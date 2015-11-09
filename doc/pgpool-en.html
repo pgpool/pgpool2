@@ -4314,7 +4314,7 @@ Configuration about virtual IP interface control
 <dt><a name="WD_PRIORITY"></a>wd_priority <span class="version">V3.5 -</span></dt>
 <dd>
 	<p>
-	This new parameter can be used to
+	This parameter can be used to
 	elevate the current watchdog node priority in leader elections.
 	The node with the higher wd_priority value will get selected as master/coordinator
 	watchdog node when cluster will be electing its master node at cluster startup or in the event of old master watchdog node failure	</p>
@@ -4526,47 +4526,52 @@ Configuration about virtual IP interface control
 <h2 id="INTEGRATE_EXT_LIFECHECK">Integrating external lifecheck with watchdog <span class="version">V3.5 -</span></h2>
 <p>
 pgpool-II watchdog process uses the BSD sockets for communicating with all pgpool-II processes and
-the same BSD socket can be used any third party system to provide the lifecheck function for
+the same BSD socket can be used by any third party system to provide the lifecheck function for
 current and remote pgpool-II watchdog nodes.
-The BSD socket file name for IPC is constructed by appending pgpool-II wd_port after "s.PGPOOLWD_CMD."
-string and the socket file is placed in the pgpool-II <a href="#WD_IPC_SOCKET_DIR">wd_ipc_socket_dir</a>." directory.
+The BSD socket file name for IPC is constructed by appending pgpool-II <a href="WD_PORT">wd_port</a> after "s.PGPOOLWD_CMD."
+string and the socket file is placed in the pgpool-II <a href="#WD_IPC_SOCKET_DIR">wd_ipc_socket_dir</a> directory.
 </p>
 <h3 id="Watchdog_IPC_command_packet_format">Watchdog IPC command packet format</h3>
 <dl>
+<p>
 The watchdog IPC command packet consists of four fields. Below table details the message fields and description
+</p>
 <table border>
-	<tr><td>Field</td>		<td>Type</td>						<td>Description</td></tr>
-	<tr><td>TYPE</td>		<td>BYTE1</td>						<td>Command Type</td></tr>
-	<tr><td>ACTION</td>		<td>INT32 Network byte order</td>	<td>Command Action. Currently only DEFAULT(0) is supported</td></tr>
-	<tr><td>LENGTH</td>		<td>INT32 Network byte order</td>	<td>The length of data to follow</td></tr>
-	<tr><td>DATA</td>		<td>DATA in JSON format</td>		<td>Command data in JSON format</td></tr>
-
+	<tr class="header"><th>Field</th>		<th>Type</th>						<th>Description</th></tr>
+	<tr><th>TYPE</th>		<td>BYTE1</td>						<td>Command Type</td></tr>
+	<tr><th>ACTION</th>		<td>INT32 Network byte order</td>	<td>Command Action. Currently only DEFAULT(0) is supported</td></tr>
+	<tr><th>LENGTH</th>		<td>INT32 Network byte order</td>	<td>The length of data to follow</td></tr>
+	<tr><th>DATA</th>		<td>DATA in JSON format</td>		<td>Command data in JSON format</td></tr>
 </table>
 </dl>
 <h3 id="Watchdog_IPC_result_packet_format">Watchdog IPC command result packet format</h3>
 <dl>
-	The watchdog IPC command result packet consists of three fields. Below table details the message fields and description
-	<table border>
-		<tr><td>Field</td>		<td>Type</td>						<td>Description</td></tr>
-		<tr><td>TYPE</td>		<td>BYTE1</td>						<td>Command Type</td></tr>
-		<tr><td>LENGTH</td>		<td>INT32 Network byte order</td>	<td>The length of data to follow</td></tr>
-		<tr><td>DATA</td>		<td>DATA in JSON format</td>		<td>Command result data in JSON format</td></tr>
-	</table>
+<p>
+The watchdog IPC command result packet consists of three fields. Below table details the message fields and description
+</p>
+<table border>
+	<tr class="header"><th>Field</th>		<th>Type</th>						<th>Description</th></tr>
+	<tr><th>TYPE</th>		<td>BYTE1</td>						<td>Command Type</td></tr>
+	<tr><th>LENGTH</th>		<td>INT32 Network byte order</td>	<td>The length of data to follow</td></tr>
+	<tr><th>DATA</th>		<td>DATA in JSON format</td>		<td>Command result data in JSON format</td></tr>
+</table>
 </dl>
 <h3 id="Watchdog_IPC_command_packet_types">Watchdog IPC command packet types</h3>
 <dl>
+<p>
 The first byte of the IPC command packet sent to watchdog process and the result returned by watchdog process is identified
 as the command or command result type. The below table lists all valid types and their meanings
+</p>
 <table border>
-	<tr><td>Name</td>						<td>Byte Value</td>	<td>Type</td><td>Description</td></tr>
-	<tr><td>Register for notifications</td>	<td>'0'</td>	<td>Command packet</td> <td>Command to register the current connection to receive watchdog notifications</td></tr>
-	<tr><td>Node status change</td>			<td>'2'</td>	<td>Command packet</td> <td>Command to inform watchdog about node status change of watchddog node</td></tr>
-	<tr><td>Get nodes list</td>				<td>'3'</td>	<td>Command packet</td> <td>Command to get the list of all configured watchdog nodes</td></tr>
-	<tr><td>Nodes list data</td>			<td>'4'</td>	<td>Result packet</td>  <td>The JSON data in packet
-		contains the list of all configured watchdog nodes</td></tr>
-	<tr><td>Cluster in transition</td>		<td>'7'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when it is not possible to process the command because the cluster is transitioning.'</td></tr>
-	<tr><td>Result BAD</td>					<td>'8'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when the IPC command fails</td></tr>
-	<tr><td>Result OK</td>					<td>'9'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when IPC command succeeds</td></tr>
+	<tr class="header"><th>Name</th>		<th>Byte Value</th>	<th>Type</th><th>Description</th></tr>
+	<tr><th>Register for notifications</th>	<td>'0'</td>	<td>Command packet</td> <td>Command to register the current connection to receive watchdog notifications</td></tr>
+	<tr><th>Node status change</th>			<td>'2'</td>	<td>Command packet</td> <td>Command to inform watchdog about node status change of watchddog node</td></tr>
+	<tr><th>Get nodes list</th>				<td>'3'</td>	<td>Command packet</td> <td>Command to get the list of all configured watchdog nodes</td></tr>
+	<tr><th>Nodes list data</th>			<td>'4'</td>	<td>Result packet</td>  <td>The JSON data in packet
+		contains the list of all configured watchdog nodes</th></tr>
+	<tr><th>Cluster in transition</th>		<td>'7'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when it is not possible to process the command because the cluster is transitioning.'</td></tr>
+	<tr><th>Result BAD</th>					<td>'8'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when the IPC command fails</td></tr>
+	<tr><th>Result OK</th>					<td>'9'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when IPC command succeeds</td></tr>
 
 </table>
 </dl>

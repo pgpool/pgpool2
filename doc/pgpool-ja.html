@@ -4025,23 +4025,37 @@ pgpool-IIと同様、pgpoolプロジェクトのサブプロジェクトであ�
 <p>
 watchdog プロセスは pgpool-II から起動される、高可用性を目的としたプロセスです。
 複数の pgpool-II を連携させることで単一障害点を回避します。
+pgpool-II <span class="version">V3.5 -</span> で watchdog は大幅に改善され、常にクォーラム（低足数）が確立されているようになりました。
+この新機能により watchdog はスプリットブレイン現象やネットワーク分断の対処や防止に関して、障害透過性が向上し、よりロバストになりました。
 watchdog は以下の機能を提供します。
 </p>
 <h3>pgpool-II の死活監視</h3>
-<p>watchdog は pgpool-II の監視を行います。監視の方法は「ハートビート」モードと「クエリ」モードの２つがあります。</p>
+<p>
+watchdog の lifecheck は watchdog 高可用性クラスタに参加している pgpool-II ノードの死活監視を行うサブコンポーネントです。
+従来の pgpool-II watchdog ではリモートノードの監視方法として "heartbeat" と "query" の２つのモードが提供されていました。
+pgpool-II <span class="version">V3.5 -</span> の watchdog では新しいモードとして "external" が追加されました。
+これにより、外部のサードパーティツールによる死活監視システムを pgpool-II watchdog で使用することが可能になります。
+サードパーティツールを watchdog で使用する方法について詳しくは <a href="#INTEGRATE_EXT_LIFECHECK">外部死活監視ツールとの連携</a> を参照してください。
+リモートノードの死活監視とは別に、lifecheck は上位サーバへの接続を監視することでローカルノードの状態もチェックすることも可能です。
+</p>
 <ul>
 <li>
     ハートビートモードでは、watchdog はハートビート信号を用いて 他の pgpool-II プロセスの死活監視を行います。
     watchdog は、他の pgpool-II の watchdog より定期的に送られるハートビート信号を受け取り、これが一定期間以上途切れた場合には当該 pgpool-II プロセスに障害が発生したと判断します。
     冗長性を高めるために、複数のネットワークを用いたハートビート交換が可能です。
     デフォルトではこのモードで動作し、これが推奨設定です。
-    </li>
+</li>
 <li>
     クエリモードでは、watchdog は pgpool-II のプロセスではなく「サービス」の応答を監視します。
     このモードでは、監視対象の pgpool-II にクエリを発行しその応答をチェックします。
     この方法では他の pgpool-II から接続を受ける必要があるため、<a href="NUM_INIT_CHILDREN">num_init_children</a> が十分大きくない場合には監視が失敗する場合があることに注意してください。
     これは非推奨の監視方法であり、下位互換のために残されています。
-    </li>
+</li>
+<li>
+外部ツールモード <span class="version">V3.5 -</span> では、基本的に pgpool-II watchdog
+の組み込みの死活監視を無効にし、外部システムが watchdog クラスタに参加する全リモートノードの状態を
+watchdog に通知することを期待します。
+</li>
 </ul>
     <p>
     また watchdog は、pgpool-II から上位のサーバ（アプリケーションサーバなど）への接続も監視し、上位サーバへ pgpool-II のサービスを提供できるかチェックしています。
@@ -4070,6 +4084,13 @@ watchdog は以下の機能を提供します。
     pgpool-II の障害を検知した場合、watchdog は他の watchdog に障害検知を通知します。
     故障した pgpool-II がアクティブの場合、他の watchdog は新しいアクティブを投票で決め、
     アクティブ・スタンバイの切り替えを行います。
+    </p>
+
+<h3> <span class="version">V3.5 -</span>全ノードの重要な設定パラメータの整合性検証</h3>
+ 
+    <p>
+	watchdog の起動時に現在のノードの pgpool-II の設定がマスター watchdog ノードの設定と整合がとれているか検証します。
+	これにより pgpool-II ノード間の設定の不一致によって発生する予期しない挙動の可能性が軽減されます。
     </p>
 
 <h3>サーバ切り替えと連動した仮想 IP アドレスの自動付け替え</h3>
@@ -4108,7 +4129,7 @@ pgpool-II を起動する際に root 権限で実行するのが１つの方法�
 <a href="#IF_DOWN_CMD">if_up_cmd</a>、<a href="#ARPING_CMD">if_up_cmd</a> に設定するのがより良い方法です。
 </p>
 <p>
-watchdog の 死活監視は他の全ての pgpool-II が起動した後に開始されます。
+watchdog 組み込みの 死活監視は他の全ての pgpool-II が起動した後に開始されます。
 全ての pgpool-II が起動していない状態では監視は行われず、仮想 IP の切り替えも行われません。
 </p>
 
@@ -4293,7 +4314,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     </dd>
 </dl>
 
-<h3>昇格時の振る舞い</h3>
+<h3>昇格および降格時の振る舞い</h3>
 
 <p>pgpool-II がアクティブ（仮想 IP を保持しているステータス）に昇格した時の振る舞いの設定です。</p>
 <dl>
@@ -4314,13 +4335,23 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
 <dt><a name="WD_ESCALATION_COMMAND"></a>wd_escalation_command <span class="version">V3.3 ～</span></dt>
     <dd>
     <p>
-    pgpool-II がアクティブに昇格した時に、ここで指定したコマンドが実行されます。
-    コマンドは、仮想 IP が立ち上がる直前のタイミングで実行されます。
-    </p>
-    <p>
-    このパラメータを変更した時には pgpool-II を再起動してください。
+    pgpool-II ノードがマスター（コーディネータ）に昇格した時に、ここで指定したコマンドが実行されます。
+	</p>
+	<p>
+    コマンドは、仮想 IP が設定されていた場合、それが立ち上がる直前のタイミングで実行されます。
     </p>
     </dd>
+
+<dt><a name="WD_DE-ESCALATION_COMMAND"></a>wd_de_escalation_command <span class="version">V3.5 ～</span></dt>
+<dd>
+	<p>
+	pgpool-II watchdog のマスターノードがマスターの責務を辞退し降格するときに、ここで指定したコマンドが実行されます。
+	マスター（コーディネータ）ノードは、マスターノードが停止したとき、および、ネットワーク切断やクォーラムが失われたことを検出した時に、マスターの座を辞任します。
+	</p>
+	<p>
+    コマンドは、仮想 IP が設定されていた場合、それが停止される直前のタイミングで実行されます。
+	</p>
+</dd>
 
 </dl>
 
@@ -4334,7 +4365,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
 <dt><a name="WD_LIFECHECK_METHOD"></a>wd_lifecheck_method <span class="version">V3.3 ～</span></dt>
     <dd>
     <p>
-    死活監視の方法を指定します。指定できる値は 'heartbeat' (デフォルト)か 'query' です。
+    死活監視の方法を指定します。指定できる値は 'heartbeat' (デフォルト)、'query'、または 'external' です。
     </p>
     <p>
     'heartbeat' を指定した場合には、監視は「ハートビートモード」で行われます。
@@ -4348,6 +4379,10 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     <p>
     <font color="red">注意: クエリモードを使用する場合は、<a href="#NUM_INIT_CHILDREN">num_init_children</a>に十分大きな値を設定して下さい。watchdog 自身も pgpool-II にクライアントとして接続するためです。</font>
     </p>
+	<p>
+	'external' を指定した場合には、監視は「外部ツールモード」で行われます（<span class="version">V3.5 -</span>）。
+	watchdog は組み込みの死活監視機能を無効にし、ローカルおよびリモートの watchdog ノードの死活監視を外部のシステムに頼ります。
+	</p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
@@ -4365,6 +4400,29 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     </p>
     </dd>
 </dl>
+
+<dt><a name="WD_PRIORITY"></a>wd_priority <span class="version">V3.5 ～</span></dt>
+<dd>
+	<p>
+	このパラメータによって自身の watchdog ノードがリーダに選ばれる優先度を上げることができます。
+	クラスタの初期起動時や古いマスターノードが故障した状況でクラスタがマスターノードの選択を行う際に、wd_priority
+	が高いノードがマスター（コーディネータ）watchdog ノードに選ばれます。
+	<p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+	</p>
+</dd>
+
+<dt><a name="WD_IPC_SOCKET_DIR"></a>wd_ipc_socket_dir <span class="version">V3.5 ～</span></dt>
+<dd>
+	<p>
+	pgpool-II watchdog の IPC（プロセス間通信）で受け付ける UNIX ドメインソケットが作成されるディレクトリを指定します。
+	デフォルトは <code>'/tmp'</code> です。
+	このソケットが cron ジョブで削除されることのないよう気をつけてください。この値は <code>'/var/run'</code>
+	などのディレクトリに設定することを推奨します。
+	<p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+	</p>
+</dd>
 
 <h4>ハートビートモードの設定</h4>
 
@@ -4543,7 +4601,7 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
 <dt><a name="OTHER_WD_PORT"></a>other_wd_port<font color="red">0</font> <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
-    監視対象の pgpool-II サーバの watchdog パケット受信ポート番号を指定します
+    監視対象の pgpool-II サーバの watchdog パケット受信ポート番号を指定します。
     数値の部分は監視対象サーバの番号です。
     監視対象のサーバ毎に 0 からの連番にします。
     </p>
@@ -4551,6 +4609,135 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
+</dl>
+
+<h2 id="INTEGRATE_EXT_LIFECHECK">外部死活監視ツールとの連携 <span class="version">V3.5 -</span></h2>
+<p>
+pgpool-II watchdog プロセスは他の pgpool-II プロセスとの通信に BSD ソケットを使用しており、
+このソケットはサードパーティシステムでローカルおよびリモートの pgpool-II watchdog
+ノードの死活監視をするために使用することが可能です。
+IPC（プロセス間通信）のための BSD ソケットの名前は、"s.PGPOOLWD_CMD" の後ろの pgpool-II の <a href="WD_PORT">wd_port</a>
+を続けた文字列となります。ソケットファイルは <a href="#WD_IPC_SOCKET_DIR">wd_ipc_socket_dir</a>
+で指定されたディレクトリに置かれます。
+</p>
+<h3 id="Watchdog_IPC_command_packet_format">Watchdog IPC コマンドパケットの書式</h3>
+<dl>
+<p>
+watchdog IPC コマンドパケットは 4 つのフィールドから構成されます。メッセージフィールドの詳細を以下の表に示します。
+</p>
+<table border>
+	<tr class="header"><th>フィールド</th>		<th>型</th>						<th>説明</th></tr>
+	<tr><th>TYPE</th>		<td>BYTE1</td>						<td>コマンドのタイプ</td></tr>
+	<tr><th>ACTION</th>		<td>INT32（ネットワークバイトオーダ）</td>	<td>コマンドアクション。現状では DEFAULT(0) のみサポート。</td></tr>
+	<tr><th>LENGTH</th>		<td>INT32（ネットワークバイトオーダ）</td>	<td>続くデータの長さ</td></tr>
+	<tr><th>DATA</th>		<td>JSON 形式データ</td>		<td>JSON 形式のコマンドデータ</td></tr>
+</table>
+
+</dl>
+<h3 id="Watchdog_IPC_result_packet_format">Watchdog IPC コマンド結果パケットの書式</h3>
+<dl>
+watchdog IPC コマンド結果パケットは 3 つのフィールドから構成されます。メッセージフィールドの詳細を以下の表に示します。
+<table border>
+	<tr class="header"><th>フィールド</th>		<th>型</th>						<th>説明</th></tr>
+	<tr><th>TYPE</td>		<td>BYTE1</td>						<td>コマンドのタイプ</td></tr>
+	<tr><th>LENGTH</td>		<td>INT32（ネットワークバイトオーダ）</td>	<td>続くデータの長さ</td></tr>
+	<tr><th>DATA</td>		<td>JSON 形式データ</td>		<td>JSON 形式のコマンド結果データ</td></tr>
+</table>
+</dl>
+<h3 id="Watchdog_IPC_command_packet_types">Watchdog IPC コマンドパケットのタイプ</h3>
+<dl>
+<p>
+watchdog プロセスに送られる、または watchdog プロセスから返される IPC コマンドパケットの最初のバイトはコマンド、またはコマンド結果のタイプとみなされます。
+有効なタイプとその意味の一覧を以下の表に示します。
+</p>
+<table border>
+	<tr><th>名前</th>						<th>バイト値</th>	<th>タイプ</th><th>説明</th></tr>
+	<tr><th>Register for notifications</th>	<td>'0'</td>	<td>コマンド</td> <td>watachdog の通知を受信するための接続を登録するコマンド</td></tr>
+	<tr><th>Node status change</th>			<td>'2'</td>	<td>コマンド</td> <td>watchdog に watchdog ノードの状態変化を通知するコマンド</td></tr>
+	<tr><th>Get nodes list</th>				<td>'3'</td>	<td>コマンド</td> <td>設定された全ての watchdog ノードのリストを取得するコマンド</td></tr>
+	<tr><th>Nodes list data</th>			<td>'4'</td>	<td>結果</td>  <td>設定された全ての watchdog ノードのリストを含む JSON データのパケット</td></tr>
+	<tr><th>Cluster in transition</th>		<td>'7'</td>	<td>結果</td> <td>クラスタ状態が遷移中のためコマンドを処理できない</td></tr>
+	<tr><th>Result BAD</th>					<td>'8'</td>	<td>結果</td> <td>IPC コマンドが失敗した</td></tr>
+	<tr><th>Result OK</th>					<td>'9'</td>	<td>結果</td> <td>IPC コマンドが成功した</td></tr>
+
+</table>
+</dl>
+
+<h3 id="external_lifecheck_ipc">外部死活監視のための IPC パケットおよびデータ</h3>
+<dl>
+<p>
+外部の死活監視システムと連携に、IPC メッセージ "Get nodes list('3')", "Nodes list data('4')" および
+"Node status change('2')" が使用できます。
+内部の pgpool の死活監視もまた、同じチャネルとテクニックを使用していることに注意してください。
+</p>
+<h4 id="external_lifecheck_ipc">設定された watchdog ノードのリストの取得</h4>
+<dl>
+<p>
+サードパーティの死活監視システムはデータの長さが 0 の "Get nodes list('3')" タイプのパケットを watchdog IPC ソケットに送り、
+"Node list data('4')" タイプの結果パケットを取得することができます。このパケットは死活監視の対象となる全ての設定された watchdog ノードのリストが JSON 形式で含まれています。
+watchdog ノード全体を表す json は全ての watchdog ノードの配列 "WatchdogNodes" を格納しています。
+各 watchdog json ノードには、各ノードの "ID", "NodeName", "HostName", "DelegateIP", "WdPort" および "PgpoolPort" が格納されます。
+</p>
+<pre>
+-- "Nodes list data('4')" に格納される JSON データの例
+
+  {
+	"NodeCount":3,
+	"WatchdogNodes":
+		[
+			{
+				"ID":0,
+				"State":1,
+				"NodeName":"Linux_ubuntu_9999",
+				"HostName":"watchdog-host1",
+				"DelegateIP":"172.16.5.133",
+				"WdPort":9000,
+				"PgpoolPort":9999
+			},
+			{
+				"ID":1,
+				"State":1,
+				"NodeName":"Linux_ubuntu_9991",
+				"HostName":"watchdog-host2",
+				"DelegateIP":"172.16.5.133",
+				"WdPort":9000,
+				"PgpoolPort":9991
+			},
+			{
+				"ID":2,
+				"State":1,
+				"NodeName":"Linux_ubuntu_9992",
+				"HostName":"watchdog-host3",
+				"DelegateIP":"172.16.5.133",
+				"WdPort":9000,
+				"PgpoolPort":9992
+			}
+		]
+  }
+
+-- ID 0 のノードは常にローカルの watchdog ノードのために使用されることに注意
+</pre>
+<p>
+設定された watchdog ノードの情報を取得した後は、外部の死活監視システムは watchdog ノードの死活監視を続けることが可能であり、
+いずれかのノードでなんらかの状態変化を検出した場合には、"Node status change('2')" IPC メッセージを使ってそのことを watchdog に通知することができます。
+そのメッセージ中のデータは、状態が変化したノードの ID（watchdog から WatchdogNodes リストで返されたものと同じであること）と、その新しい状態の
+JSON を含んでなければなりません。
+</p>
+<pre>
+-- pgpool-II watchdog に ID 1 のノードの死活監視が失敗したことを通知する JSON の例
+
+  {
+	"NodeID":1,
+	"NodeStatus":1,
+	"Message":"optional message string to log by watchdog for this event"
+  }
+
+-- NodeStatus の値の意味は以下の通り
+NODE STATUS DEAD  =  1
+NODE STATUS ALIVE =  2
+</pre>
+
+</dl>
 </dl>
 
 <h2 id="watchdog_restrictions">watchdog の制限事項</h2>
