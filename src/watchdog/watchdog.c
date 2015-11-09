@@ -1922,8 +1922,12 @@ static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacke
 			json_data = ipcCommand->data_buf;
 			data_len = ipcCommand->data_len;
 		}
-		
-		root = json_parse(json_data,data_len);
+
+		if (data_len > 0 && json_data)
+			root = json_parse(json_data,data_len);
+		else
+			root = NULL;
+
 		/* The root node must be object */
 		if (root == NULL || root->type != json_object)
 		{
