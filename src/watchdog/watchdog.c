@@ -4583,6 +4583,7 @@ static bool process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt,
 		{
 			reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
 			wd_set_node_mask_for_degenerate_req(node_id_list, node_count);
+			degenerate_backend_set(node_id_list,node_count);
 		}
 	}
 	
