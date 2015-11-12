@@ -1420,7 +1420,9 @@ static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 		 * store it in the list
 		 */
 		*remove_socket = false;
+		oldCxt = MemoryContextSwitchTo(TopMemoryContext);
 		g_cluster.ipc_commands = lappend(g_cluster.ipc_commands,IPCCommand);
+		MemoryContextSwitchTo(oldCxt);
 		return true;
 	}
 	if (res == IPC_CMD_ERROR)
@@ -4474,7 +4476,6 @@ static IPC_CMD_PREOCESS_RES execute_replicate_command(WDIPCCommandData* ipcComma
 		res = IPC_CMD_ERROR;
 	else
 		res = IPC_CMD_PROCESSING;
-	
 	return res;
 }
 
