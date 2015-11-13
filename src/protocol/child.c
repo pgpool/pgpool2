@@ -43,7 +43,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <sys/file.h>
 
 #ifdef HAVE_CRYPT_H
 #include <crypt.h>
@@ -91,9 +90,6 @@ static bool backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION
 static void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp);
 static int choose_db_node_id(char *str);
 static void child_will_go_down(int code, Datum arg);
-static void accept_lock(void);
-static void accept_unlock(void);
-
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
  */
@@ -119,8 +115,6 @@ volatile sig_atomic_t got_sighup = 0;
 char remote_host[NI_MAXHOST];	/* client host */
 char remote_port[NI_MAXSERV];	/* client port */
 POOL_CONNECTION* volatile child_frontend = NULL;
-
-static int accept_lock_fd;
 
 /*
 * child main loop
@@ -1844,7 +1838,7 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 	 */
 	if (pool_config->child_life_time == 0 && pool_config->serialize_accept != 0)
 	{
-		accept_lock();
+		pool_semaphore_lock(ACCEPT_FD_SEM);
 		ereport(DEBUG1,
 			   (errmsg("LOCKING select()")));
 	}
@@ -1855,7 +1849,7 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 
 	if (pool_config->child_life_time == 0 && pool_config->serialize_accept != 0)
 	{
-		accept_unlock();
+		pool_semaphore_unlock(ACCEPT_FD_SEM);
 		ereport(DEBUG1,
 			   (errmsg("UNLOCKING select()")));
 	}
@@ -2356,52 +2350,4 @@ int pg_frontend_exists(void)
 	if (processType != PT_CHILD || child_frontend == NULL)
 		return -1;
 	return 0;
-}
-
-/*
- * Aquire accept lock. Lock file is created as
- * pool_config->logdir/accept_lock.
- */
-static void accept_lock(void)
-{
-	if (!accept_lock_fd)
-	{
-		char path[1024];
-
-		snprintf(path, sizeof(path), "%s/accept_lock", pool_config->logdir);
-		accept_lock_fd = open(path, O_CREAT|O_RDWR, S_IRUSR|S_IWUSR);
-		if (accept_lock_fd == -1)
-		{
-			ereport(WARNING,
-					(errmsg("failed to open accept_lock.reason: %s", strerror(errno))));
-			return;
-		}
-	}
-
-	if (flock(accept_lock_fd, LOCK_EX) == -1)
-	{
-		ereport(WARNING,
-				(errmsg("failed to lock accept_lock.reason: %s", strerror(errno))));
-		return;
-	}
-}
-
-/*
- * Release accept lock
- */
-static void accept_unlock(void)
-{
-	if (!accept_lock_fd)
-	{
-		ereport(WARNING,
-				(errmsg("accept_lock_fd is not open")));
-		return;
-	}
-
-	if (flock(accept_lock_fd, LOCK_UN) == -1)
-	{
-		ereport(WARNING,
-				(errmsg("failed to unlock accept_lock.reason: %s", strerror(errno))));
-		return;
-	}
 }
