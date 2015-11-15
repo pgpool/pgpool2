@@ -111,7 +111,7 @@ pool_semaphore_lock(int semNum)
 	struct sembuf sops;
 
 	sops.sem_op = -1;			/* decrement */
-	sops.sem_flg = 0;
+	sops.sem_flg = SEM_UNDO;
 	sops.sem_num = semNum;
 
 	/*
@@ -139,7 +139,7 @@ pool_semaphore_unlock(int semNum)
 	struct sembuf sops;
 
 	sops.sem_op = 1;			/* increment */
-	sops.sem_flg = 0;
+	sops.sem_flg = SEM_UNDO;
 	sops.sem_num = semNum;
 
 	/*

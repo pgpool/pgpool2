@@ -370,6 +370,10 @@ extern int my_master_node_id;
 #define MAX_REQUEST_QUEUE_SIZE	10
 
 #define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 6 /*number of sec to wait for watchdog command if cluster is stabalizing */
+
+#define SERIALIZE_ACCEPT (pool_config->serialize_accept != 0 && \
+						  pool_config->child_life_time == 0)
+
 /*
  * number specified when semaphore is locked/unlocked
  */

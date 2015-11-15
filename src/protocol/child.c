@@ -1811,7 +1811,10 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 	for (walk = fds; *walk != -1; walk++)
 		pool_set_nonblock(*walk);
 
-	set_ps_display("wait for connection request", false);
+	if (SERIALIZE_ACCEPT)
+		set_ps_display("wait for accept lock", false);
+	else
+		set_ps_display("wait for connection request", false);
 
     memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
     
@@ -1836,9 +1839,10 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 	 * If child life time is disabled and serialize_accept is on, we serialize
 	 * select() and accept() to avoid the "Thundering herd" problem.
 	 */
-	if (pool_config->child_life_time == 0 && pool_config->serialize_accept != 0)
+	if (SERIALIZE_ACCEPT)
 	{
 		pool_semaphore_lock(ACCEPT_FD_SEM);
+		set_ps_display("wait for connection request", false);
 		ereport(DEBUG1,
 			   (errmsg("LOCKING select()")));
 	}
@@ -1847,7 +1851,7 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 
 	save_errno = errno;
 
-	if (pool_config->child_life_time == 0 && pool_config->serialize_accept != 0)
+	if (SERIALIZE_ACCEPT)
 	{
 		pool_semaphore_unlock(ACCEPT_FD_SEM);
 		ereport(DEBUG1,
