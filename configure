@@ -590,8 +590,8 @@ MAKEFLAGS=
 # Identity of this package.
 PACKAGE_NAME='pgpool-II'
 PACKAGE_TARNAME='pgpool-II'
-PACKAGE_VERSION='3.5.0'
-PACKAGE_STRING='pgpool-II 3.5.0'
+PACKAGE_VERSION='3.5.0 alpha1'
+PACKAGE_STRING='pgpool-II 3.5.0 alpha1'
 PACKAGE_BUGREPORT='pgpool-hackers@pgpoo.net'
 PACKAGE_URL=''
 

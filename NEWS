@@ -1,6 +1,257 @@
                                 Release Notes
 
 ===============================================================================
+3.5 Series (2014/12/15 - )
+===============================================================================
+
+                        3.5.0 (ekieboshi) 2015/12/15
+
+* Version 3.5.0
+
+      This is the first version of pgpool-II 3.5 series.
+      That is, a "major version up" from 3.4 series.
+
+      __________________________________________________________________
+
+* Incompatible changes
+
+    - Remove parallel query mode codes (Yugo Nagata)
+
+      There are very few users and the maintenance efforts are not worth it.
+      Codes for system db are also removed, since this was used in only parallel
+      query mode and old query cache on disk. 
+
+    - Rename parameter name from ifconfig_path to if_cmd_path (Yugo Nagata)
+
+      ifconfig_path isn't appropriate for the parameter name because
+      ifconfig command is obsolete and now ip command is used as default.
+
+      __________________________________________________________________
+
+* New features 
+
+    - Add new parameter "serialize_accept" (Tatsuo Ishii)
+
+      This parameter defines whether to serialize accept() call for incoming
+      client connections.  Default is off, which means no serializing (same
+      behavior as pgpool-II 3.4 or before).  If this is off, the kernel
+      wakes up all of pgpool-II child process to execute accept() and one of
+      them actually accepts the incoming connection.  Problem here is,
+      because so my child process wake up at a same time, heavy context
+      switching occurred and the performance is affected.  This phenomena is
+      a classic problem called "the thundering herd problem".  By enabling
+      serialize_accept, only one of pgpool-II child process is woken up and
+      executes accept() and the problem can be avoided.
+
+    - Import parser of PostgreSQL 9.5 (Yugo Nagata)
+
+      pgpool-II can understand new syntax introduced in PostgreSQL 9.5 now.
+      Especially GROUPING SET, CUBE, ROLLUP and TABLESAMPLE can be be load
+      balanced and can be used in query cache (except for TABLESAMPLE).
+
+      Also INSERT...ON CONFLICT and UPDATE tab SET (col1, col2, ...) =
+      (SELECT ...) ... can now be properly handled in query rewriting in
+      native replication mode.
+
+    - Allow to specify database for health check and streaming replication
+      delay check. (Tatsuo Ishii)
+
+      For this purpose new directive "health_check_database" and
+      "sr_check_database" are added.
+	  
+      __________________________________________________________________
+
+* Enhancements
+
+    - Performance improvement in extened query protocol
+
+      Unnecessary "flush" messages which used to be sent in each step of
+      extended protocol messages (parse, bind, describe and execute) and
+      brought significant communication overhead are removed. For now it
+      only affects to streaming replication mode, that is, the performance
+      of other modes remains same.
+
+    - watchdog feature enhancements (Muhammad Usama)
+
+      The goal of this enhancement is to address the shortcomings and problems
+      in the pgpool watchdog and make the watchdog system more robust and
+      adaptable. 
+
+        -- The watchdog should consider the quorum and only elect the master/leader
+           node if the quorum exist in the watchdog cluster.
+        -- All the participating pgpool-II nodes in the watchdog cluster should have
+           similar pgpool-II configurations.
+        -- Watchdog nodes should have configurable watchdog node priority, to give
+           users more control on which node should become a leader node.
+        -- More options for the node health-checking, especially watchdog should allow
+           external/3rd party node health checking system to integrate with it.
+        -- The watchdog should keep looking for problems like split-brain syndrome and
+           should automatically recover from it.
+        -- Allow user to provide scripts to be executed at time of escalation and
+           de-escalation to master/leader nodes.
+
+      Add these new parameters:
+
+        -- wd_ipc_socket_dir:
+           This parameter is used to specify the directory where the UNIX domain
+           socket accepting pgpool-II watchdog IPC connections will be created.
+
+        -- wd_priority:
+           This new parameter can be used to elevate the current watchdog node
+           priority in leader elections. The node with the higher wd_priority
+           value will get selected as master/coordinator watchdog node when
+           cluster will be electing its master node at cluster startup or in the
+           event of old master watchdog node failure.
+
+        -- wd_de_escalation_command:
+           This parameter holds the command that watchdog will execute on the
+           master pgpool-II watchdog node when that node resigns from the master
+           node responsibilities.
+
+    - Overhauling pcp commands (Muhammad Usama)
+
+        -- Improved handling of command argument:
+           Long command line options can be used now. 
+        -- PCP password is safe:
+           Don't pass password via command line, which causes security risks.
+        -- Mutiple concurrent execution of pcp commands:
+           Allow to execute a pcp command while running pcp_recovery_node
+           which takes sometime to finish.
+
+    - SELECT count statics in "show pool_nodes" command results (Tatsuo Ishii)
+
+      show pool_nodes results which briefly describes the status of each backend
+      now shows how many SELECTs are issued to them. So you can quickly
+      recognize the effect of load balancing for example;
+
+        test=# show pool_nodes;
+         node_id | hostname | port  | status | lb_weight |  role   | select_cnt 
+        ---------+----------+-------+--------+-----------+---------+------------
+         0       | /tmp     | 11002 | 2      | 0.500000  | primary | 338230
+         1       | /tmp     | 11003 | 2      | 0.500000  | standby | 163939
+        (2 rows)
+
+    - Parser enhancements for query rewriting (Yugo Nagata)
+
+      INSERT/UPDATE/DELETE with WITH clause, writable CTE, RETURNING clause
+      can now be properly handled in query rewriting in native replication mode.
+
+    - Allow to open pool_passwd file in read only mode by pgpool-II main
+      process (Tatsuo Ishii)
+
+    - Allow to run pgpool in debug mode in regression tests (Tatsuo Ishii)
+
+      __________________________________________________________________
+
+* Bug fixes (since 3.4.3)
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status. (Tatsuo Ishii)
+
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - Fix reset query stuck problem (Muhammad Usama)
+
+      It is reported that reset query (DISCARD ALL etc.) occasionally does
+      not finish and pgpool child remain waiting for reply from the backend
+      thus client cannot connect to pgpool (for example bug report #107).
+      The cause of problem is not identified yet but if client suddenly
+      closes connection to pgpool in the middle of query processing, backend
+      may not accept the reset queries because they are not ready for query.
+
+      The fix is to keep track of the status of frontend socket state and not
+      caching the PostgreSQL connection if the connection to frontend was not
+      properly terminated.
+
+    - test: Fix false alerm of regression tset 062 (Yugo Nagata)
+
+    - test: Fix broken regression test for native replication (Yugo Nagata)
+
+      Test for insert-lock didn't work.
+
+    - test: Fix regress test to sleep after pgpool_reload (Yugo Nagata)
+
+      Some regression tests modify configuration file and reloads. However,
+      sometimes these were not applied to pgpool just after reloading.
+
+    - Fix inconsistency of sequence values in replication mode (Yugo Nagata)
+
+      When a schema name was provided, the table name was quoted wrongly as
+      like "public.mytbl" instead of "public"."mytbl". So, pool_regclass
+      and to_regclass couldn't find right talbe oid and insert lock was
+      never executed. This caused inconsistency between DB nodes.
+
+    - test: Fix complication error and segfault of timestamp rewrite test (Yugo Nagata)
+
+    - doc: Fix untranslated sentence in Japanese document (Yugo Nagata)
+
+    - Fix ancient bug of pool_push() and friends. (Tatsuo Ishii)
+
+      It allocates buffer using realloc and uses the pointer
+      returned. However it does the pointer calculation *before* realloc
+      gets called. So the calculation uses the old pointer value, which
+      causes various problems including segfault later. 
+
+      Also there were other problems with it. The buffer pointer and buffer
+      size variable is not initialized. The buffer is not freed by
+      pool_close. Typo in debugging message (3.4 or later only). They are
+      fixed as well.
+
+    - doc: Fix wrong description in documents about log_standby_delay (Yugo Nagata)
+
+    - Fix segfalut that occurs when function is used in FROM clause (Yugo Nagata)
+
+      PRPARE statements in streaming-reaplication mode and INSERT/UPDATE
+      with SELECT in native-replication mode were affected. For example:
+
+      - prepare p as select * from generate_series(1,1);
+      - insert into tbl select now(), * from generate_series(1,1);
+
+    - doc: Add caution about JDBC driver version regarding app_name_redirect_preference_list
+      (Tatsuo Ishii)
+
+    - Fix hang problmen reported in bug #145. (Tatsuo Ishii)
+
+      The problem occurs when all the condition below are met:
+
+      1) pgpool-II 3.4 or later
+      2) streaming replication mode
+      3) primary node is also load balance node
+      4) extended protocol is used
+      5) client_idle_limit reached
+
+    - Fix a in-memory query cache bug (Tatsuo Ishii)
+
+      If extended query protocol is used and a bind/execute message arrives
+      which uses a statement created by prior parse message, the temp_cache
+      is not initialized by a parse messages. Thus messages are added to pre
+      existing temp cache buffer which causes the trouble, that is, when the
+      cached result returns, Data Row message and Command Complete message
+      appeared twice.
+
+      Per by bug #152.
+
+    - test: Fix regression test 065. (Tatsuo Ishii)
+
+      The path to JDBC driver was explicitly defined. This is wrong. This
+      should be inherited from JDBC_DRIVER environment variable.
+
+    - test: Fix possible hang-up of regression test 054.postgres_fdw (Yugo Nagata)
+
+    - test: Add option to regress.sh and pgpool_setup for unix domain socket
+      directory (Yugo Nagata)
+
+    - doc: Add missing descriptions about default values to documents
+      (Yugo Nagata)
+
+    - test: Fix regression test 055 for rhel7 rpm (Yugo Nagata)
+
+===============================================================================
 3.4 Series (2014/11/07 - )
 ===============================================================================
 
