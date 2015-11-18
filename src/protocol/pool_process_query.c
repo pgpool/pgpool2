@@ -4695,7 +4695,7 @@ SELECT_RETRY:
 
 			if (idle_count > pool_config->client_idle_limit)
 			{
-                ereport(ERROR,
+                ereport(FRONTEND_ERROR,
                         (pool_error_code("57000"),
                         errmsg("unable to read data"),
                          errdetail("child connection forced to terminate due to client_idle_limit:%d is reached",
@@ -4708,7 +4708,7 @@ SELECT_RETRY:
 
 			if (idle_count_in_recovery > pool_config->client_idle_limit_in_recovery)
 			{
-                ereport(ERROR,
+                ereport(FRONTEND_ERROR,
                     (pool_error_code("57000"),
                     errmsg("unable to read data"),
                          errdetail("child connection forced to terminate due to client_idle_limit_in_recovery:%d is reached",pool_config->client_idle_limit_in_recovery)));
@@ -4720,7 +4720,7 @@ SELECT_RETRY:
 			 * If we are in recovery and client_idle_limit_in_recovery is -1, then
 			 * exit immediately.
 			 */
-            ereport(ERROR,
+            ereport(FRONTEND_ERROR,
                 (pool_error_code("57000"),
                 errmsg("connection terminated due to online recovery"),
                      errdetail("child connection forced to terminate due to client_idle_limitis:-1")));
