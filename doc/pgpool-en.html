@@ -4243,7 +4243,7 @@ Configuration about virtual IP interface control
 <dt><a name="WD_ESCALATION_COMMAND"></a>wd_escalation_command <span class="version">V3.3 -</span></dt>
     <dd>
     <p>
-    Watchdog executes this command on the node that is escalated to the master/coordinator watchdog.
+    Watchdog executes this command on the node that is escalated to the master watchdog.
 	<p>
     This command is executed just before bringing up the virtual/floating IP if that is configured on the node.
 	</p>
@@ -4253,7 +4253,7 @@ Configuration about virtual IP interface control
 	<dd>
 		<p>
 		Watchdog executes this command on the master pgpool-II watchdog node when that node resigns
-		from the master node responsibilities. A master/coordinator watchdog node can resign from
+		from the master node responsibilities. A master watchdog node can resign from
 		being a master node, when the master node pgpool-II shuts down, detects a network blackout
 		or detects the lost of quorum.
 		</p>
@@ -4315,8 +4315,8 @@ Configuration about virtual IP interface control
 <dd>
 	<p>
 	This parameter can be used to
-	elevate the current watchdog node priority in leader elections.
-	The node with the higher wd_priority value will get selected as master/coordinator
+	elevate the local watchdog node priority in the elections to select master watchdog node.
+	The node with the higher wd_priority value will get selected as master
 	watchdog node when cluster will be electing its master node at cluster startup or in the event of old master watchdog node failure	</p>
 	<p>
 	You need to restart pgpool-II if you change this value.
@@ -4579,7 +4579,7 @@ as the command or command result type. The below table lists all valid types and
 <h3 id="external_lifecheck_ipc">External lifecheck IPC packets and data</h3>
 <dl>
 "Get nodes list('3')", "Nodes list data('4')" and "Node status change('2')" IPC messages of watchdog can be used to integration an external lifecheck systems.
-Note that the internal lifecheck of pgpool also uses the same channel and technique.
+Note that the built-in lifecheck of pgpool also uses the same channel and technique.
 <h4 id="external_lifecheck_ipc">Getting list of configured watchdog nodes</h4>
 <dl>
 Any third party lifecheck system can send the "Get nodes list('3')" type packet on watchdog IPC socket with a zero length data to get the "Nodes list data('4')"
@@ -4623,7 +4623,7 @@ The Json of watchdog nodes contains the "WatchdogNodes" Array of all watchdog no
 		]
   }
 
- -- Note that ID 0 is always reserved for local/current watchdog node
+ -- Note that ID 0 is always reserved for local watchdog node
 </pre>
 
 After getting the configured watchdog nodes information from the watchdog the external lifecheck system can proceed
