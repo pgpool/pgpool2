@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -33,7 +33,7 @@ extern int wd_chk_sticky(void);
 extern int wd_is_watchdog_pid(pid_t pid);
 extern char *wd_process_name_from_pid(pid_t pid);
 extern pid_t wd_reaper_watchdog(pid_t pid, bool restart_child);
-extern int wd_chk_setuid(void);
+extern void wd_check_network_command_configurations(void);
 extern void wd_kill_watchdog(int sig);
 /* utility function*/
 extern int watchdog_thread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void *), void *arg);
