@@ -86,7 +86,7 @@ static POOL_CONNECTION *get_connection(int front_end_fd, SockAddr *saddr);
 static POOL_CONNECTION_POOL *get_backend_connection(POOL_CONNECTION *frontend);
 static StartupPacket *StartupPacketCopy(StartupPacket *sp);
 static void print_process_status(char *remote_host,char* remote_port);
-static bool backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volatile backend);
+static bool backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volatile backend, bool frontend_invalid);
 static void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp);
 static int choose_db_node_id(char *str);
 static void child_will_go_down(int code, Datum arg);
@@ -208,6 +208,7 @@ void do_child(int *fds)
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
         POOL_PROCESS_CONTEXT *session;
+		bool frontend_invalid = getfrontendinvalid();
 		disable_authentication_timeout();
 		/* Since not using PG_TRY, must reset error stack by hand */
         error_context_stack = NULL;
@@ -230,7 +231,7 @@ void do_child(int *fds)
 		if (accepted)
 			connection_count_down();
         
-        backend_cleanup(&child_frontend, backend);
+        backend_cleanup(&child_frontend, backend, frontend_invalid);
 
         session = pool_get_process_context();
 
@@ -369,7 +370,7 @@ void do_child(int *fds)
 			status = pool_process_query(child_frontend, backend, 0);
             if(status != POOL_CONTINUE)
             {
-                backend_cleanup(&child_frontend, backend);
+                backend_cleanup(&child_frontend, backend, false);
                 break;
             }
 		}
@@ -412,7 +413,7 @@ void do_child(int *fds)
  * return true if backend connection is cached
  */
 static bool
-backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volatile backend)
+backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volatile backend, bool frontend_invalid)
 {
     StartupPacket *sp;
     bool cache_connection = false;
@@ -424,8 +425,9 @@ backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volat
 
     /*
      * cach connection if connection cache configuration parameter is enabled
+	 * and frontend connection is not invalid
      */
-    if (sp && pool_config->connection_cache != 0)
+    if (sp && pool_config->connection_cache != 0 && frontend_invalid == false )
     {
         if (*frontend)
         {
@@ -448,20 +450,22 @@ backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volat
         }
     }
 
-	/*
-	 * For those special databases, and when frontend client exits abnormally,
-	 * we don't cache connection to backend.
-	 */
-    if ((sp &&
-		(!strcmp(sp->database, "template0") ||
-		 !strcmp(sp->database, "template1") ||
-		 !strcmp(sp->database, "postgres") ||
-		 !strcmp(sp->database, "regression"))) ||
-		 (*frontend != NULL &&
-		  ((*frontend)->socket_state == POOL_SOCKET_EOF ||
-		  (*frontend)->socket_state == POOL_SOCKET_ERROR)))
-        cache_connection = false;
-
+	if (cache_connection)
+	{
+		/*
+		 * For those special databases, and when frontend client exits abnormally,
+		 * we don't cache connection to backend.
+		 */
+		if ((sp &&
+			(!strcmp(sp->database, "template0") ||
+			 !strcmp(sp->database, "template1") ||
+			 !strcmp(sp->database, "postgres") ||
+			 !strcmp(sp->database, "regression"))) ||
+			 (*frontend != NULL &&
+			  ((*frontend)->socket_state == POOL_SOCKET_EOF ||
+			  (*frontend)->socket_state == POOL_SOCKET_ERROR)))
+			cache_connection = false;
+	}
 	/*
 	 * Close frontend connection
 	 */

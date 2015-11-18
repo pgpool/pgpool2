@@ -220,11 +220,17 @@ errstart(int elevel, const char *filename, int lineno,
 	bool		output_to_server;
 	bool		output_to_client = false;
 	int			i;
-
+	int			frontend_invalid = false;
 	/*
 	 * Check some cases in which we want to promote an error into a more
 	 * severe error.  None of this logic applies for non-error messages.
 	 */
+	if (elevel == FRONTEND_ERROR)
+	{
+		frontend_invalid = true;
+		elevel = ERROR;
+	}
+
 	if (elevel >= ERROR)
 	{
 		/*
@@ -325,6 +331,7 @@ errstart(int elevel, const char *filename, int lineno,
 	edata = &errordata[errordata_stack_depth];
 	MemSet(edata, 0, sizeof(ErrorData));
 	edata->elevel = elevel;
+	edata->frontend_invalid = frontend_invalid;
 	edata->output_to_server = output_to_server;
 	edata->output_to_client = output_to_client;
 	if(elevel == FATAL && PG_exception_stack == NULL) /* This is startup failure. Take down main process with it */
@@ -973,6 +980,21 @@ geterrcode(void)
 }
 
 /*
+ * getfrontendinvalid --- return the currently frontend_invalid value
+ *
+ * This is only intended for use in error callback subroutines, since there
+ * is no other place outside elog.c where the concept is meaningful.
+ */
+bool getfrontendinvalid(void)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	return edata->frontend_invalid;
+}
+/*
  * geterrposition --- return the currently set error position (0 if none)
  *
  * This is only intended for use in error callback subroutines, since there
@@ -1584,7 +1606,7 @@ write_eventlog(int level, const char *line, int len)
 
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
-		evtHandle = RegisterEventSource(NULL, event_source ? event_source : "PostgreSQL");
+		evtHandle = RegisterEventSource(NULL, event_source ? event_source : "pgpool");
 		if (evtHandle == NULL)
 		{
 			evtHandle = INVALID_HANDLE_VALUE;
