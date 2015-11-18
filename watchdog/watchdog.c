@@ -358,6 +358,7 @@ wd_reaper_watchdog(pid_t pid, int status)
 int
 wd_chk_setuid(void)
 {
+    int ret = 1;
 	char path[128];
 	char cmd[128];
 	
@@ -367,7 +368,7 @@ wd_chk_setuid(void)
 	if (! has_setuid_bit(path))
 	{
 		pool_log("wd_chk_setuid: ifup[%s] doesn't have setuid bit", path);
-		return 0;
+		ret = 0;
 	}
 
 	/* check setuid bit of ifdown command */
@@ -376,7 +377,7 @@ wd_chk_setuid(void)
 	if (! has_setuid_bit(path))
 	{
 		pool_log("wd_chk_setuid: ifdown[%s] doesn't have setuid bit", path);
-		return 0;
+		ret = 0;
 	}
 
 	/* check setuid bit of arping command */
@@ -385,11 +386,11 @@ wd_chk_setuid(void)
 	if (! has_setuid_bit(path))
 	{
 		pool_log("wd_chk_setuid: arping[%s] doesn't have setuid bit", path);
-		return 0;
+		ret = 0;
 	}
 
 	pool_log("wd_chk_setuid all commands have setuid bit");
-	return 1;
+	return ret;
 }
 
 /* if the file has setuid bit and the owner is root, it returns 1, otherwise returns 0 */
