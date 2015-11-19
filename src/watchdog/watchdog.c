@@ -1601,23 +1601,28 @@ static bool fire_node_status_event(int nodeID, int nodeStatus)
 
 static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPCCommand)
 {
-	char res_type;
+	char res_type = WD_IPC_CMD_RESULT_BAD;
+
 	if (get_local_node_state() == WD_STANDBY ||
 		get_local_node_state() == WD_COORDINATOR)
 	{
-		res_type = execute_replicate_command(IPCCommand);
+		IPC_CMD_PREOCESS_RES execute_res = execute_replicate_command(IPCCommand);
+		if (execute_res == IPC_CMD_COMPLETE)
+			res_type = WD_IPC_CMD_RESULT_OK;
+		else if (execute_res == IPC_CMD_ERROR)
+			res_type = WD_IPC_CMD_RESULT_BAD;
+		else /* IPC_CMD_PROCESSING*/
+		{
+			/*
+			 * Just return from the function, Do not just reply back to requester
+			 * as we still need to process this command
+			 */
+			return execute_res;
+		}
 	}
 	else /* we are not in any stable state at the moment */
 	{
 		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
-	}
-	
-	if (res_type == IPC_CMD_PROCESSING)
-	{
-		/* Do not reply back to requester, as we are
-		 * still processing the results
-		 */
-		return res_type;
 	}
 
 	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
@@ -1634,7 +1639,8 @@ static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPC
 
 static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCCommand)
 {
-	char res_type;
+	IPC_CMD_PREOCESS_RES ret = IPC_CMD_COMPLETE;
+	char res_type = WD_IPC_CMD_RESULT_OK;
 	/*
 	 * if cluster or myself is not in stable state
 	 * just return cluster in transaction
@@ -1650,10 +1656,10 @@ static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCComm
 	}
 	else if(g_cluster.lockHolderNode != g_cluster.localNode)
 	{
-		/* I am not the lockhoder node, so How can I unlonk
+		/* I am not the lockhoder node, so How can I unlock
 		 * just return the error
 		 */
-		res_type = WD_IPC_CMD_RESULT_BAD;
+		ret = WD_IPC_CMD_RESULT_BAD;
 	}
 	else if (get_local_node_state() == WD_STANDBY)
 	{
@@ -1666,15 +1672,17 @@ static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCComm
 		
 		if (send_message(g_cluster.masterNode, wdPacket) <= 0)
 		{
-			/* we have failed to send to any node, return lock failed  */
+			/* we have failed to send to master node, return lock failed  */
 			res_type = WD_IPC_CMD_RESULT_BAD;
 		}
 		else
 		{
 			/*
-			 * we need to wait for the results
+			 * we need to wait for the results from master/coordinator node
+			 * do not reply back to ipc until we hear from master node
 			 */
-			res_type = IPC_CMD_PROCESSING;
+
+			ret = IPC_CMD_PROCESSING;
 		}
 		/* whatever the case we need to resign ourself from lock
 		 * holder
@@ -1692,7 +1700,9 @@ static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCComm
 			res_type = WD_IPC_CMD_RESULT_OK;
 		}
 		else
+		{
 			res_type = WD_IPC_CMD_RESULT_BAD;
+		}
 	}
 	else /* we are not in any stable state at the moment */
 	{
@@ -1700,12 +1710,12 @@ static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCComm
 		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
 	}
 	
-	if (res_type == IPC_CMD_PROCESSING)
+	if (ret == IPC_CMD_PROCESSING)
 	{
 		/* Do not reply back to requester, as we are
 		 * still processing the results
 		 */
-		return res_type;
+		return ret;
 	}
 	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
 	{
@@ -1713,15 +1723,18 @@ static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCComm
 		 * This is the complete lifecycle of command.
 		 * we are done with it
 		 */
-		return IPC_CMD_COMPLETE;
+		ret = IPC_CMD_COMPLETE;
 	}
-	return IPC_CMD_ERROR;
+	else
+		ret = IPC_CMD_ERROR;
+
+	return ret;
 }
 
 
 static IPC_CMD_PREOCESS_RES process_IPC_lock_request(WDIPCCommandData *IPCCommand)
 {
-	char res_type;
+	char res_type = WD_IPC_CMD_RESULT_BAD;
 	/*
 	 * if cluster or myself is not in stable state
 	 * just return cluster in transaction
@@ -1757,7 +1770,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_lock_request(WDIPCCommandData *IPCComman
 				(errmsg("lock request from IPC socket is forwarded to master watchdog node \"%s\"",g_cluster.masterNode->nodeName),
 					 errdetail("waiting for the reply from master node...")));
 
-			res_type = IPC_CMD_PROCESSING;
+			return IPC_CMD_PROCESSING;
 		}
 	}
 	else if (get_local_node_state() == WD_COORDINATOR)
@@ -1773,15 +1786,10 @@ static IPC_CMD_PREOCESS_RES process_IPC_lock_request(WDIPCCommandData *IPCComman
 			res_type = WD_IPC_CMD_RESULT_BAD;
 	}
 	else /* we are not in any stable state at the moment */
-		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
-	
-	if (res_type == IPC_CMD_PROCESSING)
 	{
-		/* Do not reply back to requester, as we are
-		 * still processing the results
-		 */
-		return res_type;
+		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
 	}
+
 	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
 	{
 		/*
@@ -1795,7 +1803,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_lock_request(WDIPCCommandData *IPCComman
 
 static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandData *IPCCommand)
 {
-	char res_type;
+	char res_type = WD_IPC_CMD_RESULT_BAD;
 	/*
 	 * if cluster or myself is not in stable state
 	 * just return cluster in transaction
@@ -1832,7 +1840,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandDat
 				(errmsg("sync request from IPC socket is forwarded to master watchdog node \"%s\"",g_cluster.masterNode->nodeName),
 					 errdetail("waiting for the reply from master node...")));
 
-			res_type = IPC_CMD_PROCESSING;
+			return IPC_CMD_PROCESSING;
 		}
 	}
 	else if (get_local_node_state() == WD_COORDINATOR)
@@ -1844,15 +1852,10 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandDat
 		return IPC_CMD_COMPLETE;
 	}
 	else /* we are not in any stable state at the moment */
-		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
-	
-	if (res_type == IPC_CMD_PROCESSING)
 	{
-		/* Do not reply back to requester, as we are
-		 * still processing the results
-		 */
-		return res_type;
+		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
 	}
+
 	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
 	{
 		/*
@@ -2018,7 +2021,10 @@ static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacke
 			jw_destroy(jNode);
 		}
 		else
+		{
 			ret =write_ipc_command_with_result_data(ipcCommand, WD_IPC_CMD_RESULT_BAD, NULL, 0);
+		}
+
 		if (ret == false)
 			ereport(LOG,
 					(errmsg("failed to write results for failover sync request to IPC socket")));
