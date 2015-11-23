@@ -943,7 +943,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 #define AccessExclusiveLock		8		/* ALTER TABLE, DROP TABLE, VACUUM
 										 * FULL, and unqualified LOCK TABLE */
 
-/* From 9.0 include/nodes/node.h */
+/* From 9.5 include/nodes/node.h ("TAGS FOR STATEMENT NODES" part) */
 	static NodeTag nodemap[] = {
 		T_PlannedStmt,
 		T_InsertStmt,
@@ -956,9 +956,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_SetOperationStmt,
 		T_GrantStmt,
 		T_GrantRoleStmt,
-		/*
-		T_AlterDefaultPrivilegesStmt,	Our parser does not support yet
-		*/
+		T_AlterDefaultPrivilegesStmt,
 		T_ClosePortalStmt,
 		T_ClusterStmt,
 		T_CopyStmt,
@@ -971,9 +969,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_IndexStmt,	/* CREATE INDEX */
 		T_CreateFunctionStmt,
 		T_AlterFunctionStmt,
-		/*
-		T_DoStmt,		Our parser does not support yet
-		*/
+		T_DoStmt,
 		T_RenameStmt,	/* ALTER AGGREGATE etc. */
 		T_RuleStmt,		/* CREATE RULE */
 		T_NotifyStmt,
@@ -987,6 +983,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_DropdbStmt,
 		T_VacuumStmt,
 		T_ExplainStmt,
+		T_CreateTableAsStmt,
 		T_CreateSeqStmt,
 		T_AlterSeqStmt,
 		T_VariableSetStmt,		/* SET */
@@ -1022,6 +1019,8 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_ReassignOwnedStmt,
 		T_CompositeTypeStmt,	/* CREATE TYPE */
 		T_CreateEnumStmt,
+		T_CreateRangeStmt,
+		T_AlterEnumStmt,
 		T_AlterTSDictionaryStmt,
 		T_AlterTSConfigurationStmt,
 		T_CreateFdwStmt,
@@ -1031,9 +1030,22 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_CreateUserMappingStmt,
 		T_AlterUserMappingStmt,
 		T_DropUserMappingStmt,
-		/*
-		T_AlterTableSpaceOptionsStmt,	Our parser does not support yet
-		*/
+		T_AlterTableSpaceOptionsStmt,
+		T_AlterTableMoveAllStmt,
+		T_SecLabelStmt,
+		T_CreateForeignTableStmt,
+		T_ImportForeignSchemaStmt,
+		T_CreateExtensionStmt,
+		T_AlterExtensionStmt,
+		T_AlterExtensionContentsStmt,
+		T_CreateEventTrigStmt,
+		T_AlterEventTrigStmt,
+		T_RefreshMatViewStmt,
+		T_ReplicaIdentityStmt,
+		T_AlterSystemStmt,
+		T_CreatePolicyStmt,
+		T_AlterPolicyStmt,
+		T_CreateTransformStmt,
 	};
 
 	if (bsearch(&nodeTag(node), nodemap, sizeof(nodemap)/sizeof(nodemap[0]),
@@ -1316,7 +1328,8 @@ char *pool_get_query_string(void)
 }
 
 /*
- * Return true if the query is:
+ * Returns true if the query is one of:
+ *
  * SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or
  * SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE or
  * SET transaction_isolation TO 'serializable'
