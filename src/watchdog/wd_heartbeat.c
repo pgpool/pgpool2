@@ -429,12 +429,9 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 		{
 			LifeCheckNode* node = &gslifeCheckCluster->lifeCheckNodes[i];
 
-//			printf("*******watchdog heartbeat: received heartbeat signal from \"%s:%d\"\n",
-//							from, from_pgpool_port);
-
-//			ereport(DEBUG1,
-//					(errmsg("*******watchdog heartbeat: received heartbeat signal from \"%s:%d\"",
-//							from, from_pgpool_port)));
+			ereport(DEBUG2,
+					(errmsg("received heartbeat signal from \"%s:%d\"",
+							from, from_pgpool_port)));
 
 			if (!strcmp(node->hostName, from) && node->pgpoolPort == from_pgpool_port)
 			{
@@ -442,10 +439,8 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 				if (!WD_TIME_ISSET(node->hb_send_time) ||
 					WD_TIME_BEFORE(node->hb_send_time, pkt.send_time))
 				{
-//					printf("\t %d*******watchdog heartbeat: received heartbeat signal from \"%s:%d\"\n",
-//						   i,from, from_pgpool_port);
-					ereport(NOTICE,
-							(errmsg("watchdog heartbeat: received heartbeat signal from \"%s:%d\"",
+					ereport(LOG,
+							(errmsg("received heartbeat signal from \"%s:%d\"",
 									from, from_pgpool_port)));
 					
 					node->hb_send_time = pkt.send_time;
@@ -453,11 +448,8 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 				}
 				else
 				{
-//					printf("\t %dOLDER OLDER *******watchdog heartbeat: received heartbeat signal from \"%s:%d\"\n",
-//						   i,from, from_pgpool_port);
-
 					ereport(NOTICE,
-							(errmsg("watchdog heartbeat: received heartbeat signal is older than the latest, ignored")));
+							(errmsg("received heartbeat signal is older than the latest, ignored")));
 				}
 				break;
 			}

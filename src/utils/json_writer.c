@@ -184,12 +184,10 @@ bool jw_start_element(JsonNode* jNode, JWElementType element, char* key)
 
 	if (element == JWOBJECT)
 	{
-//		printf("starting JSCON OBJECT on stack ptr = %d\n",jNode->stack_ptr);
 		ch = '{';
 	}
 	else if (element == JWARRAY)
 	{
-//		printf("starting JSCON ARRAY on stack ptr = %d\n",jNode->stack_ptr);
 		ch = '[';
 	}
 	else
@@ -276,7 +274,6 @@ static inline void jw_inc_current_element_count(JsonNode* jNode)
 {
 	if (jNode->stack_ptr <= 0)
 		return;
-//	printf("starting JSCON CURRENT = %d on stack ptr = %d\n",jNode->stack[jNode->stack_ptr -1].elementType,jNode->stack_ptr);
 	jNode->stack[jNode->stack_ptr -1].elementCount++;
 }
 
@@ -284,7 +281,5 @@ static inline JWElementType jw_get_current_element_type(JsonNode* jNode)
 {
 	if (jNode->stack_ptr <= 0)
 		return -1;
-//	printf("starting JSCON CURRENT = %d on stack ptr = %d\n",jNode->stack[jNode->stack_ptr -1].elementType,jNode->stack_ptr);
-
 	return jNode->stack[jNode->stack_ptr -1].elementType;
 }
