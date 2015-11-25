@@ -1380,7 +1380,7 @@ static POOL_STATUS CheckMd5Auth(char *username)
         ereport(FATAL,
             (return_code(2),
                  errmsg("md5 authentication failed"),
-                    errdetail("pool_passed file does not contains entry for \"%s\"",username)));
+                    errdetail("pool_passwd file does not contain an entry for \"%s\"",username)));
 
 
 	/*
