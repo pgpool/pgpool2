@@ -1691,3 +1691,77 @@ void pool_unset_cache_exceeded(void)
 		sc->query_context->temp_cache->is_exceeded = false;
 	}
 }
+
+/*
+ * Return true if one of followings is true
+ *
+ * SET transaction_read_only TO on
+ * SET TRANSACTION READ ONLY
+ * SET TRANSACTION CHARACTERISTICS AS TRANSACTION READ ONLY
+ *
+ * Note that if the node is not a variable statement, returns false.
+ */
+bool pool_is_transaction_read_only(Node *node)
+{
+	ListCell   *list_item;
+	bool ret = false;
+
+	if (!IsA(node, VariableSetStmt))
+		return ret;
+
+	/*
+	 * SET transaction_read_only TO on
+	 */
+	if (((VariableSetStmt *)node)->kind == VAR_SET_VALUE &&
+		!strcmp(((VariableSetStmt *)node)->name, "transaction_read_only"))
+	{
+		List *options = ((VariableSetStmt *)node)->args;
+		foreach(list_item, options)
+		{
+			A_Const *v = (A_Const *)lfirst(list_item);
+
+			switch (v->val.type)
+			{
+				case T_String:
+					if (!strcasecmp(v->val.val.str, "on") ||
+						!strcasecmp(v->val.val.str, "t") ||
+						!strcasecmp(v->val.val.str, "true"))
+						ret = true;
+					break;
+				case T_Integer:
+					if (v->val.val.ival)
+						ret = true;
+				default:
+					break;
+			}
+		}
+	}
+
+	/*
+	 * SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY
+	 * SET TRANSACTION READ ONLY
+	 */
+	else if (((VariableSetStmt *)node)->kind == VAR_SET_MULTI &&
+			 (!strcmp(((VariableSetStmt *)node)->name, "TRANSACTION") ||
+			  !strcmp(((VariableSetStmt *)node)->name, "SESSION CHARACTERISTICS")))
+	{
+		List *options = ((VariableSetStmt *)node)->args;
+		foreach(list_item, options)
+		{
+			DefElem *opt = (DefElem *) lfirst(list_item);
+
+			if (!strcmp("transaction_read_only", opt->defname))
+			{
+				bool read_only;
+
+				read_only = ((A_Const *)opt->arg)->val.val.ival;
+				if (read_only)
+				{
+					ret = true;
+					break;
+				}
+			}
+		}
+	}
+	return ret;
+}
