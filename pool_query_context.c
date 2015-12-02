@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1201,3 +1201,119 @@ int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2)
 
 	return ret;
 }
+<<<<<<< HEAD
+=======
+
+/*
+ * Remove READ WRITE option from the packet of START TRANSACTION command.
+ * To free the return value is required. 
+ */
+static
+char* remove_read_write(int len, const char* contents, int *rewritten_len)
+{
+	char *rewritten_query;
+	char *rewritten_contents;
+	const char *name;
+	const char *stmt;
+
+	rewritten_query = "BEGIN";
+	name = contents;
+	stmt = contents + strlen(name) + 1;
+
+	*rewritten_len = len - strlen(stmt) + strlen(rewritten_query);
+	if (len < *rewritten_len)
+	{
+		pool_error("remove_read_write: invalid message length.");
+		return NULL;
+	}
+
+	rewritten_contents = malloc(*rewritten_len);
+	if (rewritten_contents == NULL)
+	{
+		pool_error("remove_read_write: malloc failed.");
+		return NULL;
+	}
+
+	strcpy(rewritten_contents, name);
+	strcpy(rewritten_contents + strlen(name) + 1, rewritten_query);
+	memcpy(rewritten_contents + strlen(name) + strlen(rewritten_query) + 2,
+		   stmt + strlen(stmt) + 1,
+		   len - (strlen(name) + strlen(stmt) + 2));
+
+	return rewritten_contents;
+}
+
+/*
+ * Return true if one of followings is true
+ *
+ * SET transaction_read_only TO on
+ * SET TRANSACTION READ ONLY
+ * SET TRANSACTION CHARACTERISTICS AS TRANSACTION READ ONLY
+ *
+ * Note that if the node is not a variable statement, returns false.
+ */
+bool pool_is_transaction_read_only(Node *node)
+{
+	ListCell   *list_item;
+	bool ret = false;
+
+	if (!IsA(node, VariableSetStmt))
+		return ret;
+
+	/*
+	 * SET transaction_read_only TO on
+	 */
+	if (((VariableSetStmt *)node)->kind == VAR_SET_VALUE &&
+		!strcmp(((VariableSetStmt *)node)->name, "transaction_read_only"))
+	{
+		List *options = ((VariableSetStmt *)node)->args;
+		foreach(list_item, options)
+		{
+			A_Const *v = (A_Const *)lfirst(list_item);
+
+			switch (v->val.type)
+			{
+				case T_String:
+					if (!strcasecmp(v->val.val.str, "on") ||
+						!strcasecmp(v->val.val.str, "t") ||
+						!strcasecmp(v->val.val.str, "true"))
+						ret = true;
+					break;
+				case T_Integer:
+					if (v->val.val.ival)
+						ret = true;
+				default:
+					break;
+			}
+		}
+	}
+
+	/*
+	 * SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY
+	 * SET TRANSACTION READ ONLY
+	 */
+	else if (((VariableSetStmt *)node)->kind == VAR_SET_MULTI &&
+			 (!strcmp(((VariableSetStmt *)node)->name, "TRANSACTION") ||
+			  !strcmp(((VariableSetStmt *)node)->name, "SESSION CHARACTERISTICS")))
+	{
+		List *options = ((VariableSetStmt *)node)->args;
+		foreach(list_item, options)
+		{
+			DefElem *opt = (DefElem *) lfirst(list_item);
+
+			if (!strcmp("transaction_read_only", opt->defname))
+			{
+				bool read_only;
+
+				read_only = ((A_Const *)opt->arg)->val.val.ival;
+				if (read_only)
+				{
+					ret = true;
+					break;
+				}
+			}
+		}
+	}
+	return ret;
+}
+>>>>>>> ec3859b... Fix bug with "SET TRANSACTION READ ONLY".

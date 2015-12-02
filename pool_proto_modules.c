@@ -1457,7 +1457,14 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			 */
 			else if (!is_select_query(node, query))
 			{
-				pool_set_writing_transaction();
+				/* However, if the query is "SET TRANSACTION READ ONLY" or its variant,
+				 * don't set it.
+				 */
+				if (!pool_is_transaction_read_only(node))
+				{
+					pool_debug("not SET TRANSACTION READ ONLY");
+					pool_set_writing_transaction();
+				}
 			}
 		}
 		pool_unset_query_in_progress();

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -74,5 +74,6 @@ extern bool is_set_transaction_serializable(Node *node, char *query);
 extern bool is_2pc_transaction_query(Node *node);
 extern void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE state);
 extern int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2);
+extern bool pool_is_transaction_read_only(Node *node);
 
 #endif /* POOL_QUERY_CONTEXT_H */
