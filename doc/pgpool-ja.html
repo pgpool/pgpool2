@@ -585,35 +585,39 @@ pgpool.confでは空白行や#で始まる行はコメントと見なされま�
     これが、pgpool-IIに対してクライアントが同時に接続できる上限の数になります。
     これを超えた場合は、そのクライアントは、pgpool-IIのどれからのプロセスへのフロントエンドの接続が終了するまで
     待たされます(PostgreSQLと違ってエラーになりません)。
-    待たされる数の上限は、listen_backlog_multiplier * num_init_children です。
-	待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。listenキューの長さは「バックログ」と呼ばれます。
-	システムによってはバックログの上限が設定されており、listen_backlog_multiplier * num_init_children がこれを越える場合はシステム側の設定変更が必要になります。
-		さもないと高負荷時にlistenキューが溢れ、pgpool-IIへの接続が失敗したり、システム内で行われるリトライにより著しく性能が低下することがあります。
-		listenキューが溢れているかどうかは、"netstat -s"で確認できます。"TcpExt"のパートで、
-		</p>
-		<p>
-		<pre>
+    </p>
+    <p>
+    待たされる数の上限は、<code><a href="#LISTEN_BACKLOG_MULTIPLIER">listen_backlog_multiplier</a> *
+    <a href="#NUM_INIT_CHILDREN">num_init_children</a></code> です。
+    待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。listenキューの長さは「バックログ」と呼ばれます。
+    システムによってはバックログの上限が設定されており、listen_backlog_multiplier * num_init_children が
+    これを越える場合はシステム側の設定変更が必要になります。
+    </p>
+    <p>
+    さもないと高負荷時にlistenキューが溢れ、pgpool-IIへの接続が失敗したり、
+    システム内で行われるリトライにより著しく性能が低下することがあります。
+    </p>
+    <p>
+    listenキューが溢れているかどうかは、"netstat -s"で確認できます。"TcpExt"のパートで、
+    </p>
+<pre>
 535 times the listen queue of a socket overflowed
-		</pre>
-		</p>
-		<p>
-		のようなメッセージが出ていればlistenキューが溢れています。listenキュー溢れを防ぐためにバックログを大きくするには、Linuxでは以下のようにします(root権限が必要です)。
-		</p>
-		<p>
-		<pre>
+</pre>
+    <p>
+    のようなメッセージが出ていればlistenキューが溢れています。
+    listenキュー溢れを防ぐためにバックログを大きくするには、Linuxでは以下のようにします(root権限が必要です)。
+    </p>
+<pre>
 # sysctl net.core.somaxconn
 net.core.somaxconn = 128
 # sysctl -w net.core.somaxconn = 256
-		</pre>
-		</p>
-		<p>
-		もちろん、/etc/sysctl.confに以下のように書いても構いません。
-		</p>
-		<p>
-		<pre>
-net.core.somaxconn = 256
-		</pre>
+</pre>
+    <p>
+    もちろん、/etc/sysctl.confに以下のように書いても構いません。
     </p>
+<pre>
+net.core.somaxconn = 256
+</pre>
     <p>
     基本的に後述のmax_pool * num_init_children分だけPostgreSQLへのコネクションが張られますが、
     他に以下の考慮が必要です。
@@ -626,7 +630,7 @@ net.core.somaxconn = 256
             設定することをおすすめします。
         </li>
         <li>一般ユーザでPostgreSQLに接続できるのは、
-            max_connections - superuser_reserved_connections 分だけです。
+            <code>max_connections - superuser_reserved_connections</code> 分だけです。
         </li>
     </ul>
     <p>
@@ -651,9 +655,15 @@ net.core.somaxconn = 256
     </dd>
 
 <dt><a name="LISTEN_BACKLOG_MULTIPLIER"></a>listen_backlog_multiplier <span class="version">V3.4 -</span></dt>
-	<dd>
-	<p>
-	フロントエンドからpgpool-IIへの接続待ち行列の長さを制御します。デフォルト値は2です。接続待ち行列(listenシステムコールのbacklogパラメータ)の長さは、listen_backlog_multiplier * num_init_children で決まります。もし待ち行列の長さが不足する場合にはこのパラメータを増やしてください。その際、OSの設定値によっては待ち行列を長く出来ないことがあります。詳細は<a href="#NUM_INIT_CHILDREN">num_init_children</a>の項を参照してください。
+    <dd>
+    <p>
+    フロントエンドからpgpool-IIへの接続待ち行列の長さを制御します。デフォルト値は2です。
+    接続待ち行列(listenシステムコールのbacklogパラメータ)の長さは、
+    <code><a href="#LISTEN_BACKLOG_MULTIPLIER">listen_backlog_multiplier</a> *
+    <a href="#NUM_INIT_CHILDREN">num_init_children</a></code> で決まります。
+    もし待ち行列の長さが不足する場合にはこのパラメータを増やしてください。
+    その際、OSの設定値によっては待ち行列を長く出来ないことがあります。
+    詳細は<a href="#NUM_INIT_CHILDREN">num_init_children</a>の項を参照してください。
     </p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
@@ -662,43 +672,50 @@ net.core.somaxconn = 256
 
 <dt><a name="SERIALIZE_ACCEPT"></a>serialize_accept <span class="version">V3.5 -</span></dt>
     <dd>
-      <p>
-	クライアントからの接続を受け付ける際に accept() の呼び出しをシリアライズするかどうかを指定します。
-	デフォルトはoffです(シリアライズしません)で、これは pgpool-II 3.4 以前と同じ挙動です。
-	このパラメータがoffの場合、カーネルはすべてのpgpool-II子プロセスを起こして accept() を実行させます。
-	そして子プロセスのうちひとつだけが実際に接続を受け付けます。
-	問題は、ここで多くの子プロセスが一度に起こされるため、重いコンテキストスイッチングが起こり、性能に影響がでることです。
-	この現象は「thundering herd problem」と呼ばれる古典的な問題です。
-	serialize_accept を有効にすることにより、pgpool-II子プロセスのうちひとつだけが起こされて accept() を実行するようになり、この問題は回避されます。
-	ではどんなときに serialize_accept を有効にすべきでしょう？
-	num_init_children が大きい時はserialize_accept 有効にすることをおすすめします。
-	num_init_children が小さい時はserialize_accept 有効にしても効果がないかもしれません。
-	むしろシリアライズのオーバヘッドのために性能が低下するかもしれません。
-	どの位の数が「大きい」と言えるかは環境によります。
-	どうするか決める前に、ベンチマークテストを行ってみることをおすすめします。
-	例として以下のような方法でpgbenchを実行します。
-		</p>
-		<p>
-		  <pre>
-		    pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
-		  </pre>
-		</p>
-		<p>
-		  ここで、 -C は pgbench にトランザクションの実行の度に毎回データベースに接続することを指示します。
-		  -c 32 は、pgpool-II への同時接続数です。これはあなたのシステム環境にあわせて変更しましょう。
-		  pgbenchが終了すると、"including connections establishing" のところに数字が出てくるのでそれをチェックします。
-		</p>
-		<p>
-		  なお、<a href="#CHILD_LIFE_TIME">child_life_time</a> が有効だと、serialize_accept は効果がありません。
-		  serialize_accept を有効にしたい場合は、child_life_timeが 0 であることを確認してください。
-		  pgpool-IIプロセスのメモリーリークなどの潜在的な問題を気にする場合は、代わりに<a href="#CHILD_MAX_CONNECTIONS">child_max_connections</a> を使ってください。
-		  この制限は純粋に実装上の問題であり、将来はなくなるかもしれません。
-		</p>
-		<p>
-		  このパラメータを変更した時には pgpool-II を再起動してください。
-		</p>
+    <p>
+    クライアントからの接続を受け付ける際に accept() の呼び出しをシリアライズするかどうかを指定します。
+    デフォルトはoffです(シリアライズしません)で、これは pgpool-II 3.4 以前と同じ挙動です。
+    </p>
+    <p>
+    このパラメータがoffの場合、カーネルはすべてのpgpool-II子プロセスを起こして accept() を実行させます。
+    そして子プロセスのうちひとつだけが実際に接続を受け付けます。
+    問題は、ここで多くの子プロセスが一度に起こされるため、重いコンテキストスイッチングが起こり、性能に影響がでることです。
+    この現象は「thundering herd problem」と呼ばれる古典的な問題です。
+    serialize_accept を有効にすることにより、pgpool-II子プロセスのうちひとつだけが起こされて accept() を実行するようになり、
+    この問題は回避されます。
+    </p>
+    <p>
+    ではどんなときに serialize_accept を有効にすべきでしょう？
+    num_init_children が大きい時はserialize_accept 有効にすることをおすすめします。
+    num_init_children が小さい時はserialize_accept 有効にしても効果がないかもしれません。
+    むしろシリアライズのオーバヘッドのために性能が低下するかもしれません。
+    どの位の数が「大きい」と言えるかは環境によります。
+    どうするか決める前に、ベンチマークテストを行ってみることをおすすめします。
+    </p>
+    <p>
+    例として以下のような方法でpgbenchを実行します。
+    </p>
+
+<pre>
+pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
+</pre>
+    <p>
+      ここで、 -C は pgbench にトランザクションの実行の度に毎回データベースに接続することを指示します。
+      -c 32 は、pgpool-II への同時接続数です。これはあなたのシステム環境にあわせて変更しましょう。
+      pgbenchが終了すると、"including connections establishing" のところに数字が出てくるのでそれをチェックします。
+    </p>
+    <p>
+    なお、<a href="#CHILD_LIFE_TIME">child_life_time</a> が有効だと、serialize_accept は効果がありません。
+    serialize_accept を有効にしたい場合は、child_life_timeが 0 であることを確認してください。
+    pgpool-IIプロセスのメモリーリークなどの潜在的な問題を気にする場合は、
+    代わりに<a href="#CHILD_MAX_CONNECTIONS">child_max_connections</a> を使ってください。
+    この制限は純粋に実装上の問題であり、将来はなくなるかもしれません。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
     </dd>
-		
+
 <dt><a name="CHILD_LIFE_TIME"></a>child_life_time</dt>
     <dd>
     <p>
@@ -825,29 +842,30 @@ local0.*    /var/log/pgpool.log
     </dd>
 
 
-	<dt><a name="LOG_LINE_PREFIX"></a>log_line_prefix</dt>
-	<dd>
-	<p>
-	  ログの先頭に付加する文字列をprintfのようなスタイルで指定します。
-	「%」はエスケープ文字で、この後の文字は以下のように置換えをされて出力されます。認識できないエスケープ指定は無視されます。それ以外の文字はそのままログに出力されます。
-	  log_line_prefixのデフォルトは '%t: pid %p: 'で、タイムスタンプとプロセスIDを印字します。
-	  これは、3.4より前のバージョンとの互換性を保つためです。
-	</p>
-	<table border>
-	<tr class="header"><th>エスケープ文字</th><th>効果</th></tr>
-	<tr><td>%a</td><td>クライアントのアプリケーション名</td></tr>
-	<tr><td>%p</td><td>プロセスID (PID)</td></tr>
-	<tr><td>%P</td><td>プロセス名</td></tr>
-	<tr><td>%t</td><td>タイムスタンプ</td></tr>
-	<tr><td>%d</td><td>データベース名</td></tr>
-	<tr><td>%u</td><td>ユーザ名</td></tr>
-	<tr><td>%l</td><td>プロセスごとのログ行番号</td></tr>
-	<tr><td>%%</td><td>'%' 文字自身</td></tr>
-	</table>
-	<p>
+    <dt><a name="LOG_LINE_PREFIX"></a>log_line_prefix</dt>
+    <dd>
+    <p>
+    ログの先頭に付加する文字列をprintfのようなスタイルで指定します。
+    「%」はエスケープ文字で、この後の文字は以下のように置換えをされて出力されます。
+    認識できないエスケープ指定は無視されます。それ以外の文字はそのままログに出力されます。
+    log_line_prefixのデフォルトは '%t: pid %p: 'で、タイムスタンプとプロセスIDを印字します。
+    これは、3.4より前のバージョンとの互換性を保つためです。
+    </p>
+    <table border>
+    <tr class="header"><th>エスケープ文字</th><th>効果</th></tr>
+    <tr><td>%a</td><td>クライアントのアプリケーション名</td></tr>
+    <tr><td>%p</td><td>プロセスID (PID)</td></tr>
+    <tr><td>%P</td><td>プロセス名</td></tr>
+    <tr><td>%t</td><td>タイムスタンプ</td></tr>
+    <tr><td>%d</td><td>データベース名</td></tr>
+    <tr><td>%u</td><td>ユーザ名</td></tr>
+    <tr><td>%l</td><td>プロセスごとのログ行番号</td></tr>
+    <tr><td>%%</td><td>'%' 文字自身</td></tr>
+    </table>
+    <p>
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
-	</p>
-	</dd>
+    </p>
+    </dd>
 
 <dt><a name="LOG_ERROR_VERBOSITY"></a>log_error_verbosity</dt>
     <dd>
@@ -860,7 +878,7 @@ local0.*    /var/log/pgpool.log
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
     </p>
     </dd>
-		
+
 <dt><a name="LOG_CONNECTIONS"></a>log_connections</dt>
     <dd>
     <p>
@@ -1052,8 +1070,9 @@ local0.*    /var/log/pgpool.log
 
 <dt><a name="HEALTH_CHECK_DATABASE"></a>health_check_database <span class="version">V3.5 -</span></dt>
     <dd>
-      <p>ヘルスチェックを行う対象のデータベース名を指定します。
-	デフォルトは '' で、この場合最初に「postgres」データベースを試し、それに接続できない場合は「template1」データベースを試します。これはpgpool-II 3.4以前の挙動と同じです。
+    <p>ヘルスチェックを行う対象のデータベース名を指定します。
+    デフォルトは '' で、この場合最初に「postgres」データベースを試し、
+    それに接続できない場合は「template1」データベースを試します。これはpgpool-II 3.4以前の挙動と同じです。
     </p>
     <p>
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
@@ -1088,10 +1107,10 @@ local0.*    /var/log/pgpool.log
 
 <dt><a name="CONNECT_TIMEOUT"></a>connect_timeout <span class="version">V3.4 -</span></dt>
     <dd>
-	  <p>connect()システムコールを使ってバックエンドに接続する際のタイムアウト値をミリ秒単位で指定します。
-		デフォルトは10000ミリ秒(10秒)です。不安定なネットワークを使わなければならない場合は、この値を大きくすると良いでしょう。
-		0を指定すると、タイムアウトしません。
-	  </p>
+      <p>connect()システムコールを使ってバックエンドに接続する際のタイムアウト値をミリ秒単位で指定します。
+        デフォルトは10000ミリ秒(10秒)です。不安定なネットワークを使わなければならない場合は、この値を大きくすると良いでしょう。
+        0を指定すると、タイムアウトしません。
+      </p>
     <p>
     <a href="#CONNECT_TIMEOUT">connect_timeout</a>を変更した場合は、pgpool.confの再読込が必要です。
     </p>
@@ -1099,7 +1118,7 @@ local0.*    /var/log/pgpool.log
 
     <dt><a name="SEARCH_PRIMARY_NODE_TIMEOUT"></a>search_primary_node_timeout <span class="version">V3.3 -</span></dt>
     <dd>
-    <p>このパラメータはフェイルオーバーが起きた時にプライマリノードを検索する際のタイムアウト時間を秒単位で指定します。
+    <p>このパラメータはフェイルオーバが起きた時にプライマリノードを検索する際のタイムアウト時間を秒単位で指定します。
         デフォルト値は10です。
         pgpool-IIは、フェイルオーバの際にここで指定した時間プライマリノードを検索し続けます。
         0を指定すると、永久に検索し続けます。
@@ -1246,11 +1265,11 @@ local0.*    /var/log/pgpool.log
     </p>
     </dd>
 
-	<dt id="ALLOW_SQL_COMMENTS">allow_sql_comments <span class="version">V3.4 〜</span></dt>
+    <dt id="ALLOW_SQL_COMMENTS">allow_sql_comments <span class="version">V3.4 〜</span></dt>
     <dd>
     <p>
-	  onならば、負荷分散やクエリキャッシュができるかどうかの判定の際にSQLコメントを無視します。
-	  offならば、その判定に影響を与えます(3.4より前のバージョンの動作です)。
+      onならば、負荷分散やクエリキャッシュができるかどうかの判定の際にSQLコメントを無視します。
+      offならば、その判定に影響を与えます(3.4より前のバージョンの動作です)。
     </p>
     <p>
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
@@ -1497,7 +1516,8 @@ local0.*    /var/log/pgpool.log
     <p>
     もしonなら、SELECTに含まれるテーブルがunloggedテーブルかどうかのチェックを行います。
     このチェックは、primary/masterのシステムカタログへのアクセスを発生させ、それなりに負荷を上げます。
-    もしunloggedテーブルを使っていないということが確かで(たとえばPostgreSQLのバージョンが9.0かそれより前)、primary/masterの負荷を少しでも下げたいのであれば、
+    もしunloggedテーブルを使っていないということが確かで(たとえばPostgreSQLのバージョンが9.0かそれより前)、
+    primary/masterの負荷を少しでも下げたいのであれば、
     offにすることができます。デフォルトはonです。
     </p>
     </dd>
@@ -1745,28 +1765,28 @@ black_function_list = 'nextval,setval,lastval,currval'
     レプリケーションモードの動作が変化します。詳細を表に示します。
     </p>
 
-	<table border>
-	<tr class="center">
-    	<th class="nodec">replicate_selectがtrue</th>
-		<td>Y</td><td colspan="4">N</td>
-	</tr>
-	<tr class="center">
-    	<th class="nodec">load_balance_modeがtrue</th>
-		<td>any</td><td colspan="3">Y</td><td>N</td>
-	<tr class="center">
-    	<th class="nodec">SELECTが明示的なトランザクションブロックの内側にある</th>
-		<td>any</td><td colspan="2">Y</td><td>N</td><td>any</td>
-	</tr>
-	<tr class="center">
-    	<th class="nodec">「トランザクション分離レベルがSERIALIZABLE」または<br>
-		                  「トランザクション内で更新を伴うクエリが実行されている」</th>
-		<td>any</td><td>Y</td><td>N</td><td>any</td><td>any</td>
-	</tr>
-	<tr class="footer center">
-    	<th class="nodec">結果(R:レプリケーション, M: マスタのみに送信, L: ロードバランスされる)</th>
-		<td>R</td><td>M</td><td>L</td><td>L</td><td>M</td>
-	</tr>
-	</table>
+    <table border>
+    <tr class="center">
+        <th class="nodec">replicate_selectがtrue</th>
+        <td>Y</td><td colspan="4">N</td>
+    </tr>
+    <tr class="center">
+        <th class="nodec">load_balance_modeがtrue</th>
+        <td>any</td><td colspan="3">Y</td><td>N</td>
+    <tr class="center">
+        <th class="nodec">SELECTが明示的なトランザクションブロックの内側にある</th>
+        <td>any</td><td colspan="2">Y</td><td>N</td><td>any</td>
+    </tr>
+    <tr class="center">
+        <th class="nodec">「トランザクション分離レベルがSERIALIZABLE」または<br>
+                          「トランザクション内で更新を伴うクエリが実行されている」</th>
+        <td>any</td><td>Y</td><td>N</td><td>any</td><td>any</td>
+    </tr>
+    <tr class="footer center">
+        <th class="nodec">結果(R:レプリケーション, M: マスタのみに送信, L: ロードバランスされる)</th>
+        <td>R</td><td>M</td><td>L</td><td>L</td><td>M</td>
+    </tr>
+    </table>
     </dd>
 
 <dt><a name="INSERT_LOCK"></a>insert_lock</dt>
@@ -1905,19 +1925,19 @@ COMMIT;
         <li>マスタ(プライマリ)データベースクラスタへのパス</li>
         <li>リカバリ対象のPostgreSQLのホスト名</li>
         <li>リカバリ対象のデータベースクラスタへのパス</li>
-		<li>マスタデータベースクラスタのポート番号</li>
+        <li>マスタデータベースクラスタのポート番号</li>
     </ol>
     <p>
     recovery_1st_stage_command を実行している間は pgpool ではクライアン
     トからの接続を<b>制限しません</b>。参照や更新を行うことができます。
     </p>
-	<p>
-	<font color="red">
-	注意:
-	</font>
-	recovery_1st_stage_command は、PostgreSQLから見ると、一つのSQLとして実行されます。PostgreSQLの statement_timeout を無効にするか、statement_timeout が recovery_1st_stage_command の実行時間よりも十分長くないと、コマンドの実行がPostgreSQLにより途中でキャンセルされてしまいます。
-	この場合の典型的な症状は、recovery_1st_stage_command の中で呼び出されるコマンド(たとえば rsync)がシグナル2を受け取って中断する、というものです。
-	</p>
+    <p>
+    <font color="red">
+    注意:
+    </font>
+    recovery_1st_stage_command は、PostgreSQLから見ると、一つのSQLとして実行されます。PostgreSQLの statement_timeout を無効にするか、statement_timeout が recovery_1st_stage_command の実行時間よりも十分長くないと、コマンドの実行がPostgreSQLにより途中でキャンセルされてしまいます。
+    この場合の典型的な症状は、recovery_1st_stage_command の中で呼び出されるコマンド(たとえば rsync)がシグナル2を受け取って中断する、というものです。
+    </p>
     <p>
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
     </p>
@@ -1949,14 +1969,18 @@ COMMIT;
     新たな接続を制限し、現在の接続数が 0 になった時点
     でコマンドを起動します。
     </p>
-	<p>
-	<font color="red">
-	注意:
-	</font>
-	recovery_2nd_stage_command は、PostgreSQLから見ると、一つのSQLとして実行されます。PostgreSQLの statement_timeout を無効にするか、statement_timeout が recovery_2nd_stage_command の実行時間よりも十分長くないと、コマンドの実行がPostgreSQLにより途中でキャンセルされてしまいます。
-	この場合の典型的な症状は、recovery_2nd_stage_command の中で呼び出されるコマンド(たとえば rsync)がシグナル2を受け取って中断する、というものです。
-	</font>
-	</p>
+    <p>
+    <font color="red">
+    注意:
+    </font>
+    recovery_2nd_stage_command は、PostgreSQLから見ると、一つのSQLとして実行されます。
+    PostgreSQLの statement_timeout を無効にするか、statement_timeout が
+    recovery_2nd_stage_command の実行時間よりも十分長くないと、コマンドの実行が
+    PostgreSQLにより途中でキャンセルされてしまいます。
+    この場合の典型的な症状は、recovery_2nd_stage_command の中で呼び出されるコマンド(たとえば rsync)が
+    シグナル2を受け取って中断する、というものです。
+    </font>
+    </p>
     <p>
     このパラメータを変更した時には設定ファイルを再読み込みしてください。
     </p>
@@ -2010,6 +2034,8 @@ COMMIT;
     <dd>
     <p>
     ラージオブジェクトのレプリケーションを行いたいときにロック管理に使うためのテーブル名を指定します。
+    </p>
+    <p>
     このテーブルが指定されていて、ラージオブジェクトの作成要求がクライアントから送信され、
     かつその要求の中にラージオブジェクトのIDの明示的な指定が含まれていない場合
     (つまり、lo_creatでラージオブジェクトを作成する場合)、
@@ -2085,8 +2111,13 @@ SELECTなどの問い合わせがロードバランスされます。
           <li>ただし、以下の条件が満たされればトランザクションブロックの内側であってもロードバランスの対象となります。
             <ul>
               <li>トランザクション分離レベルがSERIALIZABLEでない</li>
-              <li>トランザクション内で更新を伴うクエリが実行されていない(更新を伴うクエリが実行されるまではロードバランスされます。ここで「更新を伴うクエリ」とは、SELECT以外のDDLやDMLを指します。black/white function listで指定される更新関数を含むSELECTは更新を伴うクエリとは見なされません。この仕様は将来変更される可能性があります)</li>
-	      <li>もしblack/white function listが空の場合は、関数を持つSELECTは、更新を伴うクエリとは見なされません。</li>
+              <li>トランザクション内で更新を伴うクエリが実行されていない
+                  (更新を伴うクエリが実行されるまではロードバランスされます。
+                  ここで「更新を伴うクエリ」とは、SELECT以外のDDLやDMLを指します。
+                  black/white function listで指定される更新関数を含むSELECTは更新を伴うクエリとは見なされません。
+                  この仕様は将来変更される可能性があります)
+              </li>
+              <li>もしblack/white function listが空の場合は、関数を持つSELECTは、更新を伴うクエリとは見なされません。</li>
             </ul>
           </li>
           </ul>
@@ -2516,19 +2547,21 @@ parseに続くbind, describe, executeも同じDBノードで実行されます�
     <dd>
     <p>
     データベース名によって負荷分散をしたいノード番号を、"データベース名:ノード番号"で指定します。
-	たとえば、"test:1"と書くと、"test"という名称のデータベースに接続すると、常にノード番号1に検索問い合わせを送信するようになります。"データベース名:ノード番号"のペアをカンマ(,)で区切って複数指定することもできます。データベース名には、正規表現を指定することできます。
-	ノード番号に"primary"と書くと、常にプライマリノードを指定したことになります。
-	ノード番号に"standby"と書くと、スタンバイノードのうちどれかをバックエンドウェイトに応じてランダムに選択します。
+    たとえば、"test:1"と書くと、"test"という名称のデータベースに接続すると、
+    常にノード番号1に検索問い合わせを送信するようになります。"データベース名:ノード番号"のペアを
+    カンマ(,)で区切って複数指定することもできます。データベース名には、正規表現を指定することできます。
+    ノード番号に"primary"と書くと、常にプライマリノードを指定したことになります。
+    ノード番号に"standby"と書くと、スタンバイノードのうちどれかをバックエンドウェイトに応じてランダムに選択します。
     </p>
-	<p>
-	  例を示します。
-	<pre>
+    <p>
+      例を示します。
+<pre>
 database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
-	</pre>
-	</p>
-	<p>
-	この例では、検索問い合わせが、postgresデータベースはプライマリノード、mydb0とmydb1はノード1、mydb2はスタンバイノードに負荷分散します。
-	</p>
+</pre>
+    </p>
+    <p>
+    この例では、検索問い合わせが、postgresデータベースはプライマリノード、mydb0とmydb1はノード1、mydb2はスタンバイノードに負荷分散します。
+    </p>
     <p>
     このパラメータは設定ファイルの再読込によって変更できます。
     </p>
@@ -2538,45 +2571,48 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
     <dd>
     <p>
     アプリケーション名によって負荷分散をしたいノード番号を、"アプリケーション名:ノード番号"で指定します。
-	アプリケーション名とは、クライアントが接続時に指定する名称で、PostgreSQL 9.0以降で使用できます。
+    アプリケーション名とは、クライアントが接続時に指定する名称で、PostgreSQL 9.0以降で使用できます。
 </p>
     <p>
       <blockquote>
-	<font color="red">注意: </font>
-	JDBCドライバのpostgresql-9.3以前のバージョンでは、JDBCドライバの"ApplicationName" と "assumeMinServerVersion=9.0"オプションを指定してもスタートアップパケットの中にapplication_nameを含まないため、この機能を利用できません。
-	postgresql-9.4 以降のJDBCドライバをお使いください。
+    <font color="red">注意: </font>
+    JDBCドライバのpostgresql-9.3以前のバージョンでは、JDBCドライバの"ApplicationName" と
+    "assumeMinServerVersion=9.0"オプションを指定してもスタートアップパケットの中にapplication_nameを含まないため、
+    この機能を利用できません。
+    postgresql-9.4 以降のJDBCドライバをお使いください。
       </blockquote>
     </p>
     <p>
-	たとえばpsqlコマンドのアプリケーション名は"psql"です。
-	pgpool-IIは、クライアントが接続に送信するスタートアップパケットに含まれるアプリケーション名だけを認識します。
-	接続後に変更されたアプリケーション名は認識されません。
-	</p>
-	<p>
-	アプリケーション名の指定はdatabase_redirect_preference_listと同様です。
-	正規表現も使用できます。
+    たとえばpsqlコマンドのアプリケーション名は"psql"です。
+    pgpool-IIは、クライアントが接続に送信するスタートアップパケットに含まれるアプリケーション名だけを認識します。
+    接続後に変更されたアプリケーション名は認識されません。
     </p>
-	<p>
-	  例を示します。
-	<pre>
+    <p>
+    アプリケーション名の指定はdatabase_redirect_preference_listと同様です。
+    正規表現も使用できます。
+    </p>
+    <p>
+      例を示します。
+<pre>
 app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
-	</pre>
-	</p>
-	<p>
-	この例では、検索問い合わせが、psqlではプライマリノード、myapp1はノード1、myapp2はスタンバイノードに負荷分散します。
-	</p>
-	<p>
-	  app_name_redirect_preference_listは、database_redirect_preference_listよりも優先されます。
-	  以下の例を見てください。
-	  <pre>
-		database_redirect_preference_list = 'bigdb:primary'
-		app_name_redirect_preference_list = 'myapp:2'
-	  </pre>
-	</p>
-	<p>
-	  通常、bigdbというデータベースに接続するアプリケーションはプライマリノードに検索問い合わせを送信します。
-	  しかし、myappというアプリケーションは、同じbigdbに接続しても常にノード2に検索問い合わせするようになります。たとえば、myapp2が非常に重いSELECTを実行する分析アプリケーションで、ノード2を分析処理専用にしたい場合に有効です。
-	</p>
+</pre>
+    </p>
+    <p>
+    この例では、検索問い合わせが、psqlではプライマリノード、myapp1はノード1、myapp2はスタンバイノードに負荷分散します。
+    </p>
+    <p>
+      app_name_redirect_preference_listは、database_redirect_preference_listよりも優先されます。
+      以下の例を見てください。
+<pre>
+database_redirect_preference_list = 'bigdb:primary'
+app_name_redirect_preference_list = 'myapp:2'
+</pre>
+    </p>
+    <p>
+      通常、bigdbというデータベースに接続するアプリケーションはプライマリノードに検索問い合わせを送信します。
+      しかし、myappというアプリケーションは、同じbigdbに接続しても常にノード2に検索問い合わせするようになります。
+      たとえば、myapp2が非常に重いSELECTを実行する分析アプリケーションで、ノード2を分析処理専用にしたい場合に有効です。
+    </p>
     <p>
     このパラメータは設定ファイルの再読込によって変更できます。
     </p>
@@ -2638,12 +2674,12 @@ recovery_2nd_stage_command = ''
 
     <li>オンラインリカバリを実施するための PostgreSQL の C 言語関数やSQL関数を各DBノードにインストールします。
 
-    <pre>
+<pre>
 # cd pgpool-II-x.x.x/sql/pgpool-recovery
 # make
 # make install
 # psql -f pgpool-recovery.sql template1
-    </pre>
+</pre>
     </li>
 
     <li>オンラインリカバリが終了したあと、pgpool-IIは、停止していたDBノードのPostgreSQLを起動します。
@@ -2830,11 +2866,18 @@ pgpool内部のSQLパース処理などを経由しないため、非常に高�
 
 <h2 id="MEMORY_CACHE_RESTRICTIONS">インメモリクエリキャッシュの制限事項</h2>
 <ul>
-  <li>インメモリクエリキャッシュでは、テーブルに変更があると、関連するキャッシュを自動的に削除して古いデータが返却されないようにする機能があります。
+  <li>インメモリクエリキャッシュでは、テーブルに変更があると、関連するキャッシュを自動的に削除して
+      古いデータが返却されないようにする機能があります。
       このため、pgpoolは常にUPDATEやINSERTやALTER TABLEなどのコマンドが発行されたかどうかをモニタしています。
-      しかし、トリガ、外部キーやDROP TABLE CASCADEなどの働きによって暗黙的にテーブルが更新されたことはpgpool-IIからはわからないため、この機能が働きません。
-      この問題を回避するためには、<a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>を使って一定時間経過したキャッシュを削除するようにするか、<a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>を使って、該当テーブルがキャッシュされないようにしてください。</li>
-  <li>複数のpgpool-IIを動かす環境で共有メモリを使ったインメモリクエリキャッシュを使用すると、あるpgpool-II経由でテーブルが更新された時に、他のpgpool-IIのキャッシュが削除されず、古いデータを読みだしてしまうことがあります。
+      しかし、トリガ、外部キーやDROP TABLE CASCADEなどの働きによって暗黙的にテーブルが更新されたことは
+      pgpool-IIからはわからないため、この機能が働きません。
+      この問題を回避するためには、<a href="#MEMQCACHE_EXPIRE">memqcache_expire</a>を使って
+      一定時間経過したキャッシュを削除するようにするか、
+      <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a>を使って、
+      該当テーブルがキャッシュされないようにしてください。</li>
+  <li>複数のpgpool-IIを動かす環境で共有メモリを使ったインメモリクエリキャッシュを使用すると、
+      あるpgpool-II経由でテーブルが更新された時に、他のpgpool-IIのキャッシュが削除されず、
+      古いデータを読みだしてしまうことがあります。
       このような環境では、キャッシュストレージにmemcachedを使ってください。</li>
 </ul>
 
@@ -2874,7 +2917,9 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
   <li>一時テーブルを使っているSELECT</li>
   <li>システムカタログを検索しているSELECT</li>
   <li>VIEWをまたはunloggedテーブル使っているSELECT。
-      ただし、それらのテーブルが<a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>で指定されている場合はキャッシュの対象になります。</li>
+      ただし、それらのテーブルが<a href="#WHITE_MEMQCACHE_TABLE_LIST">white_memqcache_table_list</a>で
+      指定されている場合はキャッシュの対象になります。
+  </li>
   <li>明示的なトランザクション内でSELECTが発行され、そのトランザクションがアボートした時</li>
   <li>SELECT結果が大きい場合(<a href="#MEMQCACHE_MAXCACHE">memqcache_maxcache</a>の項参照)</li>
 </ul>
@@ -2928,7 +2973,9 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
     なお、同じテーブル・VIEW が <a href="#BLACK_MEMQCACHE_TABLE_LIST">black_memqcache_table_list</a> と両方に
     指定されている場合は、white_memqcache_table_list が優先され、キャッシュを利用します。
     </p>
-    <p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
+    <p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、
+    両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、
+    単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
     </p>
     </dd>
 
@@ -2938,7 +2985,9 @@ memcachedをキャッシュストレージに使用する場合は、ネット�
     SELECT結果をキャッシュしたくないテーブル名をカンマ区切りで指定します。正規表現も利用できます
     （指定した各表現に ^ と $ をつけた形で使われます）。
     </p>
-    <p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
+    <p>スキーマ名を付けないテーブル名とスキーマ名を付けた形の両方をクエリの中で使う場合は、
+    両方共リストに登録してください。たとえば、"table1"と"public.table1"の両方がクエリに現れる場合は、
+    単に"table1"ではなく、"table1,public.table1"を追加する必要があります。
     </p>
     </dd>
 
@@ -3201,7 +3250,9 @@ pgpool [-f config_file][-F pcp_config_file] [-m {s[mart]|f[ast]|i[mmediate]}] st
 pgpoolが停止すると、[logdir]/pgpool_statusというファイルにバックエンドの状態を書き込みます。
 pgpool-II 3.4.0から、ファイルフォーマットが変更され、ASCIIファイルになりました。
 ですから普通のエディタでこのファイルを参照したり編集ができます。
-たとえば、pgpool.confを編集して新しいバックエンドを追加、再起動した際にpgpool-IIが新しいバックエンドの死活を判定するまで待ちたくない場合、あらかじめそのバックエンドを"down"状態に編集しておくことができます。
+たとえば、pgpool.confを編集して新しいバックエンドを追加、再起動した際に
+pgpool-IIが新しいバックエンドの死活を判定するまで待ちたくない場合、
+あらかじめそのバックエンドを"down"状態に編集しておくことができます。
 pgpool_statusの各行はそれぞれのバックエンドの状態に対応します。
 1行目は最初のバックエンド、2行目は2番目のバックエンドというような具合です。
 バックエンドの状態は"up", "down", "unused"のどれかです(大文字小文字は無視されます)。
@@ -3844,7 +3895,8 @@ pgpool-IIがPostgreSQLの停止を検知すると、以下のようなログを�
 
 <p>
 新しいバージョンのPostgreSQLを古いバージョンと別の場所にインストールした場合、
-リカバリスクリプトを編集することなくそのまま使用するには、シンボリックリンクなどを使用してインストール先のパスを以前と合わせる必要があります。
+リカバリスクリプトを編集することなくそのまま使用するには、シンボリックリンクなどを使用して
+インストール先のパスを以前と合わせる必要があります。
 上書きインストールした場合は以下のC言語関数をインストールするまでの操作は不要です。
 すぐにオンラインリカバリが実行できます。
 </p>
@@ -3983,7 +4035,9 @@ pgpool-IIは、独立したサーバに配置することもできますし、�
     ソケット通信がマシン間で通信するよりも高速になるメリットがあります。
     また、複数のWebサーバ／アプリケーションサーバがあれば、自然と単一障害点を回避できるようになります。
     (この場合、複数のpgpool-IIの設定は<a href="#watchdog">watchdog用の設定</a>を除き同じにしてください)。
-    なお、複数のpgpool-IIが動作しているケースでは以下のような問題が考えられますが、<a href="#watchdog">watchdog</a>を有効にすることによって回避できます。したがって、このような構成では<a href="#watchdog">watchdog</a>を有効にすることを強くおすすめします。
+    なお、複数のpgpool-IIが動作しているケースでは以下のような問題が考えられますが、
+    <a href="#watchdog">watchdog</a>を有効にすることによって回避できます。
+    したがって、このような構成では<a href="#watchdog">watchdog</a>を有効にすることを強くおすすめします。
     </p>
     <ul>
         <li>pgpool-IIとDBサーバの間のネットワークが不安定だと、pgpool-IIから見てDBノード#1がダウン、
@@ -4035,20 +4089,23 @@ watchdog の lifecheck は watchdog 高可用性クラスタに参加してい�
 従来の pgpool-II watchdog ではリモートノードの監視方法として "heartbeat" と "query" の２つのモードが提供されていました。
 pgpool-II <span class="version">V3.5 -</span> の watchdog では新しいモードとして "external" が追加されました。
 これにより、外部のサードパーティツールによる死活監視システムを pgpool-II watchdog で使用することが可能になります。
-サードパーティツールを watchdog で使用する方法について詳しくは <a href="#INTEGRATE_EXT_LIFECHECK">外部死活監視ツールとの連携</a> を参照してください。
+サードパーティツールを watchdog で使用する方法について詳しくは
+<a href="#INTEGRATE_EXT_LIFECHECK">外部死活監視ツールとの連携</a> を参照してください。
 リモートノードの死活監視とは別に、lifecheck は上位サーバへの接続を監視することでローカルノードの状態もチェックすることも可能です。
 </p>
 <ul>
 <li>
     ハートビートモードでは、watchdog はハートビート信号を用いて 他の pgpool-II プロセスの死活監視を行います。
-    watchdog は、他の pgpool-II の watchdog より定期的に送られるハートビート信号を受け取り、これが一定期間以上途切れた場合には当該 pgpool-II プロセスに障害が発生したと判断します。
+    watchdog は、他の pgpool-II の watchdog より定期的に送られるハートビート信号を受け取り、
+    これが一定期間以上途切れた場合には当該 pgpool-II プロセスに障害が発生したと判断します。
     冗長性を高めるために、複数のネットワークを用いたハートビート交換が可能です。
     デフォルトではこのモードで動作し、これが推奨設定です。
 </li>
 <li>
     クエリモードでは、watchdog は pgpool-II のプロセスではなく「サービス」の応答を監視します。
     このモードでは、監視対象の pgpool-II にクエリを発行しその応答をチェックします。
-    この方法では他の pgpool-II から接続を受ける必要があるため、<a href="NUM_INIT_CHILDREN">num_init_children</a> が十分大きくない場合には監視が失敗する場合があることに注意してください。
+    この方法では他の pgpool-II から接続を受ける必要があるため、<a href="NUM_INIT_CHILDREN">num_init_children</a> が
+    十分大きくない場合には監視が失敗する場合があることに注意してください。
     これは非推奨の監視方法であり、下位互換のために残されています。
 </li>
 <li>
@@ -4058,7 +4115,8 @@ watchdog に通知することを期待します。
 </li>
 </ul>
     <p>
-    また watchdog は、pgpool-II から上位のサーバ（アプリケーションサーバなど）への接続も監視し、上位サーバへ pgpool-II のサービスを提供できるかチェックしています。
+    また watchdog は、pgpool-II から上位のサーバ（アプリケーションサーバなど）への接続も監視し、
+    上位サーバへ pgpool-II のサービスを提供できるかチェックしています。
     この監視に失敗した場合には、watchdog は pgpool-II に障害が発生しているとみなしダウンステータスに移行します。
     </p>
 <h3>pgpool-II 間の協調動作</h3>
@@ -4075,7 +4133,8 @@ watchdog に通知することを期待します。
     </p>
     <li>
     フェイルオーバ、ファイルバックの際に実行されるコマンド（<a href="#FAILOVER_COMMAND">failover_command</a>,
-    <a href="#FAILBACK_COMMAND">failback_command</a>, <a href="#FOLLOW_MASTER_COMMAND">follow_master_command</a>）は、インターロック機構により、１つの pgpool-II でのみ実行されます。
+    <a href="#FAILBACK_COMMAND">failback_command</a>, <a href="#FOLLOW_MASTER_COMMAND">follow_master_command</a>）は、
+    インターロック機構により、１つの pgpool-II でのみ実行されます。
     </li>
 </ul>
 
@@ -4086,11 +4145,11 @@ watchdog に通知することを期待します。
     アクティブ・スタンバイの切り替えを行います。
     </p>
 
-<h3> <span class="version">V3.5 -</span>全ノードの重要な設定パラメータの整合性検証</h3>
- 
+<h3>全ノードの重要な設定パラメータの整合性検証 <span class="version">V3.5 -</span></h3>
+
     <p>
-	watchdog の起動時に現在のノードの pgpool-II の設定がマスター watchdog ノードの設定と整合がとれているか検証します。
-	これにより pgpool-II ノード間の設定の不一致によって発生する予期しない挙動の可能性が軽減されます。
+    watchdog の起動時に現在のノードの pgpool-II の設定がマスター watchdog ノードの設定と整合がとれているか検証します。
+    これにより pgpool-II ノード間の設定の不一致によって発生する予期しない挙動の可能性が軽減されます。
     </p>
 
 <h3>サーバ切り替えと連動した仮想 IP アドレスの自動付け替え</h3>
@@ -4336,21 +4395,22 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     <dd>
     <p>
     pgpool-II ノードがマスター（コーディネータ）に昇格した時に、ここで指定したコマンドが実行されます。
-	</p>
-	<p>
+    </p>
+    <p>
     コマンドは、仮想 IP が設定されていた場合、それが立ち上がる直前のタイミングで実行されます。
     </p>
     </dd>
 
 <dt><a name="WD_DE-ESCALATION_COMMAND"></a>wd_de_escalation_command <span class="version">V3.5 ～</span></dt>
 <dd>
-	<p>
-	pgpool-II watchdog のマスターノードがマスターの責務を辞退し降格するときに、ここで指定したコマンドが実行されます。
-	マスター（コーディネータ）ノードは、マスターノードが停止したとき、および、ネットワーク切断やクォーラムが失われたことを検出した時に、マスターの座を辞任します。
-	</p>
-	<p>
+    <p>
+    pgpool-II watchdog のマスターノードがマスターの責務を辞退し降格するときに、ここで指定したコマンドが実行されます。
+    マスター（コーディネータ）ノードは、マスターノードが停止したとき、および、
+    ネットワーク切断やクォーラムが失われたことを検出した時に、マスターの座を辞任します。
+    </p>
+    <p>
     コマンドは、仮想 IP が設定されていた場合、それが停止される直前のタイミングで実行されます。
-	</p>
+    </p>
 </dd>
 
 </dl>
@@ -4370,19 +4430,21 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     <p>
     'heartbeat' を指定した場合には、監視は「ハートビートモード」で行われます。
     watchdog は一定間隔でハートビート信号（UDP パケット）を他の pgpool-II へ送信します。
-    また watchdog は他の pgpool-II から送られてくる信号を受信し、これが一定時間以上途絶えた場合にはその pgpool-II に障害が発生したと判断します。
+    また watchdog は他の pgpool-II から送られてくる信号を受信し、これが一定時間以上途絶えた場合には
+    その pgpool-II に障害が発生したと判断します。
     </p>
     <p>
     'query' を指定した場合には、監視は「クエリモード」で行われます。
     watchdog は監視用のクエリを pgpool-II に発行し、それが成功するかどうかで pgpool-II が生きているかどうかを判断します。
     </p>
     <p>
-    <font color="red">注意: クエリモードを使用する場合は、<a href="#NUM_INIT_CHILDREN">num_init_children</a>に十分大きな値を設定して下さい。watchdog 自身も pgpool-II にクライアントとして接続するためです。</font>
+    <font color="red">注意: クエリモードを使用する場合は、<a href="#NUM_INIT_CHILDREN">num_init_children</a>に
+        十分大きな値を設定して下さい。watchdog 自身も pgpool-II にクライアントとして接続するためです。</font>
     </p>
-	<p>
-	'external' を指定した場合には、監視は「外部ツールモード」で行われます（<span class="version">V3.5 -</span>）。
-	watchdog は組み込みの死活監視機能を無効にし、ローカルおよびリモートの watchdog ノードの死活監視を外部のシステムに頼ります。
-	</p>
+    <p>
+    'external' を指定した場合には、監視は「外部ツールモード」で行われます（<span class="version">V3.5 -</span>）。
+    watchdog は組み込みの死活監視機能を無効にし、ローカルおよびリモートの watchdog ノードの死活監視を外部のシステムに頼ります。
+    </p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
@@ -4399,30 +4461,30 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     このパラメータを変更した時には pgpool-II を再起動してください。
     </p>
     </dd>
-</dl>
 
 <dt><a name="WD_PRIORITY"></a>wd_priority <span class="version">V3.5 ～</span></dt>
 <dd>
-	<p>
-	このパラメータによって自身の watchdog ノードがリーダに選ばれる優先度を上げることができます。
-	クラスタの初期起動時や古いマスターノードが故障した状況でクラスタがマスターノードの選択を行う際に、wd_priority
-	が高いノードがマスター（コーディネータ）watchdog ノードに選ばれます。
-	<p>
+    <p>
+    このパラメータによって自身の watchdog ノードがリーダに選ばれる優先度を上げることができます。
+    クラスタの初期起動時や古いマスターノードが故障した状況でクラスタがマスターノードの選択を行う際に、wd_priority
+    が高いノードがマスター（コーディネータ）watchdog ノードに選ばれます。
+    <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
-	</p>
+    </p>
 </dd>
 
 <dt><a name="WD_IPC_SOCKET_DIR"></a>wd_ipc_socket_dir <span class="version">V3.5 ～</span></dt>
 <dd>
-	<p>
-	pgpool-II watchdog の IPC（プロセス間通信）で受け付ける UNIX ドメインソケットが作成されるディレクトリを指定します。
-	デフォルトは <code>'/tmp'</code> です。
-	このソケットが cron ジョブで削除されることのないよう気をつけてください。この値は <code>'/var/run'</code>
-	などのディレクトリに設定することを推奨します。
-	<p>
+    <p>
+    pgpool-II watchdog の IPC（プロセス間通信）で受け付ける UNIX ドメインソケットが作成されるディレクトリを指定します。
+    デフォルトは <code>'/tmp'</code> です。
+    このソケットが cron ジョブで削除されることのないよう気をつけてください。この値は <code>'/var/run'</code>
+    などのディレクトリに設定することを推奨します。
+    <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
-	</p>
+    </p>
 </dd>
+</dl>
 
 <h4>ハートビートモードの設定</h4>
 
@@ -4493,7 +4555,8 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
 <dt><a name="HEARTBEAT_DEVICE"></a>heartbeat_device<font color="red">0</font> <span class="version">V3.3 ～</span></dt>
     <dd>
     <p>
-    <a href="#HEARTBEAT_DESTINATION">heartbeat_destinationX</a>に指定した送り先とのハートビートの送受信に用いるネットワークデバイス名を指定します。
+    <a href="#HEARTBEAT_DESTINATION">heartbeat_destinationX</a>に指定した送り先とのハートビートの送受信に用いる
+    ネットワークデバイス名を指定します。
     数値の部分は送り先の番号です。デバイス毎に 0 からの連番にします。
     複数の異なる送り先に同じデバイスを設定することが可能です。
     ハートビートモードの場合のみ有効です。空文字列が指定された場合には無視されます。
@@ -4626,11 +4689,11 @@ IPC（プロセス間通信）のための BSD ソケットの名前は、"s.PGP
 watchdog IPC コマンドパケットは 4 つのフィールドから構成されます。メッセージフィールドの詳細を以下の表に示します。
 </p>
 <table border>
-	<tr class="header"><th>フィールド</th>		<th>型</th>						<th>説明</th></tr>
-	<tr><th>TYPE</th>		<td>BYTE1</td>						<td>コマンドのタイプ</td></tr>
-	<tr><th>ACTION</th>		<td>INT32（ネットワークバイトオーダ）</td>	<td>コマンドアクション。現状では DEFAULT(0) のみサポート。</td></tr>
-	<tr><th>LENGTH</th>		<td>INT32（ネットワークバイトオーダ）</td>	<td>続くデータの長さ</td></tr>
-	<tr><th>DATA</th>		<td>JSON 形式データ</td>		<td>JSON 形式のコマンドデータ</td></tr>
+    <tr class="header"><th>フィールド</th>        <th>型</th>                        <th>説明</th></tr>
+    <tr><th>TYPE</th>        <td>BYTE1</td>                        <td>コマンドのタイプ</td></tr>
+    <tr><th>ACTION</th>        <td>INT32（ネットワークバイトオーダ）</td>    <td>コマンドアクション。現状では DEFAULT(0) のみサポート。</td></tr>
+    <tr><th>LENGTH</th>        <td>INT32（ネットワークバイトオーダ）</td>    <td>続くデータの長さ</td></tr>
+    <tr><th>DATA</th>        <td>JSON 形式データ</td>        <td>JSON 形式のコマンドデータ</td></tr>
 </table>
 
 </dl>
@@ -4638,10 +4701,10 @@ watchdog IPC コマンドパケットは 4 つのフィールドから構成さ�
 <dl>
 watchdog IPC コマンド結果パケットは 3 つのフィールドから構成されます。メッセージフィールドの詳細を以下の表に示します。
 <table border>
-	<tr class="header"><th>フィールド</th>		<th>型</th>						<th>説明</th></tr>
-	<tr><th>TYPE</td>		<td>BYTE1</td>						<td>コマンドのタイプ</td></tr>
-	<tr><th>LENGTH</td>		<td>INT32（ネットワークバイトオーダ）</td>	<td>続くデータの長さ</td></tr>
-	<tr><th>DATA</td>		<td>JSON 形式データ</td>		<td>JSON 形式のコマンド結果データ</td></tr>
+    <tr class="header"><th>フィールド</th>        <th>型</th>                        <th>説明</th></tr>
+    <tr><th>TYPE</td>        <td>BYTE1</td>                        <td>コマンドのタイプ</td></tr>
+    <tr><th>LENGTH</td>        <td>INT32（ネットワークバイトオーダ）</td>    <td>続くデータの長さ</td></tr>
+    <tr><th>DATA</td>        <td>JSON 形式データ</td>        <td>JSON 形式のコマンド結果データ</td></tr>
 </table>
 </dl>
 <h3 id="Watchdog_IPC_command_packet_types">Watchdog IPC コマンドパケットのタイプ</h3>
@@ -4651,14 +4714,14 @@ watchdog プロセスに送られる、または watchdog プロセスから返�
 有効なタイプとその意味の一覧を以下の表に示します。
 </p>
 <table border>
-	<tr class="header"><th>名前</th>						<th>バイト値</th>	<th>タイプ</th><th>説明</th></tr>
-	<tr><th>Register for notifications</th>	<td>'0'</td>	<td>コマンド</td> <td>watachdog の通知を受信するための接続を登録するコマンド</td></tr>
-	<tr><th>Node status change</th>			<td>'2'</td>	<td>コマンド</td> <td>watchdog に watchdog ノードの状態変化を通知するコマンド</td></tr>
-	<tr><th>Get nodes list</th>				<td>'3'</td>	<td>コマンド</td> <td>設定された全ての watchdog ノードのリストを取得するコマンド</td></tr>
-	<tr><th>Nodes list data</th>			<td>'4'</td>	<td>結果</td>  <td>設定された全ての watchdog ノードのリストを含む JSON データのパケット</td></tr>
-	<tr><th>Cluster in transition</th>		<td>'7'</td>	<td>結果</td> <td>クラスタ状態が遷移中のためコマンドを処理できない</td></tr>
-	<tr><th>Result BAD</th>					<td>'8'</td>	<td>結果</td> <td>IPC コマンドが失敗した</td></tr>
-	<tr><th>Result OK</th>					<td>'9'</td>	<td>結果</td> <td>IPC コマンドが成功した</td></tr>
+    <tr class="header"><th>名前</th>                        <th>バイト値</th>    <th>タイプ</th><th>説明</th></tr>
+    <tr><th>Register for notifications</th>    <td>'0'</td>    <td>コマンド</td> <td>watachdog の通知を受信するための接続を登録するコマンド</td></tr>
+    <tr><th>Node status change</th>            <td>'2'</td>    <td>コマンド</td> <td>watchdog に watchdog ノードの状態変化を通知するコマンド</td></tr>
+    <tr><th>Get nodes list</th>                <td>'3'</td>    <td>コマンド</td> <td>設定された全ての watchdog ノードのリストを取得するコマンド</td></tr>
+    <tr><th>Nodes list data</th>            <td>'4'</td>    <td>結果</td>  <td>設定された全ての watchdog ノードのリストを含む JSON データのパケット</td></tr>
+    <tr><th>Cluster in transition</th>        <td>'7'</td>    <td>結果</td> <td>クラスタ状態が遷移中のためコマンドを処理できない</td></tr>
+    <tr><th>Result BAD</th>                    <td>'8'</td>    <td>結果</td> <td>IPC コマンドが失敗した</td></tr>
+    <tr><th>Result OK</th>                    <td>'9'</td>    <td>結果</td> <td>IPC コマンドが成功した</td></tr>
 
 </table>
 </dl>
@@ -4682,37 +4745,37 @@ watchdog ノード全体を表す json は全ての watchdog ノードの配列 
 -- "Nodes list data('4')" に格納される JSON データの例
 
   {
-	"NodeCount":3,
-	"WatchdogNodes":
-		[
-			{
-				"ID":0,
-				"State":1,
-				"NodeName":"Linux_ubuntu_9999",
-				"HostName":"watchdog-host1",
-				"DelegateIP":"172.16.5.133",
-				"WdPort":9000,
-				"PgpoolPort":9999
-			},
-			{
-				"ID":1,
-				"State":1,
-				"NodeName":"Linux_ubuntu_9991",
-				"HostName":"watchdog-host2",
-				"DelegateIP":"172.16.5.133",
-				"WdPort":9000,
-				"PgpoolPort":9991
-			},
-			{
-				"ID":2,
-				"State":1,
-				"NodeName":"Linux_ubuntu_9992",
-				"HostName":"watchdog-host3",
-				"DelegateIP":"172.16.5.133",
-				"WdPort":9000,
-				"PgpoolPort":9992
-			}
-		]
+    "NodeCount":3,
+    "WatchdogNodes":
+        [
+            {
+                "ID":0,
+                "State":1,
+                "NodeName":"Linux_ubuntu_9999",
+                "HostName":"watchdog-host1",
+                "DelegateIP":"172.16.5.133",
+                "WdPort":9000,
+                "PgpoolPort":9999
+            },
+            {
+                "ID":1,
+                "State":1,
+                "NodeName":"Linux_ubuntu_9991",
+                "HostName":"watchdog-host2",
+                "DelegateIP":"172.16.5.133",
+                "WdPort":9000,
+                "PgpoolPort":9991
+            },
+            {
+                "ID":2,
+                "State":1,
+                "NodeName":"Linux_ubuntu_9992",
+                "HostName":"watchdog-host3",
+                "DelegateIP":"172.16.5.133",
+                "WdPort":9000,
+                "PgpoolPort":9992
+            }
+        ]
   }
 
 -- ID 0 のノードは常にローカルの watchdog ノードのために使用されることに注意
@@ -4727,9 +4790,9 @@ JSON を含んでなければなりません。
 -- pgpool-II watchdog に ID 1 のノードの死活監視が失敗したことを通知する JSON の例
 
   {
-	"NodeID":1,
-	"NodeStatus":1,
-	"Message":"optional message string to log by watchdog for this event"
+    "NodeID":1,
+    "NodeStatus":1,
+    "Message":"optional message string to log by watchdog for this event"
   }
 
 -- NodeStatus の値の意味は以下の通り
@@ -4915,12 +4978,12 @@ PCP 認証のユーザ名を指定します。(デフォルト: OS のユーザ)
 </dd>
 <dt>説明</dt>
 <dd>
-	<p>pgpool-II の pgpool.conf で定義されたノードの総数を表示します。
+    <p>pgpool-II の pgpool.conf で定義されたノードの総数を表示します。
     切り離されているノードの区別はしません。</p>
 </dd>
 <dt>オプション</dt>
 <dd>
-	<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+    <p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
 </dd>
 </dl>
 
@@ -4932,20 +4995,20 @@ PCP 認証のユーザ名を指定します。(デフォルト: OS のユーザ)
 </dd>
 <dt>説明</dt>
 <dd>
-	<p>指定されたノードの情報を表示します。</p>
+    <p>指定されたノードの情報を表示します。</p>
 </dd>
 <dt>オプション</dt>
 <dd>
-	<dl>
-	<dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
-	<dd>
-		<p>情報を表示するバックエンドノードのインデックスを指定します。</p>
-	</dd>
-	<dt>その他</dt>
-	<dd>
-		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
-	</dd>
-	</dl>
+    <dl>
+    <dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
+    <dd>
+        <p>情報を表示するバックエンドノードのインデックスを指定します。</p>
+    </dd>
+    <dt>その他</dt>
+    <dd>
+        <p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+    </dd>
+    </dl>
 </dd>
 
 <dt>出力例</dt>
@@ -4974,7 +5037,7 @@ host1 5432 1 1073741823.500000
 <p>ロードバランスウェイトは Normalize されたフォーマットで出力されます。</p>
 
 <p><code>--verbose</code> オプションは出力内容を理解するのに役に立ちます。例：</p>
- 
+
  <pre>
 $ pcp_node_info --verbose -h localhost -U postgres 0
 Hostname: host1
@@ -4990,7 +5053,7 @@ Weight  : 0.5
 <dl>
 <dt>書式</dt>
 <dd>
-	<pre><code>pcp_watchdog_info [options...] [watchdog_id]</code></pre>
+    <pre><code>pcp_watchdog_info [options...] [watchdog_id]</code></pre>
 </dd>
 
 <dt>説明</dt>
@@ -5029,13 +5092,13 @@ host1 9999 9000 2
 <dl>
 <dt>書式</dt>
 <dd>
-	<pre><code>pcp_proc_count [options...] </code></pre>
+    <pre><code>pcp_proc_count [options...] </code></pre>
 </dd>
 <dt>説明</dt>
 <dd><p>pgpool-II の子プロセスのプロセス ID を一覧表示します。複数ある場合は空白文字で区切られます。<p></dd>
 <dt>オプション</dt>
 <dd>
-	<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+    <p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
 </dd>
 </dl>
 
@@ -5043,7 +5106,7 @@ host1 9999 9000 2
 <dl>
 <dt>書式</dt>
 <dd>
-	<pre><code>pcp_proc_info [options...] [processid] </code></pre>
+    <pre><code>pcp_proc_info [options...] [processid] </code></pre>
 </dd>
 <dt>説明</dt>
 <dd>
@@ -5051,15 +5114,15 @@ host1 9999 9000 2
 </dd>
 <dt>オプション</dt>
 <dd>
-	<dl class="options">
-	<dt><code>-P <strong>PID</strong>, --process-id=<strong>PID</strong></code></dt>
-	<dd>
-		<p>pgpool-II 子プロセスの PID を指定します。</p>
-	</dd>
-	<dt>その他</dt>
-	<dd>
-		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
-	</dd>
+    <dl class="options">
+    <dt><code>-P <strong>PID</strong>, --process-id=<strong>PID</strong></code></dt>
+    <dd>
+        <p>pgpool-II 子プロセスの PID を指定します。</p>
+    </dd>
+    <dt>その他</dt>
+    <dd>
+        <p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+    </dd>
 </dd>
 </dd>
 <dt>出力例</dt>
@@ -5118,7 +5181,7 @@ Connected    : 1
 <dl>
 <dt>書式</dt>
 <dd>
-	<pre><code>pcp_pool_status [options...]</code></pre>
+    <pre><code>pcp_pool_status [options...]</code></pre>
 </dd>
 <dt>説明</dt>
 <dd>
@@ -5126,7 +5189,7 @@ Connected    : 1
 </dd>
 <dt>オプション</dt>
 <dd>
-	<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+    <p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
 </dd>
 <dt>出力例</dt>
 <dd>
@@ -5157,7 +5220,7 @@ desc : PCP port # to bind
 <dl>
 <dt>書式</dt>
 <dd>
-	<pre><code>pcp_detach_node [options...] [node_id] [grecefully]</code></pre>
+    <pre><code>pcp_detach_node [options...] [node_id] [grecefully]</code></pre>
 </dd>
 <dt>説明</dt>
 <dd>
@@ -5166,22 +5229,22 @@ desc : PCP port # to bind
 </dd>
 <dt>オプション</dt>
 <dd>
-	<dl class="option">
-	<dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
-	<dd>
-		<p>切り離すバックエンドノードのインデックスを指定します。</p>
-	</dd>
-	<dt><code>-g, --gracefully</code></dt>
-	<dd>
-		<p>すべてのクライアントが接続を終了するまでノードを復帰しません。
-		（ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
-		あるいは、<a href="#RECOVERY_TIMEOUT">recovery_timeout</a> が設定されている場合を除く）</p>
-	</dd>
-	<dt>その他</dt>
-	<dd>
-		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
-	</dd>
-	</dl>
+    <dl class="option">
+    <dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
+    <dd>
+        <p>切り離すバックエンドノードのインデックスを指定します。</p>
+    </dd>
+    <dt><code>-g, --gracefully</code></dt>
+    <dd>
+        <p>すべてのクライアントが接続を終了するまでノードを復帰しません。
+        （ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
+        あるいは、<a href="#RECOVERY_TIMEOUT">recovery_timeout</a> が設定されている場合を除く）</p>
+    </dd>
+    <dt>その他</dt>
+    <dd>
+        <p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+    </dd>
+    </dl>
 </dd>
 </dl>
 
@@ -5189,22 +5252,22 @@ desc : PCP port # to bind
 <dl>
 <dt>書式</dt>
 <dd>
-	<pre><code>pcp_attach_node [options...] [node_id]</code></pre>
+    <pre><code>pcp_attach_node [options...] [node_id]</code></pre>
 </dd>
 <dt>説明</dt>
 <dd><p>pgpool-II のノードを復帰させます。</p></dd>
 <dt>オプション</dt>
 <dd>
-	<dl class="options">
-	<dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
-	<dd>
-		<p>復帰させるバックエンドノードのインデックスを指定します。</p>
-	</dd>
-	<dt>その他</dt>
-	<dd>
-		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
-	</dd>
-	</dl>
+    <dl class="options">
+    <dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
+    <dd>
+        <p>復帰させるバックエンドノードのインデックスを指定します。</p>
+    </dd>
+    <dt>その他</dt>
+    <dd>
+        <p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+    </dd>
+    </dl>
 </dd>
 </dl>
 
@@ -5212,34 +5275,35 @@ desc : PCP port # to bind
 <dl>
 <dt>書式</dt>
 <dd>
-	<pre><code>pcp_promote_node [options...] [node_id] [gracefully]</code></pre>
+    <pre><code>pcp_promote_node [options...] [node_id] [gracefully]</code></pre>
 </dd>
 <dt>説明</dt>
 <dd>
 <p>pgpool-II のノードをマスターに昇格させます。これは、マスタースレーブモードで
 ストリーミングレプリケーション構成の場合のみ使用できます。
 このコマンドは実際にPostgreSQLのスタンバイサーバを昇格するわけではないことに注意してください。
-単にpgpool-IIの内部ステータスを変更し、フェイルオーバするだけです。ですので、ユーザはこのコマンドを使う際には自分でPostgreSQLのスタンバイを昇格させるようにしてください。
+単にpgpool-IIの内部ステータスを変更し、フェイルオーバするだけです。
+ですので、ユーザはこのコマンドを使う際には自分でPostgreSQLのスタンバイを昇格させるようにしてください。
 </p>
 </dd>
 <dt>オプション</dt>
 <dd>
-	<dl class="option">
-	<dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
-	<dd>
-		<p>マスターに昇格させるバックエンドノードのインデックスを指定します。</p>
-	</dd>
-	<dt><code>-g, --gracefully</code></dt>
-	<dd>
-		<p>すべてのクライアントが接続を終了するまでノードを復帰しません。
-		（ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
-		あるいは、<a href="#RECOVERY_TIMEOUT">recovery_timeout</a> が設定されている場合を除く）</p>
-	</dd>
-	<dt>その他</dt>
-	<dd>
-		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
-	</dd>
-	</dl>
+    <dl class="option">
+    <dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
+    <dd>
+        <p>マスターに昇格させるバックエンドノードのインデックスを指定します。</p>
+    </dd>
+    <dt><code>-g, --gracefully</code></dt>
+    <dd>
+        <p>すべてのクライアントが接続を終了するまでノードを復帰しません。
+        （ただし、<a href="#CLIENT_IDLE_LIMIT_IN_RECOVERY">client_idle_limit_in_recovery</a> が -1
+        あるいは、<a href="#RECOVERY_TIMEOUT">recovery_timeout</a> が設定されている場合を除く）</p>
+    </dd>
+    <dt>その他</dt>
+    <dd>
+        <p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+    </dd>
+    </dl>
 </dd>
 </dl>
 
@@ -5247,33 +5311,33 @@ desc : PCP port # to bind
 <dl>
 <dt>書式</dt>
 <dd>
-	<pre><code>pcp_stop_pgpool [options...] [mode]</code></pre>
+    <pre><code>pcp_stop_pgpool [options...] [mode]</code></pre>
 </dd>
 <dt>説明</dt>
 <dd>
-	<p>pgpool-IIを指定されたモードでシャットダウンします。</p>
+    <p>pgpool-IIを指定されたモードでシャットダウンします。</p>
 </dd>
 <dt>オプション</dt>
 <dd>
-	<dl class="options">
-	<dt><code>-m <strong>mode</strong>, --mode=<strong>mode</strong></code></p>
-	<dd>
-		<p>シャットダウンモードを指定します。指定できるモードは以下のとおりです。</p>
-		<ul>
-			<li>s, smart        : smart モード</li>
-			<li>f, fast         : fast モード</li>
-			<li>i, immediate    : immediate モード</li>
-		</ul>
-		<p>
-		※ 現在は fast モードと immediate シャットダウンの処理に区別はありません。
-		命令を送った時点でクライアントがいる・いないに関わらずシャットダウン処理を即座に行います。
-		</p>
-	</dd>
-	<dt>その他</dt>
-	<dd>
-		<p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
-	</dd>
-	</dl>
+    <dl class="options">
+    <dt><code>-m <strong>mode</strong>, --mode=<strong>mode</strong></code></p>
+    <dd>
+        <p>シャットダウンモードを指定します。指定できるモードは以下のとおりです。</p>
+        <ul>
+            <li>s, smart        : smart モード</li>
+            <li>f, fast         : fast モード</li>
+            <li>i, immediate    : immediate モード</li>
+        </ul>
+        <p>
+        ※ 現在は fast モードと immediate シャットダウンの処理に区別はありません。
+        命令を送った時点でクライアントがいる・いないに関わらずシャットダウン処理を即座に行います。
+        </p>
+    </dd>
+    <dt>その他</dt>
+    <dd>
+        <p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+    </dd>
+    </dl>
 </dd>
 </dl>
 
@@ -5281,7 +5345,7 @@ desc : PCP port # to bind
 <dl>
 <dt>書式</dt>
 <dd>
-	<pre><code>pcp_recovery_node [options...] [node_id] </code></pre>
+    <pre><code>pcp_recovery_node [options...] [node_id] </code></pre>
 </dd>
 <dt>説明</dt>
 <dd><p>
@@ -5289,16 +5353,16 @@ pgpool-II のノードをデータを再同期させた上で復帰させます�
 </p></dd>
 <dt>オプション</dt>
 <dd>
-	<dl class="options">
-	<dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
-	<dd>
-		<p>バックエンドノードのインデックスを指定します。</p>
-	</dd>
-	<dt>その他</dt>
-	<dd>
-		<p><a href="#pcp_common_options">common options</a> を参照してください。</p>
-	</dd>
-	</dl>
+    <dl class="options">
+    <dt><code>-n <strong>node_id</strong>, --node-id=<strong>node_id</strong></code></dt>
+    <dd>
+        <p>バックエンドノードのインデックスを指定します。</p>
+    </dd>
+    <dt>その他</dt>
+    <dd>
+        <p><a href="#pcp_common_options">common options</a> を参照してください。</p>
+    </dd>
+    </dl>
 </dd>
 </dl>
 
@@ -5619,18 +5683,18 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 <h3>互換性のない変更</h3>
 <ul>
     <li>パラレルクエリモードのコードが削除されました。(Yugo Nagata)
-	 <p>
+     <p>
       これは、パラレルクエリモードのユーザが少ない割に維持に手間がかかるためです。
       また、システムDBに関するコードも削除されました。
       これらはパラレルクエリモードと古いオンディスクのクエリキャッシュででしか使用されていなかったためです。
-	 </p>
-	</li>
+     </p>
+    </li>
 
     <li>パラメータ "ifconfig_path" が"<a href=#IF_CMD_PATH>if_cmd_path</a>"に名前が変更になりました。(Yugo Nagata)
-	 <p>
+     <p>
      ifconfig が非推奨になり現在では ip コマンドがデフォルトで使われており、ifconfig_path がパラメータ名として不適切になったためです。
      </p>
-	</li>
+    </li>
 </ul>
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -7075,35 +7139,35 @@ JDBC_DRIVER 環境変数の値を用いるように変更されました。
 
 <li>
     installer: pgpool-II の RPM インストールが失敗するバグを修正しました。
-	(Yugo Nagata)
+    (Yugo Nagata)
 </li>
 
 <li>
     installer: localhost の apache ユーザから localhost の postgres ユーザにパスワードなし
-	SSH を設定するするように修正しました。(Yugo Nagata)
+    SSH を設定するするように修正しました。(Yugo Nagata)
 </li>
 
 <li>
     再起動した pgpool-II の watchdog ステータスがダウンと見なされることがあるバグを修正しました。
-	(Yugo Nagata)
+    (Yugo Nagata)
 </li>
 
 <li>
     doc: num_init_children の項に「listen キュー」の説明とその「バックログ」を増やす方法について追記しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
 </li>
 
 <li>
     指定した上位サーバの内たった１台への ping が失敗した場合にも watchdog
-	ステータスがダウンになってしまうバグを修正しました。(Yugo Nagata)
+    ステータスがダウンになってしまうバグを修正しました。(Yugo Nagata)
 </li>
 
 <li>
     UNLOGGED テーブルを検出する処理のパフォーマンスが悪かったのを修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-January/000435.html">[pgpool-hackers: 435]</a>
-	<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
     </p>
 </li>
 
@@ -7111,10 +7175,10 @@ JDBC_DRIVER 環境変数の値を用いるように変更されました。
     プライマリノードの検出ロジックを修正しました。(Tatsuo Ishii)
     <p>
     プライマリノードが検出されないことがありました。例えば、node 0 がプライマリ、node 1
-	がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
-	内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
-	への接続が試みられます。実際にはこの接続は失敗するため、node 1
-	が新プライマリであることを検出する前に処理が終了していました。
+    がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
+    内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
+    への接続が試みられます。実際にはこの接続は失敗するため、node 1
+    が新プライマリであることを検出する前に処理が終了していました。
     </p>
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2014-January/002442.html">[pgpool-general: 2409]</a> にて報告されました。
@@ -7131,7 +7195,7 @@ JDBC_DRIVER 環境変数の値を用いるように変更されました。
 
 <li>
     raw モードで自動コミットが off で JDBC を使用したときに、DML
-	が失敗するバグを修正しました。(Tatsuo Ishii)
+    が失敗するバグを修正しました。(Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.pgpool.net/mantisbt/view.php?id=92">bug #92</a> で報告されました。
     </p>
@@ -7139,10 +7203,10 @@ JDBC_DRIVER 環境変数の値を用いるように変更されました。
 
 <li>
     wd_escalation_command が終了コード 0
-	以外で終了したときにエラーメッセージを出力するように修正しました。(Yugo Nagata)
+    以外で終了したときにエラーメッセージを出力するように修正しました。(Yugo Nagata)
     <p>
     この修正は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2014-January/002492.html">
-	[pgpool-general: 2457]</a> で Sergey Arlashin によって示唆されました。
+    [pgpool-general: 2457]</a> で Sergey Arlashin によって示唆されました。
     </p>
 </li>
 
@@ -7154,39 +7218,39 @@ JDBC_DRIVER 環境変数の値を用いるように変更されました。
     拡張プロトコルにおけるクエリキャッシュのバグを修正しました。(Tatsuo Ishii)
     <p>
     明示的なトランザクション内で DML が実行された場合でも、SELECT
-	実行時に古いキャッシュが読み込まれていました。
-	これはインメモリクエリキャッシュが実装された時点から存在していたバグです。
+    実行時に古いキャッシュが読み込まれていました。
+    これはインメモリクエリキャッシュが実装された時点から存在していたバグです。
     </p>
     <p>
     <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2014-January/001251.html">
-	[pgpool-general-jp: 1252]</a> で報告されました。
+    [pgpool-general-jp: 1252]</a> で報告されました。
     </p>
 </li>
 
 <li>
     SHOW pool_status の結果から抜けていた relcashe_size と check_temp_table
-	を追加しました。(Tatsuo Ishii)
+    を追加しました。(Tatsuo Ishii)
 </li>
 
 <li>
     if_up_cmd が失敗した際にエラーメッセージを出力するよう修正しました。(Yugo Nagata)
     <p>
     この修正は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2014-January/002492.html">
-	[pgpool-general: 2457]</a> で Sergey Arlashin によって示唆されました。
+    [pgpool-general: 2457]</a> で Sergey Arlashin によって示唆されました。
     </p>
 </li>
 
 <li>
     ストリーミングレプリケーションモードで無関係なノードにはクエリを送信しないように修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     pgpool-II は BEGIN, END, SET などのクエリを全ての DB ノードに送っています。
-	しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
-	（もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
+    しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
+    （もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
     </p>
     <p>
     詳細は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-February/000464.html">
-	[pgpool-hackers: 464]</a> を参照してください。
+    [pgpool-hackers: 464]</a> を参照してください。
     </p>
 </li>
 
@@ -7231,14 +7295,14 @@ JDBC_DRIVER 環境変数の値を用いるように変更されました。
 
 <li>
     パラレルモードで system_db_hostname
-	が空欄の場合に発生するセグメンテーションフォルトを修正しました。
-	(Yugo Nagata)
+    が空欄の場合に発生するセグメンテーションフォルトを修正しました。
+    (Yugo Nagata)
 </li>
 
 <li>
     -d オプションで起動した場合に pgpool.conf
-	の処理中のデバッグメッセージを出力するように修正しました
-	(Yugo Nagata)
+    の処理中のデバッグメッセージを出力するように修正しました
+    (Yugo Nagata)
     <p>
     以前は -d オプション使用時でも出力されていないデバッグメッセージがありました。
     </p>
@@ -7246,37 +7310,37 @@ JDBC_DRIVER 環境変数の値を用いるように変更されました。
 
 <li>
     レプリケーションモードで JDBC 使用時に now()
-	を含む準備文で発生する例外を修正しました。(Yugo Nagata)
+    を含む準備文で発生する例外を修正しました。(Yugo Nagata)
     <p>
     JDBC で準備文を PrepareThreshold 回以上実行した場合には、文に名前が付けられ Parse
-	の後に Describe メッセージが発行されます。このとき、pgpool は now()
-	をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
-	この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
-	の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
-	はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
+    の後に Describe メッセージが発行されます。このとき、pgpool は now()
+    をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
+    この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
+    の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
+    はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
     </p>
     <p>
     このバグは <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-September/001191.html">
-	[pgpool-general-jp: 1192]</a> で報告されました。
+    [pgpool-general-jp: 1192]</a> で報告されました。
     </p>
 </li>
 
 <li>
     レプリケーションモードにて、デフォルト値が now()
-	のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
-	(Yugo Nagata)
+    のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
+    (Yugo Nagata)
     <p>
     デフォルト値が now() を持つ名前付き準備文を parse する際に、pgpool-II
-	は時刻値をパラメータで置き換えます。そのため、その後の bind
-	メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
-	しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
-	"incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
+    は時刻値をパラメータで置き換えます。そのため、その後の bind
+    メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
+    しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
+    "incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
     </p>
 </li>
 
 <li>
     test: JDBC のレグレッションテストでテスト失敗時でも ok と出力されるバグを修正しました。
-	(Yugo Nagata)
+    (Yugo Nagata)
 </li>
 
 <li>
@@ -8007,7 +8071,7 @@ FATAL: no PostgreSQL user name specified in startup packet
     [pgpool-general: 1877] current transaction is aborted, commands ignored<br />
     <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html">
     http://www.sraoss.jp/pipermail/pgpool-general/2013-July/001905.html
-	</a>
+    </a>
     </blockquote>
 </li>
 
@@ -8362,20 +8426,20 @@ FATAL: no PostgreSQL user name specified in startup packet
 
 <li>
     doc: num_init_children の項に「listen キュー」の説明とその「バックログ」を増やす方法について追記しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
 </li>
 
 <li>
     指定した上位サーバの内たった１台への ping が失敗した場合にも watchdog
-	ステータスがダウンになってしまうバグを修正しました。(Yugo Nagata)
+    ステータスがダウンになってしまうバグを修正しました。(Yugo Nagata)
 </li>
 
 <li>
     UNLOGGED テーブルを検出する処理のパフォーマンスが悪かったのを修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-January/000435.html">[pgpool-hackers: 435]</a>
-	<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
     </p>
 </li>
 
@@ -8383,10 +8447,10 @@ FATAL: no PostgreSQL user name specified in startup packet
     プライマリノードの検出ロジックを修正しました。(Tatsuo Ishii)
     <p>
     プライマリノードが検出されないことがありました。例えば、node 0 がプライマリ、node 1
-	がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
-	内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
-	への接続が試みられます。実際にはこの接続は失敗するため、node 1
-	が新プライマリであることを検出する前に処理が終了していました。
+    がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
+    内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
+    への接続が試みられます。実際にはこの接続は失敗するため、node 1
+    が新プライマリであることを検出する前に処理が終了していました。
     </p>
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2014-January/002442.html">[pgpool-general: 2409]</a> にて報告されました。
@@ -8395,7 +8459,7 @@ FATAL: no PostgreSQL user name specified in startup packet
 
 <li>
     raw モードで自動コミットが off で JDBC を使用したときに、DML
-	が失敗するバグを修正しました。(Tatsuo Ishii)
+    が失敗するバグを修正しました。(Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.pgpool.net/mantisbt/view.php?id=92">bug #92</a> で報告されました。
     </p>
@@ -8405,31 +8469,31 @@ FATAL: no PostgreSQL user name specified in startup packet
     拡張プロトコルにおけるクエリキャッシュのバグを修正しました。(Tatsuo Ishii)
     <p>
     明示的なトランザクション内で DML が実行された場合でも、SELECT
-	実行時に古いキャッシュが読み込まれていました。
-	これはインメモリクエリキャッシュが実装された時点から存在していたバグです。
+    実行時に古いキャッシュが読み込まれていました。
+    これはインメモリクエリキャッシュが実装された時点から存在していたバグです。
     </p>
     <p>
     <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2014-January/001251.html">
-	[pgpool-general-jp: 1252]</a> で報告されました。
+    [pgpool-general-jp: 1252]</a> で報告されました。
     </p>
 </li>
 
 <li>
     SHOW pool_status の結果から抜けていた relcashe_size と check_temp_table
-	を追加しました。(Tatsuo Ishii)
+    を追加しました。(Tatsuo Ishii)
 </li>
 
 <li>
     ストリーミングレプリケーションモードで無関係なノードにはクエリを送信しないように修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     pgpool-II は BEGIN, END, SET などのクエリを全ての DB ノードに送っています。
-	しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
-	（もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
+    しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
+    （もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
     </p>
     <p>
     詳細は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-February/000464.html">
-	[pgpool-hackers: 464]</a> を参照してください。
+    [pgpool-hackers: 464]</a> を参照してください。
     </p>
 </li>
 
@@ -8470,14 +8534,14 @@ FATAL: no PostgreSQL user name specified in startup packet
 
 <li>
     パラレルモードで system_db_hostname
-	が空欄の場合に発生するセグメンテーションフォルトを修正しました。
-	(Yugo Nagata)
+    が空欄の場合に発生するセグメンテーションフォルトを修正しました。
+    (Yugo Nagata)
 </li>
 
 <li>
     -d オプションで起動した場合に pgpool.conf
-	の処理中のデバッグメッセージを出力するように修正しました
-	(Yugo Nagata)
+    の処理中のデバッグメッセージを出力するように修正しました
+    (Yugo Nagata)
     <p>
     以前は -d オプション使用時でも出力されていないデバッグメッセージがありました。
     </p>
@@ -8485,31 +8549,31 @@ FATAL: no PostgreSQL user name specified in startup packet
 
 <li>
     レプリケーションモードで JDBC 使用時に now()
-	を含む準備文で発生する例外を修正しました。(Yugo Nagata)
+    を含む準備文で発生する例外を修正しました。(Yugo Nagata)
     <p>
     JDBC で準備文を PrepareThreshold 回以上実行した場合には、文に名前が付けられ Parse
-	の後に Describe メッセージが発行されます。このとき、pgpool は now()
-	をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
-	この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
-	の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
-	はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
+    の後に Describe メッセージが発行されます。このとき、pgpool は now()
+    をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
+    この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
+    の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
+    はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
     </p>
     <p>
     このバグは <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-September/001191.html">
-	[pgpool-general-jp: 1192]</a> で報告されました。
+    [pgpool-general-jp: 1192]</a> で報告されました。
     </p>
 </li>
 
 <li>
     レプリケーションモードにて、デフォルト値が now()
-	のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
-	(Yugo Nagata)
+    のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
+    (Yugo Nagata)
     <p>
     デフォルト値が now() を持つ名前付き準備文を parse する際に、pgpool-II
-	は時刻値をパラメータで置き換えます。そのため、その後の bind
-	メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
-	しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
-	"incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
+    は時刻値をパラメータで置き換えます。そのため、その後の bind
+    メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
+    しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
+    "incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
     </p>
 </li>
 
@@ -10307,7 +10371,7 @@ Session 1: LISTEN aaa; --- ハング
     <p>
     これにより環境によって発生するビルドの問題が回避できます。以下のコマンドが実行されました。
     </p>
-    <pre>
+<pre>
 libtoolize --copy --force
 aclocal
 autoheader
@@ -10616,15 +10680,15 @@ autoconf
 
 <li>
     doc: num_init_children の項に「listen キュー」の説明とその「バックログ」を増やす方法について追記しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
 </li>
 
 <li>
     UNLOGGED テーブルを検出する処理のパフォーマンスが悪かったのを修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-January/000435.html">[pgpool-hackers: 435]</a>
-	<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
     </p>
 </li>
 
@@ -10632,10 +10696,10 @@ autoconf
     プライマリノードの検出ロジックを修正しました。(Tatsuo Ishii)
     <p>
     プライマリノードが検出されないことがありました。例えば、node 0 がプライマリ、node 1
-	がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
-	内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
-	への接続が試みられます。実際にはこの接続は失敗するため、node 1
-	が新プライマリであることを検出する前に処理が終了していました。
+    がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
+    内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
+    への接続が試みられます。実際にはこの接続は失敗するため、node 1
+    が新プライマリであることを検出する前に処理が終了していました。
     </p>
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2014-January/002442.html">[pgpool-general: 2409]</a> にて報告されました。
@@ -10644,7 +10708,7 @@ autoconf
 
 <li>
     raw モードで自動コミットが off で JDBC を使用したときに、DML
-	が失敗するバグを修正しました。(Tatsuo Ishii)
+    が失敗するバグを修正しました。(Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.pgpool.net/mantisbt/view.php?id=92">bug #92</a> で報告されました。
     </p>
@@ -10652,15 +10716,15 @@ autoconf
 
 <li>
     ストリーミングレプリケーションモードで無関係なノードにはクエリを送信しないように修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     pgpool-II は BEGIN, END, SET などのクエリを全ての DB ノードに送っています。
-	しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
-	（もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
+    しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
+    （もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
     </p>
     <p>
     詳細は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-February/000464.html">
-	[pgpool-hackers: 464]</a> を参照してください。
+    [pgpool-hackers: 464]</a> を参照してください。
     </p>
 </li>
 
@@ -10694,14 +10758,14 @@ autoconf
 
 <li>
     パラレルモードで system_db_hostname
-	が空欄の場合に発生するセグメンテーションフォルトを修正しました。
-	(Yugo Nagata)
+    が空欄の場合に発生するセグメンテーションフォルトを修正しました。
+    (Yugo Nagata)
 </li>
 
 <li>
     -d オプションで起動した場合に pgpool.conf
-	の処理中のデバッグメッセージを出力するように修正しました
-	(Yugo Nagata)
+    の処理中のデバッグメッセージを出力するように修正しました
+    (Yugo Nagata)
     <p>
     以前は -d オプション使用時でも出力されていないデバッグメッセージがありました。
     </p>
@@ -10709,31 +10773,31 @@ autoconf
 
 <li>
     レプリケーションモードで JDBC 使用時に now()
-	を含む準備文で発生する例外を修正しました。(Yugo Nagata)
+    を含む準備文で発生する例外を修正しました。(Yugo Nagata)
     <p>
     JDBC で準備文を PrepareThreshold 回以上実行した場合には、文に名前が付けられ Parse
-	の後に Describe メッセージが発行されます。このとき、pgpool は now()
-	をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
-	この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
-	の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
-	はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
+    の後に Describe メッセージが発行されます。このとき、pgpool は now()
+    をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
+    この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
+    の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
+    はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
     </p>
     <p>
     このバグは <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-September/001191.html">
-	[pgpool-general-jp: 1192]</a> で報告されました。
+    [pgpool-general-jp: 1192]</a> で報告されました。
     </p>
 </li>
 
 <li>
     レプリケーションモードにて、デフォルト値が now()
-	のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
-	(Yugo Nagata)
+    のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
+    (Yugo Nagata)
     <p>
     デフォルト値が now() を持つ名前付き準備文を parse する際に、pgpool-II
-	は時刻値をパラメータで置き換えます。そのため、その後の bind
-	メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
-	しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
-	"incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
+    は時刻値をパラメータで置き換えます。そのため、その後の bind
+    メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
+    しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
+    "incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
     </p>
 </li>
 
@@ -12152,15 +12216,15 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 
 <li>
     doc: num_init_children の項に「listen キュー」の説明とその「バックログ」を増やす方法について追記しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
 </li>
 
 <li>
     UNLOGGED テーブルを検出する処理のパフォーマンスが悪かったのを修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-January/000435.html">[pgpool-hackers: 435]</a>
-	<a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
+    <a href="http://www.sraoss.jp/pipermail/pgpool-general/2013-December/002354.html">[pgpool-general:2325]</a> で指摘されました。
     </p>
 </li>
 
@@ -12168,10 +12232,10 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
     プライマリノードの検出ロジックを修正しました。(Tatsuo Ishii)
     <p>
     プライマリノードが検出されないことがありました。例えば、node 0 がプライマリ、node 1
-	がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
-	内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
-	への接続が試みられます。実際にはこの接続は失敗するため、node 1
-	が新プライマリであることを検出する前に処理が終了していました。
+    がスタンバイのときに、node 0 が落ちたとします。ヘルスチェックがそれを検出しますが、
+    内部のステータスがまだ更新されていない場合 node 0 には問題がないよう見えるため node 0
+    への接続が試みられます。実際にはこの接続は失敗するため、node 1
+    が新プライマリであることを検出する前に処理が終了していました。
     </p>
     <p>
     この問題は <a href="http://www.sraoss.jp/pipermail/pgpool-general/2014-January/002442.html">[pgpool-general: 2409]</a> にて報告されました。
@@ -12180,7 +12244,7 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 
 <li>
     raw モードで自動コミットが off で JDBC を使用したときに、DML
-	が失敗するバグを修正しました。(Tatsuo Ishii)
+    が失敗するバグを修正しました。(Tatsuo Ishii)
     <p>
     この問題は <a href="http://www.pgpool.net/mantisbt/view.php?id=92">bug #92</a> で報告されました。
     </p>
@@ -12188,15 +12252,15 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 
 <li>
     ストリーミングレプリケーションモードで無関係なノードにはクエリを送信しないように修正しました。
-	(Tatsuo Ishii)
+    (Tatsuo Ishii)
     <p>
     pgpool-II は BEGIN, END, SET などのクエリを全ての DB ノードに送っています。
-	しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
-	（もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
+    しかし、ストリーミングレプリケーションではプライマリノードと高々１台のスタンバイノードにしか送る必要がありません。
+    （もしプライマリノードがロードバランスノードとして選択されている場合には１台だけで充分です。）
     </p>
     <p>
     詳細は <a href="http://www.sraoss.jp/pipermail/pgpool-hackers/2014-February/000464.html">
-	[pgpool-hackers: 464]</a> を参照してください。
+    [pgpool-hackers: 464]</a> を参照してください。
     </p>
 </li>
 
@@ -12223,14 +12287,14 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 
 <li>
     パラレルモードで system_db_hostname
-	が空欄の場合に発生するセグメンテーションフォルトを修正しました。
-	(Yugo Nagata)
+    が空欄の場合に発生するセグメンテーションフォルトを修正しました。
+    (Yugo Nagata)
 </li>
 
 <li>
     -d オプションで起動した場合に pgpool.conf
-	の処理中のデバッグメッセージを出力するように修正しました
-	(Yugo Nagata)
+    の処理中のデバッグメッセージを出力するように修正しました
+    (Yugo Nagata)
     <p>
     以前は -d オプション使用時でも出力されていないデバッグメッセージがありました。
     </p>
@@ -12238,31 +12302,31 @@ Date: Wed, 05 Oct 2011 15:15:07 -0700
 
 <li>
     レプリケーションモードで JDBC 使用時に now()
-	を含む準備文で発生する例外を修正しました。(Yugo Nagata)
+    を含む準備文で発生する例外を修正しました。(Yugo Nagata)
     <p>
     JDBC で準備文を PrepareThreshold 回以上実行した場合には、文に名前が付けられ Parse
-	の後に Describe メッセージが発行されます。このとき、pgpool は now()
-	をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
-	この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
-	の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
-	はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
+    の後に Describe メッセージが発行されます。このとき、pgpool は now()
+    をパラメータに書き換えるため、元のクエリには無かった新しいパラメータが追加されます。
+    この場合、フロントエンドに返されるParameterDscription メッセージ（Describe
+    の返答）は、元のクエリが持つパラメータと同じ数の OID を含むべきです。そうしないと、JDBC
+    はArrayIndexoutOfBoundsException 例外を発生させてしまいます。
     </p>
     <p>
     このバグは <a href="http://www.sraoss.jp/pipermail/pgpool-general-jp/2013-September/001191.html">
-	[pgpool-general-jp: 1192]</a> で報告されました。
+    [pgpool-general-jp: 1192]</a> で報告されました。
     </p>
 </li>
 
 <li>
     レプリケーションモードにて、デフォルト値が now()
-	のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
-	(Yugo Nagata)
+    のカラムを持つテーブルに対する準備文でエラーが発生するバグを修正しました。
+    (Yugo Nagata)
     <p>
     デフォルト値が now() を持つ名前付き準備文を parse する際に、pgpool-II
-	は時刻値をパラメータで置き換えます。そのため、その後の bind
-	メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
-	しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
-	"incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
+    は時刻値をパラメータで置き換えます。そのため、その後の bind
+    メッセージも追加されたパラメータの形式コードを含んでいる必要があります。
+    しかし、元のクエリのパラーメータ形式数が１だった場合、この処理がなされていませんでした。これが
+    "incorrect binary data format in bind parameter 2" のようなエラーの原因となっていました。
     </p>
 </li>
 
@@ -14459,10 +14523,10 @@ HINT:  check data consistency between master and other db node
   </li><li> コネクションプール再利用時に、ソケットが壊れている場合は再接続するようにしました(Yoshiyuki Asaba)
   </li><li> PostgreSQL 7.4.x の libpq を使ってビルドしようとすると、
       configure スクリプトでエラーとなってしまう不具合を修正しました(Yoshiyuki Asaba)
-	  <dl>
-	  <dt>hoge</dt><dd>HOGE</dd>
-	  <dt>hoge</dt><dd>HOGE</dd>
-	  </dl>
+      <dl>
+      <dt>hoge</dt><dd>HOGE</dd>
+      <dt>hoge</dt><dd>HOGE</dd>
+      </dl>
 </li></ul>
 
 <!-- ================================================================================ -->
