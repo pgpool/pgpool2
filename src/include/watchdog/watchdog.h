@@ -50,7 +50,6 @@ typedef enum {
 	WD_PARTICIPATE_IN_ELECTION,
 	WD_STAND_FOR_COORDINATOR,
 	WD_STANDBY,
-	WD_WAITING_FOR_QUORUM,
 	WD_LOST,
 	/* the following states are only valid on local node */
 	WD_IN_NW_TROUBLE,

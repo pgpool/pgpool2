@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -439,7 +439,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 				if (!WD_TIME_ISSET(node->hb_send_time) ||
 					WD_TIME_BEFORE(node->hb_send_time, pkt.send_time))
 				{
-					ereport(LOG,
+					ereport(DEBUG1,
 							(errmsg("received heartbeat signal from \"%s:%d\"",
 									from, from_pgpool_port)));
 					
@@ -548,7 +548,7 @@ wd_hb_sender(int fork_wait_time, WdHbIf *hb_if)
 
 		/* send heartbeat signal */
 		wd_hb_send(sock, &pkt, sizeof(pkt), hb_if->addr, hb_if->dest_port);
-		ereport(NOTICE,
+		ereport(DEBUG1,
 				(errmsg("watchdog heartbeat: send heartbeat signal to %s:%d", hb_if->addr, hb_if->dest_port)));
 		sleep(pool_config->wd_heartbeat_keepalive);
 	}

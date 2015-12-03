@@ -141,7 +141,6 @@ char *debug_states[] = {
 	"PARTICIPATE_IN_ELECTION",
 	"STAND_FOR_COORDINATOR",
 	"STANDBY",
-	"WAITING_FOR_QUORUM",
 	"LOST",
 	"IN_NETWORK_TROUBLE",
 	"SHUTDOWN",
@@ -249,7 +248,7 @@ typedef struct wd_cluster
 	InterlockingNode	interlockingNodes[MAX_FAILOVER_CMDS];
 	int					remoteNodeCount;
 	int					aliveNodeCount;
-	bool				quorum_exists;
+	int					quorum_status;
 	WDCommandData		currentCommand;
 	unsigned int		nextCommandID;
 	pid_t				escalation_pid;
@@ -257,6 +256,8 @@ typedef struct wd_cluster
 	int				network_monitor_sock;
 	bool			holding_vip;
 	bool			network_error;
+	bool			escalated;
+
 	struct timeval  network_error_time;
 	
 	List			*unidentified_socks;
@@ -300,6 +301,7 @@ static void free_packet(WDPacketData *pkt);
 static WDPacketData* get_empty_packet(void);
 static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_type);
 static WDPacketData* read_packet(SocketConnection* conn);
+static WDPacketData* get_message_of_type(char type);
 
 static int issue_watchdog_internal_command(WatchdogNode* wdNode, WDPacketData *pkt, int timeout_sec);
 static char get_current_command_resultant_message_type(void);
@@ -310,7 +312,7 @@ static void service_internal_command(void);
 
 static unsigned int get_next_commandID(void);
 static WatchdogNode* parse_node_info_message(WDPacketData* pkt, char **authkey);
-static int get_quorum_status(void);
+static int update_quorum_status(void);
 static int get_mimimum_nodes_required_for_quorum(void);
 
 static bool write_packet_to_socket(int sock, WDPacketData* pkt);
@@ -325,6 +327,8 @@ static bool send_message_to_node(WatchdogNode* wdNode, WDPacketData *pkt);
 static bool reply_with_minimal_message(WatchdogNode* wdNode, char type, WDPacketData* replyFor);
 static bool reply_with_message(WatchdogNode* wdNode, char type, char* data, int data_len, WDPacketData* replyFor);
 static int send_cluster_command(WatchdogNode* wdNode, char type, int timeout_sec);
+static int send_message_of_type(WatchdogNode* wdNode, char type);
+
 static int accept_incomming_connections(fd_set* rmask, int pending_fds_count);
 
 static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt);
@@ -344,7 +348,6 @@ static int watchdog_state_machine_initializing(WD_EVENTS event, WatchdogNode* wd
 static int watchdog_state_machine_joining(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 static int watchdog_state_machine_loading(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
-static int watchdog_state_machine_waiting_for_quorum(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 static int watchdog_state_machine_nw_error(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 
 static void cleanUpIPCCommand(WDIPCCommandData* ipcCommand);
@@ -353,7 +356,7 @@ static bool read_ipc_command_and_process(int socket, bool *remove_socket);
 static JsonNode* get_node_list_json(int id);
 static bool add_nodeinfo_to_json(JsonNode* jNode, WatchdogNode* node);
 static bool fire_node_status_event(int nodeID, int nodeStatus);
-static void resign_from_coordinator(void);
+static void resign_from_escalated_node(void);
 static void init_wd_packet(WDPacketData* pkt);
 static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 
@@ -492,8 +495,11 @@ static void wd_cluster_initialize(void)
 
 	g_cluster.masterNode = NULL;
 	g_cluster.aliveNodeCount = 0;
-	g_cluster.quorum_exists = false;
+	g_cluster.quorum_status = -1;
 	g_cluster.nextCommandID = 1;
+	g_cluster.escalated = false;
+	g_cluster.holding_vip = false;
+	g_cluster.escalation_pid = 0;
 	g_cluster.unidentified_socks = NULL;
 	g_cluster.command_server_sock = 0;
 	g_cluster.notify_clients = NULL;
@@ -1086,7 +1092,7 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 		{
 			if ( FD_ISSET(wdNode->client_socket.sock, rmask) )
 			{
-				ereport(LOG,
+				ereport(DEBUG2,
 						(errmsg("client socket of %s is ready for reading", wdNode->nodeName)));
 				
 				WDPacketData* pkt = read_packet(&wdNode->client_socket);
@@ -1104,7 +1110,7 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 		{
 			if ( FD_ISSET(wdNode->server_socket.sock, rmask) )
 			{
-				ereport(LOG,
+				ereport(DEBUG2,
 						(errmsg("server socket of %s is ready for reading", wdNode->nodeName)));
 				WDPacketData* pkt = read_packet(&wdNode->server_socket);
 				if (pkt)
@@ -1126,7 +1132,7 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 		if (conn->sock > 0 &&  FD_ISSET(conn->sock, rmask))
 		{
 			WDPacketData* pkt;
-			ereport(DEBUG1,
+			ereport(DEBUG2,
 					(errmsg("un-identified socket %d is ready for reading",conn->sock)));
 			/* we only entertain ADD NODE messages from unidentified sockets */
 			pkt = read_packet_of_type(conn,WD_ADD_NODE_MESSAGE);
@@ -1587,7 +1593,7 @@ static bool fire_node_status_event(int nodeID, int nodeStatus)
 				(errmsg("Firing NODE STATUS EVENT: NODE(ID=%d) IS ALIVE",nodeID)));
 
 		if (wdNode == g_cluster.localNode)
-			watchdog_state_machine(WD_EVENT_REMOTE_NODE_FOUND, wdNode, NULL);
+			watchdog_state_machine(WD_EVENT_LOCAL_NODE_FOUND, wdNode, NULL);
 		else
 			watchdog_state_machine(WD_EVENT_REMOTE_NODE_FOUND, wdNode, NULL);
 	}
@@ -1607,10 +1613,15 @@ static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPC
 		get_local_node_state() == WD_COORDINATOR)
 	{
 		IPC_CMD_PREOCESS_RES execute_res = execute_replicate_command(IPCCommand);
+
 		if (execute_res == IPC_CMD_COMPLETE)
+		{
 			res_type = WD_IPC_CMD_RESULT_OK;
+		}
 		else if (execute_res == IPC_CMD_ERROR)
+		{
 			res_type = WD_IPC_CMD_RESULT_BAD;
+		}
 		else /* IPC_CMD_PROCESSING*/
 		{
 			/*
@@ -2298,7 +2309,7 @@ static void wd_system_will_go_down(int code, Datum arg)
 	send_cluster_command(NULL, WD_INFORM_I_AM_GOING_DOWN, 0);
 	
 	if (get_local_node_state() == WD_COORDINATOR)
-		resign_from_coordinator();
+		resign_from_escalated_node();
 	/* close server socket */
 	close_socket_connection(&g_cluster.localNode->server_socket);
 	/* close all node sockets */
@@ -2431,8 +2442,8 @@ static int update_successful_outgoing_cons(fd_set* wmask, int pending_fds_count)
 				{
 					if (valopt)
 					{
-						ereport(LOG,
-								(errmsg("error in outbond connection to %s:%d",wdNode->hostname,wdNode->wd_port),
+						ereport(DEBUG1,
+							(errmsg("error in outbond connection to %s:%d",wdNode->hostname,wdNode->wd_port),
 								 errdetail("%s",strerror(valopt))));
 						close_socket_connection(&wdNode->client_socket);
 						wdNode->client_socket.sock_state = WD_SOCK_ERROR;
@@ -2449,7 +2460,7 @@ static int update_successful_outgoing_cons(fd_set* wmask, int pending_fds_count)
 				}
 				else
 				{
-					ereport(LOG,
+					ereport(DEBUG1,
 						(errmsg("error in outbond connection to %s:%d ",wdNode->hostname,wdNode->wd_port),
 							 errdetail("getsockopt faile with error \"%s\"",strerror(errno))));
 					close_socket_connection(&wdNode->client_socket);
@@ -2483,7 +2494,7 @@ static bool write_packet_to_socket(int sock, WDPacketData* pkt)
 		}
 	}
 
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("sending watchdog packet Socket:%d, Type:[%s], Command_ID:%d, data Length:%d",sock,pkt_type?pkt_type->name:"NULL", pkt->command_id,pkt->len)));
 	
 	/* TYPE */
@@ -2971,7 +2982,7 @@ static bool watchdog_internal_command_packet_processor(WatchdogNode* wdNode, WDP
 		return true;
 	}
 
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("Watchdog node \"%s\" has replied for command id %d",nodeResult->wdNode->nodeName,pkt->command_id)));
 
 	nodeResult->result_type = pkt->type;
@@ -3229,7 +3240,7 @@ static bool service_lost_connections(void)
 
 /*
  * The function only considers the node state.
- * All node states conut towards the cluster participating nodes
+ * All node states count towards the cluster participating nodes
  * except the dead and lost nodes.
  */
 static int get_cluster_node_count(void)
@@ -3246,11 +3257,9 @@ static int get_cluster_node_count(void)
 	return count;
 }
 
-
-static int send_cluster_command(WatchdogNode* wdNode, char type, int timeout_sec)
+static WDPacketData* get_message_of_type(char type)
 {
 	WDPacketData *pkt = NULL;
-	int ret = 0;
 	switch (type)
 	{
 		case WD_INFO_MESSAGE:
@@ -3271,9 +3280,28 @@ static int send_cluster_command(WatchdogNode* wdNode, char type, int timeout_sec
 			pkt = get_minimum_message(type, NULL);
 			break;
 		default:
-			ereport(LOG,(errmsg("invalid command message type %c",type)));
+			ereport(LOG,(errmsg("invalid message type %c",type)));
 			break;
 	}
+	return pkt;
+}
+
+static int send_message_of_type(WatchdogNode* wdNode, char type)
+{
+	int ret = -1;
+	WDPacketData *pkt = get_message_of_type(type);
+	if (pkt)
+	{
+		ret = send_message(wdNode, pkt);
+		free_packet(pkt);
+	}
+	return ret;
+}
+
+static int send_cluster_command(WatchdogNode* wdNode, char type, int timeout_sec)
+{
+	int ret = -1;
+	WDPacketData *pkt = get_message_of_type(type);
 	if (pkt)
 	{
 		ret = issue_watchdog_internal_command(wdNode, pkt, timeout_sec);
@@ -3296,12 +3324,12 @@ static bool reply_with_message(WatchdogNode* wdNode, char type, char* data, int 
 	int ret;
 	init_wd_packet(&wdPacket);
 	set_message_type(&wdPacket, type);
-	
+
 	if (replyFor == NULL)
 		set_next_commandID_in_message(&wdPacket);
 	else
 		set_message_commandID(&wdPacket, replyFor->command_id);
-	
+
 	set_message_data(&wdPacket, data, data_len);
 	ret = send_message(wdNode, &wdPacket);
 	return ret;
@@ -3482,9 +3510,6 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 		case WD_STANDBY:
 			watchdog_state_machine_standby(event,wdNode,pkt);
 			break;
-		case WD_WAITING_FOR_QUORUM:
-			watchdog_state_machine_waiting_for_quorum(event,wdNode,pkt);
-			break;
 		case WD_DEAD:
 		case WD_IN_NW_TROUBLE:
 			watchdog_state_machine_nw_error(event,wdNode,pkt);
@@ -3642,7 +3667,7 @@ static int watchdog_state_machine_joining(WD_EVENTS event, WatchdogNode* wdNode,
 
 				case WD_STAND_FOR_COORDINATOR_MESSAGE:
 				{
-					/* We are loading but a note is already contesting for coordinator node
+					/* We are loading but a node is already contesting for coordinator node
 					 * well we can ignore it but then this could eventually mean a lower priority
 					 * node can became a coordinator node.
 					 * So check the priority of the node in stand for coordinator state
@@ -3704,30 +3729,18 @@ static int watchdog_state_machine_initializing(WD_EVENTS event, WatchdogNode* wd
 			}
 			else
 			{
-				/* check if the quorum exists */
-				int quorum_status = get_quorum_status();
-				if (quorum_status == -1)
+				int i;
+				for (i=0; i< g_cluster.remoteNodeCount; i++)
 				{
-					ereport(LOG,
-							(errmsg("We do not have enough nodes in cluster")));
-					set_state(WD_WAITING_FOR_QUORUM);
-				}
-				else
-				{
-					/* check if any node is already standing for coordinator */
-					int i;
-					for (i=0; i< g_cluster.remoteNodeCount; i++)
+					WatchdogNode* wdNode = &(g_cluster.remoteNodes[i]);
+					if (wdNode->state == WD_STAND_FOR_COORDINATOR)
 					{
-						WatchdogNode* wdNode = &(g_cluster.remoteNodes[i]);
-						if (wdNode->state == WD_STAND_FOR_COORDINATOR)
-						{
-							set_state(WD_PARTICIPATE_IN_ELECTION);
-							return 0;
-						}
+						set_state(WD_PARTICIPATE_IN_ELECTION);
+						return 0;
 					}
-					/* stand for coordinator */
-					set_state(WD_STAND_FOR_COORDINATOR);
 				}
+				/* stand for coordinator */
+				set_state(WD_STAND_FOR_COORDINATOR);
 			}
 		}
 			break;
@@ -3839,9 +3852,23 @@ static int watchdog_state_machine_standForCord(WD_EVENTS event, WatchdogNode* wd
 					break;
 
 				case WD_DECLARE_COORDINATOR_MESSAGE:
-					/* meanwhile someone has declared itself coordinator accept it*/
-					reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
-					set_state(WD_JOINING);
+				{
+					/* meanwhile someone has declared itself coordinator */
+					if (g_cluster.localNode->wd_priority > wdNode->wd_priority)
+					{
+						ereport(LOG,
+							(errmsg("rejecting the declare coordinator request from node \"%s\"",wdNode->nodeName),
+								 errdetail("my wd_priority [%d] is higher than the requesting node's priority [%d]",g_cluster.localNode->wd_priority,wdNode->wd_priority)));
+						reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+					}
+					else
+					{
+						ereport(LOG,
+							(errmsg("node \"%s\" has declared itself as a coordinator",wdNode->nodeName)	));
+						reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+						set_state(WD_JOINING);
+					}
+				}
 					break;
 				default:
 					standard_packet_processor(wdNode, pkt);
@@ -3856,6 +3883,11 @@ static int watchdog_state_machine_standForCord(WD_EVENTS event, WatchdogNode* wd
 	return 0;
 }
 
+/*
+ * Event handler for the coordinator/master state.
+ * The function handels all the event received when the local
+ * node is the master/coordinator node.
+ */
 static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	switch (event)
@@ -3884,7 +3916,9 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 				if (g_cluster.currentCommand.commandStatus == COMMAND_FINISHED_ALL_REPLIED ||
 					g_cluster.currentCommand.commandStatus == COMMAND_FINISHED_TIMEOUT)
 				{
-					ereport(LOG,
+					update_quorum_status();
+
+					ereport(DEBUG1,
 						(errmsg("declare coordinator command finished with status:[%s]",
 								g_cluster.currentCommand.commandStatus == COMMAND_FINISHED_ALL_REPLIED?
 								"ALL NODES REPLIED":
@@ -3895,18 +3929,42 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 									   )));
 
 					ereport(LOG,
-						(errmsg("I am the cluster leader node. Starting escalation process"),
+						(errmsg("I am the cluster leader node"),
 							 errdetail("our declare coordinator message is accepted by all nodes")));
 
-					ereport(LOG,
-							(errmsg("I am the cluster leader node. Starting escalation process")));
 					g_cluster.masterNode = g_cluster.localNode;
-					g_cluster.escalation_pid = fork_escalation_process();
-					ereport(LOG,
-							(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
-					if (strlen(g_cluster.localNode->delegate_ip) > 0)
-						g_cluster.holding_vip = true;
-					
+
+					/*
+					 * Check if the quorum is present then start the escalation process
+					 * otherwise keep in the coordinator state and wait for the quorum
+					 */
+					if (g_cluster.quorum_status == -1)
+					{
+						g_cluster.escalated = false;
+						ereport(LOG,
+								(errmsg("I am the cluster leader node but we do not have enough nodes in cluster"),
+								 errdetail("waiting for the quorum to start escalation process")));
+					}
+					else
+					{
+						ereport(LOG,
+								(errmsg("I am the cluster leader node. Starting escalation process")));
+						g_cluster.escalation_pid = fork_escalation_process();
+						if (g_cluster.escalation_pid > 0)
+						{
+							g_cluster.escalated = true;
+							ereport(LOG,
+									(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
+							if (strlen(g_cluster.localNode->delegate_ip) > 0)
+								g_cluster.holding_vip = true;
+						}
+						else
+						{
+							g_cluster.escalated = false;
+							ereport(LOG,
+									(errmsg("failed to start escalation process")));
+						}
+					}
 				}
 				else
 				{
@@ -3999,39 +4057,30 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 			
 		case WD_EVENT_NW_IP_IS_ASSIGNED:
 			break;
-			
+
 
 		case WD_EVENT_TIMEOUT:
 			send_cluster_command(NULL, WD_IAM_COORDINATOR_MESSAGE, 10);
-			/* check if the quorum still exists */
-			int quorum_status = get_quorum_status();
-			if (quorum_status == -1)
-			{
-				ereport(LOG,
-						(errmsg("We do not have enough nodes in cluster")));
-				set_state(WD_WAITING_FOR_QUORUM);
-			}
-			else
-				set_timeout(20);
+			set_timeout(10);
 			break;
-			
+
 		case WD_EVENT_REMOTE_NODE_LOST:
 		{
 			/*
 			 * we have lost one remote connected node
 			 * check if the quorum still exists
 			 */
-			int quorum_status = get_quorum_status();
-			if (quorum_status == -1)
+			update_quorum_status();
+			if (g_cluster.quorum_status == -1)
 			{
 				ereport(LOG,
 						(errmsg("We have lost the quorum after loosing \"%s\"",wdNode->nodeName)));
-				
 				/*
-				 * We have lost the qurum, and left with no reason to
-				 * continue as a coordinator node
+				 * We have lost the quorum, stay as a master node but
+				 * perform de-escalation. As keeping the VIP may result in
+				 * split-brain
 				 */
-				set_state(WD_WAITING_FOR_QUORUM);
+				resign_from_escalated_node();
 			}
 			else
 				ereport(DEBUG1,
@@ -4042,10 +4091,43 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 		case WD_EVENT_LOCAL_NODE_LOST:
 			ereport(NOTICE,
 					(errmsg("Lifecheck reported we have been lost, resigning from master ")));
-			resign_from_coordinator();
+			resign_from_escalated_node();
 			set_state(WD_LOST);
 			break;
-			
+
+		case WD_EVENT_REMOTE_NODE_FOUND:
+		{
+			update_quorum_status();
+			if (g_cluster.escalated == false)
+			{
+				if (g_cluster.quorum_status >= 0)
+				{
+					ereport(LOG,
+							(errmsg("quorum is complete after node \"%s\" joined the cluster",wdNode->nodeName),
+							 errdetail("starting escalation process")));
+
+					g_cluster.escalation_pid = fork_escalation_process();
+					if (g_cluster.escalation_pid > 0)
+					{
+						g_cluster.escalated = true;
+						ereport(LOG,
+								(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
+						if (strlen(g_cluster.localNode->delegate_ip) > 0)
+							g_cluster.holding_vip = true;
+						else
+							g_cluster.holding_vip = false;
+					}
+					else
+					{
+						g_cluster.escalated = false;
+						ereport(LOG,
+								(errmsg("failed to start escalation process")));
+					}
+				}
+			}
+		}
+			break;
+
 		case WD_EVENT_PACKET_RCV:
 		{
 			switch (pkt->type)
@@ -4058,16 +4140,52 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 							(errmsg("We are corrdinator and another node tried a coup")));
 					reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
 					break;
-					
+
 				case WD_IAM_COORDINATOR_MESSAGE:
 				{
 					ereport(NOTICE,
-							(errmsg("We are in split brain, resigning from master")));
+							(errmsg("We are in split brain, WD_EVENT_LOCAL_NODE_LOST from master")));
 					reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
 					set_state(WD_JOINING);
 				}
 					break;
-					
+
+				case WD_ADD_NODE_MESSAGE:
+				{
+					standard_packet_processor(wdNode, pkt);
+					/*
+					 * A new node has joined the cluster
+					 * see if we were in waiting for quorum state
+					 * and this node completes the quorum
+					 */
+					update_quorum_status();
+					if (g_cluster.escalated == false)
+					{
+						if (g_cluster.quorum_status >= 0)
+						{
+							ereport(LOG,
+								(errmsg("quorum is complete after node \"%s\" joined the cluster",wdNode->nodeName),
+									 errdetail("starting escalation process")));
+							g_cluster.escalation_pid = fork_escalation_process();
+							if (g_cluster.escalation_pid > 0)
+							{
+								g_cluster.escalated = true;
+								ereport(LOG,
+										(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
+								if (strlen(g_cluster.localNode->delegate_ip) > 0)
+									g_cluster.holding_vip = true;
+							}
+							else
+							{
+								g_cluster.escalated = false;
+								ereport(LOG,
+										(errmsg("failed to start escalation process")));
+							}
+						}
+					}
+				}
+					break;
+
 				default:
 					standard_packet_processor(wdNode, pkt);
 					break;
@@ -4141,11 +4259,14 @@ static int watchdog_state_machine_nw_error(WD_EVENTS event, WatchdogNode* wdNode
 	return 0;
 }
 
-static void resign_from_coordinator(void)
+static void resign_from_escalated_node(void)
 {
+	if (g_cluster.escalated == false)
+		return;
+
 	fork_plunging_process();
 	g_cluster.holding_vip = false;
-
+	g_cluster.escalated = false;
 }
 
 static int watchdog_state_machine_voting(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
@@ -4225,10 +4346,10 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 		case WD_EVENT_WD_STATE_CHANGED:
 			send_cluster_command(g_cluster.masterNode, WD_JOIN_COORDINATOR_MESSAGE, 5);
 			break;
-			
+
 		case WD_EVENT_TIMEOUT:
 			break;
-		
+
 		case WD_EVENT_COMMAND_FINISHED:
 		{
 			if (g_cluster.currentCommand.packet.type == WD_JOIN_COORDINATOR_MESSAGE)
@@ -4253,6 +4374,20 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 			}
 		}
 			break;
+
+		case WD_EVENT_REMOTE_NODE_FOUND:
+		{
+			int quorum_status = g_cluster.quorum_status;
+			update_quorum_status();
+			if (g_cluster.quorum_status >= 0 && quorum_status < 0 )
+			{
+				ereport(LOG,
+					(errmsg("quorum is complete after node \"%s\" is found",wdNode->nodeName)));
+				standard_packet_processor(wdNode, pkt);
+			}
+		}
+			break;
+
 		case WD_EVENT_REMOTE_NODE_LOST:
 		{
 			/*
@@ -4260,20 +4395,19 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 			 * check if the node was coordinator
 			 */
 			if (g_cluster.masterNode == NULL)
+			{
 				set_state(WD_JOINING);
+			}
 			else
 			{
-				int quorum_status = get_quorum_status();
-				if (quorum_status == -1)
+				int quorum_status = g_cluster.quorum_status;
+				update_quorum_status();
+				if (g_cluster.quorum_status == -1 && quorum_status >= 0 )
 				{
 					ereport(LOG,
 							(errmsg("We have lost the quorum after loosing \"%s\"",wdNode->nodeName)));
-					
-					/*
-					 * We have lost the qurum, and left with no reason to
-					 * continue as a coordinator node
-					 */
-					set_state(WD_WAITING_FOR_QUORUM);
+					send_message_of_type(NULL, WD_QUORUM_IS_LOST);
+
 				}
 				else
 					ereport(DEBUG1,
@@ -4298,6 +4432,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 				}
 			}
 				break;
+
 			case WD_DECLARE_COORDINATOR_MESSAGE:
 				if (wdNode != g_cluster.masterNode)
 				{
@@ -4310,6 +4445,20 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 					set_state(WD_JOINING);
 				}
 				break;
+
+			case WD_ADD_NODE_MESSAGE:
+			{
+				int quorum_status = g_cluster.quorum_status;
+				update_quorum_status();
+				if (g_cluster.quorum_status >= 0 && quorum_status < 0 )
+				{
+					ereport(LOG,
+						(errmsg("quorum is complete after node \"%s\" joined the cluster",wdNode->nodeName)));
+					standard_packet_processor(wdNode, pkt);
+				}
+			}
+				break;
+
 			default:
 				standard_packet_processor(wdNode, pkt);
 				break;
@@ -4321,46 +4470,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 	return 0;
 }
 
-static int watchdog_state_machine_waiting_for_quorum(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
-{
-	switch (event)
-	{
-		case WD_EVENT_WD_STATE_CHANGED:
-			send_cluster_command(NULL, WD_QUORUM_IS_LOST, 10);
-			break;
-			
-		case WD_EVENT_TIMEOUT:
-			break;
-			
-		case WD_EVENT_PACKET_RCV:
-		{
-			standard_packet_processor(wdNode, pkt);
-			if (pkt->type == WD_ADD_NODE_MESSAGE)
-				set_state(WD_JOINING);
-		}
-			break;
-		case WD_EVENT_REMOTE_NODE_FOUND:
-		{
-			if (get_quorum_status() >= 0)
-			{
-				/* quorum is complete again, start cluster initializing */
-				ereport(LOG,
-						(errmsg("node \"%s\" is found, and quorum is complete again",wdNode->nodeName),
-						 errdetail("initializing the cluster")));
-				set_state(WD_JOINING);
-			}
-			break;
-		}
-			
-		case WD_EVENT_LOCAL_NODE_FOUND:
-			break;
-			
-		default:
-			break;
-	}
-	return 0;
-	
-}
+
 /*
  * The function identifies the current quorum state
  * return values:
@@ -4372,17 +4482,24 @@ static int watchdog_state_machine_waiting_for_quorum(WD_EVENTS event, WatchdogNo
  * 1:
  *     quorum exists
  */
-static int get_quorum_status(void)
+static int update_quorum_status(void)
 {
 	if ( get_cluster_node_count() > get_mimimum_nodes_required_for_quorum())
-		return 1;
+	{
+		g_cluster.quorum_status = 1;
+	}
 	else if ( get_cluster_node_count() == get_mimimum_nodes_required_for_quorum())
 	{
 		if (g_cluster.remoteNodeCount % 2 != 0)
-			return 0; /* on the edge */
-		return 1;
+			g_cluster.quorum_status = 0; /* on the edge */
+		else
+			g_cluster.quorum_status = 1;
 	}
-	return -1;
+	else
+	{
+		g_cluster.quorum_status = -1;
+	}
+	return g_cluster.quorum_status;
 }
 
 /* returns the minimum number of remote nodes required for quorum */
@@ -4405,19 +4522,15 @@ static int get_mimimum_nodes_required_for_quorum(void)
 static int set_state(WD_STATES newState)
 {
 	WD_STATES oldState = g_cluster.localNode->state;
-	ereport(LOG,
-			(errmsg("watchdog state changed from [%s] to [%s]",debug_states[oldState],debug_states[newState])));
 	g_cluster.localNode->state = newState;
-	/* If we are resigning from being coordinator
-	 * kill the escalation child process
-	if (oldState == WD_COORDINATOR && newState != WD_COORDINATOR && g_cluster.escalation_pid > 0)
-	{
-		kill(g_cluster.escalation_pid,SIGTERM);
-		g_cluster.escalation_pid = -1;
-	}
-	 */
 	if (oldState != newState)
+	{
+		ereport(LOG,
+				(errmsg("watchdog node state changed from [%s] to [%s]",debug_states[oldState],debug_states[newState])));
 		watchdog_state_machine(WD_EVENT_WD_STATE_CHANGED, NULL, NULL);
+		/* send out the info message to all nodes */
+		send_message_of_type(NULL, WD_INFO_MESSAGE);
+	}
 	return 0;
 }
 
@@ -4467,21 +4580,50 @@ static IPC_CMD_PREOCESS_RES execute_replicate_command(WDIPCCommandData* ipcComma
 		else
 			nodeResult->cmdState = COMMAND_STATE_SEND_ERROR;
 	}
-	
-	/* Okay if we are not able to send to minimum nodes required for quorum
-	 * we are already failed
+	/*
+	 * The current quorum status of standby node can be out of sync,
+	 * so update it before making any decision on command success
 	 */
+	if (get_local_node_state() == WD_STANDBY)
+		update_quorum_status();
+
 	if (ipcCommand->sendTo_count == 0)
 	{
+		/* We are not able to send the message to any node.
+		 * But this does not straight away means we are failed.
+		 * There are two scenarios.
+		 *
+		 * 1- The current cluster setting requires only single node
+		 * to complete the quorum.
+		 *
+		 * 2- Currrently the cluster does not holds the quorum and
+		 * I am the only node alive
+		 *
+		 * in these both of these above cases the command will be marked as successful
+		 * even if we are not able to send to any node
+		 */
 		if (get_mimimum_nodes_required_for_quorum() == 0)
+			res = IPC_CMD_COMPLETE;
+		/*
+		 * If quorum is not present at the moment, Sending to all connected nodes
+		 * is enough to mark it as success
+		 */
+		else if (g_cluster.quorum_status < 0 && get_cluster_node_count() == 0)
 			res = IPC_CMD_COMPLETE;
 		else
 			res = IPC_CMD_ERROR;
 	}
 	else if (ipcCommand->sendTo_count < get_mimimum_nodes_required_for_quorum() )
-		res = IPC_CMD_ERROR;
+	{
+		if (g_cluster.quorum_status < 0 && get_cluster_node_count() == ipcCommand->sendTo_count)
+			res = IPC_CMD_PROCESSING;
+		else
+			res = IPC_CMD_ERROR;
+	}
 	else
+	{
 		res = IPC_CMD_PROCESSING;
+	}
 	return res;
 }
 
@@ -4670,8 +4812,9 @@ static bool reply_is_received_for_pgpool_replicate_command(WatchdogNode* wdNode,
 
 		cleanUpIPCCommand(ipcCommand);
 	}
-	
-	return true; /* do not process this packet further */
+
+	/* do not process this packet further */
+	return true;
 }
 
 /*

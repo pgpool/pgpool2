@@ -161,7 +161,7 @@ fork_plunging_process(void)
 	{
 		if (pid == -1)
 			ereport(NOTICE,
-					(errmsg("failed to fork a escalation process")));
+					(errmsg("failed to fork a de-escalation process")));
 		return pid;
 	}
 	on_exit_reset();

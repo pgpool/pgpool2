@@ -699,7 +699,7 @@ check_pgpool_status_by_hb(void)
 
 		if (wd_check_heartbeat(node) == WD_NG)
 		{
-			ereport(LOG,
+			ereport(DEBUG2,
 				(errmsg("checking pgpool status by heartbeat"),
 					 errdetail("lifecheck failed. pgpool: %d at \"%s:%d\" seems not to be working",
 							   i, node->hostName, node->pgpoolPort)));
