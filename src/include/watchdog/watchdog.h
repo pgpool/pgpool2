@@ -36,7 +36,6 @@
 #define WD_TIME_DIFF_SEC(a,b) (int)(((a).tv_sec - (b).tv_sec) + \
                                     ((a).tv_usec - (b).tv_usec) / 1000000.0)
 
-
 /*
  * watchdog state
  */
@@ -45,7 +44,6 @@ typedef enum {
 	WD_LOADING,
 	WD_JOINING,
 	WD_INITIALIZING,
-	WD_WAITING_CONNECT,
 	WD_COORDINATOR,
 	WD_PARTICIPATE_IN_ELECTION,
 	WD_STAND_FOR_COORDINATOR,

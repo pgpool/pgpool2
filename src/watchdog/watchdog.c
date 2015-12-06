@@ -136,7 +136,6 @@ char *debug_states[] = {
 	"LOADING",
 	"JOINING",
 	"INITIALIZING",
-	"WAITING_CONNECT",
 	"COORDINATOR",
 	"PARTICIPATE_IN_ELECTION",
 	"STAND_FOR_COORDINATOR",
@@ -257,9 +256,10 @@ typedef struct wd_cluster
 	bool			holding_vip;
 	bool			network_error;
 	bool			escalated;
+	bool			clusterInitialized;
 
 	struct timeval  network_error_time;
-	
+
 	List			*unidentified_socks;
 	List			*notify_clients;
 	List			*ipc_command_socks;
@@ -396,6 +396,7 @@ static int wd_create_recv_socket(int port);
 static void wd_check_config(void);
 static pid_t watchdog_main(void);
 static pid_t fork_watchdog_child(void);
+static void cluster_in_stable_state(void);
 
 static void print_received_packet_info(WDPacketData* pkt,WatchdogNode* wdNode);
 /* global variables */
@@ -498,6 +499,7 @@ static void wd_cluster_initialize(void)
 	g_cluster.quorum_status = -1;
 	g_cluster.nextCommandID = 1;
 	g_cluster.escalated = false;
+	g_cluster.clusterInitialized = false;
 	g_cluster.holding_vip = false;
 	g_cluster.escalation_pid = 0;
 	g_cluster.unidentified_socks = NULL;
@@ -805,11 +807,10 @@ watchdog_main(void)
 	fd_set emask;
 	const int select_timeout = 1;
 	struct timeval tv, ref_time;
-	
-	
+
 	volatile int fd;
 	sigjmp_buf	local_sigjmp_buf;
-	
+
 	pool_signal(SIGTERM, wd_child_exit);
 	pool_signal(SIGINT, wd_child_exit);
 	pool_signal(SIGQUIT, wd_child_exit);
@@ -830,9 +831,9 @@ watchdog_main(void)
 											   ALLOCSET_DEFAULT_MAXSIZE);
 	
 	MemoryContextSwitchTo(TopMemoryContext);
-	
+
 	set_ps_display("watchdog", false);
-	
+
 	/* initialize all the local structures for watchdog */
 	wd_cluster_initialize();
 	/* create a server socket for incoming watchdog connections */
@@ -849,23 +850,18 @@ watchdog_main(void)
 	set_local_node_state(WD_LOADING);
 
 	/*
-	 * Okay inform the parent by SIGUSR1 about initialization complete
-	 */
-	kill(getppid(), SIGUSR2);
-	
-	/*
 	 * install the call back for preparation of system exit
 	 */
 	on_system_exit(wd_system_will_go_down, (Datum)NULL);
-	
+
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
 		/* Since not using PG_TRY, must reset error stack by hand */
 		if(fd > 0)
 			close(fd);
-		
+
 		error_context_stack = NULL;
-		
+
 		EmitErrorReport();
 		MemoryContextSwitchTo(TopMemoryContext);
 		FlushErrorState();
@@ -3438,6 +3434,17 @@ static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, 
 	return false;
 }
 
+
+static void cluster_in_stable_state(void)
+{
+	if (g_cluster.clusterInitialized == false)
+	{
+		g_cluster.clusterInitialized = true;
+		/* Inform the parent */
+		kill(getppid(), SIGUSR2);
+	}
+}
+
 static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	ereport(DEBUG1,
@@ -3727,6 +3734,19 @@ static int watchdog_state_machine_initializing(WD_EVENTS event, WatchdogNode* wd
 				 */
 				set_state(WD_STANDBY);
 			}
+			else if (get_cluster_node_count() == 0)
+			{
+				ereport(LOG,
+					(errmsg("I am the only alive node in the watchdog cluster"),
+						 errhint("skiping stand for coordinator state")));
+
+				/*
+				 * I am the alone node in the cluster at the moment
+				 * skip the intermediate steps and jump to the coordinator
+				 * state
+				 */
+				set_state(WD_COORDINATOR);
+			}
 			else
 			{
 				int i;
@@ -3790,7 +3810,7 @@ static int watchdog_state_machine_standForCord(WD_EVENTS event, WatchdogNode* wd
 				}
 				else
 				{
-					/* command is finished but because of error */
+					/* command finished with an error */
 					if (pkt)
 					{
 						if (pkt->type == WD_ERROR_MESSAGE)
@@ -3899,6 +3919,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 			set_timeout(10);
 			ereport(LOG,
 					(errmsg("I am announcing my self as master/coordinator watchdog node")));
+
 			for (i=0; i< g_cluster.remoteNodeCount; i++)
 			{
 				WatchdogNode* wdNode = &(g_cluster.remoteNodes[i]);
@@ -3933,6 +3954,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 							 errdetail("our declare coordinator message is accepted by all nodes")));
 
 					g_cluster.masterNode = g_cluster.localNode;
+					cluster_in_stable_state();
 
 					/*
 					 * Check if the quorum is present then start the escalation process
@@ -4269,6 +4291,9 @@ static void resign_from_escalated_node(void)
 	g_cluster.escalated = false;
 }
 
+/*
+ * state machine function for state participate in elections
+ */
 static int watchdog_state_machine_voting(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	switch (event)
@@ -4360,6 +4385,9 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 					WDPacketData* pktAsk = get_minimum_message(WD_ASK_FOR_POOL_CONFIG, NULL);
 					send_message(g_cluster.masterNode, pktAsk);
 					free_packet(pktAsk);
+
+					cluster_in_stable_state();
+
 					ereport(LOG,
 						(errmsg("successfully joined the watchdog cluster as standby node"),
 							 errdetail("our join coordinator request is accepted by cluster leader node \"%s\"",g_cluster.masterNode->nodeName)));
@@ -4511,7 +4539,7 @@ static int get_mimimum_nodes_required_for_quorum(void)
 	 */
 	if (g_cluster.remoteNodeCount % 2 == 0)
 		return (g_cluster.remoteNodeCount / 2);
-	
+
 	/*
 	 * Total nodes including self are even, So we consider 50%
 	 * nodes as quorum, should we?
@@ -4642,12 +4670,16 @@ static bool process_pgpool_replicate_command(WatchdogNode* wdNode, WDPacketData*
 				 errdetail("command packet contains no data")));
 		return false;
 	}
+
 	ereport(DEBUG1,
 		(errmsg("processing pgpool replicate variable command"),
 			 errdetail("%s",pkt->data)));
 
 	if (parse_wd_node_function_json(pkt->data, pkt->len, &func_name, &node_id_list, &node_count))
-	 ret = process_wd_command_function(wdNode, pkt, func_name, node_count, node_id_list);
+		ret = process_wd_command_function(wdNode, pkt, func_name, node_count, node_id_list);
+	else
+		reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+
 	if (func_name)
 		pfree(func_name);
 	if (node_id_list)
@@ -4785,8 +4817,9 @@ static bool reply_is_received_for_pgpool_replicate_command(WatchdogNode* wdNode,
 	nodeResult->cmdState = COMMAND_STATE_REPLIED;
 	ipcCommand->reply_from_count++;
 	ereport(DEBUG2,
-			(errmsg("watchdog node \"%s\" has replied for pgpool-II replicate command packet",wdNode->nodeName),
+		(errmsg("watchdog node \"%s\" has replied for pgpool-II replicate command packet",wdNode->nodeName),
 			 errdetail("command was sent to %d nodes and %d nodes have replied to it",ipcCommand->sendTo_count,ipcCommand->reply_from_count)));
+
 	if (ipcCommand->reply_from_count >= ipcCommand->sendTo_count)
 	{
 		/*
@@ -4807,7 +4840,7 @@ static bool reply_is_received_for_pgpool_replicate_command(WatchdogNode* wdNode,
 			}
 		}
 		if (write_ipc_command_with_result_data(ipcCommand, res_type, NULL, 0) == false)
-		ereport(LOG,
+			ereport(LOG,
 				(errmsg("failed to forward message to IPC command socket")));
 
 		cleanUpIPCCommand(ipcCommand);

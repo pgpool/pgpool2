@@ -227,6 +227,45 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		ereport(FATAL,
 				(errmsg("failed to allocate memory in startup process")));
 
+	initialize_shared_mem_objects(clear_memcache_oidmaps);
+
+	if (pool_config->use_watchdog)
+	{
+		sigset_t mask;
+		wakeup_request = 0;
+
+		/* Watchdog process fires SIGUSR2 once in stable state
+		 * so install the SIGUSR2 handler first up
+		 */
+		pool_signal(SIGUSR2, wakeup_handler);
+		/*
+		 * okay as we need to wait until watchdog is in stable state
+		 * so only wait for SIGUSR2 and signals those are necessary to make
+		 * sure we respond to user requests of shudown if it arives while
+		 * we are in waiting state.
+		 */
+		sigfillset(&mask);
+		sigdelset(&mask, SIGUSR2);
+		sigdelset(&mask, SIGTERM);
+		sigdelset(&mask, SIGINT);
+		sigdelset(&mask, SIGQUIT);
+		watchdog_pid = initialize_watchdog();
+		ereport (LOG,
+				 (errmsg("waiting for watchdog to initialize")));
+		while (wakeup_request == 0)
+		{
+			sigsuspend(&mask);
+		}
+		wakeup_request = 0;
+
+		ereport (LOG,
+				 (errmsg("watchdog process is initialized")));
+		/*
+		 * initialize the lifecheck process
+		 */
+		wd_lifecheck_pid = initialize_watchdog_lifecheck();
+	}
+
 	fds[0] = create_unix_domain_socket(un_addr);
 	on_proc_exit(FileUnlink, (Datum) un_addr.sun_path);
 
@@ -256,29 +295,6 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		free(inet_fds);
 	}
 
-	initialize_shared_mem_objects(clear_memcache_oidmaps);
-
-	if (pool_config->use_watchdog)
-	{
-		sigset_t mask;
-		pool_sighandler_t old_sig;
-		wakeup_request = 0;
-
-		old_sig = pool_signal(SIGUSR2, wakeup_handler);
-
-		sigfillset(&mask);
-		sigdelset(&mask, SIGUSR2);
-		watchdog_pid = initialize_watchdog();
-		while (wakeup_request == 0)
-		{
-			sigsuspend(&mask);  /* and wait for parent */
-		}
-		wakeup_request = 0;
-
-		pool_signal(SIGUSR2, old_sig);
-
-		wd_lifecheck_pid = initialize_watchdog_lifecheck();
-	}
 
 	/*
 	 * We need to block signal here. Otherwise child might send some
@@ -2320,15 +2336,15 @@ static void wakeup_children(void)
 
 static RETSIGTYPE wakeup_handler(int sig)
 {
-	POOL_SETMASK(&BlockSig);
 	wakeup_request = 1;
 	if (processState != INITIALIZING)
 	{
+		POOL_SETMASK(&BlockSig);
 		if(write(pipe_fds[1], "\0", 1) < 0)
 			ereport(WARNING,
 				(errmsg("wakeup_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+		POOL_SETMASK(&UnBlockSig);
 	}
-	POOL_SETMASK(&UnBlockSig);
 }
 
 /*
