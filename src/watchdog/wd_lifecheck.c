@@ -48,6 +48,12 @@
 
 #include "libpq-fe.h"
 
+#define LIFECHECK_GETNODE_WAIT_SEC_COUNT 5 /* max number of seconds the lifecheck process
+											* should waits before giving up
+											* while fetching the configured watchdog node
+											* infromation from watchdog process through IPC channel
+											*/
+
 /*
  * thread argument for lifecheck of pgpool
  */
@@ -312,6 +318,7 @@ static pid_t fork_lifecheck_child(void)
 	return pid;
 }
 
+
 /* main entry point of watchdog lifecheck process*/
 static pid_t
 lifecheck_main(void)
@@ -346,11 +353,11 @@ lifecheck_main(void)
 	/* Get the list of watchdog node to monitor
 	 * from watchdog process
 	 */
-	for (i =0; i < 5; i++)
+	for (i =0; i < LIFECHECK_GETNODE_WAIT_SEC_COUNT; i++)
 	{
 		if (fetch_watchdog_nodes_data() == true)
 			break;
-		sleep(2);
+		sleep(1);
 	}
 
 	if (!gslifeCheckCluster)
@@ -466,7 +473,7 @@ static bool inform_node_status(LifeCheckNode* node, char *message)
 
 	for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
 	{
-		res = issue_command_to_watchdog(WD_NODE_STATUS_CHANGE_COMMAND, WD_COMMAND_ACTION_DEFAULT,0, json_data, strlen(json_data),false);
+		res = issue_command_to_watchdog(WD_NODE_STATUS_CHANGE_COMMAND ,0, json_data, strlen(json_data),false);
 		if (res)
 			break;
 		sleep(1);
@@ -630,7 +637,7 @@ static int wd_lifecheck(void)
 				ereport(WARNING,
 						(errmsg("watchdog lifecheck, failed to connect to any trusted servers")));
 
-				inform_node_status(node,"trusted server is down");
+				inform_node_status(node,"trusted server is unreachable");
 			}
 			return WD_NG;
 		}

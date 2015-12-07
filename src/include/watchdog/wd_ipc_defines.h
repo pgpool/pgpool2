@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -42,13 +42,6 @@ typedef enum WDFailoverCMDResults
 	FAILOVER_RES_BLOCKED
 }WDFailoverCMDResults;
 
-typedef enum {
-	WD_COMMAND_ACTION_DEFAULT = 0,
-	WD_COMMAND_ACTION_SEND_ALL,
-	WD_COMMAND_ACTION_SEND_MASTER,
-	WD_COMMAND_ACTION_LOCAL
-} WD_COMMAND_ACTIONS;
-
 
 /* IPC MESSAGES TYPES */
 #define WD_REGISTER_FOR_NOTIFICATION		'0'
@@ -56,12 +49,9 @@ typedef enum {
 #define WD_GET_NODES_LIST_COMMAND			'3'
 #define WD_NODES_LIST_DATA					'4'
 
-#define WD_TRY_COMMAND_LOCK					'5'
-#define WD_COMMAND_UNLOCK					'6'
-
-#define WD_IPC_CMD_CLUSTER_IN_TRAN			'7'
-#define WD_IPC_CMD_RESULT_BAD				'8'
-#define WD_IPC_CMD_RESULT_OK				'9'
+#define WD_IPC_CMD_CLUSTER_IN_TRAN			'5'
+#define WD_IPC_CMD_RESULT_BAD				'6'
+#define WD_IPC_CMD_RESULT_OK				'7'
 
 #define WD_FUNCTION_COMMAND					'f'
 #define WD_FAILOVER_CMD_SYNC_REQUEST		's'

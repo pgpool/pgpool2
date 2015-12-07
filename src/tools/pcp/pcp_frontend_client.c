@@ -218,7 +218,7 @@ main(int argc, char **argv)
 				{
 					if (nodeID < 0)
 					{
-						fprintf(stderr, "%s: Invalid watchdog-id \"%s\", must be a positive number\n",progname,optarg);
+						fprintf(stderr, "%s: Invalid watchdog-id \"%s\", must be a positive number or zero for a local watchdog node\n",progname,optarg);
 						exit(0);
 					}
 				}
@@ -287,7 +287,7 @@ main(int argc, char **argv)
 			nodeID = atoi(argv[optind]);
 			if (nodeID < 0 )
 			{
-				fprintf(stderr, "%s: Invalid watchdog-id \"%s\", must be a positive number\n",progname,optarg);
+				fprintf(stderr, "%s: Invalid watchdog-id \"%s\", must be a positive number or zero for local watchdog node\n",progname,optarg);
 				exit(0);
 			}
 		}

@@ -395,7 +395,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 					if (ret > 0) /* Retries are exhausted, reset the counter */
 					{
 						retrycnt = 0;
-						if (ret == 2)
+						if (ret == 2) /* 2 = failover done on node */
 						{
 							health_check_node_id = 0;
 							use_template_db = false;

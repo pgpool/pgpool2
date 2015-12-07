@@ -131,7 +131,7 @@ char *wd_event_name[] =
 	"NODE CONNECTION FOUND"
 };
 
-char *debug_states[] = {
+char *wd_state_names[] = {
 	"DEAD",
 	"LOADING",
 	"JOINING",
@@ -175,7 +175,6 @@ typedef struct WDCommandNodeResult
 
 typedef struct WDIPCCommandData
 {
-	WD_COMMAND_ACTIONS command_action;
 	MemoryContext		memoryContext;
 	int					issueing_sock;
 	char				type;
@@ -266,9 +265,6 @@ typedef struct wd_cluster
 	List			*ipc_commands;
 	List			*wd_timer_commands;
 }wd_cluster;
-
-int	*escalation_status = NULL; /* Lives in shared memory */
-
 
 volatile sig_atomic_t reload_config_signal = 0;
 
@@ -365,9 +361,7 @@ static WDIPCCommandData* get_wd_IPC_command_from_socket(int sock);
 
 static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* IPCCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDIPCCommandData* IPCCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_lock_request(WDIPCCommandData *IPCCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDIPCCommandData* IPCCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPCCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandData *IPCCommand);
 static IPC_CMD_PREOCESS_RES execute_replicate_command(WDIPCCommandData* ipcCommand);
@@ -490,9 +484,6 @@ static void wd_cluster_initialize(void)
 		ereport(LOG,
 				(errmsg("watchdog remote node:%d on %s:%d",i,g_cluster.remoteNodes[i].hostname, g_cluster.remoteNodes[i].wd_port)));
 	}
-
-	escalation_status = pool_shared_memory_create(sizeof(int));
-	*escalation_status = 0;
 
 	g_cluster.masterNode = NULL;
 	g_cluster.aliveNodeCount = 0;
@@ -1338,7 +1329,6 @@ static bool write_ipc_command_with_result_data(WDIPCCommandData* IPCCommand, cha
 static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 {
 	char type;
-	WD_COMMAND_ACTIONS command_action;
 	IPC_CMD_PREOCESS_RES res;
 	int data_len,ret;
 	WDIPCCommandData* IPCCommand = NULL;
@@ -1357,16 +1347,7 @@ static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 				 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 		return false;
 	}
-	/* Next is is command action */
-	ret = socket_read(sock, &command_action, sizeof(int),0);
-	if (ret != sizeof(int))
-	{
-		ereport(WARNING,
-			(errmsg("error reading from IPC socket"),
-				 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
-		return false;
-	}
-	command_action = htonl(command_action);
+
 	/* We should have data length */
 	ret = socket_read(sock, &data_len, sizeof(int),0);
 	if (ret != sizeof(int))
@@ -1390,7 +1371,6 @@ static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 	IPCCommand = palloc0(sizeof(WDIPCCommandData));
 	
 	IPCCommand->issueing_sock = sock;
-	IPCCommand->command_action = command_action;
 	IPCCommand->type = type;
 	gettimeofday(&IPCCommand->issue_time, NULL);
 	
@@ -1444,14 +1424,6 @@ static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* IPCCommand)
 	{
 		case WD_NODE_STATUS_CHANGE_COMMAND:
 			return process_IPC_nodeStatusChange_command(IPCCommand);
-			break;
-
-		case WD_TRY_COMMAND_LOCK:
-			return process_IPC_lock_request(IPCCommand);
-			break;
-
-		case WD_COMMAND_UNLOCK:
-			process_IPC_unlock_request(IPCCommand);
 			break;
 
 		case WD_REGISTER_FOR_NOTIFICATION:
@@ -1576,7 +1548,7 @@ static bool fire_node_status_event(int nodeID, int nodeStatus)
 	if (nodeStatus == WD_LIFECHECK_NODE_STATUS_DEAD)
 	{
 		ereport(DEBUG1,
-				(errmsg("Firing NODE STATUS EVENT: NODE(ID=%d) IS DEAD",nodeID)));
+				(errmsg("firing NODE STATUS EVENT: NODE(ID=%d) IS DEAD",nodeID)));
 
 		if (wdNode == g_cluster.localNode)
 			watchdog_state_machine(WD_EVENT_LOCAL_NODE_LOST, wdNode, NULL);
@@ -1586,7 +1558,7 @@ static bool fire_node_status_event(int nodeID, int nodeStatus)
 	else if (nodeStatus == WD_LIFECHECK_NODE_STATUS_ALIVE)
 	{
 		ereport(DEBUG1,
-				(errmsg("Firing NODE STATUS EVENT: NODE(ID=%d) IS ALIVE",nodeID)));
+				(errmsg("firing NODE STATUS EVENT: NODE(ID=%d) IS ALIVE",nodeID)));
 
 		if (wdNode == g_cluster.localNode)
 			watchdog_state_machine(WD_EVENT_LOCAL_NODE_FOUND, wdNode, NULL);
@@ -1644,169 +1616,6 @@ static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPC
 	return IPC_CMD_ERROR;
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_unlock_request(WDIPCCommandData *IPCCommand)
-{
-	IPC_CMD_PREOCESS_RES ret = IPC_CMD_COMPLETE;
-	char res_type = WD_IPC_CMD_RESULT_OK;
-	/*
-	 * if cluster or myself is not in stable state
-	 * just return cluster in transaction
-	 */
-	IPCCommand->type = WD_INTERUNLOCKING_REQUEST;
-
-	if (g_cluster.lockHolderNode == NULL)
-	{
-		/* There is no lock holder as per our records
-		 * just ignore this request
-		 */
-		res_type = WD_IPC_CMD_RESULT_OK;
-	}
-	else if(g_cluster.lockHolderNode != g_cluster.localNode)
-	{
-		/* I am not the lockhoder node, so How can I unlock
-		 * just return the error
-		 */
-		ret = WD_IPC_CMD_RESULT_BAD;
-	}
-	else if (get_local_node_state() == WD_STANDBY)
-	{
-		/* I am a standby node, and also the lock holder
-		 * Just forward the request to coordinator */
-		
-		WDPacketData *wdPacket = get_minimum_message(WD_INTERUNLOCKING_REQUEST,NULL);
-		/* save the command ID */
-		IPCCommand->internal_command_id = wdPacket->command_id;
-		
-		if (send_message(g_cluster.masterNode, wdPacket) <= 0)
-		{
-			/* we have failed to send to master node, return lock failed  */
-			res_type = WD_IPC_CMD_RESULT_BAD;
-		}
-		else
-		{
-			/*
-			 * we need to wait for the results from master/coordinator node
-			 * do not reply back to ipc until we hear from master node
-			 */
-
-			ret = IPC_CMD_PROCESSING;
-		}
-		/* whatever the case we need to resign ourself from lock
-		 * holder
-		 */
-		pfree(wdPacket);
-		g_cluster.lockHolderNode = NULL;
-	}
-	else if (get_local_node_state() == WD_COORDINATOR)
-	{
-		/*
-		 * If I am coordinator, Just process the request locally
-		 */
-		if (node_has_resigned_from_interlocking(g_cluster.localNode, NULL))
-		{
-			res_type = WD_IPC_CMD_RESULT_OK;
-		}
-		else
-		{
-			res_type = WD_IPC_CMD_RESULT_BAD;
-		}
-	}
-	else /* we are not in any stable state at the moment */
-	{
-		g_cluster.lockHolderNode = NULL;
-		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
-	}
-	
-	if (ret == IPC_CMD_PROCESSING)
-	{
-		/* Do not reply back to requester, as we are
-		 * still processing the results
-		 */
-		return ret;
-	}
-	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
-	{
-		/*
-		 * This is the complete lifecycle of command.
-		 * we are done with it
-		 */
-		ret = IPC_CMD_COMPLETE;
-	}
-	else
-		ret = IPC_CMD_ERROR;
-
-	return ret;
-}
-
-
-static IPC_CMD_PREOCESS_RES process_IPC_lock_request(WDIPCCommandData *IPCCommand)
-{
-	char res_type = WD_IPC_CMD_RESULT_BAD;
-	/*
-	 * if cluster or myself is not in stable state
-	 * just return cluster in transaction
-	 */
-	ereport(LOG,
-			(errmsg("processing lock request from IPC socket")));
-
-	IPCCommand->type = WD_INTERLOCKING_REQUEST;
-
-	if (get_local_node_state() == WD_STANDBY)
-	{
-		
-		/* I am a standby node, Just forward the request to coordinator */
-		WDPacketData * wdPacket = get_minimum_message(WD_INTERLOCKING_REQUEST,NULL);
-		/* save the command ID */
-		IPCCommand->internal_command_id = wdPacket->command_id;
-		
-		if (send_message(g_cluster.masterNode, wdPacket) <= 0)
-		{
-			ereport(LOG,
-				(errmsg("failed to process lock request from IPC socket"),
-					 errdetail("failed to forward the request to master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
-
-			/* we have failed to send to any node, return lock failed  */
-			res_type = WD_IPC_CMD_RESULT_BAD;
-		}
-		else
-		{
-			/*
-			 * we need to wait for the result
-			 */
-			ereport(LOG,
-				(errmsg("lock request from IPC socket is forwarded to master watchdog node \"%s\"",g_cluster.masterNode->nodeName),
-					 errdetail("waiting for the reply from master node...")));
-
-			return IPC_CMD_PROCESSING;
-		}
-	}
-	else if (get_local_node_state() == WD_COORDINATOR)
-	{
-		/*
-		 * If I am coordinator, Just process the request locally
-		 */
-		if (node_has_requested_for_interlocking(g_cluster.localNode, NULL))
-		{
-			res_type = WD_IPC_CMD_RESULT_OK;
-		}
-		else
-			res_type = WD_IPC_CMD_RESULT_BAD;
-	}
-	else /* we are not in any stable state at the moment */
-	{
-		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
-	}
-
-	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
-	{
-		/*
-		 * This is the complete lifecycle of command.
-		 * we are done with it
-		 */
-		return IPC_CMD_COMPLETE;
-	}
-	return IPC_CMD_ERROR;
-}
 
 static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandData *IPCCommand)
 {
@@ -2315,6 +2124,9 @@ static void wd_system_will_go_down(int code, Datum arg)
 		close_socket_connection(&wdNode->client_socket);
 		close_socket_connection(&wdNode->server_socket);
 	}
+	/* close network monitoring socket */
+	if (g_cluster.network_monitor_sock > 0)
+		close(g_cluster.network_monitor_sock);
 }
 
 static void close_socket_connection(SocketConnection* conn)
@@ -3180,24 +2992,6 @@ static int update_connected_node_count(void)
 	return g_cluster.aliveNodeCount;
 }
 
-static void update_nodes_connection_status(void)
-{
-	int i;
-	for (i = 0; i< g_cluster.remoteNodeCount; i++)
-	{
-		bool conectable = false;
-		WatchdogNode* wdNode = &(g_cluster.remoteNodes[i]);
-		if (is_socket_connection_connected(&wdNode->client_socket))
-			conectable = true;
-		else if (is_socket_connection_connected(&wdNode->server_socket))
-			conectable = true;
-		if (wdNode->is_connectable && conectable)	/* new and old status is same */
-			continue;
-		wdNode->is_connectable = conectable;
-		watchdog_state_machine(wdNode->is_connectable?WD_EVENT_NODE_CON_FOUND:WD_EVENT_NODE_CON_LOST, wdNode, NULL);
-	}
-}
-
 
 static bool service_lost_connections(void)
 {
@@ -3448,7 +3242,7 @@ static void cluster_in_stable_state(void)
 static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	ereport(DEBUG1,
-			(errmsg("STATE MACHINE INVOKED WITH EVENT = %s Current State = %s",wd_event_name[event], debug_states[get_local_node_state()])));
+			(errmsg("STATE MACHINE INVOKED WITH EVENT = %s Current State = %s",wd_event_name[event], wd_state_names[get_local_node_state()])));
 	
 	if (event == WD_EVENT_REMOTE_NODE_LOST)
 	{
@@ -4554,7 +4348,7 @@ static int set_state(WD_STATES newState)
 	if (oldState != newState)
 	{
 		ereport(LOG,
-				(errmsg("watchdog node state changed from [%s] to [%s]",debug_states[oldState],debug_states[newState])));
+				(errmsg("watchdog node state changed from [%s] to [%s]",wd_state_names[oldState],wd_state_names[newState])));
 		watchdog_state_machine(WD_EVENT_WD_STATE_CHANGED, NULL, NULL);
 		/* send out the info message to all nodes */
 		send_message_of_type(NULL, WD_INFO_MESSAGE);
@@ -5102,7 +4896,7 @@ static void print_watchdog_node_info(WatchdogNode* wdNode)
 {
 	ereport(DEBUG2,
 			(errmsg("state: \"%s\" Host: \"%s\" Name: \"%s\" WD Port:%d PP Port: %d priority:%d",
-					debug_states[wdNode->state],
+					wd_state_names[wdNode->state],
 					wdNode->hostname
 					,wdNode->nodeName
 					,wdNode->wd_port
@@ -5129,5 +4923,5 @@ static void print_received_packet_info(WDPacketData* pkt,WatchdogNode* wdNode)
 		(errmsg("watchdog packet received from node \"%s\"",wdNode->nodeName),
 			 errdetail("command id : %d Type: %s my watchdog state :%s",pkt->command_id,
 					   pkt_type?pkt_type->name:"UNKNOWN",
-					   debug_states[get_local_node_state()])));
+					   wd_state_names[get_local_node_state()])));
 }

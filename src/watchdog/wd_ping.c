@@ -33,7 +33,6 @@
 #include "pool.h"
 #include "utils/elog.h"
 #include "pool_config.h"
-//#include "watchdog/watchdog.h"
 #include "watchdog/wd_utils.h"
 
 #define WD_MAX_PING_RESULT 256

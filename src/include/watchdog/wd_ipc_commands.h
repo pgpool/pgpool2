@@ -64,7 +64,7 @@ extern WDFailoverCMDResults wd_send_failover_sync_command(WDFailoverCMDTypes cmd
 
 extern char* wd_get_watchdog_nodes(int nodeID);
 
-extern WDIPCCmdResult* issue_command_to_watchdog(char type, WD_COMMAND_ACTIONS command_action,int timeout_sec, char* data, int data_len, bool blocking);
+extern WDIPCCmdResult* issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, bool blocking);
 
 
 /* wd_interlock.c */

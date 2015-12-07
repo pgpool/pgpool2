@@ -35,7 +35,6 @@
 #include "watchdog/wd_utils.h"
 
 #include "query_cache/pool_memqcache.h"
-extern int *escalation_status;
 
 static void
 wd_exit(int exit_signo)
@@ -59,8 +58,6 @@ pid_t
 fork_escalation_process(void)
 {
 	pid_t pid;
-	int has_vip = 0;
-
 	pid = fork();
 	if (pid != 0)
 	{
@@ -85,13 +82,10 @@ fork_escalation_process(void)
 
 	MemoryContextSwitchTo(TopMemoryContext);
 	
-	set_ps_display("escalation",false);
+	set_ps_display("watchdog escalation",false);
 
 	ereport(LOG,
 			(errmsg("watchdog: escalation started")));
-
-	*escalation_status = 1;
-
 	/*
 	 * STEP 1
 	 * clear shared memory cache
@@ -108,7 +102,7 @@ fork_escalation_process(void)
 
 	/*
 	 * STEP 2
-	 * execute escalation command
+	 * execute escalation command provided by user in pgpool conf file
 	 */
 	if (strlen(pool_config->wd_escalation_command))
 	{
@@ -133,17 +127,15 @@ fork_escalation_process(void)
 
 	/*
 	 * STEP 3
-	 * interface up as delegate IP
+	 * bring up the delegate IP
 	 */
-
 	if (strlen(pool_config->delegate_IP) != 0)
 	{
-		has_vip = wd_IP_up();
+		if (wd_IP_up() != WD_OK)
+			ereport(WARNING,
+				(errmsg("watchdog de-escalation failed to bring down delegate IP")));
+
 	}
-
-	if (has_vip == WD_OK)
-		*escalation_status = 2;
-
 	exit(0);
 }
 
@@ -154,8 +146,7 @@ pid_t
 fork_plunging_process(void)
 {
 	pid_t pid;
-	int has_vip = 0;
-	
+
 	pid = fork();
 	if (pid != 0)
 	{
@@ -180,16 +171,14 @@ fork_plunging_process(void)
 	
 	MemoryContextSwitchTo(TopMemoryContext);
 	
-	set_ps_display("de-escalation",false);
+	set_ps_display("watchdog de-escalation",false);
 	
 	ereport(LOG,
 			(errmsg("watchdog: de-escalation started")));
 	
-	*escalation_status = 1;
-	
 	/*
-	 * STEP 2
-	 * execute escalation command
+	 * STEP 1
+	 * execute de-escalation command provided by user in pgpool conf file
 	 */
 	if (strlen(pool_config->wd_de_escalation_command))
 	{
@@ -213,16 +202,15 @@ fork_plunging_process(void)
 	}
 	
 	/*
-	 * STEP 3
-	 * interface up as delegate IP
+	 * STEP 2
+	 * bring down the delegate IP
 	 */
 	
 	if (strlen(pool_config->delegate_IP) != 0)
 	{
-		has_vip = wd_IP_down();
+		if (wd_IP_down() != WD_OK)
+			ereport(WARNING,
+					(errmsg("watchdog de-escalation failed to bring down delegate IP")));
 	}
-	
-	if (has_vip == WD_OK)
-		*escalation_status = 2;
 	exit(0);
 }

@@ -87,32 +87,27 @@ typedef enum {
 
 typedef struct SocketConnection
 {
-	int				sock;
-	struct			timeval tv;
-	char			addr[48];
-	WD_SOCK_STATE	sock_state;
+	int				sock;			/* socket descriptor */
+	struct			timeval tv;		/* connect time of socket */
+	char			addr[48];		/* ip address of socket connection*/
+	WD_SOCK_STATE	sock_state;		/* current state of socket */
 }SocketConnection;
 
 typedef struct WatchdogNode
 {
 	WD_STATES state;
 	struct timeval tv;						/* startup time value */
-	char nodeName[WD_MAX_HOST_NAMELEN];
+	char nodeName[WD_MAX_HOST_NAMELEN];		/* name of this node */
 	char hostname[WD_MAX_HOST_NAMELEN];		/* host name */
 	int wd_port;							/* watchdog port */
 	int pgpool_port;						/* pgpool port */
 	int wd_priority;						/* watchdog priority */
 	char delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
-	char** resolved_ips;
-	int delegate_ip_flag;					/* delegate IP flag */
-	unsigned int	lastCommandID;
-	struct timeval hb_last_recv_time; 		/* recv time */
-	int	private_id;
-	SocketConnection server_socket;
-	SocketConnection client_socket;
-	bool is_connectable;					/* true if any of the socket is connected */
-	bool is_lock_holder;					/* lock holder flag */
-	bool in_interlocking;					/* interlocking is in progress */
+	int	private_id;							/* ID assigned to this node
+											 * This id is consumed locally
+											 */
+	SocketConnection server_socket;			/* socket connections for this node initiated by remote */
+	SocketConnection client_socket;			/* socket connections for this node initiated by local*/
 }WatchdogNode;
 
 extern pid_t initialize_watchdog(void);
