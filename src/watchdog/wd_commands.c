@@ -572,28 +572,28 @@ WDFailoverCMDResults wd_failover_command_start(WDFailoverCMDTypes cmdType)
 {
 	if (pool_config->use_watchdog)
 		return wd_issue_failover_lock_command(cmdType,"START_COMMAND");
-	return FAILOVER_RES_PROCEED_LOCK_HOLDER;
+	return FAILOVER_RES_I_AM_LOCK_HOLDER;
 }
 
 WDFailoverCMDResults wd_failover_command_end(WDFailoverCMDTypes cmdType)
 {
 	if (pool_config->use_watchdog)
 		return wd_issue_failover_lock_command(cmdType,"END_COMMAND");
-	return FAILOVER_RES_PROCEED_LOCK_HOLDER;
+	return FAILOVER_RES_I_AM_LOCK_HOLDER;
 }
 
 WDFailoverCMDResults wd_failover_command_check_lock(WDFailoverCMDTypes cmdType)
 {
 	if (pool_config->use_watchdog)
 		return wd_issue_failover_lock_command(cmdType,"CHECK_LOCKED");
-	return FAILOVER_RES_PROCEED_LOCK_HOLDER;
+	return FAILOVER_RES_I_AM_LOCK_HOLDER;
 }
 
 WDFailoverCMDResults wd_release_failover_command_lock(WDFailoverCMDTypes cmdType)
 {
 	if (pool_config->use_watchdog)
 		return wd_issue_failover_lock_command(cmdType,"UNLOCK_COMMAND");
-	return FAILOVER_RES_PROCEED_LOCK_HOLDER;
+	return FAILOVER_RES_I_AM_LOCK_HOLDER;
 }
 
 void wd_wati_until_lock_or_timeout(WDFailoverCMDTypes cmdType)
@@ -603,8 +603,8 @@ void wd_wati_until_lock_or_timeout(WDFailoverCMDTypes cmdType)
 	while (1)
 	{
 		res = wd_failover_command_check_lock(cmdType);
-		if (res == FAILOVER_RES_PROCEED_LOCK_HOLDER ||
-			res == FAILOVER_RES_PROCEED_UNLOCKED)
+		if (res == FAILOVER_RES_I_AM_LOCK_HOLDER ||
+			res == FAILOVER_RES_LOCK_UNLOCKED)
 		{
 			/* we have the permision */
 			return;

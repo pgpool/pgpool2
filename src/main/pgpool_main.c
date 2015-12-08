@@ -1543,7 +1543,7 @@ static void failover(void)
 			/* Aquire failback start command lock */
 			failoverLockRes = wd_failover_command_start(NODE_FAILBACK_CMD);
 
-			if (failoverLockRes != FAILOVER_RES_BLOCKED)
+			if (failoverLockRes == FAILOVER_RES_I_AM_LOCK_HOLDER)
 			{
 				trigger_failover_command(node_id, pool_config->failback_command,
 										MASTER_NODE_ID, get_next_master_node(), PRIMARY_NODE_ID);
@@ -1711,7 +1711,7 @@ static void failover(void)
 
 		failoverLockRes = wd_failover_command_start(NODE_FAILED_CMD);
 
-		if (failoverLockRes != FAILOVER_RES_BLOCKED)
+		if (failoverLockRes == FAILOVER_RES_I_AM_LOCK_HOLDER)
 		{
 			/* Exec failover_command if needed */
 			for (i = 0; i < pool_config->backend_desc->num_backends; i++)
@@ -1810,7 +1810,7 @@ static void failover(void)
 		/*
 		 * follow master command also uses the same locks used by trigring command
 		 */
-		if (failoverLockRes != FAILOVER_RES_BLOCKED)
+		if (failoverLockRes == FAILOVER_RES_I_AM_LOCK_HOLDER)
 		{
 			if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
 			{

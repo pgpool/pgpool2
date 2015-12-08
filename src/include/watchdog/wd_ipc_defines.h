@@ -35,11 +35,18 @@ typedef enum WDFailoverCMDTypes
 
 typedef enum WDFailoverCMDResults
 {
-	FAILOVER_RES_ERROR = 0,
-	FAILOVER_RES_TRANSITION,
-	FAILOVER_RES_PROCEED_LOCK_HOLDER,
-	FAILOVER_RES_PROCEED_UNLOCKED,
-	FAILOVER_RES_BLOCKED
+	FAILOVER_RES_ERROR = 0,				/* processing of command is failed */
+	FAILOVER_RES_TRANSITION,			/* cluster is transitioning and is 
+										 * currently not accepting any commands.
+										 * retry is the best option when this result
+										 * is returned by watchdog
+										 */
+	FAILOVER_RES_I_AM_LOCK_HOLDER,		/* node successfully becomes a lock holder */
+	FAILOVER_RES_LOCK_UNLOCKED,			/* the node is not a lock holder but associated
+										 * lock is unlocked */
+	FAILOVER_RES_BLOCKED				/* the node is neither a lock holder and
+										 * associated lock is also locked
+										 */
 }WDFailoverCMDResults;
 
 

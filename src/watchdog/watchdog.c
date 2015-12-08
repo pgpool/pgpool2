@@ -1879,7 +1879,7 @@ node_is_asking_for_failover_cmd_start(WatchdogNode* wdNode, WDPacketData* pkt, i
 					lockingNode->lockHolderNode = wdNode;
 					lockingNode->locked = true;
 				}
-				res = FAILOVER_RES_PROCEED_LOCK_HOLDER;
+				res = FAILOVER_RES_I_AM_LOCK_HOLDER;
 			}
 			else /* some other node is holding the lock */
 			{
@@ -1891,7 +1891,7 @@ node_is_asking_for_failover_cmd_start(WatchdogNode* wdNode, WDPacketData* pkt, i
 				if (lockingNode->locked)
 					res = FAILOVER_RES_BLOCKED;
 				else
-					res = FAILOVER_RES_PROCEED_UNLOCKED;
+					res = FAILOVER_RES_LOCK_UNLOCKED;
 			}
 		}
 	}
@@ -1933,7 +1933,7 @@ node_is_asking_for_failover_cmd_end(WatchdogNode* wdNode, WDPacketData* pkt, int
 				if (resign)
 					lockingNode->lockHolderNode = NULL;
 				lockingNode->locked = false;
-				res = FAILOVER_RES_PROCEED_UNLOCKED;
+				res = FAILOVER_RES_LOCK_UNLOCKED;
 			}
 			else /* some other node is holding the lock */
 			{
