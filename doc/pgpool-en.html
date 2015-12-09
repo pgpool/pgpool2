@@ -37,6 +37,7 @@ Last modified: Mon Aug 24 18:19:17 JST 2015
         <li><a href="#deploy">Deploying pgpool-II</a></li>
         <li><a href="#watchdog">Watchdog</a></li>
         <li><a href="#pcp_command">PCP commands</a></li>
+        <li><a href="#pgpool_adm">pgpool_adm</a></li>
         <li><a href="#troubleshooting">Troubleshooting</a></li>
         <li><a href="#restriction">Restrictions</a></li>
         <li><a href="#internal">internal</a></li>
@@ -4534,11 +4535,12 @@ string and the socket file is placed in the pgpool-II <a href="#WD_IPC_SOCKET_DI
 <h3 id="Watchdog_IPC_command_packet_format">Watchdog IPC command packet format</h3>
 <dl>
 <p>
-The watchdog IPC command packet consists of three fields. Below table details the message fields and description
+The watchdog IPC command packet consists of four fields. Below table details the message fields and description
 </p>
 <table border>
 	<tr class="header"><th>Field</th>		<th>Type</th>						<th>Description</th></tr>
 	<tr><th>TYPE</th>		<td>BYTE1</td>						<td>Command Type</td></tr>
+	<tr><th>ACTION</th>		<td>INT32 Network byte order</td>	<td>Command Action. Currently only DEFAULT(0) is supported</td></tr>
 	<tr><th>LENGTH</th>		<td>INT32 Network byte order</td>	<td>The length of data to follow</td></tr>
 	<tr><th>DATA</th>		<td>DATA in JSON format</td>		<td>Command data in JSON format</td></tr>
 </table>
@@ -5218,6 +5220,317 @@ desc : PCP port # to bind
 	</dl>
 </dd>
 </dl>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
+
+<h1 id="pgpool_adm">pool_adm</h1>
+<p>
+  pgpoo_adm is a set of extensions to allow SQL access to pcp commands
+  (actually, pcp libraries).
+  It uses foreign data wrapper as shown in the diagram below.
+</p>
+
+<p><img src="pgpool_adm.png" alt="Data flow in pgpool_adm" hight=70% width=70%></p>
+
+<p>
+  It is possible to call the functions from either via pgpool-II (1) or via PostgreSQL (2).
+  In case (1), pgpool-II accepts query from user (1), then forward to PostgreSQL (3).
+  PostgreSQL connects to pgpool-II (5) and pgpool-II reply back to PostgreSQL with the result (3). PostgreSQL returns the result to pgpool-II (5) and pgpool-II fowards the data to the user (6).
+</p>
+<p>
+  In case (2), PostgreSQL accepts query from user (2).
+  PostgreSQL connects to pgpool-II (5) and pgpool-II reply back to PostgreSQL with the result (3).
+  PostgreSQL replies back the data to the user (6).
+</p>
+<p>
+  There are two forms to call pgpool_adm functions: first form accepts pgpool-II host name (or IP address), pcp port number, pcp user name, its password and aother parameters.
+</p>
+<p>
+  In the second form, pgpool-II server name is required.
+  The server name must be already defined using "CREATE FOREIGN SERVER" command of PostgreSQL.
+The pcp port number is hard coded as 9898, the pcp user name is assumes to be same as caller's PostgreSQL user name.
+  password is extraced from $HOME/.pcppass.
+</p>
+
+<h2>pgpool_adm functions list</h2>
+<table border>
+<tr><th><a href="#func_pcp_node_info">pcp_node_info</a></th>
+  <td>retrieves the node information</td></tr>
+<tr><th><a href="#func_pcp_pool_status">pcp_pool_status</a></th>
+    <td>retrieves parameters in pgpool.conf</td></tr>
+<tr><th><a href="#func_pcp_node_count">pcp_node_count</a></th>
+  <td>retrieves the number of nodes</td></tr>
+<tr><th><a href="#func_pcp_attach_node">pcp_attach_node</a></th>
+  <td>attaches a node to pgpool-II</td></tr>
+<tr><th><a href="#func_pcp_detach_node">pcp_detach_node</a></th>
+  <td>detaches a node to pgpool-II</td></tr>
+</table>
+
+<h3 id="func_pcp_node_info">pcp_node_info</h3>
+<dl>
+<dt>Format:</dt>
+<dd>
+  <pre><code>pcp_node_info(integer node_id, text host, integer port, text username, text password, OUT status text, OUT weight float4) returns record</code></pre>
+  <pre><code>pcp_node_info(integer node_id, text pcp_server, OUT status text, OUT weight float4) returns record</code></pre>
+</dd>
+
+<dt>Description:</dt>
+<dd>
+  <p>Retrieves the node information.
+  See <a href="#pcp_node_info">pcp_node_info command</a> for more details.</p>
+  <p>
+    Here is an example output.
+<pre>
+test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
+ host | port  |      status       | weight 
+------+-------+-------------------+--------
+ /tmp | 11002 | Connection in use |      0
+(1 row)
+</pre>
+  </p>
+</dd>
+
+<dt>Parameters:</dt>
+<dd>
+  <dl class="options">
+  <dt><code>node_id</strong></code></dt>
+<dd>
+  <p>The index of backend node.</p>
+</dd>
+
+<dd>
+  <dt><code>host</strong></code></dt>
+  <p>The host name or IP address where pcp server is running on.</p>
+
+  <dt><code>port</strong></code></dt>
+  <p>The port number pcp server is listening on.</p>
+
+  <dt><code>username</strong></code></dt>
+  <p>The user name to access pcp server.</p>
+
+  <dt><code>password</strong></code></dt>
+  <p>The pass word to access pcp server.</p>
+
+  <dt><code>pcp_server</strong></code></dt>
+  <p>The foreign server name for pcp server.</p>
+
+</dd>
+
+</dd>
+</dl>
+</h3>
+
+<h3 id="func_pcp_pool_status">pcp_pool_status</h3>
+<dl>
+<dt>Format:</dt>
+<dd>
+  <pre><code>pcp_pool_status(text host, integer port, text username, text password) returns record</code></pre>
+  <pre><code>pcp_pool_status(text pcp_server) returns record</code></pre>
+</dd>
+
+<dt>Description:</dt>
+<dd>
+  <p>Retrieves parameters in pgpool.conf.
+  See <a href="#pool_status">pool_status</a> for more details.</p>
+  <p>
+    Here is an example output.
+<pre>
+test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHERE item ~ 'backend.*0';
+          item           |                     value                      |          description          
+-------------------------+------------------------------------------------+-------------------------------
+ backend_hostname0       | /tmp                                           | backend #0 hostname
+ backend_port0           | 11002                                          | backend #0 port number
+ backend_weight0         | 0.500000                                       | weight of backend #0
+ backend_data_directory0 | /home/t-ishii/work/pgpool-II/current/aaa/data0 | data directory for backend #0
+ backend_status0         | 2                                              | status of backend #0
+ backend_flag0           | ALLOW_TO_FAILOVER                              | backend #0 flag
+(6 rows)
+</pre>
+  </p>
+</dd>
+
+<dt>Parameters:</dt>
+<dd>
+  <dl class="options">
+<dd>
+  <dt><code>host</strong></code></dt>
+  <p>The host name or IP address where pcp server is running on.</p>
+
+  <dt><code>port</strong></code></dt>
+  <p>The port number pcp server is listening on.</p>
+
+  <dt><code>username</strong></code></dt>
+  <p>The user name to access pcp server.</p>
+
+  <dt><code>password</strong></code></dt>
+  <p>The pass word to access pcp server.</p>
+
+  <dt><code>pcp_server</strong></code></dt>
+  <p>The foreign server name for pcp server.</p>
+
+</dd>
+
+</dd>
+</dl>
+</h3>
+
+<h3 id="func_pcp_node_count">pcp_node_node_count</h3>
+<dl>
+<dt>Format:</dt>
+<dd>
+  <pre><code>pcp_node_count(integer node_id, text host, integer port, text username, text password, OUT node_count integer) returns record</code></pre>
+  <pre><code>pcp_node_count(integer node_id, OUT node_count integer) returns record</code></pre>
+</dd>
+
+<dt>Description:</dt>
+<dd>
+  <p>Retrieves the node information.
+  See <a href="#pcp_node_count">pcp_node_count command</a> for more details.</p>
+  <p>
+    Here is an example output.
+<pre>
+test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
+ node_count 
+------------
+          2
+(1 row)
+</pre>
+  </p>
+</dd>
+
+<dt>Parameters:</dt>
+<dd>
+  <dl class="options">
+
+<dd>
+  <dt><code>host</strong></code></dt>
+  <p>The host name or IP address where pcp server is running on.</p>
+
+  <dt><code>port</strong></code></dt>
+  <p>The port number pcp server is listening on.</p>
+
+  <dt><code>username</strong></code></dt>
+  <p>The user name to access pcp server.</p>
+
+  <dt><code>password</strong></code></dt>
+  <p>The pass word to access pcp server.</p>
+
+  <dt><code>pcp_server</strong></code></dt>
+  <p>The foreign server name for pcp server.</p>
+
+</dd>
+
+</dd>
+</dl>
+</h3>
+
+<h3 id="func_pcp_attach_node">pcp_attach_node</h3>
+<dl>
+<dt>Format:</dt>
+<dd>
+  <pre><code>pcp_attach_node(integer node_id, text host, integer port, text username, text password, OUT node_attached boolean) returns boolean</code></pre>
+  <pre><code>pcp_attach_node(integer node_id, text pcp_server, OUT node_attached boolean) returns boolean</code></pre>
+</dd>
+
+<dt>Description:</dt>
+<dd>
+  <p>attaches a node to pgpool-II.
+  See <a href="#pcp_attach_node">pcp_attach_node</a> for more details.</p>
+  <p>
+    Here is an example output.
+<pre>
+test=# SELECT * FROM pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
+ node_attached 
+---------------
+ t
+(1 row)
+</pre>
+  </p>
+</dd>
+
+<dt>Parameters:</dt>
+<dd>
+  <dl class="options">
+  <dt><code>node_id</strong></code></dt>
+  <p>The index of backend node.</p>
+
+  <dt><code>host</strong></code></dt>
+  <p>The host name or IP address where pcp server is running on.</p>
+
+  <dt><code>port</strong></code></dt>
+  <p>The port number pcp server is listening on.</p>
+
+  <dt><code>username</strong></code></dt>
+  <p>The user name to access pcp server.</p>
+
+  <dt><code>password</strong></code></dt>
+  <p>The pass word to access pcp server.</p>
+
+  <dt><code>pcp_server</strong></code></dt>
+  <p>The foreign server name for pcp server.</p>
+
+</dd>
+
+</dd>
+</dl>
+</h3>
+
+<h3 id="func_pcp_detach_node">pcp_detach_node</h3>
+<dl>
+<dt>Format:</dt>
+<dd>
+  <pre><code>pcp_detach_node(integer node_id, boolean gracefully, text host, integer port, text username, text password, OUT node_detached boolean) returns boolean</code></pre>
+  <pre><code>pcp_detach_node(integer node_id, boolean gracefully, text pcp_server, OUT node_detached boolean) returns boolean</code></pre>
+</dd>
+
+<dt>Description:</dt>
+<dd>
+  <p>Detaches a node to pgpool-II and initiate fail over.
+  See <a href="#pcp_detach_node">pcp_detach_node</a> for more details.</p>
+  <p>
+    Here is an example output.
+<pre>
+test=# SELECT * FROM pcp_detach_node(1, 'false', 'localhost',11001,'t-ishii','t-ishii');
+ node_detached 
+---------------
+ t
+(1 row)
+</pre>
+  </p>
+</dd>
+
+<dt>Parameters:</dt>
+<dd>
+  <dl class="options">
+  <dt><code>node_id</strong></code></dt>
+  <p>The index of backend node.</p>
+
+  <dt><code>gracefully</strong></code></dt>
+  <p>If true, wait for all session of pgpool-II terminates.
+    Actually specifying true to this is not a good idea, since this query will not end because the session itself is waiting the result.
+    It is strongly recommended to specify false to this parameter.
+  </p>
+
+  <dt><code>host</strong></code></dt>
+  <p>The host name or IP address where pcp server is running on.</p>
+
+  <dt><code>port</strong></code></dt>
+  <p>The port number pcp server is listening on.</p>
+
+  <dt><code>username</strong></code></dt>
+  <p>The user name to access pcp server.</p>
+
+  <dt><code>password</strong></code></dt>
+  <p>The pass word to access pcp server.</p>
+
+  <dt><code>pcp_server</strong></code></dt>
+  <p>The foreign server name for pcp server.</p>
+
+</dd>
+
+</dd>
+</dl>
+</h3>
 
 <p class="top_link"><a href="#Top">back to top</a></p>
 

@@ -6,8 +6,9 @@ PG_CPPFLAGS = -I$(libpq_srcdir) -I../../include/pcp
 
 EXTENSION = pgpool_adm
 DATA = pgpool_adm--1.0.sql
-SHLIB_LINK = -L../../libs/pcp/.libs -lpcp
-
+#SHLIB_LINK = -L../../libs/pcp/.libs -lpcp
+#SHLIB_LINK = -L/home/t-ishii/work/pgpool-II/current/lib -Wl,-rpath '/home/t-ishii/work/pgpool-II/current/lib' -lpcp
+SHLIB_LINK =  -L../../libs/pcp/.libs -lpcp -Wl,--as-needed -Wl,-rpath,'${libdir}',--enable-new-dtags
 # if you are using PostgreSQL 8.0 or later,
 # using pg_config is recommended.
 # if you are not, comment out following line and...
