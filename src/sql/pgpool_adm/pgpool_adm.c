@@ -3,7 +3,7 @@
  * pgpool_adm.c
  *
  *
- * Copyright (c) 2002-2011, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2015, PostgreSQL Global Development Group
  *
  * Author: Jehan-Guillaume (ioguix) de Rorthais <jgdr@dalibo.com>
  *
@@ -17,6 +17,14 @@
 #include "utils/builtins.h"
 #include "foreign/foreign.h"
 #include "nodes/pg_list.h"
+
+/* 
+ * PostgreSQL 9.3 or later requires htup_details.h to get the definition of
+ * heap_form_tuple
+ */
+#if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 90300)
+#include "access/htup_details.h"
+#endif
 
 #include <unistd.h>
 
