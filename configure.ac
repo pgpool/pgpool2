@@ -411,5 +411,6 @@ fi
 AC_MSG_RESULT([enable cassert = $enable_cassert])
 
 AM_CONFIG_HEADER(src/include/config.h)
+AC_CONFIG_FILES([src/sql/pgpool_adm/Makefile])
 
 AC_OUTPUT([Makefile doc/Makefile src/Makefile src/include/Makefile src/parser/Makefile src/libs/Makefile src/libs/pcp/Makefile src/tools/Makefile src/tools/pgmd5/Makefile src/tools/pcp/Makefile src/watchdog/Makefile])
