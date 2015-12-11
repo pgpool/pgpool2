@@ -3968,7 +3968,7 @@ Pgpool-HA can be available from the pgpool development site as an open source so
     </li>
 	<li>
 	"external"<span class="version">V3.5 -</span> mode basically disables the built in lifecheck of pgpool-II watchdog and expects the
-	external system will inform the watchdog about health of current and all remote nodes
+	external system will inform the watchdog about health of local and all remote nodes
 	participating in the watchdog cluster.
 	</li>
     </ul>
@@ -3996,7 +3996,7 @@ Pgpool-HA can be available from the pgpool development site as an open source so
 	<h3> <span class="version">V3.5 -</span>Verifies the consistency of important configuration parameters of all nodes</h3>
 
 	<p>
-	At start up watchdog verifies the pgpool-II configuration of the current node for the consistency with
+	At start up watchdog verifies the pgpool-II configuration of the local node for the consistency with
 	the configurations on the master watchdog node.
 	This eliminates the likelihood of undesired behavior that can happen because of
 	different configuration on different pgpool-II nodes.
@@ -4291,7 +4291,7 @@ Configuration about virtual IP interface control
 
 	<p>
 	The 'external' mode (<span class="version">V3.5 -</span>), disables the built in lifecheck of pgpool-II watchdog
-	and relies on external system to provide node health checking of current and remote watchdog nodes.
+	and relies on external system to provide node health checking of local and remote watchdog nodes.
 	</p>
 
 	<p>
@@ -4528,7 +4528,7 @@ Configuration about virtual IP interface control
 <p>
 pgpool-II watchdog process uses the BSD sockets for communicating with all pgpool-II processes and
 the same BSD socket can be used by any third party system to provide the lifecheck function for
-current and remote pgpool-II watchdog nodes.
+local and remote pgpool-II watchdog nodes.
 The BSD socket file name for IPC is constructed by appending pgpool-II <a href="WD_PORT">wd_port</a> after "s.PGPOOLWD_CMD."
 string and the socket file is placed in the pgpool-II <a href="#WD_IPC_SOCKET_DIR">wd_ipc_socket_dir</a> directory.
 </p>
