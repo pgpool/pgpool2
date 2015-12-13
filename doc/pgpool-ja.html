@@ -38,6 +38,7 @@ Last modified: Mon Aug 24 18:18:48 JST 2015
         <li><a href="#deploy">pgpool-IIの配置について</a></li>
         <li><a href="#watchdog">watchdog</a></li>
         <li><a href="#pcp_command">PCP コマンド</a></li>
+        <li><a href="#pgpool_adm">pgpool_adm</a></li>
         <li><a href="#troubleshooting">トラブルシューティング</a></li>
         <li><a href="#restriction">制限事項</a></li>
         <li><a href="#internal">内部情報</a></li>
@@ -5365,6 +5366,338 @@ pgpool-II のノードをデータを再同期させた上で復帰させます�
     </dl>
 </dd>
 </dl>
+
+<p class="top_link"><a href="#Top">△ back to top</a></p>
+
+<h1 id="pgpool_adm">pool_adm</h1>
+<p>
+  pgpoo_adm はSQLからPCPコマンド(実際にはpcpライブラリ)にアクセスすることを可能にするextensionです。
+  pgpool_admは、下の図に示すように、foreign data wrapper を使っています。
+</p>
+
+<p><img src="pgpool_adm.png" alt="Data flow in pgpool_adm" hight=70% width=70%></p>
+
+<p>
+  関数は、pgpool-II経由で呼び出すことも(1)、PostgreSQL直接で呼び出すこともできます(2)。
+  (1)の場合では、pgpool-IIはユーザからのクエリを受け付け(1)、PostgreSQLに転送します(3)。
+  PostgreSQLはpgpool-IIに接続し(5)、pgpool-IIはPostgreSQLに結果の値を返します(3)。
+  PostgreSQLは結果をpgpool-IIに返却し(5)、pgpool-IIはデータをユーザに転送します(6)。
+</p>
+<p>
+  (2)のケースでは、PostgreSQLはクエリをユーザから受け付けます(2)。
+  PostgreSQLはpgpool-IIに接続し(5)、pgpool-IIはPostgreSQLに結果の値を返します(3)。
+  PostgreSQLははユーザに結果を返します(6)。
+</p>
+<p>
+  pgpool_admの呼び出し方法は2つあります。最初の形式は、pgpool-IIのホスト名(またはIPアドレス)、PCPポート番号、PCPユーザ名、パスワード、そして他のパラメータを渡します。
+</p>
+<p>
+  後者の形式では、pgpool-IIのサーバ名が必要です。
+  サーバ名は「CREATE FOREIGN SERVER」コマンドであらかじめ登録しておかなければなりません。
+  PCPポート番号は9898にハードコードされています。
+  PCPユーザ名はPostgreSQLのユーザ名と同じと見なされます。
+  パスワードは、$HOME/.pcppassから取得されます。
+</p>
+
+<h2>Installing pgpool_adm</h2>
+<p>
+pgpool_admはextensionなので、すべてのPostgreSQLサーバにインストールしておかなければなりません。
+</p>
+<p>
+<pre>
+$ cd src/sql/pgpool_adm
+$ make
+$ make install
+</pre>
+</p>
+<p>
+次に下のSQLコマンドをアクセスしたいデータベース全てで実行します。
+</p>
+<p>
+<pre>
+$ psql ...
+$ CREATE EXTENSION pgpool_adm
+</pre>
+</p>
+
+<h2>pgpool_adm functions list</h2>
+<table border>
+<tr><th><a href="#func_pcp_node_info">pcp_node_info</a></th>
+  <td>ノード情報を取得します</td></tr>
+<tr><th><a href="#func_pcp_pool_status">pcp_pool_status</a></th>
+    <td>pgpool.confのパラメータを取得します</td></tr>
+<tr><th><a href="#func_pcp_node_count">pcp_node_count</a></th>
+  <td>ノード数を取得します</td></tr>
+<tr><th><a href="#func_pcp_attach_node">pcp_attach_node</a></th>
+  <td>pgpool-IIにノードをアタッチします</td></tr>
+<tr><th><a href="#func_pcp_detach_node">pcp_detach_node</a></th>
+  <td>pgpool-IIからノードをデタッチします</td></tr>
+</table>
+
+<h3 id="func_pcp_node_info">pcp_node_info</h3>
+<dl>
+<dt>形式:</dt>
+<dd>
+  <pre><code>pcp_node_info(integer node_id, text host, integer port, text username, text password, OUT status text, OUT weight float4) returns record</code></pre>
+  <pre><code>pcp_node_info(integer node_id, text pcp_server, OUT status text, OUT weight float4) returns record</code></pre>
+</dd>
+
+<dt>説明:</dt>
+<dd>
+  <p>ノード情報を取得します。
+  詳細は<a href="#pcp_node_info">pcp_node_infoコマンド</a>を参照してください。</p>
+  <p>
+    実行例を示します。
+<pre>
+test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
+ host | port  |      status       | weight 
+------+-------+-------------------+--------
+ /tmp | 11002 | Connection in use |      0
+(1 row)
+</pre>
+  </p>
+</dd>
+
+<dt>引数:</dt>
+<dd>
+  <dl class="options">
+  <dt><code>node_id</strong></code></dt>
+<dd>
+  <p>バックエンドノードの番号</p>
+
+  <dt><code>host</strong></code></dt>
+  <p>PCPが稼働中のホスト名とIPアドレス</p>
+
+  <dt><code>port</strong></code></dt>
+  <p>PCPサーバがリッスンしているポート番号です</p>
+
+  <dt><code>username</strong></code></dt>
+  <p>PCPサーバにアクセスするためのユーザ名</p>
+
+  <dt><code>password</strong></code></dt>
+  <p>PCPサーバにアクセスするためのパスワード</p>
+
+  <dt><code>pcp_server</strong></code></dt>
+  <p>PCPサーバのforeign server名</p>
+
+</dd>
+
+</dd>
+</dl>
+</h3>
+
+<h3 id="func_pcp_pool_status">pcp_pool_status</h3>
+<dl>
+<dt>形式:</dt>
+<dd>
+  <pre><code>pcp_pool_status(text host, integer port, text username, text password) returns record</code></pre>
+  <pre><code>pcp_pool_status(text pcp_server) returns record</code></pre>
+</dd>
+
+<dt>説明:</dt>
+<dd>
+  <p>pgpool.confのパラメータを取得します。
+  See <a href="#pool_status">pool_status</a> for more details.</p>
+  <p>
+    実行例を示します。
+<pre>
+test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHERE item ~ 'backend.*0';
+          item           |                     value                      |          description          
+-------------------------+------------------------------------------------+-------------------------------
+ backend_hostname0       | /tmp                                           | backend #0 hostname
+ backend_port0           | 11002                                          | backend #0 port number
+ backend_weight0         | 0.500000                                       | weight of backend #0
+ backend_data_directory0 | /home/t-ishii/work/pgpool-II/current/aaa/data0 | data directory for backend #0
+ backend_status0         | 2                                              | status of backend #0
+ backend_flag0           | ALLOW_TO_FAILOVER                              | backend #0 flag
+(6 rows)
+</pre>
+  </p>
+</dd>
+
+<dt>引数:</dt>
+<dd>
+  <dl class="options">
+<dd>
+  <dt><code>host</strong></code></dt>
+  <p>PCPが稼働中のホスト名とIPアドレス</p>
+
+  <dt><code>port</strong></code></dt>
+  <p>PCPサーバがリッスンしているポート番号</p>
+
+  <dt><code>username</strong></code></dt>
+  <p>PCPサーバにアクセスするためのユーザ名</p>
+
+  <dt><code>password</strong></code></dt>
+  <p>PCPサーバにアクセスするためのパスワード</p>
+
+  <dt><code>pcp_server</strong></code></dt>
+  <p>PCPサーバのforeign server名</p>
+
+</dd>
+
+</dd>
+</dl>
+</h3>
+
+<h3 id="func_pcp_node_count">pcp_node_node_count</h3>
+<dl>
+<dt>形式:</dt>
+<dd>
+  <pre><code>pcp_node_count(integer node_id, text host, integer port, text username, text password, OUT node_count integer) returns record</code></pre>
+  <pre><code>pcp_node_count(integer node_id, OUT node_count integer) returns record</code></pre>
+</dd>
+
+<dt>説明:</dt>
+<dd>
+  <p>ノード情報を取得します。
+  詳細は<a href="#pcp_node_count">pcp_node_countコマンド</a>を参照してください。</p>
+  <p>
+    実行例を示します。
+<pre>
+test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
+ node_count 
+------------
+          2
+(1 row)
+</pre>
+  </p>
+</dd>
+
+<dt>引数:</dt>
+<dd>
+  <dl class="options">
+
+<dd>
+  <dt><code>host</strong></code></dt>
+  <p>PCPが稼働中のホスト名とIPアドレス</p>
+
+  <dt><code>port</strong></code></dt>
+  <p>PCPサーバがリッスンしているポート番号です</p>
+
+  <dt><code>username</strong></code></dt>
+  <p>PCPサーバにアクセスするためのユーザ名</p>
+
+  <dt><code>password</strong></code></dt>
+  <p>PCPサーバにアクセスするためのパスワード</p>
+
+  <dt><code>pcp_server</strong></code></dt>
+  <p>PCPサーバのforeign server名</p>
+
+</dd>
+
+</dd>
+</dl>
+</h3>
+
+<h3 id="func_pcp_attach_node">pcp_attach_node</h3>
+<dl>
+<dt>形式:</dt>
+<dd>
+  <pre><code>pcp_attach_node(integer node_id, text host, integer port, text username, text password, OUT node_attached boolean) returns boolean</code></pre>
+  <pre><code>pcp_attach_node(integer node_id, text pcp_server, OUT node_attached boolean) returns boolean</code></pre>
+</dd>
+
+<dt>説明:</dt>
+<dd>
+  <p>attaches a node to pgpool-II.
+  詳細は<a href="#pcp_attach_node">pcp_attach_nodeコマンドを</a>参照してください。</p>
+  <p>
+    実行例を示します。
+<pre>
+test=# SELECT * FROM pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
+ node_attached 
+---------------
+ t
+(1 row)
+</pre>
+  </p>
+</dd>
+
+<dt>説明:</dt>
+<dd>
+  <dl class="options">
+  <dt><code>node_id</strong></code></dt>
+  <p>バックエンドノードの番号</p>
+
+  <dt><code>host</strong></code></dt>
+  <p>PCPが稼働中のホスト名とIPアドレス</p>
+
+  <dt><code>port</strong></code></dt>
+  <p>PCPサーバがリッスンしているポート番号</p>
+
+  <dt><code>username</strong></code></dt>
+  <p>PCPサーバにアクセスするためのユーザ名</p>
+
+  <dt><code>password</strong></code></dt>
+  <p>PCPサーバにアクセスするためのパスワード</p>
+
+  <dt><code>pcp_server</strong></code></dt>
+  <p>PCPサーバのforeign server名</p>
+
+</dd>
+
+</dd>
+</dl>
+</h3>
+
+<h3 id="func_pcp_detach_node">pcp_detach_node</h3>
+<dl>
+<dt>形式:</dt>
+<dd>
+  <pre><code>pcp_detach_node(integer node_id, boolean gracefully, text host, integer port, text username, text password, OUT node_detached boolean) returns boolean</code></pre>
+  <pre><code>pcp_detach_node(integer node_id, boolean gracefully, text pcp_server, OUT node_detached boolean) returns boolean</code></pre>
+</dd>
+
+<dt>説明:</dt>
+<dd>
+  <p>Detaches a node to pgpool-II and initiate fail over.
+  See <a href="#pcp_detach_node">pcp_detach_node</a> for more details.</p>
+  <p>
+    実行例を示します。
+<pre>
+test=# SELECT * FROM pcp_detach_node(1, 'false', 'localhost',11001,'t-ishii','t-ishii');
+ node_detached 
+---------------
+ t
+(1 row)
+</pre>
+  </p>
+</dd>
+
+<dt>引数:</dt>
+<dd>
+  <dl class="options">
+  <dt><code>node_id</strong></code></dt>
+  <p>バックエンドノードの番号</p>
+
+  <dt><code>gracefully</strong></code></dt>
+  <p>もしtrueなら、pgpool-IIのすべてのセッションが切断されるまで待ちます。
+    実際には、この引数にtrueをセットするのはおすすめできません。
+    なぜなら、このSQLの結果を待っているセッション自体が終わらないからです。
+    このパラメータはfalseにすることを強くおすすめします。
+  </p>
+
+  <dt><code>host</strong></code></dt>
+  <p>PCPが稼働中のホスト名とIPアドレス</p>
+
+  <dt><code>port</strong></code></dt>
+  <p>PCPサーバがリッスンしているポート番号です</p>
+
+  <dt><code>username</strong></code></dt>
+  <p>PCPサーバにアクセスするためのユーザ名</p>
+
+  <dt><code>password</strong></code></dt>
+  <p>PCPサーバにアクセスするためのパスワード</p>
+
+  <dt><code>pcp_server</strong></code></dt>
+  <p>PCPサーバのforeign server名</p>
+
+</dd>
+
+</dd>
+</dl>
+</h3>
 
 <p class="top_link"><a href="#Top">△ back to top</a></p>
 

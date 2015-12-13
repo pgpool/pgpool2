@@ -5252,6 +5252,27 @@ The pcp port number is hard coded as 9898, the pcp user name is assumes to be sa
   password is extraced from $HOME/.pcppass.
 </p>
 
+<h2>Installing pgpool_adm</h2>
+<p>
+pgpool_adm is an extension and should be installed on all PostgreSQL servers.
+</p>
+<p>
+<pre>
+$ cd src/sql/pgpool_adm
+$ make
+$ make install
+</pre>
+</p>
+<p>
+Then issue following SQL command for every database you want to access.
+</p>
+<p>
+<pre>
+$ psql ...
+$ CREATE EXTENSION pgpool_adm
+</pre>
+</p>
+
 <h2>pgpool_adm functions list</h2>
 <table border>
 <tr><th><a href="#func_pcp_node_info">pcp_node_info</a></th>
@@ -5294,11 +5315,8 @@ test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
 <dd>
   <dl class="options">
   <dt><code>node_id</strong></code></dt>
-<dd>
   <p>The index of backend node.</p>
-</dd>
 
-<dd>
   <dt><code>host</strong></code></dt>
   <p>The host name or IP address where pcp server is running on.</p>
 
@@ -5435,7 +5453,7 @@ test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
 <dt>Description:</dt>
 <dd>
   <p>attaches a node to pgpool-II.
-  See <a href="#pcp_attach_node">pcp_attach_node</a> for more details.</p>
+  See <a href="#pcp_attach_node">pcp_attach_node command</a> for more details.</p>
   <p>
     Here is an example output.
 <pre>
