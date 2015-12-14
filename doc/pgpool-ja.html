@@ -4687,12 +4687,11 @@ IPC（プロセス間通信）のための BSD ソケットの名前は、"s.PGP
 <h3 id="Watchdog_IPC_command_packet_format">Watchdog IPC コマンドパケットの書式</h3>
 <dl>
 <p>
-watchdog IPC コマンドパケットは 4 つのフィールドから構成されます。メッセージフィールドの詳細を以下の表に示します。
+watchdog IPC コマンドパケットは 3 つのフィールドから構成されます。メッセージフィールドの詳細を以下の表に示します。
 </p>
 <table border>
     <tr class="header"><th>フィールド</th>        <th>型</th>                        <th>説明</th></tr>
     <tr><th>TYPE</th>        <td>BYTE1</td>                        <td>コマンドのタイプ</td></tr>
-    <tr><th>ACTION</th>        <td>INT32（ネットワークバイトオーダ）</td>    <td>コマンドアクション。現状では DEFAULT(0) のみサポート。</td></tr>
     <tr><th>LENGTH</th>        <td>INT32（ネットワークバイトオーダ）</td>    <td>続くデータの長さ</td></tr>
     <tr><th>DATA</th>        <td>JSON 形式データ</td>        <td>JSON 形式のコマンドデータ</td></tr>
 </table>
