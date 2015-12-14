@@ -96,7 +96,10 @@ typedef struct SocketConnection
 typedef struct WatchdogNode
 {
 	WD_STATES state;
-	struct timeval tv;						/* startup time value */
+	struct timeval startup_time;			/* startup time value of node */
+	struct timeval last_rcv_time;			/* timestamp when last packet
+											 * was received from the node
+											 */
 	char nodeName[WD_MAX_HOST_NAMELEN];		/* name of this node */
 	char hostname[WD_MAX_HOST_NAMELEN];		/* host name */
 	int wd_port;							/* watchdog port */

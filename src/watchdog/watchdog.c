@@ -62,7 +62,11 @@ typedef enum IPC_CMD_PREOCESS_RES
 	IPC_CMD_ERROR
 }IPC_CMD_PREOCESS_RES;
 
-#define MIN_SECS_CONNECTION_RETRY	10 /* Time in seconds to retry connection with node once it was failed */
+#define MIN_SECS_CONNECTION_RETRY	10	/* Time in seconds to
+										 * retry connection with
+										 * node once it was failed */
+#define BEACON_MESSAGE_INTERVAL_SECONDS		10 /* interval between beacon messages */
+
 
 
 #define WD_NO_MESSAGE						0
@@ -91,6 +95,7 @@ typedef struct packet_types
 	char type;
 	char name[100];
 }packet_types;
+
 packet_types all_packet_types[] = {
 	{WD_ADD_NODE_MESSAGE, "ADD NODE"},
 	{WD_REQ_INFO_MESSAGE, "REQUEST INFO"},
@@ -454,6 +459,8 @@ static void wd_cluster_initialize(void)
 	g_cluster.localNode->wd_priority = pool_config->wd_priority;
 	g_cluster.localNode->pgpool_port = pool_config->port;
 	g_cluster.localNode->private_id = 0;
+	gettimeofday(&g_cluster.localNode->startup_time, NULL);
+
 	strncpy(g_cluster.localNode->hostname, pool_config->wd_hostname, sizeof(g_cluster.localNode->hostname) -1);
 	strncpy(g_cluster.localNode->delegate_ip, pool_config->delegate_IP, sizeof(g_cluster.localNode->delegate_ip) -1);
 	/* Assign the node name */
@@ -1153,7 +1160,7 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 								strlcpy(wdNode->delegate_ip, tempNode->delegate_ip, WD_MAX_HOST_NAMELEN);
 								strlcpy(wdNode->nodeName, tempNode->nodeName, WD_MAX_HOST_NAMELEN);
 								wdNode->state = tempNode->state;
-								wdNode->tv.tv_sec = tempNode->tv.tv_sec;
+								wdNode->startup_time.tv_sec = tempNode->startup_time.tv_sec;
 								wdNode->wd_priority = tempNode->wd_priority;
 								wdNode->server_socket = *conn;
 								wdNode->server_socket.sock_state = WD_SOCK_CONNECTED;
@@ -1593,8 +1600,8 @@ static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPC
 		else /* IPC_CMD_PROCESSING*/
 		{
 			/*
-			 * Just return from the function, Do not just reply back to requester
-			 * as we still need to process this command
+			 * Just return from the function, Do not reply back to requester at the moment
+			 * as we still need to further process this command
 			 */
 			return execute_res;
 		}
@@ -2603,11 +2610,9 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			char *authkey = NULL;
 			WatchdogNode* tempNode = parse_node_info_message(pkt, &authkey);
 			wdNode->state = tempNode->state;
-			wdNode->tv.tv_sec = tempNode->tv.tv_sec;
-			strlcpy(wdNode->nodeName, tempNode->nodeName, WD_MAX_HOST_NAMELEN);
-			wdNode->state = tempNode->state;
-			wdNode->tv.tv_sec = tempNode->tv.tv_sec;
+			wdNode->startup_time.tv_sec = tempNode->startup_time.tv_sec;
 			wdNode->wd_priority = tempNode->wd_priority;
+			strlcpy(wdNode->nodeName, tempNode->nodeName, WD_MAX_HOST_NAMELEN);
 			
 			print_watchdog_node_info(wdNode);
 
@@ -2616,13 +2621,36 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 
 			if (wdNode->state == WD_COORDINATOR)
 			{
-				/* TODO check if we already have the coordinator */
-				if (g_cluster.masterNode != NULL && g_cluster.masterNode != wdNode)
+				if (g_cluster.masterNode == NULL)
 				{
-					ereport(WARNING,(errmsg("WE already have the coordinator...")));
-					/* What should be the best way to handle it */
+					g_cluster.masterNode = wdNode;
 				}
-				g_cluster.masterNode = wdNode;
+				else if (g_cluster.masterNode != wdNode)
+				{
+					ereport(WARNING,
+						(errmsg("\"%s\" is the coordinator as per our record but \"%s\" is also announcing as a coordinator",
+								g_cluster.masterNode->nodeName, wdNode->nodeName),
+							 errdetail("re-initializing the cluster")));
+
+					g_cluster.masterNode = NULL;
+					set_state(WD_JOINING);
+				}
+			}
+
+			/* if the info message is from master node. Make sure we are in sync
+			 * with the master node state
+			 */
+			else if (g_cluster.masterNode == wdNode)
+			{
+				if (wdNode->state != WD_COORDINATOR)
+				{
+					ereport(WARNING,
+						(errmsg("the coordinator as per our record is not coordinator anymore"),
+							 errdetail("re-initializing the cluster")));
+					g_cluster.masterNode = NULL;
+					set_state(WD_JOINING);
+				}
+
 			}
 			pfree(tempNode);
 		}
@@ -3267,6 +3295,8 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 	else if (event == WD_EVENT_PACKET_RCV)
 	{
 		print_received_packet_info(pkt,wdNode);
+		/* update the last receiv time*/
+		gettimeofday(&wdNode->last_rcv_time, NULL);
 
 		if (pkt->type == WD_INFO_MESSAGE)
 			standard_packet_processor(wdNode, pkt);
@@ -3648,7 +3678,7 @@ static int watchdog_state_machine_standForCord(WD_EVENTS event, WatchdogNode* wd
 					else if (g_cluster.localNode->wd_priority == wdNode->wd_priority)
 					{
 						/* decide on base of starting time */
-						if (g_cluster.localNode->tv.tv_sec <= wdNode->tv.tv_sec)/* I am older */
+						if (g_cluster.localNode->startup_time.tv_sec <= wdNode->startup_time.tv_sec)/* I am older */
 						{
 							reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
 						}
@@ -3870,14 +3900,13 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 			}
 		}
 			break;
-			
+
 		case WD_EVENT_NW_IP_IS_ASSIGNED:
 			break;
 
-
 		case WD_EVENT_TIMEOUT:
-			send_cluster_command(NULL, WD_IAM_COORDINATOR_MESSAGE, 10);
-			set_timeout(10);
+			send_cluster_command(NULL, WD_IAM_COORDINATOR_MESSAGE, BEACON_MESSAGE_INTERVAL_SECONDS);
+			set_timeout(BEACON_MESSAGE_INTERVAL_SECONDS);
 			break;
 
 		case WD_EVENT_REMOTE_NODE_LOST:
@@ -4164,6 +4193,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 	{
 		case WD_EVENT_WD_STATE_CHANGED:
 			send_cluster_command(g_cluster.masterNode, WD_JOIN_COORDINATOR_MESSAGE, 5);
+			update_quorum_status();
 			break;
 
 		case WD_EVENT_TIMEOUT:
@@ -4176,10 +4206,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 				if (g_cluster.currentCommand.commandStatus == COMMAND_FINISHED_ALL_REPLIED ||
 					g_cluster.currentCommand.commandStatus == COMMAND_FINISHED_TIMEOUT)
 				{
-					WDPacketData* pktAsk = get_minimum_message(WD_ASK_FOR_POOL_CONFIG, NULL);
-					send_message(g_cluster.masterNode, pktAsk);
-					free_packet(pktAsk);
-
+					send_message_of_type(g_cluster.masterNode,WD_ASK_FOR_POOL_CONFIG);
 					cluster_in_stable_state();
 
 					ereport(LOG,
@@ -4288,6 +4315,37 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 			break;
 		default:
 			break;
+	}
+
+	/* before returning from the function make sure that
+	 * we are connected with the master node
+	 */
+	if (g_cluster.masterNode)
+	{
+		struct timeval currTime;
+		gettimeofday(&currTime, NULL);
+		int last_rcv_sec = WD_TIME_DIFF_SEC(currTime,g_cluster.masterNode->last_rcv_time);
+		if (last_rcv_sec >=  (2 * BEACON_MESSAGE_INTERVAL_SECONDS))
+		{
+			/* we have missed atleast two beacons from master node */
+			ereport(WARNING,
+					(errmsg("we have not received a beacon message from master node \"%s\" and it has not replied to our info request",
+							g_cluster.masterNode->nodeName),
+					 errdetail("re-initializing the cluster")));
+			set_state(WD_JOINING);
+
+		}
+		else if (last_rcv_sec >=  BEACON_MESSAGE_INTERVAL_SECONDS)
+		{
+			/* We have not received a last becacon from master
+			 * ask for the node info from master node
+			 */
+			ereport(WARNING,
+					(errmsg("we have not received a beacon message from master node \"%s\"",
+							g_cluster.masterNode->nodeName),
+					 errdetail("requesting info message from master node")));
+			send_message_of_type(g_cluster.masterNode,WD_REQ_INFO_MESSAGE);
+		}
 	}
 	return 0;
 }
@@ -4862,7 +4920,7 @@ static bool get_authhash_for_node(WatchdogNode* wdNode, char* authhash)
 	{
 		char nodeStr[WD_MAX_PACKET_STRING + 1];
 		int len = snprintf(nodeStr, WD_MAX_PACKET_STRING, "state=%d tv_sec=%ld wd_port=%d",
-					   wdNode->state, wdNode->tv.tv_sec, wdNode->wd_port);
+					   wdNode->state, wdNode->startup_time.tv_sec, wdNode->wd_port);
 		
 		
 		/* calculate hash from packet */
@@ -4880,7 +4938,7 @@ static bool verify_authhash_for_node(WatchdogNode* wdNode, char* authhash)
 
 		char nodeStr[WD_MAX_PACKET_STRING];
 		int len = snprintf(nodeStr, WD_MAX_PACKET_STRING, "state=%d tv_sec=%ld wd_port=%d",
-						   wdNode->state, wdNode->tv.tv_sec, wdNode->wd_port);
+						   wdNode->state, wdNode->startup_time.tv_sec, wdNode->wd_port);
 		
 		
 		/* calculate hash from packet */

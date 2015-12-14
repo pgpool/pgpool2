@@ -234,7 +234,7 @@ char* get_watchdog_node_info_json(WatchdogNode* wdNode, char* authkey)
 	char* json_str;
 	JsonNode* jNode = jw_create_with_object(true);
 
-	jw_put_long(jNode, "StartupTimeSecs", wdNode->tv.tv_sec);
+	jw_put_long(jNode, "StartupTimeSecs", wdNode->startup_time.tv_sec);
 	jw_put_int(jNode, "State", wdNode->state);
 	jw_put_int(jNode, "WdPort", wdNode->wd_port);
 	jw_put_int(jNode, "PgpoolPort", wdNode->pgpool_port);
@@ -265,7 +265,7 @@ WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len, char** 
 	if (root == NULL || root->type != json_object)
 		goto ERROR_EXIT;
 
-	if (json_get_long_value_for_key(root, "StartupTimeSecs", &wdNode->tv.tv_sec))
+	if (json_get_long_value_for_key(root, "StartupTimeSecs", &wdNode->startup_time.tv_sec))
 		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "State", (int*)&wdNode->state))
 		goto ERROR_EXIT;
