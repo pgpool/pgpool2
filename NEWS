@@ -4,7 +4,7 @@
 3.5 Series (2014/12/15 - )
 ===============================================================================
 
-                        3.5.0 (ekieboshi) 2015/12/15
+                        3.5.0 (ekieboshi) 201x/xx/xx
 
 * Version 3.5.0
 
@@ -250,6 +250,28 @@
       (Yugo Nagata)
 
     - test: Fix regression test 055 for rhel7 rpm (Yugo Nagata)
+
+    - Fix reset query stuck problem (Muhammad Usama) 
+
+      The issue is already fixed in older branches and this fix adopts the
+      same solution used by 3.3 series, i.e. closing the backend connection
+      when client idle limit is reached.
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+      
+      Per bug #157.
 
 ===============================================================================
 3.4 Series (2014/11/07 - )
