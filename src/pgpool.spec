@@ -236,7 +236,7 @@ fi
 %endif
 
 %changelog
-* Tue AUg 24 2015 Yugo Nagata <nagata@sraoss.co.jp> 3.5.0
+* Tue Aug 24 2015 Yugo Nagata <nagata@sraoss.co.jp> 3.5.0
 - Remove system database 
 
 * Tue Feb 10 2015 Nozomi Anzai <anzai@sraoss.co.jp> 3.4.1-2
