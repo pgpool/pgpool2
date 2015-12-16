@@ -32,7 +32,7 @@ Source2:        pgpool.sysconfig
 Source3:        pgpool.service
 %endif
 Patch1:         pgpool-II-head.patch
-Patch2:         pgpool_socket_dirpatch
+Patch2:         pgpool_socket_dir.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel
 %if %{systemd_enabled}
