@@ -1,0 +1,53 @@
+*** pgpool.conf.sample	2015-12-15 20:43:07.952387603 +0900
+--- src/sample/pgpool.conf.sample	2015-12-15 20:27:59.039388337 +0900
+***************
+*** 31,37 ****
+  port = 9999
+                                     # Port number
+                                     # (change requires restart)
+! socket_dir = '/var/run/postgresql'
+                                     # Unix domain socket path
+                                     # The Debian package defaults to
+                                     # /var/run/postgresql
+--- 31,37 ----
+  port = 9999
+                                     # Port number
+                                     # (change requires restart)
+! socket_dir = '/tmp'
+                                     # Unix domain socket path
+                                     # The Debian package defaults to
+                                     # /var/run/postgresql
+***************
+*** 53,59 ****
+  pcp_port = 9898
+                                     # Port number for pcp
+                                     # (change requires restart)
+! pcp_socket_dir = '/var/run/postgresql'
+                                     # Unix domain socket path for pcp
+                                     # The Debian package defaults to
+                                     # /var/run/postgresql
+--- 53,59 ----
+  pcp_port = 9898
+                                     # Port number for pcp
+                                     # (change requires restart)
+! pcp_socket_dir = '/tmp'
+                                     # Unix domain socket path for pcp
+                                     # The Debian package defaults to
+                                     # /var/run/postgresql
+***************
+*** 494,500 ****
+                                      # Authentication key for watchdog communication
+                                      # (change requires restart)
+  
+! wd_ipc_socket_dir = '/var/run/postgresql'
+  									# Unix domain socket path for watchdog IPC socket
+  									# The Debian package defaults to
+  									# /var/run/postgresql
+--- 494,500 ----
+                                      # Authentication key for watchdog communication
+                                      # (change requires restart)
+  
+! wd_ipc_socket_dir = '/tmp'
+  									# Unix domain socket path for watchdog IPC socket
+  									# The Debian package defaults to
+  									# /var/run/postgresql

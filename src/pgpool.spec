@@ -9,7 +9,7 @@
 
 %global short_name  pgpool-II
 
-%if 0%{?rhel} && 0%{?rhel} <= 6
+%if 0%{rhel} && 0%{rhel} <= 6
   %global systemd_enabled 0
 %else
   %global systemd_enabled 1
@@ -31,8 +31,8 @@ Source2:        pgpool.sysconfig
 %if %{systemd_enabled}
 Source3:        pgpool.service
 %endif
-#Patch1:         pgpool.conf.sample.patch
-Patch2:         pgpool-II-head.patch
+Patch1:         pgpool-II-head.patch
+Patch2:         pgpool_socket_dirpatch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel
 %if %{systemd_enabled}
@@ -79,8 +79,10 @@ Postgresql extensions libraries and sql files for pgpool-II.
 
 %prep
 %setup -q -n %{archive_name}
-#%patch1 -p0
-%patch2 -p1
+%patch1 -p1
+%if %{pg_version} >=94 && %{rhel} >= 7
+%patch2 -p0
+%endif
 
 %build
 %configure --with-pgsql=%{pghome} \
@@ -236,7 +238,7 @@ fi
 %endif
 
 %changelog
-* Tue Aug 24 2015 Yugo Nagata <nagata@sraoss.co.jp> 3.5.0
+* Mon Aug 24 2015 Yugo Nagata <nagata@sraoss.co.jp> 3.5.0
 - Remove system database 
 
 * Tue Feb 10 2015 Nozomi Anzai <anzai@sraoss.co.jp> 3.4.1-2
