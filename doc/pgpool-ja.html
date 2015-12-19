@@ -5543,13 +5543,13 @@ test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHER
 <dl>
 <dt>形式:</dt>
 <dd>
-  <pre><code>pcp_node_count(integer node_id, text host, integer port, text username, text password, OUT node_count integer) returns record</code></pre>
+  <pre><code>pcp_node_count(integer node_id, text host, integer port, text username, text password, OUT node_count integer) returns integer</code></pre>
   <pre><code>pcp_node_count(integer node_id, OUT node_count integer) returns record</code></pre>
 </dd>
 
 <dt>説明:</dt>
 <dd>
-  <p>ノード情報を取得します。
+  <p>ノード数を取得します。
   詳細は<a href="#pcp_node_count">pcp_node_countコマンド</a>を参照してください。</p>
   <p>
     実行例を示します。

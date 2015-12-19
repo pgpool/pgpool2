@@ -5395,13 +5395,13 @@ test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHER
 <dl>
 <dt>Format:</dt>
 <dd>
-  <pre><code>pcp_node_count(integer node_id, text host, integer port, text username, text password, OUT node_count integer) returns record</code></pre>
+  <pre><code>pcp_node_count(integer node_id, text host, integer port, text username, text password, OUT node_count integer) returns integer</code></pre>
   <pre><code>pcp_node_count(integer node_id, OUT node_count integer) returns record</code></pre>
 </dd>
 
 <dt>Description:</dt>
 <dd>
-  <p>Retrieves the node information.
+  <p>Retrieves the number of DB nodes.
   See <a href="#pcp_node_count">pcp_node_count command</a> for more details.</p>
   <p>
     Here is an example output.
