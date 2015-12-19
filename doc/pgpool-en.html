@@ -40,13 +40,13 @@ Last modified: Mon Aug 24 18:19:17 JST 2015
         <li><a href="#pgpool_adm">pgpool_adm</a></li>
         <li><a href="#troubleshooting">Troubleshooting</a></li>
         <li><a href="#restriction">Restrictions</a></li>
-        <li><a href="#internal">internal</a></li>
       </ul>
     </div>
     <br />
 
     <div class="header_small" align="center">
     [<a href="pgpool-ja.html">Japanese page</a>]
+    [<a href="pgpool-zh_cn.html">Chinese page</a>]
     </div>
 </div>
 
@@ -5242,7 +5242,7 @@ desc : PCP port # to bind
   PostgreSQL replies back the data to the user (6).
 </p>
 <p>
-  There are two forms to call pgpool_adm functions: first form accepts pgpool-II host name (or IP address), pcp port number, pcp user name, its password and aother parameters.
+  There are two forms to call pgpool_adm functions: first form accepts pgpool-II host name (or IP address), pcp port number, pcp user name, its password and another parameters.
 </p>
 <p>
   In the second form, pgpool-II server name is required.
@@ -5326,7 +5326,7 @@ test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
   <p>The user name to access pcp server.</p>
 
   <dt><code>password</strong></code></dt>
-  <p>The pass word to access pcp server.</p>
+  <p>The password to access pcp server.</p>
 
   <dt><code>pcp_server</strong></code></dt>
   <p>The foreign server name for pcp server.</p>
@@ -5380,7 +5380,7 @@ test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHER
   <p>The user name to access pcp server.</p>
 
   <dt><code>password</strong></code></dt>
-  <p>The pass word to access pcp server.</p>
+  <p>The password to access pcp server.</p>
 
   <dt><code>pcp_server</strong></code></dt>
   <p>The foreign server name for pcp server.</p>
@@ -5430,7 +5430,7 @@ test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
   <p>The user name to access pcp server.</p>
 
   <dt><code>password</strong></code></dt>
-  <p>The pass word to access pcp server.</p>
+  <p>The password to access pcp server.</p>
 
   <dt><code>pcp_server</strong></code></dt>
   <p>The foreign server name for pcp server.</p>
@@ -5481,7 +5481,7 @@ test=# SELECT * FROM pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
   <p>The user name to access pcp server.</p>
 
   <dt><code>password</strong></code></dt>
-  <p>The pass word to access pcp server.</p>
+  <p>The password to access pcp server.</p>
 
   <dt><code>pcp_server</strong></code></dt>
   <p>The foreign server name for pcp server.</p>
@@ -5538,7 +5538,7 @@ test=# SELECT * FROM pcp_detach_node(1, 'false', 'localhost',11001,'t-ishii','t-
   <p>The user name to access pcp server.</p>
 
   <dt><code>password</strong></code></dt>
-  <p>The pass word to access pcp server.</p>
+  <p>The password to access pcp server.</p>
 
   <dt><code>pcp_server</strong></code></dt>
   <p>The foreign server name for pcp server.</p>
