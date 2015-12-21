@@ -3492,7 +3492,8 @@ static int watchdog_state_machine_joining(WD_EVENTS event, WatchdogNode* wdNode,
 				case WD_REJECT_MESSAGE:
 					if (wdNode->state == WD_ADD_MESSAGE_SENT)
 						ereport(FATAL,
-							(errmsg("Add to watchdog cluster request is rejected by node \"%s:%d\"",wdNode->hostname,wdNode->wd_port),
+							(return_code(POOL_EXIT_FATAL),
+							 errmsg("Add to watchdog cluster request is rejected by node \"%s:%d\"",wdNode->hostname,wdNode->wd_port),
 								 errhint("check the watchdog configurations.")));
 					break;
 
@@ -3596,7 +3597,8 @@ static int watchdog_state_machine_initializing(WD_EVENTS event, WatchdogNode* wd
 				case WD_REJECT_MESSAGE:
 					if (wdNode->state == WD_ADD_MESSAGE_SENT)
 						ereport(FATAL,
-							(errmsg("Add to watchdog cluster request is rejected by node \"%s:%d\"",wdNode->hostname,wdNode->wd_port),
+							(return_code(POOL_EXIT_FATAL),
+								errmsg("Add to watchdog cluster request is rejected by node \"%s:%d\"",wdNode->hostname,wdNode->wd_port),
 								 errhint("check the watchdog configurations.")));
 					break;
 				default:
