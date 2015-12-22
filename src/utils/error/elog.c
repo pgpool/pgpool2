@@ -540,15 +540,6 @@ int pool_error_code(const char *errcode)
 	return 0;					/* return value does not matter */
 }
 
-/*
- * errcode_for_socket_access --- add SQLSTATE error code to the current error
- *
- * The SQLSTATE code is chosen based on the saved errno value.	We assume
- * that the failing operation was some type of socket access.
- *
- * NOTE: the primary error message string should generally include %m
- * when this is used.
- */
 
 /*
  * This macro handles expansion of a format string and associated parameters;
