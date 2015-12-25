@@ -658,7 +658,7 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
 					if (error != 0)
 					{
 						ereport(LOG,
-								(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() detected error \"%s\"",host,port,strerror(errno))));
+								(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() detected error \"%s\"",host,port,strerror(error))));
 						return false;
 					}
 				}
