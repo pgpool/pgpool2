@@ -41,6 +41,7 @@ for i in \`seq 1 100\`
 do
 $PGBENCH -M \$1 -n -t 1  -f pgbench.sql test >/dev/null 2>&1
 done
+exit 0
 EOF
 
 # run test. This will hung if the bug is remained.
@@ -48,12 +49,9 @@ EOF
 for mode in simple extended
 do
 	echo -n "test $mode mode "
-	sh pgbench_loop.sh $mode &
-	sleep 5
-	kill $! >/dev/null 2>&1
+	timeout 30 sh pgbench_loop.sh $mode
 
-	# if kill succeeded then pgbench was stil running, i.e., hanging.
-	if [ $? = 0 ];then
+	if [ ! $? -eq 0 ];then
 		echo ...timed out.
 		./shutdownall
 		exit 1
