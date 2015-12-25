@@ -70,6 +70,17 @@ typedef enum WDFailoverCMDResults
 #define WD_FUNCTION_DEGENERATE_REQUEST	"DEGENERATE_BACKEND_REQUEST"
 #define WD_FUNCTION_PROMOTE_REQUEST		"PROMOTE_BACKEND_REQUEST"
 
+#define WD_IPC_AUTH_KEY			"IPCAuthKey"	/* JSON data key for authentication.
+												 * watchdog IPC server use the value for this key
+												 * to authenticate the external IPC clients
+												 * The valid value for this key is wd_authkey
+												 * configuration parameter
+												 */
+#define WD_IPC_SHARED_KEY		"IPCSharedKey"	/* JSON data key for authentication.
+												 * watchdog IPC server use the value of this key
+												 * to authenticate the internal pgpool-II processes
+												 */
+
 /* Use to inform node new node status by lifecheck */
 #define WD_LIFECHECK_NODE_STATUS_DEAD	1
 #define WD_LIFECHECK_NODE_STATUS_ALIVE	2

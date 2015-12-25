@@ -467,7 +467,7 @@ static bool inform_node_status(LifeCheckNode* node, char *message)
 			(errmsg("informing the node status change to watchdog"),
 				 errdetail("node id :%d status = \"%s\" message:\"%s\"",node->ID,new_status,message)));
 
-	json_data = get_lifecheck_node_status_change_json(node->ID, node_status, message);
+	json_data = get_lifecheck_node_status_change_json(node->ID, node_status, message, pool_config->wd_authkey);
 	if (json_data == NULL)
 		return false;
 

@@ -261,7 +261,7 @@ typedef struct wd_cluster
 	bool			network_error;
 	bool			escalated;
 	bool			clusterInitialized;
-
+	bool			ipc_auth_needed;
 	struct timeval  network_error_time;
 
 	List			*unidentified_socks;
@@ -364,7 +364,7 @@ static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, 
 static WDIPCCommandData* get_wd_IPC_command_from_reply(WDPacketData* pkt);
 static WDIPCCommandData* get_wd_IPC_command_from_socket(int sock);
 
-static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* IPCCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* ipcCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDIPCCommandData* IPCCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDIPCCommandData* IPCCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPCCommand);
@@ -396,6 +396,8 @@ static void wd_check_config(void);
 static pid_t watchdog_main(void);
 static pid_t fork_watchdog_child(void);
 static void cluster_in_stable_state(void);
+static bool check_IPC_client_authentication(json_value *rootObj, bool internal_client_only);
+static bool check_and_report_IPC_authentication(WDIPCCommandData* ipcCommand);
 
 static void print_received_packet_info(WDPacketData* pkt,WatchdogNode* wdNode);
 /* global variables */
@@ -506,6 +508,7 @@ static void wd_cluster_initialize(void)
 	g_cluster.ipc_command_socks = NULL;
 	g_cluster.wd_timer_commands = NULL;
 	g_cluster.localNode->state = WD_DEAD;
+	g_cluster.ipc_auth_needed = strlen(pool_config->wd_authkey)?true:false;
 
 	/* initialize the memory for command object */
 	g_cluster.currentCommand.nodeResults = palloc0((sizeof(WDCommandNodeResult) * g_cluster.remoteNodeCount));
@@ -1380,7 +1383,7 @@ static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 	IPCCommand->issueing_sock = sock;
 	IPCCommand->type = type;
 	gettimeofday(&IPCCommand->issue_time, NULL);
-	
+
 	if (data_len > 0)
 	{
 		IPCCommand->data_buf = palloc(data_len);
@@ -1425,35 +1428,54 @@ static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 	return (res != IPC_CMD_ERROR);
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* IPCCommand)
+static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* ipcCommand)
 {
-	switch(IPCCommand->type)
+	/* authenticate the client first */
+	if (check_and_report_IPC_authentication(ipcCommand) == false)
+	{
+		return IPC_CMD_ERROR;
+	}
+
+	switch(ipcCommand->type)
 	{
 		case WD_NODE_STATUS_CHANGE_COMMAND:
-			return process_IPC_nodeStatusChange_command(IPCCommand);
+			return process_IPC_nodeStatusChange_command(ipcCommand);
 			break;
 
 		case WD_REGISTER_FOR_NOTIFICATION:
 			/* Add this socket to the notify socket list*/
-			g_cluster.notify_clients = lappend_int(g_cluster.notify_clients, IPCCommand->issueing_sock);
+			g_cluster.notify_clients = lappend_int(g_cluster.notify_clients, ipcCommand->issueing_sock);
 			/* The command is completed successfully */
 			return IPC_CMD_COMPLETE;
 			break;
 
 		case WD_GET_NODES_LIST_COMMAND:
-			return process_IPC_nodeList_command(IPCCommand);
+			return process_IPC_nodeList_command(ipcCommand);
 			break;
 
 		case WD_FUNCTION_COMMAND:
-			return process_IPC_replicate_variable(IPCCommand);
+			return process_IPC_replicate_variable(ipcCommand);
 			break;
 
 		case WD_FAILOVER_CMD_SYNC_REQUEST:
-			return process_IPC_failover_cmd_synchronise(IPCCommand);
+			return process_IPC_failover_cmd_synchronise(ipcCommand);
 
 		default:
+		{
+			char* error_json;
 			ereport(LOG,
-					(errmsg("invalid IPC command type %c",IPCCommand->type)));
+					(errmsg("invalid IPC command type %c",ipcCommand->type)));
+
+			error_json = get_wd_simple_error_message_json("unknown IPC command type");
+			if (write_ipc_command_with_result_data(ipcCommand, WD_IPC_CMD_RESULT_BAD,
+												   error_json, strlen(error_json) +1))
+			{
+				ereport(LOG,
+						(errmsg("failed to forward error message of process node list command to IPC socket")));
+			}
+			pfree(error_json);
+
+		}
 			break;
 	}
 	return IPC_CMD_ERROR;
@@ -1479,12 +1501,14 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDIPCCommandData* IPCCo
 				(errmsg("unable to parse json data from get node list command")));
 		return IPC_CMD_ERROR;
 	}
+
 	/* If it is a node function ?*/
 	if (json_get_int_value_for_key(root, "NodeID", &NodeID))
 	{
 		json_value_free(root);
 		return IPC_CMD_ERROR;
 	}
+
 	json_value_free(root);
 	jNode = get_node_list_json(NodeID);
 	ret = write_ipc_command_with_result_data(IPCCommand, WD_IPC_CMD_RESULT_OK,
@@ -3527,6 +3551,7 @@ static int watchdog_state_machine_joining(WD_EVENTS event, WatchdogNode* wdNode,
   default:
 			break;
 	}
+
 	return 0;
 }
 
@@ -4949,6 +4974,166 @@ static bool verify_authhash_for_node(WatchdogNode* wdNode, char* authhash)
 	}
 	/* authkey is not enabled.*/
 	return true;
+}
+
+/*
+ * function authenticates the IPC command by looking for the
+ * auth key in the JSON data of IPC command.
+ * For IPC commands comming from outer wrold the function validates the
+ * authkey in JSON packet with configured pool_config->wd_authkey.
+ * if internal_client_only is true then the JSON data must contain the
+ * shared key present in the pgpool-II shared memory. This can be used
+ * to restrict certain watchdog IPC functions for outside of pgpool-II
+ */
+static bool check_IPC_client_authentication(json_value *rootObj, bool internal_client_only)
+{
+	char *packet_auth_key;
+	unsigned int packet_key;
+	bool has_shared_key;
+	unsigned int *shared_key = get_ipc_shared_key();
+
+	if (json_get_int_value_for_key(rootObj, WD_IPC_SHARED_KEY, (int*)&packet_key))
+	{
+		ereport(DEBUG2,
+			(errmsg("IPC json data packet does not contain shared key")));
+		has_shared_key = false;
+	}
+	else
+	{
+		has_shared_key = true;
+	}
+
+	if (internal_client_only)
+	{
+
+		if (shared_key == NULL)
+		{
+			ereport(LOG,
+					(errmsg("shared key not initialized")));
+			return false;
+		}
+
+		/* If it is a node function ?*/
+		if (has_shared_key == false)
+		{
+			ereport(LOG,
+				(errmsg("invalid json data packet"),
+					 errdetail("authentication shared key not found in json data")));
+			return false;
+		}
+		/* compare if shared keys match */
+		if (*shared_key != packet_key)
+			return false;
+
+		/* providing a valid shared key for inetenal clients is enough */
+		return true;
+	}
+
+	/* If no authentication is required, no need to look further */
+	if (g_cluster.ipc_auth_needed == false)
+		return true;
+
+	/* if shared key is provided and it matched, we are good */
+	if (has_shared_key == true && *shared_key == packet_key)
+		return true;
+
+	/* shared key is out of question validate the authKey valurs */
+	packet_auth_key = json_get_string_value_for_key(rootObj, WD_IPC_AUTH_KEY);
+
+	if (packet_auth_key == NULL)
+	{
+		ereport(DEBUG1,
+			(errmsg("invalid json data packet"),
+				 errdetail("authentication key not found in json data")));
+		return false;
+	}
+
+	/* compare the packet key with configured auth key */
+	if (strcmp(pool_config->wd_authkey, packet_auth_key) != 0)
+		return false;
+	return true;
+}
+
+/*
+ * function to check authentication of IPC command based on the command type
+ * this one also informs the calling client about the failure
+ */
+
+static bool check_and_report_IPC_authentication(WDIPCCommandData* ipcCommand)
+{
+	json_value *root = NULL;
+	bool internal_client_only = false;
+	bool ret;
+
+	if (ipcCommand == NULL)
+		return false;	/* should never happen*/
+
+	/* first identify the command type */
+	switch(ipcCommand->type)
+	{
+		case WD_NODE_STATUS_CHANGE_COMMAND:
+		case WD_REGISTER_FOR_NOTIFICATION:
+		case WD_GET_NODES_LIST_COMMAND:
+			internal_client_only = false;
+			break;
+
+		case WD_FUNCTION_COMMAND:
+		case WD_FAILOVER_CMD_SYNC_REQUEST:
+			/* only allowed internaly.*/
+			internal_client_only = true;
+			break;
+
+		default:
+			/* unknown command, ignore it */
+			return true;
+			break;
+	}
+
+	if (internal_client_only == false && g_cluster.ipc_auth_needed == false)
+	{
+		/* no need to look further */
+		return true;
+	}
+
+	if (ipcCommand->data_len <= 0 || ipcCommand->data_buf == NULL)
+	{
+		ereport(LOG,
+			(errmsg("authentication failed"),
+				 errdetail("IPC command contains no data")));
+		return false;
+	}
+
+	root = json_parse(ipcCommand->data_buf,ipcCommand->data_len);
+	/* The root node must be object */
+	if (root == NULL || root->type != json_object)
+	{
+		json_value_free(root);
+		ereport(LOG,
+			(errmsg("authentication failed"),
+				 errdetail("IPC command contains an invalid data")));
+		return false;
+	}
+
+	ret = check_IPC_client_authentication(root, internal_client_only);
+	json_value_free(root);
+
+	if (ret == false)
+	{
+		char* error_json;
+		ereport(WARNING,
+			(errmsg("authentication failed"),
+				 errdetail("invalid IPC key")));
+
+		error_json = get_wd_simple_error_message_json("IPC client authentication failed");
+		if (write_ipc_command_with_result_data(ipcCommand, WD_IPC_CMD_RESULT_BAD,
+											   error_json, strlen(error_json) +1))
+		{
+			ereport(LOG,
+					(errmsg("failed to forward error message to IPC socket")));
+		}
+		pfree(error_json);
+	}
+	return ret;
 }
 
 /* DEBUG */

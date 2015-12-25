@@ -70,8 +70,13 @@ static int wd_chk_node_mask (unsigned char req_mask, int *node_id_set, int count
 
 static int open_wd_command_sock(bool throw_error);
 
-unsigned char *WD_Node_List = NULL;		/* Lives in shared memory */
-char* watchdog_ipc_address = NULL;
+/* shared memory variables */
+unsigned char *WD_Node_List = NULL;
+char *watchdog_ipc_address = NULL;
+unsigned int *ipc_shared_key = NULL;   /* key lives in shared memory
+										* used to identify the ipc internal
+										* clients
+										*/
 
 void wd_ipc_initialize_data(void)
 {
@@ -86,6 +91,7 @@ void wd_ipc_initialize_data(void)
 						MAX_WATCHDOG_NUM,
 						sizeof(unsigned char) * MAX_NUM_BACKENDS)));
 	}
+
 	if (watchdog_ipc_address == NULL)
 	{
 		char wd_ipc_sock_addr[255];
@@ -96,11 +102,25 @@ void wd_ipc_initialize_data(void)
 		watchdog_ipc_address = pool_shared_memory_create(strlen(wd_ipc_sock_addr) +1);
 		strcpy(watchdog_ipc_address, wd_ipc_sock_addr);
 	}
+
+	if (ipc_shared_key == NULL)
+	{
+		ipc_shared_key = pool_shared_memory_create(sizeof(unsigned int));
+		*ipc_shared_key = 0;
+		while (*ipc_shared_key == 0) {
+			pool_random_salt((char*)ipc_shared_key);
+		}
+	}
 }
 
 char* get_watchdog_ipc_address(void)
 {
 	return watchdog_ipc_address;
+}
+
+unsigned int* get_ipc_shared_key(void)
+{
+	return ipc_shared_key;
 }
 
 /*
@@ -229,8 +249,11 @@ WdCommandResult
 wd_start_recovery(void)
 {
 	char type;
-	char* func = get_wd_node_function_json(WD_FUNCTION_START_RECOVERY, NULL,0);
-	
+	unsigned int *shared_key = get_ipc_shared_key();
+
+	char* func = get_wd_node_function_json(WD_FUNCTION_START_RECOVERY, NULL,0,
+										   shared_key?*shared_key:0,pool_config->wd_authkey);
+
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND,
 													   pool_config->recovery_timeout,
 													   func, strlen(func), true);
@@ -264,7 +287,11 @@ WdCommandResult
 wd_end_recovery(void)
 {
 	char type;
-	char* func = get_wd_node_function_json(WD_FUNCTION_END_RECOVERY, NULL, 0);
+	unsigned int *shared_key = get_ipc_shared_key();
+
+	char* func = get_wd_node_function_json(WD_FUNCTION_END_RECOVERY, NULL, 0,
+										   shared_key?*shared_key:0,pool_config->wd_authkey);
+
 	
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND,
 													   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
@@ -302,13 +329,15 @@ wd_send_failback_request(int node_id)
 	int n = node_id;
 	char type;
 	char* func;
-	
-	
+	unsigned int *shared_key = get_ipc_shared_key();
+
 	/* if failback packet is received already, do nothing */
 	if (wd_chk_node_mask_for_failback_req(&n,1))
 		return COMMAND_OK;
 	
-	func = get_wd_node_function_json(WD_FUNCTION_FAILBACK_REQUEST,&n, 1);
+	func = get_wd_node_function_json(WD_FUNCTION_FAILBACK_REQUEST,&n, 1,
+									 shared_key?*shared_key:0,pool_config->wd_authkey);
+
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND,
 													   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
 													   func, strlen(func), true);
@@ -342,7 +371,12 @@ static char* get_wd_failover_cmd_type_json(WDFailoverCMDTypes cmdType, char* req
 {
 	char* json_str;
 	JsonNode* jNode = jw_create_with_object(true);
-	
+	unsigned int *shared_key = get_ipc_shared_key();
+
+	jw_put_int(jNode, WD_IPC_SHARED_KEY, shared_key?*shared_key:0); /* put the shared key*/
+	if (pool_config->wd_authkey != NULL && strlen(pool_config->wd_authkey) > 0)
+		jw_put_string(jNode, WD_IPC_AUTH_KEY, pool_config->wd_authkey); /*  put the auth key*/
+
 	jw_put_int(jNode, "FailoverCMDType", cmdType);
 	jw_put_string(jNode, "SyncRequestType", reqType);
 	jw_finish_document(jNode);
@@ -410,13 +444,15 @@ wd_degenerate_backend_set(int *node_id_set, int count)
 {
 	char type;
 	char* func;
-	
-	
+	unsigned int *shared_key = get_ipc_shared_key();
+
 	/* if failback packet is received already, do nothing */
 	if (wd_chk_node_mask_for_degenerate_req(node_id_set,count))
 		return COMMAND_OK;
 	
-	func = get_wd_node_function_json(WD_FUNCTION_DEGENERATE_REQUEST,node_id_set, count);
+	func = get_wd_node_function_json(WD_FUNCTION_DEGENERATE_REQUEST,node_id_set, count,
+									 shared_key?*shared_key:0,pool_config->wd_authkey);
+
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND ,
 													   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
 													   func, strlen(func), true);
@@ -453,12 +489,14 @@ wd_promote_backend(int node_id)
 	char type;
 	char* func;
 	WDIPCCmdResult *result;
-	
+	unsigned int *shared_key = get_ipc_shared_key();
+
 	/* if promote packet is received already, do nothing */
 	if (wd_chk_node_mask_for_promote_req(&n,1))
 		return COMMAND_OK;
 	
-	func = get_wd_node_function_json(WD_FUNCTION_PROMOTE_REQUEST,&n, 1);
+	func = get_wd_node_function_json(WD_FUNCTION_PROMOTE_REQUEST,&n, 1,
+									 shared_key?*shared_key:0,pool_config->wd_authkey);
 	result = issue_command_to_watchdog(WD_FUNCTION_COMMAND ,
 									   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
 									   func, strlen(func), true);
@@ -496,8 +534,16 @@ char* wd_get_watchdog_nodes(int nodeID)
 {
 	WDIPCCmdResult *result;
 	char* json_str;
+	unsigned int *shared_key = get_ipc_shared_key();
+
 	JsonNode* jNode = jw_create_with_object(true);
 	jw_put_int(jNode, "NodeID", nodeID);
+
+	jw_put_int(jNode, WD_IPC_SHARED_KEY, shared_key?*shared_key:0); /* put the shared key*/
+
+	if (pool_config->wd_authkey != NULL && strlen(pool_config->wd_authkey) > 0)
+		jw_put_string(jNode, WD_IPC_AUTH_KEY, pool_config->wd_authkey); /*  put the auth key*/
+
 	jw_finish_document(jNode);
 	
 	json_str = jw_get_json_string(jNode);

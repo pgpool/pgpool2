@@ -1275,6 +1275,7 @@ int pool_read_int(POOL_CONNECTION_POOL *cp)
  */
 void pool_random_salt(char *md5Salt)
 {
+	srandom(time(NULL));
 	long rand = random();
 
 	md5Salt[0] = (rand % 255) + 1;

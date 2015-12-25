@@ -7,7 +7,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -45,6 +45,8 @@ typedef struct WDIPCCmdResult
 
 extern void wd_ipc_initialize_data(void);
 extern char* get_watchdog_ipc_address(void);
+extern unsigned int* get_ipc_shared_key(void);
+
 
 extern int wd_set_node_mask_for_failback_req(int *node_id_set, int count);
 extern int wd_set_node_mask_for_degenerate_req(int *node_id_set, int count);

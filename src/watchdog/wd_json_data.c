@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2015	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -29,6 +29,7 @@
 #include "pool_config.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_json_data.h"
+#include "watchdog/wd_ipc_defines.h"
 
 POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len)
 {
@@ -310,10 +311,14 @@ WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len, char** 
 }
 
 
-char* get_lifecheck_node_status_change_json(int nodeID, int nodeStatus, char* message)
+char* get_lifecheck_node_status_change_json(int nodeID, int nodeStatus, char* message, char* authKey)
 {
 	char* json_str;
 	JsonNode* jNode = jw_create_with_object(true);
+
+	if (authKey != NULL && strlen(authKey) > 0)
+		jw_put_string(jNode, WD_IPC_AUTH_KEY, authKey); /*  put the auth key*/
+
 	/* add the node ID */
 	jw_put_int(jNode, "NodeID", nodeID);
 	/* add the node status */
@@ -425,11 +430,16 @@ WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source)
 	
 }
 
-char* get_wd_node_function_json(char* func_name, int *node_id_set, int count)
+char* get_wd_node_function_json(char* func_name, int *node_id_set, int count, unsigned int sharedKey, char* authKey)
 {
 	char* json_str;
 	int  i;
 	JsonNode* jNode = jw_create_with_object(true);
+
+	jw_put_int(jNode, WD_IPC_SHARED_KEY, sharedKey); /* put the shared key*/
+
+	if (authKey != NULL && strlen(authKey) > 0)
+		jw_put_string(jNode, WD_IPC_AUTH_KEY, authKey); /*  put the auth key*/
 
 	jw_put_string(jNode, "Function", func_name);
 	jw_put_int(jNode, "NodeCount", count);
@@ -528,4 +538,15 @@ bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name
 	return true;
 }
 
+char* get_wd_simple_error_message_json(char* message)
+{
+	char* json_str;
+	JsonNode* jNode = jw_create_with_object(true);
+
+	jw_put_string(jNode, "ERROR", message);
+	jw_finish_document(jNode);
+	json_str = pstrdup(jw_get_json_string(jNode));
+	jw_destroy(jNode);
+	return json_str;
+}
 

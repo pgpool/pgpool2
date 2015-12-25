@@ -43,11 +43,12 @@ extern WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len, 
 extern char* get_watchdog_node_info_json(WatchdogNode* wdNode, char* authkey);
 extern POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len);
 extern char* get_pool_config_json(void);
-extern char* get_lifecheck_node_status_change_json(int nodeID, int nodeStatus, char* message);
+extern char* get_lifecheck_node_status_change_json(int nodeID, int nodeStatus, char* message, char* authKey);
 extern bool parse_node_status_json(char* json_data, int data_len, int* nodeID, int* nodeStatus, char** message);
 
 extern WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source);
 
-extern char* get_wd_node_function_json(char* func_name, int *node_id_set, int count);
+extern char* get_wd_node_function_json(char* func_name, int *node_id_set, int count, unsigned int sharedKey, char* authKey);
 extern bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name, int **node_id_set, int *count);
+extern char* get_wd_simple_error_message_json(char* message);
 #endif

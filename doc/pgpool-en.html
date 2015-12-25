@@ -4100,7 +4100,12 @@ All following options are required to be specified in watchdog process.
     All the pgpool-II must have the same key.
     Packets from watchdog of wrong key will be rejects.
     This authentication is applied also for heatrbeat singals if lifecheck method is heartbeat mode.
-    If this is empty (default), watchdog doesn't conduct authenticate.
+	</p><p>
+	Since pgpool-II <span class="version">V3.5 -</span> wd_authkey is also used to authenticate the watchdog IPC clients.
+	All clients communicating with pgpool-II watchdog process needs to provide this
+	wd_authkey value for "IPCAuthKey" key in the JSON data of the command.
+	</p><p>
+    If this is empty (default), watchdog IPC and watchdog cluster authentication is disabled.
     </p>
     <p>
     You need to restart pgpool-II if you change this value.
@@ -4564,30 +4569,32 @@ as the command or command result type. The below table lists all valid types and
 </p>
 <table border>
 	<tr class="header"><th>Name</th>		<th>Byte Value</th>	<th>Type</th><th>Description</th></tr>
-	<tr><th>Register for notifications</th>	<td>'0'</td>	<td>Command packet</td> <td>Command to register the current connection to receive watchdog notifications</td></tr>
-	<tr><th>Node status change</th>			<td>'2'</td>	<td>Command packet</td> <td>Command to inform watchdog about node status change of watchddog node</td></tr>
-	<tr><th>Get nodes list</th>				<td>'3'</td>	<td>Command packet</td> <td>Command to get the list of all configured watchdog nodes</td></tr>
-	<tr><th>Nodes list data</th>			<td>'4'</td>	<td>Result packet</td>  <td>The JSON data in packet
+	<tr><th><a name="ipc_reg_for_notifications"></a>REGISTER FOR NOTIFICATIONS</th>	<td>'0'</td>	<td>Command packet</td> <td>Command to register the current connection to receive watchdog notifications</td></tr>
+	<tr><th><a name="ipc_node_status_change"></a>NODE STATUS CHANGE</th>			<td>'2'</td>	<td>Command packet</td> <td>Command to inform watchdog about node status change of watchddog node</td></tr>
+	<tr><th><a name="ipc_get_nodes_list"></a>GET NODES LIST</h4></th>				<td>'3'</td>	<td>Command packet</td> <td>Command to get the list of all configured watchdog nodes</td></tr>
+	<tr><th><a name="ipc_nodes_list_data"></a>NODES LIST DATA</th>			<td>'4'</td>	<td>Result packet</td>  <td>The JSON data in packet
 		contains the list of all configured watchdog nodes</th></tr>
-	<tr><th>Cluster in transition</th>		<td>'7'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when it is not possible to process the command because the cluster is transitioning.'</td></tr>
-	<tr><th>Result BAD</th>					<td>'8'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when the IPC command fails</td></tr>
-	<tr><th>Result OK</th>					<td>'9'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when IPC command succeeds</td></tr>
+	<tr><th><a name="ipc_cluster_in_tran"></a>CLUSTER IN TRANSITION</th>		<td>'7'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when it is not possible to process the command because the cluster is transitioning.'</td></tr>
+	<tr><th><a name="ipc_result_bad"></a>RESULT BAD</th>					<td>'8'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when the IPC command fails</td></tr>
+	<tr><th><a name="ipc_result_ok"></a>RESULT OK</th>					<td>'9'</td>	<td>Result packet</td> <td>Watchdog returns this packet type when IPC command succeeds</td></tr>
 
 </table>
 </dl>
 
 <h3 id="external_lifecheck_ipc">External lifecheck IPC packets and data</h3>
 <dl>
-"Get nodes list('3')", "Nodes list data('4')" and "Node status change('2')" IPC messages of watchdog can be used to integration an external lifecheck systems.
+<a href="#ipc_get_nodes_list">"GET NODES LIST"</a> ,<a href="#ipc_nodes_list_data">"NODES LIST DATA"</a>
+and <a href="#ipc_node_status_change">"NODE STATUS CHANGE"</a> IPC messages of watchdog can be used to integration an external lifecheck systems.
 Note that the built-in lifecheck of pgpool also uses the same channel and technique.
 <h4 id="external_lifecheck_ipc">Getting list of configured watchdog nodes</h4>
 <dl>
-Any third party lifecheck system can send the "Get nodes list('3')" type packet on watchdog IPC socket with a zero length data to get the "Nodes list data('4')"
-type result packet which, contains the list of all configured watchdog nodes to health check on in JSON format.
-The Json of watchdog nodes contains the "WatchdogNodes" Array of all watchdog nodes. Each watchdog json node contains the
+Any third party lifecheck system can send the <a href="#ipc_get_nodes_list">"GET NODES LIST"</a> packet on watchdog IPC socket with a JSON data containing the authorization key and value if
+<a href="#WD_AUTHKEY">wd_authkey</a> is set or empty packet data when wd_authkey is not set to get the <a href="#ipc_nodes_list_data">"NODES LIST DATA"</a> result packet which, contains the list of all configured
+watchdog nodes to health check on in JSON format.
+The JSON of watchdog nodes contains the "WatchdogNodes" Array of all watchdog nodes. Each watchdog JSON node contains
 "ID", "NodeName", "HostName", "DelegateIP", "WdPort" and "PgpoolPort" for each node.
 <pre>
--- The example JSON data contained in "Nodes list data('4')"
+-- The example JSON data contained in <a href="#ipc_nodes_list_data">"NODES LIST DATA"</a>
 
   {
 	"NodeCount":3,
@@ -4628,7 +4635,7 @@ The Json of watchdog nodes contains the "WatchdogNodes" Array of all watchdog no
 
 After getting the configured watchdog nodes information from the watchdog the external lifecheck system can proceed
 with health checking of watchdog nodes, and when it detects some status change of any node it can inform that to watchdog
-using the "Node status change('2')" IPC messages of watchdog.
+using the <a href="#ipc_node_status_change">"NODE STATUS CHANGE"</a> IPC messages of watchdog.
 The data in the message should contain the JSON with the node ID of the node whose status is changed (The node ID must be
 same as returned by watchdog for that node in WatchdogNodes list) and the new status of node.
 <pre>
@@ -4639,6 +4646,7 @@ failed on node with ID 1 will look like
 	"NodeID":1,
 	"NodeStatus":1,
 	"Message":"optional message string to log by watchdog for this event"
+	"IPCAuthKey":"<a href="#WD_AUTHKEY">wd_authkey</a> configuration parameter value"
   }
 
 -- NodeStatus values meanings are as follows
