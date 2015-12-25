@@ -49,7 +49,7 @@ EOF
 for mode in simple extended
 do
 	echo -n "test $mode mode "
-	timeout 30 sh pgbench_loop.sh $mode &
+	timeout 30 sh pgbench_loop.sh $mode
 
 	if [ ! $? -eq 0 ];then
 		echo ...timed out.
