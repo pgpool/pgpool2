@@ -4707,6 +4707,16 @@ Please note that after the active pgpool-II stops, it will take a few seconds un
 standby pgpool-II promote to new active, to make sure that the former virtual IP is brought
 down before a down notification packet is sent to other pgpool-IIs.
 </li>
+<li>
+Starting multiple pgpool-II simultaneously with too short interval causes
+the following problems. pgpool-II should be started up with enough intrevals.
+  <ul>
+  <li>watchdog fails to start up with log message like
+      "failed to initialize watchdog, delegate_IP "x.x.x.x" already exists".</li>
+  <li>Multiple pgpool-II are promoted to active.</li>
+  <li>watchdog status among the pgpool-II cluster gets inconsistent.</li>
+  </ul>
+</li>
 </ul>
 <p class="top_link"><a href="#Top">back to top</a></p>
 
