@@ -252,7 +252,8 @@ process_salt_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 	if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)salt, 4, NULL) < 0 )
 	{
 		pcp_internal_error(pcpConn,
-						   "command failed. invalid response\n");
+
+						   "command failed. invalid response");
 		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
 	else
@@ -388,7 +389,7 @@ static PCPResultInfo* process_pcp_response(PCPConnInfo* pcpConn, char sentMsg)
 				else
 				{
 					pcp_internal_error(pcpConn,
-									   "ERROR: authentication failed. reason=\"%s\"\n", buf);
+									   "ERROR: authentication failed. reason=\"%s\"", buf);
 					setResultStatus(pcpConn, PCP_RES_BACKEND_ERROR);
 				}
 			}
@@ -484,7 +485,7 @@ static PCPResultInfo* process_pcp_response(PCPConnInfo* pcpConn, char sentMsg)
 			default:
 				setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				pcp_internal_error(pcpConn,
-								   "ERROR: invalid PCP packet type =\"%c\"\n", toc);
+								   "ERROR: invalid PCP packet type =\"%c\"", toc);
 				break;
 		}
 		pfree(buf);
@@ -625,7 +626,7 @@ process_pcp_node_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 	}
 	else
 		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"\n",buf);
+						   "command failed with reason: \"%s\"",buf);
 	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 }
 /* --------------------------------
@@ -698,7 +699,7 @@ process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 	else
 	{
 		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"\n",buf);
+						   "command failed with reason: \"%s\"",buf);
 		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
 
@@ -709,7 +710,7 @@ INVALID_RESPONSE:
 	if(backend_info)
 		pfree(backend_info);
 	pcp_internal_error(pcpConn,
-					   "command failed. invalid response\n");
+					   "command failed. invalid response");
 	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 
 }
@@ -760,7 +761,7 @@ process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 		if (index == NULL)
 		{
 			pcp_internal_error(pcpConn,
-							   "command failed. invalid response\n");
+							   "command failed. invalid response");
 			setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 			return;
 		}
@@ -775,7 +776,7 @@ process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 			if (index == NULL)
 			{
 				pcp_internal_error(pcpConn,
-								   "command failed. invalid response\n");
+								   "command failed. invalid response");
 				setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				return;
 			}
@@ -786,7 +787,7 @@ process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 		if (setNextResultBinaryData(pcpConn->pcpResInfo, process_list, (sizeof(int) * process_count) , NULL) < 0)
 		{
 			pcp_internal_error(pcpConn,
-							   "command failed. invalid response\n");
+							   "command failed. invalid response");
 			setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 		}
 		else
@@ -797,7 +798,7 @@ process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 	else
 	{
 		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"\n",buf);
+						   "command failed with reason: \"%s\"",buf);
 		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
 }
@@ -963,7 +964,7 @@ INVALID_RESPONSE:
 		pfree(processInfo);
 	}
 	pcp_internal_error(pcpConn,
-					   "command failed. invalid response\n");
+					   "command failed. invalid response");
 	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 }
 
@@ -1066,7 +1067,7 @@ process_command_complete_response(PCPConnInfo* pcpConn, char* buf, int len)
 	else
 	{
 		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"\n",buf);
+						   "command failed with reason: \"%s\"",buf);
 	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
 }
@@ -1167,7 +1168,7 @@ INVALID_RESPONSE:
 	if(status)
 		pfree(status);
 	pcp_internal_error(pcpConn,
-					   "command failed. invalid response\n");
+					   "command failed. invalid response");
 	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 }
 
@@ -1324,7 +1325,7 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 	else
 	{
 		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"\n",buf);
+						   "command failed with reason: \"%s\"",buf);
 		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
 
@@ -1335,7 +1336,7 @@ INVALID_RESPONSE:
 	if(watchdog_info)
 		pfree(watchdog_info);
 	pcp_internal_error(pcpConn,
-					   "command failed. invalid response\n");
+					   "command failed. invalid response");
 	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 
 }

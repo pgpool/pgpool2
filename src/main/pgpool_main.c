@@ -2669,7 +2669,7 @@ static int find_primary_node(void)
 		bool is_standby;
 
 		ereport(LOG,
-				(errmsg("find_primary_node: checking backend no %d\n",i)));
+				(errmsg("find_primary_node: checking backend no %d",i)));
 
 		if (!VALID_BACKEND(i))
 			continue;

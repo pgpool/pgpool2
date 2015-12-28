@@ -622,7 +622,7 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 	{
 		/* socket create failed */
 		ereport(LOG,
-				(errmsg("create socket failed with reason: \"%s\"\n", strerror(errno))));
+				(errmsg("create socket failed with reason: \"%s\"", strerror(errno))));
 		return -1;
 	}
 	
