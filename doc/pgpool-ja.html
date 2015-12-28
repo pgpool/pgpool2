@@ -4036,7 +4036,7 @@ watchdog プロセスは pgpool-II から自動的に起動・停止されます
 pgpool-II の起動は <font color="red">root 権限で</font> 行う必要があります。
 </p>
 <p>
-なお、他の pgpool および接続先の PostgreSQL が全て起動するのを待ってから、死活監視を開始します。
+なお、他の pgpool-II および接続先の PostgreSQL が全て起動するのを待ってから、死活監視を開始します。
 </p>
 
 <h2 id="config_watchdog">pgpool.conf の設定</h2>
@@ -4288,6 +4288,14 @@ pgpoolが生きていて PostgreSQLと繋がっている場合でも、
   <li>
   アクティブな pgpool-II の停止後、スタンバイ pgpool-II が新しいアクティブに昇格するまでには数秒の時間がかかることに注意してください。
   これは、アクティブ pgpool-II の停止を他の pgpool-II に通知する前に、仮想 IP が停止されたことの確認を行っているためです。
+  </li>
+  <li>
+  複数の pgpool-II を間隔を開けずに同時に起動すると以下のような現象が発生することがあります。十分な間隔を開けて pgpool-II を起動するようにしてください。
+      <ul>
+      <li>"failed to initialize watchdog, delegate_IP "x.x.x.x" already exists" といったメッセージが出力されて起動に失敗する。</li>
+      <li>アクティブ pgpool-II が複数存在する状態となる。</li>
+      <li>pgpool-II 間で watchdog 状態に一貫性がなくなる。</li>
+      </ul>
   </li>
 </ul>
 
