@@ -185,7 +185,7 @@ fi
 %files
 %defattr(-,root,root,-)
 %dir %{_datadir}/%{short_name}
-%doc README TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html
+%doc README TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool-zh_cn.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html
 %{_bindir}/pgpool
 %{_bindir}/pcp_attach_node
 %{_bindir}/pcp_detach_node
