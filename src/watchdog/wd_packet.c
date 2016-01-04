@@ -223,6 +223,8 @@ wd_create_send_socket(char * hostname, int port)
 	{
 		if (connect(sock,(struct sockaddr*)&addr, len) < 0)
 		{
+			int saved_errno = errno;
+
 			if (errno == EINTR)
 				continue;
 			else if (errno == EISCONN)
@@ -230,7 +232,7 @@ wd_create_send_socket(char * hostname, int port)
 
 			ereport(LOG,
 				(errmsg("failed to create watchdog sending socket"),
-					 errdetail("connect() reports failure \"%s\"",strerror(errno)),
+					 errdetail("connect() reports failure \"%s\"",strerror(saved_errno)),
 						errhint("You can safely ignore this while starting up.")));
 			break;
 		}
