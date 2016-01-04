@@ -194,7 +194,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	MemoryContext MainLoopMemoryContext;
 	sigjmp_buf	local_sigjmp_buf;
-	
+
 	/* Set the process type variable */
 	processType = PT_MAIN;
 	processState = INITIALIZING;
@@ -203,7 +203,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	 * Restore previous backend status if possible
 	 */
 	read_status_file(discard_status);
-    
+
 	/*
 	 * install the call back for preparation of system exit
 	 */
@@ -234,29 +234,40 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		sigset_t mask;
 		wakeup_request = 0;
 
-		/* Watchdog process fires SIGUSR2 once in stable state
-		 * so install the SIGUSR2 handler first up
+		/* Watchdog process fires SIGUSR2 once in stable state,
+		 * so install the SIGUSR2 handler first up. In addition,
+		 * when wathcodg fails to start with FATAL, the process
+		 * exits and SIGCHLD is fired, so SIGCHLD handelr is also
+		 * needed.
 		 */
 		pool_signal(SIGUSR2, wakeup_handler);
+		pool_signal(SIGCHLD, reap_handler);
 		/*
 		 * okay as we need to wait until watchdog is in stable state
-		 * so only wait for SIGUSR2 and signals those are necessary to make
-		 * sure we respond to user requests of shudown if it arives while
-		 * we are in waiting state.
+		 * so only wait for SIGUSR2, SIGCHLD, and signals those are
+		 * necessary to make sure we respond to user requests of shutdown
+		 if it arives while we are in waiting state.
 		 */
 		sigfillset(&mask);
 		sigdelset(&mask, SIGUSR2);
+		sigdelset(&mask, SIGCHLD);
 		sigdelset(&mask, SIGTERM);
 		sigdelset(&mask, SIGINT);
 		sigdelset(&mask, SIGQUIT);
 		watchdog_pid = initialize_watchdog();
 		ereport (LOG,
 				 (errmsg("waiting for watchdog to initialize")));
-		while (wakeup_request == 0)
+		while (wakeup_request == 0 && sigchld_request == 0)
 		{
 			sigsuspend(&mask);
 		}
 		wakeup_request = 0;
+
+		/* watchdog process fails to start */
+		if (sigchld_request)
+		{
+			reaper();
+		}
 
 		ereport (LOG,
 				 (errmsg("watchdog process is initialized")));
@@ -326,7 +337,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		ereport(FATAL,
 			(errmsg("failed to create pipe")));
 	}
-	
+
 	MemoryContextSwitchTo(TopMemoryContext);
 
 	/* Create per loop iteration memory context */
@@ -410,7 +421,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	/* Create or write status file */
 	(void)write_status_file();
-	
+
 	/* This is the main loop */
 	for (;;)
 	{
@@ -550,7 +561,7 @@ bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, i
 	bool failover_in_progress;
 	pool_sigset_t oldmask;
 
-	/* 
+	/*
 	 * if the queue is already full
 	 * what to do?
 	 */
@@ -576,7 +587,7 @@ bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, i
 
 	if (getpid() == mypid)
 	{
-		/* 
+		/*
 		 * We are invoked from main process
 		 * call failover with blocked signals
 		 */
@@ -682,7 +693,7 @@ pid_t fork_a_child(int *fds, int id)
 pid_t worker_fork_a_child()
 {
 	pid_t pid;
-	
+
 	pid = fork();
 
 	if (pid == 0)
@@ -718,7 +729,7 @@ pid_t worker_fork_a_child()
             (errmsg("failed to fork a child"),
                  errdetail("system call fork() failed with reason: %s", strerror(errno))));
 	}
-	
+
 	return pid;
 }
 
@@ -906,7 +917,7 @@ static int create_inet_domain_socket(const char *hostname, const int port)
 	{
 		char *host = "", *serv = "";
 		char hostname[NI_MAXHOST], servname[NI_MAXSERV];
-		if (getnameinfo((struct sockaddr *) &addr, len, hostname, sizeof(hostname), servname, sizeof(servname), 0) == 0) 
+		if (getnameinfo((struct sockaddr *) &addr, len, hostname, sizeof(hostname), servname, sizeof(servname), 0) == 0)
 		{
 			host = hostname;
 			serv = servname;
@@ -1003,7 +1014,7 @@ static void terminate_all_childrens()
 			if (watchdog_pid)
 				kill(watchdog_pid, SIGINT);
 			watchdog_pid = 0;
-			
+
 			if (wd_lifecheck_pid)
 				kill(wd_lifecheck_pid, SIGINT);
 			wd_lifecheck_pid = 0;
@@ -1015,7 +1026,7 @@ static void terminate_all_childrens()
     {
         wpid = wait(NULL);
     }while (wpid > 0 || (wpid == -1 && errno == EINTR));
-    
+
     if (wpid == -1 && errno != ECHILD)
         ereport(LOG,
                 (errmsg("wait() failed. reason:%s", strerror(errno))));
@@ -1046,7 +1057,7 @@ void notice_backend_error(int node_id)
  *
  * node_id_set:	array of node ids to be registered for NODE DOWN operation
  * count:		number of elements in node_id_set array
- * error:		if set error is thrown as soon as any node id is found in 
+ * error:		if set error is thrown as soon as any node id is found in
  *				in node_id_set on which operation could not be performed.
  * test_only:	When set, function only checks if NODE DOWN operation can be
  *				executed on provided node ids and never registers the operation
@@ -1203,7 +1214,7 @@ void promote_backend(int node_id)
 				(errmsg("promote backend request for node_id: %d from pid [%d], But cluster is not in stable state"
 						, node_id, getpid())));
 	}
-	
+
 	if (res != COMMAND_FAILED)
 	{
 		register_node_operation_request(PROMOTE_NODE_REQUEST, &node_id, 1);
@@ -1356,7 +1367,7 @@ static RETSIGTYPE exit_handler(int sig)
     {
         wpid = wait(NULL);
     }while (wpid > 0 || (wpid == -1 && errno == EINTR));
-    
+
     if (wpid == -1 && errno != ECHILD)
         ereport(LOG,
                 (errmsg("wait() failed. reason:%s", strerror(errno))));
@@ -1889,7 +1900,7 @@ static void failover(void)
 					(errmsg("failback done. reconnect host %s(%d)",
 					 BACKEND_INFO(node_id).backend_hostname,
 					 BACKEND_INFO(node_id).backend_port)));
-			
+
 		}
 		else if (reqkind == PROMOTE_NODE_REQUEST)
 		{
@@ -2060,7 +2071,7 @@ static RETSIGTYPE reap_handler(int sig)
 {
 	POOL_SETMASK(&BlockSig);
 	sigchld_request = 1;
-	if(write(pipe_fds[1], "\0", 1) < 0)
+	if(pipe_fds[1] && write(pipe_fds[1], "\0", 1) < 0)
         ereport(WARNING,
             (errmsg("reap_handler: write to pipe failed with error \"%s\"", strerror(errno))));
 
@@ -2575,7 +2586,7 @@ static int trigger_failover_command(int node, const char *command_line,
 }
 /*
  * This function is used by find_primary_node() function and is just a wrapper
- * over make_persistent_db_connection() function and returns boolean value to 
+ * over make_persistent_db_connection() function and returns boolean value to
  * inform connection status
  * This function must not throws ereport
  */
@@ -2715,7 +2726,7 @@ static int find_primary_node_repeatedly(void)
 		/* No point to look for primary node if not in streaming
 		 * replication mode.
 		 */
-		ereport(DEBUG1, 
+		ereport(DEBUG1,
 			(errmsg("find_primary_node: not in streaming replication mode")));
 		return -1;
 	}
@@ -2855,7 +2866,7 @@ static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 				ereport(FATAL,
 					(errmsg("invalid shared memory size"),
 						errdetail("pool_shared_memory_fsmm_size error")));
-	
+
 			pool_init_fsmm(size);
 
 			pool_allocate_fsmm_clock_hand();
@@ -2976,7 +2987,7 @@ static int read_status_file(bool discard_status)
 		/*
 		 * Fall back to new ascii format file.
 		 * the format looks like(case is ignored):
-		 * 
+		 *
 		 * up|down|unused
 		 * UP|down|unused
 		 *   :
@@ -2997,7 +3008,7 @@ static int read_status_file(bool discard_status)
 		{
 			BACKEND_INFO(i).backend_status = CON_UNUSED;
 		}
-			  
+
 		for (i=0;;i++)
 		{
 			readbuf[MAXLINE-1] = '\0';
@@ -3116,7 +3127,7 @@ int write_status_file()
             fclose(fd);
             return -1;
 		}
-			
+
         fclose(fd);
     }
 	return 0;
@@ -3145,9 +3156,9 @@ static void reload_config(void)
 /* Call back function to unlink the file */
 static void FileUnlink(int code, Datum path)
 {
-	char* filePath = (char*)path; 
+	char* filePath = (char*)path;
 	if (unlink(filePath) == 0) return;
-	/* 
+	/*
 	 * We are already exiting the system just produce a log entry to report an error
 	 */
 	ereport(LOG,
@@ -3166,7 +3177,7 @@ static void system_will_go_down(int code, Datum arg)
     POOL_SETMASK(&AuthBlockSig);
     /* Write status file */
     (void)write_status_file();
-    /* 
+    /*
      * Terminate all childrens. But we may already have killed
      * all the childrens if we come to this function because of shutdown
      * signal.
@@ -3175,7 +3186,7 @@ static void system_will_go_down(int code, Datum arg)
         terminate_all_childrens();
     processState = EXITING;
     POOL_SETMASK(&UnBlockSig);
-    
+
 }
 
 int pool_send_to_frontend(char* data, int len, bool flush)
