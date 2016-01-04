@@ -65,6 +65,12 @@ typedef enum IPC_CMD_PREOCESS_RES
 #define MIN_SECS_CONNECTION_RETRY	10	/* Time in seconds to
 										 * retry connection with
 										 * node once it was failed */
+
+#define MAX_SECS_ESC_PROC_EXIT_WAIT 5	/* maximum amount of seconds to
+										 * wait for escalation/de-esclation process to
+										 * exit normaly before moving on
+										 */
+
 #define BEACON_MESSAGE_INTERVAL_SECONDS		10 /* interval between beacon messages */
 
 
@@ -255,6 +261,7 @@ typedef struct wd_cluster
 	WDCommandData		currentCommand;
 	unsigned int		nextCommandID;
 	pid_t				escalation_pid;
+	pid_t				de_escalation_pid;
 	int				command_server_sock;
 	int				network_monitor_sock;
 	bool			holding_vip;
@@ -272,9 +279,11 @@ typedef struct wd_cluster
 }wd_cluster;
 
 volatile sig_atomic_t reload_config_signal = 0;
+volatile sig_atomic_t sigchld_request = 0;
 
-static void check_config_reload(void);
-static RETSIGTYPE reload_config_handler(int sig);
+static void check_signals(void);
+static void wd_child_signal_handler(void);
+static RETSIGTYPE watchdog_signal_handler(int sig);
 static void FileUnlink(int code, Datum path);
 static void wd_child_exit(int exit_signo);
 
@@ -358,6 +367,7 @@ static JsonNode* get_node_list_json(int id);
 static bool add_nodeinfo_to_json(JsonNode* jNode, WatchdogNode* node);
 static bool fire_node_status_event(int nodeID, int nodeStatus);
 static void resign_from_escalated_node(void);
+static void start_escalated_node(void);
 static void init_wd_packet(WDPacketData* pkt);
 static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt);
 
@@ -502,6 +512,7 @@ static void wd_cluster_initialize(void)
 	g_cluster.clusterInitialized = false;
 	g_cluster.holding_vip = false;
 	g_cluster.escalation_pid = 0;
+	g_cluster.de_escalation_pid = 0;
 	g_cluster.unidentified_socks = NULL;
 	g_cluster.command_server_sock = 0;
 	g_cluster.notify_clients = NULL;
@@ -750,21 +761,28 @@ static bool connect_to_node(WatchdogNode* wdNode)
 	return (wdNode->client_socket.sock_state != WD_SOCK_ERROR);
 }
 
-/* SIGHUP handler */
-static RETSIGTYPE reload_config_handler(int sig)
+/* signal handler for SIGHUP and SIGCHILD handler */
+static RETSIGTYPE watchdog_signal_handler(int sig)
 {
-	reload_config_signal = 1;
+	if (sig == SIGHUP)
+		reload_config_signal = 1;
+	else if (sig == SIGCHLD)
+		sigchld_request = 1;
 }
 
-static void check_config_reload(void)
+static void check_signals(void)
 {
-	/* reload config file */
+	/* reload config file signal? */
 	if (reload_config_signal)
 	{
 		MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 		pool_get_config(get_config_file_name(), RELOAD_CONFIG);
 		MemoryContextSwitchTo(oldContext);
 		reload_config_signal = 0;
+	}
+	else if (sigchld_request)
+	{
+		wd_child_signal_handler();
 	}
 }
 
@@ -815,8 +833,8 @@ watchdog_main(void)
 	pool_signal(SIGTERM, wd_child_exit);
 	pool_signal(SIGINT, wd_child_exit);
 	pool_signal(SIGQUIT, wd_child_exit);
-	pool_signal(SIGHUP, reload_config_handler);
-	pool_signal(SIGCHLD, SIG_DFL);
+	pool_signal(SIGHUP, watchdog_signal_handler);
+	pool_signal(SIGCHLD, watchdog_signal_handler);
 	pool_signal(SIGUSR1, SIG_IGN);
 	pool_signal(SIGUSR2, SIG_IGN);
 	pool_signal(SIGPIPE, SIG_IGN);
@@ -880,7 +898,7 @@ watchdog_main(void)
 		MemoryContextSwitchTo(ProcessLoopContext);
 		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
 
-		check_config_reload();
+		check_signals();
 
 		fd_max = prepare_fds(&rmask,&wmask,&emask);
 		tv.tv_sec = select_timeout;
@@ -2121,7 +2139,6 @@ static int set_local_node_state(WD_STATES newState)
 }
 
 
-
 static void
 wd_child_exit(int exit_signo)
 {
@@ -2130,9 +2147,61 @@ wd_child_exit(int exit_signo)
 	sigaddset(&mask, SIGTERM);
 	sigaddset(&mask, SIGINT);
 	sigaddset(&mask, SIGQUIT);
-	sigaddset(&mask, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &mask, NULL);
 	exit(0);
+}
+
+static void wd_child_signal_handler(void)
+{
+	pid_t pid;
+	int status;
+
+	ereport(DEBUG1,
+			(errmsg("watchdog child signal handler")));
+
+	/* clear SIGCHLD request */
+	sigchld_request = 0;
+
+	while ((pid = pool_waitpid(&status)) > 0)
+	{
+		char *exiting_process_name;
+
+		if (g_cluster.de_escalation_pid == pid)
+		{
+			exiting_process_name = "de-escalation";
+			g_cluster.de_escalation_pid = 0;
+		}
+		else if (g_cluster.escalation_pid == pid)
+		{
+			exiting_process_name = "escalation";
+			g_cluster.escalation_pid = 0;
+		}
+		else
+			exiting_process_name = "unknown";
+
+		if(WIFEXITED(status))
+		{
+			if(WEXITSTATUS(status) == POOL_EXIT_FATAL)
+				ereport(LOG,
+						(errmsg("watchdog %s process with pid: %d exit with FATAL ERROR.",exiting_process_name, pid)));
+			else if(WEXITSTATUS(status) == POOL_EXIT_SUCCESS)
+				ereport(LOG,
+						(errmsg("watchdog %s process with pid: %d exit with SUCCESS.",exiting_process_name, pid)));
+		}
+		if (WIFSIGNALED(status))
+		{
+			/* Child terminated by segmentation fault. Report it */
+			if(WTERMSIG(status) == SIGSEGV)
+				ereport(WARNING,
+						(errmsg("watchdog %s process with pid: %d was terminated by segmentation fault",exiting_process_name,pid)));
+			else
+				ereport(LOG,
+						(errmsg("watchdog %s process with pid: %d exits with status %d by signal %d",exiting_process_name, pid, status, WTERMSIG(status))));
+		}
+		else
+			ereport(LOG,
+					(errmsg("watchdog %s process with pid: %d exits with status %d",exiting_process_name,pid, status)));
+	}
 }
 
 /* Function invoked when watchdog process is about to exit */
@@ -2158,6 +2227,15 @@ static void wd_system_will_go_down(int code, Datum arg)
 	/* close network monitoring socket */
 	if (g_cluster.network_monitor_sock > 0)
 		close(g_cluster.network_monitor_sock);
+	/* wait for sub-processes to exit */
+	if (g_cluster.de_escalation_pid > 0 || g_cluster.escalation_pid > 0)
+	{
+		pid_t wpid;
+		do
+		{
+			wpid = wait(NULL);
+		}while (wpid > 0 || (wpid == -1 && errno == EINTR));
+	}
 }
 
 static void close_socket_connection(SocketConnection* conn)
@@ -3822,21 +3900,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 					{
 						ereport(LOG,
 								(errmsg("I am the cluster leader node. Starting escalation process")));
-						g_cluster.escalation_pid = fork_escalation_process();
-						if (g_cluster.escalation_pid > 0)
-						{
-							g_cluster.escalated = true;
-							ereport(LOG,
-									(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
-							if (strlen(g_cluster.localNode->delegate_ip) > 0)
-								g_cluster.holding_vip = true;
-						}
-						else
-						{
-							g_cluster.escalated = false;
-							ereport(LOG,
-									(errmsg("failed to start escalation process")));
-						}
+						start_escalated_node();
 					}
 				}
 				else
@@ -3975,26 +4039,9 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 				if (g_cluster.quorum_status >= 0)
 				{
 					ereport(LOG,
-							(errmsg("quorum is complete after node \"%s\" joined the cluster",wdNode->nodeName),
+						(errmsg("quorum is complete after node \"%s\" joined the cluster",wdNode->nodeName),
 							 errdetail("starting escalation process")));
-
-					g_cluster.escalation_pid = fork_escalation_process();
-					if (g_cluster.escalation_pid > 0)
-					{
-						g_cluster.escalated = true;
-						ereport(LOG,
-								(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
-						if (strlen(g_cluster.localNode->delegate_ip) > 0)
-							g_cluster.holding_vip = true;
-						else
-							g_cluster.holding_vip = false;
-					}
-					else
-					{
-						g_cluster.escalated = false;
-						ereport(LOG,
-								(errmsg("failed to start escalation process")));
-					}
+					start_escalated_node();
 				}
 			}
 		}
@@ -4038,21 +4085,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 							ereport(LOG,
 								(errmsg("quorum is complete after node \"%s\" joined the cluster",wdNode->nodeName),
 									 errdetail("starting escalation process")));
-							g_cluster.escalation_pid = fork_escalation_process();
-							if (g_cluster.escalation_pid > 0)
-							{
-								g_cluster.escalated = true;
-								ereport(LOG,
-										(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
-								if (strlen(g_cluster.localNode->delegate_ip) > 0)
-									g_cluster.holding_vip = true;
-							}
-							else
-							{
-								g_cluster.escalated = false;
-								ereport(LOG,
-										(errmsg("failed to start escalation process")));
-							}
+							start_escalated_node();
 						}
 					}
 				}
@@ -4131,12 +4164,71 @@ static int watchdog_state_machine_nw_error(WD_EVENTS event, WatchdogNode* wdNode
 	return 0;
 }
 
+static void start_escalated_node(void)
+{
+	int wait_secs = MAX_SECS_ESC_PROC_EXIT_WAIT;
+	if (g_cluster.escalated == true) /* already escalated */
+		return;
+
+	while (g_cluster.de_escalation_pid > 0 && wait_secs-- > 0)
+	{
+		/*
+		 * de_escalation proceess was already running and we are
+		 * esclating again.
+		 * give some time to de-escalation process to exit normaly
+		 */
+		ereport(LOG,
+				(errmsg("waiting for de-escalation process to exit before starting escalation")));
+		if (sigchld_request)
+			wd_child_signal_handler();
+		sleep (1);
+	}
+	if (g_cluster.de_escalation_pid > 0)
+		ereport(LOG,
+				(errmsg("de-escalation process does not exited in time."),
+				 errdetail("starting the escalation anyway")));
+
+	g_cluster.escalation_pid = fork_escalation_process();
+	if (g_cluster.escalation_pid > 0)
+	{
+		g_cluster.escalated = true;
+		ereport(LOG,
+				(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
+		if (strlen(g_cluster.localNode->delegate_ip) > 0)
+			g_cluster.holding_vip = true;
+	}
+	else
+	{
+		g_cluster.escalated = false;
+		ereport(LOG,
+				(errmsg("failed to start escalation process")));
+	}
+}
+
 static void resign_from_escalated_node(void)
 {
+	int wait_secs = MAX_SECS_ESC_PROC_EXIT_WAIT;
 	if (g_cluster.escalated == false)
 		return;
 
-	fork_plunging_process();
+	while (g_cluster.escalation_pid > 0 && wait_secs-- > 0)
+	{
+		/*
+		 * escalation proceess was already running and we are
+		 * resigning from it.
+		 * wait for the escalation process to exit normaly
+		 */
+		ereport(LOG,
+				(errmsg("waiting for escalation process to exit before starting de-escalation")));
+		if (sigchld_request)
+			wd_child_signal_handler();
+		sleep (1);
+	}
+	if (g_cluster.escalation_pid > 0)
+		ereport(LOG,
+			(errmsg("escalation process does not exited in time"),
+				 errdetail("starting the de-escalation anyway")));
+	g_cluster.de_escalation_pid = fork_plunging_process();
 	g_cluster.holding_vip = false;
 	g_cluster.escalated = false;
 }
