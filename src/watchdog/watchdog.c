@@ -31,6 +31,7 @@
 #include <sys/un.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -4104,16 +4105,44 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 	return 0;
 }
 
-/* We can get into this state if we detect the total
+/*
+ * We can get into this state if we detect the total
  * network blackout, Here we just keep waiting for the
  * network to come back, and when it does we re-initialize
  * the cluster state.
+ *
+ * Note:
+ *
+ * All this is very good to detect the network black out or cable unplugged
+ * scenarios, and moving to the WD_IN_NW_TROUBLE state. Although this state machine
+ * function can gracefully handle the network black out situation and recovers the
+ * watchdog node when the network becomes reachable, but there is a problem.
+ *
+ * Once the cable on the system is unplugged or when the node gets isolated from the
+ * cluster there is every likelihood that the backend healthcheck of the isolated node
+ * start reporting the backend node failure and the pgpool-II proceeds to perform
+ * the failover for all attached backend nodes. Since the pgpool-II is yet not
+ * smart enough to figure out it is because of the network failure of its own
+ * system and the backend nodes are not actually at fault but, are working properly.
+ *
+ * So now when the network gets back the backend status of the node will be different
+ * and incorrect from the other pgpool-II nodes in the cluster. So the ideal solution
+ * for the situation is to make the pgpool-II main process aware of the network black out
+ * and when the network recovers the pgpool-II asks the watchdog to sync again the state of
+ * all configured backend nodes from the master pgpool-II node. But to implement this lot 
+ * of time is required, So until that time we are just opting for the easiest solution here
+ * which is to commit a suicide as soon an the network becomes unreachable
  */
 static int watchdog_state_machine_nw_error(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	switch (event)
 	{
 		case WD_EVENT_WD_STATE_CHANGED:
+			/* commit suicide, see above note */
+			ereport(FATAL,
+				(return_code(POOL_EXIT_FATAL),
+					 errmsg("system has lost all IP addresses")));
+
 			clear_current_command();
 			set_timeout(2);
 			break;
