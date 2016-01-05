@@ -106,7 +106,7 @@ function print_usage
 	printf "  -i   DIRECTORY           pgpool installed directory, if already installed pgpool is to be used for tests\n" >&2
 	printf "  -m   install/noinstall   make install pgpool to temp directory for executing regression tests [Default: install]\n" >&2
 	printf "  -j   FILE                Postgres jdbc jar file path\n" >&2
-	printf "  -s   DIRECTORY           unix socket directory" >&2
+	printf "  -s   DIRECTORY           unix socket directory\n" >&2
 	printf "  -?                       print this help and then exit\n\n" >&2
 	printf "Please read the README for details on adding new tests\n" >&2
 
