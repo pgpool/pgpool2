@@ -2050,7 +2050,7 @@ static void get_backends_status(unsigned int *valid_backends, unsigned int *down
 	{
 		if (BACKEND_INFO(i).backend_status == CON_DOWN)
 			(*down_backends)++;
-		else if(VALID_BACKEND(i))
+		if (VALID_BACKEND(i))
 			(*valid_backends)++;
 	}
 }
@@ -2096,7 +2096,7 @@ static void validate_backend_connectivity(int front_end_fd)
 		{
 			fatal_error = true;
 			error_msg = "pgpool is not accepting any new connections";
-			error_detail = "all backend nodes are down, pgpool requires atleast one valid node";
+			error_detail = "all backend nodes are down, pgpool requires at least one valid node";
 			error_hint = "repair the backend nodes and restart pgpool";
 		}
 	}
