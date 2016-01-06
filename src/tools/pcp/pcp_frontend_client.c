@@ -317,7 +317,7 @@ main(int argc, char **argv)
 		}
 		else if (current_app_type->app_type == PCP_WATCHDOG_INFO)
 		{
-			nodeID = 0;
+			nodeID = -1;
 		}
 	}
 
@@ -611,23 +611,62 @@ output_procinfo_result(PCPResultInfo* pcpResInfo, bool all, bool verbose)
 static void
 output_watchdog_info_result(PCPResultInfo* pcpResInfo, bool verbose)
 {
-	PCPWDNodeInfo *watchdog_info = (PCPWDNodeInfo *)pcp_get_binary_data(pcpResInfo,0);
+	int i;
+	PCPWDClusterInfo *cluster = (PCPWDClusterInfo *)pcp_get_binary_data(pcpResInfo,0);
 	if (verbose)
 	{
-		printf("NodeName     : %s\n",watchdog_info->nodeName);
-		printf("HostName     : %s\n",watchdog_info->hostName);
-		printf("Pgpool port  : %d\n",watchdog_info->pgpool_port);
-		printf("Watchdog port: %d\n",watchdog_info->wd_port);
-		printf("Node priority: %d\n",watchdog_info->wd_priority);
-		printf("status       : %d\n\n",watchdog_info->state);
+		char* quorumStatus;
+		if (cluster->quorumStatus == 0)
+			quorumStatus = "QUORUM IS ON THE EDGE";
+		else if (cluster->quorumStatus == 1)
+			quorumStatus = "QUORUM EXIST";
+		else if (cluster->quorumStatus == -1)
+			quorumStatus = "QUORUM ABSENT";
+		else
+			quorumStatus = "UNKNOWN";
+
+		printf("Watchdog Cluster Information \n");
+		printf("Total Nodes          : %d\n",cluster->remoteNodeCount +1);
+		printf("Remote Nodes         : %d\n",cluster->remoteNodeCount);
+		printf("Quorum state         : %s\n",quorumStatus);
+		printf("Alive Remote Nodes   : %d\n",cluster->aliveNodeCount);
+		printf("VIP up on local node : %s\n",cluster->escalated?"YES":"NO");
+		printf("Master Node Name     : %s\n",cluster->masterNodeName);
+		printf("Master Host Name     : %s\n\n",cluster->masterHostName);
+
+		printf("Watchdog Node Information \n");
+		for (i=0; i< cluster->nodeCount; i++)
+		{
+			PCPWDNodeInfo* watchdog_info = &cluster->nodeList[i];
+			printf("Node Name      : %s\n",watchdog_info->nodeName);
+			printf("Host Name      : %s\n",watchdog_info->hostName);
+			printf("Delegate IP    : %s\n",watchdog_info->delegate_ip);
+			printf("Pgpool port    : %d\n",watchdog_info->pgpool_port);
+			printf("Watchdog port  : %d\n",watchdog_info->wd_port);
+			printf("Node priority  : %d\n",watchdog_info->wd_priority);
+			printf("status         : %d\n",watchdog_info->state);
+			printf("status Name    : %s\n\n",watchdog_info->stateName);
+		}
 	}
 	else
 	{
-		printf("%s %d %d %d\n",
-			   watchdog_info->hostName,
-			   watchdog_info->pgpool_port,
-			   watchdog_info->wd_port,
-			   watchdog_info->state);
+		printf("%d %s %s %s\n\n",
+			   cluster->remoteNodeCount +1,
+			   cluster->escalated?"YES":"NO",
+			   cluster->masterNodeName,
+			   cluster->masterHostName);
+
+		for (i=0; i< cluster->nodeCount; i++)
+		{
+			PCPWDNodeInfo* watchdog_info = &cluster->nodeList[i];
+			printf("%s %s %d %d %d %s\n",
+				   watchdog_info->nodeName,
+				   watchdog_info->hostName,
+				   watchdog_info->pgpool_port,
+				   watchdog_info->wd_port,
+				   watchdog_info->state,
+				   watchdog_info->stateName);
+		}
 	}
 }
 
@@ -683,7 +722,8 @@ usage(void)
 	if (current_app_type->app_type == PCP_WATCHDOG_INFO)
 	{
 		fprintf(stderr, "  -n, --watchdog-id=ID   ID of a other pgpool to get information for\n");
-		fprintf(stderr, "                         If omitted then get one's self information\n");
+		fprintf(stderr, "                         ID 0 for the local watchdog\n");
+		fprintf(stderr, "                         If omitted then get information of all watchdog nodes\n");
 	}
 	if (current_app_type->app_type == PCP_PROC_INFO)
 	{

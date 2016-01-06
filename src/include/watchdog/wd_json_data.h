@@ -33,8 +33,10 @@ typedef struct WDNodeInfo
 	int state;
 	char nodeName[WD_MAX_HOST_NAMELEN];
 	char hostName[WD_MAX_HOST_NAMELEN];		/* host name */
+	char stateName[WD_MAX_HOST_NAMELEN];	/* watchdog state name */
 	int wd_port;							/* watchdog port */
 	int pgpool_port;						/* pgpool port */
+	int wd_priority;						/* node priority */
 	char delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
 	int	id;
 }WDNodeInfo;

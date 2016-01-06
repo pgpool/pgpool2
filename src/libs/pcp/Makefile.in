@@ -128,8 +128,9 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libpcp_la_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
-am_libpcp_la_OBJECTS = pcp.lo pcp_stream.lo md5.lo \
-	../../utils/pool_path.lo ../../utils/strlcpy.lo
+am_libpcp_la_OBJECTS = pcp.lo pcp_stream.lo md5.lo json.lo \
+	../../utils/pool_path.lo ../../tools/fe_port.lo \
+	../../tools/fe_memutils.lo ../../utils/strlcpy.lo
 libpcp_la_OBJECTS = $(am_libpcp_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -333,7 +334,10 @@ libpcp_la_LDFLAGS = -version-info 1:0:0
 libpcp_la_SOURCES = pcp.c \
 					pcp_stream.c \
                     md5.c \
+					json.c \
 					../../utils/pool_path.c \
+					../../tools/fe_port.c \
+					../../tools/fe_memutils.c \
                     ../../utils/strlcpy.c
 
 include_HEADERS = ../../../src/include/pcp/pcp.h \
@@ -418,6 +422,16 @@ clean-libLTLIBRARIES:
 	@: > ../../utils/$(DEPDIR)/$(am__dirstamp)
 ../../utils/pool_path.lo: ../../utils/$(am__dirstamp) \
 	../../utils/$(DEPDIR)/$(am__dirstamp)
+../../tools/$(am__dirstamp):
+	@$(MKDIR_P) ../../tools
+	@: > ../../tools/$(am__dirstamp)
+../../tools/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ../../tools/$(DEPDIR)
+	@: > ../../tools/$(DEPDIR)/$(am__dirstamp)
+../../tools/fe_port.lo: ../../tools/$(am__dirstamp) \
+	../../tools/$(DEPDIR)/$(am__dirstamp)
+../../tools/fe_memutils.lo: ../../tools/$(am__dirstamp) \
+	../../tools/$(DEPDIR)/$(am__dirstamp)
 ../../utils/strlcpy.lo: ../../utils/$(am__dirstamp) \
 	../../utils/$(DEPDIR)/$(am__dirstamp)
 
@@ -426,14 +440,19 @@ libpcp.la: $(libpcp_la_OBJECTS) $(libpcp_la_DEPENDENCIES) $(EXTRA_libpcp_la_DEPE
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ../../tools/*.$(OBJEXT)
+	-rm -f ../../tools/*.lo
 	-rm -f ../../utils/*.$(OBJEXT)
 	-rm -f ../../utils/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@../../tools/$(DEPDIR)/fe_memutils.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@../../tools/$(DEPDIR)/fe_port.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../../utils/$(DEPDIR)/pool_path.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../../utils/$(DEPDIR)/strlcpy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/json.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcp_stream.Plo@am__quote@
@@ -467,6 +486,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf ../../tools/.libs ../../tools/_libs
 	-rm -rf ../../utils/.libs ../../utils/_libs
 install-includeHEADERS: $(include_HEADERS)
 	@$(NORMAL_INSTALL)
@@ -605,6 +625,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ../../tools/$(DEPDIR)/$(am__dirstamp)
+	-rm -f ../../tools/$(am__dirstamp)
 	-rm -f ../../utils/$(DEPDIR)/$(am__dirstamp)
 	-rm -f ../../utils/$(am__dirstamp)
 
@@ -617,7 +639,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ../../utils/$(DEPDIR) ./$(DEPDIR)
+	-rm -rf ../../tools/$(DEPDIR) ../../utils/$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -663,7 +685,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ../../utils/$(DEPDIR) ./$(DEPDIR)
+	-rm -rf ../../tools/$(DEPDIR) ../../utils/$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -708,6 +730,8 @@ md5.h: ../../../src/include/auth/md5.h
 pcp_stream.c: ../../../src/utils/pcp/pcp_stream.c
 	rm -f $@ && ln -s $< .
 strlcpy.c: ../../../src/utils/strlcpy.c
+	rm -f $@ && ln -s $< .
+json.c: ../../../src/utils/json.c
 	rm -f $@ && ln -s $< .
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

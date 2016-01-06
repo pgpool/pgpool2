@@ -5,7 +5,10 @@ libpcp_la_LDFLAGS = -version-info 1:0:0
 libpcp_la_SOURCES = pcp.c \
 					pcp_stream.c \
                     md5.c \
+					json.c \
 					../../utils/pool_path.c \
+					../../tools/fe_port.c \
+					../../tools/fe_memutils.c \
                     ../../utils/strlcpy.c
 
 include_HEADERS = ../../../src/include/pcp/pcp.h \
@@ -20,4 +23,6 @@ md5.h: ../../../src/include/auth/md5.h
 pcp_stream.c: ../../../src/utils/pcp/pcp_stream.c
 	rm -f $@ && ln -s $< .
 strlcpy.c: ../../../src/utils/strlcpy.c
+	rm -f $@ && ln -s $< .
+json.c: ../../../src/utils/json.c
 	rm -f $@ && ln -s $< .

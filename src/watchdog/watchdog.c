@@ -148,14 +148,14 @@ char *wd_state_names[] = {
 	"LOADING",
 	"JOINING",
 	"INITIALIZING",
-	"COORDINATOR",
-	"PARTICIPATE_IN_ELECTION",
-	"STAND_FOR_COORDINATOR",
+	"MASTER",
+	"PARTICIPATING IN ELECTION",
+	"STANDING FOR MASTER",
 	"STANDBY",
 	"LOST",
-	"IN_NETWORK_TROUBLE",
+	"IN NETWORK TROUBLE",
 	"SHUTDOWN",
-	"ADD_MESSAGE_SENT"};
+	"ADD MESSAGE SENT"};
 
 typedef struct WDPacketData
 {
@@ -266,11 +266,9 @@ typedef struct wd_cluster
 	int				command_server_sock;
 	int				network_monitor_sock;
 	bool			holding_vip;
-	bool			network_error;
 	bool			escalated;
 	bool			clusterInitialized;
 	bool			ipc_auth_needed;
-	struct timeval  network_error_time;
 
 	List			*unidentified_socks;
 	List			*notify_clients;
@@ -1521,7 +1519,6 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDIPCCommandData* IPCCo
 		return IPC_CMD_ERROR;
 	}
 
-	/* If it is a node function ?*/
 	if (json_get_int_value_for_key(root, "NodeID", &NodeID))
 	{
 		json_value_free(root);
@@ -2513,10 +2510,12 @@ static bool add_nodeinfo_to_json(JsonNode* jNode, WatchdogNode* node)
 	jw_put_int(jNode, "State",node?node->state:-1);
 	jw_put_string(jNode, "NodeName",node?node->nodeName:"Not Set");
 	jw_put_string(jNode, "HostName", node?node->hostname:"Not Set");
+	jw_put_string(jNode, "StateName", node?wd_state_names[node->state]:"Not Set");
 	jw_put_string(jNode, "DelegateIP",node?node->delegate_ip:"Not Set");
 	jw_put_int(jNode, "WdPort", node?node->wd_port:0);
 	jw_put_int(jNode, "PgpoolPort", node?node->pgpool_port:0);
-	
+	jw_put_int(jNode, "Priority", node?node->wd_priority:0);
+
 	jw_end_element(jNode);
 	
 	return true;
@@ -2526,15 +2525,23 @@ static JsonNode* get_node_list_json(int id)
 {
 	int i;
 	JsonNode* jNode = jw_create_with_object(true);
-	/* add the node count */
+	update_connected_node_count();
+	update_quorum_status();
+	jw_put_int(jNode, "RemoteNodeCount", g_cluster.remoteNodeCount);
+	jw_put_int(jNode, "QuorumStatus", g_cluster.quorum_status); 
+	jw_put_int(jNode, "AliveNodeCount", g_cluster.aliveNodeCount);
+	jw_put_int(jNode, "Escalated", g_cluster.escalated?1:0);
+	jw_put_string(jNode, "MasterNodeName",g_cluster.masterNode?g_cluster.masterNode->nodeName:"Not Set");
+	jw_put_string(jNode, "MasterHostName",g_cluster.masterNode?g_cluster.masterNode->hostname:"Not Set");
 	if (id < 0)
 	{
 		jw_put_int(jNode, "NodeCount", g_cluster.remoteNodeCount + 1);
+
 		/* add the array */
 		jw_start_array(jNode, "WatchdogNodes");
 		/* add the local node info */
 		add_nodeinfo_to_json(jNode,g_cluster.localNode);
-		/* add remote nodes */
+		/* add all remote nodes */
 		for (i=0; i< g_cluster.remoteNodeCount; i++)
 		{
 			WatchdogNode* wdNode = &(g_cluster.remoteNodes[i]);
@@ -2544,6 +2551,9 @@ static JsonNode* get_node_list_json(int id)
 	else
 	{
 		jw_put_int(jNode, "NodeCount", 1);
+		/* add the array */
+		jw_start_array(jNode, "WatchdogNodes");
+
 		if (id == 0)
 		{
 			/* add the local node info */
@@ -5134,7 +5144,6 @@ static bool check_IPC_client_authentication(json_value *rootObj, bool internal_c
 			return false;
 		}
 
-		/* If it is a node function ?*/
 		if (has_shared_key == false)
 		{
 			ereport(LOG,

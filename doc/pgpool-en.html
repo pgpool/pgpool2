@@ -4907,9 +4907,18 @@ Weight  : 0.5
 </dd>
 <dt>Description:</dt>
 <dd>
-	<p>Displays the watchdog status of the pgpool-II.
-	<code>watchdog_id</code> is the index of other_pgpool_hostname parameter in pgpool.conf.
-	If this is omitted, display the watchdog status of local pgpool-II.</p>
+<p>Displays the watchdog status of the pgpool-II.
+<code>watchdog_id</code> is the index of watchdog node to get information for.
+If this is omitted, display the watchdog status of all watchdog nodes in the cluster.
+</p><p>
+<code>watchdog_id</code> = 0 is reserved for current pgpool-II node,
+So the index of remote watchdog nodes starts from 1.
+Note that since the index numbering in pcp_watchdog_info utility starts from 1 while
+the pgpool.conf file uses 0 based indexing to define remote watchdog nodes, so you will require
+to add one to the other watchdog index to get its information using pcp_watchdog_info utility.
+</p><p>
+For example, to get the information of first remote watchdog node configured with prefix 0
+defined by other_pgpool_hostname0 parameters you will use watchdog_id = 1 for pcp_watchdog_info.</p>
 </dd>
 <dt>Options:</dt>
 <dd>
@@ -4917,7 +4926,8 @@ Weight  : 0.5
 	<dt><code>-n <strong>watchdog_id</strong>, --node-id=<strong>watchdog_id</strong></code></dt>
 	<dd>
 		<p>The index of other pgpool-II to get information for.</p>
-		<p>If ommitted then gets one's self watchdog information'.</p>
+		<p>Index 0 gets one's self watchdog information'.</p>
+		<p>If ommitted then gets information of all watchdog nodes'.</p>
 	</dd>
 	<dt>Other options</dt>
 	<dd>
@@ -4928,29 +4938,83 @@ Weight  : 0.5
 <dt>Output example:</dt>
 <dd>
 <pre>
-$ pcp_watchdog_info -h localhost -p 9898 -u postgres 0
+$ pcp_watchdog_info -h localhost -u postgres
 
-host1 9999 9000 2
-Here is an output example:
+3 NO Linux_host1.localdomain_9991 host1
+
+Linux_host1.localdomain_9991 host1 9991 9001 7 STANDBY
+Linux_host2.localdomain_9992 host2 9992 9002 4 MASTER
+Linux_host3.localdomain_9993 host3 9993 9003 7 STANDBY
+
 </pre>
 
 <p>The result is in the following order:</p>
+<p>The first output line describes the watchdog cluster information:</p>
 <ol>
-<li>hostname</li>
-<li>port number for pgpool-II</li>
-<li>port number for watchdog</li>
-<li>watchdog Status</li>
+<li>Total watchdog nodes in the cluster</li>
+<li>Is VIP is up on current node?</li>
+<li>Master node name</li>
+<li>Master node host</li>
 </ol>
 
-<p>Status is represented by a digit from [1 to 4].</p>
-<ul>
-<li>1 - watchdog is not started</li>
-<li>2 - Standby: not holding the virtual IP</li>
-<li>3 - Active: holding the virtual IP</li>
-<li>4 - Down</li>
-</ul>
+
+<p>Next is the list of watchdog nodes:</p>
+<ol>
+	<li>node name</li>
+	<li>hostname</li>
+	<li>pgpool port</li>
+	<li>watchdog port</li>
+	<li>current node state</li>
+	<li>current node name</li>
+</ol>
+</dd>
+
+<dt>verbose mode:</dt>
+<dd>
+<pre>
+$ pcp_watchdog_info -h localhost -v -u postgres
+
+Watchdog Cluster Information
+Total Nodes          : 3
+Remote Nodes         : 2
+Quorum state         : QUORUM EXIST
+Alive Remote Nodes   : 2
+VIP up on local node : NO
+Master Node Name     : Linux_host2.localdomain_9992
+Master Host Name     : localhost
+
+Watchdog Node Information
+Node Name      : Linux_host1.localdomain_9991
+Host Name      : host1
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9991
+Watchdog port  : 9001
+Node priority  : 1
+status         : 7
+status Name    : STANDBY
+
+Node Name      : Linux_host2.localdomain_9992
+Host Name      : host2
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9992
+Watchdog port  : 9002
+Node priority  : 1
+status         : 4
+status Name    : MASTER
+
+Node Name      : Linux_host3.localdomain_9993
+Host Name      : host3
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9993
+Watchdog port  : 9003
+Node priority  : 1
+status         : 7
+status Name    : STANDBY
+
+</pre>
 </dd>
 </dl>
+
 
 <h3 id="pcp_proc_count">pcp_proc_count</h3>
 <dl>

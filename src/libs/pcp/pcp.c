@@ -44,6 +44,7 @@
 #include "utils/pool_path.h"
 #include "utils/palloc.h"
 #include "utils/pool_process_reporting.h"
+#include "utils/json.h"
 #include "auth/md5.h"
 
 #define PCPPASSFILE ".pcppass"
@@ -1280,65 +1281,197 @@ _pcp_promote_node(PCPConnInfo* pcpConn,int nid, bool gracefully)
 static void
 process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 {
-	PCPWDNodeInfo* watchdog_info = NULL;
+	char *json_data = NULL;
+	PCPWDClusterInfo* wd_cluster_info = NULL;
+	int clusterDataSize = 0;
 	if (strcmp(buf, "CommandComplete") == 0)
 	{
-		char *index = NULL;
-
-		watchdog_info = palloc(sizeof(PCPWDNodeInfo));
-
-		index = (char *) memchr(buf, '\0', len);
-		if(index == NULL)
+		int tempVal;
+		char* ptr;
+		json_data = (char *) memchr(buf, '\0', len);
+		if(json_data == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
-		strlcpy(watchdog_info->hostName, index, sizeof(watchdog_info->hostName)-1);
+		json_data +=1;
 
-		index = (char *) memchr(buf, '\0', len);
-		if(index == NULL)
+		json_value* root;
+		json_value* value;
+		int i,nodeCount;
+
+		root = json_parse(json_data,len);
+
+		/* The root node must be object */
+		if (root == NULL || root->type != json_object)
+		{
+			json_value_free(root);
 			goto INVALID_RESPONSE;
-		index +=1;
-		strlcpy(watchdog_info->nodeName, index, sizeof(watchdog_info->nodeName) -1 );
+		}
 
-		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (json_get_int_value_for_key(root, "NodeCount", &nodeCount))
+		{
+			json_value_free(root);
 			goto INVALID_RESPONSE;
-		index +=1;
-		watchdog_info->pgpool_port = atoi(index);
+		}
 
-		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		/* find the WatchdogNodes array */
+		value = json_get_value_for_key(root,"WatchdogNodes");
+		if (value == NULL)
+		{
+			json_value_free(root);
 			goto INVALID_RESPONSE;
-		index +=1;
-		watchdog_info->wd_port = atoi(index);
-
-		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		}
+		if (value->type != json_array)
+		{
+			json_value_free(root);
 			goto INVALID_RESPONSE;
-		index +=1;
-		watchdog_info->state = atof(index);
-
-		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)watchdog_info,sizeof(PCPWDNodeInfo) , NULL) < 0)
+		}
+		if (nodeCount != value->u.array.length)
+		{
+			json_value_free(root);
 			goto INVALID_RESPONSE;
+		}
 
+		/* create the cluster object */
+		clusterDataSize = sizeof(PCPWDClusterInfo) + (sizeof(PCPWDNodeInfo) * nodeCount);
+		wd_cluster_info = malloc(clusterDataSize);
+
+		wd_cluster_info->nodeCount = nodeCount;
+
+		if (json_get_int_value_for_key(root, "RemoteNodeCount", &wd_cluster_info->remoteNodeCount))
+		{
+			json_value_free(root);
+			goto INVALID_RESPONSE;
+		}
+		if (json_get_int_value_for_key(root, "QuorumStatus", &wd_cluster_info->quorumStatus))
+		{
+			json_value_free(root);
+			goto INVALID_RESPONSE;
+		}
+		if (json_get_int_value_for_key(root, "AliveNodeCount", &wd_cluster_info->aliveNodeCount))
+		{
+			json_value_free(root);
+			goto INVALID_RESPONSE;
+		}
+		if (json_get_int_value_for_key(root, "Escalated", &tempVal))
+		{
+			json_value_free(root);
+			goto INVALID_RESPONSE;
+		}
+		wd_cluster_info->escalated = tempVal==0?false:true;
+
+		ptr = json_get_string_value_for_key(root, "MasterNodeName");
+		if (ptr == NULL)
+		{
+			json_value_free(root);
+			goto INVALID_RESPONSE;
+		}
+		strncpy(wd_cluster_info->masterNodeName, ptr, sizeof(wd_cluster_info->masterNodeName) -1);
+
+		ptr = json_get_string_value_for_key(root, "MasterHostName");
+		if (ptr == NULL)
+		{
+			json_value_free(root);
+			goto INVALID_RESPONSE;
+		}
+		strncpy(wd_cluster_info->masterHostName, ptr, sizeof(wd_cluster_info->masterHostName) -1);
+
+		/* Get watchdog nodes data */
+		for (i = 0; i < nodeCount; i++)
+		{
+			char* ptr;
+			json_value* nodeInfoValue = value->u.array.values[i];
+			PCPWDNodeInfo* wdNodeInfo = &wd_cluster_info->nodeList[i];
+
+			if (nodeInfoValue->type != json_object)
+			{
+				json_value_free(root);
+				goto INVALID_RESPONSE;
+			}
+
+			if (json_get_int_value_for_key(nodeInfoValue, "ID", &wdNodeInfo->id))
+			{
+				json_value_free(root);
+				goto INVALID_RESPONSE;
+			}
+
+			ptr = json_get_string_value_for_key(nodeInfoValue, "NodeName");
+			if (ptr == NULL)
+			{
+				json_value_free(root);
+				goto INVALID_RESPONSE;
+			}
+			strncpy(wdNodeInfo->nodeName, ptr, sizeof(wdNodeInfo->nodeName) -1);
+
+			ptr = json_get_string_value_for_key(nodeInfoValue, "HostName");
+			if (ptr == NULL)
+			{
+				json_value_free(root);
+				goto INVALID_RESPONSE;
+			}
+			strncpy(wdNodeInfo->hostName, ptr, sizeof(wdNodeInfo->hostName) -1);
+
+			ptr = json_get_string_value_for_key(nodeInfoValue, "DelegateIP");
+			if (ptr == NULL)
+			{
+				json_value_free(root);
+				goto INVALID_RESPONSE;
+			}
+			strncpy(wdNodeInfo->delegate_ip, ptr, sizeof(wdNodeInfo->delegate_ip) -1);
+
+			if (json_get_int_value_for_key(nodeInfoValue, "WdPort", &wdNodeInfo->wd_port))
+			{
+				json_value_free(root);
+				goto INVALID_RESPONSE;
+			}
+
+			if (json_get_int_value_for_key(nodeInfoValue, "PgpoolPort", &wdNodeInfo->pgpool_port))
+			{
+				json_value_free(root);
+				goto INVALID_RESPONSE;
+			}
+
+			if (json_get_int_value_for_key(nodeInfoValue, "State", &wdNodeInfo->state))
+			{
+				json_value_free(root);
+				goto INVALID_RESPONSE;
+			}
+
+			ptr = json_get_string_value_for_key(nodeInfoValue, "StateName");
+			if (ptr == NULL)
+			{
+				json_value_free(root);
+				goto INVALID_RESPONSE;
+			}
+			strncpy(wdNodeInfo->stateName, ptr, sizeof(wdNodeInfo->stateName) -1);
+			
+			if (json_get_int_value_for_key(nodeInfoValue, "Priority", &wdNodeInfo->wd_priority))
+			{
+				json_value_free(root);
+				goto INVALID_RESPONSE;
+			}
+
+		}
+		json_value_free(root);
+
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)wd_cluster_info,clusterDataSize , NULL) < 0)
+			goto INVALID_RESPONSE;
+		
 		setCommandSuccessful(pcpConn);
 	}
 	else
 	{
 		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"",buf);
+						   "command failed with reason: \"%s\"\n",buf);
 		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
-
 	return;
 
 INVALID_RESPONSE:
-
-	if(watchdog_info)
-		pfree(watchdog_info);
+	
+	if(wd_cluster_info)
+		pfree(wd_cluster_info);
 	pcp_internal_error(pcpConn,
-					   "command failed. invalid response");
+					   "command failed. invalid response\n");
 	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-
 }
 
 /* --------------------------------

@@ -368,13 +368,13 @@ WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source)
 	WDNodeInfo* wdNodeInfo = palloc0(sizeof(WDNodeInfo));
 	if (source->type != json_object)
 		ereport(ERROR,
-				(errmsg("invalid json data"),
+			(errmsg("invalid json data"),
 				 errdetail("node is not of object type")));
 	
 	if (json_get_int_value_for_key(source, "ID", &wdNodeInfo->id))
 	{
 		ereport(ERROR,
-				(errmsg("invalid json data"),
+			(errmsg("invalid json data"),
 				 errdetail("unable to find Watchdog Node ID")));
 	}
 	
@@ -382,7 +382,7 @@ WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source)
 	if (ptr == NULL)
 	{
 		ereport(ERROR,
-				(errmsg("invalid json data"),
+			(errmsg("invalid json data"),
 				 errdetail("unable to find Watchdog Node Name")));
 	}
 	strncpy(wdNodeInfo->nodeName, ptr, sizeof(wdNodeInfo->nodeName) -1);
@@ -391,7 +391,7 @@ WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source)
 	if (ptr == NULL)
 	{
 		ereport(ERROR,
-				(errmsg("invalid json data"),
+			(errmsg("invalid json data"),
 				 errdetail("unable to find Watchdog Host Name")));
 	}
 	strncpy(wdNodeInfo->hostName, ptr, sizeof(wdNodeInfo->hostName) -1);
@@ -400,12 +400,12 @@ WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source)
 	if (ptr == NULL)
 	{
 		ereport(ERROR,
-				(errmsg("invalid json data"),
+			(errmsg("invalid json data"),
 				 errdetail("unable to find Watchdog delegate IP")));
 	}
 	strncpy(wdNodeInfo->delegate_ip, ptr, sizeof(wdNodeInfo->delegate_ip) -1);
 	
-	if (json_get_int_value_for_key(source, "PgpoolPort", &wdNodeInfo->wd_port))
+	if (json_get_int_value_for_key(source, "WdPort", &wdNodeInfo->wd_port))
 	{
 		ereport(ERROR,
 				(errmsg("invalid json data"),
@@ -418,8 +418,24 @@ WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source)
 				(errmsg("invalid json data"),
 				 errdetail("unable to find PgpoolPort")));
 	}
-	
+
 	if (json_get_int_value_for_key(source, "State", &wdNodeInfo->state))
+	{
+		ereport(ERROR,
+				(errmsg("invalid json data"),
+				 errdetail("unable to find state")));
+	}
+
+	ptr = json_get_string_value_for_key(source, "StateName");
+	if (ptr == NULL)
+	{
+		ereport(ERROR,
+			(errmsg("invalid json data"),
+				 errdetail("unable to find Watchdog State Name")));
+	}
+	strncpy(wdNodeInfo->stateName, ptr, sizeof(wdNodeInfo->stateName) -1);
+
+	if (json_get_int_value_for_key(source, "Priority", &wdNodeInfo->wd_priority))
 	{
 		ereport(ERROR,
 				(errmsg("invalid json data"),

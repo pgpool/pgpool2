@@ -59,14 +59,19 @@
 
 const struct _json_value json_value_none;
 #include "pool.h"
-#include "utils/palloc.h"
-#include "utils/memutils.h"
-#include "utils/elog.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+
+#ifndef POOL_PRIVATE
+#include "utils/palloc.h"
+#include "utils/memutils.h"
+#include "utils/elog.h"
+#else
+#include "utils/fe_ports.h"
+#endif
 
 typedef unsigned int json_uchar;
 
