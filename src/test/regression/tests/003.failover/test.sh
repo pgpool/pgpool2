@@ -30,7 +30,8 @@ do
 	$PSQL -c "show pool_nodes" test > result
 
 	# check the output of "show pool_nodes".
-	cmp result ../expected.$mode > /dev/null 2>&1
+	LANG=C $PSQL -f ../create_expected.sql -v mode="'$mode'" -v dir="'$PGSOCKET_DIR'" test | tail -n 6 > expected
+	cmp result expected > /dev/null 2>&1
 	if [ $? != 0 ];then
 		./shutdownall
 		exit 1
