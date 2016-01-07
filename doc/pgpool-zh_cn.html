@@ -235,7 +235,7 @@ $ psql template1
 到现在为止，insert_lock 还能够工作。但是，在这种情况下，pgpool-II 需要锁定插入的目标表。
 这种行为和 pgpool-II 2.2 和 2.3 系列类似。由于表锁与 VACUUM 冲突，所以 INSERT 操作可能因而等待很长时间。
 </p>
-    
+
 <pre>
 $ cd pgpool-II-x.x.x/sql
 $ psql -f insert_lock.sql template1
@@ -486,7 +486,7 @@ cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
     本参数必须在服务启动前设置。
     </p>
     </dd>
-    
+
 <dt><a name="PCP_PORT"></a>pcp_port</dt>
     <dd>
     <p>PCP 进程接受连接的端口号。默认为 9898。
@@ -504,7 +504,7 @@ cp $prefix/etc/pgpool.conf.sample $prefix/etc/pgpool.conf
     <p>
     需要重启 pgpool-II 以使改动生效。</p>
     </dd>
-      
+
 </dl>
 
 <h3>池</h3>
@@ -560,7 +560,7 @@ net.core.somaxconn = 256
     </ul>
 
     <p>归纳起来，max_pool，num_init_children，max_connections
-        和 superuser_reserved_connections 必须符合以下规则： 
+        和 superuser_reserved_connections 必须符合以下规则：
     </p>
 <pre>
 max_pool*num_init_children &lt;= (max_connections - superuser_reserved_connections) (不需要取消查询)
@@ -790,7 +790,7 @@ local0.*    /var/log/pgpool.log
     控制哪个最小级别的消息被发送到日志中。
     可用的值为 DEBUG5、DEBUG4、DEBUG3、DEBUG2、DEBUG1、LOG、NOTICE、
     WARNING、ERROR、FATAL 以及 PANIC。每个级别包含它后面的级别。
-    默认值为 NOTICE。   
+    默认值为 NOTICE。
     </p>
     <p>
     如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
@@ -827,7 +827,7 @@ local0.*    /var/log/pgpool.log
     如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
     </p>
     </dd>
-  
+
 <dt><a name="SYSLOG_FACILITY"></a>syslog_facility <span class="version">V3.1 -</span></dt>
     <dd>
     <p>当记录日志到 syslog 被启用，本参数确定被使用的 syslog “设备”。
@@ -912,7 +912,7 @@ local0.*    /var/log/pgpool.log
     如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
     </p>
     </dd>
-      
+
 <dt><a name="HEALTH_CHECK_USER"></a>health_check_user</dt>
     <dd>
     <p>用于执行健康检查的用户。用户必须存在于 PostgreSQL 后台中。
@@ -954,7 +954,7 @@ local0.*    /var/log/pgpool.log
     </dd>
 
 <dt><a name="HEALTH_CHECK_RETRY_DELAY"></a>health_check_retry_delay <span class="version">V3.2 -</span></dt>
-    <dd> 
+    <dd>
     <p>失效健康检查重试的间隔时间（单位为秒）（ health_check_max_retries > 0 时有效 ）。
     如果为 0 则立即重试（不延迟）。
     </p>
@@ -1109,7 +1109,7 @@ local0.*    /var/log/pgpool.log
     如果你改变了这个值，需要重新加载 pgpool.conf 以使变动生效。
     </p>
     </dd>
-  
+
       <dt id="ALLOW_SQL_COMMENTS">allow_sql_comments <span class="version">V3.4 -</span></dt>
     <dd>
     <p>
@@ -1270,7 +1270,7 @@ local0.*    /var/log/pgpool.log
     但是在 <code>ssl_ca_cert</code> 被设置的时候，还是会发生校验。
     </p>
     </dd>
-    
+
 </dl>
 
 <h3>其他</h3>
@@ -1316,7 +1316,7 @@ local0.*    /var/log/pgpool.log
     并且你想减少对主节点的访问，你可以将本选项设置为 off。默认值为 on。
     </p>
     </dd>
-    
+
 </dl>
 
 <h2>生成 SSL 证书</h2>
@@ -1924,7 +1924,7 @@ chmod 755 failover_stream.sh
 failover_command = '/usr/local/src/pgsql/9.0-beta/bin/failover_stream.sh %d %H /tmp/trigger_file0'
 </pre>
     </li>
- 
+
     <li>在备节点中设置 recovery.conf。
     <a href="recovery.conf.sample">一个 recovery.conf 示例</a> 可以在 PostgreSQL 安装目录中找到。
     它的名字为 "share/recovery.conf.sample"。
@@ -2214,7 +2214,7 @@ recovery_2nd_stage_command = ''
 和 PostgreSQL 中使用的 pg_hba.conf 文件类似，pgpool-II 使用一个称之为 "pool_hba.conf" 的配置文件来支持类似的客户端认证功能。
 </p>
 <p>
-当安装 pgpool 的时候，pool_hba.conf.sample 文件将被安装在"/usr/local/etc"目录下，该位置也是配置文件的默认目录。拷贝 pool_hba.conf.sample 为 pool_hba.conf，如果必要的话并修改它。默认的情况下，<a href="#ENABLE_POOL_HBA">enable_pool_hba</a> 认证被开启。 
+当安装 pgpool 的时候，pool_hba.conf.sample 文件将被安装在"/usr/local/etc"目录下，该位置也是配置文件的默认目录。拷贝 pool_hba.conf.sample 为 pool_hba.conf，如果必要的话并修改它。默认的情况下，<a href="#ENABLE_POOL_HBA">enable_pool_hba</a> 认证被开启。
 </p>
 <p>
     pool_hba.conf 文件的格式和 PostgreSQL 的 pg_hba.conf 的格式遵循的非常相近。
@@ -2233,7 +2233,7 @@ host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
 <ul>
 <li>DATABASE 字段使用的"samegroup" 不被支持</li>
     <p>
-    尽管 pgpool 并不知道后端服务器的用户的任何信息，但是将通过 pool_hba.conf 中的 DATABASE 字段项对数据库名进行简单的检查。   
+    尽管 pgpool 并不知道后端服务器的用户的任何信息，但是将通过 pool_hba.conf 中的 DATABASE 字段项对数据库名进行简单的检查。
     </p>
 
 <li>USER 字段使用的 group 名字后面跟个"+"不被支持 </li>
@@ -2717,7 +2717,7 @@ pgpool-II 通过 SHOW 命令提供一些信息。SHOW 是一个真实的 SQL 语
 <p>除 "pool_status" 之外的选项都是从 pgpool-II 3.0 开始添加的。
 <p>
 <u>注意</u>：术语 'pool' 指的是一个 pgpool 进程所拥有的 PostgreSQL 会话池，并非指所有的 pgpool 所拥有的会话。
-</p> 
+</p>
 </p>
 <p>SQL语句中的 "pool_status" 在以前的版本中已经存在，但是其它可选项在 3.0 中才出现。
 </p>
@@ -2744,7 +2744,7 @@ SELECT 计数在每次 pgpool-II 重启后会被重置为零。
 </p>
 <pre>
 benchs2=# show pool_nodes;
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt 
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt
 ---------+----------+-------+--------+-----------+---------+------------
  0       | /tmp     | 11002 | 2      | 0.500000  | primary | 9231
  1       | /tmp     | 11003 | 2      | 0.500000  | standby | 9469
@@ -2932,7 +2932,7 @@ pgpool-II 以两个阶段来执行在线恢复。
 数据同步在称之为"第二阶段"中完成。在进入第二阶段前，pgpool-II 等待所有的客户端断开连接。它阻塞所有新来的连接直到第二阶段完成。
 </p>
 <p>
-当所有的连接被中断后，pgpool-II合并在第一和第二阶段中更新的数据。这是同步的最终数据。  
+当所有的连接被中断后，pgpool-II合并在第一和第二阶段中更新的数据。这是同步的最终数据。
 </p>
 
 <p>
@@ -3045,7 +3045,7 @@ DESTDIR=$3       # database cluster of the DB node to be recovered
 port=5432        # PostgreSQL port number
 archdir=/data/archive_log    # archive log directory
 
-# Force to flush current value of sequences to xlog 
+# Force to flush current value of sequences to xlog
 psql -p $port -t -c 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn' template1|
 while read i
 do
@@ -4241,9 +4241,18 @@ Weight  : 0.5
 </dd>
 <dt>描述：</dt>
 <dd>
-	<p>显示 pgpool-II 的看门狗状态。
-	<code>watchdog_id</code> 为 other_pgpool_hostname 参数在 pgpool.conf 中的索引值。
-	如果这个值被省略了，则显示本地 pgpool-II 的看门狗的状态。</p>
+
+    <p>显示 pgpool-II 的看门狗状态。
+    <code>watchdog_id</code> 为要获得信息的看门狗的索引值。
+    如果这个值被省略了，则显示集群里所有看门狗的状态。</p>
+    <p>由于 <code>watchdog_id</code> = 0 是为当前 pgpool-II 节点保留的，
+    所以远程看门狗节点的索引值是从 1 开始。</p>
+    <p>注意, 虽然在使用 pcp_watchdog_info 命令时远程看门狗节点的索引值是从 1 开始，
+    然而在 pgpool.conf 中是从 0 开始定义远程看门狗节点的索引值，
+    所以在使用 pcp_watchdog_info 命令来获得远程看门狗信息时，需要将其看门狗的索引值加 1。</p>
+    <p>例如，在使用 pcp_watchdog_info 来获取第一个远程看门狗节点的信息时，
+    并且其节点被 other_pgpool_hostname0 参数定义为前缀配置为 0，
+    您需要使用 <code>watchdog_id</code> = 1。</p>
 </dd>
 <dt>选项</dt>
 <dd>
@@ -4251,7 +4260,8 @@ Weight  : 0.5
 	<dt><code>-n <strong>watchdog_id</strong>, --node-id=<strong>watchdog_id</strong></code></dt>
 	<dd>
 		<p>要获得信息的其他 pgpool-II 的索引值。</p>
-		<p>如果这个值被省略了，则获取本地 pgpool-II 的看门狗的状态。</p>
+        <p>如果这个值为 0，则获取本地 pgpool-II 看门狗的信息。</p>
+        <p>如果这个值被省略了，则获取所有 pgpool-II 看门狗节点的信息。</p>
 	</dd>
 	<dt>其他选项</dt>
 	<dd>
@@ -4262,29 +4272,80 @@ Weight  : 0.5
 <dt>输出示例：</dt>
 <dd>
 <pre>
-$ pcp_watchdog_info -h localhost -p 9898 -u postgres 0
+$ pcp_watchdog_info -h localhost -u postgres
 
-host1 9999 9000 2
-输出示例为：
+3 NO Linux_host1.localdomain_9991 host1
+
+Linux_host1.localdomain_9991 host1 9991 9001 7 STANDBY
+Linux_host2.localdomain_9992 host2 9992 9002 4 MASTER
+Linux_host3.localdomain_9993 host3 9993 9003 7 STANDBY
 </pre>
 
 <p>结果按以下顺序显示：</p>
 <ol>
-<li>主机名</li>
-<li>pgpool-II 的端口号</li>
-<li>看门狗的端口号</li>
-<li>看门狗状态</li>
+<li>集群内看门狗节点的总数</li>
+<li>当前节点是否启动了虚拟 IP?</li>
+<li>主节点名</li>
+<li>主节点主机名</li>
 </ol>
 
-<p>状态用 [1 到 4] 之间的数字表示。</p>
-<ul>
-<li>1 - 看门狗没有启动</li>
-<li>2 - 备节点：没占用虚拟 IP</li>
-<li>3 - 活跃节点：占用虚拟 IP</li>
-<li>4 - 宕机</li>
-</ul>
+<p>下面是看门狗节点列表：</p>
+<ol>
+    <li>节点名</li>
+    <li>主机名</li>
+    <li>pgpool 端口号</li>
+    <li>看门狗端口号</li>
+    <li>当前节点状态</li>
+    <li>当前节点名</li>
+</ol>
+</dd>
+
+<dt>细节模式:</dt>
+<dd>
+<pre>
+$ pcp_watchdog_info -h localhost -v -u postgres
+
+Watchdog Cluster Information
+Total Nodes          : 3
+Remote Nodes         : 2
+Quorum state         : QUORUM EXIST
+Alive Remote Nodes   : 2
+VIP up on local node : NO
+Master Node Name     : Linux_host2.localdomain_9992
+Master Host Name     : localhost
+
+Watchdog Node Information
+Node Name      : Linux_host1.localdomain_9991
+Host Name      : host1
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9991
+Watchdog port  : 9001
+Node priority  : 1
+status         : 7
+status Name    : STANDBY
+
+Node Name      : Linux_host2.localdomain_9992
+Host Name      : host2
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9992
+Watchdog port  : 9002
+Node priority  : 1
+status         : 4
+status Name    : MASTER
+
+Node Name      : Linux_host3.localdomain_9993
+Host Name      : host3
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9993
+Watchdog port  : 9003
+Node priority  : 1
+status         : 7
+status Name    : STANDBY
+
+</pre>
 </dd>
 </dl>
+
 
 <h3 id="pcp_proc_count">pcp_proc_count</h3>
 <dl>
@@ -4640,7 +4701,7 @@ $ CREATE EXTENSION pgpool_adm
     以下为示例输出。
 <pre>
 test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
- host | port  |      status       | weight 
+ host | port  |      status       | weight
 ------+-------+-------------------+--------
  /tmp | 11002 | Connection in use |      0
 (1 row)
@@ -4691,7 +4752,7 @@ test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
     以下为示例输出：
 <pre>
 test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHERE item ~ 'backend.*0';
-          item           |                     value                      |          description          
+          item           |                     value                      |          description
 -------------------------+------------------------------------------------+-------------------------------
  backend_hostname0       | /tmp                                           | backend #0 hostname
  backend_port0           | 11002                                          | backend #0 port number
@@ -4745,7 +4806,7 @@ test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHER
     以下为示例输出：
 <pre>
 test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
- node_count 
+ node_count
 ------------
           2
 (1 row)
@@ -4795,7 +4856,7 @@ test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
     以下为示例输出：
 <pre>
 test=# SELECT * FROM pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
- node_attached 
+ node_attached
 ---------------
  t
 (1 row)
@@ -4846,7 +4907,7 @@ test=# SELECT * FROM pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
     以下为示例输出：
 <pre>
 test=# SELECT * FROM pcp_detach_node(1, 'false', 'localhost',11001,'t-ishii','t-ishii');
- node_detached 
+ node_detached
 ---------------
  t
 (1 row)
@@ -5067,7 +5128,7 @@ INSERT/UPDATE 使用 CURRENT_TIMESTAMP, CURRENT_DATE, now() 作为表的默认�
 
 <ul>
     <li>在 pgpool-II 3.0 或更低的以前的版本中，
-        计算表中默认值的临时数据在一些情况下并不准确，例如，下面的表定义：    
+        计算表中默认值的临时数据在一些情况下并不准确，例如，下面的表定义：
 <pre>
 CREATE TABLE rel1(
   d1 date DEFAULT CURRENT_DATE + 1
@@ -5102,7 +5163,7 @@ CREATE TABLE rel1(
 
     我们可以复制：
 <pre>
-INSERT INTO rel1(c1) VALUES(1) 
+INSERT INTO rel1(c1) VALUES(1)
 </pre>
 
     因为这将变为：
