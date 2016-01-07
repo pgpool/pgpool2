@@ -5059,32 +5059,109 @@ Weight  : 0.5
 <dt>説明</dt>
 <dd>
 <p>pgpool-II の pgpool.conf の watchdog セクションで定義された pgpool-II の watchdog ステータスを表示します。</p>
-<p>_watchdogid_ は other_pgpool_hostname パラメータの添字です。
-省略された場合には、_host_:_port_ で動作している pgpool-II の watchdog ステータスが表示されます。</p>
+<p><code>watchdog_id</code> は情報を取得する watchdog ノードのインデックです。
+省略された場合には、クラスタ中の全ての pgpool-II の watchdog ノードのステータスが表示されます。</p>
+<p><code>watchdog_id</code> = 0 はローカルの pgpool-II ノードのために予約されています。
+そのため、リモートの watchdog ノードのインデックスは 1 から始まります。pgpool.conf ではリモート
+watchdog ノードのインデックスは 0 をベースにしていますが、pcp_watchdog_info ではそれが 1 から始まることに注意してください。
+pcp_watchdog_info コマンドで情報を取得する際には、他の watchdog のインデックスに 1 を足す必要があります。
+</p><p>
+例えば、other_pgpool_hostname0 パラメータで定義されている、添字 0 である最初のリモート watchdog
+ノードの情報を取得するには、pcp_watchdog_info で <code>watchdog_id</code> = 1 を指定します。
+</p>
+</dd>
+
+<dt>オプション</dt>
+<dd>
+	<dl class="options">
+	<dt><code>-n <strong>watchdog_id</strong>, --node-id=<strong>watchdog_id</strong></code></dt>
+	<dd>
+		<p>情報を取得する他の pgpool-II のインデックスを指定します。</p>
+		<p>0 の場合ははローカルの watchdog の情報を取得します。</p>
+		<p>省略された場合は、全ての watchdog ノードの情報を取得します。</p>
+	</dd>
+    <dt>その他</dt>
+    <dd>
+        <p><a href="#pcp_common_options">common options</a> を参照してください。 </p>
+    </dd>
+	</dl>
+</dd>
 
 <dt>出力例</dt>
 <dd>
 <pre>
-$ pcp_watchdog_info -h localhost -p 9898 -u postgres 0
-host1 9999 9000 2
+$ pcp_watchdog_info -h localhost -u postgres
+
+3 NO Linux_host1.localdomain_9991 host1
+
+Linux_host1.localdomain_9991 host1 9991 9001 7 STANDBY
+Linux_host2.localdomain_9992 host2 9992 9002 4 MASTER
+Linux_host3.localdomain_9993 host3 9993 9003 7 STANDBY
 </pre>
 
 <p>結果は以下の順のとおりです。</p>
+<p>最初に出力される行は、watchdog クラスタの情報を示しています:</p>
 <ol>
-<li>pgpool-II のホスト名</li>
-<li>pgpool-II ポート番号</li>
-<li>watchdog ポート番号</li>
-<li>watchdog ステータス</li>
+<li>クラスタ内の全 watchdog ノード数</li>
+<li>仮想 IP がこのノードで起動しているか？</li>
+<li>マスターノード名</li>
+<li>マスターノードホスト</li>
 </ol>
 
-<p>ステータスは [1..4] までの数字で表わされます。各数字の意味は以下のとおりです。</p>
-<ul>
-<li>1 - 初期化時のみに表われる。指定された pgpool-II が未起動の場合に表示される。</li>
-<li>2 - スタンバイ: 仮想 IP を保持していない</li>
-<li>3 - アクティブ: 仮想 IP を保持している</li>
-<li>4 - ダウン</li>
-</ul>
+<p>それ以降は watchdog ノードのリストが出力されます:</p>
+<ol>
+	<li>ノード名</li>
+	<li>ホスト名</li>
+	<li>pgpool ポート番号</li>
+	<li>watchdog ポート番号</li>
+	<li>現在のノードステータス</li>
+	<li>現在のノードステータス名</li>
+</ol>
+</dd>
 
+<dt>verbose モード:</dt>
+<dd>
+<pre>
+$ pcp_watchdog_info -h localhost -v -u postgres
+
+Watchdog Cluster Information
+Total Nodes          : 3
+Remote Nodes         : 2
+Quorum state         : QUORUM EXIST
+Alive Remote Nodes   : 2
+VIP up on local node : NO
+Master Node Name     : Linux_host2.localdomain_9992
+Master Host Name     : localhost
+
+Watchdog Node Information
+Node Name      : Linux_host1.localdomain_9991
+Host Name      : host1
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9991
+Watchdog port  : 9001
+Node priority  : 1
+status         : 7
+status Name    : STANDBY
+
+Node Name      : Linux_host2.localdomain_9992
+Host Name      : host2
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9992
+Watchdog port  : 9002
+Node priority  : 1
+status         : 4
+status Name    : MASTER
+
+Node Name      : Linux_host3.localdomain_9993
+Host Name      : host3
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9993
+Watchdog port  : 9003
+Node priority  : 1
+status         : 7
+status Name    : STANDBY
+
+</pre>
 </dd>
 </dl>
 

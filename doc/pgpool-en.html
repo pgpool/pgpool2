@@ -4911,14 +4911,14 @@ Weight  : 0.5
 <code>watchdog_id</code> is the index of watchdog node to get information for.
 If this is omitted, display the watchdog status of all watchdog nodes in the cluster.
 </p><p>
-<code>watchdog_id</code> = 0 is reserved for current pgpool-II node,
+<code>watchdog_id</code> = 0 is reserved for local pgpool-II node,
 So the index of remote watchdog nodes starts from 1.
 Note that since the index numbering in pcp_watchdog_info utility starts from 1 while
 the pgpool.conf file uses 0 based indexing to define remote watchdog nodes, so you will require
 to add one to the other watchdog index to get its information using pcp_watchdog_info utility.
 </p><p>
 For example, to get the information of first remote watchdog node configured with prefix 0
-defined by other_pgpool_hostname0 parameters you will use watchdog_id = 1 for pcp_watchdog_info.</p>
+defined by other_pgpool_hostname0 parameters you will use <code>watchdog_id</code> = 1 for pcp_watchdog_info.</p>
 </dd>
 <dt>Options:</dt>
 <dd>
