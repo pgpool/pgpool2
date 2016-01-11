@@ -1320,6 +1320,13 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 		bool address_deleted;
 		if (read_interface_change_event(g_cluster.network_monitor_sock, &ip_address, &interface, &address_deleted))
 		{
+			ereport(DEBUG1,
+					(errmsg("interface change event received"),
+						errdetail("address_deleted = %s ip_address = %s interface = %s",
+							address_deleted?"YES":"NO",
+							ip_address?ip_address:"NULL",
+							interface?interface:"NULL")));
+
 			if (address_deleted)
 				watchdog_state_machine(WD_EVENT_NW_IP_IS_REMOVED, NULL, NULL);
 			else
@@ -1384,7 +1391,7 @@ static bool read_ipc_command_and_process(int sock, bool *remove_socket)
 				 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 		return false;
 	}
-	
+
 	data_len = ntohl(data_len);
 	/* see if we have enough information to process this command */
 	MemoryContext mCxt, oldCxt;
@@ -3428,6 +3435,45 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 		free_packet(addPkt);
 	}
 
+	else if (event == WD_EVENT_NW_IP_IS_REMOVED)
+	{
+		/* check if all IP addresses are lost */
+		List* local_addresses = get_all_local_ips();
+		if (local_addresses == NULL)
+		{
+			/*
+			 * We have lost all IP addresses
+			 * we are in network trouble. Just move to
+			 * in network trouble state
+			 */
+			ereport(WARNING,
+				(errmsg("network IP is removed and system has no IP is assigned"),
+					 errdetail("changing the state to in network trouble")));
+
+			set_state(WD_IN_NW_TROUBLE);
+		}
+		else
+		{
+			ListCell *lc;
+			ereport(DEBUG1,
+				(errmsg("network IP is removed but system still has a valid IP is assigned")));
+			foreach(lc, local_addresses)
+			{
+				char* ip = lfirst(lc);
+				ereport(DEBUG1,
+						(errmsg("IP = %s",ip?ip:"NULL")));
+			}
+		}
+	}
+
+	else if (event == WD_EVENT_LOCAL_NODE_LOST)
+	{
+		ereport(WARNING,
+			(errmsg("watchdog lifecheck reported we are disconnected from the network"),
+				 errdetail("changing the state to LOST")));
+		set_state(WD_LOST);
+	}
+
 	if (wd_commands_packet_processor(event, wdNode, pkt) == true)
 		return 0;
 
@@ -4034,13 +4080,6 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 						(errmsg("We have lost the node \"%s\" but quorum still holds",wdNode->nodeName)));
 		}
 			break;
-			
-		case WD_EVENT_LOCAL_NODE_LOST:
-			ereport(NOTICE,
-					(errmsg("Lifecheck reported we have been lost, resigning from master ")));
-			resign_from_escalated_node();
-			set_state(WD_LOST);
-			break;
 
 		case WD_EVENT_REMOTE_NODE_FOUND:
 		{
@@ -4074,7 +4113,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 				case WD_IAM_COORDINATOR_MESSAGE:
 				{
 					ereport(NOTICE,
-							(errmsg("We are in split brain, WD_EVENT_LOCAL_NODE_LOST from master")));
+							(errmsg("We are in split brain, I AM COORDINATOR MESSAGE received from \"%s\" node",wdNode->nodeName)));
 					reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
 					set_state(WD_JOINING);
 				}
@@ -4287,11 +4326,7 @@ static int watchdog_state_machine_voting(WD_EVENTS event, WatchdogNode* wdNode, 
 		case WD_EVENT_TIMEOUT:
 			set_state(WD_JOINING);
 			break;
-			
-		case WD_EVENT_LOCAL_NODE_LOST:
-			set_state(WD_JOINING);
-			break;
-			
+
 		case WD_EVENT_PACKET_RCV:
 		{
 			if(pkt == NULL)
