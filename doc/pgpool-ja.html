@@ -123,7 +123,7 @@ pgpool-IIの機能が利用できます。
 
 <h1>License<a name="license"></a></h1>
 
-<p>Copyright (c) 2003-2015        PgPool Global Development Group</p>
+<p>Copyright (c) 2003-2016        PgPool Global Development Group</p>
 <p><br></p>
 <p>
 Permission to use, copy, modify, and distribute this software and
@@ -6082,7 +6082,7 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 <hr><a name="release3.5.x"></a>
 
 <!-- -------------------------------------------------------------------------------- -->
-<h2><a name="release3.5.0"></a>3.5.0 (ekieboshi) 201x/xx/xx</h2>
+<h2><a name="release3.5.0"></a>3.5.0 (ekieboshi) 2016/xx/xx</h2>
 <!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
@@ -6103,6 +6103,14 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
      <p>
      ifconfig が非推奨になり現在では ip コマンドがデフォルトで使われており、ifconfig_path がパラメータ名として不適切になったためです。
      </p>
+    </li>
+    <li>pcp コマンド引数の文法が変更されました。(Muhammad Usama)</li>
+    <li><a href="#pcp_watchdog_info">pcp_watchdog_info</a>の出力とパラメータの意味が変更されました。
+      (Muhammad Usama)
+    <p>
+    このコマンドはクラスタ中の全ての pgpool-II ノードの watchdog 情報を表示するよう改善されました。
+    それに伴い、ノードインデックスを指定するパラメータの意味が変更され、0 が最初のリモート pgpool-II
+    ノードではなくローカル pgpool-II ノードを意味するようになりました。</p>
     </li>
 </ul>
 
@@ -6388,6 +6396,23 @@ pgpool-II はそのマークの後、クエリをプライマリに送信する�
 
 バグ報告 #157 によります。
 </p></li>
+
+<li>test: レグレッションテスト 063 のタイムアウト処理で timeout コマンドを使用するよう修正しました。(Yugo Nagata)</li>
+
+<li>エラー出力が誤っていた箇所を修正しました。(Tatsuo Ishii)
+<p>
+connect_with_timeout() で getsockopt(SO_ERROR) がエラーを報告した際に、適切なエラー情報が表示できていませんでした。
+bug #159 の報告によります。
+</p>
+
+</li>test: regress.sh のヘルプメッセージで抜けていた改行を追加しました。(Yugo Nagata)</li>
+
+<li>get_backends_status() 関数のロジックの誤りを修正しました。(Muhammad Usama)
+<p>get_backends_status () 関数は現在の有効でかつダウンしているバックエンドノードの数をカウントします。このとき、有効ではないノードは常にダウンステータスにあることを前提にしていましたが、この前提は常に正しい訳ではありません。</p>
+</li>
+
+<li>white/black_memqcache_table_list パラメータがクォーテーションを要求しないよう修正しました。(Yugo Nagata)
+<p>*_memqcache_table_list でテーブル名およびスキーマ名を指定する際に、ダブルクォーテーションが必要となっていました。修正パッチは Dang Minh Huong によって提供されました。[pgpool-hackers: 1323] の報告によります。</p>
 </ul>
 
 <!-- ================================================================================ -->

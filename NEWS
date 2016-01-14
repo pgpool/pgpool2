@@ -4,7 +4,7 @@
 3.5 Series (2014/12/15 - )
 ===============================================================================
 
-                        3.5.0 (ekieboshi) 201x/xx/xx
+                        3.5.0 (ekieboshi) 2016/xx/xx
 
 * Version 3.5.0
 
@@ -25,6 +25,16 @@
 
       ifconfig_path isn't appropriate for the parameter name because
       ifconfig command is obsolete and now ip command is used as default.
+
+    - Change the syntax of pcp commands arguments (Muhammad Usama)
+
+    - Change the output and the argument semantics of pcp_watchdog_info command
+      (Muhammad Usama)
+
+      The command is enhanced to show watchdog information about all pgpool-II
+      nodes in the cluster. According to this, the argument to specify node index
+      is changed so that 0 means local pgpool-II node instead of the first remote
+      node. 
 
       __________________________________________________________________
 
@@ -63,7 +73,7 @@
 
 * Enhancements
 
-    - Performance improvement in extened query protocol
+    - Performance improvement in extened query protocol (Tatsuo Ishii)
 
       Unnecessary "flush" messages which used to be sent in each step of
       extended protocol messages (parse, bind, describe and execute) and
@@ -140,6 +150,8 @@
       process (Tatsuo Ishii)
 
     - Allow to run pgpool in debug mode in regression tests (Tatsuo Ishii)
+
+    - Add pgpool_adm documents (Tatsuo Ishii)
 
       __________________________________________________________________
 
@@ -272,6 +284,30 @@
       data modification and should be treated as an exception.
       
       Per bug #157.
+
+    - test: Fix to use timeout command to handle time out of regress test 062
+      (Yugo Nagata)
+
+    - Fix to show wrong error (Tatsuo Ishii)
+
+      connect_with_timeout() does not show proper error info when
+      getsockopt(SO_ERROR) reports an error. Pointed out in bug #159.
+
+    - test: Add regress.sh missing \n in help messages (Yugo Nagata)
+
+    - Fix the logic issue in get_backends_status() function (Muhammad Usama)
+
+      get_backends_status () function counts the number of current valid and down
+      backend nodes. The function assumed that the node was also invalid when its
+      connection status was down. However, that is not always right.
+
+    - Fix white/black_memqcache_table_list  not to require quotaion (Yugo Nagata)
+
+      The tables and schemas name specified in *_memqcache_table_list
+      were needed to be quoted by double quotation.
+
+      Patch contributed by Dang Minh Huong.
+      Per [pgpool-hackers: 1323]
 
 ===============================================================================
 3.4 Series (2014/11/07 - )

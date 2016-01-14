@@ -240,6 +240,9 @@ fi
 %endif
 
 %changelog
+* Mon Dec 28 2015 Yugo Nagata <nagata@sraoss.co.jp> 3.5.0
+- Add Chinese document
+
 * Mon Aug 24 2015 Yugo Nagata <nagata@sraoss.co.jp> 3.5.0
 - Remove system database 
 
