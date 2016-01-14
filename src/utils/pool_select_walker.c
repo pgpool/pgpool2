@@ -43,6 +43,7 @@ static bool	insertinto_or_locking_clause_walker(Node *node, void *context);
 static bool is_immutable_function(char *fname);
 static bool select_table_walker(Node *node, void *context);
 static bool non_immutable_function_call_walker(Node *node, void *context);
+static char *strip_quote(char *str);
 
 /*
  * Return true if this SELECT has function calls *and* supposed to
@@ -166,6 +167,7 @@ bool pool_has_insertinto_or_locking_clause(Node *node)
 int pattern_compare(char *str, const int type, const char *param_name)
 {
 	int i = 0;
+	char *s;
 
 	RegPattern *lists_patterns;
 	int *pattc;
@@ -188,11 +190,12 @@ int pattern_compare(char *str, const int type, const char *param_name)
 		return -1;
 	}
 
+	s = strip_quote(str);
 	for (i = 0; i < *pattc; i++) {
 		if (lists_patterns[i].type != type)
 			continue;
 
-		if (regexec(&lists_patterns[i].regexv, str, 0, 0, 0) == 0)
+		if (regexec(&lists_patterns[i].regexv, s, 0, 0, 0) == 0)
 		{
 			switch(type) {
 			/* return 1 if string matches whitelist pattern */
@@ -200,29 +203,51 @@ int pattern_compare(char *str, const int type, const char *param_name)
 				ereport(DEBUG2,
 					(errmsg("comparing function name in whitelist regex array"),
 						errdetail("pattern_compare: %s (%s) matched: %s",
-							   param_name, lists_patterns[i].pattern, str)));
+							   param_name, lists_patterns[i].pattern, s)));
 				return 1;
 			/* return 1 if string matches blacklist pattern */
 			case BLACKLIST:
 				ereport(DEBUG2,
 					(errmsg("comparing function name in blacklist regex array"),
 						 errdetail("pattern_compare: %s (%s) matched: %s",
-								   param_name, lists_patterns[i].pattern, str)));
+								   param_name, lists_patterns[i].pattern, s)));
 				return 1;
 			default:
 				ereport(WARNING,
-						(errmsg("pattern_compare: \"%s\" unknown pattern match type: \"%s\"", param_name, str)));
+						(errmsg("pattern_compare: \"%s\" unknown pattern match type: \"%s\"", param_name, s)));
 				return -1;
 			}
 		}
 		ereport(DEBUG2,
 			(errmsg("comparing function name in blacklist/whitelist regex array"),
 				 errdetail("pattern_compare: %s (%s) not matched: %s",
-						   param_name, lists_patterns[i].pattern, str)));
+						   param_name, lists_patterns[i].pattern, s)));
 	}
 
+	free(s);
 	/* return 0 otherwise */
 	return 0;
+}
+
+static char *strip_quote(char *str)
+{
+	char *after;
+	int i = 0;
+
+	after = malloc(sizeof(char) * strlen(str) + 1);
+
+	do {
+		if (*str != '"')
+		{
+			after[i] = *str;
+			i++;
+		}
+		str++;
+	} while (*str != '\0');
+
+	after[i] = '\0';
+
+	return after;
 }
 
 /*
