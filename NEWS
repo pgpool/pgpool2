@@ -151,7 +151,9 @@
 
     - Allow to run pgpool in debug mode in regression tests (Tatsuo Ishii)
 
-    - Add pgpool_adm documents (Tatsuo Ishii)
+    - doc:Add pgpool_adm documents (Tatsuo Ishii)
+
+    - doc:Update Chinese documents (Bambo Huang)
 
       __________________________________________________________________
 
