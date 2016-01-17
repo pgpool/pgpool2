@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -25,7 +25,8 @@
 
 #ifndef LIBPCP_EXT_H
 #define LIBPCP_EXT_H
-
+#include <signal.h>
+#include <stdio.h>
 /*
  * startup packet definitions (v2) stolen from PostgreSQL
  */
@@ -62,7 +63,12 @@ typedef struct {
 } BackendInfo;
 
 typedef struct {
-	int num_backends;		/* number of used PostgreSQL backends */
+	sig_atomic_t num_backends;		/* Number of used PostgreSQL backends.
+									 * This needs to be a sig_atomic_t type
+									 * since it is replaced by a local
+									 * variable while reloading pgpool.conf.
+									 */
+
 	BackendInfo backend_info[MAX_NUM_BACKENDS];
 } BackendDesc;
 /*
