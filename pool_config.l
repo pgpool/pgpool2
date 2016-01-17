@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -223,6 +223,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 	char key[1024];
 	double total_weight;
 	int i;
+	sig_atomic_t local_num_backends;
 
 #define PARSE_ERROR()		pool_error("pool_config: parse error at line %d '%s'", Lineno, yytext)
 
@@ -1506,7 +1507,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 
 	fclose(fd);
 
-	pool_config->backend_desc->num_backends = 0;
+	local_num_backends = 0;
 	total_weight = 0.0;
 
 	for (i=0;i<MAX_CONNECTION_SLOTS;i++)
@@ -1520,7 +1521,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		else
 		{
 			total_weight += BACKEND_INFO(i).unnormalized_weight;
-			pool_config->backend_desc->num_backends = i+1;
+			local_num_backends = i+1;
 		}
 	}
 
@@ -1545,6 +1546,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			pool_debug("backend %d weight: %f", i, pool_config->backend_desc->backend_info[i].backend_weight);
 		}
 	}
+	if (local_num_backends != pool_config->backend_desc->num_backends)
+			pool_config->backend_desc->num_backends = local_num_backends;
 
 	if (pool_config->parallel_mode || pool_config->enable_query_cache)
 	{
