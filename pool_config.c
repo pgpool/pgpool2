@@ -499,7 +499,7 @@ char *yytext;
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2157,6 +2157,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 	double total_weight;
 	int i;
     bool log_destination_changed = false;
+	sig_atomic_t local_num_backends;
 #ifdef USE_MEMCACHED
 	bool use_memcached = true;
 #else
@@ -4303,7 +4304,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		}
 	}
 
-	pool_config->backend_desc->num_backends = 0;
+	local_num_backends = 0;
 	total_weight = 0.0;
 
 	for (i=0;i<MAX_CONNECTION_SLOTS;i++)
@@ -4317,7 +4318,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		else
 		{
 			total_weight += BACKEND_INFO(i).unnormalized_weight;
-			pool_config->backend_desc->num_backends = i+1;
+			local_num_backends = i+1;
 			
 			/* intialize backend_hostname with a default socket path if empty */
 			if (*(BACKEND_INFO(i).backend_hostname) == '\0') 
@@ -4335,6 +4336,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 		}	
 	}
+	if (local_num_backends != pool_config->backend_desc->num_backends)
+			pool_config->backend_desc->num_backends = local_num_backends;
 
 	pool_debug("num_backends: %d total_weight: %f",
 			   pool_config->backend_desc->num_backends, total_weight);
