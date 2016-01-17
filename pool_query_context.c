@@ -1201,8 +1201,6 @@ int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2)
 
 	return ret;
 }
-<<<<<<< HEAD
-=======
 
 /*
  * Remove READ WRITE option from the packet of START TRANSACTION command.
@@ -1316,4 +1314,3 @@ bool pool_is_transaction_read_only(Node *node)
 	}
 	return ret;
 }
->>>>>>> ec3859b... Fix bug with "SET TRANSACTION READ ONLY".
