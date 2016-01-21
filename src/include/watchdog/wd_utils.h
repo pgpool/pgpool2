@@ -25,6 +25,7 @@
 #ifndef WD_UTILS_H
 #define WD_UTILS_H
 
+#include <ifaddrs.h>
 #include "parser/pg_list.h"
 
 #define WD_NG (0)
@@ -52,6 +53,7 @@ extern int wd_IP_up(void);
 extern int wd_IP_down(void);
 extern int wd_get_cmd(char * buf, char * cmd);
 extern int create_monitoring_socket(void);
-extern bool read_interface_change_event(int sock, char** ip_address, char** interface, bool* address_deleted);
+extern bool read_interface_change_event(int sock, bool* link_event, bool* deleted);
+extern bool is_interface_up(struct ifaddrs *ifa);
 
 #endif

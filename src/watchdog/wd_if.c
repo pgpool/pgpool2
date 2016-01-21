@@ -37,6 +37,7 @@
 #ifdef __linux__
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
+#include <linux/if.h>
 #else	/* __linux__ */
 #include <net/route.h>
 #include <net/if.h>
@@ -55,6 +56,9 @@
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_utils.h"
 
+#ifndef __linux__
+#define IFF_LOWER_UP	0x10000
+#endif
 
 static int exec_if_cmd(char * path,char * command);
 
@@ -77,13 +81,15 @@ List* get_all_local_ips(void)
 			char *addressBuffer;
 			if (!strncasecmp("lo", ifa->ifa_name, 2))
 				continue; /* We do not need loop back addresses */
+
 			tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
 			addressBuffer = palloc(INET_ADDRSTRLEN);
 			inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
 			local_addresses = lappend(local_addresses,addressBuffer);
 		}
 	}
-	if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
+	if (ifAddrStruct!=NULL)
+		freeifaddrs(ifAddrStruct);
 	return local_addresses;
 }
 
@@ -317,7 +323,7 @@ int create_monitoring_socket(void)
 	
 	memset(&addr, 0x00, sizeof(addr));
 	addr.nl_family = AF_NETLINK;
-	addr.nl_groups = RTMGRP_IPV4_IFADDR;
+	addr.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_LINK;
 	
 	if (bind(sock,(struct sockaddr *)&addr,sizeof(addr)) < 0)
 	{
@@ -332,18 +338,17 @@ int create_monitoring_socket(void)
 }
 
 #ifdef __linux__
-bool read_interface_change_event(int sock, char** ip_address, char** interface, bool* address_deleted)
+bool read_interface_change_event(int sock, bool* link_event, bool* deleted)
 {
 	char buffer[4096];
 	int len;
 	struct iovec iov;
 	struct msghdr hdr;
-	struct ifaddrmsg *ifa;
 	struct nlmsghdr *nlhdr;
-	struct rtattr *rta;
-	int ifa_len;
-	
-	*address_deleted = false;
+	struct ifinfomsg *ifimsg;
+
+	*deleted = false;
+	*link_event = false;
 	
 	iov.iov_base = buffer;
 	iov.iov_len = sizeof(buffer);
@@ -362,69 +367,31 @@ bool read_interface_change_event(int sock, char** ip_address, char** interface, 
 	}
 	
 	nlhdr = (struct nlmsghdr *)buffer;
-	
+
 	for (; NLMSG_OK(nlhdr, len) ;nlhdr = NLMSG_NEXT(nlhdr, len))
 	{
-		char addr[48];
-		char* label = NULL;
-		addr[0] = '\0';
-		
 		if(nlhdr->nlmsg_type == NLMSG_DONE)
 			break;
-		
+
+		ifimsg = NLMSG_DATA(nlhdr);
+
 		switch(nlhdr->nlmsg_type)
 		{
+			case RTM_DELLINK:
+				*deleted = true; /* fallthrough */
+			case RTM_NEWLINK:
+				if (!(ifimsg->ifi_flags & IFF_LOWER_UP) || !(ifimsg->ifi_flags & IFF_RUNNING))
+					*deleted = true;
+				else
+					*link_event = true;
+				return true;
+				break;
+
 			case RTM_DELADDR:
-				*address_deleted = true; /* fallthrough */
+				*deleted = true; /* fallthrough */
 			case RTM_NEWADDR:
-				/*
-				 * code taken from http://linux-hacks.blogspot.fr/2009/01/sample-code-to-learn-netlink.html
-				 */
-				
-				ifa = (struct ifaddrmsg *)NLMSG_DATA(nlhdr);
-				rta = (struct rtattr *)IFA_RTA(ifa);
-				ifa_len = IFA_PAYLOAD(nlhdr);
-				
-				ereport(DEBUG2,
-						(errmsg("VIP monitoring new event %s", *address_deleted?"RTM_DELADDR" : "RTM_NEWADDR"),
-						 errdetail("index=%d fam=%d prefixlen=%d flags=%d scope=%d",
-								   ifa->ifa_index, ifa->ifa_family, ifa->ifa_prefixlen,
-								   ifa->ifa_flags, ifa->ifa_scope)));
-				
-				/* We are only concerned by INET addresses */
-				if (ifa->ifa_family != AF_INET)
-					continue;
-				
-				for(;RTA_OK(rta, ifa_len); rta = RTA_NEXT(rta, ifa_len))
-				{
-					
-					switch(rta->rta_type)
-					{
-						case IFA_LOCAL:
-							inet_ntop (AF_INET, RTA_DATA (rta), addr, sizeof (addr));
-							break;
-							
-						case IFA_LABEL:
-							label = (char *) RTA_DATA (rta);
-							break;
-							
-						default:
-							/* ignore all other attributes */
-							break;
-					}
-					ereport(DEBUG2,
-							(errmsg("rta_len=%d rta_type=%d '%s'", rta->rta_len, rta->rta_type, addr)));
-				}
-				
-				if (label && addr[0] != '\0')
-				{
-					ereport(DEBUG1,
-							(errmsg("%s: %s on %s",*address_deleted ? "ADDRESS DELETED" : "NEW ADDRESS",addr, label)));
-					
-					*interface = pstrdup(label);
-					*ip_address = pstrdup(addr);
-					return true;
-				}
+				*link_event = false;
+				return true;
 				break;
 			default:
 				ereport(DEBUG2,
@@ -443,26 +410,16 @@ bool read_interface_change_event(int sock, char** ip_address, char** interface, 
 
 #define SA_RLEN(sa) ((sa)->sa_len ? (((sa)->sa_len + SALIGN) & ~SALIGN) : (SALIGN + 1))
 /* With the help from https://github.com/miniupnp/miniupnp/blob/master/minissdpd/ifacewatch.c */
-bool read_interface_change_event(int sock, char** ip_address, char** interface, bool* address_deleted)
+
+bool read_interface_change_event(int sock, bool* link_event, bool* deleted)
 {
 	char buffer[1024];
 	int len;
-	struct ifa_msghdr *ifam;
 	struct rt_msghdr *nlhdr;
-	struct sockaddr * sa;
-	char * p;
-	int addr;
-	int prefixlen = 0;
-	char tmp[64];
-	int family = AF_UNSPEC;
 	
-	char address[48];
-	char ifname[256];
-	address[0] = '\0';
-	ifname[0] = '\0';
-	
-	*address_deleted = false;
-	
+	*deleted = false;
+	*link_event = false;
+
 	len = recv(sock, buffer, sizeof(buffer), 0);
 	if (len < 0)
 	{
@@ -475,95 +432,18 @@ bool read_interface_change_event(int sock, char** ip_address, char** interface, 
 	nlhdr = (struct rt_msghdr *)buffer;
 	switch(nlhdr->rtm_type)
 	{
+		case RTM_DELETE:
+			*deleted = true; /* fallthrough */
+		case RTM_ADD:
+			*link_event = true;
+			return true;
+			break;
+
 		case RTM_DELADDR:
-			*address_deleted = true; /* fallthrough */
+			*deleted = true; /* fallthrough */
 		case RTM_NEWADDR:
-			ifam = (struct ifa_msghdr *)buffer;
-			
-			p = buffer + sizeof(struct ifa_msghdr);
-			addr = 1;
-			while(p < buffer + len)
-			{
-				sa = (struct sockaddr *)p;
-				while(!(addr & ifam->ifam_addrs) && (addr <= ifam->ifam_addrs))
-					addr = addr << 1;
-				inet_ntop(sa->sa_family,
-						  &((struct sockaddr_in *)sa)->sin_addr,
-						  tmp, sizeof(tmp));
-				
-				switch(addr) {
-					case RTA_DST:
-					case RTA_GATEWAY:
-						break;
-					case RTA_NETMASK:
-						if(sa->sa_family == AF_INET
-#if defined(__OpenBSD__)
-						   || (sa->sa_family == 0 &&
-							   sa->sa_len <= sizeof(struct sockaddr_in))
-#endif
-						   ) {
-							uint32_t sin_addr = ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr);
-							while((prefixlen < 32) &&
-								  ((sin_addr & (1 << (31 - prefixlen))) != 0))
-								prefixlen++;
-						} else if(sa->sa_family == AF_INET6
-#if defined(__OpenBSD__)
-								  || (sa->sa_family == 0 &&
-									  sa->sa_len == sizeof(struct sockaddr_in6))
-#endif
-								  ) {
-							int i = 0;
-							uint8_t * q =  ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr;
-							while((*q == 0xff) && (i < 16)) {
-								prefixlen += 8;
-								q++; i++;
-							}
-							if(i < 16) {
-								i = 0;
-								while((i < 8) &&
-									  ((*q & (1 << (7 - i))) != 0))
-									i++;
-								prefixlen += i;
-							}
-						}
-						break;
-					case RTA_GENMASK:
-						break;
-					case RTA_IFP:
-#ifdef AF_LINK
-						if(sa->sa_family == AF_LINK) {
-							struct sockaddr_dl * sdl = (struct sockaddr_dl *)sa;
-							memset(ifname, 0, sizeof(ifname));
-							memcpy(ifname, sdl->sdl_data, sdl->sdl_nlen);
-						}
-#endif
-						break;
-					case RTA_IFA:
-						family = sa->sa_family;
-						if(sa->sa_family == AF_INET) {
-							inet_ntop(sa->sa_family,
-									  &((struct sockaddr_in *)sa)->sin_addr,
-									  address, sizeof(address));
-						} else if(sa->sa_family == AF_INET6) {
-							inet_ntop(sa->sa_family,
-									  &((struct sockaddr_in6 *)sa)->sin6_addr,
-									  address, sizeof(address));
-						}
-						break;
-					case RTA_AUTHOR:
-						break;
-					case RTA_BRD:
-						break;
-				}
-				p += SA_RLEN(sa);
-				addr = addr << 1;
-			}
-			if (ifname[0] != '\0' && address[0] != '\0')
-			{
-				*interface = pstrdup(ifname);
-				*ip_address = pstrdup(address);
-				return true;
-			}
+			*link_event = false;
+			return true;
 			break;
 		default:
 			ereport(DEBUG2,
@@ -573,4 +453,28 @@ bool read_interface_change_event(int sock, char** ip_address, char** interface, 
 }
 #endif
 
+bool is_interface_up(struct ifaddrs *ifa)
+{
+	bool result = false;
 
+	if (ifa->ifa_flags & IFF_RUNNING)
+	{
+		ereport(DEBUG1,
+				(errmsg("network interface \"%s\" link is active",ifa->ifa_name)));
+
+		if (ifa->ifa_flags & IFF_LOWER_UP)
+		{
+			ereport(DEBUG1,
+					(errmsg("network interface \"%s\" link is up",ifa->ifa_name)));
+			result = true;
+		}
+		else
+			ereport(NOTICE,
+					(errmsg("network interface \"%s\" link is down",ifa->ifa_name)));
+	}
+	else
+		ereport(NOTICE,
+				(errmsg("network interface \"%s\" link is inactive",ifa->ifa_name)));
+
+	return result;
+}

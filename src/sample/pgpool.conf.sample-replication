@@ -542,6 +542,12 @@ wd_de_escalation_command = ''
 
 # -- common --
 
+wd_monitoring_interfaces_list = ''  # Comma separated list of interfaces names to monitor.
+									# if any interface from the list is active the watchdog will
+									# consider the network is fine
+									# 'any' to enable monitoring on all interfaces except loopback
+									# '' to disable monitoring
+
 wd_lifecheck_method = 'heartbeat'
                                     # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
                                     # (change requires restart)

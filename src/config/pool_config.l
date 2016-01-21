@@ -270,6 +270,8 @@ int pool_init_config(void)
 	pool_config->wd_heartbeat_keepalive = 2;
 	pool_config->wd_heartbeat_deadtime = 30;
 	pool_config->num_hb_if = 0;
+	pool_config->wd_monitoring_interfaces_list = NULL;
+	pool_config->num_wd_monitoring_interfaces_list = 0;
 
     pool_config->memory_cache_enabled = 0;
     pool_config->memqcache_method = "shmem";
@@ -2766,6 +2768,31 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
 				strlcpy(WD_HB_IF(slot).addr, str, WD_MAX_HOST_NAMELEN);
+		}
+
+		else if (!strcmp(key, "wd_monitoring_interfaces_list") &&
+		CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_monitoring_interfaces_list = extract_string_tokens(str, ",", &pool_config->num_wd_monitoring_interfaces_list);
+			if (pool_config->wd_monitoring_interfaces_list == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
 		}
 
         else if (!strcmp(key, "ssl") && CHECK_CONTEXT(INIT_CONFIG, context))

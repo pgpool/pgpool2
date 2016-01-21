@@ -213,6 +213,7 @@ typedef struct {
 	int num_black_function_list;		/* number of functions in black_function_list */
 	int num_white_memqcache_table_list;		/* number of functions in white_memqcache_table_list */
 	int num_black_memqcache_table_list;		/* number of functions in black_memqcache_table_list */
+	int num_wd_monitoring_interfaces_list;  /* number of items in wd_monitoring_interfaces_list */
 	int logsyslog;		/* flag used to start logging to syslog */
 
 	/* ssl configuration */
@@ -305,6 +306,7 @@ typedef struct {
 	int wd_heartbeat_deadtime;			/* Deadtime interval for heartbeat signal (sec) */
 	WdHbIf hb_if[WD_MAX_IF_NUM];		/* interface devices */
 	int num_hb_if;						/* number of interface devices */
+	char **wd_monitoring_interfaces_list;/* network interface name list to be monitored by watchdog */
 } POOL_CONFIG;
 
 typedef enum {

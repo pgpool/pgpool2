@@ -752,6 +752,19 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "password for watchdog user in lifecheck", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "wd_monitoring_interfaces_list", POOLCONFIG_MAXNAMELEN);
+	*(status[i].value) = '\0';
+	for (j=0;j<pool_config->num_wd_monitoring_interfaces_list;j++)
+	{
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		strncat(status[i].value, pool_config->wd_monitoring_interfaces_list[j], len);
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		if (j != pool_config->num_wd_monitoring_interfaces_list-1)
+			strncat(status[i].value, ",", len);
+	}
+	StrNCpy(status[i].desc, "interfaces to monitor by watchdog", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/*
 	 * end of watchdog
 	 */

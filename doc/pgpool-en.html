@@ -4304,6 +4304,23 @@ Configuration about virtual IP interface control
     </p>
     </dd>
 
+<dt><a name="WD_MONITORING_INTERFACES_LIST"></a>wd_monitoring_interfaces_list <span class="version">V3.5 -</span></dt>
+<dd>
+	<p>
+	Specify a comma separated list of network device names, to be monitored by the watchdog process
+	for the network link state. If all network interfaces in the list become inactive
+	(disabled or cable unplugged), the watchdog will consider it as a complete network
+	failure and the pgpool-II node will commit the suicide.
+	Specifying an empty '' list disables the network interface monitoring.
+	Setting it to 'any' enables the monitoring on all available network interfaces except the loopback.
+	Default is '' empty list (monitoring disabled).
+	</p>
+	<p>
+	You need to restart pgpool-II if you change this value.
+	</p>
+</dd>
+
+
 <dt><a name="WD_INTERVAL"></a>wd_interval <span class="version">V3.2 -</span></dt>
     <dd>
     <p>

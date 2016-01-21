@@ -37,7 +37,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <fcntl.h>
-#include <ifaddrs.h>
+#include <ctype.h>
 
 #include "pool.h"
 #include "auth/md5.h"
@@ -48,6 +48,8 @@
 #include "utils/json.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
+
+#include <net/if.h>
 
 #include "watchdog/wd_utils.h"
 #include "watchdog/watchdog.h"
@@ -62,6 +64,7 @@ typedef enum IPC_CMD_PREOCESS_RES
 	IPC_CMD_PROCESSING,
 	IPC_CMD_ERROR
 }IPC_CMD_PREOCESS_RES;
+
 
 #define MIN_SECS_CONNECTION_RETRY	10	/* Time in seconds to
 										 * retry connection with
@@ -135,6 +138,8 @@ char *wd_event_name[] =
 	"NEW OUTBOUND_CONNECTION",
 	"NETWORK IP IS REMOVED",
 	"NETWORK IP IS ASSIGNED",
+	"NETWORK LINK IS INACTIVE",
+	"NETWORK LINK IS ACTIVE",
 	"THIS NODE LOST",
 	"REMOTE NODE LOST",
 	"REMOTE NODE FOUND",
@@ -248,6 +253,12 @@ typedef struct WDCommandData
 	int						partial_sent;
 }WDCommandData;
 
+typedef struct WDInterfaceStatus
+{
+	char*			if_name;
+	unsigned int	if_index;
+	bool			if_up;
+}WDInterfaceStatus;
 
 typedef struct wd_cluster
 {
@@ -275,6 +286,7 @@ typedef struct wd_cluster
 	List			*ipc_command_socks;
 	List			*ipc_commands;
 	List			*wd_timer_commands;
+	List			*wdInterfaceToMonitor;
 }wd_cluster;
 
 volatile sig_atomic_t reload_config_signal = 0;
@@ -287,6 +299,7 @@ static void FileUnlink(int code, Datum path);
 static void wd_child_exit(int exit_signo);
 
 static void wd_cluster_initialize(void);
+static void wd_initialize_monitoring_interfaces(void);
 static int wd_create_client_socket(char * hostname, int port, bool *connected);
 static int connect_with_all_configured_nodes(void);
 static void try_connecting_with_all_unreachable_nodes(void);
@@ -409,6 +422,9 @@ static bool check_IPC_client_authentication(json_value *rootObj, bool internal_c
 static bool check_and_report_IPC_authentication(WDIPCCommandData* ipcCommand);
 
 static void print_received_packet_info(WDPacketData* pkt,WatchdogNode* wdNode);
+static void update_interface_status(void);
+static bool any_interface_available(void);
+
 /* global variables */
 wd_cluster g_cluster;
 struct timeval g_tm_set_time;
@@ -451,6 +467,81 @@ wd_check_config(void)
 		if (pool_config->num_hb_if  <= 0)
 			ereport(ERROR,
 					(errmsg("invalid lifecheck configuration. no heartbeat interfaces defined")));
+	}
+}
+
+static void wd_initialize_monitoring_interfaces(void)
+{
+	g_cluster.wdInterfaceToMonitor = NULL;
+
+	if (pool_config->num_wd_monitoring_interfaces_list <= 0)
+	{
+		ereport(LOG,
+				(errmsg("interface monitoring is disabled in watchdog")));
+		return;
+	}
+
+	if (strcasecmp("any", pool_config->wd_monitoring_interfaces_list[0]) == 0)
+	{
+		struct if_nameindex *if_ni, *idx;
+		
+		ereport(LOG,
+				(errmsg("ensure availibility on any interface")));
+		
+		if_ni = if_nameindex();
+		if (if_ni == NULL)
+		{
+			ereport(ERROR,
+					(errmsg("initializing watchdog failed. unable to get network interface information")));
+		}
+		
+		for (idx = if_ni; ! (idx->if_index == 0 && idx->if_name == NULL); idx++)
+		{
+			WDInterfaceStatus* if_status;
+
+			ereport(DEBUG1,
+					(errmsg("interface name %s at index %d",idx->if_name,idx->if_index)));
+			if (strncasecmp("lo", idx->if_name, 2) == 0)
+			{
+				/* ignoring local interface */
+				continue;
+			}
+			if_status = palloc(sizeof(WDInterfaceStatus));
+			if_status->if_name = pstrdup(idx->if_name);
+			if_status->if_index = idx->if_index;
+			if_status->if_up = true; /* start with optimism */
+			g_cluster.wdInterfaceToMonitor = lappend(g_cluster.wdInterfaceToMonitor,if_status);
+		}
+		if_freenameindex(if_ni);
+	}
+	else
+	{
+		WDInterfaceStatus* if_status;
+		char *if_name;
+		int i;
+		unsigned int if_idx;
+
+		for (i=0; i < pool_config->num_wd_monitoring_interfaces_list;i++)
+		{
+			if_name = pool_config->wd_monitoring_interfaces_list[i];
+			/* ignore leading spaces */
+			while (*if_name && isspace(*if_name))
+				if_name++;
+
+			if_idx = if_nametoindex(if_name);
+			if (if_idx == 0)
+				ereport(ERROR,
+						(errmsg("initializing watchdog failed. invalid interface name \"%s\"",pool_config->wd_monitoring_interfaces_list[0])));
+
+			ereport(DEBUG1,
+					(errmsg("adding monitoring interface [%d] name %s index %d",i,if_name,if_idx)));
+
+			if_status = palloc(sizeof(WDInterfaceStatus));
+			if_status->if_name = pstrdup(if_name);
+			if_status->if_index = if_idx;
+			if_status->if_up = true; /* start with optimism */
+			g_cluster.wdInterfaceToMonitor = lappend(g_cluster.wdInterfaceToMonitor,if_status);
+		}
 	}
 }
 
@@ -527,6 +618,7 @@ static void wd_cluster_initialize(void)
 		g_cluster.currentCommand.nodeResults[i].wdNode = &g_cluster.remoteNodes[i];
 		clear_command_node_result(&g_cluster.currentCommand.nodeResults[i]);
 	}
+	wd_initialize_monitoring_interfaces();
 }
 
 static void clear_command_node_result(WDCommandNodeResult* nodeResult)
@@ -862,13 +954,23 @@ watchdog_main(void)
 	
 	/* try connecting to all watchdog nodes */
 	g_cluster.network_monitor_sock = create_monitoring_socket();
+	
+	if (any_interface_available() == false)
+	{
+		ereport(FATAL,
+			(return_code(POOL_EXIT_FATAL),
+				 errmsg("no valid network interface is active."),
+					errdetail("watchdog requires at least one valid network interface to continue"),
+					errhint("you can disable interface checking by setting wd_monitoring_interfaces_list = '' in pgpool config")));
+	}
+
 	connect_with_all_configured_nodes();
 
 	/* set the initial state of local node */
 	set_local_node_state(WD_LOADING);
 
 	/*
-	 * install the call back for preparation of system exit
+	 * install the callback for the preparation of system exit
 	 */
 	on_system_exit(wd_system_will_go_down, (Datum)NULL);
 
@@ -1315,26 +1417,29 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 	/* Finally check if something waits us on interface monitoring socket */
 	if (g_cluster.network_monitor_sock > 0 &&  FD_ISSET(g_cluster.network_monitor_sock, rmask))
 	{
-		char *ip_address = NULL;
-		char *interface = NULL;
-		bool address_deleted;
-		if (read_interface_change_event(g_cluster.network_monitor_sock, &ip_address, &interface, &address_deleted))
+		bool deleted;
+		bool link_event;
+		if (read_interface_change_event(g_cluster.network_monitor_sock, &link_event, &deleted))
 		{
 			ereport(DEBUG1,
-					(errmsg("interface change event received"),
-						errdetail("address_deleted = %s ip_address = %s interface = %s",
-							address_deleted?"YES":"NO",
-							ip_address?ip_address:"NULL",
-							interface?interface:"NULL")));
-
-			if (address_deleted)
-				watchdog_state_machine(WD_EVENT_NW_IP_IS_REMOVED, NULL, NULL);
+					(errmsg("Network event received"),
+						errdetail("deleted = %s Link change event = %s",
+							deleted?"YES":"NO",
+							link_event?"YES":"NO")));
+			if (link_event)
+			{
+				if (deleted)
+					watchdog_state_machine(WD_EVENT_NW_LINK_IS_INACTIVE, NULL, NULL);
+				else
+					watchdog_state_machine(WD_EVENT_NW_LINK_IS_ACTIVE, NULL, NULL);
+			}
 			else
-				watchdog_state_machine(WD_EVENT_NW_IP_IS_ASSIGNED, NULL, NULL);
-			if (ip_address)
-				pfree(ip_address);
-			if (interface)
-				pfree(interface);
+			{
+				if (deleted)
+					watchdog_state_machine(WD_EVENT_NW_IP_IS_REMOVED, NULL, NULL);
+				else
+					watchdog_state_machine(WD_EVENT_NW_IP_IS_ASSIGNED, NULL, NULL);
+			}
 		}
 		count++;
 	}
@@ -2184,7 +2289,7 @@ static void wd_child_signal_handler(void)
 		else
 			exiting_process_name = "unknown";
 
-		if(WIFEXITED(status))
+		if (WIFEXITED(status))
 		{
 			if(WEXITSTATUS(status) == POOL_EXIT_FATAL)
 				ereport(LOG,
@@ -2193,7 +2298,7 @@ static void wd_child_signal_handler(void)
 				ereport(LOG,
 						(errmsg("watchdog %s process with pid: %d exit with SUCCESS.",exiting_process_name, pid)));
 		}
-		if (WIFSIGNALED(status))
+		else if (WIFSIGNALED(status))
 		{
 			/* Child terminated by segmentation fault. Report it */
 			if(WTERMSIG(status) == SIGSEGV)
@@ -2333,7 +2438,7 @@ static int accept_incomming_connections(fd_set* rmask, int pending_fds_count)
 		{
 			MemoryContext oldCxt = MemoryContextSwitchTo(TopMemoryContext);
 			ereport(LOG,
-					(errmsg("new IPC connection is received ")));
+					(errmsg("new IPC connection received")));
 			g_cluster.ipc_command_socks = lappend_int(g_cluster.ipc_command_socks, fd);
 			MemoryContextSwitchTo(oldCxt);
 		}
@@ -3387,6 +3492,61 @@ static void cluster_in_stable_state(void)
 	}
 }
 
+static void update_interface_status(void)
+{
+	struct ifaddrs *ifAddrStruct=NULL;
+	struct ifaddrs *ifa=NULL;
+	ListCell *lc;
+
+	if (g_cluster.wdInterfaceToMonitor == NULL)
+		return;
+
+	getifaddrs(&ifAddrStruct);
+	for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next)
+	{
+		ereport(DEBUG1,
+				(errmsg("network interface %s having flags %d",ifa->ifa_name,ifa->ifa_flags)));
+
+		if (!strncasecmp("lo", ifa->ifa_name, 2))
+			continue; /* We do not need loop back addresses */
+
+		foreach(lc, g_cluster.wdInterfaceToMonitor)
+		{
+			WDInterfaceStatus* if_status = lfirst(lc);
+			if (!strcasecmp(if_status->if_name, ifa->ifa_name))
+			{
+				if_status->if_up = is_interface_up(ifa);
+				break;
+			}
+		}
+	}
+
+	if (ifAddrStruct!=NULL)
+		freeifaddrs(ifAddrStruct);
+
+}
+
+static bool any_interface_available(void)
+{
+	ListCell *lc;
+	update_interface_status();
+	/* if interface monitoring is disabled we are good */
+	if (g_cluster.wdInterfaceToMonitor == NULL)
+		return true;
+
+	foreach(lc, g_cluster.wdInterfaceToMonitor)
+	{
+		WDInterfaceStatus* if_status = lfirst(lc);
+		if (if_status->if_up)
+		{
+			ereport(DEBUG1,
+					(errmsg("network interface \"%s\" is up and we can continue",if_status->if_name)));
+			return true;
+		}
+	}
+	return false;
+}
+
 static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	ereport(DEBUG1,
@@ -3435,10 +3595,22 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 		free_packet(addPkt);
 	}
 
-	else if (event == WD_EVENT_NW_IP_IS_REMOVED)
+	else if (event == WD_EVENT_NW_IP_IS_REMOVED || event == WD_EVENT_NW_LINK_IS_INACTIVE)
 	{
+		List* local_addresses;
+
+		/* check if we have an active link */
+		if (any_interface_available() == false)
+		{
+			ereport(WARNING,
+				(errmsg("network event has occured and all monitored interfaces are down"),
+					 errdetail("changing the state to in network trouble")));
+			
+			set_state(WD_IN_NW_TROUBLE);
+			
+		}
 		/* check if all IP addresses are lost */
-		List* local_addresses = get_all_local_ips();
+		local_addresses = get_all_local_ips();
 		if (local_addresses == NULL)
 		{
 			/*
@@ -3469,7 +3641,7 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 	else if (event == WD_EVENT_LOCAL_NODE_LOST)
 	{
 		ereport(WARNING,
-			(errmsg("watchdog lifecheck reported we are disconnected from the network"),
+			(errmsg("watchdog lifecheck reported, we are disconnected from the network"),
 				 errdetail("changing the state to LOST")));
 		set_state(WD_LOST);
 	}
