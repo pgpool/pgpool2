@@ -20,6 +20,8 @@ do
 	echo "done."
 
 	echo "memory_cache_enabled = on" >> etc/pgpool.conf
+	echo "white_memqcache_table_list = 'white_v'" >> etc/pgpool.conf
+	echo "black_memqcache_table_list = 'black_t'" >> etc/pgpool.conf
 
 	source ./bashrc.ports
 
@@ -36,7 +38,24 @@ do
 
 	psql test <<EOF
 CREATE TABLE t1 (i int);
+CREATE TABLE black_t (i int);
+CREATE VIEW normal_v AS SELECT * FROM t1;
+CREATE VIEW white_v AS SELECT * FROM t1;
+
+SELECT * FROM t1;
+SELECT * FROM t1;
+SELECT * FROM black_t;
+SELECT * FROM black_t;
+SELECT * FROM normal_v;
+SELECT * FROM normal_v;
+SELECT * FROM white_v;
+SELECT * FROM white_v;
 EOF
+
+	grep "fetched from cache" log/pgpool.log | grep t1 > /dev/null || exit 1
+	grep "fetched from cache" log/pgpool.log | grep black_t > /dev/null && exit 1
+	grep "fetched from cache" log/pgpool.log | grep normal_v > /dev/null && exit 1
+	grep "fetched from cache" log/pgpool.log | grep white_v > /dev/null || exit 1
 
 	java jdbctest > result.txt 2>&1
 	cmp ../expected.txt result.txt
