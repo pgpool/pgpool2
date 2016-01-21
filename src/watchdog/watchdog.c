@@ -3672,7 +3672,7 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 		case WD_STANDBY:
 			watchdog_state_machine_standby(event,wdNode,pkt);
 			break;
-		case WD_DEAD:
+		case WD_LOST:
 		case WD_IN_NW_TROUBLE:
 			watchdog_state_machine_nw_error(event,wdNode,pkt);
 			break;
@@ -4362,7 +4362,7 @@ static int watchdog_state_machine_nw_error(WD_EVENTS event, WatchdogNode* wdNode
 			/* commit suicide, see above note */
 			ereport(FATAL,
 				(return_code(POOL_EXIT_FATAL),
-					 errmsg("system has lost all IP addresses")));
+					 errmsg("system has lost the network")));
 
 			clear_current_command();
 			set_timeout(2);
