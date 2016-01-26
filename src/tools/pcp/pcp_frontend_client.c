@@ -644,8 +644,8 @@ output_watchdog_info_result(PCPResultInfo* pcpResInfo, bool verbose)
 			printf("Pgpool port    : %d\n",watchdog_info->pgpool_port);
 			printf("Watchdog port  : %d\n",watchdog_info->wd_port);
 			printf("Node priority  : %d\n",watchdog_info->wd_priority);
-			printf("status         : %d\n",watchdog_info->state);
-			printf("status Name    : %s\n\n",watchdog_info->stateName);
+			printf("Status         : %d\n",watchdog_info->state);
+			printf("Status Name    : %s\n\n",watchdog_info->stateName);
 		}
 	}
 	else
