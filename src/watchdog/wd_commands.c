@@ -222,7 +222,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, 
 						pfree(result->data);
 						pfree(result);
 						ereport(DEBUG1,
-								(errmsg("error reading from IPC command socket"),
+							(errmsg("error reading from IPC command socket"),
 								 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 						close(sock);
 						return NULL;

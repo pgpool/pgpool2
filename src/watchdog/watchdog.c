@@ -4887,14 +4887,10 @@ static bool process_pgpool_replicate_command(WatchdogNode* wdNode, WDPacketData*
 	if (pkt->data == NULL || pkt->len == 0)
 	{
 		ereport(LOG,
-				(errmsg("watchdog is unable to process pgpool replicate command"),
+			(errmsg("watchdog is unable to process pgpool replicate command"),
 				 errdetail("command packet contains no data")));
 		return false;
 	}
-
-	ereport(DEBUG1,
-		(errmsg("processing pgpool replicate variable command"),
-			 errdetail("%s",pkt->data)));
 
 	if (parse_wd_node_function_json(pkt->data, pkt->len, &func_name, &node_id_list, &node_count))
 		ret = process_wd_command_function(wdNode, pkt, func_name, node_count, node_id_list);
