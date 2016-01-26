@@ -2614,19 +2614,23 @@ static void set_message_data(WDPacketData* pkt, const char* data, int len)
 	pkt->len = len;
 }
 
+#define nodeIfNull_str(m,v) node&&strlen(node->m)?node->m:v
+#define nodeIfNull_int(m,v) node?node->m:v
+#define NotSet "Not_Set"
+
 static bool add_nodeinfo_to_json(JsonNode* jNode, WatchdogNode* node)
 {
 	jw_start_object(jNode, "WatchdogNode");
 	
-	jw_put_int(jNode, "ID",node?node->private_id:-1);
-	jw_put_int(jNode, "State",node?node->state:-1);
-	jw_put_string(jNode, "NodeName",node?node->nodeName:"Not Set");
-	jw_put_string(jNode, "HostName", node?node->hostname:"Not Set");
-	jw_put_string(jNode, "StateName", node?wd_state_names[node->state]:"Not Set");
-	jw_put_string(jNode, "DelegateIP",node?node->delegate_ip:"Not Set");
-	jw_put_int(jNode, "WdPort", node?node->wd_port:0);
-	jw_put_int(jNode, "PgpoolPort", node?node->pgpool_port:0);
-	jw_put_int(jNode, "Priority", node?node->wd_priority:0);
+	jw_put_int(jNode, "ID", nodeIfNull_int(private_id,-1));
+	jw_put_int(jNode, "State", nodeIfNull_int(state,-1));
+	jw_put_string(jNode, "NodeName", nodeIfNull_str(nodeName,NotSet));
+	jw_put_string(jNode, "HostName", nodeIfNull_str(hostname,NotSet));
+	jw_put_string(jNode, "StateName", node?wd_state_names[node->state]:NotSet);
+	jw_put_string(jNode, "DelegateIP", nodeIfNull_str(delegate_ip,NotSet));
+	jw_put_int(jNode, "WdPort", nodeIfNull_int(wd_port,0));
+	jw_put_int(jNode, "PgpoolPort", nodeIfNull_int(pgpool_port,0));
+	jw_put_int(jNode, "Priority", nodeIfNull_int(wd_priority,0));
 
 	jw_end_element(jNode);
 	
