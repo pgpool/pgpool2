@@ -4451,6 +4451,21 @@ pgpool-II が生きていて PostgreSQL と繋がっている場合でも、
     </p>
     </dd>
 
+<dt><a name="WD_MONITORING_INTERFACES_LIST"></a>wd_monitoring_interfaces_list <span class="version">V3.5 -</span></dt>
+<dd>
+    <p>
+    watchdog プロセスがネットワークリンクの状態を監視するネットワークデバイス名をカンマ区切りのリストで指定します。
+    リスト中の全てのネットワークインタフェースが（無効化あるいはケーブルを抜かれることで）非アクティブになると、
+    watchdog はネットワークが完全に故障したと見なし自らを停止させませす。
+    空のリスト '' を指定するとネットワークインタフェースの監視が無効になります。
+    'any' を指定すると、ループバック以外の存在する全てのネットワークインタフェースを監視します。
+    デフォルトの値は空リスト '' （監視は無効）です。
+    </p>
+    <p>
+    このパラメータを変更した時には pgpool-II を再起動してください。
+    </p>
+</dd>
+
 <dt><a name="WD_INTERVAL"></a>wd_interval <span class="version">V3.2 ～</span></dt>
     <dd>
     <p>
