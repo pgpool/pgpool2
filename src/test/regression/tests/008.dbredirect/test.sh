@@ -10,7 +10,7 @@ PGBENCH=$PGBENCH_PATH
 
 function getnode()
 {
-	grep $1 log/pgpool.log | grep SELECT | awk '{print $9}'
+	grep $1 log/pgpool.log | grep SELECT | grep LOG | awk '{print $9}'
 }
 
 rm -fr $TESTDIR
