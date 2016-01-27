@@ -211,7 +211,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 			}
 			else
 			{
-                ereport(ERROR,
+                ereport(FRONTEND_ERROR,
 					(errmsg("unable to read data from frontend"),
                          errdetail("socket read failed with an error \"%s\"", strerror(errno))));
 			}
@@ -605,7 +605,7 @@ int pool_flush(POOL_CONNECTION *cp)
                     (errmsg("unable to flush data to frontend"),
                          errdetail("pgpool is in replication mode, ignoring error to keep consistency among backends")));
 			else
-                ereport(ERROR,
+                ereport(FRONTEND_ERROR,
                     (errmsg("unable to flush data to frontend")));
 
 		}
