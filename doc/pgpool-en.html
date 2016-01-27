@@ -3938,6 +3938,7 @@ Pgpool-HA can be available from the pgpool development site as an open source so
 	and it now ensures the presence of a quorum at all time.
 	This new addition to watchdog makes it more fault tolerant and robust in handling
 	and guarding against the split-brain syndrome and network partitioning.
+    However to ensure the quorum mechanism properly work, the number of pgpool-II nodes must be greater than or equal to 3 or more and the number must be odd.
 	Watchdog consists of the following features.
 </p>
 <h3>Life checking of pgpool-II</h3>
