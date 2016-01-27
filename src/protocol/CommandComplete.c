@@ -145,7 +145,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 	pfree(p1);
 
-	if (pool_is_doing_extended_query_message())
+	if (pool_is_doing_extended_query_message() && pool_is_query_in_progress())
 	{
 		pool_set_query_state(session_context->query_context, POOL_EXECUTE_COMPLETE);
 	}
