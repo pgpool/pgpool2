@@ -6098,7 +6098,7 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 <hr><a name="release3.5.x"></a>
 
 <!-- -------------------------------------------------------------------------------- -->
-<h2><a name="release3.5.0"></a>3.5.0 (ekieboshi) 2016/xx/xx</h2>
+<h2><a name="release3.5.0"></a>3.5.0 (ekieboshi) 2016/01/29</h2>
 <!-- -------------------------------------------------------------------------------- -->
 <h3>概要</h3>
 <p>
@@ -6177,9 +6177,9 @@ PostgreSQL 9.5 のパーサを取り込みました。(Yugo Nagata)
 </li>
 
 <li>
-watchdog 機能の改善 (Muhammad Usama)
+watchdog 機能の改善 (Muhammad Usama, Yugo Nagata)
 <p>
-この改善は pgpool-II のwachdog の弱点や問題点を見直し watchdog システムをよりロバストで適応的なものにすることです。
+この改善は pgpool-II のwachdog の弱点や問題点を見直し watchdog システムをよりロバストで適応的なものにすることです。パッチは Usama により作成され、Yugo がレビュー、テスト、デバッグを行いました。
 </p>
 <ul>
 <li>
@@ -6218,6 +6218,12 @@ pgpool-II watchdog の IPC（プロセス間通信）で受け付ける UNIX ド
 <a href="#WD_DE-ESCALATION_COMMAND">wd_de_escalation_command</a>: 
 <p>
 pgpool-II watchdog のマスターノードがマスターの責務を辞退し降格するときに、ここで指定したコマンドが実行されます。
+</p>
+</li>
+<li>
+<a href="#WD_MONITORING_INTERFACES_LIST">wd_monitoring_interfaces_list</a>: 
+<p>
+watchdog プロセスがリンク状態を監視するネットワークデバイス名をカンマ区切りで指定します。
 </p>
 </li>
 </ul>
@@ -6435,6 +6441,27 @@ bug #159 の報告によります。
 
 <li>white/black_memqcache_table_list パラメータがクォーテーションを要求しないよう修正しました。(Yugo Nagata)
 <p>*_memqcache_table_list でテーブル名およびスキーマ名を指定する際に、ダブルクォーテーションが必要となっていました。修正パッチは Dang Minh Huong によって提供されました。[pgpool-hackers: 1323] の報告によります。</p>
+</li>
+
+<li>設定リロード時の FATAL エラーを修正しました。(Tatsuo Ishii)
+<p>
+pgpool.conf をリロードする際には DB ノードの数が一時的に 0 にセットされたのちに pgpool メインプロセスにより実際のバックエンド数に達するまでカウントアップされます。この変数が共有メモリ上にあったため pgpool 子プロセスで問題が発生し FATAL エラーの原因となっていました。</p>
+<p>Bug #156 の harukat の報告によります。</p>
+</li>
+
+<li>test: レグレッションテスト 006.memqcache に white/black_memqcache_table_list のテストを追加しました。 (Yugo Nagata)</li>
+
+<li>リセットクエリがスタックする問題を修正しました。(Muhammad Usama, Tatsuo Ishii)
+<p>pool_read がフロントエンドからの読み込みに失敗した場合、または poll_flush
+がフロントエンドへの書き込みに失敗した場合に、pgpool 子プロセスの切断・終了処理を行う
+ERROR ではなく、FRONTEND_ERROR を報告するようにしました。これによりクエリがスタックすることを防止します。
+</p>
+</li>
+
+<li>test: デバッグモードで失敗していたレグレッションテストを修正しました。(Yugo Nagata)</li>
+
+<li>IPv6 使用時のパフォーマンス低下を修正しました。(Muhammad Usama)
+<p>Bug #165 の報告によります。</p></li>
 </ul>
 
 <!-- ================================================================================ -->

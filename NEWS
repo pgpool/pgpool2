@@ -4,7 +4,7 @@
 3.5 Series (2014/12/15 - )
 ===============================================================================
 
-                        3.5.0 (ekieboshi) 2016/xx/xx
+                        3.5.0 (ekieboshi) 2016/01/29
 
 * Version 3.5.0
 
@@ -68,7 +68,7 @@
 
       For this purpose new directive "health_check_database" and
       "sr_check_database" are added.
-	  
+  
       __________________________________________________________________
 
 * Enhancements
@@ -81,11 +81,12 @@
       only affects to streaming replication mode, that is, the performance
       of other modes remains same.
 
-    - watchdog feature enhancements (Muhammad Usama)
+    - watchdog feature enhancements (Muhammad Usama, Yugo Nagata)
 
       The goal of this enhancement is to address the shortcomings and problems
       in the pgpool watchdog and make the watchdog system more robust and
-      adaptable. 
+      adaptable. Patch created by Usama, and reviewed, tested, and debugged
+      by Yugo.
 
         -- The watchdog should consider the quorum and only elect the master/leader
            node if the quorum exist in the watchdog cluster.
@@ -117,6 +118,10 @@
            This parameter holds the command that watchdog will execute on the
            master pgpool-II watchdog node when that node resigns from the master
            node responsibilities.
+
+        -- wd_monitoring_interfaces_list:
+           This parameter holds a comma separated list of network device names to
+           be monitored by the watchdog process for the network link state.
 
     - Overhauling pcp commands (Muhammad Usama)
 
@@ -310,6 +315,32 @@
 
       Patch contributed by Dang Minh Huong.
       Per [pgpool-hackers: 1323]
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+
+      Per bug #156 report by harukat.
+
+    - test: Add some tests for white/black_memqcache_table_list to regression
+      test 006.memqcache (Yugo Nagata)
+
+    - Fix reset query stuck problem (Muhammad Usama, Tatsuo Ishii)
+
+      When pool_read fails to read from frontend or pool_flush fails to
+      write to the frontend, report FRONTEND_ERROR, rather than ERROR to
+      disconnect and terminate pgpool child process, to prevent the query
+      stuck problem.
+
+    - test: Fix some regression tests that failed in debug mode (Yugo Nagata)
+
+    - Fix performance degradation while using IPv6 (Muhammad Usama)
+
+      Per bug #165.
 
 ===============================================================================
 3.4 Series (2014/11/07 - )
