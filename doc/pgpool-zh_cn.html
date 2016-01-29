@@ -3700,7 +3700,7 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
 <dt><a name="WD_MONITORING_INTERFACES_LIST"></a>wd_monitoring_interfaces_list <span class="version">V3.5 -</span></dt>
     <dd>
     <p>
-	指定一个用问好分隔的网络设备名列表，用于让看门狗进程监控网络连接状态。
+	指定一个用问号分隔的网络设备名列表，用于让看门狗进程监控网络连接状态。
 	如果列表中的所有接口都失效（禁用或者网线被拔掉），则看门狗认为网络完全出故障，pgpool-II 节点将执行一次自我停机。
 	指定空串 '' 将禁用网络接口监控。
 	设置为 'any' 将监控处 lookback 接口外的所有网络接口。
