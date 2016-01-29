@@ -4296,6 +4296,7 @@ Linux_host3.localdomain_9993 host3 9993 9003 7 STANDBY
 </pre>
 
 <p>结果按以下顺序显示：</p>
+<p>输出的第一行描述看门狗集群的信息：</p>
 <ol>
 <li>集群内看门狗节点的总数</li>
 <li>当前节点是否启动了虚拟 IP?</li>
@@ -4808,7 +4809,7 @@ test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHER
 <dl>
 <dt>格式：</dt>
 <dd>
-  <pre><code>pcp_node_count(integer node_id, text host, integer port, text username, text password, OUT node_count integer) returns record</code></pre>
+  <pre><code>pcp_node_count(integer node_id, text host, integer port, text username, text password, OUT node_count integer) returns integer</code></pre>
   <pre><code>pcp_node_count(integer node_id, OUT node_count integer) returns record</code></pre>
 </dd>
 
