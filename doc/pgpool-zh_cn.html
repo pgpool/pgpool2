@@ -3515,8 +3515,12 @@ Pgpool-HA 可以在 pgpool 开发网站找到，它是一个开源软件。</p>
     <p>
     本选项指定用于看门狗通信的认证密钥。所有的 pgpool-II 必须有相同的密钥。
     从使用不同密钥的看门狗发送过来的包将被拒绝。
-    本密钥也被用于生命检测被设置为心跳模式时的心跳信号。如果本值为空（默认）则看门狗不使用认证。
+    本密钥也被用于生命检测被设置为心跳模式时的心跳信号。
     </p>
+    <p>
+	由于 pgpool-II <span class="version">V3.5 -</span> 的 wd_authkey 也用于认证看门狗的 IPC 客户端，
+	所有与 pgpool-II 看门狗进程通信的客户端需要提供这个	wd_authkey 值用于命令的 JSON 数据的 "IPCAuthKey" 键值。
+	</p>
     <p>
     修改本值后，你需要重启 pgpool-II 以使改动生效。
     </p>
@@ -3913,7 +3917,6 @@ pgpool-II 的看门狗进程使用 BSD 套接字与所有的 pgpool-II 进程通
 <table border>
 	<tr class="header"><th>字段</th>		<th>类型</th>						<th>描述</th></tr>
 	<tr><th>TYPE</th>		<td>BYTE1</td>				<td>命令类型</td></tr>
-	<tr><th>ACTION</th>		<td>INT32 网络字节序</td>	<td>命令动作。当前值支持默认的 0</td></tr>
 	<tr><th>LENGTH</th>		<td>INT32 网络字节序</td>	<td>数据长度</td></tr>
 	<tr><th>DATA</th>		<td>JSON 格式的数据</td>	<td>JSON 格式的命令数据</td></tr>
 </table>
@@ -3938,29 +3941,31 @@ pgpool-II 的看门狗进程使用 BSD 套接字与所有的 pgpool-II 进程通
 </p>
 <table border>
 	<tr class="header"><th>名称</th>		<th>字节值</th>	<th>类型</th><th>描述</th></tr>
-	<tr><th>注册通知</th>		<td>'0'</td>	<td>命令包</td> <td>注册当前连接用于接收看门狗消息通知</td></tr>
-	<tr><th>节点状态改变</th>	<td>'2'</td>	<td>命令包</td> <td>通知看门狗，有看门狗节点的状态发生变化</td></tr>
-	<tr><th>获取节点列表</th>	<td>'3'</td>	<td>命令包</td> <td>获取所有配置的看门狗节点</td></tr>
-	<tr><th>节点列表数据</th>	<td>'4'</td>	<td>结果包</td>	<td>JSON 数据包，包含所有配置的看门狗及节点的信息</th></tr>
-	<tr><th>集群变动中</th>		<td>'7'</td>	<td>结果包</td> <td>在看门狗集群状态正在发生变化的时候，看门狗返回该信息表示当前无法处理命令。</td></tr>
-	<tr><th>操作失败</th>		<td>'8'</td>	<td>结果包</td> <td>当 IPC 命令执行失败时，看门狗返回这个包类型</td></tr>
-	<tr><th>操作成功</th>		<td>'9'</td>	<td>结果包</td> <td>当 IPC 命令执行成功时，看门狗返回这个包类型</td></tr>
+	<tr><th><a name="ipc_reg_for_notifications"></a>REGISTER FOR NOTIFICATIONS（注册通知）</th>		<td>'0'</td>	<td>命令包</td> <td>注册当前连接用于接收看门狗消息通知</td></tr>
+	<tr><th><a name="ipc_node_status_change"></a>NODE STATUS CHANGE（节点状态改变）</th>	<td>'2'</td>	<td>命令包</td> <td>通知看门狗，有看门狗节点的状态发生变化</td></tr>
+	<tr><th><a name="ipc_get_nodes_list"></a>GET NODES LIST（获取节点列表）</th>	<td>'3'</td>	<td>命令包</td> <td>获取所有配置的看门狗节点</td></tr>
+	<tr><th><a name="ipc_nodes_list_data"></a>NODES LIST DATA（节点列表数据）</th>	<td>'4'</td>	<td>结果包</td>	<td>JSON 数据包，包含所有配置的看门狗及节点的信息</th></tr>
+	<tr><th><a name="ipc_cluster_in_tran"></a>CLUSTER IN TRANSITION（集群变动中）</th>		<td>'7'</td>	<td>结果包</td> <td>在看门狗集群状态正在发生变化的时候，看门狗返回该信息表示当前无法处理命令。</td></tr>
+	<tr><th><a name="ipc_result_bad"></a>RESULT BAD（操作失败）</th>		<td>'8'</td>	<td>结果包</td> <td>当 IPC 命令执行失败时，看门狗返回这个包类型</td></tr>
+	<tr><th><a name="ipc_result_ok"></a>RESULT OK（操作成功）</th>		<td>'9'</td>	<td>结果包</td> <td>当 IPC 命令执行成功时，看门狗返回这个包类型</td></tr>
 
 </table>
 </dl>
 
 <h3 id="external_lifecheck_ipc">外部存活检测的 IPC 包和数据包</h3>
 <dl>
-看门狗的“获取节点列表('3')”，“节点列表数据('4')”以及“节点状态改变('2')”IPC 消息可以用于集成一个外部存活检测系统。
+看门狗的<a href="#ipc_get_nodes_list">"GET NODES LIST"</a>、<a href="#ipc_nodes_list_data">"NODES LIST DATA"</a>
+和 <a href="#ipc_node_status_change">"NODE STATUS CHANGE"</a> IPC 消息可以用于集成一个外部存活检测系统。
 注意 pgpool-II 内置的存活检测能力也是使用这个相同的通道和技术。
 <h4 id="external_lifecheck_ipc">获取已配置的看门狗节点列表</h4>
 <dl>
-任何第三方存活检测系统可以通过看门狗 IPC 套接字发送“获取节点列表('3')”类型的数据长度为零的包来获得“节点列表数据('4')”类型的结果包，
-结果包包含包含 JSON 格式的所有已配置的参与存活检测的看门狗节点列表。
+任何第三方存活检测系统可以通过看门狗 IPC 套接字发送 <a href="#ipc_get_nodes_list">"GET NODES LIST"</a> 类型的请求数据包
+来获得 <a href="#ipc_nodes_list_data">"NODES LIST DATA"</a> 类型的结果包，如果已经设置<a href="#WD_AUTHKEY">wd_authkey</a>则
+请求数据包需要包含认证秘钥，否则请求数据包为空。结果包包含 JSON 格式的所有已配置的参与存活检测的看门狗节点列表。
 JSON 格式的看门狗节点包含所有看门狗节点的"WatchdogNodes"数组。每个看门狗节点的 JSON 节点包含对应的
 "ID", "NodeName"、"HostName"、"DelegateIP"、"WdPort"以及"PgpoolPort" 值。
 <pre>
--- 在“节点列表数据('4')”中包含的 JSON 数据示例
+-- 在 <a href="#ipc_nodes_list_data">"NODES LIST DATA"</a> 中包含的 JSON 数据示例
 
   {
 	"NodeCount":3,
@@ -3999,7 +4004,7 @@ JSON 格式的看门狗节点包含所有看门狗节点的"WatchdogNodes"数组
  -- 注意节点 ID 为 0 的值总是为本地看门狗节点保留。
 </pre>
 在从看门狗获取配置的看门狗节点信息后，外部存活检测系统可以进行为看门狗节点进行健康检查，
-当它检测到任何节点的一些状态改变时，它可以使用“节点状态改变('2')”这个 IPC 消息将情况使用通知给看门狗。
+当它检测到任何节点的一些状态改变时，它可以使用 <a href="#ipc_node_status_change">"NODE STATUS CHANGE"</a> 这个 IPC 消息将情况使用通知给看门狗。
 这个消息应该包含状态发生改变的节点的 ID （节点 ID 必须和看门狗返回的 WatchdogNodes 列表中的值相同）以及节点的新状态的 JSON 数据。
 。
 <pre>
@@ -4009,6 +4014,7 @@ JSON 格式的看门狗节点包含所有看门狗节点的"WatchdogNodes"数组
 	"NodeID":1,
 	"NodeStatus":1,
 	"Message":"optional message string to log by watchdog for this event"
+	"IPCAuthKey":"<a href="#WD_AUTHKEY">wd_authkey</a> configuration parameter value"
   }
 
 -- NodeStatus 值为以下值
@@ -4255,7 +4261,6 @@ Weight  : 0.5
 </dd>
 <dt>描述：</dt>
 <dd>
-
     <p>显示 pgpool-II 的看门狗状态。
     <code>watchdog_id</code> 为要获得信息的看门狗的索引值。
     如果这个值被省略了，则显示集群里所有看门狗的状态。</p>
@@ -4268,7 +4273,7 @@ Weight  : 0.5
     并且其节点被 other_pgpool_hostname0 参数定义为前缀配置为 0，
     您需要使用 <code>watchdog_id</code> = 1。</p>
 </dd>
-<dt>选项</dt>
+<dt>选项：</dt>
 <dd>
 	<dl class="options">
 	<dt><code>-n <strong>watchdog_id</strong>, --node-id=<strong>watchdog_id</strong></code></dt>
