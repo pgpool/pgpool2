@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2112,7 +2112,8 @@ get_connection(int front_end_fd, SockAddr *saddr)
 
     
 	/* set NODELAY and KEEPALIVE options if INET connection */
-	if (saddr->addr.ss_family == AF_INET)
+	if (saddr->addr.ss_family == AF_INET ||
+		saddr->addr.ss_family == AF_INET6)
 	{
 		int on = 1;
 
