@@ -397,6 +397,10 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 			pack_str_len = packet_to_string_hb(&pkt, pack_str, sizeof(pack_str));
 			wd_calc_hash(pack_str, pack_str_len, buf);
 
+			if (buf[0] == '\0')
+				ereport(WARNING,
+					(errmsg("failed to calculate wd_authkey hash from a received heartbeat packet")));
+
 			if (strcmp(pkt.hash, buf))
 				ereport(ERROR,
 					(errmsg("watchdog heartbeat receive"),
@@ -537,6 +541,10 @@ wd_hb_sender(int fork_wait_time, WdHbIf *hb_if)
 			/* calculate hash from packet */
 			pack_str_len = packet_to_string_hb(&pkt, pack_str, sizeof(pack_str));
 			wd_calc_hash(pack_str, pack_str_len, pkt.hash);
+
+			if (pkt.hash[0] == '\0')
+				ereport(WARNING,
+					(errmsg("failed to calculate wd_authkey hash from a heartbeat packet to be sent")));
 		}
 
 		/* send heartbeat signal */
