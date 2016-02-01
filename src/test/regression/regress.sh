@@ -19,6 +19,7 @@ JDBC_DRIVER=/usr/local/pgsql/share/postgresql-9.2-1003.jdbc4.jar
 log=$dir/log
 fail=0
 ok=0
+timeout=0
 PGSOCKET_DIR=/tmp
 
 CRED=$(tput setaf 1)
@@ -26,6 +27,8 @@ CGREEN=$(tput setaf 2)
 CBLUE=$(tput setaf 4)
 CNORM=$(tput sgr0)
 
+# timeout for each test (5 min.)
+TIMEOUT=300
 
 function install_pgpool
 {
@@ -166,10 +169,14 @@ for i in $dirs
 do
 	cd $i
 	echo -n "testing $i..."
-	./test.sh > $log/$i 2>&1
-	if [ $? = 0 ];then
+	timeout $TIMEOUT ./test.sh > $log/$i 2>&1
+	rtn=$?
+	if [ $rtn = 0 ];then
 		echo ${CGREEN}"ok."${CNORM}
 		ok=`expr $ok + 1`
+	elif [ $rtn = 124 ];then
+		echo "timeout."
+		timeout=`expr $timeout + 1`
 	else
 		echo ${CRED}"failed."${CNORM}
 		fail=`expr $fail + 1`
@@ -181,4 +188,4 @@ done
 
 total=`expr $ok + $fail`
 
-echo "out of $total ok:$ok failed:$fail"
+echo "out of $total ok:$ok failed:$fail timeout:$timeout"
