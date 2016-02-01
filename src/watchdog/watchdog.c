@@ -5290,6 +5290,9 @@ static bool get_authhash_for_node(WatchdogNode* wdNode, char* authhash)
 		
 		/* calculate hash from packet */
 		wd_calc_hash(nodeStr, len, authhash);
+		if (authhash[0] == '\0')
+			ereport(WARNING,
+				(errmsg("failed to calculate wd_authkey hash from a send packet")));
 		return true;
 	}
 	return false;
@@ -5308,6 +5311,9 @@ static bool verify_authhash_for_node(WatchdogNode* wdNode, char* authhash)
 		
 		/* calculate hash from packet */
 		wd_calc_hash(nodeStr, len, calculated_authhash);
+		if (calculated_authhash[0] == '\0')
+			ereport(WARNING,
+				(errmsg("failed to calculate wd_authkey hash from a receive packet")));
 		return (strcmp(calculated_authhash,authhash) == 0);
 	}
 	/* authkey is not enabled.*/
