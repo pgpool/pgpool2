@@ -533,6 +533,9 @@ wd_thread_negotiation(void * arg)
 		/* calculate hash from packet */
 		pack_str_len = wd_packet_to_string(thread_arg->packet, pack_str, sizeof(pack_str));
 		wd_calc_hash(pack_str, pack_str_len, thread_arg->packet->hash);
+
+		if ((thread_arg->packet->hash)[0] == '\0')
+			pool_log("wd_thread_negotiasion: failed to calculate wd_authkey hash from a send packet");
 	}
 
 	/* packet send to target watchdog */
@@ -1158,17 +1161,29 @@ wd_calc_hash(const char *str, int len, char *buf)
 	/* use first half of authkey as username, last half as password */
 	authkey_len = strlen(pool_config->wd_authkey);
 
+	if (len <= 0 || authkey_len <= 0)
+		goto wd_calc_hash_error;
+
 	username_len = authkey_len / 2;
 	pass_len = authkey_len - username_len;
-	snprintf(username, username_len + 1, "%s", pool_config->wd_authkey);
-	snprintf(pass, pass_len + 1, "%s", pool_config->wd_authkey + username_len);
+	if ( snprintf(username, username_len + 1, "%s", pool_config->wd_authkey) < 0
+	  || snprintf(pass, pass_len + 1, "%s", pool_config->wd_authkey + username_len) < 0)
+		goto wd_calc_hash_error;
 
 	/* calculate hash using md5 encrypt */
-	pool_md5_encrypt(pass, username, strlen(username), buf + MD5_PASSWD_LEN + 1);
+	if (! pool_md5_encrypt(pass, username, strlen(username), buf + MD5_PASSWD_LEN + 1))
+		goto wd_calc_hash_error;
 	buf[(MD5_PASSWD_LEN+1)*2-1] = '\0';
 
-	pool_md5_encrypt(buf+MD5_PASSWD_LEN+1, str, len, buf);
+	if (! pool_md5_encrypt(buf+MD5_PASSWD_LEN+1, str, len, buf))
+		goto wd_calc_hash_error;
 	buf[MD5_PASSWD_LEN] = '\0';
+
+	return;
+
+wd_calc_hash_error:
+	buf[0] = '\0';
+	return;
 }
 
 int

@@ -155,7 +155,11 @@ wd_send_response(int sock, WdPacket * recv_pack)
 		pack_str_len = wd_packet_to_string(recv_pack, pack_str, sizeof(pack_str));
 		wd_calc_hash(pack_str, pack_str_len, hash);
 
-		if (strcmp(recv_pack->hash, hash))
+		if (hash[0] == '\0')
+			pool_log("wd_send_response: failed to calculate wd_authkey hash from a receive packet");
+
+		if (hash[0] == '\0' || (recv_pack->hash)[0] == '\0'
+			 || strcmp(recv_pack->hash, hash))
 		{
 			pool_log("wd_send_response: watchdog authentication failed");
 			rtn = wd_authentication_failed(sock);
