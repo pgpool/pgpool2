@@ -111,6 +111,7 @@ function print_usage
 	printf "  -m   install/noinstall   make install pgpool to temp directory for executing regression tests [Default: install]\n" >&2
 	printf "  -j   FILE                Postgres jdbc jar file path\n" >&2
 	printf "  -s   DIRECTORY           unix socket directory\n" >&2
+	printf "  -t   TIMEOUT             timeout value for each test (sec)\n" >&2
 	printf "  -d                       start pgpool with debug option\n" >&2
 	printf "  -?                       print this help and then exit\n\n" >&2
 	printf "Please read the README for details on adding new tests\n" >&2
@@ -119,7 +120,7 @@ function print_usage
 
 trap "echo ; exit 0" SIGINT SIGQUIT
 
-while getopts "p:m:i:j:b:s:d?" OPTION
+while getopts "p:m:i:j:b:s:t:d?" OPTION
 do
   case $OPTION in
     p)  PG_INSTALL_DIR="$OPTARG";;
@@ -128,6 +129,7 @@ do
     j)  JDBC_DRIVER="$OPTARG";;
     b)  PGBENCH_PATH="$OPTARG";;
     s)  PGSOCKET_DIR="$OPTARG";;
+    t)  TIMEOUT="$OPTARG";;
     d)  export PGPOOLDEBUG="true";;
     ?)  print_usage
         exit 2;;
