@@ -28,6 +28,7 @@
 #ifndef PALLOC_H
 #define PALLOC_H
 
+#include <stdarg.h>
 #include "pg_config_manual.h"
 
 /*
