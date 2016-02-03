@@ -27,6 +27,10 @@
 #include <unistd.h>
 #include <errno.h>
 
+#ifdef __FreeBSD__
+#include <sys/wait.h>
+#endif
+
 #include "pool.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"

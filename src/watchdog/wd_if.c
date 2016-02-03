@@ -49,6 +49,10 @@
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 
+#ifdef __FreeBSD__
+#include <netinet/in.h>
+#endif
+
 #include "pool.h"
 
 #include "utils/elog.h"
