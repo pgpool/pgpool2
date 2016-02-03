@@ -19,6 +19,7 @@
 #define STRINGINFO_H
 
 #include <stdio.h>
+#include <stdarg.h>
 #include "parser/pg_config_manual.h"
 #include "pool_parser.h"
 
