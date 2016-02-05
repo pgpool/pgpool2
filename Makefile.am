@@ -136,9 +136,8 @@ EXTRA_DIST = pgpool.8.in sample/pgpool.pam \
 		test/regression/tests/004.watchdog/master.conf \
 		test/regression/tests/004.watchdog/test.sh \
 		test/regression/tests/004.watchdog/standby.conf \
-		test/regression/tests/003.failover/expected.s \
+		test/regression/tests/003.failover/create_expected.sql \
 		test/regression/tests/003.failover/test.sh \
-		test/regression/tests/003.failover/expected.r \
 		test/regression/libs.sh \
 		redhat/pgpool.init redhat/pgpool.sysconfig redhat/pgpool.conf.sample.patch \
 		redhat/pgpool.service 
