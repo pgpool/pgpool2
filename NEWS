@@ -4,6 +4,179 @@
 3.3 Series (2013/07/30 - )
 ===============================================================================
 
+                        3.3.8 (tokakiboshi) 2016/02/05
+
+* Version 3.3.8
+
+    This is a bugfix release against pgpool-II 3.3.7.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+      
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status (Tatsuo Ishii)
+      
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - test: Fix false alerm of regression tset 062 (Yugo Nagata)
+
+    - test: Fix broken regression test for native replication (Yugo Nagata)
+      
+      Test for insert lock didn't work.
+
+    - test: Fix regress test to sleep after pgpool_reload (Yugo Nagata)
+      
+      Some regression tests modify configuration file and reloads. However,
+      sometimes these were not applied to pgpool just after reloading.
+
+    - Fix inconsistency of sequence values in replication mode (Yugo Nagata)
+      
+      When a schema name was provided, the table name was quoted wrongly as
+      like "public.mytbl" instead of "public"."mytbl". So, pool_regclass
+      and to_regclass couldn't find right talbe oid and insert lock was
+      never executed. This caused inconsistency between DB nodes.
+
+    - test: Fix complication error and segfault of timestamp rewrite test
+      (Yugo Nagata)
+
+    - test: Add timestamp-rewrite unit test to regression test suite (Yugo Nagata)
+
+    - Fix ancient bug of pool_push() and friends (Tatsuo Ishii)
+      
+      It allocates buffer using realloc and uses the pointer
+      returned. However it does the pointer calculation *before* realloc
+      gets called. So the calculation uses the old pointer value, which
+      causes various problems including segfault later.
+      
+      Also there were other problems with it. The buffer pointer and buffer
+      size variable is not initialized. The buffer is not freed by
+      pool_close. Typo in debugging message (3.4 or later only). They are
+      fixed as well.
+
+    - doc: Fix wrong description about log_standby_delay in the document
+      (Yugo Nagata)
+
+    - test: Fix regression test 065 (Tatsuo Ishii)
+      
+      The path to JDBC driver was explicitly defined. This is wrong. This
+      should be inherited from JDBC_DRIVER environment variable.
+
+    - test: Add option to regress.sh and pgpool_setup for unix domain socket
+      directory (Yugo Nagata)
+
+    - doc: Add missing descriptions about default values to documents (Yugo Nagata)
+
+    - test: Fix a bug of regress.sh option handling (Yugo Nagata)
+
+    - test: Fix regression test 055.backend_all_down to use PGSOCKET_DIR for
+      PostgreSQL rhel7 rpm (Yugo Nagata)
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+      
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+      
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+      
+      Per bug #157.
+
+    - test: Fix to use timeout command to handle time out of regress test 062
+      (Yugo Nagata)
+
+    - test: Add missing \n in help messages (Yugo Nagata)
+
+    - test: Fix regression test 003.failover for rhel7 postgresql rpm (Yugo Nagata)
+      
+      The expected result of 'show pool_nodes' is fixed to use
+      PGSOCKET_DIR in hostname column.
+
+    - Fix white/black_memqcache_table_list not require quotaion (Yugo Nagata)
+      
+      The tables and schemas name specified in *_memqcache_table_list
+      were needed to be quoted by double quotation.
+      
+      Patch contributed by Dang Minh Huong.
+      Per [pgpool-hackers: 1323]
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+      
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+      
+      Per bug #156 report by harukat.
+
+    - test: Add some tests for white/black_memqcache_table_list to regression
+      test 006.memqcache (Yugo Nagata)
+
+    - Add some warning messages for wd_authkey hash calculation failure
+      (Yugo Nagata)
+      
+      Sometimes wd_authkey calculation fails for some reason other than
+      authkey mismatch. The additional messages make these distingushable
+      for each other.
+
+    - test: Fix regression test to check timeout of each test (Yugo Nagata)
+
+    - test: Allow timeout value to be specified by the command option (Yugo Nagata)
+
+    - Fix bugs with data modifying WITH clause. (Tatsuo Ishii)
+      
+      pgpool-II did not recognize the data modifying WITH clause despite
+      pgpool-II 3.3 or after has SQL parser which recognizes it. The bug has
+      been fixed in pgpool-II 3.5 (having PostgreSQL 9.5 parser), and the fix
+      is back ported to pgpool-II 3.3 and 3.4.
+      
+      Per bug #153.
+
+    - Fix broken arping_cmd configuration check(Muhammad Usama)
+      
+      wd_chk_setuid() function was bailing out with the NOTICE message as soon
+      as it finds the setuid bit is not set on any configured network command
+      and was ignoring the rest of configurations.
+      
+      Per bug #139.
+
+    - doc: Add restriction about starting multiple pgpool simultaneously
+      (Yugo Nagata)
+
+    - Fix a in-memory query cache bug (Tatsuo Ishii)
+      
+      If extended query protocol is used and a bind/execute message arrives
+      which uses a statement created by prior parse message, the temp_cache
+      is not initialized by a parse messages. Thus messages are added to pre
+      existing temp cache buffer which causes the trouble, that is, when the
+      cached result returns, Data Row message and Command Complete message
+      appeared twice.
+      
+      Per by bug #152.
+
+    - Ignore close statement/portal request if they do not exist (Tatsuo Ishii)
+      
+      In this case just returns a close complete message to client.
+      This is a back port of the following commit from pgpool-II 3.4:
+      
+      1a37e1c35bd8b6f10f524693bbcb7b51f73b4bf0
+
+    - test: Fix port numbers in expected result of show pool_nodes (Yugo Nagata)
+
+===============================================================================
+
                         3.3.7 (tokakiboshi) 2015/07/24
 
 * Version 3.3.7
@@ -1358,6 +1531,90 @@
 
 ===============================================================================
 3.2 Series (2012/08/03 - )
+===============================================================================
+
+                        3.2.13 (namameboshi) 2016/02/05
+
+* Version 3.2.13
+
+    This is a bugfix release against pgpool-II 3.2.12.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+      
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status (Tatsuo Ishii)
+      
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - Fix ancient bug of pool_push() and friends (Tatsuo Ishii)
+      
+      It allocates buffer using realloc and uses the pointer
+      returned. However it does the pointer calculation *before* realloc
+      gets called. So the calculation uses the old pointer value, which
+      causes various problems including segfault later.
+      
+      Also there were other problems with it. The buffer pointer and buffer
+      size variable is not initialized. The buffer is not freed by
+      pool_close. Typo in debugging message (3.4 or later only). They are
+      fixed as well.
+
+    - doc: Fix wrong description about log_standby_delay in the document
+      (Yugo Nagata)
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+      
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+      
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+      
+      Per bug #157.
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+      
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+      
+      Per bug #156 report by harukat.
+
+    - doc: Add restriction about starting multiple pgpool simultaneously
+      (Yugo Nagata)
+
+    - Fix a in-memory query cache bug (Tatsuo Ishii)
+      
+      If extended query protocol is used and a bind/execute message arrives
+      which uses a statement created by prior parse message, the temp_cache
+      is not initialized by a parse messages. Thus messages are added to pre
+      existing temp cache buffer which causes the trouble, that is, when the
+      cached result returns, Data Row message and Command Complete message
+      appeared twice.
+      
+      Per by bug #152.
+
+    - Ignore close statement/portal request if they do not exist (Tatsuo Ishii)
+      
+      In this case just returns a close complete message to client.
+      This is a back port of the following commit from pgpool-II 3.4:
+      
+      1a37e1c35bd8b6f10f524693bbcb7b51f73b4bf0
+
 ===============================================================================
 
                         3.2.12 (namameboshi) 2015/07/24
@@ -3286,6 +3543,64 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.16 (hatsuiboshi) 2016/02/05
+
+* Version 3.1.16
+
+    This is a bugfix release against pgpool-II 3.1.15.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+      
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status (Tatsuo Ishii)
+      
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - doc: Fix wrong description about log_standby_delay in the document
+      (Yugo Nagata)
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+      
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+      
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+      
+      Per bug #157.
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+      
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+      
+      Per bug #156 report by harukat.
+
+    - Ignore close statement/portal request if they do not exist (Tatsuo Ishii)
+      
+      In this case just returns a close complete message to client.
+      This is a back port of the following commit from pgpool-II 3.4:
+      
+      1a37e1c35bd8b6f10f524693bbcb7b51f73b4bf0
+
+===============================================================================
+
                         3.1.15 (hatsuiboshi) 2015/07/24
 
 * Version 3.1.15
@@ -4610,6 +4925,68 @@
 
 ===============================================================================
 3.0 Series (2013/07/30 - )
+===============================================================================
+
+                        3.0.20 (umiyameboshi) 2016/02/05
+
+* Version 3.0.20
+
+    This is a bugfix release against pgpool-II 3.0.19.
+
+    This is the final release of the series. pgpool-II 3.0 has reached
+    End of Life, and is no longer maintained and does not receive any
+    updates.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+      
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status (Tatsuo Ishii)
+      
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - doc: Fix wrong description about log_standby_delay in the document
+      (Yugo Nagata)
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+      
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+      
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+      
+      Per bug #157.
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+      
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+      
+      Per bug #156 report by harukat.
+
+    - Ignore close statement/portal request if they do not exist (Tatsuo Ishii)
+      
+      In this case just returns a close complete message to client.
+      This is a back port of the following commit from pgpool-II 3.4:
+      
+      1a37e1c35bd8b6f10f524693bbcb7b51f73b4bf0
+
 ===============================================================================
 
                         3.0.19 (umiyameboshi) 2015/07/24
