@@ -4,6 +4,64 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.16 (hatsuiboshi) 2016/02/05
+
+* Version 3.1.16
+
+    This is a bugfix release against pgpool-II 3.1.15.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+      
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status (Tatsuo Ishii)
+      
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - doc: Fix wrong description about log_standby_delay in the document
+      (Yugo Nagata)
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+      
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+      
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+      
+      Per bug #157.
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+      
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+      
+      Per bug #156 report by harukat.
+
+    - Ignore close statement/portal request if they do not exist (Tatsuo Ishii)
+      
+      In this case just returns a close complete message to client.
+      This is a back port of the following commit from pgpool-II 3.4:
+      
+      1a37e1c35bd8b6f10f524693bbcb7b51f73b4bf0
+
+===============================================================================
+
                         3.1.15 (hatsuiboshi) 2015/07/24
 
 * Version 3.1.15
@@ -1329,6 +1387,68 @@
 
 ===============================================================================
 3.0 Series (2010/09/10 - )
+===============================================================================
+
+                        3.0.20 (umiyameboshi) 2016/02/05
+
+* Version 3.0.20
+
+    This is a bugfix release against pgpool-II 3.0.19.
+
+    This is the final release of the series. pgpool-II 3.0 has reached
+    End of Life, and is no longer maintained and does not receive any
+    updates.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+      
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status (Tatsuo Ishii)
+      
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - doc: Fix wrong description about log_standby_delay in the document
+      (Yugo Nagata)
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+      
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+      
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+      
+      Per bug #157.
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+      
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+      
+      Per bug #156 report by harukat.
+
+    - Ignore close statement/portal request if they do not exist (Tatsuo Ishii)
+      
+      In this case just returns a close complete message to client.
+      This is a back port of the following commit from pgpool-II 3.4:
+      
+      1a37e1c35bd8b6f10f524693bbcb7b51f73b4bf0
+
 ===============================================================================
 
                         3.0.19 (umiyameboshi) 2015/07/24

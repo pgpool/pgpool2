@@ -4,7 +4,7 @@ AC_INIT
 dnl Checks for programs.
 AC_PROG_CC
 
-AM_INIT_AUTOMAKE(pgpool-II, 3.1.15)
+AM_INIT_AUTOMAKE(pgpool-II, 3.1.16)
 AC_PROG_RANLIB
 AC_PROG_LIBTOOL
 
