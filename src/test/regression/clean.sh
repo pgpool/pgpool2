@@ -19,3 +19,4 @@ done
 
 rm -fr $dir/tests/004.watchdog/master
 rm -fr $dir/tests/004.watchdog/standby
+cd $dir/tests/010.rewrite_timestamp/timestamp/; make clean >/dev/null 2>&1; cd $dir
