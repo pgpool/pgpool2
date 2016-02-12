@@ -168,6 +168,7 @@ int pattern_compare(char *str, const int type, const char *param_name)
 {
 	int i = 0;
 	char *s;
+	int result = 0;
 
 	RegPattern *lists_patterns;
 	int *pattc;
@@ -204,19 +205,21 @@ int pattern_compare(char *str, const int type, const char *param_name)
 					(errmsg("comparing function name in whitelist regex array"),
 						errdetail("pattern_compare: %s (%s) matched: %s",
 							   param_name, lists_patterns[i].pattern, s)));
-				return 1;
+				result = 1;
 			/* return 1 if string matches blacklist pattern */
 			case BLACKLIST:
 				ereport(DEBUG2,
 					(errmsg("comparing function name in blacklist regex array"),
 						 errdetail("pattern_compare: %s (%s) matched: %s",
 								   param_name, lists_patterns[i].pattern, s)));
-				return 1;
+				result = 1;
 			default:
 				ereport(WARNING,
 						(errmsg("pattern_compare: \"%s\" unknown pattern match type: \"%s\"", param_name, s)));
-				return -1;
+				result = -1;
 			}
+			/* return the result */
+			break;
 		}
 		ereport(DEBUG2,
 			(errmsg("comparing function name in blacklist/whitelist regex array"),
@@ -225,8 +228,7 @@ int pattern_compare(char *str, const int type, const char *param_name)
 	}
 
 	free(s);
-	/* return 0 otherwise */
-	return 0;
+	return result;
 }
 
 static char *strip_quote(char *str)
