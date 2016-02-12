@@ -144,8 +144,13 @@ pgpool_pgctl(PG_FUNCTION_ARGS)
 		elog(ERROR, "must be superuser to use pgpool_pgctl function");
 #endif
 
+#if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 90600)
+	pg_ctl = GetConfigOptionByName("pgpool.pg_ctl", NULL,false);
+	data_directory = GetConfigOptionByName("data_directory", NULL,false);
+#else
 	pg_ctl = GetConfigOptionByName("pgpool.pg_ctl", NULL);
 	data_directory = GetConfigOptionByName("data_directory", NULL);
+#endif
 
 	if (strcmp(stop_mode, "") != 0)
 	{
