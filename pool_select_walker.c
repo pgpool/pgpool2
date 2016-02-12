@@ -167,6 +167,7 @@ int pattern_compare(char *str, const int type, const char *param_name)
 {
 	int i = 0;
 	char *s;
+	int result = 0;
 
 	RegPattern *lists_patterns;
 	int *pattc;
@@ -200,24 +201,25 @@ int pattern_compare(char *str, const int type, const char *param_name)
 			case WHITELIST:
 				pool_debug("pattern_compare: %s (%s) matched: %s",
 			               param_name, lists_patterns[i].pattern, s);
-				return 1;
+				result = 1;
 			/* return 1 if string matches blacklist pattern */
 			case BLACKLIST:
 				pool_debug("pattern_compare: %s (%s) matched: %s",
 			               param_name, lists_patterns[i].pattern, s);
-				return 1;
+				result = 1;
 			default:
 				pool_error("pattern_compare: %s unknown pattern match type: %s", param_name, s);
-				return -1;
+				result = -1;
 			}
+			/* return the result */
+			break;
 		}
 		pool_debug("pattern_compare: %s (%s) not matched: %s",
 	               param_name, lists_patterns[i].pattern, s);
 	}
 
 	free(s);
-	/* return 0 otherwise */
-	return 0;
+	return result;
 }
 
 static char *strip_quote(char *str)
