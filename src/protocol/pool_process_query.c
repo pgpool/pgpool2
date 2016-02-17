@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3536,8 +3536,9 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 					{
 						List *parse_tree_list;
 						Node *node;
+						bool error;
 
-						parse_tree_list = raw_parser(query_string_buffer);
+						parse_tree_list = raw_parser(query_string_buffer, &error);
 
 						if (parse_tree_list != NIL)
 						{
