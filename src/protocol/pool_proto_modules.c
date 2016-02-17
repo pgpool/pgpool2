@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -113,6 +113,8 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
 
+	bool error;
+
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 
@@ -170,12 +172,12 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 
 	/* parse SQL string */
-	parse_tree_list = raw_parser(contents);
+	parse_tree_list = raw_parser(contents, &error);
 
 	if (parse_tree_list == NIL)
 	{
 		/* is the query empty? */
-		if (*contents == '\0' || *contents == ';')
+		if (*contents == '\0' || *contents == ';' || error == false)
 		{
 			/*
 			 * JBoss sends empty queries for checking connections.
@@ -183,7 +185,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			 * to affect load balance.
 			 * [Pgpool-general] Confused about JDBC and load balancing
 			 */
-			parse_tree_list = raw_parser(POOL_DUMMY_READ_QUERY);
+			parse_tree_list = raw_parser(POOL_DUMMY_READ_QUERY, &error);
 		}
 		else
 		{
@@ -206,7 +208,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				ereport(LOG,
 						(errmsg("Unable to parse the query: \"%s\" from client %s(%s)", contents, remote_host, remote_port)));
 			}
-			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
+			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY, &error);
 			query_context->is_parse_error = true;
 		}
 	}
@@ -780,6 +782,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
 
+	bool error;
+
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 
@@ -794,12 +798,12 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	/* parse SQL string */
 	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
-	parse_tree_list = raw_parser(stmt);
+	parse_tree_list = raw_parser(stmt, &error);
 
 	if (parse_tree_list == NIL)
 	{
 		/* is the query empty? */
-		if (*stmt == '\0' || *stmt == ';')
+		if (*stmt == '\0' || *stmt == ';' || error == false)
 		{
 			/*
 			 * JBoss sends empty queries for checking connections.
@@ -807,7 +811,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			 * to affect load balance.
 			 * [Pgpool-general] Confused about JDBC and load balancing
 			 */
-			parse_tree_list = raw_parser(POOL_DUMMY_READ_QUERY);
+			parse_tree_list = raw_parser(POOL_DUMMY_READ_QUERY, &error);
 		}
 		else
 		{
@@ -830,7 +834,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				ereport(LOG,
 						(errmsg("Unable to parse the query: \"%s\" from client %s(%s)", stmt, remote_host, remote_port)));
 			}
-			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY);
+			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY, &error);
 			query_context->is_parse_error = true;
 		}
 	}
@@ -2208,6 +2212,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		char *query;
 		Node *node;
 		List *parse_tree_list;
+		bool error;
 
 		case 'X':	/* Terminate */
 			if(contents)
@@ -2286,7 +2291,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			query = "INSERT INTO foo VALUES(1)";
 			MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 
-			parse_tree_list = raw_parser(query);
+			parse_tree_list = raw_parser(query, &error);
 			node = (Node *) lfirst(list_head(parse_tree_list));
 			pool_start_query(query_context, query, strlen(query) + 1, node);
 
