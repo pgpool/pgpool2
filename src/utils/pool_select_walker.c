@@ -207,6 +207,7 @@ int pattern_compare(char *str, const int type, const char *param_name)
 						errdetail("pattern_compare: %s (%s) matched: %s",
 							   param_name, lists_patterns[i].pattern, s)));
 				result = 1;
+				break;
 			/* return 1 if string matches blacklist pattern */
 			case BLACKLIST:
 				ereport(DEBUG2,
@@ -214,10 +215,12 @@ int pattern_compare(char *str, const int type, const char *param_name)
 						 errdetail("pattern_compare: %s (%s) matched: %s",
 								   param_name, lists_patterns[i].pattern, s)));
 				result = 1;
+				break;
 			default:
 				ereport(WARNING,
 						(errmsg("pattern_compare: \"%s\" unknown pattern match type: \"%s\"", param_name, s)));
 				result = -1;
+				break;
 			}
 			/* return the result */
 			break;
