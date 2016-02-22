@@ -930,7 +930,7 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 				if (pool_flush_it(frontend) < 0)
 				{
 					pool_error("wait_for_query_response: frontend error occured while waiting for backend reply");
-					return POOL_END;
+					return POOL_END_WITH_FRONTEND_ERROR;
 				}
 
 			} else		/* Protocol version 2 */
@@ -951,7 +951,7 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 				if (pool_flush_it(frontend) < 0)
 				{
 					pool_error("wait_for_query_response: frontend error occured while waiting for backend reply");
-					return POOL_END;
+					return POOL_END_WITH_FRONTEND_ERROR;
 				}
 #endif
 			}
