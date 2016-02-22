@@ -844,7 +844,7 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 				pool_write(frontend, DUMMY_VALUE, sizeof(DUMMY_VALUE));
 				if (pool_flush_it(frontend) < 0)
 				{
-                    ereport(ERROR,
+                    ereport(FRONTEND_ERROR,
 						(errmsg("unable to to flush data to frontend"),
                              errdetail("frontend error occured while waiting for backend reply")));
 				}
@@ -864,7 +864,7 @@ POOL_STATUS wait_for_query_response(POOL_CONNECTION *frontend, POOL_CONNECTION *
 				pool_write(frontend, notice_message, strlen(notice_message)+1);
 				if (pool_flush_it(frontend) < 0)
 				{
-                    ereport(ERROR,
+                    ereport(FRONTEND_ERROR,
                         (errmsg("unable to to flush data to frontend"),
                              errdetail("frontend error occured while waiting for backend reply")));
 
