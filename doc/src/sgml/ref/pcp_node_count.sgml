@@ -1,0 +1,107 @@
+<!--
+doc/src/sgml/ref/pcp_node_count.sgml
+Pgpool-II documentation
+-->
+
+<refentry id="PCP-NODE-COUNT">
+ <indexterm zone="pcp-node-count">
+  <primary>pcp_node_count</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>pcp_node_count</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>PCP Command</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pcp_node_count</refname>
+  <refpurpose>
+  displays the total number of database nodes</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pcp_node_count</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+   <group choice="plain">
+    <group choice="opt">
+     <arg choice="plain"><option>--pgdata</option></arg>
+     <arg choice="plain"><option>-D</option></arg>
+    </group>
+    <replaceable> directory</replaceable>
+   </group>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-PCP-NODE-COUNT-1">
+  <title>
+   Description
+  </title>
+  <para>
+  <command>pcp_node_count</command>
+  displays the total number of database nodes defined in <filename>pgpool.conf</filename>. It does
+  not distinguish between nodes status, ie attached/detached. ALL nodes are counted.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+   <para>
+    <variablelist>
+
+     <varlistentry>
+      <term><option>-h <replaceable class="parameter">hostname</replaceable></option></term>
+      <term><option>--host=<replaceable class="parameter">hostname</replaceable></option></term>
+      <listitem>
+       <para>
+	 The host name of the machine on which the server is running. If the
+	 value begins with a slash, it is used as the directory for the Unix-domain socket.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><envar>PCPPASSFILE</envar></term>
+
+    <listitem>
+     <para>
+      Specifies the path to pcp password file.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+    Notes...
+  </para>
+ </refsect1>
+
+<!--
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-pg-ctl"></member>
+   <member><xref linkend="app-postgres"></member>
+  </simplelist>
+ </refsect1>
+-->
+
+</refentry>

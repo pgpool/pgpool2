@@ -39,3 +39,4 @@ EXTRA_DIST = pgpool.8.in \
 
 CLEANFILES = pgpool.8
 
+SUBDIRS = src
