@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -23,6 +23,7 @@
 */
 
 #include "pool.h"
+#include "context/pool_session_context.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
 #include "auth/pool_passwd.h"
@@ -1092,6 +1093,10 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 {
 	int length, length0;
 	int i;
+	POOL_SYNC_MAP_STATE use_sync_map = pool_use_sync_map();
+
+	/* Check whether we can use the sync map or not */
+	use_sync_map = pool_use_sync_map();
 
 	/* read message from master node */
 	pool_read(CONNECTION(cp, MASTER_NODE_ID), &length0, sizeof(length0));
@@ -1103,7 +1108,12 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
+		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i) || use_sync_map == POOL_SYNC_MAP_EMPTY)
+		{
+			continue;
+		}
+
+		if (use_sync_map == POOL_SYNC_MAP_IS_VALID && !pool_is_set_sync_map(i))
 		{
 			continue;
 		}

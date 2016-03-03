@@ -191,7 +191,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 		/*
 		 * If we are not processing a query, now is the time to
-		 * extract retrieve pending data from buffer stack if any.
+		 * extract pending data from buffer stack if any.
 		 */
 		if (!pool_is_query_in_progress())
 		{
@@ -204,9 +204,11 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		}
 
 		/*
-		 * If we are prcessing query, process it.
+		 * If we are processing query, process it.  Even if we are not
+		 * processing query, process backend response if there's pending data
+		 * in backend cache.
 		 */
-		if (pool_is_query_in_progress())
+		if (pool_is_query_in_progress() || !is_backend_cache_empty(backend))
 		{
 			status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
 			if (status != POOL_CONTINUE)
@@ -712,6 +714,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	char *p1 = NULL;
 	int sendlen;
 	int i;
+	POOL_SYNC_MAP_STATE use_sync_map = pool_use_sync_map();
 
 #ifdef NOT_USED
 	/* 
@@ -748,8 +751,16 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
+			if (use_sync_map == POOL_SYNC_MAP_EMPTY)
+				continue;
+
 			if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 			{
+				if (use_sync_map == POOL_SYNC_MAP_IS_VALID && !pool_is_set_sync_map(i))
+				{
+						continue;
+				}
+
 				pool_read(CONNECTION(backend, i), &len, sizeof(len));
 
 				len = ntohl(len);
@@ -3001,21 +3012,11 @@ int is_drop_database(Node *node)
 }
 
 /*
- * check if any pending data remains.
+ * check if any pending data remains in backend.
 */
-static bool is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+bool is_backend_cache_empty(POOL_CONNECTION_POOL *backend)
 {
 	int i;
-
-	/*
-	 * If SSL is enabled, we need to check SSL internal buffer
-	 * is empty or not first.
-	 */
-	if (pool_ssl_pending(frontend))
-		return false;
-
-	if (!pool_read_buffer_is_empty(frontend))
-		return false;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -3034,6 +3035,24 @@ static bool is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *back
 	}
 
 	return true;
+}
+
+/*
+ * check if any pending data remains.
+*/
+static bool is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	/*
+	 * If SSL is enabled, we need to check SSL internal buffer
+	 * is empty or not first.
+	 */
+	if (pool_ssl_pending(frontend))
+		return false;
+
+	if (!pool_read_buffer_is_empty(frontend))
+		return false;
+
+	return is_backend_cache_empty(backend);
 }
 
 /*
@@ -3178,9 +3197,10 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	double max_count = 0;
 	int degenerate_node_num = 0;                /* number of backends degeneration requested */
 	int degenerate_node[MAX_NUM_BACKENDS];      /* degeneration requested backend list */
-
+	bool doing_extended_message = false;		/* are we doing extended protocol? */
 	POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
 	POOL_QUERY_CONTEXT *query_context = session_context->query_context;
+	POOL_SYNC_MAP_STATE use_sync_map = pool_use_sync_map();
 
 	int num_executed_nodes = 0;
 	int first_node = -1;
@@ -3218,8 +3238,19 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		/* initialize degenerate record */
 		degenerate_node[i] = 0;
 
+		if (!VALID_BACKEND(i) || use_sync_map == POOL_SYNC_MAP_EMPTY)
+		{
+			kind_list[i] = 0;
+			continue;
+		}
+
 		if (VALID_BACKEND(i))
 		{
+			if (use_sync_map == POOL_SYNC_MAP_IS_VALID && !pool_is_set_sync_map(i))
+			{
+				continue;
+			}
+
 			num_executed_nodes++;
 
 			if (first_node < 0)

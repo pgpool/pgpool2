@@ -1419,9 +1419,11 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	POOL_SESSION_CONTEXT *session_context;
 	Node *node = NULL;
 	char *query = NULL;
+	POOL_SYNC_MAP_STATE use_sync_map;
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
+	use_sync_map = pool_use_sync_map();
 
 	/*
 	 * If the numbers of update tuples are differ and
@@ -1559,8 +1561,13 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
-			if (!VALID_BACKEND(i))
+			if (!VALID_BACKEND(i) || use_sync_map == POOL_SYNC_MAP_EMPTY)
 				continue;
+
+			if (use_sync_map == POOL_SYNC_MAP_IS_VALID && !pool_is_set_sync_map(i))
+			{
+				continue;
+			}
 
 			if (pool_read(CONNECTION(backend, i), &kind, sizeof(kind)))
 				return POOL_END;
@@ -2349,7 +2356,16 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 	{
 		if (pool_is_query_in_progress())
 			pool_unset_query_in_progress();
-		return POOL_CONTINUE;
+
+		/*
+		 * Check if If we have pending data in backend connection cache. If we
+		 * do, it is likely that a sync message has been sent to backend and the
+		 * backend replied back to us. So we need to process it.
+		 */
+		if (is_backend_cache_empty(backend))
+		{
+			return POOL_CONTINUE;
+		}
 	}
 
 	if (pool_is_skip_reading_from_backends())

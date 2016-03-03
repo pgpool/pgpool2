@@ -517,6 +517,8 @@ extern POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 extern int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp);
 
+extern bool is_backend_cache_empty(POOL_CONNECTION_POOL *backend);
+
 /* SSL functionality */
 extern void pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp);
 extern void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp);
