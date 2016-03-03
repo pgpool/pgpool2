@@ -930,6 +930,34 @@ void pool_clear_sync_map(void)
 }
 
 /*
+ * Check whether we should 1) ignore sync map, 2) consult sync map, or 3) we
+ * cannot use sync map because it's empty.
+ */
+bool pool_use_sync_map(void)
+{
+	int i;
+
+	if (!session_context)
+		return POOL_IGNORE_SYNC_MAP;
+
+	if (STREAM && !pool_is_query_in_progress() && pool_is_doing_extended_query_message())
+	{
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (pool_is_set_sync_map(i))
+			{
+				ereport(DEBUG1,
+						(errmsg("pool_use_sync_map: set use sync map: %d", i)));
+				return POOL_SYNC_MAP_IS_VALID;	/* yes, we can use sync map */
+			}
+		}
+		return POOL_SYNC_MAP_EMPTY;	/* no, we cannot use sync map */
+	}
+
+	return POOL_IGNORE_SYNC_MAP;
+}
+
+/*
  * Set pending response
  */
 void pool_set_pending_response(void)

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -43,6 +43,15 @@ typedef enum {
 	POOL_REPEATABLE_READ,		/* Rpeatable read */
 	POOL_SERIALIZABLE			/* Serializable */
 } POOL_TRANSACTION_ISOLATION;
+
+/*
+ * Return values for pool_use_sync_map
+ */
+typedef enum {
+	POOL_IGNORE_SYNC_MAP,		/* Please ignore sync map */
+	POOL_SYNC_MAP_IS_VALID,		/* Sync map is valid */
+	POOL_SYNC_MAP_EMPTY,		/* Sync map is empty */
+} POOL_SYNC_MAP_STATE;
 
 /*
  * Message content of extended query
@@ -246,6 +255,7 @@ extern void pool_set_sync_map(int node_id);
 extern bool pool_is_set_sync_map(int node_id);
 extern int pool_get_nth_sync_map(int nth);
 extern void pool_clear_sync_map(void);
+extern bool pool_use_sync_map(void);
 extern void pool_set_pending_response(void);
 extern void pool_unset_pending_response(void);
 extern bool pool_is_pending_response(void);
