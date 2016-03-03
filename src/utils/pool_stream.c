@@ -5,7 +5,7 @@
 * pgpool: a language independent connection pool server for PostgreSQL
 * written by Tatsuo Ishii
 *
-* Copyright (c) 2003-2015	PgPool Global Development Group
+* Copyright (c) 2003-2016	PgPool Global Development Group
 *
 * Permission to use, copy, modify, and distribute this software and
 * its documentation for any purpose and without fee is hereby
@@ -256,7 +256,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				/*
 				 * if backend offers authentication method, frontend could close connection
 				 */
-                ereport(ERROR,
+                ereport(FRONTEND_ERROR,
 					(errmsg("unable to read data from frontend"),
                          errdetail("EOF encountered with frontend")));
 			}
