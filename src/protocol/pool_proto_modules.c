@@ -1421,6 +1421,14 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	char *query = NULL;
 	POOL_SYNC_MAP_STATE use_sync_map;
 
+	/*
+	 * It is possible that the "ignore until sync is received" flag was set if
+	 * we send sync to backend and the backend returns error. Let's reset the
+	 * flag unconditionally because we apparently have received a "ready for
+	 * query" message from backend.
+	 */
+	pool_unset_ignore_till_sync();
+
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 	use_sync_map = pool_use_sync_map();
