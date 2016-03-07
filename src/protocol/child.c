@@ -192,7 +192,7 @@ void do_child(int *fds)
 	/* initialize connection pool */
 	if (pool_init_cp())
 	{
-		child_exit(1);
+		child_exit(POOL_EXIT_AND_RESTART);
 	}
 
 	/*
@@ -253,7 +253,7 @@ void do_child(int *fds)
             {
                 ereport(LOG,
                     (errmsg("child exiting, %d connections reached", pool_config->child_max_connections)));
-				child_exit(2);
+				child_exit(POOL_EXIT_AND_RESTART);
             }
         }
 
@@ -299,7 +299,7 @@ void do_child(int *fds)
 			{
 				ereport(DEBUG1,
 					(errmsg("child life %d seconds expired", pool_config->child_life_time)));
-				child_exit(2);
+				child_exit(POOL_EXIT_AND_RESTART);
 			}
 			continue;
 		}
@@ -395,12 +395,12 @@ void do_child(int *fds)
 		if ( ( pool_config->child_max_connections > 0 ) &&
 			( connections_count >= pool_config->child_max_connections ) )
 		{
-			ereport(FATAL,
-                (return_code(2),
-					errmsg("child exiting, %d connections reached", pool_config->child_max_connections)));
+			ereport(LOG,
+					(errmsg("child exiting, %d connections reached", pool_config->child_max_connections)));
+			child_exit(POOL_EXIT_AND_RESTART);
 		}
 	}
-	child_exit(0);
+	child_exit(POOL_EXIT_NO_RESTART);
 }
 
 /* -------------------------------------------------------------------
@@ -933,7 +933,7 @@ static RETSIGTYPE die(int sig)
 
 		case SIGINT:	/* fast shutdown */
 		case SIGQUIT:	/* immediate shutdown */
-			child_exit(0);
+			child_exit(POOL_EXIT_NO_RESTART);
 			break;
 		default:
 			ereport(LOG,
@@ -1005,7 +1005,7 @@ static RETSIGTYPE authentication_timeout(int sig)
 	ereport(LOG,
 			(errmsg("authentication timeout")));
 
-	child_exit(1);
+	child_exit(POOL_EXIT_AND_RESTART);
 }
 
 static void enable_authentication_timeout(void)
@@ -1742,7 +1742,7 @@ void check_stop_request(void)
 	if (exit_request)
 	{
 		reset_variables();
-		child_exit(0);
+		child_exit(POOL_EXIT_NO_RESTART);
 	}
 }
 
@@ -1781,7 +1781,7 @@ static void check_restart_request(void)
 				 errdetail("restarting myself")));
 
 		pool_get_my_process_info()->need_to_restart = 0;
-		child_exit(1);
+		child_exit(POOL_EXIT_AND_RESTART);
 	}
 }
 
@@ -2055,8 +2055,8 @@ static void validate_backend_connectivity(int front_end_fd)
 			{
 				if ((cp = pool_open(front_end_fd,false)) == NULL)
 				{
-					close(front_end_fd); //todo
-					child_exit(1);
+					close(front_end_fd);
+					child_exit(POOL_EXIT_AND_RESTART);
 				}
 				sp = read_startup_packet(cp);
 				ereport(DEBUG1,

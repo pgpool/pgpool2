@@ -1490,7 +1490,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				free_string(msg);
 
 				degenerate_backend_set(victim_nodes, number_of_nodes);
-				child_exit(1);
+				child_exit(POOL_EXIT_AND_RESTART);
 			}
 			else
 			{
