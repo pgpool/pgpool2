@@ -2294,7 +2294,7 @@ static void wd_child_signal_handler(void)
 			if(WEXITSTATUS(status) == POOL_EXIT_FATAL)
 				ereport(LOG,
 						(errmsg("watchdog %s process with pid: %d exit with FATAL ERROR.",exiting_process_name, pid)));
-			else if(WEXITSTATUS(status) == POOL_EXIT_SUCCESS)
+			else if(WEXITSTATUS(status) == POOL_EXIT_NO_RESTART)
 				ereport(LOG,
 						(errmsg("watchdog %s process with pid: %d exit with SUCCESS.",exiting_process_name, pid)));
 		}

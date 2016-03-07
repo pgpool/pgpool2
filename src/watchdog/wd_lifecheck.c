@@ -140,7 +140,7 @@ static void reaper(void)
 			if(WEXITSTATUS(status) == POOL_EXIT_FATAL)
 				ereport(LOG,
 						(errmsg("lifecheck child process (%s) with pid: %d exit with FATAL ERROR.",proc_name, pid)));
-			else if(WEXITSTATUS(status) == POOL_EXIT_SUCCESS)
+			else if(WEXITSTATUS(status) == POOL_EXIT_NO_RESTART)
 			{
 				restart_child = false;
 				ereport(LOG,

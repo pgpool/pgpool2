@@ -858,7 +858,7 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 					(errmsg("failed to create a backend connection"),
 						 errdetail("not executing failover because fail_over_on_backend_error is off")));
 			}
-			child_exit(1);
+			child_exit(POOL_EXIT_AND_RESTART);
 		}
 
 		p->info[i].create_time = time(NULL);

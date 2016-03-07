@@ -211,7 +211,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				if (pool_config->fail_over_on_backend_error)
 				{
 					notice_backend_error(cp->db_node_id);
-					child_exit(1);
+					child_exit(POOL_EXIT_AND_RESTART);
                     /* we are in main process */
                     ereport(ERROR,
 						(errmsg("unable to read data from DB node %d",cp->db_node_id),
@@ -248,7 +248,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 #ifdef NOT_USED
 			    /* fatal error, notice to parent and exit */
 			    notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id));
-				child_exit(1);
+				child_exit(POOL_EXIT_AND_RESTART);
 #endif
 			}
 			else
@@ -355,7 +355,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 				if (pool_config->fail_over_on_backend_error)
 				{
 					notice_backend_error(cp->db_node_id);
-					child_exit(1);
+					child_exit(POOL_EXIT_AND_RESTART);
                     /* we are in main process */
                     ereport(ERROR,
                             (errmsg("unable to read data from DB node %d",cp->db_node_id),
@@ -387,7 +387,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 #ifdef NOT_USED
 			    /* fatal error, notice to parent and exit */
 			    notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id));
-				child_exit(1);
+				child_exit(POOL_EXIT_AND_RESTART);
 #endif
 			}
 			else
@@ -615,7 +615,7 @@ int pool_flush(POOL_CONNECTION *cp)
 					(errmsg("unable to flush data to backend"),
 						 errdetail("do not failover because I am the main process")));
 
-				child_exit(1);
+				child_exit(POOL_EXIT_AND_RESTART);
 				return -1;
 			}
 			else
@@ -658,7 +658,7 @@ int pool_flush_noerror(POOL_CONNECTION *cp)
             if (pool_config->fail_over_on_backend_error)
             {
                 notice_backend_error(cp->db_node_id);
-                child_exit(1);
+                child_exit(POOL_EXIT_AND_RESTART);
 				ereport(LOG,
 					(errmsg("unable to flush data to backend"),
 						 errdetail("do not failover because I am the main process")));
@@ -815,7 +815,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 			if (cp->isbackend)
 			{
 				notice_backend_error(cp->db_node_id);
-				child_exit(1);
+				child_exit(POOL_EXIT_AND_RESTART);
                 ereport(ERROR,
                         (errmsg("unable to read data from frontend"),
                          errdetail("socket read function returned -1")));

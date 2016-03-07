@@ -124,9 +124,12 @@ typedef enum
 #define FRONTEND_ERROR	23			/* transformed to ERROR at errstart */
 
  /* #define DEBUG DEBUG1 */	/* Backward compatibility with pre-7.3 */
-#define POOL_EXIT_SUCCESS	0	/* failure exit and child gets restarted*/
-#define POOL_EXIT_NOFATAL	1	/* failure exit and child gets restarted*/
-#define POOL_EXIT_FATAL		3	/* This exit code from child takes down the pgpool main with it */
+#define POOL_EXIT_NO_RESTART	0	/* child exiting with this error will not be
+									 * restarted by pgpool main process
+									 * but the pgpool main will remain unaffected by this */
+#define POOL_EXIT_AND_RESTART	1	/* child process exit with this error code will
+									 * be restarted by the pgpool main */
+#define POOL_EXIT_FATAL			3	/* This exit code from child also takes down the pgpool main with it */
 
 
 

@@ -2124,7 +2124,7 @@ static char* process_name_from_pid(pid_t pid)
  * terminating child but shutdowns the pgpool-II. This allow
  * the child process to inform parent process of fatal failures which needs
  * to be rectified (e.g startup failure) by user for smooth running of system.
- * Also the child exits with success status POOL_EXIT_SUCCESS does not gets
+ * Also the child exits with success status POOL_EXIT_NO_RESTART does not gets
  * restarted.
  */
 static void reaper(void)
@@ -2158,6 +2158,7 @@ static void reaper(void)
 		pid_t new_pid = 0;
 		bool shutdown_system = false;
 		bool restart_child = true;
+		bool found = false;
 		char *exiting_process_name = process_name_from_pid(pid);
 
 		/*
@@ -2171,7 +2172,7 @@ static void reaper(void)
 						(errmsg("%s process with pid: %d exit with FATAL ERROR. pgpool-II will be shutdown",exiting_process_name, pid)));
 				shutdown_system = true;
 			}
-			else if(WEXITSTATUS(status) == POOL_EXIT_SUCCESS)
+			else if(WEXITSTATUS(status) == POOL_EXIT_NO_RESTART)
 			{
 				ereport(DEBUG1,
 						(errmsg("%s process with pid: %d exit with SUCCESS. child will not be restarted",exiting_process_name, pid)));
@@ -2196,6 +2197,7 @@ static void reaper(void)
 		/* if exiting child process was PCP handler */
 		if (pid == pcp_pid)
 		{
+			found = true;
 			if(restart_child)
 			{
 				pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
@@ -2208,6 +2210,7 @@ static void reaper(void)
 		/* exiting process was worker process */
 		else if (pid == worker_pid)
 		{
+			found = true;
 			if(restart_child)
 			{
 				worker_pid = worker_fork_a_child();
@@ -2222,6 +2225,7 @@ static void reaper(void)
 		{
 			if (watchdog_pid == pid)
 			{
+				found = true;
 				if(restart_child)
 				{
 					watchdog_pid = initialize_watchdog();
@@ -2232,6 +2236,7 @@ static void reaper(void)
 			}
 			else if (wd_lifecheck_pid == pid)
 			{
+				found = true;
 				if(restart_child)
 				{
 					wd_lifecheck_pid = initialize_watchdog_lifecheck();
@@ -2241,13 +2246,17 @@ static void reaper(void)
 					wd_lifecheck_pid = 0;
 			}
 		}
-		else
+		/* we are not able to identify the exiting process yet.
+		 * check if the exiting process was child process (handling PG clients)
+		 */
+		if (found == false)
 		{
 			/* look for exiting child's pid */
 			for (i=0;i<pool_config->num_init_children;i++)
 			{
 				if (pid == process_info[i].pid)
 				{
+					found = true;
 					/* if found, fork a new child */
 					if (!switching && !exiting && restart_child)
 					{
@@ -2264,6 +2273,7 @@ static void reaper(void)
 		if(shutdown_system)
 			ereport(FATAL,
 				(errmsg("%s process exit with fatal error. exiting pgpool-II",exiting_process_name)));
+
 		else if(restart_child && new_pid)
 		{
 			/* Report if the child was restarted */

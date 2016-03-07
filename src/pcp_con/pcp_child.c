@@ -322,7 +322,7 @@ static void reaper(void)
 			if(WEXITSTATUS(status) == POOL_EXIT_FATAL)
 				ereport(LOG,
 						(errmsg("PCP worker process with pid: %d exit with FATAL ERROR.", pid)));
-			else if(WEXITSTATUS(status) == POOL_EXIT_SUCCESS)
+			else
 				ereport(LOG,
 						(errmsg("PCP process with pid: %d exit with SUCCESS.", pid)));
 		}

@@ -337,7 +337,7 @@ errstart(int elevel, const char *filename, int lineno,
 	if(elevel == FATAL && PG_exception_stack == NULL) /* This is startup failure. Take down main process with it */
 		edata->retcode = POOL_EXIT_FATAL;
 	else
-		edata->retcode = POOL_EXIT_NOFATAL;
+		edata->retcode = POOL_EXIT_AND_RESTART;
 	if (filename)
 	{
 		const char *slash;
