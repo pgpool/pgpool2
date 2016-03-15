@@ -1,0 +1,13 @@
+<!-- doc/src/sgml/history.sgml -->
+
+<sect1 id="history">
+ <title>A Brief History of <productname>pgpool-II</productname></title>
+
+ <indexterm zone="history">
+  <primary>history</primary>
+  <secondary>of pgpool-II</secondary>
+ </indexterm>
+ <para>
+ pgpool-II history...
+ </para>
+</sect1>

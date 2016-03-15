@@ -1,0 +1,9 @@
+<!-- doc/src/sgml/problems.sgml -->
+
+<sect1 id="bug-reporting">
+ <title>Bug Reporting Guidelines</title>
+
+ <para>
+  When you find a bug in <productname>pgpool-II</productname> ...
+ </para>
+</sect1>

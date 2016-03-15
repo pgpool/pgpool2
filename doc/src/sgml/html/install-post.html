@@ -1,0 +1,457 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Post-Installation Setup</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.5.0 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="pgpool-IIInstallation from Source Code"
+HREF="installation.html"><LINK
+REL="PREVIOUS"
+TITLE="Installation Procedure"
+HREF="install-procedure.html"><LINK
+REL="NEXT"
+TITLE="Supported Platforms"
+HREF="supported-platforms.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-03-15T07:35:30"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.5.0 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Installation Procedure"
+HREF="install-procedure.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="installation.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 2. <SPAN
+CLASS="PRODUCTNAME"
+>pgpool-II</SPAN
+>Installation from Source Code</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Supported Platforms"
+HREF="supported-platforms.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="INSTALL-POST"
+>2.5. Post-Installation Setup</A
+></H1
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN453"
+>2.5.1. Shared Libraries</A
+></H2
+><P
+>    On some systems with shared libraries
+    you need to tell the system how to find the newly installed
+    shared libraries.  The systems on which this is
+    <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>not</I
+></SPAN
+> necessary include
+    <SPAN
+CLASS="SYSTEMITEM"
+>FreeBSD</SPAN
+>,
+    <SPAN
+CLASS="SYSTEMITEM"
+>HP-UX</SPAN
+>,
+    <SPAN
+CLASS="SYSTEMITEM"
+>Linux</SPAN
+>,
+    <SPAN
+CLASS="SYSTEMITEM"
+>NetBSD</SPAN
+>, <SPAN
+CLASS="SYSTEMITEM"
+>OpenBSD</SPAN
+>, and
+    <SPAN
+CLASS="SYSTEMITEM"
+>Solaris</SPAN
+>.
+   </P
+><P
+>    The method to set the shared library search path varies between
+    platforms, but the most widely-used method is to set the
+    environment variable <TT
+CLASS="ENVAR"
+>LD_LIBRARY_PATH</TT
+> like so: In Bourne
+    shells (<TT
+CLASS="COMMAND"
+>sh</TT
+>, <TT
+CLASS="COMMAND"
+>ksh</TT
+>, <TT
+CLASS="COMMAND"
+>bash</TT
+>, <TT
+CLASS="COMMAND"
+>zsh</TT
+>):
+</P><PRE
+CLASS="PROGRAMLISTING"
+>LD_LIBRARY_PATH=/usr/local/pgsql/lib
+export LD_LIBRARY_PATH</PRE
+><P>
+    or in <TT
+CLASS="COMMAND"
+>csh</TT
+> or <TT
+CLASS="COMMAND"
+>tcsh</TT
+>:
+</P><PRE
+CLASS="PROGRAMLISTING"
+>setenv LD_LIBRARY_PATH /usr/local/pgsql/lib</PRE
+><P>
+    Replace <TT
+CLASS="LITERAL"
+>/usr/local/pgsql/lib</TT
+> with whatever you set
+    <TT
+CLASS="OPTION"
+><TT
+CLASS="LITERAL"
+>--libdir</TT
+></TT
+> to in <A
+HREF="install-procedure.html#CONFIGURE"
+>step 1</A
+>.
+    You should put these commands into a shell start-up file such as
+    <TT
+CLASS="FILENAME"
+>/etc/profile</TT
+> or <TT
+CLASS="FILENAME"
+>~/.bash_profile</TT
+>.  Some
+    good information about the caveats associated with this method can
+    be found at <A
+HREF="http://xahlee.org/UnixResource_dir/_/ldpath.html"
+TARGET="_top"
+>http://xahlee.org/UnixResource_dir/_/ldpath.html</A
+>.
+   </P
+><P
+>    On some systems it might be preferable to set the environment
+    variable <TT
+CLASS="ENVAR"
+>LD_RUN_PATH</TT
+> <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>before</I
+></SPAN
+>
+    building.
+   </P
+><P
+>    On <SPAN
+CLASS="SYSTEMITEM"
+>Cygwin</SPAN
+>, put the library
+    directory in the <TT
+CLASS="ENVAR"
+>PATH</TT
+> or move the
+    <TT
+CLASS="FILENAME"
+>.dll</TT
+> files into the <TT
+CLASS="FILENAME"
+>bin</TT
+>
+    directory.
+   </P
+><P
+>    If in doubt, refer to the manual pages of your system (perhaps
+    <TT
+CLASS="COMMAND"
+>ld.so</TT
+> or <TT
+CLASS="COMMAND"
+>rld</TT
+>). If you later
+    get a message like:
+</P><PRE
+CLASS="SCREEN"
+>psql: error in loading shared libraries
+libpq.so.2.1: cannot open shared object file: No such file or directory</PRE
+><P>
+    then this step was necessary.  Simply take care of it then.
+   </P
+><P
+>    
+    If you are on <SPAN
+CLASS="SYSTEMITEM"
+>Linux</SPAN
+> and you have root
+    access, you can run:
+</P><PRE
+CLASS="PROGRAMLISTING"
+>/sbin/ldconfig /usr/local/pgsql/lib</PRE
+><P>
+    (or equivalent directory) after installation to enable the
+    run-time linker to find the shared libraries faster.  Refer to the
+    manual page of <TT
+CLASS="COMMAND"
+>ldconfig</TT
+> for more information.  On
+    <SPAN
+CLASS="SYSTEMITEM"
+>FreeBSD</SPAN
+>, <SPAN
+CLASS="SYSTEMITEM"
+>NetBSD</SPAN
+>, and <SPAN
+CLASS="SYSTEMITEM"
+>OpenBSD</SPAN
+> the command is:
+</P><PRE
+CLASS="PROGRAMLISTING"
+>/sbin/ldconfig -m /usr/local/pgsql/lib</PRE
+><P>
+    instead.  Other systems are not known to have an equivalent
+    command.
+   </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN504"
+>2.5.2. Environment Variables</A
+></H2
+><P
+>    If you installed into <TT
+CLASS="FILENAME"
+>/usr/local/pgsql</TT
+> or some other
+    location that is not searched for programs by default, you should
+    add <TT
+CLASS="FILENAME"
+>/usr/local/pgsql/bin</TT
+> (or whatever you set
+    <TT
+CLASS="OPTION"
+><TT
+CLASS="LITERAL"
+>--bindir</TT
+></TT
+> to in <A
+HREF="install-procedure.html#CONFIGURE"
+>step 1</A
+>)
+    into your <TT
+CLASS="ENVAR"
+>PATH</TT
+>.  Strictly speaking, this is not
+    necessary, but it will make the use of <SPAN
+CLASS="PRODUCTNAME"
+>PostgreSQL</SPAN
+>
+    much more convenient.
+   </P
+><P
+>    To do this, add the following to your shell start-up file, such as
+    <TT
+CLASS="FILENAME"
+>~/.bash_profile</TT
+> (or <TT
+CLASS="FILENAME"
+>/etc/profile</TT
+>, if you
+    want it to affect all users):
+</P><PRE
+CLASS="PROGRAMLISTING"
+>PATH=/usr/local/pgsql/bin:$PATH
+export PATH</PRE
+><P>
+    If you are using <TT
+CLASS="COMMAND"
+>csh</TT
+> or <TT
+CLASS="COMMAND"
+>tcsh</TT
+>, then use this command:
+</P><PRE
+CLASS="PROGRAMLISTING"
+>set path = ( /usr/local/pgsql/bin $path )</PRE
+><P>
+   </P
+><P
+>    
+    To enable your system to find the <SPAN
+CLASS="APPLICATION"
+>man</SPAN
+>
+    documentation, you need to add lines like the following to a
+    shell start-up file unless you installed into a location that is
+    searched by default:
+</P><PRE
+CLASS="PROGRAMLISTING"
+>MANPATH=/usr/local/pgsql/man:$MANPATH
+export MANPATH</PRE
+><P>
+   </P
+><P
+>    The environment variables <TT
+CLASS="ENVAR"
+>PGHOST</TT
+> and <TT
+CLASS="ENVAR"
+>PGPORT</TT
+>
+    specify to client applications the host and port of the database
+    server, overriding the compiled-in defaults. If you are going to
+    run client applications remotely then it is convenient if every
+    user that plans to use the database sets <TT
+CLASS="ENVAR"
+>PGHOST</TT
+>.  This
+    is not required, however; the settings can be communicated via command
+    line options to most client programs.
+   </P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="install-procedure.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="supported-platforms.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Installation Procedure</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="installation.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Supported Platforms</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>
