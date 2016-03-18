@@ -208,4 +208,5 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY reindexdb          SYSTEM "reindexdb.sgml">
 <!ENTITY vacuumdb           SYSTEM "vacuumdb.sgml">
 -->
+<!ENTITY pcpCommonOptions    SYSTEM "pcp_common_options.sgml">
 <!ENTITY pcpNodeCount        SYSTEM "pcp_node_count.sgml">

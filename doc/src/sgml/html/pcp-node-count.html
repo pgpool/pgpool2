@@ -9,14 +9,14 @@ CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
 REV="MADE"
 HREF="mailto:pgsql-docs@postgresql.org"><LINK
 REL="HOME"
-TITLE="pgpool-II 3.5.0 Documentation"
+TITLE="pgpool-II 3.6 alpha1 Documentation"
 HREF="index.html"><LINK
 REL="UP"
 TITLE="PCP commands"
 HREF="pcp-commands.html"><LINK
 REL="PREVIOUS"
-TITLE="PCP commands"
-HREF="pcp-commands.html"><LINK
+TITLE="pcp_common_options"
+HREF="pcp-common-options.html"><LINK
 REL="NEXT"
 TITLE="Bibliography"
 HREF="biblio.html"><LINK
@@ -26,7 +26,7 @@ HREF="stylesheet.css"><META
 HTTP-EQUIV="Content-Type"
 CONTENT="text/html; charset=ISO-8859-1"><META
 NAME="creation"
-CONTENT="2016-03-15T07:35:30"></HEAD
+CONTENT="2016-03-18T23:36:16"></HEAD
 ><BODY
 CLASS="REFENTRY"
 ><DIV
@@ -44,7 +44,7 @@ ALIGN="center"
 VALIGN="bottom"
 ><A
 HREF="index.html"
->pgpool-II 3.5.0 Documentation</A
+>pgpool-II 3.6 alpha1 Documentation</A
 ></TH
 ></TR
 ><TR
@@ -53,8 +53,8 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="top"
 ><A
-TITLE="PCP commands"
-HREF="pcp-commands.html"
+TITLE="pcp_common_options"
+HREF="pcp-common-options.html"
 ACCESSKEY="P"
 >Prev</A
 ></TD
@@ -95,7 +95,7 @@ NAME="PCP-NODE-COUNT"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN572"
+NAME="AEN685"
 ></A
 ><H2
 >Name</H2
@@ -103,7 +103,7 @@ NAME="AEN572"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN575"
+NAME="AEN688"
 ></A
 ><H2
 >Synopsis</H2
@@ -116,18 +116,7 @@ CLASS="REPLACEABLE"
 ><I
 >option</I
 ></TT
->...]  [<TT
-CLASS="OPTION"
->--pgdata</TT
-> | <TT
-CLASS="OPTION"
->-D</TT
->]<TT
-CLASS="REPLACEABLE"
-><I
-> directory</I
-></TT
-> </P
+>...]</P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
@@ -148,84 +137,30 @@ CLASS="FILENAME"
 >. It does
   not distinguish between nodes status, ie attached/detached. ALL nodes are counted.
   </P
+><P
+>    Here is an example output:
+    </P><PRE
+CLASS="PROGRAMLISTING"
+>$ pcp_node_count -p 11001
+Password: 
+2
+    </PRE
+><P>
+  </P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN592"
+NAME="AEN700"
 ></A
 ><H2
 >Options</H2
 ><P
->    <P
-></P
-></P><DIV
-CLASS="VARIABLELIST"
-><DL
-><DT
-><TT
-CLASS="OPTION"
->-h <TT
-CLASS="REPLACEABLE"
-><I
->hostname</I
-></TT
-></TT
-><BR><TT
-CLASS="OPTION"
->--host=<TT
-CLASS="REPLACEABLE"
-><I
->hostname</I
-></TT
-></TT
-></DT
-><DD
-><P
->	 The host name of the machine on which the server is running. If the
-	 value begins with a slash, it is used as the directory for the Unix-domain socket.
-       </P
-></DD
-></DL
-></DIV
-><P>
+>     See <A
+HREF="pcp-common-options.html"
+>pcp_common_options</A
+>.
    </P
-></DIV
-><DIV
-CLASS="REFSECT1"
-><A
-NAME="AEN605"
-></A
-><H2
->Environment</H2
-><P
-></P
-><DIV
-CLASS="VARIABLELIST"
-><DL
-><DT
-><TT
-CLASS="ENVAR"
->PCPPASSFILE</TT
-></DT
-><DD
-><P
->      Specifies the path to pcp password file.
-     </P
-></DD
-></DL
-></DIV
-></DIV
-><DIV
-CLASS="REFSECT1"
-><A
-NAME="AEN613"
-></A
-><H2
->Notes</H2
-><P
->    Notes...
-  </P
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
@@ -243,7 +178,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="pcp-commands.html"
+HREF="pcp-common-options.html"
 ACCESSKEY="P"
 >Prev</A
 ></TD
@@ -271,7 +206,7 @@ ACCESSKEY="N"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->PCP commands</TD
+>pcp_common_options</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"

@@ -3,21 +3,16 @@
 <date>2016</date>
 
 <copyright>
- <year>1996-2016</year>
- <holder>The PostgreSQL Global Development Group</holder>
+ <year>2003-2016</year>
+ <holder>The Pgpool Global Development Group</holder>
 </copyright>
 
 <legalnotice id="legalnotice">
  <title>Legal Notice</title>
 
  <para>
-  <productname>PostgreSQL</productname> is Copyright &copy; 1996-2016
-  by the PostgreSQL Global Development Group.
- </para>
-
- <para>
-  <productname>Postgres95</productname> is Copyright &copy; 1994-5
-  by the Regents of the University of California.
+  <productname>Pgpool and Pgpool-II</productname> are Copyright &copy; 1996-2016
+  by the Pgpool Global Development Group.
  </para>
 
  <para>

@@ -52,7 +52,7 @@
 
 <indexentry>
   <primaryie>ldconfig,
-    <ulink url="install-post.html#AEN453" role="AEN495">Shared Libraries</ulink>
+    <ulink url="install-post.html#AEN451" role="AEN493">Shared Libraries</ulink>
   </primaryie>
 </indexentry>
 
@@ -61,7 +61,7 @@
 
 <indexentry>
   <primaryie>MANPATH,
-    <ulink url="install-post.html#AEN504" role="AEN525">Environment Variables</ulink>
+    <ulink url="install-post.html#AEN502" role="AEN523">Environment Variables</ulink>
   </primaryie>
 </indexentry>
 
@@ -70,7 +70,7 @@
 
 <indexentry>
   <primaryie>OpenSSL,
-    <ulink url="install-procedure.html" role="AEN283">Installation Procedure</ulink>
+    <ulink url="install-procedure.html" role="AEN281">Installation Procedure</ulink>
   </primaryie>
   <seealsoie>SSL</seealsoie>
 </indexentry>
@@ -80,7 +80,13 @@
 
 <indexentry>
   <primaryie>PATH,
-    <ulink url="install-post.html#AEN504" role="AEN506">Environment Variables</ulink>
+    <ulink url="install-post.html#AEN502" role="AEN504">Environment Variables</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>pcp_common_options,
+    <ulink url="pcp-common-options.html" role="pcp-common-options">pcp_common_options</ulink>
   </primaryie>
 </indexentry>
 
@@ -95,7 +101,7 @@
 
 <indexentry>
   <primaryie>regression test,
-    <ulink url="install-procedure.html" role="AEN404">Installation Procedure</ulink>
+    <ulink url="install-procedure.html" role="AEN402">Installation Procedure</ulink>
   </primaryie>
 </indexentry>
 
@@ -104,7 +110,7 @@
 
 <indexentry>
   <primaryie>shared library,
-    <ulink url="install-post.html#AEN453" role="AEN455">Shared Libraries</ulink>
+    <ulink url="install-post.html#AEN451" role="AEN453">Shared Libraries</ulink>
   </primaryie>
 </indexentry>
 
@@ -113,7 +119,7 @@
 
 <indexentry>
   <primaryie>VPATH,
-    <ulink url="install-procedure.html" role="AEN139">Installation Procedure</ulink>
+    <ulink url="install-procedure.html" role="AEN137">Installation Procedure</ulink>
   </primaryie>
 </indexentry>
 
