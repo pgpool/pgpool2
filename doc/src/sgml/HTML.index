@@ -1,5 +1,5 @@
 INDEXTERM history.html
-INDEXPOINT history.html#AEN48
+INDEXPOINT history.html#AEN91
 TITLE A Brief History of pgpool-II
 significance NORMAL
 ZONE history.html
@@ -8,66 +8,21 @@ PRIMARY history
 SECONDARY of pgpool-II
 /INDEXTERM
 INDEXTERM installation.html
-INDEXPOINT installation.html#AEN112
+INDEXPOINT installation.html#AEN166
 TITLE pgpool-IIInstallation from Source Code
 significance NORMAL
 ZONE installation.html
 TITLE pgpool-IIInstallation from Source Code
 PRIMARY installation
 /INDEXTERM
-INDEXTERM install-procedure.html
-INDEXPOINT install-procedure.html#AEN130
-TITLE Installation Procedure
-significance NORMAL
-ZONE install-procedure.html
-TITLE Installation Procedure
-PRIMARY configure
-/INDEXTERM
-INDEXTERM install-procedure.html
-INDEXPOINT install-procedure.html#AEN137
-TITLE Installation Procedure
-significance NORMAL
-PRIMARY VPATH
-/INDEXTERM
-INDEXTERM install-procedure.html
-INDEXPOINT install-procedure.html#AEN281
-TITLE Installation Procedure
+INDEXTERM install-source.html#INSTALL-PGPOOL
+INDEXPOINT install-source.html#AEN198
+TITLE Installing pgpool-II
 significance NORMAL
 PRIMARY OpenSSL
-SEEALSO SSL
-/INDEXTERM
-INDEXTERM install-procedure.html
-INDEXPOINT install-procedure.html#AEN402
-TITLE Installation Procedure
-significance NORMAL
-PRIMARY regression test
-/INDEXTERM
-INDEXTERM install-post.html#AEN451
-INDEXPOINT install-post.html#AEN453
-TITLE Shared Libraries
-significance NORMAL
-PRIMARY shared library
-/INDEXTERM
-INDEXTERM install-post.html#AEN451
-INDEXPOINT install-post.html#AEN493
-TITLE Shared Libraries
-significance NORMAL
-PRIMARY ldconfig
-/INDEXTERM
-INDEXTERM install-post.html#AEN502
-INDEXPOINT install-post.html#AEN504
-TITLE Environment Variables
-significance NORMAL
-PRIMARY PATH
-/INDEXTERM
-INDEXTERM install-post.html#AEN502
-INDEXPOINT install-post.html#AEN523
-TITLE Environment Variables
-significance NORMAL
-PRIMARY MANPATH
 /INDEXTERM
 INDEXTERM pcp-common-options.html
-INDEXPOINT pcp-common-options.html#AEN579
+INDEXPOINT pcp-common-options.html#AEN308
 TITLE pcp_common_options
 significance NORMAL
 ZONE pcp-common-options.html
@@ -75,7 +30,7 @@ TITLE pcp_common_options
 PRIMARY pcp_common_options
 /INDEXTERM
 INDEXTERM pcp-node-count.html
-INDEXPOINT pcp-node-count.html#AEN679
+INDEXPOINT pcp-node-count.html#AEN408
 TITLE pcp_node_count
 significance NORMAL
 ZONE pcp-node-count.html

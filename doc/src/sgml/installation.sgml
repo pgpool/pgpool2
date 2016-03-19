@@ -1,11 +1,4 @@
 <!-- doc/src/sgml/installation.sgml -->
-<!--
-
-Use </link> not just </> so INSTALL.html can be created without links
-to the main documentation.  Don't use <xref>; or if you must, wrap it
-in a standalone-ignore clause.
-
--->
 
 <chapter id="installation">
  <title><productname>pgpool-II</productname>Installation from Source Code</title>
@@ -15,1018 +8,258 @@ in a standalone-ignore clause.
  </indexterm>
 
  <para>
-   Blah blah...
+   This chapter describes the installtion
+   of <productname>pgpool-II</productname>.  First, installation from
+   source code distribution is explained. Then installtion from RPM
+   packages is explained.
  </para>
 
- <sect1 id="install-short">
-  <title>Short Version</title>
+ <sect1 id="install-source">
+  <title>Installing from the soruce code</title>
+  <para>
+    pgpool-II's source code and RPM packages for Red Hat Enterprise
+    Linux and CentOS can be downloaded from:
+    <ulink url="http://pgpool.net/mediawiki/index.php/Downloads">pgpool development page</ulink>
+  </para>
 
   <para>
-<synopsis>
+    Installing <productname>pgpool-II</productname> from source code
+    requires gcc 2.9 or higher, and GNU make. Also, pgpool-II links
+    with the libpq library, so the libpq library and its development
+    headers must be installed on the machine used to build pgpool-II.
+    Additionally the OpenSSL library and its development headers must
+    be present in order to enable OpenSSL support in pgpool-II.  Also
+    the libmemcached library and its development headers must be
+    present in order to enable memcached support
+    in <productname>pgpool-II</productname>.
+  </para>
+
+  <sect2 id="install-pgpool">
+    <title>Installing pgpool-II</title>
+    <para>
+      After extracting the source tarball, execute the configure script.
+<programlisting>
 ./configure
-make
-su
-make install
-adduser postgres
-mkdir /usr/local/pgsql/data
-chown postgres /usr/local/pgsql/data
-su - postgres
-/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
-/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;
-/usr/local/pgsql/bin/createdb test
-/usr/local/pgsql/bin/psql test
-</synopsis>
-   The long version is the rest of this chapter.
-  </para>
- </sect1>
-
-
- <sect1 id="install-requirements">
-  <title>Requirements</title>
-
-  <para>
-    Blah...
-  </para>
- </sect1>
-
- <sect1 id="install-getsource">
-  <title>Getting The Source</title>
-
-  <para>
-    Blah...
-  </para>
- </sect1>
-
- <sect1 id="install-procedure">
-  <title>Installation Procedure</title>
-
-  <procedure>
-
-  <step id="configure">
-   <title>Configuration</title>
-
-   <indexterm zone="configure">
-    <primary>configure</primary>
-   </indexterm>
-
-   <para>
-    The first step of the installation procedure is to configure the
-    source tree for your system and choose the options you would like.
-    This is done by running the <filename>configure</> script. For a
-    default installation simply enter:
-<screen>
-<userinput>./configure</userinput>
-</screen>
-    This script will run a number of tests to determine values for various
-    system dependent variables and detect any quirks of your
-    operating system, and finally will create several files in the
-    build tree to record what it found.  You can also run
-    <filename>configure</filename> in a directory outside the source
-    tree, if you want to keep the build directory separate.  This
-    procedure is also called a
-    <indexterm><primary>VPATH</primary></indexterm><firstterm>VPATH</firstterm>
-    build.  Here's how:
-<screen>
-<userinput>mkdir build_dir</userinput>
-<userinput>cd build_dir</userinput>
-<userinput>/path/to/source/tree/configure [options go here]</userinput>
-<userinput>make</userinput>
-</screen>
-   </para>
-
-   <para>
-    The default configuration will build the server and utilities, as
-    well as all client applications and interfaces that require only a
-    C compiler. All files will be installed under
-    <filename>/usr/local/pgsql</> by default.
-   </para>
-
-   <para>
-    You can customize the build and installation process by supplying one
-    or more of the following command line options to
-    <filename>configure</filename>:
-
-     <variablelist>
-      <varlistentry>
-       <term><option>--prefix=<replaceable>PREFIX</></option></term>
-       <listitem>
-        <para>
-         Install all files under the directory <replaceable>PREFIX</>
-         instead of <filename>/usr/local/pgsql</filename>. The actual
-         files will be installed into various subdirectories; no files
-         will ever be installed directly into the
-         <replaceable>PREFIX</> directory.
-        </para>
-
-        <para>
-         If you have special needs, you can also customize the
-         individual subdirectories with the following options. However,
-         if you leave these with their defaults, the installation will be
-         relocatable, meaning you can move the directory after
-         installation. (The <literal>man</> and <literal>doc</>
-         locations are not affected by this.)
-        </para>
-
-        <para>
-         For relocatable installs, you might want to use
-         <filename>configure</filename>'s <literal>--disable-rpath</>
-         option.  Also, you will need to tell the operating system how
-         to find the shared libraries.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--exec-prefix=<replaceable>EXEC-PREFIX</></option></term>
-       <listitem>
-        <para>
-         You can install architecture-dependent files under a
-         different prefix, <replaceable>EXEC-PREFIX</>, than what
-         <replaceable>PREFIX</> was set to. This can be useful to
-         share architecture-independent files between hosts. If you
-         omit this, then <replaceable>EXEC-PREFIX</> is set equal to
-         <replaceable>PREFIX</> and both architecture-dependent and
-         independent files will be installed under the same tree,
-         which is probably what you want.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--bindir=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         Specifies the directory for executable programs. The default
-         is <filename><replaceable>EXEC-PREFIX</>/bin</>, which
-         normally means <filename>/usr/local/pgsql/bin</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--sysconfdir=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         Sets the directory for various configuration files,
-         <filename><replaceable>PREFIX</>/etc</> by default.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--libdir=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         Sets the location to install libraries and dynamically loadable
-         modules. The default is
-         <filename><replaceable>EXEC-PREFIX</>/lib</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--includedir=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         Sets the directory for installing C and C++ header files. The
-         default is <filename><replaceable>PREFIX</>/include</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--datarootdir=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         Sets the root directory for various types of read-only data
-         files.  This only sets the default for some of the following
-         options.  The default is
-         <filename><replaceable>PREFIX</>/share</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--datadir=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         Sets the directory for read-only data files used by the
-         installed programs. The default is
-         <filename><replaceable>DATAROOTDIR</></>. Note that this has
-         nothing to do with where your database files will be placed.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--mandir=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         The man pages that come with <productname>PostgreSQL</> will be installed under
-         this directory, in their respective
-         <filename>man<replaceable>x</></> subdirectories.
-         The default is <filename><replaceable>DATAROOTDIR</>/man</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--docdir=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         Sets the root directory for installing documentation files,
-         except <quote>man</> pages.  This only sets the default for
-         the following options.  The default value for this option is
-         <filename><replaceable>DATAROOTDIR</>/doc/postgresql</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--htmldir=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         The HTML-formatted documentation for
-         <productname>PostgreSQL</productname> will be installed under
-         this directory.  The default is
-         <filename><replaceable>DATAROOTDIR</></>.
-        </para>
-       </listitem>
-      </varlistentry>
-     </variablelist>
-
-     <note>
-      <para>
-	Notes...
-      </para>
-     </note>
+</programlisting>
     </para>
 
     <para>
-     <variablelist>
+    If you want non-default values, some options can be set.
+    </para>
+
+    <variablelist>
 
       <varlistentry>
-       <term><option>--with-includes=<replaceable>DIRECTORIES</></option></term>
-       <listitem>
-        <para>
-         <replaceable>DIRECTORIES</> is a colon-separated list of
-         directories that will be added to the list the compiler
-         searches for header files. If you have optional packages
-         (such as GNU <application>Readline</>) installed in a non-standard
-         location,
-         you have to use this option and probably also the corresponding
-         <option>--with-libraries</> option.
-        </para>
-        <para>
-         Example: <literal>--with-includes=/opt/gnu/include:/usr/sup/include</>.
-        </para>
-       </listitem>
+	<term><option>--prefix=path</option></term>
+	<listitem>
+          <para>
+	    pgpool-II binaries and docs will be installed in this
+            directory. Default value is <filename>/usr/local</filename>.
+	  </para>
+	</listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-libraries=<replaceable>DIRECTORIES</></option></term>
-       <listitem>
-        <para>
-         <replaceable>DIRECTORIES</> is a colon-separated list of
-         directories to search for libraries. You will probably have
-         to use this option (and the corresponding
-         <option>--with-includes</> option) if you have packages
-         installed in non-standard locations.
-        </para>
-        <para>
-         Example: <literal>--with-libraries=/opt/gnu/lib:/usr/sup/lib</>.
-        </para>
-       </listitem>
+	<term><option>--with-pgsql=path</option></term>
+	<listitem>
+          <para>
+	    The top directory where PostgreSQL's client libraries are
+            installed. Default value is provided by <command>pg_config</command>.
+	  </para>
+	</listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-openssl</option>
+	<term><option>--with-openssl</option></term>
        <indexterm>
         <primary>OpenSSL</primary>
-        <seealso>SSL</seealso>
        </indexterm>
-       </term>
-       <listitem>
-        <para>
-         Build with support for <acronym>SSL</> (encrypted)
-         connections. This requires the <productname>OpenSSL</>
-         package to be installed.  <filename>configure</> will check
-         for the required header files and libraries to make sure that
-         your <productname>OpenSSL</> installation is sufficient
-         before proceeding.
-        </para>
-       </listitem>
+	<listitem>
+          <para>
+	   <productname>pgpool-II</productname> binaries will be built
+           with <productname>OpenSSL</productname>
+           support.  <productname>OpenSSL</productname> support is
+           disabled by default.
+	  </para>
+	</listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--enable-debug</option></term>
-       <listitem>
-        <para>
-         Compiles all programs and libraries with debugging symbols.
-         This means that you can run the programs in a debugger
-         to analyze problems. This enlarges the size of the installed
-         executables considerably, and on non-GCC compilers it usually
-         also disables compiler optimization, causing slowdowns. However,
-         having the symbols available is extremely helpful for dealing
-         with any problems that might arise.  Currently, this option is
-         recommended for production installations only if you use GCC.
-         But you should always have it on if you are doing development work
-         or running a beta version.
-        </para>
-       </listitem>
+	<term><option>--enable-sequence-lock</option></term>
+	<listitem>
+          <para>
+	    Use insert_lock compatible
+            with <productname>pgpool-II</productname> 3.0 series
+            (until 3.0.4).  <productname>pgpool-II</productname> locks
+            against a row in the sequence
+            table. <productname>PostgreSQL</productname> 8.2 or later
+            which was released after June 2011 cannot use this lock
+            method.
+	  </para>
+	</listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--enable-profiling</option></term>
-       <listitem>
-        <para>
-         If using GCC, all programs and libraries are compiled so they
-         can be profiled.  On backend exit, a subdirectory will be created
-         that contains the <filename>gmon.out</> file for use in profiling.
-         This option is for use only with GCC and when doing development work.
-        </para>
-       </listitem>
+	<term><option>--enable-table-lock</option></term>
+	<listitem>
+          <para>
+	    Use insert_lock compatible
+            with <productname>pgpool-II</productname> 2.2 and 2.3
+            series.  <productname>pgpool-II</productname> locks
+            against the insert target table.  This lock method is
+            deprecated because it causes a lock conflict
+            with <command>VACUUM</command>.
+	  </para>
+	</listitem>
       </varlistentry>
 
-     </variablelist>
-    </para>
+      <varlistentry>
+	<term><option>--with-memcached=path</option></term>
+	<listitem>
+          <para>
+	    <productname>pgpool-II</productname> binaries will use memcached for in
+          memory query cache.  You have to
+          install <ulink url="http://libmemcached.org/libMemcached.html">libmemcached</ulink>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
 
     <para>
-     If you prefer a C compiler different from the one
-     <filename>configure</filename> picks, you can set the
-     environment variable <envar>CC</> to the program of your choice.
-     By default, <filename>configure</filename> will pick
-     <filename>gcc</filename> if available, else the platform's
-     default (usually <filename>cc</>).  Similarly, you can override the
-     default compiler flags if needed with the <envar>CFLAGS</envar> variable.
+      <programlisting>
+make
+make install
+      </programlisting>
+      will install pgpool-II. (If you use Solaris or FreeBSD, replace make with gmake)
     </para>
 
-    <para>
-     You can specify environment variables on the
-     <filename>configure</filename> command line, for example:
-<screen>
-<userinput>./configure CC=/opt/bin/gcc CFLAGS='-O2 -pipe'</>
-</screen>
-    </para>
-
-    <para>
-     Here is a list of the significant variables that can be set in
-     this manner:
-
-     <variablelist>
-      <varlistentry>
-       <term><envar>BISON</envar></term>
-       <listitem>
-        <para>
-         Bison program
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>CC</envar></term>
-       <listitem>
-        <para>
-         C compiler
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>CFLAGS</envar></term>
-       <listitem>
-        <para>
-         options to pass to the C compiler
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>CPP</envar></term>
-       <listitem>
-        <para>
-         C preprocessor
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>CPPFLAGS</envar></term>
-       <listitem>
-        <para>
-         options to pass to the C preprocessor
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>DTRACE</envar></term>
-       <listitem>
-        <para>
-         location of the <command>dtrace</command> program
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>DTRACEFLAGS</envar></term>
-       <listitem>
-        <para>
-         options to pass to the <command>dtrace</command> program
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>FLEX</envar></term>
-       <listitem>
-        <para>
-         Flex program
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>LDFLAGS</envar></term>
-       <listitem>
-        <para>
-         options to use when linking either executables or shared libraries
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>LDFLAGS_EX</envar></term>
-       <listitem>
-        <para>
-         additional options for linking executables only
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>LDFLAGS_SL</envar></term>
-       <listitem>
-        <para>
-         additional options for linking shared libraries only
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><envar>XML2_CONFIG</envar></term>
-       <listitem>
-        <para>
-         <command>xml2-config</command> program used to locate the
-         libxml installation.
-        </para>
-       </listitem>
-      </varlistentry>
-     </variablelist>
-    </para>
-
-    <note>
-     <para>
-      When developing code inside the server, it is recommended to
-      use the configure options <option>--enable-cassert</> (which
-      turns on many run-time error checks) and <option>--enable-debug</>
-      (which improves the usefulness of debugging tools).
-     </para>
-
-     <para>
-      If using GCC, it is best to build with an optimization level of
-      at least <option>-O1</>, because using no optimization
-      (<option>-O0</>) disables some important compiler warnings (such
-      as the use of uninitialized variables).  However, non-zero
-      optimization levels can complicate debugging because stepping
-      through compiled code will usually not match up one-to-one with
-      source code lines.  If you get confused while trying to debug
-      optimized code, recompile the specific files of interest with
-      <option>-O0</>.  An easy way to do this is by passing an option
-      to <application>make</>: <command>make PROFILE=-O0 file.o</>.
-     </para>
-    </note>
-   </step>
-
-  <step id="build">
-   <title>Build</title>
-
-   <para>
-    To start the build, type:
-<screen>
-<userinput>make</userinput>
-</screen>
-    (Remember to use <acronym>GNU</> <application>make</>.) The build
-    will take a few minutes depending on your
-    hardware. The last line displayed should be:
-<screen>
-All of PostgreSQL is successfully made. Ready to install.
-</screen>
-   </para>
-
-  <para>
-   If you want to build everything that can be built, including the
-   documentation (HTML and man pages), and the additional modules
-   (<filename>contrib</filename>), type instead:
-<screen>
-<userinput>make world</userinput>
-</screen>
-   The last line displayed should be:
-<screen>
-PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
-</screen>
-   </para>
-  </step>
-
-  <step>
-   <title>Regression Tests</title>
-
-   <indexterm>
-    <primary>regression test</primary>
-   </indexterm>
-
-   <para>
-     Description about the regression test...
-   </para>
-  </step>
-
-  <step id="install">
-   <title>Installing the Files</title>
-
-   <para>
-    To install <productname>pgpool-II</> enter:
-<screen>
-<userinput>make install</userinput>
-</screen>
-    This will install files into the directories that were specified
-    in <xref linkend="configure">. Make sure that you have appropriate
-    permissions to write into that area. Normally you need to do this
-    step as root. Alternatively, you can create the target
-    directories in advance and arrange for appropriate permissions to
-    be granted.
-   </para>
-
-   <para>
-    To install the documentation (HTML and man pages), enter:
-<screen>
-<userinput>make install-docs</userinput>
-</screen>
-   </para>
-
-   <para>
-    If you built the world above, type instead:
-<screen>
-<userinput>make install-world</userinput>
-</screen>
-    This also installs the documentation.
-   </para>
-
-   <para>
-    You can use <literal>make install-strip</literal> instead of
-    <literal>make install</literal> to strip the executable files and
-    libraries as they are installed.  This will save some space.  If
-    you built with debugging support, stripping will effectively
-    remove the debugging support, so it should only be done if
-    debugging is no longer needed.  <literal>install-strip</literal>
-    tries to do a reasonable job saving space, but it does not have
-    perfect knowledge of how to strip every unneeded byte from an
-    executable file, so if you want to save all the disk space you
-    possibly can, you will have to do manual work.
-   </para>
-
-   <para>
-    The standard installation provides all the header files needed for client
-    application development as well as for server-side program
-    development, such as custom functions or data types written in C.
-    (Prior to <productname>PostgreSQL</> 8.0, a separate <literal>make
-    install-all-headers</> command was needed for the latter, but this
-    step has been folded into the standard install.)
-   </para>
-
-   <formalpara>
-    <title>Client-only installation:</title>
-    <para>
-     If you want to install only the client applications and
-     interface libraries, then you can use these commands:
-<screen>
-<userinput>make -C src/bin install</>
-<userinput>make -C src/include install</>
-<userinput>make -C src/interfaces install</>
-<userinput>make -C doc install</>
-</screen>
-    <filename>src/bin</> has a few binaries for server-only use,
-    but they are small.
-    </para>
-   </formalpara>
-  </step>
-  </procedure>
-
-  <formalpara>
-   <title>Uninstallation:</title>
-   <para>
-    To undo the installation use the command <command>make
-    uninstall</>. However, this will not remove any created directories.
-   </para>
-  </formalpara>
-
-  <formalpara>
-   <title>Cleaning:</title>
-
-   <para>
-    After the installation you can free disk space by removing the built
-    files from the source tree with the command <command>make
-    clean</>. This will preserve the files made by the <command>configure</command>
-    program, so that you can rebuild everything with <command>make</>
-    later on. To reset the source tree to the state in which it was
-    distributed, use <command>make distclean</>. If you are going to
-    build for several platforms within the same source tree you must do
-    this and re-configure for each platform.  (Alternatively, use
-    a separate build tree for each platform, so that the source tree
-    remains unmodified.)
-   </para>
-  </formalpara>
-
-  <para>
-   If you perform a build and then discover that your <command>configure</>
-   options were wrong, or if you change anything that <command>configure</>
-   investigates (for example, software upgrades), then it's a good
-   idea to do <command>make distclean</> before reconfiguring and
-   rebuilding.  Without this, your changes in configuration choices
-   might not propagate everywhere they need to.
-  </para>
- </sect1>
-
- <sect1 id="install-post">
-  <title>Post-Installation Setup</title>
-
-  <sect2>
-   <title>Shared Libraries</title>
-
-   <indexterm>
-    <primary>shared library</primary>
-   </indexterm>
-
-   <para>
-    On some systems with shared libraries
-    you need to tell the system how to find the newly installed
-    shared libraries.  The systems on which this is
-    <emphasis>not</emphasis> necessary include
-    <systemitem class="osname">FreeBSD</>,
-    <systemitem class="osname">HP-UX</>,
-    <systemitem class="osname">Linux</>,
-    <systemitem class="osname">NetBSD</>, <systemitem
-    class="osname">OpenBSD</>, and
-    <systemitem class="osname">Solaris</>.
-   </para>
-
-   <para>
-    The method to set the shared library search path varies between
-    platforms, but the most widely-used method is to set the
-    environment variable <envar>LD_LIBRARY_PATH</> like so: In Bourne
-    shells (<command>sh</>, <command>ksh</>, <command>bash</>, <command>zsh</>):
-<programlisting>
-LD_LIBRARY_PATH=/usr/local/pgsql/lib
-export LD_LIBRARY_PATH
-</programlisting>
-    or in <command>csh</> or <command>tcsh</>:
-<programlisting>
-setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
-</programlisting>
-    Replace <literal>/usr/local/pgsql/lib</> with whatever you set
-    <option><literal>--libdir</></> to in <xref linkend="configure">.
-    You should put these commands into a shell start-up file such as
-    <filename>/etc/profile</> or <filename>~/.bash_profile</>.  Some
-    good information about the caveats associated with this method can
-    be found at <ulink
-    url="http://xahlee.org/UnixResource_dir/_/ldpath.html"></ulink>.
-   </para>
-
-   <para>
-    On some systems it might be preferable to set the environment
-    variable <envar>LD_RUN_PATH</envar> <emphasis>before</emphasis>
-    building.
-   </para>
-
-   <para>
-    On <systemitem class="osname">Cygwin</systemitem>, put the library
-    directory in the <envar>PATH</envar> or move the
-    <filename>.dll</filename> files into the <filename>bin</filename>
-    directory.
-   </para>
-
-   <para>
-    If in doubt, refer to the manual pages of your system (perhaps
-    <command>ld.so</command> or <command>rld</command>). If you later
-    get a message like:
-<screen>
-psql: error in loading shared libraries
-libpq.so.2.1: cannot open shared object file: No such file or directory
-</screen>
-    then this step was necessary.  Simply take care of it then.
-   </para>
-
-   <para>
-    <indexterm>
-     <primary>ldconfig</primary>
-    </indexterm>
-    If you are on <systemitem class="osname">Linux</> and you have root
-    access, you can run:
-<programlisting>
-/sbin/ldconfig /usr/local/pgsql/lib
-</programlisting>
-    (or equivalent directory) after installation to enable the
-    run-time linker to find the shared libraries faster.  Refer to the
-    manual page of <command>ldconfig</> for more information.  On
-    <systemitem class="osname">FreeBSD</>, <systemitem
-    class="osname">NetBSD</>, and <systemitem
-    class="osname">OpenBSD</> the command is:
-<programlisting>
-/sbin/ldconfig -m /usr/local/pgsql/lib
-</programlisting>
-    instead.  Other systems are not known to have an equivalent
-    command.
-   </para>
   </sect2>
 
-  <sect2>
-   <title>Environment Variables</title>
+  <sect2 id="install-pgpool-recovery">
+    <title>Installing pgpool_recovery</title>
+    <para>
+      This is required all <productname>pgpool-II</productname>
+      installation.
+      <programlisting>
+$ cd pgpool-II-x.x.x/sql/pgpool-recovery
+$ make
+$ make install
+      </programlisting>
+After this:
+      <programlisting>
+$ psql template1
+=# CREATE EXTENSION pgpool_recovery;
+      </programlisting>
 
-   <indexterm>
-    <primary><envar>PATH</envar></primary>
-   </indexterm>
+      or
+      <programlisting>
+$ psql -f pgpool-recovery.sql template1
+      </programlisting>
 
-   <para>
-    If you installed into <filename>/usr/local/pgsql</> or some other
-    location that is not searched for programs by default, you should
-    add <filename>/usr/local/pgsql/bin</> (or whatever you set
-    <option><literal>--bindir</></> to in <xref linkend="configure">)
-    into your <envar>PATH</>.  Strictly speaking, this is not
-    necessary, but it will make the use of <productname>PostgreSQL</>
-    much more convenient.
-   </para>
+    </para>
 
-   <para>
-    To do this, add the following to your shell start-up file, such as
-    <filename>~/.bash_profile</> (or <filename>/etc/profile</>, if you
-    want it to affect all users):
-<programlisting>
-PATH=/usr/local/pgsql/bin:$PATH
-export PATH
-</programlisting>
-    If you are using <command>csh</> or <command>tcsh</>, then use this command:
-<programlisting>
-set path = ( /usr/local/pgsql/bin $path )
-</programlisting>
-   </para>
+    <para>
+      With <productname>pgpool-II</productname> 3.3 or later, you need
+      to tweak <filename>postgresql.conf</filename>.  Suppose the path
+      to <command>pg_ctl</command>
+      is <filename>/usr/local/pgsql/bin/pg_ctl</filename>. Then you
+      add following to <filename>postgresql.conf</filename>.
 
-   <para>
-    <indexterm>
-     <primary><envar>MANPATH</envar></primary>
-    </indexterm>
-    To enable your system to find the <application>man</>
-    documentation, you need to add lines like the following to a
-    shell start-up file unless you installed into a location that is
-    searched by default:
-<programlisting>
-MANPATH=/usr/local/pgsql/man:$MANPATH
-export MANPATH
-</programlisting>
-   </para>
+      <programlisting>
+pgpool.pg_ctl = '/usr/local/pgsql/bin/pg_ctl'
+      </programlisting>
 
-   <para>
-    The environment variables <envar>PGHOST</> and <envar>PGPORT</>
-    specify to client applications the host and port of the database
-    server, overriding the compiled-in defaults. If you are going to
-    run client applications remotely then it is convenient if every
-    user that plans to use the database sets <envar>PGHOST</>.  This
-    is not required, however; the settings can be communicated via command
-    line options to most client programs.
-   </para>
+      Probably you want to execute following after this:
+      <programlisting>
+$ pg_ctl reload -D /usr/local/pgsql/data
+      </programlisting>
+
+    </para>
   </sect2>
- </sect1>
 
-
-<![%standalone-include;[
- <sect1 id="install-getting-started">
-  <title>Getting Started</title>
-
-  <para>
-   The following is a quick summary of how to get <productname>PostgreSQL</> up and
-   running once installed. The main documentation contains more information.
-  </para>
-
-  <procedure>
-   <step>
+  <sect2 id="install-pgpool-regclass">
+    <title>Installing pgpool-regclass</title>
     <para>
-     Create a user account for the <productname>PostgreSQL</>
-     server. This is the user the server will run as. For production
-     use you should create a separate, unprivileged account
-     (<quote>postgres</> is commonly used). If you do not have root
-     access or just want to play around, your own user account is
-     enough, but running the server as root is a security risk and
-     will not work.
-<screen>
-<userinput>adduser postgres</>
-</screen>
-    </para>
-   </step>
-
-   <step>
-    <para>
-     Create a database installation with the <command>initdb</>
-     command. To run <command>initdb</> you must be logged in to your
-     <productname>PostgreSQL</> server account. It will not work as
-     root.
-<screen>
-root# <userinput>mkdir /usr/local/pgsql/data</>
-root# <userinput>chown postgres /usr/local/pgsql/data</>
-root# <userinput>su - postgres</>
-postgres$ <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
-</screen>
+      If you are using <productname>PostgreSQL</productname> 9.4 or
+      later, you can skip this section.
     </para>
 
     <para>
-     The <option>-D</> option specifies the location where the data
-     will be stored. You can use any path you want, it does not have
-     to be under the installation directory. Just make sure that the
-     server account can write to the directory (or create it, if it
-     doesn't already exist) before starting <command>initdb</>, as
-     illustrated here.
-    </para>
-   </step>
-
-   <step>
-    <para>
-     At this point, if you did not use the <command>initdb</> <literal>-A</>
-     option, you might want to modify <filename>pg_hba.conf</> to control
-     local access to the server before you start it.  The default is to
-     trust all local users.
-    </para>
-   </step>
-
-   <step>
-    <para>
-     The previous <command>initdb</> step should have told you how to
-     start up the database server. Do so now. The command should look
-     something like:
-<programlisting>
-/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data
-</programlisting>
-     This will start the server in the foreground. To put the server
-     in the background use something like:
-<programlisting>
-nohup /usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data \
-    &lt;/dev/null &gt;&gt;server.log 2&gt;&amp;1 &lt;/dev/null &amp;
-</programlisting>
+      If you are using <productname>PostgreSQL</productname> 8.0
+      to <productname>PostgreSQL</productname> 9.3, installing
+      <function>pgpool_regclass</function> function on
+      all <productname>PostgreSQL</productname> to be accessed by
+      <productname>pgpool-II</productname> is strongly recommended, as
+      it is used internally by <productname>pgpool-II</productname>.
+      Without this, handling of duplicate table names in different
+      schema might cause trouble (temporary tables aren't a problem).
+      If you are using <productname>PostgreSQL</productname> 9.4 or
+      later, installing <function>pgpool_regclass</function> is not
+      necessary since an equivalent (<function>to_regclass</function>)
+      is included in the <productname>PostgreSQL</productname> core.
     </para>
 
     <para>
-     To stop a server running in the background you can type:
-<programlisting>
-kill `cat /usr/local/pgsql/data/postmaster.pid`
-</programlisting>
-    </para>
-   </step>
+      <programlisting>
+$ cd pgpool-II-x.x.x/sql/pgpool-regclass
+$ make
+$ make install
+      </programlisting>
+      After this:
+      <programlisting>
+$ psql -f pgpool-regclass.sql template1
+      </programlisting>
 
-   <step>
+      or
+
+      <programlisting>
+$ psql template1
+=# CREATE EXTENSION pgpool_regclass;
+      </programlisting>
+
+      Executing <filename>pgpool-regclass.sql</filename>
+      or <command>CREATE EXTENSION</command> should be performed on
+      every databases accessed
+      with <productname>pgpool-II</productname>.  You do not need to
+      do this for a database created after the execution of
+      <command>psql -f pgpool-regclass.sql template1</command>
+      or <command>CREATE EXTENSION</command>, as this template
+      database will be cloned to create new databases.
+    </para>
+
+  </sect2>
+
+  <sect2 id="create-installlock-table">
+    <title>Creating insert_lock table</title>
     <para>
-     Create a database:
-<screen>
-<userinput>createdb testdb</>
-</screen>
-     Then enter:
-<screen>
-<userinput>psql testdb</>
-</screen>
-     to connect to that database. At the prompt you can enter SQL
-     commands and start experimenting.
+      If you plan to use native replication mode and insert_lock,
+      creating <structname>pgpool_catalog.insert_lock</structname>
+      table for mutual exclusion is strongly recommended.  Without
+      this, insert_lock works so far. However in that
+      case <productname>pgpool-II</productname> locks against the
+      insert target table. This behavior is same
+      as <productname>pgpool-II</productname> 2.2 and 2.3 series. The
+      table lock conflicts
+      with <command>VACUUM</command>. So <command>INSERT</command>
+      processing may be thereby kept waiting for a long time.
+
+      <programlisting>
+	$ cd pgpool-II-x.x.x/sql
+	$ psql -f insert_lock.sql template1
+      </programlisting>
+
     </para>
-   </step>
-  </procedure>
- </sect1>
 
- <sect1 id="install-whatnow">
-  <title>What Now?</title>
-
-  <para>
-   <itemizedlist>
-    <listitem>
-     <para>
-      The <productname>PostgreSQL</> distribution contains a
-      comprehensive documentation set, which you should read sometime.
-      After installation, the documentation can be accessed by
-      pointing your browser to
-      <filename>/usr/local/pgsql/doc/html/index.html</>, unless you
-      changed the installation directories.
-     </para>
-
-     <para>
-      The first few chapters of the main documentation are the Tutorial,
-      which should be your first reading if you are completely new to
-      <acronym>SQL</> databases.  If you are familiar with database
-      concepts then you want to proceed with part on server
-      administration, which contains information about how to set up
-      the database server, database users, and authentication.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Usually, you will want to modify your computer so that it will
-      automatically start the database server whenever it boots. Some
-      suggestions for this are in the documentation.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Run the regression tests against the installed server (using
-      <command>make installcheck</command>). If you didn't run the
-      tests before installation, you should definitely do it now. This
-      is also explained in the documentation.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      By default, <productname>PostgreSQL</> is configured to run on
-      minimal hardware.  This allows it to start up with almost any
-      hardware configuration. The default configuration is, however,
-      not designed for optimum performance. To achieve optimum
-      performance, several server parameters must be adjusted, the two
-      most common being <varname>shared_buffers</varname> and
-      <varname>work_mem</varname>.
-      Other parameters mentioned in the documentation also affect
-      performance.
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
- </sect1>
-]]>
-
-
- <sect1 id="supported-platforms">
-  <title>Supported Platforms</title>
-
-  <para>
-   A platform (that is, a CPU architecture and operating system combination)
-   is considered supported by the <productname>PostgreSQL</> development
-   community if the code contains provisions to work on that platform and
-   it has recently been verified to build and pass its regression tests
-   on that platform.  Currently, most testing of platform compatibility
-   is done automatically by test machines in the
-   <ulink url="http://buildfarm.postgresql.org/">PostgreSQL Build Farm</ulink>.
-   If you are interested in using <productname>PostgreSQL</> on a platform
-   that is not represented in the build farm, but on which the code works
-   or can be made to work, you are strongly encouraged to set up a build
-   farm member machine so that continued compatibility can be assured.
-  </para>
-
-  <para>
-   In general, <productname>PostgreSQL</> can be expected to work on
-   these CPU architectures: x86, x86_64, IA64, PowerPC,
-   PowerPC 64, S/390, S/390x, Sparc, Sparc 64, ARM, MIPS, MIPSEL, M68K,
-   and PA-RISC.  Code support exists for M32R and VAX, but these
-   architectures are not known to have been tested recently.  It is often
-   possible to build on an unsupported CPU type by configuring with
-   <option>--disable-spinlocks</option>, but performance will be poor.
-  </para>
-
-  <para>
-   <productname>PostgreSQL</> can be expected to work on these operating
-   systems: Linux (all recent distributions), Windows (Win2000 SP4 and later),
-   FreeBSD, OpenBSD, NetBSD, OS X, AIX, HP/UX, Solaris,
-   and UnixWare.  Other Unix-like systems may also work but are not currently
-   being tested.  In most cases, all CPU architectures supported by
-   a given operating system will work.  Look in
-   the <xref linkend="installation-platform-notes"> below to see if
-   there is information
-   specific to your operating system, particularly if using an older system.
-  </para>
-
-  <para>
-   If you have installation problems on a platform that is known
-   to be supported according to recent build farm results, please report
-   it to <email>pgsql-bugs@postgresql.org</email>.  If you are interested
-   in porting <productname>PostgreSQL</> to a new platform,
-   <email>pgsql-hackers@postgresql.org</email> is the appropriate place
-   to discuss that.
-  </para>
- </sect1>
-
- <sect1 id="installation-platform-notes">
-  <title>Platform-specific Notes</title>
-
-  <para>
-   This section documents additional platform-specific issues
-   regarding the installation and setup of <productname>pgpool-II</>.
-  </para>
-
-  <para>
-   Platforms that are not covered here have no known platform-specific
-   installation issues.
-  </para>
+    <para>
+      Executing <filename>insert_lock.sql</filename> should be
+      performed on every databases accessed
+      with <productname>pgpool-II</productname>.  You do not need to
+      do this for a database created after the execution of
+      <command>psql -f insert_lock.sql template1</command>, as this
+      template database will be cloned to create new databases.
+    </para>
+  </sect2>
 
  </sect1>
 

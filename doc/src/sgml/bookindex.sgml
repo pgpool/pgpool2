@@ -19,15 +19,6 @@
       sequences of pages into a range.
 -->
 
-<indexdiv><title>C</title>
-
-<indexentry>
-  <primaryie>configure,
-    <ulink url="install-procedure.html" role="install-procedure">Installation Procedure</ulink>
-  </primaryie>
-</indexentry>
-
-</indexdiv>
 <indexdiv><title>H</title>
 
 <indexentry>
@@ -48,41 +39,16 @@
 </indexentry>
 
 </indexdiv>
-<indexdiv><title>L</title>
-
-<indexentry>
-  <primaryie>ldconfig,
-    <ulink url="install-post.html#AEN451" role="AEN493">Shared Libraries</ulink>
-  </primaryie>
-</indexentry>
-
-</indexdiv>
-<indexdiv><title>M</title>
-
-<indexentry>
-  <primaryie>MANPATH,
-    <ulink url="install-post.html#AEN502" role="AEN523">Environment Variables</ulink>
-  </primaryie>
-</indexentry>
-
-</indexdiv>
 <indexdiv><title>O</title>
 
 <indexentry>
   <primaryie>OpenSSL,
-    <ulink url="install-procedure.html" role="AEN281">Installation Procedure</ulink>
+    <ulink url="install-source.html#INSTALL-PGPOOL" role="AEN198">Installing pgpool-II</ulink>
   </primaryie>
-  <seealsoie>SSL</seealsoie>
 </indexentry>
 
 </indexdiv>
 <indexdiv><title>P</title>
-
-<indexentry>
-  <primaryie>PATH,
-    <ulink url="install-post.html#AEN502" role="AEN504">Environment Variables</ulink>
-  </primaryie>
-</indexentry>
 
 <indexentry>
   <primaryie>pcp_common_options,
@@ -93,33 +59,6 @@
 <indexentry>
   <primaryie>pcp_node_count,
     <ulink url="pcp-node-count.html" role="pcp-node-count">pcp_node_count</ulink>
-  </primaryie>
-</indexentry>
-
-</indexdiv>
-<indexdiv><title>R</title>
-
-<indexentry>
-  <primaryie>regression test,
-    <ulink url="install-procedure.html" role="AEN402">Installation Procedure</ulink>
-  </primaryie>
-</indexentry>
-
-</indexdiv>
-<indexdiv><title>S</title>
-
-<indexentry>
-  <primaryie>shared library,
-    <ulink url="install-post.html#AEN451" role="AEN453">Shared Libraries</ulink>
-  </primaryie>
-</indexentry>
-
-</indexdiv>
-<indexdiv><title>V</title>
-
-<indexentry>
-  <primaryie>VPATH,
-    <ulink url="install-procedure.html" role="AEN137">Installation Procedure</ulink>
   </primaryie>
 </indexentry>
 
