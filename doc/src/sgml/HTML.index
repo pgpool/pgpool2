@@ -1,5 +1,5 @@
 INDEXTERM history.html
-INDEXPOINT history.html#AEN91
+INDEXPOINT history.html#AEN93
 TITLE A Brief History of pgpool-II
 significance NORMAL
 ZONE history.html
@@ -8,7 +8,7 @@ PRIMARY history
 SECONDARY of pgpool-II
 /INDEXTERM
 INDEXTERM installation.html
-INDEXPOINT installation.html#AEN166
+INDEXPOINT installation.html#AEN168
 TITLE pgpool-IIInstallation from Source Code
 significance NORMAL
 ZONE installation.html
@@ -16,13 +16,13 @@ TITLE pgpool-IIInstallation from Source Code
 PRIMARY installation
 /INDEXTERM
 INDEXTERM install-source.html#INSTALL-PGPOOL
-INDEXPOINT install-source.html#AEN198
+INDEXPOINT install-source.html#AEN200
 TITLE Installing pgpool-II
 significance NORMAL
 PRIMARY OpenSSL
 /INDEXTERM
 INDEXTERM pcp-common-options.html
-INDEXPOINT pcp-common-options.html#AEN308
+INDEXPOINT pcp-common-options.html#AEN310
 TITLE pcp_common_options
 significance NORMAL
 ZONE pcp-common-options.html
@@ -30,7 +30,7 @@ TITLE pcp_common_options
 PRIMARY pcp_common_options
 /INDEXTERM
 INDEXTERM pcp-node-count.html
-INDEXPOINT pcp-node-count.html#AEN408
+INDEXPOINT pcp-node-count.html#AEN410
 TITLE pcp_node_count
 significance NORMAL
 ZONE pcp-node-count.html
