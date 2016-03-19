@@ -216,6 +216,8 @@ make install
     to be accessed by pgpool-II is strongly recommended, as it is used internally by pgpool-II.
     Without this, handling of duplicate table names in different schema
     might cause trouble (temporary tables aren't a problem).
+If you are using PostgreSQL 9.4 or later, installing pgpool_regclass
+is not necessary since an equivalent (to_regclass) is included in the PostgreSQL core.
     </p>
 
 <pre>
