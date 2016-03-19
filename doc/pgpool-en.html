@@ -197,6 +197,8 @@ will install pgpool-II. (If you use Solaris or FreeBSD, replace make with gmake)
 If you are using PostgreSQL 8.0 or later, installing pgpool_regclass function on all PostgreSQL to be accessed by pgpool-II is strongly recommended, as it is used internally by pgpool-II.
 Without this, handling of duplicate table names in different schema
 might cause trouble (temporary tables aren't a problem).
+If you are using PostgreSQL 9.4 or later, installing pgpool_regclass
+is not necessary since an equivalent (to_regclass) is included in the PostgreSQL core.
 </p>
 <p>
 <pre>

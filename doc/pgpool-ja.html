@@ -175,7 +175,14 @@ make install
 PostgreSQL 8.0以降を使用している場合は、pgpool-IIが内部で使用するC関数pgpool_regclassをインストールします。
 この関数がインストールされていなくてもpgpool-IIは動作しますが、違うスキーマで同じテーブル名を定義していて、SQL文の中でスキーマ名を省略している場合に、不具合が生じることがあります(一時テーブルを除く)。
 したがって、可能ならばpgpool_regclassをインストールすることをお勧めします。
+</p>
+<p>
+PostgreSQL 9.4以降を使用している場合は、pgpool_regclassのインストールは必要ありません。
+PostgreSQLに同等の関数(to_regclass)が含まれているからです。
+</p>
+<p>
 このインストールは、pgpool-IIがアクセスする予定のすべてのPostgreSQLサーバで実施してください。
+</p>
 <pre>
 cd pgpool-II-x.x.x/sql/pgpool-regclass
 make
