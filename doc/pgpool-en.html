@@ -236,12 +236,14 @@ make install
 
 <h2 id="install_functions">Installing functions</h2>
 
-<h3>Installing pgpool_regclass (recommended) <span class="version">V3.0 -</span></h3>
+<h3>Installing pgpool_regclass (optional) <span class="version">V3.0 - </span></h3>
 <p>
-If you are using PostgreSQL 8.0 or later, installing pgpool_regclass function on all PostgreSQL
+If you are using PostgreSQL 8.0 to PostgreSQL 9.3, installing pgpool_regclass function on all PostgreSQL
 to be accessed by pgpool-II is strongly recommended, as it is used internally by pgpool-II.
 Without this, handling of duplicate table names in different schema
 might cause trouble (temporary tables aren't a problem).
+If you are using PostgreSQL 9.4 or later, installing pgpool_regclass
+is not necessary since an equivalent (to_regclass) is included in the PostgreSQL core.
 </p>
 
 <pre>
