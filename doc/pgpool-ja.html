@@ -241,10 +241,13 @@ make install
 
 <h2 id="install_functions">関数の登録</h2>
 
-<h3 id="pgpool_regclass">pgpool_regclass のインストール（推奨） <span class="version">V3.0 〜</span></h3>
-<p>PostgreSQL 8.0 以降を使用している場合は、pgpool-II が内部で使用する C 関数
+<h3 id="pgpool_regclass">pgpool_regclass のインストール（オプション） <span class="version">V3.0 〜</span></h3>
+<p>PostgreSQL 8.0 以降、PostgreSQL 9.3までを使用している場合は、pgpool-II が内部で使用する C 関数
 pgpool_regclass をインストールします。</p>
-
+<p>
+PostgreSQL 9.4以降を使用している場合は、pgpool_regclassのインストールは必要ありません。
+PostgreSQLに同等の関数(to_regclass)が含まれているからです。
+</p>
 <h4>pgpool_regclass とは？</h4>
 <p>
 この関数がインストールされていなくても pgpool-II は動作しますが、違うスキーマで同じテーブル名を定義していて、
