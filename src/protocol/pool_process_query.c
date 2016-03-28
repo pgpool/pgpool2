@@ -186,7 +186,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
             ereport(ERROR,
                 (pool_error_code("57000"),
                  errmsg("connection terminated due to online recovery"),
-                     errdetail("child connection forced to terminate due to client_idle_limit = -1")));
+                     errdetail("child connection forced to terminate due to client_idle_limit_in_recovery = -1")));
 		}
 
 		/*
