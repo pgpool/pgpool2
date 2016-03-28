@@ -37,6 +37,7 @@ static void GetTranIsolationErrorCb(void *arg);
 static void init_sent_message_list(void);
 static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *messag);
 static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m);
+static char *dump_sync_map(void);
 
 /*
  * Initialize per session context
@@ -947,14 +948,33 @@ bool pool_use_sync_map(void)
 			if (pool_is_set_sync_map(i))
 			{
 				ereport(DEBUG1,
-						(errmsg("pool_use_sync_map: set use sync map: %d", i)));
+						(errmsg("pool_use_sync_map: we can use sync map: %s", dump_sync_map())));
 				return POOL_SYNC_MAP_IS_VALID;	/* yes, we can use sync map */
 			}
 		}
+		ereport(DEBUG1,
+				(errmsg("pool_use_sync_map: we cannot use sync map because all map entries are false")));
 		return POOL_SYNC_MAP_EMPTY;	/* no, we cannot use sync map */
 	}
 
+	ereport(DEBUG1,
+			(errmsg("pool_use_sync_map: we cannot use sync map because STREAM: %d query in progress: %d doing extended query: %d", STREAM, pool_is_query_in_progress(), pool_is_doing_extended_query_message())));
+
 	return POOL_IGNORE_SYNC_MAP;
+}
+
+static char *dump_sync_map(void)
+{
+	static char mapstr[MAX_NUM_BACKENDS+1];
+	int i;
+
+	memset(mapstr, 0, sizeof(mapstr));
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		mapstr[i] = session_context->sync_map[i]?'1':'0';
+	}
+	return mapstr;
 }
 
 /*
