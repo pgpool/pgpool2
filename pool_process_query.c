@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -169,7 +169,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		 */
 		if (*InRecovery > RECOVERY_INIT && pool_config->client_idle_limit_in_recovery == -1)
 		{
-			pool_log("pool_process_query: child connection forced to terminate due to client_idle_limitis -1");
+			pool_log("pool_process_query: child connection forced to terminate due to client_idle_limiti_in_recovery -1");
 			pool_send_error_message(frontend, MAJOR(backend),
 									"57000", "connection terminated due to online recovery",
 									"","",  __FILE__, __LINE__);
