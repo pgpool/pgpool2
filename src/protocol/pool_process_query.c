@@ -1926,6 +1926,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 	int num_close_complete;
 	int state;
 	bool data_pushed;
+	POOL_SESSION_CONTEXT *session_context;
 
 	data_pushed = false;
 
@@ -1970,6 +1971,29 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 			pool_write(backend, "H", 1);
 			len = htonl(sizeof(len));
 			pool_write_and_flush(backend, &len, sizeof(len));
+			ereport(DEBUG1,
+					(errmsg("do_query: send flush message to %d", backend->db_node_id)));
+
+			/*
+			 * If we have not send the flush message to load balance node yet,
+			 * send a flush message to the load balance node. Otherwise only
+			 * the non load balance node (usually the master node) produces
+			 * response if we do not send sync message to it yet.
+			 */
+			session_context = pool_get_session_context(false);
+
+			if (backend->db_node_id != session_context->load_balance_node_id)
+			{
+				POOL_CONNECTION *con;
+
+				con = session_context->backend->slots[session_context->load_balance_node_id]->con;
+				pool_write(con, "H", 1);
+				len = htonl(sizeof(len));
+				pool_write_and_flush(con, &len, sizeof(len));
+				ereport(DEBUG1,
+						(errmsg("do_query: send flush message to %d", con->db_node_id)));
+
+			}
 
 			for(;;)
 			{
