@@ -150,6 +150,9 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		pool_set_query_state(session_context->query_context, POOL_EXECUTE_COMPLETE);
 	}
 
+	if (STREAM && pool_is_doing_extended_query_message())
+		pool_unset_query_in_progress();
+
 	return POOL_CONTINUE;
 }
 
