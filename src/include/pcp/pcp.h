@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -29,6 +29,12 @@
 
 
 #define MAX_USER_PASSWD_LEN    128
+/* The largest PCP packet a PCP frontend can send is
+ * the user authentication packet, and the maximum size
+ * of the PCP authentication packet can be
+ * MAX_USER_PASSWD_LEN + MAX_USER_PASSWD_LEN + SIZE OF INT */
+#define MAX_PCP_PACKET_LENGTH	260
+
 typedef struct PCPWDNodeInfo
 {
 	int state;
