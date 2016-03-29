@@ -8,7 +8,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -290,6 +290,14 @@ pcp_authorize(PCPConnInfo* pcpConn, char *username, char *password)
 						   "ERROR: PCP authorization failed. invalid connection state.");
 		return -1;
 	}
+
+	if (strlen(username) >= MAX_USER_PASSWD_LEN)
+	{
+		pcp_internal_error(pcpConn,
+						   "ERROR: PCP authorization failed. username too long.");
+		return -1;
+	}
+
 	/* request salt */
 	pcp_write(pcpConn->pcpConn, "M", 1);
 	wsize = htonl(sizeof(int));

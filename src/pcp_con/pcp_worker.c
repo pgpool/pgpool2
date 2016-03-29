@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -40,7 +40,6 @@
 #include <fcntl.h>
 #endif
 
-#include "pool.h"
 #include "pcp/pcp_stream.h"
 #include "pcp/pcp.h"
 #include "auth/md5.h"
@@ -52,7 +51,6 @@
 #include "utils/elog.h"
 
 #define MAX_FILE_LINE_LEN    512
-#define MAX_USER_PASSWD_LEN  128
 
 extern char pcp_conf_file[POOLMAXPATHLEN+1]; /* global variable defined in main.c holds the path for pcp.conf */
 volatile sig_atomic_t pcp_worker_wakeup_request = 0;
@@ -171,6 +169,12 @@ pcp_worker_main(int port)
 		do_pcp_read(pcp_frontend, &rsize, sizeof(int));
 
 		rsize = ntohl(rsize);
+
+		if (rsize <= 0 || rsize >= MAX_PCP_PACKET_LENGTH)
+			ereport(FATAL,
+				(errmsg("invalid PCP packet"),
+					 errdetail("incorrect packet length (%d)", rsize)));
+
 		if ((rsize - sizeof(int)) > 0)
 		{
 			buf = (char *)palloc(rsize - sizeof(int));
