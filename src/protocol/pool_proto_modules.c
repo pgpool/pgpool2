@@ -760,7 +760,30 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, true);
+
+		/*
+		 * Send flush message to backend to make sure that we get any response
+		 * from backend.
+		 */
+		pool_write(MASTER(session_context->backend), "H", 1);
+		len = htonl(sizeof(len));
+		pool_write_and_flush(MASTER(session_context->backend), &len, sizeof(len));
+		if (MASTER(session_context->backend)->db_node_id != session_context->load_balance_node_id)
+		{
+			POOL_CONNECTION *con;
+
+			con = session_context->backend->slots[session_context->load_balance_node_id]->con;
+			pool_write(con, "H", 1);
+			len = htonl(sizeof(len));
+			pool_write_and_flush(con, &len, sizeof(len));
+		}
+		/*
+		 * Remeber that we send flush or sync message to backend.
+		 */
+		pool_unset_pending_response();
+#ifdef NOT_USED
 		pool_unset_query_in_progress();
+#endif
 	}
 
 	return POOL_CONTINUE;
@@ -1087,6 +1110,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		/* XXX fix me:even with streaming replication mode, couldn't we have a deadlock */
 		pool_set_query_in_progress();
+		pool_clear_sync_map();
 		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, true);
 		pool_add_sent_message(session_context->uncompleted_message);
@@ -1216,6 +1240,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	nowait = (STREAM? true: false);
 
+	pool_clear_sync_map();
 	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID, nowait);
 	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, nowait);
 
@@ -1367,6 +1392,7 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		POOL_PENDING_MESSAGE *pmsg;
 
+		pool_clear_sync_map();
 		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, true);
 
