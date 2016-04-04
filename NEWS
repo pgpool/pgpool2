@@ -4,6 +4,42 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.17 (hatsuiboshi) 2016/04/01
+
+* Version 3.1.17
+
+    This is a bugfix release against pgpool-II 3.1.16.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Change description of backend_flag (Tatsuo Ishii)
+      
+      It is pointed out that restarting pgpool-II is not necessary.
+      
+      Per [pgpool-general-jp: 1394].
+
+    - doc: Fix installation procedure. (Tatsuo Ishii)
+      
+      With PostgreSQL 9.4 or later, installing pgpool_regclass is not needed.
+
+    - Fix to validate the PCP packet length (Muhammad Usama)
+      
+      Without the validation check, a malformed PCP packet can crash the
+      PCP child and/or can run the server out of memory by sending the packet
+      with a very large data size.
+
+    - Fix a reset query stuck problem (Muhammad Usama)
+      
+      The solution is to return  POOL_END_WITH_FRONTEND_ERROR instead of
+      POOL_END when pool_flush on front-end socket fails.
+      
+      The original report is
+      [pgpool-general: 4265] Pgpool - connection hangs in DISCARD ALL
+
+===============================================================================
+
                         3.1.16 (hatsuiboshi) 2016/02/05
 
 * Version 3.1.16
