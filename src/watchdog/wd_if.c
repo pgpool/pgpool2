@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -123,7 +123,7 @@ wd_IP_up(void)
 	{
 		for (i = 0; i < WD_TRY_PING_AT_IPUP; i++)
 		{
-			if (!wd_is_unused_ip(pool_config->delegate_IP))
+			if (wd_is_ip_exists(pool_config->delegate_IP) == true)
 				break;
 			ereport(LOG,
 				(errmsg("watchdog bringing up delegate IP"),
@@ -163,7 +163,7 @@ wd_IP_down(void)
 	{
 		for (i = 0; i < WD_TRY_PING_AT_IPDOWN; i++)
 		{
-			if (wd_is_unused_ip(pool_config->delegate_IP))
+			if (wd_is_ip_exists(pool_config->delegate_IP) == false)
 				break;
 		}
 
