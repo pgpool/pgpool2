@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -62,6 +62,21 @@ typedef struct {
 	int retry;		/* retry times (not used?)*/
 } WdPgpoolThreadArg;
 
+typedef struct WdUpstreamConnectionData
+{
+	char*		hostname;	/* host name of server */
+	pid_t		pid;		/* pid of ping process */
+	bool		reachable;	/* true if last ping was successful */
+	int			outputfd;	/* pipe fd linked to output of ping process */
+}WdUpstreamConnectionData;
+
+
+List* g_trusted_server_list = NIL;
+
+static void wd_initialize_trusted_servers_list(void);
+static bool wd_ping_all_server(void);
+static WdUpstreamConnectionData* wd_get_server_from_pid(pid_t pid);
+
 static void * thread_ping_pgpool(void * arg);
 static PGconn * create_conn(char * hostname, int port);
 
@@ -79,7 +94,8 @@ static void spawn_lifecheck_children(void);
 
 static RETSIGTYPE lifecheck_exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
-static pid_t wd_reaper_lifecheck(pid_t pid, bool restart_child);
+static pid_t wd_reaper_lifecheck(pid_t pid, int status);
+
 static bool lifecheck_kill_all_children(int sig);
 static const char* lifecheck_child_name(pid_t pid);
 static void reaper(void);
@@ -117,6 +133,10 @@ static const char* lifecheck_child_name(pid_t pid)
 		else if (g_hb_sender_pid && pid == g_hb_sender_pid[i])
 			return "heartBeat sender";
 	}
+	/* Check if it was a ping to trusted server process */
+	WdUpstreamConnectionData* server = wd_get_server_from_pid(pid);
+	if (server)
+		return "trusted host ping process";
 	return "unknown";
 }
 
@@ -133,50 +153,65 @@ static void reaper(void)
 
 	while ((pid = pool_waitpid(&status)) > 0)
 	{
-		bool restart_child = true;
-		const char* proc_name = lifecheck_child_name(pid);
-		if(WIFEXITED(status))
+		/* First check if it is the trusted server ping process */
+		WdUpstreamConnectionData* server = wd_get_server_from_pid(pid);
+		if (server)
 		{
-			if(WEXITSTATUS(status) == POOL_EXIT_FATAL)
-				ereport(LOG,
-						(errmsg("lifecheck child process (%s) with pid: %d exit with FATAL ERROR.",proc_name, pid)));
-			else if(WEXITSTATUS(status) == POOL_EXIT_NO_RESTART)
-			{
-				restart_child = false;
-				ereport(LOG,
-						(errmsg("lifecheck child process (%s) with pid: %d exit with SUCCESS.", lifecheck_child_name(pid), pid)));
-			}
-		}
-		if (WIFSIGNALED(status))
-		{
-			/* Child terminated by segmentation fault. Report it */
-			if(WTERMSIG(status) == SIGSEGV)
-				ereport(WARNING,
-						(errmsg("lifecheck child process (%s) with pid: %d was terminated by segmentation fault",proc_name,pid)));
-			else
-				ereport(LOG,
-						(errmsg("lifecheck child process (%s) with pid: %d exits with status %d by signal %d", proc_name, pid, status, WTERMSIG(status))));
+			server->reachable = wd_get_ping_result(server->hostname, status, server->outputfd);
+			server->pid = 0;
+			close(server->outputfd);
 		}
 		else
-			ereport(LOG,
-					(errmsg("lifecheck child process (%s) with pid: %d exits with status %d",proc_name, pid, status)));
-
-		wd_reaper_lifecheck(pid,restart_child);
+			wd_reaper_lifecheck(pid,status);
 	}
 }
 
 static pid_t
-wd_reaper_lifecheck(pid_t pid, bool restart_child)
+wd_reaper_lifecheck(pid_t pid, int status)
 {
 	int i;
+	bool restart_child = true;
+	const char* proc_name = lifecheck_child_name(pid);
+
+	if(WIFEXITED(status))
+	{
+		if(WEXITSTATUS(status) == POOL_EXIT_FATAL)
+			ereport(LOG,
+					(errmsg("lifecheck child process (%s) with pid: %d exit with FATAL ERROR.",proc_name, pid)));
+		else if(WEXITSTATUS(status) == POOL_EXIT_NO_RESTART)
+		{
+			restart_child = false;
+			ereport(LOG,
+					(errmsg("lifecheck child process (%s) with pid: %d exit with SUCCESS.", lifecheck_child_name(pid), pid)));
+		}
+	}
+	if (WIFSIGNALED(status))
+	{
+		/* Child terminated by segmentation fault. Report it */
+		if(WTERMSIG(status) == SIGSEGV)
+			ereport(WARNING,
+					(errmsg("lifecheck child process (%s) with pid: %d was terminated by segmentation fault",proc_name,pid)));
+		else
+			ereport(LOG,
+					(errmsg("lifecheck child process (%s) with pid: %d exits with status %d by signal %d", proc_name, pid, status, WTERMSIG(status))));
+	}
+	else
+		ereport(LOG,
+				(errmsg("lifecheck child process (%s) with pid: %d exits with status %d",proc_name, pid, status)));
+
 	if (g_hb_receiver_pid == NULL && g_hb_sender_pid == NULL)
 		return -1;
+
 	for (i = 0; i < pool_config->num_hb_if; i++)
 	{
 		if (g_hb_receiver_pid && pid == g_hb_receiver_pid[i])
 		{
 			if(restart_child)
+			{
 				g_hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_if[i]));
+				ereport(LOG,
+						(errmsg("fork a new %s process with pid: %d",proc_name, g_hb_receiver_pid[i])));
+			}
 			else
 				g_hb_receiver_pid[i] = 0;
 			
@@ -186,7 +221,11 @@ wd_reaper_lifecheck(pid_t pid, bool restart_child)
 		else if (g_hb_sender_pid && pid == g_hb_sender_pid[i])
 		{
 			if(restart_child)
+			{
 				g_hb_sender_pid[i] = wd_hb_sender(1, &(pool_config->hb_if[i]));
+				ereport(LOG,
+						(errmsg("fork a new %s process with pid: %d",proc_name, g_hb_sender_pid[i])));
+			}
 			else
 				g_hb_sender_pid[i] = 0;
 			
@@ -230,10 +269,10 @@ lifecheck_exit_handler(int sig)
 {
 	pid_t wpid;
 	bool child_killed;
-	
+
 	POOL_SETMASK(&AuthBlockSig);
 	ereport(DEBUG1,
-			(errmsg("lifecheck child receives shutdown request signal %d, Forwarding to all children", sig)));
+			(errmsg("lifecheck child receives shutdown request signal %d, forwarding to all children", sig)));
 	
 	if (sig == SIGTERM) /* smart shutdown */
 	{
@@ -365,6 +404,8 @@ lifecheck_main(void)
 				(errmsg("unable to initialize lifecheck, watchdog not responding")));
 
 	spawn_lifecheck_children();
+
+	wd_initialize_trusted_servers_list();
 
 	/* wait until ready to go */
 	while (WD_OK != is_wd_lifecheck_ready())
@@ -627,7 +668,7 @@ static int wd_lifecheck(void)
 	/* check upper connection */
 	if (strlen(pool_config->trusted_servers))
 	{
-		if(wd_is_upper_ok(pool_config->trusted_servers) != WD_OK)
+		if(wd_ping_all_server() == false)
 		{
 			LifeCheckNode* node = &gslifeCheckCluster->lifeCheckNodes[0];
 
@@ -958,6 +999,110 @@ is_parent_alive()
 		return WD_OK;
 	else
 		return WD_NG;
+}
+
+
+static void wd_initialize_trusted_servers_list(void)
+{
+	char* token;
+	char* tmpString;
+	const char* delimi = ",";
+	if (g_trusted_server_list)
+		return;
+
+	if (strlen(pool_config->trusted_servers) <= 0)
+		return;
+
+	/* This has to be created in TopMemoryContext */
+	MemoryContext oldCxt = MemoryContextSwitchTo(TopMemoryContext);
+
+	tmpString = pstrdup(pool_config->trusted_servers);
+	for (token = strtok(tmpString, delimi); token != NULL; token = strtok(NULL, delimi))
+	{
+		WdUpstreamConnectionData* server = palloc(sizeof(WdUpstreamConnectionData));
+		server->pid = 0;
+		server->reachable = false;
+		server->hostname = token;
+		g_trusted_server_list = lappend(g_trusted_server_list,server);
+
+		ereport(LOG,
+			(errmsg("watchdog lifecheck trusted server \"%s\" added for the availability check",token)));
+	}
+	MemoryContextSwitchTo(oldCxt);
+}
+
+static bool wd_ping_all_server(void)
+{
+	ListCell *lc;
+	pid_t pid;
+	int status;
+	int ping_process = 0;
+
+	POOL_SETMASK(&BlockSig);
+
+	foreach(lc, g_trusted_server_list)
+	{
+		WdUpstreamConnectionData* server = (WdUpstreamConnectionData*)lfirst(lc);
+		if (server->pid <= 0)
+			server->pid = wd_issue_ping_command(server->hostname,&server->outputfd);
+
+		if (server->pid > 0)
+			ping_process++;
+	}
+
+	while(ping_process > 0)
+	{
+		pid = waitpid(0, &status, 0);
+		if (pid > 0)
+		{
+			/* find the server object associated with this pid */
+			WdUpstreamConnectionData* server = wd_get_server_from_pid(pid);
+			if (server)
+			{
+				ping_process--;
+				server->reachable = wd_get_ping_result(server->hostname, status, server->outputfd);
+				server->pid = 0;
+				close(server->outputfd);
+				if (server->reachable)
+				{
+					/* one reachable server is all we need */
+					POOL_SETMASK(&UnBlockSig);
+					return true;
+				}
+			}
+			else
+			{
+				/* It was not a ping host child process */
+				wd_reaper_lifecheck(pid,status);
+			}
+		}
+		if (pid == -1) /* wait pid error */
+		{
+			if (errno == EINTR)
+				continue;
+			ereport(WARNING,
+				(errmsg("failed to check the ping status of trusted servers"),
+					 errdetail("waitpid failed with reason: %s", strerror(errno))));
+			break;
+		}
+	}
+	POOL_SETMASK(&UnBlockSig);
+	return false;
+}
+
+static WdUpstreamConnectionData* wd_get_server_from_pid(pid_t pid)
+{
+	ListCell *lc;
+
+	foreach(lc, g_trusted_server_list)
+	{
+		WdUpstreamConnectionData* server = (WdUpstreamConnectionData*)lfirst(lc);
+		if (server->pid == pid)
+		{
+			return server;
+		}
+	}
+	return NULL;
 }
 
 

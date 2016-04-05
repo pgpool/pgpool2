@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -45,7 +45,9 @@ extern pid_t fork_plunging_process(void);
 
 /* wd_ping.c */
 extern int wd_is_upper_ok(char * server_list);
-extern int wd_is_unused_ip(char * ip);
+extern bool wd_is_ip_exists(char * ip);
+extern bool wd_get_ping_result(char* hostname, int exit_status, int outfd);
+extern pid_t wd_issue_ping_command(char* hostname, int* outfd);
 
 /* wd_if.c */
 extern List* get_all_local_ips(void);
