@@ -71,7 +71,7 @@ wd_IP_up(void)
 		{
 			for (i = 0; i < WD_TRY_PING_AT_IPUP; i++)
 			{
-				if (!wd_is_unused_ip(pool_config->delegate_IP))
+				if (wd_is_ip_exists(pool_config->delegate_IP) == true)
 					break;
 				ereport(DEBUG1,
 					(errmsg("watchdog bringing up delegate IP"),
@@ -122,7 +122,7 @@ wd_IP_down(void)
 		{
 			for (i = 0; i < WD_TRY_PING_AT_IPDOWN; i++)
 			{
-				if (wd_is_unused_ip(pool_config->delegate_IP))
+				if (wd_is_ip_exists(pool_config->delegate_IP) == false)
 					break;
 			}
 

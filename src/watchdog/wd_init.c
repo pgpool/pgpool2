@@ -91,7 +91,7 @@ wd_init(void)
 
 	/* check upper connection */
 	if (strlen(pool_config->trusted_servers) &&
-		wd_is_upper_ok(pool_config->trusted_servers) != WD_OK)
+		wd_is_upper_ok(pool_config->trusted_servers) == false)
 	{
 		ereport(ERROR,
 			(errmsg("failed to initialize watchdog, failed to connect to trusted server")));
@@ -106,7 +106,7 @@ wd_init(void)
 	if (wd_is_exist_master() == NULL)
 	{
 		if (strlen(pool_config->delegate_IP) != 0 &&
-		    !wd_is_unused_ip(pool_config->delegate_IP))
+		    wd_is_ip_exists(pool_config->delegate_IP))
 		{
 			ereport(ERROR,
 				(errmsg("failed to initialize watchdog, delegate_IP \"%s\" already exists", pool_config->delegate_IP)));

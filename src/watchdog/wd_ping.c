@@ -38,178 +38,121 @@
 
 #define WD_MAX_PING_RESULT 256
 
-static void * exec_ping(void * arg);
 static double get_result (char * ping_data);
 
-/**
- * Try to connect to trusted servers.
- */
-int
-wd_is_upper_ok(char * server_list)
-{
-	pthread_attr_t attr;
-	char * buf;
-	int rc = 0;
-	int i,cnt;
-	int len;
-	pthread_t thread[MAX_WATCHDOG_NUM];
-	WdInfo thread_arg[MAX_WATCHDOG_NUM];
-
-	char * bp, *ep;
-	int rtn = WD_NG;
-
-	if (server_list == NULL)
-	{
-		ereport(WARNING,
-			(errmsg("watchdog trying to connect to trusted server, server_list is NULL")));
-		return WD_NG;
-	}
-	len = strlen(server_list)+2;
-	buf = palloc(len);
-
-	memset(buf,0,len);
-	strlcpy(buf,server_list,len);
-	/* thread init */
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	/* set hostname as a thread_arg */
-	bp = buf;
-	cnt = 0;
-	while (*bp != '\0')
-	{
-		ep = strchr(bp,',');
-		if (ep != NULL)
-		{
-			*ep = '\0';
-		}
-		strlcpy(thread_arg[cnt].hostname,bp,sizeof(thread_arg[cnt].hostname));
-		rc = watchdog_thread_create(&thread[cnt], &attr, exec_ping, (void*)&thread_arg[cnt]);
-
-		cnt ++;
-		if (ep != NULL)
-		{
-			bp = ep + 1;
-		}
-		else
-		{
-			break;
-		}
-		if (cnt >= MAX_WATCHDOG_NUM)
-		{
-			ereport(DEBUG1,
-				(errmsg("watchdog trying to connect to trusted server"),
-					 errdetail("trusted server num is out of range(%d)",cnt)));
-			break;
-		}
-	}
-	pthread_attr_destroy(&attr);
-	for (i=0; i <cnt; )
-	{
-		void * result;
-		rc = pthread_join(thread[i], &result);
-		if ((rc != 0) && (errno == EINTR))
-		{
-			usleep(100);
-			continue;
-		}
-		if (result == (void *)WD_OK)
-		{
-			rtn = WD_OK;
-		}
-		i++;
-	}
-	pfree(buf);
-	return rtn;
-}
 
 /**
- * check if IP address is unused.
+ * check if IP address can be pinged.
  */
-int
-wd_is_unused_ip(char * ip)
+bool wd_is_ip_exists(char* ip)
 {
-	pthread_attr_t attr;
-	int rc = 0;
-	pthread_t thread;
-	WdInfo thread_arg;
-
-	int rtn = WD_NG;
-	void * result;
+	pid_t pid;
+	int outputfd;
+	int status;
+	sigset_t mask;
 
 	if (ip == NULL)
+		return false;
+
+	/* initialize mask to block and unblock SIGCHLD */
+	if ((sigemptyset(&mask) == -1) || (sigaddset(&mask, SIGCHLD) == -1))
 	{
-		return WD_NG;
+		ereport(WARNING,
+			(errmsg("watchdog failed to initialize signal mask"),
+				 errdetail("failed with reason \"%s\"", strerror(errno))));
+		return false;
 	}
 
-	/* thread init */
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-	/* set hostname as a thread_arg */
-	strlcpy(thread_arg.hostname,ip,sizeof(thread_arg.hostname));
-
-	rc = watchdog_thread_create(&thread, &attr, exec_ping, (void*)&thread_arg);
-	pthread_attr_destroy(&attr);
-
-	rc = pthread_join(thread, &result);
-	if ((rc != 0) && (errno == EINTR))
+	if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
 	{
-		return WD_NG;
+		ereport(WARNING,
+			(errmsg("watchdog failed to block SIGCHLD"),
+				 errdetail("sigprocmask() failed with reason \"%s\"", strerror(errno))));
+		return false;
 	}
-	if (result == (void *)WD_NG)
+	
+	pid = wd_issue_ping_command(ip,&outputfd);
+	if (pid <=  0)
 	{
-		rtn = WD_OK;
+		sigprocmask(SIG_UNBLOCK, &mask, NULL);
+		return false;
 	}
 
-	return rtn;
+	for(;;)
+	{
+		pid_t sts = waitpid(pid, &status, 0);
+		if (sts == pid)
+		{
+			bool ret = wd_get_ping_result(ip, status, outputfd);
+
+			if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1)
+				ereport(WARNING,
+					(errmsg("watchdog failed to unblock SIGCHLD"),
+						 errdetail("sigprocmask() failed with reason \"%s\"", strerror(errno))));
+
+			close(outputfd);
+			return ret;
+		}
+		if (errno == EINTR)
+			continue;
+
+		if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1)
+			ereport(WARNING,
+				(errmsg("watchdog failed to unblock SIGCHLD"),
+					 errdetail("sigprocmask() failed with reason \"%s\"", strerror(errno))));
+
+		close(outputfd);
+		ereport(WARNING,
+			(errmsg("watchdog failed to ping host\"%s\"",ip),
+				 errdetail("waitpid() failed with reason \"%s\"", strerror(errno))));
+		return false;
+	}
+
+	if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1)
+		ereport(WARNING,
+			(errmsg("watchdog failed to unblock SIGCHLD"),
+				 errdetail("sigprocmask() failed with reason \"%s\"", strerror(errno))));
+	return false;
 }
 
-
-/**
- * Thread to execute ping against "trusted hosts" or delegate IP.
- * Note: Since this is a thread function and our Exception Manager
- * and Memory Manager are not thread safe so do not use
- * ereport(ERROR,..) and MemoryContextSwitchTo() functions
- * All ereports other than ereport(ERROR) that do not executes longjump
- * are fine to be used from thread function
+/*
+ * function issues the ping command using the execv system call
+ * and return the pid of the process.
  */
-static void *
-exec_ping(void * arg)
+pid_t wd_issue_ping_command(char* hostname, int* outfd)
 {
-	WdInfo * thread_arg;
-	uintptr_t rtn = (uintptr_t)WD_NG;
-	int pfd[2];
 	int status;
 	char * args[8];
 	int pid, i = 0;
-	int r_size = 0;
-	char result[WD_MAX_PING_RESULT];
+	int pfd[2];
 	char ping_path[WD_MAX_PATH_LEN];
 
 	snprintf(ping_path,sizeof(ping_path),"%s/ping",pool_config->ping_path);
-	thread_arg = (WdInfo *)arg;
-	memset(result,0,sizeof(result));
+
+	ereport(DEBUG2,
+			(errmsg("watchdog trying to ping host \"%s\"",hostname)));
 
 	if (pipe(pfd) == -1)
 	{
 		ereport(WARNING,
-			(errmsg("failed to execute ping"),
+			(errmsg("watchdog failed to ping host\"%s\"",hostname),
 				 errdetail("pipe open failed. reason: %s", strerror(errno))));
-		return WD_NG;
+		return -1;
 	}
 
 	args[i++] = "ping";
 	args[i++] = "-q";
 	args[i++] = "-c3";
-	args[i++] = thread_arg->hostname;
+	args[i++] = hostname;
 	args[i++] = NULL;
 
 	pid = fork();
 	if (pid == -1)
 	{
-		ereport(FATAL,
-			(errmsg("failed to execute ping"),
+		ereport(WARNING,
+			(errmsg("watchdog failed to ping host\"%s\"",hostname),
 				 errdetail("fork() failed. reason: %s", strerror(errno))));
+		return -1;
 	}
 	if (pid == 0)
 	{
@@ -220,71 +163,95 @@ exec_ping(void * arg)
 		dup2(pfd[1], STDOUT_FILENO);
 		close(pfd[0]);
 		status = execv(ping_path,args);
-
+		
 		if (status == -1)
 		{
 			ereport(FATAL,
-				(errmsg("failed to execute ping"),
+				(errmsg("watchdog failed to ping host\"%s\"",hostname),
 					 errdetail("execv(%s) failed. reason: %s", ping_path, strerror(errno))));
 		}
 		exit(0);
 	}
+	close(pfd[1]);
+	*outfd = pfd[0];
+	return pid;
+}
+
+/**
+ * Try to connect to server list, return true if any
+ * from the list can be pinged.
+ */
+bool
+wd_is_upper_ok(char * server_list)
+{
+	char* token;
+	char* tmpString;
+	const char* delimi = ",";
+	bool ret = false;
+
+	if (strlen(server_list) <= 0)
+		return false;
+
+	tmpString = pstrdup(server_list);
+	for (token = strtok(tmpString, delimi); token != NULL; token = strtok(NULL, delimi))
+	{
+		ereport(LOG,
+				(errmsg("watchdog is verifying connectivity with a trusted server \"%s\"",token)));
+		if (wd_is_ip_exists(token))
+		{
+			ret = true;
+			break;
+		}
+	}
+	pfree(tmpString);
+	return ret;
+}
+
+/*
+ * The function is helper function and can be used with the
+ * wd_issue_ping_command() function to identify if the ping command
+ * was successful */
+bool wd_get_ping_result(char* hostname, int exit_status, int outfd)
+{
+	/* First check the exit status of ping process*/
+	if (WIFEXITED(exit_status) == 0)
+	{
+		ereport(WARNING,
+			(errmsg("watchdog failed to ping host\"%s\"",hostname),
+				 errdetail("ping process exited abnormally")));
+	}
+	else if (WEXITSTATUS(exit_status) != 0)
+	{
+		ereport(WARNING,
+			(errmsg("watchdog failed to ping host\"%s\"",hostname),
+				 errdetail("ping process exits with code: %d", WEXITSTATUS(exit_status))));
+	}
 	else
 	{
-		close(pfd[1]);
-		for (;;)
-		{
-			int r;
-			r = waitpid(pid, &status, 0);
-			if (r < 0)
-			{
-				if (errno == EINTR)
-					continue;
-				close(pfd[0]);
-				ereport(WARNING,
-					(errmsg("failed to execute ping"),
-						 errdetail("waitpid() failed with reason \"%s\"", strerror(errno))));
-				return WD_NG;
-			}
+		char result[WD_MAX_PING_RESULT];
+		int i = 0;
+		int r_size = 0;
 
-			if (WIFEXITED(status) == 0)
-			{
-				close(pfd[0]);
-				ereport(WARNING,
-					(errmsg("failed to execute ping, '%s' exited abnormally", ping_path)));
-				return WD_NG;
-			}
-			else if (WEXITSTATUS(status) != 0)
-			{
-				ereport(DEBUG1,
-					(errmsg("watchdog executing ping"),
-						 errdetail("failed to ping \"%s\" exit code: %d", thread_arg->hostname, WEXITSTATUS(status))));
-				close(pfd[0]);
-				return WD_NG;
-			}
-			else
-			{
-				ereport(DEBUG1,
-					(errmsg("watchdog executing ping"),
-						 errdetail("succeed to ping %s", thread_arg->hostname)));
-				break;
-			}
-		}
+		ereport(DEBUG1,
+				(errmsg("watchdog ping process for host \"%s\" exited successfully", hostname)));
 
-		i = 0;
-		while  (( (r_size = read (pfd[0], &result[i], sizeof(result)-i-1)) > 0) && (errno == EINTR))
+		while  (( (r_size = read (outfd, &result[i], sizeof(result)-i-1)) > 0) && (errno == EINTR))
 		{
 			i += r_size;
 		}
 		result[sizeof(result)-1] = '\0';
-
-		close(pfd[0]);
+		/* Check whether average RTT >= 0 */
+		if (get_result (result) >= 0)
+		{
+			ereport(DEBUG1,
+					(errmsg("watchdog succeeded to ping a host \"%s\"", hostname)));
+			return true;
+		}
+		ereport(WARNING,
+				(errmsg("ping host\"%s\" failed",hostname),
+				 errdetail("average RTT value is not greater than zero")));
 	}
-
-	/* Check whether average RTT >= 0 */
-	rtn = (get_result (result) >= 0) ? WD_OK : WD_NG;
-
-	pthread_exit((void *)rtn);
+	return false;
 }
 
 /**

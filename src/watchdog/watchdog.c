@@ -49,28 +49,9 @@ static pid_t child_pid;
 static pid_t hb_receiver_pid[WD_MAX_IF_NUM];
 static pid_t hb_sender_pid[WD_MAX_IF_NUM];
 
-static pid_t fork_a_lifecheck(int fork_wait_time);
-static void wd_exit(int exit_status);
 static void wd_check_config(void);
 static int has_setuid_bit(char * path);
 static void *exec_func(void *arg);
-
-static void
-wd_exit(int exit_signo)
-{
-	sigset_t mask;
-
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGTERM);
-	sigaddset(&mask, SIGINT);
-	sigaddset(&mask, SIGQUIT);
-	sigaddset(&mask, SIGCHLD);
-	sigprocmask(SIG_BLOCK, &mask, NULL);
-
-	wd_notice_server_down();
-
-	exit(0);
-}
 
 /* send signal specified by sig to watchdog processes */
 void
@@ -149,86 +130,6 @@ wd_main(int fork_wait_time)
 	return lifecheck_pid;
 }
 
-
-/* fork lifecheck process*/
-static pid_t
-fork_a_lifecheck(int fork_wait_time)
-{
-	pid_t pid;
-	sigjmp_buf	local_sigjmp_buf;
-
-	pid = fork();
-	if (pid != 0)
-	{
-		if (pid == -1)
-			ereport(ERROR,
-					(errmsg("failed to fork a lifecheck process")));
-		return pid;
-	}
-    on_exit_reset();
-	processType = PT_LIFECHECK;
-
-	if (fork_wait_time > 0) {
-		sleep(fork_wait_time);
-	}
-
-	POOL_SETMASK(&UnBlockSig);
-
-	init_ps_display("", "", "", "");
-
-	pool_signal(SIGTERM, wd_exit);	
-	pool_signal(SIGINT, wd_exit);	
-	pool_signal(SIGQUIT, wd_exit);	
-	pool_signal(SIGCHLD, SIG_DFL);
-	pool_signal(SIGHUP, SIG_IGN);	
-	pool_signal(SIGPIPE, SIG_IGN);
-
-	/* Create per loop iteration memory context */
-	ProcessLoopContext = AllocSetContextCreate(TopMemoryContext,
-											   "wd_lifecheck_main_loop",
-											   ALLOCSET_DEFAULT_MINSIZE,
-											   ALLOCSET_DEFAULT_INITSIZE,
-											   ALLOCSET_DEFAULT_MAXSIZE);
-	
-	MemoryContextSwitchTo(TopMemoryContext);
-
-	set_ps_display("lifecheck",false);
-
-	/* wait until ready to go */
-	while (WD_OK != is_wd_lifecheck_ready())
-	{
-		sleep(pool_config->wd_interval * 10);
-	}
-	ereport(LOG,
-			(errmsg("watchdog: lifecheck started")));
-
-	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
-	{
-		/* Since not using PG_TRY, must reset error stack by hand */
-		error_context_stack = NULL;
-		
-		EmitErrorReport();
-		MemoryContextSwitchTo(TopMemoryContext);
-		FlushErrorState();
-		sleep(pool_config->wd_heartbeat_keepalive);
-	}
-	
-	/* We can now handle ereport(ERROR) */
-	PG_exception_stack = &local_sigjmp_buf;
-
-	/* watchdog loop */
-	for (;;)
-	{
-		MemoryContextSwitchTo(ProcessLoopContext);
-		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
-
-		/* pgpool life check */
-		wd_lifecheck();
-		sleep(pool_config->wd_interval);
-	}
-
-	return pid;
-}
 
 /* if pid is for one of watchdog processes return 1, othewize return 0 */
 int

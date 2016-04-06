@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -32,10 +32,27 @@
 #include "pool.h"
 #include "utils/elog.h"
 #include "pool_config.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
+#include "parser/pg_list.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_ext.h"
 
 #include "libpq-fe.h"
+
+typedef struct WdUpstreamConnectionData
+{
+	char*		hostname;	/* host name of server */
+	pid_t		pid;		/* pid of ping process */
+	bool		reachable;	/* true if last ping was successful */
+	int			outputfd;	/* pipe fd linked to output of ping process */
+}WdUpstreamConnectionData;
+
+List* g_trusted_server_list = NIL;
+
+static void wd_initialize_trusted_servers_list(void);
+static bool wd_ping_all_server(void);
+static WdUpstreamConnectionData* wd_get_server_from_pid(pid_t pid);
 
 static void * thread_ping_pgpool(void * arg);
 static PGconn * create_conn(char * hostname, int port);
@@ -46,6 +63,109 @@ static void check_pgpool_status_by_query(void);
 static void check_pgpool_status_by_hb(void);
 static int ping_pgpool(PGconn * conn);
 static int is_parent_alive(void);
+static int wd_lifecheck(void);
+
+static void wd_lifecheck_exit(int exit_status);
+
+static void
+wd_lifecheck_exit(int exit_signo)
+{
+	sigset_t mask;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGTERM);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGQUIT);
+	sigaddset(&mask, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &mask, NULL);
+
+	wd_notice_server_down();
+
+	exit(0);
+}
+
+
+/* fork lifecheck process*/
+pid_t
+fork_a_lifecheck(int fork_wait_time)
+{
+	pid_t pid;
+	sigjmp_buf	local_sigjmp_buf;
+
+	pid = fork();
+	if (pid != 0)
+	{
+		if (pid == -1)
+			ereport(ERROR,
+					(errmsg("failed to fork a lifecheck process")));
+		return pid;
+	}
+	on_exit_reset();
+	processType = PT_LIFECHECK;
+
+	if (fork_wait_time > 0) {
+		sleep(fork_wait_time);
+	}
+
+	POOL_SETMASK(&UnBlockSig);
+
+	init_ps_display("", "", "", "");
+
+	pool_signal(SIGTERM, wd_lifecheck_exit);
+	pool_signal(SIGINT, wd_lifecheck_exit);
+	pool_signal(SIGQUIT, wd_lifecheck_exit);
+	pool_signal(SIGCHLD, SIG_DFL);
+	pool_signal(SIGHUP, SIG_IGN);
+	pool_signal(SIGPIPE, SIG_IGN);
+	
+	/* Create per loop iteration memory context */
+	ProcessLoopContext = AllocSetContextCreate(TopMemoryContext,
+											   "wd_lifecheck_main_loop",
+											   ALLOCSET_DEFAULT_MINSIZE,
+											   ALLOCSET_DEFAULT_INITSIZE,
+											   ALLOCSET_DEFAULT_MAXSIZE);
+
+	MemoryContextSwitchTo(TopMemoryContext);
+
+	set_ps_display("lifecheck",false);
+
+	wd_initialize_trusted_servers_list();
+
+	/* wait until ready to go */
+	while (WD_OK != is_wd_lifecheck_ready())
+	{
+		sleep(pool_config->wd_interval * 10);
+	}
+	ereport(LOG,
+			(errmsg("watchdog: lifecheck started")));
+
+	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
+	{
+		/* Since not using PG_TRY, must reset error stack by hand */
+		error_context_stack = NULL;
+	
+		EmitErrorReport();
+		MemoryContextSwitchTo(TopMemoryContext);
+		FlushErrorState();
+		sleep(pool_config->wd_heartbeat_keepalive);
+	}
+
+	/* We can now handle ereport(ERROR) */
+	PG_exception_stack = &local_sigjmp_buf;
+
+	/* watchdog loop */
+	for (;;)
+	{
+		MemoryContextSwitchTo(ProcessLoopContext);
+		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
+
+		/* pgpool life check */
+		wd_lifecheck();
+		sleep(pool_config->wd_interval);
+	}
+
+	return pid;
+}
 
 int
 is_wd_lifecheck_ready(void)
@@ -106,7 +226,7 @@ is_wd_lifecheck_ready(void)
 /*
  * Check if pgpool is living
  */
-int
+static int
 wd_lifecheck(void)
 {
 	struct timeval tv;
@@ -125,7 +245,7 @@ wd_lifecheck(void)
 	/* check upper connection */
 	if (strlen(pool_config->trusted_servers))
 	{
-		if(wd_is_upper_ok(pool_config->trusted_servers) != WD_OK)
+		if(wd_ping_all_server() == false)
 		{
 			ereport(WARNING,
 					(errmsg("watchdog lifecheck, failed to connect to any trusted servers")));
@@ -561,3 +681,98 @@ is_parent_alive()
 	else
 		return WD_NG;
 }
+
+static void wd_initialize_trusted_servers_list(void)
+{
+	char* token;
+	char* tmpString;
+	const char* delimi = ",";
+	if (g_trusted_server_list)
+		return;
+
+	if (strlen(pool_config->trusted_servers) <= 0)
+		return;
+
+	/* This has to be created in TopMemoryContext */
+	MemoryContext oldCxt = MemoryContextSwitchTo(TopMemoryContext);
+
+	tmpString = pstrdup(pool_config->trusted_servers);
+	for (token = strtok(tmpString, delimi); token != NULL; token = strtok(NULL, delimi))
+	{
+		WdUpstreamConnectionData* server = palloc(sizeof(WdUpstreamConnectionData));
+		server->pid = 0;
+		server->reachable = false;
+		server->hostname = token;
+		g_trusted_server_list = lappend(g_trusted_server_list,server);
+
+		ereport(LOG,
+				(errmsg("watchdog lifecheck trusted server \"%s\" added for the availability check",token)));
+	}
+	MemoryContextSwitchTo(oldCxt);
+}
+
+static bool wd_ping_all_server(void)
+{
+	ListCell *lc;
+	pid_t pid;
+	int status;
+	int ping_process = 0;
+
+	foreach(lc, g_trusted_server_list)
+	{
+		WdUpstreamConnectionData* server = (WdUpstreamConnectionData*)lfirst(lc);
+		if (server->pid <= 0)
+			server->pid = wd_issue_ping_command(server->hostname,&server->outputfd);
+		
+		if (server->pid > 0)
+			ping_process++;
+	}
+
+	while(ping_process > 0)
+	{
+		pid = waitpid(0, &status, 0);
+		if (pid > 0)
+		{
+			/* find the server object associated with this pid */
+			WdUpstreamConnectionData* server = wd_get_server_from_pid(pid);
+			if (server)
+			{
+				ping_process--;
+				server->reachable = wd_get_ping_result(server->hostname, status, server->outputfd);
+				server->pid = 0;
+				close(server->outputfd);
+				if (server->reachable)
+				{
+					/* one reachable server is all we need */
+					return true;
+				}
+			}
+		}
+		if (pid == -1) /* wait pid error */
+		{
+			if (errno == EINTR)
+				continue;
+			ereport(WARNING,
+				(errmsg("failed to check the ping status of trusted servers"),
+					 errdetail("waitpid failed with reason: %s", strerror(errno))));
+			break;
+		}
+	}
+	return false;
+}
+
+static WdUpstreamConnectionData* wd_get_server_from_pid(pid_t pid)
+{
+	ListCell *lc;
+
+	foreach(lc, g_trusted_server_list)
+	{
+		WdUpstreamConnectionData* server = (WdUpstreamConnectionData*)lfirst(lc);
+		if (server->pid == pid)
+		{
+			return server;
+		}
+	}
+	return NULL;
+}
+

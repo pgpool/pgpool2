@@ -87,8 +87,11 @@ extern void wd_calc_hash(const char *str, int len, char *buf);
 int wd_packet_to_string(WdPacket *pkt, char *str, int maxlen);
 
 /* wd_ping.c */
-extern int wd_is_upper_ok(char * server_list);
-extern int wd_is_unused_ip(char * ip);
+extern bool wd_is_ip_exists(char* ip);
+extern pid_t wd_issue_ping_command(char* hostname, int* outfd);
+extern bool wd_is_upper_ok(char * server_list);
+extern bool wd_get_ping_result(char* hostname, int exit_status, int outfd);
+
 
 /* wd_if.c */
 extern int wd_IP_up(void);
@@ -97,7 +100,7 @@ extern int wd_get_cmd(char * buf, char * cmd);
 
 /* wd_lifecheck.c */
 extern int is_wd_lifecheck_ready(void);
-extern int wd_lifecheck(void);
+extern pid_t fork_a_lifecheck(int fork_wait_time);
 extern int wd_check_heartbeat(WdInfo * pgpool);
 extern int wd_ping_pgpool(WdInfo * pgpool);
 
