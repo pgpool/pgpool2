@@ -2843,11 +2843,11 @@ int eval_logical(char *str)
  * array of pointers to malloced strings. number of tokens is set to
  * n; note that str will be destroyed by strtok().
  */
-#define MAXTOKENS 1024
+#define MAXTOKENS 256
 static char **extract_string_tokens(char *str, char *delimi, int *n)
 {
 	char *token;
-	static char **tokens;
+	char **tokens;
 
 	*n = 0;
 
@@ -2858,7 +2858,7 @@ static char **extract_string_tokens(char *str, char *delimi, int *n)
 		return NULL;
 	}
 
-	for (token = strtok(str, delimi); token != NULL && *n < MAXTOKENS; token = strtok(NULL, delimi))
+	for (token = strtok(str, delimi); token != NULL; token = strtok(NULL, delimi))
 	{
 		tokens[*n] = strdup(token);
 		if (tokens[*n] == NULL)
@@ -2868,6 +2868,16 @@ static char **extract_string_tokens(char *str, char *delimi, int *n)
 		}
 		pool_debug("extract_string_tokens: token: %s", tokens[*n]);
 		(*n)++;
+
+		if ( ((*n) % MAXTOKENS ) == 0)
+		{
+			tokens = realloc(tokens, (MAXTOKENS * sizeof(char *) * (((*n)/MAXTOKENS) +1) ));
+			if (tokens == NULL)
+			{
+				pool_error("extract_string_tokens: out of memory");
+				return NULL;
+			}
+		}
 	}
 	return tokens;
 }
