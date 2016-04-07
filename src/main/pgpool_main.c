@@ -542,7 +542,7 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 			ereport(LOG,
 					(errmsg("setting backend node %d status to NODE DOWN", health_check_node_id)));
 			health_check_timer_expired = 0;
-			degenerate_backend_set(&health_check_node_id,1);
+			degenerate_backend_set(&health_check_node_id, 1, false);
 			return 2;
 			/* need to distribute this info to children ??*/
 		}
@@ -556,10 +556,12 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
  * This function enqueues the failover/failback requests, and fires the failover() if the function
  * is not already executing
  */
-bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count)
+bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count, bool switch_over)
 {
 	bool failover_in_progress;
 	pool_sigset_t oldmask;
+	int index;
+	unsigned char request_details = 0;
 
 	/*
 	 * if the queue is already full
@@ -578,10 +580,17 @@ bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, i
 		return false;
 	}
 	Req_info->request_queue_tail++;
-	Req_info->request[Req_info->request_queue_tail % MAX_REQUEST_QUEUE_SIZE].kind = kind;
+	index = Req_info->request_queue_tail % MAX_REQUEST_QUEUE_SIZE;
+	Req_info->request[index].kind = kind;
+
+	/* Set switch over flag if requested */
+	if (switch_over)
+		request_details |= REQ_DETAIL_SWITCHOVER;
+	Req_info->request[index].request_details = request_details;
+
 	if(count > 0)
-		memcpy(Req_info->request[Req_info->request_queue_tail % MAX_REQUEST_QUEUE_SIZE].node_id, node_id_set, (sizeof(int) * count));
-	Req_info->request[Req_info->request_queue_tail % MAX_REQUEST_QUEUE_SIZE].count = count;
+		memcpy(Req_info->request[index].node_id, node_id_set, (sizeof(int) * count));
+	Req_info->request[index].count = count;
 	failover_in_progress = Req_info->switching;
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 
@@ -1045,7 +1054,7 @@ void notice_backend_error(int node_id)
 	}
 	else
 	{
-		degenerate_backend_set(&n, 1);
+		degenerate_backend_set(&n, 1, false);
 	}
 }
 
@@ -1058,14 +1067,16 @@ void notice_backend_error(int node_id)
  * node_id_set:	array of node ids to be registered for NODE DOWN operation
  * count:		number of elements in node_id_set array
  * error:		if set error is thrown as soon as any node id is found in
- *				in node_id_set on which operation could not be performed.
+ *				node_id_set on which operation could not be performed.
  * test_only:	When set, function only checks if NODE DOWN operation can be
  *				executed on provided node ids and never registers the operation
  *				request.
  *				For test_only case function returs false or throws an error as
  *				soon as first non complient node in node_id_set is found
+ * switch_over: if set, the request is originated by switch over, not errors.
  */
-bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only)
+bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only,
+							   bool switch_over)
 {
 	int i;
 	int node_id[MAX_NUM_BACKENDS];
@@ -1144,7 +1155,7 @@ bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool tes
 
 		if (res != COMMAND_FAILED)
 		{
-			register_node_operation_request(NODE_DOWN_REQUEST, node_id, node_count);
+			register_node_operation_request(NODE_DOWN_REQUEST, node_id, node_count, switch_over);
 		}
 		else
 		{
@@ -1161,9 +1172,9 @@ bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool tes
  * wrapper over degenerate_backend_set_ex function to register
  * NODE down operation request
  */
-void degenerate_backend_set(int *node_id_set, int count)
+void degenerate_backend_set(int *node_id_set, int count, bool switch_over)
 {
-	degenerate_backend_set_ex(node_id_set, count, false, false);
+	degenerate_backend_set_ex(node_id_set, count, false, false, switch_over);
 }
 
 /* send promote node request using SIGUSR1 */
@@ -1217,7 +1228,7 @@ void promote_backend(int node_id)
 
 	if (res != COMMAND_FAILED)
 	{
-		register_node_operation_request(PROMOTE_NODE_REQUEST, &node_id, 1);
+		register_node_operation_request(PROMOTE_NODE_REQUEST, &node_id, 1, false);
 	}
 	else
 	{
@@ -1275,7 +1286,7 @@ void send_failback_request(int node_id,bool throw_error)
 
 	if (res != COMMAND_FAILED)
 	{
-		register_node_operation_request(NODE_UP_REQUEST, &node_id, 1);
+		register_node_operation_request(NODE_UP_REQUEST, &node_id, 1, false);
 	}
 	else
 	{
@@ -1488,6 +1499,7 @@ static void failover(void)
 		int queue_index;
 		int node_id_set[MAX_NUM_BACKENDS];
 		int node_count;
+		unsigned char request_details;
 		WDFailoverCMDResults failoverLockRes;
 
 		pool_semaphore_lock(REQUEST_INFO_SEM);
@@ -1505,9 +1517,14 @@ static void failover(void)
 		queue_index = Req_info->request_queue_head % MAX_REQUEST_QUEUE_SIZE;
 		memcpy(node_id_set, Req_info->request[queue_index].node_id , (sizeof(int) * Req_info->request[queue_index].count));
 		reqkind = Req_info->request[queue_index].kind;
+		request_details = Req_info->request[queue_index].request_details;
 		node_count = Req_info->request[queue_index].count;
 
 		pool_semaphore_unlock(REQUEST_INFO_SEM);
+
+		ereport(DEBUG1,
+			(errmsg("failover handler"),
+			 errdetail("kind: %d flags: %x node_count: %d index:%d", reqkind, request_details, node_count, queue_index)));
 
 		if (reqkind == CLOSE_IDLE_REQUEST)
 		{

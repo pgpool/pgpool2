@@ -395,8 +395,11 @@ typedef enum {
 	PROMOTE_NODE_REQUEST
 } POOL_REQUEST_KIND;
 
+#define REQ_DETAIL_SWITCHOVER	0x00000001		/* failover due to switch over */
+
 typedef struct {
 	POOL_REQUEST_KIND	kind;		/* request kind */
+	unsigned char request_details;	/* option flags kind */
 	int node_id[MAX_NUM_BACKENDS];	/* request node id */
 	int count;						/* request node ids count */
 }POOL_REQUEST_NODE;
@@ -503,7 +506,7 @@ extern char remote_port[];	/* client port */
 /*
  * public functions
  */
-extern bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count);
+extern bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count, bool switch_over);
 extern char *get_config_file_name(void);
 extern char *get_hba_file_name(void);
 extern void do_child(int *fds);
@@ -534,8 +537,8 @@ extern void NoticeResponse(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend);
 
 extern void notice_backend_error(int node_id);
-extern void degenerate_backend_set(int *node_id_set, int count);
-extern bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only);
+extern void degenerate_backend_set(int *node_id_set, int count, bool switch_over);
+extern bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only, bool switch_over);
 extern void promote_backend(int node_id);
 extern void send_failback_request(int node_id, bool throw_error);
 
