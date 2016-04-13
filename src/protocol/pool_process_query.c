@@ -745,7 +745,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	/*
 	 * If we received a notification message in master/slave mode,
 	 * other backends will not receive the message.
-	 * So we should skip other nodes otherwise we will hung in pool_read.
+	 * So we should skip other nodes otherwise we will hang in pool_read.
 	 */
 	if (!MASTER_SLAVE || kind != 'A')
 	{
@@ -3233,15 +3233,16 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 	if (MASTER_SLAVE)
 	{
-		read_kind_from_one_backend(frontend, backend, (char *)&kind, MASTER_NODE_ID);
-
-			ereport(DEBUG1,
+		ereport(DEBUG1,
 				(errmsg("reading backend data packet kind"),
 				 errdetail("master node id: %d", MASTER_NODE_ID)));
+
+		read_kind_from_one_backend(frontend, backend, (char *)&kind, MASTER_NODE_ID);
+
 		/*
 		 * If we received a notification message in master/slave mode,
 		 * other backends will not receive the message.
-		 * So we should skip other nodes otherwise we will hung in pool_read.
+		 * So we should skip other nodes otherwise we will hang in pool_read.
 		 */
 		if (kind == 'A')
 		{

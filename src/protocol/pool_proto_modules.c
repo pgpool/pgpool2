@@ -2490,7 +2490,13 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			case 'I':	/* EmptyQueryResponse */
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if ((REPLICATION || RAW_MODE) && pool_is_doing_extended_query_message())
+				/* Empty query response message should be treated same as
+				 * Command complete message. When we receive the Command
+				 * complete message, we unset the query in progress flag if
+				 * operated in streaming replication mode. So we unset the
+				 * flag as well. See bug 190 for more details.
+				 */
+				if (pool_is_doing_extended_query_message())
 					pool_unset_query_in_progress();
 				break;
 
