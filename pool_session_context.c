@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -39,6 +39,7 @@ static void init_sent_message_list(void);
 void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	session_context = &session_context_d;
+	int node_id;
 
 	/* Get Process context */
 	session_context->process_context = pool_get_process_context();
@@ -67,19 +68,17 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Choose load balancing node if neccessary */
 	if (pool_config->load_balance_mode)
 	{
-		ProcessInfo *process_info = pool_get_my_process_info();
-		if (!process_info)
-		{
-			pool_error("pool_init_session_context: pool_get_my_process_info failed");
-			return;
-		}
-
-		session_context->load_balance_node_id = 
-			process_info->connection_info->load_balancing_node =
-			select_load_balancing_node();
-
-		pool_debug("selected load balancing node: %d", backend->info->load_balancing_node);
+		node_id = select_load_balancing_node();
 	}
+	else
+	{
+		node_id = STREAM? PRIMARY_NODE_ID: MASTER_NODE_ID;
+	}
+
+	session_context->load_balance_node_id = 
+		process_info->connection_info->load_balancing_node = node_id;
+
+	pool_debug("selected load balancing node: %d", backend->info->load_balancing_node);
 
 	/* Unset query is in progress */
 	pool_unset_query_in_progress();
