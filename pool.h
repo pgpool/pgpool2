@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -322,6 +322,8 @@ extern int my_master_node_id;
 
 #define REPLICATION (pool_config->replication_mode)
 #define MASTER_SLAVE (pool_config->master_slave_mode)
+#define STREAM (MASTER_SLAVE && !strcmp("stream", pool_config->master_slave_sub_mode))
+#define SLONY (MASTER_SLAVE && !strcmp("slony", pool_config->master_slave_sub_mode))
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
 #define PARALLEL_MODE (pool_config->parallel_mode)
 #define RAW_MODE (!REPLICATION && !PARALLEL_MODE && !MASTER_SLAVE)
