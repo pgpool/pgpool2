@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1443,12 +1443,13 @@ static RETSIGTYPE failover_handler(int sig)
  */
 static void failover(void)
 {
-	int i;
+	int i, j, k;
 	int node_id;
 	int new_master;
 	int new_primary;
 	int nodes[MAX_NUM_BACKENDS];
 	bool need_to_restart_children;
+	bool partial_restart;
 	int status;
 	int sts;
 	bool need_to_restart_pcp = false;
@@ -1607,7 +1608,7 @@ static void failover(void)
 
 			failoverLockRes = wd_failover_command_start(NODE_PROMOTE_CMD);
 		}
-		else
+		else	/* NODE_DOWN_REQUEST */
 		{
 			int cnt = 0;
 
@@ -1699,15 +1700,17 @@ static void failover(void)
 	}
 #endif
 
+		ereport(DEBUG1, (errmsg("failover/failback request details: STREAM: %d reqkind: %d detail: %x node_id: %d",
+								STREAM, reqkind, request_details & REQ_DETAIL_SWITCHOVER,
+								node_id)));
 
 		/* On 2011/5/2 Tatsuo Ishii says: if mode is streaming replication
-		* and request is NODE_UP_REQUEST(failback case) we don't need to
+		* and request is NODE_UP_REQUEST (failback case) we don't need to
 		* restart all children. Existing session will not use newly
 		* attached node, but load balanced node is not changed until this
 		* session ends, so it's harmless anyway.
 		*/
-		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP)	&&
-			reqkind == NODE_UP_REQUEST)
+		if (STREAM && reqkind == NODE_UP_REQUEST)
 		{
 			ereport(LOG,
 					(errmsg("Do not restart children because we are failbacking node id %d host%s port:%d and we are in streaming replication mode", node_id,
@@ -1715,6 +1718,58 @@ static void failover(void)
 					 BACKEND_INFO(node_id).backend_port)));
 
 			need_to_restart_children = false;
+			partial_restart = false;
+		}
+
+		/*
+		 * If the mode is streaming replication and the request is
+		 * NODE_DOWN_REQUEST and it's actually a switch over request, we don't
+		 * need to restart all children, except the node is primary.
+		 */
+		else if (STREAM && reqkind == NODE_DOWN_REQUEST &&
+				 request_details & REQ_DETAIL_SWITCHOVER && node_id != PRIMARY_NODE_ID)
+		{
+			ereport(LOG,
+					(errmsg("Do not restart children because we are switching over node id %d host%s port:%d and we are in streaming replication mode", node_id,
+							BACKEND_INFO(node_id).backend_hostname,
+							BACKEND_INFO(node_id).backend_port)));
+
+			need_to_restart_children = true;
+			partial_restart = true;
+
+			for (i = 0; i < pool_config->num_init_children; i++)
+			{
+				bool restart = false;
+
+				for (j=0;j<pool_config->max_pool;j++)
+				{
+					for (k=0;k<NUM_BACKENDS;k++)
+					{
+						ConnectionInfo *con = pool_coninfo(i, j, k);
+
+						if (con->connected && con->load_balancing_node == node_id)
+						{
+							ereport(LOG,
+									(errmsg("child pid %d needs to restart because pool %d uses backend %d",
+											process_info[i].pid, j, node_id)));
+							restart = true;
+							break;
+						}
+					}
+				}
+
+				if (restart)
+				{
+					pid_t pid = process_info[i].pid;
+					if (pid)
+					{
+						kill(pid, SIGQUIT);
+						ereport(DEBUG1,
+								(errmsg("failover handler"),
+								 errdetail("kill process with PID:%d", pid)));
+					}
+				}
+			}
 		}
 		else
 		{
@@ -1735,6 +1790,7 @@ static void failover(void)
 			}
 
 			need_to_restart_children = true;
+			partial_restart = false;
 		}
 
 		failoverLockRes = wd_failover_command_start(NODE_FAILED_CMD);
@@ -1872,12 +1928,11 @@ static void failover(void)
 		}
 
 
-		/* Fork the children if needed */
+		/* Kill children and restart them if needed */
 		if (need_to_restart_children)
 		{
 			for (i=0;i<pool_config->num_init_children;i++)
 			{
-
 				/*
 				 * Try to kill pgpool child because previous kill signal
 				 * may not be received by pgpool child. This could happen
@@ -1888,16 +1943,49 @@ static void failover(void)
 				 * signal mask is set as well, thus signals are never
 				 * received.
 				 */
-				kill(process_info[i].pid, SIGQUIT);
 
-				process_info[i].pid = fork_a_child(fds, i);
-				process_info[i].start_time = time(NULL);
+				bool restart = false;
+
+				if (partial_restart)
+				{
+					for (j=0;j<pool_config->max_pool;j++)
+					{
+						for (k=0;k<NUM_BACKENDS;k++)
+						{
+							ConnectionInfo *con = pool_coninfo(i, j, k);
+
+							if (con->connected && con->load_balancing_node == node_id)
+							{
+
+								ereport(LOG,
+										(errmsg("child pid %d needs to restart because pool %d uses backend %d",
+												process_info[i].pid, j, node_id)));
+								restart = true;
+								break;
+							}
+						}
+					}
+				}
+				else
+					restart = true;
+
+				if (restart)
+				{
+					if (process_info[i].pid)
+					{
+						kill(process_info[i].pid, SIGQUIT);
+
+						process_info[i].pid = fork_a_child(fds, i);
+						process_info[i].start_time = time(NULL);
+					}
+				}
 			}
 		}
+
 		else
 		{
 			/* Set restart request to each child. Children will exit(1)
-			 * whenever they are idle to restart.
+			 * whenever they are convenient.
 			 */
 			for (i=0;i<pool_config->num_init_children;i++)
 			{
