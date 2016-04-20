@@ -419,7 +419,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 				process_list = pool_get_process_list(&process_count);
 
-				mesg = (char *)malloc(6*process_count);	/* port# is at most 5 characters long (MAX:65535) */
+                mesg = (char *)malloc(7*process_count); /* PID is at most 6 characters long */
 				if (mesg == NULL)
 				{
 					pool_error("pcp_child: malloc() failed. reason: %s", strerror(errno));
@@ -430,10 +430,10 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 				for (i = 0; i < process_count; i++)
 				{
-					char port[6];
-					snprintf(port, sizeof(port), "%d", process_list[i]);
-					snprintf(mesg+total_port_len, strlen(port)+1, "%s", port);
-					total_port_len += strlen(port)+1;
+                    char process_id[7];
+                    snprintf(process_id, sizeof(process_id), "%d", process_list[i]);
+                    snprintf(mesg+total_port_len, strlen(process_id)+1, "%s", process_id);
+                    total_port_len += strlen(process_id)+1;
 				}
 
 				pcp_write(frontend, "n", 1);
@@ -1402,7 +1402,7 @@ static int pool_promote_node(int node_id, bool gracefully)
 		promote_backend(node_id);	/* send promote request */
 		return 0;
 	}
-		
+
 	/*
 	 * Wait until all frontends exit
 	 */
