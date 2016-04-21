@@ -847,7 +847,7 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 			 */
 			if (pool_config->fail_over_on_backend_error)
 			{
-				notice_backend_error(i);
+				notice_backend_error(i, true);
 				ereport(FATAL,
 					(errmsg("failed to create a backend connection"),
 						 errdetail("executing failover on backend")));

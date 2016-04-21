@@ -3214,16 +3214,16 @@ benchs2=# show pool_status;
 <h2 id="pool_nodes">pool_nodes <span class="version">V3.0 -</span></h2>
 <p>"SHOW pool_nodes" sends back a list of all configured nodes. It
 displays the node id, the hostname, the port, the status, the weight (only meaningful
-if you use the load balancing mode), the role  and the SELECT query counts issued to each backend. The possible values in the status column
+if you use the load balancing mode), the role, the SELECT query counts issued to each backend and if the node is for load balancing or not. The possible values in the status column
 are explained in the <a href="#pcp_node_info">pcp_node_info reference</a>.
 If the hostname is something like "/tmp", that means pgpool-II is connecting to backend by using UNIX domain sockets. The SELECT count does not include internal queries used by pgoool-II. Also the counters are reset to zero upon starting up of pgpool-II.
 </p>
 <pre>
 benchs2=# show pool_nodes;
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt 
----------+----------+-------+--------+-----------+---------+------------
- 0       | /tmp     | 11002 | 2      | 0.500000  | primary | 9231
- 1       | /tmp     | 11003 | 2      | 0.500000  | standby | 9469
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node 
+---------+----------+-------+--------+-----------+---------+------------+-------------------
+ 0       | /tmp     | 11002 | 2      | 0.500000  | primary | 9231       | true
+ 1       | /tmp     | 11003 | 2      | 0.500000  | standby | 9469       | false
 (2 rows)
 </pre>
 

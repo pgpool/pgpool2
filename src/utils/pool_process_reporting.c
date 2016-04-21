@@ -1032,6 +1032,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 	int i;
 	POOL_REPORT_NODES* nodes = palloc(NUM_BACKENDS * sizeof(POOL_REPORT_NODES));
 	BackendInfo *bi = NULL;
+	POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
 
     for (i = 0; i < NUM_BACKENDS; i++)
 	{
@@ -1043,6 +1044,8 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 	    snprintf(nodes[i].status, 	POOLCONFIG_MAXSTATLEN, 	"%d", 	bi->backend_status);
 	    snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight/RAND_MAX);
 	    snprintf(nodes[i].select, POOLCONFIG_MAXWEIGHTLEN, "%lld", stat_get_select_count(i));
+	    snprintf(nodes[i].load_balance_node, POOLCONFIG_MAXWEIGHTLEN, "%s",
+				 (session_context->load_balance_node_id == i)? "true":"false");
 
 		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 			if (i == REAL_PRIMARY_NODE_ID)
@@ -1065,7 +1068,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 
 void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
-	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight", "role", "select_cnt"};
+	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight", "role", "select_cnt", "load_balance_node"};
 	short num_fields = sizeof(field_names)/sizeof(char *);
 	int i;
 	short s;
@@ -1122,6 +1125,11 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			hsize = htonl(size+4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].select, size);
+
+			size = strlen(nodes[i].load_balance_node);
+			hsize = htonl(size+4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, nodes[i].load_balance_node, size);
 		}
 	}
 	else
@@ -1138,6 +1146,7 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			len += 4 + strlen(nodes[i].lb_weight); /* int32 + data; */
 			len += 4 + strlen(nodes[i].role);      /* int32 + data; */
 			len += 4 + strlen(nodes[i].select);    /* int32 + data; */
+			len += 4 + strlen(nodes[i].load_balance_node);    /* int32 + data; */
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
 			s = htons(num_fields);
@@ -1170,6 +1179,10 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			len = htonl(strlen(nodes[i].select));
 			pool_write(frontend, &len, sizeof(len));
 			pool_write(frontend, nodes[i].select, strlen(nodes[i].select));
+
+			len = htonl(strlen(nodes[i].load_balance_node));
+			pool_write(frontend, &len, sizeof(len));
+			pool_write(frontend, nodes[i].load_balance_node, strlen(nodes[i].load_balance_node));
 		}
 	}
 

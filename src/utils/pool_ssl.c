@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -340,7 +340,7 @@ void pool_ssl_close(POOL_CONNECTION *cp) { return; }
 int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
 	ereport(WARNING,
 			(errmsg("pool_ssl: SSL i/o called but SSL support is not available")));
-	notice_backend_error(cp->db_node_id);
+	notice_backend_error(cp->db_node_id, true);
 	child_exit(POOL_EXIT_AND_RESTART);
 	return -1; /* never reached */
 }
@@ -348,7 +348,7 @@ int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
 int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size) {
 	ereport(WARNING,
 			(errmsg("pool_ssl: SSL i/o called but SSL support is not available")));
-	notice_backend_error(cp->db_node_id);
+	notice_backend_error(cp->db_node_id, true);
 	child_exit(POOL_EXIT_AND_RESTART);
 	return -1; /* never reached */
 }

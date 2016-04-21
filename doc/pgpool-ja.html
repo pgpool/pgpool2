@@ -3365,15 +3365,15 @@ benchs2=# show pool_status;
 <h2 id="pool_nodes">pool_nodes <span class="version">V3.0 〜</span></h2>
 <p>"SHOW pool_nodes"は、DBノードのリストを表示します。
 ホスト名、ポート番号、状態、重み(ロードバランスモードで運用しているときにのみ意味があります)、
-ノードの役割、発行されたSELECTの数が表示されます。
+ノードの役割、発行されたSELECTの数、負荷分散対象のノードかどうかが表示されます。
 状態(status)の意味については、<a href="#pcp_node_info">pcp_node_infoリファレンス</a>で説明されています。ホスト名が"/tmp"のように表示される場合、UNIXドメインソケットを使用してpgpool-IIがPosgreSQLに接続していることを意味します。SELECTの数には、pgpool-II内部で発行されるクエリの数は含まれません。また、このカウンタはpgpool-IIがスタートした時に0にリセットされます。
 </p>
 <pre>
 benchs2=# show pool_nodes;
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt 
----------+----------+-------+--------+-----------+---------+------------
- 0       | /tmp     | 11002 | 2      | 0.500000  | primary | 9231
- 1       | /tmp     | 11003 | 2      | 0.500000  | standby | 9469
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node 
+---------+----------+-------+--------+-----------+---------+------------+-------------------
+ 0       | /tmp     | 11002 | 2      | 0.500000  | primary | 9231       | true
+ 1       | /tmp     | 11003 | 2      | 0.500000  | standby | 9469       | false
 (2 rows)
 </pre>
 

@@ -4584,13 +4584,30 @@ SELECT_RETRY:
 					ereport(LOG,
 						(errmsg("reading and processing packets"),
 							 errdetail("postmaster on DB node %d was shutdown by administrative command", i)));
-					/* detach backend node. */
-					was_error = 1;
-					if (!VALID_BACKEND(i))
+
+					/*
+					 * If shutdown node is not primary nor load balance node,
+					 * we do not need to trigger failover.
+					 */
+					if (STREAM &&
+						(i == PRIMARY_NODE_ID || i == backend->info->load_balancing_node))
+					{
+						/* detach backend node. */
+						was_error = 1;
+						if (!VALID_BACKEND(i))
+							break;
+						notice_backend_error(i, true);
+						sleep(5);
 						break;
-					notice_backend_error(i);
-					sleep(5);
-					break;
+					}
+
+					/*
+					 * Just set local status to down.
+					 */
+					else
+					{
+						*(my_backend_status[i]) = CON_DOWN;
+					}
 				}
 				else if (r < 0)
 				{

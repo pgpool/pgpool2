@@ -539,10 +539,17 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 		}
 		else
 		{
+			/*
+			 * If health check timer expired, then it is possible that there
+			 * was a communitication path problem.  In that case we need to do
+			 * full restarting of child process.
+			 */
+			bool partial_failover = health_check_timer_expired?	false:true;
+
 			ereport(LOG,
 					(errmsg("setting backend node %d status to NODE DOWN", health_check_node_id)));
 			health_check_timer_expired = 0;
-			degenerate_backend_set(&health_check_node_id, 1, false);
+			degenerate_backend_set(&health_check_node_id, 1, partial_failover);
 			return 2;
 			/* need to distribute this info to children ??*/
 		}
@@ -1043,7 +1050,11 @@ static void terminate_all_childrens()
 	POOL_SETMASK(&UnBlockSig);
 }
 
-void notice_backend_error(int node_id)
+/*
+ * Reuest failover. If "switch_over" is false, request all existing sessions
+ * restarting.
+ */
+void notice_backend_error(int node_id, bool switch_over)
 {
 	int n = node_id;
 
@@ -1054,7 +1065,7 @@ void notice_backend_error(int node_id)
 	}
 	else
 	{
-		degenerate_backend_set(&n, 1, false);
+		degenerate_backend_set(&n, 1, switch_over);
 	}
 }
 
@@ -1649,57 +1660,6 @@ static void failover(void)
 					(errmsg("failover: no valid backends node found")));
 		}
 
-	/*
-	 * Before we tried to minimize restarting pgpool to protect existing
-	 * connections from clients to pgpool children. What we did here was,
-	 * if children other than master went down, we did not fail over.
-	 * This is wrong. Think about following scenario. If someone
-	 * accidentally plugs out the network cable, the TCP/IP stack keeps
-	 * retrying for long time (typically 2 hours). The only way to stop
-	 * the retry is restarting the process.  Bottom line is, we need to
-	 * restart all children in any case.  See pgpool-general list posting
-	 * "TCP connections are *not* closed when a backend timeout" on Jul 13
-	 * 2008 for more details.
-	 */
-#ifdef NOT_USED
-	else
-	{
-		if (Req_info->master_node_id == new_master && *InRecovery == RECOVERY_INIT)
-		{
-			ereport(LOG,
-                    (errmsg("failover_handler: do not restart pgpool. same master node %d was selected", new_master)));
-			if (reqkind == NODE_UP_REQUEST)
-			{
-				ereport(LOG,
-                        (errmsg("failback done. reconnect host %s(%d)",
-						 BACKEND_INFO(node_id).backend_hostname,
-						 BACKEND_INFO(node_id).backend_port)));
-			}
-			else
-			{
-				ereport(LOG,
-                        (errmsg("failover done. shutdown host %s(%d)",
-						 BACKEND_INFO(node_id).backend_hostname,
-						 BACKEND_INFO(node_id).backend_port)));
-			}
-
-			/* exec failover_command */
-			for (i = 0; i < pool_config->backend_desc->num_backends; i++)
-			{
-				if (nodes[i])
-					trigger_failover_command(i, pool_config->failover_command);
-			}
-
-			switching = 0;
-			Req_info->switching = false;
-			kill(pcp_pid, SIGUSR2);
-			switching = 0;
-			Req_info->switching = false;
-			continue;
-		}
-	}
-#endif
-
 		ereport(DEBUG1, (errmsg("failover/failback request details: STREAM: %d reqkind: %d detail: %x node_id: %d",
 								STREAM, reqkind, request_details & REQ_DETAIL_SWITCHOVER,
 								node_id)));
@@ -1979,6 +1939,8 @@ static void failover(void)
 						process_info[i].start_time = time(NULL);
 					}
 				}
+				else
+					process_info[i].need_to_restart = 1;
 			}
 		}
 

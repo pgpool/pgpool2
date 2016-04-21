@@ -536,7 +536,7 @@ extern POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 extern void NoticeResponse(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend);
 
-extern void notice_backend_error(int node_id);
+extern void notice_backend_error(int node_id, bool switch_over);
 extern void degenerate_backend_set(int *node_id_set, int count, bool switch_over);
 extern bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only, bool switch_over);
 extern void promote_backend(int node_id);

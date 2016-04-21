@@ -210,7 +210,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				/* if fail_over_on_backend_error is true, then trigger failover */
 				if (pool_config->fail_over_on_backend_error)
 				{
-					notice_backend_error(cp->db_node_id);
+					notice_backend_error(cp->db_node_id, true);
 					child_exit(POOL_EXIT_AND_RESTART);
                     /* we are in main process */
                     ereport(ERROR,
@@ -247,7 +247,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 
 #ifdef NOT_USED
 			    /* fatal error, notice to parent and exit */
-			    notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id));
+			    notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id, true));
 				child_exit(POOL_EXIT_AND_RESTART);
 #endif
 			}
@@ -354,7 +354,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 				/* if fail_over_on_backend_error is true, then trigger failover */
 				if (pool_config->fail_over_on_backend_error)
 				{
-					notice_backend_error(cp->db_node_id);
+					notice_backend_error(cp->db_node_id, true);
 					child_exit(POOL_EXIT_AND_RESTART);
                     /* we are in main process */
                     ereport(ERROR,
@@ -386,7 +386,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 
 #ifdef NOT_USED
 			    /* fatal error, notice to parent and exit */
-			    notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id));
+			    notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id, true));
 				child_exit(POOL_EXIT_AND_RESTART);
 #endif
 			}
@@ -610,7 +610,7 @@ int pool_flush(POOL_CONNECTION *cp)
 			/* if fail_over_on_backend_error is true, then trigger failover */
 			if (pool_config->fail_over_on_backend_error)
 			{
-				notice_backend_error(cp->db_node_id);
+				notice_backend_error(cp->db_node_id, true);
 				ereport(LOG,
 					(errmsg("unable to flush data to backend"),
 						 errdetail("do not failover because I am the main process")));
@@ -657,7 +657,7 @@ int pool_flush_noerror(POOL_CONNECTION *cp)
             /* if fail_over_on_backend_erro is true, then trigger failover */
             if (pool_config->fail_over_on_backend_error)
             {
-                notice_backend_error(cp->db_node_id);
+                notice_backend_error(cp->db_node_id, true);
                 child_exit(POOL_EXIT_AND_RESTART);
 				ereport(LOG,
 					(errmsg("unable to flush data to backend"),
@@ -814,7 +814,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 			cp->socket_state = POOL_SOCKET_ERROR;
 			if (cp->isbackend)
 			{
-				notice_backend_error(cp->db_node_id);
+				notice_backend_error(cp->db_node_id, true);
 				child_exit(POOL_EXIT_AND_RESTART);
                 ereport(ERROR,
                         (errmsg("unable to read data from frontend"),
