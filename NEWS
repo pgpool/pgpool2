@@ -14,7 +14,7 @@
 
 * Bug fixes
 
-    - Fix for segfault during pcp_recovery  (Muhammad Usama)
+    - Fix for segfault during trusted_servers check (Muhammad Usama)
 
       PostgreSQL's memory and exception manager APIs adopted by the
       pgpool 3.4 are not thread safe and are causing the segmentation fault

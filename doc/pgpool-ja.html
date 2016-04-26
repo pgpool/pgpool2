@@ -6188,7 +6188,7 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 <ul>
 
 <li>
-    セグメンテーションフォルトを修正しました。 (Muhammad Usama)
+    trusted_servers チェック時のセグメンテーションフォルトを修正しました。 (Muhammad Usama)
     <p>
     pgpool-II 3.4 からは PostgreSQL のメモリマネージャおよび
     例外マネージャ APIを流用していますが 、それはスレッドセーフ
@@ -6203,22 +6203,24 @@ SELECTの最終実行ステータスとパフォーマンスのおおよその�
 </li>
 
 <li>
-    black_function_list と white_function_list　のサイズ上限を削除し
-    ました。(Muhammad Usama)
+    black_function_list と white_function_list　の項目数の上限をなくしました。(Muhammad Usama)
     <p>
-    black_function_list と white_function_list 配列のサイズ上限に達
-    する場合、realloc を使うことで配列サイズを増やすように修
-    正しました。
+    pgpool_config の black_function_list/white_function_list を保持する配列は、
+    固定サイズの malloc で確保していました。これはリストの項目数に上限があること
+    を意味しています。そのため black_function_list　と white_function_list
+    配列がサイズ上限に達する場合、realloc を使うことで配列サイズを増やすように
+    修正されました。
     </p>
 </li>
 
 <li>
-    レプリケーションモードにおける load_balance_mode = off の
-    場合でも、一部のクエリがプライマリサーバ以外にも転送される
-    不具合を修正しました。(Tatsuo Ishii)
+    レプリケーションモードにおける load_balance_mode = off の場合でも、
+    一部のクエリがプライマリサーバ以外にも転送されていました。この挙動を変更
+    し、load_balance_mode = offの場合はすべてのクエリをプライマリサーバにの
+    み送るようにしました。(Tatsuo Ishii)
     <p>
-    この修正で、load_balance_mode = off の場合、すべてのクエリが
-    プライマリサーバにのみ送信されます。
+    この修正で、load_balance_mode = off の場合、すべてのクエリがプライマリ
+    サーバにのみ送信されます。
     </p>
     <p>
     bug #189 の報告によります。
@@ -7168,22 +7170,24 @@ DETAIL: connect() reports failure "Success"
 <ul>
 
 <li>
-    black_function_list と white_function_list　のサイズ上限を削除し
-    ました。(Muhammad Usama)
+    black_function_list と white_function_list　の項目数の上限をなくしました。(Muhammad Usama)
     <p>
-    black_function_list　と white_function_list 配列のサイズ
-    上限に達する場合、realloc を使うことで配列サイズを増やすように修
-    正しました。
+    pgpool_config の black_function_list/white_function_list を保持する配列は、
+    固定サイズの malloc で確保していました。これはリストの項目数に上限があること
+    を意味しています。そのため black_function_list　と white_function_list
+    配列がサイズ上限に達する場合、realloc を使うことで配列サイズを増やすように
+    修正されました。
     </p>
 </li>
 
 <li>
-    レプリケーションモードにおける load_balance_mode = off の
-    場合でも、一部のクエリがプライマリサーバ以外にも転送される
-    不具合を修正しました。(Tatsuo Ishii)
+    レプリケーションモードにおける load_balance_mode = off の場合でも、
+    一部のクエリがプライマリサーバ以外にも転送されていました。この挙動を変更
+    し、load_balance_mode = offの場合はすべてのクエリをプライマリサーバにの
+    み送るようにしました。(Tatsuo Ishii)
     <p>
-    この修正で、load_balance_mode = off の場合、すべてのクエリが
-    プライマリサーバにのみ送信されます。
+    この修正で、load_balance_mode = off の場合、すべてのクエリがプライマリ
+    サーバにのみ送信されます。
     </p>
     <p>
     bug #189 の報告によります。
@@ -9111,22 +9115,24 @@ FATAL: no PostgreSQL user name specified in startup packet
 <ul>
 
 <li>
-    black_function_list と white_function_list のサイズ上限を削除し
-    ました。(Muhammad Usama)
+    black_function_list と white_function_list の項目数の上限をなくしました。(Muhammad Usama)
     <p>
-    black_function_list と white_function_list 配列のサイズ
-    上限に達する場合、realloc を使うことで配列サイズを増やすように修
-    正しました。
+    pgpool_config の black_function_list/white_function_list を保持する配列は、
+    固定サイズの malloc で確保していました。これはリストの項目数に上限があること
+    を意味しています。そのため black_function_list　と white_function_list
+    配列がサイズ上限に達する場合、realloc を使うことで配列サイズを増やすように
+    修正されました。
     </p>
 </li>
 
 <li>
-    レプリケーションモードにおける load_balance_mode = off の
-    場合でも、一部のクエリがプライマリサーバ以外にも転送される
-    不具合を修正しました。(Tatsuo Ishii)
+    レプリケーションモードにおける load_balance_mode = off の場合でも、
+    一部のクエリがプライマリサーバ以外にも転送されていました。この挙動を変更
+    し、load_balance_mode = offの場合はすべてのクエリをプライマリサーバにの
+    み送るようにしました。(Tatsuo Ishii)
     <p>
-    この修正で、load_balance_mode = off の場合、すべてのクエリが
-    プライマリサーバにのみ送信されます。
+    この修正で、load_balance_mode = off の場合、すべてのクエリがプライマリ
+    サーバにのみ送信されます。
     </p>
     <p>
     bug #189 の報告によります。
@@ -11619,22 +11625,24 @@ autoconf
 <ul>
 
 <li>
-    black_function_list と white_function_list のサイズ上限を削除し
-    ました。(Muhammad Usama)
+    black_function_list と white_function_list の項目数の上限をなくしました。(Muhammad Usama)
     <p>
-    black_function_list と white_function_list 配列のサイズ
-    上限に達する場合、realloc を使うことで配列サイズを増やすように修
-    正しました。
+    pgpool_config の black_function_list/white_function_list を保持する配列は、
+    固定サイズの malloc で確保していました。これはリストの項目数に上限があること
+    を意味しています。そのため black_function_list　と white_function_list
+    配列がサイズ上限に達する場合、realloc を使うことで配列サイズを増やすように
+    修正されました。
     </p>
 </li>
 
 <li>
-    レプリケーションモードにおける load_balance_mode = off の
-    場合でも、一部のクエリがプライマリサーバ以外にも転送される
-    不具合を修正しました。(Tatsuo Ishii)
+    レプリケーションモードにおける load_balance_mode = off の場合でも、
+    一部のクエリがプライマリサーバ以外にも転送されていました。この挙動を変更
+    し、load_balance_mode = offの場合はすべてのクエリをプライマリサーバにの
+    み送るようにしました。(Tatsuo Ishii)
     <p>
-    この修正で、load_balance_mode = off の場合、すべてのクエリが
-    プライマリサーバにのみ送信されます。
+    この修正で、load_balance_mode = off の場合、すべてのクエリがプライマリ
+    サーバにのみ送信されます。
     </p>
     <p>
     bug #189 の報告によります。
