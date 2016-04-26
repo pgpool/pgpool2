@@ -20,7 +20,7 @@
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        2pgdg%{?dist}
+Release:        1pgdg%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
