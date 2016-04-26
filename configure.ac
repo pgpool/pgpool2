@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([pgpool-II], [3.3.9], [pgpool-hackers@pgpool.net], [pgpool-II])
+AC_INIT([pgpool-II], [3.3.10], [pgpool-hackers@pgpool.net], [pgpool-II])
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -165,7 +165,7 @@ AC_CHECK_SIZEOF([void *])
 AC_CHECK_SIZEOF([size_t])
 
 # Decide whether float4 is passed by value: user-selectable, enabled by default
-AC_MSG_CHECKING([whether to build with float4 passed by value])   
+AC_MSG_CHECKING([whether to build with float4 passed by value])
 PGAC_ARG_BOOL(enable, float4-byval, yes, [disable float4 passed by value],
               [AC_DEFINE([USE_FLOAT4_BYVAL], 1,
                          [Define to 1 if you want float4 values to be passed by value. (--enable-float4-byval)])
