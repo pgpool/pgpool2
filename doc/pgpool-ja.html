@@ -3370,7 +3370,7 @@ benchs2=# show pool_status;
 </p>
 <pre>
 benchs2=# show pool_nodes;
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt 
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt
 ---------+----------+-------+--------+-----------+---------+------------
  0       | /tmp     | 11002 | 2      | 0.500000  | primary | 9231
  1       | /tmp     | 11003 | 2      | 0.500000  | standby | 9469
@@ -4883,7 +4883,7 @@ NODE STATUS ALIVE =  2
 <h2 id="pcp_comand_password">PCP 接続認証</h2>
 
 <p>PCP ユーザ名とパスワードが <code>$prefix/etc</code> ディレクトリ内の <code>pcp.conf</code>
-で宣言されている必要があります。<code>pcp.conf</code> が他の場所にある場合には、pgpool-II 
+で宣言されている必要があります。<code>pcp.conf</code> が他の場所にある場合には、pgpool-II
 の起動時に <code>-F</code>  オプションで指定することができます。</p>
 
 <h3 id="password_file">パスワードファイル</h3>
@@ -5545,7 +5545,7 @@ $ CREATE EXTENSION pgpool_adm
     実行例を示します。
 <pre>
 test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
- host | port  |      status       | weight 
+ host | port  |      status       | weight
 ------+-------+-------------------+--------
  /tmp | 11002 | Connection in use |      0
 (1 row)
@@ -5597,7 +5597,7 @@ test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
     実行例を示します。
 <pre>
 test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHERE item ~ 'backend.*0';
-          item           |                     value                      |          description          
+          item           |                     value                      |          description
 -------------------------+------------------------------------------------+-------------------------------
  backend_hostname0       | /tmp                                           | backend #0 hostname
  backend_port0           | 11002                                          | backend #0 port number
@@ -5651,7 +5651,7 @@ test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHER
     実行例を示します。
 <pre>
 test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
- node_count 
+ node_count
 ------------
           2
 (1 row)
@@ -5701,7 +5701,7 @@ test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
     実行例を示します。
 <pre>
 test=# SELECT * FROM pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
- node_attached 
+ node_attached
 ---------------
  t
 (1 row)
@@ -5752,7 +5752,7 @@ test=# SELECT * FROM pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
     実行例を示します。
 <pre>
 test=# SELECT * FROM pcp_detach_node(1, 'false', 'localhost',11001,'t-ishii','t-ishii');
- node_detached 
+ node_detached
 ---------------
  t
 (1 row)
@@ -6101,6 +6101,96 @@ configure に失敗します。必ず libpq 3.0 以降(PostgreSQL 7.4以降) を
 <hr><a name="release3.5.x"></a>
 
 <!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.5.2"></a>3.5.2 (ekieboshi) 2016/04/26</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.5.1 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    セグメンテーションフォルトを修正しました。 (Muhammad Usama)
+    <p>
+    pgpool-II 3.4 からは PostgreSQL のメモリマネージャおよび
+    例外マネージャ APIを流用していますが 、それはスレッドセーフ
+    ではありません。上位接続を確認するため ping の応答で信頼で
+    きるサーバ確認時、watchdog lifecheck プロセスでセグメンテ
+    ーションフォルトを引き起こしていました。スレッドを削除し、
+    子プロセスを使うように修正しました。
+    </p>
+    <p>
+    この問題は [pgpool-general: 4569] で報告されました。
+    </p>
+</li>
+
+<li>
+    black_function_list と white_function_list のサイズ上限を削除し
+    ました。(Muhammad Usama)
+    <p>
+    black_function_list と white_function_list 配列のサイズ上限に
+    達する場合、realloc を使うことで配列サイズを増やすように修
+    正しました。
+    </p>
+</li>
+
+<li>
+    インストール（初期設定）の「管理ツールパラメータ設定」で、
+    "PCP ディレクトリ" のチェックを修正しました。(Nozomi Anzai)
+    <p>
+    pgpool-II 3.5 では pcp_systemdb_info コマンドが削除されましたが、
+    ppgoolAdmin では依然として存在チェックを行なっていました。
+    </p>
+    <p>
+    bug #187 の報告によります。
+    </p>
+</li>
+
+<li>
+    拡張プロトコルにおける空クエリの場合、発生し得るハングアップ
+    を修正しました。(Tatsuo Ishii)
+    <p>
+    pgpool は空のクエリの応答に対して、プロセスフラグをリセットせず、
+    バックエンドの応答を待ち続けることが原因でした。この修正では、
+    空のクエリの応答を得た場合、pgpool はプロセスフラグをリセットし、
+    フロントエンドから Sync メッセージを受信するように修正しました。
+    </p>
+    <p>
+    bug #190 の報告によります。
+    </p>
+</li>
+
+<li>
+    レプリケーションモードにおける load_balance_mode = off の
+    場合でも、一部のクエリがプライマリサーバ以外にも転送される
+    不具合を修正しました。(Tatsuo Ishii)
+    <p>
+    この修正で、load_balance_mode = off の場合、すべてのクエリが
+    プライマリサーバにのみ送信されます。
+    </p>
+    <p>
+    bug #189 の報告によります。
+    </p>
+</li>
+
+<li>
+    pcp_proc_count コマンドの出力結果のプロセス ID を 6 桁まで表示
+    できるよう修正しました。(Bo Peng)
+    <p>
+    特定の環境において、pcp_proc_count コマンドの出力結果の
+    プロセス ID が6 桁の場合、6 番目の文字が表示されませんでした。
+    この修正で、プロセス ID が最大 6 桁まで表示するよう変更しました。
+    </p>
+    <p>
+    bug #188 の報告によります。
+    </p>
+</li>
+</ul>
+
+<!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.5.1"></a>3.5.1 (ekieboshi) 2016/04/04</h2>
 <!-- -------------------------------------------------------------------------------- -->
 
@@ -6360,25 +6450,25 @@ watchdog はスプリットブレイン現象のような問題の状況を監�
 </p>
 <ul>
 <li>
-<a href="#WD_IPC_SOCKET_DIR">wd_ipc_socket_dir</a>: 
+<a href="#WD_IPC_SOCKET_DIR">wd_ipc_socket_dir</a>:
 <p>
 pgpool-II watchdog の IPC（プロセス間通信）で受け付ける UNIX ドメインソケットが作成されるディレクトリを指定します。
 </p>
 </li>
 <li>
-<a href="#WD_PRIORITY">wd_priority</a>: 
+<a href="#WD_PRIORITY">wd_priority</a>:
 <p>
 このパラメータによって自身の watchdog ノードがリーダに選ばれる優先度を上げることができます。
 </p>
 </li>
 <li>
-<a href="#WD_DE-ESCALATION_COMMAND">wd_de_escalation_command</a>: 
+<a href="#WD_DE-ESCALATION_COMMAND">wd_de_escalation_command</a>:
 <p>
 pgpool-II watchdog のマスターノードがマスターの責務を辞退し降格するときに、ここで指定したコマンドが実行されます。
 </p>
 </li>
 <li>
-<a href="#WD_MONITORING_INTERFACES_LIST">wd_monitoring_interfaces_list</a>: 
+<a href="#WD_MONITORING_INTERFACES_LIST">wd_monitoring_interfaces_list</a>:
 <p>
 watchdog プロセスがリンク状態を監視するネットワークデバイス名をカンマ区切りで指定します。
 </p>
@@ -6403,7 +6493,7 @@ show pool_nodes の結果には各バックエンドの状態が出力されま�
 <pre>
 例：
 test=# show pool_nodes;
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt 
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt
 ---------+----------+-------+--------+-----------+---------+------------
  0       | /tmp     | 11002 | 2      | 0.500000  | primary | 338230
  1       | /tmp     | 11003 | 2      | 0.500000  | standby | 163939
@@ -6561,7 +6651,7 @@ JDBC_DRIVER 環境変数の値を用いるように変更されました。
 
 <li>doc: ドキュメントに欠けていたデフォルト値の記述を追加しました。(Yugo Nagata)</li>
 
-<li>リセットクエリがスタックする問題を修正しました。(Muhammad Usama) 
+<li>リセットクエリがスタックする問題を修正しました。(Muhammad Usama)
 <p>
 この問題は他のブランチでは既に修正済みであり、今回も 3.3 シリーズと同じ方法で解決されました。
 すなわち、client idle limit に達した際に、バックエンドの接続を閉じるようにしました。
@@ -6625,6 +6715,70 @@ ERROR ではなく、FRONTEND_ERROR を報告するようにしました。こ�
 <!-- 3.4                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.4.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.4.6"></a>3.4.6 (tataraboshi) 2016/04/26</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.4.5 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    セグメンテーションフォルトを修正しました。 (Muhammad Usama)
+    <p>
+    pgpool-II 3.4 からは PostgreSQL のメモリマネージャおよび
+    例外マネージャ APIを流用していますが 、それはスレッドセーフ
+    ではありません。上位接続を確認するため ping の応答で信頼で
+    きるサーバ確認時、watchdog lifecheck　プロセスでセグメンテ
+    ーションフォルトを引き起こしていました。スレッドを削除し、
+    子プロセスを使うように修正しました。
+    </p>
+    <p>
+    この問題は [pgpool-general: 4569] で報告されました。
+    </p>
+</li>
+
+<li>
+    black_function_list と white_function_list　のサイズ上限を削除し
+    ました。(Muhammad Usama)
+    <p>
+    black_function_list と white_function_list 配列のサイズ上限に達
+    する場合、realloc を使うことで配列サイズを増やすように修
+    正しました。
+    </p>
+</li>
+
+<li>
+    レプリケーションモードにおける load_balance_mode = off の
+    場合でも、一部のクエリがプライマリサーバ以外にも転送される
+    不具合を修正しました。(Tatsuo Ishii)
+    <p>
+    この修正で、load_balance_mode = off の場合、すべてのクエリが
+    プライマリサーバにのみ送信されます。
+    </p>
+    <p>
+    bug #189 の報告によります。
+    </p>
+</li>
+
+<li>
+    pcp_proc_count コマンドの出力結果のプロセス ID を 6 桁まで表示
+    できるよう修正しました。 (Bo Peng)
+    <p>
+    特定の環境において、pcp_proc_count コマンドの出力結果の
+    プロセス ID が6 桁の場合、6 番目の文字が表示されませんでした。
+    この修正で、プロセス ID が最大 6 桁まで表示するよう変更しました。
+    </p>
+    <p>
+    bug #188 の報告によります。
+    </p>
+</li>
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.4.5"></a>3.4.5 (tataraboshi) 2016/04/04</h2>
@@ -7541,6 +7695,55 @@ DETAIL: connect() reports failure "Success"
 <!-- 3.3                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.3.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.3.10"></a>3.3.10 (tokakiboshi) 2016/04/26</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.3.9 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    black_function_list と white_function_list　のサイズ上限を削除し
+    ました。(Muhammad Usama)
+    <p>
+    black_function_list　と white_function_list 配列のサイズ
+    上限に達する場合、realloc を使うことで配列サイズを増やすように修
+    正しました。
+    </p>
+</li>
+
+<li>
+    レプリケーションモードにおける load_balance_mode = off の
+    場合でも、一部のクエリがプライマリサーバ以外にも転送される
+    不具合を修正しました。(Tatsuo Ishii)
+    <p>
+    この修正で、load_balance_mode = off の場合、すべてのクエリが
+    プライマリサーバにのみ送信されます。
+    </p>
+    <p>
+    bug #189 の報告によります。
+    </p>
+</li>
+
+<li>
+    pcp_proc_count コマンドの出力結果のプロセス ID を 6 桁まで表示
+    できるよう修正しました。(Bo Peng)
+    <p>
+    特定の環境において、pcp_proc_count コマンドの出力結果の
+    プロセス ID が6 桁の場合、6 番目の文字が表示されませんでした。
+    この修正で、プロセス ID が最大 6 桁まで表示するよう変更しました。
+    </p>
+    <p>
+    bug #188 の報告によります。
+    </p>
+</li>
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.3.9"></a>3.3.9 (tokakiboshi) 2016/04/04</h2>
@@ -9435,6 +9638,55 @@ FATAL: no PostgreSQL user name specified in startup packet
 <!-- 3.2                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.2.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.2.15"></a>3.2.15 (namameboshi) 2016/04/26</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.2.14 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    black_function_list と white_function_list のサイズ上限を削除し
+    ました。(Muhammad Usama)
+    <p>
+    black_function_list と white_function_list 配列のサイズ
+    上限に達する場合、realloc を使うことで配列サイズを増やすように修
+    正しました。
+    </p>
+</li>
+
+<li>
+    レプリケーションモードにおける load_balance_mode = off の
+    場合でも、一部のクエリがプライマリサーバ以外にも転送される
+    不具合を修正しました。(Tatsuo Ishii)
+    <p>
+    この修正で、load_balance_mode = off の場合、すべてのクエリが
+    プライマリサーバにのみ送信されます。
+    </p>
+    <p>
+    bug #189 の報告によります。
+    </p>
+</li>
+
+<li>
+    pcp_proc_count コマンドの出力結果のプロセス ID を 6 桁まで表示
+    できるよう修正しました。(Bo Peng)
+    <p>
+    特定の環境において、pcp_proc_count コマンドの出力結果の
+    プロセス ID が6 桁の場合、6 番目の文字が表示されませんでした。
+    この修正で、プロセス ID が最大 6 桁まで表示するよう変更しました。
+    </p>
+    <p>
+    bug #188 の報告によります。
+    </p>
+</li>
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.2.14"></a>3.2.14 (namameboshi) 2016/04/04</h2>
@@ -11896,6 +12148,55 @@ autoconf
 <!-- 3.1                                                                              -->
 <!-- ================================================================================ -->
 <hr><a name="release3.1.x"></a>
+
+<!-- -------------------------------------------------------------------------------- -->
+<h2><a name="release3.1.18"></a>3.1.18 (hatsuiboshi) 2016/04/26</h2>
+<!-- -------------------------------------------------------------------------------- -->
+
+<h3>概要</h3>
+<p>
+このバージョンは 3.1.17 に対するバグ修正リリースです。
+</p>
+
+<h3>バグ修正</h3>
+<ul>
+
+<li>
+    black_function_list と white_function_list のサイズ上限を削除し
+    ました。(Muhammad Usama)
+    <p>
+    black_function_list と white_function_list 配列のサイズ
+    上限に達する場合、realloc を使うことで配列サイズを増やすように修
+    正しました。
+    </p>
+</li>
+
+<li>
+    レプリケーションモードにおける load_balance_mode = off の
+    場合でも、一部のクエリがプライマリサーバ以外にも転送される
+    不具合を修正しました。(Tatsuo Ishii)
+    <p>
+    この修正で、load_balance_mode = off の場合、すべてのクエリが
+    プライマリサーバにのみ送信されます。
+    </p>
+    <p>
+    bug #189 の報告によります。
+    </p>
+</li>
+
+<li>
+    pcp_proc_count コマンドの出力結果のプロセス ID を 6 桁まで表示
+    できるよう修正しました。(Bo Peng)
+    <p>
+    特定の環境において、pcp_proc_count コマンドの出力結果の
+    プロセス ID が6 桁の場合、6 番目の文字が表示されませんでした。
+    この修正で、プロセス ID が最大 6 桁まで表示するよう変更しました。
+    </p>
+    <p>
+    bug #188 の報告によります。
+    </p>
+</li>
+</ul>
 
 <!-- -------------------------------------------------------------------------------- -->
 <h2><a name="release3.1.17"></a>3.1.17 (hatsuiboshi) 2016/04/04</h2>
