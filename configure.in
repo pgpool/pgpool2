@@ -4,7 +4,7 @@ AC_INIT
 dnl Checks for programs.
 AC_PROG_CC
 
-AM_INIT_AUTOMAKE(pgpool-II, 3.2.14)
+AM_INIT_AUTOMAKE(pgpool-II, 3.2.15)
 # AC_PROG_RANLIB
 AC_PROG_LIBTOOL
 
@@ -162,7 +162,7 @@ AC_CHECK_SIZEOF([void *])
 AC_CHECK_SIZEOF([size_t])
 
 # Decide whether float4 is passed by value: user-selectable, enabled by default
-AC_MSG_CHECKING([whether to build with float4 passed by value])   
+AC_MSG_CHECKING([whether to build with float4 passed by value])
 PGAC_ARG_BOOL(enable, float4-byval, yes, [disable float4 passed by value],
               [AC_DEFINE([USE_FLOAT4_BYVAL], 1,
                          [Define to 1 if you want float4 values to be passed by value. (--enable-float4-byval)])
