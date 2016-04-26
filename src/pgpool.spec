@@ -20,7 +20,7 @@
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
 Version:        %{pgpool_version}
-Release:        1pgdg%{?dist}
+Release:        2pgdg%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
@@ -244,7 +244,7 @@ fi
 - Add Chinese document
 
 * Mon Aug 24 2015 Yugo Nagata <nagata@sraoss.co.jp> 3.5.0
-- Remove system database 
+- Remove system database
 
 * Tue Feb 10 2015 Nozomi Anzai <anzai@sraoss.co.jp> 3.4.1-2
 - Fix %tmpfiles_create to not be executed in RHEL/CentOS 6
