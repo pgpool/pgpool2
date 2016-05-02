@@ -1047,7 +1047,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 	    snprintf(nodes[i].load_balance_node, POOLCONFIG_MAXWEIGHTLEN, "%s",
 				 (session_context->load_balance_node_id == i)? "true":"false");
 
-		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+		if (STREAM)
 			if (i == REAL_PRIMARY_NODE_ID)
 				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "primary");
 			else

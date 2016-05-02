@@ -2664,8 +2664,8 @@ static int trigger_failover_command(int node, const char *command_line,
 /*
  * This function is used by find_primary_node() function and is just a wrapper
  * over make_persistent_db_connection() function and returns boolean value to
- * inform connection status
- * This function must not throws ereport
+ * inform connection status.
+ * This function must not throw ereport.
  */
 static bool
     verify_backend_node_status(int backend_no, bool* is_standby)
@@ -2740,8 +2740,7 @@ static int find_primary_node(void)
 	int i;
 
 	/* Streaming replication mode? */
-	if (pool_config->master_slave_mode == 0 ||
-		strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+	if (!STREAM)
 	{
 		/* No point to look for primary node if not in streaming
 		 * replication mode.
