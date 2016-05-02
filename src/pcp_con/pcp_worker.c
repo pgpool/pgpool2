@@ -934,12 +934,12 @@ process_recovery_request(PCP_CONNECTION *frontend,char *buf)
 
 	if ((!REPLICATION &&
 		 !(MASTER_SLAVE &&
-		   !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))) ||
+		   pool_config->master_slave_sub_mode == STREAM_MODE)) ||
 		(MASTER_SLAVE &&
-		 !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
+		 pool_config->master_slave_sub_mode == STREAM_MODE &&
 		 node_id == PRIMARY_NODE_ID))
 	{
-		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+		if (MASTER_SLAVE && pool_config->master_slave_sub_mode == STREAM_MODE)
 			ereport(ERROR,
 				(errmsg("process recovery request failed"),
 					 errdetail("primary server cannot be recovered by online recovery.")));
@@ -1051,7 +1051,7 @@ process_promote_node(PCP_CONNECTION *frontend, char *buf, char tos)
 				(errmsg("could not process recovery request"),
 				 errdetail("node id %d is not valid", node_id)));
 	/* promoting node is reserved to Streaming Replication */
-	if (!MASTER_SLAVE || (strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) != 0))
+	if (!MASTER_SLAVE || pool_config->master_slave_sub_mode != STREAM_MODE)
 	{
 		ereport(FATAL,
 			(errmsg("invalid pgpool mode for process recovery request"),

@@ -84,11 +84,11 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/mkinstalldirs pool_config.c \
 	$(top_srcdir)/depcomp $(top_srcdir)/ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/docbook.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
-	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/c-compiler.m4 \
-	$(top_srcdir)/c-library.m4 $(top_srcdir)/general.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/c-compiler.m4 $(top_srcdir)/c-library.m4 \
+	$(top_srcdir)/general.m4 \
 	$(top_srcdir)/ac_func_accept_argtypes.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -102,9 +102,9 @@ PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_pg_md5_OBJECTS = pg_md5.$(OBJEXT) md5.$(OBJEXT) \
 	pool_passwd.$(OBJEXT) pool_signal.$(OBJEXT) strlcpy.$(OBJEXT) \
-	regex_array.$(OBJEXT) pool_config.$(OBJEXT) \
-	../fe_port.$(OBJEXT) fe_memutils.$(OBJEXT) \
-	pool_globals.$(OBJEXT)
+	regex_array.$(OBJEXT) pool_config_variables.$(OBJEXT) \
+	pool_config.$(OBJEXT) ../fe_port.$(OBJEXT) \
+	fe_memutils.$(OBJEXT) pool_globals.$(OBJEXT)
 pg_md5_OBJECTS = $(am_pg_md5_OBJECTS)
 pg_md5_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -189,11 +189,9 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-CATALOG = @CATALOG@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
-COLLATEINDEX = @COLLATEINDEX@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
@@ -202,7 +200,6 @@ DEFS = @DEFS@ \
 
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
-DOCBOOKSTYLE = @DOCBOOKSTYLE@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -217,7 +214,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-JADE = @JADE@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
@@ -240,7 +236,6 @@ MEMCACHED_RPATH_OPT = @MEMCACHED_RPATH_OPT@
 MKDIR_P = @MKDIR_P@
 NM = @NM@
 NMEDIT = @NMEDIT@
-NSGMLS = @NSGMLS@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OSX = @OSX@
@@ -293,7 +288,6 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
-have_docbook = @have_docbook@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -329,6 +323,7 @@ pg_md5_SOURCES = pg_md5.c \
 		pool_signal.c \
 		strlcpy.c \
 		regex_array.c \
+		pool_config_variables.c \
 		pool_config.l \
 		../fe_port.c \
 		fe_memutils.c \
@@ -441,6 +436,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pg_md5.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_config.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_config_variables.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_globals.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_passwd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_signal.Po@am__quote@
@@ -700,6 +696,8 @@ pool_signal.c: ../../../src/utils/pool_signal.c
 strlcpy.c: ../../../src/utils/strlcpy.c
 	rm -f $@ && ln -s $< .
 regex_array.c: ../../../src/utils/regex_array.c
+	rm -f $@ && ln -s $< .
+pool_config_variables.c: ../../../src/config/pool_config_variables.c
 	rm -f $@ && ln -s $< .
 pool_config.l: ../../../src/config/pool_config.l
 	rm -f $@ && ln -s $< .

@@ -157,7 +157,7 @@ void do_worker_child(void)
 		 * If streaming replication mode, do time lag checking
 		 */
 
-		if (pool_config->sr_check_period > 0 && MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+		if (pool_config->sr_check_period > 0 && MASTER_SLAVE && pool_config->master_slave_sub_mode == STREAM_MODE)
 		{
 			establish_persistent_connection();
             PG_TRY();
@@ -351,9 +351,9 @@ static void check_replication_time_lag(void)
 			bkinfo->standby_delay = lag;
 
 			/* Log delay if necessary */
-			if ((!strcmp(pool_config->log_standby_delay, "always") && lag > 0) ||
+			if ((pool_config->log_standby_delay == LSD_ALWAYS && lag > 0) ||
 				(pool_config->delay_threshold &&
-				 !strcmp(pool_config->log_standby_delay, "if_over_threshold") &&
+				 pool_config->log_standby_delay == LSD_OVER_THRESHOLD &&
 				 lag > pool_config->delay_threshold))
 			{
                 ereport(LOG,
@@ -437,7 +437,7 @@ static void reload_config(void)
 	ereport(LOG,
 			(errmsg("reloading config file")));
     MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
-	pool_get_config(get_config_file_name(), RELOAD_CONFIG);
+	pool_get_config(get_config_file_name(), CFGCXT_RELOAD);
     MemoryContextSwitchTo(oldContext);
 	if (pool_config->enable_pool_hba)
 		load_hba(get_hba_file_name());

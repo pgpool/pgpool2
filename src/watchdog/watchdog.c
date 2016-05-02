@@ -462,7 +462,7 @@ wd_check_config(void)
 		ereport(ERROR,
 				(errmsg("invalid watchdog configuration. wd_authkey length can't be larger than %d",
 						MAX_PASSWORD_SIZE)));
-	if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
+	if (pool_config->wd_lifecheck_method == LIFECHECK_BY_HB)
 	{
 		if (pool_config->num_hb_if  <= 0)
 			ereport(ERROR,
@@ -867,7 +867,7 @@ static void check_signals(void)
 	if (reload_config_signal)
 	{
 		MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
-		pool_get_config(get_config_file_name(), RELOAD_CONFIG);
+		pool_get_config(get_config_file_name(), CFGCXT_RELOAD);
 		MemoryContextSwitchTo(oldContext);
 		reload_config_signal = 0;
 	}

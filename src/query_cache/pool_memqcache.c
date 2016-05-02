@@ -1695,13 +1695,7 @@ static void pool_reset_memqcache_buffer(void)
  */
 bool pool_is_shmem_cache(void)
 {
-	static int result = -1;
-
-	if (result == -1)
-	{
-		result = strcmp(pool_config->memqcache_method, "shmem");
-	}
-	return (result==0)?true:false;
+	return (pool_config->memqcache_method == SHMEM_CACHE)?true:false;
 }
 
 /*
@@ -3879,7 +3873,7 @@ POOL_SHMEM_STATS *pool_get_shmem_storage_stats(void)
 	mystats.cache_stats.num_selects = stats->num_selects;
 	mystats.cache_stats.num_cache_hits = stats->num_cache_hits;
 
-	if (strcmp(pool_config-> memqcache_method, "shmem"))
+	if (pool_config->memqcache_method == SHMEM_CACHE)
 		return &mystats;
 
 	/* number of total hash entries */

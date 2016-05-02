@@ -342,8 +342,8 @@ extern int my_master_node_id;
 
 #define REPLICATION (pool_config->replication_mode)
 #define MASTER_SLAVE (pool_config->master_slave_mode)
-#define STREAM (MASTER_SLAVE && !strcmp("stream", pool_config->master_slave_sub_mode))
-#define SLONY (MASTER_SLAVE && !strcmp("slony", pool_config->master_slave_sub_mode))
+#define STREAM (MASTER_SLAVE && pool_config->master_slave_sub_mode == STREAM_MODE)
+#define SLONY (MASTER_SLAVE && pool_config->master_slave_sub_mode == SLONY_MODE)
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
 #define RAW_MODE (!REPLICATION && !MASTER_SLAVE)
 #define MAJOR(p) MASTER_CONNECTION(p)->sp->major
@@ -371,7 +371,7 @@ extern int my_master_node_id;
 
 #define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 6 /*number of sec to wait for watchdog command if cluster is stabalizing */
 
-#define SERIALIZE_ACCEPT (pool_config->serialize_accept != 0 && \
+#define SERIALIZE_ACCEPT (pool_config->serialize_accept == true && \
 						  pool_config->child_life_time == 0)
 
 /*

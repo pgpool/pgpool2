@@ -7,6 +7,7 @@ pg_md5_SOURCES = pg_md5.c \
 		pool_signal.c \
 		strlcpy.c \
 		regex_array.c \
+		pool_config_variables.c \
 		pool_config.l \
 		../fe_port.c \
 		fe_memutils.c \
@@ -26,6 +27,8 @@ pool_signal.c: ../../../src/utils/pool_signal.c
 strlcpy.c: ../../../src/utils/strlcpy.c
 	rm -f $@ && ln -s $< .
 regex_array.c: ../../../src/utils/regex_array.c
+	rm -f $@ && ln -s $< .
+pool_config_variables.c: ../../../src/config/pool_config_variables.c
 	rm -f $@ && ln -s $< .
 pool_config.l: ../../../src/config/pool_config.l
 	rm -f $@ && ln -s $< .

@@ -18,7 +18,7 @@
  * is" without express or implied warranty.
  *
  *
- * libpcpcp_ext.h - 
+ * libpcp_ext.h - 
  *	  This file contains definitions for structures and
  *	  externs for functions used by frontend libpcp applications.
  */

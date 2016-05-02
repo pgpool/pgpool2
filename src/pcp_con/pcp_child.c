@@ -211,7 +211,7 @@ pcp_do_accept(int unix_fd, int inet_fd)
 	if (pcp_got_sighup)
 	{
 		MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
-		pool_get_config(get_config_file_name(), RELOAD_CONFIG);
+		pool_get_config(get_config_file_name(), CFGCXT_RELOAD);
 		MemoryContextSwitchTo(oldContext);
 		pcp_got_sighup = 0;
 	}

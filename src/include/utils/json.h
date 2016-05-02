@@ -67,6 +67,7 @@
 #endif
 
 #include <stdlib.h>
+#include <pool_type.h>
 
 #ifdef __cplusplus
 
@@ -296,15 +297,16 @@ void json_value_free_ex (json_settings * settings,
                          json_value *);
 
 
-	   /* pgpool-II extensions */
-	   json_value* json_get_value_for_key(json_value* source, const char* key);
-	   int json_get_int_value_for_key(json_value* source, const char* key, int* value);
-	   int json_get_long_value_for_key(json_value* source, const char* key, long* value);
-	   char* json_get_string_value_for_key(json_value* source, const char* key);
-
 #ifdef __cplusplus
    } /* extern "C" */
 #endif
+
+/* pgpool-II extensions */
+json_value* json_get_value_for_key(json_value* source, const char* key);
+int json_get_int_value_for_key(json_value* source, const char* key, int* value);
+int json_get_long_value_for_key(json_value* source, const char* key, long* value);
+char* json_get_string_value_for_key(json_value* source, const char* key);
+int json_get_bool_value_for_key(json_value* source, const char* key, bool* value);
 
 #endif
 

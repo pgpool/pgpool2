@@ -190,7 +190,7 @@ void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 			 * send query.
 			 */
 			if (pool_config->master_slave_mode &&
-				!strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
+				pool_config->master_slave_sub_mode == STREAM_MODE &&
 				i != PRIMARY_NODE_ID && i != sc->load_balance_node_id)
 			{
 				continue;
@@ -409,7 +409,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					/*
 					 * If replication delay is too much, we prefer to send to the primary.
 					 */
-					if (!strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
+					if (pool_config->master_slave_sub_mode == STREAM_MODE &&
 						pool_config->delay_threshold &&
 						bkinfo->standby_delay > pool_config->delay_threshold)
 					{

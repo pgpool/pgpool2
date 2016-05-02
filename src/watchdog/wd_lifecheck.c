@@ -238,7 +238,7 @@ wd_reaper_lifecheck(pid_t pid, int status)
 static bool lifecheck_kill_all_children(int sig)
 {
 	bool ret = false;
-	if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT)
+	if (pool_config->wd_lifecheck_method == LIFECHECK_BY_HB
 		&& g_hb_receiver_pid && g_hb_sender_pid)
 	{
 		int i;
@@ -322,7 +322,7 @@ pid_t initialize_watchdog_lifecheck(void)
 	if (!pool_config->use_watchdog)
 		return 0;
 	
-	if (!strcmp(pool_config->wd_lifecheck_method, MODE_EXTERNAL))
+	if (pool_config->wd_lifecheck_method == LIFECHECK_BY_EXTERNAL)
 		return 0;
 
 	return fork_lifecheck_child();
@@ -449,7 +449,7 @@ lifecheck_main(void)
 
 static void spawn_lifecheck_children(void)
 {
-	if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
+	if (pool_config->wd_lifecheck_method == LIFECHECK_BY_HB)
 	{
 		int i;
 		g_hb_receiver_pid = palloc0(sizeof(pid_t) * pool_config->num_hb_if);
@@ -621,7 +621,7 @@ static int is_wd_lifecheck_ready(void)
 	{
 		LifeCheckNode* node = &gslifeCheckCluster->lifeCheckNodes[i];
 		/* query mode */
-		if (!strcmp(pool_config->wd_lifecheck_method, MODE_QUERY))
+		if (pool_config->wd_lifecheck_method == LIFECHECK_BY_QUERY)
 		{
 			if (wd_ping_pgpool(node) == WD_NG)
 			{
@@ -633,7 +633,7 @@ static int is_wd_lifecheck_ready(void)
 			}
 		}
 		/* heartbeat mode */
-		else if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
+		else if (pool_config->wd_lifecheck_method == LIFECHECK_BY_HB)
 		{
 			if (node->ID == 0) /* local node */
 				continue;
@@ -652,7 +652,7 @@ static int is_wd_lifecheck_ready(void)
 		else
 		{
 			ereport(ERROR,
-				(errmsg("checking if watchdog is ready, unkown watchdog mode \"%s\"",
+				(errmsg("checking if watchdog is ready, unkown watchdog mode \"%d\"",
 							pool_config->wd_lifecheck_method)));
 		}
 	}
@@ -703,12 +703,12 @@ static void
 check_pgpool_status()
 {
 	/* query mode */
-	if (!strcmp(pool_config->wd_lifecheck_method, MODE_QUERY))
+	if (pool_config->wd_lifecheck_method == LIFECHECK_BY_QUERY)
 	{
 		check_pgpool_status_by_query();
 	}
 	/* heartbeat mode */
-	else if (!strcmp(pool_config->wd_lifecheck_method, MODE_HEARTBEAT))
+	else if (pool_config->wd_lifecheck_method == LIFECHECK_BY_HB)
 	{
 		check_pgpool_status_by_hb();
 	}

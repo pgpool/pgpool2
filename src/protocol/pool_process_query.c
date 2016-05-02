@@ -408,7 +408,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 		if (got_sighup)
 		{
             MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
-			pool_get_config(get_config_file_name(), RELOAD_CONFIG);
+			pool_get_config(get_config_file_name(), CFGCXT_RELOAD);
             MemoryContextSwitchTo(oldContext);
 			if (pool_config->enable_pool_hba)
 				load_hba(get_hba_file_name());

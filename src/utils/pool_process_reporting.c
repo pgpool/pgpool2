@@ -323,7 +323,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	i++;
 
 	StrNCpy(status[i].name, "log_standby_delay", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->log_standby_delay);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_standby_delay);
 	StrNCpy(status[i].desc, "how to log standby delay", POOLCONFIG_MAXDESCLEN);
 	i++;
 
@@ -455,7 +455,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	i++;
 
 	StrNCpy(status[i].name, "master_slave_sub_mode", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->master_slave_sub_mode);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->master_slave_sub_mode);
 	StrNCpy(status[i].desc, "master/slave sub mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
@@ -633,7 +633,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	i++;
 
 	StrNCpy(status[i].name, "wd_lifecheck_method", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_method);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_lifecheck_method);
 	StrNCpy(status[i].desc, "method of watchdog lifecheck", POOLCONFIG_MAXDESCLEN);
 	i++;
 
@@ -775,7 +775,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	i++;
 
 	StrNCpy(status[i].name, "memqcache_method", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->memqcache_method);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_method);
 	StrNCpy(status[i].desc, "Cache store method. either shmem(shared memory) or Memcached. shmem by default", POOLCONFIG_MAXDESCLEN);
 	i++;
 

@@ -115,4 +115,13 @@ do { \
 	if(elevel >= ERROR) \
 		exit(-1); \
 } while(0)
-#endif   /* HAVE__BUILTIN_CONSTANT_P */
+
+
+typedef enum
+{
+	PGERROR_TERSE,				/* single-line error messages */
+	PGERROR_DEFAULT,			/* recommended style */
+	PGERROR_VERBOSE				/* all the facts, ma'am */
+}	PGErrorVerbosity;
+
+#endif   /* FE_PORTS */

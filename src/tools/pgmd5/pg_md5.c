@@ -201,7 +201,7 @@ static void update_pool_passwd(char *conf_file, char *username, char *password)
 		fprintf(stderr, "pool_init_config() failed\n\n");
 		exit(EXIT_FAILURE);
 	}
-	if (pool_get_config(conf_file, INIT_CONFIG))
+	if (pool_get_config(conf_file, CFGCXT_RELOAD))
 	{
 		fprintf(stderr, "Unable to get configuration. Exiting...");
 		exit(EXIT_FAILURE);

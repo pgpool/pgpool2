@@ -73,7 +73,18 @@ typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
 
+#ifdef HAVE_LONG_INT_64
+/* Plain "long int" fits, use it */
 typedef long int int64;
+#define pool_atoi64 atol
+#elif defined(HAVE_LONG_LONG_INT_64)
+/* We have working support for "long long int", use that */
+typedef long long int int64;
+#define pool_atoi64 atoll
+#else
+/* neither HAVE_LONG_INT_64 nor HAVE_LONG_LONG_INT_64 */
+#error must have a working 64-bit integer datatype
+#endif
 
 typedef enum {
 	LOAD_UNSELECTED = 0,

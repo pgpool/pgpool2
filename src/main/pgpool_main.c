@@ -1193,7 +1193,7 @@ void promote_backend(int node_id)
 {
 	WdCommandResult res = COMMAND_OK;
 
-	if (!MASTER_SLAVE || strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+	if (!MASTER_SLAVE || pool_config->master_slave_sub_mode != STREAM_MODE)
 	{
 		return;
 	}
@@ -1789,7 +1789,7 @@ static void failover(void)
 		 * recognize the former primary as the new primary node, which
 		 * will reduce the time to process standby down.
 		 */
-		else if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP) &&
+		else if (MASTER_SLAVE && pool_config->master_slave_sub_mode == STREAM_MODE &&
 				 reqkind == NODE_DOWN_REQUEST)
 		{
 			if (Req_info->primary_node_id != node_id)
@@ -1806,7 +1806,7 @@ static void failover(void)
 		 * as they are not replicated anymore.
 		 */
 		int follow_cnt = 0;
-		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+		if (MASTER_SLAVE && pool_config->master_slave_sub_mode == STREAM_MODE)
 		{
 			if (*pool_config->follow_master_command != '\0' ||
 				reqkind == PROMOTE_NODE_REQUEST)
@@ -2796,8 +2796,8 @@ static int find_primary_node_repeatedly(void)
 	int node_id = -1;
 
 	/* Streaming replication mode? */
-	if (pool_config->master_slave_mode == 0 ||
-		strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
+	if (pool_config->master_slave_mode == false ||
+		pool_config->master_slave_sub_mode != STREAM_MODE)
 	{
 		/* No point to look for primary node if not in streaming
 		 * replication mode.
@@ -3215,7 +3215,7 @@ static void reload_config(void)
 	ereport(LOG,
 		(errmsg("reload config files.")));
     MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
-	pool_get_config(conf_file, RELOAD_CONFIG);
+	pool_get_config(conf_file, CFGCXT_RELOAD);
 
 	/* Realoading config file could change backend status */
 	(void)write_status_file();

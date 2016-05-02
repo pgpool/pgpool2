@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -61,6 +61,7 @@ int stop_sig = SIGTERM;		/* stopping signal default value */
 int myargc;
 char **myargv;
 int assert_enabled = 0;
+
 int main(int argc, char **argv)
 {
 	int opt;
@@ -193,7 +194,7 @@ int main(int argc, char **argv)
 	 */
 	pool_config->debug_level = debug_level;
 
-	pool_get_config(conf_file, INIT_CONFIG);
+	pool_get_config(conf_file, CFGCXT_INIT);
 	/*
 	 * Override debug level
 	 */

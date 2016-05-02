@@ -67,6 +67,12 @@ bool jw_put_string(JsonNode* jNode, char* key, char* value)
 	return true;
 }
 
+/* for compatibility reasons we pack bool in int*/
+bool jw_put_bool(JsonNode* jNode, char* key, bool value)
+{
+	return jw_put_int(jNode,key,value?1:0);
+}
+
 bool jw_put_int(JsonNode* jNode, char* key, int value)
 {
 	if (key == NULL)
@@ -129,6 +135,11 @@ bool jw_put_string_value(JsonNode* jNode, char* value)
 	appendStringInfo(jNode->buf, "\"%s\"",value);
 	jw_inc_current_element_count(jNode);
 	return true;
+}
+
+bool jw_put_bool_value(JsonNode* jNode, bool value)
+{
+	return jw_put_int_value(jNode, value?1:0);
 }
 
 bool jw_put_int_value(JsonNode* jNode, int value)
