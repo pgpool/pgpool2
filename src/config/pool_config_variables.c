@@ -17,8 +17,8 @@
 #include "utils/fe_ports.h"
 #endif
 
-static const char *default_reset_query_list[] = {"ABORT", "DISCARD ALL"};
-static const char *default_black_function_list[] = {"nextval", "setval"};
+#define default_reset_query_list	"ABORT;DISCARD ALL"
+#define default_black_function_list "nextval,setval"
 
 extern POOL_CONFIG g_pool_config;
 struct config_generic **all_parameters = NULL;
@@ -32,7 +32,7 @@ static bool BackendWeightAssignFunc (ConfigContext context, double newval, int i
 
 static void initialize_variables_with_default(struct config_generic * gconf);
 static bool config_enum_lookup_by_name(struct config_enum * record, const char *value, int *retval);
-static char **get_list_from_string(const char *str, char *delimi, int *n);
+static char **get_list_from_string(const char *str, const char *delimi, int *n);
 
 static bool MakeDBRedirectListRegex (char* newval, int error_level);
 static bool MakeAppRedirectListRegex (char* newval, int error_level);
@@ -49,6 +49,7 @@ static bool config_post_processor(ConfigContext context, int elevel);
 static void sort_config_vars(void);
 static bool setConfigOption(const char *name, const char *value,
 							ConfigContext context, GucSource source, int elevel);
+
 
 #ifndef POOL_PRIVATE
 /* This function is used to provide Hints for enum type config parameters.
@@ -85,41 +86,41 @@ static const struct config_enum_entry server_message_level_options[] = {
 
 
 static const struct config_enum_entry master_slave_sub_mode_options[] = {
-	{"slony", SLONY_MODE, true},
+	{"slony", SLONY_MODE, false},
 	{"stream", STREAM_MODE, false},
 	{NULL, 0, false}
 };
 
 
 static const struct config_enum_entry log_standby_delay_options[] = {
-	{"always", LSD_ALWAYS, true},
+	{"always", LSD_ALWAYS, false},
 	{"if_over_threshold", LSD_OVER_THRESHOLD, false},
 	{"none", LSD_NONE, false},
 	{NULL, 0, false}
 };
 
 static const struct config_enum_entry memqcache_method_options[] = {
-	{"shmem", SHMEM_CACHE, true},
+	{"shmem", SHMEM_CACHE, false},
 	{"memcached", MEMCACHED_CACHE, false},
 	{NULL, 0, false}
 };
 
 static const struct config_enum_entry wd_lifecheck_method_options[] = {
-	{"query", LIFECHECK_BY_QUERY, true},
+	{"query", LIFECHECK_BY_QUERY, false},
 	{"heartbeat", LIFECHECK_BY_HB, false},
 	{"external", LIFECHECK_BY_EXTERNAL, false},
 	{NULL, 0, false}
 };
 
 static const struct config_enum_entry syslog_facility_options[] = {
-	{"LOCAL0", LOG_LOCAL0, true},
-	{"LOCAL1", LOG_LOCAL1, true},
-	{"LOCAL2", LOG_LOCAL2, true},
-	{"LOCAL3", LOG_LOCAL3, true},
-	{"LOCAL4", LOG_LOCAL4, true},
-	{"LOCAL5", LOG_LOCAL5, true},
-	{"LOCAL6", LOG_LOCAL6, true},
-	{"LOCAL7", LOG_LOCAL7, true},
+	{"LOCAL0", LOG_LOCAL0, false},
+	{"LOCAL1", LOG_LOCAL1, false},
+	{"LOCAL2", LOG_LOCAL2, false},
+	{"LOCAL3", LOG_LOCAL3, false},
+	{"LOCAL4", LOG_LOCAL4, false},
+	{"LOCAL5", LOG_LOCAL5, false},
+	{"LOCAL6", LOG_LOCAL6, false},
+	{"LOCAL7", LOG_LOCAL7, false},
 	{NULL, 0, false}
 };
 
@@ -888,6 +889,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 		&g_pool_config.reset_query_list,	/* variable */
 		&g_pool_config.num_reset_queries,	/* item count var  */
 		(const char*)default_reset_query_list,	/* boot value */
+		";",/* token seperator */
 		false,							/* compute_regex ?*/
 		NULL, NULL, NULL				/* assign, check, show funcs */
 	},
@@ -900,6 +902,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 		&g_pool_config.white_function_list,
 		&g_pool_config.num_white_function_list,
 		NULL,
+		",",
 		true,
 		NULL, NULL, NULL
 	},
@@ -912,6 +915,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 		&g_pool_config.black_function_list,
 		&g_pool_config.num_black_function_list,
 		(const char*)default_black_function_list,
+		",",
 		true,
 		NULL, NULL, NULL
 	},
@@ -922,7 +926,8 @@ static struct config_string_list ConfigureNamesStringList[] =
 		},
 		&g_pool_config.white_memqcache_table_list,
 		&g_pool_config.num_white_memqcache_table_list,
-		"",
+		NULL,
+		",",
 		true,
 		NULL, NULL, NULL
 	},
@@ -934,7 +939,8 @@ static struct config_string_list ConfigureNamesStringList[] =
 		},
 		&g_pool_config.black_memqcache_table_list,
 		&g_pool_config.num_black_memqcache_table_list,
-		"",
+		NULL,
+		",",
 		true,
 		NULL, NULL, NULL
 	},
@@ -946,14 +952,15 @@ static struct config_string_list ConfigureNamesStringList[] =
 		},
 		&g_pool_config.wd_monitoring_interfaces_list,
 		&g_pool_config.num_wd_monitoring_interfaces_list,
-		"",
+		NULL,
+		",",
 		false,
 		NULL, NULL, NULL
 	},
 
 	/* End-of-list marker */
 	{
-		{NULL, 0, 0, NULL}, NULL, NULL, NULL,false, NULL, NULL, NULL
+		{NULL, 0, 0, NULL}, NULL, NULL, NULL,NULL,false, NULL, NULL, NULL
 	}
 };
 
@@ -2008,13 +2015,13 @@ initialize_variables_with_default(struct config_generic * gconf)
 			else
 			{
 				conf->reset_val = newval;
-				*conf->variable = get_list_from_string(conf->boot_val,",", conf->list_elements_count);
+				*conf->variable = get_list_from_string(newval,conf->seperator, conf->list_elements_count);
 				if (conf->compute_regex)
 				{
 					int i;
 					for (i=0;i < *conf->list_elements_count; i++)
 					{
-						add_regex_pattern((const char*)conf->gen.name, *conf->variable[i]);
+						add_regex_pattern((const char*)conf->gen.name, (*conf->variable)[i]);
 					}
 				}
 			}
@@ -2029,27 +2036,30 @@ initialize_variables_with_default(struct config_generic * gconf)
  * array of pointers in pallocd strings. number of elements are set to
  * n.
  */
-static char **get_list_from_string(const char *str, char *delimi, int *n)
+static char **get_list_from_string(const char *str, const char *delimi, int *n)
 {
 	char *token;
 	char **tokens;
 	char *temp_string;
 	const int MAXTOKENS = 256;
 
-	if (str == NULL)
-		return NULL;
-
 	*n = 0;
+
+	if (str == NULL || *str == '\0')
+		return NULL;
 
 	temp_string = pstrdup(str);
 	tokens = palloc(MAXTOKENS * sizeof(char *));
+
+	ereport(DEBUG3,
+		(errmsg("extracting string tokens from [%s] based on %s", temp_string,delimi)));
 	
 	for (token = strtok(temp_string, delimi); token != NULL ; token = strtok(NULL, delimi))
 	{
 		tokens[*n] = pstrdup(token);
 		ereport(DEBUG3,
 			(errmsg("initializing pool configuration"),
-				 errdetail("extracting string tokens [token: %s]", tokens[*n])));
+				 errdetail("extracting string tokens [token[%d]: %s]", *n, tokens[*n])));
 		
 		(*n)++;
 		
@@ -2171,6 +2181,7 @@ bool set_one_config_option(const char *name, const char *value,
 	return false;
 }
 
+
 static bool
 setConfigOption(const char *name, const char *value,
 				  ConfigContext context, GucSource source, int elevel)
@@ -2197,8 +2208,22 @@ setConfigOption(const char *name, const char *value,
 		case CFGCXT_BOOT:
 			if (context != CFGCXT_BOOT)
 			{
+				if (context == CFGCXT_RELOAD)
+				{
+					/* Do not treat it as an error. Since the RELOAD context is used by reload config mechanism of
+					 * pgpool-II and the configuration file always contain all the values, including
+					 * those that are not allowed to be changed in reload context.
+					 * So silently ignoring this for the time being is the best way to go until we enhance the logic
+					 * around this
+					 */
+					ereport(DEBUG2,
+							(errmsg("invalid Context, value for parameter \"%s\" cannot be changed",
+									name)));
+					return true;
+				}
+
 				ereport(elevel,
-						(errmsg("parameter \"%s\" cannot be changed",
+						(errmsg("invalid Context, value for parameter \"%s\" cannot be changed",
 								name)));
 				return false;
 			}
@@ -2206,18 +2231,25 @@ setConfigOption(const char *name, const char *value,
 		case CFGCXT_INIT:
 			if (context != CFGCXT_INIT && context != CFGCXT_BOOT)
 			{
+				if (context == CFGCXT_RELOAD)
+				{
+					ereport(DEBUG2,
+							(errmsg("invalid Context, value for parameter \"%s\" cannot be changed",
+									name)));
+					return true;
+				}
+
 				ereport(elevel,
-						(errmsg("parameter \"%s\" cannot be changed",
+						(errmsg("invalid Context, value for parameter \"%s\" cannot be changed",
 								name)));
 				return false;
 			}
 			break;
 		case CFGCXT_RELOAD:
-			/* Reject if we're connecting but user is not superuser */
 			if (context > CFGCXT_RELOAD)
 			{
-				ereport(elevel,
-						(errmsg("parameter \"%s\" cannot be changed",
+				ereport(WARNING,
+						(errmsg("invalid Context, value for parameter \"%s\" cannot be changed",
 								name)));
 				return false;
 			}
@@ -2226,7 +2258,7 @@ setConfigOption(const char *name, const char *value,
 			if (context > CFGCXT_PCP)
 			{
 				ereport(elevel,
-						(errmsg("parameter \"%s\" cannot be changed",
+						(errmsg("invalid Context, value for parameter \"%s\" cannot be changed",
 								name)));
 				return false;
 			}
@@ -2238,7 +2270,8 @@ setConfigOption(const char *name, const char *value,
 		default:
 		{
 			ereport(elevel,
-					(errmsg("invalid configuration context")));
+					(errmsg("invalid record context, value for parameter \"%s\" cannot be changed",
+							name)));
 			return false;
 		}
 			break;
@@ -2493,7 +2526,7 @@ setConfigOption(const char *name, const char *value,
 		case CONFIG_VAR_TYPE_LONG:
 		{
 			struct config_long *conf = (struct config_long *) record;
-			long	newval;
+			int64	newval;
 			
 			if (value != NULL)
 			{
@@ -2631,9 +2664,10 @@ setConfigOption(const char *name, const char *value,
 		{
 			struct config_string_list *conf = (struct config_string_list *) record;
 			char	   *newval = NULL;
+
 			if (value != NULL)
 			{
-				newval = (char*)value;
+				newval = (char*)pstrdup(value);
 			}
 			else if (source == PGC_S_DEFAULT)
 			{
@@ -2650,7 +2684,10 @@ setConfigOption(const char *name, const char *value,
 			if (conf->assign_func)
 			{
 				if ((*conf->assign_func)(context, newval, elevel) == false)
+				{
+					pfree(newval);
 					return false;
+				}
 			}
 			else
 			{
@@ -2659,14 +2696,14 @@ setConfigOption(const char *name, const char *value,
 					int i;
 					for (i=0;i < *conf->list_elements_count; i++)
 					{
-						if (*conf->variable[i])
-							pfree(*conf->variable[i]);
-						*conf->variable[i] = NULL;
+						if ((*conf->variable)[i])
+							pfree((*conf->variable)[i]);
+						(*conf->variable)[i] = NULL;
 					}
 					pfree(*conf->variable);
 				}
 
-				*conf->variable = get_list_from_string(newval,",", conf->list_elements_count);
+				*conf->variable = get_list_from_string(newval, conf->seperator, conf->list_elements_count);
 				if (conf->compute_regex)
 				{
 					/* TODO clear the old array please */
@@ -2682,6 +2719,7 @@ setConfigOption(const char *name, const char *value,
 			{
 				if (conf->reset_val)
 					pfree(conf->reset_val);
+
 				if (newval)
 					conf->reset_val = pstrdup(newval);
 				else
@@ -2836,8 +2874,9 @@ static bool BackendPortAssignFunc (ConfigContext context, int newval, int index,
 	}
 	else
 	{
-		ereport(elevel,
-				(errmsg("backend_port%d cannot be changed",index)));
+		if (context != CFGCXT_RELOAD)
+			ereport(WARNING,
+					(errmsg("backend_port%d cannot be changed in context %d and backend status = %d",index,context,backend_status)));
 		return false;
 	}
 	return true;
@@ -2854,8 +2893,10 @@ static bool BackendHostAssignFunc (ConfigContext context, char* newval, int inde
 			strlcpy(g_pool_config.backend_desc->backend_info[index].backend_hostname, newval, MAX_DB_HOST_NAMELEN-1);
 		return true;
 	}
-	ereport(elevel,
-			(errmsg("backend_hostname%d cannot be changed",index)));
+	/* silent the warning in reload contxt */
+	if (context != CFGCXT_RELOAD)
+		ereport(WARNING,
+			(errmsg("backend_hostname%d cannot be changed in context %d and backend status = %d",index,context,backend_status)));
 	return false;
 }
 
@@ -2870,8 +2911,10 @@ static bool BackendDataDirAssignFunc (ConfigContext context, char* newval, int i
 			strlcpy(g_pool_config.backend_desc->backend_info[index].backend_data_directory, newval, MAX_PATH_LENGTH-1);
 		return true;
 	}
-	ereport(elevel,
-			(errmsg("backend_data_directory%d cannot be changed",index)));
+	/* silent the warning in reload contxt */
+	if (context != CFGCXT_RELOAD)
+		ereport(WARNING,
+				(errmsg("backend_data_directory%d cannot be changed in context %d and backend status = %d",index,context,backend_status)));
 	return false;
 }
 
@@ -2927,6 +2970,7 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 			ereport(elevel,
 				(errmsg("invalid configuration for key \"backend_flag%d\"",index),
 					 errdetail("unknown backend flag:%s", flags[i])));
+			pfree(flags);
 			return false;
 		}
 	}
@@ -2935,6 +2979,7 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 	ereport(DEBUG1,
 		(errmsg("invalid configuration for key \"backend_flag%d\"",index),
 			errdetail("backend slot number %d flag: %04x", index, flag)));
+	pfree(flags);
 	return true;
 }
 
