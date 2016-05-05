@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -722,7 +722,7 @@ static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int s
 }
 
 /*
- * create actual connections to backends
+ * Create actual connections to backends.
  */
 static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 {
@@ -754,7 +754,7 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 			pool_error("new_connection: create_cp() failed");
 
 			/* If fail_over_on_backend_error is true, do failover.
-			 * Otherwise, just exit this session.
+			 * Otherwise, just exit this session or skip next health node.
 			 */
 			if (pool_config->fail_over_on_backend_error)
 			{
@@ -762,7 +762,27 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 			}
 			else
 			{
-				pool_log("new_connection: do not failover because fail_over_on_backend_error is off");
+				/*
+				 * If we are in streaming replication mode and the node is a
+				 * standby node, then we skip this node to avoid fail over.
+				 */
+				if (STREAM && !IS_PRIMARY_NODE_ID(i))
+				{
+					pool_log("failed to create a backend %d connection. Skip this backend because because fail_over_on_backend_error is off and we are in streaming replication mode and node is standby node", i);
+
+					/* set down status to local status area */
+					*(my_backend_status[i]) = CON_DOWN;
+
+					/* make sure that we need to restart the process after
+					 * finishing this session
+					 */
+					pool_get_my_process_info()->need_to_restart = 1;
+					continue;
+				}
+				else
+				{
+					pool_log("new_connection: do not failover because fail_over_on_backend_error is off");
+				}
 			}
 			child_exit(1);
 		}
