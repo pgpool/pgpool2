@@ -323,6 +323,7 @@ extern int my_master_node_id;
  */
 #define PRIMARY_NODE_ID (Req_info->primary_node_id >=0?\
 						 Req_info->primary_node_id:REAL_MASTER_NODE_ID)
+#define IS_PRIMARY_NODE_ID(node_id)	(node_id == PRIMARY_NODE_ID)
 
 /*
  * Real primary node id. If not in the mode or there's no primary

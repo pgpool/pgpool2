@@ -812,8 +812,8 @@ static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int s
 }
 
 /*
- * create actual connections to backends
- * new connection resides in TopMemoryContext
+ * Create actual connections to backends.
+ * New connection resides in TopMemoryContext.
  */
 static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 {
@@ -843,7 +843,7 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 		if (create_cp(s, i) == NULL)
 		{
 			/* If fail_over_on_backend_error is true, do failover.
-			 * Otherwise, just exit this session.
+			 * Otherwise, just exit this session or skip next health node.
 			 */
 			if (pool_config->fail_over_on_backend_error)
 			{
@@ -854,9 +854,31 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 			}
 			else
 			{
-				ereport(FATAL,
-					(errmsg("failed to create a backend connection"),
-						 errdetail("not executing failover because fail_over_on_backend_error is off")));
+				/*
+				 * If we are in streaming replication mode and the node is a
+				 * standby node, then we skip this node to avoid fail over.
+				 */
+				if (STREAM && !IS_PRIMARY_NODE_ID(i))
+				{
+					ereport(LOG,
+							(errmsg("failed to create a backend %d connection", i),
+							 errdetail("skip this backend because because fail_over_on_backend_error is off and we are in streaming replication mode and node is standby node")));
+
+					/* set down status to local status area */
+					*(my_backend_status[i]) = CON_DOWN;
+
+					/* make sure that we need to restart the process after
+					 * finishing this session
+					 */
+					pool_get_my_process_info()->need_to_restart = 1;
+					continue;
+				}
+				else
+				{
+					ereport(FATAL,
+							(errmsg("failed to create a backend %d connection", i),
+							 errdetail("not executing failover because fail_over_on_backend_error is off")));
+				}
 			}
 			child_exit(POOL_EXIT_AND_RESTART);
 		}
