@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1343,7 +1343,8 @@ bool is_set_transaction_serializable(Node *node)
 		return false;
 
 	if (((VariableSetStmt *)node)->kind == VAR_SET_VALUE &&
-		!strcmp(((VariableSetStmt *)node)->name, "transaction_isolation"))
+		(!strcmp(((VariableSetStmt *)node)->name, "transaction_isolation") ||
+                 !strcmp(((VariableSetStmt *)node)->name, "default_transaction_isolation")))
 	{
 		List *options = ((VariableSetStmt *)node)->args;
 		foreach(list_item, options)
