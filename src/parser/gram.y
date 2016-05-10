@@ -648,7 +648,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	OBJECT_P OF OFF OFFSET OIDS ON ONLY OPERATOR OPTION OPTIONS OR
 	ORDER ORDINALITY OUT_P OUTER_P OVER OVERLAPS OVERLAY OWNED OWNER
 
-	PARSER PARTIAL PARTITION PASSING PASSWORD PLACING PLANS POLICY POSITION
+	PARSER PARTIAL PARTITION PASSING PASSWORD PGPOOL PLACING PLANS POLICY POSITION
 	PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROGRAM
 
@@ -1689,7 +1689,20 @@ FunctionSetResetClause:
 
 
 VariableShowStmt:
-			SHOW var_name
+			/* pgpool extension */
+			PGPOOL SHOW var_name
+			{
+				VariableShowStmt *n = (VariableShowStmt *)newNode(sizeof(VariableShowStmt),T_PgpoolVariableShowStmt);
+				n->name = $3;
+				$$ = (Node *) n;
+			}
+			| PGPOOL SHOW ALL
+			{
+				VariableShowStmt *n = (VariableShowStmt *)newNode(sizeof(VariableShowStmt),T_PgpoolVariableShowStmt);
+				n->name = "all";
+				$$ = (Node *) n;
+			}
+			| SHOW var_name
 				{
 					VariableShowStmt *n = makeNode(VariableShowStmt);
 					n->name = $2;

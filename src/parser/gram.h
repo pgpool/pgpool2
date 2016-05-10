@@ -1,21 +1,24 @@
-/* A Bison parser, made by GNU Bison 2.7.12-4996.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
-/* Bison interface for Yacc-like parsers in C
-   
-      Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
-   
-   This program is free software: you can redistribute it and/or modify
+/* Skeleton interface for Bison's Yacc-like parsers in C
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
+
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-   
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -26,19 +29,9 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-   
+
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
-
-#ifndef YY_BASE_YY_GRAM_H_INCLUDED
-# define YY_BASE_YY_GRAM_H_INCLUDED
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int base_yydebug;
-#endif
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -321,167 +314,168 @@ extern int base_yydebug;
      PARTITION = 530,
      PASSING = 531,
      PASSWORD = 532,
-     PLACING = 533,
-     PLANS = 534,
-     POLICY = 535,
-     POSITION = 536,
-     PRECEDING = 537,
-     PRECISION = 538,
-     PRESERVE = 539,
-     PREPARE = 540,
-     PREPARED = 541,
-     PRIMARY = 542,
-     PRIOR = 543,
-     PRIVILEGES = 544,
-     PROCEDURAL = 545,
-     PROCEDURE = 546,
-     PROGRAM = 547,
-     QUOTE = 548,
-     RANGE = 549,
-     READ = 550,
-     REAL = 551,
-     REASSIGN = 552,
-     RECHECK = 553,
-     RECURSIVE = 554,
-     REF = 555,
-     REFERENCES = 556,
-     REFRESH = 557,
-     REINDEX = 558,
-     RELATIVE_P = 559,
-     RELEASE = 560,
-     RENAME = 561,
-     REPEATABLE = 562,
-     REPLACE = 563,
-     REPLICA = 564,
-     RESET = 565,
-     RESTART = 566,
-     RESTRICT = 567,
-     RETURNING = 568,
-     RETURNS = 569,
-     REVOKE = 570,
-     RIGHT = 571,
-     ROLE = 572,
-     ROLLBACK = 573,
-     ROLLUP = 574,
-     ROW = 575,
-     ROWS = 576,
-     RULE = 577,
-     SAVEPOINT = 578,
-     SCHEMA = 579,
-     SCROLL = 580,
-     SEARCH = 581,
-     SECOND_P = 582,
-     SECURITY = 583,
-     SELECT = 584,
-     SEQUENCE = 585,
-     SEQUENCES = 586,
-     SERIALIZABLE = 587,
-     SERVER = 588,
-     SESSION = 589,
-     SESSION_USER = 590,
-     SET = 591,
-     SETS = 592,
-     SETOF = 593,
-     SHARE = 594,
-     SHOW = 595,
-     SIMILAR = 596,
-     SIMPLE = 597,
-     SKIP = 598,
-     SMALLINT = 599,
-     SNAPSHOT = 600,
-     SOME = 601,
-     SQL_P = 602,
-     STABLE = 603,
-     STANDALONE_P = 604,
-     START = 605,
-     STATEMENT = 606,
-     STATISTICS = 607,
-     STDIN = 608,
-     STDOUT = 609,
-     STORAGE = 610,
-     STRICT_P = 611,
-     STRIP_P = 612,
-     SUBSTRING = 613,
-     SYMMETRIC = 614,
-     SYSID = 615,
-     SYSTEM_P = 616,
-     TABLE = 617,
-     TABLES = 618,
-     TABLESAMPLE = 619,
-     TABLESPACE = 620,
-     TEMP = 621,
-     TEMPLATE = 622,
-     TEMPORARY = 623,
-     TEXT_P = 624,
-     THEN = 625,
-     TIME = 626,
-     TIMESTAMP = 627,
-     TO = 628,
-     TRAILING = 629,
-     TRANSACTION = 630,
-     TRANSFORM = 631,
-     TREAT = 632,
-     TRIGGER = 633,
-     TRIM = 634,
-     TRUE_P = 635,
-     TRUNCATE = 636,
-     TRUSTED = 637,
-     TYPE_P = 638,
-     TYPES_P = 639,
-     UNBOUNDED = 640,
-     UNCOMMITTED = 641,
-     UNENCRYPTED = 642,
-     UNION = 643,
-     UNIQUE = 644,
-     UNKNOWN = 645,
-     UNLISTEN = 646,
-     UNLOGGED = 647,
-     UNTIL = 648,
-     UPDATE = 649,
-     USER = 650,
-     USING = 651,
-     VACUUM = 652,
-     VALID = 653,
-     VALIDATE = 654,
-     VALIDATOR = 655,
-     VALUE_P = 656,
-     VALUES = 657,
-     VARCHAR = 658,
-     VARIADIC = 659,
-     VARYING = 660,
-     VERBOSE = 661,
-     VERSION_P = 662,
-     VIEW = 663,
-     VIEWS = 664,
-     VOLATILE = 665,
-     WHEN = 666,
-     WHERE = 667,
-     WHITESPACE_P = 668,
-     WINDOW = 669,
-     WITH = 670,
-     WITHIN = 671,
-     WITHOUT = 672,
-     WORK = 673,
-     WRAPPER = 674,
-     WRITE = 675,
-     XML_P = 676,
-     XMLATTRIBUTES = 677,
-     XMLCONCAT = 678,
-     XMLELEMENT = 679,
-     XMLEXISTS = 680,
-     XMLFOREST = 681,
-     XMLPARSE = 682,
-     XMLPI = 683,
-     XMLROOT = 684,
-     XMLSERIALIZE = 685,
-     YEAR_P = 686,
-     YES_P = 687,
-     ZONE = 688,
-     NOT_LA = 689,
-     NULLS_LA = 690,
-     WITH_LA = 691,
-     POSTFIXOP = 692,
-     UMINUS = 693
+     PGPOOL = 533,
+     PLACING = 534,
+     PLANS = 535,
+     POLICY = 536,
+     POSITION = 537,
+     PRECEDING = 538,
+     PRECISION = 539,
+     PRESERVE = 540,
+     PREPARE = 541,
+     PREPARED = 542,
+     PRIMARY = 543,
+     PRIOR = 544,
+     PRIVILEGES = 545,
+     PROCEDURAL = 546,
+     PROCEDURE = 547,
+     PROGRAM = 548,
+     QUOTE = 549,
+     RANGE = 550,
+     READ = 551,
+     REAL = 552,
+     REASSIGN = 553,
+     RECHECK = 554,
+     RECURSIVE = 555,
+     REF = 556,
+     REFERENCES = 557,
+     REFRESH = 558,
+     REINDEX = 559,
+     RELATIVE_P = 560,
+     RELEASE = 561,
+     RENAME = 562,
+     REPEATABLE = 563,
+     REPLACE = 564,
+     REPLICA = 565,
+     RESET = 566,
+     RESTART = 567,
+     RESTRICT = 568,
+     RETURNING = 569,
+     RETURNS = 570,
+     REVOKE = 571,
+     RIGHT = 572,
+     ROLE = 573,
+     ROLLBACK = 574,
+     ROLLUP = 575,
+     ROW = 576,
+     ROWS = 577,
+     RULE = 578,
+     SAVEPOINT = 579,
+     SCHEMA = 580,
+     SCROLL = 581,
+     SEARCH = 582,
+     SECOND_P = 583,
+     SECURITY = 584,
+     SELECT = 585,
+     SEQUENCE = 586,
+     SEQUENCES = 587,
+     SERIALIZABLE = 588,
+     SERVER = 589,
+     SESSION = 590,
+     SESSION_USER = 591,
+     SET = 592,
+     SETS = 593,
+     SETOF = 594,
+     SHARE = 595,
+     SHOW = 596,
+     SIMILAR = 597,
+     SIMPLE = 598,
+     SKIP = 599,
+     SMALLINT = 600,
+     SNAPSHOT = 601,
+     SOME = 602,
+     SQL_P = 603,
+     STABLE = 604,
+     STANDALONE_P = 605,
+     START = 606,
+     STATEMENT = 607,
+     STATISTICS = 608,
+     STDIN = 609,
+     STDOUT = 610,
+     STORAGE = 611,
+     STRICT_P = 612,
+     STRIP_P = 613,
+     SUBSTRING = 614,
+     SYMMETRIC = 615,
+     SYSID = 616,
+     SYSTEM_P = 617,
+     TABLE = 618,
+     TABLES = 619,
+     TABLESAMPLE = 620,
+     TABLESPACE = 621,
+     TEMP = 622,
+     TEMPLATE = 623,
+     TEMPORARY = 624,
+     TEXT_P = 625,
+     THEN = 626,
+     TIME = 627,
+     TIMESTAMP = 628,
+     TO = 629,
+     TRAILING = 630,
+     TRANSACTION = 631,
+     TRANSFORM = 632,
+     TREAT = 633,
+     TRIGGER = 634,
+     TRIM = 635,
+     TRUE_P = 636,
+     TRUNCATE = 637,
+     TRUSTED = 638,
+     TYPE_P = 639,
+     TYPES_P = 640,
+     UNBOUNDED = 641,
+     UNCOMMITTED = 642,
+     UNENCRYPTED = 643,
+     UNION = 644,
+     UNIQUE = 645,
+     UNKNOWN = 646,
+     UNLISTEN = 647,
+     UNLOGGED = 648,
+     UNTIL = 649,
+     UPDATE = 650,
+     USER = 651,
+     USING = 652,
+     VACUUM = 653,
+     VALID = 654,
+     VALIDATE = 655,
+     VALIDATOR = 656,
+     VALUE_P = 657,
+     VALUES = 658,
+     VARCHAR = 659,
+     VARIADIC = 660,
+     VARYING = 661,
+     VERBOSE = 662,
+     VERSION_P = 663,
+     VIEW = 664,
+     VIEWS = 665,
+     VOLATILE = 666,
+     WHEN = 667,
+     WHERE = 668,
+     WHITESPACE_P = 669,
+     WINDOW = 670,
+     WITH = 671,
+     WITHIN = 672,
+     WITHOUT = 673,
+     WORK = 674,
+     WRAPPER = 675,
+     WRITE = 676,
+     XML_P = 677,
+     XMLATTRIBUTES = 678,
+     XMLCONCAT = 679,
+     XMLELEMENT = 680,
+     XMLEXISTS = 681,
+     XMLFOREST = 682,
+     XMLPARSE = 683,
+     XMLPI = 684,
+     XMLROOT = 685,
+     XMLSERIALIZE = 686,
+     YEAR_P = 687,
+     YES_P = 688,
+     ZONE = 689,
+     NOT_LA = 690,
+     NULLS_LA = 691,
+     WITH_LA = 692,
+     POSTFIXOP = 693,
+     UMINUS = 694
    };
 #endif
 /* Tokens.  */
@@ -760,176 +754,176 @@ extern int base_yydebug;
 #define PARTITION 530
 #define PASSING 531
 #define PASSWORD 532
-#define PLACING 533
-#define PLANS 534
-#define POLICY 535
-#define POSITION 536
-#define PRECEDING 537
-#define PRECISION 538
-#define PRESERVE 539
-#define PREPARE 540
-#define PREPARED 541
-#define PRIMARY 542
-#define PRIOR 543
-#define PRIVILEGES 544
-#define PROCEDURAL 545
-#define PROCEDURE 546
-#define PROGRAM 547
-#define QUOTE 548
-#define RANGE 549
-#define READ 550
-#define REAL 551
-#define REASSIGN 552
-#define RECHECK 553
-#define RECURSIVE 554
-#define REF 555
-#define REFERENCES 556
-#define REFRESH 557
-#define REINDEX 558
-#define RELATIVE_P 559
-#define RELEASE 560
-#define RENAME 561
-#define REPEATABLE 562
-#define REPLACE 563
-#define REPLICA 564
-#define RESET 565
-#define RESTART 566
-#define RESTRICT 567
-#define RETURNING 568
-#define RETURNS 569
-#define REVOKE 570
-#define RIGHT 571
-#define ROLE 572
-#define ROLLBACK 573
-#define ROLLUP 574
-#define ROW 575
-#define ROWS 576
-#define RULE 577
-#define SAVEPOINT 578
-#define SCHEMA 579
-#define SCROLL 580
-#define SEARCH 581
-#define SECOND_P 582
-#define SECURITY 583
-#define SELECT 584
-#define SEQUENCE 585
-#define SEQUENCES 586
-#define SERIALIZABLE 587
-#define SERVER 588
-#define SESSION 589
-#define SESSION_USER 590
-#define SET 591
-#define SETS 592
-#define SETOF 593
-#define SHARE 594
-#define SHOW 595
-#define SIMILAR 596
-#define SIMPLE 597
-#define SKIP 598
-#define SMALLINT 599
-#define SNAPSHOT 600
-#define SOME 601
-#define SQL_P 602
-#define STABLE 603
-#define STANDALONE_P 604
-#define START 605
-#define STATEMENT 606
-#define STATISTICS 607
-#define STDIN 608
-#define STDOUT 609
-#define STORAGE 610
-#define STRICT_P 611
-#define STRIP_P 612
-#define SUBSTRING 613
-#define SYMMETRIC 614
-#define SYSID 615
-#define SYSTEM_P 616
-#define TABLE 617
-#define TABLES 618
-#define TABLESAMPLE 619
-#define TABLESPACE 620
-#define TEMP 621
-#define TEMPLATE 622
-#define TEMPORARY 623
-#define TEXT_P 624
-#define THEN 625
-#define TIME 626
-#define TIMESTAMP 627
-#define TO 628
-#define TRAILING 629
-#define TRANSACTION 630
-#define TRANSFORM 631
-#define TREAT 632
-#define TRIGGER 633
-#define TRIM 634
-#define TRUE_P 635
-#define TRUNCATE 636
-#define TRUSTED 637
-#define TYPE_P 638
-#define TYPES_P 639
-#define UNBOUNDED 640
-#define UNCOMMITTED 641
-#define UNENCRYPTED 642
-#define UNION 643
-#define UNIQUE 644
-#define UNKNOWN 645
-#define UNLISTEN 646
-#define UNLOGGED 647
-#define UNTIL 648
-#define UPDATE 649
-#define USER 650
-#define USING 651
-#define VACUUM 652
-#define VALID 653
-#define VALIDATE 654
-#define VALIDATOR 655
-#define VALUE_P 656
-#define VALUES 657
-#define VARCHAR 658
-#define VARIADIC 659
-#define VARYING 660
-#define VERBOSE 661
-#define VERSION_P 662
-#define VIEW 663
-#define VIEWS 664
-#define VOLATILE 665
-#define WHEN 666
-#define WHERE 667
-#define WHITESPACE_P 668
-#define WINDOW 669
-#define WITH 670
-#define WITHIN 671
-#define WITHOUT 672
-#define WORK 673
-#define WRAPPER 674
-#define WRITE 675
-#define XML_P 676
-#define XMLATTRIBUTES 677
-#define XMLCONCAT 678
-#define XMLELEMENT 679
-#define XMLEXISTS 680
-#define XMLFOREST 681
-#define XMLPARSE 682
-#define XMLPI 683
-#define XMLROOT 684
-#define XMLSERIALIZE 685
-#define YEAR_P 686
-#define YES_P 687
-#define ZONE 688
-#define NOT_LA 689
-#define NULLS_LA 690
-#define WITH_LA 691
-#define POSTFIXOP 692
-#define UMINUS 693
+#define PGPOOL 533
+#define PLACING 534
+#define PLANS 535
+#define POLICY 536
+#define POSITION 537
+#define PRECEDING 538
+#define PRECISION 539
+#define PRESERVE 540
+#define PREPARE 541
+#define PREPARED 542
+#define PRIMARY 543
+#define PRIOR 544
+#define PRIVILEGES 545
+#define PROCEDURAL 546
+#define PROCEDURE 547
+#define PROGRAM 548
+#define QUOTE 549
+#define RANGE 550
+#define READ 551
+#define REAL 552
+#define REASSIGN 553
+#define RECHECK 554
+#define RECURSIVE 555
+#define REF 556
+#define REFERENCES 557
+#define REFRESH 558
+#define REINDEX 559
+#define RELATIVE_P 560
+#define RELEASE 561
+#define RENAME 562
+#define REPEATABLE 563
+#define REPLACE 564
+#define REPLICA 565
+#define RESET 566
+#define RESTART 567
+#define RESTRICT 568
+#define RETURNING 569
+#define RETURNS 570
+#define REVOKE 571
+#define RIGHT 572
+#define ROLE 573
+#define ROLLBACK 574
+#define ROLLUP 575
+#define ROW 576
+#define ROWS 577
+#define RULE 578
+#define SAVEPOINT 579
+#define SCHEMA 580
+#define SCROLL 581
+#define SEARCH 582
+#define SECOND_P 583
+#define SECURITY 584
+#define SELECT 585
+#define SEQUENCE 586
+#define SEQUENCES 587
+#define SERIALIZABLE 588
+#define SERVER 589
+#define SESSION 590
+#define SESSION_USER 591
+#define SET 592
+#define SETS 593
+#define SETOF 594
+#define SHARE 595
+#define SHOW 596
+#define SIMILAR 597
+#define SIMPLE 598
+#define SKIP 599
+#define SMALLINT 600
+#define SNAPSHOT 601
+#define SOME 602
+#define SQL_P 603
+#define STABLE 604
+#define STANDALONE_P 605
+#define START 606
+#define STATEMENT 607
+#define STATISTICS 608
+#define STDIN 609
+#define STDOUT 610
+#define STORAGE 611
+#define STRICT_P 612
+#define STRIP_P 613
+#define SUBSTRING 614
+#define SYMMETRIC 615
+#define SYSID 616
+#define SYSTEM_P 617
+#define TABLE 618
+#define TABLES 619
+#define TABLESAMPLE 620
+#define TABLESPACE 621
+#define TEMP 622
+#define TEMPLATE 623
+#define TEMPORARY 624
+#define TEXT_P 625
+#define THEN 626
+#define TIME 627
+#define TIMESTAMP 628
+#define TO 629
+#define TRAILING 630
+#define TRANSACTION 631
+#define TRANSFORM 632
+#define TREAT 633
+#define TRIGGER 634
+#define TRIM 635
+#define TRUE_P 636
+#define TRUNCATE 637
+#define TRUSTED 638
+#define TYPE_P 639
+#define TYPES_P 640
+#define UNBOUNDED 641
+#define UNCOMMITTED 642
+#define UNENCRYPTED 643
+#define UNION 644
+#define UNIQUE 645
+#define UNKNOWN 646
+#define UNLISTEN 647
+#define UNLOGGED 648
+#define UNTIL 649
+#define UPDATE 650
+#define USER 651
+#define USING 652
+#define VACUUM 653
+#define VALID 654
+#define VALIDATE 655
+#define VALIDATOR 656
+#define VALUE_P 657
+#define VALUES 658
+#define VARCHAR 659
+#define VARIADIC 660
+#define VARYING 661
+#define VERBOSE 662
+#define VERSION_P 663
+#define VIEW 664
+#define VIEWS 665
+#define VOLATILE 666
+#define WHEN 667
+#define WHERE 668
+#define WHITESPACE_P 669
+#define WINDOW 670
+#define WITH 671
+#define WITHIN 672
+#define WITHOUT 673
+#define WORK 674
+#define WRAPPER 675
+#define WRITE 676
+#define XML_P 677
+#define XMLATTRIBUTES 678
+#define XMLCONCAT 679
+#define XMLELEMENT 680
+#define XMLEXISTS 681
+#define XMLFOREST 682
+#define XMLPARSE 683
+#define XMLPI 684
+#define XMLROOT 685
+#define XMLSERIALIZE 686
+#define YEAR_P 687
+#define YES_P 688
+#define ZONE 689
+#define NOT_LA 690
+#define NULLS_LA 691
+#define WITH_LA 692
+#define POSTFIXOP 693
+#define UMINUS 694
+
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-{
-/* Line 2053 of yacc.c  */
 #line 226 "gram.y"
-
+{
 	core_YYSTYPE		core_yystype;
 	/* these fields must match core_YYSTYPE: */
 	int					ival;
@@ -967,15 +961,16 @@ typedef union YYSTYPE
 	struct ImportQual	*importqual;
 	InsertStmt			*istmt;
 	VariableSetStmt		*vsetstmt;
-
-
-/* Line 2053 of yacc.c  */
-#line 974 "gram.h"
-} YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
+}
+/* Line 1529 of yacc.c.  */
+#line 967 "gram.h"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
+
+
 
 #if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
 typedef struct YYLTYPE
@@ -991,18 +986,3 @@ typedef struct YYLTYPE
 #endif
 
 
-#ifdef YYPARSE_PARAM
-#if defined __STDC__ || defined __cplusplus
-int base_yyparse (void *YYPARSE_PARAM);
-#else
-int base_yyparse ();
-#endif
-#else /* ! YYPARSE_PARAM */
-#if defined __STDC__ || defined __cplusplus
-int base_yyparse (core_yyscan_t yyscanner);
-#else
-int base_yyparse ();
-#endif
-#endif /* ! YYPARSE_PARAM */
-
-#endif /* !YY_BASE_YY_GRAM_H_INCLUDED  */

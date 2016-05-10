@@ -952,6 +952,109 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	return status;
 }
 
+void send_config_var_detail_row(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* name, const char* value, const char* description)
+{
+	int size;
+	int hsize;
+	static short num_fields = 3;
+
+	if (MAJOR(backend) == PROTO_MAJOR_V2)
+	{
+
+		int nbytes = (num_fields + 7)/8;
+		static unsigned char nullmap[2] = {0xff, 0xff};
+
+		/* ascii row */
+		pool_write(frontend, "D", 1);
+		pool_write_and_flush(frontend, nullmap, nbytes);
+		
+		size = strlen(name);
+		hsize = htonl(size+4);
+		pool_write(frontend, &hsize, sizeof(hsize));
+		pool_write(frontend, (void*)name, size);
+		
+		size = strlen(value);
+		hsize = htonl(size+4);
+		pool_write(frontend, &hsize, sizeof(hsize));
+		pool_write(frontend, (void*)value, size);
+		
+		size = strlen(description);
+		hsize = htonl(size+4);
+		pool_write(frontend, &hsize, sizeof(hsize));
+		pool_write(frontend, (void*)description, size);
+	}
+	else
+	{
+		short s;
+
+		pool_write(frontend, "D", 1);
+		size = 6; /* int32 + int16; */
+		size += 4 + strlen(name);  /* int32 + data; */
+		size += 4 + strlen(value); /* int32 + data; */
+		size += 4 + strlen(description);  /* int32 + data; */
+		hsize = htonl(size);
+		pool_write(frontend, &hsize, sizeof(hsize));
+		s = htons(num_fields);
+		pool_write(frontend, &s, sizeof(s));
+		
+		size = strlen(name);
+		hsize = htonl(size);
+		pool_write(frontend, &hsize, sizeof(hsize));
+		pool_write(frontend, (void*)name, size);
+
+		size = strlen(value);
+		hsize = htonl(size);
+		pool_write(frontend, &hsize, sizeof(hsize));
+		pool_write(frontend, (void*)value, size);
+
+		size = strlen(description);
+		hsize = htonl(size);
+		pool_write(frontend, &hsize, sizeof(hsize));
+		pool_write(frontend, (void*)description, size);
+	}
+}
+
+void send_config_var_value_only_row(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* value)
+{
+	int size;
+	int hsize;
+	static short num_fields = 1;
+	
+	if (MAJOR(backend) == PROTO_MAJOR_V2)
+	{
+		
+		int nbytes = (num_fields + 7)/8;
+		static unsigned char nullmap[2] = {0xff, 0xff};
+
+		/* ascii row */
+		pool_write(frontend, "D", 1);
+		pool_write_and_flush(frontend, nullmap, nbytes);
+		
+		size = strlen(value);
+		hsize = htonl(size+4);
+		pool_write(frontend, &hsize, sizeof(hsize));
+		pool_write(frontend, (void*)value, size);
+
+	}
+	else
+	{
+		short s;
+		
+		pool_write(frontend, "D", 1);
+		size = 6; /* int32 + int16; */
+		size += 4 + strlen(value); /* int32 + data; */
+		hsize = htonl(size);
+		pool_write(frontend, &hsize, sizeof(hsize));
+		s = htons(num_fields);
+		pool_write(frontend, &s, sizeof(s));
+		
+		size = strlen(value);
+		hsize = htonl(size);
+		pool_write(frontend, &hsize, sizeof(hsize));
+		pool_write(frontend, (void*)value, size);
+	}
+}
+
 void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	static char *field_names[] = {"item", "value", "description"};

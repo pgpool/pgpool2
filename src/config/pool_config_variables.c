@@ -13,6 +13,8 @@
 #ifndef POOL_PRIVATE
 #include "utils/elog.h"
 #include "parser/stringinfo.h"
+#include "utils/pool_process_reporting.h"
+#include "utils/pool_stream.h"
 #else
 #include "utils/fe_ports.h"
 #endif
@@ -24,31 +26,61 @@ extern POOL_CONFIG g_pool_config;
 struct config_generic **all_parameters = NULL;
 static int num_all_parameters = 0;
 
+static void initialize_variables_with_default(struct config_generic * gconf);
+static bool config_enum_lookup_by_name(struct config_enum * record, const char *value, int *retval);
+static const char* config_enum_lookup_by_value(struct config_enum * record, int val);
+
+static void build_variable_groups(void);
+static void build_config_variables(void);
+
+static struct config_generic *find_option(const char *name, int elevel);
+
+static bool config_post_processor(ConfigContext context, int elevel);
+
+static void sort_config_vars(void);
+static bool setConfigOption(const char *name, const char *value,
+							ConfigContext context, GucSource source, int elevel);
+
+static char *ShowOption(struct config_generic * record, int index, int elevel);
+static int get_max_elements_for_config_record(struct config_generic* record);
+static bool get_index_in_var_name(struct config_generic* record,
+								  const char* name, int *index, int elevel);
+
+
+static bool MakeDBRedirectListRegex (char* newval, int elevel);
+static bool MakeAppRedirectListRegex (char* newval, int elevel);
+static bool check_redirect_node_spec(char *node_spec);
+static char **get_list_from_string(const char *str, const char *delimi, int *n);
+
+
+/*show functions */
+static const char* HBDestinationPortShowFunc(int index);
+static const char* HBDestinationShowFunc(int index);
+static const char* HBDeviceShowFunc(int index);
+static const char* OtherWDPortShowFunc(int index);
+static const char* OtherPPPortShowFunc(int index);
+static const char* OtherPPHostShowFunc(int index);
+static const char* BackendFlagsShowFunc(int index);
+static const char* BackendDataDirShowFunc(int index);
+static const char* BackendHostShowFunc(int index);
+static const char* BackendPortShowFunc(int index);
+static const char* BackendWeightShowFunc(int index);
+/* check empty slot functions */
+static bool WdIFSlotEmptyCheckFunc(int index);
+static bool WdSlotEmptyCheckFunc(int index);
+static bool BackendSlotEmptyCheckFunc(int index);
+/*variable custom assign functions */
 static bool BackendPortAssignFunc (ConfigContext context, int newval, int index, int elevel);
 static bool BackendHostAssignFunc (ConfigContext context, char* newval, int index, int elevel);
 static bool BackendDataDirAssignFunc (ConfigContext context, char* newval, int index, int elevel);
 static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int index, int elevel);
 static bool BackendWeightAssignFunc (ConfigContext context, double newval, int index, int elevel);
-
-static void initialize_variables_with_default(struct config_generic * gconf);
-static bool config_enum_lookup_by_name(struct config_enum * record, const char *value, int *retval);
-static char **get_list_from_string(const char *str, const char *delimi, int *n);
-
-static bool MakeDBRedirectListRegex (char* newval, int error_level);
-static bool MakeAppRedirectListRegex (char* newval, int error_level);
-static bool check_redirect_node_spec(char *node_spec);
-static void build_config_variables(void);
-
 static bool HBDestinationAssignFunc (ConfigContext context, char* newval, int index, int elevel);
 static bool HBDestinationPortAssignFunc (ConfigContext context, int newval, int index, int elevel);
 static bool HBDeviceAssignFunc (ConfigContext context, char* newval, int index, int elevel);
 static bool OtherWDPortAssignFunc (ConfigContext context, int newval, int index, int elevel);
 static bool OtherPPPortAssignFunc (ConfigContext context, int newval, int index, int elevel);
 static bool OtherPPHostAssignFunc (ConfigContext context, char* newval, int index, int elevel);
-static bool config_post_processor(ConfigContext context, int elevel);
-static void sort_config_vars(void);
-static bool setConfigOption(const char *name, const char *value,
-							ConfigContext context, GucSource source, int elevel);
 
 
 #ifndef POOL_PRIVATE
@@ -58,6 +90,12 @@ static bool setConfigOption(const char *name, const char *value,
  */
 static char *config_enum_get_options(struct config_enum * record, const char *prefix,
 						const char *suffix, const char *separator);
+static void send_row_description_for_detail_view(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+static int send_grouped_type_variable_to_frontend(struct config_grouped_array_var* grouped_record,
+												  POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+static int send_array_type_variable_to_frontend(struct config_generic* record,
+												POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+
 #endif
 
 
@@ -130,7 +168,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"serialize_accept", CFGCXT_INIT, CONNECTION_CONFIG,
 			"whether to serialize accept() call to avoid thundering herd problem",
-			CONFIG_VAR_TYPE_BOOL,false
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.serialize_accept,	/* variable */
 		false,								/* boot value */
@@ -142,7 +180,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"log_connections", CFGCXT_RELOAD, LOGING_CONFIG,
 			"Logs each successful connection.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.log_connections,
 		false,
@@ -152,7 +190,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"log_hostname", CFGCXT_RELOAD, LOGING_CONFIG,
 			"Logs the host name in the connection logs.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.log_hostname,
 		false,
@@ -162,7 +200,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"enable_pool_hba", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"Use pool_hba.conf for client authentication.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.enable_pool_hba,
 		false,
@@ -172,7 +210,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"replication_mode", CFGCXT_INIT, LOGING_CONFIG,
 			"Enables replication mode.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.replication_mode,
 		false,
@@ -182,7 +220,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"load_balance_mode", CFGCXT_INIT, LOAD_BALANCE_CONFIG,
 			"Enables load balancing of queries.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.load_balance_mode,
 		false,
@@ -192,7 +230,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"replication_stop_on_mismatch", CFGCXT_RELOAD, REPLICATION_CONFIG,
 			"Starts degeneration and stops replication, If there's a data mismatch between master and secondary.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.replication_stop_on_mismatch,
 		false,
@@ -202,7 +240,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"failover_if_affected_tuples_mismatch", CFGCXT_RELOAD, REPLICATION_CONFIG,
 			"Starts degeneration, If there's a data mismatch between master and secondary.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.failover_if_affected_tuples_mismatch,
 		false,
@@ -212,7 +250,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"replicate_select", CFGCXT_RELOAD, REPLICATION_CONFIG,
 			"Replicate SELECT statements when load balancing is disabled.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.replicate_select,
 		false,
@@ -222,7 +260,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"master_slave_mode", CFGCXT_INIT, MASTER_SLAVE_CONFIG,
 			"Enables Master/Slave mode.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.master_slave_mode,
 		false,
@@ -232,7 +270,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"connection_cache", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"Caches connections to backends.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.connection_cache,
 		true,
@@ -242,7 +280,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"fail_over_on_backend_error", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Triggers fail over when reading/writing to backend socket fails.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.fail_over_on_backend_error,
 		true,
@@ -252,7 +290,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"insert_lock", CFGCXT_RELOAD, REPLICATION_CONFIG,
 			"Automatically locks table with INSERT to keep SERIAL data consistency",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.insert_lock,
 		true,
@@ -262,7 +300,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"ignore_leading_white_space", CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
 			"Ignores leading white spaces of each query string.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.ignore_leading_white_space,
 		true,
@@ -272,7 +310,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"log_statement", CFGCXT_RELOAD, LOGING_CONFIG,
 			"Logs all statements in the pgpool logs.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.log_statement,
 		false,
@@ -282,7 +320,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"log_per_node_statement", CFGCXT_RELOAD, LOGING_CONFIG,
 			"Logs per node detailed SQL statements.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.log_per_node_statement,
 		false,
@@ -292,7 +330,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"use_watchdog", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Enables the pgpool-II watchdog.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.use_watchdog,
 		false,
@@ -302,7 +340,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"clear_memqcache_on_escalation", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Clears the query cache in the shared memory when pgpool-II escaltes to master watchdog node.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.clear_memqcache_on_escalation,
 		false,
@@ -312,7 +350,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"ssl", CFGCXT_INIT, SSL_CONFIG,
 			"Enables SSL support for frontend and backend connections",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.ssl,
 		false,
@@ -322,7 +360,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"check_temp_table", CFGCXT_RELOAD, GENERAL_CONFIG,
 			"Enables temporary table check.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.check_temp_table,
 		true,
@@ -332,7 +370,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"check_unlogged_table", CFGCXT_RELOAD, GENERAL_CONFIG,
 			"Enables unlogged table check.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.check_unlogged_table,
 		true,
@@ -342,7 +380,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"memory_cache_enabled", CFGCXT_RELOAD, CACHE_CONFIG,
 			"Enables the memory cache functionality.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.memory_cache_enabled,
 		false,
@@ -352,7 +390,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"memqcache_auto_cache_invalidation", CFGCXT_RELOAD, CACHE_CONFIG,
 			"Automatically deletes the cache related to the updated tables.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.memqcache_auto_cache_invalidation,
 		true,
@@ -362,7 +400,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"allow_sql_comments", CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
 			"Ignore SQL comments, while judging if load balance or query cache is possible.",
-			CONFIG_VAR_TYPE_BOOL
+			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
 		&g_pool_config.allow_sql_comments,
 		false,
@@ -381,7 +419,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"database_redirect_preference_list", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"redirect by database name.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.database_redirect_preference_list, /* variable */
 		NULL,/* boot value */
@@ -394,7 +432,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"app_name_redirect_preference_list", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"redirect by application name.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.app_name_redirect_preference_list,
 		NULL,
@@ -405,7 +443,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"listen_addresses", CFGCXT_INIT, CONNECTION_CONFIG,
 			"hostname or IP address on which pgpool will listen on.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.listen_addresses,
 		"localhost",
@@ -415,7 +453,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"pcp_listen_addresses", CFGCXT_INIT, CONNECTION_CONFIG,
 			"hostname(s) or IP address(es) on which pcp will listen on.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.pcp_listen_addresses,
 		"*",
@@ -425,7 +463,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"socket_dir", CFGCXT_INIT, CONNECTION_CONFIG,
 			"The directory to create the UNIX domain socket for accepting pgpool-II client connections.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.socket_dir,
 		DEFAULT_SOCKET_DIR,
@@ -435,7 +473,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"pcp_socket_dir", CFGCXT_INIT, CONNECTION_CONFIG,
 			"The directory to create the UNIX domain socket for accepting pgpool-II PCP connections.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.pcp_socket_dir,
 		DEFAULT_SOCKET_DIR,
@@ -445,7 +483,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_ipc_socket_dir", CFGCXT_INIT, CONNECTION_CONFIG,
 		"The directory to create the UNIX domain socket for accepting pgpool-II watchdog IPC connections.",
-		CONFIG_VAR_TYPE_STRING,false
+		CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.wd_ipc_socket_dir,
 		DEFAULT_SOCKET_DIR,
@@ -455,7 +493,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"log_destination", CFGCXT_RELOAD, LOGING_CONFIG,
 			"logging destinatio.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.log_destination,
 		"stderr",
@@ -465,7 +503,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"syslog_ident", CFGCXT_RELOAD, LOGING_CONFIG,
 			"syslog program ident string.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.syslog_ident,
 		"pgpool",
@@ -475,7 +513,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"pid_file_name", CFGCXT_INIT, FILE_LOCATION_CONFIG,
 			"Path to store pgpool-II pid file.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.pid_file_name,
 		DEFAULT_PID_FILE_NAME,
@@ -485,7 +523,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"pool_passwd", CFGCXT_INIT, FILE_LOCATION_CONFIG,
 			"File name of pool_passwd for md5 authentication.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, VAR_HIDDEN_VALUE
 		},
 		&g_pool_config.pool_passwd,
 		"pool_passwd",
@@ -495,7 +533,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"log_line_prefix", CFGCXT_RELOAD, LOGING_CONFIG,
 			"printf-style string to output at beginning of each log line.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.log_line_prefix,
 		"%t: pid %p: ",
@@ -505,7 +543,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"health_check_user", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"User name for PostgreSQL backend health check.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.health_check_user,
 		"nobody",
@@ -515,7 +553,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"health_check_password", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Password for PostgreSQL backend health check database user.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, VAR_HIDDEN_VALUE
 		},
 		&g_pool_config.health_check_password,
 		"",
@@ -525,7 +563,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"health_check_database", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"The database name to be used to perform PostgreSQL backend health check.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.health_check_database,
 		"postgres",
@@ -536,7 +574,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"sr_check_user", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"The User name to perform streaming replication delay check.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.sr_check_user,
 		"nobody",
@@ -546,7 +584,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"sr_check_password", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"The password for user to perform streaming replication delay check.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, VAR_HIDDEN_VALUE
 		},
 		&g_pool_config.sr_check_password,
 		"",
@@ -556,7 +594,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"sr_check_database", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"The database name to perform streaming replication delay check.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.sr_check_database,
 		"postgres",
@@ -566,7 +604,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"failback_command", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Command to execute when backend node is attached.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.failback_command,
 		"",
@@ -576,7 +614,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"follow_master_command", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Command to execute in master/slave streaming replication mode after a master node failover.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.follow_master_command,
 		"",
@@ -586,7 +624,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"failover_command", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Command to execute when backend node is detached.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.failover_command,
 		"",
@@ -596,7 +634,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"recovery_user", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"User name for online recovery.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.recovery_user,
 		"",
@@ -606,7 +644,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"recovery_password", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"Password for online recovery.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, VAR_HIDDEN_VALUE
 		},
 		&g_pool_config.recovery_password,
 		"",
@@ -616,7 +654,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"recovery_1st_stage_command", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"Command to execute in first stage recovery.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.recovery_1st_stage_command,
 		"",
@@ -626,7 +664,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"recovery_2nd_stage_command", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"Command to execute in second stage recovery.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.recovery_2nd_stage_command,
 		"",
@@ -636,7 +674,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"lobj_lock_table", CFGCXT_RELOAD, REPLICATION_CONFIG,
 			"Table name used for large object replication control.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.lobj_lock_table,
 		"",
@@ -646,7 +684,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_escalation_command", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Command to execute when watchdog node becomes cluster master/leader node.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.wd_escalation_command,
 		"",
@@ -656,7 +694,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_de_escalation_command", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Command to execute when watchdog node resigns from the cluster master/leader node.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.wd_de_escalation_command,
 		"",
@@ -666,7 +704,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"trusted_servers", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"List of servers to verify connectivity.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.trusted_servers,
 		"",
@@ -676,7 +714,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"delegate_IP", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Delegate IP address to be used when pgpool node become a watchdog cluster master/leader.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.delegate_IP,
 		"",
@@ -686,7 +724,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_hostname", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Host name or IP address of this watchdog.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.wd_hostname,
 		"",
@@ -696,7 +734,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"ping_path", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"path to ping command.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.ping_path,
 		"/bin",
@@ -706,7 +744,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"if_cmd_path", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Path to interface command.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.if_cmd_path,
 		"/sbin",
@@ -716,7 +754,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"if_up_cmd", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Complete command to bring UP virtual interface.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.if_up_cmd,
 		"ip addr add $_IP_$/24 dev eth0 label eth0:0",
@@ -726,7 +764,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"if_down_cmd", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Complete command to bring down virtual interface.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.if_down_cmd,
 		"ip addr del $_IP_$/24 dev eth0",
@@ -736,7 +774,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"arping_path", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"path to arping command.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.arping_path,
 		"/usr/sbin",
@@ -746,7 +784,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"arping_cmd", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"arping command.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.arping_cmd,
 		"arping -U $_IP_$ -w 1",
@@ -756,7 +794,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_lifecheck_query", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"SQL query to be used by watchdog lifecheck.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.wd_lifecheck_query,
 		"SELECT 1",
@@ -766,7 +804,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_lifecheck_dbname", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Database name to be used for by watchdog lifecheck.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.wd_lifecheck_dbname,
 		"postgres",
@@ -776,7 +814,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_lifecheck_user", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"User name to be used for by watchdog lifecheck.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.wd_lifecheck_user,
 		"nobody",
@@ -786,7 +824,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_lifecheck_password", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Password for watchdog user in lifecheck.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, VAR_HIDDEN_VALUE
 		},
 		&g_pool_config.wd_lifecheck_password,
 		"postgres",
@@ -796,7 +834,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_authkey", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Authentication key to be used in watchdog communication.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.wd_authkey,
 		"",
@@ -806,7 +844,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"ssl_cert", CFGCXT_INIT, SSL_CONFIG,
 			"Path to the SSL public certificate file.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.ssl_cert,
 		"",
@@ -816,7 +854,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"ssl_key", CFGCXT_INIT, SSL_CONFIG,
 			"Path to the SSL private key file.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.ssl_key,
 		"",
@@ -826,7 +864,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"ssl_ca_cert", CFGCXT_INIT, SSL_CONFIG,
 			"Path to a single PEM format file.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.ssl_ca_cert,
 		"",
@@ -836,7 +874,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"ssl_ca_cert_dir", CFGCXT_INIT, SSL_CONFIG,
 			"Directory containing CA root certificate(s).",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.ssl_ca_cert_dir,
 		"",
@@ -846,7 +884,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"memqcache_oiddir", CFGCXT_INIT, CACHE_CONFIG,
 			"Tempory directory to record table oids.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.memqcache_oiddir,
 		"/var/log/pgpool/oiddir",
@@ -856,7 +894,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"memqcache_memcached_host", CFGCXT_INIT, CACHE_CONFIG,
 			"Hostname or IP address of memcached.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.memqcache_memcached_host,
 		"localhost",
@@ -866,7 +904,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"logdir", CFGCXT_INIT, LOGING_CONFIG,
 			"PgPool status file logging directory.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.logdir,
 		DEFAULT_LOGDIR,
@@ -884,20 +922,20 @@ static struct config_string_list ConfigureNamesStringList[] =
 	{
 		{"reset_query_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
 			"list of commands sent to reset the backend connection when user session exits.",
-			CONFIG_VAR_TYPE_STRING_LIST,false
+			CONFIG_VAR_TYPE_STRING_LIST,false, 0
 		},
-		&g_pool_config.reset_query_list,	/* variable */
-		&g_pool_config.num_reset_queries,	/* item count var  */
+		&g_pool_config.reset_query_list,		/* variable */
+		&g_pool_config.num_reset_queries,		/* item count var  */
 		(const char*)default_reset_query_list,	/* boot value */
 		";",/* token seperator */
-		false,							/* compute_regex ?*/
-		NULL, NULL, NULL				/* assign, check, show funcs */
+		false,									/* compute_regex ?*/
+		NULL, NULL, NULL						/* assign, check, show funcs */
 	},
 
 	{
 		{"white_function_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
 			"list of functions that does not writes to database.",
-			CONFIG_VAR_TYPE_STRING_LIST,false
+			CONFIG_VAR_TYPE_STRING_LIST,false, 0
 		},
 		&g_pool_config.white_function_list,
 		&g_pool_config.num_white_function_list,
@@ -910,7 +948,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 	{
 		{"black_function_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
 			"list of functions that writes to database.",
-			CONFIG_VAR_TYPE_STRING_LIST,false
+			CONFIG_VAR_TYPE_STRING_LIST,false, 0
 		},
 		&g_pool_config.black_function_list,
 		&g_pool_config.num_black_function_list,
@@ -922,7 +960,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 	{
 		{"white_memqcache_table_list", CFGCXT_RELOAD, CACHE_CONFIG,
 			"list of tables to be cached.",
-			CONFIG_VAR_TYPE_STRING_LIST,false
+			CONFIG_VAR_TYPE_STRING_LIST,false, 0
 		},
 		&g_pool_config.white_memqcache_table_list,
 		&g_pool_config.num_white_memqcache_table_list,
@@ -935,7 +973,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 	{
 		{"black_memqcache_table_list", CFGCXT_RELOAD, CACHE_CONFIG,
 			"list of tables should not be cached.",
-			CONFIG_VAR_TYPE_STRING_LIST,false
+			CONFIG_VAR_TYPE_STRING_LIST,false, 0
 		},
 		&g_pool_config.black_memqcache_table_list,
 		&g_pool_config.num_black_memqcache_table_list,
@@ -948,7 +986,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 	{
 		{"wd_monitoring_interfaces_list", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"List of network device names, to be monitored by the watchdog process for the network link state.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_STRING,false, 0
 		},
 		&g_pool_config.wd_monitoring_interfaces_list,
 		&g_pool_config.num_wd_monitoring_interfaces_list,
@@ -970,7 +1008,7 @@ static struct config_long ConfigureNamesLong[] =
 	{
 		{"delay_threshold", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"standby delay threshold.",
-			CONFIG_VAR_TYPE_LONG,false
+			CONFIG_VAR_TYPE_LONG,false, 0
 		},
 		&g_pool_config.delay_threshold,
 		0,
@@ -981,7 +1019,7 @@ static struct config_long ConfigureNamesLong[] =
 	{
 		{"relcache_expire", CFGCXT_INIT, CACHE_CONFIG,
 		"Relation cache expiration time in seconds.",
-			CONFIG_VAR_TYPE_LONG,false
+			CONFIG_VAR_TYPE_LONG,false, 0
 		},
 		&g_pool_config.relcache_expire,
 		0,
@@ -992,7 +1030,7 @@ static struct config_long ConfigureNamesLong[] =
 	{
 		{"memqcache_total_size", CFGCXT_INIT, CACHE_CONFIG,
 			"Total memory size in bytes for storing memory cache.",
-			CONFIG_VAR_TYPE_LONG,false
+			CONFIG_VAR_TYPE_LONG,false, 0
 		},
 		&g_pool_config.memqcache_total_size,
 		(int64)67108864,
@@ -1006,54 +1044,55 @@ static struct config_long ConfigureNamesLong[] =
 	}
 };
 
+
 static struct config_int_array ConfigureNamesIntArray[] =
 {
 	{
 		{"backend_port", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"port number of PostgreSQL backend.",
-			CONFIG_VAR_TYPE_INT_ARRAY,true
+			CONFIG_VAR_TYPE_INT_ARRAY,true, 0
 		},
 		NULL,
 		0,
 		1024,65535,
 		MAX_NUM_BACKENDS,
-		BackendPortAssignFunc, NULL, NULL
+		BackendPortAssignFunc, NULL, BackendPortShowFunc, BackendSlotEmptyCheckFunc
 	},
 
 	{
 		{"heartbeat_destination_port", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
 			"Destination port for sending heartbeat.",
-			CONFIG_VAR_TYPE_INT_ARRAY,true
+			CONFIG_VAR_TYPE_INT_ARRAY,true, 0
 		},
 		NULL,
 		0,
 		1024,65535,
 		WD_MAX_IF_NUM,
-		HBDestinationPortAssignFunc, NULL, NULL
+		HBDestinationPortAssignFunc, NULL, HBDestinationPortShowFunc, WdIFSlotEmptyCheckFunc
 	},
 
 	{
 		{"other_wd_port", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"tcp/ip watchdog port number of other pgpool node for watchdog connection..",
-			CONFIG_VAR_TYPE_INT_ARRAY,true
+			CONFIG_VAR_TYPE_INT_ARRAY,true, 0
 		},
 		NULL,
 		0,
 		1024,65535,
 		MAX_WATCHDOG_NUM,
-		OtherWDPortAssignFunc, NULL, NULL
+		OtherWDPortAssignFunc, NULL, OtherWDPortShowFunc,WdSlotEmptyCheckFunc
 	},
 
 	{
 		{"other_pgpool_port", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"tcp/ip pgpool port number of other pgpool node for watchdog connection.",
-			CONFIG_VAR_TYPE_INT_ARRAY,true
+			CONFIG_VAR_TYPE_INT_ARRAY,true, 0
 		},
 		NULL,
 		0,
 		1024,65535,
 		MAX_WATCHDOG_NUM,
-		OtherPPPortAssignFunc, NULL, NULL
+		OtherPPPortAssignFunc, NULL, OtherPPPortShowFunc,WdSlotEmptyCheckFunc
 	},
 
 	/* End-of-list marker */
@@ -1071,18 +1110,19 @@ static struct config_double ConfigureNamesDouble[] =
 	}
 };
 
+
 static struct config_double_array ConfigureNamesDoubleArray[] =
 {
 	{
 		{"backend_weight", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"load balance weight of backend.",
-			CONFIG_VAR_TYPE_DOUBLE_ARRAY,true
+			CONFIG_VAR_TYPE_DOUBLE_ARRAY,true, 0
 		},
 		NULL,
 		0,
 		0.0,100000000.0,
 		MAX_NUM_BACKENDS,
-		BackendWeightAssignFunc, NULL, NULL
+		BackendWeightAssignFunc, NULL, BackendWeightShowFunc,BackendSlotEmptyCheckFunc
 	},
 	
 	/* End-of-list marker */
@@ -1097,67 +1137,67 @@ static struct config_string_array ConfigureNamesStringArray[] =
 	{
 		{"backend_hostname", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"hostname or IP address of PostgreSQL backend.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true
+			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0
 		},
 		NULL,
 		"",
 		MAX_NUM_BACKENDS,
-		BackendHostAssignFunc, NULL, NULL
+		BackendHostAssignFunc, NULL, BackendHostShowFunc,BackendSlotEmptyCheckFunc
 	},
 
 	{
 		{"backend_data_directory", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"data directory of the backend.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true
+			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0
 		},
 		NULL,
 		"",
 		MAX_NUM_BACKENDS,
-		BackendDataDirAssignFunc, NULL, NULL
+		BackendDataDirAssignFunc, NULL, BackendDataDirShowFunc,BackendSlotEmptyCheckFunc
 	},
 	
 	{
 		{"backend_flag", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"Controls various backend behavior.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true
+			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0
 		},
 		NULL,
 		"ALLOW_TO_FAILOVER",
 		MAX_NUM_BACKENDS,
-		BackendFlagsAssignFunc, NULL, NULL
+		BackendFlagsAssignFunc, NULL, BackendFlagsShowFunc,BackendSlotEmptyCheckFunc
 	},
 
 	{
 		{"heartbeat_destination", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
 			"destination host for sending heartbeat signal.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true
+			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0
 		},
 		NULL,
 		"",
 		WD_MAX_IF_NUM,
-		HBDestinationAssignFunc, NULL, NULL
+		HBDestinationAssignFunc, NULL, HBDestinationShowFunc,WdIFSlotEmptyCheckFunc
 	},
 
 	{
 		{"heartbeat_device", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
 			"Name of NIC device for sending hearbeat.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true
+			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0
 		},
 		NULL,
 		"",
 		WD_MAX_IF_NUM,
-		HBDeviceAssignFunc, NULL, NULL
+		HBDeviceAssignFunc, NULL, HBDeviceShowFunc,WdIFSlotEmptyCheckFunc
 	},
 
 	{
 		{"other_pgpool_hostname", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
 			"Hostname of other pgpool node for watchdog connection.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true
+			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0
 		},
 		NULL,
 		"localhost",
 		MAX_WATCHDOG_NUM,
-		OtherPPHostAssignFunc, NULL, NULL
+		OtherPPHostAssignFunc, NULL, OtherPPHostShowFunc,WdSlotEmptyCheckFunc
 	},
 
 	/* End-of-list marker */
@@ -1174,7 +1214,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"port", CFGCXT_INIT, CONNECTION_CONFIG,
 			"tcp/IP port number on which pgpool will listen on.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.port,
 		9999,
@@ -1185,7 +1225,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"pcp_port", CFGCXT_INIT, CONNECTION_CONFIG,
 			"tcp/IP port number on which pgpool PCP process will listen on.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.pcp_port,
 		9898,
@@ -1196,7 +1236,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"num_init_children", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"Number of children pre-forked for client connections.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.num_init_children,
 		32,
@@ -1207,7 +1247,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"listen_backlog_multiplier", CFGCXT_INIT, CONNECTION_CONFIG,
 			"length of connection queue from frontend to pgpool-II",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.listen_backlog_multiplier,
 		32,
@@ -1218,7 +1258,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"child_life_time", CFGCXT_SESSION, CONNECTION_POOL_CONFIG,
 			"pgpool-II child process life time in seconds.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.child_life_time,
 		300,
@@ -1229,7 +1269,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"client_idle_limit", CFGCXT_SESSION, CONNECTION_POOL_CONFIG,
 			"idle time in seconds to disconnects a client.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.client_idle_limit,
 		0,
@@ -1240,7 +1280,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"connection_life_time", CFGCXT_SESSION, CONNECTION_POOL_CONFIG,
 			"Cached connections expiration time in seconds.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.connection_life_time,
 		0,
@@ -1251,7 +1291,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"child_max_connections", CFGCXT_SESSION, CONNECTION_POOL_CONFIG,
 			"A pgpool-II child process will be terminated after this many connections from clients.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.child_max_connections,
 		0,
@@ -1262,7 +1302,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"authentication_timeout", CFGCXT_SESSION, CONNECTION_CONFIG,
 			"Time out value in seconds for client authentication.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.authentication_timeout,
 		0,
@@ -1273,7 +1313,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"max_pool", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"Maximum number of connection pools per child process.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.max_pool,
 		4,
@@ -1284,7 +1324,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"health_check_timeout", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Time out value in seconds for one health check.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.health_check_timeout,
 		20,
@@ -1295,7 +1335,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"health_check_period", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Time interval in seconds between the health checks.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.health_check_period,
 		0,
@@ -1306,7 +1346,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"health_check_max_retries", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"The maximum number of times to retry a failed health check before giving up and initiating failover.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.health_check_max_retries,
 		0,
@@ -1317,7 +1357,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"health_check_retry_delay", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"The amount of time in seconds to wait between failed health check retries.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.health_check_retry_delay,
 		1,
@@ -1328,7 +1368,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"connect_timeout", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Timeout in milliseconds before giving up connecting to backend.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.connect_timeout,
 		10000,
@@ -1339,7 +1379,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"sr_check_period", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"Time interval in seconds between the streaming replication delay checks.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.sr_check_period,
 		0,
@@ -1350,7 +1390,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"recovery_timeout", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"Maximum time in seconds to wait for the recovering PostgreSQL node.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.recovery_timeout,
 		90,
@@ -1361,7 +1401,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"client_idle_limit_in_recovery", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"Time limit is seconds for the child connection, before it is terminated during the 2nd stage recovery.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.client_idle_limit_in_recovery,
 		0,
@@ -1372,7 +1412,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"search_primary_node_timeout", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Max time in seconds to search for primary node after failover.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.search_primary_node_timeout,
 		10,
@@ -1383,7 +1423,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wd_port", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"tcp/IP port number on which watchdog of process of pgpool will listen on.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.wd_port,
 		9000,
@@ -1394,7 +1434,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wd_priority", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Watchdog node priority for leader election.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.wd_priority,
 		1,
@@ -1405,7 +1445,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wd_interval", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Time interval in seconds between life check.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.wd_interval,
 		10,
@@ -1416,7 +1456,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wd_life_point", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Maximum number of retries before failing the life check.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.wd_life_point,
 		3,
@@ -1427,7 +1467,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wd_heartbeat_port", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Port number for receiving heartbeat signal.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.wd_heartbeat_port,
 		9694,
@@ -1438,7 +1478,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wd_heartbeat_keepalive", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Time interval in seconds between sending the heartbeat siganl.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.wd_heartbeat_keepalive,
 		2,
@@ -1449,7 +1489,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wd_heartbeat_deadtime", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Deadtime interval in seconds for heartbeat siganl.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.wd_heartbeat_deadtime,
 		30,
@@ -1460,7 +1500,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"relcache_size", CFGCXT_INIT, CACHE_CONFIG,
 			"Number of relation cache entry.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.relcache_size,
 		256,
@@ -1471,7 +1511,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"memqcache_memcached_port", CFGCXT_INIT, CACHE_CONFIG,
 			"Port number of Memcached server.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.memqcache_memcached_port,
 		11211,
@@ -1482,7 +1522,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"memqcache_max_num_cache", CFGCXT_INIT, CACHE_CONFIG,
 			"Total number of cache entries.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.memqcache_max_num_cache,
 		1000000,
@@ -1493,7 +1533,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"memqcache_expire", CFGCXT_INIT, CACHE_CONFIG,
 			"Memory cache entry life time specified in seconds.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.memqcache_expire,
 		0,
@@ -1504,7 +1544,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"memqcache_maxcache", CFGCXT_INIT, CACHE_CONFIG,
 			"Maximum SELECT result size in bytes.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.memqcache_maxcache,
 		409600,
@@ -1515,7 +1555,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"memqcache_cache_block_size", CFGCXT_INIT, CACHE_CONFIG,
 			"Cache block size in bytes.",
-			CONFIG_VAR_TYPE_INT,false
+			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.memqcache_cache_block_size,
 		1048576,
@@ -1534,7 +1574,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"syslog_facility", CFGCXT_RELOAD, LOGING_CONFIG,
 			"syslog local faclity.",
-			CONFIG_VAR_TYPE_STRING,false
+			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
 		&g_pool_config.syslog_facility,
 		LOG_LOCAL0,
@@ -1545,7 +1585,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_error_verbosity", CFGCXT_RELOAD, LOGING_CONFIG,
 			"How much details about error should be emitted.",
-			CONFIG_VAR_TYPE_ENUM,false
+			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
 		&g_pool_config.log_error_verbosity,
 		PGERROR_DEFAULT,
@@ -1556,7 +1596,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"client_min_messages", CFGCXT_RELOAD, LOGING_CONFIG,
 			"Which messages should be sent to client.",
-			CONFIG_VAR_TYPE_ENUM,false
+			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
 		&g_pool_config.client_min_messages,
 		NOTICE,
@@ -1567,7 +1607,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_min_messages", CFGCXT_RELOAD, LOGING_CONFIG,
 			"Which messages should be emitted to server log.",
-			CONFIG_VAR_TYPE_ENUM,false
+			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
 		&g_pool_config.log_min_messages,
 		WARNING,
@@ -1578,7 +1618,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"master_slave_sub_mode", CFGCXT_INIT, MASTER_SLAVE_CONFIG,
 			"master/slave sub mode.",
-			CONFIG_VAR_TYPE_ENUM,false
+			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
 		(int*)&g_pool_config.master_slave_sub_mode,
 		SLONY_MODE,
@@ -1589,7 +1629,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_standby_delay", CFGCXT_RELOAD, MASTER_SLAVE_CONFIG,
 			"When to log standby delay.",
-			CONFIG_VAR_TYPE_ENUM,false
+			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
 		(int*)&g_pool_config.log_standby_delay,
 		LSD_NONE,
@@ -1600,7 +1640,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"wd_lifecheck_method", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"method for watchdog lifecheck.",
-			CONFIG_VAR_TYPE_ENUM,false
+			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
 		(int*)&g_pool_config.wd_lifecheck_method,
 		LIFECHECK_BY_HB,
@@ -1611,7 +1651,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"memqcache_method", CFGCXT_INIT, CACHE_CONFIG,
 			"Cache store method. either shmem(shared memory) or Memcached. shmem by default.",
-			CONFIG_VAR_TYPE_ENUM,false
+			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
 		(int*)&g_pool_config.memqcache_method,
 		SHMEM_CACHE,
@@ -1624,6 +1664,40 @@ static struct config_enum ConfigureNamesEnum[] =
 		{NULL, 0, 0, NULL}, NULL, 0, NULL, NULL, NULL, NULL
 	}
 };
+
+/* finally the groups */
+static struct config_grouped_array_var ConfigureVarGroups[] =
+{
+	{
+		{"backend", CFGCXT_BOOT, CONNECTION_CONFIG,
+			"backend configuration group.",
+			CONFIG_VAR_TYPE_GROUP,false, 0
+		},
+		-1, /*until initialized*/
+		NULL
+	},
+	{
+		{"other_pgpool", CFGCXT_BOOT, WATCHDOG_CONFIG,
+			"watchdog nodes configuration group.",
+			CONFIG_VAR_TYPE_GROUP,false, 0
+		},
+		-1, /*until initialized*/
+		NULL
+	},
+	{
+		{"heartbeat", CFGCXT_BOOT, WATCHDOG_LIFECHECK,
+			"heartbeat configuration group.",
+			CONFIG_VAR_TYPE_GROUP,false, 0
+		},
+		-1, /*until initialized*/
+		NULL
+	},
+	/* End-of-list marker */
+	{
+		{NULL, 0, 0, NULL}, -1 , NULL
+	}
+};
+
 
 bool assign_variable_to_int_array_config_var(const char* name, int** variable)
 {
@@ -1776,6 +1850,49 @@ build_config_variables(void)
 	all_parameters = all_vars;
 	num_all_parameters = num_vars;
 	sort_config_vars();
+	build_variable_groups();
+}
+
+static void build_variable_groups(void)
+{
+	/* we build these by hand */
+	/* group 1. Backend config vars */
+	ConfigureVarGroups[0].var_count = 5;
+	ConfigureVarGroups[0].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[0].var_count);
+	ConfigureVarGroups[0].var_list[0] = find_option("backend_hostname", FATAL);
+	ConfigureVarGroups[0].var_list[0]->flags |= VAR_PART_OF_GROUP;
+	ConfigureVarGroups[0].var_list[1] = find_option("backend_port", FATAL);
+	ConfigureVarGroups[0].var_list[1]->flags |= VAR_PART_OF_GROUP;
+	ConfigureVarGroups[0].var_list[2] = find_option("backend_weight", FATAL);
+	ConfigureVarGroups[0].var_list[2]->flags |= VAR_PART_OF_GROUP;
+	ConfigureVarGroups[0].var_list[3] = find_option("backend_data_directory", FATAL);
+	ConfigureVarGroups[0].var_list[3]->flags |= VAR_PART_OF_GROUP;
+	ConfigureVarGroups[0].var_list[4] = find_option("backend_flag", FATAL);
+	ConfigureVarGroups[0].var_list[4]->flags |= VAR_PART_OF_GROUP;
+
+
+	/* group 2. other_pgpool config vars */
+	ConfigureVarGroups[1].var_count = 3;
+	ConfigureVarGroups[1].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[0].var_count);
+	/* backend hostname */
+	ConfigureVarGroups[1].var_list[0] = find_option("other_pgpool_hostname", FATAL);
+	ConfigureVarGroups[1].var_list[0]->flags |= VAR_PART_OF_GROUP;
+	ConfigureVarGroups[1].var_list[1] = find_option("other_pgpool_port", FATAL);
+	ConfigureVarGroups[1].var_list[1]->flags |= VAR_PART_OF_GROUP;
+	ConfigureVarGroups[1].var_list[2] = find_option("other_wd_port", FATAL);
+	ConfigureVarGroups[1].var_list[2]->flags |= VAR_PART_OF_GROUP;
+
+
+	/* group 3. heartbeat config vars */
+	ConfigureVarGroups[2].var_count = 3;
+	ConfigureVarGroups[2].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[0].var_count);
+	/* backend hostname */
+	ConfigureVarGroups[2].var_list[0] = find_option("heartbeat_device", FATAL);
+	ConfigureVarGroups[2].var_list[0]->flags |= VAR_PART_OF_GROUP;
+	ConfigureVarGroups[2].var_list[1] = find_option("heartbeat_destination", FATAL);
+	ConfigureVarGroups[2].var_list[1]->flags |= VAR_PART_OF_GROUP;
+	ConfigureVarGroups[2].var_list[2] = find_option("heartbeat_destination_port", FATAL);
+	ConfigureVarGroups[2].var_list[2]->flags |= VAR_PART_OF_GROUP;
 
 }
 
@@ -1820,6 +1937,9 @@ initialize_variables_with_default(struct config_generic * gconf)
 	
 	switch (gconf->vartype)
 	{
+		case CONFIG_VAR_TYPE_GROUP: /* just to keep compiler quite */
+			break;
+
 		case CONFIG_VAR_TYPE_BOOL:
 		{
 			struct config_bool *conf = (struct config_bool *) gconf;
@@ -1992,8 +2112,9 @@ initialize_variables_with_default(struct config_generic * gconf)
 			}
 			else
 			{
-				*conf->variable = conf->reset_val = newval;
+				*conf->variable = newval;
 			}
+			conf->reset_val = newval;
 			break;
 		}
 
@@ -2014,7 +2135,6 @@ initialize_variables_with_default(struct config_generic * gconf)
 			}
 			else
 			{
-				conf->reset_val = newval;
 				*conf->variable = get_list_from_string(newval,conf->seperator, conf->list_elements_count);
 				if (conf->compute_regex)
 				{
@@ -2025,6 +2145,13 @@ initialize_variables_with_default(struct config_generic * gconf)
 					}
 				}
 			}
+			/* save the string value */
+			if (newval)
+				conf->reset_val = pstrdup(newval);
+			else
+				conf->reset_val = NULL;
+			conf->current_val = newval;
+
 			break;
 		}
 
@@ -2098,14 +2225,46 @@ InitializeConfigOptions(void)
 }
 
 /*
+ * returns the index value postfixed with the variable name
+ * for example if the if name contains "backend_hostname11" and
+ * the record name must be for the variable nameed "backend_hostname"
+ * if the index is not present at end of the name the function
+ * will return true and out parameter index will be assigned with -ve value
+ */
+static bool get_index_in_var_name(struct config_generic* record, const char* name, int *index, int elevel)
+{
+	char *ptr;
+	int index_start_index = strlen(record->name);
+	if (strlen(name) <= index_start_index)
+	{
+		/* no index is provided */
+		*index = -1;
+		return true;
+	}
+	ptr = (char*)(name + index_start_index);
+	while (*ptr)
+	{
+		if (isdigit(*ptr) == 0)
+		{
+			ereport(elevel,
+					(errmsg("invalid index value for parameter \"%s\" ",name),
+					 (errdetail("index part contains the invalid non digit character"))));
+			return false;
+		}
+		ptr++;
+	}
+	*index = atoi(name + index_start_index);
+	return true;
+}
+
+/*
  * Look up option NAME.  If it exists, return a pointer to its record,
  * else return NULL.
  */
 static struct config_generic *
 find_option(const char *name, int elevel)
 {
-	int			i;
-	
+	int	i;
 	for (i = 0; i < num_all_parameters; i++)
 	{
 		struct config_generic* gconf = all_parameters[i];
@@ -2114,15 +2273,10 @@ find_option(const char *name, int elevel)
 			int index_start_index = strlen(gconf->name);
 			/*
 			 * For dynamic array type vars the key also have the index at the end
-			 * e.g. backend_hostname0 so we only comapare the key name part
+			 * e.g. backend_hostname0 so we only comapare the key's name part
 			 */
 			if (!strncmp(gconf->name, name, index_start_index))
-			{
-				/* make sure if index is provided and its a numeric value */
-				if (strlen(name) <= index_start_index || !isdigit(*(name + index_start_index)))
-					continue;
 				return gconf;
-			}
 		}
 		else
 		{
@@ -2158,6 +2312,26 @@ config_enum_lookup_by_name(struct config_enum * record, const char *value,
 	*retval = 0;
 	return FALSE;
 }
+
+/*
+ * Lookup the name for an enum option with the selected value.
+ * The returned string is a pointer to static data and not
+ * allocated for modification.
+ */
+const char *
+config_enum_lookup_by_value(struct config_enum * record, int val)
+{
+	const struct config_enum_entry *entry;
+	
+	for (entry = record->options; entry && entry->name; entry++)
+	{
+		if (entry->val == val)
+			return entry->name;
+	}
+	/* should never happen*/
+	return NULL;
+}
+
 
 bool
 set_config_options(ConfigVariable *head_p,
@@ -2282,9 +2456,10 @@ setConfigOption(const char *name, const char *value,
 	 */
 	if (record->dynamic_array_var)
 	{
-		/* get the index */
-		int index_start_index = strlen(record->name);
-		if (strlen(name) <= index_start_index)
+		if (get_index_in_var_name(record, name, &index_val, elevel) == false)
+			return false;
+		
+		if (index_val < 0)
 		{
 			/* index is not provided */
 			ereport(elevel,
@@ -2292,11 +2467,14 @@ setConfigOption(const char *name, const char *value,
 							name)));
 			return false;
 		}
-		index_val = atoi(name + index_start_index);
 	}
 
 	switch (record->vartype)
 	{
+		case CONFIG_VAR_TYPE_GROUP:
+			ereport(ERROR,(errmsg("invalid config variable type. operation not allowed")));
+			break;
+
 		case CONFIG_VAR_TYPE_BOOL:
 		{
 			struct config_bool *conf = (struct config_bool *) record;
@@ -2672,7 +2850,7 @@ setConfigOption(const char *name, const char *value,
 			else if (source == PGC_S_DEFAULT)
 			{
 				if (conf->boot_val)
-					newval = (char*)conf->boot_val;
+					newval = pstrdup((char*)conf->boot_val);
 			}
 			else
 			{
@@ -2706,7 +2884,7 @@ setConfigOption(const char *name, const char *value,
 				*conf->variable = get_list_from_string(newval, conf->seperator, conf->list_elements_count);
 				if (conf->compute_regex)
 				{
-					/* TODO clear the old array please */
+					/* TODO clear the old regex array please */
 					int i;
 					for (i=0;i < *conf->list_elements_count; i++)
 					{
@@ -2725,7 +2903,10 @@ setConfigOption(const char *name, const char *value,
 				else
 					conf->reset_val = NULL;
 			}
-
+			/* save the string value */
+			if (conf->current_val)
+				pfree(conf->current_val);
+			conf->current_val = newval;
 		}
 			break;
 
@@ -2882,6 +3063,7 @@ static bool BackendPortAssignFunc (ConfigContext context, int newval, int index,
 	return true;
 }
 
+
 static bool BackendHostAssignFunc (ConfigContext context, char* newval, int index, int elevel)
 {
 	BACKEND_STATUS backend_status = g_pool_config.backend_desc->backend_info[index].backend_status;
@@ -2981,6 +3163,99 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 			errdetail("backend slot number %d flag: %04x", index, flag)));
 	pfree(flags);
 	return true;
+}
+
+static const char* BackendWeightShowFunc(int index)
+{
+	static char buffer[10];
+	snprintf(buffer, sizeof(buffer), "%g" ,
+			 g_pool_config.backend_desc->backend_info[index].unnormalized_weight);
+	return buffer;
+}
+
+static const char* BackendPortShowFunc(int index)
+{
+	static char buffer[10];
+	snprintf(buffer, sizeof(buffer), "%d" ,
+			 g_pool_config.backend_desc->backend_info[index].backend_port);
+	return buffer;
+}
+
+static const char* BackendHostShowFunc(int index)
+{
+	return g_pool_config.backend_desc->backend_info[index].backend_hostname;
+}
+
+static const char* BackendDataDirShowFunc(int index)
+{
+	return g_pool_config.backend_desc->backend_info[index].backend_data_directory;
+}
+
+static const char* BackendFlagsShowFunc(int index)
+{
+	static char buffer[20];
+
+	unsigned short flag = g_pool_config.backend_desc->backend_info[index].flag;
+	if (POOL_ALLOW_TO_FAILOVER(flag))
+		snprintf(buffer, sizeof(buffer), "ALLOW_TO_FAILOVER");
+	else if (POOL_DISALLOW_TO_FAILOVER(flag))
+		snprintf(buffer, sizeof(buffer), "DISALLOW_TO_FAILOVER");
+	return buffer;
+}
+
+static bool BackendSlotEmptyCheckFunc(int index)
+{
+	return (g_pool_config.backend_desc->backend_info[index].backend_port == 0);
+}
+
+static bool WdSlotEmptyCheckFunc(int index)
+{
+	return (g_pool_config.wd_remote_nodes.wd_remote_node_info[index].pgpool_port == 0);
+}
+
+static bool WdIFSlotEmptyCheckFunc(int index)
+{
+	
+	return (index >= g_pool_config.num_hb_if);
+}
+
+static const char* OtherPPHostShowFunc(int index)
+{
+	return g_pool_config.wd_remote_nodes.wd_remote_node_info[index].hostname;
+}
+
+static const char* OtherPPPortShowFunc(int index)
+{
+	static char buffer[10];
+	snprintf(buffer, sizeof(buffer), "%d" ,
+			 g_pool_config.wd_remote_nodes.wd_remote_node_info[index].pgpool_port);
+	return buffer;
+}
+
+static const char* OtherWDPortShowFunc(int index)
+{
+	static char buffer[10];
+	snprintf(buffer, sizeof(buffer), "%d" ,
+			 g_pool_config.wd_remote_nodes.wd_remote_node_info[index].wd_port);
+	return buffer;
+}
+
+static const char* HBDeviceShowFunc(int index)
+{
+	return g_pool_config.hb_if[index].if_name;
+}
+
+static const char* HBDestinationShowFunc(int index)
+{
+	return g_pool_config.hb_if[index].addr;
+}
+
+static const char* HBDestinationPortShowFunc(int index)
+{
+	static char buffer[10];
+	snprintf(buffer, sizeof(buffer), "%d" ,
+			 g_pool_config.hb_if[index].dest_port);
+	return buffer;
 }
 
 /* Watchdog Assign functions */
@@ -3193,7 +3468,7 @@ static bool config_post_processor(ConfigContext context, int elevel)
 	return true;
 }
 
-static bool MakeAppRedirectListRegex (char* newval, int error_level)
+static bool MakeAppRedirectListRegex (char* newval, int elevel)
 {
 	/* TODO Deal with the memory */
 	int i;
@@ -3216,7 +3491,7 @@ static bool MakeAppRedirectListRegex (char* newval, int error_level)
 	{
 		if (!check_redirect_node_spec(lrtokens->token[i].right_token))
 		{
-			ereport(error_level,
+			ereport(elevel,
 					(errmsg("invalid configuration for key \"app_name_redirect_preference_list\""),
 					 errdetail("wrong redirect db node spec: \"%s\"", lrtokens->token[i].right_token)));
 			return false;
@@ -3226,7 +3501,7 @@ static bool MakeAppRedirectListRegex (char* newval, int error_level)
 		if (*(lrtokens->token[i].left_token) == '\0' ||
 			add_regex_array(pool_config->redirect_app_names, lrtokens->token[i].left_token))
 		{
-			ereport(error_level,
+			ereport(elevel,
 					(errmsg("invalid configuration for key \"app_name_redirect_preference_list\""),
 					 errdetail("wrong redirect app name regular expression: \"%s\"", lrtokens->token[i].left_token)));
 			return false;
@@ -3236,7 +3511,7 @@ static bool MakeAppRedirectListRegex (char* newval, int error_level)
 	return true;
 }
 
-static bool MakeDBRedirectListRegex (char* newval, int error_level)
+static bool MakeDBRedirectListRegex (char* newval, int elevel)
 {
 	/* TODO Deal with the memory */
 	int i;
@@ -3258,8 +3533,8 @@ static bool MakeDBRedirectListRegex (char* newval, int error_level)
 	{
 		if (!check_redirect_node_spec(lrtokens->token[i].right_token))
 		{
-			ereport(error_level,
-					(errmsg("invalid configuration for key \"database_redirect_preference_list\""),
+			ereport(elevel,
+				(errmsg("invalid configuration for key \"database_redirect_preference_list\""),
 					 errdetail("wrong redirect db node spec: \"%s\"", lrtokens->token[i].right_token)));
 			return false;
 		}
@@ -3267,8 +3542,8 @@ static bool MakeDBRedirectListRegex (char* newval, int error_level)
 		if (*(lrtokens->token[i].left_token) == '\0' ||
 			add_regex_array(pool_config->redirect_dbnames, lrtokens->token[i].left_token))
 		{
-			ereport(error_level,
-					(errmsg("invalid configuration for key \"database_redirect_preference_list\""),
+			ereport(elevel,
+				(errmsg("invalid configuration for key \"database_redirect_preference_list\""),
 					 errdetail("wrong redirect dbname regular expression: \"%s\"", lrtokens->token[i].left_token)));
 			return false;
 		}
@@ -3276,3 +3551,473 @@ static bool MakeDBRedirectListRegex (char* newval, int error_level)
 	return true;
 }
 
+static char *
+ShowOption(struct config_generic * record, int index, int elevel)
+{
+	char		buffer[256];
+	const char *val;
+	
+	/* if the value needs to be hidden
+	 * no need to dig further
+	 */
+	if (record->flags & VAR_HIDDEN_VALUE)
+		return pstrdup("*****");
+
+	switch (record->vartype)
+	{
+		case CONFIG_VAR_TYPE_BOOL:
+		{
+			struct config_bool *conf = (struct config_bool *) record;
+			
+			if (conf->show_hook)
+				val = (*conf->show_hook) ();
+			else
+				val = *conf->variable ? "on" : "off";
+		}
+			break;
+			
+		case CONFIG_VAR_TYPE_INT:
+		{
+			struct config_int *conf = (struct config_int *) record;
+			
+			if (conf->show_hook)
+				val = (*conf->show_hook) ();
+			else
+			{
+				int		result = *conf->variable;
+				snprintf(buffer, sizeof(buffer), "%d" ,
+						 result);
+				val = buffer;
+			}
+		}
+			break;
+
+		case CONFIG_VAR_TYPE_LONG:
+		{
+			struct config_long *conf = (struct config_long *) record;
+
+			if (conf->show_hook)
+				val = (*conf->show_hook) ();
+			else
+			{
+				int64		result = (int64)*conf->variable;
+				snprintf(buffer, sizeof(buffer), INT64_FORMAT ,
+						 result);
+				val = buffer;
+			}
+		}
+			break;
+			
+		case CONFIG_VAR_TYPE_DOUBLE:
+		{
+			struct config_double *conf = (struct config_double *) record;
+			
+			if (conf->show_hook)
+				val = (*conf->show_hook)();
+			else
+			{
+				snprintf(buffer, sizeof(buffer), "%g",
+						 *conf->variable);
+				val = buffer;
+			}
+		}
+			break;
+			
+		case CONFIG_VAR_TYPE_STRING:
+		{
+			struct config_string *conf = (struct config_string *) record;
+			
+			if (conf->show_hook)
+				val = (*conf->show_hook) ();
+			else if (*conf->variable && **conf->variable)
+				val = *conf->variable;
+			else
+				val = "";
+		}
+			break;
+			
+		case CONFIG_VAR_TYPE_ENUM:
+		{
+			struct config_enum *conf = (struct config_enum *) record;
+			
+			if (conf->show_hook)
+				val = (*conf->show_hook) ();
+			else
+				val = config_enum_lookup_by_value(conf, *conf->variable);
+		}
+
+			break;
+
+		case CONFIG_VAR_TYPE_INT_ARRAY:
+		{
+			struct config_int_array *conf = (struct config_int_array *) record;
+			
+			if (index >= conf->max_elements || index < 0)
+			{
+				ereport(elevel,
+					(errmsg("invalid index %d for configuration parameter \"%s\"",index, conf->gen.name),
+						 errdetail("allowed index is between 0 and %d",conf->max_elements -1)));
+
+				val = NULL;
+			}
+			else
+			{
+				if (conf->show_hook)
+					val = (*conf->show_hook) (index);
+				else
+				{
+					int		result = *conf->variable[index];
+					snprintf(buffer, sizeof(buffer), "%d" ,
+							 result);
+					val = buffer;
+				}
+			}
+		}
+			break;
+
+		case CONFIG_VAR_TYPE_DOUBLE_ARRAY:
+		{
+			struct config_double_array *conf = (struct config_double_array *) record;
+			
+			if (index >= conf->max_elements || index < 0)
+			{
+				ereport(elevel,
+					(errmsg("invalid index %d for configuration parameter \"%s\"",index, conf->gen.name),
+						 errdetail("allowed index is between 0 and %d",conf->max_elements -1)));
+				
+				val = NULL;
+			}
+			else
+			{
+				if (conf->show_hook)
+					val = (*conf->show_hook) (index);
+				else
+				{
+					double		result = *conf->variable[index];
+					snprintf(buffer, sizeof(buffer), "%g" ,
+							 result);
+					val = buffer;
+				}
+			}
+		}
+			break;
+
+		case CONFIG_VAR_TYPE_STRING_ARRAY:
+		{
+			struct config_string_array *conf = (struct config_string_array *) record;
+			
+			if (index >= conf->max_elements || index < 0)
+			{
+				ereport(elevel,
+					(errmsg("invalid index %d for configuration parameter \"%s\"",index, conf->gen.name),
+						 errdetail("allowed index is between 0 and %d",conf->max_elements -1)));
+				
+				val = NULL;
+			}
+			else
+			{
+				if (conf->show_hook)
+					val = (*conf->show_hook) (index);
+				else if ( (*conf->variable)[index] && ***conf->variable)
+					val = (*conf->variable)[index];
+				else
+					val = "";
+			}
+		}
+			break;
+		case CONFIG_VAR_TYPE_STRING_LIST:
+		{
+			struct config_string_list *conf = (struct config_string_list *) record;
+			
+			if (conf->show_hook)
+				val = (*conf->show_hook) ();
+			else if (conf->current_val)
+				val = conf->current_val;
+			else
+				val = "";
+		}
+			break;
+			
+		default:
+			/* just to keep compiler quiet */
+			val = "???";
+			break;
+	}
+	if (val)
+		return pstrdup(val);
+	return NULL;
+}
+
+static bool value_slot_for_config_record_is_empty(struct config_generic* record, int index)
+{
+	switch (record->vartype)
+	{
+		case CONFIG_VAR_TYPE_BOOL:
+		case CONFIG_VAR_TYPE_INT:
+		case CONFIG_VAR_TYPE_LONG:
+		case CONFIG_VAR_TYPE_DOUBLE:
+		case CONFIG_VAR_TYPE_STRING:
+		case CONFIG_VAR_TYPE_ENUM:
+			return false;
+			break;
+			
+		case CONFIG_VAR_TYPE_INT_ARRAY:
+		{
+			struct config_int_array *conf = (struct config_int_array *) record;
+			if (conf->empty_slot_check_func)
+				return (*conf->empty_slot_check_func)(index);
+		}
+			break;
+			
+		case CONFIG_VAR_TYPE_DOUBLE_ARRAY:
+		{
+			struct config_double_array *conf = (struct config_double_array *) record;
+			if (conf->empty_slot_check_func)
+				return (*conf->empty_slot_check_func)(index);
+		}
+			break;
+			
+		case CONFIG_VAR_TYPE_STRING_ARRAY:
+		{
+			struct config_string_array *conf = (struct config_string_array *) record;
+			if (conf->empty_slot_check_func)
+				return (*conf->empty_slot_check_func)(index);
+		}
+			break;
+			
+		default:
+			break;
+	}
+	return false;
+}
+
+static int get_max_elements_for_config_record(struct config_generic* record)
+{
+	switch (record->vartype)
+	{
+		case CONFIG_VAR_TYPE_BOOL:
+		case CONFIG_VAR_TYPE_INT:
+		case CONFIG_VAR_TYPE_LONG:
+		case CONFIG_VAR_TYPE_DOUBLE:
+		case CONFIG_VAR_TYPE_STRING:
+		case CONFIG_VAR_TYPE_ENUM:
+			return 1;
+			break;
+			
+		case CONFIG_VAR_TYPE_INT_ARRAY:
+		{
+			struct config_int_array *conf = (struct config_int_array *) record;
+			return conf->max_elements;
+		}
+			break;
+			
+		case CONFIG_VAR_TYPE_DOUBLE_ARRAY:
+		{
+			struct config_double_array *conf = (struct config_double_array *) record;
+			return conf->max_elements;
+		}
+			break;
+			
+		case CONFIG_VAR_TYPE_STRING_ARRAY:
+		{
+			struct config_string_array *conf = (struct config_string_array *) record;
+			return conf->max_elements;
+		}
+			break;
+			
+		default:
+			break;
+	}
+	return 0;
+}
+
+#ifndef POOL_PRIVATE
+
+bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	int i;
+	int num_rows = 0;
+	const char* value;
+
+	send_row_description_for_detail_view(frontend, backend);
+
+	/*
+	 * grouped variables are not listed in all parameter array
+	 * so start with group variables.
+	 */
+	for (i = 0; ConfigureVarGroups[i].gen.name; i++)
+	{
+		int rows = send_grouped_type_variable_to_frontend(&ConfigureVarGroups[i], frontend, backend);
+		if (rows < 0)
+			return false;
+		num_rows += rows;
+	}
+
+	for (i = 0; i < num_all_parameters; ++i)
+	{
+		struct config_generic* record = all_parameters[i];
+		if (record->flags & VAR_PART_OF_GROUP)
+			continue;
+
+		if (record->flags & VAR_HIDDEN_IN_SHOW_ALL)
+			continue;
+
+		if (record->dynamic_array_var)
+		{
+			int rows = send_array_type_variable_to_frontend(record, frontend, backend);
+			if (rows < 0)
+				return false;
+			num_rows += rows;
+
+		}
+		else
+		{
+			value = ShowOption(record, 0, FRONTEND_ONLY_ERROR);
+			if (value == NULL)
+				return false;
+			send_config_var_detail_row(frontend, backend, record->name, value, record->description);
+			pfree((void*)value);
+			num_rows++;
+		}
+	}
+	send_complete_and_ready(frontend, backend, num_rows);
+	return true;
+}
+
+
+bool report_config_variable(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* var_name)
+{
+	int index = 0;
+	char *value;
+	int num_rows = 0;
+	struct config_generic* record;
+
+	if ( strcmp(var_name,"all") == 0)
+		return report_all_variables(frontend,backend);
+
+	/* search the variable */
+	record = find_option(var_name, WARNING);
+	if (record == NULL)
+	{
+		int i;
+		/* check if the var name match the grouped var */
+		for (i = 0; ConfigureVarGroups[i].gen.name; i++)
+		{
+			if (strcmp(ConfigureVarGroups[i].gen.name,var_name) == 0)
+			{
+				send_row_description_for_detail_view(frontend, backend);
+				num_rows = send_grouped_type_variable_to_frontend(&ConfigureVarGroups[i], frontend, backend);
+				if (num_rows < 0)
+					return false;
+				send_complete_and_ready(frontend, backend, num_rows);
+				return true;
+			}
+		}
+
+		ereport(FRONTEND_ONLY_ERROR,
+			(errmsg("config variable \"%s\" not found",var_name)));
+
+		return false;
+	}
+
+	if (record->dynamic_array_var)
+	{
+		if (get_index_in_var_name(record, var_name, &index, FRONTEND_ONLY_ERROR) == false)
+			return false;
+
+		if (index < 0)
+		{
+			/* Index is not included in parameter name.
+			 * this is the multi value config variable */
+			ereport(DEBUG3,
+					(errmsg("show parameter \"%s\" with out index",var_name)));
+			send_row_description_for_detail_view(frontend, backend);
+			num_rows = send_array_type_variable_to_frontend(record, frontend, backend);
+			if (num_rows < 0)
+				return false;
+		}
+	}
+
+	if (index >= 0)
+	{
+		/* single value only */
+		num_rows = 1;
+		send_row_description(frontend, backend, 1, (char**)&var_name);
+		value = ShowOption(record, index, FRONTEND_ONLY_ERROR);
+		if (value == NULL)
+			return false;
+		send_config_var_value_only_row(frontend, backend, value);
+		pfree((void*)value);
+	}
+
+	send_complete_and_ready(frontend, backend, num_rows);
+
+	return true;
+}
+
+static int send_array_type_variable_to_frontend(struct config_generic* record, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	if (record->dynamic_array_var)
+	{
+		const int MAX_NAME_LEN = 255;
+		char name[MAX_NAME_LEN +1];
+		int max_elements = get_max_elements_for_config_record(record);
+		int index;
+		int num_rows = 0;
+
+		for (index = 0; index < max_elements; index++)
+		{
+			const char *value;
+			if (value_slot_for_config_record_is_empty(record,index))
+				continue;
+			/* construct the name with index */
+			snprintf(name, MAX_NAME_LEN, "%s%d",record->name,index);
+			value = ShowOption(record, index, FRONTEND_ONLY_ERROR);
+			if (value == NULL)
+				return -1;
+			send_config_var_detail_row(frontend, backend, (const char*)name, value, record->description);
+			pfree((void*)value);
+			num_rows++;
+		}
+		return num_rows;
+	}
+	return -1; /* error */
+}
+
+static int send_grouped_type_variable_to_frontend(struct config_grouped_array_var* grouped_record, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	int k,index;
+	int max_elements = get_max_elements_for_config_record(grouped_record->var_list[0]);
+	int num_rows = 0;
+	for (index = 0; index < max_elements; index++)
+	{
+		for (k =0; k < grouped_record->var_count; k++)
+		{
+			const int MAX_NAME_LEN = 255;
+			char name[MAX_NAME_LEN +1];
+			const char *value;
+
+			struct config_generic* record = grouped_record->var_list[k];
+
+			if (value_slot_for_config_record_is_empty(record,index))
+				break;
+			/* construct the name with index */
+			snprintf(name, MAX_NAME_LEN, "%s%d",record->name,index);
+			value = ShowOption(record, index,FRONTEND_ONLY_ERROR);
+			if (value == NULL)
+				return -1;
+			send_config_var_detail_row(frontend, backend, (const char*)name, value, record->description);
+			pfree((void*)value);
+			num_rows++;
+		}
+	}
+
+	return num_rows;
+}
+
+static void send_row_description_for_detail_view(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	static char *field_names[] = {"item", "value", "description"};
+	send_row_description(frontend, backend, 3, field_names);
+}
+#endif /* not defined POOL_FRONTEND*/

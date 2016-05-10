@@ -181,7 +181,7 @@ static int	frontend_error_recursion_depth = 0;	/* to detect recursion in deliver
 
 static char *expand_fmt_string(const char *fmt, ErrorData *edata);
 static const char *useful_strerror(int errnum);
-static const char *error_severity(int elevel);
+static const char *error_severity(int elevel, bool for_frontend);
 static const char *process_name(void);
 static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
@@ -231,7 +231,7 @@ errstart(int elevel, const char *filename, int lineno,
 		elevel = ERROR;
 	}
 
-	if (elevel >= ERROR)
+	if (elevel >= ERROR && elevel != FRONTEND_ONLY_ERROR)
 	{
 		/*
 		 * Check reasons for treating ERROR as FATAL:
@@ -284,7 +284,7 @@ errstart(int elevel, const char *filename, int lineno,
 		 * during authentication.
 		 */
         output_to_client = (elevel >= pool_config->client_min_messages ||
-								elevel == INFO);
+								elevel == INFO || elevel == FRONTEND_ONLY_ERROR);
 	}
 
 	/* Skip processing effort if non-error message will not be output */
@@ -295,7 +295,7 @@ errstart(int elevel, const char *filename, int lineno,
 	 * Okay, crank up a stack entry to store the info in.
 	 */
 
-	if (recursion_depth++ > 0 && elevel >= ERROR)
+	if (recursion_depth++ > 0 && elevel >= ERROR && elevel != FRONTEND_ONLY_ERROR)
 	{
 		/*
 		 * Ooops, error during error processing.  Clear ErrorContext as
@@ -351,7 +351,7 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->lineno = lineno;
 	edata->funcname = funcname;
 	/* the default text domain is the backend's */
-	edata->domain = domain ? domain : PG_TEXTDOMAIN("postgres");
+	edata->domain = domain ? domain : PG_TEXTDOMAIN("pgpool");
 
     edata->saved_errno = errno;
 
@@ -492,7 +492,7 @@ errfinish(int dummy,...)
 		proc_exit(retcode);
 	}
 
-	if (elevel >= PANIC)
+	if (elevel >= PANIC && elevel != FRONTEND_ONLY_ERROR)
 	{
 		/*
 		 * Serious crash time. Postmaster will observe SIGABRT process exit
@@ -1802,7 +1802,7 @@ send_message_to_frontend(ErrorData *edata)
 		pool_send_to_frontend((edata->elevel < ERROR) ? "N" : "E", 1, false);
 
 		/* error level */
-		thislen = snprintf(msgbuf, MAXMSGBUF, "S%s", error_severity(edata->elevel));
+		thislen = snprintf(msgbuf, MAXMSGBUF, "S%s", error_severity(edata->elevel,true));
 		thislen = Min(thislen, MAXMSGBUF);
 		memcpy(data +len, msgbuf, thislen+1);
 		len += thislen + 1;
@@ -1859,6 +1859,21 @@ send_message_to_frontend(ErrorData *edata)
 		pool_send_to_frontend((char*)&len, sizeof(len), false);
 		pool_send_to_frontend(data, sendlen, true);
 
+	}
+	if (edata->elevel == FRONTEND_ONLY_ERROR)
+	{
+		/* send the ready for query to complete
+		 * the frontend error cycle
+		 */
+		/* ready for query */
+		pool_send_to_frontend((char*)"Z", 1, true);
+
+		if (protoVersion == PROTO_MAJOR_V3)
+		{
+			int len = htonl(5);
+			pool_send_to_frontend((char*)&len, sizeof(len), false);
+			pool_send_to_frontend((char*)"I", 1, true);
+		}
 	}
 
 	if (processType == PT_CHILD)
@@ -2067,7 +2082,7 @@ send_message_to_server_log(ErrorData *edata)
 	initStringInfo(&buf);
 
 	log_line_prefix(&buf, pool_config->log_line_prefix, edata);
-	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
+	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel,false));
 
 
 	if (edata->message)
@@ -2165,6 +2180,7 @@ send_message_to_server_log(ErrorData *edata)
 				syslog_level = LOG_NOTICE;
 				break;
 			case ERROR:
+			case FRONTEND_ONLY_ERROR:
 				syslog_level = LOG_WARNING;
 				break;
 			case FATAL:
@@ -2277,7 +2293,7 @@ useful_strerror(int errnum)
  * error_severity --- get localized string representing elevel
  */
 static const char *
-error_severity(int elevel)
+error_severity(int elevel, bool for_frontend)
 {
 	const char *prefix;
 
@@ -2302,6 +2318,12 @@ error_severity(int elevel)
 			break;
 		case WARNING:
 			prefix = _("WARNING");
+			break;
+		case FRONTEND_ONLY_ERROR:
+			if (for_frontend == false)
+				prefix = _("FRONTEND_ERROR");
+			else
+				prefix = _("ERROR");
 			break;
 		case ERROR:
 			prefix = _("ERROR");
@@ -2439,13 +2461,13 @@ write_stderr(const char *fmt,...)
  *
  * We use this for tests that should consider LOG to sort out-of-order,
  * between ERROR and FATAL.  Generally this is the right thing for testing
- * whether a message should go to the postmaster log, whereas a simple >=
+ * whether a message should go to the pgpool log, whereas a simple >=
  * test is correct for testing whether the message should go to the client.
  */
 static bool
 is_log_level_output(int elevel, int log_min_level)
 {
-	if (elevel == LOG || elevel == COMMERROR)
+	if (elevel == LOG || elevel == COMMERROR || elevel == FRONTEND_ONLY_ERROR)
 	{
 		if (log_min_level == LOG || log_min_level <= ERROR)
 			return true;

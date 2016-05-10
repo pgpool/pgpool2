@@ -41,4 +41,6 @@ extern void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 extern void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 
+extern void send_config_var_detail_row(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* name, const char* value, const char* description);
+extern void send_config_var_value_only_row(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* value);
 #endif

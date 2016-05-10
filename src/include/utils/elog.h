@@ -121,7 +121,12 @@ typedef enum
 /* pgpool-II extension. This is same as ERROR but sets the
  * do not cache connection flag before transforming to ERROR.
  */
-#define FRONTEND_ERROR	23			/* transformed to ERROR at errstart */
+#define FRONTEND_ERROR			23			/* transformed to ERROR at errstart */
+#define FRONTEND_ONLY_ERROR		24			/* this is treated as LOG message internally
+											 * for pgpool-II but forwarded to frontend clients
+											 * just like normal errors followed by readyForQuery
+											 * message
+											 */
 
  /* #define DEBUG DEBUG1 */	/* Backward compatibility with pre-7.3 */
 #define POOL_EXIT_NO_RESTART	0	/* child exiting with this error will not be
@@ -179,7 +184,7 @@ typedef enum
 	do { \
 		if (errstart(elevel, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain)) \
 			errfinish rest; \
-		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
+		if (__builtin_constant_p(elevel) && (elevel) >= ERROR && (elevel) != FRONTEND_ONLY_ERROR) \
 			pg_unreachable(); \
 	} while(0)
 #else							/* !HAVE__BUILTIN_CONSTANT_P */
@@ -188,7 +193,7 @@ typedef enum
 		const int elevel_ = (elevel); \
 		if (errstart(elevel_, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain)) \
 			errfinish rest; \
-		if (elevel_ >= ERROR) \
+		if (elevel_ >= ERROR  && (elevel) != FRONTEND_ONLY_ERROR) \
 			pg_unreachable(); \
 	} while(0)
 #endif   /* HAVE__BUILTIN_CONSTANT_P */
@@ -310,7 +315,7 @@ extern int	getinternalerrposition(void);
 	do { \
 		elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
 		elog_finish(elevel, __VA_ARGS__); \
-		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
+		if (__builtin_constant_p(elevel) && (elevel) >= ERROR  && (elevel) != FRONTEND_ONLY_ERROR) \
 			pg_unreachable(); \
 	} while(0)
 #else							/* !HAVE__BUILTIN_CONSTANT_P */
@@ -320,7 +325,7 @@ extern int	getinternalerrposition(void);
 		elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
 		elevel_ = (elevel); \
 		elog_finish(elevel_, __VA_ARGS__); \
-		if (elevel_ >= ERROR) \
+		if (elevel_ >= ERROR  && (elevel) != FRONTEND_ONLY_ERROR) \
 			pg_unreachable(); \
 	} while(0)
 #endif   /* HAVE__BUILTIN_CONSTANT_P */

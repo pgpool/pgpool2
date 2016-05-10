@@ -58,7 +58,8 @@ typedef enum
 	CONFIG_VAR_TYPE_ENUM,
 	CONFIG_VAR_TYPE_INT_ARRAY,
 	CONFIG_VAR_TYPE_DOUBLE_ARRAY,
-	CONFIG_VAR_TYPE_STRING_ARRAY
+	CONFIG_VAR_TYPE_STRING_ARRAY,
+	CONFIG_VAR_TYPE_GROUP
 }config_type;
 
 /*
@@ -82,11 +83,19 @@ typedef enum
 	PGC_S_SESSION				/* SET command */
 } GucSource;
 
+
+/* Config variable flags bit values */
+#define VAR_PART_OF_GROUP			0x0001
+#define VAR_HIDDEN_VALUE			0x0002	/* for password type variables */
+#define VAR_HIDDEN_IN_SHOW_ALL		0x0004	/* for password type variables */
+
 /*
  * Signatures for per-variable check/assign/show  functions
  */
 
-typedef const char *(*GucShowHook) (void);
+typedef const char *(*VarShowHook) (void);
+typedef const char *(*IndexedVarShowHook) (int index);
+typedef bool (*IndexedVarEmptySlotCheck) (int index);
 
 typedef bool (*ConfigBoolAssignFunc) (ConfigContext scontext, bool newval, int elevel);
 typedef bool (*ConfigEnumAssignFunc) (ConfigContext scontext, int newval, int elevel);
@@ -104,22 +113,23 @@ typedef bool (*ConfigIntArrayAssignFunc) (ConfigContext scontext, int newval, in
 typedef bool (*ConfigDoubleAssignFunc) (ConfigContext scontext, double newval, int elevel);
 typedef bool (*ConfigDoubleArrayAssignFunc) (ConfigContext scontext, double newval, int index, int elevel);
 
-typedef bool (*ConfigStringProcessingFunc) (char* newval,int error_level);
+typedef bool (*ConfigStringProcessingFunc) (char* newval,int elevel);
 
 
 struct config_generic
 {
 	/* constant fields, must be set correctly in initial value: */
-	const char *name;			/* name of variable - MUST BE FIRST */
-	ConfigContext	context;	/* context required to set the variable */
-	config_group group;			/* to help organize variables by function */
-	const char *description;	/* short desc. of this variable's purpose */
-	config_type vartype;		/* type of variable (set only at startup) */
-	bool		dynamic_array_var;	/* true if the variable name contains index postfix */
-	int			status;			/* status bits, see below */
-	GucSource	source;			/* source of the current actual value */
-	ConfigContext	scontext;	/* context that set the current value */
-	int			sourceline;		/* line in source file */
+	const char		*name;			/* name of variable - MUST BE FIRST */
+	ConfigContext	context;		/* context required to set the variable */
+	config_group	group;			/* to help organize variables by function */
+	const char		*description;	/* short desc. of this variable's purpose */
+	config_type		vartype;		/* type of variable (set only at startup) */
+	bool			dynamic_array_var;	/* true if the variable name contains index postfix */
+	int				flags;			/* flags */
+	int				status;			/* status bits, see below */
+	GucSource		source;			/* source of the current actual value */
+	ConfigContext	scontext;		/* context that set the current value */
+	int				sourceline;		/* line in source file */
 };
 
 /* GUC records for specific variable types */
@@ -132,7 +142,7 @@ struct config_bool
 	bool		boot_val;
 	ConfigBoolAssignFunc assign_func;
 	ConfigBoolAssignFunc check_func;
-	GucShowHook show_hook;
+	VarShowHook show_hook;
 	bool		reset_val;
 };
 
@@ -146,7 +156,7 @@ struct config_int
 	int			max;
 	ConfigIntAssignFunc assign_func;
 	ConfigIntAssignFunc check_func;
-	GucShowHook show_hook;
+	VarShowHook show_hook;
 	int		reset_val;
 };
 
@@ -161,7 +171,8 @@ struct config_int_array
 	int			max_elements;
 	ConfigIntArrayAssignFunc assign_func;
 	ConfigIntArrayAssignFunc check_func;
-	GucShowHook show_hook;
+	IndexedVarShowHook show_hook;
+	IndexedVarEmptySlotCheck	empty_slot_check_func;
 	int			*reset_vals; /* Array of reset values */
 };
 
@@ -176,7 +187,7 @@ struct config_double
 	double		max;
 	ConfigDoubleAssignFunc assign_func;
 	ConfigDoubleAssignFunc check_func;
-	GucShowHook show_hook;
+	VarShowHook show_hook;
 	double		reset_val;
 };
 
@@ -191,7 +202,8 @@ struct config_double_array
 	int			max_elements;
 	ConfigDoubleArrayAssignFunc assign_func;
 	ConfigDoubleArrayAssignFunc check_func;
-	GucShowHook show_hook;
+	IndexedVarShowHook show_hook;
+	IndexedVarEmptySlotCheck	empty_slot_check_func;
 	double		*reset_vals;
 };
 
@@ -205,7 +217,7 @@ struct config_long
 	int64		max;
 	ConfigInt64AssignFunc assign_func;
 	ConfigInt64AssignFunc check_func;
-	GucShowHook show_hook;
+	VarShowHook show_hook;
 	int64		reset_val;
 };
 
@@ -218,7 +230,7 @@ struct config_string
 	ConfigStringAssignFunc assign_func;
 	ConfigStringAssignFunc check_func;
 	ConfigStringProcessingFunc process_func;
-	GucShowHook show_hook;
+	VarShowHook show_hook;
 	char*		reset_val;
 };
 
@@ -231,7 +243,8 @@ struct config_string_array
 	int			max_elements;
 	ConfigStringArrayAssignFunc assign_func;
 	ConfigStringArrayAssignFunc check_func;
-	GucShowHook show_hook;
+	IndexedVarShowHook show_hook;
+	IndexedVarEmptySlotCheck	empty_slot_check_func;
 	char		**reset_vals;
 };
 
@@ -246,10 +259,10 @@ struct config_string_list
 	bool		compute_regex;
 	ConfigStringListAssignFunc assign_func;
 	ConfigStringListAssignFunc check_func;
-	GucShowHook show_hook;
+	VarShowHook show_hook;
 	char		*reset_val;
+	char		*current_val;
 };
-
 
 struct config_enum
 {
@@ -260,8 +273,15 @@ struct config_enum
 	const struct config_enum_entry *options;
 	ConfigEnumAssignFunc assign_func;
 	ConfigEnumAssignFunc check_func;
-	GucShowHook show_hook;
+	VarShowHook show_hook;
 	int		reset_val;
+};
+
+struct config_grouped_array_var
+{
+	struct config_generic gen;
+	int var_count;
+	struct config_generic **var_list;
 };
 
 extern void InitializeConfigOptions(void);
@@ -271,5 +291,11 @@ extern bool set_one_config_option(const char *name, const char *value,
 extern bool set_config_options(ConfigVariable *head_p,
 							   ConfigContext context, GucSource source, int elevel);
 extern bool assign_variable_to_int_array_config_var(const char* name, int** variable);
+
+
+#ifndef POOL_PRIVATE
+extern bool report_config_variable(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* var_name);
+extern bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+#endif
 
 #endif /* POOL_CONFIG_VARIABLES_H */

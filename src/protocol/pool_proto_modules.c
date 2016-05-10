@@ -59,6 +59,7 @@
 #include "utils/pool_signal.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
+#include "pool_config_variables.h"
 
 char *copy_table = NULL;  /* copy table name */
 char *copy_schema = NULL;  /* copy table name */
@@ -257,6 +258,18 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 * if true, set copy_* variable
 		 */
 		check_copy_from_stdin(node);
+
+		if (IsA(node, PgpoolVariableShowStmt))
+		{
+			VariableShowStmt *vnode = (VariableShowStmt *)node;
+
+			report_config_variable(frontend, backend, vnode->name);
+
+			pool_ps_idle_display(backend);
+			pool_query_context_destroy(query_context);
+			pool_set_skip_reading_from_backends();
+			return POOL_CONTINUE;
+		}
 
 		/* status reporting? */
 		if (IsA(node, VariableShowStmt))
