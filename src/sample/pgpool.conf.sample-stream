@@ -112,13 +112,13 @@ ssl = off
 # POOLS
 #------------------------------------------------------------------------------
 
-# - Pool size -
+# - Concurrent session and pool size -
 
 num_init_children = 32
-                                   # Number of pools
+                                   # Number of concurrent sessions allowed
                                    # (change requires restart)
 max_pool = 4
-                                   # Number of connections per pool
+                                   # Number of connection pool caches per connection
                                    # (change requires restart)
 
 # - Life time -
