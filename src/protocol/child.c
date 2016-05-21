@@ -54,6 +54,7 @@
 #include "context/pool_process_context.h"
 #include "context/pool_session_context.h"
 #include "pool_config.h"
+#include "pool_config_variables.h"
 #include "utils/pool_ip.h"
 #include "utils/pool_stream.h"
 #include "utils/elog.h"
@@ -480,6 +481,8 @@ backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION_POOL* volat
             pool_discard_cp(sp->user, sp->database, sp->major);
     }
 
+	/* reset the config parameters */
+	reset_all_variables(NULL,NULL);
     return cache_connection;
 }
 

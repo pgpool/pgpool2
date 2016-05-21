@@ -40,6 +40,8 @@ static bool config_post_processor(ConfigContext context, int elevel);
 static void sort_config_vars(void);
 static bool setConfigOption(const char *name, const char *value,
 							ConfigContext context, GucSource source, int elevel);
+static bool setConfigOptionVar(struct config_generic *record, const char *name, int index_val,
+				const char *value, ConfigContext context, GucSource source, int elevel);
 
 static char *ShowOption(struct config_generic * record, int index, int elevel);
 static int get_max_elements_for_config_record(struct config_generic* record);
@@ -308,7 +310,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"log_statement", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"log_statement", CFGCXT_SESSION, LOGING_CONFIG,
 			"Logs all statements in the pgpool logs.",
 			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
@@ -318,7 +320,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"log_per_node_statement", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"log_per_node_statement", CFGCXT_SESSION, LOGING_CONFIG,
 			"Logs per node detailed SQL statements.",
 			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
@@ -358,7 +360,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"check_temp_table", CFGCXT_RELOAD, GENERAL_CONFIG,
+		{"check_temp_table", CFGCXT_SESSION, GENERAL_CONFIG,
 			"Enables temporary table check.",
 			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
@@ -368,7 +370,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	
 	{
-		{"check_unlogged_table", CFGCXT_RELOAD, GENERAL_CONFIG,
+		{"check_unlogged_table", CFGCXT_SESSION, GENERAL_CONFIG,
 			"Enables unlogged table check.",
 			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
@@ -398,7 +400,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"allow_sql_comments", CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
+		{"allow_sql_comments", CFGCXT_SESSION, LOAD_BALANCE_CONFIG,
 			"Ignore SQL comments, while judging if load balance or query cache is possible.",
 			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
@@ -1256,7 +1258,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"child_life_time", CFGCXT_SESSION, CONNECTION_POOL_CONFIG,
+		{"child_life_time", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"pgpool-II child process life time in seconds.",
 			CONFIG_VAR_TYPE_INT,false, 0
 		},
@@ -1278,7 +1280,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"connection_life_time", CFGCXT_SESSION, CONNECTION_POOL_CONFIG,
+		{"connection_life_time", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"Cached connections expiration time in seconds.",
 			CONFIG_VAR_TYPE_INT,false, 0
 		},
@@ -1289,7 +1291,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"child_max_connections", CFGCXT_SESSION, CONNECTION_POOL_CONFIG,
+		{"child_max_connections", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"A pgpool-II child process will be terminated after this many connections from clients.",
 			CONFIG_VAR_TYPE_INT,false, 0
 		},
@@ -1300,7 +1302,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"authentication_timeout", CFGCXT_SESSION, CONNECTION_CONFIG,
+		{"authentication_timeout", CFGCXT_INIT, CONNECTION_CONFIG,
 			"Time out value in seconds for client authentication.",
 			CONFIG_VAR_TYPE_INT,false, 0
 		},
@@ -1399,7 +1401,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 	
 	{
-		{"client_idle_limit_in_recovery", CFGCXT_RELOAD, RECOVERY_CONFIG,
+		{"client_idle_limit_in_recovery", CFGCXT_SESSION, RECOVERY_CONFIG,
 			"Time limit is seconds for the child connection, before it is terminated during the 2nd stage recovery.",
 			CONFIG_VAR_TYPE_INT,false, 0
 		},
@@ -1583,7 +1585,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"log_error_verbosity", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"log_error_verbosity", CFGCXT_SESSION, LOGING_CONFIG,
 			"How much details about error should be emitted.",
 			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
@@ -1594,7 +1596,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"client_min_messages", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"client_min_messages", CFGCXT_SESSION, LOGING_CONFIG,
 			"Which messages should be sent to client.",
 			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
@@ -1605,7 +1607,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"log_min_messages", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"log_min_messages", CFGCXT_SESSION, LOGING_CONFIG,
 			"Which messages should be emitted to server log.",
 			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
@@ -2355,24 +2357,51 @@ bool set_one_config_option(const char *name, const char *value,
 	return false;
 }
 
-
 static bool
 setConfigOption(const char *name, const char *value,
-				  ConfigContext context, GucSource source, int elevel)
+				ConfigContext context, GucSource source, int elevel)
 {
 	struct config_generic *record;
 	int		index_val = -1;
 
 	ereport(DEBUG2,
-		(errmsg("set_config_option \"%s\" = \"%s\"", name,value)));
+			(errmsg("set_config_option \"%s\" = \"%s\"", name,value)));
+	
 	record = find_option(name, elevel);
+	
 	if (record == NULL)
 	{
-		ereport(WARNING,
+		/* we emit only INFO message when setting the option from
+		 * configuration file.
+		 * As the conf file may still contain some configuration parameters only exist
+		 * in older version and does not exist anymore
+		 */
+		ereport(source == PGC_S_FILE?INFO:elevel,
 				(errmsg("unrecognized configuration parameter \"%s\"", name)));
 		return false;
 	}
+	if (record->dynamic_array_var)
+	{
+		if (get_index_in_var_name(record, name, &index_val, elevel) == false)
+			return false;
+		
+		if (index_val < 0)
+		{
+			/* index is not provided */
+			ereport(elevel,
+					(errmsg("parameter \"%s\" expects the index value",
+							name)));
+			return false;
+		}
+	}
 
+	return setConfigOptionVar(record, name, index_val, value, context, source, elevel);
+}
+
+static bool
+setConfigOptionVar(struct config_generic *record, const char* name, int index_val, const char *value,
+				  ConfigContext context, GucSource source, int elevel)
+{
 	/*
 	 * Check if the option can be set at this time. See guc.h for the precise
 	 * rules.
@@ -2422,7 +2451,7 @@ setConfigOption(const char *name, const char *value,
 		case CFGCXT_RELOAD:
 			if (context > CFGCXT_RELOAD)
 			{
-				ereport(WARNING,
+				ereport(elevel,
 						(errmsg("invalid Context, value for parameter \"%s\" cannot be changed",
 								name)));
 				return false;
@@ -2451,14 +2480,8 @@ setConfigOption(const char *name, const char *value,
 			break;
 	}
 
-	/*
-	 * Evaluate value and set variable.
-	 */
 	if (record->dynamic_array_var)
 	{
-		if (get_index_in_var_name(record, name, &index_val, elevel) == false)
-			return false;
-		
 		if (index_val < 0)
 		{
 			/* index is not provided */
@@ -2469,6 +2492,9 @@ setConfigOption(const char *name, const char *value,
 		}
 	}
 
+	/*
+	 * Evaluate value and set variable.
+	 */
 	switch (record->vartype)
 	{
 		case CONFIG_VAR_TYPE_GROUP:
@@ -2929,7 +2955,7 @@ setConfigOption(const char *name, const char *value,
 				newval = conf->reset_val;
 			}
 			
-			if (!config_enum_lookup_by_name(conf, value, &newval))
+			if (value && !config_enum_lookup_by_name(conf, value, &newval))
 			{
 
 				char	   *hintmsg = NULL;
@@ -3833,6 +3859,59 @@ static int get_max_elements_for_config_record(struct config_generic* record)
 
 #ifndef POOL_PRIVATE
 
+bool set_config_option_for_session(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char *name, const char *value)
+{
+	if (set_one_config_option(name, value, CFGCXT_SESSION, PGC_S_SESSION, FRONTEND_ONLY_ERROR) == true)
+	{
+		send_complete_and_ready(frontend, backend, "SET", -1);
+		return true;
+	}
+	return false;
+}
+
+bool reset_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	int i;
+	int elevel = (frontend == NULL)?FATAL:FRONTEND_ONLY_ERROR;
+
+	ereport(DEBUG2,
+		(errmsg("RESET ALL CONFIG VARIABLES")));
+
+	for (i = 0; i < num_all_parameters; ++i)
+	{
+		struct config_generic* record = all_parameters[i];
+		/* do nothing if variable is not changed in session */
+		if (record->scontext != CFGCXT_SESSION)
+			continue;
+		/* Don't reset if special exclusion from RESET ALL */
+		if (record->flags & VAR_NO_RESET_ALL)
+			continue;
+
+		
+		if (record->dynamic_array_var)
+		{
+			int max_elements = get_max_elements_for_config_record(record);
+			int index;
+			for (index = 0; index < max_elements; index++)
+			{
+				if (value_slot_for_config_record_is_empty(record,index))
+					continue;
+
+				setConfigOptionVar(record, record->name, index, NULL,
+								   CFGCXT_SESSION, PGC_S_FILE, elevel);
+			}
+		}
+		else
+		{
+			setConfigOptionVar(record, record->name, -1, NULL,
+							   CFGCXT_SESSION, PGC_S_FILE, elevel);
+		}
+	}
+	if (frontend)
+		send_complete_and_ready(frontend, backend, "RESET", -1);
+	return true;
+}
+
 bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	int i;
@@ -3880,7 +3959,7 @@ bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 			num_rows++;
 		}
 	}
-	send_complete_and_ready(frontend, backend, num_rows);
+	send_complete_and_ready(frontend, backend, "SELECT", num_rows);
 	return true;
 }
 
@@ -3909,7 +3988,7 @@ bool report_config_variable(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				num_rows = send_grouped_type_variable_to_frontend(&ConfigureVarGroups[i], frontend, backend);
 				if (num_rows < 0)
 					return false;
-				send_complete_and_ready(frontend, backend, num_rows);
+				send_complete_and_ready(frontend, backend, "SELECT", num_rows);
 				return true;
 			}
 		}
@@ -3950,7 +4029,7 @@ bool report_config_variable(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		pfree((void*)value);
 	}
 
-	send_complete_and_ready(frontend, backend, num_rows);
+	send_complete_and_ready(frontend, backend, "SELECT" ,num_rows);
 
 	return true;
 }

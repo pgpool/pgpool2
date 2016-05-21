@@ -87,7 +87,8 @@ typedef enum
 /* Config variable flags bit values */
 #define VAR_PART_OF_GROUP			0x0001
 #define VAR_HIDDEN_VALUE			0x0002	/* for password type variables */
-#define VAR_HIDDEN_IN_SHOW_ALL		0x0004	/* for password type variables */
+#define VAR_HIDDEN_IN_SHOW_ALL		0x0004	/* for variables hidden in show all*/
+#define VAR_NO_RESET_ALL			0x0008	/* for variables not to be reset with reset all*/
 
 /*
  * Signatures for per-variable check/assign/show  functions
@@ -296,6 +297,8 @@ extern bool assign_variable_to_int_array_config_var(const char* name, int** vari
 #ifndef POOL_PRIVATE
 extern bool report_config_variable(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* var_name);
 extern bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+extern bool set_config_option_for_session(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char *name, const char *value);
+bool reset_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 #endif
 
 #endif /* POOL_CONFIG_VARIABLES_H */

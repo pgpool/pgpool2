@@ -31,6 +31,7 @@ Last modified: Mon Aug 24 18:19:17 JST 2015
         <li><a href="#memqcache">In memory query Cache</a></li>
         <li><a href="#start">Starting/Stopping pgpool-II</a></li>
         <li><a href="#reload">Reloading pgpool-II configuration files</a></li>
+		<li><a href="#pgpool-show-commands">PGPOOL SHOW commands</a></li>
         <li><a href="#show-commands">SHOW commands</a></li>
         <li><a href="#online-recovery">Online recovery</a></li>
         <li><a href="#backup">Backup</a></li>
@@ -716,8 +717,10 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     the feature is turned off. this value.
     This parameter is ignored in the second stage of online recovery.
     </p>
-    <p>
-    You need to reload pgpool.conf if you change client_idle_limit.</p>
+	<p>
+	You need to reload pgpool.conf if you change this value. And you can also use PGPOOL SET command
+	to alter the value of this parameter for a current session.
+	</p>
     </dd>
 
 <dt><a name="ENABLE_POOL_HBA"></a>enable_pool_hba</dt>
@@ -824,9 +827,10 @@ local0.*    /var/log/pgpool.log
     Valid values are TERSE, DEFAULT, and VERBOSE, each adding more fields to displayed messages.
     TERSE excludes the logging of DETAIL, HINT, and CONTEXT error information.
     </p>
-    <p>
-    You need to reload pgpool.conf if you change this value.
-    </p>
+	<p>
+	You need to reload pgpool.conf if you change this value. And you can also use PGPOOL SET command
+	to alter the value of this parameter for a current session.
+	</p>
     </dd>
 
 <dt><a name="LOG_CONNECTIONS"></a>log_connections</dt>
@@ -847,9 +851,10 @@ local0.*    /var/log/pgpool.log
     WARNING and ERROR. Each level includes all the levels that follow it.
     The default is NOTICE.
     </p>
-    <p>
-    You need to reload pgpool.conf if you change this value.
-    </p>
+	<p>
+	You need to reload pgpool.conf if you change this value. And you can also use PGPOOL SET command
+	to alter the value of this parameter for a current session.
+	</p>
     </dd>
 
 <dt><a name="LOG_MIN_MESSAGES"></a>log_min_messages</dt>
@@ -861,8 +866,9 @@ local0.*    /var/log/pgpool.log
     levels that follow it. The default is WARNING.    
     </p>
     <p>
-    You need to reload pgpool.conf if you change this value.
-    </p>
+    You need to reload pgpool.conf if you change this value. And you can also use PGPOOL SET command
+	to alter the value of this parameter for a current session.
+	</p>
     </dd>
 
 <dt><a name="LOG_HOSTNAME"></a>log_hostname</dt>
@@ -883,9 +889,10 @@ local0.*    /var/log/pgpool.log
     log_statement parameter in PostgreSQL. It produces logs even if the
     debug option was not passed to pgpool-II at start up.
     </p>
-    <p>
-    You need to reload pgpool.conf if you change this value.
-    </p>
+	<p>
+	You need to reload pgpool.conf if you change this value. And you can also use PGPOOL SET command
+	to alter the value of this parameter for a current session.
+	</p>
     </dd>
 
 <dt><a name="LOG_PER_NODE_STATEMENT"></a>log_per_node_statement <span class="version">V2.3 -</span></dt>
@@ -894,9 +901,10 @@ local0.*    /var/log/pgpool.log
     except that it prints logs for each DB node separately.
     It can be useful to make sure that replication is working, for example.
     </p>
-    <p>
-    You need to reload pgpool.conf if you change this value.
-    </p>
+	<p>
+	You need to reload pgpool.conf if you change this value. And you can also use PGPOOL SET command
+	to alter the value of this parameter for a current session.
+	</p>
     </dd>
 
 <dt><a name="SYSLOG_FACILITY"></a>syslog_facility <span class="version">V3.1 -</span></dt>
@@ -1220,9 +1228,10 @@ local0.*    /var/log/pgpool.log
 	  If off, SQL comments effectively prevent the judgment
 	  (pre 3.4 behavior).
     </p>
-    <p>
-    You need to reload pgpool.conf if you change this value.
-    </p>
+	<p>
+	You need to reload pgpool.conf if you change this value. And you can also use PGPOOL SET command
+	to alter the value of this parameter for a current session.
+	</p>
     </dd>
 </dl>
 
@@ -1456,6 +1465,10 @@ local0.*    /var/log/pgpool.log
     system never uses temporary tables and you want to save access
     to primary/master, you could turn this off.  Default is on.
     </p>
+	<p>
+	You need to reload pgpool.conf if you change this value. And you can also use PGPOOL SET command
+	to alter the value of this parameter for a current session.
+	</p>
     </dd>
 
 <dt><a name="CHECK_UNLOGGED_TABLE"></a>check_unlogged_table <span class="version">V3.4 -</span></dt>
@@ -1467,6 +1480,10 @@ local0.*    /var/log/pgpool.log
     system never uses unlogged (for example, you are using PostgreSQL 9.0 or before) tables and you want to save access
     to primary/master, you could turn this off.  Default is on.
     </p>
+	<p>
+	You need to reload pgpool.conf if you change this value. And you can also use PGPOOL SET command
+	to alter the value of this parameter for a current session.
+	</p>
     </dd>
 		
 </dl>
@@ -1913,8 +1930,10 @@ end of transaction block
     In this case, you can set client_idle_limit_in_recovery to -1
     so that pgpool-II immediately disconnects such busy clients before entering the second stage.
     </p>
-    <p>
-    You need to reload pgpool.conf if you change client_idle_limit_in_recovery.</p>
+	<p>
+	You need to reload pgpool.conf if you change this value. And you can also use PGPOOL SET command
+	to alter the value of this parameter for a current session.
+	</p>
     </dd>
 
 <dt><a name="LOBJ_LOCK_TABLE"></a>lobj_lock_table <span class="version">V2.2 -</span></dt>
@@ -3166,6 +3185,211 @@ pgpool [-c][-f config_file][-a hba_file][-F pcp_config_file] reload
 <p>
 Please note that some configuration items cannot be changed by
 reloading. New configuration takes effect after a change for new sessions.
+</p>
+
+<p class="top_link"><a href="#Top">back to top</a></p>
+
+<!-- ================================================================================ -->
+
+<h1><a name="pgpool-show-commands"></a>PGPOOL SHOW and SET commands <span class="version">V3.6 -</span></h1>
+
+<h2>PGPOOL SHOW</h2>
+<p>The PGPOOL SHOW command will display the current value of pgpool-II configuration parameters.
+This command is similar to the SHOW command in PostgreSQL with an addition of
+PGPOOL keyword to distinguish it from the PostgreSQL SHOW command.
+</p>
+
+<h3>Syntax</h3>
+<dl>
+	<dt><a name="PGPOOL_SHOW_NAME"></a>PGPOOL SHOW <a>configuration_parameter</a></dt>
+	<dd>
+		<p>
+		Show the current value of one pgpool-II configuration parameter.
+		</p>
+	</dd>
+	<dt><a name="PGPOOL_SHOW_GROUP_NAME"></a>PGPOOL SHOW <a>configuration_parameter_group</a></dt>
+	<dd>
+		<p>
+		Show the current value of all pgpool-II configuration parameter belonging to group_name group.
+		Currently there are three parameter groups.
+		
+		<ul>
+			<li><strong>backend:</strong> configuration group of all backend config parameters </li>
+			<li><strong>other_pgpool:</strong> configuration group of all watchdog node config parameters </li>
+			<li><strong>heartbeat:</strong> configuration group of all watchdog heartbeat node config parameters </li>
+		</ul>
+
+		</p>
+	</dd>
+	<dt><a name="PGPOOL_SHOW_ALL"></a>PGPOOL SHOW ALL</dt>
+	<dd>
+		<p>
+		Show the values of all pgpool-II configuration parameters, with descriptions.
+		</p>
+	</dd>
+</dl>
+<p>
+<strong>Examples.</strong>
+</p>
+<p>
+Show the current setting of the parameter port.
+</p>
+<pre>
+PGPOOL SHOW port;
+port
+------
+9999
+(1 row)
+</pre>
+</p>
+
+<p>
+Show the current setting of the parameter black_function_list.
+</p>
+<pre>
+ PGPOOL SHOW black_function_list;
+ black_function_list
+ ---------------------
+ nextval,setval
+ (1 row)
+
+</pre>
+</p>
+
+<p>
+Show the current settings of all the configuration parameters belonging to backend group.
+</p>
+<pre>
+ PGPOOL SHOW backend;
+ item                     |          value          |              description
+ -------------------------+-------------------------+-----------------------------------------------------------
+ backend_hostname0        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+ backend_port0            | 5434                    | port number of PostgreSQL backend.
+ backend_weight0          | 0                       | load balance weight of backend.
+ backend_data_directory0  | /var/lib/pgsql/data     | data directory of the backend.
+ backend_flag0            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+ backend_hostname1        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+ backend_port1            | 5432                    | port number of PostgreSQL backend.
+ backend_weight1          | 1                       | load balance weight of backend.
+ backend_data_directory1  | /home/work/installed/pg | data directory of the backend.
+ backend_flag1            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+ (10 rows)
+ 
+</pre>
+</p>
+
+<p>
+Show all settings.
+</p>
+<pre>
+ PGPOOL SHOW ALL;
+ item                     |          value          |              description
+ -------------------------+-------------------------+-----------------------------------------------------------
+ backend_hostname0        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+ backend_port0            | 5434                    | port number of PostgreSQL backend.
+ backend_weight0          | 0                       | load balance weight of backend.
+ backend_data_directory0  | /var/lib/pgsql/data     | data directory of the backend.
+ backend_flag0            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+ backend_hostname1        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+ backend_port1            | 5432                    | port number of PostgreSQL backend.
+ backend_weight1          | 1                       | load balance weight of backend.
+ backend_data_directory1  | /home/work/installed/pg | data directory of the backend.
+ backend_flag1            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+ other_pgpool_hostname0   | localhost               | Hostname of other pgpool node for watchdog connection.
+ .
+ .
+ .
+ ssl                      | off                     | Enables SSL support for frontend and backend connections
+ (138 rows)
+
+</pre>
+</p>
+
+<h2>PGPOOL SET</h2>
+<p>
+The PGPOOL SET command changes the value of pgpool-II configuration parameters for the current session.
+This command is similar to the SET command in PostgreSQL with an addition of
+PGPOOL keyword to distinguish it from the PostgreSQL SET command.
+</p>
+
+<h3>Syntax</h3>
+<dl>
+	<dt><a name="PGPOOL_SET_NAME"></a>PGPOOL SET <a>configuration_parameter</a> { TO | = } { value | 'value' | DEFAULT }</dt>
+	<dd>
+		<p>
+		Sets the current value of the pgpool-II configuration parameter to new or DEFAULT value for current session.
+		</p>
+	</dd>
+</dl>
+
+<p>
+<strong>Examples.</strong>
+</p>
+<p>
+Change the value of client_idle_limit parameter.
+</p>
+<pre>
+ PGPOOL SET client_idle_limit = 350;
+</pre>
+</p>
+
+<p>
+Reset the value of client_idle_limit parameter to default.
+</p>
+<pre>
+ PGPOOL SET client_idle_limit TO DEFAULT;
+</pre>
+</p>
+
+<p>
+Change the value of log_min_messages parameter.
+</p>
+<pre>
+ PGPOOL SET log_min_messages TO INFO;
+</pre>
+</p>
+
+<h2>PGPOOL RESET</h2>
+<p>
+The PGPOOL RESET command restores the value of pgpool-II configuration parameters to the default value.
+The default value is defined as the value that the parameter would have had, if no PGPOOL SET had ever been issued for it in the current session.
+This command is similar to the RESET command in PostgreSQL with an addition of
+PGPOOL keyword to distinguish it from the PostgreSQL SET command.
+</p>
+
+<h3>Syntax</h3>
+<dl>
+	<dt><a name="PGPOOL_RESET_NAME"></a>PGPOOL RESET <a>configuration_parameter</a></dt>
+	<dd>
+		<p>
+		Reset the value of one pgpool-II configuration parameter.
+		</p>
+	</dd>
+	<dt><a name="PGPOOL_RESET_ALL"></a>PGPOOL RESET ALL</dt>
+	<dd>
+		<p>
+		Reset the values of all pgpool-II configuration parameters.
+		</p>
+	</dd>
+</dl>
+
+<p>
+<strong>Examples.</strong>
+</p>
+<p>
+Reset the value of client_idle_limit parameter.
+</p>
+<pre>
+ PGPOOL RESET client_idle_limit;
+</pre>
+</p>
+
+<p>
+Reset the value of all parameter to default.
+</p>
+<pre>
+ PGPOOL RESET ALL;
+</pre>
 </p>
 
 <p class="top_link"><a href="#Top">back to top</a></p>

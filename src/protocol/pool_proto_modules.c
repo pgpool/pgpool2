@@ -90,6 +90,9 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 static int* find_victim_nodes(int *ntuples, int nmembers, int master_node, int *number_of_nodes);
 static POOL_STATUS close_standby_transactions(POOL_CONNECTION *frontend,
 											  POOL_CONNECTION_POOL *backend);
+
+static char *
+flatten_set_variable_args(const char *name, List *args);
 /*
  * Process Query('Q') message
  * Query messages include an SQL string.
@@ -264,6 +267,31 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			VariableShowStmt *vnode = (VariableShowStmt *)node;
 
 			report_config_variable(frontend, backend, vnode->name);
+
+			pool_ps_idle_display(backend);
+			pool_query_context_destroy(query_context);
+			pool_set_skip_reading_from_backends();
+			return POOL_CONTINUE;
+		}
+
+		if (IsA(node, PgpoolVariableSetStmt))
+		{
+			VariableSetStmt *vnode = (VariableSetStmt *)node;
+			const char *value = NULL;
+			if (vnode->kind == VAR_SET_VALUE)
+			{
+				value = flatten_set_variable_args("name", vnode->args);
+				printf("%s\n", value);
+			}
+			if (vnode->kind == VAR_RESET_ALL)
+			{
+				printf("reset all\n");
+				reset_all_variables(frontend, backend);
+			}
+			else
+			{
+				set_config_option_for_session(frontend, backend, vnode->name, value);
+			}
 
 			pool_ps_idle_display(backend);
 			pool_query_context_destroy(query_context);
@@ -3169,4 +3197,75 @@ static int* find_victim_nodes(int *ntuples, int nmembers, int master_node, int *
 	}
 
 	return victim_nodes;
+}
+
+
+/*
+ * flatten_set_variable_args
+ *		Given a parsenode List as emitted by the grammar for SET,
+ *		convert to the flat string representation used by GUC.
+ *
+ * We need to be told the name of the variable the args are for, because
+ * the flattening rules vary (ugh).
+ *
+ * The result is NULL if args is NIL (ie, SET ... TO DEFAULT), otherwise
+ * a palloc'd string.
+ */
+static char *
+flatten_set_variable_args(const char *name, List *args)
+{
+	StringInfoData buf;
+	ListCell   *l;
+
+	/* Fast path if just DEFAULT */
+	if (args == NIL)
+		return NULL;
+
+	initStringInfo(&buf);
+
+	/*
+	 * Each list member may be a plain A_Const node, or an A_Const within a
+	 * TypeCast; the latter case is supported only for ConstInterval arguments
+	 * (for SET TIME ZONE).
+	 */
+	foreach(l, args)
+	{
+		Node	   *arg = (Node *) lfirst(l);
+		char	   *val;
+		A_Const    *con;
+
+		if (l != list_head(args))
+			appendStringInfoString(&buf, ", ");
+	
+		if (IsA(arg, TypeCast))
+		{
+			TypeCast   *tc = (TypeCast *) arg;
+			arg = tc->arg;
+		}
+		
+		if (!IsA(arg, A_Const))
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(arg));
+		con = (A_Const *) arg;
+	
+		switch (nodeTag(&con->val))
+		{
+			case T_Integer:
+				appendStringInfo(&buf, "%ld", intVal(&con->val));
+				break;
+			case T_Float:
+				/* represented as a string, so just copy it */
+				appendStringInfoString(&buf, strVal(&con->val));
+				break;
+			case T_String:
+				val = strVal(&con->val);
+				appendStringInfoString(&buf, val);
+				break;
+			default:
+				ereport(ERROR, (errmsg("unrecognized node type: %d",
+					 (int) nodeTag(&con->val))));
+				break;
+		}
+	}
+	
+	return buf.data;
 }

@@ -100,13 +100,22 @@ void send_row_description(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	pool_flush(frontend);
 }
 
-void send_complete_and_ready(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const int num_rows)
+/*
+ * send the command complete and ready for query message
+ * to frontend.
+ * if the num_row is passed with a -ve value it is not included
+ * to the command complete message
+ */
+void send_complete_and_ready(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,const char* message ,const int num_rows)
 {
 	int len;
 	int msg_len;
 	char msg[16];
 
-	msg_len = snprintf(msg, 16, "SELECT %d", num_rows);
+	if (num_rows >= 0)
+		msg_len = snprintf(msg, 16, "%s %d", message,num_rows);
+	else
+		msg_len = snprintf(msg, 16, "%s", message);
 
 	/* if we had more than 16 bytes, including '\0', the string was truncatured
 	 * shouldn't happen though, as it would means more than "SELECT 99999999" */
@@ -1125,7 +1134,7 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		}
 	}
 
-	send_complete_and_ready(frontend, backend, nrows);
+	send_complete_and_ready(frontend, backend,"SELECT", nrows);
 
 	pfree(status);
 }
@@ -1289,7 +1298,7 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		}
 	}
 
-	send_complete_and_ready(frontend, backend, nrows);
+	send_complete_and_ready(frontend, backend, "SELECT", nrows);
 
 	pfree(nodes);
 }
@@ -1490,7 +1499,7 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		pool_write(frontend, connected, len);
 	}
 
-	send_complete_and_ready(frontend, backend, nrows);
+	send_complete_and_ready(frontend, backend, "SELECT", nrows);
 
 	pfree(pools);
 }
@@ -1635,7 +1644,7 @@ void processes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backen
 		}
 	}
 
-	send_complete_and_ready(frontend, backend, nrows);
+	send_complete_and_ready(frontend, backend, "SELECT", nrows);
 
 	pfree(processes);
 }
@@ -1692,7 +1701,7 @@ void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		pool_write(frontend, version[0].version, strlen(version[0].version));
 	}
 
-	send_complete_and_ready(frontend, backend, 1);
+	send_complete_and_ready(frontend, backend, "SELECT",1);
 
 	pfree(version);
 }
@@ -1814,7 +1823,7 @@ void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		}
 	}
 
-	send_complete_and_ready(frontend, backend, 1);
+	send_complete_and_ready(frontend, backend, "SELECT", 1);
 
 	pfree(strp);
 }

@@ -1380,7 +1380,14 @@ schema_stmt:
  *****************************************************************************/
 
 VariableSetStmt:
-			SET set_rest
+			PGPOOL SET generic_set
+				{
+					VariableSetStmt *n = $3;
+					n->type = T_PgpoolVariableSetStmt; /* Hack to keep changes minumum */
+					n->is_local = false;
+					$$ = (Node *) n;
+				}
+			| SET set_rest
 				{
 					VariableSetStmt *n = $2;
 					n->is_local = false;
@@ -1632,6 +1639,12 @@ NonReservedWord_or_Sconst:
 
 VariableResetStmt:
 			RESET reset_rest						{ $$ = (Node *) $2; }
+			| PGPOOL RESET generic_reset
+				{
+					VariableSetStmt *n = $3;
+					n->type = T_PgpoolVariableSetStmt; /* Hack to keep the changes minumum */
+					$$ = (Node *) n;
+				}
 		;
 
 reset_rest:
