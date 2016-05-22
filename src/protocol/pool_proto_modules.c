@@ -1309,13 +1309,13 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
     ereport(DEBUG1,
             (errmsg("Describe: waiting for master completing the query")));
 
-	nowait = (REPLICATION? false: true);
+	nowait = (STREAM? true: false);
 
 	pool_set_query_in_progress();
 	pool_extended_send_and_wait(query_context, "D", len, contents, 1, MASTER_NODE_ID, nowait);
 	pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID, nowait);
 
-	if (!REPLICATION)
+	if (STREAM)
 		pool_unset_query_in_progress();
 
 	return POOL_CONTINUE;
@@ -1383,7 +1383,7 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	pool_set_query_in_progress();
 
-	if (REPLICATION)
+	if (!STREAM)
 	{
 		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, false);
 		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
