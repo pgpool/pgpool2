@@ -190,8 +190,18 @@ static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
 	char *cacert = NULL, *cacert_dir = NULL;
 
 	/* initialize SSL members */
-	cp->ssl_ctx = SSL_CTX_new(TLSv1_method());
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+		cp->ssl_ctx = SSL_CTX_new(TLS_method());
+#else
+		cp->ssl_ctx = SSL_CTX_new(SSLv23_method());
+#endif
+
 	SSL_RETURN_ERROR_IF( (! cp->ssl_ctx), "SSL_CTX_new" );
+	/*
+	 * Disable OpenSSL's moving-write-buffer sanity check, because it
+	 * causes unnecessary failures in nonblocking send cases.
+	 */
+	SSL_CTX_set_mode(cp->ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
 	if ( conntype == ssl_conn_serverclient) {
 		error = SSL_CTX_use_certificate_chain_file(cp->ssl_ctx,
