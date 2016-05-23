@@ -74,32 +74,32 @@ extern void errfinish(int dummy,...);
  * keep these values insync with defines in elog.h
  */
 #define DEBUG5		10			/* Debugging messages, in categories of
-* decreasing detail. */
+								 * decreasing detail. */
 #define DEBUG4		11
 #define DEBUG3		12
 #define DEBUG2		13
 #define DEBUG1		14			/* used by GUC debug_* variables */
 #define LOG			15			/* Server operational messages; sent only to
-* server log by default. */
+								 * server log by default. */
 #define COMMERROR	16			/* Client communication problems; same as LOG
-* for server reporting, but never sent to
-* client. */
+								 * for server reporting, but never sent to
+								 * client. */
 #define INFO		17			/* Messages specifically requested by user (eg
-* VACUUM VERBOSE output); always sent to
-* client regardless of client_min_messages,
-* but by default not sent to server log. */
+								 * VACUUM VERBOSE output); always sent to
+								 * client regardless of client_min_messages,
+								 * but by default not sent to server log. */
 #define NOTICE		18			/* Helpful messages to users about query
-* operation; sent to client and server log by
-* default. */
+								 * operation; sent to client and server log by
+								 * default. */
 #define WARNING		19			/* Warnings.  NOTICE is for expected messages
-* like implicit sequence creation by SERIAL.
-* WARNING is for unexpected messages. */
+								 * like implicit sequence creation by SERIAL.
+								 * WARNING is for unexpected messages. */
 #define ERROR		20			/* user error - abort transaction; return to
-* known state */
-/* Save ERROR value in PGERROR so it can be restored when Win32 includes
- * modify it.  We have to use a constant rather than ERROR because macros
- * are expanded only when referenced outside macros.
- */
+								 * known state */
+								/* Save ERROR value in PGERROR so it can be restored when Win32 includes
+								 * modify it.  We have to use a constant rather than ERROR because macros
+								 * are expanded only when referenced outside macros.
+								 */
 
 #ifdef WIN32
 #define PGERROR		20
@@ -107,12 +107,20 @@ extern void errfinish(int dummy,...);
 #define FATAL		21			/* fatal error - abort process */
 #define PANIC		22			/* take down the other backends with me */
 
+#define FRONTEND_ERROR			23	/* transformed to ERROR at errstart */
+#define FRONTEND_ONLY_ERROR		24	/* this is treated as LOG message internally
+									 * for pgpool-II but forwarded to frontend clients
+									 * just like normal errors followed by readyForQuery
+									 * message
+									 */
+
 #define ereport(elevel, rest)	\
 do { \
-	_fe_error_level = elevel; \
-	if (errstart(elevel, __FILE__, __LINE__, __FUNCTION__)) \
+	const int elevel_ = (elevel); \
+	_fe_error_level = elevel_; \
+	if (errstart(elevel_, __FILE__, __LINE__, __FUNCTION__)) \
 		rest; \
-	if(elevel >= ERROR) \
+	if (elevel_ >= ERROR  && elevel_ != FRONTEND_ONLY_ERROR) \
 		exit(-1); \
 } while(0)
 

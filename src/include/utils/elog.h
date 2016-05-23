@@ -193,7 +193,7 @@ typedef enum
 		const int elevel_ = (elevel); \
 		if (errstart(elevel_, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain)) \
 			errfinish rest; \
-		if (elevel_ >= ERROR  && (elevel) != FRONTEND_ONLY_ERROR) \
+		if (elevel_ >= ERROR  && elevel_ != FRONTEND_ONLY_ERROR) \
 			pg_unreachable(); \
 	} while(0)
 #endif   /* HAVE__BUILTIN_CONSTANT_P */

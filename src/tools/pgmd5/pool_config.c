@@ -1833,9 +1833,8 @@ int pool_init_config(void)
 	memset(pool_config, 0, sizeof(POOL_CONFIG));
 
 #ifndef POOL_PRIVATE
-g_pool_config.backend_desc = palloc0(sizeof(BackendDesc));
-//	g_pool_config.backend_desc = pool_shared_memory_create(sizeof(BackendDesc));
-//	memset(g_pool_config.backend_desc, 0, sizeof(BackendDesc));
+	g_pool_config.backend_desc = pool_shared_memory_create(sizeof(BackendDesc));
+	memset(g_pool_config.backend_desc, 0, sizeof(BackendDesc));
 
 #else
 	g_pool_config.backend_desc = palloc0(sizeof(BackendDesc));
