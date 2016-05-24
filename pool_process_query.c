@@ -2561,9 +2561,17 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 		pool_write(backend, prepared_name, pname_len);
 
 		/*
-		 * Send flush message
+		 * Send sync or flush message. If we are in an explicit transaction,
+		 * sending "sync" is safe because it will not break unnamed
+		 * portal. Also this is desirable because if no user queries are sent
+		 * after do_query(), COMMIT command could cause statement timeout,
+		 * because flush message does not clear the alarm for statement time
+		 * out in the backend which has been set when do_query() issues query.
 		 */
-		pool_write(backend, "H", 1);
+		if (backend->tstate == 'T')		/* are we in an explicit transaction? */
+			pool_write(backend, "S", 1);		/* send "sync" message */
+		else
+			pool_write(backend, "H", 1);		/* send "flush" message */
 		len = htonl(sizeof(len));
 		pool_write_and_flush(backend, &len, sizeof(len));
 	}
@@ -2658,13 +2666,21 @@ POOL_STATUS do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT *
 		{
 			case 'Z':	/* Ready for query */
 				pool_debug("do_query: Ready for query");
+
 				if (!doing_extended)
 					return POOL_CONTINUE;
+
+				/* If "sync" message was issued, 'Z' is expected. */
+				if (doing_extended && backend->tstate == 'T')
+					state |= COMMAND_COMPLETE_RECEIVED;
 				break;
 
 			case 'C':	/* Command Complete */
 				pool_debug("do_query: Command complete received");
-				state |= COMMAND_COMPLETE_RECEIVED;
+
+				/* If "sync" message was issued, 'Z' is expected, else we are done with 'C'. */
+				if (!doing_extended || backend->tstate != 'T')
+					state |= COMMAND_COMPLETE_RECEIVED;
 				/*
 				 * "Comand Complete" implies data row received status
 				 * if the query was SELECT.  If there's no row
