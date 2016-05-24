@@ -433,7 +433,7 @@ void pool_clear_sent_message_list(void)
 static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m)
 {
 	ereport(DEBUG1,
-			(errmsg("called by %s: sent message: address: %x kind: %c name: =%s=", caller, m, m->kind, m->name)));
+			(errmsg("called by %s: sent message: address: %p kind: %c name: =%s=", caller, m, m->kind, m->name)));
 }
 
 /*

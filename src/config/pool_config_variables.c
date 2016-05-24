@@ -2212,6 +2212,13 @@ InitializeConfigOptions(void)
 {
 	int			i;
 
+	/*
+	 * Before we do anything set the log_min_messages to ERROR.
+	 * Reason for doing that is before the log_min_messages gets initialized
+	 * with the actual value the pgpool-II log should not get flooded by DEBUG
+	 * messages
+	 */
+	g_pool_config.log_min_messages = ERROR;
 	build_config_variables();
 
 	/*
@@ -2929,6 +2936,7 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 				else
 					conf->reset_val = NULL;
 			}
+
 			/* save the string value */
 			if (conf->current_val)
 				pfree(conf->current_val);
@@ -3326,7 +3334,7 @@ static bool HBDestinationAssignFunc (ConfigContext context, char* newval, int in
 		g_pool_config.hb_if[index].addr[0] = '\0';
 	else
 		strlcpy(g_pool_config.hb_if[index].addr, newval, WD_MAX_HOST_NAMELEN -1);
-		return true;
+	return true;
 }
 
 /*heartbeat_destination_port*/

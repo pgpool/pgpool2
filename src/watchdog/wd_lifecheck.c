@@ -1022,12 +1022,13 @@ static void wd_initialize_trusted_servers_list(void)
 		WdUpstreamConnectionData* server = palloc(sizeof(WdUpstreamConnectionData));
 		server->pid = 0;
 		server->reachable = false;
-		server->hostname = token;
+		server->hostname = pstrdup(token);
 		g_trusted_server_list = lappend(g_trusted_server_list,server);
 
 		ereport(LOG,
 			(errmsg("watchdog lifecheck trusted server \"%s\" added for the availability check",token)));
 	}
+	pfree(tmpString);
 	MemoryContextSwitchTo(oldCxt);
 }
 
