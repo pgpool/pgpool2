@@ -2118,9 +2118,17 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		pool_write(backend, prepared_name, pname_len);
 
 		/*
-		 * Send flush message
+		 * Send sync or flush message. If we are in an explicit transaction,
+		 * sending "sync" is safe because it will not break unnamed
+		 * portal. Also this is desirable because if no user queries are sent
+		 * after do_query(), COMMIT command could cause statement time out,
+		 * because flush message does not clear the alarm for statement time
+		 * out which has been set when do_query() issues query.
 		 */
-		pool_write(backend, "H", 1);
+		if (backend->tstate == 'T')
+			pool_write(backend, "S", 1);		/* send "sync" message */
+		else
+			pool_write(backend, "H", 1);		/* send "flush" message */
 		len = htonl(sizeof(len));
 		pool_write_and_flush(backend, &len, sizeof(len));
 	}
@@ -2212,12 +2220,19 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 					(errmsg("do_query: received READY FOR QUERY ('%c')",kind)));
 				if (!doing_extended)
 					return;
+
+				/* If "sync" message was issued, 'Z' is expected. */
+				if (doing_extended && backend->tstate == 'T')
+					state |= COMMAND_COMPLETE_RECEIVED;
 				break;
 
 			case 'C':	/* Command Complete */
 				ereport(DEBUG1,
 						(errmsg("do_query: received COMMAND COMPLETE ('%c')",kind)));
-				state |= COMMAND_COMPLETE_RECEIVED;
+
+				/* If "sync" message was issued, 'Z' is expected, else we are done with 'C'. */
+				if (!doing_extended || backend->tstate != 'T')
+					state |= COMMAND_COMPLETE_RECEIVED;
 				/*
 				 * "Comand Complete" implies data row received status
 				 * if the query was SELECT.  If there's no row
@@ -2452,6 +2467,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 				ereport(DEBUG1,
 						(errmsg("do_query: popped data len:%d", poplen)));
 			}
+
 			break;
 		}
 	}
