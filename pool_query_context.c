@@ -296,7 +296,23 @@ int pool_virtual_master_db_node_id(void)
 
 	if (sc->query_context)
 	{
-		return sc->query_context->virtual_master_node_id;
+		int node_id = sc->query_context->virtual_master_node_id;
+
+		if (STREAM)
+		{
+			 /*
+			  * Make sure that virtual_master_node_id is either primary node
+			  * id or load balance node id.  If not, it is likely that
+			  * virtual_master_node_id is not set up yet. Let's use the
+			  * primary node id.
+			  */
+			if (node_id != sc->load_balance_node_id && node_id != PRIMARY_NODE_ID)
+			{
+				node_id = PRIMARY_NODE_ID;
+			}
+		}
+
+		return node_id;
 	}
 
 	/*
