@@ -802,6 +802,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, true);
 
+#ifdef NOT_USED
 		/*
 		 * Send flush message to backend to make sure that we get any response
 		 * from backend.
@@ -809,6 +810,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_write(MASTER(session_context->backend), "H", 1);
 		len = htonl(sizeof(len));
 		pool_write_and_flush(MASTER(session_context->backend), &len, sizeof(len));
+
 		if (MASTER(session_context->backend)->db_node_id != session_context->load_balance_node_id)
 		{
 			POOL_CONNECTION *con;
@@ -818,6 +820,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			len = htonl(sizeof(len));
 			pool_write_and_flush(con, &len, sizeof(len));
 		}
+#endif
 		/*
 		 * Remeber that we send flush or sync message to backend.
 		 */
@@ -829,6 +832,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	return POOL_CONTINUE;
 }
+
 /*
  * process Parse (V3 only)
  */

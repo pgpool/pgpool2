@@ -428,7 +428,7 @@ int pool_write_noerror(POOL_CONNECTION *cp, void *buf, int len)
 		c = ((char *)buf)[0];
 
 		ereport(DEBUG1,
-				(errmsg("pool_write: to backend: kind:%c", c)));
+				(errmsg("pool_write: to backend: %d kind:%c", cp->db_node_id, c)));
 	}
     
 	while (len > 0)
