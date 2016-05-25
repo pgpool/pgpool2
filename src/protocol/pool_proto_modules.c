@@ -761,6 +761,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, true);
 
+#ifdef NOT_USED
 		/*
 		 * Send flush message to backend to make sure that we get any response
 		 * from backend.
@@ -768,6 +769,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_write(MASTER(session_context->backend), "H", 1);
 		len = htonl(sizeof(len));
 		pool_write_and_flush(MASTER(session_context->backend), &len, sizeof(len));
+
 		if (MASTER(session_context->backend)->db_node_id != session_context->load_balance_node_id)
 		{
 			POOL_CONNECTION *con;
@@ -777,6 +779,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			len = htonl(sizeof(len));
 			pool_write_and_flush(con, &len, sizeof(len));
 		}
+#endif
 		/*
 		 * Remeber that we send flush or sync message to backend.
 		 */
@@ -788,6 +791,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	return POOL_CONTINUE;
 }
+
 /*
  * process Parse (V3 only)
  */
@@ -3156,4 +3160,74 @@ static int* find_victim_nodes(int *ntuples, int nmembers, int master_node, int *
 	}
 
 	return victim_nodes;
+}
+
+/*
+ * flatten_set_variable_args
+ *		Given a parsenode List as emitted by the grammar for SET,
+ *		convert to the flat string representation used by GUC.
+ *
+ * We need to be told the name of the variable the args are for, because
+ * the flattening rules vary (ugh).
+ *
+ * The result is NULL if args is NIL (ie, SET ... TO DEFAULT), otherwise
+ * a palloc'd string.
+ */
+static char *
+flatten_set_variable_args(const char *name, List *args)
+{
+	StringInfoData buf;
+	ListCell   *l;
+
+	/* Fast path if just DEFAULT */
+	if (args == NIL)
+		return NULL;
+
+	initStringInfo(&buf);
+
+	/*
+	 * Each list member may be a plain A_Const node, or an A_Const within a
+	 * TypeCast; the latter case is supported only for ConstInterval arguments
+	 * (for SET TIME ZONE).
+	 */
+	foreach(l, args)
+	{
+		Node	   *arg = (Node *) lfirst(l);
+		char	   *val;
+		A_Const    *con;
+
+		if (l != list_head(args))
+			appendStringInfoString(&buf, ", ");
+	
+		if (IsA(arg, TypeCast))
+		{
+			TypeCast   *tc = (TypeCast *) arg;
+			arg = tc->arg;
+		}
+		
+		if (!IsA(arg, A_Const))
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(arg));
+		con = (A_Const *) arg;
+	
+		switch (nodeTag(&con->val))
+		{
+			case T_Integer:
+				appendStringInfo(&buf, "%ld", intVal(&con->val));
+				break;
+			case T_Float:
+				/* represented as a string, so just copy it */
+				appendStringInfoString(&buf, strVal(&con->val));
+				break;
+			case T_String:
+				val = strVal(&con->val);
+				appendStringInfoString(&buf, val);
+				break;
+			default:
+				ereport(ERROR, (errmsg("unrecognized node type: %d",
+					 (int) nodeTag(&con->val))));
+				break;
+		}
+	}
+	
+	return buf.data;
 }

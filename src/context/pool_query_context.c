@@ -27,6 +27,7 @@
 #include "utils/memutils.h"
 #include "utils/elog.h"
 #include "utils/pool_select_walker.h"
+#include "utils/pool_stream.h"
 #include "context/pool_session_context.h"
 #include "context/pool_query_context.h"
 #include "parser/nodes.h"
@@ -279,7 +280,23 @@ int pool_virtual_master_db_node_id(void)
 
 	if (sc->query_context)
 	{
-		return sc->query_context->virtual_master_node_id;
+		int node_id = sc->query_context->virtual_master_node_id;
+
+		if (STREAM)
+		{
+			 /*
+			  * Make sure that virtual_master_node_id is either primary node
+			  * id or load balance node id.  If not, it is likely that
+			  * virtual_master_node_id is not set up yet. Let's use the
+			  * primary node id.
+			  */
+			if (node_id != sc->load_balance_node_id && node_id != PRIMARY_NODE_ID)
+			{
+				node_id = PRIMARY_NODE_ID;
+			}
+		}
+
+		return node_id;
 	}
 
 	/*
@@ -860,6 +877,21 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 		}
 
 		send_extended_protocol_message(backend, i, kind, str_len, str);
+
+		if (*kind == 'E' && STREAM)
+		{
+			/*
+			 * Send flush message to backend to make sure that we get any response
+			 * from backend in Sream replication mode.
+			 */
+
+			POOL_CONNECTION *cp = CONNECTION(backend, i);
+			int len;
+
+			pool_write(cp, "H", 1);
+			len = htonl(sizeof(len));
+			pool_write_and_flush(cp, &len, sizeof(len));
+		}
 	}
 
 	if (!is_begin_read_write)
