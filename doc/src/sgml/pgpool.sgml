@@ -122,9 +122,9 @@
   </partintro>
 
   &installation;
+  &runtime;
 <!--
   &installw;
-  &runtime;
   &config;
   &client-auth;
   &user-manag;

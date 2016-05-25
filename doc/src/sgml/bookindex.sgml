@@ -19,6 +19,24 @@
       sequences of pages into a range.
 -->
 
+<indexdiv><title>B</title>
+
+<indexentry>
+  <primaryie>bison,
+    <ulink url="install-requirements.html" role="AEN221">Requirements</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>F</title>
+
+<indexentry>
+  <primaryie>flex,
+    <ulink url="install-requirements.html" role="AEN217">Requirements</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
 <indexdiv><title>H</title>
 
 <indexentry>
@@ -34,7 +52,25 @@
 
 <indexentry>
   <primaryie>installation,
-    <ulink url="installation.html" role="installation">pgpool-IIInstallation from Source Code</ulink>
+    <ulink url="installation.html" role="installation">pgpool-II Installation from Source Code</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>L</title>
+
+<indexentry>
+  <primaryie>lex,
+    <ulink url="install-requirements.html" role="AEN219">Requirements</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>M</title>
+
+<indexentry>
+  <primaryie>make,
+    <ulink url="install-requirements.html" role="AEN184">Requirements</ulink>
   </primaryie>
 </indexentry>
 
@@ -43,12 +79,18 @@
 
 <indexentry>
   <primaryie>OpenSSL,
-    <ulink url="install-source.html#INSTALL-PGPOOL" role="AEN200">Installing pgpool-II</ulink>
+    <ulink url="install-pgpool.html" role="AEN269">Installing pgpool-II</ulink>
   </primaryie>
 </indexentry>
 
 </indexdiv>
 <indexdiv><title>P</title>
+
+<indexentry>
+  <primaryie>pcp configuration,
+    <ulink url="configuring-pcp-conf.html" role="AEN370">Configuring pcp.conf</ulink>
+  </primaryie>
+</indexentry>
 
 <indexentry>
   <primaryie>pcp_common_options,
@@ -59,6 +101,27 @@
 <indexentry>
   <primaryie>pcp_node_count,
     <ulink url="pcp-node-count.html" role="pcp-node-count">pcp_node_count</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>pgpool-II configuration,
+    <ulink url="configuring-pgpool.html" role="AEN389">Configuring pgpool</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>pgpool-II user,
+    <ulink url="pgpool-ii-user.html" role="AEN359">The pgpool-II User Account</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>Y</title>
+
+<indexentry>
+  <primaryie>yacc,
+    <ulink url="install-requirements.html" role="AEN223">Requirements</ulink>
   </primaryie>
 </indexentry>
 

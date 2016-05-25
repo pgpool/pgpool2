@@ -16,21 +16,23 @@
  </para>
  <para>
    In 2004, <productname>pgpool</productname> 1.0 was released with
-   the native replication feature. In the same year 2.0 was release
-   with load balancing, and support for version 3 frontend/backend
-   protocol. In 2005, automated fail over and master slave mode
-   support were added.
+   the native replication feature (SQL statement based
+   replication). In the same year 2.0 was released with load
+   balancing, and support for version 3 frontend/backend protocol. In
+   2005, automated fail over and master slave mode support were added.
  </para>
  <para>
    In 2006, <productname>pgpool</productname>
    became <productname>pgpool-II</productname>. The first release 1.0
-   eliminated restrictions, for example the number
-   of <productname>PostgreSQL</productname> servers were up to 2 in
+   eliminated many of restrictions
+   in <productname>pgpool</productname>, for example the number
+   of <productname>PostgreSQL</productname> servers was up to 2 in
    <productname>pgpool</productname>. Also many new features such as
-   parallel query mode and PCP commands were added. Probably most
-   imporant change between <productname>pgpool</productname>
+   parallel query mode and PCP commands (PCP stands for "Pgpool
+   Control Protocol") were added. Probably the most important change
+   made between <productname>pgpool</productname>
    and <productname>pgpool-II</productname> was that the project was
-   changed from the personal project to a group project owned by the
+   changed from a personal project to a group project owned by the
    Pgpool Developement Group.
  </para>
 </sect1>

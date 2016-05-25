@@ -1,40 +1,155 @@
 <!-- doc/src/sgml/installation.sgml -->
 
 <chapter id="installation">
- <title><productname>pgpool-II</productname>Installation from Source Code</title>
+ <title><productname>pgpool-II</productname> Installation from Source Code</title>
 
  <indexterm zone="installation">
   <primary>installation</primary>
  </indexterm>
 
- <para>
-   This chapter describes the installtion
-   of <productname>pgpool-II</productname>.  First, installation from
-   source code distribution is explained. Then installtion from RPM
-   packages is explained.
- </para>
-
  <sect1 id="install-source">
-  <title>Installing from the soruce code</title>
+  <title>Installation from Source Code</title>
+   <para>
+     This chapter describes the installtion
+     of <productname>pgpool-II</productname>.  First, installation from
+     source code distribution is explained. Then installtion from RPM
+     packages is explained.
+   </para>
+ </sect1>
+
+ <sect1 id="install-requirements">
+  <title>Requirements</title>
+
   <para>
-    pgpool-II's source code and RPM packages for Red Hat Enterprise
-    Linux and CentOS can be downloaded from:
-    <ulink url="http://pgpool.net/mediawiki/index.php/Downloads">pgpool development page</ulink>
+   In general, a modern Unix-compatible platform should be able to run
+   <productname>pgpool-II</>. Windows is not supported.
   </para>
 
   <para>
-    Installing <productname>pgpool-II</productname> from source code
-    requires gcc 2.9 or higher, and GNU make. Also, pgpool-II links
-    with the libpq library, so the libpq library and its development
-    headers must be installed on the machine used to build pgpool-II.
-    Additionally the OpenSSL library and its development headers must
-    be present in order to enable OpenSSL support in pgpool-II.  Also
-    the libmemcached library and its development headers must be
-    present in order to enable memcached support
-    in <productname>pgpool-II</productname>.
+   The following software packages are required for building
+   <productname>pgpool-II</>:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      <indexterm>
+       <primary>make</primary>
+      </indexterm>
+
+      <acronym>GNU</> <application>make</> version 3.80 or newer is required; other
+      <application>make</> programs or older <acronym>GNU</> <application>make</> versions will <emphasis>not</> work.
+      (<acronym>GNU</> <application>make</> is sometimes installed under
+      the name <filename>gmake</filename>.)  To test for <acronym>GNU</acronym>
+      <application>make</application> enter:
+<screen>
+<userinput>make --version</userinput>
+</screen>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      You need an <acronym>ISO</>/<acronym>ANSI</> C compiler (at least
+      C89-compliant). Recent
+      versions of <productname>GCC</> are recommended, but
+      <productname>PostgreSQL</> is known to build using a wide variety
+      of compilers from different vendors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <application>tar</> is required to unpack the source
+      distribution, in addition to either
+      <application>gzip</> or <application>bzip2</>.
+     </para>
+    </listitem>
+
+   </itemizedlist>
   </para>
 
-  <sect2 id="install-pgpool">
+  <para>
+   The following packages are optional.  They are not required in the
+   default configuration, but they are needed when certain build
+   options are enabled, as explained below:
+  </para>
+
+  <para>
+   If you are building from a <productname>Git</productname> tree instead of
+   using a released source package, or if you want to do server development,
+   you also need the following packages:
+  </para>
+
+  <para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <indexterm>
+       <primary>flex</primary>
+      </indexterm>
+      <indexterm>
+       <primary>lex</primary>
+      </indexterm>
+      <indexterm>
+       <primary>bison</primary>
+      </indexterm>
+      <indexterm>
+       <primary>yacc</primary>
+      </indexterm>
+
+      GNU <application>Flex</> and <application>Bison</>
+      are needed to build from a Git checkout, or if you changed the actual
+      scanner and parser definition files. If you need them, be sure
+      to get <application>Flex</> 2.5.31 or later and
+      <application>Bison</> 1.875 or later. Other <application>lex</>
+      and <application>yacc</> programs cannot be used.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </para>
+
+  <para>
+   If you need to get a <acronym>GNU</acronym> package, you can find
+   it at your local <acronym>GNU</acronym> mirror site (see <ulink
+   url="http://www.gnu.org/order/ftp.html"></>
+   for a list) or at <ulink
+   url="ftp://ftp.gnu.org/gnu/"></ulink>.
+  </para>
+
+  <para>
+   Also check that you have sufficient disk space. You will need about
+   40 MB for the source tree during compilation and about 20 MB for
+   the installation directory. If you are going to
+   run the regression tests you will temporarily need up to an extra
+   4 GB. Use the <command>df</command> command to check free disk
+   space.
+  </para>
+ </sect1>
+
+ <sect1 id="install-getsource">
+  <title>Getting The Source</title>
+
+  <para>
+   The <productname>pgpool-II</> &version; sources can be obtained
+   from the download section of our
+   website: <ulink url="http://www.pgpool.net"></ulink>.  You should
+   get a file
+   named <filename>pgpool-II-&version;.tar.gz</filename>. After you
+   have obtained the file, unpack it:
+<screen>
+<userinput>tar xf pgpool-II-&version;.tar.gz</userinput>
+</screen>
+   This will create a directory
+   <filename>pgpool-II-&version;</filename> under the current directory
+   with the <productname>pgpool-II</> sources.
+   Change into that directory for the rest
+   of the installation procedure.
+  </para>
+
+ </sect1>
+
+  <sect1 id="install-pgpool">
     <title>Installing pgpool-II</title>
     <para>
       After extracting the source tarball, execute the configure script.
@@ -134,12 +249,12 @@ make install
       will install pgpool-II. (If you use Solaris or FreeBSD, replace make with gmake)
     </para>
 
-  </sect2>
+  </sect1>
 
-  <sect2 id="install-pgpool-recovery">
+  <sect1 id="install-pgpool-recovery">
     <title>Installing pgpool_recovery</title>
     <para>
-      This is required all <productname>pgpool-II</productname>
+      This is required in all <productname>pgpool-II</productname>
       installation.
       <programlisting>
 $ cd pgpool-II-x.x.x/sql/pgpool-recovery
@@ -176,9 +291,9 @@ $ pg_ctl reload -D /usr/local/pgsql/data
       </programlisting>
 
     </para>
-  </sect2>
+  </sect1>
 
-  <sect2 id="install-pgpool-regclass">
+  <sect1 id="install-pgpool-regclass">
     <title>Installing pgpool-regclass</title>
     <para>
       If you are using <productname>PostgreSQL</productname> 9.4 or
@@ -207,20 +322,21 @@ $ make
 $ make install
       </programlisting>
       After this:
-      <programlisting>
-$ psql -f pgpool-regclass.sql template1
-      </programlisting>
-
-      or
 
       <programlisting>
 $ psql template1
 =# CREATE EXTENSION pgpool_regclass;
       </programlisting>
 
-      Executing <filename>pgpool-regclass.sql</filename>
-      or <command>CREATE EXTENSION</command> should be performed on
-      every databases accessed
+or 
+
+      <programlisting>
+$ psql -f pgpool-regclass.sql template1
+      </programlisting>
+
+      Executing <command>CREATE EXTENSION</command>
+      or <filename>pgpool-regclass.sql</filename> should be performed
+      on every databases accessed
       with <productname>pgpool-II</productname>.  You do not need to
       do this for a database created after the execution of
       <command>psql -f pgpool-regclass.sql template1</command>
@@ -228,9 +344,9 @@ $ psql template1
       database will be cloned to create new databases.
     </para>
 
-  </sect2>
+  </sect1>
 
-  <sect2 id="create-installlock-table">
+  <sect1 id="create-installlock-table">
     <title>Creating insert_lock table</title>
     <para>
       If you plan to use native replication mode and insert_lock,
@@ -259,8 +375,6 @@ $ psql template1
       <command>psql -f insert_lock.sql template1</command>, as this
       template database will be cloned to create new databases.
     </para>
-  </sect2>
-
- </sect1>
+  </sect1>
 
 </chapter>
