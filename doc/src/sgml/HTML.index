@@ -69,8 +69,32 @@ TITLE Configuring pgpool
 significance NORMAL
 PRIMARY pgpool-II configuration
 /INDEXTERM
+INDEXTERM configuring-backend-info.html#BACKEND-INFO
+INDEXPOINT configuring-backend-info.html#AEN430
+TITLE Backend information
+significance NORMAL
+PRIMARY backend_hostname configuration parameter
+/INDEXTERM
+INDEXTERM configuring-backend-info.html#BACKEND-INFO
+INDEXPOINT configuring-backend-info.html#AEN448
+TITLE Backend information
+significance NORMAL
+PRIMARY backend_port configuration parameter
+/INDEXTERM
+INDEXTERM configuring-backend-info.html#BACKEND-INFO
+INDEXPOINT configuring-backend-info.html#AEN460
+TITLE Backend information
+significance NORMAL
+PRIMARY backend_data_directory configuration parameter
+/INDEXTERM
+INDEXTERM configuring-backend-info.html#BACKEND-INFO
+INDEXPOINT configuring-backend-info.html#AEN472
+TITLE Backend information
+significance NORMAL
+PRIMARY backend_flag configuration parameter
+/INDEXTERM
 INDEXTERM pcp-common-options.html
-INDEXPOINT pcp-common-options.html#AEN441
+INDEXPOINT pcp-common-options.html#AEN521
 TITLE pcp_common_options
 significance NORMAL
 ZONE pcp-common-options.html
@@ -78,7 +102,7 @@ TITLE pcp_common_options
 PRIMARY pcp_common_options
 /INDEXTERM
 INDEXTERM pcp-node-count.html
-INDEXPOINT pcp-node-count.html#AEN541
+INDEXPOINT pcp-node-count.html#AEN621
 TITLE pcp_node_count
 significance NORMAL
 ZONE pcp-node-count.html

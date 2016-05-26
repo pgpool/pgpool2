@@ -22,6 +22,30 @@
 <indexdiv><title>B</title>
 
 <indexentry>
+  <primaryie>backend_data_directory configuration parameter,
+    <ulink url="configuring-backend-info.html#BACKEND-INFO" role="AEN460">Backend information</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>backend_flag configuration parameter,
+    <ulink url="configuring-backend-info.html#BACKEND-INFO" role="AEN472">Backend information</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>backend_hostname configuration parameter,
+    <ulink url="configuring-backend-info.html#BACKEND-INFO" role="AEN430">Backend information</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>backend_port configuration parameter,
+    <ulink url="configuring-backend-info.html#BACKEND-INFO" role="AEN448">Backend information</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
   <primaryie>bison,
     <ulink url="install-requirements.html" role="AEN221">Requirements</ulink>
   </primaryie>
