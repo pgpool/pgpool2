@@ -2084,8 +2084,11 @@ initialize_variables_with_default(struct config_generic * gconf)
 			int i;
 			char	   *newval = NULL;
 			
-			/* non-NULL boot_val must always get strdup'd */
-			if (conf->boot_val != NULL)
+			/* non-NULL boot_val must always get strdup'd
+			 * also check if max_elements > 0 before doing pstrdup to silent
+			 * the coverity scan report
+			 */
+			if (conf->boot_val != NULL && conf->max_elements > 0)
 				newval = pstrdup(conf->boot_val);
 
 			for (i = 0; i < conf->max_elements; i ++)
