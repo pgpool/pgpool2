@@ -181,9 +181,15 @@ acbd18db4cc2f85cedef654fccc4a4d8
     set up to start <productname>pgpool-II</productname> server.
   </para>
 
-  <sect2 id="backend-info">
-    <title>Backend information</title>
+  <sect2 id="backend-settings">
+    <title>Backend Settings</title>
 
+    <para>
+      Backend PostgreSQL used by pgpool-II must be specified in pgpool.conf.
+      See <xref linkend="runtime-config-backend-settings">
+    </para>
+
+<!--
     <variablelist>
 
       <varlistentry id="guc-backend-hostname" xreflabel="backend_hostname">
@@ -348,6 +354,8 @@ acbd18db4cc2f85cedef654fccc4a4d8
       </varlistentry>
 
     </variablelist>
+
+-->
 
   </sect2>
 

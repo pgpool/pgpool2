@@ -1,0 +1,11 @@
+<!-- doc/src/sgml/config.sgml -->
+
+<sect1 id="runtime-config-health-check">
+  <title>Health Check</title>
+
+  <para>
+    health_check_period, health_check_timeout, health_check_user,
+    health_check_password, health_check_database, health_check_max_retries,
+    health_check_retry_delay, connect_timeout
+  </para>
+</sect1>

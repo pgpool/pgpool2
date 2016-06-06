@@ -1,0 +1,24 @@
+<!-- doc/src/sgml/advanced.sgml -->
+
+<chapter id="tutorial-watchdog">
+  <title>Watchdog</title>
+
+  <sect1 id="tutorial-watchdog-intro">
+    <title>Introduction</title>
+
+    <para>
+      This chapter explains advanced feature of pgpool-II called "watchdog". Why do we need watchdog anyway?
+    </para>
+
+  </sect1>
+
+  <sect1 id="tutorial-advanced-arch">
+    <title>the Architecure of watchdog</title>
+
+    <para>
+      This chapter explains the overall architecture of watchdog.
+    </para>
+
+  </sect1>
+
+</chapter>

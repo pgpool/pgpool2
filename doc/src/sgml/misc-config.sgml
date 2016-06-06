@@ -1,0 +1,9 @@
+<!-- doc/src/sgml/config.sgml -->
+
+<sect1 id="runtime-misc">
+  <title>Misc Configuration Parameters</title>
+
+  <para>
+    relcache_expire, relcache_size, check_temp_table, check_unlogged_table
+  </para>
+</sect1>

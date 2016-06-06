@@ -47,8 +47,22 @@
 <!ENTITY recovery-config SYSTEM "recovery-config.sgml">
 <!ENTITY runtime       SYSTEM "runtime.sgml">
 <!ENTITY config        SYSTEM "config.sgml">
+<!ENTITY connection-settings SYSTEM "connection-settings.sgml">
+<!ENTITY connection-pooling SYSTEM "connection-pooling.sgml">
+<!ENTITY loadbalance   SYSTEM "loadbalance.sgml">
+<!ENTITY healthcheck   SYSTEM "healthcheck.sgml">
+<!ENTITY failover      SYSTEM "failover.sgml">
+<!ENTITY online-recovery SYSTEM "online-recovery.sgml">
+<!ENTITY stream-check  SYSTEM "stream-check.sgml">
+<!ENTITY memcache      SYSTEM "memcache.sgml">
+<!ENTITY ssl           SYSTEM "ssl.sgml">
+<!ENTITY watchdog      SYSTEM "watchdog.sgml">
+<!ENTITY misc-config   SYSTEM "misc-config.sgml">
+<!ENTITY config-last   SYSTEM "config-last.sgml">
 <!ENTITY user-manag    SYSTEM "user-manag.sgml">
 <!ENTITY wal           SYSTEM "wal.sgml">
+
+<!ENTITY examples      SYSTEM "examples.sgml">
 
 <!-- programmer's guide -->
 <!ENTITY bgworker   SYSTEM "bgworker.sgml">

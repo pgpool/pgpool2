@@ -1,0 +1,10 @@
+<!-- doc/src/sgml/config.sgml -->
+
+<sect1 id="runtime-online-recovery">
+  <title>Online Recovery</title>
+
+  <para>
+    recovery_user, recovery_password,recovery_1st_stage_command,
+    recovery_2nd_stage_command,recovery_timeout, client_idle_limit_in_recovery
+  </para>
+</sect1>

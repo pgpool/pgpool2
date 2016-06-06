@@ -1,0 +1,41 @@
+<!-- doc/src/sgml/examples.sgml -->
+
+<part id="examples">
+  <title>Examples</title>
+
+  <partintro>
+    <para>
+      Various examples
+    </para>
+
+  </partintro>
+
+  <chapter id="example-configs">
+    <title>Configuration Examples</title>
+
+    <sect1 id="example-basic">
+      <title>Basic Configuration Example</title>
+
+      <para>
+	Basic configuration (without watchdog).
+      </para>
+    </sect1>
+
+    <sect1 id="example-watchdog">
+      <title>Watchdog Configuration Example</title>
+
+      <para>
+	Watchdog configuration.
+      </para>
+    </sect1>
+
+    <sect1 id="example-AWS">
+      <title>AWS Configuration Example</title>
+
+      <para>
+	AWS watchdog configuration.
+      </para>
+    </sect1>
+
+  </chapter>
+</part>

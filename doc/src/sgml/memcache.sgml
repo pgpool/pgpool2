@@ -1,0 +1,9 @@
+<!-- doc/src/sgml/config.sgml -->
+
+<sect1 id="runtime-in-memory-query-cache">
+  <title>In Memory Query Cache</title>
+
+  <para>
+    memory_cache_enabled etc.
+  </para>
+</sect1>

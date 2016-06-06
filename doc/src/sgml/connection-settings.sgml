@@ -1,0 +1,238 @@
+<!-- doc/src/sgml/config.sgml -->
+
+<sect1 id="runtime-config-connection">
+  <title>Connections and Authentication</title>
+
+  <sect2 id="runtime-config-connection-settings">
+    <title>Connection Settings</title>
+
+    <variablelist>
+
+      <varlistentry id="guc-listen-addresses" xreflabel="listen_addresses">
+	<term><varname>listen_addresses</varname> (<type>string</type>)
+	  <indexterm>
+	    <primary><varname>listen_addresses</varname> configuration parameter</primary>
+	  </indexterm>
+	</term>
+	<listitem>
+	  <para>
+	    Specifies the hostname or IP address, on which pgpool-II
+	    will accept TCP/IP connections. <literal>'*'</literal>
+	    accepts all incoming connections. <literal>''</literal>
+	    disables TCP/IP connections. Default
+	    is <literal>'localhost'</literal>. Connections via UNIX
+	    domain socket are always accepted.
+	  </para>
+	  <para>
+	    This parameter can only be set at server start.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </sect2>
+</sect1>
+
+<sect1 id="runtime-config-runnung-mode">
+  <title>Running mode</title>
+
+  <sect2 id="runtime-config-master-slave-mode">
+    <title>Master slave mode</title>
+
+    <variablelist>
+
+      <varlistentry id="guc-master-slave" xreflabel="master_slave_mode">
+	<term><varname>listen_addresses</varname> (<type>string</type>)
+	  <indexterm>
+	    <primary><varname>listen_addresses</varname> configuration parameter</primary>
+	  </indexterm>
+	</term>
+	<listitem>
+	  <para>
+	    Specifies the TCP/IP address(es) on which the server is
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </sect2>
+</sect1>
+
+<sect1 id="runtime-config-backend-settings">
+  <title>Backend Settings</title>
+
+  <sect2 id="runtime-config-backend-connection-settings">
+    <title>Backend Connection Settings</title>
+
+    <variablelist>
+
+      <varlistentry id="guc-backend-hostname" xreflabel="backend_hostname">
+	<term><varname>backend_hostname</varname> (<type>string</type>)
+	  <indexterm>
+	    <primary><varname>backend_hostname</varname> configuration parameter</primary>
+	  </indexterm>
+	</term>
+
+	<listitem>
+	  <para>
+            <varname>backend_hostname</varname> specifies where to
+            connect to the <productname>PostgreSQL</productname>
+            backend. It is used
+            by <productname>pgpool-II</productname> to communicate
+            with the server.
+	  </para>
+
+	  <para>
+	    For TCP/IP communication, this parameter can take a hostname
+	    or an IP address. If this begins with a slash, it specifies
+	    Unix-domain communication rather than TCP/IP; the value is
+	    the name of the directory in which the socket file is
+	    stored. The default behavior when backend_hostname is empty
+	    ('') is to connect to a Unix-domain socket in /tmp.
+	  </para>
+
+	  <para>
+	    Multiple backends can be specified by adding a number at the
+	    end of the parameter name (e.g.backend_hostname0). This
+	    number is referred to as "DB node ID", and it starts from
+	    0. The backend which was given the DB node ID of 0 will be
+	    called "Master DB". When multiple backends are defined, the
+	    service can be continued even if the Master DB is down (not
+	    true in some modes). In this case, the youngest DB node ID
+	    alive will be the new Master DB.
+	  </para>
+
+	  <para>
+	    Please note that the DB node which has id 0 has no special
+	    meaning if operated in streaming replication mode. Rather,
+	    you should care about if the DB node is the "primary node" or
+	    not. See Streaming Replication for more details.
+	  </para>
+
+	  <para>
+	    If you plan to use only one PostgreSQL server, specify it by
+	    backend_hostname0.
+	  </para>
+
+	  <para>
+	    New nodes can be added in this parameter by reloading a
+	    configuration file. However, values cannot be updated so
+	    you must restart <productname>pgpool-II</productname> in
+	    that case.
+	  </para>
+
+	</listitem>
+
+      </varlistentry>
+
+      <varlistentry id="guc-backend-port" xreflabel="backend_port">
+	<term><varname>backend_port</varname> (<type>integer</type>)
+	  <indexterm>
+	    <primary><varname>backend_port</varname> configuration parameter</primary>
+	  </indexterm>
+	</term>
+
+	<listitem>
+	  <para>
+            <varname>backend_port</varname> specifies the port number
+            of the backends. Multiple backends can be specified by
+            adding a number at the end of the parameter name
+            (e.g. backend_port0). If you plan to use only one
+            PostgreSQL server, specify it by backend_port0.
+	  </para>
+	  <para>
+	    New backend ports can be added in this parameter by
+	    reloading a configuration file. However, values cannot be
+	    updated so you must
+	    restart <productname>pgpool-II</productname> in that case.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </sect2>
+
+  <sect2 id="runtime-config-backend-data">
+    <title>Backend Data Settings</title>
+
+    <variablelist>
+
+      <varlistentry id="guc-backend-data-directory" xreflabel="backend_data_directory">
+	<term><varname>backend_data_directory</varname> (<type>string</type>)
+	  <indexterm>
+	    <primary><varname>backend_data_directory</varname> configuration parameter</primary>
+	  </indexterm>
+	</term>
+
+	<listitem>
+	  <para>
+            <varname>backend_data_directory</varname> specifies the
+            database directory. Multiple backends can be
+            specified by adding a number at the end of the parameter
+            name (e.g. backend_data_directory0). If you plan to use
+            only one PostgreSQL server, specify it by
+            backend_data_directory0.
+	  </para>
+	  <para>
+	    New backend data_directorys can be added in this parameter
+	    by reloading a configuration file. However, values cannot
+	    be updated so you must
+	    restart <productname>pgpool-II</productname> in that case.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-backend-flag" xreflabel="backend_flag">
+	<term><varname>backend_flag</varname> (<type>string</type>)
+	  <indexterm>
+	    <primary><varname>backend_flag</varname> configuration parameter</primary>
+	  </indexterm>
+	</term>
+
+	<listitem>
+	  <para>
+            <varname>backend_flag</varname> controls various backend
+            behavior. Multiple backends can be specified by adding a
+            number at the end of the parameter name
+            (e.g. backend_flag0). If you plan to use only one
+            PostgreSQL server, specify it by backend_flag0.
+	  </para>
+	  <para>
+	    New backend flags can be added in this parameter by
+	    reloading a configuration file.  Currently followings are
+	    allowed. Multiple flags can be specified by using "|".
+	  </para>
+
+	  <table id="backend-flag-table">
+	    <title>Backend flags</title>
+	    <tgroup cols="2">
+	      <thead>
+		<row>
+		  <entry>Flag</entry>
+		  <entry>Description</entry>
+		</row>
+	      </thead>
+
+	      <tbody>
+		<row>
+		  <entry><literal>ALLOW_TO_FAILOVER</literal></entry>
+		  <entry>Allow to failover or detaching backend. This
+		    is the default. You cannot specify with
+		    DISALLOW_TO_FAILOVER at a same time.</entry>
+		</row>
+		<row>
+		  <entry><literal>DISALLOW_TO_FAILOVER</literal></entry>
+		  <entry>This is useful when you protect backend by
+		    using HA (High Availability) softwares such as
+		    Heartbeat or Pacemaker. You cannot specify with
+		    ALLOW_TO_FAILOVER at a same time.
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </sect2>
+</sect1>
