@@ -939,6 +939,7 @@ int pool_check_fd(POOL_CONNECTION *cp)
 	int fds;
 	struct timeval timeout;
 	struct timeval *timeoutp;
+	int save_errno;
 
 	/*
 	 * If SSL is enabled, we need to check SSL internal buffer
@@ -968,8 +969,16 @@ int pool_check_fd(POOL_CONNECTION *cp)
 		FD_SET(fd, &exceptmask);
 
 		fds = select(fd+1, &readmask, NULL, &exceptmask, timeoutp);
+		save_errno = errno;
 		if (fds == -1)
 		{
+			if (processState == PERFORMING_HEALTH_CHECK && errno == EINTR)
+			{
+				ereport(WARNING, (errmsg("health check timed out while waiting for reading data")));
+				errno = save_errno;
+				return 1;
+			}
+
 			if (errno == EAGAIN || errno == EINTR)
 				continue;
 			
@@ -986,6 +995,7 @@ int pool_check_fd(POOL_CONNECTION *cp)
 					(errmsg("waiting for reading data. exception occurred in select ")));
 			break;
 		}
+		errno = save_errno;
 		return 0;
 	}
 	return -1;
