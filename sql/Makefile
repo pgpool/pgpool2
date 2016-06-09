@@ -25,11 +25,11 @@ subdir = sql
 # if you are not, comment out following line and...
 USE_PGXS = true
 # set top_builddir to the PostgreSQL build source tree top.
-# (for example /usr/local/src/postgresql-9.0) 
+# (for example /usr/local/src/postgresql-9.0)
 top_builddir = ..
 
 ifdef USE_PGXS
-PG_CONFIG = pg_config
+PG_CONFIG ?= pg_config
 PGXS = $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else

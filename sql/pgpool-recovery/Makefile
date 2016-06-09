@@ -7,11 +7,11 @@ DATA = uninstall_pgpool-recovery.sql
 # if you are not, comment out following line and...
 USE_PGXS = true
 # set top_builddir to the PostgreSQL build source tree top.
-# (for example /usr/local/src/postgresql-8.4) 
+# (for example /usr/local/src/postgresql-8.4)
 top_builddir = ../..
 
 ifdef USE_PGXS
-PG_CONFIG = pg_config
+PG_CONFIG ?= pg_config
 PGXS = $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
