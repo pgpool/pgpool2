@@ -59,6 +59,7 @@ typedef enum WDFailoverCMDResults
 #define WD_IPC_CMD_CLUSTER_IN_TRAN			'5'
 #define WD_IPC_CMD_RESULT_BAD				'6'
 #define WD_IPC_CMD_RESULT_OK				'7'
+#define WD_IPC_CMD_TIMEOUT					'8'
 
 #define WD_FUNCTION_COMMAND					'f'
 #define WD_FAILOVER_CMD_SYNC_REQUEST		's'

@@ -727,7 +727,7 @@ wd_create_client_socket(char * hostname, int port, bool *connected)
 				(errmsg("create socket failed with reason: \"%s\"", strerror(errno))));
 		return -1;
 	}
-	
+
 	/* set socket option */
 	if ( setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1 )
 	{

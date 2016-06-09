@@ -188,6 +188,25 @@ issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, 
 		{
 			int select_res;
 			select_res = select(sock+1,&fds,NULL,NULL,timeout_st);
+			if (select_res == 0)
+			{
+				close(sock);
+				result = palloc(sizeof(WDIPCCmdResult));
+				result->type = WD_IPC_CMD_TIMEOUT;
+				result->length = 0;
+				result->data = NULL;
+				return result;
+			}
+			if (select_res < 0)
+			{
+				if (errno == EAGAIN || errno == EINTR)
+					continue;
+				ereport(WARNING,
+					(errmsg("error reading from IPC command socket"),
+						 errdetail("select system call failed with error \"%s\"",strerror(errno))));
+				close(sock);
+				return NULL;
+			}
 			if (select_res > 0)
 			{
 				/* read the result type char */
@@ -266,7 +285,7 @@ wd_start_recovery(void)
 				 errdetail("issue command to watchdog returned NULL")));
 		return COMMAND_FAILED;
 	}
-	
+
 	type = result->type;
 	pfree(result);
 	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
@@ -277,9 +296,17 @@ wd_start_recovery(void)
 					errhint("try again when the cluster is fully initialized")));
 		return CLUSTER_IN_TRANSATIONING;
 	}
-	if (type == WD_IPC_CMD_RESULT_OK)
+	else if (type == WD_IPC_CMD_TIMEOUT)
+	{
+		ereport(WARNING,
+			(errmsg("start recovery command lock failed"),
+				 errdetail("ipc command timeout")));
+		return COMMAND_TIMEOUT;
+	}
+	else if (type == WD_IPC_CMD_RESULT_OK)
+	{
 		return COMMAND_OK;
-	
+	}
 	return COMMAND_FAILED;
 }
 
@@ -301,7 +328,7 @@ wd_end_recovery(void)
 	if (result == NULL)
 	{
 		ereport(WARNING,
-				(errmsg("start recovery command lock failed"),
+			(errmsg("end recovery command lock failed"),
 				 errdetail("issue command to watchdog returned NULL")));
 		return COMMAND_FAILED;
 	}
@@ -311,14 +338,22 @@ wd_end_recovery(void)
 	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
 	{
 		ereport(WARNING,
-				(errmsg("start recovery command lock failed"),
+				(errmsg("end recovery command lock failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 					errhint("try again when the cluster is fully initialized")));
 		return CLUSTER_IN_TRANSATIONING;
 	}
-	if (type == WD_IPC_CMD_RESULT_OK)
+	else if (type == WD_IPC_CMD_TIMEOUT)
+	{
+		ereport(WARNING,
+			(errmsg("end recovery command lock failed"),
+				 errdetail("ipc command timeout")));
+		return COMMAND_TIMEOUT;
+	}
+	else if (type == WD_IPC_CMD_RESULT_OK)
+	{
 		return COMMAND_OK;
-	
+	}
 	return COMMAND_FAILED;
 }
 
@@ -346,7 +381,7 @@ wd_send_failback_request(int node_id)
 	if (result == NULL)
 	{
 		ereport(WARNING,
-				(errmsg("start recovery command lock failed"),
+			(errmsg("watchdog failed to send failback command"),
 				 errdetail("issue command to watchdog returned NULL")));
 		return COMMAND_FAILED;
 	}
@@ -356,14 +391,23 @@ wd_send_failback_request(int node_id)
 	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
 	{
 		ereport(WARNING,
-				(errmsg("start recovery command lock failed"),
+			(errmsg("watchdog failed to send failback command"),
 				 errdetail("watchdog cluster is not in stable state"),
 					errhint("try again when the cluster is fully initialized")));
 		return CLUSTER_IN_TRANSATIONING;
 	}
-	if (type == WD_IPC_CMD_RESULT_OK)
+	else if (type == WD_IPC_CMD_TIMEOUT)
+	{
+		ereport(WARNING,
+			(errmsg("watchdog failed to send failback command"),
+				 errdetail("ipc command timeout")));
+		return COMMAND_TIMEOUT;
+	}
+	else if (type == WD_IPC_CMD_RESULT_OK)
+	{
 		return COMMAND_OK;
-	
+	}
+
 	return COMMAND_FAILED;
 }
 
@@ -404,10 +448,25 @@ wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType)
 	if (result == NULL || result->length <= 0)
 	{
 		ereport(WARNING,
-				(errmsg("start recovery command lock failed"),
+			(errmsg("watchdog failed to send failover command"),
 				 errdetail("issue command to watchdog returned NULL")));
 		return FAILOVER_RES_ERROR;
 	}
+	else if (result->type == WD_IPC_CMD_TIMEOUT)
+	{
+		ereport(WARNING,
+			(errmsg("watchdog failed to send failover command"),
+				 errdetail("ipc command timeout")));
+		return FAILOVER_RES_ERROR;
+	}
+	if (result->length <= 0)
+	{
+		ereport(WARNING,
+			(errmsg("watchdog failed to send failover command"),
+				 errdetail("issue command to watchdog returned no data")));
+		return FAILOVER_RES_ERROR;
+	}
+
 	root = json_parse(result->data,result->length);
 	/* The root node must be object */
 	if (root == NULL || root->type != json_object)
@@ -476,8 +535,17 @@ wd_degenerate_backend_set(int *node_id_set, int count)
 					errhint("try again when the cluster is fully initialized")));
 		return CLUSTER_IN_TRANSATIONING;
 	}
-	if (type == WD_IPC_CMD_RESULT_OK)
+	else if (type == WD_IPC_CMD_TIMEOUT)
+	{
+		ereport(WARNING,
+				(errmsg("degenerate backend set command failed"),
+				 errdetail("ipc command timeout")));
+		return COMMAND_TIMEOUT;
+	}
+	else if (type == WD_IPC_CMD_RESULT_OK)
+	{
 		return COMMAND_OK;
+	}
 	
 	return COMMAND_FAILED;
 }
@@ -505,7 +573,7 @@ wd_promote_backend(int node_id)
 	if (result == NULL)
 	{
 		ereport(WARNING,
-				(errmsg("start recovery command lock failed"),
+			(errmsg("promote backend node command failed"),
 				 errdetail("issue command to watchdog returned NULL")));
 		return COMMAND_FAILED;
 	}
@@ -515,13 +583,22 @@ wd_promote_backend(int node_id)
 	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
 	{
 		ereport(WARNING,
-				(errmsg("start recovery command lock failed"),
+			(errmsg("promote backend node command failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 					errhint("try again when the cluster is fully initialized")));
 		return CLUSTER_IN_TRANSATIONING;
 	}
-	if (type == WD_IPC_CMD_RESULT_OK)
+	else if (type == WD_IPC_CMD_TIMEOUT)
+	{
+		ereport(WARNING,
+			(errmsg("promote backend node command failed"),
+				 errdetail("ipc command timeout")));
+		return COMMAND_TIMEOUT;
+	}
+	else if (type == WD_IPC_CMD_RESULT_OK)
+	{
 		return COMMAND_OK;
+	}
 	
 	return COMMAND_FAILED;
 }
@@ -557,21 +634,28 @@ char* wd_get_watchdog_nodes(int nodeID)
 	if (result == NULL)
 	{
 		ereport(WARNING,
-				(errmsg("get watchdog nodes command failed"),
+			(errmsg("get watchdog nodes command failed"),
 				 errdetail("issue command to watchdog returned NULL")));
 		return NULL;
 	}
-	
-	if (result->type == WD_IPC_CMD_CLUSTER_IN_TRAN)
+	else if (result->type == WD_IPC_CMD_CLUSTER_IN_TRAN)
 	{
 		ereport(WARNING,
-				(errmsg("get watchdog nodes command failed"),
+			(errmsg("get watchdog nodes command failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 					errhint("try again when the cluster is fully initialized")));
 		pfree(result);
 		return NULL;
 	}
-	if (result->type == WD_IPC_CMD_RESULT_OK)
+	else if (result->type == WD_IPC_CMD_TIMEOUT)
+	{
+		ereport(WARNING,
+			(errmsg("get watchdog nodes command failed"),
+				 errdetail("ipc command timeout")));
+		pfree(result);
+		return NULL;
+	}
+	else if (result->type == WD_IPC_CMD_RESULT_OK)
 	{
 		char* data = result->data;
 		pfree(result);
@@ -597,7 +681,7 @@ open_wd_command_sock(bool throw_error)
 				 errdetail("connect on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(errno))));
 		return -1;
 	}
-	
+
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
 	snprintf(addr.sun_path, sizeof(addr.sun_path),"%s",watchdog_ipc_address);
