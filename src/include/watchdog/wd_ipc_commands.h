@@ -32,7 +32,8 @@ typedef enum WdCommandResult
 {
 	CLUSTER_IN_TRANSATIONING,
 	COMMAND_OK,
-	COMMAND_FAILED
+	COMMAND_FAILED,
+	COMMAND_TIMEOUT
 }WdCommandResult;
 
 
