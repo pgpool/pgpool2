@@ -114,6 +114,7 @@
   &planstats;
 
  </part>
+-->
 
  <part id="appendixes">
   <title>Appendixes</title>
@@ -124,19 +125,10 @@
     </para>
   </partintro>
 
-  &errcodes;
-  &datetime;
-  &keywords;
-  &features;
   &release;
-  &contrib;
-  &external-projects;
-  &sourcerepo;
-  &docguide;
-  &acronyms;
 
  </part>
--->
+
 
  &biblio;
  <![%include-index;[&bookindex;]]>
