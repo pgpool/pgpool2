@@ -162,7 +162,7 @@ static int not_detach = 0;		/* non 0 if non detach option (-n) is given */
 
 static int stop_sig = SIGTERM;	/* stopping signal default value */
 
-static volatile sig_atomic_t health_check_timer_expired;		/* non 0 if health check timer expired */
+volatile sig_atomic_t health_check_timer_expired;               /* non 0 if health check timer expired */
 
 POOL_REQUEST_INFO *Req_info;		/* request info area in shared memory */
 volatile sig_atomic_t *InRecovery; /* non 0 if recovery is started */

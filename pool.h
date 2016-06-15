@@ -397,6 +397,7 @@ extern bool run_as_pcp_child;
 
 extern POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
 extern volatile sig_atomic_t backend_timer_expired; /* flag for connection closed timer is expired */
+extern volatile sig_atomic_t health_check_timer_expired;		/* non 0 if health check timer expired */
 extern long int weight_master;	/* normalized weight of master (0-RAND_MAX range) */
 extern int my_proc_id;  /* process table id (!= UNIX's PID) */
 extern POOL_SYSTEMDB_CONNECTION_POOL *system_db_info; /* systemdb */
