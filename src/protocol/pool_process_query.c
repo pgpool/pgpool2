@@ -4486,7 +4486,17 @@ SELECT_RETRY:
 		BACKEND_INFO(backend->info->load_balancing_node).backend_status == CON_DOWN)
 	{
 		/* select load balancing node */
-		backend->info->load_balancing_node = select_load_balancing_node();
+		POOL_SESSION_CONTEXT *session_context;
+		int node_id;
+
+		session_context = pool_get_session_context(false);
+		node_id = select_load_balancing_node();
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			pool_coninfo(session_context->process_context->proc_id,
+						 pool_pool_index(), i)->load_balancing_node = node_id;
+		}
 	}
 
 	for (i=0;i<NUM_BACKENDS;i++)

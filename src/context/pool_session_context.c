@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -47,6 +47,7 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	session_context = &session_context_d;
 	ProcessInfo *process_info;
 	int node_id;
+	int i;
 
 	/* Get Process context */
 	session_context->process_context = pool_get_process_context();
@@ -91,12 +92,17 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 		node_id = STREAM? PRIMARY_NODE_ID: MASTER_NODE_ID;
 	}
 
-	session_context->load_balance_node_id =
-		process_info->connection_info->load_balancing_node = node_id;
+	session_context->load_balance_node_id = node_id;
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		pool_coninfo(session_context->process_context->proc_id,
+					 pool_pool_index(), i)->load_balancing_node = node_id;
+	}
 
 	ereport(DEBUG1,
 			(errmsg("initializing session context"),
-			 errdetail("selected load balancing node: %d", backend->info->load_balancing_node)));
+			 errdetail("selected load balancing node: %d", node_id)));
 
 	/* Unset query is in progress */
 	pool_unset_query_in_progress();
