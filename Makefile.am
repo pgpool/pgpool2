@@ -4,10 +4,10 @@ AUTOMAKE_OPTIONS = subdir-objects
 # suggested by libtoolize
 ACLOCAL_AMFLAGS = -I m4
 
-if can_build_docs
-DOC_DIR = doc
-endif
+docs:
+	$(MAKE) -C doc all
+.PHONY: docs
 
-SUBDIRS = src $(DOC_DIR)
+SUBDIRS = src
 DIST_SUBDIRS = src doc
 

@@ -342,8 +342,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 # suggested by libtoolize
 ACLOCAL_AMFLAGS = -I m4
-@can_build_docs_TRUE@DOC_DIR = doc
-SUBDIRS = src $(DOC_DIR)
+SUBDIRS = src
 DIST_SUBDIRS = src doc
 all: all-recursive
 
@@ -811,6 +810,10 @@ uninstall-am:
 	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
 	ps ps-am tags tags-am uninstall uninstall-am
 
+
+docs:
+	$(MAKE) -C doc all
+.PHONY: docs
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
