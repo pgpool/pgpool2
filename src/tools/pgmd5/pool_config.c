@@ -2033,8 +2033,8 @@ ParseConfigFile(const char *config_file, int elevel,
 	fd = fopen(config_file, "r");
 	if (!fd)
 	{
-		ereport(elevel,
-			(errmsg("could not open configuration file: \"%s\"\n",config_file),
+		ereport(WARNING,
+			(errmsg("could not open configuration file: \"%s\"",config_file),
 				errdetail("using default configuration parameter values")));
 		return false;
 	}
