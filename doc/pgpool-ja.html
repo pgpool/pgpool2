@@ -4197,19 +4197,19 @@ pgpool-IIのチュートリアルは<a href="tutorial-ja.html">ここ</a>にあ�
         <a href="http://www.pgpool.net/mantisbt/view.php?id=194#c837の報告により、">
     http://www.pgpool.net/mantisbt/view.php?id=194#c837の報告により、
     </a><br />
-bug194-3.3.diff を適用しても、プライマリノードが 0 ではない場合、<br />
-ステートメントタイムアウトが発生する可能性がありました。<br />
-調査した結果、MASTER マクロがプライマリノードまたはロードバランスノード<br />
-以外のノードを返したからです。そのため、 do_query() がクエリを間違った<br />
-ノードに送信してしまいました（これは報告で確認されていませんが、<br />
+bug194-3.3.diff を適用しても、プライマリノードが 0 ではない場合、
+ステートメントタイムアウトが発生する可能性がありました。
+調査した結果、MASTER マクロがプライマリノードまたはロードバランスノード
+以外のノードを返したからです。そのため、 do_query() がクエリを間違った
+ノードに送信してしまいました（これは報告で確認されていませんが、
 調査で確認できました）。
     </blockquote>
     <blockquote>
-    MASTER マクロと呼ばれる pool_virtual_master_db_node_id() が、<br />
-クエリコンテキストが存在する場合、query_context->virtual_master_node_id<br />
-を返します。変数がセットされていない場合、この関数が間違ったノード<br />
-を返す可能性があります。そのため、pool_virtual_master_db_node_id()　<br />
-関数を以下のように修正しました。戻り値がプライマリノードまたはロード<br />
+    MASTER マクロと呼ばれる pool_virtual_master_db_node_id() が、
+クエリコンテキストが存在する場合、query_context-&gt; virtual_master_node_id
+を返します。変数がセットされていない場合、この関数が間違ったノード
+を返す可能性があります。そのため、pool_virtual_master_db_node_id()　
+関数を以下のように修正しました。戻り値がプライマリノードまたはロード
 バランスノードではない場合、プライマリノードを返します。
     </blockquote>
 </li>
