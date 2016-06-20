@@ -1769,6 +1769,140 @@
 3.2 Series (2012/08/03 - )
 ===============================================================================
 
+                        3.2.16 (namameboshi) 2016/06/17
+
+* Version 3.2.16
+
+    This is a bugfix release against pgpool-II 3.2.15.
+
+    __________________________________________________________________
+
+* New features
+
+    - Allow to access to pgpool while doing health checking (Tatsuo Ishii)
+
+      Currently any attempt to connect to pgpool fails if pgpool is doing
+      health check against failed node even if fail_over_on_backend_error is
+      off because pgpool child first tries to connect to all backend
+      including the failed one and exits if it fails to connect to a backend
+      (of course it fails). This is a temporary situation and will be
+      resolved before pgpool executes failover. However if the health check
+      is retrying, the temporary situation keeps longer depending on the
+      setting of health_check_max_retries and health_check_retry_delay. This
+      is not good. Attached patch tries to mitigate the problem:
+
+      - When an attempt to connect to backend fails, give up connecting to
+      the failed node and skip to other node, rather than exiting the
+      process if operating in streaming replication mode and the node is
+      not primary node.
+
+      - Mark the local status of the failed node to "down".
+
+      - This will let the primary node be selected as a load balance node
+      and every queries will be sent to the primary node. If there's other
+      healthy standby nodes, one of them will be chosen as the load
+      balance node.
+
+      - After the session is over, the child process will suicide to not
+      retain the local status.
+
+* Bug fixes
+
+    - Fix is_set_transaction_serializable() when
+      SET default_transaction_isolation TO 'serializable'. (Bo Peng)
+
+      SET default_transaction_isolation TO 'serializable' is sent to
+      not only primary but also to standby server in streaming replication mode,
+      and this causes an error. Fix is, in streaming replication mode,
+      SET default_transaction_isolation TO 'serializable' is sent only to the
+      primary server.
+
+      See bug 191 for related info.
+
+    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+      Connection pool is avalilable in raw mode.
+
+    - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
+
+    - Permit pgpool to support multiple SSL cipher protocols (Muhammad Usama)
+
+      Currently TLSv1_method() is used to initialize the SSL context, that puts an
+      unnecessary limitation to allow only TLSv1 protocol for SSL communication.
+      While postgreSQL supports other ciphers protocols as well. The commit changes
+      the above and initializes the SSLSession using the SSLv23_method()
+      (same is also used by PostgreSQL). Because it can negotiate the use of the
+      highest mutually supported protocol version and remove the limitation of one
+      specific protocol version.
+
+    - If statement timeout is enabled on backend and do_query() sends a (Tatsuo Ishii)
+      query to primary node, and all of following user queries are sent to
+      standby, it is possible that the next command, for example END, could
+      cause a statement timeout error on the primary, and a kind mismatch
+      error on pgpool-II is raised.
+
+      This fix tries to mitigate the problem by sending sync message instead
+      of flush message in do_query(), expecting that the sync message reset
+      the statement timeout timer if we are in an explicit transaction. We
+      cannot use this technique for implicit transaction case, because the
+      sync message removes the unnamed portal if there's any.
+
+      Plus, pg_stat_statement will no longer show the query issued by
+      do_query() as "running".
+
+      See bug 194 for related info.
+
+    - Deal with the case when the primary is not node 0 in streaming replication mode. (Tatsuo Ishii)
+
+      http://www.pgpool.net/mantisbt/view.php?id=194#c837 reported that if
+      primary is not node 0, then statement timeout could occur even after
+      bug194-3.3.diff was applied. After some investigation, it appeared
+      that MASTER macro could return other than primary or load balance
+      node, which was not supposed to happen, thus do_query() sends queries
+      to wrong node (this is not clear from the report but I confirmed it in
+      my investigation).
+
+      pool_virtual_master_db_node_id(), which is called in MASTER macro
+      returns query_context->virtual_master_node_id if query context
+      exists. This could return wrong node if the variable has not been set
+      yet. To fix this, the function is modified: if the variable is not
+      either load balance node or primary node, the primary node id is
+      returned.
+
+    - change the Makefile under the directory src/sql/, that is proposed (Bo Peng)
+      by [pgpool-hackers: 1611]
+
+    - Fix a posible hang during health checking (Yugo Nagata)
+
+      Helath checking was hang when any data wasn't sent
+      from backend after connect(2) succeeded. To fix this,
+      pool_check_fd() returns 1 when select(2) exits with
+      EINTR due to SIGALRM while health checkking is performed.
+
+      Reported and patch provided by harukat and some modification
+      by Yugo. Per bug #204.
+
+      backported from 3.4 or later;
+      https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commitdiff;h=ed9f2900f1b611f5cfd52e8f758c3616861e60c0
+
+    - Fix bug with load balance node id info on shmem (Tatsuo Ishii)
+
+      There are few places where the load balance node was mistakenly put on
+      wrong place. It should be placed on: ConnectionInfo *con_info[child
+      id, connection pool_id, backend id].load_balancing_node].  In fact it
+      was placed on: *con_info[child id, connection pool_id,
+      0].load_balancing_node].
+
+      As long as the backend id in question is 0, it is ok. However while
+      testing pgpool-II 3.6's enhancement regarding failover, if primary
+      node is 1 (which is the load balance node) and standby is 0, a client
+      connecting to node 1 is disconnected when failover happens on node
+      0. This is unexpected and the bug was revealed.
+
+      It seems the bug was there since long time ago but it had not found
+      until today by the reason above.
+
+===============================================================================
+
                         3.2.15 (namameboshi) 2016/04/26
 
 * Version 3.2.15
@@ -3851,6 +3985,111 @@
 
 ===============================================================================
 3.1 Series (2011/09/08 - )
+===============================================================================
+
+                        3.1.19 (hatsuiboshi) 2016/06/17
+
+* Version 3.1.19
+
+    This is a bugfix release against pgpool-II 3.1.18.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix is_set_transaction_serializable() when
+      SET default_transaction_isolation TO 'serializable'. (Bo Peng)
+
+      SET default_transaction_isolation TO 'serializable' is sent to
+      not only primary but also to standby server in streaming replication mode,
+      and this causes an error. Fix is, in streaming replication mode,
+      SET default_transaction_isolation TO 'serializable' is sent only to the
+      primary server.
+
+      See bug 191 for related info.
+
+    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+      Connection pool is avalilable in raw mode.
+
+    - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
+
+    - Permit pgpool to support multiple SSL cipher protocols (Muhammad Usama)
+
+      Currently TLSv1_method() is used to initialize the SSL context, that puts an
+      unnecessary limitation to allow only TLSv1 protocol for SSL communication.
+      While postgreSQL supports other ciphers protocols as well. The commit changes
+      the above and initializes the SSLSession using the SSLv23_method()
+      (same is also used by PostgreSQL). Because it can negotiate the use of the
+      highest mutually supported protocol version and remove the limitation of one
+      specific protocol version.
+
+    - If statement timeout is enabled on backend and do_query() sends a (Tatsuo Ishii)
+      query to primary node, and all of following user queries are sent to
+      standby, it is possible that the next command, for example END, could
+      cause a statement timeout error on the primary, and a kind mismatch
+      error on pgpool-II is raised.
+
+      This fix tries to mitigate the problem by sending sync message instead
+      of flush message in do_query(), expecting that the sync message reset
+      the statement timeout timer if we are in an explicit transaction. We
+      cannot use this technique for implicit transaction case, because the
+      sync message removes the unnamed portal if there's any.
+
+      Plus, pg_stat_statement will no longer show the query issued by
+      do_query() as "running".
+
+      See bug 194 for related info.
+
+    - Deal with the case when the primary is not node 0 in streaming replication mode. (Tatsuo Ishii)
+
+      http://www.pgpool.net/mantisbt/view.php?id=194#c837 reported that if
+      primary is not node 0, then statement timeout could occur even after
+      bug194-3.3.diff was applied. After some investigation, it appeared
+      that MASTER macro could return other than primary or load balance
+      node, which was not supposed to happen, thus do_query() sends queries
+      to wrong node (this is not clear from the report but I confirmed it in
+      my investigation).
+
+      pool_virtual_master_db_node_id(), which is called in MASTER macro
+      returns query_context->virtual_master_node_id if query context
+      exists. This could return wrong node if the variable has not been set
+      yet. To fix this, the function is modified: if the variable is not
+      either load balance node or primary node, the primary node id is
+      returned.
+
+    - change the Makefile under the directory src/sql/, that is proposed (Bo Peng)
+      by [pgpool-hackers: 1611]
+
+    - Fix a posible hang during health checking (Yugo Nagata)
+
+      Helath checking was hang when any data wasn't sent
+      from backend after connect(2) succeeded. To fix this,
+      pool_check_fd() returns 1 when select(2) exits with
+      EINTR due to SIGALRM while health checkking is performed.
+
+      Reported and patch provided by harukat and some modification
+      by Yugo. Per bug #204.
+
+      backported from 3.4 or later;
+      https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commitdiff;h=ed9f2900f1b611f5cfd52e8f758c3616861e60c0
+
+    - Fix bug with load balance node id info on shmem (Tatsuo Ishii)
+
+      There are few places where the load balance node was mistakenly put on
+      wrong place. It should be placed on: ConnectionInfo *con_info[child
+      id, connection pool_id, backend id].load_balancing_node].  In fact it
+      was placed on: *con_info[child id, connection pool_id,
+      0].load_balancing_node].
+
+      As long as the backend id in question is 0, it is ok. However while
+      testing pgpool-II 3.6's enhancement regarding failover, if primary
+      node is 1 (which is the load balance node) and standby is 0, a client
+      connecting to node 1 is disconnected when failover happens on node
+      0. This is unexpected and the bug was revealed.
+
+      It seems the bug was there since long time ago but it had not found
+      until today by the reason above.
+
 ===============================================================================
 
                         3.1.18 (hatsuiboshi) 2016/04/26
