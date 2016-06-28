@@ -207,21 +207,17 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 			cp->socket_state = POOL_SOCKET_ERROR;
 			if (cp->isbackend)
 			{
+				ereport(ERROR,
+						(errmsg("unable to read data from DB node %d",cp->db_node_id),
+						 errdetail("socket read failed with an error \"%s\"", strerror(errno))));
+
 				/* if fail_over_on_backend_error is true, then trigger failover */
 				if (pool_config->fail_over_on_backend_error)
 				{
 					notice_backend_error(cp->db_node_id, true);
+
+                    /* If we are in the main process, we will not exit */
 					child_exit(POOL_EXIT_AND_RESTART);
-                    /* we are in main process */
-                    ereport(ERROR,
-						(errmsg("unable to read data from DB node %d",cp->db_node_id),
-                             errdetail("socket read failed with an error \"%s\"", strerror(errno))));
-				}
-				else
-				{
-                    ereport(ERROR,
-						(errmsg("unable to read data from DB node %d",cp->db_node_id),
-                             errdetail("socket read failed with an error \"%s\"", strerror(errno))));
 				}
 			}
 			else
