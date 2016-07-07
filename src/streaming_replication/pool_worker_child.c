@@ -402,6 +402,8 @@ static unsigned long long int text_to_lsn(char *text)
 
 static RETSIGTYPE my_signal_handler(int sig)
 {
+	int save_errno = errno;
+
 	POOL_SETMASK(&BlockSig);
 
 	switch (sig)
@@ -423,13 +425,17 @@ static RETSIGTYPE my_signal_handler(int sig)
 	}
 
 	POOL_SETMASK(&UnBlockSig);
+
+	errno = save_errno;
 }
 
 static RETSIGTYPE reload_config_handler(int sig)
 {
+	int save_errno = errno;
 	POOL_SETMASK(&BlockSig);
 	reload_config_request = 1;
 	POOL_SETMASK(&UnBlockSig);
+	errno = save_errno;
 }
 
 static void reload_config(void)

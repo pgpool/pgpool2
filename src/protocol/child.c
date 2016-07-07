@@ -910,6 +910,8 @@ static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION 
  */
 static RETSIGTYPE die(int sig)
 {
+	int save_errno = errno;
+
 	ereport(LOG,
 			(errmsg("child process received shutdown request signal %d", sig)));
 
@@ -945,6 +947,8 @@ static RETSIGTYPE die(int sig)
 
 			break;
 	}
+
+	errno = save_errno;
 }
 
 /*
@@ -956,6 +960,7 @@ static RETSIGTYPE close_idle_connection(int sig)
 	int i, j;
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 	ConnectionInfo *info;
+	int save_errno = errno;
 
 	ereport(DEBUG1,
 			(errmsg("close connection request received")));
@@ -996,6 +1001,8 @@ static RETSIGTYPE close_idle_connection(int sig)
 			memset(p->info, 0, sizeof(ConnectionInfo));
 		}
 	}
+
+	errno = save_errno;
 }
 
 /*
