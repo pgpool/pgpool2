@@ -1024,8 +1024,10 @@ static void terminate_all_childrens()
     /* wait for all children to exit */
     do
     {
-        wpid = wait(NULL);
-    }while (wpid > 0 || (wpid == -1 && errno == EINTR));
+		int ret_pid;
+
+        wpid = waitpid(-1, &ret_pid, WNOHANG);
+    } while (wpid > 0 || (wpid == -1 && errno == EINTR));
 
     if (wpid == -1 && errno != ECHILD)
         ereport(LOG,
@@ -1365,8 +1367,10 @@ static RETSIGTYPE exit_handler(int sig)
 	POOL_SETMASK(&UnBlockSig);
     do
     {
-        wpid = wait(NULL);
-    }while (wpid > 0 || (wpid == -1 && errno == EINTR));
+		int ret_pid;
+
+        wpid = waitpid(-1, &ret_pid, WNOHANG);
+    } while (wpid > 0 || (wpid == -1 && errno == EINTR));
 
     if (wpid == -1 && errno != ECHILD)
         ereport(LOG,
