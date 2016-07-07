@@ -1210,6 +1210,8 @@ static RETSIGTYPE exit_handler(int sig)
 {
 	int i;
     pid_t wpid;
+
+	int save_errno = errno;
 	POOL_SETMASK(&AuthBlockSig);
 
 	/*
@@ -1241,6 +1243,7 @@ static RETSIGTYPE exit_handler(int sig)
 				 errdetail("ignoring...")));
 
 		POOL_SETMASK(&UnBlockSig);
+		errno = save_errno;
 		return;
 	}
 	exiting = 1;
@@ -1291,6 +1294,8 @@ static RETSIGTYPE exit_handler(int sig)
 
 	process_info = NULL;
 	exit(0);
+
+	errno = save_errno;
 }
 
 /*
@@ -1333,6 +1338,8 @@ static int get_next_master_node(void)
  */
 static RETSIGTYPE failover_handler(int sig)
 {
+	int save_errno = errno;
+
 	POOL_SETMASK(&BlockSig);
 	failover_request = 1;
 	if(write(pipe_fds[1], "\0", 1) < 0)
@@ -1340,6 +1347,8 @@ static RETSIGTYPE failover_handler(int sig)
                 (errmsg("failover_handler: write to pipe failed with error \"%s\"", strerror(errno))));
 
 	POOL_SETMASK(&UnBlockSig);
+
+	errno = save_errno;
 }
 
 /*
@@ -1908,9 +1917,11 @@ static void failover(void)
  */
 static RETSIGTYPE health_check_timer_handler(int sig)
 {
+	int save_errno = errno;
 	POOL_SETMASK(&BlockSig);
 	health_check_timer_expired = 1;
 	POOL_SETMASK(&UnBlockSig);
+	errno = save_errno;
 }
 
 
@@ -1991,6 +2002,8 @@ do_health_check(bool use_template_db, volatile int *health_check_node_id)
  */
 static RETSIGTYPE reap_handler(int sig)
 {
+	int save_errno = errno;
+
 	POOL_SETMASK(&BlockSig);
 	sigchld_request = 1;
 	if(write(pipe_fds[1], "\0", 1) < 0)
@@ -1998,6 +2011,8 @@ static RETSIGTYPE reap_handler(int sig)
             (errmsg("reap_handler: write to pipe failed with error \"%s\"", strerror(errno))));
 
 	POOL_SETMASK(&UnBlockSig);
+
+	errno = save_errno;
 }
 
 /*
@@ -2245,12 +2260,16 @@ static void wakeup_children(void)
 
 static RETSIGTYPE wakeup_handler(int sig)
 {
+	int save_errno = errno;
+
 	POOL_SETMASK(&BlockSig);
 	wakeup_request = 1;
 	if(write(pipe_fds[1], "\0", 1) < 0)
         ereport(WARNING,
             (errmsg("wakeup_handler: write to pipe failed with error \"%s\"", strerror(errno))));
 	POOL_SETMASK(&UnBlockSig);
+
+	errno = save_errno;
 }
 
 /*
@@ -2259,6 +2278,8 @@ static RETSIGTYPE wakeup_handler(int sig)
  */
 static RETSIGTYPE reload_config_handler(int sig)
 {
+	int save_errno = errno;
+
 	POOL_SETMASK(&BlockSig);
 	reload_config_request = 1;
 	if(write(pipe_fds[1], "\0", 1) < 0)
@@ -2266,6 +2287,8 @@ static RETSIGTYPE reload_config_handler(int sig)
             (errmsg("reload_config_handler: write to pipe failed with error \"%s\"", strerror(errno))));
 
 	POOL_SETMASK(&UnBlockSig);
+
+	errno = save_errno;
 }
 
 static void kill_all_children(int sig)
