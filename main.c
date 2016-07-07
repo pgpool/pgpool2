@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1439,6 +1439,7 @@ static void myunlink(const char* path)
 static void myexit(int code)
 {
 	int i;
+	pid_t wpid;
 
 	if (getpid() != mypid)
 		return;
@@ -1456,9 +1457,14 @@ static void myexit(int code)
 		}
 
 		/* wait for all children to exit */
-		while (wait(NULL) > 0)
-			;
-		if (errno != ECHILD)
+		do
+		{
+			pid_t ret_pid;
+
+			wpid = waitpid(-1, &ret_pid, WNOHANG);
+		} while (wpid > 0 || (wpid == -1 && errno == EINTR));
+
+		if (wpid == -1 && errno != ECHILD)
 			pool_error("wait() failed. reason:%s", strerror(errno));
 		POOL_SETMASK(&UnBlockSig);
 	}
@@ -1683,6 +1689,7 @@ void send_failback_request(int node_id)
 static RETSIGTYPE exit_handler(int sig)
 {
 	int i;
+	pid_t wpid;
 
 	POOL_SETMASK(&AuthBlockSig);
 
@@ -1736,10 +1743,14 @@ static RETSIGTYPE exit_handler(int sig)
 
 	POOL_SETMASK(&UnBlockSig);
 
-	while (wait(NULL) > 0)
-		;
+    do
+    {
+		pid_t ret_pid;
 
-	if (errno != ECHILD)
+        wpid = waitpid(-1, &ret_pid, WNOHANG);
+    } while (wpid > 0 || (wpid == -1 && errno == EINTR));
+
+    if (wpid == -1 && errno != ECHILD)
 		pool_error("wait() failed. reason:%s", strerror(errno));
 
 	process_info = NULL;
