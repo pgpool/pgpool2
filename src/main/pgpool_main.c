@@ -3165,7 +3165,40 @@ int write_status_file()
 	FILE *fd;
 	int fdnum;
 	char fnamebuf[POOLMAXPATHLEN];
+	char buf[10];
 	int i;
+
+    if (!pool_config)
+	{
+		ereport(WARNING,
+				(errmsg("pool_config is not set")));
+		return 0;
+	}
+
+	/* Check to see if all nodes are down status.
+	 * If so, skip writing status file.
+	 * So pgpool_status will
+	 * always reflect the last set of nodes to which any data was written.
+	 * Upon restart, if the up-to-date (previously "up") node is in fact down
+	 * (regardless of whether the stale ("down") node is back up), pgpool
+	 * will detect this in its health check and will fail; if the up-to-date
+	 * (previously "up") node is back up, then pgpool will commence using it.
+	 *
+	 * See [pgpool-general: 4721] for more discussion.
+	 */
+	for (i=0;i< pool_config->backend_desc->num_backends;i++)
+	{
+		if (BACKEND_INFO(i).backend_status != CON_DOWN)
+			break;
+	}
+
+	if (i && i == pool_config->backend_desc->num_backends)
+	{
+		ereport(WARNING,
+				(errmsg("All the DB nodes are in down status and skip writing status file.")));
+
+		return 0;
+	}
 
 	snprintf(fnamebuf, sizeof(fnamebuf), "%s/%s", pool_config->logdir, STATUS_FILE_NAME);
 	fd = fopen(fnamebuf, "w");
@@ -3177,64 +3210,59 @@ int write_status_file()
 		return -1;
 	}
 
-    if(pool_config)
-    {
-		char buf[10];
+	for (i=0;i< pool_config->backend_desc->num_backends;i++)
+	{
+		char* status;
 
-        for (i=0;i< pool_config->backend_desc->num_backends;i++)
-        {
-			char* status;
+		if (BACKEND_INFO(i).backend_status == CON_UP ||
+			BACKEND_INFO(i).backend_status == CON_CONNECT_WAIT)
+			status = "up";
+		else if (BACKEND_INFO(i).backend_status == CON_DOWN)
+			status = "down";
+		else
+			status = "unused";
 
-			if (BACKEND_INFO(i).backend_status == CON_UP ||
-				BACKEND_INFO(i).backend_status == CON_CONNECT_WAIT)
-				status = "up";
-			else if (BACKEND_INFO(i).backend_status == CON_DOWN)
-				status = "down";
-			else
-				status = "unused";
-
-			sprintf(buf, "%s\n", status);
-			if (fwrite(buf, 1, strlen(buf), fd) != strlen(buf))
-			{
-				ereport(WARNING,
-					(errmsg("failed to write status file at: \"%s\"",fnamebuf),
-						 errdetail("\"%s\"",strerror(errno))));
-				fclose(fd);
-				return -1;
-			}
-		}
-
-        if (fflush(fd) != 0)
-        {
-			ereport(WARNING,
-				(errmsg("failed to write status file at: \"%s\"",fnamebuf),
-					 errdetail("\"%s\"",strerror(errno))));
-            fclose(fd);
-            return -1;
-        }
-		fdnum = fileno(fd);
-		if (fdnum < 0)
-        {
-			ereport(WARNING,
-				(errmsg("failed to get file number. fsync() will not be performed: \"%s\"",fnamebuf),
-					 errdetail("\"%s\"",strerror(errno))));
-            fclose(fd);
-            return -1;
-        }
-		if (fsync(fdnum) != 0)
+		sprintf(buf, "%s\n", status);
+		if (fwrite(buf, 1, strlen(buf), fd) != strlen(buf))
 		{
 			ereport(WARNING,
-				(errmsg("failed to fsync(): \"%s\"",fnamebuf),
+					(errmsg("failed to write status file at: \"%s\"",fnamebuf),
 					 errdetail("\"%s\"",strerror(errno))));
-            fclose(fd);
-            return -1;
+			fclose(fd);
+			return -1;
 		}
+	}
 
-        fclose(fd);
-    }
+	if (fflush(fd) != 0)
+	{
+		ereport(WARNING,
+				(errmsg("failed to write status file at: \"%s\"",fnamebuf),
+				 errdetail("\"%s\"",strerror(errno))));
+		fclose(fd);
+		return -1;
+	}
+	fdnum = fileno(fd);
+	if (fdnum < 0)
+	{
+		ereport(WARNING,
+				(errmsg("failed to get file number. fsync() will not be performed: \"%s\"",fnamebuf),
+				 errdetail("\"%s\"",strerror(errno))));
+		fclose(fd);
+		return -1;
+	}
+	if (fsync(fdnum) != 0)
+	{
+		ereport(WARNING,
+				(errmsg("failed to fsync(): \"%s\"",fnamebuf),
+				 errdetail("\"%s\"",strerror(errno))));
+		fclose(fd);
+		return -1;
+	}
+
+	fclose(fd);
+
 	return 0;
 }
-
 
 static void reload_config(void)
 {
