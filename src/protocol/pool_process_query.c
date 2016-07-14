@@ -84,7 +84,7 @@ static bool has_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table);
 static POOL_STATUS read_packets_and_process(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int reset_request, int *state, short *num_fields, bool *cont);
 static bool is_all_slaves_command_complete(unsigned char *kind_list, int num_backends, int master);
-
+static bool pool_process_notice_message_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int backend_idx, char kind);
 /* timeout sec for pool_check_fd */
 static int timeoutsec;
 
@@ -3646,32 +3646,39 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 						 errdetail("backend:%d kind:'%c'",i, kind)));
 
 				/*
-				 * Read and discard parameter status
+				 * Read and discard parameter status and notice messages
 				 */
-				if (kind != 'S')
+				if (kind == 'N')
 				{
-					break;
-				}
-
-				pool_read(CONNECTION(backend, i), &len, sizeof(len));
-				len = htonl(len) - 4;
-				p = pool_read2(CONNECTION(backend, i), len);
-				if (p)
-				{
-					value = p + strlen(p) + 1;
 					ereport(DEBUG1,
-						(errmsg("reading backend data packet kind"),
-							 errdetail("parameter name: %s value: \"%s\"", p, value)));
-
-					if (IS_MASTER_NODE_ID(i))
-						pool_add_param(&CONNECTION(backend, i)->params, p, value);
+						(errmsg("received log message from backend %d while reading packet kind",i)));
+					pool_process_notice_message_from_one_backend(frontend, backend, i, kind);
 				}
-				else
-					ereport(WARNING,
-						(errmsg("failed to read parameter status packet from backend %d", i),
-							 errdetail("read from backend failed")));
 
-			} while (kind == 'S');
+				else if (kind == 'S')
+				{
+					pool_read(CONNECTION(backend, i), &len, sizeof(len));
+					len = htonl(len) - 4;
+					p = pool_read2(CONNECTION(backend, i), len);
+					if (p)
+					{
+						value = p + strlen(p) + 1;
+						ereport(DEBUG1,
+							(errmsg("reading backend data packet kind"),
+								 errdetail("parameter name: %s value: \"%s\"", p, value)));
+
+						if (IS_MASTER_NODE_ID(i))
+							pool_add_param(&CONNECTION(backend, i)->params, p, value);
+					}
+					else
+					{
+						ereport(WARNING,
+							(errmsg("failed to read parameter status packet from backend %d", i),
+								 errdetail("read from backend failed")));
+					}
+				}
+
+			} while (kind == 'S' || kind == 'N' );
 
 #ifdef DEALLOCATE_ERROR_TEST
 			if (i == 1 && kind == 'C' &&
@@ -4442,6 +4449,86 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 	}
 
 	return is_error;
+}
+
+/*
+ * The function forwards the NOTICE mesaage received from one backend
+ * to the frontend and also puts the human readable message to the
+ * pgpool log
+ */
+
+static bool pool_process_notice_message_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int backend_idx, char kind)
+{
+	int major = MAJOR(backend);
+	POOL_CONNECTION *backend_conn = CONNECTION(backend, backend_idx);
+
+	if (kind != 'N')
+		return false;
+
+	/* read actual message */
+	if (major == PROTO_MAJOR_V3)
+	{
+		char *e;
+		int len, datalen;
+		char *buff;
+		char *errorSev = NULL;
+		char *errorMsg = NULL;
+
+		pool_read(backend_conn, &datalen, sizeof(datalen));
+		len = ntohl(datalen) - 4;
+
+		if (len <= 0 )
+			return false;
+
+		buff = palloc(len);
+
+		pool_read(backend_conn, buff, len);
+
+		e = buff;
+
+		while (*e)
+		{
+			char tok = *e;
+			e++;
+			if(*e == 0)
+				break;
+			if (tok == 'M')
+				errorMsg = e;
+			else if(tok == 'S')
+				errorSev = e;
+			else
+				e += strlen(e) + 1;
+
+			if(errorSev && errorMsg) /* we have all what we need */
+				break;
+		}
+
+		/* produce a pgpool log entry */
+		ereport(LOG,
+			(errmsg("backend [%d]: %s: %s",backend_idx,errorSev,errorMsg)));
+		/* forward it to the frontend */
+		pool_write(frontend, &kind, 1);
+		pool_write(frontend, &datalen, sizeof(datalen));
+		pool_write_and_flush(frontend, buff, len);
+
+		pfree(buff);
+	}
+	else /* Old Protocol */
+	{
+		int len = 0;
+		char *str = pool_read_string(backend_conn, &len, 0);
+
+		if (str == NULL || len <= 0)
+			return false;
+
+		/* produce a pgpool log entry */
+		ereport(LOG,
+				(errmsg("backend [%d]: NOTICE: %s",backend_idx,str)));
+		/* forward it to the frontend */
+		pool_write(frontend, &kind, 1);
+		pool_write_and_flush(frontend, str, len);
+	}
+	return true;
 }
 
 /*
