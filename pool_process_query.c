@@ -80,7 +80,7 @@ static bool has_lock_target(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char* table);
 static POOL_STATUS read_packets_and_process(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int reset_request, int *state, short *num_fields, bool *cont);
 static bool is_all_slaves_command_complete(unsigned char *kind_list, int num_backends, int master);
-
+static POOL_STATUS pool_process_notice_message_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int backend_idx, char kind);
 /* timeout sec for pool_check_fd */
 static int timeoutsec;
 
@@ -3808,31 +3808,35 @@ POOL_STATUS read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 				pool_debug("read_kind_from_backend: kind: %c from %d th backend", kind, i);
 
 				/*
-				 * Read and discard parameter status
+				 * Read and discard parameter status and notice messages
 				 */
-				if (kind != 'S')
+				if (kind == 'N')
 				{
-					break;
+					pool_debug("read_kind_from_backend: received log message from backend %d while reading packet kind",i);
+					if (pool_process_notice_message_from_one_backend(frontend, backend, i, kind) != POOL_CONTINUE)
+						return POOL_ERROR;
+				}
+				else if (kind == 'S')
+				{
+					if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
+					{
+						pool_error("read_kind_from_backend: failed to read parameter status packet length from %d th backend", i);
+						return POOL_ERROR;
+					}
+					len = htonl(len) - 4;
+					p = pool_read2(CONNECTION(backend, i), len);
+					if (p)
+					{
+						value = p + strlen(p) + 1;
+						pool_debug("read_kind_from_backend: parameter name: %s value: %s", p, value);
+						if (IS_MASTER_NODE_ID(i))
+							pool_add_param(&CONNECTION(backend, i)->params, p, value);
+					}
+					else
+						pool_error("read_kind_from_backend: failed to read parameter status packet from %d th backend", i);
 				}
 
-				if (pool_read(CONNECTION(backend, i), &len, sizeof(len)) < 0)
-				{
-					pool_error("read_kind_from_backend: failed to read parameter status packet length from %d th backend", i);
-					return POOL_ERROR;
-				}
-				len = htonl(len) - 4;
-				p = pool_read2(CONNECTION(backend, i), len);
-				if (p)
-				{
-					value = p + strlen(p) + 1;
-					pool_debug("read_kind_from_backend: parameter name: %s value: %s", p, value);
-					if (IS_MASTER_NODE_ID(i))
-						pool_add_param(&CONNECTION(backend, i)->params, p, value);
-				}
-				else
-					pool_error("read_kind_from_backend: failed to read parameter status packet from %d th backend", i);
-
-			} while (kind == 'S');
+			} while (kind == 'S' || kind == 'N' );
 
 #ifdef DEALLOCATE_ERROR_TEST
 			/*
@@ -4612,6 +4616,102 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 	}
 
 	return is_error;
+}
+
+/*
+ * The function forwards the NOTICE mesaage received from one backend
+ * to the frontend and also puts the human readable message to the
+ * pgpool log
+ */
+
+static POOL_STATUS pool_process_notice_message_from_one_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int backend_idx, char kind)
+{
+	int major = MAJOR(backend);
+	POOL_CONNECTION *backend_conn = CONNECTION(backend, backend_idx);
+
+	if (kind != 'N')
+		return POOL_ERROR;
+
+	/* read actual message */
+	if (major == PROTO_MAJOR_V3)
+	{
+		char *e;
+		int len, datalen;
+		char *buff;
+		char *errorSev = NULL;
+		char *errorMsg = NULL;
+
+		if (pool_read(backend_conn, &datalen, sizeof(datalen)) < 0)
+		{
+			pool_error("pool_process_notice_message_from_one_backend: failed to read data length from %d th backend", backend_idx);
+			return POOL_ERROR;
+		}
+
+		len = ntohl(datalen) - 4;
+
+		if (len <= 0 )
+			return POOL_ERROR;
+
+		buff = malloc(len);
+		if (!buff)
+		{
+			pool_error("pool_process_notice_message_from_one_backend: malloc failed");
+			return POOL_ERROR;
+		}
+
+		if (pool_read(backend_conn, buff, len) < 0)
+		{
+			pool_error("pool_process_notice_message_from_one_backend: failed to read data from %d th backend", backend_idx);
+			return POOL_ERROR;
+		}
+
+		e = buff;
+
+		while (*e)
+		{
+			char tok = *e;
+			e++;
+			if(*e == 0)
+				break;
+			if (tok == 'M')
+				errorMsg = e;
+			else if(tok == 'S')
+				errorSev = e;
+			else
+				e += strlen(e) + 1;
+
+			if(errorSev && errorMsg) /* we have all what we need */
+				break;
+		}
+
+		/* produce a pgpool log entry */
+		pool_log("backend [%d]: %s: %s",backend_idx,errorSev,errorMsg);
+		/* forward it to the frontend */
+		pool_write(frontend, &kind, 1);
+		pool_write(frontend, &datalen, sizeof(datalen));
+		if (pool_write_and_flush(frontend, buff, len) < 0)
+		{
+			free(buff);
+			return POOL_END;
+		}
+		free(buff);
+	}
+	else /* Old Protocol */
+	{
+		int len = 0;
+		char *str = pool_read_string(backend_conn, &len, 0);
+
+		if (str == NULL || len <= 0)
+			return POOL_END;
+
+		/* produce a pgpool log entry */
+		pool_log("backend [%d]: NOTICE: %s",backend_idx,str);
+		/* forward it to the frontend */
+		pool_write(frontend, &kind, 1);
+		if (pool_write_and_flush(frontend, str, len) < 0)
+			return POOL_END;
+	}
+	return POOL_CONTINUE;
 }
 
 /*
