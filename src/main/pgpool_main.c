@@ -352,8 +352,10 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	/* Add onproc exit to clean up the unix domain socket at exit */
 	on_proc_exit(FileUnlink, (Datum)pcp_un_addr.sun_path);
 
-    /* maybe change "*" to pool_config->pcp_listen_addresses */
-	pcp_inet_fd = create_inet_domain_socket("*", pool_config->pcp_port);
+	if (pool_config->pcp_listen_addresses[0])
+	{
+		pcp_inet_fd = create_inet_domain_socket(pool_config->pcp_listen_addresses, pool_config->pcp_port);
+	}
 	pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
 
 	/* Fork worker process */
