@@ -2334,7 +2334,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			pool_config->socket_dir = str;
 		}
-		else if (!strcmp(key, "socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
+		else if (!strcmp(key, "pcp_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
 			
@@ -2350,7 +2350,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				fclose(fd);
 				return(-1);
 			}
-			pool_config->socket_dir = str;
+			pool_config->pcp_socket_dir = str;
 		}
 		else if (!strcmp(key, "wd_ipc_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{

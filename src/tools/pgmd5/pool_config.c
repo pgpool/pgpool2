@@ -491,7 +491,7 @@ char *yytext;
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -547,7 +547,7 @@ static char **extract_string_tokens(char *str, char *delim, int *n);
 static void clear_host_entry(int slot);
 static bool check_redirect_node_spec(char *node_spec);
 
-#line 552 "pool_config.c"
+#line 551 "pool_config.c"
 
 #define INITIAL 0
 
@@ -727,10 +727,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 91 "pool_config.l"
+#line 90 "pool_config.l"
 
 
-#line 735 "pool_config.c"
+#line 734 "pool_config.c"
 
 	if ( !(yy_init) )
 		{
@@ -812,12 +812,12 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 93 "pool_config.l"
+#line 92 "pool_config.l"
 Lineno++; return POOL_EOL;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 94 "pool_config.l"
+#line 93 "pool_config.l"
 /* eat whitespace */
 	YY_BREAK
 case 3:
@@ -825,50 +825,50 @@ case 3:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 95 "pool_config.l"
+#line 94 "pool_config.l"
 /* eat comment */
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 97 "pool_config.l"
+#line 96 "pool_config.l"
 return POOL_KEY;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 98 "pool_config.l"
+#line 97 "pool_config.l"
 return POOL_STRING;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 99 "pool_config.l"
+#line 98 "pool_config.l"
 return POOL_UNQUOTED_STRING;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 100 "pool_config.l"
+#line 99 "pool_config.l"
 return POOL_INTEGER;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 101 "pool_config.l"
+#line 100 "pool_config.l"
 return POOL_REAL;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 102 "pool_config.l"
+#line 101 "pool_config.l"
 return POOL_EQUALS;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 104 "pool_config.l"
+#line 103 "pool_config.l"
 return POOL_PARSE_ERROR;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 106 "pool_config.l"
+#line 105 "pool_config.l"
 ECHO;
 	YY_BREAK
-#line 873 "pool_config.c"
+#line 872 "pool_config.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1825,7 +1825,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 106 "pool_config.l"
+#line 105 "pool_config.l"
 
 
 
@@ -1856,9 +1856,11 @@ int pool_init_config(void)
 	pool_config->port = 9999;
 	pool_config->pcp_port = 9898;
 	pool_config->socket_dir = DEFAULT_SOCKET_DIR;
+	pool_config->wd_ipc_socket_dir = DEFAULT_WD_IPC_SOCKET_DIR;
 	pool_config->pcp_socket_dir = DEFAULT_SOCKET_DIR;
 	pool_config->num_init_children = 32;
 	pool_config->listen_backlog_multiplier = 2;
+	pool_config->serialize_accept = 0;
 	pool_config->max_pool = 4;
 	pool_config->child_life_time = 300;
 	pool_config->client_idle_limit = 0;
@@ -1866,10 +1868,10 @@ int pool_init_config(void)
 	pool_config->child_max_connections = 0;
 	pool_config->authentication_timeout = 60;
 	pool_config->logdir = DEFAULT_LOGDIR;
-    pool_config->logsyslog = 0;
-    pool_config->log_destination = "stderr";
-    pool_config->syslog_facility = LOG_LOCAL0;
-    pool_config->syslog_ident = "pgpool";
+	pool_config->logsyslog = 0;
+	pool_config->log_destination = "stderr";
+	pool_config->syslog_facility = LOG_LOCAL0;
+	pool_config->syslog_ident = "pgpool";
 	pool_config->pid_file_name = DEFAULT_PID_FILE_NAME;
 	pool_config->log_statement = 0;
 	pool_config->log_per_node_statement = 0;
@@ -1902,12 +1904,14 @@ int pool_init_config(void)
 	pool_config->health_check_period = 0;
 	pool_config->health_check_user = "nobody";
 	pool_config->health_check_password = "";
+	pool_config->health_check_database = "";
 	pool_config->health_check_max_retries = 0;
 	pool_config->health_check_retry_delay = 1;
 	pool_config->connect_timeout = 10000;
 	pool_config->sr_check_period = 0;
 	pool_config->sr_check_user = "nobody";
 	pool_config->sr_check_password = "";
+	pool_config->sr_check_database = "postgres";
 	pool_config->failover_command = "";
 	pool_config->follow_master_command = "";
 	pool_config->failback_command = "";
@@ -1991,6 +1995,8 @@ int pool_init_config(void)
 	pool_config->wd_heartbeat_keepalive = 2;
 	pool_config->wd_heartbeat_deadtime = 30;
 	pool_config->num_hb_if = 0;
+	pool_config->wd_monitoring_interfaces_list = NULL;
+	pool_config->num_wd_monitoring_interfaces_list = 0;
 
     pool_config->memory_cache_enabled = 0;
     pool_config->memqcache_method = "shmem";
@@ -2161,6 +2167,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 	int i;
 	int error_level;
     bool log_destination_changed = false;
+	sig_atomic_t local_num_backends;
 #ifdef USE_MEMCACHED
 	bool use_memcached = true;
 #else
@@ -2330,7 +2337,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		else if (!strcmp(key, "pcp_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
 			char *str;
-
+			
 			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
 			{
 				PARSE_ERROR();
@@ -2344,6 +2351,24 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->pcp_socket_dir = str;
+		}
+		else if (!strcmp(key, "wd_ipc_socket_dir") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_ipc_socket_dir = str;
 		}
 		else if (!strcmp(key, "num_init_children") && CHECK_CONTEXT(INIT_CONFIG, context))
 		{
@@ -2372,6 +2397,20 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->listen_backlog_multiplier = v;
+		}
+		else if (!strcmp(key, "serialize_accept") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+
+			if (v < 0)
+			{
+				fclose(fd);
+				ereport(error_level,
+					(errmsg("invalid configuration for key \"%s\"",key),
+						errdetail("invalid value:\"%s\" for key:\"%s\"",yytext,key)));
+				return(-1);
+			}
+			pool_config->serialize_accept = v;
 		}
 		else if (!strcmp(key, "child_life_time") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
@@ -3142,7 +3181,28 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			pool_config->health_check_password = str;
 		}
 
-                else if (!strcmp(key, "health_check_max_retries") &&
+		else if (!strcmp(key, "health_check_database") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->health_check_database = str;
+		}
+
+
+        else if (!strcmp(key, "health_check_max_retries") &&
                                  CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
                 {
                         int v = atoi(yytext);
@@ -3175,6 +3235,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
                         }
                         pool_config->health_check_retry_delay = v;
                 }
+
 		else if (!strcmp(key, "connect_timeout") &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
 		{
@@ -3247,6 +3308,26 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->sr_check_password = str;
+		}
+
+		else if (!strcmp(key, "sr_check_database") &&
+				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->sr_check_database = str;
 		}
 
 		else if (!strcmp(key, "failover_command") &&
@@ -3490,7 +3571,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			pool_config->ignore_leading_white_space = v;
 		}
 
-
 		else if (!strncmp(key, "backend_hostname", 16) &&
 				 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context) &&
 				 mypid == getpid()) /* this parameter must be modified by parent pid */
@@ -3518,6 +3598,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			if (context == INIT_CONFIG ||
 				(context == RELOAD_CONFIG && BACKEND_INFO(slot).backend_status == CON_UNUSED))
 				strlcpy(BACKEND_INFO(slot).backend_hostname, str, MAX_DB_HOST_NAMELEN);
+
 		}
 
 		else if (!strncmp(key, "backend_port", 12) &&
@@ -4361,7 +4442,6 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
 				strlcpy(WD_HB_IF(slot).if_name, str, WD_MAX_IF_NAME_LEN);
-
 		}
 		/* this must be prior to hertbeat_destination */
 		else if (!strncmp(key, "heartbeat_destination_port", 26) &&
@@ -4413,6 +4493,31 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 			if (context == INIT_CONFIG || (context == RELOAD_CONFIG ))
 				strlcpy(WD_HB_IF(slot).addr, str, WD_MAX_HOST_NAMELEN);
+		}
+
+		else if (!strcmp(key, "wd_monitoring_interfaces_list") &&
+		CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			char *str;
+
+			if (token != POOL_STRING && token != POOL_UNQUOTED_STRING && token != POOL_KEY)
+			{
+				PARSE_ERROR();
+				fclose(fd);
+				return(-1);
+			}
+			str = extract_string(yytext, token);
+			if (str == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
+			pool_config->wd_monitoring_interfaces_list = extract_string_tokens(str, ",", &pool_config->num_wd_monitoring_interfaces_list);
+			if (pool_config->wd_monitoring_interfaces_list == NULL)
+			{
+				fclose(fd);
+				return(-1);
+			}
 		}
 
         else if (!strcmp(key, "ssl") && CHECK_CONTEXT(INIT_CONFIG, context))
@@ -4977,7 +5082,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		}
 	}
 
-	pool_config->backend_desc->num_backends = 0;
+	local_num_backends = 0;
 	total_weight = 0.0;
 
 	for (i=0;i<MAX_CONNECTION_SLOTS;i++)
@@ -4991,7 +5096,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		else
 		{
 			total_weight += BACKEND_INFO(i).unnormalized_weight;
-			pool_config->backend_desc->num_backends = i+1;
+			local_num_backends = i+1;
 			
 			/* initialize backend_hostname with a default socket path if empty */
 			if (*(BACKEND_INFO(i).backend_hostname) == '\0')
@@ -5004,6 +5109,8 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 			}
 		}	
 	}
+	if (local_num_backends != pool_config->backend_desc->num_backends)
+			pool_config->backend_desc->num_backends = local_num_backends;
 
 	ereport(DEBUG1,
 		(errmsg("initializing pool configuration"),
@@ -5166,17 +5273,17 @@ int eval_logical(char *str)
  * array of pointers in pallocd strings. number of tokens is set to
  * n; note that str will be destroyed by strtok().
  */
-#define MAXTOKENS 1024
+#define MAXTOKENS 256
 static char **extract_string_tokens(char *str, char *delimi, int *n)
 {
 	char *token;
-	static char **tokens;
+	char **tokens;
 
 	*n = 0;
 
 	tokens = palloc(MAXTOKENS*sizeof(char *));
 
-	for (token = strtok(str, delimi); token != NULL && *n < MAXTOKENS; token = strtok(NULL, delimi))
+	for (token = strtok(str, delimi); token != NULL ; token = strtok(NULL, delimi))
 	{
 		tokens[*n] = pstrdup(token);
 		ereport(DEBUG3,
@@ -5184,7 +5291,14 @@ static char **extract_string_tokens(char *str, char *delimi, int *n)
 				errdetail("extracting string tokens [token: %s]", tokens[*n])));
 
 		(*n)++;
+
+		if ( ((*n) % MAXTOKENS ) == 0)
+		{
+			tokens = repalloc(tokens, (MAXTOKENS * sizeof(char *) * (((*n)/MAXTOKENS) +1) ));
+		}
 	}
+	/* how about reclaiming the unused space */
+	tokens = repalloc(tokens, (sizeof(char *) * (*n) ));
 	return tokens;
 }
 
