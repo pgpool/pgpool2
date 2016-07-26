@@ -348,6 +348,11 @@ $ psql -f pgpool-regclass.sql template1
 
   <sect1 id="create-installlock-table">
     <title>Creating insert_lock table</title>
+
+    <para>
+      If you are not going to use the native replication mode, you can skip this section.
+    </para>
+
     <para>
       If you plan to use native replication mode and insert_lock,
       creating <structname>pgpool_catalog.insert_lock</structname>
