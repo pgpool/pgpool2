@@ -328,7 +328,7 @@ extern int my_master_node_id;
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
 #define PARALLEL_MODE (pool_config->parallel_mode)
 #define RAW_MODE (!REPLICATION && !PARALLEL_MODE && !MASTER_SLAVE)
-#define MAJOR(p) MASTER_CONNECTION(p)->sp->major
+#define MAJOR(p) (pool_get_major_version())
 #define TSTATE(p, i) (CONNECTION(p, i)->tstate)
 #define INTERNAL_TRANSACTION_STARTED(p, i) (CONNECTION(p, i)->is_internal_transaction_started)
 #define SYSDB_INFO (system_db_info->info)
