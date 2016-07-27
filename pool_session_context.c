@@ -945,3 +945,50 @@ static bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 
 	return true;
 }
+
+/*
+ * Set protocol major version number
+ */
+void pool_set_major_version(int major)
+{
+	if (session_context)
+	{
+		session_context->major = major; 
+	}
+}
+
+/*
+ * Get protocol major version number
+ */
+int pool_get_major_version(void)
+{
+	if (session_context)
+	{
+		return session_context->major;
+	}
+	return PROTO_MAJOR_V3;
+}
+
+/*
+ * Set protocol minor version number
+ */
+void pool_set_minor_version(int minor)
+{
+	if (session_context)
+	{
+		session_context->minor = minor; 
+	}
+}
+
+/*
+ * Get protocol minor version number
+ */
+int pool_get_minor_version(void)
+{
+	if (session_context)
+	{
+		return session_context->minor;
+	}
+	return 0;
+}
+
