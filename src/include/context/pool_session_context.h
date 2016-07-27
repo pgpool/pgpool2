@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2011	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -152,6 +152,11 @@ typedef struct {
 	 */
 	POOL_QUERY_CACHE_ARRAY *query_cache_array;	/* pending SELECT results */
 	long long int num_selects;	/* number of successful SELECTs in this transaction */
+
+	/* Protocol major version number */
+	int major;
+	/* Protocol minor version number */
+	int minor;
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
@@ -193,6 +198,10 @@ extern void pool_set_command_success(void);
 extern bool pool_is_command_success(void);
 extern void pool_copy_prep_where(bool *src, bool *dest);
 extern bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc);
+extern void pool_set_major_version(int major);
+extern int pool_get_major_version(void);
+extern void pool_set_minor_version(int minor);
+extern int pool_get_minor_version(void);
 
 #ifdef NOT_USED
 extern void pool_add_prep_where(char *name, bool *map);
