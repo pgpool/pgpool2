@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -32,6 +32,8 @@
 #include "parser/parsenodes.h"
 #include "parser/parser.h"
 #include "utils/palloc.h"
+#include "utils/memutils.h"
+#include "context/pool_session_context.h"
 
 typedef struct {
 	char	*attrname;	/* attribute name */

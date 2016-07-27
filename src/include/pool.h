@@ -347,7 +347,7 @@ extern int my_master_node_id;
 #define SLONY (MASTER_SLAVE && pool_config->master_slave_sub_mode == SLONY_MODE)
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
 #define RAW_MODE (!REPLICATION && !MASTER_SLAVE)
-#define MAJOR(p) MASTER_CONNECTION(p)->sp->major
+#define MAJOR(p) (pool_get_major_version())
 #define TSTATE(p, i) (CONNECTION(p, i)->tstate)
 #define INTERNAL_TRANSACTION_STARTED(p, i) (CONNECTION(p, i)->is_internal_transaction_started)
 

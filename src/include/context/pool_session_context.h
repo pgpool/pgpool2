@@ -210,6 +210,11 @@ typedef struct {
 	 * Parse/Bind/Close message queue.
 	 */
 	List *pending_messages;
+
+	/* Protocol major version number */
+	int major;
+	/* Protocol minor version number */
+	int minor;
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
@@ -266,6 +271,10 @@ extern void pool_pending_message_add(POOL_PENDING_MESSAGE* message);
 extern POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type);
 extern char pool_get_close_message_spec(POOL_PENDING_MESSAGE *msg);
 extern char *pool_get_close_message_name(POOL_PENDING_MESSAGE *msg);
+extern void pool_set_major_version(int major);
+extern int pool_get_major_version(void);
+extern void pool_set_minor_version(int minor);
+extern int pool_get_minor_version(void);
 
 #ifdef NOT_USED
 extern void pool_add_prep_where(char *name, bool *map);
