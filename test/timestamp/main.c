@@ -50,6 +50,21 @@ bool pool_has_pgpool_regclass(void)
 	return false;
 }
 
+bool pool_has_to_regclass(void)
+{
+	return false;
+}
+
+char *remove_quotes_and_schema_from_relname(char *table)
+{
+	return table; 
+}
+
+int pool_get_major_version(void)
+{
+	return PROTO_MAJOR_V3;
+}
+
 POOL_RELCACHE *
 pool_create_relcache(int cachesize, char *sql, func_ptr register_func, func_ptr unregister_func, bool issessionlocal)
 {
