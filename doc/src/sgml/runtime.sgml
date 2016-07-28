@@ -139,8 +139,8 @@ acbd18db4cc2f85cedef654fccc4a4d8
 
     <para>
       The master slave mode mode can be used with PostgreSQL servers
-      operating Slony. In this mode, PostgreSQL is responsible for
-      synchronizing databases. This Slony is being obsoletd by streaming
+      operating Slony. In this mode, Slony/PostgreSQL is responsible for
+      synchronizing databases. Since Slony is being obsoletd by streaming
       replication, we do not recommend to use this mode unless you have
       specific reason to use Slony. Load balancing is possible in the
       mode. The sample configuration file
