@@ -340,6 +340,7 @@ extern int pool_init_config(void);
 extern bool pool_get_config(const char *config_file, ConfigContext context);
 extern int eval_logical(const char *str);
 extern char *pool_flag_to_str(unsigned short flag);
+extern char* backend_status_to_str(BACKEND_STATUS status);
 
 /* methods used for regexp support */
 extern int add_regex_pattern(const char *type, char *s);

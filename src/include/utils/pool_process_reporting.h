@@ -43,4 +43,5 @@ extern void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 extern void send_config_var_detail_row(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* name, const char* value, const char* description);
 extern void send_config_var_value_only_row(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* value);
+extern char* get_backend_status_string(BACKEND_STATUS status);
 #endif

@@ -2265,4 +2265,36 @@ char *pool_flag_to_str(unsigned short flag)
 	return buf;
 }
 
+/*
+ * Translate the BACKEND_STATUS enum value to string.
+ * the function returns the constant string so should not be freed
+ */
+char* backend_status_to_str(BACKEND_STATUS status)
+{
+	char *statusName;
+
+	switch (status) {
+
+		case CON_UNUSED:
+		statusName = BACKEND_STATUS_CON_UNUSED;
+		break;
+
+		case CON_CONNECT_WAIT:
+		statusName = BACKEND_STATUS_CON_CONNECT_WAIT;
+		break;
+
+		case CON_UP:
+		statusName = BACKEND_STATUS_CON_UP;
+		break;
+
+		case CON_DOWN:
+		statusName = BACKEND_STATUS_CON_DOWN;
+		break;
+
+		default:
+		statusName = "unknown";
+		break;
+	}
+	return statusName;
+}
 

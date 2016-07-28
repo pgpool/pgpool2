@@ -48,6 +48,7 @@ static void output_proccount_result(PCPResultInfo* pcpResInfo, bool verbose);
 static void output_poolstatus_result(PCPResultInfo* pcpResInfo, bool verbose);
 static void output_nodeinfo_result(PCPResultInfo* pcpResInfo, bool verbose);
 static void output_nodecount_result(PCPResultInfo* pcpResInfo, bool verbose);
+static char* backend_status_to_string(BACKEND_STATUS status);
 
 typedef enum
 {
@@ -465,17 +466,19 @@ output_nodeinfo_result(PCPResultInfo* pcpResInfo, bool verbose)
 
 	if (verbose)
 	{
-		printf("Hostname: %s\nPort    : %d\nStatus  : %d\nWeight  : %f\n",
+		printf("Hostname   : %s\nPort       : %d\nStatus     : %d\nWeight     : %f\nStatus Name: %s\n",
 			   backend_info->backend_hostname,
 			   backend_info->backend_port,
 			   backend_info->backend_status,
-			   backend_info->backend_weight/RAND_MAX);
+			   backend_info->backend_weight/RAND_MAX,
+			   backend_status_to_string(backend_info->backend_status));
 	} else {
-		printf("%s %d %d %f\n",
+		printf("%s %d %d %f %s\n",
 			   backend_info->backend_hostname,
 			   backend_info->backend_port,
 			   backend_info->backend_status,
-			   backend_info->backend_weight/RAND_MAX);
+			   backend_info->backend_weight/RAND_MAX,
+			   backend_status_to_string(backend_info->backend_status));
 	}
 }
 
@@ -767,3 +770,35 @@ get_progname(const char *argv0)
 	return progname;
 }
 
+/*
+ * Translate the BACKEND_STATUS enum value to string.
+ * the function returns the constant string so should not be freed
+ */
+static char* backend_status_to_string(BACKEND_STATUS status)
+{
+	char *statusName;
+
+	switch (status) {
+
+		case CON_UNUSED:
+			statusName = BACKEND_STATUS_CON_UNUSED;
+			break;
+
+		case CON_CONNECT_WAIT:
+			statusName = BACKEND_STATUS_CON_CONNECT_WAIT;
+			break;
+
+		case CON_UP:
+			statusName = BACKEND_STATUS_CON_UP;
+			break;
+
+		case CON_DOWN:
+			statusName = BACKEND_STATUS_CON_DOWN;
+			break;
+
+		default:
+			statusName = "unknown";
+			break;
+	}
+	return statusName;
+}

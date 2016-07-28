@@ -42,11 +42,17 @@
 #define MAX_PATH_LENGTH 256
 
 typedef enum {
-	CON_UNUSED,		/* unused slot */
-    CON_CONNECT_WAIT,		/* waiting for connection starting */
-	CON_UP,	/* up and running */
-	CON_DOWN		/* down, disconnected */
+	CON_UNUSED,			/* unused slot */
+	CON_CONNECT_WAIT,	/* waiting for connection starting */
+	CON_UP,				/* up and running */
+	CON_DOWN			/* down, disconnected */
 } BACKEND_STATUS;
+
+/* backend status name strings */
+#define BACKEND_STATUS_CON_UNUSED		"unused"
+#define BACKEND_STATUS_CON_CONNECT_WAIT	"waiting"
+#define BACKEND_STATUS_CON_UP			"up"
+#define BACKEND_STATUS_CON_DOWN			"down"
 
 /*
  * PostgreSQL backend descriptor. Placed on shared memory area.
@@ -123,7 +129,7 @@ typedef struct {
 #define POOLCONFIG_MAXDESCLEN 80
 #define POOLCONFIG_MAXIDENTLEN 63
 #define POOLCONFIG_MAXPORTLEN 6
-#define POOLCONFIG_MAXSTATLEN 2
+#define POOLCONFIG_MAXSTATLEN 8
 #define POOLCONFIG_MAXWEIGHTLEN 20
 #define POOLCONFIG_MAXDATELEN 128
 #define POOLCONFIG_MAXCOUNTLEN 16

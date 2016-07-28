@@ -3442,12 +3442,15 @@ if you use the load balancing mode), the role, the SELECT query counts issued to
 are explained in the <a href="#pcp_node_info">pcp_node_info reference</a>.
 If the hostname is something like "/tmp", that means pgpool-II is connecting to backend by using UNIX domain sockets. The SELECT count does not include internal queries used by pgoool-II. Also the counters are reset to zero upon starting up of pgpool-II.
 </p>
+<p>
+Please note that since pgpool-II <span class="version">3.6</span>, The status column shows the human readable status instead of status code
+</p>
 <pre>
 benchs2=# show pool_nodes;
  node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node 
 ---------+----------+-------+--------+-----------+---------+------------+-------------------
- 0       | /tmp     | 11002 | 2      | 0.500000  | primary | 9231       | true
- 1       | /tmp     | 11003 | 2      | 0.500000  | standby | 9469       | false
+ 0       | /tmp     | 11002 | up      | 0.500000  | primary | 9231       | true
+ 1       | /tmp     | 11003 | up      | 0.500000  | standby | 9469       | false
 (2 rows)
 </pre>
 
@@ -5093,6 +5096,10 @@ Shows help for the command line arguments, then exit.
 <dt>Description:</dt>
 <dd>
 	<p>Displays the information on the given node ID.</p>
+	<p>
+	Please note that since pgpool-II <span class="version">3.6</span>, The output also contains the human readable node status
+	</p>
+
 </dd>
 <dt>Options:</dt>
 <dd>
@@ -5111,7 +5118,7 @@ Shows help for the command line arguments, then exit.
 <dd>
 <pre>
 $ pcp_node_info -h localhost -U postgres 0
-host1 5432 1 1073741823.500000
+host1 5432 1 1073741823.500000 waiting
 </pre>
 
 <p>The result is in the following order:</p>
@@ -5120,6 +5127,7 @@ host1 5432 1 1073741823.500000
 <li>port number</li>
 <li>status</li>
 <li>load balance weight</li>
+<li>status name</li>
 </ol>
 
 <p>Status is represented by a digit from [0 to 3].</p>
@@ -5135,10 +5143,11 @@ host1 5432 1 1073741823.500000
 
 <pre>
 $ pcp_node_info --verbose -h localhost -U postgres 0
-Hostname: host1
-Port    : 5432
-Status  : 1
-Weight  : 0.5
+Hostname   : host1
+Port       : 5432
+Status     : 1
+Weight     : 0.5
+Status Name: waiting
 </pre>
 </dd>
 </dl>
