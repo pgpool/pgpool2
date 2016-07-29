@@ -1705,7 +1705,7 @@ static void failover(void)
 				 request_details & REQ_DETAIL_SWITCHOVER && node_id != PRIMARY_NODE_ID)
 		{
 			ereport(LOG,
-					(errmsg("Do not restart children because we are switching over node id %d host%s port:%d and we are in streaming replication mode", node_id,
+					(errmsg("Do not restart children because we are switching over node id %d host: %s port: %d and we are in streaming replication mode", node_id,
 							BACKEND_INFO(node_id).backend_hostname,
 							BACKEND_INFO(node_id).backend_port)));
 
