@@ -1708,7 +1708,7 @@ static void failover(void)
 			reqkind == NODE_UP_REQUEST)
 		{
 			ereport(LOG,
-					(errmsg("Do not restart children because we are failbacking node id %d host%s port:%d and we are in streaming replication mode", node_id,
+					(errmsg("Do not restart children because we are failbacking node id %d host: %s port: %d and we are in streaming replication mode", node_id,
 					 BACKEND_INFO(node_id).backend_hostname,
 					 BACKEND_INFO(node_id).backend_port)));
 

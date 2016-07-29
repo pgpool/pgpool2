@@ -130,6 +130,13 @@ packet_types all_packet_types[] = {
 	{WD_NO_MESSAGE,""}
 };
 
+char* wd_failover_cmd_type_name[] =
+{
+	"FAILOVER",
+	"FAILBACK",
+	"PROMOTE"
+};
+
 char *wd_event_name[] =
 {	"STATE CHANGED",
 	"TIMEOUT",
@@ -2011,10 +2018,13 @@ node_is_asking_for_failover_cmd_start(WatchdogNode* wdNode, WDPacketData* pkt, i
 {
 	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
 	/* only coordinator(master) node can process this request */
+
 	ereport(LOG,
-		(errmsg("watchdog node \"%s\" is requesting to %s lock for failover command start",
-				wdNode->nodeName,
-				check?"check":"aquire")));
+		(errmsg("%s pgpool-II node \"%s\" is %s [%s] lock to start the failover command",
+				(g_cluster.localNode == wdNode)? "local":"remote",
+					wdNode->nodeName,
+					check?"checking the availability of":"requesting to acquire",
+					wd_failover_cmd_type_name[failoverCmdType])));
 
 	if (get_local_node_state() == WD_COORDINATOR)
 	{
@@ -2029,24 +2039,32 @@ node_is_asking_for_failover_cmd_start(WatchdogNode* wdNode, WDPacketData* pkt, i
 			/* check if we already have no lockholder node */
 			if (lockingNode->lockHolderNode == NULL || lockingNode->lockHolderNode == wdNode)
 			{
-				ereport(LOG,
-					(errmsg("watchdog node \"%s\" is requesting to %s lock for failover command start",
-								wdNode->nodeName,
-								check?"check":"aquire")));
 				if (check == false)
 				{
 					lockingNode->lockHolderNode = wdNode;
 					lockingNode->locked = true;
 				}
 				res = FAILOVER_RES_I_AM_LOCK_HOLDER;
+				ereport(LOG,
+					(errmsg("%s pgpool-II node \"%s\" %s [%s] lock to start the failover command",
+							(g_cluster.localNode == wdNode)? "local":"remote",
+							wdNode->nodeName,
+							check?"can acquire":"has",
+							wd_failover_cmd_type_name[failoverCmdType])));
+
 			}
 			else /* some other node is holding the lock */
 			{
 				ereport(LOG,
-					(errmsg("%s lock for failover command start request is denied to node \"%s\"",
-								check?"check":"aquire",
+						(errmsg("[%s] lock %s %s pgpool-II node \"%s\" to start the failover command",
+								wd_failover_cmd_type_name[failoverCmdType],
+								check?"is not available for":"request denied to",
+								(g_cluster.localNode == wdNode)? "local":"remote",
 								wdNode->nodeName),
-					 errdetail("node \"%s\" is holding the lock",lockingNode->lockHolderNode->nodeName)));
+						 errdetail("%s pgpool-II node \"%s\" is holding the lock",
+								   (g_cluster.localNode == lockingNode->lockHolderNode)? "local":"remote",
+								   lockingNode->lockHolderNode->nodeName)));
+
 				if (lockingNode->locked)
 					res = FAILOVER_RES_BLOCKED;
 				else
@@ -2057,9 +2075,11 @@ node_is_asking_for_failover_cmd_start(WatchdogNode* wdNode, WDPacketData* pkt, i
 	else
 	{
 		ereport(LOG,
-				(errmsg("failed to process failover command start request by watchdog node \"%s\"",
-						check?"check":"aquire"),
-				 errdetail("I am standby node and request can only be handled by master node")));
+				(errmsg("failed to process [%s] lock request from %s pgpool-II node \"%s\" to start the failover command",
+						wd_failover_cmd_type_name[failoverCmdType],
+						(g_cluster.localNode == wdNode)? "local":"remote",
+						wdNode->nodeName),
+				 errdetail("I am standby node and request can only be processed by master watchdog node")));
 		res = FAILOVER_RES_ERROR;
 	}
 	return res;
@@ -2070,10 +2090,13 @@ node_is_asking_for_failover_cmd_end(WatchdogNode* wdNode, WDPacketData* pkt, int
 {
 	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
 	/* only coordinator(master) node can process this request */
+
 	ereport(LOG,
-		(errmsg("watchdog node \"%s\" is requesting to %s lock for failover command start",
+			(errmsg("%s pgpool-II node \"%s\" is %s to release [%s] lock to end the failover command",
+					(g_cluster.localNode == wdNode)? "local":"remote",
 					wdNode->nodeName,
-					resign?"check":"release")));
+					resign?"requesting":"testing",
+					wd_failover_cmd_type_name[failoverCmdType])));
 
 	if (get_local_node_state() == WD_COORDINATOR)
 	{
@@ -2090,18 +2113,31 @@ node_is_asking_for_failover_cmd_end(WatchdogNode* wdNode, WDPacketData* pkt, int
 			if (lockingNode->lockHolderNode == NULL || lockingNode->lockHolderNode == wdNode)
 			{
 				if (resign)
+				{
 					lockingNode->lockHolderNode = NULL;
-				lockingNode->locked = false;
+					lockingNode->locked  = false;
+				}
 				res = FAILOVER_RES_LOCK_UNLOCKED;
+
+				ereport(LOG,
+						(errmsg("%s pgpool-II node \"%s\" %s the [%s] lock to end the failover command",
+								(g_cluster.localNode == wdNode)? "local":"remote",
+								wdNode->nodeName,
+								resign?"has released":"can release",
+								wd_failover_cmd_type_name[failoverCmdType])));
+
 			}
 			else /* some other node is holding the lock */
 			{
 				ereport(LOG,
-					(errmsg("%s lock for failover command end request is denied to node \"%s\"",
-								resign?"check":"release",
+						(errmsg("[%s] lock %s %s pgpool-II node \"%s\" to end the failover command",
+								wd_failover_cmd_type_name[failoverCmdType],
+								resign?"release request denied to":"cannot be released by",
+								(g_cluster.localNode == wdNode)? "local":"remote",
 								wdNode->nodeName),
-							errdetail("node \"%s\" is holding the lock",lockingNode->lockHolderNode->nodeName)));
-
+						 errdetail("%s pgpool-II node \"%s\" is holding the lock",
+								   (g_cluster.localNode == lockingNode->lockHolderNode)? "local":"remote",
+								   lockingNode->lockHolderNode->nodeName)));
 				res = FAILOVER_RES_BLOCKED;
 			}
 		}
@@ -2109,9 +2145,11 @@ node_is_asking_for_failover_cmd_end(WatchdogNode* wdNode, WDPacketData* pkt, int
 	else
 	{
 		ereport(LOG,
-			(errmsg("failed to process failover command end request by watchdog node \"%s\"",
-						resign?"check":"release"),
-				 errdetail("I am standby node and request can only be handled by master node")));
+				(errmsg("failed to process [%s] lock request from %s pgpool-II node \"%s\" to end the failover command",
+						wd_failover_cmd_type_name[failoverCmdType],
+						(g_cluster.localNode == wdNode)? "local":"remote",
+						wdNode->nodeName),
+				 errdetail("I am standby node and request can only be processed by master watchdog node")));
 
 		res = FAILOVER_RES_ERROR;
 	}

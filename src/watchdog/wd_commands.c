@@ -761,7 +761,7 @@ static WDFailoverCMDResults wd_issue_failover_lock_command(WDFailoverCMDTypes cm
 	int x;
 	for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
 	{
-		res = wd_send_failover_sync_command(NODE_FAILBACK_CMD, syncReqType);
+		res = wd_send_failover_sync_command(cmdType, syncReqType);
 		if (res != FAILOVER_RES_TRANSITION)
 			break;
 		sleep(1);
