@@ -17,7 +17,7 @@
 # directory for *testing* purpose.
 # Do not use this tool for production environment!
 #
-# usage: pgpool_setup [-m r|s|n][-n num_clusters][-p base_port][--no-stop][-d]
+# usage: pgpool_setup [-m r|s|n][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d]
 # -m s: create an installation as streaming replication mode.
 # (the default)
 # -m r: create an installation as native replication mode.
@@ -27,6 +27,9 @@
 #  pcp port is base_port + 1. The first PostgreSQL node's port is
 #  base_port + 2, second PostgreSQL node's port is base_port + 3
 #  and so on.
+# if -pg option is specified, the first PostgreSQL node's port is
+# assigned to pg_pase_port, the second PostgreSQL node's port is
+# pg_base_port + 1 and so on.
 # --no-stop: do not stop pgpool and PostgreSQL after the work
 # -d: start pgpool with debug mode
 #
@@ -54,6 +57,8 @@
 # $BASEPORT + 2, $BASEPORT + 3 and so on.
 # pgpool port and pcp_port will be assigned to $BASEPORT and $BASEPORT +1 .
 BASEPORT=${BASEBOPRT:-"11000"}
+# PostgreSQL startig port number.
+PGBASEPORT=`expr $BASEPORT + 2`
 # Default number of PostgreSQL database clusters
 NUMCLUSTERS=${NUMCLUSTERS:-"2"}
 # Where to look for pgpool.conf.sample*
@@ -553,12 +558,12 @@ function wait_for_pgpool_reload {
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s|n] [-n num_clusters] [-p base_port] [--no-stop] [-d]";exit 1
+	echo "usage: $0 [-m r|s|n] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d]";exit 1
 }
 
 #-------------------------------------------
 # Argument check
-# usage: $0 [-m r|s|n] [-n num_clusters] [-p base_port] [--no-stop] [-d]"
+# usage: $0  [-m r|s|n][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d]
 #-------------------------------------------
 #
 # default mode is streaming replication mode
@@ -581,6 +586,9 @@ do
 	elif [ $1 = "-p" ];then
 		shift
 		BASEPORT=$1
+	elif [ $1 = "-pg" ];then
+		shift
+		PGBASEPORT=$1
 	elif [ $1 = "--no-stop" ];then
 		shift
 		NO_STOP="true"
@@ -629,7 +637,7 @@ echo "Satrting set up in $MODENAME"
 # assign base port for PostgreSQL
 #-------------------------------------------
 ORIG_BASEPORT=$BASEPORT
-BASEPORT=`expr $BASEPORT + 2`
+BASEPORT=$PGBASEPORT
 
 #-------------------------------------------
 # install pgpool.conf
