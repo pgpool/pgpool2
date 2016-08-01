@@ -76,7 +76,7 @@ static int wd_create_hb_send_socket(WdHbIf * hb_if);
 static int wd_create_hb_recv_socket(WdHbIf * hb_if);
 
 static void wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * destination, const int dest_port);
-static void wd_hb_recv(int sock, WdHbPacket * pkt);
+static void wd_hb_recv(int sock, WdHbPacket * pkt, char *from_addr);
 
 /* create socket for sending heartbeat */
 static int
@@ -301,9 +301,12 @@ wd_hb_send(int sock, WdHbPacket * pkt, int len, const char * host, const int por
 
 }
 
-/* receive heartbeat signal */
+/*
+ * receive heartbeat signal
+ * the function expects the from_addr to be at least WD_MAX_HOST_NAMELEN bytes long
+ */
 void
-static wd_hb_recv(int sock, WdHbPacket * pkt)
+static wd_hb_recv(int sock, WdHbPacket * pkt, char *from_addr)
 {
 	int rtn;
 	struct sockaddr_in senderinfo;
@@ -323,6 +326,8 @@ static wd_hb_recv(int sock, WdHbPacket * pkt)
 	else
 		ereport(DEBUG2,
 				(errmsg("watchdog heartbeat: received %d byte packet", rtn)));
+
+	strncpy(from_addr,inet_ntoa(senderinfo.sin_addr),WD_MAX_HOST_NAMELEN-1);
 
 	ntoh_wd_hb_packet(pkt, &buf);
 }
@@ -405,7 +410,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
 
 		/* receive heartbeat signal */
-		wd_hb_recv(sock, &pkt);
+		wd_hb_recv(sock, &pkt, from);
 			/* authentication */
 		if (strlen(pool_config->wd_authkey))
 		{
@@ -427,25 +432,24 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 		gettimeofday(&tv, NULL);
 
 		/* who send this packet? */
-		strlcpy(from, pkt.from, sizeof(from));
 		from_pgpool_port = pkt.from_pgpool_port;
 		for (i = 0; i< gslifeCheckCluster->nodeCount; i++)
 		{
 			LifeCheckNode* node = &gslifeCheckCluster->lifeCheckNodes[i];
 
 			ereport(DEBUG2,
-					(errmsg("received heartbeat signal from \"%s:%d\"",
-							from, from_pgpool_port)));
+					(errmsg("received heartbeat signal from \"%s:%d\" hostname:%s",
+							from, from_pgpool_port, pkt.from)));
 
-			if (!strcmp(node->hostName, from) && node->pgpoolPort == from_pgpool_port)
+			if ( (!strcmp(node->hostName, pkt.from) || !strcmp(node->hostName, from)) && node->pgpoolPort == from_pgpool_port)
 			{
 				/* this is the first packet or the latest packet */
 				if (!WD_TIME_ISSET(node->hb_send_time) ||
 					WD_TIME_BEFORE(node->hb_send_time, pkt.send_time))
 				{
 					ereport(DEBUG1,
-							(errmsg("received heartbeat signal from \"%s:%d\"",
-									from, from_pgpool_port)));
+							(errmsg("received heartbeat signal from \"%s(%s):%d\" node:%s",
+									from,pkt.from, from_pgpool_port, node->nodeName)));
 					
 					node->hb_send_time = pkt.send_time;
 					node->hb_last_recv_time = tv;
