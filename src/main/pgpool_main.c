@@ -239,14 +239,26 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		 * when wathcodg fails to start with FATAL, the process
 		 * exits and SIGCHLD is fired, so SIGCHLD handelr is also
 		 * needed.
+		 * Finally, we also need to set the SIGUSR1 handler for the
+		 * failover requests from other watchdog nodes.
+		 * In case a request arrives at the same time when the
+		 * watchdog has just been initialized.
 		 */
 		pool_signal(SIGUSR2, wakeup_handler);
 		pool_signal(SIGCHLD, reap_handler);
+		pool_signal(SIGUSR1, failover_handler);
+
 		/*
 		 * okay as we need to wait until watchdog is in stable state
 		 * so only wait for SIGUSR2, SIGCHLD, and signals those are
 		 * necessary to make sure we respond to user requests of shutdown
-		 if it arives while we are in waiting state.
+		 * if it arrives while we are in waiting state.
+		 *
+		 * Note that SIGUSR1 does not need to be in the wait signal list,
+		 * although it's signal handler is already installed, but even if
+		 * the SIGUSR1 arrives while watchdog is initializing we will continue
+		 * with our normal initialization and will process the failover request
+		 * once our backend status will be synchronized across the cluster
 		 */
 		sigfillset(&mask);
 		sigdelset(&mask, SIGUSR2);
