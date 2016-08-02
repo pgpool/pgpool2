@@ -30,6 +30,9 @@
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_json_data.h"
 #include "watchdog/wd_ipc_defines.h"
+#include "pool.h"
+
+#define WD_JSON_KEY_DATA_REQ_TYPE	"DataRequestType"
 
 POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len)
 {
@@ -227,6 +230,133 @@ char* get_pool_config_json(void)
 	json_str = pstrdup(jw_get_json_string(jNode));
 	jw_destroy(jNode);
 	return json_str;
+}
+
+char* get_data_request_json(char* request_type, unsigned int sharedKey, char* authKey)
+{
+	char* json_str;
+
+	JsonNode* jNode = jw_create_with_object(true);
+
+	jw_put_int(jNode, WD_IPC_SHARED_KEY, sharedKey); /* put the shared key*/
+
+	if (authKey != NULL && strlen(authKey) > 0)
+		jw_put_string(jNode, WD_IPC_AUTH_KEY, authKey); /*  put the auth key*/
+
+	jw_put_string(jNode, WD_JSON_KEY_DATA_REQ_TYPE, request_type);
+	jw_finish_document(jNode);
+	json_str = pstrdup(jw_get_json_string(jNode));
+	jw_destroy(jNode);
+	return json_str;
+}
+
+bool parse_data_request_json(char* json_data, int data_len, char** request_type)
+{
+	json_value *root;
+	char* ptr;
+
+	*request_type = NULL;
+
+	root = json_parse(json_data,data_len);
+
+	/* The root node must be object */
+	if (root == NULL || root->type != json_object)
+	{
+		json_value_free(root);
+		ereport(LOG,
+			(errmsg("watchdog is unable to parse data request json"),
+				 errdetail("invalid json data \"%s\"",json_data)));
+		return false;
+	}
+	ptr = json_get_string_value_for_key(root, WD_JSON_KEY_DATA_REQ_TYPE);
+	if (ptr == NULL)
+	{
+		json_value_free(root);
+		ereport(LOG,
+			(errmsg("watchdog is unable to parse data request json"),
+				 errdetail("request name node not found in json data \"%s\"",json_data)));
+		return false;
+	}
+	*request_type = pstrdup(ptr);
+	json_value_free(root);
+	return true;
+}
+
+
+/* The function reads the backend node status from shared memory
+ * and creates a json packet from it
+ */
+char* get_backend_node_status_json(WatchdogNode* wdNode)
+{
+	int i;
+	char* json_str;
+	JsonNode* jNode = jw_create_with_object(true);
+
+	jw_start_array(jNode, "BackendNodeStatusList");
+
+	for (i=0;i< pool_config->backend_desc->num_backends;i++)
+	{
+		BACKEND_STATUS backend_status = pool_config->backend_desc->backend_info[i].backend_status;
+		jw_put_int_value(jNode, backend_status);
+	}
+	/* put the primary node id */
+	jw_end_element(jNode);
+	jw_put_int(jNode, "PrimaryNodeId", Req_info->primary_node_id);
+	jw_put_string(jNode, "NodeName",wdNode->nodeName);
+
+	jw_finish_document(jNode);
+	json_str = pstrdup(jw_get_json_string(jNode));
+	jw_destroy(jNode);
+	return json_str;
+}
+
+WDPGBackendStatus* get_pg_backend_node_status_from_json(char* json_data, int data_len)
+{
+	json_value *root = NULL;
+	json_value *value = NULL;
+	char *ptr;
+	int i;
+	WDPGBackendStatus* backendStatus = NULL;
+
+	root = json_parse(json_data,data_len);
+	/* The root node must be object */
+	if (root == NULL || root->type != json_object)
+		return NULL;
+
+	/* backend status array */
+	value = json_get_value_for_key(root,"BackendNodeStatusList");
+	if (value == NULL || value->type != json_array)
+		return NULL;
+
+	if (value->u.array.length <=0 || value->u.array.length > MAX_NUM_BACKENDS )
+		return NULL;
+
+	backendStatus = palloc(sizeof(WDPGBackendStatus));
+	backendStatus->node_count = value->u.array.length;
+
+	for (i = 0; i < backendStatus->node_count; i++)
+	{
+		backendStatus->backend_status[i] = value->u.array.values[i]->u.integer;
+	}
+
+	if (json_get_int_value_for_key(root, "PrimaryNodeId", &backendStatus->primary_node_id))
+	{
+		ereport(ERROR,
+			(errmsg("invalid json data"),
+				 errdetail("unable to find Watchdog Node ID")));
+	}
+
+	ptr = json_get_string_value_for_key(root, "NodeName");
+	if (ptr)
+	{
+		strncpy(backendStatus->nodeName, ptr, sizeof(backendStatus->nodeName) -1);
+	}
+	else
+	{
+		backendStatus->nodeName[0] = 0;
+	}
+
+	return backendStatus;
 }
 
 

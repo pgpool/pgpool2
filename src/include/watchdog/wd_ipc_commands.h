@@ -27,6 +27,7 @@
 #define WD_IPC_COMMANDS_H
 
 #include "watchdog/wd_ipc_defines.h"
+#include "watchdog/wd_json_data.h"
 
 typedef enum WdCommandResult
 {
@@ -64,6 +65,7 @@ extern WdCommandResult wd_degenerate_backend_set(int *node_id_set, int count);
 extern WdCommandResult wd_promote_backend(int node_id);
 extern WDFailoverCMDResults wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType);
 
+extern WDPGBackendStatus* get_pg_backend_status_from_master_wd_node(void);
 
 extern char* wd_get_watchdog_nodes(int nodeID);
 

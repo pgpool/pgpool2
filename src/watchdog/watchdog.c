@@ -127,6 +127,8 @@ packet_types all_packet_types[] = {
 	{WD_INFORM_I_AM_GOING_DOWN, "INFORM I AM GOING DOWN"},
 	{WD_ASK_FOR_POOL_CONFIG, "ASK FOR POOL CONFIG"},
 	{WD_POOL_CONFIG_DATA, "CONFIG DATA"},
+	{WD_GET_MASTER_DATA_REQUEST, "DATA REQUEST"},
+
 	{WD_NO_MESSAGE,""}
 };
 
@@ -398,6 +400,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDIPCCommandDat
 static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDIPCCommandData* IPCCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPCCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandData *IPCCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDIPCCommandData *IPCCommand);
 static IPC_CMD_PREOCESS_RES execute_replicate_command(WDIPCCommandData* ipcCommand);
 static bool write_ipc_command_with_result_data(WDIPCCommandData* IPCCommand, char type, char* data, int len);
 
@@ -431,6 +434,7 @@ static bool check_and_report_IPC_authentication(WDIPCCommandData* ipcCommand);
 static void print_received_packet_info(WDPacketData* pkt,WatchdogNode* wdNode);
 static void update_interface_status(void);
 static bool any_interface_available(void);
+static WDPacketData* process_data_request(WatchdogNode* wdNode, WDPacketData* pkt);
 
 /* global variables */
 wd_cluster g_cluster;
@@ -695,7 +699,7 @@ wd_create_recv_socket(int port)
 		}
 		close(sock);
 		ereport(ERROR,
-				(errmsg("failed to create watchdog receive socket"),
+			(errmsg("failed to create watchdog receive socket"),
 				 errdetail("bind on \"%s:%s\" failed with reason: \"%s\"", host, serv, strerror(errno))));
 	}
 	
@@ -1574,6 +1578,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* ipcCommand)
 
 	switch(ipcCommand->type)
 	{
+
 		case WD_NODE_STATUS_CHANGE_COMMAND:
 			return process_IPC_nodeStatusChange_command(ipcCommand);
 			break;
@@ -1595,6 +1600,9 @@ static IPC_CMD_PREOCESS_RES process_IPC_command(WDIPCCommandData* ipcCommand)
 
 		case WD_FAILOVER_CMD_SYNC_REQUEST:
 			return process_IPC_failover_cmd_synchronise(ipcCommand);
+
+		case WD_GET_MASTER_DATA_REQUEST:
+			return process_IPC_data_request_from_master(ipcCommand);
 
 		default:
 		{
@@ -1782,6 +1790,69 @@ static IPC_CMD_PREOCESS_RES process_IPC_replicate_variable(WDIPCCommandData* IPC
 	return IPC_CMD_ERROR;
 }
 
+static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDIPCCommandData *IPCCommand)
+{
+	char res_type = WD_IPC_CMD_RESULT_BAD;
+	/*
+	 * if cluster or myself is not in stable state
+	 * just return cluster in transaction
+	 */
+	ereport(LOG,
+			(errmsg("processing master node data request from IPC socket")));
+
+	IPCCommand->type = WD_GET_MASTER_DATA_REQUEST;
+	if (get_local_node_state() == WD_STANDBY)
+	{
+		/* I am a standby node, Just forward the request to coordinator */
+
+		WDPacketData wdPacket;
+		init_wd_packet(&wdPacket);
+		set_message_type(&wdPacket, WD_GET_MASTER_DATA_REQUEST);
+		set_next_commandID_in_message(&wdPacket);
+		set_message_data(&wdPacket, IPCCommand->data_buf , IPCCommand->data_len);
+		/* save the command ID */
+		IPCCommand->internal_command_id = wdPacket.command_id;
+		if (send_message(g_cluster.masterNode, &wdPacket) <= 0)
+		{
+			ereport(LOG,
+				(errmsg("failed to process master node data request from IPC socket"),
+					 errdetail("failed to forward the request to master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
+			/* we have failed to send to any node, return lock failed  */
+			res_type = WD_IPC_CMD_RESULT_BAD;
+		}
+		else
+		{
+			/*
+			 * we need to wait for the result
+			 */
+			ereport(LOG,
+				(errmsg("data request from IPC socket is forwarded to master watchdog node \"%s\"",g_cluster.masterNode->nodeName),
+					 errdetail("waiting for the reply from master node...")));
+
+			return IPC_CMD_PROCESSING;
+		}
+	}
+	else if (get_local_node_state() == WD_COORDINATOR)
+	{
+		/* This node is itself a master node, So send the empty result with OK tag */
+		res_type = WD_IPC_CMD_RESULT_OK;
+	}
+	else /* we are not in any stable state at the moment */
+	{
+		res_type = WD_IPC_CMD_CLUSTER_IN_TRAN;
+	}
+
+	if (write_ipc_command_with_result_data(IPCCommand, res_type, NULL, 0))
+	{
+		/*
+		 * This is the complete lifecycle of command.
+		 * we are done with it
+		 */
+		return IPC_CMD_COMPLETE;
+	}
+	return IPC_CMD_ERROR;
+
+}
 
 static IPC_CMD_PREOCESS_RES process_IPC_failover_cmd_synchronise(WDIPCCommandData *IPCCommand)
 {
@@ -2830,23 +2901,78 @@ static void cleanUpIPCCommand(WDIPCCommandData* ipcCommand)
 	MemoryContextDelete(ipcCommand->memoryContext);
 }
 
+static WDPacketData* process_data_request(WatchdogNode* wdNode, WDPacketData* pkt)
+{
+	char* request_type;
+	char* data = NULL;
+	WDPacketData* replyPkt = NULL;
+
+	if (pkt->data == NULL || pkt->len <= 0)
+	{
+		ereport(WARNING,
+			(errmsg("invalid data request packet from watchdog node \"%s\"",wdNode->nodeName),
+				 errdetail("no data found in the packet")));
+
+		replyPkt = get_minimum_message(WD_ERROR_MESSAGE,pkt);
+		return replyPkt;
+	}
+
+	if (!parse_data_request_json(pkt->data,pkt->len, &request_type))
+	{
+		ereport(WARNING,
+			(errmsg("invalid data request packet from watchdog node \"%s\"",wdNode->nodeName),
+				 errdetail("no data found in the packet")));
+
+		replyPkt = get_minimum_message(WD_ERROR_MESSAGE,pkt);
+		return replyPkt;
+	}
+
+	if (strcasecmp(request_type, WD_DATE_REQ_PG_BACKEND_DATA) == 0)
+	{
+		data = get_backend_node_status_json(g_cluster.localNode);
+	}
+
+	if (data)
+	{
+		replyPkt = get_empty_packet();
+		set_message_type(replyPkt, WD_DATA_MESSAGE);
+		set_message_commandID(replyPkt, pkt->command_id);
+		set_message_data(replyPkt, data , strlen(data));
+	}
+	else
+	{
+		replyPkt = get_minimum_message(WD_ERROR_MESSAGE,pkt);
+	}
+
+	return replyPkt;
+}
+
 static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	WDPacketData* replyPkt = NULL;
 	switch (pkt->type)
 	{
+		case WD_GET_MASTER_DATA_REQUEST:
+		{
+			replyPkt = process_data_request(wdNode, pkt);
+		}
+			break;
+
 		case WD_ASK_FOR_POOL_CONFIG:
 		{
 			char* config_data = get_pool_config_json();
 			
-			if (config_data == NULL)
-				reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
-			else
+			if (config_data)
 			{
 				replyPkt = get_empty_packet();
 				set_message_type(replyPkt, WD_POOL_CONFIG_DATA);
 				set_message_commandID(replyPkt, pkt->command_id);
 				set_message_data(replyPkt, config_data , strlen(config_data));
+			}
+			else
+			{
+				replyPkt = get_minimum_message(WD_ERROR_MESSAGE,pkt);
+
 			}
 		}
 			break;
@@ -2938,9 +3064,13 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			 * otherwise reject
 			 */
 			if (g_cluster.localNode == g_cluster.masterNode)
-				reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+			{
+				replyPkt = get_minimum_message(WD_ACCEPT_MESSAGE,pkt);
+			}
 			else
-				reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+			{
+				replyPkt = get_minimum_message(WD_REJECT_MESSAGE,pkt);
+			}
 		}
 			break;
 			
@@ -2954,10 +3084,12 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			{
 				ereport(NOTICE,
 						(errmsg("cluster is in split brain")));
-				reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+				replyPkt = get_minimum_message(WD_ERROR_MESSAGE,pkt);
 			}
 			else
+			{
 				replyPkt = get_mynode_info_message(pkt);
+			}
 		}
 			break;
 
@@ -2969,8 +3101,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 		if (send_message_to_node(wdNode,replyPkt) == false)
 			ereport(LOG,
 				(errmsg("sending packet to node \"%s\" failed", wdNode->nodeName)));
-
-		pfree(replyPkt);
+		free_packet(replyPkt);
 	}
 	return 1;
 }
@@ -3621,14 +3752,19 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 		gettimeofday(&wdNode->last_rcv_time, NULL);
 
 		if (pkt->type == WD_INFO_MESSAGE)
+		{
 			standard_packet_processor(wdNode, pkt);
+		}
+
 		if (pkt->type == WD_INFORM_I_AM_GOING_DOWN)		/* TODO do it better way */
 		{
 			wdNode->state = WD_SHUTDOWN;
 			return watchdog_state_machine(WD_EVENT_REMOTE_NODE_LOST, wdNode, NULL);
 		}
 		if (watchdog_internal_command_packet_processor(wdNode,pkt) == true)
+		{
 			return 0;
+		}
 	}
 	else if (event == WD_EVENT_NEW_OUTBOUND_CONNECTION)
 	{
@@ -5460,6 +5596,7 @@ static bool check_and_report_IPC_authentication(WDIPCCommandData* ipcCommand)
 
 		case WD_FUNCTION_COMMAND:
 		case WD_FAILOVER_CMD_SYNC_REQUEST:
+		case WD_GET_MASTER_DATA_REQUEST:
 			/* only allowed internaly.*/
 			internal_client_only = true;
 			break;
