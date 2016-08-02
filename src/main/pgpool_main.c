@@ -131,6 +131,7 @@ static int find_primary_node_repeatedly(void);
 static void terminate_all_childrens();
 static void system_will_go_down(int code, Datum arg);
 static char* process_name_from_pid(pid_t pid);
+static void initialize_backend_status_from_watchdog(void);
 
 static struct sockaddr_un un_addr;		/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
@@ -228,7 +229,6 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 				(errmsg("failed to allocate memory in startup process")));
 
 	initialize_shared_mem_objects(clear_memcache_oidmaps);
-
 	if (pool_config->use_watchdog)
 	{
 		sigset_t mask;
@@ -275,6 +275,9 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		 * initialize the lifecheck process
 		 */
 		wd_lifecheck_pid = initialize_watchdog_lifecheck();
+
+		/* load the backend node status from watchdog cluster */
+		initialize_backend_status_from_watchdog();
 	}
 
 	fds[0] = create_unix_domain_socket(un_addr);
@@ -371,8 +374,14 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	ereport(LOG,
 			(errmsg("%s successfully started. version %s (%s)", PACKAGE, VERSION, PGPOOLVERSION)));
 
-	/* Save primary node id */
-	Req_info->primary_node_id = find_primary_node();
+	/*
+	 * if the primary node id is not loaded by watchdog, search for it
+	 */
+	if (Req_info->primary_node_id < 0)
+	{
+		/* Save primary node id */
+		Req_info->primary_node_id = find_primary_node();
+	}
 
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
@@ -2929,7 +2938,6 @@ static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	ereport(DEBUG1,
 			(errmsg("Request info are: sizeof(POOL_REQUEST_INFO) %zu bytes requested for shared memory",
 					sizeof(POOL_REQUEST_INFO))));
-
 	/*
 	 * Initialize backend status area.
 	 * From now on, VALID_BACKEND macro can be used.
@@ -2946,6 +2954,7 @@ static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	Req_info->conn_counter = 0;
 	Req_info->switching = false;
 	Req_info->request_queue_head = Req_info->request_queue_tail = -1;
+	Req_info->primary_node_id = -2;
 	InRecovery = pool_shared_memory_create(sizeof(int));
 	*InRecovery = RECOVERY_INIT;
 
@@ -3337,4 +3346,74 @@ int pool_frontend_exists(void)
 	else if (processType == PT_CHILD)
 		return pg_frontend_exists();
 	return -1;
+}
+
+static void initialize_backend_status_from_watchdog(void)
+{
+	if (pool_config->use_watchdog)
+	{
+		WDPGBackendStatus* backendStatus = get_pg_backend_status_from_master_wd_node();
+		if (backendStatus)
+		{
+			if (backendStatus->node_count <= 0)
+			{
+				/*
+				 * -ve node count is returned by watchdog when the node itself is a master
+				 * and in that case we need to use the loacl backend node status
+				 */
+				ereport(LOG,
+						(errmsg("I am the master watchdog node"),
+						 errdetail("using the local backend node status")));
+			}
+			else
+			{
+				int i;
+				bool reload_maste_node_id = false;
+				ereport(LOG,
+						(errmsg("master watchdog node \"%s\" returned status for %d backend nodes",backendStatus->nodeName,backendStatus->node_count)));
+				ereport(LOG,
+						(errmsg("primary node on master watchdog node \"%s\" is %d",backendStatus->nodeName,backendStatus->primary_node_id)));
+
+				Req_info->primary_node_id = backendStatus->primary_node_id;
+
+				for (i = 0; i < backendStatus->node_count; i++)
+				{
+					if (backendStatus->backend_status[i] == CON_DOWN)
+					{
+						if (BACKEND_INFO(i).backend_status != CON_DOWN)
+						{
+
+							BACKEND_INFO(i).backend_status = CON_DOWN;
+							my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
+							reload_maste_node_id = true;
+							ereport(LOG,
+									(errmsg("backend status from \"%s\" backend:%d is set to down status",backendStatus->nodeName, i)));
+						}
+					}
+					else if (backendStatus->backend_status[i] == CON_CONNECT_WAIT ||
+								backendStatus->backend_status[i] == CON_UP)
+					{
+						if (BACKEND_INFO(i).backend_status != CON_CONNECT_WAIT)
+						{
+							BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
+							my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
+							reload_maste_node_id = true;
+						}
+					}
+				}
+
+				if (reload_maste_node_id)
+				{
+					Req_info->master_node_id = get_next_master_node();
+				}
+			}
+			pfree(backendStatus);
+		}
+		else
+		{
+			ereport(WARNING,
+				(errmsg("failed to get the backend status from the master watchdog node"),
+					 errdetail("using the local backend node status")));
+		}
+	}
 }

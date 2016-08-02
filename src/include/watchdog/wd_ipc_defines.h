@@ -63,13 +63,15 @@ typedef enum WDFailoverCMDResults
 
 #define WD_FUNCTION_COMMAND					'f'
 #define WD_FAILOVER_CMD_SYNC_REQUEST		's'
-
+#define WD_GET_MASTER_DATA_REQUEST			'd'
 
 #define WD_FUNCTION_START_RECOVERY		"START_RECOVERY"
 #define WD_FUNCTION_END_RECOVERY		"END_RECOVERY"
 #define WD_FUNCTION_FAILBACK_REQUEST	"FAILBACK_REQUEST"
 #define WD_FUNCTION_DEGENERATE_REQUEST	"DEGENERATE_BACKEND_REQUEST"
 #define WD_FUNCTION_PROMOTE_REQUEST		"PROMOTE_BACKEND_REQUEST"
+
+#define WD_DATE_REQ_PG_BACKEND_DATA		"BackendStatus"
 
 #define WD_IPC_AUTH_KEY			"IPCAuthKey"	/* JSON data key for authentication.
 												 * watchdog IPC server use the value for this key

@@ -41,6 +41,18 @@ typedef struct WDNodeInfo
 	int	id;
 }WDNodeInfo;
 
+/*
+ * The structure to hold the parsed PG backend node status data fetched
+ * from the master watchdog node
+ */
+typedef struct WDPGBackendStatus
+{
+	int primary_node_id;
+	int node_count;
+	BACKEND_STATUS backend_status[MAX_NUM_BACKENDS];
+	char nodeName[WD_MAX_HOST_NAMELEN];		/* name of the watchdog node that sent the data */
+}WDPGBackendStatus;
+
 extern WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len, char** authkey);
 extern char* get_watchdog_node_info_json(WatchdogNode* wdNode, char* authkey);
 extern POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len);
@@ -53,4 +65,11 @@ extern WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source);
 extern char* get_wd_node_function_json(char* func_name, int *node_id_set, int count, unsigned int sharedKey, char* authKey);
 extern bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name, int **node_id_set, int *count);
 extern char* get_wd_simple_error_message_json(char* message);
+
+extern WDPGBackendStatus* get_pg_backend_node_status_from_json(char* json_data, int data_len);
+extern char* get_backend_node_status_json(WatchdogNode* wdNode);
+
+extern bool parse_data_request_json(char* json_data, int data_len, char** request_type);
+extern char* get_data_request_json(char* request_type, unsigned int sharedKey, char* authKey);
+
 #endif

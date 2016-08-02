@@ -59,6 +59,7 @@
 #define PROMOTE_REQUEST_NODE_MASK		0x04
 
 static void sleep_in_waiting(void);
+static void FreeCmdResult(WDIPCCmdResult* res);
 static WDFailoverCMDResults wd_issue_failover_lock_command(WDFailoverCMDTypes cmdType, char* syncReqType);
 
 
@@ -263,6 +264,70 @@ issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, 
 	return result;
 }
 
+/*
+ * function gets the PG backend status of all attached nodes from
+ * the master watchdog node.
+ */
+WDPGBackendStatus* get_pg_backend_status_from_master_wd_node(void)
+{
+	unsigned int *shared_key = get_ipc_shared_key();
+	char *data = get_data_request_json(WD_DATE_REQ_PG_BACKEND_DATA,
+									   shared_key?*shared_key:0,pool_config->wd_authkey);
+
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_GET_MASTER_DATA_REQUEST,
+													   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
+													   data, strlen(data), true);
+	pfree(data);
+
+	if (result == NULL)
+	{
+		ereport(WARNING,
+			(errmsg("get backend node status from master watchdog failed"),
+				 errdetail("issue command to watchdog returned NULL")));
+		return NULL;
+	}
+	if (result->type == WD_IPC_CMD_CLUSTER_IN_TRAN)
+	{
+		ereport(WARNING,
+			(errmsg("get backend node status from master watchdog failed"),
+				 errdetail("watchdog cluster is not in stable state"),
+					errhint("try again when the cluster is fully initialized")));
+		FreeCmdResult(result);
+		return NULL;
+	}
+	else if (result->type == WD_IPC_CMD_TIMEOUT)
+	{
+		ereport(WARNING,
+				(errmsg("get backend node status from master watchdog failed"),
+				 errdetail("ipc command timeout")));
+		FreeCmdResult(result);
+		return NULL;
+	}
+	else if (result->type == WD_IPC_CMD_RESULT_OK)
+	{
+		WDPGBackendStatus* backendStatus =  get_pg_backend_node_status_from_json(result->data, result->length);
+		/*
+		 * Watchdog returns the zero length data when the node itself is a master
+		 * watchdog node
+		 */
+		if (result->length <= 0)
+		{
+			backendStatus = palloc0(sizeof(WDPGBackendStatus));
+			backendStatus->node_count = -1;
+		}
+		else
+		{
+			backendStatus =  get_pg_backend_node_status_from_json(result->data, result->length);
+		}
+		FreeCmdResult(result);
+		return backendStatus;
+	}
+
+	ereport(WARNING,
+		(errmsg("get backend node status from master watchdog failed")));
+	FreeCmdResult(result);
+	return NULL;
+}
 
 WdCommandResult
 wd_start_recovery(void)
@@ -287,7 +352,7 @@ wd_start_recovery(void)
 	}
 
 	type = result->type;
-	pfree(result);
+	FreeCmdResult(result);
 	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
 	{
 		ereport(WARNING,
@@ -334,7 +399,8 @@ wd_end_recovery(void)
 	}
 	
 	type = result->type;
-	pfree(result);
+	FreeCmdResult(result);
+
 	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
 	{
 		ereport(WARNING,
@@ -387,7 +453,7 @@ wd_send_failback_request(int node_id)
 	}
 	
 	type = result->type;
-	pfree(result);
+	FreeCmdResult(result);
 	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
 	{
 		ereport(WARNING,
@@ -457,6 +523,7 @@ wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType)
 		ereport(WARNING,
 			(errmsg("watchdog failed to send failover command"),
 				 errdetail("ipc command timeout")));
+		FreeCmdResult(result);
 		return FAILOVER_RES_ERROR;
 	}
 	if (result->length <= 0)
@@ -464,6 +531,7 @@ wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType)
 		ereport(WARNING,
 			(errmsg("watchdog failed to send failover command"),
 				 errdetail("issue command to watchdog returned no data")));
+		FreeCmdResult(result);
 		return FAILOVER_RES_ERROR;
 	}
 
@@ -473,21 +541,24 @@ wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType)
 	{
 		ereport(NOTICE,
 				(errmsg("unable to parse json data from replicate command")));
+		FreeCmdResult(result);
 		return FAILOVER_RES_ERROR;
 	}
 	
 	if (json_get_int_value_for_key(root, "FailoverCMDType", &failoverResCmdType))
 	{
 		json_value_free(root);
+		FreeCmdResult(result);
 		return FAILOVER_RES_ERROR;
 	}
 	if (root && json_get_int_value_for_key(root, "InterlockingResult", &interlockingResult))
 	{
 		json_value_free(root);
+		FreeCmdResult(result);
 		return FAILOVER_RES_ERROR;
 	}
 	json_value_free(root);
-	pfree(result);
+	FreeCmdResult(result);
 	
 	if (failoverResCmdType != cmdType)
 		return FAILOVER_RES_ERROR;
@@ -526,7 +597,7 @@ wd_degenerate_backend_set(int *node_id_set, int count)
 	}
 	
 	type = result->type;
-	pfree(result);
+	FreeCmdResult(result);
 	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
 	{
 		ereport(WARNING,
@@ -579,7 +650,7 @@ wd_promote_backend(int node_id)
 	}
 	
 	type = result->type;
-	pfree(result);
+	FreeCmdResult(result);
 	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
 	{
 		ereport(WARNING,
@@ -644,7 +715,7 @@ char* wd_get_watchdog_nodes(int nodeID)
 			(errmsg("get watchdog nodes command failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 					errhint("try again when the cluster is fully initialized")));
-		pfree(result);
+		FreeCmdResult(result);
 		return NULL;
 	}
 	else if (result->type == WD_IPC_CMD_TIMEOUT)
@@ -652,16 +723,17 @@ char* wd_get_watchdog_nodes(int nodeID)
 		ereport(WARNING,
 			(errmsg("get watchdog nodes command failed"),
 				 errdetail("ipc command timeout")));
-		pfree(result);
+		FreeCmdResult(result);
 		return NULL;
 	}
 	else if (result->type == WD_IPC_CMD_RESULT_OK)
 	{
 		char* data = result->data;
+		/* do not free the result->data, Save the data copy */
 		pfree(result);
 		return data;
 	}
-	pfree(result);
+	FreeCmdResult(result);
 	return NULL;
 }
 
@@ -847,3 +919,9 @@ wd_chk_node_mask_for_promote_req(int *node_id_set, int count)
 	return wd_chk_node_mask (PROMOTE_REQUEST_NODE_MASK, node_id_set, count);
 }
 
+static void FreeCmdResult(WDIPCCmdResult* res)
+{
+	if (res->data)
+		pfree(res->data);
+	pfree (res);
+}
