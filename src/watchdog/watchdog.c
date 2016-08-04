@@ -316,7 +316,6 @@ static bool connect_to_node(WatchdogNode* wdNode);
 static bool is_socket_connection_connected(SocketConnection* conn);
 
 static int update_successful_outgoing_cons(fd_set* wmask, int pending_fds_count);
-static int set_local_node_state(WD_STATES newState);
 static int prepare_fds(fd_set* rmask, fd_set* wmask, fd_set* emask);
 
 static WDPacketData* get_addnode_message(void);
@@ -978,7 +977,7 @@ watchdog_main(void)
 	connect_with_all_configured_nodes();
 
 	/* set the initial state of local node */
-	set_local_node_state(WD_LOADING);
+	set_state(WD_LOADING);
 
 	/*
 	 * install the callback for the preparation of system exit
@@ -2342,20 +2341,6 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 	return pkt;
 }
 
-
-/*
- * sets the state of local watchdog node, and fires an state change event
- * if the new and old state differes
- */
-
-static int set_local_node_state(WD_STATES newState)
-{
-	WD_STATES oldState = g_cluster.localNode->state;
-	g_cluster.localNode->state = newState;
-	if (oldState != newState)
-		watchdog_state_machine(WD_EVENT_WD_STATE_CHANGED, NULL, NULL);
-	return 0;
-}
 
 
 static void
@@ -4942,12 +4927,22 @@ static int get_mimimum_nodes_required_for_quorum(void)
 	return ((g_cluster.remoteNodeCount - 1 ) / 2);
 }
 
+
+/*
+ * sets the state of local watchdog node, and fires an state change event
+ * if the new and old state differes
+ */
+
 static int set_state(WD_STATES newState)
 {
-	WD_STATES oldState = g_cluster.localNode->state;
+	WD_STATES oldState = get_local_node_state();
 	g_cluster.localNode->state = newState;
 	if (oldState != newState)
 	{
+		/* if we changing from the coordinator state, do the de-escalation if required */
+		if (oldState == WD_COORDINATOR)
+			resign_from_escalated_node();
+
 		ereport(LOG,
 				(errmsg("watchdog node state changed from [%s] to [%s]",wd_state_names[oldState],wd_state_names[newState])));
 		watchdog_state_machine(WD_EVENT_WD_STATE_CHANGED, NULL, NULL);
