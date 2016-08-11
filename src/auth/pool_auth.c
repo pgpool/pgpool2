@@ -72,7 +72,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	StartupPacket *sp;
 	
 
-	protoMajor = MAJOR(cp);
+	protoMajor = MASTER_CONNECTION(cp)->sp->major;
 
 	kind = pool_read_kind(cp);
 	if (kind < 0)
