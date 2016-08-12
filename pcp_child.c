@@ -873,7 +873,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 					if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP))
 						msg = "primary server cannot be recovered by online recovery.";
 					else
-						msg = "recovery request is accepted only in replication mode or stereaming replication mode. ";
+						msg = "recovery request is only allowed in replication and streaming replication modes.";
 
 					len = strlen(msg)+1;
 					pcp_write(frontend, "e", 1);
