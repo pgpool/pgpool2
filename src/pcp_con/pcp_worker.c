@@ -946,7 +946,7 @@ process_recovery_request(PCP_CONNECTION *frontend,char *buf)
 		else
 			ereport(ERROR,
 				(errmsg("process recovery request failed"),
-					 errdetail("recovery request is accepted only in replication mode or stereaming replication mode.")));
+					 errdetail("recovery request is only allowed in replication and streaming replication modes.")));
 	}
 	else
 	{
