@@ -151,6 +151,7 @@ typedef struct {
 	char role[POOLCONFIG_MAXWEIGHTLEN+1];
 	char select[POOLCONFIG_MAXWEIGHTLEN+1];
 	char load_balance_node[POOLCONFIG_MAXWEIGHTLEN+1];
+	char delay[POOLCONFIG_MAXWEIGHTLEN+1];
 } POOL_REPORT_NODES;
 
 /* processes report struct */

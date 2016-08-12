@@ -3438,7 +3438,7 @@ benchs2=# show pool_status;
 <h2 id="pool_nodes">pool_nodes <span class="version">V3.0 -</span></h2>
 <p>"SHOW pool_nodes" sends back a list of all configured nodes. It
 displays the node id, the hostname, the port, the status, the weight (only meaningful
-if you use the load balancing mode), the role, the SELECT query counts issued to each backend and if the node is for load balancing or not. The possible values in the status column
+if you use the load balancing mode), the role, the SELECT query counts issued to each backend, whether the node is for load balancing or not and the streaming replication delay value in bytes if operated in streaming replication mode (in other mode, it is simply 0). The possible values in the status column
 are explained in the <a href="#pcp_node_info">pcp_node_info reference</a>.
 If the hostname is something like "/tmp", that means pgpool-II is connecting to backend by using UNIX domain sockets. The SELECT count does not include internal queries used by pgoool-II. Also the counters are reset to zero upon starting up of pgpool-II.
 </p>
@@ -3447,10 +3447,10 @@ Please note that since pgpool-II <span class="version">3.6</span>, The status co
 </p>
 <pre>
 benchs2=# show pool_nodes;
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node 
----------+----------+-------+--------+-----------+---------+------------+-------------------
- 0       | /tmp     | 11002 | up      | 0.500000  | primary | 9231       | true
- 1       | /tmp     | 11003 | up      | 0.500000  | standby | 9469       | false
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication delay 
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
+ 0       | /tmp     | 11002 | up      | 0.500000  | primary | 9231       | true             | 0
+ 1       | /tmp     | 11003 | up      | 0.500000  | standby | 9469       | false            | 4248
 (2 rows)
 </pre>
 

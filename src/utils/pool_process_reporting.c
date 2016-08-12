@@ -1160,11 +1160,20 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 	    snprintf(nodes[i].load_balance_node, POOLCONFIG_MAXWEIGHTLEN, "%s",
 				 (session_context->load_balance_node_id == i)? "true":"false");
 
+		snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, "%lld", 0);
+
 		if (STREAM)
+		{
 			if (i == REAL_PRIMARY_NODE_ID)
+			{
 				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "primary");
+			}
 			else
+			{
 				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "standby");
+				snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, "%lld", bi->standby_delay);
+			}
+		}
 		else
 		{
 			if (i == REAL_MASTER_NODE_ID)
@@ -1181,7 +1190,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 
 void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
-	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight", "role", "select_cnt", "load_balance_node"};
+	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight", "role", "select_cnt", "load_balance_node", "replication delay"};
 	short num_fields = sizeof(field_names)/sizeof(char *);
 	int i;
 	short s;
@@ -1243,6 +1252,11 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			hsize = htonl(size+4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].load_balance_node, size);
+
+			size = strlen(nodes[i].delay);
+			hsize = htonl(size+4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, nodes[i].delay, size);
 		}
 	}
 	else
@@ -1260,6 +1274,7 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			len += 4 + strlen(nodes[i].role);      /* int32 + data; */
 			len += 4 + strlen(nodes[i].select);    /* int32 + data; */
 			len += 4 + strlen(nodes[i].load_balance_node);    /* int32 + data; */
+			len += 4 + strlen(nodes[i].delay);    /* int32 + data; */
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
 			s = htons(num_fields);
@@ -1296,6 +1311,10 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 			len = htonl(strlen(nodes[i].load_balance_node));
 			pool_write(frontend, &len, sizeof(len));
 			pool_write(frontend, nodes[i].load_balance_node, strlen(nodes[i].load_balance_node));
+
+			len = htonl(strlen(nodes[i].delay));
+			pool_write(frontend, &len, sizeof(len));
+			pool_write(frontend, nodes[i].delay, strlen(nodes[i].delay));
 		}
 	}
 
