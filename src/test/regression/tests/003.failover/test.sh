@@ -27,7 +27,7 @@ do
 	# trrigger failover
 	$PG_CTL -D data1 -m f stop
 	wait_for_pgpool_startup
-	$PSQL -c "show pool_nodes" test |sed -e 's/true/false/'> result
+	$PSQL -c "show pool_nodes" test |sed -e 's/true /false/'> result
 
 	# check the output of "show pool_nodes".
 	LANG=C $PSQL -f ../create_expected.sql -v mode="'$mode'" -v dir="'$PGSOCKET_DIR'" test | tail -n 6 > expected

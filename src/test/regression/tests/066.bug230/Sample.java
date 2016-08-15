@@ -27,5 +27,6 @@ public class Sample {
             System.out.println(rs.getString(1));
         }
         rs.close();
+	conn.close();
     }
 }

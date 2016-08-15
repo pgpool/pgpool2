@@ -1190,7 +1190,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 
 void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
-	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight", "role", "select_cnt", "load_balance_node", "replication delay"};
+	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight", "role", "select_cnt", "load_balance_node", "replication_delay"};
 	short num_fields = sizeof(field_names)/sizeof(char *);
 	int i;
 	short s;
