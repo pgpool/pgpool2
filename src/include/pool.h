@@ -235,6 +235,9 @@ typedef struct {
 	char *auth_arg;
 	char *database;
 	char *username;
+	ConnectionInfo *con_info; /* shared memory coninfo used
+						   * for handling the query containing
+						   * pg_terminate_backend*/
 } POOL_CONNECTION;
 
 /*

@@ -68,6 +68,13 @@ typedef struct {
 								 * query and parsed node is actually a dummy query.
 								 */
 	int num_original_params; /* number of parameters in original query */
+	ConnectionInfo	*pg_terminate_backend_conn;
+							/* pointer to the shared memory connection info object
+							 * referred by pg_terminate_backend() function.
+							 * we need this to reset the flag after executing
+							 * the pg_terminate_backend query, especially for the
+							 * case when the query gets fail on the backend.
+							 */
 	MemoryContext memory_context;	/* memory context for query context */
 } POOL_QUERY_CONTEXT;
 
@@ -103,5 +110,5 @@ extern bool pool_is_cache_exceeded(void);
 extern void pool_set_cache_exceeded(void);
 extern void pool_unset_cache_exceeded(void);
 extern bool pool_is_transaction_read_only(Node *node);
-
+extern void pool_force_query_node_to_backend(POOL_QUERY_CONTEXT *query_context, int backend_id);
 #endif /* POOL_QUERY_CONTEXT_H */

@@ -88,6 +88,13 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 		MemoryContext memory_context = query_context->memory_context;
 		session_context = pool_get_session_context(false);
 		pool_unset_query_in_progress();
+		if (query_context->pg_terminate_backend_conn)
+		{
+			ereport(DEBUG1,
+				 (errmsg("resetting the connection flag for pg_terminate_backend")));
+			pool_unset_connection_will_be_terminated(query_context->pg_terminate_backend_conn);
+		}
+		query_context->pg_terminate_backend_conn = NULL;
 		query_context->original_query = NULL;
 		session_context->query_context = NULL;
 		pfree(query_context);
@@ -288,11 +295,24 @@ int pool_virtual_master_db_node_id(void)
 			  * Make sure that virtual_master_node_id is either primary node
 			  * id or load balance node id.  If not, it is likely that
 			  * virtual_master_node_id is not set up yet. Let's use the
-			  * primary node id.
+			  * primary node id. except for the special case where we need
+			  * to send the query to the node which is not primary nor the
+			  * load balance node. Currently there is only one special such
+			  * case that is handling of pg_terminate_backend() function, which
+			  * may refer to the backend connection that is neither hosted by
+			  * the primary or load balance node for current child process, but
+			  * the query must be forwarded to that node. Since only that backend
+			  * node can handle that pg_terminate_backend query
+			  *
 			  */
 			if (node_id != sc->load_balance_node_id && node_id != PRIMARY_NODE_ID)
 			{
-				node_id = PRIMARY_NODE_ID;
+				/*
+				 * Only return the primary node id if we are not processing the
+				 * pg_terminate_backend query
+				 */
+				if (sc->query_context->pg_terminate_backend_conn == NULL)
+					node_id = PRIMARY_NODE_ID;
 			}
 		}
 
@@ -309,6 +329,28 @@ int pool_virtual_master_db_node_id(void)
 		return PRIMARY_NODE_ID;
 	}
 	return my_master_node_id;
+}
+
+/*
+ * The function sets the destination for the current query to the specific backend node
+ */
+void pool_force_query_node_to_backend(POOL_QUERY_CONTEXT *query_context, int backend_id)
+{
+	int i;
+	CHECK_QUERY_CONTEXT_IS_VALID;
+
+	ereport(DEBUG1,
+		(errmsg("forcing query destination node to backend node:%d",backend_id)));
+
+	pool_set_node_to_be_sent(query_context,backend_id);
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (query_context->where_to_send[i])
+		{
+			query_context->virtual_master_node_id = i;
+			break;
+		}
+	}
 }
 
 /*

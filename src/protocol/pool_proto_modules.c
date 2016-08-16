@@ -93,6 +93,71 @@ static POOL_STATUS close_standby_transactions(POOL_CONNECTION *frontend,
 
 static char *
 flatten_set_variable_args(const char *name, List *args);
+static bool
+process_pg_terminate_backend_func(POOL_QUERY_CONTEXT *query_context);
+
+/*
+ * This is the workhorse of processing the pg_terminate_backend function to
+ * make sure that the use of function should not trigger the backend node failover.
+ *
+ * The function searches for the pg_terminate_backend() function call in the
+ * query parse tree and if the search comes out to be successful,
+ * the next step is to locate the pgpool-II child process and a backend node
+ * of that connection whose PID is specified in pg_terminate_backend argument.
+ *
+ * Once the connection is identified, we set the swallow_termination flag of
+ * that connection (in shared memory) and also sets the query destination to
+ * the same backend that hosts the connection.
+ *
+ * The function returns true on success, i.e. when the query contains the
+ * pg_terminate_backend call and that call refers to the backend
+ * connection that belongs to pgpool-II.
+ *
+ * Note:  Since upon successful return this function has already
+ * set the destination backend node for the current query,
+ * so for that case pool_where_to_send() should not be called.
+ *
+ */
+static bool process_pg_terminate_backend_func(POOL_QUERY_CONTEXT *query_context)
+{
+	/*
+	 * locate pg_terminate_backend and get the pid argument, if pg_terminate_backend
+	 * is present in the query
+	 */
+	int backend_pid = pool_get_terminate_backend_pid(query_context->parse_tree);
+	if (backend_pid > 0)
+	{
+		int backend_node = 0;
+		ConnectionInfo* conn = pool_coninfo_backend_pid(backend_pid, &backend_node);
+		if(conn == NULL)
+		{
+			ereport(LOG,
+				(errmsg("found the pg_terminate_backend request for backend pid:%d, but the backend connection does not belong to pgpool-II",backend_pid)));
+			/* we are not able to find the backend connection with the pid
+			 * so there is not much left for us to do here
+			 */
+			return false;
+		}
+		ereport(LOG,
+			(errmsg("found the pg_terminate_backend request for backend pid:%d on backend node:%d",backend_pid,backend_node),
+				 errdetail("setting the connection flag")));
+
+		if (pool_is_my_coninfo(conn)){
+			ereport(LOG,
+				(errmsg("pg_terminate_backend refer to the current child process connection"),
+					 errdetail("setting the connection flag not required")));
+		}
+		else{
+			pool_set_connection_will_be_terminated(conn);
+		}
+		/* It was the pg_terminate_backend call so send the query to appropriate backend */
+		query_context->pg_terminate_backend_conn = conn;
+		pool_force_query_node_to_backend(query_context, backend_node);
+		return true;
+	}
+	return false;
+}
+
 /*
  * Process Query('Q') message
  * Query messages include an SQL string.
@@ -409,11 +474,18 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		}
 
 		/*
-		 * Decide where to send query
+		 * pg_terminate function needs special handling, process it if the query
+		 * contains one, otherwise use pool_where_to_send() to decide destination
+		 * backend node for the query
 		 */
-		pool_where_to_send(query_context, query_context->original_query,
-						   query_context->parse_tree);
-
+		if (process_pg_terminate_backend_func(query_context) == false)
+		{
+			/*
+			 * Decide where to send query
+			 */
+			pool_where_to_send(query_context, query_context->original_query,
+							   query_context->parse_tree);
+		}
 		/*
 		 * if this is DROP DATABASE command, send USR1 signal to parent and
 		 * ask it to close all idle connections.

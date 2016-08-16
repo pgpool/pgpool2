@@ -406,6 +406,8 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			strlcpy(cp->info[i].database, sp->database, sizeof(cp->info[i].database));
 			strlcpy(cp->info[i].user, sp->user, sizeof(cp->info[i].user));
 			cp->info[i].counter = 1;
+			CONNECTION(cp, i)->con_info = &cp->info[i];
+			cp->info[i].swallow_termination = 0;
 		}
 	}
 

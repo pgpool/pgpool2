@@ -167,6 +167,7 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 					info = connection_pool->info;
 					memset(connection_pool, 0, sizeof(POOL_CONNECTION_POOL));
 					connection_pool->info = info;
+					info->swallow_termination = 0;
 					memset(connection_pool->info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 					POOL_SETMASK(&oldmask);
 					return NULL;

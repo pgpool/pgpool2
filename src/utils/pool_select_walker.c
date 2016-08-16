@@ -58,10 +58,30 @@ bool pool_has_function_call(Node *node)
 		return false;
 
 	ctx.has_function_call = false;
+	ctx.pg_terminate_backend_pid = -1;
 
 	raw_expression_tree_walker(node, function_call_walker, &ctx);
 
 	return ctx.has_function_call;
+}
+
+/*
+ * Search the pg_terminate_backend() call in the query
+ */
+int pool_get_terminate_backend_pid(Node *node)
+{
+	SelectContext	ctx;
+
+	if (!IsA(node, SelectStmt))
+		return false;
+
+	ctx.has_function_call = false;
+	ctx.pg_terminate_backend_pid = 0;
+
+	raw_expression_tree_walker(node, function_call_walker, &ctx);
+
+	return ctx.pg_terminate_backend_pid;
+
 }
 
 /*
@@ -286,6 +306,20 @@ static bool function_call_walker(Node *node, void *context)
 			ereport(DEBUG1,
 				(errmsg("function call walker, function name: \"%s\"", fname)));
 
+			if (ctx->pg_terminate_backend_pid == 0 && strcmp("pg_terminate_backend", fname) == 0)
+			{
+				if (list_length(fcall->args) == 1)
+				{
+					Node *arg = linitial(fcall->args);
+					if (IsA(arg, A_Const) &&
+					   ((A_Const *)arg)->val.type == T_Integer)
+					{
+						ctx->pg_terminate_backend_pid = ((A_Const *)arg)->val.val.ival;
+						ereport(DEBUG1,
+								(errmsg("pg_terminate_backend pid = %d",ctx->pg_terminate_backend_pid)));
+					}
+				}
+			}
 			/*
 			 * Check white list if any.
 			 */

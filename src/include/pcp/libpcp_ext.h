@@ -89,8 +89,8 @@ typedef struct {
 	int			pid;	/* backend process id */
 	int			key;	/* cancel key */
 	int			counter; /* used counter */
-	time_t 		create_time; /* connection creation time */
-	int load_balancing_node; /* load balancing node */
+	time_t		create_time; /* connection creation time */
+	int			load_balancing_node; /* load balancing node */
 	char		connected;	/* True if frontend connected. Please note
 							 * that we use "char" instead of "bool".
 							 * Since 3.1, we need to export this
@@ -100,6 +100,13 @@ typedef struct {
 							 * we use bool, the size of the structure
 							 * might be out of control of
 							 * pgpool-II. So we use "char" here.
+							 */
+	char		swallow_termination;
+							/* Flag to mark that if the connection will
+							 * be terminated by the backend. it should
+							 * not be treated as a backend node failure.
+							 * This flag is used to handle
+							 * pg_terminate_backend()
 							 */
 } ConnectionInfo;
 

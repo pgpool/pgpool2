@@ -40,6 +40,7 @@ typedef struct {
 	bool    has_unlogged_table; /* True if unlogged table is used */
 	bool    has_view; /* True if view is used */
 	bool    has_function_call;  /* True if write function call is used */
+	int     pg_terminate_backend_pid; /* pid argument of pg_terminate_backedn_call(if used) */
 	bool    has_non_immutable_function_call;    /* True if non immutable functions are used */
 	bool    has_insertinto_or_locking_clause;   /* True if it has SELECT INTO or FOR SHARE/UPDATE */
 	int     num_oids;   /* number of oids */
@@ -47,6 +48,7 @@ typedef struct {
 	char    table_names[POOL_MAX_SELECT_OIDS][POOL_NAMEDATALEN];  /* table names */
 } SelectContext;
 
+extern int pool_get_terminate_backend_pid(Node *node);
 extern bool pool_has_function_call(Node *node);
 extern bool pool_has_non_immutable_function_call(Node *node);
 extern bool pool_has_system_catalog(Node *node);

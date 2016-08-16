@@ -207,8 +207,16 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 			cp->socket_state = POOL_SOCKET_ERROR;
 			if (cp->isbackend)
 			{
-				ereport(ERROR,
+				if (cp->con_info->swallow_termination == 1)
+				{
+					cp->con_info->swallow_termination = 0;
+					ereport(FATAL,
 						(errmsg("unable to read data from DB node %d",cp->db_node_id),
+							 errdetail("pg_terminate_backend was called on the backend")));
+				}
+
+				ereport(ERROR,
+					(errmsg("unable to read data from DB node %d",cp->db_node_id),
 						 errdetail("socket read failed with an error \"%s\"", strerror(errno))));
 
 				/* if fail_over_on_backend_error is true, then trigger failover */
@@ -347,6 +355,14 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 			cp->socket_state = POOL_SOCKET_ERROR;
 			if (cp->isbackend)
 			{
+				if (cp->con_info->swallow_termination == 1)
+				{
+					cp->con_info->swallow_termination = 0;
+					ereport(FATAL,
+						(errmsg("unable to read data from DB node %d",cp->db_node_id),
+							 errdetail("pg_terminate_backend was called on the backend")));
+				}
+
 				/* if fail_over_on_backend_error is true, then trigger failover */
 				if (pool_config->fail_over_on_backend_error)
 				{
@@ -603,6 +619,14 @@ int pool_flush(POOL_CONNECTION *cp)
 	{
 		if (cp->isbackend)
 		{
+			if (cp->con_info->swallow_termination == 1)
+			{
+				cp->con_info->swallow_termination = 0;
+				ereport(FATAL,
+						(errmsg("unable to read data from DB node %d",cp->db_node_id),
+						 errdetail("pg_terminate_backend was called on the backend")));
+			}
+
 			/* if fail_over_on_backend_error is true, then trigger failover */
 			if (pool_config->fail_over_on_backend_error)
 			{
@@ -650,6 +674,14 @@ int pool_flush_noerror(POOL_CONNECTION *cp)
     {
         if (cp->isbackend)
         {
+			if (cp->con_info->swallow_termination == 1)
+			{
+				cp->con_info->swallow_termination = 0;
+				ereport(FATAL,
+						(errmsg("unable to read data from DB node %d",cp->db_node_id),
+						 errdetail("pg_terminate_backend was called on the backend")));
+			}
+
             /* if fail_over_on_backend_erro is true, then trigger failover */
             if (pool_config->fail_over_on_backend_error)
             {
@@ -810,6 +842,14 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 			cp->socket_state = POOL_SOCKET_ERROR;
 			if (cp->isbackend)
 			{
+				if (cp->con_info->swallow_termination == 1)
+				{
+					cp->con_info->swallow_termination = 0;
+					ereport(FATAL,
+							(errmsg("unable to read data from DB node %d",cp->db_node_id),
+							 errdetail("pg_terminate_backend was called on the backend")));
+				}
+
 				notice_backend_error(cp->db_node_id, true);
 				child_exit(POOL_EXIT_AND_RESTART);
                 ereport(ERROR,

@@ -191,6 +191,87 @@ ConnectionInfo *pool_coninfo_pid(int pid, int connection_pool, int backend)
 }
 
 /*
+ * locate and return the shared memory ConnectionInfo having the
+ * backend connection with the pid
+ * if the connection is found the *backend_node_id contains the backend node id
+ * of the backend node that has the connection
+ */
+ConnectionInfo* pool_coninfo_backend_pid(int backend_pid, int* backend_node_id)
+{
+	int child;
+	/*
+	 * look for the child process that has the backend
+	 * with the pid
+	 */
+
+	ereport(DEBUG1,
+			(errmsg("searching for the connection with backend pid:%d",backend_pid)));
+
+	for (child = 0; child < pool_config->num_init_children; child++)
+	{
+		int pool;
+		ProcessInfo *pi = pool_get_process_info(process_info[child].pid);
+
+		for (pool = 0; pool < pool_config->max_pool; pool++)
+		{
+			int backend_id;
+			for (backend_id = 0; backend_id < NUM_BACKENDS; backend_id++)
+			{
+				int poolBE = pool*MAX_NUM_BACKENDS+backend_id;
+				if (ntohl(pi->connection_info[poolBE].pid) == backend_pid)
+				{
+					ereport(DEBUG1,
+							(errmsg("found for the connection with backend pid:%d on backend node %d",backend_pid,backend_id)));
+					*backend_node_id = backend_id;
+					return &pi->connection_info[poolBE];
+				}
+			}
+		}
+	}
+	return NULL;
+}
+
+/*
+ * returns true if the conInfo object belongs to the current child process
+ */
+bool pool_is_my_coninfo(ConnectionInfo* connInfo)
+{
+	int pool;
+	ProcessInfo *pi = pool_get_my_process_info();
+	for (pool = 0; pool < pool_config->max_pool; pool++)
+	{
+		int backend_id;
+		for (backend_id = 0; backend_id < NUM_BACKENDS; backend_id++)
+		{
+			int poolBE = pool*MAX_NUM_BACKENDS+backend_id;
+			ConnectionInfo* cInfo = &pi->connection_info[poolBE];
+			if (cInfo == connInfo)
+			{
+				ereport(DEBUG1,
+						(errmsg("connection Info object is local")));
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+/*
+ * sets the flag to mark that the connection will be terminated by the
+ * backend and it should not be considered as a backend node failure.
+ * This flag is used to handle pg_terminate_backend()
+ */
+void pool_set_connection_will_be_terminated(ConnectionInfo* connInfo)
+{
+	connInfo->swallow_termination = 1;
+}
+
+void pool_unset_connection_will_be_terminated(ConnectionInfo* connInfo)
+{
+	connInfo->swallow_termination = 0;
+}
+
+/*
  * Set frontend connected flag
  */
 void pool_coninfo_set_frontend_connected(int proc_id, int pool_index)
