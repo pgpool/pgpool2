@@ -9,28 +9,13 @@
 
   <variablelist>
 
-<!--
-   <varlistentry>
-    <term>Wiki</term>
-    <listitem>
-     <para>
-      The <productname>PostgreSQL</productname> <ulink
-      url="http://wiki.postgresql.org">wiki</ulink> contains the project's <ulink
-      url="http://wiki.postgresql.org/wiki/Frequently_Asked_Questions">FAQ</>
-      (Frequently Asked Questions) list, <ulink
-      url="http://wiki.postgresql.org/wiki/Todo">TODO</> list, and
-      detailed information about many more topics.
-     </para>
-    </listitem>
-   </varlistentry>
--->
-
    <varlistentry>
     <term>Web Site</term>
     <listitem>
      <para>
       The <productname>pgpool-II</productname>
-      <ulink url="http://pgpool.net">web site</ulink>...
+      <ulink url="http://pgpool.net">web site</ulink> is a central place providing official information regarding
+      <productname>Pgpool-II</productname>: downloads, documentation, FAQ, mailing list archives and more.
      </para>
     </listitem>
    </varlistentry>
