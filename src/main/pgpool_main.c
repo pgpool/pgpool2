@@ -935,19 +935,24 @@ static int create_inet_domain_socket(const char *hostname, const int port)
 
 	addr.sin_port = htons(port);
 	len = sizeof(struct sockaddr_in);
+
 	status = bind(fd, (struct sockaddr *)&addr, len);
 	if (status == -1)
 	{
-		char *host = "", *serv = "";
+		int saved_errno = errno;
 		char hostname[NI_MAXHOST], servname[NI_MAXSERV];
-		if (getnameinfo((struct sockaddr *) &addr, len, hostname, sizeof(hostname), servname, sizeof(servname), 0) == 0)
+		if ((status = getnameinfo((struct sockaddr *) &addr, len, hostname, sizeof(hostname), servname, sizeof(servname), 0)))
 		{
-			host = hostname;
-			serv = servname;
+			ereport(NOTICE,
+				(errmsg("getnameinfo failed while creating INET domain socket"),
+					 errdetail("getnameinfo failed with reason: \"%s\"",gai_strerror(status))));
+
+			snprintf(servname, sizeof(servname), "%d",port);
+			snprintf(hostname, sizeof(hostname), "%s",hostname);
 		}
 		ereport(FATAL,
 			(errmsg("failed to create INET domain socket"),
-             errdetail("bind on host:\"%s\" server:\"%s\" failed with error \"%s\"",host, serv,strerror(errno))));
+             errdetail("bind on host:\"%s\" server:\"%s\" failed with error \"%s\"",hostname, servname,strerror(saved_errno))));
 	}
 
     backlog = pool_config->num_init_children * pool_config->listen_backlog_multiplier;

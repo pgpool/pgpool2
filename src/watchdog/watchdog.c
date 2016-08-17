@@ -646,7 +646,8 @@ wd_create_recv_socket(int port)
 	struct sockaddr_in addr;
 	int one = 1;
 	int sock = -1;
-	
+	int saved_errno;
+
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		/* socket create failed */
@@ -660,55 +661,54 @@ wd_create_recv_socket(int port)
 	if ( setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1 )
 	{
 		/* setsockopt(SO_REUSEADDR) failed */
+		saved_errno = errno;
 		close(sock);
 		ereport(ERROR,
 				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%s\"", strerror(saved_errno))));
 	}
 	if ( setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1 )
 	{
 		/* setsockopt(TCP_NODELAY) failed */
+		saved_errno = errno;
 		close(sock);
 		ereport(ERROR,
-				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("setsockopt(TCP_NODELAY) failed with reason: \"%s\"", strerror(errno))));
+			(errmsg("failed to create watchdog receive socket"),
+				 errdetail("setsockopt(TCP_NODELAY) failed with reason: \"%s\"", strerror(saved_errno))));
 	}
 	if ( setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1 )
 	{
 		/* setsockopt(SO_KEEPALIVE) failed */
+		saved_errno = errno;
 		close(sock);
 		ereport(ERROR,
-				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("setsockopt(SO_KEEPALIVE) failed with reason: \"%s\"", strerror(errno))));
+			(errmsg("failed to create watchdog receive socket"),
+				 errdetail("setsockopt(SO_KEEPALIVE) failed with reason: \"%s\"", strerror(saved_errno))));
 	}
 	
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	addr.sin_port = htons(port);
 	len = sizeof(struct sockaddr_in);
-	
+
 	if ( bind(sock, (struct sockaddr *) & addr, len) < 0 )
 	{
 		/* bind failed */
-		char *host = "", *serv = "";
-		char hostname[NI_MAXHOST], servname[NI_MAXSERV];
-		if (getnameinfo((struct sockaddr *) &addr, len, hostname, sizeof(hostname), servname, sizeof(servname), 0) == 0) {
-			host = hostname;
-			serv = servname;
-		}
+		saved_errno = errno;
 		close(sock);
 		ereport(ERROR,
 			(errmsg("failed to create watchdog receive socket"),
-				 errdetail("bind on \"%s:%s\" failed with reason: \"%s\"", host, serv, strerror(errno))));
+				 errdetail("bind on \"TCP:%d\" failed with reason: \"%s\"", port, strerror(saved_errno))));
 	}
-	
+
 	if ( listen(sock, MAX_WATCHDOG_NUM * 2) < 0 )
 	{
 		/* listen failed */
+		saved_errno = errno;
 		close(sock);
 		ereport(ERROR,
-				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("listen failed with reason: \"%s\"", strerror(errno))));
+			(errmsg("failed to create watchdog receive socket"),
+				 errdetail("listen failed with reason: \"%s\"", strerror(saved_errno))));
 	}
 
 	return sock;
@@ -1069,27 +1069,32 @@ wd_create_command_server_socket(void)
 	addr.sun_family = AF_UNIX;
 	snprintf(addr.sun_path, sizeof(addr.sun_path),"%s",get_watchdog_ipc_address());
 	len = sizeof(struct sockaddr_un);
+
 	ereport(LOG,
 			(errmsg("IPC socket path: \"%s\"",get_watchdog_ipc_address())));
+
+
 	if ( bind(sock, (struct sockaddr *) &addr, len) == -1)
 	{
+		int saved_errno = errno;
 		close(sock);
 		unlink(addr.sun_path);
 		ereport(FATAL,
 			(return_code(POOL_EXIT_FATAL),
 				errmsg("failed to create watchdog command server socket"),
-				 errdetail("bind on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(errno))));
+				 errdetail("bind on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(saved_errno))));
 	}
 	
 	if ( listen(sock, 5) < 0 )
 	{
 		/* listen failed */
+		int saved_errno = errno;
 		close(sock);
 		unlink(addr.sun_path);
 		ereport(FATAL,
 			(return_code(POOL_EXIT_FATAL),
 				errmsg("failed to create watchdog command server socket"),
-				 errdetail("listen failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("listen failed with reason: \"%s\"", strerror(saved_errno))));
 	}
 	on_proc_exit(FileUnlink, (Datum) pstrdup(addr.sun_path));
 	return sock;
