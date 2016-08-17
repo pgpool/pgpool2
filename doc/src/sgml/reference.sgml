@@ -79,4 +79,18 @@
 
  </reference>
 
+   <reference id="other-commands">
+   <title>Other commands</title>
+
+   <partintro>
+     <para>
+       This part contains reference information for various Pgpool-II commands.
+     </para>
+
+   </partintro>
+
+   &pgpoolSetup;
+
+ </reference>
+
 </part>
