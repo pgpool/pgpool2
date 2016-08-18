@@ -90,6 +90,7 @@
    </partintro>
 
    &pgpoolSetup;
+   &watchdoglSetup;
 
  </reference>
 

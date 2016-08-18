@@ -345,7 +345,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = pcp pgmd5
-dist_bin_SCRIPTS = pgpool_setup
+dist_bin_SCRIPTS = pgpool_setup watchdog_setup
 all: all-recursive
 
 .SUFFIXES:
@@ -698,6 +698,9 @@ uninstall-am: uninstall-dist_binSCRIPTS
 
 pgpool_setup:
 	ln -s ../test/pgpool_setup .
+
+watchdog_setup:
+	ln -s ../test/watchdog_setup .
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
