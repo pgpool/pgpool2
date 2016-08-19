@@ -27,17 +27,6 @@
     </para>
    </listitem>
 
-<!--
-   <listitem>
-    <para>
-     <xref linkend="sql"> documents the <acronym>SQL</acronym> query
-     language environment, including data types and functions, as well
-     as user-level performance tuning.  Every
-     <productname>PostgreSQL</> user should read this.
-    </para>
-   </listitem>
--->
-
    <listitem>
     <para>
      <xref linkend="admin"> describes the installation and
@@ -47,15 +36,12 @@
     </para>
    </listitem>
 
-<!--
    <listitem>
     <para>
-     <xref linkend="client-interfaces"> describes the programming
-     interfaces for <productname>pgpool-II</productname> PCP client
-     programs.
+     <xref linkend="examples"> explains several configuration examples
+     so that users can choose the starting point of their actual systems.
     </para>
    </listitem>
--->
 
    <listitem>
     <para>
@@ -63,6 +49,12 @@
      SQL commands, client and server programs.  This part supports
      the other parts with structured information sorted by command or
      program.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="appendixes"> is an appendix information such as release notes.
     </para>
    </listitem>
 
