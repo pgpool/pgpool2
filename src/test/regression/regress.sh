@@ -16,7 +16,7 @@ MODE=install
 PG_INSTALL_DIR=/usr/local/pgsql/bin
 PGPOOL_PATH=/usr/local
 JDBC_DRIVER=/usr/local/pgsql/share/postgresql-9.2-1003.jdbc4.jar
-log=$dir/log
+export log=$dir/log
 fail=0
 ok=0
 timeout=0
@@ -35,7 +35,12 @@ function install_pgpool
 	echo "creating pgpool-II temporary installation ..."
         PGPOOL_PATH=$dir/temp/installed
         
-	make install -C $dir/../../ -e prefix=${PGPOOL_PATH}
+	make install -C $dir/../../ -e prefix=${PGPOOL_PATH} >& $log/regression.log 2>&1
+
+	if [ $? != 0 ];then
+	    echo "make install failed"
+	    exit 1
+	fi
 	
 	echo "moving pgpool_setup to temporary installation path ..."
         cp $dir/../pgpool_setup ${PGPOOL_PATH}/pgpool_setup
