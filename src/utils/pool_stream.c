@@ -215,10 +215,6 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 							 errdetail("pg_terminate_backend was called on the backend")));
 				}
 
-				ereport(ERROR,
-					(errmsg("unable to read data from DB node %d",cp->db_node_id),
-						 errdetail("socket read failed with an error \"%s\"", strerror(errno))));
-
 				/* if fail_over_on_backend_error is true, then trigger failover */
 				if (pool_config->fail_over_on_backend_error)
 				{
@@ -226,6 +222,15 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 
                     /* If we are in the main process, we will not exit */
 					child_exit(POOL_EXIT_AND_RESTART);
+					ereport(ERROR,
+							(errmsg("unable to read data from DB node %d",cp->db_node_id),
+							 errdetail("socket read failed with an error \"%s\"", strerror(errno))));
+				}
+				else
+				{
+					ereport(ERROR,
+							(errmsg("unable to read data from DB node %d",cp->db_node_id),
+							 errdetail("socket read failed with an error \"%s\"", strerror(errno))));
 				}
 			}
 			else
@@ -248,12 +253,6 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
                 ereport(FATAL,
 					(errmsg("unable to read data from DB node %d",cp->db_node_id),
                          errdetail("EOF encountered with backend")));
-
-#ifdef NOT_USED
-			    /* fatal error, notice to parent and exit */
-			    notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id, true));
-				child_exit(POOL_EXIT_AND_RESTART);
-#endif
 			}
 			else
 			{
@@ -395,12 +394,6 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
                 ereport(ERROR,
                     (errmsg("unable to read data from backend"),
                          errdetail("EOF read on socket")));
-
-#ifdef NOT_USED
-			    /* fatal error, notice to parent and exit */
-			    notice_backend_error(IS_MASTER_NODE_ID(cp->db_node_id, true));
-				child_exit(POOL_EXIT_AND_RESTART);
-#endif
 			}
 			else
 			{
@@ -514,45 +507,12 @@ int pool_flush_it(POOL_CONNECTION *cp)
 	{
 		errno = 0;
 
-#ifdef NOT_USED
-		if (!cp->isbackend)
+		if (cp->ssl_active > 0)
 		{
-			fd_set	writemask;
-			fd_set	exceptmask;
-
-			FD_ZERO(&writemask);
-			FD_ZERO(&exceptmask);
-			FD_SET(cp->fd, &writemask);
-			FD_SET(cp->fd, &exceptmask);
-
-			sts = select(cp->fd+1, NULL, &writemask, &exceptmask, NULL);
-			if (sts == -1)
-			{
-				if (errno == EAGAIN || errno == EINTR || errno == EWOULDBLOCK)
-					continue;
-				ereport(WARNING,
-						(errmsg("pool_flush_it: select() failed. reason: %s", strerror(errno))));
-				cp->wbufpo = 0;
-				return -1;
-			}
-			else if (sts == 0)
-			{
-				continue;
-			}
-			else if (FD_ISSET(cp->fd, &exceptmask))
-			{
-				ereport(LOG,
-					(errmsg("unable to flush data"),
-						 errdetail("exception occurred while in waiting select() ")));
-
-				cp->wbufpo = 0;
-				return -1;
-			}
-		}
-#endif
-		if (cp->ssl_active > 0) {
 		  sts = pool_ssl_write(cp, cp->wbuf + offset, wlen);
-		} else {
+		}
+		else
+		{
 		  sts = write(cp->fd, cp->wbuf + offset, wlen);
 		}
 
@@ -593,7 +553,7 @@ int pool_flush_it(POOL_CONNECTION *cp)
 			 * just report debug message.
 			 */
 			if (cp->isbackend)
-				ereport(DEBUG1,
+				ereport(WARNING,
 					(errmsg("write on backend %d failed with error :\"%s\"",cp->db_node_id,strerror(errno)),
 						 errdetail("while trying to write data from offset: %d wlen: %d",offset, wlen)));
 			else
@@ -640,7 +600,7 @@ int pool_flush(POOL_CONNECTION *cp)
 			}
 			else
 			{
-                ereport(FATAL,
+                ereport(ERROR,
                     (errmsg("unable to flush data to backend"),
                          errdetail("do not failover because fail_over_on_backend_error is off")));
 			}
@@ -831,9 +791,12 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
             }
 		}
 
-		if (cp->ssl_active > 0) {
+		if (cp->ssl_active > 0)
+		{
 		  readlen = pool_ssl_read(cp, cp->sbuf+readp, readsize);
-		} else {
+		}
+		else
+		{
 		  readlen = read(cp->fd, cp->sbuf+readp, readsize);
 		}
 
