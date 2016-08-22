@@ -639,9 +639,10 @@ int pool_check_fd(POOL_CONNECTION *cp)
 		save_errno = errno;
 		if (fds == -1)
 		{
-			if (processState == PERFORMING_HEALTH_CHECK && errno == EINTR)
+			if (processType == PT_MAIN && processState == PERFORMING_HEALTH_CHECK && errno == EINTR && health_check_timer_expired)
 			{
-				ereport(WARNING, (errmsg("health check timed out while waiting for reading data")));
+				ereport(WARNING,
+						(errmsg("health check timed out while waiting for reading data")));
 				errno = save_errno;
 				return 1;
 			}
