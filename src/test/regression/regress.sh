@@ -34,6 +34,8 @@ function install_pgpool
 {
 	echo "creating pgpool-II temporary installation ..."
         PGPOOL_PATH=$dir/temp/installed
+
+	test -d $log || mkdir $log
         
 	make install -C $dir/../../ -e prefix=${PGPOOL_PATH} >& $log/regression.log 2>&1
 
