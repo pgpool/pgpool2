@@ -1,0 +1,10 @@
+<!--
+doc/src/sgml/ref/allfiles.sgml
+PostgreSQL documentation
+Complete list of usable sgml source files in this directory.
+-->
+
+<!ENTITY pcpCommonOptions    SYSTEM "pcp_common_options.sgml">
+<!ENTITY pcpNodeCount        SYSTEM "pcp_node_count.sgml">
+<!ENTITY pgpoolSetup         SYSTEM "pgpool_setup.sgml">
+<!ENTITY watchdoglSetup      SYSTEM "watchdog_setup.sgml">

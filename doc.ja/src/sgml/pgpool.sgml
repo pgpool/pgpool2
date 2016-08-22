@@ -1,0 +1,138 @@
+<!-- doc/src/sgml/pgpool-en.sgml -->
+
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY % version SYSTEM "version.sgml">
+%version;
+<!ENTITY % filelist SYSTEM "filelist.sgml">
+%filelist;
+
+<!ENTITY reference  SYSTEM "reference.sgml">
+
+]>
+
+<book id="postgres">
+<!-- needs to be replaced as "pgpool" later -->
+
+ <title>pgpool-II &version; Documentation</title>
+
+ <bookinfo>
+  <corpauthor>The Pgpool Global Development Group</corpauthor>
+  <productname>pgpool-II</productname>
+  <productnumber>&version;</productnumber>
+  &legal;
+ </bookinfo>
+
+ &intro;
+
+ <part id="tutorial">
+  <title>Tutorial</title>
+
+  <partintro>
+   <para>
+    Explanation about pgpool-II tutorial here...
+    pgpool-II チュートリアルの説明
+   </para>
+
+<!--
+   <para>
+    After you have worked through this tutorial you might want to move
+    on to reading <xref linkend="sql"> to gain a more formal knowledge
+    of the SQL language, or <xref linkend="client-interfaces"> for
+    information about developing applications for
+    <productname>PostgreSQL</productname>.  Those who set up and
+    manage their own server should also read <xref linkend="admin">.
+   </para>
+-->
+
+  </partintro>
+
+  &start;
+  &advanced;
+
+ </part>
+
+ <part id="admin">
+  <title>Server Administration</title>
+
+  <partintro>
+   <para>
+    This part covers topics that are of interest to a
+    <productname>pgpool-II</> ...
+   </para>
+  </partintro>
+
+  &installation;
+  &runtime;
+  &config;
+  &connection-settings;
+  &connection-pooling;
+  &loadbalance;
+  &healthcheck;
+  &failover;
+  &online-recovery;
+  &stream-check;
+  &memcache;
+  &ssl;
+  &watchdog;
+  &misc-config;
+  &config-last;
+  &client-auth;
+ </part>
+
+ &examples;
+
+ &reference;
+
+<!--
+ <part id="internals">
+  <title>Internals</title>
+
+  <partintro>
+   <para>
+    This part contains assorted information that might be of use to
+    <productname>PostgreSQL</> developers.
+   </para>
+  </partintro>
+
+  &arch-dev;
+  &catalogs;
+  &protocol;
+  &sources;
+  &nls;
+  &plhandler;
+  &fdwhandler;
+  &tablesample-method;
+  &custom-scan;
+  &geqo;
+  &indexam;
+  &gist;
+  &spgist;
+  &gin;
+  &brin;
+  &storage;
+  &bki;
+  &planstats;
+
+ </part>
+-->
+
+ <part id="appendixes">
+  <title>Appendixes</title>
+
+  <partintro>
+    <para>
+    something...
+    </para>
+  </partintro>
+
+  &release;
+
+ </part>
+
+
+ &biblio;
+ <![%include-index;[&bookindex;]]>
+ <![%include-xslt-index;[<index id="bookindex"></index>]]>
+
+</book>

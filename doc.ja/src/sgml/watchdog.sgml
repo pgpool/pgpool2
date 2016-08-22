@@ -1,0 +1,9 @@
+<!-- doc/src/sgml/config.sgml -->
+
+<sect1 id="runtime-watchdog">
+  <title>Watchdog</title>
+
+  <para>
+    watchdog...
+  </para>
+</sect1>

@@ -1,0 +1,10 @@
+<!-- doc/src/sgml/config.sgml -->
+
+<sect1 id="runtime-config-connection-pooling">
+  <title>Connection Pooling</title>
+
+  <para>
+    connection_cache, max_pool, reset_query_list, child_life_time, 
+    child_max_connections, connection_life_time, client_idle_limit
+  </para>
+</sect1>

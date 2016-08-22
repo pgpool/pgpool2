@@ -1,0 +1,10 @@
+<!-- doc/src/sgml/config.sgml -->
+
+<sect1 id="runtime-config-failover">
+  <title>Failover and Failback</title>
+
+  <para>
+    failover_command, failback_command, fail_over_on_backend_error,
+    search_primary_node_timeout
+  </para>
+</sect1>

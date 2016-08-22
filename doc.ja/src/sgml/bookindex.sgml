@@ -1,0 +1,364 @@
+<index id='bookindex'>
+
+<!-- This file was produced by collateindex.pl.         -->
+<!-- Remove this comment if you edit this file by hand! -->
+<!-- ULINK is abused here.
+
+      The URL attribute holds the URL that points from the index entry
+      back to the appropriate place in the output produced by the HTML
+      stylesheet. (It's much easier to calculate this URL in the first
+      pass.)
+
+      The Role attribute holds the ID (either real or manufactured) of
+      the corresponding INDEXTERM.  This is used by the print backends
+      to produce page numbers.
+
+      The entries below are sorted and collated into the correct order.
+      Duplicates may be removed in the HTML backend, but in the print
+      backends, it is impossible to suppress duplicate pages or coalesce
+      sequences of pages into a range.
+-->
+
+<indexdiv><title>B</title>
+
+<indexentry>
+  <primaryie>backend_data_directory configuration parameter,
+    <ulink url="runtime-config-backend-settings.html#RUNTIME-CONFIG-BACKEND-DATA" role="AEN756">Backend Data Settings</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>backend_flag configuration parameter,
+    <ulink url="runtime-config-backend-settings.html#RUNTIME-CONFIG-BACKEND-DATA" role="AEN768">Backend Data Settings</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>backend_hostname configuration parameter,
+    <ulink url="runtime-config-backend-settings.html#RUNTIME-CONFIG-BACKEND-CONNECTION-SETTINGS" role="AEN723">Backend Connection Settings</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>backend_port configuration parameter,
+    <ulink url="runtime-config-backend-settings.html#RUNTIME-CONFIG-BACKEND-CONNECTION-SETTINGS" role="AEN741">Backend Connection Settings</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>bison,
+    <ulink url="install-requirements.html" role="AEN240">Requirements</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>BSD Authentication,
+    <ulink url="auth-methods.html#AUTH-BSD" role="AUTH-BSD">BSD Authentication</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>C</title>
+
+<indexentry>
+  <primaryie>Certificate,
+    <ulink url="auth-methods.html#AUTH-CERT" role="AUTH-CERT">Certificate Authentication</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>client authentication,
+    <ulink url="client-authentication.html" role="client-authentication">Client Authentication</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>configuration
+  </primaryie>
+  <secondaryie>of the server,
+    <ulink url="runtime-config.html" role="AEN450">Server Configuration</ulink>
+  </secondaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>config_file configuration parameter,
+    <ulink url="runtime-config-file-locations.html" role="AEN624">File Locations</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>D</title>
+
+<indexentry>
+  <primaryie>data_directory configuration parameter,
+    <ulink url="runtime-config-file-locations.html" role="AEN615">File Locations</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>E</title>
+
+<indexentry>
+  <primaryie>external_pid_file configuration parameter,
+    <ulink url="runtime-config-file-locations.html" role="AEN654">File Locations</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>F</title>
+
+<indexentry>
+  <primaryie>flex,
+    <ulink url="install-requirements.html" role="AEN236">Requirements</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>G</title>
+
+<indexentry>
+  <primaryie>GSSAPI,
+    <ulink url="auth-methods.html#GSSAPI-AUTH" role="GSSAPI-AUTH">GSSAPI Authentication</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>H</title>
+
+<indexentry>
+  <primaryie>hba_file configuration parameter,
+    <ulink url="runtime-config-file-locations.html" role="AEN635">File Locations</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>history
+  </primaryie>
+  <secondaryie>of pgpool-II,
+    <ulink url="history.html" role="history">A Brief History of pgpool-II</ulink>
+  </secondaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>I</title>
+
+<indexentry>
+  <primaryie>ident,
+    <ulink url="auth-methods.html#AUTH-IDENT" role="AEN1421">Ident Authentication</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>ident_file configuration parameter,
+    <ulink url="runtime-config-file-locations.html" role="AEN645">File Locations</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>include
+  </primaryie>
+  <secondaryie>in configuration file,
+    <ulink url="config-setting.html#CONFIG-INCLUDES" role="AEN564">Managing Configuration File Contents</ulink>
+  </secondaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>include_dir
+  </primaryie>
+  <secondaryie>in configuration file,
+    <ulink url="config-setting.html#CONFIG-INCLUDES" role="AEN581">Managing Configuration File Contents</ulink>
+  </secondaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>include_if_exists
+  </primaryie>
+  <secondaryie>in configuration file,
+    <ulink url="config-setting.html#CONFIG-INCLUDES" role="AEN572">Managing Configuration File Contents</ulink>
+  </secondaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>installation,
+    <ulink url="installation.html" role="installation">pgpool-II Installation from Source Code</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>L</title>
+
+<indexentry>
+  <primaryie>LDAP,
+    <ulink url="auth-methods.html#AUTH-LDAP" role="AUTH-LDAP">LDAP Authentication</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>lex,
+    <ulink url="install-requirements.html" role="AEN238">Requirements</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>listen_addresses configuration parameter,
+    <ulink url="runtime-config-connection.html#RUNTIME-CONFIG-CONNECTION-SETTINGS" role="AEN691">Connection Settings</ulink>,
+    <ulink url="runtime-config-runnung-mode.html#RUNTIME-CONFIG-MASTER-SLAVE-MODE" role="AEN709">Master slave mode</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>M</title>
+
+<indexentry>
+  <primaryie>make,
+    <ulink url="install-requirements.html" role="AEN203">Requirements</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>MD5,
+    <ulink url="auth-methods.html#AUTH-PASSWORD" role="AEN1247">Password Authentication</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>O</title>
+
+<indexentry>
+  <primaryie>OpenSSL,
+    <ulink url="install-pgpool.html" role="AEN288">Installing pgpool-II</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>P</title>
+
+<indexentry>
+  <primaryie>PAM,
+    <ulink url="auth-methods.html#AUTH-PAM" role="AUTH-PAM">PAM Authentication</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>password
+  </primaryie>
+  <secondaryie>authentication,
+    <ulink url="auth-methods.html#AUTH-PASSWORD" role="AEN1249">Password Authentication</ulink>
+  </secondaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>pcp configuration,
+    <ulink url="configuring-pcp-conf.html" role="AEN390">Configuring pcp.conf</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>pcp_common_options,
+    <ulink url="pcp-common-options.html" role="pcp-common-options">pcp_common_options</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>pcp_node_count,
+    <ulink url="pcp-node-count.html" role="pcp-node-count">pcp_node_count</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>peer,
+    <ulink url="auth-methods.html#AUTH-PEER" role="AEN1454">Peer Authentication</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>pgpool-II configuration,
+    <ulink url="configuring-pgpool.html" role="AEN409">Configuring pgpool</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>pgpool-II user,
+    <ulink url="pgpool-ii-user.html" role="AEN379">The pgpool-II User Account</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>pgpool_setup,
+    <ulink url="pgpool-setup.html" role="pgpool-setup">pgpool_setup</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>pg_hba.conf,
+    <ulink url="auth-pg-hba-conf.html" role="auth-pg-hba-conf">The pg_hba.conf File</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>pg_ident.conf,
+    <ulink url="auth-username-maps.html" role="AEN1163">User Name Maps</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>postgresql.conf,
+    <ulink url="config-setting.html#CONFIG-SETTING-CONFIGURATION-FILE" role="AEN506">Parameter Interaction via the Configuration File</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>R</title>
+
+<indexentry>
+  <primaryie>RADIUS,
+    <ulink url="auth-methods.html#AUTH-RADIUS" role="AUTH-RADIUS">RADIUS Authentication</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>S</title>
+
+<indexentry>
+  <primaryie>SIGHUP,
+    <ulink url="config-setting.html#CONFIG-SETTING-CONFIGURATION-FILE" role="AEN512">Parameter Interaction via the Configuration File</ulink>,
+    <ulink url="auth-pg-hba-conf.html" role="AEN1134">The pg_hba.conf File</ulink>,
+    <ulink url="auth-username-maps.html" role="AEN1192">User Name Maps</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>SSPI,
+    <ulink url="auth-methods.html#SSPI-AUTH" role="SSPI-AUTH">SSPI Authentication</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>U</title>
+
+<indexentry>
+  <primaryie>User name maps,
+    <ulink url="auth-username-maps.html" role="auth-username-maps">User Name Maps</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>W</title>
+
+<indexentry>
+  <primaryie>watchdog_setup,
+    <ulink url="watchdog-setup.html" role="watchdog-setup">watchdog_setup</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+<indexdiv><title>Y</title>
+
+<indexentry>
+  <primaryie>yacc,
+    <ulink url="install-requirements.html" role="AEN242">Requirements</ulink>
+  </primaryie>
+</indexentry>
+
+</indexdiv>
+</index>

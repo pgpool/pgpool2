@@ -1,0 +1,10 @@
+<!-- doc/src/sgml/config.sgml -->
+
+<sect1 id="runtime-streaming-replication-check">
+  <title>Streaming Replication Check</title>
+
+  <para>
+    sr_check_period, sr_check_user, sr_check_password,
+    sr_check_database, delay_threshold
+  </para>
+</sect1>

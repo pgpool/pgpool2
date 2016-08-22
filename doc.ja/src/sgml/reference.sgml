@@ -1,0 +1,97 @@
+<!-- doc/src/sgml/reference.sgml -->
+
+<part id="reference">
+ <title>Reference</title>
+
+ <partintro>
+  <para>
+    This part contains reference information for the pgool-II.
+  </para>
+
+  <para>
+    The reference entries are also available as traditional
+    <quote>man</quote> pages.
+  </para>
+ </partintro>
+
+ <reference id="pcp-commands">
+   <title>PCP commands</title>
+
+   <partintro>
+     <para>
+       This part contains reference information for PCP commands.
+       PCP commands are UNIX commands which manipulate pgpool-II via the network.
+       Please note that the parameter format for all PCP commands has been changed since pgpool-II 3.5.
+     </para>
+
+     <sect1 id="pcp-connection-authentication">
+       <title>PCP connection authentication</title>
+       <para>
+	 PCP user names and passwords must be declared in
+	 <filename>pcp.conf</filename> in <filename>$prefix/etc</filename>
+	 directory. <option>-F</option> option can be used when starting
+	 pgpool-II if <filename>pcp.conf</filename> is placed somewhere
+	 else.
+       </para>
+     </sect1>
+
+     <sect1 id="pcp-password-file">
+       <title>PCP password file</title>
+       <para>
+	 The file <filename>.pcppass</filename> in a user's home
+	 directory or the file referenced by environment variable
+	 PCPPASSFILE can contain passwords to be used if no password has
+	 been specified for the pcp connection.
+       </para>
+       <para>
+	 This file should contain lines of the following format:
+
+	 <programlisting>
+	   hostname:port:username:password
+	 </programlisting>
+       </para>
+
+       <para>
+	 (You can add a reminder comment to the file by copying the line
+	 above and preceding it with #.)  Each of the first three fields
+	 can be a literal value, or *, which matches anything. The password
+	 field from the first line that matches the current connection
+	 parameters will be used. (Therefore, put more-specific entries
+	 first when you are using wildcards.) If an entry needs to contain
+	 : or \, escape this character with \. A host name of localhost
+	 matches both TCP (host name localhost) and Unix domain socket
+	 connections coming from the local machine.
+       </para>
+
+       <para>
+	 The permissions on .pcppass must disallow any access to world or
+	 group; achieve this by the command chmod 0600 ~/.pcppass. If the
+	 permissions are less strict than this, the file will be
+	 ignored.
+       </para>
+
+     </sect1>
+
+   </partintro>
+
+   &pcpCommonOptions;
+   &pcpNodeCount;
+
+ </reference>
+
+   <reference id="other-commands">
+   <title>Other commands</title>
+
+   <partintro>
+     <para>
+       This part contains reference information for various Pgpool-II commands.
+     </para>
+
+   </partintro>
+
+   &pgpoolSetup;
+   &watchdoglSetup;
+
+ </reference>
+
+</part>
