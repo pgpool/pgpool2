@@ -1373,9 +1373,24 @@ static void s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
 
 	if (kind != 'R')
 	{
-        ereport(ERROR,
-			(errmsg("failed to authenticate"),
-				errdetail("invalid authentication message response type, Expecting 'R' and received '%c'",kind)));
+		char *msg;
+		int sts = 0;
+
+		if (kind == 'E' || kind == 'N')
+		{
+			sts =  pool_extract_error_message(false, cp->con, cp->sp->major, false, &msg);
+		}
+
+		if (sts == 1)	/* succeeded in extracting error/notice message */
+		{
+			ereport(ERROR,
+					(errmsg("failed to authenticate"),
+					 errdetail("%s", msg)));
+			pfree(msg);
+		}
+			ereport(ERROR,
+					(errmsg("failed to authenticate"),
+					 errdetail("invalid authentication message response type, Expecting 'R' and received '%c'",kind)));
 	}
 
 	/* read message length */
