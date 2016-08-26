@@ -3,8 +3,8 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
- * Portions Copyright (c) 2003-2015, PgPool Global Development Group
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2016, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,6 +26,7 @@
 #include "utils/palloc.h"
 #include "utils/elog.h"
 #include "parser.h"
+#include "extensible.h"
 #include "pool_string.h"
 #include "pg_list.h"
 #include "parsenodes.h"
@@ -309,6 +310,15 @@ static void _outList(String *str, List *node)
  *	Stuff from primnodes.h.
  *
  *****************************************************************************/
+
+#ifdef NOT_USED_IN_PGPOOL
+/* for use by extensions which define extensible nodes */
+void
+outToken(StringInfo str, const char *s)
+{
+	_outToken(str, s);
+}
+#endif
 
 static void
 _outAlias(String *str, Alias *node)
@@ -788,6 +798,29 @@ _outOnConflictExpr(String *str, const OnConflictExpr *node)
 {
 
 }
+
+#ifdef NOT_USED
+/*****************************************************************************
+ *
+ *	Stuff from extensible.h
+ *
+ *****************************************************************************/
+
+static void
+_outExtensibleNode(StringInfo str, const ExtensibleNode *node)
+{
+	const ExtensibleNodeMethods *methods;
+
+	methods = GetExtensibleNodeMethods(node->extnodename, false);
+
+	WRITE_NODE_TYPE("EXTENSIBLENODE");
+
+	WRITE_STRING_FIELD(extnodename);
+
+	/* serialize the private fields */
+	methods->nodeOut(str, node);
+}
+#endif
 
 /*****************************************************************************
  *
@@ -1539,6 +1572,14 @@ _outAExpr(String *str, A_Expr *node)
 			string_append_char(str, " (");
 			_outNode(str, node->lexpr);
 			string_append_char(str, " IS DISTINCT FROM ");
+			_outNode(str, node->rexpr);
+			string_append_char(str, ")");
+			break;
+
+		case AEXPR_NOT_DISTINCT:
+			string_append_char(str, " (");
+			_outNode(str, node->lexpr);
+			string_append_char(str, " IS NOT DISTINCT FROM ");
 			_outNode(str, node->rexpr);
 			string_append_char(str, ")");
 			break;
@@ -5584,7 +5625,11 @@ _outNode(String *str, void *obj)
 			case T_OnConflictExpr:
 				_outOnConflictExpr(str, obj);
 				break;
-
+#ifdef NOT_USED
+			case T_ExtensibleNode:
+				_outExtensibleNode(str, obj);
+				break;
+#endif
 			case T_CreateStmt:
 				_outCreateStmt(str, obj);
 				break;

@@ -19,7 +19,7 @@ libsql_parser_a_SOURCES  = \
 	$(top_srcdir)/src/utils/mmgr/mcxt.c \
 	$(top_srcdir)/src/utils/mmgr/aset.c \
 	$(top_srcdir)/src/utils/error/elog.c \
-	wchar.c
+	wchar.c scan.c
 
 if use_repl_snprintf
   libsql_parser_a_SOURCES  += snprintf.c

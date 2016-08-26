@@ -110,7 +110,7 @@ am__libsql_parser_a_SOURCES_DIST = copyfuncs.c gram.y keywords.c \
 	pool_string.c scansup.c stringinfo.c value.c \
 	$(top_srcdir)/src/utils/mmgr/mcxt.c \
 	$(top_srcdir)/src/utils/mmgr/aset.c \
-	$(top_srcdir)/src/utils/error/elog.c wchar.c snprintf.c
+	$(top_srcdir)/src/utils/error/elog.c wchar.c scan.c snprintf.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @use_repl_snprintf_TRUE@am__objects_1 = snprintf.$(OBJEXT)
 am_libsql_parser_a_OBJECTS = copyfuncs.$(OBJEXT) gram.$(OBJEXT) \
@@ -121,7 +121,7 @@ am_libsql_parser_a_OBJECTS = copyfuncs.$(OBJEXT) gram.$(OBJEXT) \
 	$(top_srcdir)/src/utils/mmgr/mcxt.$(OBJEXT) \
 	$(top_srcdir)/src/utils/mmgr/aset.$(OBJEXT) \
 	$(top_srcdir)/src/utils/error/elog.$(OBJEXT) wchar.$(OBJEXT) \
-	$(am__objects_1)
+	scan.$(OBJEXT) $(am__objects_1)
 libsql_parser_a_OBJECTS = $(am_libsql_parser_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -346,7 +346,8 @@ libsql_parser_a_SOURCES = copyfuncs.c gram.y keywords.c kwlookup.c \
 	scansup.c stringinfo.c value.c \
 	$(top_srcdir)/src/utils/mmgr/mcxt.c \
 	$(top_srcdir)/src/utils/mmgr/aset.c \
-	$(top_srcdir)/src/utils/error/elog.c wchar.c $(am__append_1)
+	$(top_srcdir)/src/utils/error/elog.c wchar.c scan.c \
+	$(am__append_1)
 EXTRA_DIST = scan.c scan.l
 AM_YFLAGS = -d
 all: all-am
@@ -437,6 +438,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/outfuncs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_string.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scan.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scansup.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snprintf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stringinfo.Po@am__quote@
