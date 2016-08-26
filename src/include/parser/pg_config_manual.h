@@ -6,8 +6,8 @@
  * for developers.  If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * Portions Copyright (c) 2003-2015, PgPool Global Development Group
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2016, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/pg_config_manual.h
@@ -72,17 +72,12 @@
 #define SEQ_MINVALUE	(-SEQ_MAXVALUE)
 
 /*
- * Number of spare LWLocks to allocate for user-defined add-on code.
- */
-#define NUM_USER_DEFINED_LWLOCKS	4
-
-/*
  * When we don't have native spinlocks, we use semaphores to simulate them.
  * Decreasing this value reduces consumption of OS resources; increasing it
  * may improve performance, but supplying a real spinlock implementation is
  * probably far better.
  */
-#define NUM_SPINLOCK_SEMAPHORES		1024
+#define NUM_SPINLOCK_SEMAPHORES		128
 
 /*
  * When we have neither spinlocks nor atomic operations support we're
@@ -298,6 +293,13 @@
  * copyObject().
  */
 /* #define COPY_PARSE_PLAN_TREES */
+
+/*
+ * Define this to force all raw parse trees for DML statements to be scanned
+ * by raw_expression_tree_walker(), to facilitate catching errors and
+ * omissions in that function.
+ */
+/* #define RAW_EXPRESSION_COVERAGE_TEST */
 
 /*
  * Enable debugging print statements for lock-related operations.

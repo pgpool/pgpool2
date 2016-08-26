@@ -4,8 +4,8 @@
  *	  interface for Value nodes
  *
  *
- * Copyright (c) 2003-2015, PgPool Global Development Group
- * Copyright (c) 2003-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2016, PgPool Global Development Group
+ * Copyright (c) 2003-2016, PostgreSQL Global Development Group
  *
  * src/include/nodes/value.h
  *
