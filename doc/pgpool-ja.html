@@ -631,7 +631,9 @@ LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7から選択しま
 <dd>
 <p>
    trueならPostgreSQLへのコネクションをキャッシュします。デフォルトはtrueです。
-このパラメータを変更した時には pgpool-II を再起動してください。
+   ただし、connection_cacheがtrueでも、template0、template1、postgres、
+    regression データベースへの接続はキャッシュされません。
+   このパラメータを変更した時には pgpool-II を再起動してください。
 </p>
 
 <dt><a name="HEALTH_CHECK_TIMEOUT"></a>health_check_timeout</dt>

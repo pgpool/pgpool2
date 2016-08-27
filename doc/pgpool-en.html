@@ -656,8 +656,11 @@ max_pool*num_init_children*2 <= (max_connections - superuser_reserved_connection
 
   <dt><a name="CONNECTION_CACHE"></a>connection_cache</dt>
   <dd>
-      <p>Caches connections to backends when set to true. Default is
-      true. You need to restart pgpool-II if you change this value.</p>
+      <p>Caches connections to backends when set to true. However,
+      connections to template0, template1, postgres and regression
+      databases are not cached even if connection_cache is true.
+      Default is true. You need to restart pgpool-II if you change
+      this value.</p>
   </dd>
 
   <dt><a name="HEALTH_CHECK_TIMEOUT"></a>health_check_timeout</dt>
