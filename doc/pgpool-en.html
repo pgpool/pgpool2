@@ -955,7 +955,10 @@ local0.*    /var/log/pgpool.log
 <dl>
 <dt><a name="CONNECTION_CACHE"></a>connection_cache</dt>
     <dd>
-    <p>Caches connections to backends when set to true. Default is true.
+    <p>Caches connections to backends when set to on. Default is true.
+      However, connections to template0, template1, postgres and
+      regression databases are not cached even if connection_cache is
+      on.
     </p>
     <p>
     You need to restart pgpool-II if you change this value.</p>
