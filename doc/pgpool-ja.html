@@ -892,7 +892,9 @@ local0.*    /var/log/pgpool.log
 <dt><a name="CONNECTION_CACHE"></a>connection_cache</dt>
     <dd>
     <p>
-    trueならPostgreSQLへのコネクションをキャッシュします。デフォルトはtrueです。
+    trueならPostgreSQLへのコネクションをキャッシュします。デフォルトはonです。
+    ただし、connection_cacheがonでも、template0、template1、postgres、
+    regression データベースへの接続はキャッシュされません。
     </p>
     <p>
     このパラメータを変更した時には pgpool-II を再起動してください。
