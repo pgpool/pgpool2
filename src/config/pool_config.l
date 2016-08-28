@@ -3573,7 +3573,8 @@ static char **extract_string_tokens(char *str, char *delimi, int *n)
 		}
 	}
 	/* how about reclaiming the unused space */
-	tokens = repalloc(tokens, (sizeof(char *) * (*n) ));
+	if (*n > 0)
+		tokens = repalloc(tokens, (sizeof(char *) * (*n) ));
 	return tokens;
 }
 
