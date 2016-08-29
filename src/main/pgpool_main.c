@@ -223,7 +223,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	pool_signal(SIGPIPE, SIG_IGN);
 
 	/* create unix domain socket */
-	fds = malloc(sizeof(int));
+	fds = malloc(sizeof(int) * 2);
 	if (fds == NULL)
 		ereport(FATAL,
 				(errmsg("failed to allocate memory in startup process")));
@@ -293,6 +293,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	}
 
 	fds[0] = create_unix_domain_socket(un_addr);
+	fds[1] = -1;
 	on_proc_exit(FileUnlink, (Datum) un_addr.sun_path);
 
 	/* create inet domain socket if any */
