@@ -4,6 +4,71 @@
 3.4 Series (2014/11/07 - )
 ===============================================================================
 
+                        3.4.8 (tataraboshi) 2016/08/31
+
+* Version 3.4.8
+
+    This is a bugfix release against pgpool-II 3.4.7.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+      
+      While processing "show pool_nodes", the buffer for hostname was too
+      short. It should be same size as the buffer used for pgpool.conf.
+      Problem reported by a twitter user who is using pgpool on AWS (which
+      could have very long hostname).
+
+    - Fix usage of wait(2) in pgpool main process. (Tatsuo Ishii)
+      
+      The usage of wait(2) in pgpool main could cause infinite wait in the
+      system call. Solution is, to use waitpid(2) instead of wait(2).
+
+    - Save and restore errno in each signal handler. (Tatsuo Ishii)
+
+    - Fix handling of pcp_listen_addresses config parameter. (Muhammad Usama)
+
+    - Fix "kind mismatch" error message in pgpool. (Muhammad Usama)
+      
+      Many of "kind mismatch..." errors are caused by notice/warning
+      messages produced by one or more of the DB nodes. In this case now
+      Pgpool-II forwards the messages to frontend, rather than throwing the
+      "kind mismatch..." error. This would reduce the chance of "kind
+      mismatch..."  errors.
+      
+      See [pgpool-hackers: 1501] for more details.
+
+    - Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+      
+      The macro calls pool_virtual_master_db_node_id() and then access
+      backend->slots[id]->con using the node id returned.  In rare cases, it
+      could point to 0 (in case when the DB node is not connected), which
+      gives access to con->major, then it causes a segfault.
+      
+      See bug 225 for related info.
+
+    - doc : Fixing a typo in english doc (Muhammad Usama)
+
+    - doc : fix Japanese document typo. (Bo Peng)
+
+    - Fixing a typo in the log message. (Muhammad Usama)
+
+    - Tighten up health check timer expired condition in pool_check_fd(). (Muhammad Usama)
+
+    - doc : Add comment to the document about connection_cache. (Tatsuo Ishii)
+
+    - Fix for 237 that Pgpool-II fails to start if listen_addresses is empty string.
+      (Muhammad Usama)
+      
+      The socket descriptor array (fds[]) was not getting the array end marker
+      when TCP listen addresses are not used.
+      
+      See bug 237 for related info.
+
+===============================================================================
+
                         3.4.7 (tataraboshi) 2016/06/17
 
 * Version 3.4.7
@@ -974,6 +1039,57 @@
 
 ===============================================================================
 3.3 Series (2013/07/30 - )
+===============================================================================
+
+                        3.3.12 (tokakiboshi) 2016/08/31
+
+* Version 3.3.12
+
+    This is a bugfix release against pgpool-II 3.3.11.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+      
+      While processing "show pool_nodes", the buffer for hostname was too
+      short. It should be same size as the buffer used for pgpool.conf.
+      Problem reported by a twitter user who is using pgpool on AWS (which
+      could have very long hostname).
+
+    - Fix usage of wait(2) in pgpool main process. (Tatsuo Ishii)
+      
+      The usage of wait(2) in pgpool main could cause infinite wait in the
+      system call. Solution is, to use waitpid(2) instead of wait(2).
+
+    - Fix "kind mismatch" error message in pgpool. (Muhammad Usama)
+      
+      Many of "kind mismatch..." errors are caused by notice/warning
+      messages produced by one or more of the DB nodes. In this case now
+      Pgpool-II forwards the messages to frontend, rather than throwing the
+      "kind mismatch..." error. This would reduce the chance of "kind
+      mismatch..."  errors.
+      
+      See [pgpool-hackers: 1501] for more details.
+
+    - Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+      
+      The macro calls pool_virtual_master_db_node_id() and then access
+      backend->slots[id]->con using the node id returned.  In rare cases, it
+      could point to 0 (in case when the DB node is not connected), which
+      gives access to con->major, then it causes a segfault.
+      
+      See bug 225 for related info.
+
+    - doc : Fixing a typo in english doc (Muhammad Usama)
+
+    - doc : fix Japanese document typo. (Bo Peng)
+
+    - Fixing a typo in the log message. (Muhammad Usama)
+
+    - doc : Add comment to the document about connection_cache. (Tatsuo Ishii)
+
 ===============================================================================
 
                         3.3.11 (tokakiboshi) 2016/06/17
@@ -2739,6 +2855,55 @@
 
 ===============================================================================
 3.2 Series (2012/08/03 - )
+===============================================================================
+
+                        3.2.17 (namameboshi) 2016/08/31
+
+* Version 3.2.17
+
+    This is a bugfix release against pgpool-II 3.2.16.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+      
+      While processing "show pool_nodes", the buffer for hostname was too
+      short. It should be same size as the buffer used for pgpool.conf.
+      Problem reported by a twitter user who is using pgpool on AWS (which
+      could have very long hostname).
+
+    - Fix usage of wait(2) in pgpool main process. (Tatsuo Ishii)
+      
+      The usage of wait(2) in pgpool main could cause infinite wait in the
+      system call. Solution is, to use waitpid(2) instead of wait(2).
+
+    - Fix "kind mismatch" error message in pgpool. (Muhammad Usama)
+      
+      Many of "kind mismatch..." errors are caused by notice/warning
+      messages produced by one or more of the DB nodes. In this case now
+      Pgpool-II forwards the messages to frontend, rather than throwing the
+      "kind mismatch..." error. This would reduce the chance of "kind
+      mismatch..."  errors.
+      
+      See [pgpool-hackers: 1501] for more details.
+
+    - Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+      
+      The macro calls pool_virtual_master_db_node_id() and then access
+      backend->slots[id]->con using the node id returned.  In rare cases, it
+      could point to 0 (in case when the DB node is not connected), which
+      gives access to con->major, then it causes a segfault.
+      
+      See bug 225 for related info.
+
+    - doc : fix Japanese document typo. (Bo Peng)
+
+    - Fixing a typo in the log message. (Muhammad Usama)
+
+    - doc : Add comment to the document about connection_cache. (Tatsuo Ishii)
+
 ===============================================================================
 
                         3.2.16 (namameboshi) 2016/06/17
@@ -4958,6 +5123,55 @@
 
 ===============================================================================
 3.1 Series (2011/09/08 - )
+===============================================================================
+
+                        3.1.20 (hatsuiboshi) 2016/08/31
+
+* Version 3.1.20
+
+    This is a bugfix release against pgpool-II 3.1.19.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+      
+      While processing "show pool_nodes", the buffer for hostname was too
+      short. It should be same size as the buffer used for pgpool.conf.
+      Problem reported by a twitter user who is using pgpool on AWS (which
+      could have very long hostname).
+
+    - Fix usage of wait(2) in pgpool main process. (Tatsuo Ishii)
+      
+      The usage of wait(2) in pgpool main could cause infinite wait in the
+      system call. Solution is, to use waitpid(2) instead of wait(2).
+
+    - Fix "kind mismatch" error message in pgpool. (Muhammad Usama)
+      
+      Many of "kind mismatch..." errors are caused by notice/warning
+      messages produced by one or more of the DB nodes. In this case now
+      Pgpool-II forwards the messages to frontend, rather than throwing the
+      "kind mismatch..." error. This would reduce the chance of "kind
+      mismatch..."  errors.
+      
+      See [pgpool-hackers: 1501] for more details.
+
+    - Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+      
+      The macro calls pool_virtual_master_db_node_id() and then access
+      backend->slots[id]->con using the node id returned.  In rare cases, it
+      could point to 0 (in case when the DB node is not connected), which
+      gives access to con->major, then it causes a segfault.
+      
+      See bug 225 for related info.
+
+    - doc : fix Japanese document typo. (Bo Peng)
+
+    - Fixing a typo in the log message. (Muhammad Usama)
+
+    - doc : Add comment to the document about connection_cache. (Tatsuo Ishii)
+
 ===============================================================================
 
                         3.1.19 (hatsuiboshi) 2016/06/17
