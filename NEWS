@@ -4,6 +4,55 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.20 (hatsuiboshi) 2016/08/31
+
+* Version 3.1.20
+
+    This is a bugfix release against pgpool-II 3.1.19.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+      
+      While processing "show pool_nodes", the buffer for hostname was too
+      short. It should be same size as the buffer used for pgpool.conf.
+      Problem reported by a twitter user who is using pgpool on AWS (which
+      could have very long hostname).
+
+    - Fix usage of wait(2) in pgpool main process. (Tatsuo Ishii)
+      
+      The usage of wait(2) in pgpool main could cause infinite wait in the
+      system call. Solution is, to use waitpid(2) instead of wait(2).
+
+    - Fix "kind mismatch" error message in pgpool. (Muhammad Usama)
+      
+      Many of "kind mismatch..." errors are caused by notice/warning
+      messages produced by one or more of the DB nodes. In this case now
+      Pgpool-II forwards the messages to frontend, rather than throwing the
+      "kind mismatch..." error. This would reduce the chance of "kind
+      mismatch..."  errors.
+      
+      See [pgpool-hackers: 1501] for more details.
+
+    - Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+      
+      The macro calls pool_virtual_master_db_node_id() and then access
+      backend->slots[id]->con using the node id returned.  In rare cases, it
+      could point to 0 (in case when the DB node is not connected), which
+      gives access to con->major, then it causes a segfault.
+      
+      See bug 225 for related info.
+
+    - doc : fix Japanese document typo. (Bo Peng)
+
+    - Fixing a typo in the log message. (Muhammad Usama)
+
+    - doc : Add comment to the document about connection_cache. (Tatsuo Ishii)
+
+===============================================================================
+
                         3.1.19 (hatsuiboshi) 2016/06/17
 
 * Version 3.1.19
