@@ -603,7 +603,7 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 				return POOL_END;
 
 			/* Forward "Sync" message to backend */
-			session_context = pool_get_session_context(true);
+			session_context = pool_get_session_context();
 			target_backend = CONNECTION(backend, session_context->load_balance_node_id);
 			pool_write(target_backend, &kind, 1);
 			pool_write_and_flush(target_backend, &len, sizeof(len));
