@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -582,14 +582,17 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 		free(qcache);
 
 		/*
-		 * If we are doing extended query, wait and discard Sync
-		 * message from frontend. This is necessary to prevent
-		 * receiving Sync message after Sending Ready for query.
+		 * If we are doing extended query, forward sync message from frontend to
+		 * backend. This is necessary to prevent receiving Sync message after
+		 * Sending Ready for query.
 		 */
 		if (pool_is_doing_extended_query_message())
 		{
 			char kind;
 			int32 len;
+			POOL_SESSION_CONTEXT *session_context;
+			POOL_CONNECTION *target_backend;
+			char buf[5];
 
 			if (pool_flush(frontend))
 				return POOL_END;
@@ -598,6 +601,16 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 			pool_debug("pool_fetch_from_memory_cache: expecting sync: %c", kind);
 			if (pool_read(frontend, &len, sizeof(len)))
 				return POOL_END;
+
+			/* Forward "Sync" message to backend */
+			session_context = pool_get_session_context(true);
+			target_backend = CONNECTION(backend, session_context->load_balance_node_id);
+			pool_write(target_backend, &kind, 1);
+			pool_write_and_flush(target_backend, &len, sizeof(len));
+
+			/* Read and discard "Ready for query" message from backend */
+			pool_read(target_backend, &kind, 1);
+			pool_read(target_backend, buf, sizeof(buf));
 		}
 
 		/*
