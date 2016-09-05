@@ -1156,7 +1156,13 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		 */
 		else if (IsA(node, CopyStmt))
 		{
-			return (((CopyStmt *)node)->is_from)?POOL_PRIMARY:POOL_EITHER;
+        		if (((CopyStmt *)node)->is_from)
+            		{
+                		return POOL_PRIMARY;
+            		} else {
+                		return (IsA(((CopyStmt *)node)->query, SelectStmt))?POOL_EITHER:POOL_PRIMARY;
+            		}
+
 		}
 
 		/*
