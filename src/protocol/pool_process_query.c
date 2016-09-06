@@ -796,7 +796,22 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	pool_write(frontend, &kind, 1);
 	sendlen = htonl(len1+4);
 	pool_write(frontend, &sendlen, sizeof(sendlen));
-	pool_write_and_flush(frontend, p1, len1);
+
+	/*
+	 * Optimization for "Data Row" message.  Since it is too often to receive
+	 * and forward "Data Row" message, we do not flush the message to frontend
+	 * now. We expect that "Command Complete" message (or "Error response" or
+	 * "Notice response" message) follows the stream of data row message
+	 * anyway, so flushing will be done at that time.
+	 */
+	if (kind == 'D')
+	{
+		pool_write(frontend, p1, len1);
+	}
+	else
+	{
+		pool_write_and_flush(frontend, p1, len1);
+	}
 
 	ereport(DEBUG1,
 			(errmsg("SimpleForwardToFrontend: packet:%c length:%d",

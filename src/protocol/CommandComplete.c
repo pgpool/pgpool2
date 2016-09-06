@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -370,17 +370,13 @@ static int foward_command_complete(POOL_CONNECTION *frontend, char *packet, int 
 {
 	int sendlen;
 
-	pool_flush(frontend);
-
 	if (pool_write(frontend, "C", 1) < 0)
 		return -1;
-
-	pool_flush(frontend);
 
 	sendlen = htonl(packetlen+4);
 	if (pool_write(frontend, &sendlen, sizeof(sendlen)) < 0)
 		return -1;
-	pool_flush(frontend);
+
 	pool_write_and_flush(frontend, packet, packetlen);
 
 	return 0;

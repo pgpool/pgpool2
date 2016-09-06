@@ -2637,8 +2637,10 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			default:
 				status = SimpleForwardToFrontend(kind, frontend, backend);
+#ifdef NOT_USED
 				if (pool_flush(frontend))
 					return POOL_END;
+#endif
 				break;
 		}
 	}
