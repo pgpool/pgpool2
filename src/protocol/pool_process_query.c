@@ -1198,7 +1198,9 @@ bool is_select_query(Node *node, char *sql)
 			{
 				return false;
 			}
-		} else {
+		} 
+		else 
+		{
 			return false;
 		}
 	}
