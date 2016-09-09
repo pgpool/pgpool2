@@ -773,7 +773,6 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 		if (!connect_with_timeout(fd, walk, host, port, retry))
 		{
 			close(fd);
-			fd = -1;
 			continue;
 		}
 
