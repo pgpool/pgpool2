@@ -25,4 +25,3 @@
 pid_t mypid;	/* pgpool parent process id */
 ProcessType processType;
 ProcessState processState;
-random_start_time;
