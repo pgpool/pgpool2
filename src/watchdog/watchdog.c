@@ -828,8 +828,8 @@ try_connecting_with_all_unreachable_nodes(void)
 	for (i=0; i< g_cluster.remoteNodeCount; i++)
 	{
 		WatchdogNode* wdNode = &(g_cluster.remoteNodes[i]);
-		if ((wdNode->client_socket.sock_state != WD_SOCK_WAITING_FOR_CONNECT || wdNode->client_socket.sock_state != WD_SOCK_CONNECTED) &&
-			(wdNode->server_socket.sock_state != WD_SOCK_WAITING_FOR_CONNECT || wdNode->server_socket.sock_state != WD_SOCK_CONNECTED))
+		if (wdNode->client_socket.sock_state != WD_SOCK_WAITING_FOR_CONNECT && wdNode->client_socket.sock_state != WD_SOCK_CONNECTED &&
+			wdNode->server_socket.sock_state != WD_SOCK_WAITING_FOR_CONNECT && wdNode->server_socket.sock_state != WD_SOCK_CONNECTED)
 		{
 			wdNode->state = WD_DEAD;
 			connect_to_node(wdNode);
