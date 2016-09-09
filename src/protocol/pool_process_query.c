@@ -1179,8 +1179,28 @@ bool is_select_query(Node *node, char *sql)
 	else if (IsA(node, CopyStmt))
 	{
 		CopyStmt *copy_stmt = (CopyStmt *)node;
-		return (copy_stmt->is_from == FALSE &&
-				copy_stmt->filename == NULL);
+               
+		if (copy_stmt->is_from)
+		{
+			return false;
+		}
+		else if (copy_stmt->filename == NULL )
+		{
+			if (copy_stmt->query == NULL)
+			{
+				return true;
+			}
+			else if (copy_stmt->query  && IsA(copy_stmt->query, SelectStmt))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		} else {
+			return false;
+		}
 	}
 	else if (IsA(node, ExplainStmt))
 	{
