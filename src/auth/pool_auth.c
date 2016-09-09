@@ -54,6 +54,8 @@ static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char
 static int send_password_packet(POOL_CONNECTION *backend, int protoMajor, char *password);
 static int send_auth_ok(POOL_CONNECTION *frontend, int protoMajor);
 
+static long PostmasterRandom(void);
+
 /*
  * After sending the start up packet to the backend, do the
  * authentication against backend. if success return 0 otherwise non
@@ -1275,13 +1277,51 @@ int pool_read_int(POOL_CONNECTION_POOL *cp)
  */
 void pool_random_salt(char *md5Salt)
 {
-	long rand = random();
+	long rand = PostmasterRandom();
 
 	md5Salt[0] = (rand % 255) + 1;
-	rand = random();
+	rand = PostmasterRandom();
 	md5Salt[1] = (rand % 255) + 1;
-	rand = random();
+	rand = PostmasterRandom();
 	md5Salt[2] = (rand % 255) + 1;
-	rand = random();
+	rand = PostmasterRandom();
 	md5Salt[3] = (rand % 255) + 1;
+}
+
+/*
+ * PostmasterRandom
+ */
+static long
+PostmasterRandom(void)
+{
+	extern struct timeval random_start_time;
+	static unsigned int random_seed = 0;
+
+	/*
+	 * Select a random seed at the time of first receiving a request.
+	 */
+	if (random_seed == 0)
+	{
+		do
+		{
+			struct timeval random_stop_time;
+
+			gettimeofday(&random_stop_time, NULL);
+
+			/*
+			 * We are not sure how much precision is in tv_usec, so we swap
+			 * the high and low 16 bits of 'random_stop_time' and XOR them
+			 * with 'random_start_time'. On the off chance that the result is
+			 * 0, we loop until it isn't.
+			 */
+			random_seed = random_start_time.tv_usec ^
+				((random_stop_time.tv_usec << 16) |
+				 ((random_stop_time.tv_usec >> 16) & 0xffff));
+		}
+		while (random_seed == 0);
+
+		srandom(random_seed);
+	}
+
+	return random();
 }

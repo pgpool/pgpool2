@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -132,7 +132,8 @@ static char* process_name_from_pid(pid_t pid);
 
 static struct sockaddr_un un_addr;		/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
-ProcessInfo *process_info = NULL;	/* Per child info table on shmem */
+ProcessInfo *process_info = NULL;		/* Per child info table on shmem */
+struct timeval random_start_time;
 
 /*
  * Private copy of backend status
@@ -191,7 +192,10 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	MemoryContext MainLoopMemoryContext;
 	sigjmp_buf	local_sigjmp_buf;
-	
+
+	/* For PostmasterRandom */
+	gettimeofday(&random_start_time, NULL);
+
 	/* Set the process type variable */
 	processType = PT_MAIN;
 	processState = INITIALIZING;

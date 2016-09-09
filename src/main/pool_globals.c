@@ -27,3 +27,4 @@ pid_t mypid;	/* pgpool parent process id */
 bool run_as_pcp_child;
 ProcessType processType;
 ProcessState processState;
+random_start_time;
