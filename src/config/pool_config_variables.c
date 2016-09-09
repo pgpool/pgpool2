@@ -3157,10 +3157,14 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 
 	for (i=0;i<n;i++)
 	{
+		int k;
 		if (!strcmp(flags[i], "ALLOW_TO_FAILOVER"))
 		{
 			if (disallow_to_failover_is_specified)
 			{
+				for (k = i; k < n; k++)
+					pfree(flags[k]);
+				pfree(flags);
 				ereport(elevel,
 					(errmsg("invalid configuration for key \"backend_flag%d\"",index),
 						 errdetail("cannot set ALLOW_TO_FAILOVER and DISALLOW_TO_FAILOVER at the same time")));
@@ -3175,6 +3179,10 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 		{
 			if (allow_to_failover_is_specified)
 			{
+				for (k = i; k < n; k++)
+					pfree(flags[k]);
+				pfree(flags);
+
 				ereport(elevel,
 					(errmsg("invalid configuration for key \"backend_flag%d\"",index),
 						 errdetail("cannot set ALLOW_TO_FAILOVER and DISALLOW_TO_FAILOVER at the same time")));
@@ -3189,9 +3197,12 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 			ereport(elevel,
 				(errmsg("invalid configuration for key \"backend_flag%d\"",index),
 					 errdetail("unknown backend flag:%s", flags[i])));
+			for (k = i; k < n; k++)
+				pfree(flags[k]);
 			pfree(flags);
 			return false;
 		}
+		pfree(flags[i]);
 	}
 
 	g_pool_config.backend_desc->backend_info[index].flag = flag;
