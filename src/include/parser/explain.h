@@ -13,9 +13,6 @@
 #ifndef EXPLAIN_H
 #define EXPLAIN_H
 
-//#include "executor/executor.h"
-//#include "lib/stringinfo.h"
-
 typedef enum ExplainFormat
 {
 	EXPLAIN_FORMAT_TEXT,

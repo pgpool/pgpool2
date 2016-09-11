@@ -252,7 +252,7 @@ typedef enum A_Expr_Kind
 	AEXPR_OP_ANY,				/* scalar op ANY (array) */
 	AEXPR_OP_ALL,				/* scalar op ALL (array) */
 	AEXPR_DISTINCT,				/* IS DISTINCT FROM - name must be "=" */
-    AEXPR_NOT_DISTINCT,         /* IS NOT DISTINCT FROM - name must be "=" */
+	AEXPR_NOT_DISTINCT,         /* IS NOT DISTINCT FROM - name must be "=" */
 	AEXPR_NULLIF,				/* NULLIF - name must be "=" */
 	AEXPR_OF,					/* IS [NOT] OF - name must be "=" or "<>" */
 	AEXPR_IN,					/* [NOT] IN - name must be "=" or "<>" */
@@ -377,8 +377,8 @@ typedef struct A_Indices
 {
 	NodeTag		type;
 	bool		is_slice;		/* true if slice (i.e., colon present) */
-	Node	   *lidx;			/* slice lower bound, if any */
-	Node	   *uidx;			/* subscript, or slice upper bound if any */
+	Node		*lidx;			/* slice lower bound, if any */
+	Node		*uidx;			/* subscript, or slice upper bound if any */
 } A_Indices;
 
 /*
@@ -1701,15 +1701,15 @@ typedef struct AlterDefaultPrivilegesStmt
 typedef struct CopyStmt
 {
 	NodeTag		type;
-	RangeVar   *relation;		/* the relation to copy */
-	Node	   *query;			/* the query (SELECT or DML statement with
+	RangeVar	*relation;		/* the relation to copy */
+	Node		*query;			/* the query (SELECT or DML statement with
 								 * RETURNING) to copy */
-	List	   *attlist;		/* List of column names (as Strings), or NIL
+	List		*attlist;		/* List of column names (as Strings), or NIL
 								 * for all columns */
 	bool		is_from;		/* TO or FROM */
 	bool		is_program;		/* is 'filename' a program to popen? */
-	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
-	List	   *options;		/* List of DefElem nodes */
+	char		*filename;		/* filename, or NULL for STDIN/STDOUT */
+	List		*options;		/* List of DefElem nodes */
 } CopyStmt;
 
 /* ----------------------

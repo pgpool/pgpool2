@@ -481,9 +481,9 @@ typedef enum NodeTag
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
 	T_FdwRoutine,				/* in foreign/fdwapi.h */
-    T_IndexAmRoutine,           /* in access/amapi.h */
-    TsmRoutine,                 /* in access/tsmapi.h */
-    T_ForeignKeyCacheInfo,       /* in utils/rel.h */
+	T_IndexAmRoutine,           /* in access/amapi.h */
+	TsmRoutine,                 /* in access/tsmapi.h */
+	T_ForeignKeyCacheInfo,       /* in utils/rel.h */
 	/* pgpool Extention */
 	T_PgpoolVariableSetStmt,
 	T_PgpoolVariableShowStmt
