@@ -14417,6 +14417,8 @@ fi
 fi
 
 
+CFLAGS="$CFLAGS -fno-strict-aliasing"
+
 
 
 
