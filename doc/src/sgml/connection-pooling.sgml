@@ -4,7 +4,71 @@
   <title>Connection Pooling</title>
 
   <para>
+   <productname>Pgpool-II</productname> maintains established
+    connections to the PostgreSQL servers, and reuses them whenever a
+    new connection with the same properties (i.e. user name, database,
+    protocol version) comes in. It reduces the connection overhead,
+    and improves system's overall throughput.
+  </para>
+  <para>
     connection_cache, max_pool, reset_query_list, child_life_time, 
     child_max_connections, connection_life_time, client_idle_limit
   </para>
+
+  <sect2 id="runtime-config-connection-pooling-settings">
+    <title>Connection Pooling Settings</title>
+
+    <variablelist>
+
+      <varlistentry id="guc-connection-cache" xreflabel="connection_cache">
+	<term><varname>connection_cache</varname> (<type>boolean</type>)
+	  <indexterm>
+	    <primary><varname>connection_cache</varname> configuration parameter</primary>
+	  </indexterm>
+	</term>
+	<listitem>
+	  <para>
+	    Caches connections to backends when set to on. Default is on.
+	    <emphasis>However, connections to template0, template1, postgres and
+	    regression databases are not cached even if connection_cache is
+	    on.</emphasis>
+	  </para>
+	  <para>
+	    You need to restart <productname>Pgpool-II</productname>
+	    if you change this value.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-max-pool" xreflabel="max_pool">
+	<term><varname>max_pool</varname> (<type>integer</type>)
+	  <indexterm>
+	    <primary><varname>max_pool</varname> configuration parameter</primary>
+	  </indexterm>
+	</term>
+	<listitem>
+	  <para>
+	    The maximum number of cached connections
+	    in <productname>Pgpool-II</productname> children
+	    processes.  <productname>Pgpool-II</productname> reuses the
+	    cached connection if an incoming connection is connecting
+	    to the same database with the same user name.  If not,
+	    <productname>Pgpool-II</productname> creates a new
+	    connection to the backend.  If the number of cached
+	    connections exceeds max_pool, the oldest connection will
+	    be discarded, and uses that slot for the new connection.
+	  </para>
+	  <para>
+	    Default value is 4. Please be aware that the number of
+	    connections from pgpool-II processes to the backends may reach
+	    num_init_children * max_pool.
+	  </para>
+	  <para>
+	    This parameter can only be set at server start.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+  </sect2>
 </sect1>
