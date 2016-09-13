@@ -491,7 +491,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	i++;
 
 	StrNCpy(status[i].name, "delay_threshold", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", pool_config->delay_threshold);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, INT64_FORMAT, pool_config->delay_threshold);
 	StrNCpy(status[i].desc, "standby delay threshold", POOLCONFIG_MAXDESCLEN);
 	i++;
 
@@ -1160,7 +1160,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 	    snprintf(nodes[i].load_balance_node, POOLCONFIG_MAXWEIGHTLEN, "%s",
 				 (session_context->load_balance_node_id == i)? "true":"false");
 
-		snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, "%lld", 0);
+		snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, "%d", 0);
 
 		if (STREAM)
 		{
@@ -1171,7 +1171,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 			else
 			{
 				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "standby");
-				snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, "%lld", bi->standby_delay);
+				snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, bi->standby_delay);
 			}
 		}
 		else
