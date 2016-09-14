@@ -138,6 +138,7 @@ static struct sockaddr_un un_addr;		/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
 
 ProcessInfo *process_info;	/* Per child info table on shmem */
+struct timeval random_start_time;
 
 /*
  * Private copy of backend status
@@ -315,6 +316,9 @@ int main(int argc, char **argv)
 				exit(1);
 		}
 	}
+
+	/* For PostmasterRandom */
+	gettimeofday(&random_start_time, NULL);
 
 #ifdef USE_SSL
 	/* global ssl init */
