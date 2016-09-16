@@ -76,6 +76,7 @@
 
    &pcpCommonOptions;
    &pcpNodeCount;
+   &pcpNodeInfo;
 
  </reference>
 
