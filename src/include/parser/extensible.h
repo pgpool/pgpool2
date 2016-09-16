@@ -14,12 +14,6 @@
 #ifndef EXTENSIBLE_H
 #define EXTENSIBLE_H
 
-//#include "parallel.h"
-//#include "explain.h"
-//#include "nodes/execnodes.h"
-//#include "nodes/plannodes.h"
-//#include "nodes/relation.h"
-
 /* maximum length of an extensible node identifier */
 #define EXTNODENAME_MAX_LEN					64
 
@@ -80,7 +74,5 @@ extern const ExtensibleNodeMethods *GetExtensibleNodeMethods(const char *name,
  */
 #define CUSTOMPATH_SUPPORT_BACKWARD_SCAN	0x0001
 #define CUSTOMPATH_SUPPORT_MARK_RESTORE		0x0002
-
-
 
 #endif   /* EXTENSIBLE_H */

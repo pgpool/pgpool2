@@ -710,6 +710,8 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 		stmt = ((PrepareStmt *) node)->query;
 		ctx.rewrite_to_params = true;
 	}
+	else if (IsA(node, CopyStmt) && ((CopyStmt *) node)->query != NULL)
+		stmt = ((CopyStmt *) node)->query;
 	else
 		stmt = node;
 
