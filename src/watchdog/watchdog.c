@@ -416,7 +416,7 @@ static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacke
 static WDFailoverCMDResults node_is_asking_for_failover_cmd_end(WatchdogNode* wdNode, WDPacketData* pkt, int failoverCmdType, bool resign);
 static WDFailoverCMDResults node_is_asking_for_failover_cmd_start(WatchdogNode* wdNode, WDPacketData* pkt, int failoverCmdType, bool check);
 static void wd_system_will_go_down(int code, Datum arg);
-static bool verify_pool_configurations(POOL_CONFIG* config);
+static void verify_pool_configurations(WatchdogNode* wdNode, POOL_CONFIG* config);
 
 static bool get_authhash_for_node(WatchdogNode* wdNode, char* authhash);
 static bool verify_authhash_for_node(WatchdogNode* wdNode, char* authhash);
@@ -2969,17 +2969,15 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			
 		case WD_POOL_CONFIG_DATA:
 		{
-			/* we only accept config data from coordinator node */
-			if (wdNode == g_cluster.masterNode && pkt->data)
+			/* only accept config data if I am the coordinator node */
+			if (g_cluster.localNode == g_cluster.masterNode && pkt->data)
 			{
-				POOL_CONFIG* master_config = get_pool_config_from_json(pkt->data, pkt->len);
-				if (master_config)
+				POOL_CONFIG* standby_config = get_pool_config_from_json(pkt->data, pkt->len);
+				if (standby_config)
 				{
-					verify_pool_configurations(master_config);
+					verify_pool_configurations(wdNode, standby_config);
 				}
-				
 			}
-			
 		}
 			break;
 			
@@ -4459,6 +4457,14 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 				}
 					break;
 
+				case WD_JOIN_COORDINATOR_MESSAGE:
+				{
+					reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+					/* Also get the configurations from the standby node */
+					send_message_of_type(wdNode,WD_ASK_FOR_POOL_CONFIG);
+				}
+					break;
+
 				case WD_ADD_NODE_MESSAGE:
 				{
 					standard_packet_processor(wdNode, pkt);
@@ -4739,7 +4745,6 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 				if (g_cluster.currentCommand.commandStatus == COMMAND_FINISHED_ALL_REPLIED ||
 					g_cluster.currentCommand.commandStatus == COMMAND_FINISHED_TIMEOUT)
 				{
-					send_message_of_type(g_cluster.masterNode,WD_ASK_FOR_POOL_CONFIG);
 					cluster_in_stable_state();
 
 					ereport(LOG,
@@ -5324,133 +5329,106 @@ static void add_wd_command_for_timer_events(unsigned int expire_secs, bool need_
 	
 }
 
-static bool verify_pool_configurations(POOL_CONFIG* config)
+#define WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config_obj, wdNode, parameter) \
+do { \
+	if (config_obj->parameter != pool_config->parameter) \
+	{ \
+		ereport(WARNING, \
+			(errmsg("configurations value for \"%s\" on node \"%s\" is different", #parameter, wdNode->nodeName), \
+				errdetail("\"%s\" on this node is %d while on \"%s\" is %d", \
+				   #parameter, \
+				   pool_config->parameter, \
+				   wdNode->nodeName, \
+				   config_obj->parameter))); \
+	} \
+} while(0)
+#define WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config_obj,wdNode, parameter) \
+do { \
+	if (config_obj->parameter != pool_config->parameter) \
+	{ \
+		ereport(WARNING, \
+			(errmsg("configurations value for \"%s\" on node \"%s\" is different", #parameter, wdNode->nodeName), \
+				errdetail("\"%s\" on this node is %s while on \"%s\" is %s", \
+					#parameter, \
+					pool_config->parameter?"ON":"OFF", \
+					wdNode->nodeName, \
+					config_obj->parameter?"ON":"OFF"))); \
+	} \
+} while(0)
+
+static void verify_pool_configurations(WatchdogNode* wdNode, POOL_CONFIG* config)
 {
 	int i;
-	char *key = "";
-	if (config->num_init_children != pool_config->num_init_children)
-	{
-		key = "num_init_children";
-		goto ERROR_EXIT;
-	}
-	if (config->listen_backlog_multiplier != pool_config->listen_backlog_multiplier)
-	{
-		key = "listen_backlog_multiplier";
-		goto ERROR_EXIT;
-	}
-	if (config->child_life_time != pool_config->child_life_time)
-	{
-		key = "child_life_time";
-		goto ERROR_EXIT;
-	}
-	if (config->connection_life_time != pool_config->connection_life_time)
-	{
-		key = "connection_life_time";
-		goto ERROR_EXIT;
-	}
-	if (config->child_max_connections != pool_config->child_max_connections)
-	{
-		key = "child_max_connections";
-		goto ERROR_EXIT;
-	}
-	if (config->client_idle_limit != pool_config->client_idle_limit)
-	{
-		key = "client_idle_limit";
-		goto ERROR_EXIT;
-	}
-	if (config->max_pool != pool_config->max_pool)
-	{
-		key = "max_pool";
-		goto ERROR_EXIT;
-	}
-	if (config->replication_mode != pool_config->replication_mode)
-	{
-		key = "replication_mode";
-		goto ERROR_EXIT;
-	}
-	if (config->enable_pool_hba != pool_config->enable_pool_hba){key = "enable_pool_hba";goto ERROR_EXIT;}
-	if (config->load_balance_mode != pool_config->load_balance_mode){key = "load_balance_mode";goto ERROR_EXIT;}
-	if (config->replication_stop_on_mismatch != pool_config->replication_stop_on_mismatch){key = "replication_stop_on_mismatch";goto ERROR_EXIT;}
-	if (config->failover_if_affected_tuples_mismatch != pool_config->failover_if_affected_tuples_mismatch){key = "failover_if_affected_tuples_mismatch";goto ERROR_EXIT;}
-	if (config->replicate_select != pool_config->replicate_select){key = "replicate_select";goto ERROR_EXIT;}
-	if (config->master_slave_mode != pool_config->master_slave_mode){key = "master_slave_mode";goto ERROR_EXIT;}
-	if (config->connection_cache != pool_config->connection_cache){key = "connection_cache";goto ERROR_EXIT;}
-	if (config->health_check_timeout != pool_config->health_check_timeout){key = "health_check_timeout";goto ERROR_EXIT;}
-	if (config->health_check_period != pool_config->health_check_period){key = "health_check_period";goto ERROR_EXIT;}
-	if (config->health_check_max_retries != pool_config->health_check_max_retries){key = "health_check_max_retries";goto ERROR_EXIT;}
-	
-	if (config->health_check_retry_delay != pool_config->health_check_retry_delay){key = "health_check_retry_delay";goto ERROR_EXIT;}
-	if (config->fail_over_on_backend_error != pool_config->fail_over_on_backend_error){key = "fail_over_on_backend_error";goto ERROR_EXIT;}
-	if (config->recovery_timeout != pool_config->recovery_timeout){key = "recovery_timeout";goto ERROR_EXIT;}
-	if (config->search_primary_node_timeout != pool_config->search_primary_node_timeout){key = "search_primary_node_timeout";goto ERROR_EXIT;}
-	if (config->client_idle_limit_in_recovery != pool_config->client_idle_limit_in_recovery){key = "client_idle_limit_in_recovery";goto ERROR_EXIT;}
-	if (config->insert_lock != pool_config->insert_lock){key = "insert_lock";goto ERROR_EXIT;}
-	
-	if (config->memory_cache_enabled != pool_config->memory_cache_enabled){key = "memory_cache_enabled";goto ERROR_EXIT;}
-	if (config->use_watchdog != pool_config->use_watchdog){key = "use_watchdog";goto ERROR_EXIT;}
-	if (config->clear_memqcache_on_escalation != pool_config->clear_memqcache_on_escalation){key = "clear_memqcache_on_escalation";goto ERROR_EXIT;}
-	
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, num_init_children);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, listen_backlog_multiplier);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, child_life_time);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, connection_life_time);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, child_max_connections);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, client_idle_limit);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, max_pool);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, health_check_timeout);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, health_check_period);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, health_check_max_retries);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, health_check_retry_delay);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, recovery_timeout);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, search_primary_node_timeout);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_INT(config, wdNode, client_idle_limit_in_recovery);
+
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, replication_mode);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, enable_pool_hba);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, load_balance_mode);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, replication_stop_on_mismatch);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, failover_if_affected_tuples_mismatch);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, fail_over_on_backend_error);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, replicate_select);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, master_slave_mode);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, connection_cache);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, insert_lock);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, memory_cache_enabled);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, clear_memqcache_on_escalation);
+
 	if (config->backend_desc->num_backends != pool_config->backend_desc->num_backends)
 	{
-		ereport(FATAL,
-				(return_code(POOL_EXIT_FATAL),
-				 errmsg("configuration error. The configurations on master node is different"),
-				 errdetail("pgpool on master node \"%s\" is configured with %d backends while this node has %d backends configured",
-						   g_cluster.masterNode->nodeName,
-						   config->backend_desc->num_backends,
-						   pool_config->backend_desc->num_backends)));
-		return false;
+		ereport(WARNING,
+				(errmsg("number of configured backends on node \"%s\" are different", wdNode->nodeName),
+				 errdetail("this node has %d backends while on \"%s\" number of configured backends are %d",
+						   pool_config->backend_desc->num_backends,
+						   wdNode->nodeName,
+						   config->backend_desc->num_backends)));
 	}
-	
 	for (i=0; i < pool_config->backend_desc->num_backends; i++)
 	{
 		if (strncasecmp(pool_config->backend_desc->backend_info[i].backend_hostname, config->backend_desc->backend_info[i].backend_hostname, sizeof(pool_config->backend_desc->backend_info[i].backend_hostname)))
 		{
-			ereport(FATAL,
-					(return_code(POOL_EXIT_FATAL),
-					 errmsg("configuration error. The configurations on master node is different"),
-					 errdetail("pgpool on master node \"%s\" backend[%d] hostname \"%s\" is different from \"%s\" on this node",
-							   g_cluster.masterNode->nodeName,
+			ereport(WARNING,
+					(errmsg("configurations value for backend[%d] \"hostname\" on node \"%s\" is different",i, wdNode->nodeName),
+					 errdetail("\"backend_hostname%d\" on this node is %s while on \"%s\" is %s",
 							   i,
-							   config->backend_desc->backend_info[i].backend_hostname,
-							   pool_config->backend_desc->backend_info[i].backend_hostname)));
-			return false;
+							   pool_config->backend_desc->backend_info[i].backend_hostname,
+							   wdNode->nodeName,
+							   config->backend_desc->backend_info[i].backend_hostname)));
 		}
 		if (config->backend_desc->backend_info[i].backend_port != pool_config->backend_desc->backend_info[i].backend_port)
 		{
-			ereport(FATAL,
-					(return_code(POOL_EXIT_FATAL),
-					 errmsg("configuration error. The configurations on master node is different"),
-					 errdetail("pgpool on master node \"%s\" backend[%d] port \"%d\" is different from \"%d\" on this node",
-							   g_cluster.masterNode->nodeName,
+			ereport(WARNING,
+					(errmsg("configurations value for backend[%d] \"port\" on node \"%s\" is different",i, wdNode->nodeName),
+					 errdetail("\"backend_port%d\" on this node is %d while on \"%s\" is %d",
 							   i,
-							   config->backend_desc->backend_info[i].backend_port,
-							   pool_config->backend_desc->backend_info[i].backend_port)));
-			return false;
+							   pool_config->backend_desc->backend_info[i].backend_port,
+							   wdNode->nodeName,
+							   config->backend_desc->backend_info[i].backend_port)));
 		}
 	}
-	
+
 	if (config->wd_remote_nodes.num_wd != pool_config->wd_remote_nodes.num_wd)
 	{
-		ereport(FATAL,
-				(return_code(POOL_EXIT_FATAL),
-				 errmsg("configuration error. The configurations on master node is different"),
-				 errdetail("pgpool on master node \"%s\" is configured with %d watchdog nodes while this node has %d nodes configured",
-						   g_cluster.masterNode->nodeName,
-						   config->wd_remote_nodes.num_wd,
-						   pool_config->wd_remote_nodes.num_wd)));
-		return false;
+		ereport(WARNING,
+				(errmsg("the number of configured watchdog nodes on node \"%s\" are different", wdNode->nodeName),
+				 errdetail("this node has %d watchdog nodes while \"%s\" is configured with %d watchdog nodes",
+						   pool_config->wd_remote_nodes.num_wd,
+						   wdNode->nodeName,
+						   config->wd_remote_nodes.num_wd)));
 	}
-
-
-	return true;
-ERROR_EXIT:
-	ereport(FATAL,
-			(return_code(POOL_EXIT_FATAL),
-			 errmsg("configuration error. The configurations on master node is different"),
-			 errdetail("value for key \"%s\" differs",key)));
-	
-	return false;
 }
 
 static bool get_authhash_for_node(WatchdogNode* wdNode, char* authhash)
