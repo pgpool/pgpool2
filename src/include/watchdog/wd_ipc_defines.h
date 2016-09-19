@@ -25,28 +25,28 @@
 #ifndef WD_IPC_DEFINES_H
 #define WD_IPC_DEFINES_H
 
-typedef enum WDFailoverCMDTypes
+typedef enum WDFailoverLocks
 {
-	NODE_FAILED_CMD = 0,
-	NODE_FAILBACK_CMD,
-	NODE_PROMOTE_CMD,
-	MAX_FAILOVER_CMDS
-}WDFailoverCMDTypes;
+	FAILOVER_LOCK = 0,
+	FAILBACK_LOCK,
+	FOLLOW_MASTER_LOCK,
+	MAX_FAILOVER_LOCKS
+}WDFailoverLock;
 
 typedef enum WDFailoverCMDResults
 {
 	FAILOVER_RES_ERROR = 0,				/* processing of command is failed */
-	FAILOVER_RES_TRANSITION,			/* cluster is transitioning and is 
+	FAILOVER_RES_TRANSITION,			/* cluster is transitioning and is
 										 * currently not accepting any commands.
 										 * retry is the best option when this result
 										 * is returned by watchdog
 										 */
 	FAILOVER_RES_I_AM_LOCK_HOLDER,		/* node successfully becomes a lock holder */
-	FAILOVER_RES_LOCK_UNLOCKED,			/* the node is not a lock holder but associated
-										 * lock is unlocked */
-	FAILOVER_RES_BLOCKED				/* the node is neither a lock holder and
-										 * associated lock is also locked
-										 */
+	FAILOVER_RES_I_AM_NOT_LOCK_HOLDER,	/* some other node is a lock holder */
+	FAILOVER_RES_UNLOCKED,				/* the lock is not acquired */
+	FAILOVER_RES_LOCKED,				/* lock is acquired */
+	FAILOVER_RES_SUCCESS,
+	FAILOVER_RES_NO_LOCKHOLDER
 }WDFailoverCMDResults;
 
 
@@ -72,6 +72,14 @@ typedef enum WDFailoverCMDResults
 #define WD_FUNCTION_PROMOTE_REQUEST		"PROMOTE_BACKEND_REQUEST"
 
 #define WD_DATE_REQ_PG_BACKEND_DATA		"BackendStatus"
+
+
+#define WD_REQ_FAILOVER_START			"FAILOVER_START"
+#define WD_REQ_FAILOVER_END				"FAILOVER_FINISH"
+#define WD_REQ_FAILOVER_RELEASE_LOCK	"RELEASE_LOCK"
+#define WD_REQ_FAILOVER_LOCK_STATUS		"CHECK_LOCKED"
+
+
 
 #define WD_IPC_AUTH_KEY			"IPCAuthKey"	/* JSON data key for authentication.
 												 * watchdog IPC server use the value for this key

@@ -60,11 +60,10 @@
 
 static void sleep_in_waiting(void);
 static void FreeCmdResult(WDIPCCmdResult* res);
-static WDFailoverCMDResults wd_issue_failover_lock_command(WDFailoverCMDTypes cmdType, char* syncReqType);
 
-
-static char* get_wd_failover_cmd_type_json(WDFailoverCMDTypes cmdType, char* reqType);
-WDFailoverCMDResults wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType);
+static WDFailoverCMDResults wd_issue_failover_lock_command(char* syncReqType, enum WDFailoverLocks lockID);
+static char* get_wd_failover_cmd_type_json(char* reqType, enum WDFailoverLocks lockID);
+static WDFailoverCMDResults wd_send_failover_sync_command(char* syncReqType, enum WDFailoverLocks lockID);
 
 static int wd_set_node_mask (unsigned char req_mask, int *node_id_set, int count);
 static int wd_chk_node_mask (unsigned char req_mask, int *node_id_set, int count);
@@ -181,6 +180,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, 
 		if (timeout_sec > 0)
 		{
 			tv.tv_sec = timeout_sec;
+			tv.tv_usec = 0;
 			timeout_st = &tv;
 		}
 		FD_ZERO(&fds);
@@ -477,7 +477,7 @@ wd_send_failback_request(int node_id)
 	return COMMAND_FAILED;
 }
 
-static char* get_wd_failover_cmd_type_json(WDFailoverCMDTypes cmdType, char* reqType)
+static char* get_wd_failover_cmd_type_json(char* reqType, enum WDFailoverLocks lockID)
 {
 	char* json_str;
 	JsonNode* jNode = jw_create_with_object(true);
@@ -487,24 +487,22 @@ static char* get_wd_failover_cmd_type_json(WDFailoverCMDTypes cmdType, char* req
 	if (pool_config->wd_authkey != NULL && strlen(pool_config->wd_authkey) > 0)
 		jw_put_string(jNode, WD_IPC_AUTH_KEY, pool_config->wd_authkey); /*  put the auth key*/
 
-	jw_put_int(jNode, "FailoverCMDType", cmdType);
 	jw_put_string(jNode, "SyncRequestType", reqType);
+	jw_put_int(jNode, "FailoverLockID", lockID);
 	jw_finish_document(jNode);
 	json_str = pstrdup(jw_get_json_string(jNode));
 	jw_destroy(jNode);
 	return json_str;
 }
 
-
-WDFailoverCMDResults
-wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType)
+static WDFailoverCMDResults
+wd_send_failover_sync_command(char* syncReqType, enum WDFailoverLocks lockID)
 {
-	int failoverResCmdType;
-	int interlockingResult;
+	int interlockingResult = FAILOVER_RES_ERROR;
 	json_value *root;
 	
-	char* json_data = get_wd_failover_cmd_type_json(cmdType, syncReqType);
-	
+	char* json_data = get_wd_failover_cmd_type_json(syncReqType, lockID);
+
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FAILOVER_CMD_SYNC_REQUEST
 													   ,pool_config->recovery_timeout,
 													   json_data, strlen(json_data), true);
@@ -544,28 +542,20 @@ wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType)
 		FreeCmdResult(result);
 		return FAILOVER_RES_ERROR;
 	}
-	
-	if (json_get_int_value_for_key(root, "FailoverCMDType", &failoverResCmdType))
-	{
-		json_value_free(root);
-		FreeCmdResult(result);
-		return FAILOVER_RES_ERROR;
-	}
+
 	if (root && json_get_int_value_for_key(root, "InterlockingResult", &interlockingResult))
 	{
 		json_value_free(root);
 		FreeCmdResult(result);
 		return FAILOVER_RES_ERROR;
 	}
+
 	json_value_free(root);
 	FreeCmdResult(result);
 	
-	if (failoverResCmdType != cmdType)
+	if (interlockingResult < 0 || interlockingResult > FAILOVER_RES_NO_LOCKHOLDER)
 		return FAILOVER_RES_ERROR;
-	
-	if (interlockingResult < 0 || interlockingResult > FAILOVER_RES_BLOCKED)
-		return FAILOVER_RES_ERROR;
-	
+
 	return interlockingResult;
 }
 
@@ -770,43 +760,44 @@ open_wd_command_sock(bool throw_error)
 	return sock;
 }
 
-WDFailoverCMDResults wd_failover_command_start(WDFailoverCMDTypes cmdType)
+WDFailoverCMDResults wd_start_failover_interlocking(void)
 {
 	if (pool_config->use_watchdog)
-		return wd_issue_failover_lock_command(cmdType,"START_COMMAND");
+		return wd_issue_failover_lock_command(WD_REQ_FAILOVER_START, 0);
 	return FAILOVER_RES_I_AM_LOCK_HOLDER;
 }
 
-WDFailoverCMDResults wd_failover_command_end(WDFailoverCMDTypes cmdType)
+WDFailoverCMDResults wd_end_failover_interlocking(void)
 {
 	if (pool_config->use_watchdog)
-		return wd_issue_failover_lock_command(cmdType,"END_COMMAND");
-	return FAILOVER_RES_I_AM_LOCK_HOLDER;
+		return wd_issue_failover_lock_command(WD_REQ_FAILOVER_END, 0);
+	return FAILOVER_RES_SUCCESS;
 }
 
-WDFailoverCMDResults wd_failover_command_check_lock(WDFailoverCMDTypes cmdType)
+WDFailoverCMDResults wd_failover_lock_release(enum WDFailoverLocks lock)
 {
 	if (pool_config->use_watchdog)
-		return wd_issue_failover_lock_command(cmdType,"CHECK_LOCKED");
-	return FAILOVER_RES_I_AM_LOCK_HOLDER;
+		return wd_issue_failover_lock_command(WD_REQ_FAILOVER_RELEASE_LOCK, lock);
+	return FAILOVER_RES_SUCCESS;
 }
 
-WDFailoverCMDResults wd_release_failover_command_lock(WDFailoverCMDTypes cmdType)
+WDFailoverCMDResults wd_failover_lock_status(enum WDFailoverLocks lock)
 {
 	if (pool_config->use_watchdog)
-		return wd_issue_failover_lock_command(cmdType,"UNLOCK_COMMAND");
-	return FAILOVER_RES_I_AM_LOCK_HOLDER;
+		return wd_issue_failover_lock_command(WD_REQ_FAILOVER_LOCK_STATUS, lock);
+	return FAILOVER_RES_UNLOCKED;
 }
 
-void wd_wati_until_lock_or_timeout(WDFailoverCMDTypes cmdType)
+void wd_wait_until_command_complete_or_timeout(enum WDFailoverLocks lock)
 {
 	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
 	int	count = WD_INTERLOCK_WAIT_COUNT;
-	while (1)
+
+	while (pool_config->use_watchdog)
 	{
-		res = wd_failover_command_check_lock(cmdType);
-		if (res == FAILOVER_RES_I_AM_LOCK_HOLDER ||
-			res == FAILOVER_RES_LOCK_UNLOCKED)
+		res = wd_failover_lock_status(lock);
+		if (res == FAILOVER_RES_UNLOCKED ||
+			res == FAILOVER_RES_NO_LOCKHOLDER)
 		{
 			/* we have the permision */
 			return;
@@ -823,17 +814,17 @@ void wd_wati_until_lock_or_timeout(WDFailoverCMDTypes cmdType)
 
 /*
  * This is just a wrapper over wd_send_failover_sync_command()
- * but tries to wait for WD_INTERLOCK_TIMEOUT_SEC amount of time
+ * but try to wait for WD_INTERLOCK_TIMEOUT_SEC amount of time
  * if watchdog is in transition state
  */
 
-static WDFailoverCMDResults wd_issue_failover_lock_command(WDFailoverCMDTypes cmdType, char* syncReqType)
+static WDFailoverCMDResults wd_issue_failover_lock_command(char* syncReqType, enum WDFailoverLocks lockID)
 {
 	WDFailoverCMDResults res;
 	int x;
 	for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
 	{
-		res = wd_send_failover_sync_command(cmdType, syncReqType);
+		res = wd_send_failover_sync_command(syncReqType, lockID);
 		if (res != FAILOVER_RES_TRANSITION)
 			break;
 		sleep(1);

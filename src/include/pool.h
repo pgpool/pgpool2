@@ -373,7 +373,9 @@ extern int my_master_node_id;
 #define ACCEPT_FD_SEM			5
 #define MAX_REQUEST_QUEUE_SIZE	10
 
-#define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 6 /*number of sec to wait for watchdog command if cluster is stabalizing */
+#define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 6 /* time in seconds to keep retrying for a
+											   * watchdog command if the cluster is not
+											   * in stable state */
 
 #define SERIALIZE_ACCEPT (pool_config->serialize_accept == true && \
 						  pool_config->child_life_time == 0)

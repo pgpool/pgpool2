@@ -63,7 +63,6 @@ extern WdCommandResult wd_end_recovery(void);
 extern WdCommandResult wd_send_failback_request(int node_id);
 extern WdCommandResult wd_degenerate_backend_set(int *node_id_set, int count);
 extern WdCommandResult wd_promote_backend(int node_id);
-extern WDFailoverCMDResults wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType);
 
 extern WDPGBackendStatus* get_pg_backend_status_from_master_wd_node(void);
 
@@ -72,13 +71,12 @@ extern char* wd_get_watchdog_nodes(int nodeID);
 extern WDIPCCmdResult* issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, bool blocking);
 
 
-/* wd_interlock.c */
-
-extern WDFailoverCMDResults wd_release_failover_command_lock(WDFailoverCMDTypes cmdType);
-extern WDFailoverCMDResults wd_failover_command_check_lock(WDFailoverCMDTypes cmdType);
-extern WDFailoverCMDResults wd_failover_command_end(WDFailoverCMDTypes cmdType);
-extern WDFailoverCMDResults wd_failover_command_start(WDFailoverCMDTypes cmdType);
-extern void wd_wati_until_lock_or_timeout(WDFailoverCMDTypes cmdType);
+/* functions for failover commands interlocking */
+extern WDFailoverCMDResults wd_end_failover_interlocking(void);
+extern WDFailoverCMDResults wd_start_failover_interlocking(void);
+extern WDFailoverCMDResults wd_failover_lock_release(enum WDFailoverLocks lock);
+extern WDFailoverCMDResults wd_failover_lock_status(enum WDFailoverLocks lock);
+extern void wd_wait_until_command_complete_or_timeout(enum WDFailoverLocks lock);
 
 
 

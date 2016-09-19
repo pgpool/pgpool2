@@ -132,11 +132,11 @@ packet_types all_packet_types[] = {
 	{WD_NO_MESSAGE,""}
 };
 
-char* wd_failover_cmd_type_name[] =
+char* wd_failover_lock_name[] =
 {
 	"FAILOVER",
 	"FAILBACK",
-	"PROMOTE"
+	"FOLLOW MASTER"
 };
 
 char *wd_event_name[] =
@@ -232,10 +232,12 @@ typedef struct WDCommandTimerData
 	WDFunctionCommandData*	wd_func_command;
 }WDCommandTimerData;
 
+
 typedef struct InterlockingNode
 {
-	WatchdogNode*	lockHolderNode;
-	bool			locked;
+	WatchdogNode*		lockHolderNode;
+	bool				locks[MAX_FAILOVER_LOCKS];
+	struct timeval		lock_time;
 }InterlockingNode;
 
 
@@ -275,7 +277,7 @@ typedef struct wd_cluster
 	WatchdogNode*		remoteNodes;
 	WatchdogNode*		masterNode;
 	WatchdogNode*		lockHolderNode;
-	InterlockingNode	interlockingNodes[MAX_FAILOVER_CMDS];
+	InterlockingNode	interlockingNode;
 	int					remoteNodeCount;
 	int					aliveNodeCount;
 	int					quorum_status;
@@ -289,7 +291,6 @@ typedef struct wd_cluster
 	bool			escalated;
 	bool			clusterInitialized;
 	bool			ipc_auth_needed;
-
 	List			*unidentified_socks;
 	List			*notify_clients;
 	List			*ipc_command_socks;
@@ -413,8 +414,10 @@ static bool process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt,
 static bool process_pgpool_replicate_command(WatchdogNode* wdNode, WDPacketData* pkt);
 
 static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacketData* pkt, WDIPCCommandData* ipcCommand);
-static WDFailoverCMDResults node_is_asking_for_failover_cmd_end(WatchdogNode* wdNode, WDPacketData* pkt, int failoverCmdType, bool resign);
-static WDFailoverCMDResults node_is_asking_for_failover_cmd_start(WatchdogNode* wdNode, WDPacketData* pkt, int failoverCmdType, bool check);
+static WDFailoverCMDResults node_is_asking_for_failover_end(WatchdogNode* wdNode, WDPacketData* pkt);
+static WDFailoverCMDResults node_is_asking_for_failover_start(WatchdogNode* wdNode, WDPacketData* pkt);
+static WDFailoverCMDResults node_is_asking_for_failover_lock_status(WatchdogNode* wdNode, WDPacketData* pkt, WDFailoverLock failoverLock);
+static WDFailoverCMDResults node_is_asking_for_failover_lock_release(WatchdogNode* wdNode, WDPacketData* pkt, WDFailoverLock failoverLock);
 static void wd_system_will_go_down(int code, Datum arg);
 static bool verify_pool_configurations(POOL_CONFIG* config);
 
@@ -1958,19 +1961,24 @@ static int node_has_requested_for_interlocking(WatchdogNode* wdNode, WDPacketDat
 	return false;
 }
 
+/*
+ * process_failover_command_sync_requests()
+ * the function is the main processor of all interlocking related requests.
+ * it parses the request json and executes the requested intelocking command
+ */
 static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacketData* pkt, WDIPCCommandData* ipcCommand)
 {
 	
 	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
 	JsonNode* jNode = NULL;
-	int failoverCmdType = -1;
-	
+	int failoverLockID = -1;
+
 	/* only coordinator(master) node can process this request */
 	if (get_local_node_state() == WD_COORDINATOR)
 	{
 		char* json_data = NULL;
 		int data_len = 0;
-		json_value *root;
+		json_value *root = NULL;
 		char* syncRequestType = NULL;
 		
 		/* We need to identify failover command type and sync function */
@@ -1986,76 +1994,68 @@ static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacke
 		}
 
 		if (data_len > 0 && json_data)
-			root = json_parse(json_data,data_len);
-		else
-			root = NULL;
-
-		/* The root node must be object */
-		if (root == NULL || root->type != json_object)
 		{
-			ereport(LOG,
-					(errmsg("unable to parse json data from replicate command")));
-			res = FAILOVER_RES_ERROR;
+			root = json_parse(json_data,data_len);
+			if (root && root->type == json_object)
+			{
+				syncRequestType = json_get_string_value_for_key(root, "SyncRequestType");
+				json_get_int_value_for_key(root, "FailoverLockID", &failoverLockID);
+			}
+			else
+			{
+				ereport(LOG,
+						(errmsg("unable to parse json data of interlocking command")));
+			}
 		}
-		if (root)
-			syncRequestType = json_get_string_value_for_key(root, "SyncRequestType");
-		
-		if (syncRequestType == NULL)
+		if (syncRequestType)
+		{
+
+			if (strcasecmp(WD_REQ_FAILOVER_START, syncRequestType) == 0)
+				res = node_is_asking_for_failover_start(wdNode, pkt);
+
+			else if (strcasecmp(WD_REQ_FAILOVER_END, syncRequestType) == 0)
+				res = node_is_asking_for_failover_end(wdNode, pkt);
+
+			else if (strcasecmp(WD_REQ_FAILOVER_RELEASE_LOCK, syncRequestType) == 0)
+				res = node_is_asking_for_failover_lock_release(wdNode, pkt, failoverLockID);
+
+			else if (strcasecmp(WD_REQ_FAILOVER_LOCK_STATUS, syncRequestType) == 0)
+				res = node_is_asking_for_failover_lock_status(wdNode, pkt, failoverLockID);
+
+			else
+				res = FAILOVER_RES_ERROR;
+		}
+		else
 		{
 			ereport(LOG,
 					(errmsg("invalid json data"),
-					 errdetail("unable to find Watchdog Function Name")));
+					 errdetail("unable to find interlocking command type")));
 			res = FAILOVER_RES_ERROR;
 		}
-		else
-			syncRequestType = pstrdup(syncRequestType);
-		
-		if (root && json_get_int_value_for_key(root, "FailoverCMDType", &failoverCmdType))
-		{
-			res = FAILOVER_RES_ERROR;
-		}
-		
+
 		if (root)
-			json_value_free(root);
-		
-		/* verify the failoverCmdType */
-		if (failoverCmdType < 0 || failoverCmdType >= MAX_FAILOVER_CMDS)
-			res = FAILOVER_RES_ERROR;
-		
-		if (syncRequestType == NULL)
-			res = FAILOVER_RES_ERROR;
-		
-		if (res != FAILOVER_RES_ERROR)
 		{
-			if (strcasecmp("START_COMMAND", syncRequestType) == 0)
-				res = node_is_asking_for_failover_cmd_start(wdNode, pkt, failoverCmdType, false);
-			else if (strcasecmp("END_COMMAND", syncRequestType) == 0)
-				res = node_is_asking_for_failover_cmd_end(wdNode, pkt, failoverCmdType, true);
-			else if (strcasecmp("UNLOCK_COMMAND", syncRequestType) == 0)
-				res = node_is_asking_for_failover_cmd_end(wdNode, pkt, failoverCmdType, false);
-			else if (strcasecmp("CHECK_LOCKED", syncRequestType) == 0)
-				res = node_is_asking_for_failover_cmd_start(wdNode, pkt, failoverCmdType, true);
-			else
-				res = FAILOVER_RES_ERROR;
+			json_value_free(root);
 		}
 	}
 	else
 	{
+		/* I am not the coordinator node. So just return an error */
 		res = FAILOVER_RES_ERROR;
 	}
-	
+
 	if (res != FAILOVER_RES_ERROR)
 	{
 		/* create the json result */
 		jNode = jw_create_with_object(true);
 		/* add the node count */
-		jw_put_int(jNode, "FailoverCMDType", failoverCmdType);
+		jw_put_int(jNode, "FailoverLockID", failoverLockID);
 		jw_put_int(jNode, "InterlockingResult", res);
 		/* create the packet */
 		jw_end_element(jNode);
 		jw_finish_document(jNode);
 	}
-	
+
 	if (wdNode != g_cluster.localNode)
 	{
 		if (jNode == NULL)
@@ -2069,7 +2069,7 @@ static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacke
 	}
 	else
 	{
-		/* Reply to IPC Socket */
+		/* reply on IPC Socket */
 		bool ret;
 		if (jNode != NULL)
 		{
@@ -2083,75 +2083,71 @@ static void process_failover_command_sync_requests(WatchdogNode* wdNode, WDPacke
 		}
 
 		if (ret == false)
+		{
 			ereport(LOG,
 					(errmsg("failed to write results for failover sync request to IPC socket")));
+		}
 	}
 }
 
+/*
+ * node_is_asking_for_failover_start()
+ * the function process the lock holding requests. If the lock holding node
+ * is the same as the requesting node or no lock holder exists when the request
+ * arrives, the node is registered as a a lock holder. When the lock holding request
+ * is successful all respective command locks states are changed to locked
+ * Only coordinator/master node can execute the interlocking requests.
+ */
 static WDFailoverCMDResults
-node_is_asking_for_failover_cmd_start(WatchdogNode* wdNode, WDPacketData* pkt, int failoverCmdType, bool check)
+node_is_asking_for_failover_start(WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
-	/* only coordinator(master) node can process this request */
 
 	ereport(LOG,
-		(errmsg("%s pgpool-II node \"%s\" is %s [%s] lock to start the failover command",
-				(g_cluster.localNode == wdNode)? "local":"remote",
-					wdNode->nodeName,
-					check?"checking the availability of":"requesting to acquire",
-					wd_failover_cmd_type_name[failoverCmdType])));
+			(errmsg("%s pgpool-II node \"%s\" is requesting to become a lock holder",
+					(g_cluster.localNode == wdNode)? "local":"remote",
+					wdNode->nodeName)));
 
+	/* only coordinator(master) node can process this request */
 	if (get_local_node_state() == WD_COORDINATOR)
 	{
-		InterlockingNode* lockingNode = NULL;
-		if (failoverCmdType < 0 || failoverCmdType >= MAX_FAILOVER_CMDS)
-			res = FAILOVER_RES_ERROR;
-		else
-			lockingNode = &g_cluster.interlockingNodes[failoverCmdType];
-		
-		if (res != FAILOVER_RES_ERROR)
+		/* check if we have no node in interlocking or requesting node is itself
+		 * a lock holder node
+		 */
+		if (g_cluster.interlockingNode.lockHolderNode == NULL ||
+			g_cluster.interlockingNode.lockHolderNode == wdNode)
 		{
-			/* check if we already have no lockholder node */
-			if (lockingNode->lockHolderNode == NULL || lockingNode->lockHolderNode == wdNode)
+			int i = 0;
+			/* lock all command locks */
+			for (i = 0; i < MAX_FAILOVER_LOCKS; i++)
 			{
-				if (check == false)
-				{
-					lockingNode->lockHolderNode = wdNode;
-					lockingNode->locked = true;
-				}
-				res = FAILOVER_RES_I_AM_LOCK_HOLDER;
-				ereport(LOG,
-					(errmsg("%s pgpool-II node \"%s\" %s [%s] lock to start the failover command",
+				g_cluster.interlockingNode.locks[i] = true;
+			}
+			g_cluster.interlockingNode.lockHolderNode = wdNode;
+			gettimeofday(&g_cluster.interlockingNode.lock_time, NULL);
+			res = FAILOVER_RES_I_AM_LOCK_HOLDER;
+			ereport(LOG,
+					(errmsg("%s pgpool-II node \"%s\" is the lock holder",
 							(g_cluster.localNode == wdNode)? "local":"remote",
-							wdNode->nodeName,
-							check?"can acquire":"has",
-							wd_failover_cmd_type_name[failoverCmdType])));
-
-			}
-			else /* some other node is holding the lock */
-			{
-				ereport(LOG,
-						(errmsg("[%s] lock %s %s pgpool-II node \"%s\" to start the failover command",
-								wd_failover_cmd_type_name[failoverCmdType],
-								check?"is not available for":"request denied to",
-								(g_cluster.localNode == wdNode)? "local":"remote",
-								wdNode->nodeName),
-						 errdetail("%s pgpool-II node \"%s\" is holding the lock",
-								   (g_cluster.localNode == lockingNode->lockHolderNode)? "local":"remote",
-								   lockingNode->lockHolderNode->nodeName)));
-
-				if (lockingNode->locked)
-					res = FAILOVER_RES_BLOCKED;
-				else
-					res = FAILOVER_RES_LOCK_UNLOCKED;
-			}
+							wdNode->nodeName)));
+		}
+		else
+		{
+			/* some other node is holding the lock */
+			res = FAILOVER_RES_I_AM_NOT_LOCK_HOLDER;
+			ereport(LOG,
+					(errmsg("lock holder request denied to %s pgpool-II node \"%s\"",
+							(g_cluster.localNode == wdNode)? "local":"remote",
+							wdNode->nodeName),
+					 errdetail("%s pgpool-II node \"%s\" is already holding the locks",
+							   (g_cluster.localNode == g_cluster.interlockingNode.lockHolderNode)? "local":"remote",
+							   g_cluster.interlockingNode.lockHolderNode->nodeName)));
 		}
 	}
 	else
 	{
 		ereport(LOG,
-				(errmsg("failed to process [%s] lock request from %s pgpool-II node \"%s\" to start the failover command",
-						wd_failover_cmd_type_name[failoverCmdType],
+				(errmsg("failed to process interlocking request from %s pgpool-II node \"%s\"",
 						(g_cluster.localNode == wdNode)? "local":"remote",
 						wdNode->nodeName),
 				 errdetail("I am standby node and request can only be processed by master watchdog node")));
@@ -2160,68 +2156,191 @@ node_is_asking_for_failover_cmd_start(WatchdogNode* wdNode, WDPacketData* pkt, i
 	return res;
 }
 
+/*
+ * node_is_asking_for_failover_end()
+ * the function process the request to release from the lock holder.
+ * The node can resign from the lock holder if the lock holding node
+ * is the same as the requesting node. When the resign from lock holding request
+ * is successful all respective command locks becomes unlocked.
+ * Only coordinator/master node can execute the interlocking requests.
+ */
 static WDFailoverCMDResults
-node_is_asking_for_failover_cmd_end(WatchdogNode* wdNode, WDPacketData* pkt, int failoverCmdType, bool resign)
+node_is_asking_for_failover_end(WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
-	/* only coordinator(master) node can process this request */
 
 	ereport(LOG,
-			(errmsg("%s pgpool-II node \"%s\" is %s to release [%s] lock to end the failover command",
+			(errmsg("%s pgpool-II node \"%s\" is requesting to resign from a lock holder",
 					(g_cluster.localNode == wdNode)? "local":"remote",
-					wdNode->nodeName,
-					resign?"requesting":"testing",
-					wd_failover_cmd_type_name[failoverCmdType])));
+					wdNode->nodeName)));
 
 	if (get_local_node_state() == WD_COORDINATOR)
 	{
-		InterlockingNode* lockingNode = NULL;
-		
-		if (failoverCmdType < 0 || failoverCmdType >= MAX_FAILOVER_CMDS)
-			res = FAILOVER_RES_ERROR;
-		else
-			lockingNode = &g_cluster.interlockingNodes[failoverCmdType];
-		
-		if (res != FAILOVER_RES_ERROR)
+		/* check if the resigning node is the same that is holding the lock
+		 */
+		if (g_cluster.interlockingNode.lockHolderNode == NULL ||
+			g_cluster.interlockingNode.lockHolderNode == wdNode)
 		{
-			/* check if we already have no lockholder node */
-			if (lockingNode->lockHolderNode == NULL || lockingNode->lockHolderNode == wdNode)
+			int i;
+			/* unlock all the locks */
+			for (i = 0; i < MAX_FAILOVER_LOCKS; i++)
 			{
-				if (resign)
-				{
-					lockingNode->lockHolderNode = NULL;
-					lockingNode->locked  = false;
-				}
-				res = FAILOVER_RES_LOCK_UNLOCKED;
-
-				ereport(LOG,
-						(errmsg("%s pgpool-II node \"%s\" %s the [%s] lock to end the failover command",
-								(g_cluster.localNode == wdNode)? "local":"remote",
-								wdNode->nodeName,
-								resign?"has released":"can release",
-								wd_failover_cmd_type_name[failoverCmdType])));
-
+				g_cluster.interlockingNode.locks[i] = false;
 			}
-			else /* some other node is holding the lock */
-			{
-				ereport(LOG,
-						(errmsg("[%s] lock %s %s pgpool-II node \"%s\" to end the failover command",
-								wd_failover_cmd_type_name[failoverCmdType],
-								resign?"release request denied to":"cannot be released by",
-								(g_cluster.localNode == wdNode)? "local":"remote",
-								wdNode->nodeName),
-						 errdetail("%s pgpool-II node \"%s\" is holding the lock",
-								   (g_cluster.localNode == lockingNode->lockHolderNode)? "local":"remote",
-								   lockingNode->lockHolderNode->nodeName)));
-				res = FAILOVER_RES_BLOCKED;
-			}
+			g_cluster.interlockingNode.lockHolderNode = NULL;
+			res = FAILOVER_RES_SUCCESS;
+			ereport(LOG,
+					(errmsg("%s pgpool-II node \"%s\" has resigned from the lock holder",
+							(g_cluster.localNode == wdNode)? "local":"remote",
+							wdNode->nodeName)));
+		}
+		else /* some other node is holding the lock */
+		{
+			res = FAILOVER_RES_I_AM_NOT_LOCK_HOLDER;
+			ereport(LOG,
+					(errmsg("request of resigning from lock holder is denied to %s pgpool-II node \"%s\"",
+							(g_cluster.localNode == wdNode)? "local":"remote",
+							wdNode->nodeName),
+					 errdetail("%s pgpool-II node \"%s\" is the lock holder node",
+							   (g_cluster.localNode == g_cluster.interlockingNode.lockHolderNode)? "local":"remote",
+							   g_cluster.interlockingNode.lockHolderNode->nodeName)));
 		}
 	}
 	else
 	{
 		ereport(LOG,
-				(errmsg("failed to process [%s] lock request from %s pgpool-II node \"%s\" to end the failover command",
-						wd_failover_cmd_type_name[failoverCmdType],
+				(errmsg("failed to process release interlocking request from %s pgpool-II node \"%s\"",
+						(g_cluster.localNode == wdNode)? "local":"remote",
+						wdNode->nodeName),
+				 errdetail("I am standby node and request can only be processed by master watchdog node")));
+		res = FAILOVER_RES_ERROR;
+	}
+	return res;
+}
+
+/*
+ * node_is_asking_for_failover_lock_release()
+ * the function process the request from the lock holder node to
+ * release a specific failocer command lock.
+ * Only coordinator/master node can execute the interlocking requests.
+ */
+static WDFailoverCMDResults
+node_is_asking_for_failover_lock_release(WatchdogNode* wdNode, WDPacketData* pkt, WDFailoverLock failoverLock)
+{
+	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
+
+	ereport(LOG,
+			(errmsg("%s pgpool-II node \"%s\" is requesting to release [%s] lock",
+					(g_cluster.localNode == wdNode)? "local":"remote",
+					wdNode->nodeName,
+					wd_failover_lock_name[failoverLock])));
+
+	if (get_local_node_state() == WD_COORDINATOR)
+	{
+		/* check if the node requesting to release a lock is the lock holder */
+		if (g_cluster.interlockingNode.lockHolderNode == wdNode)
+		{
+			/* make sure the request is of a valid lock */
+			if (failoverLock < MAX_FAILOVER_LOCKS)
+			{
+				g_cluster.interlockingNode.locks[failoverLock] = false;
+				res = FAILOVER_RES_SUCCESS;
+
+				ereport(LOG,
+						(errmsg("%s pgpool-II node \"%s\" has released the [%s] lock",
+								(g_cluster.localNode == wdNode)? "local":"remote",
+								wdNode->nodeName,
+								wd_failover_lock_name[failoverLock])));
+			}
+			else
+			{
+				res = FAILOVER_RES_ERROR;
+			}
+		}
+		else
+		{
+			/* I am not the lock holder so not allowed to release the lock */
+			ereport(LOG,
+					(errmsg("[%s] lock release request denied to %s pgpool-II node \"%s\"",
+							wd_failover_lock_name[failoverLock],
+							(g_cluster.localNode == wdNode)? "local":"remote",
+							wdNode->nodeName),
+					 errdetail("requesting node is not the lock holder")));
+			res = FAILOVER_RES_I_AM_NOT_LOCK_HOLDER;
+		}
+	}
+	else
+	{
+		ereport(LOG,
+				(errmsg("failed to process release lock request from %s pgpool-II node \"%s\"",
+						(g_cluster.localNode == wdNode)? "local":"remote",
+						wdNode->nodeName),
+				 errdetail("I am standby node and request can only be processed by master watchdog node")));
+		res = FAILOVER_RES_ERROR;
+	}
+	return res;
+}
+
+/*
+ * node_is_asking_for_failover_lock_status()
+ * This is an interlocking family function and returns the status of a specific failover lock.
+ * Only coordinator/master node can execute the interlocking requests.
+ */
+static WDFailoverCMDResults
+node_is_asking_for_failover_lock_status(WatchdogNode* wdNode, WDPacketData* pkt, WDFailoverLock failoverLock)
+{
+	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
+
+	ereport(LOG,
+			(errmsg("%s pgpool-II node \"%s\" is checking the status of [%s] lock",
+					(g_cluster.localNode == wdNode)? "local":"remote",
+					wdNode->nodeName,
+					wd_failover_lock_name[failoverLock])));
+
+	if (get_local_node_state() == WD_COORDINATOR)
+	{
+		/* check if the node requesting to start the command is the lock holder */
+		if (g_cluster.interlockingNode.lockHolderNode)
+		{
+			/* make sure the request is of a valid lock */
+			if (failoverLock < MAX_FAILOVER_LOCKS)
+			{
+				if (g_cluster.interlockingNode.locks[failoverLock])
+					res = FAILOVER_RES_LOCKED;
+				else
+					res = FAILOVER_RES_UNLOCKED;
+
+				ereport(LOG,
+						(errmsg("%s lock is currently %s",
+								wd_failover_lock_name[failoverLock],
+								(res == FAILOVER_RES_LOCKED)?"LOCKED":"FREE"),
+						 errdetail("request was from %s pgpool-II node \"%s\" and lock holder is %s pgpool-II node \"%s\"",
+								   (g_cluster.localNode == wdNode)? "local":"remote",
+								   wdNode->nodeName,
+								   (g_cluster.localNode == g_cluster.interlockingNode.lockHolderNode)? "local":"remote",
+								   g_cluster.interlockingNode.lockHolderNode->nodeName)));
+			}
+			else
+			{
+				res = FAILOVER_RES_ERROR;
+			}
+		}
+		else
+		{
+			/* no lock holder exists */
+			ereport(LOG,
+					(errmsg("[%s] lock status check request denied to %s pgpool-II node \"%s\"",
+							wd_failover_lock_name[failoverLock],
+							(g_cluster.localNode == wdNode)? "local":"remote",
+							wdNode->nodeName),
+					 errdetail("no lock holder exists")));
+			res = FAILOVER_RES_NO_LOCKHOLDER;
+		}
+	}
+	else
+	{
+		ereport(LOG,
+				(errmsg("failed to process lock status check request from %s pgpool-II node \"%s\"",
 						(g_cluster.localNode == wdNode)? "local":"remote",
 						wdNode->nodeName),
 				 errdetail("I am standby node and request can only be processed by master watchdog node")));
