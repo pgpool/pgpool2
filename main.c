@@ -1823,6 +1823,7 @@ static void failover(void)
 	int status;
 	int sts;
 	bool need_to_restart_pcp = false;
+	bool all_backend_down = true;
 
 	pool_debug("failover_handler called");
 
@@ -1932,6 +1933,19 @@ static void failover(void)
 			pool_log("starting fail back. reconnect host %s(%d)",
 					 BACKEND_INFO(node_id).backend_hostname,
 					 BACKEND_INFO(node_id).backend_port);
+
+			/* Check to see if all backends are down */
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				if (BACKEND_INFO(i).backend_status != CON_DOWN &&
+					BACKEND_INFO(i).backend_status != CON_UNUSED)
+				{
+					pool_log("Node %d is not down (status: %d)",
+							 i, BACKEND_INFO(i).backend_status);
+					all_backend_down = false;
+					break;
+				}
+			}
 
 			BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
 
@@ -2066,10 +2080,21 @@ static void failover(void)
 		* attached node, but load balanced node is not changed until this
 		* session ends, so it's harmless anyway.
 		*/
-		if (MASTER_SLAVE && !strcmp(pool_config->master_slave_sub_mode, MODE_STREAMREP)	&&
-			reqkind == NODE_UP_REQUEST)
+
+		/*
+		 * On 2015/9/21 Tatsuo Ishii says: this judgment is not sufficient if
+		 * all backends were down. Child process has local status in which all
+		 * backends are down. In this case even if new connection arrives from
+		 * frontend, the child will not accept it because the local status
+		 * shows all backends are down. For this purpose we refer to
+		 * "all_backend_down" variable, which was set before updating backend status.
+		 *
+		 * See bug 248 for more details.
+		 */
+
+		if (STREAM && reqkind == NODE_UP_REQUEST &&	all_backend_down == false)
 		{
-			pool_log("Do not restart children because we are failbacking node id %d host%s port:%d and we are in streaming replication mode", node_id,
+			pool_log("Do not restart children because we are failbacking node id %d host: %s port: %d and we are in streaming replication mode and not all backends were down", node_id,
 					 BACKEND_INFO(node_id).backend_hostname,
 					 BACKEND_INFO(node_id).backend_port);
 
