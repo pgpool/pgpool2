@@ -556,11 +556,7 @@ static char **extract_string_tokens(char *str, char *delim, int *n);
 static void clear_host_entry(int slot);
 static bool check_redirect_node_spec(char *node_spec);
 
-<<<<<<< HEAD
-#line 552 "config/pool_config.c"
-=======
-#line 559 "config/pool_config.c"
->>>>>>> 8aa7586... Change the default value of search_primary_node_timeout from 10 to 300.
+#line 560 "config/pool_config.c"
 
 #define INITIAL 0
 
@@ -748,11 +744,7 @@ YY_DECL
 #line 91 "pool_config.l"
 
 
-<<<<<<< HEAD
-#line 735 "config/pool_config.c"
-=======
-#line 747 "config/pool_config.c"
->>>>>>> 8aa7586... Change the default value of search_primary_node_timeout from 10 to 300.
+#line 748 "config/pool_config.c"
 
 	if ( !(yy_init) )
 		{
@@ -890,11 +882,7 @@ YY_RULE_SETUP
 #line 106 "pool_config.l"
 ECHO;
 	YY_BREAK
-<<<<<<< HEAD
-#line 873 "config/pool_config.c"
-=======
-#line 885 "config/pool_config.c"
->>>>>>> 8aa7586... Change the default value of search_primary_node_timeout from 10 to 300.
+#line 886 "config/pool_config.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
