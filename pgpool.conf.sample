@@ -397,7 +397,7 @@ fail_over_on_backend_error = on
                                    # If set to off, pgpool will report an
                                    # error and disconnect the session.
 
-search_primary_node_timeout = 10
+search_primary_node_timeout = 300
                                    # Timeout in seconds to search for the
                                    # primary node when a failover occurs.
                                    # 0 means no timeout, keep searching

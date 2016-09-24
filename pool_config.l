@@ -215,7 +215,7 @@ int pool_init_config(void)
     pool_config->recovery_1st_stage_command = "";
     pool_config->recovery_2nd_stage_command = "";
 	pool_config->recovery_timeout = 90;
-	pool_config->search_primary_node_timeout = 10;
+	pool_config->search_primary_node_timeout = 300;
 	pool_config->client_idle_limit_in_recovery = 0;
 	pool_config->lobj_lock_table = "";
 	pool_config->ssl = 0;
