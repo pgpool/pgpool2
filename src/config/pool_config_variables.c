@@ -1417,7 +1417,7 @@ static struct config_int ConfigureNamesInt[] =
 			CONFIG_VAR_TYPE_INT,false, 0
 		},
 		&g_pool_config.search_primary_node_timeout,
-		10,
+		300,
 		0,INT_MAX,
 		NULL, NULL, NULL
 	},
