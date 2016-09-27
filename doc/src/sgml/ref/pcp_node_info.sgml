@@ -74,12 +74,12 @@ host1 5432 1 1073741823.500000
   </para>
   <para>
 	The result is in the following order:
-	<itemizedlist>
-	  <listitem><para>1.hostname </para></listitem>
-	  <listitem><para>2.port number </para></listitem>
-	  <listitem><para>3.status </para></listitem>
-	  <listitem><para>4.load balance weight </para></listitem>
-	</itemizedlist>
+<literallayout class="monospaced">
+1. hostname
+2. port number
+3. status
+4. load balance weight
+</literallayout>
   </para>
   <para>
 	Status is represented by a digit from [0 to 3].

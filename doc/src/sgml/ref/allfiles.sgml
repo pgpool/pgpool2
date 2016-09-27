@@ -7,5 +7,14 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY pcpCommonOptions    SYSTEM "pcp_common_options.sgml">
 <!ENTITY pcpNodeCount        SYSTEM "pcp_node_count.sgml">
 <!ENTITY pcpNodeInfo         SYSTEM "pcp_node_info.sgml">
+<!ENTITY pcpWatchdogInfo     SYSTEM "pcp_watchdog_info.sgml">
+<!ENTITY pcpProcCount        SYSTEM "pcp_proc_count.sgml">
+<!ENTITY pcpProcInfo         SYSTEM "pcp_proc_info.sgml">
+<!ENTITY pcpPoolStatus       SYSTEM "pcp_pool_status.sgml">
+<!ENTITY pcpDetachNode       SYSTEM "pcp_detach_node.sgml">
+<!ENTITY pcpAttachNode       SYSTEM "pcp_attach_node.sgml">
+<!ENTITY pcpPromoteNode      SYSTEM "pcp_promote_node.sgml">
+<!ENTITY pcpStopPgpool       SYSTEM "pcp_stop_pgpool.sgml">
+<!ENTITY pcpRecoveryNode     SYSTEM "pcp_recovery_node.sgml">
 <!ENTITY pgpoolSetup         SYSTEM "pgpool_setup.sgml">
 <!ENTITY watchdoglSetup      SYSTEM "watchdog_setup.sgml">

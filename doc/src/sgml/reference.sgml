@@ -77,6 +77,15 @@
    &pcpCommonOptions;
    &pcpNodeCount;
    &pcpNodeInfo;
+   &pcpWatchdogInfo;
+   &pcpProcCount;
+   &pcpProcInfo;
+   &pcpPoolStatus;
+   &pcpDetachNode;
+   &pcpAttachNode;
+   &pcpPromoteNode;
+   &pcpStopPgpool;
+   &pcpRecoveryNode;
 
  </reference>
 

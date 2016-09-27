@@ -36,14 +36,6 @@ Pgpool-II documentation
   displays the total number of database nodes defined in <filename>pgpool.conf</filename>. It does
   not distinguish between nodes status, ie attached/detached. ALL nodes are counted.
   </para>
-  <para>
-    Here is an example output:
-    <programlisting>
-$ pcp_node_count -p 11001
-Password: 
-2
-    </programlisting>
-  </para>
  </refsect1>
 
  <refsect1>
@@ -53,4 +45,15 @@ Password:
    </para>
  </refsect1>
 
+ <refsect1>
+  <title>Example</title>
+   <para>
+	Here is an example output:
+    <programlisting>
+$ pcp_node_count -p 11001
+Password:
+2
+    </programlisting>
+   </para>
+ </refsect1>
 </refentry>
