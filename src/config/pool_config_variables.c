@@ -2201,7 +2201,8 @@ static char **get_list_from_string(const char *str, const char *delimi, int *n)
 		}
 	}
 	/* how about reclaiming the unused space */
-	tokens = repalloc(tokens, (sizeof(char *) * (*n) ));
+	if (*n > 0)
+		tokens = repalloc(tokens, (sizeof(char *) * (*n) ));
 	pfree(temp_string);
 
 	return tokens;
@@ -3149,6 +3150,9 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 	flags = get_list_from_string(newval, "|", &n);
 	if (!flags || n < 0)
 	{
+		if (flags)
+			pfree(flags);
+
 		ereport(elevel,
 			(errmsg("invalid configuration for key \"backend_flag%d\"",index),
 				 errdetail("unable to get backend flags")));
