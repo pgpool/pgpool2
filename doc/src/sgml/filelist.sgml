@@ -6,6 +6,7 @@
 <!ENTITY legal      SYSTEM "legal.sgml">
 <!ENTITY notation   SYSTEM "notation.sgml">
 <!ENTITY problems   SYSTEM "problems.sgml">
+<!ENTITY restrictions SYSTEM "restrictions.sgml">
 
 <!-- tutorial -->
 <!ENTITY advanced   SYSTEM "advanced.sgml">
