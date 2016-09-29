@@ -99,6 +99,7 @@
 
    </partintro>
 
+   &pgMd5;
    &pgpoolSetup;
    &watchdoglSetup;
 
