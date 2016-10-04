@@ -204,6 +204,70 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
       </varlistentry>
     </variablelist>
   </sect2>
+
+	<sect2 id="runtime-config-authentication-settings">
+		<title>Authentication Settings</title>
+		<variablelist>
+
+			<varlistentry id="guc-enable-pool-hba" xreflabel="enable_pool_hba">
+				<term><varname>enable_pool_hba</varname> (<type>boolean</type>)
+					<indexterm>
+						<primary><varname>enable_pool_hba</varname> configuration parameter</primary>
+					</indexterm>
+				</term>
+				<listitem>
+					<para>
+						If true <productname>Pgpool-II</productname> will use the
+						<filename>pool_hba.conf</filename> for the client authentication.
+						See <xref linkend="auth-pool-hba-conf"> for details on how to configure
+						<filename>pool_hba.conf</filename> for client authentication.
+						Default is <literal>false</literal>
+					</para>
+					<para>
+						This parameter can be changed by reloading pgpool configuration..
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry id="guc-pool-passwd" xreflabel="pool_passwd">
+				<term><varname>pool_passwd</varname> (<type>string</type>)
+					<indexterm>
+						<primary><varname>pool_passwd</varname> configuration parameter</primary>
+					</indexterm>
+				</term>
+				<listitem>
+					<para>
+						Specify the pool_passwd file name for md5 authentication.
+						Default value is <literal>"pool_passwd"</literal>.
+						See <xref linkend="auth-md5"> for more details.
+					</para>
+					<para>
+						This parameter can only be set at server start.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry id="guc-authentication-timeout" xreflabel="authentication_timeout">
+				<term><varname>listen_addresses</varname> (<type>integer</type>)
+					<indexterm>
+						<primary><varname>authentication_timeout</varname> configuration parameter</primary>
+					</indexterm>
+				</term>
+				<listitem>
+					<para>
+						Specify the timeout in seconds for <productname>Pgpool-II</productname>
+						authentication. Specifying 0 disables the time out.
+						Default value is 60
+					</para>
+					<para>
+						This parameter can be changed by reloading pgpool configuration..
+					</para>
+				</listitem>
+			</varlistentry>
+
+		</variablelist>
+
+  </sect2>
 </sect1>
 
 <sect1 id="runtime-config-runnung-mode">
@@ -409,4 +473,5 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
     </variablelist>
 
   </sect2>
+
 </sect1>
