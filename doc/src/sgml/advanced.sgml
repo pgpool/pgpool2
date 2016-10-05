@@ -188,6 +188,365 @@
   </sect2>
   </sect1>
 
+  <sect1 id="tutorial-watchdog-integrating-external-lifecheck">
+    <title>Integrating external lifecheck with watchdog</title>
+
+    <para>
+      <productname>Pgpool-II</productname> watchdog process uses the
+      <acronym>BSD</acronym> sockets for communicating with
+      all the <productname>Pgpool-II</productname> processes and the
+      same <acronym>BSD</acronym> socket can also be used by any third
+      party system to provide the lifecheck function for local and remote
+      <productname>Pgpool-II</productname> watchdog nodes.
+      The <acronym>BSD</acronym> socket file name for IPC is constructed
+      by appending <productname>Pgpool-II</productname> wd_port after
+      <literal>"s.PGPOOLWD_CMD."</literal> string and the socket file is
+      placed in the <xref linkend="guc-wd-ipc-socket-dir"> directory.
+    </para>
+
+  <sect2 id="tutorial-watchdog-ipc-command-packet">
+   <title>Watchdog IPC command packet format</title>
+
+   <indexterm zone="tutorial-watchdog-ipc-command-packet">
+    <primary>WATCHDOG</primary>
+   </indexterm>
+    <para>
+      The watchdog IPC command packet consists of three fields.
+      Below table details the message fields and description.
+    </para>
+
+    <table id="wd-ipc-command-format-table">
+      <title>Watchdog IPC command packet format</title>
+      <tgroup cols="3">
+        <thead>
+          <row>
+            <entry>Field</entry>
+            <entry>Type</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+
+        <tbody>
+          <row>
+            <entry>TYPE</entry>
+            <entry>BYTE1</entry>
+            <entry>Command Type</entry>
+          </row>
+          <row>
+            <entry>LENGTH</entry>
+            <entry>INT32 in network byte order</entry>
+            <entry>The length of data to follow</entry>
+          </row>
+          <row>
+            <entry>DATA</entry>
+            <entry>DATA in <acronym>JSON</acronym> format</entry>
+            <entry>Command data in <acronym>JSON</acronym> format</entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </table>
+  </sect2>
+
+  <sect2 id="tutorial-watchdog-ipc-result-packet">
+   <title>Watchdog IPC result packet format</title>
+
+   <indexterm zone="tutorial-watchdog-ipc-result-packet">
+    <primary>WATCHDOG</primary>
+   </indexterm>
+    <para>
+      The watchdog IPC command result packet consists of three fields.
+      Below table details the message fields and description.
+    </para>
+
+    <table id="wd-ipc-resutl-format-table">
+      <title>Watchdog IPC result packet format</title>
+      <tgroup cols="3">
+        <thead>
+          <row>
+            <entry>Field</entry>
+            <entry>Type</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+
+        <tbody>
+          <row>
+            <entry>TYPE</entry>
+            <entry>BYTE1</entry>
+            <entry>Command Type</entry>
+          </row>
+          <row>
+            <entry>LENGTH</entry>
+            <entry>INT32 in network byte order</entry>
+            <entry>The length of data to follow</entry>
+          </row>
+          <row>
+            <entry>DATA</entry>
+            <entry>DATA in <acronym>JSON</acronym> format</entry>
+            <entry>Command result data in <acronym>JSON</acronym> format</entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </table>
+  </sect2>
+
+  <sect2 id="tutorial-watchdog-ipc-command-packet-types">
+   <title>Watchdog IPC command packet types</title>
+
+   <indexterm zone="tutorial-watchdog-ipc-command-packet-types">
+    <primary>WATCHDOG</primary>
+   </indexterm>
+    <para>
+      The first byte of the IPC command packet sent to watchdog process
+      and the result returned by watchdog process is identified as the
+      command or command result type.
+      The below table lists all valid types and their meanings
+    </para>
+
+    <table id="wd-ipc-command-packet--types-table">
+      <title>Watchdog IPC command packet types</title>
+      <tgroup cols="4">
+        <thead>
+          <row>
+            <entry>Name</entry>
+            <entry>Byte Value</entry>
+            <entry>Type</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+
+        <tbody>
+          <row>
+            <entry>REGISTER FOR NOTIFICATIONS</entry>
+            <entry>'0'</entry>
+            <entry>Command packet</entry>
+            <entry>Command to register the current connection to receive watchdog notifications</entry>
+          </row>
+          <row>
+            <entry>NODE STATUS CHANGE</entry>
+            <entry>'2'</entry>
+            <entry>Command packet</entry>
+            <entry>Command to inform watchdog about node status change of watchddog node</entry>
+          </row>
+          <row>
+            <entry>GET NODES LIST</entry>
+            <entry>'3'</entry>
+            <entry>Command packet</entry>
+            <entry>Command to get the list of all configured watchdog nodes</entry>
+          </row>
+          <row>
+            <entry>NODES LIST DATA</entry>
+            <entry>'4'</entry>
+            <entry>Result packet</entry>
+            <entry>The <acronym>JSON</acronym> data in packet contains the list of all configured watchdog nodes</entry>
+          </row>
+          <row>
+            <entry>CLUSTER IN TRANSITION</entry>
+            <entry>'7'</entry>
+            <entry>Result packet</entry>
+            <entry>Watchdog returns this packet type when it is not possible to process the command because the cluster is transitioning.</entry>
+          </row>
+          <row>
+            <entry>RESULT BAD</entry>
+            <entry>'8'</entry>
+            <entry>Result packet</entry>
+            <entry>Watchdog returns this packet type when the IPC command fails</entry>
+          </row>
+          <row>
+            <entry>RESULT OK</entry>
+            <entry>'9'</entry>
+            <entry>Result packet</entry>
+            <entry>Watchdog returns this packet type when IPC command succeeds</entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </table>
+  </sect2>
+
+  <sect2 id="tutorial-watchdog-external-lifecheck-ipc">
+   <title>External lifecheck IPC packets and data</title>
+
+   <indexterm zone="tutorial-watchdog-external-lifecheck-ipc">
+    <primary>WATCHDOG</primary>
+   </indexterm>
+    <para>
+      "GET NODES LIST" ,"NODES LIST DATA" and "NODE STATUS CHANGE"
+      IPC messages of watchdog can be used to integration an external
+      lifecheck systems. Note that the built-in lifecheck of pgpool
+      also uses the same channel and technique.
+    </para>
+
+    <sect3 id="tutorial-watchdog-external-lifecheck-get-nodes">
+      <title>Getting list of configured watchdog nodes</title>
+
+    <indexterm zone="tutorial-watchdog-external-lifecheck-get-nodes">
+      <primary>WATCHDOG</primary>
+    </indexterm>
+      <para>
+        Any third party lifecheck system can send the "GET NODES LIST"
+        packet on watchdog IPC socket with a <acronym>JSON</acronym>
+        data containing the authorization key and value if
+        <xref linkend="guc-wd-authkey"> is set or empty packet data
+        when <xref linkend="guc-wd-authkey"> is not configured to get
+        the "NODES LIST DATA" result packet.
+      </para>
+      <para>
+        The result packet returnd by watchdog for the "GET NODES LIST"
+        will contains the list of all configured watchdog nodes to do
+        health check on in the <acronym>JSON</acronym> format.
+        The <acronym>JSON</acronym> of the watchdog nodes contains the
+        <literal>"WatchdogNodes"</literal> Array of all watchdog nodes.
+        Each watchdog <acronym>JSON</acronym> node contains the
+        <literal>"ID"</literal>, <literal>"NodeName"</literal>,
+        <literal>"HostName"</literal>, <literal>"DelegateIP"</literal>,
+        <literal>"WdPort"</literal> and <literal>"PgpoolPort"</literal>
+        for each node.
+      </para>
+      <para>
+        <programlisting>
+    -- The example JSON data contained in "NODES LIST DATA"
+
+      {
+      "NodeCount":3,
+      "WatchdogNodes":
+        [
+          {
+            "ID":0,
+            "State":1,
+            "NodeName":"Linux_ubuntu_9999",
+            "HostName":"watchdog-host1",
+            "DelegateIP":"172.16.5.133",
+            "WdPort":9000,
+            "PgpoolPort":9999
+          },
+          {
+            "ID":1,
+            "State":1,
+            "NodeName":"Linux_ubuntu_9991",
+            "HostName":"watchdog-host2",
+            "DelegateIP":"172.16.5.133",
+            "WdPort":9000,
+            "PgpoolPort":9991
+          },
+          {
+            "ID":2,
+            "State":1,
+            "NodeName":"Linux_ubuntu_9992",
+            "HostName":"watchdog-host3",
+            "DelegateIP":"172.16.5.133",
+            "WdPort":9000,
+            "PgpoolPort":9992
+          }
+        ]
+      }
+
+    -- Note that ID 0 is always reserved for local watchdog node
+
+        </programlisting>
+      </para>
+      <para>
+        After getting the configured watchdog nodes information from the
+        watchdog the external lifecheck system can proceed with the
+        health checking of watchdog nodes, and when it detects some status
+        change of any node it can inform that to watchdog using the
+        "NODE STATUS CHANGE" IPC messages of watchdog.
+        The data in the message should contain the <acronym>JSON</acronym>
+        with the node ID of the node whose status is changed
+        (The node ID must be same as returned by watchdog for that node
+        in WatchdogNodes list) and the new status of node.
+      </para>
+      <para>
+        <programlisting>
+  -- The example JSON to inform pgpool-II watchdog about health check
+  failed on node with ID 1 will look like
+
+    {
+    "NodeID":1,
+    "NodeStatus":1,
+    "Message":"optional message string to log by watchdog for this event"
+    "IPCAuthKey":"wd_authkey configuration parameter value"
+    }
+
+  -- NodeStatus values meanings are as follows
+  NODE STATUS DEAD  =  1
+  NODE STATUS ALIVE =  2
+
+        </programlisting>
+      </para>
+    </sect3>
+  </sect2>
+</sect1>
+  <sect1 id="tutorial-watchdog-restrictions">
+   <title>Restrictions on watchdog</title>
+
+   <indexterm zone="tutorial-watchdog-restrictions">
+    <primary>WATCHDOG</primary>
+   </indexterm>
+
+    <sect2 id="tutorial-watchdog-restrictions-query-mode">
+      <title>Watchdog restriction with query mode lifecheck</title>
+      <indexterm zone="tutorial-watchdog-restrictions-query-mode">
+        <primary>WATCHDOG</primary>
+      </indexterm>
+
+      <para>
+        In query mode, when all the DB nodes are detached from a
+        <productname>Pgpool-II</productname> due to PostgreSQL server
+        failure or pcp_detach_node issued, watchdog regards that the
+        <productname>Pgpool-II</productname> service is in the down
+        status and brings up the virtual IP assigned to watchdog down.
+        Thus clients of <productname>Pgpool-II</productname> cannot
+        connect to <productname>Pgpool-II</productname> using the
+        virtual IP any more. This is neccessary to avoid split-brain,
+        that is, situations where there are multiple active
+        <productname>Pgpool-II</productname>.
+      </para>
+    </sect2>
+
+    <sect2 id="tutorial-watchdog-restrictions-down-watchdog-mode">
+      <title>Connecting to <productname>Pgpool-II</productname> whose watchdog status is down</title>
+      <indexterm zone="tutorial-watchdog-restrictions-down-watchdog-mode">
+        <primary>WATCHDOG</primary>
+      </indexterm>
+      <para>
+        Don't connect to <productname>Pgpool-II</productname> in down
+        status using the real IP. Because a <productname>Pgpool-II</productname>
+        in down status can't receive information from other
+        <productname>Pgpool-II</productname> watchdogs so it's backend status
+        may be different from other the <productname>Pgpool-II</productname>.
+      </para>
+    </sect2>
+
+    <sect2 id="tutorial-watchdog-restrictions-down-watchdog-require-restart">
+      <title><productname>Pgpool-II</productname> whose watchdog status is down requires restart</title>
+      <indexterm zone="tutorial-watchdog-restrictions-down-watchdog-require-restart">
+        <primary>WATCHDOG</primary>
+      </indexterm>
+      <para>
+        <productname>Pgpool-II</productname> in down status can't become active
+        nor the standby <productname>Pgpool-II</productname>.
+        Recovery from down status requires the restart of <productname>Pgpool-II</productname>.
+      </para>
+    </sect2>
+
+    <sect2 id="tutorial-watchdog-restrictions-active-take-time">
+      <title>Watchdog promotion to active takes few seconds</title>
+      <indexterm zone="tutorial-watchdog-restrictions-active-take-time">
+        <primary>WATCHDOG</primary>
+      </indexterm>
+      <para>
+        After the active <productname>Pgpool-II</productname> stops,
+        it will take a few seconds until the standby <productname>Pgpool-II</productname>
+        promote to new active, to make sure that the former virtual IP is
+        brought down before a down notification packet is sent to other
+        <productname>Pgpool-II</productname>.
+      </para>
+    </sect2>
+  </sect1>
+
   <sect1 id="tutorial-advanced-arch">
     <title>Architecure of the watchdog</title>
 
@@ -196,4 +555,5 @@
     </para>
 
   </sect1>
+
 </chapter>
