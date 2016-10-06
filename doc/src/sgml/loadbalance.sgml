@@ -46,7 +46,7 @@
           white spaces against the user's will.
         </para>
         <para>
-          This parameter can be changed by reloading pgpool configuration.
+          This parameter can be changed by reloading the pgpool configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -83,7 +83,7 @@ white_function_list = 'get_.*,select_.*'
         </example>
 
         <para>
-          This parameter can be changed by reloading pgpool configuration.
+          This parameter can be changed by reloading the pgpool configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -153,7 +153,7 @@ black_function_list = 'nextval,setval,lastval,currval'
           </para>
         </note>
         <para>
-          This parameter can be changed by reloading pgpool configuration.
+          This parameter can be changed by reloading the pgpool configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -217,7 +217,7 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
         </example>
 
         <para>
-          This parameter can be changed by reloading pgpool configuration.
+          This parameter can be changed by reloading the pgpool configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -321,7 +321,7 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
         </caution>
 
         <para>
-          This parameter can be changed by reloading pgpool configuration.
+          This parameter can be changed by reloading the pgpool configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -343,7 +343,7 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
         <emphasis>V3.4</emphasis> behavior).
         </para>
         <para>
-          This parameter can be changed by reloading pgpool configuration.
+          This parameter can be changed by reloading the pgpool configurations.
         </para>
       </listitem>
     </varlistentry>

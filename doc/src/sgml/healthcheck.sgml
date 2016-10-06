@@ -37,7 +37,7 @@
       Default value is 20. Setting it to 0, disables the timeout (waits until TCP/IP timeout).
     </para>
     <para>
-      This parameter can be changed by reloading pgpool configuration.
+      This parameter can be changed by reloading the pgpool configurations.
     </para>
 	  </listitem>
    </varlistentry>
@@ -54,7 +54,7 @@
       Default is 0, which means health check is disabled.
     </para>
     <para>
-     This parameter can be changed by reloading pgpool configuration.
+     This parameter can be changed by reloading the pgpool configurations.
     </para>
     </listitem>
    </varlistentry>
@@ -72,7 +72,7 @@
         Otherwise, health check causes an error.
       </para>
       <para>
-        This parameter can be changed by reloading pgpool configuration.
+        This parameter can be changed by reloading the pgpool configurations.
       </para>
     </listitem>
    </varlistentry>
@@ -91,7 +91,7 @@
         Otherwise, health check causes an error.
       </para>
       <para>
-        This parameter can be changed by reloading pgpool configuration.
+        This parameter can be changed by reloading the pgpool configurations.
       </para>
     </listitem>
   </varlistentry>
@@ -113,7 +113,7 @@
         <productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>.
       </para>
       <para>
-	      This parameter can be changed by reloading pgpool configuration.
+	      This parameter can be changed by reloading the pgpool configurations.
       </para>
     </listitem>
   </varlistentry>
@@ -144,7 +144,7 @@
         Default is 0, which means do not retry.
       </para>
       <para>
-        This parameter can be changed by reloading pgpool configuration.
+        This parameter can be changed by reloading the pgpool configurations.
       </para>
     </listitem>
   </varlistentry>
@@ -162,7 +162,7 @@
         If 0, then retries are immediate (no delay).
       </para>
       <para>
-        This parameter can be changed by reloading pgpool configuration.
+        This parameter can be changed by reloading the pgpool configurations.
       </para>
     </listitem>
   </varlistentry>
@@ -187,7 +187,7 @@
         </note>
       </para>
       <para>
-        This parameter can be changed by reloading pgpool configuration.
+        This parameter can be changed by reloading the pgpool configurations.
       </para>
 	  </listitem>
    </varlistentry>
