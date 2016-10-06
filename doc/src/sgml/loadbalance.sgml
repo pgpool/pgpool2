@@ -9,4 +9,344 @@
     app_name_redirect_preference_list,
     allow_sql_comments
   </para>
+
+  <variablelist>
+
+    <varlistentry id="guc-load-balance-mode" xreflabel="load_balance_mode">
+      <term><varname>load_balance_mode</varname> (<type>boolean</type>)
+        <indexterm>
+          <primary><varname>load_balance_mode</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+          When set to on, <productname>Pgpool-II</productname> enables the
+          load balancing on incoming <acronym>SELECT</acronym> queries.
+          i.e. SELECT queries from the clients gets distributed to
+          the configured PostgreSQL backends.
+          Default is false.
+        </para>
+        <para>
+          This parameter can only be set at server start.
+        </para>
+      </listitem>
+    </varlistentry>
+
+   <varlistentry id="guc-ignore_leading_white_space" xreflabel="ignore_leading_white_space">
+      <term><varname>ignore_leading_white_space</varname> (<type>boolean</type>)
+        <indexterm>
+          <primary><varname>ignore_leading_white_space</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+          When set to on, <productname>Pgpool-II</productname> ignores the
+          white spaces at the beginning of SQL queries while in the load balance mode.
+          It is useful if used with APIs like DBI/DBD:Pg which adds
+          white spaces against the user's will.
+        </para>
+        <para>
+          This parameter can be changed by reloading pgpool configuration.
+        </para>
+      </listitem>
+    </varlistentry>
+
+   <varlistentry id="guc-white-function-list" xreflabel="white_function_list">
+      <term><varname>white_function_list</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>white_function_list</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+          Specifies a comma separated list of function names that
+          <emphasis>DO NOT</emphasis> update the database. SELECTs using
+          functions not specified in this list are neither load balanced,
+          nor replicated (in the replication mode).
+          In master slave mode, such SELECTs are sent to master (primary) only.
+        </para>
+        <para>
+          You can use regular expression into the list to match function name
+          (to which added automatically ^ and $),
+        </para>
+
+        <example id="example-white-function-list-1">
+          <title>Using regular expression</title>
+          <para>
+            If you have prefixed all your read only function
+            with 'get_' or 'select_', You can
+            set the <xref linkend="guc-white-function-list"> like below:
+          <programlisting>
+white_function_list = 'get_.*,select_.*'
+          </programlisting>
+          </para>
+        </example>
+
+        <para>
+          This parameter can be changed by reloading pgpool configuration.
+        </para>
+      </listitem>
+    </varlistentry>
+
+   <varlistentry id="guc-black-function-list" xreflabel="black_function_list">
+      <term><varname>black_function_list</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>black_function_list</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+          Specifies a comma separated list of function names that
+          <emphasis>DO</emphasis> update the database.
+          SELECTs using functions specified in this list are neither
+          load balanced, nor replicated (in the replication mode).
+          In master slave mode, such SELECTs are sent to master(primary) only.
+        </para>
+        <para>
+          You can use regular expression into the list to match function name
+          (to which added automatically ^ and $),
+        </para>
+
+        <example id="example-black-function-list-1">
+          <title>Using regular expression</title>
+          <para>
+            If you have prefixed all your updating functions
+            with 'set_', 'update_', 'delete_' or 'insert_', You can
+            set the <xref linkend="guc-black-function-list"> like below:
+          <programlisting>
+black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
+          </programlisting>
+          </para>
+        </example>
+
+        <note>
+          <para>
+            <xref linkend="guc-black-function-list"> and <xref linkend="guc-white-function-list">
+            are mutually exclusive and only one of the two lists can be set in the configuration.
+          </para>
+        </note>
+
+        <example id="example-black-function-list-2">
+          <title>Configuring using <literal>nextval()</literal> and <literal>setval()</literal> to land on proper backend</title>
+          <para>
+            Prior to <productname>Pgpool-II</productname><emphasis>V3.0</emphasis>,
+            <literal>nextval()</literal> and <literal>setval()</literal> were known to do writes to the database.
+            You can configure this by using <xref linkend="guc-black-function-list">
+            and <xref linkend="guc-white-function-list"> as follows
+              <programlisting>
+white_function_list = ''
+black_function_list = 'nextval,setval,lastval,currval'
+              </programlisting>
+          </para>
+          </example>
+
+        <note>
+          <para>
+            PostgreSQL also contains <literal>lastval()</literal> and
+            <literal>currval()</literal> in addition to
+            <literal>nextval()</literal> and <literal>setval()</literal>.
+            Though <literal>lastval()</literal> and <literal>currval()</literal>
+            are not writing function type, But it is advised to treat
+            <literal>lastval()</literal> and <literal>currval()</literal>
+            as a writing functions to avoid errors in the case if
+            these functions are accidentally load balanced.
+          </para>
+        </note>
+        <para>
+          This parameter can be changed by reloading pgpool configuration.
+        </para>
+      </listitem>
+    </varlistentry>
+
+   <varlistentry id="guc-database-redirect-preference-list" xreflabel="database_redirect_preference_list">
+      <term><varname>database_redirect_preference_list</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>database_redirect_preference_list</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+         Specifies the list of <literal>"database-name:node id"</literal> pairs
+         to make the <acronym>SELECT</acronym> queries land on particular Backend
+         node for particular database connection.
+         For example, by specifying "test:1", <productname>Pgpool-II</productname>
+         will redirect all <acronym>SELECT</acronym> queries to backend node 1 for
+         the connection connecting to "test" database.
+         You can specify multiple "database name:node id" pair by separating them
+         using comma (,).
+        </para>
+        <para>
+         Regular expressions are also accepted for database name.
+         Special keyword <emphasis>"primary"</emphasis> indicates the primary node and
+         <emphasis>"standby"</emphasis> indicates one of standby nodes.
+        </para>
+
+        <example id="example-database-redirect-list">
+          <title>Using database_redirect_preference_list</title>
+          <para>
+            If you want to configure the following <acronym>SELECT</acronym> query routing rules.
+          </para>
+
+          <itemizedlist>
+            <listitem>
+              <para>
+                Route all <acronym>SELECT</acronym> queries on <literal>postgres</literal>
+                database to PRIMARY backend server.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Route all <acronym>SELECT</acronym> queries on <literal>mydb0</literal> or on
+                <literal>mydb1</literal> databases to backend node 1.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Route all <acronym>SELECT</acronym> queries on <literal>mydb2</literal>
+                databases to STANDBY backend server.
+              </para>
+            </listitem>
+
+          </itemizedlist>
+          <para>
+            The <xref linkend="guc-database-redirect-preference-list"> will be configured as follows:
+              <programlisting>
+database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
+              </programlisting>
+          </para>
+        </example>
+
+        <para>
+          This parameter can be changed by reloading pgpool configuration.
+        </para>
+      </listitem>
+    </varlistentry>
+
+   <varlistentry id="guc-app-name-redirect-preference-list" xreflabel="app_name_redirect_preference_list">
+      <term><varname>app_name_redirect_preference_list</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>app_name_redirect_preference_list</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+
+        <para>
+          Specifies the list of <literal>"application-name:node id"</literal> pairs
+          to make the <acronym>SELECT</acronym> queries land on particular Backend
+          node for particular client application connection.
+        </para>
+
+        <note>
+          <para>
+            In PostgreSQL V9.0 or later the "Application name" is a name specified
+            by a client when it connects to database.
+          </para>
+         </note>
+
+        <para>
+          For example, application name of <command>psql</command> command is
+          <literal>"psql"</literal>
+        </para>
+
+        <note>
+          <para>
+            <productname>Pgpool-II</productname> ony recognizes the application name
+            specified in the start-up packet.
+            Although a client can provide the application name
+            later in the session, but that does not get considered by the
+            <productname>Pgpool-II</productname> for query routing.
+          </para>
+        </note>
+
+        <para>
+          The notion of <xref linkend="guc-app-name-redirect-preference-list">
+          is same as the <xref linkend="guc-database-redirect-preference-list">
+          thus you can also use the regular expressions for application names.
+          Similarly special keyword <emphasis>"primary"</emphasis> indicates the primary node and
+         <emphasis>"standby"</emphasis> indicates one of standby nodes.
+        </para>
+
+        <example id="example-app-name-redirect-list">
+          <title>Using app-name_redirect_preference_list</title>
+          <para>
+            If you want to configure the following <acronym>SELECT</acronym> query routing rules.
+          </para>
+
+          <itemizedlist>
+            <listitem>
+              <para>
+                Route all <acronym>SELECT</acronym> from <literal>psql</literal>
+                client to PRIMARY backend server.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Route all <acronym>SELECT</acronym> queries from <literal>myapp1</literal>
+                client to backend node 1.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Route all <acronym>SELECT</acronym> queries from <literal>myapp2</literal>
+                client to STANDBY backend server.
+              </para>
+            </listitem>
+
+          </itemizedlist>
+          <para>
+            The <xref linkend="guc-app-name-redirect-preference-list"> will be configured as follows:
+              <programlisting>
+app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
+              </programlisting>
+          </para>
+        </example>
+
+        <note>
+          <para>
+            <xref linkend="guc-app-name-redirect-preference-list"> takes precedence
+            over the <xref linkend="guc-database-redirect-preference-list">.
+          </para>
+        </note>
+
+        <caution>
+          <para>
+            <acronym>JDBC</acronym> driver PostgreSQL-9.3 and earlier versions
+            does not send the application name in the startup packet even if
+            the application name is specified using the <acronym>JDBC</acronym>
+            driver option <literal>"ApplicationName"</literal> and
+            <literal>"assumeMinServerVersion=9.0"</literal>.
+            So if you want to use the <xref linkend="guc-app-name-redirect-preference-list">
+            feature through <acronym>JDBC</acronym>, Use PostgreSQL-9.4 or later version of the driver.
+          </para>
+        </caution>
+
+        <para>
+          This parameter can be changed by reloading pgpool configuration.
+        </para>
+      </listitem>
+    </varlistentry>
+
+   <varlistentry id="guc-allow-sql-comments" xreflabel="allow_sql_comments">
+      <term><varname>allow_sql_comments</varname> (<type>boolean</type>)
+        <indexterm>
+          <primary><varname>allow_sql_comments</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+        When set to on, <productname>Pgpool-II</productname> ignore the
+        <acronym>SQL</acronym> comments when identifying if the load balance
+        or query cache is possible on the query.
+        When this parameter is set to off, the <acronym>SQL</acronym> comments
+        on the query could effectively prevent the query from being
+        load balanced or cached (pre <productname>Pgpool-II</productname>
+        <emphasis>V3.4</emphasis> behavior).
+        </para>
+        <para>
+          This parameter can be changed by reloading pgpool configuration.
+        </para>
+      </listitem>
+    </varlistentry>
+
+  </variablelist>
 </sect1>
