@@ -3,13 +3,6 @@
 <sect1 id="runtime-config-load-balancing">
   <title>Load Balancing</title>
 
-  <para>
-    load_balance_mode, ignore_leading_white_space, white_function_list,
-    black_function_list, database_redirect_preference_list,
-    app_name_redirect_preference_list,
-    allow_sql_comments
-  </para>
-
   <variablelist>
 
     <varlistentry id="guc-load-balance-mode" xreflabel="load_balance_mode">

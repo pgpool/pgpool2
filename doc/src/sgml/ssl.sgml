@@ -3,7 +3,124 @@
 <sect1 id="runtime-ssl">
   <title>Secure Sockect Layer (SSL)</title>
 
-  <para>
-    ssl...
-  </para>
+  <variablelist>
+
+    <varlistentry id="guc-ssl" xreflabel="ssl">
+      <term><varname>ssl</varname> (<type>boolean</type>)
+        <indexterm>
+          <primary><varname>ssl</varname> configuration parameter</primary>
+        </indexterm>
+    </term>
+    <listitem>
+      <para>
+        When set to on, <productname>Pgpool-II</productname> enables the <acronym>SSL</acronym>
+        for both the frontend and backend communications.
+        Default is off.
+      </para>
+      <note>
+        <para>
+          <xref linkend="guc-ssl-key"> and <xref linkend="guc-ssl-cert"> must also be
+          configured in order for SSL to work with frontend connections.
+        </para>
+      </note>
+      <note>
+        <para>
+          For SSL to work <productname>Pgpool-II</productname> must be build with OpenSSL support.
+          See <xref linkend="install-pgpool"> for details on building the
+          <productname>Pgpool-II</productname>.
+        </para>
+      </note>
+      <para>
+        This parameter can only be set at server start.
+      </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry id="guc-ssl-key" xreflabel="ssl_key">
+      <term><varname>ssl_key</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>ssl_key</varname> configuration parameter</primary>
+        </indexterm>
+    </term>
+    <listitem>
+      <para>
+        Specifies the path to the private key file to be used for
+        incoming frontend connections.
+        There is no default value for this option, and if left unset
+        <acronym>SSL</acronym> will be disabled for incoming frontend connections.
+      </para>
+      <para>
+        This parameter can only be set at server start.
+      </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry id="guc-ssl-cert" xreflabel="ssl_cert">
+      <term><varname>ssl_cert</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>ssl_cert</varname> configuration parameter</primary>
+        </indexterm>
+    </term>
+    <listitem>
+      <para>
+        Specifies the path to the public x509 certificate file to be used
+        for the incoming frontend connections.
+        There is no default value for this option, and if left unset
+        <acronym>SSL</acronym> will be disabled for incoming frontend connections.
+      </para>
+
+      <para>
+        This parameter can only be set at server start.
+      </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry id="guc-ssl-ca-cert" xreflabel="ssl_ca_cert">
+      <term><varname>ssl_ca_cert</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>ssl_ca_cert</varname> configuration parameter</primary>
+        </indexterm>
+    </term>
+    <listitem>
+      <para>
+        Specifies the path to a <acronym>PEM</acronym>
+        format <acronym>CA</acronym> certificate files, which can be used
+        to verify the backend server certificates. This is analogous to
+        the <command>-CApath</command> option of the
+        <command>OpenSSL verify(1)</command> command.
+      </para>
+
+      <para>
+        This parameter can only be set at server start.
+      </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry id="guc-ssl-ca-cert-dir" xreflabel="ssl_ca_cert_dir">
+      <term><varname>ssl_ca_cert_dir</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>ssl_ca_cert_dir</varname> configuration parameter</primary>
+        </indexterm>
+    </term>
+    <listitem>
+      <para>
+        Specifies the path to a directory containing <acronym>PEM</acronym>
+        format <acronym>CA</acronym> certificate files, which can be used
+        to verify the backend server certificates. This is analogous to
+        the <command>-CApath</command> option of the
+        <command>OpenSSL verify(1)</command> command.
+      </para>
+      <para>
+        The default value for this option is unset, which means no
+        verification takes place. Verification will still happen if
+        this option is not set but a value is provided for
+        <xref linkend="guc-ssl-ca-cert">.
+      </para>
+      <para>
+        This parameter can only be set at server start.
+      </para>
+      </listitem>
+    </varlistentry>
+
+  </variablelist>
 </sect1>
