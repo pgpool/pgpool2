@@ -551,8 +551,172 @@
     <title>Architecure of the watchdog</title>
 
     <para>
-      This chapter explains the overall architecture of watchdog.
+      Watchdog is a sub process of <productname>Pgpool-II</productname>,
+      which adds the high availability and resolves the single point of
+      failure by coordinating multiple <productname>Pgpool-II</productname>.
+      The watchdog process automatically starts (if enabled) when the
+      <productname>Pgpool-II</productname> starts up and consists of two
+      main components, Watchdog core and the lifecheck system.
     </para>
+
+    <sect2 id="tutorial-advanced-arch-wd-core">
+      <title>Watchdog Core</title>
+        <para>
+          Watchdog core referred as a "watchdog" is a
+          <productname>Pgpool-II</productname> child process that
+          manages all the watchdog related communications with the
+          <productname>Pgpool-II</productname> nodes present in the
+          cluster and also communicates with the <productname>Pgpool-II</productname>
+          parent and lifecheck processes.
+        </para>
+        <para>
+          The heart of a watchdog process is a state machine that starts
+          from its initial state (<literal>WD_LOADING</literal>) and transit
+          towards either standby (<literal>WD_STANDBY</literal>) or
+          master/coordinator (<literal>WD_COORDINATOR</literal>) state.
+          Both standby and master/coordinator states are stable states of the
+          watchdog state machine and the node stays in standby or
+          master/coordinator state until some problem in local
+          <productname>Pgpool-II</productname> node is detected or a
+          remote <productname>Pgpool-II</productname> disconnects from the cluster.
+        </para>
+        <para>
+          The watchdog process performs the following tasks:
+        </para>
+          <itemizedlist>
+            <listitem>
+              <para>
+                Manages and coordinates the local node watchdog state.
+              </para>
+            </listitem>
+
+            <listitem>
+              <para>
+                Interacts with built-in or external lifecheck system
+                for the of local and remote <productname>Pgpool-II</productname>
+                node health checking.
+              </para>
+            </listitem>
+
+            <listitem>
+              <para>
+                Interacts with <productname>Pgpool-II</productname> main
+                process and provides the mechanism to
+                <productname>Pgpool-II</productname> parent process for
+                executing the cluster commands over the watchdog channel.
+              </para>
+            </listitem>
+
+            <listitem>
+              <para>
+                Communicates with all the participating <productname>Pgpool-II
+                </productname> nodes to coordinate the selection of
+                master/coordinator node and to ensure the quorum in the cluster.
+              </para>
+            </listitem>
+
+            <listitem>
+              <para>
+                Manages the Virtual-IP on the active/coordinator node and
+                allow the users to provide custom scripts for
+                escalation and de-escalation.
+              </para>
+            </listitem>
+
+            <listitem>
+              <para>
+                Verifies the consistency of <productname>Pgpool-II</productname>
+                configurations across the participating <productname>Pgpool-II
+                </productname> nodes in the watchdog cluster.
+              </para>
+            </listitem>
+
+            <listitem>
+              <para>
+                Synchronize the status of all PostgreSQL backends at startup.
+              </para>
+            </listitem>
+
+            <listitem>
+              <para>
+                Provides the distributed locking facility to
+                <productname>Pgpool-II</productname> main process
+                for synchronizing the different failover commands.
+              </para>
+            </listitem>
+
+          </itemizedlist>
+
+      <sect3 id="tutorial-advanced-arch-wd-core-comm">
+        <title>Communication with other nodes in the Cluster</title>
+        <para>
+          Watchdog uses TCP/IP sockets for all the communication with other nodes.
+          Each watchdog node can have two sockets opened with each node. One is the
+          outgoing (client) socket which this node creates and initiate the
+          connection to the remote node and the second socket is the one which
+          is listening socket for inbound connection initiated by remote
+          watchdog node. As soon as the socket connection to remote node succeeds
+          watchdog sends the ADD NODE (<literal>WD_ADD_NODE_MESSAGE</literal>)
+          message on that socket. And upon receiving the ADD NODE message the
+          watchdog node verifies the node information encapsulated in the message
+          with the Pgpool-II configurations for that node, and if the node passes
+          the verification test it is added to the cluster otherwise the connection
+          is dropped.
+        </para>
+      </sect3>
+
+      <sect3 id="tutorial-advanced-arch-wd-ipc-data">
+        <title>IPC and data format</title>
+        <para>
+          Watchdog process exposes a <acronym>UNIX</acronym> domain socket
+          for IPC communications, which accepts and provides the data in
+          <acronym>JSON</acronym> format. All the internal <productname>Pgpool-II
+          </productname> processes, including <productname>Pgpool-II's</productname>
+          built-in lifecheck and <productname>Pgpool-II</productname> main process
+          uses this IPC socket interface to interact with the watchdog.
+          This IPC socket can also be used by any external/3rd party system
+          to interact with watchdog.
+        </para>
+        <para>
+          See <xref linkend="tutorial-watchdog-integrating-external-lifecheck"> for details
+          on how to use watchdog IPC interface for integrating external/3rd party systems.
+        </para>
+      </sect3>
+    </sect2>
+
+    <sect2 id="tutorial-advanced-arch-wd-lifecheck">
+      <title>Watchdog Lifecheck</title>
+      <para>
+        Watchdog lifecheck is the sub-component of watchdog that monitors the health
+        of <productname>Pgpool-II</productname> nodes participating in the watchdog
+        cluster. <productname>Pgpool-II</productname> watchdog provides two built-in
+        methods of remote node health checking, "heartbeat" and "query" mode.
+      </para>
+      <para>
+        In "heartbeat" mode, The lifecheck process sends and receives the data over
+        <acronym>UDP</acronym> socket to check the availability of remote nodes and
+        for each node the parent lifecheck process spawns two child process one for
+        sending the heartbeat signal and another for receiving the heartbeat.
+        While in "query" mode, The lifecheck process uses the PostgreSQL libpq
+        interface for querying the remote <productname>Pgpool-II</productname>.
+        And in this mode the lifecheck process creates a new thread for each health
+        check query which gets destroyed as soon as the query finishes.
+      </para>
+      <para>
+        Apart from remote node health checking watchdog lifecheck can also check the
+        health of node it is installed on by monitoring the connection to upstream servers.
+        For monitoring the connectivity to the upstream server <productname>Pgpool-II
+        </productname> lifecheck uses <literal>execv()</literal> function to executes
+        <command>'ping -q -c3 hostname'</command> command.
+        So a new child process gets spawned for executing each ping command.
+        This means for each health check cycle a child process gets created and
+        destroyed for each configured upstream server.
+        For example, If two upstream servers are configured in the lifecheck and it is
+        asked to health check at ten second intervals, then after each ten second
+        lifecheck will spawn two child processes, one for each upstream server,
+        and each process will live until the ping command is finished.
+      </para>
+    </sect2>
 
   </sect1>
 
