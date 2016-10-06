@@ -25,7 +25,7 @@
       </listitem>
     </varlistentry>
 
-   <varlistentry id="guc-ignore_leading_white_space" xreflabel="ignore_leading_white_space">
+   <varlistentry id="guc-ignore-leading-white-space" xreflabel="ignore_leading_white_space">
       <term><varname>ignore_leading_white_space</varname> (<type>boolean</type>)
         <indexterm>
           <primary><varname>ignore_leading_white_space</varname> configuration parameter</primary>

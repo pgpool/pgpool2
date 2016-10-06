@@ -59,7 +59,7 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-health_check_user" xreflabel="health_check_user">
+   <varlistentry id="guc-health-check-user" xreflabel="health_check_user">
     <term><varname>health_check_user</varname> (<type>string</type>)
       <indexterm>
         <primary><varname>health_check_user</varname> configuration parameter</primary>
@@ -86,7 +86,7 @@
     <listitem>
       <para>
         Specifies the password for the PostgreSQL user name configured in
-        <xref linkend="guc-health_check_user"> to perform health check.
+        <xref linkend="guc-health-check-user"> to perform health check.
         The user and password must be same in all the PostgreSQL backends.
         Otherwise, health check causes an error.
       </para>

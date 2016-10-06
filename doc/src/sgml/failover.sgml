@@ -188,7 +188,7 @@
           replaces the following special characters with the backend specific information.
         </para>
 
-        <table id="follow_master-command-table">
+        <table id="follow-master-command-table">
           <title>follow master command options</title>
           <tgroup cols="2">
             <thead>
