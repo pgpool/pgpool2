@@ -11,7 +11,7 @@
     and improves system's overall throughput.
   </para>
   <para>
-    connection_cache, max_pool, reset_query_list, child_life_time, 
+    connection_cache, max_pool, reset_query_list, child_life_time,
     child_max_connections, connection_life_time, client_idle_limit
   </para>
 
@@ -68,6 +68,35 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
+    <varlistentry id="guc-client-idle-limit" xreflabel="client_idle_limit">
+      <term><varname>client_idle_limit</varname> (<type>integer</type>)
+        <indexterm>
+        <primary><varname>client_idle_limit</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+          Specifies the time in seconds to disconnect a client if it remains idle
+          since the last query.
+          This is useful for preventing the <productname>Pgpool-II</productname>
+          children from being occupied by a lazy clients or broken TCP/IP
+					connection between client and <productname>Pgpool-II</productname>.
+				</para>
+				<note>
+					<para>
+						<varname>client_idle_limit</varname> is ignored in
+						the second stage of online recovery.
+					</para>
+				</note>
+        <para>
+          The default is 0, which turns off the feature.
+				</para>
+        <para>
+          This parameter can be changed by reloading the pgpool configurations.
+        </para>
+      </listitem>
+    </varlistentry>
 
     </variablelist>
   </sect2>
