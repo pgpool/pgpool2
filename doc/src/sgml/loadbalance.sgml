@@ -60,7 +60,7 @@
         </para>
         <para>
           You can use regular expression into the list to match function name
-          (to which added automatically ^ and $),
+          (to which ^ and $ are automatically added),
         </para>
 
         <example id="example-white-function-list-1">
@@ -97,7 +97,7 @@ white_function_list = 'get_.*,select_.*'
         </para>
         <para>
           You can use regular expression into the list to match function name
-          (to which added automatically ^ and $),
+          (to which ^ and $ are automatically added),
         </para>
 
         <example id="example-black-function-list-1">
