@@ -385,7 +385,40 @@ $psql -p $PORT -c "SELECT pg_stop_backup()" postgres
     <title>Architectural Fundamentals</title>
 
     <para>
-      pgpool-II architecure, including connection pooling, failover, replication and online recovery.
+      <productname>Pgpool-II</productname> is a proxy server sitting
+      between clients and <productname>PostgreSQL</productname>.
+      <productname>Pgpool-II</productname> understands the wire level
+      protocol used by <productname>PostgreSQL</productname> called
+      "frontend and backend protocol". For more details of the
+      protocol, see the <productname>PostgreSQL</productname> manual.
+      No modified <productname>PostgreSQL</productname> is required to
+      use <productname>Pgpool-II</productname> (more precisely, you
+      will need a few extensions to use full functions
+      of <productname>Pgpool-II</productname>). So <productname>Pgpool-II</productname>
+      can cope with variety of <productname>PostgreSQL</productname>
+      versions. In theory, even the earliest version
+      of <productname>PostgreSQL</productname> can be used
+      with <productname>Pgpool-II</productname>. Same thing can be
+      said to client side. As long as it follows the
+      protocol, <productname>Pgpool-II</productname> happily accept
+      connections from it, no matter what kind of languages or drivers
+      it uses.
+    </para>
+
+    <para>
+      <productname>Pgpool-II</productname> consists of multiple
+      process. There is a main process, which is the parent process of
+      all other process. It is responsible for forking child process
+      each of which accepts connections from clients. There are some
+      worker process those are forked from the main process as well,
+      which is responsible for detecting streaming replication
+      delay. There is also a special process called "pcp process",
+      which is solely used for management
+      of <productname>Pgpool-II</productname>
+      itself. <productname>Pgpool-II</productname> has a built-in high
+      availability function called "watchdog". Watchdog consists of
+      some process. For more details of watchdog,
+      see <xref linkend="tutorial-watchdog">.
     </para>
   </sect1>
 
