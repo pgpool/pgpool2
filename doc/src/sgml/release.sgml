@@ -72,8 +72,9 @@ For new features, add links to the documentation sections.
   subsets can easily be copied into back branches.
 -->
 
-<!--
 &release-3.6;
+<!--
+&release-3.7;
 -->
 
 </appendix>

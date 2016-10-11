@@ -1,0 +1,100 @@
+<!-- doc/src/sgml/release-3.6.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-3-6">
+  <title>Release 3.6</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2016-11-xx</simpara>
+  </note>
+
+  <sect2>
+    <title>Overview</title>
+
+    <para>
+      Major enhancements in <productname>Pgpool-II</productname> 3.6 include:
+    </para>
+
+    <!-- Items in this list summarize one or more items below -->
+
+    <itemizedlist>
+
+      <listitem>
+	<para>
+	  Change documentation format from raw HTML to SGML
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+    <para>
+      The above items are explained in more detail in the sections below.
+    </para>
+
+  </sect2>
+
+  <sect2>
+    <title>Enhancements</title>
+
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2016-03-15 [47d9af9] Mega patch to add SGML docs.
+	  -->
+	<para>
+          HTML documents are now generated from SGML documents. It is
+          intended to have better construction, contents and
+          maintainability. However, still there's tremendous room to
+          enhance the SGML documents. Please help us!
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+  <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2016-03-15 [47d9af9] Mega patch to add SGML docs.
+	  -->
+	<para>
+          HTML documents are now generated from SGML documents. It is
+          intended to have better construction, contents and
+          maintainability. However, still there's tremendous room to
+          enhance the SGML documents. Please help us!
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2016-03-15 [47d9af9] Mega patch to add SGML docs.
+	  -->
+	<para>
+          HTML documents are now generated from SGML documents. It is
+          intended to have better construction, contents and
+          maintainability. However, still there's tremendous room to
+          enhance the SGML documents. Please help us!
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
