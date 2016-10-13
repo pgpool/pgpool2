@@ -864,6 +864,32 @@ GRANT ALL ON public.my_lock_table TO PUBLIC;
 		</para>
 	</listitem>
 			</varlistentry>
+
+			<varlistentry id="guc-backend-weight" xreflabel="backend_weight">
+	<term><varname>backend_weight</varname> (<type>integer</type>)
+		<indexterm>
+			<primary><varname>backend_weight</varname> configuration parameter</primary>
+		</indexterm>
+	</term>
+
+	<listitem>
+		<para>
+						<varname>backend_weight</varname> specifies the load balance
+						ratio of the backends. Multiple backends can be specified by
+						adding a number at the end of the parameter name
+						(e.g. backend_weight0). If you plan to use only one
+						PostgreSQL server, specify it by backend_weight0.
+		</para>
+		<para>
+			New backend weights can be added in this parameter by
+			reloading a configuration file. However, this will take
+			effect only for new established client sessions.
+			This is useful if you want to prevent any query sent to
+			slaves to perform some administrative work in master/slave mode..
+		</para>
+	</listitem>
+			</varlistentry>
+
 		</variablelist>
 	</sect2>
 
