@@ -3,6 +3,29 @@
 <sect1 id="runtime-config-load-balancing">
   <title>Load Balancing</title>
 
+  <para>
+    <productname>Pgpool-II</productname> load balancing of SELECT queries
+    works with  Master Slave mode(<xref linkend="runtime-config-master-slave-mode">)
+    and Replication mode(<xref linkend="runtime-config-replication-mode">). When enabled
+    <productname>Pgpool-II</productname> sends the writing queries to the
+    <acronym>Master DB</acronym>, and other queries get load balanced to
+    <acronym>Standby DB nodes</acronym> if possible.
+  </para>
+  <note>
+    <para>
+      Queries sent to Master DB because they cannot be balanced are also accounted for in the load balancing algorithm.
+    </para>
+  </note>
+  <note>
+    <para>
+      If you don't want a query that qualifies for the load balancing to be
+      load balanced by <productname>Pgpool-II</productname>, you can put
+      <emphasis>/*NO LOAD BALANCE*/</emphasis> comment before the <acronym>SELECT
+      </acronym> statement, This will disable the load balance of the particular query
+      and <productname>Pgpool-II</productname> will send it to the Master DB node.
+    </para>
+  </note>
+
   <variablelist>
 
     <varlistentry id="guc-load-balance-mode" xreflabel="load_balance_mode">

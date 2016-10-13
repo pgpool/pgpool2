@@ -116,5 +116,46 @@
       </listitem>
     </varlistentry>
 
+    <varlistentry id="guc-pid-file-name" xreflabel="pid_file_name">
+      <term><varname>pid_file_name</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>pid_file_name</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+
+        <para>
+          Specifies the full path to a file to store the <productname>Pgpool-II
+          </productname> process id.
+          Default is <literal>"/var/run/pgpool/pgpool.pid"</literal>.
+        </para>
+
+        <para>
+          This parameter can only be set at server start.
+        </para>
+
+      </listitem>
+    </varlistentry>
+
+    <varlistentry id="guc-logdir" xreflabel="logdir">
+      <term><varname>logdir</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>logdir</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+
+        <para>
+          Specifies the full path to a directory to store the <literal>pool_status</literal>.
+          Default is <literal>"/tmp"</literal>.
+        </para>
+
+        <para>
+          This parameter can only be set at server start.
+        </para>
+
+      </listitem>
+    </varlistentry>
+
   </variablelist>
 </sect1>

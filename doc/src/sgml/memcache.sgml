@@ -100,7 +100,7 @@
           </table>
 
 					<para>
-            Default is 'shmem'.
+            Default is <literal>'shmem'</literal>.
 					</para>
 
 					<para>

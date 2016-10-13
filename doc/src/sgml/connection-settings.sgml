@@ -3,10 +3,6 @@
 <sect1 id="runtime-config-connection">
 	<title>Connections and Authentication</title>
 
-	<para>
-		listen_addresses, num_init_children
-	</para>
-
 	<sect2 id="runtime-config-connection-settings">
 		<title>Connection Settings</title>
 
@@ -148,16 +144,17 @@
 			blocked (not rejected) until a connection to
 			any <productname>Pgpool-II</productname> process is
 			closed</emphasis>.  Up to
-			listen_backlog_multiplier*num_init_children can be queued.
+			<xref linkend="guc-listen-backlog-multiplier">*
+			num_init_children can be queued.
 		</para>
 		<para>
 			The queue is inside the kernel called "listen queue". The
 			length of the listen queue is called "backlog".  There is
 			an upper limit of the backlog in some systems, and if
-			num_init_children*listen_backlog_multiplier exceeds the
-			number, you need to set the backlong higher. Otherwise,
-			following problems may occur in heavy loaded systems: 1)
-			connecting to <productname>Pgpool-II</productname> fails
+			num_init_children*<xref linkend="guc-listen-backlog-multiplier">
+			exceeds the number, you need to set the backlong higher.
+			Otherwise, following problems may occur in heavy loaded systems:
+			1) connecting to <productname>Pgpool-II</productname> fails
 			2) connecting to <productname>Pgpool-II</productname> is
 			getting slow because of retries in the kernel.  You can
 			check if the listen queue is actually overflowed by using
