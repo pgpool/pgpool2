@@ -62,53 +62,14 @@
 	  </para>
 	</listitem>
 
-	<listitem>
-	  <para>
-	    <emphasis>Numeric with Unit:</emphasis>
-	    Some numeric parameters have an implicit unit, because they describe
-	    quantities of memory or time. The unit might be kilobytes, blocks
-	    (typically eight kilobytes), milliseconds, seconds, or minutes.
-	    An unadorned numeric value for one of these settings will use the
-	    setting's default unit, which can be learned from
-	    <structname>pg_settings</>.<structfield>unit</>.
-For convenience, settings can be given with a unit specified explicitly,
-for example <literal>'120 ms'</> for a time value, and they will be
-converted to whatever the parameter's actual unit is.  Note that the
-value must be written as a string (with quotes) to use this feature.
-The unit name is case-sensitive, and there can be whitespace between
-the numeric value and the unit.
-
-<itemizedlist>
   <listitem>
     <para>
-      Valid memory units are <literal>kB</literal> (kilobytes),
-      <literal>MB</literal> (megabytes), <literal>GB</literal>
-      (gigabytes), and <literal>TB</literal> (terabytes).
-      The multiplier for memory units is 1024, not 1000.
+      <emphasis>Enumerated:</emphasis>
+      Enumerated-type parameters are written in the same way as string
+      parameters, but are restricted to have one of a limited set of
+      values. Enum parameter values are case-insensitive.
     </para>
   </listitem>
-
-  <listitem>
-    <para>
-      Valid time units are <literal>ms</literal> (milliseconds),
-      <literal>s</literal> (seconds), <literal>min</literal> (minutes),
-      <literal>h</literal> (hours), and <literal>d</literal> (days).
-    </para>
-  </listitem>
-</itemizedlist>
-</para>
-</listitem>
-
-<listitem>
-  <para>
-    <emphasis>Enumerated:</emphasis>
-    Enumerated-type parameters are written in the same way as string
-    parameters, but are restricted to have one of a limited set of
-    values.  The values allowable for such a parameter can be found from
-    <structname>pg_settings</>.<structfield>enumvals</>.
-Enum parameter values are case-insensitive.
-</para>
-</listitem>
 </itemizedlist>
 </sect2>
 
@@ -117,498 +78,75 @@ Enum parameter values are case-insensitive.
 
   <para>
     The most fundamental way to set these parameters is to edit the file
-    <filename>postgresql.conf</><indexterm><primary>postgresql.conf</></>,
-which is normally kept in the data directory.  A default copy is
-installed when the database cluster directory is initialized.
-An example of what this file might look like is:
-<programlisting>
+    <filename>pgpool.conf</><indexterm><primary>pgpool.conf</></>,
+    which is located in <literal>$prefix/etc/pgpool.conf</literal>.
+    An example of what this file might look like is:
+    <programlisting>
   # This is a comment
-  log_connections = yes
-  log_destination = 'syslog'
-  search_path = '"$user", public'
-  shared_buffers = 128MB
-</programlisting>
-One parameter is specified per line. The equal sign between name and
-value is optional. Whitespace is insignificant (except within a quoted
-parameter value) and blank lines are
-ignored. Hash marks (<literal>#</literal>) designate the remainder
-of the line as a comment.  Parameter values that are not simple
-identifiers or numbers must be single-quoted.  To embed a single
-quote in a parameter value, write either two quotes (preferred)
-or backslash-quote.
-</para>
+  listen_addresses = 'localhost'
+  port = 9999
+  serialize_accept = off
+  reset_query_list = 'ABORT; DISCARD ALL'
+    </programlisting>
 
-<para>
-  Parameters set in this way provide default values for the cluster.
-  The settings seen by active sessions will be these values unless they
-  are overridden.  The following sections describe ways in which the
-  administrator or user can override these defaults.
-</para>
+      One parameter is specified per line. The equal sign between name and
+      value is optional. Whitespace is insignificant (except within a quoted
+      parameter value) and blank lines are
+      ignored. Hash marks (<literal>#</literal>) designate the remainder
+      of the line as a comment.  Parameter values that are not simple
+      identifiers or numbers must be single-quoted.  To embed a single
+      quote in a parameter value, write either two quotes (preferred)
+      or backslash-quote.
+    </para>
 
-<para>
-  <indexterm>
-    <primary>SIGHUP</primary>
-  </indexterm>
-  The configuration file is reread whenever the main server process
-  receives a <systemitem>SIGHUP</> signal; this signal is most easily
-sent by running <literal>pg_ctl reload</> from the command line or by
-calling the SQL function <function>pg_reload_conf()</function>. The main
-server process also propagates this signal to all currently running
-server processes, so that existing sessions also adopt the new values
-(this will happen after they complete any currently-executing client
-command).  Alternatively, you can
-send the signal to a single server process directly.  Some parameters
-can only be set at server start; any changes to their entries in the
-configuration file will be ignored until the server is restarted.
-Invalid parameter settings in the configuration file are likewise
-ignored (but logged) during <systemitem>SIGHUP</> processing.
-</para>
+    <para>
+      Parameters set in this way provide default values for the cluster.
+      The settings seen by active sessions will be these values unless they
+      are overridden.  The following sections describe ways in which the
+      administrator or user can override these defaults.
+    </para>
 
-<para>
-  <!--
-      In addition to <filename>postgresql.conf</>,
-      a <productname>PostgreSQL</productname> data directory contains a file
-      <filename>postgresql.auto.conf</><indexterm><primary>postgresql.auto.conf</></>,
-which has the same format as <filename>postgresql.conf</> but should
-never be edited manually.  This file holds settings provided through
-the <xref linkend="SQL-ALTERSYSTEM"> command.  This file is automatically
-  read whenever <filename>postgresql.conf</> is, and its settings take
-effect in the same way.  Settings in <filename>postgresql.auto.conf</>
-override those in <filename>postgresql.conf</>.
--->
-</para>
-
-<para>
-  <!--
-      The system view
-      <link linkend="view-pg-file-settings"><structname>pg_file_settings</structname></link>
-      can be helpful for pre-testing changes to the configuration file, or for
-      diagnosing problems if a <systemitem>SIGHUP</> signal did not have the
-desired effects.
--->
-</para>
-</sect2>
+    <para>
+      <indexterm>
+        <primary>SIGHUP</primary>
+      </indexterm>
+      The configuration file is reread whenever the main server process
+      receives a <systemitem>SIGHUP</> signal; this signal is most easily
+      sent by running <literal>pgpool reload</> from the command line. The main
+      pgpool process also propagates this signal to all its child
+      processes, so that existing sessions also adopt the new values.
+      Some parameters can only be set at server start; any changes to their
+      entries in the configuration file will be ignored until the server is restarted.
+      Invalid parameter settings in the configuration file are likewise
+      ignored (but logged) during <systemitem>SIGHUP</> processing.
+    </para>
+  </sect2>
 
 <sect2 id="config-setting-sql-command-interaction">
-  <title>Parameter Interaction via SQL</title>
+  <title>Parameter Interaction via SQL Clients</title>
 
-  <!--
-      <para>
-	<productname>PostgreSQL</productname> provides three SQL
-	commands to establish configuration defaults.
-	The already-mentioned <xref linkend="SQL-ALTERSYSTEM"> command
-	  provides a SQL-accessible means of changing global defaults; it is
-	  functionally equivalent to editing <filename>postgresql.conf</>.
-In addition, there are two commands that allow setting of defaults
-on a per-database or per-role basis:
-</para>
+  <para>
+	  <productname>Pgpool-II</productname> also provides two SQL style
+	  commands to interact with session-local configuration settings.
+  </para>
 
-<itemizedlist>
-  <listitem>
-    <para>
-      The <xref linkend="sql-alterdatabase"> command allows global
-	settings to be overridden on a per-database basis.
-    </para>
-  </listitem>
-
-  <listitem>
-    <para>
-      The <xref linkend="sql-alterrole"> command allows both global and
-	per-database settings to be overridden with user-specific values.
-    </para>
-  </listitem>
-</itemizedlist>
-
-<para>
-  Values set with <command>ALTER DATABASE</> and <command>ALTER ROLE</>
-are applied only when starting a fresh database session.  They
-override values obtained from the configuration files or server
-command line, and constitute defaults for the rest of the session.
-Note that some settings cannot be changed after server start, and
-so cannot be set with these commands (or the ones listed below).
-</para>
-
-<para>
-  Once a client is connected to the database, <productname>PostgreSQL</>
-provides two additional SQL commands (and equivalent functions) to
-interact with session-local configuration settings:
-</para>
--->
   <itemizedlist>
     <listitem>
       <para>
-	<!--
-	    The <xref linkend="SQL-SHOW"> command allows inspection of the
-	    current value of all parameters.  The corresponding function is
-	    <function>current_setting(setting_name text)</function>.
-	    -->
-      </para>
+	    The <xref linkend="SQL-PGPOOL-SHOW"> command allows inspection of the
+	    current value of all parameters.
+	    </para>
     </listitem>
 
     <listitem>
       <para>
-	<!--
-	    The <xref linkend="SQL-SET"> command allows modification of the
+	    The <xref linkend="SQL-PGPOOL-SET"> command allows modification of the
 	    current value of those parameters that can be set locally to a
 	    session; it has no effect on other sessions.
-	    The corresponding function is
-	    <function>set_config(setting_name, new_value, is_local)</function>.
-	    -->
       </para>
     </listitem>
   </itemizedlist>
 
-  <para>
-    <!--
-	In addition, the system view <link
-	linkend="view-pg-settings"><structname>pg_settings</></> can be
-	used to view and change session-local values:
-      -->
-  </para>
-
-  <itemizedlist>
-    <listitem>
-      <para>
-	Querying this view is similar to using <command>SHOW ALL</> but
-provides more detail.  It is also more flexible, since it's possible
-to specify filter conditions or join against other relations.
-</para>
-</listitem>
-
-<listitem>
-  <para>
-    <!--
-	Using <xref linkend="SQL-UPDATE"> on this view, specifically
-	updating the <structname>setting</> column, is the equivalent
-	of issuing <command>SET</> commands.  For example, the equivalent of
-      -->
-    <programlisting>
-      SET configuration_parameter TO DEFAULT;
-    </programlisting>
-    is:
-    <programlisting>
-      UPDATE pg_settings SET setting = reset_val WHERE name = 'configuration_parameter';
-    </programlisting>
-  </para>
-</listitem>
-</itemizedlist>
-
-</sect2>
-
-<sect2>
-  <title>Parameter Interaction via the Shell</title>
-
-  <para>
-    In addition to setting global defaults or attaching
-    overrides at the database or role level, you can pass settings to
-    <productname>PostgreSQL</productname> via shell facilities.
-    Both the server and <application>libpq</> client library
-accept parameter values via the shell.
-</para>
-
-<itemizedlist>
-  <listitem>
-    <para>
-      During server startup, parameter settings can be
-      passed to the <command>postgres</command> command via the
-      <option>-c</> command-line parameter.  For example,
-<programlisting>
-  postgres -c log_connections=yes -c log_destination='syslog'
-</programlisting>
-Settings provided in this way override those set via
-<filename>postgresql.conf</> or <command>ALTER SYSTEM</>,
-so they cannot be changed globally without restarting the server.
-</para>
-</listitem>
-
-<listitem>
-  <para>
-    When starting a client session via <application>libpq</>,
-parameter settings can be
-specified using the <envar>PGOPTIONS</envar> environment variable.
-Settings established in this way constitute defaults for the life
-of the session, but do not affect other sessions.
-For historical reasons, the format of <envar>PGOPTIONS</envar> is
-similar to that used when launching the <command>postgres</command>
-command; specifically, the <option>-c</> flag must be specified.
-For example,
-<programlisting>
-  env PGOPTIONS="-c geqo=off -c statement_timeout=5min" psql
-</programlisting>
-</para>
-
-<para>
-  Other clients and libraries might provide their own mechanisms,
-  via the shell or otherwise, that allow the user to alter session
-  settings without direct use of SQL commands.
-</para>
-</listitem>
-</itemizedlist>
-
-</sect2>
-
-<sect2 id="config-includes">
-  <title>Managing Configuration File Contents</title>
-
-  <para>
-    <productname>PostgreSQL</> provides several features for breaking
-down complex <filename>postgresql.conf</> files into sub-files.
-These features are especially useful when managing multiple servers
-with related, but not identical, configurations.
-</para>
-
-<para>
-  <indexterm>
-    <primary><literal>include</></primary>
-<secondary>in configuration file</secondary>
-</indexterm>
-In addition to individual parameter settings,
-the <filename>postgresql.conf</> file can contain <firstterm>include
-  directives</>, which specify another file to read and process as if
-it were inserted into the configuration file at this point.  This
-feature allows a configuration file to be divided into physically
-separate parts.  Include directives simply look like:
-<programlisting>
-  include 'filename'
-</programlisting>
-If the file name is not an absolute path, it is taken as relative to
-the directory containing the referencing configuration file.
-Inclusions can be nested.
-</para>
-
-<para>
-  <indexterm>
-    <primary><literal>include_if_exists</></primary>
-<secondary>in configuration file</secondary>
-</indexterm>
-There is also an <literal>include_if_exists</> directive, which acts
-the same as the <literal>include</> directive, except
-when the referenced file does not exist or cannot be read.  A regular
-<literal>include</> will consider this an error condition, but
-<literal>include_if_exists</> merely logs a message and continues
-processing the referencing configuration file.
-</para>
-
-<para>
-  <indexterm>
-    <primary><literal>include_dir</></primary>
-<secondary>in configuration file</secondary>
-</indexterm>
-The <filename>postgresql.conf</> file can also contain
-<literal>include_dir</literal> directives, which specify an entire
-directory of configuration files to include.  These look like
-<programlisting>
-  include_dir 'directory'
-</programlisting>
-Non-absolute directory names are taken as relative to the directory
-containing the referencing configuration file.  Within the specified
-directory, only non-directory files whose names end with the
-suffix <literal>.conf</literal> will be included.  File names that
-start with the <literal>.</literal> character are also ignored, to
-prevent mistakes since such files are hidden on some platforms.  Multiple
-files within an include directory are processed in file name order
-(according to C locale rules, i.e. numbers before letters, and
-uppercase letters before lowercase ones).
-</para>
-
-<para>
-  Include files or directories can be used to logically separate portions
-  of the database configuration, rather than having a single large
-  <filename>postgresql.conf</> file.  Consider a company that has two
-database servers, each with a different amount of memory.  There are
-likely elements of the configuration both will share, for things such
-as logging.  But memory-related parameters on the server will vary
-between the two.  And there might be server specific customizations,
-too.  One way to manage this situation is to break the custom
-configuration changes for your site into three files.  You could add
-this to the end of your <filename>postgresql.conf</> file to include
-them:
-<programlisting>
-  include 'shared.conf'
-  include 'memory.conf'
-  include 'server.conf'
-</programlisting>
-All systems would have the same <filename>shared.conf</>.  Each
-server with a particular amount of memory could share the
-same <filename>memory.conf</>; you might have one for all servers
-with 8GB of RAM, another for those having 16GB.  And
-finally <filename>server.conf</> could have truly server-specific
-configuration information in it.
-</para>
-
-<para>
-  Another possibility is to create a configuration file directory and
-  put this information into files there. For example, a <filename>conf.d</>
-directory could be referenced at the end of <filename>postgresql.conf</>:
-<programlisting>
-  include_dir 'conf.d'
-</programlisting>
-Then you could name the files in the <filename>conf.d</> directory
-like this:
-<programlisting>
-  00shared.conf
-  01memory.conf
-  02server.conf
-</programlisting>
-This naming convention establishes a clear order in which these
-files will be loaded.  This is important because only the last
-setting encountered for a particular parameter while the server is
-reading configuration files will be used.  In this example,
-something set in <filename>conf.d/02server.conf</> would override a
-value set in <filename>conf.d/01memory.conf</>.
-</para>
-
-<para>
-  You might instead use this approach to naming the files
-  descriptively:
-  <programlisting>
-    00shared.conf
-    01memory-8GB.conf
-    02server-foo.conf
-  </programlisting>
-  This sort of arrangement gives a unique name for each configuration file
-  variation.  This can help eliminate ambiguity when several servers have
-  their configurations all stored in one place, such as in a version
-  control repository.  (Storing database configuration files under version
-  control is another good practice to consider.)
-</para>
-</sect2>
+  </sect2>
 </sect1>
 
-<sect1 id="runtime-config-file-locations">
-  <title>File Locations</title>
-
-  <para>
-    <!--
-	In addition to the <filename>postgresql.conf</filename> file
-	already mentioned, <productname>PostgreSQL</productname> uses
-	two other manually-edited configuration files, which control
-	client authentication (their use is discussed in <xref
-	linkend="client-authentication">).  By default, all three
-	configuration files are stored in the database cluster's data
-	directory.  The parameters described in this section allow the
-	configuration files to be placed elsewhere.  (Doing so can ease
-	administration.  In particular it is often easier to ensure that
-	the configuration files are properly backed-up when they are
-	kept separate.)
-      -->
-  </para>
-
-  <variablelist>
-    <varlistentry id="guc-data-directory" xreflabel="data_directory">
-      <term><varname>data_directory</varname> (<type>string</type>)
-	<indexterm>
-	  <primary><varname>data_directory</> configuration parameter</primary>
-</indexterm>
-</term>
-<listitem>
-  <para>
-    Specifies the directory to use for data storage.
-    This parameter can only be set at server start.
-  </para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="guc-config-file" xreflabel="config_file">
-  <term><varname>config_file</varname> (<type>string</type>)
-    <indexterm>
-      <primary><varname>config_file</> configuration parameter</primary>
-</indexterm>
-</term>
-<listitem>
-  <para>
-    Specifies the main server configuration file
-    (customarily called <filename>postgresql.conf</>).
-This parameter can only be set on the <command>postgres</command> command line.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="guc-hba-file" xreflabel="hba_file">
-  <term><varname>hba_file</varname> (<type>string</type>)
-    <indexterm>
-      <primary><varname>hba_file</> configuration parameter</primary>
-</indexterm>
-</term>
-<listitem>
-  <para>
-    Specifies the configuration file for host-based authentication
-    (customarily called <filename>pg_hba.conf</>).
-This parameter can only be set at server start.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="guc-ident-file" xreflabel="ident_file">
-  <term><varname>ident_file</varname> (<type>string</type>)
-    <indexterm>
-      <primary><varname>ident_file</> configuration parameter</primary>
-</indexterm>
-</term>
-<listitem>
-  <para>
-    <!--
-	Specifies the configuration file for
-	<xref linkend="auth-username-maps"> user name mapping
-	  (customarily called <filename>pg_ident.conf</>).
-This parameter can only be set at server start.
--->
-  </para>
-</listitem>
-</varlistentry>
-
-<varlistentry id="guc-external-pid-file" xreflabel="external_pid_file">
-  <term><varname>external_pid_file</varname> (<type>string</type>)
-    <indexterm>
-      <primary><varname>external_pid_file</> configuration parameter</primary>
-</indexterm>
-</term>
-<listitem>
-  <para>
-    Specifies the name of an additional process-ID (PID) file that the
-    server should create for use by server administration programs.
-    This parameter can only be set at server start.
-  </para>
-</listitem>
-</varlistentry>
-</variablelist>
-
-<para>
-  In a default installation, none of the above parameters are set
-  explicitly.  Instead, the
-  data directory is specified by the <option>-D</option> command-line
-  option or the <envar>PGDATA</envar> environment variable, and the
-  configuration files are all found within the data directory.
-</para>
-
-<para>
-  If you wish to keep the configuration files elsewhere than the
-  data directory, the <command>postgres</command> <option>-D</option>
-  command-line option or <envar>PGDATA</envar> environment variable
-  must point to the directory containing the configuration files,
-  and the <varname>data_directory</> parameter must be set in
-<filename>postgresql.conf</filename> (or on the command line) to show
-where the data directory is actually located.  Notice that
-<varname>data_directory</> overrides <option>-D</option> and
-<envar>PGDATA</envar> for the location
-of the data directory, but not for the location of the configuration
-files.
-</para>
-
-<para>
-  If you wish, you can specify the configuration file names and locations
-  individually using the parameters <varname>config_file</>,
-<varname>hba_file</> and/or <varname>ident_file</>.
-<varname>config_file</> can only be specified on the
-<command>postgres</command> command line, but the others can be
-set within the main configuration file.  If all three parameters plus
-<varname>data_directory</> are explicitly set, then it is not necessary
-to specify <option>-D</option> or <envar>PGDATA</envar>.
-</para>
-
-<para>
-  When setting any of these parameters, a relative path will be interpreted
-  with respect to the directory in which <command>postgres</command>
-  is started.
-</para>
-</sect1>
