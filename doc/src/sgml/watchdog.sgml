@@ -819,7 +819,7 @@
     </listitem>
     </varlistentry>
 
-  <varlistentry id="guc-other-wd-port0" xreflabel="other_wd_port0">
+  <varlistentry id="guc-other-wd-port" xreflabel="other_wd_port">
    <term><varname>other_wd_port0</varname> (<type>integer</type>)
     <indexterm>
       <primary><varname>other_wd_port0</varname> configuration parameter</primary>
