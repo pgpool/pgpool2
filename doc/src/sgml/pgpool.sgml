@@ -30,19 +30,8 @@
 
   <partintro>
    <para>
-    Explanation about pgpool-II tutorial here...
+    This chapter explains how to get start with <productname>Pgpool-II</productname>.
    </para>
-
-<!--
-   <para>
-    After you have worked through this tutorial you might want to move
-    on to reading <xref linkend="sql"> to gain a more formal knowledge
-    of the SQL language, or <xref linkend="client-interfaces"> for
-    information about developing applications for
-    <productname>PostgreSQL</productname>.  Those who set up and
-    manage their own server should also read <xref linkend="admin">.
-   </para>
--->
 
   </partintro>
 
@@ -56,8 +45,8 @@
 
   <partintro>
    <para>
-    This part covers topics that are of interest to a
-    <productname>pgpool-II</> ...
+    This part covers topics that are of interest
+    to <productname>Pgpool-II</productname> administrators.
    </para>
   </partintro>
 
