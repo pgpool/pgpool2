@@ -121,6 +121,9 @@
    &pgpoolShow
    &pgpoolSet
    &pgpoolReset
+   &showPoolStatus
+   &showPoolNodes
+   &showPoolProcesses
 
  </reference>
 </part>
