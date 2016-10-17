@@ -25,3 +25,6 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY showPoolStatus      SYSTEM "show_pool_status.sgml">
 <!ENTITY showPoolNodes       SYSTEM "show_pool_nodes.sgml">
 <!ENTITY showPoolProcesses   SYSTEM "show_pool_processes.sgml">
+<!ENTITY showPoolPools       SYSTEM "show_pool_pools.sgml">
+<!ENTITY showPoolVersion     SYSTEM "show_pool_version.sgml">
+<!ENTITY showPoolCache       SYSTEM "show_pool_cache.sgml">

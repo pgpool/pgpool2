@@ -18,7 +18,7 @@
     <refname>SHOW PGPOOL STATUS</refname>
     <refpurpose>
       sends back the list of configuration parameters with their name,
-      value, and description.
+      value, and description
     </refpurpose>
   </refnamediv>
 

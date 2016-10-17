@@ -9,7 +9,7 @@
   </indexterm>
 
   <refmeta>
-    <refentrytitle>SHOW POOL PROCESSES</refentrytitle>
+    <refentrytitle>SHOW POOL_PROCESSES</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo>SQL - Language Statements</refmiscinfo>
   </refmeta>
@@ -17,8 +17,8 @@
   <refnamediv>
     <refname>SHOW POOL_PROCESSES</refname>
     <refpurpose>
-      sends back a list of all pgPool-II processes waiting for
-      connections and dealing with a connection.
+      sends back a list of all <productname>Pgpool-II</productname>
+      processes waiting for connections and dealing with a connection
     </refpurpose>
   </refnamediv>
 

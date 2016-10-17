@@ -17,7 +17,7 @@
   <refnamediv>
     <refname>SHOW POOL_NODES</refname>
     <refpurpose>
-      sends back a list of all configured nodes.
+      sends back a list of all configured nodes
     </refpurpose>
   </refnamediv>
 

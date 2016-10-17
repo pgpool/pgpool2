@@ -124,6 +124,9 @@
    &showPoolStatus
    &showPoolNodes
    &showPoolProcesses
+   &showPoolPools
+   &showPoolVersion
+   &showPoolCache
 
  </reference>
 </part>
