@@ -85,96 +85,464 @@
   </sect2>
 
   <sect2>
-    <title>Enhancements</title>
+    <title>Major Enhancements</title>
 
     <itemizedlist>
+
       <listitem>
+	<!--
+	    2016-04-17 [259cdf9] Do not restart child process if certain conditions met
+	    2016-04-21 [9cc243a] Minimize the chance of session disconnection while failover
+	    2016-05-05 [0d66032] Allow to access to pgpool while doing health checking
+	  -->
 	<para>
-      <!--
-	  fail-over:
-	  commit 9cc243a625ad17632c496bad8eb8a19e243f7385
-	  Minimize the chance of session disconnection while failover
+	  Improve the behavior of fail-over (Tatsuo Ishii)
+	</para>
+	<para>
+	  In the steaming replication mode, client sessions will not
+	  be disconnected when a fail-over occurs any more if the
+	  session does not use the failed standby server. If the
+	  primary server goes down, still all sessions will be
+	  disconnected. Health check timeout case will also cause the
+	  full session disconnection. Other health check error,
+	  including retry over case does not trigger full session
+	  disconnection.
+	</para>
 
-	  commit 259cdf99fc195713abdb5eb86a6a85bc81947c77
-	  Do not restart child process if certain conditions met
+	<para>
+	  For user's convenience, "show pool_nodes" command shows the
+	  session local load balance node info since this is important
+	  for users in case of fail-over. If the load balance node is
+	  not the failed node, the session will not be affected by
+	  fail-over.
+	</para>
 
-	  commit 0d660326bde946e89f199dddb2ca3572ce785a0f
-	  Allow to access to pgpool while doing health checking
-
-	  SET command:
-	  commit b9955cee5a01f1a898554190a778ac66632121d3
-	  Adding new PGPOOL SET and PGPOOL RESET commands.
-
-	  Speed up:
-	  commit c0eb0ee5d23e1a95b27084fdf881faa6bc594e6d
-	  Enhance performance of SELECT when lots of rows involved.
-
-	  9.6 parser:
-	  commit d768944b2a320e51cd2c3bc8dfbe6607a2306a46
-	  import PostgreSQL 9.6 parser
-
-	  pg_terminate_backend:
-	  commit f284be467220cca09016b65ed7d07196b8f9fe3a
-	  Handling of pg_terminate_backend for simple query protocol
+	<para>
+	  Also now it is possible to connect
+	  to <productname>Pgpool-II</productname> even if it is doing
+	  health checking retries. Before all attempt of connecting
+	  to <productname>Pgpool-II</productname> failed while doing
+	  health checking retries.  Before any attempt to connect to
+	  <productname>Pgpool-II</productname> fails if it is doing a
+	  health check against failed node even if
+	  <xref linkend="guc-fail-over-on-backend-error"> is off
+	  because <productname>Pgpool-II</productname> child first
+	  tries to connect to all backend including the failed one and
+	  exits if it fails to connect to a backend (of course it
+	  fails). This is a temporary situation and will be resolved
+	  before pgpool executes fail-over. However if the health check
+	  is retrying, the temporary situation keeps longer depending
+	  on the setting
+	  of <xref linkend="guc-health-check-max-retries"> and
+	  <xref linkend="guc-health-check-retry-delay">. This is not
+	  good. Attached patch tries to mitigate the problem:
+	</para>
+	<para>
+	  When an attempt to connect to backend fails, give up
+	  connecting to the failed node and skip to other node, rather
+	  than exiting the process if operating in streaming
+	  replication mode and the node is not primary node.
+	</para>
+	<para>
+	  Mark the local status of the failed node to "down".  This
+	  will let the primary node be selected as a load balance node
+	  and every queries will be sent to the primary node. If
+	  there's other healthy standby nodes, one of them will be
+	  chosen as the load balance node.
+	</para>
+	<para>
+	  After the session is over, the child process will suicide to
+	  not retain the local status.
+	</para>
+      </listitem>
 
       <listitem>
+	<!--
+	    2016-05-22 [b9955ce] Adding new PGPOOL SET and PGPOOL RESET commands.
+	    2016-05-11 [25dc79e] Adding new SHOW command for pgpool-II configuration parameters.
+	  -->
+	<para>
+	  Add <link linkend="SQL-PGPOOL-SHOW">PGPOOL
+	  SHOW</link>, <link linkend="SQL-PGPOOL-SET">PGPOOL
+	  SET</link> and
+	  <link linkend="SQL-PGPOOL-RESET">PGPOOL RESET</link>
+	  commands (Muhammad Usama).
+	</para>
+	<para>
+	  These are similar to the PostgreSQL's SET and SHOW commands
+	  for GUC variables, adding the functionality
+	  in <productname>Pgpool-II</productname> to set and reset the
+	  value of config parameters for the current session, and for
+	  that it adds a new syntax
+	  in <productname>Pgpool-II</productname> which is similar to
+	  PostgreSQL's SET and RESET variable syntax with an addition
+	  of <literal>PGPOOL</literal> keyword at the start.
+	</para>
+	<para>
+	  Currently supported configuration parameters by PGPOOL
+	  SHOW/SET/RESET are: <xref linkend="guc-log-statement">,
+	  <xref linkend="guc-log-per-node-statement">, <xref linkend="guc-check-temp-table">,
+	  <xref linkend="guc-check-unlogged-table">, <xref linkend="guc-allow-sql-comments">,
+	  <xref linkend="guc-client-idle-limit">, <xref linkend="guc-log-error-verbosity">,
+	  <xref linkend="guc-client-min-messages">, <xref linkend="guc-log-min-messages">,
+	  <xref linkend="guc-client-idle-limit-in-recovery">.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-08-02 [bda946e] Fix for 218: Inconsistent status of
+	    Postgresql nodes in pgPool instances after
+	    restart. Watchdog not syncing status.
+	  -->
+	<para>
+	  Sync inconsitent status
+	  of <productname>PostgreSQL</productname> nodes
+	  in <productname>Pgpool-II</productname> instances after
+	  restart (Muhammad Usama).
+	</para>
+	<para>
+	  At the <productname>Pgpool-II</productname> startup, The
+	  status of each configured backend node is loaded from the
+	  backend status file or otherwise initialized by querying the
+	  backend nodes. This technique works fine in stand alone mode
+	  and also with the watchdog enabled as long as the status of
+	  backend nodes remains consistent until
+	  all <productname>Pgpool-II</productname> nodes got up and
+	  running.  But since <productname>Pgpool-II</productname>
+	  does not sync the backend node status from the watchdog
+	  cluster at startup time, so in some cases
+	  the <productname>Pgpool-II</productname> nodes participating
+	  in the watchdog cluster may get a different status for the
+	  same backend, especially if
+	  the <productname>Pgpool-II</productname> nodes part of the
+	  watchdog cluster starts at different times and between that
+	  time an unavailable backend PostgreSQL node had become
+	  available again.
+	</para>
+	<para>
+    	  So to solve this, the commit implements the new startup
+	  procedure for the
+	  standby <productname>Pgpool-II</productname>, And now the
+	  standby
+	  <productname>Pgpool-II</productname> will load the backend
+	  status of all
+	  configured <productname>PostgreSQL</productname> nodes from
+	  the watchdog master/coordinator node at the time of startup.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-06 [c0eb0ee] Enhance performance of SELECT when lots of rows involved.
+	  -->
+	<para>
+	  Enhance performance of SELECT when lots of rows involved
+	  (Tatsuo Ishii).
+	</para>
+	<para>
+	  <productname>Pgpool-II</productname> flushes data to network
+	  (calling write(2)) every time it sends a row data ("Data
+	  Row" message) to frontend. For example, if 10,000 rows
+	  needed to be transfer, 10,000 times write()s are
+	  issued. This is pretty expensive. Since after repeating to
+	  send row data, "Command Complete" message is sent, it's
+	  enough to issue a write() with the command complete
+	  message. Also there are unnecessary flushing are in handling
+	  the command complete message.
+	</para>
+	<para>
+	  <ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-September/001784.html">Quick
+	  testing</ulink> showed that from 47% to 62% performance
+	  enhancements were achieved in some cases.
+	</para>
+	<para>
+	  Unfortunately, performance in workloads where transferring
+	  few rows, will not be enhanced since such rows are needed to
+	  flush to network anyway.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-08-26 [d768944] import PostgreSQL 9.6 parser
+	  -->
+	<para>
+	  Import <productname>PostgreSQL</productname> 9.6's SQL
+	  parser (Peng Bo).
+	</para>
+	<para>
+	  This allows <productname>Pgpool-II</productname> to fully
+	  understand the newly added SQL syntax such as <literal>COPY
+	  INSERT RETURNING</literal>.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-08-26 [f284be4] Handling of pg_terminate_backend for simple query protocol
+	  -->
+	<para>
+	  In some cases pg_terminate_backend() now does not trigger a
+	  fail-over (Muhammad Usama).
+	</para>
+	<para>
+	  Since the pg_terminate_backend function
+	  in <productname>PostgreSQL</productname> is used to
+	  terminate the backend connection, So what happens is, when
+	  this function kills a <productname>PostgreSQL</productname>
+	  backend that is connected to
+	  the <productname>Pgpool-II</productname>, This disconnection
+	  of backend by pg_terminate_backend function is appeared as a
+	  backend node failure to
+	  the <productname>Pgpool-II</productname>.  But the problem
+	  here is, PostgreSQL does not give any information to the
+	  client program that the connection is going to be killed
+	  because of the pg_terminate_backend call and on the client
+	  side, it looks similar to the backend node failure.
+	</para>
+	<para>
+          Now to solve this in <productname>Pgpool-II</productname> we
+	  need two things.  First is to identify the
+	  pg_terminate_backend function in the query and the
+	  <productname>Pgpool-II</productname> child process that
+	  hosts the particular backend connection which will be killed
+	  by that pg_terminate_backend function call, so that we get a
+	  heads up in advance about the backend termination, and
+	  secondly the routing of the query containing
+	  pg_terminate_backend also needs a new logic so that the
+	  query should be sent to the correct PostgreSQL node that
+	  hosts the backend with the PID referred by the
+	  pg_terminate_bakend()
+	</para>
+	<para>
+	  So how does this commit handles pg_terminate_backend()??  In
+	  the SimpleQuery() function which is the work horse of simple
+	  query processing in the <productname>Pgpool-II</productname>
+	  we start with the search of the pg_terminate_backend()
+	  function call in the query parse tree and if the search
+	  comes out to be successful, the next step is to locate
+	  the <productname>Pgpool-II</productname> child process and a
+	  backend node of that connection whose PID is specified in
+	  pg_terminate_backend function's argument. Once the
+	  connection and the <productname>Pgpool-II</productname>
+	  child process is identified, we just set the
+	  swallow_termination flag(added by this commit in
+	  ConnectionInfo structure) for that connection in the shared
+	  memory, and also set the query destination node to the
+	  backend node that hosts that particular connection and does
+	  not call pool_where_to_send() for this query so that the
+	  query should be sent to the correct backend node.
+	</para>
+	<para>
+          Now when the query is routed to the correct node and
+	  consequently the backend gets killed, that results in the
+	  communication error on <productname>Pgpool-II</productname>
+	  side, the <productname>Pgpool-II</productname> already knows
+	  that this disconnection is due the pg_terminate_backend and
+	  not because of node failure as the swallow_termination flag
+	  is already set for the connection.
+	</para>
+	<para>
+	  Some works are still remaining.
+	</para>
+	<para>
+	  pg_terminate_backend is not handled with extended query
+	  protocol.
+	</para>
+	<para>
+	  Currently we only support
+	  pg_terminate_backend(constant number) function calls. If the
+	  expression or sub query is used in the argument of
+	  pg_terminate_backend then it would not be handled e.g
+	  <programlisting>
+pgpool=# select pg_terminate_backend(1025); -- Supported
+pgpool=# select pg_terminate_backend( 2 +1); -- NOT SUPPORTED
+pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
+	  </programlisting>
+	</para>
+	<para>
+	  Currently only one pg_terminate_backend call in a query is
+	  handled.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
 	    2016-03-15 [47d9af9] Mega patch to add SGML docs.
+	  -->
 	<para>
-          HTML documents are now generated from SGML documents. It is
-          intended to have better construction, contents and
+          HTML documents are now generated from SGML documents
+          (Muhammad Usama, Tatsuo Ishii, Peng Bo).
+	</para>
+	<para>
+	  It is intended to have better construction, contents and
           maintainability. However, still there's tremendous room to
           enhance the SGML documents. Please help us!
 	</para>
       </listitem>
 
-	  misc:
-	  commit 0f4d1deba03954666b270843c9237b7c48235547
-	  Make authentication error message more user friendly.
+    </itemizedlist>
+  </sect2>
 
-	  commit 2088a17980747c22d15276f7132e8f0a455fe14e
-	  Tighten up health check timer expired condition in pool_check_fd()
+  <sect2>
+    <title>Other Enhancements</title>
 
-	  commit 879d16a1e0bee51ab5c4b732bdfa8ac9a965c408
-	  Create regression log directory if it does not exist yet.
+    <itemizedlist>
 
-	  commit 6ff2ac0a512c858b580fedccae28fbf7db48b00f
-	  Add new script called "watchdog_setup".
+      <listitem>
+	<!--
+	    2016-08-24 [0f4d1de] Make authentication error message more user friendly.
+	  -->
 
-	  commit d3211dcdedbf649a5444fd06698a26f65bbbe0e1
-	  Let watchdog_setup to be installed.
+	<para>
+	  Make authentication error message more user friendly (Tatsuo Ishii)
+	</para>
+	<para>
+	  When attempt to connect to backend (including health
+	  checking), emit error messages from backend something like
+	  "sorry, too many clients already" instead of "invalid
+	  authentication message response type, Expecting 'R' and
+	  received '%c'"
+	</para>
+      </listitem>
 
-	  commit d5c3cf2d9d94534fd17b252f393d6e3a460a49b9
-	  Let pgpool_setup install into dist bin.
+      <listitem>
+	<!--
+	    2016-08-22 [2088a17] Tighten up health check timer expired condition in pool_check_fd()
+	  -->
+	<para>
+	  Tighten up health check timer expired condition in pool_check_fd() (Muhammad Usama)
+	</para>
+	<para>
+	  Check if the signal was actually the health check timer
+	  expire to make sure that we do not declare the timer expire
+	  due to some other signal arrived while waiting for data for
+	  health check in pool_check_fd().
+	</para>
+      </listitem>
 
-	  commit cf319c48dadc907731190e4432e2c5d0925d5b2a
-	  Add "-pg" option to pgpool_setup.
+      <listitem>
+	<!--
+	    2016-07-29 [6ff2ac0] Add new script called "watchdog_setup".
+	    2016-08-18 [d3211dc] Let watchdog_setup to be installed.
+	  -->
+	<para>
+	  Add new script called "watchdog_setup" (Tatstuo Ishii)
+	</para>
+	<para>
+	  <xref linkend="WATCHDOG-SETUP"> is a command to create a
+	  temporary installation
+	  of <productname>Pgpool-II</productname> clusters with
+	  watchdog for mainly testings.
+	</para>
+      </listitem>
 
-	  commit 9db83a8841925311f2e463e2bbeb875cf2bc158a
-	  Add "replication delay" column to "show pool_nodes".
+      <listitem>
+	<!--
+	    2016-07-29 [cf319c4] Add "-pg" option to pgpool_setup.
+	    2016-08-16 [d5c3cf2]  Let pgpool_setup install into dist bin.
+	  -->
+	<para>
+	  Add "-pg" option to pgpool_setup (Tatsuo Ishii)
+	</para>
+	<para>
+	  This is useful when you want to assign specific port numbers to
+	  <productname>PostgreSQL</productname> while
+	  using <xref linkend="PGPOOL-SETUP">. Also
+	  now <command>pgpool_setup</command> is installed in the
+	  standard bin directory which is same
+	  as <command>pgpool</command>.
+	</para>
+      </listitem>
 
-	  commit 270e445c5a977e16bfe8913585f6e8981a462877
-	  Add regression test for bug 230.
+      <listitem>
+	<!--
+	    2016-08-12 [9db83a8] Add "replication delay" column to "show pool_nodes".
+	  -->
+	<para>
+	  Add "replication delay" column to "show pool_nodes" (Tatsuo Ishii)
+	</para>
+	<para>
+	  This column
+	  shows the <link linkend="runtime-streaming-replication-check">
+	  replication delay</link> value in bytes if operated in
+	  streaming replication mode.
+	</para>
+      </listitem>
 
-	  commit 726cb5d3b18cc669c1eb63dcbce39a161a08b8f8
-	  Do not update status file if all backend nodes are in down status.
+      <listitem>
+	<!--
+	    2016-07-12 [726cb5d] Do not update status file if all backend nodes are in down status.
+	  -->
+	<para>
+	  Do not update status file if all backend nodes are in down status (Chris Pacejo, Tatsuo Ishii)
+	</para>
+	<para>
+	  This commit tries to remove the data inconsitency in
+	  replication mode found
+	  in <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2015-August/003974.html">[pgpool-general:
+	  3918]</ulink> by not recording the status file when all
+	  backend nodes are in down status.  This surprisingly simple
+	  but smart solution was provided by Chris Pacejo.
+	</para> 
+      </listitem>
 
-	  commit 93424727fe97013686dabcb291a34d5686bb19e2
-	  Permit pgpool to support multiple SSL cipher protocols
+      <listitem>
+	<!--
+	    2016-05-23 [9342472] Permit pgpool to support multiple SSL cipher protocols
+	  -->
+	<para>
+	  Allow to use multiple SSL cipher protocols (Multiple Usama)
+	</para>
+	<para>
+	  By replacing TLSv1_method() with SSLv23_method() while
+	  initializing the SSL session, we can use more protocols than
+	  TLSv1 protocol.
+	</para>
+      </listitem>
 
-	  commit 25dc79e478c24aa884a7be3eb5bc2af51dc6f396
-	  Adding new SHOW command for pgpool-II configuration parameters.
+      <listitem>
+	<!--
+	    2016-04-07 [0e01d32] removing the limit on the maximum number of items in the black_function_list and white_function_list lists.
+	  -->
+	<para>
+	  Allow to use arbitrary number of items in the
+	  black_function_list/white_function_list (Muhammad Usama)
+	</para>
+	<para>
+	  Previously there were fixed limits for those.
+	</para>
+      </listitem>
+	
+      <listitem>
+	<!--
+	    2016-02-17 [f2a5081] Properly process empty query (all comments)
+	  -->
+	<para>
+	  Properly process empty queries (all comments) (Tatsuo Ishii)
+	</para>
+	<para>
+	  <productname>Pgpool-II</productname> now recognizes an empty
+	  query consisted of all comments (for example "/* DBD::Pg
+	  ping test v3.5.3 */") (note that no ';') as an empty query.
+	  </para>
+	<para>
+	  Before such that query was recognized an error.
+	</para>
+      </listitem>
 
-	  commit 0e01d3238bfb887a598fed1999a558cb9349bc64
-	  removing the limit on the maximum number of items in the black_function_list and white_function_list lists.
-
-	  commit f2a5081f0b115197c1321c5ffd1bf25c8318a065
-	  Properly process empty query (all comments)
-
-	  commit 342471f578290cb2c3426940f971253ff39be9de
-	  Allow timeout value to be specified by the command option
-
-	-->
-
+      <listitem>
+	<!--
+	    2016-02-01 [342471f] Add some warning messages for wd_authkey hash calculation failure
+	  -->
+	<para>
+	  Add some warning messages for wd_authkey hash calculation failure (Yugo Nagata)
+	</para>
+	<para>
+	  Sometimes wd_authkey calculation fails for some reason other
+	  than authkey mismatch. The additional messages make these
+	  distinguishable for each other.
 	</para>
       </listitem>
 
