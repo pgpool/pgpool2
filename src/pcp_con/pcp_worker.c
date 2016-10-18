@@ -95,7 +95,7 @@ pcp_worker_main(int port)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext PCPMemoryContext;
-	int authenticated = 0;
+	volatile int authenticated = 0;
 
 	char salt[4];
 	int random_salt = 0;
