@@ -420,6 +420,17 @@ $psql -p $PORT -c "SELECT pg_stop_backup()" postgres
       some process. For more details of watchdog,
       see <xref linkend="tutorial-watchdog">.
     </para>
+    <para>
+      <figure>
+	<title>Process architecure of <productname>Pgpool-II</productname></title>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata fileref="process-diagram" format="GIF">
+	  </imageobject>
+	</mediaobject>
+      </figure>
+    </para>
+
   </sect1>
 
 </chapter>
