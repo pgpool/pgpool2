@@ -96,7 +96,7 @@
 	    2016-05-05 [0d66032] Allow to access to pgpool while doing health checking
 	  -->
 	<para>
-	  Improve the behavior of fail-over (Tatsuo Ishii)
+	  Improve the behavior of fail-over. (Tatsuo Ishii)
 	</para>
 	<para>
 	  In the steaming replication mode, client sessions will not
@@ -166,7 +166,7 @@
 	  SHOW</link>, <link linkend="SQL-PGPOOL-SET">PGPOOL
 	  SET</link> and
 	  <link linkend="SQL-PGPOOL-RESET">PGPOOL RESET</link>
-	  commands (Muhammad Usama).
+	  commands. (Muhammad Usama)
 	</para>
 	<para>
 	  These are similar to the PostgreSQL's SET and SHOW commands
@@ -199,10 +199,10 @@
 	  Sync inconsitent status
 	  of <productname>PostgreSQL</productname> nodes
 	  in <productname>Pgpool-II</productname> instances after
-	  restart (Muhammad Usama).
+	  restart. (Muhammad Usama)
 	</para>
 	<para>
-	  At the <productname>Pgpool-II</productname> startup, The
+	  At the <productname>Pgpool-II</productname> startup, the
 	  status of each configured backend node is loaded from the
 	  backend status file or otherwise initialized by querying the
 	  backend nodes. This technique works fine in stand alone mode
@@ -237,8 +237,8 @@
 	    2016-09-06 [c0eb0ee] Enhance performance of SELECT when lots of rows involved.
 	  -->
 	<para>
-	  Enhance performance of SELECT when lots of rows involved
-	  (Tatsuo Ishii).
+	  Enhance performance of SELECT when lots of rows involved.
+	  (Tatsuo Ishii)
 	</para>
 	<para>
 	  <productname>Pgpool-II</productname> flushes data to network
@@ -269,7 +269,7 @@
 	  -->
 	<para>
 	  Import <productname>PostgreSQL</productname> 9.6's SQL
-	  parser (Peng Bo).
+	  parser. (Bo Peng)
 	</para>
 	<para>
 	  This allows <productname>Pgpool-II</productname> to fully
@@ -284,7 +284,7 @@
 	  -->
 	<para>
 	  In some cases pg_terminate_backend() now does not trigger a
-	  fail-over (Muhammad Usama).
+	  fail-over. (Muhammad Usama)
 	</para>
 	<para>
 	  Since the pg_terminate_backend function
@@ -302,7 +302,7 @@
 	  side, it looks similar to the backend node failure.
 	</para>
 	<para>
-          Now to solve this in <productname>Pgpool-II</productname> we
+      Now to solve this in <productname>Pgpool-II</productname> we
 	  need two things.  First is to identify the
 	  pg_terminate_backend function in the query and the
 	  <productname>Pgpool-II</productname> child process that
@@ -356,9 +356,9 @@
 	  expression or sub query is used in the argument of
 	  pg_terminate_backend then it would not be handled e.g
 	  <programlisting>
-pgpool=# select pg_terminate_backend(1025); -- Supported
-pgpool=# select pg_terminate_backend( 2 +1); -- NOT SUPPORTED
-pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
+pgpool=# select pg_terminate_backend(1025);         -- Supported
+pgpool=# select pg_terminate_backend( 2 +1);        -- NOT SUPPORTED
+pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
 	  </programlisting>
 	</para>
 	<para>
@@ -372,8 +372,8 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
 	    2016-03-15 [47d9af9] Mega patch to add SGML docs.
 	  -->
 	<para>
-          HTML documents are now generated from SGML documents
-          (Muhammad Usama, Tatsuo Ishii, Peng Bo).
+          HTML documents are now generated from SGML documents.
+          (Muhammad Usama, Tatsuo Ishii, Bo Peng)
 	</para>
 	<para>
 	  It is intended to have better construction, contents and
@@ -396,7 +396,7 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
 	  -->
 
 	<para>
-	  Make authentication error message more user friendly (Tatsuo Ishii)
+	  Make authentication error message more user friendly. (Tatsuo Ishii)
 	</para>
 	<para>
 	  When attempt to connect to backend (including health
@@ -412,7 +412,7 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
 	    2016-08-22 [2088a17] Tighten up health check timer expired condition in pool_check_fd()
 	  -->
 	<para>
-	  Tighten up health check timer expired condition in pool_check_fd() (Muhammad Usama)
+	  Tighten up health check timer expired condition in pool_check_fd(). (Muhammad Usama)
 	</para>
 	<para>
 	  Check if the signal was actually the health check timer
@@ -428,7 +428,7 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
 	    2016-08-18 [d3211dc] Let watchdog_setup to be installed.
 	  -->
 	<para>
-	  Add new script called "watchdog_setup" (Tatstuo Ishii)
+	  Add new script called "watchdog_setup". (Tatstuo Ishii)
 	</para>
 	<para>
 	  <xref linkend="WATCHDOG-SETUP"> is a command to create a
@@ -444,7 +444,7 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
 	    2016-08-16 [d5c3cf2]  Let pgpool_setup install into dist bin.
 	  -->
 	<para>
-	  Add "-pg" option to pgpool_setup (Tatsuo Ishii)
+	  Add "-pg" option to pgpool_setup. (Tatsuo Ishii)
 	</para>
 	<para>
 	  This is useful when you want to assign specific port numbers to
@@ -461,7 +461,7 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
 	    2016-08-12 [9db83a8] Add "replication delay" column to "show pool_nodes".
 	  -->
 	<para>
-	  Add "replication delay" column to "show pool_nodes" (Tatsuo Ishii)
+	  Add "replication delay" column to "show pool_nodes". (Tatsuo Ishii)
 	</para>
 	<para>
 	  This column
@@ -476,7 +476,7 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
 	    2016-07-12 [726cb5d] Do not update status file if all backend nodes are in down status.
 	  -->
 	<para>
-	  Do not update status file if all backend nodes are in down status (Chris Pacejo, Tatsuo Ishii)
+	  Do not update status file if all backend nodes are in down status. (Chris Pacejo, Tatsuo Ishii)
 	</para>
 	<para>
 	  This commit tries to remove the data inconsitency in
@@ -485,7 +485,7 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
 	  3918]</ulink> by not recording the status file when all
 	  backend nodes are in down status.  This surprisingly simple
 	  but smart solution was provided by Chris Pacejo.
-	</para> 
+	</para>
       </listitem>
 
       <listitem>
@@ -493,7 +493,7 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
 	    2016-05-23 [9342472] Permit pgpool to support multiple SSL cipher protocols
 	  -->
 	<para>
-	  Allow to use multiple SSL cipher protocols (Multiple Usama)
+	  Allow to use multiple SSL cipher protocols. (Multiple Usama)
 	</para>
 	<para>
 	  By replacing TLSv1_method() with SSLv23_method() while
@@ -504,23 +504,24 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
 
       <listitem>
 	<!--
-	    2016-04-07 [0e01d32] removing the limit on the maximum number of items in the black_function_list and white_function_list lists.
+	    2016-04-07 [0e01d32] removing the limit on the maximum number
+        of items in the black_function_list and white_function_list lists.
 	  -->
 	<para>
 	  Allow to use arbitrary number of items in the
-	  black_function_list/white_function_list (Muhammad Usama)
+	  black_function_list/white_function_list. (Muhammad Usama)
 	</para>
 	<para>
 	  Previously there were fixed limits for those.
 	</para>
       </listitem>
-	
+
       <listitem>
 	<!--
 	    2016-02-17 [f2a5081] Properly process empty query (all comments)
 	  -->
 	<para>
-	  Properly process empty queries (all comments) (Tatsuo Ishii)
+	  Properly process empty queries (all comments). (Tatsuo Ishii)
 	</para>
 	<para>
 	  <productname>Pgpool-II</productname> now recognizes an empty
@@ -537,7 +538,7 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
 	    2016-02-01 [342471f] Add some warning messages for wd_authkey hash calculation failure
 	  -->
 	<para>
-	  Add some warning messages for wd_authkey hash calculation failure (Yugo Nagata)
+	  Add some warning messages for wd_authkey hash calculation failure. (Yugo Nagata)
 	</para>
 	<para>
 	  Sometimes wd_authkey calculation fails for some reason other
@@ -556,26 +557,59 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
     <itemizedlist>
 
       <listitem>
-	<para>
-	  <!--
-	      commit cc33fe3fd10493f16a481c622bfab53458b57d06
-	      Change the default value of search_primary_node_timeout from 10 to 300.
-
-	      commit 7671794bad592814de545dabfd6a36fd699466da
-	      change the Makefile under this directory src/sql/,that is proposed by[pgpool-hackers: 1611]
-
-	      commit 883d761b406ea156e96751aacdbb19d843905eb2
-	      Change the PID length of pcp_proc_count command result to 6 characters long
-
-	      commit 9b62eca4042ae5443a9bbbcdaa612ae86c7d8c91
-	      Redirect all user queries to primary server
-
-	    -->
-	</para>
+	<!--
+	    2016-09-24 [cc33fe3] Change the default value of search_primary_node_timeout from 10 to 300.
+	  -->
+			<para>
+            Change the default value of
+            <xref linkend="guc-search-primary-node-timeout"> from 10 to 300. (Tatstuo Ishii)
+			</para>
+			<para>
+            Prior default value 10 seconds is sometimes too short for a standby to
+            be promoted.
+			</para>
       </listitem>
 
-    </itemizedlist>
+      <listitem>
+          <!--
+            2016-06-09 [7671794] Change the Makefile under directory src/sql/,that is proposed by [pgpool-hackers: 1611]
+            -->
+			<para>
+			Change the <filename>Makefile</filename> under directory
+            <filename>src/sql/</filename>, that is proposed by
+            <ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-June/001611.html">
+            [pgpool-hackers: 1611]</ulink>. (Bo Peng)
+			</para>
 
+      </listitem>
+      <listitem>
+			  <!--
+				  2016-04-20 [883d761] Change the PID length of pcp_proc_count command output to 6 characters long
+				-->
+			<para>
+				Change the PID length of <link linkend="PCP-PROC-COUNT">pcp_proc_count</link> command output to 6 characters long. (Bo Peng)
+			</para>
+            <para>
+                If the <productname>Pgpool-II</productname> process ID are over 5 characters, the 6th character of each process ID
+                will be removed. This commit changes the process ID length of <link linkend="PCP-PROC-COUNT">pcp_proc_count</link> command
+                output to 6 characters long.
+            </para>
+      </listitem>
+      <listitem>
+            <!--
+		        2016-04-15 [9b62eca] Redirect all user queries to primary server
+            -->
+            <para>
+			    Redirect all user queries to primary server. (Tatsuo Ishii)
+            </para>
+            <para>
+               Up to now some user queries are sent to other than the primary server
+               even if <xref linkend="guc-load-balance-mode"> = off. This commit changes the behavior: if
+               load_balance_mode = off in streaming replication mode, now all the
+               user queries are sent to the primary server only.
+            </para>
+      </listitem>
+    </itemizedlist>
   </sect2>
 
   <sect2>
@@ -584,119 +618,753 @@ pgpool=# select pg_terminate_backend((select 1)); -- NOT SUPPORTED
     <itemizedlist>
 
       <listitem>
-	<para>
-	<!--
-	    commit a7e459fa31204323df83e4a3df3135bf7d4634cd
-	    Fix the case when all backends are down then 1 node attached.
-	    commit e89e365aca82316f32cb76a16b782bdcaf44bee3
-	    Fix for: [pgpool-general: 4997] Avoiding downtime when pgpool changes require a restart
-	    commit 233ae462a417fb2d5919a2eac900b17348a7ca8b
-	    Fixing a problem with the watchdog failover_command locking mechanism
-	    commit 352bba0c539910cbe349f18f5fd1447c9a09fc5a
-	    Fix wrong printf format specification.
-	    commit b412da255932ec7af3c9ec92bec61b037a32ac31
-	    Disable strict aliasing optimization.
-	    commit 9a2c2302b380ad688400e1f42db7d72590e999e8
-	    Fixing an obvious logic mistake.
-	    commit 650c660a89df7ca4f5247dbc61e6a65ea63fc78b
-	    Do not use random() while generating MD5 salt.
-	    commit 455df3d586a64ecf2063cba1a84c72bedd0af6d5
-	    Don't ignore sync message from frontend when query cache is enabled.
-	    commit 4c23c9b84bcaac627c2cd03d740ddb549b2012f2
-	    Fix for 237: Pgpool-II fails to start if listen_addresses is empty string
-	    commit 879d16a1e0bee51ab5c4b732bdfa8ac9a965c408
-	    Create regression log directory if it does not exist yet.
-	    commit fe5ccb939b967aa802ddeeb170c890b4f97ff926
-	    Fixing the error messages when the socket operation fails
-	    commit f2b5d17e23bbd77bab7a3c3db6a1ad23b613e17e
-	    Fix regression failure of 003.failover.
-	    commit 0b99687ed8eef87b2b732e0ec333354ca5a2c46a
-	    Unbreak version 2 protocol case.
-	    commit a7bc4c85d08e0ef36b290278d4c3809d5a44ba22
-	    Fix hang when portal suspend received
-	    commit 3b2db66c3a10444cb31d3f6285d6bf09994d167c
-	    Fix for 228: pgpool doesn't de-escalate IP in case network restored
-	    commit 9b122ab04c6e3f2fad41883dcdc991886499154e
-	    SIGUSR1 signal handler should be installed before watchdog initialization.
-	    commit bda946e718fe6f3605eb7e82ada8754bd84a279c
-	    Fix for 218: Inconsistent status of Postgresql nodes in pgPool instances
-	    commit 024eaeaa0fea3cd5acda4c41d791835887e11d02
-	    Fix for 215: pgpool doesnt escalate ip in case of another node inavailability
-	    commit 5bce300c491f44d44551f8812dc79d1166bf45ff
-	    Fixing a coding mistake in watchdog code.
-	    commit 541451eab2647151aa8c04a1e1a1fe9e42f2dd7e
-	    Display human readable output for backend node status.
-	    commit 3cbce4eaf870e89fdd8f8a2ad8fab8d3d8aadf65
-	    Replace "MAJOR" macro to prevent occasional failure.
-	    commit 866575c8fe89da2127a6c1bb19746b03b61bbfd4
-	    Fix for  [pgpool-hackers: 1501]  kind does not match error
-	    commit 680e3297f1d6c58810889ccf54a0614617739e7b
-	    Fix handling of pcp_listen_addresses config parameter.
-	    commit e245587de0dd967fefacb960976ab29a1ba0ac4f
-	    Save and restore errno in each signal handler.
+        <!--
+            2016-09-27 [a7e459f] Fix the case when all backends are down then 1 node attached.
+            -->
+        <para>
+        Fix the case when all backends are down then 1 node attached. (Tatsuo Ishii)
+        </para>
+        <para>
+        When all backends are down, no connection is accepted. Then 1
+        <productname>PostgreSQL</productname> becomes up, and attach the node using pcp_attach_node. It
+        successfully finishes. However, when a new connection arrives, still
+        the connection is refused because<productname>Pgpool-II</productname> child process looks into the
+        cached status, in which the recovered node is still in down status if
+        mode is streaming replication mode (native replication and other modes
+        are fine). Solution is, if all nodes are down, force to restart all
+        pgpool child.
+        </para>
+      </listitem>
+      <listitem>
+        <!--
+        2016-09-19 [e89e365] Fix for: [pgpool-general: 4997] Avoiding downtime when pgpool changes require a restart
+            -->
+        <para>
+	    Fix for avoiding downtime when <productname>Pgpool-II</productname> changes require a restart. (Muhammad Usama)
+        </para>
+        <para>
+        To fix this, The verification mechanism of configuration parameter values is
+        reversed, previously the standby nodes used to verify their parameter values
+        against the respective values on the master <productname>Pgpool-II</productname> node and when the
+        inconsistency was found the FATAL error was thrown, now with this commit the
+        verification responsibility is delegated to the master <productname>Pgpool-II</productname> node.
+        Now the master node will verify the configuration parameter values of each
+        joining standby node against its local values and will produce
+        a WARNING message instead of an error in case of a difference.
+        This way the nodes having the different configurations will also be allowed to
+        join the watchdog cluster and the user has to manually look out for the
+        configuration inconsistency warnings in the master <productname>Pgpool-II</productname> log to avoid the
+        surprises at the time of <productname>Pgpool-II</productname> master switch over.
+        </para>
+      </listitem>
+      <listitem>
+        <!--
+            2016-09-19 [233ae46] Fixing a problem with the watchdog failover_command locking mechanism
+            -->
+        <para>
+	    Fix a problem with the watchdog <xref linkend="guc-failover-command"> locking mechanism. (Muhammad Usama)
+        </para>
+        <para>
+        From <productname>Pgpool-II</productname> 3.5 watchdog was using the separate individual locks for each
+        node-failover command (failover, failback and follow-master) and the lock was
+        acquired just before executing the respective failover script and was released
+        as soon as the script execution finishes. This technique although was very
+        efficient but also had a problem. If the <xref linkend="guc-failover-command"> takes a very little
+        time and gets finished before the lock request from other <productname>Pgpool-II</productname> node
+        arrives, the other node is also granted a lock, since the lock was already
+        released by the first node at that time. Consequently, both nodes ends up
+        executing the failover script.
+        So to fix this we are reverting back to the tested failover interlocking design
+        used prior to <productname>Pgpool-II</productname> 3.5 where all the commands gets locked at the failover
+        start by the node that becomes a lock-holder and each command lock is released
+        after its execution finishes. And only the lock-holder node is allowed to
+        acquire/release the individual command lock. That way the lock-holder node
+        keeps the lock-holder status throughout the span of the failover execution and
+        the system becomes less time sensitive.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+            2016-09-12 [b412da2] Disable strict aliasing optimization.
+        -->
+        <para>
+	    Disable strict aliasing optimization. (Tatsuo Ishii)
+        </para>
+        <para>
+        <function>flatten_set_variable_args()</function> was imported from <productname>PostgreSQL</productname>
+        in <productname>Pgpool-II</productname>
+        3.5. To make the code work, a compiler flag <option>-fno-strict-aliasing</option> is
+        necessary (<productname>PostgreSQL</productname> does so). Unfortunately when the function was
+        imported, the compiler flag was not added. To fix this, <filename>configure.ac</filename>
+        was modified.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-09-09 [650c660] Do not use random() while generating MD5 salt.
+        -->
+        <para>
+	    Do not use <function>random()</function> while generating MD5 salt. (Tatsuo Ishii)
+        </para>
+        <para>
+        <function>random()</function> should not be used in security related applications.  To
+        replace <function>random()</function>, import <function>PostmasterRandom()</function> from PostgreSQL.  Also
+        store current time at the start up of <productname>Pgpool-II</productname> main process for later
+        use.
+        </para>
+
+      </listitem>
+      <listitem>
+      <!--
+        2016-09-05 [455df3d] Don't ignore sync message from frontend when query cache is enabled.
+        -->
+        <para>
+	    Don't ignore sync message from frontend when query cache is enabled. (Tatsuo Ishii)
+        </para>
+        <para>
+        While returning cached query result, sync message sent from frontend
+        is discarded. This is harmless because "ready for query" messages is
+        sent to frontend afterward. Problem is, AccessShareLock held by
+        previous parse message processing is not released until sync message
+        is received by the backend. Fix is, forwarding the sync message to
+        backend and discarding "ready for query" message returned from
+        backend.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-08-29 [4c23c9b] Fix for 237: Pgpool-II fails to start if listen_addresses is empty string
+        -->
+        <para>
+	    Fix bug that <productname>Pgpool-II</productname> fails to start if <xref linkend="guc-listen-addresses"> is empty string. (bug 237) (Muhammad Usama)
+        </para>
+        <para>
+        The socket descriptor array (fds[]) was not getting the array end marker
+        when TCP listen addresses are not used.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-08-22 [879d16a] Create regression log directory if it does not exist yet.
+        -->
+        <para>
+	    Create regression log directory if it does not exist yet. (Tatsuo Ishii)
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-08-17 [37e376e] Fixing the error messages when the socket operation fails
+        -->
+        <para>
+	    Fixing the error messages when the socket operation fails. (Muhammad Usama)
+        </para>
+        <para>
+        When some socket operation fails, we issue close socket before throwing an
+        error which causes the errno value to be overwritten and consequently the error
+        log does not print the correct failure reason.
+        The solution is to save the errno before closing the socket and use the saved
+        value to print error description.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-08-15 [f2b5d17]  Fix regression failure of 003.failover.
+        -->
+        <para>
+	    Fix regression failure of 003.failover. (Tatsuo Ishii)
+        </para>
+        <para>
+        Update expected data to reflect the changes made to <link linkend="SQL-SHOW-POOL-NODES">show pool_nodes</link>.
+        Also fix <link linkend="SQL-SHOW-POOL-NODES">show pool_nodes</link> to proper use "_" instead of space for the
+        column name.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-08-09 [a7bc4c8] Fix hang when portal suspend received
+        -->
+        <para>
+	    Fix hang when portal suspend received. (bug 230) (Tatsuo Ishii)
+        </para>
+        <para>
+        When portal suspend message is received, it's not enough to forward it
+        to the client.  Since backend expects to receive execute message,
+        trying to read further more messages from backend will never
+        succeed. To fix this, turn off the query in progress flag, which will
+        pole incoming message from the client.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-08-04 [3b2db66] Fix for 228: pgpool doesn't de-escalate IP in case network restored
+        -->
+        <para>
+	    Fix pgpool doesn't de-escalate IP in case network restored. (bug 228) (Muhammad Usama)
+        </para>
+        <para>
+        set_state function is made to de-escalate, when it is changing the local node's
+        state from the coordinator state to some other state.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-08-02 [9b122ab]  SIGUSR1 signal handler should be installed before watchdog initialization.
+        -->
+        <para>
+	    SIGUSR1 signal handler should be installed before watchdog initialization. (Muhammad Usama)
+        </para>
+        <para>
+        Since there can be a case where a failover request from other watchdog nodes
+        arrive at the same time when the watchdog has just been initialized,
+        and if we wait any longer to install a SIGUSR1 signal handler, it can
+        result in a potential crash
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-08-02 [bda946e]Fix for 218: Inconsistent status of Postgresql nodes in pgPool instances
+        after restart. Watchdog not syncing status.
+        -->
+        <para>
+        Fix for bug of inconsistent status of <productname>PostgreSQL</productname> nodes in <productname>Pgpool-II</productname> instances
+        after restart. (bug 218) (Muhammad Usama)
+        </para>
+        <para>
+        Watchdog does not synchronize status.
+        Currently at the <productname>Pgpool-II</productname> startup, The status of each configured backend node
+        is loaded from the backend status file or otherwise initialized by querying the
+        backend nodes. This technique works fine in stand alone mode and also with
+        the watchdog enabled as long as the status of backend nodes remains consistent
+        until all <productname>Pgpool-II</productname> nodes got up and running.
+        But since <productname>Pgpool-II</productname> does not sync the backend node status from the
+        watchdog cluster at startup time, so in some cases the pgpool-II nodes
+        participating in the watchdog cluster may get a different status for the same
+        backend, especially if the <productname>Pgpool-II</productname> nodes part of the watchdog cluster starts
+        at different times and between that time an unavailable backend <productname>PostgreSQL</productname> node
+        had become available again.
+        </para>
+        <para>
+        So to solve this, the commit implements the new startup procedure for the
+        standby <productname>Pgpool-II</productname>, And now the standby <productname>Pgpool-II</productname> will load the backend status of
+        all configured <productname>PostgreSQL</productname> nodes from the watchdog master/coordinator node
+        at the time of startup.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-08-01 [024eaea]  Fix for 215: pgpool doesnt escalate ip in case of another node inavailability
+        -->
+        <para>
+        Fix <productname>Pgpool-II</productname> doesn't escalate ip in case of another node inavailability. (bug 215) (Muhammad Usama)
+        </para>
+        <para>
+        The heartbeat receiver fails to identify the heartbeat sender watchdog node when
+        the heartbeat destination is specified in terms of an IP address while
+        wd_hostname is configured as a hostname string or vice versa.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-07-29 [5bce300]  Fixing a coding mistake in watchdog code.
+        -->
+        <para>
+        Fixing a coding mistake in watchdog code. (Muhammad Usama)
+        </para>
+        <para>
+        <function>wd_issue_failover_lock_command()</function> function is supposed to forward command type
+        passed in as an argument to the <function>wd_send_failover_sync_command()</function> function instead
+        it was passing the NODE_FAILBACK_CMD command type.
+        </para>
+        <para>
+        The commit also contains some log message enhancements.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-07-28 [541451e]  Display human readable output for backend node status.
+        -->
+        <para>
+	    Display human readable output for backend node status. (Muhammad Usama)
+        </para>
+        <para>
+        Changed the output of <link linkend="PCP-PROC-INFO">pcp_node_info</link> utility and show commands display human
+        readable backend status string instead of internal status code.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-07-27 [3cbce4e]  Replace "MAJOR" macro to prevent occasional failure.
+        -->
+        <para>
+          Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+        </para>
+        <para>
+          The macro calls <function>pool_virtual_master_db_node_id()</function> and then access
+          backend->slots[id]->con using the node id returned. In rare cases, it
+          could point to 0 (in case when the DB node is not connected), which
+          gives access to con->major, then it causes a segfault.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-07-14 [866575c]  Fix for  [pgpool-hackers: 1501]  kind does not match error
+        -->
+        <para>
+        Fix "kind mismatch" error message in <productname>Pgpool-II</productname>. (Muhammad Usama)
+        </para>
+        <para>
+        Many of "kind mismatch..." errors are caused by notice/warning
+        messages produced by one or more of the DB nodes. In this case now
+        <productname>Pgpool-II</productname> forwards the messages to frontend, rather than throwing the
+        "kind mismatch..." error. This would reduce the chance of "kind
+        mismatch..."  errors.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-07-14 [680e329]  Fix handling of pcp_listen_addresses config parameter.
+        -->
+        <para>
+	    Fix handling of <xref linkend="guc-pcp-listen-addresses"> config parameter. (Muhammad Usama)
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-07-07 [e245587]  Save and restore errno in each signal handler.
+        -->
+        <para>
+	    Save and restore errno in each signal handler. (Tatsuo Ishii)
+        </para>
+      </listitem>
+      <listitem>
+      <!--
 	    commit 0d1cdf96feb77de6f1dfc2d46ecd7467325d1f79
-	    Fix usage of wait(2) in pgpool main process
-	    commit bb41a1e55d59f842d8b97cdbb6c973c1989904aa
-	    Fix confusing error messages.
-	    commit a01624f498700026f75b445988fd18ab6d3a8fe9
-	    Fix buffer over run problem in "show pool_nodes".
-	    commit 4c63d102dc192b14215a83e0e86ac45cf78145c3
-	    Fixing [pgpool-hackers: 1638] pgpool-II does not use default configuration
-	    commit 226a21b19f6a59fe72599d84b4eed9185a0fa1f5
-	    Fix bug with load balance node id info on shmem
-	    commit 6ae42e74d48391b8cfaa97927e00bd65aec68fe8
-	    fix for 0000197: pgpool hangs connections to database..
-	    commit 294cf4aa4d5a3b9489d33b29d04a5ea9b8cf6d89
-	    Fix a posible hang during health checking
-	    commit a2d04ab99b8be678053106a4449c512c5bb74e04
-	    Deal with the case when the primary is not node 0 in streaming replication mode.
-	    commit 69d3faef778782ebf7c7a3f9914492825216f88a
-	    If statement timeout is enabled on backend and do_query() sends a query to primary node, and all of following user queries are sent to
+        2016-07-07 [0d1cdf9] Fix usage of wait(2) in pgpool main process
+        -->
+        <para>
+	    Fix usage of <function>wait(2)</function> in pgpool main process. (Tatsuo Ishii)
+        </para>
+        <para>
+        When child process dies, SIGCHLD signal is raised and <function>wait(2)</function> knows
+        the event. However, multiple child death does not necessarily creates
+        exact same number of SIGCHLD signal as the number of dead children and
+        <function>wait(2)</function> could wait for an event which never happens in this case. I
+        Actually encountered this situation while testing <productname>Pgpool-II</productname>. Solution
+        is, to use <function>waitpid(2)</function> instead of <function>wait(2)</function>.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-06-28 [bb41a1e]  Fix confusing error messages.
+        -->
+        <para>
+	    Fix confusing error messages. (Tatsuo Ishii)
+        </para>
+        <para>
+        <function>pool_read()</function> does not emit error messages when <function>read(2)</function> returns -1 if
+        <xref linkend="guc-fail-over-on-backend-error"> is off. In any case the cause of error
+        should be emitted. I do not back port this because it's a too trivial
+        enhancement.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-06-24 [a01624f]  Fix buffer over run problem in "show pool_nodes".
+        -->
+        <para>
+        Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+        </para>
+        <para>
+        While processing "show pool_nodes", the buffer for hostname was too
+        short. It should be same size as the buffer used for <filename>pgpool.conf</filename>.
+        Problem reported by a twitter user who is using pgpool on AWS (which
+        could have very long hostname).
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-06-17 [4c63d10]  Fixing [pgpool-hackers: 1638] pgpool-II does not use default configuration
+        -->
+        <para>
+        Fix <ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-June/001638.html">
+        [pgpool-hackers: 1638]</ulink> pgpool-II does not use default configuration. (Muhammad Usama)
+        </para>
+        <para>
+         Configuration file not found should just throw a WARNING message
+         instead of ERROR or FATAL.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-06-15 [226a21b]  Fix bug with load balance node id info on shmem
+        -->
+        <para>
+	    Fix bug with load balance node id info on shmem. (Tatsuo Ishii)
+        </para>
+        <para>
+        There are few places where the load balance node was mistakenly put on
+        wrong place. It should be placed on:
+        <programlisting>
+ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancing_node].
+        </programlisting>
+        In fact it was placed on:
+        <programlisting>
+*con_info[child id, connection pool_id, 0].load_balancing_node].
+        </programlisting>
+        </para>
+        <para>
+        As long as the backend id in question is 0, it is ok. However while
+        testing <productname>Pgpool-II</productname> 3.6's enhancement regarding failover, if primary
+        node is 1 (which is the load balance node) and standby is 0, a client
+        connecting to node 1 is disconnected when failover happens on node
+        0. This is unexpected and the bug was revealed.
+        </para>
+        <para>
+        It seems the bug was there since long time ago but it had not found
+        until today by the reason above.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-06-09 [6ae42e7]  fix for 0000197: pgpool hangs connections to database.
+        -->
+        <para>
+	    Fix for bug that pgpool hangs connections to database. (bug 197) (Muhammad Usama)
+        </para>
+        <para>
+        The client connection was getting stuck when backend node and remote <productname>Pgpool-II</productname>
+        node becomes unavailable at the same time. The reason was a missing command
+        timeout handling in the function that sends the IPC commands to watchdog.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-06-08 [294cf4a]  Fix a posible hang during health checking
+        -->
+        <para>
+	    Fix a posible hang during health checking. (bug 204) (Yugo Nagata)
+        </para>
+        <para>
+        Helath checking was hang when any data wasn't sent
+        from backend after <function>connect(2)</function> succeeded. To fix this,
+        <function>pool_check_fd()</function> returns 1 when <function>select(2)</function> exits with
+        EINTR due to SIGALRM while health checkking is performed.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-05-25 [a2d04ab]  Deal with the case when the primary is not node 0 in streaming replication mode.
+        -->
+        <para>
+         Deal with the case when the primary is not node 0 in streaming replication mode. (Tatsuo Ishii)
+        </para>
+        <para>
+
+         <ulink url="http://www.pgpool.net/mantisbt/view.php?id=194#c837">
+         http://www.pgpool.net/mantisbt/view.php?id=194#c837</ulink> reported that if
+         primary is not node 0, then statement timeout could occur even after
+         bug194-3.3.diff was applied. After some investigation, it appeared
+         that MASTER macro could return other than primary or load balance
+         node, which was not supposed to happen, thus <function>do_query()</function> sends queries
+         to wrong node (this is not clear from the report but I confirmed it in
+         my investigation).
+        </para>
+        <para>
+         <function>pool_virtual_master_db_node_id()</function>, which is called in MASTER macro
+         returns query_context->virtual_master_node_id if query context
+         exists. This could return wrong node if the variable has not been set
+         yet. To fix this, the function is modified: if the variable is not
+         either load balance node or primary node, the primary node id is
+         returned.
+        </para>
+        <para>
+         For master and 3.5-stable, additional fixes/enhancements are made:
+         <function>pool_extended_send_and_wait()</function> now issues flush message if the request
+         is 'E' (execute). Before it was issued outside (in Execute), but this
+         makes the logic to determine to which node the flush message to be
+         sent unnecessary complex.
+        </para>
+        <para>
+         A debug message in pool_write is enhanced by adding backend node id.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-05-24 [69d3fae]  If statement timeout is enabled on backend and do_query() sends a
+        -->
+        <para>
+	    If statement timeout is enabled on backend and <function>do_query()</function> sends a query to primary node, and all of following user queries are sent to
 	    standby, it is possible that the next command, for example END, could
 	    cause a statement timeout error on the primary, and a kind mismatch
-	    error on pgpool-II is raised.
-	    commit 0c0e727348f81b2d4fc273dceda6b64ed9463dbb
-	    Fix extended protocol handling in raw mode
-	    commit 78c5d56ba7d226370540205e030a8a35284bf4bd
-	    Fix confusing comments in pgpool.conf
-	    commit 27a38dc9b070607e0735feb461cd5c0a19f6493e
-	    Fix Chinese documetation bug about raw mode
-	    commit de905f672281e65ac2897475b3dc926ec28b7bfd
-	    Fix documetation bug about raw mode
-	    commit 95129999b0f04b4e1446e34f44a6ae99466885d6
-	    Fix is_set_transaction_serializable() when SET default_transaction_isolation TO 'serializable'.
-	    commit a5fdf78e6e86c5a8a1d4ce5b1eb273a59f5ecfb9
-	    Fix extended protocol hang with empty query
-	    commit 64696fd839da70e6fd8daacd73da11b6e8a1f1c9
-	    Fix for [pgpool-general: 4569] PGPoolII-3.5 : segfault
-	    commit f7723c89c7e925194f0da6154d9798a97b273026
-	    Validating the PCP packet length
-	    commit 39e07ea13a7f318f2c50a8aec7baa93e13a347d3
-	    Fix extended query hangs
-	    commit f305fbe0355529d4142d3b76e08f7d08dc2c3cf9
-	    Fix pgpool hang bug (deal with bug 167)
-	    commit d1c03f2efa25cc8d633d989d54a0cb1f074e448b
-	    Fix pgpool_setup to not confuse log output
-	    commit e55c230d674ea221c09e8266a68d119f1a3a2dac
-	    Fix for [pgpool-general: 4519] Worker Processes Exit and Are Not Re-spawned
-	    commit 67ac541d879b9a96353216b793ce954088e5ff06
-	    Fix pgpool hung after receiving error state from backend
-	    commit bb295a22ad47001758b0b38968f53c776f439f2f
-	    Fix query stack problems in extended protocol case.
-	    commit 63a0b7042b4b3d90336d8ed2c868861868178e71
-	    Fix yet another reset query stuck problem
-	    commit f1cfeb69a8557caf5d16dca5cdae0a3cad743e8c
-	    Yet another reset query stuck problem fix. [pgpool-general: 4265]
-	    commit c50f3579e92296ad57f71c4ab900f8521de1c7b1
-	    Fixing pgpool-recovery module compilation issue with PostgreSQL 9.6
-	    commit 48e9d4b028bdfefc9cca4e3f1f9d700b36cff294
-	    Fix for [pgpool-II 0000166]: compile issue on freebsd
-	    commit 6688332daa90d8578e64084d95339dfdbf5c6b30
-	    Fix regression test to check timeout of each test
-	    commit 44f43cc4799383a2049859bb47f89eb786549cd5
-	    Add some warning messages for wd_authkey hash calculation failure
-	  -->
-	</para>
+	    error on pgpool-II is raised. (bug 194) (Tatsuo Ishii)
+        </para>
+        <para>
+        This fix tries to mitigate the problem by sending sync message instead
+        of flush message in <function>do_query()</function>, expecting that the sync message reset
+        the statement timeout timer if we are in an explicit transaction. We
+        cannot use this technique for implicit transaction case, because the
+        sync message removes the unnamed portal if there's any.
+
+        </para>
+        <para>
+        Plus, pg_stat_statement will no longer show the query issued by
+        <function>do_query()</function> as "running".
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-05-22 [0c0e727]  Fix extended protocol handling in raw mode
+        -->
+        <para>
+	    Fix extended protocol handling in raw mode. (Tatsuo Ishii)
+        </para>
+        <para>
+        Bug152 reveals that extended protocol handling in raw mode (actually
+        other than in stream mode) was wrong in <function>Describe(</function>) and <function>Close()</function>.
+        Unlike stream mode, they should wait for backend response.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-05-20 [78c5d56]  Fix confusing comments in pgpool.conf
+        -->
+        <para>
+	    Fix confusing comments in <filename>pgpool.conf</filename>. (Tatsuo Ishii)
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-05-11 [de905f6]  Fix documetation bug about raw mode
+        -->
+        <para>
+	    Fix  Japanese and Chinese documetation bug about raw mode. (Yugo Nagata, Bo Peng)
+        </para>
+        <para>
+        Connection pool is avalilable in raw mode.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-05-09 [9512999] Fix is_set_transaction_serializable() when
+        SET default_transaction_isolation TO 'serializable'.
+        -->
+        <para>
+	    Fix is_<function>set_transaction_serializable()</function> when
+        SET default_transaction_isolation TO 'serializable'. (bug 191) (Bo Peng)
+        </para>
+        <para>
+        SET default_transaction_isolation TO 'serializable' is sent to
+        not only primary but also to standby server in streaming replication mode,
+        and this causes an error. Fix is, in streaming replication mode,
+        SET default_transaction_isolation TO 'serializable' is sent only to the
+        primary server.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-04-13 [a5fdf78]  Fix extended protocol hang with empty query
+        -->
+        <para>
+        Fix extended protocol hang with empty query. (bug 190 (Tatsuo Ishii))
+        </para>
+        <para>
+        The fixes related to extended protocol cases in 3.5.1 broke the case
+        of empty query.  In this case backend replies with "empty query
+        response" which is same meaning as a command complete message. Problem
+        is, when empty query response is received, pgpool does not reset the
+        query in progress flag thus keeps on waiting for backend. However,
+        backend will not send the ready for query message until it receives a
+        sync message. Fix is, resetting the in progress flag after receiving
+        the empty query response and reads from frontend expecting it sends a
+        sync message.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-04-05 [64696fd]  Fix for [pgpool-general: 4569] PGPoolII-3.5 : segfault
+        -->
+        <para>
+	    Fix for <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2016-March/004627.html">
+        [pgpool-general: 4569]</ulink> <productname>Pgpool-II</productname> 3.5 : segfault
+        </para>
+        <para>
+        PostgreSQL's memory and exception manager APIs adopted by the <productname>Pgpool-II</productname> 3.4 are not
+        thread safe and are causing the segmentation fault in the watchdog lifecheck
+        process, as it uses the threads to ping configured trusted hosts for checking
+        the upstream connections.
+        Fix is to remove threads and use the child process approach instead.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-05-29 [f7723c8]  Validating the PCP packet length
+        -->
+        <para>
+        Validating the PCP packet length. (Muhammad Usama)
+        </para>
+        <para>
+        Without the validation check, a malformed PCP packet can crash the PCP child
+        and/or can run the server out of memory by sending the packet with a
+        very large data size.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-03-28 [f305fbe]  Fix pgpool hang bug (deal with bug 167)
+        -->
+        <para>
+	    Fix <productname>Pgpool-II</productname> hang bug (bug 167). (Tatsuo Ishii)
+        </para>
+        <para>
+        <productname>Pgpool-II</productname> 3.5 or after in streaming replication mode does not wait for
+        response from each phase such parse, bind anymore.  However, if
+        do_query is called, it sends flush message to retrieve the result of
+        system catalog look up. This is only sent to primary node which may
+        results in retrieving previous message results, for example parse
+        complete. If standby is assigned to load balance node, the node does
+        not return parse complete message, which will cause a problem in
+        bug167 case, because parse message for "BEGIN" was sent to both the
+        primary and the standby. Fix is, send flush message in do_query if the
+        load balance node is one of standbys.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-03-26 [d1c03f2]  Fix pgpool_setup to not confuse log output
+        -->
+        <para>
+         Fix <link linkend="PGPOOL-SETUP">pgpool_setup </link> to not confuse log output. (Tatsuo Ishii)
+        </para>
+        <para>
+         Before it simply redirects the stdout and stderr of pgpool process to
+         a log file. This could cause log contents being garbled or even
+         missed because of race condition caused by multiple process being
+         writing concurrently. I and Usama found this while investigating the
+         regression failure of 004.watchdog.
+
+         To fix this, <link linkend="PGPOOL-SETUP">pgpool_setup </link> now generates startall script so that pgpool
+         now sends stdout/stderr to cat command and cat writes to the log file
+         (It seems the race condition does not occur when writing to a pipe).
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-03-07 [e55c230]  Fix for [pgpool-general: 4519] Worker Processes Exit and Are Not Re-spawned
+        -->
+        <para>
+	    Fix for <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2016-March/004577.html">
+	    [pgpool-general: 4519]</ulink> Worker Processes Exit and Are Not Re-spawned. (Muhammad Usama)
+        </para>
+        <para>
+        The problem was due to a logical mistake in the code for checking the exiting
+        child process type when the watchdog is enabled.
+        I have also changed the severity of the message from FATAL to LOG, emitted
+        for child exits due to max connection reached.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-03-04 [67ac541]  Fix pgpool hung after receiving error state from backend
+        -->
+        <para>
+	    Fix pgpool hung after receiving error state from backend. (bug #169) (Tatsuo Ishii)
+        </para>
+        <para>
+        This could happend if we execute an extended protocol query and it
+        fails. After an error is received the "ignore till sync flag" is set
+        and remained even if sync message was actually received. Thus any
+        subsequent query (in the case above "DEALLOCATE message") is not
+        procesed and pgpool waits for message from frontend and backend, and
+        pgpool stucks here because no message will arrive from both side.
+        </para>
+        <para>
+        To fix this, unconditionally reset the "ignore till sync flag" in
+        <function>ReadyforQuery()</function>. This is safe because apparently we already received
+        the ready for query message.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-03-03 [bb295a2]  Fix query stack problems in extended protocol case.
+        -->
+        <para>
+	    Fix query stack problems in extended protocol case. (bug 167, 168) (Tatstuo Ishii)
+        </para>
+        <para>
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-03-03 [63a0b70]  Fix yet another reset query stuck problem
+        -->
+        <para>
+	    Fix <ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-March/001440.html">
+        [pgpool-hackers: 1440]</ulink> yet another reset query stuck problem. (Tatsuo Ishii)
+        </para>
+        <para>
+        After receiving X message from frontend, if <productname>Pgpool-II</productname> detects EOF on
+        the connection before sending reset query, <productname>Pgpool-II</productname> could wait for
+        backend which had not received the reset query. To fix this, if EOF
+        received, treat this as FRONTEND_ERROR, rather than ERROR.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-02-22 [f1cfeb6]  Yet another reset query stuck problem fix. [pgpool-general: 4265]
+        -->
+        <para>
+	    Fix for <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2015-December/004323.html">
+	    [pgpool-general: 4265]</ulink> another reset query stuck problem. (Muhammad Usama)
+        </para>
+        <para>
+        The solution is to report FRONTEND_ERROR instead of simple ERROR when
+        pool_flush on front-end socket fails.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-02-12 [c50f357] Fixing pgpool-recovery module compilation issue with PostgreSQL 9.6
+        -->
+        <para>
+	    Fixing pgpool-recovery module compilation issue with <productname>PostgreSQL</productname> 9.6. (Muhammad Usama)
+        </para>
+        <para>
+        Incorporating the change of function signature for
+        <function>GetConfigOption()</function> functions in <productname>PostgreSQL</productname> 9.6
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-02-03 [48e9d4b]  Fix for [pgpool-II 0000166]: compile issue on freebsd
+        -->
+        <para>
+	    Fix compile issue on freebsd. (Muhammad Usama)
+        </para>
+        <para>
+        Add missing include files. The patch is contributed by
+        the bug reporter and enhanced a little by me.
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-02-01 [6688332]  Fix regression test to check timeout of each test
+        -->
+        <para>
+	    Fix regression test to check timeout of each test. (Yugo Nagata)
+        </para>
+      </listitem>
+      <listitem>
+      <!--
+        2016-02-01 [44f43cc]  Add some warning messages for wd_authkey hash calculation failure
+        -->
+        <para>
+	    Add some warning messages for <xref linkend="guc-wd-authkey"> hash calculation failure. (Yugo Nagata)
+        </para>
+        <para>
+        Sometimes <xref linkend="guc-wd-authkey"> calculation fails for some reason other than
+        authkey mismatch. The additional messages make these distingushable
+        for each other.
+        </para>
       </listitem>
 
     </itemizedlist>
