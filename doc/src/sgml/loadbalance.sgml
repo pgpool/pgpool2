@@ -9,11 +9,16 @@
     and Replication mode (<xref linkend="runtime-config-replication-mode">). When enabled
     <productname>Pgpool-II</productname> sends the writing queries to the
     <acronym>Master DB</acronym>, and other queries get load balanced to
-    <acronym>Standby DB nodes</acronym> if possible.
+    <acronym>Standby DB nodes</acronym> if possible.  To which node
+    the load balancing mechanism sends read queries is decided at the
+    session start time and will not be changed until the session
+    ends. The only exception is by writing special SQL comments. See
+    below for more details.
   </para>
   <note>
     <para>
-      Queries sent to Master DB because they cannot be balanced are also accounted for in the load balancing algorithm.
+      Queries sent to Master DB because they cannot be balanced are
+      also accounted for in the load balancing algorithm.
     </para>
   </note>
   <note>
@@ -40,7 +45,7 @@
           load balancing on incoming <acronym>SELECT</acronym> queries.
           i.e. SELECT queries from the clients gets distributed to
           the configured PostgreSQL backends.
-          Default is false.
+          Default is off.
         </para>
         <para>
           This parameter can only be set at server start.
