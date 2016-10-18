@@ -181,7 +181,7 @@
 
   <para>
     There are some restrictions to using SQL via <productname>Pgpool-II</productname>.
-    See Restrictions for more details.
+    See <link linkend="restrictions">Restrictions</link> for more details.
   </para>
 
  </sect1>
