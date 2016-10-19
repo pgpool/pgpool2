@@ -1,0 +1,99 @@
+<!--
+doc/src/sgml/ref/pg_md5.sgml
+Pgpool-II documentation
+-->
+
+<refentry id="PG-MD5">
+ <indexterm zone="pg-md5">
+  <primary>pg_md5</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>pg_md5</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Other Commands</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_md5</refname>
+  <refpurpose>
+	produces encrypted password in md5</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_md5</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+  </cmdsynopsis>
+  <cmdsynopsis>
+   <command>pg_md5</command>
+   <arg><replaceable>password</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-PG-MD5-1">
+  <title>Description</title>
+  <para>
+  <command>pg_md5</command>
+  	produces encrypted password in md5.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+   <para>
+    <variablelist>
+
+     <varlistentry>
+      <term><option>-p</option></term>
+      <term><option>--prompt</option></term>
+      <listitem>
+       <para>
+	 Prompt password using standard input.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-m</option></term>
+      <term><option>--md5auth</option></term>
+      <listitem>
+       <para>
+	 Produce md5 authentication password.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-u <replaceable class="parameter">your_username</replaceable></option></term>
+      <term><option>--username=<replaceable class="parameter">your_username</replaceable></option></term>
+      <listitem>
+       <para>
+	 When producing a md5 authentication password, create the pool_passwd entry for <literal>your_username</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Example</title>
+   <para>
+	Here is an example output:
+    <programlisting>
+pg_md5 -p
+password: [your password]
+    </programlisting>
+  </para>
+  <para>
+  or
+  </para>
+    <programlisting>
+./pg_md5 foo
+acbd18db4cc2f85cedef654fccc4a4d8
+    </programlisting>
+ </refsect1>
+
+</refentry>

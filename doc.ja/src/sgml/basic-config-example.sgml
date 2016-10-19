@@ -1,0 +1,258 @@
+<sect1 id="example-basic">
+  <title>Basic Configuration Example</title>
+
+  <para>
+    In this tutorial, I explain how to create a simple streaming
+    replication setting using pgpool-II step by step. You need three
+    Linux boxes: one is for pgpool-II itself and pgpoolAdmin, and the
+    others for PostgreSQL. Needless to say you could use virtual
+    machines to simulate those three servers.
+  </para>
+  <para>
+    Though the setting is simple, it makes possible to implement
+    important functionalities which PostgreSQL lacks:
+    <itemizedlist>
+
+    <listitem>
+      <para>
+	Automated failover. If one of the two PostgreSQL goes down,
+	pgpool-II will automatically let remaining node take over and
+	keep on providing database service to applications.
+      </para>
+      </listitem>
+
+    <listitem>
+      <para>
+	Query dispatching and load balancing. In streaming replication
+	mode, applications need to carefully chose queries to be sent
+	to standby node. Pgpool-II checks the query and automatically
+	chose primary or standby node in sending queries. So
+	applications need not to worry about it.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+	Online recovery. Recover failed node without stopping
+	pgpool-II and PostgreSQL.
+      </para>
+
+    </itemizedlist>
+
+    <para>
+      In this configuration, if the host where pgool-II is running on,
+      you cannot access database via pgpool-II anymore. To overcome
+      the problem, you can create a high availabilty configuration by
+      using watchdog.
+    </para>
+    <para>
+      Here is the overall picture of the installation.
+    </para>
+
+    <para>
+      Please note that in this figure the server #1(hostname is
+      "osspc16") is assigned to pgpool-II and pgpoolAdmin. The server
+      #2 (hostname is "osspc17") is for the primary PostgreSQL
+      server. The server #3 (hostname is "osspc18") is for the standby
+      PostgreSQL server. Please note that this is just a initial
+      setting and afterward you can interchange the role of each
+      PostgreSQL by using online recovery.
+    </para>
+
+    <sect2 id="exapmle-installing-postgresql">
+      <title>Installig PostgreSQL</title>
+
+      <para>
+	The easiest way is downloading Linux package from PostgreSQL
+	official site.  Another way to install PostgreSQL is from the
+	source code. This is surprisingly easy actually. Just unpack
+	the tar ball and configure;make;make install. See the
+	PostgreSQL manual for more details.
+
+From now on, I assume that database clusters are located at /home/postgres/data and are owned by postgres user:
+
+$ initdb -D /home/postgres/data
+
+Next add followings to /home/postgres/data/postgresql.conf. "logging_collector" and below are not really relevant to Streaming replication but they are my favorites to make my life easier. You might want to remove "log_statement = 'all'" in production environment however.
+
+listen_address = '*'
+hot_standby = on
+wal_level = hot_standby
+max_wal_senders = 1
+logging_collector = on
+log_filename = '%A.log'
+log_line_prefix = '%p %t '
+log_truncate_on_rotation = on
+log_statement = 'all'
+
+Put pg_hba.conf to /home/postgres/data. Of course you need to replace "/some/where/" with actual directory where you downloaded the scripts. Caution: settings here allows to access from any IP address. Please apply appropreate setting for your real world systems.
+
+$ cp /some/where/pg_hba.conf" /home/postgres/data"
+
+Start PostgreSQL server on occp17 and osspc18. At this poing those PostgreSQL servers will run as primary server, thus no streaming replication is working).
+
+$ pg_ctl -D /home/postgres/data start
+
+Next you need to allow postgres user on osspc17 and osspc18 can acceess each other without password. Execute ssh-keygen command as postgres and append the contents of /home/postgres/.ssh/id_rsa.pub to /home/postgres/.ssh/authorized_keys of other server. After this we recommend to test the setting by executing ls command via ssh, for example.
+
+$ ssh osspc17 ls
+
+Installing pgpool-II
+
+Install pgpool-II onto osspc16. In this configuration explained here you need pgpool-II 3.3.3 or later.
+
+$ tar xfz /some/where/pgpool-II-3.3.3.tar.gz
+$ cd pgpool-II-3.3.3
+$ ./configure
+$ make
+$ sudo make install
+$ cp /some/where/install-functions.sh .
+$ sh install-functions.sh
+
+Next install user defined functions used by pgpool-II onto PostgreSQL. Execute followings as postgres user on occp17 and osspc18. "install-functions.sh" can be downloaded here. Of course you need to replace "/some/where/" with actual directory where you downloaded the scripts.
+
+Next you need to install pgpool-II configuration files onto occp16. The main configuration file is pgpool.conf. The other one is the pcp.conf. You will need to execute followings as root.
+
+# cp /some/where/pgpool.conf /usr/local/etc
+# chown apache /usr/local/etc/pgpool.conf
+# cp /some/where/pcp.conf /usr/local/etc
+# chown apache /usr/local/etc/pcp.conf
+
+The reason why we execute chown is, pgpoolAdmin need to modify those files. pgpoolAdmin is a PHP script thus executed by Apache. If you have no plan to use pgpoolAdmin(that measn you want to use pcp command line admin tools only), you do not need to execute chown.
+
+The initial password for "postgres" in the pcp.conf is "pgpoolAdmin". I strongly recommend to change the password immediately after finishing the installation. The new password string can be obtained using pg_md5 command. See the pgpool-II doc for more details.
+
+Install basebackup.sh and pgpool_remote_start, neccessary for online recovery onto osspc17 and osspc18. Note that in pgpool_remote_start the path to pg_ctl command is specified. You might want to change it to an appropreate path according to your PostgreSQL installation.
+
+$ cp /some/where/baseback.sh /home/postgres/data
+$ chmod 755 basebackup.sh
+$ cp /some/where/pgpool_remote_start /home/postgres/data
+$ chmod 755 pgpool_remote_start
+
+Install failover.sh for automatic failover onto osspc16.
+
+$ sudo cp /some/where/failover.sh /usr/local/etc
+$ chmod 755 failover.sh
+
+Create neccessary directories on osspc16. Execute followings as root. The reason why we use chown is, pgpool-II is started by pgpoolAdmin. If you do not have a plan to use pgpoolAdmin, you need to change "apache" to the user you want to invoke pgpool-II.
+
+# mkdir /var/run/pgpool
+# chown apache /var/run/pgpool
+# mkdir /var/log/pgpool
+# chown apache /var/log/pgpool
+
+Create neccessary directories on osspc17 and osspc18. Execute followings as root.
+
+# mkdir /var/log/pgpool/trigger
+# chown postgres /var/log/pgpool/trigger
+
+If you plan to use pgpoolAdmin, you need to allow apache user on osspc16 accesses postgres uer on osspc17 and postgres user on osspc18. In most systems, login to the system as apache user is prohibited.
+
+apache:x:48:48:Apache:/var/www:/sbin/nologin
+
+Change temporarily /sbin/nologin to /bin/bash for example, to allow login. Create /var/www/.ssh and execute ssh-keygen.
+
+# mkdir /var/www/.ssh
+# chown apache /var/www/.ssh
+# su - apache
+$ ssh-keygen
+:
+:
+
+Add /var/www/.ssh/id_rsa.pub to /home/postggres/.ssh/authorized_keys on osspc17 and osspc18. After this we recommend to test the setting by executing ls command via ssh, for example do followings as apache user.
+
+$ ssh postgres@osspc17 ls
+$ ssh postgres@osspc18 ls
+
+Revert /etc/passwd. In the real world system it is recommended that you create an account solely used fro pgpoolAdmin and start its own apache.
+
+Create apache user on osspc17 and osspc18.
+
+$ createuser apache
+Shall the new role be a superuser? (y/n) n
+Shall the new role be allowed to create databases? (y/n) n
+Shall the new role be allowed to create more new roles? (y/n) n
+
+Stop PostgreSQL on osspc18 and execute followings on osspc18.
+
+$ pg_ctl -D /home/postgres/data -m f stop
+
+Installing pgpoolAdmin
+
+pgpoolAdmin is a management tool for pgpool-II written in PHP. pgpoolAdmin must be executed on the same host which pgpool-II is running on. This effectively means that pgpoolAdmin does not work on Windows platform. pgpoolAdmin runs on PHP 4.2 or higher. It also needs PostgreSQL extention. If you plan to build PHP, please include --with-pgsql option. If you plan to install PHP from rpm. you may need to install PostgreSQL extension as well. Some distributions have built-in support for PostgreSQL extention, but most distributions do not.
+
+pgpoolAdmin has its own installer thus it is pretty easy to install pgpoolAdmin. In this configuration you need to install pgpoolAdmin 3.3.1 or later(or CVS HEAD). Unpack it under Apache document directory(for example, /var/www/html/). Follow the install instruction, located at doc/install/install.html. Here are several key points before installing pgpoolAdmin by using Web installer.
+
+# cd /var/www/html/pgpoolAdmin-3.3.1
+# chmod 777 templates_c
+# chown apache conf/pgmgt.conf.php
+# chmod 644 conf/pgmgt.conf.php
+
+Once you are prepared, brows the pgpoolAdmin install using your favorite Web browser. In this example, the URL will be http://localhost/pgpoolAdmin-3.3.1/install/index.php. You will see this page. Click "Next" and you will see this this page. Please make sure that all items are checked by green. This indicates that everytyhing is good. Click "Next". This is the main setting page. Several points you want to change from default values:
+
+    Check "Discard pgpol_status". pgpool_status is a file to remember previous status of PostgreSQL when pgpool-II started. pgpool-II recognizes the healthiness of PostgreSQL by looking at the file. This will prevent pgpool-II from recognizing PostgreSQL has been up since pgpool started last time. Otherwise pgpool-II believies that PostgreSQL continues to be up, which cause data consistency among PostgreSQL nodes. However in an experiment environment, this is not convenient because you want to up down PostgreSQL frequently.
+    Check "don't run in daemon mode". This is neccessary to get pgpool log.
+    Chose stop mode "fast". The default value "smart" will not allow you to stop pgpool until all clients are disconnected and I feel this is annoying for test envrionment.
+    set "pgpool Logfile" to "|/usr/sbin/rotatelogs2 -l -f /var/log/pgpool/pgpool.log.%A 86400". This allows to place pgpool log files under /var/log/pgpool/ and rotate them once a day by using rotatelogs2 coming with apache2.
+    Set "Refresh Time" to 10. PgpoolAdmin will check pgpool-II status every 10 seconds and refresh pages. This is extremly convenient for test enverionments. 
+
+Once you've done, the page should look like this. You finished to install pgpoolAdmin. Conguratulations!
+Starting pgpool-II
+
+Login to pgpoolAdmin and start pgpool-II from "pgpool status" menu. You see osspc17 port 5432 PostgreSQL is running as a primary server. You should be able to connect to osspc16 port 5432 by using psql. Let's try to create a table.
+
+$ createdb -h osspc16 test
+$ psql -h osspc16 test
+test=# create table t1(i int);
+CREATE TABLE
+test=#
+
+You will find something like this in the pgpool log.
+
+$ tail /var/log/pgpool/pgpool.log.Friday
+2014-04-04 15:17:20 LOG:   pid 5716: DB node id: 0 backend pid: 6036 statement: create table t1(i int);
+
+You will see same thing in the PostgreSQL log as well.
+
+$ tail /home/postgres/data/pg_log/Friday.log
+6036 2014-04-04 15:17:22 JST LOG:  statement: create table t1(i int);
+
+Starting standby server
+
+At this point standby server is not running. To start standby server, just click "Recovery" button. "basebackup.sh" will be executed and the standby server will be automatically started.
+
+Once standby server is running, streaming replication starts. Let's insert some data into t1.
+
+-- insert into t1 via pgpool-II.
+-- it will be executed on primary server
+psql -h osspc16 test
+test=# insert into t1 values(1);
+test=# \q
+psql -h osspc18 test
+-- now connected to standby server
+test=# select * from t1;
+ i
+---
+ 1
+(1 row)
+
+What if standby server goes down?
+
+If standby goes down, it is disconnected from pgpool-II. Users can issue SQL via pgpool-II as usual. Just streaming replication is stopped. To recover standby server, click "Recovery" button.
+What if primary server goes down?
+
+Don't panic. Standby server is there for this situation. Let the current primary server be osspc17. Login to osspc17 and stop PostgreSQL.
+
+$ pg_ctl -D /home/postgres/data -m f stop
+
+As you can see, osspc17 PostgreSQL goes down and osspc18 PostgreSQL takes over the primary role. When pgpool-II finds that primary is going down it executes failover script(failover.sh). The script creates trigger file as osspc18:/var/log/pgpool/trigger/trigger1. Standby server on osspc18 finds the file and decides to promote to primary. If you click the "Recovery" button osspc17 PostgreSQL, the former primary server will be recovered as standby server.
+Summary
+
+PostgreSQL 9.3 supports simple and easy to use built-in replication system. Adding pgpool-II on top of the replication system it is possible to build a high availability(HA) system.
+
+If you have questions and/or comments, please post to pgpool-general mailing list.
+
+Tatsuo Ishii
+ishii at sraoss.co.jp 
+      </para>
+    </sect1>

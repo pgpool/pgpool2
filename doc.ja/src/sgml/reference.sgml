@@ -76,6 +76,16 @@
 
    &pcpCommonOptions;
    &pcpNodeCount;
+   &pcpNodeInfo;
+   &pcpWatchdogInfo;
+   &pcpProcCount;
+   &pcpProcInfo;
+   &pcpPoolStatus;
+   &pcpDetachNode;
+   &pcpAttachNode;
+   &pcpPromoteNode;
+   &pcpStopPgpool;
+   &pcpRecoveryNode;
 
  </reference>
 
@@ -89,9 +99,34 @@
 
    </partintro>
 
+   &pgMd5;
    &pgpoolSetup;
    &watchdoglSetup;
 
  </reference>
+   
+   <reference id="sql-commands">
+   <title>SQL type commands</title>
 
+   <partintro>
+     <para>
+       This part contains reference information for various SQL type Pgpool-II commands.
+       These commands can be issued inside the SQL session using the standard PostgreSQL
+       client like <literal>psql</literal> and are not forwarded to the backend DB instead
+       are processed by <productname>Pgpool-II</productname> server
+     </para>
+
+   </partintro>
+
+   &pgpoolShow
+   &pgpoolSet
+   &pgpoolReset
+   &showPoolStatus
+   &showPoolNodes
+   &showPoolProcesses
+   &showPoolPools
+   &showPoolVersion
+   &showPoolCache
+
+ </reference>
 </part>

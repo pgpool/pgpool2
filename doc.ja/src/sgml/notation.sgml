@@ -24,7 +24,7 @@
   An <firstterm>administrator</firstterm> is generally a person who is
   in charge of installing and running the server.  A <firstterm>user</firstterm>
   could be anyone who is using, or wants to use, any part of the
-  <productname>PostgreSQL</productname> system.  These terms should not
+  <productname>Pgpool-II</productname> system.  These terms should not
   be interpreted too narrowly; this book does not have fixed
   presumptions about system administration procedures.
  </para>

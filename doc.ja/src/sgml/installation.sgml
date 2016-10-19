@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/installation.sgml -->
 
 <chapter id="installation">
- <title><productname>pgpool-II</productname> Installation from Source Code</title>
+ <title><productname>Pgpool-II</productname> Installation from Source Code</title>
 
  <indexterm zone="installation">
   <primary>installation</primary>
@@ -11,7 +11,7 @@
   <title>Installation from Source Code</title>
    <para>
      This chapter describes the installtion
-     of <productname>pgpool-II</productname>.  First, installation from
+     of <productname>Pgpool-II</productname>.  First, installation from
      source code distribution is explained. Then installtion from RPM
      packages is explained.
    </para>
@@ -22,12 +22,12 @@
 
   <para>
    In general, a modern Unix-compatible platform should be able to run
-   <productname>pgpool-II</>. Windows is not supported.
+   <productname>Pgpool-II</>. Windows is not supported.
   </para>
 
   <para>
    The following software packages are required for building
-   <productname>pgpool-II</>:
+   <productname>Pgpool-II</>:
 
    <itemizedlist>
     <listitem>
@@ -131,7 +131,7 @@
   <title>Getting The Source</title>
 
   <para>
-   The <productname>pgpool-II</> &version; sources can be obtained
+   The <productname>Pgpool-II</> &version; sources can be obtained
    from the download section of our
    website: <ulink url="http://www.pgpool.net"></ulink>.  You should
    get a file
@@ -142,7 +142,7 @@
 </screen>
    This will create a directory
    <filename>pgpool-II-&version;</filename> under the current directory
-   with the <productname>pgpool-II</> sources.
+   with the <productname>Pgpool-II</> sources.
    Change into that directory for the rest
    of the installation procedure.
   </para>
@@ -191,7 +191,7 @@
        </indexterm>
 	<listitem>
           <para>
-	   <productname>pgpool-II</productname> binaries will be built
+	   <productname>Pgpool-II</productname> binaries will be built
            with <productname>OpenSSL</productname>
            support.  <productname>OpenSSL</productname> support is
            disabled by default.
@@ -204,8 +204,8 @@
 	<listitem>
           <para>
 	    Use insert_lock compatible
-            with <productname>pgpool-II</productname> 3.0 series
-            (until 3.0.4).  <productname>pgpool-II</productname> locks
+            with <productname>Pgpool-II</productname> 3.0 series
+            (until 3.0.4).  <productname>Pgpool-II</productname> locks
             against a row in the sequence
             table. <productname>PostgreSQL</productname> 8.2 or later
             which was released after June 2011 cannot use this lock
@@ -219,8 +219,8 @@
 	<listitem>
           <para>
 	    Use insert_lock compatible
-            with <productname>pgpool-II</productname> 2.2 and 2.3
-            series.  <productname>pgpool-II</productname> locks
+            with <productname>Pgpool-II</productname> 2.2 and 2.3
+            series.  <productname>Pgpool-II</productname> locks
             against the insert target table.  This lock method is
             deprecated because it causes a lock conflict
             with <command>VACUUM</command>.
@@ -232,7 +232,7 @@
 	<term><option>--with-memcached=path</option></term>
 	<listitem>
           <para>
-	    <productname>pgpool-II</productname> binaries will use memcached for in
+	    <productname>Pgpool-II</productname> binaries will use memcached for in
           memory query cache.  You have to
           install <ulink url="http://libmemcached.org/libMemcached.html">libmemcached</ulink>.
 	  </para>
@@ -254,7 +254,7 @@ make install
   <sect1 id="install-pgpool-recovery">
     <title>Installing pgpool_recovery</title>
     <para>
-      This is required in all <productname>pgpool-II</productname>
+      This is required in all <productname>Pgpool-II</productname>
       installation.
       <programlisting>
 $ cd pgpool-II-x.x.x/sql/pgpool-recovery
@@ -275,7 +275,7 @@ $ psql -f pgpool-recovery.sql template1
     </para>
 
     <para>
-      With <productname>pgpool-II</productname> 3.3 or later, you need
+      With <productname>Pgpool-II</productname> 3.3 or later, you need
       to tweak <filename>postgresql.conf</filename>.  Suppose the path
       to <command>pg_ctl</command>
       is <filename>/usr/local/pgsql/bin/pg_ctl</filename>. Then you
@@ -305,8 +305,8 @@ $ pg_ctl reload -D /usr/local/pgsql/data
       to <productname>PostgreSQL</productname> 9.3, installing
       <function>pgpool_regclass</function> function on
       all <productname>PostgreSQL</productname> to be accessed by
-      <productname>pgpool-II</productname> is strongly recommended, as
-      it is used internally by <productname>pgpool-II</productname>.
+      <productname>Pgpool-II</productname> is strongly recommended, as
+      it is used internally by <productname>Pgpool-II</productname>.
       Without this, handling of duplicate table names in different
       schema might cause trouble (temporary tables aren't a problem).
       If you are using <productname>PostgreSQL</productname> 9.4 or
@@ -337,7 +337,7 @@ $ psql -f pgpool-regclass.sql template1
       Executing <command>CREATE EXTENSION</command>
       or <filename>pgpool-regclass.sql</filename> should be performed
       on every databases accessed
-      with <productname>pgpool-II</productname>.  You do not need to
+      with <productname>Pgpool-II</productname>.  You do not need to
       do this for a database created after the execution of
       <command>psql -f pgpool-regclass.sql template1</command>
       or <command>CREATE EXTENSION</command>, as this template
@@ -358,9 +358,9 @@ $ psql -f pgpool-regclass.sql template1
       creating <structname>pgpool_catalog.insert_lock</structname>
       table for mutual exclusion is strongly recommended.  Without
       this, insert_lock works so far. However in that
-      case <productname>pgpool-II</productname> locks against the
+      case <productname>Pgpool-II</productname> locks against the
       insert target table. This behavior is same
-      as <productname>pgpool-II</productname> 2.2 and 2.3 series. The
+      as <productname>Pgpool-II</productname> 2.2 and 2.3 series. The
       table lock conflicts
       with <command>VACUUM</command>. So <command>INSERT</command>
       processing may be thereby kept waiting for a long time.
@@ -375,10 +375,62 @@ $ psql -f pgpool-regclass.sql template1
     <para>
       Executing <filename>insert_lock.sql</filename> should be
       performed on every databases accessed
-      with <productname>pgpool-II</productname>.  You do not need to
+      with <productname>Pgpool-II</productname>.  You do not need to
       do this for a database created after the execution of
       <command>psql -f insert_lock.sql template1</command>, as this
       template database will be cloned to create new databases.
+    </para>
+  </sect1>
+
+  <sect1 id="setting-up-pgpool-conf">
+    <title>Setting up pgpool.conf</title>
+
+    <para>
+      For each <productname>Pgpool-II</productname> operation mode,
+      there are sample configurations.
+    </para>
+
+    <table id="pgpool-conf-samples-table">
+     <title>pgpool.conf samples</title>
+
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>Operation mode</entry>
+        <entry>Configuration file name</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry>Streaming replication mode</entry>
+	<entry><literal>pgpool.conf.sample-stream</literal></entry>
+       </row>
+       <row>
+        <entry>Replication mode</entry>
+	<entry><literal>pgpool.conf.sample-replication</literal></entry>
+       </row>
+       <row>
+        <entry>Master slave mode</entry>
+	<entry><literal>pgpool.conf.sample-master-slave</literal></entry>
+       </row>
+       <row>
+        <entry>Raw mode</entry>
+	<entry><literal>pgpool.conf.sample</literal> </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+    <para>
+      These configuration files are located at /usr/local/etc with
+      default installtion from source code.
+      You can copy one of them as <filename>pgpool.conf</filename>.
+      (probably you need root privilege for this)
+      <programlisting>
+# cd /usr/local/etc
+# cp pgpool.conf.sample-stream pgpool.conf
+      </programlisting>
     </para>
   </sect1>
 
