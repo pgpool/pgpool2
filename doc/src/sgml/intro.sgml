@@ -31,7 +31,7 @@
     <para>
      <xref linkend="admin"> describes the installation and
      administration of the server.  Everyone who runs a
-     <productname>PostgreSQL</productname> server, be it for private
+     <productname>Pgpool-II</productname> server, be it for private
      use or for others, should read this part.
     </para>
    </listitem>
@@ -121,7 +121,7 @@
 	If one of database servers goes down or becomes unrechable,
 	<productname>Pgpool-II</productname> will detaches it and continues operations using rest
 	of database servers. There are some sophiscated features which
-	help the automated fail over including timeout and retres.
+	help the automated fail over including timeout and retries.
       </para>
     </listitem>
    </varlistentry>

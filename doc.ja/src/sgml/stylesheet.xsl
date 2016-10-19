@@ -16,8 +16,10 @@
 <xsl:param name="generate.legalnotice.link" select="1"></xsl:param>
 <xsl:param name="link.mailto.url">pgsql-docs@postgresql.org</xsl:param>
 <xsl:param name="chunk.first.sections" select="1"/>
+<!-- <xsl:param name="chunker.output.indent" select="'yes'"/> -->
 <xsl:param name="chunk.quietly" select="1"></xsl:param>
 <xsl:param name="toc.max.depth">2</xsl:param>
+<xsl:param name="generate.section.toc.level">1</xsl:param>
 
 <xsl:param name="website.stylesheet" select="0"/>
 
@@ -35,6 +37,7 @@
   <xsl:call-template name="inline.monoseq"/>
 </xsl:template>
 
+<xsl:include href="stylesheet-custom.xsl" />
 
 <!-- table of contents configuration -->
 
