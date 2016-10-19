@@ -499,6 +499,7 @@ html-stamp: pgpool.sgml $(ALLSGML) stylesheet.dsl
 	$(MKDIR_P) html
 	$(JADE.html.call) -i include-index $<
 	cp $(srcdir)/stylesheet.css html/
+	cp ../figures/*.gif html
 
 # single-page HTML
 pgpool.html: pgpool.sgml $(ALLSGML) stylesheet.dsl
