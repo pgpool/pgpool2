@@ -1,7 +1,1168 @@
                                 Release Notes
 
 ===============================================================================
+3.6 Series (201x/xx/xx - )
+===============================================================================
+
+                       3.6.0 (subaruboshi) 201x/xx/xx
+
+* Version 3.6.0
+
+    This is the first version of pgpool-II 3.6 series.
+    That is, a "major version up" from 3.5 series.
+
+* Overview
+
+    Major enhancements in Pgpool-II 3.6 include:
+
+    - Improve the behavior of fail-over. In the steaming replication mode,
+      client sessions will not be disconnected when a fail-over occurs any
+      more if the session does not use the failed standby server. If the
+      primary server goes down, still all sessions will be disconnected.
+      Also it is possible to connect to Pgpool-II even if it is doing health
+      checking retries. Before all attempt of connecting to Pgpool-II failed
+      while doing health checking retries.
+
+    - New PGPOOL SET command has been introduced. Certain configuration
+      parameters now can be changed on the fly in a session.
+
+    - Watchdog is significantly enhanced. It becomes more reliable than
+      previous releases.
+
+    - Handling of extended query protocol (e.g. used by Java applications)
+      in streaming replication mode speeds up if many rows are returned
+      in a result set.
+
+    - Import parser of PostgreSQL 9.6.
+
+    - In some cases pg_terminate_backend() now does not trigger a fail-over.
+
+    - Change documentation format from raw HTML to SGML.
+
+    The above items are explained in more detail in the sections below.
+
+* Major Enhancements
+
+    - Improve the behavior of fail-over. (Tatsuo Ishii)
+
+      In the steaming replication mode, client sessions will not be
+      disconnected when a fail-over occurs any more if the session
+      does not use the failed standby server. If the primary server
+      goes down, still all sessions will be disconnected. Health check
+      timeout case will also cause the full session disconnection.
+      Other health check error, including retry over case does not
+      trigger full session disconnection.
+
+      For user's convenience, "show pool_nodes" command shows the session
+      local load balance node info since this is important for users in
+      case of fail-over. If the load balance node is not the failed node,
+      the session will not be affected by fail-over.
+
+      Also now it is possible to connect to Pgpool-II even if it is doing
+      health checking retries. Before all attempt of connecting to Pgpool-II
+      failed while doing health checking retries. Before any attempt to
+      connect to Pgpool-II fails if it is doing a health check against
+      failed node even if fail_over_on_backend_error is off because Pgpool-II
+      child first tries to connect to all backend including the failed one and
+      exits if it fails to connect to a backend (of course it fails). This is
+      a temporary situation and will be resolved before pgpool executes fail-over.
+      However if the health check is retrying, the temporary situation keeps longer
+      depending on the setting of health_check_max_retries and health_check_retry_
+      delay. This is not good. Attached patch tries to mitigate the problem:
+
+      When an attempt to connect to backend fails, give up connecting to
+      the failed node and skip to other node, rather than exiting the process
+      if operating in streaming replication mode and the node is not primary node.
+
+      Mark the local status of the failed node to "down". This will let the primary
+      node be selected as a load balance node and every queries will be sent to the
+      primary node. If there's other healthy standby nodes, one of them will be
+      chosen as the load balance node.
+
+      After the session is over, the child process will suicide to not retain
+      the local status.
+
+    - Add PGPOOL SHOW, PGPOOL SET and PGPOOL RESET commands. (Muhammad Usama)
+
+      These are similar to the PostgreSQL's SET and SHOW commands for GUC
+      variables, adding the functionality in Pgpool-II to set and reset
+      the value of config parameters for the current session, and for
+      that it adds a new syntax in Pgpool-II which is similar to PostgreSQL's
+      SET and RESET variable syntax with an addition of PGPOOL keyword at the start.
+
+      Currently supported configuration parameters by PGPOOL SHOW/SET/RESET are:
+      log_statement, log_per_node_statement, check_temp_table, check_unlogged_
+      table, allow_sql_comments, client_idle_limit, log_error_verbosity,
+      client_min_messages, log_min_messages, client_idle_limit_in_recovery.
+
+    - Sync inconsitent status of PostgreSQL nodes in Pgpool-II instances
+      after restart. (Muhammad Usama)
+
+    - At the Pgpool-II startup, the status of each configured backend node
+      is loaded from the backend status file or otherwise initialized by
+      querying the backend nodes. This technique works fine in stand alone mode
+      and also with the watchdog enabled as long as the status of backend nodes
+      remains consistent until all Pgpool-II nodes got up and running. But since
+      Pgpool-II does not sync the backend node status from the watchdog cluster
+      at startup time, so in some cases the Pgpool-II nodes participating in the
+      watchdog cluster may get a different status for the same backend,
+      especially if the Pgpool-II nodes part of the watchdog cluster starts
+      at different times and between that time an unavailable backend
+      PostgreSQL node had become available again.
+
+      So to solve this, the commit implements the new startup procedure
+      for the standby Pgpool-II, And now the standby Pgpool-II will load the
+      backend status of all configured PostgreSQL nodes from the watchdog
+      master/coordinator node at the time of startup.
+
+    - Enhance performance of SELECT when lots of rows involved. (Tatsuo Ishii)
+
+      Pgpool-II flushes data to network (calling write(2)) every time it
+      sends a row data ("Data Row" message) to frontend. For example, if 10,000
+      rows needed to be transfer, 10,000 times write()s are issued. This is
+      pretty expensive. Since after repeating to send row data, "Command Complete"
+      message is sent, it's enough to issue a write() with the command complete
+      message. Also there are unnecessary flushing are in handling the command
+      complete message.
+
+      Quick testing showed that from 47% to 62% performance enhancements
+      were achieved in some cases.
+
+      Unfortunately, performance in workloads where transferring few rows,
+      will not be enhanced since such rows are needed to flush to network anyway.
+
+    - Import PostgreSQL 9.6's SQL parser. (Bo Peng)
+
+      This allows Pgpool-II to fully understand the newly added SQL syntax
+      such as COPY INSERT RETURNING.
+
+    - In some cases pg_terminate_backend() now does not trigger a fail-over. (Muhammad Usama)
+
+      Since the pg_terminate_backend function in PostgreSQL is used to terminate
+      the backend connection, So what happens is, when this function kills a PostgreSQL
+      backend that is connected to the Pgpool-II, This disconnection of backend by
+      pg_terminate_backend function is appeared as a backend node failure to the
+      Pgpool-II. But the problem here is, PostgreSQL does not give any information
+      to the client program that the connection is going to be killed because of
+      the pg_terminate_backend call and on the client side, it looks similar to
+      the backend node failure.
+
+      Now to solve this in Pgpool-II we need two things. First is to
+      identify the pg_terminate_backend function in the query and the
+      Pgpool-II child process that hosts the particular backend connection
+      which will be killed by that pg_terminate_backend function call,
+      so that we get a heads up in advance about the backend termination,
+      and secondly the routing of the query containing pg_terminate_backend
+      also needs a new logic so that the query should be sent to the correct
+      PostgreSQL node that hosts the backend with the PID referred by
+      the pg_terminate_bakend()
+
+      So how does this commit handles pg_terminate_backend()??
+      In the SimpleQuery() function which is the work horse of simple query
+      processing in the Pgpool-II we start with the search of the
+      pg_terminate_backend() function call in the query parse tree and if
+      the search comes out to be successful, the next step is to locate
+      the Pgpool-II child process and a backend node of that connection
+      whose PID is specified in pg_terminate_backend function's argument.
+      Once the connection and the Pgpool-II child process is identified,
+      we just set the swallow_termination flag(added by this commit in
+      ConnectionInfo structure) for that connection in the shared memory,
+      and also set the query destination node to the backend node that
+      hosts that particular connection and does not call pool_where_to_send()
+      for this query so that the query should be sent to the correct
+      backend node.
+
+      Now when the query is routed to the correct node and consequently
+      the backend gets killed, that results in the communication error on
+      Pgpool-II side, the Pgpool-II already knows that this disconnection
+      is due the pg_terminate_backend and not because of node failure as
+      the swallow_termination flag is already set for the connection.
+
+      Some works are still remaining.
+
+      pg_terminate_backend is not handled with extended query protocol.
+
+      Currently we only support pg_terminate_backend(constant number)
+      function calls. If the expression or sub query is used in the
+      argument of pg_terminate_backend then it would not be handled e.g
+
+        pgpool=# select pg_terminate_backend(1025);         -- Supported
+        pgpool=# select pg_terminate_backend( 2 +1);        -- NOT SUPPORTED
+        pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
+
+	  Currently only one pg_terminate_backend call in a query is handled.
+
+    - HTML documents are now generated from SGML documents.
+      (Muhammad Usama, Tatsuo Ishii, Bo Peng)
+
+      It is intended to have better construction, contents and
+      maintainability. However, still there's tremendous room to
+      enhance the SGML documents. Please help us!
+
+* Other Enhancements
+
+    - Make authentication error message more user friendly. (Tatsuo Ishii)
+
+      When attempt to connect to backend (including health checking),
+      emit error messages from backend something like "sorry,
+      too many clients already" instead of "invalid authentication
+      message response type, Expecting 'R' and received '%c'"
+
+    - Tighten up health check timer expired condition in pool_check_fd().
+      (Muhammad Usama)
+
+      Check if the signal was actually the health check timer expire to
+      make sure that we do not declare the timer expire due to some other
+      signal arrived while waiting for data for health check in pool_check_fd().
+
+    - Add new script called "watchdog_setup". (Tatstuo Ishii)
+
+      watchdog_setup is a command to create a temporary installation
+      of Pgpool-II clusters with watchdog for mainly testings.
+
+      Add "-pg" option to pgpool_setup. (Tatsuo Ishii)
+
+      This is useful when you want to assign specific port numbers to
+      PostgreSQL while using pgpool_setup. Also now pgpool_setup is
+      installed in the standard bin directory which is same as pgpool.
+
+    - Add "replication delay" column to "show pool_nodes". (Tatsuo Ishii)
+
+      This column shows the replication delay value in bytes if operated
+      in streaming replication mode.
+
+    - Do not update status file if all backend nodes are in down
+      status. (Chris Pacejo, Tatsuo Ishii)
+
+      This commit tries to remove the data inconsitency in replication
+      mode found in [pgpool-general: 3918] by not recording the status file
+      when all backend nodes are in down status. This surprisingly simple
+      but smart solution was provided by Chris Pacejo.
+
+    - Allow to use multiple SSL cipher protocols. (Multiple Usama)
+
+      By replacing TLSv1_method() with SSLv23_method() while initializing
+      the SSL session, we can use more protocols than TLSv1 protocol.
+
+      Allow to use arbitrary number of items in the
+      black_function_list/white_function_list. (Muhammad Usama)
+
+      Previously there were fixed limits for those.
+
+    - Properly process empty queries (all comments). (Tatsuo Ishii)
+
+      Pgpool-II now recognizes an empty query consisted of all comments
+      (for example "/* DBD::Pg ping test v3.5.3 */") (note that no ';')
+      as an empty query.
+
+      Before such that query was recognized an error.
+
+      Add some warning messages for wd_authkey hash calculation
+      failure. (Yugo Nagata)
+
+      Sometimes wd_authkey calculation fails for some reason other
+      than authkey mismatch. The additional messages make these distinguishable
+      for each other.
+
+* Changes
+
+    - Change the default value of search_primary_node_timeout from 10 to
+      300. (Tatstuo Ishii)
+
+      Prior default value 10 seconds is sometimes too short for a standby
+      to be promoted.
+
+    - Change the Makefile under directory src/sql/, that is proposed by
+       [pgpool-hackers: 1611]. (Bo Peng)
+
+    - Change the PID length of pcp_proc_count command output to 6
+      characters long. (Bo Peng)
+
+      If the Pgpool-II process ID are over 5 characters, the 6th character
+      of each process ID will be removed. This commit changes the process ID
+      length of pcp_proc_count command output to 6 characters long.
+
+    - Redirect all user queries to primary server. (Tatsuo Ishii)
+
+      Up to now some user queries are sent to other than the primary
+      server even if load_balance_mode = off. This commit changes the
+      behavior: if load_balance_mode = off in streaming replication mode,
+      now all the user queries are sent to the primary server only.
+
+* Bug fixes
+
+    - Fix the case when all backends are down then 1 node attached. (Tatsuo Ishii)
+
+      When all backends are down, no connection is accepted. Then 1
+      PostgreSQL becomes up, and attach the node using pcp_attach_node.
+      It successfully finishes. However, when a new connection arrives,
+      still the connection is refused becausePgpool-II child process
+      looks into the cached status, in which the recovered node is
+      still in down status if mode is streaming replication mode
+      (native replication and other modes are fine). Solution is,
+      if all nodes are down, force to restart all pgpool child.
+
+    - Fix for avoiding downtime when Pgpool-II changes require a
+      restart. (Muhammad Usama)
+
+      To fix this, The verification mechanism of configuration
+      parameter values is reversed, previously the standby nodes used
+      to verify their parameter values against the respective values
+      on the master Pgpool-II node and when the inconsistency was
+      found the FATAL error was thrown, now with this commit the
+      verification responsibility is delegated to the master Pgpool-II
+      node. Now the master node will verify the configuration parameter
+      values of each joining standby node against its local values and
+      will produce a WARNING message instead of an error in case of a
+      difference. This way the nodes having the different configurations
+      will also be allowed to join the watchdog cluster and the user
+      has to manually look out for the configuration inconsistency
+      warnings in the master Pgpool-II log to avoid the surprises at
+      the time of Pgpool-II master switch over.
+
+    - Fix a problem with the watchdog failover_command locking mechanism. (Muhammad Usama)
+
+      From Pgpool-II 3.5 watchdog was using the separate individual
+      locks for each node-failover command (failover, failback and follow-master)
+      and the lock was acquired just before executing the respective failover
+      script and was released as soon as the script execution finishes.
+      This technique although was very efficient but also had a problem.
+      If the failover_command takes a very little time and gets finished
+      before the lock request from other Pgpool-II node arrives, the other
+      node is also granted a lock, since the lock was already released by
+      the first node at that time. Consequently, both nodes ends up executing
+      the failover script. So to fix this we are reverting back to the tested
+      failover interlocking design used prior to Pgpool-II 3.5 where all the
+      commands gets locked at the failover start by the node that becomes a
+      lock-holder and each command lock is released after its execution
+      finishes. And only the lock-holder node is allowed to acquire/release
+      the individual command lock. That way the lock-holder node keeps the
+      lock-holder status throughout the span of the failover execution and
+      the system becomes less time sensitive.
+
+    - Disable strict aliasing optimization. (Tatsuo Ishii)
+
+      flatten_set_variable_args() was imported from PostgreSQL in Pgpool-II 3.5.
+      To make the code work, a compiler flag -fno-strict-aliasing is necessary
+      (PostgreSQL does so). Unfortunately when the function was imported, the
+      compiler flag was not added. To fix this, configure.ac was modified.
+
+    - Do not use random() while generating MD5 salt. (Tatsuo Ishii)
+
+      random() should not be used in security related applications.
+      To replace random(), import PostmasterRandom() from PostgreSQL.
+      Also store current time at the start up of Pgpool-II main process
+      for later use.
+
+    - Don't ignore sync message from frontend when query cache is enabled. (Tatsuo Ishii)
+
+      While returning cached query result, sync message sent from frontend
+      is discarded. This is harmless because "ready for query" messages is
+      sent to frontend afterward. Problem is, AccessShareLock held by previous
+      parse message processing is not released until sync message is received
+      by the backend. Fix is, forwarding the sync message to backend and discarding
+      "ready for query" message returned from backend.
+
+    - Fix bug that Pgpool-II fails to start if listen_addresses is
+      empty string. (bug 237) (Muhammad Usama)
+
+      The socket descriptor array (fds[]) was not getting the array
+      end marker when TCP listen addresses are not used.
+
+    - Create regression log directory if it does not exist yet. (Tatsuo Ishii)
+
+    - Fixing the error messages when the socket operation fails. (Muhammad Usama)
+
+      When some socket operation fails, we issue close socket before throwing
+      an error which causes the errno value to be overwritten and consequently
+      the error log does not print the correct failure reason. The solution is
+      to save the errno before closing the socket and use the saved value to
+      print error description.
+
+    - Fix regression failure of 003.failover. (Tatsuo Ishii)
+
+      Update expected data to reflect the changes made to show pool_nodes.
+      Also fix show pool_nodes to proper use "_" instead of space for the
+      column name.
+
+    - Fix hang when portal suspend received. (bug 230) (Tatsuo Ishii)
+
+      When portal suspend message is received, it's not enough to forward it
+      to the client. Since backend expects to receive execute message, trying
+      to read further more messages from backend will never succeed.
+      To fix this, turn off the query in progress flag, which will pole
+      incoming message from the client.
+
+    - Fix pgpool doesn't de-escalate IP in case network restored. (bug 228) (Muhammad Usama)
+
+      set_state function is made to de-escalate, when it is changing the
+      local node's state from the coordinator state to some other state.
+
+    - SIGUSR1 signal handler should be installed before watchdog
+      initialization. (Muhammad Usama)
+
+      Since there can be a case where a failover request from other
+      watchdog nodes arrive at the same time when the watchdog has just
+      been initialized, and if we wait any longer to install a SIGUSR1
+      signal handler, it can result in a potential crash
+
+    - Fix for bug of inconsistent status of PostgreSQL nodes in
+      Pgpool-II instances after restart. (bug 218) (Muhammad Usama)
+
+      Watchdog does not synchronize status. Currently at the Pgpool-II
+      startup, The status of each configured backend node is loaded from the
+      backend status file or otherwise initialized by querying the backend
+      nodes. This technique works fine in stand alone mode and also with
+      the watchdog enabled as long as the status of backend nodes remains
+      consistent until all Pgpool-II nodes got up and running. But since
+      Pgpool-II does not sync the backend node status from the watchdog
+      cluster at startup time, so in some cases the pgpool-II nodes
+      participating in the watchdog cluster may get a different status
+      for the same backend, especially if the Pgpool-II nodes part of
+      the watchdog cluster starts at different times and between that
+      time an unavailable backend PostgreSQL node had become available
+      again.
+
+      So to solve this, the commit implements the new startup procedure
+      for the standby Pgpool-II, And now the standby Pgpool-II will
+      load the backend status of all configured PostgreSQL nodes from
+      the watchdog master/coordinator node at the time of startup.
+
+    - Fix Pgpool-II doesn't escalate ip in case of another node
+      inavailability. (bug 215) (Muhammad Usama)
+
+      The heartbeat receiver fails to identify the heartbeat sender watchdog
+      node when the heartbeat destination is specified in terms of an IP address
+      while wd_hostname is configured as a hostname string or vice versa.
+
+    - Fixing a coding mistake in watchdog code. (Muhammad Usama)
+
+      wd_issue_failover_lock_command() function is supposed to forward
+      command type passed in as an argument to the wd_send_failover_sync_command()
+      function instead it was passing the NODE_FAILBACK_CMD command type.
+
+      The commit also contains some log message enhancements.
+
+    - Display human readable output for backend node status. (Muhammad Usama)
+
+      Changed the output of pcp_node_info utility and show commands display
+      human readable backend status string instead of internal status code.
+
+    - Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+
+      The macro calls pool_virtual_master_db_node_id() and then access
+      backend->slots[id]->con using the node id returned. In rare cases,
+      it could point to 0 (in case when the DB node is not connected),
+      which gives access to con->major, then it causes a segfault.
+
+    - Fix "kind mismatch" error message in Pgpool-II. (Muhammad Usama)
+
+      Many of "kind mismatch..." errors are caused by notice/warning messages
+      produced by one or more of the DB nodes. In this case now Pgpool-II forwards
+      the messages to frontend, rather than throwing the "kind mismatch..." error.
+      This would reduce the chance of "kind mismatch..." errors.
+
+    - Fix handling of pcp_listen_addresses config parameter. (Muhammad Usama)
+
+    - Save and restore errno in each signal handler. (Tatsuo Ishii)
+
+    - Fix usage of wait(2) in pgpool main process. (Tatsuo Ishii)
+
+      When child process dies, SIGCHLD signal is raised and wait(2) knows
+      the event. However, multiple child death does not necessarily creates exact
+      same number of SIGCHLD signal as the number of dead children and wait(2)
+      could wait for an event which never happens in this case. I Actually
+      encountered this situation while testing Pgpool-II. Solution is,
+      to use waitpid(2) instead of wait(2).
+
+    - Fix confusing error messages. (Tatsuo Ishii)
+
+      pool_read() does not emit error messages when read(2) returns -1
+      if fail_over_on_backend_error is off. In any case the cause of error
+      should be emitted. I do not back port this because it's a too trivial
+      enhancement.
+
+    - Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+
+      While processing "show pool_nodes", the buffer for hostname was too short.
+      It should be same size as the buffer used for pgpool.conf. Problem reported
+      by a twitter user who is using pgpool on AWS (which could have very long hostname).
+
+    - Fix [pgpool-hackers: 1638] pgpool-II does not use default configuration. (Muhammad Usama)
+
+      Configuration file not found should just throw a WARNING message
+      instead of ERROR or FATAL.
+
+    - Fix bug with load balance node id info on shmem. (Tatsuo Ishii)
+
+      There are few places where the load balance node was mistakenly
+      put on wrong place. It should be placed on:
+
+            ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancing_node].
+
+      In fact it was placed on:
+
+            *con_info[child id, connection pool_id, 0].load_balancing_node].
+
+
+      As long as the backend id in question is 0, it is ok. However while
+      testing Pgpool-II 3.6's enhancement regarding failover,
+      if primary node is 1 (which is the load balance node) and standby
+      is 0, a client connecting to node 1 is disconnected when failover
+      happens on node 0. This is unexpected and the bug was revealed.
+
+      It seems the bug was there since long time ago but it had
+      not found until today by the reason above.
+
+    - Fix for bug that pgpool hangs connections to database. (bug 197) (Muhammad Usama)
+
+      The client connection was getting stuck when backend node and
+      remote Pgpool-II node becomes unavailable at the same time.
+      The reason was a missing command timeout handling in the function
+      that sends the IPC commands to watchdog.
+
+    - Fix a posible hang during health checking. (bug 204) (Yugo Nagata)
+
+      Helath checking was hang when any data wasn't sent from
+      backend after connect(2) succeeded. To fix this, pool_check_fd()
+      returns 1 when select(2) exits with EINTR due to SIGALRM while
+      health checkking is performed.
+
+    - Deal with the case when the primary is not node 0 in streaming
+      replication mode. (Tatsuo Ishii)
+
+      http://www.pgpool.net/mantisbt/view.php?id=194#c837 reported that
+      if primary is not node 0, then statement timeout could occur even
+      after bug194-3.3.diff was applied. After some investigation,
+      it appeared that MASTER macro could return other than primary
+      or load balance node, which was not supposed to happen,
+      thus do_query() sends queries to wrong node (this is not clear
+      from the report but I confirmed it in my investigation).
+
+      pool_virtual_master_db_node_id(), which is called in MASTER macro
+      returns query_context->virtual_master_node_id if query context exists.
+      This could return wrong node if the variable has not been set yet.
+      To fix this, the function is modified: if the variable is not either
+      load balance node or primary node, the primary node id is returned.
+
+      For master and 3.5-stable, additional fixes/enhancements are made:
+      pool_extended_send_and_wait() now issues flush message if the request
+      is 'E' (execute).
+      Before it was issued outside (in Execute), but this makes the logic to
+      determine to which node the flush message to be sent unnecessary complex.
+
+      A debug message in pool_write is enhanced by adding backend node id.
+
+    - If statement timeout is enabled on backend and do_query() sends a query to
+      primary node, and all of following user queries are sent to standby,
+      it is possible that the next command, for example END, could cause a statement
+      timeout error on the primary, and a kind mismatch error on pgpool-II is
+      raised. (bug 194) (Tatsuo Ishii)
+
+      This fix tries to mitigate the problem by sending sync message instead of
+      flush message in do_query(), expecting that the sync message reset the
+      statement timeout timer if we are in an explicit transaction.
+      We cannot use this technique for implicit transaction case, because
+      the sync message removes the unnamed portal if there's any.
+
+      Plus, pg_stat_statement will no longer show the query issued
+      by do_query() as "running".
+
+    - Fix extended protocol handling in raw mode. (Tatsuo Ishii)
+
+      Bug152 reveals that extended protocol handling in raw mode
+      (actually other than in stream mode) was wrong in Describe()
+      and Close(). Unlike stream mode, they should wait for backend response.
+
+    - Fix confusing comments in pgpool.conf. (Tatsuo Ishii)
+
+    - Fix Japanese and Chinese documetation bug about raw mode. (Yugo Nagata, Bo Peng)
+
+      Connection pool is avalilable in raw mode.
+
+    - Fix is_set_transaction_serializable() when
+      SET default_transaction_isolation TO 'serializable'. (bug 191) (Bo Peng)
+
+      SET default_transaction_isolation TO 'serializable' is sent to not only
+      primary but also to standby server in streaming replication mode,
+      and this causes an error. Fix is, in streaming replication mode,
+      SET default_transaction_isolation TO 'serializable' is sent only to
+      the primary server.
+
+    - Fix extended protocol hang with empty query. (bug 190) (Tatsuo Ishii)
+
+      The fixes related to extended protocol cases in 3.5.1 broke the case of
+      empty query. In this case backend replies with "empty query response"
+      which is same meaning as a command complete message. Problem is, when
+      empty query response is received, pgpool does not reset the query in progress
+      flag thus keeps on waiting for backend. However, backend will not send the
+      ready for query message until it receives a sync message. Fix is,
+      resetting the in progress flag after receiving the empty query response
+      and reads from frontend expecting it sends a sync message.
+
+    - Fix for [pgpool-general: 4569] Pgpool-II 3.5 : segfault. (Muhammad Usama)
+
+      PostgreSQL's memory and exception manager APIs adopted by the Pgpool-II 3.4
+      are not thread safe and are causing the segmentation fault in the watchdog
+      lifecheck process, as it uses the threads to ping configured trusted hosts for
+      checking the upstream connections. Fix is to remove threads and use the child
+      process approach instead.
+
+    - Validating the PCP packet length. (Muhammad Usama)
+
+      Without the validation check, a malformed PCP packet can crash the
+      PCP child and/or can run the server out of memory by sending the packet
+      with a very large data size.
+
+    - Fix Pgpool-II hang bug (bug 167). (Tatsuo Ishii)
+
+      Pgpool-II 3.5 or after in streaming replication mode does not
+      wait for response from each phase such parse, bind anymore.
+      However, if do_query is called, it sends flush message to retrieve
+      the result of system catalog look up. This is only sent to primary node
+      which may results in retrieving previous message results, for example
+      parse complete. If standby is assigned to load balance node, the node
+      does not return parse complete message, which will cause a problem
+      in bug167 case, because parse message for "BEGIN" was sent to both the
+      primary and the standby. Fix is, send flush message in do_query if the
+      load balance node is one of standbys.
+
+    - Fix pgpool_setup to not confuse log output. (Tatsuo Ishii)
+
+      Before it simply redirects the stdout and stderr of pgpool process
+      to a log file. This could cause log contents being garbled or even
+      missed because of race condition caused by multiple process being
+      writing concurrently. I and Usama found this while investigating
+      the regression failure of 004.watchdog. To fix this, pgpool_setup
+      now generates startall script so that pgpool now sends stdout/stderr
+      to cat command and cat writes to the log file (It seems the race
+      condition does not occur when writing to a pipe).
+
+    - Fix for [pgpool-general: 4519] Worker Processes Exit and
+      Are Not Re-spawned. (Muhammad Usama)
+
+      The problem was due to a logical mistake in the code for checking
+      the exiting child process type when the watchdog is enabled.
+      I have also changed the severity of the message from FATAL to LOG,
+      emitted for child exits due to max connection reached.
+
+    - Fix pgpool hung after receiving error state from backend. (bug #169) (Tatsuo Ishii)
+
+      This could happend if we execute an extended protocol query
+      and it fails. After an error is received the "ignore till sync flag"
+      is set and remained even if sync message was actually received.
+      Thus any subsequent query (in the case above "DEALLOCATE message")
+      is not procesed and pgpool waits for message from frontend and backend,
+      and pgpool stucks here because no message will arrive from both side.
+
+      To fix this, unconditionally reset the "ignore till sync flag"
+      in ReadyforQuery(). This is safe because apparently we already
+      received the ready for query message.
+
+    - Fix query stack problems in extended protocol case. (bug 167, 168) (Tatstuo Ishii)
+
+    - Fix [pgpool-hackers: 1440] yet another reset query stuck problem. (Tatsuo Ishii)
+
+      After receiving X message from frontend, if Pgpool-II detects EOF
+      on the connection before sending reset query, Pgpool-II could wait for
+      backend which had not received the reset query. To fix this,
+      if EOF received, treat this as FRONTEND_ERROR, rather than ERROR.
+
+    - Fix for [pgpool-general: 4265] another reset query stuck problem. (Muhammad Usama)
+
+      The solution is to report FRONTEND_ERROR instead of simple ERROR
+      when pool_flush on front-end socket fails.
+
+    - Fixing pgpool-recovery module compilation issue with PostgreSQL 9.6. (Muhammad Usama)
+
+      Incorporating the change of function signature for GetConfigOption()
+      functions in PostgreSQL 9.6
+
+    - Fix compile issue on freebsd. (Muhammad Usama)
+
+      Add missing include files. The patch is contributed by the bug
+      reporter and enhanced a little by me.
+
+    - Fix regression test to check timeout of each test. (Yugo Nagata)
+
+    - Add some warning messages for wd_authkey hash calculation failure. (Yugo Nagata)
+
+      Sometimes wd_authkey calculation fails for some reason other
+      than authkey mismatch. The additional messages make these distingushable
+      for each other.
+
+===============================================================================
 3.5 Series (2016/01/29 - )
+===============================================================================
+
+                       3.5.4 (ekieboshi) 2016/08/31
+
+* Version 3.5.4
+
+    This is a bugfix release against pgpool-II 3.5.3.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+
+      While processing "show pool_nodes", the buffer for hostname was too
+      short. It should be same size as the buffer used for pgpool.conf.
+      Problem reported by a twitter user who is using pgpool on AWS (which
+      could have very long hostname).
+
+    - Fix usage of wait(2) in pgpool main process. (Tatsuo Ishii)
+
+      The usage of wait(2) in pgpool main could cause infinite wait in the
+      system call. Solution is, to use waitpid(2) instead of wait(2).
+
+    - Save and restore errno in each signal handler. (Tatsuo Ishii)
+
+    - Fix handling of pcp_listen_addresses config parameter. (Muhammad Usama)
+
+    - Fix "kind mismatch" error message in pgpool. (Muhammad Usama)
+
+      Many of "kind mismatch..." errors are caused by notice/warning
+      messages produced by one or more of the DB nodes. In this case now
+      Pgpool-II forwards the messages to frontend, rather than throwing the
+      "kind mismatch..." error. This would reduce the chance of "kind
+      mismatch..."  errors.
+
+      See [pgpool-hackers: 1501] for more details.
+
+    - Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+
+      The macro calls pool_virtual_master_db_node_id() and then access
+      backend->slots[id]->con using the node id returned.  In rare cases, it
+      could point to 0 (in case when the DB node is not connected), which
+      gives access to con->major, then it causes a segfault.
+
+      See bug 225 for related info.
+
+    - Fixing a coding mistake in watchdog code. (Muhammad Usama)
+
+      wd_issue_failover_lock_command() function is supposed to forward command type
+      passed in as an argument to the wd_send_failover_sync_command() function instead
+      it was passing the NODE_FAILBACK_CMD command type.
+
+      The commit also contains some log message enhancements.
+
+    - doc : Fixing a typo in english doc (Muhammad Usama)
+
+    - Fix for bun 215 that pgpool doesn't escalate ip in case of another node inavailability.
+      (Muhammad Usama)
+
+      The heartbeat receiver fails to identify the heartbeat sender watchdog node when
+      the heartbeat destination is specified in terms of an IP address while
+      wd_hostname is configured as a hostname string or vice versa.
+
+      See bug 215 for related info.
+
+    - Fix for bug of inconsistent status of Postgresql nodes in Pgpool instances
+      after restart.(Muhammad Usama)
+
+      Watchdog does not synchronize status.
+
+      See bug 218 for related info.
+
+    - SIGUSR1 signal handler should be installed before watchdog initialization.
+      (Muhammad Usama)
+
+      Since there can be a case where a failover request from other watchdog nodes
+      arrive at the same time when the watchdog has just been initialized,
+      and if we wait any longer to install a SIGUSR1 signal handler, it can
+      result in a potential crash.
+
+    - Fix for bug 228 that pgpool doesn't de-escalate IP in case network restored.
+      (Muhammad Usama)
+
+      See bug 228 for related info.
+
+    - Fix hang when portal suspend received. (Tatsuo Ishii)
+
+      See bug 230 for related info.
+
+    - test : Add regression test for bug 230. (Tatsuo Ishii)
+
+    - Fixing a typo in the log message. (Muhammad Usama)
+
+    - Fixing the error messages when the socket operation fails. (Muhammad Usama)
+
+    - Tighten up health check timer expired condition in pool_check_fd(). (Muhammad Usama)
+
+    - doc : Add comment to the document about connection_cache. (Tatsuo Ishii)
+
+    - Fix Handling of pcp_socket_dir was missing from pool_get_config(). (Muhammad Usama)
+
+    - doc : Fix Japanese document typo. (Bo Peng)
+
+    - Fix "out of memory" by using "pg_md5 -m".(Muhammad Usama)
+
+      See bug 236 for related info.
+
+    - Fix for 237 that Pgpool-II fails to start if listen_addresses is empty string.
+      (Muhammad Usama)
+
+      The socket descriptor array (fds[]) was not getting the array end marker
+      when TCP listen addresses are not used.
+
+      See bug 237 for related info.
+
+===============================================================================
+
+                        3.5.3 (ekieboshi) 2016/06/17
+
+* Version 3.5.3
+
+    This is a bugfix release against pgpool-II 3.5.2.
+
+    __________________________________________________________________
+
+* New features
+
+    - Allow to access to pgpool while doing health checking (Tatsuo Ishii)
+
+      Currently any attempt to connect to pgpool fails if pgpool is doing
+      health check against failed node even if fail_over_on_backend_error is
+      off because pgpool child first tries to connect to all backend
+      including the failed one and exits if it fails to connect to a backend
+      (of course it fails). This is a temporary situation and will be
+      resolved before pgpool executes failover. However if the health check
+      is retrying, the temporary situation keeps longer depending on the
+      setting of health_check_max_retries and health_check_retry_delay. This
+      is not good. Attached patch tries to mitigate the problem:
+
+      - When an attempt to connect to backend fails, give up connecting to
+        the failed node and skip to other node, rather than exiting the
+        process if operating in streaming replication mode and the node is
+        not primary node.
+
+      - Mark the local status of the failed node to "down".
+
+      - This will let the primary node be selected as a load balance node
+        and every queries will be sent to the primary node. If there's other
+        healthy standby nodes, one of them will be chosen as the load
+        balance node.
+
+      - After the session is over, the child process will suicide to not
+        retain the local status.
+
+      Per [pgpool-hackers: 1531].
+
+* Bug fixes
+
+    - Fix is_set_transaction_serializable() when
+      SET default_transaction_isolation TO 'serializable'. (Bo Peng)
+
+      SET default_transaction_isolation TO 'serializable' is sent to
+      not only primary but also to standby server in streaming replication mode,
+      and this causes an error. Fix is, in streaming replication mode,
+      SET default_transaction_isolation TO 'serializable' is sent only to the
+      primary server.
+
+      See bug 191 for related info.
+
+    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+      Connection pool is avalilable in raw mode.
+
+    - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
+
+    - Fix extended protocol handling in raw mode (Tatsuo Ishii)
+
+      Bug152 reveals that extended protocol handling in raw mode (actually
+      other than in stream mode) was wrong in Describe() and Close().
+      Unlike stream mode, they should wait for backend response.
+
+      See bug 152 for related info.
+
+    - Permit pgpool to support multiple SSL cipher protocols (Muhammad Usama)
+
+      Currently TLSv1_method() is used to initialize the SSL context, that puts an
+      unnecessary limitation to allow only TLSv1 protocol for SSL communication.
+      While postgreSQL supports other ciphers protocols as well. The commit changes
+      the above and initializes the SSLSession using the SSLv23_method()
+      (same is also used by PostgreSQL). Because it can negotiate the use of the
+      highest mutually supported protocol version and remove the limitation of one
+      specific protocol version.
+
+    - If statement timeout is enabled on backend and do_query() sends a (Tatsuo Ishii)
+      query to primary node, and all of following user queries are sent to
+      standby, it is possible that the next command, for example END, could
+      cause a statement timeout error on the primary, and a kind mismatch
+      error on pgpool-II is raised.
+
+      This fix tries to mitigate the problem by sending sync message instead
+      of flush message in do_query(), expecting that the sync message reset
+      the statement timeout timer if we are in an explicit transaction. We
+      cannot use this technique for implicit transaction case, because the
+      sync message removes the unnamed portal if there's any.
+
+      Plus, pg_stat_statement will no longer show the query issued by
+      do_query() as "running".
+
+      See bug 194 for related info.
+
+    - Deal with the case when the primary is not node 0 in streaming replication mode.
+      (Tatsuo Ishii)
+
+      http://www.pgpool.net/mantisbt/view.php?id=194#c837 reported that if
+      primary is not node 0, then statement timeout could occur even after
+      bug194-3.3.diff was applied. After some investigation, it appeared
+      that MASTER macro could return other than primary or load balance
+      node, which was not supposed to happen, thus do_query() sends queries
+      to wrong node (this is not clear from the report but I confirmed it in
+      my investigation).
+
+      pool_virtual_master_db_node_id(), which is called in MASTER macro
+      returns query_context->virtual_master_node_id if query context
+      exists. This could return wrong node if the variable has not been set
+      yet. To fix this, the function is modified: if the variable is not
+      either load balance node or primary node, the primary node id is
+      returned.
+
+    - Fix a posible hang during health checking (Yugo Nagata)
+
+      Helath checking was hang when any data wasn't sent
+      from backend after connect(2) succeeded. To fix this,
+      pool_check_fd() returns 1 when select(2) exits with
+      EINTR due to SIGALRM while health checkking is performed.
+
+      Reported and patch provided by harukat and some modification
+      by Yugo.
+
+      See bug 204 for related info.
+
+    - change the Makefile under this directory src/sql/,that is proposed by (Bo Peng)
+      [pgpool-hackers: 1611]
+
+    - fix for 0000197: pgpool hangs connections to database.. (Muhammad Usama)
+
+      The client connection was getting stuck when backend node and remote pgpool-II
+      node becomes unavailable at the same time. The reason was a missing command
+      timeout handling in the function that sends the IPC commands to watchdog.
+
+    - Fix bug with load balance node id info on shmem (Tatsuo Ishii)
+
+      There are few places where the load balance node was mistakenly put on
+      wrong place. It should be placed on:
+      ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancing_node].
+      In fact it was placed on:
+      *con_info[child id, connection pool_id, 0].load_balancing_node].
+
+      As long as the backend id in question is 0, it is ok. However while
+      testing pgpool-II 3.6's enhancement regarding failover, if primary
+      node is 1 (which is the load balance node) and standby is 0, a client
+      connecting to node 1 is disconnected when failover happens on node
+      0. This is unexpected and the bug was revealed.
+
+      It seems the bug was there since long time ago but it had not found
+      until today by the reason above.
+
+
+    - Fixing coverity scan reported issues. (Muhammad Usama)
+
+===============================================================================
+
+                        3.5.2 (ekieboshi) 2016/04/26
+
+* Version 3.5.2
+
+    This is a bugfix release against pgpool-II 3.5.1.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix for segfault during trusted_servers check (Muhammad Usama)
+
+      PostgreSQL's memory and exception manager APIs adopted by the
+      pgpool 3.4 are not thread safe and are causing the segmentation fault
+      in the watchdog lifecheck process, as it uses the threads to ping
+      configured trusted hosts for checking the upstream connections.
+      Fix is to remove threads and use the child process approach instead.
+
+      See [pgpool-general: 4569] for more details.
+
+    - Removing the limit on the maximum number of items in the
+      black_function_list and white_function_list lists (Muhammad Usama)
+
+      extract_string_tokens in pool_config uses the fixed size malloc on
+      the array to hold the black_function_list/white_function_list items.
+      This imposes a limit of maximum items in these lists.
+      The fix is to use realloc to increase the array size when it gets full.
+
+    - Fix check "PCP Directory" in "Parameter Setting" in install
+      (Nozomi Anzai)
+
+      The command "pcp_system_info" was discarded in 3.5, but pgpoolAdmin
+      still confirmed if it existed.
+
+      Per bug #187.
+
+    - Fix extended protocol hang with empty query (Tatsuo Ishii)
+
+      The fixes related to extended protocol cases in 3.5.1 broke the case
+      of empty query.  In this case backend replies with "empty query
+      response" which is same meaning as a command complete message. Problem
+      is, when empty query response is received, pgpool does not reset the
+      query in progress flag thus keeps on waiting for backend. However,
+      backend will not send the ready for query message until it receives a
+      sync message. Fix is, resetting the in progress flag after receiving
+      the empty query response and reads from frontend expecting it sends a
+      sync message.
+
+      Per bug #190.
+
+    - Redirect all user queries to primary server (Tatsuo Ishii)
+
+      Up to now some user queries are sent to other than the primary server
+      even if load_balance_mode = off. This commit changes the behavior: if
+      load_balance_mode = off in streaming replication mode, now all the
+      user queries are sent to the primary server only.
+
+      Per bug #189.
+
+    - Change the PID length of pcp_proc_count command result to 6 characters
+      long (Bo Peng)
+
+      If the pgpool process ID are over 5 characters, the 6th character of each
+      process ID will be removed. This commit changes the process ID length of
+      pcp_proc_count command result to 6 characters long.
+
+      Per bug #188.
+
+===============================================================================
+
+                        3.5.1 (ekieboshi) 2016/04/04
+
+* Version 3.5.1
+
+    This is a bugfix release against pgpool-II 3.5.0.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Add some warning messages for wd_authkey hash calculation failure
+      (Yugo Nagata)
+
+      Sometimes wd_authkey calculation fails for some reason other than
+      authkey mismatch. The additional messages make these distingushable
+      for each other.
+
+    - test: Fix regression test to check timeout of each test (Yugo Nagata)
+
+    - test: Allow timeout value to be specified by the command option
+      (Yugo Nagata)
+
+    - Fix compile issue on FreeBSD (Muhammad Usama)
+
+      Added missing include files.
+
+      Per bug #166. The patch is contributed by the bug reporter and
+      enhanced a little by Usama.
+
+    - test: Fix test/regression/clean.sh to remove binary files of
+      010.rewrite_timestamp test (Yugo Nagata)
+
+    - Fix memorry leak reported by Coverity (CID 1350095) (Yugo Nagata)
+
+    - Fixing pgpool-recovery module compilation issue with PostgreSQL 9.6
+      (Muhammad Usama)
+
+      Incorporating the change of function signature for GetConfigOption..()
+      functions in PostgreSQL 9.6.
+
+    - Fix to properly process an empty query that has only comments
+      (Tatsuo Ishii)
+
+      Pgpool-II recognized an empty query, for example "/* DBD::Pg ping test
+      v3.5.3 */" (note that it has no ';') as an error and emits message
+      "Unable to parse the query". This is because raw_parser() cannot
+      distinguish an empty query from an error query due to the poor API
+      design. To fix this new out parameter "*error" added to the
+      function. If an error occurred, the variable is set to true and caller
+      can know the reason why raw_parser() returns NIL is because of an error
+      query or an empty query.
+
+      Per bug #154. See [pgpool-hackers: 1359] for additional information.
+
+    - Fix a reset query stuck problem (Muhammad Usama)
+
+      The solution is to report FRONTEND_ERROR instead of simple ERROR when
+      pool_flush on front-end socket fails.
+
+      The original report is
+      [pgpool-general: 4265] Pgpool - connection hangs in DISCARD ALL
+
+      The patch was generated by Usama and Pawel Ufnalewski<archon@foap.com>,
+      and Gerhard Wiesinger <lists@wiesinger.com> helped to verify and test
+      the fix.
+
+    - Fix a reset query stuck problem (Tatsuo Ishii)
+
+      After receiving X message from frontend, if pgpool-II detects EOF on
+      the connection before sending reset query, pgpool-II could wait for
+      a response from backend which had not received the reset query.
+      To fix this, if EOF received, treat this as FRONTEND_ERROR, rather
+      than ERROR.
+
+      See "[pgpool-hackers: 1440] Yet another reset query stuck problem"
+      for more details.
+
+    - Fix query stuck problems in streaming replication mode with extended
+      protocol queries (Tatsuo Ishii)
+
+      This fix is for both bug #167 and #168.
+
+    - Fix pgpool hung after receiving error state from backend (Tatsuo Ishii)
+
+      This could happend if we execute an extended protocol query and it
+      fails.
+
+      Per bug #169.
+
+    - Fix bug that child processes exit and are not re-spawned (Muhammad Usama)
+
+      The problem was due to a logical mistake in the code for checking the
+      exiting child process type when the watchdog is enabled. Also the severity
+      of the message emitted for child exits due to max connection reached
+      from FATAL to LOG.
+
+      Per [pgpool-general: 4519] Worker Processes Exit and Are Not Re-spawned
+
+    - Fix typo in configure (Tatsuo Ishii)
+
+      Patch provided by Thomas Munro.
+
+    - doc: Change description of backend_flag (Tatsuo Ishii)
+
+      It is pointed out that restarting pgpool-II is not necessary.
+
+      Per [pgpool-general-jp: 1394].
+
+    - doc: Fix installation procedure. (Tatsuo Ishii)
+
+      With PostgreSQL 9.4 or later, installing pgpool_regclass is not needed.
+
+    - test: Fix pgpool_setup to not confuse log output (Tatsuo Ishii)
+
+      Before it simply redirects stdout and stderr of pgpool processes to
+      a log file. This could cause the log contents being garbled or even
+      missed because of race condition caused by multiple process being
+      writing concurrently.
+
+      To fix this, pgpool_setup now generates startall script in which pgpool
+      sends stdout/stderr to cat command by pipe, and cat writes to the log
+      file.
+
+    - Fix to validate the PCP packet length (Muhammad Usama)
+
+      Without the validation check, a malformed PCP packet can crash the
+      PCP child and/or can run the server out of memory by sending the packet
+      with a very large data size.
+
 ===============================================================================
 
                         3.5.0 (ekieboshi) 2016/01/29
@@ -19,7 +1180,7 @@
 
       There are very few users and the maintenance efforts are not worth it.
       Codes for system db are also removed, since this was used in only parallel
-      query mode and old query cache on disk. 
+      query mode and old query cache on disk.
 
     - Rename parameter name from ifconfig_path to if_cmd_path (Yugo Nagata)
 
@@ -34,11 +1195,11 @@
       The command is enhanced to show watchdog information about all pgpool-II
       nodes in the cluster. According to this, the argument to specify node index
       is changed so that 0 means local pgpool-II node instead of the first remote
-      node. 
+      node.
 
       __________________________________________________________________
 
-* New features 
+* New features
 
     - Add new parameter "serialize_accept" (Tatsuo Ishii)
 
@@ -68,7 +1229,7 @@
 
       For this purpose new directive "health_check_database" and
       "sr_check_database" are added.
-  
+
       __________________________________________________________________
 
 * Enhancements
@@ -126,7 +1287,7 @@
     - Overhauling pcp commands (Muhammad Usama)
 
         -- Improved handling of command argument:
-           Long command line options can be used now. 
+           Long command line options can be used now.
         -- PCP password is safe:
            Don't pass password via command line, which causes security risks.
         -- Mutiple concurrent execution of pcp commands:
@@ -140,7 +1301,7 @@
       recognize the effect of load balancing for example;
 
         test=# show pool_nodes;
-         node_id | hostname | port  | status | lb_weight |  role   | select_cnt 
+         node_id | hostname | port  | status | lb_weight |  role   | select_cnt
         ---------+----------+-------+--------+-----------+---------+------------
          0       | /tmp     | 11002 | 2      | 0.500000  | primary | 338230
          1       | /tmp     | 11003 | 2      | 0.500000  | standby | 163939
@@ -214,7 +1375,7 @@
       It allocates buffer using realloc and uses the pointer
       returned. However it does the pointer calculation *before* realloc
       gets called. So the calculation uses the old pointer value, which
-      causes various problems including segfault later. 
+      causes various problems including segfault later.
 
       Also there were other problems with it. The buffer pointer and buffer
       size variable is not initialized. The buffer is not freed by
@@ -270,7 +1431,7 @@
 
     - test: Fix regression test 055 for rhel7 rpm (Yugo Nagata)
 
-    - Fix reset query stuck problem (Muhammad Usama) 
+    - Fix reset query stuck problem (Muhammad Usama)
 
       The issue is already fixed in older branches and this fix adopts the
       same solution used by 3.3 series, i.e. closing the backend connection
@@ -289,7 +1450,7 @@
 
       However there's oversight here. "SET TRANSACTION READ ONLY" does no
       data modification and should be treated as an exception.
-      
+
       Per bug #157.
 
     - test: Fix to use timeout command to handle time out of regress test 062
@@ -346,6 +1507,564 @@
 3.4 Series (2014/11/07 - )
 ===============================================================================
 
+                        3.4.8 (tataraboshi) 2016/08/31
+
+* Version 3.4.8
+
+    This is a bugfix release against pgpool-II 3.4.7.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+
+      While processing "show pool_nodes", the buffer for hostname was too
+      short. It should be same size as the buffer used for pgpool.conf.
+      Problem reported by a twitter user who is using pgpool on AWS (which
+      could have very long hostname).
+
+    - Fix usage of wait(2) in pgpool main process. (Tatsuo Ishii)
+
+      The usage of wait(2) in pgpool main could cause infinite wait in the
+      system call. Solution is, to use waitpid(2) instead of wait(2).
+
+    - Save and restore errno in each signal handler. (Tatsuo Ishii)
+
+    - Fix handling of pcp_listen_addresses config parameter. (Muhammad Usama)
+
+    - Fix "kind mismatch" error message in pgpool. (Muhammad Usama)
+
+      Many of "kind mismatch..." errors are caused by notice/warning
+      messages produced by one or more of the DB nodes. In this case now
+      Pgpool-II forwards the messages to frontend, rather than throwing the
+      "kind mismatch..." error. This would reduce the chance of "kind
+      mismatch..."  errors.
+
+      See [pgpool-hackers: 1501] for more details.
+
+    - Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+
+      The macro calls pool_virtual_master_db_node_id() and then access
+      backend->slots[id]->con using the node id returned.  In rare cases, it
+      could point to 0 (in case when the DB node is not connected), which
+      gives access to con->major, then it causes a segfault.
+
+      See bug 225 for related info.
+
+    - doc : Fixing a typo in english doc (Muhammad Usama)
+
+    - doc : fix Japanese document typo. (Bo Peng)
+
+    - Fixing a typo in the log message. (Muhammad Usama)
+
+    - Tighten up health check timer expired condition in pool_check_fd(). (Muhammad Usama)
+
+    - doc : Add comment to the document about connection_cache. (Tatsuo Ishii)
+
+    - Fix for 237 that Pgpool-II fails to start if listen_addresses is empty string.
+      (Muhammad Usama)
+
+      The socket descriptor array (fds[]) was not getting the array end marker
+      when TCP listen addresses are not used.
+
+      See bug 237 for related info.
+
+===============================================================================
+
+                        3.4.7 (tataraboshi) 2016/06/17
+
+* Version 3.4.7
+
+    This is a bugfix release against pgpool-II 3.4.6.
+
+    __________________________________________________________________
+
+* New features
+
+    - Allow to access to pgpool while doing health checking (Tatsuo Ishii)
+
+      Currently any attempt to connect to pgpool fails if pgpool is doing
+      health check against failed node even if fail_over_on_backend_error is
+      off because pgpool child first tries to connect to all backend
+      including the failed one and exits if it fails to connect to a backend
+      (of course it fails). This is a temporary situation and will be
+      resolved before pgpool executes failover. However if the health check
+      is retrying, the temporary situation keeps longer depending on the
+      setting of health_check_max_retries and health_check_retry_delay. This
+      is not good. Attached patch tries to mitigate the problem:
+
+      - When an attempt to connect to backend fails, give up connecting to
+      the failed node and skip to other node, rather than exiting the
+      process if operating in streaming replication mode and the node is
+      not primary node.
+
+      - Mark the local status of the failed node to "down".
+
+      - This will let the primary node be selected as a load balance node
+      and every queries will be sent to the primary node. If there's other
+      healthy standby nodes, one of them will be chosen as the load
+      balance node.
+
+      - After the session is over, the child process will suicide to not
+      retain the local status.
+
+      Per [pgpool-hackers: 1531].
+
+* Bug fixes
+
+    - Fix is_set_transaction_serializable() when
+      SET default_transaction_isolation TO 'serializable'. (Bo Peng)
+
+      SET default_transaction_isolation TO 'serializable' is sent to
+      not only primary but also to standby server in streaming replication mode,
+      and this causes an error. Fix is, in streaming replication mode,
+      SET default_transaction_isolation TO 'serializable' is sent only to the
+      primary server.
+
+      See bug 191 for related info.
+
+    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+      Connection pool is avalilable in raw mode.
+
+    - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
+
+    - Permit pgpool to support multiple SSL cipher protocols (Muhammad Usama)
+
+      Currently TLSv1_method() is used to initialize the SSL context, that puts an
+      unnecessary limitation to allow only TLSv1 protocol for SSL communication.
+      While postgreSQL supports other ciphers protocols as well. The commit changes
+      the above and initializes the SSLSession using the SSLv23_method()
+      (same is also used by PostgreSQL). Because it can negotiate the use of the
+      highest mutually supported protocol version and remove the limitation of one
+      specific protocol version.
+
+    - If statement timeout is enabled on backend and do_query() sends a (Tatsuo Ishii)
+      query to primary node, and all of following user queries are sent to
+      standby, it is possible that the next command, for example END, could
+      cause a statement timeout error on the primary, and a kind mismatch
+      error on pgpool-II is raised.
+
+      This fix tries to mitigate the problem by sending sync message instead
+      of flush message in do_query(), expecting that the sync message reset
+      the statement timeout timer if we are in an explicit transaction. We
+      cannot use this technique for implicit transaction case, because the
+      sync message removes the unnamed portal if there's any.
+
+      Plus, pg_stat_statement will no longer show the query issued by
+      do_query() as "running".
+
+      See bug 194 for related info.
+
+    - Fix a posible hang during health checking (Yugo Nagata)
+
+      Helath checking was hang when any data wasn't sent
+      from backend after connect(2) succeeded. To fix this,
+      pool_check_fd() returns 1 when select(2) exits with
+      EINTR due to SIGALRM while health checkking is performed.
+
+      Reported and patch provided by harukat and some modification
+      by Yugo.
+
+      See bug 204 for related info.
+
+    - change the Makefile under this directory src/sql/,that is proposed by (Bo Peng)
+      [pgpool-hackers: 1611]
+
+    - Fix bug with load balance node id info on shmem (Tatsuo Ishii)
+
+      There are few places where the load balance node was mistakenly put on
+      wrong place. It should be placed on:
+      ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancing_node].
+      In fact it was placed on:
+      *con_info[child id, connection pool_id, 0].load_balancing_node].
+
+      As long as the backend id in question is 0, it is ok. However while
+      testing pgpool-II 3.6's enhancement regarding failover, if primary
+      node is 1 (which is the load balance node) and standby is 0, a client
+      connecting to node 1 is disconnected when failover happens on node
+      0. This is unexpected and the bug was revealed.
+
+      It seems the bug was there since long time ago but it had not found
+      until today by the reason above.
+
+
+    - Deal with the case when the primary is not node 0 in streaming replication mode. (Tatsuo Ishii)
+
+      http://www.pgpool.net/mantisbt/view.php?id=194#c837 reported that if
+      primary is not node 0, then statement timeout could occur even after
+      bug194-3.3.diff was applied. After some investigation, it appeared
+      that MASTER macro could return other than primary or load balance
+      node, which was not supposed to happen, thus do_query() sends queries
+      to wrong node (this is not clear from the report but I confirmed it in
+      my investigation).
+
+      pool_virtual_master_db_node_id(), which is called in MASTER macro
+      returns query_context->virtual_master_node_id if query context
+      exists. This could return wrong node if the variable has not been set
+      yet. To fix this, the function is modified: if the variable is not
+      either load balance node or primary node, the primary node id is
+      returned.
+
+===============================================================================
+
+                        3.4.6 (tataraboshi) 2016/04/26
+
+* Version 3.4.6
+
+    This is a bugfix release against pgpool-II 3.4.5.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix for segfault during trusted_servers check (Muhammad Usama)
+
+      PostgreSQL's memory and exception manager APIs adopted by the
+      pgpool 3.4 are not thread safe and are causing the segmentation fault
+      in the watchdog lifecheck process, as it uses the threads to ping
+      configured trusted hosts for checking the upstream connections.
+      Fix is to remove threads and use the child process approach instead.
+
+      See [pgpool-general: 4569] for more details.
+
+    - Removing the limit on the maximum number of items in the
+      black_function_list and white_function_list lists. (Muhammad Usama)
+
+      extract_string_tokens in pool_config uses the fixed size malloc on
+      the array to hold the black_function_list/white_function_list items.
+      This imposes a limit of maximum items in these lists.
+      The fix is to use realloc to increase the array size when it gets full.
+
+    - Redirect all user queries to primary server (Tatsuo Ishii)
+
+      Up to now some user queries are sent to other than the primary server
+      even if load_balance_mode = off. This commit changes the behavior: if
+      load_balance_mode = off in streaming replication mode, now all the
+      user queries are sent to the primary server only.
+
+      Per bug #189.
+
+    - Change the PID length of pcp_proc_count command result to 6 characters
+      long (Bo Peng)
+
+      If the pgpool process ID are over 5 characters, the 6th character of each
+      process ID will be removed. This commit changes the process ID length of
+      pcp_proc_count command result to 6 characters long.
+
+      Per bug #188.
+
+===============================================================================
+
+                        3.4.5 (tataraboshi) 2016/04/04
+
+* Version 3.4.5
+
+    This is a bugfix release against pgpool-II 3.4.4.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - test: Fix test/regression/clean.sh to remove binary files of
+      010.rewrite_timestamp test (Yugo Nagata)
+
+    - Fix memorry leak reported by Coverity (CID 1350095) (Yugo Nagata)
+
+    - Fixing pgpool-recovery module compilation issue with PostgreSQL 9.6
+      (Muhammad Usama)
+
+      Incorporating the change of function signature for GetConfigOption..()
+      functions in PostgreSQL 9.6.
+
+    - Fix a reset query stuck problem (Muhammad Usama)
+
+      The solution is to report FRONTEND_ERROR instead of simple ERROR when
+      pool_flush on front-end socket fails.
+
+      The original report is
+      [pgpool-general: 4265] Pgpool - connection hangs in DISCARD ALL
+
+      The patch was generated by Usama and Pawel Ufnalewski<archon@foap.com>,
+      and Gerhard Wiesinger <lists@wiesinger.com> helped to verify and test
+      the fix.
+
+    - Fix typo in configure (Tatsuo Ishii)
+
+      Patch provided by Thomas Munro.
+
+    - doc: Change description of backend_flag (Tatsuo Ishii)
+
+      It is pointed out that restarting pgpool-II is not necessary.
+
+      Per [pgpool-general-jp: 1394].
+
+    - doc: Fix installation procedure. (Tatsuo Ishii)
+
+      With PostgreSQL 9.4 or later, installing pgpool_regclass is not needed.
+
+    - test: Fix pgpool_setup to not confuse log output (Tatsuo Ishii)
+
+      Before it simply redirects stdout and stderr of pgpool processes to
+      a log file. This could cause the log contents being garbled or even
+      missed because of race condition caused by multiple process being
+      writing concurrently.
+
+      To fix this, pgpool_setup now generates startall script in which pgpool
+      sends stdout/stderr to cat command by pipe, and cat writes to the log
+      file.
+
+    - Fix to validate the PCP packet length (Muhammad Usama)
+
+      Without the validation check, a malformed PCP packet can crash the
+      PCP child and/or can run the server out of memory by sending the packet
+      with a very large data size.
+
+===============================================================================
+
+                        3.4.4 (tataraboshi) 2016/02/05
+
+* Version 3.4.4
+
+    This is a bugfix release against pgpool-II 3.4.3.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status (Tatsuo Ishii)
+
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - Fix reset query stuck problem (Muhammad Usama)
+
+      It is reported that reset query (DISCARD ALL etc.) occasionally does
+      not finish and pgpool child remain waiting for reply from the backend
+      thus client cannot connect to pgpool (for example bug report #107).
+      The cause of problem is not identified yet but if client suddenly
+      closes connection to pgpool in the middle of query processing, backend
+      may not accept the reset queries because they are not ready for query.
+
+      The fix is to keep track of the status of frontend socket state and not
+      caching the PostgreSQL connection if the connection to frontend was not
+      properly terminated.
+
+    - test: Fix false alerm of regression tset 062 (Yugo Nagata)
+
+    - test: Fix broken regression test for native replication (Yugo Nagata)
+
+      Test for insert lock didn't work.
+
+    - test: Fix regress test to sleep after pgpool_reload (Yugo Nagata)
+
+      Some regression tests modify configuration file and reloads. However,
+      sometimes these were not applied to pgpool just after reloading.
+
+    - Fix inconsistency of sequence values in replication mode (Yugo Nagata)
+
+      When a schema name was provided, the table name was quoted wrongly as
+      like "public.mytbl" instead of "public"."mytbl". So, pool_regclass
+      and to_regclass couldn't find right talbe oid and insert lock was
+      never executed. This caused inconsistency between DB nodes.
+
+    - test: Fix complication error and segfault of timestamp rewrite test
+      (Yugo Nagata)
+
+    - test: Add timestamp-rewrite unit test to regression test suite (Yugo Nagata)
+
+    - doc: Fix untranslated sentence in Japanese document (Yugo Nagata)
+
+    - Fix ancient bug of pool_push() and friends (Tatsuo Ishii)
+
+      It allocates buffer using realloc and uses the pointer
+      returned. However it does the pointer calculation *before* realloc
+      gets called. So the calculation uses the old pointer value, which
+      causes various problems including segfault later.
+
+      Also there were other problems with it. The buffer pointer and buffer
+      size variable is not initialized. The buffer is not freed by
+      pool_close. Typo in debugging message (3.4 or later only). They are
+      fixed as well.
+
+    - doc: Fix wrong description about log_standby_delay in the document
+      (Yugo Nagata)
+
+    - doc: Add caution about JDBC driver version regarding
+      app_name_redirect_preference_list (Tatsuo Ishii)
+
+    - Fix hang problem reported in bug#145 (Tatsuo Ishii)
+
+      The problem occurs when all the condition below are met:
+
+      1) pgpool-II 3.4 or later
+      2) streaming replication mode
+      3) primary node is also load balance node
+      4) extended protocol is used
+      5) client_idle_limit reached
+
+    - test: Fix regression test 065 (Tatsuo Ishii)
+
+      The path to JDBC driver was explicitly defined. This is wrong. This
+      should be inherited from JDBC_DRIVER environment variable.
+
+    - test: Fix possible hang-up of regression test 054.postgres_fdw (Yugo Nagata)
+
+    - test: Add option to regress.sh and pgpool_setup for unix domain socket
+      directory (Yugo Nagata)
+
+    - doc: Add missing descriptions about default values to documents (Yugo Nagata)
+
+    - test: Fix a bug of regress.sh option handling (Yugo Nagata)
+
+    - test: Fix regression test 055.backend_all_down to use PGSOCKET_DIR for
+      PostgreSQL rhel7 rpm (Yugo Nagata)
+
+    - Fix reset query stuck problem (Muhammad Usama)
+
+      The issue is already fixed in older branches and this fix adopts the
+      same solution used by 3.3 series, i.e. closing the backend connection
+      when client idle limit is reached.
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+
+      Per bug #157.
+
+    - test: Fix to use timeout command to handle time out of regress test 062
+      (Yugo Nagata)
+
+    - Fix to show wrong error (Tatsuo Ishii)
+
+      connect_with_timeout() does not show proper error info when
+      getsockopt(SO_ERROR) reports an error. Pointed out in bug #159.
+
+    - test: Add missing \n in help messages (Yugo Nagata)
+
+    - Fixing the logic issue in get_backends_status() function (Muhammad Usama)
+
+      get_backends_status () function counts the number of current valid and down
+      backend nodes. The function assumed that the node was also invalid when its
+      connection status was down. However, that is not always right.
+
+    - test: Fix regression test 003.failover for rhel7 postgresql rpm (Yugo Nagata)
+
+      The expected result of 'show pool_nodes' is fixed to use
+      PGSOCKET_DIR in hostname column.
+
+    - Fix white/black_memqcache_table_list not require quotaion (Yugo Nagata)
+
+      The tables and schemas name specified in *_memqcache_table_list
+      were needed to be quoted by double quotation.
+
+      Patch contributed by Dang Minh Huong.
+      Per [pgpool-hackers: 1323]
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+
+      Per bug #156 report by harukat.
+
+    - test: Add some tests for white/black_memqcache_table_list to regression
+      test 006.memqcache (Yugo Nagata)
+
+    - Fix reset query stuck problem (Muhammad Usama, Tatsuo Ishii)
+
+      When pool_read fails to read from frontend or pool_flush fails to
+      write to the frontend, report FRONTEND_ERROR, rather than ERROR to
+      disconnect and terminate pgpool child process, to prevent the query
+      stuck problem.
+
+    - test: Fix regression test 008 & 009 failure in debug mode (Yugo Nagata)
+
+    - Fix performance degradation while using IPv6 (Muhammad Usama)
+
+      Per bug #165.
+
+    - Add some warning messages for wd_authkey hash calculation failure
+      (Yugo Nagata)
+
+      Sometimes wd_authkey calculation fails for some reason other than
+      authkey mismatch. The additional messages make these distingushable
+      for each other.
+
+    - test: Fix regression test to check timeout of each test (Yugo Nagata)
+
+    - test: Allow timeout value to be specified by the command option (Yugo Nagata)
+
+    - Fix bugs with data modifying WITH clause. (Tatsuo Ishii)
+
+      pgpool-II did not recognize the data modifying WITH clause despite
+      pgpool-II 3.3 or after has SQL parser which recognizes it. The bug has
+      been fixed in pgpool-II 3.5 (having PostgreSQL 9.5 parser), and the fix
+      is back ported to pgpool-II 3.3 and 3.4.
+
+      Per bug #153.
+
+    - Fix segfalut that occurs when function is used in FROM clause (Yugo Nagata)
+
+      PRPARE statements in streaming-reaplication mode and INSERT/UPDATE
+      with SELECT in native-replication mode were affected. For example:
+
+      - prepare p as select * from generate_series(1,1);
+      - insert into tbl select now(), * from generate_series(1,1);
+
+    - Fix broken arping_cmd configuration check(Muhammad Usama)
+
+      wd_chk_setuid() function was bailing out with the NOTICE message as soon
+      as it finds the setuid bit is not set on any configured network command
+      and was ignoring the rest of configurations.
+
+      Per bug #139.
+
+    - doc: Add restriction about starting multiple pgpool simultaneously
+      (Yugo Nagata)
+
+    - Fix to use saved errno for erreport instead of the direct value
+      (Yugo Nagata)
+
+      Some system calls are called in errmsg() and errhint(), and
+      it isn't safe to pass errno directly as an argument. This caused
+      the confusable log message as below.
+
+      DETAIL: connect() reports failure "Success"
+
+    - Fix a in-memory query cache bug (Tatsuo Ishii)
+
+      If extended query protocol is used and a bind/execute message arrives
+      which uses a statement created by prior parse message, the temp_cache
+      is not initialized by a parse messages. Thus messages are added to pre
+      existing temp cache buffer which causes the trouble, that is, when the
+      cached result returns, Data Row message and Command Complete message
+      appeared twice.
+
+      Per by bug #152.
+
+    - Fix a compile issue on freebsd, added missing include files (Muhammad Usama)
+
+===============================================================================
+
                         3.4.3 (tataraboshi) 2015/07/24
 
 * Version 3.4.3
@@ -358,23 +2077,23 @@
 
     - Fix "cannot find xlog functions" error in pgpool-recovery
       (Muhammad Usama)
-      
+
       The argument data type of PostgreSQL's pg_xlogfile_name() function
       has been changed from text to pg_lsn since PostgreSQL 9.4. And
       pgpool-recovery was still trying to locate the function by old
       signature.
 
     - Fix problem with memory cache invalidation (Muhammad Usama)
-      
+
       The internal buffer for storing the table oids needs to be homed in
       long living memory context as it has to survive throughout the child
       life.
-      
+
       See [pgpool-general: 3643] for details.
 
     - Pass empty string parameters in failover command when pgpool-II
       does not have a value for any particular parameter (Muhammad Usama)
-      
+
       Instead of omitting the values for the parameters when pgpool-II does
       not have any value for a particular parameter, it now passes an empty
       string to the failover command. This makes sure that failover script
@@ -388,7 +2107,7 @@
 
     - Downgrading the error level for EOF on backend connection for main
       process (Muhammad Usama)
-      
+
       Throwing the FATAL error when EOF is encountered with backend is very
       harsh in pgpool main process and can cause undesirable behavior.
       Downgrading it to simple ERROR.
@@ -396,12 +2115,12 @@
     - doc: Clarify load balancing condition (Tatsuo Ishii)
 
     - doc: Clarify description of pcp_promote_node (Tatsuo Ishii)
-      
+
       It does not actually promote PostgreSQL standby.
 
     - doc: Fix outdated limitation description about load balancing using
       JDBC driver (Tatsuo Ishii)
-      
+
       Even if autocommit is false, load balancing is possible in certain
       conditions.
 
@@ -410,44 +2129,44 @@
 
     - Fix a problem in elog.c when forwarding a message to frontend clients
       (Muhammad Usama)
-      
+
       Error while forwarding the message to the frontend client can
       potentially cause the infinite recursion and terminate the child with
       ERRORDATA_STACK_SIZE exceeded error.
-      
+
       Fix is to check the recursion depth of send_message_to_frontend()
       function and pulling the plug if it is more than two levels deep.
 
     - Fix "select() system call interrupted" error (Tatsuo Ishii)
-      
+
       The health check process complains above and then:
-      
+
       ERROR:  failed to make persistent db connection
       DETAIL:  connection to host:"x.x.x.x:5432 failed
-      
+
       However, the healthchek triggers neither fail over nor retrying. So,
       except the annoying messages above, everything goes well. This could
       occur more easily if 1) num_init_children is big and 2) pgpool
       children go into idle state (no query arrived from client for
       child_life_time seconds).
-      
+
       Original bug report is [pgpool-general: 3756] Connection Interrupted.
       Patch created by Tatsuo Ishii. Enhancement from Usama.
 
     - Fix the case when user table includes spaces (Tatsuo Ishii)
-      
+
       For example if table names including spaces are used, pgpool-II cannot
       be handled correctly by the internal functions which access system
       catalogs and it results in SQL errors. Solution is, to always use
       delimited identifier.
-      
+
       Per bug #136.
       http://www.pgpool.net/mantisbt/view.php?id=136
-      
+
       Also see [pgpool-general: 3818].
 
     - Allow to use in-memory query cache size more than 4GB (Tatsuo Ishii)
-      
+
       This should have been allowed since in memory query cache was born.
 
     - Do not send a query for checking insert lock in non replication mode
@@ -455,7 +2174,7 @@
 
     - Save pgpool_status to disk each time when it is changed
       (Tatsuo Ishii)
-      
+
       Previously, pgpool-II saves pgpool_status file when pgpool-II
       explicitly is going shutdown. This is fine in most cases and it saves
       slight CPU cycles. But if pgpool-II killed abnormally or the system
@@ -476,23 +2195,23 @@
 
     - Fix "cannot find xlog functions" error in pgpool-recovery
       (Muhammad Usama)
-      
+
       The argument data type of PostgreSQL's pg_xlogfile_name() function
       has been changed from text to pg_lsn since PostgreSQL 9.4. And
       pgpool-recovery was still trying to locate the function by old
       signature.
 
     - Fix problem with memory cache invalidation (Muhammad Usama)
-      
+
       The internal buffer for storing the table oids needs to be homed in
       long living memory context as it has to survive throughout the child
       life.
-      
+
       See [pgpool-general: 3643] for details.
 
     - Pass empty string parameters in failover command when pgpool-II
       does not have a value for any particular parameter (Muhammad Usama)
-      
+
       Instead of omitting the values for the parameters when pgpool-II does
       not have any value for a particular parameter, it now passes an empty
       string to the failover command. This makes sure that failover script
@@ -506,7 +2225,7 @@
 
     - Downgrading the error level for EOF on backend connection for main
       process (Muhammad Usama)
-      
+
       Throwing the FATAL error when EOF is encountered with backend is very
       harsh in pgpool main process and can cause undesirable behavior.
       Downgrading it to simple ERROR.
@@ -514,12 +2233,12 @@
     - doc: Clarify load balancing condition (Tatsuo Ishii)
 
     - doc: Clarify description of pcp_promote_node (Tatsuo Ishii)
-      
+
       It does not actually promote PostgreSQL standby.
 
     - doc: Fix outdated limitation description about load balancing using
       JDBC driver (Tatsuo Ishii)
-      
+
       Even if autocommit is false, load balancing is possible in certain
       conditions.
 
@@ -528,44 +2247,44 @@
 
     - Fix a problem in elog.c when forwarding a message to frontend clients
       (Muhammad Usama)
-      
+
       Error while forwarding the message to the frontend client can
       potentially cause the infinite recursion and terminate the child with
       ERRORDATA_STACK_SIZE exceeded error.
-      
+
       Fix is to check the recursion depth of send_message_to_frontend()
       function and pulling the plug if it is more than two levels deep.
 
     - Fix "select() system call interrupted" error (Tatsuo Ishii)
-      
+
       The health check process complains above and then:
-      
+
       ERROR:  failed to make persistent db connection
       DETAIL:  connection to host:"x.x.x.x:5432 failed
-      
+
       However, the healthchek triggers neither fail over nor retrying. So,
       except the annoying messages above, everything goes well. This could
       occur more easily if 1) num_init_children is big and 2) pgpool
       children go into idle state (no query arrived from client for
       child_life_time seconds).
-      
+
       Original bug report is [pgpool-general: 3756] Connection Interrupted.
       Patch created by Tatsuo Ishii. Enhancement from Usama.
 
     - Fix the case when user table includes spaces (Tatsuo Ishii)
-      
+
       For example if table names including spaces are used, pgpool-II cannot
       be handled correctly by the internal functions which access system
       catalogs and it results in SQL errors. Solution is, to always use
       delimited identifier.
-      
+
       Per bug #136.
       http://www.pgpool.net/mantisbt/view.php?id=136
-      
+
       Also see [pgpool-general: 3818].
 
     - Allow to use in-memory query cache size more than 4GB (Tatsuo Ishii)
-      
+
       This should have been allowed since in memory query cache was born.
 
     - Do not send a query for checking insert lock in non replication mode
@@ -573,7 +2292,7 @@
 
     - Save pgpool_status to disk each time when it is changed
       (Tatsuo Ishii)
-      
+
       Previously, pgpool-II saves pgpool_status file when pgpool-II
       explicitly is going shutdown. This is fine in most cases and it saves
       slight CPU cycles. But if pgpool-II killed abnormally or the system
@@ -597,7 +2316,7 @@
 
     - Fix to reset on_exit call back functions in exec_if_cmd and exec_ping
       worker processes (Muhammad Usama)
-      
+
       exec_if and exec_ping child processes were inheriting the parent exit
       callback functions which could result in undesired behavior if one of
       these commands fails. Fixed by adding on_exit_reset() at child start-up
@@ -605,14 +2324,14 @@
 
     - Fix to use void * type for receiving return value of thread function
       (Yugo Nagata)
-      
+
       Previously int type was used and this could occur stack buffer
       overflow. This caused an infinity loop of ping error at bringing
       up or down VIP.
 
     - Fix to set SIGCHLD to SIG_DFL instead of SIG_IGN in watchdog processes
       (Yugo Nagata)
-      
+
       When using waitpid, it isn't necessary to set SIGCHLD to SIG_IGN.
       Rather, it is harmful, and due to this it was regarded that ping
       command exited abnormally in error even when this succeeded.
@@ -622,13 +2341,13 @@
     - Remove an unnecessary include directive (Yugo Nagata)
 
     - Enlarge POOLCONFIG_MAXDESCLEN to 80 (Tatsuo Ishii)
-      
+
       This is used in show pool_status command and limits the length of
       parameter description.  Unfortunately recovery_timeout description is
       64 chars, which is 1 byte longer than former definition of the macro.
 
     - doc: Update document of condition for load balancig (Yugo Nagata)
-      
+
       Load balancing is possible in an explicit transaction block
       even in replication mode since 3.3.0.
 
@@ -640,7 +2359,7 @@
 
     - Fix to not emits a fatal error message when clear text password auth
       is used (Muhammad Usama)
-      
+
       The problem was introduced in pgpool-II after inclusion of exception
       manager. EOF on the frontend connection during client authentication
       should not be treated as an error when the password authentication
@@ -653,7 +2372,7 @@
 
     - Fix a hang when an error occurs in a transaction block with
       replication mode (Yugo Nagata)
-      
+
       When an error occurs at a backend node in a transaction block with
       replication mode, pgpool-II sends an invalid query to other
       backends to sync transaction states. However, previously, this was
@@ -661,7 +2380,7 @@
       response forever.
 
     - Fix a problem with pcp_detach_node about graceful node detach (Muhammad Usama)
-      
+
       When graceful node detach is requested gracefully, pcp_detach_node should
       check if it is allowed to process detach_node command on the particular
       node before blocking the incoming connections and closing the existing
@@ -689,28 +2408,28 @@
     - RPM: Add to support for memcached. (Tatsuo Ishii)
 
     - Fix number of parameters of pgpool_recovery from 3 to 4. (Tatsuo Ishii)
-      
+
       This really should be done before releasing 3.4.0.
 
     - test: Allow pgpool_setup to set configuration file directory by setting
       environment variable PGPOOLDIR (Tatsuo Ishii)
 
     - RPM: Rename RPM file (Yugo Nagata)
-      
+
       Rename filename to include the RHEL version number like PostgreSQL's
       official RPM file. (e.g. pgpool-II-pg93-3.4.0-2pgdg.rhel6.x86_64.rpm)
 
     - Fix node id range check bug in trigger_failover_command(). (Tatsuo Ishii)
-      
+
       The node id should be lower than NUM_BACKENDS. Probably harmless since
       callers never pass node ids greater or equal to NUM_BACKENDS.
 
     - Fix occasional stuck that occures when a NOTIFY message is sent from
       a backend. (Muhammad Usama)
-      
+
       The issue happens in master slave mode with load balancing when the
       client is doing extended query messaging.
-      
+
       per bug #116
       http://www.pgpool.net/mantisbt/view.php?id=116
 
@@ -718,7 +2437,7 @@
       database cluster (Tatsuo Ishii)
 
     - test: Reorganize port numbers assigned in pgpool_setup (Tatsuo Ishii)
-      
+
       Assign base port (11000 by default) to pgpool, base port + 1 to pcp,
       port + 2 to PostgreSQL node0, port + 3 to PostgreSQL node1 and so on.
 
@@ -728,7 +2447,7 @@
 
     - Fix to not use non-thread-safe APIs in thread functions
       (Muhammad Usama)
-      
+
       pgpool-II has borrowed the Memory and Exception managers from PostgreSQL
       which never utilizes the threads so its APIs are not thread safe.
       Previously, those API functions which manipulate the global variables
@@ -738,36 +2457,36 @@
     - test: Add memory leak regression test (Tatsuo Ishii)
 
     - Fix a memory leak with long-lived connections (Muhammad Usama)
-      
+
       Problem reporeted in [pgpool-general: 3325].
 
     - Change the log level of "Frontend Terminated" message to DEBUG1 from LOG
       (Muhammad Usama)
 
     - Fix ill signal befavior of SIGCHLD in exec_ifconfig() (Tatsuo Ishii)
-      
+
       For some reason SIGCHLD was set to SIG_IGN *and* tries to wait
       child process which always fails because SIGCHLD is never delivered.
       Due to this "ifconfig up" fails when switching to watchdog master.
-      
+
       See "[pgpool-general: 3310] for more details.
 
     - Allow $_IP_$ having address prefix in if_up_cmd and if_down_cmd
       (Muhammad Usama)
-      
+
       Previously, it is assumed that "$_IP_$" keyword will always have a
       white space at the end, and when "$_IP_$" has address prefix (e.g.
       $_IP_$/24), this prefix was ignored.
-      
+
       Per bug #122.
       http://www.pgpool.net/mantisbt/view.php?id=122
 
     - Fix to not send signal to init process (Muhammad Usama)
-      
+
       This is more of a guard against a situation where a crash of the
       pgpool main process can make the child processes to send the signal
       to system's init process.
-      
+
       Per bug #119.
       http://www.pgpool.net/mantisbt/view.php?id=119
 
@@ -776,7 +2495,7 @@
 
     - Allow "show pool_nodes" to print node ids having more than one digits
       (Muhammad Usama)
-      
+
       Problem reported in [pgpool-general: 3374].
 
     - Prevent "WARNING: failed to execute regex matching, pattern is NULL"
@@ -785,31 +2504,31 @@
 
     - Fix pgpool main process to shutdown in case of child process start-up
       failures (Muhammad Usama)
-      
+
       Problem rported in [pgpool-general: 3358].
 
     - Fix a segmentation fault that could happen in child process error
       (Muhammad Usama)
-      
+
       Problem reported in [pgpool-general: 3377].
 
     - Fix occasional failure in regression test '004.watchdog' (Yugo Nagata)
-      
+
       The patch provided by uehara in bug #127.
       http://www.pgpool.net/mantisbt/view.php?id=127
 
     - Fix client connection leak (Tatsuo Ishii)
-      
+
       Since 3.4.0 pgpool-II child does not close the connection to client
       when it ends the session.  This leads to serious "CLOSE_WAIT" flood,
       which makes pgpool-II unusable since no new connection from clients
       accepted.
-      
+
       Problem reported by Pablo Sanchez in [pgpool-general: 3394].
 
     - Restore SIGCHLD handler to its original after executing if_up/down_cmd
       (Yugo Nagata)
-      
+
       Previously SIGCHLD was set to SIGIGN always after if_up/down_cmd.
       This led to a incorrect error handling of ping or other commands
       execution, and warning messages were output to log even when the
@@ -822,18 +2541,18 @@
 
     - Tighten up checking for app_name_redirect_preference_list and
       database_redirect_preference_list (Tatsuo Ishii)
-      
+
       Before empty application name or database name or invalid DB node
       number were silently accepted. Now they are strictly checked and
       let raise fatal error when starting up.
-      
+
       Problem reported in [pgpool-general-jp: 1337].
 
     - RPM: Change to use systemd if it is available (Nozomi Anzai)
 
     - Fix the behavior of "client_min_messages" configuration parameter
       (Muhammad Usama)
-      
+
       This parameter controls the minimum message levels to be sent to the
       frontend. Previously, regardless of the value of the parameter all
       the messages with severity less than NOTICE level were not being
@@ -943,6 +2662,466 @@
 3.3 Series (2013/07/30 - )
 ===============================================================================
 
+                        3.3.12 (tokakiboshi) 2016/08/31
+
+* Version 3.3.12
+
+    This is a bugfix release against pgpool-II 3.3.11.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+
+      While processing "show pool_nodes", the buffer for hostname was too
+      short. It should be same size as the buffer used for pgpool.conf.
+      Problem reported by a twitter user who is using pgpool on AWS (which
+      could have very long hostname).
+
+    - Fix usage of wait(2) in pgpool main process. (Tatsuo Ishii)
+
+      The usage of wait(2) in pgpool main could cause infinite wait in the
+      system call. Solution is, to use waitpid(2) instead of wait(2).
+
+    - Fix "kind mismatch" error message in pgpool. (Muhammad Usama)
+
+      Many of "kind mismatch..." errors are caused by notice/warning
+      messages produced by one or more of the DB nodes. In this case now
+      Pgpool-II forwards the messages to frontend, rather than throwing the
+      "kind mismatch..." error. This would reduce the chance of "kind
+      mismatch..."  errors.
+
+      See [pgpool-hackers: 1501] for more details.
+
+    - Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+
+      The macro calls pool_virtual_master_db_node_id() and then access
+      backend->slots[id]->con using the node id returned.  In rare cases, it
+      could point to 0 (in case when the DB node is not connected), which
+      gives access to con->major, then it causes a segfault.
+
+      See bug 225 for related info.
+
+    - doc : Fixing a typo in english doc (Muhammad Usama)
+
+    - doc : fix Japanese document typo. (Bo Peng)
+
+    - Fixing a typo in the log message. (Muhammad Usama)
+
+    - doc : Add comment to the document about connection_cache. (Tatsuo Ishii)
+
+===============================================================================
+
+                        3.3.11 (tokakiboshi) 2016/06/17
+
+* Version 3.3.11
+
+    This is a bugfix release against pgpool-II 3.3.10.
+
+    __________________________________________________________________
+
+* New features
+
+    - Allow to access to pgpool while doing health checking (Tatsuo Ishii)
+
+      Currently any attempt to connect to pgpool fails if pgpool is doing
+      health check against failed node even if fail_over_on_backend_error is
+      off because pgpool child first tries to connect to all backend
+      including the failed one and exits if it fails to connect to a backend
+      (of course it fails). This is a temporary situation and will be
+      resolved before pgpool executes failover. However if the health check
+      is retrying, the temporary situation keeps longer depending on the
+      setting of health_check_max_retries and health_check_retry_delay. This
+      is not good. Attached patch tries to mitigate the problem:
+
+      - When an attempt to connect to backend fails, give up connecting to
+      the failed node and skip to other node, rather than exiting the
+      process if operating in streaming replication mode and the node is
+      not primary node.
+
+      - Mark the local status of the failed node to "down".
+
+      - This will let the primary node be selected as a load balance node
+      and every queries will be sent to the primary node. If there's other
+      healthy standby nodes, one of them will be chosen as the load
+      balance node.
+
+      - After the session is over, the child process will suicide to not
+      retain the local status.
+
+      Per [pgpool-hackers: 1531].
+
+* Bug fixes
+
+    - Fix is_set_transaction_serializable() when
+      SET default_transaction_isolation TO 'serializable'. (Bo Peng)
+
+      SET default_transaction_isolation TO 'serializable' is sent to
+      not only primary but also to standby server in streaming replication mode,
+      and this causes an error. Fix is, in streaming replication mode,
+      SET default_transaction_isolation TO 'serializable' is sent only to the
+      primary server.
+
+      See bug 191 for related info.
+
+    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+      Connection pool is avalilable in raw mode.
+
+    - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
+
+    - Permit pgpool to support multiple SSL cipher protocols (Muhammad Usama)
+
+      Currently TLSv1_method() is used to initialize the SSL context, that puts an
+      unnecessary limitation to allow only TLSv1 protocol for SSL communication.
+      While postgreSQL supports other ciphers protocols as well. The commit changes
+      the above and initializes the SSLSession using the SSLv23_method()
+      (same is also used by PostgreSQL). Because it can negotiate the use of the
+      highest mutually supported protocol version and remove the limitation of one
+      specific protocol version.
+
+    - If statement timeout is enabled on backend and do_query() sends a (Tatsuo Ishii)
+      query to primary node, and all of following user queries are sent to
+      standby, it is possible that the next command, for example END, could
+      cause a statement timeout error on the primary, and a kind mismatch
+      error on pgpool-II is raised.
+
+      This fix tries to mitigate the problem by sending sync message instead
+      of flush message in do_query(), expecting that the sync message reset
+      the statement timeout timer if we are in an explicit transaction. We
+      cannot use this technique for implicit transaction case, because the
+      sync message removes the unnamed portal if there's any.
+
+      Plus, pg_stat_statement will no longer show the query issued by
+      do_query() as "running".
+
+      See bug 194 for related info.
+
+    - Deal with the case when the primary is not node 0 in streaming replication mode. (Tatsuo Ishii)
+
+      http://www.pgpool.net/mantisbt/view.php?id=194#c837 reported that if
+      primary is not node 0, then statement timeout could occur even after
+      bug194-3.3.diff was applied. After some investigation, it appeared
+      that MASTER macro could return other than primary or load balance
+      node, which was not supposed to happen, thus do_query() sends queries
+      to wrong node (this is not clear from the report but I confirmed it in
+      my investigation).
+
+      pool_virtual_master_db_node_id(), which is called in MASTER macro
+      returns query_context->virtual_master_node_id if query context
+      exists. This could return wrong node if the variable has not been set
+      yet. To fix this, the function is modified: if the variable is not
+      either load balance node or primary node, the primary node id is
+      returned.
+
+    - change the Makefile under the directory src/sql/, that is proposed (Bo Peng)
+      by [pgpool-hackers: 1611]
+
+    - Fix a posible hang during health checking (Yugo Nagata)
+
+      Helath checking was hang when any data wasn't sent
+      from backend after connect(2) succeeded. To fix this,
+      pool_check_fd() returns 1 when select(2) exits with
+      EINTR due to SIGALRM while health checkking is performed.
+
+      Reported and patch provided by harukat and some modification
+      by Yugo. Per bug #204.
+
+      backported from 3.4 or later;
+      https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commitdiff;h=ed9f2900f1b611f5cfd52e8f758c3616861e60c0
+
+    - Fix bug with load balance node id info on shmem (Tatsuo Ishii)
+
+      There are few places where the load balance node was mistakenly put on
+      wrong place. It should be placed on: ConnectionInfo *con_info[child
+      id, connection pool_id, backend id].load_balancing_node].  In fact it
+      was placed on: *con_info[child id, connection pool_id,
+      0].load_balancing_node].
+
+      As long as the backend id in question is 0, it is ok. However while
+      testing pgpool-II 3.6's enhancement regarding failover, if primary
+      node is 1 (which is the load balance node) and standby is 0, a client
+      connecting to node 1 is disconnected when failover happens on node
+      0. This is unexpected and the bug was revealed.
+
+      It seems the bug was there since long time ago but it had not found
+      until today by the reason above.
+
+===============================================================================
+
+                        3.3.10 (tokakiboshi) 2016/04/26
+
+* Version 3.3.10
+
+    This is a bugfix release against pgpool-II 3.3.9.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Removing the limit on the maximum number of items in the
+      black_function_list and white_function_list lists. (Muhammad Usama)
+
+      extract_string_tokens in pool_config uses the fixed size malloc on
+      the array to hold the black_function_list/white_function_list items.
+      This imposes a limit of maximum items in these lists.
+      The fix is to use realloc to increase the array size when it gets full.
+
+    - Redirect all user queries to primary server (Tatsuo Ishii)
+
+      Up to now some user queries are sent to other than the primary server
+      even if load_balance_mode = off. This commit changes the behavior: if
+      load_balance_mode = off in streaming replication mode, now all the
+      user queries are sent to the primary server only.
+
+      Per bug #189.
+
+    - Change the PID length of pcp_proc_count command result to 6 characters
+      long (Bo Peng)
+
+      If the pgpool process ID are over 5 characters, the 6th character of each
+      process ID will be removed. This commit changes the process ID length of
+      pcp_proc_count command result to 6 characters long.
+
+      Per bug #188.
+
+===============================================================================
+
+                        3.3.9 (tokakiboshi) 2016/04/04
+
+* Version 3.3.9
+
+    This is a bugfix release against pgpool-II 3.3.8.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - test: Fix test/regression/clean.sh to remove binary files of
+      010.rewrite_timestamp test (Yugo Nagata)
+
+    - Fix memorry leak reported by Coverity (CID 1350095) (Yugo Nagata)
+
+    - Fixing pgpool-recovery module compilation issue with PostgreSQL 9.6
+      (Muhammad Usama)
+
+      Incorporating the change of function signature for GetConfigOption..()
+      functions in PostgreSQL 9.6.
+
+    - Fix typo in configure (Tatsuo Ishii)
+
+      Patch provided by Thomas Munro.
+
+    - doc: Change description of backend_flag (Tatsuo Ishii)
+
+      It is pointed out that restarting pgpool-II is not necessary.
+
+      Per [pgpool-general-jp: 1394].
+
+    - doc: Fix installation procedure. (Tatsuo Ishii)
+
+      With PostgreSQL 9.4 or later, installing pgpool_regclass is not needed.
+
+    - test: Fix pgpool_setup to not confuse log output (Tatsuo Ishii)
+
+      Before it simply redirects stdout and stderr of pgpool processes to
+      a log file. This could cause the log contents being garbled or even
+      missed because of race condition caused by multiple process being
+      writing concurrently.
+
+      To fix this, pgpool_setup now generates startall script in which pgpool
+      sends stdout/stderr to cat command by pipe, and cat writes to the log
+      file.
+
+    - Fix to validate the PCP packet length (Muhammad Usama)
+
+      Without the validation check, a malformed PCP packet can crash the
+      PCP child and/or can run the server out of memory by sending the packet
+      with a very large data size.
+
+    - Fix a reset query stuck problem (Muhammad Usama)
+
+      The solution is to return  POOL_END_WITH_FRONTEND_ERROR instead of
+      POOL_END when pool_flush on front-end socket fails.
+
+      The original report is
+      [pgpool-general: 4265] Pgpool - connection hangs in DISCARD ALL
+
+===============================================================================
+
+                        3.3.8 (tokakiboshi) 2016/02/05
+
+* Version 3.3.8
+
+    This is a bugfix release against pgpool-II 3.3.7.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status (Tatsuo Ishii)
+
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - test: Fix false alerm of regression tset 062 (Yugo Nagata)
+
+    - test: Fix broken regression test for native replication (Yugo Nagata)
+
+      Test for insert lock didn't work.
+
+    - test: Fix regress test to sleep after pgpool_reload (Yugo Nagata)
+
+      Some regression tests modify configuration file and reloads. However,
+      sometimes these were not applied to pgpool just after reloading.
+
+    - Fix inconsistency of sequence values in replication mode (Yugo Nagata)
+
+      When a schema name was provided, the table name was quoted wrongly as
+      like "public.mytbl" instead of "public"."mytbl". So, pool_regclass
+      and to_regclass couldn't find right talbe oid and insert lock was
+      never executed. This caused inconsistency between DB nodes.
+
+    - test: Fix complication error and segfault of timestamp rewrite test
+      (Yugo Nagata)
+
+    - test: Add timestamp-rewrite unit test to regression test suite (Yugo Nagata)
+
+    - Fix ancient bug of pool_push() and friends (Tatsuo Ishii)
+
+      It allocates buffer using realloc and uses the pointer
+      returned. However it does the pointer calculation *before* realloc
+      gets called. So the calculation uses the old pointer value, which
+      causes various problems including segfault later.
+
+      Also there were other problems with it. The buffer pointer and buffer
+      size variable is not initialized. The buffer is not freed by
+      pool_close. Typo in debugging message (3.4 or later only). They are
+      fixed as well.
+
+    - doc: Fix wrong description about log_standby_delay in the document
+      (Yugo Nagata)
+
+    - test: Fix regression test 065 (Tatsuo Ishii)
+
+      The path to JDBC driver was explicitly defined. This is wrong. This
+      should be inherited from JDBC_DRIVER environment variable.
+
+    - test: Add option to regress.sh and pgpool_setup for unix domain socket
+      directory (Yugo Nagata)
+
+    - doc: Add missing descriptions about default values to documents (Yugo Nagata)
+
+    - test: Fix a bug of regress.sh option handling (Yugo Nagata)
+
+    - test: Fix regression test 055.backend_all_down to use PGSOCKET_DIR for
+      PostgreSQL rhel7 rpm (Yugo Nagata)
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+
+      Per bug #157.
+
+    - test: Fix to use timeout command to handle time out of regress test 062
+      (Yugo Nagata)
+
+    - test: Add missing \n in help messages (Yugo Nagata)
+
+    - test: Fix regression test 003.failover for rhel7 postgresql rpm (Yugo Nagata)
+
+      The expected result of 'show pool_nodes' is fixed to use
+      PGSOCKET_DIR in hostname column.
+
+    - Fix white/black_memqcache_table_list not require quotaion (Yugo Nagata)
+
+      The tables and schemas name specified in *_memqcache_table_list
+      were needed to be quoted by double quotation.
+
+      Patch contributed by Dang Minh Huong.
+      Per [pgpool-hackers: 1323]
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+
+      Per bug #156 report by harukat.
+
+    - test: Add some tests for white/black_memqcache_table_list to regression
+      test 006.memqcache (Yugo Nagata)
+
+    - Add some warning messages for wd_authkey hash calculation failure
+      (Yugo Nagata)
+
+      Sometimes wd_authkey calculation fails for some reason other than
+      authkey mismatch. The additional messages make these distingushable
+      for each other.
+
+    - test: Fix regression test to check timeout of each test (Yugo Nagata)
+
+    - test: Allow timeout value to be specified by the command option (Yugo Nagata)
+
+    - Fix bugs with data modifying WITH clause. (Tatsuo Ishii)
+
+      pgpool-II did not recognize the data modifying WITH clause despite
+      pgpool-II 3.3 or after has SQL parser which recognizes it. The bug has
+      been fixed in pgpool-II 3.5 (having PostgreSQL 9.5 parser), and the fix
+      is back ported to pgpool-II 3.3 and 3.4.
+
+      Per bug #153.
+
+    - Fix broken arping_cmd configuration check(Muhammad Usama)
+
+      wd_chk_setuid() function was bailing out with the NOTICE message as soon
+      as it finds the setuid bit is not set on any configured network command
+      and was ignoring the rest of configurations.
+
+      Per bug #139.
+
+    - doc: Add restriction about starting multiple pgpool simultaneously
+      (Yugo Nagata)
+
+    - Fix a in-memory query cache bug (Tatsuo Ishii)
+
+      If extended query protocol is used and a bind/execute message arrives
+      which uses a statement created by prior parse message, the temp_cache
+      is not initialized by a parse messages. Thus messages are added to pre
+      existing temp cache buffer which causes the trouble, that is, when the
+      cached result returns, Data Row message and Command Complete message
+      appeared twice.
+
+      Per by bug #152.
+
+    - Ignore close statement/portal request if they do not exist (Tatsuo Ishii)
+
+      In this case just returns a close complete message to client.
+      This is a back port of the following commit from pgpool-II 3.4:
+
+      1a37e1c35bd8b6f10f524693bbcb7b51f73b4bf0
+
+    - test: Fix port numbers in expected result of show pool_nodes (Yugo Nagata)
+
+===============================================================================
+
                         3.3.7 (tokakiboshi) 2015/07/24
 
 * Version 3.3.7
@@ -955,7 +3134,7 @@
 
     - Fix "cannot find xlog functions" error in pgpool-recovery
       (Muhammad Usama)
-      
+
       The argument data type of PostgreSQL's pg_xlogfile_name() function
       has been changed from text to pg_lsn since PostgreSQL 9.4. And
       pgpool-recovery was still trying to locate the function by old
@@ -963,7 +3142,7 @@
 
     - Pass empty string parameters in failover command when pgpool-II
       does not have a value for any particular parameter (Muhammad Usama)
-      
+
       Instead of omitting the values for the parameters when pgpool-II does
       not have any value for a particular parameter, it now passes an empty
       string to the failover command. This makes sure that failover script
@@ -972,45 +3151,45 @@
     - doc: Clarify load balancing condition (Tatsuo Ishii)
 
     - doc: Clarify description of pcp_promote_node (Tatsuo Ishii)
-      
+
       It does not actually promote PostgreSQL standby.
 
     - doc: Fix outdated limitation description about load balancing using
       JDBC driver (Tatsuo Ishii)
-      
+
       Even if autocommit is false, load balancing is possible in certain
       conditions.
 
     - Fix "select() system call interrupted" error (Tatsuo Ishii)
-      
+
       The health check process complains above and then:
-      
+
       ERROR:  failed to make persistent db connection
       DETAIL:  connection to host:"x.x.x.x:5432 failed
-      
+
       However, the healthchek triggers neither fail over nor retrying. So,
       except the annoying messages above, everything goes well. This could
       occur more easily if 1) num_init_children is big and 2) pgpool
       children go into idle state (no query arrived from client for
       child_life_time seconds).
-      
+
       Original bug report is [pgpool-general: 3756] Connection Interrupted.
       Patch created by Tatsuo Ishii. Enhancement from Usama.
 
     - Fix the case when user table includes spaces (Tatsuo Ishii)
-      
+
       For example if table names including spaces are used, pgpool-II cannot
       be handled correctly by the internal functions which access system
       catalogs and it results in SQL errors. Solution is, to always use
       delimited identifier.
-      
+
       Per bug #136.
       http://www.pgpool.net/mantisbt/view.php?id=136
-      
+
       Also see [pgpool-general: 3818].
 
     - Allow to use in-memory query cache size more than 4GB (Tatsuo Ishii)
-      
+
       This should have been allowed since in memory query cache was born.
 
     - Do not send a query for checking insert lock in non replication mode
@@ -1033,14 +3212,14 @@
 
     - Fix to use void * type for receiving return value of thread function
       (Yugo Nagata)
-      
+
       Previously int type was used and this could occur stack buffer
       overflow. This caused an infinity loop of ping error at bringing
       up or down VIP.
 
     - Fix to set SIGCHLD to SIG_DFL instead of SIG_IGN in watchdog processes
       (Yugo Nagata)
-      
+
       When using waitpid, it isn't necessary to set SIGCHLD to SIG_IGN.
       Rather, it is harmful, and due to this it was regarded that ping
       command exited abnormally in error even when this succeeded.
@@ -1048,13 +3227,13 @@
     - Remove an unnecessary include directive (Yugo Nagata)
 
     - Enlarge POOLCONFIG_MAXDESCLEN to 80 (Tatsuo Ishii)
-      
+
       This is used in show pool_status command and limits the length of
       parameter description.  Unfortunately recovery_timeout description is
       64 chars, which is 1 byte longer than former definition of the macro.
 
     - doc: Update document of condition for load balancig (Yugo Nagata)
-      
+
       Load balancing is possible in an explicit transaction block
       even in replication mode since 3.3.0.
 
@@ -1066,7 +3245,7 @@
 
     - Fix a hang when an error occurs in a transaction block with
       replication mode (Yugo Nagata)
-      
+
       When an error occurs at a backend node in a transaction block with
       replication mode, pgpool-II sends an invalid query to other
       backends to sync transaction states. However, previously, this was
@@ -1074,7 +3253,7 @@
       response forever.
 
     - Fix a problem with pcp_detach_node about graceful node detach (Muhammad Usama)
-      
+
       When graceful node detach is requested gracefully, pcp_detach_node should
       check if it is allowed to process detach_node command on the particular
       node before blocking the incoming connections and closing the existing
@@ -1101,12 +3280,12 @@
 
     - Fix occasinal deadlock in failover with watchdog enabled
       (Muhammad Usama)
-      
+
       per bug #105
       http://www.pgpool.net/mantisbt/view.php?id=105
 
     - Fix uninitialized variable (Tatsuo Ishii)
-      
+
       Per Coverity 1234603.
 
     - doc: Fix missing release note entries in the previous release
@@ -1114,7 +3293,7 @@
 
     - test: Fix wait_for_pgpool_startup in pgpool_setup to use "postgres"
       database rather than "test" (Tatsuo Ishii)
-      
+
       The test database may or may not exist and if it does not, it will
       always retry until timeout expired (20 seconds), and regression test
       takes unnecessary long.
@@ -1127,12 +3306,12 @@
       environment variable PGPOOLDIR (Tatsuo Ishii)
 
     - RPM: Rename RPM file (Yugo Nagata)
-      
+
       Rename filename to include the RHEL version number like PostgreSQL's
       official RPM file. (e.g. pgpool-II-pg93-3.4.0-2pgdg.rhel6.x86_64.rpm)
 
     - Fix node id range check bug in trigger_failover_command(). (Tatsuo Ishii)
-      
+
       The node id should be lower than NUM_BACKENDS. Probably harmless since
       callers never pass node ids greater or equal to NUM_BACKENDS.
 
@@ -1142,36 +3321,36 @@
     - test: Add memory leak regression test (Tatsuo Ishii)
 
     - Fix ill signal befavior of SIGCHLD in exec_ifconfig() (Tatsuo Ishii)
-      
+
       For some reason SIGCHLD was set to SIG_IGN *and* tries to wait
       child process which always fails because SIGCHLD is never delivered.
       Due to this "ifconfig up" fails when switching to watchdog master.
-      
+
       See "[pgpool-general: 3310] for more details.
 
     - Allow $_IP_$ having address prefix in if_up_cmd and if_down_cmd
       (Muhammad Usama)
-      
+
       Previously, it is assumed that "$_IP_$" keyword will always have a
       white space at the end, and when "$_IP_$" has address prefix (e.g.
       $_IP_$/24), this prefix was ignored.
-      
+
       Per bug #122.
       http://www.pgpool.net/mantisbt/view.php?id=122
 
     - Allow "show pool_nodes" to print node ids having more than one digits
       (Muhammad Usama)
-      
+
       Problem reported in [pgpool-general: 3374].
 
     - Fix occasional failure in regression test '004.watchdog' (Yugo Nagata)
-      
+
       The patch provided by uehara in bug #127.
       http://www.pgpool.net/mantisbt/view.php?id=127
 
     - Restore SIGCHLD handler to its original after executing if_up/down_cmd
       (Yugo Nagata)
-      
+
       Previously SIGCHLD was set to SIGIGN always after if_up/down_cmd.
       This led to a incorrect error handling of ping or other commands
       execution, and warning messages were output to log even when the
@@ -1181,17 +3360,17 @@
 
     - RPM: Split pgpool_regclass and pgpool_recovery as a separate extension
       package (Tatsuo Ishii)
-      
+
       On PostgreSQL server, only the extension package is required, no pgpool
       full package is necessary.
-      
+
       Per Andrew N Golovkov.
 
     - RPM: Fix wrong SSL configure option in the RPM spec file (Tatsuo Ishii)
-      
+
       SSL enabling option is "--with-openssl=/usr" and this is wrong. This
       should be "--with-openssl".
-      
+
       Per bug #115.
       http://www.pgpool.net/mantisbt/view.php?id=115
 
@@ -1199,7 +3378,7 @@
       (Nozomi Anzai)
 
     - Fix to disable debug mode by reloading config (Yugo Nagata)
-      
+
       Per bug #114
       http://www.pgpool.net/mantisbt/view.php?id=114
 
@@ -1219,19 +3398,19 @@
 
     - Fix bug that worker child process keeps failing when there's no
       primary backend (Tatsuo Ishii)
-      
+
       Problem identified and fix contributed by Junegunn Choi.
-      
+
       See [pgpool-hackers: 471] for more details.
 
     - Close listen socket when smart shutdown request is made (Tatsuo Ishii)
-      
+
       When smart shutdown process starts, pgpool children still listen on
       the port and clients can send further connection requests which fail
       in the end. Which is not only waste of time, but also prevents a load
       balancer which sits in front of pgpool from realizing the pgpool is
       going down.
-      
+
       Problem analyzed and patch provided by Junegunn Choi in [pgpool-hackers
       474], and enhanced to take care not only inet domain socket but UNIX
       domain socket by Tatsuo Ishii.
@@ -1246,7 +3425,7 @@
 
     - Fix to ignore a harmless error code when executing ifconfig command
       (Yugo Nagata)
-      
+
       When executing command such as ifconfig or ping by execv() in a forked
       child proess, wait() can fails with an error code ECHILD, although the
       process exists exactly, if SIGCHLD is set to SIG_IGN in Linux. We should
@@ -1263,13 +3442,13 @@
       variable (Tatsuo Ishii)
 
     - Adopt PostgreSQL 9.4 having to_regclass (Tatsuo Ishii)
-      
+
       PostgreSQL 9.4 has built-in function "to_regclass", which has
       equivalent functionality of pgpool_regclass. Now pgpool searches
       to_regclass first then try pgpool_regclass.
 
     - Fix unportable code related to SO_REUSEPORT (Tatsuo Ishii)
-      
+
       There are several places using setsockopt(sock, SOL_SOCKET,
       SO_REUSEPORT...). SO_REUSEPORT is not available on all Linux kernels
       and the source code uses ifdef to detect the feature in the compile
@@ -1283,26 +3462,26 @@
       (Tatsuo Ishii)
 
     - Fix return type of text_to_lsn() function (Yugo Nagata)
-      
+
       This caused compile warning.
 
     - Fix file descriptor leak when daemonize. (Tatsuo Ishii)
-      
+
       Per Coverity 1111471.
 
     - Fix memory leak. (Tatsuo Ishii)
-      
+
       Per Coverity 1111442.
 
     - Fix pgpool.init's long-standing bug of stop/restart failure
       (Yugo Nagata)
-      
+
       In previous, pgpool.init uses killproc for stopping pgpool, but there
       are several problems. In the new version, "pgpool -m fast stop" is
       used in stop command.
-      
+
       Original patch contributed by Ryan DeShone and modified by Yugo Nagata.
-      
+
       See [pgpool-hackers: 239][pgpool-hackers: 512].
 
     - Allow to run pgpool_setup and regression test on Ubuntu box
@@ -1312,68 +3491,68 @@
       (Tatsuo Ishii)
 
     - Add missing include file sys/wait.h. (Tatsuo Ishii)
-      
+
       Per bug #104.
       http://www.pgpool.net/mantisbt/view.php?id=104
 
     - Fix an infinite loop of ping error at new active pgpool when virtual
       IP switching (Yugo Nagata)
-      
+
       This bug also caused hangs of the old active pgpool, since this waits
       response from the new active pgpool, which is in the infinite loop and
       not able to respond.
-      
+
       This problem is reported by Qian Peng in [pgpool-hackers: 520].
 
     - Disbale statement_timeout of PostgreSQL while executing online recovery
       (Tatsuo Ishii)
-      
+
       Online recovery may take very long time and user may enable statement
       timeout. To prevent online recovery canceled by statement timeout,
       disable statement timeout in the connection used by online recovery.
-      
+
       See [pgpool-general: 2919] for more details.
 
     - Fix pool_table_name_to_oid in case new to_regclass used which is
       introduced in PostgreSQL 9.4 (Tatsuo Ishii)
-      
+
       The relcache func used here should return 0 if target table is not
       found. However to_regclass returns NULL in this case. To fix the
       problem now COALESCE is used.
 
     - test: Fix regression test 057 hung if run against PostgreSQL 9.4 or
       later (Tatsuo Ishii)
-      
+
       PostgreSQL 9.4 or later changed libpq behavior: NULL username for
       connection string does not cause an error, which was expected in the
       test.
 
     - Fix to close pipe when ping command exits with failure (Yugo Nagata)
-      
+
       This bug causes pipe open error: Too many open files, which
       leads to failure of connecting to trusted servers, and then
       pgpool goes to down status.
 
     - Fix Resource leaks (Muhammad Usama)
-      
+
       Coverity issue #1222998 and #1222999.
 
     - Add a description that pcp_detach_node command disconnects existing
       sessions (Tatsuo Ishii)
 
     - Fix failover.sh produced by pgpool_setup (Tatsuo Ishii)
-      
+
       It did not support there's more than 2 nodes case. It always tries to
       promoto node0 or node1.
 
     - Remove meaningless minus check because of unsigned int variable
       (Tatsuo Ishii)
-      
+
       Coverity issue #1111419, #1111420, #1111422.
 
     - replacing strcpy() with much safer and recomended call strlcpy()
       (Muhammad Usama)
-      
+
       Coverity issue #1111480.
 
     - Fix pgpool.spec to support openssl (Tatsuo Ishii)
@@ -1382,47 +3561,47 @@
 
     - Remove unnecessary call to pool_shmem_exit() which removes semaphore
       when it shouldn't (Tatsuo Ishii)
-      
+
       exit_handler checks if the process is parent or not. This is
       good. However, even if it is a child process, it calls
       pool_shmem_exit() which removes semaphore and shmem when it should
       not. It should be called only from parent process.
-      
+
       Per bug #102.
       http://www.pgpool.net/mantisbt/view.php?id=102
 
     - Fix get_insert_command_table_name() function not to use freed pointer
       (Muhammad Usama)
-      
+
       Coverity issue #1223007.
 
     - Fix pool_handle_query_cache() to not free NULL pointer (Tatsuo Ishii)
 
     - Change connect() timeout longer (10 seconds) for flaky network
       (Tatsuo Ishii)
-      
+
       Change connect() timeout in connect_inet_domain_socket_by_port() from
       1 second to 10 seconds for flaky network such as AWS. This should help
       reducing frequent failover.
 
     - Fix reset query stuck problem. (Tatsuo Ishii)
-      
+
       It is reported that reset query (DISCARD ALL etc.) occasionally does
       not finish and pgpool child remain waiting for reply from backend thus
       client cannot connect to pgpool.
-      
+
       The cause of problem is not identified yet but if client suddenly
       closes connection to pgpool in the middle of query processing, backend
       may not accept the reset queries because they are not ready for query.
-      
+
       The fix is, if frontend closes connection in unexpected way, query
       process loop immediately returns with new state:
       POOL_END_WITH_FRONTEND_ERROR and pgpool closes connection to
       PostgreSQL then goes back to new connection request waiting loop.
-      
+
       Also, pgpool closes connections to backend when client_idle_limit is
       set and the idle limit.
-      
+
       Per bug #107.
       http://www.pgpool.net/mantisbt/view.php?id=107
 
@@ -2299,6 +4478,348 @@
 3.2 Series (2012/08/03 - )
 ===============================================================================
 
+                        3.2.17 (namameboshi) 2016/08/31
+
+* Version 3.2.17
+
+    This is a bugfix release against pgpool-II 3.2.16.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+
+      While processing "show pool_nodes", the buffer for hostname was too
+      short. It should be same size as the buffer used for pgpool.conf.
+      Problem reported by a twitter user who is using pgpool on AWS (which
+      could have very long hostname).
+
+    - Fix usage of wait(2) in pgpool main process. (Tatsuo Ishii)
+
+      The usage of wait(2) in pgpool main could cause infinite wait in the
+      system call. Solution is, to use waitpid(2) instead of wait(2).
+
+    - Fix "kind mismatch" error message in pgpool. (Muhammad Usama)
+
+      Many of "kind mismatch..." errors are caused by notice/warning
+      messages produced by one or more of the DB nodes. In this case now
+      Pgpool-II forwards the messages to frontend, rather than throwing the
+      "kind mismatch..." error. This would reduce the chance of "kind
+      mismatch..."  errors.
+
+      See [pgpool-hackers: 1501] for more details.
+
+    - Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+
+      The macro calls pool_virtual_master_db_node_id() and then access
+      backend->slots[id]->con using the node id returned.  In rare cases, it
+      could point to 0 (in case when the DB node is not connected), which
+      gives access to con->major, then it causes a segfault.
+
+      See bug 225 for related info.
+
+    - doc : fix Japanese document typo. (Bo Peng)
+
+    - Fixing a typo in the log message. (Muhammad Usama)
+
+    - doc : Add comment to the document about connection_cache. (Tatsuo Ishii)
+
+===============================================================================
+
+                        3.2.16 (namameboshi) 2016/06/17
+
+* Version 3.2.16
+
+    This is a bugfix release against pgpool-II 3.2.15.
+
+    __________________________________________________________________
+
+* New features
+
+    - Allow to access to pgpool while doing health checking (Tatsuo Ishii)
+
+      Currently any attempt to connect to pgpool fails if pgpool is doing
+      health check against failed node even if fail_over_on_backend_error is
+      off because pgpool child first tries to connect to all backend
+      including the failed one and exits if it fails to connect to a backend
+      (of course it fails). This is a temporary situation and will be
+      resolved before pgpool executes failover. However if the health check
+      is retrying, the temporary situation keeps longer depending on the
+      setting of health_check_max_retries and health_check_retry_delay. This
+      is not good. Attached patch tries to mitigate the problem:
+
+      - When an attempt to connect to backend fails, give up connecting to
+      the failed node and skip to other node, rather than exiting the
+      process if operating in streaming replication mode and the node is
+      not primary node.
+
+      - Mark the local status of the failed node to "down".
+
+      - This will let the primary node be selected as a load balance node
+      and every queries will be sent to the primary node. If there's other
+      healthy standby nodes, one of them will be chosen as the load
+      balance node.
+
+      - After the session is over, the child process will suicide to not
+      retain the local status.
+
+* Bug fixes
+
+    - Fix is_set_transaction_serializable() when
+      SET default_transaction_isolation TO 'serializable'. (Bo Peng)
+
+      SET default_transaction_isolation TO 'serializable' is sent to
+      not only primary but also to standby server in streaming replication mode,
+      and this causes an error. Fix is, in streaming replication mode,
+      SET default_transaction_isolation TO 'serializable' is sent only to the
+      primary server.
+
+      See bug 191 for related info.
+
+    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+      Connection pool is avalilable in raw mode.
+
+    - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
+
+    - Permit pgpool to support multiple SSL cipher protocols (Muhammad Usama)
+
+      Currently TLSv1_method() is used to initialize the SSL context, that puts an
+      unnecessary limitation to allow only TLSv1 protocol for SSL communication.
+      While postgreSQL supports other ciphers protocols as well. The commit changes
+      the above and initializes the SSLSession using the SSLv23_method()
+      (same is also used by PostgreSQL). Because it can negotiate the use of the
+      highest mutually supported protocol version and remove the limitation of one
+      specific protocol version.
+
+    - If statement timeout is enabled on backend and do_query() sends a (Tatsuo Ishii)
+      query to primary node, and all of following user queries are sent to
+      standby, it is possible that the next command, for example END, could
+      cause a statement timeout error on the primary, and a kind mismatch
+      error on pgpool-II is raised.
+
+      This fix tries to mitigate the problem by sending sync message instead
+      of flush message in do_query(), expecting that the sync message reset
+      the statement timeout timer if we are in an explicit transaction. We
+      cannot use this technique for implicit transaction case, because the
+      sync message removes the unnamed portal if there's any.
+
+      Plus, pg_stat_statement will no longer show the query issued by
+      do_query() as "running".
+
+      See bug 194 for related info.
+
+    - Deal with the case when the primary is not node 0 in streaming replication mode. (Tatsuo Ishii)
+
+      http://www.pgpool.net/mantisbt/view.php?id=194#c837 reported that if
+      primary is not node 0, then statement timeout could occur even after
+      bug194-3.3.diff was applied. After some investigation, it appeared
+      that MASTER macro could return other than primary or load balance
+      node, which was not supposed to happen, thus do_query() sends queries
+      to wrong node (this is not clear from the report but I confirmed it in
+      my investigation).
+
+      pool_virtual_master_db_node_id(), which is called in MASTER macro
+      returns query_context->virtual_master_node_id if query context
+      exists. This could return wrong node if the variable has not been set
+      yet. To fix this, the function is modified: if the variable is not
+      either load balance node or primary node, the primary node id is
+      returned.
+
+    - change the Makefile under the directory src/sql/, that is proposed (Bo Peng)
+      by [pgpool-hackers: 1611]
+
+    - Fix a posible hang during health checking (Yugo Nagata)
+
+      Helath checking was hang when any data wasn't sent
+      from backend after connect(2) succeeded. To fix this,
+      pool_check_fd() returns 1 when select(2) exits with
+      EINTR due to SIGALRM while health checkking is performed.
+
+      Reported and patch provided by harukat and some modification
+      by Yugo. Per bug #204.
+
+      backported from 3.4 or later;
+      https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commitdiff;h=ed9f2900f1b611f5cfd52e8f758c3616861e60c0
+
+    - Fix bug with load balance node id info on shmem (Tatsuo Ishii)
+
+      There are few places where the load balance node was mistakenly put on
+      wrong place. It should be placed on: ConnectionInfo *con_info[child
+      id, connection pool_id, backend id].load_balancing_node].  In fact it
+      was placed on: *con_info[child id, connection pool_id,
+      0].load_balancing_node].
+
+      As long as the backend id in question is 0, it is ok. However while
+      testing pgpool-II 3.6's enhancement regarding failover, if primary
+      node is 1 (which is the load balance node) and standby is 0, a client
+      connecting to node 1 is disconnected when failover happens on node
+      0. This is unexpected and the bug was revealed.
+
+      It seems the bug was there since long time ago but it had not found
+      until today by the reason above.
+
+
+===============================================================================
+
+                        3.2.15 (namameboshi) 2016/04/26
+
+* Version 3.2.15
+
+    This is a bugfix release against pgpool-II 3.2.14.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Removing the limit on the maximum number of items in the
+      black_function_list and white_function_list lists. (Muhammad Usama)
+
+      extract_string_tokens in pool_config uses the fixed size malloc on
+      the array to hold the black_function_list/white_function_list items.
+      This imposes a limit of maximum items in these lists.
+      The fix is to use realloc to increase the array size when it gets full.
+
+    - Redirect all user queries to primary server (Tatsuo Ishii)
+
+      Up to now some user queries are sent to other than the primary server
+      even if load_balance_mode = off. This commit changes the behavior: if
+      load_balance_mode = off in streaming replication mode, now all the
+      user queries are sent to the primary server only.
+
+      Per bug #189.
+
+    - Change the PID length of pcp_proc_count command result to 6 characters
+      long (Bo Peng)
+
+      If the pgpool process ID are over 5 characters, the 6th character of each
+      process ID will be removed. This commit changes the process ID length of
+      pcp_proc_count command result to 6 characters long.
+
+      Per bug #188.
+
+===============================================================================
+
+                        3.2.14 (namameboshi) 2016/04/04
+
+* Version 3.2.14
+
+    This is a bugfix release against pgpool-II 3.2.13.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Change description of backend_flag (Tatsuo Ishii)
+
+      It is pointed out that restarting pgpool-II is not necessary.
+
+      Per [pgpool-general-jp: 1394].
+
+    - doc: Fix installation procedure. (Tatsuo Ishii)
+
+      With PostgreSQL 9.4 or later, installing pgpool_regclass is not needed.
+
+    - Fix to validate the PCP packet length (Muhammad Usama)
+
+      Without the validation check, a malformed PCP packet can crash the
+      PCP child and/or can run the server out of memory by sending the packet
+      with a very large data size.
+
+    - Fix a reset query stuck problem (Muhammad Usama)
+
+      The solution is to return  POOL_END_WITH_FRONTEND_ERROR instead of
+      POOL_END when pool_flush on front-end socket fails.
+
+      The original report is
+      [pgpool-general: 4265] Pgpool - connection hangs in DISCARD ALL
+
+===============================================================================
+
+                        3.2.13 (namameboshi) 2016/02/05
+
+* Version 3.2.13
+
+    This is a bugfix release against pgpool-II 3.2.12.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status (Tatsuo Ishii)
+
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - Fix ancient bug of pool_push() and friends (Tatsuo Ishii)
+
+      It allocates buffer using realloc and uses the pointer
+      returned. However it does the pointer calculation *before* realloc
+      gets called. So the calculation uses the old pointer value, which
+      causes various problems including segfault later.
+
+      Also there were other problems with it. The buffer pointer and buffer
+      size variable is not initialized. The buffer is not freed by
+      pool_close. Typo in debugging message (3.4 or later only). They are
+      fixed as well.
+
+    - doc: Fix wrong description about log_standby_delay in the document
+      (Yugo Nagata)
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+
+      Per bug #157.
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+
+      Per bug #156 report by harukat.
+
+    - doc: Add restriction about starting multiple pgpool simultaneously
+      (Yugo Nagata)
+
+    - Fix a in-memory query cache bug (Tatsuo Ishii)
+
+      If extended query protocol is used and a bind/execute message arrives
+      which uses a statement created by prior parse message, the temp_cache
+      is not initialized by a parse messages. Thus messages are added to pre
+      existing temp cache buffer which causes the trouble, that is, when the
+      cached result returns, Data Row message and Command Complete message
+      appeared twice.
+
+      Per by bug #152.
+
+    - Ignore close statement/portal request if they do not exist (Tatsuo Ishii)
+
+      In this case just returns a close complete message to client.
+      This is a back port of the following commit from pgpool-II 3.4:
+
+      1a37e1c35bd8b6f10f524693bbcb7b51f73b4bf0
+
+===============================================================================
+
                         3.2.12 (namameboshi) 2015/07/24
 
 * Version 3.2.12
@@ -2311,7 +4832,7 @@
 
     - Fix "cannot find xlog functions" error in pgpool-recovery
       (Muhammad Usama)
-      
+
       The argument data type of PostgreSQL's pg_xlogfile_name() function
       has been changed from text to pg_lsn since PostgreSQL 9.4. And
       pgpool-recovery was still trying to locate the function by old
@@ -2319,7 +4840,7 @@
 
     - Pass empty string parameters in failover command when pgpool-II
       does not have a value for any particular parameter (Muhammad Usama)
-      
+
       Instead of omitting the values for the parameters when pgpool-II does
       not have any value for a particular parameter, it now passes an empty
       string to the failover command. This makes sure that failover script
@@ -2327,12 +4848,12 @@
 
     - doc: Fix outdated limitation description about load balancing using
       JDBC driver (Tatsuo Ishii)
-      
+
       Even if autocommit is false, load balancing is possible in certain
       conditions.
 
     - Allow to use in-memory query cache size more than 4GB (Tatsuo Ishii)
-      
+
       This should have been allowed since in memory query cache was born.
 
     - Do not send a query for checking insert lock in non replication mode
@@ -2352,14 +4873,14 @@
 
     - Fix to use void * type for receiving return value of thread function
       (Yugo Nagata)
-      
+
       Previously int type was used and this could occur stack buffer
       overflow. This caused an infinity loop of ping error at bringing
       up or down VIP.
 
     - Fix to set SIGCHLD to SIG_DFL instead of SIG_IGN in watchdog processes
       (Yugo Nagata)
-      
+
       When using waitpid, it isn't necessary to set SIGCHLD to SIG_IGN.
       Rather, it is harmful, and due to this it was regarded that ping
       command exited abnormally in error even when this succeeded.
@@ -2367,7 +4888,7 @@
     - Remove an unnecessary include directive (Yugo Nagata)
 
     - Enlarge POOLCONFIG_MAXDESCLEN to 80 (Tatsuo Ishii)
-      
+
       This is used in show pool_status command and limits the length of
       parameter description.  Unfortunately recovery_timeout description is
       64 chars, which is 1 byte longer than former definition of the macro.
@@ -2376,7 +4897,7 @@
       frontend connections (Muhammad Usama)
 
     - Fix a problem with pcp_detach_node about graceful node detach (Muhammad Usama)
-      
+
       When graceful node detach is requested gracefully, pcp_detach_node should
       check if it is allowed to process detach_node command on the particular
       node before blocking the incoming connections and closing the existing
@@ -2397,7 +4918,7 @@
       necessarily 1 (Tatsuo Ishii)
 
     - Fix uninitialized variable (Tatsuo Ishii)
-      
+
       Per Coverity 1234603.
 
     - doc: Fix missing release note entries in the previous release
@@ -2406,27 +4927,27 @@
     - Fix possible segmentation fault in query cache (Tatsuo Ishii)
 
     - Fix node id range check bug in trigger_failover_command(). (Tatsuo Ishii)
-      
+
       The node id should be lower than NUM_BACKENDS. Probably harmless since
       callers never pass node ids greater or equal to NUM_BACKENDS.
 
     - Allow $_IP_$ having address prefix in if_up_cmd and if_down_cmd
       (Muhammad Usama)
-      
+
       Previously, it is assumed that "$_IP_$" keyword will always have a
       white space at the end, and when "$_IP_$" has address prefix (e.g.
       $_IP_$/24), this prefix was ignored.
-      
+
       Per bug #122.
       http://www.pgpool.net/mantisbt/view.php?id=122
 
     - Allow "show pool_nodes" to print node ids having more than one digits
       (Muhammad Usama)
-      
+
       Problem reported in [pgpool-general: 3374].
 
     - Fix to disable debug mode by reloading config (Yugo Nagata)
-      
+
       Per bug #114
       http://www.pgpool.net/mantisbt/view.php?id=114
 
@@ -2446,19 +4967,19 @@
 
     - Fix bug that worker child process keeps failing when there's no
       primary backend (Tatsuo Ishii)
-      
+
       Problem identified and fix contributed by Junegunn Choi.
-      
+
       See [pgpool-hackers: 471] for more details.
 
     - Close listen socket when smart shutdown request is made (Tatsuo Ishii)
-      
+
       When smart shutdown process starts, pgpool children still listen on
       the port and clients can send further connection requests which fail
       in the end. Which is not only waste of time, but also prevents a load
       balancer which sits in front of pgpool from realizing the pgpool is
       going down.
-      
+
       Problem analyzed and patch provided by Junegunn Choi in [pgpool-hackers
       474], and enhanced to take care not only inet domain socket but UNIX
       domain socket by Tatsuo Ishii.
@@ -2470,71 +4991,71 @@
       (Tatsuo Ishii)
 
     - Fix return type of text_to_lsn() function (Yugo Nagata)
-      
+
       This caused compile warning.
 
     - Fix file descriptor leak when daemonize. (Tatsuo Ishii)
-      
+
       Per Coverity 1111471.
 
     - Fix memory leak. (Tatsuo Ishii)
-      
+
       Per Coverity 1111442.
 
     - Fix pgpool.init's long-standing bug of stop/restart failure
       (Yugo Nagata)
-      
+
       In previous, pgpool.init uses killproc for stopping pgpool, but there
       are several problems. In the new version, "pgpool -m fast stop" is
       used in stop command.
-      
+
       Original patch contributed by Ryan DeShone and modified by Yugo Nagata.
-      
+
       See [pgpool-hackers: 239][pgpool-hackers: 512].
 
     - Add missing include file sys/wait.h. (Tatsuo Ishii)
-      
+
       Per bug #104.
       http://www.pgpool.net/mantisbt/view.php?id=104
 
     - Disbale statement_timeout of PostgreSQL while executing online recovery
       (Tatsuo Ishii)
-      
+
       Online recovery may take very long time and user may enable statement
       timeout. To prevent online recovery canceled by statement timeout,
       disable statement timeout in the connection used by online recovery.
-      
+
       See [pgpool-general: 2919] for more details.
 
     - Remove unnecessary call to pool_shmem_exit() which removes semaphore
       when it shouldn't (Tatsuo Ishii)
-      
+
       exit_handler checks if the process is parent or not. This is
       good. However, even if it is a child process, it calls
       pool_shmem_exit() which removes semaphore and shmem when it should
       not. It should be called only from parent process.
-      
+
       Per bug #102.
       http://www.pgpool.net/mantisbt/view.php?id=102
 
     - Fix reset query stuck problem. (Tatsuo Ishii)
-      
+
       It is reported that reset query (DISCARD ALL etc.) occasionally does
       not finish and pgpool child remain waiting for reply from backend thus
       client cannot connect to pgpool.
-      
+
       The cause of problem is not identified yet but if client suddenly
       closes connection to pgpool in the middle of query processing, backend
       may not accept the reset queries because they are not ready for query.
-      
+
       The fix is, if frontend closes connection in unexpected way, query
       process loop immediately returns with new state:
       POOL_END_WITH_FRONTEND_ERROR and pgpool closes connection to
       PostgreSQL then goes back to new connection request waiting loop.
-      
+
       Also, pgpool closes connections to backend when client_idle_limit is
       set and the idle limit.
-      
+
       Per bug #107.
       http://www.pgpool.net/mantisbt/view.php?id=107
 
@@ -4225,6 +6746,292 @@
 3.1 Series (2011/09/08 - )
 ===============================================================================
 
+                        3.1.20 (hatsuiboshi) 2016/08/31
+
+* Version 3.1.20
+
+    This is a bugfix release against pgpool-II 3.1.19.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix buffer over run problem in "show pool_nodes". (Tatsuo Ishii)
+
+      While processing "show pool_nodes", the buffer for hostname was too
+      short. It should be same size as the buffer used for pgpool.conf.
+      Problem reported by a twitter user who is using pgpool on AWS (which
+      could have very long hostname).
+
+    - Fix usage of wait(2) in pgpool main process. (Tatsuo Ishii)
+
+      The usage of wait(2) in pgpool main could cause infinite wait in the
+      system call. Solution is, to use waitpid(2) instead of wait(2).
+
+    - Fix "kind mismatch" error message in pgpool. (Muhammad Usama)
+
+      Many of "kind mismatch..." errors are caused by notice/warning
+      messages produced by one or more of the DB nodes. In this case now
+      Pgpool-II forwards the messages to frontend, rather than throwing the
+      "kind mismatch..." error. This would reduce the chance of "kind
+      mismatch..."  errors.
+
+      See [pgpool-hackers: 1501] for more details.
+
+    - Replace "MAJOR" macro to prevent occasional failure. (Tatsuo Ishii)
+
+      The macro calls pool_virtual_master_db_node_id() and then access
+      backend->slots[id]->con using the node id returned.  In rare cases, it
+      could point to 0 (in case when the DB node is not connected), which
+      gives access to con->major, then it causes a segfault.
+
+      See bug 225 for related info.
+
+    - doc : fix Japanese document typo. (Bo Peng)
+
+    - Fixing a typo in the log message. (Muhammad Usama)
+
+    - doc : Add comment to the document about connection_cache. (Tatsuo Ishii)
+
+===============================================================================
+
+                        3.1.19 (hatsuiboshi) 2016/06/17
+
+* Version 3.1.19
+
+    This is a bugfix release against pgpool-II 3.1.18.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Fix is_set_transaction_serializable() when
+      SET default_transaction_isolation TO 'serializable'. (Bo Peng)
+
+      SET default_transaction_isolation TO 'serializable' is sent to
+      not only primary but also to standby server in streaming replication mode,
+      and this causes an error. Fix is, in streaming replication mode,
+      SET default_transaction_isolation TO 'serializable' is sent only to the
+      primary server.
+
+      See bug 191 for related info.
+
+    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+      Connection pool is avalilable in raw mode.
+
+    - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
+
+    - Permit pgpool to support multiple SSL cipher protocols (Muhammad Usama)
+
+      Currently TLSv1_method() is used to initialize the SSL context, that puts an
+      unnecessary limitation to allow only TLSv1 protocol for SSL communication.
+      While postgreSQL supports other ciphers protocols as well. The commit changes
+      the above and initializes the SSLSession using the SSLv23_method()
+      (same is also used by PostgreSQL). Because it can negotiate the use of the
+      highest mutually supported protocol version and remove the limitation of one
+      specific protocol version.
+
+    - If statement timeout is enabled on backend and do_query() sends a (Tatsuo Ishii)
+      query to primary node, and all of following user queries are sent to
+      standby, it is possible that the next command, for example END, could
+      cause a statement timeout error on the primary, and a kind mismatch
+      error on pgpool-II is raised.
+
+      This fix tries to mitigate the problem by sending sync message instead
+      of flush message in do_query(), expecting that the sync message reset
+      the statement timeout timer if we are in an explicit transaction. We
+      cannot use this technique for implicit transaction case, because the
+      sync message removes the unnamed portal if there's any.
+
+      Plus, pg_stat_statement will no longer show the query issued by
+      do_query() as "running".
+
+      See bug 194 for related info.
+
+    - Deal with the case when the primary is not node 0 in streaming replication mode. (Tatsuo Ishii)
+
+      http://www.pgpool.net/mantisbt/view.php?id=194#c837 reported that if
+      primary is not node 0, then statement timeout could occur even after
+      bug194-3.3.diff was applied. After some investigation, it appeared
+      that MASTER macro could return other than primary or load balance
+      node, which was not supposed to happen, thus do_query() sends queries
+      to wrong node (this is not clear from the report but I confirmed it in
+      my investigation).
+
+      pool_virtual_master_db_node_id(), which is called in MASTER macro
+      returns query_context->virtual_master_node_id if query context
+      exists. This could return wrong node if the variable has not been set
+      yet. To fix this, the function is modified: if the variable is not
+      either load balance node or primary node, the primary node id is
+      returned.
+
+    - change the Makefile under the directory src/sql/, that is proposed (Bo Peng)
+      by [pgpool-hackers: 1611]
+
+    - Fix a posible hang during health checking (Yugo Nagata)
+
+      Helath checking was hang when any data wasn't sent
+      from backend after connect(2) succeeded. To fix this,
+      pool_check_fd() returns 1 when select(2) exits with
+      EINTR due to SIGALRM while health checkking is performed.
+
+      Reported and patch provided by harukat and some modification
+      by Yugo. Per bug #204.
+
+      backported from 3.4 or later;
+      https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commitdiff;h=ed9f2900f1b611f5cfd52e8f758c3616861e60c0
+
+    - Fix bug with load balance node id info on shmem (Tatsuo Ishii)
+
+      There are few places where the load balance node was mistakenly put on
+      wrong place. It should be placed on: ConnectionInfo *con_info[child
+      id, connection pool_id, backend id].load_balancing_node].  In fact it
+      was placed on: *con_info[child id, connection pool_id,
+      0].load_balancing_node].
+
+      As long as the backend id in question is 0, it is ok. However while
+      testing pgpool-II 3.6's enhancement regarding failover, if primary
+      node is 1 (which is the load balance node) and standby is 0, a client
+      connecting to node 1 is disconnected when failover happens on node
+      0. This is unexpected and the bug was revealed.
+
+      It seems the bug was there since long time ago but it had not found
+      until today by the reason above.
+
+===============================================================================
+
+                        3.1.18 (hatsuiboshi) 2016/04/26
+
+* Version 3.1.18
+
+    This is a bugfix release against pgpool-II 3.1.17.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - Removing the limit on the maximum number of items in the
+      black_function_list and white_function_list lists. (Muhammad Usama)
+
+      extract_string_tokens in pool_config uses the fixed size malloc on
+      the array to hold the black_function_list/white_function_list items.
+      This imposes a limit of maximum items in these lists.
+      The fix is to use realloc to increase the array size when it gets full.
+
+    - Redirect all user queries to primary server (Tatsuo Ishii)
+
+      Up to now some user queries are sent to other than the primary server
+      even if load_balance_mode = off. This commit changes the behavior: if
+      load_balance_mode = off in streaming replication mode, now all the
+      user queries are sent to the primary server only.
+
+      Per bug #189.
+
+    - Change the PID length of pcp_proc_count command result to 6 characters
+      long (Bo Peng)
+
+      If the pgpool process ID are over 5 characters, the 6th character of each
+      process ID will be removed. This commit changes the process ID length of
+      pcp_proc_count command result to 6 characters long.
+
+      Per bug #188.
+
+===============================================================================
+
+                        3.1.17 (hatsuiboshi) 2016/04/04
+
+* Version 3.1.17
+
+    This is a bugfix release against pgpool-II 3.1.16.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Change description of backend_flag (Tatsuo Ishii)
+
+      It is pointed out that restarting pgpool-II is not necessary.
+
+      Per [pgpool-general-jp: 1394].
+
+    - doc: Fix installation procedure. (Tatsuo Ishii)
+
+      With PostgreSQL 9.4 or later, installing pgpool_regclass is not needed.
+
+    - Fix to validate the PCP packet length (Muhammad Usama)
+
+      Without the validation check, a malformed PCP packet can crash the
+      PCP child and/or can run the server out of memory by sending the packet
+      with a very large data size.
+
+    - Fix a reset query stuck problem (Muhammad Usama)
+
+      The solution is to return  POOL_END_WITH_FRONTEND_ERROR instead of
+      POOL_END when pool_flush on front-end socket fails.
+
+      The original report is
+      [pgpool-general: 4265] Pgpool - connection hangs in DISCARD ALL
+
+===============================================================================
+
+                        3.1.16 (hatsuiboshi) 2016/02/05
+
+* Version 3.1.16
+
+    This is a bugfix release against pgpool-II 3.1.15.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status (Tatsuo Ishii)
+
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - doc: Fix wrong description about log_standby_delay in the document
+      (Yugo Nagata)
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+
+      Per bug #157.
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+
+      Per bug #156 report by harukat.
+
+    - Ignore close statement/portal request if they do not exist (Tatsuo Ishii)
+
+      In this case just returns a close complete message to client.
+      This is a back port of the following commit from pgpool-II 3.4:
+
+      1a37e1c35bd8b6f10f524693bbcb7b51f73b4bf0
+
+===============================================================================
+
                         3.1.15 (hatsuiboshi) 2015/07/24
 
 * Version 3.1.15
@@ -4237,7 +7044,7 @@
 
     - Fix "cannot find xlog functions" error in pgpool-recovery
       (Muhammad Usama)
-      
+
       The argument data type of PostgreSQL's pg_xlogfile_name() function
       has been changed from text to pg_lsn since PostgreSQL 9.4. And
       pgpool-recovery was still trying to locate the function by old
@@ -4259,7 +7066,7 @@
 * Bug fixes
 
     - Enlarge POOLCONFIG_MAXDESCLEN to 80 (Tatsuo Ishii)
-      
+
       This is used in show pool_status command and limits the length of
       parameter description.  Unfortunately recovery_timeout description is
       64 chars, which is 1 byte longer than former definition of the macro.
@@ -4268,7 +7075,7 @@
       frontend connections (Muhammad Usama)
 
     - Fix a problem with pcp_detach_node about graceful node detach (Muhammad Usama)
-      
+
       When graceful node detach is requested gracefully, pcp_detach_node should
       check if it is allowed to process detach_node command on the particular
       node before blocking the incoming connections and closing the existing
@@ -4290,19 +7097,19 @@
       necessarily 1 (Tatsuo Ishii)
 
     - Fix uninitialized variable (Tatsuo Ishii)
-      
+
       Per Coverity 1234603.
 
     - doc: Fix missing release note entries in the previous release
       (Tatsuo Ishii)
 
     - Fix node id range check bug in trigger_failover_command(). (Tatsuo Ishii)
-      
+
       The node id should be lower than NUM_BACKENDS. Probably harmless since
       callers never pass node ids greater or equal to NUM_BACKENDS.
 
     - Fix to disable debug mode by reloading config (Yugo Nagata)
-      
+
       Per bug #114
       http://www.pgpool.net/mantisbt/view.php?id=114
 
@@ -4322,19 +7129,19 @@
 
     - Fix bug that worker child process keeps failing when there's no
       primary backend (Tatsuo Ishii)
-      
+
       Problem identified and fix contributed by Junegunn Choi.
-      
+
       See [pgpool-hackers: 471] for more details.
 
     - Close listen socket when smart shutdown request is made (Tatsuo Ishii)
-      
+
       When smart shutdown process starts, pgpool children still listen on
       the port and clients can send further connection requests which fail
       in the end. Which is not only waste of time, but also prevents a load
       balancer which sits in front of pgpool from realizing the pgpool is
       going down.
-      
+
       Problem analyzed and patch provided by Junegunn Choi in [pgpool-hackers
       474], and enhanced to take care not only inet domain socket but UNIX
       domain socket by Tatsuo Ishii.
@@ -4346,66 +7153,66 @@
       (Tatsuo Ishii)
 
     - Fix return type of text_to_lsn() function (Yugo Nagata)
-      
+
       This caused compile warning.
 
     - Fix file descriptor leak when daemonize. (Tatsuo Ishii)
-      
+
       Per Coverity 1111471.
 
     - Fix memory leak. (Tatsuo Ishii)
-      
+
       Per Coverity 1111442.
 
     - Fix pgpool.init's long-standing bug of stop/restart failure
       (Yugo Nagata)
-      
+
       In previous, pgpool.init uses killproc for stopping pgpool, but there
       are several problems. In the new version, "pgpool -m fast stop" is
       used in stop command.
-      
+
       Original patch contributed by Ryan DeShone and modified by Yugo Nagata.
-      
+
       See [pgpool-hackers: 239][pgpool-hackers: 512].
 
     - Disbale statement_timeout of PostgreSQL while executing online recovery
       (Tatsuo Ishii)
-      
+
       Online recovery may take very long time and user may enable statement
       timeout. To prevent online recovery canceled by statement timeout,
       disable statement timeout in the connection used by online recovery.
-      
+
       See [pgpool-general: 2919] for more details.
 
     - Remove unnecessary call to pool_shmem_exit() which removes semaphore
       when it shouldn't (Tatsuo Ishii)
-      
+
       exit_handler checks if the process is parent or not. This is
       good. However, even if it is a child process, it calls
       pool_shmem_exit() which removes semaphore and shmem when it should
       not. It should be called only from parent process.
-      
+
       Per bug #102.
       http://www.pgpool.net/mantisbt/view.php?id=102
 
     - Fix reset query stuck problem. (Tatsuo Ishii)
-      
+
       It is reported that reset query (DISCARD ALL etc.) occasionally does
       not finish and pgpool child remain waiting for reply from backend thus
       client cannot connect to pgpool.
-      
+
       The cause of problem is not identified yet but if client suddenly
       closes connection to pgpool in the middle of query processing, backend
       may not accept the reset queries because they are not ready for query.
-      
+
       The fix is, if frontend closes connection in unexpected way, query
       process loop immediately returns with new state:
       POOL_END_WITH_FRONTEND_ERROR and pgpool closes connection to
       PostgreSQL then goes back to new connection request waiting loop.
-      
+
       Also, pgpool closes connections to backend when client_idle_limit is
       set and the idle limit.
-      
+
       Per bug #107.
       http://www.pgpool.net/mantisbt/view.php?id=107
 
@@ -5552,6 +8359,68 @@
 3.0 Series (2013/07/30 - )
 ===============================================================================
 
+                        3.0.20 (umiyameboshi) 2016/02/05
+
+* Version 3.0.20
+
+    This is a bugfix release against pgpool-II 3.0.19.
+
+    This is the final release of the series. pgpool-II 3.0 has reached
+    End of Life, and is no longer maintained and does not receive any
+    updates.
+
+    __________________________________________________________________
+
+* Bug fixes
+
+    - doc: Fix misinformation regarding load balancing in docs (Tatsuo Ishii)
+
+      In streaming replication mode, DECLARE, FETCH, CLOSE and SHOW are sent
+      to primary node only. Pointed out in [pgpool-general-jp: 1378].
+
+    - Issue fsync() when writing pgpool_status (Tatsuo Ishii)
+
+      This ensures that pgpool_status is saved to permanent storage and
+      allow to survive after system crash.
+
+    - doc: Fix wrong description about log_standby_delay in the document
+      (Yugo Nagata)
+
+    - Fix bug with "SET TRANSACTION READ ONLY" (Tatsuo Ishii)
+
+      Pgpool-II remembers that non read only queries (including SET) were
+      executed in an explicit transaction and adds a "writing transaction"
+      mark to the transaction. The mark affects the query routing behavior
+      of pgpool-II while running in streaming replication mode. Pgpool-II
+      starts sending queries to the primary after the mark is set. Because
+      the effect of writing queries may appear on standbys after some delay
+      in streaming replication mode, it is safer to route read queries to
+      the primary after the mark is set.
+
+      However there's oversight here. "SET TRANSACTION READ ONLY" does no
+      data modification and should be treated as an exception.
+
+      Per bug #157.
+
+    - Fix FATAL error with reloading (Tatsuo Ishii)
+
+      While reloading pgpool.conf, the number of DB nodes is tentatively set
+      to 0, then counted up until reaching to the actual number of backends
+      by the pgpool main process. Unfortunately the variable was on the
+      shared memory and it confused pgpool child process when they were using
+      the variable and this caused FATAL error.
+
+      Per bug #156 report by harukat.
+
+    - Ignore close statement/portal request if they do not exist (Tatsuo Ishii)
+
+      In this case just returns a close complete message to client.
+      This is a back port of the following commit from pgpool-II 3.4:
+
+      1a37e1c35bd8b6f10f524693bbcb7b51f73b4bf0
+
+===============================================================================
+
                         3.0.19 (umiyameboshi) 2015/07/24
 
 * Version 3.0.19
@@ -5564,7 +8433,7 @@
 
     - Fix "cannot find xlog functions" error in pgpool-recovery
       (Muhammad Usama)
-      
+
       The argument data type of PostgreSQL's pg_xlogfile_name() function
       has been changed from text to pg_lsn since PostgreSQL 9.4. And
       pgpool-recovery was still trying to locate the function by old
@@ -5586,7 +8455,7 @@
 * Bug fixes
 
     - Enlarge POOLCONFIG_MAXDESCLEN to 80 (Tatsuo Ishii)
-      
+
       This is used in show pool_status command and limits the length of
       parameter description.  Unfortunately recovery_timeout description is
       64 chars, which is 1 byte longer than former definition of the macro.
@@ -5595,7 +8464,7 @@
       frontend connections (Muhammad Usama)
 
     - Fix a problem with pcp_detach_node about graceful node detach (Muhammad Usama)
-      
+
       When graceful node detach is requested gracefully, pcp_detach_node should
       check if it is allowed to process detach_node command on the particular
       node before blocking the incoming connections and closing the existing
@@ -5617,19 +8486,19 @@
       necessarily 1 (Tatsuo Ishii)
 
     - Fix uninitialized variable (Tatsuo Ishii)
-      
+
       Per Coverity 1234603.
 
     - doc: Fix missing release note entries in the previous release
       (Tatsuo Ishii)
 
     - Fix node id range check bug in trigger_failover_command(). (Tatsuo Ishii)
-      
+
       The node id should be lower than NUM_BACKENDS. Probably harmless since
       callers never pass node ids greater or equal to NUM_BACKENDS.
 
     - Fix to disable debug mode by reloading config (Yugo Nagata)
-      
+
       Per bug #114
       http://www.pgpool.net/mantisbt/view.php?id=114
 
@@ -5649,19 +8518,19 @@
 
     - Fix bug that worker child process keeps failing when there's no
       primary backend (Tatsuo Ishii)
-      
+
       Problem identified and fix contributed by Junegunn Choi.
-      
+
       See [pgpool-hackers: 471] for more details.
 
     - Close listen socket when smart shutdown request is made (Tatsuo Ishii)
-      
+
       When smart shutdown process starts, pgpool children still listen on
       the port and clients can send further connection requests which fail
       in the end. Which is not only waste of time, but also prevents a load
       balancer which sits in front of pgpool from realizing the pgpool is
       going down.
-      
+
       Problem analyzed and patch provided by Junegunn Choi in [pgpool-hackers
       474], and enhanced to take care not only inet domain socket but UNIX
       domain socket by Tatsuo Ishii.
@@ -5673,45 +8542,45 @@
       (Tatsuo Ishii)
 
     - Fix return type of text_to_lsn() function (Yugo Nagata)
-      
+
       This caused compile warning.
 
     - Fix file descriptor leak when daemonize. (Tatsuo Ishii)
-      
+
       Per Coverity 1111471.
 
     - Fix memory leak. (Tatsuo Ishii)
-      
+
       Per Coverity 1111442.
 
     - Fix pgpool.init's long-standing bug of stop/restart failure
       (Yugo Nagata)
-      
+
       In previous, pgpool.init uses killproc for stopping pgpool, but there
       are several problems. In the new version, "pgpool -m fast stop" is
       used in stop command.
-      
+
       Original patch contributed by Ryan DeShone and modified by Yugo Nagata.
-      
+
       See [pgpool-hackers: 239][pgpool-hackers: 512].
 
     - Disbale statement_timeout of PostgreSQL while executing online recovery
       (Tatsuo Ishii)
-      
+
       Online recovery may take very long time and user may enable statement
       timeout. To prevent online recovery canceled by statement timeout,
       disable statement timeout in the connection used by online recovery.
-      
+
       See [pgpool-general: 2919] for more details.
 
     - Remove unnecessary call to pool_shmem_exit() which removes semaphore
       when it shouldn't (Tatsuo Ishii)
-      
+
       exit_handler checks if the process is parent or not. This is
       good. However, even if it is a child process, it calls
       pool_shmem_exit() which removes semaphore and shmem when it should
       not. It should be called only from parent process.
-      
+
       Per bug #102.
       http://www.pgpool.net/mantisbt/view.php?id=102
 
@@ -6051,23 +8920,23 @@
       rsync may delete unrelated files in basebackup scripts.
 
     - Fix reset query stuck problem. (Tatsuo Ishii)
-      
+
       It is reported that reset query (DISCARD ALL etc.) occasionally does
       not finish and pgpool child remain waiting for reply from backend thus
       client cannot connect to pgpool.
-      
+
       The cause of problem is not identified yet but if client suddenly
       closes connection to pgpool in the middle of query processing, backend
       may not accept the reset queries because they are not ready for query.
-      
+
       The fix is, if frontend closes connection in unexpected way, query
       process loop immediately returns with new state:
       POOL_END_WITH_FRONTEND_ERROR and pgpool closes connection to
       PostgreSQL then goes back to new connection request waiting loop.
-      
+
       Also, pgpool closes connections to backend when client_idle_limit is
       set and the idle limit.
-      
+
       Per bug #107.
       http://www.pgpool.net/mantisbt/view.php?id=107
 
