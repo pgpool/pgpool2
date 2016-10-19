@@ -324,6 +324,8 @@ rsync used in the command is killed by signal 2 for example.
 
         <para>
           This parameter can be changed by reloading the pgpool configurations.
+					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+					this parameter for a current session.
         </para>
       </listitem>
     </varlistentry>
