@@ -1165,7 +1165,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         2016-04-13 [a5fdf78]  Fix extended protocol hang with empty query
         -->
         <para>
-        Fix extended protocol hang with empty query. (bug 190 (Tatsuo Ishii))
+        Fix extended protocol hang with empty query. (bug 190) (Tatsuo Ishii)
         </para>
         <para>
         The fixes related to extended protocol cases in 3.5.1 broke the case
@@ -1185,7 +1185,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         -->
         <para>
 	    Fix for <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2016-March/004627.html">
-        [pgpool-general: 4569]</ulink> <productname>Pgpool-II</productname> 3.5 : segfault
+        [pgpool-general: 4569]</ulink> <productname>Pgpool-II</productname> 3.5 : segfault. (Muhammad Usama)
         </para>
         <para>
         PostgreSQL's memory and exception manager APIs adopted by the <productname>Pgpool-II</productname> 3.4 are not
