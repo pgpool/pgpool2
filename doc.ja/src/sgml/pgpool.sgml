@@ -11,10 +11,10 @@
 
 ]>
 
-<book id="postgres">
+<book id="pgpool" lang="ja">
 <!-- needs to be replaced as "pgpool" later -->
 
- <title>pgpool-II &version; Documentation</title>
+ <title>pgpool-II &version; 文書</title>
 
  <bookinfo>
   <corpauthor>The Pgpool Global Development Group</corpauthor>
