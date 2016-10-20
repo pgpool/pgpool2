@@ -41,12 +41,18 @@
  </part>
 
  <part id="admin">
+<!--
   <title>Server Administration</title>
+-->
+  <title>サーバ管理</title>
 
   <partintro>
    <para>
+<!--
     This part covers topics that are of interest
     to <productname>Pgpool-II</productname> administrators.
+-->
+ここでは<productname>Pgpool-II</productname>管理者にとって関心のある事項を扱います。
    </para>
   </partintro>
 
