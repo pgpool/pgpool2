@@ -60,8 +60,7 @@
     <listitem>
      <para>
       <application>tar</> is required to unpack the source
-      distribution, in addition to either
-      <application>gzip</> or <application>bzip2</>.
+      distribution, in addition to <application>gzip</>.
      </para>
     </listitem>
 
