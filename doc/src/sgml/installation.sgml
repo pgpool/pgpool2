@@ -10,9 +10,9 @@
  <sect1 id="install-source">
   <title>Installation from Source Code</title>
    <para>
-     This chapter describes the installtion
+     This chapter describes the installation
      of <productname>Pgpool-II</productname>.  First, installation from
-     source code distribution is explained. Then installtion from RPM
+     source code distribution is explained. Then installation from RPM
      packages is explained.
    </para>
  </sect1>
@@ -171,7 +171,7 @@
 	<term><option>--with-pgsql=path</option></term>
 	<listitem>
           <para>
-	    The top directory where PostgreSQL's client libraries are
+	    The top directory where <productname>PostgreSQL</>'s client libraries are
             installed. Default value is provided by <command>pg_config</command>.
 	  </para>
 	</listitem>
@@ -225,7 +225,7 @@
 	<term><option>--with-memcached=path</option></term>
 	<listitem>
           <para>
-	    <productname>Pgpool-II</productname> binaries will use memcached for in
+	    <productname>Pgpool-II</productname> binaries will use <productname>memcached</productname> for in
           memory query cache.  You have to
           install <ulink url="http://libmemcached.org/libMemcached.html">libmemcached</ulink>.
 	  </para>
@@ -417,7 +417,7 @@ $ psql -f pgpool-regclass.sql template1
 
     <para>
       These configuration files are located at /usr/local/etc with
-      default installtion from source code.
+      default installation from source code.
       You can copy one of them as <filename>pgpool.conf</filename>.
       (probably you need root privilege for this)
       <programlisting>
