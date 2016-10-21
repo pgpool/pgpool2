@@ -1,0 +1,282 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>PGPOOL SET</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="SQL type commands"
+HREF="sql-commands.html"><LINK
+REL="PREVIOUS"
+TITLE="PGPOOL SHOW"
+HREF="sql-pgpool-show.html"><LINK
+REL="NEXT"
+TITLE="PGPOOL RESET"
+HREF="sql-pgpool-reset.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="REFENTRY"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="PGPOOL SHOW"
+HREF="sql-pgpool-show.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="sql-commands.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="PGPOOL RESET"
+HREF="sql-pgpool-reset.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><H1
+><A
+NAME="SQL-PGPOOL-SET"
+></A
+>PGPOOL SET</H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN5167"
+></A
+><H2
+>Name</H2
+>PGPOOL SET&nbsp;--&nbsp;change a configuration parameter</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN5170"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="SYNOPSIS"
+>SET  <TT
+CLASS="REPLACEABLE"
+><I
+>configuration_parameter</I
+></TT
+> { TO | = } { <TT
+CLASS="REPLACEABLE"
+><I
+>value</I
+></TT
+> | '<TT
+CLASS="REPLACEABLE"
+><I
+>value</I
+></TT
+>' | DEFAULT }</PRE
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN5175"
+></A
+><H2
+>Description</H2
+><P
+>&#13;   The <TT
+CLASS="COMMAND"
+>PGPOOL SET</TT
+> command changes the value of
+   <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> configuration parameters for the current session.
+
+    This command is similar to the
+    <A
+HREF="https://www.postgresql.org/docs/current/static/sql-set.html"
+TARGET="_top"
+>    <TT
+CLASS="COMMAND"
+>SET</TT
+></A
+> command in PostgreSQL with an addition
+    of <ACRONYM
+CLASS="ACRONYM"
+>PGPOOL</ACRONYM
+> keyword to distinguish it from the
+    PostgreSQL SET command.
+    Many of the configuration parameters listed in
+   <A
+HREF="runtime-config.html"
+>Chapter 5</A
+> can be changed on-the-fly with
+   <TT
+CLASS="COMMAND"
+>PGPOOL SET</TT
+> and it only affects the value used by the current
+   session.
+  </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN5185"
+></A
+><H2
+>Examples</H2
+><P
+>   Change the value of client_idle_limit parameter:
+    </P><PRE
+CLASS="PROGRAMLISTING"
+>PGPOOL SET client_idle_limit = 350;
+    </PRE
+><P>
+  </P
+><P
+>   Reset the value of client_idle_limit parameter to default:
+    </P><PRE
+CLASS="PROGRAMLISTING"
+>PGPOOL SET client_idle_limit TO DEFAULT;
+    </PRE
+><P>
+  </P
+><P
+>   Change the value of log_min_messages parameter:
+    </P><PRE
+CLASS="PROGRAMLISTING"
+>PGPOOL SET log_min_messages TO INFO;
+    </PRE
+><P>
+  </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN5193"
+></A
+><H2
+>See Also</H2
+><A
+HREF="sql-pgpool-reset.html"
+>PGPOOL RESET</A
+>, <A
+HREF="sql-pgpool-show.html"
+>PGPOOL SHOW</A
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="sql-pgpool-show.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="sql-pgpool-reset.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>PGPOOL SHOW</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="sql-commands.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>PGPOOL RESET</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

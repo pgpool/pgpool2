@@ -1,0 +1,554 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>pgpool_setup</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Other commands"
+HREF="other-commands.html"><LINK
+REL="PREVIOUS"
+TITLE="pg_md5"
+HREF="pg-md5.html"><LINK
+REL="NEXT"
+TITLE="watchdog_setup"
+HREF="watchdog-setup.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="REFENTRY"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="pg_md5"
+HREF="pg-md5.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="other-commands.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="watchdog_setup"
+HREF="watchdog-setup.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><H1
+><A
+NAME="PGPOOL-SETUP"
+></A
+>pgpool_setup</H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN4847"
+></A
+><H2
+>Name</H2
+>pgpool_setup&nbsp;--&nbsp;  Create a temporary installation of Pgpool-II cluster</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN4850"
+></A
+><H2
+>Synopsis</H2
+><P
+><TT
+CLASS="COMMAND"
+>pgpool_setup</TT
+> [<TT
+CLASS="REPLACEABLE"
+><I
+>option</I
+></TT
+>...]</P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="R1-PGPOOL-SETUP-1"
+></A
+><H2
+>   Description
+  </H2
+><P
+>  <SPAN
+CLASS="APPLICATION"
+>pgpool_setup</SPAN
+> creates a temporary
+  installation of <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> cluster, which
+  includes a <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> installation and
+  specified number of <SPAN
+CLASS="PRODUCTNAME"
+>PostgreSQL</SPAN
+>
+  installations under current directory.
+  Current directory must be empty before running <SPAN
+CLASS="APPLICATION"
+>pgpool_setup</SPAN
+>.
+  </P
+><P
+>    <SPAN
+CLASS="APPLICATION"
+>pgpool_setup</SPAN
+> is for testing purpose
+    only and should not be used to create production installations.
+  </P
+><P
+>    Currently <SPAN
+CLASS="APPLICATION"
+>pgpool_setup</SPAN
+> supports streaming replication mode, native replication mode and raw mode.
+    Watchdog is not supported yet.
+  </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN4867"
+></A
+><H2
+>Options</H2
+><P
+>    <SPAN
+CLASS="APPLICATION"
+>pgpool_setup</SPAN
+> accepts the following command-line arguments:
+
+    <P
+></P
+></P><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="OPTION"
+>-m <TT
+CLASS="REPLACEABLE"
+><I
+>mode</I
+></TT
+></TT
+></DT
+><DD
+><P
+>        Specifies the running mode.  <TT
+CLASS="REPLACEABLE"
+><I
+>mode</I
+></TT
+>
+        can be <TT
+CLASS="LITERAL"
+>r</TT
+> (native replication mode), <TT
+CLASS="LITERAL"
+>s</TT
+> (streaming replication mode), or
+        <TT
+CLASS="LITERAL"
+>n</TT
+> (raw mode).
+	If this is omitted, <TT
+CLASS="LITERAL"
+>s</TT
+> is used.
+       </P
+></DD
+><DT
+><TT
+CLASS="OPTION"
+>-n <TT
+CLASS="REPLACEABLE"
+><I
+>num_clusters</I
+></TT
+></TT
+></DT
+><DD
+><P
+>        Specifies the number of PostgreSQL installations.
+	If this is omitted, <TT
+CLASS="LITERAL"
+>2</TT
+> is used.
+       </P
+></DD
+><DT
+><TT
+CLASS="OPTION"
+>-p <TT
+CLASS="REPLACEABLE"
+><I
+>base_port</I
+></TT
+></TT
+></DT
+><DD
+><P
+>	 Specify the base port number used by Pgpool-II and PostgreSQL.
+	 Pgpool-II port is base_port. pcp port is base_port + 1. The
+	 first PostgreSQL node's port is base_port + 2, second
+	 PostgreSQL node's port is base_port + 3 and so on.
+       </P
+><P
+>	 If -pg option is specified, the first PostgreSQL node's port is
+	 assigned to pg_base_port, the second PostgreSQL node's port is
+	 pg_base_port + 1 and so on.
+       </P
+><P
+>	If this is omitted, <TT
+CLASS="LITERAL"
+>11000</TT
+> is used.
+       </P
+></DD
+><DT
+><TT
+CLASS="OPTION"
+>-pg <TT
+CLASS="REPLACEABLE"
+><I
+>pg_base_port</I
+></TT
+></TT
+></DT
+><DD
+><P
+>	 Specify the base port number used by PostgreSQL.
+	 The first PostgreSQL node's port is base_port + 2, second
+	 PostgreSQL node's port is base_port + 3 and so on.
+       </P
+><P
+>	If this is omitted, <TT
+CLASS="LITERAL"
+>base_port</TT
+>+2 is used.
+       </P
+></DD
+><DT
+><TT
+CLASS="OPTION"
+>--no-stop</TT
+></DT
+><DD
+><P
+>	 Do not stop pgpool and PostgreSQL after the work.
+       </P
+></DD
+><DT
+><TT
+CLASS="OPTION"
+>-d</TT
+></DT
+><DD
+><P
+>	 Start pgpool with debug mode.
+       </P
+></DD
+></DL
+></DIV
+><P>
+   </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN4917"
+></A
+><H2
+>Environment variables</H2
+><P
+>    <SPAN
+CLASS="APPLICATION"
+>pgpool_setup</SPAN
+> recognizes following environment variables:
+
+    <P
+></P
+></P><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="OPTION"
+>PGPOOL_INSTALL_DIR</TT
+></DT
+><DD
+><P
+>        Specifies the Pgpool-II installation directory. Pgpool-II
+        binaries is expected to be placed under PGPOOL_INSTALL_DIR/bin
+        and pgpool.conf and pool_hba.conf etc. are expected to be placed under
+        PGPOOL_INSTALL_DIR/etc. The default is /usr/local.
+       </P
+></DD
+><DT
+><TT
+CLASS="OPTION"
+>PGPOOLDIR</TT
+></DT
+><DD
+><P
+>        Specifies the path to Pgpool-II configuration files.
+        The default is PGPOOL_INSTALL_DIR/etc.
+       </P
+></DD
+><DT
+><TT
+CLASS="OPTION"
+>PGBIN</TT
+></DT
+><DD
+><P
+>        Specifies the path to PostgreSQL commands such as initdb, pg_ctl and psql.
+        The default is /usr/local/pgsql/bin.
+       </P
+></DD
+><DT
+><TT
+CLASS="OPTION"
+>PGLIB</TT
+></DT
+><DD
+><P
+>        Specifies the path to PostgreSQL shared libraries.
+        The default is /usr/local/pgsql/lib.
+       </P
+></DD
+><DT
+><TT
+CLASS="OPTION"
+>PGSOCKET_DIR</TT
+></DT
+><DD
+><P
+>        Specifies the path to Unix socket directory.
+        The default is /tmp.
+       </P
+></DD
+><DT
+><TT
+CLASS="OPTION"
+>INITDBARG</TT
+></DT
+><DD
+><P
+>	 Specifies the arguments for initdb command.
+        The default is "--no-locale -E UTF_8".
+       </P
+></DD
+></DL
+></DIV
+><P>
+
+   </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN4952"
+></A
+><H2
+>Example</H2
+><P
+></P><PRE
+CLASS="SCREEN"
+>$ pgpool_setup
+Satrting set up in streaming replication mode
+creating startall and shutdownall
+creating failover script
+creating database cluster /home/t-ishii/tmp/test/data0...done.
+update postgreql.conf
+creating pgpool_remote_start
+creating basebackup.sh
+creating recovery.conf
+creating database cluster /home/t-ishii/tmp/test/data1...done.
+update postgreql.conf
+creating pgpool_remote_start
+creating basebackup.sh
+creating recovery.conf
+temporarily start data0 cluster to create extensions
+temporarily start pgpool-II to create standby nodes
+INFO:  unrecognized configuration parameter "debug_level"
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | true              | 0
+ 1       | /tmp     | 11003 | down   | 0.500000  | standby | 0          | false             | 0
+(2 rows)
+
+recovery node 1...pcp_recovery_node -- Command Successful
+done.
+creating follow master script
+Pager usage is off.
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | false             | 0
+ 1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | true              | 0
+(2 rows)
+
+shutdown all
+
+pgpool-II setting for streaming replication mode is done.
+To start the whole system, use /home/t-ishii/tmp/test/startall.
+To shutdown the whole system, use /home/t-ishii/tmp/test/shutdownall.
+pcp command user name is "t-ishii", password is "t-ishii".
+Each PostgreSQL, pgpool-II and pcp port is as follows:
+#1 port is 11002
+#2 port is 11003
+pgpool port is 11000
+pcp port is 11001
+The info above is in README.port.
+
+$ ls
+README.port  bashrc.ports  data1  log	   pgpool_reload     run	  startall
+archivedir   data0	   etc	  pcppass  pgpool_setup.log  shutdownall
+
+$ ./startall 
+waiting for server to start....11840 2016-08-18 13:08:51 JST LOG:  redirecting log output to logging collector process
+11840 2016-08-18 13:08:51 JST HINT:  Future log output will appear in directory "pg_log".
+ done
+server started
+waiting for server to start....11853 2016-08-18 13:08:52 JST LOG:  redirecting log output to logging collector process
+11853 2016-08-18 13:08:52 JST HINT:  Future log output will appear in directory "pg_log".
+ done
+server started
+$ psql -p 11000 test
+Pager usage is off.
+psql (9.5.4)
+Type "help" for help.
+
+test=# show pool_nodes;
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | false             | 0
+ 1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | true              | 0
+(2 rows)&#13;</PRE
+><P></P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="pg-md5.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="watchdog-setup.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>pg_md5</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="other-commands.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>watchdog_setup</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

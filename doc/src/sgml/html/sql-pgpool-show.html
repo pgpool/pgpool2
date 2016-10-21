@@ -1,0 +1,411 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>PGPOOL SHOW</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="SQL type commands"
+HREF="sql-commands.html"><LINK
+REL="PREVIOUS"
+TITLE="SQL type commands"
+HREF="sql-commands.html"><LINK
+REL="NEXT"
+TITLE="PGPOOL SET"
+HREF="sql-pgpool-set.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="REFENTRY"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="SQL type commands"
+HREF="sql-commands.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="sql-commands.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="PGPOOL SET"
+HREF="sql-pgpool-set.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><H1
+><A
+NAME="SQL-PGPOOL-SHOW"
+></A
+>PGPOOL SHOW</H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN5091"
+></A
+><H2
+>Name</H2
+>PGPOOL SHOW&nbsp;--&nbsp;show the value of a configuration parameter</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN5094"
+></A
+><H2
+>Synopsis</H2
+><PRE
+CLASS="SYNOPSIS"
+>PGPOOL SHOW <TT
+CLASS="REPLACEABLE"
+><I
+>configuration_parameter</I
+></TT
+>
+PGPOOL SHOW <TT
+CLASS="REPLACEABLE"
+><I
+>configuration_parameter_group</I
+></TT
+>
+PGPOOL SHOW ALL</PRE
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN5098"
+></A
+><H2
+>Description</H2
+><P
+>   <TT
+CLASS="COMMAND"
+>PGPOOL SHOW</TT
+> will display the current value of
+   <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> configuration parameters.
+
+    This command is similar to the
+    <A
+HREF="https://www.postgresql.org/docs/current/static/sql-show.html"
+TARGET="_top"
+>    <TT
+CLASS="COMMAND"
+>SHOW</TT
+></A
+> command in PostgreSQL with an addition
+    of <ACRONYM
+CLASS="ACRONYM"
+>PGPOOL</ACRONYM
+> keyword to distinguish it from the
+    PostgreSQL SHOW command.
+  </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN5106"
+></A
+><H2
+>Parameters</H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="REPLACEABLE"
+><I
+>configuration_parameter</I
+></TT
+></DT
+><DD
+><P
+>        The name of a <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> configuration parameter.
+        Available parameters are documented in <A
+HREF="runtime-config.html"
+>Chapter 5</A
+>
+      </P
+></DD
+><DT
+><TT
+CLASS="REPLACEABLE"
+><I
+>configuration_parameter_group</I
+></TT
+></DT
+><DD
+><P
+>        The name of the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> configuration parameter group.
+        Currently there are three parameter groups.
+      </P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>backend</TT
+></DT
+><DD
+><P
+>            Configuration group of all backend config parameters.
+          </P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>other_pgpool</TT
+></DT
+><DD
+><P
+>            Configuration group of all watchdog node config parameters.
+          </P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>heartbeat</TT
+></DT
+><DD
+><P
+>            configuration group of all watchdog heartbeat node config parameters.
+          </P
+></DD
+></DL
+></DIV
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>ALL</TT
+></DT
+><DD
+><P
+>      Show the values of all configuration parameters, with descriptions.
+     </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN5143"
+></A
+><H2
+>Examples</H2
+><P
+>   Show the current setting of the parameter <TT
+CLASS="VARNAME"
+>port</TT
+>:
+
+</P><PRE
+CLASS="PROGRAMLISTING"
+>PGPOOL SHOW port;
+port
+------
+9999
+(1 row)</PRE
+><P>
+  </P
+><P
+>   Show the current setting of the parameter <TT
+CLASS="VARNAME"
+>black_function_list</TT
+>:
+</P><PRE
+CLASS="PROGRAMLISTING"
+>PGPOOL SHOW black_function_list;
+ black_function_list
+ ---------------------
+ nextval,setval
+ (1 row)</PRE
+><P>
+  </P
+><P
+>   Show the current settings of all the configuration parameters belonging to backend group:
+</P><PRE
+CLASS="PROGRAMLISTING"
+>  PGPOOL SHOW backend;
+ item                     |          value          |              description
+ -------------------------+-------------------------+-----------------------------------------------------------
+ backend_hostname0        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+ backend_port0            | 5434                    | port number of PostgreSQL backend.
+ backend_weight0          | 0                       | load balance weight of backend.
+ backend_data_directory0  | /var/lib/pgsql/data     | data directory of the backend.
+ backend_flag0            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+ backend_hostname1        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+ backend_port1            | 5432                    | port number of PostgreSQL backend.
+ backend_weight1          | 1                       | load balance weight of backend.
+ backend_data_directory1  | /home/work/installed/pg | data directory of the backend.
+ backend_flag1            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+ (10 rows)</PRE
+><P></P
+><P
+>   Show all settings:
+</P><PRE
+CLASS="PROGRAMLISTING"
+> PGPOOL SHOW ALL;
+ item                     |          value          |              description
+ -------------------------+-------------------------+-----------------------------------------------------------
+ backend_hostname0        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+ backend_port0            | 5434                    | port number of PostgreSQL backend.
+ backend_weight0          | 0                       | load balance weight of backend.
+ backend_data_directory0  | /var/lib/pgsql/data     | data directory of the backend.
+ backend_flag0            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+ backend_hostname1        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+ backend_port1            | 5432                    | port number of PostgreSQL backend.
+ backend_weight1          | 1                       | load balance weight of backend.
+ backend_data_directory1  | /home/work/installed/pg | data directory of the backend.
+ backend_flag1            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+ other_pgpool_hostname0   | localhost               | Hostname of other pgpool node for watchdog connection.
+ .
+ .
+ .
+ ssl                      | off                     | Enables SSL support for frontend and backend connections
+ (138 rows)&#13;</PRE
+><P></P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN5155"
+></A
+><H2
+>See Also</H2
+><A
+HREF="sql-pgpool-set.html"
+>PGPOOL SET</A
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="sql-commands.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="sql-pgpool-set.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>SQL type commands</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="sql-commands.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>PGPOOL SET</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

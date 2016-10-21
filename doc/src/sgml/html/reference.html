@@ -1,0 +1,353 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Reference</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="AWS Configuration Example"
+HREF="example-aws.html"><LINK
+REL="NEXT"
+TITLE="PCP commands"
+HREF="pcp-commands.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="PART"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="AWS Configuration Example"
+HREF="example-aws.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="PCP commands"
+HREF="pcp-commands.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="PART"
+><A
+NAME="REFERENCE"
+></A
+><DIV
+CLASS="TITLEPAGE"
+><H1
+CLASS="TITLE"
+>IV. Reference</H1
+><DIV
+CLASS="PARTINTRO"
+><A
+NAME="AEN4188"
+></A
+><P
+>    This part contains reference information for the pgool-II.
+  </P
+><P
+>    The reference entries are also available as traditional
+    <SPAN
+CLASS="QUOTE"
+>"man"</SPAN
+> pages.
+  </P
+></DIV
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>I. <A
+HREF="pcp-commands.html"
+>PCP commands</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="pcp-common-options.html"
+>pcp_common_options</A
+>&nbsp;--&nbsp;  common options used in PCP commands</DT
+><DT
+><A
+HREF="pcp-node-count.html"
+>pcp_node_count</A
+>&nbsp;--&nbsp;  displays the total number of database nodes</DT
+><DT
+><A
+HREF="pcp-node-info.html"
+>pcp_node_info</A
+>&nbsp;--&nbsp;	displays the information on the given node ID</DT
+><DT
+><A
+HREF="pcp-watchdog-info.html"
+>pcp_watchdog_info</A
+>&nbsp;--&nbsp;	displays the watchdog status of the Pgpool-II</DT
+><DT
+><A
+HREF="pcp-proc-count.html"
+>pcp_proc_count</A
+>&nbsp;--&nbsp;	displays the list of Pgpool-II children process IDs</DT
+><DT
+><A
+HREF="pcp-proc-info.html"
+>pcp_proc_info</A
+>&nbsp;--&nbsp;	displays the information on the given Pgpool-II child process ID</DT
+><DT
+><A
+HREF="pcp-pool-status.html"
+>pcp_pool_status</A
+>&nbsp;--&nbsp;	displays the parameter values as defined in <TT
+CLASS="FILENAME"
+>pgpool.conf</TT
+></DT
+><DT
+><A
+HREF="pcp-detach-node.html"
+>pcp_detach_node</A
+>&nbsp;--&nbsp;	detaches the given node from Pgpool-II. Exisiting connections to Pgpool-II are forced to be disconnected.</DT
+><DT
+><A
+HREF="pcp-attach-node.html"
+>pcp_attach_node</A
+>&nbsp;--&nbsp;	attaches the given node to Pgpool-II.</DT
+><DT
+><A
+HREF="pcp-promote-node.html"
+>pcp_promote_node</A
+>&nbsp;--&nbsp;	promotes the given node as new master to Pgpool-II</DT
+><DT
+><A
+HREF="pcp-stop-pgpool.html"
+>pcp_stop_pgpool</A
+>&nbsp;--&nbsp;	terminates the Pgpool-II process</DT
+><DT
+><A
+HREF="pcp-recovery-node.html"
+>pcp_recovery_node</A
+>&nbsp;--&nbsp;	attaches the given backend node with recovery</DT
+></DL
+></DD
+><DT
+>II. <A
+HREF="other-commands.html"
+>Other commands</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="pg-md5.html"
+>pg_md5</A
+>&nbsp;--&nbsp;	produces encrypted password in md5</DT
+><DT
+><A
+HREF="pgpool-setup.html"
+>pgpool_setup</A
+>&nbsp;--&nbsp;  Create a temporary installation of Pgpool-II cluster</DT
+><DT
+><A
+HREF="watchdog-setup.html"
+>watchdog_setup</A
+>&nbsp;--&nbsp;  Create a temporary installation of Pgpool-II clusters with watchdog</DT
+></DL
+></DD
+><DT
+>III. <A
+HREF="sql-commands.html"
+>SQL type commands</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="sql-pgpool-show.html"
+>PGPOOL SHOW</A
+>&nbsp;--&nbsp;show the value of a configuration parameter</DT
+><DT
+><A
+HREF="sql-pgpool-set.html"
+>PGPOOL SET</A
+>&nbsp;--&nbsp;change a configuration parameter</DT
+><DT
+><A
+HREF="sql-pgpool-reset.html"
+>PGPOOL RESET</A
+>&nbsp;--&nbsp;restore the value of a configuration parameter to the default value</DT
+><DT
+><A
+HREF="sql-show-pgpool-status.html"
+>SHOW PGPOOL STATUS</A
+>&nbsp;--&nbsp;      sends back the list of configuration parameters with their name,
+      value, and description
+    </DT
+><DT
+><A
+HREF="sql-show-pool-nodes.html"
+>SHOW POOL NODES</A
+>&nbsp;--&nbsp;      sends back a list of all configured nodes
+    </DT
+><DT
+><A
+HREF="sql-show-pool-processes.html"
+>SHOW POOL_PROCESSES</A
+>&nbsp;--&nbsp;      sends back a list of all <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+      processes waiting for connections and dealing with a connection
+    </DT
+><DT
+><A
+HREF="sql-show-pool-pools.html"
+>SHOW POOL_POOLS</A
+>&nbsp;--&nbsp;      sends back a list of pools handled
+      by <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>.
+    </DT
+><DT
+><A
+HREF="sql-show-pool-version.html"
+>SHOW POOL_VERSION</A
+>&nbsp;--&nbsp;      displays a string containing
+      the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> release number.
+    </DT
+><DT
+><A
+HREF="sql-show-pool-cache.html"
+>SHOW POOL_CACHE</A
+>&nbsp;--&nbsp;      displays cache storage statistics
+    </DT
+></DL
+></DD
+></DL
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="example-aws.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="pcp-commands.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>AWS Configuration Example</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>PCP commands</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

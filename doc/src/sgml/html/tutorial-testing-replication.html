@@ -1,0 +1,240 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Testing Replication</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Getting Started"
+HREF="tutorial-start.html"><LINK
+REL="PREVIOUS"
+TITLE="Testing Load Balance"
+HREF="tutorial-testing-load-balance.html"><LINK
+REL="NEXT"
+TITLE="Testing Fail Over"
+HREF="tutorial-testing-failover.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Testing Load Balance"
+HREF="tutorial-testing-load-balance.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="tutorial-start.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 1. Getting Started</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Testing Fail Over"
+HREF="tutorial-testing-failover.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="TUTORIAL-TESTING-REPLICATION"
+>1.4. Testing Replication</A
+></H1
+><P
+>      Let's test the replication functionality using a benchmark
+      tool <TT
+CLASS="COMMAND"
+>pgbench</TT
+>, which comes with the
+      standard <SPAN
+CLASS="PRODUCTNAME"
+>PostgreSQL</SPAN
+> installation.
+      Type following to create the benchmark tables.
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>$ pgbench -i -p 11000 test
+      </PRE
+><P>
+      To make if the replication works correctly, directly connect to
+      the primary and the standby server to see if they return
+      identical results.
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>$ psql -p 11002 test
+\dt
+              List of relations
+ Schema |       Name       | Type  |  Owner  
+--------+------------------+-------+---------
+ public | pgbench_accounts | table | t-ishii
+ public | pgbench_branches | table | t-ishii
+ public | pgbench_history  | table | t-ishii
+ public | pgbench_tellers  | table | t-ishii
+(4 rows)
+\q
+$ psql -p 11003 test
+\dt
+              List of relations
+ Schema |       Name       | Type  |  Owner  
+--------+------------------+-------+---------
+ public | pgbench_accounts | table | t-ishii
+ public | pgbench_branches | table | t-ishii
+ public | pgbench_history  | table | t-ishii
+ public | pgbench_tellers  | table | t-ishii
+(4 rows)
+      </PRE
+><P>
+      The primary server (port 11002) and the standby server (port
+      11003) return identical results. Next, let's run pgbench for a
+      while and check to results.
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>$ pgbench -p 11000 -T 10 test
+starting vacuum...end.
+transaction type: &lt;builtin: TPC-B (sort of)&gt;
+scaling factor: 1
+query mode: simple
+number of clients: 1
+number of threads: 1
+duration: 10 s
+number of transactions actually processed: 2171
+latency average = 4.692 ms
+tps = 213.147520 (including connections establishing)
+tps = 213.258008 (excluding connections establishing)
+
+$ psql -p 11002 -c "SELECT sum(abalance) FROM pgbench_accounts" test
+  sum   
+--------
+ 192112
+(1 row)
+
+$ psql -p 11003 -c "SELECT sum(abalance) FROM pgbench_accounts" test
+  sum   
+--------
+ 192112
+(1 row)
+      </PRE
+><P>
+      Again, the results are identical.
+    </P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="tutorial-testing-load-balance.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="tutorial-testing-failover.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Testing Load Balance</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tutorial-start.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Testing Fail Over</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

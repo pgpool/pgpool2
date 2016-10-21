@@ -1,0 +1,357 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>pcp_watchdog_info</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="PCP commands"
+HREF="pcp-commands.html"><LINK
+REL="PREVIOUS"
+TITLE="pcp_node_info"
+HREF="pcp-node-info.html"><LINK
+REL="NEXT"
+TITLE="pcp_proc_count"
+HREF="pcp-proc-count.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="REFENTRY"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="pcp_node_info"
+HREF="pcp-node-info.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="pcp-commands.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="pcp_proc_count"
+HREF="pcp-proc-count.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><H1
+><A
+NAME="PCP-WATCHDOG-INFO"
+></A
+>pcp_watchdog_info</H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN4406"
+></A
+><H2
+>Name</H2
+>pcp_watchdog_info&nbsp;--&nbsp;	displays the watchdog status of the Pgpool-II</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN4409"
+></A
+><H2
+>Synopsis</H2
+><P
+><TT
+CLASS="COMMAND"
+>pcp_watchdog_info</TT
+> [<TT
+CLASS="REPLACEABLE"
+><I
+>options</I
+></TT
+>...] [<TT
+CLASS="REPLACEABLE"
+><I
+>watchdog_id</I
+></TT
+>]</P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="R1-PCP-WATCHDOG-INFO-1"
+></A
+><H2
+>Description</H2
+><P
+>  <TT
+CLASS="COMMAND"
+>pcp_node_info</TT
+>
+	displays the information on the given node ID.
+  </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN4420"
+></A
+><H2
+>Options</H2
+><P
+>    <P
+></P
+></P><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="OPTION"
+>-n <TT
+CLASS="REPLACEABLE"
+><I
+>watcgdog_id</I
+></TT
+></TT
+><BR><TT
+CLASS="OPTION"
+>--node-id=<TT
+CLASS="REPLACEABLE"
+><I
+>watcgdog_id</I
+></TT
+></TT
+></DT
+><DD
+><P
+>	 The index of other Pgpool-II to get information for.
+       </P
+><P
+>	 Index 0 gets one's self watchdog information.
+       </P
+><P
+>	 If ommitted then gets information of all watchdog nodes.
+       </P
+></DD
+><DT
+><TT
+CLASS="OPTION"
+>Other options </TT
+></DT
+><DD
+><P
+>	 See <A
+HREF="pcp-common-options.html"
+>pcp_common_options</A
+>.
+       </P
+></DD
+></DL
+></DIV
+><P>
+   </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN4441"
+></A
+><H2
+>Example</H2
+><P
+>	Here is an example output:
+    </P><PRE
+CLASS="PROGRAMLISTING"
+>$ pcp_watchdog_info -h localhost -u postgres
+
+3 NO Linux_host1.localdomain_9991 host1
+
+Linux_host1.localdomain_9991 host1 9991 9001 7 STANDBY
+Linux_host2.localdomain_9992 host2 9992 9002 4 MASTER
+Linux_host3.localdomain_9993 host3 9993 9003 7 STANDBY
+    </PRE
+><P>
+  </P
+><P
+>	The result is in the following order:
+</P><PRE
+CLASS="LITERALLAYOUT"
+>The first output line describes the watchdog cluster information:
+
+1. Total watchdog nodes in the cluster
+2. Is VIP is up on current node?
+3. Master node name
+4. Master node host</PRE
+><P>
+</P><PRE
+CLASS="LITERALLAYOUT"
+>Next is the list of watchdog nodes:
+
+1. node name
+2. hostname
+3. pgpool port
+4. watchdog port
+5. current node state
+6. current node state name</PRE
+><P>
+  </P
+><P
+>	The <TT
+CLASS="OPTION"
+>--verbose</TT
+> option can help understand the output. For example:
+  </P
+><PRE
+CLASS="PROGRAMLISTING"
+>$ pcp_watchdog_info -h localhost -v -u postgres
+
+Watchdog Cluster Information
+Total Nodes          : 3
+Remote Nodes         : 2
+Quorum state         : QUORUM EXIST
+Alive Remote Nodes   : 2
+VIP up on local node : NO
+Master Node Name     : Linux_host2.localdomain_9992
+Master Host Name     : localhost
+
+Watchdog Node Information
+Node Name      : Linux_host1.localdomain_9991
+Host Name      : host1
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9991
+Watchdog port  : 9001
+Node priority  : 1
+Status         : 7
+Status Name    : STANDBY
+
+Node Name      : Linux_host2.localdomain_9992
+Host Name      : host2
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9992
+Watchdog port  : 9002
+Node priority  : 1
+Status         : 4
+Status Name    : MASTER
+
+Node Name      : Linux_host3.localdomain_9993
+Host Name      : host3
+Delegate IP    : 192.168.1.10
+Pgpool port    : 9993
+Watchdog port  : 9003
+Node priority  : 1
+Status         : 7
+Status Name    : STANDBY
+    </PRE
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="pcp-node-info.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="pcp-proc-count.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>pcp_node_info</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="pcp-commands.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>pcp_proc_count</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

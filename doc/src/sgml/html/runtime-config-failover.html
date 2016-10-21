@@ -1,0 +1,665 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Failover and Failback</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Server Configuration"
+HREF="runtime-config.html"><LINK
+REL="PREVIOUS"
+TITLE="Health Check"
+HREF="runtime-config-health-check.html"><LINK
+REL="NEXT"
+TITLE="Online Recovery"
+HREF="runtime-online-recovery.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Health Check"
+HREF="runtime-config-health-check.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Server Configuration</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Online Recovery"
+HREF="runtime-online-recovery.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="RUNTIME-CONFIG-FAILOVER"
+>5.9. Failover and Failback</A
+></H1
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-FAILOVER-COMMAND"
+></A
+><TT
+CLASS="VARNAME"
+>failover_command</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies a user command to run when a PostgreSQL backend node detaches.
+          <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> replaces the following special characters
+          with the backend specific information.
+        </P
+><DIV
+CLASS="TABLE"
+><A
+NAME="FAILOVER-COMMAND-TABLE"
+></A
+><P
+><B
+>Table 5-6. failover command options</B
+></P
+><TABLE
+BORDER="1"
+CLASS="CALSTABLE"
+><COL><COL><THEAD
+><TR
+><TH
+>Special character</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>%d</TD
+><TD
+>Backend ID of a detached node</TD
+></TR
+><TR
+><TD
+>%h</TD
+><TD
+>Hostname of a detached node</TD
+></TR
+><TR
+><TD
+>%p</TD
+><TD
+>Port number of a detached node</TD
+></TR
+><TR
+><TD
+>%D</TD
+><TD
+>Database cluster directory of a detached node</TD
+></TR
+><TR
+><TD
+>%M</TD
+><TD
+>Old master node ID</TD
+></TR
+><TR
+><TD
+>%m</TD
+><TD
+>	New master node ID</TD
+></TR
+><TR
+><TD
+>%H</TD
+><TD
+>Hostname of the new master node</TD
+></TR
+><TR
+><TD
+>%P</TD
+><TD
+>	Old primary node ID</TD
+></TR
+><TR
+><TD
+>%r</TD
+><TD
+>New master port number</TD
+></TR
+><TR
+><TD
+>%R</TD
+><TD
+>New master database cluster directory</TD
+></TR
+><TR
+><TD
+>%%</TD
+><TD
+>	'%' character</TD
+></TR
+></TBODY
+></TABLE
+></DIV
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>            When a failover is performed, <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> kills all
+            its child processes, which will in turn terminate all the active sessions to
+            <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>. After that <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+            invokes the <TT
+CLASS="COMMAND"
+>failover_command</TT
+> and after the command completion
+            <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> starts new child processes
+            which makes it ready again to accept client connections.
+          </P
+></BLOCKQUOTE
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-FAILBACK-COMMAND"
+></A
+><TT
+CLASS="VARNAME"
+>failback_command</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies a user command to run when a PostgreSQL backend node gets attached to
+          <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>, <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+          replaces the following special characters with the backend specific information.
+        </P
+><DIV
+CLASS="TABLE"
+><A
+NAME="FFAILBACK-COMMAND-TABLE"
+></A
+><P
+><B
+>Table 5-7. failback command options</B
+></P
+><TABLE
+BORDER="1"
+CLASS="CALSTABLE"
+><COL><COL><THEAD
+><TR
+><TH
+>Special character</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>%d</TD
+><TD
+>Backend ID of a detached node</TD
+></TR
+><TR
+><TD
+>%h</TD
+><TD
+>Hostname of a detached node</TD
+></TR
+><TR
+><TD
+>%p</TD
+><TD
+>Port number of a detached node</TD
+></TR
+><TR
+><TD
+>%D</TD
+><TD
+>Database cluster directory of a detached node</TD
+></TR
+><TR
+><TD
+>%M</TD
+><TD
+>Old master node ID</TD
+></TR
+><TR
+><TD
+>%m</TD
+><TD
+>	New master node ID</TD
+></TR
+><TR
+><TD
+>%H</TD
+><TD
+>Hostname of the new master node</TD
+></TR
+><TR
+><TD
+>%P</TD
+><TD
+>	Old primary node ID</TD
+></TR
+><TR
+><TD
+>%r</TD
+><TD
+>New master port number</TD
+></TR
+><TR
+><TD
+>%R</TD
+><TD
+>New master database cluster directory</TD
+></TR
+><TR
+><TD
+>%%</TD
+><TD
+>	'%' character</TD
+></TR
+></TBODY
+></TABLE
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-FOLLOW-MASTER-COMMAND"
+></A
+><TT
+CLASS="VARNAME"
+>follow_master_command</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies a user command to run in master/slave streaming replication mode
+          after the master backend node failover.
+          <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>, <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+          replaces the following special characters with the backend specific information.
+        </P
+><DIV
+CLASS="TABLE"
+><A
+NAME="FOLLOW-MASTER-COMMAND-TABLE"
+></A
+><P
+><B
+>Table 5-8. follow master command options</B
+></P
+><TABLE
+BORDER="1"
+CLASS="CALSTABLE"
+><COL><COL><THEAD
+><TR
+><TH
+>Special character</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>%d</TD
+><TD
+>Backend ID of a detached node</TD
+></TR
+><TR
+><TD
+>%h</TD
+><TD
+>Hostname of a detached node</TD
+></TR
+><TR
+><TD
+>%p</TD
+><TD
+>Port number of a detached node</TD
+></TR
+><TR
+><TD
+>%D</TD
+><TD
+>Database cluster directory of a detached node</TD
+></TR
+><TR
+><TD
+>%M</TD
+><TD
+>Old master node ID</TD
+></TR
+><TR
+><TD
+>%m</TD
+><TD
+>	New master node ID</TD
+></TR
+><TR
+><TD
+>%H</TD
+><TD
+>Hostname of the new master node</TD
+></TR
+><TR
+><TD
+>%P</TD
+><TD
+>	Old primary node ID</TD
+></TR
+><TR
+><TD
+>%r</TD
+><TD
+>New master port number</TD
+></TR
+><TR
+><TD
+>%R</TD
+><TD
+>New master database cluster directory</TD
+></TR
+><TR
+><TD
+>%%</TD
+><TD
+>	'%' character</TD
+></TR
+></TBODY
+></TABLE
+></DIV
+><P
+>          If <A
+HREF="runtime-config-failover.html#GUC-FOLLOW-MASTER-COMMAND"
+>follow_master_command</A
+> is not left out empty, then when
+          a master node failover gets completed in master/slave streaming replication mode,
+          <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> degenerates all nodes excepted the new master
+          and starts new child processes to be ready again to accept connections from the clients.
+          After this, <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> executes the command configured
+          in the <A
+HREF="runtime-config-failover.html#GUC-FOLLOW-MASTER-COMMAND"
+>follow_master_command</A
+> for each degenerated backend nodes.
+        </P
+><P
+>          Typically <A
+HREF="runtime-config-failover.html#GUC-FOLLOW-MASTER-COMMAND"
+>follow_master_command</A
+> command is used to recover
+          the slave from the new master by calling the pcp_recovery_node command.
+        </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-FAIL-OVER-ON-BACKEND-ERROR"
+></A
+><TT
+CLASS="VARNAME"
+>fail_over_on_backend_error</TT
+> (<TT
+CLASS="TYPE"
+>boolean</TT
+>)
+        </DT
+><DD
+><P
+>          When set to on, <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> considers the reading/writing
+          errors on the PostgreSQL backend connection as the backend node failure and trigger the
+          failover on that node after disconnecting the current session.
+          When this is set to off, <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> only report an error
+          and disconnect the session in case of such errors.
+        </P
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>            It is recommended to turn on the backend health checking
+            (see <A
+HREF="runtime-config-health-check.html"
+>Section 5.8</A
+>)
+            when <A
+HREF="runtime-config-failover.html#GUC-FAIL-OVER-ON-BACKEND-ERROR"
+>fail_over_on_backend_error</A
+> is set to off.
+            However, <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> still triggers the
+            failover when it detects the administrative shutdown of
+            PostgreSQL backend server.
+          </P
+></BLOCKQUOTE
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-SEARCH-PRIMARY-NODE-TIMEOUT"
+></A
+><TT
+CLASS="VARNAME"
+>search_primary_node_timeout</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the maximum amount of time in seconds to search for the
+          primary node when a failover scenario occurs.
+          <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> will give up looking for the primary
+          node if it is not found with-in this configured time.
+          Default is 10 and Setting this parameter to 0 means keep trying forever.
+        </P
+><P
+>          This parameter is only applicable in the streaming replication mode.
+        </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-config-health-check.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="runtime-online-recovery.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Health Check</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Online Recovery</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

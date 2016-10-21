@@ -1,0 +1,1614 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Watchdog</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Server Configuration"
+HREF="runtime-config.html"><LINK
+REL="PREVIOUS"
+TITLE="Secure Sockect Layer (SSL)"
+HREF="runtime-ssl.html"><LINK
+REL="NEXT"
+TITLE="Misc Configuration Parameters"
+HREF="runtime-misc.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Secure Sockect Layer (SSL)"
+HREF="runtime-ssl.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Server Configuration</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Misc Configuration Parameters"
+HREF="runtime-misc.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="RUNTIME-WATCHDOG-CONFIG"
+>5.14. Watchdog</A
+></H1
+><P
+>   Watchdog configuration parameters are described in pgpool.conf.
+   There is sample configuration in the WATCHDOG section of
+   <TT
+CLASS="FILENAME"
+>pgpool.conf.sample</TT
+> file.
+   All following options are required to be specified in watchdog process.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CONFIG-ENABLE-WATCHDOG"
+>5.14.1. Enable watchdog</A
+></H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-USE-WATCHDOG"
+></A
+><TT
+CLASS="VARNAME"
+>use_watchdog</TT
+> (<TT
+CLASS="TYPE"
+>boolean</TT
+>)
+          </DT
+><DD
+><P
+>            If on, activates the watchdog. Default is off
+          </P
+><P
+>            This parameter can only be set at server start.
+          </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CONFIG-COMMUNICATION-WATCHDOG"
+>5.14.2. Watchdog communication</A
+></H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-WD-HOSTNAME"
+></A
+><TT
+CLASS="VARNAME"
+>wd_hostname</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+          </DT
+><DD
+><P
+>            Specifies the hostname or IP address of
+            <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> server.
+            This is used for sending/receiving queries and packets,
+            and also as an identifier of the watchdog node.
+          </P
+><P
+>             This parameter can only be set at server start.
+          </P
+></DD
+><DT
+><A
+NAME="GUC-WD-PORT"
+></A
+><TT
+CLASS="VARNAME"
+>wd_port</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+          </DT
+><DD
+><P
+>            Specifies the port number to be used by watchdog
+            process to listen for connections. Default is 9999.
+          </P
+><P
+>            This parameter can only be set at server start.
+          </P
+></DD
+><DT
+><A
+NAME="GUC-WD-AUTHKEY"
+></A
+><TT
+CLASS="VARNAME"
+>wd_authkey</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+          </DT
+><DD
+><P
+>          Specifies the authentication key used for all watchdog communications.
+          All <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> must have the same key.
+          Packets from watchdog having different key will get rejected.
+          This authentication is also applied to the heatrbeat singals
+          when the <TT
+CLASS="LITERAL"
+>heartbeat</TT
+> mode is used as a lifecheck method.
+        </P
+><P
+>          Since <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>V3.5</I
+></SPAN
+>
+          <TT
+CLASS="VARNAME"
+>wd_authkey</TT
+> is also used to authenticate
+          the watchdog IPC clients.
+          All clients communicating with <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+          watchdog process needs to provide this wd_authkey value
+          for <TT
+CLASS="LITERAL"
+>"IPCAuthKey"</TT
+> key in the JSON data
+          of the command.
+        </P
+><P
+>           Default is <TT
+CLASS="LITERAL"
+>''</TT
+> (empty) which means disables
+           the watchdog authentication.
+        </P
+><P
+>          This parameter can only be set at server start.
+        </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CONFIG-WATCHDOG-UPSTREAM-CONNECTIONS"
+>5.14.3. Upstream server connection</A
+></H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-TRUSTED-SERVERS"
+></A
+><TT
+CLASS="VARNAME"
+>trusted_servers</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+          </DT
+><DD
+><P
+>            Specifies the list of trusted servers to check the up stream connections.
+            Each server in the list is required to respond to ping.
+            Specify a comma separated list of servers such as
+            <TT
+CLASS="LITERAL"
+>"hostA,hostB,hostC"</TT
+>.
+            If none of the server are reachable, watchdog will regard it as
+            failure of the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>.
+            Therefore, it is recommended to specify multiple servers.
+          </P
+><P
+>            This parameter can only be set at server start.
+          </P
+></DD
+><DT
+><A
+NAME="GUC-PING-PATH"
+></A
+><TT
+CLASS="VARNAME"
+>ping_path</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+          </DT
+><DD
+><P
+>            Specifies the path of a ping command for monitoring
+            connection to the upper servers. Set the only path of the directory containing the
+            ping utility, such as <TT
+CLASS="LITERAL"
+>"/bin"</TT
+> or such directory.
+           </P
+><P
+>            This parameter can only be set at server start.
+          </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CONFIG-WATCHDOG-VIP-CONTROL"
+>5.14.4. Virtual IP control</A
+></H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-DELEGATE-IP"
+></A
+><TT
+CLASS="VARNAME"
+>delegate_IP</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+          </DT
+><DD
+><P
+>          Specifies the virtual IP address (VIP) of pgpool-II that is
+          connected from client servers (application servers etc.).
+          When a <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> is switched from standby to active,
+          the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> takes over
+          this VIP.
+          Default is <TT
+CLASS="LITERAL"
+>''</TT
+>(empty): which means virtual
+          IP will never be brought up.
+        </P
+><P
+>          This parameter can only be set at server start.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-IF-CMD-PATH"
+></A
+><TT
+CLASS="VARNAME"
+>if_cmd_path</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the path to the command that <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+          will use to switch the virtual IP on the system.
+          Set only the path of the directory containing the binary,
+          such as <TT
+CLASS="LITERAL"
+>"/sbin"</TT
+> or such directory.
+         </P
+><P
+>          This parameter can only be set at server start.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-IF-UP-CMD"
+></A
+><TT
+CLASS="VARNAME"
+>if_up_cmd</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the command to bring up the virtual IP.
+          Set the command and parameters such as
+          <TT
+CLASS="COMMAND"
+>"ip addr add $_IP_$/24 dev eth0 label eth0:0"</TT
+>
+          <TT
+CLASS="LITERAL"
+>$_IP_$</TT
+> will get replaced by the IP address
+          specified in the <A
+HREF="runtime-watchdog-config.html#GUC-DELEGATE-IP"
+>delegate_IP</A
+>.
+        </P
+><P
+>          This parameter can only be set at server start.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-IF-DOWN-CMD"
+></A
+><TT
+CLASS="VARNAME"
+>if_down_cmd</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the command to bring down the virtual IP.
+          Set the command and parameters such as
+          <TT
+CLASS="LITERAL"
+>"ip addr del $_IP_$/24 dev eth0"</TT
+>.
+        </P
+><P
+>          This parameter can only be set at server start.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-ARPING-PATH"
+></A
+><TT
+CLASS="VARNAME"
+>arping_path</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the path to the command that <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+          will use to send the ARP requests after the virtual IP switch.
+          Set only the path of the directory containing the binary,
+          such as <TT
+CLASS="LITERAL"
+>"/usr/sbin"</TT
+> or such directory.
+         </P
+><P
+>          This parameter can only be set at server start.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-ARPING-CMD"
+></A
+><TT
+CLASS="VARNAME"
+>arping_cmd</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the command to use for sending the ARP requests
+          after the virtual IP switch.
+          Set the command and parameters such as
+          <TT
+CLASS="LITERAL"
+>"arping -U $_IP_$ -w 1"</TT
+>.
+          <TT
+CLASS="LITERAL"
+>$_IP_$</TT
+> will get replaced by
+          the IP address specified in the <TT
+CLASS="VARNAME"
+>delegate_IP</TT
+>.
+        </P
+><P
+>          This parameter can only be set at server start.
+        </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CONFIG-WATCHDOG-ESCALATION-DE-ESCALATION"
+>5.14.5. Behaivor on escalation and de-escalation</A
+></H2
+><P
+>      Configuration about behavior when <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+      escalates to active (virtual IP holder)
+    </P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-CLEAR-MEMQCACHE-ON-ESCALATION"
+></A
+><TT
+CLASS="VARNAME"
+>clear_memqcache_on_escalation</TT
+> (<TT
+CLASS="TYPE"
+>boolean</TT
+>)
+          </DT
+><DD
+><P
+>          When set to on, watchdog clears all the query cache in the shared memory
+          when pgpool-II escaltes to active. This prevents the new active <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+          from using old query caches inconsistence to the old active.
+        </P
+><P
+>          Default is on.
+        </P
+><P
+>          This works only if <TT
+CLASS="VARNAME"
+>memqcache_method</TT
+>
+          is <TT
+CLASS="LITERAL"
+>'shmem'</TT
+>.
+        </P
+><P
+>          This parameter can only be set at server start.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-WD-ESCALATION-COMMAND"
+></A
+><TT
+CLASS="VARNAME"
+>wd_escalation_command</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Watchdog executes this command on the node that is escalated
+          to the master watchdog.
+        </P
+><P
+>          This command is executed just before bringing up the
+          virtual/floating IP if that is configured on the node.
+        </P
+><P
+>          This parameter can only be set at server start.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-WD-DE-ESCALATION-COMMAND"
+></A
+><TT
+CLASS="VARNAME"
+>wd_de_escalation_command</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>        Watchdog executes this command on the master <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+        watchdog node when that node resigns from the master node responsibilities.
+        A master watchdog node can resign from being a master node,
+        when the master node <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> shuts down, detects a network
+        blackout or detects the lost of quorum.
+        </P
+><P
+>          This command is executed before bringing down the virtual/floating IP address
+          if it is configured on the watchdog node.
+        </P
+><P
+>        <TT
+CLASS="VARNAME"
+>wd_de_escalation_command</TT
+> is not available prior to
+        <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>V3.5</I
+></SPAN
+>.
+        </P
+><P
+>          This parameter can only be set at server start.
+        </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CONFIG-WATCHDOG-LIFECHECK"
+>5.14.6. Life checking <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+></A
+></H2
+><P
+>       Watchdog checks pgpool-II status periodically. This is called "life check".
+      </P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-WD-LIFECHECK-METHOD"
+></A
+><TT
+CLASS="VARNAME"
+>wd_lifecheck_method</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the method of life check. This can be either of <TT
+CLASS="LITERAL"
+>'heartbeat'</TT
+> (default),
+      <TT
+CLASS="LITERAL"
+>'query'</TT
+> or <TT
+CLASS="LITERAL"
+>'external'</TT
+>.
+      </P
+><P
+>       <TT
+CLASS="LITERAL"
+>heartbeat</TT
+>: In this mode, watchdog sends the heartbeat singals (<ACRONYM
+CLASS="ACRONYM"
+>UDP</ACRONYM
+> packets)
+       periodically to other <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>. Similarly watchdog also receives the signals
+       from other <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> .
+       If there are no signal for a certain period, watchdog regards is as failure
+       of the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> .
+    </P
+><P
+>       <TT
+CLASS="LITERAL"
+>query</TT
+>: In this mode, watchdog sends the monitoring queries
+       to other <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> and checks the response
+       <DIV
+CLASS="CAUTION"
+><P
+></P
+><TABLE
+CLASS="CAUTION"
+BORDER="1"
+WIDTH="90%"
+><TR
+><TD
+ALIGN="CENTER"
+><B
+>Caution</B
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+><P
+>        In query mode, you need to set <A
+HREF="runtime-config-connection.html#GUC-NUM-INIT-CHILDREN"
+>num_init_children</A
+>
+        large enough if you plan to use watchdog.
+        This is because the watchdog process connects to
+        <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> as a client.
+      </P
+></TD
+></TR
+></TABLE
+></DIV
+>
+    </P
+><P
+>      <TT
+CLASS="LITERAL"
+>external</TT
+>: This mode disables the built
+      in lifecheck of <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> watchdog
+      and relies on external system to provide node health checking
+      of local and remote watchdog nodes.
+    </P
+><P
+>      <TT
+CLASS="LITERAL"
+>external</TT
+> mode is not available in versions prior to
+      <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>V3.5</I
+></SPAN
+>.
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+><DT
+><A
+NAME="GUC-WD-MONITORING-INTERFACES-LIST"
+></A
+><TT
+CLASS="VARNAME"
+>wd_monitoring_interfaces_list</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+    </DT
+><DD
+><P
+>      Specify a comma separated list of network device names, to be monitored by the watchdog process
+      for the network link state. If all network interfaces in the list becomes inactive
+      (disabled or cable unplugged), the watchdog will consider it as a complete network failure
+      and the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> node will commit the suicide.
+      Specifying an <TT
+CLASS="LITERAL"
+>''</TT
+>(empty) list disables the network interface monitoring.
+      Setting it to <TT
+CLASS="LITERAL"
+>'any'</TT
+> enables the monitoring on all available network interfaces
+      except the loopback. Default is <TT
+CLASS="LITERAL"
+>''</TT
+> empty list (monitoring disabled).
+    </P
+><P
+>      <TT
+CLASS="VARNAME"
+>wd_monitoring_interfaces_list</TT
+> is not available in versions prior to
+      <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>V3.5</I
+></SPAN
+>.
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+><DT
+><A
+NAME="GUC-WD-INTERVAL"
+></A
+><TT
+CLASS="VARNAME"
+>wd_interval</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the interval between life checks of <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+      in seconds. (A number greater than or equal to 1) Default is 10.
+  </P
+><P
+>      This parameter can only be set at server start.
+   </P
+></DD
+><DT
+><A
+NAME="GUC-WD-PRIORITY"
+></A
+><TT
+CLASS="VARNAME"
+>wd_priority</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+    </DT
+><DD
+><P
+>      This parameter can be used to elevate the local watchdog node priority in the elections
+      to select master watchdog node.
+      The node with the higher <TT
+CLASS="VARNAME"
+>wd_priority</TT
+> value will get selected
+      as master watchdog node when cluster will be electing its new master node
+      at the time of cluster startup or in the event of old master watchdog node failure
+   </P
+><P
+>     <TT
+CLASS="VARNAME"
+>wd_priority</TT
+> is not available in versions prior to
+    <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>V3.5</I
+></SPAN
+>.
+  </P
+><P
+>      This parameter can only be set at server start.
+  </P
+></DD
+><DT
+><A
+NAME="GUC-WD-IPC-SOCKET-DIR"
+></A
+><TT
+CLASS="VARNAME"
+>wd_ipc_socket_dir</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+    </DT
+><DD
+><P
+>      The directory where the <ACRONYM
+CLASS="ACRONYM"
+>UNIX</ACRONYM
+> domain socket
+	  accepting <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+      watchdog <ACRONYM
+CLASS="ACRONYM"
+>IPC</ACRONYM
+> connections will be created.
+      Default is <TT
+CLASS="LITERAL"
+>'/tmp'</TT
+>.
+      Be aware that this socket might be deleted by a cron job.
+      We recommend to set this value to <TT
+CLASS="LITERAL"
+>'/var/run'</TT
+> or such directory.
+    </P
+><P
+>      <TT
+CLASS="VARNAME"
+>wd_ipc_socket_dir</TT
+> is not available in versions prior to
+      <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>V3.5</I
+></SPAN
+>.
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CONFIG-WATCHDOG-LIFECHECK-HEARTBEAT"
+>5.14.7. Lifecheck Heartbeat mode configuration</A
+></H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-WD-HEARTBEAT-PORT"
+></A
+><TT
+CLASS="VARNAME"
+>wd_heartbeat_port</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the <ACRONYM
+CLASS="ACRONYM"
+>UDP</ACRONYM
+> port number to receive heartbeat signals.
+      Default is 9694.
+      <TT
+CLASS="VARNAME"
+>wd_heartbeat_port</TT
+> is only applicable if the
+      <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-METHOD"
+>wd_lifecheck_method</A
+> is set to <TT
+CLASS="LITERAL"
+>'heartbeat'</TT
+>
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+><DT
+><A
+NAME="GUC-WD-HEARTBEAT-KEEPALIVE"
+></A
+><TT
+CLASS="VARNAME"
+>wd_heartbeat_keepalive</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the interval time in seconds between sending the heartbeat signals.
+      <TT
+CLASS="VARNAME"
+>wd_heartbeat_port</TT
+> is only applicable if the
+      <TT
+CLASS="VARNAME"
+>wd_lifecheck_method</TT
+> is set to <TT
+CLASS="LITERAL"
+>'heartbeat'</TT
+>
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+><DT
+><A
+NAME="GUC-WD-HEARTBEAT-DEADTIME"
+></A
+><TT
+CLASS="VARNAME"
+>wd_heartbeat_deadtime</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the time in seconds before marking the remote watchdog node as failed/dead node,
+      if no heartbeat signal is received within that time.
+      DDefault is <TT
+CLASS="LITERAL"
+>30</TT
+>
+      <TT
+CLASS="VARNAME"
+>wd_heartbeat_deadtime</TT
+> is only applicable if the
+      <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-METHOD"
+>wd_lifecheck_method</A
+> is set to <TT
+CLASS="LITERAL"
+>'heartbeat'</TT
+>
+  </P
+><P
+>      This parameter can only be set at server start.
+   </P
+></DD
+><DT
+><A
+NAME="GUC-HEARTBEAT-DESTINATION"
+></A
+><TT
+CLASS="VARNAME"
+>heartbeat_destination0</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+     </DT
+><DD
+><P
+>      Specifies the <ACRONYM
+CLASS="ACRONYM"
+>IP</ACRONYM
+> address or <ACRONYM
+CLASS="ACRONYM"
+>hostname</ACRONYM
+> of destination the remote
+      <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> for sending the heartbeat signals.
+      Multiple destinations can be configured for the heartbeat singnals,
+	  the number at the end of the parameter name is
+      referred as the "destination number", that starts from 0.
+   </P
+><P
+>      <TT
+CLASS="VARNAME"
+>heartbeat_destination</TT
+> is only applicable if the
+      <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-METHOD"
+>wd_lifecheck_method</A
+> is set to <TT
+CLASS="LITERAL"
+>'heartbeat'</TT
+>
+  </P
+><P
+>      This parameter can only be set at server start.
+  </P
+></DD
+><DT
+><A
+NAME="GUC-HEARTBEAT-DESTINATION-PORT"
+></A
+><TT
+CLASS="VARNAME"
+>heartbeat_destination_port0</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the destination port number for the heartbeat_destinationX of the remote
+      <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> for sending the heartbeat signals.
+      Multiple destinations can be configured for the heartbeat singnals,
+	  the number at the end of the parameter name is
+      referred as the "destination number", that starts from 0.
+   </P
+><P
+>      <TT
+CLASS="VARNAME"
+>heartbeat_destination_port</TT
+> is only applicable if the
+      <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-METHOD"
+>wd_lifecheck_method</A
+> is set to <TT
+CLASS="LITERAL"
+>'heartbeat'</TT
+>
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+><DT
+><A
+NAME="GUC-HEARTBEAT-DEVICE"
+></A
+><TT
+CLASS="VARNAME"
+>heartbeat_device0</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the network device name for sending the heartbeat signals to the destination specified by
+      heartbeat_destinationX:heartbeat_destination_portX
+      Different heartbeat devices can be configured for each heartbeat destination
+      by changing the value of X(destination number)
+      at the end of parameter name. The destination index number starts from 0.
+   </P
+><P
+>      <TT
+CLASS="VARNAME"
+>heartbeat_device</TT
+> is only applicable if the
+      <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-METHOD"
+>wd_lifecheck_method</A
+> is set to <TT
+CLASS="LITERAL"
+>'heartbeat'</TT
+>
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CONFIG-WATCHDOG-LIFECHECK-QUERY"
+>5.14.8. Lifecheck Query mode configuration</A
+></H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-WD-LIFE-POINT"
+></A
+><TT
+CLASS="VARNAME"
+>wd_life_point</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the number of times to retry a failed life check of pgpool-II.
+      Valid value could be a number greater than or equal to 1.
+      Default is 3.
+   </P
+><P
+>      <TT
+CLASS="VARNAME"
+>wd_life_point</TT
+> is only applicable if the
+      <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-METHOD"
+>wd_lifecheck_method</A
+> is set to <TT
+CLASS="LITERAL"
+>'query'</TT
+>
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+><DT
+><A
+NAME="GUC-WD-LIFECHECK-QUERY"
+></A
+><TT
+CLASS="VARNAME"
+>wd_lifecheck_query</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the query to use for the life check of remote <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>.
+      Default is <TT
+CLASS="LITERAL"
+>"SELECT 1"</TT
+>.
+   </P
+><P
+>      <TT
+CLASS="VARNAME"
+>wd_lifecheck_query</TT
+> is only applicable if the
+      <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-METHOD"
+>wd_lifecheck_method</A
+> is set to <TT
+CLASS="LITERAL"
+>'query'</TT
+>
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+><DT
+><A
+NAME="GUC-WD-LIFECHECK-DBNAME"
+></A
+><TT
+CLASS="VARNAME"
+>wd_lifecheck_dbname</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the database name for the connection used for the
+	  life check of remote <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>.
+      Default is <TT
+CLASS="LITERAL"
+>"template1"</TT
+>.
+   </P
+><P
+>      <TT
+CLASS="VARNAME"
+>wd_lifecheck_dbname</TT
+> is only applicable if the
+      <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-METHOD"
+>wd_lifecheck_method</A
+> is set to <TT
+CLASS="LITERAL"
+>'query'</TT
+>
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+><DT
+><A
+NAME="GUC-WD-LIFECHECK-USER"
+></A
+><TT
+CLASS="VARNAME"
+>wd_lifecheck_user</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the user name for the connection used for the life
+	  check of remote <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>.
+      Default is <TT
+CLASS="LITERAL"
+>"nobody"</TT
+>.
+   </P
+><P
+>      <TT
+CLASS="VARNAME"
+>wd_lifecheck_user</TT
+> is only applicable if the
+      <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-METHOD"
+>wd_lifecheck_method</A
+> is set to <TT
+CLASS="LITERAL"
+>'query'</TT
+>
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+><DT
+><A
+NAME="GUC-WD-LIFECHECK-PASSWORD"
+></A
+><TT
+CLASS="VARNAME"
+>wd_lifecheck_password</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the password for the user used for the life check of remote <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>.
+      Default is <TT
+CLASS="LITERAL"
+>''</TT
+>(empty).
+   </P
+><P
+>      <TT
+CLASS="VARNAME"
+>wd_lifecheck_password</TT
+> is only applicable if the
+      <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-METHOD"
+>wd_lifecheck_method</A
+> is set to <TT
+CLASS="LITERAL"
+>'query'</TT
+>
+    </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CONFIG-WATCHDOG-SERVER-CONFIGURATION"
+>5.14.9. Watchdog servers configurations</A
+></H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-OTHER-PGPOOL-HOSTNAME"
+></A
+><TT
+CLASS="VARNAME"
+>other_pgpool_hostname0</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the hostname of remote <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> server for watchdog node.
+      The number at the end of the parameter name is referred as "server id", and it starts from 0.
+   </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+><DT
+><A
+NAME="GUC-OTHER-PGPOOL-PORT"
+></A
+><TT
+CLASS="VARNAME"
+>other_pgpool_port0</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the port number of the remote <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+      server for watchdog node.
+      The number at the end of the parameter name is referred
+      as "server id", and it starts from 0.
+   </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+><DT
+><A
+NAME="GUC-OTHER-WD-PORT"
+></A
+><TT
+CLASS="VARNAME"
+>other_wd_port0</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+    </DT
+><DD
+><P
+>      Specifies the watchdog port number of the remote
+      <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> server for watchdog node.
+      The number at the end of the parameter name is referred
+      as "server id", and it starts from 0.
+   </P
+><P
+>      This parameter can only be set at server start.
+    </P
+></DD
+></DL
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-ssl.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="runtime-misc.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Secure Sockect Layer (SSL)</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Misc Configuration Parameters</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,630 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Error Reporting and Logging</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Server Configuration"
+HREF="runtime-config.html"><LINK
+REL="PREVIOUS"
+TITLE="Connection Pooling"
+HREF="runtime-config-connection-pooling.html"><LINK
+REL="NEXT"
+TITLE="Load Balancing"
+HREF="runtime-config-load-balancing.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Connection Pooling"
+HREF="runtime-config-connection-pooling.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Server Configuration</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Load Balancing"
+HREF="runtime-config-load-balancing.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="RUNTIME-CONFIG-LOGGING"
+>5.6. Error Reporting and Logging</A
+></H1
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="RUNTIME-CONFIG-LOGGING-WHERE-TO-LOG"
+>5.6.1. Where To Log</A
+></H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-LOG-DESTINATION"
+></A
+><TT
+CLASS="VARNAME"
+>log_destination</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>					<SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> supports several methods
+					for logging server messages, including <TT
+CLASS="LITERAL"
+>stderr</TT
+>
+					and <TT
+CLASS="LITERAL"
+>syslog</TT
+>.
+					The default is to log to <TT
+CLASS="LITERAL"
+>stderr</TT
+>.
+				</P
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>						On some systems you will need to alter the configuration of your
+						system's syslog daemon in order to make use of the syslog option
+						for <A
+HREF="runtime-config-logging.html#GUC-LOG-DESTINATION"
+>log_destination</A
+>. <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+						can log to syslog facilities LOCAL0 through LOCAL7
+						(see <A
+HREF="runtime-config-logging.html#GUC-SYSLOG-FACILITY"
+>syslog_facility</A
+>), but the default syslog
+						configuration on most platforms will discard all such messages.
+						You will need to add something like:
+						</P><PRE
+CLASS="PROGRAMLISTING"
+>local0.*    /var/log/postgresql
+						</PRE
+><P>
+						to the syslog daemon's configuration file to make it work.
+					</P
+></BLOCKQUOTE
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-SYSLOG-FACILITY"
+></A
+><TT
+CLASS="VARNAME"
+>syslog_facility</TT
+> (<TT
+CLASS="TYPE"
+>enum</TT
+>)
+        </DT
+><DD
+><P
+>					When logging to syslog is enabled, this parameter determines
+					the syslog <TT
+CLASS="LITERAL"
+>"facility"</TT
+> to be used.
+					You can choose from LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4,
+					LOCAL5, LOCAL6, LOCAL7; the default is LOCAL0.
+					See also the documentation of your system's syslog daemon.
+				</P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-SYSLOG-IDENT"
+></A
+><TT
+CLASS="VARNAME"
+>syslog_ident</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>					When logging to syslog is enabled, this parameter determines
+					the program name used to identify <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+					messages in syslog logs. The default is <TT
+CLASS="LITERAL"
+>pgpool</TT
+>.
+				</P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="RUNTIME-CONFIG-LOGGING-WHEN-TO-LOG"
+>5.6.2. When To Log</A
+></H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-CLIENT-MIN-MESSAGES"
+></A
+><TT
+CLASS="VARNAME"
+>client_min_messages</TT
+> (<TT
+CLASS="TYPE"
+>enum</TT
+>)
+        </DT
+><DD
+><P
+>					Controls which minimum message levels are sent to the client.
+					Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1,
+					LOG, NOTICE, WARNING and ERROR. Each level includes
+					all the levels that follow it. The default is NOTICE.
+				</P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+					You can also use <A
+HREF="sql-pgpool-set.html"
+>PGPOOL SET</A
+> command to alter the value of
+					this parameter for a current session.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-LOG-MIN-MESSAGES"
+></A
+><TT
+CLASS="VARNAME"
+>log_min_messages</TT
+> (<TT
+CLASS="TYPE"
+>enum</TT
+>)
+        </DT
+><DD
+><P
+>					Controls which minimum message levels are emitted to log.
+					Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1,
+					INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC.
+					Each level includes all the levels that follow it.
+					The default is WARNING.
+				</P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+					You can also use <A
+HREF="sql-pgpool-set.html"
+>PGPOOL SET</A
+> command to alter the value of
+					this parameter for a current session.
+        </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="RUNTIME-CONFIG-LOGGING-WHAT-TO-LOG"
+>5.6.3. What To Log</A
+></H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-LOG-STATEMENT"
+></A
+><TT
+CLASS="VARNAME"
+>log_statement</TT
+> (<TT
+CLASS="TYPE"
+>boolean</TT
+>)
+        </DT
+><DD
+><P
+>					Setting to on, prints all statements to the log.
+				</P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+					You can also use <A
+HREF="sql-pgpool-set.html"
+>PGPOOL SET</A
+> command to alter the value of
+					this parameter for a current session.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-LOG-PER-NODE-STATEMENT"
+></A
+><TT
+CLASS="VARNAME"
+>log_per_node_statement</TT
+> (<TT
+CLASS="TYPE"
+>boolean</TT
+>)
+        </DT
+><DD
+><P
+>					Similar to <A
+HREF="runtime-config-logging.html#GUC-LOG-STATEMENT"
+>log_statement</A
+>, except that it print the
+					logs for each DB node separately. It can be useful to make sure that
+					replication is working.
+				</P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+					You can also use <A
+HREF="sql-pgpool-set.html"
+>PGPOOL SET</A
+> command to alter the value of
+					this parameter for a current session.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-LOG-HOSTNAME"
+></A
+><TT
+CLASS="VARNAME"
+>log_hostname</TT
+> (<TT
+CLASS="TYPE"
+>boolean</TT
+>)
+        </DT
+><DD
+><P
+>					Setting to on, prints the hostname instead of IP address
+					in ps command and connection logs(when <A
+HREF="runtime-config-logging.html#GUC-LOG-CONNECTIONS"
+>log_connections</A
+> is on).
+				</P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-LOG-CONNECTIONS"
+></A
+><TT
+CLASS="VARNAME"
+>log_connections</TT
+> (<TT
+CLASS="TYPE"
+>boolean</TT
+>)
+        </DT
+><DD
+><P
+>					Setting to on, prints all incoming connections to the log.
+				</P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-LOG-ERROR-VERBOSITY"
+></A
+><TT
+CLASS="VARNAME"
+>log_error_verbosity</TT
+> (<TT
+CLASS="TYPE"
+>enum</TT
+>)
+        </DT
+><DD
+><P
+>					Controls the amount of detail emitted for each message that is logged.
+					Valid values are TERSE, DEFAULT, and VERBOSE, each adding more fields
+					to displayed messages. TERSE excludes the logging of DETAIL, HINT,
+					and CONTEXT error information.
+				</P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+					You can also use <A
+HREF="sql-pgpool-set.html"
+>PGPOOL SET</A
+> command to alter the value of
+					this parameter for a current session.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-LOG-LINE-PREFIX"
+></A
+><TT
+CLASS="VARNAME"
+>log_line_prefix</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>					This is a printf-style string that is output at the beginning of each log line.
+					<SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>%</I
+></SPAN
+> characters begin "escape sequences" that are replaced
+					with information outlined below.
+					All unrecognized escapes are ignored. Other characters are copied straight to
+					the log line. Default is '%t: pid %p: ', which prints timestamp and process id,
+					which keeps backward compatibily with pre<SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+					<SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>V3.4</I
+></SPAN
+>.
+				</P
+><DIV
+CLASS="TABLE"
+><A
+NAME="LOG-LINE-PREFIX-TABLE"
+></A
+><P
+><B
+>Table 5-5. log_line_prefix escape options</B
+></P
+><TABLE
+BORDER="1"
+CLASS="CALSTABLE"
+><COL><COL><THEAD
+><TR
+><TH
+>Escape</TH
+><TH
+>Effect</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>%a</TD
+><TD
+>Client application name</TD
+></TR
+><TR
+><TD
+>%p</TD
+><TD
+>Process ID (PID)</TD
+></TR
+><TR
+><TD
+>%P</TD
+><TD
+>Process name</TD
+></TR
+><TR
+><TD
+>%t</TD
+><TD
+>Time stamp</TD
+></TR
+><TR
+><TD
+>%d</TD
+><TD
+>Database name</TD
+></TR
+><TR
+><TD
+>%u</TD
+><TD
+>User name</TD
+></TR
+><TR
+><TD
+>%l</TD
+><TD
+>Log line number for each process</TD
+></TR
+><TR
+><TD
+>%%</TD
+><TD
+>'%' character</TD
+></TR
+></TBODY
+></TABLE
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+></DL
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-config-connection-pooling.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="runtime-config-load-balancing.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Connection Pooling</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Load Balancing</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,1262 @@
+INDEXTERM history.html
+INDEXPOINT history.html#AEN100
+TITLE A Brief History of Pgpool-II
+significance NORMAL
+ZONE history.html
+TITLE A Brief History of Pgpool-II
+PRIMARY history
+SECONDARY of Pgpool-II
+/INDEXTERM
+INDEXTERM tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-COORDINATING-NODES
+INDEXPOINT tutorial-watchdog-intro.html#AEN364
+TITLE Coordinating multiple Pgpool-II nodes
+significance NORMAL
+ZONE tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-COORDINATING-NODES
+TITLE Coordinating multiple Pgpool-II nodes
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-LIFECHECKING
+INDEXPOINT tutorial-watchdog-intro.html#AEN378
+TITLE Life checking of other Pgpool-II nodes
+significance NORMAL
+ZONE tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-LIFECHECKING
+TITLE Life checking of other Pgpool-II nodes
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-CONSISTENCY-OF-CONFIG
+INDEXPOINT tutorial-watchdog-intro.html#AEN415
+TITLE Consistency of configuration parameters on all Pgpool-II nodes
+significance NORMAL
+ZONE tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-CONSISTENCY-OF-CONFIG
+TITLE Consistency of configuration parameters on all Pgpool-II nodes
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-CHANGING-ACTIVE
+INDEXPOINT tutorial-watchdog-intro.html#AEN422
+TITLE Changing active/standby state when certain fault is detected
+significance NORMAL
+ZONE tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-CHANGING-ACTIVE
+TITLE Changing active/standby state when certain fault is detected
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-AUTOMATIC-VIP
+INDEXPOINT tutorial-watchdog-intro.html#AEN430
+TITLE Automatic virtual IP switching
+significance NORMAL
+ZONE tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-AUTOMATIC-VIP
+TITLE Automatic virtual IP switching
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-CHANGING-AUTOMATIC-REGISTER-IN-RECOVERY
+INDEXPOINT tutorial-watchdog-intro.html#AEN437
+TITLE Automatic registration of a server as a standby in recovery
+significance NORMAL
+ZONE tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-CHANGING-AUTOMATIC-REGISTER-IN-RECOVERY
+TITLE Automatic registration of a server as a standby in recovery
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-START-STOP
+INDEXPOINT tutorial-watchdog-intro.html#AEN442
+TITLE Starting/stopping watchdog
+significance NORMAL
+ZONE tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-START-STOP
+TITLE Starting/stopping watchdog
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-integrating-external-lifecheck.html#TUTORIAL-WATCHDOG-IPC-COMMAND-PACKET
+INDEXPOINT tutorial-watchdog-integrating-external-lifecheck.html#AEN466
+TITLE Watchdog IPC command packet format
+significance NORMAL
+ZONE tutorial-watchdog-integrating-external-lifecheck.html#TUTORIAL-WATCHDOG-IPC-COMMAND-PACKET
+TITLE Watchdog IPC command packet format
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-integrating-external-lifecheck.html#TUTORIAL-WATCHDOG-IPC-RESULT-PACKET
+INDEXPOINT tutorial-watchdog-integrating-external-lifecheck.html#AEN494
+TITLE Watchdog IPC result packet format
+significance NORMAL
+ZONE tutorial-watchdog-integrating-external-lifecheck.html#TUTORIAL-WATCHDOG-IPC-RESULT-PACKET
+TITLE Watchdog IPC result packet format
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-integrating-external-lifecheck.html#TUTORIAL-WATCHDOG-IPC-COMMAND-PACKET-TYPES
+INDEXPOINT tutorial-watchdog-integrating-external-lifecheck.html#AEN522
+TITLE Watchdog IPC command packet types
+significance NORMAL
+ZONE tutorial-watchdog-integrating-external-lifecheck.html#TUTORIAL-WATCHDOG-IPC-COMMAND-PACKET-TYPES
+TITLE Watchdog IPC command packet types
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-integrating-external-lifecheck.html#TUTORIAL-WATCHDOG-EXTERNAL-LIFECHECK-IPC
+INDEXPOINT tutorial-watchdog-integrating-external-lifecheck.html#AEN573
+TITLE External lifecheck IPC packets and data
+significance NORMAL
+ZONE tutorial-watchdog-integrating-external-lifecheck.html#TUTORIAL-WATCHDOG-EXTERNAL-LIFECHECK-IPC
+TITLE External lifecheck IPC packets and data
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-integrating-external-lifecheck.html#TUTORIAL-WATCHDOG-EXTERNAL-LIFECHECK-GET-NODES
+INDEXPOINT tutorial-watchdog-integrating-external-lifecheck.html#AEN578
+TITLE Getting list of configured watchdog nodes
+significance NORMAL
+ZONE tutorial-watchdog-integrating-external-lifecheck.html#TUTORIAL-WATCHDOG-EXTERNAL-LIFECHECK-GET-NODES
+TITLE Getting list of configured watchdog nodes
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-restrictions.html
+INDEXPOINT tutorial-watchdog-restrictions.html#AEN603
+TITLE Restrictions on watchdog
+significance NORMAL
+ZONE tutorial-watchdog-restrictions.html
+TITLE Restrictions on watchdog
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-restrictions.html#TUTORIAL-WATCHDOG-RESTRICTIONS-QUERY-MODE
+INDEXPOINT tutorial-watchdog-restrictions.html#AEN607
+TITLE Watchdog restriction with query mode lifecheck
+significance NORMAL
+ZONE tutorial-watchdog-restrictions.html#TUTORIAL-WATCHDOG-RESTRICTIONS-QUERY-MODE
+TITLE Watchdog restriction with query mode lifecheck
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-restrictions.html#TUTORIAL-WATCHDOG-RESTRICTIONS-DOWN-WATCHDOG-MODE
+INDEXPOINT tutorial-watchdog-restrictions.html#AEN618
+TITLE Connecting to Pgpool-II whose watchdog status is down
+significance NORMAL
+ZONE tutorial-watchdog-restrictions.html#TUTORIAL-WATCHDOG-RESTRICTIONS-DOWN-WATCHDOG-MODE
+TITLE Connecting to Pgpool-II whose watchdog status is down
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-restrictions.html#TUTORIAL-WATCHDOG-RESTRICTIONS-DOWN-WATCHDOG-REQUIRE-RESTART
+INDEXPOINT tutorial-watchdog-restrictions.html#AEN628
+TITLE Pgpool-II whose watchdog status is down requires restart
+significance NORMAL
+ZONE tutorial-watchdog-restrictions.html#TUTORIAL-WATCHDOG-RESTRICTIONS-DOWN-WATCHDOG-REQUIRE-RESTART
+TITLE Pgpool-II whose watchdog status is down requires restart
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM tutorial-watchdog-restrictions.html#TUTORIAL-WATCHDOG-RESTRICTIONS-ACTIVE-TAKE-TIME
+INDEXPOINT tutorial-watchdog-restrictions.html#AEN636
+TITLE Watchdog promotion to active takes few seconds
+significance NORMAL
+ZONE tutorial-watchdog-restrictions.html#TUTORIAL-WATCHDOG-RESTRICTIONS-ACTIVE-TAKE-TIME
+TITLE Watchdog promotion to active takes few seconds
+PRIMARY WATCHDOG
+/INDEXTERM
+INDEXTERM installation.html
+INDEXPOINT installation.html#AEN719
+TITLE Pgpool-II Installation from Source Code
+significance NORMAL
+ZONE installation.html
+TITLE Pgpool-II Installation from Source Code
+PRIMARY installation
+/INDEXTERM
+INDEXTERM install-requirements.html
+INDEXPOINT install-requirements.html#AEN734
+TITLE Requirements
+significance NORMAL
+PRIMARY make
+/INDEXTERM
+INDEXTERM install-requirements.html
+INDEXPOINT install-requirements.html#AEN767
+TITLE Requirements
+significance NORMAL
+PRIMARY flex
+/INDEXTERM
+INDEXTERM install-requirements.html
+INDEXPOINT install-requirements.html#AEN769
+TITLE Requirements
+significance NORMAL
+PRIMARY lex
+/INDEXTERM
+INDEXTERM install-requirements.html
+INDEXPOINT install-requirements.html#AEN771
+TITLE Requirements
+significance NORMAL
+PRIMARY bison
+/INDEXTERM
+INDEXTERM install-requirements.html
+INDEXPOINT install-requirements.html#AEN773
+TITLE Requirements
+significance NORMAL
+PRIMARY yacc
+/INDEXTERM
+INDEXTERM install-pgpool.html
+INDEXPOINT install-pgpool.html#AEN819
+TITLE Installing pgpool-II
+significance NORMAL
+PRIMARY OpenSSL
+/INDEXTERM
+INDEXTERM pgpool-ii-user.html
+INDEXPOINT pgpool-ii-user.html#AEN941
+TITLE The Pgpool-II User Account
+significance NORMAL
+PRIMARY Pgpool-II user
+/INDEXTERM
+INDEXTERM configuring-pcp-conf.html
+INDEXPOINT configuring-pcp-conf.html#AEN952
+TITLE Configuring pcp.conf
+significance NORMAL
+PRIMARY pcp configuration
+/INDEXTERM
+INDEXTERM configuring-pgpool.html
+INDEXPOINT configuring-pgpool.html#AEN971
+TITLE Configuring pgpool
+significance NORMAL
+PRIMARY Pgpool-II configuration
+/INDEXTERM
+INDEXTERM runtime-config.html
+INDEXPOINT runtime-config.html#AEN1012
+TITLE Server Configuration
+significance NORMAL
+PRIMARY configuration
+SECONDARY of the server
+/INDEXTERM
+INDEXTERM config-setting.html#CONFIG-SETTING-CONFIGURATION-FILE
+INDEXPOINT config-setting.html#AEN1047
+TITLE Parameter Interaction via the Configuration File
+significance NORMAL
+PRIMARY pgpool.conf
+/INDEXTERM
+INDEXTERM config-setting.html#CONFIG-SETTING-CONFIGURATION-FILE
+INDEXPOINT config-setting.html#AEN1054
+TITLE Parameter Interaction via the Configuration File
+significance NORMAL
+PRIMARY SIGHUP
+/INDEXTERM
+INDEXTERM runtime-config-connection.html#RUNTIME-CONFIG-CONNECTION-SETTINGS
+INDEXPOINT runtime-config-connection.html#AEN1079
+TITLE Connection Settings
+significance NORMAL
+PRIMARY listen_addresses configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection.html#RUNTIME-CONFIG-CONNECTION-SETTINGS
+INDEXPOINT runtime-config-connection.html#AEN1092
+TITLE Connection Settings
+significance NORMAL
+PRIMARY port configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection.html#RUNTIME-CONFIG-CONNECTION-SETTINGS
+INDEXPOINT runtime-config-connection.html#AEN1103
+TITLE Connection Settings
+significance NORMAL
+PRIMARY socket_dir configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection.html#RUNTIME-CONFIG-CONNECTION-SETTINGS
+INDEXPOINT runtime-config-connection.html#AEN1116
+TITLE Connection Settings
+significance NORMAL
+PRIMARY pcp_listen_addresses configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection.html#RUNTIME-CONFIG-CONNECTION-SETTINGS
+INDEXPOINT runtime-config-connection.html#AEN1129
+TITLE Connection Settings
+significance NORMAL
+PRIMARY pcp_port configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection.html#RUNTIME-CONFIG-CONNECTION-SETTINGS
+INDEXPOINT runtime-config-connection.html#AEN1140
+TITLE Connection Settings
+significance NORMAL
+PRIMARY pcp_socket_dir configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection.html#RUNTIME-CONFIG-CONNECTION-SETTINGS
+INDEXPOINT runtime-config-connection.html#AEN1153
+TITLE Connection Settings
+significance NORMAL
+PRIMARY num_init_children configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection.html#RUNTIME-CONFIG-AUTHENTICATION-SETTINGS
+INDEXPOINT runtime-config-connection.html#AEN1184
+TITLE Authentication Settings
+significance NORMAL
+PRIMARY enable_pool_hba configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection.html#RUNTIME-CONFIG-AUTHENTICATION-SETTINGS
+INDEXPOINT runtime-config-connection.html#AEN1199
+TITLE Authentication Settings
+significance NORMAL
+PRIMARY pool_passwd configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection.html#RUNTIME-CONFIG-AUTHENTICATION-SETTINGS
+INDEXPOINT runtime-config-connection.html#AEN1211
+TITLE Authentication Settings
+significance NORMAL
+PRIMARY authentication_timeout configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-runnung-mode.html#RUNTIME-CONFIG-MASTER-SLAVE-MODE
+INDEXPOINT runtime-config-runnung-mode.html#AEN1236
+TITLE Master slave mode
+significance NORMAL
+PRIMARY master_slave_mode configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-runnung-mode.html#RUNTIME-CONFIG-MASTER-SLAVE-MODE
+INDEXPOINT runtime-config-runnung-mode.html#AEN1250
+TITLE Master slave mode
+significance NORMAL
+PRIMARY master_slave_sub_mode configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-runnung-mode.html#RUNTIME-CONFIG-REPLICATION-MODE
+INDEXPOINT runtime-config-runnung-mode.html#AEN1288
+TITLE Replication mode
+significance NORMAL
+PRIMARY replication_mode configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-runnung-mode.html#RUNTIME-CONFIG-REPLICATION-MODE
+INDEXPOINT runtime-config-runnung-mode.html#AEN1302
+TITLE Replication mode
+significance NORMAL
+PRIMARY replication_stop_on_mismatch configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-runnung-mode.html#RUNTIME-CONFIG-REPLICATION-MODE
+INDEXPOINT runtime-config-runnung-mode.html#AEN1321
+TITLE Replication mode
+significance NORMAL
+PRIMARY failover_if_affected_tuples_mismatch configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-runnung-mode.html#RUNTIME-CONFIG-REPLICATION-MODE
+INDEXPOINT runtime-config-runnung-mode.html#AEN1337
+TITLE Replication mode
+significance NORMAL
+PRIMARY replicate_select configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-runnung-mode.html#RUNTIME-CONFIG-REPLICATION-MODE
+INDEXPOINT runtime-config-runnung-mode.html#AEN1389
+TITLE Replication mode
+significance NORMAL
+PRIMARY insert_lock configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-runnung-mode.html#RUNTIME-CONFIG-REPLICATION-MODE
+INDEXPOINT runtime-config-runnung-mode.html#AEN1442
+TITLE Replication mode
+significance NORMAL
+PRIMARY lobj_lock_table configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-backend-settings.html#RUNTIME-CONFIG-BACKEND-CONNECTION-SETTINGS
+INDEXPOINT runtime-config-backend-settings.html#AEN1493
+TITLE Backend Connection Settings
+significance NORMAL
+PRIMARY backend_hostname configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-backend-settings.html#RUNTIME-CONFIG-BACKEND-CONNECTION-SETTINGS
+INDEXPOINT runtime-config-backend-settings.html#AEN1511
+TITLE Backend Connection Settings
+significance NORMAL
+PRIMARY backend_port configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-backend-settings.html#RUNTIME-CONFIG-BACKEND-CONNECTION-SETTINGS
+INDEXPOINT runtime-config-backend-settings.html#AEN1523
+TITLE Backend Connection Settings
+significance NORMAL
+PRIMARY backend_weight configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-backend-settings.html#RUNTIME-CONFIG-BACKEND-DATA
+INDEXPOINT runtime-config-backend-settings.html#AEN1537
+TITLE Backend Data Settings
+significance NORMAL
+PRIMARY backend_data_directory configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-backend-settings.html#RUNTIME-CONFIG-BACKEND-DATA
+INDEXPOINT runtime-config-backend-settings.html#AEN1549
+TITLE Backend Data Settings
+significance NORMAL
+PRIMARY backend_flag configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection-pooling.html#RUNTIME-CONFIG-CONNECTION-POOLING-SETTINGS
+INDEXPOINT runtime-config-connection-pooling.html#AEN1583
+TITLE Connection Pooling Settings
+significance NORMAL
+PRIMARY connection_cache configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection-pooling.html#RUNTIME-CONFIG-CONNECTION-POOLING-SETTINGS
+INDEXPOINT runtime-config-connection-pooling.html#AEN1595
+TITLE Connection Pooling Settings
+significance NORMAL
+PRIMARY max_pool configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection-pooling.html#RUNTIME-CONFIG-CONNECTION-POOLING-SETTINGS
+INDEXPOINT runtime-config-connection-pooling.html#AEN1609
+TITLE Connection Pooling Settings
+significance NORMAL
+PRIMARY listen_backlog_multiplier configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection-pooling.html#RUNTIME-CONFIG-CONNECTION-POOLING-SETTINGS
+INDEXPOINT runtime-config-connection-pooling.html#AEN1629
+TITLE Connection Pooling Settings
+significance NORMAL
+PRIMARY serialize_accept configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection-pooling.html#RUNTIME-CONFIG-CONNECTION-POOLING-SETTINGS
+INDEXPOINT runtime-config-connection-pooling.html#AEN1671
+TITLE Connection Pooling Settings
+significance NORMAL
+PRIMARY child_life_time configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection-pooling.html#RUNTIME-CONFIG-CONNECTION-POOLING-SETTINGS
+INDEXPOINT runtime-config-connection-pooling.html#AEN1694
+TITLE Connection Pooling Settings
+significance NORMAL
+PRIMARY client_idle_limit configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection-pooling.html#RUNTIME-CONFIG-CONNECTION-POOLING-SETTINGS
+INDEXPOINT runtime-config-connection-pooling.html#AEN1711
+TITLE Connection Pooling Settings
+significance NORMAL
+PRIMARY child_max_connections configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection-pooling.html#RUNTIME-CONFIG-CONNECTION-POOLING-SETTINGS
+INDEXPOINT runtime-config-connection-pooling.html#AEN1729
+TITLE Connection Pooling Settings
+significance NORMAL
+PRIMARY connection_life_time configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-connection-pooling.html#RUNTIME-CONFIG-CONNECTION-POOLING-SETTINGS
+INDEXPOINT runtime-config-connection-pooling.html#AEN1740
+TITLE Connection Pooling Settings
+significance NORMAL
+PRIMARY reset_query_list configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHERE-TO-LOG
+INDEXPOINT runtime-config-logging.html#AEN1785
+TITLE Where To Log
+significance NORMAL
+PRIMARY log_destination configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHERE-TO-LOG
+INDEXPOINT runtime-config-logging.html#AEN1805
+TITLE Where To Log
+significance NORMAL
+PRIMARY syslog_facility configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHERE-TO-LOG
+INDEXPOINT runtime-config-logging.html#AEN1816
+TITLE Where To Log
+significance NORMAL
+PRIMARY syslog_ident configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHEN-TO-LOG
+INDEXPOINT runtime-config-logging.html#AEN1831
+TITLE When To Log
+significance NORMAL
+PRIMARY client_min_messages configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHEN-TO-LOG
+INDEXPOINT runtime-config-logging.html#AEN1842
+TITLE When To Log
+significance NORMAL
+PRIMARY log_min_messages configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT-TO-LOG
+INDEXPOINT runtime-config-logging.html#AEN1856
+TITLE What To Log
+significance NORMAL
+PRIMARY log_statement configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT-TO-LOG
+INDEXPOINT runtime-config-logging.html#AEN1867
+TITLE What To Log
+significance NORMAL
+PRIMARY log_per_node_statement configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT-TO-LOG
+INDEXPOINT runtime-config-logging.html#AEN1879
+TITLE What To Log
+significance NORMAL
+PRIMARY log_hostname configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT-TO-LOG
+INDEXPOINT runtime-config-logging.html#AEN1890
+TITLE What To Log
+significance NORMAL
+PRIMARY log_connections configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT-TO-LOG
+INDEXPOINT runtime-config-logging.html#AEN1900
+TITLE What To Log
+significance NORMAL
+PRIMARY log_error_verbosity configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT-TO-LOG
+INDEXPOINT runtime-config-logging.html#AEN1911
+TITLE What To Log
+significance NORMAL
+PRIMARY log_line_prefix configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-load-balancing.html
+INDEXPOINT runtime-config-load-balancing.html#AEN1974
+TITLE Load Balancing
+significance NORMAL
+PRIMARY load_balance_mode configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-load-balancing.html
+INDEXPOINT runtime-config-load-balancing.html#AEN1986
+TITLE Load Balancing
+significance NORMAL
+PRIMARY ignore_leading_white_space configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-load-balancing.html
+INDEXPOINT runtime-config-load-balancing.html#AEN1997
+TITLE Load Balancing
+significance NORMAL
+PRIMARY white_function_list configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-load-balancing.html
+INDEXPOINT runtime-config-load-balancing.html#AEN2014
+TITLE Load Balancing
+significance NORMAL
+PRIMARY black_function_list configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-load-balancing.html
+INDEXPOINT runtime-config-load-balancing.html#AEN2057
+TITLE Load Balancing
+significance NORMAL
+PRIMARY database_redirect_preference_list configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-load-balancing.html
+INDEXPOINT runtime-config-load-balancing.html#AEN2095
+TITLE Load Balancing
+significance NORMAL
+PRIMARY app_name_redirect_preference_list configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-load-balancing.html
+INDEXPOINT runtime-config-load-balancing.html#AEN2153
+TITLE Load Balancing
+significance NORMAL
+PRIMARY allow_sql_comments configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-health-check.html
+INDEXPOINT runtime-config-health-check.html#AEN2178
+TITLE Health Check
+significance NORMAL
+PRIMARY health_check_timeout configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-health-check.html
+INDEXPOINT runtime-config-health-check.html#AEN2189
+TITLE Health Check
+significance NORMAL
+PRIMARY health_check_period configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-health-check.html
+INDEXPOINT runtime-config-health-check.html#AEN2199
+TITLE Health Check
+significance NORMAL
+PRIMARY health_check_user configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-health-check.html
+INDEXPOINT runtime-config-health-check.html#AEN2209
+TITLE Health Check
+significance NORMAL
+PRIMARY health_check_password configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-health-check.html
+INDEXPOINT runtime-config-health-check.html#AEN2220
+TITLE Health Check
+significance NORMAL
+PRIMARY health_check_database configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-health-check.html
+INDEXPOINT runtime-config-health-check.html#AEN2237
+TITLE Health Check
+significance NORMAL
+PRIMARY health_check_max_retries configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-health-check.html
+INDEXPOINT runtime-config-health-check.html#AEN2251
+TITLE Health Check
+significance NORMAL
+PRIMARY health_check_retry_delay configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-health-check.html
+INDEXPOINT runtime-config-health-check.html#AEN2262
+TITLE Health Check
+significance NORMAL
+PRIMARY connect_timeout configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-failover.html
+INDEXPOINT runtime-config-failover.html#AEN2278
+TITLE Failover and Failback
+significance NORMAL
+PRIMARY failover_command configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-failover.html
+INDEXPOINT runtime-config-failover.html#AEN2337
+TITLE Failover and Failback
+significance NORMAL
+PRIMARY failback_command configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-failover.html
+INDEXPOINT runtime-config-failover.html#AEN2390
+TITLE Failover and Failback
+significance NORMAL
+PRIMARY follow_master_command configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-failover.html
+INDEXPOINT runtime-config-failover.html#AEN2450
+TITLE Failover and Failback
+significance NORMAL
+PRIMARY fail_over_on_backend_error configuration parameter
+/INDEXTERM
+INDEXTERM runtime-config-failover.html
+INDEXPOINT runtime-config-failover.html#AEN2467
+TITLE Failover and Failback
+significance NORMAL
+PRIMARY search_primary_node_timeout configuration parameter
+/INDEXTERM
+INDEXTERM runtime-online-recovery.html
+INDEXPOINT runtime-online-recovery.html#AEN2519
+TITLE Online Recovery
+significance NORMAL
+PRIMARY recovery_user configuration parameter
+/INDEXTERM
+INDEXTERM runtime-online-recovery.html
+INDEXPOINT runtime-online-recovery.html#AEN2529
+TITLE Online Recovery
+significance NORMAL
+PRIMARY recovery_password configuration parameter
+/INDEXTERM
+INDEXTERM runtime-online-recovery.html
+INDEXPOINT runtime-online-recovery.html#AEN2540
+TITLE Online Recovery
+significance NORMAL
+PRIMARY recovery_1st_stage_command configuration parameter
+/INDEXTERM
+INDEXTERM runtime-online-recovery.html
+INDEXPOINT runtime-online-recovery.html#AEN2579
+TITLE Online Recovery
+significance NORMAL
+PRIMARY recovery_2nd_stage_command configuration parameter
+/INDEXTERM
+INDEXTERM runtime-online-recovery.html
+INDEXPOINT runtime-online-recovery.html#AEN2618
+TITLE Online Recovery
+significance NORMAL
+PRIMARY recovery_timeout configuration parameter
+/INDEXTERM
+INDEXTERM runtime-online-recovery.html
+INDEXPOINT runtime-online-recovery.html#AEN2629
+TITLE Online Recovery
+significance NORMAL
+PRIMARY client_idle_limit_in_recovery configuration parameter
+/INDEXTERM
+INDEXTERM runtime-streaming-replication-check.html
+INDEXPOINT runtime-streaming-replication-check.html#AEN2657
+TITLE Streaming Replication Check
+significance NORMAL
+PRIMARY sr_check_period configuration parameter
+/INDEXTERM
+INDEXTERM runtime-streaming-replication-check.html
+INDEXPOINT runtime-streaming-replication-check.html#AEN2667
+TITLE Streaming Replication Check
+significance NORMAL
+PRIMARY sr_check_user configuration parameter
+/INDEXTERM
+INDEXTERM runtime-streaming-replication-check.html
+INDEXPOINT runtime-streaming-replication-check.html#AEN2682
+TITLE Streaming Replication Check
+significance NORMAL
+PRIMARY sr_check_password configuration parameter
+/INDEXTERM
+INDEXTERM runtime-streaming-replication-check.html
+INDEXPOINT runtime-streaming-replication-check.html#AEN2694
+TITLE Streaming Replication Check
+significance NORMAL
+PRIMARY sr_check_database configuration parameter
+/INDEXTERM
+INDEXTERM runtime-streaming-replication-check.html
+INDEXPOINT runtime-streaming-replication-check.html#AEN2705
+TITLE Streaming Replication Check
+significance NORMAL
+PRIMARY delay_threshold configuration parameter
+/INDEXTERM
+INDEXTERM runtime-streaming-replication-check.html
+INDEXPOINT runtime-streaming-replication-check.html#AEN2720
+TITLE Streaming Replication Check
+significance NORMAL
+PRIMARY log_standby_delay configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-ENABLING
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2764
+TITLE Enabling in memory query cache
+significance NORMAL
+PRIMARY memory_cache_enabled configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-CHOOSE-STORAGE
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2777
+TITLE Choosing cache storage
+significance NORMAL
+PRIMARY memqcache_method configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-CONFIG
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2812
+TITLE Common configurations
+significance NORMAL
+PRIMARY memqcache_expire configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-CONFIG
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2826
+TITLE Common configurations
+significance NORMAL
+PRIMARY memqcache_auto_cache_invalidation configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-CONFIG
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2841
+TITLE Common configurations
+significance NORMAL
+PRIMARY memqcache_maxcache configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-CONFIG
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2859
+TITLE Common configurations
+significance NORMAL
+PRIMARY white_memqcache_table_list configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-CONFIG
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2878
+TITLE Common configurations
+significance NORMAL
+PRIMARY black_memqcache_table_list configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-CONFIG
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2894
+TITLE Common configurations
+significance NORMAL
+PRIMARY memqcache_oiddir configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-SHMEM-CONFIG
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2915
+TITLE Configurations to use shared memory
+significance NORMAL
+PRIMARY memqcache_total_size configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-SHMEM-CONFIG
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2925
+TITLE Configurations to use shared memory
+significance NORMAL
+PRIMARY memqcache_max_num_cache configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-SHMEM-CONFIG
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2938
+TITLE Configurations to use shared memory
+significance NORMAL
+PRIMARY memqcache_cache_block_size configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-MEMCACHED-CONFIG
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2957
+TITLE Configurations to use memcached
+significance NORMAL
+PRIMARY memqcache_memcached_host configuration parameter
+/INDEXTERM
+INDEXTERM runtime-in-memory-query-cache.html#RUNTIME-IN-MEMORY-QUERY-CACHE-MEMCACHED-CONFIG
+INDEXPOINT runtime-in-memory-query-cache.html#AEN2971
+TITLE Configurations to use memcached
+significance NORMAL
+PRIMARY memqcache_memcached_port configuration parameter
+/INDEXTERM
+INDEXTERM runtime-ssl.html
+INDEXPOINT runtime-ssl.html#AEN2985
+TITLE Secure Sockect Layer (SSL)
+significance NORMAL
+PRIMARY ssl configuration parameter
+/INDEXTERM
+INDEXTERM runtime-ssl.html
+INDEXPOINT runtime-ssl.html#AEN3006
+TITLE Secure Sockect Layer (SSL)
+significance NORMAL
+PRIMARY ssl_key configuration parameter
+/INDEXTERM
+INDEXTERM runtime-ssl.html
+INDEXPOINT runtime-ssl.html#AEN3017
+TITLE Secure Sockect Layer (SSL)
+significance NORMAL
+PRIMARY ssl_cert configuration parameter
+/INDEXTERM
+INDEXTERM runtime-ssl.html
+INDEXPOINT runtime-ssl.html#AEN3028
+TITLE Secure Sockect Layer (SSL)
+significance NORMAL
+PRIMARY ssl_ca_cert configuration parameter
+/INDEXTERM
+INDEXTERM runtime-ssl.html
+INDEXPOINT runtime-ssl.html#AEN3042
+TITLE Secure Sockect Layer (SSL)
+significance NORMAL
+PRIMARY ssl_ca_cert_dir configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html
+INDEXPOINT runtime-watchdog-config.html#AEN3056
+TITLE Watchdog
+significance NORMAL
+ZONE runtime-watchdog-config.html
+TITLE Watchdog
+PRIMARY configuring watchdog
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-ENABLE-WATCHDOG
+INDEXPOINT runtime-watchdog-config.html#AEN3067
+TITLE Enable watchdog
+significance NORMAL
+PRIMARY use_watchdog configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-COMMUNICATION-WATCHDOG
+INDEXPOINT runtime-watchdog-config.html#AEN3080
+TITLE Watchdog communication
+significance NORMAL
+PRIMARY wd_hostname configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-COMMUNICATION-WATCHDOG
+INDEXPOINT runtime-watchdog-config.html#AEN3091
+TITLE Watchdog communication
+significance NORMAL
+PRIMARY wd_port configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-COMMUNICATION-WATCHDOG
+INDEXPOINT runtime-watchdog-config.html#AEN3101
+TITLE Watchdog communication
+significance NORMAL
+PRIMARY wd_authkey configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-UPSTREAM-CONNECTIONS
+INDEXPOINT runtime-watchdog-config.html#AEN3124
+TITLE Upstream server connection
+significance NORMAL
+PRIMARY trusted_servers configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-UPSTREAM-CONNECTIONS
+INDEXPOINT runtime-watchdog-config.html#AEN3136
+TITLE Upstream server connection
+significance NORMAL
+PRIMARY ping_path configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-VIP-CONTROL
+INDEXPOINT runtime-watchdog-config.html#AEN3150
+TITLE Virtual IP control
+significance NORMAL
+PRIMARY delegate_IP configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-VIP-CONTROL
+INDEXPOINT runtime-watchdog-config.html#AEN3163
+TITLE Virtual IP control
+significance NORMAL
+PRIMARY if_cmd_path configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-VIP-CONTROL
+INDEXPOINT runtime-watchdog-config.html#AEN3175
+TITLE Virtual IP control
+significance NORMAL
+PRIMARY if_up_cmd configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-VIP-CONTROL
+INDEXPOINT runtime-watchdog-config.html#AEN3188
+TITLE Virtual IP control
+significance NORMAL
+PRIMARY if_down_cmd configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-VIP-CONTROL
+INDEXPOINT runtime-watchdog-config.html#AEN3199
+TITLE Virtual IP control
+significance NORMAL
+PRIMARY arping_path configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-VIP-CONTROL
+INDEXPOINT runtime-watchdog-config.html#AEN3211
+TITLE Virtual IP control
+significance NORMAL
+PRIMARY arping_cmd configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-ESCALATION-DE-ESCALATION
+INDEXPOINT runtime-watchdog-config.html#AEN3229
+TITLE Behaivor on escalation and de-escalation
+significance NORMAL
+PRIMARY clear_memqcache_on_escalation configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-ESCALATION-DE-ESCALATION
+INDEXPOINT runtime-watchdog-config.html#AEN3244
+TITLE Behaivor on escalation and de-escalation
+significance NORMAL
+PRIMARY wd_escalation_command configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-ESCALATION-DE-ESCALATION
+INDEXPOINT runtime-watchdog-config.html#AEN3255
+TITLE Behaivor on escalation and de-escalation
+significance NORMAL
+PRIMARY wd_de_escalation_command configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK
+INDEXPOINT runtime-watchdog-config.html#AEN3277
+TITLE Life checking Pgpool-II 
+significance NORMAL
+PRIMARY wd_lifecheck_method configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK
+INDEXPOINT runtime-watchdog-config.html#AEN3310
+TITLE Life checking Pgpool-II 
+significance NORMAL
+PRIMARY wd_monitoring_interfaces_list configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK
+INDEXPOINT runtime-watchdog-config.html#AEN3328
+TITLE Life checking Pgpool-II 
+significance NORMAL
+PRIMARY wd_interval configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK
+INDEXPOINT runtime-watchdog-config.html#AEN3339
+TITLE Life checking Pgpool-II 
+significance NORMAL
+PRIMARY wd_priority configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK
+INDEXPOINT runtime-watchdog-config.html#AEN3354
+TITLE Life checking Pgpool-II 
+significance NORMAL
+PRIMARY wd_ipc_socket_dir configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-HEARTBEAT
+INDEXPOINT runtime-watchdog-config.html#AEN3376
+TITLE Lifecheck Heartbeat mode configuration
+significance NORMAL
+PRIMARY wd_heartbeat_port configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-HEARTBEAT
+INDEXPOINT runtime-watchdog-config.html#AEN3390
+TITLE Lifecheck Heartbeat mode configuration
+significance NORMAL
+PRIMARY wd_heartbeat_keepalive configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-HEARTBEAT
+INDEXPOINT runtime-watchdog-config.html#AEN3403
+TITLE Lifecheck Heartbeat mode configuration
+significance NORMAL
+PRIMARY wd_heartbeat_deadtime configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-HEARTBEAT
+INDEXPOINT runtime-watchdog-config.html#AEN3417
+TITLE Lifecheck Heartbeat mode configuration
+significance NORMAL
+PRIMARY heartbeat_destination configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-HEARTBEAT
+INDEXPOINT runtime-watchdog-config.html#AEN3434
+TITLE Lifecheck Heartbeat mode configuration
+significance NORMAL
+PRIMARY heartbeat_destination_port configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-HEARTBEAT
+INDEXPOINT runtime-watchdog-config.html#AEN3449
+TITLE Lifecheck Heartbeat mode configuration
+significance NORMAL
+PRIMARY heartbeat_device configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-QUERY
+INDEXPOINT runtime-watchdog-config.html#AEN3466
+TITLE Lifecheck Query mode configuration
+significance NORMAL
+PRIMARY wd_life_point configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-QUERY
+INDEXPOINT runtime-watchdog-config.html#AEN3480
+TITLE Lifecheck Query mode configuration
+significance NORMAL
+PRIMARY wd_lifecheck_query configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-QUERY
+INDEXPOINT runtime-watchdog-config.html#AEN3496
+TITLE Lifecheck Query mode configuration
+significance NORMAL
+PRIMARY wd_lifecheck_dbname configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-QUERY
+INDEXPOINT runtime-watchdog-config.html#AEN3512
+TITLE Lifecheck Query mode configuration
+significance NORMAL
+PRIMARY wd_lifecheck_user configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-QUERY
+INDEXPOINT runtime-watchdog-config.html#AEN3528
+TITLE Lifecheck Query mode configuration
+significance NORMAL
+PRIMARY wd_lifecheck_password configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-SERVER-CONFIGURATION
+INDEXPOINT runtime-watchdog-config.html#AEN3547
+TITLE Watchdog servers configurations
+significance NORMAL
+PRIMARY other_pgpool_hostname configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-SERVER-CONFIGURATION
+INDEXPOINT runtime-watchdog-config.html#AEN3558
+TITLE Watchdog servers configurations
+significance NORMAL
+PRIMARY other_pgpool_port configuration parameter
+/INDEXTERM
+INDEXTERM runtime-watchdog-config.html#CONFIG-WATCHDOG-SERVER-CONFIGURATION
+INDEXPOINT runtime-watchdog-config.html#AEN3569
+TITLE Watchdog servers configurations
+significance NORMAL
+PRIMARY other_wd_port0 configuration parameter
+/INDEXTERM
+INDEXTERM runtime-misc.html
+INDEXPOINT runtime-misc.html#AEN3583
+TITLE Misc Configuration Parameters
+significance NORMAL
+PRIMARY relcache_expire configuration parameter
+/INDEXTERM
+INDEXTERM runtime-misc.html
+INDEXPOINT runtime-misc.html#AEN3597
+TITLE Misc Configuration Parameters
+significance NORMAL
+PRIMARY relcache_size configuration parameter
+/INDEXTERM
+INDEXTERM runtime-misc.html
+INDEXPOINT runtime-misc.html#AEN3612
+TITLE Misc Configuration Parameters
+significance NORMAL
+PRIMARY check_temp_table configuration parameter
+/INDEXTERM
+INDEXTERM runtime-misc.html
+INDEXPOINT runtime-misc.html#AEN3626
+TITLE Misc Configuration Parameters
+significance NORMAL
+PRIMARY check_unlogged_table configuration parameter
+/INDEXTERM
+INDEXTERM runtime-misc.html
+INDEXPOINT runtime-misc.html#AEN3640
+TITLE Misc Configuration Parameters
+significance NORMAL
+PRIMARY pid_file_name configuration parameter
+/INDEXTERM
+INDEXTERM runtime-misc.html
+INDEXPOINT runtime-misc.html#AEN3652
+TITLE Misc Configuration Parameters
+significance NORMAL
+PRIMARY logdir configuration parameter
+/INDEXTERM
+INDEXTERM client-authentication.html
+INDEXPOINT client-authentication.html#AEN3662
+TITLE Client Authentication
+significance NORMAL
+ZONE client-authentication.html
+TITLE Client Authentication
+PRIMARY client authentication
+/INDEXTERM
+INDEXTERM auth-pool-hba-conf.html
+INDEXPOINT auth-pool-hba-conf.html#AEN3677
+TITLE The pool_hba.conf File
+significance NORMAL
+ZONE auth-pool-hba-conf.html
+TITLE The pool_hba.conf File
+PRIMARY pool_hba.conf
+/INDEXTERM
+INDEXTERM auth-methods.html#AUTH-MD5
+INDEXPOINT auth-methods.html#AEN3844
+TITLE MD5 Password Authentication
+significance NORMAL
+PRIMARY MD5
+/INDEXTERM
+INDEXTERM auth-methods.html#SETTING-MD5-AUTHENTICATION
+INDEXPOINT auth-methods.html#AEN3858
+TITLE Setting md5 Authentication
+significance NORMAL
+ZONE auth-methods.html#SETTING-MD5-AUTHENTICATION
+TITLE Setting md5 Authentication
+PRIMARY MD5
+/INDEXTERM
+INDEXTERM auth-methods.html#AUTH-PAM
+INDEXPOINT auth-methods.html#AEN3873
+TITLE PAM Authentication
+significance NORMAL
+ZONE auth-methods.html#AUTH-PAM
+TITLE PAM Authentication
+PRIMARY PAM
+/INDEXTERM
+INDEXTERM pcp-common-options.html
+INDEXPOINT pcp-common-options.html#AEN4212
+TITLE pcp_common_options
+significance NORMAL
+ZONE pcp-common-options.html
+TITLE pcp_common_options
+PRIMARY pcp_common_options
+/INDEXTERM
+INDEXTERM pcp-node-count.html
+INDEXPOINT pcp-node-count.html#AEN4312
+TITLE pcp_node_count
+significance NORMAL
+ZONE pcp-node-count.html
+TITLE pcp_node_count
+PRIMARY pcp_node_count
+/INDEXTERM
+INDEXTERM pcp-node-info.html
+INDEXPOINT pcp-node-info.html#AEN4340
+TITLE pcp_node_info
+significance NORMAL
+ZONE pcp-node-info.html
+TITLE pcp_node_info
+PRIMARY pcp_node_info
+/INDEXTERM
+INDEXTERM pcp-watchdog-info.html
+INDEXPOINT pcp-watchdog-info.html#AEN4400
+TITLE pcp_watchdog_info
+significance NORMAL
+ZONE pcp-watchdog-info.html
+TITLE pcp_watchdog_info
+PRIMARY pcp_watchdog_info
+/INDEXTERM
+INDEXTERM pcp-proc-count.html
+INDEXPOINT pcp-proc-count.html#AEN4452
+TITLE pcp_proc_count
+significance NORMAL
+ZONE pcp-proc-count.html
+TITLE pcp_proc_count
+PRIMARY pcp_proc_count
+/INDEXTERM
+INDEXTERM pcp-proc-info.html
+INDEXPOINT pcp-proc-info.html#AEN4475
+TITLE pcp_proc_info
+significance NORMAL
+ZONE pcp-proc-info.html
+TITLE pcp_proc_info
+PRIMARY pcp_proc_info
+/INDEXTERM
+INDEXTERM pcp-pool-status.html
+INDEXPOINT pcp-pool-status.html#AEN4525
+TITLE pcp_pool_status
+significance NORMAL
+ZONE pcp-pool-status.html
+TITLE pcp_pool_status
+PRIMARY pcp_pool_status
+/INDEXTERM
+INDEXTERM pcp-detach-node.html
+INDEXPOINT pcp-detach-node.html#AEN4554
+TITLE pcp_detach_node
+significance NORMAL
+ZONE pcp-detach-node.html
+TITLE pcp_detach_node
+PRIMARY pcp_detach_node
+/INDEXTERM
+INDEXTERM pcp-attach-node.html
+INDEXPOINT pcp-attach-node.html#AEN4603
+TITLE pcp_attach_node
+significance NORMAL
+ZONE pcp-attach-node.html
+TITLE pcp_attach_node
+PRIMARY pcp_attach_node
+/INDEXTERM
+INDEXTERM pcp-promote-node.html
+INDEXPOINT pcp-promote-node.html#AEN4643
+TITLE pcp_promote_node
+significance NORMAL
+ZONE pcp-promote-node.html
+TITLE pcp_promote_node
+PRIMARY pcp_promote_node
+/INDEXTERM
+INDEXTERM pcp-stop-pgpool.html
+INDEXPOINT pcp-stop-pgpool.html#AEN4692
+TITLE pcp_stop_pgpool
+significance NORMAL
+ZONE pcp-stop-pgpool.html
+TITLE pcp_stop_pgpool
+PRIMARY pcp_stop_pgpool
+/INDEXTERM
+INDEXTERM pcp-recovery-node.html
+INDEXPOINT pcp-recovery-node.html#AEN4740
+TITLE pcp_recovery_node
+significance NORMAL
+ZONE pcp-recovery-node.html
+TITLE pcp_recovery_node
+PRIMARY pcp_recovery_node
+/INDEXTERM
+INDEXTERM pg-md5.html
+INDEXPOINT pg-md5.html#AEN4784
+TITLE pg_md5
+significance NORMAL
+ZONE pg-md5.html
+TITLE pg_md5
+PRIMARY pg_md5
+/INDEXTERM
+INDEXTERM pgpool-setup.html
+INDEXPOINT pgpool-setup.html#AEN4841
+TITLE pgpool_setup
+significance NORMAL
+ZONE pgpool-setup.html
+TITLE pgpool_setup
+PRIMARY pgpool_setup
+/INDEXTERM
+INDEXTERM watchdog-setup.html
+INDEXPOINT watchdog-setup.html#AEN4957
+TITLE watchdog_setup
+significance NORMAL
+ZONE watchdog-setup.html
+TITLE watchdog_setup
+PRIMARY watchdog_setup
+/INDEXTERM
+INDEXTERM sql-pgpool-show.html
+INDEXPOINT sql-pgpool-show.html#AEN5085
+TITLE PGPOOL SHOW
+significance NORMAL
+ZONE sql-pgpool-show.html
+TITLE PGPOOL SHOW
+PRIMARY SHOW
+/INDEXTERM
+INDEXTERM sql-pgpool-set.html
+INDEXPOINT sql-pgpool-set.html#AEN5161
+TITLE PGPOOL SET
+significance NORMAL
+ZONE sql-pgpool-set.html
+TITLE PGPOOL SET
+PRIMARY SET
+/INDEXTERM
+INDEXTERM sql-pgpool-reset.html
+INDEXPOINT sql-pgpool-reset.html#AEN5201
+TITLE PGPOOL RESET
+significance NORMAL
+ZONE sql-pgpool-reset.html
+TITLE PGPOOL RESET
+PRIMARY RESET
+/INDEXTERM
+INDEXTERM sql-show-pgpool-status.html
+INDEXPOINT sql-show-pgpool-status.html#AEN5252
+TITLE SHOW PGPOOL STATUS
+significance NORMAL
+ZONE sql-show-pgpool-status.html
+TITLE SHOW PGPOOL STATUS
+PRIMARY SHOW
+/INDEXTERM
+INDEXTERM sql-show-pool-nodes.html
+INDEXPOINT sql-show-pool-nodes.html#AEN5277
+TITLE SHOW POOL NODES
+significance NORMAL
+ZONE sql-show-pool-nodes.html
+TITLE SHOW POOL NODES
+PRIMARY SHOW
+/INDEXTERM
+INDEXTERM sql-show-pool-processes.html
+INDEXPOINT sql-show-pool-processes.html#AEN5299
+TITLE SHOW POOL_PROCESSES
+significance NORMAL
+ZONE sql-show-pool-processes.html
+TITLE SHOW POOL_PROCESSES
+PRIMARY SHOW
+/INDEXTERM
+INDEXTERM sql-show-pool-pools.html
+INDEXPOINT sql-show-pool-pools.html#AEN5340
+TITLE SHOW POOL_POOLS
+significance NORMAL
+ZONE sql-show-pool-pools.html
+TITLE SHOW POOL_POOLS
+PRIMARY SHOW
+/INDEXTERM
+INDEXTERM sql-show-pool-version.html
+INDEXPOINT sql-show-pool-version.html#AEN5400
+TITLE SHOW POOL_VERSION
+significance NORMAL
+ZONE sql-show-pool-version.html
+TITLE SHOW POOL_VERSION
+PRIMARY SHOW
+/INDEXTERM
+INDEXTERM sql-show-pool-cache.html
+INDEXPOINT sql-show-pool-cache.html#AEN5419
+TITLE SHOW POOL_CACHE
+significance NORMAL
+ZONE sql-show-pool-cache.html
+TITLE SHOW POOL_CACHE
+PRIMARY SHOW
+/INDEXTERM

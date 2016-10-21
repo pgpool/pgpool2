@@ -1,0 +1,473 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Restrictions</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Preface"
+HREF="preface.html"><LINK
+REL="PREVIOUS"
+TITLE="Further Information"
+HREF="resources.html"><LINK
+REL="NEXT"
+TITLE="Bug Reporting Guidelines"
+HREF="bug-reporting.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Further Information"
+HREF="resources.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="preface.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Preface</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Bug Reporting Guidelines"
+HREF="bug-reporting.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="RESTRICTIONS"
+>Restrictions</A
+></H1
+><P
+>  This section descibes current restrictions of <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>.
+
+  <P
+></P
+></P><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>Functionality of PostgreSQL</DT
+><DD
+><P
+>       If you use <CODE
+CLASS="FUNCTION"
+>pg_terminate_backend()</CODE
+> to stop
+       a backend, this will trigger a failover.  The reason why this
+       happens is that <SPAN
+CLASS="PRODUCTNAME"
+>PostgreSQL</SPAN
+> sends
+       exactly the same message for a terminated backend as for a full
+       postmaster shutdown.  There is no workaround prior of version
+       3.6. From version 3.6, this limitation has been mitigated. If
+       the argument to the function (that is a process id) is a
+       constant, you can safely use the function. In extended protocol
+       mode, you cannot use the function though.
+     </P
+></DD
+><DT
+>Authentication/Access Controls</DT
+><DD
+><P
+>	In the replication mode or master/slave mode, trust, clear
+        text password, and pam methods are supported. md5 in also
+        supported since <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> 3.0.  md5
+        is supported by using a authencitaion file <TT
+CLASS="FILENAME"
+>pool_passwd</TT
+>.
+        <TT
+CLASS="FILENAME"
+>pool_passwd</TT
+> is default name of the
+        authentication file.  You can change the file name
+        using <SPAN
+CLASS="APPLICATION"
+>pool_passwd</SPAN
+>.  Here are the
+        steps to enable md5 authentication:
+      </P
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>	    Login as the database's operating system user and type:
+	    </P><PRE
+CLASS="PROGRAMLISTING"
+>            pg_md5 --md5auth --username=<TT
+CLASS="LITERAL"
+>your_username</TT
+> <TT
+CLASS="LITERAL"
+>your_passwd</TT
+>
+	    </PRE
+><P>
+            user name and md5 encrypted password are registered into
+            pool_passwd.  If pool_passwd does not exist yet, pg_md5
+            command will automatically create it for you.  The format
+            of pool_passwd
+            is <TT
+CLASS="LITERAL"
+>username:encrypted_passwd</TT
+>.
+	  </P
+></LI
+><LI
+><P
+>	    You also need to add an appropriate md5 entry to
+            pool_hba.conf.  See Setting up pool_hba.conf for client
+            authentication (HBA) for more details.
+	  </P
+></LI
+><LI
+><P
+>            Please note that the user name and password must be
+            identical to those registered
+            in <SPAN
+CLASS="PRODUCTNAME"
+>PostgreSQL</SPAN
+>.
+	  </P
+></LI
+><LI
+><P
+>            After changing md5 password (in both pool_passwd and
+            PostgreSQL of course), you need to
+            execute <SPAN
+CLASS="APPLICATION"
+>pgpool reload</SPAN
+>.
+	  </P
+></LI
+></OL
+></DD
+><DT
+>Large objects</DT
+><DD
+><P
+>	<SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> supports large object
+	replication in replication mode if the backend
+	is <SPAN
+CLASS="PRODUCTNAME"
+>PostgreSQL</SPAN
+> 8.1 or later.  For
+	this, you need to enable lobj_lock_table directive
+	in <TT
+CLASS="FILENAME"
+>pgpool.conf</TT
+>.  Large object replication
+	using backend function <CODE
+CLASS="FUNCTION"
+>lo_import</CODE
+> is not
+	supported, however.
+      </P
+></DD
+><DT
+>Temporary tables in master/slave mode</DT
+><DD
+><P
+>	Creating/inserting/updating/deleting temporary tables are
+	always executed on the master (primary) in master slave mode.
+	SELECT on these tables is executed on master as well.  However
+	if the temporary table name is used as a literal in SELECT,
+	there's no way to detect it, and the SELECT will be load
+	balanced.  That will trigger a "not found the table" error or
+	will find another table having same name.  To avoid the
+	problem, use /*NO LOAD BALANCE*/ SQL comment.
+	Sample SELECT which causes a problem:
+	</P><PRE
+CLASS="PROGRAMLISTING"
+>	  SELECT 't1'::regclass::oid;
+	</PRE
+><P>
+	psql's \d command uses literal table
+	names. <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> checks if the
+	SELECT includes any access to system catalogs and always send
+	these queries to the master.  Thus we avoid the problem.
+      </P
+></DD
+><DT
+>Functions, etc. In replication mode</DT
+><DD
+><P
+>	There is no guarantee that any data provided using a
+	context-dependent mechanism (e.g. random number, transaction
+	ID, OID, SERIAL, sequence), will be replicated correctly on
+	multiple backends. For SERIAL, enabling insert_lock will help
+	replicating data.  insert_lock also helps SELECT setval() and
+	SELECT nextval().
+      </P
+><P
+>	INSERT/UPDATE
+	using <CODE
+CLASS="FUNCTION"
+>CURRENT_TIMESTAMP</CODE
+>, <CODE
+CLASS="FUNCTION"
+>CURRENT_DATE</CODE
+>,
+	<CODE
+CLASS="FUNCTION"
+>now()</CODE
+> will be replicated
+	correctly. INSERT/UPDATE for tables
+	using <CODE
+CLASS="FUNCTION"
+>CURRENT_TIMESTAMP</CODE
+>, <CODE
+CLASS="FUNCTION"
+>CURRENT_DATE</CODE
+>,
+	<CODE
+CLASS="FUNCTION"
+>now()</CODE
+> as their DEFAULT values will also
+	be replicated correctly.  This is done by replacing those
+	functions by constants fetched from master at query execution
+	time.  There are a few limitations however:
+      </P
+><P
+>	In <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> 3.0 or before, the
+        calculation of temporal data in table default value is not
+        accurate in some cases. For example, the following table
+        definition:
+	</P><PRE
+CLASS="PROGRAMLISTING"
+>CREATE TABLE rel1(
+  d1 date DEFAULT CURRENT_DATE + 1
+)
+	</PRE
+><P>
+	is treated the same as:
+	</P><PRE
+CLASS="PROGRAMLISTING"
+>CREATE TABLE rel1(
+  d1 date DEFAULT CURRENT_DATE
+)
+	</PRE
+><P>
+	<SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> 3.1 or later handles
+	these cases correctly.  Thus the column "d1" will have
+	tomorrow as the default value.  However this enhancement does
+	not apply if extended protocols(used in JDBC, PHP PDO for
+	example) or PREPARE are used.
+      </P
+><P
+>	Please note that if the column type is not a temporal one,
+	rewriting is not performed. Such example:
+	</P><PRE
+CLASS="PROGRAMLISTING"
+>foo bigint default (date_part('epoch'::text,('now'::text)::timestamp(3) with time zone) * (1000)::double precision)
+	</PRE
+><P>
+	Suppose we have the following table:
+	</P><PRE
+CLASS="PROGRAMLISTING"
+>CREATE TABLE rel1(
+  c1 int,
+  c2 timestamp default now()
+)
+	</PRE
+><P>
+	We can replicate
+	</P><PRE
+CLASS="PROGRAMLISTING"
+>INSERT INTO rel1(c1) VALUES(1)
+	</PRE
+><P>
+
+    since this turn into
+
+	</P><PRE
+CLASS="PROGRAMLISTING"
+>INSERT INTO rel1(c1, c2) VALUES(1, '2009-01-01 23:59:59.123456+09')
+	</PRE
+><P>
+
+    However,
+	</P><PRE
+CLASS="PROGRAMLISTING"
+>INSERT INTO rel1(c1) SELECT 1
+	</PRE
+><P>
+    cannot to be transformed, thus cannot be properly replicated in the current implementation.
+    Values will still be inserted, with no transformation at all.
+	</P
+><P
+>	Tables created by <TT
+CLASS="COMMAND"
+>CREATE TEMP TABLE</TT
+> will be
+	deleted at the end of the session by specifying DISCARD ALL in
+	reset_query_list if you are using PostgreSQL 8.3 or later.
+      </P
+><P
+>	For 8.2.x or earlier, <TT
+CLASS="COMMAND"
+>CREATE TEMP TABLE</TT
+>
+	will not be deleted after exiting a session. It is because of
+	the connection pooling which, from PostgreSQL's backend point
+	of view, keeps the session alive. To avoid this, you must
+	explicitly drop the temporary tables by issuing <TT
+CLASS="COMMAND"
+>DROP
+	TABLE</TT
+>, or use <TT
+CLASS="COMMAND"
+>CREATE TEMP TABLE ... ON
+	COMMIT DROP</TT
+> inside the transaction block.
+      </P
+></DD
+></DL
+></DIV
+><P>
+ </P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="resources.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="bug-reporting.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Further Information</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="preface.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Bug Reporting Guidelines</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

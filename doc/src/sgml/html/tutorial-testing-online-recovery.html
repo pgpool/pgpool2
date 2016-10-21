@@ -1,0 +1,258 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Testing Online Recovery</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Getting Started"
+HREF="tutorial-start.html"><LINK
+REL="PREVIOUS"
+TITLE="Testing Fail Over"
+HREF="tutorial-testing-failover.html"><LINK
+REL="NEXT"
+TITLE="Architectural Fundamentals"
+HREF="tutorial-arch.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Testing Fail Over"
+HREF="tutorial-testing-failover.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="tutorial-start.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 1. Getting Started</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Architectural Fundamentals"
+HREF="tutorial-arch.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="TUTORIAL-TESTING-ONLINE-RECOVERY"
+>1.6. Testing Online Recovery</A
+></H1
+><P
+>      <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> allows to recover a downed
+      node by technique called "Online Recovery". This copies data
+      from the primary node to a standby node so that it sync with the
+      primary. This may take long time and database may be updated
+      during the process. That's no problem because in the streaming
+      configuration, the standby will receive WAL log and applies it
+      to catch up the primary. To test online recovery, let's start
+      with previous cluster, where node 0 is in down state.
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>$ pcp_recovery_node -p 11001 0
+Password: 
+pcp_recovery_node -- Command Successful
+
+$ psql -p 11000 -c "show pool_nodes" test
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | standby | 2173       | true              | 0
+ 1       | /tmp     | 11003 | up     | 0.500000  | primary | 0          | false             | 0
+(2 rows)
+      </PRE
+><P>
+      <A
+HREF="pcp-recovery-node.html"
+>pcp_recovery_node</A
+> is one of control commands
+      coming with <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+      installation. The argument -p is to specify the port number
+      assigned to the command, which is 11001 set
+      by <TT
+CLASS="COMMAND"
+>pgpool_setup</TT
+>. The second argument is the
+      target node id. After executing the command, node 0 returned to
+      "up" status.
+    </P
+><P
+>      The script executed by <TT
+CLASS="COMMAND"
+>pcp_recovery_node</TT
+> is
+      specified as "recovery_1st_stage_command"
+      in <TT
+CLASS="FILENAME"
+>pgpool.conf</TT
+>. Here is the file installed
+      by <TT
+CLASS="COMMAND"
+>pgpool_setup</TT
+>.
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>#! /bin/sh
+psql=/usr/local/pgsql/bin/psql
+DATADIR_BASE=/home/t-ishii/tmp/Tutorial
+PGSUPERUSER=t-ishii
+
+master_db_cluster=$1
+recovery_node_host_name=$2
+DEST_CLUSTER=$3
+PORT=$4
+
+log=$DATADIR_BASE/log/recovery.log
+
+$psql -p $PORT -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
+
+echo "source: $master_db_cluster dest: $DEST_CLUSTER" &#62; $log
+
+rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
+--exclude postmaster.opts --exclude pg_log \
+--exclude recovery.conf --exclude recovery.done \
+--exclude pg_xlog \
+$master_db_cluster/ $DEST_CLUSTER/
+
+rm -fr $DEST_CLUSTER/pg_xlog 
+mkdir $DEST_CLUSTER/pg_xlog
+chmod 700 $DEST_CLUSTER/pg_xlog
+rm $DEST_CLUSTER/recovery.done
+cat &#62; $DEST_CLUSTER/recovery.conf $lt;$lt;REOF
+standby_mode          = 'on'
+primary_conninfo      = 'port=$PORT user=$PGSUPERUSER'
+recovery_target_timeline='latest'
+REOF
+
+$psql -p $PORT -c "SELECT pg_stop_backup()" postgres
+      </PRE
+><P>
+    </P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="tutorial-testing-failover.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="tutorial-arch.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Testing Fail Over</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tutorial-start.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Architectural Fundamentals</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

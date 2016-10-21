@@ -1,0 +1,740 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Online Recovery</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Server Configuration"
+HREF="runtime-config.html"><LINK
+REL="PREVIOUS"
+TITLE="Failover and Failback"
+HREF="runtime-config-failover.html"><LINK
+REL="NEXT"
+TITLE="Streaming Replication Check"
+HREF="runtime-streaming-replication-check.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Failover and Failback"
+HREF="runtime-config-failover.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Server Configuration</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Streaming Replication Check"
+HREF="runtime-streaming-replication-check.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="RUNTIME-ONLINE-RECOVERY"
+>5.10. Online Recovery</A
+></H1
+><P
+>    <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>, when in replication mode,
+    can sync a database and attach a node while still servicing the clients.
+    This feature is called <ACRONYM
+CLASS="ACRONYM"
+>"online recovery"</ACRONYM
+>.
+  </P
+><P
+>    For online recovery, a recovery target node must be in the detached state.
+    And if you wish to add a PostgreSQL server dynamically, reload the
+    <TT
+CLASS="FILENAME"
+>pgpool.conf</TT
+> after adding the
+    <A
+HREF="runtime-config-backend-settings.html#GUC-BACKEND-HOSTNAME"
+>backend_hostname</A
+> and its associated parameters.
+    This is how the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> will register this
+    new node as a detached backend node.
+  </P
+><DIV
+CLASS="CAUTION"
+><P
+></P
+><TABLE
+CLASS="CAUTION"
+BORDER="1"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="CENTER"
+><B
+>Caution</B
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+><P
+>      Make sure that <TT
+CLASS="COMMAND"
+>autovacuum</TT
+> is stopped on the
+      master node (the first node which is up and running) before starting the
+      online recovery. Autovacuum can change the contents of the database which
+      can cause the inconsistency after the online recovery.
+    </P
+><P
+>      This applies only if you're recovering with a simple copy mechanism,
+      such as the <TT
+CLASS="COMMAND"
+>rsync</TT
+> and doesn't apply when using
+      the PostgreSQL's PITR mechanism.
+    </P
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>      The target PostgreSQL server must not be running for performing the online recovery.
+      If the target PostgreSQL server has already started, you must shut it down before
+      starting the online recovery.
+    </P
+></BLOCKQUOTE
+></DIV
+><P
+>    online recovery is performed in two phases, and client connections are
+    not allowd only in second phase of online recovery while the data can be
+    updated or retrieved during the first phase.
+    <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> performs the follows steps in online recovery:
+  </P
+><P
+></P
+><UL
+><LI
+><P
+>        CHECKPOINT.
+      </P
+></LI
+><LI
+><P
+>        First stage of online recovery.
+      </P
+></LI
+><LI
+><P
+>        Wait until all clients have disconnected.
+      </P
+></LI
+><LI
+><P
+>        CHECKPOINT.
+      </P
+></LI
+><LI
+><P
+>        Second stage of online recovery.
+      </P
+></LI
+><LI
+><P
+>        Start up postmaster (perform <TT
+CLASS="LITERAL"
+>pgpool_remote_start</TT
+>)
+      </P
+></LI
+><LI
+><P
+>        Node attach
+      </P
+></LI
+></UL
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>      There is a restriction in the online recovery. If
+      <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> itself is installed
+      on multiple hosts, online recovery does not work correctly,
+      because <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> has to stop all
+      the clients during the 2nd stage of online recovery.
+      If there are several <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> hosts,
+      only one will have received the online recovery command and will
+      block the connections.
+    </P
+></BLOCKQUOTE
+></DIV
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-RECOVERY-USER"
+></A
+><TT
+CLASS="VARNAME"
+>recovery_user</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>        Specifies the PostgreSQL user name to perform online recovery.
+      </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-RECOVERY-PASSWORD"
+></A
+><TT
+CLASS="VARNAME"
+>recovery_password</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the password for the PostgreSQL user name configured in
+          <A
+HREF="runtime-online-recovery.html#GUC-RECOVERY-USER"
+>recovery_user</A
+> to perform online recovery.
+        </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-RECOVERY-1ST-STAGE-COMMAND"
+></A
+><TT
+CLASS="VARNAME"
+>recovery_1st_stage_command</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies a command to be run by master(primary) PostgreSQL server at the
+          first stage of online recovery. The command file must be placed in the
+          database cluster directory for security reasons.
+          For example, if <TT
+CLASS="VARNAME"
+>recovery_1st_stage_command</TT
+> = <TT
+CLASS="LITERAL"
+>          'sync-command'</TT
+>, then <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> will
+          look for the command scrit in <TT
+CLASS="LITERAL"
+>$PGDATA</TT
+> directory and will
+          try to execute <TT
+CLASS="COMMAND"
+>$PGDATA/sync-command</TT
+>.
+        </P
+><P
+>          <TT
+CLASS="VARNAME"
+>recovery_1st_stage_command</TT
+> receives following 4 parameters:
+        </P
+><P
+></P
+><UL
+><LI
+><P
+>              Path to master(primary) database cluster.
+            </P
+></LI
+><LI
+><P
+>              PostgreSQL host name to be recovered.
+            </P
+></LI
+><LI
+><P
+>              Path to database cluster to be recovered.
+            </P
+></LI
+><LI
+><P
+>              Master database port number.
+            </P
+></LI
+></UL
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>            <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> accept connections and queries
+            while <TT
+CLASS="VARNAME"
+>recovery_1st_stage command</TT
+> is executed.
+            So You can retrieve and update data during this stage.
+          </P
+></BLOCKQUOTE
+></DIV
+><DIV
+CLASS="CAUTION"
+><P
+></P
+><TABLE
+CLASS="CAUTION"
+BORDER="1"
+WIDTH="90%"
+><TR
+><TD
+ALIGN="CENTER"
+><B
+>Caution</B
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+><P
+>            <TT
+CLASS="VARNAME"
+>recovery_1st_stage command</TT
+> runs as a <ACRONYM
+CLASS="ACRONYM"
+>SQL</ACRONYM
+>
+            command from PostgreSQL's point of view. So <TT
+CLASS="VARNAME"
+>recovery_1st_stage command
+            </TT
+> can get prematuraly killed by PostgreSQL if the PostgreSQL's
+            <TT
+CLASS="VARNAME"
+>statement_time_out</TT
+> is configured with the value that is
+            smaller than the time <TT
+CLASS="VARNAME"
+>recovery_1st_stage_command</TT
+> takes for
+            completion.
+          </P
+><P
+>            Typical error in such case is
+            </P><PRE
+CLASS="PROGRAMLISTING"
+>rsync used in the command is killed by signal 2 for example.
+            </PRE
+><P>
+          </P
+></TD
+></TR
+></TABLE
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-RECOVERY-2ND-STAGE-COMMAND"
+></A
+><TT
+CLASS="VARNAME"
+>recovery_2nd_stage_command</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies a command to be run by master(primary) PostgreSQL server at the
+          second stage of online recovery. The command file must be placed in the
+          database cluster directory for security reasons.
+          For example, if <TT
+CLASS="VARNAME"
+>recovery_2nd_stage_command</TT
+> = <TT
+CLASS="LITERAL"
+>          'sync-command'</TT
+>, then <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> will
+          look for the command scrit in <TT
+CLASS="LITERAL"
+>$PGDATA</TT
+> directory and will
+          try to execute <TT
+CLASS="COMMAND"
+>$PGDATA/sync-command</TT
+>.
+        </P
+><P
+>          <TT
+CLASS="VARNAME"
+>recovery_2nd_stage_command</TT
+> receives following 4 parameters:
+        </P
+><P
+></P
+><UL
+><LI
+><P
+>              Path to master(primary) database cluster.
+            </P
+></LI
+><LI
+><P
+>              PostgreSQL host name to be recovered.
+            </P
+></LI
+><LI
+><P
+>              Path to database cluster to be recovered.
+            </P
+></LI
+><LI
+><P
+>              Port number of database to be recovered.
+            </P
+></LI
+></UL
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>            <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>does not</I
+></SPAN
+>
+            accept client connections and queries during the execution
+            of <TT
+CLASS="VARNAME"
+>recovery_2nd_stage command</TT
+> command, and waits
+            for the existing clients to close their connections before executing the
+            command.
+            So the <TT
+CLASS="VARNAME"
+>recovery_2nd_stage command</TT
+> may not execute
+            if the client stays connected for a long time.
+          </P
+></BLOCKQUOTE
+></DIV
+><DIV
+CLASS="CAUTION"
+><P
+></P
+><TABLE
+CLASS="CAUTION"
+BORDER="1"
+WIDTH="90%"
+><TR
+><TD
+ALIGN="CENTER"
+><B
+>Caution</B
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+><P
+>            <TT
+CLASS="VARNAME"
+>recovery_2nd_stage command</TT
+> runs as a <ACRONYM
+CLASS="ACRONYM"
+>SQL</ACRONYM
+>
+            command from PostgreSQL's point of view. So <TT
+CLASS="VARNAME"
+>recovery_2nd_stage command
+            </TT
+> can get prematuraly killed by PostgreSQL if the PostgreSQL's
+            <TT
+CLASS="VARNAME"
+>statement_time_out</TT
+> is configured with the value that is
+            smaller than the time <TT
+CLASS="VARNAME"
+>recovery_2nd_stage_command</TT
+> takes for
+            completion.
+          </P
+></TD
+></TR
+></TABLE
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-RECOVERY-TIMEOUT"
+></A
+><TT
+CLASS="VARNAME"
+>recovery_timeout</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the timeout in seconds to cancel the online recovery if it
+          does not completes within this time.
+          Since <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> does not accepts the connections
+          during the second stage of recovery so this parameter can be used to cancel
+          the online recovery to manage the service down time during the online recovery.
+        </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-CLIENT-IDLE-LIMIT-IN-RECOVERY"
+></A
+><TT
+CLASS="VARNAME"
+>client_idle_limit_in_recovery</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the time in seconds to disconnect a client if it remains idle
+          since the last query during the online recovery.
+          <TT
+CLASS="VARNAME"
+>client_idle_limit_in_recovery</TT
+> is similar to the
+          <A
+HREF="runtime-config-connection-pooling.html#GUC-CLIENT-IDLE-LIMIT"
+>client_idle_limit</A
+> but only takes effect during the
+          second stage of online recovery.
+        </P
+><P
+>          This is useful for preventing the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+          recovery from being disturbed by the lazy clients or if the TCP/IP
+          connection between the client and <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+          is accidentally down (a cut cable for instance).
+        </P
+><P
+>          If set to -1, All clients get immediately disconnected when the second
+          stage of online recovery starts..
+          The default is 0, which turns off the feature.
+        </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+					You can also use <A
+HREF="sql-pgpool-set.html"
+>PGPOOL SET</A
+> command to alter the value of
+					this parameter for a current session.
+        </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-config-failover.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="runtime-streaming-replication-check.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Failover and Failback</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Streaming Replication Check</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

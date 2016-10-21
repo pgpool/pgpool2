@@ -1,0 +1,217 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Testing Load Balance</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Getting Started"
+HREF="tutorial-start.html"><LINK
+REL="PREVIOUS"
+TITLE="Your First Replication"
+HREF="tutorial-replication.html"><LINK
+REL="NEXT"
+TITLE="Testing Replication"
+HREF="tutorial-testing-replication.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Your First Replication"
+HREF="tutorial-replication.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="tutorial-start.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 1. Getting Started</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Testing Replication"
+HREF="tutorial-testing-replication.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="TUTORIAL-TESTING-LOAD-BALANCE"
+>1.3. Testing Load Balance</A
+></H1
+><P
+>      <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> allows read query load
+      balancing. It is enabled by default. To see the effect, let's
+      use <TT
+CLASS="COMMAND"
+>pgbench -S</TT
+> command.
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>$ pgbench -p 11000 -c 10 -S -T 10 test
+starting vacuum...end.
+transaction type: &lt;builtin: select only&#62;
+scaling factor: 1
+query mode: simple
+number of clients: 10
+number of threads: 1
+duration: 10 s
+number of transactions actually processed: 148044
+latency average = 0.676 ms
+tps = 14802.897506 (including connections establishing)
+tps = 14810.213749 (excluding connections establishing)
+
+$ psql -p 11000 -c "show pool_nodes" test
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 75152      | true              | 0
+ 1       | /tmp     | 11003 | up     | 0.500000  | standby | 72893      | false             | 0
+(2 rows)
+      </PRE
+><P>
+      "select_cnt" column shows how many SELECT are dispatched to each
+      node. Since with the default
+      configuration, <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> tries to
+      dispatch equal number of SELECT, the column shows almost same
+      numbers.
+    </P
+><P
+>      <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> offers more sophisticated
+      strategy for load
+      balancing. See <A
+HREF="runtime-config-load-balancing.html"
+>Section 5.7</A
+>
+      for more details.
+    </P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="tutorial-replication.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="tutorial-testing-replication.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Your First Replication</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tutorial-start.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Testing Replication</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

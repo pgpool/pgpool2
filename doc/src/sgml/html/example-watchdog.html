@@ -1,0 +1,714 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Watchdog Configuration Example</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Configuration Examples"
+HREF="example-configs.html"><LINK
+REL="PREVIOUS"
+TITLE="Basic Configuration Example"
+HREF="example-basic.html"><LINK
+REL="NEXT"
+TITLE="AWS Configuration Example"
+HREF="example-aws.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Basic Configuration Example"
+HREF="example-basic.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="example-configs.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 7. Configuration Examples</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="AWS Configuration Example"
+HREF="example-aws.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="EXAMPLE-WATCHDOG"
+>7.2. Watchdog Configuration Example</A
+></H1
+><P
+>      This tutrial explains the simple way to try "Watchdog".
+      What you need is 2 Linux boxes on which <SPAN
+CLASS="PRODUCTNAME"
+>      Pgpool-II</SPAN
+> is installed and a PostgreSQL
+      on the same machine or in the other one. it is enough
+      that 1 node for backend exists.
+      You can use on memory query cache with <SPAN
+CLASS="PRODUCTNAME"
+>      Pgpool-II</SPAN
+> in any mode: replication mode,
+      master/slave mode and raw mode.
+    </P
+><P
+>      This example uses use "osspc16" as an Active node and
+      "osspc20" as a Standby node. "Someserver" means one of them.
+    </P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXAMPLE-WATCHDOG-CONFIGURATION"
+>7.2.1. Common configurations</A
+></H2
+><P
+>        Set the following parameters in both of active and standby nodes.
+      </P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="EXAMPLE-WATCHDOG-CONFIG-ENABLE"
+>7.2.1.1. Enabling watchdog</A
+></H3
+><P
+>          First of all, set <A
+HREF="runtime-watchdog-config.html#GUC-USE-WATCHDOG"
+>use_watchdog</A
+> to on.
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>use_watchdog = on
+                                    # Activates watchdog
+          </PRE
+><P>
+        </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="EXAMPLE-WATCHDOG-CONFIG-UPSTREAM"
+>7.2.1.2. Configure Up stream servers</A
+></H3
+><P
+>          Specify the up stream servers (e.g. application servers).
+          Leaving it blank is also fine.
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>trusted_servers = ''
+                                    # trusted server list which are used
+                                    # to confirm network connection
+                                    # (hostA,hostB,hostC,...)
+          </PRE
+><P>
+        </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="EXAMPLE-WATCHDOG-CONFIG-WD-COMM"
+>7.2.1.3. Watchdog Communication</A
+></H3
+><P
+>          Specify the TCP port number for watchdog communication.
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>wd_port = 9000
+                                    # port number for watchdog service
+          </PRE
+><P>
+        </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="EXAMPLE-WATCHDOG-CONFIG-WD-VIP"
+>7.2.1.4. Virtual IP</A
+></H3
+><P
+>          Specify the IP address to be used as a virtual IP address
+          in the <A
+HREF="runtime-watchdog-config.html#GUC-DELEGATE-IP"
+>delegate_IP</A
+>.
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>delegate_IP = '133.137.177.143'
+                                    # delegate IP address
+          </PRE
+><P>
+        </P
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>            Make sure the IP address configured as a Virtual IP should be
+            free and is not used by any other machine.
+          </P
+></BLOCKQUOTE
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXAMPLE-WATCHDOG-CONFIGURATION-EACH-SERVER"
+>7.2.2. Individual Server Configurations</A
+></H2
+><P
+>        Next, set the following parameters for each <SPAN
+CLASS="PRODUCTNAME"
+>        Pgpool-II</SPAN
+>.
+        Specify <A
+HREF="runtime-watchdog-config.html#GUC-OTHER-PGPOOL-HOSTNAME"
+>other_pgpool_hostname</A
+>,
+        <A
+HREF="runtime-watchdog-config.html#GUC-OTHER-PGPOOL-PORT"
+>other_pgpool_port</A
+> and
+        <A
+HREF="runtime-watchdog-config.html#GUC-OTHER-WD-PORT"
+>other_wd_port</A
+> with the values of
+        other <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> server values.
+      </P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="EXAMPLE-WATCHDOG-CONFIGURATION-ACTIVE-SERVER"
+>7.2.2.1. Active (osspc16) Server configurations</A
+></H3
+><P
+>          </P><PRE
+CLASS="PROGRAMLISTING"
+>other_pgpool_hostname0 = 'osspc20'
+                                    # Host name or IP address to connect to for other pgpool 0
+other_pgpool_port0 = 9999
+                                    # Port number for othet pgpool 0
+other_wd_port0 = 9000
+                                    # Port number for othet watchdog 0
+          </PRE
+><P>
+        </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="EXAMPLE-WATCHDOG-CONFIGURATION-STANDBY-SERVER"
+>7.2.2.2. Standby (osspc20) Server configurations</A
+></H3
+><P
+>          </P><PRE
+CLASS="PROGRAMLISTING"
+>other_pgpool_hostname0 = 'osspc16'
+                                    # Host name or IP address to connect to for other pgpool 0
+other_pgpool_port0 = 9999
+                                    # Port number for othet pgpool 0
+other_wd_port0 = 9000
+                                    # Port number for othet watchdog 0
+          </PRE
+><P>
+        </P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXAMPLE-WATCHDOG-START-SERVER"
+>7.2.3. Starting <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+></A
+></H2
+><P
+>        Start <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> on each servers from
+        <TT
+CLASS="LITERAL"
+>root</TT
+> user with <TT
+CLASS="LITERAL"
+>"-n"</TT
+> switch
+        and redirect log messages into pgpool.log file.
+      </P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="EXAMPLE-WATCHDOG-START-ACTIVE-SERVER"
+>7.2.3.1. Starting pgpool in Active server (osspc16)</A
+></H3
+><P
+>          First start the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> on Active server.
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>[user@osspc16]$ su -
+[root@osspc16]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf &#62; pgpool.log 2&#62;&#38;1
+          </PRE
+><P>
+          Log messages will show that <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+          has the virtual IP address and starts watchdog process.
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>LOG:  I am announcing my self as master/coordinator watchdog node
+LOG:  I am the cluster leader node
+DETAIL:  our declare coordinator message is accepted by all nodes
+LOG:  I am the cluster leader node. Starting escalation process
+LOG:  escalation process started with PID:59449
+<B
+CLASS="EMPHASIS"
+>LOG:  watchdog process is initialized
+LOG:  watchdog: escalation started
+LOG:  I am the master watchdog node</B
+>
+DETAIL:  using the local backend node status
+          </PRE
+><P>
+        </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="EXAMPLE-WATCHDOG-START-STANDBY-SERVER"
+>7.2.3.2. Starting pgpool in Standby server (osspc20)</A
+></H3
+><P
+>          Now start the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> on Standby server.
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>[user@osspc20]$ su -
+[root@osspc20]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf &#62; pgpool.log 2&#62;&#38;1
+          </PRE
+><P>
+          Log messages will show that <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+          has joind the watchdog cluster as standby watchdog.
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>LOG:  watchdog cluster configured with 1 remote nodes
+LOG:  watchdog remote node:0 on Linux_osspc16_9000:9000
+LOG:  interface monitoring is disabled in watchdog
+LOG:  IPC socket path: "/tmp/.s.PGPOOLWD_CMD.9000"
+LOG:  watchdog node state changed from [DEAD] to [LOADING]
+LOG:  new outbond connection to Linux_osspc16_9000:9000
+LOG:  watchdog node state changed from [LOADING] to [INITIALIZING]
+LOG:  watchdog node state changed from [INITIALIZING] to [STANDBY]
+<B
+CLASS="EMPHASIS"
+>LOG:  successfully joined the watchdog cluster as standby node
+DETAIL:  our join coordinator request is accepted by cluster leader node "Linux_osspc16_9000"
+LOG:  watchdog process is initialized</B
+>
+          </PRE
+><P>
+        </P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXAMPLE-WATCHDOG-TRY"
+>7.2.4. Try it out</A
+></H2
+><P
+>      Confirm to ping to the virtual IP address.
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>[user@someserver]$ ping 133.137.177.142
+PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+      </PRE
+><P>
+      Confirm if the Active server which started at first has the virtual IP address.
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>[root@osspc16]# ifconfig
+eth0      ...
+
+eth0:0    inet addr:133.137.177.143 ...
+
+lo        ...
+      </PRE
+><P>
+      Confirm if the Standby server which started not at first doesn't have the virtual IP address.
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>[root@osspc20]# ifconfig
+eth0      ...
+
+lo        ...
+      </PRE
+><P>
+
+      Try to connect PostgreSQL by "psql -h delegate_IP -p port".
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+      </PRE
+><P>
+      </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXAMPLE-WATCHDOG-VIP-SWITCH"
+>7.2.5. Switching virtual IP</A
+></H2
+><P
+>        Confirm how the Standby server works when the Active server can't provide its service.
+        Stop <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> on the Active server.
+        </P><PRE
+CLASS="PROGRAMLISTING"
+>[root@osspc16]# {installed_dir}/bin/pgpool stop
+      </PRE
+><P>
+
+      Then, the Standby server starts to use the virtual IP address. Log shows:
+
+        </P><PRE
+CLASS="PROGRAMLISTING"
+><B
+CLASS="EMPHASIS"
+>LOG:  remote node "Linux_osspc16_9000" is shutting down
+LOG:  watchdog cluster has lost the coordinator node</B
+>
+LOG:  watchdog node state changed from [STANDBY] to [JOINING]
+LOG:  watchdog node state changed from [JOINING] to [INITIALIZING]
+LOG:  I am the only alive node in the watchdog cluster
+HINT:  skiping stand for coordinator state
+LOG:  watchdog node state changed from [INITIALIZING] to [MASTER]
+LOG:  I am announcing my self as master/coordinator watchdog node
+LOG:  I am the cluster leader node
+DETAIL:  our declare coordinator message is accepted by all nodes
+<B
+CLASS="EMPHASIS"
+>LOG:  I am the cluster leader node. Starting escalation process
+LOG:  watchdog: escalation started</B
+>
+LOG:  watchdog escalation process with pid: 59551 exit with SUCCESS.
+         </PRE
+><P>
+
+         Confirm to ping to the virtual IP address.
+         </P><PRE
+CLASS="PROGRAMLISTING"
+>[user@someserver]$ ping 133.137.177.142
+PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+      </PRE
+><P>
+
+         Confirm that the Active server doesn't use the virtual IP address any more.
+         </P><PRE
+CLASS="PROGRAMLISTING"
+>[root@osspc16]# ifconfig
+eth0      ...
+
+lo        ...
+        </PRE
+><P>
+
+         Confirm that the Standby server uses the virtual IP address.
+         </P><PRE
+CLASS="PROGRAMLISTING"
+>[root@osspc20]# ifconfig
+eth0      ...
+
+eth0:0    inet addr:133.137.177.143 ...
+
+lo        ...
+        </PRE
+><P>
+
+        Try to connect PostgreSQL by "psql -h delegate_IP -p port".
+        </P><PRE
+CLASS="PROGRAMLISTING"
+>[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+        </PRE
+><P>
+
+      </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXAMPLE-WATCHDOG-MORE"
+>7.2.6. More</A
+></H2
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="EXAMPLE-WATCHDOG-MORE-LIFECHECK"
+>7.2.6.1. Lifecheck</A
+></H3
+><P
+>          There are the parameters about watchdog's monitoring.
+          Specify the interval to check <A
+HREF="runtime-watchdog-config.html#GUC-WD-INTERVAL"
+>wd_interval</A
+>,
+          the count to retry <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFE-POINT"
+>wd_life_point</A
+>,
+          the qyery to check <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-QUERY"
+>wd_lifecheck_query</A
+> and
+          finaly the type of lifecheck <A
+HREF="runtime-watchdog-config.html#GUC-WD-LIFECHECK-METHOD"
+>wd_lifecheck_method</A
+>.
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>wd_lifecheck_method = 'query'
+                                    # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
+                                    # (change requires restart)
+wd_interval = 10
+                                    # lifecheck interval (sec) &#62; 0
+wd_life_point = 3
+                                    # lifecheck retry times
+wd_lifecheck_query = 'SELECT 1'
+                                    # lifecheck query to pgpool from watchdog
+        </PRE
+><P>
+
+        </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="EXAMPLE-WATCHDOG-MORE-VIP-SWITCHING"
+>7.2.6.2. Switching virtual IP address</A
+></H3
+><P
+>          There are the parameters for switching the virtual IP address.
+          Specify switching commands <A
+HREF="runtime-watchdog-config.html#GUC-IF-UP-CMD"
+>if_up_cmd</A
+>,
+          <A
+HREF="runtime-watchdog-config.html#GUC-IF-DOWN-CMD"
+>if_down_cmd</A
+>, the path to them
+          <A
+HREF="runtime-watchdog-config.html#GUC-IF-CMD-PATH"
+>if_cmd_path</A
+>, the command executed after
+          switching to send ARP request <A
+HREF="runtime-watchdog-config.html#GUC-ARPING-CMD"
+>arping_cmd</A
+>
+          and the path to it <A
+HREF="runtime-watchdog-config.html#GUC-ARPING-PATH"
+>arping_path</A
+>.
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>ifconfig_path = '/sbin'
+                                    # ifconfig command path
+if_up_cmd = 'ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0'
+                                    # startup delegate IP command
+if_down_cmd = 'ifconfig eth0:0 down'
+                                    # shutdown delegate IP command
+
+arping_path = '/usr/sbin'           # arping command path
+
+arping_cmd = 'arping -U $_IP_$ -w 1'
+        </PRE
+><P>
+        You can also use the custom scripts to bring up and bring down the
+        virtual IP using <A
+HREF="runtime-watchdog-config.html#GUC-WD-ESCALATION-COMMAND"
+>wd_escalation_command</A
+> and
+        <A
+HREF="runtime-watchdog-config.html#GUC-WD-DE-ESCALATION-COMMAND"
+>wd_de_escalation_command</A
+> configurations.
+        </P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="example-basic.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="example-aws.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Basic Configuration Example</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="example-configs.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>AWS Configuration Example</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

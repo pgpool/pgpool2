@@ -1,0 +1,360 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Authentication Methods</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Client Authentication"
+HREF="client-authentication.html"><LINK
+REL="PREVIOUS"
+TITLE="The pool_hba.conf File"
+HREF="auth-pool-hba-conf.html"><LINK
+REL="NEXT"
+TITLE="Examples"
+HREF="examples.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="The pool_hba.conf File"
+HREF="auth-pool-hba-conf.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="client-authentication.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 6. Client Authentication</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Examples"
+HREF="examples.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AUTH-METHODS"
+>6.2. Authentication Methods</A
+></H1
+><P
+>   The following subsections describe the authentication methods in more detail.
+  </P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AUTH-TRUST"
+>6.2.1. Trust Authentication</A
+></H2
+><P
+>    When <TT
+CLASS="LITERAL"
+>trust</TT
+> authentication is specified,
+    <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> assumes that anyone who can
+    connect to the server is authorized to access connect with
+    whatever database user name they specify.
+   </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AUTH-MD5"
+>6.2.2. MD5 Password Authentication</A
+></H2
+><P
+>    This authentication method is the password-based authentication
+    methods in which MD-5-hashed password is sent by client.
+    Since <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> does not has the visibility
+    of PostgreSQL's database user password and client application only sends
+    the MD5-hash of the password, so <TT
+CLASS="LITERAL"
+>md5</TT
+> authentication
+    in <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> is supported using the
+    <A
+HREF="runtime-config-connection.html#GUC-POOL-PASSWD"
+>pool_passwd</A
+> authentication file.
+   </P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="MD5-AUTHENTICATION-FILE-FORMAT"
+>6.2.2.1. Authentication file format</A
+></H3
+><P
+>        This <TT
+CLASS="LITERAL"
+>pool_passwd</TT
+> file should contain lines in the following format:
+    </P><PRE
+CLASS="PROGRAMLISTING"
+>        "username:encrypted_passwd"
+    </PRE
+><P>
+    </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="SETTING-MD5-AUTHENTICATION"
+>6.2.2.2. Setting md5 Authentication</A
+></H3
+><P
+>        here are the steps to enable <TT
+CLASS="LITERAL"
+>md5</TT
+> authentication:
+    </P
+><P
+>        1- Login as the database's operating system user and type
+        <TT
+CLASS="COMMAND"
+>"pg_md5 --md5auth --username= "</TT
+>
+        user name and <TT
+CLASS="LITERAL"
+>md5</TT
+> encrypted password are registered
+        into pool_passwd.
+        If pool_passwd does not exist yet, pg_md5 command will automatically create it for you.
+        </P><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>        user name and password must be identical to those registered in PostgreSQL server
+        </P
+></BLOCKQUOTE
+></DIV
+><P>
+    </P
+><P
+>        2- Add an appropriate md5 entry to <TT
+CLASS="FILENAME"
+>pool_hba.conf</TT
+>.
+        See <A
+HREF="auth-pool-hba-conf.html"
+>Section 6.1</A
+> for more details.
+    </P
+><P
+>        3- After changing md5 password(in both pool_passwd and PostgreSQL of course),
+        reload the pgpool configurations.
+    </P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AUTH-PAM"
+>6.2.3. PAM Authentication</A
+></H2
+><P
+>    This authentication method uses PAM (Pluggable
+    Authentication Modules) as the authentication mechanism. The
+    default PAM service name is <TT
+CLASS="LITERAL"
+>pgpool</TT
+>.
+    PAM authentication is supported using user information on
+    the host where <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> is executed.
+    For more
+    information about PAM, please read the
+    <A
+HREF="http://www.kernel.org/pub/linux/libs/pam/"
+TARGET="_top"
+>    <SPAN
+CLASS="PRODUCTNAME"
+>Linux-PAM</SPAN
+> Page</A
+>.
+   </P
+><P
+>    To enable PAM authentication, you need to create a service-configuration
+    file for <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> in the system's
+    PAM configuration directory (which is usually at <TT
+CLASS="LITERAL"
+>"/etc/pam.d"</TT
+>).
+    A sample service-configuration file is installed as
+    <TT
+CLASS="FILENAME"
+>"share/pgpool.pam"</TT
+> under the install directory.
+   </P
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>     To enable PAM support the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+     must be configured with <TT
+CLASS="COMMAND"
+>"--with-pam"</TT
+>
+    </P
+></BLOCKQUOTE
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="auth-pool-hba-conf.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="examples.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>The <TT
+CLASS="FILENAME"
+>pool_hba.conf</TT
+> File</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="client-authentication.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Examples</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,435 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Streaming Replication Check</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Server Configuration"
+HREF="runtime-config.html"><LINK
+REL="PREVIOUS"
+TITLE="Online Recovery"
+HREF="runtime-online-recovery.html"><LINK
+REL="NEXT"
+TITLE="In Memory Query Cache"
+HREF="runtime-in-memory-query-cache.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Online Recovery"
+HREF="runtime-online-recovery.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Server Configuration</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="In Memory Query Cache"
+HREF="runtime-in-memory-query-cache.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="RUNTIME-STREAMING-REPLICATION-CHECK"
+>5.11. Streaming Replication Check</A
+></H1
+><P
+>    <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> can work with PostgreSQL native
+    Streaming Replication, that is available since PostgreSQL 9.0.
+    To configure <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> with streaming
+    replication, enable <A
+HREF="runtime-config-runnung-mode.html#GUC-MASTER-SLAVE-MODE"
+>master_slave_mode</A
+> and set
+    <A
+HREF="runtime-config-runnung-mode.html#GUC-MASTER-SLAVE-SUB-MODE"
+>master_slave_sub_mode</A
+> to <TT
+CLASS="LITERAL"
+>'stream'</TT
+>.
+  </P
+><P
+>    <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> assumes that Streaming Replication
+    is configured with Hot Standby on PostgreSQL, which means that the
+    standby database can handle read-only queries.
+  </P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-SR-CHECK-PERIOD"
+></A
+><TT
+CLASS="VARNAME"
+>sr_check_period</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the time interval in seconds to check the streaming
+          replication delay.
+          Default is 0, which means the check is disabled.
+        </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-SR-CHECK-USER"
+></A
+><TT
+CLASS="VARNAME"
+>sr_check_user</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the PostgreSQL user name to perform streaming replication check.
+          The user must exist on all the PostgreSQL backends.
+        </P
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>            <A
+HREF="runtime-streaming-replication-check.html#GUC-SR-CHECK-USER"
+>sr_check_user</A
+> and <A
+HREF="runtime-streaming-replication-check.html#GUC-SR-CHECK-PASSWORD"
+>sr_check_password</A
+>
+            are used even when <A
+HREF="runtime-streaming-replication-check.html#GUC-SR-CHECK-PERIOD"
+>sr_check_period</A
+> is set to 0 (disabled)
+            for the identification of the primary server.
+          </P
+></BLOCKQUOTE
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-SR-CHECK-PASSWORD"
+></A
+><TT
+CLASS="VARNAME"
+>sr_check_password</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the password of the <A
+HREF="runtime-streaming-replication-check.html#GUC-SR-CHECK-USER"
+>sr_check_user</A
+> PostgreSQL user
+          to perform the streaming replication checks.
+          Use <TT
+CLASS="LITERAL"
+>''</TT
+> (empty string) if the user does not requires a password.
+        </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-SR-CHECK-DATABASE"
+></A
+><TT
+CLASS="VARNAME"
+>sr_check_database</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the database to perform streaming replication delay checks.
+          The default is <TT
+CLASS="LITERAL"
+>"postgres"</TT
+>.
+        </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-DELAY-THRESHOLD"
+></A
+><TT
+CLASS="VARNAME"
+>delay_threshold</TT
+> (<TT
+CLASS="TYPE"
+>integer</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the maximum tolerance level of replication delay in
+          <ACRONYM
+CLASS="ACRONYM"
+>WAL</ACRONYM
+> bytes on the standby server against the
+          primary server. If the delay exceeds this configured level,
+          <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> stops sending the <ACRONYM
+CLASS="ACRONYM"
+>          SELECT</ACRONYM
+> queries to the standby server and starts routing
+          everything to the primary server even if <A
+HREF="runtime-config-load-balancing.html#GUC-LOAD-BALANCE-MODE"
+>load_balance_mode</A
+>
+          is enabled, until the standby catches-up with the primary.
+          Setting this parameter to 0 disables, the delay checking.
+          This delay threshold check is performed every <A
+HREF="runtime-streaming-replication-check.html#GUC-SR-CHECK-PERIOD"
+>sr_check_period</A
+>.
+          Default is 0.
+        </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-LOG-STANDBY-DELAY"
+></A
+><TT
+CLASS="VARNAME"
+>log_standby_delay</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies when to log the replication delay. Below table contains the list
+          of all valid values for the parameter.
+        </P
+><DIV
+CLASS="TABLE"
+><A
+NAME="LOG-STANDBY-DELAY-TABLE"
+></A
+><P
+><B
+>Table 5-9. Log standby delay options</B
+></P
+><TABLE
+BORDER="1"
+CLASS="CALSTABLE"
+><COL><COL><THEAD
+><TR
+><TH
+>Value</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="LITERAL"
+>'none'</TT
+></TD
+><TD
+>Never log the standby delay</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="LITERAL"
+>'always'</TT
+></TD
+><TD
+>Log the standby delay, every time the replication delay is checked</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="LITERAL"
+>'if_over_threshold'</TT
+></TD
+><TD
+>Only log the standby delay, when it exceeds <A
+HREF="runtime-streaming-replication-check.html#GUC-DELAY-THRESHOLD"
+>delay_threshold</A
+> value</TD
+></TR
+></TBODY
+></TABLE
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-online-recovery.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="runtime-in-memory-query-cache.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Online Recovery</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>In Memory Query Cache</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

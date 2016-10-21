@@ -1,0 +1,926 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Load Balancing</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Server Configuration"
+HREF="runtime-config.html"><LINK
+REL="PREVIOUS"
+TITLE="Error Reporting and Logging"
+HREF="runtime-config-logging.html"><LINK
+REL="NEXT"
+TITLE="Health Check"
+HREF="runtime-config-health-check.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Error Reporting and Logging"
+HREF="runtime-config-logging.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Server Configuration</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Health Check"
+HREF="runtime-config-health-check.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="RUNTIME-CONFIG-LOAD-BALANCING"
+>5.7. Load Balancing</A
+></H1
+><P
+>    <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> load balancing of SELECT queries
+    works with  Master Slave mode (<A
+HREF="runtime-config-runnung-mode.html#RUNTIME-CONFIG-MASTER-SLAVE-MODE"
+>Section 5.3.1</A
+>)
+    and Replication mode (<A
+HREF="runtime-config-runnung-mode.html#RUNTIME-CONFIG-REPLICATION-MODE"
+>Section 5.3.2</A
+>). When enabled
+    <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> sends the writing queries to the
+    <ACRONYM
+CLASS="ACRONYM"
+>Master DB</ACRONYM
+>, and other queries get load balanced to
+    <ACRONYM
+CLASS="ACRONYM"
+>Standby DB nodes</ACRONYM
+> if possible.  To which node
+    the load balancing mechanism sends read queries is decided at the
+    session start time and will not be changed until the session
+    ends. The only exception is by writing special SQL comments. See
+    below for more details.
+  </P
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>      Queries sent to Master DB because they cannot be balanced are
+      also accounted for in the load balancing algorithm.
+    </P
+></BLOCKQUOTE
+></DIV
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>      If you don't want a query that qualifies for the load balancing to be
+      load balanced by <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>, you can put
+      <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>/*NO LOAD BALANCE*/</I
+></SPAN
+> comment before the <ACRONYM
+CLASS="ACRONYM"
+>SELECT
+      </ACRONYM
+> statement, This will disable the load balance of the particular query
+      and <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> will send it to the Master DB node.
+    </P
+></BLOCKQUOTE
+></DIV
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><A
+NAME="GUC-LOAD-BALANCE-MODE"
+></A
+><TT
+CLASS="VARNAME"
+>load_balance_mode</TT
+> (<TT
+CLASS="TYPE"
+>boolean</TT
+>)
+        </DT
+><DD
+><P
+>          When set to on, <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> enables the
+          load balancing on incoming <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> queries.
+          i.e. SELECT queries from the clients gets distributed to
+          the configured PostgreSQL backends.
+          Default is off.
+        </P
+><P
+>          This parameter can only be set at server start.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-IGNORE-LEADING-WHITE-SPACE"
+></A
+><TT
+CLASS="VARNAME"
+>ignore_leading_white_space</TT
+> (<TT
+CLASS="TYPE"
+>boolean</TT
+>)
+        </DT
+><DD
+><P
+>          When set to on, <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> ignores the
+          white spaces at the beginning of SQL queries while in the load balance mode.
+          It is useful if used with APIs like DBI/DBD:Pg which adds
+          white spaces against the user's will.
+        </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-WHITE-FUNCTION-LIST"
+></A
+><TT
+CLASS="VARNAME"
+>white_function_list</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies a comma separated list of function names that
+          <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>DO NOT</I
+></SPAN
+> update the database. SELECTs using
+          functions not specified in this list are neither load balanced,
+          nor replicated (in the replication mode).
+          In master slave mode, such SELECTs are sent to master (primary) only.
+        </P
+><P
+>          You can use regular expression into the list to match function name
+          (to which ^ and $ are automatically added),
+        </P
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="EXAMPLE-WHITE-FUNCTION-LIST-1"
+></A
+><P
+><B
+>Example 5-2. Using regular expression</B
+></P
+><P
+>            If you have prefixed all your read only function
+            with 'get_' or 'select_', You can
+            set the <A
+HREF="runtime-config-load-balancing.html#GUC-WHITE-FUNCTION-LIST"
+>white_function_list</A
+> like below:
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>white_function_list = 'get_.*,select_.*'
+          </PRE
+><P>
+          </P
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-BLACK-FUNCTION-LIST"
+></A
+><TT
+CLASS="VARNAME"
+>black_function_list</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies a comma separated list of function names that
+          <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>DO</I
+></SPAN
+> update the database.
+          SELECTs using functions specified in this list are neither
+          load balanced, nor replicated (in the replication mode).
+          In master slave mode, such SELECTs are sent to master(primary) only.
+        </P
+><P
+>          You can use regular expression into the list to match function name
+          (to which ^ and $ are automatically added),
+        </P
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="EXAMPLE-BLACK-FUNCTION-LIST-1"
+></A
+><P
+><B
+>Example 5-3. Using regular expression</B
+></P
+><P
+>            If you have prefixed all your updating functions
+            with 'set_', 'update_', 'delete_' or 'insert_', You can
+            set the <A
+HREF="runtime-config-load-balancing.html#GUC-BLACK-FUNCTION-LIST"
+>black_function_list</A
+> like below:
+          </P><PRE
+CLASS="PROGRAMLISTING"
+>black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
+          </PRE
+><P>
+          </P
+></DIV
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>            <A
+HREF="runtime-config-load-balancing.html#GUC-BLACK-FUNCTION-LIST"
+>black_function_list</A
+> and <A
+HREF="runtime-config-load-balancing.html#GUC-WHITE-FUNCTION-LIST"
+>white_function_list</A
+>
+            are mutually exclusive and only one of the two lists can be set in the configuration.
+          </P
+></BLOCKQUOTE
+></DIV
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="EXAMPLE-BLACK-FUNCTION-LIST-2"
+></A
+><P
+><B
+>Example 5-4. Configuring using <TT
+CLASS="LITERAL"
+>nextval()</TT
+> and <TT
+CLASS="LITERAL"
+>setval()</TT
+> to land on proper backend</B
+></P
+><P
+>            Prior to <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>V3.0</I
+></SPAN
+>,
+            <TT
+CLASS="LITERAL"
+>nextval()</TT
+> and <TT
+CLASS="LITERAL"
+>setval()</TT
+> were known to do writes to the database.
+            You can configure this by using <A
+HREF="runtime-config-load-balancing.html#GUC-BLACK-FUNCTION-LIST"
+>black_function_list</A
+>
+            and <A
+HREF="runtime-config-load-balancing.html#GUC-WHITE-FUNCTION-LIST"
+>white_function_list</A
+> as follows
+              </P><PRE
+CLASS="PROGRAMLISTING"
+>white_function_list = ''
+black_function_list = 'nextval,setval,lastval,currval'
+              </PRE
+><P>
+          </P
+></DIV
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>            PostgreSQL also contains <TT
+CLASS="LITERAL"
+>lastval()</TT
+> and
+            <TT
+CLASS="LITERAL"
+>currval()</TT
+> in addition to
+            <TT
+CLASS="LITERAL"
+>nextval()</TT
+> and <TT
+CLASS="LITERAL"
+>setval()</TT
+>.
+            Though <TT
+CLASS="LITERAL"
+>lastval()</TT
+> and <TT
+CLASS="LITERAL"
+>currval()</TT
+>
+            are not writing function type, But it is advised to treat
+            <TT
+CLASS="LITERAL"
+>lastval()</TT
+> and <TT
+CLASS="LITERAL"
+>currval()</TT
+>
+            as a writing functions to avoid errors in the case if
+            these functions are accidentally load balanced.
+          </P
+></BLOCKQUOTE
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-DATABASE-REDIRECT-PREFERENCE-LIST"
+></A
+><TT
+CLASS="VARNAME"
+>database_redirect_preference_list</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>         Specifies the list of <TT
+CLASS="LITERAL"
+>"database-name:node id"</TT
+> pairs
+         to make the <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> queries land on particular Backend
+         node for particular database connection.
+         For example, by specifying "test:1", <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+         will redirect all <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> queries to backend node 1 for
+         the connection connecting to "test" database.
+         You can specify multiple "database name:node id" pair by separating them
+         using comma (,).
+        </P
+><P
+>         Regular expressions are also accepted for database name.
+         Special keyword <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>"primary"</I
+></SPAN
+> indicates the primary node and
+         <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>"standby"</I
+></SPAN
+> indicates one of standby nodes.
+        </P
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="EXAMPLE-DATABASE-REDIRECT-LIST"
+></A
+><P
+><B
+>Example 5-5. Using database_redirect_preference_list</B
+></P
+><P
+>            If you want to configure the following <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> query routing rules.
+          </P
+><P
+></P
+><UL
+><LI
+><P
+>                Route all <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> queries on <TT
+CLASS="LITERAL"
+>postgres</TT
+>
+                database to PRIMARY backend server.
+              </P
+></LI
+><LI
+><P
+>                Route all <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> queries on <TT
+CLASS="LITERAL"
+>mydb0</TT
+> or on
+                <TT
+CLASS="LITERAL"
+>mydb1</TT
+> databases to backend node 1.
+              </P
+></LI
+><LI
+><P
+>                Route all <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> queries on <TT
+CLASS="LITERAL"
+>mydb2</TT
+>
+                databases to STANDBY backend server.
+              </P
+></LI
+></UL
+><P
+>            The <A
+HREF="runtime-config-load-balancing.html#GUC-DATABASE-REDIRECT-PREFERENCE-LIST"
+>database_redirect_preference_list</A
+> will be configured as follows:
+              </P><PRE
+CLASS="PROGRAMLISTING"
+>database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
+              </PRE
+><P>
+          </P
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-APP-NAME-REDIRECT-PREFERENCE-LIST"
+></A
+><TT
+CLASS="VARNAME"
+>app_name_redirect_preference_list</TT
+> (<TT
+CLASS="TYPE"
+>string</TT
+>)
+        </DT
+><DD
+><P
+>          Specifies the list of <TT
+CLASS="LITERAL"
+>"application-name:node id"</TT
+> pairs
+          to make the <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> queries land on particular Backend
+          node for particular client application connection.
+        </P
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>            In PostgreSQL V9.0 or later the "Application name" is a name specified
+            by a client when it connects to database.
+          </P
+></BLOCKQUOTE
+></DIV
+><P
+>          For example, application name of <TT
+CLASS="COMMAND"
+>psql</TT
+> command is
+          <TT
+CLASS="LITERAL"
+>"psql"</TT
+>
+        </P
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>            <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> ony recognizes the application name
+            specified in the start-up packet.
+            Although a client can provide the application name
+            later in the session, but that does not get considered by the
+            <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> for query routing.
+          </P
+></BLOCKQUOTE
+></DIV
+><P
+>          The notion of <A
+HREF="runtime-config-load-balancing.html#GUC-APP-NAME-REDIRECT-PREFERENCE-LIST"
+>app_name_redirect_preference_list</A
+>
+          is same as the <A
+HREF="runtime-config-load-balancing.html#GUC-DATABASE-REDIRECT-PREFERENCE-LIST"
+>database_redirect_preference_list</A
+>
+          thus you can also use the regular expressions for application names.
+          Similarly special keyword <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>"primary"</I
+></SPAN
+> indicates the primary node and
+         <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>"standby"</I
+></SPAN
+> indicates one of standby nodes.
+        </P
+><DIV
+CLASS="EXAMPLE"
+><A
+NAME="EXAMPLE-APP-NAME-REDIRECT-LIST"
+></A
+><P
+><B
+>Example 5-6. Using app-name_redirect_preference_list</B
+></P
+><P
+>            If you want to configure the following <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> query routing rules.
+          </P
+><P
+></P
+><UL
+><LI
+><P
+>                Route all <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> from <TT
+CLASS="LITERAL"
+>psql</TT
+>
+                client to PRIMARY backend server.
+              </P
+></LI
+><LI
+><P
+>                Route all <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> queries from <TT
+CLASS="LITERAL"
+>myapp1</TT
+>
+                client to backend node 1.
+              </P
+></LI
+><LI
+><P
+>                Route all <ACRONYM
+CLASS="ACRONYM"
+>SELECT</ACRONYM
+> queries from <TT
+CLASS="LITERAL"
+>myapp2</TT
+>
+                client to STANDBY backend server.
+              </P
+></LI
+></UL
+><P
+>            The <A
+HREF="runtime-config-load-balancing.html#GUC-APP-NAME-REDIRECT-PREFERENCE-LIST"
+>app_name_redirect_preference_list</A
+> will be configured as follows:
+              </P><PRE
+CLASS="PROGRAMLISTING"
+>app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
+              </PRE
+><P>
+          </P
+></DIV
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>            <A
+HREF="runtime-config-load-balancing.html#GUC-APP-NAME-REDIRECT-PREFERENCE-LIST"
+>app_name_redirect_preference_list</A
+> takes precedence
+            over the <A
+HREF="runtime-config-load-balancing.html#GUC-DATABASE-REDIRECT-PREFERENCE-LIST"
+>database_redirect_preference_list</A
+>.
+          </P
+></BLOCKQUOTE
+></DIV
+><DIV
+CLASS="CAUTION"
+><P
+></P
+><TABLE
+CLASS="CAUTION"
+BORDER="1"
+WIDTH="90%"
+><TR
+><TD
+ALIGN="CENTER"
+><B
+>Caution</B
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+><P
+>            <ACRONYM
+CLASS="ACRONYM"
+>JDBC</ACRONYM
+> driver PostgreSQL-9.3 and earlier versions
+            does not send the application name in the startup packet even if
+            the application name is specified using the <ACRONYM
+CLASS="ACRONYM"
+>JDBC</ACRONYM
+>
+            driver option <TT
+CLASS="LITERAL"
+>"ApplicationName"</TT
+> and
+            <TT
+CLASS="LITERAL"
+>"assumeMinServerVersion=9.0"</TT
+>.
+            So if you want to use the <A
+HREF="runtime-config-load-balancing.html#GUC-APP-NAME-REDIRECT-PREFERENCE-LIST"
+>app_name_redirect_preference_list</A
+>
+            feature through <ACRONYM
+CLASS="ACRONYM"
+>JDBC</ACRONYM
+>, Use PostgreSQL-9.4 or later version of the driver.
+          </P
+></TD
+></TR
+></TABLE
+></DIV
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+        </P
+></DD
+><DT
+><A
+NAME="GUC-ALLOW-SQL-COMMENTS"
+></A
+><TT
+CLASS="VARNAME"
+>allow_sql_comments</TT
+> (<TT
+CLASS="TYPE"
+>boolean</TT
+>)
+        </DT
+><DD
+><P
+>        When set to on, <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> ignore the
+        <ACRONYM
+CLASS="ACRONYM"
+>SQL</ACRONYM
+> comments when identifying if the load balance
+        or query cache is possible on the query.
+        When this parameter is set to off, the <ACRONYM
+CLASS="ACRONYM"
+>SQL</ACRONYM
+> comments
+        on the query could effectively prevent the query from being
+        load balanced or cached (pre <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+        <SPAN
+CLASS="emphasis"
+><I
+CLASS="EMPHASIS"
+>V3.4</I
+></SPAN
+> behavior).
+        </P
+><P
+>          This parameter can be changed by reloading the pgpool configurations.
+					You can also use <A
+HREF="sql-pgpool-set.html"
+>PGPOOL SET</A
+> command to alter the value of
+					this parameter for a current session.
+        </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime-config-logging.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="runtime-config-health-check.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Error Reporting and Logging</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="runtime-config.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Health Check</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

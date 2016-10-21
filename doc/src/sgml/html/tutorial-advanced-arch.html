@@ -1,0 +1,440 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Architecure of the watchdog</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Watchdog"
+HREF="tutorial-watchdog.html"><LINK
+REL="PREVIOUS"
+TITLE="Restrictions on watchdog"
+HREF="tutorial-watchdog-restrictions.html"><LINK
+REL="NEXT"
+TITLE="Server Administration"
+HREF="admin.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="Restrictions on watchdog"
+HREF="tutorial-watchdog-restrictions.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="tutorial-watchdog.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 2. Watchdog</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Server Administration"
+HREF="admin.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="TUTORIAL-ADVANCED-ARCH"
+>2.4. Architecure of the watchdog</A
+></H1
+><P
+>      Watchdog is a sub process of <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>,
+      which adds the high availability and resolves the single point of
+      failure by coordinating multiple <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>.
+      The watchdog process automatically starts (if enabled) when the
+      <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> starts up and consists of two
+      main components, Watchdog core and the lifecheck system.
+    </P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="TUTORIAL-ADVANCED-ARCH-WD-CORE"
+>2.4.1. Watchdog Core</A
+></H2
+><P
+>          Watchdog core referred as a "watchdog" is a
+          <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> child process that
+          manages all the watchdog related communications with the
+          <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> nodes present in the
+          cluster and also communicates with the <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+          parent and lifecheck processes.
+        </P
+><P
+>          The heart of a watchdog process is a state machine that starts
+          from its initial state (<TT
+CLASS="LITERAL"
+>WD_LOADING</TT
+>) and transit
+          towards either standby (<TT
+CLASS="LITERAL"
+>WD_STANDBY</TT
+>) or
+          master/coordinator (<TT
+CLASS="LITERAL"
+>WD_COORDINATOR</TT
+>) state.
+          Both standby and master/coordinator states are stable states of the
+          watchdog state machine and the node stays in standby or
+          master/coordinator state until some problem in local
+          <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> node is detected or a
+          remote <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> disconnects from the cluster.
+        </P
+><P
+>          The watchdog process performs the following tasks:
+        </P
+><P
+></P
+><UL
+><LI
+><P
+>                Manages and coordinates the local node watchdog state.
+              </P
+></LI
+><LI
+><P
+>                Interacts with built-in or external lifecheck system
+                for the of local and remote <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+                node health checking.
+              </P
+></LI
+><LI
+><P
+>                Interacts with <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> main
+                process and provides the mechanism to
+                <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> parent process for
+                executing the cluster commands over the watchdog channel.
+              </P
+></LI
+><LI
+><P
+>                Communicates with all the participating <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II
+                </SPAN
+> nodes to coordinate the selection of
+                master/coordinator node and to ensure the quorum in the cluster.
+              </P
+></LI
+><LI
+><P
+>                Manages the Virtual-IP on the active/coordinator node and
+                allow the users to provide custom scripts for
+                escalation and de-escalation.
+              </P
+></LI
+><LI
+><P
+>                Verifies the consistency of <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>
+                configurations across the participating <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II
+                </SPAN
+> nodes in the watchdog cluster.
+              </P
+></LI
+><LI
+><P
+>                Synchronize the status of all PostgreSQL backends at startup.
+              </P
+></LI
+><LI
+><P
+>                Provides the distributed locking facility to
+                <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> main process
+                for synchronizing the different failover commands.
+              </P
+></LI
+></UL
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="TUTORIAL-ADVANCED-ARCH-WD-CORE-COMM"
+>2.4.1.1. Communication with other nodes in the Cluster</A
+></H3
+><P
+>          Watchdog uses TCP/IP sockets for all the communication with other nodes.
+          Each watchdog node can have two sockets opened with each node. One is the
+          outgoing (client) socket which this node creates and initiate the
+          connection to the remote node and the second socket is the one which
+          is listening socket for inbound connection initiated by remote
+          watchdog node. As soon as the socket connection to remote node succeeds
+          watchdog sends the ADD NODE (<TT
+CLASS="LITERAL"
+>WD_ADD_NODE_MESSAGE</TT
+>)
+          message on that socket. And upon receiving the ADD NODE message the
+          watchdog node verifies the node information encapsulated in the message
+          with the Pgpool-II configurations for that node, and if the node passes
+          the verification test it is added to the cluster otherwise the connection
+          is dropped.
+        </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="TUTORIAL-ADVANCED-ARCH-WD-IPC-DATA"
+>2.4.1.2. IPC and data format</A
+></H3
+><P
+>          Watchdog process exposes a <ACRONYM
+CLASS="ACRONYM"
+>UNIX</ACRONYM
+> domain socket
+          for IPC communications, which accepts and provides the data in
+          <ACRONYM
+CLASS="ACRONYM"
+>JSON</ACRONYM
+> format. All the internal <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II
+          </SPAN
+> processes, including <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II's</SPAN
+>
+          built-in lifecheck and <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> main process
+          uses this IPC socket interface to interact with the watchdog.
+          This IPC socket can also be used by any external/3rd party system
+          to interact with watchdog.
+        </P
+><P
+>          See <A
+HREF="tutorial-watchdog-integrating-external-lifecheck.html"
+>Section 2.2</A
+> for details
+          on how to use watchdog IPC interface for integrating external/3rd party systems.
+        </P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="TUTORIAL-ADVANCED-ARCH-WD-LIFECHECK"
+>2.4.2. Watchdog Lifecheck</A
+></H2
+><P
+>        Watchdog lifecheck is the sub-component of watchdog that monitors the health
+        of <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> nodes participating in the watchdog
+        cluster. <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> watchdog provides two built-in
+        methods of remote node health checking, "heartbeat" and "query" mode.
+      </P
+><P
+>        In "heartbeat" mode, The lifecheck process sends and receives the data over
+        <ACRONYM
+CLASS="ACRONYM"
+>UDP</ACRONYM
+> socket to check the availability of remote nodes and
+        for each node the parent lifecheck process spawns two child process one for
+        sending the heartbeat signal and another for receiving the heartbeat.
+        While in "query" mode, The lifecheck process uses the PostgreSQL libpq
+        interface for querying the remote <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>.
+        And in this mode the lifecheck process creates a new thread for each health
+        check query which gets destroyed as soon as the query finishes.
+      </P
+><P
+>        Apart from remote node health checking watchdog lifecheck can also check the
+        health of node it is installed on by monitoring the connection to upstream servers.
+        For monitoring the connectivity to the upstream server <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II
+        </SPAN
+> lifecheck uses <TT
+CLASS="LITERAL"
+>execv()</TT
+> function to executes
+        <TT
+CLASS="COMMAND"
+>'ping -q -c3 hostname'</TT
+> command.
+        So a new child process gets spawned for executing each ping command.
+        This means for each health check cycle a child process gets created and
+        destroyed for each configured upstream server.
+        For example, If two upstream servers are configured in the lifecheck and it is
+        asked to health check at ten second intervals, then after each ten second
+        lifecheck will spawn two child processes, one for each upstream server,
+        and each process will live until the ping command is finished.
+      </P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="tutorial-watchdog-restrictions.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="admin.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Restrictions on watchdog</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tutorial-watchdog.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Server Administration</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

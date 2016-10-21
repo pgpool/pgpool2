@@ -1,0 +1,247 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Configuring pcp.conf</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REV="MADE"
+HREF="mailto:pgsql-docs@postgresql.org"><LINK
+REL="HOME"
+TITLE="pgpool-II 3.6-alpha1 Documentation"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Server Setup and Operation"
+HREF="runtime.html"><LINK
+REL="PREVIOUS"
+TITLE="The Pgpool-II User Account"
+HREF="pgpool-ii-user.html"><LINK
+REL="NEXT"
+TITLE="Configuring pgpool"
+HREF="configuring-pgpool.html"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="stylesheet.css"><META
+HTTP-EQUIV="Content-Type"
+CONTENT="text/html; charset=ISO-8859-1"><META
+NAME="creation"
+CONTENT="2016-10-20T05:30:22"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+VALIGN="bottom"
+><A
+HREF="index.html"
+>pgpool-II 3.6-alpha1 Documentation</A
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+TITLE="The Pgpool-II User Account"
+HREF="pgpool-ii-user.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="runtime.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="60%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 4. Server Setup and Operation</TD
+><TD
+WIDTH="20%"
+ALIGN="right"
+VALIGN="top"
+><A
+TITLE="Configuring pgpool"
+HREF="configuring-pgpool.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CONFIGURING-PCP-CONF"
+>4.2. Configuring pcp.conf</A
+></H1
+><P
+>    <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> provides a control interface
+    where an administrator can
+    collect <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> status, and terminate
+    <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> processes
+    remotely. <TT
+CLASS="FILENAME"
+>pcp.conf</TT
+> is the user/password file
+    used for authentication by this interface. All operation modes
+    require the <TT
+CLASS="FILENAME"
+>pcp.conf</TT
+> file to be set. A
+    <TT
+CLASS="FILENAME"
+>$prefix/etc/pcp.conf.sample</TT
+> file is created
+    during the installation
+    of <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>. Rename the file to
+    <TT
+CLASS="FILENAME"
+>pcp.conf</TT
+> and add your user name and password
+    to it.
+
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>cp $prefix/etc/pcp.conf.sample $prefix/etc/pcp.conf
+      </PRE
+><P>
+
+      An empty line or a line starting with "#" is treated as a
+      comment and will be ignored. A user name and its associated
+      password must be written as one line using the following format:
+
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>username:[password encrypted in md5]
+      </PRE
+><P>
+
+[password encrypted in md5] can be produced with the $prefix/bin/pg_md5 command.
+
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>pg_md5 -p
+password: your_password
+      </PRE
+><P>
+
+or
+
+      </P><PRE
+CLASS="PROGRAMLISTING"
+>./pg_md5 foo
+acbd18db4cc2f85cedef654fccc4a4d8
+      </PRE
+><P>
+
+      The <TT
+CLASS="FILENAME"
+>pcp.conf</TT
+> file must be readable by the
+      user who executes <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+>.
+  </P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="pgpool-ii-user.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="configuring-pgpool.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>The <SPAN
+CLASS="PRODUCTNAME"
+>Pgpool-II</SPAN
+> User Account</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="runtime.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Configuring pgpool</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>
