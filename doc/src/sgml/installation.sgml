@@ -68,12 +68,6 @@
   </para>
 
   <para>
-   The following packages are optional.  They are not required in the
-   default configuration, but they are needed when certain build
-   options are enabled, as explained below:
-  </para>
-
-  <para>
    If you are building from a <productname>Git</productname> tree instead of
    using a released source package, or if you want to do server development,
    you also need the following packages:
@@ -149,7 +143,7 @@
  </sect1>
 
   <sect1 id="install-pgpool">
-    <title>Installing pgpool-II</title>
+    <title>Installing Pgpool-II</title>
     <para>
       After extracting the source tarball, execute the configure script.
 <programlisting>
@@ -167,7 +161,7 @@
 	<term><option>--prefix=path</option></term>
 	<listitem>
           <para>
-	    pgpool-II binaries and docs will be installed in this
+	    <productname>Pgpool-II</> binaries and docs will be installed in this
             directory. Default value is <filename>/usr/local</filename>.
 	  </para>
 	</listitem>
@@ -245,7 +239,7 @@
 make
 make install
       </programlisting>
-      will install pgpool-II. (If you use Solaris or FreeBSD, replace make with gmake)
+      will install <productname>Pgpool-II</>. (If you use Solaris or FreeBSD, replace make with gmake)
     </para>
 
   </sect1>
