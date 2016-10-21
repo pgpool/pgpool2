@@ -84,7 +84,9 @@
         </para>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations and using the PGPOOL SET command.
+          This parameter can be changed by reloading the pgpool configurations.
+					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+					this parameter for a current session.
         </para>
 
       </listitem>
@@ -110,7 +112,9 @@
         </para>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations and using the PGPOOL SET command.
+          This parameter can be changed by reloading the pgpool configurations.
+					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+					this parameter for a current session.
         </para>
 
       </listitem>

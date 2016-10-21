@@ -365,6 +365,8 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
         </para>
         <para>
           This parameter can be changed by reloading the pgpool configurations.
+					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+					this parameter for a current session.
         </para>
       </listitem>
     </varlistentry>

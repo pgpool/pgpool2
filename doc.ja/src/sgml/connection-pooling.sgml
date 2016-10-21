@@ -236,6 +236,8 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
 				</para>
         <para>
           This parameter can be changed by reloading the pgpool configurations.
+					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+					this parameter for a current session.
         </para>
       </listitem>
     </varlistentry>
@@ -463,6 +465,8 @@ local0.*    /var/log/postgresql
 
         <para>
           This parameter can be changed by reloading the pgpool configurations.
+					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+					this parameter for a current session.
         </para>
       </listitem>
     </varlistentry>
@@ -483,6 +487,8 @@ local0.*    /var/log/postgresql
 				</para>
         <para>
           This parameter can be changed by reloading the pgpool configurations.
+					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+					this parameter for a current session.
         </para>
       </listitem>
     </varlistentry>
@@ -508,6 +514,8 @@ local0.*    /var/log/postgresql
 
         <para>
           This parameter can be changed by reloading the pgpool configurations.
+					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+					this parameter for a current session.
         </para>
       </listitem>
     </varlistentry>
@@ -526,6 +534,8 @@ local0.*    /var/log/postgresql
 				</para>
         <para>
           This parameter can be changed by reloading the pgpool configurations.
+					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+					this parameter for a current session.
         </para>
       </listitem>
     </varlistentry>
@@ -578,6 +588,8 @@ local0.*    /var/log/postgresql
 				</para>
         <para>
           This parameter can be changed by reloading the pgpool configurations.
+					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+					this parameter for a current session.
         </para>
       </listitem>
     </varlistentry>
