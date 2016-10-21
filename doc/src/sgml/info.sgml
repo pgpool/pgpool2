@@ -26,7 +26,7 @@
      <para>
       The mailing lists are a good place to have your questions
       answered, to share experiences with other users, and to contact
-      the developers.  Consult the <productname>pgpool-II</> web site
+      the developers.  Consult the <productname>Pgpool-II</> web site
       for details.
      </para>
     </listitem>
@@ -38,7 +38,7 @@
      <para>
       <productname>pgpool-II</productname> is an open-source project.
       As such, it depends on the user community for ongoing support.
-      As you begin to use <productname>PostgreSQL</productname>, you
+      As you begin to use <productname>Pgpool-II</productname>, you
       will rely on others for help, either through the documentation
       or through the mailing lists.  Consider contributing your
       knowledge back. Read the mailing lists and answer questions.  If
