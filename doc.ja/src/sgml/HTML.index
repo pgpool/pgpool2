@@ -1,11 +1,11 @@
 INDEXTERM history.html
 INDEXPOINT history.html#AEN100
-TITLE A Brief History of Pgpool-II
+TITLE Pgpool-IIの歴史概要
 significance NORMAL
 ZONE history.html
-TITLE A Brief History of Pgpool-II
-PRIMARY history
-SECONDARY of Pgpool-II
+TITLE Pgpool-IIの歴史概要
+PRIMARY 歴史
+SECONDARY Pgpool-IIの
 /INDEXTERM
 INDEXTERM tutorial-watchdog-intro.html#TUTORIAL-WATCHDOG-COORDINATING-NODES
 INDEXPOINT tutorial-watchdog-intro.html#AEN364

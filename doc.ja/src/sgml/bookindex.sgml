@@ -19,6 +19,17 @@
       sequences of pages into a range.
 -->
 
+<indexdiv><title>Symbols</title>
+
+<indexentry>
+  <primaryie>歴史
+  </primaryie>
+  <secondaryie>Pgpool-IIの,
+    <ulink url="history.html" role="history">Pgpool-IIの歴史概要</ulink>
+  </secondaryie>
+</indexentry>
+
+</indexdiv>
 <indexdiv><title>A</title>
 
 <indexentry>
@@ -321,14 +332,6 @@
   <primaryie>heartbeat_device configuration parameter,
     <ulink url="runtime-watchdog-config.html#CONFIG-WATCHDOG-LIFECHECK-HEARTBEAT" role="AEN3441">Lifecheck Heartbeat mode configuration</ulink>
   </primaryie>
-</indexentry>
-
-<indexentry>
-  <primaryie>history
-  </primaryie>
-  <secondaryie>of Pgpool-II,
-    <ulink url="history.html" role="history">A Brief History of Pgpool-II</ulink>
-  </secondaryie>
 </indexentry>
 
 </indexdiv>
