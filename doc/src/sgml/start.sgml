@@ -136,7 +136,7 @@ $ psql -p 11000 -c "show pool_nodes" test
       <programlisting>
 $ pgbench -i -p 11000 test
       </programlisting>
-      To make if the replication works correctly, directly connect to
+      To see if the replication works correctly, directly connect to
       the primary and the standby server to see if they return
       identical results.
       <programlisting>
