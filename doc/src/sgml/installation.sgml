@@ -145,14 +145,16 @@
   <sect1 id="install-pgpool">
     <title>Installing Pgpool-II</title>
     <para>
-      After extracting the source tarball, execute the configure script.
+      After extracting the source tarball, execute the <filename>configure</> script.
 <programlisting>
 ./configure
 </programlisting>
     </para>
 
     <para>
-    If you want non-default values, some options can be set.
+    You can customize the build and installation process by supplying one
+    or more of the following command line options to
+    <filename>configure</filename>:
     </para>
 
     <variablelist>
@@ -160,9 +162,9 @@
       <varlistentry>
 	<term><option>--prefix=path</option></term>
 	<listitem>
-          <para>
-	    <productname>Pgpool-II</> binaries and docs will be installed in this
-            directory. Default value is <filename>/usr/local</filename>.
+      <para>
+      Specifies the top directory where <productname>Pgpool-II</> binaries and related
+      files like docs will be installed in. Default value is <filename>/usr/local</filename>.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -170,9 +172,9 @@
       <varlistentry>
 	<term><option>--with-pgsql=path</option></term>
 	<listitem>
-          <para>
-	    The top directory where <productname>PostgreSQL</>'s client libraries are
-            installed. Default value is provided by <command>pg_config</command>.
+      <para>
+      Specifies the top directory where <productname>PostgreSQL</>'s client libraries are
+      installed. Default value is the path provided by <command>pg_config</command> command.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -239,7 +241,7 @@
 make
 make install
       </programlisting>
-      will install <productname>Pgpool-II</>. (If you use Solaris or FreeBSD, replace make with gmake)
+      This will install <productname>Pgpool-II</>. (If you use <productname>Solaris</> or <productname>FreeBSD</>, replace <command>make</> with <command>gmake</>)
     </para>
 
   </sect1>
@@ -330,11 +332,11 @@ $ psql -f pgpool-regclass.sql template1
       Executing <command>CREATE EXTENSION</command>
       or <filename>pgpool-regclass.sql</filename> should be performed
       on every databases accessed
-      with <productname>Pgpool-II</productname>.  You do not need to
+      via <productname>Pgpool-II</productname>.  However, you do not need to
       do this for a database created after the execution of
-      <command>psql -f pgpool-regclass.sql template1</command>
-      or <command>CREATE EXTENSION</command>, as this template
-      database will be cloned to create new databases.
+      <command>CREATE EXTENSION</command> or
+      <command>psql -f pgpool-regclass.sql template1</command>,
+	  as this template database will be cloned to create new databases.
     </para>
 
   </sect1>
@@ -353,9 +355,7 @@ $ psql -f pgpool-regclass.sql template1
       this, insert_lock works so far. However in that
       case <productname>Pgpool-II</productname> locks against the
       insert target table. This behavior is same
-      as <productname>Pgpool-II</productname> 2.2 and 2.3 series. The
-      table lock conflicts
-      with <command>VACUUM</command>. So <command>INSERT</command>
+      table lock conflicts with <command>VACUUM</command>, so <command>INSERT</command>
       processing may be thereby kept waiting for a long time.
 
       <programlisting>
@@ -368,7 +368,7 @@ $ psql -f pgpool-regclass.sql template1
     <para>
       Executing <filename>insert_lock.sql</filename> should be
       performed on every databases accessed
-      with <productname>Pgpool-II</productname>.  You do not need to
+      via <productname>Pgpool-II</productname>.  You do not need to
       do this for a database created after the execution of
       <command>psql -f insert_lock.sql template1</command>, as this
       template database will be cloned to create new databases.
