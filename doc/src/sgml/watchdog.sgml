@@ -91,10 +91,10 @@
           when the <literal>heartbeat</> mode is used as a lifecheck method.
         </para>
         <para>
-          Since <productname>Pgpool-II</productname><emphasis>V3.5</emphasis>
+          Since in <productname>Pgpool-II</productname><emphasis>V3.5</emphasis> or beyond
           <varname>wd_authkey</varname> is also used to authenticate
-          the watchdog IPC clients.
-          All clients communicating with <productname>Pgpool-II</productname>
+          the watchdog IPC clients,
+          all clients communicating with <productname>Pgpool-II</productname>
           watchdog process needs to provide this wd_authkey value
           for <literal>"IPCAuthKey"</literal> key in the JSON data
           of the command.
@@ -311,7 +311,7 @@
           Default is on.
         </para>
         <para>
-          This works only if <varname>memqcache_method</varname>
+          This works only if <xref linkend="guc-memqcache-method">
           is <literal>'shmem'</literal>.
         </para>
         <para>
@@ -559,8 +559,9 @@
   <listitem>
     <para>
       Specifies the interval time in seconds between sending the heartbeat signals.
-      <varname>wd_heartbeat_port</varname> is only applicable if the
-      <varname>wd_lifecheck_method</varname> is set to <literal>'heartbeat'</literal>
+      Default is 2.
+      <varname>wd_heartbeat_keepalive</varname> is only applicable if the
+      <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
     </para>
 
     <para>
@@ -579,7 +580,7 @@
     <para>
       Specifies the time in seconds before marking the remote watchdog node as failed/dead node,
       if no heartbeat signal is received within that time.
-      DDefault is <literal>30</literal>
+      Default is <literal>30</literal>
       <varname>wd_heartbeat_deadtime</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
   </para>
@@ -648,7 +649,7 @@
       Specifies the network device name for sending the heartbeat signals to the destination specified by
       heartbeat_destinationX:heartbeat_destination_portX
       Different heartbeat devices can be configured for each heartbeat destination
-      by changing the value of X(destination number)
+      by changing the value of X(destination number).
       at the end of parameter name. The destination index number starts from 0.
    </para>
    <para>
