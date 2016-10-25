@@ -33,8 +33,8 @@
     <para>
       At the startup, if the watchdog is enabled, <productname>Pgpool-II</productname> node
       sync the status of all configured backend nodes from the master watchdog node.
-      and if the node goes on to become a master node itself it initializes the backend
-      status locally. When a backend node status change by failover etc..,
+      And if the node goes on to become a master node itself it initializes the backend
+      status locally. When a backend node status changes by failover etc..,
       watchdog notifies the information to other <productname>Pgpool-II</productname>
       nodes and synchronizes them. When online recovery occurs, watchdog restricts
       client connections to other <productname>Pgpool-II</productname>
@@ -42,7 +42,7 @@
     </para>
 
     <para>
-      Watchdog also coordinates with all connected <productname>pgpool-II</productname> nodes to ensure
+      Watchdog also coordinates with all connected <productname>Pgpool-II</productname> nodes to ensure
       that failback, failover and follow_master commands must be executed only on one <productname>pgpool-II</productname> node.
     </para>
 
@@ -91,7 +91,7 @@
        <note>
        <para>
          Note that this method requires connections from other <productname>Pgpool-II</productname>,
-         So it would fail monitoring if the <xref linkend="guc-num-init-children"> parameter isn't large enough.
+         so it would fail monitoring if the <xref linkend="guc-num-init-children"> parameter isn't large enough.
          This mode is deprecated and left for backward compatibility.
        </para>
        </note>
@@ -497,7 +497,7 @@
         <productname>Pgpool-II</productname> due to PostgreSQL server
         failure or pcp_detach_node issued, watchdog regards that the
         <productname>Pgpool-II</productname> service is in the down
-        status and brings up the virtual IP assigned to watchdog down.
+        status and brings the virtual IP assigned to watchdog down.
         Thus clients of <productname>Pgpool-II</productname> cannot
         connect to <productname>Pgpool-II</productname> using the
         virtual IP any more. This is neccessary to avoid split-brain,
@@ -711,7 +711,7 @@
         So a new child process gets spawned for executing each ping command.
         This means for each health check cycle a child process gets created and
         destroyed for each configured upstream server.
-        For example, If two upstream servers are configured in the lifecheck and it is
+        For example, if two upstream servers are configured in the lifecheck and it is
         asked to health check at ten second intervals, then after each ten second
         lifecheck will spawn two child processes, one for each upstream server,
         and each process will live until the ping command is finished.
