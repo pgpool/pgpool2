@@ -263,25 +263,53 @@ watchdogは、定期的に他の<productname>Pgpool-II</productname>から送ら
    </indexterm>
     <para>
 <!--
-      Watchdog process starts/stops automatically as sub-processes of
-      <productname>Pgpool-II</productname>, therefore there is no dedicated
-      command to start/stop it.
-      Watchdog requires root privilege for controlling the virtual IP interface.
-      One method is to start <productname>Pgpool-II</productname> by root privilege.
-      However, for security reasons, to set custom commands to <xref linkend="guc-if-up-cmd">,
-      <xref linkend="guc-if-down-cmd"> and <xref linkend="guc-arping-cmd"> using <command>sudo</command> or
-      setuid is recommended method.
-      Watchdog's built-in life-checking starts after all of the
-      <productname>Pgpool-II</productname> nodes have started.
-      This doesn't start if not all "other" nodes are alive until this,
-      failover of the virtual IP never occurs.
+      The watchdog process starts and stops automatically as sub-processes
+      of the <productname>Pgpool-II</productname>, therefore there is no
+      dedicated command to start and stop watchdog.
+    </para>
+    <para>
+      Watchdog controls the virtual IP interface, the commands executed by
+      the watchdog for bringing up and bringing down the VIP require the
+      root privileges. <productname>Pgpool-II</productname> requires the
+      user running <productname>Pgpool-II</productname> to have root
+      privileges when the watchdog is enabled along with delegate IP.
+      This is however not good security practice to run the
+      <productname>Pgpool-II</productname> as root user, the alternative
+      and preferred way is to run the <productname>Pgpool-II</productname>
+      as normal user and use either the custom commands for
+      <xref linkend="guc-if-up-cmd">, <xref linkend="guc-if-down-cmd">,
+      and <xref linkend="guc-arping-cmd"> using <command>sudo</command>
+      or use <command>setuid</command> ("set user ID upon execution")
+      on <literal>if_*</literal> commands
+    </para>
+    <para>
+      Lifecheck process is a sub-component of watchdog, its job is to monitor the
+      health of <productname>Pgpool-II</productname> nodes participating in
+      the watchdog cluster. The Lifecheck process is started automatically
+      when the watchdog is configured to use the built-in life-checking,
+      it starts after the watchdog main process initialization is complete.
+      However lifecheck process only kicks in when all configured watchdog
+      nodes join the cluster and becomes active. If some remote node fails
+      before the Lifecheck become active that failure will not get caught by the lifecheck.
 -->
 watchdogは、<productname>Pgpool-II</productname>の下位プロセスとして自動的に起動、停止されます。
 したがって、専用の起動、停止コマンドはありません。
-仮想IPを管理するために、watchdogにはroot権限が必要です。
-一つの方法は、<productname>Pgpool-II</productname>をroot権限で起動することです。
-しかし、セキュリティ上の理由により、<command>sudo</command>を使って<xref linkend="guc-if-up-cmd">、<xref linkend="guc-if-down-cmd">、<xref linkend="guc-arping-cmd">にカスタムコマンドを設定するか、setuidするのがお勧めの方法です。
+</para>
+<para>
+watchdogは仮想IPインターフェイスを制御します。
+VIPを起動、停止するために実行されるコマンドにはroot権限が必要です。
+watchdogが委任IPを伴って起動される際には、<productname>Pgpool-II</productname>は、<productname>Pgpool-II</productname>を実行しているユーザがroot権限を持つことを要求します。
+しかし、<productname>Pgpool-II</productname>をrootユーザで実行するのは良いセキュリティの実践とは言えません。
+別の推奨する方法は、<productname>Pgpool-II</productname>を通常のユーザとして起動し、<command>sudo</command>を使って<xref linkend="guc-if-up-cmd">、<xref linkend="guc-if-down-cmd">、<xref linkend="guc-arping-cmd">にカスタムコマンドを設定するか、<literal>if_*</literal>コマンドに<command>setuid</command>("set user ID upon execution")することです。
+</para>
+<para>
+死活監視プロセスはwatchdogの下位コンポーネントです。
+その仕事は、watchdogクラスタに参加している<productname>Pgpool-II</productname>ノードの健全さを監視することです。
+死活監視プロセスは、組み込みの死活監視を使用するようにwatchdogが設定されている場合、自動的に起動されます。
+死活監視プロセスは、watchdogのメインプロセスの初期化が完了した後に起動します。
 watchdogの組み込み死活監視は、すべての<productname>Pgpool-II</productname>ノードが起動してから始まります。
+ただし、死活監視プロセスは、設定されているすべてのwatchdogノードがクラスタに参加し、アクティブになった時にだけ起動されます。
+死活監視がアクティブになる前にリモートノードに障害が起こると、その障害が死活監視によって捕捉されません。
     </para>
   </sect2>
   </sect1>
@@ -969,7 +997,10 @@ watchdogクラスタ中の<productname>Pgpool-II</productname>ノードの設定
           </itemizedlist>
 
       <sect3 id="tutorial-advanced-arch-wd-core-comm">
+<!--
         <title>Communication with other nodes in the Cluster</title>
+-->
+        <title>クラスタの他のノードとの通信</title>
         <para>
 <!--
           Watchdog uses TCP/IP sockets for all the communication with other nodes.
@@ -988,7 +1019,10 @@ watchdogクラスタ中の<productname>Pgpool-II</productname>ノードの設定
 watchdogはほかのすべてのノードとの通信にTCP/IPソケットを使っています。
 各々のwatchdogノードはそれぞれのノードに2つのソケットを開くことができます。
 ひとつは出て行く（クライアント）ソケットで、他のノードとの通信のためにこのノードが作り初期化します。
-2つ目は、リモートwatchdogノードが開いた入ってくるソケットを待ち受けるソケットです。
+2つ目は、リモートwatchdogノードが開いた通信から入ってくるのを待ち受けるソケットです。
+リモートノードとのソケット接続が成功すると、直ちにwatchdogはADD NODE (<literal>WD_ADD_NODE_MESSAGE</literal>)メッセージをそのソケットに送ります。
+ADD NODEメッセージを受信したwatchdogノードは、メッセージにカプセル化されたノード情報をそのノードのPgpool-II設定と照合し、照合テストが成功すればノードをクラスタに追加します。
+照合テストが失敗すると、接続は切断されます。
         </para>
       </sect3>
 
