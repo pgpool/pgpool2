@@ -172,18 +172,34 @@
     <primary>WATCHDOG</primary>
    </indexterm>
     <para>
-      Watchdog process starts/stops automatically as sub-processes of
-      <productname>Pgpool-II</productname>, therefore there is no dedicated
-      command to start/stop it.
-      Watchdog requires root privilege for controlling the virtual IP interface.
-      One method is to start <productname>Pgpool-II</productname> by root privilege.
-      However, for security reasons, to set custom commands to <xref linkend="guc-if-up-cmd">,
-      <xref linkend="guc-if-down-cmd"> and <xref linkend="guc-arping-cmd"> using <command>sudo</command> or
-      setuid is recommended method.
-      Watchdog's built-in life-checking starts after all of the
-      <productname>Pgpool-II</productname> nodes have started.
-      This doesn't start if not all "other" nodes are alive until this,
-      failover of the virtual IP never occurs.
+      The watchdog process starts and stops automatically as sub-processes
+      of the <productname>Pgpool-II</productname>, therefore there is no
+      dedicated command to start and stop watchdog.
+    </para>
+    <para>
+      Watchdog controls the virtual IP interface, the commands executed by
+      the watchdog for bringing up and bringing down the VIP require the
+      root privileges. <productname>Pgpool-II</productname> requires the
+      user running <productname>Pgpool-II</productname> to have root
+      privileges when the watchdog is enabled along with delegate IP.
+      This is however not good security practice to run the
+      <productname>Pgpool-II</productname> as root user, the alternative
+      and preferred way is to run the <productname>Pgpool-II</productname>
+      as normal user and use either the custom commands for
+      <xref linkend="guc-if-up-cmd">, <xref linkend="guc-if-down-cmd">,
+      and <xref linkend="guc-arping-cmd"> using <command>sudo</command>
+      or use <command>setuid</command> ("set user ID upon execution")
+      on <literal>if_*</literal> commands
+    </para>
+    <para>
+      Lifecheck process is a sub-component of watchdog, its job is to monitor the
+      health of <productname>Pgpool-II</productname> nodes participating in
+      the watchdog cluster. The Lifecheck process is started automatically
+      when the watchdog is configured to use the built-in life-checking,
+      it starts after the watchdog main process initialization is complete.
+      However lifecheck process only kicks in when all configured watchdog
+      nodes join the cluster and becomes active. If some remote node fails
+      before the Lifecheck become active that failure will not get caught by the lifecheck.
     </para>
   </sect2>
   </sect1>
