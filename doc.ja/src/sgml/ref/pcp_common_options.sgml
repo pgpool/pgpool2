@@ -16,8 +16,12 @@ Pgpool-II documentation
 
  <refnamediv>
   <refname>pcp_common_options</refname>
+  <!--
   <refpurpose>
   common options used in PCP commands</refpurpose>
+  -->
+  <refpurpose>
+  PCP コマンドには共通する引数</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -29,17 +33,27 @@ Pgpool-II documentation
 
  <refsect1 id="R1-PCP-common-options-1">
   <title>
+  <!--
    Description
+   -->
+   説明
   </title>
   <para>
+  <!--
     There are some arguments common to all PCP commands.  Most of
     these are for authentication and the rest are about verbose
     mode, debug message, and so on.
+    -->
+    全てのコマンドには共通する引数があります。
+    そのほとんどは認証情報を指定するもので、 他は冗長出力モードやデバッグなどに関するものです。
   </para>
  </refsect1>
 
  <refsect1>
+ <!--
   <title>Options</title>
+  -->
+  <title>オプション</title>
 
    <para>
     <variablelist>
@@ -49,8 +63,12 @@ Pgpool-II documentation
       <term><option>--host=<replaceable class="parameter">hostname</replaceable></option></term>
       <listitem>
        <para>
+       <!--
 	 The host name of the machine on which the server is running. If the
 	 value begins with a slash, it is used as the directory for the Unix-domain socket.
+     -->
+     pgpool-II が稼働しているホスト名を指定します。 スラッシュから始まる場合は、
+     Unix ドメインソケットのディレクトリと解釈されます。
        </para>
       </listitem>
      </varlistentry>
@@ -60,7 +78,10 @@ Pgpool-II documentation
       <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
       <listitem>
        <para>
+       <!--
 	 The PCP port number (default:"9898").
+     -->
+     PCP ポート番号を指定します。(デフォルト: 9898)
        </para>
       </listitem>
      </varlistentry>
@@ -70,7 +91,10 @@ Pgpool-II documentation
       <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
+       <!--
 	 The user name for PCP authentication (default: OS user name).
+     -->
+     PCP 認証のユーザ名を指定します。(デフォルト: OS のユーザ)
        </para>
       </listitem>
      </varlistentry>
@@ -80,10 +104,15 @@ Pgpool-II documentation
       <term><option>--no-password</option></term>
       <listitem>
        <para>
+       <!--
 	 Never prompt for password. And if a password is not available
 	 by a <filename>.pcppass</filename> file, the connection
 	 attempt will fail. This option can be useful in batch jobs
 	 and scripts where no user is present to enter a password.
+     -->
+     パスワード入力プロンプトを表示しません。 もしパスワードが <filename>.pcppass</filename> ファイルから
+     取得できない場合には接続は失敗します。 このオプションはバッチジョブやスクリプトなど、
+     パスワード入力が行うユーザいない場合に有用です。
        </para>
       </listitem>
      </varlistentry>
@@ -93,7 +122,10 @@ Pgpool-II documentation
       <term><option>--password</option></term>
       <listitem>
        <para>
+       <!--
 	 Force password prompt (should happen automatically).
+     -->
+     パスワード入力プロンプトを表示します。（自動的に選択される動作です）
        </para>
       </listitem>
      </varlistentry>
@@ -103,7 +135,10 @@ Pgpool-II documentation
       <term><option>--debug</option></term>
       <listitem>
        <para>
-	 Enable debug message.
+       <!--
+	    Enable debug message.
+        -->
+        デバッグメッセージを表示します。
        </para>
       </listitem>
      </varlistentry>
@@ -113,7 +148,10 @@ Pgpool-II documentation
       <term><option>--verbose</option></term>
       <listitem>
        <para>
+    <!--
 	 Enable verbose output.
+     -->
+     冗長出力を有効にします。
        </para>
       </listitem>
      </varlistentry>
@@ -123,7 +161,10 @@ Pgpool-II documentation
       <term><option>--version</option></term>
       <listitem>
        <para>
+       <!--
 	 Print the command version, then exit.
+     -->
+     バージョンを表示して終了します。
        </para>
       </listitem>
      </varlistentry>
@@ -133,7 +174,10 @@ Pgpool-II documentation
       <term><option>--help</option></term>
       <listitem>
        <para>
-	 Shows help for the command line arguments, then exit.
+       <!--
+	    Shows help for the command line arguments, then exit.
+        -->
+        コマンドラインのヘルプを表示して終了します。
        </para>
       </listitem>
      </varlistentry>
@@ -144,7 +188,10 @@ Pgpool-II documentation
  </refsect1>
 
  <refsect1>
+ <!--
   <title>Environment</title>
+  -->
+  <title>環境変数</title>
 
   <variablelist>
    <varlistentry>
@@ -152,7 +199,10 @@ Pgpool-II documentation
 
     <listitem>
      <para>
+     <!--
       Specifies the path to pcp password file.
+      -->
+      pcp パスワードファイルをパスを指定します。
      </para>
     </listitem>
    </varlistentry>

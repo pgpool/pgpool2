@@ -1,57 +1,93 @@
 <!-- doc/src/sgml/reference.sgml -->
 
 <part id="reference">
+<!--
  <title>Reference</title>
+-->
+ <title>リファレンス</title>
 
  <partintro>
   <para>
+  <!--
     This part contains reference information for the pgool-II.
+    -->
+    ここには <productname>Pgpool-II</productname> のリファレンス情報があります。
   </para>
 
   <para>
+  <!--
     The reference entries are also available as traditional
     <quote>man</quote> pages.
+    -->
+    このリファレンスは伝統的な <quote>man</quote> ページとしても入手できます。
   </para>
  </partintro>
 
  <reference id="pcp-commands">
+<!--
    <title>PCP commands</title>
+-->
+   <title>PCP コマンド</title>
 
    <partintro>
      <para>
+     <!--
        This part contains reference information for PCP commands.
        PCP commands are UNIX commands which manipulate pgpool-II via the network.
        Please note that the parameter format for all PCP commands has been changed since pgpool-II 3.5.
+       -->
+       ここには <productname>Pgpool-II</productname> の PCP コマンドのリファレンス情報があります。
+       PCP コマンドはネットワーク経由で複数の <productname>pgpool-II</productname> を操作する UNIX コマンドです。
+       注意：<productname>pgpool-II</productname> 3.5 より、全ての PCP コマンドのパラメータ書式が変更されています。
      </para>
 
      <sect1 id="pcp-connection-authentication">
+     <!--
        <title>PCP connection authentication</title>
+       -->
+       <title>PCP 接続認証</title>
        <para>
+    <!--
 	 PCP user names and passwords must be declared in
 	 <filename>pcp.conf</filename> in <filename>$prefix/etc</filename>
 	 directory. <option>-F</option> option can be used when starting
 	 pgpool-II if <filename>pcp.conf</filename> is placed somewhere
 	 else.
+     -->
+     PCP ユーザ名とパスワードが <filename>$prefix/etc</filename> ディレクトリ内の <filename>pcp.conf</filename>
+     で宣言されている必要があります。<filename>pcp.conf</filename> が他の場所にある場合には、
+     <productname>pgpool-II</productname> の起動時に <option>-F</option> オプションで指定することができます。
        </para>
      </sect1>
 
      <sect1 id="pcp-password-file">
+     <!--
        <title>PCP password file</title>
+      -->
+       <title>PCP パスワードファイル</title>
        <para>
+     <!--
 	 The file <filename>.pcppass</filename> in a user's home
 	 directory or the file referenced by environment variable
 	 PCPPASSFILE can contain passwords to be used if no password has
 	 been specified for the pcp connection.
+     -->
+     PCP 接続時にパスワードが指定されなかった場合、ユーザのホームディレクトリに配置された <filename>.pcppass</filename> ファイルか、
+     環境変数 PCPPASSFILE で参照されるファイルに格納されたパスワードが使用可能です。
        </para>
        <para>
+    <!--
 	 This file should contain lines of the following format:
+     -->
+     このファイルの各行の書式は以下のとおりです：
 
 	 <programlisting>
-	   hostname:port:username:password
+hostname:port:username:password
 	 </programlisting>
        </para>
 
        <para>
+       <!--
 	 (You can add a reminder comment to the file by copying the line
 	 above and preceding it with #.)  Each of the first three fields
 	 can be a literal value, or *, which matches anything. The password
@@ -61,13 +97,24 @@
 	 : or \, escape this character with \. A host name of localhost
 	 matches both TCP (host name localhost) and Unix domain socket
 	 connections coming from the local machine.
+     -->
+     （この文字列の行頭に # を付けてからファイルにコピーしておけば備忘録のコメントになります。）
+     最初の３つのフィールドはそれぞれリテラル値か、任意のものにマッチする * を指定します。
+     現在の接続パラメータにマッチした最初の行の password フィールドが使用されます。
+     （したがって、ワイルドーカードを使用する場合には、具体的なエントリーの方を先に書きます。）
+     エントリーの中に : か \ を含む必要がある場合には、その文字を \ をつかってエスケープしてください。
+     ホスト名 localhost はローカルマシンからの TCP と Unix ドメインソケットの両方の接続にマッチします。
        </para>
 
        <para>
+       <!--
 	 The permissions on .pcppass must disallow any access to world or
 	 group; achieve this by the command chmod 0600 ~/.pcppass. If the
 	 permissions are less strict than this, the file will be
 	 ignored.
+     -->
+     <filename>.pcppass</filename> のパーミッションはグループおよび全ユーザからのアクセスを許してはいけません。
+     chmod 0600 ~/.pcppass を実行してください。これよりパーミッションの制限が弱い場合には、 このファイルは無視されます。
        </para>
 
      </sect1>
@@ -94,7 +141,10 @@
 
    <partintro>
      <para>
+     <!--
        This part contains reference information for various Pgpool-II commands.
+       -->
+       ここには、他の <productname>Pgpool-II</productname> コマンドのリファレンス情報があります。
      </para>
 
    </partintro>
@@ -104,16 +154,22 @@
    &watchdoglSetup;
 
  </reference>
-   
+
    <reference id="sql-commands">
    <title>SQL type commands</title>
 
    <partintro>
      <para>
+     <!--
        This part contains reference information for various SQL type Pgpool-II commands.
        These commands can be issued inside the SQL session using the standard PostgreSQL
        client like <literal>psql</literal> and are not forwarded to the backend DB instead
        are processed by <productname>Pgpool-II</productname> server
+      -->
+       ここには、SQL 型の <productname>Pgpool-II</productname> コマンドのリファレンス情報があります。
+       これらのコマンドは、<literal>psql</literal> のような標準 <productname>PostgreSQL</productname>
+       のクライアント側から SQL セッション内で発行されますが、バックエンド DB に転送されず、
+       <productname>Pgpool-II</productname> サーバで処理されます。
      </para>
 
    </partintro>
