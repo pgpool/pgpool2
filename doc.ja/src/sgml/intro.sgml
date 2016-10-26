@@ -257,6 +257,42 @@ SELECTクエリをサーバに分散させ、システム全体のスループ�
 
   <para>
 <!--
+    <productname>Pgpool-II</productname> works on Linux, Solaris,
+    FreeBSD, and most of the UNIX-like architectures. Windows is not
+    supported. Supported PostgreSQL server's versions are 6.4 and
+    higher.  If you are using <productname>PostgreSQL</productname>
+    7.3 or older, some features
+    of <productname>Pgpool-II</productname> won't be available. But
+    you shouldn't use such an old release anyway.  You must also make
+    sure that all of your <productname>PostgreSQL</productname>
+    servers are using the same major version. In addition to this, we
+    do not recommend mixing
+    different <productname>PostgreSQL</productname> installation with
+    different build options: including supporting SSL or not, to use
+    &#045;&#045disable-integer-datetimes or not, different block size. These
+    might affect part of functionality
+    of <productname>Pgpool-II</productname>. The difference of
+    <productname>PostgreSQL</productname> minor versions is not
+    usually a problem. However we do not test every occurrence of
+    minor versions and we recommend to use exact same minor version of
+    <productname>PostgreSQL</productname>.
+-->
+<productname>Pgpool-II</productname> は、Linuxをはじめ、SolarisやFreeBSDなどのほとんどのUNIX環境で動作します。
+Windows では動きません。
+対応する<productname>PostgreSQL</productname>のバージョンは、6.4 以降です。
+また、<productname>PostgreSQL</productname> 7.4 より前のバージョンでは、使用できる機能に制限事項があります。
+もっとも、そのような古いバージョンの<productname>PostgreSQL</productname> はそもそも使うべきではありません。
+<productname>Pgpool-II</productname>配下で利用する<productname>PostgreSQL</productname>サーバのメジャーバージョン、
+OS やハードウェアアーキテクチャを同じものにしなければなりません。
+また、バージョンが同じであっても、<productname>PostgreSQL</productname> のビルド方法が違うものを混ぜている場合の動作は保証できません。
+たとえば、SSL サポートの有無、日付型の実装方法 (--disable-integer-datetimes)、ブロックサイズの違いなどは、<productname>Pgpool-II</productname>の一部の機能に影響を与えるでしょう。
+<productname>PostgreSQL</productname> のマイナーバージョンが違う場合は大抵の場合問題になりませんが、
+すべての<productname>PostgreSQL</productname>のマイナーバージョンを検証したわけではないので、
+できればマイナーバージョンを合わせておくことをお勧めします。
+  </para>
+
+  <para>
+<!--
     There are some restrictions to using SQL via <productname>Pgpool-II</productname>.
     See <link linkend="restrictions">Restrictions</link> for more details.
 -->
