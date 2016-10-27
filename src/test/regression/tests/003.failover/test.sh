@@ -5,7 +5,7 @@
 source $TESTLIBS
 TESTDIR=testdir
 PG_CTL=$PGBIN/pg_ctl
-PSQL=$PGBIN/psql
+PSQL="$PGBIN/psql -X "
 
 for mode in s r
 do
