@@ -772,9 +772,11 @@ void send_simplequery_message(POOL_CONNECTION *backend, int len, char *string, i
 }
 
 /*
- * wait_for_query_response_with_trans_cleanup():
- * this function is the wrapper over the wait_for_query_response() function and performs
- * and additional step of canceling the transaction in case of an error from wait_for_query_response()
+ * wait_for_query_response_with_trans_cleanup(): this function is the wrapper
+ * over the wait_for_query_response() function and performs and additional
+ * step of canceling the transaction in case of an error from
+ * wait_for_query_response() if operated in native replication mode to keep
+ * database consistency.
  */
 
 void wait_for_query_response_with_trans_cleanup(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoVersion, int pid, int key)
@@ -785,13 +787,16 @@ void wait_for_query_response_with_trans_cleanup(POOL_CONNECTION *frontend, POOL_
     }
     PG_CATCH();
     {
-        /* Cancel current transaction */
-        CancelPacket cancel_packet;
+		if (REPLICATION)
+		{
+			/* Cancel current transaction */
+			CancelPacket cancel_packet;
         
-        cancel_packet.protoVersion = htonl(PROTO_CANCEL);
-        cancel_packet.pid = pid;
-        cancel_packet.key= key;
-        cancel_request(&cancel_packet);
+			cancel_packet.protoVersion = htonl(PROTO_CANCEL);
+			cancel_packet.pid = pid;
+			cancel_packet.key= key;
+			cancel_request(&cancel_packet);
+		}
         
         PG_RE_THROW();
     }
