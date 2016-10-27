@@ -25,6 +25,18 @@ Pgpool-II documentation
    <command>pgpool</command>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
   </cmdsynopsis>
+  <cmdsynopsis>
+   <command>pgpool</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+   <arg choice="plain"><replaceable>stop</replaceable></arg>
+  </cmdsynopsis>
+
+  <cmdsynopsis>
+   <command>pgpool</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+   <arg choice="plain"><replaceable>reload</replaceable></arg>
+  </cmdsynopsis>
+
  </refsynopsisdiv>
 
  <refsect1 id="R8-PGPOOL-8">
