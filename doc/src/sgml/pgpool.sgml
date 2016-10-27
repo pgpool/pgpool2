@@ -11,7 +11,7 @@
 
 ]>
 
-<book id="postgres">
+<book id="Pgpool-II">
 <!-- needs to be replaced as "pgpool" later -->
 
  <title>pgpool-II &version; Documentation</title>

@@ -23,6 +23,26 @@
   </para>
  </partintro>
 
+ <reference id="server-commands">
+<!--
+   <title>Server commands</title>
+-->
+   <title>サーバコマンド</title>
+
+   <partintro>
+     <para>
+<!--
+       This part contains reference information for server
+       commands. Currently only <command>pgpool</command> falls into
+       this category.
+-->
+ここには、サーバコマンドの情報があります。
+いまのところ、<command>pgpool</command>だけがここに所属しています。
+     </para>
+   </partintro>
+   &pgpool;
+ </reference>
+
  <reference id="pcp-commands">
 <!--
    <title>PCP commands</title>
