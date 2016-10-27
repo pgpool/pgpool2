@@ -744,13 +744,16 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 
 		if (wait_for_query_response(frontend, CONNECTION(backend, i), MAJOR(backend)) != POOL_CONTINUE)
 		{
-			/* Cancel current transaction */
-			CancelPacket cancel_packet;
+			if (REPLICATION)
+			{
+				/* Cancel current transaction */
+				CancelPacket cancel_packet;
 
-			cancel_packet.protoVersion = htonl(PROTO_CANCEL);
-			cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
-			cancel_packet.key= MASTER_CONNECTION(backend)->key;
-			cancel_request(&cancel_packet);
+				cancel_packet.protoVersion = htonl(PROTO_CANCEL);
+				cancel_packet.pid = MASTER_CONNECTION(backend)->pid;
+				cancel_packet.key= MASTER_CONNECTION(backend)->key;
+				cancel_request(&cancel_packet);
+			}
 
 			return POOL_END;
 		}
