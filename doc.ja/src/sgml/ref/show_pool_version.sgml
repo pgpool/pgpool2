@@ -17,27 +17,38 @@
   <refnamediv>
     <refname>SHOW POOL_VERSION</refname>
     <refpurpose>
+    <!--
       displays a string containing
-      the <productname>Pgpool-II</productname> release number.
+      the <productname>Pgpool-II</productname> release number
+      -->
+      <productname>Pgpool-II</productname> のバージョン情報を表示する
     </refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <synopsis>
-      SHOW POOL_VERSION
+SHOW POOL_VERSION
     </synopsis>
   </refsynopsisdiv>
 
   <refsect1>
+  <!--
     <title>Description</title>
+    -->
+    <title>説明</title>
 
     <para>
-      <command>SHOW pool_version</command> displays a string
+      <command>SHOW POOL_VERSION</command>
+      <!--
+      displays a string
       containing the <productname>Pgpool-II</productname> release
       number. Here is an example session:
+      -->
+      は <productname>Pgpool-II</productname> のバージョン情報を表示します。
+      ここでは例を示します。
 <programlisting>
 test=# show pool_version;
-       pool_version       
+       pool_version
 --------------------------
  3.6.0 (subaruboshi)
 (1 row)

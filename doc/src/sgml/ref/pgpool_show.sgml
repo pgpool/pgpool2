@@ -122,7 +122,7 @@ port
   </para>
 
   <para>
-   Show the current setting of the parameter <varname>black_function_list</varname>:
+   Show the current setting of the parameter <xref linkend="guc-black-function-list">:
 <programlisting>
 PGPOOL SHOW black_function_list;
  black_function_list

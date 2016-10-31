@@ -17,7 +17,10 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pg_md5</refname>
   <refpurpose>
+  <!--
 	produces encrypted password in md5</refpurpose>
+    -->
+    md5 暗号化したパスワードを生成する</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -32,15 +35,24 @@ Pgpool-II documentation
  </refsynopsisdiv>
 
  <refsect1 id="R1-PG-MD5-1">
+ <!--
   <title>Description</title>
+  -->
+  <title>説明</title>
   <para>
   <command>pg_md5</command>
+  <!--
   	produces encrypted password in md5.
+    -->
+    md5 暗号化したパスワードを生成します。
   </para>
  </refsect1>
 
  <refsect1>
+ <!--
   <title>Options</title>
+  -->
+  <title>オプション</title>
    <para>
     <variablelist>
 
@@ -49,7 +61,10 @@ Pgpool-II documentation
       <term><option>--prompt</option></term>
       <listitem>
        <para>
-	 Prompt password using standard input.
+       <!--
+	    Prompt password using standard input.
+        -->
+        パスワードを引数に渡したくない場合は <command>pg_md5 -p</command> を実行すると標準入力からパスワードを読み込みます。
        </para>
       </listitem>
      </varlistentry>
@@ -59,7 +74,10 @@ Pgpool-II documentation
       <term><option>--md5auth</option></term>
       <listitem>
        <para>
-	 Produce md5 authentication password.
+       <!--
+	    Produce md5 authentication password.
+        -->
+        md5 認証パスワードを生成します。
        </para>
       </listitem>
      </varlistentry>
@@ -69,7 +87,10 @@ Pgpool-II documentation
       <term><option>--username=<replaceable class="parameter">your_username</replaceable></option></term>
       <listitem>
        <para>
+       <!--
 	 When producing a md5 authentication password, create the pool_passwd entry for <literal>your_username</literal>.
+     -->
+     md5 認証パスワードを生成し、<filename>pool_hba.conf</filename> に <literal>your_username</literal> の md5 認証のエントリを作成します。
        </para>
       </listitem>
      </varlistentry>
@@ -79,16 +100,22 @@ Pgpool-II documentation
  </refsect1>
 
  <refsect1>
+ <!--
   <title>Example</title>
+  -->
+  <title>例</title>
    <para>
+   <!--
 	Here is an example output:
+    -->
+    ここでは例を示します。
     <programlisting>
 pg_md5 -p
 password: [your password]
     </programlisting>
   </para>
   <para>
-  or
+  または
   </para>
     <programlisting>
 ./pg_md5 foo

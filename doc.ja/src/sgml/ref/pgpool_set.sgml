@@ -16,7 +16,10 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>PGPOOL SET</refname>
+  <!--
   <refpurpose>change a configuration parameter</refpurpose>
+  -->
+  <refpurpose>実行時パラメータの設定を変更する</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -26,10 +29,14 @@ SET  <replaceable class="PARAMETER">configuration_parameter</replaceable> { TO |
  </refsynopsisdiv>
 
  <refsect1>
+ <!--
   <title>Description</title>
+  -->
+  <title>説明</title>
 
   <para>
 
+  <!--
    The <command>PGPOOL SET</command> command changes the value of
    <productname>Pgpool-II</productname> configuration parameters for the current session.
 
@@ -42,29 +49,52 @@ SET  <replaceable class="PARAMETER">configuration_parameter</replaceable> { TO |
    <xref linkend="runtime-config"> can be changed on-the-fly with
    <command>PGPOOL SET</command> and it only affects the value used by the current
    session.
+   -->
+
+    <command>PGPOOL SET</command> は現行セッションで <productname>Pgpool-II</productname> の設定パラメータを変更します。
+    このコマンドは <productname>PostgreSQL</productname> の
+    <ulink url="http://www.postgresql.jp/document/9.5/html/sql-set.html">
+    <command>SET</command></ulink> コマンドと似っていますが、
+    <productname>PostgreSQL</productname> の <command>SET</command> コマンドと区別するために、
+    <acronym>PGPOOL</acronym> というキーワードが追加されました。
+    <xref linkend="runtime-config"> に列挙されているパラメータの多くは <command>PGPOOL SET</command> で変更ですますが、
+    現行セッションで使用される値にのみ影響することにご注意ください。
   </para>
 
  </refsect1>
 
   <refsect1>
+  <!--
   <title>Examples</title>
+  -->
+  <title>例</title>
 
   <para>
+  <!--
    Change the value of client_idle_limit parameter:
+   -->
+   パラメータ <xref linkend="guc-client-idle-limit"> の設定値を変更する:
+
     <programlisting>
 PGPOOL SET client_idle_limit = 350;
     </programlisting>
   </para>
 
   <para>
-   Reset the value of client_idle_limit parameter to default:
+  <!--
+    Reset the value of client_idle_limit parameter to default:
+    -->
+    パラメータ <xref linkend="guc-client-idle-limit"> の値をデフォルトの設定にリセットする:
     <programlisting>
 PGPOOL SET client_idle_limit TO DEFAULT;
     </programlisting>
   </para>
 
   <para>
+  <!--
    Change the value of log_min_messages parameter:
+   -->
+   パラメータ <xref linkend="guc-log-min-messages"> の値を変更する:
     <programlisting>
 PGPOOL SET log_min_messages TO INFO;
     </programlisting>
@@ -73,7 +103,10 @@ PGPOOL SET log_min_messages TO INFO;
  </refsect1>
 
   <refsect1>
+  <!--
   <title>See Also</title>
+  -->
+  <title>関連項目</title>
 
   <simplelist type="inline">
    <member><xref linkend="SQL-PGPOOL-RESET"></member>

@@ -20,7 +20,7 @@ Pgpool-II documentation
   <!--
 	displays the information on the given node ID</refpurpose>
     -->
-	指定されたノードの情報を表示します。</refpurpose>
+	指定されたノードの情報を表示する</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -85,12 +85,12 @@ Pgpool-II documentation
  <!--
   <title>Example</title>
   -->
-  <title>出力例</title>
+  <title>例</title>
    <para>
    <!--
 	Here is an example output:
     -->
-    ここでは，出力例を示します。
+    ここでは例を示します。
     <programlisting>
 $ pcp_node_info -h localhost -U postgres 0
 host1 5432 1 1073741823.500000

@@ -23,7 +23,7 @@
 
   <refsynopsisdiv>
     <synopsis>
-      SHOW POOL_NODES
+SHOW POOL_NODES
     </synopsis>
   </refsynopsisdiv>
 
@@ -43,15 +43,13 @@
       using UNIX domain sockets. The SELECT count does not include
       internal queries used
       by <productname>Pgoool-II</productname>. Also the counters are
-      reset to zero upon starting up of pgpool-II.  displays the
-      current value of
-      <productname>Pgpool-II</productname> configuration parameters.
+      reset to zero upon starting up of <productname>Pgpool-II</productname>.
     </para>
     <para>
       Here is an example session:
 <programlisting>
 test=# show pool_nodes;
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
 ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
  0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | false             | 0
  1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | true              | 0

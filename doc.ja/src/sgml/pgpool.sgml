@@ -121,7 +121,10 @@
 -->
 
  <part id="appendixes">
+ <!--
   <title>Appendixes</title>
+  -->
+  <title>付録</title>
 
   <partintro>
     <para>

@@ -57,8 +57,8 @@
        Please note that the parameter format for all PCP commands has been changed since pgpool-II 3.5.
        -->
        ここには <productname>Pgpool-II</productname> の PCP コマンドのリファレンス情報があります。
-       PCP コマンドはネットワーク経由で複数の <productname>pgpool-II</productname> を操作する UNIX コマンドです。
-       注意：<productname>pgpool-II</productname> 3.5 より、全ての PCP コマンドのパラメータ書式が変更されています。
+       PCP コマンドはネットワーク経由で複数の <productname>Pgpool-II</productname> を操作する UNIX コマンドです。
+       注意：<productname>Pgpool-II</productname> 3.5 より、全ての PCP コマンドのパラメータ書式が変更されています。
      </para>
 
      <sect1 id="pcp-connection-authentication">
@@ -76,7 +76,7 @@
      -->
      PCP ユーザ名とパスワードが <filename>$prefix/etc</filename> ディレクトリ内の <filename>pcp.conf</filename>
      で宣言されている必要があります。<filename>pcp.conf</filename> が他の場所にある場合には、
-     <productname>pgpool-II</productname> の起動時に <option>-F</option> オプションで指定することができます。
+     <productname>Pgpool-II</productname> の起動時に <option>-F</option> オプションで指定することができます。
        </para>
      </sect1>
 
@@ -122,7 +122,7 @@ hostname:port:username:password
      最初の３つのフィールドはそれぞれリテラル値か、任意のものにマッチする * を指定します。
      現在の接続パラメータにマッチした最初の行の password フィールドが使用されます。
      （したがって、ワイルドーカードを使用する場合には、具体的なエントリーの方を先に書きます。）
-     エントリーの中に : か \ を含む必要がある場合には、その文字を \ をつかってエスケープしてください。
+     エントリーの中に 「:」 か 「\」 を含む必要がある場合には、その文字を 「\」 をつかってエスケープしてください。
      ホスト名 localhost はローカルマシンからの TCP と Unix ドメインソケットの両方の接続にマッチします。
        </para>
 

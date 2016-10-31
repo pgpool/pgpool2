@@ -17,24 +17,34 @@
   <refnamediv>
     <refname>SHOW POOL_CACHE</refname>
     <refpurpose>
+    <!--
       displays cache storage statistics
+      -->
+      クエリキャッシュのヒット率や、キャッシュストレージの状況を表示する
     </refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <synopsis>
-      SHOW POOL_CACHE
+SHOW POOL_CACHE
     </synopsis>
   </refsynopsisdiv>
 
   <refsect1>
+  <!--
     <title>Description</title>
+    -->
+    <title>説明</title>
 
     <para>
       <command>SHOW POOL_CACHE</command>
+      <!--
       displays <link linkend="runtime-in-memory-query-cache">in memory
       query cache </link> statistics if in memory query cache is
       enabled.  Here is an example session:
+      -->
+      は <link linkend="runtime-in-memory-query-cache"> インメモリクエリキャッシュ</link> が有効である場合に、
+      クエリキャッシュのヒット率や、キャッシュストレージの状況を表示します。 例を示します。
 <programlisting>
 test=# \x
 \x

@@ -17,115 +17,166 @@
   <refnamediv>
     <refname>SHOW POOL_POOLS</refname>
     <refpurpose>
+    <!--
       sends back a list of pools handled
       by <productname>Pgpool-II</productname>.
+      -->
+      <productname>Pgpool-II</productname> のコネクションプールの状態を表示する
     </refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <synopsis>
-      SHOW POOL_POOLS
+SHOW POOL_POOLS
     </synopsis>
   </refsynopsisdiv>
 
   <refsect1>
+  <!--
     <title>Description</title>
+    -->
+    <title>説明</title>
 
     <para>
-      <command>SHOW pool_pools</command> sends back a list of pools
-      handled by
-      <productname>Pgpool-II</productname>
+      <command>SHOW pool_pools</command>
+      <!--
+      sends back a list of pools handled by <productname>Pgpool-II</productname>
+      -->
+      は <productname>Pgpool-II</productname> のコネクションプールの状態を表示します。
     </para>
     <para>
+    <!--
       It has 11 columns:
+      -->
+      11のカラムがあります。
       <itemizedlist>
 	<listitem>
 	  <para>
+      <!--
 	    <literal>pool_pid</literal> is the PID of the
 	    displayed <productname>Pgpool-II</productname> process.
+        -->
+        <literal>pool_pid</literal> は <productname>Pgpool-II</productname> プロセスのプロセス ID です。
 	  </para>
 	</listitem>
 
 	<listitem>
 	  <para>
+      <!--
 	    <literal>start_time</literal> is the timestamp of when
 	    this process was launched.
+        -->
+        <literal>start_time</literal> はこのプロセスが起動された時刻です (1970年1月1日からの経過秒で表示されます)。
 	  </para>
 	</listitem>
 
 	<listitem>
 	  <para>
+      <!--
 	    <literal>pool_id</literal> is the pool identifier (should
 	    be between 0 and <xref linkend="guc-max-pool"> - 1)
+        -->
+        <literal>pool_id</literal> はコネクションプール ID です。(0 から <xref linkend="guc-max-pool"> - 1 の値です)
 	  </para>
 	</listitem>
 
 	<listitem>
 	  <para>
+      <!--
 	    <literal>backend_id</literal> is the backend identifier (should
 	    be between 0 and the number of configured backends minus one)
+        -->
+        <literal>backend_id</literal> は <productname>PostgreSQL</productname>
+        バックエンドの識別子です(0 からバックエンド数 - 1 の値です)
 	  </para>
 	</listitem>
 
 	<listitem>
 	  <para>
+      <!--
 	    <literal>database</literal> is the database name for this
 	    process's pool id connection.
+        -->
+        <literal>database</literal> はこのプロセスが接続しているデータベース名です。
 	  </para>
 	</listitem>
 
 	<listitem>
 	  <para>
+      <!--
 	    <literal>username</literal> is the user name for this
 	    process's pool id connection.
+        -->
+        <literal>username</literal> はこのプロセスの接続で使用しているユーザ名です。
 	  </para>
 	</listitem>
 
 	<listitem>
 	  <para>
+      <!--
 	    <literal>create_time</literal> is the creation time and
 	    date of the connection.
+        -->
+        <literal>create_time</literal> はこの接続が作成された時刻です。
 	  </para>
 	</listitem>
 
 	<listitem>
 	  <para>
+      <!--
 	    <literal>majorversion</literal>
 	    and <literal>minorversion</literal> are the protocol
 	    version numbers used in this connection.
+        -->
+        <literal>majorversion</literal> と <literal>minorversion</literal>
+        はこの接続で使用されているプロトコルバージョン番号です。
 	  </para>
 	</listitem>
 
 	<listitem>
 	  <para>
+      <!--
 	    <literal>pool_counter</literal> counts the number of times
 	    this pool of connections (process) has been used by
 	    clients.
+        -->
+        <literal>pool_counter</literal> はこの接続が使用された回数です。
 	    </para>
 	  </listitem>
 
 	<listitem>
 	  <para>
+      <!--
 	    <literal>pool_backendpid</literal> is the PID of the
 	    PostgreSQL process.
+        -->
+        <literal>pool_backendpid</literal> は <productname>PostgreSQL</productname>
+        のバックエンドプロセスのプロセス ID です。
 	  </para>
 	</listitem>
 
 	<listitem>
 	  <para>
+      <!--
 	    <literal>pool_connected</literal> is true (1) if a
 	    frontend is currently using this backend.
+        -->
+        <literal>pool_connected</literal> は真偽値で、0 ならフロントエンドからの接続無し、1 なら接続ありを表します。
 	  </para>
 	</listitem>
 
 	</itemizedlist>
     </para>
     <para>
+    <!--
       It'll always return <xref linkend="guc-num-init-children"> * <xref linkend="guc-max-pool"> *
       number_of_backends lines.  Here is an example session:
+      -->
+      返却行数は常に <xref linkend="guc-num-init-children"> * <xref linkend="guc-max-pool"> * 「バックエンドの数」になります。
+      ここでは例を示します。
 <programlisting>
 test=# show pool_pools;
- pool_pid |     start_time      | pool_id | backend_id | database | username |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected 
+ pool_pid |     start_time      | pool_id | backend_id | database | username |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected
 ----------+---------------------+---------+------------+----------+----------+---------------------+--------------+--------------+--------------+-----------------+----------------
  19696    | 2016-10-17 13:24:17 | 0       | 0          | postgres | t-ishii  | 2016-10-17 13:35:12 | 3            | 0            | 1            | 20079           | 1
  19696    | 2016-10-17 13:24:17 | 0       | 1          | postgres | t-ishii  | 2016-10-17 13:35:12 | 3            | 0            | 1            | 20080           | 1

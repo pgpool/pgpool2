@@ -24,7 +24,7 @@
 
   <refsynopsisdiv>
     <synopsis>
-      SHOW POOL_POOLS
+SHOW POOL_POOLS
     </synopsis>
   </refsynopsisdiv>
 
@@ -32,7 +32,7 @@
     <title>Description</title>
 
     <para>
-      <command>SHOW pool_pools</command> sends back a list of pools
+      <command>SHOW POOL_POOLS</command> sends back a list of pools
       handled by
       <productname>Pgpool-II</productname>
     </para>
@@ -125,7 +125,7 @@
       number_of_backends lines.  Here is an example session:
 <programlisting>
 test=# show pool_pools;
- pool_pid |     start_time      | pool_id | backend_id | database | username |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected 
+ pool_pid |     start_time      | pool_id | backend_id | database | username |     create_time     | majorversion | minorversion | pool_counter | pool_backendpid | pool_connected
 ----------+---------------------+---------+------------+----------+----------+---------------------+--------------+--------------+--------------+-----------------+----------------
  19696    | 2016-10-17 13:24:17 | 0       | 0          | postgres | t-ishii  | 2016-10-17 13:35:12 | 3            | 0            | 1            | 20079           | 1
  19696    | 2016-10-17 13:24:17 | 0       | 1          | postgres | t-ishii  | 2016-10-17 13:35:12 | 3            | 0            | 1            | 20080           | 1

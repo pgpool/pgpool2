@@ -3,19 +3,19 @@
     Pgpool-II documentation
   -->
 
-<refentry id="SQL-SHOW-PGPOOL-STATUS">
-  <indexterm zone="sql-show-pgpool-status">
+<refentry id="SQL-SHOW-POOL-STATUS">
+  <indexterm zone="sql-show-pool-status">
     <primary>SHOW</primary>
   </indexterm>
 
   <refmeta>
-    <refentrytitle>SHOW PGPOOL STATUS</refentrytitle>
+    <refentrytitle>SHOW POOL STATUS</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo>SQL - Language Statements</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>SHOW PGPOOL STATUS</refname>
+    <refname>SHOW POOL STATUS</refname>
     <refpurpose>
       sends back the list of configuration parameters with their name,
       value, and description
@@ -24,7 +24,7 @@
 
   <refsynopsisdiv>
     <synopsis>
-      SHOW POOL_STATUS
+SHOW POOL_STATUS
     </synopsis>
   </refsynopsisdiv>
 

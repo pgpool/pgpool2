@@ -39,7 +39,10 @@ For new features, add links to the documentation sections.
 -->
 
 <appendix id="release">
+<!--
  <title>Release Notes</title>
+ -->
+ <title>リリースノート</title>
 
   <para>
    The release notes contain the significant changes in each

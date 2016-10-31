@@ -24,7 +24,7 @@
 
   <refsynopsisdiv>
     <synopsis>
-      SHOW POOL_VERSION
+SHOW POOL_VERSION
     </synopsis>
   </refsynopsisdiv>
 
@@ -32,12 +32,12 @@
     <title>Description</title>
 
     <para>
-      <command>SHOW pool_version</command> displays a string
+      <command>SHOW POOL_VERSION</command> displays a string
       containing the <productname>Pgpool-II</productname> release
       number. Here is an example session:
 <programlisting>
 test=# show pool_version;
-       pool_version       
+       pool_version
 --------------------------
  3.6.0 (subaruboshi)
 (1 row)

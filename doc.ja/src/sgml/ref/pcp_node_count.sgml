@@ -21,7 +21,7 @@ Pgpool-II documentation
   displays the total number of database nodes</refpurpose>
   -->
   <refpurpose>
-  <productname>pgpool-II</productname> の <filename>pgpool.conf</filename> で定義されたノードの総数を表示します。</refpurpose>
+  <productname>Pgpool-II</productname> の <filename>pgpool.conf</filename> で定義されたノードの総数を表示する</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -44,7 +44,7 @@ Pgpool-II documentation
   displays the total number of database nodes defined in <filename>pgpool.conf</filename>. It does
   not distinguish between nodes status, ie attached/detached. ALL nodes are counted.
   -->
-  <productname>pgpool-II</productname> の <filename>pgpool.conf</filename>
+  は <productname>Pgpool-II</productname> の <filename>pgpool.conf</filename>
   で定義されたノードの総数を表示します。 切り離されているノードの区別はしません。
   </para>
  </refsect1>
@@ -66,12 +66,12 @@ Pgpool-II documentation
  <!--
   <title>Example</title>
   -->
-  <title>出力例</title>
+  <title>例</title>
    <para>
    <!--
 	Here is an example output:
     -->
-    ここでは，出力例を示します。
+    ここでは例を示します。
     <programlisting>
 $ pcp_node_count -p 11001
 Password:

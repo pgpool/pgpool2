@@ -52,7 +52,6 @@ Pgpool-II documentation
 
   <para>
     Currently <application>watchdog_setup</application> supports streaming replication mode, native replication mode and raw mode.
-    Watchdog is not supported yet.
   </para>
  </refsect1>
 
@@ -223,8 +222,8 @@ Pgpool-II documentation
   <title>Example</title>
    <para>
 <screen>
-$ watchdog_setup 
-Satrting set up 
+$ watchdog_setup
+Satrting set up
 ============= setting up pgpool 0 =============
 Satrting set up in streaming replication mode
 creating startall and shutdownall
@@ -242,7 +241,7 @@ creating recovery.conf
 temporarily start data0 cluster to create extensions
 temporarily start pgpool-II to create standby nodes
 INFO:  unrecognized configuration parameter "debug_level"
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
 ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
  0       | /tmp     | 51000 | up     | 0.500000  | primary | 0          | true              | 0
  1       | /tmp     | 51001 | down   | 0.500000  | standby | 0          | false             | 0
@@ -252,7 +251,7 @@ recovery node 1...pcp_recovery_node -- Command Successful
 done.
 creating follow master script
 Pager usage is off.
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
 ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
  0       | /tmp     | 51000 | up     | 0.500000  | primary | 0          | false             | 0
  1       | /tmp     | 51001 | up     | 0.500000  | standby | 0          | true              | 0
@@ -287,7 +286,7 @@ creating recovery.conf
 temporarily start data0 cluster to create extensions
 temporarily start pgpool-II to create standby nodes
 INFO:  unrecognized configuration parameter "debug_level"
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
 ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
  0       | /tmp     | 51000 | up     | 0.500000  | primary | 0          | true              | 0
  1       | /tmp     | 51001 | down   | 0.500000  | standby | 0          | false             | 0
@@ -297,7 +296,7 @@ recovery node 1...pcp_recovery_node -- Command Successful
 done.
 creating follow master script
 Pager usage is off.
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
 ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
  0       | /tmp     | 51000 | up     | 0.500000  | primary | 0          | true              | 0
  1       | /tmp     | 51001 | up     | 0.500000  | standby | 0          | false             | 0
@@ -332,7 +331,7 @@ creating recovery.conf
 temporarily start data0 cluster to create extensions
 temporarily start pgpool-II to create standby nodes
 INFO:  unrecognized configuration parameter "debug_level"
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
 ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
  0       | /tmp     | 51000 | up     | 0.500000  | primary | 0          | true              | 0
  1       | /tmp     | 51001 | down   | 0.500000  | standby | 0          | false             | 0
@@ -342,7 +341,7 @@ recovery node 1...pcp_recovery_node -- Command Successful
 done.
 creating follow master script
 Pager usage is off.
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
 ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
  0       | /tmp     | 51000 | up     | 0.500000  | primary | 0          | true              | 0
  1       | /tmp     | 51001 | up     | 0.500000  | standby | 0          | false             | 0
@@ -364,7 +363,7 @@ The info above is in README.port.
 $ ls
 pgpool0  pgpool1  pgpool2  shutdownall	startall
 
-$ sh startall 
+$ sh startall
 waiting for server to start....16123 2016-08-18 16:26:53 JST LOG:  redirecting log output to logging collector process
 16123 2016-08-18 16:26:53 JST HINT:  Future log output will appear in directory "pg_log".
  done
@@ -383,8 +382,8 @@ Type "help" for help.
 test=# \q
 
 $ pcp_watchdog_info -p 50001 -v
-Password: 
-Watchdog Cluster Information 
+Password:
+Watchdog Cluster Information
 Total Nodes          : 3
 Remote Nodes         : 2
 Quorum state         : QUORUM EXIST
@@ -393,7 +392,7 @@ VIP up on local node : NO
 Master Node Name     : Linux_tishii-CF-SX3HE4BP_50004
 Master Host Name     : localhost
 
-Watchdog Node Information 
+Watchdog Node Information
 Node Name      : Linux_tishii-CF-SX3HE4BP_50000
 Host Name      : localhost
 Delegate IP    : Not_Set

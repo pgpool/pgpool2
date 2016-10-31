@@ -16,7 +16,10 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>PGPOOL SHOW</refname>
+  <!--
   <refpurpose>show the value of a configuration parameter</refpurpose>
+  -->
+  <refpurpose>パラメータの設定値を表示する</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -28,9 +31,13 @@ PGPOOL SHOW ALL
  </refsynopsisdiv>
 
  <refsect1>
+ <!--
   <title>Description</title>
+  -->
+  <title>説明</title>
 
   <para>
+  <!--
    <command>PGPOOL SHOW</command> will display the current value of
    <productname>Pgpool-II</productname> configuration parameters.
 
@@ -39,11 +46,23 @@ PGPOOL SHOW ALL
     <command>SHOW</command></ulink> command in PostgreSQL with an addition
     of <acronym>PGPOOL</acronym> keyword to distinguish it from the
     PostgreSQL SHOW command.
+    -->
+
+   <command>PGPOOL SHOW</command> は 実行時 <productname>Pgpool-II</productname> のパラメータの設定値を表示します。
+   このコマンドは PostgreSQL の
+    <ulink url="http://www.postgresql.jp/document/9.5/html/sql-show.html">
+    <command>SHOW</command></ulink> コマンドと似ていますが、
+    <productname>PostgreSQL</productname> の <command>SHOW</command> コマンドと区別するために、
+    <acronym>PGPOOL</acronym> というキーワードが追加されました。
+
   </para>
  </refsect1>
 
 <refsect1>
+<!--
   <title>Parameters</title>
+  -->
+  <title>パラメータ</title>
 
   <variablelist>
 
@@ -51,8 +70,12 @@ PGPOOL SHOW ALL
     <term><replaceable class="PARAMETER">configuration_parameter</replaceable></term>
     <listitem>
       <para>
+      <!--
         The name of a <productname>Pgpool-II</productname> configuration parameter.
         Available parameters are documented in <xref linkend="runtime-config">
+        -->
+        <productname>Pgpool-II</productname> の設定パラメータ名です。指定可能なパラメータ名は
+        <xref linkend="runtime-config"> をご参照ください。
       </para>
     </listitem>
   </varlistentry>
@@ -61,15 +84,22 @@ PGPOOL SHOW ALL
     <term><replaceable class="PARAMETER">configuration_parameter_group</replaceable></term>
     <listitem>
       <para>
+      <!--
         The name of the <productname>Pgpool-II</productname> configuration parameter group.
         Currently there are three parameter groups.
+        -->
+        <productname>Pgpool-II</productname> の設定パラメータのグループ名です。
+        現在、指定可能なパラメータグループは以下の 3つです。
       </para>
         <variablelist>
           <varlistentry>
           <term><literal>backend</literal></term>
           <listitem>
           <para>
+          <!--
             Configuration group of all backend config parameters.
+            -->
+            すべてのバックエンドグループのパラメータの設定値。
           </para>
           </listitem>
         </varlistentry>
@@ -78,7 +108,10 @@ PGPOOL SHOW ALL
           <term><literal>other_pgpool</literal></term>
           <listitem>
           <para>
+          <!--
             Configuration group of all watchdog node config parameters.
+            -->
+            すべての watchdog ノードのパラメータの設定値。
           </para>
           </listitem>
         </varlistentry>
@@ -87,7 +120,10 @@ PGPOOL SHOW ALL
           <term><literal>heartbeat</literal></term>
           <listitem>
           <para>
+          <!--
             configuration group of all watchdog heartbeat node config parameters.
+            -->
+            すべての watchdog heartbeat ノードのパラメータの設定値。
           </para>
           </listitem>
         </varlistentry>
@@ -99,7 +135,10 @@ PGPOOL SHOW ALL
     <term><literal>ALL</literal></term>
     <listitem>
      <para>
+     <!--
       Show the values of all configuration parameters, with descriptions.
+      -->
+      すべてのパラメータの設定値と説明を表示します。
      </para>
     </listitem>
    </varlistentry>
@@ -107,10 +146,16 @@ PGPOOL SHOW ALL
  </refsect1>
 
  <refsect1>
+ <!--
   <title>Examples</title>
+  -->
+  <title>例</title>
 
   <para>
+  <!--
    Show the current setting of the parameter <varname>port</varname>:
+   -->
+   パラメータ <varname>port</varname> の現在の設定値を表示:
 
 <programlisting>
 PGPOOL SHOW port;
@@ -122,7 +167,10 @@ port
   </para>
 
   <para>
+  <!--
    Show the current setting of the parameter <varname>black_function_list</varname>:
+   -->
+   パラメータ <xref linkend="guc-black-function-list"> の現在の設定値を表示:
 <programlisting>
 PGPOOL SHOW black_function_list;
  black_function_list
@@ -133,7 +181,10 @@ PGPOOL SHOW black_function_list;
   </para>
 
  <para>
+ <!--
    Show the current settings of all the configuration parameters belonging to backend group:
+   -->
+   バックエンドグループのすべてのパラメータの設定値を表示する:
 <programlisting>
   PGPOOL SHOW backend;
  item                     |          value          |              description
@@ -152,7 +203,10 @@ PGPOOL SHOW black_function_list;
 </programlisting></para>
 
   <para>
+  <!--
    Show all settings:
+   -->
+   全設定を表示:
 <programlisting>
  PGPOOL SHOW ALL;
  item                     |          value          |              description
@@ -178,7 +232,10 @@ PGPOOL SHOW black_function_list;
  </refsect1>
 
  <refsect1>
+ <!--
   <title>See Also</title>
+  -->
+  <title>関連項目</title>
 
   <simplelist type="inline">
    <member><xref linkend="SQL-PGPOOL-SET"></member>
