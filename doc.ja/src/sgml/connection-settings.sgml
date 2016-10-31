@@ -97,7 +97,7 @@ UNIXドメインソケット経由の接続は常に受け付けます。
 <productname>Pgpool-II</productname>が接続を受け付けるUNIXドメインソケットを置くディレクトリです。
 デフォルト値は<literal>/tmp</literal>です。
 このソケットは、cron によって削除されることがあるので注意してください。
-<literal>/var/run</literal>などのディレクトリに変更することをお勧めします。 
+<literal>/var/run</literal>などのディレクトリに変更することをお勧めします。
 		</para>
 		<para>
 <!--
@@ -191,7 +191,7 @@ PCPプロセスが接続を受け付けるために監視するポート番号�
 PCPプロセスが接続を受け付けるUNIXドメインソケットを置くディレクトリです。
 デフォルト値は<literal>/tmp</literal>です。
 このソケットは、cron によって削除されることがあるので注意してください。
-<literal>/var/run</literal>などのディレクトリに変更することをお勧めします。 
+<literal>/var/run</literal>などのディレクトリに変更することをお勧めします。
 		</para>
 		<para>
 <!--
@@ -274,7 +274,7 @@ net.core.somaxconn = 128
 <!--
 You could add following to /etc/sysctl.conf instead.
 -->
-/etc/sysctl.confに以下のように書いても構いません。 
+/etc/sysctl.confに以下のように書いても構いません。
 			<programlisting>
 net.core.somaxconn = 256
 			</programlisting>
@@ -357,7 +357,7 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
 						Default is <literal>false</literal>
 -->
 <literal>true</literal>の場合、<productname>Pgpool-II</productname>はクライアント認証に<filename>pool_hba.conf</filename>を使用します。
-クライアント認証のため<filename>pool_hba.conf</filename>を設定する方法について、詳細は<xref linkend="auth-pool-hba-conf">を参照してください。 
+クライアント認証のため<filename>pool_hba.conf</filename>を設定する方法について、詳細は<xref linkend="auth-pool-hba-conf">を参照してください。
 デフォルトは<literal>false</literal>です。
 
 					</para>
@@ -384,7 +384,7 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
 <!--
 						Specify the password file name for md5 authentication.
 						Default value is <literal>"pool_passwd"</literal>.
-						Specifying <literal>''</literal> (empty) disables the use of password file. 
+						Specifying <literal>''</literal> (empty) disables the use of password file.
 						See <xref linkend="auth-md5"> for more details.
 -->
 md5 認証で用いるパスワードのファイルのファイル名を指定します。
@@ -419,7 +419,7 @@ md5 認証で用いるパスワードのファイルのファイル名を指定�
 -->
 <productname>Pgpool-II</productname>の認証処理のタイムアウト時間を秒単位で指定します。
 0 を指定するとタイムアウトを無効にします。
-デフォルト値は60です。 
+デフォルト値は60です。
 					</para>
 					<para>
 <!--
@@ -953,7 +953,7 @@ COMMIT;
 						automatically detects whether the table has a SERIAL columns or not,
 						so it never  locks the table if it desn't have the SERIAL columns.
 -->
-<productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>以降では、テーブルがSERIAL列を持つかどうか自動判別するため、SERIAL列がなければ決してテーブルをロックしません。 
+<productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>以降では、テーブルがSERIAL列を持つかどうか自動判別するため、SERIAL列がなければ決してテーブルをロックしません。
 					</para>
 
 					<para>
@@ -976,7 +976,7 @@ COMMIT;
 しかし、これは他の問題を引き起こします。
 トランザクション周回が起きた後、シーケンステーブルに対する行ロックはPostgreSQLの内部エラー (詳細には、トランザクション状態を保持するpg_clogへのアクセスエラー)を起こします。
 これを防ぐため、PostgreSQLのコア開発者はシーケンステーブルに対する行ロックを許可しないことを決定しました。
-これはもちろん<productname>Pgpool-II</productname>を動作不能にします(修正されたPostgreSQLはバージョン 9.0.5, 8.4.9, 8.3.16そして8.2.22としてリリースされました)。 
+これはもちろん<productname>Pgpool-II</productname>を動作不能にします(修正されたPostgreSQLはバージョン 9.0.5, 8.4.9, 8.3.16そして8.2.22としてリリースされました)。
 
 					</para>
 
@@ -1006,7 +1006,7 @@ COMMIT;
 						See <xref linkend="install-pgpool"> for more details.
 -->
 過去のバージョンと互換性のある<varname>insert_lock</varname>を使用したい場合は、configureスクリプトでロック方法を指定できます。
-詳細は<xref linkend="install-pgpool">をご覧下さい。 
+詳細は<xref linkend="install-pgpool">をご覧下さい。
 					</para>
 
 					<para>
@@ -1063,7 +1063,7 @@ end of transaction block
 -->
 たとえば、transactionsテストでは、存在しないテーブルに対してINSERTを試みており、<productname>Pgpool-II</productname>は<productname>PostgerSQL</productname>にそのテーブルのロックを獲得させることになります。
 これはもちろんエラーとなります。
-トランザクションがアボート状態になり、続くINSERTでは上記エラーが出てしまいます。 
+トランザクションがアボート状態になり、続くINSERTでは上記エラーが出てしまいます。
 						</para>
 					</note>
 					<para>
@@ -1104,7 +1104,7 @@ end of transaction block
 -->
 ラージオブジェクトのレプリケーションを行いたいときにロック管理に使うためのテーブル名を指定します。
 このテーブルが指定されてる場合、<productname>Pgpool-II</productname>は、<varname>lobj_lock_table</varname>で指定されているテーブルをロックした後、<literal>pg_largeobject</literal>システムカタログを参照してラージオブジェクトIDを生成し、<literal>lo_create()</literal>を呼び出してラージオブジェクトの作成を行います。
-この方法により、レプリケーションモードにおいて<productname>Pgpool-II</productname>が全てのDBノードで同じラージオブジェクトIDを得られることが保証されます。 
+この方法により、レプリケーションモードにおいて<productname>Pgpool-II</productname>が全てのDBノードで同じラージオブジェクトIDを得られることが保証されます。
 
 						</para>
 						<note>
@@ -1178,7 +1178,7 @@ end of transaction block
 <!--
 						Example to create a large object lock table:
 -->
-ラージオブジェクトロックテーブルを作る例を示します。 
+ラージオブジェクトロックテーブルを作る例を示します。
 						<programlisting>
 CREATE TABLE public.my_lock_table ();
 GRANT ALL ON public.my_lock_table TO PUBLIC;
@@ -1246,7 +1246,7 @@ GRANT ALL ON public.my_lock_table TO PUBLIC;
 TCP/IP通信では、このパラメータはホスト名またはIPアドレスをとることができます。
 スラッシュ（<literal>/</literal>）で始まる場合、TCP/IPではなくUNIXドメインでの通信が使用され、値はソケットファイルが作成されるディレクトリ名となります。
 となしてそこにソケットファイルが作成されることになります。
-<varname>backend_hostname</varname>に空文字(<literal>''</literal>)が指定された場合のデフォルトの動作は、<filename>/tmp</filename>に作成したUNIXドメインソケットで接続します。 
+<varname>backend_hostname</varname>に空文字(<literal>''</literal>)が指定された場合のデフォルトの動作は、<filename>/tmp</filename>に作成したUNIXドメインソケットで接続します。
 		</para>
 
 		<para>
@@ -1298,7 +1298,7 @@ DBノードIDが0のバックエンドは「マスターノード」と呼ばれ
 			that case.
 -->
 新しいノードはパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
-ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。 
+ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。
 		</para>
 
 	</listitem>
@@ -1336,7 +1336,7 @@ DBノードIDが0のバックエンドは「マスターノード」と呼ばれ
 			that case.
 -->
 新しいノードはパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
-ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。 
+ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。
 		</para>
 
 	</listitem>
@@ -1382,7 +1382,7 @@ DBノードIDが0のバックエンドは「マスターノード」と呼ばれ
 backend_weight は新しく追加した行を設定ファイル再読み込みで追加することができます。
 <productname>Pgpool-II</> <emphasis>V2.2.6</>、<emphasis>V2.3</>以降では、設定ファイルの再読込みで値を変更できます。
 ただし、この効果が反映されるのは新しく確立されたクライアントセッションからです。
-マスタースレーブモードにおいて、スレーブに対して管理業務を実施する都合上、問い合わせがそのスレーブに送られるのを防ぎたい場合に有用です。 
+マスタースレーブモードにおいて、スレーブに対して管理業務を実施する都合上、問い合わせがそのスレーブに送られるのを防ぎたい場合に有用です。
 		</para>
 	</listitem>
 			</varlistentry>
@@ -1431,7 +1431,7 @@ backend_weight は新しく追加した行を設定ファイル再読み込み�
 			that case.
 -->
 新しい<varname>backend_data_directory</>はパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
-ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。 
+ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。
 		</para>
 	</listitem>
 			</varlistentry>
@@ -1466,7 +1466,7 @@ backend_weight は新しく追加した行を設定ファイル再読み込み�
 			be specified by using "|".
 -->
 新しいバックエンドフラグはパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
-現在以下のものがあります。 
+現在以下のものがあります。
 複数のフラグを"|"で連結して指定することができます。
 		</para>
 
@@ -1494,7 +1494,7 @@ backend_weight は新しく追加した行を設定ファイル再読み込み�
 -->
 			<entry>フェイルオーバやデタッチが可能になります。
 			これがデフォルトの動作です。
-			DISALLOW_TO_FAILOVERと同時には指定できません。 
+			DISALLOW_TO_FAILOVERと同時には指定できません。
 			</entry>
 		</row>
 		<row>
@@ -1509,7 +1509,7 @@ backend_weight は新しく追加した行を設定ファイル再読み込み�
 -->
 			<entry>フェイルオーバやデタッチを禁止します。
 			<productname>Heartbeat</>や<productname>Pacemaker</>などのHA(High Availability)ソフトでバックエンドを保護しているなどの場合に有用です。
-			ALLOW_TO_FAILOVERと同時には指定できません。 
+			ALLOW_TO_FAILOVERと同時には指定できません。
 			</entry>
 		</row>
 				</tbody>

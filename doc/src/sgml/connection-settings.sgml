@@ -239,7 +239,7 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
 					<para>
 						Specify the password file name for md5 authentication.
 						Default value is <literal>"pool_passwd"</literal>.
-						Specifying <literal>''</literal> (empty) disables the use of password file. 
+						Specifying <literal>''</literal> (empty) disables the use of password file.
 						See <xref linkend="auth-md5"> for more details.
 					</para>
 					<para>
