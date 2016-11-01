@@ -117,6 +117,7 @@ onに設定すると、負荷分散の際にSQL文行頭の空白を無視しま
         <indexterm>
 <!--
           <primary><varname>white_function_list</varname> configuration parameter</primary>
+-->
           <primary><varname>white_function_list</varname> 設定パラメータ</primary>
         </indexterm>
       </term>
