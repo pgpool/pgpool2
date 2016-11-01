@@ -11,8 +11,8 @@
     or degeneration depending on the configurations.
     <caution>
       <para>
-      Health check requires one extra connection to each backend,
-      so max_connections in the <filename>postgresql.conf</filename>
+      Health check requires one extra connection to each backend node,
+      so <literal>max_connections</> in the <filename>postgresql.conf</filename>
       needs to be adjusted accordingly.
       </para>
     </caution>
@@ -29,15 +29,15 @@
   <listitem>
     <para>
       Specifies the timeout in seconds to give up connecting to the backend
-      PostgreSQL if the TCP connect does not succeed within this time.
+      <productname>PostgreSQL</> if the TCP connect does not succeed within this time.
     </para>
     <para>
       This parameter serves to prevent the health check from waiting for a
-      long time in a case such as unplugged network cable.
+      long time when the network cable is unplugged.
       Default value is 20. Setting it to 0, disables the timeout (waits until TCP/IP timeout).
     </para>
     <para>
-      This parameter can be changed by reloading the pgpool configurations.
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
     </para>
 	  </listitem>
    </varlistentry>
@@ -54,7 +54,7 @@
       Default is 0, which means health check is disabled.
     </para>
     <para>
-     This parameter can be changed by reloading the pgpool configurations.
+     This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
     </para>
     </listitem>
    </varlistentry>
@@ -67,12 +67,12 @@
     </term>
     <listitem>
       <para>
-        Specifies the PostgreSQL user name to perform health check.
-        The same user must exist in all the PostgreSQL backends.
+        Specifies the <productname>PostgreSQL</> user name to perform health check.
+        The same user must exist in all the <productname>PostgreSQL</> backends.
         Otherwise, health check causes an error.
       </para>
       <para>
-        This parameter can be changed by reloading the pgpool configurations.
+        This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
       </para>
     </listitem>
    </varlistentry>
@@ -85,13 +85,13 @@
     </term>
     <listitem>
       <para>
-        Specifies the password for the PostgreSQL user name configured in
+        Specifies the password for the <productname>PostgreSQL</> user name configured in
         <xref linkend="guc-health-check-user"> to perform health check.
-        The user and password must be same in all the PostgreSQL backends.
-        Otherwise, health check causes an error.
+        The user and password must be same in all the <productname>PostgreSQL</> backends.
+        Otherwise, health check results in an error.
       </para>
       <para>
-        This parameter can be changed by reloading the pgpool configurations.
+        This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
       </para>
     </listitem>
   </varlistentry>
@@ -113,7 +113,7 @@
         <productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>.
       </para>
       <para>
-	      This parameter can be changed by reloading the pgpool configurations.
+	      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
       </para>
     </listitem>
   </varlistentry>
@@ -126,25 +126,24 @@
     </term>
     <listitem>
       <para>
-        Specifies the maximum number of retries to do with a failed health check
-        before giving up and initiating failover.
+        Specifies the maximum number of retries to do before giving up and
+	    initiating failover when health check fails.
         <tip>
           <para>
             This setting can be useful in spotty networks, when it is expected that
-            health checks will fail occasionally even when the master is fine.
-            It is advised that you disable fail_over_on_backend_error if you want to enable health_check_max_retries.
+            health checks will fail occasionally even when the master node is fine.
           </para>
         </tip>
         <tip>
           <para>
-            It is advised that fail_over_on_backend_error must be disabled,
-            if you want to enable health_check_max_retries.
+            It is advised that <xref linkend="guc-fail-over-on-backend-error"> must be disabled,
+            if you want to enable <varname>health_check_max_retries</>.
           </para>
         </tip>
         Default is 0, which means do not retry.
       </para>
       <para>
-        This parameter can be changed by reloading the pgpool configurations.
+        This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
       </para>
     </listitem>
   </varlistentry>
@@ -157,12 +156,12 @@
     </term>
     <listitem>
       <para>
-        Specifies the amount of time (in seconds) to sleep between failed
+        Specifies the amount of time in seconds to sleep between failed
         health check retries (not used unless <xref linkend="guc-health-check-max-retries"> is > 0).
-        If 0, then retries are immediate (no delay).
+        If 0, then retries are immediate without delay.
       </para>
       <para>
-        This parameter can be changed by reloading the pgpool configurations.
+        This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
       </para>
     </listitem>
   </varlistentry>
@@ -176,7 +175,7 @@
     <listitem>
       <para>
         Specifies the amount of time in milliseconds before giving up connecting
-        to backend using connect() system call.
+        to backend using <function>connect()</> system call.
         Default is 10000 ms (10 second). The flaky network user may want to increase the value.
         0 means no timeout.
         <note>
@@ -187,7 +186,7 @@
         </note>
       </para>
       <para>
-        This parameter can be changed by reloading the pgpool configurations.
+        This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
       </para>
 	  </listitem>
    </varlistentry>
