@@ -1437,7 +1437,7 @@ backend_weight は新しく追加した行を設定ファイル再読み込み�
 			</varlistentry>
 
 			<varlistentry id="guc-backend-flag" xreflabel="backend_flag">
-	<term><varname>backend_flag</varname> (<type>enum</type>)
+	<term><varname>backend_flag</varname> (<type>string</type>)
 		<indexterm>
 <!--
 			<primary><varname>backend_flag</varname> configuration parameter</primary>

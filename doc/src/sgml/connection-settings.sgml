@@ -930,7 +930,7 @@ GRANT ALL ON public.my_lock_table TO PUBLIC;
 			</varlistentry>
 
 			<varlistentry id="guc-backend-flag" xreflabel="backend_flag">
-	<term><varname>backend_flag</varname> (<type>enum</type>)
+	<term><varname>backend_flag</varname> (<type>string</type>)
 		<indexterm>
 			<primary><varname>backend_flag</varname> configuration parameter</primary>
 		</indexterm>
