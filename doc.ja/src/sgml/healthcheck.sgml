@@ -1,19 +1,30 @@
 <!-- doc/src/sgml/config.sgml -->
 
 <sect1 id="runtime-config-health-check">
+<!--
   <title>Health Check</title>
+-->
+  <title>ヘルスチェック</title>
 
   <para>
+<!--
     <productname>Pgpool-II</productname> periodically connects to the configured
     PostgreSQL backends to detect any error on the servers or networks.
     This error check procedure is called "health check".
     If an error is detected, <productname>Pgpool-II</productname> performs failover
     or degeneration depending on the configurations.
+-->
+<productname>Pgpool-II</productname>はサーバネットワークの障害を検知するために、設定されたバックエンドに定期的に接続を試みます。
+この障害チェックの手続きを「ヘルスチェック」と言います。
+障害が検知されると、<productname>Pgpool-II</productname>は設定に基づいてフェイルオーバや縮退運転を試みます。 
     <caution>
       <para>
-      Health check requires one extra connection to each backend,
-      so max_connections in the <filename>postgresql.conf</filename>
+<!--
+      Health check requires one extra connection to each backend node,
+      so <literal>max_connections</> in the <filename>postgresql.conf</filename>
       needs to be adjusted accordingly.
+-->
+ヘルスチェックは各バックエンドノードへの余分の接続を1つ必要としますので、<filename>postgresql.conf</filename>の<literal>max_connections</>もそれに応じて調整する必要があります。
       </para>
     </caution>
   </para>
@@ -23,21 +34,34 @@
    <varlistentry id="guc-health-check-timeout" xreflabel="health_check_timeout">
     <term><varname>health_check_timeout</varname> (<type>integer</type>)
       <indexterm>
+<!--
        <primary><varname>health_check_timeout</varname> configuration parameter</primary>
+-->
+       <primary><varname>health_check_timeout</varname> 設定パラメータ</primary>
       </indexterm>
     </term>
   <listitem>
     <para>
+<!--
       Specifies the timeout in seconds to give up connecting to the backend
-      PostgreSQL if the TCP connect does not succeed within this time.
+      <productname>PostgreSQL</> if the TCP connect does not succeed within this time.
+-->
+TCP接続が時間内に成功せずにバックエンドの<productname>PostgreSQL</>への接続を諦めるまでのタイムアウト値を秒単位で指定します。 
     </para>
     <para>
+<!--
       This parameter serves to prevent the health check from waiting for a
-      long time in a case such as unplugged network cable.
+      long time when the network cable is unplugged, for example.
       Default value is 20. Setting it to 0, disables the timeout (waits until TCP/IP timeout).
+-->
+このパラメータは、ネットワークケーブルが抜けた際などにヘルスチェックが長時間待たされるのを防止します。
+デフォルトは20秒です。0を指定するとタイムアウト処理をしません (TCP/IP のタイムアウトまで待ちます)。 
     </para>
     <para>
-      This parameter can be changed by reloading the pgpool configurations.
+<!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+-->
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
     </para>
 	  </listitem>
    </varlistentry>
@@ -45,16 +69,26 @@
    <varlistentry id="guc-health-check-period" xreflabel="health_check_period">
     <term><varname>health_check_period</varname> (<type>integer</type>)
       <indexterm>
+<!--
         <primary><varname>health_check_period</varname> configuration parameter</primary>
+-->
+        <primary><varname>health_check_period</varname> 設定パラメータ</primary>
       </indexterm>
     </term>
     <listitem>
     <para>
+<!--
       Specifies the interval between the health checks in seconds.
       Default is 0, which means health check is disabled.
+-->
+ヘルスチェックの間隔を秒単位で指定します。
+デフォルトは0で、これはヘルスチェックが無効であることを意味します。
     </para>
     <para>
-     This parameter can be changed by reloading the pgpool configurations.
+<!--
+     This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+-->
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
     </para>
     </listitem>
    </varlistentry>
@@ -62,17 +96,28 @@
    <varlistentry id="guc-health-check-user" xreflabel="health_check_user">
     <term><varname>health_check_user</varname> (<type>string</type>)
       <indexterm>
+<!--
         <primary><varname>health_check_user</varname> configuration parameter</primary>
+-->
+        <primary><varname>health_check_user</varname> 設定パラメータ</primary>
       </indexterm>
     </term>
     <listitem>
       <para>
-        Specifies the PostgreSQL user name to perform health check.
-        The same user must exist in all the PostgreSQL backends.
-        Otherwise, health check causes an error.
+<!--
+        Specifies the <productname>PostgreSQL</> user name to perform health check.
+        The same user must exist in all the <productname>PostgreSQL</> backends.
+        Otherwise, health check results in an error.
+-->
+ヘルスチェックを行う<productname>PostgreSQL</>ユーザ名を指定します。
+同じユーザ名が全ての<productname>PostgreSQL</>バックエンドに存在していなければなりません。
+さもないと、ヘルスチェックがエラーとなります。
       </para>
       <para>
-        This parameter can be changed by reloading the pgpool configurations.
+<!--
+        This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+-->
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
       </para>
     </listitem>
    </varlistentry>
@@ -80,18 +125,29 @@
    <varlistentry id="guc-health-check-password" xreflabel="health_check_password">
     <term><varname>health_check_password</varname> (<type>string</type>)
       <indexterm>
+<!--
         <primary><varname>health_check_password</varname> configuration parameter</primary>
+-->
+        <primary><varname>health_check_password</varname> 設定パラメータ</primary>
       </indexterm>
     </term>
     <listitem>
       <para>
-        Specifies the password for the PostgreSQL user name configured in
+<!--
+        Specifies the password for the <productname>PostgreSQL</> user name configured in
         <xref linkend="guc-health-check-user"> to perform health check.
-        The user and password must be same in all the PostgreSQL backends.
-        Otherwise, health check causes an error.
+        The user and password must be same in all the <productname>PostgreSQL</> backends.
+        Otherwise, health check results in an error.
+-->
+<xref linkend="guc-health-check-user">で設定したヘルスチェックを行う<productname>PostgreSQL</>ユーザ名のパスワードを指定します。
+ユーザとパスワードは全ての<productname>PostgreSQL</>バックエンドで同じである必要があります。
+さもないと、ヘルスチェックがエラーとなります。
       </para>
       <para>
-        This parameter can be changed by reloading the pgpool configurations.
+<!--
+        This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+-->
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
       </para>
     </listitem>
   </varlistentry>
@@ -99,21 +155,29 @@
   <varlistentry id="guc-health-check-database" xreflabel="health_check_database">
     <term><varname>health_check_database</varname> (<type>string</type>)
       <indexterm>
+<!--
         <primary><varname>health_check_database</varname> configuration parameter</primary>
+-->
+        <primary><varname>health_check_database</varname> 設定パラメータ</primary>
       </indexterm>
     </term>
     <listitem>
       <para>
-        Specifies the PostgreSQL database name to perform health check.
-        The default is <literal>''</literal>(empty), which tries <literal>"postgres"</literal>
-        database first, then <literal>"template1"</literal> database until it succeeds
+<!--
+        Specifies the <productname>PostgreSQL</> database name to perform health check.
+        The default is <literal>''</literal>(empty), in which <literal>"postgres"</literal>
+        database is checked first, then <literal>"template1"</literal> database is tried.
+        This is the same behavior as <productname>Pgpool-II</> <emphasis>V3.4</> or before.
+-->
+ヘルスチェックを行う対象の<productname>PostgreSQL</>データベース名を指定します。
+デフォルトは<literal>''</literal>で、この場合は最初に<literal>postgres</literal>データベースが試され、その後で<literal>template1</literal>データベースが試されます。
+これは<productname>Pgpool-II</> <emphasis>V3.4</>以前の挙動と同じです。 
       </para>
       <para>
-        <varname>health_check_database</varname> was introduced in
-        <productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>.
-      </para>
-      <para>
-	      This parameter can be changed by reloading the pgpool configurations.
+<!--
+	      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+-->
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
       </para>
     </listitem>
   </varlistentry>
@@ -121,30 +185,47 @@
   <varlistentry id="guc-health-check-max-retries" xreflabel="health_check_max_retries">
     <term><varname>health_check_max_retries</varname> (<type>integer</type>)
       <indexterm>
+<!--
         <primary><varname>health_check_max_retries</varname> configuration parameter</primary>
+-->
+        <primary><varname>health_check_max_retries</varname> 設定パラメータ</primary>
       </indexterm>
     </term>
     <listitem>
       <para>
-        Specifies the maximum number of retries to do with a failed health check
-        before giving up and initiating failover.
+<!--
+        Specifies the maximum number of retries to do before giving up and
+	    initiating failover when health check fails.
+-->
+ヘルスチェックに失敗したときに、諦めてフェイルオーバを始める前にリトライする最大回数を指定します。
         <tip>
           <para>
+<!--
             This setting can be useful in spotty networks, when it is expected that
-            health checks will fail occasionally even when the master is fine.
-            It is advised that you disable fail_over_on_backend_error if you want to enable health_check_max_retries.
+            health checks will fail occasionally even when the master node is fine.
+-->
+この設定は動作にむらのあるネットワーク環境において、マスターノードが正常であるにも関わらず、たまにヘルスチェックが失敗することが予想される場合に有用です。
           </para>
         </tip>
         <tip>
           <para>
-            It is advised that fail_over_on_backend_error must be disabled,
-            if you want to enable health_check_max_retries.
+<!--
+            It is advised that <xref linkend="guc-fail-over-on-backend-error"> must be disabled,
+            if you want to enable <varname>health_check_max_retries</>.
+-->
+<varname>health_check_max_retreis</>を有効にする場合は、<xref linkend="guc-fail-over-on-backend-error">を無効にするのが望ましいです。 
           </para>
         </tip>
+<!--
         Default is 0, which means do not retry.
+-->
+デフォルト値は0で、この場合はリトライをしません。 
       </para>
       <para>
-        This parameter can be changed by reloading the pgpool configurations.
+<!--
+        This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+-->
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
       </para>
     </listitem>
   </varlistentry>
@@ -152,17 +233,27 @@
   <varlistentry id="guc-health-check-retry-delay" xreflabel="health_check_retry_delay">
     <term><varname>health_check_retry_delay</varname> (<type>integer</type>)
       <indexterm>
+<!--
         <primary><varname>health_check_retry_delay</varname> configuration parameter</primary>
+-->
+        <primary><varname>health_check_retry_delay</varname> 設定パラメータ</primary>
       </indexterm>
     </term>
     <listitem>
       <para>
-        Specifies the amount of time (in seconds) to sleep between failed
+<!--
+        Specifies the amount of time in seconds to sleep between
         health check retries (not used unless <xref linkend="guc-health-check-max-retries"> is > 0).
-        If 0, then retries are immediate (no delay).
+        If 0, then retries are immediate without delay.
+-->
+ヘルスチェックのリトライ間の時間間隔を秒単位で指定します(<xref linkend="guc-health-check-max-retries"> > 0でなければ有効になりません)。
+0を指定すると、待ち時間はなくリトライは直ちに行われます。
       </para>
       <para>
-        This parameter can be changed by reloading the pgpool configurations.
+<!--
+        This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+-->
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
       </para>
     </listitem>
   </varlistentry>
@@ -170,24 +261,39 @@
    <varlistentry id="guc-connect-timeout" xreflabel="connect_timeout">
     <term><varname>connect_timeout</varname> (<type>integer</type>)
       <indexterm>
+<!--
         <primary><varname>connect_timeout</varname> configuration parameter</primary>
+-->
+        <primary><varname>connect_timeout</varname> 設定パラメータ</primary>
       </indexterm>
     </term>
     <listitem>
       <para>
+<!--
         Specifies the amount of time in milliseconds before giving up connecting
-        to backend using connect() system call.
+        to backend using <function>connect()</> system call.
         Default is 10000 ms (10 second). The flaky network user may want to increase the value.
         0 means no timeout.
+-->
+<function>connect()</>システムコールを使ったバックエンドへの接続を諦めるまでの時間をミリ秒単位で指定します。
+デフォルトは10000ミリ秒(10秒)です。
+不安定なネットワークを使う場合、この値を大きくすると良いでしょう。
+0を指定すると、タイムアウトしません。 
         <note>
           <para>
+<!--
             <varname>connect_timeout</varname> value is not only used for a health check,
             but also for creating ordinary connection pools.
+-->
+<varname>connect_timeout</varname>の値はヘルスチェックだけではなく通常の接続プールを生成するときにも使われます。
           </para>
         </note>
       </para>
       <para>
-        This parameter can be changed by reloading the pgpool configurations.
+<!--
+        This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+-->
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
       </para>
 	  </listitem>
    </varlistentry>
