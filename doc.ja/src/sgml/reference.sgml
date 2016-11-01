@@ -157,7 +157,10 @@ hostname:port:username:password
  </reference>
 
    <reference id="other-commands">
+   <!--
    <title>Other commands</title>
+   -->
+   <title>他のコマンド</title>
 
    <partintro>
      <para>
@@ -176,7 +179,10 @@ hostname:port:username:password
  </reference>
 
    <reference id="sql-commands">
+   <!--
    <title>SQL type commands</title>
+   -->
+   <title>SQL 型コマンド</title>
 
    <partintro>
      <para>

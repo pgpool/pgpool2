@@ -199,36 +199,10 @@
 	  Sync inconsitent status
 	  of <productname>PostgreSQL</productname> nodes
 	  in <productname>Pgpool-II</productname> instances after
-	  restart. (Muhammad Usama)
+	  restart. (bug 218) (Muhammad Usama)
 	</para>
 	<para>
-	  At the <productname>Pgpool-II</productname> startup, the
-	  status of each configured backend node is loaded from the
-	  backend status file or otherwise initialized by querying the
-	  backend nodes. This technique works fine in stand alone mode
-	  and also with the watchdog enabled as long as the status of
-	  backend nodes remains consistent until
-	  all <productname>Pgpool-II</productname> nodes got up and
-	  running.  But since <productname>Pgpool-II</productname>
-	  does not sync the backend node status from the watchdog
-	  cluster at startup time, so in some cases
-	  the <productname>Pgpool-II</productname> nodes participating
-	  in the watchdog cluster may get a different status for the
-	  same backend, especially if
-	  the <productname>Pgpool-II</productname> nodes part of the
-	  watchdog cluster starts at different times and between that
-	  time an unavailable backend PostgreSQL node had become
-	  available again.
-	</para>
-	<para>
-    	  So to solve this, the commit implements the new startup
-	  procedure for the
-	  standby <productname>Pgpool-II</productname>, And now the
-	  standby
-	  <productname>Pgpool-II</productname> will load the backend
-	  status of all
-	  configured <productname>PostgreSQL</productname> nodes from
-	  the watchdog master/coordinator node at the time of startup.
+    Watchdog does not synchronize status.
 	</para>
       </listitem>
 
@@ -286,85 +260,6 @@
 	  In some cases pg_terminate_backend() now does not trigger a
 	  fail-over. (Muhammad Usama)
 	</para>
-	<para>
-	  Since the pg_terminate_backend function
-	  in <productname>PostgreSQL</productname> is used to
-	  terminate the backend connection, So what happens is, when
-	  this function kills a <productname>PostgreSQL</productname>
-	  backend that is connected to
-	  the <productname>Pgpool-II</productname>, This disconnection
-	  of backend by pg_terminate_backend function is appeared as a
-	  backend node failure to
-	  the <productname>Pgpool-II</productname>.  But the problem
-	  here is, PostgreSQL does not give any information to the
-	  client program that the connection is going to be killed
-	  because of the pg_terminate_backend call and on the client
-	  side, it looks similar to the backend node failure.
-	</para>
-	<para>
-      Now to solve this in <productname>Pgpool-II</productname> we
-	  need two things.  First is to identify the
-	  pg_terminate_backend function in the query and the
-	  <productname>Pgpool-II</productname> child process that
-	  hosts the particular backend connection which will be killed
-	  by that pg_terminate_backend function call, so that we get a
-	  heads up in advance about the backend termination, and
-	  secondly the routing of the query containing
-	  pg_terminate_backend also needs a new logic so that the
-	  query should be sent to the correct PostgreSQL node that
-	  hosts the backend with the PID referred by the
-	  pg_terminate_bakend()
-	</para>
-	<para>
-	  So how does this commit handles pg_terminate_backend()??  In
-	  the SimpleQuery() function which is the work horse of simple
-	  query processing in the <productname>Pgpool-II</productname>
-	  we start with the search of the pg_terminate_backend()
-	  function call in the query parse tree and if the search
-	  comes out to be successful, the next step is to locate
-	  the <productname>Pgpool-II</productname> child process and a
-	  backend node of that connection whose PID is specified in
-	  pg_terminate_backend function's argument. Once the
-	  connection and the <productname>Pgpool-II</productname>
-	  child process is identified, we just set the
-	  swallow_termination flag(added by this commit in
-	  ConnectionInfo structure) for that connection in the shared
-	  memory, and also set the query destination node to the
-	  backend node that hosts that particular connection and does
-	  not call pool_where_to_send() for this query so that the
-	  query should be sent to the correct backend node.
-	</para>
-	<para>
-          Now when the query is routed to the correct node and
-	  consequently the backend gets killed, that results in the
-	  communication error on <productname>Pgpool-II</productname>
-	  side, the <productname>Pgpool-II</productname> already knows
-	  that this disconnection is due the pg_terminate_backend and
-	  not because of node failure as the swallow_termination flag
-	  is already set for the connection.
-	</para>
-	<para>
-	  Some works are still remaining.
-	</para>
-	<para>
-	  pg_terminate_backend is not handled with extended query
-	  protocol.
-	</para>
-	<para>
-	  Currently we only support
-	  pg_terminate_backend(constant number) function calls. If the
-	  expression or sub query is used in the argument of
-	  pg_terminate_backend then it would not be handled e.g
-	  <programlisting>
-pgpool=# select pg_terminate_backend(1025);         -- Supported
-pgpool=# select pg_terminate_backend( 2 +1);        -- NOT SUPPORTED
-pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
-	  </programlisting>
-	</para>
-	<para>
-	  Currently only one pg_terminate_backend call in a query is
-	  handled.
-	</para>
       </listitem>
 
       <listitem>
@@ -413,12 +308,6 @@ pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
 	  -->
 	<para>
 	  Tighten up health check timer expired condition in pool_check_fd(). (Muhammad Usama)
-	</para>
-	<para>
-	  Check if the signal was actually the health check timer
-	  expire to make sure that we do not declare the timer expire
-	  due to some other signal arrived while waiting for data for
-	  health check in pool_check_fd().
 	</para>
       </listitem>
 
@@ -493,7 +382,7 @@ pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
 	    2016-05-23 [9342472] Permit pgpool to support multiple SSL cipher protocols
 	  -->
 	<para>
-	  Allow to use multiple SSL cipher protocols. (Multiple Usama)
+	  Allow to use multiple SSL cipher protocols. (Muhammad Usama)
 	</para>
 	<para>
 	  By replacing TLSv1_method() with SSLv23_method() while
@@ -664,39 +553,13 @@ pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
         <para>
 	    Fix a problem with the watchdog <xref linkend="guc-failover-command"> locking mechanism. (Muhammad Usama)
         </para>
-        <para>
-        From <productname>Pgpool-II</productname> 3.5 watchdog was using the separate individual locks for each
-        node-failover command (failover, failback and follow-master) and the lock was
-        acquired just before executing the respective failover script and was released
-        as soon as the script execution finishes. This technique although was very
-        efficient but also had a problem. If the <xref linkend="guc-failover-command"> takes a very little
-        time and gets finished before the lock request from other <productname>Pgpool-II</productname> node
-        arrives, the other node is also granted a lock, since the lock was already
-        released by the first node at that time. Consequently, both nodes ends up
-        executing the failover script.
-        So to fix this we are reverting back to the tested failover interlocking design
-        used prior to <productname>Pgpool-II</productname> 3.5 where all the commands gets locked at the failover
-        start by the node that becomes a lock-holder and each command lock is released
-        after its execution finishes. And only the lock-holder node is allowed to
-        acquire/release the individual command lock. That way the lock-holder node
-        keeps the lock-holder status throughout the span of the failover execution and
-        the system becomes less time sensitive.
-        </para>
       </listitem>
       <listitem>
       <!--
             2016-09-12 [b412da2] Disable strict aliasing optimization.
         -->
         <para>
-	    Disable strict aliasing optimization. (Tatsuo Ishii)
-        </para>
-        <para>
-        <function>flatten_set_variable_args()</function> was imported from <productname>PostgreSQL</productname>
-        in <productname>Pgpool-II</productname>
-        3.5. To make the code work, a compiler flag <option>-fno-strict-aliasing</option> is
-        necessary (<productname>PostgreSQL</productname> does so). Unfortunately when the function was
-        imported, the compiler flag was not added. To fix this, <filename>configure.ac</filename>
-        was modified.
+        Add compiler flag "-fno-strict-aliasing" in <filename>configure.ac</filename> to fix compiler error. (Tatsuo Ishii)
         </para>
       </listitem>
       <listitem>
@@ -720,15 +583,6 @@ pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
         -->
         <para>
 	    Don't ignore sync message from frontend when query cache is enabled. (Tatsuo Ishii)
-        </para>
-        <para>
-        While returning cached query result, sync message sent from frontend
-        is discarded. This is harmless because "ready for query" messages is
-        sent to frontend afterward. Problem is, AccessShareLock held by
-        previous parse message processing is not released until sync message
-        is received by the backend. Fix is, forwarding the sync message to
-        backend and discarding "ready for query" message returned from
-        backend.
         </para>
       </listitem>
       <listitem>
@@ -758,25 +612,14 @@ pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
         <para>
 	    Fixing the error messages when the socket operation fails. (Muhammad Usama)
         </para>
-        <para>
-        When some socket operation fails, we issue close socket before throwing an
-        error which causes the errno value to be overwritten and consequently the error
-        log does not print the correct failure reason.
-        The solution is to save the errno before closing the socket and use the saved
-        value to print error description.
-        </para>
       </listitem>
       <listitem>
       <!--
         2016-08-15 [f2b5d17]  Fix regression failure of 003.failover.
         -->
         <para>
-	    Fix regression failure of 003.failover. (Tatsuo Ishii)
-        </para>
-        <para>
-        Update expected data to reflect the changes made to <link linkend="SQL-SHOW-POOL-NODES">show pool_nodes</link>.
-        Also fix <link linkend="SQL-SHOW-POOL-NODES">show pool_nodes</link> to proper use "_" instead of space for the
-        column name.
+	    Update regression test 003.failover to reflect the changes made to
+        <link linkend="SQL-SHOW-POOL-NODES">show pool_nodes</link>. (Tatsuo Ishii)
         </para>
       </listitem>
       <listitem>
@@ -785,13 +628,6 @@ pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
         -->
         <para>
 	    Fix hang when portal suspend received. (bug 230) (Tatsuo Ishii)
-        </para>
-        <para>
-        When portal suspend message is received, it's not enough to forward it
-        to the client.  Since backend expects to receive execute message,
-        trying to read further more messages from backend will never
-        succeed. To fix this, turn off the query in progress flag, which will
-        pole incoming message from the client.
         </para>
       </listitem>
       <listitem>
@@ -818,36 +654,6 @@ pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
         arrive at the same time when the watchdog has just been initialized,
         and if we wait any longer to install a SIGUSR1 signal handler, it can
         result in a potential crash
-        </para>
-      </listitem>
-      <listitem>
-      <!--
-        2016-08-02 [bda946e]Fix for 218: Inconsistent status of Postgresql nodes in pgPool instances
-        after restart. Watchdog not syncing status.
-        -->
-        <para>
-        Fix for bug of inconsistent status of <productname>PostgreSQL</productname> nodes in <productname>Pgpool-II</productname> instances
-        after restart. (bug 218) (Muhammad Usama)
-        </para>
-        <para>
-        Watchdog does not synchronize status.
-        Currently at the <productname>Pgpool-II</productname> startup, The status of each configured backend node
-        is loaded from the backend status file or otherwise initialized by querying the
-        backend nodes. This technique works fine in stand alone mode and also with
-        the watchdog enabled as long as the status of backend nodes remains consistent
-        until all <productname>Pgpool-II</productname> nodes got up and running.
-        But since <productname>Pgpool-II</productname> does not sync the backend node status from the
-        watchdog cluster at startup time, so in some cases the pgpool-II nodes
-        participating in the watchdog cluster may get a different status for the same
-        backend, especially if the <productname>Pgpool-II</productname> nodes part of the watchdog cluster starts
-        at different times and between that time an unavailable backend <productname>PostgreSQL</productname> node
-        had become available again.
-        </para>
-        <para>
-        So to solve this, the commit implements the new startup procedure for the
-        standby <productname>Pgpool-II</productname>, And now the standby <productname>Pgpool-II</productname> will load the backend status of
-        all configured <productname>PostgreSQL</productname> nodes from the watchdog master/coordinator node
-        at the time of startup.
         </para>
       </listitem>
       <listitem>
@@ -945,12 +751,9 @@ pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
 	    Fix usage of <function>wait(2)</function> in pgpool main process. (Tatsuo Ishii)
         </para>
         <para>
-        When child process dies, SIGCHLD signal is raised and <function>wait(2)</function> knows
-        the event. However, multiple child death does not necessarily creates
-        exact same number of SIGCHLD signal as the number of dead children and
-        <function>wait(2)</function> could wait for an event which never happens in this case. I
-        Actually encountered this situation while testing <productname>Pgpool-II</productname>. Solution
-        is, to use <function>waitpid(2)</function> instead of <function>wait(2)</function>.
+        The usage of <function>wait(2)</function> in <productname>Pgpool-II</productname>
+        main could cause infinite wait in the system call. Solution is,
+        to use <function>waitpid(2)</function> instead of <function>wait(2)</function>.
         </para>
       </listitem>
       <listitem>
@@ -958,13 +761,8 @@ pgpool=# select pg_terminate_backend((select 1));   -- NOT SUPPORTED
         2016-06-28 [bb41a1e]  Fix confusing error messages.
         -->
         <para>
-	    Fix confusing error messages. (Tatsuo Ishii)
-        </para>
-        <para>
-        <function>pool_read()</function> does not emit error messages when <function>read(2)</function> returns -1 if
-        <xref linkend="guc-fail-over-on-backend-error"> is off. In any case the cause of error
-        should be emitted. I do not back port this because it's a too trivial
-        enhancement.
+        Fix that <function>pool_read()</function> does not emit error messages when <function>read(2)</function> returns -1 if
+        <xref linkend="guc-fail-over-on-backend-error"> is off. (Tatsuo Ishii)
         </para>
       </listitem>
       <listitem>
@@ -1077,16 +875,6 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
          either load balance node or primary node, the primary node id is
          returned.
         </para>
-        <para>
-         For master and 3.5-stable, additional fixes/enhancements are made:
-         <function>pool_extended_send_and_wait()</function> now issues flush message if the request
-         is 'E' (execute). Before it was issued outside (in Execute), but this
-         makes the logic to determine to which node the flush message to be
-         sent unnecessary complex.
-        </para>
-        <para>
-         A debug message in pool_write is enhanced by adding backend node id.
-        </para>
       </listitem>
       <listitem>
       <!--
@@ -1104,7 +892,10 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         the statement timeout timer if we are in an explicit transaction. We
         cannot use this technique for implicit transaction case, because the
         sync message removes the unnamed portal if there's any.
-
+        </para>
+        <para>
+        Plus, pg_stat_statement will no longer show the query issued by
+        do_query() as "running".
         </para>
         <para>
         Plus, pg_stat_statement will no longer show the query issued by
@@ -1185,7 +976,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         -->
         <para>
 	    Fix for <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2016-March/004627.html">
-        [pgpool-general: 4569]</ulink> <productname>Pgpool-II</productname> 3.5 : segfault. (Muhammad Usama)
+        [pgpool-general: 4569]</ulink> segfault during trusted_servers check. (Muhammad Usama)
         </para>
         <para>
         PostgreSQL's memory and exception manager APIs adopted by the <productname>Pgpool-II</productname> 3.4 are not
@@ -1197,7 +988,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
       </listitem>
       <listitem>
       <!--
-        2016-05-29 [f7723c8]  Validating the PCP packet length
+        2016-03-29 [f7723c8]  Validating the PCP packet length
         -->
         <para>
         Validating the PCP packet length. (Muhammad Usama)
@@ -1206,26 +997,6 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         Without the validation check, a malformed PCP packet can crash the PCP child
         and/or can run the server out of memory by sending the packet with a
         very large data size.
-        </para>
-      </listitem>
-      <listitem>
-      <!--
-        2016-03-28 [f305fbe]  Fix pgpool hang bug (deal with bug 167)
-        -->
-        <para>
-	    Fix <productname>Pgpool-II</productname> hang bug (bug 167). (Tatsuo Ishii)
-        </para>
-        <para>
-        <productname>Pgpool-II</productname> 3.5 or after in streaming replication mode does not wait for
-        response from each phase such parse, bind anymore.  However, if
-        do_query is called, it sends flush message to retrieve the result of
-        system catalog look up. This is only sent to primary node which may
-        results in retrieving previous message results, for example parse
-        complete. If standby is assigned to load balance node, the node does
-        not return parse complete message, which will cause a problem in
-        bug167 case, because parse message for "BEGIN" was sent to both the
-        primary and the standby. Fix is, send flush message in do_query if the
-        load balance node is one of standbys.
         </para>
       </listitem>
       <listitem>
@@ -1271,16 +1042,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         </para>
         <para>
         This could happend if we execute an extended protocol query and it
-        fails. After an error is received the "ignore till sync flag" is set
-        and remained even if sync message was actually received. Thus any
-        subsequent query (in the case above "DEALLOCATE message") is not
-        procesed and pgpool waits for message from frontend and backend, and
-        pgpool stucks here because no message will arrive from both side.
-        </para>
-        <para>
-        To fix this, unconditionally reset the "ignore till sync flag" in
-        <function>ReadyforQuery()</function>. This is safe because apparently we already received
-        the ready for query message.
+        fails.
         </para>
       </listitem>
       <listitem>
