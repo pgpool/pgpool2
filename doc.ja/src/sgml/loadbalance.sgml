@@ -55,7 +55,10 @@
     <varlistentry id="guc-load-balance-mode" xreflabel="load_balance_mode">
       <term><varname>load_balance_mode</varname> (<type>boolean</type>)
         <indexterm>
+<!--
           <primary><varname>load_balance_mode</varname> configuration parameter</primary>
+-->
+          <primary><varname>load_balance_mode</varname> 設定パラメータ</primary>
         </indexterm>
       </term>
       <listitem>
@@ -83,7 +86,10 @@ onの設定すると、<productname>Pgpool-II</productname>は入ってきた<ac
    <varlistentry id="guc-ignore-leading-white-space" xreflabel="ignore_leading_white_space">
       <term><varname>ignore_leading_white_space</varname> (<type>boolean</type>)
         <indexterm>
+<!--
           <primary><varname>ignore_leading_white_space</varname> configuration parameter</primary>
+-->
+          <primary><varname>ignore_leading_white_space</varname> 設定パラメータ</primary>
         </indexterm>
       </term>
       <listitem>
@@ -109,7 +115,9 @@ onに設定すると、負荷分散の際にSQL文行頭の空白を無視しま
    <varlistentry id="guc-white-function-list" xreflabel="white_function_list">
       <term><varname>white_function_list</varname> (<type>string</type>)
         <indexterm>
+<!--
           <primary><varname>white_function_list</varname> configuration parameter</primary>
+          <primary><varname>white_function_list</varname> 設定パラメータ</primary>
         </indexterm>
       </term>
       <listitem>
@@ -164,7 +172,10 @@ white_function_list = 'get_.*,select_.*'
    <varlistentry id="guc-black-function-list" xreflabel="black_function_list">
       <term><varname>black_function_list</varname> (<type>string</type>)
         <indexterm>
+<!--
           <primary><varname>black_function_list</varname> configuration parameter</primary>
+-->
+          <primary><varname>black_function_list</varname> 設定パラメータ</primary>
         </indexterm>
       </term>
       <listitem>
@@ -267,7 +278,10 @@ black_function_list = 'nextval,setval,lastval,currval'
    <varlistentry id="guc-database-redirect-preference-list" xreflabel="database_redirect_preference_list">
       <term><varname>database_redirect_preference_list</varname> (<type>string</type>)
         <indexterm>
+<!--
           <primary><varname>database_redirect_preference_list</varname> configuration parameter</primary>
+-->
+          <primary><varname>database_redirect_preference_list</varname> 設定パラメータ</primary>
         </indexterm>
       </term>
       <listitem>
@@ -365,7 +379,10 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
    <varlistentry id="guc-app-name-redirect-preference-list" xreflabel="app_name_redirect_preference_list">
       <term><varname>app_name_redirect_preference_list</varname> (<type>string</type>)
         <indexterm>
+<!--
           <primary><varname>app_name_redirect_preference_list</varname> configuration parameter</primary>
+-->
+          <primary><varname>app_name_redirect_preference_list</varname> 設定パラメータ</primary>
         </indexterm>
       </term>
       <listitem>
@@ -514,7 +531,10 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
    <varlistentry id="guc-allow-sql-comments" xreflabel="allow_sql_comments">
       <term><varname>allow_sql_comments</varname> (<type>boolean</type>)
         <indexterm>
+<!--
           <primary><varname>allow_sql_comments</varname> configuration parameter</primary>
+-->
+          <primary><varname>allow_sql_comments</varname> 設定パラメータ</primary>
         </indexterm>
       </term>
       <listitem>
