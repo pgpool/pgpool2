@@ -25,9 +25,9 @@
 	<listitem>
 	  <para>
 	    Caches connections to backends when set to on. Default is on.
-	    <emphasis>However, connections to template0, template1, postgres and
-	    regression databases are not cached even if connection_cache is
-	    on.</emphasis>
+	    <emphasis>However, connections to <literal>template0</>, <literal>template1</>,
+		<literal>postgres</> and <literal>regression</> databases are not cached even if
+		<varname>connection_cache</> is on.</emphasis>
 	  </para>
 	  <para>
 	    You need to restart <productname>Pgpool-II</productname>
@@ -45,8 +45,8 @@
 	<listitem>
 	  <para>
 	    The maximum number of cached connections
-	    in <productname>Pgpool-II</productname> children
-	    processes.  <productname>Pgpool-II</productname> reuses the
+	    in each <productname>Pgpool-II</productname> child 
+	    process.  <productname>Pgpool-II</productname> reuses the
 	    cached connection if an incoming connection is connecting
 	    to the same database with the same user name.  If not,
 	    <productname>Pgpool-II</productname> creates a new
@@ -56,8 +56,8 @@
 	  </para>
 	  <para>
 	    Default value is 4. Please be aware that the number of
-	    connections from pgpool-II processes to the backends may reach
-	    num_init_children * max_pool.
+	    connections from <productname>Pgpool-II</productname> processes to the backends may reach
+	    num_init_children * max_pool in total.
 	  </para>
 	  <para>
 	    This parameter can only be set at server start.
@@ -106,15 +106,15 @@
 					When set to on, <productname>Pgpool-II</productname> enables the serialization
 					on incoming client connections.
 					Without serialization the OS kernel wakes up all of the <productname>
-					Pgpool-II</productname> child process to execute accept() and one of them
+					Pgpool-II</productname> children processes to execute <literal>accept()</> and one of them
 					actually gets the incoming connection. The problem here is, because so my child
 					process wake up at a same time, heavy context switching occurs and the
 					performance is affected.
 				</para>
 				<para>
 					This phenomena is a well known classic problem called
-					"the thundering herd problem". which can be solved by the
-					the serialization of the accept calls, so that only one
+					"the thundering herd problem". This can be solved by the
+					serialization of the <literal>accept()</> calls, so that only one
 					<productname>Pgpool-II</productname> process gets woken up
 					for incoming connection to execute the <literal>accept()
 					</literal>.
@@ -147,9 +147,9 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
           </programlisting>
 						Here, <literal>-C</literal> tells <command>pgbench</command> to connect
 						to database each time a transaction gets executed. <literal>-c 32</literal>
-						specifies the concurrent sessions to <productname>Pgpool-II</productname>.
+						specifies the number of the concurrent sessions to <productname>Pgpool-II</productname>.
 						You should change this according to your system's requirement.
-						When <command>pgbench</command> finishes, you want to check the number from
+						After <command>pgbench</command> finishes, check the number from
 						"including connections establishing".
           </para>
         </example>
@@ -184,7 +184,7 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
         <para>
           Specifies the time in seconds to terminate a <productname>Pgpool-II
 					</productname> child process if it remains idle. The new child process
-					is immediately spawned by <productname>Pgpool-II</productname>, when it
+					is immediately spawned by <productname>Pgpool-II</productname> when it
 					is terminated because of <varname>child_life_time</varname>.
 					<varname>child_life_time</varname> is a measure to prevent the
 					memory leaks and other unexpected errors in <productname>Pgpool-II
@@ -235,7 +235,7 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
           The default is 0, which turns off the feature.
 				</para>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
 					this parameter for a current session.
         </para>
@@ -259,7 +259,7 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
 				<para>
 					<varname>child_max_connections</varname> is useful on a very busy server,
 					where <xref linkend="guc-child-life-time"> and <xref linkend="guc-connection-life-time">
-					never gets triggered. It is also useful to prevent the PostgreSQL servers from getting
+					never gets triggered. It is also useful to prevent the <productname>PostgreSQL</> servers from getting
 					too big.
 				</para>
         <para>
@@ -305,9 +305,10 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
 				</para>
 
 				<para>
-					Since the commands are different in each PostgreSQL version, So
-					below are some recommended settings for <varname>reset_query_list</varname>
-					on different PostgreSQL versions.
+					The available commands differ among <productname>PostgreSQL</> versions.
+					Below are some recommended settings for <varname>reset_query_list</varname>
+					on different <productname>PostgreSQL</> versions.
+					Note, however, that <literal>ABORT</literal> command should be always included.
 				</para>
 
 				<table id="reset-query-list-suggestions-table">
@@ -344,14 +345,14 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
 				<note>
 					<para>
 						<literal>"ABORT"</literal> is not issued when not in a transaction block for 7.4 or later
-						PostgreSQL versions.
+						<productname>PostgreSQL</> versions.
 					</para>
 				</note>
 				<para>
 					Default is <literal>'ABORT; DISCARD ALL'</literal>.
 				</para>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -384,20 +385,22 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
 				<note>
 					<para>
 						On some systems you will need to alter the configuration of your
-						system's syslog daemon in order to make use of the syslog option
-						for <xref linkend="guc-log-destination">. <productname>Pgpool-II</productname>
-						can log to syslog facilities LOCAL0 through LOCAL7
-						(see <xref linkend="guc-syslog-facility">), but the default syslog
+						system's <application>syslog</application> daemon in order to make use of the
+						<literal>syslog</literal> option
+						for <varname>log_destination</varname>. <productname>Pgpool-II</productname>
+						can log to <application>syslog</application> facilities LOCAL0 through LOCAL7
+						(see <xref linkend="guc-syslog-facility">), but the default
+						<application>syslog</application>
 						configuration on most platforms will discard all such messages.
 						You will need to add something like:
 						<programlisting>
-local0.*    /var/log/postgresql
+local0.*    /var/log/pgpool.log
 						</programlisting>
 						to the syslog daemon's configuration file to make it work.
 					</para>
 				</note>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -410,15 +413,19 @@ local0.*    /var/log/postgresql
       </term>
       <listitem>
 				<para>
-					When logging to syslog is enabled, this parameter determines
-					the syslog <literal>"facility"</literal> to be used.
-					You can choose from LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4,
-					LOCAL5, LOCAL6, LOCAL7; the default is LOCAL0.
 					See also the documentation of your system's syslog daemon.
+					When logging to <application>syslog</application> is enabled,
+					this parameter determines the <application>syslog</application>
+					<literal>"facility"</literal> to be used.
+					You can choose from <literal>LOCAL0</>, <literal>LOCAL1</>,
+					<literal>LOCAL2</>, <literal>LOCAL3</>, <literal>LOCAL4</>,
+					<literal>LOCAL5</>, <literal>LOCAL6</>, <literal>LOCAL7</>;
+					the default is <literal>LOCAL0</>.
+					See also the documentation of your system's <application>syslog</> daemon.
 				</para>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -431,12 +438,12 @@ local0.*    /var/log/postgresql
       </term>
       <listitem>
 				<para>
-					When logging to syslog is enabled, this parameter determines
+					When logging to <application>syslog</> is enabled, this parameter determines
 					the program name used to identify <productname>Pgpool-II</productname>
-					messages in syslog logs. The default is <literal>pgpool</literal>.
+					messages in <application>syslog</> logs. The default is <literal>pgpool</literal>.
 				</para>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -458,13 +465,15 @@ local0.*    /var/log/postgresql
       <listitem>
 				<para>
 					Controls which minimum message levels are sent to the client.
-					Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1,
-					LOG, NOTICE, WARNING and ERROR. Each level includes
-					all the levels that follow it. The default is NOTICE.
+					Valid values are <literal>DEBUG5</>, <literal>DEBUG4</>,
+					<literal>DEBUG3</>, <literal>DEBUG2</>, <literal>DEBUG1</>,
+					<literal>LOG</>, <literal>NOTICE</>, <literal>WARNING</> and
+					<literal>ERROR</>. Each level includes
+					all the levels that follow it. The default is <literal>NOTICE</>.
 				</para>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
 					this parameter for a current session.
         </para>
@@ -479,14 +488,18 @@ local0.*    /var/log/postgresql
       </term>
       <listitem>
 				<para>
-					Controls which minimum message levels are emitted to log.
-					Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1,
-					INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC.
-					Each level includes all the levels that follow it.
 					The default is WARNING.
+					Controls which minimum message levels are emitted to log.
+					Valid values are <literal>DEBUG5</>, <literal>DEBUG4</>,
+					<literal>DEBUG3</>, <literal>DEBUG2</>, <literal>DEBUG1</>,
+					<literal>INFO</>, <literal>NOTICE</>, <literal>WARNING</>,
+					<literal>ERROR</>, <literal>LOG</>, <literal>FATAL</>,
+					and <literal>PANIC</>.
+					Each level includes all the levels that follow it.
+					The default is <literal>WARNING</>.
 				</para>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
 					this parameter for a current session.
         </para>
@@ -509,11 +522,11 @@ local0.*    /var/log/postgresql
       </term>
       <listitem>
 				<para>
-					Setting to on, prints all statements to the log.
+					Setting to on, prints all SQL statements to the log.
 				</para>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
 					this parameter for a current session.
         </para>
@@ -530,10 +543,10 @@ local0.*    /var/log/postgresql
 				<para>
 					Similar to <xref linkend="guc-log-statement">, except that it print the
 					logs for each DB node separately. It can be useful to make sure that
-					replication is working.
+					replication or load-balancing is working.
 				</para>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
 					this parameter for a current session.
         </para>
@@ -549,10 +562,11 @@ local0.*    /var/log/postgresql
       <listitem>
 				<para>
 					Setting to on, prints the hostname instead of IP address
-					in ps command and connection logs(when <xref linkend="guc-log-connections"> is on).
+					in the <command>ps</> command result, and connection logs
+					(when <xref linkend="guc-log-connections"> is on).
 				</para>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -565,10 +579,10 @@ local0.*    /var/log/postgresql
       </term>
       <listitem>
 				<para>
-					Setting to on, prints all incoming connections to the log.
+					Setting to on, prints all client connections from to the log.
 				</para>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -582,12 +596,14 @@ local0.*    /var/log/postgresql
       <listitem>
 				<para>
 					Controls the amount of detail emitted for each message that is logged.
-					Valid values are TERSE, DEFAULT, and VERBOSE, each adding more fields
-					to displayed messages. TERSE excludes the logging of DETAIL, HINT,
-					and CONTEXT error information.
+					Valid values are <literal>TERSE</>, <literal>DEFAULT</>, and <literal>VERBOSE</>,
+					each adding more fields
+					to displayed messages. <literal>TERSE</> excludes the logging of <literal>DETAIL</>,
+					<literal>HINT</>,
+					and <literal>CONTEXT</> error information.
 				</para>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
 					this parameter for a current session.
         </para>
@@ -602,8 +618,9 @@ local0.*    /var/log/postgresql
       </term>
       <listitem>
 				<para>
-					This is a printf-style string that is output at the beginning of each log line.
-					<emphasis>%</emphasis> characters begin "escape sequences" that are replaced
+					This is a <function>printf</>-style string that is output at the beginning of
+					each log line.
+					<literal>%</literal> characters begin <quote>escape sequences</> that are replaced
 					with information outlined below.
 					All unrecognized escapes are ignored. Other characters are copied straight to
 					the log line. Default is '%t: pid %p: ', which prints timestamp and process id,
@@ -667,7 +684,7 @@ local0.*    /var/log/postgresql
 					</tgroup>
 				</table>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
