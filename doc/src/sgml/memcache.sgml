@@ -6,7 +6,7 @@
   <para>
     In memory query cache can be used with all modes of
     <productname>Pgpool-II</productname>. It is different
-    from the query cache on the point that in memory query
+    from the query cache on disk that In memory query
     cache is faster because of the in memory nature of the storage.
     Moreover <productname>Pgpool-II</productname> does not
     need a restart when the cache gets outdated because of
@@ -19,7 +19,7 @@
     extended query). If the same SELECTs comes in,
     <productname>Pgpool-II</productname> returns the value
     from cache. Since no <acronym>SQL</acronym> parsing nor
-    access to PostgreSQL are involved, the serving of results
+    access to <productname>PostgreSQL</> are involved, the serving of results
     from the in memory cache is extremely fast.
   </para>
   <para>
@@ -27,7 +27,7 @@
     in some cases, because it adds some overhead to store cache.
     Moreover when a table is updated, <productname>Pgpool-II
     </productname> automatically deletes all the caches related
-    to the table. So the performance will be degraded by a system
+    to the table. Therefore, the performance will be degraded by a system
     with a lot of updates.
     If the cache_hit_ratio is lower than 70%, you might want
     to disable in memory cache.
@@ -50,7 +50,7 @@
 						Default is off.
 					</para>
 					<para>
-            This parameter can be changed by reloading the pgpool configurations.
+            This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					</para>
 				</listitem>
 			</varlistentry>
@@ -132,12 +132,12 @@
             valid until the table is updated.
           </para>
 					<para>
-            This parameter can be changed by reloading the pgpool configurations.
+            This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					</para>
 
           <note>
             <para>
-              This parameters <xref linkend="guc-memqcacheexpire"> and
+              <varname>memqcache_expire</varname> and
               <xref linkend="guc-memqcache-auto-cache-invalidation"> are orthogonal to each other.
             </para>
           </note>
@@ -166,7 +166,7 @@
             </para>
           </note>
 					<para>
-            This parameter can be changed by reloading the pgpool configurations.
+            This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					</para>
 				</listitem>
 			</varlistentry>
@@ -182,7 +182,7 @@
             Specifies the maximum size in bytes of the SELECT query result to be cached.
             The result with data size larger than this value will not be cached by
             <productname>Pgpool-II</productname>.
-            And when the caching of data is rejected because of the size constraint the following
+            When the caching of data is rejected because of the size constraint the following
             message is shown.
               <programlisting>
 LOG:   pid 13756: pool_add_temp_query_cache: data size exceeds memqcache_maxcache. current:4095 requested:111 memq_maxcache:4096
@@ -197,7 +197,7 @@ LOG:   pid 13756: pool_add_temp_query_cache: data size exceeds memqcache_maxcach
             </para>
           </note>
 					<para>
-            This parameter can be changed by reloading the pgpool configurations.
+            This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					</para>
 				</listitem>
 			</varlistentry>
@@ -217,7 +217,7 @@ LOG:   pid 13756: pool_add_temp_query_cache: data size exceeds memqcache_maxcach
 
           <para>
             You can use regular expression into the list to match table name
-            (to which ^ and $ are automatically added),
+            (to which ^ and $ are automatically added).
           </para>
 
           <note>
@@ -239,12 +239,12 @@ white_memqcache_table_list = "table1,public.table1"
           </note>
           <note>
             <para>
-              <varname>white_memqcache_table_list</varname> white_memqcache_table_list takes
+              <varname>white_memqcache_table_list</varname>
               precedence over <xref linkend="guc-black-memqcache-table-list">
             </para>
           </note>
 					<para>
-            This parameter can be changed by reloading the pgpool configurations.
+            This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					</para>
 				</listitem>
 			</varlistentry>
@@ -285,7 +285,7 @@ black_function_list = "table1,public.table1"
             </para>
           </note>
 					<para>
-            This parameter can be changed by reloading the pgpool configurations.
+            This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					</para>
 				</listitem>
 			</varlistentry>
@@ -303,7 +303,7 @@ black_function_list = "table1,public.table1"
           </para>
           <para>
             <varname>memqcache_oiddir</varname> directory contains the sub directories
-            for the databases. The directory name is the OID of the database, And each
+            for the databases. The directory name is the OID of the database. In addition, each
             database directory contains the files for each table used by SELECT statement.
             Again the name of the file is the OID of the table.
             These files contains the pointers to query cache which are used as key for
@@ -316,7 +316,7 @@ black_function_list = "table1,public.table1"
             </para>
           </note>
 					<para>
-            This parameter can be changed by reloading the pgpool configurations.
+            This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					</para>
 				</listitem>
 			</varlistentry>

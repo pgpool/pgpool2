@@ -4,8 +4,8 @@
   <title>Streaming Replication Check</title>
 
   <para>
-    <productname>Pgpool-II</productname> can work with PostgreSQL native
-    Streaming Replication, that is available since PostgreSQL 9.0.
+    <productname>Pgpool-II</productname> can work with <productname>PostgreSQL</> native
+    Streaming Replication, that is available since <productname>PostgreSQL</> 9.0.
     To configure <productname>Pgpool-II</productname> with streaming
     replication, enable <xref linkend="guc-master-slave-mode"> and set
     <xref linkend="guc-master-slave-sub-mode"> to <literal>'stream'</literal>.
@@ -33,7 +33,7 @@
         </para>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
 
       </listitem>
@@ -48,19 +48,19 @@
       <listitem>
 
         <para>
-          Specifies the PostgreSQL user name to perform streaming replication check.
-          The user must exist on all the PostgreSQL backends.
+          Specifies the <productname>PostgreSQL</> user name to perform streaming replication check.
+          The user must exist on all the <productname>PostgreSQL</> backends.
         </para>
         <note>
           <para>
-            <xref linkend="guc-sr-check-user"> and <xref linkend="guc-sr-check-password">
+            <varname>sr_check_user</varname>> and <xref linkend="guc-sr-check-password">
             are used even when <xref linkend="guc-sr-check-period"> is set to 0 (disabled)
             for the identification of the primary server.
           </para>
         </note>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
 
       </listitem>
@@ -75,13 +75,13 @@
       <listitem>
 
         <para>
-          Specifies the password of the <xref linkend="guc-sr-check-user"> PostgreSQL user
+          Specifies the password of the <xref linkend="guc-sr-check-user"> <productname>PostgreSQL</> user
           to perform the streaming replication checks.
           Use <literal>''</literal> (empty string) if the user does not requires a password.
         </para>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
 
       </listitem>
@@ -100,7 +100,7 @@
           The default is <literal>"postgres"</literal>.
         </para>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
 
       </listitem>
@@ -122,13 +122,13 @@
           SELECT</acronym> queries to the standby server and starts routing
           everything to the primary server even if <xref linkend="guc-load-balance-mode">
           is enabled, until the standby catches-up with the primary.
-          Setting this parameter to 0 disables, the delay checking.
+          Setting this parameter to 0 disables the delay checking.
           This delay threshold check is performed every <xref linkend="guc-sr-check-period">.
           Default is 0.
         </para>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II conf</>igurations.
         </para>
 
       </listitem>
@@ -177,7 +177,7 @@
         </table>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
 
       </listitem>

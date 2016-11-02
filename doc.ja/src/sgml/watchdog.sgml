@@ -57,7 +57,10 @@ onならwatchdogを有効にします。
   </sect2>
 
   <sect2 id="config-communication-watchdog">
+<!--
     <title>Watchdog communication</title>
+-->
+    <title>Watchdog通信</title>
 
     <variablelist>
 
@@ -92,13 +95,20 @@ onならwatchdogを有効にします。
       <varlistentry id="guc-wd-port" xreflabel="wd_port">
         <term><varname>wd_port</varname> (<type>integer</type>)
           <indexterm>
+<!--
             <primary><varname>wd_port</varname> configuration parameter</primary>
+-->
+            <primary><varname>wd_port</varname> 設定パラメータ</primary>
           </indexterm>
         </term>
         <listitem>
           <para>
+<!--
             Specifies the port number to be used by watchdog
-            process to listen for connections. Default is 9999.
+            process to listen for connections. Default is 9000.
+-->
+watchdogが接続を受け付けるために監視するポート番号です。
+デフォルト値は9000です。
           </para>
           <para>
 <!--
@@ -163,7 +173,10 @@ wachdog間通信で用いられる認証キーを指定します。
   </sect2>
 
   <sect2 id="config-watchdog-upstream-connections">
+<!--
     <title>Upstream server connection</title>
+-->
+    <title>上流サーバへの接続</title>
 
     <variablelist>
 
@@ -804,7 +817,10 @@ watchdogプロセスがネットワークリンクの状態を監視するネッ
   </sect2>
 
   <sect2 id="config-watchdog-lifecheck-heartbeat">
+<!--
     <title>Lifecheck Heartbeat mode configuration</title>
+-->
+    <title>死活監視：ハートビートモードの設定</title>
 
     <variablelist>
       <varlistentry id="guc-wd-heartbeat-port" xreflabel="wd_heartbeat_port">
@@ -1013,7 +1029,7 @@ heartbeat_destinationX:heartbeat_destination_portXで指定されるハートビ
   </sect2>
 
   <sect2 id="config-watchdog-lifecheck-query">
-    <title>Lifecheck Query mode configuration</title>
+    <title>死活監視：クエリモードの設定</title>
   <variablelist>
 
 <varlistentry id="guc-wd-life-point" xreflabel="wd_life_point">
@@ -1193,7 +1209,10 @@ heartbeat_destinationX:heartbeat_destination_portXで指定されるハートビ
   </sect2>
 
   <sect2 id="config-watchdog-server-configuration">
+<!--
     <title>Watchdog servers configurations</title>
+-->
+    <title>Watchdogサーバの設定</title>
   <variablelist>
 
   <varlistentry id="guc-other-pgpool-hostname" xreflabel="other_pgpool_hostname">

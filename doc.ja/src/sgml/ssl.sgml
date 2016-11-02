@@ -8,19 +8,29 @@
     <varlistentry id="guc-ssl" xreflabel="ssl">
       <term><varname>ssl</varname> (<type>boolean</type>)
         <indexterm>
+<!--
           <primary><varname>ssl</varname> configuration parameter</primary>
+-->
+          <primary><varname>ssl</varname> 設定パラメータ</primary>
         </indexterm>
     </term>
     <listitem>
       <para>
+<!--
         When set to on, <productname>Pgpool-II</productname> enables the <acronym>SSL</acronym>
         for both the frontend and backend communications.
         Default is off.
+-->
+onに設定すると，<productname>Pgpool-II</productname>はフロントエンドとバックエンドの両方の通信での<acronym>SSL</acronym>が可能になります。
+デフォルトはoffです。
       </para>
       <note>
         <para>
+<!--
           <xref linkend="guc-ssl-key"> and <xref linkend="guc-ssl-cert"> must also be
           configured in order for SSL to work with frontend connections.
+-->
+フロントエンド接続にSSLするには、<xref linkend="guc-ssl-key">と<xref linkend="guc-ssl-cert">が設定されてなければなりません。
         </para>
       </note>
       <note>
@@ -28,10 +38,15 @@
           For SSL to work <productname>Pgpool-II</productname> must be build with OpenSSL support.
           See <xref linkend="install-pgpool"> for details on building the
           <productname>Pgpool-II</productname>.
+SSLサポートを有効にするためには、<productname>Pgpool-II</productname>をOpenSSLサポート付きでビルドする必要があります。
+<productname>Pgpool-II</productname>のビルドついて詳細は<xref linkend="install-pgpool">をご覧ください。
         </para>
       </note>
       <para>
+<!--
         This parameter can only be set at server start.
+-->
+このパラメータはサーバ起動時にのみ設定可能です。
       </para>
       </listitem>
     </varlistentry>
@@ -39,18 +54,29 @@
     <varlistentry id="guc-ssl-key" xreflabel="ssl_key">
       <term><varname>ssl_key</varname> (<type>string</type>)
         <indexterm>
+<!--
           <primary><varname>ssl_key</varname> configuration parameter</primary>
+-->
+          <primary><varname>ssl_key</varname> 設定パラメータ</primary>
         </indexterm>
     </term>
     <listitem>
       <para>
+<!--
         Specifies the path to the private key file to be used for
         incoming frontend connections.
         There is no default value for this option, and if left unset
         <acronym>SSL</acronym> will be disabled for incoming frontend connections.
+-->
+フロントエンドとの接続に使用するプライベートキーファイルのパスを指定します。
+このオプションののデフォルト値はありません。
+設定がない場合は、フロントエンドとの接続で<acronym>SSL</acronym>が使用されなくなります。 
       </para>
       <para>
+<!--
         This parameter can only be set at server start.
+-->
+このパラメータはサーバ起動時にのみ設定可能です。
       </para>
       </listitem>
     </varlistentry>
@@ -58,19 +84,30 @@
     <varlistentry id="guc-ssl-cert" xreflabel="ssl_cert">
       <term><varname>ssl_cert</varname> (<type>string</type>)
         <indexterm>
+<!--
           <primary><varname>ssl_cert</varname> configuration parameter</primary>
+-->
+          <primary><varname>ssl_cert</varname> 設定パラメータ</primary>
         </indexterm>
     </term>
     <listitem>
       <para>
+<!--
         Specifies the path to the public x509 certificate file to be used
         for the incoming frontend connections.
         There is no default value for this option, and if left unset
         <acronym>SSL</acronym> will be disabled for incoming frontend connections.
+-->
+フロントエンドとの接続に使用する公開x509証明書のフルパスを指定します。 
+このオプションののデフォルト値はありません。
+設定がない場合は、フロントエンドとの接続で<acronym>SSL</acronym>が使用されなくなります。 
       </para>
 
       <para>
+<!--
         This parameter can only be set at server start.
+-->
+このパラメータはサーバ起動時にのみ設定可能です。
       </para>
       </listitem>
     </varlistentry>
@@ -78,20 +115,31 @@
     <varlistentry id="guc-ssl-ca-cert" xreflabel="ssl_ca_cert">
       <term><varname>ssl_ca_cert</varname> (<type>string</type>)
         <indexterm>
+<!--
           <primary><varname>ssl_ca_cert</varname> configuration parameter</primary>
+-->
+          <primary><varname>ssl_ca_cert</varname> 設定パラメータ</primary>
         </indexterm>
     </term>
     <listitem>
       <para>
+<!--
         Specifies the path to a <acronym>PEM</acronym>
         format <acronym>CA</acronym> certificate files, which can be used
         to verify the backend server certificates. This is analogous to
         the <command>-CApath</command> option of the
         <command>OpenSSL verify(1)</command> command.
+-->
+ <acronym>PEM</acronym>形式の<acronym>CA</acronym>ルート証明書のパスを指定します。
+ これはバックエンドサーバ証明書の検証に用いられます。
+ このオプションは<command>OpenSSL verify(1)</command>コマンドにおける<command>-CAfile</command>オプションと同様の機能を提供します。
       </para>
 
       <para>
+<!--
         This parameter can only be set at server start.
+-->
+このパラメータはサーバ起動時にのみ設定可能です。
       </para>
       </listitem>
     </varlistentry>
@@ -99,25 +147,40 @@
     <varlistentry id="guc-ssl-ca-cert-dir" xreflabel="ssl_ca_cert_dir">
       <term><varname>ssl_ca_cert_dir</varname> (<type>string</type>)
         <indexterm>
+<!--
           <primary><varname>ssl_ca_cert_dir</varname> configuration parameter</primary>
+-->
+          <primary><varname>ssl_ca_cert_dir</varname> 設定パラメータ</primary>
         </indexterm>
     </term>
     <listitem>
       <para>
+<!--
         Specifies the path to a directory containing <acronym>PEM</acronym>
         format <acronym>CA</acronym> certificate files, which can be used
         to verify the backend server certificates. This is analogous to
         the <command>-CApath</command> option of the
         <command>OpenSSL verify(1)</command> command.
+-->
+ <acronym>PEM</acronym>形式の<acronym>CA</acronym>ルート証明書ファイルが格納されているディレクトリへのパスを指定します。
+ これはバックエンドサーバ証明書の検証に用いられます。
+ このオプションは<command>OpenSSL verify(1)</command>コマンドにおける<command>-CAfile</command>オプションと同様の機能を提供します。
       </para>
       <para>
+<!--
         The default value for this option is unset, which means no
         verification takes place. Verification will still happen if
         this option is not set but a value is provided for
         <xref linkend="guc-ssl-ca-cert">.
+-->
+デフォルトでは値が設定されておらず検証は行われません。
+このオプションが設定されていない場合においても、<xref linkend="guc-ssl-ca-cert">オプションが設定されている場合には検証が行われます。
       </para>
       <para>
+<!--
         This parameter can only be set at server start.
+-->
+このパラメータはサーバ起動時にのみ設定可能です。
       </para>
       </listitem>
     </varlistentry>

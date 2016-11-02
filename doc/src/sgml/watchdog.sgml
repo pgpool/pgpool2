@@ -68,7 +68,7 @@
         <listitem>
           <para>
             Specifies the port number to be used by watchdog
-            process to listen for connections. Default is 9999.
+            process to listen for connections. Default is 9000.
           </para>
           <para>
             This parameter can only be set at server start.

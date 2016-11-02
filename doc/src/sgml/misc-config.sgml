@@ -16,7 +16,7 @@
         <para>
           Specifies the relation cache expiration time in seconds.
           The relation cache is used for caching the query result of
-          PostgreSQL system catalogs that is used by <productname>Pgpool-II
+          <productname>PostgreSQL</> system catalogs that is used by <productname>Pgpool-II
           </productname> to get various informations including the table
           structures and to check table types(e.g. To check if the referred
           table is a temporary table or not). The cache is maintained in
@@ -51,7 +51,7 @@
         <note>
           <para>
             If the below message frequently appears in the
-            <productname>Pgpool-II</productname> log, You may need to
+            <productname>Pgpool-II</productname> log, you may need to
             increase the <varname>relcache_size</varname> for better performance.
             <programlisting>
 "pool_search_relcache: cache replacement happened"
@@ -76,7 +76,7 @@
         <para>
           Setting to on, enables the temporary table check in the <acronym>SELECT</acronym>
           statements. To check the temporary table <productname>Pgpool-II</productname>
-          queries the system catalog of primary/master PostgreSQL backend which increases
+          queries the system catalog of primary/master <productname>PostgreSQL</> backend, which increases
           the load on the primary/master server.
           If you are absolutely sure that your system never uses temporary tables, then
           you can safely turn off the <varname>check_temp_table</varname>.
@@ -84,7 +84,7 @@
         </para>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
 					this parameter for a current session.
         </para>
@@ -103,16 +103,16 @@
         <para>
           Setting to on, enables the unlogged table check in the <acronym>SELECT</acronym>
           statements. To check the unlogged table <productname>Pgpool-II</productname>
-          queries the system catalog of primary/master PostgreSQL backend which increases
+          queries the system catalog of primary/master <productname>PostgreSQL</> backend which increases
           the load on the primary/master server.
           If you are absolutely sure that your system never uses the unlogged tables
-          (for example, you are using 9.0 or earlier version of PostgreSQL) then you
-          can safely turn off the <varname>check_unlogged_table</varname>..
+          (for example, you are using 9.0 or earlier version of <productname>PostgreSQL</>) then you
+          can safely turn off the <varname>check_unlogged_table</varname>.
           Default is on.
         </para>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
 					this parameter for a current session.
         </para>

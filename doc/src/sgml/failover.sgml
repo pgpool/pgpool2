@@ -13,7 +13,7 @@
       </term>
       <listitem>
         <para>
-          Specifies a user command to run when a PostgreSQL backend node detaches.
+          Specifies a user command to run when a <productname>PostgreSQL</> backend node gets detached.
           <productname>Pgpool-II</productname> replaces the following special characters
           with the backend specific information.
         </para>
@@ -31,19 +31,19 @@
             <tbody>
               <row>
                 <entry>%d</entry>
-                <entry>Backend ID of a detached node</entry>
+                <entry>DB node ID of the detached node</entry>
               </row>
               <row>
                 <entry>%h</entry>
-                <entry>Hostname of a detached node</entry>
+                <entry>Hostname of the detached node</entry>
               </row>
               <row>
                 <entry>%p</entry>
-                <entry>Port number of a detached node</entry>
+                <entry>Port number of the detached node</entry>
               </row>
               <row>
                 <entry>%D</entry>
-                <entry>Database cluster directory of a detached node</entry>
+                <entry>Database cluster directory of the detached node</entry>
               </row>
               <row>
                 <entry>%M</entry>
@@ -63,11 +63,11 @@
               </row>
               <row>
                 <entry>%r</entry>
-                <entry>New master port number</entry>
+                <entry>Port number of the new master node</entry>
               </row>
               <row>
                 <entry>%R</entry>
-                <entry>New master database cluster directory</entry>
+                <entry>Database cluster directory of the new master node</entry>
               </row>
               <row>
                 <entry>%%</entry>
@@ -89,7 +89,7 @@
           </para>
         </note>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -102,9 +102,10 @@
       </term>
       <listitem>
         <para>
-          Specifies a user command to run when a PostgreSQL backend node gets attached to
-          <productname>Pgpool-II</productname>, <productname>Pgpool-II</productname>
+          Specifies a user command to run when a <productname>PostgreSQL</> backend node gets attached to
+          <productname>Pgpool-II</productname>. <productname>Pgpool-II</productname>
           replaces the following special characters with the backend specific information.
+          before excuting the command.
         </para>
 
         <table id="ffailback-command-table">
@@ -120,19 +121,19 @@
             <tbody>
               <row>
                 <entry>%d</entry>
-                <entry>Backend ID of a detached node</entry>
+                <entry>DB node ID of the attached node</entry>
               </row>
               <row>
                 <entry>%h</entry>
-                <entry>Hostname of a detached node</entry>
+                <entry>Hostname of the attached node</entry>
               </row>
               <row>
                 <entry>%p</entry>
-                <entry>Port number of a detached node</entry>
+                <entry>Port number of the attached node</entry>
               </row>
               <row>
                 <entry>%D</entry>
-                <entry>Database cluster directory of a detached node</entry>
+                <entry>Database cluster directory of the attached node</entry>
               </row>
               <row>
                 <entry>%M</entry>
@@ -152,11 +153,11 @@
               </row>
               <row>
                 <entry>%r</entry>
-                <entry>New master port number</entry>
+                <entry>Port number of the new master node</entry>
               </row>
               <row>
                 <entry>%R</entry>
-                <entry>New master database cluster directory</entry>
+                <entry>Database cluster directory of the new master node</entry>
               </row>
               <row>
                 <entry>%%</entry>
@@ -168,7 +169,7 @@
         </table>
 
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -182,10 +183,10 @@
       <listitem>
 
         <para>
-          Specifies a user command to run in master/slave streaming replication mode
-          after the master backend node failover.
-          <productname>Pgpool-II</productname>, <productname>Pgpool-II</productname>
-          replaces the following special characters with the backend specific information.
+          Specifies a user command to run after failover on the primary node failover.
+		  This works only in Master Replication mode with streaming replication.
+          <productname>Pgpool-II</productname> replaces the following special characters
+          with the backend specific information before excuting the command.
         </para>
 
         <table id="follow-master-command-table">
@@ -201,19 +202,19 @@
             <tbody>
               <row>
                 <entry>%d</entry>
-                <entry>Backend ID of a detached node</entry>
+                <entry>DB node ID of the detached node</entry>
               </row>
               <row>
                 <entry>%h</entry>
-                <entry>Hostname of a detached node</entry>
+                <entry>Hostname of the detached node</entry>
               </row>
               <row>
                 <entry>%p</entry>
-                <entry>Port number of a detached node</entry>
+                <entry>Port number of the detached node</entry>
               </row>
               <row>
                 <entry>%D</entry>
-                <entry>Database cluster directory of a detached node</entry>
+                <entry>Database cluster directory of the detached node</entry>
               </row>
               <row>
                 <entry>%M</entry>
@@ -233,11 +234,11 @@
               </row>
               <row>
                 <entry>%r</entry>
-                <entry>New master port number</entry>
+                <entry>Port number of the new master node</entry>
               </row>
               <row>
                 <entry>%R</entry>
-                <entry>New master database cluster directory</entry>
+                <entry>Database cluster directory of the new master node</entry>
               </row>
               <row>
                 <entry>%%</entry>
@@ -248,20 +249,22 @@
           </tgroup>
         </table>
 
+        <note>
         <para>
-          If <xref linkend="guc-follow-master-command"> is not left out empty, then when
-          a master node failover gets completed in master/slave streaming replication mode,
-          <productname>Pgpool-II</productname> degenerates all nodes excepted the new master
+          If <varname>follow_master_command</varname>> is not empty, then after failover 
+          on the primary node gets completed in Master Slave mode with streaming replication,
+          <productname>Pgpool-II</productname> degenerates all nodes excepted the new primary 
           and starts new child processes to be ready again to accept connections from the clients.
           After this, <productname>Pgpool-II</productname> executes the command configured
-          in the <xref linkend="guc-follow-master-command"> for each degenerated backend nodes.
+          in the <varname>follow_master_command</varname> for each degenerated backend nodes.
+        </para>
+        </note>
+        <para>
+          Typically <varname>follow_master_command</varname>> command is used to recover
+          the slave from the new primary by calling the pcp_recovery_node command.
         </para>
         <para>
-          Typically <xref linkend="guc-follow-master-command"> command is used to recover
-          the slave from the new master by calling the pcp_recovery_node command.
-        </para>
-        <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -284,14 +287,14 @@
           <para>
             It is recommended to turn on the backend health checking
             (see <xref linkend="runtime-config-health-check">)
-            when <xref linkend="guc-fail-over-on-backend-error"> is set to off.
-            However, <productname>Pgpool-II</productname> still triggers the
+            when <varname>fail_over_on_backend_error</varname> is set to off.
+            Note, however, that <productname>Pgpool-II</productname> still triggers the
             failover when it detects the administrative shutdown of
-            PostgreSQL backend server.
+            <productname>PostgreSQL</> backend server.
           </para>
         </note>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
@@ -308,13 +311,13 @@
           primary node when a failover scenario occurs.
           <productname>Pgpool-II</productname> will give up looking for the primary
           node if it is not found with-in this configured time.
-          Default is 10 and Setting this parameter to 0 means keep trying forever.
+          Default is 300 and Setting this parameter to 0 means keep trying forever.
         </para>
         <para>
           This parameter is only applicable in the streaming replication mode.
         </para>
         <para>
-          This parameter can be changed by reloading the pgpool configurations.
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
     </varlistentry>
