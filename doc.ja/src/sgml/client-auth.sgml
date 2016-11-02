@@ -57,7 +57,7 @@
   By default, pool_hba authentication is disabled, and setting <varname>enable_pool_hba</varname>
   to <literal>on</literal> enables it. see the <xref linkend="guc-enable-pool-hba"> configuration parameter.
 -->
-<productname>PostgreSQL</>の<filename>pg_hba.conf</filename>と同じよう<productname>Pgpool-II</productname>でも<filenameLpool_hba.conf</filename>とよばれる設定ファイルを使った同様のクライアント認証機能をサポートしています。
+<productname>PostgreSQL</>の<filename>pg_hba.conf</filename>と同じよう<productname>Pgpool-II</productname>でも<filename>pool_hba.conf</filename>とよばれる設定ファイルを使った同様のクライアント認証機能をサポートしています。
 <productname>Pgpool-II</productname>インストールするとデフォルトインストール先の設定ファイルディレクトリ（<literal>"/usr/local/etc"</literal>）にサンプルの<filename>pool_hba.conf.sample</filename>が含まれています。
 デフォルトではpool_hbaによる認証は無効になっており、<varname>enable_pool_hba</varname>を<literal>on</literal>に設定することで有効になります。
 <xref linkend="guc-enable-pool-hba">設定パラメータをご覧ください。
@@ -78,7 +78,7 @@
    <literal>all</> or <literal>replication</>) makes the word lose its special
    meaning, and just match a database, user, or host with that name.
 -->
-<filename>pool_hba.conf</filename>のフォーマットは<productname>PostgreSQL</>の<filename>pg_hba.conf</filaname>のものとほとんど同じです。
+<filename>pool_hba.conf</filename>のフォーマットは<productname>PostgreSQL</>の<filename>pg_hba.conf</filename>のものとほとんど同じです。
 <filename>pool_hba.conf</filename>ファイルの一般的な書式は、1行につき1つのレコードというレコードの集合です。
 空行はコメント用の<literal>#</literal>文字以降の文字と同じく無視されます。
 レコードは行をまたいで続けることはできません。
@@ -158,7 +158,7 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        since the default behavior is to listen for TCP/IP connections
        only on the local loopback address <literal>localhost</>.
 -->
-サーバのデフォルトの動作は、ローカルループバックアドレスである<litera>localhost</literal>のみTCP/IP接続を監視しています。
+サーバのデフォルトの動作は、ローカルループバックアドレスである<literal>localhost</literal>のみTCP/IP接続を監視しています。
 よってサーバにおいて<xref linkend="guc-listen-addresses">パラメータが適切な値に設定された状態で起動されていない限り、リモートのTCP/IP接続はできません。
       </para>
      </note>
@@ -354,7 +354,7 @@ IPアドレスと<literal>/</literal>、およびCIDRマスク長の間には空
          PAM authentication is supported using user information on the host
          where <productname>Pgpool-II</productname> is running.
          To enable PAM support the <productname>Pgpool-II</productname>
-         must be configured with <command>"--with-pam"</command>
+         must be configured with <command>"&#045;&#045;with-pam"</command>
 -->
 <productname>Pgpool-II</productname>が稼働するホスト上のユーザ情報を使ったPAM認証を利用することができます。
 PAMサポートを有効にするには、<productname>Pgpool-II</productname>が<command>"--with-pam"</command>をつけてconfigureされていなければなりません。
@@ -387,7 +387,7 @@ PAM認証を有効にするには、<productname>Pgpool-II</productname>のサ�
        the form <replaceable>name</><literal>=</><replaceable>value</> that
        specify options for the authentication method.
 -->
-<replaceable>auth-method</>フィールドの後ろに、認証方式のオプションを指定する、<replacealbe>name</>=<replacealbe>value</>の形式のフィールドが存在する可能性があります。
+<replaceable>auth-method</>フィールドの後ろに、認証方式のオプションを指定する、<replaceable>name</>=<replaceable>value</>の形式のフィールドが存在する可能性があります。
       </para>
      </listitem>
     </varlistentry>
@@ -522,7 +522,7 @@ host    postgres        all             192.168.12.10/32        md5
 -->
 この認証方法はMD-5ハッシュ化されたパスワードがクライアントから送信されるパスワードベースの認証方法です。
 <productname>Pgpool-II</productname>は<productname>PostgreSQL</>データベースユーザパスワードを見ることができず、クライアントプリケーションはMD5ハッシュ化されたパスワードを送るのみです。
-そのため、<productname>Pgpool-II</productname>の<litearal>md5</literal>認証は<xref linkend="guc-pool-password">認証ファイルを使ってサポートしています。
+そのため、<productname>Pgpool-II</productname>の<literal>md5</literal>認証は<xref linkend="guc-pool-passwd">認証ファイルを使ってサポートしています。
    </para>
 
     <sect3 id="md5-authentication-file-format">
@@ -560,7 +560,7 @@ host    postgres        all             192.168.12.10/32        md5
     <para>
 <!--
         1- Login as the database's operating system user and type
-        <command>"pg_md5 --md5auth --username= "</command>
+        <command>"pg_md5 &#045;&#045;md5auth &#045;&#045;username= "</command>
         user name and <literal>md5</literal> encrypted password are registered
         into pool_passwd.
         If pool_passwd does not exist yet, pg_md5 command will automatically create it for you.
@@ -634,12 +634,13 @@ PAMについての詳細は<ulink url="http://www.kernal.org/pub/linux/libs/pam/
 -->
 PAM認証を有効にするには、<productname>Pgpool-II</productname>のサービス設定ファイルをシステムのPAM設定ディレクトリ（通常は<literal>"/etc/pam.d"</literal>にあります）に作成しなければなりません。
 サービス設定ファイルのサンプルはインストールディレクトリ下に<literal>"share/pgpool.pam"</literal>としてインストールされています。
+   </para>
 
    <note>
     <para>
 <!--
      To enable PAM support the <productname>Pgpool-II</productname>
-     must be configured with <command>"--with-pam"</command>
+     must be configured with <command>"&#045;&#045;with-pam"</command>
 -->
 PAMサポートを有効にするには、<productname>Pgpool-II</productname>が<command>"--with-pam"</command>をつけてconfigureされていなければなりません。
     </para>
