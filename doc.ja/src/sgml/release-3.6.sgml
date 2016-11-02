@@ -663,7 +663,7 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
             Prior default value 10 seconds is sometimes too short for a standby to
             be promoted.
             -->
-これまでのデフォルト値10病は、スタンバイを昇格する際には小さすぎでした。
+これまでのデフォルト値10秒は、スタンバイを昇格する際には小さすぎでした。
 			</para>
       </listitem>
 
