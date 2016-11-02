@@ -9,18 +9,19 @@
 
  <para>
   Since <productname>Pgpool-II</productname> is a middleware that works between
-  PostgreSQL servers and a PostgreSQL database client. So when a client application
+  <productname>PostgreSQL</> servers and a <productname>PostgreSQL</> database client, so when a client application
   connects to the <productname>Pgpool-II</productname>, <productname>Pgpool-II</productname>
-  inturn connects to the PostgreSQL servers using the same credentials to serve the incomming
-  client connection. So all the access privileges and restrictions defined for the user in PostgreSQL
-  gets automatically applied to all <productname>Pgpool-II</productname> clients. with an exceptions of
-  the authentications on PostgreSQL side that depends on the client's IP addresses or hostnames.
-  Reason being the connections to the PostgreSQL server are made by <productname>Pgpool-II</productname>
-  on behalf of the connecting clients and PostgreSQL server can only see the IP address of the
+  inturn connects to the <productname>PostgreSQL</> servers using the same credentials to serve the incomming
+  client connection. Thus, all the access privileges and restrictions defined for the user in <productname>PostgreSQL</>
+  gets automatically applied to all <productname>Pgpool-II</productname> clients, with an exceptions of
+  the authentications on <productname>PostgreSQL</> side that depends on the client's IP addresses or hostnames.
+  Reason being the connections to the <productname>PostgreSQL</> server are made by <productname>Pgpool-II</productname>
+  on behalf of the connecting clients and <productname>PostgreSQL</> server can only see the IP address of the
   <productname>Pgpool-II</productname> server and not that of the actual client.
-  So for the client host based authentications <productname>Pgpool-II</productname> has the
+  Therefore, for the client host based authentications <productname>Pgpool-II</productname> has the
   <literal>pool_hba</literal> mechanism similar to the <literal>pg_hba</literal> mechanism for
   authenticating the incomming client connections.
+-->
  </para>
 
  <sect1 id="auth-pool-hba-conf">
@@ -31,7 +32,7 @@
   </indexterm>
 
   <para>
-  Just like the <filename>pg_hba.conf</filename> file for PostgreSQL,
+  Just like the <filename>pg_hba.conf</filename> file for <productname>PostgreSQL</>,
   <productname>Pgpool-II</productname> supports a similar client authentication
   function using a configuration file called <filename>pool_hba.conf</filename>.
   <productname>Pgpool-II</productname> installation also includes the sample
@@ -42,7 +43,7 @@
   </para>
 
   <para>
-   The format of the pool_hba.conf file follows very closely PostgreSQL's pg_hba.conf format.
+   The format of the <filename>pool_hba.conf</filename> file follows very closely <productname>PostgreSQL</>'s <filename>pg_hba.conf</filename> format.
 
    The general format of the <filename>pool_hba.conf</filename> file is
    a set of records, one per line. Blank lines are ignored, as is any
@@ -121,8 +122,8 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </para>
        <para>
         Since <productname>Pgpool-II</productname> does not know anything about
-        users in the PostgreSQL backend server, So the database name is simply
-        compared against the entries in the DATABASE field of <filename>pool_hba.conf</filename>.
+        users in the <productname>PostgreSQL</> backend server, the database name is simply
+        compared against the entries in the databaseE field of <filename>pool_hba.conf</filename>.
        </para>
       </note>
       </para>
@@ -139,11 +140,11 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        database user
        <note>
        <para>
-       group names following <literal>"+"</literal> for USER field is not supported:
+       group names following <literal>"+"</literal> for user field is not supported:
        </para>
        <para>
        This is for the same reason as for the <literal>"samegroup"</literal> of database field.
-       A user name is simply checked against the entries in the USER field of
+       A user name is simply checked against the entries in the user field of
        <filename>pool_hba.conf</filename>.
        </para>
       </note>
@@ -242,7 +243,7 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
          must be configured with <command>"--with-pam"</command>
          </para>
          <para>
-         To enable PAM authentication, You must create a service-configuration file
+         To enable PAM authentication, you must create a service-configuration file
          for <productname>Pgpool-II</productname> in the system's PAM configuration
          directory (that is usually located at <literal>"/etc/pam.d"</literal>).
          A sample service-configuration file is also installed as <literal>"share/pgpool.pam"</literal>
@@ -288,9 +289,9 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         All pool_hba authentication options described in this section are
         about the authentication taking place between a client and the
         <productname>Pgpool-II</productname>.
-        A client still has to go through the PostgreSQL's authentication
+        A client still has to go through the <productname>PostgreSQL</>'s authentication
         process and must have the <literal>CONNECT</> privilege for the
-        database on the backend PostgreSQL server.
+        database on the backend <productname>PostgreSQL</> server.
     </para>
     <para>
         As far as pool_hba is concerned, it does not matter if a user name
@@ -358,7 +359,7 @@ host    postgres        all             192.168.12.10/32        md5
     This authentication method is the password-based authentication
     methods in which MD-5-hashed password is sent by client.
     Since <productname>Pgpool-II</productname> does not has the visibility
-    of PostgreSQL's database user password and client application only sends
+    of <productname>PostgreSQL</>'s database user password and client application only sends
     the MD5-hash of the password, so <literal>md5</literal> authentication
     in <productname>Pgpool-II</productname> is supported using the
     <xref linkend="guc-pool-passwd"> authentication file.
@@ -392,7 +393,7 @@ host    postgres        all             192.168.12.10/32        md5
         If pool_passwd does not exist yet, pg_md5 command will automatically create it for you.
         <note>
         <para>
-        user name and password must be identical to those registered in PostgreSQL server
+        user name and password must be identical to those registered in <productname>PostgreSQL</> server
         </para>
         </note>
     </para>
@@ -402,7 +403,7 @@ host    postgres        all             192.168.12.10/32        md5
         See <xref linkend="auth-pool-hba-conf"> for more details.
     </para>
     <para>
-        3- After changing md5 password(in both pool_passwd and PostgreSQL of course),
+        3- After changing md5 password(in both pool_passwd and <productname>PostgreSQL</> of course),
         reload the pgpool configurations.
     </para>
     </sect3>
