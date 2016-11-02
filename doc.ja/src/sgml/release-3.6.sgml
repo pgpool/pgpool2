@@ -22,7 +22,7 @@
     <!--
       Major enhancements in <productname>Pgpool-II</productname> 3.6 include:
       -->
-      <productname>Pgpool-II</productname> 3.6 の主な改善点が以下のとおりです。
+      <productname>Pgpool-II</productname> 3.6 の主な改善点は以下のとおりです。
     </para>
 
     <!-- Items in this list summarize one or more items below -->
@@ -45,12 +45,10 @@
       fail-over の挙動が改善されました。
       </para>
       <para>
-      Streaming Replication モードで、フェイルオーバーが発生した時に、
-      ダウンしたスタンバイサーバを利用しなければ、クライアントセッションが切断されなくなります。
+      Streaming Replicationモードで、フェイルオーバーが発生した時に、ダウンしたスタンバイサーバを利用しなければ、クライアントセッションが切断されなくなります。
       プライマリサーバがダウンした場合、すべてのセッションが切断されます。
-      また、ヘルスチェックのリトライの最中でも <productname>Pgpool-II</productname>
-      に接続することが可能です。<productname>Pgpool-II</productname> への接続リトライする最大回数まで
-      ヘルスチェックのリトライが続きます。
+      また、ヘルスチェックのリトライの最中でも <productname>Pgpool-II</productname>に接続することが可能です。
+<productname>Pgpool-II</productname>への接続リトライする最大回数までヘルスチェックのリトライが続きます。
 	    </para>
       </listitem>
 
@@ -72,7 +70,8 @@
 	  Watchdog is significantly enhanced. It becomes more reliable
 	  than previous releases.
       -->
-      Watchdog の性能が大幅に改善されました。
+Watchdogが大幅に改善されました。
+以前のバージョンよりも信頼性が向上しています。
 	</para>
       </listitem>
 
@@ -83,7 +82,7 @@
 	  applications) in streaming replication mode speeds up if
 	  many rows are returned in a result set.
       -->
-      問合せから大量の行が返される場合、拡張問い合わせプロトコル（例えば、Java アプリケーションで使用される場合）の処理速動が改善されました。
+問合せから大量の行が返される場合、ストリーミングレプリケーション時の拡張問い合わせプロトコル（例えば、Java アプリケーションで使用される場合）の処理速度が改善されました。
 	</para>
       </listitem>
 
@@ -102,7 +101,7 @@
 	  In some cases pg_terminate_backend() now does not trigger a
 	  fail-over.
       -->
-      特定の場合で、<function>pg_terminate_backend()</function> がフェイルオーバを起こさないようになりました。
+特定の場合に<function>pg_terminate_backend()</function>がフェイルオーバを起こさないようになりました。
 	</para>
       </listitem>
 
@@ -121,7 +120,7 @@
     <!--
       The above items are explained in more detail in the sections below.
       -->
-      上記の項目が以下のセクションで詳しく説明します。
+      上記の項目は以下のセクションで詳しく説明します。
     </para>
 
   </sect2>
@@ -157,12 +156,10 @@
 	  including retry over case does not trigger full session
 	  disconnection.
       -->
-      Streaming Replication モードで、フェイルオーバーが発生した時に、
-      ダウンしたスタンバイサーバを使用しなければ、クライアントセッションが切断されなくなります。
-      プライマリサーバがダウンした場合、すべてのセッションが切断されます。
-      ヘルスチェックタイムアウトした場合では、すべてのセッションが切断されます。
-      リトライ最大回数を超た場合を含めて他のヘルスチェックエラーが発生する場合、
-      すべてのセッションの切断されません。
+      Streaming Replication モードで、フェイルオーバーが発生した時に、ダウンしたスタンバイサーバがそのセッションで使用されていなければ、クライアントセッションが切断されなくなりました。
+プライマリサーバがダウンした場合は、すべてのセッションが切断されます。
+ヘルスチェックタイムアウトした場合でも、すべてのセッションが切断されます。
+リトライ最大回数を超えた場合を含めて、他のヘルスチェックエラーではすべてのセッションは切断されません。
 	</para>
 
 	<para>
@@ -173,10 +170,8 @@
 	  not the failed node, the session will not be affected by
 	  fail-over.
       -->
-      fail-over が発生する場合にローカル負荷分散ノードの情報が重要であるので、
-      <command>show pool_nodes</command> コマンドで、
-      ローカル負荷分散ノードの情報が表示されるようになりました。
-      負荷分散ノードがダウンしたノードではない場合、フェイルオーバーにより影響がありません。
+fail-over が発生する場合にローカル負荷分散ノードの情報が重要なので、<command>show pool_nodes</command> コマンドで、ローカル負荷分散ノードの情報が利用者の便宜のために表示されるようになりました。
+負荷分散ノードがダウンしたノードではない場合、フェイルオーバーによる影響はありません。
 	</para>
 
 	<para>
@@ -193,7 +188,7 @@
 	  tries to connect to all backend including the failed one and
 	  exits if it fails to connect to a backend (of course it
 	  fails). This is a temporary situation and will be resolved
-	  before pgpool executes fail-over. However if the health check
+	  once pgpool executes fail-over. However if the health check
 	  is retrying, the temporary situation keeps longer depending
 	  on the setting
 	  of <xref linkend="guc-health-check-max-retries"> and
@@ -201,15 +196,12 @@
 	  good. Attached patch tries to mitigate the problem:
       -->
       また、ヘルスチェックのリトライの最中でも <productname>Pgpool-II</productname> に接続できるようになりました。
-      <productname>Pgpool-II</productname> への接続リトライする最大回数までヘルスチェックのリトライが続きます。
-      fail_over_on_backend_errorが off になっている場合でも、
-      Pgpool-II の子プロセスがまず失敗したバックエンドを含めてすべてのバックエンドへの接続を試み、
-      失敗した場合終了するため（もちろん失敗します）、<productname>Pgpool-II</productname> へ接続の再試行が失敗するまで、
-      失敗したノードに対してヘルスチェックを行っています。
-      これは一時的な状況であり、<productname>Pgpool-II</productname> がフェールオーバーを行うする前に解決されます。
-      しかし、ヘルスチェックの再試行が行っている場合は、この一時的な状況の続く時間は、
-      <xref linkend="guc-health-check-max-retries"> と <xref linkend="guc-health-check-retry-delay"> の設定に依存します。
-      この状況が良くないのて、以下のように修正しました。
+以前は、<xref linkend="guc-fail-over-on-backend-error">がオフの場合でも<productname>Pgpool-II</productname>への接続は、ヘルスチェックのリトライをしている間はすべて失敗していました。
+これは、<productname>Pgpool-II</productname>の子プロセスがまず失敗したバックエンドを含めてすべてのバックエンドへの接続を試み、失敗した場合終了するためです（これはもちろん失敗します）。
+これは一時的な状況であり、<productname>Pgpool-II</productname>がフェールオーバーを行えば解決します。
+しかし、ヘルスチェックの再試行が行っている場合は、この一時的な状況は
+      <xref linkend="guc-health-check-max-retries">と<xref linkend="guc-health-check-retry-delay">の設定次第で長時間続きます。
+この状況は良くないので、以下のように修正しました。
 
 	</para>
 	<para>
@@ -219,9 +211,7 @@
 	  than exiting the process if operating in streaming
 	  replication mode and the node is not primary node.
       -->
-      ストリーミングレプリケーションモード、ダウンしたノードがスタンバイの場合、
-      バックエンドへの接続が失敗したら、このバックエンドへの接続をあきらめて、
-      他のノードへの接続を試みます。
+ストリーミングレプリケーションモードにおいて、バックエンドへの接続に失敗したら、そのダウンしたノードがプライマリではなければ、このバックエンドへの接続をあきらめて、他のノードへの接続を試みます。
 	</para>
 	<para>
     <!--
@@ -231,18 +221,16 @@
 	  there's other healthy standby nodes, one of them will be
 	  chosen as the load balance node.
       -->
-      ローカルノードのステータスを down と記録します。
-      プライマリーノードがロードバランスノードとして選択され、
-      すべてのクエリがプライマリーノードへ転送されます。
-      他のスタンバイのノードが存在する場合、その中からロードバランスノードが選択されます。
+ローカルノードのステータスを"down"と記録します。
+これによりプライマリーノードがロードバランスノードとして選択され、すべてのクエリがプライマリーノードへ転送されます。
+他にスタンバイのノードが存在する場合、その中からロードバランスノードが選択されます。
 	</para>
 	<para>
     <!--
 	  After the session is over, the child process will suicide to
 	  not retain the local status.
       -->
-      セッションが終了した後、子プロセスが殺され、ローカルの状態を保持しません。
-
+セッションが終了した後、ローカルの状態を保持しないように子プロセスは自殺します。
 	</para>
       </listitem>
 
@@ -276,15 +264,14 @@
 	  PostgreSQL's SET and RESET variable syntax with an addition
 	  of <literal>PGPOOL</literal> keyword at the start.
       -->
-      <productname>PostgreSQL</productname> の SET、SHOW と RESET コマンドと似っていますが、
-      PostgreSQL のコマンドと区別するために、 PGPOOL というキーワードが前に挿入しなければなりません。
+これは<productname>Pgpool-II</productname>に現在のセッションの設定パラメータを設定またはリセットする機能を追加するという点で<productname>PostgreSQL</productname>のSET、SHOW、RESETコマンドと似ていますが、PostgreSQLのSET、RESETコマンドコマンドと区別するために、<literal>PGPOOL</literal>というキーワードが前に挿入してあります。
 	</para>
 	<para>
     <!--
 	  Currently supported configuration parameters by PGPOOL
 	  SHOW/SET/RESET are: <xref linkend="guc-log-statement">,
       -->
-      現在 PGPOOL SHOW/SET/RESET に対応している設定パラメータは：
+      現在 PGPOOL SHOW/SET/RESET に対応している設定パラメータは以下です。
 	  <xref linkend="guc-log-per-node-statement">, <xref linkend="guc-check-temp-table">,
 	  <xref linkend="guc-check-unlogged-table">, <xref linkend="guc-allow-sql-comments">,
 	  <xref linkend="guc-client-idle-limit">, <xref linkend="guc-log-error-verbosity">,
@@ -306,8 +293,7 @@
 	  in <productname>Pgpool-II</productname> instances after
 	  restart. (Muhammad Usama)
     -->
-        <productname>Pgpool-II</productname> 再起動後、<productname>PostgreSQL</productname>
-        ノードのデータ不整合があったのでこれを修正しました。(bug 218) (Muhammad Usama)
+<productname>Pgpool-II</productname>再起動後、<productname>PostgreSQL</productname>ノードの状態の不整合がある場合、これを同期するようにしました。(bug 218) (Muhammad Usama)
 	</para>
 	<para>
     <!--
@@ -325,6 +311,7 @@
     <!--
 	  Enhance performance of SELECT when lots of rows involved. (Tatsuo Ishii)
     -->
+多くの行が出力されるSELECTの性能を改善しました。(Tatsuo Ishii)
 	</para>
 	<para>
     <!--
@@ -338,9 +325,11 @@
 	  message. Also there are unnecessary flushing are in handling
 	  the command complete message.
       -->
-      <productname>Pgpool-II</productname> がフロントエンドに行データを送るたび、
-      フラッシュするため、<function>write(2)</function> が呼び出されていました。
-      例えば、10,000 行の場合、write(2)が10,000 回呼び出されます。この挙動のコストが高いです。
+<productname>Pgpool-II</productname> がフロントエンドに行データ（"Data Row"メッセージ）を送るたびにネットワークにデータを（<function>write(2)</function>を呼び出して）フラッシュしていました。
+例えば、10,000行を転送する必要がある場合、write()が10,000 回呼び出されます。
+これは非常にコストが高いです。
+繰り返し行データを送信した後、"Command Complete"メッセージが送られるので、Command Completeメッセージの時に併せてwrite()を発行すれば十分です。
+また、command completeメッセージの取り扱いにおいて、不必要なフラッシュがありました。
 	</para>
 	<para>
     <!--
@@ -348,9 +337,7 @@
 	  testing</ulink> showed that from 47% to 62% performance
 	  enhancements were achieved in some cases.
       -->
-	  <ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-September/001784.html">Quick testing</ulink>
-      のテスト結果から、この修正により、特定の場合で、性能向上ができたことがわかりました。
-      しかし、問い合わせが返す行が少ない場合は、まだ改善されていません。
+<ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-September/001784.html">Quick testing</ulink>のテスト結果から、この修正により、特定の場合で、47%から62%の性能向上が得られたことが分かりました。
 	</para>
 	<para>
     <!--
@@ -358,7 +345,8 @@
 	  few rows, will not be enhanced since such rows are needed to
 	  flush to network anyway.
       -->
-      しかし、問い合わせが返す行が少ない場合は、まだ改善されていません。
+しかし、問い合わせが返す行が少ない場合は、まだ改善されていません。
+そうした行はいずれにせよネットワークへのフラッシュが必要だからです。
 	</para>
       </listitem>
 
@@ -402,13 +390,21 @@
 	    2016-03-15 [47d9af9] Mega patch to add SGML docs.
 	  -->
 	<para>
+<!--
           HTML documents are now generated from SGML documents.
           (Muhammad Usama, Tatsuo Ishii, Bo Peng)
+-->
+HTMLドキュメントは、SGMLドキュメントから生成されるようになりました。(Muhammad Usama, Tatsuo Ishii, Bo Peng)
 	</para>
 	<para>
+<!--
 	  It is intended to have better construction, contents and
           maintainability. However, still there's tremendous room to
           enhance the SGML documents. Please help us!
+-->
+これはより良い構成、内容、保守の容易性をもたらすためです。
+しかし、SGMLドキュメントにはまだたくさんの改良の余地があります。
+どうか私達を助けてください！
 	</para>
       </listitem>
 
@@ -419,7 +415,7 @@
   <!--
     <title>Other Enhancements</title>
     -->
-    <title>改善点</title>
+    <title>他の改善点</title>
 
     <itemizedlist>
 
@@ -432,7 +428,7 @@
     <!--
 	  Make authentication error message more user friendly. (Tatsuo Ishii)
     -->
-	  認証エラーメッセージがわかりやすくように改善されました。 (Tatsuo Ishii)
+	  認証エラーメッセージをわかりやすくしました。 (Tatsuo Ishii)
 	</para>
 	<para>
     <!--
@@ -442,9 +438,7 @@
 	  authentication message response type, Expecting 'R' and
 	  received '%c'"
       -->
-      バックエンドに接続する時に(ヘルスチェックを含む)、
-      "invalid authentication message response type, Expecting 'R' and received '%c'" メッセージではなく
-      "sorry, too many clients already" メッセージが返されていました。
+バックエンドに接続する時に(ヘルスチェックを含む)、"invalid authentication message response type, Expecting 'R' and received '%c'" メッセージではなく"sorry, too many clients already"のようなメッセージを返すようにしました。
 	</para>
       </listitem>
 
@@ -478,7 +472,7 @@
 	  of <productname>Pgpool-II</productname> clusters with
 	  watchdog for mainly testings.
       -->
-      <xref linkend="WATCHDOG-SETUP"> は watchdog 機能を有効にした Pgpool-II クラスタのテスト環境を構築するコマンドです。
+<xref linkend="WATCHDOG-SETUP"> は watchdog 機能を有効にした<productname>Pgpool-II</productname>クラスタのテスト環境を構築するコマンドです。
 	</para>
       </listitem>
 
@@ -502,9 +496,8 @@
 	  standard bin directory which is same
 	  as <command>pgpool</command>.
       -->
-      <xref linkend="PGPOOL-SETUP"> を使用する時に、PostgreSQL に特定のポート番号を割り当てたい場合に便利です。
-      また、<command>pgpool</command> と同じように、
-      <command>pgpool_setup</command> が標準 bin ディレクトリにインストールされるようになりました。
+これは<xref linkend="PGPOOL-SETUP">を使用する時に、<productname>PostgreSQL</productname>に特定のポート番号を割り当てたい場合に便利です。
+また、<command>pgpool</command> と同じように、<command>pgpool_setup</command>は標準binディレクトリにインストールされるようになりました。
 	</para>
       </listitem>
 
@@ -549,9 +542,8 @@
 	  backend nodes are in down status.  This surprisingly simple
 	  but smart solution was provided by Chris Pacejo.
       -->
-      すべてのノードがダウンした場合、status ファイルに記録しないように、
-      <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2015-August/003974.html">[pgpool-general:3918]</ulink> で
-      報告されたデータの不整合を修正しました。Chris Pacejo により、シンプルかつスマートな解決方法が提供されました。
+レプリケーションモードにおいて、すべてのノードがダウン状態の場合にstatusファイルに記録しないようにすることで、<ulink url="http://www.pgpool.net/pipermail/pgpool-general/2015-August/003974.html">[pgpool-general:3918]</ulink> で報告されたデータの不整合を修正しました。
+この驚ほど単純ですが、スマートな解決方法はChris Pacejoにより提供されました。
 	</para>
       </listitem>
 
@@ -571,8 +563,7 @@
 	  initializing the SSL session, we can use more protocols than
 	  TLSv1 protocol.
       -->
-      <function>SSLv23_method()</function> を使って SSLSession を初期化するように修正しました（PostgreSQL と同じように）。
-      この関数が特定バージョンのプロトコルを利用することではなく、互換性のあるプロトコルの最新バージョンを利用できるからです。
+SSLセッションを初期化する際の処理でTLSv1_method()を<function>SSLv23_method()</function>で置き換えることにより、TLSv1プロトコルよりも多くのプロトコルを使うことができるようになりました。
 	</para>
       </listitem>
 
@@ -593,7 +584,7 @@
     <!--
 	  Previously there were fixed limits for those.
       -->
-      これまで、このアイテムの数には上限がありました。
+      これまで、このアイテムの数には固定の上限がありました。
 	</para>
       </listitem>
 
@@ -613,8 +604,7 @@
 	  query consisted of all comments (for example "/* DBD::Pg
 	  ping test v3.5.3 */") (note that no ';') as an empty query.
       -->
-      この修正で、Pgpool-II は "/* DBD::Pg ping test v3.5.3 */" (';' を含まないことに注意)
-      のような空クエリを正しく識別できるようになりました。
+この修正で、<productname>Pgpool-II</productname>"/* DBD::Pg ping test v3.5.3 */" (';' を含まないことに注意)のような空クエリを正しく識別できるようになりました。
 	  </para>
 	<para>
     <!--
@@ -666,14 +656,14 @@
             Change the default value of
             <xref linkend="guc-search-primary-node-timeout"> from 10 to 300. (Tatstuo Ishii)
             -->
-            <xref linkend="guc-search-primary-node-timeout"> のデフォルト値を 10 から 300 まで変更しました。(Tatstuo Ishii)
+<xref linkend="guc-search-primary-node-timeout">のデフォルト値を10から300に変更しました。(Tatstuo Ishii)
 			</para>
 			<para>
             <!--
             Prior default value 10 seconds is sometimes too short for a standby to
             be promoted.
             -->
-            これまで、デフォルト値 10s がスタンバイを昇格する際には小さすぎでした。
+これまでのデフォルト値10病は、スタンバイを昇格する際には小さすぎでした。
 			</para>
       </listitem>
 
@@ -733,8 +723,7 @@
                load_balance_mode = off in streaming replication mode, now all the
                user queries are sent to the primary server only.
                -->
-               レプリケーションモードにおける <xref linkend="guc-load-balance-mode"> = off の場合でも、
-               一部のクエリがプライマリサーバ以外にも転送されていました。
+<xref linkend="guc-load-balance-mode"> = off の場合でも、一部のクエリがプライマリサーバ以外にも転送されていました。
                この修正で、 streaming replication モードで load_balance_mode = off
                の場合はすべてのクエリをプライマリサーバにのみ送るようにしました。
             </para>
@@ -771,12 +760,14 @@
         are fine). Solution is, if all nodes are down, force to restart all
         pgpool child.
         -->
-        すべてのノードがダウンした後に、1つのノードが復元され、<command>pcp_attach_node</command>
-        コマンドでノートを復帰させます。コマンドが成功に実行されましたが、新しい接続が拒否されました。
-        <productname>Pgpool-II</productname> の子プロセスがキャッシュされた古い情報を参照したのが原因でした。
-        このキャッシュされた情報には、このノードの状態が down のままです。
-        この修正では、全ノードがダウンした場合、強制的に全 <productname>Pgpool-II</productname>
-        子プロセスを再起動するようにしました。
+すべてのノードがダウンすると、すべてのコネクションを受け付けなくなります。
+その状態で1つの<productname>PostgreSQL</productname>が起動し、<command>pcp_attach_node</command>コマンドでそのノードを復帰させます。
+そしてこのコマンドは成功しました。
+しかし、新しい接続が拒否されました。
+これは<productname>Pgpool-II</productname> の子プロセスがキャッシュされた古い情報を参照したのが原因でした。
+ストリーミングレプリケーションモードでは、このキャッシュされた情報において、復帰させたノードの状態がdownのままでした。
+（ネィティブレプリケーションモード、およびそれ以外のモードでは問題ありません）
+解決法として、全ノードがダウンした場合、強制的に全 <productname>Pgpool-II</productname>子プロセスを再起動するようにしました。
         </para>
       </listitem>
       <listitem>
@@ -787,11 +778,11 @@
         <!--
 	    Fix for avoiding downtime when <productname>Pgpool-II</productname> changes require a restart. (Muhammad Usama)
         -->
-        パラメータの設定を変更した後、<productname>Pgpool-II</productname>を再起動する際に発生するエラーが修正されました。(Muhammad Usama)
+再起動が必要なパラメータの設定を変更した際の<productname>Pgpool-II</productname>停止が起こらないようにしました。(Muhammad Usama)
         </para>
         <para>
         <!--
-        To fix this, The verification mechanism of configuration parameter values is
+        To fix this, the verification mechanism of configuration parameter values is
         reversed, previously the standby nodes used to verify their parameter values
         against the respective values on the master <productname>Pgpool-II</productname> node and when the
         inconsistency was found the FATAL error was thrown, now with this commit the
@@ -804,9 +795,11 @@
         configuration inconsistency warnings in the master <productname>Pgpool-II</productname> log to avoid the
         surprises at the time of <productname>Pgpool-II</productname> master switch over.
         -->
-        以前はスタンバイノードがマスターノードに対して設定パラメータの値を検証しましたが、
-        今の修正で、マスターノードがスタンバイノードに対して設定パラメータの値を検証するようになりました。また、FATAL の代わりに WARNING が
-        出力出力されるようになりました。そのため、設定が異なってもクラスタへの参加ができるようになりました。
+この修正のために、設定パラメータの検証機構の順序を逆にしました。
+以前はスタンバイノードが<productname>Pgpool-II</productname>マスターノードに対して設定パラメータの値を検証し、不整合が見つかった場合にはFATALエラーが出力されていました。
+この修正で、<productname>Pgpool-II</productname>マスターノードに検証の役割が移譲されました。
+マスターノードは参加している個々のスタンバイノードの設定値をローカルの設定値と比較し、違っている場合にはエラーではなくてWARNINGメッセージを出力します。
+この方法では、watchdogクラスタとユーザは、手動でマスター<productname>Pgpool-II</productname>ログの中から不整合ワーニングを見つけて、<productname>Pgpool-II</productname>マスターのスイッチオーバが見つかった時に驚くようなことが起こらないようにしなければなりません。
         </para>
       </listitem>
       <listitem>

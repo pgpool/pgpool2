@@ -130,7 +130,7 @@
 	  tries to connect to all backend including the failed one and
 	  exits if it fails to connect to a backend (of course it
 	  fails). This is a temporary situation and will be resolved
-	  before pgpool executes fail-over. However if the health check
+	  once pgpool executes fail-over. However if the health check
 	  is retrying, the temporary situation keeps longer depending
 	  on the setting
 	  of <xref linkend="guc-health-check-max-retries"> and
@@ -532,7 +532,7 @@
 	    Fix for avoiding downtime when <productname>Pgpool-II</productname> changes require a restart. (Muhammad Usama)
         </para>
         <para>
-        To fix this, The verification mechanism of configuration parameter values is
+        To fix this, the verification mechanism of configuration parameter values is
         reversed, previously the standby nodes used to verify their parameter values
         against the respective values on the master <productname>Pgpool-II</productname> node and when the
         inconsistency was found the FATAL error was thrown, now with this commit the
