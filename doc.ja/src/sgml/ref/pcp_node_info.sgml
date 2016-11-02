@@ -93,7 +93,7 @@ Pgpool-II documentation
     ここでは例を示します。
     <programlisting>
 $ pcp_node_info -h localhost -U postgres 0
-host1 5432 1 1073741823.500000
+host1 5432 1 1073741823.500000 waiting
     </programlisting>
   </para>
   <para>
@@ -146,10 +146,11 @@ host1 5432 1 1073741823.500000
   </para>
     <programlisting>
 $ pcp_node_info --verbose -h localhost -U postgres 0
-Hostname: host1
-Port    : 5432
-Status  : 1
-Weight  : 0.5
+Hostname   : host1
+Port       : 5432
+Status     : 1
+Weight     : 0.5
+Status Name: waiting
     </programlisting>
  </refsect1>
 
