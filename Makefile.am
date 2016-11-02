@@ -9,5 +9,6 @@ docs:
 .PHONY: docs
 
 SUBDIRS = src
-DIST_SUBDIRS = src doc
+DIST_SUBDIRS = src doc doc.ja
+
 
