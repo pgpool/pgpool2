@@ -1006,11 +1006,18 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
         2016-07-28 [541451e]  Display human readable output for backend node status.
         -->
         <para>
+        <!--
 	    Display human readable output for backend node status. (Muhammad Usama)
+        -->
+        <link linkend="PCP-PROC-INFO">pcp_node_info</link> コマンドの標準出力の「Status」がわかりやすくように変更されました。(Muhammad Usama)
+
         </para>
         <para>
+        <!--
         Changed the output of <link linkend="PCP-PROC-INFO">pcp_node_info</link> utility and show commands display human
         readable backend status string instead of internal status code.
+        -->
+        <link linkend="PCP-PROC-INFO">pcp_node_info</link> コマンドの標準出力の「Status」が内部状態コードから人間がわかりやすい状態の文字列に変更されました。
         </para>
       </listitem>
       <listitem>
