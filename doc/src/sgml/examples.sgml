@@ -19,7 +19,7 @@
 	  <sect2 id="example-configs-begin">
 		  <title>Let's Begin!</title>
       <para>
-        First, we must learn how to install and configure pgpool-II and database nodes before using replication or parallel query.
+        First, we must learn how to install and configure <productname>Pgpool-II</> and database nodes before using replication.
       </para>
 
       <sect3 id="example-configs-begin-installing">
@@ -35,7 +35,7 @@ $ make install
           </programlisting>
           <command>configure</command> script collects your system information
           and use it for the compilation procedure. You can pass command
-          line arguments to configure script to change the default behavior,
+          line arguments to <command>configure</> script to change the default behavior,
           such as the installation directory. <productname>Pgpool-II</productname>
           will be installed to <literal>/usr/local</literal> directory by default.
         </para>
@@ -49,7 +49,7 @@ $ make install
         <note>
           <para>
             <productname>Pgpool-II</productname> requires <literal>libpq</literal>
-            library in PostgreSQL 7.4 or later (version 3 protocol).
+            library in <productname>PostgreSQL</> 7.4 or later (version 3 protocol).
           </para>
         </note>
         <para>
@@ -63,7 +63,7 @@ configure: error: libpq is not installed or libpq is old
           configure</command> script.
           The <command>configure</command> script searches for <literal>libpq</literal>
           library under <literal>/usr/local/pgsql</literal>. If you have installed the
-          PostgreSQL in a directory other than <literal>/usr/local/pgsql</literal>, use
+          <productname>PostgreSQL</> in a directory other than <literal>/usr/local/pgsql</literal>, use
           <literal>--with-pgsql</literal>, or <literal>--with-pgsql-includedir</literal>
           and <literal>--with-pgsql-libdir</literal> command line options when you
           execute <command>configure</command>.
@@ -100,7 +100,7 @@ port = 9999
           purpose to retrieve information on database nodes, shutdown
           <productname>Pgpool-II</productname>, etc. via network. To use
           <acronym>PCP</acronym> commands, user authentication is required.
-          This authentication is different from PostgreSQL's user authentication.
+          This authentication is different from <productname>PostgreSQL</>'s user authentication.
           A user name and password need to be defined in the <literal>pcp.conf</literal>
           file. In the file, a user name and password are listed as a pair on each line,
           and they are separated by a colon (:). Passwords are encrypted in
@@ -139,7 +139,7 @@ pcp_port = 9898
       <sect3 id="example-configs-prep-db-nodes">
 		    <title>Preparing Database Nodes</title>
         <para>
-          Now, we need to set up backend PostgreSQL servers for <productname>Pgpool-II
+          Now, we need to set up backend <productname>PostgreSQL</> servers for <productname>Pgpool-II
           </productname>. These servers can be placed within the same host as
           <productname>Pgpool-II</productname>, or on separate machines. If you decide
           to place the servers on the same host, different port numbers must be assigned
@@ -192,7 +192,7 @@ $ pgpool
 $ pgpool -n &
         </programlisting>
 
-        The log messages are printed on the terminal, so the recommended options to use the following.
+        The log messages are printed on the terminal, so it is recommended to use the following options.
         <programlisting>
 $ pgpool -n -d > /tmp/pgpool.log 2>&1 &
         </programlisting>
@@ -225,7 +225,7 @@ $ pgpool -n 2>&1 | /usr/sbin/cronolog \
   '/var/log/pgsql/%Y-%m-%d-pgpool.log' &
         </programlisting>
 
-        To stop pgpool-II, execute the following command.
+        To stop <productname>Pgpool-II</>  execute the following command.
         <programlisting>
 $ pgpool stop
         </programlisting>
@@ -265,7 +265,7 @@ replication_mode = true
         </programlisting>
           When <xref linkend="guc-replication-mode"> is on, <productname>Pgpool-II</productname>
           will send a copy of a received query to all the database nodes.
-          And when <xref linkend="guc-load-balance-mode"> is set to true,
+          In addition, when <xref linkend="guc-load-balance-mode"> is set to true,
           <productname>Pgpool-II</productname> will distribute <acronym>SELECT</acronym> queries
           among the database nodes.
         <programlisting>
@@ -369,10 +369,10 @@ $ for port in 5432 5433 5434; do
     <para>
       This tutrial explains the simple way to try "Watchdog".
       What you need is 2 Linux boxes on which <productname>
-      Pgpool-II</productname> is installed and a PostgreSQL
-      on the same machine or in the other one. it is enough
+      Pgpool-II</productname> is installed and a <productname>PostgreSQL</>
+      on the same machine or in the other one. It is enough
       that 1 node for backend exists.
-      You can use on memory query cache with <productname>
+      You can use watchdog with <productname>
       Pgpool-II</productname> in any mode: replication mode,
       master/slave mode and raw mode.
     </para>
@@ -571,7 +571,7 @@ eth0      ...
 lo        ...
       </programlisting>
 
-      Try to connect PostgreSQL by "psql -h delegate_IP -p port".
+      Try to connect <productname>PostgreSQL</> by "psql -h delegate_IP -p port".
       <programlisting>
 [user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
       </programlisting>
@@ -636,7 +636,7 @@ eth0:0    inet addr:133.137.177.143 ...
 lo        ...
         </programlisting>
 
-        Try to connect PostgreSQL by "psql -h delegate_IP -p port".
+        Try to connect <productname>PostgreSQL</> by "psql -h delegate_IP -p port".
         <programlisting>
 [user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
         </programlisting>
