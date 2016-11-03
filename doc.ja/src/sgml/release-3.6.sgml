@@ -840,9 +840,8 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
         <function>random()</function> should not be used in security related applications.  To
         replace <function>random()</function>, import <function>PostmasterRandom()</function> from PostgreSQL.
         -->
-        <function>random()</function> 関数がセキュリティ関連のアプリケーションに使用しないべきなので、
-         <function>random()</function> の代わりに <productname>PostgreSQL</productname> の
-         <function>PostmasterRandom()</function> 使用するように変更しました。
+<function>random()</function>関数はセキュリティ関連のアプリケーションに使用しないべきです。
+<function>random()</function>の代わりに<productname>PostgreSQL</productname>の<function>PostmasterRandom()</function> 使用するように変更しました。
         </para>
 
       </listitem>
@@ -865,7 +864,7 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
         <!--
 	    Fix bug that <productname>Pgpool-II</productname> fails to start if <xref linkend="guc-listen-addresses"> is empty string. (bug 237) (Muhammad Usama)
         -->
-        listen_addresses が空の場合、Pgpool-II が起動できない不具合を修正しました。(bug 237) (Muhammad Usama)
+<xref linkend="guc-listen-addresses">が空文字の場合、Pgpool-II が起動できない不具合を修正しました。(bug 237) (Muhammad Usama)
         </para>
         <para>
         <!--
@@ -883,7 +882,7 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
         <!--
 	    Create regression log directory if it does not exist yet. (Tatsuo Ishii)
         -->
-        レグレッションログディレクトリが存在しない場合、作成されるようになりました。(Tatsuo Ishii)
+リグレッションログディレクトリが存在しない場合、作成されるようになりました。(Tatsuo Ishii)
         </para>
       </listitem>
       <listitem>
@@ -925,11 +924,17 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
         2016-08-04 [3b2db66] Fix for 228: pgpool doesn't de-escalate IP in case network restored
         -->
         <para>
+<!--
 	    Fix pgpool doesn't de-escalate IP in case network restored. (bug 228) (Muhammad Usama)
+-->
+ネットワークが復旧した時にIPを降格しない問題を修正しました。(bug 228) (Muhammad Usama)
         </para>
         <para>
+<!--
         set_state function is made to de-escalate, when it is changing the local node's
         state from the coordinator state to some other state.
+-->
+ローカルノードの状態が調停者状態から他の状態に変わった時に降格させるために、set_state関数が実装されました。
         </para>
       </listitem>
       <listitem>
@@ -991,8 +996,7 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
         passed in as an argument to the <function>wd_send_failover_sync_command()</function> function instead
         it was passing the NODE_FAILBACK_CMD command type.
         -->
-        <function>wd_issue_failover_lock_command()</function> 関数が <function>wd_send_failover_sync_command()</function>
-        関数に NODE_FAILBACK_CMD ではなく、渡してきたコマンドタイプを引数として渡すように修正しました。
+<function>wd_issue_failover_lock_command()</function>関数は、渡ってきたコマンドタイプを<function>wd_send_failover_sync_command()</function>関数の引数に渡すように想定されていますが、その代わりにNODE_FAILBACK_CMDコマンドタイプを渡していました。
         </para>
         <para>
         <!--
@@ -1039,8 +1043,7 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
           -->
           MAJOR が <function>pool_virtual_master_db_node_id()</function> を呼出し、
           戻り値 idを使ってbackend->slots[id]->con にアクセスします。
-          DB にアクセスできない場合(ほとんど発生しない)、con->major にアクセスし、
-          メンテーションフォルトを引き起す可能性がありました。
+可能性は低いですが、conが0を指し（DB にアクセスできない場合）、con->major にアクセスし、セグメンテーションフォルトを引き起す可能性がありました。
         </para>
       </listitem>
       <listitem>
@@ -1107,8 +1110,7 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
         main could cause infinite wait in the system call. Solution is,
         to use <function>waitpid(2)</function> instead of <function>wait(2)</function>.
         -->
-        システムコールで <productname>Pgpool-II</productname> メインプロセスの
-        <function>wait(2)</function> が無限ループを引き起こす可能性があります。
+<productname>Pgpool-II</productname> メインプロセスから呼び出される<function>wait(2)</function>はそのシステムコール内で永久に待つ可能性があります。
         この修正で、 <function>wait(2)</function> の代わりに、<function>waitpid(2)</function> を使うように変更しました。
         </para>
       </listitem>
@@ -1180,7 +1182,7 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
         There are few places where the load balance node was mistakenly put on
         wrong place. It should be placed on:
         -->
-        領域が少ないため、ロードバランスノードは間違ったことろに置かれてしまいました。
+2, 3の箇所で、ロードバランスノードが間違ったことろに置かれてしまいました。
         </para>
         <para>
         [正しい場所]
@@ -1205,17 +1207,15 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         connecting to node 1 is disconnected when failover happens on node
         0. This is unexpected and the bug was revealed.
         -->
-        バックエンド id が 0 の場合、上記バグが発生しませんが、
-        <productname>Pgpool-II</productname> 3.6 のフェイルオーバーテストで、
-        プライマリノードが 1 (ロードバランスノード)、スタンバイノードが 0 の場合、
-        ノード1 の接続が切断され、フェイルオーバーが起きています。これは想定外のバグです。
+バックエンド id が 0 の場合、上記バグが発生しませんが、<productname>Pgpool-II</productname> 3.6 のフェイルオーバーテストで、プライマリノードが 1 (ロードバランスノード)、スタンバイノードが 0 の場合、ノード1 の接続が切断され、フェイルオーバーが起きています。
+これは想定外のことだったのでこのバグが見つかりました。
         </para>
         <para>
         <!--
         It seems the bug was there since long time ago but it had not found
         until today by the reason above.
         -->
-        このバグが前からありましたが、上記の原因で、今まで見つかっておリませんでした。
+このバグはかなり前からありましたが、上記の理由で、今まで見つかっておリませんでした。
         </para>
       </listitem>
       <listitem>
@@ -1226,7 +1226,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         <!--
 	    Fix for bug that pgpool hangs connections to database. (bug 197) (Muhammad Usama)
         -->
-        #197 で報告されたハングを修正しました。(bug 197) (Muhammad Usama)
+#197 で報告されたpgpoolのハングを修正しました。(bug 197) (Muhammad Usama)
         </para>
         <para>
         <!--
@@ -1234,8 +1234,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         node becomes unavailable at the same time. The reason was a missing command
         timeout handling in the function that sends the IPC commands to watchdog.
         -->
-        watchdog が有効で、バックエンドノードとリモート <productname>Pgpool-II</productname>
-        ノードが同時接続できなくになった場合、クライアント接続がスタックします。
+watchdog が有効で、バックエンドノードとリモート <productname>Pgpool-II</productname>ノードが同時接続できなくなった場合、クライアント接続がスタックします。
         原因は watchdog に IPC コマンドを送信する関数を呼び出すコマンドタイムアウトがなかったからです。
         </para>
       </listitem>
@@ -1258,8 +1257,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         -->
         <function>connect(2)</function> が成功し、
         その後バックエンドからデータが送信されない場合、ヘルスチェックがハングしていました。
-        ヘルスチェックが行われると、<function>select(2)</function> に SIGALRM を送信し、
-        EINTR で抜けて、<function>pool_check_fd()</function> は 1 を返すように修正しました。
+ヘルスチェック中に、<function>select(2)</function>がSIGALRMのためにEINTRで終了した場合、<function>pool_check_fd()</function>が1を返すように修正しました。
         </para>
       </listitem>
       <listitem>
@@ -1283,12 +1281,10 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
          to wrong node (this is not clear from the report but I confirmed it in
          my investigation).
          -->
-         http://www.pgpool.net/mantisbt/view.php?id=194#c837の報告により、
-         bug194-3.3.diff を適用しても、プライマリノードが 0 ではない場合、
-         ステートメントタイムアウトが発生する可能性がありました。
+<ulink url="http://www.pgpool.net/mantisbt/view.php?id=194#c837">http://www.pgpool.net/mantisbt/view.php?id=194#c837</ulink>の報告により、bug194-3.3.diff を適用しても、プライマリノードが 0 ではない場合、ステートメントタイムアウトが発生する可能性がありました。
          調査した結果、MASTER マクロがプライマリノードまたはロードバランスノード
-         以外のノードを返したからです。そのため、<function>do_query()</function>
-         がクエリを間違った ノードに送信してしまいました（これは報告で確認されていませんが、 調査で確認できました）。
+         以外のノードを返したからです。
+そのため、<function>do_query()</function>がクエリを間違ったノードに送信していました（これは報告では明確ではありませんでしが、 調査で確認できました）。
         </para>
         <para>
         <!--
@@ -1299,11 +1295,10 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
          either load balance node or primary node, the primary node id is
          returned.
          -->
-         MASTER マクロと呼ばれる <function>pool_virtual_master_db_node_id()</function> が、
-         クエリコンテキストが存在する場合、query_context->virtual_master_node_id を返します。
-         その変数が初期化されていない場合、この関数が間違ったノード を返す可能性があります。
-         そのため、<function>pool_virtual_master_db_node_id()</function> 関数を以下のように修正しました。
-         戻り値がプライマリノードまたはロード バランスノードではない場合、プライマリノードを返します。
+MASTER マクロから呼ばれる<function>pool_virtual_master_db_node_id()</function> は、クエリコンテキストが存在する場合、query_context->virtual_master_node_id を返します。
+その変数がまだ初期化されていない場合、この関数が間違ったノード を返す可能性があります。
+そのため、<function>pool_virtual_master_db_node_id()</function> 関数を以下のように修正しました。
+変数にプライマリノードもロード バランスノードも設定されていない場合、プライマリノードを返します。
         </para>
       </listitem>
       <listitem>
@@ -1318,11 +1313,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
 	    cause a statement timeout error on the primary, and a kind mismatch
 	    error on pgpool-II is raised. (bug 194) (Tatsuo Ishii)
         -->
-        バックエンドのステートメントタイムアウトが有効な場合、
-        <function>do_query()</function> が最初のクエリをプライマリノードに送信し、
-        それ以降のユーザクエリをスタンバイノードに送信します。
-        例えば、END コマンドの場合、プライマリノードのステートメントタイムアウトを引き起こし、
-        kind mismatch error が発生する可能性がありました。(bug 194) (Tatsuo Ishii)
+バックエンドのステートメントタイムアウトが有効で、<function>do_query()</function>がクエリをプライマリノードに送信し、それ以降のユーザクエリがスタンバイノードに送信された場合、次のコマンド、例えば、ENDコマンドが、プライマリノードのステートメントタイムアウトを引き起こし、kind mismatch error が発生する可能性がありました。(bug 194) (Tatsuo Ishii)
         </para>
         <para>
         <!--
@@ -1337,16 +1328,16 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         -->
         この問題を軽減するために、<function>do_query()</function>
         がフラッシュメッセージを送信する代わりに、sync メッセージ送信するように修正しました。
-        sync メッセージを送信することで、明示的トランザクションの場合、
-        ステートメントタイムアウトタイマーがリセットされます。
-        unnamed portal が存在する場合、sync メッセージが unnamed portal を削除しますので、
-        暗黙的トランザクションの場合には適用しません。
-
-        また、pg_stat_statement が <function>do_query()</function> が発行したクエリを "running" で表示しなくなります。
+明示的トランザクションのときは、sync メッセージを送信することで、ステートメントタイムアウトタイマーがリセットされます。
+暗黙的なトランザクションでは、このやり方は使えません。
+なぜなら、unnamed portal が存在する場合、sync メッセージが unnamed portalを削除するからです。
         </para>
         <para>
+<!--
         Plus, pg_stat_statement will no longer show the query issued by
         <function>do_query()</function> as "running".
+-->
+更にこれにより、pg_stat_statement が <function>do_query()</function> が発行したクエリを "running" で表示しなくなります。
         </para>
       </listitem>
       <listitem>
@@ -1389,13 +1380,13 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         <!--
 	    Fix  Japanese and Chinese documetation bug about raw mode. (Yugo Nagata, Bo Peng)
         -->
-        ドキュメントのraw モードに関する内容の誤りを修正しました。(Yugo Nagata, Bo Peng)
+日本語と中国語ドキュメントのraw モードに関する内容の誤りを修正しました。(Yugo Nagata, Bo Peng)
         </para>
         <para>
         <!--
         Connection pool is avalilable in raw mode.
         -->
-        raw モードの場合、コネクションプーリングが有効です。
+        raw モードでも、コネクションプーリングが有効です。
         </para>
       </listitem>
       <listitem>
@@ -1408,8 +1399,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
 	    Fix is_<function>set_transaction_serializable()</function> when
         SET default_transaction_isolation TO 'serializable'. (bug 191) (Bo Peng)
         -->
-        <function>is_set_transaction_serializable()</function> 関数の
-        <command>SET default_transaction_isolation TO 'serializable'</command> のバグを修正しました。(bug 191) (Bo Peng)
+<function>is_set_transaction_serializable()</function>関数の<command>SET default_transaction_isolation TO 'serializable'</command>の扱いに関するバグを修正しました。(bug 191) (Bo Peng)
         </para>
         <para>
         <!--
@@ -1447,10 +1437,11 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         the empty query response and reads from frontend expecting it sends a
         sync message.
         -->
-        <productname>Pgpool-II</productname> は空のクエリの応答に対して、
-        クエリ進行中フラグをリセットせず、 バックエンドの応答を待ち続けることが原因でした。
-        この修正では、空のクエリの応答を得た場合、<productname>Pgpool-II</productname>
-        はクエリ進行中フラグをリセットし、 フロントエンドから Sync メッセージを受信するように修正しました。
+この修正は3.5.1で空のクエリの場合の拡張プロトコルの扱いに関係しています。
+この場合バックエンドはcommand complete messageと同じ意味を持つ"empty query response"を返します。
+問題は、"empty query response"を受信した際に、<productname>Pgpool-II</productname>がクエリ進行中フラグをリセットせず、 バックエンドの応答を待ち続けることことです。
+しかし、バックエンドはsyncメッセージをを受け取るまではready for queryメッセージを返しません。
+解決方法は、"empty query response"を受信した際に、クエリ進行中フラグをリセットし、フロントエンドがsync メッセージを送信することを期待してフロントエンドからの応答を待つことです。
         </para>
       </listitem>
       <listitem>
@@ -1489,7 +1480,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         <!--
         Validating the PCP packet length. (Muhammad Usama)
         -->
-        PCP パケットの長さを検証するよう修正されました。(Muhammad Usama)
+PCP パケットの長さを検証するよう修正しました。(Muhammad Usama)
         </para>
         <para>
         <!--
@@ -1509,7 +1500,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         <!--
          Fix <link linkend="PGPOOL-SETUP">pgpool_setup </link> to not confuse log output. (Tatsuo Ishii)
          -->
-         <link linkend="PGPOOL-SETUP">pgpool_setup </link> のログ出力の異常を修正しました。(Tatsuo Ishii)
+         <link linkend="PGPOOL-SETUP">pgpool_setup</link>がログ出力を混乱させないように修正しました。(Tatsuo Ishii)
         </para>
         <para>
         <!--
@@ -1521,7 +1512,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
          以前は <productname>Pgpool-II</productname> プロセスの stdout および stderr
          は単にログファイルにリダイレクトされていました。
          これは複数プロセスが同時に書き込みを行うため競合が発生し、
-         ログの文字化けや失敗の原因となっていました。
+         ログの文字化けや消失の原因となっていました。
          </para>
 
          <para>
@@ -1534,6 +1525,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
          が生成する startall スクリプトでは、<productname>Pgpool-II</productname>
          は stdout/stderr を cat コマンドにパイプで送信し、
          cat がログファイルの書き込みを行うように修正されました。
+（パイプに書き込む際にはこの競合状態は発生しないようです）
         </para>
       </listitem>
       <listitem>
@@ -1545,8 +1537,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
 	    Fix for <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2016-March/004577.html">
 	    [pgpool-general: 4519]</ulink> Worker Processes Exit and Are Not Re-spawned. (Muhammad Usama)
         -->
-	    <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2016-March/004577.html">
-	    [pgpool-general: 4519]</ulink> により報告された子プロセスが終了し再生成されなくなる不具合を修正しました。(Muhammad Usama)
+<ulink url="http://www.pgpool.net/pipermail/pgpool-general/2016-March/004577.html">[pgpool-general: 4519]</ulink> により報告されたワーカープロセスが終了し再生成されなくなる不具合を修正しました。(Muhammad Usama)
         </para>
         <para>
         <!--
@@ -1567,7 +1558,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         <!--
 	    Fix pgpool hung after receiving error state from backend. (bug #169) (Tatsuo Ishii)
         -->
-	    バックエンドからエラー状態を受信した直後のハングを修正しました。 (bug #169) (Tatsuo Ishii)
+バックエンドからエラー状態を受信した後のハングを修正しました。 (bug #169) (Tatsuo Ishii)
         </para>
         <para>
         <!--
@@ -1643,7 +1634,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
         <!--
 	    Fixing pgpool-recovery module compilation issue with <productname>PostgreSQL</productname> 9.6. (Muhammad Usama)
         -->
-        PostgreSQL 9.6 における pgpool-recovery モジュールのコンパイルエラーを修正しました。(Muhammad Usama)
+<productname>PostgreSQL</productname> 9.6における pgpool-recovery モジュールのコンパイルエラーを修正しました。(Muhammad Usama)
         </para>
         <para>
         <!--
