@@ -185,7 +185,7 @@ fi
 %files
 %defattr(-,root,root,-)
 %dir %{_datadir}/%{short_name}
-%doc README TODO COPYING INSTALL AUTHORS ChangeLog NEWS doc/pgpool-en.html doc/pgpool-ja.html doc/pgpool-zh_cn.html doc/pgpool.css doc/tutorial-en.html doc/tutorial-ja.html
+%doc README TODO COPYING INSTALL AUTHORS ChangeLog doc/src/sgml
 %{_bindir}/pgpool
 %{_bindir}/pcp_attach_node
 %{_bindir}/pcp_detach_node
@@ -244,7 +244,7 @@ fi
 - Add Chinese document
 
 * Mon Aug 24 2015 Yugo Nagata <nagata@sraoss.co.jp> 3.5.0
-- Remove system database 
+- Remove system database
 
 * Tue Feb 10 2015 Nozomi Anzai <anzai@sraoss.co.jp> 3.4.1-2
 - Fix %tmpfiles_create to not be executed in RHEL/CentOS 6
