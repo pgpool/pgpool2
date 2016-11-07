@@ -83,7 +83,7 @@ DOCBOOKSTYLE=$pgac_cv_path_stylesheets
 AC_SUBST([DOCBOOKSTYLE])
 if test -n "$DOCBOOKSTYLE"; then
   AC_MSG_RESULT([$DOCBOOKSTYLE])
-  CATALOG=-c $(DOCBOOKSTYLE)/catalog
+  CATALOG="-c ${DOCBOOKSTYLE}/catalog"
 else
   AC_MSG_RESULT(no)
   CATALOG=

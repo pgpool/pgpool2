@@ -45,8 +45,8 @@ EXTRA_DIST = $(ALLSGML) html
 
 man distprep-man: man-stamp
 
-man-stamp: stylesheet-man.xsl postgres.xml
-	$(XMLLINT) --noout --valid postgres.xml
+man-stamp: stylesheet-man.xsl pgpool.xml
+	$(XMLLINT) --noout --valid pgpool.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_MAN_FLAGS) $^
 
 # The draft target creates HTML output in draft mode, without index (for faster build).

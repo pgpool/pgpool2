@@ -46,8 +46,8 @@ EXTRA_DIST = $(ALLSGML) html
 
 man distprep-man: man-stamp
 
-man-stamp: stylesheet-man.xsl postgres.xml
-	$(XMLLINT) --noout --valid postgres.xml
+man-stamp: stylesheet-man.xsl pgpool.xml
+	$(XMLLINT) --noout --valid pgpool.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_MAN_FLAGS) $^
 
 # The draft target creates HTML output in draft mode, without index (for faster build).
@@ -134,6 +134,7 @@ pgpool-en.xml: $(ALLSGML)
 
 
 pgpool.xml: $(srcdir)/pgpool.sgml $(ALMOSTALLSGML)
+	SP_CHARSET_FIXED=1 SP_ENCODING=UTF-8 \
 	$(OSX) -D. -x lower -i include-xslt-index $< >pgpool.xmltmp
 	$(PERL) -p -e 's/\[(aacute|acirc|aelig|agrave|amp|aring|atilde|auml|bull|copy|eacute|egrave|gt|iacute|lt|mdash|nbsp|ntilde|oacute|ocirc|oslash|ouml|pi|quot|scaron|uuml) *\]/\&\1;/gi;' \
 		-e '$$_ .= qq{<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">\n} if $$. == 1;' \

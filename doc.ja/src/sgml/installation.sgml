@@ -263,9 +263,6 @@ GNUの<application>Flex</>および<application>Bison</>は、Gitチェックア
 
       <varlistentry>
 	<term><option>--with-openssl</option></term>
-       <indexterm>
-        <primary>OpenSSL</primary>
-       </indexterm>
 	<listitem>
           <para>
 <!--
