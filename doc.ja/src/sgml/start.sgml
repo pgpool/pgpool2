@@ -575,7 +575,7 @@ watchdogの詳細については<xref linkend="tutorial-watchdog">をご覧く�
 	<title><productname>Pgpool-II</productname>のプロセス構造</title>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata fileref="process-diagram" format="GIF">
+	    <imagedata fileref="process-diagram.gif">
 	  </imageobject>
 	</mediaobject>
       </figure>

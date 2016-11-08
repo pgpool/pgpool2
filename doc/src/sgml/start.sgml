@@ -425,7 +425,7 @@ $psql -p $PORT -c "SELECT pg_stop_backup()" postgres
 	<title>Process architecure of <productname>Pgpool-II</productname></title>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata fileref="process-diagram" format="GIF">
+	    <imagedata fileref="process-diagram.gif">
 	  </imageobject>
 	</mediaobject>
       </figure>

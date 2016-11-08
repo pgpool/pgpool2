@@ -181,9 +181,6 @@
 
       <varlistentry>
 	<term><option>--with-openssl</option></term>
-       <indexterm>
-        <primary>OpenSSL</primary>
-       </indexterm>
 	<listitem>
           <para>
 	   <productname>Pgpool-II</productname> binaries will be built

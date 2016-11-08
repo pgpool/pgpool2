@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
 
-all: html
+all: html man1 man8
 
 GENERATED_SGML = bookindex.sgml version.sgml \
 					features-supported.sgml features-unsupported.sgml errcodes-table.sgml
@@ -38,17 +38,18 @@ JADE.rtf.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl
 JADE_html = $(JADE) $(SPFLAGS) -d stylesheet.dsl\#html -t sgml -i html -V website-stylesheet
 
 
-EXTRA_DIST = $(ALLSGML) html
+EXTRA_DIST = $(ALLSGML) html man1 man8
 
 ##
 ## Man pages
 ##
 
-man distprep-man: man-stamp
+man1 man8 distprep-man: man-stamp
 
-man-stamp: stylesheet-man.xsl postgres.xml
-	$(XMLLINT) --noout --valid postgres.xml
+man-stamp: stylesheet-man.xsl pgpool.xml
+	$(XMLLINT) --noout --valid pgpool.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_MAN_FLAGS) $^
+	touch $@
 
 # The draft target creates HTML output in draft mode, without index (for faster build).
 draft: pgpool.sgml $(ALMOSTALLSGML) stylesheet.dsl
@@ -134,6 +135,7 @@ pgpool-en.xml: $(ALLSGML)
 
 
 pgpool.xml: $(srcdir)/pgpool.sgml $(ALMOSTALLSGML)
+	SP_CHARSET_FIXED=1 SP_ENCODING=UTF-8 \
 	$(OSX) -D. -x lower -i include-xslt-index $< >pgpool.xmltmp
 	$(PERL) -p -e 's/\[(aacute|acirc|aelig|agrave|amp|aring|atilde|auml|bull|copy|eacute|egrave|gt|iacute|lt|mdash|nbsp|ntilde|oacute|ocirc|oslash|ouml|pi|quot|scaron|uuml) *\]/\&\1;/gi;' \
 		-e '$$_ .= qq{<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">\n} if $$. == 1;' \
