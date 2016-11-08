@@ -199,7 +199,9 @@ fi
 %{_bindir}/pcp_recovery_node
 %{_bindir}/pcp_watchdog_info
 %{_bindir}/pg_md5
-%{_mandir}/man8/pgpool*
+%{_bindir}/pgpool_setup
+%{_bindir}/watchdog_setup
+#%{_mandir}/man8/pgpool*
 %{_datadir}/%{short_name}/insert_lock.sql
 %{_datadir}/%{short_name}/pgpool.pam
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-master-slave
