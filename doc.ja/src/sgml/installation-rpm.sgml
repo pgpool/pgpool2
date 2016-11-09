@@ -179,7 +179,11 @@ service start pgpool
        must have been started before this.
 -->
 <productname>PostgreSQL</productname>サーバは、これよりも前に起動済みでなければならないことに注意してください。
+<!--
        To stop <productname>Pgpool-II</productname>:
+-->
+<productname>Pgpool-II</productname>を停止するには、次のようにしてください。
+
        <programlisting>
 service stop pgpool
        </programlisting>
