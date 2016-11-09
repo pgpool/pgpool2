@@ -1,14 +1,14 @@
 <!-- doc/src/sgml/installation.sgml -->
 
 <chapter id="installation">
- <title><productname>Pgpool-II</productname> Installation from Source Code</title>
+ <title>Installation of <productname>Pgpool-II</productname></title>
 
  <indexterm zone="installation">
   <primary>installation</primary>
  </indexterm>
 
  <sect1 id="install-source">
-  <title>Installation from Source Code</title>
+  <title>Installation of Pgpool-II</title>
    <para>
      This chapter describes the installation
      of <productname>Pgpool-II</productname>.  First, installation from
@@ -423,5 +423,7 @@ $ psql -f pgpool-regclass.sql template1
       </programlisting>
     </para>
   </sect1>
+
+&installation-rpm;
 
 </chapter>

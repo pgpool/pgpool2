@@ -40,6 +40,7 @@
 <!ENTITY diskusage     SYSTEM "diskusage.sgml">
 <!ENTITY high-availability      SYSTEM "high-availability.sgml">
 <!ENTITY installation  SYSTEM "installation.sgml">
+<!ENTITY installation-rpm  SYSTEM "installation-rpm.sgml">
 <!ENTITY installw      SYSTEM "install-windows.sgml">
 <!ENTITY maintenance   SYSTEM "maintenance.sgml">
 <!ENTITY manage-ag     SYSTEM "manage-ag.sgml">

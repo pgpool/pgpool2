@@ -2,9 +2,9 @@
 
 <chapter id="installation">
 <!--
- <title><productname>Pgpool-II</productname> Installation from Source Code</title>
+ <title>Installation of <productname>Pgpool-II</productname></title>
 -->
- <title>ソースコードからの<productname>Pgpool-II</productname>インストール</title>
+ <title><productname>Pgpool-II</productname>のインストール</title>
  <indexterm zone="installation">
 <!--
   <primary>installation</primary>
@@ -14,9 +14,9 @@
 
  <sect1 id="install-source">
 <!--
-  <title>Installation from Source Code</title>
+  <title>Installation of Pgpool-II</title>
 -->
-  <title>ソースコードからのインストール</title>
+  <title>Pgpool-IIのインストール</title>
    <para>
 <!--
      This chapter describes the installation
@@ -622,5 +622,7 @@ $ psql -f pgpool-regclass.sql template1
       </programlisting>
     </para>
   </sect1>
+
+&installation-rpm;
 
 </chapter>
