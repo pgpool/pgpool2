@@ -115,6 +115,7 @@ typedef bool (*ConfigDoubleAssignFunc) (ConfigContext scontext, double newval, i
 typedef bool (*ConfigDoubleArrayAssignFunc) (ConfigContext scontext, double newval, int index, int elevel);
 
 typedef bool (*ConfigStringProcessingFunc) (char* newval,int elevel);
+typedef bool (*ConfigEnumProcessingFunc) (int newval,int elevel);
 
 
 struct config_generic
@@ -274,6 +275,7 @@ struct config_enum
 	const struct config_enum_entry *options;
 	ConfigEnumAssignFunc assign_func;
 	ConfigEnumAssignFunc check_func;
+	ConfigEnumProcessingFunc process_func;
 	VarShowHook show_hook;
 	int		reset_val;
 };

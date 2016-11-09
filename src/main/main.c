@@ -282,11 +282,6 @@ int main(int argc, char **argv)
 		write_pid_file();
 	else
 		daemonize();
-	
-#ifdef HAVE_VSYSLOG
-    set_syslog_parameters(pool_config->syslog_ident ? pool_config->syslog_ident : "pgpool",
-                          pool_config->syslog_facility);
-#endif
 	/*
 	 * Locate pool_passwd
 	 * The default file name "pool_passwd" can be changed by setting
@@ -407,7 +402,8 @@ static void daemonize(void)
 		close(i);
 	}
 	/* close syslog connection for daemonizing */
-	if (pool_config->logsyslog) {
+	if (pool_config->log_destination & LOG_DESTINATION_SYSLOG)
+	{
 		closelog();
 	}
 

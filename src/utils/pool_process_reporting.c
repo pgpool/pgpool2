@@ -287,7 +287,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	/* - Where to log - */
 	StrNCpy(status[i].name, "log_destination", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->log_destination);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->log_destination_str);
 	StrNCpy(status[i].desc, "logging destination", POOLCONFIG_MAXDESCLEN);
 	i++;
 

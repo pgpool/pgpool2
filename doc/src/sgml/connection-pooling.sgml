@@ -45,7 +45,7 @@
 	<listitem>
 	  <para>
 	    The maximum number of cached connections
-	    in each <productname>Pgpool-II</productname> child 
+	    in each <productname>Pgpool-II</productname> child
 	    process.  <productname>Pgpool-II</productname> reuses the
 	    cached connection if an incoming connection is connecting
 	    to the same database with the same user name.  If not,
@@ -377,10 +377,17 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
       </term>
       <listitem>
 				<para>
-					<productname>Pgpool-II</productname> supports several methods
-					for logging server messages, including <literal>stderr</literal>
-					and <literal>syslog</literal>.
-					The default is to log to <literal>stderr</literal>.
+					<productname>Pgpool-II</productname> supports two destinations
+					for logging the <productname>Pgpool-II</productname> messages.
+					The supported log destinations are <literal>stderr</literal>
+					and <literal>syslog</literal>. You can also set this parameter to a list
+					of desired log destinations separated by commas if you want the log messages
+					on the multiple destinations.
+						<programlisting>
+#for example to log on both syslog and stderr
+log_destination = 'syslog,stderr'
+            </programlisting>
+					The default is to log to <literal>stderr</literal> only.
 				</para>
 				<note>
 					<para>

@@ -84,6 +84,10 @@ static bool OtherWDPortAssignFunc (ConfigContext context, int newval, int index,
 static bool OtherPPPortAssignFunc (ConfigContext context, int newval, int index, int elevel);
 static bool OtherPPHostAssignFunc (ConfigContext context, char* newval, int index, int elevel);
 
+static bool LogDestinationProcessFunc (char* newval, int elevel);
+static bool SyslogIdentProcessFunc (char* newval, int elevel);
+static bool SyslogFacilityProcessFunc (int newval, int elevel);
+
 
 #ifndef POOL_PRIVATE
 /* This function is used to provide Hints for enum type config parameters.
@@ -494,12 +498,14 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"log_destination", CFGCXT_RELOAD, LOGING_CONFIG,
-			"logging destinatio.",
+			"destination of pgpool-II log",
 			CONFIG_VAR_TYPE_STRING,false, 0
 		},
-		&g_pool_config.log_destination,
+		&g_pool_config.log_destination_str,
 		"stderr",
-		NULL, NULL, NULL, NULL
+		NULL, NULL,
+		LogDestinationProcessFunc,
+		NULL
 	},
 
 	{
@@ -509,7 +515,9 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&g_pool_config.syslog_ident,
 		"pgpool",
-		NULL, NULL, NULL, NULL
+		NULL, NULL,
+		SyslogIdentProcessFunc,
+		NULL
 	},
 
 	{
@@ -1581,7 +1589,9 @@ static struct config_enum ConfigureNamesEnum[] =
 		&g_pool_config.syslog_facility,
 		LOG_LOCAL0,
 		syslog_facility_options,
-		NULL, NULL, NULL
+		NULL, NULL,
+		SyslogFacilityProcessFunc,
+		NULL
 	},
 
 	{
@@ -1592,7 +1602,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		&g_pool_config.log_error_verbosity,
 		PGERROR_DEFAULT,
 		log_error_verbosity_options,
-		NULL, NULL, NULL
+		NULL, NULL, NULL, NULL
 	},
 
 	{
@@ -1603,7 +1613,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		&g_pool_config.client_min_messages,
 		NOTICE,
 		server_message_level_options,
-		NULL, NULL, NULL
+		NULL, NULL, NULL, NULL
 	},
 
 	{
@@ -1614,7 +1624,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		&g_pool_config.log_min_messages,
 		WARNING,
 		server_message_level_options,
-		NULL, NULL, NULL
+		NULL, NULL, NULL, NULL
 	},
 	
 	{
@@ -1625,7 +1635,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		(int*)&g_pool_config.master_slave_sub_mode,
 		SLONY_MODE,
 		master_slave_sub_mode_options,
-		NULL, NULL, NULL
+		NULL, NULL, NULL, NULL
 	},
 
 	{
@@ -1636,7 +1646,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		(int*)&g_pool_config.log_standby_delay,
 		LSD_NONE,
 		log_standby_delay_options,
-		NULL, NULL, NULL
+		NULL, NULL, NULL, NULL
 	},
 
 	{
@@ -1647,7 +1657,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		(int*)&g_pool_config.wd_lifecheck_method,
 		LIFECHECK_BY_HB,
 		wd_lifecheck_method_options,
-		NULL, NULL, NULL
+		NULL, NULL, NULL, NULL
 	},
 	
 	{
@@ -1658,12 +1668,12 @@ static struct config_enum ConfigureNamesEnum[] =
 		(int*)&g_pool_config.memqcache_method,
 		SHMEM_CACHE,
 		memqcache_method_options,
-		NULL, NULL, NULL
+		NULL, NULL, NULL, NULL
 	},
 
 	/* End-of-list marker */
 	{
-		{NULL, 0, 0, NULL}, NULL, 0, NULL, NULL, NULL, NULL
+		{NULL, 0, 0, NULL}, NULL, 0, NULL, NULL, NULL, NULL, NULL
 	}
 };
 
@@ -2120,6 +2130,12 @@ initialize_variables_with_default(struct config_generic * gconf)
 				*conf->variable = newval;
 			}
 			conf->reset_val = newval;
+
+			if (conf->process_func)
+			{
+				(*conf->process_func)(newval, ERROR);
+			}
+
 			break;
 		}
 
@@ -2223,6 +2239,7 @@ InitializeConfigOptions(void)
 	 * messages
 	 */
 	g_pool_config.log_min_messages = ERROR;
+	g_pool_config.syslog_facility = LOG_LOCAL0;
 	build_config_variables();
 
 	/*
@@ -3001,6 +3018,11 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 			if (context == CFGCXT_INIT)
 				conf->reset_val = newval;
 
+			if (conf->process_func)
+			{
+				(*conf->process_func)(newval, elevel);
+			}
+
 			break;
 		}
 	}
@@ -3211,9 +3233,82 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 
 	g_pool_config.backend_desc->backend_info[index].flag = flag;
 	ereport(DEBUG1,
-		(errmsg("invalid configuration for key \"backend_flag%d\"",index),
-			errdetail("backend slot number %d flag: %04x", index, flag)));
+		(errmsg("setting \"backend_flag%d\" flag: %04x ",index, flag)));
 	pfree(flags);
+	return true;
+}
+
+static bool LogDestinationProcessFunc (char* newval, int elevel)
+{
+#ifndef POOL_PRIVATE
+	char **destinations;
+	int n,i;
+	int log_destination = 0;
+	destinations = get_list_from_string(newval, ",", &n);
+	if (!destinations || n < 0)
+	{
+		if (destinations)
+			pfree(destinations);
+
+		ereport(elevel,
+			(errmsg("invalid value \"%s\" for log_destination",newval)));
+		return false;
+	}
+	for (i=0;i<n;i++)
+	{
+		if (!strcmp(destinations[i], "syslog"))
+		{
+			log_destination |= LOG_DESTINATION_SYSLOG;
+		}
+		else if (!strcmp(destinations[i], "stderr"))
+		{
+			log_destination |= LOG_DESTINATION_STDERR;
+		}
+		else
+		{
+			int k;
+			ereport(elevel,
+				(errmsg("invalid configuration for \"log_destination\""),
+					errdetail("unknown destination :%s", destinations[i])));
+			for (k = i; k < n; k++)
+				pfree(destinations[k]);
+			pfree(destinations);
+			return false;
+		}
+		pfree(destinations[i]);
+	}
+	if (g_pool_config.log_destination & LOG_DESTINATION_SYSLOG )
+	{
+		if (!(log_destination & LOG_DESTINATION_SYSLOG))
+			closelog();
+	}
+	g_pool_config.log_destination = log_destination;
+	pfree(destinations);
+#endif
+	return true;
+}
+
+static bool SyslogFacilityProcessFunc (int newval, int elevel)
+{
+#ifndef POOL_PRIVATE
+#ifdef HAVE_SYSLOG
+	/* set syslog parameters */
+	set_syslog_parameters(g_pool_config.syslog_ident ? g_pool_config.syslog_ident : "pgpool",
+							  g_pool_config.syslog_facility);
+#endif
+#endif
+	return true;
+}
+
+static bool SyslogIdentProcessFunc (char* newval, int elevel)
+{
+#ifndef POOL_PRIVATE
+#ifdef HAVE_SYSLOG
+	/* set syslog parameters */
+	set_syslog_parameters(g_pool_config.syslog_ident ? g_pool_config.syslog_ident : "pgpool",
+						  g_pool_config.syslog_facility);
+#endif
+#endif
 	return true;
 }
 
@@ -3510,13 +3605,6 @@ static bool config_post_processor(ConfigContext context, int elevel)
 		}
 	}
 
-#ifndef POOL_PRIVATE
-	/* finally set syslog parameters */
-	if ( strcmp(g_pool_config.log_destination,"syslog") == 0)
-		set_syslog_parameters(g_pool_config.syslog_ident ? g_pool_config.syslog_ident : "pgpool",
-						  g_pool_config.syslog_facility);
-
-#endif
 	return true;
 }
 

@@ -131,7 +131,8 @@ typedef struct {
 	int authentication_timeout;		/* maximum time in seconds to complete client authentication */
     int	max_pool;					/* max # of connection pool per child */
     char *logdir;					/* logging directory */
-    char *log_destination;			/* log destination: stderr or syslog */
+    char *log_destination_str;		/* log destination: stderr and/or syslog */
+    int log_destination;			/* log destination */
     int syslog_facility;			/* syslog facility: LOCAL0, LOCAL1, ... */
     char *syslog_ident;				/* syslog ident string: pgpool */
     char *pid_file_name;			/* pid file name */
@@ -224,7 +225,6 @@ typedef struct {
 	int num_white_memqcache_table_list;		/* number of functions in white_memqcache_table_list */
 	int num_black_memqcache_table_list;		/* number of functions in black_memqcache_table_list */
 	int num_wd_monitoring_interfaces_list;  /* number of items in wd_monitoring_interfaces_list */
-	int logsyslog;							/* flag used to start logging to syslog */
 
 	/* ssl configuration */
 	bool ssl;								/* if non 0, activate ssl support (frontend+backend) */

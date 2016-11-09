@@ -1480,7 +1480,7 @@ write_syslog(int level, const char *line)
 	/* Open syslog connection if not done yet */
 	if (!openlog_done)
 	{
-		openlog(pool_config->syslog_ident ? pool_config->syslog_ident : "pgpool-II",
+		openlog(pool_config->syslog_ident ? pool_config->syslog_ident : "pgpool",
 				LOG_PID | LOG_NDELAY | LOG_NOWAIT,
 				pool_config->syslog_facility);
 		openlog_done = true;
@@ -2157,7 +2157,7 @@ send_message_to_server_log(ErrorData *edata)
 
 #ifdef HAVE_VSYSLOG
 	/* Write to syslog, if enabled */
-    if (pool_config->logsyslog == 1)
+	if (pool_config->log_destination & LOG_DESTINATION_SYSLOG)
     {
 		int			syslog_level;
 
@@ -2191,12 +2191,14 @@ send_message_to_server_log(ErrorData *edata)
 				syslog_level = LOG_CRIT;
 				break;
 		}
-		if (pool_config->logsyslog == 1)
-			write_syslog(syslog_level, buf.data);
+		write_syslog(syslog_level, buf.data);
 	}
 #endif   /* HAVE_VSYSLOG */
 
-    write_console(buf.data, buf.len);
+	if (pool_config->log_destination & LOG_DESTINATION_STDERR)
+	{
+		write_console(buf.data, buf.len);
+	}
 	pfree(buf.data);
 }
 
