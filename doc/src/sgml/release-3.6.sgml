@@ -272,7 +272,8 @@
 	</para>
 	<para>
 	  It is intended to have better construction, contents and
-          maintainability. However, still there's tremendous room to
+          maintainability. Also man pages are now generated from SGML.
+	  However, still there's tremendous room to
           enhance the SGML documents. Please help us!
 	</para>
       </listitem>
