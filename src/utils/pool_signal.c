@@ -178,7 +178,7 @@ int pool_signal_parent(int sig)
 				(errmsg("pgpool-II main process died unexpectedly. exiting current process")));
 	}
 	ereport(DEBUG1,
-		(errmsg("sending %d to the parent process with PID:%d", sig ,mypid)));
+		(errmsg("sending signal:%d to the parent process with PID:%d", sig ,mypid)));
 
 	return kill(mypid, sig);
 }

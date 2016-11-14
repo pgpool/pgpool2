@@ -617,7 +617,7 @@ bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name
 		json_value_free(root);
 		ereport(LOG,
 			(errmsg("watchdog is unable to parse node function json"),
-				 errdetail("invalid json data \"%s\"",json_data)));
+				 errdetail("invalid json data \"%.*s\"",data_len,json_data)));
 		return false;
 	}
 	ptr = json_get_string_value_for_key(root, "Function");
@@ -679,12 +679,12 @@ bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name
 	return true;
 }
 
-char* get_wd_simple_error_message_json(char* message)
+char* get_wd_simple_message_json(char* message)
 {
 	char* json_str;
 	JsonNode* jNode = jw_create_with_object(true);
 
-	jw_put_string(jNode, "ERROR", message);
+	jw_put_string(jNode, "MESSAGE", message);
 	jw_finish_document(jNode);
 	json_str = pstrdup(jw_get_json_string(jNode));
 	jw_destroy(jNode);

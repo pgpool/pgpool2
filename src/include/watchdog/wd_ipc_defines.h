@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -46,7 +46,19 @@ typedef enum WDFailoverCMDResults
 	FAILOVER_RES_UNLOCKED,				/* the lock is not acquired */
 	FAILOVER_RES_LOCKED,				/* lock is acquired */
 	FAILOVER_RES_SUCCESS,
-	FAILOVER_RES_NO_LOCKHOLDER
+	FAILOVER_RES_NO_LOCKHOLDER,
+	FAILOVER_RES_NO_LOCKHOLDER_BUT_WAIT, /* master node can return this result in reply
+										  * to the locking command when the failover
+										  * procedure is not started on master node and
+										  * standby node is advanced in the procedure
+										  */
+	FAILOVER_RES_PROCEED,
+	FAILOVER_RES_WILL_BE_DONE,
+	FAILOVER_RES_NOT_ALLOWED,
+	FAILOVER_RES_INVALID_FUNCTION,
+	FAILOVER_RES_ALREADY_ISSUED,
+	FAILOVER_RES_MASTER_REJECTED,
+	FAILOVER_RES_TIMEOUT
 }WDFailoverCMDResults;
 
 
@@ -61,8 +73,9 @@ typedef enum WDFailoverCMDResults
 #define WD_IPC_CMD_RESULT_OK				'7'
 #define WD_IPC_CMD_TIMEOUT					'8'
 
-#define WD_FUNCTION_COMMAND					'f'
-#define WD_FAILOVER_CMD_SYNC_REQUEST		's'
+#define WD_IPC_FAILOVER_COMMAND				'f'
+#define WD_IPC_ONLINE_RECOVERY_COMMAND		'r'
+#define WD_FAILOVER_LOCKING_REQUEST			's'
 #define WD_GET_MASTER_DATA_REQUEST			'd'
 
 #define WD_FUNCTION_START_RECOVERY		"START_RECOVERY"
@@ -79,6 +92,8 @@ typedef enum WDFailoverCMDResults
 #define WD_REQ_FAILOVER_RELEASE_LOCK	"RELEASE_LOCK"
 #define WD_REQ_FAILOVER_LOCK_STATUS		"CHECK_LOCKED"
 
+#define WD_FAILOVER_RESULT_KEY			"FAILOVER_COMMAND_RESULT"
+#define WD_FAILOVER_ID_KEY				"FAILOVER_COMMAND_ID"
 
 
 #define WD_IPC_AUTH_KEY			"IPCAuthKey"	/* JSON data key for authentication.
