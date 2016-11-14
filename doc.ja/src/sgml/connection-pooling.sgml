@@ -589,13 +589,23 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
       <listitem>
 				<para>
 <!--
-					<productname>Pgpool-II</productname> supports several methods
-					for logging server messages, including <literal>stderr</literal>
-					and <literal>syslog</literal>.
-					The default is to log to <literal>stderr</literal>.
+					<productname>Pgpool-II</productname> supports two destinations
+					for logging the <productname>Pgpool-II</productname> messages.
+					The supported log destinations are <literal>stderr</literal>
+					and <literal>syslog</literal>. You can also set this parameter to a list
+					of desired log destinations separated by commas if you want the log messages
+					on the multiple destinations.
 -->
-<productname>Pgpool-II</productname>は、<literal>stderr</literal>および<literal>syslog</literal>を含めて、サーバメッセージのログ取得に対し数種類の方法を提供します
-デフォルトでは<literal>stderr</literal>にログが出力されます。
+<productname>Pgpool-II</productname>は、<productname>Pgpool-II</productname>のメッセージのログ出力先を2種類サポートします。
+複数のログ出力先を使用したい場合は、希望するログ出力先をカンマで区切ったリストをパラメータに設定することができます。
+						<programlisting>
+#for example to log on both syslog and stderr
+log_destination = 'syslog,stderr'
+            </programlisting>
+<!--
+					The default is to log to <literal>stderr</literal> only.
+-->
+デフォルトでは<literal>stderr</literal>のみにログ出力します。
 				</para>
 				<note>
 					<para>
