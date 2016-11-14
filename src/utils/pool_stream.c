@@ -207,7 +207,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 			cp->socket_state = POOL_SOCKET_ERROR;
 			if (cp->isbackend)
 			{
-				if (cp->con_info->swallow_termination == 1)
+				if (cp->con_info && cp->con_info->swallow_termination == 1)
 				{
 					cp->con_info->swallow_termination = 0;
 					ereport(FATAL,
@@ -354,7 +354,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 			cp->socket_state = POOL_SOCKET_ERROR;
 			if (cp->isbackend)
 			{
-				if (cp->con_info->swallow_termination == 1)
+				if (cp->con_info && cp->con_info->swallow_termination == 1)
 				{
 					cp->con_info->swallow_termination = 0;
 					ereport(FATAL,
@@ -579,7 +579,7 @@ int pool_flush(POOL_CONNECTION *cp)
 	{
 		if (cp->isbackend)
 		{
-			if (cp->con_info->swallow_termination == 1)
+			if (cp->con_info && cp->con_info->swallow_termination == 1)
 			{
 				cp->con_info->swallow_termination = 0;
 				ereport(FATAL,
@@ -634,7 +634,7 @@ int pool_flush_noerror(POOL_CONNECTION *cp)
     {
         if (cp->isbackend)
         {
-			if (cp->con_info->swallow_termination == 1)
+			if (cp->con_info && cp->con_info->swallow_termination == 1)
 			{
 				cp->con_info->swallow_termination = 0;
 				ereport(FATAL,
@@ -805,7 +805,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 			cp->socket_state = POOL_SOCKET_ERROR;
 			if (cp->isbackend)
 			{
-				if (cp->con_info->swallow_termination == 1)
+				if (cp->con_info && cp->con_info->swallow_termination == 1)
 				{
 					cp->con_info->swallow_termination = 0;
 					ereport(FATAL,
