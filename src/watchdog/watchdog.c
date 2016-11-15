@@ -621,18 +621,22 @@ static void wd_cluster_initialize(void)
 	{
 		struct utsname unameData;
 		uname(&unameData);
-		snprintf(g_cluster.localNode->nodeName, WD_MAX_HOST_NAMELEN, "%s_%s_%d",unameData.sysname,unameData.nodename,pool_config->port);
+		snprintf(g_cluster.localNode->nodeName, WD_MAX_HOST_NAMELEN, "%s:%d %s %s",
+				 pool_config->wd_hostname,
+				 pool_config->port,
+				 unameData.sysname,
+				 unameData.nodename);
 		/* should also have upper limit???*/
 		ereport(LOG,
 				(errmsg("setting the local watchdog node name to \"%s\"",g_cluster.localNode->nodeName)));
 	}
-	
+
 	/* initialize remote nodes */
 	g_cluster.remoteNodeCount = pool_config->wd_remote_nodes.num_wd;
 	g_cluster.remoteNodes = palloc0((sizeof(WatchdogNode) * g_cluster.remoteNodeCount));
 	
 	ereport(LOG,
-			(errmsg("watchdog cluster configured with %d remote nodes",g_cluster.remoteNodeCount)));
+			(errmsg("watchdog cluster is configured with %d remote nodes",g_cluster.remoteNodeCount)));
 	
 	for ( i = 0; i < pool_config->wd_remote_nodes.num_wd; i++)
 	{
@@ -1020,7 +1024,7 @@ watchdog_main(void)
 	{
 		ereport(FATAL,
 			(return_code(POOL_EXIT_FATAL),
-				 errmsg("no valid network interface is active."),
+				 errmsg("no valid network interface is active"),
 					errdetail("watchdog requires at least one valid network interface to continue"),
 					errhint("you can disable interface checking by setting wd_monitoring_interfaces_list = '' in pgpool config")));
 	}
@@ -1131,7 +1135,7 @@ wd_create_command_server_socket(void)
 	snprintf(addr.sun_path, sizeof(addr.sun_path),"%s",get_watchdog_ipc_address());
 	len = sizeof(struct sockaddr_un);
 
-	ereport(LOG,
+	ereport(INFO,
 			(errmsg("IPC socket path: \"%s\"",get_watchdog_ipc_address())));
 
 
@@ -1385,8 +1389,8 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 						if (found)
 						{
 							/* reply with node info message */
-							ereport(NOTICE,
-									(errmsg("New node joined the cluster hostname:\"%s\" port:%d pgpool_port:%d",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port)));
+							ereport(LOG,
+									(errmsg("new node joined the cluster hostname:\"%s\" port:%d pgpool_port:%d",tempNode->hostname,tempNode->wd_port,tempNode->pgpool_port)));
 
 							watchdog_state_machine(WD_EVENT_PACKET_RCV, wdNode, pkt);
 						}
@@ -1652,7 +1656,7 @@ static bool read_ipc_socket_and_process(int sock, bool *remove_socket)
 				break;
 			case IPC_CMD_ERROR:
 				ereport(NOTICE,
-						(errmsg("error processing IPC from socket")));
+						(errmsg("IPC command returned error")));
 				res_type = WD_IPC_CMD_RESULT_BAD;
 				break;
 			case IPC_CMD_OK:
@@ -1749,7 +1753,8 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDCommandData* ipcComma
 	{
 		json_value_free(root);
 		ereport(NOTICE,
-				(errmsg("unable to parse json data from get node list command")));
+			(errmsg("failed to process GET NODE LIST IPC command"),
+				 errdetail("unable to parse json data")));
 		return IPC_CMD_ERROR;
 	}
 
@@ -1781,17 +1786,18 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDCommandData* 
 	
 	if (ret == false)
 	{
-		ereport(WARNING,
-				(errmsg("unable to parse json data from node status change ipc message")));
+		ereport(NOTICE,
+			(errmsg("failed to process NODE STATE CHANGE IPC command"),
+				 errdetail("unable to parse json data")));
 		return IPC_CMD_ERROR;
 	}
-	
+
 	if (message)
 		ereport(LOG,
 				(errmsg("received node status change ipc message"),
 				 errdetail("%s",message)));
 	pfree(message);
-	
+
 	if (fire_node_status_event(nodeID,nodeStatus) == false)
 		return IPC_CMD_ERROR;
 	
@@ -1820,14 +1826,15 @@ static bool fire_node_status_event(int nodeID, int nodeStatus)
 	if (wdNode == NULL)
 	{
 		ereport(LOG,
-				(errmsg("invalid Node id for node event")));
+			(errmsg("failed to process node status change event"),
+				 errdetail("invalid Node ID in the event")));
 		return false;
 	}
 	
 	if (nodeStatus == WD_LIFECHECK_NODE_STATUS_DEAD)
 	{
 		ereport(DEBUG1,
-				(errmsg("firing NODE STATUS EVENT: NODE(ID=%d) IS DEAD",nodeID)));
+			(errmsg("processing node status changed to DEAD event for node ID:%d",nodeID)));
 
 		if (wdNode == g_cluster.localNode)
 			watchdog_state_machine(WD_EVENT_LOCAL_NODE_LOST, wdNode, NULL);
@@ -1837,7 +1844,7 @@ static bool fire_node_status_event(int nodeID, int nodeStatus)
 	else if (nodeStatus == WD_LIFECHECK_NODE_STATUS_ALIVE)
 	{
 		ereport(DEBUG1,
-				(errmsg("firing NODE STATUS EVENT: NODE(ID=%d) IS ALIVE",nodeID)));
+				(errmsg("processing node status changed to ALIVE event for node ID:%d",nodeID)));
 
 		if (wdNode == g_cluster.localNode)
 			watchdog_state_machine(WD_EVENT_LOCAL_NODE_FOUND, wdNode, NULL);
@@ -1846,7 +1853,8 @@ static bool fire_node_status_event(int nodeID, int nodeStatus)
 	}
 	else
 		ereport(LOG,
-				(errmsg("invalid Node action")));
+			(errmsg("failed to process node status change event"),
+				 errdetail("invalid event type")));
 	return true;
 }
 
@@ -1952,7 +1960,8 @@ static void process_remote_failover_command_on_coordinator(WatchdogNode* wdNode,
 			g_cluster.ipc_commands = lappend(g_cluster.ipc_commands,ipcCommand);
 			MemoryContextSwitchTo(oldCxt);
 			ereport(LOG,
-					(errmsg("failover command from remote pgpool-II node \"%s\" is still processing",wdNode->nodeName)));
+				(errmsg("failover command from remote pgpool-II node \"%s\" is still processing",wdNode->nodeName),
+					 errdetail("waiting for results...")));
 		}
 		else
 		{
@@ -1967,7 +1976,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_command_on_coordinator(WDComman
 		return IPC_CMD_ERROR; /* should never hapen*/
 
 	ereport(LOG,
-			(errmsg("watchdog received the failover command on IPC socket")));
+			(errmsg("watchdog received the failover command from local pgpool-II on IPC interface")));
 
 	return process_failover_command_on_coordinator(ipcCommand);
 }
@@ -1983,8 +1992,8 @@ static bool reply_to_failove_command(WDCommandData* ipcCommand, WDFailoverCMDRes
 	jw_end_element(jNode);
 	jw_finish_document(jNode);
 
-	ereport(DEBUG1,
-		(errmsg("replying to failover command"),
+	ereport(DEBUG2,
+		(errmsg("replying to failover command with failover ID: %d",failoverID),
 			 errdetail("%.*s",jw_get_json_length(jNode),jw_get_json_string(jNode))));
 
 	if (ipcCommand->commandSource == COMMAND_SOURCE_IPC)
@@ -2048,8 +2057,11 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 		return IPC_CMD_COMPLETE;
 	}
 
-	ereport(LOG,(
-			errmsg("watchdog received failover command [%s]",func_name)));
+	ereport(LOG,
+			(errmsg("watchdog is processing the failover command [%s] received from %s",
+					func_name,
+					ipcCommand->commandSource == COMMAND_SOURCE_IPC?
+					"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName)));
 
 	if (get_cluster_node_count() == 0)
 	{
@@ -2058,8 +2070,8 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 		 * we need to do here
 		 */
 		ereport(LOG,(
-			errmsg("I am the only Pgpool-II node in the watchdog cluster"),
-				errdetail("local Pgpool-II node is allowd to execute the failover command [%s]",func_name)));
+			errmsg("I am the only pgpool-II node in the watchdog cluster"),
+				errdetail("no need to propagate the failover command [%s]",func_name)));
 		reply_to_failove_command(ipcCommand, FAILOVER_RES_PROCEED, 0);
 		return IPC_CMD_COMPLETE;
 	}
@@ -2070,7 +2082,7 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 		 * check if the failover is allowed before doing anything
 		 */
 		ereport(LOG,
-			(errmsg("failover command [%s] request from Pgpool-II node \"%s\" is rejected because of switching",
+			(errmsg("failover command [%s] request from pgpool-II node \"%s\" is rejected because of switching",
 					func_name,
 					ipcCommand->sourceWdNode->nodeName)));
 		reply_to_failove_command(ipcCommand, FAILOVER_RES_NOT_ALLOWED, 0);
@@ -2085,7 +2097,11 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 	if (failoverObj)
 	{
 		ereport(LOG,
-			(errmsg("ignoring the failover command [%s] request, similar failover request is already in progress",func_name)));
+			(errmsg("failover command [%s] from %s is ignored",
+						func_name,
+						ipcCommand->commandSource == COMMAND_SOURCE_IPC?
+						"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName),
+			 errdetail("similar failover with ID:%d is already in progress",failoverObj->failoverID)));
 
 		/* Same failover is already in progress */
 		reply_to_failove_command(ipcCommand, FAILOVER_RES_ALREADY_ISSUED, 0);
@@ -2094,8 +2110,11 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 	else
 	{
 		MemoryContext oldCxt;
-		ereport(DEBUG2,
-				(errmsg("no similar failover in progress")));
+		ereport(DEBUG1,
+				(errmsg("proceeding with the failover command [%s] request from pgpool-II node \"%s\"",
+						func_name,
+						ipcCommand->sourceWdNode->nodeName),
+				 errdetail("no similar failover is in progress")));
 		/*
 		 * okay now ask all nodes to start failover
 		 */
@@ -2125,13 +2144,10 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 
 		ereport(LOG,
 			(errmsg("forwarding the failover request [%s] to all alive nodes",func_name),
-				 errdetail("watchdog cluster currently has %d remote connected nodes",get_cluster_node_count())));
+				 errdetail("watchdog cluster currently has %d connected remote nodes",get_cluster_node_count())));
 
 		/* see if there is any node we want to send to */
 		send_command_packet_to_remote_nodes(ipcCommand, false);
-
-		ereport(LOG,
-			(errmsg("failover request [%s] is sent to %d nodes",func_name,ipcCommand->commandSendToCount)));
 
 		/* For a moment just think it is successfully sent to all nodes.*/
 		if (ipcCommand->commandSource == COMMAND_SOURCE_IPC)
@@ -2174,9 +2190,8 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData* ipcComma
 		if (send_command_packet_to_remote_nodes(ipcCommand, true) <= 0)
 		{
 			ereport(LOG,
-				(errmsg("failed to process failover request from IPC socket"),
-					 errdetail("failed to forward the request to master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
-			/* we have failed to send to any node, return lock failed  */
+				(errmsg("unable to process the failover command request received on IPC interface"),
+					 errdetail("failed to forward the request to the master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
 			return IPC_CMD_ERROR;
 		}
 		else
@@ -2185,12 +2200,18 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData* ipcComma
 			 * we need to wait for the result
 			 */
 			ereport(LOG,
-				(errmsg("failover request from IPC socket is forwarded to master watchdog node \"%s\"",g_cluster.masterNode->nodeName),
-					 errdetail("waiting for the reply from master node...")));
+				(errmsg("failover request from local pgpool-II node received on IPC interface is forwarded to master watchdog node \"%s\"",
+						g_cluster.masterNode->nodeName),
+					 errdetail("waiting for the reply...")));
 			return IPC_CMD_PROCESSING;
 		}
 	}
 	/* we are not in stable state at the moment */
+	ereport(LOG,
+		(errmsg("unable to process the failover request received on IPC interface"),
+			 errdetail("this watchdog node has not joined the cluster yet"),
+				errhint("try again in few seconds")));
+
 	return IPC_CMD_ERROR;
 }
 
@@ -2210,14 +2231,24 @@ static IPC_CMD_PREOCESS_RES process_IPC_online_recovery(WDCommandData* ipcComman
 		if (send_command_packet_to_remote_nodes(ipcCommand, true) <= 0)
 		{
 			ereport(LOG,
-					(errmsg("failed to process failover request from IPC socket"),
-					 errdetail("failed to forward the request to remote nodes")));
-			/* we have failed to send to any node, return lock failed  */
+				(errmsg("unable to process the online recovery request received on IPC interface"),
+					 errdetail("failed to forward the request to the master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
 			return IPC_CMD_ERROR;
 		}
+		ereport(LOG,
+			(errmsg("online recovery request from local pgpool-II node received on IPC interface is forwarded to master watchdog node \"%s\"",
+						g_cluster.masterNode->nodeName),
+				 errdetail("waiting for the reply...")));
+
 		return IPC_CMD_PROCESSING;
 	}
 	/* we are not in any stable state at the moment */
+
+	ereport(LOG,
+		(errmsg("unable to process the online recovery request received on IPC interface"),
+			 errdetail("this watchdog node has not joined the cluster yet"),
+				errhint("try again in few seconds")));
+
 	return IPC_CMD_TRY_AGAIN;
 }
 
@@ -2228,7 +2259,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDCommandData *
 	 * just return cluster in transaction
 	 */
 	ereport(LOG,
-			(errmsg("processing master node data request from IPC socket")));
+			(errmsg("received the get data request from local pgpool-II on IPC interface")));
 
 	if (get_local_node_state() == WD_STANDBY)
 	{
@@ -2243,9 +2274,8 @@ static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDCommandData *
 		if (send_command_packet_to_remote_nodes(ipcCommand, true) <= 0)
 		{
 			ereport(LOG,
-				(errmsg("failed to process master node data request from IPC socket"),
-					 errdetail("failed to forward the request to master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
-			/* we have failed to send to any node, return lock failed  */
+				(errmsg("unable to process the get data request received on IPC interface"),
+					 errdetail("failed to forward the request to the master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
 			return IPC_CMD_ERROR;
 		}
 		else
@@ -2254,8 +2284,9 @@ static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDCommandData *
 			 * we need to wait for the result
 			 */
 			ereport(LOG,
-				(errmsg("data request from IPC socket is forwarded to master watchdog node \"%s\"",g_cluster.masterNode->nodeName),
-					 errdetail("waiting for the reply from master node...")));
+				(errmsg("get data request from local pgpool-II node received on IPC interface is forwarded to master watchdog node \"%s\"",
+							g_cluster.masterNode->nodeName),
+					 errdetail("waiting for the reply...")));
 
 			return IPC_CMD_PROCESSING;
 		}
@@ -2267,6 +2298,10 @@ static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDCommandData *
 	}
 
 	/* we are not in any stable state at the moment */
+	ereport(LOG,
+		(errmsg("unable to process the get data request received on IPC interface"),
+			 errdetail("this watchdog node has not joined the cluster yet"),
+				errhint("try again in few seconds")));
 
 	return IPC_CMD_TRY_AGAIN;
 }
@@ -2278,8 +2313,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_locking_cmd(WDCommandData *ipcC
 	 * just return cluster in transaction
 	 */
 	ereport(LOG,
-		(errmsg("processing failover command lock request from IPC socket")));
-
+			(errmsg("received the failover command lock request from local pgpool-II on IPC interface")));
 	if (get_local_node_state() == WD_STANDBY)
 	{
 		/* I am a standby node, Just forward the request to coordinator */
@@ -2290,9 +2324,8 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_locking_cmd(WDCommandData *ipcC
 		if (send_command_packet_to_remote_nodes(ipcCommand, true) <= 0)
 		{
 			ereport(LOG,
-				(errmsg("failed to process the failover command lock request from IPC socket"),
-					 errdetail("failed to forward the request to master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
-			/* we have failed to send to any node, return lock failed  */
+				(errmsg("unable to process the failover command lock request received on IPC interface"),
+					 errdetail("failed to forward the request to the master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
 			return IPC_CMD_ERROR;
 		}
 		else
@@ -2301,9 +2334,9 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_locking_cmd(WDCommandData *ipcC
 			 * wait for the result
 			 */
 			ereport(LOG,
-				(errmsg("failover command lock request from IPC socket is forwarded to master watchdog node \"%s\"",g_cluster.masterNode->nodeName),
-					 errdetail("waiting for the reply from master node...")));
-
+					(errmsg("failover command lock request from local pgpool-II node received on IPC interface is forwarded to master watchdog node \"%s\"",
+							g_cluster.masterNode->nodeName),
+					 errdetail("waiting for the reply...")));
 			return IPC_CMD_PROCESSING;
 		}
 	}
@@ -2316,11 +2349,18 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_locking_cmd(WDCommandData *ipcC
 	}
 
 	/* we are not in any stable state at the moment */
+	ereport(LOG,
+		(errmsg("unable to process the failover command lock request received on IPC interface"),
+			 errdetail("this watchdog node has not joined the cluster yet"),
+				errhint("try again in few seconds")));
 	return IPC_CMD_TRY_AGAIN;
 }
 
 static void process_remote_failover_locking_request(WatchdogNode* wdNode, WDPacketData* pkt)
 {
+	ereport(LOG,
+			(errmsg("received the failover command lock request from remote pgpool-II node \"%s\"",wdNode->nodeName)));
+
 	if (get_local_node_state() != WD_COORDINATOR)
 	{
 		/* only lock holder can resign itself */
@@ -2375,7 +2415,9 @@ static IPC_CMD_PREOCESS_RES process_failover_locking_requests_on_cordinator(WDCo
 	if (ipcCommand->sourcePacket.data == NULL || ipcCommand->sourcePacket.len <= 0)
 	{
 		ereport(LOG,
-				(errmsg("failed to process locking request"),
+				(errmsg("unable to process failover command lock request from %s",
+						ipcCommand->commandSource == COMMAND_SOURCE_IPC?
+						"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName),
 				 errdetail("invalid command packet")));
 		reply_to_failove_command(ipcCommand, FAILOVER_RES_INVALID_FUNCTION, failoverID);
 		return IPC_CMD_COMPLETE;
@@ -2390,17 +2432,20 @@ static IPC_CMD_PREOCESS_RES process_failover_locking_requests_on_cordinator(WDCo
 		if (syncRequestType == false)
 		{
 			ereport(LOG,
-				(errmsg("failed to process locking request"),
-					 errdetail("invalid command packet")));
-			reply_to_failove_command(ipcCommand, FAILOVER_RES_INVALID_FUNCTION, failoverID);
+					(errmsg("unable to process failover command lock request from %s",
+							ipcCommand->commandSource == COMMAND_SOURCE_IPC?
+							"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName),
+					 errdetail("invalid data in command packet")));
 			return IPC_CMD_COMPLETE;
 		}
 	}
 	else
 	{
 		ereport(LOG,
-			(errmsg("failed to process locking request"),
-				 errdetail("invalid command packet")));
+				(errmsg("unable to process failover command lock request from %s",
+						ipcCommand->commandSource == COMMAND_SOURCE_IPC?
+						"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName),
+				 errdetail("invalid json data in command packet")));
 		reply_to_failove_command(ipcCommand, FAILOVER_RES_INVALID_FUNCTION, failoverID);
 		return IPC_CMD_COMPLETE;
 	}
@@ -2425,8 +2470,10 @@ static IPC_CMD_PREOCESS_RES process_failover_locking_requests_on_cordinator(WDCo
 	else
 	{
 		ereport(LOG,
-			(errmsg("failed to process locking request"),
-				 errdetail("invalid command packet")));
+				(errmsg("unable to process failover command lock request from %s",
+						ipcCommand->commandSource == COMMAND_SOURCE_IPC?
+						"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName),
+				 errdetail("invalid locking request type \"%s\"",syncRequestType)));
 		res = FAILOVER_RES_INVALID_FUNCTION;
 	}
 	reply_to_failove_command(ipcCommand, res, failoverID);
@@ -2787,7 +2834,7 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 	}
 	cmd_id = ntohl(cmd_id);
 
-	ereport(DEBUG3,
+	ereport(DEBUG2,
 			(errmsg("received packet with command id %d from watchdog node ",cmd_id)));
 
 	ret = socket_read(conn->sock, &len, sizeof(int), 1);
@@ -2800,7 +2847,7 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 	len = ntohl(len);
 
 	ereport(DEBUG1,
-			(errmsg("reading packet type %c of length",type,len)));
+			(errmsg("reading packet type %c of length %d",type,len)));
 
 	pkt = get_empty_packet();
 	set_message_type(pkt, type);
@@ -2840,7 +2887,7 @@ static void wd_child_signal_handler(void)
 	int status;
 
 	ereport(DEBUG1,
-			(errmsg("watchdog child signal handler")));
+			(errmsg("watchdog process signal handler")));
 
 	/* clear SIGCHLD request */
 	sigchld_request = 0;
@@ -3016,11 +3063,11 @@ static int accept_incomming_connections(fd_set* rmask, int pending_fds_count)
 			{
 				/* nothing to accept now */
 				ereport(WARNING,
-						(errmsg("Failed to accept incoming watchdog IPC connection, Nothing to accept")));
+						(errmsg("failed to accept incoming watchdog IPC connection, Nothing to accept")));
 			}
 			/* accept failed */
 			ereport(WARNING,
-					(errmsg("Failed to accept incoming watchdog IPC connection")));
+					(errmsg("failed to accept incoming watchdog IPC connection")));
 		}
 		else
 		{
