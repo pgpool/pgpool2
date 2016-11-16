@@ -650,6 +650,27 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
     <itemizedlist>
 
       <listitem>
+        <!--
+            2016-11-09 [f6ec434] Fix the broken log_destination = syslog functionality.
+        -->
+        <para>
+        <!--
+        Fix the broken log_destination = syslog functionality.
+        -->
+log_destination = syslog 設定の不具合を修正しました。(Muhammad Usama)
+        </para>
+        <para>
+        <!--
+        Fixing the logging to the syslog destination, which got broken by the
+        PGPOOL SET/SHOW command commit, and also enhancing the log_destination
+        configuration parameter to be assigned with the comma separated list of multiple
+        destinations for the <productname>Pgpool-II</productname> log. Now, after this commit log_destination can
+        be set to any combination of 'syslog' and 'stderr' log destinations.
+        -->
+PGPOOL SET/SHOW コマンド追加の修正によって、ログの出力先がsyslogの場合、不具合がありましたので、修正しました。また、log_destinationパラメータがカンマ区切りで複数出力先を指定することができるようになりました。この修正によって、log_destination は "syslog" と "stderr" の任意の組み合わせに設定できるようになりました。
+        </para>
+      </listitem>
+      <listitem>
 	<!--
 	    2016-09-24 [cc33fe3] Change the default value of search_primary_node_timeout from 10 to 300.
 	  -->
@@ -740,7 +761,56 @@ SSLセッションを初期化する際の処理でTLSv1_method()を<function>SS
     <title>不具合修正</title>
 
     <itemizedlist>
-
+      <listitem>
+      <!--
+      2016-11-14 [266b67a]  Fixing a potential crash in pool_stream functions.
+      -->
+      <para>
+      <!--
+      Fixing a potential crash in pool_stream functions.
+      -->
+pool_stream関数の潜在的なクラッシュを修正しました。(Muhammad Usama)
+      </para>
+      <para>
+      <!--
+      POOL_CONNECTION->con_info should be checked for null value before de-referencing when read or write fails on backend socket.
+      -->
+POOL_CONNECTION-> con_infoは、バックエンドソケットで読み取りまたは書き込みが失敗したときに、逆参照する前にヌル値をチェックする必要があります。
+      </para>
+      </listitem>
+      <listitem>
+      <!--
+      2016-11-14 [ef6c0c8] Fixing the design of failover command propagation on watchdog cluster
+      -->
+      <para>
+      <!--
+      Fixing the design of failover command propagation on watchdog cluster
+      -->
+watchdogクラスタでのフェイルオーバーコマンドの転送処理が改善されました。(Muhammad Usama)
+      </para>
+      <para>
+      <!--
+      Overhauling the design of how failover, failback and promote node commands are
+      propagated to the watchdog nodes. Previously the watchdog on pgpool-II node that
+      needs to perform the node command (failover, failback or promote node) used to
+      broadcast the failover command to all attached pgpool-II nodes. And this
+      sometimes makes the synchronization issues, especially when the watchdog cluster
+      contains a large number of nodes and consequently the failover command sometimes
+      gets executed by more than one <productname>Pgpool-II</productname>.
+      -->
+これまでは、<productname>Pgpool-II</productname> ノードの watchdogがすべての接続されたノードにフェイルオーバーコマンド(failover、 failback 及び promote node)を転送していました。多数のノードが含まれているwatchdogクラスタでは、フェールオーバーコマンドが複数の<productname>Pgpool-II</productname>によって実行されることによって、データの同期問題を引き起こす可能性がありました。このコミットでは、すべてのフェイルオーバーコマンド(failover、 failback 及び promote node)が master/coordinator watchdog に転送され、master/coordinator watchdogはすべてのスタンバイノードに転送するようになりました。
+      </para>
+      <para>
+      <!--
+      Now with this commit all the node commands are forwarded to the
+      master/coordinator watchdog, which in turn propagates to all standby nodes.
+      Apart from above the commit also changes the failover command interlocking
+      mechanism and now only the master/coordinator node can become the lock holder
+      so the failover commands will only get executed on the master/coordinator node.
+      -->
+また、今回の修正では、インターロック機能も変更されました。master/coordinatorノーのみがロックホルダになり、フェイルオーバコマンドはmaster/coordinatorノードでのみ実行されます。
+      </para>
+      </listitem>
       <listitem>
         <!--
             2016-09-27 [a7e459f] Fix the case when all backends are down then 1 node attached.
