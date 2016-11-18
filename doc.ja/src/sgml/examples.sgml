@@ -1154,6 +1154,7 @@ Elastic IPアドレスを確保します。
 
           <programlisting>
 use_watchdog = on
+delegate_IP = ''
 wd_hostname = 'instance-1-private-ip'
 other_pgpool_hostname0 = 'instance-2-private-ip'
 other_pgpool_port0 = 9999
@@ -1174,6 +1175,7 @@ wd_de_escalation_command = '$path_to_script/aws-de-escalation.sh'
 
           <programlisting>
 use_watchdog = on
+delegate_IP = ''
 wd_hostname = 'instance-2-private-ip'
 other_pgpool_hostname0 = 'instance-1-private-ip'
 other_pgpool_port0 = 9999
