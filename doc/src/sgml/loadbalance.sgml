@@ -32,6 +32,328 @@
     </para>
   </note>
 
+ <sect2 id="runtime-config-load-balancing-condition">
+  <title>Condition for Load Balancing</title>
+
+  <para>
+  For a query to be load balanced, all the following requirements
+  must be met:
+  <itemizedlist>
+    <listitem>
+      <para>
+      <productname>PostgreSQL</> version 7.4 or later
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+      either in replication mode or master slave mode
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+      the query must not be in an explicitly declared transaction
+      (i.e. not in a BEGIN ~ END block)
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>
+          However, if following conditions are met, load balance is possible
+          even if in an explicit transaction
+          <itemizedlist>
+            <listitem>
+              <para>
+              transaction isolation level is not SERIALIZABLE
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              transaction has not issued a write query yet (until a write
+              query is issued, load balance is possible. Here "write query"
+              means non SELECT DML or DDL. SELECTs having write functions as
+              specified in black or white function list is not regarded as
+              a write query. This may be changed in the future.)
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              If black and white function list is empty, SELECTs having
+              functions is regarded as a read only query.
+              </para>
+            </listitem>
+          </itemizedlist>
+          </para>
+        </listitem>
+      </itemizedlist>
+    </listitem>
+    <listitem>
+      <para>
+      it's not SELECT INTO
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+      it's not SELECT FOR UPDATE nor FOR SHARE
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+      it starts with "SELECT" or one of COPY TO STDOUT, EXPLAIN,
+      EXPLAIN ANALYZE SELECT... <xref linkend="guc-ignore-leading-white-space"> = <literal>true</>
+      will ignore leading white space.
+     (Except for SELECTs using writing functions specified in <xref linkend="guc-black-function-list"> or
+     <xref linkend="guc-white-function-list">)
+     </para>
+    </listitem>
+    <listitem>
+      <para>
+      in master slave mode, in addition to above, following conditions must be met:
+      </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+            does not use temporary tables
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+            does not use unlogged tables
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+            does not use system catalogs
+            </para>
+          </listitem>
+        </itemizedlist>
+    </listitem>
+  </itemizedlist>
+  </para>
+
+  <note>
+    <para>
+    You could suppress load balancing by inserting arbitrary
+    comments just in front of the SELECT query:
+    </para>
+    <programlisting>
+/*REPLICATION*/ SELECT ...
+   </programlisting>
+   <para>
+   If you want to use comments without supressing load balancing, you can set
+   <xref linkend="guc-allow-sql-comments"> to on.
+   Please refer to <xref linkend="guc-replicate-select"> as well.
+   </para>
+  </note>
+
+  <note>
+    <para>
+    The JDBC driver has an autocommit option. If the autocommit is false,
+    the JDBC driver sends "BEGIN" and "COMMIT" by itself. In this case
+    the same restriction above regarding load balancing will be applied.
+    </para>
+  </note>
+
+ </sect2>
+
+ <sect2 id="runtime-config-load-balancing-in-streaming-raplication">
+
+   <title>Load Balancing in Streaming Replication</title>
+
+   <para>
+   While using Streaming replication and Hot Standby, it is important to
+   determine which query can be sent to the primary or the standby,
+   and which one should not be sent to the standby.
+   <productname>Pgpool-II</>'s Streaming Replication mode carefully
+   takes care of this.
+   </para>
+
+   <para>
+   We distinguish which query should be sent to which node by looking
+   at the query itself.
+     <itemizedlist>
+       <listitem>
+         <para>
+         These queries should be sent to the primary node only
+         <itemizedlist>
+           <listitem>
+             <para>
+             INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE, CREATE, DROP, ALTER, COMMENT
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             SELECT ... FOR SHARE | UPDATE
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             SELECT in transaction isolation level SERIALIZABLE
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             LOCK command more strict than ROW EXCLUSIVE MODE
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+                DECLARE, FETCH, CLOSE
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             SHOW
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             Some transactional commands:
+             <itemizedlist>
+               <listitem>
+                 <para>
+                 BEGIN READ WRITE, START TRANSACTION READ WRITE
+                 </para>
+               </listitem>
+               <listitem>
+                 <para>
+                 SET TRANSACTION READ WRITE, SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE
+                 </para>
+               </listitem>
+               <listitem>
+                 <para>
+                 SET transaction_read_only = off
+                 </para>
+               </listitem>
+             </itemizedlist>
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             Two phase commit commands: PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             LISTEN, UNLISTEN, NOTIFY
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             VACUUM
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             Some sequence functions (nextval and setval)
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             Large objects creation commands
+             </para>
+           </listitem>
+         </itemizedlist>
+       </para>
+     </listitem>
+     <listitem>
+       <para>
+       These queries can be sent to both the primary node and the standby node.
+       If load balancing is enabled, these types of queries can be sent to the standby node.
+       However, if delay_threshold is set and the replication delay is higher than
+       <xref linkend="guc-delay-threshold">, queries are sent to the primary node.
+
+         <itemizedlist>
+           <listitem>
+             <para>
+             SELECT not listed above
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             COPY TO
+             </para>
+           </listitem>
+         </itemizedlist>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        These queries are sent to both the primary node and the standby node
+          <itemizedlist>
+           <listitem>
+             <para>
+             SET
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             DISCARD
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             DEALLOCATE ALL
+             </para>
+           </listitem>
+          </itemizedlist>
+        </para>
+       </listitem>
+     </itemizedlist>
+   </para>
+
+   <para>
+   In an explicit transaction:
+     <itemizedlist>
+
+       <listitem>
+         <para>
+         Transaction starting commands such as BEGIN are sent to the primary node.
+         </para>
+       </listitem>
+       <listitem>
+         <para>
+         Following SELECT and some other queries that can be sent to both
+         primary or standby are executed in the transaction or on the standby node.
+         </para>
+       </listitem>
+       <listitem>
+         <para>
+          Commands which cannot be executed on the standby such as INSERT are sent
+          to the primary.
+          After one of these commands, even SELECTs are sent to the primary node,
+          This is because these SELECTs might want to see the result of an INSERT immediately.
+          This behavior continues until the transaction closes or aborts.
+         </para>
+       </listitem>
+     </itemizedlist>
+   </para>
+
+   <para>
+   In the extended protocol, it is possible to determine if the query can
+   be sent to standby or not in load balance mode while parsing the query.
+   The rules are the same as for the non extended protocol.
+   For example, INSERTs are sent to the primary node.
+   Following bind, describe and execute will be sent to the primary node as well.
+   </para>
+
+   <note>
+     <para>
+      If the parse of a SELECT statement is sent to the standby node due to load
+      balancing, and then a DML statement, such as an INSERT, is sent to <productname>Pgpool-II</>,
+      then the parsed SELECT will have to be executed on the primary node.
+      Therefore, we re-parse the SELECT on the primary node.
+     </para>
+   </note>
+
+   <para>
+    Lastly, queries that <productname>Pgpool-II</>'s parser thinks to be an
+    error are sent to the primary node.
+   </para>
+ </sect2>
+
+ <sect2 id="runtime-config-load-balancing-settings">
+
+  <title>Load Balancing Settings</title>
+
   <variablelist>
 
     <varlistentry id="guc-load-balance-mode" xreflabel="load_balance_mode">
@@ -89,7 +411,7 @@
         </para>
         <para>
           You can use regular expression to match function names,
-		  to which <literal>^</> and <literal>$</> are automatically added.
+          to which <literal>^</> and <literal>$</> are automatically added.
         </para>
 
         <example id="example-white-function-list-1">
@@ -121,13 +443,13 @@ white_function_list = 'get_.*,select_.*'
           Specifies a comma separated list of function names that
           <emphasis>DO</emphasis> update the database.
           SELECTs including functions <emphasis>specified</emphasis> in this list are
-		  not load balanced.
+          not load balanced.
           These are replicated among all the DB nodes in Replication mode,
           sent to the primary node only in Maste Slave mode.
         </para>
         <para>
           You can use regular expression to match function names,
-		  to which <literal>^</> and <literal>$</> are automatically added.
+          to which <literal>^</> and <literal>$</> are automatically added.
         </para>
 
         <example id="example-black-function-list-1">
@@ -201,9 +523,9 @@ black_function_list = 'nextval,setval,lastval,currval'
         <para>
          Regular expressions are also accepted for database name.
          You can use special keywords as <replaceable>node id</replaceable>.
-		 If <emphasis>"primary"</emphasis> is specified, queries are sent to the primary node, and
+         If <emphasis>"primary"</emphasis> is specified, queries are sent to the primary node, and
          if <emphasis>"standby"</emphasis> is specified, one of the standby nodes are selected randomly
-		 based on weights.
+         based on weights.
         </para>
 
         <example id="example-database-redirect-list">
@@ -369,11 +691,12 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
         </para>
         <para>
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
-					this parameter for a current session.
+                    You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+                    this parameter for a current session.
         </para>
       </listitem>
     </varlistentry>
 
   </variablelist>
+ </sect2>
 </sect1>

@@ -544,7 +544,10 @@ md5 認証で用いるパスワードのファイルのファイル名を指定�
 					</para>
 
 					<table id="master-slave-sub-mode-table">
+<!--
 						<title>master slave sub mode options</title>
+-->
+						<title>master_slave_sub_modeオプション</title>
 						<tgroup cols="2">
 							<thead>
 								<row>
@@ -1471,7 +1474,10 @@ backend_weight は新しく追加した行を設定ファイル再読み込み�
 		</para>
 
 		<table id="backend-flag-table">
+<!--
 			<title>Backend flags</title>
+-->
+			<title>バックエンドフラグ</title>
 			<tgroup cols="2">
 				<thead>
 		<row>

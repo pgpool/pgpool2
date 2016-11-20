@@ -1,7 +1,14 @@
 <!-- doc/src/sgml/config.sgml -->
 
 <sect1 id="runtime-ssl">
-  <title>Secure Sockect Layer (SSL)</title>
+ <title>Secure Sockect Layer (SSL)</title>
+
+ <sect2 id="runtime-ssl-settings">
+
+<!--
+  <title>SSL Settings</title>
+-->
+  <title>SSLの設定</title>
 
   <variablelist>
 
@@ -186,4 +193,27 @@ SSLサポートを有効にするためには、<productname>Pgpool-II</productn
     </varlistentry>
 
   </variablelist>
+ </sect2>
+
+ <sect2 id="runtime-ssl-generating-ssl-certificates">
+
+<!--
+  <title>Generating SSL certificates</title>
+-->
+  <title>SSL証明書の生成</title>
+
+  <para>
+<!--
+  Certificate handling is outside the scope of this document. The
+  <ulink url="http://developer.postgresql.org/pgdocs/postgres/ssl-tcp.html">
+  Secure TCP/IP Connections with SSL</> page at postgresql.org has
+  pointers with sample commands for how to generate self-signed
+  certificates. 
+-->
+証明書の扱いについてはこのマニュアルの範囲外です。
+PostgreSQLドキュメント<ulink url="http://www.postgresql.jp/document/current/html/ssl-tcp.html">SSLによる安全なTCP/IP接続</>の章に自分で認証する証明書を作成するコマンドの例があります。
+  </para>
+
+ </sect2>
+
 </sect1>

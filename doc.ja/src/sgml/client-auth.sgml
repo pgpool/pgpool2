@@ -475,7 +475,10 @@ host    postgres        all             192.168.12.10/32        md5
  </sect1>
 
  <sect1 id="auth-methods">
+<!--
   <title>Authentication Methods</title>
+-->
+  <title>認証方式</title>
   <para>
 <!--
    The following subsections describe the authentication methods in more detail.

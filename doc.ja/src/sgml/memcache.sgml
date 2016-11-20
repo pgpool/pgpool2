@@ -54,7 +54,10 @@
   </para>
 
 	<sect2 id="runtime-in-memory-query-cache-enabling">
+<!--
 		<title>Enabling in memory query cache</title>
+-->
+		<title>インメモリクエリキャッシュを有効にする</title>
 
 		<variablelist>
 

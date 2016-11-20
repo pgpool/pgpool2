@@ -1,7 +1,11 @@
 <!-- doc/src/sgml/config.sgml -->
 
 <sect1 id="runtime-config-failover">
-  <title>Failover and Failback</title>
+ <title>Failover and Failback</title>
+
+ <sect2 id="runtime-config-failover-settings">
+
+  <title>Failover and Failback Settings</title>
 
   <variablelist>
 
@@ -251,9 +255,9 @@
 
         <note>
         <para>
-          If <varname>follow_master_command</varname>> is not empty, then after failover 
+          If <varname>follow_master_command</varname>> is not empty, then after failover
           on the primary node gets completed in Master Slave mode with streaming replication,
-          <productname>Pgpool-II</productname> degenerates all nodes excepted the new primary 
+          <productname>Pgpool-II</productname> degenerates all nodes excepted the new primary
           and starts new child processes to be ready again to accept connections from the clients.
           After this, <productname>Pgpool-II</productname> executes the command configured
           in the <varname>follow_master_command</varname> for each degenerated backend nodes.
@@ -323,5 +327,22 @@
     </varlistentry>
 
   </variablelist>
+ </sect2>
+
+ <sect2 id="runtime-config-failover-in-the-raw-mode">
+
+  <title>Failover in the raw Mode</title>
+
+  <para>
+  Failover can be performed in raw mode if multiple backend servers are defined.
+  <productname>Pgpool-II</> usually accesses the backend specified by
+  <literal>backend_hostname0</> during normal operation. If the
+  <literal>backend_hostname0</> fails for some reason,
+  <productname>Pgpool-II</> tries to access the backend specified by
+  <literal>backend_hostname1</>. If that fails, <productname>Pgpool-II</>
+  tries the <literal>backend_hostname2, 3</> and so on.
+  </para>
+
+ </sect2>
 
 </sect1>

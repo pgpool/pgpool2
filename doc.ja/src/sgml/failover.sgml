@@ -2,9 +2,16 @@
 
 <sect1 id="runtime-config-failover">
 <!--
-  <title>Failover and Failback</title>
+ <title>Failover and Failback</title>
 -->
-  <title>フェイルオーバとフェイルバック</title>
+ <title>フェイルオーバとフェイルバック</title>
+
+ <sect2 id="runtime-config-failover-settings">
+
+<!--
+  <title>Failover and Failback Settings</title>
+-->
+  <title>フェイルオーバとフェイルバックの設定</title>
 
   <variablelist>
 
@@ -22,7 +29,7 @@
           with the backend specific information before excuting the command.
 -->
 <productname>PostgreSQL</>バックエンドノードが切り離される時に実行するユーザコマンドを指定します。
-<productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。 
+<productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。
         </para>
 
         <table id="failover-command-table">
@@ -164,11 +171,14 @@
           before excuting the command.
 -->
 <productname>PostgreSQL</>バックエンドノードが<productname>Pgpool-II</productname>に復帰された時に実行するユーザコマンドを指定します。
-<productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。 
+<productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。
         </para>
 
         <table id="ffailback-command-table">
+<!--
           <title>failback command options</title>
+-->
+          <title>フェイルバックコマンドオプション</title>
           <tgroup cols="2">
             <thead>
               <row>
@@ -290,12 +300,15 @@
 -->
 プライマリノードのフェイルオーバー後に実行するユーザコマンドを指定します。
 この機能は、マスタースレーブモードでストリーミングレプリケーション構成の場合のみ有効です。
-<productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。 
+<productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。
 
         </para>
 
         <table id="follow-master-command-table">
+<!--
           <title>follow master command options</title>
+-->
+          <title>フォローマスターコマンドオプション</title>
           <tgroup cols="2">
             <thead>
               <row>
@@ -394,9 +407,9 @@
         <note>
         <para>
 <!--
-          If <varname>follow_master_command</varname>> is not empty, then after failover 
+          If <varname>follow_master_command</varname>> is not empty, then after failover
           on the primary node gets completed in Master Slave mode with streaming replication,
-          <productname>Pgpool-II</productname> degenerates all nodes excepted the new primary 
+          <productname>Pgpool-II</productname> degenerates all nodes excepted the new primary
           and starts new child processes to be ready again to accept connections from the clients.
           After this, <productname>Pgpool-II</productname> executes the command configured
           in the <varname>follow_master_command</varname> for each degenerated backend nodes.
@@ -410,7 +423,7 @@
           Typically <varname>follow_master_command</varname>> command is used to recover
           the slave from the new primary by calling the pcp_recovery_node command.
 -->
-通常は、<varname>follow_master_command</varname>コマンドは<xref linkend="PCP-RECOVERY-NODE">コマンドを呼んで新しいプライマリからスレーブをリカバリするために使用します。 
+通常は、<varname>follow_master_command</varname>コマンドは<xref linkend="PCP-RECOVERY-NODE">コマンドを呼んで新しいプライマリからスレーブをリカバリするために使用します。
         </para>
         <para>
 <!--
@@ -437,7 +450,7 @@
           and disconnect the session in case of such errors.
 -->
 onに設定した場合、<productname>Pgpool-II</productname>は<productname>PostgreSQL</>バックエンド接続からの読み出し、書き込みのエラーをバックエンドノードの故障と見なし、現在のセッションを切断した後にそのノードをフェイルオーバします。
-offに設定した場合、そのようなエラーの場合でも<productname>Pgpool-II</productname>は単にエラーをレポートしセッションが切断するのみです。 
+offに設定した場合、そのようなエラーの場合でも<productname>Pgpool-II</productname>は単にエラーをレポートしセッションが切断するのみです。
         </para>
         <note>
           <para>
@@ -480,7 +493,7 @@ offに設定した場合、そのようなエラーの場合でも<productname>P
 フェイルオーバが起きた時にプライマリノードを検索するための最大時間を秒単位で指定します。
 <productname>Pgpool-II</productname>は、ここで設定したした時間の間にプライマリノードを見つけられなかった場合、探すのを諦めます。
 デフォルト値は300です。
-0を指定すると、永久に検索し続けます。 
+0を指定すると、永久に検索し続けます。
         </para>
         <para>
 <!--
@@ -498,5 +511,31 @@ offに設定した場合、そのようなエラーの場合でも<productname>P
     </varlistentry>
 
   </variablelist>
+ </sect2>
+
+ <sect2 id="runtime-config-failover-in-the-raw-mode">
+
+<!--
+  <title>Failover in the raw Mode</title>
+-->
+  <title>rawモードにおけるフェイルオーバ</title>
+
+  <para>
+<!--
+  Failover can be performed in raw mode if multiple backend servers are defined.
+  <productname>Pgpool-II</> usually accesses the backend specified by
+  <literal>backend_hostname0</> during normal operation. If the
+  <literal>backend_hostname0</> fails for some reason,
+  <productname>Pgpool-II</> tries to access the backend specified by
+  <literal>backend_hostname1</>. If that fails, <productname>Pgpool-II</>
+  tries the <literal>backend_hostname2, 3</> and so on.
+-->
+rawモードにおいて、複数のバックエンドサーバが定義されている場合、フェイルオーバが可能です。
+通常の動作では<productname>Pgpool-II</>は<literal>backend_hostname0</>で指定したバックエンドにアクセスします。
+何らかのリユで<literal>backend_hostname0</>のサーバに障害が発生すると、<productname>Pgpool-II</>は<literal>backend_hostname1</>へのアクセスを試みます。
+これが失敗した場合には<productname>Pgpool-II</>は<literal>backend_hostname2, 3</>と以下同様に試みます。
+  </para>
+
+ </sect2>
 
 </sect1>

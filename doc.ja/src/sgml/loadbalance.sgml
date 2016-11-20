@@ -50,6 +50,466 @@
     </para>
   </note>
 
+ <sect2 id="runtime-config-load-balancing-condition">
+<!--
+  <title>Condition for Load Balancing</title>
+-->
+  <title>ロードバランスの条件について</title>
+
+  <para>
+<!--
+  For a query to be load balanced, all the following requirements
+  must be met:
+-->
+クエリが負荷分散されるためには、以下の全ての条件を満たす必要があります：
+  <itemizedlist>
+    <listitem>
+      <para>
+<!--
+      <productname>PostgreSQL</> version 7.4 or later
+-->
+<productname>PostgreSQL</>のバージョンが7.4以降である
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+<!--
+      either in replication mode or master slave mode
+-->
+レプリケーションモードまたはマスタースレーブモードである
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+<!--
+      the query must not be in an explicitly declared transaction
+      (i.e. not in a BEGIN ~ END block)
+-->
+問い合わせが明示的なトランクザションブロックの内側にない(つまり、BEGINを発行していない)
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>
+<!--
+          However, if following conditions are met, load balance is possible
+          even if in an explicit transaction
+-->
+ただし、以下の条件が満たされればトランザクションブロックの内側であっても負荷分散の対象となります。
+          <itemizedlist>
+            <listitem>
+              <para>
+<!--
+              transaction isolation level is not SERIALIZABLE
+-->
+トランザクション分離レベルがSERIALIZABLEでない
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+<!--
+              transaction has not issued a write query yet (until a write
+              query is issued, load balance is possible. Here "write query"
+              means non SELECT DML or DDL. SELECTs having write functions as
+              specified in black or white function list is not regarded as
+              a write query. This may be changed in the future.)
+-->
+トランザクション内で更新を伴うクエリが実行されていない
+(更新を伴うクエリが実行されるまではロードバランスされます。
+ここで「更新を伴うクエリ」とは、SELECT以外のDDLやDMLを指します。
+black/white function listで指定される更新関数を含むSELECTは更新を伴うクエリとは見なされません。
+この仕様は将来変更される可能性があります)
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+<!--
+              If black and white function list is empty, SELECTs having
+              functions is regarded as a read only query.
+-->
+もしblack/white function listが空の場合は、関数を持つSELECTは、更新を伴うクエリとは見なされません。
+              </para>
+            </listitem>
+          </itemizedlist>
+          </para>
+        </listitem>
+      </itemizedlist>
+    </listitem>
+    <listitem>
+      <para>
+<!--
+      it's not SELECT INTO
+-->
+SELECT INTO 文ではない
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+<!--
+      it's not SELECT FOR UPDATE nor FOR SHARE
+-->
+SELECT FOR UPDATE/SELECT FOR SHARE文ではない
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+<!--
+      it starts with "SELECT" or one of COPY TO STDOUT, EXPLAIN,
+      EXPLAIN ANALYZE SELECT... (Except for SELECTs using writing functions
+      specified in <xref linkend="guc-black-function-list"> or
+      <xref linkend="guc-white-function-list">)
+      <xref linkend="guc-ignore-leading-white-space"> = <literal>true</>
+      will ignore leading white space.
+-->
+SELECT または COPY TO STDOUT, EXPLAIN, EXPLAIN ANALYZE SELECT... から始まる。
+(<xref linkend="guc-black-function-list">または<xref linkend="guc-white-function-list">で指定された書き込み関数を含むSELECTを除く)
+<xref linkend="guc-ignore-leading-white-space"> = <literal>true</>の場合は最初の空白文字は無視されます。
+     </para>
+    </listitem>
+    <listitem>
+      <para>
+<!--
+      in master slave mode, in addition to above, following conditions must be met:
+-->
+マスタースレーブモードの場合、更に以下の条件が満たされなければなりません。
+      </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+<!--
+            does not use temporary tables
+-->
+一時テーブルを使っていない
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+<!--
+            does not use unlogged tables
+-->
+unloggedテーブルを使っていない
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+<!--
+            does not use system catalogs
+-->
+システムカタログを使っていない
+            </para>
+          </listitem>
+        </itemizedlist>
+    </listitem>
+  </itemizedlist>
+  </para>
+
+  <note>
+    <para>
+<!--
+    You could suppress load balancing by inserting arbitrary
+    comments just in front of the SELECT query:
+-->
+SELECTクエリの前に任意のコメントを挿入することにより負荷分散を抑制することができます。
+    </para>
+    <programlisting>
+/*REPLICATION*/ SELECT ...
+    </programlisting>
+    <para>
+<!--
+    If you want to use comments without supressing load balancing, you can set
+    <xref linkend="guc-allow-sql-comments"> to on.
+    Please refer to <xref linkend="guc-replicate-select"> as well.
+-->
+SQLコメントの記述が負荷分散に影響を与えないようにするには、<xref linkend="guc-allow-sql-comments">をonにします。
+<xref linkend="guc-replicate-select">も参照してください。
+    </para>
+  </note>
+
+  <note>
+    <para>
+<!--
+    The JDBC driver has an autocommit option. If the autocommit is false,
+    the JDBC driver sends "BEGIN" and "COMMIT" by itself, and an explicit
+    tranasacttion starts. In this case the same restriction above regarding
+    load balancing will be applied.
+-->
+JDBC ドライバにはautocommitオプションがあります。
+autocommit を無効にすると、ドライバが内部でBEGINおよびCOMMITコマンドを実行し、明示的なトランザクションが開始されます。
+この場合、トランザクション内における上記のロードバランスの制限事項が適用されます。
+    </para>
+  </note>
+
+ </sect2>
+
+ <sect2 id="runtime-config-load-balancing-in-streaming-raplication">
+
+<!--
+   <title>Load Balancing in Streaming Replication</title>
+-->
+   <title>ストリーミングレプリケーションにおける負荷分散</title>
+
+   <para>
+<!--
+   While using Streaming replication and Hot Standby, it is important to
+   determine which query can be sent to the primary or the standby,
+   and which one should not be sent to the standby.
+   <productname>Pgpool-II</>'s Streaming Replication mode carefully
+   takes care of this.
+-->
+ストリーミングレプリケーションとHot Standbyを利用している環境では、プライマリノードに送ってよい問い合わせ、スタンバイに送ってもよい問い合わせ、両方に送らなければならない問い合わせを厳密に管理する必要があります。
+<productname>Pgpool-II</>のストリーミングレプリケーションモードは、こうした振り分けを自動的に行ないます。
+   </para>
+
+   <para>
+<!--
+   We distinguish which query should be sent to which node by looking
+   at the query itself.
+-->
+ クエリそのものから、どのクエリがどのノードに送られるべきかを区別します。
+     <itemizedlist>
+       <listitem>
+         <para>
+<!--
+         These queries should be sent to the primary node only
+-->
+プライマリノードにしか送られない問い合わせ
+         <itemizedlist>
+           <listitem>
+             <para>
+             INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE, CREATE, DROP, ALTER, COMMENT
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             SELECT ... FOR SHARE | UPDATE
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+<!--
+             SELECT in transaction isolation level SERIALIZABLE
+-->
+トランザクションの分離レベルがシリアライザブルの場合のSELECT
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+<!--
+             LOCK command more strict than ROW EXCLUSIVE MODE
+-->
+OW EXCLUSIVE MODEよりも強いLOCK
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+                DECLARE, FETCH, CLOSE
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             SHOW
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+<!--
+             Some transactional commands:
+-->
+トランザクションコマンドの一部
+             <itemizedlist>
+               <listitem>
+                 <para>
+                 BEGIN READ WRITE, START TRANSACTION READ WRITE
+                 </para>
+               </listitem>
+               <listitem>
+                 <para>
+                 SET TRANSACTION READ WRITE, SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE
+                 </para>
+               </listitem>
+               <listitem>
+                 <para>
+                 SET transaction_read_only = off
+                 </para>
+               </listitem>
+             </itemizedlist>
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+<!--
+             Two phase commit commands: PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED
+-->
+二相コミット関連のコマンド。PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             LISTEN, UNLISTEN, NOTIFY
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             VACUUM
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+<!--
+             Som sequence functions (nextval and setval)
+-->
+シーケンス関連の関数(nextvalやsetvalなど)の呼び出し。
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+<!--
+             Large objects creation commands
+-->
+ラージオブジェクトの生成
+             </para>
+           </listitem>
+         </itemizedlist>
+       </para>
+     </listitem>
+     <listitem>
+       <para>
+<!--
+       These queries can be sent to both the primary node and the standby node.
+       If load balancing is enabled, these types of queries can be sent to the standby node.
+       However, if delay_threshold is set and the replication delay is higher than
+       <xref linkend="guc-delay-threshold">, queries are sent to the primary node.
+-->
+プライマリノードとスタンバイノードのどちらにも送ることのできる問い合わせ。
+負荷分散設定が有効ならば、スタンバイノードにも送信されます。
+レプリケーションの遅延が<xref linkend="guc-delay-threshold">を上回っている場合は問い合わせはプライマリノードに送られます。
+
+         <itemizedlist>
+           <listitem>
+             <para>
+             SELECT not listed above
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             COPY TO
+             </para>
+           </listitem>
+         </itemizedlist>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+<!--
+        These queries are sent to both the primary node and the standby node
+-->
+プライマリノードとスタンバイノードのどちらにも送られる問い合わせ
+          <itemizedlist>
+           <listitem>
+             <para>
+             SET
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             DISCARD
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             DEALLOCATE ALL
+             </para>
+           </listitem>
+          </itemizedlist>
+        </para>
+       </listitem>
+     </itemizedlist>
+   </para>
+
+   <para>
+<!--
+   In an explicit transaction:
+-->
+明示的なトランザクションでは、以下のようになります。
+     <itemizedlist>
+
+       <listitem>
+         <para>
+<!--
+         Transaction starting commands such as BEGIN are sent to the primary node.
+-->
+BEGINなどのトランザクション開始コマンドは、プライマリノードに送られます。
+         </para>
+       </listitem>
+       <listitem>
+         <para>
+<!--
+         Following SELECT and some other queries that can be sent to both
+         primary or standby are executed in the transaction or on the standby node.
+-->
+続くSELECTなど、プライマリ/スタンバイのどちらにも送ることのできる問い合わせは、プライマリのトランザクション内でそのまま実行されるか、スタンバイノードで実行されます。
+         </para>
+       </listitem>
+       <listitem>
+         <para>
+<!--
+          Commands which cannot be executed on the standby such as INSERT are sent
+          to the primary.
+          After one of these commands, even SELECTs are sent to the primary node,
+          This is because these SELECTs might want to see the result of an INSERT immediately.
+          This behavior continues until the transaction closes or aborts.
+-->
+INSERTなど、スタンバイに送ることのできない問い合わせが現われた場合はプライマリに送られます。
+そういったコマンドの後は、SELECTであってもプライマリノードに送られます。
+これは、INSERTなどの問い合わせの結果を SELECTが直ちに参照できるようにするためです。
+この状態は、トランザクションが閉じるか、アボートするまで続きます。
+         </para>
+       </listitem>
+     </itemizedlist>
+   </para>
+
+   <para>
+<!--
+   In the extended protocol, it is possible to determine if the query can
+   be sent to standby or not in load balance mode while parsing the query.
+   The rules are the same as for the non extended protocol.
+   For example, INSERTs are sent to the primary node.
+   Following bind, describe and execute will be sent to the primary node as well.
+-->
+問い合わせが、拡張問い合わせモードで実行される場合は、問い合わせのparse段階で、問い合わせがスタンバイに送信可能かが決まります。
+その際の判断ルールは通常のSQLと同じです。
+たとえば問い合わせがINSERTならば、プライマリノードに送られます。
+それに後に続くbind, describe, executeも同じくプライマリに送られます。
+   </para>
+
+   <note>
+     <para>
+<!--
+      If the parse of a SELECT statement is sent to the standby node due to load
+      balancing, and then a DML statement, such as an INSERT, is sent to <productname>Pgpool-II</>,
+      then the parsed SELECT will have to be executed on the primary node.
+      Therefore, we re-parse the SELECT on the primary node.
+-->
+負荷分散によりSELECT文のparseがスタンバイノードに送信され、その後INSERTなどのDML文が<productname>Pgpool-II</>に送られた場合、parse済のSELECTはプライマリノードで実行されなければなりません。
+そのため、同じSELECTがプライマリノードで再度パースされることになります。
+     </para>
+   </note>
+
+   <para>
+<!--
+    Lastly, queries that <productname>Pgpool-II</>'s parser thinks to be an
+    error are sent to the primary node.
+-->
+最後に、pgpool-IIのパーサが構文エラーと判断した問い合わせはプライマリノードだけに送られます。
+   </para>
+ </sect2>
+
+ <sect2 id="runtime-config-load-balancing-settings">
+
+<!--
+  <title>Load Balancing Settings</title>
+-->
+  <title>負荷分散の設定</title>
+
   <variablelist>
 
     <varlistentry id="guc-load-balance-mode" xreflabel="load_balance_mode">
@@ -104,7 +564,7 @@ onに設定すると、負荷分散の際にSQL文行頭の空白を無視しま
 これは、DBI/DBD:Pgのように、ユーザの意図に反してに空白を追加するようなAPIを使っているときに有用です。
         </para>
         <para>
-<!--	
+<!--
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 -->
 このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
@@ -137,7 +597,7 @@ onに設定すると、負荷分散の際にSQL文行頭の空白を無視しま
         <para>
 <!--
           You can use regular expression to match function names,
-		  to which <literal>^</> and <literal>$</> are automatically added.
+          to which <literal>^</> and <literal>$</> are automatically added.
 -->
 関数名のマッチングに正規表現を使うことができます。
 正規表現には自動的に<literal>^</literal>と<literal>$</literal>が付与されます。
@@ -185,7 +645,7 @@ white_function_list = 'get_.*,select_.*'
           Specifies a comma separated list of function names that
           <emphasis>DO</emphasis> update the database.
           SELECTs including functions <emphasis>specified</emphasis> in this list are
-		  not load balanced.
+          not load balanced.
           These are replicated among all the DB nodes in Replication mode,
           sent to the primary node only in Maste Slave mode.
 -->
@@ -196,7 +656,7 @@ white_function_list = 'get_.*,select_.*'
         <para>
 <!--
           You can use regular expression to match function names,
-		  to which <literal>^</> and <literal>$</> are automatically added.
+          to which <literal>^</> and <literal>$</> are automatically added.
 -->
 関数名のマッチングに正規表現を使うことができます。
 正規表現には自動的に<literal>^</literal>と<literal>$</literal>が付与されます。
@@ -305,9 +765,9 @@ black_function_list = 'nextval,setval,lastval,currval'
 <!--
          Regular expressions are also accepted for database name.
          You can use special keywords as <replaceable>node id</replaceable>.
-		 If <emphasis>"primary"</emphasis> is specified, queries are sent to the primary node, and
+         If <emphasis>"primary"</emphasis> is specified, queries are sent to the primary node, and
          if <emphasis>"standby"</emphasis> is specified, one of the standby nodes are selected randomly
-		 based on weights.
+         based on weights.
 -->
 データベース名には正規表現を指定することできます。
 <replaceable>ノードID</replaceable>には特別なキーワードを使うことができます。
@@ -400,7 +860,7 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
         <note>
           <para>
 <!--
-			The "Application name" is a name specified by a client when it connects to database,
+            The "Application name" is a name specified by a client when it connects to database,
             and is avalable in <productname>PostgreSQL</> <emphasis>V9.0</> or later.
 -->
 「アプリケーション名」とはクライアントがデータベースに接続する時に指定する名称で、<productname>PostgreSQL</> <emphasis>V9.0</>以降で利用可能です。
@@ -556,8 +1016,8 @@ onに設定すると、<productname>Pgpool-II</productname>は負荷分散やク
         <para>
 <!--
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
-					this parameter for a current session.
+                    You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+                    this parameter for a current session.
 -->
 このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
 現在のセッションでのパラメータ値は、<xref linkend="SQL-PGPOOL-SET">コマンドで変更することもできます。
@@ -566,4 +1026,5 @@ onに設定すると、<productname>Pgpool-II</productname>は負荷分散やク
     </varlistentry>
 
   </variablelist>
+ </sect2>
 </sect1>

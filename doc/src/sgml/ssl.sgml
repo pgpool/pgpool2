@@ -1,7 +1,11 @@
 <!-- doc/src/sgml/config.sgml -->
 
 <sect1 id="runtime-ssl">
-  <title>Secure Sockect Layer (SSL)</title>
+ <title>Secure Sockect Layer (SSL)</title>
+
+ <sect2 id="runtime-config-ssl-settings">
+
+  <title>SSL Settings</title>
 
   <variablelist>
 
@@ -123,4 +127,20 @@
     </varlistentry>
 
   </variablelist>
+ </sect2>
+
+ <sect2 id="runtime-g-connection-pooling-settings">
+
+  <title>Generating SSL certificates</title>
+
+  <para>
+  Certificate handling is outside the scope of this document. The
+  <ulink url="http://developer.postgresql.org/pgdocs/postgres/ssl-tcp.html">
+  Secure TCP/IP Connections with SSL</> page at postgresql.org has
+  pointers with sample commands for how to generate self-signed
+  certificates. 
+  </para>
+
+ </sect2>
+
 </sect1>

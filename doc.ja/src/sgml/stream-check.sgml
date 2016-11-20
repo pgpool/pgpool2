@@ -223,7 +223,10 @@
         </para>
 
         <table id="log-standby-delay-table">
+<!--
           <title>Log standby delay options</title>
+-->
+          <title>スタンバイ遅延のログ出力オプション</title>
           <tgroup cols="2">
             <thead>
               <row>
