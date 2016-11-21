@@ -257,9 +257,21 @@
 	    2016-08-26 [f284be4] Handling of pg_terminate_backend for simple query protocol
 	  -->
 	<para>
-	  In some cases pg_terminate_backend() now does not trigger a
-	  fail-over. (Muhammad Usama)
+	  In some cases <function>pg_terminate_backend()</function> now does not trigger a fail-over. (Muhammad Usama)
 	</para>
+	<para>
+    Because PostgreSQL returns exactly the same error code as postmaster
+    down case and <function>pg_terminate_backend()</function> case, using
+    <function>pg_terminate_backend()</function> raises a failover which user might not want. To
+    fix this, now <productname>Pgpool-II</productname> finds a pid of backend which is the target of
+    <function>pg_terminate_backend()</function> and does not trigger failover if so.
+    </para>
+    <para>
+    This functions is limited to the case of simple protocol and the pid
+    is given to <function>pg_terminate_backend()</function> as a constant. So if you call
+    <function>pg_terminate_backend()</function> via extended protocol (e.g. Java) still
+    <function>pg_terminate_backend()</function> triggers a failover.
+    </para>
       </listitem>
 
       <listitem>

@@ -380,9 +380,32 @@ fail-over が発生する場合にローカル負荷分散ノードの情報が�
     <!--
 	  In some cases pg_terminate_backend() now does not trigger a
 	  fail-over. (Muhammad Usama)
+    Because PostgreSQL returns exactly the same error code as postmaster
+    down case and <function>pg_terminate_backend()</function> case, using
+    <function>pg_terminate_backend()</function> raises a failover which user might not want. To
+    fix this, now <productname>Pgpool-II</productname> finds a pid of backend which is the target of
+    <function>pg_terminate_backend()</function> and does not trigger failover if so.
+    This functions is limited to the case of simple protocol and the pid
+    is given to <function>pg_terminate_backend()</function> as a constant. So if you call
+    <function>pg_terminate_backend()</function> via extended protocol (e.g. Java) still
+    <function>pg_terminate_backend()</function> triggers a failover.
     -->
-      ある場合では、pg_terminate_backend() 関数が failover を引き起さないようになりました。(Muhammad Usama)
+ある場合では、pg_terminate_backend() 関数が failover を引き起さないようになりました。(Muhammad Usama)
 	</para>
+    <para>
+<function>pg_terminate_backend()</function>でバックエンドを終了させた場合、
+<productname>PostgreSQL</productname>がpostmasterをシャットダウンしたときと同じメッセージを返しますので、
+ユーザが望まないかもしれないフェールオーバーを発生させます。
+</para>
+<para>
+これを修正するために、<productname>Pgpool-II</productname>は、
+<function>pg_terminate_backend()</function>の対象バックエンドのPIDを検出し、フェールオーバーを発生させません。
+</para>
+<para>
+この修正は単純なプロトコルの場合、または<function>pg_terminate_backend()</function>
+に渡されたPIDが定数の場合にのみ適用します。
+拡張プロトコル（Javaなど）の場合、<function>pg_terminate_backend()</function>はフェールオーバーを起こします。
+</para>
       </listitem>
 
       <listitem>
