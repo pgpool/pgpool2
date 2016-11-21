@@ -38,7 +38,7 @@ JADE.rtf.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl
 JADE_html = $(JADE) $(SPFLAGS) -d stylesheet.dsl\#html -t sgml -i html -V website-stylesheet
 
 
-EXTRA_DIST = $(ALLSGML) html man1 man8
+EXTRA_DIST = $(ALLSGML) html man1 man8 stylesheet.dsl stylesheet.css stylesheet-man.xsl stylesheet-common.xsl
 
 ##
 ## Man pages
