@@ -96,6 +96,7 @@ Postgresql extensions libraries and sql files for pgpool-II.
            --sysconfdir=%{_sysconfdir}/%{short_name}/
 
 make %{?_smp_mflags}
+make %{?_smp_mflags} -C doc
 
 %install
 rm -rf %{buildroot}
@@ -136,6 +137,15 @@ install -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/pgpool
 
 # nuke libtool archive and static lib
 rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
+
+mkdir html
+mv doc/src/sgml/html html/en
+mv doc.ja/src/sgml/html html/ja
+
+install -d %{buildroot}%{_mandir}/man1
+install doc/src/sgml/man1/*.1 %{buildroot}%{_mandir}/man1
+install -d %{buildroot}%{_mandir}/man8
+install doc/src/sgml/man8/*.8 %{buildroot}%{_mandir}/man8
 
 %clean
 rm -rf %{buildroot}
@@ -185,7 +195,7 @@ fi
 %files
 %defattr(-,root,root,-)
 %dir %{_datadir}/%{short_name}
-%doc README TODO COPYING INSTALL AUTHORS ChangeLog doc/src/sgml
+%doc README TODO COPYING INSTALL AUTHORS ChangeLog html
 %{_bindir}/pgpool
 %{_bindir}/pcp_attach_node
 %{_bindir}/pcp_detach_node
@@ -201,7 +211,8 @@ fi
 %{_bindir}/pg_md5
 %{_bindir}/pgpool_setup
 %{_bindir}/watchdog_setup
-#%{_mandir}/man8/pgpool*
+%{_mandir}/man8/*.8.gz
+%{_mandir}/man1/*.1.gz
 %{_datadir}/%{short_name}/insert_lock.sql
 %{_datadir}/%{short_name}/pgpool.pam
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-master-slave
@@ -242,6 +253,9 @@ fi
 %endif
 
 %changelog
+* Tue Nov 22 2016 Bo Peng <pengbo@sraoss.co.jp> 3.6.0
+- Update to 3.6.0
+
 * Mon Dec 28 2015 Yugo Nagata <nagata@sraoss.co.jp> 3.5.0
 - Add Chinese document
 
