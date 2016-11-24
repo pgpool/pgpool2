@@ -1415,7 +1415,7 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&g_pool_config.client_idle_limit_in_recovery,
 		0,
-		0,INT_MAX,
+		-1,INT_MAX,
 		NULL, NULL, NULL
 	},
 	
