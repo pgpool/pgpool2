@@ -370,7 +370,9 @@ extern int my_master_node_id;
 #define ACCEPT_FD_SEM			5
 #define MAX_REQUEST_QUEUE_SIZE	10
 
-#define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 6 /*number of sec to wait for watchdog command if cluster is stabalizing */
+#define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 10 /* time in seconds to keep retrying for a
+											   * watchdog command if the cluster is not
+											   * in stable state */
 
 #define SERIALIZE_ACCEPT (pool_config->serialize_accept != 0 && \
 						  pool_config->child_life_time == 0)
@@ -398,6 +400,7 @@ typedef enum {
 
 typedef struct {
 	POOL_REQUEST_KIND	kind;		/* request kind */
+	unsigned int wd_failover_id;    /* watchdog ID for this failover operation */
 	int node_id[MAX_NUM_BACKENDS];	/* request node id */
 	int count;						/* request node ids count */
 }POOL_REQUEST_NODE;
@@ -504,7 +507,7 @@ extern char remote_port[];	/* client port */
 /*
  * public functions
  */
-extern bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count);
+extern bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count, unsigned int wd_failover_id);
 extern char *get_config_file_name(void);
 extern char *get_hba_file_name(void);
 extern void do_child(int *fds);
@@ -535,10 +538,10 @@ extern void NoticeResponse(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend);
 
 extern void notice_backend_error(int node_id);
-extern void degenerate_backend_set(int *node_id_set, int count);
-extern bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only);
-extern void promote_backend(int node_id);
-extern void send_failback_request(int node_id, bool throw_error);
+extern void degenerate_backend_set(int *node_id_set, int count, unsigned int wd_failover_id);
+extern bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only, unsigned int wd_failover_id);
+extern void promote_backend(int node_id, unsigned int wd_failover_id);
+extern void send_failback_request(int node_id, bool throw_error, unsigned int wd_failover_id);
 
 
 extern void pool_set_timeout(int timeoutval);

@@ -502,14 +502,14 @@ static int pool_detach_node(int node_id, bool gracefully)
 {
 	if (!gracefully)
 	{
-		degenerate_backend_set_ex(&node_id, 1, true, false);
+		degenerate_backend_set_ex(&node_id, 1, true, false, 0);
 		return 0;
 	}
 
 	/* Check if the NODE DOWN can be executed on
 	 * the given node id.
 	 */
-	degenerate_backend_set_ex(&node_id, 1, true, true);
+	degenerate_backend_set_ex(&node_id, 1, true, true, 0);
 
 	/*
 	 * Wait until all frontends exit
@@ -529,7 +529,7 @@ static int pool_detach_node(int node_id, bool gracefully)
 	/*
 	 * Now all frontends have gone. Let's do failover.
 	 */
-	degenerate_backend_set_ex(&node_id, 1, true, false);
+	degenerate_backend_set_ex(&node_id, 1, true, false, 0);
 
 	/*
 	 * Wait for failover completed.
@@ -556,7 +556,7 @@ static int pool_promote_node(int node_id, bool gracefully)
 {
 	if (!gracefully)
 	{
-		promote_backend(node_id);	/* send promote request */
+		promote_backend(node_id, false);	/* send promote request */
 		return 0;
 	}
 
@@ -576,7 +576,7 @@ static int pool_promote_node(int node_id, bool gracefully)
 	/*
 	 * Now all frontends have gone. Let's do failover.
 	 */
-	promote_backend(node_id);		/* send promote request */
+	promote_backend(node_id, false);		/* send promote request */
 
 	/*
 	 * Wait for failover completed.
@@ -910,7 +910,7 @@ process_attach_node(PCP_CONNECTION *frontend,char *buf)
 			(errmsg("PCP: processing attach node"),
 			 errdetail("attaching Node ID %d", node_id)));
 
-	send_failback_request(node_id,true);
+	send_failback_request(node_id,true, false);
 
 	pcp_write(frontend, "c", 1);
 	wsize = htonl(sizeof(code) + sizeof(int));

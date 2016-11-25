@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2016	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -49,30 +49,22 @@
 #include "watchdog/wd_ipc_commands.h"
 #include "watchdog/wd_ipc_defines.h"
 
-#define WD_DEFAULT_IPC_COMMAND_TIMEOUT	5 /* default number of seconds to wait for IPC command results*/
+#define WD_DEFAULT_IPC_COMMAND_TIMEOUT	8 /* default number of seconds to wait for IPC command results*/
 #define WD_INTERLOCK_WAIT_MSEC		500
 #define WD_INTERLOCK_TIMEOUT_SEC	10
 #define WD_INTERLOCK_WAIT_COUNT ((int) ((WD_INTERLOCK_TIMEOUT_SEC * 1000)/WD_INTERLOCK_WAIT_MSEC))
 
-#define FAILBACK_REQUEST_NODE_MASK		0x01
-#define DEGENERATE_REQUEST_NODE_MASK	0x02
-#define PROMOTE_REQUEST_NODE_MASK		0x04
-
 static void sleep_in_waiting(void);
 static void FreeCmdResult(WDIPCCmdResult* res);
-static WDFailoverCMDResults wd_issue_failover_lock_command(WDFailoverCMDTypes cmdType, char* syncReqType);
 
-
-static char* get_wd_failover_cmd_type_json(WDFailoverCMDTypes cmdType, char* reqType);
-WDFailoverCMDResults wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType);
-
-static int wd_set_node_mask (unsigned char req_mask, int *node_id_set, int count);
-static int wd_chk_node_mask (unsigned char req_mask, int *node_id_set, int count);
+static WDFailoverCMDResults wd_issue_failover_lock_command(char* syncReqType, enum WDFailoverLocks lockID, unsigned int wd_failover_id);
+static char* get_wd_failover_cmd_type_json(char* reqType, enum WDFailoverLocks lockID, unsigned int wd_failover_id);
+static WDFailoverCMDResults wd_send_failover_sync_command(char* syncReqType, enum WDFailoverLocks lockID, unsigned int wd_failover_id);
 
 static int open_wd_command_sock(bool throw_error);
+static WDFailoverCMDResults wd_get_failover_result_from_data(WDIPCCmdResult *result, unsigned int *wd_failover_id);
 
 /* shared memory variables */
-unsigned char *WD_Node_List = NULL;
 char *watchdog_ipc_address = NULL;
 unsigned int *ipc_shared_key = NULL;   /* key lives in shared memory
 										* used to identify the ipc internal
@@ -81,18 +73,6 @@ unsigned int *ipc_shared_key = NULL;   /* key lives in shared memory
 
 void wd_ipc_initialize_data(void)
 {
-	/* allocate node list */
-	if (WD_Node_List == NULL)
-	{
-		WD_Node_List = pool_shared_memory_create(sizeof(unsigned char) * MAX_NUM_BACKENDS);
-		memset(WD_Node_List, 0, sizeof(unsigned char) * MAX_NUM_BACKENDS);
-		ereport(DEBUG1,
-				(errmsg("WD_Node_List: sizeof(unsigned char) (%zu) * MAX_NUM_BACKENDS (%d) = %zu bytes requested for shared memory",
-						sizeof(unsigned char),
-						MAX_WATCHDOG_NUM,
-						sizeof(unsigned char) * MAX_NUM_BACKENDS)));
-	}
-
 	if (watchdog_ipc_address == NULL)
 	{
 		char wd_ipc_sock_addr[255];
@@ -181,6 +161,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, 
 		if (timeout_sec > 0)
 		{
 			tv.tv_sec = timeout_sec;
+			tv.tv_usec = 0;
 			timeout_st = &tv;
 		}
 		FD_ZERO(&fds);
@@ -203,7 +184,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, 
 				if (errno == EAGAIN || errno == EINTR)
 					continue;
 				ereport(WARNING,
-					(errmsg("error reading from IPC command socket"),
+					(errmsg("error reading from IPC command socket for ipc command %c",type),
 						 errdetail("select system call failed with error \"%s\"",strerror(errno))));
 				close(sock);
 				return NULL;
@@ -214,7 +195,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, 
 				if (socket_read(sock, &res_type, 1 ,0) <=0)
 				{
 					ereport(WARNING,
-						(errmsg("error reading from IPC command socket"),
+						(errmsg("error reading from IPC command socket for ipc command %c",type),
 							 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 					close(sock);
 					return result;
@@ -223,7 +204,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, 
 				if (socket_read(sock, &res_length, sizeof(int), 0) <= 0)
 				{
 					ereport(WARNING,
-						(errmsg("error reading from IPC command socket"),
+						(errmsg("error reading from IPC command socket for ipc command %c",type),
 							 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 					close(sock);
 					return result;
@@ -242,7 +223,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, 
 						pfree(result->data);
 						pfree(result);
 						ereport(DEBUG1,
-							(errmsg("error reading from IPC command socket"),
+							(errmsg("error reading from IPC command socket for ipc command %c",type),
 								 errdetail("read from socket failed with error \"%s\"",strerror(errno))));
 						close(sock);
 						return NULL;
@@ -338,7 +319,7 @@ wd_start_recovery(void)
 	char* func = get_wd_node_function_json(WD_FUNCTION_START_RECOVERY, NULL,0,
 										   shared_key?*shared_key:0,pool_config->wd_authkey);
 
-	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND,
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_IPC_ONLINE_RECOVERY_COMMAND,
 													   pool_config->recovery_timeout,
 													   func, strlen(func), true);
 	pfree(func);
@@ -385,7 +366,7 @@ wd_end_recovery(void)
 										   shared_key?*shared_key:0,pool_config->wd_authkey);
 
 	
-	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND,
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_IPC_ONLINE_RECOVERY_COMMAND,
 													   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
 													   func, strlen(func), true);
 	pfree(func);
@@ -424,60 +405,28 @@ wd_end_recovery(void)
 }
 
 
-WdCommandResult
-wd_send_failback_request(int node_id)
+WDFailoverCMDResults
+wd_send_failback_request(int node_id, unsigned int *wd_failover_id)
 {
 	int n = node_id;
-	char type;
 	char* func;
 	unsigned int *shared_key = get_ipc_shared_key();
+	WDFailoverCMDResults res;
 
-	/* if failback packet is received already, do nothing */
-	if (wd_chk_node_mask_for_failback_req(&n,1))
-		return COMMAND_OK;
-	
 	func = get_wd_node_function_json(WD_FUNCTION_FAILBACK_REQUEST,&n, 1,
 									 shared_key?*shared_key:0,pool_config->wd_authkey);
 
-	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND,
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_IPC_FAILOVER_COMMAND,
 													   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
 													   func, strlen(func), true);
 	pfree(func);
-	
-	if (result == NULL)
-	{
-		ereport(WARNING,
-			(errmsg("watchdog failed to send failback command"),
-				 errdetail("issue command to watchdog returned NULL")));
-		return COMMAND_FAILED;
-	}
-	
-	type = result->type;
-	FreeCmdResult(result);
-	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
-	{
-		ereport(WARNING,
-			(errmsg("watchdog failed to send failback command"),
-				 errdetail("watchdog cluster is not in stable state"),
-					errhint("try again when the cluster is fully initialized")));
-		return CLUSTER_IN_TRANSATIONING;
-	}
-	else if (type == WD_IPC_CMD_TIMEOUT)
-	{
-		ereport(WARNING,
-			(errmsg("watchdog failed to send failback command"),
-				 errdetail("ipc command timeout")));
-		return COMMAND_TIMEOUT;
-	}
-	else if (type == WD_IPC_CMD_RESULT_OK)
-	{
-		return COMMAND_OK;
-	}
 
-	return COMMAND_FAILED;
+	res = wd_get_failover_result_from_data(result, wd_failover_id);
+	FreeCmdResult(result);
+	return res;
 }
 
-static char* get_wd_failover_cmd_type_json(WDFailoverCMDTypes cmdType, char* reqType)
+static char* get_wd_failover_cmd_type_json(char* reqType, enum WDFailoverLocks lockID, unsigned int wd_failover_id)
 {
 	char* json_str;
 	JsonNode* jNode = jw_create_with_object(true);
@@ -487,191 +436,127 @@ static char* get_wd_failover_cmd_type_json(WDFailoverCMDTypes cmdType, char* req
 	if (pool_config->wd_authkey != NULL && strlen(pool_config->wd_authkey) > 0)
 		jw_put_string(jNode, WD_IPC_AUTH_KEY, pool_config->wd_authkey); /*  put the auth key*/
 
-	jw_put_int(jNode, "FailoverCMDType", cmdType);
 	jw_put_string(jNode, "SyncRequestType", reqType);
+	jw_put_int(jNode, "FailoverLockID", lockID);
+	jw_put_int(jNode, "WDFailoverID", wd_failover_id);
 	jw_finish_document(jNode);
 	json_str = pstrdup(jw_get_json_string(jNode));
 	jw_destroy(jNode);
 	return json_str;
 }
 
-
-WDFailoverCMDResults
-wd_send_failover_sync_command(WDFailoverCMDTypes cmdType, char* syncReqType)
+static WDFailoverCMDResults
+wd_send_failover_sync_command(char* syncReqType, enum WDFailoverLocks lockID, unsigned int wd_failover_id)
 {
-	int failoverResCmdType;
-	int interlockingResult;
-	json_value *root;
-	
-	char* json_data = get_wd_failover_cmd_type_json(cmdType, syncReqType);
-	
-	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FAILOVER_CMD_SYNC_REQUEST
+	WDFailoverCMDResults res;
+	unsigned int failover_id;
+
+	char* json_data = get_wd_failover_cmd_type_json(syncReqType, lockID, wd_failover_id);
+
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FAILOVER_LOCKING_REQUEST
 													   ,pool_config->recovery_timeout,
 													   json_data, strlen(json_data), true);
 
 	pfree(json_data);
 
-	if (result == NULL || result->length <= 0)
+	res = wd_get_failover_result_from_data(result, &failover_id);
+
+	FreeCmdResult(result);
+	return res;
+}
+
+static WDFailoverCMDResults wd_get_failover_result_from_data(WDIPCCmdResult *result, unsigned int *wd_failover_id)
+{
+	if (result == NULL)
+		return FAILOVER_RES_ERROR;
+
+	if (result == NULL)
 	{
 		ereport(WARNING,
-			(errmsg("watchdog failed to send failover command"),
+			(errmsg("failover command on watchdog failed"),
 				 errdetail("issue command to watchdog returned NULL")));
 		return FAILOVER_RES_ERROR;
+	}
+	if (result->type == WD_IPC_CMD_CLUSTER_IN_TRAN)
+	{
+		ereport(WARNING,
+				(errmsg("failover command on watchdog failed"),
+				 errdetail("watchdog cluster is not in stable state"),
+					errhint("try again when the cluster is fully initialized")));
+		return FAILOVER_RES_TRANSITION;
 	}
 	else if (result->type == WD_IPC_CMD_TIMEOUT)
 	{
 		ereport(WARNING,
-			(errmsg("watchdog failed to send failover command"),
+				(errmsg("failover command on watchdog failed"),
 				 errdetail("ipc command timeout")));
-		FreeCmdResult(result);
-		return FAILOVER_RES_ERROR;
+		return FAILOVER_RES_TIMEOUT;
 	}
-	if (result->length <= 0)
+	else if (result->type == WD_IPC_CMD_RESULT_OK)
 	{
-		ereport(WARNING,
-			(errmsg("watchdog failed to send failover command"),
-				 errdetail("issue command to watchdog returned no data")));
-		FreeCmdResult(result);
-		return FAILOVER_RES_ERROR;
-	}
+		WDFailoverCMDResults res = FAILOVER_RES_ERROR;
+		json_value *root;
 
-	root = json_parse(result->data,result->length);
-	/* The root node must be object */
-	if (root == NULL || root->type != json_object)
-	{
-		ereport(NOTICE,
-				(errmsg("unable to parse json data from replicate command")));
-		FreeCmdResult(result);
-		return FAILOVER_RES_ERROR;
+		root = json_parse(result->data,result->length);
+		/* The root node must be object */
+		if (root == NULL || root->type != json_object)
+		{
+			ereport(NOTICE,
+					(errmsg("unable to parse json data from failover command result")));
+			return res;
+		}
+		if (root && json_get_int_value_for_key(root, WD_FAILOVER_RESULT_KEY, (int*)&res))
+		{
+			json_value_free(root);
+			return FAILOVER_RES_ERROR;
+		}
+		if (root && json_get_int_value_for_key(root, WD_FAILOVER_ID_KEY, (int*)wd_failover_id))
+		{
+			json_value_free(root);
+			return FAILOVER_RES_ERROR;
+		}
+		return res;
 	}
-	
-	if (json_get_int_value_for_key(root, "FailoverCMDType", &failoverResCmdType))
-	{
-		json_value_free(root);
-		FreeCmdResult(result);
-		return FAILOVER_RES_ERROR;
-	}
-	if (root && json_get_int_value_for_key(root, "InterlockingResult", &interlockingResult))
-	{
-		json_value_free(root);
-		FreeCmdResult(result);
-		return FAILOVER_RES_ERROR;
-	}
-	json_value_free(root);
-	FreeCmdResult(result);
-	
-	if (failoverResCmdType != cmdType)
-		return FAILOVER_RES_ERROR;
-	
-	if (interlockingResult < 0 || interlockingResult > FAILOVER_RES_BLOCKED)
-		return FAILOVER_RES_ERROR;
-	
-	return interlockingResult;
+	return FAILOVER_RES_ERROR;
 }
 
-WdCommandResult
-wd_degenerate_backend_set(int *node_id_set, int count)
+WDFailoverCMDResults
+wd_degenerate_backend_set(int *node_id_set, int count, unsigned int *wd_failover_id)
 {
-	char type;
+	WDFailoverCMDResults res;
 	char* func;
 	unsigned int *shared_key = get_ipc_shared_key();
-
-	/* if failback packet is received already, do nothing */
-	if (wd_chk_node_mask_for_degenerate_req(node_id_set,count))
-		return COMMAND_OK;
 	
 	func = get_wd_node_function_json(WD_FUNCTION_DEGENERATE_REQUEST,node_id_set, count,
 									 shared_key?*shared_key:0,pool_config->wd_authkey);
 
-	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FUNCTION_COMMAND ,
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_IPC_FAILOVER_COMMAND ,
 													   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
 													   func, strlen(func), true);
 	pfree(func);
-	
-	if (result == NULL)
-	{
-		ereport(WARNING,
-			(errmsg("degenerate backend set command failed"),
-				 errdetail("issue command to watchdog returned NULL")));
-		return COMMAND_FAILED;
-	}
-	
-	type = result->type;
+	res = wd_get_failover_result_from_data(result, wd_failover_id);
 	FreeCmdResult(result);
-	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
-	{
-		ereport(WARNING,
-				(errmsg("degenerate backend set command failed"),
-				 errdetail("watchdog cluster is not in stable state"),
-					errhint("try again when the cluster is fully initialized")));
-		return CLUSTER_IN_TRANSATIONING;
-	}
-	else if (type == WD_IPC_CMD_TIMEOUT)
-	{
-		ereport(WARNING,
-				(errmsg("degenerate backend set command failed"),
-				 errdetail("ipc command timeout")));
-		return COMMAND_TIMEOUT;
-	}
-	else if (type == WD_IPC_CMD_RESULT_OK)
-	{
-		return COMMAND_OK;
-	}
-	
-	return COMMAND_FAILED;
+	return res;
 }
 
-WdCommandResult
-wd_promote_backend(int node_id)
+WDFailoverCMDResults
+wd_promote_backend(int node_id, unsigned int *wd_failover_id)
 {
+	WDFailoverCMDResults res;
 	int n = node_id;
-	char type;
 	char* func;
 	WDIPCCmdResult *result;
 	unsigned int *shared_key = get_ipc_shared_key();
-
-	/* if promote packet is received already, do nothing */
-	if (wd_chk_node_mask_for_promote_req(&n,1))
-		return COMMAND_OK;
 	
 	func = get_wd_node_function_json(WD_FUNCTION_PROMOTE_REQUEST,&n, 1,
 									 shared_key?*shared_key:0,pool_config->wd_authkey);
-	result = issue_command_to_watchdog(WD_FUNCTION_COMMAND ,
+	result = issue_command_to_watchdog(WD_IPC_FAILOVER_COMMAND,
 									   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
 									   func, strlen(func), true);
 	pfree(func);
-
-	if (result == NULL)
-	{
-		ereport(WARNING,
-			(errmsg("promote backend node command failed"),
-				 errdetail("issue command to watchdog returned NULL")));
-		return COMMAND_FAILED;
-	}
-	
-	type = result->type;
+	res = wd_get_failover_result_from_data(result, wd_failover_id);
 	FreeCmdResult(result);
-	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
-	{
-		ereport(WARNING,
-			(errmsg("promote backend node command failed"),
-				 errdetail("watchdog cluster is not in stable state"),
-					errhint("try again when the cluster is fully initialized")));
-		return CLUSTER_IN_TRANSATIONING;
-	}
-	else if (type == WD_IPC_CMD_TIMEOUT)
-	{
-		ereport(WARNING,
-			(errmsg("promote backend node command failed"),
-				 errdetail("ipc command timeout")));
-		return COMMAND_TIMEOUT;
-	}
-	else if (type == WD_IPC_CMD_RESULT_OK)
-	{
-		return COMMAND_OK;
-	}
-	
-	return COMMAND_FAILED;
+	return res;
 }
 
 /*
@@ -770,43 +655,44 @@ open_wd_command_sock(bool throw_error)
 	return sock;
 }
 
-WDFailoverCMDResults wd_failover_command_start(WDFailoverCMDTypes cmdType)
+WDFailoverCMDResults wd_start_failover_interlocking(unsigned int wd_failover_id)
 {
 	if (pool_config->use_watchdog)
-		return wd_issue_failover_lock_command(cmdType,"START_COMMAND");
+		return wd_issue_failover_lock_command(WD_REQ_FAILOVER_START, 0, wd_failover_id);
 	return FAILOVER_RES_I_AM_LOCK_HOLDER;
 }
 
-WDFailoverCMDResults wd_failover_command_end(WDFailoverCMDTypes cmdType)
+WDFailoverCMDResults wd_end_failover_interlocking(unsigned int wd_failover_id)
 {
 	if (pool_config->use_watchdog)
-		return wd_issue_failover_lock_command(cmdType,"END_COMMAND");
-	return FAILOVER_RES_I_AM_LOCK_HOLDER;
+		return wd_issue_failover_lock_command(WD_REQ_FAILOVER_END, 0, wd_failover_id);
+	return FAILOVER_RES_SUCCESS;
 }
 
-WDFailoverCMDResults wd_failover_command_check_lock(WDFailoverCMDTypes cmdType)
+WDFailoverCMDResults wd_failover_lock_release(enum WDFailoverLocks lock, unsigned int wd_failover_id)
 {
 	if (pool_config->use_watchdog)
-		return wd_issue_failover_lock_command(cmdType,"CHECK_LOCKED");
-	return FAILOVER_RES_I_AM_LOCK_HOLDER;
+		return wd_issue_failover_lock_command(WD_REQ_FAILOVER_RELEASE_LOCK, lock, wd_failover_id);
+	return FAILOVER_RES_SUCCESS;
 }
 
-WDFailoverCMDResults wd_release_failover_command_lock(WDFailoverCMDTypes cmdType)
+WDFailoverCMDResults wd_failover_lock_status(enum WDFailoverLocks lock, unsigned int wd_failover_id)
 {
 	if (pool_config->use_watchdog)
-		return wd_issue_failover_lock_command(cmdType,"UNLOCK_COMMAND");
-	return FAILOVER_RES_I_AM_LOCK_HOLDER;
+		return wd_issue_failover_lock_command(WD_REQ_FAILOVER_LOCK_STATUS, lock, wd_failover_id);
+	return FAILOVER_RES_UNLOCKED;
 }
 
-void wd_wati_until_lock_or_timeout(WDFailoverCMDTypes cmdType)
+void wd_wait_until_command_complete_or_timeout(enum WDFailoverLocks lock, unsigned int wd_failover_id)
 {
 	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
 	int	count = WD_INTERLOCK_WAIT_COUNT;
-	while (1)
+
+	while (pool_config->use_watchdog)
 	{
-		res = wd_failover_command_check_lock(cmdType);
-		if (res == FAILOVER_RES_I_AM_LOCK_HOLDER ||
-			res == FAILOVER_RES_LOCK_UNLOCKED)
+		res = wd_failover_lock_status(lock, wd_failover_id);
+		if (res == FAILOVER_RES_UNLOCKED ||
+			res == FAILOVER_RES_NO_LOCKHOLDER)
 		{
 			/* we have the permision */
 			return;
@@ -823,20 +709,20 @@ void wd_wati_until_lock_or_timeout(WDFailoverCMDTypes cmdType)
 
 /*
  * This is just a wrapper over wd_send_failover_sync_command()
- * but tries to wait for WD_INTERLOCK_TIMEOUT_SEC amount of time
+ * but try to wait for WD_INTERLOCK_TIMEOUT_SEC amount of time
  * if watchdog is in transition state
  */
 
-static WDFailoverCMDResults wd_issue_failover_lock_command(WDFailoverCMDTypes cmdType, char* syncReqType)
+static WDFailoverCMDResults wd_issue_failover_lock_command(char* syncReqType, enum WDFailoverLocks lockID, unsigned int wd_failover_id)
 {
 	WDFailoverCMDResults res;
 	int x;
-	for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+	for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION/2; x++)
 	{
-		res = wd_send_failover_sync_command(cmdType, syncReqType);
+		res = wd_send_failover_sync_command(syncReqType, lockID, wd_failover_id);
 		if (res != FAILOVER_RES_TRANSITION)
 			break;
-		sleep(1);
+		sleep(2);
 	}
 	return res;
 }
@@ -849,78 +735,12 @@ sleep_in_waiting(void)
 }
 
 
-/* check mask, and if maskted return 1 and clear it, otherwise return 0 */
-static int
-wd_chk_node_mask (unsigned char req_mask, int *node_id_set, int count)
-{
-	int rtn = 0;
-	int i;
-	int offset = 0;
-	for ( i = 0 ; i < count ; i ++)
-	{
-		offset = *(node_id_set+i);
-		if ((*(WD_Node_List + offset) & req_mask) != 0)
-		{
-			*(WD_Node_List + offset) ^= req_mask;
-			rtn = 1;
-		}
-	}
-	return rtn;
-}
-
-/* set mask */
-static int
-wd_set_node_mask (unsigned char req_mask, int *node_id_set, int count)
-{
-	int i;
-	int offset = 0;
-	for ( i = 0 ; i < count ; i ++)
-	{
-		offset = *(node_id_set+i);
-		*(WD_Node_List + offset) |= req_mask;
-	}
-	return 0;
-}
-
-
-int
-wd_set_node_mask_for_failback_req(int *node_id_set, int count)
-{
-	return wd_set_node_mask (FAILBACK_REQUEST_NODE_MASK, node_id_set, count);
-}
-
-int
-wd_set_node_mask_for_degenerate_req(int *node_id_set, int count)
-{
-	return wd_set_node_mask (DEGENERATE_REQUEST_NODE_MASK, node_id_set, count);
-}
-
-int
-wd_set_node_mask_for_promote_req(int *node_id_set, int count)
-{
-	return wd_set_node_mask (PROMOTE_REQUEST_NODE_MASK, node_id_set, count);
-}
-
-int
-wd_chk_node_mask_for_failback_req(int *node_id_set, int count)
-{
-	return wd_chk_node_mask (FAILBACK_REQUEST_NODE_MASK, node_id_set, count);
-}
-
-int
-wd_chk_node_mask_for_degenerate_req(int *node_id_set, int count)
-{
-	return wd_chk_node_mask (DEGENERATE_REQUEST_NODE_MASK, node_id_set, count);
-}
-
-int
-wd_chk_node_mask_for_promote_req(int *node_id_set, int count)
-{
-	return wd_chk_node_mask (PROMOTE_REQUEST_NODE_MASK, node_id_set, count);
-}
 
 static void FreeCmdResult(WDIPCCmdResult* res)
 {
+	if (res == NULL)
+		return;
+
 	if (res->data)
 		pfree(res->data);
 	pfree (res);

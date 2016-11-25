@@ -1174,9 +1174,32 @@ int socket_read(int fd, void* buf, size_t len, int timeout)
 {
 	int ret, read_len;
 	read_len = 0;
+	struct timeval timeoutval;
+	fd_set readmask;
+	int fds;
 
 	while (read_len < len)
 	{
+		FD_ZERO(&readmask);
+		FD_SET(fd, &readmask);
+
+		timeoutval.tv_sec = timeout;
+		timeoutval.tv_usec = 0;
+
+		fds = select(fd+1, &readmask, NULL, NULL, timeout?&timeoutval:NULL);
+		if (fds == -1)
+		{
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
+
+			ereport(WARNING,
+					(errmsg("select failed with error: \"%s\"", strerror(errno))));
+			return -1;
+		}
+		else if (fds == 0)
+		{
+			return -2;
+		}
 		ret = read(fd, buf + read_len, (len - read_len));
 		if(ret < 0)
 		{

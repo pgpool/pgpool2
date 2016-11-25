@@ -3671,7 +3671,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 		if (pool_config->replication_stop_on_mismatch)
 		{
-			degenerate_backend_set(degenerate_node, degenerate_node_num);
+			degenerate_backend_set(degenerate_node, degenerate_node_num, 0);
             retcode = 1;
 		}
         ereport(FATAL,
