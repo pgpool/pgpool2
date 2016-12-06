@@ -916,7 +916,11 @@ static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION 
  */
 static RETSIGTYPE die(int sig)
 {
-	int save_errno = errno;
+	int save_errno;
+
+	POOL_SETMASK(&BlockSig);
+
+	save_errno = errno;
 
 	ereport(LOG,
 			(errmsg("child process received shutdown request signal %d", sig)));
@@ -944,6 +948,7 @@ static RETSIGTYPE die(int sig)
 
 		case SIGINT:	/* fast shutdown */
 		case SIGQUIT:	/* immediate shutdown */
+			POOL_SETMASK(&UnBlockSig);
 			child_exit(POOL_EXIT_NO_RESTART);
 			break;
 		default:
@@ -955,6 +960,7 @@ static RETSIGTYPE die(int sig)
 	}
 
 	errno = save_errno;
+	POOL_SETMASK(&UnBlockSig);
 }
 
 /*
