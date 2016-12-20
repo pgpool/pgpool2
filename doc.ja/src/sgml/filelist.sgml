@@ -41,6 +41,7 @@
 <!ENTITY high-availability      SYSTEM "high-availability.sgml">
 <!ENTITY installation  SYSTEM "installation.sgml">
 <!ENTITY installation-rpm  SYSTEM "installation-rpm.sgml">
+<!ENTITY installation-tips  SYSTEM "installation-tips.sgml">
 <!ENTITY installw      SYSTEM "install-windows.sgml">
 <!ENTITY maintenance   SYSTEM "maintenance.sgml">
 <!ENTITY manage-ag     SYSTEM "manage-ag.sgml">
