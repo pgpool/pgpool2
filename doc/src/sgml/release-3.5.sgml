@@ -1,0 +1,376 @@
+<!-- doc/src/sgml/release-3.5.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-3-5">
+  <title>Release 3.5.5</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2016-12-26</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2016-12-20 [888ac16]
+	  -->
+	<para>
+	  Fix occasional segfault when query cache is enabled. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Per bug 263.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-20 [9274f82]
+	  -->
+	<para>
+	  Fix packet kind does not match error in extended protocol per bug 231. (Tatsuo Ishii)
+	</para>
+	<para>
+	  According to the bug231, the bug seem to bite you if all of
+	  following conditions are met:
+	</para>
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	      Streaming replication mode
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Load balance node is not node 0
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Extended protocol is used
+	      </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      SELECT is executed, the statement is closed, then a
+	      transaction command is executed
+	    </para>
+	  </listitem>
+	</itemizedlist>
+	<para>
+	The sequence of how the problem bites is:
+	<orderedlist>
+	  <listitem>
+	    <para>
+	      SELECT executes on statement S1 on the load balance node 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Frontend send Close statement
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Pgool-II forward it to backend 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Frontend sends Parse, Bind, Execute of COMMIT
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Pgool-II forward it to backend 0 & 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Frontend sends sync message
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Pgool-II forward it to backend 0 & 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Backend 0 replies back Parse complete ("1"), while
+	      backend 1 replies back close complete ("3") because of
+	      #3.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Kind mismatch occurs
+	    </para>
+	  </listitem>
+	</orderedlist>
+
+	</para>
+	<para>
+	  The solution is, in #3, let Pgpool-II wait for response from backend
+	  1, but do not read the response message. Later on Pgpool-II's state
+	  machine will read the response from it before the sync message is sent
+	  in #6. With this, backend 1 will reply back "1" in #8, and the kind
+	  mismatch error does not occur.
+	</para>
+	<para>
+	  Also, fix not calling pool_set_doing_extended_query_message() when
+	  receives Close message.  (I don't know why it was missed).
+	</para>
+	<para>
+	  New regression test "067.bug231" was added.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-06 [336e932]
+	  -->
+	<para>
+	  Fix a race condition in a signal handler per bug 265. (Tatsuo Ishii)
+	</para>
+	<para>
+	  In child.c there's signal handler which calls elog. Since the signal
+	  handler is not blocked against other signals while processing, deadlock
+	  could occur in the system calls in the pgpool shutdown sequence. To
+	  fix the problem, now the signal handler is blocked by using
+	  POOL_SETMASK.
+	</para>
+	<para>
+	  Ideally we should avoid calling elog in signal handlers though.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-11-26 [045a59f]
+	  -->
+	<para>
+	  Back porting the improved failover command propagation mechanism from Pgpool-II 3.6 (Muhammad Usama)
+	</para>
+	<para>
+	  Overhauling the design of how failover, failback and promote node commands are
+	  propagated to the watchdog nodes. Previously the watchdog on pgpool-II node that
+	  needs to perform the node command (failover, failback or promote node) used to
+	  broadcast the failover command to all attached pgpool-II nodes. And this
+	  sometimes makes the synchronization issues, especially when the watchdog cluster
+	  contains a large number of nodes and consequently the failover command sometimes
+	  gets executed by more than one pgpool-II.
+	</para>
+	<para>
+	  Now with this commit all the node commands are forwarded to the
+	  master/coordinator watchdog, which in turn propagates to all standby nodes.
+	  Apart from above the commit also changes the failover command interlocking
+	  mechanism and now only the master/coordinator node can become the lock holder
+	  so the failover commands will only get executed on the master/coordinator node.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-10-27 [e07a6d3]
+	  -->
+	<para>
+	  Adopt the incompatibility with psql of PostgreSQL 9.6. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Since -c option does not imply -X anymore in 9.6, regression fails if
+	  <filename>.psqlrc</filename> is set, for example "\pset
+	  pager" is set.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-10-27 [f37c592]
+	  -->
+	<para>
+	  Do not cancel a query when the query resulted in an error other than in native replication mode. (Tatsuo Ishii)
+	</para>
+	<para>
+	  It was intended to keep the consistency, but there's no point in other
+	  than native replication mode.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-10-27 [c9e203d]
+	  -->
+	<para>
+	  Remove obsoleted option "-c" in pgpool command. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Also fix typo in the help message.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-10-18 [8da0e7f]
+	  -->
+	<para>
+	  Fix for 0000252: authentication failed error when PCP command is cancelled... (Muhammad Usama)
+	</para>
+	<para>
+	  Fixed by adding the volatile modifier to authenticated flag, to make sure we
+	  always get the updated value after the long jump.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-24 [8aa7586]
+	  -->
+	<para>
+	  Change the default value of search_primary_node_timeout from 10 to 300. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Prior default value 10 seconds is sometimes too short for a standby to
+	  be promoted.
+	</para>
+	<para>
+	  Per [pgpool-general: 5026].
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-21 [b306e04]
+	  -->
+	<para>
+	  Fix the case when all backends are down then 1 node attached. (Tatsuo Ishii)
+	</para>
+	<para>
+	  When all backends are down, no connection is accepted. Then 1
+	  PostgreSQL becomes up, and attach the node using pcp_attach_node. It
+	  successfully finishes. However, when a new connection arrives, still
+	  the connection is refused because pgpool child process looks into the
+	  cached status, in which the recovered node is still in down status if
+	  mode is streaming replication mode (native replication and other modes
+	  are fine). Solution is, if all nodes are down, force to restart all
+	  pgpool child.
+	</para>
+	<para>
+	  Per bug 248.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-20 [a38fa09]
+	  -->
+	<para>
+	  Fix for: [pgpool-general: 4997] Avoiding downtime when pgpool changes require a restart (Muhammad Usama)
+	</para>
+	<para>
+	  To fix this, The verification mechanism of configuration parameter values is
+	  reversed, previously the standby nodes used to verify their parameter values
+	  against the respective values on the master pgpool-II node and when the
+	  inconsistency was found the FATAL error was thrown, now with this commit the
+	  verification responsibility is delegated to the master pgpool-II node.
+	  Now the master node will verify the configuration parameter values of each
+	  joining standby node against its local values and will produce
+	  a WARNING message instead of an error in case of a difference.
+	  This way the nodes having the different configurations will also be allowed to
+	  join the watchdog cluster and the user has to manually look out for the
+	  configuration inconsistency warnings in the master pgpool-II log to avoid the
+	  surprises at the time of pgpool-II master switch over.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-13 [1c99580]
+	  -->
+	<para>
+	  Disable strict aliasing optimization. (Tatsuo Ishii)
+	</para>
+	<para>
+	  flatten_set_variable_args() was imported from PostgreSQL in Pgpool-II
+	  3.5. To make the code work, a compiler flag "-fno-strict-aliasing" is
+	  necessary (PostgreSQL does so). Unfortunately when the function was
+	  imported, the compiler flag was not added. To fix this, configure.ac
+	  was modified.
+	</para>
+	<para>
+	  Per [pgpool-general: 4975].
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-09 [1ac4c8a]
+	  -->
+	<para>
+	  Fixing an obvious logic mistake. (Muhammad Usama)
+	</para>
+	<para>
+	  per Coverity CID 1362580 and CID 1362581
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-09 [8231f65]
+	  -->
+	<para>
+	  Do not use random() while generating MD5 salt. (Tatsuo Ishii)
+	</para>
+	<para>
+	  random() should not be used in security related applications.  To
+	  replace random(), import PostmasterRandom() from PostgreSQL.  Also
+	  store current time at the start up of Pgpool-II main process for later
+	  use.
+	</para>
+	<para>
+	  Per Coverity CID 1362583.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-09 [12812a1]
+	  -->
+	<para>
+	  Remove useless assignment. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Per coverity CID 1362589.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-06 [891ce0f]
+	  -->
+	<para>
+	  Don't ignore sync message from frontend when query cache is enabled. (Tatsuo Ishii)
+	</para>
+	<para>
+	  While returning cached query result, sync message sent from frontend
+	  is discarded. This is harmless because "ready for query" messages is
+	  sent to frontend afterward. Problem is, AccessShareLock held by
+	  previous parse message processing is not released until sync message
+	  is received by the backend. Fix is, forwarding the sync message to
+	  backend and discarding "ready for query" message returned from
+	  backend.
+	</para>
+	<para>
+	  Per [pgpool-hackers: 1787].
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
