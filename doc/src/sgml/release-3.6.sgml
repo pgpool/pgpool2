@@ -1196,3 +1196,208 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
   </sect2>
 
 </sect1>
+
+<sect1 id="release-3-6-1">
+  <title>Release 3.6.1</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2016-12-26</simpara>
+  </note>
+
+  <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2016-12-20 [3b2e955]
+	  -->
+	<para>
+	  Add 3.6.1, 3.5.5 release note. (Tatsuo Ishii)
+	</para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2016-12-20 [888ac16]
+	  -->
+	<para>
+	  Fix occasional segfault when query cache is enabled. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Per bug 263.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-20 [9274f82]
+	  -->
+	<para>
+	  Fix packet kind does not match error in extended protocol per bug 231. (Tatsuo Ishii)
+	</para>
+	<para>
+	  According to the bug231, the bug seem to bite you if all of
+	  following conditions are met:
+	</para>
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	      Streaming replication mode
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Load balance node is not node 0
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Extended protocol is used
+	      </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      SELECT is executed, the statement is closed, then a
+	      transaction command is executed
+	    </para>
+	  </listitem>
+	</itemizedlist>
+	<para>
+	The sequence of how the problem bites is:
+	<orderedlist>
+	  <listitem>
+	    <para>
+	      SELECT executes on statement S1 on the load balance node 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Frontend send Close statement
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Pgool-II forward it to backend 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Frontend sends Parse, Bind, Execute of COMMIT
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Pgool-II forward it to backend 0 & 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Frontend sends sync message
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Pgool-II forward it to backend 0 & 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Backend 0 replies back Parse complete ("1"), while
+	      backend 1 replies back close complete ("3") because of
+	      #3.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Kind mismatch occurs
+	    </para>
+	  </listitem>
+	</orderedlist>
+
+	</para>
+	<para>
+	  The solution is, in #3, let Pgpool-II wait for response from backend
+	  1, but do not read the response message. Later on Pgpool-II's state
+	  machine will read the response from it before the sync message is sent
+	  in #6. With this, backend 1 will reply back "1" in #8, and the kind
+	  mismatch error does not occur.
+	</para>
+	<para>
+	  Also, fix not calling pool_set_doing_extended_query_message() when
+	  receives Close message.  (I don't know why it was missed).
+	</para>
+	<para>
+	  New regression test "067.bug231" was added.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-06 [336e932]
+	  -->
+	<para>
+	  Fix a race condition in a signal handler per bug 265. (Tatsuo Ishii)
+	</para>
+	<para>
+	  In child.c there's signal handler which calls elog. Since the signal
+	  handler is not blocked against other signals while processing, deadlock
+	  could occur in the system calls in the pgpool shutdown sequence. To
+	  fix the problem, now the signal handler is blocked by using
+	  POOL_SETMASK.
+	</para>
+	<para>
+	  Ideally we should avoid calling elog in signal handlers though.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-11-24 [cc452ad]
+	  -->
+	<para>
+	  Fix wrong minimum configuration value for client_idle_limit_in_recovery. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Per bug #264.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-11-22 [94d9378]
+	  -->
+	<para>
+	  Allow to execute "make xslthtml" under doc.ja. (Tatsuo Ishii)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-11-22 [99cf426]
+	  -->
+	<para>
+	  Fix pgpool.spec to install sgml docs and man. (pengbo)
+	</para>
+	<para>
+	  In 3.6.0, SGML docs and man pages wre not installed in RPM.
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>

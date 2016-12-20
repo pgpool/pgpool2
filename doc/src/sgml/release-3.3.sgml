@@ -1,8 +1,8 @@
-<!-- doc/src/sgml/release-3.5.sgml -->
+<!-- doc/src/sgml/release-3.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
-<sect1 id="release-3-5-5">
-  <title>Release 3.5.5</title>
+<sect1 id="release-3-3-13">
+  <title>Release 3.3.13</title>
 
   <note>
     <title>Release Date</title>
@@ -19,7 +19,7 @@
 	    2016-12-20 [3b2e955]
 	  -->
 	<para>
-	  Add 3.5.5 release note. (Tatsuo Ishii)
+	  Add 3.3.13 release note. (Tatsuo Ishii)
 	</para>
       </listitem>
     </itemizedlist>
