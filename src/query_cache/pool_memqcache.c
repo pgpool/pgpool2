@@ -3089,6 +3089,8 @@ static void pool_check_and_discard_cache_buffer(int num_oids, int *oids)
 			continue;
 
 		soids = (int *)pool_get_buffer(cache->oids, &len);
+		if (!soids || !len)
+			continue;
 
 		for(j=0;j<cache->num_oids;j++)
 		{
