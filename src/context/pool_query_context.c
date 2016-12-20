@@ -878,7 +878,7 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 
 		send_extended_protocol_message(backend, i, kind, str_len, str);
 
-		if (*kind == 'E' && STREAM)
+		if ((*kind == 'E' || *kind == 'C') && STREAM)
 		{
 			/*
 			 * Send flush message to backend to make sure that we get any response
@@ -891,6 +891,9 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			pool_write(cp, "H", 1);
 			len = htonl(sizeof(len));
 			pool_write_and_flush(cp, &len, sizeof(len));
+
+			ereport(DEBUG1,
+					(errmsg("pool_send_and_wait: send flush message to %d", i)));
 		}
 	}
 
