@@ -1510,8 +1510,8 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		POOL_PENDING_MESSAGE *pmsg;
 
 		pool_clear_sync_map();
-		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, true);
-		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, true);
+		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, false);
+		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
 
 		pmsg = pool_pending_messages_create('C', len, contents);
 		pool_pending_message_add(pmsg);
@@ -2415,6 +2415,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			break;
 
 		case 'C':	/* Close */
+			pool_set_doing_extended_query_message();
 			if (!pool_is_query_in_progress() && !pool_is_ignore_till_sync())
 				pool_set_query_in_progress();
 			status = Close(frontend, backend, len, contents);
