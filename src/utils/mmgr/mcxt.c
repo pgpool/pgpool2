@@ -703,6 +703,9 @@ pfree(void *pointer)
 	Assert(pointer != NULL);
 	Assert(pointer == (void *) MAXALIGN(pointer));
 
+	if (pointer == NULL)
+		return;
+
 	/*
 	 * OK, it's probably safe to look at the chunk header.
 	 */
