@@ -426,4 +426,6 @@ $ psql -f pgpool-regclass.sql template1
 
 &installation-rpm;
 
+&installation-tips;
+
 </chapter>
