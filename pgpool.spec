@@ -116,6 +116,8 @@ make %{?_smp_mflags} DESTDIR=%{buildroot} install -C sql/pgpool-recovery
 # because 9.4 or later has to_regclass.
 make %{?_smp_mflags} DESTDIR=%{buildroot} install -C sql/pgpool-regclass
 %endif
+make %{?_smp_mflags} DESTDIR=%{buildroot} install -C sql/pgpool_adm
+make %{?_smp_mflags} DESTDIR=%{buildroot} install -C sql/pgpool_adm
 
 install -d %{buildroot}%{_datadir}/%{short_name}
 install -d %{buildroot}%{_sysconfdir}/%{short_name}
@@ -237,6 +239,9 @@ fi
 %{pghome}/share/extension/pgpool_recovery--1.0.sql
 %{pghome}/share/extension/pgpool_recovery.control
 %{pghome}/lib/pgpool-recovery.so
+%{pghome}/share/extension/pgpool_adm--1.0.sql
+%{pghome}/share/extension/pgpool_adm.control
+%{pghome}/lib/pgpool_adm.so
 # From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
 # because 9.4 or later has to_regclass.
 %if %{pg_version} <= 93
