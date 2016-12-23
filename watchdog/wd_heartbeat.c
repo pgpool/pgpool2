@@ -306,7 +306,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 	struct timeval tv;
 	char from[WD_MAX_HOST_NAMELEN];
 	int from_pgpool_port;
-	char buf[(MD5_PASSWD_LEN+1)*2];
+	char buf[WD_AUTH_HASH_LEN + 1];
 	char pack_str[WD_MAX_PACKET_STRING];
 	int pack_str_len;
 

@@ -96,6 +96,7 @@ static int
 wd_check_config(void)
 {
 	int status = WD_OK;
+	int wd_authkey_len = strlen(pool_config->wd_authkey);
 
 	if (pool_config->other_wd->num_wd == 0)
 	{
@@ -103,13 +104,16 @@ wd_check_config(void)
 		status = WD_NG;
 	}
 
-	if (strlen(pool_config->wd_authkey) > MAX_PASSWORD_SIZE)
+	if (wd_authkey_len > MAX_PASSWORD_SIZE)
 	{
 		pool_error("wd_check_config: wd_authkey length can't be larger than %d",
 		           MAX_PASSWORD_SIZE);
 		status = WD_NG;
 	}
-
+#ifndef USE_SSL
+	if (wd_authkey_len > 0)
+		pool_log("watchdog is using the weak authentication, because it is not built with SSL supports");
+ #endif
 	return status;
 }
 

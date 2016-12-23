@@ -172,7 +172,7 @@ typedef struct {
 	WD_PACKET_NO packet_no;	/* packet number */
 	WD_PACKET_BODY wd_body;			/* watchdog information */
 	struct timeval send_time;
-	char hash[(MD5_PASSWD_LEN+1)*2];
+	char hash[WD_AUTH_HASH_LEN + 1];
 } WdPacket;
 
 /*
@@ -192,7 +192,7 @@ typedef struct {
 	int from_pgpool_port;
 	struct timeval send_time;
 	WD_STATUS status;
-	char hash[(MD5_PASSWD_LEN+1)*2];
+	char hash[WD_AUTH_HASH_LEN + 1];
 } WdHbPacket;
 
 /*

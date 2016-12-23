@@ -315,14 +315,14 @@ calculateDigestFromBuffer(uint8 *b, uint32 len, uint8 sum[16])
 	return 1;
 }
 
-static void
-bytesToHex(uint8 b[16], char *s)
+void
+bytesToHex(char *b, int len, char *s)
 {
 	static const char *hex = "0123456789abcdef";
 	int			q,
-				w;
-
-	for (q = 0, w = 0; q < 16; q++)
+	w;
+	
+	for (q = 0, w = 0; q < len; q++)
 	{
 		s[w++] = hex[(b[q] >> 4) & 0x0F];
 		s[w++] = hex[b[q] & 0x0F];
@@ -368,7 +368,7 @@ pool_md5_hash(const void *buff, size_t len, char *hexsum)
 	if (!calculateDigestFromBuffer((uint8 *) buff, len, sum))
 		return 0;				/* failed */
 
-	bytesToHex(sum, hexsum);
+	bytesToHex((char *)sum, 16, hexsum);
 	return 1;					/* success */
 }
 
