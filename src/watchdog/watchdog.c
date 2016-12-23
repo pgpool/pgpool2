@@ -83,14 +83,22 @@ wd_kill_watchdog(int sig)
 static void
 wd_check_config(void)
 {
+	int wd_authkey_len = strlen(pool_config->wd_authkey);
+
 	if (pool_config->other_wd->num_wd == 0)
 		ereport(ERROR,
 			(errmsg("invalid watchdog configuration. other pgpools setting is not defined")));
 
-	if (strlen(pool_config->wd_authkey) > MAX_PASSWORD_SIZE)
+	if (wd_authkey_len > MAX_PASSWORD_SIZE)
 		ereport(ERROR,
 				(errmsg("invalid watchdog configuration. wd_authkey length can't be larger than %d",
 						MAX_PASSWORD_SIZE)));
+#ifndef USE_SSL
+	if (wd_authkey_len > 0)
+		ereport(LOG,
+			(errmsg("watchdog is configured to use authentication, but pgpool-II is built without SSL support"),
+				errdetail("The authentication method used by pgpool-II without the SSL support is known to be weak")));
+#endif
 }
 
 pid_t
