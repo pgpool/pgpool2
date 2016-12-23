@@ -641,7 +641,7 @@ static void wd_cluster_initialize(void)
 		g_cluster.remoteNodes[i].pgpool_port = pool_config->wd_remote_nodes.wd_remote_node_info[i].pgpool_port;
 		strcpy(g_cluster.remoteNodes[i].hostname, pool_config->wd_remote_nodes.wd_remote_node_info[i].hostname);
 		g_cluster.remoteNodes[i].delegate_ip[0] = '\0';	/*this will be populated by remote node*/
-		
+
 		ereport(LOG,
 				(errmsg("watchdog remote node:%d on %s:%d",i,g_cluster.remoteNodes[i].hostname, g_cluster.remoteNodes[i].wd_port)));
 	}
@@ -673,6 +673,15 @@ static void wd_cluster_initialize(void)
 		clear_command_node_result(&g_cluster.currentCommand.nodeResults[i]);
 	}
 	wd_initialize_monitoring_interfaces();
+	if (g_cluster.ipc_auth_needed)
+	{
+#ifndef USE_SSL
+		ereport(LOG,
+			(errmsg("watchdog is configured to use authentication, but pgpool-II is built without SSL support"),
+				 errdetail("The authentication method used by pgpool-II without the SSL support is known to be weak")));
+#endif
+	}
+
 }
 
 static void clear_command_node_result(WDCommandNodeResult* nodeResult)
@@ -3297,7 +3306,7 @@ static JsonNode* get_node_list_json(int id)
 
 static WDPacketData* get_addnode_message(void)
 {
-	char authhash[(MD5_PASSWD_LEN+1)*2];
+	char authhash[WD_AUTH_HASH_LEN + 1];
 	WDPacketData *message = get_empty_packet();
 	bool include_hash = get_authhash_for_node(g_cluster.localNode, authhash);
 	char *json_data = get_watchdog_node_info_json(g_cluster.localNode, include_hash?authhash:NULL);
@@ -3310,7 +3319,7 @@ static WDPacketData* get_addnode_message(void)
 
 static WDPacketData* get_mynode_info_message(WDPacketData* replyFor)
 {
-	char authhash[(MD5_PASSWD_LEN+1)*2];
+	char authhash[WD_AUTH_HASH_LEN + 1];
 	WDPacketData *message = get_empty_packet();
 	bool include_hash = get_authhash_for_node(g_cluster.localNode, authhash);
 	char *json_data = get_watchdog_node_info_json(g_cluster.localNode, include_hash?authhash:NULL);
@@ -3496,6 +3505,12 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 		{
 			char *authkey = NULL;
 			WatchdogNode* tempNode = parse_node_info_message(pkt, &authkey);
+			if (tempNode == NULL)
+			{
+				ereport(WARNING,
+					(errmsg("node \"%s\" sent an invalid node info message",wdNode->nodeName)));
+				break;
+			}
 			wdNode->state = tempNode->state;
 			wdNode->startup_time.tv_sec = tempNode->startup_time.tv_sec;
 			wdNode->wd_priority = tempNode->wd_priority;
@@ -6144,7 +6159,7 @@ static bool verify_authhash_for_node(WatchdogNode* wdNode, char* authhash)
 {
 	if (strlen(pool_config->wd_authkey))
 	{
-		char calculated_authhash[(MD5_PASSWD_LEN+1)*2];
+		char calculated_authhash[WD_AUTH_HASH_LEN + 1];
 
 		char nodeStr[WD_MAX_PACKET_STRING];
 		int len = snprintf(nodeStr, WD_MAX_PACKET_STRING, "state=%d tv_sec=%ld wd_port=%d",
