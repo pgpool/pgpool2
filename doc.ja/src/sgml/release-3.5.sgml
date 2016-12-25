@@ -1,0 +1,472 @@
+<!-- doc/src/sgml/release-3.5.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-3-5-5">
+<!--
+  <title>Release 3.5.5</title>
+  -->
+  <title>リリース 3.5.5</title>
+
+  <note>
+  <!--
+    <title>Release Date</title>
+    -->
+    <title>リリース日</title>
+    <simpara>2016-12-26</simpara>
+  </note>
+
+  <sect2>
+  <!--
+    <title>Bug fixes</title>
+    -->
+    <title>不具合修正</title>
+
+    <itemizedlist>
+      <listitem>
+	<!--
+	    2016-12-23 [4124e5e]
+	  -->
+	<para>
+    <!--
+      Tightening up the watchdog security. (Muhammad Usama)
+    -->
+watchdog のセキュリティを強化しました。(Muhammad Usama)
+    </para>
+
+    <para>
+    <!--
+      Now wd_authkey uses the HMAC SHA-256 hashing.
+    -->
+wd_authkeyは、HMAC SHA-256ハッシングを使用するようになりました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-22 [f8a157a]
+	  -->
+	<para>
+	<!--
+	  Add pgpool_adm extension. (Bo Peng)
+    -->
+<productname>Pgpool-II</productname>のRPM にpgpool_adm extension が含まれるように修正しました。(Bo Peng)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-20 [888ac16]
+	  -->
+	<para>
+    <!--
+	  Fix occasional segfault when query cache is enabled. (Tatsuo Ishii)
+    -->
+クエリキャッシュが有効になっている場合に、時々発生しうるセグメンテーション違反を修正しました。(bug 263) (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-20 [9274f82]
+	  -->
+	<para>
+    <!--
+	  Fix packet kind does not match error in extended protocol per bug 231. (Tatsuo Ishii)
+    -->
+拡張プロトコルにおいて発生しうるkind mismatchエラーを修正しました。(bug 231) (Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  According to the bug231, the bug seem to bite you if all of
+	  following conditions are met:
+      -->
+bug 231による、以下の条件がすべて満たされていると、このバグが発生する可能性がありました。
+	</para>
+	<itemizedlist>
+	  <listitem>
+	    <para>
+        <!--
+	      Streaming replication mode
+          -->
+ストリーミングレプリケーションモード
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Load balance node is not node 0
+          -->
+ ロードバランスノードがnode 0ではない
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Extended protocol is used
+          -->
+拡張プロトコルを使用している
+	      </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      SELECT is executed, the statement is closed, then a
+	      transaction command is executed
+          -->
+SELECTが実行され、ステートメントがクローズされた後、トランザクションコマンドが実行されている
+	    </para>
+	  </listitem>
+	</itemizedlist>
+	<para>
+    <!--
+	The sequence of how the problem bites is:
+    -->
+問題の発生順序:
+	<orderedlist>
+	  <listitem>
+	    <para>
+        <!--
+	      SELECT executes on statement S1 on the load balance node 1
+          -->
+ロードバランスノード1でステートメントS1のSELECTが実行されます。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Frontend send Close statement
+          -->
+フロントエンドがクローズステートメントを送ります。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Pgool-II forward it to backend 1
+          -->
+Pgpool-IIはそれをバックエンド1に転送します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Frontend sends Parse, Bind, Execute of COMMIT
+          -->
+フロントエンドは、Parse、Bind、COMMIT の Execute を送信します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Pgool-II forward it to backend 0 & 1
+          -->
+Pgpool-IIはそれをバックエンド0と1に転送します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Frontend sends sync message
+          -->
+フロントエンドが同期メッセージを送信します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Pgool-II forward it to backend 0 & 1
+          -->
+Pgpool-IIはそれをバックエンド0と1に転送します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Backend 0 replies back Parse complete ("1"), while
+	      backend 1 replies back close complete ("3") because of
+	      #3.
+          -->
+バックエンド0はParse complete（ "1"）を返しますが、バックエンド1は＃3によりcloes complete（ "3"）を返します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Kind mismatch occurs
+          -->
+Kind mismatch が発生します。
+	    </para>
+	  </listitem>
+	</orderedlist>
+
+	</para>
+	<para>
+    <!--
+	  The solution is, in #3, let Pgpool-II wait for response from backend
+	  1, but do not read the response message. Later on Pgpool-II's state
+	  machine will read the response from it before the sync message is sent
+	  in #6. With this, backend 1 will reply back "1" in #8, and the kind
+	  mismatch error does not occur.
+      -->
+解決策は、＃3では、Pgpool-IIがバックエンド1からの応答を待つようにしますが、応答メッセージは読み取らないようにします。 その後、Pgpool-IIの状態マシンは、＃6で同期メッセージが送信される前に、その応答を読み込みます。 これによりバックエンド1は＃8で "1"を返信し、kind mismatchエラーは発生しなくなります。
+	</para>
+	<para>
+    <!--
+	  Also, fix not calling pool_set_doing_extended_query_message() when
+	  receives Close message.  (I don't know why it was missed).
+      -->
+また、Closeメッセージを受け取ったときにpool_set_doing_extended_query_message（）が呼び出されない不具合を修正しました。
+	</para>
+	<para>
+    <!--
+	  New regression test "067.bug231" was added.
+      -->
+新しいリグレッションテスト "067.bug231"が追加されました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-06 [336e932]
+	  -->
+	<para>
+    <!--
+	  Fix a race condition in a signal handler per bug 265. (Tatsuo Ishii)
+      -->
+シグナルハンドラでの競合状態を修正しました。(bug 265) (Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  In child.c there's signal handler which calls elog. Since the signal
+	  handler is not blocked against other signals while processing, deadlock
+	  could occur in the system calls in the pgpool shutdown sequence. To
+	  fix the problem, now the signal handler is blocked by using
+	  POOL_SETMASK.
+      -->
+child.cには、elogを呼び出すシグナルハンドラがあります。 シグナルハンドラは処理中に他のシグナルに対してブロックされないため、pgpoolのシャットダウンシーケンスでシステムコールにデッドロックが発生する可能性がありました。 この問題を解決するために、シグナルハンドラはPOOL_SETMASKを使用してブロックされるように修正されました。
+	</para>
+	<para>
+    <!--
+	  Ideally we should avoid calling elog in signal handlers though.
+      -->
+理想的にはシグナルハンドラでelogを呼び出すことを避けるべきです。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-11-26 [045a59f]
+	  -->
+	<para>
+    <!--
+	  Back porting the improved failover command propagation mechanism from Pgpool-II 3.6 (Muhammad Usama)
+    -->
+<productname>Pgpool-II</productname> 3.6 でのフェイルオーバーコマンドの転送処理の改善がバックポートされました。(Muhammad Usama)
+	</para>
+	<para>
+    <!--
+	  Overhauling the design of how failover, failback and promote node commands are
+	  propagated to the watchdog nodes. Previously the watchdog on pgpool-II node that
+	  needs to perform the node command (failover, failback or promote node) used to
+	  broadcast the failover command to all attached pgpool-II nodes. And this
+	  sometimes makes the synchronization issues, especially when the watchdog cluster
+	  contains a large number of nodes and consequently the failover command sometimes
+	  gets executed by more than one pgpool-II.
+      -->
+これまでは、Pgpool-II ノードの watchdogがすべての接続されたノードにフェイルオーバーコマンド(failover、 failback 及び promote node)を転送していました。多数のノードが含まれているwatchdogクラスタでは、フェールオーバーコマンドが複数のPgpool-IIによって実行されることによって、データの同期問題を引き起こす可能性がありました。このコミットでは、すべてのフェイルオーバーコマンド(failover、 failback 及び promote node)が master/coordinator watchdog に転送され、master/coordinator watchdogはすべてのスタンバイノードに転送するようになりました。
+	</para>
+	<para>
+    <!--
+	  Now with this commit all the node commands are forwarded to the
+	  master/coordinator watchdog, which in turn propagates to all standby nodes.
+	  Apart from above the commit also changes the failover command interlocking
+	  mechanism and now only the master/coordinator node can become the lock holder
+	  so the failover commands will only get executed on the master/coordinator node.
+      -->
+また、今回の修正では、インターロック機能も変更されました。master/coordinatorノードのみがロックホルダになり、フェイルオーバコマンドはmaster/coordinatorノードでのみ実行されます。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-10-27 [f37c592]
+	  -->
+	<para>
+    <!--
+	  Do not cancel a query when the query resulted in an error other than in native replication mode. (Tatsuo Ishii)
+    -->
+ネイティブレプリケーションモード以外の場合、エラーが発生した場合は、クエリをキャンセルしないように修正しました。(Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  It was intended to keep the consistency, but there's no point in other
+	  than native replication mode.
+      -->
+本来は一貫性を維持するためにキャセルされるようになっていましたが、ネイティブレプリケーションモード以外の場合ではキャセルする必要がないので、修正しました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-10-27 [c9e203d]
+	  -->
+	<para>
+    <!--
+	  Remove obsoleted option "-c" in pgpool command. (Tatsuo Ishii)
+      -->
+pgpool コマンドで廃止されたオプション"-c"を削除しました。(Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  Also fix typo in the help message.
+      -->
+また、helpメッセージのタイポを修正しました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-10-18 [8da0e7f]
+	  -->
+	<para>
+    <!--
+	  Fix for 0000252: authentication failed error when PCP command is cancelled... (Muhammad Usama)
+    -->
+    PCPコマンドがキャンセルされたときの認証失敗エラーが修正されました。(bug 252) (Muhammad Usama)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-24 [8aa7586]
+	  -->
+	<para>
+    <!--
+	  Change the default value of search_primary_node_timeout from 10 to 300. (Tatsuo Ishii)
+    -->
+<xref linkend="guc-search-primary-node-timeout">のデフォルト値を10から300に変更しました。(Tatstuo Ishii)
+	</para>
+	<para>
+    <!--
+	  Prior default value 10 seconds is sometimes too short for a standby to
+	  be promoted.
+            -->
+これまでのデフォルト値10秒は、スタンバイを昇格する際には小さすぎでした。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-21 [b306e04]
+	  -->
+	<para>
+    <!--
+	  Fix the case when all backends are down then 1 node attached. (Tatsuo Ishii)
+    -->
+すべてのバックエンドがダウンした後に、1つのノードを復帰させる時の不具合が修正されました。(bug 248) (Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  When all backends are down, no connection is accepted. Then 1
+	  PostgreSQL becomes up, and attach the node using pcp_attach_node. It
+	  successfully finishes. However, when a new connection arrives, still
+	  the connection is refused because pgpool child process looks into the
+	  cached status, in which the recovered node is still in down status if
+	  mode is streaming replication mode (native replication and other modes
+	  are fine). Solution is, if all nodes are down, force to restart all
+	  pgpool child.
+      -->
+すべてのノードがダウンすると、すべてのコネクションを受け付けなくなります。
+その状態で1つの<productname>PostgreSQL</productname>が起動し、<command>pcp_attach_node</command>コマンドでそのノードを復帰させます。
+そしてこのコマンドは成功しました。
+しかし、新しい接続が拒否されました。
+これは<productname>Pgpool-II</productname> の子プロセスがキャッシュされた古い情報を参照したのが原因でした。
+ストリーミングレプリケーションモードでは、このキャッシュされた情報において、復帰させたノードの状態がdownのままでした。
+（ネィティブレプリケーションモード、およびそれ以外のモードでは問題ありません）
+解決法として、全ノードがダウンした場合、強制的に全 <productname>Pgpool-II</productname>子プロセスを再起動するようにしました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-20 [a38fa09]
+	  -->
+	<para>
+    <!--
+	  Fix for: [pgpool-general: 4997] Avoiding downtime when pgpool changes require a restart (Muhammad Usama)
+    -->
+再起動が必要なパラメータの設定を変更した際の<productname>Pgpool-II</productname>停止が起こらないようにしました。(Muhammad Usama)
+	</para>
+	<para>
+    <!--
+	  To fix this, The verification mechanism of configuration parameter values is
+	  reversed, previously the standby nodes used to verify their parameter values
+	  against the respective values on the master pgpool-II node and when the
+	  inconsistency was found the FATAL error was thrown, now with this commit the
+	  verification responsibility is delegated to the master pgpool-II node.
+	  Now the master node will verify the configuration parameter values of each
+	  joining standby node against its local values and will produce
+	  a WARNING message instead of an error in case of a difference.
+	  This way the nodes having the different configurations will also be allowed to
+	  join the watchdog cluster and the user has to manually look out for the
+	  configuration inconsistency warnings in the master pgpool-II log to avoid the
+	  surprises at the time of pgpool-II master switch over.
+      -->
+この修正のために、設定パラメータの検証機構の順序を逆にしました。
+以前はスタンバイノードが<productname>Pgpool-II</productname>マスターノードに対して設定パラメータの値を検証し、不整合が見つかった場合にはFATALエラーが出力されていました。
+この修正で、<productname>Pgpool-II</productname>マスターノードに検証の役割が移譲されました。
+マスターノードは参加している個々のスタンバイノードの設定値をローカルの設定値と比較し、違っている場合にはエラーではなくてWARNINGメッセージを出力します。
+この方法では、watchdogクラスタとユーザは、手動でマスター<productname>Pgpool-II</productname>ログの中から不整合ワーニングを見つけて、<productname>Pgpool-II</productname>マスターのスイッチオーバが見つかった時に驚くようなことが起こらないようにしなければなりません。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-13 [1c99580]
+	  -->
+	<para>
+      <!--
+        Add compiler flag "-fno-strict-aliasing" in <filename>configure.ac</filename> to fix compiler error. (Tatsuo Ishii)
+      -->
+        コンパイルエラーを修正するために、<filename>configure.ac</filename>
+        ファイルにコンパイルフラグ "-fno-strict-aliasing" が追加されました。(Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-09 [8231f65]
+	  -->
+	<para>
+    <!--
+	  Do not use random() while generating MD5 salt. (Tatsuo Ishii)
+    -->
+MD5 salt を生成するときに、<function>random()</function> を使用しないように修正しました。(Tatsuo Ishii)
+	</para>
+	<para>
+        <!--
+        <function>random()</function> should not be used in security related applications.  To
+        replace <function>random()</function>, import <function>PostmasterRandom()</function> from PostgreSQL.
+        -->
+<function>random()</function>関数はセキュリティ関連のアプリケーションに使用しないべきです。
+<function>random()</function>の代わりに<productname>PostgreSQL</productname>の<function>PostmasterRandom()</function> 使用するように変更しました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-06 [891ce0f]
+	  -->
+	<para>
+    <!--
+	  Don't ignore sync message from frontend when query cache is enabled. (Tatsuo Ishii)
+      -->
+クエリキャッシュが有効な場合、sync メッセージが廃棄されないよう修正しました。(Tatsuo Ishii)
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>

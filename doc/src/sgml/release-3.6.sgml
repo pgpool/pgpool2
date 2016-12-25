@@ -1206,35 +1206,38 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
   </note>
 
   <sect2>
-    <title>Changes</title>
-
-    <itemizedlist>
-
-      <listitem>
-	<!--
-	    2016-12-20 [3b2e955]
-	  -->
-	<para>
-	  Add 3.6.1, 3.5.5 release note. (Tatsuo Ishii)
-	</para>
-      </listitem>
-    </itemizedlist>
-  </sect2>
-
-  <sect2>
     <title>Bug fixes</title>
 
     <itemizedlist>
 
       <listitem>
 	<!--
+	    2016-12-23 [4124e5e]
+	  -->
+	<para>
+      Tightening up the watchdog security. (Muhammad Usama)
+    </para>
+
+    <para>
+      Now wd_authkey uses the HMAC SHA-256 hashing.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-22 [f8a157a]
+	  -->
+	<para>
+	  Add pgpool_adm extension in <productname>Pgpool-II</productname> RPM. (Bo Peng)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
 	    2016-12-20 [888ac16]
 	  -->
 	<para>
-	  Fix occasional segfault when query cache is enabled. (Tatsuo Ishii)
-	</para>
-	<para>
-	  Per bug 263.
+	  Fix occasional segfault when query cache is enabled. (bug 263) (Tatsuo Ishii)
 	</para>
       </listitem>
 
@@ -1243,7 +1246,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
 	    2016-12-20 [9274f82]
 	  -->
 	<para>
-	  Fix packet kind does not match error in extended protocol per bug 231. (Tatsuo Ishii)
+	  Fix packet kind does not match error in extended protocol. (bug 231) (Tatsuo Ishii)
 	</para>
 	<para>
 	  According to the bug231, the bug seem to bite you if all of
@@ -1346,7 +1349,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
 	    2016-12-06 [336e932]
 	  -->
 	<para>
-	  Fix a race condition in a signal handler per bug 265. (Tatsuo Ishii)
+	  Fix a race condition in a signal handler. (bug 265) (Tatsuo Ishii)
 	</para>
 	<para>
 	  In child.c there's signal handler which calls elog. Since the signal
@@ -1365,10 +1368,7 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
 	    2016-11-24 [cc452ad]
 	  -->
 	<para>
-	  Fix wrong minimum configuration value for client_idle_limit_in_recovery. (Tatsuo Ishii)
-	</para>
-	<para>
-	  Per bug #264.
+	  Fix wrong minimum configuration value for client_idle_limit_in_recovery. (bug 264) (Tatsuo Ishii)
 	</para>
       </listitem>
 
@@ -1381,18 +1381,6 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
 	</para>
 	<para>
 
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-11-22 [99cf426]
-	  -->
-	<para>
-	  Fix pgpool.spec to install sgml docs and man. (pengbo)
-	</para>
-	<para>
-	  In 3.6.0, SGML docs and man pages wre not installed in RPM.
 	</para>
       </listitem>
 

@@ -181,6 +181,11 @@
 
 <!ENTITY release    SYSTEM "release.sgml">
 <!ENTITY release-3.6    SYSTEM "release-3.6.sgml">
+<!ENTITY release-3.5    SYSTEM "release-3.5.sgml">
+<!ENTITY release-3.4    SYSTEM "release-3.4.sgml">
+<!ENTITY release-3.3    SYSTEM "release-3.3.sgml">
+<!ENTITY release-3.2    SYSTEM "release-3.2.sgml">
+<!ENTITY release-3.1    SYSTEM "release-3.1.sgml">
 <!ENTITY release-old    SYSTEM "release-old.sgml">
 
 <!ENTITY acronyms   SYSTEM "acronyms.sgml">

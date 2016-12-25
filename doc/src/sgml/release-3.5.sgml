@@ -10,35 +10,38 @@
   </note>
 
   <sect2>
-    <title>Changes</title>
-
-    <itemizedlist>
-
-      <listitem>
-	<!--
-	    2016-12-20 [3b2e955]
-	  -->
-	<para>
-	  Add 3.5.5 release note. (Tatsuo Ishii)
-	</para>
-      </listitem>
-    </itemizedlist>
-  </sect2>
-
-  <sect2>
     <title>Bug fixes</title>
 
     <itemizedlist>
 
       <listitem>
 	<!--
+	    2016-12-23 [4124e5e]
+	  -->
+	<para>
+      Tightening up the watchdog security. (Muhammad Usama)
+    </para>
+
+    <para>
+      Now wd_authkey uses the HMAC SHA-256 hashing.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-22 [f8a157a]
+	  -->
+	<para>
+	  Add pgpool_adm extension in <productname>Pgpool-II</productname> RPM. (Bo Peng)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
 	    2016-12-20 [888ac16]
 	  -->
 	<para>
-	  Fix occasional segfault when query cache is enabled. (Tatsuo Ishii)
-	</para>
-	<para>
-	  Per bug 263.
+	  Fix occasional segfault when query cache is enabled. (bug 263) (Tatsuo Ishii)
 	</para>
       </listitem>
 
@@ -47,7 +50,7 @@
 	    2016-12-20 [9274f82]
 	  -->
 	<para>
-	  Fix packet kind does not match error in extended protocol per bug 231. (Tatsuo Ishii)
+	  Fix packet kind does not match error in extended protocol. (bug 231) (Tatsuo Ishii)
 	</para>
 	<para>
 	  According to the bug231, the bug seem to bite you if all of
@@ -191,20 +194,6 @@
 
       <listitem>
 	<!--
-	    2016-10-27 [e07a6d3]
-	  -->
-	<para>
-	  Adopt the incompatibility with psql of PostgreSQL 9.6. (Tatsuo Ishii)
-	</para>
-	<para>
-	  Since -c option does not imply -X anymore in 9.6, regression fails if
-	  <filename>.psqlrc</filename> is set, for example "\pset
-	  pager" is set.
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
 	    2016-10-27 [f37c592]
 	  -->
 	<para>
@@ -234,10 +223,6 @@
 	  -->
 	<para>
 	  Fix for 0000252: authentication failed error when PCP command is cancelled... (Muhammad Usama)
-	</para>
-	<para>
-	  Fixed by adding the volatile modifier to authenticated flag, to make sure we
-	  always get the updated value after the long jump.
 	</para>
       </listitem>
 
@@ -307,30 +292,7 @@
 	    2016-09-13 [1c99580]
 	  -->
 	<para>
-	  Disable strict aliasing optimization. (Tatsuo Ishii)
-	</para>
-	<para>
-	  flatten_set_variable_args() was imported from PostgreSQL in Pgpool-II
-	  3.5. To make the code work, a compiler flag "-fno-strict-aliasing" is
-	  necessary (PostgreSQL does so). Unfortunately when the function was
-	  imported, the compiler flag was not added. To fix this, configure.ac
-	  was modified.
-	</para>
-	<para>
-	  Per [pgpool-general: 4975].
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-09-09 [1ac4c8a]
-	  -->
-	<para>
-	  Fixing an obvious logic mistake. (Muhammad Usama)
-	</para>
-	<para>
-	  per Coverity CID 1362580 and CID 1362581
-
+      Add compiler flag "-fno-strict-aliasing" in configure.ac to fix compiler error. (Tatsuo Ishii)
 	</para>
       </listitem>
 
@@ -342,26 +304,12 @@
 	  Do not use random() while generating MD5 salt. (Tatsuo Ishii)
 	</para>
 	<para>
-	  random() should not be used in security related applications.  To
-	  replace random(), import PostmasterRandom() from PostgreSQL.  Also
-	  store current time at the start up of Pgpool-II main process for later
-	  use.
+        <function>random()</function> should not be used in security related applications.  To
+        replace <function>random()</function>, import <function>PostmasterRandom()</function> from PostgreSQL.  Also
+        store current time at the start up of <productname>Pgpool-II</productname> main process for later
+        use.
 	</para>
-	<para>
-	  Per Coverity CID 1362583.
-	</para>
-      </listitem>
 
-      <listitem>
-	<!--
-	    2016-09-09 [12812a1]
-	  -->
-	<para>
-	  Remove useless assignment. (Tatsuo Ishii)
-	</para>
-	<para>
-	  Per coverity CID 1362589.
-	</para>
       </listitem>
 
       <listitem>
@@ -370,18 +318,6 @@
 	  -->
 	<para>
 	  Don't ignore sync message from frontend when query cache is enabled. (Tatsuo Ishii)
-	</para>
-	<para>
-	  While returning cached query result, sync message sent from frontend
-	  is discarded. This is harmless because "ready for query" messages is
-	  sent to frontend afterward. Problem is, AccessShareLock held by
-	  previous parse message processing is not released until sync message
-	  is received by the backend. Fix is, forwarding the sync message to
-	  backend and discarding "ready for query" message returned from
-	  backend.
-	</para>
-	<para>
-	  Per [pgpool-hackers: 1787].
 	</para>
       </listitem>
 
