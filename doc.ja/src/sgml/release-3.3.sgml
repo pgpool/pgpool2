@@ -1,0 +1,177 @@
+<!-- doc/src/sgml/release-3.3.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-3-3-13">
+<!--
+  <title>Release 3.3.13</title>
+  -->
+  <title>リリース 3.3.13</title>
+
+  <note>
+  <!--
+    <title>Release Date</title>
+    -->
+    <title>リリース日</title>
+    <simpara>2016-12-26</simpara>
+  </note>
+
+  <sect2>
+  <!--
+    <title>Bug fixes</title>
+    -->
+    <title>不具合修正</title>
+
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2016-12-23 [a7e222d]
+	  -->
+	<para>
+    <!--
+      Tightening up the watchdog security. (Muhammad Usama)
+    -->
+watchdog のセキュリティを強化しました。(Muhammad Usama)
+    </para>
+
+    <para>
+    <!--
+      Now wd_authkey uses the HMAC SHA-256 hashing.
+    -->
+wd_authkeyは、HMAC SHA-256ハッシングを使用するようになりました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-22 [1b293c4]
+	  -->
+	<para>
+	<!--
+	  Add pgpool_adm extension. (Bo Peng)
+    -->
+<productname>Pgpool-II</productname>のRPM にpgpool_adm extension が含まれるように修正しました。(Bo Peng)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-20 [6099e25]
+	  -->
+	<para>
+    <!--
+	  Fix occasional segfault when query cache is enabled. (Tatsuo Ishii)
+    -->
+クエリキャッシュが有効になっている場合に、時々発生しうるセグメンテーション違反を修正しました。(bug 263) (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-10-27 [f37c592]
+	  -->
+	<para>
+    <!--
+	  Do not cancel a query when the query resulted in an error other than in native replication mode. (Tatsuo Ishii)
+    -->
+ネイティブレプリケーションモード以外の場合、エラーが発生した場合は、クエリをキャンセルしないように修正しました。(Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  It was intended to keep the consistency, but there's no point in other
+	  than native replication mode.
+      -->
+本来は一貫性を維持するためにキャセルされるようになっていましたが、ネイティブレプリケーションモード以外の場合ではキャセルする必要がないので、修正しました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-24 [8aa7586]
+	  -->
+	<para>
+    <!--
+	  Change the default value of search_primary_node_timeout from 10 to 300. (Tatsuo Ishii)
+    -->
+<xref linkend="guc-search-primary-node-timeout">のデフォルト値を10から300に変更しました。(Tatstuo Ishii)
+	</para>
+	<para>
+    <!--
+	  Prior default value 10 seconds is sometimes too short for a standby to
+	  be promoted.
+            -->
+これまでのデフォルト値10秒は、スタンバイを昇格する際には小さすぎでした。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-21 [b306e04]
+	  -->
+	<para>
+    <!--
+	  Fix the case when all backends are down then 1 node attached. (Tatsuo Ishii)
+    -->
+すべてのバックエンドがダウンした後に、1つのノードを復帰させる時の不具合が修正されました。(bug 248) (Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  When all backends are down, no connection is accepted. Then 1
+	  PostgreSQL becomes up, and attach the node using pcp_attach_node. It
+	  successfully finishes. However, when a new connection arrives, still
+	  the connection is refused because pgpool child process looks into the
+	  cached status, in which the recovered node is still in down status if
+	  mode is streaming replication mode (native replication and other modes
+	  are fine). Solution is, if all nodes are down, force to restart all
+	  pgpool child.
+      -->
+すべてのノードがダウンすると、すべてのコネクションを受け付けなくなります。
+その状態で1つの<productname>PostgreSQL</productname>が起動し、<command>pcp_attach_node</command>コマンドでそのノードを復帰させます。
+そしてこのコマンドは成功しました。
+しかし、新しい接続が拒否されました。
+これは<productname>Pgpool-II</productname> の子プロセスがキャッシュされた古い情報を参照したのが原因でした。
+ストリーミングレプリケーションモードでは、このキャッシュされた情報において、復帰させたノードの状態がdownのままでした。
+（ネィティブレプリケーションモード、およびそれ以外のモードでは問題ありません）
+解決法として、全ノードがダウンした場合、強制的に全 <productname>Pgpool-II</productname>子プロセスを再起動するようにしました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-09 [8231f65]
+	  -->
+	<para>
+    <!--
+	  Do not use random() while generating MD5 salt. (Tatsuo Ishii)
+    -->
+MD5 salt を生成するときに、<function>random()</function> を使用しないように修正しました。(Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  random() should not be used in security related applications.  To
+	  replace random(), import PostmasterRandom() from PostgreSQL.  Also
+	  store current time at the start up of Pgpool-II main process for later
+	  use.
+    -->
+<function>random()</function>関数はセキュリティ関連のアプリケーションに使用しないべきです。
+<function>random()</function>の代わりに<productname>PostgreSQL</productname>の<function>PostmasterRandom()</function> 使用するように変更しました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-06 [891ce0f]
+	  -->
+	<para>
+    <!--
+	  Don't ignore sync message from frontend when query cache is enabled. (Tatsuo Ishii)
+      -->
+クエリキャッシュが有効な場合、sync メッセージが廃棄されないよう修正しました。(Tatsuo Ishii)
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>

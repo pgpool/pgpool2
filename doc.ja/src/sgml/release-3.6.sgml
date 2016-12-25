@@ -1776,3 +1776,286 @@ PCP パケットの長さを検証するよう修正しました。(Muhammad Usa
   </sect2>
 
 </sect1>
+
+<sect1 id="release-3-6-1">
+<!--
+  <title>release 3.6.1</title>
+  -->
+  <title>リリース 3.6.1</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2016-12-26</simpara>
+  </note>
+
+  <sect2>
+  <!--
+    <title>Bug fixes</title>
+    -->
+    <title>不具合修正</title>
+
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2016-12-23 [4124e5e]
+	  -->
+	<para>
+    <!--
+      Tightening up the watchdog security. (Muhammad Usama)
+    -->
+watchdog のセキュリティを強化しました。(Muhammad Usama)
+    </para>
+
+    <para>
+    <!--
+      Now wd_authkey uses the HMAC SHA-256 hashing.
+    -->
+wd_authkeyは、HMAC SHA-256ハッシングを使用するようになりました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-22 [f8a157a]
+	  -->
+	<para>
+	<!--
+	  Add pgpool_adm extension. (Bo Peng)
+    -->
+<productname>Pgpool-II</productname>のRPM にpgpool_adm extension が含まれるように修正しました。(Bo Peng)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-20 [888ac16]
+	  -->
+	<para>
+    <!--
+	  Fix occasional segfault when query cache is enabled. (Tatsuo Ishii)
+    -->
+クエリキャッシュが有効になっている場合に、時々発生しうるセグメンテーション違反を修正しました。(bug 263) (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-20 [9274f82]
+	  -->
+	<para>
+    <!--
+	  Fix packet kind does not match error in extended protocol per bug 231. (Tatsuo Ishii)
+    -->
+拡張プロトコルにおいて発生しうるkind mismatchエラーを修正しました。(bug 231) (Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  According to the bug231, the bug seem to bite you if all of
+	  following conditions are met:
+      -->
+bug 231による、以下の条件がすべて満たされていると、このバグが発生する可能性がありました。
+	</para>
+	<itemizedlist>
+	  <listitem>
+	    <para>
+        <!--
+	      Streaming replication mode
+          -->
+ストリーミングレプリケーションモード
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Load balance node is not node 0
+          -->
+ ロードバランスノードがnode 0ではない
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Extended protocol is used
+          -->
+拡張プロトコルを使用している
+	      </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      SELECT is executed, the statement is closed, then a
+	      transaction command is executed
+          -->
+SELECTが実行され、ステートメントがクローズされた後、トランザクションコマンドが実行されている
+	    </para>
+	  </listitem>
+	</itemizedlist>
+	<para>
+    <!--
+	The sequence of how the problem bites is:
+    -->
+問題の発生順序:
+	<orderedlist>
+	  <listitem>
+	    <para>
+        <!--
+	      SELECT executes on statement S1 on the load balance node 1
+          -->
+ロードバランスノード1でステートメントS1のSELECTが実行されます。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Frontend send Close statement
+          -->
+フロントエンドがクローズステートメントを送ります。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Pgool-II forward it to backend 1
+          -->
+Pgpool-IIはそれをバックエンド1に転送します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Frontend sends Parse, Bind, Execute of COMMIT
+          -->
+フロントエンドは、Parse、Bind、COMMIT の Execute を送信します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Pgool-II forward it to backend 0 & 1
+          -->
+Pgpool-IIはそれをバックエンド0と1に転送します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Frontend sends sync message
+          -->
+フロントエンドが同期メッセージを送信します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Pgool-II forward it to backend 0 & 1
+          -->
+Pgpool-IIはそれをバックエンド0と1に転送します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Backend 0 replies back Parse complete ("1"), while
+	      backend 1 replies back close complete ("3") because of
+	      #3.
+          -->
+バックエンド0はParse complete（ "1"）を返しますが、バックエンド1は＃3によりcloes complete（ "3"）を返します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Kind mismatch occurs
+          -->
+Kind mismatch が発生します。
+	    </para>
+	  </listitem>
+	</orderedlist>
+
+	</para>
+	<para>
+    <!--
+	  The solution is, in #3, let Pgpool-II wait for response from backend
+	  1, but do not read the response message. Later on Pgpool-II's state
+	  machine will read the response from it before the sync message is sent
+	  in #6. With this, backend 1 will reply back "1" in #8, and the kind
+	  mismatch error does not occur.
+      -->
+解決策は、＃3では、Pgpool-IIがバックエンド1からの応答を待つようにしますが、応答メッセージは読み取らないようにします。 その後、Pgpool-IIの状態マシンは、＃6で同期メッセージが送信される前に、その応答を読み込みます。 これによりバックエンド1は＃8で "1"を返信し、kind mismatchエラーは発生しなくなります。
+	</para>
+	<para>
+    <!--
+	  Also, fix not calling pool_set_doing_extended_query_message() when
+	  receives Close message.  (I don't know why it was missed).
+      -->
+また、Closeメッセージを受け取ったときにpool_set_doing_extended_query_message（）が呼び出されない不具合を修正しました。
+	</para>
+	<para>
+    <!--
+	  New regression test "067.bug231" was added.
+      -->
+新しいリグレッションテスト "067.bug231"を追加しました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-06 [336e932]
+	  -->
+	<para>
+    <!--
+	  Fix a race condition in a signal handler per bug 265. (Tatsuo Ishii)
+    -->
+シグナルハンドラでの競合状態を修正しました。(bug 265) (Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  In child.c there's signal handler which calls elog. Since the signal
+	  handler is not blocked against other signals while processing, deadlock
+	  could occur in the system calls in the pgpool shutdown sequence. To
+	  fix the problem, now the signal handler is blocked by using
+	  POOL_SETMASK.
+      -->
+child.cには、elogを呼び出すシグナルハンドラがあります。 シグナルハンドラは処理中に他のシグナルに対してブロックされないため、pgpoolのシャットダウンシーケンスでシステムコールにデッドロックが発生する可能性がありました。 この問題を解決するために、シグナルハンドラはPOOL_SETMASKを使用してブロックされるように修正されました。
+	</para>
+	<para>
+    <!--
+	  Ideally we should avoid calling elog in signal handlers though.
+      -->
+理想的にはシグナルハンドラでelogを呼び出すことを避けるべきです。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-11-24 [cc452ad]
+	  -->
+	<para>
+    <!--
+	  Fix wrong minimum configuration value for client_idle_limit_in_recovery. (Tatsuo Ishii)
+    -->
+誤ったclient_idle_limit_in_recoveryの最小設定値を修正しました。(bug 264) (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-11-22 [94d9378]
+	  -->
+	<para>
+    <!--
+	  Allow to execute "make xslthtml" under doc.ja. (Tatsuo Ishii)
+      -->
+doc.jaの下で "make xslthtml"を実行できるように修正しました。(Tatsuo Ishii)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
