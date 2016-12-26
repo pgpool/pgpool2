@@ -222,7 +222,7 @@
 	    2016-10-18 [8da0e7f]
 	  -->
 	<para>
-	  Fix for 0000252: authentication failed error when PCP command is cancelled... (Muhammad Usama)
+	  Fix authentication failed error when PCP command is cancelled. (bug 252) (Muhammad Usama)
 	</para>
       </listitem>
 
@@ -237,9 +237,6 @@
 	  Prior default value 10 seconds is sometimes too short for a standby to
 	  be promoted.
 	</para>
-	<para>
-	  Per [pgpool-general: 5026].
-	</para>
       </listitem>
 
       <listitem>
@@ -247,7 +244,7 @@
 	    2016-09-21 [b306e04]
 	  -->
 	<para>
-	  Fix the case when all backends are down then 1 node attached. (Tatsuo Ishii)
+	  Fix the case when all backends are down then 1 node attached. (bug 248) (Tatsuo Ishii)
 	</para>
 	<para>
 	  When all backends are down, no connection is accepted. Then 1
@@ -258,9 +255,6 @@
 	  mode is streaming replication mode (native replication and other modes
 	  are fine). Solution is, if all nodes are down, force to restart all
 	  pgpool child.
-	</para>
-	<para>
-	  Per bug 248.
 	</para>
       </listitem>
 
