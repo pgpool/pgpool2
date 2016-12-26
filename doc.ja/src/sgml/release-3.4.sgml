@@ -68,34 +68,6 @@ wd_authkeyは、HMAC SHA-256ハッシングを使用するようになりまし�
 
       <listitem>
 	<!--
-	    2016-12-06 [336e932]
-	  -->
-	<para>
-    <!--
-	  Fix a race condition in a signal handler per bug 265. (Tatsuo Ishii)
-      -->
-シグナルハンドラでの競合状態を修正しました。(bug 265) (Tatsuo Ishii)
-	</para>
-	<para>
-    <!--
-	  In child.c there's signal handler which calls elog. Since the signal
-	  handler is not blocked against other signals while processing, deadlock
-	  could occur in the system calls in the pgpool shutdown sequence. To
-	  fix the problem, now the signal handler is blocked by using
-	  POOL_SETMASK.
-      -->
-child.cには、elogを呼び出すシグナルハンドラがあります。 シグナルハンドラは処理中に他のシグナルに対してブロックされないため、pgpoolのシャットダウンシーケンスでシステムコールにデッドロックが発生する可能性がありました。 この問題を解決するために、シグナルハンドラはPOOL_SETMASKを使用してブロックされるように修正しました。
-	</para>
-	<para>
-    <!--
-	  Ideally we should avoid calling elog in signal handlers though.
-      -->
-理想的にはシグナルハンドラでelogを呼び出すことを避けるべきです。
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
 	    2016-10-27 [1fe3ab1]
 	  -->
 	<para>
