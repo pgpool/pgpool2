@@ -847,8 +847,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 
 	if (pool_config->authentication_timeout > 0)
 	{
-		pool_signal(SIGALRM, authentication_timeout);
 		alarm(pool_config->authentication_timeout);
+		pool_signal(SIGALRM, authentication_timeout);
 	}
 
 	/* read startup packet length */
