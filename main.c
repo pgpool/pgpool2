@@ -1469,7 +1469,7 @@ static void myexit(int code)
 		{
 			pid_t ret_pid;
 
-			wpid = waitpid(-1, &ret_pid, WNOHANG);
+			wpid = waitpid(-1, &ret_pid, 0);
 		} while (wpid > 0 || (wpid == -1 && errno == EINTR));
 
 		if (wpid == -1 && errno != ECHILD)
@@ -1707,7 +1707,7 @@ static RETSIGTYPE exit_handler(int sig)
     {
 		pid_t ret_pid;
 
-        wpid = waitpid(-1, &ret_pid, WNOHANG);
+        wpid = waitpid(-1, &ret_pid, 0);
     } while (wpid > 0 || (wpid == -1 && errno == EINTR));
 
     if (wpid == -1 && errno != ECHILD)
