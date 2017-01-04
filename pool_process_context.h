@@ -46,6 +46,11 @@ typedef struct {
 
 	int local_session_id;	/* local session id */
 
+	pool_sighandler_t last_alarm_handler;
+	time_t	last_alarm_time;
+	unsigned int last_alarm_second;
+	unsigned int undo_alarm_second;
+
 } POOL_PROCESS_CONTEXT;
 
 extern void pool_init_process_context(void);
@@ -58,5 +63,8 @@ extern ConnectionInfo *pool_coninfo(int child, int connection_pool, int backend)
 extern ConnectionInfo *pool_coninfo_pid(int pid, int connection_pool, int backend);
 extern void pool_coninfo_set_frontend_connected(int proc_id, int pool_index);
 extern void pool_coninfo_unset_frontend_connected(int proc_id, int pool_index);
+
+extern void pool_alarm(pool_sighandler_t handler, unsigned int second);
+extern void pool_undo_alarm();
 
 #endif /* POOL_PROCESS_CONTEXT_H */

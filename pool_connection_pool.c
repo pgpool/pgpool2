@@ -332,8 +332,7 @@ void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend)
 
 	/* no other timer found. set my timer */
 	pool_debug("pool_connection_pool_timer: set alarm after %d seconds", pool_config->connection_life_time);
-	pool_signal(SIGALRM, pool_backend_timer_handler);
-	alarm(pool_config->connection_life_time);
+	pool_alarm(pool_backend_timer_handler, pool_config->connection_life_time);
 }
 
 /*
@@ -419,8 +418,7 @@ void pool_backend_timer(void)
 		nearest = pool_config->connection_life_time - (now - nearest);
 		if (nearest <= 0)
 		  nearest = 1;
-		pool_signal(SIGALRM, pool_backend_timer_handler);
-		alarm(nearest);
+		pool_alarm(pool_backend_timer_handler, nearest);
 	}
 
 	POOL_SETMASK(&UnBlockSig);
