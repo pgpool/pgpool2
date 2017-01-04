@@ -847,8 +847,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 
 	if (pool_config->authentication_timeout > 0)
 	{
-		alarm(pool_config->authentication_timeout);
-		pool_signal(SIGALRM, authentication_timeout);
+		pool_alarm(authentication_timeout, pool_config->authentication_timeout);
 	}
 
 	/* read startup packet length */
@@ -856,8 +855,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	{
 		pool_error("read_startup_packet: incorrect packet length (%d)", len);
 		pool_free_startup_packet(sp);
-		alarm(0);
-		pool_signal(SIGALRM, SIG_IGN);
+		pool_undo_alarm();
 		return NULL;
 	}
 	len = ntohl(len);
@@ -867,8 +865,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	{
 		pool_error("read_startup_packet: incorrect packet length (%d)", len);
 		pool_free_startup_packet(sp);
-		alarm(0);
-		pool_signal(SIGALRM, SIG_IGN);
+		pool_undo_alarm();
 		return NULL;
 	}
 
@@ -877,8 +874,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	{
 		pool_error("read_startup_packet: out of memory");
 		pool_free_startup_packet(sp);
-		alarm(0);
-		pool_signal(SIGALRM, SIG_IGN);
+		pool_undo_alarm();
 		return NULL;
 	}
 
@@ -886,8 +882,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	if (pool_read(cp, sp->startup_packet, len))
 	{
 		pool_free_startup_packet(sp);
-		alarm(0);
-		pool_signal(SIGALRM, SIG_IGN);
+		pool_undo_alarm();
 		return NULL;
 	}
 
@@ -907,8 +902,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 			{
 				pool_error("read_startup_packet: out of memory");
 				pool_free_startup_packet(sp);
-				alarm(0);
-				pool_signal(SIGALRM, SIG_IGN);
+				pool_undo_alarm();
 				return NULL;
 			}
 			strncpy(sp->database, sp2->database, SM_DATABASE);
@@ -918,8 +912,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 			{
 				pool_error("read_startup_packet: out of memory");
 				pool_free_startup_packet(sp);
-				alarm(0);
-				pool_signal(SIGALRM, SIG_IGN);
+				pool_undo_alarm();
 				return NULL;
 			}
 			strncpy(sp->user, sp2->user, SM_USER);
@@ -939,8 +932,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 					{
 						pool_error("read_startup_packet: out of memory");
 						pool_free_startup_packet(sp);
-						alarm(0);
-						pool_signal(SIGALRM, SIG_IGN);
+						pool_undo_alarm();
 						return NULL;
 					}
 				}
@@ -952,8 +944,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 					{
 						pool_error("read_startup_packet: out of memory");
 						pool_free_startup_packet(sp);
-						alarm(0);
-						pool_signal(SIGALRM, SIG_IGN);
+						pool_undo_alarm();
 						return NULL;
 					}
 				}
@@ -986,8 +977,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 			{
 				pool_error("read_startup_packet: out of memory");
 				pool_free_startup_packet(sp);
-				alarm(0);
-				pool_signal(SIGALRM, SIG_IGN);
+				pool_undo_alarm();
 				return NULL;
 			}
 			sp->user = calloc(1, 1);
@@ -995,8 +985,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 			{
 				pool_error("read_startup_packet: out of memory");
 				pool_free_startup_packet(sp);
-				alarm(0);
-				pool_signal(SIGALRM, SIG_IGN);
+				pool_undo_alarm();
 				return NULL;
 			}
 			break;
@@ -1004,8 +993,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 		default:
 			pool_error("read_startup_packet: invalid major no: %d", sp->major);
 			pool_free_startup_packet(sp);
-			alarm(0);
-			pool_signal(SIGALRM, SIG_IGN);
+			pool_undo_alarm();
 			return NULL;
 	}
 
@@ -1020,8 +1008,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 								__FILE__, __LINE__);
 		pool_error("read_startup_packet: no PostgreSQL user name specified in startup packet");
 		pool_free_startup_packet(sp);
-		alarm(0);
-		pool_signal(SIGALRM, SIG_IGN);
+		pool_undo_alarm();
 		return NULL;
 	}
 
@@ -1033,8 +1020,7 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 
 	pool_debug("Protocol Major: %d Minor: %d database: %s user: %s",
 			   sp->major, sp->minor, sp->database, sp->user);
-	alarm(0);
-	pool_signal(SIGALRM, SIG_IGN);
+	pool_undo_alarm();
 	return sp;
 }
 

@@ -52,6 +52,11 @@ void pool_init_process_context(void)
 	process_context->proc_id = my_proc_id;
 
 	process_context->local_session_id = 0;		/* initialize local session counter */
+
+	process_context->last_alarm_handler = SIG_IGN;
+	process_context->last_alarm_time = 0;
+	process_context->last_alarm_second = 0;
+	process_context->undo_alarm_second = 0;
 }
 
 /*
@@ -243,5 +248,49 @@ void pool_coninfo_unset_frontend_connected(int proc_id, int pool_index)
 			return;
 		}
 		con->connected = false;
+	}
+}
+
+/*
+ * Set an alarm clock and a signal handler.
+ * For pool_alarm_undo(), the alarm second and the old handler
+ * are saved, and the remaining time is calculated.
+ */
+void pool_alarm(pool_sighandler_t handler, unsigned int second)
+{
+	POOL_PROCESS_CONTEXT *p = pool_get_process_context();
+	time_t	now = time(NULL);
+
+	alarm(second);
+	p->last_alarm_handler = pool_signal(SIGALRM, handler);
+
+	if (p->last_alarm_second)
+	{
+		p->undo_alarm_second = p->last_alarm_second - (now - p->last_alarm_time);
+		if (p->undo_alarm_second <= 0)
+		  p->undo_alarm_second = 1;
+	}
+
+	p->last_alarm_time = now;
+	p->last_alarm_second = second;
+}
+
+/*
+ * Undo the alarm signal handler using the remaining time.
+ */
+void pool_undo_alarm()
+{
+	POOL_PROCESS_CONTEXT *p = pool_get_process_context();
+
+	if (p->undo_alarm_second)
+	{
+		alarm(p->undo_alarm_second);
+		pool_signal(SIGALRM, p->last_alarm_handler);
+		p->undo_alarm_second = 0;
+	}
+	else
+	{
+		alarm(0);
+		pool_signal(SIGALRM, SIG_IGN);
 	}
 }
