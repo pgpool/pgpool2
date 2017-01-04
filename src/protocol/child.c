@@ -1034,8 +1034,7 @@ static void enable_authentication_timeout(void)
 {
 	if(pool_config->authentication_timeout <= 0)
 		return;
-	alarm(pool_config->authentication_timeout);
-	pool_signal(SIGALRM, authentication_timeout);
+	pool_alarm(authentication_timeout, pool_config->authentication_timeout);
 	alarm_enabled = true;
 }
 
@@ -1043,8 +1042,7 @@ static void disable_authentication_timeout(void)
 {
 	if(alarm_enabled)
 	{
-		alarm(0);
-		pool_signal(SIGALRM, SIG_IGN);
+		pool_undo_alarm();
 		alarm_enabled = false;
 	}
 }
