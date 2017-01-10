@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1506,9 +1506,14 @@ static RETSIGTYPE failover_handler(int sig)
 
 	POOL_SETMASK(&BlockSig);
 	failover_request = 1;
+
+	write(pipe_fds[1], "\0", 1);
+
+#ifdef NOT_USED
 	if(write(pipe_fds[1], "\0", 1) < 0)
         ereport(WARNING,
                 (errmsg("failover_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+#endif
 
 	POOL_SETMASK(&UnBlockSig);
 
@@ -2233,9 +2238,17 @@ static RETSIGTYPE reap_handler(int sig)
 
 	POOL_SETMASK(&BlockSig);
 	sigchld_request = 1;
+
+	if (pipe_fds[1])
+	{
+		write(pipe_fds[1], "\0", 1);
+	}
+
+#ifdef NOT_USED
 	if(pipe_fds[1] && write(pipe_fds[1], "\0", 1) < 0)
         ereport(WARNING,
             (errmsg("reap_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+#endif
 
 	POOL_SETMASK(&UnBlockSig);
 
@@ -2527,9 +2540,12 @@ static RETSIGTYPE wakeup_handler(int sig)
 	if (processState != INITIALIZING)
 	{
 		POOL_SETMASK(&BlockSig);
+		write(pipe_fds[1], "\0", 1);
+#ifdef NOT_USED
 		if(write(pipe_fds[1], "\0", 1) < 0)
 			ereport(WARNING,
 				(errmsg("wakeup_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+#endif
 		POOL_SETMASK(&UnBlockSig);
 	}
 	errno = save_errno;
@@ -2545,9 +2561,12 @@ static RETSIGTYPE reload_config_handler(int sig)
 
 	POOL_SETMASK(&BlockSig);
 	reload_config_request = 1;
+	write(pipe_fds[1], "\0", 1);
+#ifdef NOT_USED
 	if(write(pipe_fds[1], "\0", 1) < 0)
         ereport(WARNING,
             (errmsg("reload_config_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+#endif
 
 	POOL_SETMASK(&UnBlockSig);
 

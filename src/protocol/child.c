@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -922,8 +922,10 @@ static RETSIGTYPE die(int sig)
 
 	save_errno = errno;
 
+#ifdef NOT_USED
 	ereport(LOG,
 			(errmsg("child process received shutdown request signal %d", sig)));
+#endif
 
 	exit_request = sig;
 
@@ -933,16 +935,20 @@ static RETSIGTYPE die(int sig)
 			/* Refuse further requests by closing listen socket */
 			if (child_inet_fd)
 			{
+#ifdef NOT_USED
 				ereport(LOG,
 						(errmsg("closing listen socket")));
+#endif
 				close(child_inet_fd);
 			}
 			close(child_unix_fd);
 
 			if (idle == 0)
 			{
+#ifdef NOT_USED
 				ereport(DEBUG1,
 						(errmsg("smart shutdown request received, but child is not in idle state")));
+#endif
 			}
 			break;
 
@@ -952,10 +958,11 @@ static RETSIGTYPE die(int sig)
 			child_exit(POOL_EXIT_NO_RESTART);
 			break;
 		default:
+#ifdef NOT_USED
 			ereport(LOG,
 				(errmsg("child process received unknown signal: %d",sig),
 					 errdetail("ignoring...")));
-
+#endif
 			break;
 	}
 
@@ -974,8 +981,10 @@ static RETSIGTYPE close_idle_connection(int sig)
 	ConnectionInfo *info;
 	int save_errno = errno;
 
+#ifdef NOT_USED
 	ereport(DEBUG1,
 			(errmsg("close connection request received")));
+#endif
 
 	for (j=0;j<pool_config->max_pool;j++, p++)
 	{
@@ -988,9 +997,12 @@ static RETSIGTYPE close_idle_connection(int sig)
 
 		if (MASTER_CONNECTION(p)->closetime > 0)		/* idle connection? */
 		{
+#ifdef NOT_USED
 			ereport(DEBUG1,
 					(errmsg("closing idle connection"),
 					 errdetail("user: %s database: %s", MASTER_CONNECTION(p)->sp->user, MASTER_CONNECTION(p)->sp->database)));
+#endif
+
 			pool_send_frontend_exits(p);
 
 			for (i=0;i<NUM_BACKENDS;i++)
@@ -1148,8 +1160,14 @@ void child_exit(int code)
 	if(processType != PT_CHILD)
 	{
 		/* should never happen */
+
+		/* Remove call to ereport because child_exit() is called inside a
+		 * signal handler.
+		 */
+#ifdef NOT_USED
         ereport(WARNING,
                 (errmsg("child_exit: called from invalid process. ignored.")));
+#endif
 		return;
 	}
 	exit(code);
