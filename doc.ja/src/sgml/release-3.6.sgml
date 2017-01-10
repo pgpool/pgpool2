@@ -894,7 +894,7 @@ watchdogクラスタでのフェイルオーバーコマンドの転送処理が
 以前はスタンバイノードが<productname>Pgpool-II</productname>マスターノードに対して設定パラメータの値を検証し、不整合が見つかった場合にはFATALエラーが出力されていました。
 この修正で、<productname>Pgpool-II</productname>マスターノードに検証の役割が移譲されました。
 マスターノードは参加している個々のスタンバイノードの設定値をローカルの設定値と比較し、違っている場合にはエラーではなくてWARNINGメッセージを出力します。
-この方法では、watchdogクラスタとユーザは、手動でマスター<productname>Pgpool-II</productname>ログの中から不整合ワーニングを見つけて、<productname>Pgpool-II</productname>マスターのスイッチオーバが見つかった時に驚くようなことが起こらないようにしなければなりません。
+この方法では、ユーザは、手動でマスター<productname>Pgpool-II</productname>ログの中から不整合ワーニングを見つけて、<productname>Pgpool-II</productname>マスターのスイッチオーバが起きたときに驚くようなことが起こらないようにしなければなりません。
         </para>
       </listitem>
       <listitem>
@@ -935,7 +935,7 @@ watchdogクラスタでのフェイルオーバーコマンドの転送処理が
         <function>random()</function> should not be used in security related applications.  To
         replace <function>random()</function>, import <function>PostmasterRandom()</function> from PostgreSQL.
         -->
-<function>random()</function>関数はセキュリティ関連のアプリケーションに使用しないべきです。
+<function>random()</function>関数はセキュリティ関連のアプリケーションで使用すべきではありません。
 <function>random()</function>の代わりに<productname>PostgreSQL</productname>の<function>PostmasterRandom()</function> 使用するように変更しました。
         </para>
 
@@ -1854,7 +1854,7 @@ wd_authkeyは、HMAC SHA-256ハッシングを使用するようになりまし�
 	  According to the bug231, the bug seem to bite you if all of
 	  following conditions are met:
       -->
-bug 231による、以下の条件がすべて満たされていると、このバグが発生する可能性がありました。
+bug 231によると、以下の条件がすべて満たされていると、このバグが発生する可能性がありました。
 	</para>
 	<itemizedlist>
 	  <listitem>
@@ -1926,7 +1926,7 @@ Pgpool-IIはそれをバックエンド1に転送します。
         <!--
 	      Frontend sends Parse, Bind, Execute of COMMIT
           -->
-フロントエンドは、Parse、Bind、COMMIT の Execute を送信します。
+フロントエンドは、COMMITのParse、Bind、Executeを送信します。
 	    </para>
 	  </listitem>
 	  <listitem>
@@ -1960,7 +1960,7 @@ Pgpool-IIはそれをバックエンド0と1に転送します。
 	      backend 1 replies back close complete ("3") because of
 	      #3.
           -->
-バックエンド0はParse complete（ "1"）を返しますが、バックエンド1は＃3によりcloes complete（ "3"）を返します。
+バックエンド0はParse complete（ "1"）を返しますが、バックエンド1は＃3によりclose complete（ "3"）を返します。
 	    </para>
 	  </listitem>
 	  <listitem>
