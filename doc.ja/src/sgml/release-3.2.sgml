@@ -50,7 +50,7 @@
 	  It was intended to keep the consistency, but there's no point in other
 	  than native replication mode.
       -->
-本来は一貫性を維持するためにキャセルされるようになっていましたが、ネイティブレプリケーションモード以外の場合ではキャセルする必要がないので、修正しました。
+本来は一貫性を維持するためにキャンセルされるようになっていましたが、ネイティブレプリケーションモード以外の場合ではキャンセルする必要がないので、修正しました。
 	</para>
       </listitem>
 
@@ -71,7 +71,7 @@ MD5 salt を生成するときに、<function>random()</function> を使用し�
 	  store current time at the start up of Pgpool-II main process for later
 	  use.
     -->
-<function>random()</function>関数はセキュリティ関連のアプリケーションに使用しないべきです。
+<function>random()</function>関数はセキュリティ関連のアプリケーションで使用すべきではありません。
 <function>random()</function>の代わりに<productname>PostgreSQL</productname>の<function>PostmasterRandom()</function> 使用するように変更しました。
 	</para>
       </listitem>

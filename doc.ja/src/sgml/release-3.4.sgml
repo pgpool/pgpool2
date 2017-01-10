@@ -169,7 +169,7 @@ MD5 salt を生成するときに、<function>random()</function> を使用し�
         <function>random()</function> should not be used in security related applications.  To
         replace <function>random()</function>, import <function>PostmasterRandom()</function> from PostgreSQL.
         -->
-<function>random()</function>関数はセキュリティ関連のアプリケーションに使用しないべきです。
+<function>random()</function>関数はセキュリティ関連のアプリケーションで使用すべきではありません。
 <function>random()</function>の代わりに<productname>PostgreSQL</productname>の<function>PostmasterRandom()</function> 使用するように変更しました。
 	</para>
       </listitem>
