@@ -767,7 +767,7 @@ static int *create_inet_domain_sockets(const char *hostname, const int port)
 			errdetail("asprintf() failed: %s", strerror(errno))));
 	}
 
-	if ((ret = getaddrinfo(hostname, portstr, &hints, &res)) != 0)
+	if ((ret = getaddrinfo((!hostname || strcmp(hostname, "*") == 0) ? NULL : hostname, portstr, &hints, &res)) != 0)
 	{
 		ereport(FATAL,
 			(errmsg("failed to create INET domain socket"),
