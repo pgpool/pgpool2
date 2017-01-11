@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1285,15 +1285,19 @@ static RETSIGTYPE die(int sig)
 			/* Refuse further requests by closing listen socket */
 			if (child_inet_fd)
 			{
+#ifdef NOT_USED
 				pool_log("die: close listen socket");
+#endif
 				close(child_inet_fd);
 			}
 			close(child_unix_fd);
 
+#ifdef NOT_USED
 			if (idle == 0)
 			{
 				pool_debug("child receives smart shutdown request but it's not in idle state");
 			}
+#endif
 			break;
 
 		case SIGINT:	/* fast shutdown */
@@ -1301,7 +1305,9 @@ static RETSIGTYPE die(int sig)
 			child_exit(0);
 			break;
 		default:
+#ifdef NOT_USED
 			pool_error("die() received unknown signal: %d", sig);
+#endif
 			break;
 	}
 }
@@ -1316,7 +1322,9 @@ static RETSIGTYPE close_idle_connection(int sig)
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 	ConnectionInfo *info;
 
+#ifdef NOT_USED
 	pool_debug("child receives close connection request");
+#endif
 
 	for (j=0;j<pool_config->max_pool;j++, p++)
 	{
@@ -1441,7 +1449,9 @@ void child_exit(int code)
 {
 	if (getpid() == mypid)
 	{
+#ifdef NOT_USED
 		pool_log("child_exit: called from pgpool main. ignored.");
+#endif
 		return;
 	}
 
