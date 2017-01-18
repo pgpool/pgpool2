@@ -814,6 +814,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			pool_set_skip_reading_from_backends();
 			pool_stats_count_up_num_cache_hits();
 			pool_unset_query_in_progress();
+			pool_unset_pending_response();
 			return POOL_CONTINUE;
 		}
 	}
