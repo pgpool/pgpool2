@@ -48,7 +48,12 @@ typedef struct WDIPCCmdResult
 extern void wd_ipc_initialize_data(void);
 extern char* get_watchdog_ipc_address(void);
 extern unsigned int* get_ipc_shared_key(void);
-
+extern void set_watchdog_process_needs_cleanup(void);
+extern void reset_watchdog_process_needs_cleanup(void);
+extern bool get_watchdog_process_needs_cleanup(void);
+extern void set_watchdog_node_escalated(void);
+extern void reset_watchdog_node_escalated(void);
+extern bool get_watchdog_node_escalation_state(void);
 
 extern WdCommandResult wd_start_recovery(void);
 extern WdCommandResult wd_end_recovery(void);
