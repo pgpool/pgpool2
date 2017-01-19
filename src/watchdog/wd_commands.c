@@ -66,6 +66,12 @@ static WDFailoverCMDResults wd_get_failover_result_from_data(WDIPCCmdResult *res
 
 /* shared memory variables */
 char *watchdog_ipc_address = NULL;
+bool *watchdog_require_cleanup = NULL;	/* shared memory variable set to true
+										 * when watchdog process terminates abnormally
+										 */
+bool *watchdog_node_escalated = NULL;	/* shared memory variable set to true
+										 * when watchdog process has performed escalation
+										 */
 unsigned int *ipc_shared_key = NULL;   /* key lives in shared memory
 										* used to identify the ipc internal
 										* clients
@@ -92,6 +98,18 @@ void wd_ipc_initialize_data(void)
 			pool_random_salt((char*)ipc_shared_key);
 		}
 	}
+
+	if (watchdog_require_cleanup == NULL)
+	{
+		watchdog_require_cleanup = pool_shared_memory_create(sizeof(bool));
+		*watchdog_require_cleanup = false;
+	}
+
+	if (watchdog_node_escalated == NULL)
+	{
+		watchdog_node_escalated = pool_shared_memory_create(sizeof(bool));
+		*watchdog_node_escalated = false;
+	}
 }
 
 char* get_watchdog_ipc_address(void)
@@ -102,6 +120,37 @@ char* get_watchdog_ipc_address(void)
 unsigned int* get_ipc_shared_key(void)
 {
 	return ipc_shared_key;
+}
+
+void set_watchdog_process_needs_cleanup(void)
+{
+	*watchdog_require_cleanup = true;
+}
+
+void reset_watchdog_process_needs_cleanup(void)
+{
+	*watchdog_require_cleanup = false;
+}
+
+bool get_watchdog_process_needs_cleanup(void)
+{
+	return *watchdog_require_cleanup;
+}
+
+
+void set_watchdog_node_escalated(void)
+{
+	*watchdog_node_escalated = true;
+}
+
+void reset_watchdog_node_escalated(void)
+{
+	*watchdog_node_escalated = false;
+}
+
+bool get_watchdog_node_escalation_state(void)
+{
+	return *watchdog_node_escalated;
 }
 
 /*
