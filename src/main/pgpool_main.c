@@ -2366,6 +2366,14 @@ static void reaper(void)
 			else
 				ereport(LOG,
 						(errmsg("%s process with pid: %d exits with status %d by signal %d", exiting_process_name, pid, status, WTERMSIG(status))));
+			/* If the watchdog process was terminated abonormally.
+			 * we need to set the cleanup flag so that the new watchdog process
+			 * can start without problems
+			 */
+			if (pool_config->use_watchdog && pid == watchdog_pid)
+			{
+				set_watchdog_process_needs_cleanup();
+			}
 		}
 		else
 			ereport(LOG,

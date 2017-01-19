@@ -654,7 +654,7 @@ static void wd_cluster_initialize(void)
 	g_cluster.aliveNodeCount = 0;
 	g_cluster.quorum_status = -1;
 	g_cluster.nextCommandID = 1;
-	g_cluster.escalated = false;
+	g_cluster.escalated = get_watchdog_node_escalation_state();
 	g_cluster.clusterInitialized = false;
 	g_cluster.holding_vip = false;
 	g_cluster.escalation_pid = 0;
@@ -685,7 +685,16 @@ static void wd_cluster_initialize(void)
 				 errdetail("The authentication method used by pgpool-II without the SSL support is known to be weak")));
 #endif
 	}
+	if (get_watchdog_process_needs_cleanup())
+	{
+		ereport(LOG,
+				(errmsg("watchdog is recovering from the crash of watchdog process")));
 
+		/* If we are recovering from crash or abnormal termination
+		 * de-escalate the node if it was coordinator when it crashed
+		 */
+		resign_from_escalated_node();
+	}
 }
 
 static void clear_command_node_result(WDCommandNodeResult* nodeResult)
@@ -1063,7 +1072,7 @@ watchdog_main(void)
 
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
-
+	reset_watchdog_process_needs_cleanup();
 	/* watchdog child loop */
 	for(;;)
 	{
@@ -1129,7 +1138,7 @@ wd_create_command_server_socket(void)
 	size_t	len = 0;
 	struct sockaddr_un addr;
 	int sock = -1;
-	
+
 	/* We use unix domain stream sockets for the purpose */
 	if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 	{
@@ -1147,6 +1156,13 @@ wd_create_command_server_socket(void)
 	ereport(INFO,
 			(errmsg("IPC socket path: \"%s\"",get_watchdog_ipc_address())));
 
+	if (get_watchdog_process_needs_cleanup())
+	{
+		/* If we are recovering from crash or abnormal termination
+		 * of watchdog process. Unlink the old socket file
+		 */
+		unlink(addr.sun_path);
+	}
 
 	if ( bind(sock, (struct sockaddr *) &addr, len) == -1)
 	{
@@ -1158,7 +1174,7 @@ wd_create_command_server_socket(void)
 				errmsg("failed to create watchdog command server socket"),
 				 errdetail("bind on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(saved_errno))));
 	}
-	
+
 	if ( listen(sock, 5) < 0 )
 	{
 		/* listen failed */
@@ -5062,9 +5078,8 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 					 */
 					if (g_cluster.quorum_status == -1)
 					{
-						g_cluster.escalated = false;
 						ereport(LOG,
-								(errmsg("I am the cluster leader node but we do not have enough nodes in cluster"),
+							(errmsg("I am the cluster leader node but we do not have enough nodes in cluster"),
 								 errdetail("waiting for the quorum to start escalation process")));
 					}
 					else
@@ -5399,6 +5414,7 @@ static void start_escalated_node(void)
 	if (g_cluster.escalation_pid > 0)
 	{
 		g_cluster.escalated = true;
+		set_watchdog_node_escalated();
 		ereport(LOG,
 				(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
 		if (strlen(g_cluster.localNode->delegate_ip) > 0)
@@ -5406,7 +5422,6 @@ static void start_escalated_node(void)
 	}
 	else
 	{
-		g_cluster.escalated = false;
 		ereport(LOG,
 				(errmsg("failed to start escalation process")));
 	}
@@ -5438,6 +5453,7 @@ static void resign_from_escalated_node(void)
 	g_cluster.de_escalation_pid = fork_plunging_process();
 	g_cluster.holding_vip = false;
 	g_cluster.escalated = false;
+	reset_watchdog_node_escalated();
 }
 
 /*
