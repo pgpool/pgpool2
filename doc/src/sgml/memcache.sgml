@@ -5,10 +5,8 @@
 
   <para>
     In memory query cache can be used with all modes of
-    <productname>Pgpool-II</productname>. It is different
-    from the query cache on disk that In memory query
-    cache is faster because of the in memory nature of the storage.
-    Moreover <productname>Pgpool-II</productname> does not
+    <productname>Pgpool-II</productname>.
+    <productname>Pgpool-II</productname> does not
     need a restart when the cache gets outdated because of
     the underlying table updates.
   </para>
@@ -29,7 +27,7 @@
     </productname> automatically deletes all the caches related
     to the table. Therefore, the performance will be degraded by a system
     with a lot of updates.
-    If the cache_hit_ratio is lower than 70%, you might want
+    If the query cache hit ratio (it can be checked by using <xref linkend="SQL-SHOW-POOL-CACHE">) is lower than 70%, you might want
     to disable in memory cache.
   </para>
 

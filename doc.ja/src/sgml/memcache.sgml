@@ -9,16 +9,13 @@
   <para>
 <!--
     In memory query cache can be used with all modes of
-    <productname>Pgpool-II</productname>. It is different
-    from the query cache on disk that In memory query
-    cache is faster because of the in memory nature of the storage.
-    Moreover <productname>Pgpool-II</productname> does not
+    <productname>Pgpool-II</productname>. 
+    <productname>Pgpool-II</productname> does not
     need a restart when the cache gets outdated because of
     the underlying table updates.
 -->
 <productname>Pgpool-II</productname>の全てのモードでインメモリクエリキャッシュを利用することができます。
-ディスク上のクエリキャッシュと違い、メモリ上にキャッシュが置かれる特性上高速です。
-また、テーブルが更新によりキャッシュが古くなっても、<productname>Pgpool-II</>の再起動の必要がありません。
+テーブルが更新によりキャッシュが古くなっても、<productname>Pgpool-II</>の再起動の必要はありません。
   </para>
   <para>
 <!--
@@ -44,13 +41,13 @@
     </productname> automatically deletes all the caches related
     to the table. Therefore, the performance will be degraded by a system
     with a lot of updates.
-    If the cache_hit_ratio is lower than 70%, you might want
+    If the query cache hit ratio (it can be checked by using <xref linkend="SQL-SHOW-POOL-CACHE">) is lower than 70%, you might want
     to disable in memory cache.
 -->
 反面、キャッシュをストアするオーバヘッドが生じるので、通常の方法より遅くなる場合も有ります。
 また、あるテーブルが更新された場合、<productname>Pgpool-II</productname>は自動的にそのテーブルに関係する全てのキャッシュを削除します。
 そのため、更新が多いシステムではパフォーマンスが悪くなります。
-キャッシュのヒット率が70%以下の場合は、インメモリクエリキャッシュ無効にしたほうがいいかもしれません。
+キャッシュのヒット率(<xref linkend="SQL-SHOW-POOL-CACHE">を使って確認できます)が70%以下の場合は、インメモリクエリキャッシュ無効にしたほうがいいかもしれません。
   </para>
 
 	<sect2 id="runtime-in-memory-query-cache-enabling">
