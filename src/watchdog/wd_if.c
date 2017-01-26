@@ -103,22 +103,45 @@ wd_IP_up(void)
 {
 	int rtn = WD_OK;
 	char path[WD_MAX_PATH_LEN];
-	char cmd[128];
+	char* command;
 	int i;
 
 	if (strlen(pool_config->delegate_IP) == 0)
 		return WD_NG;
 
-	wd_get_cmd(cmd,pool_config->if_up_cmd);
-	snprintf(path,sizeof(path),"%s/%s",pool_config->if_cmd_path,cmd);
-	rtn = exec_if_cmd(path,pool_config->if_up_cmd);
+	command = wd_get_cmd(pool_config->if_up_cmd);
+	if (command)
+	{
+		snprintf(path,sizeof(path),"%s/%s",pool_config->if_cmd_path,command);
+		rtn = exec_if_cmd(path,pool_config->if_up_cmd);
+		pfree(command);
+	}
+	else
+	{
+		ereport(LOG,
+			(errmsg("watchdog failed to bring up delegate IP"),
+				 errdetail("command not found in if_up_cmd:\"%s\" configuration",pool_config->if_up_cmd)));
+		return WD_NG;
+	}
 
 	if (rtn == WD_OK)
 	{
-		wd_get_cmd(cmd,pool_config->arping_cmd);
-		snprintf(path,sizeof(path),"%s/%s",pool_config->arping_path,cmd);
-		rtn = exec_if_cmd(path,pool_config->arping_cmd);
+		command = wd_get_cmd(pool_config->arping_cmd);
+		if (command)
+		{
+			snprintf(path,sizeof(path),"%s/%s",pool_config->arping_path,command);
+			rtn = exec_if_cmd(path,pool_config->arping_cmd);
+			pfree(command);
+		}
+		else
+		{
+			rtn = WD_NG;
+			ereport(LOG,
+				(errmsg("watchdog failed to bring up delegate IP"),
+					 errdetail("command not found in arping_cmd:\"%s\" configuration",pool_config->arping_cmd)));
+		}
 	}
+
 	if (rtn == WD_OK)
 	{
 		for (i = 0; i < WD_TRY_PING_AT_IPUP; i++)
@@ -149,15 +172,27 @@ wd_IP_down(void)
 {
 	int rtn = WD_OK;
 	char path[WD_MAX_PATH_LEN];
-	char cmd[128];
+	char* command;
 	int i;
 
 	if (strlen(pool_config->delegate_IP) == 0)
 		return WD_NG;
 
-	wd_get_cmd(cmd,pool_config->if_down_cmd);
-	snprintf(path, sizeof(path), "%s/%s", pool_config->if_cmd_path, cmd);
-	rtn = exec_if_cmd(path,pool_config->if_down_cmd);
+	command = wd_get_cmd(pool_config->if_down_cmd);
+	if (command)
+	{
+		snprintf(path, sizeof(path), "%s/%s", pool_config->if_cmd_path, command);
+		rtn = exec_if_cmd(path,pool_config->if_down_cmd);
+		pfree(command);
+	}
+	else
+	{
+		ereport(LOG,
+			(errmsg("watchdog failed to bring down delegate IP"),
+				 errdetail("command not found in if_down_cmd:\"%s\" configuration",pool_config->if_down_cmd)));
+		return WD_NG;
+	}
+
 
 	if (rtn == WD_OK)
 	{
@@ -186,22 +221,20 @@ wd_IP_down(void)
 }
 
 
-int
-wd_get_cmd(char * buf, char * cmd)
+char*
+wd_get_cmd(char* cmd)
 {
-	int i,j;
-	i = 0;
-	while(isspace(cmd[i]) != 0)
+	char *command = NULL;
+
+	if (cmd && *cmd)
 	{
-		i++;
+		char* tmp_str = pstrdup(cmd);
+		char* token = strtok(tmp_str," ");
+		if (token)
+			command = pstrdup(token);
+		pfree(tmp_str);
 	}
-	j = 0;
-	while(isspace(cmd[i]) == 0)
-	{
-		buf[j++] = cmd[i++];
-	}
-	buf[j] = '\0';
-	return strlen(buf);
+	return command;
 }
 
 static int
