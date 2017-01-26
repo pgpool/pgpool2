@@ -242,7 +242,7 @@ wd_reaper_watchdog(pid_t pid, bool restart_child)
 void wd_check_network_command_configurations(void)
 {
 	char path[128];
-	char cmd[128];
+	char* command;
 
 	if (pool_config->use_watchdog == 0)
 		return;
@@ -254,38 +254,68 @@ void wd_check_network_command_configurations(void)
 		return;
 
 	/* check setuid bit of ifup command */
-	wd_get_cmd(cmd, pool_config->if_up_cmd);
-	snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, cmd);
-	if (! has_setuid_bit(path))
+	command = wd_get_cmd(pool_config->if_up_cmd);
+	if (command)
 	{
-		ereport(WARNING,
+		snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, command);
+		pfree(command);
+		if (! has_setuid_bit(path))
+		{
+			ereport(WARNING,
 				(errmsg("checking setuid bit of if_up_cmd"),
-				 errdetail("ifup[%s] doesn't have setuid bit", path)));
+					 errdetail("ifup[%s] doesn't have setuid bit", path)));
+		}
+	}
+	else
+	{
+		ereport(FATAL,
+			(errmsg("invalid configuration for if_up_cmd parameter"),
+				 errdetail("unable to get command from \"%s\"",pool_config->if_up_cmd)));
 	}
 	/* check setuid bit of ifdown command */
-	wd_get_cmd(cmd, pool_config->if_down_cmd);
-	snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, cmd);
-	if (! has_setuid_bit(path))
+	command = wd_get_cmd(pool_config->if_down_cmd);
+	if (command)
 	{
-		ereport(WARNING,
-				(errmsg("checking setuid bit of if_down_cmd"),
-				 errdetail("ifdown[%s] doesn't have setuid bit", path)));
+		snprintf(path, sizeof(path), "%s/%s", pool_config->ifconfig_path, command);
+		pfree(command);
+		if (! has_setuid_bit(path))
+		{
+			ereport(WARNING,
+					(errmsg("checking setuid bit of if_down_cmd"),
+					 errdetail("ifdown[%s] doesn't have setuid bit", path)));
+		}
+	}
+	else
+	{
+		ereport(FATAL,
+			(errmsg("invalid configuration for if_down_cmd parameter"),
+				 errdetail("unable to get command from \"%s\"",pool_config->if_down_cmd)));
 	}
 
 	/* check setuid bit of arping command */
-	wd_get_cmd(cmd, pool_config->arping_cmd);
-	snprintf(path, sizeof(path), "%s/%s", pool_config->arping_path, cmd);
-	if (! has_setuid_bit(path))
+	command = wd_get_cmd(pool_config->arping_cmd);
+	if (command)
 	{
-		ereport(WARNING,
-				(errmsg("checking setuid bit of arping command"),
-				 errdetail("arping[%s] doesn't have setuid bit", path)));
+		snprintf(path, sizeof(path), "%s/%s", pool_config->arping_path, command);
+		pfree(command);
+		if (! has_setuid_bit(path))
+		{
+			ereport(WARNING,
+					(errmsg("checking setuid bit of arping command"),
+					 errdetail("arping[%s] doesn't have setuid bit", path)));
 
+		}
+	}
+	else
+	{
+		ereport(FATAL,
+			(errmsg("invalid configuration for arping_cmd parameter"),
+				 errdetail("unable to get command from \"%s\"",pool_config->arping_cmd)));
 	}
 }
 
-/* 
- * if the file has setuid bit and the owner is root, it returns 1, otherwise returns 0 
+/*
+ * if the file has setuid bit and the owner is root, it returns 1, otherwise returns 0
  */
 static int
 has_setuid_bit(char * path)

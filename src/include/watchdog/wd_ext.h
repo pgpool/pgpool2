@@ -96,7 +96,7 @@ extern bool wd_get_ping_result(char* hostname, int exit_status, int outfd);
 /* wd_if.c */
 extern int wd_IP_up(void);
 extern int wd_IP_down(void);
-extern int wd_get_cmd(char * buf, char * cmd);
+extern char* wd_get_cmd(char* cmd);
 
 /* wd_lifecheck.c */
 extern int is_wd_lifecheck_ready(void);
