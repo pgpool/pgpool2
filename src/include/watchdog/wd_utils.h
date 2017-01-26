@@ -53,7 +53,7 @@ extern pid_t wd_issue_ping_command(char* hostname, int* outfd);
 extern List* get_all_local_ips(void);
 extern int wd_IP_up(void);
 extern int wd_IP_down(void);
-extern int wd_get_cmd(char * buf, char * cmd);
+extern char* wd_get_cmd(char* cmd);
 extern int create_monitoring_socket(void);
 extern bool read_interface_change_event(int sock, bool* link_event, bool* deleted);
 extern bool is_interface_up(struct ifaddrs *ifa);
