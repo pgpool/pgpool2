@@ -147,12 +147,12 @@ wd_get_cmd(char * buf, char * cmd)
 {
 	int i,j;
 	i = 0;
-	while(isspace(cmd[i]) != 0)
+	while(cmd[i] && isspace(cmd[i]) != 0)
 	{
 		i++;
 	}
 	j = 0;
-	while(isspace(cmd[i]) == 0)
+	while(cmd[i] && isspace(cmd[i]) == 0)
 	{
 		buf[j++] = cmd[i++];
 	}
