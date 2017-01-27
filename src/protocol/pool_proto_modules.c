@@ -1404,6 +1404,10 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pmsg = pool_pending_messages_create('C', len, contents);
 		pool_pending_message_add(pmsg);
 		pool_unset_query_in_progress();
+		/*
+		 * Remeber that we send flush or sync message to backend.
+		 */
+		pool_unset_pending_response();
 	}
 
 	return POOL_CONTINUE;
@@ -2307,7 +2311,6 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			if (!pool_is_query_in_progress() && !pool_is_ignore_till_sync())
 				pool_set_query_in_progress();
 			status = Close(frontend, backend, len, contents);
-			pool_set_pending_response();
 			break;
 
 		case 'D':	/* Describe */

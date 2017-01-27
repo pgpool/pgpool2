@@ -1000,6 +1000,9 @@ void pool_set_pending_response(void)
 		ereport(ERROR,
 				(errmsg("pool_set_pending_response: session context is not initialized")));
 
+	ereport(DEBUG1,
+			(errmsg("pool_set_pending_response")));
+
 	session_context->is_pending_response = true;
 }
 
@@ -1011,6 +1014,9 @@ void pool_unset_pending_response(void)
 	if (!session_context)
 		ereport(ERROR,
 				(errmsg("pool_unset_pending_response: session context is not initialized")));
+
+	ereport(DEBUG1,
+			(errmsg("pool_unset_pending_response")));
 
 	session_context->is_pending_response = false;
 }
