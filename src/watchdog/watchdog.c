@@ -1637,6 +1637,7 @@ static bool read_ipc_socket_and_process(int sock, bool *remove_socket)
 	ipcCommand = create_command_object(data_len);
 	ipcCommand->sourceIPCSocket = sock;
 	ipcCommand->commandSource = COMMAND_SOURCE_IPC;
+	ipcCommand->sourceWdNode = g_cluster.localNode;
 	ipcCommand->sourcePacket.type = type;
 	ipcCommand->sourcePacket.len = data_len;
 	gettimeofday(&ipcCommand->commandTime, NULL);
@@ -2119,8 +2120,12 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 	else
 	{
 		MemoryContext oldCxt;
-		ereport(DEBUG2,
-				(errmsg("no similar failover in progress")));
+		ereport(DEBUG1,
+				(errmsg("proceeding with the failover command [%s] request from %s",
+						func_name,
+						ipcCommand->commandSource == COMMAND_SOURCE_IPC?
+						"local pgpool-II":ipcCommand->sourceWdNode->nodeName),
+				 errdetail("no similar failover is in progress")));
 		/*
 		 * okay now ask all nodes to start failover
 		 */
