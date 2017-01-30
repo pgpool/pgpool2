@@ -1408,6 +1408,14 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		 * Remeber that we send flush or sync message to backend.
 		 */
 		pool_unset_pending_response();
+
+		/*
+		 * Remove send message
+		 */
+		ereport(DEBUG1,
+				(errmsg("Close: removing sent message %c %s", *contents, contents+1)));
+
+		pool_remove_sent_message(*contents == 'S'?'P':'B', contents+1);
 	}
 
 	return POOL_CONTINUE;
