@@ -901,6 +901,31 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 #ifdef NOT_USED
 		pool_unset_query_in_progress();
 #endif
+
+		/*
+		 * Take of "writing transaction" flag.
+		 */
+		if (!is_select_query(node, query))
+		{
+			/*
+			 * If the query was not READ SELECT, and we are in an
+			 * explicit transaction, remember that we had a write
+			 * query in this transaction.
+			 */
+			if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
+			{
+				/* However, if the query is "SET TRANSACTION READ ONLY" or its variant,
+				 * don't set it.
+				 */
+				if (!pool_is_transaction_read_only(node))
+				{
+					ereport(DEBUG1,
+							(errmsg("not SET TRANSACTION READ ONLY")));
+
+					pool_set_writing_transaction();
+				}
+			}
+		}
 	}
 
 	return POOL_CONTINUE;
