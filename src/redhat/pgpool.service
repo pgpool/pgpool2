@@ -1,10 +1,15 @@
 [Unit]
-Description=pgpool-II
+Description=Pgpool-II
 After=syslog.target network.target
 
 [Service]
+Type=forking
+
 EnvironmentFile=-/etc/sysconfig/pgpool
+
 ExecStart=/usr/bin/pgpool -f /etc/pgpool-II/pgpool.conf $OPTS
+ExecStop=/usr/bin/pgpool -f /etc/pgpool-II/pgpool.conf stop
+ExecReload=/usr/bin/pgpool -f /etc/pgpool-II/pgpool.conf reload
 
 [Install]
 WantedBy=multi-user.target
