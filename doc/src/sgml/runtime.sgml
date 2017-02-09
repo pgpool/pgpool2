@@ -111,6 +111,18 @@ password: <userinput>your_password</userinput>
   <sect2 id="running-mode">
     <title>Running mode of Pgpool-II</title>
 
+    <indexterm zone="running-mode">
+      <primary>streaming replication mode</primary>
+    </indexterm>
+
+    <indexterm zone="running-mode">
+      <primary>master slave mode</primary>
+    </indexterm>
+
+    <indexterm zone="running-mode">
+      <primary>native replication mode</primary>
+    </indexterm>
+
     <para>
       There are four different running modes in <productname>Pgpool-II</>: streaming
       replication mode, master slave mode, native replication mode and

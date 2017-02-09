@@ -82,16 +82,47 @@
           </tgroup>
         </table>
 
+	<note>
+	  <para>
+	    The "master node" referes to a node which has the
+	    "youngest (or the smallest) node id" among live the
+	    database nodes. In <link linkend="running-mode">streaming
+	    replication mode</link>, this may be different from
+	    primary node. In <xref linkend="failover-command-table">,
+	    %m is the new master node chosen
+	    by <productname>Pgpool-II</productname>. It is the node
+	    being assigned the youngest (smallest) node id which is
+	    alive. For example if you have 3 nodes, namely node 0, 1,
+	    2. Suppose node 1 the primary and all of them are healthy
+	    (no down node). If node 1 fails, failover_command is
+	    called with %m = 0.
+	  </para>
+	</note>
+
         <note>
           <para>
-            When a failover is performed, <productname>Pgpool-II</productname> kills all
-            its child processes, which will in turn terminate all the active sessions to
+            When a failover is performed,
+            basically <productname>Pgpool-II</productname> kills all
+            its child processes, which will in turn terminate all the
+            active sessions to
             <productname>Pgpool-II</productname>. After that <productname>Pgpool-II</productname>
             invokes the <command>failover_command</command> and after the command completion
             <productname>Pgpool-II</productname> starts new child processes
             which makes it ready again to accept client connections.
           </para>
+	  <para>
+	    However from <productname>Pgpool-II</productname> 3.6, In
+	    the steaming replication mode, client sessions will not be
+	    disconnected when a fail-over occurs any more if the
+	    session does not use the failed standby server. If the
+	    primary server goes down, still all sessions will be
+	    disconnected. Health check timeout case will also cause
+	    the full session disconnection. Other health check error,
+	    including retry over case does not trigger full session
+	    disconnection.
+	  </para>
         </note>
+
         <para>
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
