@@ -101,7 +101,7 @@ typedef struct {
 							 * might be out of control of
 							 * pgpool-II. So we use "char" here.
 							 */
-	char		swallow_termination;
+	volatile char		swallow_termination;
 							/* Flag to mark that if the connection will
 							 * be terminated by the backend. it should
 							 * not be treated as a backend node failure.
