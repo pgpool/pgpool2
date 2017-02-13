@@ -88,10 +88,10 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 		MemoryContext memory_context = query_context->memory_context;
 		session_context = pool_get_session_context(false);
 		pool_unset_query_in_progress();
-		if (query_context->pg_terminate_backend_conn)
+		if (!pool_is_command_success() && query_context->pg_terminate_backend_conn)
 		{
 			ereport(DEBUG1,
-				 (errmsg("resetting the connection flag for pg_terminate_backend")));
+				 (errmsg("clearing the connection flag for pg_terminate_backend")));
 			pool_unset_connection_will_be_terminated(query_context->pg_terminate_backend_conn);
 		}
 		query_context->pg_terminate_backend_conn = NULL;
