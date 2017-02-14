@@ -872,8 +872,16 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	}
 	else		/* streaming replication mode */
 	{
+		POOL_PENDING_MESSAGE *pmsg;
+
 		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, true);
+
+		/* Add pending message */
+		pmsg = pool_pending_messages_create('E', len, contents);
+		pool_pending_messages_dest_set(pmsg, query_context);
+		pool_pending_messages_query_set(pmsg, query_context);
+		pool_pending_message_add(pmsg);
 
 #ifdef NOT_USED
 		/*
@@ -1251,13 +1259,23 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	}
 	else if (STREAM)
 	{
+		POOL_PENDING_MESSAGE *pmsg;
+
 		/* XXX fix me:even with streaming replication mode, couldn't we have a deadlock */
 		pool_set_query_in_progress();
 		pool_clear_sync_map();
 		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, true);
 		pool_add_sent_message(session_context->uncompleted_message);
+
+		/* Add pending message */
+		pmsg = pool_pending_messages_create('P', len, contents);
+		pool_pending_messages_dest_set(pmsg, query_context);
+		pool_pending_message_add(pmsg);
+
 		pool_unset_query_in_progress();
+
+		pool_set_pending_response();
 	}
 	else
 	{
@@ -1331,19 +1349,22 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	session_context->query_context = query_context;
 
-/*
- * Fix me
- */
-#ifdef NOT_USED
+	/*
+	 * Take care the case when the previous parse message has been sent to
+	 * other than primary node. In this case, we send a parse message to the
+	 * primary node.
+	 */
 	if (pool_config->load_balance_mode && pool_is_writing_transaction())
 	{
-		pool_where_to_send(query_context, query_context->original_query,
-						   query_context->parse_tree);
+		if (!STREAM)
+		{
+			pool_where_to_send(query_context, query_context->original_query,
+							   query_context->parse_tree);
+		}
 
 		if (parse_before_bind(frontend, backend, parse_msg) != POOL_CONTINUE)
 			return POOL_END;
 	}
-#endif
 
 	/*
 	 * Start a transaction if necessary in replication mode
@@ -1389,8 +1410,16 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	if (STREAM)
 	{
+		POOL_PENDING_MESSAGE *pmsg;
+
 		pool_unset_query_in_progress();
 		pool_add_sent_message(session_context->uncompleted_message);
+
+		/* Add pending message */
+		pmsg = pool_pending_messages_create('B', len, contents);
+		pool_pending_messages_dest_set(pmsg, query_context);
+		pool_pending_messages_query_set(pmsg, query_context);
+		pool_pending_message_add(pmsg);
 	}
 	
 	if(rewrite_msg)
@@ -1459,7 +1488,17 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID, nowait);
 
 	if (STREAM)
+	{
+		POOL_PENDING_MESSAGE *pmsg;
+
+		/* Add pending message */
+		pmsg = pool_pending_messages_create('D', len, contents);
+		pool_pending_messages_dest_set(pmsg, query_context);
+		pool_pending_messages_query_set(pmsg, query_context);
+		pool_pending_message_add(pmsg);
+
 		pool_unset_query_in_progress();
+	}
 
 	return POOL_CONTINUE;
 }
@@ -1539,8 +1578,14 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, false);
 		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
 
+		/* Add pending message */
 		pmsg = pool_pending_messages_create('C', len, contents);
+		pool_pending_messages_dest_set(pmsg, query_context);
+		pool_pending_messages_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
+
+		dump_pending_message();
+
 		pool_unset_query_in_progress();
 		/*
 		 * Remeber that we send flush or sync message to backend.
@@ -1548,7 +1593,7 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_unset_pending_response();
 
 		/*
-		 * Remove send message
+		 * Remove sent message
 		 */
 		ereport(DEBUG1,
 				(errmsg("Close: removing sent message %c %s", *contents, contents+1)));
@@ -1991,7 +2036,7 @@ POOL_STATUS ParseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 
-	if (session_context->uncompleted_message)
+	if (!STREAM && session_context->uncompleted_message)
 	{
 		POOL_QUERY_CONTEXT *qc;
 
@@ -2014,7 +2059,7 @@ POOL_STATUS BindComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backen
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 
-	if (session_context->uncompleted_message)
+	if (!STREAM && session_context->uncompleted_message)
 	{
 		POOL_QUERY_CONTEXT *qc;
 
@@ -2564,6 +2609,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 	}
 
     read_kind_from_backend(frontend, backend, &kind);
+
 	/*
 	 * Sanity check
 	 */
@@ -2601,13 +2647,13 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case '1':	/* ParseComplete */
 				status = ParseComplete(frontend, backend);
 				pool_set_command_success();
-				if (REPLICATION||RAW_MODE)
+//				if (REPLICATION||RAW_MODE)
 					pool_unset_query_in_progress();
 				break;
 
 			case '2':	/* BindComplete */
 				status = BindComplete(frontend, backend);
-				pool_set_command_success();
+//				pool_set_command_success();
 				if (REPLICATION||RAW_MODE)
 					pool_unset_query_in_progress();
 				break;
@@ -2615,7 +2661,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case '3':	/* CloseComplete */
 				status = CloseComplete(frontend, backend);
 				pool_set_command_success();
-				if (REPLICATION||RAW_MODE)
+//				if (REPLICATION||RAW_MODE)
 					pool_unset_query_in_progress();
 				break;
 
@@ -2635,7 +2681,8 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case 'C':	/* CommandComplete */				
 				status = CommandComplete(frontend, backend);
 				pool_set_command_success();
-				if ((REPLICATION || RAW_MODE) && pool_is_doing_extended_query_message())
+//				if ((REPLICATION || RAW_MODE) && pool_is_doing_extended_query_message())
+				if (pool_is_doing_extended_query_message())
 					pool_unset_query_in_progress();
 				break;
 
@@ -2681,6 +2728,9 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 #endif
 				break;
 		}
+
+		if (STREAM && pool_is_doing_extended_query_message())
+			pool_reset_preferred_master_node_id();
 	}
 	else
 	{
@@ -3139,6 +3189,11 @@ void per_node_error_log(POOL_CONNECTION_POOL *backend, int node_id, char *query,
 	}
 }
 
+/*
+ * Send parse message to primary/master node and wait for reply if particular
+ * message is not yet parsed on the primary/master node but parsed on other
+ * node. Caller must provide the parse message data as "message".
+ */
 static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 									 POOL_CONNECTION_POOL *backend,
 									 POOL_SENT_MESSAGE *message)
@@ -3153,20 +3208,98 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 
 	memcpy(backup, qc->where_to_send, sizeof(qc->where_to_send));
 
-	/* expect to send to master node only */
-	for (i = 0; i < NUM_BACKENDS; i++)
+	if (STREAM)
 	{
-		if (qc->where_to_send[i] && statecmp(qc->query_state[i], POOL_PARSE_COMPLETE) < 0)
+		if (message->kind == 'P' && qc->where_to_send[PRIMARY_NODE_ID] == 0)
 		{
-			ereport(DEBUG1,
-				(errmsg("parse before bind"),
-					 errdetail("waiting for backend %d completing parse", i)));
+			bool data_pushed;
+			POOL_PENDING_MESSAGE *pmsg;
 
-			pool_extended_send_and_wait(qc, "P", len, contents, 1, i, false);
+			/* we are in streaming replication mode and the parse message has not
+			 * been sent to primary yet */
+
+#ifdef NOT_USED
+			/* extract pending data and save to stack */
+			data_pushed = pool_push_pending_data(backend->slots[PRIMARY_NODE_ID]->con);
+#endif
+
+			/* Send parse message to primary node */
+			ereport(DEBUG1,
+					(errmsg("parse before bind"),
+					 errdetail("waiting for primary completing parse")));
+
+			pool_extended_send_and_wait(qc, "P", len, contents, 1, PRIMARY_NODE_ID, false);
+			memset(qc->where_to_send, 0, sizeof(qc->where_to_send));
+			qc->where_to_send[PRIMARY_NODE_ID] = 1;
+			qc->virtual_master_node_id = PRIMARY_NODE_ID;
+
+			/* Add pending message */
+			pmsg = pool_pending_messages_create('P', len, contents);
+			pool_pending_messages_dest_set(pmsg, qc);
+			pool_pending_message_add(pmsg);
+
+#ifdef NOT_USED
+			/* popd data from stack */
+			if (data_pushed)
+			{
+				int poplen;
+
+				pool_pop(backend->slots[PRIMARY_NODE_ID]->con, &poplen);
+				ereport(DEBUG1,
+						(errmsg("parse_before_bind: popped data len:%d", poplen)));
+
+			}
+
+			/* read and discard response message of parse */
+			kind = '0';
+			while (kind != '1')
+			{
+				PG_TRY();
+				{
+					pool_read(CONNECTION(backend, PRIMARY_NODE_ID), &kind, 1);
+					ereport(DEBUG1,
+							(errmsg("parse_before_bind: discarding kind \"%c\"", kind)));
+					pool_read(CONNECTION(backend, PRIMARY_NODE_ID), &len, sizeof(len));
+					len = ntohl(len) - sizeof(len);
+					if (len > 0)
+					{
+						pool_read2(CONNECTION(backend, PRIMARY_NODE_ID), len);
+					}
+				}
+				PG_CATCH();
+				{
+					PG_RE_THROW();
+				}
+				PG_END_TRY();
+			}
+#endif
+			return POOL_CONTINUE;
 		}
 		else
 		{
-			qc->where_to_send[i] = 0;
+			ereport(DEBUG1,
+					(errmsg("parse before bind"),
+					 errdetail("no need to re-send parse")));
+			return POOL_CONTINUE;
+		}
+	}
+	else
+	{
+		/* expect to send to master node only */
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if (qc->where_to_send[i] && statecmp(qc->query_state[i], POOL_PARSE_COMPLETE) < 0)
+			{
+				ereport(DEBUG1,
+						(errmsg("parse before bind"),
+						 errdetail("waiting for backend %d completing parse", i)));
+
+				pool_extended_send_and_wait(qc, "P", len, contents, 1, i, false);
+			}
+			else
+			{
+				qc->where_to_send[i] = 0;
+			}
 		}
 	}
 

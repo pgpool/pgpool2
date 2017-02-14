@@ -96,6 +96,8 @@ typedef struct {
 typedef enum {
 	POOL_PARSE,
 	POOL_BIND,
+	POOL_EXECUTE,
+	POOL_DESCRIBE,
 	POOL_CLOSE
 } POOL_MESSAGE_TYPE;
 
@@ -103,7 +105,16 @@ typedef struct {
 	POOL_MESSAGE_TYPE type;
 	char *contents;		/* message packet contents excluding message kind */
 	int contents_len;	/* message packet length */
+	char query[QUERY_STRING_BUFFER_LEN];	/* copy of original query */
+	char statement[MAX_IDENTIFIER_LEN];	/* prepared statment name if any */
+	char portal[MAX_IDENTIFIER_LEN];	/* portal name if any */
+	bool is_rows_returned;		/* true if the message could produce row data */
+	int node_ids[2];	/* backend node ids this message was sent to. -1 means no message was sent. */
+	POOL_QUERY_CONTEXT *query_context;	/* query context */
 } POOL_PENDING_MESSAGE;
+
+/* Return true if node_id is one of node_ids */
+#define IS_SENT_NODE_ID(msg, node_id)	(msg->node_ids[0] == node_id || msg->node_ids[1] == node_id)
 
 /*
  * Per session context:
@@ -215,6 +226,9 @@ typedef struct {
 	int major;
 	/* Protocol minor version number */
 	int minor;
+
+	/* Preferred "master" node id. Only used for SimpleForwardToFrontend. */
+	int preferred_master_node_id;
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
@@ -267,14 +281,21 @@ extern bool pool_is_pending_response(void);
 extern void pool_pending_messages_init (void);
 extern void pool_pending_messages_destroy(void);
 extern POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *contents);
+extern void pool_pending_messages_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context);
+extern void pool_pending_messages_query_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context);
 extern void pool_pending_message_add(POOL_PENDING_MESSAGE* message);
+extern POOL_PENDING_MESSAGE *pool_pending_message_pull_out(void);
 extern POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type);
 extern char pool_get_close_message_spec(POOL_PENDING_MESSAGE *msg);
 extern char *pool_get_close_message_name(POOL_PENDING_MESSAGE *msg);
+extern void dump_pending_message(void);
 extern void pool_set_major_version(int major);
 extern int pool_get_major_version(void);
 extern void pool_set_minor_version(int minor);
 extern int pool_get_minor_version(void);
+extern void pool_set_preferred_master_node_id(int node_id);
+extern int pool_get_preferred_master_node_id(void);
+extern void pool_reset_preferred_master_node_id(void);
 
 #ifdef NOT_USED
 extern void pool_add_prep_where(char *name, bool *map);

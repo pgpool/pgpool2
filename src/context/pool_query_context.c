@@ -86,6 +86,10 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 	if (query_context)
 	{
 		MemoryContext memory_context = query_context->memory_context;
+
+		ereport(LOG,
+				(errmsg("pool_query_context_destroy: query context:%x", query_context)));
+
 		session_context = pool_get_session_context(false);
 		pool_unset_query_in_progress();
 		if (!pool_is_command_success() && query_context->pg_terminate_backend_conn)
@@ -101,6 +105,41 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 		MemoryContextDelete(memory_context);
 	}
 }
+
+#ifdef NOT_USED
+/*
+ * Perform deep copy of given query context.
+ */
+POOL_QUERY_CONTEXT *pool_query_context_copy(POOL_QUERY_CONTEXT *query_context)
+{
+	MemoryContext old_context;
+	POOL_QUERY_CONTEXT *qc;
+	int len;
+
+	qc = pool_init_query_context();
+	memcpy(qc, query_context, sizeof(POOL_QUERY_CONTEXT));
+
+	old_context = MemoryContextSwitchTo(query_context->memory_context);
+
+	if (query_context->original_query)
+	{
+		len = strlen(query_context->original_query)+1;
+		qc->originarl_query = palloc(len);
+		memcpy(qc->originarl_query, query_context->original_query, len);
+	}
+
+	if (query_context->rewritten_query)
+	{
+		len = strlen(query_context->rewritten_query)+1;
+		qc->originarl_query = palloc(len);
+		memcpy(qc->originarl_query, query_context->rewritten_query, len);
+	}
+
+	if (query_context->parse_tree)
+	{
+	}
+}
+#endif
 
 /*
  * Start query
@@ -326,6 +365,12 @@ int pool_virtual_master_db_node_id(void)
 	 */
 	if (MASTER_SLAVE)
 	{
+		int node_id;
+
+		node_id = pool_get_preferred_master_node_id();
+		if (node_id >= 0)
+			return node_id;
+
 		return PRIMARY_NODE_ID;
 	}
 	return my_master_node_id;
@@ -920,11 +965,11 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 
 		send_extended_protocol_message(backend, i, kind, str_len, str);
 
-		if ((*kind == 'E' || *kind == 'C') && STREAM)
+		if ((*kind == 'P' || *kind == 'E' || *kind == 'C') && STREAM)
 		{
 			/*
 			 * Send flush message to backend to make sure that we get any response
-			 * from backend in Sream replication mode.
+			 * from backend in Streaming replication mode.
 			 */
 
 			POOL_CONNECTION *cp = CONNECTION(backend, i);

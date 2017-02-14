@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2011,6 +2011,8 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		 */
 		if (pool_is_pending_response())
 		{
+			pool_push_pending_data(backend);
+#ifdef NOT_USED
 			pool_write(backend, "H", 1);
 			len = htonl(sizeof(len));
 			pool_write_and_flush(backend, &len, sizeof(len));
@@ -2074,6 +2076,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 					}
 				}
 			}
+#endif
 		}
 
 		if (pname_len == 0)
@@ -3284,11 +3287,60 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
 	POOL_QUERY_CONTEXT *query_context = session_context->query_context;
 	POOL_SYNC_MAP_STATE use_sync_map = pool_use_sync_map();
+	POOL_PENDING_MESSAGE *msg = NULL;
+	static POOL_PENDING_MESSAGE *previous_msg = NULL;
+	bool do_this_node_id;
 
 	int num_executed_nodes = 0;
 	int first_node = -1;
 
 	memset(kind_map, 0, sizeof(kind_map));
+
+	if (STREAM && pool_get_session_context(true) && pool_is_doing_extended_query_message())
+	{
+		msg = pool_pending_message_pull_out();
+		if (!msg)
+		{
+			/*
+			 * There is no pending message in the queue. This could mean we
+			 * are receiving data rows.  If so, previous_msg must exist and the
+			 * query must be SELECT.
+			 */
+			if (previous_msg == NULL)
+			{
+				/* no previous message. let's unset query in progress flag. */
+				ereport(DEBUG1,
+						(errmsg("read_kind_from_backend: no pending message, no previous message")));
+				pool_unset_query_in_progress();
+			}
+			else
+			{
+				/*
+				 * previous message exists. Let's see if it could return
+				 * rows. If not, we cannot predict what kind of message will
+				 * arrive, so just unset query in progress.
+				 */
+				if (previous_msg->is_rows_returned)
+				{
+					ereport(DEBUG1,
+							(errmsg("read_kind_from_backend: no pending message, previous message exists, rows returning")));
+					session_context->query_context = previous_msg->query_context;
+					pool_set_query_in_progress();
+				}
+				else
+					pool_unset_query_in_progress();
+			}
+		}
+		else
+		{
+			ereport(LOG,
+					(errmsg("read_kind_from_backend: pending message exists. query context: %x",
+						msg->query_context)));
+			previous_msg = msg;
+			session_context->query_context = msg->query_context;
+			pool_set_query_in_progress();
+		}
+	}
 
 	if (MASTER_SLAVE)
 	{
@@ -3321,20 +3373,35 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	{
 		/* initialize degenerate record */
 		degenerate_node[i] = 0;
+		do_this_node_id = false;
+		kind_list[i] = 0;
 
+#ifdef NOT_USED
 		if (!VALID_BACKEND(i) || use_sync_map == POOL_SYNC_MAP_EMPTY)
 		{
 			kind_list[i] = 0;
 			continue;
 		}
+#endif
 
+#ifdef NOT_USED
+		if (STREAM && pool_is_doing_extended_query_message())
+		{
+			if (msg && IS_SENT_NODE_ID(msg, i))
+			{
+				do_this_node_id = true;
+			}
+		}
+		else
+		{
+			if (VALID_BACKEND(i))
+			{
+				do_this_node_id = true;
+			}
+		}
+#endif
 		if (VALID_BACKEND(i))
 		{
-			if (use_sync_map == POOL_SYNC_MAP_IS_VALID && !pool_is_set_sync_map(i))
-			{
-				continue;
-			}
-
 			num_executed_nodes++;
 
 			if (first_node < 0)
@@ -3362,9 +3429,14 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 							 errdetail("kind == 0")));
 				}
 
+				ereport(LOG,
+					(errmsg("reading backend data packet kind"),
+						 errdetail("backend:%d kind:'%c'",i, kind)));
+#ifdef NOT_USED
 				ereport(DEBUG2,
 					(errmsg("reading backend data packet kind"),
 						 errdetail("backend:%d kind:'%c'",i, kind)));
+#endif
 
 				/*
 				 * Read and discard parameter status and notice messages
@@ -3707,6 +3779,22 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
                     errdetail("%s",msg->data),
                         errhint("check data consistency among db nodes")));
 
+	}
+
+	/*
+	 * If we are in in streaming replication mode and we doing an extended
+	 * query, check the kind we just read.  If it's one of 'D', 'E', or 'N',
+	 * and the pulled out message was 'execute', the message must be put back
+	 * to the tail of queue so that next Command Complete message from backend
+	 * matches the execute message.
+	 */
+	if (STREAM && pool_is_doing_extended_query_message() && msg)
+	{
+		if (msg->type == POOL_EXECUTE &&
+			(*decided_kind == 'D' || *decided_kind == 'E' || *decided_kind == 'N'))
+		{
+			pool_pending_message_add(msg);
+		}
 	}
 
 	return;
@@ -4835,4 +4923,92 @@ void pool_dump_valid_backend(int backend_id)
             (errmsg("RAW_MODE:%d REAL_MASTER_NODE_ID:%d pool_is_node_to_be_sent_in_current_query:%d my_backend_status:%d",
                     RAW_MODE, REAL_MASTER_NODE_ID, pool_is_node_to_be_sent_in_current_query(backend_id),
                     *my_backend_status[backend_id])));
+}
+
+/*
+ * Read pending data from backend and push them into pending statck if any.
+ * Should be used for streaming replication mode and extended query.
+ * Returns true if data was actually pushed.
+ */
+bool pool_push_pending_data(POOL_CONNECTION *backend)
+{
+	POOL_SESSION_CONTEXT *session_context;
+	int len;
+	bool data_pushed = false;
+
+	if (!pool_get_session_context(true) || !pool_is_doing_extended_query_message())
+		return data_pushed;
+	if (!pool_is_pending_response())
+		return data_pushed;
+
+	/*
+	 * In streaming replication mode, send flush message before going any
+	 * further to retrieve and save any pending response packet from
+	 * backend. The saved packets will be poped up before returning to
+	 * caller. This preserves the user's expectation of packet sequence.
+	 */
+	pool_write(backend, "H", 1);
+	len = htonl(sizeof(len));
+	pool_write_and_flush(backend, &len, sizeof(len));
+	ereport(DEBUG1,
+			(errmsg("pool_push_pending_data: send flush message to %d", backend->db_node_id)));
+
+	/*
+	 * If we have not send the flush message to load balance node yet,
+	 * send a flush message to the load balance node. Otherwise only
+	 * the non load balance node (usually the master node) produces
+	 * response if we do not send sync message to it yet.
+	 */
+	session_context = pool_get_session_context(false);
+
+	if (backend->db_node_id != session_context->load_balance_node_id)
+	{
+		POOL_CONNECTION *con;
+
+		con = session_context->backend->slots[session_context->load_balance_node_id]->con;
+		pool_write(con, "H", 1);
+		len = htonl(sizeof(len));
+		pool_write_and_flush(con, &len, sizeof(len));
+		ereport(DEBUG1,
+				(errmsg("pool_push_pending_data: send flush message to %d", con->db_node_id)));
+	}
+
+	for(;;)
+	{
+		int len;
+		char *buf;
+		char kind;
+
+		pool_set_timeout(-1);
+
+		pool_read(backend, &kind, 1);
+		pool_push(backend, &kind, 1);
+		data_pushed = true;
+
+		pool_read(backend, &len, sizeof(len));
+		pool_push(backend, &len, sizeof(len));
+
+		len = ntohl(len);
+		if ((len - sizeof(len)) > 0)
+		{
+			len -= sizeof(len);
+			buf = palloc(len);
+			pool_read(backend, buf, len);
+			pool_push(backend, buf, len);
+		}
+
+		/* check if there's any pending data */
+		if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
+		{
+			pool_set_timeout(0);
+			if (pool_check_fd(backend) != 0)
+			{
+				ereport(DEBUG1,
+						(errmsg("pool_push_pending_data: no pending data")));
+				pool_set_timeout(-1);
+				break;
+			}
+		}
+	}
+	return data_pushed;
 }
