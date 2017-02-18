@@ -3288,7 +3288,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	POOL_QUERY_CONTEXT *query_context = session_context->query_context;
 	POOL_SYNC_MAP_STATE use_sync_map = pool_use_sync_map();
 	POOL_PENDING_MESSAGE *msg = NULL;
-	static POOL_PENDING_MESSAGE *previous_msg = NULL;
+	POOL_PENDING_MESSAGE *previous_message;
 	bool do_this_node_id;
 
 	int num_executed_nodes = 0;
@@ -3299,6 +3299,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	if (STREAM && pool_get_session_context(true) && pool_is_doing_extended_query_message())
 	{
 		msg = pool_pending_message_pull_out();
+		previous_message = pool_pending_message_get_previous_message();
 		if (!msg)
 		{
 			/*
@@ -3306,7 +3307,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			 * are receiving data rows.  If so, previous_msg must exist and the
 			 * query must be SELECT.
 			 */
-			if (previous_msg == NULL)
+			if (previous_message == NULL)
 			{
 				/* no previous message. let's unset query in progress flag. */
 				ereport(DEBUG1,
@@ -3316,15 +3317,15 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			else
 			{
 				/*
-				 * previous message exists. Let's see if it could return
+				 * Previous message exists. Let's see if it could return
 				 * rows. If not, we cannot predict what kind of message will
 				 * arrive, so just unset query in progress.
 				 */
-				if (previous_msg->is_rows_returned)
+				if (previous_message->is_rows_returned)
 				{
 					ereport(DEBUG1,
 							(errmsg("read_kind_from_backend: no pending message, previous message exists, rows returning")));
-					session_context->query_context = previous_msg->query_context;
+					session_context->query_context = previous_message->query_context;
 					pool_set_query_in_progress();
 				}
 				else
@@ -3336,7 +3337,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			ereport(LOG,
 					(errmsg("read_kind_from_backend: pending message exists. query context: %x",
 						msg->query_context)));
-			previous_msg = msg;
+			pool_pending_message_set_previous_message(msg);
 			session_context->query_context = msg->query_context;
 			pool_set_query_in_progress();
 		}

@@ -1655,6 +1655,9 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	 */
 	pool_unset_ignore_till_sync();
 
+	/* Reset previous message */
+	pool_pending_message_reset_previous_message();
+
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 	use_sync_map = pool_use_sync_map();
@@ -1729,6 +1732,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		/*
 		 * XXX: discard rest of ReadyForQuery packet
 		 */
+
 		if (pool_read_message_length(backend) < 0)
 			return POOL_END;
 
@@ -1795,6 +1799,10 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
+			if (!VALID_BACKEND(i))
+				continue;
+
+#ifdef NOT_USED
 			if (!VALID_BACKEND(i) || use_sync_map == POOL_SYNC_MAP_EMPTY)
 				continue;
 
@@ -1802,6 +1810,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			{
 				continue;
 			}
+#endif
 
 			if (pool_read(CONNECTION(backend, i), &kind, sizeof(kind)))
 				return POOL_END;
@@ -2518,7 +2527,10 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			pool_set_doing_extended_query_message();
 			if (pool_is_ignore_till_sync())
 				pool_unset_ignore_till_sync();
-			if (!pool_is_query_in_progress())
+
+			if (STREAM)
+				pool_unset_query_in_progress();
+			else if (!pool_is_query_in_progress())
 				pool_set_query_in_progress();
 			status = SimpleForwardToBackend(fkind, frontend, backend, len, contents);
 			pool_unset_pending_response();
@@ -2675,6 +2687,11 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				{
 					pool_set_ignore_till_sync();
 					pool_unset_query_in_progress();
+
+					/* Remove all pending messages */
+					while (pool_pending_message_pull_out())
+						;
+					pool_pending_message_reset_previous_message();
 				}
 				break;
 

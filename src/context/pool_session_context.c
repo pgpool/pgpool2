@@ -151,6 +151,9 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Initialize pending message list */
 	pool_pending_messages_init();
 
+	/* Initialize previous pending message */
+	pool_pending_message_reset_previous_message();
+
 	/* Initialize preferred master node id */
 	pool_reset_preferred_master_node_id();
 }
@@ -1361,6 +1364,48 @@ static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *message)
 	memcpy(msg->contents, message->contents, msg->contents_len);
 
 	return msg;
+}
+
+/*
+ * Reset previous message.
+ */
+void pool_pending_message_reset_previous_message(void)
+{
+	if (!session_context)
+	{
+		ereport(ERROR,
+				(errmsg("pool_pending_message_reset_previous_message: session context is not initialized")));
+		return;
+	}
+	session_context->previous_message = NULL;
+}
+
+/*
+ * Set previous message.
+ */
+void pool_pending_message_set_previous_message(POOL_PENDING_MESSAGE *message)
+{
+	if (!session_context)
+	{
+		ereport(ERROR,
+				(errmsg("pool_pending_message_set_previous_message: session context is not initialized")));
+		return;
+	}
+	session_context->previous_message = message;
+}
+
+/*
+ * Get previous message.
+ */
+POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void)
+{
+	if (!session_context)
+	{
+		ereport(ERROR,
+				(errmsg("pool_pending_message_get_previous_message: session context is not initialized")));
+		return;
+	}
+	return session_context->previous_message;
 }
 
 /*
