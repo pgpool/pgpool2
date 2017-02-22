@@ -1969,7 +1969,6 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 	int num_close_complete;
 	int state;
 	bool data_pushed;
-	POOL_SESSION_CONTEXT *session_context;
 
 	data_pushed = false;
 
@@ -2012,71 +2011,6 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		if (STREAM && pool_pending_message_exists())
 		{
 			data_pushed = pool_push_pending_data(backend);
-#ifdef NOT_USED
-			pool_write(backend, "H", 1);
-			len = htonl(sizeof(len));
-			pool_write_and_flush(backend, &len, sizeof(len));
-			ereport(DEBUG1,
-					(errmsg("do_query: send flush message to %d", backend->db_node_id)));
-
-			/*
-			 * If we have not send the flush message to load balance node yet,
-			 * send a flush message to the load balance node. Otherwise only
-			 * the non load balance node (usually the master node) produces
-			 * response if we do not send sync message to it yet.
-			 */
-			session_context = pool_get_session_context(false);
-
-			if (backend->db_node_id != session_context->load_balance_node_id)
-			{
-				POOL_CONNECTION *con;
-
-				con = session_context->backend->slots[session_context->load_balance_node_id]->con;
-				pool_write(con, "H", 1);
-				len = htonl(sizeof(len));
-				pool_write_and_flush(con, &len, sizeof(len));
-				ereport(DEBUG1,
-						(errmsg("do_query: send flush message to %d", con->db_node_id)));
-
-			}
-
-			for(;;)
-			{
-				int len;
-				char *buf;
-
-				pool_set_timeout(-1);
-
-				pool_read(backend, &kind, 1);
-				pool_push(backend, &kind, 1);
-				data_pushed = true;
-
-				pool_read(backend, &len, sizeof(len));
-				pool_push(backend, &len, sizeof(len));
-
-				len = ntohl(len);
-				if ((len - sizeof(len)) > 0)
-				{
-					len -= sizeof(len);
-					buf = palloc(len);
-					pool_read(backend, buf, len);
-					pool_push(backend, buf, len);
-				}
-
-				/* check if there's any pending data */
-				if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
-				{
-					pool_set_timeout(0);
-					if (pool_check_fd(backend) != 0)
-					{
-						ereport(DEBUG1,
-								(errmsg("do_query: no pending data")));
-						pool_set_timeout(-1);
-						break;
-					}
-				}
-			}
-#endif
 		}
 
 		if (pname_len == 0)
@@ -3283,13 +3217,10 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	double max_count = 0;
 	int degenerate_node_num = 0;                /* number of backends degeneration requested */
 	int degenerate_node[MAX_NUM_BACKENDS];      /* degeneration requested backend list */
-	bool doing_extended_message = false;		/* are we doing extended protocol? */
 	POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
 	POOL_QUERY_CONTEXT *query_context = session_context->query_context;
-	POOL_SYNC_MAP_STATE use_sync_map = pool_use_sync_map();
 	POOL_PENDING_MESSAGE *msg = NULL;
 	POOL_PENDING_MESSAGE *previous_message;
-	bool do_this_node_id;
 
 	int num_executed_nodes = 0;
 	int first_node = -1;
@@ -3374,7 +3305,6 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	{
 		/* initialize degenerate record */
 		degenerate_node[i] = 0;
-		do_this_node_id = false;
 		kind_list[i] = 0;
 
 #ifdef NOT_USED
@@ -4954,10 +4884,13 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 		return data_pushed;
 
 	/*
-	 * In streaming replication mode, send flush message before going any
-	 * further to retrieve and save any pending response packet from
-	 * backend. The saved packets will be poped up before returning to
-	 * caller. This preserves the user's expectation of packet sequence.
+	 * In streaming replication mode, send a Close message for none existing
+	 * prepared statement and flush message before going any further to
+	 * retrieve and save any pending response packet from backend. This
+	 * ensures that at least "close complete" message is retured from backend.
+	 *
+	 * The saved packets will be poped up before returning to caller. This
+	 * preserves the user's expectation of packet sequence.
 	 */
 	pool_write(backend, "C", 1);
 	len = htonl(sizeof(len)+1+sizeof(random_statement));
