@@ -289,6 +289,7 @@ extern POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, ch
 extern void pool_pending_messages_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context);
 extern void pool_pending_messages_query_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context);
 extern void pool_pending_message_add(POOL_PENDING_MESSAGE* message);
+extern POOL_PENDING_MESSAGE *pool_pending_message_head_message(void);
 extern POOL_PENDING_MESSAGE *pool_pending_message_pull_out(void);
 extern POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type);
 extern char pool_get_close_message_spec(POOL_PENDING_MESSAGE *msg);
@@ -296,6 +297,7 @@ extern char *pool_get_close_message_name(POOL_PENDING_MESSAGE *msg);
 extern void pool_pending_message_reset_previous_message(void);
 extern void pool_pending_message_set_previous_message(POOL_PENDING_MESSAGE *message);
 extern POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void);
+extern bool pool_pending_message_exists(void);
 extern void dump_pending_message(void);
 extern void pool_set_major_version(int major);
 extern int pool_get_major_version(void);

@@ -1250,6 +1250,41 @@ void pool_pending_message_add(POOL_PENDING_MESSAGE* message)
 }
 
 /*
+ * Return the message from the head of the list.  If the list is not empty, a
+ * copy of the message is returned. If the list is empty, returns NULL.
+ */
+POOL_PENDING_MESSAGE *pool_pending_message_head_message(void)
+{
+	ListCell   *cell;
+	POOL_PENDING_MESSAGE *message;
+	POOL_PENDING_MESSAGE *m;
+	MemoryContext old_context;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_pending_message_head_message: session context is not initialized")));
+
+	if (list_length(session_context->pending_messages) == 0)
+	{
+		return NULL;
+	}
+
+	old_context = MemoryContextSwitchTo(session_context->memory_context);
+
+	cell = list_head(session_context->pending_messages);
+	m = (POOL_PENDING_MESSAGE *) lfirst(cell);
+	message = copy_pending_message(m);
+	ereport(LOG,
+			(errmsg("pool_pending_message_head_message: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
+					message->type, message->contents_len, message->query, message->statement, message->portal,
+					message->node_ids[0], message->node_ids[1])));
+
+	MemoryContextSwitchTo(old_context);
+	return message;
+}
+
+
+/*
  * Remove one message from the head of the list.  If the list is not empty, a
  * copy of the message is returned and the message is removed the message
  * list. If the list is empty, returns NULL.
@@ -1403,9 +1438,17 @@ POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void)
 	{
 		ereport(ERROR,
 				(errmsg("pool_pending_message_get_previous_message: session context is not initialized")));
-		return;
+		return NULL;
 	}
 	return session_context->previous_message;
+}
+
+/*
+ * Return true if there's any pending message.
+ */
+bool pool_pending_message_exists(void)
+{
+	return list_length(session_context->pending_messages) > 0;
 }
 
 /*
