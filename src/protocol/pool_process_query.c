@@ -367,7 +367,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 											pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
 										}
 									}
-									else
+									else if (!STREAM)
 									{
                                         ereport(LOG,
                                                 (errmsg("pool process query"),
@@ -2009,9 +2009,9 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		 * backend. The saved packets will be poped up before returning to
 		 * caller. This preserves the user's expectation of packet sequence.
 		 */
-		if (pool_is_pending_response())
+		if (STREAM && pool_pending_message_exists())
 		{
-			pool_push_pending_data(backend);
+			data_pushed = pool_push_pending_data(backend);
 #ifdef NOT_USED
 			pool_write(backend, "H", 1);
 			len = htonl(sizeof(len));
@@ -3298,7 +3298,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 	if (STREAM && pool_get_session_context(true) && pool_is_doing_extended_query_message())
 	{
-		msg = pool_pending_message_pull_out();
+		msg = pool_pending_message_head_message();
 		previous_message = pool_pending_message_get_previous_message();
 		if (!msg)
 		{
@@ -3788,13 +3788,25 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	 * and the pulled out message was 'execute', the message must be put back
 	 * to the tail of queue so that next Command Complete message from backend
 	 * matches the execute message.
+	 *
+	 * Also if it's 't' (parameter description) and the pulled message was
+	 * 'describe', the message must be put back to the tail of queue so that
+	 * the row description message from backend matches the describe message.
 	 */
 	if (STREAM && pool_is_doing_extended_query_message() && msg)
 	{
-		if (msg->type == POOL_EXECUTE &&
-			(*decided_kind == 'D' || *decided_kind == 'E' || *decided_kind == 'N'))
+		if ((msg->type == POOL_EXECUTE &&
+			 (*decided_kind == 'D' || *decided_kind == 'E' || *decided_kind == 'N')) ||
+			(msg->type == POOL_DESCRIBE && *decided_kind == 't'))
 		{
-			pool_pending_message_add(msg);
+			ereport(LOG,
+					(errmsg("read_kind_from_backend: pending message was left")));
+		}
+		else
+		{
+			ereport(LOG,
+					(errmsg("read_kind_from_backend: pending message was pulled out")));
+			pool_pending_message_pull_out();
 		}
 	}
 
@@ -4936,10 +4948,9 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 	POOL_SESSION_CONTEXT *session_context;
 	int len;
 	bool data_pushed = false;
+	static char random_statement[] = "pgpool_non_existant";
 
 	if (!pool_get_session_context(true) || !pool_is_doing_extended_query_message())
-		return data_pushed;
-	if (!pool_is_pending_response())
 		return data_pushed;
 
 	/*
@@ -4948,10 +4959,15 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 	 * backend. The saved packets will be poped up before returning to
 	 * caller. This preserves the user's expectation of packet sequence.
 	 */
+	pool_write(backend, "C", 1);
+	len = htonl(sizeof(len)+1+sizeof(random_statement));
+	pool_write(backend, &len, sizeof(len));
+	pool_write(backend, "S", 1);
+	pool_write(backend, random_statement, sizeof(random_statement));
 	pool_write(backend, "H", 1);
 	len = htonl(sizeof(len));
 	pool_write_and_flush(backend, &len, sizeof(len));
-	ereport(DEBUG1,
+	ereport(LOG,
 			(errmsg("pool_push_pending_data: send flush message to %d", backend->db_node_id)));
 
 	/*
@@ -4970,32 +4986,32 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 		pool_write(con, "H", 1);
 		len = htonl(sizeof(len));
 		pool_write_and_flush(con, &len, sizeof(len));
-		ereport(DEBUG1,
+		ereport(LOG,
 				(errmsg("pool_push_pending_data: send flush message to %d", con->db_node_id)));
 	}
 
 	for(;;)
 	{
 		int len;
+		int len_save;
 		char *buf;
 		char kind;
 
 		pool_set_timeout(-1);
 
 		pool_read(backend, &kind, 1);
-		pool_push(backend, &kind, 1);
-		data_pushed = true;
-
+		ereport(LOG,
+				(errmsg("pool_push_pending_data: kind: %c", kind)));
 		pool_read(backend, &len, sizeof(len));
-		pool_push(backend, &len, sizeof(len));
 
+		len_save = len;
 		len = ntohl(len);
+		buf = NULL;
 		if ((len - sizeof(len)) > 0)
 		{
 			len -= sizeof(len);
 			buf = palloc(len);
 			pool_read(backend, buf, len);
-			pool_push(backend, buf, len);
 		}
 
 		/* check if there's any pending data */
@@ -5004,12 +5020,25 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 			pool_set_timeout(0);
 			if (pool_check_fd(backend) != 0)
 			{
-				ereport(DEBUG1,
+				ereport(LOG,
 						(errmsg("pool_push_pending_data: no pending data")));
 				pool_set_timeout(-1);
+				if (buf)
+					pfree(buf);					
 				break;
 			}
 		}
+
+		pool_push(backend, &kind, 1);
+		pool_push(backend, &len_save, sizeof(len_save));
+		len = htonl(len_save);
+		len -= sizeof(len);
+		if (len > 0)
+		{
+			pool_push(backend, buf, len);
+			pfree(buf);
+		}
+		data_pushed = true;
 	}
 	return data_pushed;
 }

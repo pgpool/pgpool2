@@ -150,8 +150,15 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		pool_set_query_state(session_context->query_context, POOL_EXECUTE_COMPLETE);
 	}
 
+	/*
+	 * If we are in streaming replication mode and we are doing extended
+	 * query, reset query in progress flag and prevoius pending message.
+	*/
 	if (STREAM && pool_is_doing_extended_query_message())
+	{
 		pool_unset_query_in_progress();
+		pool_pending_message_reset_previous_message();
+	}
 
 	return POOL_CONTINUE;
 }
