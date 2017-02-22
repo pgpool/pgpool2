@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1645,7 +1645,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	POOL_SESSION_CONTEXT *session_context;
 	Node *node = NULL;
 	char *query = NULL;
-	POOL_SYNC_MAP_STATE use_sync_map;
 
 	/*
 	 * It is possible that the "ignore until sync is received" flag was set if
@@ -1660,7 +1659,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
-	use_sync_map = pool_use_sync_map();
 
 	/*
 	 * If the numbers of update tuples are differ and
@@ -2659,21 +2657,21 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case '1':	/* ParseComplete */
 				status = ParseComplete(frontend, backend);
 				pool_set_command_success();
-//				if (REPLICATION||RAW_MODE)
+				if (STREAM||REPLICATION||RAW_MODE)
 					pool_unset_query_in_progress();
 				break;
 
 			case '2':	/* BindComplete */
 				status = BindComplete(frontend, backend);
-//				pool_set_command_success();
-				if (REPLICATION||RAW_MODE)
+				pool_set_command_success();
+				if (STREAM||REPLICATION||RAW_MODE)
 					pool_unset_query_in_progress();
 				break;
 
 			case '3':	/* CloseComplete */
 				status = CloseComplete(frontend, backend);
 				pool_set_command_success();
-//				if (REPLICATION||RAW_MODE)
+				if (STREAM||REPLICATION||RAW_MODE)
 					pool_unset_query_in_progress();
 				break;
 
@@ -2698,7 +2696,6 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			case 'C':	/* CommandComplete */				
 				status = CommandComplete(frontend, backend);
 				pool_set_command_success();
-//				if ((REPLICATION || RAW_MODE) && pool_is_doing_extended_query_message())
 				if (pool_is_doing_extended_query_message())
 					pool_unset_query_in_progress();
 				break;
@@ -2739,10 +2736,6 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 			default:
 				status = SimpleForwardToFrontend(kind, frontend, backend);
-#ifdef NOT_USED
-				if (pool_flush(frontend))
-					return POOL_END;
-#endif
 				break;
 		}
 
@@ -3229,16 +3222,10 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 	{
 		if (message->kind == 'P' && qc->where_to_send[PRIMARY_NODE_ID] == 0)
 		{
-			bool data_pushed;
 			POOL_PENDING_MESSAGE *pmsg;
 
 			/* we are in streaming replication mode and the parse message has not
 			 * been sent to primary yet */
-
-#ifdef NOT_USED
-			/* extract pending data and save to stack */
-			data_pushed = pool_push_pending_data(backend->slots[PRIMARY_NODE_ID]->con);
-#endif
 
 			/* Send parse message to primary node */
 			ereport(DEBUG1,
@@ -3255,41 +3242,6 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 			pool_pending_messages_dest_set(pmsg, qc);
 			pool_pending_message_add(pmsg);
 
-#ifdef NOT_USED
-			/* popd data from stack */
-			if (data_pushed)
-			{
-				int poplen;
-
-				pool_pop(backend->slots[PRIMARY_NODE_ID]->con, &poplen);
-				ereport(DEBUG1,
-						(errmsg("parse_before_bind: popped data len:%d", poplen)));
-
-			}
-
-			/* read and discard response message of parse */
-			kind = '0';
-			while (kind != '1')
-			{
-				PG_TRY();
-				{
-					pool_read(CONNECTION(backend, PRIMARY_NODE_ID), &kind, 1);
-					ereport(DEBUG1,
-							(errmsg("parse_before_bind: discarding kind \"%c\"", kind)));
-					pool_read(CONNECTION(backend, PRIMARY_NODE_ID), &len, sizeof(len));
-					len = ntohl(len) - sizeof(len);
-					if (len > 0)
-					{
-						pool_read2(CONNECTION(backend, PRIMARY_NODE_ID), len);
-					}
-				}
-				PG_CATCH();
-				{
-					PG_RE_THROW();
-				}
-				PG_END_TRY();
-			}
-#endif
 			return POOL_CONTINUE;
 		}
 		else
