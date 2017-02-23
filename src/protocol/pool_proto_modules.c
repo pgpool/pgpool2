@@ -597,9 +597,9 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				}
 				else if (IsA(node, ExecuteStmt))
 				{
-					msg = pool_get_sent_message('Q', ((ExecuteStmt *)node)->name);
+					msg = pool_get_sent_message('Q', ((ExecuteStmt *)node)->name, POOL_SENT_MESSAGE_CREATED);
 					if (!msg)
-						msg = pool_get_sent_message('P', ((ExecuteStmt *)node)->name);
+						msg = pool_get_sent_message('P', ((ExecuteStmt *)node)->name, POOL_SENT_MESSAGE_CREATED);
 				}
 
 				/* rewrite `now()' to timestamp literal */
@@ -701,7 +701,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	ereport(DEBUG2,
             (errmsg("Execute: portal name <%s>", contents)));
 
-	bind_msg = pool_get_sent_message('B', contents);
+	bind_msg = pool_get_sent_message('B', contents, POOL_SENT_MESSAGE_CREATED);
 	if (!bind_msg)
         ereport(FATAL,
             (return_code(2),
@@ -1307,9 +1307,9 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	portal_name = contents;
 	pstmt_name = contents + strlen(portal_name) + 1;
 
-	parse_msg = pool_get_sent_message('Q', pstmt_name);
+	parse_msg = pool_get_sent_message('Q', pstmt_name, POOL_SENT_MESSAGE_CREATED);
 	if (!parse_msg)
-		parse_msg = pool_get_sent_message('P', pstmt_name);
+		parse_msg = pool_get_sent_message('P', pstmt_name, POOL_SENT_MESSAGE_CREATED);
 	if (!parse_msg)
 	{
         ereport(ERROR,
@@ -1442,9 +1442,9 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/* Prepared Statement */
 	if (*contents == 'S')
 	{
-		msg = pool_get_sent_message('Q', contents+1);
+		msg = pool_get_sent_message('Q', contents+1, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
-			msg = pool_get_sent_message('P', contents+1);
+			msg = pool_get_sent_message('P', contents+1, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
             ereport(FATAL,
                 (return_code(2),
@@ -1454,7 +1454,7 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/* Portal */
 	else
 	{
-		msg = pool_get_sent_message('B', contents+1);
+		msg = pool_get_sent_message('B', contents+1, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
             ereport(FATAL,
                     (return_code(2),
@@ -1517,14 +1517,14 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/* Prepared Statement */
 	if (*contents == 'S')
 	{
-		msg = pool_get_sent_message('Q', contents+1);
+		msg = pool_get_sent_message('Q', contents+1, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
-			msg = pool_get_sent_message('P', contents+1);
+			msg = pool_get_sent_message('P', contents+1, POOL_SENT_MESSAGE_CREATED);
 	}
 	/* Portal */
 	else if (*contents == 'P')
 	{
-		msg = pool_get_sent_message('B', contents+1);
+		msg = pool_get_sent_message('B', contents+1, POOL_SENT_MESSAGE_CREATED);
 	}
 	else
         ereport(FATAL,
@@ -1597,8 +1597,8 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		 */
 		ereport(DEBUG1,
 				(errmsg("Close: removing sent message %c %s", *contents, contents+1)));
-
-		pool_remove_sent_message(*contents == 'S'?'P':'B', contents+1);
+		pool_set_sent_message_state(msg);
+//		pool_remove_sent_message(*contents == 'S'?'P':'B', contents+1);
 	}
 
 	return POOL_CONTINUE;
