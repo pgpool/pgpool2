@@ -1598,7 +1598,6 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		ereport(DEBUG1,
 				(errmsg("Close: removing sent message %c %s", *contents, contents+1)));
 		pool_set_sent_message_state(msg);
-//		pool_remove_sent_message(*contents == 'S'?'P':'B', contents+1);
 	}
 
 	return POOL_CONTINUE;
