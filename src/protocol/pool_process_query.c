@@ -4957,7 +4957,7 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 						(errmsg("pool_push_pending_data: no pending data")));
 				pool_set_timeout(-1);
 				if (buf)
-					pfree(buf);					
+					pfree(buf);
 				break;
 			}
 		}

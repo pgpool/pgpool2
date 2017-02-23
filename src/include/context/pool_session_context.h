@@ -69,7 +69,7 @@ typedef struct {
 	 * is assumed that the message is a portal.
 	 */
 	char kind;
-	
+
 	int len;	/* message length in host byte order */
 	char *contents;
 	POOL_SENT_MESSAGE_STATE state;		/* message state */
