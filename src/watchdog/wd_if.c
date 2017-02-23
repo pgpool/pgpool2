@@ -107,7 +107,11 @@ wd_IP_up(void)
 	int i;
 
 	if (strlen(pool_config->delegate_IP) == 0)
-		return WD_NG;
+	{
+		ereport(LOG,
+			(errmsg("trying to acquire the delegate IP address, but delegate IP is not configured")));
+		return WD_OK;
+	}
 
 	command = wd_get_cmd(pool_config->if_up_cmd);
 	if (command)
@@ -119,8 +123,8 @@ wd_IP_up(void)
 	else
 	{
 		ereport(LOG,
-			(errmsg("watchdog failed to bring up delegate IP"),
-				 errdetail("command not found in if_up_cmd:\"%s\" configuration",pool_config->if_up_cmd)));
+			(errmsg("failed to acquire the delegate IP address"),
+				 errdetail("unable to parse the if_up_cmd:\"%s\"",pool_config->if_up_cmd)));
 		return WD_NG;
 	}
 
@@ -137,8 +141,8 @@ wd_IP_up(void)
 		{
 			rtn = WD_NG;
 			ereport(LOG,
-				(errmsg("watchdog failed to bring up delegate IP"),
-					 errdetail("command not found in arping_cmd:\"%s\" configuration",pool_config->arping_cmd)));
+				(errmsg("failed to acquire the delegate IP address"),
+					 errdetail("unable to parse the arping_cmd:\"%s\"",pool_config->arping_cmd)));
 		}
 	}
 
@@ -149,7 +153,7 @@ wd_IP_up(void)
 			if (wd_is_ip_exists(pool_config->delegate_IP) == true)
 				break;
 			ereport(LOG,
-				(errmsg("watchdog bringing up delegate IP"),
+				(errmsg("waiting for the delegate IP address to become active"),
 					 errdetail("waiting... count: %d", i+1)));
 		}
 
@@ -159,24 +163,28 @@ wd_IP_up(void)
 
 	if (rtn == WD_OK)
 		ereport(LOG,
-			(errmsg("watchdog bringing up delegate IP, 'if_up_cmd' succeeded")));
+			(errmsg("successfully acquired the delegate IP:\"%s\"",pool_config->delegate_IP),
+				 errdetail("'if_up_cmd' returned with success")));
 	else
-		ereport(WARNING,
-			(errmsg("watchdog failed to bring up delegate IP, 'if_up_cmd' failed")));
+		ereport(LOG,
+			(errmsg("failed to acquire the delegate IP address"),
+				 errdetail("'if_up_cmd' failed")));
 	return rtn;
 }
 
-#define WD_TRY_PING_AT_IPDOWN 3
 int
 wd_IP_down(void)
 {
 	int rtn = WD_OK;
 	char path[WD_MAX_PATH_LEN];
 	char* command;
-	int i;
 
 	if (strlen(pool_config->delegate_IP) == 0)
-		return WD_NG;
+	{
+		ereport(LOG,
+			(errmsg("trying to release the delegate IP address, but delegate IP is not configured")));
+		return WD_OK;
+	}
 
 	command = wd_get_cmd(pool_config->if_down_cmd);
 	if (command)
@@ -188,34 +196,22 @@ wd_IP_down(void)
 	else
 	{
 		ereport(LOG,
-			(errmsg("watchdog failed to bring down delegate IP"),
-				 errdetail("command not found in if_down_cmd:\"%s\" configuration",pool_config->if_down_cmd)));
+			(errmsg("failed to release the delegate IP address"),
+				 errdetail("unable to parse the if_down_cmd:\"%s\"",pool_config->if_down_cmd)));
 		return WD_NG;
-	}
-
-
-	if (rtn == WD_OK)
-	{
-		for (i = 0; i < WD_TRY_PING_AT_IPDOWN; i++)
-		{
-			if (wd_is_ip_exists(pool_config->delegate_IP) == false)
-				break;
-		}
-
-		if (i >= WD_TRY_PING_AT_IPDOWN)
-			rtn = WD_NG;
 	}
 
 	if (rtn == WD_OK)
 	{
 		ereport(LOG,
-			(errmsg("watchdog bringing down delegate IP"),
-				 errdetail("if_down_cmd succeeded")));
+			(errmsg("successfully released the delegate IP:\"%s\"",pool_config->delegate_IP),
+				 errdetail("'if_down_cmd' returned with success")));
 	}
 	else
 	{
-		ereport(WARNING,
-			(errmsg("watchdog bringing down delegate IP, if_down_cmd failed")));
+		ereport(LOG,
+			(errmsg("failed to release the delegate IP:\"%s\"",pool_config->delegate_IP),
+				 errdetail("'if_down_cmd' failed")));
 	}
 	return rtn;
 }
