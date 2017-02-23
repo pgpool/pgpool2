@@ -446,13 +446,14 @@ void pool_clear_sent_message_list(void)
 static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m)
 {
 	ereport(DEBUG1,
-			(errmsg("called by %s: sent message: address: %p kind: %c name: =%s=", caller, m, m->kind, m->name)));
+			(errmsg("called by %s: sent message: address: %p kind: %c name: =%s= state:%d", 
+					caller, m, m->kind, m->name, m->state)));
 }
 
 /*
- * Create a sent message
- * kind: one of 'P':Parse, 'B':Bind or'Q':Query(PREPARE)
- * len: message length that is not network byte order
+ * Create a sent message.
+ * kind: one of 'P':Parse, 'B':Bind or 'Q':Query(PREPARE)
+ * len: message length in host order
  * contents: message contents
  * num_tsparams: number of timestamp parameters
  * name: prepared statement name or portal name
@@ -474,6 +475,7 @@ POOL_SENT_MESSAGE *pool_create_sent_message(char kind, int len, char *contents,
 	msg->len = len;
 	msg->contents = palloc(len);
 	memcpy(msg->contents, contents, len);
+	msg->state = POOL_SENT_MESSAGE_CREATED;
 	msg->num_tsparams = num_tsparams;
 	msg->name = pstrdup(name);
 	msg->query_context = query_context;
@@ -500,7 +502,7 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 		return;
 	}
 
-	old_msg = pool_get_sent_message(message->kind, message->name);
+	old_msg = pool_get_sent_message(message->kind, message->name, POOL_SENT_MESSAGE_CREATED);
 
 	if (old_msg == message)
 	{
@@ -552,7 +554,7 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 /*
  * Get a sent message
  */
-POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name)
+POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name, POOL_SENT_MESSAGE_STATE state)
 {
 	int i;
 	POOL_SENT_MESSAGE_LIST *msglist;
@@ -562,11 +564,23 @@ POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name)
 	for (i = 0; i < msglist->size; i++)
 	{
 		if (msglist->sent_messages[i]->kind == kind &&
-			!strcmp(msglist->sent_messages[i]->name, name))
+			!strcmp(msglist->sent_messages[i]->name, name) &&
+			msglist->sent_messages[i]->state == state)
 			return msglist->sent_messages[i];
 	}
 
 	return NULL;
+}
+
+/*
+ * Set message state to POOL_SENT_MESSAGE_STATE to POOL_SENT_MESSAGE_CLOSED.
+ */
+void pool_set_sent_message_state(POOL_SENT_MESSAGE *message)
+{
+	ereport(LOG,
+			(errmsg("pool_set_sent_message_state: name:%s kind:%c previous state: %d",
+					message->name, message->kind, message->state)));
+	message->state = POOL_SENT_MESSAGE_CLOSED;
 }
 
 /*

@@ -3674,9 +3674,9 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 								POOL_SENT_MESSAGE *sent_msg;
 								DeallocateStmt *d = (DeallocateStmt *)node;
 
-								sent_msg = pool_get_sent_message('Q', d->name);
+								sent_msg = pool_get_sent_message('Q', d->name, POOL_SENT_MESSAGE_CREATED);
 								if (!sent_msg)
-									sent_msg = pool_get_sent_message('P', d->name);
+									sent_msg = pool_get_sent_message('P', d->name, POOL_SENT_MESSAGE_CREATED);
 								if (sent_msg)
 								{
 									if (sent_msg->query_context->original_query)

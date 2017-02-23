@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -647,9 +647,9 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	{
 		POOL_SENT_MESSAGE *msg;
 
-		msg = pool_get_sent_message('Q', ((ExecuteStmt *)node)->name);
+		msg = pool_get_sent_message('Q', ((ExecuteStmt *)node)->name, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
-			msg = pool_get_sent_message('P', ((ExecuteStmt *)node)->name);
+			msg = pool_get_sent_message('P', ((ExecuteStmt *)node)->name, POOL_SENT_MESSAGE_CREATED);
 		if (msg)
 			pool_copy_prep_where(msg->query_context->where_to_send,
 								 query_context->where_to_send);
@@ -1404,9 +1404,9 @@ void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
 	}
 	else
 	{
-		msg = pool_get_sent_message('Q', d->name);
+		msg = pool_get_sent_message('Q', d->name, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
-			msg = pool_get_sent_message('P', d->name);
+			msg = pool_get_sent_message('P', d->name, POOL_SENT_MESSAGE_CREATED);
 		if (msg)
 		{
 			/* Inherit same map from PREPARE or PARSE */

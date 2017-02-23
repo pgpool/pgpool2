@@ -54,12 +54,25 @@ typedef enum {
 } POOL_SYNC_MAP_STATE;
 
 /*
+ * Status of sent message
+ */
+typedef enum {
+	POOL_SENT_MESSAGE_CREATED,	/* initial state of sent meesage */
+	POOL_SENT_MESSAGE_CLOSED	/* sent meesage closed but close complete message has not arrived yet */
+} POOL_SENT_MESSAGE_STATE;
+/*
  * Message content of extended query
  */
 typedef struct {
-	char kind;	/* one of 'P':Parse, 'B':Bind or 'Q':Query(PREPARE) */
-	int len;	/* in host byte order */
+	/*
+	 * One of 'P':Parse, 'B':Bind or 'Q':Query (PREPARE).  If kind = 'B', it
+	 * is assumed that the message is a portal.
+	 */
+	char kind;
+	
+	int len;	/* message length in host byte order */
 	char *contents;
+	POOL_SENT_MESSAGE_STATE state;		/* message state */
 	int num_tsparams;
 	char *name;		/* object name of prepared statement or portal */
 	POOL_QUERY_CONTEXT *query_context;
@@ -74,7 +87,8 @@ typedef struct {
 } POOL_SENT_MESSAGE;
 
 /*
- * List of POOL_SENT_MESSAGE
+ * List of POOL_SENT_MESSAGE (XXX this should have been implemented using a
+ * list, rather than an array)
  */
 typedef struct {
 	int capacity;	/* capacity of list */
@@ -83,12 +97,13 @@ typedef struct {
 } POOL_SENT_MESSAGE_LIST;
 
 /*
- * Received message queue used in extended protocol/streaming replication
- * mode.  The queue is an FIFO, allow to de-queue in the middle of the queue
- * however.  When Parse/Bind/Close message are received, each message is
- * en-queued.  The information is used to process those response messages,
- * when Parse complete/Bind completes and Close compete message are received
- * because they don't have any information regarding statement/portal.
+ * Received message queue used in extended query/streaming replication mode.
+ * The queue is an FIFO.  When Parse/Bind/Describe/Execute/Close message are
+ * received, each message is en-queued.  The information is used to process
+ * those response messages, when Parse complete/Bind completes, Parameter
+ * description, row description, command complete and close compete message
+ * are received because they don't have any information regarding
+ * statement/portal.
  *
  * The memory used for the queue lives in the session context mememory.
  */
@@ -260,7 +275,8 @@ extern bool pool_remove_sent_message(char kind, const char *name);
 extern void pool_remove_sent_messages(char kind);
 extern void pool_clear_sent_message_list(void);
 extern void pool_sent_message_destroy(POOL_SENT_MESSAGE *message);
-extern POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name);
+extern POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name, POOL_SENT_MESSAGE_STATE state);
+extern void pool_set_sent_message_state(POOL_SENT_MESSAGE *message);
 extern void pool_unset_writing_transaction(void);
 extern void pool_set_writing_transaction(void);
 extern bool pool_is_writing_transaction(void);
