@@ -115,8 +115,10 @@ IpcMemoryDelete(int status, Datum shmId)
   	if (shmctl(shmId, IPC_STAT, &shmStat) < 0
   		&& (errno == EINVAL || errno == EACCES))
   		return;
+#ifdef NOT_USED
   	else if (shmStat.shm_nattch != 0)
   		return;
+#endif
 
 	if (shmctl(shmId, IPC_RMID, NULL) < 0)
 		pool_log("shmctl(%lu, %d, 0) failed: %s",
