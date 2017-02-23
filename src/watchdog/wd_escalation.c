@@ -137,7 +137,7 @@ fork_escalation_process(void)
 	{
 		if (wd_IP_up() != WD_OK)
 			ereport(WARNING,
-				(errmsg("watchdog de-escalation failed to bring down delegate IP")));
+				(errmsg("watchdog escalation failed to acquire delegate IP")));
 
 	}
 	exit(0);
