@@ -113,7 +113,8 @@ typedef enum {
 	POOL_BIND,
 	POOL_EXECUTE,
 	POOL_DESCRIBE,
-	POOL_CLOSE
+	POOL_CLOSE,
+	POOL_SYNC
 } POOL_MESSAGE_TYPE;
 
 typedef struct {

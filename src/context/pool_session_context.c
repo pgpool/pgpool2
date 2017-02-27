@@ -1150,14 +1150,24 @@ POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *con
 		msg->type = POOL_CLOSE;
 		break;
 
+		case 'S':
+		msg->type = POOL_SYNC;
+		break;
+
 		default:
 			ereport(ERROR,
 					(errmsg("pool_pending_message_create: unknow kind: %c", kind)));
 		break;
 	}
 
-	msg->contents = palloc(len);
-	memcpy(msg->contents, contents, len);
+	if (len > 0)
+	{
+		msg->contents = palloc(len);
+		memcpy(msg->contents, contents, len);
+	}
+	else
+		msg->contents = NULL;
+
 	msg->contents_len = len;
 	msg->query[0] = '\0';
 	msg->statement[0] = '\0';
@@ -1245,6 +1255,9 @@ void pool_pending_message_add(POOL_PENDING_MESSAGE* message)
 				StrNCpy(message->portal, message->contents+1, sizeof(message->portal));
 			break;
 
+		case POOL_SYNC:
+			break;
+
 		default:
 			ereport(ERROR,
 					(errmsg("pool_pending_message_add: unknown message type:%d", message->type)));
@@ -1252,10 +1265,14 @@ void pool_pending_message_add(POOL_PENDING_MESSAGE* message)
 			break;
 	}
 
-	ereport(LOG,
-			(errmsg("pool_pending_message_add: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
-					message->type, message->contents_len, message->query, message->statement, message->portal,
-					message->node_ids[0], message->node_ids[1])));
+	if (message->type != POOL_SYNC)
+		ereport(LOG,
+				(errmsg("pool_pending_message_add: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
+						message->type, message->contents_len, message->query, message->statement, message->portal,
+						message->node_ids[0], message->node_ids[1])));
+	else
+		ereport(LOG,
+				(errmsg("pool_pending_message_add: message type: sync")));
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
 	msg = copy_pending_message(message);

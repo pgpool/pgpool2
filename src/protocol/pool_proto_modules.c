@@ -2526,7 +2526,13 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				pool_unset_ignore_till_sync();
 
 			if (STREAM)
+			{
+				POOL_PENDING_MESSAGE *msg;
+
 				pool_unset_query_in_progress();
+				msg = pool_pending_messages_create('S', 0, NULL);
+				pool_pending_message_add(msg);
+			}
 			else if (!pool_is_query_in_progress())
 				pool_set_query_in_progress();
 			status = SimpleForwardToBackend(fkind, frontend, backend, len, contents);

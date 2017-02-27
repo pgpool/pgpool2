@@ -3265,12 +3265,22 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		}
 		else
 		{
-			ereport(LOG,
-					(errmsg("read_kind_from_backend: pending message exists. query context: %x",
-						msg->query_context)));
-			pool_pending_message_set_previous_message(msg);
-			session_context->query_context = msg->query_context;
-			pool_set_query_in_progress();
+			if (msg->type == POOL_SYNC)
+			{
+				ereport(LOG,
+						(errmsg("read_kind_from_backend: sync pending message exists")));
+				session_context->query_context = NULL;
+				pool_unset_query_in_progress();
+			}
+			else
+			{
+				ereport(LOG,
+						(errmsg("read_kind_from_backend: pending message exists. query context: %x",
+								msg->query_context)));
+				pool_pending_message_set_previous_message(msg);
+				session_context->query_context = msg->query_context;
+				pool_set_query_in_progress();
+			}
 		}
 	}
 
