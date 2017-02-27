@@ -1173,6 +1173,7 @@ POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *con
 	msg->statement[0] = '\0';
 	msg->portal[0] = '\0';
 	msg->is_rows_returned = false;
+	msg->not_forward_to_frontend = false;
 	msg->node_ids[0] = msg->node_ids[1] = -1;
 
 	MemoryContextSwitchTo(old_context);

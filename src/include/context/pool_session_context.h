@@ -125,6 +125,9 @@ typedef struct {
 	char statement[MAX_IDENTIFIER_LEN];	/* prepared statment name if any */
 	char portal[MAX_IDENTIFIER_LEN];	/* portal name if any */
 	bool is_rows_returned;		/* true if the message could produce row data */
+	bool not_forward_to_frontend;		/* Do not forward response from backend to frontend.
+										 * This is used by parse_before_bind()
+										 */
 	int node_ids[2];	/* backend node ids this message was sent to. -1 means no message was sent. */
 	POOL_QUERY_CONTEXT *query_context;	/* query context */
 } POOL_PENDING_MESSAGE;
