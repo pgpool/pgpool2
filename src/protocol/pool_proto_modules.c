@@ -878,9 +878,9 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, true);
 
 		/* Add pending message */
-		pmsg = pool_pending_messages_create('E', len, contents);
-		pool_pending_messages_dest_set(pmsg, query_context);
-		pool_pending_messages_query_set(pmsg, query_context);
+		pmsg = pool_pending_message_create('E', len, contents);
+		pool_pending_message_dest_set(pmsg, query_context);
+		pool_pending_message_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
 
 #ifdef NOT_USED
@@ -1269,8 +1269,8 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_add_sent_message(session_context->uncompleted_message);
 
 		/* Add pending message */
-		pmsg = pool_pending_messages_create('P', len, contents);
-		pool_pending_messages_dest_set(pmsg, query_context);
+		pmsg = pool_pending_message_create('P', len, contents);
+		pool_pending_message_dest_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
 
 		pool_unset_query_in_progress();
@@ -1416,9 +1416,9 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_add_sent_message(session_context->uncompleted_message);
 
 		/* Add pending message */
-		pmsg = pool_pending_messages_create('B', len, contents);
-		pool_pending_messages_dest_set(pmsg, query_context);
-		pool_pending_messages_query_set(pmsg, query_context);
+		pmsg = pool_pending_message_create('B', len, contents);
+		pool_pending_message_dest_set(pmsg, query_context);
+		pool_pending_message_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
 	}
 	
@@ -1492,9 +1492,9 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		POOL_PENDING_MESSAGE *pmsg;
 
 		/* Add pending message */
-		pmsg = pool_pending_messages_create('D', len, contents);
-		pool_pending_messages_dest_set(pmsg, query_context);
-		pool_pending_messages_query_set(pmsg, query_context);
+		pmsg = pool_pending_message_create('D', len, contents);
+		pool_pending_message_dest_set(pmsg, query_context);
+		pool_pending_message_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
 
 		pool_unset_query_in_progress();
@@ -1579,9 +1579,9 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
 
 		/* Add pending message */
-		pmsg = pool_pending_messages_create('C', len, contents);
-		pool_pending_messages_dest_set(pmsg, query_context);
-		pool_pending_messages_query_set(pmsg, query_context);
+		pmsg = pool_pending_message_create('C', len, contents);
+		pool_pending_message_dest_set(pmsg, query_context);
+		pool_pending_message_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
 
 		dump_pending_message();
@@ -2530,7 +2530,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				POOL_PENDING_MESSAGE *msg;
 
 				pool_unset_query_in_progress();
-				msg = pool_pending_messages_create('S', 0, NULL);
+				msg = pool_pending_message_create('S', 0, NULL);
 				pool_pending_message_add(msg);
 			}
 			else if (!pool_is_query_in_progress())
@@ -3261,9 +3261,9 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 			qc->virtual_master_node_id = PRIMARY_NODE_ID;
 
 			/* Add pending message */
-			pmsg = pool_pending_messages_create('P', len, contents);
+			pmsg = pool_pending_message_create('P', len, contents);
 			pmsg->not_forward_to_frontend = true;
-			pool_pending_messages_dest_set(pmsg, qc);
+			pool_pending_message_dest_set(pmsg, qc);
 			pool_pending_message_add(pmsg);
 
 			return POOL_CONTINUE;

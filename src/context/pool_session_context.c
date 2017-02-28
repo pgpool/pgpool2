@@ -1116,7 +1116,7 @@ void pool_pending_messages_destroy(void)
 /*
  * Create one message.
  */
-POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *contents)
+POOL_PENDING_MESSAGE *pool_pending_message_create(char kind, int len, char *contents)
 {
 	POOL_PENDING_MESSAGE* msg;
 	MemoryContext old_context;
@@ -1185,7 +1185,7 @@ POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *con
  * Set node_ids field of message which indicates which backend nodes the
  * message was sent.
  */
-void pool_pending_messages_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context)
+void pool_pending_message_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context)
 {
 	int i;
 	int j = 0;
@@ -1215,7 +1215,7 @@ void pool_pending_messages_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CO
 /*
  * Set query field of message.
  */
-void pool_pending_messages_query_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context)
+void pool_pending_message_query_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context)
 {
 	StrNCpy(message->query, query_context->original_query, sizeof(message->query));
 }
