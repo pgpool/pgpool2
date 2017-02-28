@@ -295,7 +295,7 @@
         </para>
         </note>
         <para>
-          Typically <varname>follow_master_command</varname>> command is used to recover
+          Typically <varname>follow_master_command</varname> command is used to recover
           the slave from the new primary by calling the pcp_recovery_node command.
         </para>
         <para>
