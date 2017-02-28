@@ -2438,18 +2438,17 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		{
 			ereport(DEBUG1,
 					(errmsg("do_query: all state completed. returning")));
-
-			if (data_pushed)
-			{
-				int poplen;
-
-				pool_pop(backend, &poplen);
-				ereport(DEBUG1,
-						(errmsg("do_query: popped data len:%d", poplen)));
-			}
-
 			break;
 		}
+	}
+
+	if (data_pushed)
+	{
+		int poplen;
+
+		pool_pop(backend, &poplen);
+		ereport(DEBUG1,
+				(errmsg("do_query: popped data len:%d", poplen)));
 	}
 }
 
