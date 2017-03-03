@@ -320,7 +320,7 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 
 									if (kind == 'A')
 									{
-										if(MASTER_SLAVE)
+										if (MASTER_SLAVE)
 										{
 											int sendlen;
 											/*
@@ -367,6 +367,11 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 											pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
 										}
 									}
+									else if (STREAM)
+									{
+										pool_unread(CONNECTION(backend, i), &kind, sizeof(kind));
+									}
+
 									else if (!STREAM)
 									{
                                         ereport(LOG,
@@ -730,7 +735,9 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	char *p1 = NULL;
 	int sendlen;
 	int i;
+#ifdef NOT_USED
 	POOL_SYNC_MAP_STATE use_sync_map = pool_use_sync_map();
+#endif
 
 #ifdef NOT_USED
 	/* 
@@ -767,15 +774,19 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
+#ifdef NOT_USED
 			if (use_sync_map == POOL_SYNC_MAP_EMPTY)
 				continue;
+#endif
 
 			if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
 			{
+#ifdef NOT_USED
 				if (use_sync_map == POOL_SYNC_MAP_IS_VALID && !pool_is_set_sync_map(i))
 				{
 						continue;
 				}
+#endif
 
 				pool_read(CONNECTION(backend, i), &len, sizeof(len));
 
@@ -4973,7 +4984,7 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 
 		pool_push(backend, &kind, 1);
 		pool_push(backend, &len_save, sizeof(len_save));
-		len = htonl(len_save);
+		len = ntohl(len_save);
 		len -= sizeof(len);
 		if (len > 0)
 		{
