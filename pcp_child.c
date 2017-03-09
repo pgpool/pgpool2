@@ -1098,7 +1098,7 @@ pcp_do_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 					exit(1);
 				}
 
-				if (node_id == PRIMARY_NODE_ID)
+				if (node_id == REAL_PRIMARY_NODE_ID)
 				{
 					char code[] = "NodeIdAlreadyPrimary";
 					pool_error("pcp_child: specified node is already primary node, can't promote node id %d", node_id);
