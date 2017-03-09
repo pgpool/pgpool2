@@ -4719,7 +4719,7 @@ SELECT_RETRY:
                         (pool_error_code("57000"),
                         errmsg("unable to read data"),
                          errdetail("child connection forced to terminate due to client_idle_limit:%d is reached",
-                                   pool_config->client_idle_limit)));
+pool_config->client_idle_limit)));
             }
 		}
 		else if (*InRecovery > RECOVERY_INIT && pool_config->client_idle_limit_in_recovery > 0)
@@ -4967,10 +4967,13 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 			pool_read(backend, buf, len);
 		}
 
-		/* check if there's any pending data */
 		if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
 		{
-			pool_set_timeout(0);
+			if (kind != '3')
+				pool_set_timeout(-1);
+			else
+				pool_set_timeout(0);
+
 			if (pool_check_fd(backend) != 0)
 			{
 				ereport(LOG,
