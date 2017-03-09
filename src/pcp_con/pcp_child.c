@@ -1439,7 +1439,7 @@ process_promote_node(PCP_CONNECTION *frontend, char *buf, char tos)
 
 	}
 
-	if (node_id == PRIMARY_NODE_ID)
+	if (node_id == REAL_PRIMARY_NODE_ID)
 	{
 		char code[] = "NodeIdAlreadyPrimary";
 		pcp_write(frontend, "e", 1);
