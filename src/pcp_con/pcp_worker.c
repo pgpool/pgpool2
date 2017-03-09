@@ -1059,7 +1059,7 @@ process_promote_node(PCP_CONNECTION *frontend, char *buf, char tos)
 		
 	}
 
-	if (node_id == PRIMARY_NODE_ID)
+	if (node_id == REAL_PRIMARY_NODE_ID)
 	{
 		ereport(FATAL,
 				(errmsg("invalid pgpool mode for process recovery request"),
