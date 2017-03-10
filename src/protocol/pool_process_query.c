@@ -3277,14 +3277,14 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		{
 			if (msg->type == POOL_SYNC)
 			{
-				ereport(LOG,
+				ereport(DEBUG1,
 						(errmsg("read_kind_from_backend: sync pending message exists")));
 				session_context->query_context = NULL;
 				pool_unset_query_in_progress();
 			}
 			else
 			{
-				ereport(LOG,
+				ereport(DEBUG1,
 						(errmsg("read_kind_from_backend: pending message exists. query context: %x",
 								msg->query_context)));
 				pool_pending_message_set_previous_message(msg);
@@ -3311,7 +3311,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		{
 			*decided_kind = 'A';
 			
-			ereport(LOG,
+			ereport(DEBUG1,
 				(errmsg("reading backend data packet kind"),
 					 errdetail("received notification message for master node %d",
 							   MASTER_NODE_ID)));
@@ -3380,7 +3380,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 							 errdetail("kind == 0")));
 				}
 
-				ereport(LOG,
+				ereport(DEBUG1,
 					(errmsg("reading backend data packet kind"),
 						 errdetail("backend:%d kind:'%c'",i, kind)));
 #ifdef NOT_USED
@@ -3532,7 +3532,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				pool_read(s, buf, len);
 				pfree(buf);
 			}
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("read_kind_from_backend: skipped first standy packet")));
 
 			for(;;)
@@ -3542,7 +3542,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 					pool_set_timeout(0);
 					if (pool_check_fd(s) != 0)
 					{
-						ereport(LOG,
+						ereport(DEBUG1,
 								(errmsg("readkind_from_backend: no pending data")));
 						pool_set_timeout(-1);
 						break;
@@ -3553,29 +3553,29 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 				pool_read(s, &kind, 1);
 
-				ereport(LOG,
+				ereport(DEBUG1,
 						(errmsg("read_kind_from_backend: checking kind: '%c'", kind)));
 
 				if (kind == 'Z')
 				{
 					/* succeeded in re-sync */
-					ereport(LOG,
+					ereport(DEBUG1,
 							(errmsg("read_kind_from_backend: succeeded in re-sync")));
 					*decided_kind = kind;
 					return;
 				}
 
-				ereport(LOG,
+				ereport(DEBUG1,
 						(errmsg("read_kind_from_backend: reading len")));
 				pool_read(s, &len, sizeof(len));
-				ereport(LOG,
+				ereport(DEBUG1,
 						(errmsg("read_kind_from_backend: finished reading len:%d", ntohl(len))));
 
 				len = ntohl(len);
 				if ((len - sizeof(len)) > 0)
 				{
 					len -= sizeof(len);
-					ereport(LOG,
+					ereport(DEBUG1,
 							(errmsg("read_kind_from_backend: reading message len:%d", len)));
 
 					buf = palloc(len);
@@ -3749,12 +3749,12 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			 (*decided_kind == 'D' || *decided_kind == 'E' || *decided_kind == 'N')) ||
 			(msg->type == POOL_DESCRIBE && *decided_kind == 't'))
 		{
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("read_kind_from_backend: pending message was left")));
 		}
 		else
 		{
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("read_kind_from_backend: pending message was pulled out")));
 			pool_pending_message_pull_out();
 		}
@@ -4190,7 +4190,7 @@ static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 	int r =  detect_error(backend, ADMIN_SHUTDOWN_ERROR_CODE, major, 'E', false);
 	if (r < 0)
 	{
-		ereport(LOG,
+		ereport(DEBUG1,
 			(errmsg("detecting postmaster down error")));
 		return r;
 	}
@@ -4920,7 +4920,7 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 	pool_write(backend, "H", 1);
 	len = htonl(sizeof(len));
 	pool_write_and_flush(backend, &len, sizeof(len));
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("pool_push_pending_data: send flush message to %d", backend->db_node_id)));
 
 	/*
@@ -4953,7 +4953,7 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 		pool_set_timeout(-1);
 
 		pool_read(backend, &kind, 1);
-		ereport(LOG,
+		ereport(DEBUG1,
 				(errmsg("pool_push_pending_data: kind: %c", kind)));
 		pool_read(backend, &len, sizeof(len));
 
@@ -4976,7 +4976,7 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 
 			if (pool_check_fd(backend) != 0)
 			{
-				ereport(LOG,
+				ereport(DEBUG1,
 						(errmsg("pool_push_pending_data: no pending data")));
 				pool_set_timeout(-1);
 				if (buf)
