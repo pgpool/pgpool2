@@ -577,7 +577,7 @@ POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name, POOL_SENT_
  */
 void pool_set_sent_message_state(POOL_SENT_MESSAGE *message)
 {
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("pool_set_sent_message_state: name:%s kind:%c previous state: %d",
 					message->name, message->kind, message->state)));
 	message->state = POOL_SENT_MESSAGE_CLOSED;
@@ -1267,12 +1267,12 @@ void pool_pending_message_add(POOL_PENDING_MESSAGE* message)
 	}
 
 	if (message->type != POOL_SYNC)
-		ereport(LOG,
+		ereport(DEBUG1,
 				(errmsg("pool_pending_message_add: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
 						message->type, message->contents_len, message->query, message->statement, message->portal,
 						message->node_ids[0], message->node_ids[1])));
 	else
-		ereport(LOG,
+		ereport(DEBUG1,
 				(errmsg("pool_pending_message_add: message type: sync")));
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
@@ -1306,7 +1306,7 @@ POOL_PENDING_MESSAGE *pool_pending_message_head_message(void)
 	cell = list_head(session_context->pending_messages);
 	m = (POOL_PENDING_MESSAGE *) lfirst(cell);
 	message = copy_pending_message(m);
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("pool_pending_message_head_message: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
 					message->type, message->contents_len, message->query, message->statement, message->portal,
 					message->node_ids[0], message->node_ids[1])));
@@ -1342,7 +1342,7 @@ POOL_PENDING_MESSAGE *pool_pending_message_pull_out(void)
 	cell = list_head(session_context->pending_messages);
 	m = (POOL_PENDING_MESSAGE *) lfirst(cell);
 	message = copy_pending_message(m);
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("pool_pending_message_pull_out: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
 					message->type, message->contents_len, message->query, message->statement, message->portal,
 					message->node_ids[0], message->node_ids[1])));
@@ -1498,14 +1498,14 @@ void dump_pending_message(void)
 		return;
 	}
 
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("start dumping pending message list")));
 
 	for (cell = list_head(session_context->pending_messages); cell; cell = next)
 	{
 		POOL_PENDING_MESSAGE *message = (POOL_PENDING_MESSAGE *) lfirst(cell);
 
-		ereport(LOG,
+		ereport(DEBUG1,
 				(errmsg("pool_pending_message_dump: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
 						message->type, message->contents_len, message->query, message->statement, message->portal,
 						message->node_ids[0], message->node_ids[1])));
@@ -1513,7 +1513,7 @@ void dump_pending_message(void)
 		next = lnext(cell);
 	}
 
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("end dumping pending message list")));
 }
 

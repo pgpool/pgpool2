@@ -87,7 +87,7 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 	{
 		MemoryContext memory_context = query_context->memory_context;
 
-		ereport(LOG,
+		ereport(DEBUG1,
 				(errmsg("pool_query_context_destroy: query context:%x", query_context)));
 
 		session_context = pool_get_session_context(false);
