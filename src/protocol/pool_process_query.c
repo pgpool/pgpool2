@@ -4939,7 +4939,7 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 		pool_write(con, "H", 1);
 		len = htonl(sizeof(len));
 		pool_write_and_flush(con, &len, sizeof(len));
-		ereport(LOG,
+		ereport(DEBUG1,
 				(errmsg("pool_push_pending_data: send flush message to %d", con->db_node_id)));
 	}
 
