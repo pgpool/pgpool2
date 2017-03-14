@@ -3510,8 +3510,8 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		 * (ready for response) case only, since it's a good candidate to
 		 * re-sync primary and standby.
 		 */
-		if (kind_list[MASTER_NODE_ID] == 'Z' && STREAM && query_context->parse_tree &&
-			is_commit_query(query_context->parse_tree))
+
+		if (kind_list[MASTER_NODE_ID] == 'Z' && STREAM)
 		{
 			POOL_SESSION_CONTEXT *session_context;
 			POOL_CONNECTION *s;

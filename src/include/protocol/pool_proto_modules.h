@@ -118,6 +118,8 @@ extern POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 										  POOL_CONNECTION_POOL *backend,
 										  int *state, short *num_fields);
 
+extern void handle_query_context(POOL_CONNECTION_POOL *backend);;
+
 /*
  * modules defined in pool_proto2.c
  */
