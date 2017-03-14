@@ -38,7 +38,6 @@
 #include "utils/memutils.h"
 #include "utils/pool_stream.h"
 
-static void handle_query_context(POOL_CONNECTION_POOL *backend);
 static int extract_ntuples(char *message);
 static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *packet, int packetlen);
 static int foward_command_complete(POOL_CONNECTION *frontend, char *packet, int packetlen);
@@ -157,7 +156,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 /*
  * Handle misc process which is neccessary when query context exists.
  */
-static void handle_query_context(POOL_CONNECTION_POOL *backend)
+void handle_query_context(POOL_CONNECTION_POOL *backend)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	Node *node;

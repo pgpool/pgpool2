@@ -883,6 +883,9 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_pending_message_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
 
+		/* Various take care at the transaction start */
+		handle_query_context(backend);
+
 #ifdef NOT_USED
 		/*
 		 * Send flush message to backend to make sure that we get any response
@@ -911,7 +914,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 #endif
 
 		/*
-		 * Take of "writing transaction" flag.
+		 * Take care of "writing transaction" flag.
 		 */
 		if (!is_select_query(node, query))
 		{

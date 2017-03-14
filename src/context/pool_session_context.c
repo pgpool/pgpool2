@@ -50,6 +50,9 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	int node_id;
 	int i;
 
+	/* Clear session context memory */
+	memset(&session_context_d, 0, sizeof(session_context_d));
+
 	/* Get Process context */
 	session_context->process_context = pool_get_process_context();
 	if (!session_context->process_context)
