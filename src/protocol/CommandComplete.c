@@ -56,7 +56,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	/*
 	 * Handle misc process which is neccessary when query context exists.
 	 */
-	if (session_context->query_context != NULL)
+	if (session_context->query_context != NULL && !STREAM)
 		handle_query_context(backend);
 
 	/*

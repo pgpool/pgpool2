@@ -918,6 +918,9 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		 */
 		if (!is_select_query(node, query))
 		{
+			ereport(DEBUG1,
+					(errmsg("Execute: TSTATE:%c",
+							TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID))));
 			/*
 			 * If the query was not READ SELECT, and we are in an
 			 * explicit transaction, remember that we had a write
