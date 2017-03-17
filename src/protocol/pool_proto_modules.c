@@ -916,7 +916,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		/*
 		 * Take care of "writing transaction" flag.
 		 */
-		if (!is_select_query(node, query))
+		if (!is_select_query(node, query) && !is_start_transaction_query(node))
 		{
 			ereport(DEBUG1,
 					(errmsg("Execute: TSTATE:%c",
@@ -928,16 +928,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			 */
 			if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
 			{
-				/* However, if the query is "SET TRANSACTION READ ONLY" or its variant,
-				 * don't set it.
-				 */
-				if (!pool_is_transaction_read_only(node))
-				{
-					ereport(DEBUG1,
-							(errmsg("not SET TRANSACTION READ ONLY")));
-
-					pool_set_writing_transaction();
-				}
+				pool_set_writing_transaction();
 			}
 		}
 	}
