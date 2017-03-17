@@ -470,7 +470,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		dest = send_to_where(node, query);
 
 		ereport(DEBUG1,
-			(errmsg("decide where to send the queries"),
+			(errmsg("decide where to send the query"),
 				 errdetail("destination = %d for query= \"%s\"", dest, query)));
 
 		/* Should be sent to primary only? */
@@ -499,6 +499,15 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				 *	transaction isolation level is not SERIALIZABLE)
 				 * we might be able to load balance.
 				 */
+
+				ereport(DEBUG1,
+						(errmsg("checking load balance precondtions. TSTATE:%c wrting_trancation:%d failed_transaction:%d isolation:%d",
+								TSTATE(backend, PRIMARY_NODE_ID),
+								pool_is_writing_transaction(),
+								pool_is_failed_transaction(),
+								pool_get_transaction_isolation()),
+						 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 				if (TSTATE(backend, PRIMARY_NODE_ID) == 'I' ||
 					(!pool_is_writing_transaction() &&
 					 !pool_is_failed_transaction() &&
@@ -517,6 +526,10 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 						pool_config->delay_threshold &&
 						bkinfo->standby_delay > pool_config->delay_threshold)
 					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because of too much replication delay"),
+								 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 
@@ -526,6 +539,10 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					 */
 					else if (pool_has_function_call(node))
 					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because writing functions are used"),
+								 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 
@@ -543,6 +560,10 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					 */
 					else if (pool_has_system_catalog(node))
 					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because systems catalogs are used"),
+								 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 
@@ -552,6 +573,10 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					 */
 					else if (pool_config->check_temp_table && pool_has_temp_table(node))
 					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because temporary tables are used"),
+								 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 
@@ -561,6 +586,10 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					 */
 					else if (pool_config->check_unlogged_table && pool_has_unlogged_table(node))
 					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because unlogged tables are used"),
+								 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 
