@@ -336,6 +336,16 @@
 
     <listitem>
     <!--
+    2017-03-17 [ba1bcc3]
+    -->
+    <para>
+    Add "Wants=network.target" to pgpool.service file.
+    (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=294">bug 294</ulink>) (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
     2017-03-09 [1ddb7f1]
     -->
     <para>
