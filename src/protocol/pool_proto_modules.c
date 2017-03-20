@@ -3302,7 +3302,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 		}
 	}
 	
-	if (parse_was_sent)
+	if (!STREAM && parse_was_sent)
 	{
 		while (kind != '1')
 		{
@@ -3319,6 +3319,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 			PG_END_TRY();
 		}
 	}
+
 	memcpy(qc->where_to_send, backup, sizeof(backup));
 	return POOL_CONTINUE;
 }
