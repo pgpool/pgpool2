@@ -3511,14 +3511,12 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		 * re-sync primary and standby.
 		 */
 
-		if (kind_list[MASTER_NODE_ID] == 'Z' && STREAM)
+		if (session_context->load_balance_node_id != MASTER_NODE_ID &&
+			kind_list[MASTER_NODE_ID] == 'Z' && STREAM)
 		{
-			POOL_SESSION_CONTEXT *session_context;
 			POOL_CONNECTION *s;
 			char *buf;
 			int len;
-
-			session_context = pool_get_session_context(false);
 
 			s = CONNECTION(backend, session_context->load_balance_node_id);
 
@@ -3537,9 +3535,10 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 			for(;;)
 			{
+#ifdef NOT_USED
 				if (!pool_ssl_pending(s) && pool_read_buffer_is_empty(s))
 				{
-					pool_set_timeout(0);
+					pool_set_timeout(-1);
 					if (pool_check_fd(s) != 0)
 					{
 						ereport(DEBUG1,
@@ -3550,7 +3549,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				}
 
 				pool_set_timeout(-1);
-
+#endif
 				pool_read(s, &kind, 1);
 
 				ereport(DEBUG1,
