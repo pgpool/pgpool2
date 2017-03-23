@@ -1,7 +1,7 @@
 # Options for pgpool
 
-# -n: don't run in daemon mode. does not detatch control tty
-# -d: debug mode. lots of debug information will be printed
+# If you want to use '-n' in START_OPTS, change the service type to simple in
+# the Pgpool-II service configuration file
+#OPTS=" -d"
 
-#OPTS=" -d -n"
-OPTS=" -n"
+#STOP_OPTS=" -m fast"
