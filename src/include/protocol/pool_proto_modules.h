@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -89,9 +89,6 @@ extern POOL_STATUS BindComplete(POOL_CONNECTION *frontend,
 
 extern POOL_STATUS CloseComplete(POOL_CONNECTION *frontend,
 								 POOL_CONNECTION_POOL *backend);
-
-extern POOL_STATUS CommandComplete(POOL_CONNECTION *frontend,
-								   POOL_CONNECTION_POOL *backend);
 
 extern POOL_STATUS ParameterDescription(POOL_CONNECTION *frontend,
 										POOL_CONNECTION_POOL *backend);
@@ -187,6 +184,6 @@ extern void raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend);
 /*
  * modules defined in CommandComplete.c
  */
-extern POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+extern POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, bool command_complete);
 
 #endif

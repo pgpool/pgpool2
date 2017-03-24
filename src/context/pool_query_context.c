@@ -106,40 +106,20 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 	}
 }
 
-#ifdef NOT_USED
 /*
- * Perform deep copy of given query context.
+ * Perform shallow copy of given query context. Used in parse_before_bind.
  */
-POOL_QUERY_CONTEXT *pool_query_context_copy(POOL_QUERY_CONTEXT *query_context)
+POOL_QUERY_CONTEXT *pool_query_context_shallow_copy(POOL_QUERY_CONTEXT *query_context)
 {
-	MemoryContext old_context;
 	POOL_QUERY_CONTEXT *qc;
-	int len;
+	MemoryContext memory_context;
 
 	qc = pool_init_query_context();
+	memory_context = qc->memory_context;
 	memcpy(qc, query_context, sizeof(POOL_QUERY_CONTEXT));
-
-	old_context = MemoryContextSwitchTo(query_context->memory_context);
-
-	if (query_context->original_query)
-	{
-		len = strlen(query_context->original_query)+1;
-		qc->originarl_query = palloc(len);
-		memcpy(qc->originarl_query, query_context->original_query, len);
-	}
-
-	if (query_context->rewritten_query)
-	{
-		len = strlen(query_context->rewritten_query)+1;
-		qc->originarl_query = palloc(len);
-		memcpy(qc->originarl_query, query_context->rewritten_query, len);
-	}
-
-	if (query_context->parse_tree)
-	{
-	}
+	qc->memory_context = memory_context;
+	return qc;
 }
-#endif
 
 /*
  * Start query
@@ -344,6 +324,11 @@ int pool_virtual_master_db_node_id(void)
 			  * node can handle that pg_terminate_backend query
 			  *
 			  */
+
+			ereport(DEBUG1,
+					(errmsg("pool_virtual_master_db_node_id: virtual_master_node_id:%d load_balance_node_id:%d PRIMARY_NODE_ID:%d",
+							node_id, sc->load_balance_node_id, PRIMARY_NODE_ID)));
+
 			if (node_id != sc->load_balance_node_id && node_id != PRIMARY_NODE_ID)
 			{
 				/*
