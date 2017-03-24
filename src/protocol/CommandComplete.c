@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -19,8 +19,9 @@
  * is" without express or implied warranty.
  *
  *---------------------------------------------------------------------
- * This file contains modules which process the "Command Complete" message sent
- * from backend. The main function is "CommandComplete".
+ * This file contains modules which process the "Command Complete" and "Empty
+ * query response" message sent from backend. The main function is
+ * "CommandComplete".
  *---------------------------------------------------------------------
  */
 #include <string.h>
@@ -41,8 +42,10 @@
 static int extract_ntuples(char *message);
 static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *packet, int packetlen);
 static int foward_command_complete(POOL_CONNECTION *frontend, char *packet, int packetlen);
+static int foward_empty_query(POOL_CONNECTION *frontend, char *packet, int packetlen);
+static int foward_packet_to_frontend(POOL_CONNECTION *frontend, char kind, char *packet, int packetlen);
 
-POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, bool command_complete)
 {
 	int len, len1;
 	char *p, *p1;
@@ -115,7 +118,14 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	 */
 	if (STREAM && pool_is_doing_extended_query_message())
 	{
-		if (foward_command_complete(frontend, p1, len1) < 0)
+		int status;
+
+		if (command_complete)
+			status = foward_command_complete(frontend, p1, len1);
+		else
+			status = foward_empty_query(frontend, p1, len1);
+
+		if (status < 0)
 			return POOL_END;
 	}
 	else
@@ -365,9 +375,25 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNEC
  */
 static int foward_command_complete(POOL_CONNECTION *frontend, char *packet, int packetlen)
 {
+	return foward_packet_to_frontend(frontend, 'C', packet, packetlen);
+}
+
+/*
+ * Forward Empty query response to frontend
+ */
+static int foward_empty_query(POOL_CONNECTION *frontend, char *packet, int packetlen)
+{
+	return foward_packet_to_frontend(frontend, 'I', packet, packetlen);
+}
+
+/*
+ * Forward packet to frontend
+ */
+static int foward_packet_to_frontend(POOL_CONNECTION *frontend, char kind, char *packet, int packetlen)
+{
 	int sendlen;
 
-	if (pool_write(frontend, "C", 1) < 0)
+	if (pool_write(frontend, &kind, 1) < 0)
 		return -1;
 
 	sendlen = htonl(packetlen+4);

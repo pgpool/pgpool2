@@ -3733,14 +3733,14 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 	/*
 	 * If we are in in streaming replication mode and we doing an extended
-	 * query, check the kind we just read.  If it's one of 'D', 'E', or 'N',
-	 * and the pulled out message was 'execute', the message must be put back
-	 * to the tail of queue so that next Command Complete message from backend
-	 * matches the execute message.
+	 * query, check the kind we just read.  If it's one of 'D' (data row), 'E'
+	 * (error), or 'N' (notice), and the head of the pending message queue was
+	 * 'execute', the message must not be pulled out so that next Command
+	 * Complete message from backend matches the execute message.
 	 *
 	 * Also if it's 't' (parameter description) and the pulled message was
-	 * 'describe', the message must be put back to the tail of queue so that
-	 * the row description message from backend matches the describe message.
+	 * 'describe', the message must not be pulled out so that the row
+	 * description message from backend matches the describe message.
 	 */
 	if (STREAM && pool_is_doing_extended_query_message() && msg)
 	{

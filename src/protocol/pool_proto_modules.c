@@ -86,7 +86,8 @@ static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id);
 static void generate_error_message(char *prefix, int specific_error, char *query);
 static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 									 POOL_CONNECTION_POOL *backend,
-									 POOL_SENT_MESSAGE *message);
+									 POOL_SENT_MESSAGE *message,
+									 POOL_SENT_MESSAGE *bind_message);
 static int* find_victim_nodes(int *ntuples, int nmembers, int master_node, int *number_of_nodes);
 static POOL_STATUS close_standby_transactions(POOL_CONNECTION *frontend,
 											  POOL_CONNECTION_POOL *backend);
@@ -1359,7 +1360,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 							   query_context->parse_tree);
 		}
 
-		if (parse_before_bind(frontend, backend, parse_msg) != POOL_CONTINUE)
+		if (parse_before_bind(frontend, backend, parse_msg, bind_msg) != POOL_CONTINUE)
 			return POOL_END;
 	}
 
@@ -1399,7 +1400,13 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	pool_set_query_in_progress();
 
-	nowait = (STREAM? true: false);
+	if (STREAM)
+	{
+		nowait = true;
+		session_context->query_context = query_context = bind_msg->query_context;
+	}
+	else
+		nowait = false;
 
 	pool_clear_sync_map();
 	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID, nowait);
@@ -2714,7 +2721,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case 'C':	/* CommandComplete */				
-				status = CommandComplete(frontend, backend);
+				status = CommandComplete(frontend, backend, true);
 				pool_set_command_success();
 				if (pool_is_doing_extended_query_message())
 					pool_unset_query_in_progress();
@@ -2725,7 +2732,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case 'I':	/* EmptyQueryResponse */
-				status = SimpleForwardToFrontend(kind, frontend, backend);
+				status = CommandComplete(frontend, backend, false);
 				/* Empty query response message should be treated same as
 				 * Command complete message. When we receive the Command
 				 * complete message, we unset the query in progress flag if
@@ -3226,7 +3233,8 @@ void per_node_error_log(POOL_CONNECTION_POOL *backend, int node_id, char *query,
  */
 static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 									 POOL_CONNECTION_POOL *backend,
-									 POOL_SENT_MESSAGE *message)
+									 POOL_SENT_MESSAGE *message,
+									 POOL_SENT_MESSAGE *bind_message)
 {
 	int i;
 	int len = message->len;
@@ -3243,9 +3251,48 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 		if (message->kind == 'P' && qc->where_to_send[PRIMARY_NODE_ID] == 0)
 		{
 			POOL_PENDING_MESSAGE *pmsg;
+			POOL_QUERY_CONTEXT *new_qc;
+			char message_body[1024];
+			int offset;
+			int message_len;
 
 			/* we are in streaming replication mode and the parse message has not
 			 * been sent to primary yet */
+
+			/* Prepare modified query context */
+			new_qc = pool_query_context_shallow_copy(qc);
+			memset(new_qc->where_to_send, 0, sizeof(new_qc->where_to_send));
+			new_qc->where_to_send[PRIMARY_NODE_ID] = 1;
+			new_qc->virtual_master_node_id = PRIMARY_NODE_ID;
+
+			/* Before sending the parse message to the primary, we need to
+			 * close the named statement. Otherwise we will get an error from
+			 * backend if the named statement already exists. This could
+			 * happend if parse_before_bind is called with a bind message
+			 * using same named statement. If the named statement does not
+			 * exist, it's fine. PostgreSQL just ignores a request trying to
+			 * close a non-existing statement. If the statement is unnamed
+			 * one, we do not need it because unnamed statement can be
+			 * overwritten anytime.
+			 */
+			message_body[0] = 'S';
+			offset = strlen(bind_message->contents)+1;
+
+			ereport(DEBUG1,
+					(errmsg("parse before bind"),
+					 errdetail("close statement: %s", bind_message->contents+offset)));
+
+			if (bind_message->contents[offset] != '\0')
+			{
+				message_len = 1 + strlen(bind_message->contents+offset) + 1;
+				StrNCpy(message_body+1, bind_message->contents+offset, sizeof(message_body)-1);
+				pool_extended_send_and_wait(qc, "C", message_len, message_body, 1, PRIMARY_NODE_ID, false);
+				/* Add pending message */
+				pmsg = pool_pending_message_create('C', message_len, message_body);
+				pmsg->not_forward_to_frontend = true;
+				pool_pending_message_dest_set(pmsg, new_qc);
+				pool_pending_message_add(pmsg);
+			}
 
 			/* Send parse message to primary node */
 			ereport(DEBUG1,
@@ -3253,15 +3300,15 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 					 errdetail("waiting for primary completing parse")));
 
 			pool_extended_send_and_wait(qc, "P", len, contents, 1, PRIMARY_NODE_ID, false);
-			memset(qc->where_to_send, 0, sizeof(qc->where_to_send));
-			qc->where_to_send[PRIMARY_NODE_ID] = 1;
-			qc->virtual_master_node_id = PRIMARY_NODE_ID;
 
 			/* Add pending message */
 			pmsg = pool_pending_message_create('P', len, contents);
 			pmsg->not_forward_to_frontend = true;
-			pool_pending_message_dest_set(pmsg, qc);
+			pool_pending_message_dest_set(pmsg, new_qc);
 			pool_pending_message_add(pmsg);
+
+			/* Replace the query context of bind message */
+			bind_message->query_context = new_qc;
 
 			return POOL_CONTINUE;
 		}
