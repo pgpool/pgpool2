@@ -307,6 +307,7 @@ extern void pool_pending_messages_init (void);
 extern void pool_pending_messages_destroy(void);
 extern POOL_PENDING_MESSAGE *pool_pending_message_create(char kind, int len, char *contents);
 extern void pool_pending_message_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context);
+void pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context);
 extern void pool_pending_message_query_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context);
 extern void pool_pending_message_add(POOL_PENDING_MESSAGE* message);
 extern POOL_PENDING_MESSAGE *pool_pending_message_head_message(void);
