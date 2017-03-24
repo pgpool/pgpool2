@@ -1108,17 +1108,6 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-#ifdef NOT_USED
-		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i) || use_sync_map == POOL_SYNC_MAP_EMPTY)
-		{
-			continue;
-		}
-
-		if (use_sync_map == POOL_SYNC_MAP_IS_VALID && !pool_is_set_sync_map(i))
-		{
-			continue;
-		}
-#endif
 		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
 		{
 			continue;

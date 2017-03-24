@@ -1216,6 +1216,25 @@ void pool_pending_message_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CON
 }
 
 /*
+ * Set where_to_send field in query_context from node_ids field of message
+ * which indicates which backend nodes the message was sent.
+ */
+void pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context)
+{
+	int i;
+
+	memset(query_context->where_to_send, 0, sizeof(query_context->where_to_send));
+
+	for (i=0;i<2;i++)
+	{
+		if (message->node_ids[i] != -1)
+		{
+			query_context->where_to_send[message->node_ids[i]] = 1;
+		}
+	}
+}
+
+/*
  * Set query field of message.
  */
 void pool_pending_message_query_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context)

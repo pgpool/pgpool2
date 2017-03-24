@@ -887,32 +887,10 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		/* Various take care at the transaction start */
 		handle_query_context(backend);
 
-#ifdef NOT_USED
-		/*
-		 * Send flush message to backend to make sure that we get any response
-		 * from backend.
-		 */
-		pool_write(MASTER(session_context->backend), "H", 1);
-		len = htonl(sizeof(len));
-		pool_write_and_flush(MASTER(session_context->backend), &len, sizeof(len));
-
-		if (MASTER(session_context->backend)->db_node_id != session_context->load_balance_node_id)
-		{
-			POOL_CONNECTION *con;
-
-			con = session_context->backend->slots[session_context->load_balance_node_id]->con;
-			pool_write(con, "H", 1);
-			len = htonl(sizeof(len));
-			pool_write_and_flush(con, &len, sizeof(len));
-		}
-#endif
 		/*
 		 * Remeber that we send flush or sync message to backend.
 		 */
 		pool_unset_pending_response();
-#ifdef NOT_USED
-		pool_unset_query_in_progress();
-#endif
 
 		/*
 		 * Take care of "writing transaction" flag.
@@ -1261,7 +1239,9 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 		/* XXX fix me:even with streaming replication mode, couldn't we have a deadlock */
 		pool_set_query_in_progress();
+#ifdef NOT_USED
 		pool_clear_sync_map();
+#endif
 		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, true);
 		pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, true);
 		pool_add_sent_message(session_context->uncompleted_message);
@@ -1408,7 +1388,9 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	else
 		nowait = false;
 
+#ifdef NOT_USED
 	pool_clear_sync_map();
+#endif
 	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID, nowait);
 	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, nowait);
 
@@ -1578,7 +1560,12 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		POOL_PENDING_MESSAGE *pmsg;
 
-		pool_clear_sync_map();
+		if (session_context->load_balance_node_id != PRIMARY_NODE_ID)
+		{
+			query_context->where_to_send[PRIMARY_NODE_ID] = true;
+			query_context->where_to_send[session_context->load_balance_node_id] = true;
+		}
+
 		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, false);
 		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
 
@@ -1588,9 +1575,11 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_pending_message_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
 
+#ifdef NOT_USED
 		dump_pending_message();
-
+#endif
 		pool_unset_query_in_progress();
+
 		/*
 		 * Remeber that we send flush or sync message to backend.
 		 */
@@ -1802,16 +1791,6 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		{
 			if (!VALID_BACKEND(i))
 				continue;
-
-#ifdef NOT_USED
-			if (!VALID_BACKEND(i) || use_sync_map == POOL_SYNC_MAP_EMPTY)
-				continue;
-
-			if (use_sync_map == POOL_SYNC_MAP_IS_VALID && !pool_is_set_sync_map(i))
-			{
-				continue;
-			}
-#endif
 
 			if (pool_read(CONNECTION(backend, i), &kind, sizeof(kind)))
 				return POOL_END;
@@ -2228,56 +2207,6 @@ POOL_STATUS ErrorResponse3(POOL_CONNECTION *frontend,
 
 	raise_intentional_error_if_need(backend);
 	
-#ifdef NOT_USED
-	for (i = 0;i < NUM_BACKENDS; i++)
-	{
-		if (VALID_BACKEND(i))
-		{
-			POOL_CONNECTION *cp = CONNECTION(backend, i);
-
-			/* We need to send "sync" message to backend in extend mode
-			 * so that it accepts next command.
-			 * Note that this may be overkill since client may send
-			 * it by itself. Moreover we do not need it in non-extend mode.
-			 * At this point we regard it is not harmful since error response
-			 * will not be sent too frequently.
-			 */
-			pool_write(cp, "S", 1);
-			res1 = htonl(4);
-			if (pool_write_and_flush_noerror(cp, &res1, sizeof(res1)) < 0)
-			{
-				return POOL_END;
-			}
-		}
-	}
-
-	while (read_kind_from_backend(frontend, backend, &kind1))
-	{
-		if (kind1 == 'Z') /* ReadyForQuery? */
-			break;
-
-		ret = SimpleForwardToFrontend(kind1, frontend, backend);
-		if (ret != POOL_CONTINUE)
-			return ret;
-		pool_flush(frontend);
-	}
-
-	if (ret != POOL_CONTINUE)
-		return ret;
-
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (VALID_BACKEND(i))
-		{
-			status = pool_read(CONNECTION(backend, i), &res1, sizeof(res1));
-			res1 = ntohl(res1) - sizeof(res1);
-			p1 = pool_read2(CONNECTION(backend, i), res1);
-			if (p1 == NULL)
-				return POOL_END;
-		}
-	}
-#endif
-
 	return POOL_CONTINUE;
 }
 
@@ -2489,20 +2418,12 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		case 'P':	/* Parse */
 			allow_close_transaction = 0;
 			pool_set_doing_extended_query_message();
-#ifdef NOT_USED
-			if (!pool_is_query_in_progress() && !pool_is_ignore_till_sync())
-				pool_set_query_in_progress();
-#endif
 			status = Parse(frontend, backend, len, contents);
 			pool_set_pending_response();
 			break;
 
 		case 'B':	/* Bind */
 			pool_set_doing_extended_query_message();
-#ifdef NOT_USED
-			if (!pool_is_query_in_progress() && !pool_is_ignore_till_sync())
-				pool_set_query_in_progress();
-#endif
 			status = Bind(frontend, backend, len, contents);
 			pool_set_pending_response();
 			break;
@@ -2516,10 +2437,6 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 		case 'D':	/* Describe */
 			pool_set_doing_extended_query_message();
-#ifdef NOT_USED
-			if (!pool_is_query_in_progress() && !pool_is_ignore_till_sync())
-				pool_set_query_in_progress();
-#endif
 			status = Describe(frontend, backend, len, contents);
 			pool_set_pending_response();
 			break;

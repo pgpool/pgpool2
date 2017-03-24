@@ -735,21 +735,6 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 	char *p1 = NULL;
 	int sendlen;
 	int i;
-#ifdef NOT_USED
-	POOL_SYNC_MAP_STATE use_sync_map = pool_use_sync_map();
-#endif
-
-#ifdef NOT_USED
-	/* 
-	 * The response of Execute command will be EmptyQueryResponse(I),
-	 * if Bind error occurs.
-	 */
-	else if ((kind == 'C' || kind == 'I') && select_in_transaction)
-	{
-		select_in_transaction = 0;
-		execute_select = 0;
-	}
-#endif
 
 	pool_read(MASTER(backend), &len, sizeof(len));
 
@@ -1051,9 +1036,6 @@ static int
 				/* Deallocate failed. We are in unknown state. Ask caller
 				 * to reset backend connection.
 				 */
-#ifdef NOT_USED
-				reset_prepared_list(&prepared_list);
-#endif
 				pool_remove_sent_message(kind, name);
 				return -1;
 			}
@@ -1065,9 +1047,6 @@ static int
 			 * del_prepared_list() again. This is harmless since trying to
 			 * remove same prepared object will be ignored.
 			 */
-#ifdef NOT_USED
-			del_prepared_list(&prepared_list, prepared_list.portal_list[0]);
-#endif
 			pool_remove_sent_message(kind, name);
 			return 1;
 		}
@@ -1256,48 +1235,6 @@ bool is_select_query(Node *node, char *sql)
 	}
 	return false;
 }
-
-#ifdef NOT_USED
-/*
- * returns true if SQL is SELECT statement including nextval() or
- * setval() call
- */
-bool is_sequence_query(Node *node)
-{
-	SelectStmt *select_stmt;
-	ListCell *lc;
-
-	if (node == NULL || !IsA(node, SelectStmt))
-		return false;
-
-	select_stmt = (SelectStmt *)node;
-	foreach (lc, select_stmt->targetList)
-	{
-		if (IsA(lfirst(lc), ResTarget))
-		{
-			ResTarget *t;
-			FuncCall *fc;
-			ListCell *c;
-
-			t = (ResTarget *) lfirst(lc);
-			if (IsA(t->val, FuncCall))
-			{
-				fc = (FuncCall *) t->val;
-				foreach (c, fc->funcname)
-				{
-					Value *v = lfirst(c);
-					if (strncasecmp(v->val.str, "NEXTVAL", 7) == 0)
-						return true;
-					else if (strncasecmp(v->val.str, "SETVAL", 6) == 0)
-						return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-#endif
 
 /*
  * Returns true if SQL is transaction commit or rollback command (COMMIT,
@@ -1751,34 +1688,6 @@ void do_error_command(POOL_CONNECTION *backend, int major)
 		}
 	} while (kind != 'E');
 
-#ifdef NOT_USED
-	/*
-	 * Expecting ErrorResponse
-	 */
-	pool_read(backend, &kind, sizeof(kind));
-
-	/*
-	 * read command tag of CommandComplete response
-	 */
-	if (major == PROTO_MAJOR_V3)
-	{
-		pool_read(backend, &len, sizeof(len));
-		len = ntohl(len) - 4;
-		string = pool_read2(backend, len);
-		if (string == NULL)
-            ereport(ERROR,
-                (errmsg("do error command failed"),
-                     errdetail("read from backend failed")));
-	}
-	else
-	{
-		string = pool_read_string(backend, &len, 0);
-		if (string == NULL)
-            ereport(ERROR,
-                (errmsg("do error command failed"),
-                     errdetail("read from backend failed")));
-	}
-#endif
 }
 
 /*
@@ -3288,7 +3197,14 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 						(errmsg("read_kind_from_backend: pending message exists. query context: %x",
 								msg->query_context)));
 				pool_pending_message_set_previous_message(msg);
+				pool_pending_message_query_context_dest_set(msg, msg->query_context);
 				session_context->query_context = msg->query_context;
+
+				ereport(DEBUG1,
+						(errmsg("read_kind_from_backend: where_to_send[0]:%d [1]:%d",
+								msg->query_context->where_to_send[0],
+								msg->query_context->where_to_send[1])));
+				
 				pool_set_query_in_progress();
 			}
 		}
@@ -3327,30 +3243,6 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		degenerate_node[i] = 0;
 		kind_list[i] = 0;
 
-#ifdef NOT_USED
-		if (!VALID_BACKEND(i) || use_sync_map == POOL_SYNC_MAP_EMPTY)
-		{
-			kind_list[i] = 0;
-			continue;
-		}
-#endif
-
-#ifdef NOT_USED
-		if (STREAM && pool_is_doing_extended_query_message())
-		{
-			if (msg && IS_SENT_NODE_ID(msg, i))
-			{
-				do_this_node_id = true;
-			}
-		}
-		else
-		{
-			if (VALID_BACKEND(i))
-			{
-				do_this_node_id = true;
-			}
-		}
-#endif
 		if (VALID_BACKEND(i))
 		{
 			num_executed_nodes++;
@@ -3383,11 +3275,6 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				ereport(DEBUG1,
 					(errmsg("reading backend data packet kind"),
 						 errdetail("backend:%d kind:'%c'",i, kind)));
-#ifdef NOT_USED
-				ereport(DEBUG2,
-					(errmsg("reading backend data packet kind"),
-						 errdetail("backend:%d kind:'%c'",i, kind)));
-#endif
 
 				/*
 				 * Read and discard parameter status and notice messages
@@ -3535,21 +3422,6 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 			for(;;)
 			{
-#ifdef NOT_USED
-				if (!pool_ssl_pending(s) && pool_read_buffer_is_empty(s))
-				{
-					pool_set_timeout(-1);
-					if (pool_check_fd(s) != 0)
-					{
-						ereport(DEBUG1,
-								(errmsg("readkind_from_backend: no pending data")));
-						pool_set_timeout(-1);
-						break;
-					}
-				}
-
-				pool_set_timeout(-1);
-#endif
 				pool_read(s, &kind, 1);
 
 				ereport(DEBUG1,
