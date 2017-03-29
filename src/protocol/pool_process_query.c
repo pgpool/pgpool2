@@ -3191,7 +3191,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 						(errmsg("read_kind_from_backend: where_to_send[0]:%d [1]:%d",
 								msg->query_context->where_to_send[0],
 								msg->query_context->where_to_send[1])));
-				
+
 				pool_set_query_in_progress();
 			}
 		}
