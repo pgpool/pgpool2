@@ -150,9 +150,6 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 		session_context->num_selects = 0;
 	}
 
-	/* Unset pending response */
-	pool_unset_pending_response();
-
 	/* Initialize pending message list */
 	pool_pending_messages_init();
 
@@ -931,52 +928,6 @@ bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 
 	return true;
 }
-
-/*
- * Set pending response
- */
-void pool_set_pending_response(void)
-{
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_set_pending_response: session context is not initialized")));
-
-	ereport(DEBUG1,
-			(errmsg("pool_set_pending_response")));
-
-	session_context->is_pending_response = true;
-}
-
-/*
- * Unset pending response
- */
-void pool_unset_pending_response(void)
-{
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_unset_pending_response: session context is not initialized")));
-
-	ereport(DEBUG1,
-			(errmsg("pool_unset_pending_response")));
-
-	session_context->is_pending_response = false;
-}
-
-/*
- * Returns true if pending response is set
- */
-bool pool_is_pending_response(void)
-{
-	if (!STREAM)
-		return false;
-
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_is_pending_response: session context is not initialized")));
-
-	return session_context->is_pending_response;
-}
-
 
 /*
  * Initialize pending message list

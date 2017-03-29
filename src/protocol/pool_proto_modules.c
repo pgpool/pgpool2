@@ -815,7 +815,6 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			pool_set_skip_reading_from_backends();
 			pool_stats_count_up_num_cache_hits();
 			pool_unset_query_in_progress();
-			pool_unset_pending_response();
 			return POOL_CONTINUE;
 		}
 	}
@@ -886,11 +885,6 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 		/* Various take care at the transaction start */
 		handle_query_context(backend);
-
-		/*
-		 * Remeber that we send flush or sync message to backend.
-		 */
-		pool_unset_pending_response();
 
 		/*
 		 * Take care of "writing transaction" flag.
@@ -1252,8 +1246,6 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_pending_message_add(pmsg);
 
 		pool_unset_query_in_progress();
-
-		pool_set_pending_response();
 	}
 	else
 	{
@@ -1579,11 +1571,6 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		dump_pending_message();
 #endif
 		pool_unset_query_in_progress();
-
-		/*
-		 * Remeber that we send flush or sync message to backend.
-		 */
-		pool_unset_pending_response();
 
 		/*
 		 * Remove sent message
@@ -2419,13 +2406,11 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			allow_close_transaction = 0;
 			pool_set_doing_extended_query_message();
 			status = Parse(frontend, backend, len, contents);
-			pool_set_pending_response();
 			break;
 
 		case 'B':	/* Bind */
 			pool_set_doing_extended_query_message();
 			status = Bind(frontend, backend, len, contents);
-			pool_set_pending_response();
 			break;
 
 		case 'C':	/* Close */
@@ -2438,7 +2423,6 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		case 'D':	/* Describe */
 			pool_set_doing_extended_query_message();
 			status = Describe(frontend, backend, len, contents);
-			pool_set_pending_response();
 			break;
 
 		case 'S':  /* Sync */
@@ -2457,7 +2441,6 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			else if (!pool_is_query_in_progress())
 				pool_set_query_in_progress();
 			status = SimpleForwardToBackend(fkind, frontend, backend, len, contents);
-			pool_unset_pending_response();
 			break;
 
 		case 'F':	/* FunctionCall */

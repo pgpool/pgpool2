@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3958,16 +3958,6 @@ void forward_pending_data(POOL_CONNECTION *frontend, POOL_CONNECTION *backend)
 	char kind;
 	int len;
 	char *buf;
-
-	/* If are doing extended query and we are in streaming replication
-	 * mode, we need to retrieve any response from backend.
-	 */
-	if (!pool_is_pending_response())
-	{
-		ereport(DEBUG1,
-				(errmsg("forward_pending_data: no peding data")));
-		return;
-	}
 
 	/* Send flush messsage to backend to retrieve response of backend */
 	pool_write(backend, "H", 1);		

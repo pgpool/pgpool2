@@ -216,15 +216,6 @@ typedef struct {
 	long long int num_selects;	/* number of successful SELECTs in this transaction */
 
 	/*
-	 * True if parse/bind/describe/close messages are sent to backend but
-	 * still sync or flush is not sent. If the flag is true, do_query issues
-	 * flush and stashes responses such as "parse complete" sent from backend,
-	 * then inserts them to pool_read buffer after finishing the job not to
-	 * confuse the message sequence.
-	 */
-	bool is_pending_response;
-
-	/*
 	 * Parse/Bind/Decribe/Execute/Close message queue.
 	 */
 	List *pending_messages;
