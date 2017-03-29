@@ -2082,7 +2082,7 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	{
 		POOL_PENDING_MESSAGE *pmsg;
 
-		pmsg = pool_pending_message_remove(POOL_CLOSE);
+		pmsg = pool_pending_message_get(POOL_CLOSE);
 
 		if (pmsg)
 		{
@@ -2613,6 +2613,25 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case '3':	/* CloseComplete */
+				if (STREAM)
+				{
+					POOL_PENDING_MESSAGE *pmsg;
+					pmsg = pool_pending_message_get_previous_message();
+					if (pmsg && pmsg->not_forward_to_frontend)
+					{
+						/* parse_before_bind() was called. Do not foward the
+						 * close complete message to frontend. */
+						ereport(LOG,
+								(errmsg("processing backend response"),
+								 errdetail("do not forward close complete message to frontend")));
+						pool_discard_packet_contents(backend);
+						pool_unset_query_in_progress();
+						pool_set_command_success();
+						status = POOL_CONTINUE;
+						break;
+					}
+				}
+
 				status = CloseComplete(frontend, backend);
 				pool_set_command_success();
 				if (STREAM||REPLICATION||RAW_MODE)

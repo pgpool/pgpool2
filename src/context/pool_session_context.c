@@ -40,6 +40,12 @@ static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *messag);
 static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m);
 static char *dump_sync_map(void);
 
+#ifdef PENDING_MESSAGE_DEBUG
+static int Elevel = LOG;
+#else
+static int Elevel = DEBUG1;
+#endif
+
 /*
  * Initialize per session context
  */
@@ -923,7 +929,7 @@ bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 	{
 		ereport(DEBUG1,
 				(errmsg("checking if query context can be safely destroyed"),
-				 errdetail("query context %p is still used %d times in pending message list", qc, count, qc->original_query)));
+				 errdetail("query context %p is still used %d times in pending message list. query:%s", qc, count, qc->original_query)));
 		return false;
 	}
 
@@ -1289,12 +1295,12 @@ void pool_pending_message_add(POOL_PENDING_MESSAGE* message)
 	}
 
 	if (message->type != POOL_SYNC)
-		ereport(DEBUG1,
+		ereport(Elevel,
 				(errmsg("pool_pending_message_add: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
 						message->type, message->contents_len, message->query, message->statement, message->portal,
 						message->node_ids[0], message->node_ids[1])));
 	else
-		ereport(DEBUG1,
+		ereport(Elevel,
 				(errmsg("pool_pending_message_add: message type: sync")));
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
@@ -1328,7 +1334,7 @@ POOL_PENDING_MESSAGE *pool_pending_message_head_message(void)
 	cell = list_head(session_context->pending_messages);
 	m = (POOL_PENDING_MESSAGE *) lfirst(cell);
 	message = copy_pending_message(m);
-	ereport(DEBUG1,
+	ereport(Elevel,
 			(errmsg("pool_pending_message_head_message: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
 					message->type, message->contents_len, message->query, message->statement, message->portal,
 					message->node_ids[0], message->node_ids[1])));
@@ -1364,7 +1370,7 @@ POOL_PENDING_MESSAGE *pool_pending_message_pull_out(void)
 	cell = list_head(session_context->pending_messages);
 	m = (POOL_PENDING_MESSAGE *) lfirst(cell);
 	message = copy_pending_message(m);
-	ereport(DEBUG1,
+	ereport(Elevel,
 			(errmsg("pool_pending_message_pull_out: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
 					message->type, message->contents_len, message->query, message->statement, message->portal,
 					message->node_ids[0], message->node_ids[1])));
@@ -1378,10 +1384,9 @@ POOL_PENDING_MESSAGE *pool_pending_message_pull_out(void)
 
 /*
  * Try to find the first message specified by the message type in the message
- * list. If found, a copy of the message is returned and the message is
- * removed the message list. If not, returns NULL.
+ * list. If found, a copy of the message is returned. If not, returns NULL.
  */
-POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type)
+POOL_PENDING_MESSAGE *pool_pending_message_get(POOL_MESSAGE_TYPE type)
 {
 	ListCell   *cell;
 	ListCell   *prev;
@@ -1407,10 +1412,6 @@ POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type)
 		if (m->type == type)
 		{
 			msg = copy_pending_message(m);
-
-			session_context->pending_messages =
-				list_delete_cell(session_context->pending_messages, cell, prev);
-
 			break;
 		}
 		else
