@@ -373,6 +373,7 @@ extern int my_master_node_id;
 #define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 10 /* time in seconds to keep retrying for a
 											   * watchdog command if the cluster is not
 											   * in stable state */
+#define MAX_IDENTIFIER_LEN		128
 
 #define SERIALIZE_ACCEPT (pool_config->serialize_accept != 0 && \
 						  pool_config->child_life_time == 0)
@@ -668,6 +669,7 @@ extern int compare(const void *p1, const void *p2);
 extern void do_error_execute_command(POOL_CONNECTION_POOL *backend, int node_id, int major);
 extern POOL_STATUS pool_discard_packet_contents(POOL_CONNECTION_POOL *cp);
 extern void pool_dump_valid_backend(int backend_id);
+extern bool pool_push_pending_data(POOL_CONNECTION *backend);
 
 /* pool_auth.c */
 extern void pool_random_salt(char *md5Salt);

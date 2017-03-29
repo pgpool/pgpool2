@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -19,8 +19,9 @@
  * is" without express or implied warranty.
  *
  *---------------------------------------------------------------------
- * This file contains modules which process the "Command Complete" message sent
- * from backend. The main function is "CommandComplete".
+ * This file contains modules which process the "Command Complete" and "Empty
+ * query response" message sent from backend. The main function is
+ * "CommandComplete".
  *---------------------------------------------------------------------
  */
 #include <string.h>
@@ -38,18 +39,22 @@
 #include "utils/memutils.h"
 #include "utils/pool_stream.h"
 
-static void handle_query_context(POOL_CONNECTION_POOL *backend);
 static int extract_ntuples(char *message);
 static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *packet, int packetlen);
 static int foward_command_complete(POOL_CONNECTION *frontend, char *packet, int packetlen);
+static int foward_empty_query(POOL_CONNECTION *frontend, char *packet, int packetlen);
+static int foward_packet_to_frontend(POOL_CONNECTION *frontend, char kind, char *packet, int packetlen);
 
-POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, bool command_complete)
 {
 	int len, len1;
 	char *p, *p1;
+	int i;
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION	*con;
-	int slot_id;
+
+	p1 = NULL;
+	len1 = 0;
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
@@ -57,64 +62,55 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	/*
 	 * Handle misc process which is neccessary when query context exists.
 	 */
-	if (session_context->query_context != NULL)
+	if (session_context->query_context != NULL && !STREAM)
 		handle_query_context(backend);
 
 	/*
-	 * Read backend data from the first valid node using sync map if operated
-	 * in streaming replication mode with extended protocol.
+	 * If operated in streaming replication mode and doing an extended query,
+	 * read backend message according to the query context.
 	 */
-	if	(STREAM && pool_is_doing_extended_query_message())
+	if (STREAM && pool_is_doing_extended_query_message())
 	{
-		slot_id =  pool_get_nth_sync_map(0);
-		if (slot_id < 0)
-			return POOL_END;	/* this should not happen */
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (VALID_BACKEND(i))
+			{
+				con = CONNECTION(backend, i);
 
-		con = backend->slots[slot_id]->con;
+				if (pool_read(con, &len, sizeof(len)) < 0)
+					return POOL_END;
+
+				len = ntohl(len);
+				len -= 4;
+				len1 = len;
+
+				p = pool_read2(con, len);
+				if (p == NULL)
+					return POOL_END;
+				p1 = palloc(len);
+				memcpy(p1, p, len);
+			}
+		}
 	}
 	/*
-	 * Oterwise read from "MASTER" node.
+	 * Otherwise just read from master node.
 	 */
 	else
 	{
 		con = MASTER(backend);
-	}
 
-	if (pool_read(con, &len, sizeof(len)) < 0)
-		return POOL_END;
+		if (pool_read(con, &len, sizeof(len)) < 0)
+			return POOL_END;
 
-	len = ntohl(len);
-	len -= 4;
-	len1 = len;
+		len = ntohl(len);
+		len -= 4;
+		len1 = len;
 
-	p = pool_read2(con, len);
-	if (p == NULL)
-		return POOL_END;
-	p1 = palloc(len);
-	memcpy(p1, p, len);
-
-	/*
-	 * If operated in streaming replication mode and extended query mode, we
-	 * may need to read data from other node if any (SET or transaction
-	 * statements).
-	 */
-	if	(STREAM && pool_is_doing_extended_query_message())
-	{
-		slot_id =  pool_get_nth_sync_map(1);
-		if (slot_id >= 0)
-		{
-			con = backend->slots[slot_id]->con;
-
-			if (pool_read(con, &len, sizeof(len)) < 0)
-				return POOL_END;
-
-			len = ntohl(len);
-			len -= 4;
-
-			p = pool_read2(con, len);
-			if (p == NULL)
-				return POOL_END;
-		}
+		p = pool_read2(con, len);
+		if (p == NULL)
+			return POOL_END;
+		p1 = palloc(len);
+		memcpy(p1, p, len);
 	}
 
 	/*
@@ -125,7 +121,14 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	 */
 	if (STREAM && pool_is_doing_extended_query_message())
 	{
-		if (foward_command_complete(frontend, p1, len1) < 0)
+		int status;
+
+		if (command_complete)
+			status = foward_command_complete(frontend, p1, len1);
+		else
+			status = foward_empty_query(frontend, p1, len1);
+
+		if (status < 0)
 			return POOL_END;
 	}
 	else
@@ -150,8 +153,15 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		pool_set_query_state(session_context->query_context, POOL_EXECUTE_COMPLETE);
 	}
 
+	/*
+	 * If we are in streaming replication mode and we are doing extended
+	 * query, reset query in progress flag and prevoius pending message.
+	*/
 	if (STREAM && pool_is_doing_extended_query_message())
+	{
 		pool_unset_query_in_progress();
+		pool_pending_message_reset_previous_message();
+	}
 
 	return POOL_CONTINUE;
 }
@@ -159,7 +169,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 /*
  * Handle misc process which is neccessary when query context exists.
  */
-static void handle_query_context(POOL_CONNECTION_POOL *backend)
+void handle_query_context(POOL_CONNECTION_POOL *backend)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	Node *node;
@@ -368,19 +378,31 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNEC
  */
 static int foward_command_complete(POOL_CONNECTION *frontend, char *packet, int packetlen)
 {
-	int sendlen;
+	return foward_packet_to_frontend(frontend, 'C', packet, packetlen);
+}
 
-	pool_flush(frontend);
+/*
+ * Forward Empty query response to frontend
+ */
+static int foward_empty_query(POOL_CONNECTION *frontend, char *packet, int packetlen)
+{
+	return foward_packet_to_frontend(frontend, 'I', packet, packetlen);
+}
 
-	if (pool_write(frontend, "C", 1) < 0)
-		return -1;
+/*
+ * Forward packet to frontend
+ */
+static int foward_packet_to_frontend(POOL_CONNECTION *frontend, char kind, char *packet, int packetlen)
+{
+ 	int sendlen;
 
-	pool_flush(frontend);
-
+	if (pool_write(frontend, &kind, 1) < 0)
+ 		return -1;
+ 
 	sendlen = htonl(packetlen+4);
 	if (pool_write(frontend, &sendlen, sizeof(sendlen)) < 0)
 		return -1;
-	pool_flush(frontend);
+
 	pool_write_and_flush(frontend, packet, packetlen);
 
 	return 0;

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -86,6 +86,10 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 	if (query_context)
 	{
 		MemoryContext memory_context = query_context->memory_context;
+
+		ereport(DEBUG1,
+				(errmsg("pool_query_context_destroy: query context:%x", query_context)));
+
 		session_context = pool_get_session_context(false);
 		pool_unset_query_in_progress();
 		query_context->original_query = NULL;
@@ -93,6 +97,21 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 		pfree(query_context);
 		MemoryContextDelete(memory_context);
 	}
+}
+
+/*
+ * Perform shallow copy of given query context. Used in parse_before_bind.
+ */
+POOL_QUERY_CONTEXT *pool_query_context_shallow_copy(POOL_QUERY_CONTEXT *query_context)
+{
+	POOL_QUERY_CONTEXT *qc;
+	MemoryContext memory_context;
+
+	qc = pool_init_query_context();
+	memory_context = qc->memory_context;
+	memcpy(qc, query_context, sizeof(POOL_QUERY_CONTEXT));
+	qc->memory_context = memory_context;
+	return qc;
 }
 
 /*
@@ -290,6 +309,11 @@ int pool_virtual_master_db_node_id(void)
 			  * virtual_master_node_id is not set up yet. Let's use the
 			  * primary node id.
 			  */
+
+			ereport(DEBUG1,
+					(errmsg("pool_virtual_master_db_node_id: virtual_master_node_id:%d load_balance_node_id:%d PRIMARY_NODE_ID:%d",
+							node_id, sc->load_balance_node_id, PRIMARY_NODE_ID)));
+
 			if (node_id != sc->load_balance_node_id && node_id != PRIMARY_NODE_ID)
 			{
 				node_id = PRIMARY_NODE_ID;
@@ -306,6 +330,12 @@ int pool_virtual_master_db_node_id(void)
 	 */
 	if (MASTER_SLAVE)
 	{
+		int node_id;
+
+		node_id = pool_get_preferred_master_node_id();
+		if (node_id >= 0)
+			return node_id;
+
 		return PRIMARY_NODE_ID;
 	}
 	return my_master_node_id;
@@ -383,7 +413,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		dest = send_to_where(node, query);
 
 		ereport(DEBUG1,
-			(errmsg("decide where to send the queries"),
+			(errmsg("decide where to send the query"),
 				 errdetail("destination = %d for query= \"%s\"", dest, query)));
 
 		/* Should be sent to primary only? */
@@ -412,6 +442,15 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				 *	transaction isolation level is not SERIALIZABLE)
 				 * we might be able to load balance.
 				 */
+
+				ereport(DEBUG1,
+						(errmsg("checking load balance precondtions. TSTATE:%c wrting_trancation:%d failed_transaction:%d isolation:%d",
+								TSTATE(backend, PRIMARY_NODE_ID),
+								pool_is_writing_transaction(),
+								pool_is_failed_transaction(),
+								pool_get_transaction_isolation()),
+						 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 				if (TSTATE(backend, PRIMARY_NODE_ID) == 'I' ||
 					(!pool_is_writing_transaction() &&
 					 !pool_is_failed_transaction() &&
@@ -430,6 +469,10 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 						pool_config->delay_threshold &&
 						bkinfo->standby_delay > pool_config->delay_threshold)
 					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because of too much replication delay"),
+								 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 
@@ -439,6 +482,10 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					 */
 					else if (pool_has_function_call(node))
 					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because writing functions are used"),
+								 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 
@@ -456,6 +503,10 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					 */
 					else if (pool_has_system_catalog(node))
 					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because systems catalogs are used"),
+								 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 
@@ -465,6 +516,10 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					 */
 					else if (pool_config->check_temp_table && pool_has_temp_table(node))
 					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because temporary tables are used"),
+								 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 
@@ -474,6 +529,10 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					 */
 					else if (pool_config->check_unlogged_table && pool_has_unlogged_table(node))
 					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because unlogged tables are used"),
+								 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 
@@ -560,9 +619,9 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	{
 		POOL_SENT_MESSAGE *msg;
 
-		msg = pool_get_sent_message('Q', ((ExecuteStmt *)node)->name);
+		msg = pool_get_sent_message('Q', ((ExecuteStmt *)node)->name, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
-			msg = pool_get_sent_message('P', ((ExecuteStmt *)node)->name);
+			msg = pool_get_sent_message('P', ((ExecuteStmt *)node)->name, POOL_SENT_MESSAGE_CREATED);
 		if (msg)
 			pool_copy_prep_where(msg->query_context->where_to_send,
 								 query_context->where_to_send);
@@ -865,11 +924,6 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			per_node_statement_log(backend, i, msgbuf);
 		}
 
-		/* Set sync map so that we could wait for response from appropreate node */
-		pool_set_sync_map(i);
-		ereport(DEBUG1,
-				(errmsg("pool_send_and_wait: pool_set_sync_map: %d", i)));
-
 		/* if Execute message, count up stats count */
 		if (*kind == 'E')
 		{
@@ -878,11 +932,11 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 
 		send_extended_protocol_message(backend, i, kind, str_len, str);
 
-		if ((*kind == 'E' || *kind == 'C') && STREAM)
+		if ((*kind == 'P' || *kind == 'E' || *kind == 'C') && STREAM)
 		{
 			/*
 			 * Send flush message to backend to make sure that we get any response
-			 * from backend in Sream replication mode.
+			 * from backend in Streaming replication mode.
 			 */
 
 			POOL_CONNECTION *cp = CONNECTION(backend, i);
@@ -1309,9 +1363,9 @@ void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
 	}
 	else
 	{
-		msg = pool_get_sent_message('Q', d->name);
+		msg = pool_get_sent_message('Q', d->name, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
-			msg = pool_get_sent_message('P', d->name);
+			msg = pool_get_sent_message('P', d->name, POOL_SENT_MESSAGE_CREATED);
 		if (msg)
 		{
 			/* Inherit same map from PREPARE or PARSE */
