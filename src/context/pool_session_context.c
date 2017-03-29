@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -30,6 +30,7 @@
 #include "utils/elog.h"
 #include "pool_config.h"
 #include "context/pool_session_context.h"
+#include "protocol/pool_proto_modules.h"
 
 static POOL_SESSION_CONTEXT session_context_d;
 static POOL_SESSION_CONTEXT *session_context = NULL;
@@ -37,7 +38,12 @@ static void GetTranIsolationErrorCb(void *arg);
 static void init_sent_message_list(void);
 static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *messag);
 static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m);
-static char *dump_sync_map(void);
+
+#ifdef PENDING_MESSAGE_DEBUG
+static int Elevel = LOG;
+#else
+static int Elevel = DEBUG1;
+#endif
 
 /*
  * Initialize per session context
@@ -48,6 +54,9 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	ProcessInfo *process_info;
 	int node_id;
 	int i;
+
+	/* Clear session context memory */
+	memset(&session_context_d, 0, sizeof(session_context_d));
 
 	/* Get Process context */
 	session_context->process_context = pool_get_process_context();
@@ -141,14 +150,14 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 		session_context->num_selects = 0;
 	}
 
-	/* Clear sync map */
-	pool_clear_sync_map();
-
-	/* Unset pending response */
-	pool_unset_pending_response();
-
 	/* Initialize pending message list */
 	pool_pending_messages_init();
+
+	/* Initialize previous pending message */
+	pool_pending_message_reset_previous_message();
+
+	/* Initialize preferred master node id */
+	pool_reset_preferred_master_node_id();
 }
 
 /*
@@ -439,13 +448,14 @@ void pool_clear_sent_message_list(void)
 static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m)
 {
 	ereport(DEBUG1,
-			(errmsg("called by %s: sent message: address: %p kind: %c name: =%s=", caller, m, m->kind, m->name)));
+			(errmsg("called by %s: sent message: address: %p kind: %c name: =%s= state:%d",
+					caller, m, m->kind, m->name, m->state)));
 }
 
 /*
- * Create a sent message
- * kind: one of 'P':Parse, 'B':Bind or'Q':Query(PREPARE)
- * len: message length that is not network byte order
+ * Create a sent message.
+ * kind: one of 'P':Parse, 'B':Bind or 'Q':Query(PREPARE)
+ * len: message length in host order
  * contents: message contents
  * num_tsparams: number of timestamp parameters
  * name: prepared statement name or portal name
@@ -467,6 +477,7 @@ POOL_SENT_MESSAGE *pool_create_sent_message(char kind, int len, char *contents,
 	msg->len = len;
 	msg->contents = palloc(len);
 	memcpy(msg->contents, contents, len);
+	msg->state = POOL_SENT_MESSAGE_CREATED;
 	msg->num_tsparams = num_tsparams;
 	msg->name = pstrdup(name);
 	msg->query_context = query_context;
@@ -493,7 +504,7 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 		return;
 	}
 
-	old_msg = pool_get_sent_message(message->kind, message->name);
+	old_msg = pool_get_sent_message(message->kind, message->name, POOL_SENT_MESSAGE_CREATED);
 
 	if (old_msg == message)
 	{
@@ -545,7 +556,7 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 /*
  * Get a sent message
  */
-POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name)
+POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name, POOL_SENT_MESSAGE_STATE state)
 {
 	int i;
 	POOL_SENT_MESSAGE_LIST *msglist;
@@ -555,11 +566,23 @@ POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name)
 	for (i = 0; i < msglist->size; i++)
 	{
 		if (msglist->sent_messages[i]->kind == kind &&
-			!strcmp(msglist->sent_messages[i]->name, name))
+			!strcmp(msglist->sent_messages[i]->name, name) &&
+			msglist->sent_messages[i]->state == state)
 			return msglist->sent_messages[i];
 	}
 
 	return NULL;
+}
+
+/*
+ * Set message state to POOL_SENT_MESSAGE_STATE to POOL_SENT_MESSAGE_CLOSED.
+ */
+void pool_set_sent_message_state(POOL_SENT_MESSAGE *message)
+{
+	ereport(DEBUG1,
+			(errmsg("pool_set_sent_message_state: name:%s kind:%c previous state: %d",
+					message->name, message->kind, message->state)));
+	message->state = POOL_SENT_MESSAGE_CLOSED;
 }
 
 /*
@@ -863,6 +886,8 @@ bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 	int i;
 	int count = 0;
 	POOL_SENT_MESSAGE_LIST *msglist;
+	ListCell   *cell;
+	ListCell   *next;
 
 	msglist = &session_context->message_list;
 
@@ -875,167 +900,34 @@ bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 	{
 		ereport(DEBUG1,
 			(errmsg("checking if query context can be safely destroyed"),
-				 errdetail("query context %p is still used %d times. query:\"%s\"",
+				 errdetail("query context %p is still used %d times in sent message list. query:\"%s\"",
 						   qc, count,qc->original_query)));
+		return false;
+	}
+
+	count = 0;
+
+	for (cell = list_head(session_context->pending_messages); cell; cell = next)
+	{
+		POOL_PENDING_MESSAGE *message = (POOL_PENDING_MESSAGE *) lfirst(cell);
+
+		if (message->query_context == qc)
+		{
+			count++;
+		}
+		next = lnext(cell);
+	}
+
+	if (count >= 1)
+	{
+		ereport(DEBUG1,
+				(errmsg("checking if query context can be safely destroyed"),
+				 errdetail("query context %p is still used %d times in pending message list. query:%s", qc, count, qc->original_query)));
 		return false;
 	}
 
 	return true;
 }
-
-/*
- * Set sync map
- */
-void pool_set_sync_map(int node_id)
-{
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_set_sync_map: session context is not initialized")));
-
-	session_context->sync_map[node_id] = true;
-}
-
-/*
- * Check if sync map is set
- */
-bool pool_is_set_sync_map(int node_id)
-{
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_is_set_sync_map: session context is not initialized")));
-
-	return session_context->sync_map[node_id];
-}
-
-/*
- * Get nth valid node id from sync map
- */
-int pool_get_nth_sync_map(int nth)
-{
-	int i;
-	int cnt = 0;
-
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (!VALID_BACKEND(i))
-			continue;
-
-		if (session_context->sync_map[i])
-		{
-			if (cnt == nth)
-				return i;	/* found nth valid node id */
-		}
-
-		cnt++;
-	}
-
-	return -1;		/* no valid node id found */
-}
-
-/*
- * Clear sync map
- */
-void pool_clear_sync_map(void)
-{
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_clear_sync_map: session context is not initialized")));
-
-	memset(&session_context->sync_map, 0, sizeof(session_context->sync_map));
-}
-
-/*
- * Check whether we should 1) ignore sync map, 2) consult sync map, or 3) we
- * cannot use sync map because it's empty.
- */
-bool pool_use_sync_map(void)
-{
-	int i;
-
-	if (!session_context)
-		return POOL_IGNORE_SYNC_MAP;
-
-	if (STREAM && !pool_is_query_in_progress() && pool_is_doing_extended_query_message())
-	{
-		for (i=0;i<NUM_BACKENDS;i++)
-		{
-			if (pool_is_set_sync_map(i))
-			{
-				ereport(DEBUG1,
-						(errmsg("pool_use_sync_map: we can use sync map: %s", dump_sync_map())));
-				return POOL_SYNC_MAP_IS_VALID;	/* yes, we can use sync map */
-			}
-		}
-		ereport(DEBUG1,
-				(errmsg("pool_use_sync_map: we cannot use sync map because all map entries are false")));
-		return POOL_SYNC_MAP_EMPTY;	/* no, we cannot use sync map */
-	}
-
-	ereport(DEBUG1,
-			(errmsg("pool_use_sync_map: we cannot use sync map because STREAM: %d query in progress: %d doing extended query: %d", STREAM, pool_is_query_in_progress(), pool_is_doing_extended_query_message())));
-
-	return POOL_IGNORE_SYNC_MAP;
-}
-
-static char *dump_sync_map(void)
-{
-	static char mapstr[MAX_NUM_BACKENDS+1];
-	int i;
-
-	memset(mapstr, 0, sizeof(mapstr));
-
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		mapstr[i] = session_context->sync_map[i]?'1':'0';
-	}
-	return mapstr;
-}
-
-/*
- * Set pending response
- */
-void pool_set_pending_response(void)
-{
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_set_pending_response: session context is not initialized")));
-
-	ereport(DEBUG1,
-			(errmsg("pool_set_pending_response")));
-
-	session_context->is_pending_response = true;
-}
-
-/*
- * Unset pending response
- */
-void pool_unset_pending_response(void)
-{
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_unset_pending_response: session context is not initialized")));
-
-	ereport(DEBUG1,
-			(errmsg("pool_unset_pending_response")));
-
-	session_context->is_pending_response = false;
-}
-
-/*
- * Returns true if pending response is set
- */
-bool pool_is_pending_response(void)
-{
-	if (!STREAM)
-		return false;
-
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_is_pending_response: session context is not initialized")));
-
-	return session_context->is_pending_response;
-}
-
 
 /*
  * Initialize pending message list
@@ -1072,7 +964,7 @@ void pool_pending_messages_destroy(void)
 /*
  * Create one message.
  */
-POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *contents)
+POOL_PENDING_MESSAGE *pool_pending_message_create(char kind, int len, char *contents)
 {
 	POOL_PENDING_MESSAGE* msg;
 	MemoryContext old_context;
@@ -1094,8 +986,20 @@ POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *con
 		msg->type = POOL_BIND;
 		break;
 
+		case 'E':
+		msg->type = POOL_EXECUTE;
+		break;
+
+		case 'D':
+		msg->type = POOL_DESCRIBE;
+		break;
+
 		case 'C':
 		msg->type = POOL_CLOSE;
+		break;
+
+		case 'S':
+		msg->type = POOL_SYNC;
 		break;
 
 		default:
@@ -1104,9 +1008,21 @@ POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *con
 		break;
 	}
 
-	msg->contents = palloc(len);
-	memcpy(msg->contents, contents, len);
+	if (len > 0)
+	{
+		msg->contents = palloc(len);
+		memcpy(msg->contents, contents, len);
+	}
+	else
+		msg->contents = NULL;
+
 	msg->contents_len = len;
+	msg->query[0] = '\0';
+	msg->statement[0] = '\0';
+	msg->portal[0] = '\0';
+	msg->is_rows_returned = false;
+	msg->not_forward_to_frontend = false;
+	msg->node_ids[0] = msg->node_ids[1] = -1;
 
 	MemoryContextSwitchTo(old_context);
 
@@ -1114,7 +1030,65 @@ POOL_PENDING_MESSAGE *pool_pending_messages_create(char kind, int len, char *con
 }
 
 /*
- * Add one message
+ * Set node_ids field of message which indicates which backend nodes the
+ * message was sent.
+ */
+void pool_pending_message_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context)
+{
+	int i;
+	int j = 0;
+
+	for (i=0;i<MAX_NUM_BACKENDS;i++)
+	{
+		if (query_context->where_to_send[i])
+		{
+			if (j > 1)
+			{
+				ereport(ERROR,
+						(errmsg("pool_pending_messages_dest_set: node ids exceeds 2")));
+				return;
+			}
+			message->node_ids[j++] = i;
+		}
+	}
+
+	message->query_context = query_context;
+
+	if (is_select_query(query_context->parse_tree, query_context->original_query))
+	{
+		message->is_rows_returned = true;
+	}
+}
+
+/*
+ * Set where_to_send field in query_context from node_ids field of message
+ * which indicates which backend nodes the message was sent.
+ */
+void pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context)
+{
+	int i;
+
+	memset(query_context->where_to_send, 0, sizeof(query_context->where_to_send));
+
+	for (i=0;i<2;i++)
+	{
+		if (message->node_ids[i] != -1)
+		{
+			query_context->where_to_send[message->node_ids[i]] = 1;
+		}
+	}
+}
+
+/*
+ * Set query field of message.
+ */
+void pool_pending_message_query_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context)
+{
+	StrNCpy(message->query, query_context->original_query, sizeof(message->query));
+}
+
+/*
+ * Add one message to the tail of the list
  */
 void pool_pending_message_add(POOL_PENDING_MESSAGE* message)
 {
@@ -1125,9 +1099,48 @@ void pool_pending_message_add(POOL_PENDING_MESSAGE* message)
 		ereport(ERROR,
 				(errmsg("pool_pending_message_add: session context is not initialized")));
 
-	ereport(DEBUG1,
-			(errmsg("pool_pending_message_add: message type:%d message len:%d",
-					message->type, message->contents_len)));
+	switch (message->type)
+	{
+		case POOL_PARSE:
+			StrNCpy(message->statement, message->contents, sizeof(message->statement));
+			StrNCpy(message->query, message->contents+strlen(message->contents)+1, sizeof(message->query));
+			break;
+
+		case POOL_BIND:
+			StrNCpy(message->portal, message->contents, sizeof(message->portal));
+			StrNCpy(message->statement, message->contents+strlen(message->contents)+1, sizeof(message->statement));
+			break;
+
+		case POOL_EXECUTE:
+			StrNCpy(message->portal, message->contents, sizeof(message->portal));
+			break;
+
+		case POOL_CLOSE:
+		case POOL_DESCRIBE:
+			if (*message->contents == 'S')
+				StrNCpy(message->statement, message->contents+1, sizeof(message->statement));
+			else
+				StrNCpy(message->portal, message->contents+1, sizeof(message->portal));
+			break;
+
+		case POOL_SYNC:
+			break;
+
+		default:
+			ereport(ERROR,
+					(errmsg("pool_pending_message_add: unknown message type:%d", message->type)));
+			return;
+			break;
+	}
+
+	if (message->type != POOL_SYNC)
+		ereport(Elevel,
+				(errmsg("pool_pending_message_add: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
+						message->type, message->contents_len, message->query, message->statement, message->portal,
+						message->node_ids[0], message->node_ids[1])));
+	else
+		ereport(Elevel,
+				(errmsg("pool_pending_message_add: message type: sync")));
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
 	msg = copy_pending_message(message);
@@ -1136,14 +1149,85 @@ void pool_pending_message_add(POOL_PENDING_MESSAGE* message)
 }
 
 /*
- * Try to find the first message specified by the message type in the message
- * list. If found, a copy of the message is returned and the message is
- * removed the message list. If not, returns NULL.
+ * Return the message from the head of the list.  If the list is not empty, a
+ * copy of the message is returned. If the list is empty, returns NULL.
  */
-POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type)
+POOL_PENDING_MESSAGE *pool_pending_message_head_message(void)
 {
 	ListCell   *cell;
-	ListCell   *prev;
+	POOL_PENDING_MESSAGE *message;
+	POOL_PENDING_MESSAGE *m;
+	MemoryContext old_context;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_pending_message_head_message: session context is not initialized")));
+
+	if (list_length(session_context->pending_messages) == 0)
+	{
+		return NULL;
+	}
+
+	old_context = MemoryContextSwitchTo(session_context->memory_context);
+
+	cell = list_head(session_context->pending_messages);
+	m = (POOL_PENDING_MESSAGE *) lfirst(cell);
+	message = copy_pending_message(m);
+	ereport(Elevel,
+			(errmsg("pool_pending_message_head_message: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
+					message->type, message->contents_len, message->query, message->statement, message->portal,
+					message->node_ids[0], message->node_ids[1])));
+
+	MemoryContextSwitchTo(old_context);
+	return message;
+}
+
+
+/*
+ * Remove one message from the head of the list.  If the list is not empty, a
+ * copy of the message is returned and the message is removed the message
+ * list. If the list is empty, returns NULL.
+ */
+POOL_PENDING_MESSAGE *pool_pending_message_pull_out(void)
+{
+	ListCell   *cell;
+	POOL_PENDING_MESSAGE *message;
+	POOL_PENDING_MESSAGE *m;
+	MemoryContext old_context;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_pending_message_pull_out: session context is not initialized")));
+
+	if (list_length(session_context->pending_messages) == 0)
+	{
+		return NULL;
+	}
+
+	old_context = MemoryContextSwitchTo(session_context->memory_context);
+
+	cell = list_head(session_context->pending_messages);
+	m = (POOL_PENDING_MESSAGE *) lfirst(cell);
+	message = copy_pending_message(m);
+	ereport(Elevel,
+			(errmsg("pool_pending_message_pull_out: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
+					message->type, message->contents_len, message->query, message->statement, message->portal,
+					message->node_ids[0], message->node_ids[1])));
+
+	session_context->pending_messages =
+		list_delete_cell(session_context->pending_messages, cell, NULL);
+
+	MemoryContextSwitchTo(old_context);
+	return message;
+}
+
+/*
+ * Try to find the first message specified by the message type in the message
+ * list. If found, a copy of the message is returned. If not, returns NULL.
+ */
+POOL_PENDING_MESSAGE *pool_pending_message_get(POOL_MESSAGE_TYPE type)
+{
+	ListCell   *cell;
 	ListCell   *next;
 	POOL_PENDING_MESSAGE *msg;
 	MemoryContext old_context;
@@ -1154,7 +1238,6 @@ POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type)
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
 
-	prev = NULL;
 	msg = NULL;
 
 	for (cell = list_head(session_context->pending_messages); cell; cell = next)
@@ -1166,14 +1249,8 @@ POOL_PENDING_MESSAGE *pool_pending_message_remove(POOL_MESSAGE_TYPE type)
 		if (m->type == type)
 		{
 			msg = copy_pending_message(m);
-
-			session_context->pending_messages =
-				list_delete_cell(session_context->pending_messages, cell, prev);
-
 			break;
 		}
-		else
-			prev = cell;
 	}
 
 	MemoryContextSwitchTo(old_context);
@@ -1199,7 +1276,8 @@ char *pool_get_close_message_name(POOL_PENDING_MESSAGE *msg)
 }
 
 /*
- * Perform deep copy of POOL_PENDING_MESSAGE object in the current memory context.
+ * Perform deep copy of POOL_PENDING_MESSAGE object in the current memory
+ * context except the query context.
  */
 static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *message)
 {
@@ -1211,6 +1289,90 @@ static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *message)
 	memcpy(msg->contents, message->contents, msg->contents_len);
 
 	return msg;
+}
+
+/*
+ * Reset previous message.
+ */
+void pool_pending_message_reset_previous_message(void)
+{
+	if (!session_context)
+	{
+		ereport(ERROR,
+				(errmsg("pool_pending_message_reset_previous_message: session context is not initialized")));
+		return;
+	}
+	session_context->previous_message = NULL;
+}
+
+/*
+ * Set previous message.
+ */
+void pool_pending_message_set_previous_message(POOL_PENDING_MESSAGE *message)
+{
+	if (!session_context)
+	{
+		ereport(ERROR,
+				(errmsg("pool_pending_message_set_previous_message: session context is not initialized")));
+		return;
+	}
+	session_context->previous_message = message;
+}
+
+/*
+ * Get previous message.
+ */
+POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void)
+{
+	if (!session_context)
+	{
+		ereport(ERROR,
+				(errmsg("pool_pending_message_get_previous_message: session context is not initialized")));
+		return NULL;
+	}
+	return session_context->previous_message;
+}
+
+/*
+ * Return true if there's any pending message.
+ */
+bool pool_pending_message_exists(void)
+{
+	return list_length(session_context->pending_messages) > 0;
+}
+
+/*
+ * Dump whole pending message list
+ */
+void dump_pending_message(void)
+{
+	ListCell   *cell;
+	ListCell   *next;
+
+	if (!session_context)
+	{
+		ereport(ERROR,
+				(errmsg("dump_pending_message: session context is not initialized")));
+		return;
+	}
+
+	ereport(DEBUG1,
+			(errmsg("start dumping pending message list")));
+
+	for (cell = list_head(session_context->pending_messages); cell; cell = next)
+	{
+		POOL_PENDING_MESSAGE *message = (POOL_PENDING_MESSAGE *) lfirst(cell);
+
+		ereport(DEBUG1,
+				(errmsg("pool_pending_message_dump: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
+						message->type, message->contents_len, message->query, message->statement, message->portal,
+						message->node_ids[0], message->node_ids[1])));
+
+		next = lnext(cell);
+	}
+
+	ereport(DEBUG1,
+			(errmsg("end dumping pending message list")));
 }
 
 /*
@@ -1257,4 +1419,31 @@ int pool_get_minor_version(void)
 		return session_context->minor;
 	}
 	return 0;
+}
+
+/*
+ * Set preferred "master" node id.
+ * Only used for SimpleForwardToFrontend.
+ */
+void pool_set_preferred_master_node_id(int node_id)
+{
+	session_context->preferred_master_node_id = node_id;
+}
+
+/*
+ * Return preferred "master" node id.
+ * Only used for SimpleForwardToFrontend.
+ */
+int pool_get_preferred_master_node_id(void)
+{
+	return session_context->preferred_master_node_id;
+}
+
+/*
+ * Reset preferred "master" node id.
+ * Only used for SimpleForwardToFrontend.
+ */
+void pool_reset_preferred_master_node_id(void)
+{
+	session_context->preferred_master_node_id = -1;
 }
