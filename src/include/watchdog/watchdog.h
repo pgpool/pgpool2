@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -99,6 +99,7 @@ typedef struct SocketConnection
 typedef struct WatchdogNode
 {
 	WD_STATES state;
+	struct timeval current_state_time;		/* time value when the node state last changed*/
 	struct timeval startup_time;			/* startup time value of node */
 	struct timeval last_rcv_time;			/* timestamp when last packet
 											 * was received from the node
@@ -115,6 +116,11 @@ typedef struct WatchdogNode
 	int	private_id;							/* ID assigned to this node
 											 * This id is consumed locally
 											 */
+	int alive_node_count;					/* number of alive/reachable
+											 * watchdog nodes connected */
+	int quorum_status;						/* quorum status on the node */
+	bool escalated;							/* true if the Watchdog node has
+											 * performed escalation */
 	SocketConnection server_socket;			/* socket connections for this node initiated by remote */
 	SocketConnection client_socket;			/* socket connections for this node initiated by local*/
 }WatchdogNode;
