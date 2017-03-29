@@ -966,11 +966,6 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			per_node_statement_log(backend, i, msgbuf);
 		}
 
-		/* Set sync map so that we could wait for response from appropreate node */
-		pool_set_sync_map(i);
-		ereport(DEBUG1,
-				(errmsg("pool_send_and_wait: pool_set_sync_map: %d", i)));
-
 		/* if Execute message, count up stats count */
 		if (*kind == 'E')
 		{

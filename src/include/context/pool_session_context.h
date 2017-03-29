@@ -216,18 +216,6 @@ typedef struct {
 	long long int num_selects;	/* number of successful SELECTs in this transaction */
 
 	/*
-	 * Used for managing sync message response in streaming replication
-	 * mode. In streaming replication mode, there are at most two nodes
-	 * involved. One is always primary, and the other (if any) could be
-	 * standby. If the load balancing manager chooses the primary as the load
-	 * balancing node, only the primary node is involved. Every time extended
-	 * protocol is sent to backend, we set true on the member of array
-	 * below. It is cleared after sync message is processed and command
-	 * complete or error response message is processed.
-	 */
-	bool sync_map[MAX_NUM_BACKENDS];
-
-	/*
 	 * True if parse/bind/describe/close messages are sent to backend but
 	 * still sync or flush is not sent. If the flag is true, do_query issues
 	 * flush and stashes responses such as "parse complete" sent from backend,

@@ -38,7 +38,6 @@ static void GetTranIsolationErrorCb(void *arg);
 static void init_sent_message_list(void);
 static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *messag);
 static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m);
-static char *dump_sync_map(void);
 
 #ifdef PENDING_MESSAGE_DEBUG
 static int Elevel = LOG;
@@ -150,9 +149,6 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 		session_context->query_cache_array = pool_create_query_cache_array();
 		session_context->num_selects = 0;
 	}
-
-	/* Clear sync map */
-	pool_clear_sync_map();
 
 	/* Unset pending response */
 	pool_unset_pending_response();
@@ -934,114 +930,6 @@ bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 	}
 
 	return true;
-}
-
-/*
- * Set sync map
- */
-void pool_set_sync_map(int node_id)
-{
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_set_sync_map: session context is not initialized")));
-
-	session_context->sync_map[node_id] = true;
-}
-
-/*
- * Check if sync map is set
- */
-bool pool_is_set_sync_map(int node_id)
-{
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_is_set_sync_map: session context is not initialized")));
-
-	return session_context->sync_map[node_id];
-}
-
-/*
- * Get nth valid node id from sync map
- */
-int pool_get_nth_sync_map(int nth)
-{
-	int i;
-	int cnt = 0;
-
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (!VALID_BACKEND(i))
-			continue;
-
-		if (session_context->sync_map[i])
-		{
-			if (cnt == nth)
-				return i;	/* found nth valid node id */
-		}
-
-		cnt++;
-	}
-
-	return -1;		/* no valid node id found */
-}
-
-/*
- * Clear sync map
- */
-void pool_clear_sync_map(void)
-{
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_clear_sync_map: session context is not initialized")));
-
-	memset(&session_context->sync_map, 0, sizeof(session_context->sync_map));
-}
-
-/*
- * Check whether we should 1) ignore sync map, 2) consult sync map, or 3) we
- * cannot use sync map because it's empty.
- */
-bool pool_use_sync_map(void)
-{
-	int i;
-
-	if (!session_context)
-		return POOL_IGNORE_SYNC_MAP;
-
-	if (STREAM && !pool_is_query_in_progress() && pool_is_doing_extended_query_message())
-	{
-		for (i=0;i<NUM_BACKENDS;i++)
-		{
-			if (pool_is_set_sync_map(i))
-			{
-				ereport(DEBUG1,
-						(errmsg("pool_use_sync_map: we can use sync map: %s", dump_sync_map())));
-				return POOL_SYNC_MAP_IS_VALID;	/* yes, we can use sync map */
-			}
-		}
-		ereport(DEBUG1,
-				(errmsg("pool_use_sync_map: we cannot use sync map because all map entries are false")));
-		return POOL_SYNC_MAP_EMPTY;	/* no, we cannot use sync map */
-	}
-
-	ereport(DEBUG1,
-			(errmsg("pool_use_sync_map: we cannot use sync map because STREAM: %d query in progress: %d doing extended query: %d", STREAM, pool_is_query_in_progress(), pool_is_doing_extended_query_message())));
-
-	return POOL_IGNORE_SYNC_MAP;
-}
-
-static char *dump_sync_map(void)
-{
-	static char mapstr[MAX_NUM_BACKENDS+1];
-	int i;
-
-	memset(mapstr, 0, sizeof(mapstr));
-
-	for (i=0;i<NUM_BACKENDS;i++)
-	{
-		mapstr[i] = session_context->sync_map[i]?'1':'0';
-	}
-	return mapstr;
 }
 
 /*
