@@ -72,7 +72,6 @@
 
 static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
 static char *get_insert_command_table_name(InsertStmt *node);
-static int send_deallocate(POOL_CONNECTION_POOL *backend, POOL_SENT_MESSAGE_LIST msglist, int n);
 static bool is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static bool is_panic_or_fatal_error(const char *message, int major);
 static int detect_error(POOL_CONNECTION *master, char *error_code, int major, char class, bool unread);
@@ -3619,35 +3618,6 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	}
 
 	return;
-}
-
-/*
- * Send DEALLOCATE message to backend by using SimpleQuery.
- */
-static int send_deallocate(POOL_CONNECTION_POOL *backend,
-						   POOL_SENT_MESSAGE_LIST msglist, int n)
-{
-	int len;
-	char *name;
-	char *query;
-
-	if (msglist.size <= n)
-		return 1;
-
-	name = msglist.sent_messages[n]->name;
-
-	len = strlen(name) + 14; /* "DEALLOCATE \"" + "\"" + '\0' */
-	query = palloc(len);
-	sprintf(query, "DEALLOCATE \"%s\"", name);
-
-	if (SimpleQuery(NULL, backend, strlen(query)+1, query) != POOL_CONTINUE)
-	{
-		pfree(query);
-		return 1;
-	}
-	pfree(query);
-
-	return 0;
 }
 
 /*

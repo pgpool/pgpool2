@@ -53,6 +53,9 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION	*con;
 
+	p1 = NULL;
+	len1 = 0;
+
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 

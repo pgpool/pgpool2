@@ -1228,7 +1228,6 @@ POOL_PENDING_MESSAGE *pool_pending_message_pull_out(void)
 POOL_PENDING_MESSAGE *pool_pending_message_get(POOL_MESSAGE_TYPE type)
 {
 	ListCell   *cell;
-	ListCell   *prev;
 	ListCell   *next;
 	POOL_PENDING_MESSAGE *msg;
 	MemoryContext old_context;
@@ -1239,7 +1238,6 @@ POOL_PENDING_MESSAGE *pool_pending_message_get(POOL_MESSAGE_TYPE type)
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
 
-	prev = NULL;
 	msg = NULL;
 
 	for (cell = list_head(session_context->pending_messages); cell; cell = next)
@@ -1253,8 +1251,6 @@ POOL_PENDING_MESSAGE *pool_pending_message_get(POOL_MESSAGE_TYPE type)
 			msg = copy_pending_message(m);
 			break;
 		}
-		else
-			prev = cell;
 	}
 
 	MemoryContextSwitchTo(old_context);
