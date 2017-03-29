@@ -1017,44 +1017,12 @@ static int
 	qn = pool_config->num_reset_queries;
 
 	/*
-	 * After execution of all SQL commands in the reset_query_list, we
-	 * remove all prepared objects in the prepared_list.
+	 * After execution of all SQL commands in the reset_query_list, we are
+	 * done.
 	 */
 	if (qcnt >= qn)
 	{
-		if (session_context->message_list.size == 0)
-			return 2;
-
-		char kind = session_context->message_list.sent_messages[0]->kind;
-		char *name = session_context->message_list.sent_messages[0]->name;
-
-		if ((kind == 'P' || kind == 'Q') && *name != '\0')
-		{
-			/* Deallocate a prepared statement */
-			if (send_deallocate(backend, session_context->message_list, 0))
-			{
-				/* Deallocate failed. We are in unknown state. Ask caller
-				 * to reset backend connection.
-				 */
-				pool_remove_sent_message(kind, name);
-				return -1;
-			}
-			/*
-			 * If DEALLOCATE returns ERROR response, instead of
-			 * CommandComplete, del_prepared_list is not called and the
-			 * prepared object keeps on sitting on the prepared list. This
-			 * will cause infinite call to reset_backend.  So we call
-			 * del_prepared_list() again. This is harmless since trying to
-			 * remove same prepared object will be ignored.
-			 */
-			pool_remove_sent_message(kind, name);
-			return 1;
-		}
-		else
-		{
-			pool_remove_sent_message(kind, name);
-			return 0;
-		}
+		return 2;
 	}
 
 	query = pool_config->reset_query_list[qcnt];
@@ -2164,9 +2132,25 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 			case '3':	/* Close complete */
 				ereport(DEBUG1,
 						(errmsg("do_query: received CLOSE COMPLETE ('%c')",kind)));
-				num_close_complete++;
-				if (num_close_complete >= 2)
-					state |= CLOSE_COMPLETE_RECEIVED;
+
+				if (state == 0)
+				{
+					/* Close complete message received prior to parse complete
+					 * message.  It is likely that a close message was not
+					 * pushed in pool_push_pending_data(). Push the message
+					 * now.
+					*/
+					pool_push(backend, "3", 1);
+					len = htonl(4);
+					pool_push(backend, &len, sizeof(len));
+					data_pushed = true;
+				}
+				else
+				{
+					num_close_complete++;
+					if (num_close_complete >= 2)
+						state |= CLOSE_COMPLETE_RECEIVED;
+				}
 				break;
 
 			case 'T':	/* Row Description */
@@ -3152,6 +3136,9 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		previous_message = pool_pending_message_get_previous_message();
 		if (!msg)
 		{
+			ereport(DEBUG1,
+					(errmsg("read_kind_from_backend: no pending message")));
+
 			/*
 			 * There is no pending message in the queue. This could mean we
 			 * are receiving data rows.  If so, previous_msg must exist and the
@@ -3161,7 +3148,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			{
 				/* no previous message. let's unset query in progress flag. */
 				ereport(DEBUG1,
-						(errmsg("read_kind_from_backend: no pending message, no previous message")));
+						(errmsg("read_kind_from_backend: no previous message")));
 				pool_unset_query_in_progress();
 			}
 			else
@@ -4769,10 +4756,20 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 	POOL_SESSION_CONTEXT *session_context;
 	int len;
 	bool data_pushed = false;
-	static char random_statement[] = "pgpool_non_existant";
+	bool pending_data_existed = false;
+	static char random_statement[] = "pgpool_non_existent";
 
 	if (!pool_get_session_context(true) || !pool_is_doing_extended_query_message())
-		return data_pushed;
+		return false;
+
+	/*
+	 * If data is ready in the backend buffer, we are sure that at least one
+	 * pending message exists.
+	 */
+	if (pool_ssl_pending(backend) || !pool_read_buffer_is_empty(backend))
+	{
+		pending_data_existed = true;
+	}
 
 	/*
 	 * In streaming replication mode, send a Close message for none existing
@@ -4840,7 +4837,7 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 
 		if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
 		{
-			if (kind != '3')
+			if (kind != '3' || pending_data_existed)
 				pool_set_timeout(-1);
 			else
 				pool_set_timeout(0);
@@ -4854,6 +4851,8 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 					pfree(buf);
 				break;
 			}
+
+			pending_data_existed = false;
 		}
 
 		pool_push(backend, &kind, 1);
