@@ -104,6 +104,17 @@ typedef enum IPC_CMD_PREOCESS_RES
 #define WD_ASK_FOR_POOL_CONFIG				'Y'
 #define WD_POOL_CONFIG_DATA					'Z'
 #define WD_CMD_REPLY_IN_DATA				'-'
+#define WD_CLUSTER_SERVICE_MESSAGE			'#'
+
+/*Cluster Service Message Types */
+#define CLUSTER_QUORUM_LOST					'L'
+#define CLUSTER_QUORUM_FOUND				'F'
+#define CLUSTER_IN_SPLIT_BRAIN				'B'
+#define CLUSTER_NEEDS_ELECTION				'E'
+#define CLUSTER_IAM_TRUE_MASTER				'M'
+#define CLUSTER_IAM_NOT_TRUE_MASTER			'X'
+#define CLUSTER_IAM_RESIGNING_FROM_MASTER	'R'
+#define CLUSTER_NODE_INVALID_VERSION		'V'
 
 typedef struct packet_types
 {
@@ -134,6 +145,7 @@ packet_types all_packet_types[] = {
 	{WD_GET_MASTER_DATA_REQUEST, "DATA REQUEST"},
 	{WD_CMD_REPLY_IN_DATA, "COMMAND REPLY IN DATA"},
 	{WD_FAILOVER_LOCKING_REQUEST,"FAILOVER LOCKING REQUEST"},
+	{WD_CLUSTER_SERVICE_MESSAGE, "CLUSTER SERVICE MESSAGE"},
 	{WD_NO_MESSAGE,""}
 };
 
@@ -361,8 +373,9 @@ static void free_packet(WDPacketData *pkt);
 static WDPacketData* get_empty_packet(void);
 static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_type);
 static WDPacketData* read_packet(SocketConnection* conn);
-static WDPacketData* get_message_of_type(char type);
+static WDPacketData* get_message_of_type(char type, WDPacketData* replyFor);
 static WDPacketData* get_addnode_message(void);
+static WDPacketData* get_beacon_message(char type, WDPacketData* replyFor);
 static WDPacketData* get_mynode_info_message(WDPacketData* replyFor);
 static WDPacketData* get_minimum_message(char type, WDPacketData* replyFor);
 
@@ -391,11 +404,15 @@ static bool send_message_to_node(WatchdogNode* wdNode, WDPacketData *pkt);
 static bool reply_with_minimal_message(WatchdogNode* wdNode, char type, WDPacketData* replyFor);
 static bool reply_with_message(WatchdogNode* wdNode, char type, char* data, int data_len, WDPacketData* replyFor);
 static int send_cluster_command(WatchdogNode* wdNode, char type, int timeout_sec);
-static int send_message_of_type(WatchdogNode* wdNode, char type);
+static int send_message_of_type(WatchdogNode* wdNode, char type, WDPacketData* replyFor);
+
+static bool send_cluster_service_message(WatchdogNode* wdNode, WDPacketData* replyFor, char message);
+
 
 static int accept_incomming_connections(fd_set* rmask, int pending_fds_count);
 
 static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt);
+static void cluster_service_message_processor(WatchdogNode* wdNode, WDPacketData* pkt);
 static int update_connected_node_count(void);
 static int get_cluster_node_count(void);
 static void clear_command_node_result(WDCommandNodeResult* nodeResult);
@@ -412,6 +429,10 @@ static int watchdog_state_machine_joining(WD_EVENTS event, WatchdogNode* wdNode,
 static int watchdog_state_machine_loading(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt, WDCommandData* clusterCommand);
 static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt, WDCommandData* clusterCommand);
 static int watchdog_state_machine_nw_error(WD_EVENTS event, WatchdogNode* wdNode, WDPacketData* pkt, WDCommandData* clusterCommand);
+
+static int I_am_master_and_cluser_in_split_brain(WatchdogNode* otherMasterNode);
+static void handle_split_brain(WatchdogNode* otherMasterNode, WDPacketData* pkt);
+static bool beacon_message_received_from_node(WatchdogNode* wdNode, WDPacketData* pkt);
 
 static void cleanUpIPCCommand(WDCommandData* ipcCommand);
 static bool read_ipc_socket_and_process(int socket, bool *remove_socket);
@@ -664,9 +685,9 @@ static void wd_cluster_initialize(void)
 	g_cluster.ipc_commands = NULL;
 	g_cluster.localNode->state = WD_DEAD;
 	g_cluster.clusterCommands = NULL;
-
 	g_cluster.ipc_auth_needed = strlen(pool_config->wd_authkey)?true:false;
 
+	g_cluster.localNode->escalated = g_cluster.escalated;
 	wd_initialize_monitoring_interfaces();
 	if (g_cluster.ipc_auth_needed)
 	{
@@ -1399,6 +1420,13 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 								wdNode->wd_priority = tempNode->wd_priority;
 								wdNode->server_socket = *conn;
 								wdNode->server_socket.sock_state = WD_SOCK_CONNECTED;
+								if (tempNode->current_state_time.tv_sec)
+								{
+									wdNode->current_state_time.tv_sec = tempNode->current_state_time.tv_sec;
+									wdNode->escalated = tempNode->escalated;
+									wdNode->alive_node_count = tempNode->alive_node_count;
+									wdNode->quorum_status = tempNode->quorum_status;
+								}
 								break;
 							}
 						}
@@ -1435,6 +1463,21 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 						close_socket_connection(conn);
 					}
 					pfree(tempNode);
+				}
+				else
+				{
+					/*
+					 * Probably some invalid data in the add message
+					 */
+					WatchdogNode tmpNode;
+					ereport(LOG,
+						(errmsg("unable to parse the add node message")));
+					tmpNode.client_socket = *conn;
+					tmpNode.client_socket.sock_state = WD_SOCK_CONNECTED;
+					tmpNode.server_socket.sock = -1;
+					tmpNode.server_socket.sock_state = WD_SOCK_UNINITIALIZED;
+					reply_with_minimal_message(&tmpNode, WD_REJECT_MESSAGE, pkt);
+					close_socket_connection(conn);
 				}
 				if (authkey)
 					pfree(authkey);
@@ -3321,6 +3364,25 @@ static JsonNode* get_node_list_json(int id)
 	return jNode;
 }
 
+static WDPacketData* get_beacon_message(char type, WDPacketData* replyFor)
+{
+	WDPacketData *message = get_empty_packet();
+	char *json_data;
+	update_connected_node_count();
+	update_quorum_status();
+
+	json_data = get_beacon_message_json(g_cluster.localNode);
+
+	set_message_type(message, type);
+
+	if (replyFor == NULL)
+		set_next_commandID_in_message(message);
+	else
+		set_message_commandID(message, replyFor->command_id);
+
+	set_message_data(message,json_data,strlen(json_data));
+	return message;
+}
 
 static WDPacketData* get_addnode_message(void)
 {
@@ -3482,15 +3544,147 @@ static WDPacketData* process_data_request(WatchdogNode* wdNode, WDPacketData* pk
 	return replyPkt;
 }
 
+static void cluster_service_message_processor(WatchdogNode* wdNode, WDPacketData* pkt)
+{
+	if (pkt->type != WD_CLUSTER_SERVICE_MESSAGE)
+		return;
+
+	if (pkt->len != 1 || pkt->data == NULL)
+	{
+		ereport(LOG,
+				(errmsg("node \"%s\" sent an invalid cluster service message",wdNode->nodeName)));
+		return;
+	}
+
+	switch (pkt->data[0])
+	{
+		case CLUSTER_IAM_TRUE_MASTER:
+		{
+			/* The cluster was in split-brain and thigs it is the worthy master */
+			if (get_local_node_state() == WD_COORDINATOR)
+			{
+				ereport(LOG,
+						(errmsg("remote node \"%s\" decided it is the true master",wdNode->nodeName),
+						 errdetail("re-initializing the local watchdog cluster state because of split-brain")));
+
+				send_cluster_service_message(NULL,pkt,CLUSTER_IAM_RESIGNING_FROM_MASTER);
+
+				g_cluster.masterNode = NULL;
+				set_state(WD_JOINING);
+			}
+			else if (g_cluster.masterNode != NULL && g_cluster.masterNode != wdNode)
+			{
+				ereport(LOG,
+						(errmsg("remote node \"%s\" thinks it is a master/coordinator and I am causing the split-brain," \
+								" but as per our record \"%s\" is the cluster master/coordinator",
+								wdNode->nodeName,
+								g_cluster.masterNode->nodeName),
+						 errdetail("restarting the cluster")));
+				send_cluster_service_message(NULL,pkt,CLUSTER_NEEDS_ELECTION);
+				g_cluster.masterNode = NULL;
+				set_state(WD_JOINING);
+			}
+		}
+			break;
+
+		case CLUSTER_IAM_RESIGNING_FROM_MASTER:
+		{
+			if (g_cluster.masterNode == wdNode)
+			{
+				ereport(LOG,
+						(errmsg("master/coordinator node \"%s\" decided to resigning from master, probably because of split-brain",
+								wdNode->nodeName),
+						 errdetail("re-initializing the local watchdog cluster state")));
+
+				g_cluster.masterNode = NULL;
+				set_state(WD_JOINING);
+			}
+			else
+			{
+				ereport(LOG,
+						(errmsg("master/coordinator node \"%s\" decided to resigning from master, probably because of split-brain",
+								wdNode->nodeName),
+						 errdetail("but it was not our coordinator/master anyway. ignoring the message")));
+			}
+		}
+			break;
+
+		case CLUSTER_IN_SPLIT_BRAIN:
+		{
+			if (get_local_node_state() == WD_COORDINATOR)
+			{
+				ereport(LOG,
+						(errmsg("remote node \"%s\" detected the cluster is in split-brain",wdNode->nodeName),
+						 errdetail("broadcasting the beacon message")));
+				send_message_of_type(NULL, WD_IAM_COORDINATOR_MESSAGE, NULL);
+			}
+		}
+			break;
+
+		case CLUSTER_NEEDS_ELECTION:
+		{
+			ereport(LOG,
+					(errmsg("remote node \"%s\" detected the split-brain and wants to re-initialize the cluster",wdNode->nodeName)));
+
+			g_cluster.masterNode = NULL;
+			set_state(WD_JOINING);
+		}
+			break;
+
+		case CLUSTER_IAM_NOT_TRUE_MASTER:
+		{
+			if (g_cluster.masterNode == wdNode)
+			{
+				ereport(LOG,
+						(errmsg("master/coordinator node \"%s\" decided it was not true master, probably because of split-brain",wdNode->nodeName),
+						 errdetail("re-initializing the local watchdog cluster state")));
+
+				g_cluster.masterNode = NULL;
+				set_state(WD_JOINING);
+			}
+			else if (get_local_node_state() == WD_COORDINATOR)
+			{
+				ereport(LOG,
+						(errmsg("node \"%s\" was also thinking it was a master/coordinator and decided to resign",wdNode->nodeName),
+						 errdetail("cluster is recovering from split-brain")));
+			}
+			else
+			{
+				ereport(LOG,
+						(errmsg("master/coordinator node \"%s\" decided to resigning from master, probably because of split-brain",
+								wdNode->nodeName),
+						 errdetail("but it was not our coordinator/master anyway. ignoring the message")));
+			}
+		}
+			break;
+
+		case CLUSTER_NODE_INVALID_VERSION:
+		{
+			/* this should never happen
+			 * means something is seriously wrong
+			 */
+			ereport(FATAL,
+				(errmsg("\"%s\" node has found serious issues in our watchdog messages",
+							wdNode->nodeName),
+					 errdetail("shutting down")));
+		}
+			break;
+		default:
+			break;
+	}
+}
+
 static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	WDPacketData* replyPkt = NULL;
 	switch (pkt->type)
 	{
+		case WD_CLUSTER_SERVICE_MESSAGE:
+			cluster_service_message_processor(wdNode, pkt);
+			break;
+
 		case WD_GET_MASTER_DATA_REQUEST:
-		{
 			replyPkt = process_data_request(wdNode, pkt);
-		}
 			break;
 
 		case WD_ASK_FOR_POOL_CONFIG:
@@ -3530,7 +3724,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 		case WD_REQ_INFO_MESSAGE:
 			replyPkt = get_mynode_info_message(pkt);
 			break;
-			
+
 		case WD_INFO_MESSAGE:
 		{
 			char *authkey = NULL;
@@ -3539,13 +3733,19 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			{
 				ereport(WARNING,
 					(errmsg("node \"%s\" sent an invalid node info message",wdNode->nodeName)));
+				send_cluster_service_message(wdNode,pkt,CLUSTER_NODE_INVALID_VERSION);
 				break;
 			}
 			wdNode->state = tempNode->state;
 			wdNode->startup_time.tv_sec = tempNode->startup_time.tv_sec;
 			wdNode->wd_priority = tempNode->wd_priority;
 			strlcpy(wdNode->nodeName, tempNode->nodeName, WD_MAX_HOST_NAMELEN);
-			
+
+			wdNode->current_state_time.tv_sec = tempNode->current_state_time.tv_sec;
+			wdNode->escalated = tempNode->escalated;
+			wdNode->alive_node_count = tempNode->alive_node_count;
+			wdNode->quorum_status = tempNode->quorum_status;
+
 			print_watchdog_node_info(wdNode);
 
 			if (authkey)
@@ -3560,12 +3760,35 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 				else if (g_cluster.masterNode != wdNode)
 				{
 					ereport(WARNING,
-						(errmsg("\"%s\" is the coordinator as per our record but \"%s\" is also announcing as a coordinator",
-								g_cluster.masterNode->nodeName, wdNode->nodeName),
-							 errdetail("re-initializing the cluster")));
+							(errmsg("\"%s\" is the coordinator as per our record but \"%s\" is also announcing as a coordinator",
+									g_cluster.masterNode->nodeName, wdNode->nodeName),
+							 errdetail("cluster is in the split-brain")));
 
-					g_cluster.masterNode = NULL;
-					set_state(WD_JOINING);
+					if (get_local_node_state() != WD_COORDINATOR)
+					{
+						/* This fight dosen't belong to me
+						 * brodcast the message about cluster in split-brain
+						 */
+
+						send_cluster_service_message(NULL,pkt,CLUSTER_IN_SPLIT_BRAIN);
+						g_cluster.masterNode = NULL;
+
+						ereport(LOG,
+								(errmsg("re-initializing the local watchdog cluster state because of split-brain")));
+
+						set_state(WD_JOINING);
+					}
+					else
+					{
+						/* okay the contention is between me and the other node
+						 * try to figure out which node is the worthy master
+						 */
+						ereport(LOG,
+							(errmsg("I am the coordinator but \"%s\" is also announcing as a coordinator",wdNode->nodeName),
+								 errdetail("trying to figure out the best contender for the master/coordinator node")));
+
+						handle_split_brain(wdNode, pkt);
+					}
 				}
 			}
 
@@ -3582,8 +3805,8 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 					g_cluster.masterNode = NULL;
 					set_state(WD_JOINING);
 				}
-
 			}
+
 			pfree(tempNode);
 		}
 			break;
@@ -3613,9 +3836,13 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			 */
 			if (g_cluster.masterNode != NULL && wdNode != g_cluster.masterNode)
 			{
-				ereport(NOTICE,
-						(errmsg("cluster is in split brain")));
-				replyPkt = get_minimum_message(WD_ERROR_MESSAGE,pkt);
+				ereport(LOG,
+						(errmsg("re-initializing the local watchdog cluster state because of split-brain")));
+
+				send_cluster_service_message(NULL,pkt,CLUSTER_IN_SPLIT_BRAIN);
+				g_cluster.masterNode = NULL;
+				set_state(WD_JOINING);
+
 			}
 			else
 			{
@@ -4165,6 +4392,7 @@ static int update_connected_node_count(void)
 		if (is_node_reachable(wdNode))
 			g_cluster.aliveNodeCount++;
 	}
+	g_cluster.localNode->alive_node_count = g_cluster.aliveNodeCount;
 	return g_cluster.aliveNodeCount;
 }
 
@@ -4221,27 +4449,28 @@ static int get_cluster_node_count(void)
 	return count;
 }
 
-static WDPacketData* get_message_of_type(char type)
+static WDPacketData* get_message_of_type(char type, WDPacketData* replyFor)
 {
 	WDPacketData *pkt = NULL;
 	switch (type)
 	{
 		case WD_INFO_MESSAGE:
-			pkt = get_mynode_info_message(NULL);
+			pkt = get_mynode_info_message(replyFor);
 			break;
 		case WD_ADD_NODE_MESSAGE:
 			pkt = get_addnode_message();
 			break;
-			
-		case WD_REQ_INFO_MESSAGE:
 		case WD_IAM_COORDINATOR_MESSAGE:
+			pkt = get_beacon_message(WD_IAM_COORDINATOR_MESSAGE,replyFor);
+			break;
+		case WD_REQ_INFO_MESSAGE:
 		case WD_STAND_FOR_COORDINATOR_MESSAGE:
 		case WD_DECLARE_COORDINATOR_MESSAGE:
 		case WD_JOIN_COORDINATOR_MESSAGE:
 		case WD_QUORUM_IS_LOST:
 		case WD_INFORM_I_AM_GOING_DOWN:
 		case WD_ASK_FOR_POOL_CONFIG:
-			pkt = get_minimum_message(type, NULL);
+			pkt = get_minimum_message(type, replyFor);
 			break;
 		default:
 			ereport(LOG,(errmsg("invalid message type %c",type)));
@@ -4250,10 +4479,10 @@ static WDPacketData* get_message_of_type(char type)
 	return pkt;
 }
 
-static int send_message_of_type(WatchdogNode* wdNode, char type)
+static int send_message_of_type(WatchdogNode* wdNode, char type, WDPacketData* replyFor)
 {
 	int ret = -1;
-	WDPacketData *pkt = get_message_of_type(type);
+	WDPacketData *pkt = get_message_of_type(type, replyFor);
 	if (pkt)
 	{
 		ret = send_message(wdNode, pkt);
@@ -4265,7 +4494,7 @@ static int send_message_of_type(WatchdogNode* wdNode, char type)
 static int send_cluster_command(WatchdogNode* wdNode, char type, int timeout_sec)
 {
 	int ret = -1;
-	WDPacketData *pkt = get_message_of_type(type);
+	WDPacketData *pkt = get_message_of_type(type, NULL);
 	if (pkt)
 	{
 		ret = issue_watchdog_internal_command(wdNode, pkt, timeout_sec);
@@ -4281,6 +4510,12 @@ static bool reply_with_minimal_message(WatchdogNode* wdNode, char type, WDPacket
 	free_packet(pkt);
 	return ret;
 }
+
+static bool send_cluster_service_message(WatchdogNode* wdNode, WDPacketData* replyFor, char message)
+{
+	return reply_with_message(wdNode, WD_CLUSTER_SERVICE_MESSAGE, &message, 1, replyFor);
+}
+
 
 static bool reply_with_message(WatchdogNode* wdNode, char type, char* data, int data_len, WDPacketData* replyFor)
 {
@@ -5122,7 +5357,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 				}
 				else
 				{
-					/* command is finished but because of error */
+					/* command is finished but because of an error */
 					ereport(WARNING,
 							(errmsg("possible split brain scenario detected by \"%s\" node", wdNode->nodeName),
 							 (errdetail("re-initializing cluster"))));
@@ -5131,7 +5366,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 			}
 		}
 			break;
-			
+
 		case WD_EVENT_NW_IP_IS_REMOVED:
 		{
 			/* check if we were holding the virtual IP and it is now lost */
@@ -5244,8 +5479,27 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 				{
 					ereport(NOTICE,
 							(errmsg("We are in split brain, I AM COORDINATOR MESSAGE received from \"%s\" node",wdNode->nodeName)));
-					reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
-					set_state(WD_JOINING);
+
+					if (beacon_message_received_from_node(wdNode, pkt) == true)
+					{
+						handle_split_brain(wdNode, pkt);
+					}
+					else
+					{
+						/* we are not able to decide which should be the
+						 * best candidate to stay as master/coordinator node
+						 * This could also happen if the remote node is using the
+						 * older version of Pgpool-II which send the empty
+						 * beacon messages.
+						 */
+						ereport(LOG,
+							(errmsg("We are in split brain, and not able to decide the best candidate for master/coordinator"),
+								 errdetail("re-initializing the local watchdog cluster state")));
+
+						send_cluster_service_message(wdNode,pkt,CLUSTER_NEEDS_ELECTION);
+						g_cluster.masterNode = NULL;
+						set_state(WD_JOINING);
+					}
 				}
 					break;
 
@@ -5253,7 +5507,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 				{
 					reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
 					/* Also get the configurations from the standby node */
-					send_message_of_type(wdNode,WD_ASK_FOR_POOL_CONFIG);
+					send_message_of_type(wdNode,WD_ASK_FOR_POOL_CONFIG,NULL);
 				}
 					break;
 
@@ -5379,6 +5633,194 @@ static int watchdog_state_machine_nw_error(WD_EVENTS event, WatchdogNode* wdNode
 	return 0;
 }
 
+static bool beacon_message_received_from_node(WatchdogNode* wdNode, WDPacketData* pkt)
+{
+	long seconds_since_node_startup;
+	long seconds_since_current_state;
+	int quorum_status;
+	int alive_node_count;
+	bool escalated;
+	int state;
+	struct timeval current_time;
+
+	gettimeofday(&current_time,NULL);
+
+	if (pkt->data == NULL || pkt->len <= 0)
+		return false;
+
+	if (parse_beacon_message_json(pkt->data, pkt->len,
+									&state,
+									&seconds_since_node_startup,
+									&seconds_since_current_state,
+									&quorum_status,
+									&alive_node_count,
+									&escalated) == false)
+	{
+		return false;
+	}
+
+	wdNode->current_state_time.tv_sec = current_time.tv_sec - seconds_since_current_state;
+	wdNode->startup_time.tv_sec = current_time.tv_sec - seconds_since_node_startup;
+	wdNode->current_state_time.tv_usec = wdNode->startup_time.tv_usec = 0;
+	wdNode->quorum_status = quorum_status;
+	wdNode->alive_node_count = alive_node_count;
+	wdNode->state = state;
+	wdNode->escalated = escalated;
+	return true;
+}
+
+/*
+ * This function decides the best contender for a coordinator/master node
+ * when the remote node info states it is a coordinator while
+ * the local node is also in the master/coordinator state.
+ *
+ * return:
+ * -1 : remote node is the best candidate to remain as master
+ *  0 : both local and remote nodes are not worthy master or error
+ *  1 : local node should remain as the master/coordinator
+ */
+static int I_am_master_and_cluser_in_split_brain(WatchdogNode* otherMasterNode)
+{
+	if (get_local_node_state() != WD_COORDINATOR)
+		return 0;
+	if (otherMasterNode->state != WD_COORDINATOR)
+		return 0;
+
+	if (otherMasterNode->current_state_time.tv_sec == 0)
+	{
+		ereport(LOG,
+				(errmsg("not enough data to decide the master node"),
+					 errdetail("the watchdog node:\"%s\" is using the older version of Pgpool-II",otherMasterNode->nodeName)));
+		return 0;
+	}
+
+	update_quorum_status();
+	update_connected_node_count();
+
+	/* Decide which node should stay as master */
+	if (otherMasterNode->escalated != g_cluster.escalated)
+	{
+		if (otherMasterNode->escalated != 0 && g_cluster.escalated == false)
+		{
+			/* remote node stays as the master */
+			ereport(LOG,
+				(errmsg("remote node:\"%s\" is best suitable to stay as master because it is escalated and I am not",
+						otherMasterNode->nodeName)));
+			return -1;
+		}
+		else
+		{
+			/* local node stays as master */
+			ereport(LOG,
+					(errmsg("remote node:\"%s\" should step down from master because it is not escalated",
+							otherMasterNode->nodeName)));
+			return 1;
+		}
+	}
+	else if (otherMasterNode->quorum_status != g_cluster.quorum_status)
+	{
+		if (otherMasterNode->quorum_status > g_cluster.quorum_status)
+		{
+			/* quorum of remote node is in better state */
+			ereport(LOG,
+					(errmsg("remote node:\"%s\" is best suitable to stay as master because it holds the quorum"
+							,otherMasterNode->nodeName)));
+
+			return -1;
+		}
+		else
+		{
+			/* local node stays as master */
+			ereport(LOG,
+					(errmsg("remote node:\"%s\" should step down from master because it does not hold the quorum"
+							,otherMasterNode->nodeName)));
+			return 1;
+		}
+	}
+	else if (otherMasterNode->alive_node_count != g_cluster.aliveNodeCount)
+	{
+		if (otherMasterNode->alive_node_count > g_cluster.aliveNodeCount)
+		{
+			/* remote node has more alive nodes */
+			ereport(LOG,
+				(errmsg("remote node:\"%s\" is best suitable to stay as master because it has more alive nodes"
+						,otherMasterNode->nodeName)));
+			return -1;
+		}
+		else
+		{
+			/* local node stays as master */
+			ereport(LOG,
+					(errmsg("remote node:\"%s\" should step down from master because we have more alive nodes"
+							,otherMasterNode->nodeName)));
+			return 1;
+		}
+	}
+	else /* decide on which node is the older mater */
+	{
+		if (otherMasterNode->current_state_time.tv_sec < g_cluster.localNode->current_state_time.tv_sec)
+		{
+			/* remote node has more alive nodes */
+			ereport(LOG,
+				(errmsg("remote node:\"%s\" is best suitable to stay as master because it is the older master"
+						,otherMasterNode->nodeName)));
+
+			return -1;
+		}
+		else
+		{
+			/* local node should keep the master status */
+			ereport(LOG,
+				(errmsg("remote node:\"%s\" should step down from master because we are the older master"
+						,otherMasterNode->nodeName)));
+
+			return 1;
+		}
+	}
+	return 0; /* keep the compiler quite */
+}
+
+static void handle_split_brain(WatchdogNode* otherMasterNode, WDPacketData* pkt)
+{
+	int decide_master = I_am_master_and_cluser_in_split_brain(otherMasterNode);
+	if (decide_master == 0)
+	{
+		/* we are not able to decide which should be the
+		 * best candidate to stay as master/coordinator node
+		 * This could also happen if the remote node is using the
+		 * older version of Pgpool-II which send the empty
+		 * beacon messages.
+		 */
+		ereport(LOG,
+				(errmsg("We are in split brain, and not able to decide the best candidate for master/coordinator"),
+				 errdetail("re-initializing the local watchdog cluster state")));
+		send_cluster_service_message(otherMasterNode,pkt,CLUSTER_NEEDS_ELECTION);
+		g_cluster.masterNode = NULL;
+		set_state(WD_JOINING);
+	}
+	else if (decide_master == -1)
+	{
+		/* Remote node is the best candidate for the master node */
+		ereport(LOG,
+				(errmsg("We are in split brain, and \"%s\" node is the best candidate for master/coordinator"
+						,otherMasterNode->nodeName),
+				 errdetail("re-initializing the local watchdog cluster state")));
+		/* brodcast the message about I am not the true master node */
+		send_cluster_service_message(NULL,pkt,CLUSTER_IAM_NOT_TRUE_MASTER);
+		g_cluster.masterNode = NULL;
+		set_state(WD_JOINING);
+	}
+	else
+	{
+		/* I am the best candidate for the master node */
+		ereport(LOG,
+				(errmsg("We are in split brain, and I am the best candidate for master/coordinator"),
+				 errdetail("asking the remote node \"%s\" to step down",otherMasterNode->nodeName)));
+		send_cluster_service_message(otherMasterNode,pkt,CLUSTER_IAM_TRUE_MASTER);
+	}
+
+}
+
 static void start_escalated_node(void)
 {
 	int wait_secs = MAX_SECS_ESC_PROC_EXIT_WAIT;
@@ -5407,6 +5849,7 @@ static void start_escalated_node(void)
 	if (g_cluster.escalation_pid > 0)
 	{
 		g_cluster.escalated = true;
+		g_cluster.localNode->escalated = g_cluster.escalated;
 		set_watchdog_node_escalated();
 		ereport(LOG,
 				(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
@@ -5446,6 +5889,7 @@ static void resign_from_escalated_node(void)
 	g_cluster.de_escalation_pid = fork_plunging_process();
 	g_cluster.holding_vip = false;
 	g_cluster.escalated = false;
+	g_cluster.localNode->escalated = g_cluster.escalated;
 	reset_watchdog_node_escalated();
 }
 
@@ -5527,6 +5971,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 			break;
 
 		case WD_EVENT_TIMEOUT:
+			set_timeout(5);
 			break;
 
 		case WD_EVENT_COMMAND_FINISHED:
@@ -5584,7 +6029,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 				{
 					ereport(LOG,
 							(errmsg("We have lost the quorum after loosing \"%s\"",wdNode->nodeName)));
-					send_message_of_type(NULL, WD_QUORUM_IS_LOST);
+					send_message_of_type(NULL, WD_QUORUM_IS_LOST,NULL);
 
 				}
 				else
@@ -5673,7 +6118,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 					(errmsg("we have not received a beacon message from master node \"%s\"",
 							g_cluster.masterNode->nodeName),
 					 errdetail("requesting info message from master node")));
-			send_message_of_type(g_cluster.masterNode,WD_REQ_INFO_MESSAGE);
+			send_message_of_type(g_cluster.masterNode,WD_REQ_INFO_MESSAGE,NULL);
 		}
 	}
 	return 0;
@@ -5708,6 +6153,7 @@ static int update_quorum_status(void)
 	{
 		g_cluster.quorum_status = -1;
 	}
+	g_cluster.localNode->quorum_status = g_cluster.quorum_status;
 	return g_cluster.quorum_status;
 }
 
@@ -5733,13 +6179,13 @@ static int get_mimimum_nodes_required_for_quorum(void)
  * sets the state of local watchdog node, and fires an state change event
  * if the new and old state differes
  */
-
 static int set_state(WD_STATES newState)
 {
 	WD_STATES oldState = get_local_node_state();
 	g_cluster.localNode->state = newState;
 	if (oldState != newState)
 	{
+		gettimeofday(&g_cluster.localNode->current_state_time, NULL);
 		/* if we changing from the coordinator state, do the de-escalation if required */
 		if (oldState == WD_COORDINATOR)
 			resign_from_escalated_node();
@@ -5748,7 +6194,7 @@ static int set_state(WD_STATES newState)
 				(errmsg("watchdog node state changed from [%s] to [%s]",wd_state_names[oldState],wd_state_names[newState])));
 		watchdog_state_machine(WD_EVENT_WD_STATE_CHANGED, NULL, NULL, NULL);
 		/* send out the info message to all nodes */
-		send_message_of_type(NULL, WD_INFO_MESSAGE);
+		send_message_of_type(NULL, WD_INFO_MESSAGE,NULL);
 	}
 	return 0;
 }

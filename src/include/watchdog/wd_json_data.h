@@ -62,6 +62,14 @@ extern bool parse_node_status_json(char* json_data, int data_len, int* nodeID, i
 
 extern WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source);
 
+extern bool parse_beacon_message_json(char* json_data, int data_len, int* state,
+								long* seconds_since_node_startup,
+								long* seconds_since_current_state,
+								int* quorumStatus,
+								int* aliveNodeCount,
+								bool* escalated);
+extern char* get_beacon_message_json(WatchdogNode* wdNode);
+
 extern char* get_wd_node_function_json(char* func_name, int *node_id_set, int count, unsigned int sharedKey, char* authKey);
 extern bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name, int **node_id_set, int *count);
 extern char* get_wd_simple_message_json(char* message);
