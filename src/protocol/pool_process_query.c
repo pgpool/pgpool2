@@ -3611,10 +3611,17 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		}
 		else
 		{
+			POOL_PENDING_MESSAGE *pending_message;
+
 			ereport(DEBUG1,
 					(errmsg("read_kind_from_backend: pending message was pulled out")));
-			pool_pending_message_pull_out();
+			pending_message = pool_pending_message_pull_out();
+
+			if (pending_message)
+				pool_pending_message_free_pending_message(pending_message);
 		}
+
+		pool_pending_message_free_pending_message(msg);
 	}
 
 	return;
