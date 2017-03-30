@@ -1214,6 +1214,7 @@ POOL_PENDING_MESSAGE *pool_pending_message_pull_out(void)
 					message->type, message->contents_len, message->query, message->statement, message->portal,
 					message->node_ids[0], message->node_ids[1])));
 
+	pool_pending_message_free_pending_message(m);
 	session_context->pending_messages =
 		list_delete_cell(session_context->pending_messages, cell, NULL);
 
@@ -1289,6 +1290,21 @@ static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *message)
 	memcpy(msg->contents, message->contents, msg->contents_len);
 
 	return msg;
+}
+
+/*
+ * Free POOL_PENDING_MESSAGE object in the current memory
+ * context except the query context.
+ */
+void pool_pending_message_free_pending_message(POOL_PENDING_MESSAGE *message)
+{
+	if (message == NULL)
+		return;
+
+	if (message->contents)
+		pfree(message->contents);
+
+	pfree(message);
 }
 
 /*
