@@ -769,6 +769,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_pending_message_dest_set(pmsg, query_context);
 		pool_pending_message_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
+		pool_pending_message_free_pending_message(pmsg);
 
 		/* Various take care at the transaction start */
 		handle_query_context(backend);
@@ -1131,6 +1132,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pmsg = pool_pending_message_create('P', len, contents);
 		pool_pending_message_dest_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
+		pool_pending_message_free_pending_message(pmsg);
 
 		pool_unset_query_in_progress();
 	}
@@ -1285,6 +1287,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_pending_message_dest_set(pmsg, query_context);
 		pool_pending_message_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
+		pool_pending_message_free_pending_message(pmsg);
 	}
 	
 	if(rewrite_msg)
@@ -1361,6 +1364,7 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_pending_message_dest_set(pmsg, query_context);
 		pool_pending_message_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
+		pool_pending_message_free_pending_message(pmsg);
 
 		pool_unset_query_in_progress();
 	}
@@ -1453,6 +1457,7 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_pending_message_dest_set(pmsg, query_context);
 		pool_pending_message_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
+		pool_pending_message_free_pending_message(pmsg);
 
 #ifdef NOT_USED
 		dump_pending_message();
@@ -1962,6 +1967,7 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 		{
 			kind = pool_get_close_message_spec(pmsg);
 			name = pool_get_close_message_name(pmsg);
+			pool_pending_message_free_pending_message(pmsg);
 		}
 	}
 	else
@@ -2324,6 +2330,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				pool_unset_query_in_progress();
 				msg = pool_pending_message_create('S', 0, NULL);
 				pool_pending_message_add(msg);
+				pool_pending_message_free_pending_message(msg);
 			}
 			else if (!pool_is_query_in_progress())
 				pool_set_query_in_progress();
@@ -3100,6 +3107,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 				pmsg->not_forward_to_frontend = true;
 				pool_pending_message_dest_set(pmsg, new_qc);
 				pool_pending_message_add(pmsg);
+				pool_pending_message_free_pending_message(pmsg);
 			}
 
 			/* Send parse message to primary node */
@@ -3114,6 +3122,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 			pmsg->not_forward_to_frontend = true;
 			pool_pending_message_dest_set(pmsg, new_qc);
 			pool_pending_message_add(pmsg);
+			pool_pending_message_free_pending_message(pmsg);
 
 			/* Replace the query context of bind message */
 			bind_message->query_context = new_qc;
