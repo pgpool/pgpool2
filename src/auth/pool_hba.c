@@ -1261,10 +1261,13 @@ static int pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 
 	/*
 	 * PAM will free this memory in * pam_end()
+     * Do not use Palloc and freinds to allocate this memory,
+     * Since the PAM library will be freeing this memory who
+     * knowns nothing about our MemoryManager
 	 */
-	*resp = palloc0(num_msg* sizeof(struct pam_response));
+	*resp = calloc(num_msg, sizeof(struct pam_response));
 
-	(*resp)[0].resp = pstrdup((char *) appdata_ptr);
+	(*resp)[0].resp = strdup((char *) appdata_ptr);
 	(*resp)[0].resp_retcode = 0;
 
 	return ((*resp)[0].resp ? PAM_SUCCESS : PAM_CONV_ERR);
