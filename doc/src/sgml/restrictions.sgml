@@ -227,6 +227,16 @@ INSERT INTO rel1(c1) SELECT 1
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>SQL type commands</term>
+    <listitem>
+      <para>
+	<link linkend="sql-commands">SQL type commands</link> cannot
+	be used in extended query mode.
+      </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </para>
 </sect1>

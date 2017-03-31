@@ -187,15 +187,22 @@ hostname:port:username:password
    <partintro>
      <para>
      <!--
-       This part contains reference information for various SQL type Pgpool-II commands.
-       These commands can be issued inside the SQL session using the standard PostgreSQL
-       client like <literal>psql</literal> and are not forwarded to the backend DB instead
-       are processed by <productname>Pgpool-II</productname> server
+       This part contains reference information for various SQL type
+       <productname>Pgpool-II</productname> commands.  These commands
+       can be issued inside the SQL session using the
+       standard <productname>PostgreSQL</productname> client
+       like <literal>psql</literal>. They are not forwarded to the
+       backend DB: instead they are processed
+       by <productname>Pgpool-II</productname> server.  Please note
+       that SQL type commands cannot be used in extended query
+       mode. You will get parse errors
+       from <productname>PostgreSQL</productname>.
       -->
        ここには、SQL 型の <productname>Pgpool-II</productname> コマンドのリファレンス情報があります。
        これらのコマンドは、<literal>psql</literal> のような標準 <productname>PostgreSQL</productname>
-       のクライアント側から SQL セッション内で発行されますが、バックエンド DB に転送されず、
+       のクライアントのSQLセッションで発行できますが、バックエンド DB に転送されず、
        <productname>Pgpool-II</productname> サーバで処理されます。
+       また、拡張クエリモードでは利用することができません。
      </para>
 
    </partintro>

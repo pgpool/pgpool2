@@ -356,6 +356,19 @@ INSERT INTO rel1(c1) SELECT 1
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>SQL型コマンド</term>
+    <listitem>
+      <para>
+<!--
+	SQL type commands</link> cannot
+	be used in extended query mode.
+-->
+<link linkend="sql-commands">SQL型コマンド</link>は、拡張クエリモードでは使用できません。
+      </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </para>
 </sect1>
