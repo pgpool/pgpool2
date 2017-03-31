@@ -2639,10 +2639,30 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 					pool_set_ignore_till_sync();
 					pool_unset_query_in_progress();
 
-					/* Remove all pending messages */
-					while (pool_pending_message_pull_out())
-						;
-					pool_pending_message_reset_previous_message();
+					if (STREAM)
+					{
+						POOL_PENDING_MESSAGE *pmsg;
+						int i;
+
+						/* Remove all pending messages */
+						do
+						{
+							pmsg = pool_pending_message_pull_out();
+							pool_pending_message_free_pending_message(pmsg);
+						}
+						while (pmsg);
+
+						pool_pending_message_reset_previous_message();
+
+						/* Discard read buffer */
+						for (i=0;i<NUM_BACKENDS;i++)
+						{
+							if (VALID_BACKEND(i))
+							{
+								pool_discard_read_buffer(CONNECTION(backend, i));
+							}
+						}
+					}
 				}
 				break;
 
