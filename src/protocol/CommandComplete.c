@@ -68,6 +68,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	/*
 	 * If operated in streaming replication mode and doing an extended query,
 	 * read backend message according to the query context.
+	 * Also we set the transaction state at this point.
 	 */
 	if (STREAM && pool_is_doing_extended_query_message())
 	{
@@ -89,6 +90,14 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 					return POOL_END;
 				p1 = palloc(len);
 				memcpy(p1, p, len);
+
+				if (session_context->query_context->parse_tree &&
+					is_start_transaction_query(session_context->query_context->parse_tree))
+					TSTATE(backend, i) ='T';		/* we are inside a transaction */
+
+					ereport(DEBUG1,
+							(errmsg("processing command complete"),
+							 errdetail("set transaction state to T")));
 			}
 		}
 	}
