@@ -1080,6 +1080,7 @@ static int
  * - COPY TO STDOUT
  * - EXPLAIN
  * - EXPLAIN ANALYZE and query is SELECT not including writing functions
+ * - SHOW
  *
  * Note that for SELECT this function returns false.
  */
@@ -1200,6 +1201,9 @@ bool is_select_query(Node *node, char *sql)
 				return true;
 		}
 	}
+	else if (IsA(node, VariableShowStmt))		/* SHOW command */
+		return true;
+
 	return false;
 }
 

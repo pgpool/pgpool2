@@ -1387,6 +1387,13 @@ static POOL_DEST send_to_where(Node *node, char *query)
 			 */
 			return POOL_PRIMARY; 
 		}
+		/*
+		 * SHOW
+		 */
+		else if (IsA(node, VariableShowStmt))
+		{
+			return POOL_EITHER;
+		}
 
 		/*
 		 * Other statements are sent to primary
