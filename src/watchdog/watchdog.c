@@ -1573,6 +1573,8 @@ static bool write_ipc_command_with_result_data(WDCommandData* ipcCommand, char t
 	pkt.data = data;
 	pkt.len = len;
 	pkt.type = type;
+	pkt.command_id = 0; /*command Id is not used in IPC packets*/
+
 	if (ipcCommand == NULL || ipcCommand->commandSource != COMMAND_SOURCE_IPC || ipcCommand->sourceIPCSocket <= 0)
 	{
 		ereport(DEBUG1,
