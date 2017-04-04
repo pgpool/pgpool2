@@ -194,7 +194,8 @@ wd_calc_hash(const char *str, int len, char *buf)
 	/* calculate hash using md5 encrypt */
 	if (! pool_md5_encrypt(pass, username, strlen(username), tmp_buf + MD5_PASSWD_LEN + 1))
 		goto wd_calc_hash_error;
-	buf[(MD5_PASSWD_LEN+1)*2-1] = '\0';
+
+	tmp_buf[sizeof(tmp_buf)-1] = '\0';
 
 	if (! pool_md5_encrypt(tmp_buf+MD5_PASSWD_LEN+1, str, len, tmp_buf))
 		goto wd_calc_hash_error;
