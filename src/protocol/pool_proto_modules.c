@@ -2579,7 +2579,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 					{
 						/* parse_before_bind() was called. Do not foward the
 						 * parse complete message to frontend. */
-						ereport(LOG,
+						ereport(DEBUG1,
 								(errmsg("processing backend response"),
 								 errdetail("do not forward parse complete message to frontend")));
 						pool_discard_packet_contents(backend);
