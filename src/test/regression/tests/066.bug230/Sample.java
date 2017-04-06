@@ -16,7 +16,7 @@ public class Sample {
         props.setProperty("user", System.getenv("USER"));
         props.setProperty("password", "");
         DriverManager.setLogWriter(new PrintWriter(System.out));
-        Driver.setLogLevel(2);
+	//        Driver.setLogLevel(2);
         Connection conn = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:11000/test", props);
         conn.setAutoCommit(false);
