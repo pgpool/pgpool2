@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -21,6 +21,8 @@
  *
  */
 
+#include <unistd.h>
+#include <arpa/inet.h>
 #include "pool.h"
 #include "utils/elog.h"
 #include "context/pool_process_context.h"
@@ -351,7 +353,7 @@ void pool_alarm(pool_sighandler_t handler, unsigned int second)
 /*
  * Undo the alarm signal handler using the remaining time.
  */
-void pool_undo_alarm()
+void pool_undo_alarm(void)
 {
 	POOL_PROCESS_CONTEXT *p = pool_get_process_context();
 

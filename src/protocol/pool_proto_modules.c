@@ -1382,9 +1382,6 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	else
 		nowait = false;
 
-#ifdef NOT_USED
-	pool_clear_sync_map();
-#endif
 	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID, nowait);
 	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, nowait);
 

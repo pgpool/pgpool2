@@ -3184,7 +3184,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			else
 			{
 				ereport(DEBUG1,
-						(errmsg("read_kind_from_backend: pending message exists. query context: %x",
+						(errmsg("read_kind_from_backend: pending message exists. query context: %p",
 								msg->query_context)));
 				pool_pending_message_set_previous_message(msg);
 				pool_pending_message_query_context_dest_set(msg, msg->query_context);
