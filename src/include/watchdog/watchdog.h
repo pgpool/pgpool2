@@ -27,6 +27,7 @@
 #define WATCHDOG_H
 
 #include <sys/time.h>
+#include "pool_config.h"
 
 #define WD_TIME_INIT(tv)      ((tv).tv_sec = (tv).tv_usec = 0)
 #define WD_TIME_ISSET(tv)     ((tv).tv_sec || (tv).tv_usec)

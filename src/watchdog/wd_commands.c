@@ -76,7 +76,6 @@ unsigned int *ipc_shared_key = NULL;   /* key lives in shared memory
 										* used to identify the ipc internal
 										* clients
 										*/
-
 void wd_ipc_initialize_data(void)
 {
 	if (watchdog_ipc_address == NULL)
@@ -110,6 +109,30 @@ void wd_ipc_initialize_data(void)
 		watchdog_node_escalated = pool_shared_memory_create(sizeof(bool));
 		*watchdog_node_escalated = false;
 	}
+}
+
+WD_STATES get_watchdog_local_node_state(void)
+{
+	WD_STATES ret = WD_DEAD;
+	WDGenericData *state = get_wd_runtime_variable_value(WD_RUNTIME_VAR_WD_STATE);
+	if (state == NULL)
+	{
+		ereport(LOG,
+				(errmsg("failed to get current state of local watchdog node"),
+				 errdetail("get runtime variable value from watchdog returned no data")));
+		return WD_DEAD;
+	}
+	if (state->valueType != VALUE_DATA_TYPE_INT)
+	{
+		ereport(LOG,
+				(errmsg("failed to get current state of local watchdog node"),
+				 errdetail("get runtime variable value from watchdog returned invalid value type")));
+		pfree(state);
+		return WD_DEAD;
+	}
+	ret = (WD_STATES)state->data.intVal;
+	pfree(state);
+	return ret;
 }
 
 char* get_watchdog_ipc_address(void)
@@ -292,6 +315,157 @@ issue_command_to_watchdog(char type, int timeout_sec, char* data, int data_len, 
 	}
 	close(sock);
 	return result;
+}
+
+/*
+ * Function gets the runtime value of watchdog varibale using the
+ * watchdog IPC
+ */
+WDGenericData *get_wd_runtime_variable_value(char *varName)
+{
+	unsigned int *shared_key = get_ipc_shared_key();
+	char *data = get_simple_request_json(WD_JSON_KEY_VARIABLE_NAME,varName,
+									   shared_key?*shared_key:0,pool_config->wd_authkey);
+
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_GET_RUNTIME_VARIABLE_VALUE,
+													   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
+													   data, strlen(data), true);
+	pfree(data);
+
+	if (result == NULL)
+	{
+		ereport(WARNING,
+			(errmsg("get runtime variable value from watchdog failed"),
+				 errdetail("issue command to watchdog returned NULL")));
+		return NULL;
+	}
+	if (result->type == WD_IPC_CMD_CLUSTER_IN_TRAN)
+	{
+		ereport(WARNING,
+				(errmsg("get runtime variable value from watchdog failed"),
+				 errdetail("watchdog cluster is not in stable state"),
+					errhint("try again when the cluster is fully initialized")));
+		FreeCmdResult(result);
+		return NULL;
+	}
+	else if (result->type == WD_IPC_CMD_TIMEOUT)
+	{
+		ereport(WARNING,
+				(errmsg("get runtime variable value from watchdog failed"),
+				 errdetail("ipc command timeout")));
+		FreeCmdResult(result);
+		return NULL;
+	}
+	else if (result->type == WD_IPC_CMD_RESULT_OK)
+	{
+		json_value *root = NULL;
+		WDGenericData *genData = NULL;
+		WDValueDataType dayaType;
+
+		root = json_parse(result->data, result->length);
+		/* The root node must be object */
+		if (root == NULL || root->type != json_object)
+		{
+			FreeCmdResult(result);
+			return NULL;
+		}
+
+		if (json_get_int_value_for_key(root, WD_JSON_KEY_VALUE_DATA_TYPE, (int*)&dayaType))
+		{
+			FreeCmdResult(result);
+			json_value_free(root);
+			return NULL;
+		}
+
+		switch (dayaType) {
+			case VALUE_DATA_TYPE_INT:
+			{
+				int intVal;
+				if (json_get_int_value_for_key(root, WD_JSON_KEY_VALUE_DATA, &intVal))
+				{
+					ereport(WARNING,
+						(errmsg("get runtime variable value from watchdog failed"),
+							 errdetail("unable to get INT value from JSON data returned by watchdog")));
+				}
+				else
+				{
+					genData = palloc(sizeof(WDGenericData));
+					genData->valueType = dayaType;
+					genData->data.intVal = intVal;
+				}
+			}
+				break;
+
+			case VALUE_DATA_TYPE_LONG:
+			{
+				long longVal;
+				if (json_get_long_value_for_key(root, WD_JSON_KEY_VALUE_DATA, &longVal))
+				{
+					ereport(WARNING,
+						(errmsg("get runtime variable value from watchdog failed"),
+							 errdetail("unable to get LONG value from JSON data returned by watchdog")));
+				}
+				else
+				{
+					genData = palloc(sizeof(WDGenericData));
+					genData->valueType = dayaType;
+					genData->data.longVal = longVal;
+				}
+			}
+				break;
+
+			case VALUE_DATA_TYPE_BOOL:
+			{
+				bool boolVal;
+				if (json_get_bool_value_for_key(root, WD_JSON_KEY_VALUE_DATA, &boolVal))
+				{
+					ereport(WARNING,
+						(errmsg("get runtime variable value from watchdog failed"),
+							 errdetail("unable to get BOOL value from JSON data returned by watchdog")));
+				}
+				else
+				{
+					genData = palloc(sizeof(WDGenericData));
+					genData->valueType = dayaType;
+					genData->data.boolVal = boolVal;
+				}
+			}
+				break;
+
+			case VALUE_DATA_TYPE_STRING:
+			{
+				char *ptr = json_get_string_value_for_key(root, WD_JSON_KEY_VALUE_DATA);
+				if (ptr == NULL)
+				{
+					ereport(WARNING,
+						(errmsg("get runtime variable value from watchdog failed"),
+							 errdetail("unable to get STRING value from JSON data returned by watchdog")));
+				}
+				else
+				{
+					genData = palloc(sizeof(WDGenericData));
+					genData->valueType = dayaType;
+					genData->data.stringVal = pstrdup(ptr);
+				}
+			}
+				break;
+
+			default:
+				ereport(WARNING,
+						(errmsg("get runtime variable value from watchdog failed, unknown value data type")));
+				break;
+		}
+
+		json_value_free(root);
+		FreeCmdResult(result);
+		return genData;
+	}
+
+	ereport(WARNING,
+			(errmsg("get runtime variable value from watchdog failed")));
+	FreeCmdResult(result);
+	return NULL;
+
 }
 
 /*
