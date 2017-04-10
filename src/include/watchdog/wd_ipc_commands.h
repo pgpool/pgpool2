@@ -45,6 +45,19 @@ typedef struct WDIPCCmdResult
 	char*	data;
 }WDIPCCmdResult;
 
+typedef struct WDGenericData
+{
+	WDValueDataType	valueType;
+	union data
+	{
+		char	*stringVal;
+		int		intVal;
+		bool	boolVal;
+		long	longVal;
+	}data;
+}WDGenericData;
+
+
 extern void wd_ipc_initialize_data(void);
 extern char* get_watchdog_ipc_address(void);
 extern unsigned int* get_ipc_shared_key(void);
@@ -62,6 +75,8 @@ extern WDFailoverCMDResults wd_degenerate_backend_set(int *node_id_set, int coun
 extern WDFailoverCMDResults wd_promote_backend(int node_id, unsigned int *wd_failover_id);
 
 extern WDPGBackendStatus* get_pg_backend_status_from_master_wd_node(void);
+extern WDGenericData *get_wd_runtime_variable_value(char *varName);
+extern WD_STATES get_watchdog_local_node_state(void);
 
 extern char* wd_get_watchdog_nodes(int nodeID);
 

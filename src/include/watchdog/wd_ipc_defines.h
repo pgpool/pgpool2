@@ -61,6 +61,13 @@ typedef enum WDFailoverCMDResults
 	FAILOVER_RES_TIMEOUT
 }WDFailoverCMDResults;
 
+typedef enum WDValueDataType
+{
+	VALUE_DATA_TYPE_INT = 1,
+	VALUE_DATA_TYPE_STRING,
+	VALUE_DATA_TYPE_BOOL,
+	VALUE_DATA_TYPE_LONG
+}WDValueDataType;
 
 /* IPC MESSAGES TYPES */
 #define WD_REGISTER_FOR_NOTIFICATION		'0'
@@ -77,6 +84,7 @@ typedef enum WDFailoverCMDResults
 #define WD_IPC_ONLINE_RECOVERY_COMMAND		'r'
 #define WD_FAILOVER_LOCKING_REQUEST			's'
 #define WD_GET_MASTER_DATA_REQUEST			'd'
+#define WD_GET_RUNTIME_VARIABLE_VALUE		'v'
 
 #define WD_FUNCTION_START_RECOVERY		"START_RECOVERY"
 #define WD_FUNCTION_END_RECOVERY		"END_RECOVERY"
@@ -85,7 +93,10 @@ typedef enum WDFailoverCMDResults
 #define WD_FUNCTION_PROMOTE_REQUEST		"PROMOTE_BACKEND_REQUEST"
 
 #define WD_DATE_REQ_PG_BACKEND_DATA		"BackendStatus"
-
+#define WD_JSON_KEY_DATA_REQ_TYPE		"DataRequestType"
+#define WD_JSON_KEY_VARIABLE_NAME		"VarName"
+#define WD_JSON_KEY_VALUE_DATA_TYPE		"ValueDataType"
+#define WD_JSON_KEY_VALUE_DATA			"ValueData"
 
 #define WD_REQ_FAILOVER_START			"FAILOVER_START"
 #define WD_REQ_FAILOVER_END				"FAILOVER_FINISH"
@@ -106,6 +117,12 @@ typedef enum WDFailoverCMDResults
 												 * watchdog IPC server use the value of this key
 												 * to authenticate the internal pgpool-II processes
 												 */
+
+/* Watchdog runtime variable names */
+
+#define WD_RUNTIME_VAR_WD_STATE			"WDState"
+#define WD_RUNTIME_VAR_QUORUM_STATE		"QuorumState"
+#define WD_RUNTIME_VAR_ESCALATION_STATE	"Escalated"
 
 /* Use to inform node new node status by lifecheck */
 #define WD_LIFECHECK_NODE_STATUS_DEAD	1
