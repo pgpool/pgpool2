@@ -209,6 +209,25 @@
 	as caller's <productname>PostgreSQL</productname> user name.
 	password is extraced from $HOME/.pcppass.
       </para>
+
+      <sect1 id="installing-pgpool-adm">
+	<title>Installing pgpool_adm</title>
+	<para>
+	  pgpool_adm is an extension and should be installed on all
+	  PostgreSQL servers.
+	  <programlisting>
+$ cd src/sql/pgpool_adm
+$ make
+$ make install
+	  </programlisting>
+	  Then issue following SQL command for every database you want to access.
+	  <programlisting>
+$ psql ...
+$ CREATE EXTENSION pgpool_adm
+	  </programlisting>
+	</para>
+      </sect1>
+      
     </partintro>
 
     &pgpoolAdmPcpNodeInfo
