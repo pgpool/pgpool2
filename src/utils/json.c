@@ -1102,6 +1102,26 @@ json_value* json_get_value_for_key(json_value* source, const char* key)
  * for all other cases when key or integer value is not found
  * function returns -1
  */
+
+int json_get_bool_value_for_key(json_value* source, const char* key, bool* value)
+{
+	json_value* jNode;
+
+	jNode = json_get_value_for_key(source,key);
+	if (jNode == NULL)
+		return -1;
+	/* for older version compatibility, We use int for encoding bool values */
+	if (jNode->type == json_integer || jNode->type == json_boolean)
+	{
+		*value = jNode->u.integer?true:false;
+	}
+	else
+		return -1;
+
+	return 0;
+}
+
+
 int json_get_int_value_for_key(json_value* source, const char* key, int* value)
 {
 	json_value* jNode;
