@@ -148,4 +148,75 @@
     &showPoolCache
 
   </reference>
+
+  <reference id="pgpool-adm">
+    <title>pgpool_adm extension</title>
+
+    <partintro>
+      <para>
+	<command>pgpool_adm</command> is a set of extensions to allow
+	SQL access to <xref linkend="pcp-commands"> (actually, pcp
+	  libraries). It uses foreign data wrapper as shown in the
+	  diagram below.
+      </para>
+      <para>
+	<figure>
+	  <title>How <command>pgpool_adm</command> works</title>
+	  <mediaobject>
+	    <imageobject>
+	      <imagedata fileref="pgpool_adm.gif">
+	    </imageobject>
+	  </mediaobject>
+	</figure>
+      </para>
+
+      <para>
+	It is possible to call the functions from either via pgpool-II
+	(1) or via <productname>PostgreSQL</productname> (2).  In case
+	(1), <productname>Pgpool-II</productname> accepts query from
+	user (1), then forward
+	to <productname>PostgreSQL</productname> (3).
+	<productname>PostgreSQL</productname> connects
+	to <productname>Pgpool-II</productname> (5)
+	and <productname>Pgpool-II</productname> reply back
+	to <productname>PostgreSQL</productname> with the result
+	(3). <productname>PostgreSQL</productname> returns the result
+	to <productname>Pgpool-II</productname> (5)
+	and <productname>Pgpool-II</productname> fowards the data to
+	the user (6).
+      </para>
+      <para>
+	In case (2), <productname>PostgreSQL</productname> accepts query from user (2).
+	<productname>PostgreSQL</productname> connects
+	to <productname>Pgpool-II</productname> (5)
+	and <productname>Pgpool-II</productname> reply back
+	to <productname>PostgreSQL</productname> with the result (3).
+	<productname>PostgreSQL</productname> replies back the data to
+	the user (6).
+      </para>
+      <para>
+	There are two forms to call pgpool_adm functions: first form
+	accepts <productname>Pgpool-II</productname> host name (or IP
+	address), pcp port number, pcp user name, its password and
+	another parameters.
+      </para>
+      <para>
+	In the second form, <productname>Pgpool-II</productname>
+	server name is required.  The server name must be already
+	defined using "CREATE FOREIGN SERVER" command
+	of <productname>PostgreSQL</productname>.  The pcp port number
+	is hard coded as 9898, the pcp user name is assumes to be same
+	as caller's <productname>PostgreSQL</productname> user name.
+	password is extraced from $HOME/.pcppass.
+      </para>
+    </partintro>
+
+    &pgpoolAdmPcpNodeInfo
+    &pgpoolAdmPcpPoolStatus
+    &pgpoolAdmPcpNodeCount
+    &pgpoolAdmPcpAttachNode
+    &pgpoolAdmPcpDetachNode
+
+  </reference>
+
 </part>
