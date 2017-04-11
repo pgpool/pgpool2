@@ -142,7 +142,8 @@ packet_types all_packet_types[] = {
 	{WD_INFORM_I_AM_GOING_DOWN, "INFORM I AM GOING DOWN"},
 	{WD_ASK_FOR_POOL_CONFIG, "ASK FOR POOL CONFIG"},
 	{WD_POOL_CONFIG_DATA, "CONFIG DATA"},
-	{WD_GET_MASTER_DATA_REQUEST, "DATA REQUEST"},
+	{WD_GET_MASTER_DATA_REQUEST, "DATA REQUEST FOR MASTER"},
+	{WD_GET_RUNTIME_VARIABLE_VALUE, "GET WD RUNTIME VARIABLE VALUE"},
 	{WD_CMD_REPLY_IN_DATA, "COMMAND REPLY IN DATA"},
 	{WD_FAILOVER_LOCKING_REQUEST,"FAILOVER LOCKING REQUEST"},
 	{WD_CLUSTER_SERVICE_MESSAGE, "CLUSTER SERVICE MESSAGE"},
@@ -454,6 +455,7 @@ static WDCommandData* get_wd_IPC_command_from_socket(int sock);
 static IPC_CMD_PREOCESS_RES process_IPC_command(WDCommandData* ipcCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDCommandData* ipcCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDCommandData* ipcCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_get_runtime_variable_value_request(WDCommandData* ipcCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_online_recovery(WDCommandData* ipcCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_failover_locking_cmd(WDCommandData *ipcCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDCommandData *ipcCommand);
@@ -489,7 +491,6 @@ static int wd_create_recv_socket(int port);
 static void wd_check_config(void);
 static pid_t watchdog_main(void);
 static pid_t fork_watchdog_child(void);
-static void cluster_in_stable_state(void);
 static bool check_IPC_client_authentication(json_value *rootObj, bool internal_client_only);
 static bool check_and_report_IPC_authentication(WDCommandData* ipcCommand);
 
@@ -1792,6 +1793,8 @@ static IPC_CMD_PREOCESS_RES process_IPC_command(WDCommandData* ipcCommand)
 		case WD_GET_MASTER_DATA_REQUEST:
 			return process_IPC_data_request_from_master(ipcCommand);
 
+		case WD_GET_RUNTIME_VARIABLE_VALUE:
+			return process_IPC_get_runtime_variable_value_request(ipcCommand);
 		default:
 			ipcCommand->errorMessage = MemoryContextStrdup(ipcCommand->memoryContext,"unknown IPC command type");
 			break;
@@ -1799,6 +1802,70 @@ static IPC_CMD_PREOCESS_RES process_IPC_command(WDCommandData* ipcCommand)
 	return IPC_CMD_ERROR;
 }
 
+
+static IPC_CMD_PREOCESS_RES process_IPC_get_runtime_variable_value_request(WDCommandData* ipcCommand)
+{
+	/* get the json for node list */
+	JsonNode* jNode = NULL;
+	char* requestVarName = NULL;
+
+	if (ipcCommand->sourcePacket.len <= 0 || ipcCommand->sourcePacket.data == NULL)
+		return IPC_CMD_ERROR;
+
+	json_value *root = json_parse(ipcCommand->sourcePacket.data,ipcCommand->sourcePacket.len);
+	/* The root node must be object */
+	if (root == NULL || root->type != json_object)
+	{
+		json_value_free(root);
+		ereport(NOTICE,
+			(errmsg("failed to process get local variable IPC command"),
+				 errdetail("unable to parse json data")));
+		return IPC_CMD_ERROR;
+	}
+
+	requestVarName = json_get_string_value_for_key(root, WD_JSON_KEY_VARIABLE_NAME);
+
+	if (requestVarName == NULL)
+	{
+		json_value_free(root);
+		ipcCommand->errorMessage = MemoryContextStrdup(ipcCommand->memoryContext,
+													   "requested variable name is null");
+		return IPC_CMD_ERROR;
+	}
+
+	jNode = jw_create_with_object(true);
+
+	if (strcasecmp(WD_RUNTIME_VAR_WD_STATE, requestVarName) == 0)
+	{
+		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA_TYPE, VALUE_DATA_TYPE_INT);
+		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA, g_cluster.localNode->state);
+	}
+	else if (strcasecmp(WD_RUNTIME_VAR_QUORUM_STATE, requestVarName) == 0)
+	{
+		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA_TYPE, VALUE_DATA_TYPE_INT);
+		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA, g_cluster.quorum_status);
+	}
+	else if (strcasecmp(WD_RUNTIME_VAR_ESCALATION_STATE, requestVarName) == 0)
+	{
+		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA_TYPE, VALUE_DATA_TYPE_BOOL);
+		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA, g_cluster.escalated);
+	}
+	else
+	{
+		json_value_free(root);
+		jw_destroy(jNode);
+		ipcCommand->errorMessage = MemoryContextStrdup(ipcCommand->memoryContext,
+													   "unknown variable requested");
+		return IPC_CMD_ERROR;
+	}
+
+	jw_finish_document(jNode);
+	json_value_free(root);
+	write_ipc_command_with_result_data(ipcCommand, WD_IPC_CMD_RESULT_OK,
+											 jw_get_json_string(jNode), jw_get_json_length(jNode) +1);
+	jw_destroy(jNode);
+	return IPC_CMD_COMPLETE;
+}
 
 static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDCommandData* ipcCommand)
 {
@@ -2457,7 +2524,7 @@ static IPC_CMD_PREOCESS_RES process_failover_locking_requests_on_cordinator(WDCo
 		syncRequestType = json_get_string_value_for_key(root, "SyncRequestType");
 		json_get_int_value_for_key(root, "FailoverLockID", &failoverLockID);
 		json_get_int_value_for_key(root, "WDFailoverID", (int*)&failoverID);
-		if (syncRequestType == false)
+		if (syncRequestType == NULL)
 		{
 			ereport(LOG,
 				(errmsg("failed to process locking request"),
@@ -4660,16 +4727,6 @@ static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, 
 }
 
 
-static void cluster_in_stable_state(void)
-{
-	if (g_cluster.clusterInitialized == false)
-	{
-		g_cluster.clusterInitialized = true;
-		/* Inform the parent */
-		kill(getppid(), SIGUSR2);
-	}
-}
-
 static void update_interface_status(void)
 {
 	struct ifaddrs *ifAddrStruct=NULL;
@@ -5306,7 +5363,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 							 errdetail("our declare coordinator message is accepted by all nodes")));
 
 					g_cluster.masterNode = g_cluster.localNode;
-					cluster_in_stable_state();
+					register_watchdog_state_change_interupt();
 
 					/*
 					 * Check if the quorum is present then start the escalation process
@@ -5981,7 +6038,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 				if (clusterCommand->commandStatus == COMMAND_FINISHED_ALL_REPLIED ||
 					clusterCommand->commandStatus == COMMAND_FINISHED_TIMEOUT)
 				{
-					cluster_in_stable_state();
+					register_watchdog_state_change_interupt();
 
 					ereport(LOG,
 						(errmsg("successfully joined the watchdog cluster as standby node"),
@@ -6176,7 +6233,7 @@ static int get_mimimum_nodes_required_for_quorum(void)
 
 
 /*
- * sets the state of local watchdog node, and fires an state change event
+ * sets the state of local watchdog node, and fires a state change event
  * if the new and old state differes
  */
 static int set_state(WD_STATES newState)
@@ -6775,6 +6832,7 @@ static bool check_and_report_IPC_authentication(WDCommandData* ipcCommand)
 		case WD_NODE_STATUS_CHANGE_COMMAND:
 		case WD_REGISTER_FOR_NOTIFICATION:
 		case WD_GET_NODES_LIST_COMMAND:
+		case WD_GET_RUNTIME_VARIABLE_VALUE:
 			internal_client_only = false;
 			break;
 

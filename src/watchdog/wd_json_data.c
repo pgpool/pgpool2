@@ -32,7 +32,6 @@
 #include "watchdog/wd_ipc_defines.h"
 #include "pool.h"
 
-#define WD_JSON_KEY_DATA_REQ_TYPE	"DataRequestType"
 
 POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len)
 {
@@ -232,7 +231,10 @@ char* get_pool_config_json(void)
 	return json_str;
 }
 
-char* get_data_request_json(char* request_type, unsigned int sharedKey, char* authKey)
+/* The function returs the simple JSON string that contains
+ * only one KEY,VALUE along with the authkey key value if provided
+ */
+char* get_simple_request_json(char *key, char* value, unsigned int sharedKey, char* authKey)
 {
 	char* json_str;
 
@@ -243,11 +245,16 @@ char* get_data_request_json(char* request_type, unsigned int sharedKey, char* au
 	if (authKey != NULL && strlen(authKey) > 0)
 		jw_put_string(jNode, WD_IPC_AUTH_KEY, authKey); /*  put the auth key*/
 
-	jw_put_string(jNode, WD_JSON_KEY_DATA_REQ_TYPE, request_type);
+	jw_put_string(jNode, key, value);
 	jw_finish_document(jNode);
 	json_str = pstrdup(jw_get_json_string(jNode));
 	jw_destroy(jNode);
 	return json_str;
+}
+
+char* get_data_request_json(char* request_type, unsigned int sharedKey, char* authKey)
+{
+	return get_simple_request_json(WD_JSON_KEY_DATA_REQ_TYPE, request_type, sharedKey, authKey);
 }
 
 bool parse_data_request_json(char* json_data, int data_len, char** request_type)
