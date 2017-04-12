@@ -3514,10 +3514,13 @@ static WDCommandData* get_wd_command_from_reply(List* commands, WDPacketData* pk
 		WDCommandData* ipcCommand = lfirst(lc);
 		if (ipcCommand)
 		{
-			if (ipcCommand->commandSource != COMMAND_SOURCE_IPC)
-				continue;
 			if (ipcCommand->commandPacket.command_id == pkt->command_id)
+			{
+				ereport(DEBUG1,
+						(errmsg("packet %c with command ID %d is reply to the command %c",pkt->type, pkt->command_id,
+								ipcCommand->commandPacket.type)));
 				return ipcCommand;
+			}
 		}
 	}
 	return NULL;
@@ -4289,18 +4292,31 @@ static bool watchdog_internal_command_packet_processor(WatchdogNode* wdNode, WDP
 	if (clusterCommand->commandReplyFromCount >= clusterCommand->commandSendToCount)
 	{
 		if (pkt->type == WD_REJECT_MESSAGE || pkt->type == WD_ERROR_MESSAGE)
+		{
+			ereport(DEBUG1,
+					(errmsg("command %c with command id %d is finished with COMMAND_FINISHED_NODE_REJECTED",pkt->type, pkt->command_id)));
 			clusterCommand->commandStatus = COMMAND_FINISHED_NODE_REJECTED;
+		}
 		else
+		{
+			ereport(DEBUG1,
+					(errmsg("command %c with command id %d is finished with COMMAND_FINISHED_ALL_REPLIED",pkt->type, pkt->command_id)));
 			clusterCommand->commandStatus = COMMAND_FINISHED_ALL_REPLIED;
+		}
 		watchdog_state_machine(WD_EVENT_COMMAND_FINISHED, wdNode, pkt, clusterCommand);
+		g_cluster.clusterCommands = list_delete_ptr(g_cluster.clusterCommands,clusterCommand);
+		MemoryContextDelete(clusterCommand->memoryContext);
 	}
 	else if (pkt->type == WD_REJECT_MESSAGE || pkt->type == WD_ERROR_MESSAGE)
 	{
 		/* Error or reject message by any node imidiately finishes the command */
+		ereport(DEBUG1,
+				(errmsg("command %c with command id %d is finished with COMMAND_FINISHED_NODE_REJECTED",pkt->type, pkt->command_id)));
 		clusterCommand->commandStatus = COMMAND_FINISHED_NODE_REJECTED;
 		watchdog_state_machine(WD_EVENT_COMMAND_FINISHED, wdNode, pkt, clusterCommand);
+		g_cluster.clusterCommands = list_delete_ptr(g_cluster.clusterCommands,clusterCommand);
+		MemoryContextDelete(clusterCommand->memoryContext);
 	}
-
 	return true; /* do not process this packet further */
 }
 
@@ -4439,6 +4455,8 @@ static int issue_watchdog_internal_command(WatchdogNode* wdNode, WDPacketData *p
 		memcpy(clusterCommand->commandPacket.data,pkt->data,pkt->len);
 		clusterCommand->commandPacket.len = pkt->len;
 	}
+	ereport(DEBUG2,
+			(errmsg("new cluster command %c issued with command id %d",pkt->type,pkt->command_id)));
 
 	oldCxt = MemoryContextSwitchTo(TopMemoryContext);
 	g_cluster.clusterCommands = lappend(g_cluster.clusterCommands, clusterCommand);
