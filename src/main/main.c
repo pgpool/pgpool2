@@ -203,9 +203,6 @@ int main(int argc, char **argv)
     if(debug_level > 0 && pool_config->log_min_messages > DEBUG1)
         pool_config->log_min_messages = DEBUG1;
 
-	if (pool_config->enable_pool_hba)
-		load_hba(hba_file);
-
 	/*
 	 * If a non-switch argument remains, then it should be either "reload" or "stop".
 	 */
@@ -269,6 +266,9 @@ int main(int argc, char **argv)
 		usage();
 		exit(1);
 	}
+
+	if (pool_config->enable_pool_hba)
+		load_hba(hba_file);
 
 	/* check effective user id for watchdog */
 	/* watchdog must be started under the privileged user */
