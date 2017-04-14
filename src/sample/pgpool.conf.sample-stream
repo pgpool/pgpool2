@@ -180,10 +180,6 @@ syslog_ident = 'pgpool'
 
 # - Debug -
 
-debug_level = 0
-                                   # Debug message verbosity level
-                                   # 0 means no message, 1 or more mean verbose
-
 #log_error_verbosity = default          # terse, default, or verbose messages
 
 #client_min_messages = notice           # values in order of decreasing detail:
