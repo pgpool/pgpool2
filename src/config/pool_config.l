@@ -38,7 +38,6 @@
 #include "utils/fe_ports.h"
 #endif
 
-
 /* to shut off compiler warnings */
 int yylex(void);
 
@@ -68,6 +67,7 @@ static bool ParseConfigFile( const char *config_file, int elevel,
 %option never-interactive
 %option nounput
 %option noyywrap
+%option noinput
 
 SIGN            ("-"|"+")
 DIGIT           [0-9]

@@ -522,7 +522,6 @@ char *yytext;
 #include "utils/fe_ports.h"
 #endif
 
-
 /* to shut off compiler warnings */
 int yylex(void);
 
@@ -546,6 +545,7 @@ static void FreeConfigVariable(ConfigVariable *item);
 static bool ParseConfigFile( const char *config_file, int elevel,
 			ConfigVariable **head_p, ConfigVariable **tail_p);
 
+#define YY_NO_INPUT 1
 #line 550 "config/pool_config.c"
 
 #define INITIAL 0
