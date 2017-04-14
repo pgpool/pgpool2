@@ -902,7 +902,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		i++;
 
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "standby_delay%d", j);
-		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%lld", BACKEND_INFO(j).standby_delay);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, UINT64_FORMAT, BACKEND_INFO(j).standby_delay);
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "standby delay of backend #%d", j);
 		i++;
 
@@ -1150,7 +1150,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 	    snprintf(nodes[i].port, 	POOLCONFIG_MAXPORTLEN, "%d", 	bi->backend_port);
 	    snprintf(nodes[i].status, 	POOLCONFIG_MAXSTATLEN, 	"%s", 	backend_status_to_str(bi->backend_status));
 	    snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight/RAND_MAX);
-	    snprintf(nodes[i].select, POOLCONFIG_MAXWEIGHTLEN, "%lld", stat_get_select_count(i));
+	    snprintf(nodes[i].select, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_select_count(i));
 	    snprintf(nodes[i].load_balance_node, POOLCONFIG_MAXWEIGHTLEN, "%s",
 				 (session_context->load_balance_node_id == i)? "true":"false");
 

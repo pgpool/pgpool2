@@ -28,6 +28,7 @@
 
 #include "config.h"
 #include "pool_type.h"
+#include "pcp/libpcp_ext.h"
 #include "utils/pool_signal.h"
 #include "parser/nodes.h"
 

@@ -26,6 +26,8 @@
 #ifndef POOL_CONFIG_H
 #define POOL_CONFIG_H
 
+#include "pcp/libpcp_ext.h"
+
 /*
  * watchdog
  */

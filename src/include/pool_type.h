@@ -29,7 +29,6 @@
 #include "config.h"
 #include <sys/types.h>
 #include <sys/socket.h>
-#include "pcp/libpcp_ext.h"
 #include "libpq-fe.h"
 /* Define common boolean type. C++ and BEOS already has it so exclude them. */
 #ifdef c_plusplus
@@ -76,10 +75,13 @@ typedef unsigned int uint32;	/* == 32 bits */
 #ifdef HAVE_LONG_INT_64
 /* Plain "long int" fits, use it */
 typedef long int int64;
+typedef unsigned long int uint64;
+
 #define pool_atoi64 atol
 #elif defined(HAVE_LONG_LONG_INT_64)
 /* We have working support for "long long int", use that */
 typedef long long int int64;
+typedef unsigned long long int uint64;
 #define pool_atoi64 atoll
 #else
 /* neither HAVE_LONG_INT_64 nor HAVE_LONG_LONG_INT_64 */
@@ -90,13 +92,6 @@ typedef enum {
 	LOAD_UNSELECTED = 0,
 	LOAD_SELECTED
 } LOAD_BALANCE_STATUS;
-
-/*
- * Backend status record file
- */
-typedef struct {
-	BACKEND_STATUS status[MAX_NUM_BACKENDS];
-} BackendStatusRecord;
 
 extern int assert_enabled;
 extern void ExceptionalCondition(const char *conditionName,
@@ -215,7 +210,6 @@ typedef unsigned int AuthRequest;
 typedef uint8 bits8;			/* >= 8 bits */
 typedef uint16 bits16;			/* >= 16 bits */
 typedef uint32 bits32;			/* >= 32 bits */
-typedef unsigned long long int uint64;
 
 /*
  * stdint.h limits aren't guaranteed to be present and aren't guaranteed to

@@ -25,8 +25,11 @@
 
 #ifndef LIBPCP_EXT_H
 #define LIBPCP_EXT_H
+
+#include "pool_type.h"
 #include <signal.h>
 #include <stdio.h>
+
 /*
  * startup packet definitions (v2) stolen from PostgreSQL
  */
@@ -55,6 +58,13 @@ typedef enum {
 #define BACKEND_STATUS_CON_DOWN			"down"
 
 /*
+ * Backend status record file
+ */
+typedef struct {
+	BACKEND_STATUS status[MAX_NUM_BACKENDS];
+} BackendStatusRecord;
+
+/*
  * PostgreSQL backend descriptor. Placed on shared memory area.
  */
 typedef struct {
@@ -65,7 +75,7 @@ typedef struct {
 	double unnormalized_weight; /* descripted parameter */
 	char backend_data_directory[MAX_PATH_LENGTH];
 	unsigned short flag;		/* various flags */
-	unsigned long long int standby_delay;		/* The replication delay against the primary */
+	uint64 standby_delay;		/* The replication delay against the primary */
 } BackendInfo;
 
 typedef struct {
