@@ -293,7 +293,6 @@ extern POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void);
 extern bool pool_pending_message_exists(void);
 extern void dump_pending_message(void);
 extern void pool_set_major_version(int major);
-extern int pool_get_major_version(void);
 extern void pool_set_minor_version(int minor);
 extern int pool_get_minor_version(void);
 extern void pool_set_preferred_master_node_id(int node_id);

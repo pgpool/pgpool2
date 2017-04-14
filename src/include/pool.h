@@ -281,6 +281,8 @@ typedef struct {
 	UNIT unit;
 } Interval;
 
+/* Defined in pool_session_context.h */
+extern int pool_get_major_version(void);
 
 /* NUM_BACKENDS now always returns actual number of backends */
 #define NUM_BACKENDS (pool_config->backend_desc->num_backends)

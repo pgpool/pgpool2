@@ -88,7 +88,9 @@ static POOL_INTERNAL_BUFFER *pool_create_buffer(void);
 static void pool_discard_buffer(POOL_INTERNAL_BUFFER *buffer);
 static void pool_add_buffer(POOL_INTERNAL_BUFFER *buffer, void *data, size_t len);
 static void *pool_get_buffer(POOL_INTERNAL_BUFFER *buffer, size_t *len);
+#ifdef NOT_USED
 static char *pool_get_buffer_pointer(POOL_INTERNAL_BUFFER *buffer);
+#endif
 static char *pool_get_current_cache_buffer(size_t *len);
 static size_t pool_get_buffer_length(POOL_INTERNAL_BUFFER *buffer);
 static void pool_check_and_discard_cache_buffer(int num_oids, int *oids);
@@ -2996,6 +2998,7 @@ static size_t pool_get_buffer_length(POOL_INTERNAL_BUFFER *buffer)
 	return buffer->buflen;
 }
 
+#ifdef NOT_USED
 /*
  * Get internal buffer pointer.
  */
@@ -3005,7 +3008,7 @@ static char *pool_get_buffer_pointer(POOL_INTERNAL_BUFFER *buffer)
 		return NULL;
 	return buffer->buf;
 }
-
+#endif
 /*
  * Get query cache buffer struct of current query context
  */
@@ -3480,7 +3483,6 @@ long long int pool_stats_count_up_num_cache_hits(void)
 
 static volatile POOL_HASH_HEADER *hash_header;
 static volatile POOL_HASH_ELEMENT *hash_elements;
-static volatile POOL_HASH_ELEMENT hash_free_body;
 static volatile POOL_HASH_ELEMENT *hash_free;
 
 /*
