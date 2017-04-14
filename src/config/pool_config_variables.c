@@ -28,7 +28,6 @@ static int num_all_parameters = 0;
 
 static void initialize_variables_with_default(struct config_generic * gconf);
 static bool config_enum_lookup_by_name(struct config_enum * record, const char *value, int *retval);
-static const char* config_enum_lookup_by_value(struct config_enum * record, int val);
 
 static void build_variable_groups(void);
 static void build_config_variables(void);
@@ -43,8 +42,6 @@ static bool setConfigOption(const char *name, const char *value,
 static bool setConfigOptionVar(struct config_generic *record, const char *name, int index_val,
 				const char *value, ConfigContext context, GucSource source, int elevel);
 
-static char *ShowOption(struct config_generic * record, int index, int elevel);
-static int get_max_elements_for_config_record(struct config_generic* record);
 static bool get_index_in_var_name(struct config_generic* record,
 								  const char* name, int *index, int elevel);
 
@@ -90,10 +87,17 @@ static bool SyslogFacilityProcessFunc (int newval, int elevel);
 
 
 #ifndef POOL_PRIVATE
-/* This function is used to provide Hints for enum type config parameters.
- * an it is not available for tools since this uses the stringInfo that is
+/* These functions are used to provide Hints for enum type config parameters and
+ * to output the vslues of the parameters.
+ * These functuons are not available for tools since they use the stringInfo that is
  * not present for tools.
  */
+
+static const char* config_enum_lookup_by_value(struct config_enum * record, int val);
+
+static char *ShowOption(struct config_generic * record, int index, int elevel);
+static int get_max_elements_for_config_record(struct config_generic* record);
+
 static char *config_enum_get_options(struct config_enum * record, const char *prefix,
 						const char *suffix, const char *separator);
 static void send_row_description_for_detail_view(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
@@ -2343,25 +2347,6 @@ config_enum_lookup_by_name(struct config_enum * record, const char *value,
 	return FALSE;
 }
 
-/*
- * Lookup the name for an enum option with the selected value.
- * The returned string is a pointer to static data and not
- * allocated for modification.
- */
-const char *
-config_enum_lookup_by_value(struct config_enum * record, int val)
-{
-	const struct config_enum_entry *entry;
-	
-	for (entry = record->options; entry && entry->name; entry++)
-	{
-		if (entry->val == val)
-			return entry->name;
-	}
-	/* should never happen*/
-	return NULL;
-}
-
 
 bool
 set_config_options(ConfigVariable *head_p,
@@ -3691,6 +3676,27 @@ static bool MakeDBRedirectListRegex (char* newval, int elevel)
 	return true;
 }
 
+#ifndef POOL_PRIVATE
+
+/*
+ * Lookup the name for an enum option with the selected value.
+ * The returned string is a pointer to static data and not
+ * allocated for modification.
+ */
+static const char *
+config_enum_lookup_by_value(struct config_enum * record, int val)
+{
+	const struct config_enum_entry *entry;
+
+	for (entry = record->options; entry && entry->name; entry++)
+	{
+		if (entry->val == val)
+			return entry->name;
+	}
+	/* should never happen*/
+	return NULL;
+}
+
 static char *
 ShowOption(struct config_generic * record, int index, int elevel)
 {
@@ -3888,6 +3894,7 @@ ShowOption(struct config_generic * record, int index, int elevel)
 	return NULL;
 }
 
+
 static bool value_slot_for_config_record_is_empty(struct config_generic* record, int index)
 {
 	switch (record->vartype)
@@ -3970,8 +3977,6 @@ static int get_max_elements_for_config_record(struct config_generic* record)
 	}
 	return 0;
 }
-
-#ifndef POOL_PRIVATE
 
 bool set_config_option_for_session(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char *name, const char *value)
 {
