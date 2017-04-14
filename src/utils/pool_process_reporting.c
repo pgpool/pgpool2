@@ -348,12 +348,6 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "syslog program ident string", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	/* - Debug - */
-	StrNCpy(status[i].name, "debug_level", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->debug_level);
-	StrNCpy(status[i].desc, "debug message level", POOLCONFIG_MAXDESCLEN);
-	i++;
-
 	/* FILE LOCATIONS */
 
 	StrNCpy(status[i].name, "pid_file_name", POOLCONFIG_MAXNAMELEN);

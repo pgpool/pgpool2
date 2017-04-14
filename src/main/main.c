@@ -43,6 +43,7 @@
 #include "auth/pool_passwd.h"
 #include "query_cache/pool_memqcache.h"
 #include "watchdog/wd_utils.h"
+#include "pool_config_variables.h"
 
 static void daemonize(void);
 static int read_pid_file(void);
@@ -188,21 +189,15 @@ int main(int argc, char **argv)
 	mypid = getpid();
 
 	pool_init_config();
-	/*
-	 * Init debug level with -d option value
-	 */
-	pool_config->debug_level = debug_level;
 
 	pool_get_config(conf_file, CFGCXT_INIT);
+
 	/*
 	 * Override debug level
+	 * if command line -d arg is given adjust the log_min_message config variable
 	 */
-	if (pool_config->debug_level == 0)
-		pool_config->debug_level = debug_level;
-
-    /* if command line -d arg is given adjust the log_min_message config variable */
-    if(debug_level > 0 && pool_config->log_min_messages > DEBUG1)
-        pool_config->log_min_messages = DEBUG1;
+	if(debug_level > 0 && pool_config->log_min_messages > DEBUG1)
+		set_one_config_option("log_min_messages", "DEBUG1",CFGCXT_INIT, PGC_S_ARGV, INFO);
 
 	/*
 	 * If a non-switch argument remains, then it should be either "reload" or "stop".

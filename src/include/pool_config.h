@@ -210,10 +210,6 @@ typedef struct {
  	bool log_per_node_statement;			/* logs per node detailed SQL statements */
 	char *lobj_lock_table;					/* table name to lock for rewriting lo_creat */
 
-	int debug_level;						/* debug message verbosity level.
-											 * 0: no message, 1 <= : more verbose
-										 	 */
-
 	BackendDesc *backend_desc;				/* PostgreSQL Server description. Placed on shared memory */
 
 	LOAD_BALANCE_STATUS	load_balance_status[MAX_NUM_BACKENDS];	/* to remember which DB node is selected for load balancing */
