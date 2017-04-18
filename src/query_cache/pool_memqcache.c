@@ -3890,7 +3890,7 @@ POOL_SHMEM_STATS *pool_get_shmem_storage_stats(void)
 	mystats.cache_stats.num_selects = stats->num_selects;
 	mystats.cache_stats.num_cache_hits = stats->num_cache_hits;
 
-	if (pool_config->memqcache_method == SHMEM_CACHE)
+	if (pool_config->memqcache_method != SHMEM_CACHE)
 		return &mystats;
 
 	/* number of total hash entries */
