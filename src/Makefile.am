@@ -6,6 +6,7 @@ bin_PROGRAMS = pgpool
 pgpool_SOURCES = main/main.c \
 	main/pool_globals.c \
 	main/pgpool_main.c \
+	main/health_check.c \
 	config/pool_config.l \
 	config/pool_config_variables.c \
 	pcp_con/pcp_child.c \

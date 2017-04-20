@@ -76,7 +76,8 @@ typedef enum
 typedef struct User1SignalSlot
 {
 	sig_atomic_t	signalFlags[MAX_INTERUPTS];
-}User1SignalSlot;
+} User1SignalSlot;
+
 /*
  * Process pending signal actions.
  */
@@ -103,22 +104,14 @@ typedef struct User1SignalSlot
 		} \
     } while (0)
 
-#define CLEAR_ALARM \
-	do { \
-			elog(DEBUG1,"health check: clearing alarm"); \
-    } while (alarm(0) > 0)
-
-
 #define PGPOOLMAXLITSENQUEUELENGTH 10000
 
-static int process_backend_health_check_failure(int health_check_node_id, int retrycnt);
-static bool do_health_check(bool use_template_db, volatile int *health_check_node_id);
 static void signal_user1_to_parent_with_reason(User1SignalReason reason);
 
 static void FileUnlink(int code, Datum path);
 static pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file);
 static pid_t fork_a_child(int *fds, int id);
-static pid_t worker_fork_a_child(void);
+static pid_t worker_fork_a_child(ProcessType type, void (*func) (), void *params);
 static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp);
 static int create_inet_domain_socket(const char *hostname, const int port);
 static int *create_inet_domain_sockets(const char *hostname, const int port);
@@ -137,7 +130,6 @@ static RETSIGTYPE reap_handler(int sig);
 static RETSIGTYPE sigusr1_handler(int sig);
 static void sigusr1_interupt_processor(void);
 static RETSIGTYPE reload_config_handler(int sig);
-static RETSIGTYPE health_check_timer_handler(int sig);
 static RETSIGTYPE wakeup_handler(int sig);
 
 static void initialize_shared_mem_objects(bool clear_memcache_oidmaps);
@@ -156,6 +148,11 @@ static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
 ProcessInfo *process_info = NULL;		/* Per child info table on shmem */
 volatile User1SignalSlot	*user1SignalSlot = NULL;/* User 1 signal slot on shmem */
 struct timeval random_start_time;
+
+/*
+ * To track health check process ids
+ */
+static pid_t health_check_pids[MAX_NUM_BACKENDS];
 
 /*
  * Private copy of backend status
@@ -209,11 +206,7 @@ int my_master_node_id;		/* Master node id buffer */
 int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 {
 	int i;
-	volatile int health_check_node_id = 0;
-	volatile bool use_template_db = false;
-	volatile int retrycnt;
 
-	MemoryContext MainLoopMemoryContext;
 	sigjmp_buf	local_sigjmp_buf;
 
 	/* For PostmasterRandom */
@@ -382,13 +375,6 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	MemoryContextSwitchTo(TopMemoryContext);
 
-	/* Create per loop iteration memory context */
-	MainLoopMemoryContext = AllocSetContextCreate(TopMemoryContext,
-											  "pgpool_main_loop",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
-
 	/* fork a child for PCP handling */
 	pcp_unix_fd = create_unix_domain_socket(pcp_un_addr);
 	/* Add onproc exit to clean up the unix domain socket at exit */
@@ -401,9 +387,14 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
 
 	/* Fork worker process */
-	worker_pid = worker_fork_a_child();
+	worker_pid = worker_fork_a_child(PT_WORKER, do_worker_child, NULL);
 
-	retrycnt = 0;		/* reset health check retry counter */
+	/* Fork health check process */
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (VALID_BACKEND(i))
+			health_check_pids[i] = worker_fork_a_child(PT_HEALTH_CHECK, do_health_check_child, &i);
+	}
 
 	/*
 	 * check for child signals to ensure child startup before reporting successfull start
@@ -431,41 +422,8 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		FlushErrorState();
 		POOL_SETMASK(&BlockSig);
 
-		/* Check if we are failed during health check
-		 * perform the necessary actions in case
-		 */
-		if(processState == PERFORMING_HEALTH_CHECK)
-		{
-			if (errno != EINTR || health_check_timer_expired)
-			{
-				if (use_template_db == false)
-				{
-					/* Health check was performed on 'postgres' database
-					 * lets try to perform health check with template1 db
-					 * before marking the health check as failed
-					 */
-					use_template_db = true;
-
-				}
-				else
-				{
-					int ret;
-
-					retrycnt++;
-					ret = process_backend_health_check_failure(health_check_node_id, retrycnt);
-					if (ret > 0) /* Retries are exhausted, reset the counter */
-					{
-						retrycnt = 0;
-						if (ret == 2) /* 2 = failover done on node */
-						{
-							health_check_node_id = 0;
-							use_template_db = false;
-						}
-					}
-				}
-			}
-		}
 	}
+
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
 
@@ -475,136 +433,21 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	/* This is the main loop */
 	for (;;)
 	{
-		bool all_nodes_healthy;
 		CHECK_REQUEST;
 
-		/* do we need health checking for PostgreSQL? */
-		if (pool_config->health_check_period > 0)
+		processState = SLEEPING;
+		for (;;)
 		{
-			/* rest per iteration memory context */
-			MemoryContextSwitchTo(MainLoopMemoryContext);
-			MemoryContextResetAndDeleteChildren(MainLoopMemoryContext);
-
-			if (retrycnt == 0 && !use_template_db)
-				ereport(DEBUG1,
-					(errmsg("starting health check")));
-			else if(retrycnt)
-				ereport(LOG,
-					(errmsg("health checking retry count %d", retrycnt)));
-
-			if (pool_config->health_check_timeout > 0)
-			{
-				/*
-				 * set health checker timeout. we want to detect
-				 * communication path failure much earlier before
-				 * TCP/IP stack detects it.
-				 */
-				CLEAR_ALARM;
-				pool_signal(SIGALRM, health_check_timer_handler);
-				alarm(pool_config->health_check_timeout);
-			}
-			/*
-			 * do actual health check. trying to connect to the backend
-			 */
-			errno = 0;
-			health_check_timer_expired = 0;
+			int r;
+			struct timeval t = {3, 0};
 
 			POOL_SETMASK(&UnBlockSig);
-
-			processState = PERFORMING_HEALTH_CHECK;
-			all_nodes_healthy = do_health_check(use_template_db,&health_check_node_id);
+			r = pool_pause(&t);
 			POOL_SETMASK(&BlockSig);
-
-			if (all_nodes_healthy && retrycnt)
-				ereport(LOG,
-					(errmsg("all backends are returned to a healthy state after %d retry(ies)",retrycnt)));
-
-			health_check_node_id = 0;
-			use_template_db = false;
-			retrycnt = 0;
-			processState = SLEEPING;
-
-			if (pool_config->health_check_timeout > 0)
-			{
-				/* seems OK. cancel health check timer */
-				pool_signal(SIGALRM, SIG_IGN);
-				CLEAR_ALARM;
-			}
-			pool_sleep(pool_config->health_check_period);
-		}
-		else /* Health Check is not enable and we have not much to do */
-		{
-			processState = SLEEPING;
-			for (;;)
-			{
-				int r;
-				struct timeval t = {3, 0};
-
-				POOL_SETMASK(&UnBlockSig);
-				r = pool_pause(&t);
-				POOL_SETMASK(&BlockSig);
-				if (r > 0)
-					break;
-			}
+			if (r > 0)
+				break;
 		}
 	}
-}
-
-/*
- * Function process the backend node failure captured by the health check
- * since this function is called from the exception handler so ereport(ERROR)
- * is not allowed from this function
- * Function returns non zero if no retries are exhausted.
- * ( 1 if failover is not performed on node and 2 in case of failover)
- */
-static int
-process_backend_health_check_failure(int health_check_node_id, int retrycnt)
-{
-	/*
-	 *  health check is failed on template1 database as well
-	 */
-	int sleep_time = pool_config->health_check_retry_delay;
-	int health_check_max_retries = pool_config->health_check_max_retries;
-
-	pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
-	CLEAR_ALARM;
-
-	if (health_check_max_retries > 0 && retrycnt <= health_check_max_retries)
-	{
-		/* Keep retrying and sleep a little in between */
-		ereport(DEBUG1,
-			(errmsg("Sleeping for %d seconds from process backend health check failure", sleep_time),
-					errdetail("health check failed retry no is %d while max retries are %d",retrycnt,health_check_max_retries) ));
-
-		pool_sleep(sleep_time);
-	}
-	else
-	{
-		/* No more retries left, proceed to failover if allowed */
-		if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(health_check_node_id).flag))
-		{
-			ereport(LOG,
-					(errmsg("health check failed on node %d but failover is disallowed for the node", health_check_node_id)));
-			return 1;
-		}
-		else
-		{
-			/*
-			 * If health check timer expired, then it is possible that there
-			 * was a communitication path problem.  In that case we need to do
-			 * full restarting of child process.
-			 */
-			bool partial_failover = health_check_timer_expired?	false:true;
-
-			ereport(LOG,
-					(errmsg("setting backend node %d status to NODE DOWN", health_check_node_id)));
-			health_check_timer_expired = 0;
-			degenerate_backend_set(&health_check_node_id, 1, partial_failover, 0);
-			return 2;
-			/* need to distribute this info to children ??*/
-		}
-	}
-	return 0;
 }
 
 /*
@@ -652,22 +495,10 @@ bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, i
 	failover_in_progress = Req_info->switching;
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 
-	if (getpid() == mypid)
+	POOL_SETMASK(&oldmask);
+	if(failover_in_progress == false)
 	{
-		/*
-		 * We are invoked from main process
-		 * call failover with blocked signals
-		 */
-		failover();
-		POOL_SETMASK(&oldmask);
-	}
-	else
-	{
-		POOL_SETMASK(&oldmask);
-		if(failover_in_progress == false)
-		{
-			signal_user1_to_parent_with_reason(SIG_FAILOVER_INTERRUPT);
-		}
+		signal_user1_to_parent_with_reason(SIG_FAILOVER_INTERRUPT);
 	}
 
 	return true;
@@ -686,7 +517,7 @@ static void signal_user1_to_parent_with_reason(User1SignalReason reason)
 /*
  * fork a child for PCP
  */
-pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
+static pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 {
 	pid_t pid;
 
@@ -720,7 +551,7 @@ pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 /*
 * fork a child
 */
-pid_t fork_a_child(int *fds, int id)
+static pid_t fork_a_child(int *fds, int id)
 {
 	pid_t pid;
 
@@ -767,7 +598,7 @@ pid_t fork_a_child(int *fds, int id)
 /*
 * fork worker child process
 */
-pid_t worker_fork_a_child()
+static pid_t worker_fork_a_child(ProcessType type, void (*func) (), void *params)
 {
 	pid_t pid;
 
@@ -792,13 +623,13 @@ pid_t worker_fork_a_child()
 		}
 
 		/* Set the process type variable */
-		processType = PT_WORKER;
+		processType = type;
 
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
 		health_check_timer_expired = 0;
 		reload_config_request = 0;
-		do_worker_child();
+		func(params);
 	}
 	else if (pid == -1)
 	{
@@ -1454,6 +1285,14 @@ static RETSIGTYPE exit_handler(int sig)
 		{
 			kill(pid, sig);
 			process_info[i].pid = 0;
+		}
+	}
+
+	for (i = 0; i < MAX_NUM_BACKENDS; i++)
+	{
+		if (health_check_pids[i] > 0)
+		{
+			kill(health_check_pids[i], sig);
 		}
 	}
 
@@ -2211,6 +2050,7 @@ static void failover(void)
 	}
 }
 
+#ifdef NOT_USED
 /*
  * health check timer handler
  */
@@ -2222,8 +2062,6 @@ static RETSIGTYPE health_check_timer_handler(int sig)
 	POOL_SETMASK(&UnBlockSig);
 	errno = save_errno;
 }
-
-
 
 /*
  * do_health_check() performs the health check on all backend nodes.
@@ -2303,6 +2141,7 @@ do_health_check(bool use_template_db, volatile int *health_check_node_id)
 	}
 	return all_nodes_healthy;
 }
+#endif
 
 /*
  * handle SIGCHLD
@@ -2471,9 +2310,9 @@ static void reaper(void)
 		else if (pid == worker_pid)
 		{
 			found = true;
-			if(restart_child)
+			if (restart_child)
 			{
-				worker_pid = worker_fork_a_child();
+				worker_pid = worker_fork_a_child(PT_WORKER, do_worker_child, NULL);
 				new_pid = worker_pid;
 			}
 			else

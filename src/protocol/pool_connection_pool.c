@@ -560,7 +560,7 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
 			return false;
 		}
 
-		if (health_check_timer_expired && getpid() == mypid)		/* has health check timer expired */
+		if (health_check_timer_expired)		/* has health check timer expired */
 		{
 			ereport(LOG,
 				(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
@@ -694,9 +694,18 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
 					continue;
 				}
 
-				ereport(LOG,
-					(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
-						 errdetail("select() system call failed with an error \"%s\"",strerror(errno))));
+				else if (health_check_timer_expired && errno == EINTR)
+				{
+					ereport(LOG,
+							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
+							 errdetail("health check timer expired")));
+				}
+				else
+				{
+					ereport(LOG,
+							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
+							 errdetail("select() system call failed with an error \"%s\"",strerror(errno))));
+				}
 				close(fd);
 				return false;
 			}

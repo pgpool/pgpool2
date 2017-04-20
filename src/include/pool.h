@@ -474,7 +474,8 @@ typedef enum
 	PT_FOLLOWCHILD,
 	PT_WATCHDOG_UTILITY,
 	PT_PCP,
-	PT_PCP_WORKER
+	PT_PCP_WORKER,
+	PT_HEALTH_CHECK
 } ProcessType;
 
 extern ProcessType processType;
@@ -729,5 +730,6 @@ extern int pool_send_to_frontend(char* data, int len, bool flush);
 extern int pool_frontend_exists(void);
 extern pid_t pool_waitpid(int *status);
 extern int write_status_file(void);
+extern void do_health_check_child(int *node_id);
 
 #endif /* POOL_H */
