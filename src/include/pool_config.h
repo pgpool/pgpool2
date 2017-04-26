@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -112,6 +112,20 @@ typedef struct {
 #define WD_HB_IF(if_id) (pool_config->hb_if[(if_id)])
 
 /*
+ * Per node health check parameters
+*/
+typedef struct {
+	int health_check_timeout;				/* health check timeout */
+	int health_check_period;				/* health check period */
+	char *health_check_user;				/* PostgreSQL user name for health check */
+	char *health_check_password;			/* password for health check username */
+	char *health_check_database;			/* database name for health check username */
+	int health_check_max_retries;			/* health check max retries */
+	int health_check_retry_delay;			/* amount of time to wait between retries */
+	int connect_timeout;					/* timeout value before giving up connecting to backend */
+} HealthCheckParams;
+
+/*
  * configuration parameters
  */
 typedef struct {
@@ -179,6 +193,7 @@ typedef struct {
 	int health_check_max_retries;			/* health check max retries */
 	int health_check_retry_delay;			/* amount of time to wait between retries */
 	int connect_timeout;					/* timeout value before giving up connecting to backend */
+	HealthCheckParams *health_check_params;	/* per node health check parameters */
 	int sr_check_period;					/* streaming replication check period */
 	char *sr_check_user;					/* PostgreSQL user name for streaming replication check */
 	char *sr_check_password;				/* password for sr_check_user */

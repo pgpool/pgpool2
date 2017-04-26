@@ -356,7 +356,7 @@ follow_master_command = ''
                                    #   %% = '%' character
 
 #------------------------------------------------------------------------------
-# HEALTH CHECK
+# HEALTH CHECK GLOBAL PARAMETERS
 #------------------------------------------------------------------------------
 
 health_check_period = 0
@@ -381,6 +381,18 @@ connect_timeout = 10000
 								   # the value. 0 means no timeout.
 								   # Note that this value is not only used for health check,
 								   # but also for ordinary conection to backend.
+
+#------------------------------------------------------------------------------
+# HEALTH CHECK PER NODE PARAMETERS (OPTIONAL)
+#------------------------------------------------------------------------------
+health_check_period0 = 0
+health_check_timeout0 = 20
+health_check_user0 = 'nobody'
+health_check_password0 = ''
+health_check_database0 = ''
+health_check_max_retries0 = 0
+health_check_retry_delay0 = 1
+connect_timeout0 = 10000
 
 #------------------------------------------------------------------------------
 # FAILOVER AND FAILBACK
