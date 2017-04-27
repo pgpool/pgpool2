@@ -2310,3 +2310,267 @@ authentication_timeoutが有効な場合、connection_life_timeが正しく処�
   </sect2>
 
 </sect1>
+
+<sect1 id="release-3-6-3">
+  <title>リリース 3.6.3</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-04-28</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-04-18 [b8eb551]
+    -->
+    <para>
+     memcachedが使用されているときに,"show pool_cache"のセグメンテーション違反を修正しました。
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=301">(Bug 301)</ulink> (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [bedb509]
+    -->
+    <para>
+     いくつかのソースコードの警告を修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [8b25ca3]
+    -->
+    <para>
+        いくつかのコンパイラの警告を修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [50fb9a4]
+    -->
+    <para>
+     pool_config_vatiable.cから「定義されたが未使用の関数」という警告を削除しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [9007558]
+    -->
+    <para>
+     古いdebug_level設定パラメーターの参照を削除しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [7105243]
+    -->
+    <para>
+     Watchdogのソースコードのミスを修正し、いくつかのdebugメッセージを追加しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [f5f42be]
+    -->
+    <para>
+     pool_hba.confファイルをリロード時に発生するエラーを修正しました。<ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [32b7c6d]
+    2017-04-11 [d47add6]
+    2017-04-11 [02a6f45]
+    -->
+    <para>
+     英語/日本語のドキュメントにpgpool_adm extensionに関する情報を追加しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-11 [a6cc0c9]
+    -->
+    <para>
+     ドキュメントを改善しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-11 [2997b3a]
+    -->
+    <para>
+     バックエンドの状態が一致しない不具合を修正しました。
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=289">(Bug 289)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-30 [be9d634]
+    -->
+    <para>
+     Watchdogによるスプリットブレインシナリオの処理を強化しました。(Muhammad Usama)
+    </para>
+    <para>
+
+     watchdogクラスタを使用しmaster/coordinatorノードの再選出が呼び出されていました。その結果、すべてのノードがウォッチドッグネットワークに再結合する必要がありました。これはwatchdogクラスタ全体の再起動と本質的に同じでした。
+    </para>
+    <para>
+     今回の修正では、master/coordinatorノードの候補は、次の基準で選択されるようになりました。
+    </para>
+    <para>
+    (1) 2つのウォッチドッグノードがクラスタマスターであると主張している場合、エスカレーションを実行したマスターノードはマスター状態を保持し、他のノードはステップダウンするように要求されます。
+    </para>
+    <para>
+    (2) 競合がノードのエスカレーション状況によって解決できない場合、クォーラムを保持するノードはマスター/コーディネータのままです。
+    </para>
+    <para>
+    (3) 両方の候補のクォーラムステータスが同じ場合、接続されたアライブノードの数が多いノードが優先されます。
+    </para>
+    <para>
+    (4) 最後に、上記3つでマスターノードを選出できなかった場合、古いマスター(長期間コーディネーターステータスを持つノード) はマスターのままです。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-21 [deaa822]
+    -->
+    <para>
+     複数の並行コマンドを処理するためにwatchdog内部コマンドのメカニズムを強化しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-07 [e989242]
+    -->
+    <para>
+     コンパイラ時の警告を修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-06 [d87f93d]
+    -->
+    <para>
+     リグレッションの失敗を防ぐために、サポートされていないJavaメソッドを新しいJDBCドライバでコメントアウトしました。(Tatsu Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-05 [e5541d7]
+    -->
+    <para>
+     ログメッセージをバインドする前にdebug1に解析をダウングレードしました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-04 [aa4e308]
+    2017-04-04 [24d9770]
+    2017-04-03 [7d8482a]
+    -->
+    <para>
+     coverity警告を修正しました。(Muhammad Usama, Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [c4f816b]
+    -->
+    <para>
+     <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink>
+        pam ldapが失敗する不具合が修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [6899b7d]
+    -->
+    <para>
+     拡張クエリモードでSQL型コマンドが使用できないことをドキュメントに追加しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [9cd2f8a]
+    -->
+    <para>
+     <command>SHOW</command>コマンドを読み込みクエリの一つとして認識するようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     ストリーミングレプリケーションモードでは、<command>SHOW</command>が発行されるとその後のSELECTは明示的なトランザクションでプライマリノードに送信されていました。この制限は不適切でした。また、parseコマンドがエラーを返すときに発生するハングアップを修正しました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-30 [9aaec32]
+    -->
+    <para>
+     コミットadcb636によって引き起こされたメモリリークの問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     Commit adcb636では"pending message queue"を導入しました。メッセージを受信すると、情報がキューに追加され、オブジェクトのコピーが同時に作成されますが、オブジェクトを解放するのを忘れてしまいました。
+     </para>
+     <para>
+     今回の修正では、新しい関数<function>pool_pending_message_free_pending_message()</function>を作成し、<function>pool_pending_message_add()</function>、<function>pool_pending_message_get()</function>および<function>pool_pending_message_pull_out()</function>の後に呼び出すように修正しました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-29 [18f9501]
+    -->
+    <para>
+     ストリーミングレプリケーションモードで「kind mismatch」(または derived)エラーが修正されました。
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">(Bug 271)</ulink> (Tatsuo Ishii)
+    </para>
+    <para>
+     このエラー原因はデータベースノードがPgpool-IIに送る応答の予測が誤っていたことです。以前使用した「sync map」の実装は弱く、予測に失敗することがありました。今回の修正では、送信されたすべてのメッセージをバックエンドに記録する"pending message queue"を導入しました。このキューの要素には、メッセージのタイプ(parse/bind/execute/describe/close/sync)、メッセージが送信されたデータベースノードの情報などが格納されます。これは単純なFIFOキューです。バックエンドからメッセージが到着すると、"pending message queue"の先頭を見れば、受信したメッセージの種類やデータベースノードを確実に予測できます。 メッセージを受信した後、この要素はキューから削除されます。
+    </para>
+    <para>
+    一連のパッチをテストしてくれたSergey Kimさんに感謝します。
+    </para>
+    <para>
+    詳細は <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">Bug 271</ulink>、
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-February/002043.html">[pgpool-hackers: 2043]</ulink> と
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-March/002140.html">[pgpool-hackers: 2140]</ulink> をご参照下さい。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-24 [c2a0cc5]
+    -->
+    <para>
+    [Service] が Type=forking に設定されている場合、Pgpool-II 3.6.2 が systemd によって終了された不具合を修正しました。
+    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>

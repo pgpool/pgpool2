@@ -341,3 +341,58 @@ authentication_timeoutが有効な場合、connection_life_timeが正しく処�
   </sect2>
 
 </sect1>
+<sect1 id="release-3-4-11">
+  <title>リリース 3.4.11</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-04-28</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-04-12 [60ae422]
+    -->
+    <para>
+     pool_hba.confファイルをリロード時に発生するエラーを修正しました。<ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-04 [877e7ad]
+    -->
+    <para>
+     coverity警告を修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [6f25856]
+    -->
+    <para>
+     <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink>
+        pam ldapが失敗する不具合が修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-24 [1172e6c]
+    -->
+    <para>
+    [Service] が Type=forking に設定されている場合、Pgpool-II 3.6.2 が systemd によって終了された不具合を修正しました。
+    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>

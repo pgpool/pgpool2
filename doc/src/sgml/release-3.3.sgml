@@ -294,3 +294,50 @@
   </sect2>
 
 </sect1>
+<sect1 id="release-3-3-15">
+  <title>Release 3.3.15</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-04-28</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-04-12 [7575feb]
+    -->
+    <para>
+
+     Fix for 0000299: Errors on the reloading of configuration.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-04 [ba0a596]
+    -->
+    <para>
+    Fix coverity warnings. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-24 [dab2ff0]
+    -->
+    <para>
+    Fix for 0000296: PGPool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
+    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>

@@ -379,3 +379,60 @@
   </sect2>
 
 </sect1>
+
+<sect1 id="release-3-4-11">
+  <title>Release 3.4.11</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-04-28</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-04-12 [60ae422]
+    -->
+    <para>
+
+     Fix for 0000299: Errors on the reloading of configuration.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-04 [877e7ad]
+    -->
+    <para>
+    Fix coverity warnings. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [6f25856]
+    -->
+    <para>
+    Fix for <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink> pam ldap failure. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-24 [1172e6c]
+    -->
+    <para>
+    Fix for 0000296: PGPool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
+    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
