@@ -633,3 +633,234 @@
   </sect2>
 
 </sect1>
+
+<sect1 id="release-3-5-7">
+  <title>Release 3.5.7</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-04-28</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-04-12 [0069844]
+    -->
+    <para>
+    Fixing a mistake in the watchdog code. (Muhammad Usama)
+    </para>
+    <para>
+    commit also adds some debug messages in the watchdog code.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [f99053c]
+    -->
+    <para>
+     Fix for 0000299: Errors on the reloading of configuration.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-11 [2997b3a]
+    -->
+    <para>
+    Fix for 0000289: Inconsistent backend state.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=289">(Bug 289)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [ab32ae7]
+    -->
+    <para>
+    Enhancing the handling of split-brain scenario by the watchdog. (Muhammad Usama)
+    </para>
+    <para>
+    Previously, the watchdog cluster was used to call for re-election of the
+    master/coordinator node whenever the split-brain situation was detected. And
+    consequently every node was required to rejoin the watchdog network, Which was
+    essentially similar to the re-booting of the whole watchdog cluster.
+    </para>
+    <para>
+    The candidate for the master/coordinator node is selected on the following criteria.
+
+    </para>
+    <para>
+    1-- When two watchdog nodes are claiming to be the cluster master, the master
+    node that has performed the escalation keeps the master status and the other
+    node is asked to step down.
+    </para>
+    <para>
+
+    2-- If the conflict could not be resolved by the escalation status of the nodes,
+    The node which holds the quorum remains the master/coordinator.
+    </para>
+    <para>
+
+    3-- If the quorum status of both contenders is also same. The node with higher
+    number of connected alive nodes get the preference.
+    </para>
+    <para>
+
+    4-- Finally, if all above three yields no winner, the older master (The node
+    that has the coordinator status for longer duration) remains the master.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-11 [8ffd1fa]
+    -->
+    <para>
+    Enhancing the watchdog internal command mechanism to handle multiple concurrent commands. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [79f219a]
+    -->
+    <para>
+    Add bool encode and decode functions to JSON framework for code compatibility.(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-06 [7859f06]
+    -->
+    <para>
+    Comment out unsupported Java method in new JDBC drivers to prevent regression failure. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-05 [436f7a7]
+    -->
+    <para>
+    Downgrade parse before bind log message to debug1. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-04 [aa4e308]
+    2017-04-04 [24d9770]
+    2017-04-03 [7d8482a]
+    -->
+    <para>
+     Fix coverity warnings. (Tatsuo Ishii, Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [f61e002]
+    -->
+    <para>
+    Fix for <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink> pam ldap failure. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [0c16dd1]
+    -->
+    <para>
+    Consider SHOW command as kind of a read query. (Tatsuo Ishii)
+    </para>
+    <para>
+    In streaming replication mode, if SHOW is issued then subsequent
+    SELECTs are sent to the primary node in an explicit transaction. This
+    is not a reasonable and unnecessary limitation.
+
+    Also fix hang when parse command returns error.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-30 [4b28556]
+    -->
+    <para>
+    Fix memory leak problem caused by commit adcb636. (Tatsuo Ishii)
+    </para>
+    <para>
+    Commit adcb636 introduces "pending message queue". When a message
+    arrives, the info is added to the queue and a copy of object is
+    created at the same time, but forgot to free the object. Fix is,
+    creating a new function pool_pending_message_free_pending_message()
+    and call it after pool_pending_message_add(),
+    pool_pending_message_get() and pool_pending_message_pull_out().
+
+    Problem reported by Sergey Kim.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-29 [a504a9f]
+    -->
+    <para>
+    Mega patch to fix "kind mismatch" (or derived) errors in streaming replication mode.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">(Bug 271)</ulink> (Tatsuo Ishii)
+    </para>
+    <para>
+    The errors are caused by wrong prediction in which (or both) database
+    node will send response to Pgpool-II. Previous implementation using
+    "sync map" are weak and sometimes fail in the prediction.
+
+    </para>
+    <para>
+    This patch introduces new implementation using "pending message
+    queue", which records all sent message to backends. The element of the
+    queue stores info regarding messages types
+    (parse/bind/execute/describe/close/sync), to which database node the
+    message was sent and so on. It's a simple FIFO queue. When a message
+    arrives from backend, by looking at the head of the "pending message
+    queue", it is possible to reliably predict what kind of message and
+    from which database node it will arrive. After receiving the message,
+    the element is removed from the queue.
+    </para>
+    <para>
+
+    I would like to thank to Sergey Kim, who has been helping me in
+    testing series of patches.
+
+    </para>
+    <para>
+    See <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">Bug 271</ulink>
+    and discussion in pgpool-hackers mailing list
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-February/002043.html">[pgpool-hackers: 2043]</ulink> and
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-March/002140.html">[pgpool-hackers: 2140]</ulink>
+     for more details.
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-24 [d726c3a]
+    -->
+    <para>
+    Fix for 0000296: PGPool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
+    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>

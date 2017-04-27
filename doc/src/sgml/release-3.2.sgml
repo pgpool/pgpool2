@@ -200,3 +200,31 @@
   </sect2>
 
 </sect1>
+<sect1 id="release-3-2-20">
+  <title>Release 3.2.20</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-04-28</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-04-12 [0185d33]
+    -->
+    <para>
+
+     Fix for 0000299: Errors on the reloading of configuration.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
