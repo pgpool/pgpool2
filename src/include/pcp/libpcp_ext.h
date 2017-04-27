@@ -1,7 +1,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2016	PgPool Global Development Group
@@ -18,7 +18,7 @@
  * is" without express or implied warranty.
  *
  *
- * libpcp_ext.h - 
+ * libpcp_ext.h -
  *	  This file contains definitions for structures and
  *	  externs for functions used by frontend libpcp applications.
  */
@@ -26,7 +26,7 @@
 #ifndef LIBPCP_EXT_H
 #define LIBPCP_EXT_H
 
-#include "pool_type.h"
+#include "../pool_type.h"
 #include <signal.h>
 #include <stdio.h>
 
