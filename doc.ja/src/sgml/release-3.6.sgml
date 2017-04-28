@@ -2544,7 +2544,7 @@ authentication_timeoutが有効な場合、connection_life_timeが正しく処�
     2017-03-29 [18f9501]
     -->
     <para>
-     ストリーミングレプリケーションモードで「kind mismatch」(または derived)エラーが修正されました。
+     ストリーミングレプリケーションモードで「kind mismatch」(またはそれに関連する)エラーが修正されました。
      <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">(Bug 271)</ulink> (Tatsuo Ishii)
     </para>
     <para>
