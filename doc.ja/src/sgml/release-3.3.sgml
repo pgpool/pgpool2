@@ -1,6 +1,192 @@
 <!-- doc/src/sgml/release-3.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-3-15">
+  <title>リリース 3.3.15</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-04-28</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-04-12 [7575feb]
+    -->
+    <para>
+     pool_hba.confファイルをリロード時に発生するエラーを修正しました。<ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-04 [ba0a596]
+    -->
+    <para>
+     coverity警告を修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-24 [dab2ff0]
+    -->
+    <para>
+    [Service] が Type=forking に設定されている場合、Pgpool-II 3.6.2 が systemd によって終了された不具合を修正しました。
+    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
+
+<sect1 id="release-3-3-14">
+  <title>リリース 3.3.14</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-03-17</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-03-17 [ba1bcc3]
+    -->
+    <para>
+    pgpool.serviceファイルに"Wants=network.target"を追加しました。
+    (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=294">bug 294</ulink>) (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-09 [1ddb7f1]
+    -->
+    <para>
+ <link linkend="PCP-PROMOTE-NODE">pcp_promote_node</link>を使ってノード0の昇格に失敗する不具合を修正しました。(Yugo Nagata)
+    </para>
+    <para>
+失敗したときのエラーメッセージは以下のとおりです。
+    </para>
+
+    <programlisting>
+  FATAL: invalid pgpool mode for process recovery request
+  DETAIL: specified node is already primary node, can't promote node id 0
+    </programlisting>
+
+    <para>
+ストリーミングレプリケーションモードでは、<productname>Pgpool-II</productname>がプライマリノードを何らかの理由で「スタンバイ」とみなしていました。たとえば、<productname>Pgpool-II</productname>が起動中で、pg_ctl promoteを手動で実行したとき、<productname>Pgpool-II</productname>はプライマリノードが存在しないと認識します。
+    </para>
+
+    <para>
+この状態の不一致は、pcp_promote_nodeコマンドによって直されるはずですが、昇格させたいノードがマスターノード（最初のアライブノード）である場合、上記のように失敗しました。
+失敗した理由は次のとおりです。ステータスを変更する前に、pcp_promote_nodeコマンドがPRIMARY_NODE_IDのノードIDと比較することによって、指定されたノードが既にプライマリであるかどうかをチェックします。ただし、プライマリが存在しない場合<productname>Pgpool-II</productname>のビューでは、PRIMARY_NODE_IDが0に設定されます。これはMASTER_NODE_IDと同じです。したがって、マスタノードを昇格させるように指定する場合、pcp_promote_nodeはこのノードが既にプライマリであるとのエラーを返して終了しました。
+    </para>
+
+    <para>
+これを修正するには、pcp_promote_nodeは指定したノードがプライマリーノードであるかどうかをチェックするとき、PRIMARY_NODE_IDではなくREAL_PRIMARY_NODE_IDを使うように修正しました。REAL_PRIMARY_NODE_IDはプライマリが存在しない場合、-1に設定されます。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+      2017-02-28 [5b4f78c]
+     -->
+    <para>
+READMEに最新リリースノートへのリンクを追加しました。(Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-23 [7ed400b]
+    -->
+    <para>
+特定の場合に、<productname>Pgpool-II</productname>が終了したときに共有メモリセグメントを解放しない不具合を修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=272">bug 272</ulink>) (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-06 [8fa731a]
+    -->
+    <para>
+ExecStopとExecReloadコマンドをsystemdサービス設定ファイルに追加しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-27 [7512482]
+    -->
+    <para>
+<function>wd_get_cmd</function>関数のバッファオーバーフローを修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=280">bug 280</ulink>)(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-11 [29b61eb]
+    -->
+    <para>
+シグナルハンドラがpool_log/pool_errorを呼び出さないように修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+詳しくは<ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-December/001950.html">[pgpool-hackers: 1950]</ulink>をご参照ください。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-04 [8598d5a]
+    -->
+    <para>
+特定に場合にwatchdogがデエスカレーションに失敗する不具合を修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=249">bug 249</ulink>)(Muhammad Usama)
+    </para>
+
+    <para>
+WNOHANGオプションなしで<function>waitpid()</function>システムコールを使用するように修正しました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-04 [bd92a11]
+    -->
+    <para>
+authentication_timeoutが有効な場合、connection_life_timeが正しく処理されない不具合を修正しました。(Yugo Nagata)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2016-12-28 [afebadf]
+    -->
+    <para>
+クライアント接続直後に発生しうる認証タイムアウトを修正しました。(Yugo Nagata)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
 <sect1 id="release-3-3-13">
 <!--
   <title>Release 3.3.13</title>
@@ -176,188 +362,3 @@ MD5 salt を生成するときに、<function>random()</function> を使用し�
 
 </sect1>
 
-<sect1 id="release-3-3-14">
-  <title>リリース 3.3.14</title>
-
-  <note>
-    <title>リリース日</title>
-    <simpara>2017-03-17</simpara>
-  </note>
-
-  <sect2>
-    <title>不具合修正</title>
-
-    <itemizedlist>
-
-    <listitem>
-    <!--
-    2017-03-17 [ba1bcc3]
-    -->
-    <para>
-    pgpool.serviceファイルに"Wants=network.target"を追加しました。
-    (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=294">bug 294</ulink>) (Bo Peng)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-09 [1ddb7f1]
-    -->
-    <para>
- <link linkend="PCP-PROMOTE-NODE">pcp_promote_node</link>を使ってノード0の昇格に失敗する不具合を修正しました。(Yugo Nagata)
-    </para>
-    <para>
-失敗したときのエラーメッセージは以下のとおりです。
-    </para>
-
-    <programlisting>
-  FATAL: invalid pgpool mode for process recovery request
-  DETAIL: specified node is already primary node, can't promote node id 0
-    </programlisting>
-
-    <para>
-ストリーミングレプリケーションモードでは、<productname>Pgpool-II</productname>がプライマリノードを何らかの理由で「スタンバイ」とみなしていました。たとえば、<productname>Pgpool-II</productname>が起動中で、pg_ctl promoteを手動で実行したとき、<productname>Pgpool-II</productname>はプライマリノードが存在しないと認識します。
-    </para>
-
-    <para>
-この状態の不一致は、pcp_promote_nodeコマンドによって直されるはずですが、昇格させたいノードがマスターノード（最初のアライブノード）である場合、上記のように失敗しました。
-失敗した理由は次のとおりです。ステータスを変更する前に、pcp_promote_nodeコマンドがPRIMARY_NODE_IDのノードIDと比較することによって、指定されたノードが既にプライマリであるかどうかをチェックします。ただし、プライマリが存在しない場合<productname>Pgpool-II</productname>のビューでは、PRIMARY_NODE_IDが0に設定されます。これはMASTER_NODE_IDと同じです。したがって、マスタノードを昇格させるように指定する場合、pcp_promote_nodeはこのノードが既にプライマリであるとのエラーを返して終了しました。
-    </para>
-
-    <para>
-これを修正するには、pcp_promote_nodeは指定したノードがプライマリーノードであるかどうかをチェックするとき、PRIMARY_NODE_IDではなくREAL_PRIMARY_NODE_IDを使うように修正しました。REAL_PRIMARY_NODE_IDはプライマリが存在しない場合、-1に設定されます。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-      2017-02-28 [5b4f78c]
-     -->
-    <para>
-READMEに最新リリースノートへのリンクを追加しました。(Bo Peng)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-23 [7ed400b]
-    -->
-    <para>
-特定の場合に、<productname>Pgpool-II</productname>が終了したときに共有メモリセグメントを解放しない不具合を修正しました。
-(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=272">bug 272</ulink>) (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-06 [8fa731a]
-    -->
-    <para>
-ExecStopとExecReloadコマンドをsystemdサービス設定ファイルに追加しました。(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-27 [7512482]
-    -->
-    <para>
-<function>wd_get_cmd</function>関数のバッファオーバーフローを修正しました。
-(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=280">bug 280</ulink>)(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-11 [29b61eb]
-    -->
-    <para>
-シグナルハンドラがpool_log/pool_errorを呼び出さないように修正しました。(Tatsuo Ishii)
-    </para>
-    <para>
-詳しくは<ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-December/001950.html">[pgpool-hackers: 1950]</ulink>をご参照ください。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-04 [8598d5a]
-    -->
-    <para>
-特定に場合にwatchdogがデエスカレーションに失敗する不具合を修正しました。
-(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=249">bug 249</ulink>)(Muhammad Usama)
-    </para>
-
-    <para>
-WNOHANGオプションなしで<function>waitpid()</function>システムコールを使用するように修正しました。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-04 [bd92a11]
-    -->
-    <para>
-authentication_timeoutが有効な場合、connection_life_timeが正しく処理されない不具合を修正しました。(Yugo Nagata)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2016-12-28 [afebadf]
-    -->
-    <para>
-クライアント接続直後に発生しうる認証タイムアウトを修正しました。(Yugo Nagata)
-    </para>
-    </listitem>
-
-    </itemizedlist>
-
-  </sect2>
-
-</sect1>
-<sect1 id="release-3-3-15">
-  <title>リリース 3.3.15</title>
-
-  <note>
-    <title>リリース日</title>
-    <simpara>2017-04-28</simpara>
-  </note>
-
-  <sect2>
-    <title>不具合修正</title>
-
-    <itemizedlist>
-    <listitem>
-    <!--
-    2017-04-12 [7575feb]
-    -->
-    <para>
-     pool_hba.confファイルをリロード時に発生するエラーを修正しました。<ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-04 [ba0a596]
-    -->
-    <para>
-     coverity警告を修正しました。(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-24 [dab2ff0]
-    -->
-    <para>
-    [Service] が Type=forking に設定されている場合、Pgpool-II 3.6.2 が systemd によって終了された不具合を修正しました。
-    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
-    </para>
-    </listitem>
-
-    </itemizedlist>
-
-  </sect2>
-
-</sect1>

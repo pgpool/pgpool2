@@ -1,133 +1,56 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
-<sect1 id="release-3-4-9">
-  <title>Release 3.4.9</title>
+<sect1 id="release-3-4-11">
+  <title>Release 3.4.11</title>
 
   <note>
     <title>Release Date</title>
-    <simpara>2016-12-26</simpara>
+    <simpara>2017-04-28</simpara>
   </note>
 
   <sect2>
     <title>Bug fixes</title>
 
     <itemizedlist>
-
-      <listitem>
-	<!--
-	    2016-12-23 [f5e9a2a]
-	  -->
-	<para>
-      Tightening up the watchdog security. (Muhammad Usama)
-    </para>
-
+    <listitem>
+    <!--
+    2017-04-12 [60ae422]
+    -->
     <para>
-      Now wd_authkey uses the HMAC SHA-256 hashing.
-	</para>
-      </listitem>
 
-      <listitem>
-	<!--
-	    2016-12-22 [79f1ba8]
-	  -->
-	<para>
-	  Add pgpool_adm extension in <productname>Pgpool-II</productname>RPM. (Bo Peng)
-	</para>
-      </listitem>
+     Fix for 0000299: Errors on the reloading of configuration.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
 
-      <listitem>
-	<!--
-	    2016-12-20 [888ac16]
-	  -->
-	<para>
-	  Fix occasional segfault when query cache is enabled. (bug 263) (Tatsuo Ishii)
-	</para>
-      </listitem>
+    <listitem>
+    <!--
+    2017-04-04 [877e7ad]
+    -->
+    <para>
+    Fix coverity warnings. (Muhammad Usama)
+    </para>
+    </listitem>
 
-      <listitem>
-	<!--
-	    2016-10-27 [f37c592]
-	  -->
-	<para>
-	  Do not cancel a query when the query resulted in an error other than in native replication mode. (Tatsuo Ishii)
-	</para>
-	<para>
-	  It was intended to keep the consistency, but there's no point in other
-	  than native replication mode.
-	</para>
-      </listitem>
+    <listitem>
+    <!--
+    2017-03-31 [6f25856]
+    -->
+    <para>
+    Fix for <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink> pam ldap failure. (Muhammad Usama)
+    </para>
+    </listitem>
 
-      <listitem>
-	<!--
-	    2016-10-27 [c9e203d]
-	  -->
-	<para>
-	  Remove obsoleted option "-c" in pgpool command. (Tatsuo Ishii)
-	</para>
-	<para>
-	  Also fix typo in the help message.
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-09-24 [8aa7586]
-	  -->
-	<para>
-	  Change the default value of search_primary_node_timeout from 10 to 300. (Tatsuo Ishii)
-	</para>
-	<para>
-	  Prior default value 10 seconds is sometimes too short for a standby to
-	  be promoted.
-	</para>
-	<para>
-	  Per [pgpool-general: 5026].
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-09-21 [b306e04]
-	  -->
-	<para>
-	  Fix the case when all backends are down then 1 node attached. (bug 248) (Tatsuo Ishii)
-	</para>
-	<para>
-	  When all backends are down, no connection is accepted. Then 1
-	  PostgreSQL becomes up, and attach the node using pcp_attach_node. It
-	  successfully finishes. However, when a new connection arrives, still
-	  the connection is refused because pgpool child process looks into the
-	  cached status, in which the recovered node is still in down status if
-	  mode is streaming replication mode (native replication and other modes
-	  are fine). Solution is, if all nodes are down, force to restart all
-	  pgpool child.
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-09-09 [8231f65]
-	  -->
-	<para>
-	  Do not use random() while generating MD5 salt. (Tatsuo Ishii)
-	</para>
-	<para>
-	  random() should not be used in security related applications.  To
-	  replace random(), import PostmasterRandom() from PostgreSQL.  Also
-	  store current time at the start up of Pgpool-II main process for later
-	  use.
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-09-06 [891ce0f]
-	  -->
-	<para>
-	  Don't ignore sync message from frontend when query cache is enabled. (Tatsuo Ishii)
-	</para>
-      </listitem>
+    <listitem>
+    <!--
+    2017-03-24 [1172e6c]
+    -->
+    <para>
+    Fix for 0000296: PGPool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
+    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
 
     </itemizedlist>
 
@@ -380,59 +303,137 @@
 
 </sect1>
 
-<sect1 id="release-3-4-11">
-  <title>Release 3.4.11</title>
+<sect1 id="release-3-4-9">
+  <title>Release 3.4.9</title>
 
   <note>
     <title>Release Date</title>
-    <simpara>2017-04-28</simpara>
+    <simpara>2016-12-26</simpara>
   </note>
 
   <sect2>
     <title>Bug fixes</title>
 
     <itemizedlist>
-    <listitem>
-    <!--
-    2017-04-12 [60ae422]
-    -->
-    <para>
 
-     Fix for 0000299: Errors on the reloading of configuration.
-     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+      <listitem>
+	<!--
+	    2016-12-23 [f5e9a2a]
+	  -->
+	<para>
+      Tightening up the watchdog security. (Muhammad Usama)
     </para>
-    </listitem>
 
-    <listitem>
-    <!--
-    2017-04-04 [877e7ad]
-    -->
     <para>
-    Fix coverity warnings. (Muhammad Usama)
-    </para>
-    </listitem>
+      Now wd_authkey uses the HMAC SHA-256 hashing.
+	</para>
+      </listitem>
 
-    <listitem>
-    <!--
-    2017-03-31 [6f25856]
-    -->
-    <para>
-    Fix for <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink> pam ldap failure. (Muhammad Usama)
-    </para>
-    </listitem>
+      <listitem>
+	<!--
+	    2016-12-22 [79f1ba8]
+	  -->
+	<para>
+	  Add pgpool_adm extension in <productname>Pgpool-II</productname>RPM. (Bo Peng)
+	</para>
+      </listitem>
 
-    <listitem>
-    <!--
-    2017-03-24 [1172e6c]
-    -->
-    <para>
-    Fix for 0000296: PGPool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
-    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
-    </para>
-    </listitem>
+      <listitem>
+	<!--
+	    2016-12-20 [888ac16]
+	  -->
+	<para>
+	  Fix occasional segfault when query cache is enabled. (bug 263) (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-10-27 [f37c592]
+	  -->
+	<para>
+	  Do not cancel a query when the query resulted in an error other than in native replication mode. (Tatsuo Ishii)
+	</para>
+	<para>
+	  It was intended to keep the consistency, but there's no point in other
+	  than native replication mode.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-10-27 [c9e203d]
+	  -->
+	<para>
+	  Remove obsoleted option "-c" in pgpool command. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Also fix typo in the help message.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-24 [8aa7586]
+	  -->
+	<para>
+	  Change the default value of search_primary_node_timeout from 10 to 300. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Prior default value 10 seconds is sometimes too short for a standby to
+	  be promoted.
+	</para>
+	<para>
+	  Per [pgpool-general: 5026].
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-21 [b306e04]
+	  -->
+	<para>
+	  Fix the case when all backends are down then 1 node attached. (bug 248) (Tatsuo Ishii)
+	</para>
+	<para>
+	  When all backends are down, no connection is accepted. Then 1
+	  PostgreSQL becomes up, and attach the node using pcp_attach_node. It
+	  successfully finishes. However, when a new connection arrives, still
+	  the connection is refused because pgpool child process looks into the
+	  cached status, in which the recovered node is still in down status if
+	  mode is streaming replication mode (native replication and other modes
+	  are fine). Solution is, if all nodes are down, force to restart all
+	  pgpool child.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-09 [8231f65]
+	  -->
+	<para>
+	  Do not use random() while generating MD5 salt. (Tatsuo Ishii)
+	</para>
+	<para>
+	  random() should not be used in security related applications.  To
+	  replace random(), import PostmasterRandom() from PostgreSQL.  Also
+	  store current time at the start up of Pgpool-II main process for later
+	  use.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-06 [891ce0f]
+	  -->
+	<para>
+	  Don't ignore sync message from frontend when query cache is enabled. (Tatsuo Ishii)
+	</para>
+      </listitem>
 
     </itemizedlist>
 
   </sect2>
 
 </sect1>
+
