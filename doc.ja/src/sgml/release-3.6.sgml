@@ -19,7 +19,7 @@
     2017-04-18 [b8eb551]
     -->
     <para>
-     memcachedが使用されているときに,"show pool_cache"のセグメンテーション違反を修正しました。
+     memcachedが使用されているときに発生する"show pool_cache"のセグメンテーション違反を修正しました。
      <ulink url="http://www.pgpool.net/mantisbt/view.php?id=301">(Bug 301)</ulink> (Tatsuo Ishii)
     </para>
     </listitem>
@@ -103,7 +103,7 @@
     2017-04-11 [2997b3a]
     -->
     <para>
-     バックエンドの状態が一致しない不具合を修正しました。
+     watchdog 使用時に Pgpool-II 間でバックエンドの状態が一致しない不具合を修正しました。
      <ulink url="http://www.pgpool.net/mantisbt/view.php?id=289">(Bug 289)</ulink> (Muhammad Usama)
     </para>
     </listitem>
@@ -255,7 +255,7 @@
     2017-03-24 [c2a0cc5]
     -->
     <para>
-    [Service] が Type=forking に設定されている場合、Pgpool-II 3.6.2 が systemd によって終了された不具合を修正しました。
+    [Service] が Type=forking に設定されている場合、Pgpool-II 3.6.2 が systemd によって強制終了されていた不具合を修正しました。
     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
     </para>
     </listitem>

@@ -18,7 +18,7 @@
     2017-04-12 [0185d33]
     -->
     <para>
-     pool_hba.confファイルをリロード時に発生するエラーを修正しました。<ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+     pool_hba.confファイルのリロード時に発生するエラーを修正しました。<ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
     </para>
     </listitem>
 
