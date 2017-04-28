@@ -1,6 +1,826 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-6-3">
+  <title>Release 3.6.3</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-04-28</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-04-18 [b8eb551]
+    -->
+    <para>
+    Fix "show pool_cache" segfault when memcached is used.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=301">(Bug 301)</ulink> (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [bedb509]
+    -->
+    <para>
+    Fix for some more code warnings. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [8b25ca3]
+    -->
+    <para>
+    Fixing some annoying compiler warnings. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [50fb9a4]
+    -->
+    <para>
+    Removing the function defined but not used warnings from pool_config_vatiable.c (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [9007558]
+    -->
+    <para>
+    Removing the references of obsolete debug_level configuration parameter. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [7105243]
+    -->
+    <para>
+    Fixing a mistake in the watchdog code. (Muhammad Usama)
+    </para>
+    <para>
+    commit also adds some debug messages in the watchdog code.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [f5f42be]
+    -->
+    <para>
+
+     Fix for 0000299: Errors on the reloading of configuration.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [32b7c6d]
+    2017-04-11 [d47add6]
+    2017-04-11 [02a6f45]
+    -->
+    <para>
+    Add pgpool_adm English and Japanese docs. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-11 [a6cc0c9]
+    -->
+    <para>
+    Fix document indentation. (Tatsuo Ishii)
+    </para>
+    <para>
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-11 [2997b3a]
+    -->
+    <para>
+    Fix for 0000289: Inconsistent backend state.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=289">(Bug 289)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-30 [be9d634]
+    -->
+    <para>
+    Enhancing the handling of split-brain scenario by the watchdog. (Muhammad Usama)
+    </para>
+    <para>
+    Previously, the watchdog cluster was used to call for re-election of the
+    master/coordinator node whenever the split-brain situation was detected. And
+    consequently every node was required to rejoin the watchdog network, Which was
+    essentially similar to the re-booting of the whole watchdog cluster.
+    </para>
+    <para>
+    The candidate for the master/coordinator node is selected on the following criteria.
+
+    </para>
+    <para>
+    1-- When two watchdog nodes are claiming to be the cluster master, the master
+    node that has performed the escalation keeps the master status and the other
+    node is asked to step down.
+    </para>
+    <para>
+
+    2-- If the conflict could not be resolved by the escalation status of the nodes,
+    The node which holds the quorum remains the master/coordinator.
+    </para>
+    <para>
+
+    3-- If the quorum status of both contenders is also same. The node with higher
+    number of connected alive nodes get the preference.
+    </para>
+    <para>
+
+    4-- Finally, if all above three yields no winner, the older master (The node
+    that has the coordinator status for longer duration) remains the master.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-21 [deaa822]
+    -->
+    <para>
+    Enhancing the watchdog internal command mechanism to handle multiple concurrent commands. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-07 [e989242]
+    -->
+    <para>
+    Fix compiler warnings. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-06 [d87f93d]
+    -->
+    <para>
+    Comment out unsupported Java method in new JDBC drivers to prevent regression failure. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-05 [e5541d7]
+    -->
+    <para>
+    Downgrade parse before bind log message to debug1. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-04 [aa4e308]
+    2017-04-04 [24d9770]
+    2017-04-03 [7d8482a]
+    -->
+    <para>
+    Fix coverity warnings. (Tatsuo Ishii, Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [c4f816b]
+    -->
+    <para>
+    Fix for <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink> pam ldap failure. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [6899b7d]
+    -->
+    <para>
+    Mention that SQL type commands cannot be used in extended query mode. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [9cd2f8a]
+    -->
+    <para>
+    Consider SHOW command as kind of a read query. (Tatsuo Ishii)
+    </para>
+    <para>
+    In streaming replication mode, if SHOW is issued then subsequent
+    SELECTs are sent to the primary node in an explicit transaction. This
+    is not a reasonable and unnecessary limitation.
+
+    Also fix hang when parse command returns error.
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-30 [9aaec32]
+    -->
+    <para>
+    Fix memory leak problem caused by commit adcb636. (Tatsuo Ishii)
+    </para>
+    <para>
+    Commit adcb636 introduces "pending message queue". When a message
+    arrives, the info is added to the queue and a copy of object is
+    created at the same time, but forgot to free the object. Fix is,
+    creating a new function pool_pending_message_free_pending_message()
+    and call it after pool_pending_message_add(),
+    pool_pending_message_get() and pool_pending_message_pull_out().
+
+    Problem reported by Sergey Kim.
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-29 [18f9501]
+    -->
+    <para>
+    Mega patch to fix "kind mismatch" (or derived) errors in streaming replication mode.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">(Bug 271)</ulink> (Tatsuo Ishii)
+    </para>
+    <para>
+    The errors are caused by wrong prediction in which (or both) database
+    node will send response to Pgpool-II. Previous implementation using
+    "sync map" are weak and sometimes fail in the prediction.
+
+    </para>
+    <para>
+    This patch introduces new implementation using "pending message
+    queue", which records all sent message to backends. The element of the
+    queue stores info regarding messages types
+    (parse/bind/execute/describe/close/sync), to which database node the
+    message was sent and so on. It's a simple FIFO queue. When a message
+    arrives from backend, by looking at the head of the "pending message
+    queue", it is possible to reliably predict what kind of message and
+    from which database node it will arrive. After receiving the message,
+    the element is removed from the queue.
+    </para>
+    <para>
+
+    I would like to thank to Sergey Kim, who has been helping me in
+    testing series of patches.
+
+    </para>
+    <para>
+    See <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">Bug 271</ulink>
+    and discussion in pgpool-hackers mailing list
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-February/002043.html">[pgpool-hackers: 2043]</ulink> and
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-March/002140.html">[pgpool-hackers: 2140]</ulink>
+     for more details.
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-24 [c2a0cc5]
+    -->
+    <para>
+    Fix for 0000296: PGPool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
+    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
+
+<sect1 id="release-3-6-2">
+  <title>Release 3.6.2</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-03-17</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-03-17 [ba1bcc3]
+    -->
+    <para>
+    Add "Wants=network.target" to pgpool.service file.
+    (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=294">bug 294</ulink>) (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-09 [1ddb7f1]
+    -->
+    <para>
+    Fix  <link linkend="PCP-PROMOTE-NODE">pcp_promote_node</link> bug that fails promoting node 0. (Yugo Nagata)
+    </para>
+    <para>
+    The master node could not be promoted by pcp_promote_node with
+    the following error;
+    </para>
+
+    <programlisting>
+     FATAL: invalid pgpool mode for process recovery request
+     DETAIL: specified node is already primary node, can't promote node id 0
+     </programlisting>
+
+    <para>
+    In streaming replication mode, there is a case that Pgpool-II
+    regards the status of primary node as "standby" for some reasons,
+    for example, when pg_ctl promote is executed manually during
+    Pgpool-II is running, in which case, it seems to Pgpool-II
+    that the primary node doesn't exist.
+    </para>
+
+    <para>
+    This status mismatch should be fixe by pcp_promote_node, but when the node
+    is the master node (the first alive node), it fails as mentioned above.
+    </para>
+
+    <para>
+    The reason is as following. before changing the status, pcp_promote_node
+    checks if the specified node is already primary or not by comparing the
+    node id with PRIMARY_NODE_ID. However, if the primary doesn't exist from
+    Pgpool-II's view, PRIMARY_NODE_ID is set to 0, which is same as MASTER_NODE_ID.
+    Hence, when the master node is specified to be promoted, pcp_promote_node
+    is confused that this node is already primary and doesn't have to be
+    promoted, and it exits with the error.
+    </para>
+
+    <para>
+    To fix this, pcp_promote_node should check the node id by using
+    REAL_PRIMARY_NODE_ID, which is set -1 when the primary doesn't exist,
+    rather than PRIMARY_NODE_ID.
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-28 [b1060bd]
+    2017-01-10 [1e4e494]
+    2017-02-09 [767eff3]
+    -->
+    <para>
+    Fix document error. (Tatsuo Ishii, Bo Peng)
+    </para>
+    <para>
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-23 [2b7217e]
+    -->
+    <para>
+    <productname>Pgpool-II</productname>should not perform ping test after bringing down the VIP. (Muhammad Usama)
+    </para>
+
+    <para>
+    This issue was reported by the reporter of
+    bug:[pgpool-II 0000249]: watchdog sometimes fails de-escalation
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-23 [7ed400b]
+    -->
+    <para>
+    Fix to release shared memory segments when <productname>Pgpool-II</productname>exits. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=272">bug 272</ulink>) (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-14 [c1cd41c]
+    -->
+    <para>
+    Fix for  <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-February/005373.html">[pgpool-general: 5315]</ulink> pg_terminate_backend (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-06 [8fa731a]
+    -->
+    <para>
+    Adding the missing ExecStop and ExecReload commands to the systemd service configuration file. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-30 [6362ba6]
+    -->
+    <para>
+    Fix for 281: "segmentation fault" when execute <link linkend="PCP-ATTACH-NODE">pcp_attach_node</link>. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=281">bug 281</ulink>) (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-30 [fb58877]
+    -->
+    <para>
+    Fix load balancing bug in streaming replication mode. (Tatsuo Ishii)
+    </para>
+    <para>
+    In an explicit transaction, any SELECT will be load balanced until
+    write query is sent. After writing query is sent, any SELECT should be
+    sent to the primary node. However if a SELECT is sent before a sync
+    message is sent, this does not work since the treatment of writing
+    query is done after ready for query message arrives.
+    </para>
+    <para>
+    Solution is, the treatment for writing query is done in executing the writing query as well.
+    </para>
+
+    <para>
+    The bug has been there since V3.5.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-30 [8371649]
+    -->
+    <para>
+    Fix yet another kind mismatch error in streaming replication mode. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-27 [4f98bf0]
+    -->
+    <para>
+    Fix <function>do_query()</function>hangs after close message. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-27 [7512482]
+    -->
+    <para>
+    Fixing stack smashing detected. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=280">bug 280</ulink>) (Muhammad Usama)
+    </para>
+    <para>
+    It was a buffer overflow in <function>wd_get_cmd</function> function
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-19 [839a709]
+    -->
+    <para>
+    Fixing the issue with the watchdog process restart. (Muhammad Usama)
+    </para>
+    <para>
+    When the watchdog process gets abnormally terminated because of some problem
+    (e.g. Segmentation fault) the new spawned watchdog process fails to start and
+    produces an error "bind on ... failed with reason: Address already in use".
+    </para>
+    <para>
+    Reason is the abnormally terminating watchdog process never gets the time to
+    clean-up the socket it uses for IPC and the new process gets an error because
+    the socket address is already occupied.
+    </para>
+
+    <para>
+    Fix is, the Pgpool main process sets the flag in shared memory to mark the
+    watchdog process was abnormally terminated and at startup when the watchdog
+    process see that the flag is set, it performs the clean up of the socket file and
+    also performs the de-escalation (If the watchdog process was crashed when it
+    was master/coordinator node) if required before initializing itself.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-19 [779d029]
+    -->
+    <para>
+    Fix query cache bug reported in  <ulink url="http://www.pgpool.net/pipermail/pgpool-general-jp/2017-January/001440.html">pgpool-general-jp:1441</ulink>. (Tatsuo Ishii)
+    </para>
+    <para>
+    In streaming replication mode with query cache enabled, SELECT hangs
+    in the following scenario:
+    </para>
+
+    <programlisting>
+    1) a SELECT hits query cache and returns rows from the query cache.
+    2) following SELECT needs to search meta data and it hangs.
+    </programlisting>
+
+    <para>
+    In #1, while returning the cached result, it misses to call
+    pool_unset_pending_response(), which leave the pending_response flag
+    be set. In #2, do_query() checks the flag and tries to read pending
+    response from backend. Since there's no pending data in backend, it
+    hangs in reading data from backend.
+    </para>
+
+    <para>
+    Fix is, just call <function>pool_unset_pending_response()</function> in #1 to reset the
+    flag.
+    </para>
+
+    <para>
+    Bug report and fix provided by Nobuyuki Nagai.
+
+    New regression test item (068) added by me.
+    </para>
+
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-11 [29b61eb]
+    -->
+    <para>
+    Remove elog/ereport calls from signal handlers. (Tatsuo Ishii)
+    </para>
+    <para>
+    See  <ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-December/001950.html">[pgpool-hackers: 1950]</ulink> for details.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-10 [39d24e7]
+    -->
+    <para>
+    Fix bug failed to create INET domain socket in FreeBSD if listen_addresses = '*'.
+    (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=202">bug 202</ulink>) (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-04 [8598d5a]
+    -->
+    <para>
+    Fix for 0000249: watchdog sometimes fails de-escalation. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=249">bug 249</ulink>) (Muhammad Usama)
+    </para>
+
+    <para>
+    The solution is to use the <function>waitpid()</function> system call without WNOHANG option.
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-04 [bd92a11]
+    -->
+    <para>
+    Fix connection_life_time broken by authentication_timeout. (Yugo Nagata)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2016-12-28 [afebadf]
+    -->
+    <para>
+    Fix authentication timeout that can occur right after client connecttions. (Yugo Nagata)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
+
+<sect1 id="release-3-6-1">
+  <title>Release 3.6.1</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2016-12-26</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2016-12-23 [4124e5e]
+	  -->
+	<para>
+      Tightening up the watchdog security. (Muhammad Usama)
+    </para>
+
+    <para>
+      Now wd_authkey uses the HMAC SHA-256 hashing.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-22 [f8a157a]
+	  -->
+	<para>
+	  Add pgpool_adm extension in <productname>Pgpool-II</productname> RPM. (Bo Peng)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-20 [888ac16]
+	  -->
+	<para>
+	  Fix occasional segfault when query cache is enabled. (bug 263) (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-20 [9274f82]
+	  -->
+	<para>
+	  Fix packet kind does not match error in extended protocol. (bug 231) (Tatsuo Ishii)
+	</para>
+	<para>
+	  According to the bug231, the bug seem to bite you if all of
+	  following conditions are met:
+	</para>
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	      Streaming replication mode
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Load balance node is not node 0
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Extended protocol is used
+	      </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      SELECT is executed, the statement is closed, then a
+	      transaction command is executed
+	    </para>
+	  </listitem>
+	</itemizedlist>
+	<para>
+	The sequence of how the problem bites is:
+	<orderedlist>
+	  <listitem>
+	    <para>
+	      SELECT executes on statement S1 on the load balance node 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Frontend send Close statement
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Pgool-II forward it to backend 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Frontend sends Parse, Bind, Execute of COMMIT
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Pgool-II forward it to backend 0 & 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Frontend sends sync message
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Pgool-II forward it to backend 0 & 1
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Backend 0 replies back Parse complete ("1"), while
+	      backend 1 replies back close complete ("3") because of
+	      #3.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Kind mismatch occurs
+	    </para>
+	  </listitem>
+	</orderedlist>
+
+	</para>
+	<para>
+	  The solution is, in #3, let Pgpool-II wait for response from backend
+	  1, but do not read the response message. Later on Pgpool-II's state
+	  machine will read the response from it before the sync message is sent
+	  in #6. With this, backend 1 will reply back "1" in #8, and the kind
+	  mismatch error does not occur.
+	</para>
+	<para>
+	  Also, fix not calling pool_set_doing_extended_query_message() when
+	  receives Close message.  (I don't know why it was missed).
+	</para>
+	<para>
+	  New regression test "067.bug231" was added.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-06 [336e932]
+	  -->
+	<para>
+	  Fix a race condition in a signal handler. (bug 265) (Tatsuo Ishii)
+	</para>
+	<para>
+	  In child.c there's signal handler which calls elog. Since the signal
+	  handler is not blocked against other signals while processing, deadlock
+	  could occur in the system calls in the pgpool shutdown sequence. To
+	  fix the problem, now the signal handler is blocked by using
+	  POOL_SETMASK.
+	</para>
+	<para>
+	  Ideally we should avoid calling elog in signal handlers though.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-11-24 [cc452ad]
+	  -->
+	<para>
+	  Fix wrong minimum configuration value for client_idle_limit_in_recovery. (bug 264) (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-11-22 [94d9378]
+	  -->
+	<para>
+	  Allow to execute "make xslthtml" under doc.ja. (Tatsuo Ishii)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
+
+
 <sect1 id="release-3-6">
   <title>Release 3.6</title>
 
@@ -1197,821 +2017,3 @@ ConnectionInfo *con_info[child id, connection pool_id, backend id].load_balancin
 
 </sect1>
 
-<sect1 id="release-3-6-1">
-  <title>Release 3.6.1</title>
-
-  <note>
-    <title>Release Date</title>
-    <simpara>2016-12-26</simpara>
-  </note>
-
-  <sect2>
-    <title>Bug fixes</title>
-
-    <itemizedlist>
-
-      <listitem>
-	<!--
-	    2016-12-23 [4124e5e]
-	  -->
-	<para>
-      Tightening up the watchdog security. (Muhammad Usama)
-    </para>
-
-    <para>
-      Now wd_authkey uses the HMAC SHA-256 hashing.
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-12-22 [f8a157a]
-	  -->
-	<para>
-	  Add pgpool_adm extension in <productname>Pgpool-II</productname> RPM. (Bo Peng)
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-12-20 [888ac16]
-	  -->
-	<para>
-	  Fix occasional segfault when query cache is enabled. (bug 263) (Tatsuo Ishii)
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-12-20 [9274f82]
-	  -->
-	<para>
-	  Fix packet kind does not match error in extended protocol. (bug 231) (Tatsuo Ishii)
-	</para>
-	<para>
-	  According to the bug231, the bug seem to bite you if all of
-	  following conditions are met:
-	</para>
-	<itemizedlist>
-	  <listitem>
-	    <para>
-	      Streaming replication mode
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Load balance node is not node 0
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Extended protocol is used
-	      </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      SELECT is executed, the statement is closed, then a
-	      transaction command is executed
-	    </para>
-	  </listitem>
-	</itemizedlist>
-	<para>
-	The sequence of how the problem bites is:
-	<orderedlist>
-	  <listitem>
-	    <para>
-	      SELECT executes on statement S1 on the load balance node 1
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Frontend send Close statement
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Pgool-II forward it to backend 1
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Frontend sends Parse, Bind, Execute of COMMIT
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Pgool-II forward it to backend 0 & 1
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Frontend sends sync message
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Pgool-II forward it to backend 0 & 1
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Backend 0 replies back Parse complete ("1"), while
-	      backend 1 replies back close complete ("3") because of
-	      #3.
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Kind mismatch occurs
-	    </para>
-	  </listitem>
-	</orderedlist>
-
-	</para>
-	<para>
-	  The solution is, in #3, let Pgpool-II wait for response from backend
-	  1, but do not read the response message. Later on Pgpool-II's state
-	  machine will read the response from it before the sync message is sent
-	  in #6. With this, backend 1 will reply back "1" in #8, and the kind
-	  mismatch error does not occur.
-	</para>
-	<para>
-	  Also, fix not calling pool_set_doing_extended_query_message() when
-	  receives Close message.  (I don't know why it was missed).
-	</para>
-	<para>
-	  New regression test "067.bug231" was added.
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-12-06 [336e932]
-	  -->
-	<para>
-	  Fix a race condition in a signal handler. (bug 265) (Tatsuo Ishii)
-	</para>
-	<para>
-	  In child.c there's signal handler which calls elog. Since the signal
-	  handler is not blocked against other signals while processing, deadlock
-	  could occur in the system calls in the pgpool shutdown sequence. To
-	  fix the problem, now the signal handler is blocked by using
-	  POOL_SETMASK.
-	</para>
-	<para>
-	  Ideally we should avoid calling elog in signal handlers though.
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-11-24 [cc452ad]
-	  -->
-	<para>
-	  Fix wrong minimum configuration value for client_idle_limit_in_recovery. (bug 264) (Tatsuo Ishii)
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-11-22 [94d9378]
-	  -->
-	<para>
-	  Allow to execute "make xslthtml" under doc.ja. (Tatsuo Ishii)
-	</para>
-	<para>
-
-	</para>
-      </listitem>
-
-    </itemizedlist>
-
-  </sect2>
-
-</sect1>
-
-<sect1 id="release-3-6-2">
-  <title>Release 3.6.2</title>
-
-  <note>
-    <title>Release Date</title>
-    <simpara>2017-03-17</simpara>
-  </note>
-
-  <sect2>
-    <title>Bug fixes</title>
-
-    <itemizedlist>
-
-    <listitem>
-    <!--
-    2017-03-17 [ba1bcc3]
-    -->
-    <para>
-    Add "Wants=network.target" to pgpool.service file.
-    (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=294">bug 294</ulink>) (Bo Peng)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-09 [1ddb7f1]
-    -->
-    <para>
-    Fix  <link linkend="PCP-PROMOTE-NODE">pcp_promote_node</link> bug that fails promoting node 0. (Yugo Nagata)
-    </para>
-    <para>
-    The master node could not be promoted by pcp_promote_node with
-    the following error;
-    </para>
-
-    <programlisting>
-     FATAL: invalid pgpool mode for process recovery request
-     DETAIL: specified node is already primary node, can't promote node id 0
-     </programlisting>
-
-    <para>
-    In streaming replication mode, there is a case that Pgpool-II
-    regards the status of primary node as "standby" for some reasons,
-    for example, when pg_ctl promote is executed manually during
-    Pgpool-II is running, in which case, it seems to Pgpool-II
-    that the primary node doesn't exist.
-    </para>
-
-    <para>
-    This status mismatch should be fixe by pcp_promote_node, but when the node
-    is the master node (the first alive node), it fails as mentioned above.
-    </para>
-
-    <para>
-    The reason is as following. before changing the status, pcp_promote_node
-    checks if the specified node is already primary or not by comparing the
-    node id with PRIMARY_NODE_ID. However, if the primary doesn't exist from
-    Pgpool-II's view, PRIMARY_NODE_ID is set to 0, which is same as MASTER_NODE_ID.
-    Hence, when the master node is specified to be promoted, pcp_promote_node
-    is confused that this node is already primary and doesn't have to be
-    promoted, and it exits with the error.
-    </para>
-
-    <para>
-    To fix this, pcp_promote_node should check the node id by using
-    REAL_PRIMARY_NODE_ID, which is set -1 when the primary doesn't exist,
-    rather than PRIMARY_NODE_ID.
-
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-28 [b1060bd]
-    2017-01-10 [1e4e494]
-    2017-02-09 [767eff3]
-    -->
-    <para>
-    Fix document error. (Tatsuo Ishii, Bo Peng)
-    </para>
-    <para>
-
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-23 [2b7217e]
-    -->
-    <para>
-    <productname>Pgpool-II</productname>should not perform ping test after bringing down the VIP. (Muhammad Usama)
-    </para>
-
-    <para>
-    This issue was reported by the reporter of
-    bug:[pgpool-II 0000249]: watchdog sometimes fails de-escalation
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-23 [7ed400b]
-    -->
-    <para>
-    Fix to release shared memory segments when <productname>Pgpool-II</productname>exits. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=272">bug 272</ulink>) (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-14 [c1cd41c]
-    -->
-    <para>
-    Fix for  <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-February/005373.html">[pgpool-general: 5315]</ulink> pg_terminate_backend (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-06 [8fa731a]
-    -->
-    <para>
-    Adding the missing ExecStop and ExecReload commands to the systemd service configuration file. (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-30 [6362ba6]
-    -->
-    <para>
-    Fix for 281: "segmentation fault" when execute <link linkend="PCP-ATTACH-NODE">pcp_attach_node</link>. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=281">bug 281</ulink>) (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-30 [fb58877]
-    -->
-    <para>
-    Fix load balancing bug in streaming replication mode. (Tatsuo Ishii)
-    </para>
-    <para>
-    In an explicit transaction, any SELECT will be load balanced until
-    write query is sent. After writing query is sent, any SELECT should be
-    sent to the primary node. However if a SELECT is sent before a sync
-    message is sent, this does not work since the treatment of writing
-    query is done after ready for query message arrives.
-    </para>
-    <para>
-    Solution is, the treatment for writing query is done in executing the writing query as well.
-    </para>
-
-    <para>
-    The bug has been there since V3.5.
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-30 [8371649]
-    -->
-    <para>
-    Fix yet another kind mismatch error in streaming replication mode. (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-27 [4f98bf0]
-    -->
-    <para>
-    Fix <function>do_query()</function>hangs after close message. (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-27 [7512482]
-    -->
-    <para>
-    Fixing stack smashing detected. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=280">bug 280</ulink>) (Muhammad Usama)
-    </para>
-    <para>
-    It was a buffer overflow in <function>wd_get_cmd</function> function
-
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-19 [839a709]
-    -->
-    <para>
-    Fixing the issue with the watchdog process restart. (Muhammad Usama)
-    </para>
-    <para>
-    When the watchdog process gets abnormally terminated because of some problem
-    (e.g. Segmentation fault) the new spawned watchdog process fails to start and
-    produces an error "bind on ... failed with reason: Address already in use".
-    </para>
-    <para>
-    Reason is the abnormally terminating watchdog process never gets the time to
-    clean-up the socket it uses for IPC and the new process gets an error because
-    the socket address is already occupied.
-    </para>
-
-    <para>
-    Fix is, the Pgpool main process sets the flag in shared memory to mark the
-    watchdog process was abnormally terminated and at startup when the watchdog
-    process see that the flag is set, it performs the clean up of the socket file and
-    also performs the de-escalation (If the watchdog process was crashed when it
-    was master/coordinator node) if required before initializing itself.
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-19 [779d029]
-    -->
-    <para>
-    Fix query cache bug reported in  <ulink url="http://www.pgpool.net/pipermail/pgpool-general-jp/2017-January/001440.html">pgpool-general-jp:1441</ulink>. (Tatsuo Ishii)
-    </para>
-    <para>
-    In streaming replication mode with query cache enabled, SELECT hangs
-    in the following scenario:
-    </para>
-
-    <programlisting>
-    1) a SELECT hits query cache and returns rows from the query cache.
-    2) following SELECT needs to search meta data and it hangs.
-    </programlisting>
-
-    <para>
-    In #1, while returning the cached result, it misses to call
-    pool_unset_pending_response(), which leave the pending_response flag
-    be set. In #2, do_query() checks the flag and tries to read pending
-    response from backend. Since there's no pending data in backend, it
-    hangs in reading data from backend.
-    </para>
-
-    <para>
-    Fix is, just call <function>pool_unset_pending_response()</function> in #1 to reset the
-    flag.
-    </para>
-
-    <para>
-    Bug report and fix provided by Nobuyuki Nagai.
-
-    New regression test item (068) added by me.
-    </para>
-
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-11 [29b61eb]
-    -->
-    <para>
-    Remove elog/ereport calls from signal handlers. (Tatsuo Ishii)
-    </para>
-    <para>
-    See  <ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-December/001950.html">[pgpool-hackers: 1950]</ulink> for details.
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-10 [39d24e7]
-    -->
-    <para>
-    Fix bug failed to create INET domain socket in FreeBSD if listen_addresses = '*'.
-    (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=202">bug 202</ulink>) (Bo Peng)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-04 [8598d5a]
-    -->
-    <para>
-    Fix for 0000249: watchdog sometimes fails de-escalation. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=249">bug 249</ulink>) (Muhammad Usama)
-    </para>
-
-    <para>
-    The solution is to use the <function>waitpid()</function> system call without WNOHANG option.
-
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-04 [bd92a11]
-    -->
-    <para>
-    Fix connection_life_time broken by authentication_timeout. (Yugo Nagata)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2016-12-28 [afebadf]
-    -->
-    <para>
-    Fix authentication timeout that can occur right after client connecttions. (Yugo Nagata)
-    </para>
-    </listitem>
-
-    </itemizedlist>
-
-  </sect2>
-
-</sect1>
-
-<sect1 id="release-3-6-3">
-  <title>Release 3.6.3</title>
-
-  <note>
-    <title>Release Date</title>
-    <simpara>2017-04-28</simpara>
-  </note>
-
-  <sect2>
-    <title>Bug fixes</title>
-
-    <itemizedlist>
-    <listitem>
-    <!--
-    2017-04-18 [b8eb551]
-    -->
-    <para>
-    Fix "show pool_cache" segfault when memcached is used.
-     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=301">(Bug 301)</ulink> (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-14 [bedb509]
-    -->
-    <para>
-    Fix for some more code warnings. (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-14 [8b25ca3]
-    -->
-    <para>
-    Fixing some annoying compiler warnings. (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-14 [50fb9a4]
-    -->
-    <para>
-    Removing the function defined but not used warnings from pool_config_vatiable.c (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-14 [9007558]
-    -->
-    <para>
-    Removing the references of obsolete debug_level configuration parameter. (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-12 [7105243]
-    -->
-    <para>
-    Fixing a mistake in the watchdog code. (Muhammad Usama)
-    </para>
-    <para>
-    commit also adds some debug messages in the watchdog code.
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-12 [f5f42be]
-    -->
-    <para>
-
-     Fix for 0000299: Errors on the reloading of configuration.
-     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-12 [32b7c6d]
-    2017-04-11 [d47add6]
-    2017-04-11 [02a6f45]
-    -->
-    <para>
-    Add pgpool_adm English and Japanese docs. (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-11 [a6cc0c9]
-    -->
-    <para>
-    Fix document indentation. (Tatsuo Ishii)
-    </para>
-    <para>
-
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-11 [2997b3a]
-    -->
-    <para>
-    Fix for 0000289: Inconsistent backend state.
-     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=289">(Bug 289)</ulink> (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-30 [be9d634]
-    -->
-    <para>
-    Enhancing the handling of split-brain scenario by the watchdog. (Muhammad Usama)
-    </para>
-    <para>
-    Previously, the watchdog cluster was used to call for re-election of the
-    master/coordinator node whenever the split-brain situation was detected. And
-    consequently every node was required to rejoin the watchdog network, Which was
-    essentially similar to the re-booting of the whole watchdog cluster.
-    </para>
-    <para>
-    The candidate for the master/coordinator node is selected on the following criteria.
-
-    </para>
-    <para>
-    1-- When two watchdog nodes are claiming to be the cluster master, the master
-    node that has performed the escalation keeps the master status and the other
-    node is asked to step down.
-    </para>
-    <para>
-
-    2-- If the conflict could not be resolved by the escalation status of the nodes,
-    The node which holds the quorum remains the master/coordinator.
-    </para>
-    <para>
-
-    3-- If the quorum status of both contenders is also same. The node with higher
-    number of connected alive nodes get the preference.
-    </para>
-    <para>
-
-    4-- Finally, if all above three yields no winner, the older master (The node
-    that has the coordinator status for longer duration) remains the master.
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-21 [deaa822]
-    -->
-    <para>
-    Enhancing the watchdog internal command mechanism to handle multiple concurrent commands. (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-07 [e989242]
-    -->
-    <para>
-    Fix compiler warnings. (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-06 [d87f93d]
-    -->
-    <para>
-    Comment out unsupported Java method in new JDBC drivers to prevent regression failure. (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-05 [e5541d7]
-    -->
-    <para>
-    Downgrade parse before bind log message to debug1. (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-04 [aa4e308]
-    2017-04-04 [24d9770]
-    2017-04-03 [7d8482a]
-    -->
-    <para>
-    Fix coverity warnings. (Tatsuo Ishii, Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-31 [c4f816b]
-    -->
-    <para>
-    Fix for <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink> pam ldap failure. (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-31 [6899b7d]
-    -->
-    <para>
-    Mention that SQL type commands cannot be used in extended query mode. (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-31 [9cd2f8a]
-    -->
-    <para>
-    Consider SHOW command as kind of a read query. (Tatsuo Ishii)
-    </para>
-    <para>
-    In streaming replication mode, if SHOW is issued then subsequent
-    SELECTs are sent to the primary node in an explicit transaction. This
-    is not a reasonable and unnecessary limitation.
-
-    Also fix hang when parse command returns error.
-
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-30 [9aaec32]
-    -->
-    <para>
-    Fix memory leak problem caused by commit adcb636. (Tatsuo Ishii)
-    </para>
-    <para>
-    Commit adcb636 introduces "pending message queue". When a message
-    arrives, the info is added to the queue and a copy of object is
-    created at the same time, but forgot to free the object. Fix is,
-    creating a new function pool_pending_message_free_pending_message()
-    and call it after pool_pending_message_add(),
-    pool_pending_message_get() and pool_pending_message_pull_out().
-
-    Problem reported by Sergey Kim.
-
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-29 [18f9501]
-    -->
-    <para>
-    Mega patch to fix "kind mismatch" (or derived) errors in streaming replication mode.
-     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">(Bug 271)</ulink> (Tatsuo Ishii)
-    </para>
-    <para>
-    The errors are caused by wrong prediction in which (or both) database
-    node will send response to Pgpool-II. Previous implementation using
-    "sync map" are weak and sometimes fail in the prediction.
-
-    </para>
-    <para>
-    This patch introduces new implementation using "pending message
-    queue", which records all sent message to backends. The element of the
-    queue stores info regarding messages types
-    (parse/bind/execute/describe/close/sync), to which database node the
-    message was sent and so on. It's a simple FIFO queue. When a message
-    arrives from backend, by looking at the head of the "pending message
-    queue", it is possible to reliably predict what kind of message and
-    from which database node it will arrive. After receiving the message,
-    the element is removed from the queue.
-    </para>
-    <para>
-
-    I would like to thank to Sergey Kim, who has been helping me in
-    testing series of patches.
-
-    </para>
-    <para>
-    See <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">Bug 271</ulink>
-    and discussion in pgpool-hackers mailing list
-    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-February/002043.html">[pgpool-hackers: 2043]</ulink> and
-    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-March/002140.html">[pgpool-hackers: 2140]</ulink>
-     for more details.
-
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-24 [c2a0cc5]
-    -->
-    <para>
-    Fix for 0000296: PGPool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
-    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
-    </para>
-    </listitem>
-
-    </itemizedlist>
-
-  </sect2>
-
-</sect1>

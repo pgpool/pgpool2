@@ -1,67 +1,28 @@
 <!-- doc/src/sgml/release-3.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
-<sect1 id="release-3-2-18">
-  <title>Release 3.2.18</title>
+<sect1 id="release-3-2-20">
+  <title>Release 3.2.20</title>
 
   <note>
     <title>Release Date</title>
-    <simpara>2016-12-26</simpara>
+    <simpara>2017-04-28</simpara>
   </note>
 
   <sect2>
     <title>Bug fixes</title>
 
     <itemizedlist>
+    <listitem>
+    <!--
+    2017-04-12 [0185d33]
+    -->
+    <para>
 
-      <listitem>
-	<!--
-	    2016-12-20 [888ac16]
-	  -->
-	<para>
-	  Fix occasional segfault when query cache is enabled. (Tatsuo Ishii)
-	</para>
-	<para>
-	  Per bug 263.
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-10-27 [f37c592]
-	  -->
-	<para>
-	  Do not cancel a query when the query resulted in an error other than in native replication mode. (Tatsuo Ishii)
-	</para>
-	<para>
-	  It was intended to keep the consistency, but there's no point in other
-	  than native replication mode.
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-09-09 [8231f65]
-	  -->
-	<para>
-	  Do not use <function>random()</function> while generating MD5 salt. (Tatsuo Ishii)
-	</para>
-	<para>
-	  <function>random()</function> should not be used in security related applications.  To
-	  replace <function>random()</function>, import <function>PostmasterRandom()</function> from PostgreSQL.  Also
-	  store current time at the start up of <productname>Pgpool-II</productname> main process for later
-	  use.
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-09-06 [891ce0f]
-	  -->
-	<para>
-	  Don't ignore sync message from frontend when query cache is enabled. (Tatsuo Ishii)
-	</para>
-      </listitem>
+     Fix for 0000299: Errors on the reloading of configuration.
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
 
     </itemizedlist>
 
@@ -200,31 +161,71 @@
   </sect2>
 
 </sect1>
-<sect1 id="release-3-2-20">
-  <title>Release 3.2.20</title>
+<sect1 id="release-3-2-18">
+  <title>Release 3.2.18</title>
 
   <note>
     <title>Release Date</title>
-    <simpara>2017-04-28</simpara>
+    <simpara>2016-12-26</simpara>
   </note>
 
   <sect2>
     <title>Bug fixes</title>
 
     <itemizedlist>
-    <listitem>
-    <!--
-    2017-04-12 [0185d33]
-    -->
-    <para>
 
-     Fix for 0000299: Errors on the reloading of configuration.
-     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
-    </para>
-    </listitem>
+      <listitem>
+	<!--
+	    2016-12-20 [888ac16]
+	  -->
+	<para>
+	  Fix occasional segfault when query cache is enabled. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Per bug 263.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-10-27 [f37c592]
+	  -->
+	<para>
+	  Do not cancel a query when the query resulted in an error other than in native replication mode. (Tatsuo Ishii)
+	</para>
+	<para>
+	  It was intended to keep the consistency, but there's no point in other
+	  than native replication mode.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-09 [8231f65]
+	  -->
+	<para>
+	  Do not use <function>random()</function> while generating MD5 salt. (Tatsuo Ishii)
+	</para>
+	<para>
+	  <function>random()</function> should not be used in security related applications.  To
+	  replace <function>random()</function>, import <function>PostmasterRandom()</function> from PostgreSQL.  Also
+	  store current time at the start up of <productname>Pgpool-II</productname> main process for later
+	  use.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-09-06 [891ce0f]
+	  -->
+	<para>
+	  Don't ignore sync message from frontend when query cache is enabled. (Tatsuo Ishii)
+	</para>
+      </listitem>
 
     </itemizedlist>
 
   </sect2>
 
 </sect1>
+

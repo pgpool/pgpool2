@@ -1,6 +1,808 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-6-3">
+  <title>リリース 3.6.3</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-04-28</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-04-18 [b8eb551]
+    -->
+    <para>
+     memcachedが使用されているときに発生する"show pool_cache"のセグメンテーション違反を修正しました。
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=301">(Bug 301)</ulink> (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [bedb509]
+    -->
+    <para>
+     いくつかのソースコードの警告を修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [8b25ca3]
+    -->
+    <para>
+        いくつかのコンパイラの警告を修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [50fb9a4]
+    -->
+    <para>
+     pool_config_vatiable.cから「定義されたが未使用の関数」という警告を削除しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-14 [9007558]
+    -->
+    <para>
+     古いdebug_level設定パラメーターの参照を削除しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [7105243]
+    -->
+    <para>
+     Watchdogのソースコードのミスを修正し、いくつかのdebugメッセージを追加しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [f5f42be]
+    -->
+    <para>
+     pool_hba.confファイルをリロード時に発生するエラーを修正しました。<ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-12 [32b7c6d]
+    2017-04-11 [d47add6]
+    2017-04-11 [02a6f45]
+    -->
+    <para>
+     英語/日本語のドキュメントにpgpool_adm extensionに関する情報を追加しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-11 [a6cc0c9]
+    -->
+    <para>
+     ドキュメントを改善しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-11 [2997b3a]
+    -->
+    <para>
+     watchdog 使用時に Pgpool-II 間でバックエンドの状態が一致しない不具合を修正しました。
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=289">(Bug 289)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-30 [be9d634]
+    -->
+    <para>
+     Watchdogによるスプリットブレインシナリオの処理を強化しました。(Muhammad Usama)
+    </para>
+    <para>
+
+     watchdogクラスタを使用しmaster/coordinatorノードの再選出が呼び出されていました。その結果、すべてのノードがウォッチドッグネットワークに再結合する必要がありました。これはwatchdogクラスタ全体の再起動と本質的に同じでした。
+    </para>
+    <para>
+     今回の修正では、master/coordinatorノードの候補は、次の基準で選択されるようになりました。
+    </para>
+    <para>
+    (1) 2つのウォッチドッグノードがクラスタマスターであると主張している場合、エスカレーションを実行したマスターノードはマスター状態を保持し、他のノードはステップダウンするように要求されます。
+    </para>
+    <para>
+    (2) 競合がノードのエスカレーション状況によって解決できない場合、クォーラムを保持するノードはマスター/コーディネータのままです。
+    </para>
+    <para>
+    (3) 両方の候補のクォーラムステータスが同じ場合、接続されたアライブノードの数が多いノードが優先されます。
+    </para>
+    <para>
+    (4) 最後に、上記3つでマスターノードを選出できなかった場合、古いマスター(長期間コーディネーターステータスを持つノード) はマスターのままです。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-21 [deaa822]
+    -->
+    <para>
+     複数の並行コマンドを処理するためにwatchdog内部コマンドのメカニズムを強化しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-07 [e989242]
+    -->
+    <para>
+     コンパイラ時の警告を修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-06 [d87f93d]
+    -->
+    <para>
+     リグレッションの失敗を防ぐために、サポートされていないJavaメソッドを新しいJDBCドライバでコメントアウトしました。(Tatsu Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-05 [e5541d7]
+    -->
+    <para>
+     ログメッセージをバインドする前にdebug1に解析をダウングレードしました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-04-04 [aa4e308]
+    2017-04-04 [24d9770]
+    2017-04-03 [7d8482a]
+    -->
+    <para>
+     coverity警告を修正しました。(Muhammad Usama, Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [c4f816b]
+    -->
+    <para>
+     <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink>
+        pam ldapが失敗する不具合が修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [6899b7d]
+    -->
+    <para>
+     拡張クエリモードでSQL型コマンドが使用できないことをドキュメントに追加しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-31 [9cd2f8a]
+    -->
+    <para>
+     <command>SHOW</command>コマンドを読み込みクエリの一つとして認識するようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     ストリーミングレプリケーションモードでは、<command>SHOW</command>が発行されるとその後のSELECTは明示的なトランザクションでプライマリノードに送信されていました。この制限は不適切でした。また、parseコマンドがエラーを返すときに発生するハングアップを修正しました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-30 [9aaec32]
+    -->
+    <para>
+     コミットadcb636によって引き起こされたメモリリークの問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     Commit adcb636では"pending message queue"を導入しました。メッセージを受信すると、情報がキューに追加され、オブジェクトのコピーが同時に作成されますが、オブジェクトを解放するのを忘れてしまいました。
+     </para>
+     <para>
+     今回の修正では、新しい関数<function>pool_pending_message_free_pending_message()</function>を作成し、<function>pool_pending_message_add()</function>、<function>pool_pending_message_get()</function>および<function>pool_pending_message_pull_out()</function>の後に呼び出すように修正しました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-29 [18f9501]
+    -->
+    <para>
+     ストリーミングレプリケーションモードで「kind mismatch」(またはそれに関連する)エラーが修正されました。
+     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">(Bug 271)</ulink> (Tatsuo Ishii)
+    </para>
+    <para>
+     このエラー原因はデータベースノードがPgpool-IIに送る応答の予測が誤っていたことです。以前使用した「sync map」の実装は弱く、予測に失敗することがありました。今回の修正では、送信されたすべてのメッセージをバックエンドに記録する"pending message queue"を導入しました。このキューの要素には、メッセージのタイプ(parse/bind/execute/describe/close/sync)、メッセージが送信されたデータベースノードの情報などが格納されます。これは単純なFIFOキューです。バックエンドからメッセージが到着すると、"pending message queue"の先頭を見れば、受信したメッセージの種類やデータベースノードを確実に予測できます。 メッセージを受信した後、この要素はキューから削除されます。
+    </para>
+    <para>
+    一連のパッチをテストしてくれたSergey Kimさんに感謝します。
+    </para>
+    <para>
+    詳細は <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">Bug 271</ulink>、
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-February/002043.html">[pgpool-hackers: 2043]</ulink> と
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-March/002140.html">[pgpool-hackers: 2140]</ulink> をご参照下さい。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-24 [c2a0cc5]
+    -->
+    <para>
+    [Service] が Type=forking に設定されている場合、Pgpool-II 3.6.2 が systemd によって強制終了されていた不具合を修正しました。
+    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
+    </para>
+    </listitem>
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
+
+<sect1 id="release-3-6-2">
+  <title>リリース 3.6.2</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-03-17</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-03-17 [ba1bcc3]
+    -->
+    <para>
+    pgpool.serviceファイルに"Wants=network.target"を追加しました。
+    (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=294">bug 294</ulink>) (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-03-09 [1ddb7f1]
+    -->
+    <para>
+ <link linkend="PCP-PROMOTE-NODE">pcp_promote_node</link>を使ってノード0の昇格に失敗する不具合を修正しました。(Yugo Nagata)
+    </para>
+    <para>
+失敗したときのエラーメッセージは以下のとおりです。
+    </para>
+
+    <programlisting>
+  FATAL: invalid pgpool mode for process recovery request
+  DETAIL: specified node is already primary node, can't promote node id 0
+    </programlisting>
+
+    <para>
+ストリーミングレプリケーションモードでは、<productname>Pgpool-II</productname>がプライマリノードを何らかの理由で「スタンバイ」とみなしていました。たとえば、<productname>Pgpool-II</productname>が起動中で、pg_ctl promoteを手動で実行したとき、<productname>Pgpool-II</productname>はプライマリノードが存在しないと認識します。
+    </para>
+
+    <para>
+この状態の不一致は、pcp_promote_nodeコマンドによって直されるはずですが、昇格させたいノードがマスターノード（最初のアライブノード）である場合、上記のように失敗しました。
+失敗した理由は次のとおりです。ステータスを変更する前に、pcp_promote_nodeコマンドがPRIMARY_NODE_IDのノードIDと比較することによって、指定されたノードが既にプライマリであるかどうかをチェックします。ただし、プライマリが存在しない場合<productname>Pgpool-II</productname>のビューでは、PRIMARY_NODE_IDが0に設定されます。これはMASTER_NODE_IDと同じです。したがって、マスタノードを昇格させるように指定する場合、pcp_promote_nodeはこのノードが既にプライマリであるとのエラーを返して終了しました。
+    </para>
+
+    <para>
+これを修正するには、pcp_promote_nodeは指定したノードがプライマリーノードであるかどうかをチェックするとき、PRIMARY_NODE_IDではなくREAL_PRIMARY_NODE_IDを使うように修正しました。REAL_PRIMARY_NODE_IDはプライマリが存在しない場合、-1に設定されます。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-28 [b1060bd]
+    2017-01-10 [1e4e494]
+    2017-02-09 [767eff3]
+    -->
+    <para>
+<productname>Pgpool-II</productname>のドキュメントを修正しました。(Tatsuo Ishii, Bo Peng)
+    </para>
+    <para>
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-23 [2b7217e]
+    -->
+    <para>
+<productname>Pgpool-II</productname>がVIPを解除した後にpingテストを続けている不具合を修正しました。(Muhammad Usama)
+    </para>
+    <para>
+<ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-June/001611.html">[pgpool-hackers: 1611]</ulink> により報告されました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-23 [7ed400b]
+    -->
+    <para>
+特定の場合に、<productname>Pgpool-II</productname>が終了したときに共有メモリセグメントを解放しない不具合を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=272">bug 272</ulink>) (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-14 [c1cd41c]
+    -->
+    <para>
+pg_terminate_backend関数を実行するときに発生する不具合を修正しました。(Muhammad Usama)
+    </para>
+    <para>
+<ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-February/005373.html">[pgpool-general: 5315]</ulink>により報告されました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-02-06 [8fa731a]
+    -->
+    <para>
+ExecStopとExecReloadコマンドをsystemdサービス設定ファイルに追加しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-30 [6362ba6]
+    -->
+    <para>
+<link linkend="PCP-ATTACH-NODE">pcp_attach_node</link>を実行するときのセグメンテーション違反を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=281">bug 281</ulink>)(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-30 [fb58877]
+    -->
+    <para>
+ストリーミングレプリケーションモードでロードバランスのバグを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+明示的なトランザクションでは、書き込みクエリが送信されるまで、SELECTはロードバランスされます。書込みクエリが送信された後、SELECTがプライマリノードに送信されます。しかし、syncメッセージが送信される前にSELECTが送信された場合、これは正しく動作しませんでした。
+    </para>
+    <para>
+書き込みクエリが実行されると書き込みクエリの処理が行われるように修正しました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-30 [8371649]
+    -->
+    <para>
+ストリーミングレプリケーションモードでのkind mismatchエラーを修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-27 [4f98bf0]
+    -->
+    <para>
+closeメッセージの後に<function>do_query()</function>がハングする問題を修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-27 [7512482]
+    -->
+    <para>
+<function>wd_get_cmd</function>関数のバッファオーバーフローを修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=280">bug 280</ulink>)(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-19 [839a709]
+    -->
+    <para>
+watchdogプロセスを再起動する時の不具合を修正しました。(Muhammad Usama)
+    </para>
+    <para>
+watchdogプロセスが何らかの問題（例えばセグメンテーションフォルト）によって異常終了した場合、新たに生成されたwatchdogプロセスの起動が失敗し、"bind on ... failed with reason: Address already in use"とのエラーを返しました。
+    </para>
+
+    <para>
+理由は、異常終了したwatchdogプロセスはIPCに使用するソケットをクリーンアップする時間がなかったからです。
+    </para>
+
+    <para>
+この不具合を修正するために、Pgpoolのメインプロセスは、watchdogプロセスが異常終了したときに共有メモリにフラグを設定するように修正しました。
+watchdogプロセスが再起動されるとき、フラグがセットされたら、ソケットファイルをクリーンアップするようにしました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-19 [779d029]
+    -->
+    <para>
+特定の条件下で、ストリーミングレプリケーションモードでクエリキャッシュが有効な場合、SELECTがハングアップする不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    <ulink url="http://www.pgpool.net/pipermail/pgpool-general-jp/2017-January/001440.html">pgpool-general-jp:1441</ulink>により報告されました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-11 [29b61eb]
+    -->
+    <para>
+シグナルハンドラがelog/ereportを呼び出さないように修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+詳しくは<ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-December/001950.html">[pgpool-hackers: 1950]</ulink>をご参照ください。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-10 [39d24e7]
+    -->
+    <para>
+FreeBSDでlisten_addresses = '*'の場合、INETドメインソケットが作成できない不具合を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=202">bug 202</ulink>)(Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-04 [8598d5a]
+    -->
+    <para>
+特定に場合にwatchdogがデエスカレーションに失敗する不具合を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=249">bug 249</ulink>)(Muhammad Usama)
+    </para>
+
+    <para>
+WNOHANGオプションなしで<function>waitpid()</function>システムコールを使用するように修正しました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-01-04 [bd92a11]
+    -->
+    <para>
+authentication_timeoutが有効な場合、connection_life_timeが正しく処理されない不具合を修正しました。(Yugo Nagata)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2016-12-28 [afebadf]
+    -->
+    <para>
+クライアント接続直後に発生しうる認証タイムアウトを修正しました。(Yugo Nagata)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
+
+
+<sect1 id="release-3-6-1">
+<!--
+  <title>release 3.6.1</title>
+  -->
+  <title>リリース 3.6.1</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2016-12-26</simpara>
+  </note>
+
+  <sect2>
+  <!--
+    <title>Bug fixes</title>
+    -->
+    <title>不具合修正</title>
+
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2016-12-23 [4124e5e]
+	  -->
+	<para>
+    <!--
+      Tightening up the watchdog security. (Muhammad Usama)
+    -->
+watchdog のセキュリティを強化しました。(Muhammad Usama)
+    </para>
+
+    <para>
+    <!--
+      Now wd_authkey uses the HMAC SHA-256 hashing.
+    -->
+wd_authkeyは、HMAC SHA-256ハッシングを使用するようになりました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-22 [f8a157a]
+	  -->
+	<para>
+	<!--
+	  Add pgpool_adm extension. (Bo Peng)
+    -->
+<productname>Pgpool-II</productname>のRPM にpgpool_adm extension が含まれるように修正しました。(Bo Peng)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-20 [888ac16]
+	  -->
+	<para>
+    <!--
+	  Fix occasional segfault when query cache is enabled. (Tatsuo Ishii)
+    -->
+クエリキャッシュが有効になっている場合に、時々発生しうるセグメンテーション違反を修正しました。(bug 263) (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-20 [9274f82]
+	  -->
+	<para>
+    <!--
+	  Fix packet kind does not match error in extended protocol per bug 231. (Tatsuo Ishii)
+    -->
+拡張プロトコルにおいて発生しうるkind mismatchエラーを修正しました。(bug 231) (Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  According to the bug231, the bug seem to bite you if all of
+	  following conditions are met:
+      -->
+bug 231によると、以下の条件がすべて満たされていると、このバグが発生する可能性がありました。
+	</para>
+	<itemizedlist>
+	  <listitem>
+	    <para>
+        <!--
+	      Streaming replication mode
+          -->
+ストリーミングレプリケーションモード
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Load balance node is not node 0
+          -->
+ ロードバランスノードがnode 0ではない
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Extended protocol is used
+          -->
+拡張プロトコルを使用している
+	      </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      SELECT is executed, the statement is closed, then a
+	      transaction command is executed
+          -->
+SELECTが実行され、ステートメントがクローズされた後、トランザクションコマンドが実行されている
+	    </para>
+	  </listitem>
+	</itemizedlist>
+	<para>
+    <!--
+	The sequence of how the problem bites is:
+    -->
+問題の発生順序:
+	<orderedlist>
+	  <listitem>
+	    <para>
+        <!--
+	      SELECT executes on statement S1 on the load balance node 1
+          -->
+ロードバランスノード1でステートメントS1のSELECTが実行されます。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Frontend send Close statement
+          -->
+フロントエンドがクローズステートメントを送ります。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Pgool-II forward it to backend 1
+          -->
+Pgpool-IIはそれをバックエンド1に転送します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Frontend sends Parse, Bind, Execute of COMMIT
+          -->
+フロントエンドは、COMMITのParse、Bind、Executeを送信します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Pgool-II forward it to backend 0 & 1
+          -->
+Pgpool-IIはそれをバックエンド0と1に転送します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Frontend sends sync message
+          -->
+フロントエンドが同期メッセージを送信します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Pgool-II forward it to backend 0 & 1
+          -->
+Pgpool-IIはそれをバックエンド0と1に転送します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Backend 0 replies back Parse complete ("1"), while
+	      backend 1 replies back close complete ("3") because of
+	      #3.
+          -->
+バックエンド0はParse complete（ "1"）を返しますが、バックエンド1は＃3によりclose complete（ "3"）を返します。
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+        <!--
+	      Kind mismatch occurs
+          -->
+Kind mismatch が発生します。
+	    </para>
+	  </listitem>
+	</orderedlist>
+
+	</para>
+	<para>
+    <!--
+	  The solution is, in #3, let Pgpool-II wait for response from backend
+	  1, but do not read the response message. Later on Pgpool-II's state
+	  machine will read the response from it before the sync message is sent
+	  in #6. With this, backend 1 will reply back "1" in #8, and the kind
+	  mismatch error does not occur.
+      -->
+解決策は、＃3では、Pgpool-IIがバックエンド1からの応答を待つようにしますが、応答メッセージは読み取らないようにします。 その後、Pgpool-IIの状態マシンは、＃6で同期メッセージが送信される前に、その応答を読み込みます。 これによりバックエンド1は＃8で "1"を返信し、kind mismatchエラーは発生しなくなります。
+	</para>
+	<para>
+    <!--
+	  Also, fix not calling pool_set_doing_extended_query_message() when
+	  receives Close message.  (I don't know why it was missed).
+      -->
+また、Closeメッセージを受け取ったときにpool_set_doing_extended_query_message（）が呼び出されない不具合を修正しました。
+	</para>
+	<para>
+    <!--
+	  New regression test "067.bug231" was added.
+      -->
+新しいリグレッションテスト "067.bug231"を追加しました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-12-06 [336e932]
+	  -->
+	<para>
+    <!--
+	  Fix a race condition in a signal handler per bug 265. (Tatsuo Ishii)
+    -->
+シグナルハンドラでの競合状態を修正しました。(bug 265) (Tatsuo Ishii)
+	</para>
+	<para>
+    <!--
+	  In child.c there's signal handler which calls elog. Since the signal
+	  handler is not blocked against other signals while processing, deadlock
+	  could occur in the system calls in the pgpool shutdown sequence. To
+	  fix the problem, now the signal handler is blocked by using
+	  POOL_SETMASK.
+      -->
+child.cには、elogを呼び出すシグナルハンドラがあります。 シグナルハンドラは処理中に他のシグナルに対してブロックされないため、pgpoolのシャットダウンシーケンスでシステムコールにデッドロックが発生する可能性がありました。 この問題を解決するために、シグナルハンドラはPOOL_SETMASKを使用してブロックされるように修正されました。
+	</para>
+	<para>
+    <!--
+	  Ideally we should avoid calling elog in signal handlers though.
+      -->
+理想的にはシグナルハンドラでelogを呼び出すことを避けるべきです。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-11-24 [cc452ad]
+	  -->
+	<para>
+    <!--
+	  Fix wrong minimum configuration value for client_idle_limit_in_recovery. (Tatsuo Ishii)
+    -->
+誤ったclient_idle_limit_in_recoveryの最小設定値を修正しました。(bug 264) (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2016-11-22 [94d9378]
+	  -->
+	<para>
+    <!--
+	  Allow to execute "make xslthtml" under doc.ja. (Tatsuo Ishii)
+      -->
+doc.jaの下で "make xslthtml"を実行できるように修正しました。(Tatsuo Ishii)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
+
+
+
+
 <sect1 id="release-3-6">
 <!--
   <title>Release 3.6</title>
@@ -1777,800 +2579,3 @@ PCP パケットの長さを検証するよう修正しました。(Muhammad Usa
 
 </sect1>
 
-<sect1 id="release-3-6-1">
-<!--
-  <title>release 3.6.1</title>
-  -->
-  <title>リリース 3.6.1</title>
-
-  <note>
-    <title>リリース日</title>
-    <simpara>2016-12-26</simpara>
-  </note>
-
-  <sect2>
-  <!--
-    <title>Bug fixes</title>
-    -->
-    <title>不具合修正</title>
-
-    <itemizedlist>
-
-      <listitem>
-	<!--
-	    2016-12-23 [4124e5e]
-	  -->
-	<para>
-    <!--
-      Tightening up the watchdog security. (Muhammad Usama)
-    -->
-watchdog のセキュリティを強化しました。(Muhammad Usama)
-    </para>
-
-    <para>
-    <!--
-      Now wd_authkey uses the HMAC SHA-256 hashing.
-    -->
-wd_authkeyは、HMAC SHA-256ハッシングを使用するようになりました。
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-12-22 [f8a157a]
-	  -->
-	<para>
-	<!--
-	  Add pgpool_adm extension. (Bo Peng)
-    -->
-<productname>Pgpool-II</productname>のRPM にpgpool_adm extension が含まれるように修正しました。(Bo Peng)
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-12-20 [888ac16]
-	  -->
-	<para>
-    <!--
-	  Fix occasional segfault when query cache is enabled. (Tatsuo Ishii)
-    -->
-クエリキャッシュが有効になっている場合に、時々発生しうるセグメンテーション違反を修正しました。(bug 263) (Tatsuo Ishii)
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-12-20 [9274f82]
-	  -->
-	<para>
-    <!--
-	  Fix packet kind does not match error in extended protocol per bug 231. (Tatsuo Ishii)
-    -->
-拡張プロトコルにおいて発生しうるkind mismatchエラーを修正しました。(bug 231) (Tatsuo Ishii)
-	</para>
-	<para>
-    <!--
-	  According to the bug231, the bug seem to bite you if all of
-	  following conditions are met:
-      -->
-bug 231によると、以下の条件がすべて満たされていると、このバグが発生する可能性がありました。
-	</para>
-	<itemizedlist>
-	  <listitem>
-	    <para>
-        <!--
-	      Streaming replication mode
-          -->
-ストリーミングレプリケーションモード
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-        <!--
-	      Load balance node is not node 0
-          -->
- ロードバランスノードがnode 0ではない
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-        <!--
-	      Extended protocol is used
-          -->
-拡張プロトコルを使用している
-	      </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-        <!--
-	      SELECT is executed, the statement is closed, then a
-	      transaction command is executed
-          -->
-SELECTが実行され、ステートメントがクローズされた後、トランザクションコマンドが実行されている
-	    </para>
-	  </listitem>
-	</itemizedlist>
-	<para>
-    <!--
-	The sequence of how the problem bites is:
-    -->
-問題の発生順序:
-	<orderedlist>
-	  <listitem>
-	    <para>
-        <!--
-	      SELECT executes on statement S1 on the load balance node 1
-          -->
-ロードバランスノード1でステートメントS1のSELECTが実行されます。
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-        <!--
-	      Frontend send Close statement
-          -->
-フロントエンドがクローズステートメントを送ります。
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-        <!--
-	      Pgool-II forward it to backend 1
-          -->
-Pgpool-IIはそれをバックエンド1に転送します。
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-        <!--
-	      Frontend sends Parse, Bind, Execute of COMMIT
-          -->
-フロントエンドは、COMMITのParse、Bind、Executeを送信します。
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-        <!--
-	      Pgool-II forward it to backend 0 & 1
-          -->
-Pgpool-IIはそれをバックエンド0と1に転送します。
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-        <!--
-	      Frontend sends sync message
-          -->
-フロントエンドが同期メッセージを送信します。
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-        <!--
-	      Pgool-II forward it to backend 0 & 1
-          -->
-Pgpool-IIはそれをバックエンド0と1に転送します。
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-        <!--
-	      Backend 0 replies back Parse complete ("1"), while
-	      backend 1 replies back close complete ("3") because of
-	      #3.
-          -->
-バックエンド0はParse complete（ "1"）を返しますが、バックエンド1は＃3によりclose complete（ "3"）を返します。
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-        <!--
-	      Kind mismatch occurs
-          -->
-Kind mismatch が発生します。
-	    </para>
-	  </listitem>
-	</orderedlist>
-
-	</para>
-	<para>
-    <!--
-	  The solution is, in #3, let Pgpool-II wait for response from backend
-	  1, but do not read the response message. Later on Pgpool-II's state
-	  machine will read the response from it before the sync message is sent
-	  in #6. With this, backend 1 will reply back "1" in #8, and the kind
-	  mismatch error does not occur.
-      -->
-解決策は、＃3では、Pgpool-IIがバックエンド1からの応答を待つようにしますが、応答メッセージは読み取らないようにします。 その後、Pgpool-IIの状態マシンは、＃6で同期メッセージが送信される前に、その応答を読み込みます。 これによりバックエンド1は＃8で "1"を返信し、kind mismatchエラーは発生しなくなります。
-	</para>
-	<para>
-    <!--
-	  Also, fix not calling pool_set_doing_extended_query_message() when
-	  receives Close message.  (I don't know why it was missed).
-      -->
-また、Closeメッセージを受け取ったときにpool_set_doing_extended_query_message（）が呼び出されない不具合を修正しました。
-	</para>
-	<para>
-    <!--
-	  New regression test "067.bug231" was added.
-      -->
-新しいリグレッションテスト "067.bug231"を追加しました。
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-12-06 [336e932]
-	  -->
-	<para>
-    <!--
-	  Fix a race condition in a signal handler per bug 265. (Tatsuo Ishii)
-    -->
-シグナルハンドラでの競合状態を修正しました。(bug 265) (Tatsuo Ishii)
-	</para>
-	<para>
-    <!--
-	  In child.c there's signal handler which calls elog. Since the signal
-	  handler is not blocked against other signals while processing, deadlock
-	  could occur in the system calls in the pgpool shutdown sequence. To
-	  fix the problem, now the signal handler is blocked by using
-	  POOL_SETMASK.
-      -->
-child.cには、elogを呼び出すシグナルハンドラがあります。 シグナルハンドラは処理中に他のシグナルに対してブロックされないため、pgpoolのシャットダウンシーケンスでシステムコールにデッドロックが発生する可能性がありました。 この問題を解決するために、シグナルハンドラはPOOL_SETMASKを使用してブロックされるように修正されました。
-	</para>
-	<para>
-    <!--
-	  Ideally we should avoid calling elog in signal handlers though.
-      -->
-理想的にはシグナルハンドラでelogを呼び出すことを避けるべきです。
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-11-24 [cc452ad]
-	  -->
-	<para>
-    <!--
-	  Fix wrong minimum configuration value for client_idle_limit_in_recovery. (Tatsuo Ishii)
-    -->
-誤ったclient_idle_limit_in_recoveryの最小設定値を修正しました。(bug 264) (Tatsuo Ishii)
-	</para>
-      </listitem>
-
-      <listitem>
-	<!--
-	    2016-11-22 [94d9378]
-	  -->
-	<para>
-    <!--
-	  Allow to execute "make xslthtml" under doc.ja. (Tatsuo Ishii)
-      -->
-doc.jaの下で "make xslthtml"を実行できるように修正しました。(Tatsuo Ishii)
-	</para>
-	<para>
-
-	</para>
-      </listitem>
-
-    </itemizedlist>
-
-  </sect2>
-
-</sect1>
-
-<sect1 id="release-3-6-2">
-  <title>リリース 3.6.2</title>
-
-  <note>
-    <title>リリース日</title>
-    <simpara>2017-03-17</simpara>
-  </note>
-
-  <sect2>
-    <title>不具合修正</title>
-
-    <itemizedlist>
-
-    <listitem>
-    <!--
-    2017-03-17 [ba1bcc3]
-    -->
-    <para>
-    pgpool.serviceファイルに"Wants=network.target"を追加しました。
-    (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=294">bug 294</ulink>) (Bo Peng)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-09 [1ddb7f1]
-    -->
-    <para>
- <link linkend="PCP-PROMOTE-NODE">pcp_promote_node</link>を使ってノード0の昇格に失敗する不具合を修正しました。(Yugo Nagata)
-    </para>
-    <para>
-失敗したときのエラーメッセージは以下のとおりです。
-    </para>
-
-    <programlisting>
-  FATAL: invalid pgpool mode for process recovery request
-  DETAIL: specified node is already primary node, can't promote node id 0
-    </programlisting>
-
-    <para>
-ストリーミングレプリケーションモードでは、<productname>Pgpool-II</productname>がプライマリノードを何らかの理由で「スタンバイ」とみなしていました。たとえば、<productname>Pgpool-II</productname>が起動中で、pg_ctl promoteを手動で実行したとき、<productname>Pgpool-II</productname>はプライマリノードが存在しないと認識します。
-    </para>
-
-    <para>
-この状態の不一致は、pcp_promote_nodeコマンドによって直されるはずですが、昇格させたいノードがマスターノード（最初のアライブノード）である場合、上記のように失敗しました。
-失敗した理由は次のとおりです。ステータスを変更する前に、pcp_promote_nodeコマンドがPRIMARY_NODE_IDのノードIDと比較することによって、指定されたノードが既にプライマリであるかどうかをチェックします。ただし、プライマリが存在しない場合<productname>Pgpool-II</productname>のビューでは、PRIMARY_NODE_IDが0に設定されます。これはMASTER_NODE_IDと同じです。したがって、マスタノードを昇格させるように指定する場合、pcp_promote_nodeはこのノードが既にプライマリであるとのエラーを返して終了しました。
-    </para>
-
-    <para>
-これを修正するには、pcp_promote_nodeは指定したノードがプライマリーノードであるかどうかをチェックするとき、PRIMARY_NODE_IDではなくREAL_PRIMARY_NODE_IDを使うように修正しました。REAL_PRIMARY_NODE_IDはプライマリが存在しない場合、-1に設定されます。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-28 [b1060bd]
-    2017-01-10 [1e4e494]
-    2017-02-09 [767eff3]
-    -->
-    <para>
-<productname>Pgpool-II</productname>のドキュメントを修正しました。(Tatsuo Ishii, Bo Peng)
-    </para>
-    <para>
-
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-23 [2b7217e]
-    -->
-    <para>
-<productname>Pgpool-II</productname>がVIPを解除した後にpingテストを続けている不具合を修正しました。(Muhammad Usama)
-    </para>
-    <para>
-<ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-June/001611.html">[pgpool-hackers: 1611]</ulink> により報告されました。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-23 [7ed400b]
-    -->
-    <para>
-特定の場合に、<productname>Pgpool-II</productname>が終了したときに共有メモリセグメントを解放しない不具合を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=272">bug 272</ulink>) (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-14 [c1cd41c]
-    -->
-    <para>
-pg_terminate_backend関数を実行するときに発生する不具合を修正しました。(Muhammad Usama)
-    </para>
-    <para>
-<ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-February/005373.html">[pgpool-general: 5315]</ulink>により報告されました。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-02-06 [8fa731a]
-    -->
-    <para>
-ExecStopとExecReloadコマンドをsystemdサービス設定ファイルに追加しました。(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-30 [6362ba6]
-    -->
-    <para>
-<link linkend="PCP-ATTACH-NODE">pcp_attach_node</link>を実行するときのセグメンテーション違反を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=281">bug 281</ulink>)(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-30 [fb58877]
-    -->
-    <para>
-ストリーミングレプリケーションモードでロードバランスのバグを修正しました。(Tatsuo Ishii)
-    </para>
-    <para>
-明示的なトランザクションでは、書き込みクエリが送信されるまで、SELECTはロードバランスされます。書込みクエリが送信された後、SELECTがプライマリノードに送信されます。しかし、syncメッセージが送信される前にSELECTが送信された場合、これは正しく動作しませんでした。
-    </para>
-    <para>
-書き込みクエリが実行されると書き込みクエリの処理が行われるように修正しました。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-30 [8371649]
-    -->
-    <para>
-ストリーミングレプリケーションモードでのkind mismatchエラーを修正しました。(Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-27 [4f98bf0]
-    -->
-    <para>
-closeメッセージの後に<function>do_query()</function>がハングする問題を修正しました。(Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-27 [7512482]
-    -->
-    <para>
-<function>wd_get_cmd</function>関数のバッファオーバーフローを修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=280">bug 280</ulink>)(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-19 [839a709]
-    -->
-    <para>
-watchdogプロセスを再起動する時の不具合を修正しました。(Muhammad Usama)
-    </para>
-    <para>
-watchdogプロセスが何らかの問題（例えばセグメンテーションフォルト）によって異常終了した場合、新たに生成されたwatchdogプロセスの起動が失敗し、"bind on ... failed with reason: Address already in use"とのエラーを返しました。
-    </para>
-
-    <para>
-理由は、異常終了したwatchdogプロセスはIPCに使用するソケットをクリーンアップする時間がなかったからです。
-    </para>
-
-    <para>
-この不具合を修正するために、Pgpoolのメインプロセスは、watchdogプロセスが異常終了したときに共有メモリにフラグを設定するように修正しました。
-watchdogプロセスが再起動されるとき、フラグがセットされたら、ソケットファイルをクリーンアップするようにしました。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-19 [779d029]
-    -->
-    <para>
-特定の条件下で、ストリーミングレプリケーションモードでクエリキャッシュが有効な場合、SELECTがハングアップする不具合を修正しました。(Tatsuo Ishii)
-    </para>
-    <para>
-    <ulink url="http://www.pgpool.net/pipermail/pgpool-general-jp/2017-January/001440.html">pgpool-general-jp:1441</ulink>により報告されました。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-11 [29b61eb]
-    -->
-    <para>
-シグナルハンドラがelog/ereportを呼び出さないように修正しました。(Tatsuo Ishii)
-    </para>
-    <para>
-詳しくは<ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2016-December/001950.html">[pgpool-hackers: 1950]</ulink>をご参照ください。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-10 [39d24e7]
-    -->
-    <para>
-FreeBSDでlisten_addresses = '*'の場合、INETドメインソケットが作成できない不具合を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=202">bug 202</ulink>)(Bo Peng)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-04 [8598d5a]
-    -->
-    <para>
-特定に場合にwatchdogがデエスカレーションに失敗する不具合を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=249">bug 249</ulink>)(Muhammad Usama)
-    </para>
-
-    <para>
-WNOHANGオプションなしで<function>waitpid()</function>システムコールを使用するように修正しました。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-01-04 [bd92a11]
-    -->
-    <para>
-authentication_timeoutが有効な場合、connection_life_timeが正しく処理されない不具合を修正しました。(Yugo Nagata)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2016-12-28 [afebadf]
-    -->
-    <para>
-クライアント接続直後に発生しうる認証タイムアウトを修正しました。(Yugo Nagata)
-    </para>
-    </listitem>
-
-    </itemizedlist>
-
-  </sect2>
-
-</sect1>
-
-<sect1 id="release-3-6-3">
-  <title>リリース 3.6.3</title>
-
-  <note>
-    <title>リリース日</title>
-    <simpara>2017-04-28</simpara>
-  </note>
-
-  <sect2>
-    <title>不具合修正</title>
-
-    <itemizedlist>
-
-    <listitem>
-    <!--
-    2017-04-18 [b8eb551]
-    -->
-    <para>
-     memcachedが使用されているときに,"show pool_cache"のセグメンテーション違反を修正しました。
-     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=301">(Bug 301)</ulink> (Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-14 [bedb509]
-    -->
-    <para>
-     いくつかのソースコードの警告を修正しました。(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-14 [8b25ca3]
-    -->
-    <para>
-        いくつかのコンパイラの警告を修正しました。(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-14 [50fb9a4]
-    -->
-    <para>
-     pool_config_vatiable.cから「定義されたが未使用の関数」という警告を削除しました。(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-14 [9007558]
-    -->
-    <para>
-     古いdebug_level設定パラメーターの参照を削除しました。(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-12 [7105243]
-    -->
-    <para>
-     Watchdogのソースコードのミスを修正し、いくつかのdebugメッセージを追加しました。(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-12 [f5f42be]
-    -->
-    <para>
-     pool_hba.confファイルをリロード時に発生するエラーを修正しました。<ulink url="http://www.pgpool.net/mantisbt/view.php?id=299">(Bug 299)</ulink> (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-12 [32b7c6d]
-    2017-04-11 [d47add6]
-    2017-04-11 [02a6f45]
-    -->
-    <para>
-     英語/日本語のドキュメントにpgpool_adm extensionに関する情報を追加しました。(Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-11 [a6cc0c9]
-    -->
-    <para>
-     ドキュメントを改善しました。(Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-11 [2997b3a]
-    -->
-    <para>
-     バックエンドの状態が一致しない不具合を修正しました。
-     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=289">(Bug 289)</ulink> (Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-30 [be9d634]
-    -->
-    <para>
-     Watchdogによるスプリットブレインシナリオの処理を強化しました。(Muhammad Usama)
-    </para>
-    <para>
-
-     watchdogクラスタを使用しmaster/coordinatorノードの再選出が呼び出されていました。その結果、すべてのノードがウォッチドッグネットワークに再結合する必要がありました。これはwatchdogクラスタ全体の再起動と本質的に同じでした。
-    </para>
-    <para>
-     今回の修正では、master/coordinatorノードの候補は、次の基準で選択されるようになりました。
-    </para>
-    <para>
-    (1) 2つのウォッチドッグノードがクラスタマスターであると主張している場合、エスカレーションを実行したマスターノードはマスター状態を保持し、他のノードはステップダウンするように要求されます。
-    </para>
-    <para>
-    (2) 競合がノードのエスカレーション状況によって解決できない場合、クォーラムを保持するノードはマスター/コーディネータのままです。
-    </para>
-    <para>
-    (3) 両方の候補のクォーラムステータスが同じ場合、接続されたアライブノードの数が多いノードが優先されます。
-    </para>
-    <para>
-    (4) 最後に、上記3つでマスターノードを選出できなかった場合、古いマスター(長期間コーディネーターステータスを持つノード) はマスターのままです。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-21 [deaa822]
-    -->
-    <para>
-     複数の並行コマンドを処理するためにwatchdog内部コマンドのメカニズムを強化しました。(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-07 [e989242]
-    -->
-    <para>
-     コンパイラ時の警告を修正しました。(Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-06 [d87f93d]
-    -->
-    <para>
-     リグレッションの失敗を防ぐために、サポートされていないJavaメソッドを新しいJDBCドライバでコメントアウトしました。(Tatsu Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-05 [e5541d7]
-    -->
-    <para>
-     ログメッセージをバインドする前にdebug1に解析をダウングレードしました。(Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-04-04 [aa4e308]
-    2017-04-04 [24d9770]
-    2017-04-03 [7d8482a]
-    -->
-    <para>
-     coverity警告を修正しました。(Muhammad Usama, Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-31 [c4f816b]
-    -->
-    <para>
-     <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink>
-        pam ldapが失敗する不具合が修正しました。(Muhammad Usama)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-31 [6899b7d]
-    -->
-    <para>
-     拡張クエリモードでSQL型コマンドが使用できないことをドキュメントに追加しました。(Tatsuo Ishii)
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-31 [9cd2f8a]
-    -->
-    <para>
-     <command>SHOW</command>コマンドを読み込みクエリの一つとして認識するようにしました。(Tatsuo Ishii)
-    </para>
-    <para>
-     ストリーミングレプリケーションモードでは、<command>SHOW</command>が発行されるとその後のSELECTは明示的なトランザクションでプライマリノードに送信されていました。この制限は不適切でした。また、parseコマンドがエラーを返すときに発生するハングアップを修正しました。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-30 [9aaec32]
-    -->
-    <para>
-     コミットadcb636によって引き起こされたメモリリークの問題を修正しました。(Tatsuo Ishii)
-    </para>
-    <para>
-     Commit adcb636では"pending message queue"を導入しました。メッセージを受信すると、情報がキューに追加され、オブジェクトのコピーが同時に作成されますが、オブジェクトを解放するのを忘れてしまいました。
-     </para>
-     <para>
-     今回の修正では、新しい関数<function>pool_pending_message_free_pending_message()</function>を作成し、<function>pool_pending_message_add()</function>、<function>pool_pending_message_get()</function>および<function>pool_pending_message_pull_out()</function>の後に呼び出すように修正しました。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-29 [18f9501]
-    -->
-    <para>
-     ストリーミングレプリケーションモードで「kind mismatch」(または derived)エラーが修正されました。
-     <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">(Bug 271)</ulink> (Tatsuo Ishii)
-    </para>
-    <para>
-     このエラー原因はデータベースノードがPgpool-IIに送る応答の予測が誤っていたことです。以前使用した「sync map」の実装は弱く、予測に失敗することがありました。今回の修正では、送信されたすべてのメッセージをバックエンドに記録する"pending message queue"を導入しました。このキューの要素には、メッセージのタイプ(parse/bind/execute/describe/close/sync)、メッセージが送信されたデータベースノードの情報などが格納されます。これは単純なFIFOキューです。バックエンドからメッセージが到着すると、"pending message queue"の先頭を見れば、受信したメッセージの種類やデータベースノードを確実に予測できます。 メッセージを受信した後、この要素はキューから削除されます。
-    </para>
-    <para>
-    一連のパッチをテストしてくれたSergey Kimさんに感謝します。
-    </para>
-    <para>
-    詳細は <ulink url="http://www.pgpool.net/mantisbt/view.php?id=271">Bug 271</ulink>、
-    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-February/002043.html">[pgpool-hackers: 2043]</ulink> と
-    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-March/002140.html">[pgpool-hackers: 2140]</ulink> をご参照下さい。
-    </para>
-    </listitem>
-
-    <listitem>
-    <!--
-    2017-03-24 [c2a0cc5]
-    -->
-    <para>
-    [Service] が Type=forking に設定されている場合、Pgpool-II 3.6.2 が systemd によって終了された不具合を修正しました。
-    <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
-    </para>
-    </listitem>
-    </itemizedlist>
-
-  </sect2>
-
-</sect1>
