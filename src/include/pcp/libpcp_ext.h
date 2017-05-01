@@ -26,7 +26,6 @@
 #ifndef LIBPCP_EXT_H
 #define LIBPCP_EXT_H
 
-#include "pool_type.h"
 #include <signal.h>
 #include <stdio.h>
 
