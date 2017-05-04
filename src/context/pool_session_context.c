@@ -91,6 +91,12 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 		ereport(ERROR,
 				(errmsg("failed to get process info for current process")));
 
+	/* Initialize preferred master node id. This must be done before any
+	 * statement using MASTER* macros because inside the macro,
+	 * pool_get_preferred_master_node_id() is called.
+	 */
+	pool_reset_preferred_master_node_id();
+
 	/* Choose load balancing node if necessary */
 	if (pool_config->load_balance_mode)
 	{
@@ -155,9 +161,6 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 
 	/* Initialize previous pending message */
 	pool_pending_message_reset_previous_message();
-
-	/* Initialize preferred master node id */
-	pool_reset_preferred_master_node_id();
 }
 
 /*
