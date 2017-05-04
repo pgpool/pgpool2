@@ -350,12 +350,6 @@ int pool_virtual_master_db_node_id(void)
 	 */
 	if (MASTER_SLAVE)
 	{
-		int node_id;
-
-		node_id = pool_get_preferred_master_node_id();
-		if (node_id >= 0)
-			return node_id;
-
 		return PRIMARY_NODE_ID;
 	}
 	return my_master_node_id;

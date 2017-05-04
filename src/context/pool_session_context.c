@@ -156,8 +156,10 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	/* Initialize previous pending message */
 	pool_pending_message_reset_previous_message();
 
+#ifdef NOT_USED
 	/* Initialize preferred master node id */
 	pool_reset_preferred_master_node_id();
+#endif
 }
 
 /*
@@ -1437,6 +1439,7 @@ int pool_get_minor_version(void)
 	return 0;
 }
 
+#ifdef NOT_USED
 /*
  * Set preferred "master" node id.
  * Only used for SimpleForwardToFrontend.
@@ -1463,3 +1466,4 @@ void pool_reset_preferred_master_node_id(void)
 {
 	session_context->preferred_master_node_id = -1;
 }
+#endif

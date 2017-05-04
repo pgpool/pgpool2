@@ -2708,9 +2708,10 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				status = SimpleForwardToFrontend(kind, frontend, backend);
 				break;
 		}
-
+#ifdef NOT_USED
 		if (STREAM && pool_is_doing_extended_query_message())
 			pool_reset_preferred_master_node_id();
+#endif
 	}
 	else
 	{

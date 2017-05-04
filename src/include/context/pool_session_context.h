@@ -229,9 +229,10 @@ typedef struct {
 	int major;
 	/* Protocol minor version number */
 	int minor;
-
+#ifdef NOT_USED
 	/* Preferred "master" node id. Only used for SimpleForwardToFrontend. */
 	int preferred_master_node_id;
+#endif
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
@@ -295,9 +296,11 @@ extern void dump_pending_message(void);
 extern void pool_set_major_version(int major);
 extern void pool_set_minor_version(int minor);
 extern int pool_get_minor_version(void);
+#ifdef NOT_USED
 extern void pool_set_preferred_master_node_id(int node_id);
 extern int pool_get_preferred_master_node_id(void);
 extern void pool_reset_preferred_master_node_id(void);
+#endif
 
 #ifdef NOT_USED
 extern void pool_add_prep_where(char *name, bool *map);
