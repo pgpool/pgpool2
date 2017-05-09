@@ -209,6 +209,8 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	sigjmp_buf	local_sigjmp_buf;
 
+	bool first = true;
+
 	/* For PostmasterRandom */
 	gettimeofday(&random_start_time, NULL);
 
@@ -375,6 +377,15 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	MemoryContextSwitchTo(TopMemoryContext);
 
+	/*
+	 * if the primary node id is not loaded by watchdog, search for it
+	 */
+	if (Req_info->primary_node_id < 0)
+	{
+		/* Save primary node id */
+		Req_info->primary_node_id = find_primary_node_repeatedly();
+	}
+
 	/* fork a child for PCP handling */
 	pcp_unix_fd = create_unix_domain_socket(pcp_un_addr);
 	/* Add onproc exit to clean up the unix domain socket at exit */
@@ -394,23 +405,6 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	{
 		if (VALID_BACKEND(i))
 			health_check_pids[i] = worker_fork_a_child(PT_HEALTH_CHECK, do_health_check_child, &i);
-	}
-
-	/*
-	 * check for child signals to ensure child startup before reporting successfull start
-	 */
-	CHECK_REQUEST;
-
-	ereport(LOG,
-			(errmsg("%s successfully started. version %s (%s)", PACKAGE, VERSION, PGPOOLVERSION)));
-
-	/*
-	 * if the primary node id is not loaded by watchdog, search for it
-	 */
-	if (Req_info->primary_node_id < 0)
-	{
-		/* Save primary node id */
-		Req_info->primary_node_id = find_primary_node();
 	}
 
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
@@ -434,6 +428,15 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	for (;;)
 	{
 		CHECK_REQUEST;
+
+		/*
+		 * check for child signals to ensure child startup before reporting
+		 * successfull start.
+		 */
+		if (first)
+			ereport(LOG,
+					(errmsg("%s successfully started. version %s (%s)", PACKAGE, VERSION, PGPOOLVERSION)));
+		first = false;
 
 		processState = SLEEPING;
 		for (;;)
