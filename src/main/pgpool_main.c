@@ -216,6 +216,8 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	MemoryContext MainLoopMemoryContext;
 	sigjmp_buf	local_sigjmp_buf;
 
+	bool first = true;
+
 	/* For PostmasterRandom */
 	gettimeofday(&random_start_time, NULL);
 
@@ -389,6 +391,15 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 											  ALLOCSET_DEFAULT_INITSIZE,
 											  ALLOCSET_DEFAULT_MAXSIZE);
 
+	/*
+	 * if the primary node id is not loaded by watchdog, search for it
+	 */
+	if (Req_info->primary_node_id < 0)
+	{
+		/* Save primary node id */
+		Req_info->primary_node_id = find_primary_node_repeatedly();
+	}
+
 	/* fork a child for PCP handling */
 	pcp_unix_fd = create_unix_domain_socket(pcp_un_addr);
 	/* Add onproc exit to clean up the unix domain socket at exit */
@@ -404,23 +415,6 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	worker_pid = worker_fork_a_child();
 
 	retrycnt = 0;		/* reset health check retry counter */
-
-	/*
-	 * check for child signals to ensure child startup before reporting successfull start
-	 */
-	CHECK_REQUEST;
-
-	ereport(LOG,
-			(errmsg("%s successfully started. version %s (%s)", PACKAGE, VERSION, PGPOOLVERSION)));
-
-	/*
-	 * if the primary node id is not loaded by watchdog, search for it
-	 */
-	if (Req_info->primary_node_id < 0)
-	{
-		/* Save primary node id */
-		Req_info->primary_node_id = find_primary_node();
-	}
 
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
@@ -478,6 +472,15 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		bool all_nodes_healthy;
 		CHECK_REQUEST;
 
+		/*
+		 * check for child signals to ensure child startup before reporting
+		 * successfull start.
+		 */
+		if (first)
+			ereport(LOG,
+					(errmsg("%s successfully started. version %s (%s)", PACKAGE, VERSION, PGPOOLVERSION)));
+		first = false;
+
 		/* do we need health checking for PostgreSQL? */
 		if (pool_config->health_check_period > 0)
 		{
@@ -532,7 +535,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 			}
 			pool_sleep(pool_config->health_check_period);
 		}
-		else /* Health Check is not enable and we have not much to do */
+		else /* Health Check is not enabled and we have not much to do */
 		{
 			processState = SLEEPING;
 			for (;;)
