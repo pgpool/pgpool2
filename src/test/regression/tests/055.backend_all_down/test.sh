@@ -17,6 +17,8 @@ echo -n "creating test environment..."
 $PGPOOL_SETUP -m s -n 2 || exit 1
 echo "done."
 
+echo "search_primary_node_timeout = 5" >> etc/pgpool.conf
+
 source ./bashrc.ports
 
 export PGPORT=$PGPOOL_PORT
