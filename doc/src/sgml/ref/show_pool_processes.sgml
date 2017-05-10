@@ -5,7 +5,7 @@
 
 <refentry id="SQL-SHOW-POOL-PROCESSES">
   <indexterm zone="sql-show-pool-processes">
-    <primary>SHOW</primary>
+    <primary>SHOW POOL_PROCESSES</primary>
   </indexterm>
 
   <refmeta>

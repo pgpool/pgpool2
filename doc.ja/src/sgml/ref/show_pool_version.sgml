@@ -5,7 +5,7 @@
 
 <refentry id="SQL-SHOW-POOL-VERSION">
   <indexterm zone="sql-show-pool-version">
-    <primary>SHOW</primary>
+    <primary>SHOW POOL_VERSION</primary>
   </indexterm>
 
   <refmeta>

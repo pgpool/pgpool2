@@ -50,6 +50,16 @@
     </para>
   </note>
 
+  <note>
+    <para>
+<!--
+      You can check which DB node is assigned as the load balancing
+      node by using <xref linkend="sql-show-pool-nodes">.
+  -->
+どのDBノードが負荷分散ノードになっているかは、<xref linkend="sql-show-pool-nodes">を利用して確認できます。
+    </para>
+  </note>
+      
  <sect2 id="runtime-config-load-balancing-condition">
 <!--
   <title>Condition for Load Balancing</title>

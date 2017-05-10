@@ -32,6 +32,13 @@
     </para>
   </note>
 
+  <note>
+    <para>
+      You can check which DB node is assigned as the load balancing
+      node by using <xref linkend="sql-show-pool-nodes">.
+    </para>
+  </note>
+      
  <sect2 id="runtime-config-load-balancing-condition">
   <title>Condition for Load Balancing</title>
 
