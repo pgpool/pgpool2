@@ -550,10 +550,10 @@ extern void NoticeResponse(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend);
 
 extern void notice_backend_error(int node_id, bool switch_over);
-extern void degenerate_backend_set(int *node_id_set, int count, bool switch_over, unsigned int wd_failover_id);
+extern bool degenerate_backend_set(int *node_id_set, int count, bool switch_over, unsigned int wd_failover_id);
 extern bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only, bool switch_over, unsigned int wd_failover_id);
-extern void promote_backend(int node_id, unsigned int wd_failover_id);
-extern void send_failback_request(int node_id, bool throw_error, unsigned int wd_failover_id);
+extern bool promote_backend(int node_id, unsigned int wd_failover_id);
+extern bool send_failback_request(int node_id, bool throw_error, unsigned int wd_failover_id);
 
 
 extern void pool_set_timeout(int timeoutval);

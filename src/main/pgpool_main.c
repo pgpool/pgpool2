@@ -1092,20 +1092,20 @@ bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool tes
  * wrapper over degenerate_backend_set_ex function to register
  * NODE down operation request
  */
-void degenerate_backend_set(int *node_id_set, int count, bool switch_over, unsigned int wd_failover_id)
+bool degenerate_backend_set(int *node_id_set, int count, bool switch_over, unsigned int wd_failover_id)
 {
-	degenerate_backend_set_ex(node_id_set, count, false, false, switch_over, wd_failover_id);
+	return degenerate_backend_set_ex(node_id_set, count, false, false, switch_over, wd_failover_id);
 }
 
 /* send promote node request using SIGUSR1 */
-void promote_backend(int node_id, unsigned int wd_failover_id)
+bool promote_backend(int node_id, unsigned int wd_failover_id)
 {
 	WDFailoverCMDResults res = FAILOVER_RES_PROCEED;
-
+	bool ret = false;
 
 	if (!MASTER_SLAVE || pool_config->master_slave_sub_mode != STREAM_MODE)
 	{
-		return;
+		return false;
 	}
 
 	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS || !VALID_BACKEND(node_id))
@@ -1118,7 +1118,7 @@ void promote_backend(int node_id, unsigned int wd_failover_id)
 			ereport(LOG,
 					(errmsg("invalid promote backend request, node id : %d status: [%d] not valid"
 							,node_id,BACKEND_INFO(node_id).backend_status)));
-		return;
+		return false;
 	}
 	ereport(LOG,
 			(errmsg("received promote backend request for node_id: %d from pid [%d]",
@@ -1149,7 +1149,7 @@ void promote_backend(int node_id, unsigned int wd_failover_id)
 
 	if (res == FAILOVER_RES_PROCEED)
 	{
-		register_node_operation_request(PROMOTE_NODE_REQUEST, &node_id, 1, false, wd_failover_id);
+		ret = register_node_operation_request(PROMOTE_NODE_REQUEST, &node_id, 1, false, wd_failover_id);
 	}
 	else if (res == FAILOVER_RES_WILL_BE_DONE)
 	{
@@ -1163,12 +1163,14 @@ void promote_backend(int node_id, unsigned int wd_failover_id)
 				(errmsg("promote backend request for node_id: %d from pid [%d] is canceled  by other pgpool"
 						, node_id, getpid())));
 	}
+	return ret;
 }
 
 /* send failback request using SIGUSR1 */
-void send_failback_request(int node_id,bool throw_error, unsigned int wd_failover_id)
+bool send_failback_request(int node_id,bool throw_error, unsigned int wd_failover_id)
 {
 	WDFailoverCMDResults res = FAILOVER_RES_PROCEED;
+	bool ret = false;
 
     if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
 		(RAW_MODE && BACKEND_INFO(node_id).backend_status != CON_DOWN && VALID_BACKEND(node_id)))
@@ -1181,7 +1183,7 @@ void send_failback_request(int node_id,bool throw_error, unsigned int wd_failove
 			ereport(throw_error?ERROR:LOG,
 					(errmsg("invalid failback request, node id : %d status: [%d] not valid for failback"
 							,node_id,BACKEND_INFO(node_id).backend_status)));
-		return;
+		return false;
 	}
 
 	ereport(LOG,
@@ -1213,7 +1215,7 @@ void send_failback_request(int node_id,bool throw_error, unsigned int wd_failove
 
 	if (res == FAILOVER_RES_PROCEED)
 	{
-		register_node_operation_request(NODE_UP_REQUEST, &node_id, 1, false, wd_failover_id);
+		ret = register_node_operation_request(NODE_UP_REQUEST, &node_id, 1, false, wd_failover_id);
 	}
 	else if (res == FAILOVER_RES_WILL_BE_DONE)
 	{
@@ -1221,13 +1223,13 @@ void send_failback_request(int node_id,bool throw_error, unsigned int wd_failove
 				(errmsg("failback request for node_id: %d from pid [%d], will be handled by watchdog"
 						, node_id, getpid())));
 	}
-
 	else
 	{
 		ereport(throw_error?ERROR:LOG,
 				(errmsg("failback request for node_id: %d from pid [%d] is canceled  by other pgpool"
 						, node_id, getpid())));
 	}
+	return ret;
 }
 
 static RETSIGTYPE exit_handler(int sig)
