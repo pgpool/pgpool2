@@ -116,6 +116,8 @@ typedef enum IPC_CMD_PREOCESS_RES
 #define CLUSTER_IAM_RESIGNING_FROM_MASTER	'R'
 #define CLUSTER_NODE_INVALID_VERSION		'V'
 
+#define WD_MASTER_NODE getMasterWatchdogNode()
+
 typedef struct packet_types
 {
 	char type;
@@ -172,7 +174,8 @@ char *wd_event_name[] =
 	"REMOTE NODE FOUND",
 	"THIS NODE FOUND",
 	"NODE CONNECTION LOST",
-	"NODE CONNECTION FOUND"
+	"NODE CONNECTION FOUND",
+	"CLUSTER QUORUM STATUS CHANGED"
 };
 
 char *wd_state_names[] = {
@@ -287,22 +290,27 @@ typedef struct WDInterfaceStatus
 	bool			if_up;
 }WDInterfaceStatus;
 
+typedef struct WDClusterMaster
+{
+	WatchdogNode*	masterNode;
+	WatchdogNode**	standbyNodes;
+	int				standby_nodes_count;
+	bool			holding_vip;
+}WDClusterMasterInfo;
+
 typedef struct wd_cluster
 {
 	WatchdogNode*		localNode;
 	WatchdogNode*		remoteNodes;
-	WatchdogNode*		masterNode;
+	WDClusterMasterInfo	clusterMasterInfo;
 	InterlockingNode	interlockingNode;
 	int					remoteNodeCount;
-	int					aliveNodeCount;
 	int					quorum_status;
 	unsigned int		nextCommandID;
 	pid_t				escalation_pid;
 	pid_t				de_escalation_pid;
 	int				command_server_sock;
 	int				network_monitor_sock;
-	bool			holding_vip;
-	bool			escalated;
 	bool			clusterInitialized;
 	bool			ipc_auth_needed;
 	List			*unidentified_socks;
@@ -390,7 +398,7 @@ static void service_internal_command(void);
 
 static unsigned int get_next_commandID(void);
 static WatchdogNode* parse_node_info_message(WDPacketData* pkt, char **authkey);
-static int update_quorum_status(void);
+static void update_quorum_status(void);
 static int get_mimimum_nodes_required_for_quorum(void);
 
 static bool write_packet_to_socket(int sock, WDPacketData* pkt, bool ipcPacket);
@@ -414,7 +422,6 @@ static int accept_incomming_connections(fd_set* rmask, int pending_fds_count);
 
 static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt);
 static void cluster_service_message_processor(WatchdogNode* wdNode, WDPacketData* pkt);
-static int update_connected_node_count(void);
 static int get_cluster_node_count(void);
 static void clear_command_node_result(WDCommandNodeResult* nodeResult);
 
@@ -499,11 +506,16 @@ static void update_interface_status(void);
 static bool any_interface_available(void);
 static WDPacketData* process_data_request(WatchdogNode* wdNode, WDPacketData* pkt);
 
+static WatchdogNode* getMasterWatchdogNode(void);
+static void set_cluster_master_node(WatchdogNode* wdNode);
+static void clear_standby_nodes_list(void);
+static int standby_node_left_cluster(WatchdogNode* wdNode);
+static int standby_node_join_cluster(WatchdogNode* wdNode);
+
 /* global variables */
 wd_cluster g_cluster;
 struct timeval g_tm_set_time;
 int g_timeout_sec = 0;
-
 
 static unsigned int get_next_commandID(void)
 {
@@ -656,10 +668,10 @@ static void wd_cluster_initialize(void)
 	/* initialize remote nodes */
 	g_cluster.remoteNodeCount = pool_config->wd_remote_nodes.num_wd;
 	g_cluster.remoteNodes = palloc0((sizeof(WatchdogNode) * g_cluster.remoteNodeCount));
-	
+
 	ereport(LOG,
 			(errmsg("watchdog cluster is configured with %d remote nodes",g_cluster.remoteNodeCount)));
-	
+
 	for ( i = 0; i < pool_config->wd_remote_nodes.num_wd; i++)
 	{
 		g_cluster.remoteNodes[i].wd_port = pool_config->wd_remote_nodes.wd_remote_node_info[i].wd_port;
@@ -672,13 +684,13 @@ static void wd_cluster_initialize(void)
 				(errmsg("watchdog remote node:%d on %s:%d",i,g_cluster.remoteNodes[i].hostname, g_cluster.remoteNodes[i].wd_port)));
 	}
 
-	g_cluster.masterNode = NULL;
-	g_cluster.aliveNodeCount = 0;
+	g_cluster.clusterMasterInfo.masterNode = NULL;
+	g_cluster.clusterMasterInfo.standbyNodes = palloc0(sizeof(WatchdogNode*) * g_cluster.remoteNodeCount);
+	g_cluster.clusterMasterInfo.standby_nodes_count = 0;
+	g_cluster.clusterMasterInfo.holding_vip = false;
 	g_cluster.quorum_status = -1;
 	g_cluster.nextCommandID = 1;
-	g_cluster.escalated = get_watchdog_node_escalation_state();
 	g_cluster.clusterInitialized = false;
-	g_cluster.holding_vip = false;
 	g_cluster.escalation_pid = 0;
 	g_cluster.de_escalation_pid = 0;
 	g_cluster.unidentified_socks = NULL;
@@ -692,7 +704,8 @@ static void wd_cluster_initialize(void)
 	g_cluster.clusterCommands = NULL;
 	g_cluster.ipc_auth_needed = strlen(pool_config->wd_authkey)?true:false;
 
-	g_cluster.localNode->escalated = g_cluster.escalated;
+	g_cluster.localNode->escalated = get_watchdog_node_escalation_state();
+
 	wd_initialize_monitoring_interfaces();
 	if (g_cluster.ipc_auth_needed)
 	{
@@ -1144,7 +1157,10 @@ watchdog_main(void)
 
 		service_unreachable_nodes();
 
-		update_connected_node_count();
+		if (get_local_node_state() == WD_COORDINATOR)
+		{
+			update_quorum_status();
+		}
 	}
 	return 0;
 }
@@ -1429,7 +1445,7 @@ static int read_sockets(fd_set* rmask,int pending_fds_count)
 								{
 									wdNode->current_state_time.tv_sec = tempNode->current_state_time.tv_sec;
 									wdNode->escalated = tempNode->escalated;
-									wdNode->alive_node_count = tempNode->alive_node_count;
+									wdNode->standby_nodes_count = tempNode->standby_nodes_count;
 									wdNode->quorum_status = tempNode->quorum_status;
 								}
 								break;
@@ -1852,7 +1868,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_get_runtime_variable_value_request(WDCom
 	else if (strcasecmp(WD_RUNTIME_VAR_ESCALATION_STATE, requestVarName) == 0)
 	{
 		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA_TYPE, VALUE_DATA_TYPE_BOOL);
-		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA, g_cluster.escalated);
+		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA, g_cluster.localNode->escalated);
 	}
 	else
 	{
@@ -2320,12 +2336,12 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData* ipcComma
 		wd_packet_shallow_copy(&ipcCommand->sourcePacket, &ipcCommand->commandPacket);
 		set_next_commandID_in_message(&ipcCommand->commandPacket);
 
-		ipcCommand->sendToNode = g_cluster.masterNode; /* command needs to be sent to all nodes */
+		ipcCommand->sendToNode = WD_MASTER_NODE; /* send the command to master node */
 		if (send_command_packet_to_remote_nodes(ipcCommand, true) <= 0)
 		{
 			ereport(LOG,
 				(errmsg("unable to process the failover command request received on IPC interface"),
-					 errdetail("failed to forward the request to the master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
+					 errdetail("failed to forward the request to the master watchdog node \"%s\"",WD_MASTER_NODE->nodeName)));
 			return IPC_CMD_ERROR;
 		}
 		else
@@ -2335,7 +2351,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData* ipcComma
 			 */
 			ereport(LOG,
 				(errmsg("failover request from local pgpool-II node received on IPC interface is forwarded to master watchdog node \"%s\"",
-						g_cluster.masterNode->nodeName),
+						WD_MASTER_NODE->nodeName),
 					 errdetail("waiting for the reply...")));
 			return IPC_CMD_PROCESSING;
 		}
@@ -2366,12 +2382,12 @@ static IPC_CMD_PREOCESS_RES process_IPC_online_recovery(WDCommandData* ipcComman
 		{
 			ereport(LOG,
 				(errmsg("unable to process the online recovery request received on IPC interface"),
-					 errdetail("failed to forward the request to the master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
+					 errdetail("failed to forward the request to the master watchdog node \"%s\"",WD_MASTER_NODE->nodeName)));
 			return IPC_CMD_ERROR;
 		}
 		ereport(LOG,
 			(errmsg("online recovery request from local pgpool-II node received on IPC interface is forwarded to master watchdog node \"%s\"",
-						g_cluster.masterNode->nodeName),
+						WD_MASTER_NODE->nodeName),
 				 errdetail("waiting for the reply...")));
 
 		return IPC_CMD_PROCESSING;
@@ -2404,12 +2420,12 @@ static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDCommandData *
 		wd_packet_shallow_copy(&ipcCommand->sourcePacket, &ipcCommand->commandPacket);
 		set_next_commandID_in_message(&ipcCommand->commandPacket);
 
-		ipcCommand->sendToNode = g_cluster.masterNode;
+		ipcCommand->sendToNode = WD_MASTER_NODE;
 		if (send_command_packet_to_remote_nodes(ipcCommand, true) <= 0)
 		{
 			ereport(LOG,
 				(errmsg("unable to process the get data request received on IPC interface"),
-					 errdetail("failed to forward the request to the master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
+					 errdetail("failed to forward the request to the master watchdog node \"%s\"",WD_MASTER_NODE->nodeName)));
 			return IPC_CMD_ERROR;
 		}
 		else
@@ -2419,7 +2435,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDCommandData *
 			 */
 			ereport(LOG,
 				(errmsg("get data request from local pgpool-II node received on IPC interface is forwarded to master watchdog node \"%s\"",
-							g_cluster.masterNode->nodeName),
+							WD_MASTER_NODE->nodeName),
 					 errdetail("waiting for the reply...")));
 
 			return IPC_CMD_PROCESSING;
@@ -2454,12 +2470,12 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_locking_cmd(WDCommandData *ipcC
 		wd_packet_shallow_copy(&ipcCommand->sourcePacket, &ipcCommand->commandPacket);
 		set_next_commandID_in_message(&ipcCommand->commandPacket);
 
-		ipcCommand->sendToNode = g_cluster.masterNode;
+		ipcCommand->sendToNode = WD_MASTER_NODE;
 		if (send_command_packet_to_remote_nodes(ipcCommand, true) <= 0)
 		{
 			ereport(LOG,
 				(errmsg("unable to process the failover command lock request received on IPC interface"),
-					 errdetail("failed to forward the request to the master watchdog node \"%s\"",g_cluster.masterNode->nodeName)));
+					 errdetail("failed to forward the request to the master watchdog node \"%s\"",WD_MASTER_NODE->nodeName)));
 			return IPC_CMD_ERROR;
 		}
 		else
@@ -2469,7 +2485,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_locking_cmd(WDCommandData *ipcC
 			 */
 			ereport(LOG,
 					(errmsg("failover command lock request from local pgpool-II node received on IPC interface is forwarded to master watchdog node \"%s\"",
-							g_cluster.masterNode->nodeName),
+							WD_MASTER_NODE->nodeName),
 					 errdetail("waiting for the reply...")));
 			return IPC_CMD_PROCESSING;
 		}
@@ -2640,7 +2656,7 @@ node_is_asking_for_failover_start(WatchdogNode* wdNode, WDPacketData* pkt, unsig
 	if (get_local_node_state() == WD_COORDINATOR)
 	{
 		/* only the coordinator node can become a lock holder */
-		if (g_cluster.masterNode == wdNode)
+		if (WD_MASTER_NODE == wdNode)
 		{
 			int i = 0;
 			/* lock all command locks */
@@ -3421,14 +3437,12 @@ static JsonNode* get_node_list_json(int id)
 {
 	int i;
 	JsonNode* jNode = jw_create_with_object(true);
-	update_connected_node_count();
-	update_quorum_status();
 	jw_put_int(jNode, "RemoteNodeCount", g_cluster.remoteNodeCount);
-	jw_put_int(jNode, "QuorumStatus", g_cluster.quorum_status); 
-	jw_put_int(jNode, "AliveNodeCount", g_cluster.aliveNodeCount);
-	jw_put_int(jNode, "Escalated", g_cluster.escalated?1:0);
-	jw_put_string(jNode, "MasterNodeName",g_cluster.masterNode?g_cluster.masterNode->nodeName:"Not Set");
-	jw_put_string(jNode, "MasterHostName",g_cluster.masterNode?g_cluster.masterNode->hostname:"Not Set");
+	jw_put_int(jNode, "QuorumStatus", WD_MASTER_NODE?WD_MASTER_NODE->quorum_status:-2);
+	jw_put_int(jNode, "AliveNodeCount", WD_MASTER_NODE?WD_MASTER_NODE->standby_nodes_count:0);
+	jw_put_int(jNode, "Escalated", g_cluster.localNode->escalated);
+	jw_put_string(jNode, "MasterNodeName",WD_MASTER_NODE?WD_MASTER_NODE->nodeName:"Not Set");
+	jw_put_string(jNode, "MasterHostName",WD_MASTER_NODE?WD_MASTER_NODE->hostname:"Not Set");
 	if (id < 0)
 	{
 		jw_put_int(jNode, "NodeCount", g_cluster.remoteNodeCount + 1);
@@ -3479,8 +3493,6 @@ static WDPacketData* get_beacon_message(char type, WDPacketData* replyFor)
 {
 	WDPacketData *message = get_empty_packet();
 	char *json_data;
-	update_connected_node_count();
-	update_quorum_status();
 
 	json_data = get_beacon_message_json(g_cluster.localNode);
 
@@ -3674,7 +3686,7 @@ static void cluster_service_message_processor(WatchdogNode* wdNode, WDPacketData
 	{
 		case CLUSTER_IAM_TRUE_MASTER:
 		{
-			/* The cluster was in split-brain and thigs it is the worthy master */
+			/* The cluster was in split-brain and remote node thiks it is the worthy master */
 			if (get_local_node_state() == WD_COORDINATOR)
 			{
 				ereport(LOG,
@@ -3682,20 +3694,17 @@ static void cluster_service_message_processor(WatchdogNode* wdNode, WDPacketData
 						 errdetail("re-initializing the local watchdog cluster state because of split-brain")));
 
 				send_cluster_service_message(NULL,pkt,CLUSTER_IAM_RESIGNING_FROM_MASTER);
-
-				g_cluster.masterNode = NULL;
 				set_state(WD_JOINING);
 			}
-			else if (g_cluster.masterNode != NULL && g_cluster.masterNode != wdNode)
+			else if (WD_MASTER_NODE != NULL && WD_MASTER_NODE != wdNode)
 			{
 				ereport(LOG,
 						(errmsg("remote node \"%s\" thinks it is a master/coordinator and I am causing the split-brain," \
 								" but as per our record \"%s\" is the cluster master/coordinator",
 								wdNode->nodeName,
-								g_cluster.masterNode->nodeName),
+								WD_MASTER_NODE->nodeName),
 						 errdetail("restarting the cluster")));
 				send_cluster_service_message(NULL,pkt,CLUSTER_NEEDS_ELECTION);
-				g_cluster.masterNode = NULL;
 				set_state(WD_JOINING);
 			}
 		}
@@ -3703,14 +3712,13 @@ static void cluster_service_message_processor(WatchdogNode* wdNode, WDPacketData
 
 		case CLUSTER_IAM_RESIGNING_FROM_MASTER:
 		{
-			if (g_cluster.masterNode == wdNode)
+			if (WD_MASTER_NODE == wdNode)
 			{
 				ereport(LOG,
 						(errmsg("master/coordinator node \"%s\" decided to resigning from master, probably because of split-brain",
 								wdNode->nodeName),
 						 errdetail("re-initializing the local watchdog cluster state")));
 
-				g_cluster.masterNode = NULL;
 				set_state(WD_JOINING);
 			}
 			else
@@ -3740,20 +3748,18 @@ static void cluster_service_message_processor(WatchdogNode* wdNode, WDPacketData
 			ereport(LOG,
 					(errmsg("remote node \"%s\" detected the split-brain and wants to re-initialize the cluster",wdNode->nodeName)));
 
-			g_cluster.masterNode = NULL;
 			set_state(WD_JOINING);
 		}
 			break;
 
 		case CLUSTER_IAM_NOT_TRUE_MASTER:
 		{
-			if (g_cluster.masterNode == wdNode)
+			if (WD_MASTER_NODE == wdNode)
 			{
 				ereport(LOG,
 						(errmsg("master/coordinator node \"%s\" decided it was not true master, probably because of split-brain",wdNode->nodeName),
 						 errdetail("re-initializing the local watchdog cluster state")));
 
-				g_cluster.masterNode = NULL;
 				set_state(WD_JOINING);
 			}
 			else if (get_local_node_state() == WD_COORDINATOR)
@@ -3823,7 +3829,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 		case WD_POOL_CONFIG_DATA:
 		{
 			/* only accept config data if I am the coordinator node */
-			if (g_cluster.localNode == g_cluster.masterNode && pkt->data)
+			if (get_local_node_state() == WD_COORDINATOR && pkt->data)
 			{
 				POOL_CONFIG* standby_config = get_pool_config_from_json(pkt->data, pkt->len);
 				if (standby_config)
@@ -3833,7 +3839,17 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			}
 		}
 			break;
-			
+
+		case WD_EVENT_REMOTE_NODE_FOUND:
+		{
+			ereport(LOG,
+				(errmsg("remote node \"%s\" became reachable again",wdNode->nodeName),
+					 errdetail("requesting the node info")));
+			send_message_of_type(wdNode,WD_REQ_INFO_MESSAGE,NULL);
+			break;
+		}
+			break;
+
 		case WD_ADD_NODE_MESSAGE:
 		case WD_REQ_INFO_MESSAGE:
 			replyPkt = get_mynode_info_message(pkt);
@@ -3842,6 +3858,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 		case WD_INFO_MESSAGE:
 		{
 			char *authkey = NULL;
+			WD_STATES oldNodeState;
 			WatchdogNode* tempNode = parse_node_info_message(pkt, &authkey);
 			if (tempNode == NULL)
 			{
@@ -3850,6 +3867,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 				send_cluster_service_message(wdNode,pkt,CLUSTER_NODE_INVALID_VERSION);
 				break;
 			}
+			oldNodeState = wdNode->state;
 			wdNode->state = tempNode->state;
 			wdNode->startup_time.tv_sec = tempNode->startup_time.tv_sec;
 			wdNode->wd_priority = tempNode->wd_priority;
@@ -3857,7 +3875,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 
 			wdNode->current_state_time.tv_sec = tempNode->current_state_time.tv_sec;
 			wdNode->escalated = tempNode->escalated;
-			wdNode->alive_node_count = tempNode->alive_node_count;
+			wdNode->standby_nodes_count = tempNode->standby_nodes_count;
 			wdNode->quorum_status = tempNode->quorum_status;
 
 			print_watchdog_node_info(wdNode);
@@ -3867,15 +3885,15 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 
 			if (wdNode->state == WD_COORDINATOR)
 			{
-				if (g_cluster.masterNode == NULL)
+				if (WD_MASTER_NODE == NULL)
 				{
-					g_cluster.masterNode = wdNode;
+					set_cluster_master_node(wdNode);
 				}
-				else if (g_cluster.masterNode != wdNode)
+				else if (WD_MASTER_NODE != wdNode)
 				{
 					ereport(WARNING,
 							(errmsg("\"%s\" is the coordinator as per our record but \"%s\" is also announcing as a coordinator",
-									g_cluster.masterNode->nodeName, wdNode->nodeName),
+									WD_MASTER_NODE->nodeName, wdNode->nodeName),
 							 errdetail("cluster is in the split-brain")));
 
 					if (get_local_node_state() != WD_COORDINATOR)
@@ -3885,7 +3903,6 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 						 */
 
 						send_cluster_service_message(NULL,pkt,CLUSTER_IN_SPLIT_BRAIN);
-						g_cluster.masterNode = NULL;
 
 						ereport(LOG,
 								(errmsg("re-initializing the local watchdog cluster state because of split-brain")));
@@ -3909,19 +3926,22 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			/* if the info message is from master node. Make sure we are in sync
 			 * with the master node state
 			 */
-			else if (g_cluster.masterNode == wdNode)
+			else if (WD_MASTER_NODE == wdNode)
 			{
 				if (wdNode->state != WD_COORDINATOR)
 				{
 					ereport(WARNING,
 						(errmsg("the coordinator as per our record is not coordinator anymore"),
 							 errdetail("re-initializing the cluster")));
-					g_cluster.masterNode = NULL;
 					set_state(WD_JOINING);
 				}
 			}
-
 			pfree(tempNode);
+
+			if (oldNodeState == WD_STANDBY && wdNode->state != oldNodeState)
+			{
+				standby_node_left_cluster(wdNode);
+			}
 		}
 			break;
 
@@ -3931,7 +3951,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			 * if I am coordinator reply with accept,
 			 * otherwise reject
 			 */
-			if (g_cluster.localNode == g_cluster.masterNode)
+			if (g_cluster.localNode == WD_MASTER_NODE)
 			{
 				replyPkt = get_minimum_message(WD_ACCEPT_MESSAGE,pkt);
 			}
@@ -3948,19 +3968,19 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			 * if the message is received from coordinator reply with info,
 			 * otherwise reject
 			 */
-			if (g_cluster.masterNode != NULL && wdNode != g_cluster.masterNode)
+			if (WD_MASTER_NODE != NULL && wdNode != WD_MASTER_NODE)
 			{
 				ereport(LOG,
 						(errmsg("re-initializing the local watchdog cluster state because of split-brain")));
 
 				send_cluster_service_message(NULL,pkt,CLUSTER_IN_SPLIT_BRAIN);
-				g_cluster.masterNode = NULL;
 				set_state(WD_JOINING);
 
 			}
 			else
 			{
 				replyPkt = get_mynode_info_message(pkt);
+				beacon_message_received_from_node(wdNode, pkt);
 			}
 		}
 			break;
@@ -4509,23 +4529,6 @@ static int issue_watchdog_internal_command(WatchdogNode* wdNode, WDPacketData *p
 	return clusterCommand->commandSendToCount;
 }
 
-static int update_connected_node_count(void)
-{
-	int i;
-	g_cluster.aliveNodeCount = 0;
-	for (i = 0; i< g_cluster.remoteNodeCount; i++)
-	{
-		WatchdogNode* wdNode = &(g_cluster.remoteNodes[i]);
-		if (wdNode->state == WD_DEAD || wdNode->state == WD_SHUTDOWN)
-			continue;
-		if (is_node_reachable(wdNode))
-			g_cluster.aliveNodeCount++;
-	}
-	g_cluster.localNode->alive_node_count = g_cluster.aliveNodeCount;
-	return g_cluster.aliveNodeCount;
-}
-
-
 static bool service_lost_connections(void)
 {
 	int i;
@@ -4867,11 +4870,11 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 			ereport(LOG,
 					(errmsg("remote node \"%s\" is lost",wdNode->nodeName)));
 		}
-		if (wdNode == g_cluster.masterNode)
+		if (wdNode == WD_MASTER_NODE)
 		{
 			ereport(LOG,
 					(errmsg("watchdog cluster has lost the coordinator node")));
-			g_cluster.masterNode = NULL;
+			set_cluster_master_node(NULL);
 		}
 
 		/* clear the wait timer on the node */
@@ -5113,7 +5116,7 @@ static int watchdog_state_machine_joining(WD_EVENTS event, WatchdogNode* wdNode,
 	switch (event)
 	{
 		case WD_EVENT_WD_STATE_CHANGED:
-			g_cluster.masterNode = NULL;
+			set_cluster_master_node(NULL);
 			try_connecting_with_all_unreachable_nodes();
 			send_cluster_command(NULL, WD_REQ_INFO_MESSAGE, 4);
 			set_timeout(MAX_SECS_WAIT_FOR_REPLY_FROM_NODE);
@@ -5196,7 +5199,7 @@ static int watchdog_state_machine_initializing(WD_EVENTS event, WatchdogNode* wd
 			 * If master node exists in cluser, Join it
 			 * otherwise try becoming a master
 			 */
-			if (g_cluster.masterNode)
+			if (WD_MASTER_NODE)
 			{
 				/*
 				 * we found the coordinator node in network.
@@ -5424,7 +5427,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 						(errmsg("I am the cluster leader node"),
 							 errdetail("our declare coordinator message is accepted by all nodes")));
 
-					g_cluster.masterNode = g_cluster.localNode;
+					set_cluster_master_node(g_cluster.localNode);
 					register_watchdog_state_change_interupt();
 
 					/*
@@ -5486,6 +5489,38 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 		}
 			break;
 
+		case WD_EVENT_CLUSTER_QUORUM_CHANGED:
+		{
+			/* make sure we are accepted as master*/
+			if (WD_MASTER_NODE == g_cluster.localNode)
+			{
+				if (g_cluster.quorum_status == -1)
+				{
+					ereport(LOG,
+							(errmsg("We have lost the quorum")));
+					/*
+					 * We have lost the quorum, stay as a master node but
+					 * perform de-escalation. As keeping the VIP may result in
+					 * split-brain
+					 */
+					resign_from_escalated_node();
+				}
+				else if (g_cluster.quorum_status >= 0)
+				{
+					if (g_cluster.localNode->escalated == false)
+					{
+						ereport(LOG,
+								(errmsg("quorum found"),
+								 errdetail("starting escalation process")));
+						start_escalated_node();
+					}
+				}
+				/* inform to the cluster about the new quorum status */
+				send_message_of_type(NULL, WD_INFO_MESSAGE,NULL);
+			}
+		}
+			break;
+
 		case WD_EVENT_NW_IP_IS_REMOVED:
 		{
 			/* check if we were holding the virtual IP and it is now lost */
@@ -5505,7 +5540,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 				 * so its not a total black-out
 				 * check if we still have the VIP assigned
 				 */
-				if (g_cluster.holding_vip == true)
+				if (g_cluster.clusterMasterInfo.holding_vip == true)
 				{
 					ListCell *lc;
 					bool vip_exists = false;
@@ -5537,47 +5572,15 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 			break;
 
 		case WD_EVENT_TIMEOUT:
+		{
 			send_cluster_command(NULL, WD_IAM_COORDINATOR_MESSAGE, 5);
 			set_timeout(BEACON_MESSAGE_INTERVAL_SECONDS);
+		}
 			break;
 
 		case WD_EVENT_REMOTE_NODE_LOST:
 		{
-			/*
-			 * we have lost one remote connected node
-			 * check if the quorum still exists
-			 */
-			update_quorum_status();
-			if (g_cluster.quorum_status == -1)
-			{
-				ereport(LOG,
-						(errmsg("We have lost the quorum after loosing \"%s\"",wdNode->nodeName)));
-				/*
-				 * We have lost the quorum, stay as a master node but
-				 * perform de-escalation. As keeping the VIP may result in
-				 * split-brain
-				 */
-				resign_from_escalated_node();
-			}
-			else
-				ereport(DEBUG1,
-						(errmsg("We have lost the node \"%s\" but quorum still holds",wdNode->nodeName)));
-		}
-			break;
-
-		case WD_EVENT_REMOTE_NODE_FOUND:
-		{
-			update_quorum_status();
-			if (g_cluster.escalated == false)
-			{
-				if (g_cluster.quorum_status >= 0)
-				{
-					ereport(LOG,
-						(errmsg("quorum is complete after node \"%s\" joined the cluster",wdNode->nodeName),
-							 errdetail("starting escalation process")));
-					start_escalated_node();
-				}
-			}
+			standby_node_left_cluster(wdNode);
 		}
 			break;
 
@@ -5616,7 +5619,6 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 								 errdetail("re-initializing the local watchdog cluster state")));
 
 						send_cluster_service_message(wdNode,pkt,CLUSTER_NEEDS_ELECTION);
-						g_cluster.masterNode = NULL;
 						set_state(WD_JOINING);
 					}
 				}
@@ -5627,28 +5629,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 					reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
 					/* Also get the configurations from the standby node */
 					send_message_of_type(wdNode,WD_ASK_FOR_POOL_CONFIG,NULL);
-				}
-					break;
-
-				case WD_ADD_NODE_MESSAGE:
-				{
-					standard_packet_processor(wdNode, pkt);
-					/*
-					 * A new node has joined the cluster
-					 * see if we were in waiting for quorum state
-					 * and this node completes the quorum
-					 */
-					update_quorum_status();
-					if (g_cluster.escalated == false)
-					{
-						if (g_cluster.quorum_status >= 0)
-						{
-							ereport(LOG,
-								(errmsg("quorum is complete after node \"%s\" joined the cluster",wdNode->nodeName),
-									 errdetail("starting escalation process")));
-							start_escalated_node();
-						}
-					}
+					standby_node_join_cluster(wdNode);
 				}
 					break;
 
@@ -5757,7 +5738,7 @@ static bool beacon_message_received_from_node(WatchdogNode* wdNode, WDPacketData
 	long seconds_since_node_startup;
 	long seconds_since_current_state;
 	int quorum_status;
-	int alive_node_count;
+	int standby_nodes_count;
 	bool escalated;
 	int state;
 	struct timeval current_time;
@@ -5772,7 +5753,7 @@ static bool beacon_message_received_from_node(WatchdogNode* wdNode, WDPacketData
 									&seconds_since_node_startup,
 									&seconds_since_current_state,
 									&quorum_status,
-									&alive_node_count,
+									&standby_nodes_count,
 									&escalated) == false)
 	{
 		return false;
@@ -5782,7 +5763,7 @@ static bool beacon_message_received_from_node(WatchdogNode* wdNode, WDPacketData
 	wdNode->startup_time.tv_sec = current_time.tv_sec - seconds_since_node_startup;
 	wdNode->current_state_time.tv_usec = wdNode->startup_time.tv_usec = 0;
 	wdNode->quorum_status = quorum_status;
-	wdNode->alive_node_count = alive_node_count;
+	wdNode->standby_nodes_count = standby_nodes_count;
 	wdNode->state = state;
 	wdNode->escalated = escalated;
 	return true;
@@ -5813,13 +5794,10 @@ static int I_am_master_and_cluser_in_split_brain(WatchdogNode* otherMasterNode)
 		return 0;
 	}
 
-	update_quorum_status();
-	update_connected_node_count();
-
 	/* Decide which node should stay as master */
-	if (otherMasterNode->escalated != g_cluster.escalated)
+	if (otherMasterNode->escalated != g_cluster.localNode->escalated)
 	{
-		if (otherMasterNode->escalated != 0 && g_cluster.escalated == false)
+		if (otherMasterNode->escalated == true && g_cluster.localNode->escalated == false)
 		{
 			/* remote node stays as the master */
 			ereport(LOG,
@@ -5856,13 +5834,13 @@ static int I_am_master_and_cluser_in_split_brain(WatchdogNode* otherMasterNode)
 			return 1;
 		}
 	}
-	else if (otherMasterNode->alive_node_count != g_cluster.aliveNodeCount)
+	else if (otherMasterNode->standby_nodes_count != g_cluster.clusterMasterInfo.standby_nodes_count)
 	{
-		if (otherMasterNode->alive_node_count > g_cluster.aliveNodeCount)
+		if (otherMasterNode->standby_nodes_count > g_cluster.clusterMasterInfo.standby_nodes_count)
 		{
 			/* remote node has more alive nodes */
 			ereport(LOG,
-				(errmsg("remote node:\"%s\" is best suitable to stay as master because it has more alive nodes"
+				(errmsg("remote node:\"%s\" is best suitable to stay as master because it has more connected standby nodes"
 						,otherMasterNode->nodeName)));
 			return -1;
 		}
@@ -5870,7 +5848,7 @@ static int I_am_master_and_cluser_in_split_brain(WatchdogNode* otherMasterNode)
 		{
 			/* local node stays as master */
 			ereport(LOG,
-					(errmsg("remote node:\"%s\" should step down from master because we have more alive nodes"
+					(errmsg("remote node:\"%s\" should step down from master because we have more connected standby nodes"
 							,otherMasterNode->nodeName)));
 			return 1;
 		}
@@ -5914,7 +5892,6 @@ static void handle_split_brain(WatchdogNode* otherMasterNode, WDPacketData* pkt)
 				(errmsg("We are in split brain, and not able to decide the best candidate for master/coordinator"),
 				 errdetail("re-initializing the local watchdog cluster state")));
 		send_cluster_service_message(otherMasterNode,pkt,CLUSTER_NEEDS_ELECTION);
-		g_cluster.masterNode = NULL;
 		set_state(WD_JOINING);
 	}
 	else if (decide_master == -1)
@@ -5926,7 +5903,6 @@ static void handle_split_brain(WatchdogNode* otherMasterNode, WDPacketData* pkt)
 				 errdetail("re-initializing the local watchdog cluster state")));
 		/* brodcast the message about I am not the true master node */
 		send_cluster_service_message(NULL,pkt,CLUSTER_IAM_NOT_TRUE_MASTER);
-		g_cluster.masterNode = NULL;
 		set_state(WD_JOINING);
 	}
 	else
@@ -5943,7 +5919,7 @@ static void handle_split_brain(WatchdogNode* otherMasterNode, WDPacketData* pkt)
 static void start_escalated_node(void)
 {
 	int wait_secs = MAX_SECS_ESC_PROC_EXIT_WAIT;
-	if (g_cluster.escalated == true) /* already escalated */
+	if (g_cluster.localNode->escalated == true) /* already escalated */
 		return;
 
 	while (g_cluster.de_escalation_pid > 0 && wait_secs-- > 0)
@@ -5967,13 +5943,12 @@ static void start_escalated_node(void)
 	g_cluster.escalation_pid = fork_escalation_process();
 	if (g_cluster.escalation_pid > 0)
 	{
-		g_cluster.escalated = true;
-		g_cluster.localNode->escalated = g_cluster.escalated;
+		g_cluster.localNode->escalated = true;
 		set_watchdog_node_escalated();
 		ereport(LOG,
 				(errmsg("escalation process started with PID:%d",g_cluster.escalation_pid)));
 		if (strlen(g_cluster.localNode->delegate_ip) > 0)
-			g_cluster.holding_vip = true;
+			g_cluster.clusterMasterInfo.holding_vip = true;
 	}
 	else
 	{
@@ -5985,7 +5960,7 @@ static void start_escalated_node(void)
 static void resign_from_escalated_node(void)
 {
 	int wait_secs = MAX_SECS_ESC_PROC_EXIT_WAIT;
-	if (g_cluster.escalated == false)
+	if (g_cluster.localNode->escalated == false)
 		return;
 
 	while (g_cluster.escalation_pid > 0 && wait_secs-- > 0)
@@ -6006,9 +5981,8 @@ static void resign_from_escalated_node(void)
 			(errmsg("escalation process does not exited in time"),
 				 errdetail("starting the de-escalation anyway")));
 	g_cluster.de_escalation_pid = fork_plunging_process();
-	g_cluster.holding_vip = false;
-	g_cluster.escalated = false;
-	g_cluster.localNode->escalated = g_cluster.escalated;
+	g_cluster.clusterMasterInfo.holding_vip = false;
+	g_cluster.localNode->escalated = false;
 	reset_watchdog_node_escalated();
 }
 
@@ -6085,8 +6059,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 	switch (event)
 	{
 		case WD_EVENT_WD_STATE_CHANGED:
-			send_cluster_command(g_cluster.masterNode, WD_JOIN_COORDINATOR_MESSAGE, 5);
-			update_quorum_status();
+			send_cluster_command(WD_MASTER_NODE, WD_JOIN_COORDINATOR_MESSAGE, 5);
 			break;
 
 		case WD_EVENT_TIMEOUT:
@@ -6104,7 +6077,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 
 					ereport(LOG,
 						(errmsg("successfully joined the watchdog cluster as standby node"),
-							 errdetail("our join coordinator request is accepted by cluster leader node \"%s\"",g_cluster.masterNode->nodeName)));
+							 errdetail("our join coordinator request is accepted by cluster leader node \"%s\"",WD_MASTER_NODE->nodeName)));
 				}
 				else
 				{
@@ -6117,43 +6090,17 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 		}
 			break;
 
-		case WD_EVENT_REMOTE_NODE_FOUND:
-		{
-			int quorum_status = g_cluster.quorum_status;
-			update_quorum_status();
-			if (g_cluster.quorum_status >= 0 && quorum_status < 0 )
-			{
-				ereport(LOG,
-					(errmsg("quorum is complete after node \"%s\" is found",wdNode->nodeName)));
-				standard_packet_processor(wdNode, pkt);
-			}
-		}
-			break;
-
 		case WD_EVENT_REMOTE_NODE_LOST:
 		{
 			/*
 			 * we have lost one remote connected node
 			 * check if the node was coordinator
 			 */
-			if (g_cluster.masterNode == NULL)
+			if (WD_MASTER_NODE == NULL)
 			{
+				ereport(LOG,
+						(errmsg("We have lost the cluster master node \"%s\"",wdNode->nodeName)));
 				set_state(WD_JOINING);
-			}
-			else
-			{
-				int quorum_status = g_cluster.quorum_status;
-				update_quorum_status();
-				if (g_cluster.quorum_status == -1 && quorum_status >= 0 )
-				{
-					ereport(LOG,
-							(errmsg("We have lost the quorum after loosing \"%s\"",wdNode->nodeName)));
-					send_message_of_type(NULL, WD_QUORUM_IS_LOST,NULL);
-
-				}
-				else
-					ereport(DEBUG1,
-							(errmsg("We have lost the node \"%s\" but quorum still holds",wdNode->nodeName)));
 			}
 		}
 			break;
@@ -6162,7 +6109,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 		{
 			case WD_STAND_FOR_COORDINATOR_MESSAGE:
 			{
-				if (g_cluster.masterNode == NULL)
+				if (WD_MASTER_NODE == NULL)
 				{
 					reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
 					set_state(WD_PARTICIPATE_IN_ELECTION);
@@ -6176,7 +6123,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 				break;
 
 			case WD_DECLARE_COORDINATOR_MESSAGE:
-				if (wdNode != g_cluster.masterNode)
+				if (wdNode != WD_MASTER_NODE)
 				{
 					/*
 					 * we already have a master node
@@ -6184,21 +6131,11 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 					 * re-initialize the cluster, something is wrong
 					 */
 					reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+				}
+				else
+				{
 					set_state(WD_JOINING);
 				}
-				break;
-
-			case WD_ADD_NODE_MESSAGE:
-			{
-				int quorum_status = g_cluster.quorum_status;
-				update_quorum_status();
-				if (g_cluster.quorum_status >= 0 && quorum_status < 0 )
-				{
-					ereport(LOG,
-						(errmsg("quorum is complete after node \"%s\" joined the cluster",wdNode->nodeName)));
-					standard_packet_processor(wdNode, pkt);
-				}
-			}
 				break;
 
 			default:
@@ -6213,17 +6150,17 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 	/* before returning from the function make sure that
 	 * we are connected with the master node
 	 */
-	if (g_cluster.masterNode)
+	if (WD_MASTER_NODE)
 	{
 		struct timeval currTime;
 		gettimeofday(&currTime, NULL);
-		int last_rcv_sec = WD_TIME_DIFF_SEC(currTime,g_cluster.masterNode->last_rcv_time);
+		int last_rcv_sec = WD_TIME_DIFF_SEC(currTime,WD_MASTER_NODE->last_rcv_time);
 		if (last_rcv_sec >=  (2 * BEACON_MESSAGE_INTERVAL_SECONDS))
 		{
 			/* we have missed atleast two beacons from master node */
 			ereport(WARNING,
 					(errmsg("we have not received a beacon message from master node \"%s\" and it has not replied to our info request",
-							g_cluster.masterNode->nodeName),
+							WD_MASTER_NODE->nodeName),
 					 errdetail("re-initializing the cluster")));
 			set_state(WD_JOINING);
 
@@ -6235,9 +6172,9 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 			 */
 			ereport(WARNING,
 					(errmsg("we have not received a beacon message from master node \"%s\"",
-							g_cluster.masterNode->nodeName),
+							WD_MASTER_NODE->nodeName),
 					 errdetail("requesting info message from master node")));
-			send_message_of_type(g_cluster.masterNode,WD_REQ_INFO_MESSAGE,NULL);
+			send_message_of_type(WD_MASTER_NODE,WD_REQ_INFO_MESSAGE,NULL);
 		}
 	}
 	return 0;
@@ -6246,7 +6183,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 
 /*
  * The function identifies the current quorum state
- * return values:
+ * quorum values:
  * -1:
  *     quorum is lost or does not exisits
  * 0:
@@ -6255,13 +6192,15 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
  * 1:
  *     quorum exists
  */
-static int update_quorum_status(void)
+static void update_quorum_status(void)
 {
-	if ( get_cluster_node_count() > get_mimimum_nodes_required_for_quorum())
+	int quorum_status = g_cluster.quorum_status;
+
+	if ( g_cluster.clusterMasterInfo.standby_nodes_count > get_mimimum_nodes_required_for_quorum())
 	{
 		g_cluster.quorum_status = 1;
 	}
-	else if ( get_cluster_node_count() == get_mimimum_nodes_required_for_quorum())
+	else if ( g_cluster.clusterMasterInfo.standby_nodes_count == get_mimimum_nodes_required_for_quorum())
 	{
 		if (g_cluster.remoteNodeCount % 2 != 0)
 			g_cluster.quorum_status = 0; /* on the edge */
@@ -6273,7 +6212,10 @@ static int update_quorum_status(void)
 		g_cluster.quorum_status = -1;
 	}
 	g_cluster.localNode->quorum_status = g_cluster.quorum_status;
-	return g_cluster.quorum_status;
+	if (g_cluster.quorum_status != quorum_status)
+	{
+		watchdog_state_machine(WD_EVENT_CLUSTER_QUORUM_CHANGED, NULL, NULL, NULL);
+	}
 }
 
 /* returns the minimum number of remote nodes required for quorum */
@@ -6307,7 +6249,10 @@ static int set_state(WD_STATES newState)
 		gettimeofday(&g_cluster.localNode->current_state_time, NULL);
 		/* if we changing from the coordinator state, do the de-escalation if required */
 		if (oldState == WD_COORDINATOR)
+		{
 			resign_from_escalated_node();
+			clear_standby_nodes_list();
+		}
 
 		ereport(LOG,
 				(errmsg("watchdog node state changed from [%s] to [%s]",wd_state_names[oldState],wd_state_names[newState])));
@@ -6352,11 +6297,11 @@ static void process_pgpool_remote_failover_command(WatchdogNode* wdNode, WDPacke
 		return;
 	}
 
-	if (wdNode != g_cluster.masterNode)
+	if (wdNode != WD_MASTER_NODE)
 	{
 		ereport(LOG,
 			(errmsg("watchdog is unable to process pgpool failover command received from \"%s\"",wdNode->nodeName),
-				 errdetail("only master/coordinator (\"%s\") node can send the replicate commands",g_cluster.masterNode->nodeName)));
+				 errdetail("only master/coordinator (\"%s\") node can send the replicate commands",WD_MASTER_NODE->nodeName)));
 		reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
 		return;
 	}
@@ -7049,5 +6994,103 @@ static int send_command_packet_to_remote_nodes(WDCommandData* ipcCommand, bool s
 		}
 	}
 	return ipcCommand->commandSendToCount;
+}
+
+static void set_cluster_master_node(WatchdogNode* wdNode)
+{
+	if (WD_MASTER_NODE != wdNode)
+	{
+		if (wdNode == NULL)
+			ereport(LOG,
+					(errmsg("unassigning the %s node \"%s\" from watchdog cluster master",
+							(g_cluster.localNode == WD_MASTER_NODE)? "local":"remote",
+							WD_MASTER_NODE->nodeName)));
+		else
+			ereport(LOG,
+					(errmsg("setting the %s node \"%s\" as watchdog cluster master",
+							(g_cluster.localNode == wdNode)? "local":"remote",
+							wdNode->nodeName)));
+		g_cluster.clusterMasterInfo.masterNode = wdNode;
+	}
+}
+
+static WatchdogNode* getMasterWatchdogNode(void)
+{
+	return g_cluster.clusterMasterInfo.masterNode;
+}
+
+static int standby_node_join_cluster(WatchdogNode* wdNode)
+{
+	if (get_local_node_state() == WD_COORDINATOR)
+	{
+		int i;
+		/* First check if the node is already in the List */
+		for ( i = 0; i < g_cluster.clusterMasterInfo.standby_nodes_count; i++)
+		{
+			WatchdogNode* node = g_cluster.clusterMasterInfo.standbyNodes[i];
+			if (node && node == wdNode)
+			{
+				/* The node is already in the standby list */
+				return g_cluster.clusterMasterInfo.standby_nodes_count;
+			}
+		}
+		/* okay the node is not in the list */
+		ereport(LOG,
+				(errmsg("adding watchdog node \"%s\" to the standby list",wdNode->nodeName)));
+		g_cluster.clusterMasterInfo.standbyNodes[g_cluster.clusterMasterInfo.standby_nodes_count] = wdNode;
+		g_cluster.clusterMasterInfo.standby_nodes_count++;
+	}
+	g_cluster.localNode->standby_nodes_count = g_cluster.clusterMasterInfo.standby_nodes_count;
+	return g_cluster.clusterMasterInfo.standby_nodes_count;
+}
+
+static int standby_node_left_cluster(WatchdogNode* wdNode)
+{
+	if (get_local_node_state() == WD_COORDINATOR)
+	{
+		int i;
+		bool removed = false;
+		int standby_nodes_count = g_cluster.clusterMasterInfo.standby_nodes_count;
+		for ( i = 0; i < standby_nodes_count; i++)
+		{
+			WatchdogNode* node = g_cluster.clusterMasterInfo.standbyNodes[i];
+			if (node)
+			{
+				if (removed)
+				{
+					/* move this to previous index */
+					g_cluster.clusterMasterInfo.standbyNodes[i -1] = node;
+					g_cluster.clusterMasterInfo.standbyNodes[i] = NULL;
+				}
+				else if (node == wdNode)
+				{
+					/* okay we have found the node in the list.
+					 */
+					ereport(LOG,
+							(errmsg("removing watchdog node \"%s\" from the standby list",wdNode->nodeName)));
+
+					g_cluster.clusterMasterInfo.standbyNodes[i] = NULL;
+					g_cluster.clusterMasterInfo.standby_nodes_count--;
+					removed = true;
+				}
+			}
+		}
+	}
+	g_cluster.localNode->standby_nodes_count = g_cluster.clusterMasterInfo.standby_nodes_count;
+	return g_cluster.clusterMasterInfo.standby_nodes_count;
+}
+
+static void clear_standby_nodes_list(void)
+{
+	int i;
+	ereport(DEBUG1,
+			(errmsg("removing all watchdog nodes from the standby list"),
+			 errdetail("standby list contains %d nodes",g_cluster.clusterMasterInfo.standby_nodes_count)));
+	for ( i = 0; i < g_cluster.remoteNodeCount; i++)
+	{
+		g_cluster.clusterMasterInfo.standbyNodes[i] = NULL;
+	}
+	g_cluster.clusterMasterInfo.standby_nodes_count = 0;
+	g_cluster.localNode->standby_nodes_count = 0;
 }
 

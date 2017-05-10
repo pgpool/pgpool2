@@ -378,7 +378,7 @@ char* get_beacon_message_json(WatchdogNode* wdNode)
 	jw_put_long(jNode, "SecondsSinceStartup", seconds_since_node_startup);
 	jw_put_long(jNode, "SecondsSinceCurrentState", seconds_since_current_state);
 	jw_put_int(jNode, "QuorumStatus", wdNode->quorum_status);
-	jw_put_int(jNode, "AliveNodeCount", wdNode->alive_node_count);
+	jw_put_int(jNode, "AliveNodeCount", wdNode->standby_nodes_count);
 	jw_put_bool(jNode, "Escalated", wdNode->escalated == 0?false:true);
 
 	jw_finish_document(jNode);
@@ -413,7 +413,7 @@ char* get_watchdog_node_info_json(WatchdogNode* wdNode, char* authkey)
 	jw_put_long(jNode, "SecondsSinceStartup", seconds_since_node_startup);
 	jw_put_long(jNode, "SecondsSinceCurrentState", seconds_since_current_state);
 	jw_put_int(jNode, "QuorumStatus", wdNode->quorum_status);
-	jw_put_int(jNode, "AliveNodeCount", wdNode->alive_node_count);
+	jw_put_int(jNode, "AliveNodeCount", wdNode->standby_nodes_count);
 	jw_put_bool(jNode, "Escalated", wdNode->escalated == 0?false:true);
 
 	if(authkey)
@@ -455,7 +455,7 @@ WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len, char** 
 			goto ERROR_EXIT;
 		if (json_get_int_value_for_key(root, "QuorumStatus", &wdNode->quorum_status))
 			goto ERROR_EXIT;
-		if (json_get_int_value_for_key(root, "AliveNodeCount", &wdNode->alive_node_count))
+		if (json_get_int_value_for_key(root, "AliveNodeCount", &wdNode->standby_nodes_count))
 			goto ERROR_EXIT;
 
 		if (escalated)
@@ -521,7 +521,7 @@ bool parse_beacon_message_json(char* json_data, int data_len,
 							   long* seconds_since_node_startup,
 							   long* seconds_since_current_state,
 							   int* quorumStatus,
-							   int* aliveNodeCount,
+							   int* standbyNodesCount,
 							   bool* escalated)
 {
 	json_value *root = NULL;
@@ -541,7 +541,7 @@ bool parse_beacon_message_json(char* json_data, int data_len,
 		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "QuorumStatus", quorumStatus))
 		goto ERROR_EXIT;
-	if (json_get_int_value_for_key(root, "AliveNodeCount", aliveNodeCount))
+	if (json_get_int_value_for_key(root, "AliveNodeCount", standbyNodesCount))
 		goto ERROR_EXIT;
 
 	if (root)

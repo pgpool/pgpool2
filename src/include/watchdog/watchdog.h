@@ -85,7 +85,8 @@ typedef enum {
 	WD_EVENT_LOCAL_NODE_FOUND,
 
 	WD_EVENT_NODE_CON_LOST,
-	WD_EVENT_NODE_CON_FOUND
+	WD_EVENT_NODE_CON_FOUND,
+	WD_EVENT_CLUSTER_QUORUM_CHANGED
 
 } WD_EVENTS;
 
@@ -117,8 +118,9 @@ typedef struct WatchdogNode
 	int	private_id;							/* ID assigned to this node
 											 * This id is consumed locally
 											 */
-	int alive_node_count;					/* number of alive/reachable
-											 * watchdog nodes connected */
+	int standby_nodes_count;				/* number of standby nodes joined the cluster
+											 * only applicable when this WatchdogNode is
+											 * the master/coordinator node*/
 	int quorum_status;						/* quorum status on the node */
 	bool escalated;							/* true if the Watchdog node has
 											 * performed escalation */
