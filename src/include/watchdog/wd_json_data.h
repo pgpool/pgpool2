@@ -66,7 +66,7 @@ extern bool parse_beacon_message_json(char* json_data, int data_len, int* state,
 								long* seconds_since_node_startup,
 								long* seconds_since_current_state,
 								int* quorumStatus,
-								int* aliveNodeCount,
+								int* standbyNodesCount,
 								bool* escalated);
 extern char* get_beacon_message_json(WatchdogNode* wdNode);
 

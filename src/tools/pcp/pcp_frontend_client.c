@@ -625,6 +625,8 @@ output_watchdog_info_result(PCPResultInfo* pcpResInfo, bool verbose)
 			quorumStatus = "QUORUM EXIST";
 		else if (cluster->quorumStatus == -1)
 			quorumStatus = "QUORUM ABSENT";
+		else if (cluster->quorumStatus == -2)
+			quorumStatus = "NO MASTER NODE";
 		else
 			quorumStatus = "UNKNOWN";
 
