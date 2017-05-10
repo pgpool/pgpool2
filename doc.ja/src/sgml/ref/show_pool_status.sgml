@@ -5,7 +5,7 @@
 
 <refentry id="SQL-SHOW-POOL-STATUS">
   <indexterm zone="sql-show-pool-status">
-    <primary>SHOW</primary>
+    <primary>SHOW POOL_STATUS</primary>
   </indexterm>
 
   <refmeta>

@@ -5,7 +5,7 @@
 
 <refentry id="SQL-SHOW-POOL-NODES">
   <indexterm zone="sql-show-pool-nodes">
-    <primary>SHOW</primary>
+    <primary>SHOW POOL_NODES</primary>
   </indexterm>
 
   <refmeta>
