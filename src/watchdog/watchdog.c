@@ -77,12 +77,14 @@ typedef enum IPC_CMD_PREOCESS_RES
 										 * exit normaly before moving on
 										 */
 
-#define BEACON_MESSAGE_INTERVAL_SECONDS		10 /* interval between beacon messages */
+#define BEACON_MESSAGE_INTERVAL_SECONDS		10	/* interval between beacon messages */
 
-#define	MAX_SECS_WAIT_FOR_REPLY_FROM_NODE	5  /* time in seconds to wait for the reply from
-												* remote watchdog node
-												*/
-
+#define	MAX_SECS_WAIT_FOR_REPLY_FROM_NODE	5	/* time in seconds to wait for the reply from
+												 * remote watchdog node
+												 */
+#define	FAILOVER_COMMAND_FINISH_TIMEOUT		15	/* timeout in seconds to wait for Pgpool-II to
+												 * send the finish failover command
+												 */
 
 
 #define WD_NO_MESSAGE						0
@@ -341,6 +343,9 @@ static WDFailoverObject* get_failover_object(POOL_REQUEST_KIND reqKind, int node
 static WDFailoverObject* get_failover_object_by_id(unsigned int failoverID);
 static bool does_int_array_contains_value(int *intArray, int count, int value);
 static bool remove_failover_object_by_id(unsigned int failoverID);
+static void remove_failovers_from_node(WatchdogNode* wdNode);
+static void remove_failover_object(WDFailoverObject* failoverObj);
+static void service_expired_failovers(void);
 
 static int send_command_packet_to_remote_nodes(WDCommandData* ipcCommand, bool source_included);
 static void wd_command_is_complete(WDCommandData* ipcCommand);
@@ -475,7 +480,7 @@ static bool write_ipc_command_with_result_data(WDCommandData* ipcCommand, char t
 static void process_wd_func_commands_for_timer_events(void);
 static void add_wd_command_for_timer_events(unsigned int expire_secs, bool need_tics, WDFunctionCommandData* wd_func_command);
 static bool reply_is_received_for_pgpool_replicate_command(WatchdogNode* wdNode, WDPacketData* pkt, WDCommandData* ipcCommand);
-static void process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt, char* func_name, int node_count, int* node_id_list, unsigned int failover_id);
+static bool process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt, char* func_name, int node_count, int* node_id_list, unsigned int failover_id);
 static void process_pgpool_remote_failover_command(WatchdogNode* wdNode, WDPacketData* pkt);
 static void process_remote_online_recovery_command(WatchdogNode* wdNode, WDPacketData* pkt);
 
@@ -1148,7 +1153,7 @@ watchdog_main(void)
 		}
 
 		check_for_current_command_timeout();
-		
+
 		if (service_lost_connections() == true)
 		{
 			service_internal_command();
@@ -1161,6 +1166,8 @@ watchdog_main(void)
 		{
 			update_quorum_status();
 		}
+
+		service_expired_failovers();
 	}
 	return 0;
 }
@@ -2023,19 +2030,88 @@ static WDFailoverObject* get_failover_object_by_id(unsigned int failoverID)
 	}
 	return NULL;
 }
+
+static void remove_failover_object(WDFailoverObject* failoverObj)
+{
+	ereport(DEBUG1,
+			(errmsg("removing failover object from \"%s\" with ID:%d", failoverObj->wdRequestingNode->nodeName,failoverObj->failoverID)));
+	g_cluster.wdCurrentFailovers = list_delete_ptr(g_cluster.wdCurrentFailovers,failoverObj);
+	pfree(failoverObj->nodeList);
+	pfree(failoverObj);
+}
+
 static bool remove_failover_object_by_id(unsigned int failoverID)
 {
 	WDFailoverObject* failoverObj = get_failover_object_by_id(failoverID);
 	if (failoverObj)
 	{
-		ereport(DEBUG2,
-				(errmsg("removing failover object with ID:%d",failoverID)));
-		g_cluster.wdCurrentFailovers = list_delete_ptr(g_cluster.wdCurrentFailovers,failoverObj);
-		pfree(failoverObj->nodeList);
-		pfree(failoverObj);
+		remove_failover_object(failoverObj);
 		return true;
 	}
 	return false;
+}
+
+/* if the wdNode is NULL. The function removes all failover objects */
+static void remove_failovers_from_node(WatchdogNode* wdNode)
+{
+	ListCell *lc;
+	List *failovers_to_del = NULL;
+
+	foreach(lc, g_cluster.wdCurrentFailovers)
+	{
+		WDFailoverObject* failoverObj = lfirst(lc);
+		if (failoverObj)
+		{
+			if (wdNode == NULL || failoverObj->wdRequestingNode == wdNode)
+			{
+				failovers_to_del = lappend(failovers_to_del,failoverObj);
+			}
+		}
+	}
+
+	/* delete the failover objects */
+
+	foreach(lc, failovers_to_del)
+	{
+		WDFailoverObject* failoverObj = lfirst(lc);
+		remove_failover_object(failoverObj);
+	}
+}
+
+/* Remove the over stayed failover objects */
+static void service_expired_failovers(void)
+{
+	ListCell *lc;
+	List *failovers_to_del = NULL;
+	struct timeval currTime;
+
+	if (get_local_node_state() != WD_COORDINATOR)
+		return;
+
+	gettimeofday(&currTime,NULL);
+
+	foreach(lc, g_cluster.wdCurrentFailovers)
+	{
+		WDFailoverObject* failoverObj = lfirst(lc);
+		if (failoverObj)
+		{
+			if (WD_TIME_DIFF_SEC(currTime,failoverObj->startTime) >=  FAILOVER_COMMAND_FINISH_TIMEOUT)
+			{
+				failovers_to_del = lappend(failovers_to_del,failoverObj);
+				ereport(DEBUG1,
+					(errmsg("failover object from \"%s\" with ID:%d is timeout", failoverObj->wdRequestingNode->nodeName,failoverObj->failoverID),
+						 errdetail("adding the failover object for removal")));
+
+			}
+		}
+	}
+
+	/* delete the failover objects */
+	foreach(lc, failovers_to_del)
+	{
+		WDFailoverObject* failoverObj = lfirst(lc);
+		remove_failover_object(failoverObj);
+	}
 }
 
 static bool does_int_array_contains_value(int *intArray, int count, int value)
@@ -2258,6 +2334,7 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 	}
 	else
 	{
+		/* No similar failover is in progress */
 		MemoryContext oldCxt;
 		ereport(DEBUG1,
 				(errmsg("proceeding with the failover command [%s] request from %s",
@@ -2270,10 +2347,28 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 		 */
 		wd_packet_shallow_copy(&ipcCommand->sourcePacket, &ipcCommand->commandPacket);
 		ipcCommand->commandPacket.type = WD_REMOTE_FAILOVER_REQUEST;
+		ipcCommand->sendToNode = NULL; /* command needs to be sent to all nodes */
 		set_next_commandID_in_message(&ipcCommand->commandPacket);
 
+		if (ipcCommand->commandSource != COMMAND_SOURCE_IPC)
+		{
+			if (process_wd_command_function(ipcCommand->sourceWdNode, &ipcCommand->sourcePacket,
+										func_name, node_count, node_id_list, ipcCommand->commandPacket.command_id) == false)
+			{
+				return IPC_CMD_COMPLETE;
+			}
+		}
+
+		/* send to all alive nodes */
+		ereport(LOG,
+			(errmsg("forwarding the failover request [%s] to all alive nodes",func_name),
+				 errdetail("watchdog cluster currently has %d connected remote nodes",get_cluster_node_count())));
+		send_command_packet_to_remote_nodes(ipcCommand, false);
+
+		/* create a failover object. to make sure we know the node failovers
+		 * is already in progress
+		 */
 		oldCxt = MemoryContextSwitchTo(TopMemoryContext);
-		/* No similar failover is in progress */
 		failoverObj = palloc0(sizeof(WDFailoverObject));
 		failoverObj->reqKind = reqKind;
 		failoverObj->nodesCount = node_count;
@@ -2284,20 +2379,10 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 		}
 		failoverObj->failoverID = ipcCommand->commandPacket.command_id; /* use command id as failover id */
 		gettimeofday(&failoverObj->startTime, NULL);
-		failoverObj->wdRequestingNode = g_cluster.localNode;
+		failoverObj->wdRequestingNode = ipcCommand->sourceWdNode;
 		g_cluster.wdCurrentFailovers = lappend(g_cluster.wdCurrentFailovers,failoverObj);
 
 		MemoryContextSwitchTo(oldCxt);
-		/* We may also need to send the Accept message here for remote node */
-
-		ipcCommand->sendToNode = NULL; /* command needs to be sent to all nodes */
-
-		ereport(LOG,
-			(errmsg("forwarding the failover request [%s] to all alive nodes",func_name),
-				 errdetail("watchdog cluster currently has %d connected remote nodes",get_cluster_node_count())));
-
-		/* see if there is any node we want to send to */
-		send_command_packet_to_remote_nodes(ipcCommand, false);
 
 		/* For a moment just think it is successfully sent to all nodes.*/
 		if (ipcCommand->commandSource == COMMAND_SOURCE_IPC)
@@ -2307,9 +2392,7 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 		}
 		else
 		{
-			process_wd_command_function(ipcCommand->sourceWdNode, &ipcCommand->sourcePacket,
-										func_name, node_count, node_id_list, failoverObj->failoverID);
-			if (get_cluster_node_count() == 1)
+			if (get_cluster_node_count() <= 1)
 			{
 				/* Since its just 2 nodes cluster, and the only other
 				 * node is the one that actually issued the failover
@@ -4881,7 +4964,6 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 		wdNode->last_sent_time.tv_sec = 0;
 		wdNode->last_sent_time.tv_usec = 0;
 		node_lost_while_ipc_command(wdNode);
-
 	}
 	else if (event == WD_EVENT_PACKET_RCV)
 	{
@@ -5581,6 +5663,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 		case WD_EVENT_REMOTE_NODE_LOST:
 		{
 			standby_node_left_cluster(wdNode);
+			remove_failovers_from_node(wdNode);
 		}
 			break;
 
@@ -6252,6 +6335,7 @@ static int set_state(WD_STATES newState)
 		{
 			resign_from_escalated_node();
 			clear_standby_nodes_list();
+			remove_failovers_from_node(NULL);
 		}
 
 		ereport(LOG,
@@ -6408,9 +6492,10 @@ static void process_remote_online_recovery_command(WatchdogNode* wdNode, WDPacke
 		pfree(node_id_list);
 }
 
-static void process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt, char* func_name,
+static bool process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt, char* func_name,
 										int node_count, int* node_id_list, unsigned int failover_id)
 {
+	bool ret = false;
 	if (strcasecmp(WD_FUNCTION_FAILBACK_REQUEST, func_name) == 0)
 	{
 		if (Req_info->switching)
@@ -6422,8 +6507,7 @@ static void process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt,
 		}
 		else
 		{
-			reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
-			send_failback_request(node_id_list[0],false, failover_id);
+			ret = send_failback_request(node_id_list[0],false, failover_id);
 		}
 	}
 	
@@ -6434,12 +6518,10 @@ static void process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt,
 			ereport(LOG,
 					(errmsg("sending watchdog response"),
 					 errdetail("failover request from other pgpool is canceled because of switching")));
-			reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
 		}
 		else
 		{
-			reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
-			degenerate_backend_set(node_id_list, node_count, false, failover_id);
+			ret = degenerate_backend_set(node_id_list, node_count, false, failover_id);
 		}
 	}
 
@@ -6450,19 +6532,22 @@ static void process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt,
 			ereport(LOG,
 					(errmsg("sending watchdog response"),
 					 errdetail("failover request from other pgpool is canceled because of switching")));
-			reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
 		}
 		else
 		{
-			reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
-			promote_backend(node_id_list[0], failover_id);
+			ret = promote_backend(node_id_list[0], failover_id);
 		}
 	}
 	else
 	{
 		/* This is not supported function */
-		reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+		ereport(LOG,
+			(errmsg("invalid failover function \"%s\"",func_name)));
 	}
+
+	reply_with_minimal_message(wdNode, ret?WD_ACCEPT_MESSAGE:WD_REJECT_MESSAGE, pkt);
+
+	return ret;
 }
 
 
