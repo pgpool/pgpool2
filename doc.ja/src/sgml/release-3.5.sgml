@@ -1,6 +1,44 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-5-8">
+  <title>リリース 3.5.8</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-05-11</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-05-08 [8b92a23]
+    -->
+    <para>
+    ノード 0 がフェイルオーバーするレグレッションテストを追加しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-04 [b97c38f]
+    -->
+    <para>
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-May/002312.html">[pgpool-hackers：2312]</ulink> で報告された
+<productname>Pgpool-II</productname>ノード 0 がフェイルオーバーするときに発生するセグメンテーション違反を修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
+
 <sect1 id="release-3-5-7">
   <title>リリース 3.5.7</title>
 

@@ -1,6 +1,67 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-6-4">
+  <title>Release 3.6.4</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-05-11</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-05-10 [c99e0fc]
+    -->
+    <para>
+    Fixing a few corner cases in the failover request handling of the watchdog. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-10 [ee0a415]
+    -->
+    <para>
+    Tightening up the watchdog cluster membership criteria. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-10 [54aa688]
+    -->
+    <para>
+    Enhance document for load balancing. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-08 [eb83f0b]
+    -->
+    <para>
+    Add node 0 failover test. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-04 [2b0edb1]
+    -->
+    <para>
+    Fix <productname>Pgpool-II</productname> child process segfault reported in <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-May/002312.html">[pgpool-hackers: 2312]</ulink>. (Tatsuo Ishii)
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-6-3">
   <title>Release 3.6.3</title>
 

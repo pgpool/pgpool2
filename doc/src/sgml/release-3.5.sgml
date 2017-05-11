@@ -1,6 +1,40 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-5-8">
+  <title>Release 3.5.8</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-05-11</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-05-08 [8b92a23]
+    -->
+    <para>
+    Add node 0 failover test. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-04 [b97c38f]
+    -->
+    <para>
+    Fix <productname>Pgpool-II</productname> child process segfault reported in <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-May/002312.html">[pgpool-hackers: 2312]</ulink>. (Tatsuo Ishii)
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-5-7">
   <title>Release 3.5.7</title>
 
