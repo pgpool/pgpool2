@@ -1835,10 +1835,11 @@ int pool_init_config(void)
 #ifndef POOL_PRIVATE
 	g_pool_config.backend_desc = pool_shared_memory_create(sizeof(BackendDesc));
 	memset(g_pool_config.backend_desc, 0, sizeof(BackendDesc));
-
 #else
 	g_pool_config.backend_desc = palloc0(sizeof(BackendDesc));
 #endif
+	g_pool_config.health_check_params = palloc0(MAX_NUM_BACKENDS*sizeof(HealthCheckParams));
+
 	InitializeConfigOptions();
 
 	return 0;

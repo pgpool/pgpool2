@@ -80,7 +80,8 @@ typedef enum
 	PGC_S_FILE,					/* pgpool.conf */
 	PGC_S_ARGV,					/* command line */
 	PGC_S_CLIENT,				/* from client connection request */
-	PGC_S_SESSION				/* SET command */
+	PGC_S_SESSION,				/* SET command */
+	PGC_S_VALUE_DEFAULT			/* Configurable Default Value for array type */
 } GucSource;
 
 
@@ -89,6 +90,9 @@ typedef enum
 #define VAR_HIDDEN_VALUE			0x0002	/* for password type variables */
 #define VAR_HIDDEN_IN_SHOW_ALL		0x0004	/* for variables hidden in show all*/
 #define VAR_NO_RESET_ALL			0x0008	/* for variables not to be reset with reset all*/
+#define ARRAY_VAR_ALLOW_NO_INDEX	0x0010	/* for array type vars that also alows
+											 * variable with same naem with out index*/
+#define DEFAULT_FOR_NO_VALUE_ARRAY_VAR	0x0020
 
 /*
  * Signatures for per-variable check/assign/show  functions
@@ -128,11 +132,20 @@ struct config_generic
 	config_type		vartype;		/* type of variable (set only at startup) */
 	bool			dynamic_array_var;	/* true if the variable name contains index postfix */
 	int				flags;			/* flags */
+	int				max_elements;	/* number of maximum elements, only valid for array type configs */
 	int				status;			/* status bits, see below */
-	GucSource		source;			/* source of the current actual value */
-	ConfigContext	scontext;		/* context that set the current value */
 	int				sourceline;		/* line in source file */
+
+
+	GucSource		*sources;		/* source of the current actual value, For array type config elements
+									 * it contains the corosponding source of each individual element */
+	GucSource		*reset_sources;	/* source of the reset value, For array type config elements
+									 * it contains the corosponding source of each individual element */
+	ConfigContext	*scontexts;		/* context that set the current value, For array type config elements
+									 * it contains the corosponding context of each individual element */
+
 };
+
 
 /* GUC records for specific variable types */
 
@@ -170,14 +183,16 @@ struct config_int_array
 	int			boot_val;
 	int			min;
 	int			max;
-	int			max_elements;
+
+	struct config_int	config_no_index; /* int type record if the array also includes
+										  * master value (value without index postfix )*/
+
 	ConfigIntArrayAssignFunc assign_func;
 	ConfigIntArrayAssignFunc check_func;
 	IndexedVarShowHook show_hook;
 	IndexedVarEmptySlotCheck	empty_slot_check_func;
-	int			*reset_vals; /* Array of reset values */
+	int			*reset_vals;	/* Array of reset values */
 };
-
 
 struct config_double
 {
@@ -201,7 +216,9 @@ struct config_double_array
 	double		boot_val;
 	double		min;
 	double		max;
-	int			max_elements;
+
+	struct config_double	config_no_index; /* record if the array also includes
+											  * master value (value without index postfix )*/
 	ConfigDoubleArrayAssignFunc assign_func;
 	ConfigDoubleArrayAssignFunc check_func;
 	IndexedVarShowHook show_hook;
@@ -242,7 +259,9 @@ struct config_string_array
 	/* constant fields, must be set correctly in initial value: */
 	char		***variable;
 	const char	*boot_val;
-	int			max_elements;
+
+	struct config_string		config_no_index; /* record if the array also includes
+												  * master value (value without index postfix )*/
 	ConfigStringArrayAssignFunc assign_func;
 	ConfigStringArrayAssignFunc check_func;
 	IndexedVarShowHook show_hook;
@@ -287,13 +306,13 @@ struct config_grouped_array_var
 	struct config_generic **var_list;
 };
 
+
 extern void InitializeConfigOptions(void);
 extern bool set_one_config_option(const char *name, const char *value,
 						   ConfigContext context, GucSource source, int elevel);
 
 extern bool set_config_options(ConfigVariable *head_p,
 							   ConfigContext context, GucSource source, int elevel);
-extern bool assign_variable_to_int_array_config_var(const char* name, int** variable);
 
 
 #ifndef POOL_PRIVATE
