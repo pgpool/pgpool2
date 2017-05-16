@@ -499,7 +499,7 @@ extern long int weight_master;	/* normalized weight of master (0-RAND_MAX range)
 extern int my_proc_id;  /* process table id (!= UNIX's PID) */
 extern ProcessInfo *process_info; /* shmem process information table */
 extern ConnectionInfo *con_info; /* shmem connection info table */
-extern POOL_REQUEST_INFO *Req_info;
+extern volatile POOL_REQUEST_INFO *Req_info;
 extern volatile sig_atomic_t *InRecovery;
 extern char remote_ps_data[];		/* used for set_ps_display */
 extern volatile sig_atomic_t got_sighup;
