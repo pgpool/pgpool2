@@ -9,7 +9,7 @@
 
 /* for get_current_timestamp() (MASTER() macro) */
 POOL_REQUEST_INFO		_req_info;
-POOL_REQUEST_INFO *Req_info = &_req_info;
+volatile POOL_REQUEST_INFO *Req_info = &_req_info;
 POOL_CONFIG _pool_config;
 POOL_CONFIG *pool_config = &_pool_config;
 ProcessType processType;
