@@ -177,7 +177,7 @@ extern char hba_file[POOLMAXPATHLEN+1];
 static int exiting = 0;		/* non 0 if I'm exiting */
 static int switching = 0;		/* non 0 if I'm failing over or degenerating */
 
-volatile POOL_REQUEST_INFO *Req_info;		/* request info area in shared memory */
+POOL_REQUEST_INFO *Req_info;		/* request info area in shared memory */
 volatile sig_atomic_t *InRecovery; /* non 0 if recovery is started */
 volatile sig_atomic_t reload_config_request = 0;
 static volatile sig_atomic_t sigusr1_request = 0;
