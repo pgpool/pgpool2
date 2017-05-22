@@ -2036,7 +2036,7 @@ static void build_variable_groups(void)
 
 	/* group 2. other_pgpool config vars */
 	ConfigureVarGroups[1].var_count = 3;
-	ConfigureVarGroups[1].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[0].var_count);
+	ConfigureVarGroups[1].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[1].var_count);
 	/* backend hostname */
 	ConfigureVarGroups[1].var_list[0] = find_option("other_pgpool_hostname", FATAL);
 	ConfigureVarGroups[1].var_list[0]->flags |= VAR_PART_OF_GROUP;
@@ -2049,7 +2049,7 @@ static void build_variable_groups(void)
 
 	/* group 3. heartbeat config vars */
 	ConfigureVarGroups[2].var_count = 3;
-	ConfigureVarGroups[2].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[0].var_count);
+	ConfigureVarGroups[2].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[2].var_count);
 	/* backend hostname */
 	ConfigureVarGroups[2].var_list[0] = find_option("heartbeat_device", FATAL);
 	ConfigureVarGroups[2].var_list[0]->flags |= VAR_PART_OF_GROUP;
@@ -2061,7 +2061,7 @@ static void build_variable_groups(void)
 
 	/* group 4. health_check config vars */
 	ConfigureVarGroups[3].var_count = 8;
-	ConfigureVarGroups[3].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[0].var_count);
+	ConfigureVarGroups[3].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[3].var_count);
 	ConfigureVarGroups[3].var_list[0] = find_option("health_check_period", FATAL);
 	ConfigureVarGroups[3].var_list[0]->flags |= VAR_PART_OF_GROUP;
 	ConfigureVarGroups[3].var_list[1] = find_option("health_check_timeout", FATAL);
@@ -2256,11 +2256,7 @@ initialize_variables_with_default(struct config_generic * gconf)
 		case CONFIG_VAR_TYPE_STRING:
 		{
 			struct config_string *conf = (struct config_string *) gconf;
-			char	   *newval = NULL;
-
-			/* non-NULL boot_val must always get strdup'd */
-			if (conf->boot_val != NULL)
-				newval = pstrdup(conf->boot_val);
+			char	   *newval = (char*)conf->boot_val;
 
 			if (conf->assign_func)
 			{
@@ -2268,11 +2264,10 @@ initialize_variables_with_default(struct config_generic * gconf)
 			}
 			else
 			{
-				*conf->variable = newval;
+				*conf->variable = newval?pstrdup(newval):NULL;
 			}
 
-			if (newval)
-				conf->reset_val = pstrdup(newval);
+			conf->reset_val = newval?pstrdup(newval):NULL;
 
 			if (conf->process_func)
 			{
@@ -2284,30 +2279,21 @@ initialize_variables_with_default(struct config_generic * gconf)
 		case CONFIG_VAR_TYPE_STRING_ARRAY:
 		{
 			struct config_string_array *conf = (struct config_string_array *) gconf;
+			char	   *newval = (char*)conf->boot_val;
 			int i;
-			const char	   *newval = NULL;
-			
-			/* non-NULL boot_val must always get strdup'd
-			 * also check if max_elements > 0 before doing pstrdup to silent
-			 * the coverity scan report
-			 */
-			if (conf->boot_val != NULL && gconf->max_elements > 0)
-				newval = conf->boot_val;
 
 			for (i = 0; i < gconf->max_elements; i ++)
 			{
-				char *newval_copy = NULL;
-				if (newval)
-					newval_copy = pstrdup(newval);
 
 				if (conf->assign_func)
 				{
-					(*conf->assign_func)(CFGCXT_BOOT, newval_copy, i, ERROR);
+					(*conf->assign_func)(CFGCXT_BOOT, newval, i, ERROR);
 				}
 				else
 				{
-					*conf->variable[i] = newval_copy;
+					*conf->variable[i] = newval?pstrdup(newval):NULL;
 				}
+
 				if (newval)
 					conf->reset_vals[i] = pstrdup(newval);
 			}
@@ -2316,8 +2302,8 @@ initialize_variables_with_default(struct config_generic * gconf)
 
 		case CONFIG_VAR_TYPE_ENUM:
 		{
-			struct config_enum *conf = (struct config_enum *) gconf;
-			int			newval = conf->boot_val;
+			struct	config_enum *conf = (struct config_enum *) gconf;
+			int		newval = conf->boot_val;
 
 			if (conf->assign_func)
 			{
@@ -2339,14 +2325,8 @@ initialize_variables_with_default(struct config_generic * gconf)
 
 		case CONFIG_VAR_TYPE_STRING_LIST:
 		{
-			struct config_string_list *conf = (struct config_string_list *) gconf;
-			char	   *newval = NULL;
-
-			/* non-NULL boot_val must always get strdup'd */
-			if (conf->boot_val != NULL)
-				newval = pstrdup(conf->boot_val);
-			else
-				newval = NULL;
+			struct	config_string_list *conf = (struct config_string_list *) gconf;
+			char	*newval = (char*)conf->boot_val;
 
 			if (conf->assign_func)
 			{
@@ -2365,12 +2345,12 @@ initialize_variables_with_default(struct config_generic * gconf)
 				}
 			}
 			/* save the string value */
-			if (newval)
-				conf->reset_val = pstrdup(newval);
-			else
-				conf->reset_val = NULL;
-			conf->current_val = newval;
+			conf->reset_val = newval?pstrdup(newval):NULL;
 
+			if (conf->current_val)
+				pfree(conf->current_val);
+
+			conf->current_val = newval?pstrdup(newval):NULL;
 			break;
 		}
 
@@ -3077,18 +3057,16 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 
 			if (value != NULL)
 			{
-				newval = pstrdup(value);
+				newval = (char*)value;
 			}
 			else if (source == PGC_S_DEFAULT)
 			{
-				if (conf->boot_val)
-					newval = pstrdup(conf->boot_val);
+				newval = (char*)conf->boot_val;
 			}
 			else
 			{
 				/* Reset */
-				if (conf->reset_val)
-					newval = pstrdup(conf->reset_val);
+				newval = conf->reset_val;
 				reset = true;
 			}
 
@@ -3101,19 +3079,20 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 			{
 				if (*conf->variable)
 					pfree(*conf->variable);
-				*conf->variable = newval;
+
+				*conf->variable = newval?pstrdup(newval):NULL;
 			}
 			if (context == CFGCXT_INIT)
 			{
 				if (conf->reset_val)
 					pfree(conf->reset_val);
-				conf->reset_val = pstrdup(newval);
+
+				conf->reset_val = newval?pstrdup(newval):NULL;
 			}
 			if (conf->process_func)
 			{
 				(*conf->process_func)(newval, elevel);
 			}
-
 		}
 			break;
 
@@ -3133,18 +3112,16 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 
 			if (value != NULL)
 			{
-				newval = pstrdup(value);
+				newval = (char*)value;
 			}
 			else if (source == PGC_S_DEFAULT)
 			{
-				if (conf->boot_val)
-					newval = pstrdup(conf->boot_val);
+				newval = (char*)conf->boot_val;
 			}
 			else
 			{
 				/* Reset */
-				if (conf->reset_vals[index_val])
-					newval = pstrdup(conf->reset_vals[index_val]);
+				newval = conf->reset_vals[index_val];
 				reset = true;
 			}
 			
@@ -3157,15 +3134,16 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 			{
 				if (*conf->variable[index_val])
 					pfree(*conf->variable[index_val]);
-				*conf->variable[index_val] = newval;
+
+				*conf->variable[index_val] = newval?pstrdup(newval):NULL;
 			}
 			if (context == CFGCXT_INIT)
 			{
 				if (conf->reset_vals[index_val])
 					pfree(conf->reset_vals[index_val]);
-				conf->reset_vals[index_val] = pstrdup(newval);
+
+				conf->reset_vals[index_val] = newval?pstrdup(newval):NULL;
 			}
-			
 		}
 			break;
 
@@ -3176,18 +3154,16 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 
 			if (value != NULL)
 			{
-				newval = (char*)pstrdup(value);
+				newval = (char*)value;
 			}
 			else if (source == PGC_S_DEFAULT)
 			{
-				if (conf->boot_val)
-					newval = pstrdup((char*)conf->boot_val);
+				newval = (char*)conf->boot_val;
 			}
 			else
 			{
 				/* Reset */
-				if (conf->reset_val)
-					newval = pstrdup(conf->reset_val);
+				newval = conf->reset_val;
 				reset = true;
 			}
 
@@ -3195,7 +3171,6 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 			{
 				if ((*conf->assign_func)(context, newval, elevel) == false)
 				{
-					pfree(newval);
 					return false;
 				}
 			}
@@ -3230,16 +3205,14 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 				if (conf->reset_val)
 					pfree(conf->reset_val);
 
-				if (newval)
-					conf->reset_val = pstrdup(newval);
-				else
-					conf->reset_val = NULL;
+				conf->reset_val = newval?pstrdup(newval):NULL;
 			}
 
 			/* save the string value */
 			if (conf->current_val)
 				pfree(conf->current_val);
-			conf->current_val = newval;
+
+			conf->current_val = newval?pstrdup(newval):NULL;
 		}
 			break;
 
@@ -3771,7 +3744,10 @@ static bool HealthCheckUserAssignFunc(ConfigContext context, char* newval, int i
 {
 	if (g_pool_config.health_check_params[index].health_check_user)
 		pfree(g_pool_config.health_check_params[index].health_check_user);
-	g_pool_config.health_check_params[index].health_check_user = newval;
+	if (newval)
+		g_pool_config.health_check_params[index].health_check_user = pstrdup(newval);
+	else
+		g_pool_config.health_check_params[index].health_check_user = NULL;
 	return true;
 }
 
@@ -3779,7 +3755,10 @@ static bool HealthCheckPasswordAssignFunc(ConfigContext context, char* newval, i
 {
 	if (g_pool_config.health_check_params[index].health_check_password)
 		pfree(g_pool_config.health_check_params[index].health_check_password);
-	g_pool_config.health_check_params[index].health_check_password = newval;
+	if (newval)
+		g_pool_config.health_check_params[index].health_check_password = pstrdup(newval);
+	else
+		g_pool_config.health_check_params[index].health_check_password = newval;
 	return true;
 }
 
@@ -3787,7 +3766,11 @@ static bool HealthCheckDatabaseAssignFunc(ConfigContext context, char* newval, i
 {
 	if (g_pool_config.health_check_params[index].health_check_database)
 		pfree(g_pool_config.health_check_params[index].health_check_database);
-	g_pool_config.health_check_params[index].health_check_database = newval;
+
+	if (newval)
+		g_pool_config.health_check_params[index].health_check_database = pstrdup(newval);
+	else
+		g_pool_config.health_check_params[index].health_check_database = newval;
 	return true;
 }
 
