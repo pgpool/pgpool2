@@ -1889,7 +1889,7 @@ static void build_variable_groups(void)
 
 	/* group 2. other_pgpool config vars */
 	ConfigureVarGroups[1].var_count = 3;
-	ConfigureVarGroups[1].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[0].var_count);
+	ConfigureVarGroups[1].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[1].var_count);
 	/* backend hostname */
 	ConfigureVarGroups[1].var_list[0] = find_option("other_pgpool_hostname", FATAL);
 	ConfigureVarGroups[1].var_list[0]->flags |= VAR_PART_OF_GROUP;
@@ -1901,7 +1901,7 @@ static void build_variable_groups(void)
 
 	/* group 3. heartbeat config vars */
 	ConfigureVarGroups[2].var_count = 3;
-	ConfigureVarGroups[2].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[0].var_count);
+	ConfigureVarGroups[2].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[2].var_count);
 	/* backend hostname */
 	ConfigureVarGroups[2].var_list[0] = find_option("heartbeat_device", FATAL);
 	ConfigureVarGroups[2].var_list[0]->flags |= VAR_PART_OF_GROUP;
