@@ -95,10 +95,11 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 					session_context->query_context->parse_tree &&
 					is_start_transaction_query(session_context->query_context->parse_tree))
 					TSTATE(backend, i) ='T';		/* we are inside a transaction */
-
+				{
 					ereport(DEBUG1,
 							(errmsg("processing command complete"),
 							 errdetail("set transaction state to T")));
+				}
 			}
 		}
 	}
