@@ -2367,6 +2367,10 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		case 'H':	/* Flush */
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 			{
+				if (fkind == 'H')
+				{
+					pool_set_doing_extended_query_message();
+				}
 				status = SimpleForwardToBackend(fkind, frontend, backend, len, contents);
 				break;
 			}
