@@ -3358,6 +3358,14 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 					pool_check_and_discard_cache_buffer(num_oids, oids);
 				} 
 			}
+			else if (num_oids == 0)
+			{
+				/* 
+				 * It is also necessary to clear cache buffers in case of
+				 * no oid queries (like BEGIN, CHECKPOINT, VACUUM, etc) too.
+				 */
+				pool_reset_memqcache_buffer();
+			}
 		}
 	}
 }
