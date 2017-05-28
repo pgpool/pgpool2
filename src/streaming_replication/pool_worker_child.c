@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -75,6 +75,8 @@ static unsigned long long int text_to_lsn(char *text);
 static RETSIGTYPE my_signal_handler(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
 static void reload_config(void);
+static int get_query_result(int backend_id, char *query, POOL_SELECT_RESULT **res);
+
 #define CHECK_REQUEST \
 	do { \
 		if (reload_config_request) \
@@ -87,6 +89,9 @@ static void reload_config(void);
 		  exit(1); \
 		} \
     } while (0)
+
+
+#define PG10_SERVER_VERSION	100000	/* PostgreSQL 10 server version num */
 
 /*
 * worker child main loop
@@ -157,7 +162,7 @@ void do_worker_child(void)
 		 * If streaming replication mode, do time lag checking
 		 */
 
-		if (pool_config->sr_check_period > 0 && MASTER_SLAVE && pool_config->master_slave_sub_mode == STREAM_MODE)
+		if (pool_config->sr_check_period > 0 && STREAM)
 		{
 			establish_persistent_connection();
             PG_TRY();
@@ -229,6 +234,9 @@ static void discard_persistent_connection(void)
  */
 static void check_replication_time_lag(void)
 {
+	/* backend server version cache */
+	static int server_version[MAX_NUM_BACKENDS];
+
 	int i;
 	int active_nodes = 0;
 	POOL_SELECT_RESULT *res;
@@ -286,50 +294,43 @@ static void check_replication_time_lag(void)
 
 		}
 
+		if (server_version[i] == 0)
+		{
+			query = "SELECT current_setting('server_version_num')";
+
+			/* Get backend serversion. If the query fails, keep previous info. */
+			if (get_query_result(i, query, &res) == 0)
+			{
+				server_version[i] = atoi(res->data[0]);
+				ereport(DEBUG1,
+						(errmsg("backend %d server version: %d", i, server_version[i])));
+			}
+			
+		}
+
 		if (PRIMARY_NODE_ID == i)
 		{
-			query = "SELECT pg_current_xlog_location()";
+			if (server_version[i] >= PG10_SERVER_VERSION)
+				query = "SELECT pg_current_wal_location()";
+			else
+				query = "SELECT pg_current_xlog_location()";
 		}
 		else
 		{
-			query = "SELECT pg_last_xlog_replay_location()";
+			if (server_version[i] >= PG10_SERVER_VERSION)
+				query = "SELECT pg_last_wal_replay_location()";
+			else
+				query = "SELECT pg_last_xlog_replay_location()";
 		}
 
-		do_query(slots[i]->con, query, &res, PROTO_MAJOR_V3);
-
-		if (!res)
-		{
-            ereport(ERROR,
-                (errmsg("Failed to check replication time lag"),
-                     errdetail("Query to node (%d) returned no result for node",i)));
-		}
-		if (res->numrows <= 0)
-		{
-			free_select_result(res);
-            ereport(ERROR,
-                (errmsg("Failed to check replication time lag"),
-                     errdetail("Query to node (%d) returned result with no rows",i)));
-		}
-		if (res->data[0] == NULL)
-		{
-			free_select_result(res);
-            ereport(ERROR,
-                (errmsg("Failed to check replication time lag"),
-                     errdetail("Query to node (%d) returned no data",i)));
-		}
-
-		if (res->nullflags[0] == -1)
-		{
-			free_select_result(res);
-			lsn[i] = 0;
-            ereport(ERROR,
-                (errmsg("Failed to check replication time lag"),
-                     errdetail("Query to node (%d) returned NULL data",i)));
-		}
-		else
+		if (get_query_result(i, query, &res) == 0)
 		{
 			lsn[i] = text_to_lsn(res->data[0]);
 			free_select_result(res);
+		}
+		else
+		{
+			lsn[i] = 0;
 		}
 	}
 
@@ -448,4 +449,55 @@ static void reload_config(void)
 	if (pool_config->enable_pool_hba)
 		load_hba(get_hba_file_name());
 	reload_config_request = 0;
+}
+
+/*
+ * Execute query against specified backend.
+ * Return -1 on failure or 0 otherwise.
+ * Caller must prepare memory for POOL_SELECT_RESULT and pass it as "res".
+ */
+
+static 	int get_query_result(int backend_id, char *query, POOL_SELECT_RESULT **res)
+{
+	int sts = -1;
+
+	do_query(slots[backend_id]->con, query, res, PROTO_MAJOR_V3);
+
+	if (!res)
+	{
+		ereport(ERROR,
+				(errmsg("Failed to check replication time lag"),
+				 errdetail("Query to node (%d) returned no result for node", backend_id)));
+		return sts;
+	}
+
+	if ((*res)->numrows <= 0)
+	{
+		free_select_result(*res);
+		ereport(ERROR,
+				(errmsg("Failed to check replication time lag"),
+				 errdetail("Query to node (%d) returned result with no rows", backend_id)));
+		return sts;
+	}
+
+	if ((*res)->data[0] == NULL)
+	{
+		free_select_result(*res);
+		ereport(ERROR,
+				(errmsg("Failed to check replication time lag"),
+				 errdetail("Query to node (%d) returned no data", backend_id)));
+		return sts;
+	}
+
+	if ((*res)->nullflags[0] == -1)
+	{
+		free_select_result(*res);
+		ereport(ERROR,
+				(errmsg("Failed to check replication time lag"),
+				 errdetail("Query to node (%d) returned NULL data", backend_id)));
+		return sts;
+	}
+
+	sts = 0;
+	return sts;
 }
