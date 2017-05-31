@@ -17,6 +17,37 @@
     <productname>Pgpool-II</productname>の全てのモードでインメモリクエリキャッシュを利用することができます。
     テーブルが更新によりキャッシュが古くなっても、<productname>Pgpool-II</>の再起動の必要はありません。
 </para>
+
+  <note>
+    <para>
+      <!--
+      Basically following SELECTs will not be cached:
+      <programlisting>
+       SELECTs including non immutable functions
+       SELECTs including temp tables, unlogged tables
+       SELECT result is too large (memqcache_maxcache)
+       SELECT FOR SHARE/UPDATE
+       SELECT starting with "/*NO QUERY CACHE*/" comment
+       SELECT including system catalogs
+       SELECT uses TABLESAMPLE
+      </programlisting>
+      However, VIEWs and SELECTs accessing unlogged tables can be
+      cached by specifying in
+      the <xref linkend="guc-white-memqcache-table-list">.
+	-->
+      基本的に以下のSELECTはキャッシュされません。
+      <programlisting>
+       immutableな関数を含むSELECT
+       一時テーブル、unloggedテーブルを使ったSELECT
+       検索結果が memqcache_maxcache を越えるようなSELECT
+       SELECT FOR SHARE/UPDATE
+       /*NO QUERY CACHE*/コメントで始まるSELECT
+       システムカタログを使用しているSELECT
+       TABLESAMPLEを使っているSELECT
+      </programlisting>
+
+    </para>
+  </note>
 <para>
   <!--
       In memory cache saves the pair of SELECT statement
@@ -320,10 +351,16 @@ from the in memory cache is extremely fast.
 
     <para>
       <!--
-          Specifies a comma separated list of table names whose SELECT
-          results should be cached by the <productname>Pgpool-II</productname>.
+          Specifies a comma separated list of table names whose
+          SELECT results should be cached by
+          <productname>Pgpool-II</productname>.  This parameter only
+          applies to VIEWs and SELECTs accessing unlogged tables.
+          Regular tables can be cached unless specified
+          by <xref linkend="guc-black-memqcache-table-list">.
 	-->
       SELECT結果が<productname>Pgpool-II</productname>にキャッシュされるべきテーブル名のリストをカンマ区切りで指定します。
+      このパラメータは、VIEWとunloggedテーブルにのみ適用されます。
+      通常のテーブルは、<xref linkend="guc-black-memqcache-table-list">に記載されていない限りキャッシュされます。
     </para>
 
     <para>
@@ -357,10 +394,10 @@ from the in memory cache is extremely fast.
     <note>
       <para>
 	<!--
-            <varname>white_memqcache_table_list</varname> takes
-            precedence over <xref linkend="guc-black-memqcache-table-list">
+            <varname>black_memqcache_table_list</varname> takes
+            precedence over <xref linkend="guc-white-memqcache-table-list">
 	      -->
-	<varname>white_memqcache_table_list</varname>は<xref linkend="guc-black-memqcache-table-list">より優先されます。
+	<varname>black_memqcache_table_list</varname>は<xref linkend="guc-white-memqcache-table-list">より優先されます。
       </para>
     </note>
     <para>
