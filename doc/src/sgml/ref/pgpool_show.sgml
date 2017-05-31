@@ -90,7 +90,17 @@ PGPOOL SHOW ALL
             configuration group of all watchdog heartbeat node config parameters.
           </para>
           </listitem>
+          </varlistentry>
+
+	  <varlistentry>
+          <term><literal>health_check</literal></term>
+          <listitem>
+          <para>
+            configuration group of all health check parameters.
+          </para>
+          </listitem>
         </varlistentry>
+
       </variablelist>
     </listitem>
   </varlistentry>

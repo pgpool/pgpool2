@@ -126,7 +126,20 @@ PGPOOL SHOW ALL
             すべての watchdog heartbeat ノードのパラメータの設定値。
           </para>
           </listitem>
-        </varlistentry>
+          </varlistentry>
+
+	  <varlistentry>
+          <term><literal>health_check</literal></term>
+          <listitem>
+            <para>
+	      <!--
+            configuration group of all health check parameters.
+		-->
+	      すべてのhealth checkパラメータの設定値。
+          </para>
+          </listitem>
+          </varlistentry>
+
       </variablelist>
     </listitem>
   </varlistentry>
