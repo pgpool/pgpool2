@@ -2374,11 +2374,32 @@ static void reaper(void)
 				}
 			}
 		}
-		if(shutdown_system)
+
+		/* Check health check process */
+		if (found == false)
+		{
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				if (pid == health_check_pids[i])
+				{
+					found = true;
+
+					/* Fork new health check worker */
+					if (!switching && !exiting && VALID_BACKEND(i))
+					{
+						health_check_pids[i] = worker_fork_a_child(PT_HEALTH_CHECK, do_health_check_child, &i);
+					}
+					else
+						health_check_pids[i] = 0;
+				}
+			}
+		}
+		
+		if (shutdown_system)
 			ereport(FATAL,
 				(errmsg("%s process exit with fatal error. exiting pgpool-II",exiting_process_name)));
 
-		else if(restart_child && new_pid)
+		else if (restart_child && new_pid)
 		{
 			/* Report if the child was restarted */
 			ereport(LOG,
