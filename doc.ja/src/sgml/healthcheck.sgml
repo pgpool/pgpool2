@@ -29,6 +29,30 @@
     </caution>
   </para>
 
+<para>
+<!-- Following parameter names can also have numeric suffix at the end
+    of each name.  The suffix corresponds to backend id, which is
+    defined in backend information, such
+    as <xref linkend="guc-backend-hostname">.
+    example, <varname>health_check_timeout0</varname> is applied to
+    backend 0's <varname>health_check_timeout</varname> value.
+-->
+
+以下のパラメータは、名前の最後に数字の接尾辞を持つことができます。その
+接尾辞は、<xref linkend="guc-backend-hostname">のようなバックエンド情報で定義されるバックエンドのIDに対応します。
+たとえば<varname>health_check_timeout0</varname>は、バックエンド0の<varname>health_check_timeout</varname>に適用されます。
+  </para>
+<para>
+<!--
+    If there's no parameter with suffix, the value for the backend
+    is taken from the parameter name which does not have a suffix. In
+    this sense, parameter names without suffix work like "global
+    variables".
+-->
+接尾辞付きのパラメータがない場合は、そのバックエンドの設定値は接尾辞なしのパラメータの値が使用されます。
+つまり、接尾辞なしのパラメータは、「広域変数」のように扱われます。
+  </para>
+
   <variablelist>
 
    <varlistentry id="guc-health-check-timeout" xreflabel="health_check_timeout">

@@ -1,4 +1,4 @@
-<!-- doc/src/sgml/config.sgml -->
+<!-- doc/src/sgml/healthcheck.sgml -->
 
 <sect1 id="runtime-config-health-check">
   <title>Health Check</title>
@@ -12,10 +12,25 @@
     <caution>
       <para>
       Health check requires one extra connection to each backend node,
-      so <literal>max_connections</> in the <filename>postgresql.conf</filename>
+      so <literal>max_connections</literal> in the <filename>postgresql.conf</filename>
       needs to be adjusted accordingly.
       </para>
     </caution>
+  </para>
+
+  <para>
+    Following parameter names can also have numeric suffix at the end
+    of each name.  The suffix corresponds to backend id, which is
+    defined in backend information, such
+    as <xref linkend="guc-backend-hostname">.
+    example, <varname>health_check_timeout0</varname> is applied to
+    backend 0's <varname>health_check_timeout</varname> value.
+  </para>
+  <para>
+    If there's no parameter with suffix, the value for the backend
+    is taken from the parameter name which does not have a suffix. In
+    this sense, parameter names without suffix work like "global
+    variables".
   </para>
 
   <variablelist>
