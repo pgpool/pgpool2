@@ -233,10 +233,19 @@ void pool_set_query_in_progress(void)
  */
 void pool_unset_query_in_progress(void)
 {
+	POOL_SESSION_CONTEXT *s = pool_get_session_context(false);
+
 	ereport(DEBUG1,
 		(errmsg("session context: unsetting query in progress. DONE")));
 
-	pool_get_session_context(false)->in_progress = false;
+	s->in_progress = false;
+
+	/* Restore where_to_send map if neccessary */
+	if (s->need_to_restore_where_to_send)
+	{
+		memcpy(s->query_context->where_to_send,s->where_to_send_save, sizeof(s->where_to_send_save));
+	}
+	s->need_to_restore_where_to_send = false;
 }
 
 /*
@@ -1071,6 +1080,13 @@ void pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE* message, 
 {
 	int i;
 
+	POOL_SESSION_CONTEXT *s = pool_get_session_context(false);
+
+	/* Save where_to_send map */
+	memcpy(s->where_to_send_save, query_context->where_to_send, sizeof(s->where_to_send_save));
+	s->need_to_restore_where_to_send = true;
+
+	/* Rewrite where_to_send map */
 	memset(query_context->where_to_send, 0, sizeof(query_context->where_to_send));
 
 	for (i=0;i<2;i++)
