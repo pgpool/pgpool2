@@ -792,6 +792,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				pool_set_writing_transaction();
 			}
 		}
+		pool_unset_query_in_progress();
 	}
 
 	return POOL_CONTINUE;
@@ -1442,9 +1443,18 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	else
 	{
 		POOL_PENDING_MESSAGE *pmsg;
+		bool where_to_send_save[MAX_NUM_BACKENDS];
 
+		/* Parse_before_bind() may have sent a bind message to the primary
+		 * node id. So send the close message to the primary node as well.
+		 * Even if not, sending a close message for non existing
+		 * statement/portal is harmless. No error will happen.
+		 */
 		if (session_context->load_balance_node_id != PRIMARY_NODE_ID)
 		{
+			/* save where_to_send map */
+			memcpy(where_to_send_save, query_context->where_to_send, sizeof(where_to_send_save));
+
 			query_context->where_to_send[PRIMARY_NODE_ID] = true;
 			query_context->where_to_send[session_context->load_balance_node_id] = true;
 		}
@@ -1458,6 +1468,12 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_pending_message_query_set(pmsg, query_context);
 		pool_pending_message_add(pmsg);
 		pool_pending_message_free_pending_message(pmsg);
+
+		if (session_context->load_balance_node_id != PRIMARY_NODE_ID)
+		{
+			/* Restore where_to_send map */
+			memcpy(query_context->where_to_send, where_to_send_save, sizeof(where_to_send_save));		
+		}
 
 #ifdef NOT_USED
 		dump_pending_message();
@@ -2372,6 +2388,12 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 					pool_set_doing_extended_query_message();
 				}
 				status = SimpleForwardToBackend(fkind, frontend, backend, len, contents);
+
+				if (pool_is_doing_extended_query_message())
+				{
+					pool_unset_doing_extended_query_message();
+				}
+
 				break;
 			}
 
