@@ -152,6 +152,14 @@ typedef struct {
 	/* If true, we are doing extended query message */
 	bool doing_extended_query_message;
 
+	/* If true, we have rewritten where_to_send map in the current query
+	 * context. pool_unset_query_in_progress() should restore the data from
+	 * where_to_send_save.  For now, this is only necessary while doing
+	 * extended query protocol and in streaming replication mode.
+	 */
+	bool need_to_restore_where_to_send;
+	bool where_to_send_save[MAX_NUM_BACKENDS];
+
 	/* If true, the command in progress has finished successfully. */
 	bool command_success;
 
