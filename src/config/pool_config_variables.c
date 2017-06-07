@@ -2633,14 +2633,6 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 				  ConfigContext context, GucSource source, int elevel)
 {
 	bool reset = false;
-	/*
-	 * Check if the option can be set at this time. See guc.h for the precise
-	 * rules.
-	 */
-	if (strncmp("health_check_database",name,strlen("health_check_database")) == 0)
-	ereport(LOG,
-			(errmsg("setting value for parameter \"%s\" at index %d to %s source = %d",
-					name,index_val,value, source)));
 
 	switch (record->context)
 	{
@@ -2739,7 +2731,7 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 					{
 						const char *newVal;
 						/* we need to update the default values*/
-						ereport(LOG,
+						ereport(DEBUG2,
 								(errmsg("modifying the array index values for parameter \"%s\" source = %d",
 										name, source)));
 #ifndef POOL_PRIVATE
