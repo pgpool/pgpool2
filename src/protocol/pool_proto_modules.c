@@ -1327,7 +1327,8 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	 * other than primary node. In this case, we send a parse message to the
 	 * primary node.
 	 */
-	if (pool_config->load_balance_mode && pool_is_writing_transaction())
+	if (pool_config->load_balance_mode && pool_is_writing_transaction() &&
+		TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
 	{
 		if (!STREAM)
 		{
