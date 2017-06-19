@@ -263,14 +263,14 @@ static void check_replication_time_lag(void)
 		if (PRIMARY_NODE_ID == i)
 		{
 			if (server_version[i] >= PG10_SERVER_VERSION)
-				query = "SELECT pg_current_wal_location()";
+				query = "SELECT pg_current_wal_lsn()";
 			else
 				query = "SELECT pg_current_xlog_location()";
 		}
 		else
 		{
 			if (server_version[i] >= PG10_SERVER_VERSION)
-				query = "SELECT pg_last_wal_replay_location()";
+				query = "SELECT pg_last_wal_replay_lsn()";
 			else
 				query = "SELECT pg_last_xlog_replay_location()";
 		}
