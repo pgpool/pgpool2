@@ -52,7 +52,7 @@
 
 #define MAX_FILE_LINE_LEN    512
 
-extern char pcp_conf_file[POOLMAXPATHLEN+1]; /* global variable defined in main.c holds the path for pcp.conf */
+extern char *pcp_conf_file; /* global variable defined in main.c holds the path for pcp.conf */
 volatile sig_atomic_t pcp_worker_wakeup_request = 0;
 PCP_CONNECTION* volatile pcp_frontend = NULL;
 

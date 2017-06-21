@@ -131,6 +131,8 @@
         <para>
           Specifies the full path to a file to store the <productname>Pgpool-II
           </productname> process id.
+          The pid_file_name path can be specified as relative to the
+          location of pgpool.conf file or as an absolute path
           Default is <literal>"/var/run/pgpool/pgpool.pid"</literal>.
         </para>
 
