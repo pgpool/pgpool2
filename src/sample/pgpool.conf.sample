@@ -213,6 +213,9 @@ debug_level = 0
 
 pid_file_name = '/var/run/pgpool/pgpool.pid'
                                    # PID file name
+                                   # Can be specified as relative to the"
+                                   # location of pgpool.conf file or
+                                   # as an absolute path
                                    # (change requires restart)
 logdir = '/var/log/pgpool'
                                    # Directory of pgPool status file
