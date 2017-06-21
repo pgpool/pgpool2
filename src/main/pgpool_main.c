@@ -173,9 +173,9 @@ static int *fds;	/* listening file descriptors (UNIX socket, inet domain sockets
 
 static int pcp_unix_fd; /* unix domain socket fd for PCP (not used) */
 static int pcp_inet_fd; /* inet domain socket fd for PCP */
-extern char pcp_conf_file[POOLMAXPATHLEN+1]; /* path for pcp.conf */
-extern char conf_file[POOLMAXPATHLEN+1];
-extern char hba_file[POOLMAXPATHLEN+1];
+extern char *pcp_conf_file; /* path for pcp.conf */
+extern char *conf_file;
+extern char *hba_file;
 
 static int exiting = 0;		/* non 0 if I'm exiting */
 static int switching = 0;		/* non 0 if I'm failing over or degenerating */
