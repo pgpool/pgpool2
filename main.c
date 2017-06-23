@@ -21,6 +21,7 @@
 #include "pool.h"
 #include "pool_config.h"
 #include "pool_process_context.h"
+#include "pool_path.h"
 
 #include <ctype.h>
 #include <sys/types.h>
@@ -97,6 +98,7 @@
 #define PGPOOLMAXLITSENQUEUELENGTH 10000
 static void daemonize(void);
 static int read_pid_file(void);
+static char *get_pid_file_path(void);
 static void write_pid_file(void);
 static int read_status_file(bool discard_status);
 static int write_status_file(void);
@@ -114,6 +116,7 @@ static int pool_pause(struct timeval *timeout);
 static void kill_all_children(int sig);
 static int get_next_master_node(void);
 static pid_t fork_follow_child(int old_master, int new_primary, int old_primary);
+static void myunlink(const char* path);
 
 static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
@@ -160,9 +163,11 @@ static int follow_pid; /* pid for child process handling follow command */
 static int pcp_pid; /* pid for child process handling PCP */
 static int pcp_unix_fd; /* unix domain socket fd for PCP (not used) */
 static int pcp_inet_fd; /* inet domain socket fd for PCP */
-static char pcp_conf_file[POOLMAXPATHLEN+1]; /* path for pcp.conf */
-static char conf_file[POOLMAXPATHLEN+1];
-static char hba_file[POOLMAXPATHLEN+1];
+
+char *pcp_conf_file = NULL; /* absolute path of the pcp.conf */
+char *conf_file = NULL;		/* absolute path of the pgpool.conf */
+char *hba_file = NULL;		/* absolute path of the hba.conf */
+char *base_dir = NULL;		/* The working dir from where pgpool was invoked from */
 
 static int exiting = 0;		/* non 0 if I'm exiting */
 static int switching = 0;		/* non 0 if I'm fail overing or degenerating */
@@ -209,6 +214,10 @@ int main(int argc, char **argv)
 	bool discard_status = false;
 	bool retrying;
 	bool clear_memcache_oidmaps = false;
+	char pcp_conf_file_path[POOLMAXPATHLEN+1];
+	char conf_file_path[POOLMAXPATHLEN+1];
+	char hba_file_path[POOLMAXPATHLEN+1];
+
 
 	static struct option long_options[] = {
 		{"hba-file", required_argument, NULL, 'a'},
@@ -228,9 +237,9 @@ int main(int argc, char **argv)
 	myargc = argc;
 	myargv = argv;
 
-	snprintf(conf_file, sizeof(conf_file), "%s/%s", DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
-	snprintf(pcp_conf_file, sizeof(pcp_conf_file), "%s/%s", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
-	snprintf(hba_file, sizeof(hba_file), "%s/%s", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
+	snprintf(conf_file_path, sizeof(conf_file_path), "%s/%s", DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
+	snprintf(pcp_conf_file_path, sizeof(pcp_conf_file_path), "%s/%s", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
+	snprintf(hba_file_path, sizeof(hba_file_path), "%s/%s", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
 
     while ((opt = getopt_long(argc, argv, "a:cdf:F:hm:nDCv", long_options, &optindex)) != -1)
 	{
@@ -242,7 +251,7 @@ int main(int argc, char **argv)
 					usage();
 					exit(1);
 				}
-				strlcpy(hba_file, optarg, sizeof(hba_file));
+				strlcpy(hba_file_path, optarg, sizeof(hba_file_path));
 				break;
 
 			case 'c':			/* clear cache option */
@@ -259,7 +268,7 @@ int main(int argc, char **argv)
 					usage();
 					exit(1);
 				}
-				strlcpy(conf_file, optarg, sizeof(conf_file));
+				strlcpy(conf_file_path, optarg, sizeof(conf_file_path));
 				break;
 
 			case 'F':   /* specify PCP password file */
@@ -268,7 +277,7 @@ int main(int argc, char **argv)
 					usage();
 					exit(1);
 				}
-				strlcpy(pcp_conf_file, optarg, sizeof(pcp_conf_file));
+				strlcpy(pcp_conf_file_path, optarg, sizeof(pcp_conf_file_path));
 				break;
 
 			case 'h':
@@ -319,6 +328,35 @@ int main(int argc, char **argv)
 
 	/* For PostmasterRandom */
 	gettimeofday(&random_start_time, NULL);
+
+	/* load the CWD before it is changed */
+	base_dir = get_current_working_dir();
+	if (base_dir == NULL)
+	{
+		pool_error("could not get current working directory. reason:%s\nExiting...",strerror(errno));
+		exit(1);
+	}
+	/* convert all the paths to absolute paths*/
+	conf_file = make_absolute_path(conf_file_path, base_dir);
+	if (conf_file == NULL)
+	{
+		pool_error("could not get the absolute file path for pgpool conf file. Exiting...");
+		exit(1);
+	}
+
+	pcp_conf_file = make_absolute_path(pcp_conf_file_path, base_dir);
+	if (pcp_conf_file == NULL)
+	{
+		pool_error("could not get the absolute file path for pcp conf file. Exiting...");
+		exit(1);
+	}
+
+	hba_file = make_absolute_path(hba_file_path, base_dir);
+	if (hba_file == NULL)
+	{
+		pool_error("could not get the absolute file path for pool_hba conf file. Exiting...");
+		exit(1);
+	}
 
 #ifdef USE_SSL
 	/* global ssl init */
@@ -381,7 +419,6 @@ int main(int argc, char **argv)
 		if (!strcmp(argv[optind], "stop"))
 		{
 			stop_me();
-			unlink(pool_config->pid_file_name);
 			pool_shmem_exit(0);
 			exit(0);
 		}
@@ -969,6 +1006,7 @@ static void daemonize(void)
 static void stop_me(void)
 {
 	pid_t pid;
+	char *pid_file;
 
 	pid = read_pid_file();
 	if (pid < 0)
@@ -993,6 +1031,58 @@ static void stop_me(void)
 		sleep(1);
 	}
 	fprintf(stderr, "done.\n");
+	pid_file = get_pid_file_path();
+	if(pid_file)
+	{
+		unlink(pid_file);
+		free(pid_file);
+	}
+	else
+	{
+		pool_error("failed to get pid file path from %s",
+				   pool_config->pid_file_name);
+	}
+}
+
+/*
+ * The function returns the malloc'd copy of pid_file_path,
+ * caller must free it after use
+ */
+static char *get_pid_file_path(void)
+{
+	char *new = NULL;
+	if (!is_absolute_path(pool_config->pid_file_name))
+	{
+		/*
+		 * some implementations of dirname() may modify the
+		 * string argument passed to it, so do not use the original
+		 * conf_file as an argument
+		 */
+		char *conf_file_copy = strdup(conf_file);
+		char *conf_dir = dirname(conf_file_copy);
+		size_t  path_size;
+		if (conf_dir == NULL)
+		{
+			pool_error("could not read pid file as %s. reason: %s",
+					   pool_config->pid_file_name, strerror(errno));
+			return NULL;
+		}
+		path_size = strlen(conf_dir) + strlen(pool_config->pid_file_name) + 1 + 1;
+		new = malloc(path_size);
+		if (new == NULL)
+		{
+			pool_error("out of memory");
+			exit(1);
+		}
+		snprintf(new, path_size, "%s/%s",conf_dir, pool_config->pid_file_name);
+
+		pool_debug("pid file location is \"%s\"",new);
+	}
+	else
+	{
+		new = strdup(pool_config->pid_file_name);
+	}
+	return new;
 }
 
 /*
@@ -1003,26 +1093,38 @@ static int read_pid_file(void)
 	int fd;
 	int readlen;
 	char pidbuf[128];
+	char *pid_file = get_pid_file_path();
 
-	fd = open(pool_config->pid_file_name, O_RDONLY);
+	if (pid_file == NULL)
+	{
+		pool_error("failed to get pid file path from %s",
+				   pool_config->pid_file_name);
+		return -1;
+	}
+
+	fd = open(pid_file, O_RDONLY);
 	if (fd == -1)
 	{
+		free(pid_file);
 		return -1;
 	}
 	if ((readlen = read(fd, pidbuf, sizeof(pidbuf))) == -1)
 	{
 		pool_error("could not read pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno));
+				   pid_file, strerror(errno));
+		free(pid_file);
 		close(fd);
 		return -1;
 	}
 	else if (readlen == 0)
 	{
 		pool_error("EOF detected while reading pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno));
+				   pid_file, strerror(errno));
+		free(pid_file);
 		close(fd);
 		return -1;
 	}
+	free(pid_file);
 	close(fd);
 	return(atoi(pidbuf));
 }
@@ -1034,12 +1136,21 @@ static void write_pid_file(void)
 {
 	int fd;
 	char pidbuf[128];
+	char *pid_file = get_pid_file_path();
 
-	fd = open(pool_config->pid_file_name, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR);
+	if (pid_file == NULL)
+	{
+		pool_error("failed to get pid file path from %s",
+				   pool_config->pid_file_name);
+		exit(1);
+	}
+
+	fd = open(pid_file, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR);
 	if (fd == -1)
 	{
 		pool_error("could not open pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno));
+				   pid_file, strerror(errno));
+		free(pid_file);
 		pool_shmem_exit(1);
 		exit(1);
 	}
@@ -1047,7 +1158,8 @@ static void write_pid_file(void)
 	if (write(fd, pidbuf, strlen(pidbuf)+1) == -1)
 	{
 		pool_error("could not write pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno));
+				   pid_file, strerror(errno));
+		free(pid_file);
 		close(fd);
 		pool_shmem_exit(1);
 		exit(1);
@@ -1055,7 +1167,8 @@ static void write_pid_file(void)
 	if (fsync(fd) == -1)
 	{
 		pool_error("could not fsync pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno));
+				   pid_file, strerror(errno));
+		free(pid_file);
 		close(fd);
 		pool_shmem_exit(1);
 		exit(1);
@@ -1063,11 +1176,13 @@ static void write_pid_file(void)
 	if (close(fd) == -1)
 	{
 		pool_error("could not close pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno));
+				   pid_file, strerror(errno));
 		pool_shmem_exit(1);
 		exit(1);
 	}
+	free(pid_file);
 }
+
 
 /*
 * Read the status file
@@ -1437,13 +1552,14 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 static void myunlink(const char* path)
 {
 	if (unlink(path) == 0) return;
-	pool_error("unlink(%s) failed: %s", path, strerror(errno));
+		pool_error("unlink(%s) failed: %s", path, strerror(errno));
 }
 
 static void myexit(int code)
 {
 	int i;
 	pid_t wpid;
+	char *pid_file;
 
 	if (getpid() != mypid)
 		return;
@@ -1475,7 +1591,18 @@ static void myexit(int code)
 
 	myunlink(un_addr.sun_path);
 	myunlink(pcp_un_addr.sun_path);
-	myunlink(pool_config->pid_file_name);
+
+	pid_file = get_pid_file_path();
+	if(pid_file)
+	{
+		unlink(pid_file);
+		free(pid_file);
+	}
+	else
+	{
+		pool_error("failed to get pid file path from %s",
+				   pool_config->pid_file_name);
+	}
 
 	write_status_file();
 
