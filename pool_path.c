@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2008,	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2017,	PgPool Global Development Group
  * Portions Copyright (c) 2004, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
@@ -28,6 +28,9 @@
 #include "pool_path.h"
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 static void trim_directory(char *path);
 static void trim_trailing_separator(char *path);
@@ -190,4 +193,87 @@ static void trim_trailing_separator(char *path)
 	if (p > path)
 		for (p--; p > path && IS_DIR_SEP(*p); p--)
 			*p = '\0';
+}
+
+char *
+get_current_working_dir(void)
+{
+	char	*buf = NULL;
+	size_t	buflen = MAXPGPATH;
+
+	for (;;)
+	{
+		buf = malloc(buflen);
+		if (buf == NULL)
+		{
+			fprintf(stderr,"out of memory: %s",strerror(errno));
+		}
+
+		if (getcwd(buf, buflen))
+			break;
+
+		else if (errno == ERANGE)
+		{
+			free(buf);
+			buflen *= 2;
+			continue;
+		}
+		else
+		{
+			int	save_errno = errno;
+
+			free(buf);
+			errno = save_errno;
+			fprintf(stderr,"could not get current working directory: %s",strerror(errno));
+			return NULL;
+		}
+	}
+	return buf;
+}
+/*
+ * make_absolute_path
+ *
+ * If the given pathname isn't already absolute, make it so, interpreting
+ * it relative to the current working directory.
+ *
+ * if arg base_dir is NULL, The function gets the current cwd
+ * Also canonicalizes the path.  The result is always a palloc'd copy.
+ *
+ * Logic borrowed from PostgreSQL source
+ */
+char *
+make_absolute_path(const char *path, const char* base_dir)
+{
+	char	*new;
+	/* Returning null for null input is convenient for some callers */
+	if (path == NULL)
+		return NULL;
+
+	if (!is_absolute_path(path))
+	{
+		const char	*cwd = NULL;
+		if (base_dir == NULL)
+		{
+			cwd = get_current_working_dir();
+			if (!cwd)
+				return NULL;
+		}
+		else
+			cwd = base_dir;
+
+		new = malloc(strlen(cwd) + strlen(path) + 2);
+		sprintf(new, "%s/%s", cwd, path);
+
+		if (!base_dir)
+			free((void*)cwd);
+	}
+	else
+	{
+		new = strdup(path);
+	}
+
+	/* Make sure punctuation is canonical, too */
+	canonicalize_path(new);
+
+	return new;
 }
