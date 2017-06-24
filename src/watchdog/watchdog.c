@@ -3816,6 +3816,7 @@ static void cluster_service_message_processor(WatchdogNode* wdNode, WDPacketData
 
 		case CLUSTER_IN_SPLIT_BRAIN:
 		{
+			try_connecting_with_all_unreachable_nodes();
 			if (get_local_node_state() == WD_COORDINATOR)
 			{
 				ereport(LOG,
@@ -3974,7 +3975,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 				}
 				else if (WD_MASTER_NODE != wdNode)
 				{
-					ereport(WARNING,
+					ereport(LOG,
 							(errmsg("\"%s\" is the coordinator as per our record but \"%s\" is also announcing as a coordinator",
 									WD_MASTER_NODE->nodeName, wdNode->nodeName),
 							 errdetail("cluster is in the split-brain")));
@@ -3986,11 +3987,6 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 						 */
 
 						send_cluster_service_message(NULL,pkt,CLUSTER_IN_SPLIT_BRAIN);
-
-						ereport(LOG,
-								(errmsg("re-initializing the local watchdog cluster state because of split-brain")));
-
-						set_state(WD_JOINING);
 					}
 					else
 					{
@@ -4054,11 +4050,11 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			if (WD_MASTER_NODE != NULL && wdNode != WD_MASTER_NODE)
 			{
 				ereport(LOG,
-						(errmsg("re-initializing the local watchdog cluster state because of split-brain")));
+					(errmsg("\"%s\" is our coordinator node, but \"%s\" is also announcing as a coordinator",
+							WD_MASTER_NODE->nodeName, wdNode->nodeName),
+						 errdetail("broadcasting the cluster in split-brain message")));
 
 				send_cluster_service_message(NULL,pkt,CLUSTER_IN_SPLIT_BRAIN);
-				set_state(WD_JOINING);
-
 			}
 			else
 			{
@@ -4400,6 +4396,7 @@ static bool watchdog_internal_command_packet_processor(WatchdogNode* wdNode, WDP
 	int i;
 	WDCommandNodeResult* nodeResult = NULL;
 	WDCommandData* clusterCommand = get_wd_cluster_command_from_reply(pkt);
+
 	if (clusterCommand == NULL || clusterCommand->commandStatus != COMMAND_IN_PROGRESS)
 		return false;
 
@@ -5392,11 +5389,11 @@ static int watchdog_state_machine_standForCord(WD_EVENTS event, WatchdogNode* wd
 			}
 		}
 			break;
-			
+
 		case WD_EVENT_TIMEOUT:
 			set_state(WD_COORDINATOR);
 			break;
-			
+
 		case WD_EVENT_PACKET_RCV:
 		{
 			switch (pkt->type)
@@ -5559,13 +5556,14 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 									   clusterCommand->commandReplyFromCount
 									   )));
 				}
-				else
+				else if (clusterCommand->commandStatus == COMMAND_FINISHED_NODE_REJECTED)
 				{
-					/* command is finished but because of an error */
-					ereport(WARNING,
-							(errmsg("possible split brain scenario detected by \"%s\" node", wdNode->nodeName),
-							 (errdetail("re-initializing cluster"))));
-					set_state(WD_JOINING);
+					/* one of the node rejected out I am coordinator message */
+					ereport(LOG,
+							(errmsg("possible split brain, \"%s\" node has rejected our coordinator beacon", wdNode->nodeName),
+							 (errdetail("removing the node from out standby list"))));
+
+					standby_node_left_cluster(wdNode);
 				}
 			}
 		}
@@ -6206,6 +6204,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 				break;
 
 			case WD_DECLARE_COORDINATOR_MESSAGE:
+			{
 				if (wdNode != WD_MASTER_NODE)
 				{
 					/*
@@ -6220,6 +6219,29 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 					set_state(WD_JOINING);
 				}
 				break;
+
+				case WD_IAM_COORDINATOR_MESSAGE:
+				{
+					/*
+					 * if the message is received from coordinator reply with info,
+					 * otherwise reject
+					 */
+					if (wdNode != WD_MASTER_NODE)
+					{
+						ereport(LOG,
+								(errmsg("\"%s\" is our coordinator node, but \"%s\" is also announcing as a coordinator",
+										WD_MASTER_NODE->nodeName,wdNode->nodeName),
+								 errdetail("broadcasting the cluster in split-brain message")));
+
+						send_cluster_service_message(NULL,pkt,CLUSTER_IN_SPLIT_BRAIN);
+					}
+					else
+					{
+						send_message_of_type(wdNode, WD_INFO_MESSAGE, pkt);
+						beacon_message_received_from_node(wdNode, pkt);
+					}
+				}
+			}
 
 			default:
 				standard_packet_processor(wdNode, pkt);
