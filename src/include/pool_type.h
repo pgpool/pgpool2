@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include "pcp/libpcp_ext.h"
+#include <stddef.h>
 #include "libpq-fe.h"
 /* Define common boolean type. C++ and BEOS already has it so exclude them. */
 #ifdef c_plusplus
@@ -57,6 +58,21 @@ typedef char bool;
 #endif
 #endif /* not C++ */
 #endif /* __BEOS__ */
+
+/* ----------------------------------------------------------------
+ *              Section 5:  offsetof, lengthof, endof, alignment
+ * ----------------------------------------------------------------
+ */
+/*
+ * offsetof
+ *      Offset of a structure/union field within that structure/union.
+ *
+ *      XXX This is supposed to be part of stddef.h, but isn't on
+ *      some systems (like SunOS 4).
+ */
+#ifndef offsetof
+#define offsetof(type, field)   ((long) &((type *)0)->field)
+#endif
 
 #define PointerIsValid(pointer) ((const void*)(pointer) != NULL)
 typedef signed char int8;		/* == 8 bits */
