@@ -15,6 +15,22 @@
  */
 
 #if 0
+/* from include/pg_config.h */
+/*
+ * Set the format style used by gcc to check printf type functions. We really
+ * want the "gnu_printf" style set, which includes what glibc uses, such
+ * as %m for error strings and %lld for 64 bit long longs. But not all gcc
+ * compilers are known to support it, so we just use "printf" which all
+ * gcc versions alive are known to support, except on Windows where
+ * using "gnu_printf" style makes a dramatic difference. Maybe someday
+ * we'll have a configure test for this, if we ever discover use of more
+ * variants to be necessary.
+ */
+#ifdef WIN32
+#define PG_PRINTF_ATTRIBUTE gnu_printf
+#else
+#define PG_PRINTF_ATTRIBUTE printf
+#endif
 /*
  * Maximum length for identifiers (e.g. table names, column names,
  * function names).  Names actually are limited to one less byte than this,
@@ -174,6 +190,16 @@
 #define PG_PRINTF_ATTRIBUTE gnu_printf
 #else
 #define PG_PRINTF_ATTRIBUTE printf
+#endif
+
+/* from postgresql/src/include/c.h */
+/* GCC and XLC support format attributes */
+#if defined(__GNUC__) || defined(__IBMC__)
+#define pg_attribute_format_arg(a) __attribute__((format_arg(a)))
+#define pg_attribute_printf(f,a) __attribute__((format(PG_PRINTF_ATTRIBUTE, f, a)))
+#else
+#define pg_attribute_format_arg(a)
+#define pg_attribute_printf(f,a)
 #endif
 
 #if 0
