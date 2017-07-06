@@ -73,7 +73,6 @@ typedef enum WDValueDataType
 #define WD_REGISTER_FOR_NOTIFICATION		'0'
 #define WD_NODE_STATUS_CHANGE_COMMAND		'2'
 #define WD_GET_NODES_LIST_COMMAND			'3'
-#define WD_NODES_LIST_DATA					'4'
 
 #define WD_IPC_CMD_CLUSTER_IN_TRAN			'5'
 #define WD_IPC_CMD_RESULT_BAD				'6'

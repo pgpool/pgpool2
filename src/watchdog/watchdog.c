@@ -151,8 +151,16 @@ packet_types all_packet_types[] = {
 	{WD_CMD_REPLY_IN_DATA, "COMMAND REPLY IN DATA"},
 	{WD_FAILOVER_LOCKING_REQUEST,"FAILOVER LOCKING REQUEST"},
 	{WD_CLUSTER_SERVICE_MESSAGE, "CLUSTER SERVICE MESSAGE"},
+	{WD_REGISTER_FOR_NOTIFICATION, "REGISTER FOR NOTIFICATION"},
+	{WD_NODE_STATUS_CHANGE_COMMAND, "NODE STATUS CHANGE"},
+	{WD_GET_NODES_LIST_COMMAND, "GET NODES LIST"},
+	{WD_IPC_CMD_CLUSTER_IN_TRAN, "CLUSTER STATE NOT STABLE"},
+	{WD_IPC_CMD_RESULT_BAD, "IPC RESPONSE BAD"},
+	{WD_IPC_CMD_RESULT_OK, "IPC RESPONSE GOOD"},
+	{WD_IPC_CMD_TIMEOUT, "IPC TIMEOUT"},
 	{WD_NO_MESSAGE,""}
 };
+
 
 char* wd_failover_lock_name[] =
 {
@@ -506,7 +514,8 @@ static pid_t fork_watchdog_child(void);
 static bool check_IPC_client_authentication(json_value *rootObj, bool internal_client_only);
 static bool check_and_report_IPC_authentication(WDCommandData* ipcCommand);
 
-static void print_received_packet_info(WDPacketData* pkt,WatchdogNode* wdNode);
+static void print_packet_node_info(WDPacketData* pkt,WatchdogNode* wdNode, bool sending);
+static void print_packet_info(WDPacketData* pkt, bool sending);
 static void update_interface_status(void);
 static bool any_interface_available(void);
 static WDPacketData* process_data_request(WatchdogNode* wdNode, WDPacketData* pkt);
@@ -3048,7 +3057,7 @@ static WDPacketData* read_packet_of_type(SocketConnection* conn, char ensure_typ
 	}
 
 	ereport(DEBUG1,
-			(errmsg("received packet type %c while need packet type %c",type,ensure_type)));
+			(errmsg("received watchdog packet type:%c",type)));
 
 	if (ensure_type != WD_NO_MESSAGE && ensure_type != type)
 	{
@@ -3375,28 +3384,18 @@ static bool write_packet_to_socket(int sock, WDPacketData* pkt, bool ipcPacket)
 {
 	int ret = 0;
 	int command_id, len;
-	int i;
-	packet_types *pkt_type = NULL;
-	for (i =0; ; i++)
-	{
-		if (all_packet_types[i].type == WD_NO_MESSAGE)
-			break;
-		
-		if (all_packet_types[i].type == pkt->type)
-		{
-			pkt_type = &all_packet_types[i];
-			break;
-		}
-	}
 
 	ereport(DEBUG1,
-			(errmsg("sending watchdog packet Socket:%d, Type:[%s], Command_ID:%d, data Length:%d",sock,pkt_type?pkt_type->name:"NULL", pkt->command_id,pkt->len)));
-	
+			(errmsg("sending watchdog packet to socket:%d, type:[%c], command ID:%d, data Length:%d",sock,pkt->type,
+					pkt->command_id,pkt->len)));
+
+	print_packet_info(pkt, true);
+
 	/* TYPE */
 	if (write(sock, &pkt->type, 1) < 1)
 	{
 		ereport(LOG,
-				(errmsg("failed to send packet Socket:%d, Type:[%s], Command_ID:%d, data Length:%d",sock,pkt_type?pkt_type->name:"NULL", pkt->command_id,pkt->len),
+				(errmsg("failed to write watchdog packet to socket"),
 				 errdetail("%s",strerror(errno))));
 		return false;
 	}
@@ -3407,9 +3406,8 @@ static bool write_packet_to_socket(int sock, WDPacketData* pkt, bool ipcPacket)
 		if (write(sock, &command_id, 4) < 4)
 		{
 			ereport(LOG,
-				(errmsg("failed to send command id, Socket:%d Type:[%s], Command_ID:%d, data Length:%d",sock,pkt_type?pkt_type->name:"NULL", pkt->command_id,pkt->len),
+				(errmsg("failed to write watchdog packet to socket"),
 					 errdetail("%s",strerror(errno))));
-
 			return false;
 		}
 	}
@@ -3418,7 +3416,7 @@ static bool write_packet_to_socket(int sock, WDPacketData* pkt, bool ipcPacket)
 	if (write(sock, &len, 4) < 4)
 	{
 		ereport(LOG,
-			(errmsg("failed to send length,Socket:%d Type:[%s], Command_ID:%d, data Length:%d",sock,pkt_type?pkt_type->name:"NULL", pkt->command_id,pkt->len),
+			(errmsg("failed to write watchdog packet to socket"),
 				 errdetail("%s",strerror(errno))));
 		return false;
 	}
@@ -3432,7 +3430,7 @@ static bool write_packet_to_socket(int sock, WDPacketData* pkt, bool ipcPacket)
 			if (ret <=0)
 			{
 				ereport(LOG,
-					(errmsg("failed to send packet data, Socket:%d Type:[%s], Command_ID:%d, data Length:%d",sock,pkt_type?pkt_type->name:"NULL", pkt->command_id,pkt->len),
+					(errmsg("failed to write watchdog packet to socket"),
 						 errdetail("%s",strerror(errno))));
 				return false;
 			}
@@ -4095,6 +4093,9 @@ static bool send_message_to_connection(SocketConnection* conn, WDPacketData *pkt
 static bool send_message_to_node(WatchdogNode* wdNode, WDPacketData *pkt)
 {
 	bool ret;
+
+	print_packet_node_info(pkt,wdNode, true);
+
 	ret = send_message_to_connection(&wdNode->client_socket,pkt);
 	if (ret == false)
 	{
@@ -4964,7 +4965,7 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 	}
 	else if (event == WD_EVENT_PACKET_RCV)
 	{
-		print_received_packet_info(pkt,wdNode);
+		print_packet_node_info(pkt,wdNode, false);
 		/* update the last receiv time*/
 		gettimeofday(&wdNode->last_rcv_time, NULL);
 
@@ -7010,11 +7011,10 @@ static bool check_and_report_IPC_authentication(WDCommandData* ipcCommand)
 	return ret;
 }
 
-/* DEBUG */
 static void print_watchdog_node_info(WatchdogNode* wdNode)
 {
 	ereport(DEBUG2,
-			(errmsg("state: \"%s\" Host: \"%s\" Name: \"%s\" WD Port:%d PP Port: %d priority:%d",
+		(errmsg("state: \"%s\" Host: \"%s\" Name: \"%s\" WD Port:%d PP Port: %d priority:%d",
 					wd_state_names[wdNode->state],
 					wdNode->hostname
 					,wdNode->nodeName
@@ -7023,10 +7023,47 @@ static void print_watchdog_node_info(WatchdogNode* wdNode)
 					,wdNode->wd_priority)));
 }
 
-static void print_received_packet_info(WDPacketData* pkt,WatchdogNode* wdNode)
+static void print_packet_node_info(WDPacketData* pkt,WatchdogNode* wdNode, bool sending)
 {
 	int i;
 	packet_types *pkt_type = NULL;
+	/*
+	 * save the cpu cycles if our log level would swallow this message
+	 */
+	if (pool_config->log_min_messages > DEBUG1)
+		return;
+
+	for (i =0; ; i++)
+	{
+		if (all_packet_types[i].type == WD_NO_MESSAGE)
+			break;
+
+		if (all_packet_types[i].type == pkt->type)
+		{
+			pkt_type = &all_packet_types[i];
+			break;
+		}
+	}
+
+	ereport(DEBUG1,
+		(errmsg("%s packet, watchdog node:[%s] command id:[%d] type:[%s] state:[%s]",
+				sending?"sending":"received",
+				wdNode->nodeName,
+				pkt->command_id,
+				pkt_type?pkt_type->name:"UNKNOWN",
+				wd_state_names[get_local_node_state()])));
+}
+
+static void print_packet_info(WDPacketData* pkt, bool sending)
+{
+	int i;
+	packet_types *pkt_type = NULL;
+	/*
+	 * save the cpu cycles if our log level would swallow this message
+	 */
+	if (pool_config->log_min_messages > DEBUG2)
+		return;
+
 	for (i =0; ; i++)
 	{
 		if (all_packet_types[i].type == WD_NO_MESSAGE)
@@ -7038,11 +7075,13 @@ static void print_received_packet_info(WDPacketData* pkt,WatchdogNode* wdNode)
 			break;
 		}
 	}
+
 	ereport(DEBUG2,
-		(errmsg("watchdog packet received from node \"%s\"",wdNode->nodeName),
-			 errdetail("command id : %d Type: %s my watchdog state :%s",pkt->command_id,
-					   pkt_type?pkt_type->name:"UNKNOWN",
-					   wd_state_names[get_local_node_state()])));
+			(errmsg("%s watchdog packet, command id:[%d] type:[%s] state :[%s]",
+					sending?"sending":"received",
+					pkt->command_id,
+					pkt_type?pkt_type->name:"UNKNOWN",
+					wd_state_names[get_local_node_state()])));
 }
 
 static int send_command_packet_to_remote_nodes(WDCommandData* ipcCommand, bool source_included)
