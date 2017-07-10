@@ -1,6 +1,106 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-4-12">
+  <title>Release 3.4.12</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-07-11</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-06-29 [0a1b675]
+    -->
+    <para>
+    Importing the latest changes in the <productname>MemoryManager API</productname> from <productname>PostgreSQL</productname> code. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-21 [8991f6e]
+    -->
+    <para>
+    Fixing  <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-June/002390.html">[pgpool-hackers: 2390]</ulink>Problems with the relative paths in daemon mode (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-19 [7b90252]
+    -->
+    <para>
+    Adjust function name change in <productname>PostgreSQL</productname> 10 dev head. (Tatsuo Ishii)
+    </para>
+    <programlisting>
+    pg_current_wal_location     -> pg_current_wal_lsn
+    pg_last_wal_replay_location -> pg_last_wal_replay_lsn
+    </programlisting>
+
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-31 [4d2281e]
+    -->
+    <para>
+    Fix query cache hang when used by node.js. (Tatsuo Ishii)
+    </para>
+    <para>
+    See <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-May/005569.html">[pgpool-general: 5511]</ulink> for more details.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-28 [d313520]
+    -->
+    <para>
+    Deal with <productname>PostgreSQL</productname> 10 in streaming replication delay checking. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-27 [b755fd4]
+    -->
+    <para>
+    Fix query cache memory leak. (Tatsuo Ishii)
+    </para>
+    <para>
+    Clearing cache buffers in case of no oid queries (like <command>BEGIN</command>,
+    <command>CHECKPOINT</command>, <command>VACUUM</command>, etc) should have been done, but it did not.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-10 [e4ce880]
+    -->
+    <para>
+    Fix corner case bug in <productname>Pgpool-II</productname> starting up. (Tatsuo Ishii)
+    </para>
+    <para>
+    It is possible that a failover request is accepted before primary node
+    is searched.  This leads <productname>Pgpool-II</productname> to a strange state: there's no
+    primary node if the failed node was a primary node (even if new
+    primary node exists as a result of promotion of existing standby).
+    </para>
+    <para>
+    See <ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2017-May/002321.html">[pgpool-hackers: 2321]</ulink> for more details.
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+
+</sect1>
+
 <sect1 id="release-3-4-11">
   <title>Release 3.4.11</title>
 

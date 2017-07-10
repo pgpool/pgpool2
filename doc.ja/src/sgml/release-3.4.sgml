@@ -1,6 +1,104 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-4-12">
+  <title>リリース 3.4.12</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-07-11</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-06-29 [0a1b675]
+    -->
+    <para>
+    <productname>PostgreSQL</productname>の<productname>MemoryManager API</productname>に関する最新の変更をインポートしました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-21 [8991f6e]
+    -->
+    <para>
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-June/002390.html">[pgpool-hackers: 2390]</ulink> によって報告されたデーモンモードでの相対パスの問題を修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-19 [7b90252]
+    -->
+    <para>
+    <productname>PostgreSQL</productname> 10の変更に合わせて以下の関数名を修正しました。(Tatsuo Ishii)
+    </para>
+    <programlisting>
+    pg_current_wal_location     -> pg_current_wal_lsn
+    pg_last_wal_replay_location -> pg_last_wal_replay_lsn
+    </programlisting>
+
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-31 [4d2281e]
+    -->
+    <para>
+    <productname>node.js</productname>を使用する場合に発生するクエリキャッシュのハングアップの問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    詳細は<ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-May/005569.html">[pgpool-general: 5511]</ulink>を参照してください。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-28 [d313520]
+    -->
+    <para>
+    <productname>PostgreSQL</productname> 10のストリーミングレプリケーションの遅延チェックに関する変更に合わせて修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-27 [b755fd4]
+    -->
+    <para>
+    クエリキャッシュのメモリリークを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    oidがないクエリ（<command>BEGIN</command>、<command>CHECKPOINT</command>、<command>VACUUM</command>など）の場合キャッシュバッファがクリアされるべきでしたが、されていませんでした。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-10 [e4ce880]
+    -->
+    <para>
+    滅多に発生しない<productname>Pgpool-II</productname>起動時のバグを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    プライマリノードが見つかる前にフェールオーバーの要求が受け入れられる可能性がありました。
+    これにより、<productname>Pgpool-II</productname>は奇妙な状態に陥ります。障害が発生したノードはプライマリノードの場合、
+    プライマリノードは存在しないと判断していました。（既存のスタンバイが昇格し新しいプライマリノードになった場合でも）
+    </para>
+    <para>
+    詳細は<ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2017-May/002321.html">[pgpool-hackers: 2321]</ulink>  をご参照下さい。
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+
+</sect1>
+
 <sect1 id="release-3-4-11">
   <title>リリース 3.4.11</title>
 
@@ -37,7 +135,7 @@
     -->
     <para>
      <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink>
-        pam ldapが失敗する不具合が修正しました。(Muhammad Usama)
+        pam ldapが失敗する不具合を修正しました。(Muhammad Usama)
     </para>
     </listitem>
 

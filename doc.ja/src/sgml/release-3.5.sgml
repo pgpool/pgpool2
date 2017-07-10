@@ -1,6 +1,220 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-5-9">
+  <title>リリース 3.5.9</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-07-11</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-07-07 [d845be6]
+    -->
+    <para>
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-June/002400.html">[pgpool-hackers: 2400]</ulink>で報告された、ログ出力中の不正なバイトを修正しました。(Muhammad Usama)
+    </para>
+    <para>
+    ほとんどログメッセージの修正でした。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-29 [e83a274]
+    -->
+    <para>
+    <productname>PostgreSQL</productname>の<productname>MemoryManager API</productname>に関する最新の変更をインポートしました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-21 [cc0b21d]
+    -->
+    <para>
+    <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-June/002390.html">[pgpool-hackers: 2390]</ulink> によって報告されたデーモンモードでの相対パスの問題を修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-19 [d1013ac]
+    -->
+    <para>
+    <productname>PostgreSQL</productname> 10の変更に合わせて以下の関数名を修正しました。(Tatsuo Ishii)
+    </para>
+    <programlisting>
+    pg_current_wal_location     -> pg_current_wal_lsn
+    pg_last_wal_replay_location -> pg_last_wal_replay_lsn
+    </programlisting>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-09 [b86e7b7]
+    -->
+    <para>
+    ストリーミングレプリケーションと拡張プロトコルで発生するハングアップを修正しました。(Yugo Nagata)
+    </para>
+    <para>
+    以下の例で再現できます。
+
+    <programlisting>
+    - <filename>pgpool.conf</filename>ですべての読み取りクエリをスタンバイに送信するように設定しています。
+    - まず、トランザクションブロックで書き込みクエリを発行します。
+    - トランザクションをコミットした後、<command>SELECT</command>クエリを発行します。
+    - クエリを処理するときに、<command>Parse</command>の直後に<command>Describe（statement)</command>メッセージを送信します。
+    </programlisting>
+    </para>
+
+    <para>
+    <productname>JDBC</productname>を使用せず、<productname>pgproto</productname>を利用し以下のデータでこの問題を再現できます。
+    </para>
+
+    <programlisting>
+    'Q' "DROP TABLE IF EXISTS test_tbl"
+    'Y'
+    'Q' "CREATE TABLE test_tbl(i int)"
+    'Y'
+    'Q' "INSERT INTO test_tbl VALUES(1)"
+    'Y'
+
+    'P' "" "BEGIN" 0
+    'B' "" "" 0 0 0
+    'E' "" 0
+    'S'
+    'Y'
+
+    'P' "" "INSERT INTO test_tbl VALUES(1)" 0
+    'B' "" "" 0 0 0
+    'E' "" 0
+    'S'
+    'Y'
+
+    'P' "" "COMMIT" 0
+    'B' "" "" 0 0 0
+    'E' "" 0
+    'S'
+    'Y'
+
+    'P' "S_1" "SELECT * FROM test_tbl" 0
+    'D' 'S' "S_1"
+    'B' "C_1" "S_1" 0 0 0
+    'E' "C_1" 0
+    'S'
+    'Y'
+
+    'X'
+    </programlisting>
+
+    <para>
+    <command>Bind</command>と<command>Execute</command>を適切なバックエンドに送信するように、<function>parse_before_bind()</function>は、トランザクション中にのみ呼び出されるように修正しました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-07 [378111d]
+    -->
+    <para>
+    <productname>erlang</productname>アプリケーションを使用する場合、<productname>Pgpool-II</productname> がハングする不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    <productname>Erlang</productname>クライアントは "Describe"メッセージの後に "Flush"を送信し、バックエンドは "Row description" を返します。しかし、<productname>Pgpool-II</productname>は、"Row description" メッセージを受信した後、進行中のクエリフラグをリセットすることを忘れてしまい、<productname>Pgpool-II</productname>はバックエンドからの応答を待っていました。これが<productname>erlang</productname>クライアントのハングアップの原因でした。
+
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>が "Row description" メッセージを受信した際に、クエリ処理中のフラグをリセットするように修正しました。"no data" メッセージと同じ扱いにする必要がありました。
+    </para>
+    <para>
+    詳細は<ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-June/005613.html">[pgpo       ol-general: 5555]</ulink>を参照してください。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-07 [cfcb85e]
+    -->
+    <para>
+    間違ったターゲットノードにバインドメッセージを送信するバグを修正しました。 <ulink url="http://www.pgpool.net/mantisbt/view.php?id=306">(bug 306)</ulink> (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-31 [ba69889]
+    -->
+    <para>
+    <productname>node.js</productname>を使用する場合に発生するクエリキャッシュのハングアップの問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    詳細は<ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-May/005569.html">[pgpool-general: 5511]</ulink>を参照してください。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-28 [9de196b]
+    -->
+    <para>
+    <productname>PostgreSQL</productname> 10のストリーミングレプリケーションの遅延チェックに関する変更に合わせて修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-27 [52769db]
+    -->
+    <para>
+    クエリキャッシュのメモリリークを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    oidがないクエリ（<command>BEGIN</command>、<command>CHECKPOINT</command>、<command>VACUUM</command>など）の場合キャッシュバッファがクリアされるべきでしたが、されていませんでした。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-23 [27a516a]
+    -->
+    <para>
+    特定の場合に発生する拡張クエリのハングアップを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    <productname>erlang</productname> PostgreSQL APIは<command>Parse ('P')</command>、<command>Describe ('D')</command>、<command>Flush ('H')</command>、<command>Bind (B)</command>、<command>Execute('E')</command>を生成します。この"H"は<productname>JDBC</productname>にはありませんので、今まで問題が起こらなかったと思われます。その後、<productname>Pgpool-II</productname>は拡張クエリモードを削除し、データを読み取るバックエンドを見つけることができませんでした。したがって、<productname>Pgpool-II</productname>はバックエンドの一部にメッセージを送信していない可能性があるため、ハングアップを引き起こすすべてのバックエンドを読み取ろうとします。
+    </para>
+    <para>
+    この問題を避けるために、<command>Flush</command>メッセージを受信後拡張クエリフラグを設定するように修正しました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-10 [7b2ef18]
+    -->
+    <para>
+    滅多に発生しない<productname>Pgpool-II</productname>起動時のバグを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    プライマリノードが見つかる前にフェールオーバーの要求が受け入れられる可能性がありました。
+    これにより、<productname>Pgpool-II</productname>は奇妙な状態に陥ります。障害が発生したノードはプライマリノードの場合、
+    プライマリノードは存在しないと判断していました。（既存のスタンバイが昇格し新しいプライマリノードになった場合でも）
+    </para>
+    <para>
+    詳細は<ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2017-May/002321.html">[pgpool-hackers: 2321]</ulink>  をご参照下さい。
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-5-8">
   <title>リリース 3.5.8</title>
 
@@ -140,7 +354,7 @@
     2017-04-05 [436f7a7]
     -->
     <para>
-     ログメッセージをバインドする前にdebug1に解析をダウングレードしました。(Tatsuo Ishii)
+    <function>parse_before_bind()</function> のログメッセージを debug1 にダウングレードしました。(Tatsuo Ishii)
     </para>
     </listitem>
 
@@ -161,7 +375,7 @@
     -->
     <para>
      <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-March/005454.html">[pgpool-general: 5396]</ulink>
-        pam ldapが失敗する不具合が修正しました。(Muhammad Usama)
+        pam ldapが失敗する不具合を修正しました。(Muhammad Usama)
     </para>
     </listitem>
 

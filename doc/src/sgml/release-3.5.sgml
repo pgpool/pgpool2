@@ -1,6 +1,232 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-5-9">
+  <title>Release 3.5.9</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-07-11</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-07-07 [d845be6]
+    -->
+    <para>
+    Fix for <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-June/002400.html">[pgpool-hackers: 2400]</ulink> Garbage output (Muhammad Usama)
+    </para>
+    <para>
+    Mostly the log messages fixes and few code cleanups.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-29 [e83a274]
+    -->
+    <para>
+    Importing the latest changes in the <productname>MemoryManager API</productname> from <productname>PostgreSQL</productname> code. (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-21 [cc0b21d]
+    -->
+    <para>
+    Fixing  <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-June/002390.html">[pgpool-hackers: 2390]</ulink>Problems with the relative paths in daemon mode (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-19 [d1013ac]
+    -->
+    <para>
+    Adjust function name change in <productname>PostgreSQL</productname> 10 dev head. (Tatsuo Ishii)
+    </para>
+    <programlisting>
+    pg_current_wal_location     -> pg_current_wal_lsn
+    pg_last_wal_replay_location -> pg_last_wal_replay_lsn
+    </programlisting>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-09 [b86e7b7]
+    -->
+    <para>
+    Fix a posible hang with streaming replication and extended protocol (Yugo Nagata)
+    </para>
+    <para>
+    This hang occured under a certain condition. The following is an example.
+    </para>
+
+    <programlisting>
+    - pgpool.conf is configured so that all read queries are sent to the standby.
+    - First, issue a writing query in a transaction block
+    - After commiting the transaction, issue a select query.
+    - When processing the query, send Describe (statement) message just after Parse.
+    </programlisting>
+
+    <para>
+    Without using <productname>JDBC</productname>, we can reproduce the problem by <productname>pgproto</productname> with the followeing messages.
+    </para>
+
+    <programlisting>
+    'Q' "DROP TABLE IF EXISTS test_tbl"
+    'Y'
+    'Q' "CREATE TABLE test_tbl(i int)"
+    'Y'
+    'Q' "INSERT INTO test_tbl VALUES(1)"
+    'Y'
+
+    'P' "" "BEGIN" 0
+    'B' "" "" 0 0 0
+    'E' "" 0
+    'S'
+    'Y'
+
+    'P' "" "INSERT INTO test_tbl VALUES(1)" 0
+    'B' "" "" 0 0 0
+    'E' "" 0
+    'S'
+    'Y'
+
+    'P' "" "COMMIT" 0
+    'B' "" "" 0 0 0
+    'E' "" 0
+    'S'
+    'Y'
+
+    'P' "S_1" "SELECT * FROM test_tbl" 0
+    'D' 'S' "S_1"
+    'B' "C_1" "S_1" 0 0 0
+    'E' "C_1" 0
+    'S'
+    'Y'
+
+    'X'
+    </programlisting>
+
+    <para>
+    To fix it, <function>parse_before_bind()</function> should be called only if we are in a transaction block so that we can send <command>Bind</command> and <command>Execute</command> to the right backend.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-07 [378111d]
+    -->
+    <para>
+    Fix <productname>Pgpool-II</productname> hang when used by <productname>erlang</productname> applications. (Tatsuo Ishii)
+    </para>
+    <para>
+    <productname>Erlang</productname> client sends "Describe" message followed by "Flush".  So the
+    backend returns "Row description." However <productname>Pgpool-II</productname> forgets to reset
+    the query in progress flag upon receiving "Row description" message,
+    then <productname>Pgpool-II</productname> keeps on waiting for response from backend. This is the
+    cause of erlang client hanging.
+    </para>
+    <para>
+    Fix is, just reset the query in progress flag upon receiving "Row
+    description" message. Same thing can be said to "no data" message.
+    </para>
+    <para>
+    See <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-June/005613.html">[pgpool-general: 5555]</ulink> for more details.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-07 [cfcb85e]
+    -->
+    <para>
+    Fix bug with sending bind message to wrong target node. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=314">bug 314</ulink>) (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-31 [ba69889]
+    -->
+    <para>
+    Fix query cache hang when used by node.js. (Tatsuo Ishii)
+    </para>
+    <para>
+    See <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-May/005569.html">[pgpool-general: 5511]</ulink> for more details.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-28 [9de196b]
+    -->
+    <para>
+    Deal with <productname>PostgreSQL</productname> 10 in streaming replication delay checking. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-27 [52769db]
+    -->
+    <para>
+    Fix query cache memory leak. (Tatsuo Ishii)
+    </para>
+    <para>
+    Clearing cache buffers in case of no oid queries (like <command>BEGIN</command>,
+    <command>CHECKPOINT</command>, <command>VACUUM</command>, etc) should have been done, but it did not.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-23 [27a516a]
+    -->
+    <para>
+    Fix extended query hang in certain case. (Tatsuo Ishii)
+    </para>
+    <para>
+    <productname>errlang</productname> PostgreSQL API produces <command>Parse ('P')</command>, <command>Describe ('D')</command>,
+    <command>Flush ('H')</command>, <command>Bind ('B')</command>, and <command>Execute ('E')</command>. Notice the 'H' message (this
+    does not happen in <productname>JDBC</productname>. I suspect that's the reason why this problem
+    is not popular before). After that, <productname>Pgpool-II</productname> dropped the extended
+    query mode, it failed to find which backend to read data. Thus <productname>Pgpool-II</productname> simply tries to read all of backend which causes hang
+    because it may have not send a message to some of backends.
+    </para>
+    <para>
+    Solution is, after receiving the flush message set doing extended query flag.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-10 [7b2ef18]
+    -->
+    <para>
+    Fix corner case bug in <productname>Pgpool-II</productname> starting up. (Tatsuo Ishii)
+    </para>
+    <para>
+    It is possible that a failover request is accepted before primary node
+    is searched.  This leads <productname>Pgpool-II</productname> to a strange state: there's no
+    primary node if the failed node was a primary node (even if new
+    primary node exists as a result of promotion of existing standby).
+    </para>
+
+    <para>
+    See <ulink url="http://www.pgpool.net/pipermail/pgpool-hackers/2017-May/002321.html">[pgpool-hackers: 2321]</ulink> for more details.
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-5-8">
   <title>Release 3.5.8</title>
 
