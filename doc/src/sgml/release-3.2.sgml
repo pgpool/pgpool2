@@ -1,6 +1,78 @@
 <!-- doc/src/sgml/release-3.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-2-21">
+  <title>Release 3.2.21</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-07-11</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-06-24 [242e87a]
+    -->
+    <para>
+    Fixing  <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-June/002390.html">[pgpool-hackers: 2390]</ulink>Problems with the relative paths in daemon mode (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-19 [11b0808]
+    -->
+    <para>
+    Adjust function name change in <productname>PostgreSQL</productname> 10 dev head. (Tatsuo Ishii)
+    </para>
+    <programlisting>
+    pg_current_wal_location     -> pg_current_wal_lsn
+    pg_last_wal_replay_location -> pg_last_wal_replay_lsn
+    </programlisting>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-31 [69f486f]
+    -->
+    <para>
+    Fix query cache hang when used by node.js. (Tatsuo Ishii)
+    </para>
+    <para>
+    See <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-May/005569.html">[pgpool-general: 5511]</ulink> for more details.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-29 [487bf5e]
+    -->
+    <para>
+    Deal with <productname>PostgreSQL</productname> 10 in streaming replication delay checking. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-27 [378f61d]
+    -->
+    <para>
+    Fix query cache memory leak. (Tatsuo Ishii)
+    </para>
+    <para>
+    Clearing cache buffers in case of no oid queries (like <command>BEGIN</command>,
+    <command>CHECKPOINT</command>, <command>VACUUM</command>, etc) should have been done, but it did not.
+    Fix query cache memory leak. (Tatsuo Ishii)
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-2-20">
   <title>Release 3.2.20</title>
 

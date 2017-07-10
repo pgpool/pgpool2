@@ -1,6 +1,77 @@
 <!-- doc/src/sgml/release-3.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-3-16">
+  <title>Release 3.3.16</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-07-11</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-06-24 [1f9e532]
+    -->
+    <para>
+    Fixing  <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2017-June/002390.html">[pgpool-hackers: 2390]</ulink>Problems with the relative paths in daemon mode (Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-06-19 [7b52511]
+    -->
+    <para>
+    Adjust function name change in <productname>PostgreSQL</productname> 10 dev head. (Tatsuo Ishii)
+    </para>
+    <programlisting>
+    pg_current_wal_location     -> pg_current_wal_lsn
+    pg_last_wal_replay_location -> pg_last_wal_replay_lsn
+    </programlisting>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-31 [906f9af]
+    -->
+    <para>
+    Fix query cache hang when used by node.js. (Tatsuo Ishii)
+    </para>
+    <para>
+    See <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-May/005569.html">[pgpool-general: 5511]</ulink> for more details.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-29 [d740659]
+    -->
+    <para>
+    Deal with <productname>PostgreSQL</productname> 10 in streaming replication delay checking. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-05-27 [466dc92]
+    -->
+    <para>
+    Fix query cache memory leak. (Tatsuo Ishii)
+    </para>
+    <para>
+    Clearing cache buffers in case of no oid queries (like <command>BEGIN</command>,
+    <command>CHECKPOINT</command>, <command>VACUUM</command>, etc) should have been done, but it did not.
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-3-15">
   <title>Release 3.3.15</title>
 
