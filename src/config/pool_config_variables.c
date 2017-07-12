@@ -1287,6 +1287,17 @@ static struct config_string_array ConfigureNamesStringArray[] =
 	},
 
 	{
+		{"backend_flag", CFGCXT_RELOAD, CONNECTION_CONFIG,
+			"Controls various backend behavior.",
+			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0, MAX_NUM_BACKENDS
+		},
+		NULL,
+		"ALWAYS_MASTER",
+		EMPTY_CONFIG_STRING,
+		BackendFlagsAssignFunc, NULL, BackendFlagsShowFunc,BackendSlotEmptyCheckFunc
+	},
+
+	{
 		{"heartbeat_destination", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
 			"destination host for sending heartbeat signal.",
 			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0, WD_MAX_IF_NUM
@@ -3486,6 +3497,11 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 			disallow_to_failover_is_specified = true;
 		}
 
+		else if ((!strcmp(flags[i], "ALWAYS_MASTER")))
+		{
+			flag |= POOL_ALWAYS_MASTER;
+		}
+		
 		else
 		{
 			ereport(elevel,

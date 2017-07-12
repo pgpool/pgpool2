@@ -83,7 +83,8 @@ typedef enum WdLifeCheckMethod
 /*
  * Flags for backendN_flag
  */
-#define POOL_FAILOVER	0x0001	/* allow or disallow failover */
+#define POOL_FAILOVER	(1 << 0)	/* allow or disallow failover */
+#define POOL_ALWAYS_MASTER	(1 << 1)	/* this backend is always master */
 #define POOL_DISALLOW_TO_FAILOVER(x) ((unsigned short)(x) & POOL_FAILOVER)
 #define POOL_ALLOW_TO_FAILOVER(x) (!(POOL_DISALLOW_TO_FAILOVER(x)))
 

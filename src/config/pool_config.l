@@ -534,10 +534,21 @@ char *pool_flag_to_str(unsigned short flag)
 {
 	static char buf[1024];		/* should be large enough */
 
+	*buf = '\0';
+
 	if (POOL_ALLOW_TO_FAILOVER(flag))
 		snprintf(buf, sizeof(buf), "ALLOW_TO_FAILOVER");
 	else if (POOL_DISALLOW_TO_FAILOVER(flag))
 		snprintf(buf, sizeof(buf), "DISALLOW_TO_FAILOVER");
+
+	if (POOL_ALWAYS_MASTER & flag)
+	{
+		if (*buf == '\0')
+			snprintf(buf, sizeof(buf), "ALWAYS_MASTER");
+		else
+			snprintf(buf+strlen(buf), sizeof(buf), "|ALWAYS_MASTER");
+	}
+
 	return buf;
 }
 

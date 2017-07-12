@@ -2821,6 +2821,20 @@ static int find_primary_node(void)
 		return -1;
 	}
 
+	/* 
+	 *First check for "ALWAYS_MASTER" flags exists. If so, do not perform
+	 * actual primary node check and just returns the node id.
+	 */
+	for(i=0;i<NUM_BACKENDS;i++)
+	{
+		if (POOL_ALWAYS_MASTER & BACKEND_INFO(i).flag)
+		{
+			ereport(DEBUG1,
+					(errmsg("find_primary_node: ALWAYS_MASTER flag found. Returns node id: %d", i)));
+			return i;
+		}
+	}
+
 	for(i=0;i<NUM_BACKENDS;i++)
 	{
 		bool node_status;
