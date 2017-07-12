@@ -1518,8 +1518,33 @@ backend_weight は新しく追加した行を設定ファイル再読み込み�
 			ALLOW_TO_FAILOVERと同時には指定できません。
 			</entry>
 		</row>
-				</tbody>
-			</tgroup>
+
+               <row>
+<!--
+                 <entry><literal>ALWAYS_MASTER</literal></entry>
+                 <entry>This is only useful in streaming replication
+                 mode. See <xref linkend="running-mode"> about
+                 streaming replication mode.  If this flag is set to
+                 one of
+                 backends, <productname>Pgpool-II</productname> will
+                 not find the primary node by inspecting
+                 backend. Instead, always regard the node which the
+                 flag is set as the primary node. This is useful for
+                 systems including <productname>Amazon Aurora for
+                 PostgreSQL Compatibility</productname> which has
+                 fixed master server name.
+                 </entry>
+-->
+                 <entry><literal>ALWAYS_MASTER</literal></entry>
+                 <entry>ストリーミングレプリケーションでのみ有効です。
+                 ストリーミングレプリケーションモードについては<xref linkend="running-mode">をご覧ください。
+                 このフラグがバックエンドのどれかにセットされていると、<productname>Pgpool-II</productname>はバックエンドにアクセスしてプライマリノードを探すのではなく、このフラグがセットされているノードをプライマリノードと見なします。
+		 これは、<productname>Amazon Aurora for PostgreSQL Compatibility</productname>のような、マスターサーバに固定のホスト名が割り当てられるシステムで有用です。
+                 </entry>
+               </row>
+
+		</tbody>
+		</tgroup>
 		</table>
 		<para>
 <!--
