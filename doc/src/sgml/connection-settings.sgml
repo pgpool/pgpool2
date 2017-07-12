@@ -1040,6 +1040,23 @@
 		    ALLOW_TO_FAILOVER at a same time.
 		  </entry>
 		</row>
+
+		<row>
+		  <entry><literal>ALWAYS_MASTER</literal></entry>
+		  <entry>This is only useful in streaming replication
+		  mode. See <xref linkend="running-mode"> about
+		  streaming replication mode.  If this flag is set to
+		  one of
+		  backends, <productname>Pgpool-II</productname> will
+		  not find the primary node by inspecting
+		  backend. Instead, always regard the node which the
+		  flag is set as the primary node. This is useful for
+		  systems including <productname>Amazon Aurora for
+		  PostgreSQL Compatibility</productname> which has
+		  fixed master server name.
+		  </entry>
+		</row>
+
 	      </tbody>
 	    </tgroup>
 	  </table>
