@@ -1053,7 +1053,8 @@
 		  flag is set as the primary node. This is useful for
 		  systems including <productname>Amazon Aurora for
 		  PostgreSQL Compatibility</productname> which has
-		  fixed master server name.
+		  fixed master server name. See <xref linkend="example-Aurora">
+		  for an example settings.
 		  </entry>
 		</row>
 

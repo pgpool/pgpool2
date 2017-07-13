@@ -1532,7 +1532,8 @@ backend_weight は新しく追加した行を設定ファイル再読み込み�
                  flag is set as the primary node. This is useful for
                  systems including <productname>Amazon Aurora for
                  PostgreSQL Compatibility</productname> which has
-                 fixed master server name.
+		 fixed master server name. See <xref linkend="example-Aurora">
+		 for an example settings.
                  </entry>
 -->
                  <entry><literal>ALWAYS_MASTER</literal></entry>
@@ -1540,6 +1541,7 @@ backend_weight は新しく追加した行を設定ファイル再読み込み�
                  ストリーミングレプリケーションモードについては<xref linkend="running-mode">をご覧ください。
                  このフラグがバックエンドのどれかにセットされていると、<productname>Pgpool-II</productname>はバックエンドにアクセスしてプライマリノードを探すのではなく、このフラグがセットされているノードをプライマリノードと見なします。
 		 これは、<productname>Amazon Aurora for PostgreSQL Compatibility</productname>のような、マスターサーバに固定のホスト名が割り当てられるシステムで有用です。
+		  設定例については<xref linkend="example-Aurora">をご覧ください。
                  </entry>
                </row>
 
