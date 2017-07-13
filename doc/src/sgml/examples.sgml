@@ -1084,6 +1084,14 @@
 		Set <xref linkend="guc-health-check-retry-delay"> to 1 to avoid the problem.
 	      </para>
 	    </listitem>
+	    <listitem>
+	      <para>
+		Disable <xref linkend="guc-fail-over-on-backend-error">
+		to avoid failover when connecting to the backend or
+		detecting errors on backend side while executing
+		queries for the same reasons above.
+	      </para>
+	    </listitem>
 	  </itemizedlist>
 	</para>
       </sect2>

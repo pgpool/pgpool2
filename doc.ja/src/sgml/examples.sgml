@@ -1559,9 +1559,20 @@ PING 35.163.178.3 (35.163.178.3) 56(84) bytes of data.
 		      <xref linkend="guc-health-check-user">、<xref linkend="guc-health-check-database">
 		  に適切な値を設定します。
 		  リトライを設定します。
-		  <productname>Aurora</productname>は、スィッチングオーバーやフェイルオーバーの際に、一時的に全DBノードを停止します。
+		  <productname>Aurora</productname>は、スィッチングオーバやフェイルオーバの際に、一時的に全DBノードを停止します。
 		  リトライを行わないと、<productname>Pgpool-II</productname>から見ると全DBノードがダウン状態になり、<productname>Pgpool-II</productname>の再起動が必要になります。
 		  <xref linkend="guc-health-check-max-retries">を20に、<xref linkend="guc-health-check-retry-delay">を1にして、そのような問題を回避してください。
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		<!--
+		Disable <xref linkend="guc-fail-over-on-backend-error">
+		to avoid failover when connecting to the backend or
+		detecting errors on backend side while executing
+		queries for the same reasons above.
+		  -->
+		同様の理由により、接続時あるいは問い合わせ実行中のエラーによるフェイルオーバを避けるために、<xref linkend="guc-fail-over-on-backend-error">をオフにしてください。
 	      </para>
 	    </listitem>
 	  </itemizedlist>
