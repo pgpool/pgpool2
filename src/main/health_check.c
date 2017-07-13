@@ -260,7 +260,15 @@ static bool establish_persistent_connection(int node)
 			}
 
 			if (slot)
+			{
+				if (retry_cnt != pool_config->health_check_max_retries)
+				{
+					ereport(LOG,
+							(errmsg("health check retrying on DB node: %d succeeded",
+									node)));
+				}
 				break;	/* Success */
+			}
 
 			retry_cnt--;
 
