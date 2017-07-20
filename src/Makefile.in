@@ -542,7 +542,8 @@ EXTRA_DIST = sample/pgpool.pam \
 		test/pdo-test/mod/database.inc test/pdo-test/mod/errorhandler.inc \
 		test/pgpool_setup test/regression \
 		redhat/pgpool.init redhat/pgpool.sysconfig redhat/pgpool.conf.sample.patch \
-                pgpool.spec
+		redhat/pgpool.service \
+		pgpool.spec
 
 SUBDIRS = parser libs watchdog . tools include
 all: all-recursive
