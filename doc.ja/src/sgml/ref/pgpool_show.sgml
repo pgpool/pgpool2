@@ -155,7 +155,7 @@ PGPOOL SHOW ALL
   <!--
    Show the current setting of the parameter <varname>port</varname>:
    -->
-   パラメータ <varname>port</varname> の現在の設定値を表示:
+   パラメータ <xref linkend="guc-port"> の現在の設定値を表示:
 
 <programlisting>
 PGPOOL SHOW port;

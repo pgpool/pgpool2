@@ -33,7 +33,7 @@ Pgpool-II documentation
        <paramdef>out <parameter>status text</parameter></paramdef>
        <paramdef>out <parameter>weight float4</parameter></paramdef>
      </funcprototype>
-     
+
      <funcprototype>
        <funcdef><function>pcp_node_info</function> returns record</funcdef>
        <paramdef>integer <parameter>node_id</parameter></paramdef>
@@ -93,8 +93,8 @@ Pgpool-II documentation
    <para>
 	Here is an example output:
 	<programlisting>
-test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
- host | port  |      status       | weight 
+test=# SELECT * FROM pgpool_adm_pcp_node_info(0,'',11001,'t-ishii','t-ishii');
+ host | port  |      status       | weight
 ------+-------+-------------------+--------
  /tmp | 11002 | Connection in use |      0
 (1 row)

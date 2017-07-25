@@ -43,7 +43,10 @@ Pgpool-II documentation
  </refsynopsisdiv>
 
  <refsect1 id="R3-PCP-NODE-COUNT-3">
+<!--
   <title>Description</title>
+-->
+  <title>説明</title>
   <para>
 <!--
     <function>pcp_node_count</function> retrieves number of DB nodes.
@@ -101,8 +104,8 @@ pcpサーバの外部サーバ名
 -->
 使用例です。
 	<programlisting>
-test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
- node_count 
+test=# SELECT * FROM pgpool_adm_pcp_node_count('localhost',11001,'t-ishii','t-ishii');
+ node_count
 ------------
           2
 (1 row)

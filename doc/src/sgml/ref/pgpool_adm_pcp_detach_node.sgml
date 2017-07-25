@@ -32,7 +32,7 @@ Pgpool-II documentation
        <paramdef>text <parameter>password</parameter></paramdef>
        <paramdef>out <parameter>node_detached boolean</parameter></paramdef>
      </funcprototype>
-     
+
      <funcprototype>
        <funcdef><function>pcp_detach_node</function> returns record</funcdef>
        <paramdef>integer <parameter>node_id</parameter></paramdef>
@@ -102,8 +102,8 @@ Pgpool-II documentation
    <para>
 	Here is an example output:
 	<programlisting>
-test=# SELECT * FROM pcp_detach_node(1, 'false', 'localhost',11001,'t-ishii','t-ishii');
- node_detached 
+test=# SELECT * FROM pgpool_adm_pcp_detach_node(1, 'false', 'localhost',11001,'t-ishii','t-ishii');
+ node_detached
 ---------------
  t
 (1 row)
