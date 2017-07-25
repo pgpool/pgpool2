@@ -120,7 +120,7 @@ PGPOOL SHOW ALL
   <title>Examples</title>
 
   <para>
-   Show the current setting of the parameter <varname>port</varname>:
+   Show the current setting of the parameter <xref linkend="guc-port">:
 
 <programlisting>
 PGPOOL SHOW port;

@@ -35,7 +35,7 @@ Pgpool-II documentation
        <paramdef>text <parameter>password</parameter></paramdef>
        <paramdef>out <parameter>node_attached boolean</parameter></paramdef>
      </funcprototype>
-     
+
      <funcprototype>
        <funcdef><function>pcp_attach_node</function> returns record</funcdef>
        <paramdef>integer <parameter>node_id</parameter></paramdef>
@@ -121,8 +121,8 @@ pcpサーバの外部サーバ名
 -->
 使用例です。
 	<programlisting>
-test=# SELECT * FROM pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
- node_attached 
+test=# SELECT * FROM pgpool_adm_pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
+ node_attached
 ---------------
  t
 (1 row)

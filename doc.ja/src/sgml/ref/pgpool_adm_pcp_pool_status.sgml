@@ -49,7 +49,10 @@ pgpool.confのパラメータを取得する関数
  </refsynopsisdiv>
 
  <refsect1 id="R3-PCP-POOL-STATUS-3">
+<!--
   <title>Description</title>
+-->
+  <title>説明</title>
   <para>
 <!--
     <function>pcp_pool_status</function> retrieves parameters in
@@ -108,8 +111,8 @@ pcpサーバの外部サーバ名
 -->
 使用例です。
 	<programlisting>
- test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHERE item ~ 'backend.*0';
-          item           |                     value                      |          description          
+ test=# SELECT * FROM pgpool_adm_pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHERE item ~ 'backend.*0';
+          item           |                     value                      |          description
 -------------------------+------------------------------------------------+-------------------------------
  backend_hostname0       | /tmp                                           | backend #0 hostname
  backend_port0           | 11002                                          | backend #0 port number

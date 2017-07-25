@@ -257,8 +257,9 @@
               </row>
 
               <row>
-<!--
                 <entry><literal>'if_over_threshold'</literal></entry>
+<!--
+                <entry>Only log the standby delay, when it exceeds <xref linkend="guc-delay-threshold"> value</entry>
 -->
                 <entry><xref linkend="guc-delay-threshold">の値を超えた時だけ、スタンバイの遅延がログ出力される</entry>
               </row>

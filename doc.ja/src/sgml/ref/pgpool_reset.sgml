@@ -24,8 +24,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-RESET <replaceable class="PARAMETER">configuration_parameter</replaceable>
-RESET ALL
+PGPOOL RESET <replaceable class="PARAMETER">configuration_parameter</replaceable>
+PGPOOL RESET ALL
 </synopsis>
  </refsynopsisdiv>
 
