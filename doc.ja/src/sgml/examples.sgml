@@ -35,9 +35,9 @@
 		  <title>さあ始めましょう</title>
       <para>
 <!--
-        First, we must learn how to install and configure <productname>Pgpool-II</> and database nodes before using replication.
+        First, we must learn how to install and configure <productname>Pgpool-II</productname> and database nodes before using replication.
 -->
-ここでは、レプリケーションを行うための準備として、<productname>Pgpool-II</> のインストールや設定、データベースノードの準備について説明します。
+ここでは、レプリケーションを行うための準備として、<productname>Pgpool-II</productname> のインストールや設定、データベースノードの準備について説明します。
       </para>
 
       <sect3 id="example-configs-begin-installing">
@@ -1036,6 +1036,855 @@ arping_cmd = 'arping -U $_IP_$ -w 1'
     </sect2>
   </sect1>
 
+  <sect1 id="example-cluster">
+    <title><productname>Pgpoo-II</productname> + Watchdogの構築の例</title>
+    <para>
+ここでは、ストリーミングレプリケーション構成の<productname>PostgreSQL</productname>を<productname>Pgpool-II</productname>で管理するシステムの構成例を示します。この例では、3台の<productname>Pgpool-II</productname>を使って<productname>PostgreSQL</productname>を管理し、単一障害点やスプリットブレインの起きない堅牢なクラスタを運用することが可能です。
+    </para>
+    <sect2 id="example-cluster-requirement">
+      <title>前提条件</title>
+        <para>
+<productname>Pgpool-II</productname>サーバと<productname>PostgreSQL</productname>サーバが同じサブネットにあることを前提とします。
+        </para>
+    </sect2>
+
+    <sect2 id="example-cluster-structure">
+      <title>全体構成</title>
+        <para>
+今回は、Linux サーバ 5 台を用意し、それぞれのホスト名は 「osspc16」、「osspc17」、「osspc18」、「osspc19」、「osspc20」 とします。使用するOSはすべてCentOS7とします。<productname>Pgpool-II</productname>3台 +<productname>PostgresQL</productname>2台(ストリーミングレプリケーション)の全体構成図は以下の通りです。
+        </para>
+        <para>
+          <figure>
+	    <title>全体構成図</title>
+	    <mediaobject>
+	      <imageobject>
+	        <imagedata fileref="cluster.gif">
+	      </imageobject>
+	    </mediaobject>
+          </figure>
+        </para>
+        <note>
+          <para>
+「アクティブ」「スタンバイ」「Primary」「Standby」といった役割は固定されているものではなく、運用と共に変化することがあります。
+          </para>
+        </note>
+    </sect2>
+
+    <sect2 id="example-cluster-installation">
+      <title>インストール</title>
+      <para>
+ここでは、 <productname>PostgreSQL</productname> 9.6.1 と<productname>Pgpool-II</productname> 3.6.1 をRPMからインストールします。
+      </para>
+
+    <table id="example-cluster-table">
+      <title>Pgpool-II、PostgreSQLのバージョンと設定情報</title>
+      <tgroup cols="5">
+        <thead>
+          <row>
+            <entry>サーバ</entry>
+            <entry>バージョン</entry>
+            <entry>ホスト名</entry>
+            <entry>ポート番号</entry>
+            <entry>$PGDATAディレクトリ</entry>
+          </row>
+        </thead>
+
+        <tbody>
+          <row>
+            <entry><productname>PostgreSQL</productname>サーバ (プライマリ)</entry>
+            <entry><productname>PostgreSQL</productname>9.6.1</entry>
+            <entry>osspc19</entry>
+            <entry>5432</entry>
+            <entry>/var/lib/pgsql/9.6/data</entry>
+          </row>
+          <row>
+            <entry><productname>PostgreSQL</productname>サーバ (スタンバイ) </entry>
+            <entry><productname>PostgreSQL</productname>9.6.1</entry>
+            <entry>osspc20</entry>
+            <entry>5432</entry>
+            <entry>/var/lib/pgsql/9.6/data</entry>
+          </row>
+          <row>
+            <entry><productname>Pgpool-II</productname>サーバ</entry>
+            <entry><productname>Pgpool-II</productname>3.6.1</entry>
+            <entry>osspc16</entry>
+            <entry>9999</entry>
+            <entry>-</entry>
+          </row>
+
+          <row>
+            <entry><productname>Pgpool-II</productname>サーバ</entry>
+            <entry><productname>Pgpool-II</productname>3.6.1</entry>
+            <entry>osspc17</entry>
+            <entry>9999</entry>
+            <entry>-</entry>
+          </row>
+
+          <row>
+            <entry><productname>Pgpool-II</productname>サーバ</entry>
+            <entry><productname>Pgpool-II</productname>3.6.1</entry>
+            <entry>osspc18</entry>
+            <entry>9999</entry>
+            <entry>-</entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </table>
+      <para>
+<productname>Pgpool-II</productname>のインストール方法は以下の通りです。
+      </para>
+      <programlisting>
+# yum install http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6-1.noarch.rpm
+# yum install pgpool-II-pg96
+# yum install pgpool-II-pg96-debuginfo
+# yum install pgpool-II-pg96-devel
+# yum install pgpool-II-pg96-extensions
+      </programlisting>
+
+      <para>
+<productname>PostgreSQL</productname>のインストールは<productname>PostgreSQL</productname>コミュニティのリポジトリを使います。
+      </para>
+      <programlisting>
+# yum install https://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm
+
+# yum install postgresql96 postgresql96-devel postgresql96-server
+      </programlisting>
+    </sect2>
+
+    <sect2 id="example-cluster-pre-setup">
+      <title>事前設定</title>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+<productname>PostgreSQL</productname>プライマリサーバのストリーミングレプリケーションの設定を行います。ここでははアーカイブリカバリを行うように設定します。
+          </para>
+          <para>
+まず、<acronym>WAL</acronym>を格納するディレクトリ<filename>/var/lib/pgsql/archivedir</filename>を<productname>PostgreSQL</productname>バックエンドサーバ<literal>osspc19</literal>と<literal>osspc20</literal>に事前に作成します。
+          </para>
+          <programlisting>
+[PostgreSQLサーバ]$ mkdir /var/lib/pgsql/archivedir
+          </programlisting>
+
+          <para>
+次に設定ファイル<filename>$PGDATA/postgresql.conf</filename>を以下のように編集します。
+          </para>
+          <programlisting>
+sten_addresses = '*'
+wal_level = hot_standby
+max_wal_senders = 2
+
+archive_mode = on
+archive_command = 'cp "%p" "/var/lib/pgsql/archivedir/%f"'
+          </programlisting>
+          <para>
+スタンバイサーバの設定は、プライマリが起動した状態で、<productname>Pgpool-II</productname>のオンラインリカバリ機能を使って行います。
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+セキュリティ上の理由で、<productname>PostgreSQL</productname>プライマリサーバ<literal>osspc19</literal>でレプリケーション専用ユーザ<literal>repl</literal>を作成します。また、<productname>Pgpool-II</productname>のレプリケーションの遅延チェックとヘルスチェック用のユーザ<literal>pgpool</literal>も作成します。 <productname>Pgpool-II</productname>サーバと<productname>PostgreSQL</productname>バックエンドサーバが<literal>133.137.174.0/24</literal>のネットワークにあることを想定し、各ユーザが<literal>md5</literal>認証方式で接続できるように、<filename>pg_hba.conf</filename>を編集しておきます。
+          </para>
+          <programlisting>
+host    all             pgpool          133.137.174.0/24         md5
+host    all             all             0.0.0.0/0                md5
+
+host    replication     repl            133.137.174.0/24         md5
+          </programlisting>
+        </listitem>
+
+        <listitem>
+          <para>
+自動フェイルオーバ、オンラインリカバリ機能を利用するために 5台のサーバでは、<literal>postgres</literal>ユーザがパスワードなしで双方向に<command>ssh</command>接続できる状態にする必要があります。
+          </para>
+        </listitem>
+
+
+        <listitem>
+          <para>
+<literal>repl</literal>ユーザのパスワード入力なしで、ストリーミングレプリケーションとオンラインリカバリを行うために、バックエンドの<literal>osspc19</literal>、<literal>osspc20</literal>の<literal>postgres</literal>ユーザのホームディレクト<filename>/var/lib/pgsql</filename> に<filename>.pgpass</filename>を作成・配置し、パーミッションを 600 に設定しておきます。
+          </para>
+            <programlisting>
+[osspc19]$ cat /var/lib/pgsql/.pgpass
+osspc20:5432:replication:repl:&lt;replユーザのパスワード&gt;
+            </programlisting>
+
+            <programlisting>
+[osspc20]$ cat /var/lib/pgsql/.pgpass
+osspc19:5432:replication:repl:&lt;replユーザのパスワード&gt;
+            </programlisting>
+
+            <programlisting>
+$ chmod 600  /var/lib/pgsql/.pgpass
+            </programlisting>
+
+        </listitem>
+
+        <listitem>
+          <para>
+<productname>Pgpool-II</productname>が他の<productname>PostgreSQL</productname>サーバに接続する際には、ファイアーウォールによって目的のポートが開けられていなければなりません。<systemitem>CentOS/RHEL7</systemitem>の場合、以下のように設定します。
+          </para>
+            <programlisting>
+[PostgreSQLサーバ]# firewall-cmd --permanent --zone=public --add-service=postgresql
+[PostgreSQLサーバ]# firewall-cmd --reload
+            </programlisting>
+        </listitem>
+
+        <listitem>
+          <para>
+<productname>Pgpool-II</productname>と<productname>PostgreSQL</productname>の自動起動の設定をします。
+          </para>
+            <programlisting>
+[Pgpool-IIサーバ]# systemctl enable pgpool.service
+            </programlisting>
+            <programlisting>
+[PostgreSQLサーバ]# systemctl enable postgresql.service
+            </programlisting>
+        </listitem>
+      </itemizedlist>
+    </sect2>
+
+    <sect2 id="example-cluster-pgpool-config">
+      <title><productname>Pgpool-II</productname>の設定</title>
+      <sect3 id="example-cluster-pgpool-config-common">
+        <title>共通設定</title>
+        <para>
+以下の操作は<literal>osspc16</literal>, <literal>osspc17</literal>, <literal>osspc18</literal>での共通の設定です。
+        </para>
+        <para>
+RPM からインストールする場合、すべての<productname>Pgpool-II</productname>設定ファイルは<filename>/etc/pgpool-II</filename>にあります。今回はストリーミングレプリケーションモードのテンプレートとして<filename>pgpool.conf.sample-stream</filename>サンプルファイルを使用します。
+        </para>
+        <programlisting>
+# cp /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
+        </programlisting>
+        <para>
+<productname>Pgpool-II</productname>が全てのIPアドレスから接続を受け付けるように、<varname>listen_addresses</varname>パラメータに<literal>'*'</literal>を設定します。
+        </para>
+        <programlisting>
+listen_addresses = '*'
+        </programlisting>
+        <para>
+レプリケーションの遅延チェックユーザとパスワードを設定します。
+        </para>
+        <programlisting>
+sr_check_user = 'pgpool'
+sr_check_password = 'pgpool'
+        </programlisting>
+        <para>
+自動フェイルオーバのため、ヘルスチェックを有効にします。 また、ネットワークが不安定な場合には、バックエンドが正常であるにも関わらず、ヘルスチェックに失敗し、フェイルオーバや縮退運転が発生してしまう可能性があります。そのようなヘルスチェックの誤検知を防止するため、ヘルスチェックのリトライ回数を<varname>health_check_max_retries = 10</varname> に設定しておきます。
+        </para>
+        <programlisting>
+health_check_period = 5
+                                   # Health check period
+                                   # Disabled (0) by default
+health_check_timeout = 0
+                                   # Health check timeout
+                                   # 0 means no timeout
+health_check_user = 'pgpool'
+health_check_password = 'pgpool'
+
+health_check_max_retries = 10
+        </programlisting>
+        <para>
+また、バックエンド情報を前述の<literal>osspc19</literal>と<literal>osspc20</literal>の設定に従って設定しておきます。
+        </para>
+        <programlisting>
+# - Backend Connection Settings -
+
+backend_hostname0 = 'osspc19'
+                                   # Host name or IP address to connect to for backend 0
+backend_port0 = 5432
+                                   # Port number for backend 0
+backend_weight0 = 1
+                                   # Weight for backend 0 (only in load balancing mode)
+backend_data_directory0 = '/var/lib/pgsql/9.6/data'
+                                   # Data directory for backend 0
+backend_flag0 = 'ALLOW_TO_FAILOVER'
+                                   # Controls various backend behavior
+                                   # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
+backend_hostname1 = 'osspc20'
+backend_port1 = 5432
+backend_weight1 = 1
+backend_data_directory1 = '/var/lib/pgsql/9.6/data'
+backend_flag1 = 'ALLOW_TO_FAILOVER'
+        </programlisting>
+      </sect3>
+
+      <sect3 id="example-cluster-pgpool-config-failover">
+        <title>フェイルオーバの設定</title>
+        <para>
+<varname>failover_command</varname>を次のように設定します。引数の <command>%d %P %H %R</command> は、それぞれ実行時に<productname>Pgpool-II</productname>によって「切り離されたノード番号」、「古いプライマリノードのID 」、「新しいマスターのホスト名」、「新しいマスターノードのデータベースクラスタのパス 」に置き換えられます。
+        </para>
+      <programlisting>
+failover_command = '/etc/pgpool-II/failover.sh %d %P %H %R'
+      </programlisting>
+      <para>
+また、<filename>/etc/pgpool-II/failover.sh</filename>を作成し、実行権限を与えておきます。
+      </para>
+      <programlisting>
+# vi /etc/pgpool-II/failover.sh
+# chmod 755 /etc/pgpool-II/failover.sh
+      </programlisting>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+/etc/pgpool-II/failover.sh
+          </para>
+          <programlisting>
+#! /bin/sh -x
+# Execute command by failover.
+# special values:  %d = node id
+#                  %h = host name
+#                  %p = port number
+#                  %D = database cluster path
+#                  %m = new master node id
+#                  %M = old master node id
+#                  %H = new master node host name
+#                  %P = old primary node id
+#                  %R = new master database cluster path
+#                  %r = new master port number
+#                  %% = '%' character
+
+falling_node=$1          # %d
+old_primary=$2           # %P
+new_primary=$3           # %H
+pgdata=$4                # %R
+
+pghome=/usr/pgsql-9.6
+log=/var/log/pgpool/failover.log
+
+date >> $log
+echo "failed_node_id=$falling_node new_primary=$new_primary" >> $log
+
+if [ $falling_node = $old_primary ]; then
+    if [ $UID -eq 0 ]
+    then
+        su postgres -c "ssh -T postgres@$new_primary $pghome/bin/pg_ctl promote -D $pgdata"
+    else
+        ssh -T postgres@$new_primary $pghome/bin/pg_ctl promote -D $pgdata
+    fi
+    exit 0;
+fi;
+exit 0;
+          </programlisting>
+        </listitem>
+      </itemizedlist>
+
+      </sect3>
+
+      <sect3 id="example-cluster-pgpool-config-online-recovery">
+        <title>オンラインリカバリ設定</title>
+        <para>
+続いて、オンラインリカバリを行うための<productname>PostgreSQL</productname>のユーザ名およびオンラインリカバリ時に呼び出されるコマンド<command>recovery_1st_stage</command>を設定します。オンラインリカバリ用のスクリプト<filename>recovery_1st_stage</filename>、<filename>pgpool_remote_start</filename>をプライマリサーバのデータベースクラスタ配下に配置し、実行権限を与えておきます。
+        </para>
+        <programlisting>
+recovery_user = 'postgres'
+                                   # Online recovery user
+recovery_password = 'postgres'
+                                   # Online recovery password
+
+recovery_1st_stage_command = 'recovery_1st_stage'
+        </programlisting>
+        <programlisting>
+$ vi /var/lib/pgsql/9.6/data/recovery_1st_stage
+$ vi /var/lib/pgsql/9.6/data/pgpool_remote_start
+$ chmod 755 /var/lib/pgsql/9.6/data/recovery_1st_stage
+$ chmod 755 /var/lib/pgsql/9.6/data/pgpool_remote_start
+        </programlisting>
+
+        <itemizedlist>
+          <listitem>
+            <para>
+/var/lib/pgsql/9.6/data/recovery_1st_stage
+            </para>
+            <programlisting>
+#!/bin/bash -x
+# Recovery script for streaming replication.
+
+pgdata=$1
+remote_host=$2
+remote_pgdata=$3
+port=$4
+
+pghome=/usr/pgsql-9.6
+archivedir=/var/lib/pgsql/archivedir
+hostname=$(hostname)
+
+ssh -T postgres@$remote_host "
+rm -rf $remote_pgdata
+$pghome/bin/pg_basebackup -h $hostname -U repl -D $remote_pgdata -x -c fast
+rm -rf $archivedir/*
+
+cd $remote_pgdata
+cp postgresql.conf postgresql.conf.bak
+sed -e 's/#*hot_standby = off/hot_standby = on/' postgresql.conf.bak > postgresql.conf
+rm -f postgresql.conf.bak
+cat > recovery.conf &lt;$lt; EOT
+standby_mode = 'on'
+primary_conninfo = 'host="$hostname" port=$port user=repl'
+restore_command = 'scp $hostname:$archivedir/%f %p'
+EOT
+"
+            </programlisting>
+          </listitem>
+          <listitem>
+
+          <para>
+/var/lib/pgsql/9.6/data/pgpool_remote_start
+          </para>
+          <programlisting>
+#! /bin/sh -x
+
+pghome=/usr/pgsql-9.6
+remote_host=$1
+remote_pgdata=$2
+
+# リカバリ先のPostgreSQLを起動
+ssh -T $remote_host $pghome/bin/pg_ctl -w -D $remote_pgdata start > /dev/null 2>&1 < /dev/null &
+          </programlisting>
+          </listitem>
+        </itemizedlist>
+
+        <para>
+また、オンラインリカバリ機能を使用するには、<function>pgpool_recovery</function>、<function>pgpool_remote_start</function>、<function>pgpool_switch_xlog</function>という関数が必要になるので、<productname>PostgreSQL</productname>サーバ<literal>osspc19</literal>の template1 に<function>pgpool_recovery</function>をインストールしておきます。
+        </para>
+        <programlisting>
+# su - postgres
+$ psql template1
+=# CREATE EXTENSION pgpool_recovery;
+        </programlisting>
+      </sect3>
+
+      <sect3 id="example-cluster-pgpool-config-auth">
+        <title>クライアント認証の設定</title>
+        <para>
+<link linkend="EXAMPLE-CLUSTER-PRE-SETUP">事前設定</link>の章で、<productname>PostgreSQL</productname>のクライアント認証方式を<acronym>md5</acronym>に設定しましたので、クライアントが<productname>Pgpool-II</productname>を経由でバックエンドに接続できるように<productname>Pgpool-II</productname>側でもクライアント認証の設定を行う必要があります。<productname>Pgpool-II</productname>のクライアント認証の設定ファイルは<filename>pool_hba.conf</filename>と呼ばれ、RPMパッケージからインストールする場合、デフォルトでは<filename>/etc/pgpool-II</filename>配下にインストールされます。デフォルトでは<filename>pool_hba.conf</filename>による認証は無効にになっているので、 <filename>pgpool.conf</filename>では以下の設定を on に変更します。
+        </para>
+        <programlisting>
+enable_pool_hba = on
+        </programlisting>
+        <para>
+<filename>pool_hba.conf</filename>のフォーマットは<productname>PostgreSQL</productname>の<filename>pg_hba.conf</filename>とほとんど同じです。<literal>pgpool</literal>と<literal>postgres</literal>ユーザを<acronym>md5</acronym>認証に設定します。
+        </para>
+        <programlisting>
+host    all         pgpool           0.0.0.0/0          md5
+host    all         postgres         0.0.0.0/0          md5
+        </programlisting>
+        <para>
+md5 認証で用いるデフォルトのファイル名は pool_passwd です。 「pg_md5 --md5auth --username=ユーザ名 パスワード」 コマンドを実行すると、ユーザ名と md5 によりハッシュ化 されたパスワードが pool_passwd に登録されます。 pool_passwd がまだ存在しなければ、pgpool.confと同じディレクトリ内に作成されます。
+        </para>
+        <programlisting>
+# pg_md5 --md5auth --username=pgpool &lt;pgpool ユーザのパスワード&gt;
+# pg_md5 --md5auth --username=postgres &lt;postgres ユーザのパスワード&gt;
+        </programlisting>
+      </sect3>
+
+      <sect3 id="example-cluster-pgpool-config-watchdog">
+        <title>Watchdogの設定</title>
+        <para>
+<literal>osspc16</literal>、<literal>osspc17</literal>、<literal>osspc18</literal>で<literal>watchdog</literal>を有効にします。
+        </para>
+        <programlisting>
+use_watchdog = on
+        </programlisting>
+        <para>
+アクティブ機が立ち上げる仮想 IP を delegate_IP に指定します。仮想 IP はまだ使われていない IP アドレスを指定してください。osspc16、osspc17、osspc18 の共通の設定です。
+        </para>
+        <programlisting>
+delegate_IP = '133.137.174.153'
+        </programlisting>
+        <para>
+各watchdog が稼働するサーバ情報を設定しておきます。
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+<literal>osspc16</literal>の場合
+            </para>
+            <programlisting>
+wd_hostname = 'osspc16'
+wd_port = 9000
+            </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+<literal>osspc17</literal>の場合
+            </para>
+            <programlisting>
+wd_hostname = 'osspc17'
+wd_port = 9000
+            </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+<literal>osspc18</literal>の場合
+            </para>
+            <programlisting>
+wd_hostname = 'osspc18'
+wd_port = 9000
+            </programlisting>
+          </listitem>
+        </itemizedlist>
+
+        <para>
+各監視対象の<productname>Pgpool-II</productname>サーバ情報を設定しておきます。
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+<literal>osspc16</literal>の場合
+            </para>
+            <programlisting>
+# - Other pgpool Connection Settings -
+
+other_pgpool_hostname0 = 'osspc17'
+                                    # Host name or IP address to connect to for other pgpool 0
+                                    # (change requires restart)
+other_pgpool_port0 = 9999
+                                    # Port number for othet pgpool 0
+                                    # (change requires restart)
+other_wd_port0 = 9000
+                                    # Port number for othet watchdog 0
+                                    # (change requires restart)
+other_pgpool_hostname1 = 'osspc18'
+other_pgpool_port1 = 9999
+other_wd_port1 = 9000
+            </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+<literal>osspc17</literal>の場合
+            </para>
+            <programlisting>
+# - Other pgpool Connection Settings -
+
+other_pgpool_hostname0 = 'osspc16'
+                                    # Host name or IP address to connect to for other pgpool 0
+                                    # (change requires restart)
+other_pgpool_port0 = 9999
+                                    # Port number for othet pgpool 0
+                                    # (change requires restart)
+other_wd_port0 = 9000
+                                    # Port number for othet watchdog 0
+                                    # (change requires restart)
+other_pgpool_hostname1 = 'osspc18'
+other_pgpool_port1 = 9999
+other_wd_port1 = 9000
+            </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+<literal>osspc18</literal>の場合
+            </para>
+            <programlisting>
+# - Other pgpool Connection Settings -
+
+other_pgpool_hostname0 = 'osspc16'
+                                    # Host name or IP address to connect to for other pgpool 0
+                                    # (change requires restart)
+other_pgpool_port0 = 9999
+                                    # Port number for othet pgpool 0
+                                    # (change requires restart)
+other_wd_port0 = 9000
+                                    # Port number for othet watchdog 0
+                                    # (change requires restart)
+other_pgpool_hostname1 = 'osspc17'
+other_pgpool_port1 = 9999
+other_wd_port1 = 9000
+            </programlisting>
+          </listitem>
+        </itemizedlist>
+
+        <para>
+ハートビート信号の送信先のホスト名とポート番号を指定します。
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+<literal>osspc16</literal>の場合
+            </para>
+            <programlisting>
+heartbeat_destination0 = 'osspc17'
+                                    # Host name or IP address of destination 0
+                                    # for sending heartbeat signal.
+                                    # (change requires restart)
+heartbeat_destination_port0 = 9694
+                                    # Port number of destination 0 for sending
+                                    # heartbeat signal. Usually this is the
+                                    # same as wd_heartbeat_port.
+                                    # (change requires restart)
+heartbeat_device0 = ''
+                                    # Name of NIC device (such like 'eth0')
+                                    # used for sending/receiving heartbeat
+                                    # signal to/from destination 0.
+                                    # This works only when this is not empty
+                                    # and pgpool has root privilege.
+                                    # (change requires restart)
+
+heartbeat_destination1 = 'osspc18'
+heartbeat_destination_port1 = 9694
+heartbeat_device1 = ''
+
+            </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+<literal>osspc17</literal>の場合
+            </para>
+            <programlisting>
+heartbeat_destination0 = 'osspc16'
+                                    # Host name or IP address of destination 0
+                                    # for sending heartbeat signal.
+                                    # (change requires restart)
+heartbeat_destination_port0 = 9694
+                                    # Port number of destination 0 for sending
+                                    # heartbeat signal. Usually this is the
+                                    # same as wd_heartbeat_port.
+                                    # (change requires restart)
+heartbeat_device0 = ''
+                                    # Name of NIC device (such like 'eth0')
+                                    # used for sending/receiving heartbeat
+                                    # signal to/from destination 0.
+                                    # This works only when this is not empty
+                                    # and pgpool has root privilege.
+                                    # (change requires restart)
+
+heartbeat_destination1 = 'osspc18'
+heartbeat_destination_port1 = 9694
+heartbeat_device1 = ''
+
+            </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+<literal>osspc18</literal>の場合
+            </para>
+            <programlisting>
+heartbeat_destination0 = 'osspc16'
+                                    # Host name or IP address of destination 0
+                                    # for sending heartbeat signal.
+                                    # (change requires restart)
+heartbeat_destination_port0 = 9694
+                                    # Port number of destination 0 for sending
+                                    # heartbeat signal. Usually this is the
+                                    # same as wd_heartbeat_port.
+                                    # (change requires restart)
+heartbeat_device0 = ''
+                                    # Name of NIC device (such like 'eth0')
+                                    # used for sending/receiving heartbeat
+                                    # signal to/from destination 0.
+                                    # This works only when this is not empty
+                                    # and pgpool has root privilege.
+                                    # (change requires restart)
+
+heartbeat_destination1 = 'osspc17'
+heartbeat_destination_port1 = 9694
+heartbeat_device1 = ''
+            </programlisting>
+          </listitem>
+        </itemizedlist>
+      </sect3>
+
+      <sect3 id="example-cluster-pgpool-config-pcp">
+        <title>PCPコマンドの設定</title>
+        <para>
+<literal>PCP</literal>コマンドを使用するにはユーザ認証が必要になるので、ユーザ名と<literal>md5</literal>ハッシュに変換されたパスワードを<filename>pcp.conf</filename>ファイルに設定します。ここではユーザ名に<literal>postgres</literal>を使用し、&lt;ユーザ名:ハッシュ化されたパスワード&gt;を<filename>/etc/pgpool-II/pcp.conf</filename>に追記しておきます。
+        </para>
+        <programlisting>
+# pg_md5 -p
+Password: (パスワードを入力)
+(ハッシュ化されたパスワードを pcp.conf に貼り付ける)
+
+# vi /etc/pgpool-II/pcp.conf
+(以下１行を追記)
+ユーザ名:ハッシュ化されたパスワード
+        </programlisting>
+        <para>
+ここで、<productname>Pgpool-II</productname>の設定は完了です。
+        </para>
+      </sect3>
+    </sect2>
+
+    <sect2 id="example-cluster-start-stop">
+      <title>システムの起動と停止</title>
+      <para>
+<productname>Pgpool-II</productname>の設定が完了したら、次に<productname>Pgpool-II</productname>を起動します。<productname>Pgpool-II</productname>を起動する前に、バックエンドの<productname>PostgreSQL</productname>をあらかじめ起動する必要があります。また、<productname>Pgpool-II</productname>を停止する場合、<productname>Pgpool-II</productname>を先に停止する必要があります。
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>
+<productname>Pgpool-II</productname>の起動
+          </para>
+          <para>
+前述の<link linkend="EXAMPLE-CLUSTER-PRE-SETUP">事前設定</link>の章で<productname>Pgpool-II</productname>の自動起動が設定済なので、ここでシステム全体を再起動するか、以下のコマンドを実行してください。
+          </para>
+          <programlisting>
+# systemctl start pgpool.service
+          </programlisting>
+        </listitem>
+        <listitem>
+          <para>
+<productname>Pgpool-II</productname>の停止
+          </para>
+          <programlisting>
+# systemctl stop pgpool.service
+          </programlisting>
+        </listitem>
+      </itemizedlist>
+    </sect2>
+
+    <sect2 id="example-cluster-log">
+      <title>ログの確認</title>
+      <para>
+<productname>Pgpool-II</productname>のログは<command>journalctl</command>コマンドを使用し確認します。
+      </para>
+      <programlisting>
+# journalctl -a | grep pgpool
+      </programlisting>
+    </sect2>
+
+    <sect2 id="example-cluster-try">
+      <title>動作確認</title>
+      <para>
+これから、動作確認を行います。まず、<literal>osspc16</literal>、<literal>osspc17</literal>、<literal>osspc18</literal>で以下のコマンドで Pgpool-II を起動します。
+      </para>
+      <programlisting>
+# systemctl start pgpool.service
+      </programlisting>
+
+      <sect3 id="example-cluster-try-standby">
+        <title>PostgreSQL スタンバイサーバを構築</title>
+        <para>
+まず、<productname>Pgpool-II</productname>のオンラインリカバリ機能を利用し、スタンバイサーバを構築します。<command>pcp_recovery_node</command>コマンドで実行される<varname>recovery_1st_stage_command</varname>パラメータに指定した<filename>recovery_1st_stage</filename>と<filename>pgpool_remote_start</filename>スプリクトが実行されるので、この 2つのスクリプトが現在稼働中のプライマリサーバ<literal>osspc19</literal>のデータベースクラスタの下に存在することを確認します。
+        </para>
+      <programlisting>
+# pcp_recovery_node -h 133.137.174.153 -p 9898 -U postgres -n 1
+      </programlisting>
+      <para>
+<literal>osspc20</literal>がスタンバイとして起動されたことを確認します。
+      </para>
+      <programlisting>
+# psql -h 133.137.174.153 -p 9999 -U pgpool postgres
+
+postgres=> show pool_nodes;
+ node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
+---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------
+ 0       | osspc19  | 5432 | up     | 0.500000  | primary | 0          | true             | 0
+ 1       | osspc20  | 5432 | up     | 0.500000  | standby | 0          | false              | 0
+(2 行)
+      </programlisting>
+      </sect3>
+
+      <sect3 id="example-cluster-try-watchdog">
+        <title>watchdog アクティブ/スタンバイの切り替え</title>
+        <para>
+<command>pcp_watchdog_info</command>で<productname>Pgpool-II</productname>の<application>watchdog</application>の情報を確認します。最初に起動した<productname>Pgpool-II</productname>が「MASTER」になります。
+        </para>
+        <programlisting>
+# pcp_watchdog_info -h 133.137.174.153 -p 9898 -U postgres
+Password:
+3 YES osspc16:9999 Linux osspc16 osspc16
+
+osspc16:9999 Linux osspc16 osspc16 9999 9000 4 MASTER  #最初に起動されたサーバがMASTERになる
+osspc17:9999 Linux osspc17 osspc17 9999 9000 7 STANDBY #スタンバイとして稼働
+osspc18:9999 Linux osspc18 osspc18 9999 9000 7 STANDBY #スタンバイとして稼働
+        </programlisting>
+        <para>
+アクティブである<literal>osspc16</literal>を停止し、<literal>osspc17</literal>または<literal>osspc1</literal>がスタンバイからアクティブに昇格することを確認します。<literal>osspc16</literal>を停止する方法は<productname>Pgpool-II</productname>を停止する、またはマシンをシャットダウンします。ここでは、<productname>Pgpool-II</productname>を停止します。
+        </para>
+        <programlisting>
+[root@osspc16 ~]# systemctl stop pgpool.service
+[root@osspc16 ~]# pcp_watchdog_info -h 133.137.174.153 -p 9898 -U postgres
+Password:
+3 YES osspc17:9999 Linux osspc17 osspc17
+
+osspc17:9999 Linux osspc17 osspc17 9999 9000 4 MASTER     #osspc17がアクティブに昇格
+osspc16:9999 Linux osspc16 osspc16 9999 9000 10 SHUTDOWN  #osspc16が停止された
+osspc18:9999 Linux osspc18 osspc18 9999 9000 7 STANDBY    #スタンバイとして稼働
+        </programlisting>
+        <para>
+先ほど停止した<productname>Pgpool-II</productname>を再起動し、スタンバイとして起動したことを確認します。
+        </para>
+        <programlisting>
+[root@osspc16 ~]# systemctl start pgpool.service
+[root@osspc16 ~]# pcp_watchdog_info -h 133.137.174.153 -p 9898 -U postgres
+Password:
+3 YES osspc17:9999 Linux osspc17 osspc17
+
+osspc17:9999 Linux osspc17 osspc17 9999 9000 4 MASTER
+osspc16:9999 Linux osspc16 osspc16 9999 9000 7 STANDBY
+osspc18:9999 Linux osspc18 osspc18 9999 9000 7 STANDBY
+        </programlisting>
+      </sect3>
+
+      <sect3 id="example-cluster-try-failover">
+        <title>自動フェイルオーバ</title>
+        <para>
+<command>psql</command>で仮想IPに接続し、バックエンドの情報を確認します。
+        </para>
+        <programlisting>
+# psql -h 133.137.174.153 -p 9999 -U pgpool postgres
+
+postgres=> show pool_nodes;
+ node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
+---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------
+ 0       | osspc19  | 5432 | up     | 0.500000  | primary | 0          | true              | 0
+ 1       | osspc20  | 5432 | up     | 0.500000  | standby | 0          | false             | 0
+(2 行)
+        </programlisting>
+        <para>
+次にプライマリである<literal>osspc19</literal>の<productname>PostgreSQL</productname>を停止し、フェイルオーバするかどうか確認してみます。
+        </para>
+        <programlisting>
+$ pg_ctl -D /var/lib/pgsql/9.6/data -m immediate stop
+        </programlisting>
+        <para>
+<literal>osspc19</literal>を停止後、フェイルオーバが発生し、<literal>osspc20</literal>がプライマリに昇格したことを確認します。
+        </para>
+        <programlisting>
+# psql -h 133.137.174.153 -p 9999 -U pgpool postgres
+
+postgres=> show pool_nodes;
+ node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
+---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------
+ 0       | osspc19  | 5432 | down   | 0.500000  | standby | 0          | false             | 0
+ 1       | osspc20  | 5432 | up     | 0.500000  | primary | 0          | true              | 0
+(2 行)
+        </programlisting>
+      </sect3>
+
+      <sect3 id="example-cluster-try-online-recovery">
+	<title>オンラインリカバリ</title>
+        <para>
+次に、<productname>Pgpool-II</productname>のオンラインリカバリ機能を利用し、先ほど停止した旧プライマリサーバをスタンバイとして復旧させます。<command>pcp_recovery_node</command>コマンドで実行される<varname>recovery_1st_stage_command</varname>パラメータに指定した<filename>recovery_1st_stage</filename>と<filename>pgpool_remote_start</filename>スプリクトが現在稼働中のプライマリサーバ<literal>osspc20</literal>のデータベースクラスタの下に存在することを確認します。
+        </para>
+        <programlisting>
+# pcp_recovery_node -h 133.137.174.153 -p 9898 -U postgres -n 0
+        </programlisting>
+        <para>
+<literal>osspc19</literal>がスタンバイとして起動されたことを確認します。
+        </para>
+        <programlisting>
+# psql -h 133.137.174.153 -p 9999 -U pgpool postgres
+
+postgres=> show pool_nodes;
+ node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
+---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------
+ 0       | osspc19  | 5432 | up     | 0.500000  | standby | 0          | false             | 0
+ 1       | osspc20  | 5432 | up     | 0.500000  | primary | 0          | true              | 0
+(2 行)
+        </programlisting>
+        <para>
+以上で、動作確認が完了です。
+        </para>
+      </sect3>
+    </sect2>
+
+  </sect1>
+
     <sect1 id="example-AWS">
 <!--
       <title>AWS Configuration Example</title>
@@ -1140,9 +1989,9 @@ Elastic IPアドレスを確保します。
         <xref linkend="guc-delegate-ip"> which we will not set in this example instead
         we will use <xref linkend="guc-wd-escalation-command"> and
         <xref linkend="guc-wd-de-escalation-command"> to switch the
-        Elastic IP address to the maste/Active <productname>Pgpool-II</productname> node.
+        Elastic IP address to the master/Active <productname>Pgpool-II</productname> node.
 -->
-この例の設定は<xref linkend="example-watchdog">とほとんど同じになりますが、<xref linkend="guc-delegate-ip">を設定せず、代わりに<xref linkend="guc-wd-escalation-command">と<xref linkend="guc-wd-de-escalation-command">を使ってmaste/Active <productname>Pgpool-II</productname>ノードのElastic IPアドレスを切り替えるのが異なります。
+この例の設定は<xref linkend="example-watchdog">とほとんど同じになりますが、<xref linkend="guc-delegate-ip">を設定せず、代わりに<xref linkend="guc-wd-escalation-command">と<xref linkend="guc-wd-de-escalation-command">を使ってmaster/Active <productname>Pgpool-II</productname>ノードのElastic IPアドレスを切り替えるのが異なります。
       </para>
 
       <sect3 id="example-AWS-pgpool-config-instance-1">
@@ -1432,6 +2281,6 @@ PING 35.163.178.3 (35.163.178.3) 56(84) bytes of data.
       </para>
     </sect2>
   </sect1>
-
   </chapter>
 </part>
+
