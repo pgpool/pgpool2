@@ -1158,7 +1158,7 @@ arping_cmd = 'arping -U $_IP_$ -w 1'
       <itemizedlist>
         <listitem>
           <para>
-<productname>PostgreSQL</productname>プライマリサーバのストリーミングレプリケーションの設定を行います。ここでははアーカイブリカバリを行うように設定します。
+<productname>PostgreSQL</productname>プライマリサーバのストリーミングレプリケーションの設定を行います。ここではアーカイブリカバリを行うように設定します。
           </para>
           <para>
 まず、<acronym>WAL</acronym>を格納するディレクトリ<filename>/var/lib/pgsql/archivedir</filename>を<productname>PostgreSQL</productname>バックエンドサーバ<literal>osspc19</literal>と<literal>osspc20</literal>に事前に作成します。
@@ -1171,7 +1171,7 @@ arping_cmd = 'arping -U $_IP_$ -w 1'
 次に設定ファイル<filename>$PGDATA/postgresql.conf</filename>を以下のように編集します。
           </para>
           <programlisting>
-sten_addresses = '*'
+listen_addresses = '*'
 wal_level = hot_standby
 max_wal_senders = 2
 
@@ -1376,7 +1376,7 @@ exit 0;
       </sect3>
 
       <sect3 id="example-cluster-pgpool-config-online-recovery">
-        <title>オンラインリカバリ設定</title>
+        <title>オンラインリカバリの設定</title>
         <para>
 続いて、オンラインリカバリを行うための<productname>PostgreSQL</productname>のユーザ名およびオンラインリカバリ時に呼び出されるコマンド<command>recovery_1st_stage</command>を設定します。オンラインリカバリ用のスクリプト<filename>recovery_1st_stage</filename>、<filename>pgpool_remote_start</filename>をプライマリサーバのデータベースクラスタ配下に配置し、実行権限を与えておきます。
         </para>
@@ -1422,7 +1422,7 @@ cd $remote_pgdata
 cp postgresql.conf postgresql.conf.bak
 sed -e 's/#*hot_standby = off/hot_standby = on/' postgresql.conf.bak > postgresql.conf
 rm -f postgresql.conf.bak
-cat > recovery.conf &lt;$lt; EOT
+cat > recovery.conf &lt;&lt; EOT
 standby_mode = 'on'
 primary_conninfo = 'host="$hostname" port=$port user=repl'
 restore_command = 'scp $hostname:$archivedir/%f %p'
@@ -1477,8 +1477,8 @@ host    all         postgres         0.0.0.0/0          md5
 md5 認証で用いるデフォルトのファイル名は pool_passwd です。 「pg_md5 --md5auth --username=ユーザ名 パスワード」 コマンドを実行すると、ユーザ名と md5 によりハッシュ化 されたパスワードが pool_passwd に登録されます。 pool_passwd がまだ存在しなければ、pgpool.confと同じディレクトリ内に作成されます。
         </para>
         <programlisting>
-# pg_md5 --md5auth --username=pgpool &lt;pgpool ユーザのパスワード&gt;
-# pg_md5 --md5auth --username=postgres &lt;postgres ユーザのパスワード&gt;
+# pg_md5 --md5auth --username=pgpool &lt;pgpoolユーザのパスワード&gt;
+# pg_md5 --md5auth --username=postgres &lt;postgresユーザのパスワード&gt;
         </programlisting>
       </sect3>
 
@@ -1696,7 +1696,7 @@ heartbeat_device1 = ''
         <programlisting>
 # pg_md5 -p
 Password: (パスワードを入力)
-(ハッシュ化されたパスワードを pcp.conf に貼り付ける)
+(ハッシュ化されたパスワードをpcp.confに貼り付ける)
 
 # vi /etc/pgpool-II/pcp.conf
 (以下１行を追記)
@@ -1711,7 +1711,7 @@ Password: (パスワードを入力)
     <sect2 id="example-cluster-start-stop">
       <title>システムの起動と停止</title>
       <para>
-<productname>Pgpool-II</productname>の設定が完了したら、次に<productname>Pgpool-II</productname>を起動します。<productname>Pgpool-II</productname>を起動する前に、バックエンドの<productname>PostgreSQL</productname>をあらかじめ起動する必要があります。また、<productname>Pgpool-II</productname>を停止する場合、<productname>Pgpool-II</productname>を先に停止する必要があります。
+<productname>Pgpool-II</productname>の設定が完了したら、次に<productname>Pgpool-II</productname>を起動します。<productname>Pgpool-II</productname>を起動する前に、バックエンドの<productname>PostgreSQL</productname>をあらかじめ起動する必要があります。また、<productname>PostgreSQL</productname>を停止する場合、<productname>Pgpool-II</productname>を先に停止する必要があります。
       </para>
       <itemizedlist>
         <listitem>
@@ -1772,8 +1772,8 @@ Password: (パスワードを入力)
 postgres=> show pool_nodes;
  node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
 ---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------
- 0       | osspc19  | 5432 | up     | 0.500000  | primary | 0          | true             | 0
- 1       | osspc20  | 5432 | up     | 0.500000  | standby | 0          | false              | 0
+ 0       | osspc19  | 5432 | up     | 0.500000  | primary | 0          | true              | 0
+ 1       | osspc20  | 5432 | up     | 0.500000  | standby | 0          | false             | 0
 (2 行)
       </programlisting>
       </sect3>
