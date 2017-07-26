@@ -304,7 +304,7 @@ int pool_virtual_master_db_node_id(void)
 		return REAL_MASTER_NODE_ID;
 	}
 
-	if (sc->query_context)
+	if (sc->in_progress && sc->query_context)
 	{
 		int node_id = sc->query_context->virtual_master_node_id;
 

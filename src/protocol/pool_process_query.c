@@ -3179,6 +3179,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				ereport(DEBUG1,
 						(errmsg("read_kind_from_backend: sync pending message exists")));
 				session_context->query_context = NULL;
+				pool_unset_ignore_till_sync();
 				pool_unset_query_in_progress();
 			}
 			else
@@ -3386,16 +3387,28 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		 * various scenario, probably we should employ this strategy for 'Z'
 		 * (ready for response) case only, since it's a good candidate to
 		 * re-sync primary and standby.
+		 *
+		 * 2017/7/16 Tatsuo Ishii wrote: The issue above has been solved since
+		 * the pending message mechanism was introduced.  However, in error
+		 * cases it is possible that similar issue could happen since returned
+		 * messages do not follow the sequence recorded in the pending
+		 * messages because the backend ignores requests till sync message is
+		 * received. In this case we need to re-sync either master or
+		 * standby. So we check not only the standby but master node.
 		 */
-
 		if (session_context->load_balance_node_id != MASTER_NODE_ID &&
-			kind_list[MASTER_NODE_ID] == 'Z' && STREAM)
+			(kind_list[MASTER_NODE_ID] == 'Z' ||
+			 kind_list[session_context->load_balance_node_id] == 'Z')
+			&& STREAM)
 		{
 			POOL_CONNECTION *s;
 			char *buf;
 			int len;
 
-			s = CONNECTION(backend, session_context->load_balance_node_id);
+			if (kind_list[MASTER_NODE_ID] == 'Z')
+				s = CONNECTION(backend, session_context->load_balance_node_id);
+			else
+				s = CONNECTION(backend, MASTER_NODE_ID);
 
 			/* skip len and contents corresponding standby data */
 			pool_read(s, &len, sizeof(len));
