@@ -1959,6 +1959,16 @@ static void failover(void)
 	Req_info->switching = true;
 	node_id = Req_info->node_id[0];
 
+	/* Perform failover with health check alarm
+	 * disabled
+	 */
+	if (pool_config->health_check_timeout > 0)
+	{
+		pool_signal(SIGALRM, SIG_IGN);
+		CLEAR_ALARM;
+		health_check_timer_expired = 0;
+	}
+
 	/* failback request? */
 	if (Req_info->kind == NODE_UP_REQUEST)
 	{
