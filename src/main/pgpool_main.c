@@ -525,9 +525,6 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 	int health_check_max_retries = pool_config->parallel_mode ?
 			(NUM_BACKENDS - 1) : pool_config->health_check_max_retries;
 
-	pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
-	CLEAR_ALARM;
-
 	if (health_check_max_retries > 0 && retrycnt <= health_check_max_retries)
 	{
 		/* Keep retrying and sleep a little in between */
@@ -1430,6 +1427,17 @@ static void failover(void)
 	}
 	Req_info->switching = true;
 	switching = 1;
+
+	/* Perform failover with health check alarm
+	 * disabled
+	 */
+	if (pool_config->health_check_timeout > 0)
+	{
+		pool_signal(SIGALRM, SIG_IGN);
+		CLEAR_ALARM;
+		health_check_timer_expired = 0;
+	}
+
 	for(;;)
 	{
 		POOL_REQUEST_KIND reqkind;
