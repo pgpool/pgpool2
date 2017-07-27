@@ -1989,6 +1989,16 @@ static void failover(void)
 	Req_info->switching = true;
 	switching = 1;
 
+	/* Perform failover with health check alarm
+	 * disabled
+	 */
+	if (pool_config->health_check_timeout > 0)
+	{
+		pool_signal(SIGALRM, SIG_IGN);
+		CLEAR_ALARM;
+		health_check_timer_expired = 0;
+	}
+
 	for(;;)
 	{
 		POOL_REQUEST_KIND reqkind;
