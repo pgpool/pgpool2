@@ -5508,7 +5508,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 							 errdetail("our declare coordinator message is accepted by all nodes")));
 
 					set_cluster_master_node(g_cluster.localNode);
-					register_watchdog_state_change_interupt();
+					register_watchdog_state_change_interrupt();
 
 					/*
 					 * Check if the quorum is present then start the escalation process
@@ -6155,7 +6155,7 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 				if (clusterCommand->commandStatus == COMMAND_FINISHED_ALL_REPLIED ||
 					clusterCommand->commandStatus == COMMAND_FINISHED_TIMEOUT)
 				{
-					register_watchdog_state_change_interupt();
+					register_watchdog_state_change_interrupt();
 
 					ereport(LOG,
 						(errmsg("successfully joined the watchdog cluster as standby node"),

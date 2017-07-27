@@ -69,13 +69,13 @@ typedef enum
 {
 	SIG_FAILOVER_INTERRUPT,		/* signal main to start failover */
 	SIG_WATCHDOG_STATE_CHANGED,	/* notify main about local watchdog node state changed */
-	MAX_INTERUPTS				/* Must be last! */
+	MAX_INTERRUPTS				/* Must be last! */
 } User1SignalReason;
 
 
 typedef struct User1SignalSlot
 {
-	sig_atomic_t	signalFlags[MAX_INTERUPTS];
+	sig_atomic_t	signalFlags[MAX_INTERRUPTS];
 }User1SignalSlot;
 /*
  * Process pending signal actions.
@@ -89,7 +89,7 @@ typedef struct User1SignalSlot
 		} \
 		if (sigusr1_request) \
 		{ \
-			sigusr1_interupt_processor(); \
+			sigusr1_interrupt_processor(); \
 			sigusr1_request = 0; \
 		} \
 		if (sigchld_request) \
@@ -135,7 +135,7 @@ static int read_status_file(bool discard_status);
 static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
 static RETSIGTYPE sigusr1_handler(int sig);
-static void sigusr1_interupt_processor(void);
+static void sigusr1_interrupt_processor(void);
 static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE health_check_timer_handler(int sig);
 static RETSIGTYPE wakeup_handler(int sig);
@@ -315,7 +315,7 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 		if (sigusr1_request)
 		{
-			sigusr1_interupt_processor();
+			sigusr1_interrupt_processor();
 			sigusr1_request = 0;
 		}
 	}
@@ -569,9 +569,6 @@ process_backend_health_check_failure(int health_check_node_id, int retrycnt)
 	int sleep_time = pool_config->health_check_retry_delay;
 	int health_check_max_retries = pool_config->health_check_max_retries;
 
-	pool_signal(SIGALRM, SIG_IGN);	/* Cancel timer */
-	CLEAR_ALARM;
-
 	if (health_check_max_retries > 0 && retrycnt <= health_check_max_retries)
 	{
 		/* Keep retrying and sleep a little in between */
@@ -676,7 +673,7 @@ bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, i
 	return true;
 }
 
-void register_watchdog_state_change_interupt(void)
+void register_watchdog_state_change_interrupt(void)
 {
 	signal_user1_to_parent_with_reason(SIG_WATCHDOG_STATE_CHANGED);
 }
@@ -1557,7 +1554,7 @@ static RETSIGTYPE sigusr1_handler(int sig)
 	errno = save_errno;
 }
 
-static void sigusr1_interupt_processor(void)
+static void sigusr1_interrupt_processor(void)
 {
 	ereport(DEBUG1,
 			(errmsg("Pgpool-II parent process received SIGUSR1")));
@@ -1671,6 +1668,17 @@ static void failover(void)
 
 	Req_info->switching = true;
 	switching = 1;
+
+	/* Perform failover with health check alarm
+	 * disabled
+	 */
+	if (pool_config->health_check_timeout > 0)
+	{
+		pool_signal(SIGALRM, SIG_IGN);
+		CLEAR_ALARM;
+		health_check_timer_expired = 0;
+	}
+
 	for(;;)
 	{
 		POOL_REQUEST_KIND reqkind;

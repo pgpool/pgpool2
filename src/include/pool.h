@@ -517,7 +517,7 @@ extern char remote_port[];	/* client port */
 /*
  * public functions
  */
-extern void register_watchdog_state_change_interupt(void);
+extern void register_watchdog_state_change_interrupt(void);
 extern bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count, bool switch_over, unsigned int wd_failover_id);
 extern char *get_config_file_name(void);
 extern char *get_hba_file_name(void);
