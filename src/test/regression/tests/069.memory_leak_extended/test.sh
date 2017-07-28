@@ -51,7 +51,7 @@ do
 
 	echo "initial process size: $init_size after size: $after_size delta: $delta"
 
-	test "$delta -eq 0"
+	test $delta -eq 0
 
 	if [ $? != 0 ];then
 		echo "memory leak in $delta KB in mode:$mode"

@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------
-# Testing memory leak. To detect the memory leak, we perform pgbench
-# -S for sometime and see how much the pgpool child process is growing
-# by using ps command.
+# Testing memory leak in extended query protocol case with query cache
+# enabled.  To detect the memory leak, we perform pgbench -S for
+# sometime and see how much the pgpool child process is growing by
+# using ps command.
 
 PGBENCH=$PGBENCH_PATH
 WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
 
-for mode in s r n
+#for mode in s r n
+for mode in s
 do
 	rm -fr $TESTDIR
 	mkdir $TESTDIR
@@ -26,6 +28,9 @@ do
 
 	# set pgpool number of child to 1
 	echo "num_init_children = 1" >> etc/pgpool.conf
+
+	# enable query cache
+	echo "memory_cache_enabled = on" >> etc/pgpool.conf
 
 	# start pgpool-II
 	./startall
@@ -44,7 +49,7 @@ do
 	echo "init_size: $init_size"
 
 	# run pgbench for a while
-	$PGBENCH -S -T 30 test
+	$PGBENCH -M extended -S -T 30 test
 
 	after_size=`ps l $pid|tail -1|awk '{print $7}'`
 	delta=`expr $after_size - $init_size`
