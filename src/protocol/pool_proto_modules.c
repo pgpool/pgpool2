@@ -419,7 +419,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 * - statement is INSERT
 		 * - either "INSERT LOCK" comment exists or insert_lock directive specified
 		 */
-		if (!RAW_MODE)
+		if (!RAW_MODE && !STREAM)
 		{
 			/*
 			 * If there's only one node to send the command, there's no
