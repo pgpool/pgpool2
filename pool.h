@@ -556,7 +556,7 @@ extern POOL_STATUS OneNode_do_command(POOL_CONNECTION *frontend, POOL_CONNECTION
 
 /* child.c */
 extern POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
-	char *hostname, int port, char *dbname, char *user, char *password, bool retry);
+	int db_node_id, char *hostname, int port, char *dbname, char *user, char *password, bool retry);
 extern void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp);
 
 /* define pool_system.c */
