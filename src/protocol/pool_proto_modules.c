@@ -1984,12 +1984,22 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	{
 		POOL_PENDING_MESSAGE *pmsg;
 
-		pmsg = pool_pending_message_get(POOL_CLOSE);
+		pmsg = pool_pending_message_pull_out();
 
 		if (pmsg)
 		{
-			kind = pool_get_close_message_spec(pmsg);
-			name = pool_get_close_message_name(pmsg);
+			/* Sanity check */
+			if (pmsg->type != POOL_CLOSE)
+			{
+				ereport(LOG,
+						(errmsg("loseComplete: pending messge was not CloseComplete")));
+			}
+			else
+			{
+				kind = pool_get_close_message_spec(pmsg);
+				name = pool_get_close_message_name(pmsg);
+				kind = kind=='S'?'P':'B';
+			}
 			pool_pending_message_free_pending_message(pmsg);
 		}
 	}
@@ -2008,11 +2018,11 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 		}
 	}
 	
-	if (kind == ' ')
+	if (kind != ' ')
 	{
 		pool_remove_sent_message(kind, name);
 		ereport(DEBUG1,
-				(errmsg("CloseComplete: remove uncompleted message. kind:%c, name:%s",
+				(errmsg("CloseComplete: remove sent message. kind:%c, name:%s",
 						kind, name)));
 	}
 

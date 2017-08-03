@@ -3601,11 +3601,20 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		}
 		else
 		{
-			POOL_PENDING_MESSAGE *pending_message;
+			POOL_PENDING_MESSAGE *pending_message = NULL;
 
-			ereport(DEBUG1,
-					(errmsg("read_kind_from_backend: pending message was pulled out")));
-			pending_message = pool_pending_message_pull_out();
+			if (msg->type == POOL_CLOSE)
+			{
+				/* Pending message will be pulled out in CloseComplete() */
+				ereport(DEBUG1,
+						(errmsg("read_kind_from_backend: pending message was not pulled out because message type is CloseComplete")));
+			}
+			else
+			{
+				ereport(DEBUG1,
+						(errmsg("read_kind_from_backend: pending message was pulled out")));
+				pending_message = pool_pending_message_pull_out();
+			}
 
 			if (pending_message)
 				pool_pending_message_free_pending_message(pending_message);
