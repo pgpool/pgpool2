@@ -851,6 +851,16 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 }
 
 /*
+ * Set db node id to connection.
+ */
+void pool_set_db_node_id(POOL_CONNECTION *con, int db_node_id)
+{
+	if (!con)
+		return;
+	con->db_node_id = db_node_id;
+}
+
+/*
  * returns the byte length of str, including \0, no more than upper.
  * if encountered \0, flag is set to non 0.
  * example:
