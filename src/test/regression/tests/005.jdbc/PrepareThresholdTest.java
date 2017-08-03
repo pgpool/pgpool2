@@ -59,6 +59,7 @@ public class PrepareThresholdTest extends PgpoolTest {
 
 			} finally {
 				if (rs != null) rs.close();
+				connection.commit();
 				if (pstmt != null) pstmt.close();
 			}
 
