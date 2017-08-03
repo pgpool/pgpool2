@@ -246,7 +246,7 @@ static bool establish_persistent_connection(int node)
 				health_check_timer_expired = 0;
 			}
 
-			slot = make_persistent_db_connection_noerror(bkinfo->backend_hostname,
+			slot = make_persistent_db_connection_noerror(node, bkinfo->backend_hostname,
 														 bkinfo->backend_port,
 														 pool_config->health_check_database,
 														 pool_config->health_check_user,
