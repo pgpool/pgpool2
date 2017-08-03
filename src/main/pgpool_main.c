@@ -2230,7 +2230,7 @@ do_health_check(bool use_template_db, volatile int *health_check_node_id)
 		ereport(DEBUG1,
 			(errmsg("Trying to make persistent DB connection to backend node %d having status %d", i, bkinfo->backend_status)));
 
-		slot = make_persistent_db_connection(bkinfo->backend_hostname,
+		slot = make_persistent_db_connection(i, bkinfo->backend_hostname,
 											 bkinfo->backend_port,
 											 dbname,
 											 pool_config->health_check_user,
@@ -2823,7 +2823,7 @@ static bool
 
 	*is_standby = false;
 
-	s = make_persistent_db_connection_noerror(bkinfo->backend_hostname,
+	s = make_persistent_db_connection_noerror(backend_no, bkinfo->backend_hostname,
 										  bkinfo->backend_port,
 										  pool_config->sr_check_database,
 										  pool_config->sr_check_user,

@@ -794,6 +794,8 @@ void cancel_request(CancelPacket *sp)
 		if (con == NULL)
 			return;
 
+		pool_set_db_node_id(con, i);
+
 		len = htonl(sizeof(len) + sizeof(CancelPacket));
 		pool_write(con, &len, sizeof(len));
 
@@ -877,7 +879,7 @@ static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION 
 			{
 
 				/* set DB node id */
-				CONNECTION(backend, i)->db_node_id = i;
+				pool_set_db_node_id(CONNECTION(backend, i), i);
 
 				/* mark this is a backend connection */
 				CONNECTION(backend, i)->isbackend = 1;
@@ -1174,7 +1176,7 @@ void child_exit(int code)
  * create a persistent connection
  */
 POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
-	char *hostname, int port, char *dbname, char *user, char *password, bool retry)
+	int db_node_id,	char *hostname, int port, char *dbname, char *user, char *password, bool retry)
 {
 	POOL_CONNECTION_POOL_SLOT *cp;
 	int fd;
@@ -1218,6 +1220,8 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	cp->con = pool_open(fd,true);
 	cp->closetime = 0;
 	cp->con->isbackend = 1;
+	pool_set_db_node_id(cp->con, db_node_id);
+
 	pool_ssl_negotiate_clientserver(cp->con);
 
 	/*
@@ -1294,17 +1298,18 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
  * make_persistent_db_connection() which does not ereports in case of an error
  */
 POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection_noerror(
-                        char *hostname, int port, char *dbname, char *user, char *password, bool retry)
+	int db_node_id, char *hostname, int port, char *dbname, char *user, char *password, bool retry)
 {
     POOL_CONNECTION_POOL_SLOT *slot = NULL;
     MemoryContext oldContext = CurrentMemoryContext;
     PG_TRY();
     {
-        slot = make_persistent_db_connection(hostname,
-                                                 port,
-                                                 dbname,
-                                                 user,
-                                                 password, retry);
+        slot = make_persistent_db_connection(db_node_id,
+											 hostname,
+											 port,
+											 dbname,
+											 user,
+											 password, retry);
     }
     PG_CATCH();
     {
