@@ -67,4 +67,6 @@ extern void pool_unset_nonblock(int fd);
 extern int socket_read(int sock, void* buf, size_t len, int timeout);
 extern int socket_write(int fd, void* buf, size_t len);
 
+extern void pool_set_db_node_id(POOL_CONNECTION *con, int db_node_id);
+
 #endif /* POOL_STREAM_H */
