@@ -2543,7 +2543,7 @@ static int health_check(void)
 			bkinfo->backend_status == CON_DOWN)
 			continue;
 
-		slot = make_persistent_db_connection(bkinfo->backend_hostname,
+			slot = make_persistent_db_connection(i, bkinfo->backend_hostname,
 											 bkinfo->backend_port,
 											 dbname,
 											 pool_config->health_check_user,
@@ -3142,7 +3142,7 @@ static int find_primary_node(void)
 		is_standby = false;
 
 		bkinfo = pool_get_node_info(i);
-		s = make_persistent_db_connection(bkinfo->backend_hostname,
+		s = make_persistent_db_connection(i, bkinfo->backend_hostname,
 										  bkinfo->backend_port,
 										  "postgres",
 										  pool_config->sr_check_user,

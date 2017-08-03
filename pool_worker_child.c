@@ -163,7 +163,7 @@ static void establish_persistent_connection(void)
 		if (slots[i] == NULL)
 		{
 			bkinfo = pool_get_node_info(i);
-			s = make_persistent_db_connection(bkinfo->backend_hostname, 
+			s = make_persistent_db_connection(i, bkinfo->backend_hostname, 
 											  bkinfo->backend_port,
 											  "postgres",
 											  pool_config->sr_check_user,
