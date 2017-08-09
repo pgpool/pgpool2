@@ -75,6 +75,11 @@ typedef struct {
 							 * the pg_terminate_backend query, especially for the
 							 * case when the query gets fail on the backend.
 							 */
+
+	bool skip_cache_commit;	/* In streaming replication mode and extended query,
+							 *  do not commit cache if this flag is true.
+							 */
+
 	MemoryContext memory_context;	/* memory context for query context */
 } POOL_QUERY_CONTEXT;
 

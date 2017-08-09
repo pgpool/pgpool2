@@ -698,6 +698,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
 	POOL_SENT_MESSAGE *bind_msg;
+	bool foundp = false;
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
@@ -738,6 +739,10 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	ereport(DEBUG2,(errmsg("Execute: query string = <%s>", query)));
 
+	ereport(DEBUG1,(errmsg("Execute: pool_is_likely_select: %d pool_is_writing_transaction: %d TSTATE: %c",
+						   pool_is_likely_select(query), pool_is_writing_transaction(),
+						   TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID))));
+
 	/*
 	 * Fetch memory cache if possible
 	 */
@@ -745,7 +750,6 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		!pool_is_writing_transaction() &&
 		(TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != 'E'))
 	{
-		bool foundp;
 		POOL_STATUS status;
 		char *search_query = NULL;
 		int len;
@@ -754,6 +758,9 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 		len = strlen(query)+1;
 		search_query = MemoryContextStrdup(query_context->memory_context,query);
+
+		ereport(DEBUG1,(errmsg("Execute: checkig cache fetch condition")));
+		
 		/*
 		 * Add bind message's info to query to search.
 		 */
@@ -814,12 +821,26 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 		if (foundp)
 		{
+#ifdef DEBUG
+			extern bool stop_now;
+#endif
 			pool_ps_idle_display(backend);
-			pool_set_skip_reading_from_backends();
 			pool_stats_count_up_num_cache_hits();
-			pool_unset_query_in_progress();
-			return POOL_CONTINUE;
+			session_context->query_context->skip_cache_commit = true;
+#ifdef DEBUG
+			stop_now = true;
+#endif
+			
+			if (!STREAM || !pool_is_doing_extended_query_message())
+			{
+				pool_set_skip_reading_from_backends();
+				pool_stats_count_up_num_cache_hits();
+				pool_unset_query_in_progress();
+				return POOL_CONTINUE;
+			}
 		}
+		else
+			session_context->query_context->skip_cache_commit = false;
 	}
 
 	session_context->query_context = query_context;
@@ -877,8 +898,11 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		POOL_PENDING_MESSAGE *pmsg;
 
-		pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, true);
-		pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, true);
+		if (!foundp)
+		{
+			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, true);
+			pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, true);
+		}
 
 		/* Add pending message */
 		pmsg = pool_pending_message_create('E', len, contents);
@@ -1835,101 +1859,12 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	if (pool_is_query_in_progress())
 	{
 		node = pool_get_parse_tree();
+		query = pool_get_query_string();
 
 		if (pool_is_command_success())
 		{
-			query = pool_get_query_string();
-
 			if (node)
-			{
-				/*
-				 * If the query was BEGIN/START TRANSACTION, clear the
-				 * history that we had a writing command in the transaction
-				 * and forget the transaction isolation level.
-				 *
-				 * XXX If BEGIN is received while we are already in an
-				 * explicit transaction, the command *successes*
-				 * (just with a NOTICE message). In this case we lose
-				 * "writing_transaction" etc. info.
-				 */
-				if (is_start_transaction_query(node))
-				{
-					pool_unset_writing_transaction();
-					pool_unset_failed_transaction();
-					pool_unset_transaction_isolation();
-				}
-
-				/*
-				 * If the query was COMMIT/ABORT, clear the history
-				 * that we had a writing command in the transaction
-				 * and forget the transaction isolation level.  This
-				 * is necessary if succeeding transaction is not an
-				 * explicit one.
-				 */
-				else if (is_commit_or_rollback_query(node))
-				{
-					pool_unset_writing_transaction();
-					pool_unset_failed_transaction();
-					pool_unset_transaction_isolation();
-				}
-
-				/*
-				 * SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or SET
-				 * SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
-				 * SERIALIZABLE, remember it.
-				 */
-				else if (is_set_transaction_serializable(node))
-				{
-					pool_set_transaction_isolation(POOL_SERIALIZABLE);
-				}
-
-				/*
-				 * If 2PC commands has been executed, automatically close
-				 * transactions on standbys if there is any open
-				 * transaction since 2PC commands close transaction on
-				 * primary.
-				 */
-				else if (is_2pc_transaction_query(node))
-				{
-					if (close_standby_transactions(frontend, backend) != POOL_CONTINUE)
-						return POOL_END;
-				}
-
-				else if (!is_select_query(node, query))
-				{
-					/*
-					 * If the query was not READ SELECT, and we are in an
-					 * explicit transaction, remember that we had a write
-					 * query in this transaction.
-					 */
-					if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
-					{
-						/* However, if the query is "SET TRANSACTION READ ONLY" or its variant,
-						 * don't set it.
-						 */
-						if (!pool_is_transaction_read_only(node))
-						{
-							ereport(DEBUG1,
-									(errmsg("not SET TRANSACTION READ ONLY")));
-
-							pool_set_writing_transaction();
-						}
-					}
-
-					/*
-					 * If the query was CREATE TEMP TABLE, discard
-					 * temp table relcache because we might have had
-					 * persistent table relation cache which has table
-					 * name as the temp table.
-					 */
-					if (IsA(node, CreateStmt))
-					{
-						CreateStmt *create_table_stmt = (CreateStmt *)node;
-						if (create_table_stmt->relation->relpersistence)
-							discard_temp_table_relcache();
-					}
-				}
-			}
+				pool_at_command_success(frontend, backend);
 
 			/* Memory cache enabled? */
 			if (cache_commit && pool_config->memory_cache_enabled)
@@ -2099,7 +2034,7 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 			if (pmsg->type != POOL_CLOSE)
 			{
 				ereport(LOG,
-						(errmsg("loseComplete: pending messge was not CloseComplete")));
+						(errmsg("CloseComplete: pending messge was not Close request: %s", pool_pending_message_type_to_string(pmsg->type))));
 			}
 			else
 			{
@@ -2131,6 +2066,10 @@ POOL_STATUS CloseComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 		ereport(DEBUG1,
 				(errmsg("CloseComplete: remove sent message. kind:%c, name:%s",
 						kind, name)));
+		if (pool_config->memory_cache_enabled)
+		{
+			pool_discard_temp_query_cache(pool_get_current_cache());
+		}
 	}
 
 	return status;
@@ -2562,9 +2501,9 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 			pool_unset_query_in_progress();
 
 		/*
-		 * Check if If we have pending data in backend connection cache. If we
-		 * do, it is likely that a sync message has been sent to backend and the
-		 * backend replied back to us. So we need to process it.
+		 * Check if we have pending data in backend connection cache. If we
+		 * do, it is likely that a sync message has been sent to backend and
+		 * the backend replied back to us. So we need to process it.
 		 */
 		if (is_backend_cache_empty(backend))
 		{
@@ -2612,6 +2551,11 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 					(errmsg("processing backend response"),
 						 errdetail("Ready For Query received")));
 				status = ReadyForQuery(frontend, backend, true, true);
+#ifdef DEBUG
+				extern bool stop_now;
+				if (stop_now)
+					exit(0);
+#endif
 				break;
 
 			case '1':	/* ParseComplete */
@@ -3544,6 +3488,8 @@ static void pool_wait_till_ready_for_query(POOL_CONNECTION_POOL *backend)
 			for (;;)
 			{
 				pool_read(CONNECTION(backend, i), &kind, sizeof(kind));
+				ereport(DEBUG1,
+						(errmsg("pool_wait_till_ready_for_query: kind: %c", kind)));
 				pool_push(CONNECTION(backend, i), &kind, sizeof(kind));
 				pool_read(CONNECTION(backend, i), &len, sizeof(len));
 				pool_push(CONNECTION(backend, i), &len, sizeof(len));
@@ -3655,6 +3601,132 @@ static void pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION *fronte
 							(errmsg("pool_discard_except_sync_and_ready_for_query: discarding packet %c (len:%lu) of backend:%d", kind, ntohl(len)-sizeof(len), i)));
 				}
 			}
+		}
+	}
+}
+
+/*
+ * Handle misc treatment when a command successfully completed.
+ * Preconditions: query is in progress. The command is succeeded.
+ */
+void pool_at_command_success(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+{
+	Node *node;
+	char *query;
+
+	/* Sanity checks */
+	if (!pool_is_query_in_progress())
+	{
+		ereport(ERROR,
+				(errmsg("pool_at_command_success: query is not in progress")));
+	}
+
+	if (!pool_is_command_success())
+	{
+		ereport(ERROR,
+				(errmsg("pool_at_command_success: command did not suceed")));
+	}
+
+	node = pool_get_parse_tree();
+
+	if (!node)
+	{
+		ereport(ERROR,
+				(errmsg("pool_at_command_success: no parse tree found")));
+	}
+
+	query = pool_get_query_string();
+	
+	if (query == NULL)
+	{
+		ereport(ERROR,
+				(errmsg("pool_at_command_success: no query found")));
+	}
+
+	/*
+	 * If the query was BEGIN/START TRANSACTION, clear the
+	 * history that we had a writing command in the transaction
+	 * and forget the transaction isolation level.
+	 *
+	 * XXX If BEGIN is received while we are already in an
+	 * explicit transaction, the command *successes*
+	 * (just with a NOTICE message). In this case we lose
+	 * "writing_transaction" etc. info.
+	 */
+	if (is_start_transaction_query(node))
+	{
+		pool_unset_writing_transaction();
+		pool_unset_failed_transaction();
+		pool_unset_transaction_isolation();
+	}
+
+	/*
+	 * If the query was COMMIT/ABORT, clear the history
+	 * that we had a writing command in the transaction
+	 * and forget the transaction isolation level.  This
+	 * is necessary if succeeding transaction is not an
+	 * explicit one.
+	 */
+	else if (is_commit_or_rollback_query(node))
+	{
+		pool_unset_writing_transaction();
+		pool_unset_failed_transaction();
+		pool_unset_transaction_isolation();
+	}
+
+	/*
+	 * SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or SET
+	 * SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL
+	 * SERIALIZABLE, remember it.
+	 */
+	else if (is_set_transaction_serializable(node))
+	{
+		pool_set_transaction_isolation(POOL_SERIALIZABLE);
+	}
+
+	/*
+	 * If 2PC commands has been executed, automatically close
+	 * transactions on standbys if there is any open
+	 * transaction since 2PC commands close transaction on
+	 * primary.
+	 */
+	else if (is_2pc_transaction_query(node))
+	{
+		close_standby_transactions(frontend, backend);
+	}
+
+	else if (!is_select_query(node, query))
+	{
+		/*
+		 * If the query was not READ SELECT, and we are in an
+		 * explicit transaction, remember that we had a write
+		 * query in this transaction.
+		 */
+		if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
+		{
+			/* However, if the query is "SET TRANSACTION READ ONLY" or its variant,
+			 * don't set it.
+			 */
+			if (!pool_is_transaction_read_only(node))
+			{
+				ereport(DEBUG1,
+						(errmsg("not SET TRANSACTION READ ONLY")));
+
+				pool_set_writing_transaction();
+			}
+		}
+
+		/*
+		 * If the query was CREATE TEMP TABLE, discard
+		 * temp table relcache because we might have had
+		 * persistent table relation cache which has table
+		 * name as the temp table.
+		 */
+		if (IsA(node, CreateStmt))
+		{
+			CreateStmt *create_table_stmt = (CreateStmt *)node;
+			if (create_table_stmt->relation->relpersistence)
+				discard_temp_table_relcache();
 		}
 	}
 }
