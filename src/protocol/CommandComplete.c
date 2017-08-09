@@ -155,6 +155,22 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		{
 			memqcache_register('C', frontend, p1, len1);
 		}
+
+		/*
+		 * If we are in streaming replication mode and we are doing extended
+		 * query, register query cache now.
+		 */
+		if (STREAM && pool_is_doing_extended_query_message())
+		{
+			char *query;
+			Node *node;
+			char state;
+
+			query = session_context->query_context->query_w_hex;
+			node = pool_get_parse_tree();
+			state = TSTATE(backend, MASTER_NODE_ID);
+			pool_handle_query_cache(backend, query, node, state);
+		}
 	}
 
 	pfree(p1);
@@ -170,6 +186,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	*/
 	if (STREAM && pool_is_doing_extended_query_message())
 	{
+		pool_at_command_success(frontend, backend);
 		pool_unset_query_in_progress();
 		pool_pending_message_reset_previous_message();
 	}

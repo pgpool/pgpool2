@@ -68,6 +68,10 @@ typedef struct {
 								 * query and parsed node is actually a dummy query.
 								 */
 	int num_original_params; /* number of parameters in original query */
+	bool skip_cache_commit;	/* In streaming replication mode and extended query,
+							 *  do not commit cache if this flag is true.
+							 */
+
 	MemoryContext memory_context;	/* memory context for query context */
 } POOL_QUERY_CONTEXT;
 

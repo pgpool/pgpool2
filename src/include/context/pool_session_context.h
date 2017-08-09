@@ -299,6 +299,8 @@ extern void pool_pending_message_reset_previous_message(void);
 extern void pool_pending_message_set_previous_message(POOL_PENDING_MESSAGE *message);
 extern POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void);
 extern bool pool_pending_message_exists(void);
+extern const char *pool_pending_message_type_to_string(POOL_MESSAGE_TYPE type);
+extern POOL_PENDING_MESSAGE *pool_pending_message_find_lastest_by_query_context(POOL_QUERY_CONTEXT *qc);
 extern void dump_pending_message(void);
 extern void pool_set_major_version(int major);
 extern int pool_get_major_version(void);
