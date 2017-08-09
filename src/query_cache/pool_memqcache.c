@@ -122,7 +122,7 @@ static uint32 create_hash_key(POOL_QUERY_HASH *key);
 static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
 static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element);
 static bool is_free_hash_element(void);
-static void forward_pending_data(POOL_CONNECTION *frontend,POOL_CONNECTION *backend);
+static void inject_cached_message(POOL_CONNECTION *backend, char *qcache, int qcachelen);
 
 /*
  * Connect to Memcached
@@ -198,8 +198,24 @@ void memqcache_register(char kind,
                         int data_len)
 {
 	POOL_TEMP_QUERY_CACHE *cache;
+	POOL_SESSION_CONTEXT *session_context;
+	POOL_QUERY_CONTEXT *query_context;
 
 	cache = pool_get_current_cache();
+
+	if (cache == NULL)
+	{
+		session_context = pool_get_session_context(true);
+
+		if (session_context && pool_is_query_in_progress())
+		{
+			char *query = pool_get_query_string();
+			query_context = session_context->query_context;
+
+			if (query)
+				query_context->temp_cache = pool_create_temp_query_cache(query);
+		}
+	}
 
 	pool_add_temp_query_cache(cache, kind, data, data_len);
 }
@@ -596,6 +612,9 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 	int sts;
 	pool_sigset_t oldmask;
 
+	ereport(DEBUG1,
+			(errmsg("pool_fetch_from_memory_cache called")));
+
 	*foundp = false;
     
     POOL_SETMASK2(&BlockSig, &oldmask);
@@ -631,17 +650,20 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 		POOL_CONNECTION *target_backend;
 
 		ereport(DEBUG1,
-				(errmsg("memcache: fetching forwarding_pending_data")));
+				(errmsg("memcache: injecting cache data")));
 
 		session_context = pool_get_session_context(true);
 		target_backend = CONNECTION(backend, session_context->load_balance_node_id);
-		forward_pending_data(frontend, target_backend);
+		inject_cached_message(target_backend, qcache, qcachelen);
+	}
+	else
+	{
+		/*
+		 * Send each messages to frontend
+		 */
+		send_cached_messages(frontend, qcache, qcachelen);
 	}
 
-	/*
-	 * Send each messages to frontend
-	 */
-	send_cached_messages(frontend, qcache, qcachelen);
 	pfree(qcache);
 
 	/*
@@ -658,9 +680,12 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 		send_message(frontend, 'Z', 5, (char *)&state);
 	}
 
-	if (pool_flush(frontend))
+	if (!pool_is_doing_extended_query_message() || !STREAM)
 	{
-		return POOL_END;
+		if (pool_flush(frontend))
+		{
+			return POOL_END;
+		}
 	}
 
 	*foundp = true;
@@ -2763,6 +2788,9 @@ POOL_TEMP_QUERY_CACHE *pool_create_temp_query_cache(char *query)
 
     MemoryContextSwitchTo(old_context);
 
+	ereport(DEBUG1,
+			(errmsg("pool_create_temp_query_cache: cache created: %p", p)));
+
 	return p;
 }
 
@@ -2781,6 +2809,9 @@ void pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache)
 	if (temp_cache->oids)
 		pool_discard_buffer(temp_cache->oids);
 	pfree(temp_cache);
+
+	ereport(DEBUG1,
+			(errmsg("pool_discard_temp_query_cache: cache discarded: %p", temp_cache)));
 }
 
 /*
@@ -3061,8 +3092,9 @@ static void pool_check_and_discard_cache_buffer(int num_oids, int *oids)
 }
 
 /*
- * At Ready for Query handle query cache.
- * Supposed to be called from ReadyForQuery().
+ * At Ready for Query or Comand Complete handle query cache.  For streaming
+ * replication mode and extended query at Comand Complete handle query cache.
+ * For other case At Ready for Query handle query cache.
  */
 void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *node, char state)
 {
@@ -3096,6 +3128,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			 */
 			if (!pool_is_cache_exceeded())
 			{
+				POOL_TEMP_QUERY_CACHE *cache;
 				/*
 				 * If we are not inside a transaction, we can
 				 * immediately register to cache storage.
@@ -3107,30 +3140,33 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 				cache_buffer =  pool_get_current_cache_buffer(&len);
 				if (cache_buffer)
 				{
-					if (pool_commit_cache(backend, query, cache_buffer, len, num_oids, oids) != 0)
+					if (session_context->query_context->skip_cache_commit == false)
 					{
-						ereport(WARNING,
-								(errmsg("ReadyForQuery: pool_commit_cache failed")));
-
+						if (pool_commit_cache(backend, query, cache_buffer, len, num_oids, oids) != 0)
+						{
+							ereport(WARNING,
+									(errmsg("ReadyForQuery: pool_commit_cache failed")));
+						}
 					}
+					/*
+					 * Reset temporary query cache buffer. This is
+					 * necessary if extended query protocol is used and a
+					 * bind/execute message arrives which uses a statement
+					 * created by prior parse message. In this case since
+					 * the temp_cache is not initialized by a parse
+					 * message, messages are added to pre existing temp
+					 * cache buffer. The problem was found in bug#152.
+					 * http://www.pgpool.net/mantisbt/view.php?id=152
+					 */
+					cache = pool_get_current_cache();
+					ereport(DEBUG1,
+							(errmsg("pool_handle_query_cache: temp_cache: %p", cache)));
+					pool_discard_temp_query_cache(cache);
+
+					if (STREAM && pool_is_doing_extended_query_message())
+						session_context->query_context->temp_cache = NULL;
 					else
-					{
-						/*
-						 * Reset temporary query cache buffer. This is
-						 * necessary if extended query protocol is used and a
-						 * bind/execute message arrives which uses a statement
-						 * created by prior parse message. In this case since
-						 * the temp_cache is not initialized by a parse
-						 * message, messages are added to pre existing temp
-						 * cache buffer. The problem was found in bug#152.
-						 * http://www.pgpool.net/mantisbt/view.php?id=152
-						 */
-						POOL_TEMP_QUERY_CACHE *cache;
-						cache = pool_get_current_cache();
-						pool_discard_temp_query_cache(cache);
 						session_context->query_context->temp_cache = pool_create_temp_query_cache(query);
-					}
-
 					pfree(cache_buffer);
 				}
 				pool_shmem_unlock();
@@ -3924,13 +3960,29 @@ POOL_SHMEM_STATS *pool_get_shmem_storage_stats(void)
 }
 
 /*
- * Send flash message to backend and forward any response to frontend.
+ * Inject cached message to the target backend buffer to pretend as if backend
+ * actually repies with Data row and Command Complete message.
  */
-void forward_pending_data(POOL_CONNECTION *frontend, POOL_CONNECTION *backend)
+static void inject_cached_message(POOL_CONNECTION *backend, char *qcache, int qcachelen)
 {
 	char kind;
 	int len;
 	char *buf;
+	int timeout;
+	int i = 0;
+	bool is_prepared_stmt = false;
+	POOL_SESSION_CONTEXT *session_context;
+	POOL_QUERY_CONTEXT* query_context;
+	POOL_PENDING_MESSAGE *msg;
+
+	session_context = pool_get_session_context(false);
+	query_context = session_context->query_context;
+	msg = pool_pending_message_find_lastest_by_query_context(query_context);
+
+	if (msg)
+		timeout = -1;
+	else
+		timeout = 0;
 
 	/* Send flush messsage to backend to retrieve response of backend */
 	pool_write(backend, "H", 1);		
@@ -3938,44 +3990,89 @@ void forward_pending_data(POOL_CONNECTION *frontend, POOL_CONNECTION *backend)
 	pool_write_and_flush(backend, &len, sizeof(len));
 
 	/*
-	 * Then forward any response from backend
+	 * Push any response from backend
 	 */
 	for(;;)
 	{
 		pool_read(backend, &kind, 1);
 		ereport(DEBUG1,
-				(errmsg("forward_pending_data: forwarding kind: '%c'", kind)));
-		pool_write(frontend, &kind, 1);
-
-		pool_read(backend, &len, sizeof(len));
-		ereport(DEBUG1,
-				(errmsg("forward_pending_data: forwarding len: '%d'", ntohl(len))));
-		pool_write(frontend, &len, sizeof(len));
-
-		len = ntohl(len);
-		if ((len - sizeof(len)) > 0)
+				(errmsg("inject_cached_message: push message kind: '%c'", kind)));
+		if (msg &&
+			((kind == 'T' && msg->type == POOL_DESCRIBE) ||
+			 (kind == '2' && msg->type == POOL_BIND)))
 		{
-			len -= sizeof(len);
-			ereport(DEBUG1,
-					(errmsg("forward_pending_data: fowarding rest of packet. len:%d", len)));
-			buf = palloc(len);
-			pool_read(backend, buf, len);
-			pool_write(frontend, buf, len);
+			/* Pending message seen. Now it is likely to end of pending data */
+			timeout = 0;
+		}
+		pool_push(backend, &kind, sizeof(kind));
+		pool_read(backend, &len, sizeof(len));
+		pool_push(backend, &len, sizeof(len));
+		if ((ntohl(len)-sizeof(len)) > 0)
+		{
+			buf = pool_read2(backend, ntohl(len)-sizeof(len));
+			pool_push(backend, buf, ntohl(len)-sizeof(len));
 		}
 
 		/* check if there's any pending data */
 		if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
 		{
-			pool_set_timeout(0);
+			pool_set_timeout(timeout);
 			if (pool_check_fd(backend) != 0)
 			{
 				ereport(DEBUG1,
-						(errmsg("forward_pending_data: select shows no pending data")));
+						(errmsg("inject_cached_message: select shows no pending data")));
 				pool_set_timeout(-1);
 				break;
 			}
 			pool_set_timeout(-1);
 		}
 	}
-	pool_flush(frontend);
+
+	/*
+	 * Inject row data and command complete
+	 */
+	while (i < qcachelen)
+	{
+		char tmpkind;
+		int tmplen;
+		char *p;
+
+		tmpkind = qcache[i];
+		i++;
+
+		memcpy(&tmplen, qcache+i, sizeof(tmplen));
+		i += sizeof(tmplen);
+		len = ntohl(tmplen);
+		p = qcache + i;
+		i += len - sizeof(tmplen);
+
+		/* No need to cache PARSE and BIND responses */
+		if (tmpkind == '1' || tmpkind == '2')
+		{
+			is_prepared_stmt = true;
+			continue;
+		}
+
+		/*
+		 * In the prepared statement execution, there is no need to send
+		 * 'T' response to the frontend.
+		 */
+		if (is_prepared_stmt && tmpkind == 'T')
+		{
+			continue;
+		}
+
+		/* push message */
+		ereport(DEBUG1,
+			(errmsg("inject_cached_message: push cached messages: '%c' len: %d", tmpkind, len)));
+		pool_push(backend, &tmpkind, 1);
+		pool_push(backend, &tmplen, sizeof(tmplen));
+		if (len > 0)
+			pool_push(backend, p, len - sizeof(tmplen));
+	}
+
+	/*
+	 * Pop data.
+	 */
+	pool_pop(backend, &len);
 }

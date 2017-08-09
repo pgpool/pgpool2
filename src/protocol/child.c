@@ -117,6 +117,10 @@ char remote_host[NI_MAXHOST];	/* client host */
 char remote_port[NI_MAXSERV];	/* client port */
 POOL_CONNECTION* volatile child_frontend = NULL;
 
+#ifdef DEBUG
+bool stop_now = false;
+#endif
+
 /*
 * child main loop
 */

@@ -1153,8 +1153,9 @@ void pool_pending_message_add(POOL_PENDING_MESSAGE* message)
 
 	if (message->type != POOL_SYNC)
 		ereport(Elevel,
-				(errmsg("pool_pending_message_add: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
-						message->type, message->contents_len, message->query, message->statement, message->portal,
+				(errmsg("pool_pending_message_add: message type:%s message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
+						pool_pending_message_type_to_string(message->type),
+						message->contents_len, message->query, message->statement, message->portal,
 						message->node_ids[0], message->node_ids[1])));
 	else
 		ereport(Elevel,
@@ -1192,8 +1193,9 @@ POOL_PENDING_MESSAGE *pool_pending_message_head_message(void)
 	m = (POOL_PENDING_MESSAGE *) lfirst(cell);
 	message = copy_pending_message(m);
 	ereport(Elevel,
-			(errmsg("pool_pending_message_head_message: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
-					message->type, message->contents_len, message->query, message->statement, message->portal,
+			(errmsg("pool_pending_message_head_message: message type:%s message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
+					pool_pending_message_type_to_string(message->type),
+					message->contents_len, message->query, message->statement, message->portal,
 					message->node_ids[0], message->node_ids[1])));
 
 	MemoryContextSwitchTo(old_context);
@@ -1228,8 +1230,9 @@ POOL_PENDING_MESSAGE *pool_pending_message_pull_out(void)
 	m = (POOL_PENDING_MESSAGE *) lfirst(cell);
 	message = copy_pending_message(m);
 	ereport(Elevel,
-			(errmsg("pool_pending_message_pull_out: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
-					message->type, message->contents_len, message->query, message->statement, message->portal,
+			(errmsg("pool_pending_message_pull_out: message type:%s message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
+					pool_pending_message_type_to_string(message->type),
+					message->contents_len, message->query, message->statement, message->portal,
 					message->node_ids[0], message->node_ids[1])));
 
 	pool_pending_message_free_pending_message(m);
@@ -1373,6 +1376,71 @@ POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void)
 bool pool_pending_message_exists(void)
 {
 	return list_length(session_context->pending_messages) > 0;
+}
+
+/*
+ * Convert enum pending message type to string. The returned string must not
+ * be modified or freed.
+ */
+const char *pool_pending_message_type_to_string(POOL_MESSAGE_TYPE type)
+{
+	static const char *pending_msg_string[] = {"Parse", "Bind", "Execute",
+											   "Descripbe", "Close", "Sync"};
+	if (type < 0 || type > POOL_SYNC)
+		return "unknown type";
+	return pending_msg_string[type];
+}
+
+/*
+ * Find the latest pending message having specified query context.  The
+ * returned message is a pointer to the message list. So do not free it using
+ * pool_pending_message_free_pending_message.
+ */
+POOL_PENDING_MESSAGE *pool_pending_message_find_lastest_by_query_context(POOL_QUERY_CONTEXT *qc)
+{
+	List *msgs;
+	POOL_PENDING_MESSAGE *msg;
+	int len;
+	ListCell *cell;
+
+	if (!session_context)
+	{
+		ereport(ERROR,
+				(errmsg("pool_pending_message_find_lastest_by_query_context: session context is not initialized")));
+	}
+
+	if (!session_context->pending_messages)
+		return NULL;
+
+	msgs = session_context->pending_messages;
+
+	len = list_length(msgs);
+	if (len <= 0)
+		return NULL;
+
+	ereport(DEBUG1,
+			(errmsg("pool_pending_message_find_lastest_by_query_context: num messages: %d",
+					len)));
+
+	while (len--)
+	{
+		cell = list_nth_cell(msgs, len);
+		if (cell)
+		{
+			msg = (POOL_PENDING_MESSAGE *) lfirst(cell);
+			if (msg->query_context == qc)
+			{
+				ereport(DEBUG1,
+						(errmsg("pool_pending_message_find_lastest_by_query_context: msg found. type: %s",
+								pool_pending_message_type_to_string(msg->type))));
+				return msg;
+			}
+			ereport(DEBUG1,
+					(errmsg("pool_pending_message_find_lastest_by_query_context: type: %s",
+							pool_pending_message_type_to_string(msg->type))));
+		}
+	}
+	return NULL;
 }
 
 /*
