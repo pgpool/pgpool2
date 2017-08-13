@@ -40,7 +40,7 @@
 #include "utils/pool_stream.h"
 
 static int extract_ntuples(char *message);
-static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *packet, int packetlen);
+static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *packet, int packetlen, bool command_complete);
 static int foward_command_complete(POOL_CONNECTION *frontend, char *packet, int packetlen);
 static int foward_empty_query(POOL_CONNECTION *frontend, char *packet, int packetlen);
 static int foward_packet_to_frontend(POOL_CONNECTION *frontend, char kind, char *packet, int packetlen);
@@ -144,7 +144,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	}
 	else
 	{
-		if (handle_mismatch_tuples(frontend, backend, p1, len1) != POOL_CONTINUE)
+		if (handle_mismatch_tuples(frontend, backend, p1, len1, command_complete) != POOL_CONTINUE)
 			return POOL_END;
 	}
 
@@ -300,7 +300,7 @@ static int extract_ntuples(char *message)
 /*
  * Handle mismatch tuples
  */
-static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *packet, int packetlen)
+static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *packet, int packetlen, bool command_complete)
 {
 	POOL_SESSION_CONTEXT *session_context;
 
@@ -394,8 +394,16 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNEC
 	}
 	else
 	{
-		if (foward_command_complete(frontend, packet, packetlen) < 0)
-			return POOL_END;
+		if (command_complete)
+		{
+			if (foward_command_complete(frontend, packet, packetlen) < 0)
+				return POOL_END;
+		}
+		else
+		{
+			if (foward_empty_query(frontend, packet, packetlen) < 0)
+				return POOL_END;
+		}
 	}
 
 	return POOL_CONTINUE;
