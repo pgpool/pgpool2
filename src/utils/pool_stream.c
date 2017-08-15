@@ -1024,6 +1024,7 @@ int pool_unread(POOL_CONNECTION *cp, void *data, int len)
         MemoryContextSwitchTo(oldContext);
 		
         cp->hp = p;
+		cp->bufsz = realloc_size;
 	}
 	if (cp->len != 0)
 		memmove(p + len, cp->hp + cp->po, cp->len);
