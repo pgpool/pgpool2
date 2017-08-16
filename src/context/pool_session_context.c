@@ -347,6 +347,9 @@ bool pool_remove_sent_message(char kind, const char *name)
 	int i;
 	POOL_SENT_MESSAGE_LIST *msglist;
 
+	if (kind == 0 || name == NULL)
+		return false;
+
 	msglist = &pool_get_session_context(false)->message_list;
 
 	for (i = 0; i < msglist->size; i++)
@@ -574,6 +577,9 @@ POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name, POOL_SENT_
 	POOL_SENT_MESSAGE_LIST *msglist;
 
 	msglist = &pool_get_session_context(false)->message_list;
+
+	if (kind == 0 || name == NULL)
+		return NULL;
 
 	for (i = 0; i < msglist->size; i++)
 	{

@@ -3619,7 +3619,7 @@ void pool_at_command_success(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *ba
 		if (IsA(node, CreateStmt))
 		{
 			CreateStmt *create_table_stmt = (CreateStmt *)node;
-			if (create_table_stmt->relation->relpersistence)
+			if (create_table_stmt->relation->relpersistence == 't')
 				discard_temp_table_relcache();
 		}
 	}
