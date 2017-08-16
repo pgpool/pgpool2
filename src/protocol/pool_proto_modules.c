@@ -1908,7 +1908,8 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			if ((pool_is_doing_extended_query_message() &&
 				 session_context->query_context->query_state[MASTER_NODE_ID] != POOL_UNPARSED &&
 			     session_context->uncompleted_message) ||
-			    (!pool_is_doing_extended_query_message() && session_context->uncompleted_message))
+			    (!pool_is_doing_extended_query_message() && session_context->uncompleted_message &&
+				 session_context->uncompleted_message->kind != 0))
 			{
 				pool_add_sent_message(session_context->uncompleted_message);
 				pool_remove_sent_message(session_context->uncompleted_message->kind,
