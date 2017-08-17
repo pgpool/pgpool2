@@ -61,10 +61,12 @@ Pgpool-II documentation
 
   <para>
   <!--
-    Currently <application>pgpool_setup</application> supports streaming replication mode, native replication mode and raw mode.
-    Watchdog is not supported yet.
+    Currently <application>pgpool_setup</application> supports
+    streaming replication mode, native replication mode, raw mode and
+    logical replication mode.  To support watchdog,
+    see <xref linkend="WATCHDOG-SETUP"> for details.
     -->
-    現在、「ストリーミングレプリケーションモード」、「ネイティブレプリケーションモード」及び「raw モード」に対応しています。
+    現在、「ストリーミングレプリケーションモード」、「ネイティブレプリケーションモード」、「raw モード」及び「ロジカルレプリケーションモード」に対応しています。
     Watchdog  の対応については  <xref linkend="WATCHDOG-SETUP"> をご参照下さい。
   </para>
  </refsect1>
@@ -88,14 +90,14 @@ Pgpool-II documentation
        <para>
        <!--
         Specifies the running mode.  <replaceable>mode</replaceable>
-        can be <literal>r</literal> (native replication mode), <literal>s</literal> (streaming replication mode), or
-        <literal>n</literal> (raw mode).
-	    If this is omitted, <literal>s</literal> is used.
+        can be <literal>r</literal> (native replication mode), <literal>s</literal> (streaming replication mode),
+        <literal>n</literal> (raw mode) or <literal>l</literal>
+	(logical replication mode).  If this is
+	omitted, <literal>s</literal> is assumed.
         -->
         動作モードを指定します。<replaceable>mode</replaceable>は
-        <literal>r</literal> (ネイティブレプリケーションモード), <literal>s</literal> (ストリーミングレプリケーションモード)、または
-        <literal>n</literal> (raw モード)を指定できます。
-        指定しない場合は、<literal>s</literal> (ストリーミングレプリケーションモード) です。
+        <literal>r</literal> (ネイティブレプリケーションモード), <literal>s</literal> (ストリーミングレプリケーションモード)、<literal>n</literal> (raw モード)、または<literal>l</literal> (ロジカルレプリケーションモード)を指定できます。
+        指定しない場合は、<literal>s</literal> (ストリーミングレプリケーションモード) を指定した見なされます。
        </para>
       </listitem>
      </varlistentry>
