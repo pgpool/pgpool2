@@ -62,7 +62,8 @@ sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pool_hba.conf.sample \
 			   sample/pgpool.conf.sample-replication \
 			   sample/pgpool.conf.sample-master-slave \
-			   sample/pgpool.conf.sample-stream
+			   sample/pgpool.conf.sample-stream \
+			   sample/pgpool.conf.sample-logical
 
 pkgdata_DATA = sql/insert_lock.sql \
 			   sample/pgpool.pam

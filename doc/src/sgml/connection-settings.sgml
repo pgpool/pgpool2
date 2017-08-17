@@ -281,7 +281,7 @@
   </sect2>
 </sect1>
 
-<sect1 id="runtime-config-runnung-mode">
+<sect1 id="runtime-config-running-mode">
   <title>Running mode</title>
 
   <sect2 id="runtime-config-master-slave-mode">
@@ -371,6 +371,13 @@
 		  <entry>Suitable
 		    for <productname>PostgreSQL</productname>'s built-in
 		    replication system (Streaming Replication)</entry>
+		</row>
+
+		<row>
+		  <entry><literal>'logical'</literal></entry>
+		  <entry>Suitable
+		    for <productname>PostgreSQL</productname>'s built-in
+		    replication system (Logical Replication)</entry>
 		</row>
 
 	      </tbody>

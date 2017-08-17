@@ -366,12 +366,12 @@ POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 											pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
 										}
 									}
-									else if (STREAM)
+									else if (SL_MODE)
 									{
 										pool_unread(CONNECTION(backend, i), &kind, sizeof(kind));
 									}
 
-									else if (!STREAM)
+									else if (!SL_MODE)
 									{
                                         ereport(LOG,
                                                 (errmsg("pool process query"),
@@ -567,7 +567,7 @@ POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
 	pool_write(cp, &sendlen, sizeof(sendlen));
 	pool_write(cp, string, len);
 
-	if (!STREAM)
+	if (!SL_MODE)
 	{
 		/*
 		 * send "Flush" message so that backend notices us
@@ -1899,7 +1899,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		 * backend. The saved packets will be poped up before returning to
 		 * caller. This preserves the user's expectation of packet sequence.
 		 */
-		if (STREAM && pool_pending_message_exists())
+		if (SL_MODE && pool_pending_message_exists())
 		{
 			data_pushed = pool_push_pending_data(backend);
 		}
@@ -3133,7 +3133,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 	memset(kind_map, 0, sizeof(kind_map));
 
-	if (STREAM && pool_get_session_context(true) && pool_is_doing_extended_query_message())
+	if (SL_MODE && pool_get_session_context(true) && pool_is_doing_extended_query_message())
 	{
 		msg = pool_pending_message_head_message();
 		previous_message = pool_pending_message_get_previous_message();
@@ -3399,7 +3399,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		if (session_context->load_balance_node_id != MASTER_NODE_ID &&
 			(kind_list[MASTER_NODE_ID] == 'Z' ||
 			 kind_list[session_context->load_balance_node_id] == 'Z')
-			&& STREAM)
+			&& SL_MODE)
 		{
 			POOL_CONNECTION *s;
 			char *buf;
@@ -3617,7 +3617,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	 * 'describe', the message must not be pulled out so that the row
 	 * description message from backend matches the describe message.
 	 */
-	if (STREAM && pool_is_doing_extended_query_message() && msg)
+	if (SL_MODE && pool_is_doing_extended_query_message() && msg)
 	{
 		if ((msg->type == POOL_EXECUTE &&
 			 (*decided_kind == 'D' || *decided_kind == 'E' || *decided_kind == 'N')) ||
@@ -4657,7 +4657,7 @@ pool_config->client_idle_limit)));
 					 * If shutdown node is not primary nor load balance node,
 					 * we do not need to trigger failover.
 					 */
-					if (STREAM &&
+					if (SL_MODE &&
 						(i == PRIMARY_NODE_ID || i == backend->info->load_balancing_node))
 					{
 						/* detach backend node. */

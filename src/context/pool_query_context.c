@@ -217,8 +217,7 @@ void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 			 * primary node nor load balance node, there's no point to
 			 * send query.
 			 */
-			if (pool_config->master_slave_mode &&
-				pool_config->master_slave_sub_mode == STREAM_MODE &&
+			if (SL_MODE &&
 				i != PRIMARY_NODE_ID && i != sc->load_balance_node_id)
 			{
 				continue;
@@ -309,7 +308,7 @@ int pool_virtual_master_db_node_id(void)
 	{
 		int node_id = sc->query_context->virtual_master_node_id;
 
-		if (STREAM)
+		if (SL_MODE)
 		{
 			 /*
 			  * Make sure that virtual_master_node_id is either primary node
@@ -502,7 +501,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					/*
 					 * If replication delay is too much, we prefer to send to the primary.
 					 */
-					if (pool_config->master_slave_sub_mode == STREAM_MODE &&
+					if (STREAM &&
 						pool_config->delay_threshold &&
 						bkinfo->standby_delay > pool_config->delay_threshold)
 					{

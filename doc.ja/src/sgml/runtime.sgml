@@ -226,6 +226,24 @@ password: <userinput>your_password</userinput>
     </para>
 
     <para>
+  <!--
+      The logical replication mode can be used
+      with <productname>PostgreSQL</> servers operating logical
+      replication. In this mode, <productname>PostgreSQL</> is
+      responsible for synchronizing tables. Load balancing is possible
+      in the mode. Since logical replication does not replicate all
+      tables, it's user's responsibility to replicate the table which
+      could be load balanced.  The sample configuration file
+      is <filename>$prefix/etc/pgpool.conf.sample-logical</filename>.
+-->
+ロジカルレプリケーションモードはロジカルレプリケーションを使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。
+このモードでは、<productname>PostgreSQL</>がテーブルを同期する責任を持ちます。
+このモードでは負荷分散が可能です。
+ロジカルレプリケーションは必ずしもすべてのテーブルをレプリケーションしないので、負荷分散させるテーブルがレプリケーションされるようにするのはユーザの責任です。
+サンプルの設定ファイルは<filename>$prefix/etc/pgpool.conf.sample-logical</filename>です。
+    </para>
+
+    <para>
 <!--
       The master slave mode mode can be used with <productname>PostgreSQL</> servers
       operating <productname>Slony</>. In this mode, <productname>Slony</>/<productname>PostgreSQL</> is responsible for

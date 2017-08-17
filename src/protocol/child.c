@@ -1673,7 +1673,7 @@ int select_load_balancing_node(void)
 	/* 
 	 * Check database_redirect_preference_list
 	 */
-	if (STREAM && pool_config->redirect_dbnames)
+	if (SL_MODE && pool_config->redirect_dbnames)
 	{
 		char *database = MASTER_CONNECTION(ses->backend)->sp->database;
 
@@ -1699,7 +1699,7 @@ int select_load_balancing_node(void)
 	/* 
 	 * Check app_name_redirect_preference_list
 	 */
-	if (STREAM && pool_config->redirect_app_names)
+	if (SL_MODE && pool_config->redirect_app_names)
 	{
 		char *app_name = MASTER_CONNECTION(ses->backend)->sp->application_name;
 

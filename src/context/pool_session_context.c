@@ -98,7 +98,7 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	}
 	else
 	{
-		node_id = STREAM? PRIMARY_NODE_ID: MASTER_NODE_ID;
+		node_id = SL_MODE? PRIMARY_NODE_ID: MASTER_NODE_ID;
 	}
 
 	session_context->load_balance_node_id = node_id;

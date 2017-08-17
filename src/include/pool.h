@@ -350,9 +350,11 @@ extern int my_master_node_id;
 #define REPLICATION (pool_config->replication_mode)
 #define MASTER_SLAVE (pool_config->master_slave_mode)
 #define STREAM (MASTER_SLAVE && pool_config->master_slave_sub_mode == STREAM_MODE)
+#define LOGICAL (MASTER_SLAVE && pool_config->master_slave_sub_mode == LOGICAL_MODE)
 #define SLONY (MASTER_SLAVE && pool_config->master_slave_sub_mode == SLONY_MODE)
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
 #define RAW_MODE (!REPLICATION && !MASTER_SLAVE)
+#define SL_MODE (STREAM || LOGICAL)	/* streaming or logical replication mode */
 #define MAJOR(p) (pool_get_major_version())
 #define TSTATE(p, i) (CONNECTION(p, i)->tstate)
 #define INTERNAL_TRANSACTION_STARTED(p, i) (CONNECTION(p, i)->is_internal_transaction_started)

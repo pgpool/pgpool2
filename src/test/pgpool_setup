@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2013-2016 PgPool Global Development Group
+# Copyright (c) 2013-2017 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby
@@ -17,11 +17,12 @@
 # directory for *testing* purpose.
 # Do not use this tool for production environment!
 #
-# usage: pgpool_setup [-m r|s|n][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d]
+# usage: pgpool_setup [-m r|s|n|l][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d]
 # -m s: create an installation as streaming replication mode.
 # (the default)
 # -m r: create an installation as native replication mode.
 # -m n: create an installation as raw mode.
+# -m l: create an installation as logical replication mode.
 # -n num_clusters: create num_clusters PostgreSQL database cluster nodes
 # -p base_port: specify base port. pgpool port is base_port.
 #  pcp port is base_port + 1. The first PostgreSQL node's port is
@@ -291,10 +292,13 @@ function set_postgresql_conf
 		echo "max_wal_senders = $NUMCLUSTERS" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
 		echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
-	elif [ $MODE = 'r' ];then
+	elif [ $MODE = 'r' -o $MODE = 'l' ];then
 		echo "wal_level = archive" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
 		echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
+		if [ $MODE = 'l' ];then
+		    echo "wal_level = logical" >> $PGCONF
+		fi
 	fi
 
 	ed $1/pg_hba.conf <<EOF
@@ -558,7 +562,7 @@ function wait_for_pgpool_reload {
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s|n] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d]";exit 1
+	echo "usage: $0 [-m r|s|n|l] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d]";exit 1
 }
 
 #-------------------------------------------
@@ -578,6 +582,7 @@ do
 			r ) MODE="r";;
 			s ) MODE="s";;
 			n ) MODE="n";;
+			l ) MODE="l";;
 			* ) usage;;
 		esac
 	elif [ $1 = "-n" ];then
@@ -615,6 +620,9 @@ case $MODE in
 	n ) MODENAME="raw mode"
 		SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample
 		;;
+	l ) MODENAME="logical replication mode"
+	    SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-logical
+	    ;;
 esac
 
 #-------------------------------------------
@@ -828,10 +836,29 @@ else
 
 	while [ $n -lt $NUMCLUSTERS ]
 	do
+	    if [ $MODE = 'l' ]
+	    then
+		# temporarily start data$n cluster to create extensions
+		echo "temporarily start data${n} cluster to create extensions"
+		$PG_CTL -w -D data${n} start >&5 2>&1
+		$PSQL -p `expr $BASEPORT + $n` template1 >&5 2>&1 <<EOF
+CREATE EXTENSION pgpool_regclass;
+CREATE EXTENSION pgpool_recovery;
+CREATE DATABASE test;
+EOF
+		$PG_CTL -m f -D data${n} stop >&5 2>&1
+	    fi
+
 	# set up pgpool.conf
 		echo "backend_hostname$n = '$PGSOCKET_DIR'" >> $CONF
 		echo "backend_port$n = $PORT" >> $CONF
 		echo "backend_weight$n = 1" >> $CONF
+
+		if [ $n -eq 0 -a $MODE = "l" ]
+		then
+		    echo "backend_flag$n = ALWAYS_MASTER" >> $CONF
+		fi
+
 		CLUSTER="data"`expr $n`
 		CLUSTERDIR=$BASEDIR/$CLUSTER
 		echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF

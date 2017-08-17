@@ -36,13 +36,7 @@ socket_dir = '/tmp'
                                    # The Debian package defaults to
                                    # /var/run/postgresql
                                    # (change requires restart)
-listen_backlog_multiplier = 2
-                                   # Set the backlog parameter of listen(2) to
-								   # num_init_children * listen_backlog_multiplier.
-                                   # (change requires restart)
-serialize_accept = off
-                                   # whether to serialize accept() call to avoid thundering herd problem
-                                   # (change requires restart)
+
 
 # - pgpool Communication Manager Connection Settings -
 
@@ -57,6 +51,13 @@ pcp_socket_dir = '/tmp'
                                    # Unix domain socket path for pcp
                                    # The Debian package defaults to
                                    # /var/run/postgresql
+                                   # (change requires restart)
+listen_backlog_multiplier = 2
+                                   # Set the backlog parameter of listen(2) to
+								   # num_init_children * listen_backlog_multiplier.
+                                   # (change requires restart)
+serialize_accept = off
+                                   # whether to serialize accept() call to avoid thundering herd problem
                                    # (change requires restart)
 
 # - Backend Connection Settings -
@@ -165,7 +166,7 @@ log_statement = off
 log_per_node_statement = off
                                    # Log all statements
                                    # with node and backend informations
-log_standby_delay = 'none'
+log_standby_delay = 'if_over_threshold'
                                    # Log standby delay
                                    # Valid values are combinations of always,
                                    # if_over_threshold, none
@@ -318,9 +319,9 @@ allow_sql_comments = off
 master_slave_mode = on
                                    # Activate master/slave mode
                                    # (change requires restart)
-master_slave_sub_mode = 'slony'
+master_slave_sub_mode = 'logical'
                                    # Master/slave sub mode
-                                   # Valid values are combinations stream, slony
+				   # Valid values are combinations stream, slony
                                    # or logical. Default is stream.
                                    # (change requires restart)
 
@@ -337,7 +338,7 @@ sr_check_password = ''
                                    # Password for streaming replication check user
 sr_check_database = 'postgres'
                                    # Database name for streaming replication check
-delay_threshold = 0
+delay_threshold = 10000000
                                    # Threshold before not dispatching query to standby node
                                    # Unit is in bytes
                                    # Disabled (0) by default
@@ -415,7 +416,6 @@ failover_command = ''
                                    #   %P = old primary node id
 								   #   %r = new master port number
 								   #   %R = new master database cluster path
-
                                    #   %% = '%' character
 failback_command = ''
                                    # Executes this command at failback.
@@ -510,6 +510,7 @@ wd_ipc_socket_dir = '/tmp'
 									# The Debian package defaults to
 									# /var/run/postgresql
 									# (change requires restart)
+
 
 # - Virtual IP control Setting -
 

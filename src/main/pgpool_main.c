@@ -1103,7 +1103,7 @@ bool promote_backend(int node_id, unsigned int wd_failover_id)
 	WDFailoverCMDResults res = FAILOVER_RES_PROCEED;
 	bool ret = false;
 
-	if (!MASTER_SLAVE || pool_config->master_slave_sub_mode != STREAM_MODE)
+	if (!SL_MODE)
 	{
 		return false;
 	}
@@ -1812,7 +1812,7 @@ static void failover(void)
 		 * recognize the former primary as the new primary node, which
 		 * will reduce the time to process standby down.
 		 */
-		else if (MASTER_SLAVE && pool_config->master_slave_sub_mode == STREAM_MODE &&
+		else if (SL_MODE &&
 				 reqkind == NODE_DOWN_REQUEST)
 		{
 			if (Req_info->primary_node_id != node_id)
@@ -1829,7 +1829,7 @@ static void failover(void)
 		 * as they are not replicated anymore.
 		 */
 		int follow_cnt = 0;
-		if (MASTER_SLAVE && pool_config->master_slave_sub_mode == STREAM_MODE)
+		if (STREAM)
 		{
 			if (*pool_config->follow_master_command != '\0' ||
 				reqkind == PROMOTE_NODE_REQUEST)
@@ -2811,7 +2811,7 @@ static int find_primary_node(void)
 	int i;
 
 	/* Streaming replication mode? */
-	if (!STREAM)
+	if (!SL_MODE)
 	{
 		/* No point to look for primary node if not in streaming
 		 * replication mode.
@@ -2881,8 +2881,7 @@ static int find_primary_node_repeatedly(void)
 	int node_id = -1;
 
 	/* Streaming replication mode? */
-	if (pool_config->master_slave_mode == false ||
-		pool_config->master_slave_sub_mode != STREAM_MODE)
+	if (!SL_MODE)
 	{
 		/* No point to look for primary node if not in streaming
 		 * replication mode.

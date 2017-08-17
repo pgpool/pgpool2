@@ -180,6 +180,7 @@ static const struct config_enum_entry server_message_level_options[] = {
 static const struct config_enum_entry master_slave_sub_mode_options[] = {
 	{"slony", SLONY_MODE, false},
 	{"stream", STREAM_MODE, false},
+	{"logical", LOGICAL_MODE, false},
 	{NULL, 0, false}
 };
 
@@ -1752,7 +1753,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			CONFIG_VAR_TYPE_ENUM,false, 0
 		},
 		(int*)&g_pool_config.master_slave_sub_mode,
-		SLONY_MODE,
+		STREAM_MODE,
 		master_slave_sub_mode_options,
 		NULL, NULL, NULL, NULL
 	},

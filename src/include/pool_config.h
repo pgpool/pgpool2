@@ -56,7 +56,8 @@ typedef struct {
 typedef enum MasterSlaveSubModes
 {
 	SLONY_MODE = 1,
-	STREAM_MODE
+	STREAM_MODE,
+	LOGICAL_MODE
 }MasterSlaveSubModes;
 
 typedef enum LogStandbyDelayModes

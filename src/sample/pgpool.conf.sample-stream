@@ -321,8 +321,8 @@ master_slave_mode = on
                                    # (change requires restart)
 master_slave_sub_mode = 'stream'
                                    # Master/slave sub mode
-                                   # Valid values are combinations slony or
-                                   # stream. Default is slony.
+                                   # Valid values are combinations stream, slony
+                                   # or logical. Default is stream.
                                    # (change requires restart)
 
 # - Streaming -

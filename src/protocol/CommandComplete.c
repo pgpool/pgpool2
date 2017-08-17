@@ -62,7 +62,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	/*
 	 * Handle misc process which is neccessary when query context exists.
 	 */
-	if (session_context->query_context != NULL && !STREAM)
+	if (session_context->query_context != NULL && !SL_MODE)
 		handle_query_context(backend);
 
 	/*
@@ -70,7 +70,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	 * read backend message according to the query context.
 	 * Also we set the transaction state at this point.
 	 */
-	if (STREAM && pool_is_doing_extended_query_message())
+	if (SL_MODE && pool_is_doing_extended_query_message())
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
@@ -130,7 +130,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	 * do mismatch tuples process (forwarding to frontend is done in
 	 * handle_mismatch_tuples().
 	 */
-	if (STREAM && pool_is_doing_extended_query_message())
+	if (SL_MODE && pool_is_doing_extended_query_message())
 	{
 		int status;
 
@@ -160,7 +160,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		 * If we are in streaming replication mode and we are doing extended
 		 * query, register query cache now.
 		 */
-		if (STREAM && pool_is_doing_extended_query_message())
+		if (SL_MODE && pool_is_doing_extended_query_message())
 		{
 			char *query;
 			Node *node;
@@ -184,7 +184,7 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	 * If we are in streaming replication mode and we are doing extended
 	 * query, reset query in progress flag and prevoius pending message.
 	*/
-	if (STREAM && pool_is_doing_extended_query_message())
+	if (SL_MODE && pool_is_doing_extended_query_message())
 	{
 		pool_at_command_success(frontend, backend);
 		pool_unset_query_in_progress();

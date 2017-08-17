@@ -435,7 +435,7 @@ md5 認証で用いるパスワードのファイルのファイル名を指定�
 	</sect2>
 </sect1>
 
-<sect1 id="runtime-config-runnung-mode">
+<sect1 id="runtime-config-running-mode">
 <!--
 	<title>Running mode</title>
 -->
@@ -575,6 +575,14 @@ md5 認証で用いるパスワードのファイルのファイル名を指定�
 									<entry>Suitable for <productname>PostgreSQL</>'s built-in replication system (Streaming Replication)</entry>
 -->
 									<entry><productname>PostgreSQL</>の組み込みレプリケーションシステム（ストリーミングレプリケーション）に適合</entry>
+								</row>
+
+								<row>
+									<entry><literal>'logical'</literal></entry>
+<!--
+									<entry>Suitable for <productname>PostgreSQL</>'s built-in replication system (Logical Replication)</entry>
+-->
+									<entry><productname>PostgreSQL</>の組み込みレプリケーションシステム（ロジカルレプリケーション）に適合</entry>
 								</row>
 
 							</tbody>

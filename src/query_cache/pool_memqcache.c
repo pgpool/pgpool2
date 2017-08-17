@@ -644,7 +644,7 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 	 * replication mode, we need to retrieve any responses from backend and
 	 * forward them to frontend.
 	 */
-	if (pool_is_doing_extended_query_message() && STREAM)
+	if (pool_is_doing_extended_query_message() && SL_MODE)
 	{
 		POOL_SESSION_CONTEXT *session_context;
 		POOL_CONNECTION *target_backend;
@@ -680,7 +680,7 @@ POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 		send_message(frontend, 'Z', 5, (char *)&state);
 	}
 
-	if (!pool_is_doing_extended_query_message() || !STREAM)
+	if (!pool_is_doing_extended_query_message() || !SL_MODE)
 	{
 		if (pool_flush(frontend))
 		{
@@ -3163,7 +3163,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 							(errmsg("pool_handle_query_cache: temp_cache: %p", cache)));
 					pool_discard_temp_query_cache(cache);
 
-					if (STREAM && pool_is_doing_extended_query_message())
+					if (SL_MODE && pool_is_doing_extended_query_message())
 						session_context->query_context->temp_cache = NULL;
 					else
 						session_context->query_context->temp_cache = pool_create_temp_query_cache(query);

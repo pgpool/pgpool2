@@ -865,7 +865,7 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 				 * If we are in streaming replication mode and the node is a
 				 * standby node, then we skip this node to avoid fail over.
 				 */
-				if (STREAM && !IS_PRIMARY_NODE_ID(i))
+				if (SL_MODE && !IS_PRIMARY_NODE_ID(i))
 				{
 					ereport(LOG,
 							(errmsg("failed to create a backend %d connection", i),
