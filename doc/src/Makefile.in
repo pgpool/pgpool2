@@ -321,7 +321,9 @@ top_srcdir = @top_srcdir@
 # suggested by libtoolize
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = figures/process-diagram.gif \
-			 figures/process-diagram.odp
+			 figures/process-diagram.odp \
+			 figures/cluster.gif \
+			 figures/cluster.odp
 
 SUBDIRS = sgml
 all: all-recursive
