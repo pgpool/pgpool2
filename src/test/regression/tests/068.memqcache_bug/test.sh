@@ -6,6 +6,7 @@
 
 source $TESTLIBS
 TESTDIR=testdir
+PSQL=$PGBIN/psql
 export CLASSPATH=.:/usr/local/pgsql/share/postgresql-9.2-1003.jdbc4.jar
 
 rm -fr $TESTDIR
@@ -26,7 +27,7 @@ sh startall
 wait_for_pgpool_startup
 
 cd ..
-psql test <<EOF
+$PSQL test <<EOF
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(i int);
 EOF

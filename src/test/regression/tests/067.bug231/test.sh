@@ -25,9 +25,9 @@ export PGPORT=$PGPOOL_PORT
 wait_for_pgpool_startup
 
 export PGPORT=11000
-psql -c "DROP TABLE IF EXISTS t1" test
-psql -c "CREATE TABLE t1 (id int);" test
-psql -c "INSERT INTO t1 VALUES(1)" test
+$PSQL -c "DROP TABLE IF EXISTS t1" test
+$PSQL -c "CREATE TABLE t1 (id int);" test
+$PSQL -c "INSERT INTO t1 VALUES(1)" test
 
 TestProg=TestReplGap
 cp ../$TestProg.java .

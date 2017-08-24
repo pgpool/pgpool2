@@ -6,6 +6,7 @@
 source $TESTLIBS
 TESTDIR=testdir
 PSQL=$PGBIN/psql
+CREATEDB=$PGBIN/createdb
 PGBENCH=$PGBENCH_PATH
 
 function getnode()
@@ -31,8 +32,8 @@ echo "database_redirect_preference_list = 'postgres:primary,test:1,mydb[5-9]:2,t
 export PGPORT=$PGPOOL_PORT
 wait_for_pgpool_startup
 
-createdb mydb6
-createdb test2
+$CREATEDB mydb6
+$CREATEDB test2
 $PGBENCH -i postgres
 
 ok=yes
