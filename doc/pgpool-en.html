@@ -2153,7 +2153,7 @@ In an explicit transaction:
 </p>
 
 <ul>
-    <li>Transaction starting commands such as BEGIN are sent to the primary node.
+    <li>Transaction starting commands such as BEGIN are sent to both the primary node and the standby node.
     <li>Following SELECT and some other queries that can be sent to both
         primary or standby are executed in the transaction or on the standby node.
     </li>

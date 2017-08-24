@@ -2227,7 +2227,7 @@ pgpool-IIのStreaming Replicationモードは、こうした振り分けを自�
 </p>
 
 <ul>
-    <li>BEGINなどのトランザクション開始コマンドは、Primaryサーバに送られます。</li>
+    <li>BEGINなどのトランザクション開始コマンドは、PrimaryサーバとStandbyサーバの両方に送られます。</li>
     <li>続くSELECTなど、Primary/Standbyどちらにも送ることのできる問い合わせは、
         Primaryのトランザクション内でそのまま実行されるか、Standbyサーバで実行されます。</li>
     <li>
