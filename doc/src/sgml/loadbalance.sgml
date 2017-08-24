@@ -313,7 +313,8 @@
 
        <listitem>
          <para>
-         Transaction starting commands such as BEGIN are sent to the primary node.
+         Transaction starting commands such as BEGIN are sent to both the primary node
+         and the standby node.
          </para>
        </listitem>
        <listitem>

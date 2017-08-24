@@ -445,9 +445,10 @@ OW EXCLUSIVE MODEよりも強いLOCK
        <listitem>
          <para>
 <!--
-         Transaction starting commands such as BEGIN are sent to the primary node.
+         Transaction starting commands such as BEGIN are sent to the primary node
+         and the standby node.
 -->
-BEGINなどのトランザクション開始コマンドは、プライマリノードに送られます。
+BEGINなどのトランザクション開始コマンドは、プライマリノードとスタンバイノードの両方に送られます。
          </para>
        </listitem>
        <listitem>
