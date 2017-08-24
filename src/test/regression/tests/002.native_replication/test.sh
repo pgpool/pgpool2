@@ -40,9 +40,9 @@ $PGBENCH -f pgbench.sql -c 10 -t 10 test
 cp ../PgTester.java .
 javac PgTester.java
 export CLASSPATH=.:$JDBC_DRIVER
-psql -f ../create.sql test
+$PSQL -f ../create.sql test
 env
-psql -f $PGPOOL_INSTALL_DIR/share/pgpool-II/insert_lock.sql test
+$PSQL -f $PGPOOL_INSTALL_DIR/share/pgpool-II/insert_lock.sql test
 
 java PgTester 0 &
 java PgTester 10 &

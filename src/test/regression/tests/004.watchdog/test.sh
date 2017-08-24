@@ -50,8 +50,8 @@ $PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $STANDBY_DIR/etc/pgpool.conf -F $STANDBY
 echo "Waiting for the pgpool master..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	RESULT=`grep "I am the cluster leader node. Starting escalation process" $MASTER_DIR/log/pgpool.log`
-	if [ ! -z "$RESULT" ]; then
+	grep "I am the cluster leader node. Starting escalation process" $MASTER_DIR/log/pgpool.log > /dev/null 2>&1
+	if [ $? = 0 ];then
 		success_count=$(( success_count + 1 ))
 		echo "Master brought up successfully."
 		break;
@@ -64,8 +64,8 @@ done
 echo "Waiting for the standby to join cluster..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	RESULT=`grep "successfully joined the watchdog cluster as standby node" $STANDBY_DIR/log/pgpool.log`
-	if [ ! -z "$RESULT" ]; then
+	grep "successfully joined the watchdog cluster as standby node" $STANDBY_DIR/log/pgpool.log > /dev/null 2>&1
+	if [ $? = 0 ];then
 		success_count=$(( success_count + 1 ))
 		echo "Standby successfully connected."
 		break;
@@ -80,8 +80,8 @@ $PGPOOL_INSTALL_DIR/bin/pgpool -f $MASTER_DIR/etc/pgpool.conf -m f stop
 echo "Checking if the Standby pgpool-II detected the master shutdown..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	RESULT=`grep " is shutting down" $STANDBY_DIR/log/pgpool.log`
-	if [ ! -z "$RESULT" ]; then
+	grep " is shutting down" $STANDBY_DIR/log/pgpool.log > /dev/null 2>&1
+	if [ $? = 0 ];then
 		success_count=$(( success_count + 1 ))
 		echo "Master shutdown detected."
 		break;
@@ -95,8 +95,8 @@ done
 echo "Checking if the Standby pgpool-II takes over the master responsibility..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	RESULT=`grep "I am the cluster leader node. Starting escalation process" $STANDBY_DIR/log/pgpool.log`
-	if [ ! -z "$RESULT" ]; then
+	grep "I am the cluster leader node. Starting escalation process" $STANDBY_DIR/log/pgpool.log > /dev/null 2>&1
+	if [ $? = 0 ];then
 		success_count=$(( success_count + 1 ))
 		echo "Standby successfully became the new master."
 		break;

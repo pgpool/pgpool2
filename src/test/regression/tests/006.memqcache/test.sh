@@ -8,6 +8,8 @@ WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
 
+PSQL=$PGBIN/psql
+
 for mode in s r n
 do
 	rm -fr $TESTDIR
@@ -36,7 +38,7 @@ do
 	./startall
 	wait_for_pgpool_startup
 
-	psql test <<EOF
+	$PSQL test <<EOF
 CREATE TABLE t1 (i int);
 CREATE TABLE black_t (i int);
 CREATE VIEW normal_v AS SELECT * FROM t1;
