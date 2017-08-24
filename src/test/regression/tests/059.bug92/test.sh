@@ -12,6 +12,7 @@ PGBENCH=$PGBENCH_PATH
 WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
+PSQL=$PGBIN/psql
 
 for mode in s r n
 do
@@ -37,7 +38,7 @@ do
 	./startall
 	wait_for_pgpool_startup
 
-	psql test <<EOF
+	$PSQL test <<EOF
 CREATE TABLE t (i text, j text, k text);
 EOF
 
