@@ -2580,15 +2580,13 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				}
 				status = ParseComplete(frontend, backend);
 				pool_set_command_success();
-				if (STREAM||REPLICATION||RAW_MODE)
-					pool_unset_query_in_progress();
+				pool_unset_query_in_progress();
 				break;
 
 			case '2':	/* BindComplete */
 				status = BindComplete(frontend, backend);
 				pool_set_command_success();
-				if (STREAM||REPLICATION||RAW_MODE)
-					pool_unset_query_in_progress();
+				pool_unset_query_in_progress();
 				break;
 
 			case '3':	/* CloseComplete */
@@ -2613,8 +2611,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 
 				status = CloseComplete(frontend, backend);
 				pool_set_command_success();
-				if (STREAM||REPLICATION||RAW_MODE)
-					pool_unset_query_in_progress();
+				pool_unset_query_in_progress();
 				break;
 
 			case 'E':	/* ErrorResponse */
