@@ -123,13 +123,12 @@ EOF
 		# the SELECT should be executed on node 0
 		fi
 
+		if [ $ok != 2 ];then
+		    exit 1;
+		fi
 	fi
 
 	./shutdownall
-
-	if [ $ok != 2 ];then
-		exit 1;
-	fi
 
 	cd ..
 
