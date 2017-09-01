@@ -6718,8 +6718,8 @@ static bool get_authhash_for_node(WatchdogNode* wdNode, char* authhash)
 	if (strlen(pool_config->wd_authkey))
 	{
 		char nodeStr[WD_MAX_PACKET_STRING + 1];
-		int len = snprintf(nodeStr, WD_MAX_PACKET_STRING, "state=%d tv_sec=%ld wd_port=%d",
-					   wdNode->state, wdNode->startup_time.tv_sec, wdNode->wd_port);
+		int len = snprintf(nodeStr, WD_MAX_PACKET_STRING, "state=%d wd_port=%d",
+					   wdNode->state, wdNode->wd_port);
 		
 		
 		/* calculate hash from packet */
@@ -6739,8 +6739,8 @@ static bool verify_authhash_for_node(WatchdogNode* wdNode, char* authhash)
 		char calculated_authhash[WD_AUTH_HASH_LEN + 1];
 
 		char nodeStr[WD_MAX_PACKET_STRING];
-		int len = snprintf(nodeStr, WD_MAX_PACKET_STRING, "state=%d tv_sec=%ld wd_port=%d",
-						   wdNode->state, wdNode->startup_time.tv_sec, wdNode->wd_port);
+		int len = snprintf(nodeStr, WD_MAX_PACKET_STRING, "state=%d wd_port=%d",
+						   wdNode->state, wdNode->wd_port);
 		
 		
 		/* calculate hash from packet */
