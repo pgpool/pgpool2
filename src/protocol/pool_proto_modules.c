@@ -3428,9 +3428,30 @@ static void pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION *fronte
 	pmsg = pool_pending_message_get(POOL_SYNC);
 	if (pmsg == NULL)
 	{
-		ProcessFrontendResponse(frontend, backend);
+		char kind;
+		int len;
+		POOL_PENDING_MESSAGE *msg;
+		char *contents;
+
+		for(;;)
+		{
+			pool_read(frontend, &kind, sizeof(kind));
+			pool_read(frontend, &len, sizeof(len));
+			len = ntohl(len) - sizeof(len);
+			if (len > 0)
+				contents = pool_read2(frontend, len);
+			if (kind == 'S')
+			{
+				msg = pool_pending_message_create('S', 0, NULL);
+				pool_pending_message_add(msg);
+				pool_pending_message_free_pending_message(msg);
+				SimpleForwardToBackend(kind, frontend, backend, len, contents);
+				break;
+			}
+		}
 	}
-	pool_pending_message_free_pending_message(pmsg);
+	else
+		pool_pending_message_free_pending_message(pmsg);
 
 	/* Remove all pending messages except sync message */
 	do
