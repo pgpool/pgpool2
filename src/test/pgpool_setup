@@ -23,6 +23,7 @@
 # -m r: create an installation as native replication mode.
 # -m n: create an installation as raw mode.
 # -m l: create an installation as logical replication mode.
+# -m y: create an installation as slony mode.
 # -n num_clusters: create num_clusters PostgreSQL database cluster nodes
 # -p base_port: specify base port. pgpool port is base_port.
 #  pcp port is base_port + 1. The first PostgreSQL node's port is
@@ -292,7 +293,7 @@ function set_postgresql_conf
 		echo "max_wal_senders = $NUMCLUSTERS" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
 		echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
-	elif [ $MODE = 'r' -o $MODE = 'l' ];then
+	elif [ $MODE = 'r' -o $MODE = 'l' -o $MODE = 'y' ];then
 		echo "wal_level = archive" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
 		echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
@@ -562,7 +563,7 @@ function wait_for_pgpool_reload {
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s|n|l] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d]";exit 1
+	echo "usage: $0 [-m r|s|n|l|y] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d]";exit 1
 }
 
 #-------------------------------------------
@@ -583,6 +584,7 @@ do
 			s ) MODE="s";;
 			n ) MODE="n";;
 			l ) MODE="l";;
+			y ) MODE="y";;
 			* ) usage;;
 		esac
 	elif [ $1 = "-n" ];then
@@ -622,6 +624,9 @@ case $MODE in
 		;;
 	l ) MODENAME="logical replication mode"
 	    SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-logical
+	    ;;
+	y ) MODENAME="slony mode"
+	    SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-master-slave
 	    ;;
 esac
 
@@ -836,7 +841,7 @@ else
 
 	while [ $n -lt $NUMCLUSTERS ]
 	do
-	    if [ $MODE = 'l' ]
+	    if [ $MODE = 'l' -o $MODE = 'y' ]
 	    then
 		# temporarily start data$n cluster to create extensions
 		echo "temporarily start data${n} cluster to create extensions"

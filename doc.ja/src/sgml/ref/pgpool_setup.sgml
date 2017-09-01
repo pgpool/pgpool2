@@ -91,12 +91,12 @@ Pgpool-II documentation
        <!--
         Specifies the running mode.  <replaceable>mode</replaceable>
         can be <literal>r</literal> (native replication mode), <literal>s</literal> (streaming replication mode),
-        <literal>n</literal> (raw mode) or <literal>l</literal>
-	(logical replication mode).  If this is
+        <literal>n</literal> (raw mode), <literal>l</literal>
+	(logical replication mode) or <literal>y</literal> (slony mode).  If this is
 	omitted, <literal>s</literal> is assumed.
         -->
         動作モードを指定します。<replaceable>mode</replaceable>は
-        <literal>r</literal> (ネイティブレプリケーションモード), <literal>s</literal> (ストリーミングレプリケーションモード)、<literal>n</literal> (raw モード)、または<literal>l</literal> (ロジカルレプリケーションモード)を指定できます。
+        <literal>r</literal> (ネイティブレプリケーションモード), <literal>s</literal> (ストリーミングレプリケーションモード)、<literal>n</literal> (raw モード)、<literal>l</literal> (ロジカルレプリケーションモード)または<literal>l</literal>（slonyモード）を指定できます。
         指定しない場合は、<literal>s</literal> (ストリーミングレプリケーションモード) を指定した見なされます。
        </para>
       </listitem>

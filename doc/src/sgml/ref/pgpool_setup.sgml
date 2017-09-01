@@ -65,8 +65,8 @@ Pgpool-II documentation
        <para>
         Specifies the running mode.  <replaceable>mode</replaceable>
         can be <literal>r</literal> (native replication mode), <literal>s</literal> (streaming replication mode),
-        <literal>n</literal> (raw mode) or <literal>l</literal>
-	(logical replication mode).  If this is
+        <literal>n</literal> (raw mode), <literal>l</literal>
+	(logical replication mode) or <literal>y</literal> (slony mode).  If this is
 	omitted, <literal>s</literal> is assumed.
        </para>
       </listitem>
