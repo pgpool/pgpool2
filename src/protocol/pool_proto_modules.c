@@ -2495,6 +2495,13 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 								(errmsg("processing backend response"),
 								 errdetail("do not forward close complete message to frontend")));
 						pool_discard_packet_contents(backend);
+						
+						/* Remove pending message here because
+						 * read_kind_from_backend() did not do it.
+						 */
+						pmsg = pool_pending_message_pull_out();
+						pool_pending_message_free_pending_message(pmsg);
+
 						pool_unset_query_in_progress();
 						pool_set_command_success();
 						status = POOL_CONTINUE;
