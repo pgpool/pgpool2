@@ -1,6 +1,257 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-5-10">
+  <title>リリース 3.5.10</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-09-05</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+
+      <listitem>
+      <!--
+      2017-09-02 [322eb19]
+      -->
+      <para>
+ストリーミングレプリケーションモード/拡張クエリで発生する可能性のあるハングアップを修正しました。 (Tatsuo Ishii)
+      </para>
+      <para>
+エラーが発生すると、<productname>Pgpool-II</productname>はフロントエンドから送られてきた<literal>Sync</literal>メッセージを読み取ります。しかし、タイミングによってはまれに<literal>Sync</literal>メッセージがまだ送出されていないことがあり、<literal>sync</literal>が送られるまで待つように修正しました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-09-01 [ad90886]
+      -->
+      <para>
+<literal>watchdog</literal>が新しいノードを追加しようとした時にmasterに拒否される問題を修正しました。 (Yugo Nagata)
+      </para>
+      <para>
+<literal>watchdog</literal>の間の認証の際に、秒を元にした文字列が使われていたため、<literal>watchdog</literal>ノードの間で秒単位の時刻同期ができていないときに、この問題が発生します。修正は、単に秒を元にした文字列を認証キーに使わないようにしました。
+      </para>
+      <para>
+      これは3.5.6, 3.6.3で追加された問題です。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-09-01 [56dccb4]
+      -->
+      <para>
+Test: 001.load_balance のテストスクリプトを修正しました。(Tatsuo Ishii)
+      </para>
+      <para>
+ネイティブレプリケーションモードのみで実行される一部のテストが、ストリーミングレプリケーションモードでも実行されていたので、修正しました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-31 [b380241]
+      -->
+      <para>
+拡張クエリで<literal>slony</literal>モードが動かなくなっていたのを修正しました。(Tatsuo Ishii)
+      </para>
+      <para>
+<literal>slony</literal>モードの場合、応答がバックエンドから返されたときに、進行中フラグがリセットされず、バックエンドからの次のメッセージ待ち状態になり、ハングアップしていました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-29 [e0d27bd]
+      -->
+      <para>
+ストリーム書き込みモジュールのバグを修正しました。(Tatsuo Ishii)
+      </para>
+      <para>
+要求された長さが残りの書き込みバッファサイズを超えた場合に発生する<function>pool_write_noerror()</function>の不具合を修正しました。この不具合はバッファオーバーランの問題につながる可能性がありました。
+      </para>
+      <para>
+書き込みバッファがいっぱいになると、<function>pool_flush_it()</function>を呼び出し、バッファをフラッシュし、要求されたデータを直接書き込むように修正しました。
+      </para>
+      <para>
+さらに、<function>pool_unread()</function>のパフォーマンスが向上しました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-24 [661c8d3]
+      -->
+      <para>
+Test: レグレッションテストスクリプトを修正しました。(Muhammad Usama)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-24 [7bcd7b8]
+      -->
+      <para>
+Doc: ロードバランスに関するドキュメントを修正しました。(Yugo Nagata)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-16 [2db0ded]
+      -->
+      <para>
+コアダンプが発生する可能性があったのと、一時テーブルの扱いに関するバグを修正しました。(Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-15 [2f3d3e1]
+      -->
+      <para>
+<function>pool_unread()</function> の不具合を修正しました。(Tatsuo Ishii)
+      </para>
+      <para>
+<function>pool_unread()</function> が<function>realloc()</function>を呼び出すときに、バッファサイズが更新されませんでした。これにより、メモリ破損や予期しないデータの読み取りが発生する可能性がありました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-13 [645468e]
+      -->
+      <para>
+空文字のクエリの処理を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=328">bug 328</ulink>) (Tatsuo Ishii)
+      </para>
+      <para>
+空文字のクエリ (空文字列またはコメントクエリ) が送信されると、コマンド完了メッセージがフロントエンドに返されていました。この動作は正しくありません。空文字クエリのレスポンスをフロントエンドに返すように修正しました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-09 [e1de72c]
+      -->
+      <para>
+ストリーミングレプリケーションモード/拡張クエリで発生するクエリキャッシュのバグを修正しました。(Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-03 [0780efe]
+      -->
+      <para>
+ストリーミングレプリケーションモード/拡張クエリで発生するメモリリークを修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=324">bug 324</ulink>)(Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-03 [3b298f0]
+      -->
+      <para>
+Test: テスト 005.jdbc の Java プログラムを修正しました。(Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-03 [49e47ec]
+      -->
+      <para>
+<literal>worker</literal>プロセスが間違った DB ノードをフェイルオーバーさせる不具合を修正しました。 (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=303">bug 303</ulink>) (Tatsuo Ishii)
+      </para>
+      <para>
+<literal>worker</literal>プロセスが間違った DB ノードをフェイルオーバーさせる可能性がありました。原因は、<varname>POLL_CONNECTIO</varname>構造体の<varname>db_node_id</varname>メンバがこのプロセスで初期化されていなかったからです （子プロセスでは適切に初期化されていました）。
+      </para>
+      <para>
+この問題を解決するには、ノード ID をセットする関数 <function>pool_set_db_node_id()</function>を追加し、<function>make_persistent_db_connection()</function>内で呼び出すように修正しました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-07-31 [c4a2a44]
+      -->
+      <para>
+<command>SET</command>コマンド発行時の不要なトランザクションの開始を修正しました。(Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-07-27 [6586da8]
+      -->
+      <para>
+ヘルスチェックアラームを無効にした状態で <function>Failover()</function>関数を実行するように修正しました。(Muhammad Usama)
+      </para>
+      <para>
+詳細は <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-July/005679.html">[pgpool-general: 5621]</ulink> をご参照ください。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-07-27 [7958f97]
+      -->
+      <para>
+ストリーミングレプリケーションモード/拡張クエリの場合、フロントエンドが 'S' (同期) メッセージを送信する前に、バックエンドからエラーレスポンスを受信するときに発生するハングアップを修正しました。
+      </para>
+      <para>
+さらに、以下の修正を行いました。
+      </para>
+      <para>
+- ストリーミングレプリケーションモードで <function>ErrorResponse3()</function> 関数が意図的にエラークエリをバックエンドに送信しないように修正しました。
+      </para>
+      <para>
+- クエリが進行中でクエリコンテキストが存在する場合のみ、<varname>virtual_master_node_id</varname>を返すように <function>pool_virtual_master_db_node_id()</function>関数を修正しました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-07-20 [a9ada5c]
+      -->
+      <para>
+配布物に<filename>pgpool.service</filename>が含まれるように修正しました。(Yugo Nagata)
+      </para>
+      </listitem>
+    </itemizedlist>
+
+  </sect2>
+
+  <sect2>
+    <title>改善点</title>
+    <itemizedlist>
+
+      <listitem>
+      <!--
+      2017-08-09 [50223bc]
+      -->
+      <para>
+Test: ビルド時のログがファイルに出力されるように修正しました。 (Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-09 [ea3a958]
+      -->
+      <para>
+Test: メモリリークのレグレッションテストを追加しました。(Tatsuo Ishii)
+      </para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-5-9">
   <title>リリース 3.5.9</title>
 

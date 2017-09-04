@@ -1,6 +1,80 @@
 <!-- doc/src/sgml/release-3.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-2-22">
+  <title>リリース 3.2.22</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-09-05</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+
+      <listitem>
+      <!--
+      2017-08-24 [cb4d863]
+      -->
+      <para>
+Doc: ロードバランスに関するドキュメントを修正しました。(Yugo Nagata)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-15 [2cd5bd3]
+      -->
+      <para>
+<function>pool_unread()</function> の不具合を修正しました。(Tatsuo Ishii)
+      </para>
+      <para>
+<function>pool_unread()</function> が<function>realloc()</function>を呼び出すときに、バッファサイズが更新されませんでした。これにより、メモリ破損や予期しないデータの読み取りが発生する可能性がありました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-03 [3f9806b]
+      -->
+      <para>
+<literal>worker</literal>プロセスが間違った DB ノードをフェイルオーバーさせる不具合を修正しました。 (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=303">bug 303</ulink>) (Tatsuo Ishii)
+      </para>
+      <para>
+<literal>worker</literal>プロセスが間違った DB ノードをフェイルオーバーさせる可能性がありました。原因は、<varname>POLL_CONNECTIO</varname>構造体の<varname>db_node_id</varname>メンバがこのプロセスで初期化されていなかったからです （子プロセスでは適切に初期化されていました）。
+      </para>
+      <para>
+この問題を解決するには、ノード ID をセットする関数 <function>pool_set_db_node_id()</function>を追加し、<function>make_persistent_db_connection()</function>内で呼び出すように修正しました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-07-31 [ea6ea69]
+      -->
+      <para>
+<command>SET</command>コマンド発行時の不要なトランザクションの開始を修正しました。(Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-07-27 [576312c]
+      -->
+      <para>
+ヘルスチェックアラームを無効にした状態で <function>Failover()</function>関数を実行するように修正しました。(Muhammad Usama)
+      </para>
+      <para>
+詳細は <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-July/005679.html">[pgpool-general: 5621]</ulink> をご参照ください。
+      </para>
+      </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-2-21">
   <title>リリース 3.2.21</title>
 
