@@ -1,6 +1,81 @@
 <!-- doc/src/sgml/release-3.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-2-22">
+  <title>Release 3.2.22</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-09-05</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+
+      <listitem>
+      <!--
+      2017-08-24 [cb4d863]
+      -->
+      <para>
+      Doc: Fix documentation about load-balancing. (Yugo Nagata)
+      </para>
+      <para>
+
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-15 [2cd5bd3]
+      -->
+      <para>
+      Fix ancient bug of <function>pool_unread()</function>. (Tatsuo Ishii)
+      </para>
+      <para>
+      When <function>realloc()</function> is called in <function>pool_unread()</function>, it did not update the
+      buffer size.  This could cause variety of memory corruption and
+      unexpected data reading from backend. The reason why we did not found
+      that is, probably recently <productname>Pgpool-II</productname> starts extensively to use
+      <function>pool_unread()</function>.
+
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-08-03 [3f9806b]
+      -->
+      <para>
+      Fix for when failover is triggered by worker process, it is possible that wrong DB node could failover. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=303">bug 303</ulink>) (Tatsuo Ishii)
+      </para>
+      <para>
+      This is due to the db_node_id member in the <varname>POLL_CONNECTION</varname> structure is not initialized in the process (in child process the member is properly initialized). To solve the problem, add new function <function>pool_set_db_node_id()</function> to set the structure member variable and call it inside <function>make_persistent_db_connection()</function>.
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-07-31 [ea6ea69]
+      -->
+      <para>
+      Fix starting unnecessary transaction when <command>SET</command> command is issued. (Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-07-27 [576312c]
+      -->
+      <para>
+      Fix for <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-July/005679.html">[pgpool-general: 5621]</ulink> <function>Failover()</function> function should be executed with health check alarm disabled. (Muhammad Usama)
+      </para>
+      </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-2-21">
   <title>Release 3.2.21</title>
 
