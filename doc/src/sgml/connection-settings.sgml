@@ -525,8 +525,8 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
 								<row>
 									<entry>load_balance_mode is true</entry>
 									<entry>ANY</entry>
-									<entry align="center">Y</entry>
-									<entry nameend="_6" namest="_4" align="center">N</entry>
+									<entry align="center" nameend="_5" namest="_3">Y</entry>
+									<entry align="center">N</entry>
 								</row>
 
 								<row>
@@ -542,9 +542,9 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
 										Transaction isolation level is SERIALIZABLE and
 										the transaction has issued a write query
 									</entry>
+									<entry align="center">ANY</entry>
 									<entry align="center">Y</entry>
 									<entry align="center">N</entry>
-									<entry align="center">ANY</entry>
 									<entry align="center">ANY</entry>
 									<entry align="center">ANY</entry>
 								</row>

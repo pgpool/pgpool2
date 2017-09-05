@@ -829,8 +829,8 @@ onを設定すると、<productname>Pgpool-II</productname>はSELECTクエリの
 -->
 									<entry>load_balance_modeがtrue</entry>
 									<entry>ANY</entry>
-									<entry align="center">Y</entry>
-									<entry nameend="_6" namest="_4" align="center">N</entry>
+									<entry align="center" nameend="_5" namest="_3">Y</entry>
+									<entry align="center">N</entry>
 								</row>
 
 								<row>
@@ -852,9 +852,9 @@ onを設定すると、<productname>Pgpool-II</productname>はSELECTクエリの
 -->
 										トランザクション分離レベルがSERIALIZABLEで、トランザクションが更新クエリを発行済
 									</entry>
+									<entry align="center">ANY</entry>
 									<entry align="center">Y</entry>
 									<entry align="center">N</entry>
-									<entry align="center">ANY</entry>
 									<entry align="center">ANY</entry>
 									<entry align="center">ANY</entry>
 								</row>
