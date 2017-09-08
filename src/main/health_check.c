@@ -72,6 +72,11 @@ static RETSIGTYPE reload_config_handler(int sig);
 static void reload_config(void);
 static RETSIGTYPE health_check_timer_handler(int sig);
 
+#undef HEALTHCHECK_DEBUG
+#ifdef HEALTHCHECK_DEBUG
+static bool check_backend_down_request(int node);
+#endif
+
 #undef CHECK_REQUEST
 #define CHECK_REQUEST \
 	do { \
@@ -169,7 +174,11 @@ void do_health_check_child(int *node_id)
 
 			result = establish_persistent_connection(*node_id);
 
+#ifdef HEALTHCHECK_DEBUG
+			if (check_backend_down_request(*node_id) || (result && slot == NULL))
+#else
 			if (result && slot == NULL)
+#endif
 			{
 				if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(*node_id).flag))
 				{
@@ -358,3 +367,119 @@ static RETSIGTYPE health_check_timer_handler(int sig)
 	POOL_SETMASK(&UnBlockSig);
 	errno = save_errno;
 }
+
+#ifdef HEALTHCHECK_DEBUG
+
+/*
+ * Node down request file. In the file, each line consists of "backend node
+ * id", tab and "down".  If such a line found, check_backend_down_request()
+ * will return true.
+ */
+
+# define BACKEND_DOWN_REQUEST_FILE	"backend_down_request"
+
+/*
+ * Check backend down request file with specified backend node id.  If it's
+ * down ("down"), returns true and set the status to "already_down" to
+ * prevent repeatable * failover. If it's other than "down", returns false.
+*/
+
+static bool check_backend_down_request(int node)
+{
+	static char	backend_down_request_file[POOLMAXPATHLEN];
+	FILE *fd;
+	int i;
+#define MAXLINE 128
+	char linebuf[MAXLINE];
+	char readbuf[MAXLINE];
+	char buf[MAXLINE];
+	char *writebuf;
+	char *p;
+	bool found = false;
+	int node_id;
+	char status[MAXLINE];
+
+	if (backend_down_request_file[0] == '\0')
+	{
+		snprintf(backend_down_request_file, sizeof(backend_down_request_file),
+				 "%s/%s", pool_config->logdir, BACKEND_DOWN_REQUEST_FILE);
+	}
+
+	fd = fopen(backend_down_request_file, "r");
+	if (!fd)
+	{
+		ereport(WARNING,
+				(errmsg("check_backend_down_request: failed to open file %s",
+						backend_down_request_file),
+				 errdetail("\"%s\"",strerror(errno))));
+		return false;
+	}
+
+	writebuf = NULL;
+
+	for (i=0;;i++)
+	{
+		readbuf[MAXLINE-1] = '\0';
+		if (fgets(readbuf, MAXLINE-1, fd) == 0)
+			break;
+
+		strncpy(buf, readbuf, sizeof(buf));
+		if (strlen(readbuf) > 0 && readbuf[strlen(readbuf)-1] == '\n')
+			buf[strlen(readbuf)-1] = '\0';
+
+		p = readbuf;
+		if (found == false)
+		{
+			sscanf(buf, "%d\t%s", &node_id, status);
+			if (node_id == node && !strcmp(status, "down"))
+			{
+				snprintf(linebuf, sizeof(linebuf), "%d\t%s\n", node_id, "already_down");
+				found = true;
+				p = linebuf;
+			}
+		}
+
+		if (writebuf == NULL)
+		{
+			writebuf = malloc(strlen(p)+1);
+			memset(writebuf, 0, strlen(p)+1);
+		}
+		else
+			writebuf = realloc(writebuf, strlen(p)+strlen(writebuf)+1);
+		if (!writebuf)
+		{
+			fclose(fd);
+			return false;
+		}
+		strcat(writebuf, p);
+	}
+
+	fclose(fd);
+
+	if (!found)
+		return false;
+
+	fd = fopen(backend_down_request_file, "w");
+	if (!fd)
+	{
+		ereport(WARNING,
+                (errmsg("check_backend_down_request: failed to open file for writing %s",
+						backend_down_request_file),
+				 errdetail("\"%s\"",strerror(errno))));
+		return false;
+	}
+
+	if (fwrite(writebuf, 1, strlen(writebuf), fd) != strlen(writebuf))
+	{
+		ereport(WARNING,
+                (errmsg("check_backend_down_request: failed to write %s",
+						backend_down_request_file),
+				 errdetail("\"%s\"",strerror(errno))));
+		fclose(fd);
+		return false;
+	}
+	fclose(fd);
+
+	return true;
+}
+#endif
