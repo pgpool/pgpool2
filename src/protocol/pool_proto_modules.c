@@ -3521,8 +3521,8 @@ static void pool_wait_till_ready_for_query(POOL_CONNECTION_POOL *backend)
  * Called when error response received in streaming replication mode and doing
  * extended query. Remove all pending messages and backend message buffer data
  * except POOL_SYNC pending message and ready for query.  If sync message is
- * not received yet, call ProcessFrontendResponse() to read data from
- * frontend.
+ * not received yet, continue to read data from frontend until a sync message
+ * is read.
  */
 static void pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION *frontend,
 														 POOL_CONNECTION_POOL *backend)
