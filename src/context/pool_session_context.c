@@ -1398,6 +1398,45 @@ const char *pool_pending_message_type_to_string(POOL_MESSAGE_TYPE type)
 }
 
 /*
+ * Check consistency the message type and backend message kind.
+ * This function is intended to be used for debugging.
+ */
+void pool_check_pending_message_and_reply(POOL_MESSAGE_TYPE type, char kind)
+{
+	/* 
+	 * Backend response message sorted by POOL_MESSAGE_TYPE
+	 */
+	static char backend_response_kind[] = {
+		'1',	/* POOL_PARSE, parse complete */
+		'2',	/* POOL_BIND, bind complete */
+		'*',	/* POOL_EXECUTE, skip checking */
+		'*',	/* POOL_DESCRIBE, skip checking */
+		'3',	/* POOL_CLOSE, close complete */
+		'Z'	/* POOL_SYNC, ready for query */
+	};
+
+	if (type < POOL_PARSE || type > POOL_SYNC)
+	{
+		ereport(DEBUG1,
+				(errmsg("pool_check_pending_message_and_reply: type out of range: %d", type)));
+		return;
+	}
+
+	if (backend_response_kind[type] == '*')
+	{
+		return;
+	}
+
+	if (backend_response_kind[type] != kind)
+	{
+		ereport(DEBUG1,
+				(errmsg("pool_check_pending_message_and_reply: type: %s but is kind: %c",
+						pool_pending_message_type_to_string(type), kind)));
+	}
+	return;
+}
+
+/*
  * Find the latest pending message having specified query context.  The
  * returned message is a pointer to the message list. So do not free it using
  * pool_pending_message_free_pending_message.

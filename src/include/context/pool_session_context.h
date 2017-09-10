@@ -109,7 +109,7 @@ typedef struct {
  */
 
 typedef enum {
-	POOL_PARSE,
+	POOL_PARSE = 0,
 	POOL_BIND,
 	POOL_EXECUTE,
 	POOL_DESCRIBE,
@@ -301,6 +301,7 @@ extern void pool_pending_message_set_previous_message(POOL_PENDING_MESSAGE *mess
 extern POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void);
 extern bool pool_pending_message_exists(void);
 extern const char *pool_pending_message_type_to_string(POOL_MESSAGE_TYPE type);
+extern void pool_check_pending_message_and_reply(POOL_MESSAGE_TYPE type, char kind);
 extern POOL_PENDING_MESSAGE *pool_pending_message_find_lastest_by_query_context(POOL_QUERY_CONTEXT *qc);
 extern void dump_pending_message(void);
 extern void pool_set_major_version(int major);

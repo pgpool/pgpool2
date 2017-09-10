@@ -3641,6 +3641,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				ereport(DEBUG1,
 						(errmsg("read_kind_from_backend: pending message was pulled out")));
 				pending_message = pool_pending_message_pull_out();
+				pool_check_pending_message_and_reply(msg->type, *decided_kind);
 			}
 
 			if (pending_message)
