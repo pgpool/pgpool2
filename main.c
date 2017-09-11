@@ -359,9 +359,13 @@ int main(int argc, char **argv)
 	}
 
 #ifdef USE_SSL
-	/* global ssl init */
-	SSL_library_init();
-	SSL_load_error_strings();
+    /* global ssl init */
+    #if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+        OPENSSL_init_ssl(0, NULL);
+    else
+        SSL_library_init();
+    #endif
+        SSL_load_error_strings();
 #endif /* USE_SSL */
 
 	mypid = getpid();

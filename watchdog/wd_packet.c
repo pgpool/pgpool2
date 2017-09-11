@@ -1154,18 +1154,30 @@ static void calculate_hmac_sha256(const char *data, int len, char *buf)
 {
 	char* key = pool_config->wd_authkey;
 	char str[WD_AUTH_HASH_LEN/2];
-	
 	unsigned int res_len = WD_AUTH_HASH_LEN;
+	HMAC_CTX *ctx = NULL;
 	
-	HMAC_CTX ctx;
-	HMAC_CTX_init(&ctx);
-	HMAC_Init_ex(&ctx, key, strlen(key), EVP_sha256(), NULL);
-	HMAC_Update(&ctx, (unsigned char*)data, len);
-	HMAC_Final(&ctx, (unsigned char*)str, &res_len);
-	HMAC_CTX_cleanup(&ctx);
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	ctx = HMAC_CTX_new();
+	HMAC_CTX_reset(ctx);
+#else
+	HMAC_CTX ctx_obj;
+	ctx = &ctx_obj;
+	HMAC_CTX_init(ctx);
+#endif
+	HMAC_Init_ex(ctx, key, strlen(key), EVP_sha256(), NULL);
+	HMAC_Update(ctx, (unsigned char*)data, len);
+	HMAC_Final(ctx, (unsigned char*)str, &res_len);
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	HMAC_CTX_reset(ctx);
+	HMAC_CTX_free(ctx);
+#else
+	HMAC_CTX_cleanup(ctx);
+#endif
 	bytesToHex(str,32,buf);
 	buf[WD_AUTH_HASH_LEN] = '\0';
 }
+
 void
 wd_calc_hash(const char *str, int len, char *buf)
 {
