@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -183,7 +183,11 @@ int main(int argc, char **argv)
 	}
 #ifdef USE_SSL
 	/* global ssl init */
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	OPENSSL_init_ssl(0, NULL);
+#else
 	SSL_library_init();
+#endif
 	SSL_load_error_strings();
 #endif /* USE_SSL */
 
