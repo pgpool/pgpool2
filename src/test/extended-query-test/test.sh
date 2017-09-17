@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+timeout=300
 export PGPORT=11000
 export PGDATABASE=test
 export PGPOOL_INSTALL_DIR=$HOME/work/pgpool-II/current
@@ -23,9 +24,13 @@ pgpool_setup > /dev/null 2>&1
 echo "done."
 cp etc/pgpool.conf pgpool.conf.back
 
+okcnt=0
+failcnt=0
+timeoutcnt=0
+
 for i in $tests
 do
-    echo "====== $i ======="
+    echo -n "testing $i ... "
 
     # check if modification to pgpool.conf specified.
     d=/tmp/diff$$
@@ -48,13 +53,23 @@ do
 	sleep 1
     done
 
-    $PGPROTO -f $testdir/$i > $results/$i 2>&1
-    cmp $expected/$i $results/$i >/dev/null 2>&1
-    if [ $? != 0 ]
+    timeout $timeout $PGPROTO -f $testdir/$i > $results/$i 2>&1
+    if [ $? = 124 ]
     then
-	echo "$i differ"
-	echo "=== $i ===" >> $diffs
-	diff -N $expected/$i $results/$i >> $diffs
+	echo "timeout."
+	timeoutcnt=`expr $timeout + 1`
+    else
+	cmp $expected/$i $results/$i >/dev/null 2>&1
+	if [ $? != 0 ]
+	then
+	    echo "failed."
+	    echo "=== $i ===" >> $diffs
+	    diff -N $expected/$i $results/$i >> $diffs
+	    failcnt=`expr $failcnt + 1`
+	else
+	    echo "ok."
+	    okcnt=`expr $okcnt + 1`
+	fi
     fi
     grep pool_check_pending_message_and_reply log/pgpool.log
     ./shutdownall >/dev/null 2>&1
@@ -67,3 +82,6 @@ do
     fi
 
 done
+
+total=`expr $okcnt + $failcnt + $timeoutcnt`
+echo "out of $total ok: $okcnt failed: $failcnt timeout: $timeoutcnt."
