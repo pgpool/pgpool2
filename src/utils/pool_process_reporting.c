@@ -897,7 +897,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		i++;
 
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend_status%d", j);
-		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s",backend_status_to_str(BACKEND_INFO(j).backend_status) );
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s",backend_status_to_str(&BACKEND_INFO(j)) );
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "status of backend #%d", j);
 		i++;
 
@@ -1148,7 +1148,7 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 		snprintf(nodes[i].node_id, 	POOLCONFIG_MAXIDLEN, 	"%d", 	i);
 	    StrNCpy(nodes[i].hostname, 	bi->backend_hostname, 		strlen(bi->backend_hostname)+1);
 	    snprintf(nodes[i].port, 	POOLCONFIG_MAXPORTLEN, "%d", 	bi->backend_port);
-	    snprintf(nodes[i].status, 	POOLCONFIG_MAXSTATLEN, 	"%s", 	backend_status_to_str(bi->backend_status));
+	    snprintf(nodes[i].status, 	POOLCONFIG_MAXSTATLEN, 	"%s", 	backend_status_to_str(bi));
 	    snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight/RAND_MAX);
 	    snprintf(nodes[i].select, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_select_count(i));
 	    snprintf(nodes[i].load_balance_node, POOLCONFIG_MAXWEIGHTLEN, "%s",

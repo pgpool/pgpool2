@@ -3595,7 +3595,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 		if (pool_config->replication_stop_on_mismatch)
 		{
-			degenerate_backend_set(degenerate_node, degenerate_node_num, false, 0);
+			degenerate_backend_set(degenerate_node, degenerate_node_num, REQ_DETAIL_CONFIRMED);
             retcode = 1;
 		}
         ereport(FATAL,
@@ -4674,7 +4674,7 @@ pool_config->client_idle_limit)));
 						}
 						else
 						{
-							notice_backend_error(i, true);
+							notice_backend_error(i, REQ_DETAIL_SWITCHOVER);
 							sleep(5);
 						}
 						break;

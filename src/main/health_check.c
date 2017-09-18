@@ -195,7 +195,7 @@ void do_health_check_child(int *node_id)
 
 					/* trigger failover */
 					partial = health_check_timer_expired?false:true;
-					degenerate_backend_set(node_id, 1, partial, 0);
+					degenerate_backend_set(node_id, 1, partial?REQ_DETAIL_SWITCHOVER:0);
 				}
 			}
 

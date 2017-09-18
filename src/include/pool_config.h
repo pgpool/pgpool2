@@ -300,6 +300,11 @@ typedef struct {
 	 * add for watchdog
 	 */
 	bool use_watchdog;						/* Enables watchdog */
+	bool failover_when_quorum_exists;		/* Do failover only when wd cluster holds he quorum */
+	bool failover_require_consensus;		/* Only do failover when majority aggrees */
+	bool enable_multiple_failover_requests_from_node; /* One Pgpool-II node can send multiple
+													   * failover requests to build consensus
+													   */
 	WdLifeCheckMethod wd_lifecheck_method;	/* method of lifecheck. 'heartbeat' or 'query' */
 	bool clear_memqcache_on_escalation;		/* Clear query cache on shmem when escalating ?*/
 	char *wd_escalation_command;			/* Executes this command at escalation on new active pgpool.*/
@@ -355,7 +360,7 @@ extern int pool_init_config(void);
 extern bool pool_get_config(const char *config_file, ConfigContext context);
 extern int eval_logical(const char *str);
 extern char *pool_flag_to_str(unsigned short flag);
-extern char* backend_status_to_str(BACKEND_STATUS status);
+extern char* backend_status_to_str(BackendInfo *bi);
 
 /* methods used for regexp support */
 extern int add_regex_pattern(const char *type, char *s);

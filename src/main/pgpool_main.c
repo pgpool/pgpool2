@@ -69,6 +69,9 @@ typedef enum
 {
 	SIG_FAILOVER_INTERRUPT,		/* signal main to start failover */
 	SIG_WATCHDOG_STATE_CHANGED,	/* notify main about local watchdog node state changed */
+	SIG_BACKEND_SYNC_REQUIRED,	/* notify main about local backend state sync required */
+	SIG_WATCHDOG_QUORUM_CHANGED,/* notify main about cluster quorum change of watchdog cluster */
+	SIG_INFORM_QURANTINE_NODES, /* notify main about send degenerate requests for all quarantine nodes */
 	MAX_INTERUPTS				/* Must be last! */
 } User1SignalReason;
 
@@ -142,6 +145,8 @@ static void terminate_all_childrens();
 static void system_will_go_down(int code, Datum arg);
 static char* process_name_from_pid(pid_t pid);
 static void sync_backend_from_watchdog(void);
+static void update_backend_quarantine_status(void);
+static void degenerate_all_quarantine_nodes(void);
 
 static struct sockaddr_un un_addr;		/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
@@ -459,12 +464,11 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
  * This function enqueues the failover/failback requests, and fires the failover() if the function
  * is not already executing
  */
-bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count, bool switch_over , unsigned int wd_failover_id)
+bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count, unsigned char flags)
 {
 	bool failover_in_progress;
 	pool_sigset_t oldmask;
 	int index;
-	unsigned char request_details = 0;
 
 	/*
 	 * if the queue is already full
@@ -485,12 +489,8 @@ bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, i
 	Req_info->request_queue_tail++;
 	index = Req_info->request_queue_tail % MAX_REQUEST_QUEUE_SIZE;
 	Req_info->request[index].kind = kind;
-	Req_info->request[index].wd_failover_id = wd_failover_id;
 
-	/* Set switch over flag if requested */
-	if (switch_over)
-		request_details |= REQ_DETAIL_SWITCHOVER;
-	Req_info->request[index].request_details = request_details;
+	Req_info->request[index].request_details = flags;
 
 	if(count > 0)
 		memcpy(Req_info->request[index].node_id, node_id_set, (sizeof(int) * count));
@@ -501,16 +501,33 @@ bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, i
 	POOL_SETMASK(&oldmask);
 	if(failover_in_progress == false)
 	{
-		signal_user1_to_parent_with_reason(SIG_FAILOVER_INTERRUPT);
+		if(processType == PT_MAIN)
+			failover();
+		else
+			signal_user1_to_parent_with_reason(SIG_FAILOVER_INTERRUPT);
 	}
 
 	return true;
+}
+
+void register_watchdog_quorum_change_interupt(void)
+{
+	signal_user1_to_parent_with_reason(SIG_WATCHDOG_QUORUM_CHANGED);
 }
 
 void register_watchdog_state_change_interupt(void)
 {
 	signal_user1_to_parent_with_reason(SIG_WATCHDOG_STATE_CHANGED);
 }
+void register_backend_state_sync_req_interupt(void)
+{
+	signal_user1_to_parent_with_reason(SIG_BACKEND_SYNC_REQUIRED);
+}
+void register_inform_quarantine_nodes_req(void)
+{
+	signal_user1_to_parent_with_reason(SIG_INFORM_QURANTINE_NODES);
+}
+
 static void signal_user1_to_parent_with_reason(User1SignalReason reason)
 {
 	user1SignalSlot->signalFlags[reason] = true;
@@ -956,7 +973,7 @@ static void terminate_all_childrens()
  * Reuest failover. If "switch_over" is false, request all existing sessions
  * restarting.
  */
-void notice_backend_error(int node_id, bool switch_over)
+void notice_backend_error(int node_id, unsigned char flags)
 {
 	int n = node_id;
 
@@ -967,7 +984,7 @@ void notice_backend_error(int node_id, bool switch_over)
 	}
 	else
 	{
-		degenerate_backend_set(&n, 1, switch_over, 0);
+		degenerate_backend_set(&n, 1, flags);
 	}
 }
 
@@ -990,8 +1007,7 @@ void notice_backend_error(int node_id, bool switch_over)
  *
  * wd_failover_id: The watchdog internal ID for this failover
  */
-bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only,
-							   bool switch_over, unsigned int wd_failover_id)
+bool degenerate_backend_set_ex(int *node_id_set, int count, unsigned char flags, bool error, bool test_only)
 {
 	int i;
 	int node_id[MAX_NUM_BACKENDS];
@@ -1004,7 +1020,7 @@ bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool tes
 	for (i = 0; i < count; i++)
 	{
 		if (node_id_set[i] < 0 || node_id_set[i] >= MAX_NUM_BACKENDS ||
-			!VALID_BACKEND(node_id_set[i]))
+			(!VALID_BACKEND(node_id_set[i]) &&  BACKEND_INFO(node_id_set[i]).quarantine == false))
 		{
 			if (node_id_set[i] < 0 || node_id_set[i] >= MAX_NUM_BACKENDS)
 				ereport(elevel,
@@ -1046,12 +1062,12 @@ bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool tes
 		if(test_only)
 			return true;
 
-		if (pool_config->use_watchdog && wd_failover_id == 0)
+		if (!(flags & REQ_DETAIL_WATCHDOG))
 		{
 			int x;
 			for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
 			{
-				res = wd_degenerate_backend_set(node_id_set, count, &wd_failover_id);
+				res = wd_degenerate_backend_set(node_id_set, count, flags);
 				if (res != FAILOVER_RES_TRANSITION)
 					break;
 				sleep(1);
@@ -1069,10 +1085,34 @@ bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool tes
 		}
 		if (res == FAILOVER_RES_PROCEED)
 		{
-			register_node_operation_request(NODE_DOWN_REQUEST, node_id, node_count, switch_over, wd_failover_id);
+			register_node_operation_request(NODE_DOWN_REQUEST, node_id, node_count, flags);
+		}
+		else if (res == FAILOVER_RES_NO_QUORUM)
+		{
+			ereport(LOG,
+					(errmsg("degenerate backend request for %d node(s) from pid [%d], is changed to quarantine node request by watchdog"
+							, node_count, getpid()),
+					 errdetail("watchdog does not holds the quorum")));
+
+			register_node_operation_request(NODE_QUARANTINE_REQUEST, node_id, node_count, flags);
+		}
+		else if (res == FAILOVER_RES_CONSENSUS_MAY_FAIL)
+		{
+			ereport(LOG,
+					(errmsg("degenerate backend request for %d node(s) from pid [%d], is changed to quarantine node request by watchdog"
+							, node_count, getpid()),
+					 errdetail("watchdog is taking time to build consensus")));
+			register_node_operation_request(NODE_QUARANTINE_REQUEST, node_id, node_count, flags);
+		}
+		else if (res == FAILOVER_RES_BUILDING_CONSENSUS)
+		{
+			ereport(LOG,
+					(errmsg("degenerate backend request for node_id: %d from pid [%d], will be handled by watchdog, which is building consensus for request"
+							,*node_id, getpid())));
 		}
 		else if (res == FAILOVER_RES_WILL_BE_DONE)
 		{
+			/* we will receive a sync request from master watchdog node */
 			ereport(LOG,
 					(errmsg("degenerate backend request for %d node(s) from pid [%d], will be handled by watchdog"
 							, node_count, getpid())));
@@ -1092,13 +1132,13 @@ bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool tes
  * wrapper over degenerate_backend_set_ex function to register
  * NODE down operation request
  */
-bool degenerate_backend_set(int *node_id_set, int count, bool switch_over, unsigned int wd_failover_id)
+bool degenerate_backend_set(int *node_id_set, int count, unsigned char flags)
 {
-	return degenerate_backend_set_ex(node_id_set, count, false, false, switch_over, wd_failover_id);
+	return degenerate_backend_set_ex(node_id_set, count, flags, false, false);
 }
 
 /* send promote node request using SIGUSR1 */
-bool promote_backend(int node_id, unsigned int wd_failover_id)
+bool promote_backend(int node_id, unsigned char flags)
 {
 	WDFailoverCMDResults res = FAILOVER_RES_PROCEED;
 	bool ret = false;
@@ -1125,12 +1165,12 @@ bool promote_backend(int node_id, unsigned int wd_failover_id)
 					node_id, getpid())));
 
 	/* If this was only a test. Inform the caller without doing anything */
-	if (pool_config->use_watchdog && wd_failover_id == 0)
+	if (!(flags & REQ_DETAIL_WATCHDOG))
 	{
 		int x;
 		for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
 		{
-			res = wd_promote_backend(node_id, &wd_failover_id);
+			res = wd_promote_backend(node_id, flags);
 			if (res != FAILOVER_RES_TRANSITION)
 				break;
 			sleep(1);
@@ -1149,12 +1189,24 @@ bool promote_backend(int node_id, unsigned int wd_failover_id)
 
 	if (res == FAILOVER_RES_PROCEED)
 	{
-		ret = register_node_operation_request(PROMOTE_NODE_REQUEST, &node_id, 1, false, wd_failover_id);
+		ret = register_node_operation_request(PROMOTE_NODE_REQUEST, &node_id, 1, flags);
 	}
 	else if (res == FAILOVER_RES_WILL_BE_DONE)
 	{
 		ereport(LOG,
 				(errmsg("promote backend request for node_id: %d from pid [%d], will be handled by watchdog"
+						, node_id, getpid())));
+	}
+	else if (res == FAILOVER_RES_NO_QUORUM)
+	{
+		ereport(LOG,
+				(errmsg("promote backend request for node_id: %d from pid [%d], is canceled because watchdog does not hold quorum"
+						, node_id, getpid())));
+	}
+	else if (res == FAILOVER_RES_BUILDING_CONSENSUS)
+	{
+		ereport(LOG,
+				(errmsg("promote backend request for node_id: %d from pid [%d], will be handled by watchdog, which is building consensus for request"
 						, node_id, getpid())));
 	}
 	else
@@ -1167,7 +1219,7 @@ bool promote_backend(int node_id, unsigned int wd_failover_id)
 }
 
 /* send failback request using SIGUSR1 */
-bool send_failback_request(int node_id,bool throw_error, unsigned int wd_failover_id)
+bool send_failback_request(int node_id,bool throw_error, unsigned char flags)
 {
 	WDFailoverCMDResults res = FAILOVER_RES_PROCEED;
 	bool ret = false;
@@ -1187,21 +1239,34 @@ bool send_failback_request(int node_id,bool throw_error, unsigned int wd_failove
 	}
 
 	ereport(LOG,
-			(errmsg("received failback request for node_id: %d from pid [%d] wd_failover_id [%d]",
-					node_id, getpid(),wd_failover_id)));
+			(errmsg("received failback request for node_id: %d from pid [%d]",
+					node_id, getpid())));
 
-	/* If this was only a test. Inform the caller without doing anything */
-	if (pool_config->use_watchdog && wd_failover_id == 0)
+	/* check we are trying to failback the quarantine node */
+	if (BACKEND_INFO(node_id).quarantine)
 	{
-		int x;
-		for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+		/* set the update flags */
+		ereport(LOG,
+				(errmsg("failback request from pid [%d] is changed to update status request because node_id: %d was quarantined",
+						getpid(),node_id)));
+		flags |= REQ_DETAIL_UPDATE;
+	}
+	else
+	{
+		/* no need to go to watchdog if it's an update or already initiated from watchdog */
+		if (!(flags & REQ_DETAIL_WATCHDOG))
 		{
-			res = wd_send_failback_request(node_id, &wd_failover_id);
-			if (res != FAILOVER_RES_TRANSITION)
-				break;
-			sleep(1);
+			int x;
+			for (x=0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+			{
+				res = wd_send_failback_request(node_id, flags);
+				if (res != FAILOVER_RES_TRANSITION)
+					break;
+				sleep(1);
+			}
 		}
 	}
+
 	if (res == FAILOVER_RES_TRANSITION)
 	{
 		/*
@@ -1215,7 +1280,7 @@ bool send_failback_request(int node_id,bool throw_error, unsigned int wd_failove
 
 	if (res == FAILOVER_RES_PROCEED)
 	{
-		ret = register_node_operation_request(NODE_UP_REQUEST, &node_id, 1, false, wd_failover_id);
+		ret = register_node_operation_request(NODE_UP_REQUEST, &node_id, 1, flags);
 	}
 	else if (res == FAILOVER_RES_WILL_BE_DONE)
 	{
@@ -1396,15 +1461,55 @@ static RETSIGTYPE sigusr1_handler(int sig)
 	errno = save_errno;
 }
 
+
 static void sigusr1_interupt_processor(void)
 {
 	ereport(DEBUG1,
 			(errmsg("Pgpool-II parent process received SIGUSR1")));
 
+	if (user1SignalSlot->signalFlags[SIG_WATCHDOG_QUORUM_CHANGED])
+	{
+		ereport(LOG,
+				(errmsg("Pgpool-II parent process received watchdog quorum change signal from watchdog")));
+
+		user1SignalSlot->signalFlags[SIG_WATCHDOG_QUORUM_CHANGED] = false;
+		if (get_watchdog_quorum_state() >= 0)
+		{
+			ereport(LOG,
+					(errmsg("watchdog cluster now holds the quorum"),
+					 errdetail("updating the state of quarantine backend nodes")));
+			update_backend_quarantine_status();
+		}
+	}
+
+	if (user1SignalSlot->signalFlags[SIG_INFORM_QURANTINE_NODES])
+	{
+		ereport(LOG,
+				(errmsg("Pgpool-II parent process received inform quarantine nodes signal from watchdog")));
+		
+		user1SignalSlot->signalFlags[SIG_INFORM_QURANTINE_NODES] = false;
+		degenerate_all_quarantine_nodes();
+	}
+
+	if (user1SignalSlot->signalFlags[SIG_BACKEND_SYNC_REQUIRED])
+	{
+		ereport(LOG,
+				(errmsg("Pgpool-II parent process received sync backend signal from watchdog")));
+
+		user1SignalSlot->signalFlags[SIG_BACKEND_SYNC_REQUIRED] = false;
+		if (get_watchdog_local_node_state() == WD_STANDBY)
+		{
+			ereport(LOG,
+					(errmsg("master watchdog has performed failover"),
+					 errdetail("syncing the backend states from the MASTER watchdog node")));
+			sync_backend_from_watchdog();
+		}
+	}
+
 	if (user1SignalSlot->signalFlags[SIG_WATCHDOG_STATE_CHANGED])
 	{
 		ereport(DEBUG1,
-				(errmsg("Pgpool-II parent process received SIGUSR1 from watchdog")));
+				(errmsg("Pgpool-II parent process received watchdog state change signal from watchdog")));
 
 		user1SignalSlot->signalFlags[SIG_WATCHDOG_STATE_CHANGED] = false;
 		if (get_watchdog_local_node_state() == WD_STANDBY)
@@ -1468,6 +1573,7 @@ static void failover(void)
 	int sts;
 	bool need_to_restart_pcp = false;
 	bool all_backend_down = true;
+	bool sync_required = false;
 
 	ereport(DEBUG1,
 		(errmsg("failover handler called")));
@@ -1517,8 +1623,6 @@ static void failover(void)
 		int node_id_set[MAX_NUM_BACKENDS];
 		int node_count;
 		unsigned char request_details;
-		unsigned int wd_failover_id;
-		WDFailoverCMDResults wdInterlockingRes;
 
 		pool_semaphore_lock(REQUEST_INFO_SEM);
 
@@ -1537,7 +1641,6 @@ static void failover(void)
 		reqkind = Req_info->request[queue_index].kind;
 		request_details = Req_info->request[queue_index].request_details;
 		node_count = Req_info->request[queue_index].count;
-		wd_failover_id = Req_info->request[queue_index].wd_failover_id;
 		pool_semaphore_unlock(REQUEST_INFO_SEM);
 
 		ereport(DEBUG1,
@@ -1550,8 +1653,8 @@ static void failover(void)
 			continue;
 		}
 
-		/* start watchdog interlocking */
-		wdInterlockingRes = wd_start_failover_interlocking(wd_failover_id);
+		/* inform all remote watchdog nodes that we are starting the failover */
+		wd_failover_start();
 
 		/*
 		 * if not in replication mode/master slave mode, we treat this a restart request.
@@ -1577,9 +1680,6 @@ static void failover(void)
 					ereport(LOG,
 							(errmsg("invalid failback request, status: [%d] of node id : %d is invalid for failback",BACKEND_INFO(node_id).backend_status,node_id)));
 
-				if (wdInterlockingRes == FAILOVER_RES_I_AM_LOCK_HOLDER)
-					wd_end_failover_interlocking(wd_failover_id);
-
 				continue;
 			}
 
@@ -1592,24 +1692,18 @@ static void failover(void)
 			all_backend_down = check_all_backend_down();
 
 			BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
-			(void)write_status_file();
-
-			/* Aquire failback start command lock */
-			if (wdInterlockingRes == FAILOVER_RES_I_AM_LOCK_HOLDER)
+			if (!(request_details & REQ_DETAIL_UPDATE))
 			{
+				/* The request is a proper failbak request
+				 * and not because of the update status of quarantined node
+				 */
+				(void)write_status_file();
+
 				trigger_failover_command(node_id, pool_config->failback_command,
 											MASTER_NODE_ID, get_next_master_node(), PRIMARY_NODE_ID);
-				wd_failover_lock_release(FAILBACK_LOCK, wd_failover_id);
 			}
-			else
-			{
-				/*
-				 * Okay we are not allowed to execute the failover command
-				 * so we need to wait till the one who is executing the command
-				 * finish with it.
-				 */
-				wd_wait_until_command_complete_or_timeout(FAILBACK_LOCK,wd_failover_id);
-			}
+
+			sync_required = true;
 		}
 		else if (reqkind == PROMOTE_NODE_REQUEST)
 		{
@@ -1624,28 +1718,36 @@ static void failover(void)
 			{
 				ereport(LOG,
 						(errmsg("failover: no backends are promoted")));
-				if (wdInterlockingRes == FAILOVER_RES_I_AM_LOCK_HOLDER)
-					wd_end_failover_interlocking(wd_failover_id);
 				continue;
 			}
 		}
-		else	/* NODE_DOWN_REQUEST */
+		else	/* NODE_DOWN_REQUEST && NODE_QUARANTINE_REQUEST*/
 		{
 			int cnt = 0;
 
 			for (i = 0; i < node_count; i++)
 			{
-				if (node_id_set[i] != -1 &&
+				if (node_id_set[i] != -1 && ( BACKEND_INFO(node_id_set[i]).quarantine ==true ||
 					((RAW_MODE && VALID_BACKEND_RAW(node_id_set[i])) ||
-					 VALID_BACKEND(node_id_set[i])))
+					 VALID_BACKEND(node_id_set[i]))))
 				{
 					ereport(LOG,
-							(errmsg("starting degeneration. shutdown host %s(%d)",
+							(errmsg("starting %s. shutdown host %s(%d)",
+							(reqkind == NODE_QUARANTINE_REQUEST)?"quarantine":"degeneration",
 							 BACKEND_INFO(node_id_set[i]).backend_hostname,
 							 BACKEND_INFO(node_id_set[i]).backend_port)));
 
 					BACKEND_INFO(node_id_set[i]).backend_status = CON_DOWN;	/* set down status */
-					(void)write_status_file();
+
+					if (reqkind == NODE_QUARANTINE_REQUEST)
+					{
+						BACKEND_INFO(node_id_set[i]).quarantine = true;
+					}
+					else
+					{
+						BACKEND_INFO(node_id_set[i]).quarantine = false;
+						(void)write_status_file();
+					}
 
 					/* save down node */
 					nodes[node_id_set[i]] = 1;
@@ -1657,10 +1759,6 @@ static void failover(void)
 			{
 				ereport(LOG,
 						(errmsg("failover: no backends are degenerated")));
-
-				if (wdInterlockingRes == FAILOVER_RES_I_AM_LOCK_HOLDER)
-					wd_end_failover_interlocking(wd_failover_id);
-
 				continue;
 			}
 		}
@@ -1710,7 +1808,7 @@ static void failover(void)
 		 * NODE_DOWN_REQUEST and it's actually a switch over request, we don't
 		 * need to restart all children, except the node is primary.
 		 */
-		else if (STREAM && reqkind == NODE_DOWN_REQUEST &&
+		else if (STREAM && (reqkind == NODE_DOWN_REQUEST || reqkind == NODE_QUARANTINE_REQUEST) &&
 				 request_details & REQ_DETAIL_SWITCHOVER && node_id != PRIMARY_NODE_ID)
 		{
 			ereport(LOG,
@@ -1776,36 +1874,36 @@ static void failover(void)
 			need_to_restart_children = true;
 			partial_restart = false;
 		}
-		if (wdInterlockingRes == FAILOVER_RES_I_AM_LOCK_HOLDER)
+		/* Exec failover_command if needed
+		 * We do not execute failover when request is quarantine type
+		 */
+		if (reqkind == NODE_DOWN_REQUEST)
 		{
-			/* Exec failover_command if needed */
 			for (i = 0; i < pool_config->backend_desc->num_backends; i++)
 			{
 				if (nodes[i])
+				{
 					trigger_failover_command(i, pool_config->failover_command,
 												MASTER_NODE_ID, new_master, PRIMARY_NODE_ID);
+					sync_required = true;
+				}
 			}
-			wd_failover_lock_release(FAILOVER_LOCK, wd_failover_id);
 		}
-		else
-		{
-			wd_wait_until_command_complete_or_timeout(FAILOVER_LOCK, wd_failover_id);
-		}
-
-	/* no need to wait since it will be done in reap_handler */
-#ifdef NOT_USED
-		while (wait(NULL) > 0)
-			;
-
-		if (errno != ECHILD)
-			ereport(LOG,
-				(errmsg("failover_handler: wait() failed. reason:%s", strerror(errno))));
-
-#endif
 
 		if (reqkind == PROMOTE_NODE_REQUEST && VALID_BACKEND(node_id))
+		{
 			new_primary = node_id;
-
+		}
+		else if (reqkind == NODE_QUARANTINE_REQUEST)
+		{
+			/* if the quarantine node was the primary node
+			 * set the newprimary to -1 (invalid)
+			 */
+			if (Req_info->primary_node_id == node_id)
+				new_primary = -1;
+			else
+				new_primary =  find_primary_node_repeatedly();
+		}
 		/*
 		 * If the down node was a standby node in streaming replication
 		 * mode, we can avoid calling find_primary_node_repeatedly() and
@@ -1821,8 +1919,9 @@ static void failover(void)
 				new_primary =  find_primary_node_repeatedly();
 		}
 		else
+		{
 			new_primary =  find_primary_node_repeatedly();
-
+		}
 		/*
 		 * If follow_master_command is provided and in master/slave
 		 * streaming replication mode, we start degenerating all backends
@@ -1874,22 +1973,10 @@ static void failover(void)
 			}
 		}
 
-		/*
-		 * follow master command also uses the same locks used by trigring command
-		 */
-		if (wdInterlockingRes == FAILOVER_RES_I_AM_LOCK_HOLDER)
+		if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
 		{
-			if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
-			{
-				follow_pid = fork_follow_child(Req_info->master_node_id, new_primary,
-											Req_info->primary_node_id);
-			}
-			wd_failover_lock_release(FOLLOW_MASTER_LOCK, wd_failover_id);
-		}
-		else
-		{
-			wd_wait_until_command_complete_or_timeout(FOLLOW_MASTER_LOCK, wd_failover_id);
-
+			follow_pid = fork_follow_child(Req_info->master_node_id, new_primary,
+										Req_info->primary_node_id);
 		}
 
 		/* Save primary node id */
@@ -1900,6 +1987,7 @@ static void failover(void)
 		if (new_master >= 0)
 		{
 			Req_info->master_node_id = new_master;
+			sync_required = true;
 			ereport(LOG,
 					(errmsg("failover: set new master node: %d", Req_info->master_node_id)));
 		}
@@ -1977,8 +2065,8 @@ static void failover(void)
 		 */
 		kill(worker_pid, SIGUSR1);
 
-		if (wdInterlockingRes == FAILOVER_RES_I_AM_LOCK_HOLDER)
-			wd_end_failover_interlocking(wd_failover_id);
+		if (sync_required)
+			wd_failover_end();
 
 		if (reqkind == NODE_UP_REQUEST)
 		{
@@ -1998,12 +2086,14 @@ static void failover(void)
 		else
 		{
 			/* Temporary black magic. Without this regression 055 does not finish */
-			fprintf(stderr, "failover done. shutdown host %s(%d)",
+			fprintf(stderr, "%s done. shutdown host %s(%d)",
+					(reqkind == NODE_DOWN_REQUEST)?"failover":"quarantine",
 					 BACKEND_INFO(node_id).backend_hostname,
 					BACKEND_INFO(node_id).backend_port);
 
 			ereport(LOG,
-					(errmsg("failover done. shutdown host %s(%d)",
+					(errmsg("%s done. shutdown host %s(%d)",
+					(reqkind == NODE_DOWN_REQUEST)?"failover":"quarantine",
 					 BACKEND_INFO(node_id).backend_hostname,
 					 BACKEND_INFO(node_id).backend_port)));
 		}
@@ -3396,6 +3486,43 @@ int pool_frontend_exists(void)
 	return -1;
 }
 
+static void degenerate_all_quarantine_nodes(void)
+{
+	int i;
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (BACKEND_INFO(i).quarantine && BACKEND_INFO(i).backend_status == CON_DOWN)
+		{
+			/* just send the request to watchdog */
+			if (wd_degenerate_backend_set(&i, 1, REQ_DETAIL_UPDATE) == FAILOVER_RES_PROCEED)
+				register_node_operation_request(NODE_DOWN_REQUEST, &i, 1, REQ_DETAIL_WATCHDOG | REQ_DETAIL_SWITCHOVER);
+		}
+	}
+}
+
+static void update_backend_quarantine_status(void)
+{
+	/* Reset the quarantine flag from each backend and
+	 * set it to con_wait
+	 */
+	int i;
+	WD_STATES wd_state = get_watchdog_local_node_state();
+
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (BACKEND_INFO(i).quarantine && BACKEND_INFO(i).backend_status == CON_DOWN)
+		{
+			BACKEND_INFO(i).quarantine = false;
+			/* send the failback request for the node
+			 * we also set the watchdog flag because we we eventually send the sync
+			 * message to all standby nodes
+			 */
+			if (wd_state == WD_COORDINATOR)
+				send_failback_request(i,false, REQ_DETAIL_UPDATE | REQ_DETAIL_WATCHDOG);
+		}
+	}
+}
+
 /*
  * The function fetch the current status of all configured backend
  * nodes from the MASTER/COORDINATOR watchdog Pgpool-II and synchronize the
@@ -3461,9 +3588,12 @@ static void sync_backend_from_watchdog(void)
 		Req_info->primary_node_id = backendStatus->primary_node_id;
 		primary_changed = true;
 	}
-	/* update the local backend status*/
+	/* update the local backend status
+	 * Also remove quarantine flags
+	 */
 	for (i = 0; i < backendStatus->node_count; i++)
 	{
+		BACKEND_INFO(i).quarantine = false;
 		if (backendStatus->backend_status[i] == CON_DOWN)
 		{
 			if (BACKEND_INFO(i).backend_status != CON_DOWN)

@@ -58,6 +58,14 @@
 #include "watchdog/wd_ipc_commands.h"
 #include "parser/stringinfo.h"
 
+/* These defines enables the consensus building feature
+ * in watchdog for node failover operations
+ * We can also take these to the configure script
+ */
+#define NODE_UP_REQUIRE_CONSENSUS
+#define NODE_DOWN_REQUIRE_CONSENSUS
+#define NODE_PROMOTE_REQUIRE_CONSENSUS
+
 typedef enum IPC_CMD_PREOCESS_RES
 {
 	IPC_CMD_COMPLETE,
@@ -83,7 +91,7 @@ typedef enum IPC_CMD_PREOCESS_RES
 												 * remote watchdog node
 												 */
 #define	FAILOVER_COMMAND_FINISH_TIMEOUT		15	/* timeout in seconds to wait for Pgpool-II to
-												 * send the finish failover command
+												 * build consensus for failover
 												 */
 
 
@@ -107,6 +115,10 @@ typedef enum IPC_CMD_PREOCESS_RES
 #define WD_POOL_CONFIG_DATA					'Z'
 #define WD_CMD_REPLY_IN_DATA				'-'
 #define WD_CLUSTER_SERVICE_MESSAGE			'#'
+
+#define WD_FAILOVER_START					'F'
+#define WD_FAILOVER_END						'H'
+#define WD_FAILOVER_WAITING_FOR_CONSENSUS	'K'
 
 /*Cluster Service Message Types */
 #define CLUSTER_QUORUM_LOST					'L'
@@ -150,6 +162,7 @@ packet_types all_packet_types[] = {
 	{WD_GET_RUNTIME_VARIABLE_VALUE, "GET WD RUNTIME VARIABLE VALUE"},
 	{WD_CMD_REPLY_IN_DATA, "COMMAND REPLY IN DATA"},
 	{WD_FAILOVER_LOCKING_REQUEST,"FAILOVER LOCKING REQUEST"},
+	{WD_FAILOVER_INDICATION,"FAILOVER INDICATION"},
 	{WD_CLUSTER_SERVICE_MESSAGE, "CLUSTER SERVICE MESSAGE"},
 	{WD_REGISTER_FOR_NOTIFICATION, "REGISTER FOR NOTIFICATION"},
 	{WD_NODE_STATUS_CHANGE_COMMAND, "NODE STATUS CHANGE"},
@@ -255,14 +268,6 @@ typedef struct WDCommandTimerData
 }WDCommandTimerData;
 
 
-typedef struct InterlockingNode
-{
-	WatchdogNode*		lockHolderNode;
-	bool				locks[MAX_FAILOVER_LOCKS];
-	struct timeval		lock_time;
-}InterlockingNode;
-
-
 typedef enum WDCommandStatus
 {
 	COMMAND_EMPTY,
@@ -313,7 +318,6 @@ typedef struct wd_cluster
 	WatchdogNode*		localNode;
 	WatchdogNode*		remoteNodes;
 	WDClusterMasterInfo	clusterMasterInfo;
-	InterlockingNode	interlockingNode;
 	int					remoteNodeCount;
 	int					quorum_status;
 	unsigned int		nextCommandID;
@@ -323,6 +327,7 @@ typedef struct wd_cluster
 	int				network_monitor_sock;
 	bool			clusterInitialized;
 	bool			ipc_auth_needed;
+	int				current_failover_id;
 	List			*unidentified_socks;
 	List			*notify_clients;
 	List			*ipc_command_socks;
@@ -337,10 +342,12 @@ typedef struct WDFailoverObject
 {
 	int id;
 	POOL_REQUEST_KIND reqKind;
+	unsigned char reqFlags;
 	int nodesCount;
 	unsigned int failoverID;
 	int *nodeList;
-	WatchdogNode* wdRequestingNode;
+	List* requestingNodes;
+	int request_count;
 	struct timeval	startTime;
 	int state;
 }WDFailoverObject;
@@ -348,12 +355,14 @@ typedef struct WDFailoverObject
 
 static void process_remote_failover_command_on_coordinator(WatchdogNode* wdNode, WDPacketData* pkt);
 static WDFailoverObject* get_failover_object(POOL_REQUEST_KIND reqKind, int nodesCount, int *nodeList);
-static WDFailoverObject* get_failover_object_by_id(unsigned int failoverID);
 static bool does_int_array_contains_value(int *intArray, int count, int value);
-static bool remove_failover_object_by_id(unsigned int failoverID);
-static void remove_failovers_from_node(WatchdogNode* wdNode);
+static void clear_all_failovers(void);
 static void remove_failover_object(WDFailoverObject* failoverObj);
 static void service_expired_failovers(void);
+static WDFailoverObject* add_failover(POOL_REQUEST_KIND reqKind, int *node_id_list, int node_count, WatchdogNode *wdNode,
+									  unsigned char flags, bool *duplicate);
+static WDFailoverCMDResults compute_failover_consensus(POOL_REQUEST_KIND reqKind,int *node_id_list,
+													   int node_count, unsigned char *flags, WatchdogNode *wdNode);
 
 static int send_command_packet_to_remote_nodes(WDCommandData* ipcCommand, bool source_included);
 static void wd_command_is_complete(WDCommandData* ipcCommand);
@@ -477,10 +486,9 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDCommandData* 
 static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDCommandData* ipcCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_get_runtime_variable_value_request(WDCommandData* ipcCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_online_recovery(WDCommandData* ipcCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_failover_locking_cmd(WDCommandData *ipcCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData *ipcCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDCommandData *ipcCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData* ipcCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_failover_command_on_coordinator(WDCommandData* ipcCommand);
 static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandData* ipcCommand);
 
 static bool write_ipc_command_with_result_data(WDCommandData* ipcCommand, char type, char* data, int len);
@@ -488,18 +496,12 @@ static bool write_ipc_command_with_result_data(WDCommandData* ipcCommand, char t
 static void process_wd_func_commands_for_timer_events(void);
 static void add_wd_command_for_timer_events(unsigned int expire_secs, bool need_tics, WDFunctionCommandData* wd_func_command);
 static bool reply_is_received_for_pgpool_replicate_command(WatchdogNode* wdNode, WDPacketData* pkt, WDCommandData* ipcCommand);
-static bool process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt, char* func_name, int node_count, int* node_id_list, unsigned int failover_id);
-static void process_pgpool_remote_failover_command(WatchdogNode* wdNode, WDPacketData* pkt);
+
 static void process_remote_online_recovery_command(WatchdogNode* wdNode, WDPacketData* pkt);
 
+static WDFailoverCMDResults failover_end_indication(WDCommandData* ipcCommand);
+static WDFailoverCMDResults failover_start_indication(WDCommandData* ipcCommand);
 
-static IPC_CMD_PREOCESS_RES process_failover_locking_requests_on_cordinator(WDCommandData* ipcCommand);
-static WDFailoverCMDResults node_is_asking_for_failover_end(WatchdogNode* wdNode, WDPacketData* pkt, unsigned int failoverID);
-static WDFailoverCMDResults node_is_asking_for_failover_start(WatchdogNode* wdNode, WDPacketData* pkt, unsigned int failoverID);
-static WDFailoverCMDResults node_is_asking_for_failover_lock_status(WatchdogNode* wdNode, WDPacketData* pkt,
-																	WDFailoverLock failoverLock, unsigned int failoverID);
-static WDFailoverCMDResults node_is_asking_for_failover_lock_release(WatchdogNode* wdNode, WDPacketData* pkt,
-																	 WDFailoverLock failoverLock, unsigned int failoverID);
 static void wd_system_will_go_down(int code, Datum arg);
 static void verify_pool_configurations(WatchdogNode* wdNode, POOL_CONFIG* config);
 
@@ -1823,8 +1825,8 @@ static IPC_CMD_PREOCESS_RES process_IPC_command(WDCommandData* ipcCommand)
 			return process_IPC_online_recovery(ipcCommand);
 			break;
 
-		case WD_FAILOVER_LOCKING_REQUEST:
-			return process_IPC_failover_locking_cmd(ipcCommand);
+		case WD_FAILOVER_INDICATION:
+			return process_IPC_failover_indication(ipcCommand);
 
 		case WD_GET_MASTER_DATA_REQUEST:
 			return process_IPC_data_request_from_master(ipcCommand);
@@ -1879,7 +1881,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_get_runtime_variable_value_request(WDCom
 	else if (strcasecmp(WD_RUNTIME_VAR_QUORUM_STATE, requestVarName) == 0)
 	{
 		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA_TYPE, VALUE_DATA_TYPE_INT);
-		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA, g_cluster.quorum_status);
+		jw_put_int(jNode, WD_JSON_KEY_VALUE_DATA, WD_MASTER_NODE?WD_MASTER_NODE->quorum_status:-2);
 	}
 	else if (strcasecmp(WD_RUNTIME_VAR_ESCALATION_STATE, requestVarName) == 0)
 	{
@@ -2023,68 +2025,35 @@ static bool fire_node_status_event(int nodeID, int nodeStatus)
 	return true;
 }
 
-static WDFailoverObject* get_failover_object_by_id(unsigned int failoverID)
-{
-	ListCell *lc;
-	foreach(lc, g_cluster.wdCurrentFailovers)
-	{
-		WDFailoverObject* failoverObj = lfirst(lc);
-		if (failoverObj)
-		{
-			if (failoverObj->failoverID == failoverID)
-			{
-				return failoverObj;
-			}
-		}
-	}
-	return NULL;
-}
-
+/*
+ * Free the failover object
+ */
 static void remove_failover_object(WDFailoverObject* failoverObj)
 {
 	ereport(DEBUG1,
-			(errmsg("removing failover object from \"%s\" with ID:%d", failoverObj->wdRequestingNode->nodeName,failoverObj->failoverID)));
+			(errmsg("removing failover request from %d nodes with ID:%d", failoverObj->request_count,failoverObj->failoverID)));
 	g_cluster.wdCurrentFailovers = list_delete_ptr(g_cluster.wdCurrentFailovers,failoverObj);
+	list_free(failoverObj->requestingNodes);
 	pfree(failoverObj->nodeList);
 	pfree(failoverObj);
 }
 
-static bool remove_failover_object_by_id(unsigned int failoverID)
-{
-	WDFailoverObject* failoverObj = get_failover_object_by_id(failoverID);
-	if (failoverObj)
-	{
-		remove_failover_object(failoverObj);
-		return true;
-	}
-	return false;
-}
 
 /* if the wdNode is NULL. The function removes all failover objects */
-static void remove_failovers_from_node(WatchdogNode* wdNode)
+static void clear_all_failovers(void)
 {
 	ListCell *lc;
-	List *failovers_to_del = NULL;
+	List *failovers_to_del = list_copy(g_cluster.wdCurrentFailovers);
 
-	foreach(lc, g_cluster.wdCurrentFailovers)
-	{
-		WDFailoverObject* failoverObj = lfirst(lc);
-		if (failoverObj)
-		{
-			if (wdNode == NULL || failoverObj->wdRequestingNode == wdNode)
-			{
-				failovers_to_del = lappend(failovers_to_del,failoverObj);
-			}
-		}
-	}
-
-	/* delete the failover objects */
+	ereport(DEBUG1,
+		(errmsg("Removing all failover objects")));
 
 	foreach(lc, failovers_to_del)
 	{
 		WDFailoverObject* failoverObj = lfirst(lc);
 		remove_failover_object(failoverObj);
 	}
+	list_free(failovers_to_del);
 }
 
 /* Remove the over stayed failover objects */
@@ -2108,8 +2077,8 @@ static void service_expired_failovers(void)
 			{
 				failovers_to_del = lappend(failovers_to_del,failoverObj);
 				ereport(DEBUG1,
-					(errmsg("failover object from \"%s\" with ID:%d is timeout", failoverObj->wdRequestingNode->nodeName,failoverObj->failoverID),
-						 errdetail("adding the failover object for removal")));
+					(errmsg("failover request from %d nodes with ID:%d is expired", failoverObj->request_count,failoverObj->failoverID),
+						 errdetail("marking the failover object for removal")));
 
 			}
 		}
@@ -2121,6 +2090,7 @@ static void service_expired_failovers(void)
 		WDFailoverObject* failoverObj = lfirst(lc);
 		remove_failover_object(failoverObj);
 	}
+	list_free(failovers_to_del);
 }
 
 static bool does_int_array_contains_value(int *intArray, int count, int value)
@@ -2204,18 +2174,6 @@ static void process_remote_failover_command_on_coordinator(WatchdogNode* wdNode,
 	}
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_failover_command_on_coordinator(WDCommandData* ipcCommand)
-{
-	if (get_local_node_state() != WD_COORDINATOR)
-		return IPC_CMD_ERROR; /* should never hapen*/
-
-	ereport(LOG,
-			(errmsg("watchdog received the failover command from local pgpool-II on IPC interface")));
-
-	return process_failover_command_on_coordinator(ipcCommand);
-}
-
-
 static bool reply_to_failove_command(WDCommandData* ipcCommand, WDFailoverCMDResults cmdResult, unsigned int failoverID)
 {
 	bool ret = false;
@@ -2246,7 +2204,160 @@ static bool reply_to_failove_command(WDCommandData* ipcCommand, WDFailoverCMDRes
 }
 
 /*
- * The Function forwards the failover command to all standby nodes.
+ * This function process the failover command and decides
+ * about the execution of failover command.
+ */
+
+static WDFailoverCMDResults compute_failover_consensus(POOL_REQUEST_KIND reqKind,int *node_id_list, int node_count, unsigned char *flags, WatchdogNode *wdNode)
+{
+#ifndef NODE_UP_REQUIRE_CONSENSUS
+	if (reqKind == NODE_UP_REQUEST)
+		return FAILOVER_RES_PROCEED;
+#endif
+#ifndef NODE_DOWN_REQUIRE_CONSENSUS
+	if (reqKind == NODE_DOWN_REQUEST)
+		return FAILOVER_RES_PROCEED;
+#endif
+#ifndef NODE_PROMOTE_REQUIRE_CONSENSUS
+	if (reqKind == PROMOTE_NODE_REQUEST)
+		return FAILOVER_RES_PROCEED;
+#endif
+
+	if (pool_config->failover_when_quorum_exists == false)
+	{
+		/* No need for any calculation, We do not need a quorum for failover */
+		ereport(LOG,(
+				errmsg("we do not need quorum to hold to proceed with failover"),
+					 errdetail("proceeding with the failover"),
+					 errhint("failover_when_quorum_exists is set to false")));
+
+		return FAILOVER_RES_PROCEED;
+	}
+	if (*flags & REQ_DETAIL_CONFIRMED)
+	{
+		/* Check the request flags, If it asks to bypass the quorum status */
+		ereport(LOG,(
+			errmsg("The failover request does not need quorum to hold"),
+					 errdetail("proceeding with the failover"),
+					 errhint("REQ_DETAIL_CONFIRMED")));
+		return FAILOVER_RES_PROCEED;
+	}
+	update_quorum_status();
+	if (g_cluster.quorum_status < 0)
+	{
+		/* quorum is must and it is not present at the moment */
+		ereport(LOG,(
+				errmsg("failover requires the quorum to hold, which is not present at the moment"),
+					 errdetail("Rejecting the failover request")));
+		return FAILOVER_RES_NO_QUORUM;
+	}
+
+	/* So we reached here means quorum is present
+	 * Now come to dificult part of enusring the consensus
+	 */
+	if (pool_config->failover_require_consensus == true)
+	{
+		/* Record the failover.*/
+		bool duplicate = false;
+		WDFailoverObject *failoverObj = add_failover(reqKind, node_id_list, node_count, wdNode, *flags, &duplicate);
+		if (failoverObj->request_count <= get_mimimum_nodes_required_for_quorum())
+		{
+			ereport(LOG,(
+					errmsg("failover requires the majority vote, waiting for consensus"),
+						 errdetail("failover request noted")));
+			if (duplicate && !pool_config->enable_multiple_failover_requests_from_node)
+				return FAILOVER_RES_CONSENSUS_MAY_FAIL;
+			else
+				return FAILOVER_RES_BUILDING_CONSENSUS;
+		}
+		else
+		{
+			/* We have received enough votes for this failover */
+			ereport(LOG,(
+					errmsg("we have got the consensus to perform the failover"),
+						 errdetail("%d node(s) voted in the favor",failoverObj->request_count)));
+			/* restor the flag value to the one from the first call */
+			*flags = failoverObj->reqFlags;
+			/* remove this object, It is no longer needed */
+			remove_failover_object(failoverObj);
+			return FAILOVER_RES_PROCEED;
+		}
+	}
+	else
+	{
+		ereport(LOG,(
+				errmsg("we do not require majority votes to proceed with failover"),
+					errdetail("proceeding with the failover"),
+					 errhint("failover_require_consensus is set to false")));
+	}
+	return FAILOVER_RES_PROCEED;
+}
+
+static WDFailoverObject* add_failover(POOL_REQUEST_KIND reqKind, int *node_id_list, int node_count, WatchdogNode *wdNode,
+									  unsigned char flags, bool *duplicate)
+{
+	MemoryContext oldCxt;
+	/* Find the failover */
+	WDFailoverObject *failoverObj = get_failover_object(reqKind, node_count, node_id_list);
+	*duplicate = false;
+	if (failoverObj)
+	{
+		ListCell *lc;
+		/* search the node if it is a duplicate request */
+		foreach(lc, failoverObj->requestingNodes)
+		{
+			WatchdogNode* reqWdNode = lfirst(lc);
+			if (wdNode == reqWdNode)
+			{
+				*duplicate = true;
+				/* The failover request is duplicate */
+				if (pool_config->enable_multiple_failover_requests_from_node)
+				{
+					failoverObj->request_count++;
+					ereport(LOG,(
+							errmsg("duplicate failover request from \"%s\" node",wdNode->nodeName),
+								 errdetail("Pgpool-II can send multiple failover requests for same node"),
+								 errhint("enable_multiple_failover_requests_from_node is enabled")));
+				}
+				else
+				{
+					ereport(LOG,(
+							errmsg("Duplicate failover request from \"%s\" node",wdNode->nodeName),
+								 errdetail("request ignored")));
+				}
+				return failoverObj;
+			}
+		}
+	}
+	else
+	{
+		oldCxt = MemoryContextSwitchTo(TopMemoryContext);
+		failoverObj = palloc0(sizeof(WDFailoverObject));
+		failoverObj->reqKind = reqKind;
+		failoverObj->requestingNodes = NULL;
+		failoverObj->nodesCount = node_count;
+		failoverObj->reqFlags = flags;
+		failoverObj->request_count = 0;
+		if (node_count > 0)
+		{
+			failoverObj->nodeList = palloc(sizeof(int) * node_count);
+			memcpy(failoverObj->nodeList, node_id_list, sizeof(int) * node_count);
+		}
+		failoverObj->failoverID = get_next_commandID();
+		gettimeofday(&failoverObj->startTime, NULL);
+		g_cluster.wdCurrentFailovers = lappend(g_cluster.wdCurrentFailovers,failoverObj);
+		MemoryContextSwitchTo(oldCxt);
+	}
+
+	failoverObj->request_count++;
+	oldCxt = MemoryContextSwitchTo(TopMemoryContext);
+	failoverObj->requestingNodes = lappend(failoverObj->requestingNodes,wdNode);
+	MemoryContextSwitchTo(oldCxt);
+	return failoverObj;
+}
+
+/*
+ * The function processes all failover commands on master node
  */
 static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandData* ipcCommand)
 {
@@ -2254,22 +2365,15 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 	int node_count = 0;
 	int *node_id_list = NULL;
 	bool ret = false;
-	WDFailoverObject* failoverObj;
+	unsigned char flags;
 	POOL_REQUEST_KIND reqKind;
+	WDFailoverCMDResults res;
 
 	if (get_local_node_state() != WD_COORDINATOR)
 		return IPC_CMD_ERROR; /* should never happen*/
 
-	/*
-	 * The coordinator node
-	 * Forward this command to all standby nodes.
-	 * Ask the caller to proceed with failover
-	 * but first check if this failover is already requested
-	 * by some other node.
-	 */
-
 	ret = parse_wd_node_function_json(ipcCommand->sourcePacket.data, ipcCommand->sourcePacket.len,
-									  &func_name, &node_id_list, &node_count);
+									  &func_name, &node_id_list, &node_count, &flags);
 	if (ret == false)
 	{
 		ereport(LOG,(
@@ -2297,129 +2401,77 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 					ipcCommand->commandSource == COMMAND_SOURCE_IPC?
 					"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName)));
 
-	if (get_cluster_node_count() == 0)
+	res = compute_failover_consensus(reqKind, node_id_list, node_count, &flags, ipcCommand->sourceWdNode);
+
+	if (res == FAILOVER_RES_PROCEED)
 	{
 		/*
-		 * Since I am the only node in the cluster so nothing
-		 * we need to do here
+		 * We are allowed to proceed with the failover, now
+		 * if the command was originated by the remote node,
+		 * Kick the failover function on the Pgpool-II main process
+		 * and inform the remote caller to wait for sync
 		 */
-		ereport(LOG,(
-			errmsg("I am the only pgpool-II node in the watchdog cluster"),
-				errdetail("no need to propagate the failover command [%s]",func_name)));
-		reply_to_failove_command(ipcCommand, FAILOVER_RES_PROCEED, 0);
-		return IPC_CMD_COMPLETE;
-	}
-
-	if (ipcCommand->commandSource == COMMAND_SOURCE_REMOTE  && Req_info->switching)
-	{
-		/*
-		 * check if the failover is allowed before doing anything
-		 */
-		ereport(LOG,
-			(errmsg("failover command [%s] request from pgpool-II node \"%s\" is rejected because of switching",
-					func_name,
-					ipcCommand->sourceWdNode->nodeName)));
-		reply_to_failove_command(ipcCommand, FAILOVER_RES_NOT_ALLOWED, 0);
-		return IPC_CMD_COMPLETE;
-	}
-
-	/*
-	 * check if the same failover is already issued to the main
-	 * process
-	 */
-	failoverObj = get_failover_object(reqKind, node_count, node_id_list);
-	if (failoverObj)
-	{
-		ereport(LOG,
-			(errmsg("failover command [%s] from %s is ignored",
-						func_name,
-						ipcCommand->commandSource == COMMAND_SOURCE_IPC?
-						"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName),
-			 errdetail("similar failover with ID:%d is already in progress",failoverObj->failoverID)));
-
-		/* Same failover is already in progress */
-		reply_to_failove_command(ipcCommand, FAILOVER_RES_ALREADY_ISSUED, 0);
-		return IPC_CMD_COMPLETE;
-	}
-	else
-	{
-		/* No similar failover is in progress */
-		MemoryContext oldCxt;
-		ereport(DEBUG1,
-				(errmsg("proceeding with the failover command [%s] request from %s",
-						func_name,
-						ipcCommand->commandSource == COMMAND_SOURCE_IPC?
-						"local pgpool-II":ipcCommand->sourceWdNode->nodeName),
-				 errdetail("no similar failover is in progress")));
-		/*
-		 * okay now ask all nodes to start failover
-		 */
-		wd_packet_shallow_copy(&ipcCommand->sourcePacket, &ipcCommand->commandPacket);
-		ipcCommand->commandPacket.type = WD_REMOTE_FAILOVER_REQUEST;
-		ipcCommand->sendToNode = NULL; /* command needs to be sent to all nodes */
-		set_next_commandID_in_message(&ipcCommand->commandPacket);
-
-		if (ipcCommand->commandSource != COMMAND_SOURCE_IPC)
+		if (ipcCommand->commandSource == COMMAND_SOURCE_REMOTE)
 		{
-			if (process_wd_command_function(ipcCommand->sourceWdNode, &ipcCommand->sourcePacket,
-										func_name, node_count, node_id_list, ipcCommand->commandPacket.command_id) == false)
-			{
-				return IPC_CMD_COMPLETE;
-			}
-		}
+			/* Set the flag indicating the failover request is originated by watchdog */
+			flags |= REQ_DETAIL_WATCHDOG;
 
-		/* send to all alive nodes */
-		ereport(LOG,
-			(errmsg("forwarding the failover request [%s] to all alive nodes",func_name),
-				 errdetail("watchdog cluster currently has %d connected remote nodes",get_cluster_node_count())));
-		send_command_packet_to_remote_nodes(ipcCommand, false);
+			if (reqKind == NODE_DOWN_REQUEST)
+				ret = degenerate_backend_set(node_id_list, node_count, flags);
+			else if (reqKind == NODE_UP_REQUEST)
+				ret = send_failback_request(node_id_list[0],false, flags);
+			else if (reqKind == PROMOTE_NODE_REQUEST)
+				ret = promote_backend(node_id_list[0], flags);
 
-		/* create a failover object. to make sure we know the node failovers
-		 * is already in progress
-		 */
-		oldCxt = MemoryContextSwitchTo(TopMemoryContext);
-		failoverObj = palloc0(sizeof(WDFailoverObject));
-		failoverObj->reqKind = reqKind;
-		failoverObj->nodesCount = node_count;
-		if (node_count > 0)
-		{
-			failoverObj->nodeList = palloc(sizeof(int) * node_count);
-			memcpy(failoverObj->nodeList, node_id_list, sizeof(int) * node_count);
-		}
-		failoverObj->failoverID = ipcCommand->commandPacket.command_id; /* use command id as failover id */
-		gettimeofday(&failoverObj->startTime, NULL);
-		failoverObj->wdRequestingNode = ipcCommand->sourceWdNode;
-		g_cluster.wdCurrentFailovers = lappend(g_cluster.wdCurrentFailovers,failoverObj);
-
-		MemoryContextSwitchTo(oldCxt);
-
-		/* For a moment just think it is successfully sent to all nodes.*/
-		if (ipcCommand->commandSource == COMMAND_SOURCE_IPC)
-		{
-			reply_to_failove_command(ipcCommand, FAILOVER_RES_PROCEED, failoverObj->failoverID);
-			return IPC_CMD_COMPLETE;
+			if (ret == true)
+				reply_to_failove_command(ipcCommand, FAILOVER_RES_WILL_BE_DONE, 0);
+			else
+				reply_to_failove_command(ipcCommand, FAILOVER_RES_ERROR, 0);
 		}
 		else
 		{
-			if (get_cluster_node_count() <= 1)
-			{
-				/* Since its just 2 nodes cluster, and the only other
-				 * node is the one that actually issued the failover
-				 * so the command actually completes here
-				 */
-				return IPC_CMD_COMPLETE;
-			}
+			/*
+			 * It was the request from the local node,
+			 * Just reply the caller to get on with the failover
+			 */
+			reply_to_failove_command(ipcCommand, FAILOVER_RES_PROCEED, 0);
 		}
+		return IPC_CMD_COMPLETE;
+	}
+	else if (res == FAILOVER_RES_NO_QUORUM)
+	{
+		ereport(LOG,
+				(errmsg("failover command [%s] request from pgpool-II node \"%s\" is rejected because the watchdog cluster does not hold the quorum",
+						func_name,
+						ipcCommand->sourceWdNode->nodeName)));
+	}
+	else if (res == FAILOVER_RES_BUILDING_CONSENSUS)
+	{
+		ereport(LOG,
+				(errmsg("failover command [%s] request from pgpool-II node \"%s\" is queued, waiting for the confirmation from other nodes",
+						func_name,
+						ipcCommand->sourceWdNode->nodeName)));
+		/*
+		 * Ask all the nodes to re-send the failover request for
+		 * the quarantined nodes.
+		 */
+		send_message_of_type(NULL, WD_FAILOVER_WAITING_FOR_CONSENSUS, NULL);
+		/* Also if the command was originated by remote node, check local quarantine space as-well*/
+		if (ipcCommand->commandSource == COMMAND_SOURCE_REMOTE)
+			register_inform_quarantine_nodes_req();
 	}
 
-	return IPC_CMD_PROCESSING;
+	reply_to_failove_command(ipcCommand, res, 0);
+	return IPC_CMD_COMPLETE;
 }
 
 static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData* ipcCommand)
 {
 	if (get_local_node_state() == WD_COORDINATOR)
 	{
-		return process_IPC_failover_command_on_coordinator(ipcCommand);
+		ereport(LOG,
+				(errmsg("watchdog received the failover command from local pgpool-II on IPC interface")));
+		return process_failover_command_on_coordinator(ipcCommand);
 	}
 	else if (get_local_node_state() == WD_STANDBY)
 	{
@@ -2448,12 +2500,14 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData* ipcComma
 			return IPC_CMD_PROCESSING;
 		}
 	}
-	/* we are not in stable state at the moment */
-	ereport(LOG,
-		(errmsg("unable to process the failover request received on IPC interface"),
-			 errdetail("this watchdog node has not joined the cluster yet"),
-				errhint("try again in few seconds")));
-
+	else
+	{
+		/* we are not in stable state at the moment */
+		ereport(LOG,
+			(errmsg("unable to process the failover request received on IPC interface"),
+				 errdetail("this watchdog node has not joined the cluster yet"),
+					errhint("try again in few seconds")));
+	}
 	return IPC_CMD_ERROR;
 }
 
@@ -2548,475 +2602,127 @@ static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDCommandData *
 	return IPC_CMD_TRY_AGAIN;
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_failover_locking_cmd(WDCommandData *ipcCommand)
+static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData *ipcCommand)
 {
+	WDFailoverCMDResults res = FAILOVER_RES_NOT_ALLOWED;
 	/*
 	 * if cluster or myself is not in stable state
 	 * just return cluster in transaction
 	 */
 	ereport(LOG,
-			(errmsg("received the failover command lock request from local pgpool-II on IPC interface")));
-	if (get_local_node_state() == WD_STANDBY)
-	{
-		/* I am a standby node, Just forward the request to coordinator */
-		wd_packet_shallow_copy(&ipcCommand->sourcePacket, &ipcCommand->commandPacket);
-		set_next_commandID_in_message(&ipcCommand->commandPacket);
+			(errmsg("received the failover indication from Pgpool-II on IPC interface")));
 
-		ipcCommand->sendToNode = WD_MASTER_NODE;
-		if (send_command_packet_to_remote_nodes(ipcCommand, true) <= 0)
+	if (get_local_node_state() == WD_COORDINATOR)
+	{
+		json_value* root;
+		int failoverState = -1;
+		if (ipcCommand->sourcePacket.data == NULL || ipcCommand->sourcePacket.len <= 0)
 		{
 			ereport(LOG,
-				(errmsg("unable to process the failover command lock request received on IPC interface"),
-					 errdetail("failed to forward the request to the master watchdog node \"%s\"",WD_MASTER_NODE->nodeName)));
-			return IPC_CMD_ERROR;
+					(errmsg("watchdog unable to process failover indication"),
+					 errdetail("invalid command packet")));
+			res = FAILOVER_RES_INVALID_FUNCTION;
+		}
+		root = json_parse(ipcCommand->sourcePacket.data,ipcCommand->sourcePacket.len);
+		if (root && root->type == json_object)
+		{
+			json_get_int_value_for_key(root, "FailoverFuncState", &failoverState);
 		}
 		else
 		{
-			/*
-			 * wait for the result
-			 */
 			ereport(LOG,
-					(errmsg("failover command lock request from local pgpool-II node received on IPC interface is forwarded to master watchdog node \"%s\"",
-							WD_MASTER_NODE->nodeName),
-					 errdetail("waiting for the reply...")));
-			return IPC_CMD_PROCESSING;
+					(errmsg("unable to process failover indication"),
+					 errdetail("invalid json data in command packet")));
+			res = FAILOVER_RES_INVALID_FUNCTION;
 		}
-	}
-	else if (get_local_node_state() == WD_COORDINATOR)
-	{
-		/*
-		 * If I am coordinator, Just process the request locally
-		 */
-		return process_failover_locking_requests_on_cordinator(ipcCommand);
-	}
+		if (root)
+			json_value_free(root);
 
-	/* we are not in any stable state at the moment */
-	ereport(LOG,
-		(errmsg("unable to process the failover command lock request received on IPC interface"),
-			 errdetail("this watchdog node has not joined the cluster yet"),
-				errhint("try again in few seconds")));
-	return IPC_CMD_TRY_AGAIN;
-}
-
-static void process_remote_failover_locking_request(WatchdogNode* wdNode, WDPacketData* pkt)
-{
-	ereport(LOG,
-			(errmsg("received the failover command lock request from remote pgpool-II node \"%s\"",wdNode->nodeName)));
-
-	if (get_local_node_state() != WD_COORDINATOR)
-	{
-		/* only lock holder can resign itself */
-		reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
-	}
-	else
-	{
-		IPC_CMD_PREOCESS_RES res;
-		WDCommandData* ipcCommand = create_command_object(pkt->len);
-		ipcCommand->sourcePacket.type = pkt->type;
-		ipcCommand->sourcePacket.len = pkt->len;
-		ipcCommand->sourcePacket.command_id = pkt->command_id;
-		if (pkt->len > 0)
-			memcpy(ipcCommand->sourcePacket.data, pkt->data, pkt->len);
-
-		ipcCommand->commandSource = COMMAND_SOURCE_REMOTE;
-		ipcCommand->sourceWdNode = wdNode;
-		gettimeofday(&ipcCommand->commandTime, NULL);
-
-		res = process_failover_locking_requests_on_cordinator(ipcCommand);
-		if (res == IPC_CMD_PROCESSING)
+		if (failoverState < 0 )
 		{
-			MemoryContext oldCxt = MemoryContextSwitchTo(TopMemoryContext);
-			g_cluster.ipc_commands = lappend(g_cluster.ipc_commands,ipcCommand);
-			MemoryContextSwitchTo(oldCxt);
+			ereport(LOG,
+				(errmsg("unable to process failover indication"),
+					 errdetail("invalid json data in command packet")));
+			res = FAILOVER_RES_INVALID_FUNCTION;
+		}
+		else if (failoverState == 0) /* start */
+		{
+			res = failover_start_indication(ipcCommand);
 		}
 		else
 		{
-			cleanUpIPCCommand(ipcCommand);
-		}
-	}
-}
-
-
-/*
- * process_failover_locking_requests_on_cordinator()
- * the function is the main processor of all interlocking related requests.
- * it parses the request json and executes the requested intelocking command
- */
-static IPC_CMD_PREOCESS_RES process_failover_locking_requests_on_cordinator(WDCommandData* ipcCommand)
-{
-	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
-	json_value* root;
-	int failoverLockID = -1;
-	unsigned int failoverID = 0;
-	char *syncRequestType;
-	WatchdogNode* wdNode;
-
-	if (get_local_node_state() != WD_COORDINATOR)
-		return IPC_CMD_ERROR;
-
-	if (ipcCommand->sourcePacket.data == NULL || ipcCommand->sourcePacket.len <= 0)
-	{
-		ereport(LOG,
-				(errmsg("unable to process failover command lock request from %s",
-						ipcCommand->commandSource == COMMAND_SOURCE_IPC?
-						"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName),
-				 errdetail("invalid command packet")));
-		reply_to_failove_command(ipcCommand, FAILOVER_RES_INVALID_FUNCTION, failoverID);
-		return IPC_CMD_COMPLETE;
-	}
-	/* parse the json*/
-	root = json_parse(ipcCommand->sourcePacket.data,ipcCommand->sourcePacket.len);
-	if (root && root->type == json_object)
-	{
-		syncRequestType = json_get_string_value_for_key(root, "SyncRequestType");
-		json_get_int_value_for_key(root, "FailoverLockID", &failoverLockID);
-		json_get_int_value_for_key(root, "WDFailoverID", (int*)&failoverID);
-		if (syncRequestType == NULL)
-		{
-			ereport(LOG,
-					(errmsg("unable to process failover command lock request from %s",
-							ipcCommand->commandSource == COMMAND_SOURCE_IPC?
-							"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName),
-					 errdetail("invalid data in command packet")));
-			return IPC_CMD_COMPLETE;
+			res = failover_end_indication(ipcCommand);
 		}
 	}
 	else
 	{
 		ereport(LOG,
-				(errmsg("unable to process failover command lock request from %s",
-						ipcCommand->commandSource == COMMAND_SOURCE_IPC?
-						"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName),
-				 errdetail("invalid json data in command packet")));
-		reply_to_failove_command(ipcCommand, FAILOVER_RES_INVALID_FUNCTION, failoverID);
-		return IPC_CMD_COMPLETE;
+				(errmsg("received the failover indication from Pgpool-II on IPC interface, but only master can do failover")));
 	}
-	
-	if (ipcCommand->commandSource == COMMAND_SOURCE_IPC)
-		wdNode = g_cluster.localNode;
-	else
-		wdNode = ipcCommand->sourceWdNode;
-
-	if (strcasecmp(WD_REQ_FAILOVER_START, syncRequestType) == 0)
-		res = node_is_asking_for_failover_start(wdNode, &ipcCommand->sourcePacket, failoverID);
-
-	else if (strcasecmp(WD_REQ_FAILOVER_END, syncRequestType) == 0)
-		res = node_is_asking_for_failover_end(wdNode, &ipcCommand->sourcePacket, failoverID);
-
-	else if (strcasecmp(WD_REQ_FAILOVER_RELEASE_LOCK, syncRequestType) == 0)
-		res = node_is_asking_for_failover_lock_release(wdNode, &ipcCommand->sourcePacket, failoverLockID, failoverID);
-
-	else if (strcasecmp(WD_REQ_FAILOVER_LOCK_STATUS, syncRequestType) == 0)
-		res = node_is_asking_for_failover_lock_status(wdNode, &ipcCommand->sourcePacket, failoverLockID, failoverID);
-
-	else
-	{
-		ereport(LOG,
-				(errmsg("unable to process failover command lock request from %s",
-						ipcCommand->commandSource == COMMAND_SOURCE_IPC?
-						"local pgpool-II on IPC interface":ipcCommand->sourceWdNode->nodeName),
-				 errdetail("invalid locking request type \"%s\"",syncRequestType)));
-		res = FAILOVER_RES_INVALID_FUNCTION;
-	}
-	reply_to_failove_command(ipcCommand, res, failoverID);
-
-	if (root)
-		json_value_free(root);
+	reply_to_failove_command(ipcCommand, res, 0);
 
 	return IPC_CMD_COMPLETE;
 }
 
-/*
- * node_is_asking_for_failover_start()
- * the function process the lock holding requests. If the lock holding node
- * is the same as the requesting node or no lock holder exists when the request
- * arrives, the node is registered as a a lock holder. When the lock holding request
- * is successful all respective command locks states are changed to locked
- * Only coordinator/master node can execute the interlocking requests.
+
+/* Failover start basically does nothing fency, It just sets the failover_in_progress
+ * flag and inform all nodes that the failover is in progress.
+ *
+ * only the local node that is a master can start the failover.
  */
 static WDFailoverCMDResults
-node_is_asking_for_failover_start(WatchdogNode* wdNode, WDPacketData* pkt, unsigned int failoverID)
+failover_start_indication(WDCommandData* ipcCommand)
 {
-	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
-
 	ereport(LOG,
-			(errmsg("%s pgpool-II node \"%s\" is requesting to become a lock holder for failover ID: %d",
-					(g_cluster.localNode == wdNode)? "local":"remote",
-					wdNode->nodeName, failoverID)));
+		(errmsg("watchdog is informed of failover start by the main process")));
 
-	/* only coordinator(master) node can process this request */
+	/* only coordinator(master) node is allowed to process failover */
 	if (get_local_node_state() == WD_COORDINATOR)
 	{
-		/* only the coordinator node can become a lock holder */
-		if (WD_MASTER_NODE == wdNode)
-		{
-			int i = 0;
-			/* lock all command locks */
-			for (i = 0; i < MAX_FAILOVER_LOCKS; i++)
-			{
-				g_cluster.interlockingNode.locks[i] = true;
-			}
-			g_cluster.interlockingNode.lockHolderNode = wdNode;
-			gettimeofday(&g_cluster.interlockingNode.lock_time, NULL);
-			res = FAILOVER_RES_I_AM_LOCK_HOLDER;
-			ereport(LOG,
-					(errmsg("%s pgpool-II node \"%s\" is the lock holder",
-							(g_cluster.localNode == wdNode)? "local":"remote",
-							wdNode->nodeName)));
-		}
-		else
-		{
-			res = FAILOVER_RES_I_AM_NOT_LOCK_HOLDER;
-			if (g_cluster.interlockingNode.lockHolderNode == NULL)
-				ereport(LOG,
-						(errmsg("request to become a lock holder is denied to %s pgpool-II node \"%s\"",
-								(g_cluster.localNode == wdNode)? "local":"remote",
-								wdNode->nodeName),
-						 errdetail("only master/coordinator can become a lock holder")));
-			else
-				ereport(LOG,
-					(errmsg("lock holder request denied to %s pgpool-II node \"%s\"",
-							(g_cluster.localNode == wdNode)? "local":"remote",
-							wdNode->nodeName),
-					 errdetail("%s pgpool-II node \"%s\" is already holding the locks",
-							   (g_cluster.localNode == g_cluster.interlockingNode.lockHolderNode)? "local":"remote",
-							   g_cluster.interlockingNode.lockHolderNode->nodeName)));
-		}
+		/* inform to all nodes about failover start */
+		send_message_of_type(NULL, WD_FAILOVER_START, NULL);
+		return FAILOVER_RES_PROCEED;
+	}
+	else if (get_local_node_state() == WD_STANDBY)
+	{
+		/* The node might be performing the locl quarantine opetaion */
+		ereport(DEBUG1,
+			(errmsg("main process is starting the local quarantine operation")));
+		return FAILOVER_RES_PROCEED;
 	}
 	else
 	{
 		ereport(LOG,
-				(errmsg("failed to process interlocking request from %s pgpool-II node \"%s\"",
-						(g_cluster.localNode == wdNode)? "local":"remote",
-						wdNode->nodeName),
-				 errdetail("I am standby node and request can only be processed by master watchdog node")));
-		res = FAILOVER_RES_ERROR;
+				(errmsg("failed to process failover start request, I am not in stable state")));
 	}
-	return res;
+	return FAILOVER_RES_TRANSITION;
 }
 
-/*
- * node_is_asking_for_failover_end()
- * the function process the request to release from the lock holder.
- * The node can resign from the lock holder if the lock holding node
- * is the same as the requesting node. When the resign from lock holding request
- * is successful all respective command locks becomes unlocked.
- * Only coordinator/master node can execute the interlocking requests.
- */
 static WDFailoverCMDResults
-node_is_asking_for_failover_end(WatchdogNode* wdNode, WDPacketData* pkt, unsigned int failoverID)
+failover_end_indication(WDCommandData* ipcCommand)
 {
-	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
-
 	ereport(LOG,
-			(errmsg("%s pgpool-II node \"%s\" is requesting to resign from a lock holder for failover ID %d",
-					(g_cluster.localNode == wdNode)? "local":"remote",
-					wdNode->nodeName, failoverID)));
+			(errmsg("watchdog is informed of failover end by the main process")));
 
+	/* only coordinator(master) node is allowed to process failover */
 	if (get_local_node_state() == WD_COORDINATOR)
 	{
-		/* check if the resigning node is the same that is holding the lock
-		 */
-		if (g_cluster.interlockingNode.lockHolderNode == NULL ||
-			g_cluster.interlockingNode.lockHolderNode == wdNode)
-		{
-			int i;
-			/* unlock all the locks */
-			for (i = 0; i < MAX_FAILOVER_LOCKS; i++)
-			{
-				g_cluster.interlockingNode.locks[i] = false;
-			}
-			g_cluster.interlockingNode.lockHolderNode = NULL;
-			res = FAILOVER_RES_SUCCESS;
-			ereport(LOG,
-					(errmsg("%s pgpool-II node \"%s\" has resigned from the lock holder",
-							(g_cluster.localNode == wdNode)? "local":"remote",
-							wdNode->nodeName)));
-			/* This marks the end of failover. Remove the
-			 * associated failover object
-			 */
-			remove_failover_object_by_id(failoverID);
-		}
-		else /* some other node is holding the lock */
-		{
-			res = FAILOVER_RES_I_AM_NOT_LOCK_HOLDER;
-			ereport(LOG,
-					(errmsg("request of resigning from lock holder is denied to %s pgpool-II node \"%s\"",
-							(g_cluster.localNode == wdNode)? "local":"remote",
-							wdNode->nodeName),
-					 errdetail("%s pgpool-II node \"%s\" is the lock holder node",
-							   (g_cluster.localNode == g_cluster.interlockingNode.lockHolderNode)? "local":"remote",
-							   g_cluster.interlockingNode.lockHolderNode->nodeName)));
-		}
+		send_message_of_type(NULL, WD_FAILOVER_END, NULL);
+		return FAILOVER_RES_PROCEED;
+	}
+	else if (get_local_node_state() == WD_STANDBY)
+	{
+		/* The node might be performing the locl quarantine opetaion */
+		ereport(DEBUG1,
+				(errmsg("main process is ending the local quarantine operation")));
+		return FAILOVER_RES_PROCEED;
 	}
 	else
 	{
 		ereport(LOG,
-				(errmsg("failed to process release interlocking request from %s pgpool-II node \"%s\"",
-						(g_cluster.localNode == wdNode)? "local":"remote",
-						wdNode->nodeName),
-				 errdetail("I am standby node and request can only be processed by master watchdog node")));
-		res = FAILOVER_RES_ERROR;
+				(errmsg("failed to process failover start request, I am not in stable state")));
 	}
-	return res;
-}
-
-/*
- * node_is_asking_for_failover_lock_release()
- * the function process the request from the lock holder node to
- * release a specific failocer command lock.
- * Only coordinator/master node can execute the interlocking requests.
- */
-static WDFailoverCMDResults
-node_is_asking_for_failover_lock_release(WatchdogNode* wdNode, WDPacketData* pkt, WDFailoverLock failoverLock, unsigned int failoverID)
-{
-	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
-
-	ereport(LOG,
-			(errmsg("%s pgpool-II node \"%s\" is requesting to release [%s] lock for failover ID %d",
-					(g_cluster.localNode == wdNode)? "local":"remote",
-					wdNode->nodeName,
-					wd_failover_lock_name[failoverLock],
-					failoverID)));
-
-	if (get_local_node_state() == WD_COORDINATOR)
-	{
-		/* check if the node requesting to release a lock is the lock holder */
-		if (g_cluster.interlockingNode.lockHolderNode == wdNode)
-		{
-			/* make sure the request is of a valid lock */
-			if (failoverLock < MAX_FAILOVER_LOCKS)
-			{
-				g_cluster.interlockingNode.locks[failoverLock] = false;
-				res = FAILOVER_RES_SUCCESS;
-
-				ereport(LOG,
-						(errmsg("%s pgpool-II node \"%s\" has released the [%s] lock for failover ID %d",
-								(g_cluster.localNode == wdNode)? "local":"remote",
-								wdNode->nodeName,
-								wd_failover_lock_name[failoverLock],
-								failoverID)));
-			}
-			else
-			{
-				res = FAILOVER_RES_ERROR;
-			}
-		}
-		else
-		{
-			/* I am not the lock holder so not allowed to release the lock */
-			ereport(LOG,
-					(errmsg("[%s] lock release request denied to %s pgpool-II node \"%s\"",
-							wd_failover_lock_name[failoverLock],
-							(g_cluster.localNode == wdNode)? "local":"remote",
-							wdNode->nodeName),
-					 errdetail("requesting node is not the lock holder")));
-			res = FAILOVER_RES_I_AM_NOT_LOCK_HOLDER;
-		}
-	}
-	else
-	{
-		ereport(LOG,
-				(errmsg("failed to process release lock request from %s pgpool-II node \"%s\"",
-						(g_cluster.localNode == wdNode)? "local":"remote",
-						wdNode->nodeName),
-				 errdetail("I am standby node and request can only be processed by master watchdog node")));
-		res = FAILOVER_RES_ERROR;
-	}
-	return res;
-}
-
-/*
- * node_is_asking_for_failover_lock_status()
- * This is an interlocking family function and returns the status of a specific failover lock.
- * Only coordinator/master node can execute the interlocking requests.
- */
-static WDFailoverCMDResults
-node_is_asking_for_failover_lock_status(WatchdogNode* wdNode, WDPacketData* pkt, WDFailoverLock failoverLock, unsigned int failoverID)
-{
-	WDFailoverCMDResults res = FAILOVER_RES_TRANSITION;
-
-	ereport(LOG,
-			(errmsg("%s pgpool-II node \"%s\" is checking the status of [%s] lock for failover ID %d",
-					(g_cluster.localNode == wdNode)? "local":"remote",
-					wdNode->nodeName,
-					wd_failover_lock_name[failoverLock],
-					failoverID)));
-
-	if (get_local_node_state() == WD_COORDINATOR)
-	{
-		/* check if the lock holder exists */
-		if (g_cluster.interlockingNode.lockHolderNode)
-		{
-			/* make sure the request is of a valid lock */
-			if (failoverLock < MAX_FAILOVER_LOCKS)
-			{
-				if (g_cluster.interlockingNode.locks[failoverLock])
-					res = FAILOVER_RES_LOCKED;
-				else
-					res = FAILOVER_RES_UNLOCKED;
-
-				ereport(LOG,
-						(errmsg("%s lock is currently %s",
-								wd_failover_lock_name[failoverLock],
-								(res == FAILOVER_RES_LOCKED)?"LOCKED":"FREE"),
-						 errdetail("request was from %s pgpool-II node \"%s\" and lock holder is %s pgpool-II node \"%s\"",
-								   (g_cluster.localNode == wdNode)? "local":"remote",
-								   wdNode->nodeName,
-								   (g_cluster.localNode == g_cluster.interlockingNode.lockHolderNode)? "local":"remote",
-								   g_cluster.interlockingNode.lockHolderNode->nodeName)));
-			}
-			else
-			{
-				res = FAILOVER_RES_ERROR;
-			}
-		}
-		else
-		{
-			/* There is one special case, Since only the coordinator/master
-			 * can become a lock holder, and in case when some standby node asks for
-			 * the status of lock before the master node has even started to failover
-			 * The normal flow will return that no lock holder exist. That make the
-			 * standby node to think if master node is already finished with the
-			 * failover.
-			 */
-			if (get_failover_object_by_id(failoverID))
-			{
-				ereport(LOG,
-						(errmsg("[%s] lock status check request from %s pgpool-II node \"%s\" for failover ID %d",
-								wd_failover_lock_name[failoverLock],
-								(g_cluster.localNode == wdNode)? "local":"remote",
-								wdNode->nodeName,
-								failoverID),
-						 errdetail("but failover is not yet started by master node")));
-				res = FAILOVER_RES_NO_LOCKHOLDER_BUT_WAIT;
-
-			}
-			else
-			{
-			/* no lock holder exists */
-				ereport(LOG,
-						(errmsg("[%s] lock status check request from %s pgpool-II node \"%s\" for failover ID %d",
-								wd_failover_lock_name[failoverLock],
-								(g_cluster.localNode == wdNode)? "local":"remote",
-								wdNode->nodeName,
-								failoverID),
-						 errdetail("no lock holder exists")));
-				res = FAILOVER_RES_NO_LOCKHOLDER;
-			}
-		}
-	}
-	else
-	{
-		ereport(LOG,
-				(errmsg("failed to process lock status check request from %s pgpool-II node \"%s\"",
-						(g_cluster.localNode == wdNode)? "local":"remote",
-						wdNode->nodeName),
-				 errdetail("I am standby node and request can only be processed by master watchdog node")));
-
-		res = FAILOVER_RES_ERROR;
-	}
-	return res;
+	return FAILOVER_RES_TRANSITION;
 }
 
 static WatchdogNode* parse_node_info_message(WDPacketData* pkt, char **authkey)
@@ -3881,6 +3587,11 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 	WDPacketData* replyPkt = NULL;
 	switch (pkt->type)
 	{
+		case WD_FAILOVER_WAITING_FOR_CONSENSUS:
+			ereport(LOG,
+				(errmsg("remote node \"%s\" is asking to degenerate quarantined backend node",wdNode->nodeName)));
+			register_inform_quarantine_nodes_req();
+
 		case WD_CLUSTER_SERVICE_MESSAGE:
 			cluster_service_message_processor(wdNode, pkt);
 			break;
@@ -3940,6 +3651,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 		case WD_INFO_MESSAGE:
 		{
 			char *authkey = NULL;
+			int oldQuorumStatus;
 			WD_STATES oldNodeState;
 			WatchdogNode* tempNode = parse_node_info_message(pkt, &authkey);
 			if (tempNode == NULL)
@@ -3949,6 +3661,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 				send_cluster_service_message(wdNode,pkt,CLUSTER_NODE_INVALID_VERSION);
 				break;
 			}
+			oldQuorumStatus = wdNode->quorum_status;
 			oldNodeState = wdNode->state;
 			wdNode->state = tempNode->state;
 			wdNode->startup_time.tv_sec = tempNode->startup_time.tv_sec;
@@ -3997,6 +3710,11 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 
 						handle_split_brain(wdNode, pkt);
 					}
+				}
+				else if (WD_MASTER_NODE == wdNode && oldQuorumStatus != wdNode->quorum_status)
+				{
+					/* inform Pgpool man about quorum status changes */
+					register_watchdog_quorum_change_interupt();
 				}
 			}
 
@@ -4106,7 +3824,6 @@ static bool send_message_to_node(WatchdogNode* wdNode, WDPacketData *pkt)
 		/* we only update the last sent time if reply for packet is expected */
 		switch (pkt->type) {
 			case WD_REMOTE_FAILOVER_REQUEST:
-			case WD_FAILOVER_LOCKING_REQUEST:
 			case WD_IPC_FAILOVER_COMMAND:
 				if (wdNode->last_sent_time.tv_sec <= 0)
 					gettimeofday(&wdNode->last_sent_time, NULL);
@@ -4676,6 +4393,9 @@ static WDPacketData* get_message_of_type(char type, WDPacketData* replyFor)
 		case WD_IAM_COORDINATOR_MESSAGE:
 			pkt = get_beacon_message(WD_IAM_COORDINATOR_MESSAGE,replyFor);
 			break;
+
+		case WD_FAILOVER_START:
+		case WD_FAILOVER_END:
 		case WD_REQ_INFO_MESSAGE:
 		case WD_STAND_FOR_COORDINATOR_MESSAGE:
 		case WD_DECLARE_COORDINATOR_MESSAGE:
@@ -4683,6 +4403,7 @@ static WDPacketData* get_message_of_type(char type, WDPacketData* replyFor)
 		case WD_QUORUM_IS_LOST:
 		case WD_INFORM_I_AM_GOING_DOWN:
 		case WD_ASK_FOR_POOL_CONFIG:
+		case WD_FAILOVER_WAITING_FOR_CONSENSUS:
 			pkt = get_minimum_message(type, replyFor);
 			break;
 		default:
@@ -4765,21 +4486,19 @@ static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, 
 	if (pkt == NULL)
 		return false;
 
-	if (pkt->type == WD_FAILOVER_LOCKING_REQUEST)
+	if (pkt->type == WD_FAILOVER_LOCKING_REQUEST ||
+		pkt->type == WD_REMOTE_FAILOVER_REQUEST )
 	{
-		process_remote_failover_locking_request(wdNode, pkt);
+		/* Node is using the older version of Pgpool-II */
+		ereport(WARNING,
+				(errmsg("node \"%s\" is using the older version of Pgpool-II",wdNode->nodeName)));
+		send_cluster_service_message(wdNode,pkt,CLUSTER_NODE_INVALID_VERSION);
 		return true;
 	}
 
 	if (pkt->type == WD_IPC_FAILOVER_COMMAND)
 	{
 		process_remote_failover_command_on_coordinator(wdNode, pkt);
-		return true;
-	}
-
-	if (pkt->type == WD_REMOTE_FAILOVER_REQUEST)
-	{
-		process_pgpool_remote_failover_command(wdNode, pkt);
 		return true;
 	}
 
@@ -4820,7 +4539,7 @@ static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, 
 		cleanUpIPCCommand(ipcCommand);
 		return true; /* do not process this packet further */
 	}
-	
+
 	else if (pkt->type == WD_ACCEPT_MESSAGE ||
 			 pkt->type == WD_REJECT_MESSAGE ||
 			 pkt->type == WD_ERROR_MESSAGE)
@@ -4839,36 +4558,12 @@ static bool wd_commands_packet_processor(WD_EVENTS event, WatchdogNode* wdNode, 
 			return true;
 		}
 
-		else if (ipcCommand->commandPacket.type == WD_FAILOVER_LOCKING_REQUEST)
-		{
-			/*
-			 * we are expecting only one reply for this
-			 * and we got that.
-			 */
-			char res_type = WD_IPC_CMD_RESULT_BAD;
-			if (pkt->type == WD_ACCEPT_MESSAGE)
-				res_type = WD_IPC_CMD_RESULT_OK;
-			else
-				res_type = WD_IPC_CMD_RESULT_BAD;
-
-			if (write_ipc_command_with_result_data(ipcCommand, res_type, NULL, 0) == false)
-				ereport(LOG,
-						(errmsg("failed to forward data message to IPC command socket")));
-			/*
-			 * ok we are done, delete this command
-			 */
-			cleanUpIPCCommand(ipcCommand);
-			
-			return true; /* do not process this packet further */
-		}
-		
-		else if (ipcCommand->commandPacket.type == WD_REMOTE_FAILOVER_REQUEST ||
-				 ipcCommand->commandPacket.type == WD_IPC_ONLINE_RECOVERY_COMMAND)
+		else if (ipcCommand->commandPacket.type == WD_IPC_ONLINE_RECOVERY_COMMAND)
 		{
 			return reply_is_received_for_pgpool_replicate_command(wdNode, pkt, ipcCommand);
 		}
 	}
-	
+
 	return false;
 }
 
@@ -5598,6 +5293,7 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 				}
 				/* inform to the cluster about the new quorum status */
 				send_message_of_type(NULL, WD_INFO_MESSAGE,NULL);
+				register_watchdog_quorum_change_interupt();
 			}
 		}
 			break;
@@ -5662,7 +5358,6 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 		case WD_EVENT_REMOTE_NODE_LOST:
 		{
 			standby_node_left_cluster(wdNode);
-			remove_failovers_from_node(wdNode);
 		}
 			break;
 
@@ -6189,6 +5884,9 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 		case WD_EVENT_PACKET_RCV:
 			switch (pkt->type)
 		{
+			case WD_FAILOVER_END:
+				register_backend_state_sync_req_interupt();
+				break;
 			case WD_STAND_FOR_COORDINATOR_MESSAGE:
 			{
 				if (WD_MASTER_NODE == NULL)
@@ -6358,7 +6056,7 @@ static int set_state(WD_STATES newState)
 		{
 			resign_from_escalated_node();
 			clear_standby_nodes_list();
-			remove_failovers_from_node(NULL);
+			clear_all_failovers();
 		}
 
 		ereport(LOG,
@@ -6389,54 +6087,12 @@ static void allocate_resultNodes_in_command(WDCommandData* ipcCommand)
 }
 
 
-static void process_pgpool_remote_failover_command(WatchdogNode* wdNode, WDPacketData* pkt)
-{
-	char* func_name;
-	int node_count = 0;
-	int *node_id_list = NULL;
-
-	if (pkt->data == NULL || pkt->len == 0)
-	{
-		ereport(LOG,
-			(errmsg("watchdog is unable to process pgpool failover command"),
-				 errdetail("command packet contains no data")));
-		reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
-		return;
-	}
-
-	if (wdNode != WD_MASTER_NODE)
-	{
-		ereport(LOG,
-			(errmsg("watchdog is unable to process pgpool failover command received from \"%s\"",wdNode->nodeName),
-				 errdetail("only master/coordinator (\"%s\") node can send the replicate commands",WD_MASTER_NODE->nodeName)));
-		reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
-		return;
-	}
-	if (parse_wd_node_function_json(pkt->data, pkt->len, &func_name, &node_id_list, &node_count))
-	{
-		ereport(LOG,
-			(errmsg("watchdog received the failover command from \"%s\"",wdNode->nodeName)));
-		process_wd_command_function(wdNode, pkt, func_name, node_count, node_id_list, pkt->command_id);
-	}
-	else
-	{
-		ereport(LOG,
-			(errmsg("watchdog is unable to process pgpool failover command"),
-				 errdetail("command packet contains invalid data")));
-		reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
-	}
-
-	if (func_name)
-		pfree(func_name);
-	if (node_id_list)
-		pfree(node_id_list);
-}
-
 static void process_remote_online_recovery_command(WatchdogNode* wdNode, WDPacketData* pkt)
 {
 	char* func_name;
 	int node_count = 0;
 	int *node_id_list = NULL;
+	unsigned char flags;
 
 	if (pkt->data == NULL || pkt->len == 0)
 	{
@@ -6450,7 +6106,7 @@ static void process_remote_online_recovery_command(WatchdogNode* wdNode, WDPacke
 	ereport(LOG,
 		(errmsg("watchdog received online recovery request from \"%s\"",wdNode->nodeName)));
 
-	if (parse_wd_node_function_json(pkt->data, pkt->len, &func_name, &node_id_list, &node_count))
+	if (parse_wd_node_function_json(pkt->data, pkt->len, &func_name, &node_id_list, &node_count, &flags))
 	{
 		if (strcasecmp(WD_FUNCTION_START_RECOVERY, func_name) == 0)
 		{
@@ -6513,64 +6169,6 @@ static void process_remote_online_recovery_command(WatchdogNode* wdNode, WDPacke
 		pfree(func_name);
 	if (node_id_list)
 		pfree(node_id_list);
-}
-
-static bool process_wd_command_function(WatchdogNode* wdNode, WDPacketData* pkt, char* func_name,
-										int node_count, int* node_id_list, unsigned int failover_id)
-{
-	bool ret = false;
-	if (strcasecmp(WD_FUNCTION_FAILBACK_REQUEST, func_name) == 0)
-	{
-		if (Req_info->switching)
-		{
-			ereport(LOG,
-					(errmsg("sending watchdog response"),
-					 errdetail("failover request from other pgpool is canceled because of switching")));
-			reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
-		}
-		else
-		{
-			ret = send_failback_request(node_id_list[0],false, failover_id);
-		}
-	}
-	
-	else if (strcasecmp(WD_FUNCTION_DEGENERATE_REQUEST, func_name) == 0)
-	{
-		if (Req_info->switching)
-		{
-			ereport(LOG,
-					(errmsg("sending watchdog response"),
-					 errdetail("failover request from other pgpool is canceled because of switching")));
-		}
-		else
-		{
-			ret = degenerate_backend_set(node_id_list, node_count, false, failover_id);
-		}
-	}
-
-	else if (strcasecmp(WD_FUNCTION_PROMOTE_REQUEST, func_name) == 0)
-	{
-		if (Req_info->switching)
-		{
-			ereport(LOG,
-					(errmsg("sending watchdog response"),
-					 errdetail("failover request from other pgpool is canceled because of switching")));
-		}
-		else
-		{
-			ret = promote_backend(node_id_list[0], failover_id);
-		}
-	}
-	else
-	{
-		/* This is not supported function */
-		ereport(LOG,
-			(errmsg("invalid failover function \"%s\"",func_name)));
-	}
-
-	reply_with_minimal_message(wdNode, ret?WD_ACCEPT_MESSAGE:WD_REJECT_MESSAGE, pkt);
-
-	return ret;
 }
 
 
@@ -6953,7 +6551,6 @@ static bool check_and_report_IPC_authentication(WDCommandData* ipcCommand)
 
 		case WD_IPC_FAILOVER_COMMAND:
 		case WD_IPC_ONLINE_RECOVERY_COMMAND:
-		case WD_FAILOVER_LOCKING_REQUEST:
 		case WD_GET_MASTER_DATA_REQUEST:
 			/* only allowed internaly.*/
 			internal_client_only = true;

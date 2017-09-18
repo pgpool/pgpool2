@@ -70,8 +70,8 @@ extern bool parse_beacon_message_json(char* json_data, int data_len, int* state,
 								bool* escalated);
 extern char* get_beacon_message_json(WatchdogNode* wdNode);
 
-extern char* get_wd_node_function_json(char* func_name, int *node_id_set, int count, unsigned int sharedKey, char* authKey);
-extern bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name, int **node_id_set, int *count);
+extern char* get_wd_node_function_json(char* func_name, int *node_id_set, int count, unsigned char flags, unsigned int sharedKey, char* authKey);
+extern bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name, int **node_id_set, int *count, unsigned char *flags);
 extern char* get_wd_simple_message_json(char* message);
 
 extern WDPGBackendStatus* get_pg_backend_node_status_from_json(char* json_data, int data_len);

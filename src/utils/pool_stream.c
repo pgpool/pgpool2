@@ -219,7 +219,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				/* if fail_over_on_backend_error is true, then trigger failover */
 				if (pool_config->fail_over_on_backend_error)
 				{
-					notice_backend_error(cp->db_node_id, true);
+					notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 
                     /* If we are in the main process, we will not exit */
 					child_exit(POOL_EXIT_AND_RESTART);
@@ -366,7 +366,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 				/* if fail_over_on_backend_error is true, then trigger failover */
 				if (pool_config->fail_over_on_backend_error)
 				{
-					notice_backend_error(cp->db_node_id, true);
+					notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 					child_exit(POOL_EXIT_AND_RESTART);
                     /* we are in main process */
                     ereport(ERROR,
@@ -710,7 +710,7 @@ int pool_flush(POOL_CONNECTION *cp)
 			/* if fail_over_on_backend_error is true, then trigger failover */
 			if (pool_config->fail_over_on_backend_error)
 			{
-				notice_backend_error(cp->db_node_id, true);
+				notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 				ereport(LOG,
 					(errmsg("unable to flush data to backend"),
 						 errdetail("do not failover because I am the main process")));
@@ -765,7 +765,7 @@ int pool_flush_noerror(POOL_CONNECTION *cp)
             /* if fail_over_on_backend_erro is true, then trigger failover */
             if (pool_config->fail_over_on_backend_error)
             {
-                notice_backend_error(cp->db_node_id, true);
+                notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
                 child_exit(POOL_EXIT_AND_RESTART);
 				ereport(LOG,
 					(errmsg("unable to flush data to backend"),
@@ -933,7 +933,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 							 errdetail("pg_terminate_backend was called on the backend")));
 				}
 
-				notice_backend_error(cp->db_node_id, true);
+				notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 				child_exit(POOL_EXIT_AND_RESTART);
                 ereport(ERROR,
                         (errmsg("unable to read data from frontend"),

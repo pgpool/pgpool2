@@ -298,6 +298,13 @@ char* get_backend_node_status_json(WatchdogNode* wdNode)
 	for (i=0;i< pool_config->backend_desc->num_backends;i++)
 	{
 		BACKEND_STATUS backend_status = pool_config->backend_desc->backend_info[i].backend_status;
+		if (backend_status == CON_DOWN && pool_config->backend_desc->backend_info[i].quarantine)
+		{
+			/* since quarantine nodes are not cluster wide
+			 * so send CON_WATI status for quarantine nodes
+			 */
+			backend_status = CON_CONNECT_WAIT;
+		}
 		jw_put_int_value(jNode, backend_status);
 	}
 	/* put the primary node id */
@@ -690,7 +697,7 @@ WDNodeInfo* get_WDNodeInfo_from_wd_node_json(json_value* source)
 	
 }
 
-char* get_wd_node_function_json(char* func_name, int *node_id_set, int count, unsigned int sharedKey, char* authKey)
+char* get_wd_node_function_json(char* func_name, int *node_id_set, int count, unsigned char flags, unsigned int sharedKey, char* authKey)
 {
 	char* json_str;
 	int  i;
@@ -702,6 +709,7 @@ char* get_wd_node_function_json(char* func_name, int *node_id_set, int count, un
 		jw_put_string(jNode, WD_IPC_AUTH_KEY, authKey); /*  put the auth key*/
 
 	jw_put_string(jNode, "Function", func_name);
+	jw_put_int(jNode, "Flags", (int)flags);
 	jw_put_int(jNode, "NodeCount", count);
 	if (count > 0)
 	{
@@ -717,7 +725,7 @@ char* get_wd_node_function_json(char* func_name, int *node_id_set, int count, un
 	return json_str;
 }
 
-bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name, int **node_id_set, int *count)
+bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name, int **node_id_set, int *count, unsigned char *flags)
 {
 	json_value *root, *value;
 	char* ptr;
@@ -750,6 +758,12 @@ bool parse_wd_node_function_json(char* json_data, int data_len, char** func_name
 	}
 	*func_name = pstrdup(ptr);
 	/* If it is a node function ?*/
+	if (json_get_int_value_for_key(root, "Flags", flags))
+	{
+		/*node count not found, But we don't care much about this*/
+		*flags = 0;
+		/* it may be from the old version */
+	}
 	if (json_get_int_value_for_key(root, "NodeCount", &node_count))
 	{
 		/*node count not found, But we don't care much about this*/

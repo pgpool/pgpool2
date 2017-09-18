@@ -556,11 +556,11 @@ char *pool_flag_to_str(unsigned short flag)
  * Translate the BACKEND_STATUS enum value to string.
  * the function returns the constant string so should not be freed
  */
-char* backend_status_to_str(BACKEND_STATUS status)
+char* backend_status_to_str(BackendInfo *bi)
 {
 	char *statusName;
 
-	switch (status) {
+	switch (bi->backend_status) {
 
 		case CON_UNUSED:
 		statusName = BACKEND_STATUS_CON_UNUSED;
@@ -575,7 +575,12 @@ char* backend_status_to_str(BACKEND_STATUS status)
 		break;
 
 		case CON_DOWN:
-		statusName = BACKEND_STATUS_CON_DOWN;
+		{
+			if (bi->quarantine)
+				statusName = BACKEND_STATUS_QUARANTINE;
+			else
+				statusName = BACKEND_STATUS_CON_DOWN;
+		}
 		break;
 
 		default:

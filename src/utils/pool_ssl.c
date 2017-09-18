@@ -350,7 +350,7 @@ void pool_ssl_close(POOL_CONNECTION *cp) { return; }
 int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
 	ereport(WARNING,
 			(errmsg("pool_ssl: SSL i/o called but SSL support is not available")));
-	notice_backend_error(cp->db_node_id, true);
+	notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 	child_exit(POOL_EXIT_AND_RESTART);
 	return -1; /* never reached */
 }
@@ -358,7 +358,7 @@ int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
 int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size) {
 	ereport(WARNING,
 			(errmsg("pool_ssl: SSL i/o called but SSL support is not available")));
-	notice_backend_error(cp->db_node_id, true);
+	notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 	child_exit(POOL_EXIT_AND_RESTART);
 	return -1; /* never reached */
 }

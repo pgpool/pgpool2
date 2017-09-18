@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -25,14 +25,6 @@
 #ifndef WD_IPC_DEFINES_H
 #define WD_IPC_DEFINES_H
 
-typedef enum WDFailoverLocks
-{
-	FAILOVER_LOCK = 0,
-	FAILBACK_LOCK,
-	FOLLOW_MASTER_LOCK,
-	MAX_FAILOVER_LOCKS
-}WDFailoverLock;
-
 typedef enum WDFailoverCMDResults
 {
 	FAILOVER_RES_ERROR = 0,				/* processing of command is failed */
@@ -41,23 +33,15 @@ typedef enum WDFailoverCMDResults
 										 * retry is the best option when this result
 										 * is returned by watchdog
 										 */
-	FAILOVER_RES_I_AM_LOCK_HOLDER,		/* node successfully becomes a lock holder */
-	FAILOVER_RES_I_AM_NOT_LOCK_HOLDER,	/* some other node is a lock holder */
-	FAILOVER_RES_UNLOCKED,				/* the lock is not acquired */
-	FAILOVER_RES_LOCKED,				/* lock is acquired */
 	FAILOVER_RES_SUCCESS,
-	FAILOVER_RES_NO_LOCKHOLDER,
-	FAILOVER_RES_NO_LOCKHOLDER_BUT_WAIT, /* master node can return this result in reply
-										  * to the locking command when the failover
-										  * procedure is not started on master node and
-										  * standby node is advanced in the procedure
-										  */
 	FAILOVER_RES_PROCEED,
+	FAILOVER_RES_NO_QUORUM,
 	FAILOVER_RES_WILL_BE_DONE,
 	FAILOVER_RES_NOT_ALLOWED,
 	FAILOVER_RES_INVALID_FUNCTION,
-	FAILOVER_RES_ALREADY_ISSUED,
 	FAILOVER_RES_MASTER_REJECTED,
+	FAILOVER_RES_BUILDING_CONSENSUS,
+	FAILOVER_RES_CONSENSUS_MAY_FAIL,
 	FAILOVER_RES_TIMEOUT
 }WDFailoverCMDResults;
 
@@ -84,6 +68,7 @@ typedef enum WDValueDataType
 #define WD_FAILOVER_LOCKING_REQUEST			's'
 #define WD_GET_MASTER_DATA_REQUEST			'd'
 #define WD_GET_RUNTIME_VARIABLE_VALUE		'v'
+#define WD_FAILOVER_INDICATION				'i'
 
 #define WD_FUNCTION_START_RECOVERY		"START_RECOVERY"
 #define WD_FUNCTION_END_RECOVERY		"END_RECOVERY"

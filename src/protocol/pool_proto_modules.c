@@ -504,7 +504,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 
 			ereport(DEBUG1,
 					(errmsg("Query: sending SIGUSR1 signal to parent")));
-			register_node_operation_request(CLOSE_IDLE_REQUEST, NULL, 0, false, 0);
+			register_node_operation_request(CLOSE_IDLE_REQUEST, NULL, 0, 0);
 
 			/* we need to loop over here since we will get USR1 signal while sleeping */
 			while (stime > 0)
@@ -1741,7 +1741,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 
 				free_string(msg);
 
-				degenerate_backend_set(victim_nodes, number_of_nodes, true, 0);
+				degenerate_backend_set(victim_nodes, number_of_nodes, REQ_DETAIL_CONFIRMED|REQ_DETAIL_SWITCHOVER);
 				child_exit(POOL_EXIT_AND_RESTART);
 			}
 			else

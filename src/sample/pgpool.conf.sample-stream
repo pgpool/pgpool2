@@ -550,6 +550,21 @@ wd_de_escalation_command = ''
 									# Executes this command when master pgpool resigns from being master.
 									# (change requires restart)
 
+# - Watchdog consensus settings for failover -
+
+failover_when_quorum_exists = true
+									# Only perform backend node failover
+									# when the watchdog cluster holds the quorum
+
+failover_require_consensus = true
+									# Perform failover when majority of Pgpool-II nodes
+									# aggrees on the backend node status change
+
+enable_multiple_failover_requests_from_node = false
+									# A Pgpool-II node can cast multiple votes
+									# for building the consensus on failover
+
+
 # - Lifecheck Setting -
 
 # -- common --

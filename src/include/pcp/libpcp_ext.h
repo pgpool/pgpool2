@@ -55,6 +55,7 @@ typedef enum {
 #define BACKEND_STATUS_CON_CONNECT_WAIT	"waiting"
 #define BACKEND_STATUS_CON_UP			"up"
 #define BACKEND_STATUS_CON_DOWN			"down"
+#define BACKEND_STATUS_QUARANTINE		"quarantine"
 
 /*
  * Backend status record file
@@ -74,6 +75,7 @@ typedef struct {
 	double unnormalized_weight; /* descripted parameter */
 	char backend_data_directory[MAX_PATH_LENGTH];
 	unsigned short flag;		/* various flags */
+	bool quarantine;			/* true if node is CON_DOWN because of quarantine */
 	uint64 standby_delay;		/* The replication delay against the primary */
 } BackendInfo;
 
@@ -145,7 +147,7 @@ typedef struct {
 #define POOLCONFIG_MAXDESCLEN 80
 #define POOLCONFIG_MAXIDENTLEN 63
 #define POOLCONFIG_MAXPORTLEN 6
-#define POOLCONFIG_MAXSTATLEN 8
+#define POOLCONFIG_MAXSTATLEN 12
 #define POOLCONFIG_MAXWEIGHTLEN 20
 #define POOLCONFIG_MAXDATELEN 128
 #define POOLCONFIG_MAXCOUNTLEN 16

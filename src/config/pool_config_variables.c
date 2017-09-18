@@ -231,7 +231,33 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL,								/* check func */
 		NULL								/* show hook */
 	},
-
+	{
+		{"failover_when_quorum_exists", CFGCXT_INIT, FAILOVER_CONFIG,
+			"Do failover only when cluster has the quorum.",
+			CONFIG_VAR_TYPE_BOOL,false, 0
+		},
+		&g_pool_config.failover_when_quorum_exists,
+		false,
+		NULL, NULL,NULL
+	},
+	{
+		{"failover_require_consensus", CFGCXT_INIT, FAILOVER_CONFIG,
+			"Only do failover when majority aggrees.",
+			CONFIG_VAR_TYPE_BOOL,false, 0
+		},
+		&g_pool_config.failover_require_consensus,
+		false,
+		NULL, NULL,NULL
+	},
+	{
+		{"enable_multiple_failover_requests_from_node", CFGCXT_INIT, FAILOVER_CONFIG,
+			"A Pgpool-II node can send multiple failover requests to build consensus.",
+			CONFIG_VAR_TYPE_BOOL,false, 0
+		},
+		&g_pool_config.enable_multiple_failover_requests_from_node,
+		false,
+		NULL, NULL,NULL
+	},
 	{
 		{"log_connections", CFGCXT_RELOAD, LOGING_CONFIG,
 			"Logs each successful connection.",

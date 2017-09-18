@@ -404,15 +404,18 @@ typedef enum {
 	NODE_DOWN_REQUEST,
 	NODE_RECOVERY_REQUEST,
 	CLOSE_IDLE_REQUEST,
-	PROMOTE_NODE_REQUEST
+	PROMOTE_NODE_REQUEST,
+	NODE_QUARANTINE_REQUEST
 } POOL_REQUEST_KIND;
 
 #define REQ_DETAIL_SWITCHOVER	0x00000001		/* failover due to switch over */
+#define REQ_DETAIL_WATCHDOG		0x00000002		/* failover req from watchdog */
+#define REQ_DETAIL_CONFIRMED	0x00000004		/* failover req that does not require majority vote */
+#define REQ_DETAIL_UPDATE		0x00000008		/* failover req is just and update node status request */
 
 typedef struct {
 	POOL_REQUEST_KIND	kind;		/* request kind */
 	unsigned char request_details;	/* option flags kind */
-	unsigned int wd_failover_id;	/* watchdog ID for this failover operation */
 	int node_id[MAX_NUM_BACKENDS];	/* request node id */
 	int count;						/* request node ids count */
 }POOL_REQUEST_NODE;
@@ -520,8 +523,12 @@ extern char remote_port[];	/* client port */
 /*
  * public functions
  */
+extern void register_watchdog_quorum_change_interupt(void);
 extern void register_watchdog_state_change_interupt(void);
-extern bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count, bool switch_over, unsigned int wd_failover_id);
+extern void register_backend_state_sync_req_interupt(void);
+extern void register_inform_quarantine_nodes_req(void);
+
+extern bool register_node_operation_request(POOL_REQUEST_KIND kind, int* node_id_set, int count, unsigned char flags);
 extern char *get_config_file_name(void);
 extern char *get_hba_file_name(void);
 extern void do_child(int *fds);
@@ -551,11 +558,11 @@ extern POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend,
 extern void NoticeResponse(POOL_CONNECTION *frontend,
 								  POOL_CONNECTION_POOL *backend);
 
-extern void notice_backend_error(int node_id, bool switch_over);
-extern bool degenerate_backend_set(int *node_id_set, int count, bool switch_over, unsigned int wd_failover_id);
-extern bool degenerate_backend_set_ex(int *node_id_set, int count, bool error, bool test_only, bool switch_over, unsigned int wd_failover_id);
-extern bool promote_backend(int node_id, unsigned int wd_failover_id);
-extern bool send_failback_request(int node_id, bool throw_error, unsigned int wd_failover_id);
+extern void notice_backend_error(int node_id, unsigned char flags);
+extern bool degenerate_backend_set(int *node_id_set, int count, unsigned char flags);
+extern bool degenerate_backend_set_ex(int *node_id_set, int count, unsigned char flags, bool error, bool test_only);
+extern bool promote_backend(int node_id, unsigned char flags);
+extern bool send_failback_request(int node_id, bool throw_error, unsigned char flags);
 
 
 extern void pool_set_timeout(int timeoutval);
