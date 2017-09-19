@@ -311,7 +311,8 @@ CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@ \
-	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
+	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\" \
+	-DHEALTHCHECK_OPTS=$(HEALTHCHECK_DEBUG)
 
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
@@ -440,6 +441,7 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
 libs_dir = $(top_srcdir)/src/libs
 AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
+HEALTHCHECK_DEBUG = 0
 pgpool_SOURCES = main/main.c \
 	main/pool_globals.c \
 	main/pgpool_main.c \

@@ -2,6 +2,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 libs_dir = $(top_srcdir)/src/libs
 AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
 bin_PROGRAMS = pgpool
+HEALTHCHECK_DEBUG=0
 
 pgpool_SOURCES = main/main.c \
 	main/pool_globals.c \
@@ -55,7 +56,8 @@ pgpool_SOURCES = main/main.c \
     utils/statistics.c
 
 DEFS = @DEFS@ \
-	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
+	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\" \
+	-DHEALTHCHECK_OPTS=$(HEALTHCHECK_DEBUG)
 
 sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pcp.conf.sample \

@@ -72,7 +72,12 @@ static RETSIGTYPE reload_config_handler(int sig);
 static void reload_config(void);
 static RETSIGTYPE health_check_timer_handler(int sig);
 
-#undef HEALTHCHECK_DEBUG
+#ifdef HEALTHCHECK_OPTS
+  #if HEALTHCHECK_OPTS > 0
+  #define HEALTHCHECK_DEBUG
+  #endif
+#endif
+
 #ifdef HEALTHCHECK_DEBUG
 static bool check_backend_down_request(int node);
 #endif
