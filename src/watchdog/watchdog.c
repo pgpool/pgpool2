@@ -2614,7 +2614,6 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData *ipcCo
 
 	if (get_local_node_state() == WD_COORDINATOR)
 	{
-		json_value* root;
 		int failoverState = -1;
 		if (ipcCommand->sourcePacket.data == NULL || ipcCommand->sourcePacket.len <= 0)
 		{
@@ -2623,20 +2622,24 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData *ipcCo
 					 errdetail("invalid command packet")));
 			res = FAILOVER_RES_INVALID_FUNCTION;
 		}
-		root = json_parse(ipcCommand->sourcePacket.data,ipcCommand->sourcePacket.len);
-		if (root && root->type == json_object)
-		{
-			json_get_int_value_for_key(root, "FailoverFuncState", &failoverState);
-		}
 		else
 		{
-			ereport(LOG,
-					(errmsg("unable to process failover indication"),
-					 errdetail("invalid json data in command packet")));
-			res = FAILOVER_RES_INVALID_FUNCTION;
+			json_value* root = json_parse(ipcCommand->sourcePacket.data,ipcCommand->sourcePacket.len);
+
+			if (root && root->type == json_object)
+			{
+				json_get_int_value_for_key(root, "FailoverFuncState", &failoverState);
+			}
+			else
+			{
+				ereport(LOG,
+						(errmsg("unable to process failover indication"),
+						 errdetail("invalid json data in command packet")));
+				res = FAILOVER_RES_INVALID_FUNCTION;
+			}
+			if (root)
+				json_value_free(root);
 		}
-		if (root)
-			json_value_free(root);
 
 		if (failoverState < 0 )
 		{
@@ -2649,7 +2652,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData *ipcCo
 		{
 			res = failover_start_indication(ipcCommand);
 		}
-		else
+		else	/* end */
 		{
 			res = failover_end_indication(ipcCommand);
 		}
@@ -3591,6 +3594,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 			ereport(LOG,
 				(errmsg("remote node \"%s\" is asking to degenerate quarantined backend node",wdNode->nodeName)));
 			register_inform_quarantine_nodes_req();
+			break;
 
 		case WD_CLUSTER_SERVICE_MESSAGE:
 			cluster_service_message_processor(wdNode, pkt);
@@ -5881,41 +5885,47 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 			}
 		}
 			break;
+
 		case WD_EVENT_PACKET_RCV:
-			switch (pkt->type)
 		{
-			case WD_FAILOVER_END:
-				register_backend_state_sync_req_interupt();
-				break;
-			case WD_STAND_FOR_COORDINATOR_MESSAGE:
+			switch (pkt->type)
 			{
-				if (WD_MASTER_NODE == NULL)
+				case WD_FAILOVER_END:
 				{
-					reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
-					set_state(WD_PARTICIPATE_IN_ELECTION);
+					register_backend_state_sync_req_interupt();
 				}
-				else
-				{
-					reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
-					set_state(WD_JOINING);
-				}
-			}
 				break;
 
-			case WD_DECLARE_COORDINATOR_MESSAGE:
-			{
-				if (wdNode != WD_MASTER_NODE)
+				case WD_STAND_FOR_COORDINATOR_MESSAGE:
 				{
-					/*
-					 * we already have a master node
-					 * and we got a new node trying to be master
-					 * re-initialize the cluster, something is wrong
-					 */
-					reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+					if (WD_MASTER_NODE == NULL)
+					{
+						reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+						set_state(WD_PARTICIPATE_IN_ELECTION);
+					}
+					else
+					{
+						reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+						set_state(WD_JOINING);
+					}
 				}
-				else
+				break;
+
+				case WD_DECLARE_COORDINATOR_MESSAGE:
 				{
-					set_state(WD_JOINING);
+					if (wdNode != WD_MASTER_NODE)
+					{
+						/*
+						 * we already have a master node
+						 * and we got a new node trying to be master
+						 * re-initialize the cluster, something is wrong
+						 */
+						reply_with_minimal_message(wdNode, WD_ERROR_MESSAGE, pkt);
+					}
+					else
+					{
+						set_state(WD_JOINING);
+					}
 				}
 				break;
 
@@ -5940,13 +5950,15 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 						beacon_message_received_from_node(wdNode, pkt);
 					}
 				}
-			}
+				break;
 
 			default:
 				standard_packet_processor(wdNode, pkt);
 				break;
+			}
 		}
-			break;
+		break;
+
 		default:
 			break;
 	}
