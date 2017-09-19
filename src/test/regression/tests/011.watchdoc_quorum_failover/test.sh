@@ -11,6 +11,8 @@ STANDBY_DIR=standby
 STANDBY2_DIR=standby2
 num_tests=9
 success_count=0
+PSQL=$PGBIN/psql
+PG_CTL=$PGBIN/pg_ctl
 
 rm -fr $MASTER_DIR
 rm -fr $STANDBY_DIR
@@ -132,7 +134,7 @@ echo "Checking if all Pgpool-II agrees that the failover request is discarded."
 n=0
 for p in 11000 11100 11200
 do
-    psql -p $p -c "show pool_nodes" test|grep standby|grep up >/dev/null 2>&1
+    $PSQL -p $p -c "show pool_nodes" test|grep standby|grep up >/dev/null 2>&1
     if [ $? = 0 ];then
 	n=$(( n + 1))
     fi
@@ -143,7 +145,7 @@ if [ $n -eq 3 ];then
 fi
 
 # raise an real DB node 1 error
-pg_ctl -D master/data1 -m f stop
+$PG_CTL -D master/data1 -m f stop
 echo "Checking if master detects the shutdown error"
 for i in 1 2 3 4 5 6 7 8 9 10
 do
@@ -165,7 +167,7 @@ do
     n=0
     for p in 11000 11100 11200
     do
-	psql -p $p -c "show pool_nodes" test|grep standby|grep down >/dev/null 2>&1
+	$PSQL -p $p -c "show pool_nodes" test|grep standby|grep down >/dev/null 2>&1
 	if [ $? = 0 ];then
 	    n=$(( n + 1))
 	fi
