@@ -197,4 +197,4 @@ done
 
 total=`expr $ok + $fail`
 
-echo "out of $total ok:$ok failed:$fail timeout:$timeoutcnt"
+echo "out of $total ok:$ok failed:$fail timeout:$timeout"
