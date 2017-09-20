@@ -26,6 +26,7 @@
 #include "context/pool_session_context.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
+#include "auth/pool_hba.h"
 #include "auth/pool_passwd.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
@@ -218,7 +219,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		/* If MD5 auth is not active in pool_hba.conf, it cannot be
 		 * used with other than raw mode.
 		 */
-		if (frontend->auth_method != uaMD5 && !RAW_MODE && NUM_BACKENDS > 1)
+		if ((frontend->pool_hba == NULL || frontend->pool_hba->auth_method != uaMD5) && !RAW_MODE && NUM_BACKENDS > 1)
 		{
 			pool_send_error_message(frontend, protoMajor, AUTHFAIL_ERRORCODE,
 									"MD5 authentication is unsupported in replication and master-slave modes.",

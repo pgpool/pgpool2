@@ -42,7 +42,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-
+#include <ifaddrs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -365,29 +365,6 @@ getnameinfo_unix(const struct sockaddr_un * sa, int salen,
 }
 
 
-/*
- * rangeSockAddr - is addr within the subnet specified by netaddr/netmask ?
- *
- * Note: caller must already have verified that all three addresses are
- * in the same address family; and AF_UNIX addresses are not supported.
- */
-int
-rangeSockAddr(const struct sockaddr_storage * addr,
-			  const struct sockaddr_storage * netaddr,
-			  const struct sockaddr_storage * netmask)
-{
-	if (addr->ss_family == AF_INET)
-		return rangeSockAddrAF_INET((struct sockaddr_in *) addr,
-									(struct sockaddr_in *) netaddr,
-									(struct sockaddr_in *) netmask);
-	else if (addr->ss_family == AF_INET6)
-		return rangeSockAddrAF_INET6((struct sockaddr_in6 *) addr,
-									 (struct sockaddr_in6 *) netaddr,
-									 (struct sockaddr_in6 *) netmask);
-	else
-		return 0;
-}
-
 static int
 rangeSockAddrAF_INET(const struct sockaddr_in * addr,
 					 const struct sockaddr_in * netaddr,
@@ -559,4 +536,92 @@ promote_v4_to_v6_mask(struct sockaddr_storage * addr)
 	addr6.sin6_addr.s6_addr[15] = (ip4addr) & 0xFF;
 
 	memcpy(addr, &addr6, sizeof(addr6));
+}
+
+/*
+ * range_sockaddr - is addr within the subnet specified by netaddr/netmask ?
+ *
+ * Note: caller must already have verified that all three addresses are
+ * in the same address family; and AF_UNIX addresses are not supported.
+ */
+int
+rangeSockAddr(const struct sockaddr_storage *addr,
+				  const struct sockaddr_storage *netaddr,
+				  const struct sockaddr_storage *netmask)
+{
+	if (addr->ss_family == AF_INET)
+		return rangeSockAddrAF_INET((const struct sockaddr_in *) addr,
+									  (const struct sockaddr_in *) netaddr,
+									  (const struct sockaddr_in *) netmask);
+	else if (addr->ss_family == AF_INET6)
+		return rangeSockAddrAF_INET6((const struct sockaddr_in6 *) addr,
+									   (const struct sockaddr_in6 *) netaddr,
+									   (const struct sockaddr_in6 *) netmask);
+	else
+		return 0;
+}
+
+/*
+ * Run the callback function for the addr/mask, after making sure the
+ * mask is sane for the addr.
+ */
+static void
+run_ifaddr_callback(PgIfAddrCallback callback, void *cb_data,
+					struct sockaddr *addr, struct sockaddr *mask)
+{
+	struct sockaddr_storage fullmask;
+
+	if (!addr)
+		return;
+
+	/* Check that the mask is valid */
+	if (mask)
+	{
+		if (mask->sa_family != addr->sa_family)
+		{
+			mask = NULL;
+		}
+		else if (mask->sa_family == AF_INET)
+		{
+			if (((struct sockaddr_in *) mask)->sin_addr.s_addr == INADDR_ANY)
+				mask = NULL;
+		}
+		else if (mask->sa_family == AF_INET6)
+		{
+			if (IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *) mask)->sin6_addr))
+				mask = NULL;
+		}
+	}
+
+	/* If mask is invalid, generate our own fully-set mask */
+	if (!mask)
+	{
+		SockAddr_cidr_mask(&fullmask, NULL, addr->sa_family);
+		mask = (struct sockaddr *) &fullmask;
+	}
+
+	(*callback) (addr, mask, cb_data);
+}
+/*
+ * Enumerate the system's network interface addresses and call the callback
+ * for each one.  Returns 0 if successful, -1 if trouble.
+ *
+ * This version uses the getifaddrs() interface, which is available on
+ * BSDs, AIX, and modern Linux.
+ */
+int
+pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
+{
+	struct ifaddrs *ifa,
+	*l;
+
+	if (getifaddrs(&ifa) < 0)
+		return -1;
+
+	for (l = ifa; l; l = l->ifa_next)
+		run_ifaddr_callback(callback, cb_data,
+							l->ifa_addr, l->ifa_netmask);
+
+	freeifaddrs(ifa);
+	return 0;
 }

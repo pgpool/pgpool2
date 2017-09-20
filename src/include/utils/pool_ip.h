@@ -32,6 +32,11 @@
 
 #include "pool_type.h"
 
+extern int SockAddr_cidr_mask(struct sockaddr_storage * mask,
+							  char *numbits, int family);
+
+typedef void (*PgIfAddrCallback) (struct sockaddr *addr, struct sockaddr *netmask, void *cb_data);
+
 extern int getaddrinfo_all(const char *hostname, const char *servname,
 				const struct addrinfo * hintp,
 				struct addrinfo ** result);
@@ -46,8 +51,6 @@ extern int rangeSockAddr(const struct sockaddr_storage * addr,
 			  const struct sockaddr_storage * netaddr,
 			  const struct sockaddr_storage * netmask);
 
-extern int SockAddr_cidr_mask(struct sockaddr_storage * mask,
-				   char *numbits, int family);
 
 /* imported from PostgreSQL getaddrinfo.c */
 #ifndef HAVE_GAI_STRERROR
@@ -56,6 +59,8 @@ extern const char * gai_strerror(int errcode);
 
 extern void promote_v4_to_v6_addr(struct sockaddr_storage * addr);
 extern void promote_v4_to_v6_mask(struct sockaddr_storage * addr);
+
+extern int pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data);
 
 #define IS_AF_INET(fam) ((fam) == AF_INET)
 #define IS_AF_UNIX(fam) ((fam) == AF_UNIX)

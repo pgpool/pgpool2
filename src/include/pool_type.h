@@ -177,22 +177,6 @@ typedef struct
 }
 SockAddr;
 
-/* UserAuth type used for HBA which indicates the authentication method */
-typedef enum UserAuth
-{
-	uaReject,
-	/*  uaKrb4, */
-	/*  uaKrb5, */
-	uaTrust,
-	/*  uaIdent, */
-	/*  uaPassword, */
-	/*  uaCrypt, */
-	uaMD5
-#ifdef USE_PAM
-	,uaPAM
-#endif /* USE_PAM */
-}
-UserAuth;
 
 #define AUTH_REQ_OK         0   /* User is authenticated  */
 #define AUTH_REQ_KRB4       1   /* Kerberos V4 */

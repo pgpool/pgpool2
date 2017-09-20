@@ -60,6 +60,7 @@
 #include "pool_config.h"
 #include "utils/pool_ip.h"
 #include "auth/md5.h"
+#include "auth/pool_hba.h"
 #include "utils/pool_stream.h"
 
 char remote_ps_data[NI_MAXHOST];		/* used for set_ps_display */

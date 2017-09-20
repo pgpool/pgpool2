@@ -60,6 +60,8 @@
 #include "utils/elog.h"
 #include "auth/md5.h"
 #include "auth/pool_passwd.h"
+#include "auth/pool_hba.h"
+
 
 static StartupPacket *read_startup_packet(POOL_CONNECTION *cp);
 static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION *frontend);

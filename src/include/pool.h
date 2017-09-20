@@ -31,7 +31,6 @@
 #include "pcp/libpcp_ext.h"
 #include "utils/pool_signal.h"
 #include "parser/nodes.h"
-
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
@@ -166,6 +165,12 @@ typedef struct {
 } ParamStatus;
 
 /*
+ * HbaLines is declared in pool_hba.h
+ * we use forward declaration here
+ */
+typedef struct HbaLine HbaLine;
+
+/*
  * stream connection structure
  */
 typedef struct {
@@ -232,10 +237,11 @@ typedef struct {
 	 */
 	int protoVersion;
 	SockAddr raddr;
-	UserAuth auth_method;
-	char *auth_arg;
+	HbaLine *pool_hba;
 	char *database;
 	char *username;
+	char *remote_hostname;
+	int remote_hostname_resolv;
 	ConnectionInfo *con_info; /* shared memory coninfo used
 						   * for handling the query containing
 						   * pg_terminate_backend*/
@@ -638,10 +644,6 @@ extern void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp);
 
 /* define pool_system.c */
 extern void pool_close_libpq_connection(void);
-
-/* pool_hba.c */
-extern int load_hba(char *hbapath);
-extern void ClientAuthentication(POOL_CONNECTION *frontend);
 
 /* pool_ip.c */
 extern void pool_getnameinfo_all(SockAddr *saddr, char *remote_host, char *remote_port);

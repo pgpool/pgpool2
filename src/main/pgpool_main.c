@@ -56,6 +56,7 @@
 #include "version.h"
 #include "parser/pool_string.h"
 #include "auth/pool_passwd.h"
+#include "auth/pool_hba.h"
 #include "query_cache/pool_memqcache.h"
 #include "watchdog/wd_ipc_commands.h"
 #include "watchdog/wd_lifecheck.h"

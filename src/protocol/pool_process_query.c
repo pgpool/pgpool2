@@ -50,6 +50,7 @@
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "utils/elog.h"
+#include "auth/pool_hba.h"
 #include "utils/pool_relcache.h"
 #include "utils/pool_stream.h"
 #include "context/pool_session_context.h"

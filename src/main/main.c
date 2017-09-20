@@ -42,6 +42,7 @@
 
 #include "version.h"
 #include "auth/pool_passwd.h"
+#include "auth/pool_hba.h"
 #include "query_cache/pool_memqcache.h"
 #include "watchdog/wd_utils.h"
 #include "pool_config_variables.h"
