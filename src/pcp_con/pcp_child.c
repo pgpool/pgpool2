@@ -101,9 +101,6 @@ void pcp_main(int unix_fd, int inet_fd)
 	sigjmp_buf	local_sigjmp_buf;
 	struct timeval uptime;
 
-	ereport(DEBUG1,
-			(errmsg("I am PCP child with pid:%d",getpid())));
-
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
 
@@ -143,6 +140,10 @@ void pcp_main(int unix_fd, int inet_fd)
 	}
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
+
+	ereport(DEBUG1,
+			(errmsg("I am PCP child with pid:%d",getpid())));
+
 	for(;;)
 	{
 		int port;
@@ -354,28 +355,14 @@ pcp_exit_handler(int sig)
 	pid_t wpid;
 
 	POOL_SETMASK(&AuthBlockSig);
-	ereport(DEBUG1,
-			(errmsg("PCP child receives shutdown request signal %d, Forwarding to all children", sig)));
 
 	pcp_kill_all_children(sig);
 
 	if (sig == SIGTERM) /* smart shutdown */
 	{
-		ereport(DEBUG1,
-				(errmsg("PCP child receives smart shutdown request")));
 		/* close the listening sockets */
 		close(pcp_unix_fd);
 		close(pcp_inet_fd);
-	}
-	else if (sig == SIGINT)
-	{
-		ereport(DEBUG1,
-				(errmsg("PCP child receives fast shutdown request")));
-	}
-	else if (sig == SIGQUIT)
-	{
-		ereport(DEBUG1,
-				(errmsg("PCP child receives immediate shutdown request")));
 	}
 
 	POOL_SETMASK(&UnBlockSig);
@@ -387,9 +374,6 @@ pcp_exit_handler(int sig)
 			wpid = wait(NULL);
 		}while (wpid > 0 || (wpid == -1 && errno == EINTR));
 		
-		if (wpid == -1 && errno != ECHILD)
-			ereport(WARNING,
-					(errmsg("wait() on pcp worker children failed. reason:%s", strerror(errno))));
 		list_free(pcp_worker_children);
 	}
 	pcp_worker_children = NULL;
