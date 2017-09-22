@@ -1374,6 +1374,7 @@ static RETSIGTYPE exit_handler(int sig)
 {
 	int i;
     pid_t wpid;
+	int *walk;
 
 	int save_errno = errno;
 	POOL_SETMASK(&AuthBlockSig);
@@ -1384,28 +1385,12 @@ static RETSIGTYPE exit_handler(int sig)
 	 */
 	if (getpid() != mypid)
 	{
-		ereport(DEBUG1,
-			(errmsg("exit_handler: I am not parent")));
-
 		POOL_SETMASK(&UnBlockSig);
 		proc_exit(0);
 	}
 
-	if (sig == SIGTERM)
-		ereport(LOG,
-                (errmsg("received smart shutdown request")));
-	else if (sig == SIGINT)
-		ereport(LOG,
-                (errmsg("received fast shutdown request")));
-	else if (sig == SIGQUIT)
-		ereport(LOG,
-                (errmsg("received immediate shutdown request")));
-	else
+	if (sig != SIGTERM && sig != SIGINT && sig != SIGQUIT)
 	{
-		ereport(LOG,
-			(errmsg("main process received unknown signal: %d",sig),
-				 errdetail("ignoring...")));
-
 		POOL_SETMASK(&UnBlockSig);
 		errno = save_errno;
 		return;
@@ -1414,10 +1399,6 @@ static RETSIGTYPE exit_handler(int sig)
     processState = EXITING;
 
     /* Close listen socket */
-	ereport(LOG,
-		(errmsg("shutdown request. closing listen socket")));
-
-	int *walk;
 	for (walk = fds; *walk != -1; walk++)
 		close(*walk);
 
@@ -1458,14 +1439,8 @@ static RETSIGTYPE exit_handler(int sig)
         wpid = waitpid(-1, &ret_pid, 0);
     } while (wpid > 0 || (wpid == -1 && errno == EINTR));
 
-    if (wpid == -1 && errno != ECHILD)
-        ereport(LOG,
-                (errmsg("wait() failed. reason:%s", strerror(errno))));
-
 	process_info = NULL;
 	exit(0);
-
-	errno = save_errno;
 }
 
 /*
