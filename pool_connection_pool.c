@@ -739,6 +739,20 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 			continue;
 		}
 
+		/*
+		 * Make sure that the global backend status in the shared memory
+		 * agrees the local status checked by VALID_BACKEND. It is possible
+		 * that the local status is up, while the global status has been
+		 * changed to down by failover.
+		 */
+		if (BACKEND_INFO(i).backend_status != CON_UP &&
+			BACKEND_INFO(i).backend_status != CON_CONNECT_WAIT)
+		{
+			pool_debug("new_connection: skipping slot %d because global backend_status = %d",
+					   i, BACKEND_INFO(i).backend_status);
+			continue;
+		}
+
 		s = malloc(sizeof(POOL_CONNECTION_POOL_SLOT));
 		if (s == NULL)
 		{
