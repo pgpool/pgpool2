@@ -4,8 +4,8 @@
  *	  interface for Value nodes
  *
  *
- * Copyright (c) 2003-2016, PgPool Global Development Group
- * Copyright (c) 2003-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2017, PgPool Global Development Group
+ * Copyright (c) 2003-2017, PostgreSQL Global Development Group
  *
  * src/include/nodes/value.h
  *
@@ -59,4 +59,4 @@ extern Value *makeFloat(char *numericStr);
 extern Value *makeString(char *str);
 extern Value *makeBitString(char *str);
 
-#endif   /* VALUE_H */
+#endif							/* VALUE_H */

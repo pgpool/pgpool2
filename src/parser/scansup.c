@@ -4,8 +4,8 @@
  *	  support routines for the lex/flex scanner, used by both the normal
  * backend as well as the bootstrap backend
  *
- * Portions Copyright (c) 1996-2016, PgPool Global Development Group
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
