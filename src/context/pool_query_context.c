@@ -3,7 +3,7 @@
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL
+ * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2017	PgPool Global Development Group
@@ -163,7 +163,7 @@ void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 				 errdetail("backend node id: %d out of range, node id can be between 0 and %d",node_id,MAX_NUM_BACKENDS)));
 
 	query_context->where_to_send[node_id] = true;
-
+	
 	return;
 }
 
@@ -180,7 +180,7 @@ void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 				 errdetail("backend node id: %d out of range, node id can be between 0 and %d",node_id,MAX_NUM_BACKENDS)));
 
 	query_context->where_to_send[node_id] = false;
-
+	
 	return;
 }
 
@@ -472,7 +472,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				is_select_query(node, query) &&
 				MAJOR(backend) == PROTO_MAJOR_V3)
 			{
-				/*
+				/* 
 				 * If (we are outside of an explicit transaction) OR
 				 * (the transaction has not issued a write query yet, AND
 				 *	transaction isolation level is not SERIALIZABLE)
@@ -513,7 +513,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					}
 
 					/*
-					 * If a writing function call is used,
+					 * If a writing function call is used, 
 					 * we prefer to send to the primary.
 					 */
 					else if (pool_has_function_call(node))
@@ -605,7 +605,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 			{
 				pool_setall_node_to_be_sent(query_context);
 			}
-			/*
+			/* 
 			 * If (we are outside of an explicit transaction) OR
 			 * (the transaction has not issued a write query yet, AND
 			 *	transaction isolation level is not SERIALIZABLE)
@@ -813,20 +813,20 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			else
 				string = query_context->rewritten_query;
 		}
-
+        
         wait_for_query_response_with_trans_cleanup(frontend,
                                                    CONNECTION(backend, i),
                                                    MAJOR(backend),
                                                    MASTER_CONNECTION(backend)->pid,
                                                    MASTER_CONNECTION(backend)->key);
-
+        
 		/*
 		 * Check if some error detected.  If so, emit
 		 * log. This is useful when invalid encoding error
 		 * occurs. In this case, PostgreSQL does not report
 		 * what statement caused that error and make users
 		 * confused.
-		 */
+		 */		
 		per_node_error_log(backend, i, string, "pool_send_and_wait: Error or notice message from backend: ", true);
 	}
 
@@ -881,7 +881,7 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	}
 
 	if (!rewritten_begin)
-	{
+	{	
 		str_len = len;
 		str = contents;
 	}
@@ -1036,7 +1036,7 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			 * occurs. In this case, PostgreSQL does not report
 			 * what statement caused that error and make users
 			 * confused.
-			 */
+			 */		
 			per_node_error_log(backend, i, str, "pool_send_and_wait: Error or notice message from backend: ", true);
 		}
 	}
@@ -1070,8 +1070,6 @@ static POOL_DEST send_to_where(Node *node, char *query)
 
 /* From 9.5 include/nodes/node.h ("TAGS FOR STATEMENT NODES" part) */
 	static NodeTag nodemap[] = {
-		T_RawStmt,
-		T_Query,
 		T_PlannedStmt,
 		T_InsertStmt,
 		T_DeleteStmt,
@@ -1173,13 +1171,6 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_CreatePolicyStmt,
 		T_AlterPolicyStmt,
 		T_CreateTransformStmt,
-		T_CreateAmStmt,
-		T_CreatePublicationStmt,
-		T_AlterPublicationStmt,
-		T_CreateSubscriptionStmt,
-		T_DropSubscriptionStmt,
-		T_CreateStatsStmt,
-		T_AlterCollationStmt,
 	};
 
 	if (bsearch(&nodeTag(node), nodemap, sizeof(nodemap)/sizeof(nodemap[0]),
@@ -1377,7 +1368,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 			/* This is temporary decision. where_to_send will inherit
 			 *  same destination AS PREPARE.
 			 */
-			return POOL_PRIMARY;
+			return POOL_PRIMARY; 
 		}
 
 		/*
@@ -1388,7 +1379,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 			/* This is temporary decision. where_to_send will inherit
 			 *  same destination AS PREPARE.
 			 */
-			return POOL_PRIMARY;
+			return POOL_PRIMARY; 
 		}
 		/*
 		 * SHOW
@@ -1525,7 +1516,7 @@ bool is_set_transaction_serializable(Node *node)
 				!strcmp("default_transaction_isolation", opt->defname))
 			{
 				A_Const *v = (A_Const *)opt->arg;
-
+ 
 				if (!strcasecmp(v->val.val.str, "serializable"))
 					return true;
 			}
@@ -1664,7 +1655,7 @@ void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE st
 
 /*
  * Return -1, 0 or 1 according to s1 is "before, equal or after" s2 in terms of state
- * transition order.
+ * transition order. 
  * The State transition order is defined as: UNPARSED < PARSE_COMPLETE < BIND_COMPLETE < EXECUTE_COMPLETE
  */
 int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2)
@@ -1700,7 +1691,7 @@ int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2)
 
 /*
  * Remove READ WRITE option from the packet of START TRANSACTION command.
- * To free the return value is required.
+ * To free the return value is required. 
  */
 static
 char* remove_read_write(int len, const char* contents, int *rewritten_len)

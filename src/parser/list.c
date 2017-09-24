@@ -4,8 +4,8 @@
  *	  implementation for PostgreSQL generic linked list package
  *
  *
- * Portions Copyright (c) 2003-2017, PgPool Global Development Group
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2016, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -54,7 +54,7 @@ check_list_invariants(const List *list)
 }
 #else
 #define check_list_invariants(l)
-#endif							/* USE_ASSERT_CHECKING */
+#endif   /* USE_ASSERT_CHECKING */
 
 /*
  * Return a freshly allocated List. Since empty non-NIL lists are
