@@ -10,8 +10,8 @@
  * analyze.c and related files.
  *
  *
- * Portions Copyright (c) 2003-2016, PgPool Global Development Group
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2017, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -40,7 +40,8 @@ parse_version(const char *versionString);
  * raw_parser
  *		Given a query in string form, do lexical and grammatical analysis.
  *
- * Returns a list of raw (un-analyzed) parse trees.
+ * Returns a list of raw (un-analyzed) parse trees.  The immediate elements
+ * of the list are always RawStmt nodes.
  * Set *error to true if there's any parse error.
  */
 List *
@@ -91,6 +92,20 @@ raw_parser(const char *str, bool *error)
 	return yyextra.parsetree;
 }
 
+/*
+ * XXX: Currently we only process the first element of the parse tree.
+ * rest of multiple statements are silently discarded.
+ */
+Node *
+raw_parser2(List *parse_tree_list)
+{
+	Node *node = NULL;
+	RawStmt *rstmt;
+
+	rstmt = (RawStmt *) lfirst(list_head(parse_tree_list));
+	node = (Node *) rstmt->stmt;
+	return node;
+}
 
 /*
  * Intermediate filter between parser and core lexer (core_yylex in scan.l).

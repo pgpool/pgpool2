@@ -3,8 +3,8 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
- * Portions Copyright (c) 2003-2016, PgPool Global Development Group
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2017, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -183,7 +183,7 @@ static void _outSetRest(String *str, VariableSetStmt *node);
 static void _outSetTransactionModeList(String *str, List *list);
 static void _outAlterTableCmd(String *str, AlterTableCmd *node);
 static void _outOptSeqList(String *str, List *options);
-static void _outFuncWithArgs(String *str, FuncWithArgs *node);
+static void _outObjectWithArgs(String *str, ObjectWithArgs *node);
 static void _outFunctionParameter(String *str, FunctionParameter *node);
 static void _outPrivilegeList(String *str, List *list);
 static void _outFuncOptList(String *str, List *list);
@@ -358,11 +358,6 @@ _outRangeVar(String *str, RangeVar *node)
 
 	if (node->alias)
 		_outNode(str, node->alias);
-
-	if (node->inhOpt == INH_YES)
-	{
-		string_append_char(str, " * ");
-	}
 }
 
 static void
@@ -985,6 +980,11 @@ _outIndexStmt(String *str, IndexStmt *node)
 }
 
 static void
+_outCreateStatsStmt(String *str, CreateStatsStmt *node)
+{
+}
+
+static void
 _outNotifyStmt(String *str, NotifyStmt *node)
 {
 	string_append_char(str, "NOTIFY ");
@@ -1286,6 +1286,11 @@ _outLockingClause(String *str, LockingClause *node)
 		case LockWaitBlock:
 			break;
 	}
+}
+
+static void
+_outTriggerTransition(String *str, TriggerTransition *node)
+{
 }
 
 static void
@@ -2753,7 +2758,7 @@ static void _outRenameStmt(String *str, RenameStmt *node)
 		case OBJECT_FUNCTION:
 			string_append_char(str, "FUNCTION ");
 
-			foreach (lc, node->object)
+			foreach (lc, castNode(List, node->object))
 			{
 				Node *n = lfirst(lc);
 				if (IsA(n, String))
@@ -2772,7 +2777,6 @@ static void _outRenameStmt(String *str, RenameStmt *node)
 			}
 
 			string_append_char(str, "(");
-			_outNode(str, node->objarg);
 			string_append_char(str, ")");
 			string_append_char(str, " RENAME TO \"");
 			string_append_char(str, node->newname);
@@ -3777,15 +3781,15 @@ _outCreateOpClassItem(String *str, CreateOpClassItem *node)
 			snprintf(buf, 16, "%d", node->number);
 			string_append_char(str, buf);
 			string_append_char(str, " ");
-			_outOperatorName(str, node->name);
+			_outOperatorName(str, node->name->objname);
 
-			if (node->args != NIL)
+			if (node->name->objname != NIL)
 			{
 				string_append_char(str, "(");
-				_outNode(str, node->args);
+				_outNode(str, node->name->objname);
 				string_append_char(str, ")");
 			}
-			/* XXX
+			/*
 			if (node->recheck == TRUE)
 				string_append_char(str, " RECHECK");
 			*/
@@ -3796,9 +3800,9 @@ _outCreateOpClassItem(String *str, CreateOpClassItem *node)
 			snprintf(buf, 16, "%d", node->number);
 			string_append_char(str, buf);
 			string_append_char(str, " ");
-			_outFuncName(str, node->name);
+			_outFuncName(str, node->name->objname);
 			string_append_char(str, "(");
-			_outNode(str, node->args);
+			_outNode(str, node->name->objname);
 			string_append_char(str, ")");
 			break;
 
@@ -3991,7 +3995,6 @@ _outDropStmt(String *str, DropStmt *node)
 			objname = linitial(node->objects);
 			_outNode(str, linitial(objname));
 			string_append_char(str, " AS ");
-			objname = linitial(node->arguments);
 			_outNode(str, linitial(objname));
 			string_append_char(str, ")");
 			break;
@@ -4003,7 +4006,6 @@ _outDropStmt(String *str, DropStmt *node)
 			objname = linitial(node->objects);
 			_outIdList(str, objname);
 			string_append_char(str, " USING ");
-			objname = linitial(node->arguments);
 			_outIdList(str, objname);
 			break;
 
@@ -4129,11 +4131,11 @@ _outFunctionParameter(String *str, FunctionParameter *node)
 }
 
 static void
-_outFuncWithArgs(String *str, FuncWithArgs *node)
+_outObjectWithArgs(String *str, ObjectWithArgs *node)
 {
-	_outFuncName(str, node->funcname);
+	_outFuncName(str, node->objname);
 	string_append_char(str, "(");
-	_outNode(str, node->funcargs);
+	_outNode(str, node->objargs);
 	string_append_char(str, ")");
 }
 
@@ -4405,16 +4407,18 @@ _outAlterObjectSchemaStmt(String *str, AlterObjectSchemaStmt *node)
 {
 	string_append_char(str, "ALTER ");
 
+	ObjectWithArgs *owa = castNode(ObjectWithArgs, node);
+
 	switch (node->objectType)
 	{
 		case OBJECT_AGGREGATE:
 			string_append_char(str, "AGGREGATE ");
-			_outFuncName(str, node->object);
+			_outFuncName(str, owa->objname);
 			string_append_char(str, "(");
-			if (lfirst(list_head(node->objarg)) == NULL)
+			if (lfirst(list_head(owa->objargs)) == NULL)
 				string_append_char(str, "*");
 			else
-				_outNode(str, lfirst(list_head(node->objarg)));
+				_outNode(str, lfirst(list_head(owa->objargs)));
 			string_append_char(str, ") SET SCHAME \"");
 			string_append_char(str, node->newschema);
 			string_append_char(str, "\"");
@@ -4422,7 +4426,7 @@ _outAlterObjectSchemaStmt(String *str, AlterObjectSchemaStmt *node)
 
 		case OBJECT_DOMAIN:
 			string_append_char(str, "DOMAIN ");
-			_outFuncName(str, node->object);
+			_outFuncName(str, owa->objname);
 			string_append_char(str, " SET SCHEMA \"");
 			string_append_char(str, node->newschema);
 			string_append_char(str, "\"");
@@ -4430,9 +4434,8 @@ _outAlterObjectSchemaStmt(String *str, AlterObjectSchemaStmt *node)
 
 		case OBJECT_FUNCTION:
 			string_append_char(str, "FUNCTION ");
-			_outFuncName(str, node->object);
+			_outFuncName(str, owa->objname);
 			string_append_char(str, "(");
-			_outNode(str, node->objarg);
 			string_append_char(str, ") SET SCHEMA \"");
 			string_append_char(str, node->newschema);
 			string_append_char(str, "\"");
@@ -4456,7 +4459,7 @@ _outAlterObjectSchemaStmt(String *str, AlterObjectSchemaStmt *node)
 
 		case OBJECT_TYPE:
 			string_append_char(str, "TYPE ");
-			_outFuncName(str, node->object);
+			_outFuncName(str, owa->objname);
 			string_append_char(str, " SET SCHEMA \"");
 			string_append_char(str, node->newschema);
 			string_append_char(str, "\"");
@@ -4472,16 +4475,18 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 {
 	string_append_char(str, "ALTER ");
 
+    ObjectWithArgs *owa = castNode(ObjectWithArgs, node);
+
 	switch (node->objectType)
 	{
 		case OBJECT_AGGREGATE:
 			string_append_char(str, "AGGREGATE ");
-			_outFuncName(str, node->object);
+			_outFuncName(str, owa->objname);
 			string_append_char(str, "(");
-			if (lfirst(list_head(node->objarg)) == NULL)
+			if (lfirst(list_head(owa->objargs)) == NULL)
 				string_append_char(str, "*");
 			else
-				_outNode(str, lfirst(list_head(node->objarg)));
+				_outNode(str, lfirst(list_head(owa->objargs)));
 			string_append_char(str, ") OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4489,7 +4494,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_CONVERSION:
 			string_append_char(str, "CONVERSION \"");
-			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, strVal(linitial(owa->objname)));
 			string_append_char(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4497,7 +4502,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_DATABASE:
 			string_append_char(str, "DATABASE \"");
-			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, strVal(linitial(owa->objname)));
 			string_append_char(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4505,7 +4510,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_DOMAIN:
 			string_append_char(str, "DOMAIN \"");
-			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, strVal(linitial(owa->objname)));
 			string_append_char(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4513,9 +4518,9 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_FUNCTION:
 			string_append_char(str, "FUNCTION ");
-			_outFuncName(str, node->object);
+			_outFuncName(str, owa->objname);
 			string_append_char(str, "(");
-			_outNode(str, node->objarg);
+			_outNode(str, owa->objargs);
 			string_append_char(str, ") OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4523,7 +4528,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_LANGUAGE:
 			string_append_char(str, "LANGUAGE \"");
-			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, strVal(linitial(owa->objname)));
 			string_append_char(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4531,9 +4536,8 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_OPERATOR:
 			string_append_char(str, "OPERATOR ");
-			_outOperatorName(str, node->object);
+			_outOperatorName(str, owa->objname);
 			string_append_char(str, "(");
-			_outOperatorArgTypes(str, node->objarg);
 			string_append_char(str, ") OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4541,9 +4545,9 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_OPCLASS:
 			string_append_char(str, "OPERATOR CLASS ");
-			_outFuncName(str, node->object);
+			_outFuncName(str, owa->objname);
 			string_append_char(str, " USING ");
-			string_append_char(str, strVal(linitial(node->objarg)));
+			string_append_char(str, strVal(linitial(owa->objargs)));
 			string_append_char(str, " OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4551,9 +4555,9 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_OPFAMILY:
 			string_append_char(str, "OPERATOR FAMILY ");
-			_outFuncName(str, node->object);
+			_outFuncName(str, owa->objname);
 			string_append_char(str, " USING ");
-			string_append_char(str, strVal(linitial(node->objarg)));
+			string_append_char(str, strVal(linitial(owa->objargs)));
 			string_append_char(str, " OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4561,7 +4565,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_SCHEMA:
 			string_append_char(str, "SCHEMA \"");
-			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, strVal(linitial(owa->objname)));
 			string_append_char(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4569,7 +4573,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_TYPE:
 			string_append_char(str, "TYPE \"");
-			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, strVal(linitial(owa->objname)));
 			string_append_char(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4577,7 +4581,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_TABLESPACE:
 			string_append_char(str, "TABLESPACE \"");
-			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, strVal(linitial(owa->objname)));
 			string_append_char(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4585,7 +4589,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_TSDICTIONARY:
 			string_append_char(str, "TEXT SEARCH DICTIONARY \"");
-			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, strVal(linitial(owa->objname)));
 			string_append_char(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4593,7 +4597,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_TSCONFIGURATION:
 			string_append_char(str, "TEXT SEARCH CONFIGURATION \"");
-			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, strVal(linitial(owa->objname)));
 			string_append_char(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4601,7 +4605,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_FDW:
 			string_append_char(str, "FOREIGN DATA WRAPPER \"");
-			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, strVal(linitial(owa->objname)));
 			string_append_char(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4609,7 +4613,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 
 		case OBJECT_FOREIGN_SERVER:
 			string_append_char(str, "SERVER \"");
-			string_append_char(str, strVal(linitial(node->object)));
+			string_append_char(str, strVal(linitial(owa->objname)));
 			string_append_char(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
 			string_append_char(str, "\"");
@@ -4990,14 +4994,16 @@ _outCommentStmt(String *str, CommentStmt *node)
 
 	string_append_char(str, "COMMENT ON ");
 
+    ObjectWithArgs *owa = castNode(ObjectWithArgs, node);
+
 	switch (node->objtype)
 	{
 		case OBJECT_AGGREGATE:
 			string_append_char(str, "AGGREGATE ");
-			_outFuncName(str, node->objname);
+			_outFuncName(str, owa->objname);
 			string_append_char(str, "(");
 
-			t = linitial(node->objargs);
+			t = linitial(owa->objargs);
 			if (t)
 				_outNode(str, t);
 			else
@@ -5007,56 +5013,56 @@ _outCommentStmt(String *str, CommentStmt *node)
 
 		case OBJECT_FUNCTION:
 			string_append_char(str, "FUNCTION ");
-			_outFuncName(str, node->objname);
+			_outFuncName(str, owa->objname);
 			string_append_char(str, "(");
-			_outNode(str, node->objargs);
+			_outNode(str, owa->objargs);
 			string_append_char(str, ")");
 			break;
 
 		case OBJECT_OPERATOR:
 			string_append_char(str, "OPERATOR ");
-			_outOperatorName(str, node->objname);
+			_outOperatorName(str,  owa->objname);
 			string_append_char(str, "(");
-			_outOperatorArgTypes(str, node->objargs);
+			_outOperatorArgTypes(str, owa->objargs);
 			string_append_char(str, ")");
 			break;
 
 		case OBJECT_TABCONSTRAINT:
 		case OBJECT_DOMCONSTRAINT:
 			string_append_char(str, "CONSTRAINT \"");
-			v = lsecond(node->objname);
+			v = lsecond(owa->objname);
 			string_append_char(str, v->val.str);
 			string_append_char(str, "\" ON ");
-			_outFuncName(str, linitial(node->objargs));
+			_outFuncName(str, linitial(owa->objargs));
 			break;
 
 		case OBJECT_RULE:
 			string_append_char(str, "RULE \"");
-			v = lsecond(node->objname);
+			v = lsecond(owa->objname);
 			string_append_char(str, v->val.str);
 			string_append_char(str, "\" ON ");
-			_outFuncName(str, linitial(node->objargs));
+			_outFuncName(str, linitial(owa->objargs));
 			break;
 
 		case OBJECT_TRIGGER:
 			string_append_char(str, "TRIGGER \"");
-			v = lsecond(node->objname);
+			v = lsecond(owa->objname);
 			string_append_char(str, v->val.str);
 			string_append_char(str, "\" ON ");
-			_outFuncName(str, linitial(node->objargs));
+			_outFuncName(str, linitial(owa->objargs));
 			break;
 
 		case OBJECT_OPCLASS:
 			string_append_char(str, "OPERATOR CLASS ");
-			_outFuncName(str, node->objname);
+			_outFuncName(str, owa->objname);
 			string_append_char(str, " USING ");
-			v = linitial(node->objargs);
+			v = linitial(owa->objargs);
 			string_append_char(str, v->val.str);
 			break;
 
 		case OBJECT_LARGEOBJECT:
 			string_append_char(str, "LARGE OBJECT ");
-			v = linitial(node->objname);
+			v = linitial(owa->objname);
 			if (IsA(v, String))
 				string_append_char(str, v->val.str);
 			else if (IsA(v, Integer))
@@ -5068,15 +5074,15 @@ _outCommentStmt(String *str, CommentStmt *node)
 
 		case OBJECT_CAST:
 			string_append_char(str, "CAST (");
-			_outNode(str, linitial(node->objname));
+			_outNode(str, linitial(owa->objname));
 			string_append_char(str, " AS ");
-			_outNode(str, linitial(node->objargs));
+			_outNode(str, linitial(owa->objargs));
 			string_append_char(str, ")");
 			break;
 
 		case OBJECT_LANGUAGE:
 			string_append_char(str, "LANGUAGE ");
-			_outFuncName(str, node->objname);
+			_outFuncName(str, owa->objname);
 			break;
 
 		default:
@@ -5112,7 +5118,7 @@ _outCommentStmt(String *str, CommentStmt *node)
 				default:
 					break;
 			}
-			_outFuncName(str, node->objname);
+			_outFuncName(str, owa->objname);
 			break;
 	}
 
@@ -5170,6 +5176,16 @@ _outRangeTableSample(String *str, RangeTableSample *node)
 		_outNode(str, node->repeatable);
 		string_append_char(str, ")");
 	}
+}
+
+static void
+_outRangeTableFunc(String *str, RangeTableFunc *node)
+{
+}
+
+static void
+_outRangeTableFuncCol(String *str, RangeTableFuncCol *node)
+{
 }
 
 static void
@@ -5445,6 +5461,25 @@ _outOnConflictClause(String *str, OnConflictClause *node)
 	}
 }
 
+static void
+_outPartitionElem(String *str, PartitionElem *node)
+{
+}
+
+static void
+_outPartitionSpec(String *str, PartitionSpec *node)
+{
+}
+
+static void
+_outPartitionBoundSpec(String *str, PartitionBoundSpec *node)
+{
+}
+
+static void
+_outPartitionRangeDatum(String *str, PartitionRangeDatum *node)
+{
+}
 
 /*
  * _outNode -
@@ -5586,6 +5621,11 @@ _outNode(String *str, void *obj)
 			case T_MinMaxExpr:
 				_outMinMaxExpr(str, obj);
 				break;
+				/*
+			case T_SQLValueFunction:
+				_outSQLValueFunction(str, obj);
+				*/
+				break;
 			case T_XmlExpr:
 				_outXmlExpr(str, obj);
 				break;
@@ -5607,6 +5647,11 @@ _outNode(String *str, void *obj)
 			case T_CurrentOfExpr:
 				_outCurrentOfExpr(str, obj);
 				break;
+				/*
+			case T_NextValueExpr:
+				_outNextValueExpr(str, obj);
+				break;
+				*/
 			case T_InferenceElem:
 				_outInferenceElem(str, obj);
 				break;
@@ -5644,6 +5689,9 @@ _outNode(String *str, void *obj)
 				break;
 			case T_IndexStmt:
 				_outIndexStmt(str, obj);
+				break;
+			case T_CreateStatsStmt:
+				_outCreateStatsStmt(str, obj);
 				break;
 			case T_NotifyStmt:
 				_outNotifyStmt(str, obj);
@@ -5755,6 +5803,12 @@ _outNode(String *str, void *obj)
 			case T_RangeTableSample:
 				_outRangeTableSample(str, obj);
 				break;
+			case T_RangeTableFunc:
+				_outRangeTableFunc(str, obj);
+				break;
+			case T_RangeTableFuncCol:
+				_outRangeTableFuncCol(str, obj);
+				break;
 			case T_Constraint:
 				_outConstraint(str, obj);
 				break;
@@ -5774,6 +5828,21 @@ _outNode(String *str, void *obj)
 				break;
 			case T_XmlSerialize:
 				_outXmlSerialize(str, obj);
+				break;
+			case T_TriggerTransition:
+				_outTriggerTransition(str, obj);
+				break;
+			case T_PartitionElem:
+				_outPartitionElem(str, obj);
+				break;
+			case T_PartitionSpec:
+				_outPartitionSpec(str, obj);
+				break;
+			case T_PartitionBoundSpec:
+				_outPartitionBoundSpec(str, obj);
+				break;
+			case T_PartitionRangeDatum:
+				_outPartitionRangeDatum(str, obj);
 				break;
 
 			case T_InsertStmt:
@@ -5932,8 +6001,8 @@ _outNode(String *str, void *obj)
 				_outGrantStmt(str, obj);
 				break;
 
-			case T_FuncWithArgs:
-				_outFuncWithArgs(str, obj);
+			case T_ObjectWithArgs:
+				_outObjectWithArgs(str, obj);
 				break;
 
 			case T_FunctionParameter:
@@ -6082,3 +6151,4 @@ nodeToString(const void *obj)
 
 	return p;
 }
+

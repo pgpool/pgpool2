@@ -458,13 +458,13 @@ void wait_for_query_response_with_trans_cleanup(POOL_CONNECTION *frontend, POOL_
 		{
 			/* Cancel current transaction */
 			CancelPacket cancel_packet;
-        
+
 			cancel_packet.protoVersion = htonl(PROTO_CANCEL);
 			cancel_packet.pid = pid;
 			cancel_packet.key= key;
 			cancel_request(&cancel_packet);
 		}
-        
+
         PG_RE_THROW();
     }
     PG_END_TRY();
@@ -580,7 +580,7 @@ POOL_STATUS send_extended_protocol_message(POOL_CONNECTION_POOL *backend,
 	}
 	else
 		pool_flush(cp);
-	
+
 	return POOL_CONTINUE;
 }
 
@@ -626,7 +626,7 @@ int pool_check_fd(POOL_CONNECTION *cp)
 	{
 		return 0;
 	}
-		
+
 	fd = cp->fd;
 
 	if (timeoutsec >= 0)
@@ -659,7 +659,7 @@ int pool_check_fd(POOL_CONNECTION *cp)
 
 			if (errno == EAGAIN || errno == EINTR)
 				continue;
-			
+
 			ereport(WARNING,
 					(errmsg("waiting for reading data. select failed with error: \"%s\"", strerror(errno))));
 			break;
@@ -940,7 +940,7 @@ POOL_STATUS ParameterStatus(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
                 ereport(ERROR,
                     (errmsg("unable to process parameter status"),
                          errdetail("could not read from backend")));
- 
+
 			name = p;
 			value = p + strlen(name) + 1;
 			ereport(DEBUG1,
@@ -1066,7 +1066,7 @@ static int
 		 */
 		session_context->query_context->temp_cache = NULL;
 	}
-		
+
 	return 1;
 }
 
@@ -1410,7 +1410,7 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
 	int deadlock_detected = 0;
 	ereport(DEBUG1,
 		(errmsg("do_command: Query:\"%s\"", query)));
-	
+
 	/* send the query to the backend */
 	send_simplequery_message(backend, strlen(query)+1, query, protoMajor);
 
@@ -1466,7 +1466,7 @@ POOL_STATUS do_command(POOL_CONNECTION *frontend, POOL_CONNECTION *backend,
                 ereport(ERROR,
 					(errmsg("do command failed"),
                          errdetail("kind is not N, E, S, C or A(%02x)", kind)));
-                
+
 			}
 			string = pool_read2(backend, len);
 			if (string == NULL)
@@ -1595,7 +1595,7 @@ retry_read_packet:
 		pool_read(backend, &kind, sizeof(kind));
 
 		/* set transaction state */
-        
+
 		backend->tstate = kind;
 
         ereport(DEBUG2,
@@ -2260,13 +2260,13 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
  					if (major == PROTO_MAJOR_V2)
  					{
  						nbytes = (num_fields + 7)/8;
- 
+
  						if (nbytes <= 0)
                             ereport(ERROR,
 								(errmsg("do query failed"),
                                      errdetail("error while reading null bitmap")));
 
- 
+
  						pool_read(backend, nullmap, nbytes);
  					}
 
@@ -2476,9 +2476,9 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
  * 1: Issue LOCK TABLE IN SHARE ROW EXCLUSIVE MODE
  * 2: Issue row lock against sequence table
  * 3: Issue row lock against pgpool_catalog.insert_lock table
- * "lock_kind == 2" is deprecated because PostgreSQL disallows 
+ * "lock_kind == 2" is deprecated because PostgreSQL disallows
  * SELECT FOR UPDATE/SHARE on sequence tables since 2011/06/03.
- * See following threads for more details: 
+ * See following threads for more details:
  * [HACKERS] pgpool versus sequences
  * [ADMIN] 'SGT DETAIL: Could not open file "pg_clog/05DC": ...
  */
@@ -2720,7 +2720,7 @@ POOL_STATUS insert_lock(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 					}
 					else
 					{
-						status = do_command(frontend, CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3, 
+						status = do_command(frontend, CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3,
 											MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
 					}
 				}
@@ -3104,7 +3104,7 @@ static bool is_all_slaves_command_complete(unsigned char *kind_list, int num_bac
 	}
 	return ok;
 }
-		
+
 /*
  * read_kind_from_backend: read kind from backends.
  * the "frontend" parameter is used to send "kind mismatch" error message to the frontend.
@@ -3218,7 +3218,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		if (kind == 'A')
 		{
 			*decided_kind = 'A';
-			
+
 			ereport(DEBUG1,
 				(errmsg("reading backend data packet kind"),
 					 errdetail("received notification message for master node %d",
@@ -3548,7 +3548,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 					{
 						string_append_char(msg, "unknown message]");
 					}
-					
+
 					/*
 					 * If the error was caused by DEALLOCATE then print original query
 					 */
@@ -3562,7 +3562,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 						if (parse_tree_list != NIL)
 						{
-							node = (Node *) lfirst(list_head(parse_tree_list));
+							node = raw_parser2(parse_tree_list);
 
 							if (IsA(node, DeallocateStmt))
 							{
@@ -3900,7 +3900,7 @@ POOL_STATUS start_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTIO
 			{
 				per_node_statement_log(backend, i, "BEGIN");
 
-				if (do_command(frontend, CONNECTION(backend, i), "BEGIN", MAJOR(backend), 
+				if (do_command(frontend, CONNECTION(backend, i), "BEGIN", MAJOR(backend),
 							   MASTER_CONNECTION(backend)->pid,	MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
                     ereport(ERROR,
                             (errmsg("unable to start the internal transaction"),
@@ -3966,7 +3966,7 @@ POOL_STATUS end_internal_transaction(POOL_CONNECTION *frontend, POOL_CONNECTION_
                     PG_RE_THROW();
                 }
                 PG_END_TRY();
-                
+
                 INTERNAL_TRANSACTION_STARTED(backend, i) = false;
             }
         }
@@ -4302,9 +4302,9 @@ static bool pool_process_notice_message_from_one_backend(POOL_CONNECTION *fronte
  *
  * If "unread" is true, the packet will be returned to the stream.
  *
- * Return values are: 
- * 0: not error or notice message 
- * 1: succeeded to extract error message 
+ * Return values are:
+ * 0: not error or notice message
+ * 1: succeeded to extract error message
  * -1: error)
  */
 int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int major, bool unread, char **message)
@@ -4425,7 +4425,7 @@ POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp)
 		backend = CONNECTION(cp, i);
 
 		pool_read(backend, &kind, sizeof(kind));
-        
+
         ereport(DEBUG2,
                 (errmsg("pool_discard_packet: kind: %c", kind)));
 	}
@@ -4695,7 +4695,7 @@ pool_config->client_idle_limit)));
 					 * This could happen after detecting backend errors and before actually
 					 * detaching the backend. In this case reading from backend socket will
 					 * return EOF and it's better to close this session. So returns POOL_END.
-					 */ 
+					 */
                     ereport(LOG,
                         (errmsg("unable to read and process data"),
                              errdetail("detect_postmaster_down_error returns error on backend %d. Going to close this session.", i)));
@@ -4717,7 +4717,7 @@ pool_config->client_idle_limit)));
             ereport(ERROR,
                 (errmsg("unable to read from frontend socket"),
                      errdetail("exception occured on frontend socket")));
-    
+
 		else if (FD_ISSET(frontend->fd, &readmask))
 		{
 			status = ProcessFrontendResponse(frontend, backend);

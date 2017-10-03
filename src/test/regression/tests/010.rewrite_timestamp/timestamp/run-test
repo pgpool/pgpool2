@@ -51,7 +51,7 @@ begin
         test_sql.chomp!
         system("#{TEST_PROGRAM} \"#{escape_string(test_sql)}\" >> #{RESULT_DIRECTORY}/#{testcase}.out\n")
       end
-      
+
       system("diff -c #{EXPECTED_DIRECTORY}/#{testcase}.out #{RESULT_DIRECTORY}/#{testcase}.out >> #{DIFF_FILE}")
 
       if ($? == 0)
@@ -66,4 +66,4 @@ begin
 
 rescue
   STDERR.puts "NG"
-end 
+end

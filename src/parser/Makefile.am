@@ -6,7 +6,6 @@ libsql_parser_a_SOURCES  = \
 	copyfuncs.c \
 	gram.y \
 	keywords.c \
-	kwlookup.c \
 	list.c \
 	makefuncs.c \
 	nodes.c \

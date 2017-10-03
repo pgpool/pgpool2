@@ -138,7 +138,7 @@ main(int argc, char **argv)
 			msg.num_tsparams = 0;
 			msg.query_context = &ctx;
 			Node *node = (Node *) lfirst(l);
-			query = rewrite_timestamp(&backend, node, false, &msg);
+			query = rewrite_timestamp(&backend,  ((RawStmt *) node)->stmt, false, &msg);
 			if (query)
 				printf("%s\n", query);
 			else

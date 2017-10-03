@@ -65,6 +65,7 @@ static bool rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx);
 static bool rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx);
 static char *get_current_timestamp(POOL_CONNECTION_POOL *backend);
 static Node *makeTsExpr(TSRewriteContext *ctx);
+static TypeCast *makeTypeCastFromSvfOp(SQLValueFunctionOp op);
 static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *expression);
 bool raw_expression_tree_walker(Node *node, bool (*walker) (), void *context);
 
@@ -291,7 +292,7 @@ rewrite_timestamp_walker(Node *node, void *context)
 				rewrite_timestamp_insert(i_stmt, ctx);
 				ctx->relname = relname_old;
 			}
-			/* tree walker is called in rewrite_timestamp_insert() */ 
+			/* tree walker is called in rewrite_timestamp_insert() */
 			return false;
 		case T_UpdateStmt:
 			{
@@ -304,7 +305,7 @@ rewrite_timestamp_walker(Node *node, void *context)
 				rewrite_timestamp_update(u_stmt, ctx);
 				ctx->relname = relname_old;
 			}
-			/* tree walker is called in rewrite_timestamp_update() */ 
+			/* tree walker is called in rewrite_timestamp_update() */
 			return false;
 		case T_FuncCall:
 			{
@@ -320,17 +321,61 @@ rewrite_timestamp_walker(Node *node, void *context)
 					TypeCast	*tc = makeNode(TypeCast);
 					tc->arg = makeTsExpr(ctx);
 					tc->typeName = SystemTypeName("text");
-	
+
 					fcall->funcname = SystemFuncName("timestamptz");
 					fcall->args = list_make1(tc);
 					ctx->rewrite = true;
 				}
 			}
 			break;
+		case T_SQLValueFunction:
+			{
+
+				/* CURRENT_DATE, CURRENT_TIME, LOCALTIMESTAMP, LOCALTIME etc.
+				 * From PostgreSQL 10, timestamp conversion is changed and
+				 * SQLValueFunction is added. But Pgpool-II should use
+				 * the old timestamp translate like "'now'::text::date".
+				 * So we have to cast the node to TypeCast first.
+				 */
+				SQLValueFunction	*svf = (SQLValueFunction *) node;
+
+				if (svf->op == SVFOP_CURRENT_DATE ||
+					svf->op == SVFOP_CURRENT_TIME ||
+					svf->op == SVFOP_CURRENT_TIME_N ||
+					svf->op == SVFOP_CURRENT_TIMESTAMP ||
+					svf->op == SVFOP_CURRENT_TIMESTAMP_N ||
+					svf->op == SVFOP_LOCALTIME ||
+					svf->op == SVFOP_LOCALTIME_N ||
+					svf->op == SVFOP_LOCALTIMESTAMP ||
+					svf->op == SVFOP_LOCALTIMESTAMP_N)
+				{
+
+					TypeCast	*tc, *tc1;
+
+					tc1 = makeTypeCastFromSvfOp(svf->op);
+
+					tc = (TypeCast *) node;
+					tc->arg = tc1->arg;
+					tc->typeName = (TypeName *)copyObject(tc1->typeName);
+					tc->location = -1;
+
+					node->type = T_TypeCast;
+
+					/* rewrite `'now'::timestamp' and `'now'::text::timestamp' both */
+					if (isSystemTypeCast(tc->arg, "text"))
+						tc = (TypeCast *) tc->arg;
+
+					if (isStringConst(tc->arg, "now"))
+					{
+						tc->arg = (Node *) makeTsExpr(ctx);
+						ctx->rewrite = true;
+					}
+				}
+			}
+			break;
 		case T_TypeCast:
 			{
-				/* CURRENT_DATE, CURRENT_TIME, LOCALTIMESTAMP, LOCALTIME etc.*/
-				TypeCast	*tc = (TypeCast *) node;
+				TypeCast   *tc = (TypeCast *) node;
 
 				if ((isSystemType((Node *) tc->typeName, "date") ||
 			 		isSystemType((Node *) tc->typeName, "timestamp") ||
@@ -1004,6 +1049,69 @@ static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *ex
 	con->val.type = T_String;
 	con->val.val.str = str;
 	return con;
+}
+
+static TypeCast *
+makeTypeCastFromSvfOp(SQLValueFunctionOp op)
+{
+	TypeName *typename;
+	Node *n;
+	int location;
+
+	switch (op)
+	{
+		case SVFOP_CURRENT_DATE:
+			typename = SystemTypeName("date");
+			location = 0;
+			break;
+		case SVFOP_CURRENT_TIME:
+			typename = SystemTypeName("timetz");
+			location = 0;
+			break;
+		case SVFOP_CURRENT_TIME_N:
+			typename = SystemTypeName("timetz");
+			typename->typmods = lcons(makeIntConst(0, 0), NIL);
+			location = -3;
+			break;
+		case SVFOP_CURRENT_TIMESTAMP:
+			typename = SystemTypeName("timestamptz");
+			location = 0;
+			break;
+		case SVFOP_CURRENT_TIMESTAMP_N:
+			typename = SystemTypeName("timestamptz");
+			typename->typmods = lcons(makeIntConst(0, 0), NIL);
+			location = -3;
+			break;
+		case SVFOP_LOCALTIME:
+			typename = SystemTypeName("time");
+			location = 0;
+			break;
+		case SVFOP_LOCALTIME_N:
+			typename = SystemTypeName("time");
+			typename->typmods = lcons(makeIntConst(0, 0), NIL);
+			location = -3;
+			break;
+		case SVFOP_LOCALTIMESTAMP:
+			typename = SystemTypeName("timestamp");
+			location = 0;
+			break;
+		case SVFOP_LOCALTIMESTAMP_N:
+			typename = SystemTypeName("timestamp");;
+			typename->typmods = lcons(makeIntConst(0, 0), NIL);
+			location = -3;
+			break;
+		case SVFOP_CURRENT_ROLE:
+		case SVFOP_CURRENT_USER:
+		case SVFOP_USER:
+		case SVFOP_SESSION_USER:
+		case SVFOP_CURRENT_CATALOG:
+		case SVFOP_CURRENT_SCHEMA:
+			break;
+	}
+
+	n = makeStringConstCast("now", -1, SystemTypeName("text"));
+
+	return (TypeCast *) makeTypeCast(n, typename, location);
 }
 
 /* from nodeFuncs.c start */
