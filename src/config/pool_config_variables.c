@@ -250,11 +250,11 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL,NULL
 	},
 	{
-		{"enable_multiple_failover_requests_from_node", CFGCXT_INIT, FAILOVER_CONFIG,
+		{"allow_multiple_failover_requests_from_node", CFGCXT_INIT, FAILOVER_CONFIG,
 			"A Pgpool-II node can send multiple failover requests to build consensus.",
 			CONFIG_VAR_TYPE_BOOL,false, 0
 		},
-		&g_pool_config.enable_multiple_failover_requests_from_node,
+		&g_pool_config.allow_multiple_failover_requests_from_node,
 		false,
 		NULL, NULL,NULL
 	},

@@ -2265,7 +2265,7 @@ static WDFailoverCMDResults compute_failover_consensus(POOL_REQUEST_KIND reqKind
 			ereport(LOG,(
 					errmsg("failover requires the majority vote, waiting for consensus"),
 						 errdetail("failover request noted")));
-			if (duplicate && !pool_config->enable_multiple_failover_requests_from_node)
+			if (duplicate && !pool_config->allow_multiple_failover_requests_from_node)
 				return FAILOVER_RES_CONSENSUS_MAY_FAIL;
 			else
 				return FAILOVER_RES_BUILDING_CONSENSUS;
@@ -2311,13 +2311,13 @@ static WDFailoverObject* add_failover(POOL_REQUEST_KIND reqKind, int *node_id_li
 			{
 				*duplicate = true;
 				/* The failover request is duplicate */
-				if (pool_config->enable_multiple_failover_requests_from_node)
+				if (pool_config->allow_multiple_failover_requests_from_node)
 				{
 					failoverObj->request_count++;
 					ereport(LOG,(
 							errmsg("duplicate failover request from \"%s\" node",wdNode->nodeName),
 								 errdetail("Pgpool-II can send multiple failover requests for same node"),
-								 errhint("enable_multiple_failover_requests_from_node is enabled")));
+								 errhint("allow_multiple_failover_requests_from_node is enabled")));
 				}
 				else
 				{

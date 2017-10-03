@@ -302,7 +302,7 @@ typedef struct {
 	bool use_watchdog;						/* Enables watchdog */
 	bool failover_when_quorum_exists;		/* Do failover only when wd cluster holds he quorum */
 	bool failover_require_consensus;		/* Only do failover when majority aggrees */
-	bool enable_multiple_failover_requests_from_node; /* One Pgpool-II node can send multiple
+	bool allow_multiple_failover_requests_from_node; /* One Pgpool-II node can send multiple
 													   * failover requests to build consensus
 													   */
 	WdLifeCheckMethod wd_lifecheck_method;	/* method of lifecheck. 'heartbeat' or 'query' */

@@ -559,7 +559,7 @@ failover_require_consensus = true
 									# Perform failover when majority of Pgpool-II nodes
 									# aggrees on the backend node status change
 
-enable_multiple_failover_requests_from_node = false
+allow_multiple_failover_requests_from_node = false
 									# A Pgpool-II node can cast multiple votes
 									# for building the consensus on failover
 
