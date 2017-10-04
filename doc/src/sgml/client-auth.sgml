@@ -14,7 +14,7 @@
   inturn connects to the <productname>PostgreSQL</> servers using the same credentials to serve the incomming
   client connection. Thus, all the access privileges and restrictions defined for the user in <productname>PostgreSQL</>
   gets automatically applied to all <productname>Pgpool-II</productname> clients, with an exceptions of
-  the authentications on <productname>PostgreSQL</> side that depends on the client's IP addresses or hostnames.
+  the authentications on <productname>PostgreSQL</> side that depends on the client's IP addresses or host names.
   Reason being the connections to the <productname>PostgreSQL</> server are made by <productname>Pgpool-II</productname>
   on behalf of the connecting clients and <productname>PostgreSQL</> server can only see the IP address of the
   <productname>Pgpool-II</productname> server and not that of the actual client.
@@ -73,7 +73,14 @@
    A record can have one of the following formats
 <synopsis>
 local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable> <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable> <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable> <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
 </synopsis>
    The meaning of the fields is as follows:
 
@@ -111,6 +118,31 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
     </varlistentry>
 
     <varlistentry>
+     <term><literal>hostssl</literal></term>
+     <listitem>
+      <para>
+      This record matches connection attempts made using TCP/IP, but only
+      when the connection is made with SSL encryption.
+      </para>
+      <para>
+      To make use of this option the <productname>Pgpool-II</productname> must be
+      built with SSL support. Furthermore, SSL must be enabled by setting the <xref linkend="guc-ssl">
+      configuration parameter. Otherwise, the hostssl record is ignored.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>hostnossl</literal></term>
+     <listitem>
+      <para>
+      This record type has the opposite behavior of hostssl; it only matches connection
+      attempts made over TCP/IP that do not use SSL.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><replaceable>database</replaceable></term>
      <listitem>
       <para>
@@ -123,7 +155,7 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        <para>
         Since <productname>Pgpool-II</productname> does not know anything about
         users in the <productname>PostgreSQL</> backend server, the database name is simply
-        compared against the entries in the databaseE field of <filename>pool_hba.conf</filename>.
+        compared against the entries in the database field of <filename>pool_hba.conf</filename>.
        </para>
       </note>
       </para>
@@ -156,26 +188,103 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><replaceable>address</replaceable></term>
      <listitem>
       <para>
-       Specifies the client machine address(es) that this record matches.
-       An IP address range is specified using standard numeric notation
-       for the range's starting address, then a slash (<literal>/</literal>)
-       and a <acronym>CIDR</> mask length.  The mask
-       length indicates the number of high-order bits of the client
-       IP address that must match.  Bits to the right of this should
-       be zero in the given IP address.
-       There must not be any white space between the IP address, the
-       <literal>/</literal>, and the CIDR mask length.
-
-       <note>
-       <para>
-       Pv6 IP address/mask is currently not supported
-       </para>
-       </note>
+      Specifies the client machine address(es) that this record matches.
+      This field can contain either a host name, an IP address range,
+      or one of the special key words mentioned below.
       </para>
 
       <para>
-       This field only applies to <literal>host</literal> records.
+      An IP address range is specified using standard numeric notation for
+      the range's starting address, then a slash (<literal>/</literal>)
+      and a <acronym>CIDR</acronym> mask length.
+      The mask length indicates the number of high-order bits of the client
+      IP address that must match. Bits to the right of this should be zero
+      in the given IP address. There must not be any white space between the
+      IP address, the <literal>/</literal>, and the CIDR mask length.
       </para>
+
+      <para>
+      Typical examples of an IPv4 address range specified this way are
+      <literal>172.20.143.89/32</literal> for a single host, or
+      <literal>172.20.143.0/24</literal> for a small network, or
+      <literal>10.6.0.0/16</literal> for a larger one.
+      An IPv6 address range might look like <literal>::1/128</literal> for
+      a single host (in this case the IPv6 loopback address) or
+      <literal>fe80::7a31:c1ff:0000:0000/96</literal> for a small network.
+      <literal>0.0.0.0/0</literal> represents all IPv4 addresses, and
+      <literal>::0/0</literal> represents all IPv6 addresses. To specify a
+      single host, use a mask length of 32 for IPv4 or 128 for IPv6.
+      In a network address, do not omit trailing zeroes.
+      </para>
+
+      <para>
+      An entry given in IPv4 format will match only IPv4 connections, and
+      an entry given in IPv6 format will match only IPv6 connections, even
+      if the represented address is in the IPv4-in-IPv6 range.
+      Note that entries in IPv6 format will be rejected if the system's C
+      library does not have support for IPv6 addresses.
+      </para>
+
+      <para>
+      You can also write all to match any IP address, samehost to match any
+      of the server's own IP addresses, or samenet to match any address in
+      any subnet that the server is directly connected to.
+      </para>
+
+      <para>
+      If a host name is specified (anything that is not an IP address range or
+      a special key word is treated as a host name), that name is compared with
+      the result of a reverse name resolution of the client's IP address
+      (e.g., reverse DNS lookup, if DNS is used). Host name comparisons are
+      case insensitive. If there is a match, then a forward name resolution
+      (e.g., forward DNS lookup) is performed on the host name to check whether
+      any of the addresses it resolves to are equal to the client's IP address.
+      If both directions match, then the entry is considered to match.
+      (The host name that is used in <filename>pool_hba.conf</filename> should be the one that
+      address-to-name resolution of the client's IP address returns, otherwise
+      the line won't be matched. Some host name databases allow associating an
+      IP address with multiple host names, but the operating system will only
+      return one host name when asked to resolve an IP address.)
+      </para>
+
+      <para>
+      A host name specification that starts with a dot (.) matches a suffix of
+      the actual host name. So <literal>.example.com</literal> would match
+      <literal>foo.example.com</literal> (but not just <literal>example.com</literal>).
+      </para>
+
+      <para>
+      When host names are specified in <filename>pool_hba.conf</filename>, you should
+      make sure that name resolution is reasonably fast. It can be of advantage to
+      set up a local name resolution cache such as <acronym>nscd</acronym>.
+      </para>
+
+      <para>
+      This field only applies to host, hostssl, and hostnossl records.
+      </para>
+      <para>
+      Specifying the host name in address field is not supported prior to
+        <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>IP-address</replaceable></term>
+     <term><replaceable>IP-mask</replaceable></term>
+     <listitem>
+      <para>
+      These two fields can be used as an alternative to the IP-address/mask-length notation.
+      Instead of specifying the mask length, the actual mask is specified in a separate column.
+      For example, <literal>255.0.0.0</literal> represents an IPv4 <acronym>CIDR</acronym> mask
+      length of <literal>8</literal>, and <literal>255.255.255.255</literal> represents a
+      <acronym>CIDR</acronym> mask length of 32.
+      </para>
+
+      <para>
+      This field only applies to host, hostssl, and hostnossl records.
+      </para>
+
      </listitem>
     </varlistentry>
 
