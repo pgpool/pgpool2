@@ -93,7 +93,7 @@ Pgpool-II documentation
     ここでは例を示します。
     <programlisting>
 $ pcp_node_info -h localhost -U postgres 0
-host1 5432 1 1073741823.500000 waiting
+host1 5432 1 1073741823.500000 waiting primary
     </programlisting>
   </para>
   <para>
@@ -107,11 +107,15 @@ host1 5432 1 1073741823.500000 waiting
 2. port number
 3. status
 4. load balance weight
+5. status name
+6. backend role
 -->
 1. ノードのホスト名
 2. ノードのポート番号
 3. ステータス
 4. ロードバランスウェイト
+5. バックエンド状態名
+6. バックエンドの役割
 </literallayout>
   </para>
   <para>
@@ -151,6 +155,7 @@ Port       : 5432
 Status     : 1
 Weight     : 0.5
 Status Name: waiting
+Role       : primary
     </programlisting>
  </refsect1>
 

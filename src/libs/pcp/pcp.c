@@ -700,6 +700,13 @@ process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 		index +=1;
 		backend_info->backend_weight = atof(index);
 
+		index = (char *) memchr(index, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+
+		index++;
+		backend_info->role = atoi(index);
+
 		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)backend_info, sizeof(BackendInfo) , NULL) < 0)
 			goto INVALID_RESPONSE;
 

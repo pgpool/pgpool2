@@ -466,19 +466,21 @@ output_nodeinfo_result(PCPResultInfo* pcpResInfo, bool verbose)
 
 	if (verbose)
 	{
-		printf("Hostname   : %s\nPort       : %d\nStatus     : %d\nWeight     : %f\nStatus Name: %s\n",
+		printf("Hostname   : %s\nPort       : %d\nStatus     : %d\nWeight     : %f\nStatus Name: %s\nRole       : %s\n",
 			   backend_info->backend_hostname,
 			   backend_info->backend_port,
 			   backend_info->backend_status,
 			   backend_info->backend_weight/RAND_MAX,
-			   backend_status_to_string(backend_info));
+			   backend_status_to_string(backend_info),
+			   role_to_str(backend_info->role));
 	} else {
-		printf("%s %d %d %f %s\n",
+		printf("%s %d %d %f %s %s\n",
 			   backend_info->backend_hostname,
 			   backend_info->backend_port,
 			   backend_info->backend_status,
 			   backend_info->backend_weight/RAND_MAX,
-			   backend_status_to_string(backend_info));
+			   backend_status_to_string(backend_info),
+			   role_to_str(backend_info->role));
 	}
 }
 
@@ -808,4 +810,13 @@ static char* backend_status_to_string(BackendInfo *bi)
 			break;
 	}
 	return statusName;
+}
+
+/* Convert enum role to string */
+char *role_to_str(SERVER_ROLE role)
+{
+	static char *role_str[] = {"master", "slave", "primary", "standby"};
+	if (role < ROLE_MASTER || role > ROLE_STANDBY)
+		return "unknown";
+	return role_str[role];
 }

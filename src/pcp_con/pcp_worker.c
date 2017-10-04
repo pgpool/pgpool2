@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -85,7 +85,6 @@ static void pcp_worker_will_go_down(int code, Datum arg);
 
 static void  do_pcp_flush(PCP_CONNECTION *frontend);
 static void  do_pcp_read(PCP_CONNECTION *pc, void *buf, int len);
-
 
 /* 
  * main entry pont of pcp worker child process
@@ -811,8 +810,10 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 	char port_str[6];
 	char status[2];
 	char weight_str[20];
+	char role_str[10];
 	char code[] = "CommandComplete";
 	BackendInfo *bi = NULL;
+	SERVER_ROLE role;
 
 	node_id = atoi(buf);
 
@@ -830,6 +831,22 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 	snprintf(port_str, sizeof(port_str), "%d", bi->backend_port);
 	snprintf(status, sizeof(status), "%d", bi->backend_status);
 	snprintf(weight_str, sizeof(weight_str), "%f", bi->backend_weight);
+
+	if (STREAM)
+	{
+		if (Req_info->primary_node_id == node_id)
+			role = ROLE_PRIMARY;
+		else
+			role = ROLE_STANDBY;
+	}
+	else
+	{
+		if (Req_info->master_node_id == node_id)
+			role = ROLE_MASTER;
+		else
+			role = ROLE_SLAVE;
+	}
+	snprintf(role_str, sizeof(role_str), "%d", role);
 	
 	pcp_write(frontend, "i", 1);
 	wsize = htonl(sizeof(code) +
@@ -837,6 +854,7 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 				  strlen(port_str)+1 +
 				  strlen(status)+1 +
 				  strlen(weight_str)+1 +
+				  strlen(role_str)+1 +
 				  sizeof(int));
 	pcp_write(frontend, &wsize, sizeof(int));
 	pcp_write(frontend, code, sizeof(code));
@@ -844,6 +862,8 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 	pcp_write(frontend, port_str, strlen(port_str)+1);
 	pcp_write(frontend, status, strlen(status)+1);
 	pcp_write(frontend, weight_str, strlen(weight_str)+1);
+
+	pcp_write(frontend, role_str, strlen(role_str)+1);
 	do_pcp_flush(frontend);
 }
 
@@ -1289,4 +1309,3 @@ static void pcp_worker_will_go_down(int code, Datum arg)
 	POOL_SETMASK(&UnBlockSig);
 	
 }
-

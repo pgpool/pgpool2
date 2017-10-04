@@ -69,7 +69,7 @@ Pgpool-II documentation
 	Here is an example output:
     <programlisting>
 $ pcp_node_info -h localhost -U postgres 0
-host1 5432 1 1073741823.500000
+host1 5432 1 1073741823.500000 waiting primary
     </programlisting>
   </para>
   <para>
@@ -79,6 +79,8 @@ host1 5432 1 1073741823.500000
 2. port number
 3. status
 4. load balance weight
+5. status name
+6. backend role
 </literallayout>
   </para>
   <para>
@@ -98,10 +100,12 @@ host1 5432 1 1073741823.500000
   </para>
     <programlisting>
 $ pcp_node_info --verbose -h localhost -U postgres 0
-Hostname: host1
-Port    : 5432
-Status  : 1
-Weight  : 0.5
+Hostname   : host1
+Port       : 5432
+Status     : 1
+Weight     : 0.5
+Status Name: waiting
+Role       : primary
     </programlisting>
  </refsect1>
 

@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -64,6 +64,13 @@ typedef struct {
 	BACKEND_STATUS status[MAX_NUM_BACKENDS];
 } BackendStatusRecord;
 
+typedef enum {
+	ROLE_MASTER,
+	ROLE_SLAVE,
+	ROLE_PRIMARY,
+	ROLE_STANDBY
+} SERVER_ROLE;
+
 /*
  * PostgreSQL backend descriptor. Placed on shared memory area.
  */
@@ -77,6 +84,7 @@ typedef struct {
 	unsigned short flag;		/* various flags */
 	bool quarantine;			/* true if node is CON_DOWN because of quarantine */
 	uint64 standby_delay;		/* The replication delay against the primary */
+	SERVER_ROLE role;	/* Role of server. Only used by pcp_node_info */
 } BackendInfo;
 
 typedef struct {
@@ -281,6 +289,8 @@ extern int pcp_result_slot_count(PCPResultInfo* res);
 extern char *pcp_get_last_error(PCPConnInfo* pcpConn);
 
 extern int pcp_result_is_empty(PCPResultInfo* res);
+
+extern char *role_to_str(SERVER_ROLE role);
 /* ------------------------------
  * pcp_error.c
  * ------------------------------
