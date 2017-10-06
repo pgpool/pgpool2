@@ -1,0 +1,495 @@
+<sect1 id="release-3-7">
+  <title>Release 3.7</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-xx-xx</simpara>
+  </note>
+
+  <sect2>
+    <title>Overview</title>
+    <para>
+      This version improves reliability of failover by using new
+      watchdog feature and per node health check.  Also this version
+      adapts to changes in PostgreSQL 10: new SQL parser, logical
+      replication and some admin functions name changes.
+    </para>
+    <para>
+      Major enhancements in <productname>Pgpool-II</productname> 3.7 include:
+    </para>
+
+    <!-- Items in this list summarize one or more items below -->
+
+    <itemizedlist>
+
+      <listitem>
+	<para>
+	  Quorum aware failover feature.
+	</para>
+      </listitem>
+
+      <listitem>
+	<para>
+	  Allow specifying the hostnames in pool_hba.
+	</para>
+      </listitem>
+
+      <listitem>
+	<para>
+	  Allow to specify per node health check parameters.
+	</para>
+      </listitem>
+      
+      <listitem>
+	<para>
+	  Support AWS Aurora.
+	</para>
+      </listitem>
+
+      <listitem>
+	<para>
+	  Import PostgreSQL 10 SQL parser
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Support logical replication. 
+	</para>
+      </listitem>
+
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>Major Enhancements</title>
+
+    <itemizedlist>
+      <listitem>
+	<!--
+	    2017-09-18 [54af632]
+	    2017-10-03 [12bd99b]
+	  -->
+	<para>
+	  Quorum and Consensus for backend failover. (Muhammad Usama)
+	</para>
+	<para>
+	  Add ability in the Pgpool-II to considers the existence of
+	  quorum and seek the majority node (Pgpool-II nodes part of
+	  the watchdog cluster) consensus to validate the backend node
+	  failover request. This feature helps make failover decision
+	  better and prevent split brain scenarios.
+	</para>
+
+	<para>
+	  The addition of this feature also made some modification in
+	  the execution behavior of the failover (failover, failback,
+	  promote-node) command.
+	</para>
+
+	<para>
+	  Now only the Master node performs the failover, and the failover 
+	  locks are removed.
+	</para>
+
+	<para>
+	  Three new configuration parameters to configure the failover
+	  behavior from user side: failover_when_quorum_exists,
+	  failover_require_consensus,
+	  enable_multiple_failover_requests_from_node.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-20 [3cc5235]
+	  -->
+	<para>
+	  Allow specifying the hostnames in pool_hba. (Muhammad Usama)
+	</para>
+	<para>
+	  The commit adds the support of hostnames to be used in the
+	  address field of pool_hba records, previously only CIDR
+	  address was supported.
+	</para>
+
+	<para>
+	  Along with allowing the hostnames in address field of the
+	  HBA record the commit also made the following enhancements
+	  in the area.
+	</para>
+
+	<para>
+	  (1) pool_hba records are now completely parsed at the
+	  loading time and we now keep the structured data of records
+	  instead of raw record lines, This saves the parsing at every
+	  new connection time and however little it may be but its a
+	  performance enhancement.
+	</para>
+	<para>
+	  (2) Enhanced parsing now gives the better descriptive
+	  error/log messages.
+	</para>
+
+	<para>
+	  (3) Better handling of auth-options field.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-04-20 [127e64f]
+	    2017-04-26 [c0d209d]
+	    2017-05-16 [18f4d2e]
+	    2017-05-31 [cbf1268]
+	  -->
+	<para>
+  	  Supporting per node health check parameters. (Tatsuo Ishii,
+  	  Muhammad Usama)
+	</para>
+	<para>
+	  Previous implementation of health check is a single serial
+	  processing for all of database nodes.
+	</para>
+	<para>
+	  Now pgpool main process forks health check process for each
+	  DB node.  This commit enables all health-check related
+	  parameter to be configured for each individual backend
+	  nodes.
+	</para>
+	<para>
+	  For example if we have 3 backend nodes and do following
+	  configurations.
+	</para>
+	<programlisting>
+health_check_period = 10
+health_check_period0 = 5
+	</programlisting>
+
+	<para>
+	  Then will set the health_check_period for node 0 to 5 while
+	  node-id 1 and 2 will get the value 10
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-10-03 [57196ae]
+	  -->
+	<para>
+  	  Import PostgreSQL 10 SQL parser. (Bo Peng)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-07-12 [e9b241e]
+	    2017-07-12 [6bbcfe7]
+	    2017-07-12 [b61019e]
+	    2017-07-13 [e626055]
+	    2017-07-12 [ea1a6b9]
+	  -->
+	<para>
+	  Support AWS Aurora. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Add new backend flag "ALWAYS_MASTER" to control the primary
+	  node detecting logic. Since we cannot use
+	  pg_is_in_recovery() in Aurora, we assign the new flag to a
+	  backend which is specified as "writer" in Aurora. Since
+	  Aurora always use the same hostname for the master (it's
+	  called "writer"), find_primary_node() just returns the node
+	  id which has ALWAYS_MASTER flag on.
+	</para>
+	<para>
+	  See more details about ALWAYS_MASTER
+	  flag <xref linkend="backend-flag-table">.
+	</para>
+	<para>
+	  Other than that, user can use the streaming replication mode
+	  with Aurora. Notice that replication delay cannot be
+	  performed in Aurora, sr_check_period should be always 0.
+	</para>
+	<para>
+	  Also add English/Japanese Aurora setting example. 
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-08-17 [184b412]
+	    2017-08-17 [88c5c11]
+	  -->
+	<para>
+	  Support logical replication. (Tatsuo Ishii)
+	</para>
+	<para>
+	  The logical replication mode can be used
+	  with <productname>PostgreSQL</productname> servers operating
+	  logical replication. In this
+	  mode, <productname>PostgreSQL</productname> is responsible
+	  for synchronizing tables.
+	</para>
+	<para>
+	  Load balancing is possible in the mode. Since logical
+	  replication does not replicate all tables, it's user's
+	  responsibility to replicate the table which could be load
+	  balanced.
+	</para>
+	<para>
+	  The sample configuration file
+	  is <filename>$prefix/etc/pgpool.conf.sample-logical</filename>.
+	</para>
+	<para>
+	  And add support for logical replication mode
+	  to <application>pgpool_setup</application>.
+	</para>
+      </listitem>
+
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>Other Enhancements</title>
+    <itemizedlist>
+      <listitem>
+	<!--
+	    2017-10-04 [0e0d7eb]
+	  -->
+	<para>
+	  Documentation updates for pool_hba enhancements.(Muhammad Usama)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-01 [6e71926]
+	  -->
+	<para>
+	  Add "slony mode" to pgpool_setup. (Tatsuo Ishii)
+	</para>
+      </listitem>
+      <listitem>
+	<!--
+	    2017-09-11 [c0f4f1a]
+	  -->
+	<para>
+	  Deal with OpenSSL 1.1. (Tatsuo Ishii, Muhammad Usama)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-03-29 [3dd0278]
+	  -->
+	<para>
+	  Test: Add new regression test "069.memory_leak_extended". (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-01-25 [91143a1]
+	  -->
+	<para>
+	  Doc: Enhance query cache documents. (Tatsuo Ishii)
+	</para>
+      </listitem>
+      <listitem>
+	<!--
+	    2016-12-20 [f6659fb]
+	    2016-12-20 [5485b9b]
+	  -->
+	<para>
+	  Doc: Add "Tips for Installation" section. (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-19 [34922b5]
+	  -->
+	<para>
+	  Test: Add new test 011.watchdoc_quorum_failover. (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-17 [3810b55]
+	  -->
+	<para>
+	  Test: Add new test suits. (Tatsuo Ishii)
+	</para>
+	<para>
+	  The new test suit "extended-query-test" is intended to test extended
+	  queries using pgproto command.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-10 [d114c19]
+	  -->
+	<para>
+	  Add debugging aid to check pending message and backend
+	  response. (Tatsuo Ishii)
+	</para>
+	<para>
+	  New function pool_check_pending_message_and_reply() added.
+	  If pending message kind and backend reply message kind is
+	  not inconsistent, it prints a debug message. Currently the
+	  only client of the function is read_kind_from_backend().
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-08 [0f75428]
+	  -->
+	<para>
+	  Add debugging/testing aid for health check. (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>Changes</title>
+    <itemizedlist>
+      <listitem>
+	<!--
+	    2017-10-04 [1e26fa7]
+	  -->
+	<para>
+	  Add "role" field to pcp_node_info command.(Tatsuo Ishii)
+	</para>
+	<para>
+	  Role is the server role: one of "primary", "standby",
+	  "master" or "slave".
+	</para>
+      </listitem>
+      <listitem>
+	<!--
+	    2017-09-01 [9ebcdbc]
+	  -->
+	<para>
+	  Change master_slave_sub_mode default to 'stream'. (Tatsuo Ishii)
+	</para>
+	<para>
+	  This is necessary since the default value for the
+	  pool_config_variable.c is STREAM_MODE.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-05-31 [20e1dab]
+	  -->
+	<para>
+	  Allow to fork new health check process when it exits. (Tatsuo Ishii)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-05-31 [b37dcc4]
+	  -->
+	<para>
+	  Add new group "health_check" to PGPOOL SHOW command doc. (Tatsuo Ishii)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-04-12 [6eb7160]
+	  -->
+	<para>
+	  Remove old html docs and related files. (Tatsuo Ishii)
+	</para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>Bug fix</title>
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2017-09-22 [e18632e]
+	  -->
+	<para>
+	  Fix exit signal handlers to not call ereport. (Tatsuo Ishii)
+	</para>
+	<para>
+	  There could be a race condition in the exit signal handlers. 
+	</para>
+	<para>
+		See <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2017-September/002545.html">[pgpool-hackers:2545]</ulink> for more details.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-05 [815fd17]
+	  -->
+	<para>
+	  Doc: Fix table about replicate_select behavior. (Yugo Nagata)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-07-28 [7a47b01]
+	  -->
+	<para>
+	  Test: Fix bug with memory leak tests and add new memory leak
+	  test. (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-07-13 [95cab40]
+	  -->
+	<para>
+	  Add log after health check retrying succeeds. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Previously only health check retry logs were produced. So it was not
+	  clear if the retry succeeded or not in the end.
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-07-13 [1e1d1d1]
+	  -->
+	<para>
+	  Add necessary setting for health check retry in the Aurora
+	  example. (Tatsuo Ishii)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
