@@ -61,7 +61,7 @@ wd_init_interlock(void)
 		memset((void *)WD_Locks, 0, alloc_size);
 
 		ereport(DEBUG1,
-				(errmsg("WD_Locks: sizeof(bool) (%d) * WD_MAX_LOCK_NUM (%d) = %d bytes requested for shared memory",
+				(errmsg("WD_Locks: sizeof(bool) (%lu) * WD_MAX_LOCK_NUM (%d) = %d bytes requested for shared memory",
 						sizeof(bool),
 						WD_MAX_LOCK_NUM,
 						alloc_size)));

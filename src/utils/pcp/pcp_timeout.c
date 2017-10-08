@@ -1,4 +1,5 @@
 #include <sys/time.h>
+#include <pcp/pcp.h>
 
 struct timeval pcp_timeout;
 

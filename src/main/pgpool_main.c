@@ -2323,8 +2323,6 @@ static void wakeup_children(void)
 
 static RETSIGTYPE wakeup_handler(int sig)
 {
-	int save_errno = errno;
-
 	POOL_SETMASK(&BlockSig);
 	wakeup_request = 1;
 
