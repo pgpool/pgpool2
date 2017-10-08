@@ -2828,6 +2828,7 @@ static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	Req_info->conn_counter = 0;
 	Req_info->switching = false;
 	Req_info->request_queue_head = Req_info->request_queue_tail = -1;
+	Req_info->primary_node_id = -2;
 	InRecovery = pool_shared_memory_create(sizeof(int));
 	*InRecovery = RECOVERY_INIT;
 
