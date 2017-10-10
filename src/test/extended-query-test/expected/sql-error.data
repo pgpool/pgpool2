@@ -1,9 +1,3 @@
-FE=> Query(query="DROP TABLE IF EXISTS pgproto_test1")
-<= BE CommandComplete(DROP TABLE)
-<= BE ReadyForQuery(I)
-FE=> Query(query="CREATE TABLE pgproto_test1(i INT)")
-<= BE CommandComplete(CREATE TABLE)
-<= BE ReadyForQuery(I)
 FE=> Parse(stmt="S1", query="BEGIN")
 FE=> Bind(stmt="S1", portal="")
 FE=> Execute(portal="")
@@ -21,6 +15,6 @@ FE=> Sync
 <= BE BindComplete
 <= BE CommandComplete(BEGIN)
 <= BE CloseComplete
-<= BE ErrorResponse(S ERROR V ERROR C 42P01 M relation "non_existsing_table" does not exist P 15 F parse_relation.c L 1160 R parserOpenTable )
+<= BE ErrorResponse(S ERROR V ERROR C 42P01 M relation "non_existsing_table" does not exist P 15 F parse_relation.c L 1186 R parserOpenTable )
 <= BE ReadyForQuery(I)
 FE=> Terminate

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-timeout=300
+timeout=30
 export PGPORT=11000
 export PGDATABASE=test
 export PGPOOL_INSTALL_DIR=$HOME/work/pgpool-II/current
@@ -11,12 +11,16 @@ testdir=`pwd`/tests
 expected=`pwd`/expected
 results=`pwd`/results
 rm -f $results/*
-mkdir $results
+test ! -d $result && mkdir $results
 
 diffs=`pwd`/diffs
 rm -f $diffs
 
-tests=`(cd tests;ls)`
+if [ $# -gt 0 ];then
+    tests=`(cd tests;ls |grep $1)`
+else
+    tests=`(cd tests;ls)`
+fi
 rm -fr testdata
 mkdir testdata
 cd testdata
@@ -58,9 +62,11 @@ do
     if [ $? = 124 ]
     then
 	echo "timeout."
-	timeoutcnt=`expr $timeout + 1`
+	timeoutcnt=`expr $timeoutcnt + 1`
     else
-	cmp $expected/$i $results/$i >/dev/null 2>&1
+	sed -e 's/L [0-9]* R/L xxx R/' $expected/$i > expected_tmp
+	sed -e 's/L [0-9]* R/L xxx R/' $results/$i > results_tmp
+	cmp expected_tmp results_tmp >/dev/null 2>&1
 	if [ $? != 0 ]
 	then
 	    echo "failed."
@@ -71,6 +77,7 @@ do
 	    echo "ok."
 	    okcnt=`expr $okcnt + 1`
 	fi
+	rm expected_tmp results_tmp
     fi
     grep pool_check_pending_message_and_reply log/pgpool.log
     ./shutdownall >/dev/null 2>&1

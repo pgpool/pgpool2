@@ -1,12 +1,6 @@
 # Test data for error case.
 #
 
-# Create test table
-'Q'	"DROP TABLE IF EXISTS pgproto_test1"
-'Y'
-'Q'	"CREATE TABLE pgproto_test1(i INT)"
-'Y'
-
 # Start a transaction
 'P'	"S1"	"BEGIN"	0
 'B'	""	"S1"	0	0	0

@@ -17,11 +17,19 @@ The script runs each pgproto test data under "tests" directory using
 pgproto command. The each result is compared with data under
 "expected" directory.
 
+Optional argument can be specified if you want to run only some of
+tests. The argument should be the test file name under "tests"
+directory. You can only specify part of the name, or you can use
+regular expressions.
+
 How to add tests:
 
 Add pgproto data under "tests" directory. Also you need to add
 expected output of pgproto to "expected" directory. The file name must
-be identical to the file name added to tests directory.
+be identical to the file name added to tests directory. Note that
+source files lines like "1186" below
+<= BE ErrorResponse(S ERROR V ERROR C 42P01 M relation "non_existsing_table" does not exist P 15 F parse_relation.c L 1186 R parserOpenTable )
+will be replaced with "xxx" to avoid the source code version differences.
 
 If you need to add special directives to pgpool.conf, include those
 configuration directives to the pgproto data starting with "##". You
