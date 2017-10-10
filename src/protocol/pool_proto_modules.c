@@ -2460,7 +2460,11 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				}
 				status = SimpleForwardToBackend(fkind, frontend, backend, len, contents);
 
-				if (pool_is_doing_extended_query_message())
+				/*
+				 * After flush message received, extended query mode should be
+				 * continued.
+				 */
+				if (fkind != 'H' && pool_is_doing_extended_query_message())
 				{
 					pool_unset_doing_extended_query_message();
 				}
