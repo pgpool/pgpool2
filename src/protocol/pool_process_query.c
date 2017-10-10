@@ -4057,6 +4057,12 @@ static int detect_postmaster_down_error(POOL_CONNECTION *backend, int major)
 			(errmsg("detecting postmaster down error")));
 		return r;
 	}
+
+#undef DISABLE_POSTMASTER_DOWN
+#ifdef DISABLE_POSTMASTER_DOWN
+	return 0;
+#endif
+
 	if (r == SPECIFIED_ERROR)
 	{
 		ereport(DEBUG1,
