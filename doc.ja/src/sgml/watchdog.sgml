@@ -570,6 +570,196 @@ IPアドレス切り替え後にARPリクエストを送信するコマンドで
   </variablelist>
   </sect2>
 
+  <sect2 id="config-watchdog-failover-behavior" xreflabel="Controlling the Failover behavior">
+<!--
+    <title>Controlling the Failover behavior</title>
+-->
+    <title>フェイルオーバの挙動の制御</title>
+
+    <para>
+<!--
+      These settings are used to control the behavior of backend node failover when the watchdog is enabled.
+      The effect of these configurations is limited to the failover/degenerate requests initiated by
+      <productname>Pgpool-II</productname> internally, while the user initiated detach backend requests
+      (using PCP command) by-pass these configuration settings.
+-->
+これらの設定は、<application>watchdog</application>機能が有効な場合に、バックエンドノードのフェイルオーバの動作を制御するために使用されます。
+これらの設定の影響は、内部的な<productname>Pgpool-II</productname>のフェイルオーバ/縮退要求のみに影響します。
+一方、(PCPコマンドを使った)ユーザが起動したバックエンド切り離し操作では、これらの設定項目は迂回され適用されません。
+    </para>
+
+    <variablelist>
+
+      <varlistentry id="guc-failover-when-quorum-exists" xreflabel="failover_when_quorum_exists">
+        <term><varname>failover_when_quorum_exists</varname> (<type>boolean</type>)
+          <indexterm>
+<!--
+            <primary><varname>failover_when_quorum_exists</varname> configuration parameter</primary>
+-->
+            <primary><varname>failover_when_quorum_exists</varname> 設定パラメータ</primary>
+          </indexterm>
+        </term>
+      <listitem>
+        <para>
+<!--
+        When enabled, <productname>Pgpool-II</productname> will perform the degenerate/failover on
+        backend node if the quorum exists. In the absence of the quorum, <productname>Pgpool-II</productname>
+        node that detects the backend failure will quarantine the failed backend node until the quorum exists again.
+-->
+このパラメータを有効にすると、クォーラムが存在する場合、<productname>Pgpool-II</productname>はバックエンドノードで縮退/フェイルオーバを実行します。
+クォーラムが存在しない場合、クォーラムが再び存在するまで、バックエンドの障害を検出する<productname>Pgpool-II</productname>ノードは、障害の発生したバックエンドノードを隔離します。
+        </para>
+        <para>
+<!--
+        The quarantine nodes behaves similar to the detached backend nodes but unlike failed/degenerated backends
+        the quarantine status is not propagated to the other <productname>Pgpool-II</productname> nodes in the
+        watchdog cluster, So even if the backend node is in the quarantine state on one
+        <productname>Pgpool-II</productname> node, other <productname>Pgpool-II</productname> nodes may
+        still continue to use that backend.
+		-->
+隔離されたノードの動作は切り離されたバックエンドノードと似ていますが、フェイルオーバ/縮退と異なり、隔離ステータスはwatchdogクラスタ内の他の<productname>Pgpool-II</productname>ノードに伝播されません。
+したがって、他の<productname>Pgpool-II</productname>ノードは引き続きそのバックエンドを使用し続ける可能性があります。
+        </para>
+        <para>
+<!--
+        Although there are many similarities in quarantine and failover operations, but they both differ in a very
+        fundamental way. The quarantine operations does not executes the <xref linkend="guc-failover-command">
+        and silently detaches the problematic node, So in the case when the master backend node is quarantined, the
+        <productname>Pgpool-II</productname> will not promote the standby to take over the master responsibilities
+        and until the master node is quarantined the <productname>Pgpool-II</productname> will not have
+        any useable master backend node.
+-->
+隔離とフェイルオーバ操作には多くの類似点がありますが、どちらも非常に基本的な方法で異なります。
+隔離操作は<xref linkend="guc-failover-command">を実行せず、障害の発生したノードを隔離します。
+この隔離されたノードがマスタの場合、<productname>Pgpool-II</productname>はスタンバイをマスタに昇格させないので、マスタノードが隔離されている間は、使用可能なマスタバックエンドノードはありません。
+        </para>
+        <para>
+<!--
+          Default is on.
+-->
+デフォルト値はonです。
+        </para>
+        <para>
+<!--
+        <varname>failover_when_quorum_exists</varname> is not available prior to
+        <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>.
+-->
+failover_when_quorum_existsは<productname>Pgpool-II </productname><emphasis>V3.7</emphasis>より前では利用できません。
+        </para>
+        <para>
+<!--
+          This parameter can only be set at server start.
+-->
+このパラメータは、サーバーの起動時にのみ設定できます。
+        </para>
+      </listitem>
+    </varlistentry>
+
+      <varlistentry id="guc-failover-require-consensus" xreflabel="failover_require_consensus">
+        <term><varname>failover_require_consensus</varname> (<type>boolean</type>)
+          <indexterm>
+<!--
+            <primary><varname>failover_require_consensus</varname> configuration parameter</primary>
+-->
+            <primary><varname>failover_require_consensus</varname> 設定パラメータ</primary>
+          </indexterm>
+        </term>
+      <listitem>
+        <para>
+<!--
+        When enabled, <productname>Pgpool-II</productname> will perform the degenerate/failover on a
+        backend node if the watchdog quorum exists and at-least minimum number of nodes necessary
+        for the quorum vote for the failover.
+-->
+このパラメータを有効にすると、<productname>Pgpool-II</productname>は、<application>watchdog</application>クォーラムが存在し、少なくともクォーラム投票に必要なノードの最小数があれば、バックエンドノードで縮退/フェイルオーバを実行します。
+        </para>
+        <para>
+<!--
+        For example, in a three node watchdog cluster, the failover will only be performed until at
+        least two nodes ask for performing the failover on the particular backend node.
+-->
+たとえば、3ノードの<application>watchdog</application>のクラスタでは、フェイルオーバは、少なくとも2つのノードが特定のバックエンドノードに対してフェイルオーバの実行要求をするときのみ実行されます。
+        </para>
+        <para>
+<!--
+          Default is on.
+-->
+デフォルト値はonです。
+        </para>
+        <para>
+<!--
+        <varname>failover_require_consensus</varname> is not available prior to
+        <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>. and it is only
+        effective when <xref linkend="guc-failover-when-quorum-exists"> is enabled
+-->
+<productname>Pgpool-II </productname><emphasis>V3.7</emphasis>より前では<varname>failover_require_consensus</varname>は利用できません。
+<xref linkend="guc-failover-when-quorum-exists">が有効な場合にのみ有効です。
+        </para>
+        <para>
+<!--
+          This parameter can only be set at server start.
+-->
+このパラメータは、サーバの起動時にのみ設定できます。
+        </para>
+      </listitem>
+    </varlistentry>
+
+      <varlistentry id="guc-allow-multiple-failover-requests-from-node" xreflabel="allow_multiple_failover_requests_from_node">
+        <term><varname>allow_multiple_failover_requests_from_node</varname> (<type>boolean</type>)
+          <indexterm>
+<!--
+            <primary><varname>allow_multiple_failover_requests_from_node</varname> configuration parameter</primary>
+-->
+            <primary><varname>allow_multiple_failover_requests_from_node</varname> 設定パラメータ</primary>
+          </indexterm>
+        </term>
+      <listitem>
+        <para>
+<!--
+        This parameter works in connection with the
+        <xref linkend="guc-failover-require-consensus">. When enabled, a single <productname>Pgpool-II</productname>
+        node can cast multiple votes for the failover.
+-->
+このパラメータは、<xref linkend="guc-failover-require-consensus">と連携して動作します。
+有効にすると、単一の<productname>Pgpool-II</productname>ノードが複数のフェイルオーバ投票をできます。
+        </para>
+        <para>
+<!--
+        For example, in a three node watchdog cluster, if one <productname>Pgpool-II</productname> node sends two
+        failover requests for a particular backend node failover, Both requests will be counted as a separate
+        vote in the favor of the failover and <productname>Pgpool-II</productname> will execute the failover,
+        even if it does not get the vote from any other <productname>Pgpool-II</productname> node.
+-->
+たとえば、3ノードの<application>watchdog</application>クラスタでは、1つの<productname>Pgpool-II</productname>ノードが特定のバックエンドノードのフェイルオーバに対して2つのフェイルオーバ要求を送信すると、両方の要求が別の投票としてカウントされ、たとえ他の<productname>Pgpool-II</productname>ノードからの投票を得なくても、<productname>Pgpool-II</productname>がフェイルオーバを実行します。 
+        </para>
+        <para>
+<!--
+          Default is off.
+-->
+デフォルト値はoffです。
+        </para>
+        <para>
+<!--
+        <varname>allow_multiple_failover_requests_from_node</varname> is not available prior to
+        <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>. and it is only
+        effective when both <xref linkend="guc-failover-when-quorum-exists"> and
+        <xref linkend="guc-failover-require-consensus"> are enabled
+-->
+<varname>allow_multiple_failover_requests_from_node</varname>は、<productname>Pgpool-II </productname><emphasis>V3.7</emphasis>以前では利用できません。
+<xref linkend="guc-failover-when-quorum-exists">と<xref linkend="guc-failover-require-consensus">の両方が有効な場合にのみ有効です。
+        </para>
+        <para>
+<!--
+          This parameter can only be set at server start.
+-->
+このパラメータは、サーバの起動時にのみ設定できます。
+        </para>
+      </listitem>
+    </varlistentry>
+
+  </variablelist>
+  </sect2>
+
 <sect2 id="config-watchdog-lifecheck">
 <!--
     <title>Life checking <productname>Pgpool-II</productname> </title>
