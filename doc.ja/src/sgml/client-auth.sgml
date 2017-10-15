@@ -113,7 +113,14 @@
 レコードは以下の書式のうちの1つの形式を取ります。
 <synopsis>
 local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable> <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable> <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable> <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
 </synopsis>
 <!--
    The meaning of the fields is as follows:
@@ -166,6 +173,42 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
     </varlistentry>
 
     <varlistentry>
+     <term><literal>hostssl</literal></term>
+     <listitem>
+      <para>
+<!--
+      This record matches connection attempts made using TCP/IP, but only
+      when the connection is made with <acronym>SSL</acronym> encryption.
+-->
+このレコードは、接続が<acronym>SSL</acronym>で暗号化されている場合にのみTCP/IPを使用する接続に対応します。
+      </para>
+      <para>
+<!--
+      To make use of this option the <productname>Pgpool-II</productname> must be
+      built with SSL support. Furthermore, SSL must be enabled by setting the <xref linkend="guc-ssl">
+      configuration parameter. Otherwise, the hostssl record is ignored.
+-->
+このオプションを使用するには、<productname>Pgpool-II</productname>は<acronym>SSL</acronym>サポートでビルドする必要があります。
+また、<acronym>SSL</acronym>は<xref linkend="guc-ssl">設定パラメータを設定することによって有効にする必要があります。
+そうしなければ、hostsslレコードは無視されます。
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>hostnossl</literal></term>
+     <listitem>
+      <para>
+<!--
+      This record type has the opposite behavior of hostssl; it only matches connection
+      attempts made over TCP/IP that do not use SSL.
+-->
+このレコードは、hostsslと反対の動作で、<acronym>SSL</acronym>を使用していないTCP/IPの接続のみに対応します。
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><replaceable>database</replaceable></term>
      <listitem>
       <para>
@@ -206,7 +249,7 @@ databaseフィールド値として<literal>"samegroup"</literal>はサポート
        database user
 -->
 このレコードで対応するデータベースユーザ名を指定します。
-<literal>all</literal>という値は、全てのユーザが対応することを指定します。
+<literal>all</literal>という値は、すべてのユーザが対応することを指定します。
 それ以外の場合には特定のデータベースユーザの名前となります。
        <note>
        <para>
@@ -234,37 +277,158 @@ userフィールド値として"+"を使ったグループ指定はサポート�
      <listitem>
       <para>
 <!--
-       Specifies the client machine address(es) that this record matches.
-       An IP address range is specified using standard numeric notation
-       for the range's starting address, then a slash (<literal>/</literal>)
-       and a <acronym>CIDR</> mask length.  The mask
-       length indicates the number of high-order bits of the client
-       IP address that must match.  Bits to the right of this should
-       be zero in the given IP address.
-       There must not be any white space between the IP address, the
-       <literal>/</literal>, and the CIDR mask length.
+      Specifies the client machine address(es) that this record matches.
+      This field can contain either a host name, an IP address range,
+      or one of the special key words mentioned below.
 -->
 このレコードに対応しているクライアントマシンのアドレスを指定します。
-IPアドレスの範囲は、範囲の開始アドレス、続いてスラッシュ(<literal>/</literal>)と<acronym>CIDR</>マスクの長さという標準の数値表記で指定されます。
-CIDRマスク長とは、クライアントIPアドレスが一致しなければならない、高位のビット数を表すものです。
-指定するIPアドレスのこれより右側のビットには、0を指定しなければなりません。
-IPアドレスと<literal>/</literal>、およびCIDRマスク長の間には空白を入れてはいけません。
-       <note>
-       <para>
-<!--
-       Pv6 IP address/mask is currently not supported
--->
-現在、IPv6アドレス/マスク表記法はサポートされません
-       </para>
-       </note>
+このフィールドはホスト名、IPアドレスの範囲、もしくは下記の特別なキーワードのいずれかを含むことができます。
       </para>
 
       <para>
 <!--
-       This field only applies to <literal>host</literal> records.
+      An IP address range is specified using standard numeric notation for
+      the range's starting address, then a slash (<literal>/</literal>)
+      and a <acronym>CIDR</acronym> mask length.
+      The mask length indicates the number of high-order bits of the client
+      IP address that must match. Bits to the right of this should be zero
+      in the given IP address. There must not be any white space between the
+      IP address, the <literal>/</literal>, and the CIDR mask length.
 -->
-このフィールドは<literal>host</literal>レコードにのみ適用されます。
+IPアドレスの範囲は、範囲の開始アドレス、スラッシュ (<literal>/</literal>) および<acronym>CIDR</acronym>マスク長という標準数値表記を使用して指定します。
+CIDRマスク長は、クライアントIPアドレスが一致しなければならない、上位のビット数を表すものです。
+指定するIPアドレスの右側のビットには、0を指定しなければなりません。
+IPアドレス、 <literal>/</literal>、およびCIDRマスク長の間に空白を入れてはいけません。
       </para>
+
+      <para>
+<!--
+      Typical examples of an IPv4 address range specified this way are
+      <literal>172.20.143.89/32</literal> for a single host, or
+      <literal>172.20.143.0/24</literal> for a small network, or
+      <literal>10.6.0.0/16</literal> for a larger one.
+      An IPv6 address range might look like <literal>::1/128</literal> for
+      a single host (in this case the IPv6 loopback address) or
+      <literal>fe80::7a31:c1ff:0000:0000/96</literal> for a small network.
+      <literal>0.0.0.0/0</literal> represents all IPv4 addresses, and
+      <literal>::0/0</literal> represents all IPv6 addresses. To specify a
+      single host, use a mask length of 32 for IPv4 or 128 for IPv6.
+      In a network address, do not omit trailing zeroes.
+-->
+典型的なIPv4アドレス範囲の例は、単一のホストの場合は<literal>172.20.143.89/32</literal>、小規模ネットワークの場合は<literal>172.20.143.0/24</literal>、大規模ネットワークの場合は<literal>10.6.0.0/16</literal>です。
+IPv6アドレスの範囲は、単一のホストの場合は<literal>::1/128</literal>(この場合はIPv6ループバックアドレス)、小規模ネットワークの場合は<literal>fe80::7a31:c1ff:0000:0000/96</literal>です。
+<literal>0.0.0.0/0</literal>はすべてのIPv4アドレス、<literal>::0/0</literal>はすべてのIPv6アドレスを意味しています。
+単一ホストを指定するには、IPv4の場合は32、IPv6の場合は128のマスク長を使用します。ネットワークアドレスでは、末尾の0を省略できません。
+      </para>
+
+      <para>
+<!--
+      An entry given in IPv4 format will match only IPv4 connections, and
+      an entry given in IPv6 format will match only IPv6 connections, even
+      if the represented address is in the IPv4-in-IPv6 range.
+      Note that entries in IPv6 format will be rejected if the system's C
+      library does not have support for IPv6 addresses.
+-->
+IPv4書式で指定されたエントリは、IPv4接続のみに対応し、IPv6書式で指定されたエントリは、たとえそのアドレスがIPv6内のIPv4の範囲内であったとしてもIPv6接続のみに対応します。
+IPv6書式のエントリは、システムのCライブラリがIPv6アドレスをサポートしていない場合拒否されることに注意してください。 
+      </para>
+
+      <para>
+<!--
+      You can also write all to match any IP address, samehost to match any
+      of the server's own IP addresses, or samenet to match any address in
+      any subnet that the server is directly connected to.
+-->
+すべてのIPアドレスに一致するように<literal>all</literal>と書くこともできますし、サーバ自身のどのIPアドレスにも一致するように<literal>samehost</literal>と書くこともできます。
+もしくは、サーバが直接接続されているサブネット内のどのアドレスにも一致するように<literal>samenet</literal>と書くこともできます。 
+      </para>
+
+      <para>
+<!--
+      If a host name is specified (anything that is not an IP address range or
+      a special key word is treated as a host name), that name is compared with
+      the result of a reverse name resolution of the client's IP address
+      (e.g., reverse DNS lookup, if DNS is used). Host name comparisons are
+      case insensitive. If there is a match, then a forward name resolution
+      (e.g., forward DNS lookup) is performed on the host name to check whether
+      any of the addresses it resolves to are equal to the client's IP address.
+      If both directions match, then the entry is considered to match.
+      (The host name that is used in <filename>pool_hba.conf</filename> should be the one that
+      address-to-name resolution of the client's IP address returns, otherwise
+      the line won't be matched. Some host name databases allow associating an
+      IP address with multiple host names, but the operating system will only
+      return one host name when asked to resolve an IP address.)
+-->
+もし、ホスト名が指定されている場合 (IPアドレス範囲以外の場合、もしくはホスト名として処理される特別なキーワード)、その名前は、クライアントのIPアドレスの逆引き名前解決の結果 (例えば、もしDNSが使用されている場合は、逆引きDNS検索により解決されるもの) と比較されます。
+ホスト名の比較では、大文字と小文字を区別しません。
+もし一致するものがあった場合は、ホスト名に対して正引き解決 (例えば正引きDNS検索) が実行され、解決されたアドレスのいずれかがクライアントのIPアドレスと等しいかどうかがチェックされます。
+もし両方が一致した場合、エントリは一致するものとみなされます。
+(<filename>pool_hba.conf</filename>で使用されているホスト名は、クライアントのIPアドレスの正引き名前解決が返すホスト名の1つでなければなりません。
+そうでなければ、この行は一致しません。 
+1つのIPアドレスを複数のホスト名に関連付けるホスト名データベースもありますが、IPアドレスの解決を要求された場合にオペレーティングシステムは1つのホスト名のみを返します。)
+      </para>
+
+      <para>
+<!--
+      A host name specification that starts with a dot (.) matches a suffix of
+      the actual host name. So <literal>.example.com</literal> would match
+      <literal>foo.example.com</literal> (but not just <literal>example.com</literal>).
+-->
+ドット (<literal>.</literal>) で始まるホスト名の指定は実際のホスト名のサフィックスに一致します。
+したがって、<literal>.example.com</literal>は<literal>foo.example.com</literal>に一致します (<literal>example.com</literal>だけでは一致しません)。 
+      </para>
+
+      <para>
+<!--
+      When host names are specified in <filename>pool_hba.conf</filename>, you should
+      make sure that name resolution is reasonably fast. It can be of advantage to
+      set up a local name resolution cache such as <acronym>nscd</acronym>.
+-->
+<filename>pool_hba.conf</filename>にホスト名が指定されている場合は、名前解決が十分に高速であることを確認する必要があります。
+<acronym>nscd</acronym>のようなローカル名前解決のキャッシュを設定することは有利かもしれません。
+      </para>
+
+      <para>
+<!--
+      This field only applies to host, hostssl, and hostnossl records.
+-->
+このフィールドは<literal>host</literal>、<literal>hostssl</literal>、<literal>hostnossl</literal>レコードにのみ適用されます。
+      </para>
+      <para>
+<!--
+      Specifying the host name in address field is not supported prior to
+        <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>.
+-->
+アドレスフィールドにホスト名を指定することは、 <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>より前では利用できません。
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>IP-address</replaceable></term>
+     <term><replaceable>IP-mask</replaceable></term>
+     <listitem>
+      <para>
+<!--
+      These two fields can be used as an alternative to the 
+      <replaceable>IP-address</><literal>/</><replaceable>mask-length</> notation.
+      Instead of specifying the mask length, the actual mask is specified in a separate column.
+      For example, <literal>255.0.0.0</literal> represents an IPv4 <acronym>CIDR</acronym> mask
+      length of <literal>8</literal>, and <literal>255.255.255.255</literal> represents a
+      <acronym>CIDR</acronym> mask length of 32.
+-->
+この2つのフィールドは<replaceable>IP-address</><literal>/</><replaceable>mask-length</>表記の代替として使用可能です。
+マスク長を指定する代わりに、実際のマスクを分離した列で指定します。 
+例えば、<literal>255.0.0.0</literal>はIPv4の<acronym>CIDR</acronym>マスク長8を意味し、<literal>255.255.255.255</literal>は<acronym>CIDR</acronym>マスク長32を意味しています。 
+      </para>
+
+      <para>
+<!--
+      This field only applies to host, hostssl, and hostnossl records.
+-->
+このフィールドは<literal>host</literal>、<literal>hostssl</literal>、<literal>hostnossl</literal>レコードにのみ適用されます。
+      </para>
+
      </listitem>
     </varlistentry>
 
