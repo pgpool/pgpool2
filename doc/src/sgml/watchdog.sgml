@@ -371,7 +371,7 @@
   </variablelist>
   </sect2>
 
-<sect2 id="config-watchdog-failover-behavior">
+<sect2 id="config-watchdog-failover-behavior" xreflabel="Controlling the Failover behavior">
     <title>Controlling the Failover behavior</title>
 
     <para>

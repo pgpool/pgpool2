@@ -122,7 +122,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <listitem>
       <para>
       This record matches connection attempts made using TCP/IP, but only
-      when the connection is made with SSL encryption.
+      when the connection is made with <acronym>SSL</acronym> encryption.
       </para>
       <para>
       To make use of this option the <productname>Pgpool-II</productname> must be
@@ -137,7 +137,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <listitem>
       <para>
       This record type has the opposite behavior of hostssl; it only matches connection
-      attempts made over TCP/IP that do not use SSL.
+      attempts made over TCP/IP that do not use <acronym>SSL</acronym>.
       </para>
      </listitem>
     </varlistentry>
@@ -226,9 +226,10 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       </para>
 
       <para>
-      You can also write all to match any IP address, samehost to match any
+      You can also write <literal>all</literal> to match any IP address, 
+      <literal>samehost</literal> to match any
       of the server's own IP addresses, or samenet to match any address in
-      any subnet that the server is directly connected to.
+      any <literal>subnet</literal> that the server is directly connected to.
       </para>
 
       <para>
@@ -248,8 +249,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       </para>
 
       <para>
-      A host name specification that starts with a dot (.) matches a suffix of
-      the actual host name. So <literal>.example.com</literal> would match
+      A host name specification that starts with a dot (<literal>.</literal>) matches 
+      a suffix of the actual host name. So <literal>.example.com</literal> would match
       <literal>foo.example.com</literal> (but not just <literal>example.com</literal>).
       </para>
 
@@ -274,7 +275,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><replaceable>IP-mask</replaceable></term>
      <listitem>
       <para>
-      These two fields can be used as an alternative to the IP-address/mask-length notation.
+      These two fields can be used as an alternative to the 
+      <replaceable>IP-address</><literal>/</><replaceable>mask-length</> notation.
       Instead of specifying the mask length, the actual mask is specified in a separate column.
       For example, <literal>255.0.0.0</literal> represents an IPv4 <acronym>CIDR</acronym> mask
       length of <literal>8</literal>, and <literal>255.255.255.255</literal> represents a
