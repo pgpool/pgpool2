@@ -438,6 +438,7 @@ static void cluster_service_message_processor(WatchdogNode* wdNode, WDPacketData
 static int get_cluster_node_count(void);
 static void clear_command_node_result(WDCommandNodeResult* nodeResult);
 
+static inline bool is_local_node_true_master(void);
 static inline WD_STATES get_local_node_state(void);
 static int set_state(WD_STATES newState);
 
@@ -2417,7 +2418,7 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 
 static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData* ipcCommand)
 {
-	if (get_local_node_state() == WD_COORDINATOR)
+	if (is_local_node_true_master())
 	{
 		return process_IPC_failover_command_on_coordinator(ipcCommand);
 	}
@@ -2454,7 +2455,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData* ipcComma
 			 errdetail("this watchdog node has not joined the cluster yet"),
 				errhint("try again in few seconds")));
 
-	return IPC_CMD_ERROR;
+	return IPC_CMD_TRY_AGAIN;
 }
 
 static IPC_CMD_PREOCESS_RES process_IPC_online_recovery(WDCommandData* ipcCommand)
@@ -2582,7 +2583,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_locking_cmd(WDCommandData *ipcC
 			return IPC_CMD_PROCESSING;
 		}
 	}
-	else if (get_local_node_state() == WD_COORDINATOR)
+	else if (is_local_node_true_master())
 	{
 		/*
 		 * If I am coordinator, Just process the request locally
@@ -4750,6 +4751,11 @@ static bool reply_with_message(WatchdogNode* wdNode, char type, char* data, int 
 static inline WD_STATES get_local_node_state(void)
 {
 	return g_cluster.localNode->state;
+}
+
+static inline bool is_local_node_true_master(void)
+{
+	return (get_local_node_state() == WD_COORDINATOR && WD_MASTER_NODE == g_cluster.localNode);
 }
 
 /*
