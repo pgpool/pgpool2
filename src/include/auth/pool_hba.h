@@ -63,7 +63,7 @@ typedef enum IPCompareMethod
 	ipCmpAll
 } IPCompareMethod;
 
-typedef struct HbaLine
+struct HbaLine
 {
 	int         linenumber;
 	char       *rawline;
@@ -77,7 +77,7 @@ typedef struct HbaLine
 	UserAuth    auth_method;
 	char		*pamservice;
 	bool		pam_use_hostname;
-} HbaLine;
+};
 
 extern bool load_hba(char *hbapath);
 extern void ClientAuthentication(POOL_CONNECTION *frontend);
