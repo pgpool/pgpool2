@@ -219,6 +219,7 @@ fi
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-master-slave
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-replication
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-stream
+%{_sysconfdir}/%{short_name}/pgpool.conf.sample-logical
 %{_libdir}/libpcp.so.*
 %if %{systemd_enabled}
 %ghost %{_varrundir}
