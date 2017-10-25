@@ -146,14 +146,7 @@ static bool process_pg_terminate_backend_func(POOL_QUERY_CONTEXT *query_context)
 			(errmsg("found the pg_terminate_backend request for backend pid:%d on backend node:%d",backend_pid,backend_node),
 				 errdetail("setting the connection flag")));
 
-		if (pool_is_my_coninfo(conn)){
-			ereport(LOG,
-				(errmsg("pg_terminate_backend refer to the current child process connection"),
-					 errdetail("setting the connection flag not required")));
-		}
-		else{
-			pool_set_connection_will_be_terminated(conn);
-		}
+		pool_set_connection_will_be_terminated(conn);
 		/* It was the pg_terminate_backend call so send the query to appropriate backend */
 		query_context->pg_terminate_backend_conn = conn;
 		pool_force_query_node_to_backend(query_context, backend_node);
