@@ -239,31 +239,6 @@ ConnectionInfo* pool_coninfo_backend_pid(int backend_pid, int* backend_node_id)
 }
 
 /*
- * returns true if the conInfo object belongs to the current child process
- */
-bool pool_is_my_coninfo(ConnectionInfo* connInfo)
-{
-	int pool;
-	ProcessInfo *pi = pool_get_my_process_info();
-	for (pool = 0; pool < pool_config->max_pool; pool++)
-	{
-		int backend_id;
-		for (backend_id = 0; backend_id < NUM_BACKENDS; backend_id++)
-		{
-			int poolBE = pool*MAX_NUM_BACKENDS+backend_id;
-			ConnectionInfo* cInfo = &pi->connection_info[poolBE];
-			if (cInfo == connInfo)
-			{
-				ereport(DEBUG1,
-						(errmsg("connection Info object is local")));
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
-/*
  * sets the flag to mark that the connection will be terminated by the
  * backend and it should not be considered as a backend node failure.
  * This flag is used to handle pg_terminate_backend()

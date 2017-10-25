@@ -65,7 +65,6 @@ extern void pool_coninfo_set_frontend_connected(int proc_id, int pool_index);
 extern void pool_coninfo_unset_frontend_connected(int proc_id, int pool_index);
 
 extern ConnectionInfo* pool_coninfo_backend_pid(int backend_pid, int* backend_node_id);
-extern bool pool_is_my_coninfo(ConnectionInfo* connInfo);
 extern void pool_set_connection_will_be_terminated(ConnectionInfo* connInfo);
 extern void pool_unset_connection_will_be_terminated(ConnectionInfo* connInfo);
 
