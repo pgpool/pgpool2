@@ -1,6 +1,55 @@
 <!-- doc/src/sgml/release-3.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-3-18">
+  <title>Release 3.3.18</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-11-01</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-10-31 [48ab79c]
+    -->
+    <para>
+    Add different pgpool.sysconfig file for RHEL6 and RHEL7. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=343">bug 343</ulink>) (Bo Peng)
+    </para>
+    <para>
+    In RHEL6, the "-n" option is needed to redirect log.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-09-22 [b0da893]
+    -->
+    <para>
+    Fix bug mistakenly overriding global backend status right after failover. (Tatsuo Ishii)
+    </para>
+    <para>
+    See <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink> for mor details.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-09-11 [ca278d0]
+    -->
+    <para>
+    Deal with OpenSSL 1.1. (Tatsuo Ishii, Muhammad Usama)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-3-17">
   <title>Release 3.3.17</title>
 

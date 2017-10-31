@@ -1,6 +1,67 @@
 <!-- doc/src/sgml/release-3.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-3-18">
+  <title>リリース 3.3.18</title>
+
+  <note>
+    <title>リリース日</title>
+    <simpara>2017-11-01</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+
+    <itemizedlist>
+    <listitem>
+    <!--
+    2017-10-31 [48ab79c]
+    -->
+    <para>
+    <!--
+    Add different pgpool.sysconfig file for RHEL6 and RHEL7. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=343">bug 343</ulink>) (Bo Peng)
+    -->
+    <filename>/etc/sysconfig/pgpool</filename> を RHEL6 と RHEL7 向けに分け、RHEL6 では起動時に "-n" オプションを指定するようにしました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=343">bug 343</ulink>) (Bo Peng)
+    </para>
+    <para>
+    <!--
+    In RHEL6, the "-n" option is needed to redirect log.
+    -->
+    RHEL6 では、起動時のログが出力されなくなったとの報告がありました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-09-22 [b0da893]
+    -->
+    <para>
+    <!--
+    Fix bug mistakenly overriding global backend status right after failover. (Tatsuo Ishii)
+    -->
+フェイルオーバの直後にグローバルバックエンドの状態が誤って上書きされる不具合を修正しました。(Tatsuo Ishii) 
+    </para>
+    <para>
+詳細は <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink>を参照してください。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-09-11 [ca278d0]
+    -->
+    <para>
+    <!--
+    Deal with OpenSSL 1.1. (Tatsuo Ishii)
+    -->
+OpenSSL 1.1に対応しました。(Tatsuo Ishii, Muhammad Usama) 
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-3-17">
   <title>リリース 3.3.17</title>
 

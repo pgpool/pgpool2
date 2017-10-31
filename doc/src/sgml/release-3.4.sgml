@@ -1,6 +1,63 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-4-14">
+  <title>Release 3.4.14</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-11-01</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-10-31 [97b08f7]
+    -->
+    <para>
+    Add different pgpool.sysconfig file for RHEL6 and RHEL7. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=343">bug 343</ulink>) (Bo Peng)
+    </para>
+    <para>
+    In RHEL6, the "-n" option is needed to redirect log.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-10-08 [f484c61]
+    -->
+    <para>
+    Fix finding primary node is not working in 3.4.12, 3.4.13. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-09-22 [eb9347e]
+    -->
+    <para>
+    Fix bug mistakenly overriding global backend status right after failover. (Tatsuo Ishii)
+    </para>
+    <para>
+    See <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink> for mor details.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-09-11 [588996f]
+    -->
+    <para>
+    Deal with OpenSSL 1.1. (Tatsuo Ishii, Muhammad Usama)
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-4-13">
   <title>Release 3.4.13</title>
 
@@ -87,9 +144,6 @@
       -->
       <para>
       Allow make dist to include <filename>pgpool.service</filename>. (Yugo Nagata)
-      </para>
-      <para>
-
       </para>
       </listitem>
     </itemizedlist>
