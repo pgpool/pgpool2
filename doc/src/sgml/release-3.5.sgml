@@ -1,6 +1,122 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-5-11">
+  <title>Release 3.5.11</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2017-11-01</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-10-31 [f4e1e93]
+    -->
+    <para>
+    Add different pgpool.sysconfig file for RHEL6 and RHEL7. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=343">bug 343</ulink>) (Bo Peng)
+    </para>
+    <para>
+    In RHEL6, the "-n" option is needed to redirect log.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-10-16 [94b9919]
+    -->
+    <para>
+    Fix for bug in watchdog where sometime failover is not reliably performed. (Muhammad Usama)
+    </para>
+    <para>
+    Currently watchdog process only considers the node's watchdog state before
+    deciding if it can handle the failover and failover-locking requests. 
+    </para>
+    <para>
+    But the problem with this technique is that, for the instance when the node has
+    announced itself as a master/coordinator of the cluster and is waiting for the
+    standby nodes to recognise it as a Master node. For that period of time the
+    watchdog state of the node is Master/coordinator, but it is yet not fully
+    capable of handling the failover and failover-locking requests.
+    </para>
+    <para>
+    So sometimes this leads to a situation where a failover is not reliably
+    performed in case when the failover request arrives while watchdog cluster is
+    in the process of electing a leader.
+    </para>
+    <para>
+    The fix for the above situation is to make sure that the node has fully acquired the Master status before accepting the failover and failover-locking requests.
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-10-10 [6cf6ae1]
+    -->
+    <para>
+    Fix bug with handling of 'H' (flush) message in streaming replication mode. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=345">bug 345</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+    If user expects to read response right after 'H', <productname>Pgpool-II</productname> hangs. The
+    cause was, when 'H' received, extended query mode was reset and
+    pending message was not used.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-10-08 [3c40260]
+    -->
+    <para>
+    Doc: Fix <command>pcp_node_info</command> documents. (Tatsuo Ishii)
+    </para>
+    <para>
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-09-22 [86d1195]
+    -->
+    <para>
+    Fix bug mistakenly overriding global backend status right after failover. (Tatsuo Ishii)
+    </para>
+    <para>
+    See <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink> for mor details.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-09-22 [3acd553]
+    -->
+    <para>
+    Fix exit signal handlers to not call ereport. (Tatsuo Ishii)
+    </para>
+    <para>
+    See <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2017-September/002545.html">[pgpool-hackers: 2545]</ulink> for more details.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-09-11 [dbfbb10]
+    -->
+    <para>
+    Deal with OpenSSL 1.1. (Tatsuo Ishii, Muhammad Usama) 
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-5-10">
   <title>Release 3.5.10</title>
 
