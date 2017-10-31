@@ -27,10 +27,11 @@ Vendor:         Pgpool Global Development Group
 URL:            http://www.pgppol.net/
 Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
-Source2:        pgpool.sysconfig
+Source2:        pgpool_rhel6.sysconfig
 %if %{systemd_enabled}
 Source3:        pgpool.service
 %endif
+Source4:        pgpool_rhel7.sysconfig
 Patch1:         pgpool.conf.sample.patch
 Patch2:         pgpool-II-head.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -137,7 +138,11 @@ install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/pgpool
 %endif
 
 install -d %{buildroot}%{_sysconfdir}/sysconfig
-install -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/pgpool
+%if 0%{rhel} && 0%{rhel} <= 6
+    install -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/pgpool
+%else
+    install -m 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/sysconfig/pgpool
+%endif
 
 # nuke libtool archive and static lib
 rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
