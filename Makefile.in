@@ -556,7 +556,9 @@ EXTRA_DIST = pgpool.8.in sample/pgpool.pam \
 		test/regression/tests/003.failover/create_expected.sql \
 		test/regression/tests/003.failover/test.sh \
 		test/regression/libs.sh \
-		redhat/pgpool.init redhat/pgpool.sysconfig redhat/pgpool.conf.sample.patch \
+		redhat/pgpool.init \
+		redhat/pgpool_rhel7.sysconfig redhat/pgpool_rhel6.sysconfig \
+	   	redhat/pgpool.conf.sample.patch \
 		redhat/pgpool.service 
 
 SUBDIRS = parser pcp watchdog
