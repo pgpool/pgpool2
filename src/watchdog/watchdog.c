@@ -3593,7 +3593,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 	{
 		case WD_FAILOVER_WAITING_FOR_CONSENSUS:
 			ereport(LOG,
-				(errmsg("remote node \"%s\" is asking to degenerate quarantined backend node",wdNode->nodeName)));
+				(errmsg("remote node \"%s\" is asking to inform about quarantined backend nodes",wdNode->nodeName)));
 			register_inform_quarantine_nodes_req();
 			break;
 
@@ -3718,7 +3718,7 @@ static int standard_packet_processor(WatchdogNode* wdNode, WDPacketData* pkt)
 				}
 				else if (WD_MASTER_NODE == wdNode && oldQuorumStatus != wdNode->quorum_status)
 				{
-					/* inform Pgpool man about quorum status changes */
+					/* inform Pgpool main about quorum status changes */
 					register_watchdog_quorum_change_interupt();
 				}
 			}
