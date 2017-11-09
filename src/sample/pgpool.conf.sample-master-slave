@@ -551,15 +551,15 @@ wd_de_escalation_command = ''
 
 # - Watchdog consensus settings for failover -
 
-failover_when_quorum_exists = true
+failover_when_quorum_exists = on
 									# Only perform backend node failover
 									# when the watchdog cluster holds the quorum
 
-failover_require_consensus = true
+failover_require_consensus = on
 									# Perform failover when majority of Pgpool-II nodes
 									# aggrees on the backend node status change
 
-allow_multiple_failover_requests_from_node = false
+allow_multiple_failover_requests_from_node = off
 									# A Pgpool-II node can cast multiple votes
 									# for building the consensus on failover
 
