@@ -402,66 +402,79 @@ health_check_period0 = 5
     <title>他の改善点</title>
     <itemizedlist>
       <listitem>
-	<!--
+      <!--
+      2017-11-09 [9f12b15]
+      -->
+      <para>
+      <!--
+      Test: Add some watchdog test cases. (Muhammad Usama)
+      -->
+      Test: Watchdog のテストケースを追加しました。 (Muhammad Usama) 
+      </para>
+      </listitem>
+
+      <listitem>
+	  <!--
 	    2017-10-05 [7dace77]
 	    2017-10-10 [79baaf0]
 	    2017-10-10 [6da5672]
 	    2017-10-10 [f18e099]
 	  -->
-	<para>
-	<!--
-	  Test: Add new test case "node_js.data" to extended-query-test.(Tatsuo Ishii)
-	  -->
-Test: extended-query-test に新しいテストケース "node_js.data"を追加しました。 (Tatsuo Ishii)
-	</para>
+      <para>
+      <!--
+        Test: Add new test case "node_js.data" to extended-query-test.(Tatsuo Ishii)
+        -->
+  Test: extended-query-test に新しいテストケース "node_js.data"を追加しました。 (Tatsuo Ishii)
+      </para>
       </listitem>
 
       <listitem>
-	<!--
-	    2017-10-04 [0e0d7eb]
-	  -->
-	<para>
-	<!--
-	  Documentation updates for pool_hba enhancements.(Muhammad Usama)
-	-->
-Doc: <link linkend="auth-pool-hba-conf">「pool_hba.conf ファイル」</link>に関するドキュメントを更新しました。(Muhammad Usama)
+      <!--
+          2017-10-04 [0e0d7eb]
+        -->
+      <para>
+      <!--
+        Documentation updates for pool_hba enhancements.(Muhammad Usama)
+      -->
+  Doc: <link linkend="auth-pool-hba-conf">「pool_hba.conf ファイル」</link>に関するドキュメントを更新しました。(Muhammad Usama)
 
-	</para>
+      </para>
       </listitem>
 
       <listitem>
-	<!--
-	    2017-09-01 [6e71926]
-	  -->
-	<para>
-	<!--
-	  Add "slony mode" to pgpool_setup. (Tatsuo Ishii)
-		-->
-<application>pgpool_setup</application>が<application>slony</application>モードに対応しました。(Tatsuo Ishii)
-	</para>
+      <!--
+          2017-09-01 [6e71926]
+        -->
+      <para>
+      <!--
+        Add "slony mode" to pgpool_setup. (Tatsuo Ishii)
+          -->
+  <application>pgpool_setup</application>が<application>slony</application>モードに対応しました。(Tatsuo Ishii)
+      </para>
       </listitem>
+
       <listitem>
-	<!--
-	    2017-09-11 [c0f4f1a]
-	  -->
-	<para>
-	<!--
-	  Deal with OpenSSL 1.1. (Tatsuo Ishii, Muhammad Usama)
-	-->
+      <!--
+      2017-09-11 [c0f4f1a]
+      -->
+      <para>
+      <!--
+        Deal with OpenSSL 1.1. (Tatsuo Ishii, Muhammad Usama)
+      -->
 <application>OpenSSL 1.1</application>に対応しました。(Tatsuo Ishii, Muhammad Usama)
-	</para>
+      </para>
       </listitem>
 
       <listitem>
-	<!--
-	    2017-03-29 [3dd0278]
+	  <!--
+	  2017-03-29 [3dd0278]
 	  -->
-	<para>
-	<!--
-	  Test: Add new regression test "069. memory_leak_extended". (Tatsuo Ishii)
-		-->
+      <para>
+      <!--
+      Test: Add new regression test "069. memory_leak_extended". (Tatsuo Ishii)
+      -->
 Test: 新しいレグレッションテスト「069. memory_leak_extended」を追加しました。(Tatsuo Ishii)
-	</para>
+      </para>
       </listitem>
 
       <listitem>

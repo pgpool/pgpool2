@@ -255,68 +255,77 @@ health_check_period0 = 5
     <title>Other Enhancements</title>
     <itemizedlist>
       <listitem>
-	<!--
+      <!--
+      2017-11-09 [9f12b15]
+      -->
+      <para>
+      Test: Add some watchdog test cases. (Muhammad Usama)
+      </para>
+      </listitem>
+
+      <listitem>
+	  <!--
 	    2017-10-05 [7dace77]
 	    2017-10-10 [79baaf0]
 	    2017-10-10 [6da5672]
 	    2017-10-10 [f18e099]
 	  -->
 	<para>
-	  Test: Add new test case "node_js.data" to extended-query-test.(Tatsuo Ishii)
+	  Test: Add new test case "node_js.data" to extended-query-test. (Tatsuo Ishii)
 	</para>
       </listitem>
 
       <listitem>
-	<!--
+	  <!--
 	    2017-10-04 [0e0d7eb]
 	  -->
-	<para>
-	  Doc: Documentation updates for pool_hba enhancements.(Muhammad Usama)
-	</para>
+      <para>
+        Doc: Documentation updates for pool_hba enhancements. (Muhammad Usama)
+      </para>
       </listitem>
 
       <listitem>
-	<!--
-	    2017-09-01 [6e71926]
-	  -->
-	<para>
-	  Add "slony mode" to pgpool_setup. (Tatsuo Ishii)
-	</para>
+      <!--
+          2017-09-01 [6e71926]
+        -->
+      <para>
+        Add "slony mode" to pgpool_setup. (Tatsuo Ishii)
+      </para>
       </listitem>
       <listitem>
-	<!--
-	    2017-09-11 [c0f4f1a]
-	  -->
-	<para>
-	  Deal with OpenSSL 1.1. (Tatsuo Ishii, Muhammad Usama)
-	</para>
+      <!--
+          2017-09-11 [c0f4f1a]
+        -->
+      <para>
+        Deal with OpenSSL 1.1. (Tatsuo Ishii, Muhammad Usama)
+      </para>
       </listitem>
 
       <listitem>
-	<!--
+	  <!--
 	    2017-03-29 [3dd0278]
 	  -->
-	<para>
-	  Test: Add new regression test "069.memory_leak_extended". (Tatsuo Ishii)
-	</para>
+      <para>
+        Test: Add new regression test "069.memory_leak_extended". (Tatsuo Ishii)
+      </para>
       </listitem>
 
       <listitem>
-	<!--
-	    2017-01-25 [91143a1]
-	  -->
-	<para>
-	  Doc: Enhance query cache documents. (Tatsuo Ishii)
-	</para>
+      <!--
+          2017-01-25 [91143a1]
+        -->
+      <para>
+        Doc: Enhance query cache documents. (Tatsuo Ishii)
+      </para>
       </listitem>
       <listitem>
-	<!--
-	    2016-12-20 [f6659fb]
-	    2016-12-20 [5485b9b]
-	  -->
-	<para>
-	  Doc: Add "Tips for Installation" section. (Tatsuo Ishii)
-	</para>
+      <!--
+          2016-12-20 [f6659fb]
+          2016-12-20 [5485b9b]
+        -->
+      <para>
+        Doc: Add "Tips for Installation" section. (Tatsuo Ishii)
+      </para>
       </listitem>
 
       <listitem>
@@ -377,7 +386,7 @@ health_check_period0 = 5
 	    2017-10-04 [1e26fa7]
 	  -->
 	<para>
-	  Add "role" field to pcp_node_info command.(Tatsuo Ishii)
+	  Add "role" field to pcp_node_info command. (Tatsuo Ishii)
 	</para>
 	<para>
 	  Role is the server role: one of "primary", "standby",
