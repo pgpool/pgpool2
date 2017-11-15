@@ -193,7 +193,11 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	MemoryContext MainLoopMemoryContext;
 	sigjmp_buf	local_sigjmp_buf;
 
-	bool first = true;
+	/*
+	 * to prevent the variable set on a register so that longjmp() does not
+	 * discard the content
+	 */
+	volatile bool first = true;
 
 	/* For PostmasterRandom */
 	gettimeofday(&random_start_time, NULL);
