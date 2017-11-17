@@ -555,14 +555,17 @@ wd_de_escalation_command = ''
 failover_when_quorum_exists = on
 									# Only perform backend node failover
 									# when the watchdog cluster holds the quorum
+									# (change requires restart)
 
 failover_require_consensus = on
 									# Perform failover when majority of Pgpool-II nodes
 									# aggrees on the backend node status change
+									# (change requires restart)
 
 allow_multiple_failover_requests_from_node = off
 									# A Pgpool-II node can cast multiple votes
 									# for building the consensus on failover
+									# (change requires restart)
 
 
 # - Lifecheck Setting -
@@ -574,6 +577,7 @@ wd_monitoring_interfaces_list = ''  # Comma separated list of interfaces names t
 									# consider the network is fine
 									# 'any' to enable monitoring on all interfaces except loopback
 									# '' to disable monitoring
+									# (change requires restart)
 
 wd_lifecheck_method = 'heartbeat'
                                     # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
