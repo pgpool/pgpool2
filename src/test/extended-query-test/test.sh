@@ -11,7 +11,7 @@ testdir=`pwd`/tests
 expected=`pwd`/expected
 results=`pwd`/results
 rm -f $results/*
-test ! -d $result && mkdir $results
+test ! -d $results && mkdir $results
 
 diffs=`pwd`/diffs
 rm -f $diffs
