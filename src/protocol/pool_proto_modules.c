@@ -1660,6 +1660,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 	POOL_SESSION_CONTEXT *session_context;
 	Node *node = NULL;
 	char *query = NULL;
+	bool got_estate = false;
 
 	/*
 	 * It is possible that the "ignore until sync is received" flag was set if
@@ -1830,6 +1831,13 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 			{
 				state = kind;
 			}
+			/*
+			 * However, if the state is 'E', then frontend should had been
+			 * already reported an ERROR. So, to match with that, let be the
+			 * state to be returned to frontend.
+			 */
+			if (kind == 'E')
+				got_estate = true;
 		}
 	}
 
@@ -1841,6 +1849,8 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 		{
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
+			if (got_estate)
+				state = 'E';
 			pool_write(frontend, &state, 1);
 		}
 		pool_flush(frontend);
