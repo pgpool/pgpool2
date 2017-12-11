@@ -1903,6 +1903,24 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		if (SL_MODE && pool_pending_message_exists())
 		{
 			data_pushed = pool_push_pending_data(backend);
+			/*
+			 * ignore_till_sync flag may have been set in pool_push_pending_data().
+			 * So check it.
+			 */
+			if (pool_is_ignore_till_sync())
+			{
+				if (data_pushed)
+				{
+					int poplen;
+
+					pool_pop(backend, &poplen);
+					ereport(DEBUG1,
+							(errmsg("do_query: popped data len:%d because ignore till sync was set", poplen)));
+				}
+				ereport(DEBUG1,
+						(errmsg("do_query: no query issued because ignore till sync was set")));
+				return;
+			}
 		}
 
 		if (pname_len == 0)
@@ -4846,7 +4864,7 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 			pool_read(backend, buf, len);
 		}
 
-		if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
+		if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend) && kind != 'E')
 		{
 			if (kind != '3' || pending_data_existed)
 				pool_set_timeout(-1);
@@ -4876,6 +4894,14 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 			pfree(buf);
 		}
 		data_pushed = true;
+		if (kind == 'E')
+		{
+			/* Found error response */
+			ereport(DEBUG1,
+					(errmsg("pool_push_pending_data: ERROR response found")));
+			pool_set_ignore_till_sync();
+			break;
+		}
 	}
 	return data_pushed;
 }
