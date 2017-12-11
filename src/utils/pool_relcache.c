@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2017	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -207,7 +207,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	/* Register cache */
 	result = (*relcache->register_func)(res);
 
-	if (!relcache->no_cache_if_zero || result)
+	if (!pool_is_ignore_till_sync() && (!relcache->no_cache_if_zero || result))
 	{
 		strlcpy(relcache->cache[index].dbname, dbname, MAX_ITEM_LENGTH);
 		strlcpy(relcache->cache[index].relname, table, MAX_ITEM_LENGTH);
