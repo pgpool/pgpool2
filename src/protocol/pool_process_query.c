@@ -3455,6 +3455,16 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 					ereport(DEBUG1,
 							(errmsg("read_kind_from_backend: succeeded in re-sync")));
 					*decided_kind = kind;
+
+					if (SL_MODE && pool_get_session_context(true) && pool_is_doing_extended_query_message() &&
+						msg && msg->type == POOL_SYNC)
+					{
+						POOL_PENDING_MESSAGE *pending_message;
+
+						pending_message = pool_pending_message_pull_out();
+						if (pending_message)
+							pool_pending_message_free_pending_message(pending_message);
+					}
 					return;
 				}
 
