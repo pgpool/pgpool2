@@ -51,7 +51,7 @@ Pgpool-II documentation
   </para>
 
   <para>
-    Currently <application>watchdog_setup</application> supports streaming replication mode, native replication mode and raw mode.
+    Currently <application>watchdog_setup</application> supports streaming replication mode, native replication mode, logical replication mode and raw mode.
   </para>
  </refsect1>
 
