@@ -70,10 +70,10 @@ Pgpool-II documentation
 
   <para>
   <!--
-    Currently <application>watchdog_setup</application> supports streaming replication mode, native replication mode and raw mode.
+    Currently <application>watchdog_setup</application> supports streaming replication mode, native replication mode, logical replication mode and raw mode.
     Watchdog is not supported yet.
     -->
-    現在、<application>watchdog_setup</application> は「ストリーミングレプリケーションモード」、「ネイティブレプリケーションモード」及び「raw モード」に対応しています。
+    現在、<application>watchdog_setup</application> は「ストリーミングレプリケーションモード」、「ネイティブレプリケーションモード」、「ロジカルレプリケーションモード」及び「raw モード」に対応しています。
   </para>
  </refsect1>
 
