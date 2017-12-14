@@ -3579,7 +3579,7 @@ static void pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION *fronte
 		pmsg = pool_pending_message_head_message();
 		if (pmsg && pmsg->type == POOL_SYNC)
 		{
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("Process backend response: sync pending message found after receiving error response")));
 			pool_unset_ignore_till_sync();
 			pool_pending_message_free_pending_message(pmsg);
