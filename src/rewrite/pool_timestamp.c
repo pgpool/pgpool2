@@ -129,7 +129,9 @@ ts_unregister_func(void *data)
 static TSRel*
 relcache_lookup(TSRewriteContext *ctx)
 {
-#define ATTRDEFQUERY "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%')" \
+#define ATTRDEFQUERY "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%' OR" \
+	" d.adsrc LIKE '%%CURRENT_TIMESTAMP%%' OR d.adsrc LIKE '%%CURRENT_TIME%%' OR d.adsrc LIKE '%%CURRENT_DATE%%' OR" \
+	" d.adsrc LIKE '%%LOCALTIME%%' OR d.adsrc LIKE '%%LOCALTIMESTAMP%%')" \
 	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
 	" a.atttypid = 'timestamp with time zone'::regtype::oid OR" \
 	" a.atttypid = 'date'::regtype::oid OR" \
@@ -141,7 +143,9 @@ relcache_lookup(TSRewriteContext *ctx)
 	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.relname = '%s'" \
 	" ORDER BY a.attnum"
 
-#define ATTRDEFQUERY2 "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%')" \
+#define ATTRDEFQUERY2 "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%' OR" \
+	" d.adsrc LIKE '%%CURRENT_TIMESTAMP%%' OR d.adsrc LIKE '%%CURRENT_TIME%%' OR d.adsrc LIKE '%%CURRENT_DATE%%' OR" \
+	" d.adsrc LIKE '%%LOCALTIME%%' OR d.adsrc LIKE '%%LOCALTIMESTAMP%%')" \
 	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
 	" a.atttypid = 'timestamp with time zone'::regtype::oid OR" \
 	" a.atttypid = 'date'::regtype::oid OR" \
@@ -153,7 +157,9 @@ relcache_lookup(TSRewriteContext *ctx)
 	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = pgpool_regclass('%s')" \
 	" ORDER BY a.attnum"
 
-#define ATTRDEFQUERY3 "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%')" \
+#define ATTRDEFQUERY3 "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%' OR" \
+	" d.adsrc LIKE '%%CURRENT_TIMESTAMP%%' OR d.adsrc LIKE '%%CURRENT_TIME%%' OR d.adsrc LIKE '%%CURRENT_DATE%%' OR" \
+	" d.adsrc LIKE '%%LOCALTIME%%' OR d.adsrc LIKE '%%LOCALTIMESTAMP%%')" \
 	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
 	" a.atttypid = 'timestamp with time zone'::regtype::oid OR" \
 	" a.atttypid = 'date'::regtype::oid OR" \
