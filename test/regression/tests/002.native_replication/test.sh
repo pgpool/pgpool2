@@ -58,7 +58,7 @@ java PgTester 100 &
 java PgTester 1000 &
 wait
 
-$PSQL -p 11001 test <<EOF
+$PSQL -p 11000 test <<EOF
 \copy (SELECT * FROM t1 ORDER BY i) to 'dump_t1_n0.txt'
 \copy (SELECT * FROM t2 ORDER BY i) to 'dump_t2_n0.txt'
 \copy (SELECT * FROM t3 ORDER BY i) to 'dump_t3_n0.txt'
