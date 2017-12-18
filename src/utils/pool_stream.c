@@ -246,7 +246,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 			cp->socket_state = POOL_SOCKET_EOF;
 			if (cp->isbackend)
 			{
-				if(processType == PT_MAIN)
+				if (processType == PT_MAIN || processType == PT_HEALTH_CHECK)
 					ereport(ERROR,
 						(errmsg("unable to read data from DB node %d",cp->db_node_id),
 							 errdetail("EOF encountered with backend")));
