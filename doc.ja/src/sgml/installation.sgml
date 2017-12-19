@@ -623,6 +623,62 @@ $ psql -f pgpool-regclass.sql template1
     </para>
   </sect1>
 
+  <sect1 id="install-docs">
+<!--
+    <title>Compiling and installing documents</title>
+-->
+    <title>ドキュメントのコンパイルとインストール</title>
+
+    <sect2 id="install-docs-tool-sets">
+<!--
+      <title>Tool Sets</title>
+-->
+      <title>ツールセット</title>
+
+      <para>
+<!--
+	<productname>Pgpool-II</productname> documents are written in
+	SGML (more precisely, DocBook, which is a language implemented
+	using SGML). To generate readable HTML documents, you need to
+	compile them using docbook tools. To install Docbook tools on
+	RHEL or similar systems, use:
+-->
+<productname>Pgpool-II</productname>のドキュメントはSGML(より正確には、SGMLを使って実装された言語であるDocBook)で書かれています。
+ユーザが読めるHTMLドキュメントを生成するには、docbookツールを使ってコンパイルする必要があります。
+RHEL類似のシステムでツールをインストールするには、以下を実行します。
+	<programlisting>
+	  yum install docbook-dtds docbook-style-dsssl docbook-style-xsl libxslt openjade
+	</programlisting>
+      </para>
+    </sect2>
+    
+    <sect2 id="install-docs-make">
+<!--
+      <title>Compiling docs</title>
+-->
+      <title>ドキュメントのコンパイル</title>
+      <para>
+<!--
+	Once the tool sets are installed on the system, you can compile the docs:
+-->
+ツールセットがインストールされたら、以下のようにコンパイルします。
+	<programlisting>
+	  $ cd doc
+	  $ make
+	  $ cd ..
+	  $ cd doc.ja
+	  $ make
+	</programlisting>
+<!--
+	You will see English HTML docs under doc/src/sgml/html, and online docs under sgml/man[1-8].
+	Japanese docs can be found under doc.ja/src/sgml/html, and online docs under sgml/man[1-8].
+-->
+HTMLドキュメントはdoc/src/sgml/htmlに、オンラインマニュアルはsgml/man[1-8]にあります。
+日本語のドキュメントはdoc.ja/src/sgml/htmlに、オンラインマニュアルはsgml/man[1-8]にあります。
+      </para>
+    </sect2>
+  </sect1>
+
 &installation-rpm;
 
 &installation-tips;
