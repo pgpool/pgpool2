@@ -320,7 +320,7 @@ $ psql template1
 =# CREATE EXTENSION pgpool_regclass;
       </programlisting>
 
-or 
+or
 
       <programlisting>
 $ psql -f pgpool-regclass.sql template1
@@ -424,6 +424,43 @@ $ psql -f pgpool-regclass.sql template1
     </para>
   </sect1>
 
-&installation-rpm;
+  <sect1 id="install-docs">
+    <title>Compiling and installing documents</title>
+
+    <sect2 id="install-docs-tool-sets">
+      <title>Tool Sets</title>
+
+      <para>
+	<productname>Pgpool-II</productname> documents are written in
+	SGML (more precisely, DocBook, which is a language implemented
+	using SGML). To generate readable HTML documents, you need to
+	compile them using docbook tools. To install Docbook tools on
+	RHEL or similar systems, use:
+	<programlisting>
+	  yum install docbook-dtds docbook-style-dsssl docbook-style-xsl libxslt openjade
+	</programlisting>
+      </para>
+    </sect2>
+
+    <sect2 id="install-docs-make">
+      <title>Compiling docs</title>
+      <para>
+	Once the tool sets are installed on the system, you can compile the docs:
+	<programlisting>
+	  $ cd doc
+	  $ make
+	  $ cd ..
+	  $ cd doc.ja
+	  $ make
+	</programlisting>
+	You will see English HTML docs under doc/src/sgml/html, and online docs under sgml/man[1-8].
+	Japanese docs can be found under doc.ja/src/sgml/html, and online docs under sgml/man[1-8].
+      </para>
+    </sect2>
+  </sect1>
+
+  &installation-rpm;
+
+  &installation-tips;
 
 </chapter>
