@@ -165,7 +165,7 @@ void do_health_check_child(int *node_id)
 
 		CHECK_REQUEST;
 
-		if (pool_config->health_check_period <= 0)
+		if (pool_config->health_check_params[*node_id].health_check_period <= 0)
 		{
 			sleep(30);
 		}
@@ -174,7 +174,7 @@ void do_health_check_child(int *node_id)
 		 * If health checking is enabled and the node is not in down status,
 		 * do health check.
 		 */
-		else if (pool_config->health_check_period > 0)
+		else if (pool_config->health_check_params[*node_id].health_check_period > 0)
 		{
 			bool result;
 
@@ -207,7 +207,7 @@ void do_health_check_child(int *node_id)
 
 			/* Discard persistent connections */
 			discard_persistent_connection(*node_id);
-			sleep(pool_config->health_check_period);
+			sleep(pool_config->health_check_params[*node_id].health_check_period);
 		}
 	}
 	exit(0);
@@ -235,15 +235,15 @@ static bool establish_persistent_connection(int node)
 	/*
 	 * If database is not specified, "postgres" database is assumed.
 	 */
-	if (*pool_config->health_check_database == '\0')
-		pool_config->health_check_database = "postgres";
+	if (*pool_config->health_check_params[node].health_check_database == '\0')
+		pool_config->health_check_params[node].health_check_database = "postgres";
 
 	/*
 	 * Try to connect to the database.
 	 */
 	if (slot == NULL)
 	{
-		retry_cnt = pool_config->health_check_max_retries;
+		retry_cnt = pool_config->health_check_params[node].health_check_max_retries;
 
 		do
 		{
@@ -252,22 +252,22 @@ static bool establish_persistent_connection(int node)
 			 * communication path failure much earlier before
 			 * TCP/IP stack detects it.
 			 */
-			if (pool_config->health_check_timeout > 0)
+			if (pool_config->health_check_params[node].health_check_timeout > 0)
 			{
 				CLEAR_ALARM;
 				pool_signal(SIGALRM, health_check_timer_handler);
-				alarm(pool_config->health_check_timeout);
+				alarm(pool_config->health_check_params[node].health_check_timeout);
 				errno = 0;
 				health_check_timer_expired = 0;
 			}
 
 			slot = make_persistent_db_connection_noerror(node, bkinfo->backend_hostname,
 														 bkinfo->backend_port,
-														 pool_config->health_check_database,
-														 pool_config->health_check_user,
-														 pool_config->health_check_password, false);
+														 pool_config->health_check_params[node].health_check_database,
+														 pool_config->health_check_params[node].health_check_user,
+														 pool_config->health_check_params[node].health_check_password, false);
 
-			if (pool_config->health_check_timeout > 0)
+			if (pool_config->health_check_params[node].health_check_timeout > 0)
 			{
 				/* cancel health check timer */
 				pool_signal(SIGALRM, SIG_IGN);
@@ -276,7 +276,7 @@ static bool establish_persistent_connection(int node)
 
 			if (slot)
 			{
-				if (retry_cnt != pool_config->health_check_max_retries)
+				if (retry_cnt != pool_config->health_check_params[node].health_check_max_retries)
 				{
 					ereport(LOG,
 							(errmsg("health check retrying on DB node: %d succeeded",
@@ -292,9 +292,9 @@ static bool establish_persistent_connection(int node)
 				ereport(LOG,
 						(errmsg("health check retrying on DB node: %d (round:%d)",
 								node,
-								pool_config->health_check_max_retries - retry_cnt)));
+								pool_config->health_check_params[node].health_check_max_retries - retry_cnt)));
 
-				sleep(pool_config->health_check_retry_delay);
+				sleep(pool_config->health_check_params[node].health_check_retry_delay);
 			}
 		} while (retry_cnt >= 0);
 	}
