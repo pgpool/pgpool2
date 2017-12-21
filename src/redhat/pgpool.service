@@ -4,7 +4,6 @@ After=syslog.target network.target
 Wants=network.target
 
 [Service]
-Type=forking
 
 EnvironmentFile=-/etc/sysconfig/pgpool
 
