@@ -108,7 +108,7 @@ Windows はサポートされてません。
    using a released source package, or if you want to do server development,
    you also need the following packages:
 -->
-リリースされたソースパッケージではなく<productname>Git</productname>ツリーからの構築の場合、またはサーバ開発を行いたい場合には、以下のパッケージも必要となります。 
+リリースされたソースパッケージではなく<productname>Git</productname>ツリーからの構築の場合、またはサーバ開発を行いたい場合には、以下のパッケージも必要となります。
   </para>
 
   <para>
@@ -138,7 +138,7 @@ Windows はサポートされてません。
 -->
 GNUの<application>Flex</>および<application>Bison</>は、Gitチェックアウトから構築する場合や、実際のスキャナとパーサの定義ファイルを変更した場合に必要となります。
 それらが必要な場合は、<application>Flex</> 2.5.31以降と<application>Bison</> 1.875以降を使うようにしてください。
-他の<application>lex</>と<application>yacc</>プログラムは使用できません。 
+他の<application>lex</>と<application>yacc</>プログラムは使用できません。
      </para>
     </listitem>
 
@@ -154,7 +154,7 @@ GNUの<application>Flex</>および<application>Bison</>は、Gitチェックア
    url="ftp://ftp.gnu.org/gnu/"></ulink>.
 -->
 <acronym>GNU</acronym>パッケージの入手が必要な場合、近くの<acronym>GNU</acronym>ミラーサイトから探してください（ミラーサイトの一覧は<ulink url="http://www.gnu.org/order/ftp.html"></>にあります）。
-または、<ulink url="ftp://ftp.gnu.org/gnu/"></ulink>から探してください。 
+または、<ulink url="ftp://ftp.gnu.org/gnu/"></ulink>から探してください。
   </para>
 
   <para>
@@ -169,18 +169,18 @@ GNUの<application>Flex</>および<application>Bison</>は、Gitチェックア
 また、十分なディスク領域があることも確認してください。
 コンパイル中、ソースツリーのために40メガバイト、インストールディレクトリに20メガバイトほど必要となります。
 リグレッションテストを実行する場合は、一時的に最大で4ギガバイトの領域がさらに必要になります。
-ディスクの空き容量を確認するためには<command>df</command>コマンドを使います。 
+ディスクの空き容量を確認するためには<command>df</command>コマンドを使います。
   </para>
  </sect1>
 
  <sect1 id="install-getsource">
-<!--  
+<!--
   <title>Getting The Source</title>
 -->
   <title>ソースの入手</title>
 
   <para>
-<!--  
+<!--
    The <productname>Pgpool-II</> &version; sources can be obtained
    from the download section of our
    website: <ulink url="http://www.pgpool.net"></ulink>.  You should
@@ -194,7 +194,7 @@ GNUの<application>Flex</>および<application>Bison</>は、Gitチェックア
 <screen>
 <userinput>tar xf pgpool-II-&version;.tar.gz</userinput>
 </screen>
-<!--  
+<!--
    This will create a directory
    <filename>pgpool-II-&version;</filename> under the current directory
    with the <productname>Pgpool-II</> sources.
@@ -202,13 +202,13 @@ GNUの<application>Flex</>および<application>Bison</>は、Gitチェックア
    of the installation procedure.
 -->
 これにより、カレントディレクトリ以下に<filename>pgpool-II-&version;</filename>というディレクトリが作成され、<productname>Pgpool-II</productname>のソースが展開されます。
-この後のインストール手順を行うために、このディレクトリに移動してください。 
+この後のインストール手順を行うために、このディレクトリに移動してください。
   </para>
 
  </sect1>
 
   <sect1 id="install-pgpool">
-<!--  
+<!--
     <title>Installing Pgpool-II</title>
 -->
     <title>Pgpool-IIのインストール</title>
@@ -228,7 +228,7 @@ GNUの<application>Flex</>および<application>Bison</>は、Gitチェックア
     or more of the following command line options to
     <filename>configure</filename>:
 -->
-<filename>configure</filename>に以下のコマンドラインオプションを1つ以上指定することで、構築処理やインストール処理を変更することができます。 
+<filename>configure</filename>に以下のコマンドラインオプションを1つ以上指定することで、構築処理やインストール処理を変更することができます。
     </para>
 
     <variablelist>
@@ -242,7 +242,7 @@ GNUの<application>Flex</>および<application>Bison</>は、Gitチェックア
       files like docs will be installed in. Default value is <filename>/usr/local</filename>.
 -->
 <productname>Pgpool-II</>バイナリやドキュメントなどの関連ファイルがインストールされるトップディレクトリを指定します。
-デフォルトは<filename>/usr/local</filename>です。 
+デフォルトは<filename>/usr/local</filename>です。
 	  </para>
 	</listitem>
       </varlistentry>
@@ -256,7 +256,7 @@ GNUの<application>Flex</>および<application>Bison</>は、Gitチェックア
       installed. Default value is the path provided by <command>pg_config</command> command.
 -->
 <productname>PostgreSQL</>のクライアントライブラリなどがインストールされているトップディレクトリを指定します。
-デフォルト値は<command>pg_config</command>コマンドで取得できるパスです。 
+デフォルト値は<command>pg_config</command>コマンドで取得できるパスです。
 	  </para>
 	</listitem>
       </varlistentry>
@@ -359,7 +359,7 @@ make install
 -->
 これは全ての<productname>Pgpool-II</productname>のインストールで必要です。
       <programlisting>
-$ cd pgpool-II-x.x.x/sql/pgpool-recovery
+$ cd pgpool-II-x.x.x/src/sql/pgpool-recovery
 $ make
 $ make install
       </programlisting>
@@ -420,7 +420,7 @@ $ pg_ctl reload -D /usr/local/pgsql/data
       If you are using <productname>PostgreSQL</productname> 9.4 or
       later, you can skip this section.
 -->
-<productname>PostgreSQL</productname> 9.4以降を使用している場合には、本節は飛ばすことができます。 
+<productname>PostgreSQL</productname> 9.4以降を使用している場合には、本節は飛ばすことができます。
     </para>
 
     <para>
@@ -447,7 +447,7 @@ $ pg_ctl reload -D /usr/local/pgsql/data
 
     <para>
       <programlisting>
-$ cd pgpool-II-x.x.x/sql/pgpool-regclass
+$ cd pgpool-II-x.x.x/src/sql/pgpool-regclass
 $ make
 $ make install
       </programlisting>
@@ -462,7 +462,7 @@ $ psql template1
       </programlisting>
 
 <!--
-or 
+or
 -->
 または
 
@@ -483,7 +483,7 @@ $ psql -f pgpool-regclass.sql template1
 	  as this template database will be cloned to create new databases.
 -->
 <command>CREATE EXTENSION</command>または<filename>pgpool-regclass.sql</filename>の実行は、<productname>Pgpool-II</productname>経由でアクセスされる全てのデータベースで実行しなければなりません。
-ただし、<command>CREATE EXTENSINO</command>または"psql -f pgpool-regclass.sql template1"の実行後に作成されたデータベースでは、新しいデータベース作成のためにテンプレートデータベースが複製されるため、これを実行する必要はありません。 
+ただし、<command>CREATE EXTENSINO</command>または"psql -f pgpool-regclass.sql template1"の実行後に作成されたデータベースでは、新しいデータベース作成のためにテンプレートデータベースが複製されるため、これを実行する必要はありません。
     </para>
 
   </sect1>
@@ -498,7 +498,7 @@ $ psql -f pgpool-regclass.sql template1
 <!--
       If you are not going to use the native replication mode, you can skip this section.
 -->
-ネイティブレプリケーションモードを使う予定のない場合は、本説は飛ばすことができます。
+ネイティブレプリケーションモードを使う予定のない場合は、本節は飛ばすことができます。
     </para>
 
     <para>
@@ -520,7 +520,7 @@ $ psql -f pgpool-regclass.sql template1
 このテーブルに対するロックは、<command>VACUUM</command>と競合するため、<command>INSERT</command>処理が長時間が待たされ続ける可能性があります。
 
       <programlisting>
-	$ cd pgpool-II-x.x.x/sql
+	$ cd pgpool-II-x.x.x/src/sql
 	$ psql -f insert_lock.sql template1
       </programlisting>
 
@@ -536,7 +536,7 @@ $ psql -f pgpool-regclass.sql template1
       template database will be cloned to create new databases.
 -->
 <filename>insert_lock.sql</filename>は、pgpool-II経由で利用するデータベース毎に必要になります。
-ただし、"psql -f insert_lock.sql template1"の実行後に作成されたデータベースでは、新しいデータベース作成のためにテンプレートデータベースが複製されるため、これを実行する必要はありません。 
+ただし、"psql -f insert_lock.sql template1"の実行後に作成されたデータベースでは、新しいデータベース作成のためにテンプレートデータベースが複製されるため、これを実行する必要はありません。
     </para>
   </sect1>
 
@@ -607,7 +607,7 @@ $ psql -f pgpool-regclass.sql template1
     </table>
 
     <para>
-<!--	
+<!--
       These configuration files are located at /usr/local/etc with
       default installation from source code.
       You can copy one of them as <filename>pgpool.conf</filename>.
@@ -651,7 +651,7 @@ RHEL類似のシステムでツールをインストールするには、以下�
 	</programlisting>
       </para>
     </sect2>
-    
+
     <sect2 id="install-docs-make">
 <!--
       <title>Compiling docs</title>

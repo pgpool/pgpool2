@@ -83,9 +83,9 @@ DBユーザのOSアカウントでログインし、以下を実行します。
             of pool_passwd
             is <literal>username:encrypted_passwd</literal>.
 -->
->md5により暗号化されたユーザ名とパスワードがpool_passwdに登録されます。
-pool_passwdがまだ存在しなければ、pg_md5コマンドは、自動的にpgpool.confと同じディレクトリ内にpool_passwdwを作成します。
-pool_passwdのフォーマットは、<literal>username:encrypted_passwd</literal>です。
+ユーザ名とmd5により暗号化されたパスワードが<filename>pool_passwd</filename>に登録されます。
+<filename>pool_passwd</filename>がまだ存在しなければ、pg_md5コマンドは、自動的に<filename>pgpool.conf</filename>と同じディレクトリ内に<filename>pool_passwd</filename>を作成します。
+<filename>pool_passwd</filename>のフォーマットは、<literal>username:encrypted_passwd</literal>です。
 	  </para>
 	</listitem>
 

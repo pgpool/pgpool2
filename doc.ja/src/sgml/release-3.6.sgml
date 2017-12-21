@@ -57,12 +57,12 @@
     <!--
     Fix for bug in watchdog where sometime failover is not reliably performed (Muhammad Usama)
     -->
-    たまににフェイルオーバが実行されない watchdog の不具合を修正しました。(Muhammad Usama)
+    たまにフェイルオーバが実行されない watchdog の不具合を修正しました。(Muhammad Usama)
     </para>
     <para>
     <!--
     Currently watchdog process only considers the node's watchdog state before
-    deciding if it can handle the failover and failover-locking requests. 
+    deciding if it can handle the failover and failover-locking requests.
     -->
     今までは、watchdog プロセスは、自分の状態のみを考慮し、フェイルオーバおよびフェイルオーバロック要求の処理を判断していました。
     </para>
@@ -74,7 +74,7 @@
     the watchdog state of the node is Master/coordinator, but it is yet not fully
     capable of handling the failover and failover-locking requests.
     -->
-    しかし、この処理の問題点は、ある watchdog が自分をクラスタのマスター/コーディネーターとして通知し、スタンバイノードが自分をマスターノードとして認識するのを待っている間に、自分の状態はマスター/コーディネータですが、まだフェイルオーバおよびフェイルオーバロック要求処理することはできませんでした。
+    しかし、この処理の問題点は、ある watchdog が自分をクラスタのマスター/コーディネーターとして通知し、スタンバイノードが自分をマスターノードとして認識するのを待っている間に、自分の状態はマスター/コーディネータですが、まだフェイルオーバおよびフェイルオーバロック要求処理することができない点にありました。
     </para>
     <para>
     <!--
@@ -89,7 +89,7 @@
     The fix for the above situation is to make sure that the node has fully acquired
     the Master status before accepting the failover and failover-locking requests.
     -->
-    修正案としては、ノードがフェイルオーバおよびフェイルオーバーロック要求を受け入れる前に、完全にマスター状態を取得したことを確認するように修正しました。
+    ノードがフェイルオーバおよびフェイルオーバーロック要求を受け入れる前に、完全にマスター状態を取得したことを確認するように修正しました。
     </para>
     </listitem>
 
@@ -109,7 +109,7 @@
     cause was, when 'H' received, extended query mode was reset and
     pending message was not used.
     -->
-    ユーザが 'H' メッセージの直後に応答を読み込もうとすると、<productname>Pgpool-II</productname>はハングアップしまていました。
+    ユーザが 'H' メッセージの直後に応答を読み込もうとすると、<productname>Pgpool-II</productname>はハングアップしていました。
     原因は、'H' が受信されたときに拡張クエリモードがリセットされ、保留メッセージが使用されなかったためです。
     </para>
     </listitem>
@@ -134,7 +134,7 @@
     <!--
     Fix bug mistakenly overriding global backend status right after failover. (Tatsuo Ishii)
     -->
-    フェイルオーバの直後にグローバルバックエンドの状態が誤って上書きされる不具合を修正しました。(Tatsuo Ishii) 
+    フェイルオーバの直後にグローバルバックエンドの状態が誤って上書きされる不具合を修正しました。(Tatsuo Ishii)
     </para>
     <para>
     詳細は <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink>を参照してください。
@@ -164,7 +164,7 @@
     <!--
     Deal with OpenSSL 1.1. (Tatsuo Ishii)
     -->
-    OpenSSL 1.1に対応しました。(Tatsuo Ishii, Muhammad Usama) 
+    OpenSSL 1.1に対応しました。(Tatsuo Ishii, Muhammad Usama)
     </para>
     </listitem>
 
@@ -176,7 +176,7 @@
     <!--
     Doc: Fix table about replicate_select behavior (Yugo Nagata)
     -->
-    Doc: replicate_select の動作に関する説明を修正しました。(Yugo Nagata) 
+    Doc: replicate_select の動作に関する説明を修正しました。(Yugo Nagata)
     </para>
     </listitem>
     </itemizedlist>

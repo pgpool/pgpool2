@@ -24,13 +24,13 @@
       adapts to changes in PostgreSQL 10: new SQL parser, logical
       replication and some admin functions name changes.
 			-->
-このバージョンでは、新しい<application>watchdog</application>機能とノードごとのヘルスチェックの設定により、フェイルオーバの信頼性が向上しています。また、このバージョンでは、<productname>PostgreSQL</productname> 10の新しい<literal>SQL</literal>パーサ、ロジカルレプリケーション、およびいくつかの管理関数の名前の変更に対応しています。 
+このバージョンでは、新しい<application>watchdog</application>機能とノードごとのヘルスチェックの設定により、フェイルオーバの信頼性が向上しています。また、このバージョンでは、<productname>PostgreSQL</productname> 10の新しい<literal>SQL</literal>パーサ、ロジカルレプリケーション、およびいくつかの管理関数の名前の変更に対応しています。
     </para>
     <para>
 		<!--
       Major enhancements in <productname>Pgpool-II</productname> 3.7 include:
 			-->
-Pgpool-II 3.7 の主な改善点は以下のとおりです。 
+Pgpool-II 3.7 の主な改善点は以下のとおりです。
     </para>
 
     <!-- Items in this list summarize one or more items below -->
@@ -63,7 +63,7 @@ Pgpool-II 3.7 の主な改善点は以下のとおりです。
 <productname>PostgreSQL</productname>バックエンドごとにヘルスチェックパラメータを設定できるようになりました。
 	</para>
       </listitem>
-      
+
       <listitem>
 	<para>
 	<!--
@@ -84,7 +84,7 @@ Pgpool-II 3.7 の主な改善点は以下のとおりです。
       <listitem>
 	<para>
 	<!--
-	  Support logical replication. 
+	  Support logical replication.
 		-->
 ロジカルレプリケーションに対応しました。
 	</para>
@@ -134,7 +134,7 @@ Pgpool-II 3.7 の主な改善点は以下のとおりです。
 
 	<para>
 	<!--
-	  Now only the Master node performs the failover, and the failover 
+	  Now only the Master node performs the failover, and the failover
 	  locks are removed.
 		-->
 また、マスタノードだけがフェイルオーバーを実行することになったので、フェイルオーバ時にロックする必要がなくなりました。
@@ -147,14 +147,14 @@ Pgpool-II 3.7 の主な改善点は以下のとおりです。
 	  failover_require_consensus,
 	  enable_multiple_failover_requests_from_node.
 		-->
-この機能追加に伴い、以下の 3つのフェイルオーバに関するパラメータを追加しました。 
+この機能追加に伴い、以下の 3つのフェイルオーバに関するパラメータを追加しました。
 				<itemizedlist>
 					<listitem>
 						<para>
 						<!--
 				<xref linkend="guc-failover-when-quorum-exists">
 				-->
-				guc_failover_when_quorum_exists
+				failover_when_quorum_exists
 						</para>
 					</listitem>
 					<listitem>
@@ -202,7 +202,7 @@ Pgpool-II 3.7 の主な改善点は以下のとおりです。
 	  HBA record the commit also made the following enhancements
 	  in the area.
 		-->
-この機能追加に伴い、以下の改善も行いました。 
+この機能追加に伴い、以下の改善も行いました。
 	</para>
 
 	<para>
@@ -336,11 +336,11 @@ health_check_period0 = 5
 	  with Aurora. Notice that replication delay cannot be
 	  performed in Aurora, sr_check_period should be always 0.
 		-->
-それ以外は、<productname>Aurora</productname>ではストリーミングレプリケーションモードを使用することができます。 <productname>Aurora</productname>ではレプリケーション遅延を検査できないことに注意してください。<xref linkend="guc-sr-check-period">は常に0にする必要があります。 
+それ以外は、<productname>Aurora</productname>ではストリーミングレプリケーションモードを使用することができます。 <productname>Aurora</productname>ではレプリケーション遅延を検査できないことに注意してください。<xref linkend="guc-sr-check-period">は常に0にする必要があります。
 	</para>
 	<para>
 	<!--
-	  Also add English/Japanese Aurora setting example. 
+	  Also add English/Japanese Aurora setting example.
 		-->
 設定については <link linkend="example-AWS">AWS設定の例</link>を参照してください。
 	</para>
@@ -355,7 +355,7 @@ health_check_period0 = 5
 	<!--
 	  Support logical replication. (Tatsuo Ishii)
 		-->
-ロジカルレプリケーションモードを追加しました。(Tatsuo Ishii) 
+ロジカルレプリケーションモードを追加しました。(Tatsuo Ishii)
 	</para>
 	<para>
 	<!--
@@ -409,7 +409,7 @@ health_check_period0 = 5
       <!--
       Test: Add some watchdog test cases. (Muhammad Usama)
       -->
-      Test: Watchdog のテストケースを追加しました。 (Muhammad Usama) 
+      Test: Watchdog のテストケースを追加しました。 (Muhammad Usama)
       </para>
       </listitem>
 
@@ -601,7 +601,7 @@ Test: 新しいテストケース「extended-query-test」を追加しました�
 	<!--
 	  Change master_slave_sub_mode default to 'stream'. (Tatsuo Ishii)
 		-->
-<xref linkend="guc-master-slave-sub-mode">パラメータのデフォルト値を「stream」に変更しました。(Tatsuo Ishii) 
+<xref linkend="guc-master-slave-sub-mode">パラメータのデフォルト値を「stream」に変更しました。(Tatsuo Ishii)
 	</para>
 	<para>
 	<!--
@@ -620,7 +620,7 @@ Test: 新しいテストケース「extended-query-test」を追加しました�
 	<!--
 	  Allow to fork new health check process when it exits. (Tatsuo Ishii)
 	-->
-終了時に新しいヘルスチェックプロセスをフォークするようにしました。(Tatsuo Ishii) 
+終了時に新しいヘルスチェックプロセスをフォークするようにしました。(Tatsuo Ishii)
 	</para>
 	<para>
 
@@ -686,13 +686,13 @@ ereportを呼び出さないように終了シグナルハンドラを修正し�
 	</para>
 	<para>
 	<!--
-	  There could be a race condition in the exit signal handlers. 
+	  There could be a race condition in the exit signal handlers.
 		-->
 終了シグナルハンドラに競合状態が発生する可能性がありました。
 	</para>
 	<para>
 	<!--
-	See [pgpool-hackers: 2545] for more details. 
+	See [pgpool-hackers: 2545] for more details.
 	-->
 詳細は、 <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2017-September/002545.html">[pgpool-hackers：2545]</ulink>を参照してください。
 	</para>
@@ -741,7 +741,7 @@ Test: メモリリークテストのバグを修正し、新しいメモリリ�
 	  Previously only health check retry logs were produced. So it was not
 	  clear if the retry succeeded or not in the end.
 		-->
-以前は、ヘルスチェックが再試行されたログだけが記録されていましたが、再試行が成功したかどうかは明らかではありませんでした。 
+以前は、ヘルスチェックが再試行されたログだけが記録されていましたが、再試行が成功したかどうかは明らかではありませんでした。
 	</para>
       </listitem>
 

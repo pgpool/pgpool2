@@ -65,7 +65,7 @@ Pgpool-II documentation
     <application>watchdog_setup</application>
     uses <xref linkend="pgpool-setup"> as a workhorse.
     -->
-    <application>watchdog_setup</application> が <xref linkend="pgpool-setup"> をベースとしたツールです。
+    <application>watchdog_setup</application> は <xref linkend="pgpool-setup"> をベースとしたツールです。
   </para>
 
   <para>
@@ -86,7 +86,7 @@ Pgpool-II documentation
    <!--
     <application>watchdog_setup</application> accepts the following command-line arguments:
     -->
-    <application>watchdog_setup</application> 以下のコマンドライン引数を受け付けます:
+    <application>watchdog_setup</application> は以下のコマンドライン引数を受け付けます:
 
     <variablelist>
 
@@ -120,12 +120,12 @@ Pgpool-II documentation
          -->
          <productname>Pgpool-II</productname> と <productname>PostgreSQL</productname> のベースとなるポート番号を指定します。
          最初の Pgpool-II のポートは watchdog_base_port となります。
-         pcp のポートは u、watchdog のポートは watchdog_base_port + 2 となります。wd_heartbeat_port は watchdog_base_port + 3 (heartbeat が使われていない場合でも)。
+         pcp のポートは watchdog_base_port + 1、watchdog のポートは watchdog_base_port + 2 となります。wd_heartbeat_port は watchdog_base_port + 3 (heartbeat が使われていない場合でも)。
          1 番目の PostgreSQL ノードのポートは watchdog_base_port + 4、
          2 番目の PostgreSQL ノードのポートは watchdog_base_port + 5 というようになります。
        </para>
        <para>
-	If this is omitted, <literal>50000</literal> is used.
+    省略した場合、<literal>50000</literal> が使われます。
        </para>
       </listitem>
      </varlistentry>
@@ -197,7 +197,7 @@ Pgpool-II documentation
    <!--
     <application>watchdog_setup</application> recognizes following environment variables:
     -->
-    <application>pgpool_setup</application> 以下の環境変数を使用します:
+    <application>pgpool_setup</application> は以下の環境変数を使用します:
 
     <variablelist>
 
@@ -230,7 +230,7 @@ Pgpool-II documentation
         <productname>Pgpool-II</productname> のインストールディレクトリを指定します。
         <productname>Pgpool-II</productname> バイナリーは PGPOOL_INSTALL_DIR/bin ディレクトリ以下、
         <filename>pgpool.conf</filename> と <filename>pool_hba.conf</filename>
-        などは PGPOOL_INSTALL_DIR/etc ディレクトリ以にインストールされます。
+        などは PGPOOL_INSTALL_DIR/etc ディレクトリ以下にインストールされます。
         デフォルトでは /usr/local ディレクトリ以下にインストールされます。
        </para>
       </listitem>
