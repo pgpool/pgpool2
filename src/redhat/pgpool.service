@@ -3,7 +3,6 @@ Description=Pgpool-II
 After=syslog.target network.target
 
 [Service]
-Type=forking
 
 EnvironmentFile=-/etc/sysconfig/pgpool
 
