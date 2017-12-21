@@ -78,7 +78,7 @@ Pgpool-II documentation
    <!--
     <application>pgpool_setup</application> accepts the following command-line arguments:
     -->
-    <application>pgpool_setup</application> 以下のコマンドライン引数を受け付けます:
+    <application>pgpool_setup</application> は以下のコマンドライン引数を受け付けます:
 
     <variablelist>
 
@@ -157,9 +157,9 @@ Pgpool-II documentation
          The first PostgreSQL node's port is base_port + 2, second
          PostgreSQL node's port is base_port + 3 and so on.
          -->
-         PostgreSQL のベースとなるポート番号を指定します。
-         最初の PostgreSQL ノードのポートは base_port + 2、
-         2 番目の PostgreSQL ノードのポートは base_port + 3 というようになります。
+         <productname>PostgreSQL</productname> のベースとなるポート番号を指定します。
+         最初の <productname>PostgreSQL</productname> ノードのポートは <literal>pg_base_port</literal>、
+         2 番目の <productname>PostgreSQL</productname> ノードのポートは <literal>pg_base_port</literal> + 1 というようになります。
        </para>
        <para>
        <!--
@@ -207,7 +207,7 @@ Pgpool-II documentation
    <!--
     <application>pgpool_setup</application> recognizes following environment variables:
     -->
-    <application>pgpool_setup</application> 以下の環境変数を使用します:
+    <application>pgpool_setup</application> は以下の環境変数を使用します:
 
     <variablelist>
 
@@ -224,7 +224,7 @@ Pgpool-II documentation
         <productname>Pgpool-II</productname> のインストールディレクトリを指定します。
         <productname>Pgpool-II</productname> バイナリーは PGPOOL_INSTALL_DIR/bin ディレクトリ以下、
         <filename>pgpool.conf</filename> と <filename>pool_hba.conf</filename>
-        などは PGPOOL_INSTALL_DIR/etc ディレクトリ以にインストールされます。
+        などは PGPOOL_INSTALL_DIR/etc ディレクトリ以下にインストールされます。
         デフォルトでは /usr/local ディレクトリ以下にインストールされます。
        </para>
       </listitem>

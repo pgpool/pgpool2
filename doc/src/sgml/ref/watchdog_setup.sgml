@@ -78,7 +78,7 @@ Pgpool-II documentation
        <para>
 	 Specify the starting base port number used by Pgpool-II and
 	 PostgreSQL.  For the first Pgpool-II, Pgpool-II port is
-	 watchdog_base_port. pcp port is u watchdog port is
+	 watchdog_base_port. pcp port is watchdog_base_port + 1, watchdog port is
 	 watchdog_base_port + 2. wd_heartbeat_port is
 	 watchdog_base_port + 3 (though heartbeat is not used).  The
 	 first PostgreSQL node's port is watchdog_base_port + 4,

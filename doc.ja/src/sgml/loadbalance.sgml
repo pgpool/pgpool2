@@ -33,7 +33,8 @@
       Queries which are sent to primary node or all backend nodes because they cannot be balanced are
       also accounted for in the load balancing algorithm.
 -->
-負荷分散ができないためにプリマリノードまたは全バックエンドノードに送られクエリもまた、負荷分散アルゴリズムで判断されます。
+負荷分散ができないためにプライマリノードまたは全バックエンドノードに送られるクエリもまた、
+負荷分散アルゴリズムの考慮に入れられます。
     </para>
   </note>
   <note>
@@ -59,7 +60,7 @@
 どのDBノードが負荷分散ノードになっているかは、<xref linkend="sql-show-pool-nodes">を利用して確認できます。
     </para>
   </note>
-      
+
  <sect2 id="runtime-config-load-balancing-condition">
 <!--
   <title>Condition for Load Balancing</title>
@@ -714,7 +715,7 @@ black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
             and <xref linkend="guc-white-function-list"> as follows
 -->
 <productname>Pgpool-II</productname> <emphasis>V3.0</emphasis>より前のバージョンでは、固定で<literal>nextval()</literal>と<literal>setval()</literal>がデータベースに書き込みを行なう関数であると認識されていました。
-以下のように<xref linkend="guc-black-function-list">と<xref linkend="guc-black-function-list">を設定することで、それと同じように動作させることができます。
+以下のように<xref linkend="guc-white-function-list">と<xref linkend="guc-black-function-list">を設定することで、それと同じように動作させることができます。
               <programlisting>
 white_function_list = ''
 black_function_list = 'nextval,setval,lastval,currval'

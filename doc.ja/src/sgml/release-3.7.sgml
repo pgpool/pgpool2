@@ -1,0 +1,765 @@
+<sect1 id="release-3-7">
+<!--
+  <title>Release 3.7</title>
+	-->
+  <title>リリース 3.7</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2017-11-22</simpara>
+  </note>
+
+  <sect2>
+	<!--
+    <title>Overview</title>
+		-->
+    <title>概要</title>
+    <para>
+		<!--
+      This version improves reliability of failover by using new
+      watchdog feature and per node health check.  Also this version
+      adapts to changes in PostgreSQL 10: new SQL parser, logical
+      replication and some admin functions name changes.
+			-->
+このバージョンでは、新しい<application>watchdog</application>機能とノードごとのヘルスチェックの設定により、フェイルオーバの信頼性が向上しています。また、このバージョンでは、<productname>PostgreSQL</productname> 10の新しい<literal>SQL</literal>パーサ、ロジカルレプリケーション、およびいくつかの管理関数の名前の変更に対応しています。
+    </para>
+    <para>
+		<!--
+      Major enhancements in <productname>Pgpool-II</productname> 3.7 include:
+			-->
+Pgpool-II 3.7 の主な改善点は以下のとおりです。
+    </para>
+
+    <!-- Items in this list summarize one or more items below -->
+
+    <itemizedlist>
+
+      <listitem>
+	<para>
+		<!--
+	  Quorum aware failover feature.
+		-->
+クォーラム機能によりフェイルオーバを決定するようになりました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<para>
+	<!--
+	  Allow specifying the hostnames in pool_hba.
+		-->
+<filename>pool_hba</filename>ではホスト名を指定できるようになりました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<para>
+	<!--
+	  Allow to specify per node health check parameters.
+		-->
+<productname>PostgreSQL</productname>バックエンドごとにヘルスチェックパラメータを設定できるようになりました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<para>
+	<!--
+	  Support AWS Aurora.
+		-->
+<application>AWS Aurora</application> に対応しました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<para>
+	<!--
+	  Import PostgreSQL 10 SQL parser
+		-->
+<productname>PostgreSQL</productname> 10 のSQLパーサを取り込みました。
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	<!--
+	  Support logical replication.
+		-->
+ロジカルレプリケーションに対応しました。
+	</para>
+      </listitem>
+
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+	<!--
+    <title>Major Enhancements</title>
+		-->
+    <title>主な改善点</title>
+
+    <itemizedlist>
+      <listitem>
+	<!--
+	    2017-09-18 [54af632]
+	    2017-10-03 [12bd99b]
+	  -->
+	<para>
+	<!--
+	  Quorum and Consensus for backend failover. (Muhammad Usama)
+	-->
+クォーラム機能によりフェイルオーバを決定するようになりました。(Muhammad Usama)
+	</para>
+	<para>
+	<!--
+	  Add ability in the Pgpool-II to considers the existence of
+	  quorum and seek the majority node (Pgpool-II nodes part of
+	  the watchdog cluster) consensus to validate the backend node
+	  failover request. This feature helps make failover decision
+	  better and prevent split brain scenarios.
+		-->
+<productname>Pgpool-II</productname>はクォーラム機能を利用し、<application>watchdog</application>クラスタ内で<productname>PostgreSQL</productname>バックエンドノードのフェイルオーバを決定する機能を追加しました。この機能追加により、スプリットブレインを防止することができます。
+
+	</para>
+
+	<para>
+	<!--
+	  The addition of this feature also made some modification in
+	  the execution behavior of the failover (failover, failback,
+	  promote-node) command.
+		-->
+この変更により、failover、failback、promote-node コマンドの処理も変更しました。
+	</para>
+
+	<para>
+	<!--
+	  Now only the Master node performs the failover, and the failover
+	  locks are removed.
+		-->
+また、マスタノードだけがフェイルオーバーを実行することになったので、フェイルオーバ時にロックする必要がなくなりました。
+	</para>
+
+	<para>
+	<!--
+	  Three new configuration parameters to configure the failover
+	  behavior from user side: failover_when_quorum_exists,
+	  failover_require_consensus,
+	  enable_multiple_failover_requests_from_node.
+		-->
+この機能追加に伴い、以下の 3つのフェイルオーバに関するパラメータを追加しました。
+				<itemizedlist>
+					<listitem>
+						<para>
+						<!--
+				<xref linkend="guc-failover-when-quorum-exists">
+				-->
+				failover_when_quorum_exists
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+						<!--
+				<xref linkend="failover-require-consensus">
+				-->
+				failover_require_consensus
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+						<!--
+				<xref linkend="allow-multiple-failover-requests-from-node">
+						-->
+						allow_multiple_failover_requests_from_node
+						</para>
+					</listitem>
+				</itemizedlist>
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-20 [3cc5235]
+	  -->
+	<para>
+	<!--
+	  Allow specifying the hostnames in pool_hba. (Muhammad Usama)
+		-->
+<filename>pool_hba</filename>でホスト名を指定できるようになりました。(Muhammad Usama)
+	</para>
+	<para>
+	<!--
+	  The commit adds the support of hostnames to be used in the
+	  address field of pool_hba records, previously only CIDR
+	  address was supported.
+		-->
+<filename>pool_hba</filename>設定ファイルの address フィールドにおいて、以前はCIDRアドレスのみに対応していましたが、この修正により、ホスト名にも対応するようになりました。
+	</para>
+
+	<para>
+	<!--
+	  Along with allowing the hostnames in address field of the
+	  HBA record the commit also made the following enhancements
+	  in the area.
+		-->
+この機能追加に伴い、以下の改善も行いました。
+	</para>
+
+	<para>
+	<!--
+	  (1) pool_hba records are now completely parsed at the
+	  loading time and we now keep the structured data of records
+	  instead of raw record lines, This saves the parsing at every
+	  new connection time and however little it may be but its a
+	  performance enhancement.
+		-->
+(1) pool_hba レコードはロード時に完全に解析されるようになりました。Raw レコード行ではなく、構造化されたデータを保存します。これにより、新規接続時間が短縮され、パフォーマンスが向上します。
+	</para>
+	<para>
+	<!--
+	  (2) Enhanced parsing now gives the better descriptive
+	  error/log messages.
+		-->
+(2) エラー/ログメッセージが改善されました。
+	</para>
+
+	<para>
+	<!--
+	  (3) Better handling of auth-options field.
+		-->
+(3) auth-options フィールドの処理が改善されました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-04-20 [127e64f]
+	    2017-04-26 [c0d209d]
+	    2017-05-16 [18f4d2e]
+	    2017-05-31 [cbf1268]
+	  -->
+	<para>
+	<!--
+  	  Supporting per node health check parameters. (Tatsuo Ishii,
+  	  Muhammad Usama)
+		-->
+<productname>PostgreSQL</productname>ノードごとにヘルスチェックパラメータを設定できるようになりました。(Tatsuo Ishi, Muhammad Usama)
+	</para>
+	<para>
+	<!--
+	  Previous implementation of health check is a single serial
+	  processing for all of database nodes.
+		-->
+従来のヘルスチェックでは、すべての<productname>PostgreSQL</productname>ノードを順番にチェックし、パラメータはノードごとには設定できず、全ノードで共通の設定でした。
+	</para>
+	<para>
+	<!--
+	  Now pgpool main process forks health check process for each
+	  DB node.  This commit enables all health-check related
+	  parameter to be configured for each individual backend
+	  nodes.
+		-->
+この機能追加により、<productname>Pgpool-II</productname>の親プロセスが<productname>PostgreSQL</productname>ノードごとにヘルスチェックプロセスをフォークし、ヘルスチェックに関連するパラメータがノードごとに設定できるようになりました。
+	</para>
+	<para>
+	<!--
+	  For example if we have 3 backend nodes and do following
+	  configurations.
+		-->
+例えば、<productname>PostgreSQL</productname>バックエンドノードが3台の場合、以下のように設定すると、
+	</para>
+	<programlisting>
+health_check_period = 10
+health_check_period0 = 5
+	</programlisting>
+
+	<para>
+	<!--
+	  Then will set the health_check_period for node 0 to 5 while
+	  node-id 1 and 2 will get the value 10
+		-->
+ノード0に<varname>health_check_period = 5</varname> が設定され、ノード1 と2 に<varname>health_check_period = 10</varname>が設定されます。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-10-03 [57196ae]
+	  -->
+	<para>
+	<!--
+  	  Import PostgreSQL 10 SQL parser. (Bo Peng)
+		-->
+<productname>PostgreSQL</productname> 10 のパーサを取り込みました。(Bo Peng)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-07-12 [e9b241e]
+	    2017-07-12 [6bbcfe7]
+	    2017-07-12 [b61019e]
+	    2017-07-13 [e626055]
+	    2017-07-12 [ea1a6b9]
+	  -->
+	<para>
+	<!--
+	  Support AWS Aurora. (Tatsuo Ishii)
+		-->
+<productname>AWS Aurora</productname>に対応しました。 (Tatsuo Ishii)
+	</para>
+	<para>
+	<!--
+	  Add new backend flag "ALWAYS_MASTER" to control the primary
+	  node detecting logic. Since we cannot use
+	  pg_is_in_recovery() in Aurora, we assign the new flag to a
+	  backend which is specified as "writer" in Aurora. Since
+	  Aurora always use the same hostname for the master (it's
+	  called "writer"), find_primary_node() just returns the node
+	  id which has ALWAYS_MASTER flag on.
+		-->
+プライマリノード検出ロジックを制御する新しいバックエンドフラグ「ALWAYS_MASTER」を追加しました。Aurora では<function>pg_is_in_recovery()</function>を使用できないため、<productname>Aurora</productname>の "writer"として指定されたバックエンドに「ALWAYS_MASTER」を割り当てます。Aurora は常にマスタに同じホスト名を使用するため、<function>find_primary_node()</function> は「ALWAYS_MASTER」フラグが立っているノードIDを返します。
+	</para>
+	<para>
+	<!--
+	  See more details about ALWAYS_MASTER
+	  flag <xref linkend="backend-flag-table">.
+		-->
+詳細は、<link linkend="backend-flag-table">ALWAYS_MASTER</link>を参照してください。
+	</para>
+	<para>
+	<!--
+	  Other than that, user can use the streaming replication mode
+	  with Aurora. Notice that replication delay cannot be
+	  performed in Aurora, sr_check_period should be always 0.
+		-->
+それ以外は、<productname>Aurora</productname>ではストリーミングレプリケーションモードを使用することができます。 <productname>Aurora</productname>ではレプリケーション遅延を検査できないことに注意してください。<xref linkend="guc-sr-check-period">は常に0にする必要があります。
+	</para>
+	<para>
+	<!--
+	  Also add English/Japanese Aurora setting example.
+		-->
+設定については <link linkend="example-AWS">AWS設定の例</link>を参照してください。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-08-17 [184b412]
+	    2017-08-17 [88c5c11]
+	  -->
+	<para>
+	<!--
+	  Support logical replication. (Tatsuo Ishii)
+		-->
+ロジカルレプリケーションモードを追加しました。(Tatsuo Ishii)
+	</para>
+	<para>
+	<!--
+	  The logical replication mode can be used
+	  with <productname>PostgreSQL</productname> servers operating
+	  logical replication. In this
+	  mode, <productname>PostgreSQL</productname> is responsible
+	  for synchronizing tables.
+		-->
+ロジカルレプリケーションモードはロジカルレプリケーションを使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。このモードでは、<productname>PostgreSQL</>がテーブルを同期する責任を持ちます。
+	</para>
+	<para>
+	<!--
+	  Load balancing is possible in the mode. Since logical
+	  replication does not replicate all tables, it's user's
+	  responsibility to replicate the table which could be load
+	  balanced.
+		-->
+このモードでは負荷分散が可能です。ロジカルレプリケーションは必ずしもすべてのテーブルをレプリケーションしないので、負荷分散させるテーブルがレプリケーションされるようにするのはユーザの責任です。
+	</para>
+	<para>
+	<!--
+	  The sample configuration file
+	  is <filename>$prefix/etc/pgpool.conf.sample-logical</filename>.
+		-->
+サンプルの設定ファイルは <filename>$prefix/etc/pgpool.conf.sample-logical</filename>です。
+	</para>
+	<para>
+	<!--
+	  And add support for logical replication mode
+	  to <application>pgpool_setup</application>.
+		-->
+<application>pgpool_setup</> もロジカルレプリケーションモードに対応しました。
+	</para>
+      </listitem>
+
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+	<!--
+    <title>Other Enhancements</title>
+		-->
+    <title>他の改善点</title>
+    <itemizedlist>
+      <listitem>
+      <!--
+      2017-11-09 [9f12b15]
+      -->
+      <para>
+      <!--
+      Test: Add some watchdog test cases. (Muhammad Usama)
+      -->
+      Test: Watchdog のテストケースを追加しました。 (Muhammad Usama)
+      </para>
+      </listitem>
+
+      <listitem>
+	  <!--
+	    2017-10-05 [7dace77]
+	    2017-10-10 [79baaf0]
+	    2017-10-10 [6da5672]
+	    2017-10-10 [f18e099]
+	  -->
+      <para>
+      <!--
+        Test: Add new test case "node_js.data" to extended-query-test.(Tatsuo Ishii)
+        -->
+  Test: extended-query-test に新しいテストケース "node_js.data"を追加しました。 (Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+          2017-10-04 [0e0d7eb]
+        -->
+      <para>
+      <!--
+        Documentation updates for pool_hba enhancements.(Muhammad Usama)
+      -->
+  Doc: <link linkend="auth-pool-hba-conf">「pool_hba.conf ファイル」</link>に関するドキュメントを更新しました。(Muhammad Usama)
+
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+          2017-09-01 [6e71926]
+        -->
+      <para>
+      <!--
+        Add "slony mode" to pgpool_setup. (Tatsuo Ishii)
+          -->
+  <application>pgpool_setup</application>が<application>slony</application>モードに対応しました。(Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-09-11 [c0f4f1a]
+      -->
+      <para>
+      <!--
+        Deal with OpenSSL 1.1. (Tatsuo Ishii, Muhammad Usama)
+      -->
+<application>OpenSSL 1.1</application>に対応しました。(Tatsuo Ishii, Muhammad Usama)
+      </para>
+      </listitem>
+
+      <listitem>
+	  <!--
+	  2017-03-29 [3dd0278]
+	  -->
+      <para>
+      <!--
+      Test: Add new regression test "069. memory_leak_extended". (Tatsuo Ishii)
+      -->
+Test: 新しいレグレッションテスト「069. memory_leak_extended」を追加しました。(Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-01-25 [91143a1]
+	  -->
+	<para>
+	<!--
+	  Doc: Enhance query cache documents. (Tatsuo Ishii)
+	-->
+Doc: インメモリキャッシュに関するドキュメントを更新しました。(Tatsuo Ishii)
+	</para>
+      </listitem>
+      <listitem>
+	<!--
+	    2016-12-20 [f6659fb]
+	    2016-12-20 [5485b9b]
+	  -->
+	<para>
+	<!--
+	  Doc: Add "Tips for Installation" section. (Tatsuo Ishii)
+		-->
+Doc: ドキュメントに<link linkend="installation-tips">「インストールのヒント」</link>を追加しました。(Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-19 [34922b5]
+	  -->
+	<para>
+	<!--
+	  Test: Add new test 011.watchdoc_quorum_failover. (Tatsuo Ishii)
+	-->
+Test: 新しいレグレッションテスト「011.watchdoc_quorum_failover」を追加しました。(Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-17 [3810b55]
+	  -->
+	<para>
+	<!--
+	  Test: Add new test suits. (Tatsuo Ishii)
+	-->
+Test: 新しいテストケース「extended-query-test」を追加しました。(Tatsuo Ishii)
+	</para>
+	<para>
+	<!--
+	  The new test suit "extended-query-test" is intended to test extended
+	  queries using pgproto command.
+		-->
+この新しいテストケースは、<productname>pgproto</productname>コマンドを使い拡張クエリをテストするために追加しました。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-10 [d114c19]
+	  -->
+	<para>
+	<!--
+	  Add debugging aid to check pending message and backend
+	  response. (Tatsuo Ishii)
+	-->
+保留中のメッセージとバックエンドの応答を確認するためのデバッグ情報を追加しました。(Tatsuo Ishii)
+	</para>
+	<para>
+	<!--
+	  New function pool_check_pending_message_and_reply() added.
+	  If pending message kind and backend reply message kind is
+	  not inconsistent, it prints a debug message. Currently the
+	  only client of the function is read_kind_from_backend().
+		-->
+新しい関数<function>pool_check_pending_message_and_reply()</function>を追加しました。保留中のメッセージの種類とバックエンドの応答メッセージの種類が一致しない場合、デバッグメッセージを出力します。今までは、<function>read_kind_from_backend()</function>関数のみでした。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-08 [0f75428]
+	  -->
+	<para>
+	<!--
+	  Add debugging/testing aid for health check. (Tatsuo Ishii)
+	-->
+ヘルスチェックのためのデバッグ情報を追加しました。(Tatsuo Ishii)
+	</para>
+      </listitem>
+
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+	<!--
+    <title>Changes</title>
+		-->
+    <title>変更点</title>
+    <itemizedlist>
+      <listitem>
+	<!--
+	    2017-10-04 [1e26fa7]
+	  -->
+	<para>
+	<!--
+	  Add "role" field to pcp_node_info command.(Tatsuo Ishii)
+		-->
+<xref linkend="PCP-NODE-INFO">コマンドの出力に「role」フィールドを追加しました。(Tatsuo Ishii)
+	</para>
+	<para>
+	<!--
+	  Role is the server role: one of "primary", "standby",
+	  "master" or "slave".
+		-->
+「role」フィールドに「primary」、「standby」、「master」、「slave」のいずれかが出力されます。
+	</para>
+      </listitem>
+      <listitem>
+	<!--
+	    2017-09-01 [9ebcdbc]
+	  -->
+	<para>
+	<!--
+	  Change master_slave_sub_mode default to 'stream'. (Tatsuo Ishii)
+		-->
+<xref linkend="guc-master-slave-sub-mode">パラメータのデフォルト値を「stream」に変更しました。(Tatsuo Ishii)
+	</para>
+	<para>
+	<!--
+	  This is necessary since the default value for the
+	  pool_config_variable.c is STREAM_MODE.
+		-->
+<filename>pool_config_variable.c</filename>のデフォルト値が「STREAM_MODE」であるため、この変更が必要でした。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-05-31 [20e1dab]
+	  -->
+	<para>
+	<!--
+	  Allow to fork new health check process when it exits. (Tatsuo Ishii)
+	-->
+終了時に新しいヘルスチェックプロセスをフォークするようにしました。(Tatsuo Ishii)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-05-31 [b37dcc4]
+	  -->
+	<para>
+	<!--
+	  Doc: Add new group "health_check" to PGPOOL SHOW command doc. (Tatsuo Ishii)
+		-->
+Doc:  <link linkend="SQL-PGPOOL-SHOW">PGPOOL SHOW</link>コマンドのパラメータグループに「health_check」を追加しました。(Tatsuo Ishii)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-04-12 [6eb7160]
+	  -->
+	<para>
+	<!--
+	  Remove old html docs and related files. (Tatsuo Ishii)
+	-->
+Doc: 古いhtmlドキュメント及び関連ファイルを削除しました。(Tatsuo Ishii)
+	</para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+	<!--
+    <title>Bug fix</title>
+		-->
+    <title>不具合修正</title>
+    <itemizedlist>
+      <listitem>
+	<!--
+	    2017-10-10 [fafb82c]
+	  -->
+	<para>
+	<!--
+	  Fix Pgpool-II hanging after receiving 'H' (flush) message in streaming replication mode. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=345">bug 345</ulink>) (Tatsuo Ishii)
+	  -->
+ストリーミングレプリケーションモードで、'H' (flush) メッセージを受信した後に発生するハングアップを修正しました。 (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=345">bug 345</ulink>) (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-22 [e18632e]
+	  -->
+	<para>
+	<!--
+	  Fix exit signal handlers to not call ereport. (Tatsuo Ishii)
+	-->
+ereportを呼び出さないように終了シグナルハンドラを修正しました。(Tatsuo Ishii)
+	</para>
+	<para>
+	<!--
+	  There could be a race condition in the exit signal handlers.
+		-->
+終了シグナルハンドラに競合状態が発生する可能性がありました。
+	</para>
+	<para>
+	<!--
+	See [pgpool-hackers: 2545] for more details.
+	-->
+詳細は、 <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2017-September/002545.html">[pgpool-hackers：2545]</ulink>を参照してください。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-09-05 [815fd17]
+	  -->
+	<para>
+	<!--
+	  Doc: Fix table about replicate_select behavior. (Yugo Nagata)
+	-->
+Doc: replicate_selectの動作に関する説明を修正しました。(Yugo Nagata)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-07-28 [7a47b01]
+	  -->
+	<para>
+	<!--
+	  Test: Fix bug with memory leak tests and add new memory leak
+	  test. (Tatsuo Ishii)
+	-->
+Test: メモリリークテストのバグを修正し、新しいメモリリークテストを追加しました。(Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-07-13 [95cab40]
+	  -->
+	<para>
+	<!--
+	  Add log after health check retrying succeeds. (Tatsuo Ishii)
+	-->
+ヘルスチェック後に再試行が成功したログを記録するようになりました。 (Tatsuo Ishii)
+	</para>
+	<para>
+	<!--
+	  Previously only health check retry logs were produced. So it was not
+	  clear if the retry succeeded or not in the end.
+		-->
+以前は、ヘルスチェックが再試行されたログだけが記録されていましたが、再試行が成功したかどうかは明らかではありませんでした。
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2017-07-13 [1e1d1d1]
+	  -->
+	<para>
+	<!--
+	  Add necessary setting for health check retry in the Aurora
+	  example. (Tatsuo Ishii)
+	-->
+Doc: 「<link linkend="example-Aurora">AWS設定の例</link>」でヘルスチェックリトライの設定に関する説明を追加しました。(Tatsuo Ishii)
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+</sect1>
