@@ -151,12 +151,10 @@ EOF
 #-------------------------------------------
 # replace some variables in the script
 #-------------------------------------------
-/bin/ed $FAILOVER_SCRIPT <<EOF
-/__MYDIR__/s@__MYDIR__@$BASEDIR@
-/__PGBIN__/s@__PGBIN__@$PGBIN@
-w
-q
-EOF
+/bin/sed -i \
+	 -e "/__MYDIR__/s@__MYDIR__@$BASEDIR@" \
+	 -e "/__PGBIN__/s@__PGBIN__@$PGBIN@" \
+	 $FAILOVER_SCRIPT
 
 chmod 755 $FAILOVER_SCRIPT
 }
@@ -218,14 +216,12 @@ EOF
 # replace some variables in the script
 #-------------------------------------------
 
-/bin/ed $FOLLOW_MASTER_SCRIPT <<EOF
-/__MYDIR__/s@__MYDIR__@$BASEDIR@
-/__PGBIN__/s@__PGBIN__@$PGBIN@
-/__PCPPASSFILE__/s@__PCPPASSFILE__@$PCP_PASS_FILE@
-/__PCPPORT__/s/__PCPPORT__/$PCP_PORT/
-w
-q
-EOF
+/bin/sed -i \
+	 -e "/__MYDIR__/s@__MYDIR__@$BASEDIR@" \
+	 -e "/__PGBIN__/s@__PGBIN__@$PGBIN@" \
+	 -e "/__PCPPASSFILE__/s@__PCPPASSFILE__@$PCP_PASS_FILE@" \
+	 -e "/__PCPPORT__/s/__PCPPORT__/$PCP_PORT/" \
+	$FOLLOW_MASTER_SCRIPT
 
 chmod 755 $FOLLOW_MASTER_SCRIPT
 }
@@ -257,14 +253,11 @@ EOF
 #-------------------------------------------
 # replace some variables in the script
 #-------------------------------------------
-/bin/ed $1/$PGPOOL_REMOTE_START_SCRIPT <<EOF
-/__PGBIN__/s@__PGBIN__@$PGBIN@
-w
-q
-EOF
+/bin/sed -i \
+	-e "/__PGBIN__/s@__PGBIN__@$PGBIN@" \
+	$1/$PGPOOL_REMOTE_START_SCRIPT
 
 chmod 755 $1/$PGPOOL_REMOTE_START_SCRIPT
-
 }
 
 #-------------------------------------------
@@ -352,16 +345,13 @@ EOF
 #-------------------------------------------
 # replace some variables in the script
 #-------------------------------------------
-/bin/ed $1/$SCRIPT <<EOF
-/__PGBIN__/s@__PGBIN__@$PGBIN@
-/__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@
-/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/
-w
-q
-EOF
+/bin/sed -i \
+	-e "/__PGBIN__/s@__PGBIN__@$PGBIN@" \
+	-e "/__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@" \
+	-e "/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/" \
+$1/$SCRIPT
 
 chmod 755 $1/$SCRIPT
-
 }
 
 #-------------------------------------------
@@ -407,17 +397,14 @@ EOF
 #-------------------------------------------
 # replace some variables in the script
 #-------------------------------------------
-/bin/ed $1/$SCRIPT <<EOF
-/__PGBIN__/s@__PGBIN__@$PGBIN@
-/__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@
-/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/
-/__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir@p
-w
-q
-EOF
+/bin/sed -i \
+	-e "/__PGBIN__/s@__PGBIN__@$PGBIN@" \
+	-e "/__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@" \
+	-e "/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/" \
+	-e "/__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir@" \
+	$1/$SCRIPT
 
 chmod 755 $1/$SCRIPT
-
 }
 
 #-------------------------------------------
@@ -453,17 +440,14 @@ EOF
 #-------------------------------------------
 # replace some variables in the script
 #-------------------------------------------
-/bin/ed $1/$SCRIPT <<EOF
-/__PGBIN__/s@__PGBIN__@$PGBIN@p
-/__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@p
-/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/p
-/__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir@p
-w
-q
-EOF
+/bin/sed -i \
+	-e "/__PGBIN__/s@__PGBIN__@$PGBIN@p" \
+	-e "/__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@" \
+	-e "/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/" \
+	-e "/__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir@" \
+	$1/$SCRIPT
 
 chmod 755 $1/$SCRIPT
-
 }
 
 #-------------------------------------------
