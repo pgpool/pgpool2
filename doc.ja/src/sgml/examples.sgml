@@ -242,8 +242,7 @@ pcp_port = 9898
 これらのサーバは、<productname>Pgpool-II</> と同じホストで起動しても、異なるホストであっても構いません。
 同じホストにサーバを配置するのならば、各サーバにそれぞれ異なるポート番号を割り合てなければなりません。
 異なるマシンで起動する場合は <productname>Pgpool-II</>からのネットワーク接続を受け入れられるよう適切に設定されている必要があります。
-
-が起動するホストからデータベースサーバに接続できるように設定する必要があります。 <productname>Pgpool-II</> ではデータベースサーバごとにレプリケーションを行うので、チュートリアルのためのデータベースクラスタを作成したほうがいいでしょう。
+ <productname>Pgpool-II</> ではデータベースサーバごとにレプリケーションを行うので、チュートリアルのためのデータベースクラスタを作成したほうがいいでしょう。
           <programlisting>
 backend_hostname0 = 'localhost'
 backend_port0 = 5432
@@ -323,7 +322,7 @@ $ pgpool -n -d > /tmp/pgpool.log 2>&1 &
         <command>rotatelogs</command></ulink> from Apache2:
 -->
 -d オプションはデバッグメッセージの出力を有効にします。
-上記の例はファイルにリダイレクトさせているため、ログメッセージが<literal>/tmp/pgpol.log</literal>追加され続けます。
+上記の例はファイルにリダイレクトさせているため、ログメッセージが<literal>/tmp/pgpool.log</literal>に追加され続けます。
 ログをローテートさせたい場合は、ローテート機能を持った外部コマンドにログを渡してください。
 たとえば、Apache2の<ulink url="https://httpd.apache.org/docs/2.4/programs/rotatelogs.html">rotatelogs</ulink>が使用できます。
 
@@ -351,7 +350,7 @@ cronを使うことで、古いログファイルをローテーションの前�
           <command>rotatelogs</command> starts and is available in apache2 2.2.9 or greater.
           Also <ulink url="http://www.cronolog.org/">cronolog</ulink> can be used.
 -->
-注意：Linuxディストリビューションによっては、rotatelogsは<literal>usr/sbin/rotatelogs2</literal>として存在しているかもしれません。
+注意：Linuxディストリビューションによっては、rotatelogsは<literal>/usr/sbin/rotatelogs2</literal>として存在しているかもしれません。
 <literal>-f</literal>オプションは<command>rotatelogs</command>が起動された直後に直ちにログファイルを作るオプションで、apache2 2.2.9以降でのみ有効です。
 <ulink url="http://www.cronlog.org/">cronolog</ulink>を使うこともできます。
         <programlisting>
@@ -831,7 +830,7 @@ LOG:  watchdog process is initialized
 -->
 仮想 IP アドレスに、pingが通ることを確認します。
       <programlisting>
-[user@someserver]$ ping 133.137.177.142
+[user@someserver]$ ping 133.137.177.143
 PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
 64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
 64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
@@ -865,7 +864,7 @@ lo        ...
 -->
 仮想IPアドレスを使って、<productname>PostgreSQL</> に接続をできることを確認します。
       <programlisting>
-[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+[user@someserver]$ psql -h 133.137.177.143 -p 9999 -l
       </programlisting>
       </para>
     </sect2>
@@ -916,7 +915,7 @@ LOG:  watchdog escalation process with pid: 59551 exit with SUCCESS.
 -->
 仮想 IP アドレスに、pingが通ることを確認します。
          <programlisting>
-[user@someserver]$ ping 133.137.177.142
+[user@someserver]$ ping 133.137.177.143
 PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
 64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
 64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
@@ -952,7 +951,7 @@ lo        ...
 -->
 仮想IPアドレスを使って、<productname>PostgreSQL</>に接続できることを確認します。
         <programlisting>
-[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+[user@someserver]$ psql -h 133.137.177.143 -p 9999 -l
         </programlisting>
 
       </para>
@@ -1461,7 +1460,7 @@ $ psql template1
       <sect3 id="example-cluster-pgpool-config-auth">
         <title>クライアント認証の設定</title>
         <para>
-<link linkend="EXAMPLE-CLUSTER-PRE-SETUP">事前設定</link>の章で、<productname>PostgreSQL</productname>のクライアント認証方式を<acronym>md5</acronym>に設定しましたので、クライアントが<productname>Pgpool-II</productname>を経由でバックエンドに接続できるように<productname>Pgpool-II</productname>側でもクライアント認証の設定を行う必要があります。<productname>Pgpool-II</productname>のクライアント認証の設定ファイルは<filename>pool_hba.conf</filename>と呼ばれ、RPMパッケージからインストールする場合、デフォルトでは<filename>/etc/pgpool-II</filename>配下にインストールされます。デフォルトでは<filename>pool_hba.conf</filename>による認証は無効にになっているので、 <filename>pgpool.conf</filename>では以下の設定を on に変更します。
+<link linkend="EXAMPLE-CLUSTER-PRE-SETUP">事前設定</link>の章で、<productname>PostgreSQL</productname>のクライアント認証方式を<acronym>md5</acronym>に設定しましたので、クライアントが<productname>Pgpool-II</productname>を経由でバックエンドに接続できるように<productname>Pgpool-II</productname>側でもクライアント認証の設定を行う必要があります。<productname>Pgpool-II</productname>のクライアント認証の設定ファイルは<filename>pool_hba.conf</filename>と呼ばれ、RPMパッケージからインストールする場合、デフォルトでは<filename>/etc/pgpool-II</filename>配下にインストールされます。デフォルトでは<filename>pool_hba.conf</filename>による認証は無効になっているので、 <filename>pgpool.conf</filename>では以下の設定を on に変更します。
         </para>
         <programlisting>
 enable_pool_hba = on
@@ -1793,7 +1792,7 @@ osspc17:9999 Linux osspc17 osspc17 9999 9000 7 STANDBY #スタンバイとして
 osspc18:9999 Linux osspc18 osspc18 9999 9000 7 STANDBY #スタンバイとして稼働
         </programlisting>
         <para>
-アクティブである<literal>osspc16</literal>を停止し、<literal>osspc17</literal>または<literal>osspc1</literal>がスタンバイからアクティブに昇格することを確認します。<literal>osspc16</literal>を停止する方法は<productname>Pgpool-II</productname>を停止する、またはマシンをシャットダウンします。ここでは、<productname>Pgpool-II</productname>を停止します。
+アクティブである<literal>osspc16</literal>を停止し、<literal>osspc17</literal>または<literal>osspc18</literal>がスタンバイからアクティブに昇格することを確認します。<literal>osspc16</literal>を停止する方法は<productname>Pgpool-II</productname>を停止する、またはマシンをシャットダウンします。ここでは、<productname>Pgpool-II</productname>を停止します。
         </para>
         <programlisting>
 [root@osspc16 ~]# systemctl stop pgpool.service

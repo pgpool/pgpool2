@@ -493,7 +493,7 @@ rm -fr $DEST_CLUSTER/pg_xlog
 mkdir $DEST_CLUSTER/pg_xlog
 chmod 700 $DEST_CLUSTER/pg_xlog
 rm $DEST_CLUSTER/recovery.done
-cat > $DEST_CLUSTER/recovery.conf $lt;$lt;REOF
+cat > $DEST_CLUSTER/recovery.conf &lt;&lt;REOF
 standby_mode          = 'on'
 primary_conninfo      = 'port=$PORT user=$PGSUPERUSER'
 recovery_target_timeline='latest'

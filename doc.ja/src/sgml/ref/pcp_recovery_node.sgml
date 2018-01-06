@@ -37,7 +37,7 @@ Pgpool-II documentation
   -->
   <title>説明</title>
   <para>
-  <command>pcp_node_info</command>
+  <command>pcp_recovery_node</command>
   <!--
   attaches the given backend node with recovery.
   -->

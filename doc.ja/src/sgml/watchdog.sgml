@@ -1122,7 +1122,7 @@ watchdogプロセスがネットワークリンクの状態を監視するネッ
 	  the number at the end of the parameter name is
       referred as the "destination number", that starts from 0.
 -->
-<productname>Pgpool-II</productname>を送る先の<acronym>IP</acronym>アドレスまたは <acronym>ホスト名</acronym>を指定します。
+ハートビート信号の送る先の<acronym>IP</acronym>アドレスまたは <acronym>ホスト名</acronym>を指定します。
 複数のハートビート信号の送り先が指定可能です。
 0から始まるパラメータの最後の部分は送り先の番号です。
    </para>
@@ -1160,7 +1160,7 @@ watchdogプロセスがネットワークリンクの状態を監視するネッ
 	  the number at the end of the parameter name is
       referred as the "destination number", that starts from 0.
 -->
-<productname>Pgpool-II</productname>を送る先のheartbeat_destinationXのポート番号を指定します。
+ハートビート信号の送る先のポート番号を指定します。
 複数のハートビート信号の送り先が指定可能です。
 0から始まるパラメータの最後の部分は送り先の番号です。
    </para>

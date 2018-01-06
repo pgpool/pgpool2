@@ -48,7 +48,7 @@ Pgpool-II documentation
 -->
     <productname>Pgpool-II</productname> の <filename>pgpool.conf</filename>
     の watchdog セクションで定義された <productname>Pgpool-II</productname> の watchdog ステータスを表示します。
-    watchdog_id は情報を取得する watchdog ノードのインデックです。
+    watchdog_id は情報を取得する watchdog ノードのインデックスです。
     省略された場合には、クラスタ中の全ての Pgpool-II の watchdog ノードのステータスが表示されます。
     </para>
     <para>
@@ -76,8 +76,8 @@ Pgpool-II documentation
     <variablelist>
 
      <varlistentry>
-      <term><option>-n <replaceable class="parameter">watcgdog_id</replaceable></option></term>
-      <term><option>--node-id=<replaceable class="parameter">watcgdog_id</replaceable></option></term>
+      <term><option>-n <replaceable class="parameter">watchdog_id</replaceable></option></term>
+      <term><option>--node-id=<replaceable class="parameter">watchdog_id</replaceable></option></term>
       <listitem>
        <para>
        <!--
@@ -89,7 +89,7 @@ Pgpool-II documentation
        <!--
 	 Index 0 gets one's self watchdog information.
      -->
-     0 の場合ははローカルの watchdog の情報を取得します。
+     0 の場合はローカルの watchdog の情報を取得します。
        </para>
 	   <para>
        <!--

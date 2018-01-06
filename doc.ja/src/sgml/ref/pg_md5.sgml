@@ -90,7 +90,7 @@ Pgpool-II documentation
        <!--
 	 When producing a md5 authentication password, create the pool_passwd entry for <literal>your_username</literal>.
      -->
-     md5 認証パスワードを生成し、<filename>pool_hba.conf</filename> に <literal>your_username</literal> の md5 認証のエントリを作成します。
+     md5 認証パスワードを生成する際、<filename>pool_passwd</filename> に <literal>your_username</literal> の md5 認証のエントリが登録されます。
        </para>
       </listitem>
      </varlistentry>

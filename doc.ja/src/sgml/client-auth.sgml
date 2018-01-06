@@ -57,8 +57,8 @@
   By default, pool_hba authentication is disabled, and setting <varname>enable_pool_hba</varname>
   to <literal>on</literal> enables it. see the <xref linkend="guc-enable-pool-hba"> configuration parameter.
 -->
-<productname>PostgreSQL</>の<filename>pg_hba.conf</filename>と同じよう<productname>Pgpool-II</productname>でも<filename>pool_hba.conf</filename>とよばれる設定ファイルを使った同様のクライアント認証機能をサポートしています。
-<productname>Pgpool-II</productname>インストールするとデフォルトインストール先の設定ファイルディレクトリ（<literal>"/usr/local/etc"</literal>）にサンプルの<filename>pool_hba.conf.sample</filename>が含まれています。
+<productname>PostgreSQL</>の<filename>pg_hba.conf</filename>と同じように<productname>Pgpool-II</productname>でも<filename>pool_hba.conf</filename>とよばれる設定ファイルを使った同様のクライアント認証機能をサポートしています。
+<productname>Pgpool-II</productname>をインストールするとデフォルトインストール先の設定ファイルディレクトリ（<literal>"/usr/local/etc"</literal>）にサンプルの<filename>pool_hba.conf.sample</filename>が含まれています。
 デフォルトではpool_hbaによる認証は無効になっており、<varname>enable_pool_hba</varname>を<literal>on</literal>に設定することで有効になります。
 <xref linkend="guc-enable-pool-hba">設定パラメータをご覧ください。
   </para>
@@ -605,8 +605,10 @@ pool_hbaは<filename>pool_hba.conf</filename>の値とマッチするかどう�
   </tip>
 
   <para>
+<!--
    Some examples of <filename>pool_hba.conf</filename> entries are below.
    See the next section for details on the different authentication methods.
+-->
 <filename>pool_hba.conf</filename>ファイルの例をいくつか以下に示します。
 各種認証方式の詳細については次の節をご覧ください。
   </para>

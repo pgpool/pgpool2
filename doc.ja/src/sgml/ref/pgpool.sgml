@@ -116,7 +116,7 @@ Pgpool-II documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-F <replaceable class="parameter">pc_config_file</replaceable></option></term>
+      <term><option>-F <replaceable class="parameter">pcp_config_file</replaceable></option></term>
       <term><option>--pcp-file=<replaceable class="parameter">pcp_config_file</replaceable></option></term>
       <listitem>
        <para>
@@ -138,7 +138,7 @@ Pgpool-II documentation
 <!--
 	 Print help.
 -->
-使用法を印字します。
+ヘルプを表示します。
        </para>
       </listitem>
      </varlistentry>
