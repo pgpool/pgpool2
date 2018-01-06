@@ -9,7 +9,7 @@
   </indexterm>
 
   <refmeta>
-    <refentrytitle>SHOW POOL NODES</refentrytitle>
+    <refentrytitle>SHOW POOL_NODES</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo>SQL - Language Statements</refmiscinfo>
   </refmeta>

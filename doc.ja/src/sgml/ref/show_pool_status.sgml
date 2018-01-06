@@ -9,13 +9,13 @@
   </indexterm>
 
   <refmeta>
-    <refentrytitle>SHOW POOL STATUS</refentrytitle>
+    <refentrytitle>SHOW POOL_STATUS</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo>SQL - Language Statements</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>SHOW POOL STATUS</refname>
+    <refname>SHOW POOL_STATUS</refname>
     <refpurpose>
     <!--
       sends back the list of configuration parameters with their name,
@@ -52,7 +52,7 @@ SHOW POOL_STATUS
 	version of it.  It is recommended to
 	use <xref linkend="SQL-PGPOOL-SHOW"> instead.
     -->
-    このコマンドは<xref linkend="SQL-PGPOOL-SHOW"> と似っていますが、
+    このコマンドは<xref linkend="SQL-PGPOOL-SHOW"> と似ていますが、
     古いバージョンのコマンドです。<command>SHOW POOL_STATUS</command> の代わりに、
     <xref linkend="SQL-PGPOOL-SHOW"> を使うことを推奨します。
     </para>

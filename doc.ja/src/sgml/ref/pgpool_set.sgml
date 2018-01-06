@@ -51,7 +51,7 @@ PGPOOL SET  <replaceable class="PARAMETER">configuration_parameter</replaceable>
    session.
    -->
 
-<command>PGPOOL SET</command> は現行セッションで <productname>Pgpool-II</productname> の設定パラメータを変更します。このコマンドは <productname>PostgreSQL</productname> の<ulink url="http://www.postgresql.jp/document/9.5/html/sql-set.html"><command>SET</command></ulink> コマンドと似っていますが、<productname>PostgreSQL</productname> の <command>SET</command> コマンドと区別するために、<acronym>PGPOOL</acronym> というキーワードが追加されました。<xref linkend="runtime-config"> に列挙されているパラメータの多くは <command>PGPOOL SET</command> で変更できますが、現行セッションで使用される値にのみ影響することにご注意ください。
+<command>PGPOOL SET</command> は現行セッションで <productname>Pgpool-II</productname> の設定パラメータを変更します。このコマンドは <productname>PostgreSQL</productname> の<ulink url="http://www.postgresql.jp/document/9.5/html/sql-set.html"><command>SET</command></ulink> コマンドと似ていますが、<productname>PostgreSQL</productname> の <command>SET</command> コマンドと区別するために、<acronym>PGPOOL</acronym> というキーワードが追加されました。<xref linkend="runtime-config"> に列挙されているパラメータの多くは <command>PGPOOL SET</command> で変更できますが、現行セッションで使用される値にのみ影響することにご注意ください。
   </para>
 
  </refsect1>

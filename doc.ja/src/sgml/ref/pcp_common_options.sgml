@@ -202,7 +202,7 @@ Pgpool-II documentation
      <!--
       Specifies the path to pcp password file.
       -->
-      pcp パスワードファイルをパスを指定します。
+      pcp パスワードファイルのパスを指定します。
      </para>
     </listitem>
    </varlistentry>

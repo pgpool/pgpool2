@@ -299,7 +299,7 @@ autocommit を無効にすると、ドライバが内部でBEGINおよびCOMMIT�
 <!--
              SELECT in transaction isolation level SERIALIZABLE
 -->
-トランザクションの分離レベルがシリアライザブルの場合のSELECT
+トランザクションの分離レベルがSERIALIZABLEの場合のSELECT
              </para>
            </listitem>
            <listitem>
@@ -307,7 +307,7 @@ autocommit を無効にすると、ドライバが内部でBEGINおよびCOMMIT�
 <!--
              LOCK command more strict than ROW EXCLUSIVE MODE
 -->
-OW EXCLUSIVE MODEよりも強いLOCK
+ROW EXCLUSIVE MODEよりも強いLOCK
              </para>
            </listitem>
            <listitem>
@@ -397,7 +397,7 @@ OW EXCLUSIVE MODEよりも強いLOCK
          <itemizedlist>
            <listitem>
              <para>
-             SELECT not listed above
+             SELECT (上記以外)
              </para>
            </listitem>
            <listitem>

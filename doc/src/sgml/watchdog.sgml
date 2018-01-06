@@ -740,7 +740,7 @@
   </term>
   <listitem>
    <para>
-      Specifies the destination port number for the heartbeat_destinationX of the remote
+      Specifies the destination port number of the remote
       <productname>Pgpool-II</productname> for sending the heartbeat signals.
       Multiple destinations can be configured for the heartbeat singnals,
 	  the number at the end of the parameter name is
