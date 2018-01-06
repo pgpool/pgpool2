@@ -59,7 +59,7 @@ firewall-cmd --reload
        If <productname>PostgreSQL</productname> is listening on 11002
        port, rather than the standard 5432 port, you can do:
 -->
-<productname>PostgreSQL</productname>が標準の5432ポートではなく、11002をリッスン指定場合は以下のように設定できます。
+<productname>PostgreSQL</productname>が標準の5432ポートではなく、11002をリッスンしている場合は以下のように設定できます。
        <programlisting>
  firewall-cmd --zone=public --remove-service=popstgresql --permanent
  firewall-cmd --zone=public --add-port=11002/tcp --permanent

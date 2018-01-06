@@ -20,7 +20,7 @@ Pgpool-II documentation
   <!--
 	attaches the given node to Pgpool-II.</refpurpose>
     -->
-    <productname>Pgpool-II</productname> のノードを復帰させる</refpurpose>
+    <productname>Pgpool-II</productname> にノードを復帰させる</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -41,7 +41,7 @@ Pgpool-II documentation
   <!--
   attaches the given node to Pgpool-II.
   -->
-  は <productname>Pgpool-II</productname> のノードを復帰させます。
+  は <productname>Pgpool-II</productname> にノードを復帰させます。
   </para>
  </refsect1>
 

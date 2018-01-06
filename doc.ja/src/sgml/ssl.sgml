@@ -42,11 +42,13 @@ onに設定すると，<productname>Pgpool-II</productname>はフロントエン
       </note>
       <note>
         <para>
+<!--
           For SSL to work <productname>Pgpool-II</productname> must be build with OpenSSL support.
           See <xref linkend="install-pgpool"> for details on building the
           <productname>Pgpool-II</productname>.
+-->
 SSLサポートを有効にするためには、<productname>Pgpool-II</productname>をOpenSSLサポート付きでビルドする必要があります。
-<productname>Pgpool-II</productname>のビルドついて詳細は<xref linkend="install-pgpool">をご覧ください。
+<productname>Pgpool-II</productname>のビルドについて詳細は<xref linkend="install-pgpool">をご覧ください。
         </para>
       </note>
       <para>
@@ -76,7 +78,7 @@ SSLサポートを有効にするためには、<productname>Pgpool-II</productn
         <acronym>SSL</acronym> will be disabled for incoming frontend connections.
 -->
 フロントエンドとの接続に使用するプライベートキーファイルのパスを指定します。
-このオプションののデフォルト値はありません。
+このオプションのデフォルト値はありません。
 設定がない場合は、フロントエンドとの接続で<acronym>SSL</acronym>が使用されなくなります。 
       </para>
       <para>
@@ -106,7 +108,7 @@ SSLサポートを有効にするためには、<productname>Pgpool-II</productn
         <acronym>SSL</acronym> will be disabled for incoming frontend connections.
 -->
 フロントエンドとの接続に使用する公開x509証明書のフルパスを指定します。 
-このオプションののデフォルト値はありません。
+このオプションのデフォルト値はありません。
 設定がない場合は、フロントエンドとの接続で<acronym>SSL</acronym>が使用されなくなります。 
       </para>
 

@@ -69,7 +69,7 @@
           Specifies the number of relcache entries.
           Default is 256.
 -->
-リレーションキャッシュのサイズを指定します。
+リレーションキャッシュのエントリ数を指定します。
 デフォルトは256です。
         </para>
         <note>
@@ -223,7 +223,7 @@ unloggedテーブルをチェックするため<productname>Pgpool-II</productna
           Specifies the full path to a directory to store the <literal>pool_status</literal>.
           Default is <literal>"/tmp"</literal>.
 -->
-<literal>pool_status</literal>ファイルが書かれます。を格納するディレクトリのフルパスを指定します。
+<literal>pool_status</literal>ファイルを格納するディレクトリのフルパスを指定します。
 デフォルトは<literal>"/tmp"</literal>です。
         </para>
 

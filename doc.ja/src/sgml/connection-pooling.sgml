@@ -130,7 +130,7 @@ onに設定されるとバックエンドへの接続をキャッシュします
 						<literal>listen()</literal> system call.
 						See <xref linkend="guc-num-init-children"> for more details.
 -->
-システムのよっては<literal>listen()</literal>システムコールの<literal>backlog</literal>パラメータに上限が設定されています。
+システムによっては<literal>listen()</literal>システムコールの<literal>backlog</literal>パラメータに上限が設定されています。
 詳細は<xref linkend="guc-num-init-children">の項を参照してください。
 					</para>
 				</note>
@@ -307,8 +307,11 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
 				</note>
 				<note>
 					<para>
+<!--
 						<xref linkend="guc-serialize-accept"> becomes ineffective when
 						<varname>child_life_time</varname> is enabled.
+-->
+<varname>child_life_time</varname>が有効な場合、<xref linkend="guc-serialize-accept">は無効になります。
 					</para>
 				</note>
         <para>
@@ -548,7 +551,7 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
 <!--
 					Default is <literal>'ABORT; DISCARD ALL'</literal>.
 -->
-デフォルト<literal>'ABORT; DISCARD SLL'</literal>です。
+デフォルトは<literal>'ABORT; DISCARD ALL'</literal>です。
 				</para>
         <para>
 <!--

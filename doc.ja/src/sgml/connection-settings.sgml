@@ -128,7 +128,7 @@ UNIXドメインソケット経由の接続は常に受け付けます。
 			socket are always accepted.
 -->
 PCPプロセスがTCP/IP接続を受け付けるホスト名またはIPアドレスを指定します。
-<literal>*</literal>を指定すると入ってくる全てのの接続を受け付けます。
+<literal>*</literal>を指定すると入ってくる全ての接続を受け付けます。
 <literal>''</literal>を指定するとTCP/IP接続を受け付けません。
 デフォルト値は<literal>*</literal>です。
 UNIXドメインソケット経由のコネクションは常に受け付けます。
@@ -264,7 +264,7 @@ listenキューの長さは「バックログ」と呼ばれます。
 			You should increase the backlog in this case (you will be required a super user privilege).
 -->
 listenキューが溢れています。
-この場合にはバックログを増やす必要があります（スーパユーザ権限が権限が必要になります)。
+この場合にはバックログを増やす必要があります（スーパユーザ権限が必要になります)。
 
 			<programlisting>
 # sysctl net.core.somaxconn
@@ -310,7 +310,7 @@ net.core.somaxconn = 256
 			In summary, max_pool, num_init_children, max_connections,
 			superuser_reserved_connections must satisfy the following formula:
 -->
-まとめると、max_pool、num_init_children、max_connections、superuser_reserved_connectionsは、以下の式を満たいていなければなりません。
+まとめると、max_pool、num_init_children、max_connections、superuser_reserved_connectionsは、以下の式を満たしていなければなりません。
 			<programlisting>
 <!--
 max_pool*num_init_children &lt;= (max_connections - superuser_reserved_connections) (no query canceling needed)
@@ -1248,7 +1248,6 @@ GRANT ALL ON public.my_lock_table TO PUBLIC;
 -->
 TCP/IP通信では、このパラメータはホスト名またはIPアドレスをとることができます。
 スラッシュ（<literal>/</literal>）で始まる場合、TCP/IPではなくUNIXドメインでの通信が使用され、値はソケットファイルが作成されるディレクトリ名となります。
-となしてそこにソケットファイルが作成されることになります。
 <varname>backend_hostname</varname>に空文字(<literal>''</literal>)が指定された場合のデフォルトの動作は、<filename>/tmp</filename>に作成したUNIXドメインソケットで接続します。
 		</para>
 

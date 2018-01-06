@@ -20,7 +20,7 @@ Pgpool-II documentation
   <!--
 	detaches the given node from Pgpool-II. Exisiting connections to Pgpool-II are forced to be disconnected.</refpurpose>
     -->
-	<productname>Pgpool-II</productname> のノードを切り離す</refpurpose>
+	<productname>Pgpool-II</productname> からノードを切り離す</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -75,7 +75,7 @@ Pgpool-II documentation
        <!--
 	 wait until all clients are disconnected (unless client_idle_limit_in_recovery is -1 or recovery_timeout is expired).
      -->
-     すべてのクライアントが接続を終了するまでノードを復帰しません。
+     すべてのクライアントが接続を終了するまで待機します。
      （ただし、<xref linkend="guc-client-idle-limit-in-recovery"> が -1 あるいは、<xref linkend="guc-recovery-timeout"> が設定されている場合を除く）
        </para>
       </listitem>

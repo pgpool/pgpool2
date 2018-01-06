@@ -67,7 +67,7 @@ SHOW POOL_PROCESSES
 	    <literal>start_time</literal> is the timestamp of when
 	    this process was launched.
         -->
-        <literal>start_time</literal> はこのプロセスが起動された時刻です (1970年1月1日からの経過秒で表示されます)。
+        <literal>start_time</literal> はこのプロセスが起動された時刻です。
 	  </para>
 	</listitem>
 	<listitem>

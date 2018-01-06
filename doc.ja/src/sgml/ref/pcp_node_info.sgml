@@ -67,7 +67,10 @@ Pgpool-II documentation
      </varlistentry>
 
      <varlistentry>
+ <!--
       <term><option>Other options </option></term>
+ -->
+      <term><option>その他 </option></term>
       <listitem>
        <para>
        <!--
@@ -93,7 +96,7 @@ Pgpool-II documentation
     ここでは例を示します。
     <programlisting>
 $ pcp_node_info -h localhost -U postgres 0
-host1 5432 1 1073741823.500000 waiting
+host1 5432 1 0.500000 waiting
     </programlisting>
   </para>
   <para>
@@ -150,7 +153,7 @@ $ pcp_node_info --verbose -h localhost -U postgres 0
 Hostname   : host1
 Port       : 5432
 Status     : 1
-Weight     : 0.5
+Weight     : 0.500000
 Status Name: waiting
     </programlisting>
  </refsect1>

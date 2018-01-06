@@ -55,7 +55,7 @@ PGPOOL RESET ALL
     コマンドが発行されなかった場合に変数が保持していた値として定義されます。
     このコマンドは <productname>PostgreSQL</productname> の
     <ulink url="http://www.postgresql.jp/document/9.5/html/sql-reset.html">
-    <command>RESET</command></ulink> コマンドと似っていますが、
+    <command>RESET</command></ulink> コマンドと似ていますが、
     <productname>PostgreSQL</productname> の <command>RESET</command> コマンドと区別するために、
     <acronym>PGPOOL</acronym> というキーワードが追加されました。
 

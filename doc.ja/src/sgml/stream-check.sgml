@@ -23,7 +23,7 @@
     is configured with Hot Standby on PostgreSQL, which means that the
     standby database can handle read-only queries.
 -->
-<productname>Pgpool-II</productname>ではストリーミングレプリケーションととHot Standbyを併用することを前提にしています。
+<productname>Pgpool-II</productname>ではストリーミングレプリケーションとHot Standbyを併用することを前提にしています。
 すなわちスタンバイデータベースでは参照クエリのみを扱うことができます。
   </para>
 
@@ -117,7 +117,7 @@
           to perform the streaming replication checks.
           Use <literal>''</literal> (empty string) if the user does not requires a password.
 -->
-ストリーミングレプリケーションのチェックを行う<xref linkend="guc-sr-check-user"> <productname>PostgreSQL</>ユーザのパスワードをを指定します。
+ストリーミングレプリケーションのチェックを行う<xref linkend="guc-sr-check-user"> <productname>PostgreSQL</>ユーザのパスワードを指定します。
 ユーザがパスワードが必要としなければ空文字('')を使用します。
         </para>
 
@@ -184,7 +184,7 @@
           This delay threshold check is performed every <xref linkend="guc-sr-check-period">.
           Default is 0.
 -->
-プラマリサーバに対するスタンバイサーバのレプリケーション遅延の許容度を<acronym>WAL</acronym>バイト単位で指定します。
+プライマリサーバに対するスタンバイサーバのレプリケーション遅延の許容度を<acronym>WAL</acronym>バイト単位で指定します。
 <productname>Pgpool-II</productname>は、スタンバイサーバの遅延がこの設定レベルを超えた場合には、 <xref linkend="guc-load-balance-mode">が有効であっても、プライマリに追いつくまでそのスタンバイノードには<acronym>SELECT</acronym>クエリを送信せず、全てプライマリサーバに送るようにします。
 このパラメータが0の場合は、遅延のチェックを行ないません。
 この遅延閾値のチェックは<xref linkend="guc-sr-check-period">毎に行われます。
