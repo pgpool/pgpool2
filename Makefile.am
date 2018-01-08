@@ -5,7 +5,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 
 docs:
-	$(MAKE) -C doc doc.ja all
+	$(MAKE) -C doc all && $(MAKE) -C doc.ja all
 .PHONY: docs
 
 SUBDIRS = src

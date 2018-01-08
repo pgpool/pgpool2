@@ -187,4 +187,4 @@ version.sgml: $(top_srcdir)/configure
 check-tabs:
 	@( ! grep ' ' $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml $(srcdir)/*.dsl $(srcdir)/*.xsl) ) || (echo "Tabs appear in SGML/XML files" 1>&2;  exit 1)
 
-CLEANFILES = *.html *.tex-pdf pgpool-en.rtf pgpool-en.txt html/*
+CLEANFILES = *.html *.tex-pdf pgpool-en.rtf pgpool-en.txt html/* HTML.index bookindex.sgml man-stamp man1/* man3/* pgpool.xml
