@@ -1,6 +1,94 @@
 <!-- doc/src/sgml/release-3.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-3-19">
+<!--
+  <title>Release 3.3.19</title>
+	-->
+  <title>リリース 3.3.19</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-01-09</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+    <itemizedlist>
+
+      <listitem>
+      <!--
+      2017-12-21 [b5f7c63]
+      -->
+      <para>
+      <!--
+      Change the pgpool.service and sysconfig files to output Pgpool-II log. (Bo Peng)
+      -->
+ログを取得するために <filename>pgpool.service</filename> とsysconfig ファイルを変更しました。(Bo Peng)
+      </para>
+      <para>
+      <!--
+      Removeing "Type=forking" and add OPTS=" -n" to
+      run Pgpool-II with non-daemon mode, because we need to redirect logs.
+      Using "journalctl" command to see Pgpool-II systemd log.
+      -->
+ログを取得するために、非デーモンモードで <productname>Pgpool-II</productname> を起動するように Type=forking を削除し、OPTS=" -n" を追加しました。<command>journalctl</command> コマンドで <productname>Pgpool-II</productname> の systemd のログを確認することができます。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-18 [63fdde2]
+      2017-12-17 [91723e7]
+      -->
+      <para>
+      <!--
+      Fix timestamp data inconsistency by replication mode. (Bo Peng)
+      -->
+ネイティブレプリケーションモードで発生するタイムスタンプデータの不整合を修正しました。 (Bo Peng)
+      </para>
+      <para>
+      <!--
+      From PostgreSQL10 the column default value such as 'CURRENT_DATE' changes,
+	    Pgpool-II didn't rewrite timestamp by the added default
+      values. This caused data inconsistency.
+      -->
+<productname>PostgreSQL</productname> 10から「CURRENT_DATE」のようなカラムのデフォルト値が変わったので、<productname>Pgpool-II</productname> はこれらのタイムスタンプをリライトしませんでした。これによって、データの不整合が発生していました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-10 [3f1d420]
+      -->
+      <para>
+      <!--
+      Fix returning transaction state when "ready for query" message received. (Tatsuo Ishii)
+      -->
+"ready for query" メッセージを受信したときにトランザクション状態を返すように修正しました。(Tatsuo Ishii)
+      </para>
+      <para>
+      <!--
+      We return primary or master node state of ready for query message to
+      frontend. In most cases this is good. However if other than primary
+      node or master node returns an error state (this could happen if load
+      balance node is other than primary or master node and the query is an
+      errornous SELECT), this should be returned to frontend, because the
+      frontend already received an error.
+      -->
+今まではプライマリノードまたはマスターノードの状態をフロントエンドに返していました。
+ほとんどの場合、問題がありませんでした。
+ただし、プライマリノードまたはマスターノード以外のノードがエラー状態を返した場合(ロードバランスノードがプライマリまたはマスターノード以外で、誤った SELECT クエリの場合に発生する可能性がある)、このエラー状態をフロントエンドに返す必要がありました。
+      </para>
+    </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-3-18">
   <title>リリース 3.3.18</title>
 
@@ -39,7 +127,7 @@
     <!--
     Fix bug mistakenly overriding global backend status right after failover. (Tatsuo Ishii)
     -->
-フェイルオーバの直後にグローバルバックエンドの状態が誤って上書きされる不具合を修正しました。(Tatsuo Ishii) 
+フェイルオーバの直後にグローバルバックエンドの状態が誤って上書きされる不具合を修正しました。(Tatsuo Ishii)
     </para>
     <para>
 詳細は <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink>を参照してください。
@@ -54,7 +142,7 @@
     <!--
     Deal with OpenSSL 1.1. (Tatsuo Ishii)
     -->
-OpenSSL 1.1に対応しました。(Tatsuo Ishii, Muhammad Usama) 
+OpenSSL 1.1に対応しました。(Tatsuo Ishii, Muhammad Usama)
     </para>
     </listitem>
 
