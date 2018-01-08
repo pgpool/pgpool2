@@ -1,6 +1,87 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-4-15">
+  <title>Release 3.4.15</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2018-01-09</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2017-12-22 [ae98493]
+    -->
+    <para>
+    Replace <command>/bin/ed</command> with <command>/bin/sed</command> in <xref linkend="pgpool-setup">, because <command>/bin/sed</command> is included in most distribution's base packages. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-21 [2168564]
+    -->
+    <para>
+    Change the <filename>pgpool.service</filename> and sysconfig files to output <productname>Pgpool-II</productname> log. (Bo Peng)
+    </para>
+    <para>
+    Removeing "Type=forking" and add OPTS=" -n" to
+    run <productname>Pgpool-II</productname> with non-daemon mode, because we need to redirect logs.
+    Using <command>"journalctl"</command> command to see <productname>Pgpool-II</productname> systemd log.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-18 [f908e30]
+    2017-12-17 [e799639]
+    -->
+    <para>
+    Fix timestamp data inconsistency by replication mode. (Bo Peng)
+    </para>
+    <para>
+    From <productname>PostgreSQL</productname>10 the column
+    default value such as 'CURRENT_DATE' changes,
+    <productname>Pgpool-II</productname> didn't rewrite
+    timestamp by the added default values. This caused data inconsistency.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-10 [c34517f]
+    -->
+    <para>
+    Fix returning transaction state when "ready for query" message received. (Tatsuo Ishii)
+    </para>
+    <para>
+    We return primary or master node state of ready for query message to
+    frontend. In most cases this is good. However if other than primary
+    node or master node returns an error state (this could happen if load
+    balance node is other than primary or master node and the query is an
+    errornous SELECT), this should be returned to frontend, because the
+    frontend already received an error.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-11-16 [9e21ef9]
+    -->
+    <para>
+    Fix pgpool start message printed multiple times. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-4-14">
   <title>Release 3.4.14</title>
 
