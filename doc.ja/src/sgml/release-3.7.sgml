@@ -1,3 +1,307 @@
+<sect1 id="release-3-7-1">
+<!--
+  <title>Release 3.7.1</title>
+	-->
+  <title>リリース 3.7.1</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-01-09</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title>
+    <itemizedlist>
+
+      <listitem>
+      <!--
+      2018-01-08 [4427782]
+      -->
+      <para>
+      <!--
+      Improve Makefiles. (Bo Peng)
+      -->
+Makefile を改善しました。(Bo Peng)
+      </para>
+      <para>
+      <!--
+      Patch provided by Tomoaki Sato.
+      -->
+Tomoaki Sato がパッチを提供しました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2018-01-06 [915c6df]
+      2017-12-21 [b515794]
+      -->
+      <para>
+      <!--
+      Fix document typo. (Bo Peng)
+      -->
+Doc: ドキュメントのミスとタイポを修正しました。(Bo Peng)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-22 [e67b610]
+      -->
+      <para>
+      <!--
+      Replace /bin/ed with /bin/sed, because /bin/sed is included in most distribution's base packages. (Tatsuo Ishii)
+      -->
+<xref linkend="pgpool-setup"> スクリプト内の <command>/bin/ed</command> を <command>/bin/sed</command> に置き換えました。(Tatsuo Ishii)
+      </para>
+      <para>
+<command>/bin/sed</command> は <command>/bin/ed</command>に比べてほとんどのディストリビューションの基本パッケージに含まれているためです。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-21 [6388631]
+      -->
+      <para>
+      <!--
+      Change the pgpool.service and sysconfig files to output Pgpool-II log. (Bo Peng)
+      -->
+ログを取得するために <filename>pgpool.service</filename> とsysconfig ファイルを変更しました。(Bo Peng)
+      </para>
+      <para>
+      <!--
+      Removeing "Type=forking" and add OPTS=" -n" to
+      run Pgpool-II with non-daemon mode, because we need to redirect logs.
+      Using "journalctl" command to see Pgpool-II systemd log.
+      -->
+ログを取得するために、非デーモンモードで <productname>Pgpool-II</productname> を起動するように Type=forking を削除し、OPTS=" -n" を追加しました。<command>journalctl</command> コマンドで <productname>Pgpool-II</productname> の systemd のログを確認することができます。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-19 [d712067]
+      -->
+      <para>
+      <!--
+      Add documentation for SGML document build. (Tatsuo Ishii)
+      -->
+Doc: 新しいドキュメント<link linkend="install-docs">「ドキュメントのコンパイルとインストール」</link>を追加しました。(Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-19 [88108ba]
+      -->
+      <para>
+      <!--
+      Fix per node health check parameters ignored. (Tatsuo Ishii)
+      -->
+ノードごとのヘルスチェックパラメータが無視される不具合を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=371">bug 371</ulink>) (Tatsuo Ishii)
+      </para>
+      <para>
+      <!--
+      Also pgpool_setup is modified to add appropriate per node health check
+      parameters to pgpool.conf.
+      -->
+また、<xref linkend="pgpool-setup"> がノードごとのヘルスチェックパラメータを <filename>pgpool.conf</filename> に追加するように変更しました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-19 [7898d48]
+      -->
+      <para>
+      <!--
+      Fix health checking process death and forking forever. (Tatsuo Ishii)
+      -->
+ヘルスチェックプロセスがエラーで終了したときに、<productname>Pgpool-II</productname> が新しいヘルスチェックプロセスをフォークするように修正しました。(Tatsuo Ishii)
+      </para>
+      <para>
+      <!--
+      When failed to read from backend socket (this could happen when wrong
+      health_check_user is specified), the health check process raises a
+      FATAL error in pool_read(), which causes death of health check
+      process. And Pgpool-II main forks off a new health check process. This
+      repeats forever.
+      -->
+バックエンドソケットの読み込みに失敗した場合 (これはhealth_check_userが間違っていると発生する可能性がある）、ヘルスチェックプロセスは <function>pool_read()</function> でFATALエラーを発生させ、ヘルスチェックプロセスを終了させます。
+そして、<productname>Pgpool-II</productname> は、新しいヘルスチェックプロセスをフォークします。
+これは永遠に繰り返されます。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-17 [b974f5f]
+      2017-12-18 [646477a]
+      -->
+      <para>
+      <!--
+      Fix timestamp data inconsistency by replication mode. (Bo Peng)
+      -->
+ネイティブレプリケーションモードで発生するタイムスタンプデータの不整合を修正しました。 (Bo Peng)
+      </para>
+      <para>
+      <!--
+      From PostgreSQL10 the column default value such as 'CURRENT_DATE' changes,
+	    Pgpool-II didn't rewrite timestamp by the added default
+      values. This caused data inconsistency.
+      -->
+<productname>PostgreSQL</productname> 10から「CURRENT_DATE」のようなカラムのデフォルト値が変わったので、<productname>Pgpool-II</productname> はこれらのタイムスタンプをリライトしませんでした。これによって、データの不整合が発生していました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-14 [5281126]
+      -->
+      <para>
+      <!--
+      Fix watchdog_setup up doc. (Tatsuo Ishii)
+      -->
+      Doc: <xref linkend="watchdog-setup"> のドキュメントを修正しました。 (Tatsuo Ishii)
+      </para>
+      <para>
+      <!--
+      It lacked to mention that it supports logical replication mode.
+      -->
+      ロジカルレプリケーションモードにも対応するとの説明を追加しました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-14 [4fa846b]
+      -->
+      <para>
+      <!--
+      Downgrade a log message to debug message. (Tatsuo Ishii)
+      -->
+一部のログメッセージをデバッグメッセージにダウングレードしました。(Tatsuo Ishii)
+      </para>
+      <para>
+      <!--
+      That was mistaken left while last development cycle.
+      -->
+前回の開発で誤って残していました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-13 [51a8687]
+      -->
+      <para>
+      <!--
+      Add test data for bug370. (Tatsuo Ishii)
+      -->
+Test: <ulink url="http://www.pgpool.net/mantisbt/view.php?id=370">bug370</ulink> のテスト用データを追加しました。(Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-12 [73269e2]
+      -->
+      <para>
+      <!--
+      Fix for re-sync logic in reading packet from backend. (Tatsuo Ishii)
+      -->
+バックエンドからのパケットを読み込む際の再同期のロジックを修正しました。(Tatsuo Ishii)
+      </para>
+      <para>
+      <!--
+      Fix for re-sync logic in reading packet from backend. (Tatsuo Ishii)
+      read_kind_from_backend(), which reads message kind from backend,
+      re-syncs backend nodes when a ready for query message is
+      received. Unfortunately it forgot to call
+      pool_pending_message_pull_out() to delete sync pending message. This
+      leads to random stuck while reading packets from backend. Fix this to
+      call pool_pending_message_pull_out().
+      -->
+<function>read_kind_from_backend()</function> は、バックエンドからメッセージを読み取り、"ready for query" メッセージが受信されたときにバックエンドノードを再同期します。
+しかし、<function>pool_pending_message_pull_out()</function> を呼び出して「sync メッセージを受信した」を削除することを忘れていました。
+これによって、バックエンドからのパケットの読み取り中に <productname>Popool-II</productname> がハングアップする可能性がありました。
+<function>pool_pending_message_pull_out()</function>を呼び出し、「sync メッセージを受信した」を削除するように修正しました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-12 [0e658bb]
+      -->
+      <para>
+      <!--
+      Fix Pgpool-II hangs.(Bug370) (Tatsuo Ishii)
+      -->
+問い合わせ中に <productname>Pgpool-II</productname> がハングアップする不具合を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=370">bug 370</ulink>) (Tatsuo Ishii)
+      </para>
+      <para>
+      <!--
+      If an erroneous query is sent to primary and without a sync message the next query that requires a catalog cache look up is send, Pgpool-II hangs in do_query().
+      -->
+エラークエリがプライマリに送信され、sync メッセージを送信せずに、次のクエリを実行するときに、
+<productname>PostgreSQL</productname> のシステムカタログへの問い合わせが必要な場合、<productname>Pgpool-II</productname> は <function>do_query()</function> 関数でハングアップしていました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-10 [ec3350c]
+      -->
+      <para>
+      <!--
+      Fix returning transaction state when "ready for query" message received. (Tatsuo Ishii)
+      -->
+"ready for query" メッセージを受信したときにトランザクション状態を返すように修正しました。(Tatsuo Ishii)
+      </para>
+      <para>
+      <!--
+      We return primary or master node state of ready for query message to
+      frontend. In most cases this is good. However if other than primary
+      node or master node returns an error state (this could happen if load
+      balance node is other than primary or master node and the query is an
+      errornous SELECT), this should be returned to frontend, because the
+      frontend already received an error.
+      -->
+今まではプライマリノードまたはマスターノードの状態をフロントエンドに返していました。
+ほとんどの場合、問題がありませんでした。
+ただし、プライマリノードまたはマスターノード以外のノードがエラー状態を返した場合(ロードバランスノードがプライマリまたはマスターノード以外で、誤った SELECT クエリの場合に発生する可能性がある)、このエラー状態をフロントエンドに返す必要がありました。
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-12-10 [3018f66]
+      -->
+      <para>
+      <!--
+      Fix but with extended-query-test test driver. (Tatsuo Ishii)
+      -->
+Test: extended-query-test テストスクリプトを修正しました。(Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2017-11-23 [6664ce2]
+      2017-11-23 [87ebfb7]
+      -->
+      <para>
+Doc: ドキュメント<link linkend="running-mode">「Pgpool-IIの動作モード」</link> を改善しました。 (Tatsuo Ishii)
+      </para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-7">
 <!--
   <title>Release 3.7</title>

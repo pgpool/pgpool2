@@ -1,3 +1,224 @@
+<!-- doc/src/sgml/release-3.6.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-3-7-1">
+  <title>Release 3.7.1</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2018-01-09</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2018-01-08 [4427782]
+    -->
+    <para>
+    Improve Makefiles. (Bo Peng)
+    </para>
+    <para>
+    Patch provided by Tomoaki Sato.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-06 [915c6df]
+    2017-12-21 [b515794]
+    -->
+    <para>
+    Doc: Fix document typo and mistakes. (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-22 [e67b610]
+    -->
+    <para>
+    Replace <command>/bin/ed</command> with <command>/bin/sed</command> in <xref linkend="pgpool-setup">, because <command>/bin/sed</command> is included in most distribution's base packages. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-21 [6388631]
+    -->
+    <para>
+    Change the <filename>pgpool.service</filename> and sysconfig files to output <productname>Pgpool-II</productname> log. (Bo Peng)
+    </para>
+    <para>
+    Removeing "Type=forking" and add OPTS=" -n" to
+    run <productname>Pgpool-II</productname> with non-daemon mode, because we need to redirect logs.
+    Using <command>"journalctl"</command> command to see <productname>Pgpool-II</productname> systemd log.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-19 [d712067]
+    -->
+    <para>
+    Add documentation <link linkend="install-docs">"Compiling and installing documents"</link> for SGML document build. (Tatsuo Ishii)
+    </para>
+    <para>
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-19 [88108ba]
+    -->
+    <para>
+    Fix per node health check parameters ignored. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=371">bug 371</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+    Also <xref linkend="pgpool-setup"> is modified to add appropriate
+    per node health check parameters to <filename>pgpool.conf</filename>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-19 [7898d48]
+    -->
+    <para>
+    Fix health checking process death and forking forever. (Tatsuo Ishii)
+    </para>
+    <para>
+    When failed to read from backend socket (this could happen when wrong
+    health_check_user is specified), the health check process raises a
+    FATAL error in pool_read(), which causes death of health check
+    process. And <productname>Pgpool-II</productname> main forks off
+    a new health check process. This repeats forever.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-17 [b974f5f]
+    2017-12-18 [646477a]
+    -->
+    <para>
+    Fix timestamp data inconsistency by replication mode. (Bo Peng)
+    </para>
+    <para>
+    From <productname>PostgreSQL</productname>10 the column
+    default value such as 'CURRENT_DATE' changes,
+    <productname>Pgpool-II</productname> didn't rewrite
+    timestamp by the added default values.
+    This caused data inconsistency.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-14 [5281126]
+    -->
+    <para>
+    Doc: Fix <xref linkend="watchdog-setup"> doc. (Tatsuo Ishii)
+    </para>
+    <para>
+    It lacked to mention that it supports logical replication mode.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-14 [4fa846b]
+    -->
+    <para>
+    Downgrade a log message to debug message. (Tatsuo Ishii)
+    </para>
+    <para>
+    That was mistaken left while last development cycle.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-13 [51a8687]
+    -->
+    <para>
+    Test: Add test data for <ulink url="http://www.pgpool.net/mantisbt/view.php?id=370">bug 370</ulink>. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-12 [73269e2]
+    -->
+    <para>
+    Fix for re-sync logic in reading packet from backend. (Tatsuo Ishii)
+    </para>
+    <para>
+    <function>read_kind_from_backend()</function>, which reads message kind
+    from backend, re-syncs backend nodes when a ready for query message is
+    received. Unfortunately it forgot to call
+    <function>pool_pending_message_pull_out()</function> to delete sync
+    pending message. This leads to random stuck while reading packets
+    from backend. Fix this to call <function>pool_pending_message_pull_out()</function>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-12 [0e658bb]
+    -->
+    <para>
+    Fix Pgpool-II hangs. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=370">bug 370</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+    If an erroneous query is sent to primary and without a sync message
+    the next query that requires a catalog cache look up is send,
+    <productname>Pgpool-II</productname> hangs in <function>do_query()</function>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-10 [ec3350c]
+    -->
+    <para>
+    Fix returning transaction state when "ready for query" message received. (Tatsuo Ishii)
+    </para>
+    <para>
+    We return primary or master node state of ready for query message to
+    frontend. In most cases this is good. However if other than primary
+    node or master node returns an error state (this could happen if load
+    balance node is other than primary or master node and the query is an
+    errornous SELECT), this should be returned to frontend, because the
+    frontend already received an error.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-12-10 [3018f66]
+    -->
+    <para>
+    Test: Fix bug with extended-query-test test driver. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2017-11-23 [6664ce2]
+    2017-11-23 [87ebfb7]
+    -->
+    <para>
+    Doc: Enhance document <link linkend="running-mode">"Running mode of Pgpool-II"</link>. (Tatsuo Ishii)
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-7">
   <title>Release 3.7</title>
 
@@ -39,7 +260,7 @@
 	  Allow to specify per node health check parameters.
 	</para>
       </listitem>
-      
+
       <listitem>
 	<para>
 	  Support AWS Aurora.
@@ -53,7 +274,7 @@
       </listitem>
       <listitem>
 	<para>
-	  Support logical replication. 
+	  Support logical replication.
 	</para>
       </listitem>
 
@@ -87,7 +308,7 @@
 	</para>
 
 	<para>
-	  Now only the Master node performs the failover, and the failover 
+	  Now only the Master node performs the failover, and the failover
 	  locks are removed.
 	</para>
 
@@ -213,7 +434,7 @@ health_check_period0 = 5
 	  performed in Aurora, sr_check_period should be always 0.
 	</para>
 	<para>
-	  Also add English/Japanese Aurora setting example. 
+	  Also add English/Japanese Aurora setting example.
 	</para>
       </listitem>
 
@@ -462,7 +683,7 @@ health_check_period0 = 5
 	  Fix exit signal handlers to not call ereport. (Tatsuo Ishii)
 	</para>
 	<para>
-	  There could be a race condition in the exit signal handlers. 
+	  There could be a race condition in the exit signal handlers.
 	</para>
 	<para>
 		See <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2017-September/002545.html">[pgpool-hackers:2545]</ulink> for more details.
