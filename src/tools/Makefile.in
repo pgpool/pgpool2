@@ -146,6 +146,8 @@ AM_V_at = $(am__v_at_@AM_V@)
 am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
+depcomp =
+am__depfiles_maybe =
 SOURCES =
 DIST_SOURCES =
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
@@ -226,14 +228,12 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CATALOG = @CATALOG@
 CC = @CC@
-CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 COLLATEINDEX = @COLLATEINDEX@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
-DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
 DOCBOOKSTYLE = @DOCBOOKSTYLE@
 DSYMUTIL = @DSYMUTIL@
@@ -310,9 +310,7 @@ abs_top_srcdir = @abs_top_srcdir@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
-am__include = @am__include@
 am__leading_dot = @am__leading_dot@
-am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
@@ -371,9 +369,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/tools/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps src/tools/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/tools/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps src/tools/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -627,7 +625,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-generic clean-libtool mostlyclean-am
+clean-am: clean-generic clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f Makefile
@@ -694,18 +692,19 @@ uninstall-am: uninstall-dist_binSCRIPTS
 .MAKE: $(am__recursive_targets) install-am install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am check \
-	check-am clean clean-generic clean-libtool cscopelist-am ctags \
-	ctags-am distclean distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am \
-	install-dist_binSCRIPTS install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-dist_binSCRIPTS
+	check-am clean clean-generic clean-libtool clean-local \
+	cscopelist-am ctags ctags-am distclean distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-dist_binSCRIPTS install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
+	ps ps-am tags tags-am uninstall uninstall-am \
+	uninstall-dist_binSCRIPTS
 
 .PRECIOUS: Makefile
 
@@ -715,6 +714,9 @@ pgpool_setup:
 
 watchdog_setup:
 	ln -s ../test/watchdog_setup .
+
+clean-local:
+	-rm -f $(dist_bin_SCRIPTS)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

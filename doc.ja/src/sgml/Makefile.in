@@ -117,6 +117,8 @@ AM_V_at = $(am__v_at_@AM_V@)
 am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
+depcomp =
+am__depfiles_maybe =
 SOURCES =
 DIST_SOURCES =
 am__can_run_installinfo = \
@@ -137,7 +139,6 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CATALOG = @CATALOG@
 CC = @CC@
-CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 COLLATEINDEX = @COLLATEINDEX@
 CPP = @CPP@
@@ -146,7 +147,6 @@ CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
 
-DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
 DOCBOOKSTYLE = @DOCBOOKSTYLE@
 DSYMUTIL = @DSYMUTIL@
@@ -223,9 +223,7 @@ abs_top_srcdir = @abs_top_srcdir@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
-am__include = @am__include@
 am__leading_dot = @am__leading_dot@
-am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
@@ -293,7 +291,7 @@ JADE.rtf.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl
 JADE_html = $(JADE) $(SPFLAGS) -d stylesheet.dsl\#html -t sgml -i html -V website-stylesheet
 EXTRA_DIST = $(ALLSGML) html man1 man8 stylesheet.dsl stylesheet.css stylesheet-man.xsl stylesheet-common.xsl
 FOP = fop
-CLEANFILES = *.html *.tex-pdf pgpool-en.rtf pgpool-en.txt html/*
+CLEANFILES = *.html *.tex-pdf pgpool-en.rtf pgpool-en.txt html/* HTML.index bookindex.sgml man-stamp man1/* man3/* pgpool.xml
 all: all-am
 
 .SUFFIXES:
@@ -306,9 +304,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu doc.ja/src/sgml/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps doc.ja/src/sgml/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu doc.ja/src/sgml/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps doc.ja/src/sgml/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \

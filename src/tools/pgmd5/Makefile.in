@@ -108,12 +108,12 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_pg_md5_OBJECTS = pg_md5.$(OBJEXT) md5.$(OBJEXT) \
-	pool_passwd.$(OBJEXT) pool_signal.$(OBJEXT) strlcpy.$(OBJEXT) \
-	regex_array.$(OBJEXT) pool_config_variables.$(OBJEXT) \
-	pool_config.$(OBJEXT) ../fe_port.$(OBJEXT) \
+dist_pg_md5_OBJECTS = pg_md5.$(OBJEXT) ../fe_port.$(OBJEXT)
+nodist_pg_md5_OBJECTS = md5.$(OBJEXT) pool_passwd.$(OBJEXT) \
+	pool_signal.$(OBJEXT) strlcpy.$(OBJEXT) regex_array.$(OBJEXT) \
+	pool_config_variables.$(OBJEXT) pool_config.$(OBJEXT) \
 	fe_memutils.$(OBJEXT) pool_globals.$(OBJEXT)
-pg_md5_OBJECTS = $(am_pg_md5_OBJECTS)
+pg_md5_OBJECTS = $(dist_pg_md5_OBJECTS) $(nodist_pg_md5_OBJECTS)
 pg_md5_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -132,9 +132,8 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/src/include
-depcomp = $(SHELL) $(top_srcdir)/depcomp
-am__depfiles_maybe = depfiles
-am__mv = mv -f
+depcomp =
+am__depfiles_maybe =
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -153,17 +152,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-@MAINTAINER_MODE_FALSE@am__skiplex = test -f $@ ||
-LEXCOMPILE = $(LEX) $(AM_LFLAGS) $(LFLAGS)
-LTLEXCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(LEX) $(AM_LFLAGS) $(LFLAGS)
-AM_V_LEX = $(am__v_LEX_@AM_V@)
-am__v_LEX_ = $(am__v_LEX_@AM_DEFAULT_V@)
-am__v_LEX_0 = @echo "  LEX     " $@;
-am__v_LEX_1 = 
-YLWRAP = $(top_srcdir)/ylwrap
-SOURCES = $(pg_md5_SOURCES)
-DIST_SOURCES = $(pg_md5_SOURCES)
+SOURCES = $(dist_pg_md5_SOURCES) $(nodist_pg_md5_SOURCES)
+DIST_SOURCES = $(dist_pg_md5_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -188,8 +178,7 @@ am__define_uniq_tagged_files = \
   done | $(am__uniquify_input)`
 ETAGS = etags
 CTAGS = ctags
-am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/depcomp \
-	$(top_srcdir)/mkinstalldirs $(top_srcdir)/ylwrap pool_config.c
+am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/mkinstalldirs
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -201,7 +190,6 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CATALOG = @CATALOG@
 CC = @CC@
-CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 COLLATEINDEX = @COLLATEINDEX@
 CPP = @CPP@
@@ -210,7 +198,6 @@ CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@ \
     -DDEFAULT_CONFIGDIR=\"$(sysconfdir)\" -DPOOL_TOOLS
 
-DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
 DOCBOOKSTYLE = @DOCBOOKSTYLE@
 DSYMUTIL = @DSYMUTIL@
@@ -287,9 +274,7 @@ abs_top_srcdir = @abs_top_srcdir@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
-am__include = @am__include@
 am__leading_dot = @am__leading_dot@
-am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
@@ -335,22 +320,23 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
-pg_md5_SOURCES = pg_md5.c \
-		md5.c \
+dist_pg_md5_SOURCES = pg_md5.c \
+		../fe_port.c
+
+nodist_pg_md5_SOURCES = md5.c \
 		pool_passwd.c \
 		pool_signal.c \
 		strlcpy.c \
 		regex_array.c \
 		pool_config_variables.c \
-		pool_config.l \
-		../fe_port.c \
+		pool_config.c \
 		fe_memutils.c \
 		pool_globals.c
 
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .l .lo .o .obj
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -360,9 +346,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/tools/pgmd5/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps src/tools/pgmd5/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/tools/pgmd5/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps src/tools/pgmd5/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -432,10 +418,7 @@ clean-binPROGRAMS:
 ../$(am__dirstamp):
 	@$(MKDIR_P) ..
 	@: > ../$(am__dirstamp)
-../$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) ../$(DEPDIR)
-	@: > ../$(DEPDIR)/$(am__dirstamp)
-../fe_port.$(OBJEXT): ../$(am__dirstamp) ../$(DEPDIR)/$(am__dirstamp)
+../fe_port.$(OBJEXT): ../$(am__dirstamp)
 
 pg_md5$(EXEEXT): $(pg_md5_OBJECTS) $(pg_md5_DEPENDENCIES) $(EXTRA_pg_md5_DEPENDENCIES) 
 	@rm -f pg_md5$(EXEEXT)
@@ -448,44 +431,14 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@../$(DEPDIR)/fe_port.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fe_memutils.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pg_md5.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_config.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_config_variables.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_globals.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_passwd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pool_signal.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/regex_array.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strlcpy.Po@am__quote@
-
 .c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
+	$(AM_V_CC)$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+	$(AM_V_CC)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
-
-.l.c:
-	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
+	$(AM_V_CC)$(LTCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -608,19 +561,17 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
-	-rm -f ../$(DEPDIR)/$(am__dirstamp)
 	-rm -f ../$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-rm -f pool_config.c
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
+	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ../$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -666,7 +617,6 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ../$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -688,18 +638,19 @@ uninstall-am: uninstall-binPROGRAMS
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic clean-libtool cscopelist-am \
-	ctags ctags-am distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS
+	clean-binPROGRAMS clean-generic clean-libtool clean-local \
+	cscopelist-am ctags ctags-am distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-binPROGRAMS install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
+	uninstall-binPROGRAMS
 
 .PRECIOUS: Makefile
 
@@ -718,12 +669,15 @@ regex_array.c: ../../../src/utils/regex_array.c
 	rm -f $@ && ln -s $< .
 pool_config_variables.c: ../../../src/config/pool_config_variables.c
 	rm -f $@ && ln -s $< .
-pool_config.l: ../../../src/config/pool_config.l
+pool_config.c: ../../../src/config/pool_config.c
 	rm -f $@ && ln -s $< .
 fe_memutils.c: ../../../src/tools/fe_memutils.c
 	rm -f $@ && ln -s $< .
 pool_globals.c: ../../../src/main/pool_globals.c
 	rm -f $@ && ln -s $< .
+
+clean-local:
+	-rm -f $(nodist_pg_md5_SOURCES)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

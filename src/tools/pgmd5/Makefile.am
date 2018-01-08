@@ -1,15 +1,15 @@
 AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
 bin_PROGRAMS = pg_md5
 
-pg_md5_SOURCES = pg_md5.c \
-		md5.c \
+dist_pg_md5_SOURCES = pg_md5.c \
+		../fe_port.c
+nodist_pg_md5_SOURCES = md5.c \
 		pool_passwd.c \
 		pool_signal.c \
 		strlcpy.c \
 		regex_array.c \
 		pool_config_variables.c \
-		pool_config.l \
-		../fe_port.c \
+		pool_config.c \
 		fe_memutils.c \
 		pool_globals.c
 
@@ -30,9 +30,12 @@ regex_array.c: ../../../src/utils/regex_array.c
 	rm -f $@ && ln -s $< .
 pool_config_variables.c: ../../../src/config/pool_config_variables.c
 	rm -f $@ && ln -s $< .
-pool_config.l: ../../../src/config/pool_config.l
+pool_config.c: ../../../src/config/pool_config.c
 	rm -f $@ && ln -s $< .
 fe_memutils.c: ../../../src/tools/fe_memutils.c
 	rm -f $@ && ln -s $< .
 pool_globals.c: ../../../src/main/pool_globals.c
 	rm -f $@ && ln -s $< .
+
+clean-local:
+	-rm -f $(nodist_pg_md5_SOURCES)

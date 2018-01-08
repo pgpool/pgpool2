@@ -7,3 +7,6 @@ pgpool_setup:
 
 watchdog_setup:
 	ln -s ../test/watchdog_setup .
+
+clean-local:
+	-rm -f $(dist_bin_SCRIPTS)
