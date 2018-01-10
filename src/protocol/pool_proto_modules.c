@@ -3657,7 +3657,7 @@ void pool_at_command_success(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *ba
 	if (!pool_is_command_success())
 	{
 		ereport(ERROR,
-				(errmsg("pool_at_command_success: command did not suceed")));
+				(errmsg("pool_at_command_success: command did not succeed")));
 	}
 
 	node = pool_get_parse_tree();
