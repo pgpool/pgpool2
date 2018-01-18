@@ -1253,8 +1253,13 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 							   query_context->parse_tree);
 		}
 
+		pool_set_query_in_progress();
 		if (parse_before_bind(frontend, backend, parse_msg, bind_msg) != POOL_CONTINUE)
+		{
+			pool_unset_query_in_progress();
 			return POOL_END;
+		}
+		pool_unset_query_in_progress();
 	}
 
 	/*
