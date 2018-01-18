@@ -1170,8 +1170,12 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_where_to_send(query_context, query_context->original_query,
 						   query_context->parse_tree);
 
+		pool_set_query_in_progress();
 		if (parse_before_bind(frontend, backend, parse_msg) != POOL_CONTINUE)
+		{
+			pool_unset_query_in_progress();
 			return POOL_END;
+		}
 	}
 
 	/*
