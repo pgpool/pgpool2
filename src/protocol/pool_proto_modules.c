@@ -3211,6 +3211,8 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 	
 	if (parse_was_sent)
 	{
+		pool_set_query_in_progress();
+
 		while (kind != '1')
 		{
 			PG_TRY();
