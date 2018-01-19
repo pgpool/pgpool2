@@ -6,4 +6,4 @@
 #OPTS=" -d -n"
 OPTS=" -n"
 
-#STOP_OPTS=" -m fast"
+STOP_OPTS=" -m fast"
