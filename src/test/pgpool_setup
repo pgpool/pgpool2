@@ -329,6 +329,7 @@ cat > $DEST_CLUSTER/recovery.conf <<REOF
 standby_mode          = 'on'
 primary_conninfo      = 'port=$PORT user=$PGSUPERUSER'
 recovery_target_timeline='latest'
+restore_command = 'cp $DATADIR_BASE/archivedir/%f "%p" 2> /dev/null'
 REOF
 
 $psql -p $PORT -c "SELECT pg_stop_backup()" postgres
@@ -458,7 +459,7 @@ cat > $1/$fname <<EOF
 standby_mode          = 'on'
 primary_conninfo      = 'port=$BASEPORT user=$WHOAMI'
 recovery_target_timeline='latest'
-restore_command = 'cp $BASEDIR/archivedir/pg_xlog/%f "%p" 2> /dev/null'
+restore_command = 'cp $BASEDIR/archivedir/%f "%p" 2> /dev/null'
 EOF
 }
 
