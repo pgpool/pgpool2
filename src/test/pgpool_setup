@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2013-2017 PgPool Global Development Group
+# Copyright (c) 2013-2018 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby
@@ -497,9 +497,9 @@ function set_pgpool_conf {
 	    echo "health_check_user$n = '$WHOAMI'" >> $CONF
 	    echo "health_check_password$n = ''" >> $CONF
 	    echo "health_check_database$n = 'postgres'" >> $CONF
-	    echo "health_check_max_retries$n = '3'" >> $CONF
-	    echo "health_check_retry_delay$n = '1'" >> $CONF
-	    echo "connect_timeout$n = '1000'" >> $CONF
+	    echo "health_check_max_retries$n = 3" >> $CONF
+	    echo "health_check_retry_delay$n = 1" >> $CONF
+	    echo "connect_timeout$n = 1000" >> $CONF
 	    n=`expr $n + 1`
 	done
 	OIDDIR=$BASEDIR/log/pgpool/oiddir
