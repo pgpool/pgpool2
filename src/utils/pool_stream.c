@@ -5,7 +5,7 @@
 * pgpool: a language independent connection pool server for PostgreSQL
 * written by Tatsuo Ishii
 *
-* Copyright (c) 2003-2016	PgPool Global Development Group
+* Copyright (c) 2003-2018	PgPool Global Development Group
 *
 * Permission to use, copy, modify, and distribute this software and
 * its documentation for any purpose and without fee is hereby
@@ -524,7 +524,7 @@ static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 	wlen = len;
 
 	ereport(DEBUG1,
-			(errmsg("pool_write_flush_it: write size: %d", wlen)));
+			(errmsg("pool_write_flush: write size: %d", wlen)));
 
 	if (wlen == 0)
 	{
@@ -539,11 +539,11 @@ static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 
 		if (cp->ssl_active > 0)
 		{
-		  sts = pool_ssl_write(cp, buf, wlen);
+			sts = pool_ssl_write(cp, buf+offset, wlen);
 		}
 		else
 		{
-		  sts = write(cp->fd, buf, wlen);
+			sts = write(cp->fd, buf+offset, wlen);
 		}
 
 		if (sts > 0)
@@ -559,7 +559,7 @@ static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 			else if (wlen < 0)
 			{
 				ereport(WARNING,
-						(errmsg("pool_write_flush_it: invalid write size %d", sts)));
+						(errmsg("pool_write_flush: invalid write size %d", sts)));
 				return -1;
 			}
 
@@ -567,7 +567,7 @@ static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 			{
 				/* need to write remaining data */
 				ereport(DEBUG1,
-						(errmsg("pool_write_flush_it: write retry: %d", wlen)));
+						(errmsg("pool_write_flush: write retry: %d", wlen)));
 
 				offset += sts;
 				continue;
