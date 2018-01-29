@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1895,6 +1895,7 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 	int fd = 0;
 	int afd;
 	int *walk;
+	int on;
 
 #ifdef ACCEPT_PERFORMANCE
 	struct timeval now1, now2;
@@ -2043,6 +2044,30 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 		return RETRY;
 
 	}
+
+	/*
+	 * Set no delay if AF_INET socket. Not sure if this is really necessary
+	 * but PostgreSQL does this.
+	 */
+	if (!FD_ISSET(fds[0], &rmask))	/* fds[0] is UNIX domain socket */
+	{
+		on = 1;
+		if (setsockopt(afd, IPPROTO_TCP, TCP_NODELAY,
+					   (char *) &on,
+					   sizeof(on)) < 0)
+		{
+			ereport(WARNING,
+					(errmsg("wait_for_new_connections: setsockopt failed with error \"%s\"",strerror(errno))));
+			close(afd);
+			return -1;
+		}
+	}
+
+	/*
+	 * Make sure that the socket is non blocking.
+	 */
+	pool_unset_nonblock(afd);
+
 #ifdef ACCEPT_PERFORMANCE
 	gettimeofday(&now2,0);
 	atime += (now2.tv_sec - now1.tv_sec)*1000000 + (now2.tv_usec - now1.tv_usec);
