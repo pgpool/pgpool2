@@ -626,7 +626,7 @@ pool_passwdがまだ存在していなかった場合は、pg_md5コマンドが
 この認証方式は認証機構としてPAM（Pluggable Authentication Modules）を使用します。
 デフォルトのPAMサービス名は<literal>pgpool</literal>です。
 <productname>Pgpool-II</productname>が稼働するホスト上のユーザ情報を使ったPAM認証を利用することができます。
-PAMについての詳細は<ulink url="http://www.kernal.org/pub/linux/libs/pam/">Linux-PAM</>ページを読んでください
+PAMについての詳細は<ulink url="http://www.kernel.org/pub/linux/libs/pam/">Linux-PAM</>ページを読んでください
    </para>
 
    <para>

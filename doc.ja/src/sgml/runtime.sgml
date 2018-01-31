@@ -206,7 +206,7 @@ password: <userinput>your_password</userinput>
 -->
 これらのモードは互いに排他的であり、サーバ起動後は変更することができません。
 システム設計の初期の段階でどのモードを使うか決めなければなりません。
-どれを使えばわからない場合は、ストリーミングレプリケーションモードを使うことを推奨します。
+どれを使えば良いかわからない場合は、ストリーミングレプリケーションモードを使うことを推奨します。
     </para>
 
     <para>
@@ -235,7 +235,7 @@ password: <userinput>your_password</userinput>
       mode. The sample configuration file
       is <filename>$prefix/etc/pgpool.conf.sample-master-slave</filename>.
 -->
-マスタスレーブモードは<productname>Slony</>を使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。
+<firstterm>マスタスレーブモード</firstterm>(slonyモード)は<productname>Slony-I</>を使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。
 このモードでは、<productname>Slony</>/<productname>PostgreSQL</>がデータベースを同期する責任を持ちます。
 <productname>Slony</>はストリーミングレプリケーションの登場により廃れつつあるため、<productname>Slony</>を使う特別な理由が無い限りこのモードの使用を推奨しません。
 このモードでは負荷分散が可能です。
@@ -255,8 +255,15 @@ password: <userinput>your_password</userinput>
 -->
 ネイティブレプリケーションモードでは、<productname>Pgpool-II</>がデータベースを同期する責任を持ちます。
 このモードの利点は同期が同期的に行われることです。
-すなわち、データベースへの書き込みは全ての<productname>PostgreSQL</>サーバが書き込み操作を完了するまでに返ってきません。
-ただし、読み込みスナップショットの制御は行われていないため、このモードでは一貫性のある可視性は保証されていないことに注意してください。
+すなわち、データベースへの書き込みは全ての<productname>PostgreSQL</>サーバが書き込み操作を完了するまで返ってきません。
+しかし、<productname>PostgreSQL</> 9.6以降では、ストリーミングレプリケーションで<literal>synchronous_commit = remote_apply</literal>と設定することにより、同様の効果が得られます。
+ネイティブレプリケーションモードの<xref linkend="restrictions">を回避できるので、この設定が使える場合には、ネイティブレプリケーションモードではなくてこの設定を使うことをお勧めします。
+  <productname>PostgreSQL</>はノードをまたがるスナップショット管理を提供しないため、セッションYがノードBでコミットする前に、ノードAでコミットしたデータをセッションXが見ることがあり得ます。
+もしセッションXが、そのときノードAで見た見たデータに基づいてノードBのデータを更新しようとすると、ノードAとノードBのデータ一貫性は損なわれるかもしれません。
+この問題を回避するには、ユーザは明示的にノードAのデータをロックしなければなりません。
+これがストリーミングレプリケーションと<literal>synchronous_commit = remote_apply</literal>を使用することをおすすめするもう一つの理由です。
+    </para>
+    <para>
 このモードでは負荷分散が可能です。
 サンプルの設定ファイルは<filename>$prefix/etc/pgpool.conf.sample-replication</filename>です。
     </para>

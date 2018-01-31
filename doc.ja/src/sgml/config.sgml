@@ -218,7 +218,7 @@
 	  <productname>Pgpool-II</productname> also provides two SQL style
 	  commands to interact with session-local configuration settings.
 -->
-<productname>Pgpool-II</productname>はまた2つのSQL形式のコマンドを使ってセッションローカルの設定変更を行うことができます。
+<productname>Pgpool-II</productname>はまた2つのSQL形式のコマンドを使ってセッションローカルの設定の参照や変更を行うことができます。
   </para>
 
   <itemizedlist>

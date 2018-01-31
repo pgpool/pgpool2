@@ -467,7 +467,7 @@ IPアドレス切り替え後にARPリクエストを送信するコマンドで
           from using old query caches inconsistence to the old active.
 -->
 このオプションがonの場合、pgpool-II がアクティブに昇格した時に、共有メモリ上のクエリキャッシュを全て削除します。
-    これにより、新しいアクティブの<productname>Pgpool-II</productname>が旧アクティブと非整合な古いクエリキャッシュが使うことを防止します。
+    これにより、新しいアクティブの<productname>Pgpool-II</productname>が旧アクティブと非整合な古いクエリキャッシュを使うことを防止します。
         </para>
         <para>
 <!--
@@ -513,7 +513,7 @@ IPアドレス切り替え後にARPリクエストを送信するコマンドで
           This command is executed just before bringing up the
           virtual/floating IP if that is configured on the node.
 -->
-コマンドは、そのノードに仮想/浮動IPが設定されていた場合、それが立ち上がる直前のタイミングで実行されます。
+コマンドは、そのノードに仮想IPが設定されていた場合、それが立ち上がる直前のタイミングで実行されます。
         </para>
         <para>
 <!--
@@ -975,8 +975,11 @@ watchdogプロセスがネットワークリンクの状態を監視するネッ
 0から始まるパラメータの最後の部分は送り先の番号です。
    </para>
    <para>
+<!--
       <varname>heartbeat_destination_port</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
+-->
+      <varname>heartbeat_destination_port</varname>は、<xref linkend="guc-wd-lifecheck-method"> が <literal>'heartbeat'</literal>に設定されている場合のみ有効です。 
     </para>
     <para>
 <!--

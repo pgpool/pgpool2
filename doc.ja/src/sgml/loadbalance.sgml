@@ -542,7 +542,7 @@ INSERTなど、スタンバイに送ることのできない問い合わせが�
           the configured <productname>PostgreSQL</> backends.
           Default is off.
 -->
-onの設定すると、<productname>Pgpool-II</productname>は入ってきた<acronym>SELECT</acronym>クエリに対する負荷分散を有効にします。
+onに設定すると、<productname>Pgpool-II</productname>は入ってきた<acronym>SELECT</acronym>クエリに対する負荷分散を有効にします。
 すなわち、クライアントからの<acronym>SELECT</acronym>クエリは設定された<productname>PostgreSQL</>バックエンドに振り分けます。
 デフォルトはoffです。
         </para>
@@ -735,8 +735,8 @@ black_function_list = 'nextval,setval,lastval,currval'
             as writing functions to avoid errors which occur when
             these functions are accidentally load balanced.
 -->
-<productname>PostgreSQL</>には<literal>nextval()</literal>と<literal>setval()</literal>に加え、<literal>lastval()</literal>と<literal>currval</literal>があります。
-<literal>lastval()</literal>と<literal>currval()</literal>は書き込みを行う関数ではありませんが、これらの関数が負荷分散されることで発生するエラーを防ぐため、<literal>lastval()</literal>と<literal>curval()</literal>を書き込みを行う関数として扱うのが望ましいです。
+<productname>PostgreSQL</>には<literal>nextval()</literal>と<literal>setval()</literal>に加え、<literal>lastval()</literal>と<literal>currval()</literal>があります。
+<literal>lastval()</literal>と<literal>currval()</literal>は書き込みを行う関数ではありませんが、これらの関数が負荷分散されることで発生するエラーを防ぐため、<literal>lastval()</literal>と<literal>currval()</literal>を書き込みを行う関数として扱うのが望ましいです。
           </para>
         </note>
         <para>

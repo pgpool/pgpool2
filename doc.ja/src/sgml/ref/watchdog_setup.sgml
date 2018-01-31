@@ -197,7 +197,7 @@ Pgpool-II documentation
    <!--
     <application>watchdog_setup</application> recognizes following environment variables:
     -->
-    <application>pgpool_setup</application> は以下の環境変数を使用します:
+    <application>watchdog_setup</application> は以下の環境変数を使用します:
 
     <variablelist>
 
@@ -324,12 +324,12 @@ Satrting set up in streaming replication mode
 creating startall and shutdownall
 creating failover script
 creating database cluster /home/t-ishii/work/pgpool-II/current/pgpool2/src/test/a/pgpool0/data0...done.
-update postgreql.conf
+update postgresql.conf
 creating pgpool_remote_start
 creating basebackup.sh
 creating recovery.conf
 creating database cluster /home/t-ishii/work/pgpool-II/current/pgpool2/src/test/a/pgpool0/data1...done.
-update postgreql.conf
+update postgresql.conf
 creating pgpool_remote_start
 creating basebackup.sh
 creating recovery.conf
