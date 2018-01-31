@@ -12,7 +12,7 @@
 	a node without stopping the service.
     This feature is called <acronym>"online recovery"</acronym>.
 -->
-<productname>Pgpool-II</productname> はサービスを止めることなくデータベースノード同期させ、ノードを復帰させることができます。
+<productname>Pgpool-II</productname> はサービスを止めることなくデータベースノードを同期させ、ノードを復帰させることができます。
 この機能は「<acronym>オンラインリカバリ</acronym>」と呼ばれます。
   </para>
   <para>
@@ -182,7 +182,6 @@ postmasterの起動（<literal>pgpool_remote_start</literal>の実施）
           Specifies the password for the <productname>PostgreSQL</> user name configured in
 -->
 オンラインリカバリを行うための PostgreSQL ユーザパスワードです。
-          <xref linkend="guc-recovery-user"> to perform online recovery.
         </para>
         <para>
 <!--
@@ -430,7 +429,7 @@ rsync used in the command is killed by signal 2 for example.
           the online recovery to manage the service down time during the online recovery.
 -->
 時間内にオンラインリカバリが完了しなかった場合に、これをキャンセルするためのタイムアウトを秒単位で指定します。
-<productname>Pgpool-II</productname>は、オンラインリカバリのセカンドステージの間は接続を受け付けけないので、このパラメータはオンラインリカバリの最中のサーバがダウンした時にオンラインリカバリをキャンセルするのに使えます。
+<productname>Pgpool-II</productname>は、オンラインリカバリのセカンドステージの間は接続を受け付けないので、このパラメータはオンラインリカバリの最中のサーバがダウンした時にオンラインリカバリをキャンセルするのに使えます。
         </para>
         <para>
 <!--

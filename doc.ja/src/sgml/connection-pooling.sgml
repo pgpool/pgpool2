@@ -665,7 +665,7 @@ local0.*    /var/log/pgpool.log
 					the default is <literal>LOCAL0</>.
 					See also the documentation of your system's <application>syslog</> daemon.
 -->
-<application>syslog</application>へのログ取得が有効な場合、このパラメータは<application>syslog</application>の「<literal>facility</literal>」が使われるように確定します。
+<application>syslog</application>へのログ取得が有効な場合、このパラメータは使用される<application>syslog</application>の「<literal>facility</literal>」を決定します。
 <literal>LOCAL0</>、<literal>LOCAL1</>、<literal>LOCAL2</>、<literal>LOCAL3</>、<literal>LOCAL4</>、<literal>LOCAL5</>、<literal>LOCAL6</>、<literal>LOCAL7</>の中から選んでください。
 デフォルトは<literal>LOCAL0</>です。
 使用しているシステムの<application>syslog</application>デーモンの文書を同時に参照してください。

@@ -782,7 +782,7 @@ pgpoolの組み込み死活監視も同じチャンネルと技術を使って�
         <productname>Pgpool-II</productname>.
 -->
 クエリモードでは、PostgreSQLサーバの障害やpcp_detach_nodeによってすべてのDBノードが<productname>Pgpool-II</productname>から切り離されると、watchdogは<productname>Pgpool-II</productname>サービスが停止状態にあるとみなし、watchdogに割り当てあられた仮想IPを停止します。
-ですので、<productname>Pgpool-II</productname>のクライアントは仮想IPを使って<productname>Pgpool-II</productname>できなくなります。
+ですので、<productname>Pgpool-II</productname>のクライアントは仮想IPを使って<productname>Pgpool-II</productname>に接続できなくなります。
 これは、複数のアクティブ<productname>Pgpool-II</productname>が存在するスプリットブレインを回避するために必要です。
       </para>
     </sect2>
@@ -803,8 +803,8 @@ pgpoolの組み込み死活監視も同じチャンネルと技術を使って�
         <productname>Pgpool-II</productname> watchdogs so it's backend status
         may be different from other the <productname>Pgpool-II</productname>.
 -->
-停止状態の<productname>Pgpool-II</productname>に実IPで接続しないでください。
-なぜなら、ダウン状態の<productname>Pgpool-II</productname>は、他の<productname>Pgpool-II</productname> watchdogから情報を受け取れないので、他の<productname>Pgpool-II</productname>から、バックエンドの状態がずれるかもしれないからです。
+watchdog が停止状態の<productname>Pgpool-II</productname>に実IPで接続しないでください。
+なぜなら、watchdog がダウン状態の<productname>Pgpool-II</productname>は、他の<productname>Pgpool-II</productname> watchdogから情報を受け取れないので、他の<productname>Pgpool-II</productname>から、バックエンドの状態がずれるかもしれないからです。
       </para>
     </sect2>
 
@@ -822,7 +822,7 @@ pgpoolの組み込み死活監視も同じチャンネルと技術を使って�
         nor the standby <productname>Pgpool-II</productname>.
         Recovery from down status requires the restart of <productname>Pgpool-II</productname>.
 -->
-停止状態の<productname>Pgpool-II</productname>は、アクティブの<productname>Pgpool-II</productname>にもスタンバイの<productname>Pgpool-II</productname>にもなれません。
+watchdog が停止状態の<productname>Pgpool-II</productname>は、アクティブの<productname>Pgpool-II</productname>にもスタンバイの<productname>Pgpool-II</productname>にもなれません。
 停止状態からの復帰には<productname>Pgpool-II</productname>の再起動が必要です。
       </para>
     </sect2>
@@ -863,7 +863,7 @@ pgpoolの組み込み死活監視も同じチャンネルと技術を使って�
       <productname>Pgpool-II</productname> starts up and consists of two
       main components, Watchdog core and the lifecheck system.
 -->
-watchdogは<productname>Pgpool-II</productname>の下位プロセスで、単一障害点を除くために複数の<productname>Pgpool-II</productname>を統合します。
+watchdogは<productname>Pgpool-II</productname>の下位プロセスで、複数の<productname>Pgpool-II</productname>を調整して、高可用性を追加し、単一障害点を除きます。
 （もし有効なら）watchdogプロセスは<productname>Pgpool-II</productname>が起動した際に自動的に起動されます。
 watchdogは、コアシステムと死活監視システムの2つの主なコンポーネントから構成されます。
     </para>
@@ -1018,7 +1018,7 @@ watchdogクラスタ中の<productname>Pgpool-II</productname>ノードの設定
 -->
 watchdogはほかのすべてのノードとの通信にTCP/IPソケットを使っています。
 各々のwatchdogノードはそれぞれのノードに2つのソケットを開くことができます。
-ひとつは出て行く（クライアント）ソケットで、他のノードとの通信のためにこのノードが作り初期化します。
+ひとつはこのノードが作った出て行く（クライアント）ソケットで、他のノードとの通信を開始します。
 2つ目は、リモートwatchdogノードが開いた通信から入ってくるのを待ち受けるソケットです。
 リモートノードとのソケット接続が成功すると、直ちにwatchdogはADD NODE (<literal>WD_ADD_NODE_MESSAGE</literal>)メッセージをそのソケットに送ります。
 ADD NODEメッセージを受信したwatchdogノードは、メッセージにカプセル化されたノード情報をそのノードのPgpool-II設定と照合し、照合テストが成功すればノードをクラスタに追加します。
@@ -1043,7 +1043,7 @@ ADD NODEメッセージを受信したwatchdogノードは、メッセージに�
           to interact with watchdog.
 -->
 watchdogプロセスはIPC通信のために<acronym>UNIX</acronym>ドメインソケットを公開し、<acronym>JSON</acronym>形式のデータを受付、また提供します。
-<productname>Pgpool-II</productname>の組み込み死活監視とメインプロセスも含めて、すべての<productname>Pgpool-II's</productname>内部プロセスは、このIPCソケットを使ってwatchdogと通信します。
+<productname>Pgpool-II</productname>の組み込み死活監視とメインプロセスも含めて、すべての<productname>Pgpool-II</productname>の内部プロセスは、このIPCソケットを使ってwatchdogと通信します。
 IPCソケットは、watchdogと通信する外部/サードパーティシステムも利用することができます。
         </para>
         <para>

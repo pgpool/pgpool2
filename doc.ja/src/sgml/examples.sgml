@@ -709,9 +709,9 @@ delegate_IP = '133.137.177.143'
 other_pgpool_hostname0 = 'osspc20'
                                     # Host name or IP address to connect to for other pgpool 0
 other_pgpool_port0 = 9999
-                                    # Port number for othet pgpool 0
+                                    # Port number for other pgpool 0
 other_wd_port0 = 9000
-                                    # Port number for othet watchdog 0
+                                    # Port number for other watchdog 0
           </programlisting>
         </para>
       </sect3>
@@ -726,9 +726,9 @@ other_wd_port0 = 9000
 other_pgpool_hostname0 = 'osspc16'
                                     # Host name or IP address to connect to for other pgpool 0
 other_pgpool_port0 = 9999
-                                    # Port number for othet pgpool 0
+                                    # Port number for other pgpool 0
 other_wd_port0 = 9000
-                                    # Port number for othet watchdog 0
+                                    # Port number for other watchdog 0
           </programlisting>
         </para>
       </sect3>
@@ -806,7 +806,7 @@ LOG:  watchdog remote node:0 on Linux_osspc16_9000:9000
 LOG:  interface monitoring is disabled in watchdog
 LOG:  IPC socket path: "/tmp/.s.PGPOOLWD_CMD.9000"
 LOG:  watchdog node state changed from [DEAD] to [LOADING]
-LOG:  new outbond connection to Linux_osspc16_9000:9000
+LOG:  new outbound connection to Linux_osspc16_9000:9000
 LOG:  watchdog node state changed from [LOADING] to [INITIALIZING]
 LOG:  watchdog node state changed from [INITIALIZING] to [STANDBY]
 <emphasis>
@@ -898,7 +898,7 @@ LOG:  watchdog cluster has lost the coordinator node
 LOG:  watchdog node state changed from [STANDBY] to [JOINING]
 LOG:  watchdog node state changed from [JOINING] to [INITIALIZING]
 LOG:  I am the only alive node in the watchdog cluster
-HINT:  skiping stand for coordinator state
+HINT:  skipping stand for coordinator state
 LOG:  watchdog node state changed from [INITIALIZING] to [MASTER]
 LOG:  I am announcing my self as master/coordinator watchdog node
 LOG:  I am the cluster leader node
@@ -1543,10 +1543,10 @@ other_pgpool_hostname0 = 'osspc17'
                                     # Host name or IP address to connect to for other pgpool 0
                                     # (change requires restart)
 other_pgpool_port0 = 9999
-                                    # Port number for othet pgpool 0
+                                    # Port number for other pgpool 0
                                     # (change requires restart)
 other_wd_port0 = 9000
-                                    # Port number for othet watchdog 0
+                                    # Port number for other watchdog 0
                                     # (change requires restart)
 other_pgpool_hostname1 = 'osspc18'
 other_pgpool_port1 = 9999
@@ -1564,10 +1564,10 @@ other_pgpool_hostname0 = 'osspc16'
                                     # Host name or IP address to connect to for other pgpool 0
                                     # (change requires restart)
 other_pgpool_port0 = 9999
-                                    # Port number for othet pgpool 0
+                                    # Port number for other pgpool 0
                                     # (change requires restart)
 other_wd_port0 = 9000
-                                    # Port number for othet watchdog 0
+                                    # Port number for other watchdog 0
                                     # (change requires restart)
 other_pgpool_hostname1 = 'osspc18'
 other_pgpool_port1 = 9999
@@ -1585,10 +1585,10 @@ other_pgpool_hostname0 = 'osspc16'
                                     # Host name or IP address to connect to for other pgpool 0
                                     # (change requires restart)
 other_pgpool_port0 = 9999
-                                    # Port number for othet pgpool 0
+                                    # Port number for other pgpool 0
                                     # (change requires restart)
 other_wd_port0 = 9000
-                                    # Port number for othet watchdog 0
+                                    # Port number for other watchdog 0
                                     # (change requires restart)
 other_pgpool_hostname1 = 'osspc17'
 other_pgpool_port1 = 9999
@@ -2240,7 +2240,7 @@ LOG:  watchdog cluster has lost the coordinator node
 LOG:  watchdog node state changed from [STANDBY] to [JOINING]
 LOG:  watchdog node state changed from [JOINING] to [INITIALIZING]
 LOG:  I am the only alive node in the watchdog cluster
-HINT:  skiping stand for coordinator state
+HINT:  skipping stand for coordinator state
 LOG:  watchdog node state changed from [INITIALIZING] to [MASTER]
 LOG:  I am announcing my self as master/coordinator watchdog node
 LOG:  I am the cluster leader node

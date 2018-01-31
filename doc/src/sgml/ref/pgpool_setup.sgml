@@ -220,12 +220,12 @@ Satrting set up in streaming replication mode
 creating startall and shutdownall
 creating failover script
 creating database cluster /home/t-ishii/tmp/test/data0...done.
-update postgreql.conf
+update postgresql.conf
 creating pgpool_remote_start
 creating basebackup.sh
 creating recovery.conf
 creating database cluster /home/t-ishii/tmp/test/data1...done.
-update postgreql.conf
+update postgresql.conf
 creating pgpool_remote_start
 creating basebackup.sh
 creating recovery.conf

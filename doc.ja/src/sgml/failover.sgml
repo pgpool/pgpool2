@@ -491,7 +491,7 @@ offに設定した場合、そのようなエラーの場合でも<productname>P
           Default is 300. Setting this parameter to 0 means keep trying forever.
 -->
 フェイルオーバが起きた時にプライマリノードを検索するための最大時間を秒単位で指定します。
-<productname>Pgpool-II</productname>は、ここで設定したした時間の間にプライマリノードを見つけられなかった場合、探すのを諦めます。
+<productname>Pgpool-II</productname>は、ここで設定した時間の間にプライマリノードを見つけられなかった場合、探すのを諦めます。
 デフォルト値は300です。
 0を指定すると、永久に検索し続けます。
         </para>
@@ -532,7 +532,7 @@ offに設定した場合、そのようなエラーの場合でも<productname>P
 -->
 rawモードにおいて、複数のバックエンドサーバが定義されている場合、フェイルオーバが可能です。
 通常の動作では<productname>Pgpool-II</>は<literal>backend_hostname0</>で指定したバックエンドにアクセスします。
-何らかのリユで<literal>backend_hostname0</>のサーバに障害が発生すると、<productname>Pgpool-II</>は<literal>backend_hostname1</>へのアクセスを試みます。
+何らかの理由で<literal>backend_hostname0</>のサーバに障害が発生すると、<productname>Pgpool-II</>は<literal>backend_hostname1</>へのアクセスを試みます。
 これが失敗した場合には<productname>Pgpool-II</>は<literal>backend_hostname2, 3</>と以下同様に試みます。
   </para>
 

@@ -333,7 +333,7 @@
         </para>
         <para>
           This command is executed just before bringing up the
-          virtual/floating IP if that is configured on the node.
+          virtual IP if that is configured on the node.
         </para>
         <para>
           This parameter can only be set at server start.
