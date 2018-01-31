@@ -45,7 +45,7 @@
        システムカタログを使用しているSELECT
        TABLESAMPLEを使っているSELECT
       </programlisting>
-
+      ただし、VIEWと unloggedテーブルは、white_memqcache_table_list に記載することでキャッシュされます。
     </para>
   </note>
 <para>
@@ -494,7 +494,7 @@ from the in memory cache is extremely fast.
 	  -->
       <varname>memqcache_oiddir</varname>には、各データベースのためのディレクトリが格納されます。
       そのディレクトリ名はデータベースのOIDです。
-      更に、各データベースディレクトリその下には各テーブルの「ためのファイルが格納されます。
+      更に、各データベースディレクトリの下には各テーブルのためのファイルが格納されます。
       そのファイル名は同じくテーブルのOIDです。
       これらのファイルの中にはクエリキャッシュへのポインタが格納されており、 キャッシュを削除する際のキーとして使われます。
     </para>
@@ -619,7 +619,7 @@ from the in memory cache is extremely fast.
 	  キャッシュのブロックサイズを指定します。
 	  <productname>Pgpool-II</productname>は<varname>memqcache_cache_block_size</varname>のブロックで管理されたキャッシュメモリを利用します。
 	  SELECT結果はこのブロックに詰め込まれ、１つのブロックに収まらなければなりません。
-	  従って、<varname>memqcache_cache_block_size</varname>を検索結果が超えると、キャッシュされません。。
+	  従って、<varname>memqcache_cache_block_size</varname>を検索結果が超えると、キャッシュされません。
 	</para>
 
         <para>

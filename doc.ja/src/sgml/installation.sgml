@@ -129,14 +129,14 @@ Windows はサポートされてません。
       </indexterm>
 
 <!--
-      GNU <application>Flex</> and <application>Bison</>
+      <application>Flex</> and <application>Bison</>
       are needed to build from a Git checkout, or if you changed the actual
       scanner and parser definition files. If you need them, be sure
       to get <application>Flex</> 2.5.31 or later and
       <application>Bison</> 1.875 or later. Other <application>lex</>
       and <application>yacc</> programs cannot be used.
 -->
-GNUの<application>Flex</>および<application>Bison</>は、Gitチェックアウトから構築する場合や、実際のスキャナとパーサの定義ファイルを変更した場合に必要となります。
+<application>Flex</>および<application>Bison</>は、Gitチェックアウトから構築する場合や、実際のスキャナとパーサの定義ファイルを変更した場合に必要となります。
 それらが必要な場合は、<application>Flex</> 2.5.31以降と<application>Bison</> 1.875以降を使うようにしてください。
 他の<application>lex</>と<application>yacc</>プログラムは使用できません。
      </para>
@@ -342,7 +342,7 @@ make install
       This will install <productname>Pgpool-II</>. (If you use <productname>Solaris</> or <productname>FreeBSD</>, replace make with gmake)
 -->
 これにより<productname>Pgpool-II</>がインストールされます。
-（<productname>Soralis</>または<productname>FreeBSD</>を使用している場合は<command>make</>を<command>gmake</>で置き換えて下さい。）
+（<productname>Solaris</>または<productname>FreeBSD</>を使用している場合は<command>make</>を<command>gmake</>で置き換えて下さい。）
     </para>
 
   </sect1>
@@ -483,7 +483,7 @@ $ psql -f pgpool-regclass.sql template1
 	  as this template database will be cloned to create new databases.
 -->
 <command>CREATE EXTENSION</command>または<filename>pgpool-regclass.sql</filename>の実行は、<productname>Pgpool-II</productname>経由でアクセスされる全てのデータベースで実行しなければなりません。
-ただし、<command>CREATE EXTENSINO</command>または"psql -f pgpool-regclass.sql template1"の実行後に作成されたデータベースでは、新しいデータベース作成のためにテンプレートデータベースが複製されるため、これを実行する必要はありません。
+ただし、<command>CREATE EXTENSINON</command>または"psql -f pgpool-regclass.sql template1"の実行後に作成されたデータベースでは、新しいデータベース作成のためにテンプレートデータベースが複製されるため、これを実行する必要はありません。
     </para>
 
   </sect1>
@@ -517,7 +517,7 @@ $ psql -f pgpool-regclass.sql template1
 これがなくてもある程度はinsert_lock は動作します。
 しかしその場合は、<productname>Pgpool-II</productname>は挿入対象のテーブルに対してロックを行います。
 これは<productname>Pgpool-II</productname> 2.2と2.3 シリーズの動作と同じです。
-このテーブルに対するロックは、<command>VACUUM</command>と競合するため、<command>INSERT</command>処理が長時間が待たされ続ける可能性があります。
+このテーブルに対するロックは、<command>VACUUM</command>と競合するため、<command>INSERT</command>処理が長時間待たされ続ける可能性があります。
 
       <programlisting>
 	$ cd pgpool-II-x.x.x/src/sql
@@ -585,7 +585,7 @@ $ psql -f pgpool-regclass.sql template1
 <!--
         <entry>Replication mode</entry>
 -->
-        <entry>レプリケーションモード</entry>
+        <entry>ネイティブレプリケーションモード</entry>
 	<entry><literal>pgpool.conf.sample-replication</literal></entry>
        </row>
        <row>
@@ -601,6 +601,13 @@ $ psql -f pgpool-regclass.sql template1
 -->
         <entry>Rawモード</entry>
 	<entry><literal>pgpool.conf.sample</literal> </entry>
+       </row>
+       <row>
+<!--
+        <entry>Logical replication mode</entry>
+-->
+        <entry>ロジカルレプリケーションモード</entry>
+	<entry><literal>pgpool.conf.sample-logical</literal> </entry>
        </row>
       </tbody>
      </tgroup>

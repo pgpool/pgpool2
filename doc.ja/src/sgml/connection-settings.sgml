@@ -465,7 +465,7 @@ md5 認証で用いるパスワードのファイルのファイル名を指定�
 				master/slave mode can also work just master node without any slave nodes.
 -->
 スレーブノードの数は1つに限定されず、<productname>Pgpool-II</productname>は127個までのスレーブノードを持つことができます。
-マスター/スレーブモードは、スレーブノードが1つも存在しない場合マスターノードのみを動作させることができます。
+マスタースレーブモードは、スレーブノードが1つも存在しない場合マスターノードのみを動作させることができます。
 			</para>
 		</note>
 
@@ -475,13 +475,13 @@ md5 認証で用いるパスワードのファイルのファイル名を指定�
 			also be used with master/slave mode to distribute the read load on the
 			standby backend nodes.
 -->
-参照負荷をスタンバイバックエンドノードに振り分ける負荷分散（<xref linkend="runtime-config-load-balancing">を参照）もマスター/スレーブモードと共に使用可能です。
+参照負荷をスタンバイバックエンドノードに振り分ける負荷分散（<xref linkend="runtime-config-load-balancing">を参照）もマスタースレーブモードと共に使用可能です。
 		</para>
 		<para>
 <!--
 				 Following options are required to be specified for master/slave mode.
 -->
-マスター/スレーブモードでは以下のオプションを設定する必要があります。
+マスタースレーブモードでは以下のオプションを設定する必要があります。
 		</para>
 
 		<variablelist>
@@ -634,7 +634,7 @@ md5 認証で用いるパスワードのファイルのファイル名を指定�
 				 Following options affect the behavior of
 				 <productname>Pgpool-II</productname> in the replication mode.
 -->
-以下のオプションがプリケーションモードにおける<productname>Pgpool-II</productname>の動作に影響します。
+以下のオプションがレプリケーションモードにおける<productname>Pgpool-II</productname>の動作に影響します。
 		</para>
 
 		<variablelist>
@@ -696,7 +696,7 @@ md5 認証で用いるパスワードのファイルのファイル名を指定�
 						only terminates the current user session but does not degenerate a backend node.
 -->
 
-これがonで、全ての<productname>PostgreSQL</>バックエンドノードに送られたクエリに対して、全てのノードが同じパケット種類で応答しなかった場合、多数派とは異なる応答したバックエンドノードは<productname>Pgpool-II</productname>による切り離されます。
+これがonで、全ての<productname>PostgreSQL</>バックエンドノードに送られたクエリに対して、全てのノードが同じパケット種類で応答しなかった場合、多数派とは異なる応答したバックエンドノードは<productname>Pgpool-II</productname>により切り離されます。
 <varname>replication_stop_on_mismatch</varname>がoffの場合に同様の状況が発生したときには、<productname>Pgpool-II</productname>は現在のユーザセッションを強制終了するだけにとどめ、バックエンドの切り離しは行いません。
 
 					</para>
@@ -954,7 +954,7 @@ COMMIT;
 <!--
 							This approach severely degrades the transactions' parallelism
 -->
-この方法はトランザクションの並列実行性が大きく劣化させます。
+この方法はトランザクションの並列実行性を大きく劣化させます。
 						</para>
 					</caution>
 
@@ -982,7 +982,7 @@ COMMIT;
 						of course (the "fixed" version of PostgreSQL was released as
 						9.0.5, 8.4.9, 8.3.16 and 8.2.22).
 -->
-<productname>Pgpool-II</productname> <emphasis>V3.0.4</emphasis>までの<productname>Pgpool-II</productname> <emphasis>V3.0</emphasis>では、テーブルロックではなシーケンステーブルに対して行ロックをかけます。
+<productname>Pgpool-II</productname> <emphasis>V3.0.4</emphasis>までの<productname>Pgpool-II</productname> <emphasis>V3.0</emphasis>では、テーブルロックではなくシーケンステーブルに対して行ロックをかけます。
 これはVACUUM(autovacuumを含む)とのロック競合を最小化することを意図しています。
 しかし、これは他の問題を引き起こします。
 トランザクション周回が起きた後、シーケンステーブルに対する行ロックはPostgreSQLの内部エラー (詳細には、トランザクション状態を保持するpg_clogへのアクセスエラー)を起こします。
@@ -1114,7 +1114,7 @@ end of transaction block
 						will get the same large object id in all DB nodes in replication mode.
 -->
 ラージオブジェクトのレプリケーションを行いたいときにロック管理に使うためのテーブル名を指定します。
-このテーブルが指定されてる場合、<productname>Pgpool-II</productname>は、<varname>lobj_lock_table</varname>で指定されているテーブルをロックした後、<literal>pg_largeobject</literal>システムカタログを参照してラージオブジェクトIDを生成し、<literal>lo_create()</literal>を呼び出してラージオブジェクトの作成を行います。
+このテーブルが指定されている場合、<productname>Pgpool-II</productname>は、<varname>lobj_lock_table</varname>で指定されているテーブルをロックした後、<literal>pg_largeobject</literal>システムカタログを参照してラージオブジェクトIDを生成し、<literal>lo_create()</literal>を呼び出してラージオブジェクトの作成を行います。
 この方法により、レプリケーションモードにおいて<productname>Pgpool-II</productname>が全てのDBノードで同じラージオブジェクトIDを得られることが保証されます。
 
 						</para>
@@ -1180,8 +1180,8 @@ end of transaction block
 							All <productname>PostgreSQL</> users must have a write access on <varname>lobj_lock_table</varname>
 							and it can be created in any schema.
 -->
-全ての<productname>PostgreSQL</>ユーザは<varname>lobj_lock_table</varname>へ書き込み可能ある必要が有ります。
-また、これはどのスキーマに作成されてかまいません。
+全ての<productname>PostgreSQL</>ユーザは<varname>lobj_lock_table</varname>へ書き込み可能である必要が有ります。
+また、これはどのスキーマに作成されてもかまいません。
 						</para>
 					</note>
 
@@ -1389,7 +1389,6 @@ DBノードIDが0のバックエンドは「マスターノード」と呼ばれ
 			slaves to perform some administrative work in master/slave mode.
 -->
 新しい<varname>backend_weight</>はパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
-backend_weight は新しく追加した行を設定ファイル再読み込みで追加することができます。
 <productname>Pgpool-II</> <emphasis>V2.2.6</>、<emphasis>V2.3</>以降では、設定ファイルの再読込みで値を変更できます。
 ただし、この効果が反映されるのは新しく確立されたクライアントセッションからです。
 マスタースレーブモードにおいて、スレーブに対して管理業務を実施する都合上、問い合わせがそのスレーブに送られるのを防ぎたい場合に有用です。
@@ -1430,7 +1429,7 @@ backend_weight は新しく追加した行を設定ファイル再読み込み�
 -->
 <varname>backend_data_directory</varname>にはバックエンドのデータベースクラスタのディレクトリを指定します。
 パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_data_directory0)。
-1台しか<productname>PostgreSQL</>を使用しない場合は、backend_data_diarectory0で指定してください。
+1台しか<productname>PostgreSQL</>を使用しない場合は、backend_data_directory0で指定してください。
     使用する PostgreSQL サーバのデータベースクラスタのパスを指定します。 実際には、"backend_data_directory"の後にDBノードIDを付加して使用する複数のPostgreSQLを区別します。 このパラメータはオンラインリカバリの際に使用します。 オンラインリカバリを使用しない場合には設定する必要はありません。
 		</para>
 		<para>

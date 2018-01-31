@@ -460,9 +460,9 @@ delegate_IP = '133.137.177.143'
 other_pgpool_hostname0 = 'osspc20'
   # Host name or IP address to connect to for other pgpool 0
 other_pgpool_port0 = 9999
-  # Port number for othet pgpool 0
+  # Port number for other pgpool 0
 other_wd_port0 = 9000
-  # Port number for othet watchdog 0
+  # Port number for other watchdog 0
 	    </programlisting>
 	  </para>
 	</sect3>
@@ -474,9 +474,9 @@ other_wd_port0 = 9000
 other_pgpool_hostname0 = 'osspc16'
   # Host name or IP address to connect to for other pgpool 0
 other_pgpool_port0 = 9999
-  # Port number for othet pgpool 0
+  # Port number for other pgpool 0
 other_wd_port0 = 9000
-  # Port number for othet watchdog 0
+  # Port number for other watchdog 0
 	    </programlisting>
 	  </para>
 	</sect3>
@@ -1210,10 +1210,10 @@ other_pgpool_hostname0 = 'osspc17'
                                     # Host name or IP address to connect to for other pgpool 0
                                     # (change requires restart)
 other_pgpool_port0 = 9999
-                                    # Port number for othet pgpool 0
+                                    # Port number for other pgpool 0
                                     # (change requires restart)
 other_wd_port0 = 9000
-                                    # Port number for othet watchdog 0
+                                    # Port number for other watchdog 0
                                     # (change requires restart)
 other_pgpool_hostname1 = 'osspc18'
 other_pgpool_port1 = 9999
@@ -1231,10 +1231,10 @@ other_pgpool_hostname0 = 'osspc16'
                                     # Host name or IP address to connect to for other pgpool 0
                                     # (change requires restart)
 other_pgpool_port0 = 9999
-                                    # Port number for othet pgpool 0
+                                    # Port number for other pgpool 0
                                     # (change requires restart)
 other_wd_port0 = 9000
-                                    # Port number for othet watchdog 0
+                                    # Port number for other watchdog 0
                                     # (change requires restart)
 other_pgpool_hostname1 = 'osspc18'
 other_pgpool_port1 = 9999
@@ -1252,10 +1252,10 @@ other_pgpool_hostname0 = 'osspc16'
                                     # Host name or IP address to connect to for other pgpool 0
                                     # (change requires restart)
 other_pgpool_port0 = 9999
-                                    # Port number for othet pgpool 0
+                                    # Port number for other pgpool 0
                                     # (change requires restart)
 other_wd_port0 = 9000
-                                    # Port number for othet watchdog 0
+                                    # Port number for other watchdog 0
                                     # (change requires restart)
 other_pgpool_hostname1 = 'osspc17'
 other_pgpool_port1 = 9999

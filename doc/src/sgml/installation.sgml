@@ -90,7 +90,7 @@
        <primary>yacc</primary>
       </indexterm>
 
-      GNU <application>Flex</> and <application>Bison</>
+      <application>Flex</> and <application>Bison</>
       are needed to build from a Git checkout, or if you changed the actual
       scanner and parser definition files. If you need them, be sure
       to get <application>Flex</> 2.5.31 or later and
@@ -249,7 +249,7 @@ make install
       This is required in all <productname>Pgpool-II</productname>
       installation.
       <programlisting>
-$ cd pgpool-II-x.x.x/sql/pgpool-recovery
+$ cd pgpool-II-x.x.x/src/sql/pgpool-recovery
 $ make
 $ make install
       </programlisting>
@@ -309,7 +309,7 @@ $ pg_ctl reload -D /usr/local/pgsql/data
 
     <para>
       <programlisting>
-$ cd pgpool-II-x.x.x/sql/pgpool-regclass
+$ cd pgpool-II-x.x.x/src/sql/pgpool-regclass
 $ make
 $ make install
       </programlisting>
@@ -356,7 +356,7 @@ $ psql -f pgpool-regclass.sql template1
       processing may be thereby kept waiting for a long time.
 
       <programlisting>
-	$ cd pgpool-II-x.x.x/sql
+	$ cd pgpool-II-x.x.x/src/sql
 	$ psql -f insert_lock.sql template1
       </programlisting>
 
@@ -407,6 +407,10 @@ $ psql -f pgpool-regclass.sql template1
        <row>
         <entry>Raw mode</entry>
 	<entry><literal>pgpool.conf.sample</literal> </entry>
+       </row>
+       <row>
+        <entry>Logical replication mode</entry>
+	<entry><literal>pgpool.conf.sample-logical</literal> </entry>
        </row>
       </tbody>
      </tgroup>
