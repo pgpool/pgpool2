@@ -107,6 +107,12 @@ POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len)
 	if (json_get_int_value_for_key(root, "master_slave_sub_mode", (int*)&config->master_slave_sub_mode))
 		goto ERROR_EXIT;
 
+	if (json_get_bool_value_for_key(root, "failover_when_quorum_exists", &config->failover_when_quorum_exists))
+		goto ERROR_EXIT;
+	if (json_get_bool_value_for_key(root, "failover_require_consensus", &config->failover_require_consensus))
+		goto ERROR_EXIT;
+	if (json_get_bool_value_for_key(root, "allow_multiple_failover_requests_from_node", &config->allow_multiple_failover_requests_from_node))
+		goto ERROR_EXIT;
 
 	/* backend_desc array */
 	value = json_get_value_for_key(root,"backend_desc");
@@ -195,6 +201,10 @@ char* get_pool_config_json(void)
 	jw_put_int(jNode, "wd_port", pool_config->wd_port);
 	jw_put_int(jNode, "wd_priority", pool_config->wd_priority);
 	jw_put_int(jNode, "master_slave_sub_mode", pool_config->master_slave_sub_mode);
+
+	jw_put_bool(jNode, "failover_when_quorum_exists", pool_config->failover_when_quorum_exists);
+	jw_put_bool(jNode, "failover_require_consensus", pool_config->failover_require_consensus);
+	jw_put_bool(jNode, "allow_multiple_failover_requests_from_node", pool_config->allow_multiple_failover_requests_from_node);
 
 	/* Array of backends */
 	jw_start_array(jNode, "backend_desc");
