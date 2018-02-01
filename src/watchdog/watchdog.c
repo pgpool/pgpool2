@@ -6381,6 +6381,10 @@ static void verify_pool_configurations(WatchdogNode* wdNode, POOL_CONFIG* config
 	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, memory_cache_enabled);
 	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, clear_memqcache_on_escalation);
 
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, failover_when_quorum_exists);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, failover_require_consensus);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, allow_multiple_failover_requests_from_node);
+
 	if (config->backend_desc->num_backends != pool_config->backend_desc->num_backends)
 	{
 		ereport(WARNING,
