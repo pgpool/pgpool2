@@ -907,7 +907,8 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		/*
 		 * Take care of "writing transaction" flag.
 		 */
-		if (!is_select_query(node, query) && !is_start_transaction_query(node))
+		if (!is_select_query(node, query) && !is_start_transaction_query(node) &&
+			!is_commit_or_rollback_query(node))
 		{
 			ereport(DEBUG1,
 					(errmsg("Execute: TSTATE:%c",
