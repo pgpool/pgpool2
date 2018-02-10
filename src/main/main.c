@@ -183,7 +183,7 @@ int main(int argc, char **argv)
 	}
 #ifdef USE_SSL
 	/* global ssl init */
-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
 	OPENSSL_init_ssl(0, NULL);
 #else
 	SSL_library_init();
