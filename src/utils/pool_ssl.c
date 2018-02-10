@@ -253,7 +253,7 @@ static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
 	char *cacert = NULL, *cacert_dir = NULL;
 
 	/* initialize SSL members */
-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
 		cp->ssl_ctx = SSL_CTX_new(TLS_method());
 #else
 		cp->ssl_ctx = SSL_CTX_new(SSLv23_method());
