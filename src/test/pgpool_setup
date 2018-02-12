@@ -660,7 +660,7 @@ do
 	echo "done."
 
 	# set postgresql.conf
-	echo "update postgreql.conf"
+	echo "update postgresql.conf"
 	set_postgresql_conf $CLUSTERDIR >&5 2>&1
 
 	# create pgpool_remote_start script under cluster directory
