@@ -530,7 +530,7 @@ LOG:  watchdog remote node:0 on Linux_osspc16_9000:9000
 LOG:  interface monitoring is disabled in watchdog
 LOG:  IPC socket path: "/tmp/.s.PGPOOLWD_CMD.9000"
 LOG:  watchdog node state changed from [DEAD] to [LOADING]
-LOG:  new outbond connection to Linux_osspc16_9000:9000
+LOG:  new outbound connection to Linux_osspc16_9000:9000
 LOG:  watchdog node state changed from [LOADING] to [INITIALIZING]
 LOG:  watchdog node state changed from [INITIALIZING] to [STANDBY]
 <emphasis>
@@ -597,7 +597,7 @@ LOG:  watchdog cluster has lost the coordinator node
 LOG:  watchdog node state changed from [STANDBY] to [JOINING]
 LOG:  watchdog node state changed from [JOINING] to [INITIALIZING]
 LOG:  I am the only alive node in the watchdog cluster
-HINT:  skiping stand for coordinator state
+HINT:  skipping stand for coordinator state
 LOG:  watchdog node state changed from [INITIALIZING] to [MASTER]
 LOG:  I am announcing my self as master/coordinator watchdog node
 LOG:  I am the cluster leader node
@@ -1810,7 +1810,7 @@ LOG:  watchdog cluster has lost the coordinator node
 LOG:  watchdog node state changed from [STANDBY] to [JOINING]
 LOG:  watchdog node state changed from [JOINING] to [INITIALIZING]
 LOG:  I am the only alive node in the watchdog cluster
-HINT:  skiping stand for coordinator state
+HINT:  skipping stand for coordinator state
 LOG:  watchdog node state changed from [INITIALIZING] to [MASTER]
 LOG:  I am announcing my self as master/coordinator watchdog node
 LOG:  I am the cluster leader node

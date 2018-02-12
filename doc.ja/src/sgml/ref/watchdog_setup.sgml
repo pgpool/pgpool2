@@ -369,12 +369,12 @@ Satrting set up in streaming replication mode
 creating startall and shutdownall
 creating failover script
 creating database cluster /home/t-ishii/work/pgpool-II/current/pgpool2/src/test/a/pgpool1/data0...done.
-update postgreql.conf
+update postgresql.conf
 creating pgpool_remote_start
 creating basebackup.sh
 creating recovery.conf
 creating database cluster /home/t-ishii/work/pgpool-II/current/pgpool2/src/test/a/pgpool1/data1...done.
-update postgreql.conf
+update postgresql.conf
 creating pgpool_remote_start
 creating basebackup.sh
 creating recovery.conf
@@ -414,12 +414,12 @@ Satrting set up in streaming replication mode
 creating startall and shutdownall
 creating failover script
 creating database cluster /home/t-ishii/work/pgpool-II/current/pgpool2/src/test/a/pgpool2/data0...done.
-update postgreql.conf
+update postgresql.conf
 creating pgpool_remote_start
 creating basebackup.sh
 creating recovery.conf
 creating database cluster /home/t-ishii/work/pgpool-II/current/pgpool2/src/test/a/pgpool2/data1...done.
-update postgreql.conf
+update postgresql.conf
 creating pgpool_remote_start
 creating basebackup.sh
 creating recovery.conf
