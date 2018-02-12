@@ -643,10 +643,10 @@ wd_lifecheck_password = ''
                                     # Host name or IP address to connect to for other pgpool 0
                                     # (change requires restart)
 #other_pgpool_port0 = 5432
-                                    # Port number for othet pgpool 0
+                                    # Port number for other pgpool 0
                                     # (change requires restart)
 #other_wd_port0 = 9000
-                                    # Port number for othet watchdog 0
+                                    # Port number for other watchdog 0
                                     # (change requires restart)
 #other_pgpool_hostname1 = 'host1'
 #other_pgpool_port1 = 5432
