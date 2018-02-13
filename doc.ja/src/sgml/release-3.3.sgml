@@ -1,6 +1,69 @@
 <!-- doc/src/sgml/release-3.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-3-20">
+<!--
+  <title>Release 3.3.20</title>
+	-->
+  <title>リリース 3.3.20</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-02-13</simpara>
+  </note>
+
+  <sect2>
+    <title>変更点</title> 
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2018-01-19 [0bca7cf]
+    -->
+    <para>
+    <!--
+    Change systemd service file to use STOP_OPTS=" -m fast". (Bo Peng)
+    -->
+systemd サービスを用いて<productname>Pgpool-II</> を停止するときに fast モードで停止するように変更しました。 (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-19 [9dab4b2]
+    -->
+    <para>
+    <!--
+    Change pgpool_setup to add restore_command in recovery.conf. (Bo Peng)
+    -->
+pgpool_setup の recovery.conf で  restore_command を使用するように pgpool_setup を変更します。 (Bo Peng)
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>不具合修正</title> 
+    <itemizedlist>
+    <listitem>
+    <!--
+    2018-01-18 [21451f9]
+    -->
+    <para>
+    <!--
+    Fix queries hanging in parse_before_bind with extended protocol and replication + load-balancing. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=377">bug 377</ulink>) (Tatsuo Ishii)
+    -->
+拡張プロトコル、レプリケーションモードかつロードバランスを使用した場合に発生しうるハングアップを修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=377">bug 377</ulink>) (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-3-19">
 <!--
   <title>Release 3.3.19</title>

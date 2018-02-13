@@ -1,3 +1,240 @@
+<sect1 id="release-3-7-2">
+<!--
+  <title>Release 3.7.2</title>
+	-->
+  <title>リリース 3.7.2</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-02-13</simpara>
+  </note>
+  <note>
+    <para>
+    このリリースでは、Pgpool-II 3.7.0、3.6.6、3.5.10 で追加された、ソケット
+    への書き込み不具合を修正しています。この障害により、ネットワーク負荷が
+    高い状態でのフロントエンド、バックエンドへのメッセージ送信の際に、不正
+    なメッセージが送信される可能性があります。3.7.x、3.6.6 以降、3.5.10 以降
+    のバージョンを利用中のユーザは、できるだけ早くアップグレードすることを
+    お勧めします。
+    </para>
+  </note>
+
+  <sect2>
+    <title>変更点</title> 
+    <itemizedlist>
+    <listitem>
+    <!--
+    2018-02-10 [6c77a9e]
+    -->
+    <para>
+    <!--
+    Allow to build with libressl. (Tatsuo Ishii)
+    -->
+<productname>Pgpool-II</> が libressl の環境でビルドできるようになりました。(Tatsuo Ishii)
+    </para>
+    <para>
+詳細は <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2018-February/002714.html">[pgpool-hackers: 2714]</ulink> を参照してください。パッチは Sandino Araico Sanchez により提供されました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-29 [144e7a8]
+    -->
+    <para>
+    <!--
+    Set TCP_NODELAY and non blocking to frontend socket. (Tatsuo Ishii)
+    -->
+<productname>PostgreSQL</>のようにフロントエンドソケットを TCP_NODELAY、non-blocking に設定しました。 (Tatsuo Ishii) 
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-19 [9357d76]
+    -->
+    <para>
+    <!--
+    Change systemd service file to use STOP_OPTS=" -m fast". (Bo Peng)
+    -->
+systemd サービスを用いて<productname>Pgpool-II</> を停止するときに fast モードで停止するように変更しました。 (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-19 [d1565e7]
+    -->
+    <para>
+    <!--
+    Change pgpool_setup to add restore_command in recovery.conf. (Bo Peng)
+    -->
+pgpool_setup の recovery.conf で  restore_command を使用するように pgpool_setup を変更します。 (Bo Peng)
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>不具合修正</title> 
+    <itemizedlist>
+    <listitem>
+    <!--
+    2018-02-09 [324768d]
+    -->
+    <para>
+    <!--
+    Fix writing transaction flag is accidentally set at commit or rollback. (Tatsuo Ishii)
+    -->
+コミットまたはロールバック時に誤って書き込みトランザクションフラグをセットする不具合を修正しました。 (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-01 [ff0b66e]
+    -->
+    <para>
+    <!--
+    Throw a warning message when failover consensus settings on watchdog nodes differs. (Muhammad Usama)
+    -->
+watchdog のフェイルオーバーコンセンサスの設定が異なる場合、警告メッセージを表示するように修正しました。(Muhammad Usama)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-31 [8f9e406]
+    -->
+    <para>
+    <!--
+    Fix document typo. (Bo Peng)
+    -->
+Doc: ドキュメントのタイポを修正しました。 (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-29 [22f739a]
+    -->
+    <para>
+    <!--
+    Fix bug with socket writing. (Tatsuo Ishii)
+    -->
+ソケット書き込みの不具合を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+ネットワーク負荷が高い場合に、フロントエンド、バックエンドへのメッセージ送信の際に、
+不正なメッセージが送信される可能性があるのを修正しました。
+    </para>
+    <para>
+このバグは 3.6.6、3.5.10 がリリースされた際に追加されたものです。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-29 [36517db]
+    -->
+    <para>
+    <!--
+    Fix pgpool child process segfault when ALWAYS_MASTER is on. (Tatsuo Ishii)
+    -->
+ALWAYS_MASTER がオンの場合に発生するPgpool-II の子プロセスのセグメンテーション違反を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+    <!--
+    If following conditions are all met pgpool child segfaults:
+    -->
+以下で条件で発生します。
+    <orderedlist>  
+    <listitem>
+    <para>
+    <!--
+    Streaming replication mode.
+    -->
+ストリーミングレプリケーションモード
+     </para>
+     </listitem>
+    <listitem>
+    <para>
+    <!--
+    fail_over_on_backend_error is off.
+    -->
+fail_over_on_backend_error=off
+     </para>
+     </listitem>
+    <listitem>
+    <para>
+    <!--
+    ALWAYS_MASTER flags is set to the master (writer) node.
+    -->
+マスタノードの backend_flag が ALWAYS_MASTER に設定してある
+     </para>
+     </listitem>
+    <listitem>
+    <para>
+    <!--
+    pgpool_status file indicates that the node mentioned in #3 is in down status.
+    -->
+pgpool_status ファイルで #3 のノードの状態が down である
+     </para>
+     </listitem>
+    </orderedlist>  
+    </para>
+    <para>
+    <!--
+    See <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2018-January/002687.html">[pgpool-hackers: 2687]</ulink> and <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-January/005939.html">[pgpool-general: 5881]</ulink> for more details.
+    -->
+詳細は <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2018-January/002687.html">[pgpool-hackers: 2687]</ulink> と <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-January/005939.html">[pgpool-general: 5881]</ulink> を参照してください。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-24 [1a4dfec]
+    -->
+    <para>
+    <!--
+    Fix segfault when %a is in log_line_prefix and debug message is on. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=376">bug 376</ulink>) (Tatsuo Ishii)
+    -->
+デバッグモードがオン、かつ log_line_prefix に %a を指定した場合に発生するセグメンテーション違反を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=376">bug 376</ulink>) (Tatsuo Ishii)
+    </para>
+
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-23 [b6bc607]
+    -->
+    <para>
+    <!--
+    Fix per node health check parameters types. (Tatsuo Ishii)
+    -->
+ノードごとのヘルスチェックパラメータのデータ型の不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-18 [c5c72c3]
+    -->
+    <para>
+    <!--
+    Fix queries hanging in parse_before_bind with extended protocol and replication + load-balancing. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=377">bug 377</ulink>) (Tatsuo Ishii)
+    -->
+拡張プロトコル、レプリケーションモードかつロードバランスを使用した場合に発生しうるハングアップを修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=377">bug 377</ulink>) (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-7-1">
 <!--
   <title>Release 3.7.1</title>
