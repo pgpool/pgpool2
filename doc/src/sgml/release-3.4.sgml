@@ -1,6 +1,77 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-4-16">
+  <title>Release 3.4.16</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2018-02-13</simpara>
+  </note>
+
+  <sect2>
+    <title>Changes</title>
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2018-01-29 [717c4dd]
+    -->
+    <para>
+    Set TCP_NODELAY and non blocking to frontend socket. (Tatsuo Ishii)
+    </para>
+    <para>
+    TCP_NODELAY is employed by <productname>PostgreSQL</>, so do we it.
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-19 [0bca7cf]
+    -->
+    <para>
+    Change systemd service file to use <varname>STOP_OPTS=" -m fast"</>. (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-19 [9dab4b2]
+    -->
+    <para>
+    Change <command>pgpool_setup</> to add restore_command in <filename>recovery.conf</>. (Bo Peng)
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2018-01-24 [a4f9d5a]
+    -->
+    <para>
+    Fix segfault when %a is in <varname>log_line_prefix</> and debug message is on. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=376">bug 376</ulink>) (Tatsuo Ishii)
+    </para>
+
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-01-18 [21451f9]
+    -->
+    <para>
+    Fix queries hanging in <function>parse_before_bind</> with extended protocol and replication + load-balancing. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=377">bug 377</ulink>) (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-4-15">
   <title>Release 3.4.15</title>
 
