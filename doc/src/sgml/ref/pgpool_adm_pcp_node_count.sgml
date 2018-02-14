@@ -77,7 +77,7 @@ Pgpool-II documentation
    <para>
 	Here is an example output:
 	<programlisting>
-test=# SELECT * FROM pgpool_adm_pcp_node_count('localhost',11001,'t-ishii','t-ishii');
+test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
  node_count
 ------------
           2
