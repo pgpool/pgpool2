@@ -136,7 +136,7 @@ pcpサーバの外部サーバ名
 -->
 使用例です。
 	<programlisting>
-test=# SELECT * FROM pgpool_adm_pcp_detach_node(1, 'false', 'localhost',11001,'t-ishii','t-ishii');
+test=# SELECT * FROM pcp_detach_node(1, 'false', 'localhost',11001,'t-ishii','t-ishii');
  node_detached
 ---------------
  t
