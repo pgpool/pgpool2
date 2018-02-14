@@ -83,7 +83,7 @@ Pgpool-II documentation
    <para>
 	Here is an example output:
 	<programlisting>
- test=# SELECT * FROM pgpool_adm_pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHERE item ~ 'backend.*0';
+ test=# SELECT * FROM pcp_pool_status('localhost',11001,'t-ishii','t-ishii') WHERE item ~ 'backend.*0';
           item           |                     value                      |          description
 -------------------------+------------------------------------------------+-------------------------------
  backend_hostname0       | /tmp                                           | backend #0 hostname

@@ -121,7 +121,7 @@ pcpサーバの外部サーバ名
 -->
 使用例です。
 	<programlisting>
-test=# SELECT * FROM pgpool_adm_pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
+test=# SELECT * FROM pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
  node_attached
 ---------------
  t
