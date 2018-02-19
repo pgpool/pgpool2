@@ -45,4 +45,9 @@
 
 'S'
 'Y'
+
+# DROP test table
+'Q'	"DROP TABLE pgproto_test1"
+'Y'
+
 'X'

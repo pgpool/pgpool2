@@ -1,10 +1,13 @@
 # Test data for bug271.
 # In an explicit transaction, SELECT is parsed, DML issued, same SELECT/bind issued.
-# In this case Pgpool-II should parse resend to primary node.
+# In this case Pgpool-II should resend parse message to primary node.
 # Similar to pgproto.data but in this case SELECT uses "S1" statement.
 # As of 2017/2/14, this fails.
 # <= BE ErrorResponse(S ERROR C XX000 M unable to bind D cannot get parse message "S1" F pool_proto_modules.c L 1317 )
 # Moreover, Pgpool-II does not close the idle connection.
+
+##backend_weight0 = 0
+##backend_weight1 = 1
 
 # Create test table
 'Q'	"DROP TABLE IF EXISTS pgproto_test1"
@@ -39,4 +42,9 @@
 'C'	'S'	"S1"
 'S'
 'Y'
+
+# DROP test table
+'Q'	"DROP TABLE pgproto_test1"
+'Y'
+
 'X'
