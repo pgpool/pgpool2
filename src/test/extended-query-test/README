@@ -15,7 +15,8 @@ How to run the test:
 
 The script runs each pgproto test data under "tests" directory using
 pgproto command. The each result is compared with data under
-"expected" directory.
+"expected" directory. Pgpool-II used for this test is installed
+temporarily under "temp/installed".
 
 Optional argument can be specified if you want to run only some of
 tests. The argument should be the test file name under "tests"
