@@ -1,21 +1,113 @@
 #!/usr/bin/env bash
 
+dir=`pwd`
+MODE=install
+PG_INSTALL_DIR=/usr/local/pgsql/bin
+PGPOOL_PATH=/usr/local
+JDBC_DRIVER=/usr/local/pgsql/share/postgresql-9.2-1003.jdbc4.jar
+export log=$dir/log
+PGSOCKET_DIR=/tmp
+
 timeout=30
 export PGPORT=11000
 export PGDATABASE=test
-export PGPOOL_INSTALL_DIR=$HOME/work/pgpool-II/current
+#export PGPOOL_INSTALL_DIR=$HOME/work/pgpool-II/current
 #export PGPOOLDEBUG=true
 PGPROTO=/usr/local/bin/pgproto
 
-testdir=`pwd`/tests
-expected=`pwd`/expected
-extra_scripts=`pwd`/extra_scripts
-export PGPOOLLOG=`pwd`/testdata/log/pgpool.log
-results=`pwd`/results
+testdir=$dir/tests
+expected=$dir/expected
+extra_scripts=$dir/extra_scripts
+export PGPOOLLOG=$dir/testdata/log/pgpool.log
+results=$dir/results
+
+function install_pgpool
+{
+	echo "creating pgpool-II temporary installation ..."
+        PGPOOL_PATH=$dir/temp/installed
+
+	test -d $log || mkdir $log
+        
+	make install -C $dir/../../ -e prefix=${PGPOOL_PATH} >& regression.log 2>&1
+
+	if [ $? != 0 ];then
+	    echo "make install failed"
+	    exit 1
+	fi
+	
+	echo "moving pgpool_setup to temporary installation path ..."
+        cp $dir/../pgpool_setup ${PGPOOL_PATH}/pgpool_setup
+	export PGPOOL_SETUP=$PGPOOL_PATH/pgpool_setup
+}
+
+function verify_pginstallation
+{
+	# PostgreSQL bin directory
+	PGBIN=`$PG_INSTALL_DIR/pg_config --bindir`
+	if [ -z $PGBIN ]; then
+		echo "$0: cannot locate pg_config"
+		exit 1
+	fi
+}
+
+function export_env_vars
+{
+	if [[ -z "$PGPOOL_PATH" ]]; then
+		# check if pgpool is in the path
+		PGPOOL_PATH=/usr/local
+		export PGPOOL_SETUP=$HOME/bin/pgpool_setup
+ 	fi
+	
+	if [[ -z "$PGBENCH_PATH" ]]; then
+		if [ -x $PGBIN/pgbench ]; then
+			PGBENCH_PATH=$PGBIN/pgbench
+		else
+			PGBENCH_PATH=`which pgbench`
+		fi
+	fi
+
+	if [ ! -x $PGBENCH_PATH ]; then
+		echo "$0] cannot locate pgbench"; exit 1
+ 	fi
+	
+	echo "using pgpool-II at "$PGPOOL_PATH
+	export PGPOOL_INSTALL_DIR=$PGPOOL_PATH
+
+	PGPOOLLIB=${PGPOOL_INSTALL_DIR}/lib
+	if [ -z "$LD_LIBRARY_PATH" ];then
+	    export LD_LIBRARY_PATH=$PGPOOLLIB
+	else
+	    export LD_LIBRARY_PATH=${PGPOOLLIB}:${LD_LIBRARY_PATH}
+	fi
+
+	export TESTLIBS=$dir/libs.sh
+	export PGBIN=$PGBIN
+	export JDBC_DRIVER=$JDBC_DRIVER
+	export PGBENCH_PATH=$PGBENCH_PATH
+	export PGSOCKET_DIR=$PGSOCKET_DIR
+}
+
+function print_info
+{
+	echo ${CBLUE}"*************************"${CNORM}
+
+	echo "REGRESSION MODE : "${CBLUE}$MODE${CNORM}
+	echo "PGPOOL-II       : "${CBLUE}$PGPOOL_PATH${CNORM}
+	echo "PostgreSQL bin  : "${CBLUE}$PGBIN${CNORM}
+	echo "pgbench         : "${CBLUE}$PGBENCH_PATH${CNORM}
+	echo "PostgreSQL jdbc : "${CBLUE}$JDBC_DRIVER${CNORM}
+	echo ${CBLUE}"*************************"${CNORM}
+}
+
+install_pgpool
+verify_pginstallation
+export_env_vars
+print_info
+
 rm -f $results/*
 test ! -d $results && mkdir $results
 
-diffs=`pwd`/diffs
+diffs=$dir/diffs
 rm -f $diffs
 
 if [ $# -gt 0 ];then
@@ -112,3 +204,4 @@ done
 
 total=`expr $okcnt + $failcnt + $timeoutcnt`
 echo "out of $total ok: $okcnt failed: $failcnt timeout: $timeoutcnt."
+
