@@ -9,6 +9,8 @@ PGPROTO=/usr/local/bin/pgproto
 
 testdir=`pwd`/tests
 expected=`pwd`/expected
+extra_scripts=`pwd`/extra_scripts
+export PGPOOLLOG=`pwd`/testdata/log/pgpool.log
 results=`pwd`/results
 rm -f $results/*
 test ! -d $results && mkdir $results
@@ -74,8 +76,25 @@ do
 	    diff -N $expected/$i $results/$i >> $diffs
 	    failcnt=`expr $failcnt + 1`
 	else
-	    echo "ok."
-	    okcnt=`expr $okcnt + 1`
+	    extra_fail=0
+	    # excute extra scripts if exists.
+	    if [ -x $extra_scripts/$i ]
+	    then
+		$extra_scripts/$i > $results/$i.extra 2>&1
+
+		if [ $? != 0 ]
+		then
+		    echo "extra test failed."
+		    extra_fail=1
+		    failcnt=`expr $failcnt + 1`
+		fi
+	    fi
+
+	    if [ $extra_fail = 0 ]
+	    then
+		echo "ok."
+		okcnt=`expr $okcnt + 1`
+	    fi
 	fi
 	rm expected_tmp results_tmp
     fi
