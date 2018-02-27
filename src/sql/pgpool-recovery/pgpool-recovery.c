@@ -233,7 +233,14 @@ pgpool_switch_xlog(PG_FUNCTION_ARGS)
 	xlogfile_name_oid = get_function_oid("pg_xlogfile_name", pg_xlogfile_name_arg_type, "pg_catalog");
 
 	if (!switch_xlog_oid || !xlogfile_name_oid)
-		elog(ERROR, "cannot find xlog functions");
+	{
+		/* probably PostgreSQL is 10 or greater */
+		switch_xlog_oid = get_function_oid("pg_switch_wal", NULL, "pg_catalog");
+		xlogfile_name_oid = get_function_oid("pg_walfile_name", pg_xlogfile_name_arg_type, "pg_catalog");
+
+		if (!switch_xlog_oid || !xlogfile_name_oid)
+			elog(ERROR, "cannot find xlog functions");
+	}
 
 	location = OidFunctionCall1(switch_xlog_oid, PointerGetDatum(NULL));
 	filename_t = DatumGetTextP(OidFunctionCall1(xlogfile_name_oid, location));
