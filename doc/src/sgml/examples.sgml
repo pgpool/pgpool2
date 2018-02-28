@@ -320,22 +320,22 @@ $ pgbench -i -p 9999 bench_replication
 
               <tbody>
 		<row>
-		  <entry>branches</entry>
+		  <entry>pgbench_branches</entry>
 		  <entry>1</entry>
 		</row>
 
 		<row>
-		  <entry>tellers</entry>
+		  <entry>pgbench_tellers</entry>
 		  <entry>10</entry>
 		</row>
 
 		<row>
-		  <entry>accounts</entry>
+		  <entry>pgbench_accounts</entry>
 		  <entry>100000</entry>
 		</row>
 
 		<row>
-		  <entry>history</entry>
+		  <entry>pgbench_history</entry>
 		  <entry>0</entry>
 		</row>
 
@@ -345,12 +345,12 @@ $ pgbench -i -p 9999 bench_replication
 
 	  <para>
 	    Let's use a simple shell script to check the above on all the nodes.
-	    The following script will display the number of rows in branches,
-	    tellers, accounts, and history tables on all the nodes (5432, 5433, 5434).
+	    The following script will display the number of rows in pgbench_branches,
+	    pgbench_tellers, pgbench_accounts, and pgbench_history tables on all the nodes (5432, 5433, 5434).
 	    <programlisting>
 $ for port in 5432 5433 5434; do
 >     echo $port
->     for table_name in branches tellers accounts history; do
+>     for table_name in pgbench_branches pgbench_tellers pgbench_accounts pgbench_history; do
 >         echo $table_name
 >         psql -c "SELECT count(*) FROM $table_name" -p $port bench_replication
 >     done
