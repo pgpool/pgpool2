@@ -36,6 +36,14 @@ typedef enum {
 	POOL_PASSWD_RW,		/* open pool_passwd in read/write mode. used by pg_md5 command */
 } POOL_PASSWD_MODE;
 
+typedef enum PasswordType
+{
+	PASSWORD_TYPE_PLAINTEXT = 0,
+	PASSWORD_TYPE_MD5,
+	PASSWORD_TYPE_SCRAM_SHA_256
+} PasswordType;
+
+extern PasswordType get_password_type(const char *shadow_pass);
 extern void pool_init_pool_passwd(char *pool_passwd_filename, POOL_PASSWD_MODE mode);
 extern int pool_create_passwdent(char *username, char *passwd);
 extern char *pool_get_passwd(char *username);

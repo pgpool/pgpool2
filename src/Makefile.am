@@ -17,6 +17,7 @@ pgpool_SOURCES = main/main.c \
 	auth/pool_auth.c \
 	auth/pool_passwd.c \
 	auth/pool_hba.c \
+	auth/auth-scram.c \
 	protocol/pool_proto2.c \
 	protocol/child.c \
 	protocol/pool_process_query.c \
@@ -53,6 +54,9 @@ pgpool_SOURCES = main/main.c \
 	utils/regex_array.c \
 	utils/json_writer.c \
 	utils/json.c \
+	utils/scram-common.c \
+	utils/base64.c \
+	utils/sha2.c \
     utils/statistics.c
 
 DEFS = @DEFS@ \

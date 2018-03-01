@@ -28,6 +28,7 @@
 #include "pool_config.h"
 #include "auth/pool_hba.h"
 #include "auth/pool_passwd.h"
+#include "auth/scram.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
@@ -40,6 +41,10 @@
 #ifdef HAVE_PARAM_H
 #include <param.h>
 #endif
+#ifdef USE_SSL
+#include <openssl/rand.h>
+#endif
+
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -51,12 +56,17 @@ static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *fro
 static void pool_send_auth_fail(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp);
 static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
 static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
-static int send_md5auth_request(POOL_CONNECTION *frontend, int protoMajor, char *salt);
+static void send_md5auth_request(POOL_CONNECTION *frontend, int protoMajor, char *salt);
 static int read_password_packet(POOL_CONNECTION *frontend, int protoMajor, 	char *password, int *pwdSize);
 static int send_password_packet(POOL_CONNECTION *backend, int protoMajor, char *password);
 static int send_auth_ok(POOL_CONNECTION *frontend, int protoMajor);
-
+static void sendAuthRequest(POOL_CONNECTION *frontend, int protoMajor, int32 auth_req_type, char *extradata, int extralen);
 static long PostmasterRandom(void);
+
+static int doSCRAMAuth(POOL_CONNECTION *frontend, int reauth, int protoMajor);
+static int pg_SASL_continue(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payload, int payloadlen, void *sasl_state, bool final);
+static void* pg_SASL_init(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payload, int payloadlen);
+static bool doSCRAMBackendAuth(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoMajor, int message_length);
 
 /*
  * After sending the start up packet to the backend, do the
@@ -72,6 +82,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	int length;
 	int authkind;
 	int i;
+	int message_length = 0;
 	StartupPacket *sp;
 	
 
@@ -107,14 +118,17 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	/*
 	 * message length (v3 only)
 	 */
-	if (protoMajor == PROTO_MAJOR_V3 && pool_read_message_length(cp) < 0)
-		ereport(ERROR,
-			(errmsg("invalid authentication packet from backend"),
-				errdetail("failed to get the authentication packet length"),
-					errhint("This is likely caused by the inconsistency of auth method among DB nodes. \
-							Please check the previous error messages (hint: length field) \
-							from pool_read_message_length and recheck the pg_hba.conf settings.")));
-
+	if (protoMajor == PROTO_MAJOR_V3)
+	{
+		message_length = pool_read_message_length(cp);
+		if (message_length <= 0)
+			ereport(ERROR,
+				(errmsg("invalid authentication packet from backend"),
+					errdetail("failed to get the authentication packet length"),
+						errhint("This is likely caused by the inconsistency of auth method among DB nodes. \
+								Please check the previous error messages (hint: length field) \
+								from pool_read_message_length and recheck the pg_hba.conf settings.")));
+	}
 
 	/*
 	 * read authentication request kind.
@@ -145,7 +159,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			 errdetail("auth kind:%d", authkind)));
 
 	/* trust? */
-	if (authkind == 0)
+	if (authkind == AUTH_REQ_OK)
 	{
 		int msglen;
 
@@ -163,7 +177,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	}
 
 	/* clear text password authentication? */
-	else if (authkind == 3)
+	else if (authkind == AUTH_REQ_PASSWORD)
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
@@ -190,7 +204,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	}
 
 	/* crypt authentication? */
-	else if (authkind == 4)
+	else if (authkind == AUTH_REQ_CRYPT)
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
@@ -214,7 +228,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	}
 
 	/* md5 authentication? */
-	else if (authkind == 5)
+	else if (authkind == AUTH_REQ_MD5)
 	{
 		/* If MD5 auth is not active in pool_hba.conf, it cannot be
 		 * used with other than raw mode.
@@ -251,6 +265,49 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 						errdetail("MD5 authentication failed in slot [%d].",i)));
 			}
 		}
+	}
+
+	/* SCRAM authentication? */
+	else if (authkind == AUTH_REQ_SASL)
+	{
+		/* If SCRAM auth is not active in pool_hba.conf, it cannot be
+		 * used with other than raw mode.
+		 */
+		if (frontend->pool_hba == NULL || frontend->pool_hba->auth_method != uaSCRAM)
+		{
+			pool_send_error_message(frontend, protoMajor, AUTHFAIL_ERRORCODE,
+									"SCRAM authentication is unsupported in replication and master-slave modes.",
+									"",
+									"check pg_hba.conf",
+									__FILE__, __LINE__);
+			ereport(ERROR,
+					(errmsg("failed to authenticate with backend"),
+					 errdetail("SCRAM authentication is not supported in replication and master-slave modes."),
+					 errhint("check pg_hba.conf settings on backend node")));
+		}
+		/* Do frontend SCRAM auth first */
+		authkind = doSCRAMAuth(frontend, 0, protoMajor);
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (!VALID_BACKEND(i))
+				continue;
+			
+			ereport(DEBUG1,
+				(errmsg("authentication backend"),
+					 errdetail("trying SCRAM authentication")));
+
+			if (doSCRAMBackendAuth(frontend, CONNECTION(cp, i), protoMajor, message_length) == false)
+			{
+				pool_send_auth_fail(frontend, cp);
+				ereport(ERROR,
+						(errmsg("failed to authenticate with backend"),
+						 errdetail("SCRAM authentication failed in slot [%d].",i)));
+			}
+		}
+
+		send_auth_ok(frontend, protoMajor);
+
 	}
 
 	else
@@ -439,25 +496,28 @@ int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 
 	switch(MASTER(cp)->auth_kind)
 	{
-		case 0:
+		case AUTH_REQ_OK:
 			/* trust */
 			break;
 
-		case 3:
+		case AUTH_REQ_PASSWORD:
 			/* clear text password */
 			do_clear_text_password(MASTER(cp), frontend, 1, protoMajor);
 			break;
 
-		case 4:
+		case AUTH_REQ_CRYPT:
 			/* crypt password */
 			do_crypt(MASTER(cp), frontend, 1, protoMajor);
 			break;
 
-		case 5:
+		case AUTH_REQ_MD5:
 			/* md5 password */
 			do_md5(MASTER(cp), frontend, 1, protoMajor);
 			break;
-
+		case AUTH_REQ_SASL:
+			/* SCRAM */
+			doSCRAMAuth( frontend, 1, protoMajor);
+			break;
 		default:
             ereport(ERROR,
                 (errmsg("authentication failed"),
@@ -802,6 +862,164 @@ static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int rea
 	return kind;
 }
 
+
+static int
+doSCRAMAuth(POOL_CONNECTION *frontend, int reauth, int protoMajor)
+{
+	void	   *scram_opaq;
+	char	   *output = NULL;
+	int			outputlen = 0;
+	char	   *input;
+	int			inputlen;
+	int			result;
+	bool		initial;
+	char 		*logdetail = NULL;
+	char 		*shadow_pass;
+	char 		*pool_passwd = pool_get_passwd(frontend->username);
+
+	if (!pool_passwd)
+		ereport(ERROR,
+			(errmsg("authentication failed"),
+				 errdetail("username \"%s\" does not exist in pool_passwd",frontend->username)));
+
+	shadow_pass = pg_be_scram_build_verifier(pool_passwd);
+	if (!shadow_pass)
+		ereport(ERROR,
+			(errmsg("authentication failed"),
+				 errdetail("faild to build the scram verifier")));
+
+
+	/*
+	 * SASL auth is not supported for protocol versions before 3, because it
+	 * relies on the overall message length word to determine the SASL payload
+	 * size in AuthenticationSASLContinue and PasswordMessage messages.  (We
+	 * used to have a hard rule that protocol messages must be parsable
+	 * without relying on the length word, but we hardly care about older
+	 * protocol version anymore.)
+	 */
+	if (protoMajor < 3)
+		ereport(FATAL,
+				(errmsg("SASL authentication is not supported in protocol version 2")));
+
+	/*
+	 * Send the SASL authentication request to user.  It includes the list of
+	 * authentication mechanisms (which is trivial, because we only support
+	 * SCRAM-SHA-256 at the moment).  The extra "\0" is for an empty string to
+	 * terminate the list.
+	 */
+
+	sendAuthRequest(frontend, protoMajor, AUTH_REQ_SASL, SCRAM_SHA_256_NAME "\0",
+					strlen(SCRAM_SHA_256_NAME) + 2);
+	
+	/*
+	 * Initialize the status tracker for message exchanges.
+	 *
+	 * If the user doesn't exist, or doesn't have a valid password, or it's
+	 * expired, we still go through the motions of SASL authentication, but
+	 * tell the authentication method that the authentication is "doomed".
+	 * That is, it's going to fail, no matter what.
+	 *
+	 * This is because we don't want to reveal to an attacker what usernames
+	 * are valid, nor which users have a valid password.
+	 */
+	scram_opaq = pg_be_scram_init(frontend->username, shadow_pass);
+
+	/*
+	 * Loop through SASL message exchange.  This exchange can consist of
+	 * multiple messages sent in both directions.  First message is always
+	 * from the client.  All messages from client to server are password
+	 * packets (type 'p').
+	 */
+	initial = true;
+	do
+	{
+		static int size;
+		static char data[MAX_PASSWORD_SIZE];
+
+		/* Read password packet */
+		read_password_packet(frontend, protoMajor, data, &size);
+
+		ereport(DEBUG4,
+				(errmsg("Processing received SASL response of length %d", size)));
+
+		/*
+		 * The first SASLInitialResponse message is different from the others.
+		 * It indicates which SASL mechanism the client selected, and contains
+		 * an optional Initial Client Response payload.  The subsequent
+		 * SASLResponse messages contain just the SASL payload.
+		 */
+		if (initial)
+		{
+			const char *selected_mech;
+			char *ptr = data;
+			
+			/*
+			 * We only support SCRAM-SHA-256 at the moment, so anything else
+			 * is an error.
+			 */
+			selected_mech = data;
+			if (strcmp(selected_mech, SCRAM_SHA_256_NAME) != 0)
+			{
+				ereport(ERROR,
+						(errmsg("client selected an invalid SASL authentication mechanism")));
+			}
+			/* get the length of trailing optional data */
+			ptr += strlen(selected_mech) + 1;
+			memcpy(&inputlen,ptr,sizeof(int));
+			inputlen = ntohl(inputlen);
+			if (inputlen == -1)
+				input = NULL;
+			else
+				input = ptr + 4;
+
+			initial = false;
+		}
+		else
+		{
+			inputlen = size;
+			input = data;
+		}
+		Assert(input == NULL || input[inputlen] == '\0');
+		
+		/*
+		 * we pass 'logdetail' as NULL when doing a mock authentication,
+		 * because we should already have a better error message in that case
+		 */
+		result = pg_be_scram_exchange(scram_opaq, input, inputlen,
+									  &output, &outputlen,
+									  &logdetail);
+		
+		/* input buffer no longer used */
+
+		if (output)
+		{
+			/*
+			 * Negotiation generated data to be sent to the client.
+			 */
+			ereport(DEBUG4,
+				(errmsg("sending SASL challenge of length %u", outputlen)));
+
+			if (result == SASL_EXCHANGE_SUCCESS)
+				sendAuthRequest(frontend, protoMajor, AUTH_REQ_SASL_FIN, output, outputlen);
+			else
+				sendAuthRequest(frontend, protoMajor, AUTH_REQ_SASL_CONT, output, outputlen);
+
+			pfree(output);
+		}
+	} while (result == SASL_EXCHANGE_CONTINUE);
+	
+	/* Oops, Something bad happened */
+	if (result != SASL_EXCHANGE_SUCCESS)
+	{
+		ereport(ERROR,
+			(errmsg("authentication failed"),
+				 errdetail("username \"%s\" or password does not exist in backend",frontend->username)));
+	}
+	
+	return 0;
+}
+
+
 /*
  * perform MD5 authentication
  */
@@ -879,7 +1097,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 			}
 
 			/* Save the auth info */
-			backend->auth_kind = 5;
+			backend->auth_kind = AUTH_REQ_MD5;
 		}
 		return kind;
 	}
@@ -948,25 +1166,34 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 }
 
 /*
- * Send md5 authentication request packet to frontend
+ * Send an authentication request packet to the frontend.
  */
-static int send_md5auth_request(POOL_CONNECTION *frontend, int protoMajor, char *salt)
+static void
+sendAuthRequest(POOL_CONNECTION *frontend, int protoMajor, int32 auth_req_type, char *extradata, int extralen)
 {
-	int len;
-	int kind;
+	int kind = htonl(auth_req_type);
 
 	pool_write(frontend, "R", 1);	/* authentication */
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
-		len = htonl(12);
+		int len = 8 + extralen;
+		len = htonl(len);
 		pool_write(frontend, &len, sizeof(len));
 	}
-	kind = htonl(5);
-	pool_write(frontend, &kind, sizeof(kind));	/* indicating MD5 */
-	pool_write_and_flush(frontend, salt, 4);		/* salt */
-
-	return 0;
+	pool_write(frontend, &kind, sizeof(kind));
+	if (extralen > 0)
+		pool_write_and_flush(frontend, extradata, extralen);
 }
+
+/*
+ * Send md5 authentication request packet to frontend
+ */
+static void
+send_md5auth_request(POOL_CONNECTION *frontend, int protoMajor, char *salt)
+{
+	sendAuthRequest(frontend, protoMajor, AUTH_REQ_MD5, salt, 4);
+}
+
 
 /*
  * Read password packet from frontend
@@ -1276,20 +1503,32 @@ int pool_read_int(POOL_CONNECTION_POOL *cp)
 	return data;
 }
 
+void
+pool_random(void *buf, size_t len)
+{
+	int ret = 0;
+#ifdef USE_SSL
+	ret = RAND_bytes(buf, len);
+#endif
+	/* if RND_bytes fails or not present use the old technique */
+	if ( ret == 0)
+	{
+		int i;
+		char *ptr = buf;
+		for (i = 0; i < len; i++)
+		{
+			long rand = PostmasterRandom();
+			ptr[i] = (rand % 255) + 1;
+		}
+	}
+}
+
 /*
  *  pool_random_salt
  */
 void pool_random_salt(char *md5Salt)
 {
-	long rand = PostmasterRandom();
-
-	md5Salt[0] = (rand % 255) + 1;
-	rand = PostmasterRandom();
-	md5Salt[1] = (rand % 255) + 1;
-	rand = PostmasterRandom();
-	md5Salt[2] = (rand % 255) + 1;
-	rand = PostmasterRandom();
-	md5Salt[3] = (rand % 255) + 1;
+	pool_random(md5Salt,4);
 }
 
 /*
@@ -1329,3 +1568,246 @@ PostmasterRandom(void)
 
 	return random();
 }
+
+
+/* SCRAM  CLIENT */
+/*
+ * Initialize SASL authentication exchange.
+ */
+static bool doSCRAMBackendAuth(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoMajor, int message_length)
+{
+	/* read the packet first */
+	void *sasl_state = NULL;
+	int payload_len = message_length - 4 - 4;
+	int  auth_kind = AUTH_REQ_SASL;
+	char payload[1024];
+	for(;;)
+	{
+		/* at this point we have already read kind, message length and authkind */
+		if (payload_len > 1024)
+			ereport(ERROR,
+					(errmsg("invalid authentication data too big")));
+
+		pool_read(backend, payload, payload_len);
+
+		//char kind = read_packet_from_connection(backend, protoMajor, data, &len);
+
+		switch (auth_kind) {
+			case AUTH_REQ_OK:
+				return true;
+				break;
+			case AUTH_REQ_SASL:
+
+				/*
+				 * The request contains the name (as assigned by IANA) of the
+				 * authentication mechanism.
+				 */
+				sasl_state = pg_SASL_init(frontend, backend, payload, payload_len);
+				if (!sasl_state)
+				{
+					ereport(ERROR,
+							(errmsg("invalid authentication request from server")));
+					return false;
+				}
+				break;
+
+			case AUTH_REQ_SASL_CONT:
+			case AUTH_REQ_SASL_FIN:
+				if (sasl_state == NULL)
+				{
+					ereport(ERROR,
+							(errmsg("invalid authentication request from server: AUTH_REQ_SASL_CONT without AUTH_REQ_SASL")));
+					return false;
+				}
+				if (pg_SASL_continue(frontend, backend, payload, payload_len, sasl_state, (auth_kind == AUTH_REQ_SASL_FIN))!= 0)
+				{
+					/* Use error message, if set already */
+					ereport(ERROR,
+							(errmsg("error in SASL authentication")));
+
+				}
+				break;
+			default:
+				ereport(ERROR,
+						(errmsg("invalid authentication request from server: unknown auth kind %d",auth_kind)));
+			}
+		/* Read next packend */
+		char kind;
+		int len;
+		pool_read(backend, &kind, sizeof(kind));
+		pool_read(backend, &len, sizeof(len));
+		if (kind != 'R')
+			ereport(ERROR,
+					(errmsg("backend authentication failed"),
+					 errdetail("backend response with kind \'%c\' when expecting \'R\'",kind)));
+		message_length = ntohl(len);
+		if (len <= 8)
+			ereport(ERROR,
+					(errmsg("backend authentication failed"),
+					 errdetail("backend response with no data ")));
+
+		pool_read(backend, &auth_kind, sizeof(auth_kind));
+		auth_kind = ntohl(auth_kind);
+		payload_len = message_length - 4 - 4;
+	}
+	return false;
+}
+
+static void*
+pg_SASL_init(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payload, int payloadlen)
+{
+	char	   *initialresponse = NULL;
+	int			initialresponselen;
+	bool		done;
+	bool		success;
+	const char *selected_mechanism;
+	char	*mechanism_buf = payload;
+	void 	*sasl_state = NULL;
+	int 	size;
+	int 	send_msg_len;
+
+	/*
+	 * Parse the list of SASL authentication mechanisms in the
+	 * AuthenticationSASL message, and select the best mechanism that we
+	 * support.  (Only SCRAM-SHA-256 is supported at the moment.)
+	 */
+	selected_mechanism = NULL;
+	for (;;)
+	{
+		/* An empty string indicates end of list */
+		if (mechanism_buf[0] == '\0')
+			break;
+
+		/*
+		 * If we have already selected a mechanism, just skip through the rest
+		 * of the list.
+		 */
+		if (selected_mechanism)
+			continue;
+
+		/*
+		 * Do we support this mechanism?
+		 */
+		if (strcmp(mechanism_buf, SCRAM_SHA_256_NAME) == 0)
+		{
+			/* This is the password which we need to send to the PG backend
+			 * for authentication.
+			 * It is stored in the file
+			 */
+			/* Read the password from the pool_passwd file */
+			char	   *password = pool_get_passwd(frontend->username);
+
+			if (password == NULL || password[0] == '\0')
+			{
+				ereport(ERROR,
+						(errmsg("password not found")));
+			}
+
+			sasl_state = pg_fe_scram_init(frontend->username, password);
+			if (!sasl_state)
+				ereport(ERROR,
+						(errmsg("SASL authentication error\n")));
+			selected_mechanism = SCRAM_SHA_256_NAME;
+		}
+		mechanism_buf += strlen(mechanism_buf) +1;
+	}
+	
+	if (!selected_mechanism)
+	{
+		ereport(ERROR,
+				(errmsg("none of the server's SASL authentication mechanisms are supported\n")));
+	}
+	
+	/* Get the mechanism-specific Initial Client Response, if any */
+	pg_fe_scram_exchange(sasl_state,
+						 NULL, -1,
+						 &initialresponse, &initialresponselen,
+						 &done, &success);
+
+	if (done && !success)
+		ereport(ERROR,
+				(errmsg("SASL authentication error")));
+
+	send_msg_len = strlen(selected_mechanism) + 1;
+	if (initialresponse)
+	{
+		send_msg_len += 4;
+		send_msg_len += initialresponselen;
+	}
+
+	size = htonl(send_msg_len + 4);
+
+	pool_write(backend, "p", 1);
+	pool_write(backend, &size, sizeof(size));
+	pool_write(backend, (void*)selected_mechanism, strlen(selected_mechanism)+1);
+	if (initialresponse)
+	{
+		size = htonl(initialresponselen);
+		pool_write(backend, &size, sizeof(size));
+		pool_write(backend, initialresponse, initialresponselen);
+	}
+	pool_flush(backend);
+
+	if (initialresponse)
+		pfree(initialresponse);
+	
+	return sasl_state;
+}
+
+/*
+ * Exchange a message for SASL communication protocol with the backend.
+ * This should be used after calling pg_SASL_init to set up the status of
+ * the protocol.
+ */
+static int
+pg_SASL_continue(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payload, int payloadlen, void *sasl_state, bool final)
+{
+	char	   *output;
+	int			outputlen;
+	bool		done;
+	bool		success;
+	char	   *challenge;
+	
+	/* Read the SASL challenge from the AuthenticationSASLContinue message. */
+	challenge = palloc(payloadlen + 1);
+	memcpy(challenge,payload,payloadlen);
+	challenge[payloadlen] = '\0';
+
+	/* For safety and convenience, ensure the buffer is NULL-terminated. */
+	
+	pg_fe_scram_exchange(sasl_state,
+						 challenge, payloadlen,
+						 &output, &outputlen,
+						 &done, &success);
+	pfree(challenge);			/* don't need the input anymore */
+
+	if (final && !done)
+	{
+		if (outputlen != 0)
+			pfree(output);
+
+		ereport(ERROR,
+				(errmsg("AuthenticationSASLFinal received from server, but SASL authentication was not completed")));
+		return -1;
+	}
+	if (outputlen != 0)
+	{
+		/*
+		 * Send the SASL response to the server.
+		 */
+		int size = htonl(outputlen + 4);
+
+		pool_write(backend, "p", 1);
+		pool_write(backend, &size, sizeof(size));
+		pool_write_and_flush(backend, output, outputlen);
+		pfree(output);
+
+		return 0;
+	}
+	
+	if (done && !success)
+		return -1;
+	
+	return 0;
+}
+
