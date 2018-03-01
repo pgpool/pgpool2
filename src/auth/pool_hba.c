@@ -134,7 +134,7 @@ next_token(char **lineptr, char *buf, int bufsz,
 static List *
 next_field_expand(const char *filename, char **lineptr,
 				  int elevel, char **err_msg);
-static POOL_STATUS CheckMd5Auth(char *username);
+static POOL_STATUS CheckUserExist(char *username);
 
 #ifdef USE_PAM
 #ifdef HAVE_PAM_PAM_APPL_H
@@ -617,6 +617,8 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 		parsedline->auth_method = uaReject;
 	else if (strcmp(token->string, "md5") == 0)
 		parsedline->auth_method = uaMD5;
+	else if (strcmp(token->string, "scram-sha-256") == 0)
+		parsedline->auth_method = uaSCRAM;
 #ifdef USE_PAM
 	else if (strcmp(token->string, "pam") == 0)
 		parsedline->auth_method = uaPAM;
@@ -821,8 +823,23 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
             */
 
             case uaMD5:
-                status = CheckMd5Auth(frontend->username);
+                status = CheckUserExist(frontend->username);
+				if (status != POOL_CONTINUE)
+					ereport(FATAL,
+						(return_code(2),
+						 	errmsg("md5 authentication failed"),
+						 		errdetail("pool_passwd file does not contain an entry for \"%s\"",frontend->username)));
                 break;
+
+			case uaSCRAM:
+				status = CheckUserExist(frontend->username);
+				if (status != POOL_CONTINUE)
+					ereport(FATAL,
+						(return_code(2),
+							errmsg("SCRAM authentication failed"),
+							 errdetail("pool_passwd file does not contain an entry for \"%s\"",frontend->username)));
+
+				break;
 
 
     #ifdef USE_PAM
@@ -986,6 +1003,12 @@ static void auth_failed(POOL_CONNECTION *frontend)
  		case uaMD5:
 			snprintf(errmessage, messagelen,
 					 "\"MD5\" authentication with pgpool failed for user \"%s\"",
+					 frontend->username);
+			break;
+
+		case uaSCRAM:
+			snprintf(errmessage, messagelen,
+					 "\"SCRAM\" authentication with pgpool failed for user \"%s\"",
 					 frontend->username);
 			break;
 
@@ -1983,7 +2006,7 @@ static POOL_STATUS CheckPAMAuth(POOL_CONNECTION *frontend, char *user, char *pas
 
 #endif   /* USE_PAM */
 
-static POOL_STATUS CheckMd5Auth(char *username)
+static POOL_STATUS CheckUserExist(char *username)
 {
 	char *passwd;
 
@@ -1991,12 +2014,7 @@ static POOL_STATUS CheckMd5Auth(char *username)
 	passwd = pool_get_passwd(username);
 
 	if (passwd == NULL)
-        ereport(FATAL,
-            (return_code(2),
-                 errmsg("md5 authentication failed"),
-                    errdetail("pool_passwd file does not contain an entry for \"%s\"",username)));
-
-
+		return POOL_ERROR;
 	/*
 	 * Ok for now. Actual authentication will be performed later.
 	 */

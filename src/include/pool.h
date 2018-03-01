@@ -703,6 +703,7 @@ extern bool pool_push_pending_data(POOL_CONNECTION *backend);
 
 /* pool_auth.c */
 extern void pool_random_salt(char *md5Salt);
+extern void pool_random(void *buf, size_t len);
 
 /* main.c */
 extern void pool_sleep(unsigned int second);
