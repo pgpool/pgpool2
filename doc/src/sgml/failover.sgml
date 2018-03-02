@@ -326,6 +326,7 @@
             Note, however, that <productname>Pgpool-II</productname> still triggers the
             failover when it detects the administrative shutdown of
             <productname>PostgreSQL</> backend server.
+            If you want to avoid a fail over even in this case, you need to specify DISALLOW_TO_FAILOVER on <xref linkend="guc-backend-flag">.
           </para>
         </note>
         <para>
