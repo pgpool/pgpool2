@@ -1512,7 +1512,7 @@ DBノードIDが0のバックエンドは「マスターノード」と呼ばれ
 			</entry>
 -->
 			<entry>フェイルオーバやデタッチを禁止します。
-			<productname>Heartbeat</>や<productname>Pacemaker</>などのHA(High Availability)ソフトでバックエンドを保護しているなどの場合に有用です。
+			<productname>Heartbeat</>や<productname>Pacemaker</>などのHA (High Availability)ソフトでバックエンドを保護しているなどの場合に有用です。
 			ALLOW_TO_FAILOVERと同時には指定できません。
 			</entry>
 		</row>
