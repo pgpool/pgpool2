@@ -463,7 +463,8 @@ offに設定した場合、そのようなエラーの場合でも<productname>P
             <productname>PostgreSQL</> backend server.
 -->
 <varname>fail_over_on_backend_error</varname>をoffにする場合は、バックエンドのヘルスチェックを有効にすることをお勧めします（<xref linkend="runtime-config-health-check">をご覧ください）。
-なお、<productname>PostgreSQL</>バックエンドサーバが管理コマンドでシャットダウンされたことを<productname>Pgpool-II</productname>が検知した場合には依然としてフェイルオーバが起こることに注意してください。
+  なお、<productname>PostgreSQL</>バックエンドサーバが管理コマンドでシャットダウンされたことを<productname>Pgpool-II</productname>が検知した場合には、依然としてフェイルオーバが起こることに注意してください。
+この場合にもフェイルオーバを避けたい場合には、<xref linkend="guc-backend-flag">でDISALLOW_TO_FAILOVERを指定してください。
           </para>
         </note>
         <para>
