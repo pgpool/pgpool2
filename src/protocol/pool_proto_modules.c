@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1203,7 +1203,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		parse_msg = pool_get_sent_message('P', pstmt_name, POOL_SENT_MESSAGE_CREATED);
 	if (!parse_msg)
 	{
-        ereport(ERROR,
+        ereport(FATAL,
                 (errmsg("unable to bind"),
                  errdetail("cannot get parse message \"%s\"", pstmt_name)));
 	}
@@ -1215,7 +1215,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	query_context = parse_msg->query_context;
 	if (!query_context)
 	{
-        ereport(ERROR,
+        ereport(FATAL,
                 (errmsg("unable to bind"),
                  errdetail("cannot get the query context")));
 	}
@@ -2791,7 +2791,7 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 		}
 
 		if (string == NULL)
-            ereport(ERROR,
+            ereport(FATAL,
                 (errmsg("unable to copy data rows"),
                      errdetail("cannot read string message from backend")));
 
