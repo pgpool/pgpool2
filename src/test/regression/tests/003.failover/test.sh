@@ -40,7 +40,7 @@ do
 	./shutdownall
 
 	./startall
-#	wait_for_pgpool_startup
+	wait_for_pgpool_startup
 	# trigger failover on node 0
 	$PG_CTL -D data0 -m f stop
 	$PSQL -c "show pool_nodes" test |sed -e 's/true /false/'> result
