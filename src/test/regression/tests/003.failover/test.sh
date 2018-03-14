@@ -40,7 +40,7 @@ do
 	./shutdownall
 
 	./startall
-#	wait_for_pgpool_startup
+	wait_for_pgpool_startup
 	# trigger failover on node 0
 	$PG_CTL -D data0 -m f stop
 	wait_for_failover_done
