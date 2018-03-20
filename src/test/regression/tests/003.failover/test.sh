@@ -44,7 +44,7 @@ do
 
 	# trigger failover on node 0
 	$PG_CTL -D data0 -m f stop
-	wait_for_pgpool_startup
+	wait_for_failover_done
 	$PSQL -c "show pool_nodes" test | sed -e 's/true /false/' > result
 	if [ ! -s result ];then
 		./shutdownall
