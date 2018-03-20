@@ -43,7 +43,12 @@ do
 	# trigger failover on node 0
 	$PG_CTL -D data0 -m f stop
 	wait_for_failover_done
-	$PSQL -c "show pool_nodes" test |sed -e 's/true /false/'> result
+	$PSQL -c "show pool_nodes" test | sed -e 's/true /false/' > result
+	if [ ! -s result ];then
+		./shutdownall
+		echo "result file is empty."
+		exit 1
+	fi
 
 	# check the output of "show pool_nodes".
 	LANG=C $PSQL -f ../create_expected_node0.sql -v mode="'$mode'" -v dir="'$PGSOCKET_DIR'" test | tail -n 6 > expected
