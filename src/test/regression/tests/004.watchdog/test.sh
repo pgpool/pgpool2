@@ -32,7 +32,7 @@ source ./bashrc.ports
 cat ../standby.conf >> etc/pgpool.conf
 egrep 'backend_data_directory0|backend_data_directory1|failover_command|follow_master_command' ../$TESTDIR/etc/pgpool.conf >> etc/pgpool.conf
 ./startall
-wait_for_pgpool_startup
+#wait_for_pgpool_startup
 cd ..
 
 echo "wait 5sec"
