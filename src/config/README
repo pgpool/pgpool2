@@ -58,12 +58,61 @@ struct config_enum_entry
 	bool		hidden;
 };
 
-Step4: add the new config parameter to example config files.
+Step4: add an entry to static struct config_enum ConfigureNamesEnum[].
+
+	{
+		{"disable_load_balance_on_write", CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
+			"Load balance behavior when write query is received.",
+			CONFIG_VAR_TYPE_ENUM,false, 0
+		},
+		(int*)&g_pool_config.disable_load_balance_on_write,
+		DLBOW_TRANSACTION,
+		disable_load_balance_on_write_options,
+		NULL, NULL, NULL, NULL
+	},
+
+
+config_enum is defined as below.
+
+struct config_enum
+{
+	struct config_generic gen;
+	/* constant fields, must be set correctly in initial value: */
+	int		   *variable;
+	int			boot_val;
+	const struct config_enum_entry *options;
+	ConfigEnumAssignFunc assign_func;
+	ConfigEnumAssignFunc check_func;
+	ConfigEnumProcessingFunc process_func;
+	VarShowHook show_hook;
+	int		reset_val;
+};
+
+config_generic is defined as below.
+
+struct config_generic
+{
+	/* constant fields, must be set correctly in initial value: */
+	const char		*name;			/* name of variable - MUST BE FIRST */
+	ConfigContext	context;		/* context required to set the variable */
+	config_group	group;			/* to help organize variables by function */
+	const char		*description;	/* short desc. of this variable's purpose */
+	config_type		vartype;		/* type of variable (set only at startup) */
+	bool			dynamic_array_var;	/* true if the variable name contains index postfix */
+	int				flags;			/* flags */
+	int				status;			/* status bits, see below */
+	GucSource		source;			/* source of the current actual value */
+	ConfigContext	scontext;		/* context that set the current value */
+	int				sourceline;		/* line in source file */
+};
+
+
+Step5: add the new config parameter to example config files.
 
 You need to the new config sample to config example files under
 src/sample/pgpool.conf.sample*
 
-Step5: add the new config parameter to the report program.
+Step6: add the new config parameter to the report program.
 
  src/utils/pool_process_reporting.c
 
@@ -72,4 +121,4 @@ Step5: add the new config parameter to the report program.
 	StrNCpy(status[i].desc, "Load balance behavior when write query is received", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-Step6: remeber to add documents and tests!
+Step7: remeber to add documents and tests!
