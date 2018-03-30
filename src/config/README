@@ -1,0 +1,75 @@
+How to add new config parameter
+
+This document explains how to add a new configuration parameter. In We
+use new enum type configuration parameter
+"disable_load_balance_on_write" as an example.
+
+Step1: add enum definition
+
+Add an enum type to src/include/pool_config.h.
+
+typedef enum DLBOW_OPTION
+{
+	DLBOW_OFF = 1,
+	DLBOW_TRANSACTION,
+	DLBOW_TRANS_TRANSACTION,
+	DLBOW_ALWAYS
+} DLBOW_OPTION;
+
+Step2: Add the new entry to POOL_CONFIG struct
+
+There's a struct called "POOL_CONFIG" holding all config
+variables. Add the new configparameter name along with the enum
+defined above to src/include/pool_config.h.
+
+	DLBOW_OPTION	disable_load_balance_on_write;	/* Load balance behavior when write query is issued
+							 * in an explicit transaction.
+							 * Note that any query not in an explicit transaction
+							 * is not affected by the parameter.
+							 * 'transaction' (the default): if a write query is issued,
+							 * subsequent read queries will not be load balanced
+							 * until the transaction ends.
+							 * 'trans_transaction': if a write query is issued,
+							 * subsequent read queries in an explicit transaction
+							 * will not be load balanced until the session ends.
+							 */
+
+Step3: Add config_emum_entery array to src/config/pool_config.c.
+
+static const struct config_enum_entry disable_load_balance_on_write_options[] = {
+	{"off", DLBOW_OFF, false},
+	{"transaction", DLBOW_TRANSACTION, false},
+	{"trans_transaction", DLBOW_TRANS_TRANSACTION, false},
+	{"always", DLBOW_ALWAYS, false},
+	{NULL, 0, false}
+};
+
+config_enum_entry is defined in src/include/pool_config.h:
+
+/*
+ * The possible values of an enum variable are specified by an array of
+ * name-value pairs.  The "hidden" flag means the value is accepted but
+ * won't be displayed when guc.c is asked for a list of acceptable values.
+ */
+struct config_enum_entry
+{
+	const char *name;
+	int			val;
+	bool		hidden;
+};
+
+Step4: add the new config parameter to example config files.
+
+You need to the new config sample to config example files under
+src/sample/pgpool.conf.sample*
+
+Step5: add the new config parameter to the report program.
+
+ src/utils/pool_process_reporting.c
+
+	StrNCpy(status[i].name, "disable_load_balance_on_write", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->disable_load_balance_on_write);
+	StrNCpy(status[i].desc, "Load balance behavior when write query is received", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+Step6: remeber to add documents and tests!
