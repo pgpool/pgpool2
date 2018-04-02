@@ -37,7 +37,7 @@ defined above to src/include/pool_config.h.
 							 * will not be load balanced until the session ends.
 							 */
 
-Step3: Add config_emum_entery array to src/config/pool_config.c.
+Step3: Add config_emum_entry array to src/config/pool_config.c.
 ================================================================
 
 static const struct config_enum_entry disable_load_balance_on_write_options[] = {
@@ -67,9 +67,9 @@ config_int_array, config_double, config_double_array, config_long,
 config_string, config_string_array, and config_list. See
 src/include/pool_config_variable.h for more details.
 
-Note that each config_* struct they have common data as struct
+Note that for each config_* struct they have common data as struct
 config_generic.  config_generic is defined as follows in
-src/include/pool_config_variable.h:
+src/include/pool_config_variables.h:
 
 struct config_generic
 {
