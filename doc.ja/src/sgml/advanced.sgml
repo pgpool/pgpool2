@@ -11,7 +11,7 @@
 
   <para>
 <!--
-    Watchdog is a sub process of <productname>Pgpool-II</productname>
+    <firstterm>Watchdog</firstterm> is a sub process of <productname>Pgpool-II</productname>
     to add high availability. Watchdog is used to resolve the single
     point of failure by coordinating multiple <productname>Pgpool-II</productname>
     nodes. The watchdog was first introduced in <productname>Pgpool-II</productname>
@@ -23,7 +23,7 @@
     works, the number of pgpool-II nodes must be odd in number and greater than or
     equal to 3.
 -->
-Watchdogは、高可用性のための<productname>Pgpool-II</productname>のサブプロセスです。
+<firstterm>Watchdog</firstterm>は、高可用性のための<productname>Pgpool-II</productname>のサブプロセスです。
 Watchdogは、単一障害点を除くために複数の<productname>Pgpool-II</productname>を使用する際に使用されます。
 Watchdogは、最初に<productname>Pgpool-II</productname> <emphasis>V3.2</emphasis>で導入され、<productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>で常にクォーラムを保つように大きく改善されました。
 この機能追加により、watchdogはより対障害性が増し、スプリットブレイン障害とネットワーク分割に対する対処および防止が強固になりました。
