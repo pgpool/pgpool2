@@ -1,11 +1,9 @@
 /* -*-pgsql-c-*- */
 /*
- * $Header$
- *
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2369,7 +2367,7 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
 
 #define NEXTVALQUERY2 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = pgpool_regclass('%s')"
 
-#define NEXTVALQUERY3 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = to_regclass('%s')"
+#define NEXTVALQUERY3 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = pg_catalog.to_regclass('%s')"
 
 	char *table;
 	int result;
@@ -2839,7 +2837,7 @@ static bool has_lock_target(POOL_CONNECTION *frontend,
 	if (table)
 	{
 		if (pool_has_to_regclass())
-			snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = to_regclass('%s')%s", table, suffix);
+			snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = pg_catalog.to_regclass('%s')%s", table, suffix);
 		else if (pool_has_pgpool_regclass())
 			snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = pgpool_regclass('%s')%s", table, suffix);
 		else
@@ -2877,7 +2875,7 @@ static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION *frontend,
 	if (table)
 	{
 		if (pool_has_to_regclass())
-			snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock VALUES (to_regclass('%s'))", table);
+			snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock VALUES (pg_catalog.to_regclass('%s'))", table);
 		else if (pool_has_pgpool_regclass())
 			snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock VALUES (pgpool_regclass('%s'))", table);
 		else

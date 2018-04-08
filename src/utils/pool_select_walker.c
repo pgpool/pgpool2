@@ -1,11 +1,9 @@
 /* -*-pgsql-c-*- */
 /*
- * $Header$
- *
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -451,7 +449,7 @@ static bool is_system_catalog(char *table_name)
 
 #define ISBELONGTOPGCATALOGQUERY2 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = pgpool_regclass('\"%s\"') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
 
-#define ISBELONGTOPGCATALOGQUERY3 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = to_regclass('\"%s\"') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
+#define ISBELONGTOPGCATALOGQUERY3 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = pg_catalog.to_regclass('\"%s\"') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
 
 	int hasreliscatalog;
 	bool result;
@@ -658,7 +656,7 @@ bool is_unlogged_table(char *table_name)
 
 #define ISUNLOGGEDQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND c.relpersistence = 'u'"
 
-#define ISUNLOGGEDQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('%s') AND c.relpersistence = 'u'"
+#define ISUNLOGGEDQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pg_catalog.to_regclass('%s') AND c.relpersistence = 'u'"
 
 	int hasrelpersistence;
 	static POOL_RELCACHE *hasrelpersistence_cache;
@@ -752,7 +750,7 @@ bool is_view(char *table_name)
 
 #define ISVIEWQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pgpool_regclass('%s') AND (c.relkind = 'v' OR c.relkind = 'm')"
 
-#define ISVIEWQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = to_regclass('%s') AND (c.relkind = 'v' OR c.relkind = 'm')"
+#define ISVIEWQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pg_catalog.to_regclass('%s') AND (c.relkind = 'v' OR c.relkind = 'm')"
 
 	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
@@ -848,7 +846,7 @@ bool pool_has_to_regclass(void)
 /*
  * Query to know if to_regclass exists.
  */
-#define HAS_TOREGCLASSQUERY "SELECT count(*) from (SELECT has_function_privilege('%s', 'to_regclass(cstring)', 'execute') WHERE EXISTS(SELECT * FROM pg_catalog.pg_proc AS p WHERE p.proname = 'to_regclass')) AS s"
+#define HAS_TOREGCLASSQUERY "SELECT count(*) from (SELECT has_function_privilege('%s', 'pg_catalog.to_regclass(cstring)', 'execute') WHERE EXISTS(SELECT * FROM pg_catalog.pg_proc AS p WHERE p.proname = 'to_regclass')) AS s"
 
 	bool result;
 	static POOL_RELCACHE *relcache;
@@ -1021,7 +1019,7 @@ int pool_table_name_to_oid(char *table_name)
  */
 #define TABLE_TO_OID_QUERY "SELECT pgpool_regclass('%s')"
 #define TABLE_TO_OID_QUERY2 "SELECT oid FROM pg_class WHERE relname = '%s'"
-#define TABLE_TO_OID_QUERY3 "SELECT COALESCE(to_regclass('%s')::oid, 0)"
+#define TABLE_TO_OID_QUERY3 "SELECT COALESCE(pg_catalog.to_regclass('%s')::oid, 0)"
 
 	int oid = 0;
 	static POOL_RELCACHE *relcache;
