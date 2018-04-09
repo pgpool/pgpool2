@@ -1,12 +1,10 @@
 /* -*-pgsql-c-*- */
 /*
  *
- * $Header$
- *
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -352,6 +350,16 @@ extern int my_master_node_id;
 #define IS_MASTER_NODE_ID(node_id) (MASTER_NODE_ID == (node_id))
 #define MASTER_CONNECTION(p) ((p)->slots[MASTER_NODE_ID])
 #define MASTER(p) MASTER_CONNECTION(p)->con
+
+/*
+ * Backend node status in streaming replication mode.
+ */
+typedef enum {
+	POOL_NODE_STATUS_UNUSED,	/* unused */
+	POOL_NODE_STATUS_PRIMARY,	/* primary ndoe */
+	POOL_NODE_STATUS_STANDBY,	/* standby node */
+	POOL_NODE_STATUS_INVALID	/* invalid node (split branin, stand alone) */
+} POOL_NODE_STATUS;
 
 #define REPLICATION (pool_config->replication_mode)
 #define MASTER_SLAVE (pool_config->master_slave_mode)
@@ -701,6 +709,7 @@ extern void pool_sleep(unsigned int second);
 
 /* pool_worker_child.c */
 extern void do_worker_child(void);
+extern int get_query_result(POOL_CONNECTION_POOL_SLOT **slots, int backend_id, char *query, POOL_SELECT_RESULT **res);
 
 /* md5.c */
 extern bool pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len, char *buf);
@@ -742,5 +751,6 @@ extern int pool_frontend_exists(void);
 extern pid_t pool_waitpid(int *status);
 extern int write_status_file(void);
 extern void do_health_check_child(int *node_id);
+extern POOL_NODE_STATUS *pool_get_node_status(void);
 
 #endif /* POOL_H */

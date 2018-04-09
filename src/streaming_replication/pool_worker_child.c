@@ -1,11 +1,9 @@
 /* -*-pgsql-c-*- */
 /*
- * $Header$
- *
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -76,7 +74,6 @@ static unsigned long long int text_to_lsn(char *text);
 static RETSIGTYPE my_signal_handler(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
 static void reload_config(void);
-static int get_query_result(int backend_id, char *query, POOL_SELECT_RESULT **res);
 
 #define CHECK_REQUEST \
 	do { \
@@ -299,8 +296,8 @@ static void check_replication_time_lag(void)
 		{
 			query = "SELECT current_setting('server_version_num')";
 
-			/* Get backend serversion. If the query fails, keep previous info. */
-			if (get_query_result(i, query, &res) == 0)
+			/* Get backend server version. If the query fails, keep previous info. */
+			if (get_query_result(slots, i, query, &res) == 0)
 			{
 				server_version[i] = atoi(res->data[0]);
 				ereport(DEBUG1,
@@ -324,7 +321,7 @@ static void check_replication_time_lag(void)
 				query = "SELECT pg_last_xlog_replay_location()";
 		}
 
-		if (get_query_result(i, query, &res) == 0)
+		if (get_query_result(slots, i, query, &res) == 0)
 		{
 			lsn[i] = text_to_lsn(res->data[0]);
 			free_select_result(res);
@@ -453,49 +450,63 @@ static void reload_config(void)
 }
 
 /*
- * Execute query against specified backend.
- * Return -1 on failure or 0 otherwise.
- * Caller must prepare memory for POOL_SELECT_RESULT and pass it as "res".
+ * Execute query against specified backend using an established connection to
+ * backend.  Return -1 on failure or 0 otherwise.  Caller must prepare memory
+ * for POOL_SELECT_RESULT and pass it as "res". It is guaranteed that no
+ * exception occurs within this function.
  */
-
-static 	int get_query_result(int backend_id, char *query, POOL_SELECT_RESULT **res)
+int get_query_result(POOL_CONNECTION_POOL_SLOT	**slots, int backend_id, char *query, POOL_SELECT_RESULT **res)
 {
 	int sts = -1;
+	MemoryContext oldContext = CurrentMemoryContext;
 
-	do_query(slots[backend_id]->con, query, res, PROTO_MAJOR_V3);
+	PG_TRY();
+	{
+		do_query(slots[backend_id]->con, query, res, PROTO_MAJOR_V3);
+	}
+	PG_CATCH();
+	{
+		/* ignore the error message */
+		res = NULL;
+		MemoryContextSwitchTo(oldContext);
+		FlushErrorState();
+		ereport(LOG,
+				(errmsg("get_query_result: do_query failed")));
+	}
+	PG_END_TRY();
 
 	if (!res)
 	{
-		ereport(ERROR,
-				(errmsg("Failed to check replication time lag"),
-				 errdetail("Query to node (%d) returned no result for node", backend_id)));
+		ereport(LOG,
+				(errmsg("get_query_result: no result returned"),
+				 errdetail("node id (%d)", backend_id)));
 		return sts;
 	}
 
 	if ((*res)->numrows <= 0)
 	{
 		free_select_result(*res);
-		ereport(ERROR,
-				(errmsg("Failed to check replication time lag"),
-				 errdetail("Query to node (%d) returned result with no rows", backend_id)));
+		ereport(LOG,
+				(errmsg("get_query_result: no rows returned"),
+				 errdetail("node id (%d)", backend_id)));
 		return sts;
 	}
 
 	if ((*res)->data[0] == NULL)
 	{
 		free_select_result(*res);
-		ereport(ERROR,
-				(errmsg("Failed to check replication time lag"),
-				 errdetail("Query to node (%d) returned no data", backend_id)));
+		ereport(LOG,
+				(errmsg("get_query_result: no rows returned"),
+				 errdetail("node id (%d)", backend_id)));
 		return sts;
 	}
 
 	if ((*res)->nullflags[0] == -1)
 	{
 		free_select_result(*res);
-		ereport(ERROR,
-				(errmsg("Failed to check replication time lag"),
-				 errdetail("Query to node (%d) returned NULL data", backend_id)));
+		ereport(LOG,
+				(errmsg("get_query_result: NULL data returned"),
+				 errdetail("node id (%d)", backend_id)));
 		return sts;
 	}
 

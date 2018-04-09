@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -139,7 +139,7 @@ static RETSIGTYPE wakeup_handler(int sig);
 static void initialize_shared_mem_objects(bool clear_memcache_oidmaps);
 static int trigger_failover_command(int node, const char *command_line,
 									int old_master, int new_master, int old_primary);
-static bool verify_backend_node_status(int backend_no, bool* is_standby);
+static POOL_NODE_STATUS *verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots);
 static int find_primary_node(void);
 static int find_primary_node_repeatedly(void);
 static void terminate_all_childrens();
@@ -444,8 +444,29 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		 * successfull start.
 		 */
 		if (first)
+		{
+			int i;
+			int n;
+			POOL_NODE_STATUS *node_status = pool_get_node_status();
+
 			ereport(LOG,
 					(errmsg("%s successfully started. version %s (%s)", PACKAGE, VERSION, PGPOOLVERSION)));
+
+			/* Very early stage node checking. It is assumed that find_primary_node got called. */
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				ereport(LOG,
+						(errmsg("node status[%d]: %d", i,  node_status[i])));
+
+				if (node_status[i] == POOL_NODE_STATUS_INVALID)
+				{
+					ereport(LOG,
+							(errmsg("pgpool_main: invalid node found %d", i)));
+					n = i;
+					degenerate_backend_set(&n, 1, REQ_DETAIL_SWITCHOVER|REQ_DETAIL_CONFIRMED);
+				}
+			}
+		}
 		first = false;
 
 		processState = SLEEPING;
@@ -2802,74 +2823,64 @@ static int trigger_failover_command(int node, const char *command_line,
 
 	return r;
 }
+
 /*
- * This function is used by find_primary_node() function and is just a wrapper
- * over make_persistent_db_connection() function and returns boolean value to
- * inform connection status.
- * This function must not throw ereport.
+ * This function is used by find_primary_node().  Find primary node/standby
+ * node and returns static array of status for each backend node. This
+ * function must not throw ereport.
  */
-static bool
-    verify_backend_node_status(int backend_no, bool* is_standby)
+static POOL_NODE_STATUS pool_node_status[MAX_NUM_BACKENDS];
+
+static POOL_NODE_STATUS *
+verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots)
 {
-	POOL_CONNECTION_POOL_SLOT   *s = NULL;
-	POOL_CONNECTION *con;
 	POOL_SELECT_RESULT *res;
-	BackendInfo *bkinfo = pool_get_node_info(backend_no);
+	bool found_primary = false;
+	int i;
 
-	*is_standby = false;
-
-	s = make_persistent_db_connection_noerror(backend_no, bkinfo->backend_hostname,
-										  bkinfo->backend_port,
-										  pool_config->sr_check_database,
-										  pool_config->sr_check_user,
-										  pool_config->sr_check_password, true);
-	if (s)
+	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		MemoryContext oldContext = CurrentMemoryContext;
-		con = s->con;
+		pool_node_status[i] = POOL_NODE_STATUS_UNUSED;
 
-		PG_TRY();
+		if (!VALID_BACKEND(i))
+			continue;
+
+		if (!slots[i])
+			continue;
+
+		if (get_query_result(slots, i, "SELECT pg_is_in_recovery()", &res))
 		{
-			do_query(con, "SELECT pg_is_in_recovery()",
-					 &res, PROTO_MAJOR_V3);
+			continue;
 		}
-		PG_CATCH();
+
+		if (res->data[0] && !strcmp(res->data[0], "t"))
 		{
-			/* ignore the error message */
-			res = NULL;
-			MemoryContextSwitchTo(oldContext);
-			FlushErrorState();
-			ereport(LOG,
-					(errmsg("verify_backend_node_status: do_query failed")));
+			/* Possibly standby */
+			pool_node_status[i] = POOL_NODE_STATUS_STANDBY;
 		}
-		PG_END_TRY();
-		if(res)
+		else if (res->data[0] && !strcmp(res->data[0], "f"))
 		{
-			if (res->numrows <= 0)
+			/* Possibly primary. Let's see if we already found a primary
+			 * (checking split brain)
+			 */
+			if (found_primary)
+				pool_node_status[i] = POOL_NODE_STATUS_INVALID;
+			else
 			{
-				ereport(LOG,
-						(errmsg("verify_backend_node_status: do_query returns no rows")));
+				pool_node_status[i] = POOL_NODE_STATUS_PRIMARY;
+				found_primary = true;
 			}
-			if (res->data[0] == NULL)
-			{
-				ereport(LOG,
-						(errmsg("verify_backend_node_status: do_query returns no data")));
-			}
-			if (res->nullflags[0] == -1)
-			{
-				ereport(LOG,
-						(errmsg("verify_backend_node_status: do_query returns NULL")));
-			}
-			if (res->data[0] && !strcmp(res->data[0], "t"))
-			{
-				*is_standby = true;
-			}
-			free_select_result(res);
 		}
-		discard_persistent_db_connection(s);
-		return true;
+		free_select_result(res);
 	}
-	return false;
+
+	return pool_node_status;
+}
+
+POOL_NODE_STATUS *
+pool_get_node_status(void)
+{
+	return pool_node_status;
 }
 
 /*
@@ -2878,7 +2889,11 @@ static bool
  */
 static int find_primary_node(void)
 {
+	BackendInfo *bkinfo;
+	POOL_CONNECTION_POOL_SLOT *slots[MAX_NUM_BACKENDS];
 	int i;
+	POOL_NODE_STATUS *status;
+	int primary = 0;
 
 	/* Streaming replication mode? */
 	if (!SL_MODE)
@@ -2892,7 +2907,7 @@ static int find_primary_node(void)
 	}
 
 	/* 
-	 *First check for "ALWAYS_MASTER" flags exists. If so, do not perform
+	 * First check for "ALWAYS_MASTER" flags exists. If so, do not perform
 	 * actual primary node check and just returns the node id.
 	 */
 	for(i=0;i<NUM_BACKENDS;i++)
@@ -2905,44 +2920,62 @@ static int find_primary_node(void)
 		}
 	}
 
-	for(i=0;i<NUM_BACKENDS;i++)
+	/*
+	 * Establish connections to backend
+	 */
+	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		bool node_status;
-		bool is_standby;
-
-		ereport(LOG,
-				(errmsg("find_primary_node: checking backend no %d",i)));
+		slots[i] = NULL;
 
 		if (!VALID_BACKEND(i))
 			continue;
-		node_status = verify_backend_node_status(i,&is_standby);
-        if (!node_status)
-        {
-            /*
-             * It is possible that a node is down even if
-             * VALID_BACKEND tells it's valid.  This could happen
-             * before health checking detects the failure.
-             * Thus we should continue to look for primary node.
-             */
-            continue;
-        }
-		if (is_standby)
-			ereport(DEBUG1,
-					(errmsg("find_primary_node: %d node is standby", i)));
-		else
-			break;
+
+		bkinfo = pool_get_node_info(i);
+
+		slots[i] = make_persistent_db_connection_noerror(i, bkinfo->backend_hostname,
+														 bkinfo->backend_port,
+														 pool_config->sr_check_database,
+														 pool_config->sr_check_user,
+														 pool_config->sr_check_password, true);
+		if (!slots[i])
+		{
+			ereport(LOG,
+					(errmsg("find_primary_node: make_persistent_db_connection_noerror failed on node %d", i)));
+		}
 	}
 
-	if (i == NUM_BACKENDS)
+	/* Verify backend status */
+	status = verify_backend_node_status(slots);
+
+	for(i=0;i<NUM_BACKENDS;i++)
 	{
-		ereport(DEBUG1,
-				(errmsg("find_primary_node: no primary node found")));
-		return -1;
+		if (status[i] == POOL_NODE_STATUS_PRIMARY)
+		{
+			/* This is the primary */
+			ereport(LOG,
+					(errmsg("find_primary_node: primary node is %d",i)));
+			primary = i;
+		}
+		else if (status[i] == POOL_NODE_STATUS_STANDBY)
+		{
+			ereport(LOG,
+					(errmsg("find_primary_node: standby node is %d", i)));
+		}
+		else if (status[i] == POOL_NODE_STATUS_INVALID)
+		{
+			/* Split brain or invalid node */
+			ereport(LOG,
+					(errmsg("find_primary_node: invalid node %d", i)));
+		}
 	}
 
-	ereport(LOG,
-            (errmsg("find_primary_node: primary node id is %d", i)));
-	return i;
+	for (i=0;i<NUM_BACKENDS;i++)
+	{
+		if (slots[i])
+			discard_persistent_db_connection(slots[i]);
+	}
+
+	return primary;
 }
 
 static int find_primary_node_repeatedly(void)
