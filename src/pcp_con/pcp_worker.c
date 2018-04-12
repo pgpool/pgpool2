@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -528,7 +528,7 @@ static int pool_detach_node(int node_id, bool gracefully)
 	/*
 	 * Now all frontends have gone. Let's do failover.
 	 */
-	degenerate_backend_set_ex(&node_id, 1, REQ_DETAIL_SWITCHOVER | REQ_DETAIL_CONFIRMED, false, true);
+	degenerate_backend_set_ex(&node_id, 1, REQ_DETAIL_SWITCHOVER | REQ_DETAIL_CONFIRMED, false, false);
 
 	/*
 	 * Wait for failover completed.
