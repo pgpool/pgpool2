@@ -17,7 +17,7 @@
 # directory for *testing* purpose.
 # Do not use this tool for production environment!
 #
-# usage: pgpool_setup [-m r|s|n|l][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d]
+# usage: pgpool_setup [-m r|s|n|l][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d][-s]
 # -m s: create an installation as streaming replication mode.
 # (the default)
 # -m r: create an installation as native replication mode.
@@ -34,6 +34,7 @@
 # pg_base_port + 1 and so on.
 # --no-stop: do not stop pgpool and PostgreSQL after the work
 # -d: start pgpool with debug mode
+# -s use replication slot, rather than wal archive.
 #
 # The user run this script will become the PostgreSQL super user as
 # well.  Current directory must be empty.  Assume that appropreate
@@ -284,8 +285,11 @@ function set_postgresql_conf
 		echo "hot_standby = on" >> $PGCONF
 		echo "wal_level = hot_standby" >> $PGCONF
 		echo "max_wal_senders = $NUMCLUSTERS" >> $PGCONF
-		echo "archive_mode = on" >> $PGCONF
-		echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
+
+		if [ $USE_SLOT = "fasel" ];then
+		    echo "archive_mode = on" >> $PGCONF
+		    echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
+		fi
 	elif [ $MODE = 'r' -o $MODE = 'l' -o $MODE = 'y' ];then
 		echo "wal_level = archive" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
@@ -342,9 +346,21 @@ cat > $DEST_CLUSTER/recovery.conf <<REOF
 standby_mode          = 'on'
 primary_conninfo      = 'port=$PORT user=$PGSUPERUSER'
 recovery_target_timeline='latest'
+EOF
+
+if [ $USE_SLOT = "false" ];then
+    cat >> $1/$SCRIPT <<'EOF'
 restore_command = 'cp $DATADIR_BASE/archivedir/%f "%p" 2> /dev/null'
 REOF
+EOF
+else
+    cat >> $1/$SCRIPT <<'EOF'
+primary_slot_name = 'pgpool_setup_slot'
+REOF
+EOF
+fi
 
+cat >> $1/$SCRIPT <<'EOF'
 $psql -p $PORT -c "SELECT pg_stop_backup()" postgres
 EOF
 
@@ -472,8 +488,14 @@ cat > $1/$fname <<EOF
 standby_mode          = 'on'
 primary_conninfo      = 'port=$BASEPORT user=$WHOAMI'
 recovery_target_timeline='latest'
+EOF
+if [ $USE_SLOT = true ];then
+    echo "primary_slot_name = 'pgpool_setup_slot'" >> $1/$fname
+else
+cat >> $1/$fname <<EOF
 restore_command = 'cp $BASEDIR/archivedir/%f "%p" 2> /dev/null'
 EOF
+fi
 }
 
 #-------------------------------------------
@@ -558,7 +580,7 @@ function wait_for_pgpool_reload {
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s|n|l|y] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d]";exit 1
+	echo "usage: $0 [-m r|s|n|l|y] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d] [-s]";exit 1
 }
 
 #-------------------------------------------
@@ -569,6 +591,7 @@ function usage()
 # default mode is streaming replication mode
 MODE="s"
 NO_STOP="false"
+USE_SLOT="false"
 
 while [ $# -gt 0 ]
 do
@@ -597,6 +620,8 @@ do
 	elif [ $1 = "-d" ];then
 		PGPOOLDEBUG="true"
 		shift;
+	elif [ $1 = "-s" ];then
+		USE_SLOT="true"
 	elif [ $1 = "--help" -o $1 = "-o" ];then
 		usage
 		exit
@@ -758,8 +783,10 @@ $PGPOOL_INSTALL_DIR/bin/pg_md5 $WHOAMI >> etc/pcp.conf
 # create pool_passwd
 $PGPOOL_INSTALL_DIR/bin/pg_md5 -m -f etc/pgpool.conf -u $WHOAMI $WHOAMI
 
-# create archive directory
-mkdir archivedir
+if [ $USE_SLOT = "false" ];then
+    # create archive directory
+    mkdir archivedir
+fi
 
 #-------------------------------------------
 # if streaming replication mode, we need to create data1 and so on, by
@@ -775,6 +802,9 @@ CREATE EXTENSION pgpool_regclass;
 CREATE EXTENSION pgpool_recovery;
 CREATE DATABASE test;
 EOF
+	if [ $USE_SLOT = "true" ];then
+	    $PSQL -p $BASEPORT template1 -c "SELECT * FROM pg_create_physical_replication_slot('pgpool_setup_slot')" >&5 2>&1
+	fi
 
 	n=0
 	PORT=$BASEPORT

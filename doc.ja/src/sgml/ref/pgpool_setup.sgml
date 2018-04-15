@@ -196,6 +196,34 @@ Pgpool-II documentation
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><option>-s</option></term>
+      <listitem>
+       <para>
+<!--
+
+	 In streaming replication mode, use replication slot instead
+	 of archive.  Since the archive directory is shared by all
+	 <productname>PostgreSQL</productname> clusters, if a standby
+	 is promoted, the time line in the archive directory will be
+	 changed and other standby servers will be stopped. Using a
+	 replication slot does not have this problem and is always
+	 preferable if you can
+	 use <productname>PostgreSQL</productname> 9.4 or later, which
+	 supports replication slot. The replication slot name used
+	 by <application>pgpool_setup</application>
+	 is <literal>pgpool_setup_slot</literal>.
+
+-->
+ストリーミングレプリケーションモードの時に、アーカイブの代わりにレプリケーションスロットを使います。
+アーカイブディレクトリは<productname>PostgreSQL</productname>クラスタに共有されているので、スタンバイが昇格すると、アーカイアブディレクトリ内のタイムラインが変わり、他のスタンバイが停止してしまいます。
+レプリケーションスロットを使うとこの問題が起きないので、レプリケーションスロットをサポートしている<productname>PostgreSQL</productname> 9.4以降が使えるのであれば、常にレプリケーションスロットを使うのが常にお勧めです。
+<application>pgpool_setup</application>が使うレプリケーションスロット名は、<literal>pgpool_setup_slot</literal>です。
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
  </refsect1>
