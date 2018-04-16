@@ -3,7 +3,7 @@ DATA_built = pgpool-recovery.sql
 DATA = uninstall_pgpool-recovery.sql
 
 EXTENSION = pgpool_recovery
-DATA = pgpool_recovery--1.1.sql
+DATA = pgpool_recovery--1.2.sql
 
 # if you are using PostgreSQL 8.0 or later,
 # using pg_config is recommended.

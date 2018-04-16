@@ -311,7 +311,7 @@ EOF
 
 #-------------------------------------------
 # create basebackup.sh for streaming replication mode
-# argument: PostgreSQL database cluster directory
+# argument1: PostgreSQL database cluster
 #-------------------------------------------
 function create_basebackup_stream {
 SCRIPT=basebackup.sh
@@ -325,6 +325,7 @@ master_db_cluster=$1
 recovery_node_host_name=$2
 DEST_CLUSTER=$3
 PORT=$4
+recovery_node=$5
 
 log=$DATADIR_BASE/log/recovery.log
 
@@ -342,6 +343,15 @@ rm -fr $DEST_CLUSTER/pg_xlog
 mkdir $DEST_CLUSTER/pg_xlog
 chmod 700 $DEST_CLUSTER/pg_xlog
 rm $DEST_CLUSTER/recovery.done
+EOF
+
+if [ $USE_SLOT = "true" ];then
+    cat >> $1/$SCRIPT <<'EOF'
+$psql -p $PORT -c "SELECT * FROM pg_create_physical_replication_slot('pgpool_setup_slot$recovery_node')" postgres
+EOF
+fi
+
+cat >> $1/$SCRIPT <<'EOF'
 cat > $DEST_CLUSTER/recovery.conf <<REOF
 standby_mode          = 'on'
 primary_conninfo      = 'port=$PORT user=$PGSUPERUSER'
@@ -354,8 +364,8 @@ restore_command = 'cp $DATADIR_BASE/archivedir/%f "%p" 2> /dev/null'
 REOF
 EOF
 else
-    cat >> $1/$SCRIPT <<'EOF'
-primary_slot_name = 'pgpool_setup_slot'
+    cat >> $1/$SCRIPT << 'EOF'
+primary_slot_name = 'pgpool_setup_slot$recovery_node'
 REOF
 EOF
 fi
@@ -475,7 +485,7 @@ chmod 755 $1/$SCRIPT
 #-------------------------------------------
 # create initial recovery.conf
 # argument1: PostgreSQL database cluster directory
-# argument2: cluster No. we assume that data0 is primary
+# argument2: cluster No. We assume that data0 is primary
 #-------------------------------------------
 function create_recovery_conf {
 if [ $2 = "0" ];then
@@ -490,7 +500,7 @@ primary_conninfo      = 'port=$BASEPORT user=$WHOAMI'
 recovery_target_timeline='latest'
 EOF
 if [ $USE_SLOT = true ];then
-    echo "primary_slot_name = 'pgpool_setup_slot'" >> $1/$fname
+    echo "primary_slot_name = 'pgpool_setup_slot$2'" >> $1/$fname
 else
 cat >> $1/$fname <<EOF
 restore_command = 'cp $BASEDIR/archivedir/%f "%p" 2> /dev/null'
@@ -726,7 +736,7 @@ do
 	echo "creating basebackup.sh"
 	# create basebackup.sh
 	if [ $MODE = 's' ];then
-		create_basebackup_stream $CLUSTERDIR >&5 2>&1
+		create_basebackup_stream $CLUSTERDIR $n >&5 2>&1
 	elif [ $MODE = 'r' ];then
 		create_basebackup_replication $CLUSTERDIR >&5 2>&1
 		create_pgpool_recovery_pitr $CLUSTERDIR >&5 2>&1
@@ -803,7 +813,12 @@ CREATE EXTENSION pgpool_recovery;
 CREATE DATABASE test;
 EOF
 	if [ $USE_SLOT = "true" ];then
-	    $PSQL -p $BASEPORT template1 -c "SELECT * FROM pg_create_physical_replication_slot('pgpool_setup_slot')" >&5 2>&1
+	    n=1
+	    while [ $n -lt $NUMCLUSTERS ]
+	    do
+		$PSQL -p $BASEPORT template1 -c "SELECT * FROM pg_create_physical_replication_slot('pgpool_setup_slot$n')" >&5 2>&1
+		n=`expr $n + 1`
+	    done
 	fi
 
 	n=0

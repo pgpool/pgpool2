@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -41,7 +41,7 @@
 #define SECOND_STAGE 1
 
 static void exec_checkpoint(PGconn *conn);
-static void exec_recovery(PGconn *conn, BackendInfo *master_backend, BackendInfo *recovery_backend, char stage);
+static void exec_recovery(PGconn *conn, BackendInfo *master_backend, BackendInfo *recovery_backend, char stage, int recovery_node);
 static void exec_remote_start(PGconn *conn, BackendInfo *backend);
 static PGconn *connect_backend_libpq(BackendInfo *backend);
 static void check_postmaster_started(BackendInfo *backend);
@@ -97,7 +97,7 @@ void start_recovery(int recovery_node)
 				(errmsg("node recovery, CHECKPOINT in the 1st stage done")));
 		}
 
-		exec_recovery(conn, backend, recovery_backend, FIRST_STAGE);
+		exec_recovery(conn, backend, recovery_backend, FIRST_STAGE, recovery_node);
 
 		ereport(LOG,
 			(errmsg("node recovery, 1st stage is done")));
@@ -130,7 +130,7 @@ void start_recovery(int recovery_node)
 				(errmsg("node recovery"),
 					 errdetail("CHECKPOINT in the 2nd stage done")));
 
-			exec_recovery(conn, backend, recovery_backend, SECOND_STAGE);
+			exec_recovery(conn, backend, recovery_backend, SECOND_STAGE, recovery_node);
 		}
 
 		exec_remote_start(conn, recovery_backend);
@@ -219,7 +219,7 @@ static void exec_checkpoint(PGconn *conn)
 /*
  * Call pgpool_recovery() function.
  */
-static void exec_recovery(PGconn *conn, BackendInfo *master_backend, BackendInfo *recovery_backend, char stage)
+static void exec_recovery(PGconn *conn, BackendInfo *master_backend, BackendInfo *recovery_backend, char stage, int recovery_node)
 {
 	PGresult *result;
 	char *hostname;
@@ -244,11 +244,13 @@ static void exec_recovery(PGconn *conn, BackendInfo *master_backend, BackendInfo
 	 */
 	snprintf(recovery_command,
 			 sizeof(recovery_command),
-			 "SELECT pgpool_recovery('%s', '%s', '%s', '%d')",
+			 "SELECT pgpool_recovery('%s', '%s', '%s', '%d', %d)",
 			 script,
 			 hostname,
 			 recovery_backend->backend_data_directory,
-			 master_backend->backend_port);
+			 master_backend->backend_port,
+			 recovery_node
+		);
 
 	ereport(LOG,
 		(errmsg("executing recovery"),

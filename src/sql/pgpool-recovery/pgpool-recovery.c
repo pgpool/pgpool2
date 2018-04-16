@@ -79,7 +79,16 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 		elog(ERROR, "must be superuser to use pgpool_recovery function");
 #endif
 
-	if (PG_NARGS() >= 4)		/* post pgpool-II 3.4 */
+	if (PG_NARGS() >= 5)		/* Pgpool-II 4.0 or later */
+	{
+		char *remote_port = DatumGetCString(DirectFunctionCall1(textout,
+														  PointerGetDatum(PG_GETARG_TEXT_P(3))));
+		int recovery_node = PG_GETARG_INT32(4);
+		snprintf(recovery_script, sizeof(recovery_script), "%s/%s %s %s %s %s %d",
+				 DataDir, script, DataDir, remote_host,
+				 remote_data_directory, remote_port, recovery_node);
+	}
+	else if (PG_NARGS() >= 4)		/* Pgpool-II 3.4 - 3.7 */
 	{
 		char *remote_port = DatumGetCString(DirectFunctionCall1(textout,
 														  PointerGetDatum(PG_GETARG_TEXT_P(3))));

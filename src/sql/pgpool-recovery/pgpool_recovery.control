@@ -1,5 +1,5 @@
 # pgpool-recovery extension
-comment = 'recovery functions for pgpool-II for V3.4 or later'
-default_version = '1.1'
+comment = 'recovery functions for pgpool-II for V4.0 or later'
+default_version = '1.2'
 module_pathname = '$libdir/pgpool-recovery'
 relocatable = true
