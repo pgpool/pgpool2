@@ -438,6 +438,12 @@ fail_over_on_backend_error = on
                                    # If set to off, pgpool will report an
                                    # error and disconnect the session.
 
+detach_false_primary = off
+                                   # Detach false primary if on. Only
+                                   # valid in streaming replicaton
+                                   # mode and with PostgreSQL 9.6 or
+                                   # after.
+
 search_primary_node_timeout = 300
                                    # Timeout in seconds to search for the
                                    # primary node when a failover occurs.

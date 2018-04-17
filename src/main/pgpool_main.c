@@ -139,7 +139,6 @@ static RETSIGTYPE wakeup_handler(int sig);
 static void initialize_shared_mem_objects(bool clear_memcache_oidmaps);
 static int trigger_failover_command(int node, const char *command_line,
 									int old_master, int new_master, int old_primary);
-static POOL_NODE_STATUS *verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots);
 static int find_primary_node(void);
 static int find_primary_node_repeatedly(void);
 static void terminate_all_childrens();
@@ -148,6 +147,8 @@ static char* process_name_from_pid(pid_t pid);
 static void sync_backend_from_watchdog(void);
 static void update_backend_quarantine_status(void);
 static void degenerate_all_quarantine_nodes(void);
+static int get_server_version(POOL_CONNECTION_POOL_SLOT **slots, int node_id);
+static void get_info_from_conninfo(char *conninfo, char *host, char *port);
 
 static struct sockaddr_un un_addr;		/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;  /* unix domain socket path for PCP */
@@ -453,17 +454,23 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 					(errmsg("%s successfully started. version %s (%s)", PACKAGE, VERSION, PGPOOLVERSION)));
 
 			/* Very early stage node checking. It is assumed that find_primary_node got called. */
-			for (i=0;i<NUM_BACKENDS;i++)
+			if (STREAM)
 			{
-				ereport(LOG,
-						(errmsg("node status[%d]: %d", i,  node_status[i])));
-
-				if (node_status[i] == POOL_NODE_STATUS_INVALID)
+				for (i=0;i<NUM_BACKENDS;i++)
 				{
 					ereport(LOG,
-							(errmsg("pgpool_main: invalid node found %d", i)));
-					n = i;
-					degenerate_backend_set(&n, 1, REQ_DETAIL_SWITCHOVER|REQ_DETAIL_CONFIRMED);
+							(errmsg("node status[%d]: %d", i,  node_status[i])));
+
+					if (node_status[i] == POOL_NODE_STATUS_INVALID)
+					{
+						ereport(LOG,
+								(errmsg("pgpool_main: invalid node found %d", i)));
+						if (pool_config->detach_false_primary)
+						{
+							n = i;
+							degenerate_backend_set(&n, 1, REQ_DETAIL_SWITCHOVER|REQ_DETAIL_CONFIRMED);
+						}
+					}
 				}
 			}
 		}
@@ -2827,16 +2834,18 @@ static int trigger_failover_command(int node, const char *command_line,
 /*
  * This function is used by find_primary_node().  Find primary node/standby
  * node and returns static array of status for each backend node. This
- * function must not throw ereport.
+ * function must not throw ERROR or FATAL.
  */
 static POOL_NODE_STATUS pool_node_status[MAX_NUM_BACKENDS];
 
-static POOL_NODE_STATUS *
+POOL_NODE_STATUS *
 verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots)
 {
 	POOL_SELECT_RESULT *res;
-	bool found_primary = false;
-	int i;
+	int num_primaries = 0;
+	int num_standbys = 0;
+	int i, j;
+	BackendInfo *backend_info;
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
@@ -2853,25 +2862,230 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots)
 			continue;
 		}
 
+		get_server_version(slots, i);
+
 		if (res->data[0] && !strcmp(res->data[0], "t"))
 		{
 			/* Possibly standby */
 			pool_node_status[i] = POOL_NODE_STATUS_STANDBY;
+			num_standbys++;
 		}
 		else if (res->data[0] && !strcmp(res->data[0], "f"))
 		{
-			/* Possibly primary. Let's see if we already found a primary
-			 * (checking split brain)
-			 */
-			if (found_primary)
-				pool_node_status[i] = POOL_NODE_STATUS_INVALID;
-			else
-			{
-				pool_node_status[i] = POOL_NODE_STATUS_PRIMARY;
-				found_primary = true;
-			}
+			/* Possibly primary */
+			pool_node_status[i] = POOL_NODE_STATUS_PRIMARY;
+			num_primaries++;
 		}
 		free_select_result(res);
+	}
+
+	/*
+	 * If there's no primary node, there's no point to run additional
+	 * testings.
+	 */
+	if (num_primaries == 0)
+	{
+		ereport(DEBUG1,
+				(errmsg("verify_backend_node_status: there's no primary node")));
+		return pool_node_status;
+	}
+
+	/*
+	 * There's no standby node.
+	 */
+	if (num_standbys == 0)
+	{
+		if (num_primaries == 1)
+		{
+			/*
+			 * If there's only one primary node and there's no standby, there's no
+			 * point to run additional testings.
+			 */
+			ereport(DEBUG1,
+					(errmsg("verify_backend_node_status: there's no standby node")));
+			return pool_node_status;
+		}
+		else
+		{
+			/*
+			 * There are multiple primaries and there's no standby
+			 * node. There's no way to decide which one is correct.  We just
+			 * leave the youngest primary node and detach rests if allowed.
+			 */
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				if (pool_node_status[i] == POOL_NODE_STATUS_PRIMARY)
+				{
+					ereport(DEBUG1,
+							(errmsg("verify_backend_node_status: decided node %d is the true primary", i)));
+					i++;
+					for (;i<NUM_BACKENDS;i++)
+					{
+						if (pool_node_status[i] == POOL_NODE_STATUS_PRIMARY)
+						{
+							pool_node_status[i] = POOL_NODE_STATUS_UNUSED;
+							ereport(DEBUG1,
+							(errmsg("verify_backend_node_status: node %d is a false primary", i)));
+
+							if (pool_config->detach_false_primary)
+								pool_node_status[i] = POOL_NODE_STATUS_INVALID;
+							else
+								pool_node_status[i] = POOL_NODE_STATUS_UNUSED;
+						}
+					}
+				}
+			}
+		}
+		return pool_node_status;
+	}
+
+	/*
+	 * There are multiple standbys
+	 */
+	else
+	{
+		bool check_connectivity = false;
+		int wal_receiver_status = 0;
+		int wal_receiver_conninfo = 1;
+		char host[1024];
+		char port[1024];
+		int primary[MAX_NUM_BACKENDS];
+		int true_primary = -1;
+
+		ereport(DEBUG1,
+				(errmsg("verify_backend_node_status: multiple standbys: %d", num_standbys)));
+
+		/*
+		 * Check connectivity between primary and standby by using
+		 * pg_stat_wal_receiver (only >= 9.6.0) if there's more than or equal
+		 * to 1 primary.
+		 */
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			if (get_server_version(slots, i) >= 90600)
+			{
+				check_connectivity = true;
+				break;
+			}
+		}
+		if (!check_connectivity)
+		{
+			ereport(DEBUG1,
+					(errmsg("verify_backend_node_status: server verion is lower than 9.6.0. Skipping connectivity checks")));
+			return pool_node_status;
+		}
+
+		ereport(DEBUG1,
+				(errmsg("verify_backend_node_status: checking connectivity")));
+
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			primary[i] = 0;
+
+			if (pool_node_status[i] == POOL_NODE_STATUS_PRIMARY)
+			{
+				ereport(DEBUG1,
+						(errmsg("verify_backend_node_status: %d is primary", i)));
+
+				for (j=0;j<NUM_BACKENDS;j++)
+				{
+					if (pool_node_status[j] == POOL_NODE_STATUS_STANDBY)
+					{
+						ereport(DEBUG1,
+								(errmsg("verify_backend_node_status: %d is standby", j)));
+
+						if (get_query_result(slots, j, "SELECT status, conninfo FROM pg_stat_wal_receiver", &res))
+						{
+							ereport(DEBUG1,
+									(errmsg("verify_backend_node_status: call pg_stat_wal_receiver to standby %d failed", j)));
+							continue;
+						}
+						if (res->numrows <= 0)
+						{
+							ereport(DEBUG1,
+									(errmsg("verify_backend_node_status: pg_stat_wal_receiver returned no row. standby %d", j)));
+							free_select_result(res);
+							continue;
+						}
+						if (res->nullflags[wal_receiver_status] == -1)
+						{
+							ereport(DEBUG1,
+									(errmsg("verify_backend_node_status: pg_stat_wal_receiver status for standby %d is NULL", j)));
+							free_select_result(res);
+							continue;
+						}
+						if (strcmp(res->data[wal_receiver_status], "streaming"))
+						{
+							ereport(DEBUG1,
+									(errmsg("verify_backend_node_status: pg_stat_wal_receiver status is not \"streaming\" for standby %d (%s)", j, res->data[wal_receiver_status])));
+							free_select_result(res);
+							continue;
+
+						}
+						if (res->nullflags[wal_receiver_conninfo] == -1)
+						{
+							ereport(DEBUG1,
+									(errmsg("verify_backend_node_status: pg_stat_wal_receiver conninfo for standby %d is NULL", j)));
+							continue;
+						}
+						get_info_from_conninfo(res->data[wal_receiver_conninfo], host, port);
+						ereport(DEBUG1,
+								(errmsg("verify_backend_node_status: conninfo for standby %d is === %s ===. host:%s port:%s", j, res->data[wal_receiver_conninfo], host, port)));
+						free_select_result(res);
+
+						/* get primary backend info */
+						backend_info = pool_get_node_info(i);
+
+						/* verify host and port */
+						if (((!strcmp(backend_info->backend_hostname, "/tmp") && *host == '\0') ||
+							 !strcmp(backend_info->backend_hostname, host)) &&
+							(backend_info->backend_port == atoi(port)))
+						{
+							/* the standby connects to the primary */
+							primary[i]++;
+							if (primary[i] == num_standbys)
+								true_primary = i;
+						}
+						else
+						{
+							/* the standby does not connect to the primary */
+							ereport(LOG,
+									(errmsg("verify_backend_node_status: primary %d does not connect to standby %d", i, j)));
+						}
+					}
+				}
+			}
+		}
+
+		/*
+		 * Check if each primary connected standbys. If all standbys connect
+		 * to one of primaries, then the primary is good. Other primaries are
+		 * false.  If none of primaries does not own all connected standbys,
+		 * we cannot judge which primary is good.
+		 */
+		for (i=0;i<NUM_BACKENDS;i++)
+		{
+			ereport(DEBUG1,
+					(errmsg("verify_backend_node_status: primary %d owns %d standbys out of %d", i, primary[i], num_standbys)));
+			ereport(DEBUG1,
+					(errmsg("verify_backend_node_status: true_primary %d", true_primary)));
+
+			if (pool_node_status[i] == POOL_NODE_STATUS_PRIMARY && primary[i] >= 0)
+			{
+				if (primary[i] < num_standbys)
+				{
+					ereport(LOG,
+							(errmsg("verify_backend_node_status: primary %d owns only %d standbys out of %d", i, primary[i], num_standbys)));
+
+					/*
+					 * If the good primary exists and detach_false_primary is
+					 * true, then ask to detach the false primary
+					 */
+					if (true_primary >= 0 && pool_config->detach_false_primary)
+						pool_node_status[i] = POOL_NODE_STATUS_INVALID;
+				}
+			}
+		}
 	}
 
 	return pool_node_status;
@@ -3774,5 +3988,64 @@ static void sync_backend_from_watchdog(void)
 		{
 			process_info[i].need_to_restart = 1;
 		}
+	}
+}
+
+/*
+ * Obtain backend server version number and cache it.  Note that returned
+ * version number is in the static memory area.
+ */
+static int
+get_server_version(POOL_CONNECTION_POOL_SLOT **slots, int node_id)
+{
+	static int server_versions[MAX_NUM_BACKENDS];
+
+	char *query;
+	POOL_SELECT_RESULT *res;
+
+	if (server_versions[node_id] == 0)
+	{
+		query = "SELECT current_setting('server_version_num')";
+
+		/* Get backend server version. If the query fails, keep previous info. */
+		if (get_query_result(slots, node_id, query, &res) == 0)
+		{
+			server_versions[node_id] = atoi(res->data[0]);
+			ereport(DEBUG1,
+					(errmsg("get_server_version: backend %d server version: %d", node_id, server_versions[node_id])));
+			free_select_result(res);
+		}
+	}
+	return server_versions[node_id];
+}
+
+/*
+ * Get info from conninfo string.
+ */
+static void get_info_from_conninfo(char *conninfo, char *host, char *port)
+{
+	char *p;
+
+	*host = '\0';
+	*port = '\0';
+
+	p = strstr(conninfo, "host");
+	if (p)
+	{
+		while (*p && *p != ' ')
+			*host++ = *p++;
+		*host = '\0';
+	}
+
+	p = strstr(conninfo, "port");
+	if (p)
+	{
+		/* skip "port=" */
+		while (*p && *p++ != '=')
+			;
+
+		while (*p && *p != ' ')
+			*port++ = *p++;
+		*port = '\0';
 	}
 }

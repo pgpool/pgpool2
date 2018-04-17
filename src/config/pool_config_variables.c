@@ -369,6 +369,16 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	
 	{
+		{"detach_false_primary", CFGCXT_RELOAD, FAILOVER_CONFIG,
+			"Automatically detaches false primary node.",
+			CONFIG_VAR_TYPE_BOOL,false, 0
+		},
+		&g_pool_config.detach_false_primary,
+		false,
+		NULL, NULL,NULL
+	},
+
+	{
 		{"insert_lock", CFGCXT_RELOAD, REPLICATION_CONFIG,
 			"Automatically locks table with INSERT to keep SERIAL data consistency",
 			CONFIG_VAR_TYPE_BOOL,false, 0

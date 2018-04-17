@@ -358,6 +358,63 @@
       </listitem>
     </varlistentry>
 
+    <varlistentry id="guc-detach-false-primary" xreflabel="detach_false_primary">
+      <term><varname>detach_false_primary</varname> (<type>boolean</type>)
+        <indexterm>
+          <primary><varname>detach_false_primary</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+	  If set to on, detach false primary node. The default is
+          off. This parameter is only valid in streaming replication
+          mode and for <productname>PostgreSQL</productname> 9.6 or
+          after since this feature
+          uses <function>pg_stat_wal_receiver</function>.
+          If <productname>PostgreSQL</productname> 9.5.x or older
+          version is used, no error is raised, just the feature is
+          ignored.
+	</para>
+	<para>
+	  If there's no primary node, no checking will be performed.
+	</para>
+	<para>
+	  If there's no standby node, and there's only one primary
+	  node, no checking will be performed.
+	</para>
+	<para>
+	  If there's no standby node, and there's multiple primary
+	  nodes, leave the primary node which has the youngest node
+	  id and detach rest of primary nodes.
+	</para>
+	<para>
+	  If there are one or more primaries and one or more standbys,
+	  check the connectivity between primary and standby nodes by
+	  using <function>pg_stat_wal_receiver</function>
+	  if <productname>PostgreSQL</productname> 9.6 or after. In
+	  this case if a primary node connects to all standby nodes,
+	  the primary is regarded as "true" primary. Other primaries
+	  are regarded as "false" primary and the false primaries will
+	  be detached if <varname>detach_false_primary</varname> is
+	  true.  If no "true" primary is found, nothing will happen.
+        </para>
+	<para>
+	  When <productname>Pgpool-II</productname> starts, the
+	  checking of false primaries are performed only once in
+	  the <productname>Pgpool-II</productname> main
+	  process. If <xref linkend="guc-sr-check-period"> is greater
+	  than 0, the false primaries checking will be performed at
+	  the same timing of streaming replication delay checking.
+	</para>
+        <para>
+          This parameter is only applicable in the streaming replication mode.
+        </para>
+        <para>
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+        </para>
+      </listitem>
+    </varlistentry>
+
   </variablelist>
  </sect2>
 

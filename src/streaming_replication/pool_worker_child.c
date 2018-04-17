@@ -165,9 +165,31 @@ void do_worker_child(void)
 			establish_persistent_connection();
             PG_TRY();
             {
+				POOL_NODE_STATUS *node_status;
+				int i;
 
             	/* Do replication time lag checking */
             	check_replication_time_lag();
+
+				/* Check node status */
+				node_status = verify_backend_node_status(slots);
+				for (i=0;i<NUM_BACKENDS;i++)
+				{
+					ereport(DEBUG1,
+							(errmsg("node status[%d]: %d", i,  node_status[i])));
+
+					if (node_status[i] == POOL_NODE_STATUS_INVALID)
+					{
+						int n;
+						ereport(LOG,
+								(errmsg("pgpool_worker_child: invalid node found %d", i)));
+						if (pool_config->detach_false_primary)
+						{
+							n = i;
+							degenerate_backend_set(&n, 1, REQ_DETAIL_SWITCHOVER|REQ_DETAIL_CONFIRMED);
+						}
+					}
+				}
             }
             PG_CATCH();
             {
@@ -321,7 +343,7 @@ static void check_replication_time_lag(void)
 				query = "SELECT pg_last_xlog_replay_location()";
 		}
 
-		if (get_query_result(slots, i, query, &res) == 0)
+		if (get_query_result(slots, i, query, &res) == 0 && res->nullflags[0] != -1)
 		{
 			lsn[i] = text_to_lsn(res->data[0]);
 			free_select_result(res);
@@ -492,6 +514,7 @@ int get_query_result(POOL_CONNECTION_POOL_SLOT	**slots, int backend_id, char *qu
 		return sts;
 	}
 
+/*
 	if ((*res)->data[0] == NULL)
 	{
 		free_select_result(*res);
@@ -501,6 +524,7 @@ int get_query_result(POOL_CONNECTION_POOL_SLOT	**slots, int backend_id, char *qu
 		return sts;
 	}
 
+
 	if ((*res)->nullflags[0] == -1)
 	{
 		free_select_result(*res);
@@ -509,7 +533,7 @@ int get_query_result(POOL_CONNECTION_POOL_SLOT	**slots, int backend_id, char *qu
 				 errdetail("node id (%d)", backend_id)));
 		return sts;
 	}
-
+*/
 	sts = 0;
 	return sts;
 }

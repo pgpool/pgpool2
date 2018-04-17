@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -209,7 +209,7 @@ typedef struct {
 											 * pgpool-II 2.2.x or earlier. If set to false, pgpool will report
 											 * an error and disconnect the session.
 											 */
-
+	bool detach_false_primary;				/* If true, detach false primary */
 	char *recovery_user;					/* PostgreSQL user name for online recovery */
 	char *recovery_password;				/* PostgreSQL user password for online recovery */
 	char *recovery_1st_stage_command;		/* Online recovery command in 1st stage */
