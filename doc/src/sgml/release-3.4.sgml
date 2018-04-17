@@ -1,6 +1,69 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-4-17">
+  <title>Release 3.4.17</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2018-04-17</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2018-04-09 [a20855b]
+    -->
+    <para>
+    Test: Add new regression test for node 0 is down. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-04-08 [dfde4ff]
+    -->
+    <para>
+    Make calls to to_regclass fully schema qualified. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-20 [5fb797e]
+    -->
+    <para>
+    Test: Improve the test script 003.failover. (Bo Peng)
+    </para>
+    <para>
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-27 [d669a0d]
+    -->
+    <para>
+    Allow to support <function>pgpool_switch_xlog</function> <productname>PostgreSQL</productname> 10. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-27 [c90dde1]
+    -->
+    <para>
+    Fix <command>pgpool_setup</command> failure in replication mode. (Tatsuo Ishii)
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-4-16">
   <title>Release 3.4.16</title>
 

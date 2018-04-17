@@ -1,6 +1,87 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-4-17">
+<!--
+  <title>Release 3.4.17</title>
+	-->
+  <title>リリース 3.4.17</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-04-17</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title> 
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2018-04-09 [a20855b]
+    -->
+    <para>
+    <!--
+    Add new regression test for node 0 is down. (Tatsuo Ishii)
+    -->
+    Test: ノード0 がダウンした場合のレグレッションテストを追加しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-04-08 [dfde4ff]
+    -->
+    <para>
+    <!--
+    Make calls to to_regclass fully schema qualified. (Tatsuo Ishii)
+    -->
+    to_regclass を呼び出すときにスキーマ名を含むように修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-20 [5fb797e]
+    -->
+    <para>
+    <!--
+    Test: Improve test script 003.failover. (Bo Peng)
+    -->
+    Test: 003.failover レグレッションテストが失敗しないように修正しました。(Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-27 [d669a0d]
+    -->
+    <para>
+    <!--
+    Allow to support <function>pgpool_switch_xlog</function> <productname>PostgreSQL</productname> 10. (Tatsuo Ishii)
+    -->
+    <productname>PostgreSQL</productname> 10 に対応できるように pgpool_switch_xlog を修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-27 [c90dde1]
+    -->
+    <para>
+    <!--
+    Fix <command>pgpool_setup</command> failure in replication mode. (Tatsuo Ishii)
+    -->
+    レプリケーションモードで <command>pgpool_setup</command> が失敗するのを修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-4-16">
 <!--
   <title>Release 3.4.16</title>

@@ -1,6 +1,115 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-6-10">
+  <title>Release 3.6.10</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2018-04-17</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2018-04-09 [56dcc8d]
+    -->
+    <para>
+    Test: Add new regression test for node 0 is down. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-04-08 [62cd287]
+    -->
+    <para>
+    Make calls to to_regclass fully schema qualified. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-04-04 [61dbb77]
+    -->
+    <para>
+    Doc: Improve watchdog documents. (Tatsuo Ishii)
+    </para>
+    <para>
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-20 [a144e9a]
+    -->
+    <para>
+    Test: Improve test script 003.failover. (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-14 [95ed081]
+    -->
+    <para>
+    Deal with "unable to bind D cannot get parse message "S1" error. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-02 [426c2df]
+    -->
+    <para>
+    Doc: Mention that users can avoid failover using backend_flag even PostgreSQL admin shutdown. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-28 [3cc5422]
+    -->
+    <para>
+    Doc: Fix document typos. (Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-27 [bfb46bc]
+    -->
+    <para>
+    Fix <command>pgpool_setup</command> failure in replication mode. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-27 [4a47d33]
+    -->
+    <para>
+    Allow to support <function>pgpool_switch_xlog</function> <productname>PostgreSQL</productname> 10. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-14 [41978bf]
+    -->
+    <para>
+    Doc: Fix <link linkend="pgpool-adm"> pgpool_adm</link> family functions examples. (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-6-9">
   <title>Release 3.6.9</title>
 
