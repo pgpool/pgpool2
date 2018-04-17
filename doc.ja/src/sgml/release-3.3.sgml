@@ -1,6 +1,39 @@
 <!-- doc/src/sgml/release-3.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-3-21">
+<!--
+  <title>Release 3.3.21</title>
+	-->
+  <title>リリース 3.3.21</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-04-17</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title> 
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2018-04-08 [424acce]
+    -->
+    <para>
+    <!--
+    Make calls to to_regclass fully schema qualified. (Tatsuo Ishii)
+    -->
+    to_regclass を呼び出すときにスキーマ名を含むように修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-3-20">
 <!--
   <title>Release 3.3.20</title>

@@ -1,6 +1,148 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-6-10">
+<!--
+  <title>Release 3.6.10</title>
+	-->
+  <title>リリース 3.6.10</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-04-17</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title> 
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2018-04-09 [56dcc8d]
+    -->
+    <para>
+    <!--
+    Add new regression test for node 0 is down. (Tatsuo Ishii)
+    -->
+    Test: ノード0 がダウンした場合のレグレッションテストを追加しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-04-08 [62cd287]
+    -->
+    <para>
+    <!--
+    Make calls to to_regclass fully schema qualified. (Tatsuo Ishii)
+    -->
+    to_regclass を呼び出すときにスキーマ名を含むように修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-04-04 [61dbb77]
+    -->
+    <para>
+    <!--
+    Improve watchdog documents. (Tatsuo Ishii)
+    -->
+    Doc: watchdog に関するドキュメントを更新しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-20 [a144e9a]
+    -->
+    <para>
+    <!--
+    Test: Improve test script 003.failover. (Bo Peng)
+    -->
+    Test: 003.failover レグレッションテストが失敗しないように修正しました。(Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-14 [95ed081]
+    -->
+    <para>
+    <!--
+    Deal with "unable to bind D cannot get parse message "S1" error. (Tatsuo Ishii)
+    -->
+    「unable to bind D cannot get parse message "S1"」エラーによるハングアップを修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-02 [426c2df]
+    -->
+    <para>
+    <!--
+    Doc: Mention that users can avoid failover using backend_flag even PostgreSQL admin shutdown. (Tatsuo Ishii)
+    -->
+    Doc: backend_flag を使用してフェイルオーバ回避できるようにする説明をドキュメントに追加しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-28 [3cc5422]
+    -->
+    <para>
+    <!--
+    Doc: Fix document typos. (Bo Peng)
+    -->
+    Doc: ドキュメントのタイポを修正しました。(Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-27 [bfb46bc]
+    -->
+    <para>
+    <!--
+    Fix <command>pgpool_setup</command> failure in replication mode. (Tatsuo Ishii)
+    -->
+    レプリケーションモードで <command>pgpool_setup</command> が失敗するのを修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-27 [4a47d33]
+    -->
+    <para>
+    <!--
+    Allow to support <function>pgpool_switch_xlog</function> <productname>PostgreSQL</productname> 10. (Tatsuo Ishii)
+    -->
+    <productname>PostgreSQL</productname> 10 に対応できるように pgpool_switch_xlog を修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-14 [41978bf]
+    -->
+    <para>
+    <!--
+    Doc: Fix <link linkend="pgpool-adm"> pgpool_adm</link> family functions examples. (Tatsuo Ishii)
+    -->
+    Doc: <link linkend="pgpool-adm"> pgpool_adm エクステンション</link>関数の例を修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-6-9">
 <!--
   <title>Release 3.6.9</title>
