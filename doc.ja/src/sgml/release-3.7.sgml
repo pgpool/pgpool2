@@ -1,3 +1,242 @@
+<sect1 id="release-3-7-3">
+<!--
+  <title>Release 3.7.3</title>
+	-->
+  <title>リリース 3.7.3</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-04-17</simpara>
+  </note>
+  <sect2>
+    <title>不具合修正</title> 
+    <itemizedlist>
+
+    <listitem>
+    <!--
+    2018-04-17 [7ce2a02]
+    -->
+    <para>
+    <!--
+    Disable health check per node parameters by default. (Bo Peng)
+    -->
+    デフォルトではノードごとヘルスチェックパラメータの設定が無効になりました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-04-13 [d07c908]
+    -->
+    <para>
+    <!--
+    Fix pcp_detach_node hung when -g option is specified. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=391">bug 391</ulink>) (Tatsuo Ishii)
+    -->
+     <xref linkend="pcp-detach-node"> コマンドで -g オプションを指定した場合に発生するハングアップを修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=391">bug 391</ulink>) (Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-04-09 [1fb3008]
+    -->
+    <para>
+    <!--
+    Add new regression test for node 0 is down. (Tatsuo Ishii)
+    -->
+    Test: ノード0 がダウンした場合のレグレッションテストを追加しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-04-08 [046a855]
+    -->
+    <para>
+    <!--
+    Make calls to to_regclass fully schema qualified. (Tatsuo Ishii)
+    -->
+    to_regclass を呼び出すときにスキーマ名を含むように修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-04-05 [af4ea10]
+    -->
+    <para>
+    <!--
+    Fix pgpool child process segfault when ALWAYS_MASTER is on. (Tatsuo Ishii)
+    -->
+    ALWAYS_MASTER が on の場合に発生する <productname>Pgpool-II</productname> 子プロセスのセグメンテーション違反を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    <productname>Pgpool-II</productname> 3.7.1 で、以下の条件をすべて満たす場合にセグメンテーション違反が発生していました。
+    <orderedlist>
+      <listitem>
+        <para>
+        ストリーミングレプリケーションモード
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        fail_over_on_backend_error = off
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        マスタノードが ALWAYS_MASTER に設定してある
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <filename>pgpool_status</filename> ファイルの上記 3)で設定したノードの状態が down である
+        </para>
+     </listitem>
+    </orderedlist>
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-04-04 [ec494b8]
+    -->
+    <para>
+    <!--
+    Improve watchdog documents. (Tatsuo Ishii)
+    -->
+    Doc: watchdog に関するドキュメントを更新しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-30 [d4b52e6]
+    -->
+    <para>
+    Doc: 新しい設定パラメータの追加方法に関する <filename>README</filename> ファイルを追加しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-14 [fc69c68]
+    -->
+    <para>
+    「unable to bind D cannot get parse message "S1"」エラーによるハングアップを修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-14 [795cb98]
+    -->
+    <para>
+    <!--
+    Test: Improve test script 003.failover. (Bo Peng)
+    -->
+    Test: 003.failover レグレッションテストが失敗しないように修正しました。(Bo Peng)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-03-02 [121bf41]
+    -->
+    <para>
+    Doc: backend_flag を使用してフェイルオーバ回避できるようにする説明をドキュメントに追加しました。(Tatsuo Ishii)
+    </para>
+    <para>
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-28 [8593af6]
+    -->
+    <para>
+    <!--
+    Doc: Fix document typos. (Bo Peng)
+    -->
+    Doc: ドキュメントのタイポを修正しました。(Bo Peng)
+    </para>
+    <para>
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-27 [f0c510f]
+    -->
+    <para>
+    Test: ノード0がプライマリではない場合のレグレッションテストを追加しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-27 [45e9699]
+    -->
+    <para>
+    <!--
+    Fix <command>pgpool_setup</command> failure in replication mode. (Tatsuo Ishii)
+    -->
+    レプリケーションモードで <command>pgpool_setup</command> が失敗するのを修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-27 [40647e2]
+    -->
+    <para>
+    <productname>PostgreSQL</productname> 10 に対応できるように pgpool_switch_xlog を修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-26 [e8baa3f]
+    -->
+    <para>
+    3.7.2 のコミット <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=9022ff842fb5dbbe06e2f2f4cf38fadf47b592da">9022ff842fb5dbbe06e2f2f4cf38fadf47b592da</ulink> を取り消しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    このコミットにより、 プライマリがノード 0 以外の場合に更新クエリを実行できなくなっていました。
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-19 [a3e2c68]
+    -->
+    <para>
+    Test: 拡張クエリのテストスクリプトを改善しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    <listitem>
+    <!--
+    2018-02-14 [ab93bb7]
+    -->
+    <para>
+    <!--
+    Fix pgpool_adm family functions examples. (Tatsuo Ishii)
+    -->
+    Doc: <link linkend="pgpool-adm"> pgpool_adm エクステンション</link>関数の例を修正しました。(Tatsuo Ishii)
+    </para>
+    </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-7-2">
 <!--
   <title>Release 3.7.2</title>
