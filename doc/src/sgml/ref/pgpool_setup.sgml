@@ -216,12 +216,23 @@ Pgpool-II documentation
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><option>INITDBARG</option></term>
       <listitem>
        <para>
 	 Specifies the arguments for initdb command.
         The default is "--no-locale -E UTF_8".
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>USE_REPLICATION_SLOT</option></term>
+      <listitem>
+       <para>
+	 If "true", in streaming replication mode, use replication slot instead
+	 of archive. This brings the same effect as "-s" option is specified.
        </para>
       </listitem>
      </varlistentry>

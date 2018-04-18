@@ -329,6 +329,20 @@ Pgpool-II documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>USE_REPLICATION_SLOT</option></term>
+      <listitem>
+       <para>
+<!--
+	 If "true", in streaming replication mode, use replication slot instead
+	 of archive. This brings the same effect as "-s" option is specified.
+-->
+ストリーミングレプリケーション環境に置いて、この環境変数が"true"に指定されると、アーカイブログの代わりにレプリケーションスロットを使います。
+これは、"-s"を使ったのと同じ効果をもたらします。
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
 
    </para>

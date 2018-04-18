@@ -75,6 +75,9 @@ LPATH=${PGLIB:-"/usr/local/pgsql/lib"}
 PGSOCKET_DIR=${PGSOCKET_DIR:-"/tmp"}
 # initdb args
 INITDBARG="--no-locale -E UTF_8"
+# Use replication slot
+USE_REPLICATION_SLOT=${USE_REPLICATION_SLOT:false}
+
 #-------------------------------------------
 # End of configuration section
 #-------------------------------------------
@@ -286,7 +289,7 @@ function set_postgresql_conf
 		echo "wal_level = hot_standby" >> $PGCONF
 		echo "max_wal_senders = $NUMCLUSTERS" >> $PGCONF
 
-		if [ $USE_SLOT = "fasel" ];then
+		if [ $USE_SLOT = "false" ];then
 		    echo "archive_mode = on" >> $PGCONF
 		    echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
 		fi
@@ -660,6 +663,10 @@ case $MODE in
 	    ;;
 esac
 
+# If USE_REPLICATION_SLOT is provided as an environment variable, turn on -s
+if [ $USE_REPLICATION_SLOT = "true" ];then
+    USE_SLOT="true"
+fi
 #-------------------------------------------
 # Make sure that current directory is empty
 #-------------------------------------------
