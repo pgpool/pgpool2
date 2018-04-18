@@ -511,6 +511,113 @@ offに設定した場合、そのようなエラーの場合でも<productname>P
       </listitem>
     </varlistentry>
 
+    <varlistentry id="guc-detach-false-primary" xreflabel="detach_false_primary">
+      <term><varname>detach_false_primary</varname> (<type>boolean</type>)
+        <indexterm>
+<!--
+          <primary><varname>detach_false_primary</varname> configuration parameter</primary>
+-->
+          <primary><varname>detach_false_primary</varname>設定パラメータ</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+<!--
+	  If set to on, detach false primary node. The default is
+          off. This parameter is only valid in streaming replication
+          mode and for <productname>PostgreSQL</productname> 9.6 or
+          after since this feature
+          uses <function>pg_stat_wal_receiver</function>.
+          If <productname>PostgreSQL</productname> 9.5.x or older
+          version is used, no error is raised, just the feature is
+          ignored.
+-->
+onにすると、不正なプライマリを切り離します。
+デフォルトはoffです。
+このパラメータは、ストリーミングレプリケーションモードでかつ、<productname>PostgreSQL</productname> 9.6以降を使っている場合にのみ有効です。
+というのも、<function>pg_stat_wal_receiver</function>を使っているからです。
+<productname>PostgreSQL</productname> 9.5以前を使っている場合は、エラーは報告されず、単にこの設定は無視されます。
+	</para>
+	<para>
+<!--
+	  If there's no primary node, no checking will be performed.
+  -->
+プライマリノードが存在しない場合は、検査を実施しません。
+	</para>
+	<para>
+<!--
+	  If there's no standby node, and there's only one primary
+	  node, no checking will be performed.
+-->
+プライマリノードが存在せず、プライマリノードがひとつだけ存在する場合は検査を実施しません。
+	</para>
+	<para>
+<!--
+	  If there's no standby node, and there's multiple primary
+	  nodes, leave the primary node which has the youngest node
+	  id and detach rest of primary nodes.
+-->
+プライマリノードが存在せず、プライマリノードが複数存在する場合は、もっとも若いノード番号を持つプライマリノードだけを残し、それ以外は切り離します。
+	</para>
+	<para>
+<!--
+	  If there are one or more primaries and one or more standbys,
+	  check the connectivity between primary and standby nodes by
+	  using <function>pg_stat_wal_receiver</function>
+	  if <productname>PostgreSQL</productname> 9.6 or after. In
+	  this case if a primary node connects to all standby nodes,
+	  the primary is regarded as "true" primary. Other primaries
+	  are regarded as "false" primary and the false primaries will
+	  be detached if <varname>detach_false_primary</varname> is
+	  true.  If no "true" primary is found, nothing will happen.
+-->
+もし複数のプライマリと一つ以上のスタンバイがある場合は、<productname>PostgreSQL</productname> 9.6以降であれば、プライマリとスタンバイノードの間の接続性を<function>pg_stat_wal_receiver</function>で検証します。
+もしあるプライマリがすべてのスタンバイに接続している場合は、そのプライマリは「正しい」と見なされ、それ以外のプライマリは「不正」と見なされ、<varname>detach_false_primary</varname>がonなら不正なプライマリは切り離されます。
+もし、正しいプライマリが見つからない場合は、何も起きません。
+        </para>
+	<para>
+<!--
+	  When <productname>Pgpool-II</productname> starts, the
+	  checking of false primaries are performed only once in
+	  the <productname>Pgpool-II</productname> main
+	  process. If <xref linkend="guc-sr-check-period"> is greater
+	  than 0, the false primaries checking will be performed at
+	  the same timing of streaming replication delay checking.
+-->
+<productname>Pgpool-II</productname>が起動した時、不正なプライマリのチェックは<productname>Pgpool-II</productname>のメインプロセスの中で一度だけ行われます。
+もし<xref linkend="guc-sr-check-period">が0より大きければ、不正なプライマリのチェックは、ストリーミングレプリケーションの遅延チェックと同じタイミングで行われます。
+	</para>
+        <para>
+<!--
+          This parameter is only applicable in the streaming replication mode.
+-->
+このパラメータは、ストリーミングレプリケーションモードの時だけに適用されます。
+        </para>
+        <para>
+<!--
+          This parameter can be changed by reloading
+          the <productname>Pgpool-II</productname> configurations.
+-->
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+        </para>
+
+	<para>
+	  <figure>
+<!--
+	    <title>Detecting false primaries</title>
+-->
+	    <title>不正なプライマリの検出</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata fileref="detach_false_primary.gif">
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	</para>
+
+      </listitem>
+    </varlistentry>
+
   </variablelist>
  </sect2>
 

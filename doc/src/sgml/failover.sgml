@@ -410,8 +410,21 @@
           This parameter is only applicable in the streaming replication mode.
         </para>
         <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+          This parameter can be changed by reloading
+          the <productname>Pgpool-II</productname> configurations.
         </para>
+
+	<para>
+	  <figure>
+	    <title>Detecting false primaries</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata fileref="detach_false_primary.gif">
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	</para>
+
       </listitem>
     </varlistentry>
 
