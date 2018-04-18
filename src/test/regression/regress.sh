@@ -16,6 +16,7 @@ MODE=install
 PG_INSTALL_DIR=/usr/local/pgsql/bin
 PGPOOL_PATH=/usr/local
 JDBC_DRIVER=/usr/local/pgsql/share/postgresql-9.2-1003.jdbc4.jar
+export USE_REPLICATION_SLOT=true
 export log=$dir/log
 fail=0
 ok=0
