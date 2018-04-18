@@ -71,6 +71,10 @@ void start_recovery(int recovery_node)
 		ereport(ERROR,
 				(errmsg("node recovery failed, node id: %d is not valid", recovery_node)));
 
+	if (*(my_backend_status[(recovery_node)]) == CON_UNUSED)
+		ereport(ERROR,
+				(errmsg("node recovery failed, node id: %d is unused", recovery_node)));
+
 	if (VALID_BACKEND(recovery_node))
 		ereport(ERROR,
 				(errmsg("node recovery failed, node id: %d is alive", recovery_node)));
