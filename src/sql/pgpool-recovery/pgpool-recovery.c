@@ -4,7 +4,7 @@
  *
  * pgpool-recovery: exec online recovery script from SELECT statement.
  *
- * Copyright (c) 2003-2013	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -83,13 +83,13 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 	{
 		char *remote_port = DatumGetCString(DirectFunctionCall1(textout,
 														  PointerGetDatum(PG_GETARG_TEXT_P(3))));
-		snprintf(recovery_script, sizeof(recovery_script), "%s/%s %s %s %s %s",
+		snprintf(recovery_script, sizeof(recovery_script), "\\"%s/%s\\" \\"%s\\" \\"%s\\" \\"%s\\" \\"%s\\"",
 				 DataDir, script, DataDir, remote_host,
 				 remote_data_directory, remote_port);
 	}
 	else
 	{
-		snprintf(recovery_script, sizeof(recovery_script), "%s/%s %s %s %s",
+		snprintf(recovery_script, sizeof(recovery_script), "\\"%s/%s\\" \\"%s\\" \\"%s\"" \\"%s\\"",
 				 DataDir, script, DataDir, remote_host,
 				 remote_data_directory);
 	}
