@@ -3037,9 +3037,9 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots)
 						backend_info = pool_get_node_info(i);
 
 						/* verify host and port */
-						if (((!strcmp(backend_info->backend_hostname, "/tmp") && *host == '\0') ||
-							 !strcmp(backend_info->backend_hostname, host)) &&
-							(backend_info->backend_port == atoi(port)))
+						if ((*backend_info->backend_hostname == '/' && *host == '\0') ||
+							(!strcmp(backend_info->backend_hostname, host) &&
+							 backend_info->backend_port == atoi(port)))
 						{
 							/* the standby connects to the primary */
 							primary[i]++;
