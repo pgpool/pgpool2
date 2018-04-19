@@ -664,7 +664,7 @@ case $MODE in
 esac
 
 # If USE_REPLICATION_SLOT is provided as an environment variable, turn on -s
-if [ $USE_REPLICATION_SLOT = "true" ];then
+if [ a$USE_REPLICATION_SLOT = a"true" ];then
     USE_SLOT="true"
 fi
 #-------------------------------------------
