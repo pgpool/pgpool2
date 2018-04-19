@@ -3685,7 +3685,9 @@ void pool_at_command_success(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *ba
 	 */
 	if (is_start_transaction_query(node))
 	{
-		pool_unset_writing_transaction();
+		if (pool_config->disable_load_balance_on_write != DLBOW_TRANS_TRANSACTION)
+			pool_unset_writing_transaction();
+
 		pool_unset_failed_transaction();
 		pool_unset_transaction_isolation();
 	}
@@ -3699,7 +3701,9 @@ void pool_at_command_success(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *ba
 	 */
 	else if (is_commit_or_rollback_query(node))
 	{
-		pool_unset_writing_transaction();
+		if (pool_config->disable_load_balance_on_write != DLBOW_TRANS_TRANSACTION)
+			pool_unset_writing_transaction();
+
 		pool_unset_failed_transaction();
 		pool_unset_transaction_isolation();
 	}

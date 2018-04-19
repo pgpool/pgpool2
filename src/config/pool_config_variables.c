@@ -217,6 +217,13 @@ static const struct config_enum_entry syslog_facility_options[] = {
 	{NULL, 0, false}
 };
 
+static const struct config_enum_entry disable_load_balance_on_write_options[] = {
+	{"off", DLBOW_OFF, false},
+	{"transaction", DLBOW_TRANSACTION, false},
+	{"trans_transaction", DLBOW_TRANS_TRANSACTION, false},
+	{"always", DLBOW_ALWAYS, false},
+	{NULL, 0, false}
+};
 
 static struct config_bool ConfigureNamesBool[] =
 {
@@ -1824,6 +1831,17 @@ static struct config_enum ConfigureNamesEnum[] =
 		(int*)&g_pool_config.memqcache_method,
 		SHMEM_CACHE,
 		memqcache_method_options,
+		NULL, NULL, NULL, NULL
+	},
+
+	{
+		{"disable_load_balance_on_write", CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
+			"Load balance behavior when write query is received.",
+			CONFIG_VAR_TYPE_ENUM,false, 0
+		},
+		(int*)&g_pool_config.disable_load_balance_on_write,
+		DLBOW_TRANSACTION,
+		disable_load_balance_on_write_options,
 		NULL, NULL, NULL, NULL
 	},
 

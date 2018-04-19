@@ -81,6 +81,14 @@ typedef enum WdLifeCheckMethod
 	LIFECHECK_BY_EXTERNAL
 }WdLifeCheckMethod;
 
+typedef enum DLBOW_OPTION
+{
+	DLBOW_OFF = 1,
+	DLBOW_TRANSACTION,
+	DLBOW_TRANS_TRANSACTION,
+	DLBOW_ALWAYS
+} DLBOW_OPTION;
+
 /*
  * Flags for backendN_flag
  */
@@ -296,6 +304,19 @@ typedef struct {
 									 * is possible. If off, SQL comments effectively prevent the judgment
 									 * (pre 3.4 behavior). For backward compatibilty sake, default is off.
 									 */
+
+	DLBOW_OPTION	disable_load_balance_on_write;	/* Load balance behavior when write query is issued
+													 * in an explicit transaction.
+													 * Note that any query not in an explicit transaction
+													 * is not affected by the parameter.
+													 * 'transaction' (the default): if a write query is issued,
+													 * subsequent read queries will not be load balanced
+													 * until the transaction ends.
+													 * 'trans_transaction': if a write query is issued,
+													 * subsequent read queries in an explicit transaction
+													 * will not be load balanced until the session ends.
+													 */
+
 	/*
 	 * add for watchdog
 	 */
@@ -334,6 +355,7 @@ typedef struct {
 	WdHbIf hb_if[WD_MAX_IF_NUM];			/* interface devices */
 	int num_hb_if;							/* number of interface devices */
 	char **wd_monitoring_interfaces_list;	/* network interface name list to be monitored by watchdog */
+
 } POOL_CONFIG;
 
 extern POOL_CONFIG* pool_config;

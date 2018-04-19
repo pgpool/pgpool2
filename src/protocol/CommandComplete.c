@@ -270,7 +270,10 @@ void handle_query_context(POOL_CONNECTION_POOL *backend)
 
 				TSTATE(backend, i) = 'T';
 			}
-			pool_unset_writing_transaction();
+
+			if (pool_config->disable_load_balance_on_write != DLBOW_TRANS_TRANSACTION)
+				pool_unset_writing_transaction();
+
 			pool_unset_failed_transaction();
 			pool_unset_transaction_isolation();
 		}
