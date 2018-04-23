@@ -8,13 +8,12 @@
     works with Master Slave mode (<xref linkend="runtime-config-master-slave-mode">)
     and Replication mode (<xref linkend="runtime-config-replication-mode">). When enabled
     <productname>Pgpool-II</productname> sends the writing queries to the
-    <acronym>primay node</acronym> in Master Slave mode, all of the backend nodes
-    in Replication mode, and other queries get load balanced among all backend nodes.
-    To which node
-    the load balancing mechanism sends read queries is decided at the
-    session start time and will not be changed until the session
-    ends. The only exception is by writing special SQL comments. See
-    below for more details.
+    <acronym>primay node</acronym> in Master Slave mode, all of the
+    backend nodes in Replication mode, and other queries get load
+    balanced among all backend nodes.  To which node the load
+    balancing mechanism sends read queries is decided at the session
+    start time and will not be changed until the session ends. However
+    there are some exceptions.  See below for more details.
   </para>
   <note>
     <para>
@@ -161,6 +160,59 @@
 
  </sect2>
 
+ <sect2 id="runtime-config-writing-queries-may-affect-load-balancing">
+
+   <title>Writing queries may affect Load Balancing</title>
+   <para>
+     In general, read queries are load balanced if certain conditions
+     are met. However, writing queries may affect the load
+     balancing. Here "writing queries" mean all the queries except
+     below:
+   </para>
+
+   <para>
+   <itemizedlist>
+     <listitem>
+       <para>
+	 SELECT/WITH without FOR UPDATE/SHARE
+       </para>
+     </listitem>
+
+     <listitem>
+       <para>
+	 COPY TO STODUT
+       </para>
+     </listitem>
+
+     <listitem>
+       <para>
+	 EXPLAIN
+       </para>
+     </listitem>	 
+
+     <listitem>
+       <para>
+	 EXPLAIN ANALYZE and the query is SELECT not including writing functions
+       </para>
+     </listitem>	 
+
+     <listitem>
+       <para>
+	 SHOW
+       </para>
+     </listitem>	 
+
+   </itemizedlist>
+   </para>
+
+   <para>
+     If writing queires appear, succeeding read queries may not be
+     load balanced. i.e. sent to primary node (in streaming
+     replication mode) or master node (in other mode) depending on the
+     setting of <xref linkend="guc-disable-load-balance-on-write">.
+   </para>
+ </sect2>
+
  <sect2 id="runtime-config-load-balancing-in-streaming-raplication">
 
    <title>Load Balancing in Streaming Replication</title>
@@ -274,11 +326,31 @@
              SELECT not listed above
              </para>
            </listitem>
+
            <listitem>
              <para>
-             COPY TO
+             COPY TO STDOUT
              </para>
            </listitem>
+
+	   <listitem>
+	     <para>
+	       EXPLAIN
+	     </para>
+	   </listitem>	 
+
+	   <listitem>
+	     <para>
+	       EXPLAIN ANALYZE and the query is SELECT not including writing functions
+	     </para>
+	   </listitem>	 
+
+	   <listitem>
+	     <para>
+	       SHOW
+	     </para>
+	   </listitem>	 
+
          </itemizedlist>
         </para>
       </listitem>
@@ -702,6 +774,69 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
                     You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
                     this parameter for a current session.
         </para>
+      </listitem>
+    </varlistentry>
+
+   <varlistentry id="guc-disable-load-balance-on-write" xreflabel="disable_load_balance_on_write">
+      <term><varname>disable_load_balance_on_write</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>disable_load_balance_on_write</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+	  Specify load balance behavior after write queries appear.
+	  This parameter is especially useful in streaming replication
+	  mode. When write queries are sent to primary server, the
+	  changes are applied to standby servers but there's a time
+	  lag. So if a client read the same row right after the write
+	  query, the client may not see the latest value of the
+	  row. If that's the problem, clients should always read data
+	  from the primary server. However this effectively disables
+	  load balancing, which leads to lesser performance. This
+	  parameter allows a fine tuning for the trade off between
+	  not-clustering-aware applications compatibility and
+	  performance.
+	</para>
+	<para>
+	  If this parameter is set to <varname>off</varname>, read
+	  queries are load balanced even if write queries appear. This
+	  gives the best load balance performance but clients may see
+	  older data. This is useful for an environment where
+	  PostgreSQL parameter synchronous_commit = 'remote_apply', or
+	  in the native replication mode, since there's no replication
+	  delay in such environments.
+	</para>
+	<para>
+	  If this parameter is set to <varname>transaction</varname>
+	  and write queries appear in an explicit transaction,
+	  subsequent read queries are not load balanced until the
+	  transaction ends.  Please note that read queries not in an
+	  explicit transaction are not affected by the parameter. This
+	  setting gives the best balance in most cases and you should
+	  start from this. This is the default and same behavior in
+	  <productname>Pgpool-II 3.7</productname> or before.
+	</para>
+	<para>
+	  If this parameter is set
+	  to <varname>trans_transaction</varname> and write queries
+	  appear in an explicit transaction, subsequent read queries
+	  are not load balanced in the transaction and subsequent
+	  explicit transaction until the session ends. So this
+	  parameter is safer for older applications but give lesser
+	  performance than <varname>transaction</varname>. Please note
+	  that read queries not in an explicit transaction are not
+	  affected by the parameter.
+	</para>
+
+	<para>
+	  If this parameter is set to <varname>always</varname> and
+	  write queries appear, subsequent read queries are not load
+	  balanced until the session ends regardless they are in
+	  explicit transactions or not. This gives the highest
+	  compatibility with not-clustering-aware applications and the
+	  lowest performance.
+	</para>
       </listitem>
     </varlistentry>
 

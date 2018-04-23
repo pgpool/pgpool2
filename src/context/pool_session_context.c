@@ -1,12 +1,10 @@
 /* -*-pgsql-c-*- */
 /*
  *
- * $Header$
- *
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -607,10 +605,16 @@ void pool_set_sent_message_state(POOL_SENT_MESSAGE *message)
  */
 void pool_unset_writing_transaction(void)
 {
-	ereport(DEBUG1,
-			(errmsg("session context: clearing writing transaction. DONE")));
-
-	pool_get_session_context(false)->writing_transaction = false;
+	/*
+	 * If disable_transaction_on_write is 'always', then never turn off
+	 * writing transaction flag.
+	 */
+	if (pool_config->disable_load_balance_on_write != DLBOW_ALWAYS)
+	{
+		pool_get_session_context(false)->writing_transaction = false;
+		ereport(DEBUG1,
+				(errmsg("session context: clearing writing transaction. DONE")));
+	}
 }
 
 /*
@@ -618,9 +622,16 @@ void pool_unset_writing_transaction(void)
  */
 void pool_set_writing_transaction(void)
 {
-	ereport(DEBUG1,
+	/*
+	 * If disable_transaction_on_write is 'off', then never turn on writing
+	 * transaction flag.
+	 */
+	if (pool_config->disable_load_balance_on_write != DLBOW_OFF)
+	{
+		pool_get_session_context(false)->writing_transaction = true;
+		ereport(DEBUG1,
 			(errmsg("session context: setting writing transaction. DONE")));
-	pool_get_session_context(false)->writing_transaction = true;
+	}
 }
 
 /*

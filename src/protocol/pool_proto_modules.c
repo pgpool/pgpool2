@@ -918,7 +918,8 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			 * explicit transaction, remember that we had a write
 			 * query in this transaction.
 			 */
-			if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
+			if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T' ||
+				pool_config->disable_load_balance_on_write == DLBOW_ALWAYS)
 			{
 				pool_set_writing_transaction();
 			}
@@ -3732,11 +3733,12 @@ void pool_at_command_success(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *ba
 	else if (!is_select_query(node, query))
 	{
 		/*
-		 * If the query was not READ SELECT, and we are in an
-		 * explicit transaction, remember that we had a write
-		 * query in this transaction.
+		 * If the query was not READ SELECT, and we are in an explicit
+		 * transaction or disable_load_balance_on_write is 'ALWAYS', remember
+		 * that we had a write query in this transaction.
 		 */
-		if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
+		if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T' ||
+			pool_config->disable_load_balance_on_write == DLBOW_ALWAYS)
 		{
 			/* However, if the query is "SET TRANSACTION READ ONLY" or its variant,
 			 * don't set it.

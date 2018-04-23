@@ -462,6 +462,11 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		{
 			pool_setall_node_to_be_sent(query_context);
 		}
+		else if (pool_is_writing_transaction() &&
+				 pool_config->disable_load_balance_on_write == DLBOW_ALWAYS)
+		{
+			pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+		}
 
 		/*
 		 * Ok, we might be able to load balance the SELECT query.
