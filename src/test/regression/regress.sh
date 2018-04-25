@@ -44,9 +44,20 @@ function install_pgpool
 	    echo "make install failed"
 	    exit 1
 	fi
-	
+
+	cd ../../sql
+	make install
+	cd ../test/regression
+
+	if [ $? = 0 ];then
+	    echo "make extension ok"
+	else 
+	    echo "make extension failed"
+	    exit 1
+	fi
+
 	echo "moving pgpool_setup to temporary installation path ..."
-        cp $dir/../pgpool_setup ${PGPOOL_PATH}/pgpool_setup
+	cp $dir/../pgpool_setup ${PGPOOL_PATH}/pgpool_setup
 	export PGPOOL_SETUP=$PGPOOL_PATH/pgpool_setup
 }
 
