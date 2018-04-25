@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -26,7 +26,6 @@
 #ifndef POOL_PASSWD_H
 #define POOL_PASSWD_H
 
-#include "pool.h"
 
 #define POOL_PASSWD_FILENAME "pool_passwd"
 #define POOL_PASSWD_LEN 35
@@ -38,11 +37,27 @@ typedef enum {
 
 typedef enum PasswordType
 {
-	PASSWORD_TYPE_PLAINTEXT = 0,
+	PASSWORD_TYPE_UNKNOWN = 0,
+	PASSWORD_TYPE_PLAINTEXT,
 	PASSWORD_TYPE_MD5,
 	PASSWORD_TYPE_SCRAM_SHA_256
 } PasswordType;
 
+typedef struct UserPassword
+{
+	char *userName;
+	char *password;
+	PasswordType passwordType;
+}UserPassword;
+
+typedef struct PasswordMapping
+{
+	UserPassword pgpoolUser;
+	UserPassword backendUser;
+	bool mappedUser;
+}PasswordMapping;
+
+extern PasswordMapping *pool_get_user_credentials(char *username);
 extern PasswordType get_password_type(const char *shadow_pass);
 extern void pool_init_pool_passwd(char *pool_passwd_filename, POOL_PASSWD_MODE mode);
 extern int pool_create_passwdent(char *username, char *passwd);

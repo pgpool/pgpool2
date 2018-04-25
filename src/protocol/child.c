@@ -2317,7 +2317,7 @@ retry_startup:
 	found = 0;
 
 	backend = pool_get_cp(sp->user, sp->database, sp->major, 1);
-	
+
 	if (backend != NULL)
 	{
 		found = 1;

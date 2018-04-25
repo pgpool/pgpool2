@@ -38,8 +38,9 @@ typedef enum UserAuth
 	/*  uaKrb5, */
 	uaTrust,
 	/*  uaIdent, */
-	/*  uaPassword, */
+	uaPassword,
 	/*  uaCrypt, */
+	uaCert,
 	uaMD5,
 	uaSCRAM
 #ifdef USE_PAM
