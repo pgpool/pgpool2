@@ -184,15 +184,15 @@ int main(int argc, char **argv)
 				exit(1);
 		}
 	}
-#ifdef USE_SSL
-	/* global ssl init */
-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
-	OPENSSL_init_ssl(0, NULL);
-#else
-	SSL_library_init();
-#endif
-	SSL_load_error_strings();
-#endif /* USE_SSL */
+//#ifdef USE_SSL
+//	/* global ssl init */
+//#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
+//	OPENSSL_init_ssl(0, NULL);
+//#else
+//	SSL_library_init();
+//#endif
+//	SSL_load_error_strings();
+//#endif /* USE_SSL */
 
 	myargv = save_ps_display_args(myargc, myargv);
 	/* create MemoryContexts */
@@ -283,6 +283,10 @@ int main(int argc, char **argv)
 
 	if (pool_config->enable_pool_hba)
 		load_hba(hba_file);
+
+#ifdef USE_SSL
+	SSL_ServerSide_init();
+#endif /* USE_SSL */
 
 	/* check effective user id for watchdog */
 	/* watchdog must be started under the privileged user */

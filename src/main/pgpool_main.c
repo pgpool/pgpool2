@@ -46,7 +46,6 @@
 
 #include <libgen.h>
 #include "utils/elog.h"
-#include "utils/palloc.h"
 
 #include "pool.h"
 #include "utils/palloc.h"

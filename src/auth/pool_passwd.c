@@ -234,6 +234,158 @@ char *pool_get_passwd(char *username)
 }
 
 /*
+ * return the next token if the current token matches the
+ * user
+ */
+static char *
+getNextToken(char *buf, char **token)
+{
+#define MAX_TOKEN_LEN 128
+	char	*tbuf,*p;
+	bool	bslash = false;
+	char 	tok[MAX_TOKEN_LEN+1];
+	int readlen = 0;
+
+	*token = NULL;
+	if (buf == NULL)
+		return NULL;
+
+	tbuf = buf;
+	p = tok;
+	while (*tbuf != 0 && readlen < MAX_TOKEN_LEN)
+	{
+		if (*tbuf == '\\' && !bslash)
+		{
+			tbuf++;
+			bslash = true;
+		}
+
+		if (*tbuf == ':' && !bslash)
+		{
+			*p = '\0';
+			if(readlen)
+				*token = pstrdup(tok);
+			return tbuf + 1;
+		}
+		/*  just copy to the tok */
+		bslash = false;
+		*p++ = *tbuf++;
+		readlen++;
+	}
+	*p = '\0';
+	if(readlen)
+		*token = pstrdup(tok);
+	return NULL;
+}
+/*
+ * return the next token if the current token matches the
+ * user
+ */
+static char *
+userMatchesString(char *buf, char *user)
+{
+	char       *tbuf,
+	*ttok;
+	bool            bslash = false;
+
+	if (buf == NULL || user == NULL)
+		return NULL;
+	tbuf = buf;
+	ttok = user;
+	while (*tbuf != 0)
+	{
+		if (*tbuf == '\\' && !bslash)
+		{
+			tbuf++;
+			bslash = true;
+		}
+		if (*tbuf == ':' && *ttok == 0 && !bslash)
+			return tbuf + 1;
+		bslash = false;
+		if (*ttok == 0)
+			return NULL;
+		if (*tbuf == *ttok)
+		{
+			tbuf++;
+			ttok++;
+		}
+		else
+			return NULL;
+	}
+	return NULL;
+}
+
+/*
+ * user:passwod[:user:password]
+ */
+PasswordMapping *pool_get_user_credentials(char *username)
+{
+	PasswordMapping	*pwdMapping = NULL;
+	char        buf[1024];
+
+
+	if (!username)
+		ereport(ERROR,
+				(errmsg("unable to get password, username is NULL")));
+
+	if (!passwd_fd)
+		ereport(ERROR,
+				(errmsg("unable to get password, password file descriptor is NULL")));
+
+	rewind(passwd_fd);
+
+	while (!feof(passwd_fd) && !ferror(passwd_fd))
+	{
+		char    *t = buf;
+		char	*tok;
+		int     len;
+
+		if (fgets(buf, sizeof(buf), passwd_fd) == NULL)
+			break;
+
+		len = strlen(buf);
+		if (len == 0)
+			continue;
+
+		/* Remove trailing newline */
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = 0;
+
+		if ((t = userMatchesString(t, username)) == NULL)
+			continue;
+		/* Get the password */
+		t = getNextToken(t, &tok);
+		if (tok)
+		{
+			pwdMapping = palloc(sizeof(PasswordMapping));
+			pwdMapping->pgpoolUser.password = tok;
+			pwdMapping->pgpoolUser.passwordType = get_password_type(pwdMapping->pgpoolUser.password);
+			pwdMapping->pgpoolUser.userName = pstrdup(username);
+			pwdMapping->mappedUser = false;
+		}
+		else
+			continue;
+		/* Get backend user*/
+		t = getNextToken(t, &tok);
+		if (tok)
+		{
+			/* check if we also have the password */
+			char *pwd;
+			t = getNextToken(t, &pwd);
+			if (tok)
+			{
+				pwdMapping->backendUser.password = pwd;
+				pwdMapping->backendUser.userName = tok;
+				pwdMapping->backendUser.passwordType = get_password_type(pwdMapping->backendUser.password);
+				pwdMapping->mappedUser = true;
+			}
+		}
+		break;
+	}
+	return pwdMapping;
+}
+
+/*
  * Delete the entry by username. If specified entry does not exist,
  * does nothing.
  */

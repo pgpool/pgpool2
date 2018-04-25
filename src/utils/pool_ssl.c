@@ -27,10 +27,21 @@
 #include "config.h"
 #include "pool.h"
 #include "utils/elog.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
+#include <sys/stat.h>
 
 #ifdef USE_SSL
+
+static SSL_CTX *SSL_frontend_context = NULL;
+static bool SSL_initialized = false;
+static bool ssl_passwd_cb_called = false;
+static int	ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
+static int  verify_cb(int ok, X509_STORE_CTX *ctx);
+static const char * SSLerrmessage(unsigned long ecode);
+static void fetch_pool_ssl_cert(POOL_CONNECTION *cp);
 
 #define SSL_RETURN_VOID_IF(cond, msg) \
 	do { \
@@ -62,7 +73,9 @@ static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype);
 /* OpenSSL error message */
 static void perror_ssl(const char *context);
 
-/* attempt to negotiate a secure connection */
+/* Attempt to negotiate a secure connection
+ * between pgpool-II and PostgreSQL backends
+ */
 void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 	int ssl_packet[2] = { htonl(sizeof(int)*2), htonl(NEGOTIATE_SSL_CODE) };
 	char server_response;
@@ -112,21 +125,27 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 }
 
 
-/* attempt to negotiate a secure connection */
+/* attempt to negotiate a secure connection
+ * between frontend and Pgpool-II
+ */
 void pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp) {
 
 	cp->ssl_active = -1;
+	if ( (!pool_config->ssl) || !SSL_frontend_context) {
 
-	if ( (!pool_config->ssl) || init_ssl_ctx(cp, ssl_conn_serverclient)) {
+//	if ( (!pool_config->ssl) || init_ssl_ctx(cp, ssl_conn_serverclient)) {
 		/* write back an "SSL reject" response before returning */
 		pool_write_and_flush(cp, "N", 1);
 	} else {
+		cp->ssl = SSL_new(SSL_frontend_context);
+
 		/* write back an "SSL accept" response */
 		pool_write_and_flush(cp, "S", 1);
 
 		SSL_set_fd(cp->ssl, cp->fd);
 		SSL_RETURN_VOID_IF( (SSL_accept(cp->ssl) < 0), "SSL_accept");
 		cp->ssl_active = 1;
+		fetch_pool_ssl_cert(cp);
 	}
 }
 
@@ -319,6 +338,31 @@ static void perror_ssl(const char *context) {
 }
 
 /*
+ * Obtain reason string for passed SSL errcode
+ *
+ * ERR_get_error() is used by caller to get errcode to pass here.
+ *
+ * Some caution is needed here since ERR_reason_error_string will
+ * return NULL if it doesn't recognize the error code.  We don't
+ * want to return NULL ever.
+ */
+static const char *
+SSLerrmessage(unsigned long ecode)
+{
+	const char *errreason;
+	static char errbuf[32];
+	
+	if (ecode == 0)
+		return _("no SSL error reported");
+	errreason = ERR_reason_error_string(ecode);
+	if (errreason != NULL)
+		return errreason;
+	snprintf(errbuf, sizeof(errbuf), _("SSL error code %lu"), ecode);
+	return errbuf;
+}
+
+
+/*
  * Return true if SSL layer has any pending data in buffer
  */
 bool pool_ssl_pending(POOL_CONNECTION *cp)
@@ -326,6 +370,315 @@ bool pool_ssl_pending(POOL_CONNECTION *cp)
 	if (cp->ssl_active > 0 && SSL_pending(cp->ssl) > 0)
 		return true;
 	return false;
+}
+
+static void fetch_pool_ssl_cert(POOL_CONNECTION *cp)
+{
+	int         len;
+	X509 *peer = SSL_get_peer_certificate(cp->ssl);
+	cp->peer = peer;
+	if (peer)
+	{
+		ereport(DEBUG1,
+				(errmsg("got the SSL certificate")));
+		len = X509_NAME_get_text_by_NID(X509_get_subject_name(peer),NID_commonName, NULL, 0);
+		if (len != -1)
+		{
+			char       *peer_cn;
+			peer_cn = palloc(len + 1);
+			int r = X509_NAME_get_text_by_NID(X509_get_subject_name(peer), NID_commonName, peer_cn, len + 1);
+			peer_cn[len] = '\0';
+			if (r != len)
+			{
+				/* shouldn't happen */
+				pfree(peer_cn);
+				return;
+			}
+			cp->client_cert_loaded = true;
+			cp->cert_cn = MemoryContextStrdup(TopMemoryContext,peer_cn);
+			pfree(peer_cn);
+		}
+		else
+		{
+			cp->client_cert_loaded = false;
+		}
+	}
+	else
+	{
+		cp->client_cert_loaded = false;
+	}
+}
+
+/*
+ *	Passphrase collection callback
+ *
+ * If OpenSSL is told to use a passphrase-protected server key, by default
+ * it will issue a prompt on /dev/tty and try to read a key from there.
+ * That's no good during a postmaster SIGHUP cycle, not to mention SSL context
+ * reload in an EXEC_BACKEND postmaster child.  So override it with this dummy
+ * function that just returns an empty passphrase, guaranteeing failure.
+ */
+static int
+ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
+{
+	/* Set flag to change the error message we'll report */
+	ssl_passwd_cb_called = true;
+	/* And return empty string */
+	Assert(size > 0);
+	buf[0] = '\0';
+	return 0;
+}
+/*
+ *	Certificate verification callback
+ *
+ *	This callback allows us to log intermediate problems during
+ *	verification, but for now we'll see if the final error message
+ *	contains enough information.
+ *
+ *	This callback also allows us to override the default acceptance
+ *	criteria (e.g., accepting self-signed or expired certs), but
+ *	for now we accept the default checks.
+ */
+static int
+verify_cb(int ok, X509_STORE_CTX *ctx)
+{
+	return ok;
+}
+
+/*
+ *	Initialize global SSL context.
+ *
+ * If isServerStart is true, report any errors as FATAL (so we don't return).
+ * Otherwise, log errors at LOG level and return -1 to indicate trouble,
+ * preserving the old SSL state if any.  Returns 0 if OK.
+ */
+int
+SSL_ServerSide_init(void)
+{
+	STACK_OF(X509_NAME) *root_cert_list = NULL;
+	SSL_CTX    *context;
+	struct stat buf;
+	
+	/* This stuff need be done only once. */
+	if (!SSL_initialized)
+	{
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
+		OPENSSL_init_ssl(0, NULL);
+#else
+		SSL_library_init();
+#endif
+		SSL_load_error_strings();
+
+		SSL_initialized = true;
+	}
+	
+	/*
+	 * We use SSLv23_method() because it can negotiate use of the highest
+	 * mutually supported protocol version, while alternatives like
+	 * TLSv1_2_method() permit only one specific version.  Note that we don't
+	 * actually allow SSL v2 or v3, only TLS protocols (see below).
+	 */
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
+	context = SSL_CTX_new(TLS_method());
+#else
+	context = SSL_CTX_new(SSLv23_method());
+#endif
+
+	if (!context)
+	{
+		ereport(FATAL,
+				(errmsg("could not create SSL context: %s",
+						SSLerrmessage(ERR_get_error()))));
+		goto error;
+	}
+
+	/*
+	 * Disable OpenSSL's moving-write-buffer sanity check, because it causes
+	 * unnecessary failures in nonblocking send cases.
+	 */
+	SSL_CTX_set_mode(context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+
+	/*
+	 * prompt for password for passphrase-protected files
+	 */
+	SSL_CTX_set_default_passwd_cb(context, ssl_passwd_cb);
+
+	/*
+	 * Load and verify server's certificate and private key
+	 */
+	if (SSL_CTX_use_certificate_chain_file(context, pool_config->ssl_cert) != 1)
+	{
+		ereport(FATAL,
+				(errmsg("could not load server certificate file \"%s\": %s",
+						pool_config->ssl_cert, SSLerrmessage(ERR_get_error()))));
+		goto error;
+	}
+
+	if (stat(pool_config->ssl_key, &buf) != 0)
+	{
+		ereport(FATAL,
+				(errmsg("could not access private key file \"%s\": %m",
+						pool_config->ssl_key)));
+		goto error;
+	}
+	
+	if (!S_ISREG(buf.st_mode))
+	{
+		ereport(FATAL,
+				(errmsg("private key file \"%s\" is not a regular file",
+						pool_config->ssl_key)));
+		goto error;
+	}
+	
+	/*
+	 * Refuse to load key files owned by users other than us or root.
+	 *
+	 * XXX surely we can check this on Windows somehow, too.
+	 */
+#if !defined(WIN32) && !defined(__CYGWIN__)
+	if (buf.st_uid != geteuid() && buf.st_uid != 0)
+	{
+		ereport(FATAL,
+				(errmsg("private key file \"%s\" must be owned by the database user or root",
+						pool_config->ssl_key)));
+		goto error;
+	}
+#endif
+	
+	/*
+	 * Require no public access to key file. If the file is owned by us,
+	 * require mode 0600 or less. If owned by root, require 0640 or less to
+	 * allow read access through our gid, or a supplementary gid that allows
+	 * to read system-wide certificates.
+	 *
+	 * XXX temporarily suppress check when on Windows, because there may not
+	 * be proper support for Unix-y file permissions.  Need to think of a
+	 * reasonable check to apply on Windows.  (See also the data directory
+	 * permission check in postmaster.c)
+	 */
+#if !defined(WIN32) && !defined(__CYGWIN__)
+	if ((buf.st_uid == geteuid() && buf.st_mode & (S_IRWXG | S_IRWXO)) ||
+		(buf.st_uid == 0 && buf.st_mode & (S_IWGRP | S_IXGRP | S_IRWXO)))
+	{
+		ereport(FATAL,
+				(errmsg("private key file \"%s\" has group or world access",
+						pool_config->ssl_key),
+				 errdetail("File must have permissions u=rw (0600) or less if owned by the database user, or permissions u=rw,g=r (0640) or less if owned by root.")));
+		goto error;
+	}
+#endif
+	
+	/*
+	 * OK, try to load the private key file.
+	 */
+	ssl_passwd_cb_called = false;
+	
+	if (SSL_CTX_use_PrivateKey_file(context,
+									pool_config->ssl_key,
+									SSL_FILETYPE_PEM) != 1)
+	{
+		if (ssl_passwd_cb_called)
+			ereport(FATAL,
+					(errmsg("private key file \"%s\" cannot be reloaded because it requires a passphrase",
+							pool_config->ssl_key)));
+		else
+			ereport(FATAL,
+					(errmsg("could not load private key file \"%s\": %s",
+							pool_config->ssl_key, SSLerrmessage(ERR_get_error()))));
+		goto error;
+	}
+	
+	if (SSL_CTX_check_private_key(context) != 1)
+	{
+		ereport(FATAL,
+				(errmsg("check of private key failed: %s",
+						SSLerrmessage(ERR_get_error()))));
+		goto error;
+	}
+	
+	/* disallow SSL v2/v3 */
+	SSL_CTX_set_options(context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+	
+	/* disallow SSL session tickets */
+#ifdef SSL_OP_NO_TICKET			/* added in openssl 0.9.8f */
+	SSL_CTX_set_options(context, SSL_OP_NO_TICKET);
+#endif
+	
+	/* disallow SSL session caching, too */
+	SSL_CTX_set_session_cache_mode(context, SSL_SESS_CACHE_OFF);
+	
+//	/* set up ephemeral DH and ECDH keys */
+//	if (!initialize_dh(context, isServerStart))
+//		goto error;
+//	if (!initialize_ecdh(context, isServerStart))
+//		goto error;
+	
+//	/* set up the allowed cipher list */
+//	if (SSL_CTX_set_cipher_list(context, SSLCipherSuites) != 1)
+//	{
+//		ereport(FATAL,
+//				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+//				 errmsg("could not set the cipher list (no valid ciphers available)")));
+//		goto error;
+//	}
+	
+	/* Let server choose order */
+//	if (SSLPreferServerCiphers)
+//		SSL_CTX_set_options(context, SSL_OP_CIPHER_SERVER_PREFERENCE);
+	
+	/*
+	 * Load CA store, so we can verify client certificates if needed.
+	 */
+	if (pool_config->ssl_ca_cert)
+	{
+		if (SSL_CTX_load_verify_locations(context, pool_config->ssl_ca_cert, NULL) != 1 ||
+			(root_cert_list = SSL_load_client_CA_file(pool_config->ssl_ca_cert)) == NULL)
+		{
+			ereport(FATAL,
+					(errmsg("could not load root certificate file \"%s\": %s",
+							pool_config->ssl_ca_cert, SSLerrmessage(ERR_get_error()))));
+			goto error;
+		}
+		/*
+		 * Always ask for SSL client cert, but don't fail if it's not
+		 * presented.  We might fail such connections later, depending on what
+		 * we find in pg_hba.conf.
+		 */
+		SSL_CTX_set_verify(context,
+						   (SSL_VERIFY_PEER |
+							SSL_VERIFY_CLIENT_ONCE),
+						   verify_cb);
+		
+		/*
+		 * Tell OpenSSL to send the list of root certs we trust to clients in
+		 * CertificateRequests.  This lets a client with a keystore select the
+		 * appropriate client certificate to send to us.
+		 */
+		SSL_CTX_set_client_CA_list(context, root_cert_list);
+	}
+	
+	/*
+	 * Success!  Replace any existing SSL_context.
+	 */
+	if (SSL_frontend_context)
+		SSL_CTX_free(SSL_frontend_context);
+	
+	SSL_frontend_context = context;
+	
+	/*
+	 * Set flag to remember whether CA store has been loaded into SSL_context.
+	 */
+//	if (pool_config->ssl_ca_cert)
+//		ssl_loaded_verify_locations = true;
+//	else
+//		ssl_loaded_verify_locations = false;
+//
+	return 0;
+	
+error:
+	if (context)
+		SSL_CTX_free(context);
+	return -1;
 }
 
 #else /* USE_SSL: wrap / no-op ssl functionality if it's not available */
@@ -361,6 +714,11 @@ int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size) {
 	notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 	child_exit(POOL_EXIT_AND_RESTART);
 	return -1; /* never reached */
+}
+
+int SSL_ServerSide_init(void)
+{
+	return 0;
 }
 
 bool pool_ssl_pending(POOL_CONNECTION *cp)
