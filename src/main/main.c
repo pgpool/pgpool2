@@ -285,7 +285,11 @@ int main(int argc, char **argv)
 		load_hba(hba_file);
 
 #ifdef USE_SSL
-	SSL_ServerSide_init();
+	/*
+	 * If ssl is enabled, initialize the SSL context
+	 */
+	if (pool_config->ssl)
+		SSL_ServerSide_init();
 #endif /* USE_SSL */
 
 	/* check effective user id for watchdog */
