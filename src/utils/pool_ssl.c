@@ -31,7 +31,10 @@
 #include "utils/memutils.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
+#include <unistd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+
 
 #ifdef USE_SSL
 
@@ -132,9 +135,6 @@ void pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp) {
 
 	cp->ssl_active = -1;
 	if ( (!pool_config->ssl) || !SSL_frontend_context) {
-
-//	if ( (!pool_config->ssl) || init_ssl_ctx(cp, ssl_conn_serverclient)) {
-		/* write back an "SSL reject" response before returning */
 		pool_write_and_flush(cp, "N", 1);
 	} else {
 		cp->ssl = SSL_new(SSL_frontend_context);
@@ -286,6 +286,7 @@ static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
 	SSL_CTX_set_mode(cp->ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
 	if ( conntype == ssl_conn_serverclient) {
+		/* between frontend and pgpool */
 		error = SSL_CTX_use_certificate_chain_file(cp->ssl_ctx,
 		                                     pool_config->ssl_cert);
 		SSL_RETURN_ERROR_IF( (error != 1), "Loading SSL certificate");
@@ -295,6 +296,7 @@ static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
 		                                    SSL_FILETYPE_PEM);
 		SSL_RETURN_ERROR_IF( (error != 1), "Loading SSL private key");
 	} else {
+		/* between pgpool and backend */
 		/* set extra verification if ssl_ca_cert or ssl_ca_cert_dir are set */
 		if (strlen(pool_config->ssl_ca_cert))
 			cacert = pool_config->ssl_ca_cert;
@@ -471,7 +473,7 @@ SSL_ServerSide_init(void)
 
 		SSL_initialized = true;
 	}
-	
+
 	/*
 	 * We use SSLv23_method() because it can negotiate use of the highest
 	 * mutually supported protocol version, while alternatives like
@@ -486,7 +488,7 @@ SSL_ServerSide_init(void)
 
 	if (!context)
 	{
-		ereport(FATAL,
+		ereport(WARNING,
 				(errmsg("could not create SSL context: %s",
 						SSLerrmessage(ERR_get_error()))));
 		goto error;
@@ -508,7 +510,7 @@ SSL_ServerSide_init(void)
 	 */
 	if (SSL_CTX_use_certificate_chain_file(context, pool_config->ssl_cert) != 1)
 	{
-		ereport(FATAL,
+		ereport(WARNING,
 				(errmsg("could not load server certificate file \"%s\": %s",
 						pool_config->ssl_cert, SSLerrmessage(ERR_get_error()))));
 		goto error;
@@ -516,7 +518,7 @@ SSL_ServerSide_init(void)
 
 	if (stat(pool_config->ssl_key, &buf) != 0)
 	{
-		ereport(FATAL,
+		ereport(WARNING,
 				(errmsg("could not access private key file \"%s\": %m",
 						pool_config->ssl_key)));
 		goto error;
@@ -524,12 +526,12 @@ SSL_ServerSide_init(void)
 	
 	if (!S_ISREG(buf.st_mode))
 	{
-		ereport(FATAL,
+		ereport(WARNING,
 				(errmsg("private key file \"%s\" is not a regular file",
 						pool_config->ssl_key)));
 		goto error;
 	}
-	
+
 	/*
 	 * Refuse to load key files owned by users other than us or root.
 	 *
@@ -538,8 +540,8 @@ SSL_ServerSide_init(void)
 #if !defined(WIN32) && !defined(__CYGWIN__)
 	if (buf.st_uid != geteuid() && buf.st_uid != 0)
 	{
-		ereport(FATAL,
-				(errmsg("private key file \"%s\" must be owned by the database user or root",
+		ereport(WARNING,
+				(errmsg("private key file \"%s\" must be owned by the Pgpool-II user or root",
 						pool_config->ssl_key)));
 		goto error;
 	}
@@ -560,14 +562,14 @@ SSL_ServerSide_init(void)
 	if ((buf.st_uid == geteuid() && buf.st_mode & (S_IRWXG | S_IRWXO)) ||
 		(buf.st_uid == 0 && buf.st_mode & (S_IWGRP | S_IXGRP | S_IRWXO)))
 	{
-		ereport(FATAL,
+		ereport(WARNING,
 				(errmsg("private key file \"%s\" has group or world access",
 						pool_config->ssl_key),
-				 errdetail("File must have permissions u=rw (0600) or less if owned by the database user, or permissions u=rw,g=r (0640) or less if owned by root.")));
+				 errdetail("File must have permissions u=rw (0600) or less if owned by the Pgpool-II user, or permissions u=rw,g=r (0640) or less if owned by root.")));
 		goto error;
 	}
 #endif
-	
+
 	/*
 	 * OK, try to load the private key file.
 	 */
@@ -578,19 +580,19 @@ SSL_ServerSide_init(void)
 									SSL_FILETYPE_PEM) != 1)
 	{
 		if (ssl_passwd_cb_called)
-			ereport(FATAL,
+			ereport(WARNING,
 					(errmsg("private key file \"%s\" cannot be reloaded because it requires a passphrase",
 							pool_config->ssl_key)));
 		else
-			ereport(FATAL,
+			ereport(WARNING,
 					(errmsg("could not load private key file \"%s\": %s",
 							pool_config->ssl_key, SSLerrmessage(ERR_get_error()))));
 		goto error;
 	}
-	
+
 	if (SSL_CTX_check_private_key(context) != 1)
 	{
-		ereport(FATAL,
+		ereport(WARNING,
 				(errmsg("check of private key failed: %s",
 						SSLerrmessage(ERR_get_error()))));
 		goto error;
@@ -606,35 +608,23 @@ SSL_ServerSide_init(void)
 	
 	/* disallow SSL session caching, too */
 	SSL_CTX_set_session_cache_mode(context, SSL_SESS_CACHE_OFF);
-	
-//	/* set up ephemeral DH and ECDH keys */
-//	if (!initialize_dh(context, isServerStart))
-//		goto error;
-//	if (!initialize_ecdh(context, isServerStart))
-//		goto error;
-	
-//	/* set up the allowed cipher list */
-//	if (SSL_CTX_set_cipher_list(context, SSLCipherSuites) != 1)
-//	{
-//		ereport(FATAL,
-//				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-//				 errmsg("could not set the cipher list (no valid ciphers available)")));
-//		goto error;
-//	}
-	
-	/* Let server choose order */
-//	if (SSLPreferServerCiphers)
-//		SSL_CTX_set_options(context, SSL_OP_CIPHER_SERVER_PREFERENCE);
-	
+
 	/*
 	 * Load CA store, so we can verify client certificates if needed.
 	 */
 	if (pool_config->ssl_ca_cert)
 	{
-		if (SSL_CTX_load_verify_locations(context, pool_config->ssl_ca_cert, NULL) != 1 ||
-			(root_cert_list = SSL_load_client_CA_file(pool_config->ssl_ca_cert)) == NULL)
+		char *cacert = NULL, *cacert_dir = NULL;
+
+		if (strlen(pool_config->ssl_ca_cert))
+			cacert = pool_config->ssl_ca_cert;
+		if (strlen(pool_config->ssl_ca_cert_dir))
+			cacert_dir = pool_config->ssl_ca_cert_dir;
+
+		if (SSL_CTX_load_verify_locations(context, cacert, cacert_dir) != 1 ||
+			(root_cert_list = SSL_load_client_CA_file(cacert)) == NULL)
 		{
-			ereport(FATAL,
+			ereport(WARNING,
 					(errmsg("could not load root certificate file \"%s\": %s",
 							pool_config->ssl_ca_cert, SSLerrmessage(ERR_get_error()))));
 			goto error;
@@ -665,14 +655,6 @@ SSL_ServerSide_init(void)
 	
 	SSL_frontend_context = context;
 	
-	/*
-	 * Set flag to remember whether CA store has been loaded into SSL_context.
-	 */
-//	if (pool_config->ssl_ca_cert)
-//		ssl_loaded_verify_locations = true;
-//	else
-//		ssl_loaded_verify_locations = false;
-//
 	return 0;
 	
 error:
