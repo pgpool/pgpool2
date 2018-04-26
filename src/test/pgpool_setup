@@ -292,6 +292,9 @@ function set_postgresql_conf
 		if [ $USE_SLOT = "false" ];then
 		    echo "archive_mode = on" >> $PGCONF
 		    echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
+		else
+		    num_slots=`expr $NUMCLUSTERS + 10`
+		    echo "max_replication_slots = $num_slots" >> $PGCONF
 		fi
 	elif [ $MODE = 'r' -o $MODE = 'l' -o $MODE = 'y' ];then
 		echo "wal_level = archive" >> $PGCONF
