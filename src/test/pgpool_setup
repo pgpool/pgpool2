@@ -76,7 +76,7 @@ PGSOCKET_DIR=${PGSOCKET_DIR:-"/tmp"}
 # initdb args
 INITDBARG="--no-locale -E UTF_8"
 # Use replication slot
-USE_REPLICATION_SLOT=${USE_REPLICATION_SLOT:false}
+USE_REPLICATION_SLOT=${USE_REPLICATION_SLOT:-"false"}
 
 #-------------------------------------------
 # End of configuration section
