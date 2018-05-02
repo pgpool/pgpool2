@@ -145,7 +145,13 @@ typedef struct {
     int	connection_life_time;		/* if idle for this seconds, connection closes */
     int	child_max_connections;		/* if max_connections received, child exits */
 	int client_idle_limit;			/* If client_idle_limit is n (n > 0), the client is forced to be
-									 *disconnected after n seconds idle */
+									 * disconnected after n seconds idle */
+	bool allow_clear_text_frontend_auth;
+									/* enable Pgpool-II to use clear text password authentication
+									 * between Pgpool and client to get the password
+									 * when password for user does not exist in pool_password
+									 * file.
+									 */
 	int authentication_timeout;		/* maximum time in seconds to complete client authentication */
     int	max_pool;					/* max # of connection pool per child */
     char *logdir;					/* logging directory */

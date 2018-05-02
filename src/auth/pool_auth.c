@@ -254,11 +254,12 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 				 * we can still get the password from client using plain text authentication
 				 * if it is allowed by user
 				 */
-				if (frontend->pool_hba == NULL /*&& config allows */)
+				if (frontend->pool_hba == NULL && pool_config->allow_clear_text_frontend_auth)
 				{
 					ereport(LOG,
-							(errmsg("usign clear text authentication with frontend"),
-							 errdetail("backend will still use md5 auth")));
+						(errmsg("using clear text authentication with frontend"),
+							errdetail("backend will still use md5 auth"),
+							 errhint("you can disable this behavior by setting allow_clear_text_frontend_auth to off")));
 					authenticate_frontend_clear_text(frontend);
 					/* now check again if we have a password now */
 					if (get_auth_password(MASTER(cp), frontend, 0,
@@ -275,7 +276,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			{
 				ereport(ERROR,
 					(errmsg("failed to authenticate with backend using md5"),
-						 errdetail("password type is not valid")));
+						 errdetail("valid password not found")));
 			}
 		}
 
@@ -314,11 +315,12 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			 * we can still get the password from client using plain text authentication
 			 * if it is allowed by user
 			 */
-			if (frontend->pool_hba == NULL /*&& config allows */)
+			if (frontend->pool_hba == NULL && pool_config->allow_clear_text_frontend_auth)
 			{
 				ereport(LOG,
-						(errmsg("usign clear text authentication with frontend"),
-						 errdetail("backend will still use SCRAM auth")));
+					(errmsg("using clear text authentication with frontend"),
+						 errdetail("backend will still use SCRAM auth"),
+						 errhint("you can disable this behavior by setting allow_clear_text_frontend_auth to off")));
 				authenticate_frontend_clear_text(frontend);
 				/* now check again if we have a password now */
 				if (get_auth_password(MASTER(cp), frontend, 0,
@@ -335,7 +337,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		{
 			ereport(ERROR,
 					(errmsg("failed to authenticate with backend using SCRAM"),
-					 errdetail("password type is not valid")));
+					 errdetail("valid password not ")));
 		}
 
 		for (i=0;i<NUM_BACKENDS;i++)
