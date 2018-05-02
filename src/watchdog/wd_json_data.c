@@ -68,6 +68,8 @@ POOL_CONFIG* get_pool_config_from_json(char* json_data, int data_len)
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "replication_stop_on_mismatch", &config->replication_stop_on_mismatch))
 		goto ERROR_EXIT;
+	if (json_get_bool_value_for_key(root, "allow_clear_text_frontend_auth", &config->allow_clear_text_frontend_auth))
+		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "failover_if_affected_tuples_mismatch", &config->failover_if_affected_tuples_mismatch))
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "replicate_select", &config->replicate_select))
@@ -181,6 +183,7 @@ char* get_pool_config_json(void)
 	jw_put_bool(jNode, "replication_mode", pool_config->replication_mode);
 	jw_put_bool(jNode, "enable_pool_hba", pool_config->enable_pool_hba);
 	jw_put_int(jNode, "load_balance_mode", pool_config->load_balance_mode);
+	jw_put_bool(jNode, "allow_clear_text_frontend_auth", pool_config->allow_clear_text_frontend_auth);
 	jw_put_bool(jNode, "replication_stop_on_mismatch", pool_config->replication_stop_on_mismatch);
 	jw_put_bool(jNode, "failover_if_affected_tuples_mismatch", pool_config->failover_if_affected_tuples_mismatch);
 	jw_put_bool(jNode, "replicate_select", pool_config->replicate_select);

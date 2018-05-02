@@ -92,6 +92,11 @@ authentication_timeout = 60
                                    # Delay in seconds to complete client authentication
                                    # 0 means no timeout.
 
+allow_clear_text_frontend_auth = off
+                                   # Allow Pgpool-II to use clear text password authentication
+                                   # with clients, when pool_passwd does not
+                                   # contain the user password
+
 # - SSL Connections -
 
 ssl = off
