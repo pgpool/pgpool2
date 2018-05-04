@@ -532,6 +532,7 @@ function set_pgpool_conf {
 	while [ $n -lt $NUMCLUSTERS ]
 	do
 	    echo "health_check_period$n = 10" >> $CONF
+	    echo "health_check_timeout$n = 20" >> $CONF
 	    echo "health_check_user$n = '$WHOAMI'" >> $CONF
 	    echo "health_check_password$n = ''" >> $CONF
 	    echo "health_check_database$n = 'postgres'" >> $CONF
