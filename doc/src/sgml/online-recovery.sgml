@@ -175,7 +175,7 @@
           try to execute <command>$PGDATA/sync-command</command>.
         </para>
         <para>
-          <varname>recovery_1st_stage_command</varname> receives following 4 parameters:
+          <varname>recovery_1st_stage_command</varname> receives following 5 parameters:
         </para>
 
         <itemizedlist>
@@ -196,7 +196,12 @@
           </listitem>
           <listitem>
             <para>
-              Port number of the master (primary) node.
+              Port number of the master (primary) node (<productname>Pgpool-II</productname> 3.4 or after).
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Node number to be recovered (<productname>Pgpool-II</productname> 4.0 or after)
             </para>
           </listitem>
         </itemizedlist>
@@ -253,7 +258,7 @@ rsync used in the command is killed by signal 2 for example.
           will try to execute <command>$PGDATA/sync-command</command>.
         </para>
         <para>
-          <varname>recovery_2nd_stage_command</varname> receives following 4 parameters:
+          <varname>recovery_2nd_stage_command</varname> receives following 5 parameters:
         </para>
 
         <itemizedlist>
@@ -274,7 +279,12 @@ rsync used in the command is killed by signal 2 for example.
           </listitem>
           <listitem>
             <para>
-              Port number of database to be recovered.
+              Port number of the master (primary) node (<productname>Pgpool-II</productname> 3.4 or after).
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Node number to be recovered (<productname>Pgpool-II</productname> 4.0 or after)
             </para>
           </listitem>
         </itemizedlist>

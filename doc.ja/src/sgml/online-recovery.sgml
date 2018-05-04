@@ -260,9 +260,9 @@ postmasterの起動（<literal>pgpool_remote_start</literal>の実施）
         </para>
         <para>
 <!--
-          <varname>recovery_1st_stage_command</varname> receives following 4 parameters:
+          <varname>recovery_1st_stage_command</varname> receives following 5 parameters:
 -->
-<varname>recovery_1st_stage_command</varname>は次の4つの引数を受けとります。 
+<varname>recovery_1st_stage_command</varname>は次の5つの引数を受けとります。 
         </para>
 
         <itemizedlist>
@@ -293,9 +293,17 @@ postmasterの起動（<literal>pgpool_remote_start</literal>の実施）
           <listitem>
             <para>
 <!--
-              Port number of database to be recovered.
+              Port number of the master(primary) node (<productname>Pgpool-II</productname> 3.4 or after).
 -->
-リカバリーされるノードのポート番号
+マスター（プライマリ）ノードのポート番号（<productname>Pgpool-II</productname> 3.4以降）
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+<!--
+              Node number to be recovered (<productname>Pgpool-II</productname> 4.0 or after)
+-->
+リカバリされるノードの番号（<productname>Pgpool-II</productname> 4.0以降）
             </para>
           </listitem>
         </itemizedlist>
@@ -371,9 +379,9 @@ rsync used in the command is killed by signal 2 for example.
         </para>
         <para>
 <!--
-          <varname>recovery_2nd_stage_command</varname> receives following 4 parameters:
+          <varname>recovery_2nd_stage_command</varname> receives following 5 parameters:
 -->
-<varname>recovery_2nd_stage_command</varname>は次の4つの引数を受けとります。 
+<varname>recovery_2nd_stage_command</varname>は次の5つの引数を受けとります。 
         </para>
 
         <itemizedlist>
@@ -404,9 +412,17 @@ rsync used in the command is killed by signal 2 for example.
           <listitem>
             <para>
 <!--
-              Port number of the master(primary) node.
+              Port number of the master(primary) node (<productname>Pgpool-II</productname> 3.4 or after).
 -->
-マスター（プライマリ）ノードのポート番号
+マスター（プライマリ）ノードのポート番号（<productname>Pgpool-II</productname> 3.4以降）
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+<!--
+              Node number to be recovered (<productname>Pgpool-II</productname> 4.0 or after)
+-->
+リカバリされるノードの番号（<productname>Pgpool-II</productname> 4.0以降）
             </para>
           </listitem>
         </itemizedlist>
