@@ -31,8 +31,9 @@ Pgpool-II documentation
  <refsect1 id="R1-PCP-RECOVERY-NODE-1">
   <title>Description</title>
   <para>
-  <command>pcp_node_info</command>
+  <command>pcp_recovery_node</command>
   attaches the given backend node with recovery.
+  See <xref linkend="runtime-online-recovery"> to set up necessary parameters of pgpool.conf.
   </para>
  </refsect1>
 
