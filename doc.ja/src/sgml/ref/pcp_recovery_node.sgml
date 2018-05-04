@@ -40,8 +40,10 @@ Pgpool-II documentation
   <command>pcp_recovery_node</command>
   <!--
   attaches the given backend node with recovery.
+  See <xref linkend="runtime-online-recovery"> to set up necessary parameters of pgpool.conf.
   -->
   は <productname>Pgpool-II</productname> のノードのデータを再同期させた上で復帰させます。
+  pgpool.confに必要なパラメータを設定する方法の詳細については、<xref linkend="runtime-online-recovery">をご覧ください。
   </para>
  </refsect1>
 
