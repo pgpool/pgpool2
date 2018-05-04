@@ -74,7 +74,7 @@ LPATH=${PGLIB:-"/usr/local/pgsql/lib"}
 # unix socket directory
 PGSOCKET_DIR=${PGSOCKET_DIR:-"/tmp"}
 # initdb args
-INITDBARG="--no-locale -E UTF_8"
+INITDBARG="--no-locale -E UTF_8 --data-checksums"
 # Use replication slot
 USE_REPLICATION_SLOT=${USE_REPLICATION_SLOT:-"false"}
 
@@ -824,7 +824,7 @@ CREATE EXTENSION pgpool_recovery;
 CREATE DATABASE test;
 EOF
 	if [ $USE_SLOT = "true" ];then
-	    n=1
+	    n=0
 	    while [ $n -lt $NUMCLUSTERS ]
 	    do
 		$PSQL -p $BASEPORT template1 -c "SELECT * FROM pg_create_physical_replication_slot('pgpool_setup_slot$n')" >&5 2>&1
