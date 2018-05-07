@@ -1,11 +1,9 @@
 /* -*-pgsql-c-*- */
 /*
- * $Header$
- *
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1103,7 +1101,7 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 	pool_read(CONNECTION(cp, MASTER_NODE_ID), &length0, sizeof(length0));
 	length0 = ntohl(length0);
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 		(errmsg("reading message length"),
 			 errdetail("slot: %d length: %d", MASTER_NODE_ID, length0)));
 
@@ -1117,7 +1115,7 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 		pool_read(CONNECTION(cp, i), &length, sizeof(length));
 
 		length = ntohl(length);
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 			(errmsg("reading message length"),
 				 errdetail("slot: %d length: %d", i, length)));
 
@@ -1152,7 +1150,7 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 
 	length0 = ntohl(length0);
 	length_array[MASTER_NODE_ID] = length0;
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 		(errmsg("reading message length"),
 			 errdetail("master slot: %d length: %d", MASTER_NODE_ID, length0)));
 
@@ -1163,7 +1161,7 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 			pool_read(CONNECTION(cp, i), &length, sizeof(length));
 
 			length = ntohl(length);
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 				(errmsg("reading message length"),
 					 errdetail("master slot: %d length: %d", i, length)));
 

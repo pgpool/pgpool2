@@ -1,7 +1,5 @@
 /* -*-pgsql-c-*- */
 /*
- * $Header$
- *
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
@@ -1822,7 +1820,7 @@ POOL_STATUS ReadyForQuery(POOL_CONNECTION *frontend,
 				return POOL_END;
 
 			TSTATE(backend, i) = kind;
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 				(errmsg("processing ReadyForQuery"),
 					 errdetail("transaction state '%c'(%02x)", state,state)));
 			/*
@@ -2285,7 +2283,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 	pool_read(frontend, &fkind, 1);
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 		(errmsg("processing frontend response"),
 			 errdetail("received kind '%c'(%02x) from frontend",fkind,fkind)));
 
@@ -2360,7 +2358,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		case 'X':	/* Terminate */
 			if(contents)
 				pfree(contents);
-            ereport(DEBUG1,
+            ereport(DEBUG5,
                 (errmsg("Frontend terminated"),
                      errdetail("received message kind 'X' from frontend")));
             return POOL_END;
@@ -2536,7 +2534,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
                 errmsg("unable to process backend response"),
                  errdetail("invalid message kind sent by backend connection")));
 	}
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 		(errmsg("processing backend response"),
 			 errdetail("received kind '%c'(%02x) from backend",kind,kind)));
 
@@ -2554,7 +2552,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				break;
 
 			case 'Z':	/* ReadyForQuery */
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 					(errmsg("processing backend response"),
 						 errdetail("Ready For Query received")));
 				status = ReadyForQuery(frontend, backend, true, true);
@@ -2574,7 +2572,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 					{
 						/* parse_before_bind() was called. Do not foward the
 						 * parse complete message to frontend. */
-						ereport(DEBUG1,
+						ereport(DEBUG5,
 								(errmsg("processing backend response"),
 								 errdetail("do not forward parse complete message to frontend")));
 						pool_discard_packet_contents(backend);
@@ -2604,7 +2602,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 					{
 						/* parse_before_bind() was called. Do not foward the
 						 * close complete message to frontend. */
-						ereport(DEBUG1,
+						ereport(DEBUG5,
 								(errmsg("processing backend response"),
 								 errdetail("do not forward close complete message to frontend")));
 						pool_discard_packet_contents(backend);
@@ -2829,7 +2827,7 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 
 				pool_read(frontend, &kind, 1);
 
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 					(errmsg("copy data rows"),
 						 errdetail("read kind from frontend %c(%02x)", kind, kind)));
 
@@ -3498,7 +3496,7 @@ static void pool_wait_till_ready_for_query(POOL_CONNECTION_POOL *backend)
 			for (;;)
 			{
 				pool_read(CONNECTION(backend, i), &kind, sizeof(kind));
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("pool_wait_till_ready_for_query: kind: %c", kind)));
 				pool_push(CONNECTION(backend, i), &kind, sizeof(kind));
 				pool_read(CONNECTION(backend, i), &len, sizeof(len));
@@ -3512,7 +3510,7 @@ static void pool_wait_till_ready_for_query(POOL_CONNECTION_POOL *backend)
 				if (kind == 'Z')	/* Ready for query? */
 				{
 					pool_pop(CONNECTION(backend, i), &poplen);
-					ereport(DEBUG1,
+					ereport(DEBUG5,
 							(errmsg("pool_wait_till_ready_for_query: backend:%d ready for query found. buffer length:%d",
 									i, CONNECTION(backend, i)->len)));
 					break;

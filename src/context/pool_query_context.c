@@ -1,12 +1,10 @@
 /* -*-pgsql-c-*- */
 /*
  *
- * $Header$
- *
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -87,7 +85,7 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 	{
 		MemoryContext memory_context = query_context->memory_context;
 
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("pool_query_context_destroy: query context:%p", query_context)));
 
 		session_context = pool_get_session_context(false);
@@ -325,7 +323,7 @@ int pool_virtual_master_db_node_id(void)
 			  *
 			  */
 
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 					(errmsg("pool_virtual_master_db_node_id: virtual_master_node_id:%d load_balance_node_id:%d PRIMARY_NODE_ID:%d",
 							node_id, sc->load_balance_node_id, PRIMARY_NODE_ID)));
 
@@ -987,7 +985,7 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			len = htonl(sizeof(len));
 			pool_write_and_flush(cp, &len, sizeof(len));
 
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 					(errmsg("pool_send_and_wait: send flush message to %d", i)));
 		}
 	}

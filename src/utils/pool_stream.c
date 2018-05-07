@@ -1,7 +1,5 @@
 /* -*-pgsql-c-*- */
 /*
-* $Header$
-*
 * pgpool: a language independent connection pool server for PostgreSQL
 * written by Tatsuo Ishii
 *
@@ -186,7 +184,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 		  readlen = read(cp->fd, readbuf, READBUFSZ);
 		  if (cp->isbackend)
 		  {
-			  ereport(DEBUG1,
+			  ereport(DEBUG5,
 				  (errmsg("pool_read: read %d bytes from backend %d",
 						  readlen, cp->db_node_id)));
 #ifdef DEBUG
@@ -199,7 +197,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 		{
 			if (errno == EINTR || errno == EAGAIN)
 			{
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 					(errmsg("read on socket failed with error :\"%s\"",strerror(errno)),
 						 errdetail("retrying...")));
 				continue;
@@ -337,7 +335,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 		{
 		  readlen = read(cp->fd, buf, len);
 		  if (cp->isbackend)
-			  ereport(DEBUG1,
+			  ereport(DEBUG5,
 				  (errmsg("pool_read2: read %d bytes from backend %d",
 						  readlen, cp->db_node_id)));
 		}
@@ -346,7 +344,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 		{
 			if (errno == EINTR || errno == EAGAIN)
 			{
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 					(errmsg("read on socket failed with error :\"%s\"",strerror(errno)),
 						 errdetail("retrying...")));
 				continue;
@@ -433,7 +431,7 @@ int pool_write_noerror(POOL_CONNECTION *cp, void *buf, int len)
 
 		c = ((char *)buf)[0];
 
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("pool_write: to backend: %d kind:%c", cp->db_node_id, c)));
 	}
 
@@ -444,10 +442,10 @@ int pool_write_noerror(POOL_CONNECTION *cp, void *buf, int len)
 		c = ((char *)buf)[0];
 
 		if (len == 1)
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 					(errmsg("pool_write: to frontend: kind:%c po:%d", c, cp->wbufpo)));
 		else
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 					(errmsg("pool_write: to frontend: length:%d po:%d", len, cp->wbufpo)));
 	}
 	
@@ -523,7 +521,7 @@ static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 	int offset;
 	wlen = len;
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("pool_write_flush: write size: %d", wlen)));
 
 	if (wlen == 0)
@@ -566,7 +564,7 @@ static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 			else
 			{
 				/* need to write remaining data */
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("pool_write_flush: write retry: %d", wlen)));
 
 				offset += sts;
@@ -589,7 +587,7 @@ static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 					(errmsg("write on backend %d failed with error :\"%s\"",cp->db_node_id,strerror(errno)),
 						 errdetail("while trying to write data from offset: %d wlen: %d",offset, wlen)));
 			else
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 					(errmsg("write on frontend failed with error :\"%s\"",strerror(errno)),
 						 errdetail("while trying to write data from offset: %d wlen: %d",offset, wlen)));
 			return -1;
@@ -610,7 +608,7 @@ int pool_flush_it(POOL_CONNECTION *cp)
 	int offset;
 	wlen = cp->wbufpo;
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("pool_flush_it: flush size: %d", wlen)));
 
 	if (wlen == 0)
@@ -654,7 +652,7 @@ int pool_flush_it(POOL_CONNECTION *cp)
 			else
 			{
 				/* need to write remaining data */
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("pool_flush_it: write retry: %d", wlen)));
 
 				offset += sts;
@@ -677,7 +675,7 @@ int pool_flush_it(POOL_CONNECTION *cp)
 					(errmsg("write on backend %d failed with error :\"%s\"",cp->db_node_id,strerror(errno)),
 						 errdetail("while trying to write data from offset: %d wlen: %d",offset, wlen)));
 			else
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 					(errmsg("write on frontend failed with error :\"%s\"",strerror(errno)),
 						 errdetail("while trying to write data from offset: %d wlen: %d",offset, wlen)));
 			cp->wbufpo = 0;
@@ -881,7 +879,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		}
 		else
 		{
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 				(errmsg("reading string data"),
 					 errdetail("read all from pending data. po:%d len:%d",
 							   cp->po, cp->len)));
@@ -969,7 +967,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		{
 			save_pending_data(cp, cp->sbuf+readp+strlength, readlen-strlength);
 			*len += strlength;
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 				(errmsg("reading string data"),
 					 errdetail("total read %d with pending data po:%d len:%d", *len, cp->po, cp->len)));
 			return cp->sbuf;
@@ -981,7 +979,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		if (flag)
 		{
 			/* ok we have read all data */
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 				(errmsg("reading string data"),
 					 errdetail("all data read: total read %d", *len)));
 			break;
@@ -1172,7 +1170,7 @@ int pool_push(POOL_CONNECTION *cp, void *data, int len)
 {
 	char *p;
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 		(errmsg("pushing data of len: %d", len)));
 
 
@@ -1204,7 +1202,7 @@ void pool_pop(POOL_CONNECTION *cp, int *len)
 	if (cp->bufsz3 == 0)
 	{
 		*len = 0;
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("pop data of len: %d", *len)));
 		return;
 	}
@@ -1214,7 +1212,7 @@ void pool_pop(POOL_CONNECTION *cp, int *len)
 	pfree(cp->buf3);
 	cp->bufsz3 = 0;
 	cp->buf3 = NULL;
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("pop data of len: %d", *len)));
 }
 
@@ -1282,7 +1280,7 @@ static void dump_buffer(char *buf, int len)
 {
 	while (--len)
 	{
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("%02x", *buf++)));
 	}
 }
@@ -1298,7 +1296,7 @@ int socket_write(int fd, void* buf, size_t len)
 		{
 			if (errno == EINTR || errno == EAGAIN)
 			{
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("write on socket failed with error :\"%s\"",strerror(errno)),
 						 errdetail("retrying...")));
 				continue;
@@ -1347,7 +1345,7 @@ int socket_read(int fd, void* buf, size_t len, int timeout)
 		{
 			if (errno == EINTR || errno == EAGAIN)
 			{
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("read from socket failed with error :\"%s\"",strerror(errno)),
 						 errdetail("retrying...")));
 				continue;

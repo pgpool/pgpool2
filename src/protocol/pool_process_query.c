@@ -812,7 +812,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		pool_write_and_flush(frontend, p1, len1);
 	}
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("SimpleForwardToFrontend: packet:%c length:%d",
 					kind, len1)));
 
@@ -822,7 +822,7 @@ POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION *frontend,
 		if (pool_is_cache_safe() && !pool_is_cache_exceeded())
 		{
 			memqcache_register(kind, frontend, p1, len1);
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 					(errmsg("SimpleForwardToFrontend: add to memqcache buffer:%c length:%d",
 							kind, len1)));
 		}
@@ -1912,10 +1912,10 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 					int poplen;
 
 					pool_pop(backend, &poplen);
-					ereport(DEBUG1,
+					ereport(DEBUG5,
 							(errmsg("do_query: popped data len:%d because ignore till sync was set", poplen)));
 				}
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("do_query: no query issued because ignore till sync was set")));
 				return;
 			}
@@ -2041,7 +2041,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 	{
 		pool_read(backend, &kind, sizeof(kind));
 
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("do_query: kind: '%c'", kind)));
 
 		if (kind ==  'E')
@@ -2104,7 +2104,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		switch (kind)
 		{
 			case 'Z':	/* Ready for query */
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 					(errmsg("do_query: received READY FOR QUERY ('%c')",kind)));
 				if (!doing_extended)
 					return;
@@ -2115,7 +2115,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 				break;
 
 			case 'C':	/* Command Complete */
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("do_query: received COMMAND COMPLETE ('%c')",kind)));
 
 				/* If "sync" message was issued, 'Z' is expected, else we are done with 'C'. */
@@ -2137,20 +2137,20 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 				break;
 
 			case '1':	/* Parse complete */
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("do_query: received PARSE COMPLETE ('%c')",kind)));
 
 				state |= PARSE_COMPLETE_RECEIVED;
 				break;
 
 			case '2':	/* Bind complete */
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("do_query: received BIND COMPLETE ('%c')",kind)));
 				state |= BIND_COMPLETE_RECEIVED;
 				break;
 
 			case '3':	/* Close complete */
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("do_query: received CLOSE COMPLETE ('%c')",kind)));
 
 				if (state == 0)
@@ -2175,7 +2175,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 
 			case 'T':	/* Row Description */
 				state |= ROW_DESCRIPTION_RECEIVED;
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("do_query: received ROW DESCRIPTION ('%c')",kind)));
 
 				if (major == PROTO_MAJOR_V3)
@@ -2197,7 +2197,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 					pool_read(backend, &shortval, sizeof(short));
 				}
 				num_fields = ntohs(shortval);		/* number of fields */
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("do_query: row description: num_fileds: %d", num_fields)));
 
 				if (num_fields > 0)
@@ -2252,7 +2252,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 
 			case 'D':	/* data row */
 				state |= DATA_ROW_RECEIVED;
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("do_query: received DATA ROW ('%c')",kind)));
 
 				if (major == PROTO_MAJOR_V3)
@@ -2360,7 +2360,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 
 		if (doing_extended && (state & STATE_COMPLETED) == STATE_COMPLETED)
 		{
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 					(errmsg("do_query: all state completed. returning")));
 			break;
 		}
@@ -2371,7 +2371,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		int poplen;
 
 		pool_pop(backend, &poplen);
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("do_query: popped data len:%d", poplen)));
 	}
 }
@@ -3156,7 +3156,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		previous_message = pool_pending_message_get_previous_message();
 		if (!msg)
 		{
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 					(errmsg("read_kind_from_backend: no pending message")));
 
 			/*
@@ -3167,7 +3167,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			if (previous_message == NULL)
 			{
 				/* no previous message. let's unset query in progress flag. */
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: no previous message")));
 				pool_unset_query_in_progress();
 			}
@@ -3180,7 +3180,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				 */
 				if (previous_message->is_rows_returned)
 				{
-					ereport(DEBUG1,
+					ereport(DEBUG5,
 							(errmsg("read_kind_from_backend: no pending message, previous message exists, rows returning")));
 					session_context->query_context = previous_message->query_context;
 					pool_set_query_in_progress();
@@ -3193,7 +3193,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		{
 			if (msg->type == POOL_SYNC)
 			{
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: sync pending message exists")));
 				session_context->query_context = NULL;
 				pool_unset_ignore_till_sync();
@@ -3201,14 +3201,14 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			}
 			else
 			{
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: pending message exists. query context: %p",
 								msg->query_context)));
 				pool_pending_message_set_previous_message(msg);
 				pool_pending_message_query_context_dest_set(msg, msg->query_context);
 				session_context->query_context = msg->query_context;
 
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: where_to_send[0]:%d [1]:%d",
 								msg->query_context->where_to_send[0],
 								msg->query_context->where_to_send[1])));
@@ -3220,7 +3220,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 	if (MASTER_SLAVE)
 	{
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("reading backend data packet kind"),
 				 errdetail("master node id: %d", MASTER_NODE_ID)));
 
@@ -3235,7 +3235,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		{
 			*decided_kind = 'A';
 
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 				(errmsg("reading backend data packet kind"),
 					 errdetail("received notification message for master node %d",
 							   MASTER_NODE_ID)));
@@ -3280,7 +3280,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 							 errdetail("kind == 0")));
 				}
 
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 					(errmsg("reading backend data packet kind"),
 						 errdetail("backend:%d kind:'%c'",i, kind)));
 
@@ -3289,7 +3289,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				 */
 				if (kind == 'N')
 				{
-					ereport(DEBUG1,
+					ereport(DEBUG5,
 						(errmsg("received log message from backend %d while reading packet kind",i)));
 					pool_process_notice_message_from_one_backend(frontend, backend, i, kind);
 				}
@@ -3302,7 +3302,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 					if (p)
 					{
 						value = p + strlen(p) + 1;
-						ereport(DEBUG1,
+						ereport(DEBUG5,
 							(errmsg("reading backend data packet kind"),
 								 errdetail("parameter name: %s value: \"%s\"", p, value)));
 
@@ -3328,7 +3328,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 			kind_list[i] = kind;
 
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 				(errmsg("reading backend data packet kind"),
 					 errdetail("backend:%d of %d kind = '%c'", i,NUM_BACKENDS, kind_list[i])));
 
@@ -3344,7 +3344,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			kind_list[i] = 0;
 	}
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("read_kind_from_backend max_count:%f num_executed_nodes:%d",
 					max_count, num_executed_nodes)));
 
@@ -3437,20 +3437,20 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				pool_read(s, buf, len);
 				pfree(buf);
 			}
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 					(errmsg("read_kind_from_backend: skipped first standy packet")));
 
 			for(;;)
 			{
 				pool_read(s, &kind, 1);
 
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: checking kind: '%c'", kind)));
 
 				if (kind == 'Z')
 				{
 					/* succeeded in re-sync */
-					ereport(DEBUG1,
+					ereport(DEBUG5,
 							(errmsg("read_kind_from_backend: succeeded in re-sync")));
 					*decided_kind = kind;
 
@@ -3466,17 +3466,17 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 					return;
 				}
 
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: reading len")));
 				pool_read(s, &len, sizeof(len));
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: finished reading len:%d", ntohl(len))));
 
 				len = ntohl(len);
 				if ((len - sizeof(len)) > 0)
 				{
 					len -= sizeof(len);
-					ereport(DEBUG1,
+					ereport(DEBUG5,
 							(errmsg("read_kind_from_backend: reading message len:%d", len)));
 
 					buf = palloc(len);
@@ -3650,7 +3650,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			 (*decided_kind == 'D' || *decided_kind == 'E' || *decided_kind == 'N')) ||
 			(msg->type == POOL_DESCRIBE && *decided_kind == 't'))
 		{
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 					(errmsg("read_kind_from_backend: pending message was left")));
 		}
 		else
@@ -3660,12 +3660,12 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			if (msg->type == POOL_CLOSE)
 			{
 				/* Pending message will be pulled out in CloseComplete() */
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: pending message was not pulled out because message type is CloseComplete")));
 			}
 			else
 			{
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: pending message was pulled out")));
 				pending_message = pool_pending_message_pull_out();
 				pool_check_pending_message_and_reply(msg->type, *decided_kind);
@@ -4174,7 +4174,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 	memcpy(p, &kind, sizeof(kind));
 	p += sizeof(kind);
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("detect error: kind: %c", kind)));
 
 

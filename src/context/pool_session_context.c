@@ -40,7 +40,7 @@ static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m);
 #ifdef PENDING_MESSAGE_DEBUG
 static int Elevel = LOG;
 #else
-static int Elevel = DEBUG1;
+static int Elevel = DEBUG2;
 #endif
 
 /*
@@ -107,7 +107,7 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 					 pool_pool_index(), i)->load_balancing_node = node_id;
 	}
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("initializing session context"),
 			 errdetail("selected load balancing node: %d", node_id)));
 
@@ -219,7 +219,7 @@ bool pool_is_query_in_progress(void)
  */
 void pool_set_query_in_progress(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 		(errmsg("session context: setting query in progress. DONE")));
 
 	pool_get_session_context(false)->in_progress = true;
@@ -232,7 +232,7 @@ void pool_unset_query_in_progress(void)
 {
 	POOL_SESSION_CONTEXT *s = pool_get_session_context(false);
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 		(errmsg("session context: unsetting query in progress. DONE")));
 
 	s->in_progress = false;
@@ -258,7 +258,7 @@ bool pool_is_skip_reading_from_backends(void)
  */
 void pool_set_skip_reading_from_backends(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: setting skip reading from backends. DONE")));
 
 
@@ -270,7 +270,7 @@ void pool_set_skip_reading_from_backends(void)
  */
 void pool_unset_skip_reading_from_backends(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: clearing skip reading from backends. DONE")));
 	
 	pool_get_session_context(false)->skip_reading_from_backends = false;
@@ -289,7 +289,7 @@ bool pool_is_doing_extended_query_message(void)
  */
 void pool_set_doing_extended_query_message(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: setting doing extended query messaging. DONE")));
 	
 	pool_get_session_context(false)->doing_extended_query_message = true;
@@ -300,7 +300,7 @@ void pool_set_doing_extended_query_message(void)
  */
 void pool_unset_doing_extended_query_message(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: clearing doing extended query messaging. DONE")));
 	
 	pool_get_session_context(false)->doing_extended_query_message = false;
@@ -319,7 +319,7 @@ bool pool_is_ignore_till_sync(void)
  */
 void pool_set_ignore_till_sync(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: setting ignore till sync. DONE")));
 	
 	pool_get_session_context(false)->ignore_till_sync = true;
@@ -330,7 +330,7 @@ void pool_set_ignore_till_sync(void)
  */
 void pool_unset_ignore_till_sync(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: clearing ignore till sync. DONE")));
 
 	pool_get_session_context(false)->ignore_till_sync = false;
@@ -459,7 +459,7 @@ void pool_clear_sent_message_list(void)
 
 static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("called by %s: sent message: address: %p kind: %c name: =%s= state:%d",
 					caller, m, m->kind, m->name, m->state)));
 }
@@ -510,7 +510,7 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 
 	if (!message)
 	{
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 			(errmsg("adding sent message to list"),
 				 errdetail("message is null")));
 		return;
@@ -525,7 +525,7 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 		 * added. We should ignore this because pool_remove_sent_message()
 		 * will free memory allocated in the message.
 		 */
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("adding sent message to list"),
 				 errdetail("adding exactly same message is prohibited")));
 		return;
@@ -536,11 +536,11 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 	if (old_msg)
 	{
 		if (message->kind == 'B')
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 				(errmsg("adding sent message to list"),
 					errdetail("portal \"%s\" already exists",message->name)));
 		else
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 				(errmsg("adding sent message to list"),
 					errdetail("prepared statement \"%s\" already exists",message->name)));
 
@@ -594,7 +594,7 @@ POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name, POOL_SENT_
  */
 void pool_set_sent_message_state(POOL_SENT_MESSAGE *message)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("pool_set_sent_message_state: name:%s kind:%c previous state: %d",
 					message->name, message->kind, message->state)));
 	message->state = POOL_SENT_MESSAGE_CLOSED;
@@ -612,7 +612,7 @@ void pool_unset_writing_transaction(void)
 	if (pool_config->disable_load_balance_on_write != DLBOW_ALWAYS)
 	{
 		pool_get_session_context(false)->writing_transaction = false;
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("session context: clearing writing transaction. DONE")));
 	}
 }
@@ -629,7 +629,7 @@ void pool_set_writing_transaction(void)
 	if (pool_config->disable_load_balance_on_write != DLBOW_OFF)
 	{
 		pool_get_session_context(false)->writing_transaction = true;
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 			(errmsg("session context: setting writing transaction. DONE")));
 	}
 }
@@ -647,7 +647,7 @@ bool pool_is_writing_transaction(void)
  */
 void pool_unset_failed_transaction(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: clearing failed transaction. DONE")));
 	
 	pool_get_session_context(false)->failed_transaction = false;
@@ -658,7 +658,7 @@ void pool_unset_failed_transaction(void)
  */
 void pool_set_failed_transaction(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: setting failed transaction. DONE")));
 
 	pool_get_session_context(false)->failed_transaction = true;
@@ -677,7 +677,7 @@ bool pool_is_failed_transaction(void)
  */
 void pool_unset_transaction_isolation(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: clearing failed transaction. DONE")));
 	pool_get_session_context(false)->transaction_isolation = POOL_UNKNOWN;
 }
@@ -687,7 +687,7 @@ void pool_unset_transaction_isolation(void)
  */
 void pool_set_transaction_isolation(POOL_TRANSACTION_ISOLATION isolation_level)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: setting transaction isolation. DONE")));
 	pool_get_session_context(false)->transaction_isolation = isolation_level;
 }
@@ -784,7 +784,7 @@ static void GetTranIsolationErrorCb(void *arg)
  */
 void pool_unset_command_success(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: clearing transaction isolation. DONE")));
 	pool_get_session_context(false)->command_success = false;
 }
@@ -794,7 +794,7 @@ void pool_unset_command_success(void)
  */
 void pool_set_command_success(void)
 {
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("session context: setting command success. DONE")));
 
 	pool_get_session_context(false)->command_success = true;
@@ -926,7 +926,7 @@ bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 	}
 	if (count > 1)
 	{
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 			(errmsg("checking if query context can be safely destroyed"),
 				 errdetail("query context %p is still used %d times in sent message list. query:\"%s\"",
 						   qc, count,qc->original_query)));
@@ -948,7 +948,7 @@ bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 
 	if (count >= 1)
 	{
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("checking if query context can be safely destroyed"),
 				 errdetail("query context %p is still used %d times in pending message list. query:%s", qc, count, qc->original_query)));
 		return false;
@@ -1428,7 +1428,7 @@ void pool_check_pending_message_and_reply(POOL_MESSAGE_TYPE type, char kind)
 
 	if (type < POOL_PARSE || type > POOL_SYNC)
 	{
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("pool_check_pending_message_and_reply: type out of range: %d", type)));
 		return;
 	}
@@ -1440,7 +1440,7 @@ void pool_check_pending_message_and_reply(POOL_MESSAGE_TYPE type, char kind)
 
 	if (backend_response_kind[type] != kind)
 	{
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("pool_check_pending_message_and_reply: type: %s but is kind: %c",
 						pool_pending_message_type_to_string(type), kind)));
 	}
@@ -1474,7 +1474,7 @@ POOL_PENDING_MESSAGE *pool_pending_message_find_lastest_by_query_context(POOL_QU
 	if (len <= 0)
 		return NULL;
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("pool_pending_message_find_lastest_by_query_context: num messages: %d",
 					len)));
 
@@ -1486,12 +1486,12 @@ POOL_PENDING_MESSAGE *pool_pending_message_find_lastest_by_query_context(POOL_QU
 			msg = (POOL_PENDING_MESSAGE *) lfirst(cell);
 			if (msg->query_context == qc)
 			{
-				ereport(DEBUG1,
+				ereport(DEBUG5,
 						(errmsg("pool_pending_message_find_lastest_by_query_context: msg found. type: %s",
 								pool_pending_message_type_to_string(msg->type))));
 				return msg;
 			}
-			ereport(DEBUG1,
+			ereport(DEBUG5,
 					(errmsg("pool_pending_message_find_lastest_by_query_context: type: %s",
 							pool_pending_message_type_to_string(msg->type))));
 		}
@@ -1514,14 +1514,14 @@ void dump_pending_message(void)
 		return;
 	}
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("start dumping pending message list")));
 
 	for (cell = list_head(session_context->pending_messages); cell; cell = next)
 	{
 		POOL_PENDING_MESSAGE *message = (POOL_PENDING_MESSAGE *) lfirst(cell);
 
-		ereport(DEBUG1,
+		ereport(DEBUG5,
 				(errmsg("pool_pending_message_dump: message type:%d message len:%d query:%s statement:%s portal:%s node_ids[0]:%d node_ids[1]:%d",
 						message->type, message->contents_len, message->query, message->statement, message->portal,
 						message->node_ids[0], message->node_ids[1])));
@@ -1529,7 +1529,7 @@ void dump_pending_message(void)
 		next = lnext(cell);
 	}
 
-	ereport(DEBUG1,
+	ereport(DEBUG5,
 			(errmsg("end dumping pending message list")));
 }
 
