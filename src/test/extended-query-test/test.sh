@@ -119,7 +119,7 @@ rm -fr testdata
 mkdir testdata
 cd testdata
 echo -n "creating test database..."
-pgpool_setup > /dev/null 2>&1
+$PGPOOL_SETUP > /dev/null 2>&1
 echo "done."
 cp etc/pgpool.conf pgpool.conf.back
 
@@ -158,8 +158,8 @@ do
 	echo "timeout."
 	timeoutcnt=`expr $timeoutcnt + 1`
     else
-	sed -e 's/L [0-9]* R/L xxx R/' $expected/$i > expected_tmp
-	sed -e 's/L [0-9]* R/L xxx R/' $results/$i > results_tmp
+	sed -e 's/L [0-9]*/L xxx/g' $expected/$i > expected_tmp
+	sed -e 's/L [0-9]*/L xxx/g' $results/$i > results_tmp
 	cmp expected_tmp results_tmp >/dev/null 2>&1
 	if [ $? != 0 ]
 	then
