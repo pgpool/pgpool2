@@ -68,9 +68,9 @@ Pgpool-II documentation
    <para>
 	Here is an example output:
     <programlisting>
-$ pcp_proc_info -h localhost -p 9898 -U postgres 3815
-postgres_db postgres 1150769932 1150767351 3 0 1 1467 1
-postgres_db postgres 1150769932 1150767351 3 0 1 1468 1
+$ pcp_proc_info -p 11001
+test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4157 1
+test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4158 1
     </programlisting>
   </para>
   <para>
@@ -90,30 +90,29 @@ postgres_db postgres 1150769932 1150767351 3 0 1 1468 1
   <para>
   If there is no connection to the backends, nothing will be displayed.
   If there are multiple connections, one connection's information will be displayed on each line multiple times.
-  Timestamps are displayed in EPOCH format.
   </para>
   <para>
 	The <option>--verbose</option> option can help understand the output. For example:
   </para>
     <programlisting>
-$ pcp_proc_info --verbose -U postgres 3815
-Database     : postgres_db
-Username     : postgres
-Start time   : 1150769932
-Creation time: 1150767351
+$ pcp_proc_info -p 11001 --verbose
+Database     : test
+Username     : t-ishii
+Start time   : 2018-05-09 11:10:16
+Creation time: 2018-05-09 11:10:40
 Major        : 3
 Minor        : 0
 Counter      : 1
-PID          : 1467
+Backend PID  : 4157
 Connected    : 1
-Database     : postgres_db
-Username     : postgres
-Start time   : 1150769932
-Creation time: 1150767351
+Database     : test
+Username     : t-ishii
+Start time   : 2018-05-09 11:10:16
+Creation time: 2018-05-09 11:10:40
 Major        : 3
 Minor        : 0
 Counter      : 1
-PID          : 1468
+Backend PID  : 4158
 Connected    : 1
     </programlisting>
  </refsect1>
