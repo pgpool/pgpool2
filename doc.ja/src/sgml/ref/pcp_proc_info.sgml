@@ -93,11 +93,11 @@ Pgpool-II documentation
    <!--
 	Here is an example output:
     -->
-    ここでは例を示します。
+    例を示します。
     <programlisting>
-$ pcp_proc_info -h localhost -p 9898 -U postgres 3815
-postgres_db postgres 1150769932 1150767351 3 0 1 1467 1
-postgres_db postgres 1150769932 1150767351 3 0 1 1468 1
+$ pcp_proc_info -p 11001
+test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4157 1
+test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4158 1
     </programlisting>
   </para>
   <para>
@@ -106,6 +106,7 @@ postgres_db postgres 1150769932 1150767351 3 0 1 1468 1
     -->
     結果は以下の順のとおりです。
 <literallayout class="monospaced">
+<!--
 1. connected database name
 2. connected user name
 3. process start-up timestamp
@@ -115,6 +116,16 @@ postgres_db postgres 1150769932 1150767351 3 0 1 1468 1
 7. connection-reuse counter
 8. PostgreSQL backend process id
 9. 1 if frontend conncted 0 if not
+-->
+1. 接続先のデータベース名
+2. 接続先のユーザ名
+3. Pgpool-IIプロセスの起動時刻
+4. バックエンドへの接続時刻
+5. プロトコルのメジャーバージョン
+6. プロトコルのマイナーバージョン
+7. 接続の再利用カウンタ値
+8. PostgreSQLバックエンドプロセスのプロセスID
+9. フロントエンドが接続中なら1、そうでなければ0
 </literallayout>
   </para>
   <para>
@@ -123,7 +134,7 @@ postgres_db postgres 1150769932 1150767351 3 0 1 1468 1
   If there are multiple connections, one connection's information will be displayed on each line multiple times.
   Timestamps are displayed in EPOCH format.
   -->
-  コネクションがバックエンドに対して張られていない場合、データは表示されません。 コネクション情報が複数ある場合、複数行に 1 行 1 コネクション情報で表示されます。 時刻は EPOCH タイムからの秒数で表わされます。
+  コネクションがバックエンドに対して張られていない場合、データは表示されません。 コネクション情報が複数ある場合、複数行に 1 行 1 コネクション情報で表示されます。
   </para>
   <para>
   <!--
@@ -132,24 +143,24 @@ postgres_db postgres 1150769932 1150767351 3 0 1 1468 1
     <option>--verbose</option> オプションは出力内容を理解するのに役に立ちます。例：
   </para>
     <programlisting>
-$ pcp_proc_info --verbose -U postgres 3815
-Database     : postgres_db
-Username     : postgres
-Start time   : 1150769932
-Creation time: 1150767351
+$ pcp_proc_info -p 11001 --verbose
+Database     : test
+Username     : t-ishii
+Start time   : 2018-05-09 11:10:16
+Creation time: 2018-05-09 11:10:40
 Major        : 3
 Minor        : 0
 Counter      : 1
-PID          : 1467
+Backend PID  : 4157
 Connected    : 1
-Database     : postgres_db
-Username     : postgres
-Start time   : 1150769932
-Creation time: 1150767351
+Database     : test
+Username     : t-ishii
+Start time   : 2018-05-09 11:10:16
+Creation time: 2018-05-09 11:10:40
 Major        : 3
 Minor        : 0
 Counter      : 1
-PID          : 1468
+Backend PID  : 4158
 Connected    : 1
     </programlisting>
  </refsect1>
