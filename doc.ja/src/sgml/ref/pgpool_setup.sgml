@@ -224,6 +224,24 @@ Pgpool-II documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>-r</option></term>
+      <listitem>
+       <para>
+<!--
+	 Use <command>pg_rewind</command> command in recovery script
+	 (basebackup.sh).  If the command fails, switch to use ordinal
+	 rsync command.  In certain cases recovery
+	 using <command>pg_rewind</command> is much faster than rsync
+	 since it does not copy whole database cluster.
+-->
+リカバリスクリプト(basebackup.sh)中で<command>pg_rewind</command>を使います。
+このコマンドが失敗すると、通常のrsyncを使います。
+<command>pg_rewind</command>は、データベースクラスタのすべてをコピーしないので、rsyncに比べてずっと高速になることがあります。
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
  </refsect1>
@@ -337,8 +355,22 @@ Pgpool-II documentation
 	 If "true", in streaming replication mode, use replication slot instead
 	 of archive. This brings the same effect as "-s" option is specified.
 -->
-ストリーミングレプリケーション環境に置いて、この環境変数が"true"に指定されると、アーカイブログの代わりにレプリケーションスロットを使います。
-これは、"-s"を使ったのと同じ効果をもたらします。
+ストリーミングレプリケーション環境において、この環境変数が"true"に指定されると、アーカイブログの代わりにレプリケーションスロットを使います。
+これは、"-s"オプションを使ったのと同じ効果をもたらします。
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>USE_PG_REWIND</option></term>
+      <listitem>
+       <para>
+<!--
+	 If "true", in streaming replication mode, use <command>pg_rewind</command> in basebackup.sh script.
+	 This brings the same effect as "-r" option is specified.
+-->
+ストリーミングレプリケーション環境において、この環境変数が"true"に指定されると、basebackup.sh中で<command>pg_rewind</command>を使います。
+これは、"-r"オプションを使ったのと同じ効果をもたらします。
        </para>
       </listitem>
      </varlistentry>

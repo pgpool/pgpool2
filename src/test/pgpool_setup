@@ -17,7 +17,7 @@
 # directory for *testing* purpose.
 # Do not use this tool for production environment!
 #
-# usage: pgpool_setup [-m r|s|n|l][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d][-s]
+# usage: pgpool_setup [-m r|s|n|l][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d][-s][-r]
 # -m s: create an installation as streaming replication mode.
 # (the default)
 # -m r: create an installation as native replication mode.
@@ -34,7 +34,8 @@
 # pg_base_port + 1 and so on.
 # --no-stop: do not stop pgpool and PostgreSQL after the work
 # -d: start pgpool with debug mode
-# -s use replication slot, rather than wal archive.
+# -s: use replication slot, rather than wal archive.
+# -r: use pg_rewind for base backup if possible.
 #
 # The user run this script will become the PostgreSQL super user as
 # well.  Current directory must be empty.  Assume that appropreate
@@ -77,6 +78,8 @@ PGSOCKET_DIR=${PGSOCKET_DIR:-"/tmp"}
 INITDBARG="--no-locale -E UTF_8 --data-checksums"
 # Use replication slot
 USE_REPLICATION_SLOT=${USE_REPLICATION_SLOT:-"false"}
+# Use pg_rewind
+USE_PG_REWIND=${USE_PG_REWIND:-"false"}
 
 #-------------------------------------------
 # End of configuration section
@@ -324,6 +327,7 @@ SCRIPT=basebackup.sh
 cat >> $1/$SCRIPT <<'EOF'
 #! /bin/sh
 psql=__PGBIN__/psql
+pg_rewind=__PGBIN__/pg_rewind
 DATADIR_BASE=__DATADIR_BASE__
 PGSUPERUSER=__PGSUPERUSER__
 
@@ -333,11 +337,39 @@ DEST_CLUSTER=$3
 PORT=$4
 recovery_node=$5
 
+pg_rewind_failed="true"
+
 log=$DATADIR_BASE/log/recovery.log
+echo >> $log
+date >> $log
+EOF
+
+pg_rewind_failed="true"
+
+if [ $USE_PG_REWIND = "true" ];then
+cat >> $1/$SCRIPT <<'EOF'    
+
+# First try pg_rewind
+
+# Make backup copy of postgresql.conf since pg_rewind blindly copies
+# $master_db_cluster/postgresql.conf.
+cp $DEST_CLUSTER/postgresql.conf /tmp/
+echo "pg_rewind starts" >> $log
+$pg_rewind -P -D $DEST_CLUSTER --source-server="port=$PORT user=$PGSUPERUSER dbname=postgres" >> $log 2>&1
+if [ $? != 0 ];then
+    # pg_rewind failed. Fallback to rsync.
+   echo "pg_rewind failed. Fall back to rsync" >> $log
+   pg_rewind_failed="true"
+fi
+EOF
+fi
+
+cat >> $1/$SCRIPT <<'EOF'
+if [ $pg_rewind_failed = "true" ];then
 
 $psql -p $PORT -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
 
-echo "source: $master_db_cluster dest: $DEST_CLUSTER" > $log
+echo "source: $master_db_cluster dest: $DEST_CLUSTER" >> $log
 
 rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
 --exclude postmaster.opts --exclude pg_log \
@@ -349,6 +381,7 @@ rm -fr $DEST_CLUSTER/pg_xlog
 mkdir $DEST_CLUSTER/pg_xlog
 chmod 700 $DEST_CLUSTER/pg_xlog
 rm $DEST_CLUSTER/recovery.done
+fi
 EOF
 
 if [ $USE_SLOT = "true" ];then
@@ -377,7 +410,13 @@ EOF
 fi
 
 cat >> $1/$SCRIPT <<'EOF'
+if [ $pg_rewind_failed = "true" ];then
 $psql -p $PORT -c "SELECT pg_stop_backup()" postgres
+fi
+
+if [ $pg_rewind_failed = "false" ];then
+    cp /tmp/postgresql.conf $DEST_CLUSTER/
+fi
 EOF
 
 #-------------------------------------------
@@ -597,18 +636,17 @@ function wait_for_pgpool_reload {
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s|n|l|y] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d] [-s]";exit 1
+	echo "usage: $0 [-m r|s|n|l|y] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d] [-s] [-r]";exit 1
 }
 
 #-------------------------------------------
 # Argument check
-# usage: $0  [-m r|s|n][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d]
+# usage: $0  [-m r|s|n][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d][-s][-r]
 #-------------------------------------------
 #
 # default mode is streaming replication mode
 MODE="s"
 NO_STOP="false"
-USE_SLOT="false"
 
 while [ $# -gt 0 ]
 do
@@ -636,9 +674,10 @@ do
 		NO_STOP="true"
 	elif [ $1 = "-d" ];then
 		PGPOOLDEBUG="true"
-		shift;
 	elif [ $1 = "-s" ];then
-		USE_SLOT="true"
+	    USE_SLOT="true"
+	elif [ $1 = "-r" ];then
+	    USE_PG_REWIND="true"
 	elif [ $1 = "--help" -o $1 = "-o" ];then
 		usage
 		exit
@@ -671,6 +710,12 @@ esac
 if [ a$USE_REPLICATION_SLOT = a"true" ];then
     USE_SLOT="true"
 fi
+
+# If USE_PG_REWIND is provided as an environment variable, turn on -r
+if [ a$USE_PG_REWIND = a"true" ];then
+    USE_PG_REWIND="true"
+fi
+
 #-------------------------------------------
 # Make sure that current directory is empty
 #-------------------------------------------

@@ -154,6 +154,19 @@ Pgpool-II documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>-r</option></term>
+      <listitem>
+       <para>
+	 Use <command>pg_rewind</command> command in recovery script
+	 (basebackup.sh).  If the command fails, switch to use ordinal
+	 rsync command.  In certain cases recovery
+	 using <command>pg_rewind</command> is much faster than rsync
+	 since it does not copy whole database cluster.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
  </refsect1>
@@ -233,6 +246,16 @@ Pgpool-II documentation
        <para>
 	 If "true", in streaming replication mode, use replication slot instead
 	 of archive. This brings the same effect as "-s" option is specified.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>USE_PG_REWIND</option></term>
+      <listitem>
+       <para>
+	 If "true", in streaming replication mode, use <command>pg_rewind</command> in basebackup.sh script.
+	 This brings the same effect as "-r" option is specified.
        </para>
       </listitem>
      </varlistentry>
