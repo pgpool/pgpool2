@@ -269,6 +269,7 @@ chmod 755 $1/$PGPOOL_REMOTE_START_SCRIPT
 function set_postgresql_conf
 {
 	PGCONF=$1/postgresql.conf
+	PGHBACONF=$1/pg_hba.conf
 
 	echo "listen_addresses = '*'" >> $PGCONF
 	echo "port = $PORT" >> $PGCONF
@@ -295,14 +296,24 @@ function set_postgresql_conf
 		fi
 	fi
 
-	ed $1/pg_hba.conf <<EOF
+    sed -i '/host.*all.*all.*trust$/s/^/#/g' $PGHBACONF
+    sed -i '/local.*all.*all.*trust$/s/^/#/g' $PGHBACONF
+
+    echo "host      all   scram_user     0/0    scram-sha-256" >> $PGHBACONF
+    echo "host      all   md5_user       0/0    md5" >> $PGHBACONF
+    echo "host      all   all       0/0    trust" >> $PGHBACONF
+
+    echo "local      all   scram_user      scram-sha-256" >> $PGHBACONF
+    echo "local      all   md5_user        md5" >> $PGHBACONF
+    echo "local      all   all      trust" >> $PGHBACONF
+
+    ed $1/pg_hba.conf <<EOF
 /^#local *replication/s/^#//p
 /^#host *replication/s/^#//p
 /^#host *replication/s/^#//p
 w
 q
 EOF
-
 }
 
 #-------------------------------------------
