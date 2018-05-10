@@ -51,6 +51,8 @@
 #include <stdlib.h>
 
 #define AUTHFAIL_ERRORCODE "28000"
+#define MAX_SASL_PAYLOAD_LEN 1024
+
 
 static POOL_STATUS pool_send_backend_key_data(POOL_CONNECTION *frontend, int pid, int key, int protoMajor);
 static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
@@ -344,7 +346,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 		{
 			if (!VALID_BACKEND(i))
 				continue;
-			
+
 			ereport(DEBUG1,
 				(errmsg("authentication backend %d",i),
 					 errdetail("trying SCRAM authentication")));
@@ -1867,8 +1869,8 @@ static bool do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int pr
 	void *sasl_state = NULL;
 	int payload_len = message_length - 4 - 4;
 	int  auth_kind = AUTH_REQ_SASL;
-	char payload[1024];
-	
+	char payload[MAX_SASL_PAYLOAD_LEN];
+
 	if (passwordType != PASSWORD_TYPE_PLAINTEXT)
 	{
 		ereport(ERROR,
@@ -1905,8 +1907,11 @@ static bool do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int pr
 
 	for(;;)
 	{
+		char kind;
+		int len;
+
 		/* at this point we have already read kind, message length and authkind */
-		if (payload_len > 1024)
+		if (payload_len > MAX_SASL_PAYLOAD_LEN)
 			ereport(ERROR,
 					(errmsg("invalid authentication data too big")));
 
@@ -1919,7 +1924,6 @@ static bool do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int pr
 				return true;
 				break;
 			case AUTH_REQ_SASL:
-
 				/*
 				 * The request contains the name (as assigned by IANA) of the
 				 * authentication mechanism.
@@ -1954,8 +1958,6 @@ static bool do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int pr
 						(errmsg("invalid authentication request from server: unknown auth kind %d",auth_kind)));
 			}
 		/* Read next packend */
-		char kind;
-		int len;
 		pool_read(backend, &kind, sizeof(kind));
 		pool_read(backend, &len, sizeof(len));
 		if (kind != 'R')
@@ -2093,7 +2095,7 @@ pg_SASL_continue(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payl
 	challenge[payloadlen] = '\0';
 
 	/* For safety and convenience, ensure the buffer is NULL-terminated. */
-	
+
 	pg_fe_scram_exchange(sasl_state,
 						 challenge, payloadlen,
 						 &output, &outputlen,
@@ -2126,7 +2128,7 @@ pg_SASL_continue(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payl
 	
 	if (done && !success)
 		return -1;
-	
+
 	return 0;
 }
 
