@@ -1,3 +1,27 @@
+/* -*-pgsql-c-*- */
+/*
+ * $Header$
+ *
+ * pgpool: a language independent connection pool server for PostgreSQL
+ * written by Tatsuo Ishii
+ *
+ * Copyright (c) 2003-2018	PgPool Global Development Group
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby
+ * granted, provided that the above copyright notice appear in all
+ * copies and that both that copyright notice and this permission
+ * notice appear in supporting documentation, and that the name of the
+ * author not be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission. The author makes no representations about the
+ * suitability of this software for any purpose.  It is provided "as
+ * is" without express or implied warranty.
+ *
+ * auth_scram.c: SCRAM authentication stuff
+ * borrowed from PostgreSQL source src/backend/libpq/auth-scram.c
+ *
+ */
 /*-------------------------------------------------------------------------
  *
  * auth-scram.c
@@ -95,6 +119,7 @@
 #include "utils/elog.h"
 #include "utils/memutils.h"
 
+#define MOCK_AUTH_NONCE_LEN		32
 
 typedef enum
 {
@@ -129,15 +154,6 @@ typedef struct
 	char	   *server_final_message;
 	char		ServerSignature[SCRAM_KEY_LEN];
 } fe_scram_state;
-
-static bool read_server_first_message(fe_scram_state *state, char *input);
-static bool read_server_final_message(fe_scram_state *state, char *input);
-static char *build_client_first_message(fe_scram_state *state);
-static char *build_client_final_message(fe_scram_state *state);
-static bool verify_server_signature(fe_scram_state *state);
-static void calculate_client_proof(fe_scram_state *state,
-								   const char *client_final_message_without_proof,
-								   uint8 *result);
 
 
 /*
@@ -187,6 +203,16 @@ typedef struct
 	bool		doomed;
 	char	   *logdetail;
 } scram_state;
+
+
+static bool read_server_first_message(fe_scram_state *state, char *input);
+static bool read_server_final_message(fe_scram_state *state, char *input);
+static char *build_client_first_message(fe_scram_state *state);
+static char *build_client_final_message(fe_scram_state *state);
+static bool verify_server_signature(fe_scram_state *state);
+static void calculate_client_proof(fe_scram_state *state,
+								   const char *client_final_message_without_proof,
+								   uint8 *result);
 
 static void read_client_first_message(scram_state *state, char *input);
 static void read_client_final_message(scram_state *state, char *input);
@@ -1147,7 +1173,6 @@ build_server_final_message(scram_state *state)
  * hash based on the username and a cluster-level secret key.  Returns a
  * pointer to a static buffer of size SCRAM_DEFAULT_SALT_LEN.
  */
-#define MOCK_AUTH_NONCE_LEN		32
 static char *
 GetMockAuthenticationNonce(void)
 {
