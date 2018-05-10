@@ -360,6 +360,8 @@ if [ $? != 0 ];then
     # pg_rewind failed. Fallback to rsync.
    echo "pg_rewind failed. Fall back to rsync" >> $log
    pg_rewind_failed="true"
+else
+   pg_rewind_failed="false"
 fi
 EOF
 fi
