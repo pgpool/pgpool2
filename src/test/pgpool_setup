@@ -154,6 +154,18 @@ if [ a"$failed_node_id" = a"$old_primary_node_id" ];then	# master failed
 ! 	new_primary_db_cluster=${mydir}/data"$new_master_id"
 	echo $pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
 	$pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
+
+	timeout=20
+	while [ $timeout -gt 0 ]
+	do
+		res=`__PGBIN__/psql -At -p $new_master_port_number -c "SELECT pg_is_in_recovery()"`
+		if [[ "$res" = 'f' ]]; then
+			break;
+		fi
+		timeout=`expr $timeout - 1`
+		sleep 1
+	done
+
 fi
 EOF
 
