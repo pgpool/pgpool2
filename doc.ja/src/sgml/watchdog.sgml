@@ -687,12 +687,36 @@ failover_when_quorum_existsは<productname>Pgpool-II </productname><emphasis>V3.
 デフォルト値はonです。
         </para>
         <para>
+
+<!--
+	<caution>
+	  <para>
+            When <varname>failover_require_consensus</varname> is
+            enabled, <productname>Pgpool-II</productname> does not
+            execute the failover until it get enough votes from
+            other <productname>Pgpool-II</productname> nodes. So it is
+            strongly recommended to enable the backend health check on
+            all
+            <productname>Pgpool-II</productname> nodes to ensure
+	    proper detection of backend node failures.  For more
+	    details of health check,
+	    see <xref linkend="runtime-config-health-check">.
+	  </para>
+	</caution>
+-->
+	<caution>
+	  <para>
+<varname>failover_require_consensus</varname>が有効な場合、<productname>Pgpool-II</productname>は他            の<productname>Pgpool-II</productname>ノードから充分な投票を得るまでフェイルオーバしません。
+ですから、正しくバックエンドの障害を検出するために、すべての<productname>Pgpool-II</productname>ノードでヘルスチェックを有効にすることを強く推奨します。
+ヘルスチェックに関する詳細については、<xref linkend="runtime-config-health-check">をご覧ください。
+	  </para>
+	</caution>
 <!--
         <varname>failover_require_consensus</varname> is not available prior to
         <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>. and it is only
         effective when <xref linkend="guc-failover-when-quorum-exists"> is enabled
 -->
-<productname>Pgpool-II </productname><emphasis>V3.7</emphasis>より前では<varname>failover_require_consensus</varname>は利用できません。
+<productname>Pgpool-II</productname> <emphasis>V3.7</emphasis>より前では<varname>failover_require_consensus</varname>は利用できません。
 <xref linkend="guc-failover-when-quorum-exists">が有効な場合にのみ有効です。
         </para>
         <para>
