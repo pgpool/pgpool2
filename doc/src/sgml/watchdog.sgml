@@ -442,6 +442,22 @@
         <para>
           Default is on.
         </para>
+
+	<caution>
+	  <para>
+            When <varname>failover_require_consensus</varname> is
+            enabled, <productname>Pgpool-II</productname> does not
+            execute the failover until it get enough votes from
+            other <productname>Pgpool-II</productname> nodes. So it is
+            strongly recommended to enable the backend health check on
+            all
+            <productname>Pgpool-II</productname> nodes to ensure
+	    proper detection of backend node failures.  For more
+	    details of health check,
+	    see <xref linkend="runtime-config-health-check">.
+	  </para>
+	</caution>
+
         <para>
         <varname>failover_require_consensus</varname> is not available prior to
         <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>. and it is only
