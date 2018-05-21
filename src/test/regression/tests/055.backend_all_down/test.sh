@@ -37,6 +37,12 @@ do
 	if [ $? = 0 ];then
 		break;
 	fi
+
+	grep "failover: no backends are degenerated" log/pgpool.log > /dev/null 2>&1
+	if [ $? = 0 ];then
+		break;
+	fi
+
 	sleep 1
 done
 

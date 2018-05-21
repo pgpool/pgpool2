@@ -154,6 +154,7 @@ if [ a"$failed_node_id" = a"$old_primary_node_id" ];then	# master failed
 ! 	new_primary_db_cluster=${mydir}/data"$new_master_id"
 	echo $pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
 	$pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
+	sleep 2
 fi
 EOF
 
