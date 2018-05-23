@@ -1864,7 +1864,7 @@ static void failover(void)
 				if (nodes[i])
 				{
 					trigger_failover_command(i, pool_config->failover_command,
-												MASTER_NODE_ID, new_master, PRIMARY_NODE_ID);
+												MASTER_NODE_ID, new_master, REAL_PRIMARY_NODE_ID);
 					sync_required = true;
 				}
 			}
