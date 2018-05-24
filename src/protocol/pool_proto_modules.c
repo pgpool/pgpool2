@@ -340,11 +340,9 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			if (vnode->kind == VAR_SET_VALUE)
 			{
 				value = flatten_set_variable_args("name", vnode->args);
-				printf("%s\n", value);
 			}
 			if (vnode->kind == VAR_RESET_ALL)
 			{
-				printf("reset all\n");
 				reset_all_variables(frontend, backend);
 			}
 			else
