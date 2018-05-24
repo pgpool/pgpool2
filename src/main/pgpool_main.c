@@ -2962,6 +2962,9 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots)
 		 */
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
+			if (!VALID_BACKEND(i))
+				continue;
+
 			if (get_server_version(slots, i) >= 90600)
 			{
 				check_connectivity = true;
@@ -2981,6 +2984,9 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots)
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
 			primary[i] = 0;
+
+			if (!VALID_BACKEND(i))
+				continue;
 
 			if (pool_node_status[i] == POOL_NODE_STATUS_PRIMARY)
 			{
