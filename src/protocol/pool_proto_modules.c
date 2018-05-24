@@ -923,7 +923,13 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			 */
 			if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
 			{
-				pool_set_writing_transaction();
+				/* However, if the query is "SET TRANSACTION READ ONLY" or its variant,
+				 * don't set it.
+				 */
+				if (!pool_is_transaction_read_only(node))
+				{
+					pool_set_writing_transaction();
+				}
 			}
 		}
 		pool_unset_query_in_progress();
