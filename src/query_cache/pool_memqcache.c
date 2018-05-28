@@ -3965,7 +3965,7 @@ POOL_SHMEM_STATS *pool_get_shmem_storage_stats(void)
 
 /*
  * Inject cached message to the target backend buffer to pretend as if backend
- * actually repies with Data row and Command Complete message.
+ * actually replies with Data row and Command Complete message.
  */
 static void inject_cached_message(POOL_CONNECTION *backend, char *qcache, int qcachelen)
 {
