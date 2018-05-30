@@ -66,7 +66,7 @@ Pgpool-II documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-u <replaceable class="parameter">username</replaceable></option></term>
+      <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
       <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
