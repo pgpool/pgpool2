@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3984,7 +3984,16 @@ static void inject_cached_message(POOL_CONNECTION *backend, char *qcache, int qc
 	msg = pool_pending_message_find_lastest_by_query_context(query_context);
 
 	if (msg)
+	{
+		/*
+		 * If pending message found, we should extract target backend from it
+		 */
+		int backend_id;
+
+		backend_id = pool_pending_message_get_target_backend_id(msg);
+		backend = CONNECTION(session_context->backend, backend_id);
 		timeout = -1;
+	}
 	else
 		timeout = 0;
 

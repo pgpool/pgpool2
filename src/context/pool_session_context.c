@@ -1451,6 +1451,25 @@ POOL_PENDING_MESSAGE *pool_pending_message_find_lastest_by_query_context(POOL_QU
 }
 
 /*
+ * Get target backend id from pending message assuming that the destination for
+ * the pending message is one of primary or standby node.
+ */
+int pool_pending_message_get_target_backend_id(POOL_PENDING_MESSAGE *msg)
+{
+	int backend_id = -1;
+
+	if (msg->node_ids[0] != -1)
+		backend_id = msg->node_ids[0];
+	else if (msg->node_ids[1] != -1)
+		backend_id = msg->node_ids[1];
+	else
+		ereport(ERROR,
+				(errmsg("pool_pending_message_get_target_backend_id: no target backend id found")));
+
+	return backend_id;
+}
+
+/*
  * Dump whole pending message list
  */
 void dump_pending_message(void)
