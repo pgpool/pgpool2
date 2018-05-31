@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -287,7 +287,7 @@ extern void pool_pending_messages_destroy(void);
 extern POOL_PENDING_MESSAGE *pool_pending_message_create(char kind, int len, char *contents);
 extern void pool_pending_message_free_pending_message(POOL_PENDING_MESSAGE *message);
 extern void pool_pending_message_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context);
-void pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context);
+extern void pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context);
 extern void pool_pending_message_query_set(POOL_PENDING_MESSAGE* message, POOL_QUERY_CONTEXT *query_context);
 extern void pool_pending_message_add(POOL_PENDING_MESSAGE* message);
 extern POOL_PENDING_MESSAGE *pool_pending_message_head_message(void);
@@ -301,6 +301,7 @@ extern POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void);
 extern bool pool_pending_message_exists(void);
 extern const char *pool_pending_message_type_to_string(POOL_MESSAGE_TYPE type);
 extern POOL_PENDING_MESSAGE *pool_pending_message_find_lastest_by_query_context(POOL_QUERY_CONTEXT *qc);
+extern int pool_pending_message_get_target_backend_id(POOL_PENDING_MESSAGE *msg);
 extern void dump_pending_message(void);
 extern void pool_set_major_version(int major);
 extern void pool_set_minor_version(int minor);
