@@ -1,6 +1,63 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-5-15">
+  <title>Release 3.5.15</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2018-06-12</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+	  <listitem>
+		<!--
+		2018-05-31 [871c089]
+		-->
+		<para>
+		Fix <productname>Pgpool-II</productname> hung if replication delay is too much, when query cache enabled in extended query mode. (Tatsuo Ishii)
+		</para>
+		<para>
+		See <ulink url="https://www.pgpool.net/pipermail/pgpool-general-jp/2018-May/001533.html">[pgpool-general-jp: 1534]</ulink> 
+		for more details.
+		</para>
+	  </listitem>
+
+	  <listitem>
+		<!--
+		2018-05-24 [c88c336]
+		-->
+		<para>
+		In extended query mode, do not set writing tx flag with SET TRANSACTION READ ONLY. (Tatsuo Ishii) 
+		</para>
+	  </listitem>
+
+	  <listitem>
+		<!--
+		2018-04-18 [7f47596]
+		-->
+		<para>
+		Prevent <xref linkend="PCP-RECOVERY-NODE"> from recovering "unused" status node. (Tatsuo Ishii)
+		</para>
+		<para>
+		This allowed to try to recovery a node without configuration data,
+		which leads to variety of problems. 
+		</para>
+		<para>
+		See <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-March/006021.html">[pgpool-general: 5963]</ulink> 
+		for more details.
+		</para>
+		<para>
+		Also I fixed <function>pgpool_recovery</function> function so that it quotes an 
+		empty string argument with double quotes. 
+		</para>
+	  </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-5-14">
   <title>Release 3.5.14</title>
 
