@@ -1,6 +1,63 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-4-18">
+<!--
+  <title>Release 3.4.18</title>
+	-->
+  <title>リリース 3.4.18</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-06-12</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title> 
+    <itemizedlist>
+
+	  <listitem>
+		<!--
+		2018-04-18 [34253a5]
+		-->
+		<para>
+		<!--
+		Prevent pcp_recovery_node from recovering "unused" status node. (Tatsuo Ishii)
+		-->
+pcp_recovery_node が "unused" 状態のノードをリカバリしないように修正しました。(Tatsuo Ishii)
+		</para>
+		<para>
+		<!--
+		This allowed to try to recover a node without configuration data,
+		which leads to variety of problems. 
+		-->
+これにより、設定情報がないノードをリカバリしようとするときに発生する様々な問題を回避できます。
+		</para>
+		<para>
+		<!--
+		See <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-March/006021.html">[pgpool-general: 5963]</ulink> 
+		for more details.
+		-->
+詳細は
+<ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-March/006021.html">[pgpool-general: 5963]</ulink> 
+をご参照してください。
+		</para>
+		<para>
+		<!--
+		Also I fixed pgpool_recovery function so that it quotes an empty
+		string argument with double quotes. 
+		-->
+また、空の文字列の引数に対応できるように引数をダブルクォートで囲むように、<function>pgpool_recovery</function> 関数を修正しました。
+		</para>
+	  </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
+
 <sect1 id="release-3-4-17">
 <!--
   <title>Release 3.4.17</title>

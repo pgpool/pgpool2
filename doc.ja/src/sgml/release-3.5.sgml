@@ -1,6 +1,95 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-5-15">
+<!--
+  <title>Release 3.5.15</title>
+	-->
+  <title>リリース 3.5.15</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-06-12</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title> 
+    <itemizedlist>
+	  <listitem>
+		<!--
+		2018-05-31 [871c089]
+		-->
+		<para>
+		<!--
+		Fix pgpool hung if replication delay is too much, when query cache enabled in extended query mode. (Tatsuo Ishii)
+		-->
+拡張問合せ、かつクエリキャッシュが有効の場合、レプリケーション遅延が大きすぎるときに発生しうる <productname>Pgpool-II</productname> のハングアップを修正しました。(Tatsuo Ishii)
+		</para>
+		<para>
+		<!--
+		See <ulink url="https://www.pgpool.net/pipermail/pgpool-general-jp/2018-May/001533.html">[pgpool-general-jp: 1534]</ulink> 
+		for more details.
+		-->
+詳細は <ulink url="https://www.pgpool.net/pipermail/pgpool-general-jp/2018-May/001533.html">[pgpool-general-jp: 1534]</ulink> 
+を参考してください。
+		</para>
+	  </listitem>
+
+	  <listitem>
+		<!--
+		2018-05-24 [c88c336]
+		-->
+		<para>
+		<!--
+		In extended query mode, do not set writing tx flag with SET TRANSACTION READ ONLY. (Tatsuo Ishii) 
+		-->
+拡張問合せでは、SET TRANSACTION READ ONLY の場合、書き込みトランザクションフラグを立てないように修正しました。 (Tatsuo Ishii) 
+		</para>
+	  </listitem>
+
+	  <listitem>
+		<!--
+		2018-04-18 [7f47596]
+		-->
+		<para>
+		<!--
+		Prevent pcp_recovery_node from recovering "unused" status node. (Tatsuo Ishii)
+		-->
+pcp_recovery_node が "unused" 状態のノードをリカバリしないように修正しました。(Tatsuo Ishii)
+		</para>
+		<para>
+		<!--
+		This allowed to try to recover a node without configuration data,
+		which leads to variety of problems. 
+		-->
+これにより、設定情報がないノードをリカバリしようとするときに発生する様々な問題を回避できます。
+		</para>
+		<para>
+		<!--
+		See <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-March/006021.html">[pgpool-general: 5963]</ulink> 
+		for more details.
+		-->
+詳細は
+<ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-March/006021.html">[pgpool-general: 5963]</ulink> 
+をご参照してください。
+		</para>
+		<para>
+		<!--
+		Also I fixed pgpool_recovery function so that it quotes an empty
+		string argument with double quotes. 
+		-->
+また、空の文字列の引数に対応できるように引数をダブルクォートで囲むように、<function>pgpool_recovery</function> 関数を修正しました。
+		</para>
+	  </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
+
+
 <sect1 id="release-3-5-14">
 <!--
   <title>Release 3.5.14</title>
