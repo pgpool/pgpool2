@@ -1,6 +1,136 @@
 <!-- doc/src/sgml/release-3.7.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-7-4">
+  <title>Release 3.7.4</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2018-06-12</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+	<listitem>
+		<!--
+		2018-05-31 [068f867]
+		-->
+		<para>
+		Fix <productname>Pgpool-II</productname> hung if replication delay is too much, when query cache enabled in extended query mode. (Tatsuo Ishii)
+		</para>
+		<para>
+		See <ulink url="https://www.pgpool.net/pipermail/pgpool-general-jp/2018-May/001533.html">[pgpool-general-jp: 1534]</ulink> 
+		for more details.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-30 [272744b]
+		-->
+		<para>
+		Doc: Fix document typo of PCP commands option "-U". (Bo Peng)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-24 [29f7e00]
+		-->
+		<para>
+		Delete some debug code. (Bo Peng)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-24 [61b183c]
+		-->
+		<para>
+		In extended query mode, do not set writing tx flag with SET TRANSACTION READ ONLY. (Tatsuo Ishii) 
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-23 [92cbc38]
+		-->
+		<para>
+		Fix wrong parameter %P (old primary node id) passed to failover script in 3.7.3 and 3.7.2. (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-17 [5ce01ab]
+		-->
+		<para>
+		Doc: Clarify that <xref linkend="guc-failover-require-consensus"> requires that health check is enabled. (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-09 [d272885]
+		-->
+		<para>
+		Doc: Update outdated <xref linkend="PCP-PROC-INFO"> manual. (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-08 [041fe59]
+		-->
+		<para>
+		Test: Fix test.sh in extended_query_test. (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-04 [451d8a5]
+		-->
+		<para>
+		Add missing health_check_timeout in <command>pgpool_setup</command>. (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-04 [e7c262f]
+		-->
+		<para>
+		Doc: Enhance online recovery document to Clarify 
+		that <xref linkend="guc-recovery-2nd-stage-command"> is only required in native replication mode. (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-04-18 [ffa545e]
+		-->
+		<para>
+		Prevent <xref linkend="PCP-RECOVERY-NODE"> from recovering "unused" status node. (Tatsuo Ishii)
+		</para>
+		<para>
+		This allowed to try to recovery a node without configuration data,
+		which leads to variety of problems. 
+		</para>
+		<para>
+		See <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-March/006021.html">[pgpool-general: 5963]</ulink> 
+		for more details.
+		</para>
+		<para>
+		Also I fixed <function>pgpool_recovery</function> function so that it quotes an
+	 	empty string argument with double quotes. 
+		</para>
+	</listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-7-3">
   <title>Release 3.7.3</title>
 

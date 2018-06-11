@@ -1,3 +1,192 @@
+<!-- doc/src/sgml/release-3.7.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-3-7-4">
+	<!--
+  <title>Release 3.7.4</title>
+	-->
+  <title>リリース 3.7.4</title>
+
+  <note>
+		<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-06-12</simpara>
+  </note>
+  <sect2>
+		<!--
+    <title>Bug fixes</title>
+		-->
+    <title>不具合修正</title> 
+    <itemizedlist>
+	<listitem>
+		<!--
+		2018-05-31 [068f867]
+		-->
+		<para>
+		<!--
+		Fix pgpool hung if replication delay is too much, when query cache enabled in extended query mode. (Tatsuo Ishii)
+		-->
+拡張問合せ、かつクエリキャッシュが有効の場合、レプリケーション遅延が大きすぎるときに発生しうる <productname>Pgpool-II</productname> のハングアップを修正しました。(Tatsuo Ishii)
+		</para>
+		<para>
+		<!--
+		See <ulink url="https://www.pgpool.net/pipermail/pgpool-general-jp/2018-May/001533.html">[pgpool-general-jp: 1534]</ulink> 
+		for more details.
+		-->
+詳細は <ulink url="https://www.pgpool.net/pipermail/pgpool-general-jp/2018-May/001533.html">[pgpool-general-jp: 1534]</ulink> 
+を参考してください。
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-30 [272744b]
+		-->
+		<para>
+		<!--
+		Doc: Fix document typo of PCP commands option "-U". (Bo Peng)
+		-->
+Doc: PCP コマンドの "-U" オプションのタイポを修正しました。 (Bo Peng)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-24 [29f7e00]
+		-->
+		<para>
+		<!--
+		Delete some debug code. (Bo Peng)
+		-->
+デバッグ用コードを削除しました。(Bo Peng)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-24 [61b183c]
+		-->
+		<para>
+		<!--
+		In extended query mode, do not set writing tx flag with SET TRANSACTION READ ONLY. (Tatsuo Ishii) 
+		-->
+拡張問合せでは、SET TRANSACTION READ ONLY の場合、書き込みトランザクションフラグを立てないように修正しました。 (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-23 [92cbc38]
+		-->
+		<para>
+		<!--
+		Fix wrong parameter %P (old primary node id) passed to failover script in 3.7.3 and 3.7.2. (Tatsuo Ishii)
+		-->
+3.7.2 と 3.7.3 で発生するフェイルオーバスクリプトに間違ったパラメータ %P (古いプライマリノードID) を渡す不具合を修正しました。 (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-17 [5ce01ab]
+		-->
+		<para>
+		<!--
+		Doc: Clarify that failover_require_consensus requires that health check is enabled. (Tatsuo Ishii)
+		-->
+Doc: <xref linkend="guc-failover-require-consensus"> を使うために、ヘルスチェックが有効になっている必要がある明確な説明をドキュメントに追加しました。(Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-09 [d272885]
+		-->
+		<para>
+		<!--
+		Doc: Update outdated pcp_proc_info manual. (Tatsuo Ishii)
+		-->
+Doc: 古い <xref linkend="PCP-PROC-INFO"> のドキュメントを修正しました。 (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-08 [041fe59]
+		-->
+		<para>
+		<!--
+		Test: Fix test.sh in extended_query_test. (Tatsuo Ishii)
+		-->
+Test: extended_query_test のスクリプト test.sh を修正しました。 (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-04 [451d8a5]
+		-->
+		<para>
+		<!--
+		Add missing health_check_timeout in pgpool_setup. (Tatsuo Ishii)
+		-->
+<command>pgpool_setup</command> に抜けていた health_check_timeout の設定を追加しました。(Tatsuo Ishii) 
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-05-04 [e7c262f]
+		-->
+		<para>
+		<!--
+		Doc: Enhance online recovery document to Clarify 
+		that recovery_2nd_stage_command is only required in native replication mode. (Tatsuo Ishii)
+		-->
+Doc: recovery_2nd_stage_command はネイティブレプリケーションモードのみで設定する必要がある明確な説明をドキュメントに追加しました。(Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-04-18 [ffa545e]
+		-->
+		<para>
+		<!--
+		Prevent pcp_recovery_node from recovering "unused" status node. (Tatsuo Ishii)
+		-->
+pcp_recovery_node が "unused" 状態のノードをリカバリしないように修正しました。(Tatsuo Ishii)
+		</para>
+		<para>
+		<!--
+		This allowed to try to recover a node without configuration data,
+		which leads to variety of problems. 
+		-->
+これにより、設定情報がないノードをリカバリしようとするときに発生する様々な問題を回避できます。
+		</para>
+		<para>
+		<!--
+		See <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-March/006021.html">[pgpool-general: 5963]</ulink> 
+		for more details.
+		-->
+詳細は
+<ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-March/006021.html">[pgpool-general: 5963]</ulink> 
+をご参照してください。
+		</para>
+		<para>
+		<!--
+		Also I fixed pgpool_recovery function so that it quotes an empty
+		string argument with double quotes. 
+		-->
+また、空の文字列の引数に対応できるように引数をダブルクォートで囲むように、<function>pgpool_recovery</function> 関数を修正しました。
+		</para>
+	</listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-7-3">
 <!--
   <title>Release 3.7.3</title>
