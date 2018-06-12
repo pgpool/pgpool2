@@ -1700,6 +1700,8 @@ static void failover(void)
 			all_backend_down = check_all_backend_down();
 
 			BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
+			pool_set_backend_status_changed_time(node_id);
+
 			if (!(request_details & REQ_DETAIL_UPDATE))
 			{
 				/* The request is a proper failbak request
@@ -1746,6 +1748,7 @@ static void failover(void)
 							 BACKEND_INFO(node_id_set[i]).backend_port)));
 
 					BACKEND_INFO(node_id_set[i]).backend_status = CON_DOWN;	/* set down status */
+					pool_set_backend_status_changed_time(node_id_set[i]);
 
 					if (reqkind == NODE_QUARANTINE_REQUEST)
 					{
@@ -1959,6 +1962,7 @@ static void failover(void)
 									 bkinfo->backend_hostname,
 									 bkinfo->backend_port)));
 							bkinfo->backend_status = CON_DOWN;	/* set down status */
+							pool_set_backend_status_changed_time(i);
 							(void)write_status_file();
 
 							follow_cnt++;
@@ -1988,6 +1992,13 @@ static void failover(void)
 		}
 
 		/* Save primary node id */
+		if (Req_info->primary_node_id != new_primary)
+		{
+			if (Req_info->primary_node_id >= 0)
+				pool_set_backend_status_changed_time(Req_info->primary_node_id);
+			if (new_primary >= 0)
+				pool_set_backend_status_changed_time(new_primary);
+		}
 		Req_info->primary_node_id = new_primary;
 		ereport(LOG,
 				(errmsg("failover: set new primary node: %d", Req_info->primary_node_id)));
@@ -3442,6 +3453,7 @@ static int read_status_file(bool discard_status)
 			if (backend_rec.status[i] == CON_DOWN)
 			{
 				BACKEND_INFO(i).backend_status = CON_DOWN;
+				pool_set_backend_status_changed_time(i);
 				(void)write_status_file();
 				ereport(LOG,
 						(errmsg("read_status_file: %d th backend is set to down status", i)));
@@ -3450,6 +3462,7 @@ static int read_status_file(bool discard_status)
 					 BACKEND_INFO(i).backend_status == CON_UP)
 			{
 				BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
+				pool_set_backend_status_changed_time(i);
 				(void)write_status_file();
 				someone_wakeup = true;
 			}
@@ -3491,6 +3504,7 @@ static int read_status_file(bool discard_status)
 		for (i=0;i<MAX_NUM_BACKENDS;i++)
 		{
 			BACKEND_INFO(i).backend_status = CON_UNUSED;
+			pool_set_backend_status_changed_time(i);
 		}
 
 		for (i=0;;i++)
@@ -3507,12 +3521,14 @@ static int read_status_file(bool discard_status)
 			else if (!strncasecmp("down", readbuf, 4))
 			{
 				BACKEND_INFO(i).backend_status = CON_DOWN;
+				pool_set_backend_status_changed_time(i);
 				ereport(LOG,
 						(errmsg("reading status file: %d th backend is set to down status", i)));
 			}
 			else if (!strncasecmp("unused", readbuf, 6))
 			{
 				BACKEND_INFO(i).backend_status = CON_UNUSED;
+				pool_set_backend_status_changed_time(i);
 			}
 			else
 			{
@@ -3532,6 +3548,7 @@ static int read_status_file(bool discard_status)
 		for (i=0;i< pool_config->backend_desc->num_backends;i++)
 		{
 			BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
+			pool_set_backend_status_changed_time(i);
 		}
 		(void)write_status_file();
 	}
@@ -3832,6 +3849,7 @@ static void sync_backend_from_watchdog(void)
 			if (BACKEND_INFO(i).backend_status != CON_DOWN)
 			{
 				BACKEND_INFO(i).backend_status = CON_DOWN;
+				pool_set_backend_status_changed_time(i);
 				my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
 				reload_maste_node_id = true;
 				node_status_was_changed_to_down = true;
@@ -3850,6 +3868,7 @@ static void sync_backend_from_watchdog(void)
 					node_status_was_changed_to_up = true;
 
 				BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
+				pool_set_backend_status_changed_time(i);
 				my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
 				reload_maste_node_id = true;
 
@@ -4054,4 +4073,15 @@ static void get_info_from_conninfo(char *conninfo, char *host, char *port)
 			*port++ = *p++;
 		*port = '\0';
 	}
+}
+
+/*
+ * Set backend status changed time for specified backend id.
+ */
+void
+pool_set_backend_status_changed_time(int backend_id)
+{
+	time_t tval;
+	tval = time(NULL);
+	BACKEND_INFO(backend_id).status_changed_time = tval;
 }

@@ -35,24 +35,29 @@ SHOW POOL_NODES
       hostname, the port, the status, the weight (only meaningful if
       you use the load balancing mode), the role, the SELECT query
       counts issued to each backend, whether each node is the load
-      bakance node or not, and the replication delay (only if in
-      streaming replication mode). The possible values in the status
-      column are explained in the <xref linkend="pcp-node-info">
-      reference. If the hostname is something like "/tmp", that means
+      bakance node or not, the replication delay (only if in streaming
+      replication mode) and last status change time. The possible
+      values in the status column are explained in
+      the <xref linkend="pcp-node-info"> reference. If the hostname is
+      something like "/tmp", that means
       <productname>Pgpool-II</productname> is connecting to backend by
       using UNIX domain sockets. The SELECT count does not include
       internal queries used
       by <productname>Pgoool-II</productname>. Also the counters are
-      reset to zero upon starting up of <productname>Pgpool-II</productname>.
+      reset to zero upon starting up
+      of <productname>Pgpool-II</productname>.  The last status change
+      time is initially set to the
+      time <productname>Pgpool-II</productname> starts.  After that
+      whenever "status" or "role" is changed, it is updated.
     </para>
     <para>
       Here is an example session:
 <programlisting>
 test=# show pool_nodes;
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
----------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
- 0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | false             | 0
- 1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | true              | 0
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | last_status_change  
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+---------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | true              | 0                 | 2018-06-12 21:45:59
+ 1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | false             | 0                 | 2018-06-12 21:45:59
 (2 rows)
 </programlisting>
     </para>

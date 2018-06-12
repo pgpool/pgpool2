@@ -911,7 +911,11 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 
 		pool_init_params(&s->con->params);
 	
-		BACKEND_INFO(i).backend_status = CON_UP;
+		if (BACKEND_INFO(i).backend_status != CON_UP)
+		{
+			BACKEND_INFO(i).backend_status = CON_UP;
+			pool_set_backend_status_changed_time(i);
+		}
 		active_backend_count++;
 	}
 

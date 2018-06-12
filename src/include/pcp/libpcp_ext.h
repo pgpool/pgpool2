@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -78,6 +78,7 @@ typedef struct {
 	char backend_hostname[MAX_DB_HOST_NAMELEN];	/* backend host name */
 	int backend_port;	/* backend port numbers */
 	BACKEND_STATUS backend_status;	/* backend status */
+	time_t status_changed_time;	/* backend status changed time */
 	double backend_weight;	/* normalized backend load balance ratio */
 	double unnormalized_weight; /* descripted parameter */
 	char backend_data_directory[MAX_PATH_LENGTH];
@@ -178,6 +179,7 @@ typedef struct {
 	char select[POOLCONFIG_MAXWEIGHTLEN+1];
 	char load_balance_node[POOLCONFIG_MAXWEIGHTLEN+1];
 	char delay[POOLCONFIG_MAXWEIGHTLEN+1];
+	char last_status_change[POOLCONFIG_MAXDATELEN];
 } POOL_REPORT_NODES;
 
 /* processes report struct */
