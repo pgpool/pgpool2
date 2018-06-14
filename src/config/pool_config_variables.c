@@ -17,6 +17,7 @@
 #include "utils/pool_stream.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
+#include "watchdog/wd_utils.h"
 
 #else
 #include "utils/fe_ports.h"
@@ -71,6 +72,7 @@ static bool MakeDBRedirectListRegex (char* newval, int elevel);
 static bool MakeAppRedirectListRegex (char* newval, int elevel);
 static bool check_redirect_node_spec(char *node_spec);
 static char **get_list_from_string(const char *str, const char *delimi, int *n);
+static char **get_list_from_string_regex_delim(const char *str, const char *delimi, int *n);
 
 
 /*show functions */
@@ -1046,6 +1048,19 @@ static struct config_string_list ConfigureNamesStringList[] =
 		&g_pool_config.num_black_memqcache_table_list,
 		NULL,
 		",",
+		true,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"black_query_pattern_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
+			"list of query patterns that should be sent to primary node.",
+			CONFIG_VAR_TYPE_STRING_LIST,false, 0
+		},
+		&g_pool_config.black_query_pattern_list,
+		&g_pool_config.num_black_query_pattern_list,
+		NULL,
+		";",
 		true,
 		NULL, NULL, NULL
 	},
@@ -2400,7 +2415,15 @@ initialize_variables_with_default(struct config_generic * gconf)
 			}
 			else
 			{
-				*conf->variable = get_list_from_string(newval,conf->seperator, conf->list_elements_count);
+				if (strcmp(gconf->name, "black_query_pattern_list") == 0)
+				{
+					*conf->variable = get_list_from_string_regex_delim(newval, conf->seperator, conf->list_elements_count);
+				}
+				else
+				{
+					*conf->variable = get_list_from_string(newval,conf->seperator, conf->list_elements_count);
+				}
+
 				if (conf->compute_regex)
 				{
 					int i;
@@ -2466,6 +2489,82 @@ static char **get_list_from_string(const char *str, const char *delimi, int *n)
 	pfree(temp_string);
 
 	return tokens;
+}
+
+/*
+ * Extract tokens separated by delimiter from str. Allow to
+ * use regex of delimiter. Return value is an array of
+ * pointers in pallocd strings. number of elements are set
+ * to n.
+ */
+static char **get_list_from_string_regex_delim(const char *input, const char *delimi, int *n)
+{
+#ifndef POOL_PRIVATE
+	int j = 0;
+	char *output;
+	char *str;
+	char *buf;
+	char **tokens;
+	const int MAXTOKENS = 256;
+	*n = 0;
+
+	if (input == NULL || *input == '\0')
+		return NULL;
+
+	tokens = palloc(MAXTOKENS * sizeof(char *));
+	if (*(input + strlen(input) - 1) != *delimi)
+	{
+		int len = strlen(input) + 2;
+		str = palloc(len); 
+		snprintf(str, len, "%s;", input);
+	}
+	else
+	{
+		str = pstrdup(input);
+	}
+
+	buf = str;
+
+	while(*str != '\0')
+	{
+		if (*str == '\\')
+		{
+			j += 2;
+			str++;
+		}
+		else if (*str == *delimi)
+		{
+			output = (char *) palloc(j + 1);
+			StrNCpy(output, buf, j + 1);
+
+			/* replace escape character of "'"*/
+			tokens[*n] = pstrdup(string_replace(output, "\\'", "'"));
+
+			ereport(DEBUG3,
+				(errmsg("initializing pool configuration"),
+					errdetail("extracting string tokens [token[%d]: %s]", *n, tokens[*n])));
+
+			(*n)++;
+			buf = str + 1;
+			j = 0;
+
+			if ( ((*n) % MAXTOKENS ) == 0)
+				tokens = repalloc(tokens, (MAXTOKENS * sizeof(char *) * (((*n)/MAXTOKENS) + 1) ));
+		}
+		else
+		{
+			j++;
+		}
+		str++;
+	}
+
+	if (*n > 0)
+		tokens = repalloc(tokens, (sizeof(char *) * (*n) ));
+
+	return tokens;
+#else
+	return NULL;
+#endif
 }
 
 /*
@@ -3246,7 +3345,15 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 					pfree(*conf->variable);
 				}
 
-				*conf->variable = get_list_from_string(newval, conf->seperator, conf->list_elements_count);
+				if (strcmp(name, "black_query_pattern_list") == 0)
+				{
+					*conf->variable = get_list_from_string_regex_delim(newval, conf->seperator, conf->list_elements_count);
+				}
+				else
+				{
+					*conf->variable = get_list_from_string(newval, conf->seperator, conf->list_elements_count);
+				}
+
 				if (conf->compute_regex)
 				{
 					/* TODO clear the old regex array please */

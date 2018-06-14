@@ -203,6 +203,12 @@ int pattern_compare(char *str, const int type, const char *param_name)
 		lists_patterns = pool_config->lists_memqcache_table_patterns;
 		pattc = &pool_config->memqcache_table_pattc;
 
+	} 
+	else if (strcmp(param_name, "black_query_pattern_list") == 0)
+	{
+		lists_patterns = pool_config->lists_query_patterns;
+		pattc = &pool_config->query_pattc;
+
 	} else {
 		ereport(WARNING,
 				(errmsg("pattern_compare: unknown paramname %s", param_name)));

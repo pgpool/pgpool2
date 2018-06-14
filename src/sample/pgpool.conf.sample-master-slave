@@ -296,6 +296,12 @@ black_function_list = 'currval,lastval,nextval,setval'
                                    # that write to database
                                    # Regexp are accepted
 
+black_query_pattern_list = ''
+                                   # Semicolon separated list of query patterns
+                                   # that should be sent to primary node
+                                   # Regexp are accepted
+                                   # valid for streaming replicaton mode only.
+
 database_redirect_preference_list = ''
 								   # comma separated list of pairs of database and node id.
 								   # example: postgres:primary,mydb[0-4]:1,mydb[5-9]:2'

@@ -748,6 +748,100 @@ black_function_list = 'nextval,setval,lastval,currval'
       </listitem>
     </varlistentry>
 
+   <varlistentry id="guc-black-query-pattern-list" xreflabel="black_query_pattern_list">
+      <term><varname>black_query_pattern_list</varname> (<type>string</type>)
+        <indexterm>
+<!--
+          <primary><varname>black_query_pattern_list</varname> configuration parameter</primary>
+-->
+          <primary><varname>black_query_pattern_list</varname> 設定パラメータ</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+<!--
+          Specifies a semicolon separated list of SQL patterns that
+          should be sent to primary node.
+          SQL that matched patterns specified in this list are
+          not load balanced.
+          Only Maste Slave mode is supported.
+-->
+特定の SQL をプライマリノードに送信するように <xref linkend="guc-black-query-pattern-list">を設定します。
+SQL パターンをセミコロン区切りで指定します。
+マスタースレーブモードのみで動作します。
+        </para>
+        <para>
+<!--
+          You can use regular expression to match function names,
+          to which <literal>^</> and <literal>$</> are automatically added.
+-->
+SQL のマッチングに正規表現を使うことができます。
+正規表現には自動的に<literal>^</literal>と<literal>$</literal>が付与されます。
+"'"、";" あるいは "*" などの文字を SQL パターンの中で利用する場合、"\" でエスケープする必要があります。
+        </para>
+
+        <example id="example-black-query-pattern-list-1">
+<!--
+          <title>Using regular expression</title>
+-->
+          <title>正規表現の使用</title>
+          <para>
+<!--
+            If the following SQL should be sent to the primary node only, You can
+            set the <xref linkend="guc-black-query-pattern-list"> like below:
+-->
+もし以下の SQL をプライマリノードに送信したい場合、<xref linkend="guc-black-query-pattern-list">を以下のように設定可能です。
+
+         <itemizedlist>
+           <listitem>
+             <para>
+             SELECT * FROM table_name1;
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+             SELECT * FROM table_name2 WHERE col LIKE '%a%';
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+<!--
+             SQL including table_nama3
+-->
+             table_name3 という文字列を含む SQL
+             </para>
+           </listitem>
+         </itemizedlist>
+          </para>
+
+          <para>
+          <programlisting>
+black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \\'%a%\\'\;;.*table_name3.*'
+          </programlisting>
+          </para>
+        </example>
+
+        <note>
+          <para>
+<!--
+            If SQL matches both <xref linkend="guc-black-function-list"> and
+            <xref linkend="guc-white-function-list">, <xref linkend="guc-white-function-list">
+            setting is ignored and the SQL should be sent only to the primary node.
+-->
+<xref linkend="guc-black-query-pattern-list">と<xref linkend="guc-white-function-list">の両方にマッチした場合、
+<xref linkend="guc-white-function-list">の設定が無視され、プライマリノードのみに送信されます。
+          </para>
+        </note>
+
+        <para>
+<!--
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+-->
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+        </para>
+      </listitem>
+    </varlistentry>
+
    <varlistentry id="guc-database-redirect-preference-list" xreflabel="database_redirect_preference_list">
       <term><varname>database_redirect_preference_list</varname> (<type>string</type>)
         <indexterm>

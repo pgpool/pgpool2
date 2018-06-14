@@ -135,7 +135,8 @@ int add_regex_pattern(const char *type, char *s)
 	regex_flags |= REG_EXTENDED;
 	/* Fill the pattern type */
 	if (strcmp(type, "black_function_list") == 0 ||
-        strcmp(type, "black_memqcache_table_list") == 0)
+		strcmp(type, "black_query_pattern_list") == 0 ||
+		strcmp(type, "black_memqcache_table_list") == 0)
 	{
 		currItem.type = BLACKLIST;
 	}
@@ -194,6 +195,13 @@ int add_regex_pattern(const char *type, char *s)
 			(errmsg("unable to add regex pattern for \"%s\", unable to allocate new pattern", type)));
         return 0;
     }
+	else if (strcmp(type, "black_query_pattern_list") == 0 &&
+			growQueryPatternArray(currItem) < 0)
+	{
+		ereport(WARNING,
+			(errmsg("unable to add regex pattern for \"%s\", unable to allocate new pattern", type)));
+		return 0;
+	}
 
 	return 1;
 }
@@ -243,6 +251,27 @@ int growMemqcacheTablePatternArray(RegPattern item)
 	pool_config->memqcache_table_pattc++;
 
 	return(pool_config->memqcache_table_pattc);
+}
+
+int growQueryPatternArray(RegPattern item)
+{
+	void *_tmp = NULL;
+	if (pool_config->query_pattc == pool_config->current_query_pattern_size)
+	{
+		pool_config->current_query_pattern_size += PATTERN_ARR_SIZE;
+		_tmp = repalloc(pool_config->lists_query_patterns,
+		               (pool_config->current_query_pattern_size * sizeof(RegPattern)));
+		if (!_tmp)
+		{
+			return(-1);
+		}
+
+		pool_config->lists_query_patterns = (RegPattern*)_tmp;
+	}
+	pool_config->lists_query_patterns[pool_config->query_pattc] = item;
+	pool_config->query_pattc++;
+
+	return(pool_config->query_pattc);
 }
 
 /*

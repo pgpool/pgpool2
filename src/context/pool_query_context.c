@@ -392,7 +392,17 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	/*
 	 * Zap out DB node map
 	 */
-	pool_clear_node_to_be_sent(query_context);
+    pool_clear_node_to_be_sent(query_context);
+
+	/*
+	 * When query match the query patterns in black_query_pattern_list,
+	 * we send only to master node.
+	 */
+	if (MASTER_SLAVE && pattern_compare(query, BLACKLIST, "black_query_pattern_list") == 1)
+	{
+		pool_set_node_to_be_sent(query_context, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID);
+		return;
+	}
 
 	/*
 	 * If there is "NO LOAD BALANCE" comment, we send only to master node.

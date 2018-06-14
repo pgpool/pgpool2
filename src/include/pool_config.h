@@ -181,6 +181,7 @@ typedef struct {
 	char **reset_query_list;		/* comma separated list of queries to be issued at the end of session */
 	char **white_function_list;		/* list of functions with no side effects */
 	char **black_function_list;		/* list of functions with side effects */
+	char **black_query_pattern_list;	/* list of query patterns that should be sent to primary node */
 	char *log_line_prefix;			/* printf-style string to output at beginning of each log line */
     int log_error_verbosity;		/* controls how much detail about error should be emitted */
     int client_min_messages;		/* controls which message should be sent to client */
@@ -247,6 +248,7 @@ typedef struct {
 	int num_black_function_list;			/* number of functions in black_function_list */
 	int num_white_memqcache_table_list;		/* number of functions in white_memqcache_table_list */
 	int num_black_memqcache_table_list;		/* number of functions in black_memqcache_table_list */
+	int num_black_query_pattern_list;		/* number of query patterns in black_query_pattern_list */
 	int num_wd_monitoring_interfaces_list;  /* number of items in wd_monitoring_interfaces_list */
 
 	/* ssl configuration */
@@ -265,6 +267,10 @@ typedef struct {
 	RegPattern *lists_patterns;				/* Precompiled regex patterns for black/white lists */
 	int pattc;								/* number of regexp pattern */
 	int current_pattern_size;				/* size of the regex pattern array */
+
+	RegPattern *lists_query_patterns;				/* Precompiled regex patterns for black query pattern lists */
+	int query_pattc;								/* number of regexp pattern */
+	int current_query_pattern_size;				/* size of the regex pattern array */
 
 	bool memory_cache_enabled;				/* if true, use the memory cache functionality, false by default */
 	MemCacheMethod memqcache_method;		/* Cache store method. Either 'shmem'(shared memory) or 'memcached'. 'shmem' by default */
@@ -388,5 +394,6 @@ extern char* backend_status_to_str(BackendInfo *bi);
 extern int add_regex_pattern(const char *type, char *s);
 extern int growFunctionPatternArray(RegPattern item);
 extern int growMemqcacheTablePatternArray(RegPattern item);
+extern int growQueryPatternArray(RegPattern item);
 
 #endif /* POOL_CONFIG_H */
