@@ -893,14 +893,14 @@ open_wd_command_sock(bool throw_error)
 WDFailoverCMDResults wd_failover_start(void)
 {
 	if (pool_config->use_watchdog)
-		return wd_send_failover_func_status_command(0);
+		return wd_send_failover_func_status_command(true);
 	return FAILOVER_RES_PROCEED;
 }
 
 WDFailoverCMDResults wd_failover_end(void)
 {
 	if (pool_config->use_watchdog)
-		return wd_send_failover_func_status_command(1);
+		return wd_send_failover_func_status_command(false);
 	return FAILOVER_RES_PROCEED;
 }
 
