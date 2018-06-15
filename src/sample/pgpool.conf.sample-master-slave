@@ -327,6 +327,8 @@ disable_load_balance_on_write = 'transaction'	# Load balance behavior when write
 						# 'trans_transaction': if a write query is issued,
 						# subsequent read queries in an explicit transaction
 						# will not be load balanced until the session ends.
+						# 'always': if a write query is issued, read queries will
+						# not be load balanced until the session ends.
 
 #------------------------------------------------------------------------------
 # MASTER/SLAVE MODE

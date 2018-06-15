@@ -1131,6 +1131,103 @@ onに設定すると、<productname>Pgpool-II</productname>は負荷分散やク
       </listitem>
     </varlistentry>
 
+   <varlistentry id="guc-disable-load-balance-on-write" xreflabel="disable_load_balance_on_write">
+      <term><varname>disable_load_balance_on_write</varname> (<type>string</type>)
+        <indexterm>
+<!--
+          <primary><varname>disable_load_balance_on_write</varname> configuration parameter</primary>
+-->
+          <primary><varname>disable_load_balance_on_write</varname>設定パラメータ</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+<!--
+	  Specify load balance behavior after write queries appear.
+	  This parameter is especially useful in streaming replication
+	  mode. When write queries are sent to primary server, the
+	  changes are applied to standby servers but there's a time
+	  lag. So if a client read the same row right after the write
+	  query, the client may not see the latest value of the
+	  row. If that's the problem, clients should always read data
+	  from the primary server. However this effectively disables
+	  load balancing, which leads to lesser performance. This
+	  parameter allows a fine tuning for the trade off between
+	  not-clustering-aware applications compatibility and
+	  performance.
+-->
+writeクエリが発行された時の負荷分散の振る舞いを指定します。
+このパラメータは、特にストリーミングレプリケーションモードで有効です。
+writeクエリがプライマリサーバに送られた時、この変更はスタンバイサーバにも適用されますが、そこには時間差があります。
+ですからクライアントが行を更新して同じ行をスタンバイから読むと、その行の最新データを読めないかもしれません。
+もしこれが問題になるようなら、クライアントは常にプライマリサーバからデータを読むべきです。
+しかし、これは実質的に負荷分散を無効にして、性能低下をもたらします。
+このパラメータは、クラスタリングについて考慮しないアプリケーションにおける互換性と、性能の間におけるトレードオフの細かな調整を可能にします。
+	</para>
+	<para>
+<!--
+	  If this parameter is set to <varname>off</varname>, read
+	  queries are load balanced even if write queries appear. This
+	  gives the best load balance performance but clients may see
+	  older data. This is useful for an environment where
+	  PostgreSQL parameter synchronous_commit = 'remote_apply', or
+	  in the native replication mode, since there's no replication
+	  delay in such environments.
+-->
+このパラメータが<varname>off</varname>なら、writeクエリが来ても負荷分散が行われます。
+この設定では最大の性能を期待できますが、クライアントは古いデータを読むことになるかもしれません。
+この設定は、PostgreSQLのパラメータsynchronous_commit = 'remote_apply'が設定されているか、ネィティブレプリケーションモードのときに有用です。
+そのような環境ではレプリケーションの遅延が発生しないからです。
+	</para>
+	<para>
+<!--
+	  If this parameter is set to <varname>transaction</varname>
+	  and write queries appear in an explicit transaction,
+	  subsequent read queries are not load balanced until the
+	  transaction ends.  Please note that read queries not in an
+	  explicit transaction are not affected by the parameter. This
+	  setting gives the best balance in most cases and you should
+	  start from this. This is the default and same behavior in
+	  <productname>Pgpool-II 3.7</productname> or before.
+-->
+このパラメータが<varname>transaction</varname>で、明示的なトランザクション中にwriteクエリが来ると、トランザクションが終了するまで負荷分散が行われません。
+なお、明示的なトランザクション中ではないreadクエリは、このパラメータの影響を受けないことに注意してください。
+この設定は、たいていの場合に最良のバランスを提供するので、この設定から試すことをお勧めします。
+これはデフォルトで、<productname>Pgpool-II 3.7</productname>以前のバージョンと同じ振る舞いです。
+	</para>
+	<para>
+<!--
+	  If this parameter is set
+	  to <varname>trans_transaction</varname> and write queries
+	  appear in an explicit transaction, subsequent read queries
+	  are not load balanced in the transaction and subsequent
+	  explicit transaction until the session ends. So this
+	  parameter is safer for older applications but give lesser
+	  performance than <varname>transaction</varname>. Please note
+	  that read queries not in an explicit transaction are not
+	  affected by the parameter.
+-->
+このパラメータが<varname>trans_transaction</varname>で、明示的なトランザクション中にwriteクエリが来ると、トランザクションが終了するまで負荷分散が行われません。
+また、セッションが終了するまで後続の明示的なトランザクション中でも負荷分散が行われません。
+この設定は古いアプリケーションにとって安全ですが、<varname>transaction</varname>よりは性能が低下します。
+なお、明示的なトランザクション内にないreadクエリは、このパラメータの影響を受けないことに注意してください。
+	</para>
+
+	<para>
+<!--
+	  If this parameter is set to <varname>always</varname> and
+	  write queries appear, subsequent read queries are not load
+	  balanced until the session ends regardless they are in
+	  explicit transactions or not. This gives the highest
+	  compatibility with not-clustering-aware applications and the
+	  lowest performance.
+-->
+このパラメータが<varname>always</varname>で、writeクエリが来ると、明示的なトランザクション中であるかどうかを問わず、セッションが終了するまで負荷分散が行われません。
+この設定により、クラスタリングについて考慮しないアプリケーションを使った場合最大の互換性が得られますが、性能は最低になります。
+	</para>
+      </listitem>
+    </varlistentry>
+
   </variablelist>
  </sect2>
 </sect1>
