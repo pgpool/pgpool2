@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -492,6 +492,8 @@ static char *get_pid_file_path(void)
 		ereport(DEBUG1,
 				(errmsg("pid file location is \"%s\"",
 						new)));
+
+		pfree(conf_file_copy);
 	}
 	else
 	{

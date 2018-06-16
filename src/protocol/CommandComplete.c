@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -134,6 +134,12 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	{
 		int status;
 
+		if (p1 == NULL)
+		{
+			elog(WARNING, "CommandComplete: expected p1 is not NULL");
+			return POOL_END;
+		}
+
 		if (command_complete)
 			status = foward_command_complete(frontend, p1, len1);
 		else
@@ -166,6 +172,11 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 			Node *node;
 			char state;
 
+			if (session_context->query_context == NULL)
+			{
+				elog(WARNING, "expected query_contex is not NULL");
+				return POOL_END;
+			}
 			query = session_context->query_context->query_w_hex;
 			node = pool_get_parse_tree();
 			state = TSTATE(backend, MASTER_NODE_ID);
