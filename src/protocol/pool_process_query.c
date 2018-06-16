@@ -4896,7 +4896,7 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 		pool_push(backend, &len_save, sizeof(len_save));
 		len = ntohl(len_save);
 		len -= sizeof(len);
-		if (len > 0)
+		if (len > 0 && buf)
 		{
 			pool_push(backend, buf, len);
 			pfree(buf);
