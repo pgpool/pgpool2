@@ -2503,7 +2503,7 @@ static char **get_list_from_string_regex_delim(const char *input, const char *de
 	int j = 0;
 	char *output;
 	char *str;
-	char *buf;
+	char *buf, * str_temp;
 	char **tokens;
 	const int MAXTOKENS = 256;
 	*n = 0;
@@ -2524,28 +2524,29 @@ static char **get_list_from_string_regex_delim(const char *input, const char *de
 	}
 
 	buf = str;
+	str_temp = str;
 
-	while(*str != '\0')
+	while(*str_temp != '\0')
 	{
-		if (*str == '\\')
+		if (*str_temp == '\\')
 		{
 			j += 2;
-			str++;
+			str_temp++;
 		}
-		else if (*str == *delimi)
+		else if (*str_temp == *delimi)
 		{
 			output = (char *) palloc(j + 1);
 			StrNCpy(output, buf, j + 1);
 
 			/* replace escape character of "'"*/
-			tokens[*n] = pstrdup(string_replace(output, "\\'", "'"));
+			tokens[*n] = string_replace(output, "\\'", "'");
 
 			ereport(DEBUG3,
 				(errmsg("initializing pool configuration"),
 					errdetail("extracting string tokens [token[%d]: %s]", *n, tokens[*n])));
 
 			(*n)++;
-			buf = str + 1;
+			buf = str_temp + 1;
 			j = 0;
 
 			if ( ((*n) % MAXTOKENS ) == 0)
@@ -2555,11 +2556,13 @@ static char **get_list_from_string_regex_delim(const char *input, const char *de
 		{
 			j++;
 		}
-		str++;
+		str_temp++;
 	}
 
 	if (*n > 0)
 		tokens = repalloc(tokens, (sizeof(char *) * (*n) ));
+
+	pfree(str);
 
 	return tokens;
 #else
