@@ -4541,19 +4541,19 @@ static bool pool_process_notice_message_from_one_backend(POOL_CONNECTION *fronte
  * kind will be read in this function. If "read_kind" is false, kind
  * should have been already read and it should be either 'E' or
  * 'N'. The returned string is in palloc'd buffer. Callers must pfree
- * it if it becomes neccessary.
+ * it if it becomes unnecessary.
  *
  * If "unread" is true, the packet will be returned to the stream.
  *
- * Return values are: 
- * 0: not error or notice message 
- * 1: succeeded to extract error message 
- * -1: error)
+ * Return values are:
+ * 0: not error or notice message
+ * 1: succeeded to extract error message
+ * -1: error
  */
 int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int major, bool unread, char **message)
 {
 	char kind;
-	bool ret = 1;
+	int ret = 1;
 	int readlen = 0, len;
 	StringInfo str_buf;             /* unread buffer */
 	StringInfo str_message_buf;		/* message buffer */
