@@ -3162,6 +3162,7 @@ void per_node_error_log(POOL_CONNECTION_POOL *backend, int node_id, char *query,
 		ereport(LOG,
 			(errmsg("%s: DB node id: %d backend pid: %d statement: \"%s\" message: \"%s\"",
 				 prefix, node_id, ntohl(slot->pid), query, message)));
+		pfree(message);
 	}
 }
 
