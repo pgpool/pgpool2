@@ -282,7 +282,8 @@ void do_child(int *fds)
 		StartupPacket *sp;
 		int front_end_fd;
 		SockAddr saddr;
-		/* rest per iteration memory context */
+
+		/* reset per iteration memory context */
 		MemoryContextSwitchTo(ProcessLoopContext);
 		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
 
