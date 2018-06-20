@@ -2048,7 +2048,7 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 		{
 			char *message = NULL;
 
-			if (pool_extract_error_message(false, backend, major, true, &message))
+			if (pool_extract_error_message(false, backend, major, true, &message) == 1)
 			{
 				/*
 				 * This is fatal. Because: If we operate extended
@@ -2067,6 +2067,8 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
                         errmsg("Backend throw an error message"),
                          errdetail("Exiting current session because of an error from backend"),
                             errhint("BACKEND Error: \"%s\"",message?message:"")));
+				if (message)
+					pfree(message);
 			}
 		}
 
