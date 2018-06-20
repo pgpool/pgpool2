@@ -298,6 +298,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 						ereport(NOTICE,
 							(errmsg("notice from backend"),
 								errdetail("BACKEND NOTICE: \"%s\"",message)));
+						pfree(message);
 					}
 					/* process notice message */
 					if (SimpleForwardToFrontend(kind, frontend, cp))
@@ -325,6 +326,8 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 						(errmsg("authentication failed, backend node replied with an error"),
 							errdetail("SERVER ERROR:\"%s\"",message?message:"could not extract backend message")));
 
+					if (message)
+						pfree(message);
 					break;
 
 				default:
@@ -603,13 +606,15 @@ static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *fro
 	{
 		if(response == 'E') /* Backend has thrown an error instead */
 		{
-			char* message;
+			char* message = NULL;
 			if (pool_extract_error_message(false, backend, protoMajor, false, &message) == 1)
 			{
 				ereport(ERROR,
 					(errmsg("clear text password authentication failed"),
 					 errdetail("%s",message?message:"backend throws authentication error")));
 			}
+			if (message)
+				pfree(message);
 		}
         ereport(ERROR,
             (errmsg("clear text password authentication failed"),
@@ -750,13 +755,15 @@ static int do_crypt(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int rea
 	{
 		if(response == 'E') /* Backend has thrown an error instead */
 		{
-			char* message;
+			char* message = NULL;
 			if (pool_extract_error_message(false, backend, protoMajor, false, &message) == 1)
 			{
 				ereport(ERROR,
 						(errmsg("crypt authentication failed"),
 						 errdetail("%s",message?message:"backend throws authentication error")));
 			}
+			if (message)
+				pfree(message);
 		}
         ereport(ERROR,
 			(errmsg("crypt authentication failed"),
@@ -1040,13 +1047,15 @@ static int send_password_packet(POOL_CONNECTION *backend, int protoMajor, char *
 	{
 		if(response == 'E') /* Backend has thrown an error instead */
 		{
-			char* message;
+			char* message = NULL;
 			if (pool_extract_error_message(false, backend, protoMajor, false, &message) == 1)
 			{
 				ereport(ERROR,
 						(errmsg("authentication failed"),
 						 errdetail("%s",message?message:"backend throws authentication error")));
 			}
+			if (message)
+				pfree(message);
 		}
         ereport(ERROR,
 			(errmsg("authentication failed"),
