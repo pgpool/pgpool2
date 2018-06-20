@@ -718,7 +718,10 @@ bool pool_is_likely_select(char *query)
 		while (*query && isspace(*query))
 			query++;
 	}
-	if (! *query) { return false; }
+	if (! *query)
+	{
+		return false;
+	}
 
 	/*
 	 * Get rid of head comment.
@@ -734,7 +737,10 @@ bool pool_is_likely_select(char *query)
 			query++;
 			do_continue = true;
 		}
-		if (do_continue) { continue; }
+		if (do_continue)
+		{
+			continue;
+		}
 
 		while (*query && !strncmp(query, "\n", 2))
 		{
@@ -934,8 +940,8 @@ bool pool_is_table_in_white_list(const char *table_name)
  * Extract table oid from INSERT/UPDATE/DELETE/TRUNCATE/
  * DROP TABLE/ALTER TABLE/COPY FROM statement.
  * Returns number of oids.
- * In case of error, returns 0(InvalidOid).
- * oids buffer(oidsp) will be discarded by subsequent call.
+ * In case of error, returns 0 (InvalidOid).
+ * oids buffer (oidsp) will be discarded by subsequent call.
  */
 int pool_extract_table_oids(Node *node, int **oidsp)
 {
@@ -1205,7 +1211,7 @@ static void pool_discard_dml_table_oid(void)
  * using same table oid will add to the same file. If the SELECT uses
  * multiple tables, multiple table_oid_file will be created. When
  * INSERT/UPDATE/DELETE is executed, corresponding caches must be
- * deleted(cache invalidation) (when DROP TABLE, ALTER TABLE is
+ * deleted (cache invalidation) (when DROP TABLE, ALTER TABLE is
  * executed, the caches must be deleted as well). When database is
  * dropped, all caches belonging to the database must be deleted.
  */
@@ -1280,7 +1286,7 @@ int pool_get_database_oid_from_dbname(char *dbname)
 }
 
 /*
- * Add cache id(shmem case) or hash key(memcached case) to table oid
+ * Add cache id (shmem case) or hash key (memcached case) to table oid
  * map file.  Caller must hold shmem lock before calling this function
  * to avoid file extension conflict among different pgpool child
  * process.
@@ -1481,7 +1487,7 @@ void pool_discard_oid_maps_by_db(int dboid)
 }
 
 /*
- * Reading cache id(shmem case) or hash key(memcached case) from table
+ * Read cache id (shmem case) or hash key (memcached case) from table
  * oid map file according to table_oids and discard cache entries.  If
  * unlink is true, the file will be unlinked after successful cache
  * removal.
@@ -1511,7 +1517,8 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 	/*
 	 * Create memqcache_oiddir/database_oid
 	 */
-	if (dboid == 0) {
+	if (dboid == 0)
+	{
 		dboid = pool_get_database_oid();
 		ereport(DEBUG1,
 			(errmsg("memcache invalidating query cache"),
