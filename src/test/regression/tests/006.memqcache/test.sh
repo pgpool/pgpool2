@@ -52,11 +52,16 @@ SELECT * FROM white_v;
 SELECT * FROM white_v;
 EOF
 
-	grep "fetched from cache" log/pgpool.log | grep t1 > /dev/null || exit 1
-	grep "fetched from cache" log/pgpool.log | grep black_t > /dev/null && exit 1
-	grep "fetched from cache" log/pgpool.log | grep normal_v > /dev/null && exit 1
-	grep "fetched from cache" log/pgpool.log | grep white_v > /dev/null || exit 1
-
+	success=true
+	grep "fetched from cache" log/pgpool.log | grep t1 > /dev/null || success=false
+	grep "fetched from cache" log/pgpool.log | grep black_t > /dev/null && success=false
+	grep "fetched from cache" log/pgpool.log | grep normal_v > /dev/null && success=false
+	grep "fetched from cache" log/pgpool.log | grep white_v > /dev/null || success=false
+	if [ $success = false ];then
+		./shutdownall
+		exit 1
+	fi
+	    
 	java jdbctest > result.txt 2>&1
 	cmp ../expected.txt result.txt
 	if [ $? != 0 ];then
