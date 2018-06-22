@@ -2094,6 +2094,19 @@ static void failover(void)
 					 BACKEND_INFO(node_id).backend_hostname,
 					 BACKEND_INFO(node_id).backend_port)));
 
+			/* Fork health check process if needed */
+			for (i=0;i<NUM_BACKENDS;i++)
+			{
+				if (health_check_pids[i] == 0)
+				{
+					ereport(LOG,
+							(errmsg("start health check process for host %s(%d)",
+									BACKEND_INFO(node_id).backend_hostname,
+									BACKEND_INFO(node_id).backend_port)));
+
+					health_check_pids[i] = worker_fork_a_child(PT_HEALTH_CHECK, do_health_check_child, &i);
+				}
+			}
 		}
 		else if (reqkind == PROMOTE_NODE_REQUEST)
 		{
