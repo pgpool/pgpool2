@@ -40,6 +40,8 @@ do
 	sleep 1
 done
 
+sleep 5
+
 # if that's the case, shutdownall will hang.
 (./shutdownall)&
 sleep 5
