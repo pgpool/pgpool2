@@ -663,8 +663,11 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 
 			*val++ = '\0';		/* str now holds "name", val holds "value" */
 			if (!parse_hba_auth_opt(str, val, parsedline, elevel, err_msg))
+			{
 			/* parse_hba_auth_opt already logged the error message */
+				pfree(str);
 				return NULL;
+			}
 			pfree(str);
 		}
 	}
