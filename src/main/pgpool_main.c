@@ -2947,12 +2947,12 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots)
 					{
 						if (pool_node_status[i] == POOL_NODE_STATUS_PRIMARY)
 						{
-							pool_node_status[i] = POOL_NODE_STATUS_UNUSED;
-							ereport(DEBUG1,
-							(errmsg("verify_backend_node_status: node %d is a false primary", i)));
-
 							if (pool_config->detach_false_primary)
+							{
+								ereport(DEBUG1,
+										(errmsg("verify_backend_node_status: node %d is a false primary", i)));
 								pool_node_status[i] = POOL_NODE_STATUS_INVALID;
+							}
 							else
 								pool_node_status[i] = POOL_NODE_STATUS_UNUSED;
 						}
@@ -2978,6 +2978,13 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots)
 
 		ereport(DEBUG1,
 				(errmsg("verify_backend_node_status: multiple standbys: %d", num_standbys)));
+
+		if (!pool_config->detach_false_primary)
+		{
+			ereport(DEBUG1,
+					(errmsg("verify_backend_node_status: detach_false_primary is off and no additional checking is performed")));
+			return pool_node_status;
+		}
 
 		/*
 		 * Check connectivity between primary and standby by using
@@ -3137,7 +3144,7 @@ static int find_primary_node(void)
 	POOL_CONNECTION_POOL_SLOT *slots[MAX_NUM_BACKENDS];
 	int i;
 	POOL_NODE_STATUS *status;
-	int primary = 0;
+	int primary = -1;
 
 	/* Streaming replication mode? */
 	if (!SL_MODE)
