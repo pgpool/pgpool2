@@ -1573,10 +1573,10 @@ static void failover(void)
 	int i, j, k;
 	int node_id;
 	int new_master;
-	int new_primary;
+	int new_primary = -1;
 	int nodes[MAX_NUM_BACKENDS];
-	bool need_to_restart_children;
-	bool partial_restart;
+	bool need_to_restart_children = true;
+	bool partial_restart = false;
 	int status;
 	int sts;
 	bool need_to_restart_pcp = false;
@@ -1631,6 +1631,7 @@ static void failover(void)
 		int node_id_set[MAX_NUM_BACKENDS];
 		int node_count;
 		unsigned char request_details;
+		bool	search_primary = true;
 
 		pool_semaphore_lock(REQUEST_INFO_SEM);
 
@@ -1702,7 +1703,52 @@ static void failover(void)
 			BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
 			pool_set_backend_status_changed_time(node_id);
 
-			if (!(request_details & REQ_DETAIL_UPDATE))
+			if ((request_details & REQ_DETAIL_UPDATE))
+			{
+				/* remove the quarantine flag */
+				BACKEND_INFO(node_id).quarantine = false;
+				/* do not search for primary node when handling the quarantine nodes */
+				search_primary = false;
+				/*
+				 * recalculate the master node id after setting the
+				 * backend status of quarantined node, this will bring
+				 * us to the old master_node_id that was beofre the quarantine state
+				 */
+				Req_info->master_node_id = get_next_master_node();
+				if (Req_info->primary_node_id == -1 &&
+					BACKEND_INFO(node_id).role == ROLE_PRIMARY)
+				{
+					/*
+					 * if the failback request is for the quarantined node and that
+					 * node had a primary role before it was quarantined,
+					 * restore the primary node status for that node.
+					 * this is important for the failover script to get the proper value of
+					 * old primary
+					 */
+					ereport(LOG,
+						(errmsg("failover: failing back the quarantine node that was primary before it was quarantined"),
+							 errdetail("all children needs a restart")));
+					Req_info->primary_node_id = node_id;
+					/* since we changed the primary node so restart of all children is required */
+					need_to_restart_children = true;
+					partial_restart = false;
+				}
+				else if (all_backend_down == false)
+				{
+					ereport(LOG,
+							(errmsg("Do not restart children because we are failing back node id %d host: %s port: %d and we are in streaming replication mode and not all backends were down", node_id,
+									BACKEND_INFO(node_id).backend_hostname,
+									BACKEND_INFO(node_id).backend_port)));
+					need_to_restart_children = false;
+					partial_restart = false;
+				}
+				else
+				{
+					need_to_restart_children = true;
+					partial_restart = false;
+				}
+			}
+			else
 			{
 				/* The request is a proper failbak request
 				 * and not because of the update status of quarantined node
@@ -1749,13 +1795,28 @@ static void failover(void)
 
 					BACKEND_INFO(node_id_set[i]).backend_status = CON_DOWN;	/* set down status */
 					pool_set_backend_status_changed_time(node_id_set[i]);
-
 					if (reqkind == NODE_QUARANTINE_REQUEST)
 					{
 						BACKEND_INFO(node_id_set[i]).quarantine = true;
 					}
 					else
 					{
+						/*
+						 * if the degeneration request is for the quarantined node and that
+						 * node had a primary role before it was quarantined,
+						 * Restore the primary node status for that node before degenerating it.
+						 * This is important for the failover script to get the proper valueo of
+						 * old primary
+						 */
+						if (Req_info->primary_node_id == -1 &&
+							BACKEND_INFO(node_id_set[i]).quarantine == true &&
+							BACKEND_INFO(node_id_set[i]).role == ROLE_PRIMARY)
+						{
+							ereport(DEBUG2,
+									(errmsg("failover: degenerating the node that was primary node before it was quarantined")));
+							Req_info->primary_node_id = node_id_set[i];
+							search_primary = false;
+						}
 						BACKEND_INFO(node_id_set[i]).quarantine = false;
 						(void)write_status_file();
 					}
@@ -1779,10 +1840,11 @@ static void failover(void)
 		if (new_master < 0)
 		{
 			ereport(LOG,
-					(errmsg("failover: no valid backends node found")));
+					(errmsg("failover: no valid backend node found")));
 		}
 
-		ereport(DEBUG1, (errmsg("failover/failback request details: STREAM: %d reqkind: %d detail: %x node_id: %d",
+		ereport(DEBUG1,
+				(errmsg("failover/failback request details: STREAM: %d reqkind: %d detail: %x node_id: %d",
 								STREAM, reqkind, request_details & REQ_DETAIL_SWITCHOVER,
 								node_id)));
 
@@ -1805,13 +1867,20 @@ static void failover(void)
 
 		if (STREAM && reqkind == NODE_UP_REQUEST && all_backend_down == false)
 		{
-			ereport(LOG,
-					(errmsg("Do not restart children because we are failing back node id %d host: %s port: %d and we are in streaming replication mode and not all backends were down", node_id,
-					 BACKEND_INFO(node_id).backend_hostname,
-					 BACKEND_INFO(node_id).backend_port)));
-
-			need_to_restart_children = false;
-			partial_restart = false;
+			/*
+			 * The decision to restart/no-restart children for update status request has already been
+			 * made
+			 */
+			if (!(request_details & REQ_DETAIL_UPDATE))
+			{
+				ereport(LOG,
+						(errmsg("Do not restart children because we are failing back node id %d host: %s port: %d and we are in streaming replication mode and not all backends were down", node_id,
+								BACKEND_INFO(node_id).backend_hostname,
+								BACKEND_INFO(node_id).backend_port)));
+	
+				need_to_restart_children = false;
+				partial_restart = false;
+			}
 		}
 
 		/*
@@ -1911,9 +1980,18 @@ static void failover(void)
 			 * set the newprimary to -1 (invalid)
 			 */
 			if (Req_info->primary_node_id == node_id)
+			{
+				/*
+				 * set the role of the node, This will help us restore the
+				 * primary node id when the node will come out from quarantine state
+				 */
+				BACKEND_INFO(node_id).role = ROLE_PRIMARY;
 				new_primary = -1;
-			else
-				new_primary =  find_primary_node_repeatedly();
+			}
+			else if (SL_MODE)
+			{
+				new_primary = Req_info->primary_node_id;
+			}
 		}
 		/*
 		 * If the down node was a standby node in streaming replication
@@ -1925,9 +2003,21 @@ static void failover(void)
 				 reqkind == NODE_DOWN_REQUEST)
 		{
 			if (Req_info->primary_node_id != node_id)
+			{
 				new_primary = Req_info->primary_node_id;
+			}
 			else
+			{
+				if (Req_info->primary_node_id >= 0)
+					BACKEND_INFO(Req_info->primary_node_id).role = ROLE_STANDBY;
 				new_primary =  find_primary_node_repeatedly();
+			}
+		}
+		else if (search_primary == false)
+		{
+			ereport(DEBUG1,
+					(errmsg("faliover was called on quarantined node. No need to search for primary node")));
+			new_primary = Req_info->primary_node_id;
 		}
 		else
 		{
@@ -1995,9 +2085,14 @@ static void failover(void)
 		if (Req_info->primary_node_id != new_primary)
 		{
 			if (Req_info->primary_node_id >= 0)
+			{
 				pool_set_backend_status_changed_time(Req_info->primary_node_id);
+			}
 			if (new_primary >= 0)
+			{
+				BACKEND_INFO(new_primary).role = ROLE_PRIMARY;
 				pool_set_backend_status_changed_time(new_primary);
+			}
 		}
 		Req_info->primary_node_id = new_primary;
 		ereport(LOG,
@@ -3782,9 +3877,10 @@ static void update_backend_quarantine_status(void)
 	{
 		if (BACKEND_INFO(i).quarantine && BACKEND_INFO(i).backend_status == CON_DOWN)
 		{
-			BACKEND_INFO(i).quarantine = false;
-			/* send the failback request for the node
-			 * we also set the watchdog flag because we we eventually send the sync
+			/*
+			 * Send the failback request for the node
+			 * we also set the watchdog flag, so that the failover should only be executed
+			 * locally because, we will eventually send the sync backend
 			 * message to all standby nodes
 			 */
 			if (wd_state == WD_COORDINATOR)

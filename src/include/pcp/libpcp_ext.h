@@ -85,7 +85,9 @@ typedef struct {
 	unsigned short flag;		/* various flags */
 	bool quarantine;			/* true if node is CON_DOWN because of quarantine */
 	uint64 standby_delay;		/* The replication delay against the primary */
-	SERVER_ROLE role;	/* Role of server. Only used by pcp_node_info */
+	SERVER_ROLE role;			/* Role of server. used by pcp_node_info and failover()
+								 * to keep track of quarantined primary node
+								 */
 } BackendInfo;
 
 typedef struct {
