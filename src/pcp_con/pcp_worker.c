@@ -811,6 +811,8 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 	char status[2];
 	char weight_str[20];
 	char role_str[10];
+	char standby_delay_str[20];
+	char status_changed_time_str[20];
 	char code[] = "CommandComplete";
 	BackendInfo *bi = NULL;
 	SERVER_ROLE role;
@@ -847,6 +849,10 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 			role = ROLE_SLAVE;
 	}
 	snprintf(role_str, sizeof(role_str), "%d", role);
+
+	snprintf(standby_delay_str, sizeof(standby_delay_str), UINT64_FORMAT, bi->standby_delay);
+
+	snprintf(status_changed_time_str, sizeof(status_changed_time_str), UINT64_FORMAT, bi->status_changed_time);
 	
 	pcp_write(frontend, "i", 1);
 	wsize = htonl(sizeof(code) +
@@ -855,6 +861,8 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 				  strlen(status)+1 +
 				  strlen(weight_str)+1 +
 				  strlen(role_str)+1 +
+				  strlen(standby_delay_str)+1 +
+				  strlen(status_changed_time_str)+1 +
 				  sizeof(int));
 	pcp_write(frontend, &wsize, sizeof(int));
 	pcp_write(frontend, code, sizeof(code));
@@ -862,8 +870,10 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 	pcp_write(frontend, port_str, strlen(port_str)+1);
 	pcp_write(frontend, status, strlen(status)+1);
 	pcp_write(frontend, weight_str, strlen(weight_str)+1);
-
 	pcp_write(frontend, role_str, strlen(role_str)+1);
+	pcp_write(frontend, standby_delay_str, strlen(standby_delay_str)+1);
+	pcp_write(frontend, status_changed_time_str, strlen(status_changed_time_str)+1);
+
 	do_pcp_flush(frontend);
 }
 

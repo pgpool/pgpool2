@@ -95,8 +95,8 @@ Pgpool-II documentation
     -->
     ここでは例を示します。
     <programlisting>
-$ pcp_node_info -h localhost -U postgres 0
-host1 5432 1 0.500000 waiting primary
+$ pcp_node_info -h localhost -U postgres 1
+/tmp 11003 2 0.500000 up standby 208 2018-07-03 08:26:39
     </programlisting>
   </para>
   <para>
@@ -112,6 +112,8 @@ host1 5432 1 0.500000 waiting primary
 4. load balance weight
 5. status name
 6. backend role
+7. replication delay
+8. last status change time
 -->
 1. ノードのホスト名
 2. ノードのポート番号
@@ -119,6 +121,8 @@ host1 5432 1 0.500000 waiting primary
 4. ロードバランスウェイト
 5. バックエンド状態名
 6. バックエンドの役割
+7. レプリケーションの遅延
+8. 最終ステータス変更時刻
 </literallayout>
   </para>
   <para>
@@ -152,13 +156,15 @@ host1 5432 1 0.500000 waiting primary
     <option>--verbose</option> オプションは出力内容を理解するのに役に立ちます。例：
   </para>
     <programlisting>
-$ pcp_node_info --verbose -h localhost -U postgres 0
-Hostname   : host1
-Port       : 5432
-Status     : 1
-Weight     : 0.500000
-Status Name: waiting
-Role       : primary
+$ pcp_node_info --verbose -h localhost -U postgres 1
+Hostname          : /tmp
+Port              : 11003
+Status            : 2
+Weight            : 0.500000
+Status Name       : up
+Role              : standby
+Replication Delay : 208
+Last Status Change: 2018-07-03 08:26:39
     </programlisting>
  </refsect1>
 

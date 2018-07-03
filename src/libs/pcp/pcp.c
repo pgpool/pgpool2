@@ -707,6 +707,24 @@ process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 		index++;
 		backend_info->role = atoi(index);
 
+		index = (char *) memchr(index, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+
+		index++;
+		backend_info->standby_delay = atol(index);
+
+		index = (char *) memchr(index, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+
+		index++;
+		backend_info->status_changed_time = atol(index);
+
+		index = (char *) memchr(index, '\0', len);
+		if(index == NULL)
+			goto INVALID_RESPONSE;
+
 		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)backend_info, sizeof(BackendInfo) , NULL) < 0)
 			goto INVALID_RESPONSE;
 

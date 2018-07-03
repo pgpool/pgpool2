@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -463,24 +463,35 @@ static void
 output_nodeinfo_result(PCPResultInfo* pcpResInfo, bool verbose)
 {
 	BackendInfo *backend_info = (BackendInfo *) pcp_get_binary_data(pcpResInfo,0);
+	char last_status_change[20];
+	struct tm tm;
+
+	localtime_r(&backend_info->status_changed_time, &tm);
+	strftime(last_status_change, sizeof(last_status_change), "%F %T", &tm);
 
 	if (verbose)
 	{
-		printf("Hostname   : %s\nPort       : %d\nStatus     : %d\nWeight     : %f\nStatus Name: %s\nRole       : %s\n",
+		printf("Hostname          : %s\nPort              : %d\nStatus            : %d\nWeight            : %f\nStatus Name       : %s\nRole              : %s\nReplication Delay : %lu\nLast Status Change: %s\n",
 			   backend_info->backend_hostname,
 			   backend_info->backend_port,
 			   backend_info->backend_status,
 			   backend_info->backend_weight/RAND_MAX,
 			   backend_status_to_string(backend_info),
-			   role_to_str(backend_info->role));
-	} else {
-		printf("%s %d %d %f %s %s\n",
+			   role_to_str(backend_info->role),
+			   backend_info->standby_delay,
+			   last_status_change);
+	}
+	else
+	{
+		printf("%s %d %d %f %s %s %lu %s\n",
 			   backend_info->backend_hostname,
 			   backend_info->backend_port,
 			   backend_info->backend_status,
 			   backend_info->backend_weight/RAND_MAX,
 			   backend_status_to_string(backend_info),
-			   role_to_str(backend_info->role));
+			   role_to_str(backend_info->role),
+			   backend_info->standby_delay,
+			   last_status_change);
 	}
 }
 
