@@ -3746,4 +3746,9 @@ static void sync_backend_from_watchdog(void)
 			process_info[i].need_to_restart = 1;
 		}
 	}
+
+	/*
+	 * Send restart request to worker child.
+	 */
+	kill(worker_pid, SIGUSR1);
 }
