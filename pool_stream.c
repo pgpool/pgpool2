@@ -451,7 +451,7 @@ int pool_flush_it(POOL_CONNECTION *cp)
 		  sts = write(cp->fd, cp->wbuf + offset, wlen);
 		}
 
-		if (sts > 0)
+		if (sts >= 0)
 		{
 			wlen -= sts;
 
