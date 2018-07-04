@@ -3,7 +3,7 @@
  * pgpool_adm.c
  *
  *
- * Copyright (c) 2002-2015, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2018, PostgreSQL Global Development Group
  *
  * Author: Jehan-Guillaume (ioguix) de Rorthais <jgdr@dalibo.com>
  *
@@ -17,6 +17,7 @@
 #include "utils/builtins.h"
 #include "foreign/foreign.h"
 #include "nodes/pg_list.h"
+#include "utils/timestamp.h"
 
 /* 
  * PostgreSQL 9.3 or later requires htup_details.h to get the definition of
@@ -123,10 +124,12 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	PCPResultInfo* pcpResInfo;
 
 	BackendInfo * backend_info = NULL;
-	Datum values[4]; /* values to build the returned tuple from */
-	bool nulls[] = {false, false, false, false};
+	Datum values[7]; /* values to build the returned tuple from */
+	bool nulls[] = {false, false, false, false, false, false, false};
 	TupleDesc tupledesc;
 	HeapTuple tuple;
+	struct tm tm;
+	char datebuf[20];
 
 	if (nodeID < 0 || nodeID >= MAX_NUM_BACKENDS)
 		ereport(ERROR, (0, errmsg("NodeID is out of range.")));
@@ -163,11 +166,14 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	/**
 	 * Construct a tuple descriptor for the result rows.
 	 **/
-	tupledesc = CreateTemplateTupleDesc(4, false);
+	tupledesc = CreateTemplateTupleDesc(7, false);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 1, "hostname", TEXTOID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 2, "port", INT4OID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 3, "status", TEXTOID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 4, "weight", FLOAT4OID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 5, "role", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 6, "replication_delay", INT8OID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 7, "last_status_change", TIMESTAMPOID, -1, 0);
 	tupledesc = BlessTupleDesc(tupledesc);
 
 	backend_info = (BackendInfo *) pcp_get_binary_data(pcpResInfo,0);
@@ -195,6 +201,20 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	nulls[2] = false;
 	values[3] = Float8GetDatum(backend_info->backend_weight/RAND_MAX);
 	nulls[3] = false;
+
+	nulls[4] = false;
+	values[4] = backend_info->role == ROLE_PRIMARY?CStringGetTextDatum("Primary"):CStringGetTextDatum("Standby");
+
+	nulls[5] = false;
+	values[5] = Int64GetDatum(backend_info->standby_delay);
+
+	nulls[6] = false;
+	localtime_r(&backend_info->status_changed_time, &tm);
+	strftime(datebuf, sizeof(datebuf), "%F %T", &tm);
+	values[6] = DatumGetTimestamp(DirectFunctionCall3(timestamp_in,
+													  CStringGetDatum(datebuf),
+													  ObjectIdGetDatum(InvalidOid),
+													  Int32GetDatum(-1)));
 
 	pcp_disconnect(pcpConnInfo);
 	pcp_free_connection(pcpConnInfo);

@@ -1,5 +1,5 @@
 # pcp extension
 comment = 'Administrative functions for pgPool'
-default_version = '1.0'
+default_version = '1.1'
 module_pathname = '$libdir/pgpool_adm'
 relocatable = true

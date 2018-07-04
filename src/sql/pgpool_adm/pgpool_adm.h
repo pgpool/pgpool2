@@ -3,7 +3,7 @@
  * pgpool_adm.h
  *
  *
- * Copyright (c) 2002-2011, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2018, PostgreSQL Global Development Group
  *
  * Author: Jehan-Guillaume (ioguix) de Rorthais <jgdr@dalibo.com>
  *

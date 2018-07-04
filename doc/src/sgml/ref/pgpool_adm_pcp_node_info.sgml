@@ -32,6 +32,9 @@ Pgpool-II documentation
        <paramdef>text <parameter>password</parameter></paramdef>
        <paramdef>out <parameter>status text</parameter></paramdef>
        <paramdef>out <parameter>weight float4</parameter></paramdef>
+       <paramdef>out <parameter>role text</parameter></paramdef>
+       <paramdef>out <parameter>replication_delay bigint</parameter></paramdef>
+       <paramdef>out <parameter>last_status_change timestamp</parameter></paramdef>
      </funcprototype>
 
      <funcprototype>
@@ -40,6 +43,9 @@ Pgpool-II documentation
        <paramdef>text <parameter>pcp_server</parameter></paramdef>
        <paramdef>out <parameter>status text</parameter></paramdef>
        <paramdef>out <parameter>weight float4</parameter></paramdef>
+       <paramdef>out <parameter>role text</parameter></paramdef>
+       <paramdef>out <parameter>replication_delay bigint</parameter></paramdef>
+       <paramdef>out <parameter>last_status_change timestamp</parameter></paramdef>
      </funcprototype>
 
    </funcsynopsis>
@@ -94,12 +100,25 @@ Pgpool-II documentation
 	Here is an example output:
 	<programlisting>
 test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
- host | port  |      status       | weight
-------+-------+-------------------+--------
- /tmp | 11002 | Connection in use |      0
+ host | port  |      status       | weight |  role   | replication_delay | last_status_change  
+------+-------+-------------------+--------+---------+-------------------+---------------------
+ /tmp | 11002 | Connection in use |      0 | Primary |                 0 | 2018-07-04 17:34:39
 (1 row)
     </programlisting>
   </para>
+
+  <note>
+    <para>
+       <parameter>role</parameter>, <parameter>replication_delay</parameter>, <parameter>last_status_change</parameter>
+       out parameters are new
+       from <productname>Pgpool-II</productname> 4.0. If you have
+       already installed pre-4.0 pgpool_adm extension, you can upgrade
+       to the new one by using ALTER EXTENSION SQL command.
+       <programlisting>
+	 ALTER EXTENSION pgpool_adm UPDATE;
+       </programlisting>
+    </para>
+  </note>
 
  </refsect1>
 
