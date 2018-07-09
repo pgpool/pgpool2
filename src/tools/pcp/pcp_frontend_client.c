@@ -560,8 +560,7 @@ output_procinfo_result(PCPResultInfo* pcpResInfo, bool all, bool verbose)
 	int array_size = pcp_result_slot_count(pcpResInfo);
 	if (verbose)
 	{
-		if (all)
-			frmt =	"Database     : %s\n"
+		frmt =	"Database     : %s\n"
 			"Username     : %s\n"
 			"Start time   : %s\n"
 			"Creation time: %s\n"
@@ -572,23 +571,10 @@ output_procinfo_result(PCPResultInfo* pcpResInfo, bool all, bool verbose)
 			"Connected    : %d\n"
 			"PID          : %d\n"
 			"Backend ID   : %d\n";
-		else
-			frmt =	"Database     : %s\n"
-			"Username     : %s\n"
-			"Start time   : %s\n"
-			"Creation time: %s\n"
-			"Major        : %d\n"
-			"Minor        : %d\n"
-			"Counter      : %d\n"
-			"Backend PID  : %d\n"
-			"Connected    : %d\n";
 	}
 	else
 	{
-		if (all)
-			frmt = "%s %s %s %s %d %d %d %d %d %d %d\n";
-		else
-			frmt = "%s %s %s %s %d %d %d %d %d\n";
+		frmt = "%s %s %s %s %d %d %d %d %d %d %d\n";
 	}
 
 	for (i = 0; i < array_size; i++)

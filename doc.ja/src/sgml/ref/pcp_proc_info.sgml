@@ -54,6 +54,19 @@ Pgpool-II documentation
     <variablelist>
 
      <varlistentry>
+      <term><option>-a</option></term>
+      <term><option>--all</option></term>
+      <listitem>
+       <para>
+<!--
+	 Display all child processes and their available connection slots.
+-->
+すべての子プロセスと、それに関するコネクションスロットを表示します。
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-P <replaceable class="parameter">PID</replaceable></option></term>
       <term><option>--process-id=<replaceable class="parameter">PID</replaceable></option></term>
       <listitem>
@@ -81,6 +94,16 @@ Pgpool-II documentation
       </listitem>
      </varlistentry>
     </variablelist>
+<!--
+    If -a nor -P is not specified, process information of all
+    connected <productname>Pgpool-II</productname> child process will
+    be printed. In this case if there's no
+    connected <productname>Pgpool-II</productname> child process,
+    nothing but "No process information available" message will be
+    printed.
+-->
+もし-aオプションも-Pオプションも指定されない場合は、すべての接続された<productname>Pgpool-II</productname>子プロセスが表示されます。
+この場合、接続された子プロセスが存在しない場合は、"No process information available"メッセージだけが表示されます。
    </para>
  </refsect1>
 
@@ -95,9 +118,9 @@ Pgpool-II documentation
     -->
     例を示します。
     <programlisting>
-$ pcp_proc_info -p 11001
-test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4157 1
-test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4158 1
+$ pcp_proc_info -p 11001 1406
+test t-ishii 2018-07-09 16:43:53 2018-07-09 16:44:08 3 0 1 1435 1 1406 0
+test t-ishii 2018-07-09 16:43:53 2018-07-09 16:44:08 3 0 1 1436 1 1406 1
     </programlisting>
   </para>
   <para>
@@ -116,6 +139,8 @@ test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4158 1
 7. connection-reuse counter
 8. PostgreSQL backend process id
 9. 1 if frontend conncted 0 if not
+10. pgpool child process id
+11. PostgreSQL backend id 
 -->
 1. 接続先のデータベース名
 2. 接続先のユーザ名
@@ -126,6 +151,8 @@ test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4158 1
 7. 接続の再利用カウンタ値
 8. PostgreSQLバックエンドプロセスのプロセスID
 9. フロントエンドが接続中なら1、そうでなければ0
+10. pgpool子プロセスID
+11. PostgreSQLバックエンドID
 </literallayout>
   </para>
   <para>
@@ -143,25 +170,29 @@ test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4158 1
     <option>--verbose</option> オプションは出力内容を理解するのに役に立ちます。例：
   </para>
     <programlisting>
-$ pcp_proc_info -p 11001 --verbose
+$ pcp_proc_info -p 11001 --verbose 1406
 Database     : test
 Username     : t-ishii
-Start time   : 2018-05-09 11:10:16
-Creation time: 2018-05-09 11:10:40
+Start time   : 2018-07-09 16:43:53
+Creation time: 2018-07-09 16:44:08
 Major        : 3
 Minor        : 0
 Counter      : 1
-Backend PID  : 4157
+Backend PID  : 1435
 Connected    : 1
+PID          : 1406
+Backend ID   : 0
 Database     : test
 Username     : t-ishii
-Start time   : 2018-05-09 11:10:16
-Creation time: 2018-05-09 11:10:40
+Start time   : 2018-07-09 16:43:53
+Creation time: 2018-07-09 16:44:08
 Major        : 3
 Minor        : 0
 Counter      : 1
-Backend PID  : 4158
+Backend PID  : 1436
 Connected    : 1
+PID          : 1406
+Backend ID   : 1
     </programlisting>
  </refsect1>
 

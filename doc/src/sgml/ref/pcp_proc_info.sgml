@@ -24,7 +24,7 @@ Pgpool-II documentation
   <cmdsynopsis>
    <command>pcp_proc_info</command>
    <arg rep="repeat"><replaceable>options</replaceable></arg>
-   <arg><replaceable>processid</replaceable></arg>
+   <arg><replaceable>pgpool_child_processid</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -42,11 +42,21 @@ Pgpool-II documentation
     <variablelist>
 
      <varlistentry>
+      <term><option>-a</option></term>
+      <term><option>--all</option></term>
+      <listitem>
+       <para>
+	 Display all child processes and their available connection slots.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-P <replaceable class="parameter">PID</replaceable></option></term>
       <term><option>--process-id=<replaceable class="parameter">PID</replaceable></option></term>
       <listitem>
        <para>
-	   PID of Pgpool-II child process.
+	   PID of <productname>Pgpool-II</productname> child process.
        </para>
       </listitem>
      </varlistentry>
@@ -60,7 +70,14 @@ Pgpool-II documentation
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
+
+    If -a nor -P is not specified, process information of all
+    connected <productname>Pgpool-II</productname> child process will
+    be printed. In this case if there's no
+    connected <productname>Pgpool-II</productname> child process,
+    nothing but "No process information available" message will be
+    printed.
+    </para>
  </refsect1>
 
  <refsect1>
@@ -68,9 +85,9 @@ Pgpool-II documentation
    <para>
 	Here is an example output:
     <programlisting>
-$ pcp_proc_info -p 11001
-test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4157 1
-test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4158 1
+$ pcp_proc_info -p 11001 1406
+test t-ishii 2018-07-09 16:43:53 2018-07-09 16:44:08 3 0 1 1435 1 1406 0
+test t-ishii 2018-07-09 16:43:53 2018-07-09 16:44:08 3 0 1 1436 1 1406 1
     </programlisting>
   </para>
   <para>
@@ -85,6 +102,8 @@ test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4158 1
 7. connection-reuse counter
 8. PostgreSQL backend process id
 9. 1 if frontend conncted 0 if not
+10. pgpool child process id
+11. PostgreSQL backend id 
 </literallayout>
   </para>
   <para>
@@ -95,25 +114,29 @@ test t-ishii 2018-05-09 11:10:16 2018-05-09 11:10:40 3 0 1 4158 1
 	The <option>--verbose</option> option can help understand the output. For example:
   </para>
     <programlisting>
-$ pcp_proc_info -p 11001 --verbose
+$ pcp_proc_info -p 11001 --verbose 1406
 Database     : test
 Username     : t-ishii
-Start time   : 2018-05-09 11:10:16
-Creation time: 2018-05-09 11:10:40
+Start time   : 2018-07-09 16:43:53
+Creation time: 2018-07-09 16:44:08
 Major        : 3
 Minor        : 0
 Counter      : 1
-Backend PID  : 4157
+Backend PID  : 1435
 Connected    : 1
+PID          : 1406
+Backend ID   : 0
 Database     : test
 Username     : t-ishii
-Start time   : 2018-05-09 11:10:16
-Creation time: 2018-05-09 11:10:40
+Start time   : 2018-07-09 16:43:53
+Creation time: 2018-07-09 16:44:08
 Major        : 3
 Minor        : 0
 Counter      : 1
-Backend PID  : 4158
+Backend PID  : 1436
 Connected    : 1
+PID          : 1406
+Backend ID   : 1
     </programlisting>
  </refsect1>
 
