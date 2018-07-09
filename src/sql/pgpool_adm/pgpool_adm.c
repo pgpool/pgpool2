@@ -28,6 +28,7 @@
 #endif
 
 #include <unistd.h>
+#include <time.h>
 
 #include "catalog/pg_type.h"
 #include "funcapi.h"
