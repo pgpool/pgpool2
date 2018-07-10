@@ -694,6 +694,17 @@ host    postgres        all             192.168.12.10/32        md5
 そのため、<productname>Pgpool-II</productname>の<literal>md5</literal>認証は<xref linkend="guc-pool-passwd">認証ファイルを使ってサポートしています。
    </para>
 
+      <note>
+	<para>
+<!--
+	  If <productname>Pgpool-II</productname> is operated in raw
+	  mode or there's only 1 backend configured, you don't need to
+	  setup <literal>pool_passwd</literal>.
+-->
+<productname>Pgpool-II</productname>をrawモードで使用している場合、あるいはバックエンドが1つしかない場合は、<literal>pool_passwd</literal>を設定する必要はありません。
+	</para>
+      </note>
+
     <sect3 id="md5-authentication-file-format">
 <!--
     <title>Authentication file format</title>

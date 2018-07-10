@@ -819,7 +819,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 	char encbuf[POOL_PASSWD_LEN+1];
 	char *pool_passwd = NULL;
 
-	if (NUM_BACKENDS > 1)
+	if (!RAW_MODE && NUM_BACKENDS > 1)
 	{
 		/* Read password entry from pool_passwd */
 		pool_passwd = pool_get_passwd(frontend->username);
