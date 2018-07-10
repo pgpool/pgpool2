@@ -505,6 +505,14 @@
 	<xref linkend="guc-pool-passwd"> authentication file.
       </para>
 
+      <note>
+	<para>
+	  If <productname>Pgpool-II</productname> is operated in raw
+	  mode or there's only 1 backend configured, you don't need to
+	  setup <literal>pool_passwd</literal>.
+	</para>
+      </note>
+
       <sect3 id="md5-authentication-file-format">
 	<title>Authentication file format</title>
 
