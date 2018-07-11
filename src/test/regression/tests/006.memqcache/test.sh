@@ -41,7 +41,7 @@ CREATE TABLE t1 (i int);
 CREATE TABLE black_t (i int);
 CREATE VIEW normal_v AS SELECT * FROM t1;
 CREATE VIEW white_v AS SELECT * FROM t1;
-
+SELECT pg_sleep(2);	-- Sleep for a while to make sure object creations are replicated
 SELECT * FROM t1;
 SELECT * FROM t1;
 SELECT * FROM black_t;
