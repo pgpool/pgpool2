@@ -1356,7 +1356,7 @@ void pool_pending_message_reset_previous_message(void)
 				(errmsg("pool_pending_message_reset_previous_message: session context is not initialized")));
 		return;
 	}
-	session_context->previous_message = NULL;
+	session_context->previous_message_exists = false;
 }
 
 /*
@@ -1370,11 +1370,13 @@ void pool_pending_message_set_previous_message(POOL_PENDING_MESSAGE *message)
 				(errmsg("pool_pending_message_set_previous_message: session context is not initialized")));
 		return;
 	}
-	session_context->previous_message = message;
+	session_context->previous_message_exists = true;
+	memcpy(&session_context->previous_message, message, sizeof(POOL_PENDING_MESSAGE));
 }
 
 /*
- * Get previous message.
+ * Get previous message. This actually returns the address of memory. Do not
+ * try to free using pool_pending_message_free_pending_message().
  */
 POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void)
 {
@@ -1384,7 +1386,10 @@ POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void)
 				(errmsg("pool_pending_message_get_previous_message: session context is not initialized")));
 		return NULL;
 	}
-	return session_context->previous_message;
+	if (session_context->previous_message_exists == false)
+		return NULL;
+
+	return &session_context->previous_message;
 }
 
 /*
