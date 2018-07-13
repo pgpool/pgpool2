@@ -229,9 +229,12 @@ typedef struct {
 	List *pending_messages;
 
 	/*
-	 * The last pending message. Reset at Ready for query.
+	 * The last pending message. Reset at Ready for query.  Note that this is
+	 * a shallow copy of pending message.  Once the are is reset,
+	 * previos_message_exists is set to false.
 	 */
-	POOL_PENDING_MESSAGE *previous_message;
+	bool previous_message_exists;
+	POOL_PENDING_MESSAGE previous_message;
 
 	/* Protocol major version number */
 	int major;
