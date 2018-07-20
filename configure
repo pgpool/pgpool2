@@ -14906,7 +14906,7 @@ ac_config_headers="$ac_config_headers src/include/config.h"
 ac_config_files="$ac_config_files src/sql/pgpool_adm/Makefile"
 
 
-ac_config_files="$ac_config_files Makefile doc/Makefile doc/src/Makefile doc/src/sgml/Makefile doc.ja/Makefile doc.ja/src/Makefile doc.ja/src/sgml/Makefile src/Makefile src/include/Makefile src/parser/Makefile src/libs/Makefile src/libs/pcp/Makefile src/tools/Makefile src/tools/pgmd5/Makefile src/tools/pcp/Makefile src/watchdog/Makefile"
+ac_config_files="$ac_config_files Makefile doc/Makefile doc/src/Makefile doc/src/sgml/Makefile doc.ja/Makefile doc.ja/src/Makefile doc.ja/src/sgml/Makefile src/Makefile src/include/Makefile src/parser/Makefile src/libs/Makefile src/libs/pcp/Makefile src/tools/Makefile src/tools/pgmd5/Makefile src/tools/pgenc/Makefile src/tools/pcp/Makefile src/watchdog/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -15937,6 +15937,7 @@ do
     "src/libs/pcp/Makefile") CONFIG_FILES="$CONFIG_FILES src/libs/pcp/Makefile" ;;
     "src/tools/Makefile") CONFIG_FILES="$CONFIG_FILES src/tools/Makefile" ;;
     "src/tools/pgmd5/Makefile") CONFIG_FILES="$CONFIG_FILES src/tools/pgmd5/Makefile" ;;
+    "src/tools/pgenc/Makefile") CONFIG_FILES="$CONFIG_FILES src/tools/pgenc/Makefile" ;;
     "src/tools/pcp/Makefile") CONFIG_FILES="$CONFIG_FILES src/tools/pcp/Makefile" ;;
     "src/watchdog/Makefile") CONFIG_FILES="$CONFIG_FILES src/watchdog/Makefile" ;;
 

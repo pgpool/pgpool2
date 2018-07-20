@@ -846,7 +846,8 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
 							errmsg("md5 authentication failed"),
 						 		errdetail("pool_passwd file does not contain an entry for \"%s\"",frontend->username)));
 				if (frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_PLAINTEXT &&
-					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_MD5)
+					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_MD5 &&
+					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_AES)
 					ereport(FATAL,
 						(return_code(2),
 						 	errmsg("md5 authentication failed"),
@@ -860,7 +861,8 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
 							errmsg("SCRAM authentication failed"),
 							 errdetail("pool_passwd file does not contain an entry for \"%s\"",frontend->username)));
 				if (frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_PLAINTEXT &&
-					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_SCRAM_SHA_256)
+					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_SCRAM_SHA_256 &&
+					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_AES)
 					ereport(FATAL,
 						(return_code(2),
 							errmsg("SCRAM authentication failed"),

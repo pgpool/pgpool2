@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -28,11 +28,15 @@
 #include "pool.h"
 #include "auth/pool_passwd.h"
 #include "auth/md5.h"
+#include "utils/ssl_utils.h"
+#include "utils/base64.h"
 #ifndef POOL_PRIVATE
 #include "utils/elog.h"
 #else
 #include "utils/fe_ports.h"
 #endif
+#include <sys/stat.h>
+
 
 static FILE *passwd_fd = NULL;	/* File descriptor for pool_passwd */
 static char saved_passwd_filename[POOLMAXPATHLEN+1];
@@ -101,7 +105,7 @@ int pool_create_passwdent(char *username, char *passwd)
 				(errmsg("pool_create_passwdent should be called with pool_passwd opened with read/write mode")));
 
 	len = strlen(passwd);
-	if (len != POOL_PASSWD_LEN)
+	if (len <= 0)
 		ereport(ERROR,
 				(errmsg("error updating password, invalid password length:%d",len)));
 
@@ -411,15 +415,130 @@ void pool_reopen_passwd_file(void)
 	pool_init_pool_passwd(saved_passwd_filename, pool_passwd_mode);
 }
 
+#ifndef POOL_PRIVATE
+char *get_decrypted_password(const char *shadow_pass)
+{
+	if (get_password_type(shadow_pass) == PASSWORD_TYPE_AES)
+	{
+		unsigned char b64_dec[MAX_PGPASS_LEN *2];
+		unsigned char plaintext[MAX_PGPASS_LEN];
+		int len;
+		char *pwd;
+		const char *enc_key = (const char*)get_pool_key();
+
+		if (enc_key == NULL)
+			return NULL;
+
+		pwd = (char*)shadow_pass + 3;
+
+		if ((len = strlen(pwd)) == 0)
+			return NULL;
+
+		if ((len = pg_b64_decode((const char*)pwd, len, (char*)b64_dec)) == 0)
+		{
+			ereport(WARNING,
+					(errmsg("base64 decoding failed")));
+			return NULL;
+		}
+		if ((len = aes_decrypt_with_password(b64_dec, len,
+										enc_key, plaintext)) <= 0)
+		{
+			ereport(WARNING,
+					(errmsg("decryption failed")));
+			return NULL;
+		}
+		plaintext[len] = 0;
+		return pstrdup((const char*)plaintext);
+	}
+	return NULL;
+}
+#else
+char *get_decrypted_password(const char *shadow_pass)
+{
+	ereport(ERROR,
+			(errmsg("unable to decrypt password")));
+}
+#endif
+
 /*
 * What kind of a password verifier is 'shadow_pass'?
 */
 PasswordType
 get_password_type(const char *shadow_pass)
 {
-	if (strncmp(shadow_pass, "md5", 3) == 0 && strlen(shadow_pass) == MD5_PASSWD_LEN)
+	if (strncmp(shadow_pass, PASSWORD_MD5_PREFIX, strlen(PASSWORD_MD5_PREFIX)) == 0 && strlen(shadow_pass) == MD5_PASSWD_LEN)
 		return PASSWORD_TYPE_MD5;
-	if (strncmp(shadow_pass, "SCRAM-SHA-256$", strlen("SCRAM-SHA-256$")) == 0)
+	if (strncmp(shadow_pass, PASSWORD_AES_PREFIX, strlen(PASSWORD_AES_PREFIX)) == 0 )
+		return PASSWORD_TYPE_AES;
+	if (strncmp(shadow_pass, PASSWORD_SCRAM_PREFIX, strlen(PASSWORD_SCRAM_PREFIX)) == 0)
 		return PASSWORD_TYPE_SCRAM_SHA_256;
 	return PASSWORD_TYPE_PLAINTEXT;
+}
+
+/*
+ * Get a key from the pgpool key file. return the palloc'd.
+ * value
+ */
+char *read_pool_key(char *key_file_path)
+{
+	FILE        *fp;
+	struct stat stat_buf;
+	char *key = NULL;
+
+#define LINELEN MAX_POOL_KEY_LEN
+	char        buf[LINELEN];
+
+	if (strlen(key_file_path) == 0)
+		return NULL;
+
+	/* If password file cannot be opened, ignore it. */
+	if (stat(key_file_path, &stat_buf) != 0)
+		return NULL;
+
+	if (!S_ISREG(stat_buf.st_mode))
+	{
+		ereport(WARNING,
+				(errmsg("pool key file \"%s\" is not a text file\n",key_file_path)));
+		return NULL;
+	}
+
+	/* If password file is insecure, alert the user. */
+	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
+	{
+		ereport(WARNING,
+				(errmsg("pool key file \"%s\" is not a text file\n",key_file_path)));
+
+		ereport(WARNING,
+				(errmsg("pool key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n",
+				key_file_path)));
+		/* do we want to allow unsecure pool key file ?*/
+		//return NULL;
+	}
+
+	fp = fopen(key_file_path, "r");
+	if (fp == NULL)
+		return NULL;
+
+	while (!feof(fp) && !ferror(fp))
+	{
+		int	len;
+
+		if (fgets(buf, sizeof(buf), fp) == NULL)
+			break;
+
+		len = strlen(buf);
+		if (len == 0)
+			continue;
+
+		/* Remove trailing newline */
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = 0;
+		key = pstrdup(buf);
+		break;
+	}
+
+	fclose(fp);
+	return key;
+
+#undef LINELEN
 }

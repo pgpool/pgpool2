@@ -19,7 +19,6 @@
 #ifndef MD5_H
 #define MD5_H
 
-#define MAX_USER_NAME_LEN 128
 #define MD5_PASSWD_LEN 32
 
 #define WD_AUTH_HASH_LEN 64

@@ -51,6 +51,9 @@
 
 #define POOLMAXPATHLEN 8192
 
+#define POOLKEYFILE 	".pgpoolkey"
+#define POOLKEYFILEENV "PGPOOLKEYFILE"
+
 /*
  * Brought from PostgreSQL's pg_config_manual.h.
  *
@@ -712,6 +715,7 @@ extern void pool_random(void *buf, size_t len);
 
 /* main.c */
 extern void pool_sleep(unsigned int second);
+extern char *get_pool_key(void);
 
 /* pool_worker_child.c */
 extern void do_worker_child(void);
