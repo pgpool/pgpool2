@@ -30,6 +30,15 @@
 #define POOL_PASSWD_FILENAME "pool_passwd"
 #define POOL_PASSWD_LEN 35
 
+#define MAX_USER_NAME_LEN	128
+#define MAX_PGPASS_LEN		128
+#define MAX_POOL_KEY_LEN	256
+
+
+#define PASSWORD_MD5_PREFIX 	"md5"
+#define PASSWORD_AES_PREFIX 	"AES"
+#define PASSWORD_SCRAM_PREFIX	"SCRAM-SHA-256$"
+
 typedef enum {
 	POOL_PASSWD_R,		/* open pool_passwd in read only mode. used by pgpool-II child main process */
 	POOL_PASSWD_RW,		/* open pool_passwd in read/write mode. used by pg_md5 command */
@@ -40,6 +49,7 @@ typedef enum PasswordType
 	PASSWORD_TYPE_UNKNOWN = 0,
 	PASSWORD_TYPE_PLAINTEXT,
 	PASSWORD_TYPE_MD5,
+	PASSWORD_TYPE_AES,
 	PASSWORD_TYPE_SCRAM_SHA_256
 } PasswordType;
 
@@ -65,5 +75,7 @@ extern char *pool_get_passwd(char *username);
 extern void pool_delete_passwdent(char *username);
 extern void pool_finish_pool_passwd(void);
 extern void pool_reopen_passwd_file(void);
+extern char *get_decrypted_password(const char *shadow_pass);
+extern char *read_pool_key(char *key_file_path);
 
 #endif /* POOL_PASSWD_H */

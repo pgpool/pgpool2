@@ -47,6 +47,9 @@
 #include "watchdog/wd_utils.h"
 #include "pool_config_variables.h"
 
+
+static bool get_pool_key_filename(char *poolKeyFile);
+
 static void daemonize(void);
 static char	*get_pid_file_path(void);
 static int read_pid_file(void);
@@ -66,7 +69,7 @@ int stop_sig = SIGTERM;		/* stopping signal default value */
 int myargc;
 char **myargv;
 int assert_enabled = 0;
-
+char *pool_key = NULL;
 int main(int argc, char **argv)
 {
 	int opt;
@@ -78,11 +81,13 @@ int main(int argc, char **argv)
 	char pcp_conf_file_path[POOLMAXPATHLEN+1];
 	char conf_file_path[POOLMAXPATHLEN+1];
 	char hba_file_path[POOLMAXPATHLEN+1];
+	char pool_passwd_key_file_path[POOLMAXPATHLEN+1];
 
 	static struct option long_options[] = {
 		{"hba-file", required_argument, NULL, 'a'},
 		{"debug", no_argument, NULL, 'd'},
 		{"config-file", required_argument, NULL, 'f'},
+		{"key-file", required_argument, NULL, 'k'},
 		{"pcp-file", required_argument, NULL, 'F'},
 		{"help", no_argument, NULL, 'h'},
 		{"mode", required_argument, NULL, 'm'},
@@ -100,7 +105,9 @@ int main(int argc, char **argv)
 	snprintf(conf_file_path, sizeof(conf_file_path), "%s/%s", DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
 	snprintf(pcp_conf_file_path, sizeof(pcp_conf_file_path), "%s/%s", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
 	snprintf(hba_file_path, sizeof(hba_file_path), "%s/%s", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
-    while ((opt = getopt_long(argc, argv, "a:df:F:hm:nDCxv", long_options, &optindex)) != -1)
+	pool_passwd_key_file_path[0] = 0;
+
+	while ((opt = getopt_long(argc, argv, "a:df:k:F:hm:nDCxv", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
@@ -137,6 +144,15 @@ int main(int argc, char **argv)
 					exit(1);
 				}
 				strlcpy(pcp_conf_file_path, optarg, sizeof(pcp_conf_file_path));
+				break;
+
+			case 'k':	/* specify key file for decrypt pool_password entries */
+				if (!optarg)
+				{
+					usage();
+					exit(1);
+				}
+				strlcpy(pool_passwd_key_file_path, optarg, sizeof(pool_passwd_key_file_path));
 				break;
 
 			case 'h':
@@ -299,6 +315,13 @@ int main(int argc, char **argv)
 	/* set signal masks */
 	poolinitmask();
 
+	/* read the pool password key */
+	if (strlen(pool_passwd_key_file_path) == 0)
+	{
+		get_pool_key_filename(pool_passwd_key_file_path);
+	}
+	pool_key = read_pool_key(pool_passwd_key_file_path);
+
 	if (not_detach)
 		write_pid_file();
 	else
@@ -336,6 +359,10 @@ static void show_version(void)
 
 static void usage(void)
 {
+	char	homedir[POOLMAXPATHLEN];
+	if (!get_home_directory(homedir, sizeof(homedir)))
+		strncpy(homedir,"USER-HOME-DIR",POOLMAXPATHLEN);
+
 	fprintf(stderr, "%s version %s (%s),\n",	PACKAGE, VERSION, PGPOOLVERSION);
 	fprintf(stderr, "  A generic connection pool/replication/load balance server for PostgreSQL\n\n");
 	fprintf(stderr, "Usage:\n");
@@ -351,6 +378,10 @@ static void usage(void)
 	fprintf(stderr, "  -f, --config-file=CONFIG_FILE\n");
 	fprintf(stderr, "                      Set the path to the pgpool.conf configuration file\n");
 	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
+	fprintf(stderr, "  -k, --key-file=KEY_FILE\n");
+	fprintf(stderr, "                      Set the path to the pgpool key file\n");
+	fprintf(stderr, "                      (default: %s/%s)\n",homedir, POOLKEYFILE);
+	fprintf(stderr, "                      can be over ridden by %s environment variable\n",POOLKEYFILEENV);
 	fprintf(stderr, "  -F, --pcp-file=PCP_CONFIG_FILE\n");
 	fprintf(stderr, "                      Set the path to the pcp.conf configuration file\n");
 	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
@@ -371,6 +402,31 @@ static void usage(void)
 	fprintf(stderr, "  immediate   the same mode as fast\n");
 }
 
+static bool
+get_pool_key_filename(char *poolKeyFile)
+{
+	char	*passfile_env;
+
+	if ((passfile_env = getenv(POOLKEYFILEENV)) != NULL)
+	{
+		/* use the literal path from the environment, if set */
+		strlcpy(poolKeyFile, passfile_env, POOLMAXPATHLEN);
+	}
+	else
+	{
+		char	homedir[POOLMAXPATHLEN];
+		if (!get_home_directory(homedir, sizeof(homedir)))
+			return false;
+		snprintf(poolKeyFile, POOLMAXPATHLEN, "%s/%s", homedir, POOLKEYFILE);
+	}
+	return true;
+}
+
+
+char *get_pool_key(void)
+{
+	return pool_key;
+}
 /*
 * detach control ttys
 */

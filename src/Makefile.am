@@ -57,6 +57,7 @@ pgpool_SOURCES = main/main.c \
 	utils/scram-common.c \
 	utils/base64.c \
 	utils/sha2.c \
+	utils/ssl_utils.c \
     utils/statistics.c
 
 DEFS = @DEFS@ \

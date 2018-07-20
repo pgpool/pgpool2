@@ -272,7 +272,8 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 				}
 			}
 			/* we have a password to use, validate the password type */
-			if (passwordType != PASSWORD_TYPE_PLAINTEXT && passwordType != PASSWORD_TYPE_MD5)
+			if (passwordType != PASSWORD_TYPE_PLAINTEXT && passwordType != PASSWORD_TYPE_MD5
+				&& passwordType != PASSWORD_TYPE_AES)
 			{
 				ereport(ERROR,
 					(errmsg("failed to authenticate with backend using md5"),
@@ -305,13 +306,13 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	else if (authkind == AUTH_REQ_SASL)
 	{
 		char *password;
-		PasswordType passwordType;
+		PasswordType passwordType = PASSWORD_TYPE_UNKNOWN;
 
 		if (get_auth_password(MASTER(cp), frontend, 0,
 							  &password, &passwordType) == false)
 		{
 			/*
-			 * We do not have any passeord,
+			 * We do not have any password,
 			 * we can still get the password from client using plain text authentication
 			 * if it is allowed by user
 			 */
@@ -332,12 +333,28 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 				}
 			}
 		}
+		/*
+		 * if we have encrypted password,
+		 * Decrypt it before going any further
+		 */
+		if (passwordType == PASSWORD_TYPE_AES)
+		{
+			password = get_decrypted_password(password);
+			if (password == NULL)
+				ereport(ERROR,
+						(errmsg("SCRAM authentication failed"),
+						 errdetail("unable to decrypt password from pool_passwd"),
+						 errhint("verify the valid pool_key exists")));
+			/* we have converted the password to plain text */
+			passwordType = PASSWORD_TYPE_PLAINTEXT;
+		}
+
 		/* we have a password to use, validate the password type */
 		if (passwordType != PASSWORD_TYPE_PLAINTEXT)
 		{
 			ereport(ERROR,
 					(errmsg("failed to authenticate with backend using SCRAM"),
-					 errdetail("valid password not ")));
+					 errdetail("valid password not found")));
 		}
 
 		for (i=0;i<NUM_BACKENDS;i++)
@@ -652,8 +669,8 @@ static void authenticate_frontend_clear_text(POOL_CONNECTION *frontend)
 	static int size;
 	char password[MAX_PASSWORD_SIZE];
 	char userPassword[MAX_PASSWORD_SIZE];
-	char *pwd;
-
+	char *storedPassword = NULL;
+	char *userPwd = NULL;
 
 	sendAuthRequest(frontend, frontend->protoVersion, AUTH_REQ_PASSWORD, NULL, 0);
 
@@ -670,11 +687,15 @@ static void authenticate_frontend_clear_text(POOL_CONNECTION *frontend)
 	if (!frontend->passwordMapping)
 	{
 		/*
-		 * if the password is not saved in pool_passwd
+		 * if the password is not present in pool_passwd
 		 * just bail out from here
 		 */
 		return;
 	}
+
+	storedPassword = frontend->passwordMapping->pgpoolUser.password;
+	userPwd = password;
+
 	/*
 	 * If we have md5 password stored in pool_passwd, convert the user
 	 * supplied password to md5 for comparison
@@ -684,21 +705,30 @@ static void authenticate_frontend_clear_text(POOL_CONNECTION *frontend)
 		pg_md5_encrypt(password,
 					   frontend->username,
 					   strlen(frontend->username), userPassword);
-		
-		pwd = userPassword;
+		userPwd = userPassword;
+		size = strlen (userPwd);
 	}
-	else if (frontend->passwordMapping->pgpoolUser.passwordType == PASSWORD_TYPE_PLAINTEXT)
+	else if (frontend->passwordMapping->pgpoolUser.passwordType == PASSWORD_TYPE_AES)
 	{
-		pwd = password;
+		/*
+		 * decrypt the stored AES password
+		 * for comparing it
+		 */
+		storedPassword = get_decrypted_password(storedPassword);
+		if (storedPassword == NULL)
+			ereport(ERROR,
+				(errmsg("clear text authentication failed"),
+					 errdetail("unable to decrypt password from pool_passwd"),
+					 errhint("verify the valid pool_key exists")));
 	}
-	else
+	else if (frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_PLAINTEXT)
 	{
-		ereport(LOG,
-				(errmsg("password type stored in pool_passwd can't be used for clear text authentication")));
-		return;
+		ereport(ERROR,
+			(errmsg("clear text authentication failed"),
+				 errdetail("password type stored in pool_passwd can't be used for clear text authentication")));
 	}
 
-	if (memcmp(password, frontend->passwordMapping->pgpoolUser.password, size))
+	if (memcmp(userPwd, storedPassword, size))
 	{
 		/* Password does not match */
 		ereport(ERROR,
@@ -706,7 +736,10 @@ static void authenticate_frontend_clear_text(POOL_CONNECTION *frontend)
 				 errdetail("password does not match")));
 	}
 	ereport(LOG,
-			(errmsg("clear text authentication successfull with frontend")));
+			(errmsg("clear text authentication successful with frontend")));
+
+	if (frontend->passwordMapping->pgpoolUser.passwordType == PASSWORD_TYPE_AES)
+		pfree(storedPassword);
 
 	frontend->frontend_authenticated = true;
 }
@@ -732,12 +765,28 @@ static int do_clear_text_password(POOL_CONNECTION *backend, POOL_CONNECTION *fro
 		pwd = frontend->password;
 		size = frontend->pwd_size;
 	}
-	else if (frontend->passwordMapping && frontend->passwordMapping->pgpoolUser.passwordType == PASSWORD_TYPE_PLAINTEXT)
+	else if (frontend->passwordMapping)
 	{
-		pwd = frontend->passwordMapping->pgpoolUser.password;
-		size = pwd? strlen(pwd): 0;
+		if (frontend->passwordMapping->pgpoolUser.passwordType == PASSWORD_TYPE_PLAINTEXT)
+		{
+			pwd = frontend->passwordMapping->pgpoolUser.password;
+			size = pwd? strlen(pwd): 0;
+		}
+		else if (frontend->passwordMapping->pgpoolUser.passwordType == PASSWORD_TYPE_AES)
+		{
+			/*
+			 * decrypt the stored AES password
+			 * for comparing it
+			 */
+			pwd = get_decrypted_password(frontend->passwordMapping->pgpoolUser.password);
+			if (pwd == NULL)
+				ereport(ERROR,
+					(errmsg("clear text password authentication failed"),
+						 errdetail("unable to decrypt password from pool_passwd"),
+						 errhint("verify the valid pool_key exists")));
+			size = strlen(pwd);
+		}
 	}
-
 	if (pwd == NULL)
 	{
 		/* If we still do not have a password. we can't proceed */
@@ -975,6 +1024,22 @@ authenticate_frontend_SCRAM(POOL_CONNECTION *backend, POOL_CONNECTION *frontend,
 		storedPassword = frontend->passwordMapping->pgpoolUser.password;
 	}
 
+	if (storedPasswordType == PASSWORD_TYPE_AES)
+	{
+		/*
+		 * decrypt the stored AES password
+		 * for comparing it
+		 */
+		storedPassword = get_decrypted_password(storedPassword);
+		if (storedPassword == NULL)
+			ereport(ERROR,
+					(errmsg("SCRAM authentication failed"),
+					 errdetail("unable to decrypt password from pool_passwd"),
+					 errhint("verify the valid pool_key exists")));
+		/* we have converted the password to plain text */
+		storedPasswordType = PASSWORD_TYPE_PLAINTEXT;
+	}
+
 	if (storedPasswordType != PASSWORD_TYPE_PLAINTEXT)
 	{
 		ereport(ERROR,
@@ -1148,7 +1213,7 @@ static void authenticate_frontend_cert(POOL_CONNECTION *frontend)
 			frontend->frontend_authenticated = true;
 			ereport(LOG,
 					(errmsg("SSL certificate authentication for user \"%s\" with Pgpool-II is successful",frontend->username)));
-			return POOL_CONTINUE;
+			return;
 		}
 		else
 		{
@@ -1221,11 +1286,29 @@ static void authenticate_frontend_md5(POOL_CONNECTION *backend, POOL_CONNECTION 
 	read_password_packet(frontend, frontend->protoVersion, password, &size);
 
 	/*If we have clear text password stored in pool_passwd, convert it to md5 */
-	if (storedPasswordType == PASSWORD_TYPE_PLAINTEXT)
+	if (storedPasswordType == PASSWORD_TYPE_PLAINTEXT || storedPasswordType == PASSWORD_TYPE_AES)
 	{
-		pg_md5_encrypt(storedPassword,
+		char *pwd;
+		if (storedPasswordType == PASSWORD_TYPE_AES)
+		{
+			pwd = get_decrypted_password(storedPassword);
+			if (pwd == NULL)
+				ereport(ERROR,
+						(errmsg("md5 authentication failed"),
+						 errdetail("unable to decrypt password from pool_passwd"),
+						 errhint("verify the valid pool_key exists")));
+
+		}
+		else
+		{
+			pwd = storedPassword;
+		}
+		pg_md5_encrypt(pwd,
 					   frontend->username,
 					   strlen(frontend->username), userPassword);
+
+		if (storedPasswordType == PASSWORD_TYPE_AES)
+			pfree(pwd);
 
 		md5 = userPassword;
 	}
@@ -1251,7 +1334,7 @@ static void authenticate_frontend_md5(POOL_CONNECTION *backend, POOL_CONNECTION 
 				 errdetail("password does not match")));
 	}
 	ereport(LOG,
-			(errmsg("md5 authentication successfull with frontend")));
+			(errmsg("md5 authentication successful with frontend")));
 
 	frontend->frontend_authenticated = true;
 }
@@ -1374,12 +1457,29 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 	char salt[4];
 	static char userPassword[MAX_PASSWORD_SIZE];
 	int kind;
+	bool password_decrypted = false;
 	char encbuf[POOL_PASSWD_LEN+1];
 	char *pool_passwd = NULL;
 	
 	if (NUM_BACKENDS == 1)
 		return do_md5_single_backend(backend, frontend, reauth, protoMajor);
 
+	if (passwordType == PASSWORD_TYPE_AES)
+	{
+		/*
+		 * decrypt the stored AES password
+		 * for comparing it
+		 */
+		storedPassword = get_decrypted_password(storedPassword);
+		if (storedPassword == NULL)
+			ereport(ERROR,
+					(errmsg("md5 authentication failed"),
+					 errdetail("unable to decrypt password from pool_passwd"),
+					 errhint("verify the valid pool_key exists")));
+		/* we have converted the password to plain text */
+		passwordType = PASSWORD_TYPE_PLAINTEXT;
+		password_decrypted = true;
+	}
 	if (passwordType == PASSWORD_TYPE_PLAINTEXT)
 	{
 		pg_md5_encrypt(storedPassword,
@@ -1455,6 +1555,10 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 		/* Save the auth info */
 		backend->auth_kind = AUTH_REQ_MD5;
 	}
+
+	if (password_decrypted && storedPassword)
+		pfree(storedPassword);
+
 	return 0;
 }
 
