@@ -50,6 +50,7 @@ Pgpool-II documentation
   <title>Usages</title>
   <para>
     <command>pgpool</command> runs in 3 modes: start, stop and reload.
+    If none of stop or reload is given, it is assumed that "start" is specified.
   </para>
  </refsect1>
 

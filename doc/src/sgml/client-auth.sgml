@@ -387,7 +387,7 @@ host    postgres        all             192.168.12.10/32        md5
     </para>
     <para>
         1- Login as the database's operating system user and type
-        <command>"pg_md5 --md5auth --username= "</command>
+        <command>"pg_md5 --md5auth --username=username password"</command>
         user name and <literal>md5</literal> encrypted password are registered
         into pool_passwd.
         If pool_passwd does not exist yet, pg_md5 command will automatically create it for you.
@@ -434,7 +434,7 @@ host    postgres        all             192.168.12.10/32        md5
     file for <productname>Pgpool-II</productname> in the system's
     PAM configuration directory (which is usually at <literal>"/etc/pam.d"</literal>).
     A sample service-configuration file is installed as
-    <filename>"share/pgpool.pam"</filename> under the install directory.
+    <filename>"share/pgpool-II/pgpool.pam"</filename> under the install directory.
    </para>
 
    <note>

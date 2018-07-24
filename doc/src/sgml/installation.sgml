@@ -231,6 +231,16 @@
 	</listitem>
       </varlistentry>
 
+      <varlistentry>
+        <term><option>--with-pam</option></term>
+        <listitem>
+          <para>
+            <productname>Pgpool-II</productname> binaries will be built with PAM authentication support.
+          PAM authentication support is disabled by dafault.
+          </para>
+        </listitem>
+      </varlistentry>
+
     </variablelist>
 
     <para>

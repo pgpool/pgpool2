@@ -27,10 +27,12 @@ Pgpool-II documentation
   <cmdsynopsis>
    <command>pg_md5</command>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
+   <arg choice="plain"><replaceable>-p</replaceable></arg>
   </cmdsynopsis>
   <cmdsynopsis>
    <command>pg_md5</command>
-   <arg><replaceable>password</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+   <arg choice="plain"><replaceable>password</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
