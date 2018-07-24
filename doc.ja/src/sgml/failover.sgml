@@ -549,7 +549,7 @@ onにすると、不正なプライマリを切り離します。
 	  If there's no standby node, and there's only one primary
 	  node, no checking will be performed.
 -->
-プライマリノードが存在せず、プライマリノードがひとつだけ存在する場合は検査を実施しません。
+スタンバイノードが存在せず、プライマリノードがひとつだけ存在する場合は検査を実施しません。
 	</para>
 	<para>
 <!--
@@ -557,7 +557,7 @@ onにすると、不正なプライマリを切り離します。
 	  nodes, leave the primary node which has the youngest node
 	  id and detach rest of primary nodes.
 -->
-プライマリノードが存在せず、プライマリノードが複数存在する場合は、もっとも若いノード番号を持つプライマリノードだけを残し、それ以外は切り離します。
+スタンバイノードが存在せず、プライマリノードが複数存在する場合は、もっとも若いノード番号を持つプライマリノードだけを残し、それ以外は切り離します。
 	</para>
 	<para>
 <!--
