@@ -740,12 +740,12 @@ host    postgres        all             192.168.12.10/32        md5
     <para>
 <!--
         1- Login as the database's operating system user and type
-        <command>"pg_md5 &#045;&#045;md5auth &#045;&#045;username= "</command>
+        <command>"pg_md5 &#045;&#045;md5auth &#045;&#045;username=username password"</command>
         user name and <literal>md5</literal> encrypted password are registered
         into pool_passwd.
         If pool_passwd does not exist yet, pg_md5 command will automatically create it for you.
 -->
-1. データベースのOSユーザとしてログインしてンし、<command>"pg_md5 --md5auth --username=ユーザ名"</command> を実行します。
+1. データベースのOSユーザとしてログインし、<command>"pg_md5 --md5auth --username=ユーザ名 パスワード"</command> を実行します。
 pool_passwdがまだ存在していなかった場合は、pg_md5コマンドが自動的にこれを生成します。
         <note>
         <para>
@@ -810,10 +810,10 @@ PAMについての詳細は<ulink url="http://www.kernel.org/pub/linux/libs/pam/
     file for <productname>Pgpool-II</productname> in the system's
     PAM configuration directory (which is usually at <literal>"/etc/pam.d"</literal>).
     A sample service-configuration file is installed as
-    <filename>"share/pgpool.pam"</filename> under the install directory.
+    <filename>"share/pgpool-II/pgpool.pam"</filename> under the install directory.
 -->
 PAM認証を有効にするには、<productname>Pgpool-II</productname>のサービス設定ファイルをシステムのPAM設定ディレクトリ（通常は<literal>"/etc/pam.d"</literal>にあります）に作成しなければなりません。
-サービス設定ファイルのサンプルはインストールディレクトリ下に<literal>"share/pgpool.pam"</literal>としてインストールされています。
+サービス設定ファイルのサンプルはインストールディレクトリ下に<literal>"share/pgpool-II/pgpool.pam"</literal>としてインストールされています。
    </para>
 
    <note>

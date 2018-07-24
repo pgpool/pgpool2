@@ -67,8 +67,10 @@ Pgpool-II documentation
   <para>
 <!--
     <command>pgpool</command> runs in 3 modes: start, stop and reload.
+    If none of stop or reload is given, it is assumed that "start" is specified.
 -->
     <command>pgpool</command>は3つのモードで実行されます。すなわち、start、stop、reloadです。
+    stopもしくはreloadが指定されていなければ、start モードが指定されているものとします。
   </para>
  </refsect1>
 
