@@ -164,6 +164,8 @@ log_statement = off
 log_per_node_statement = off
                                    # Log all statements
                                    # with node and backend informations
+log_client_messages = off
+                                   # Log any client messages
 log_standby_delay = 'none'
                                    # Log standby delay
                                    # Valid values are combinations of always,

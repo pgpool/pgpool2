@@ -746,6 +746,10 @@ void cancel_request(CancelPacket *sp)
 	CancelPacket cp;
 	bool found = false;
 
+	if (pool_config->log_client_messages)
+		ereport(LOG,
+			(errmsg("CancelRequest: Cancel message from frontend."),
+				errdetail("process id: %d", ntohl(sp->pid) )));
     ereport(DEBUG1,
             (errmsg("Cancel request received")));
 

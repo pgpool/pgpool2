@@ -236,6 +236,7 @@ typedef struct {
 	bool ignore_leading_white_space;		/* ignore leading white spaces of each query */
  	bool log_statement;						/* logs all SQL statements */
  	bool log_per_node_statement;			/* logs per node detailed SQL statements */
+	bool log_client_messages;				/* If true, logs any client messages */
 	char *lobj_lock_table;					/* table name to lock for rewriting lo_creat */
 
 	BackendDesc *backend_desc;				/* PostgreSQL Server description. Placed on shared memory */

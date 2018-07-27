@@ -560,6 +560,24 @@ local0.*    /var/log/pgpool.log
       </listitem>
     </varlistentry>
 
+		<varlistentry id="guc-log-client-messages" xreflabel="log_client_messages">
+      <term><varname>log_client_messages</varname> (<type>boolean</type>)
+        <indexterm>
+        <primary><varname>log_client_messages</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+				<para>
+					Setting to on, prints client messages to the log.
+				</para>
+        <para>
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+					this parameter for a current session.
+        </para>
+      </listitem>
+    </varlistentry>
+
 		<varlistentry id="guc-log-hostname" xreflabel="log_hostname">
       <term><varname>log_hostname</varname> (<type>boolean</type>)
         <indexterm>

@@ -428,6 +428,16 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
+		{"log_client_messages", CFGCXT_SESSION, LOGING_CONFIG,
+			"Logs any client messages in the pgpool logs.",
+			CONFIG_VAR_TYPE_BOOL,false, 0
+		},
+		&g_pool_config.log_client_messages,
+		false,
+		NULL, NULL,NULL
+	},
+
+	{
 		{"use_watchdog", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Enables the pgpool-II watchdog.",
 			CONFIG_VAR_TYPE_BOOL,false, 0

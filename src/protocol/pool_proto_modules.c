@@ -689,6 +689,10 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 
+	if (pool_config->log_client_messages)
+		ereport(LOG,
+			(errmsg("Execute: Execute message from frontend."),
+				errdetail("portal: \"%s\"",contents)));
 	ereport(DEBUG2,
             (errmsg("Execute: portal name <%s>", contents)));
 
@@ -962,6 +966,11 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	name = contents;
 	stmt = contents + strlen(contents) + 1;
+
+	if (pool_config->log_client_messages)
+		ereport(LOG,
+			(errmsg("Parse: Parse message from frontend."),
+				errdetail("statement: \"%s\", query: \"%s\"",name, stmt)));
 
 	/* parse SQL string */
 	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
@@ -1301,6 +1310,10 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	portal_name = contents;
 	pstmt_name = contents + strlen(portal_name) + 1;
 
+	if (pool_config->log_client_messages)
+		ereport(LOG,
+			(errmsg("Bind: Bind message from frontend."),
+				errdetail("portal: \"%s\", statement: \"%s\"",portal_name, pstmt_name)));
 	parse_msg = pool_get_sent_message('Q', pstmt_name, POOL_SENT_MESSAGE_CREATED);
 	if (!parse_msg)
 		parse_msg = pool_get_sent_message('P', pstmt_name, POOL_SENT_MESSAGE_CREATED);
@@ -1443,6 +1456,10 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/* Prepared Statement */
 	if (*contents == 'S')
 	{
+		if (pool_config->log_client_messages)
+			ereport(LOG,
+				(errmsg("Describe: Describe message from frontend."),
+					errdetail("statement: \"%s\"",contents+1 )));
 		msg = pool_get_sent_message('Q', contents+1, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
 			msg = pool_get_sent_message('P', contents+1, POOL_SENT_MESSAGE_CREATED);
@@ -1455,6 +1472,10 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/* Portal */
 	else
 	{
+		if (pool_config->log_client_messages)
+			ereport(LOG,
+				(errmsg("Describe: Describe message from frontend."),
+					errdetail("portal: \"%s\"",contents+1 )));
 		msg = pool_get_sent_message('B', contents+1, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
             ereport(FATAL,
@@ -1520,12 +1541,20 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	if (*contents == 'S')
 	{
 		msg = pool_get_sent_message('Q', contents+1, POOL_SENT_MESSAGE_CREATED);
+		if (pool_config->log_client_messages)
+			ereport(LOG,
+				(errmsg("Close: Close message from frontend."),
+					errdetail("statement: \"%s\"",contents+1)));
 		if (!msg)
 			msg = pool_get_sent_message('P', contents+1, POOL_SENT_MESSAGE_CREATED);
 	}
 	/* Portal */
 	else if (*contents == 'P')
 	{
+		if (pool_config->log_client_messages)
+			ereport(LOG,
+				(errmsg("Close: Close message from frontend."),
+					errdetail("portal: \"%s\"",contents+1)));
 		msg = pool_get_sent_message('B', contents+1, POOL_SENT_MESSAGE_CREATED);
 	}
 	else
@@ -2362,6 +2391,9 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		case 'X':	/* Terminate */
 			if(contents)
 				pfree(contents);
+			if (pool_config->log_client_messages)
+				ereport(LOG,
+					(errmsg("Terminate: Terminate message from frontend.")));
             ereport(DEBUG5,
                 (errmsg("Frontend terminated"),
                      errdetail("received message kind 'X' from frontend")));
@@ -2369,6 +2401,10 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 		case 'Q':	/* Query */
 			allow_close_transaction = 1;
+			if (pool_config->log_client_messages)
+				ereport(LOG,
+					(errmsg("Query: Query message from frontend."),
+						errdetail("query: \"%s\"",contents)));
 			status = SimpleQuery(frontend, backend, len, contents);
 			break;
 
@@ -2404,6 +2440,9 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			break;
 
 		case 'S':  /* Sync */
+			if (pool_config->log_client_messages)
+				ereport(LOG,
+					(errmsg("Sync: Sync message from frontendend.")));
 			pool_set_doing_extended_query_message();
 			if (pool_is_ignore_till_sync())
 				pool_unset_ignore_till_sync();
@@ -2429,6 +2468,14 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			break;
 
 		case 'F':	/* FunctionCall */
+			if (pool_config->log_client_messages)
+			{
+				int oid;
+				memcpy(&oid, contents, sizeof(int));
+				ereport(LOG,
+					(errmsg("FunctionCall: FunctionCall message from frontend."),
+						errdetail("oid: \"%d\"", ntohl(oid) )));
+			}
 			/*
 			 * Create dummy query context as if it were an INSERT.
 			 */
@@ -2456,6 +2503,9 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		case 'd':	/* CopyData */
 		case 'f':	/* CopyFail */
 		case 'H':	/* Flush */
+			if (fkind == 'H' && pool_config->log_client_messages)
+				ereport(LOG,
+					(errmsg("Flush: Flush message from frontend.")));
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 			{
 				if (fkind == 'H')
@@ -2814,12 +2864,14 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 	char *string = NULL;
 	int len;
 	int i;
+	int copy_count;
 
 #ifdef DEBUG
 	int j = 0;
 	char buf[1024];
 #endif
 
+	copy_count=0;
 	for (;;)
 	{
 		if (copyin)
@@ -2844,12 +2896,25 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 
 				/* CopyData? */
 				if (kind == 'd')
+				{
+					copy_count++;
 					continue;
+				}
 				else
 				{
+					if (pool_config->log_client_messages && copy_count !=0 )
+						ereport(LOG,
+							(errmsg("CopyData: CopyData message from frontend."),
+								errdetail("count: %d", copy_count)));
+					if (kind == 'c' && pool_config->log_client_messages)
+						ereport(LOG,
+							(errmsg("CopyDone: CopyDone message from frontend.")));
+					if (kind == 'f' && pool_config->log_client_messages)
+						ereport(LOG,
+							(errmsg("CopyFail: CopyFail message from frontend.")));
 					ereport(DEBUG1,
 						(errmsg("copy data rows"),
-							 errdetail("invalid copyin kind. expected 'd' got '%c'", kind)));
+							errdetail("invalid copyin kind. expected 'd' got '%c'", kind)));
 					break;
 				}
 			}

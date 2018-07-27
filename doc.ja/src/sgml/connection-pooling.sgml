@@ -864,6 +864,34 @@ onに設定されている場合、全てのSQL文をログ出力します。
       </listitem>
     </varlistentry>
 
+		<varlistentry id="guc-log-client-messages" xreflabel="log_client_messages">
+      <term><varname>log_client_messages</varname> (<type>boolean</type>)
+        <indexterm>
+<!--
+        <primary><varname>log_client_messages</varname> configuration parameter</primary>
+-->
+        <primary><varname>log_client_messages</varname> 設定パラメータ</primary>
+        </indexterm>
+      </term>
+      <listitem>
+				<para>
+<!--
+					Setting to on, prints client messages to the messages.
+-->
+onに設定されている場合、クライアントメッセージをログ出力します。
+				</para>
+        <para>
+<!--
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+                    You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+                    this parameter for a current session.
+-->
+このパラメータは、<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+現在のセッションでのパラメータ値は、<xref linkend="SQL-PGPOOL-SET">コマンドで変更することもできます。
+
+        </para>
+      </listitem>
+    </varlistentry>
 		<varlistentry id="guc-log-hostname" xreflabel="log_hostname">
       <term><varname>log_hostname</varname> (<type>boolean</type>)
         <indexterm>
