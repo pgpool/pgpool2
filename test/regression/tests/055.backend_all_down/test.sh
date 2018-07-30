@@ -33,23 +33,15 @@ while true
 do
 	grep "failover done. shutdown host $PGSOCKET_DIR(11001)" log/pgpool.log > /dev/null 2>&1
 	if [ $? = 0 ];then
-	        echo "shutdown detected"
 		break;
 	fi
-
-	grep "failover: no backends are degenerated" log/pgpool.log > /dev/null 2>&1
-	if [ $? = 0 ];then
-	        echo "no backend to degenerate detected"
-		break;
-	fi
-
 	sleep 1
 done
 
 # if that's the case, shutdownall will hang.
-(./shutdownall) >/dev/null 2>&1 &
+(./shutdownall)&
 sleep 5
-kill $pid
+kill $!
 
 if [ $? = 0 ];then
 	./shutdownall
