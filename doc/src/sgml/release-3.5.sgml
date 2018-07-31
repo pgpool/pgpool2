@@ -1,6 +1,76 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-5-16">
+  <title>Release 3.5.16</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2018-07-31</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+
+	<listitem>
+		<!--
+		2018-07-04 [eec52a4]
+		-->
+		<para>
+		Fix "write on backend 0 failed with error :"Success"" error.
+		(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=403">bug 403</ulink>) (Tatsuo Ishii)
+		</para>
+		<para>
+		Don't treated it as an error if <function>write()</function> returns 0.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-20 [a73a255]
+		-->
+		<para>
+		Fix memory leaks related to <function>pool_extract_error_message()</function>. (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-19 [bf61ea2]
+		-->
+		<para>
+		Fix an incorrect declare as bool, rather than int in <function>pool_extract_error_message()</function>. (Tatsuo Ishii)
+		</para>
+		<para>
+		This led to a segfault issue mentioned on certain platform.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-19 [95f32d2]
+		-->
+		<para>
+		Fix segfault in <function>per_node_error_log()</function> on armhf architecture. (Tatsuo Ishii)
+		</para>
+		<para>
+		Patch provided by Christian Ehrhardt.
+		</para>
+	</listitem>
+	<listitem>
+		<!--
+		2018-06-20 [cc270ce]
+		2018-07-11 [b37e629]
+		-->
+		<para>
+		Test: Fix 006.memqcache test failure. (Tatsuo Ishii)
+		</para>
+	</listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-5-15">
   <title>Release 3.5.15</title>
 

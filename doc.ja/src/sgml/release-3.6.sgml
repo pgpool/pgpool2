@@ -1,6 +1,142 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-6-12">
+<!--
+  <title>Release 3.6.12</title>
+	-->
+  <title>リリース 3.6.12</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-07-31</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title> 
+    <itemizedlist>
+
+	<listitem>
+		<!--
+		2018-07-04 [06a1d33]
+		-->
+		<para>
+		<!--
+		Fix "write on backend 0 failed with error :"Success"" error.
+		(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=403">bug 403</ulink>) (Tatsuo Ishii)
+		-->
+「write on backend 0 failed with error :"Success"」エラーを修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=403">bug 403</ulink>) (Tatsuo Ishii)
+		</para>
+		<para>
+<function>write()</function> が 0 を返した場合、エラーとして扱わないように修正しました。
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-07-03 [7f9aad9]
+		-->
+		<para>
+		<!--
+		Fix for 0000409: worker process is not restarted after failover on standby Pgpool-II.
+		-->
+フェイルオーバ後、スタンバイ Pgpool-II で worker プロセスが起動されない不具合を修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=409">bug 409</ulink>) (Muhammad Usama)
+		</para>
+		<para>
+		<!--
+		Patch contributed by Yugo Nagata.
+		-->
+修正パッチは Yugo Nagataによって提供されました。
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-20 [9956328]
+		-->
+		<para>
+		<!--
+		Fix memory leaks related to pool_extract_error_message(). (Tatsuo Ishii)
+		-->
+<function>pool_extract_error_message()</function> で発生するメモリリークを修正しました。(Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-19 [8aadbd3]
+		-->
+		<para>
+		<!--
+		Fix an incorrect declare as bool, rather than int in pool_extract_error_message(). (Tatsuo Ishii)
+		-->
+<function>pool_extract_error_message()</function> 関数での誤ったデータ型の変数宣言を修正しました。(Tatsuo Ishii)
+		</para>
+		<para>
+		<!--
+		This led to a segfault issue mentioned on certain platform.
+		-->
+これにより、特定のプラットフォームでセグメンテーション違反が発生する可能性がありました。
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-19 [ff2260f]
+		-->
+		<para>
+		<!--
+		Fix segfault in per_node_error_log() on armhf architecture. (Tatsuo Ishii)
+		-->
+<literal>armhf</literal> アーキテクチャで発生する <function>per_node_error_log()</function> のセグメンテーション違反を修正しました。(Tatsuo Ishii)
+		</para>
+		<para>
+		<!--
+		Patch provided by Christian Ehrhardt.
+		-->
+修正パッチは Christian Ehrhardt によって提供されました。
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-07-24 [68f9645]
+		-->
+		<para>
+		<!--
+		Fix document typos. (Bo Peng)
+		-->
+Doc:「クライアント認証」、「Pgpool-II のインストール」、「pg_md5」などのドキュメントを改善しました。(Bo Peng)
+		</para>
+		<para>
+		<!--
+		Patch provided by Takuma Hoshiai.
+		-->
+修正パッチは Takuma Hoshiai によって提供されました。
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-20 [7c4aff8]
+		2018-07-11 [893b1ef]
+		-->
+		<para>
+		<!--
+		Test: Fix 006.memqcache test failure. (Tatsuo Ishii)
+		-->
+Test: テスト006.memqcache の失敗を修正しました。(	Tatsuo Ishii)
+		</para>
+	</listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-6-11">
 <!--
   <title>Release 3.6.11</title>
