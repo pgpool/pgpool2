@@ -1,6 +1,64 @@
 <!-- doc/src/sgml/release-3.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-3-22">
+<!--
+  <title>Release 3.3.22</title>
+-->
+  <title>リリース 3.3.22</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-07-31</simpara>
+  </note>
+
+  <sect2>
+	<!--
+    <title>Bug fixes</title>
+	-->
+    <title>不具合修正</title> 
+    <itemizedlist>
+	<listitem>
+		<!--
+		2018-07-04 [8fe9a65]
+		-->
+		<para>
+		<!--
+		Fix "write on backend 0 failed with error :"Success"" error.
+		(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=403">bug 403</ulink>) (Tatsuo Ishii)
+		-->
+「write on backend 0 failed with error :"Success"」エラーを修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=403">bug 403</ulink>) (Tatsuo Ishii)
+		</para>
+		<para>
+<function>write()</function> が 0 を返した場合、エラーとして扱わないように修正しました。
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-19 [7111ebb]
+		-->
+		<para>
+		<!--
+		Fix segfault in per_node_error_log() on armhf architecture. (Tatsuo Ishii)
+		-->
+armhf アーキテクチャで発生する <function>per_node_error_log()</function> のセグメンテーション違反を修正しました。(	Tatsuo Ishii)
+		</para>
+		<para>
+		<!--
+		Patch provided by Christian Ehrhardt.
+		-->
+修正パッチは Christian Ehrhardt によって提供されました。
+		</para>
+	</listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-3-21">
 <!--
   <title>Release 3.3.21</title>
