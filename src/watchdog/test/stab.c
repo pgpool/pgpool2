@@ -49,8 +49,6 @@ void pool_error(const char *fmt,...)
    }
 #else
 	  fprintf(stderr, "%s ERROR: pid %d: ", nowsec(), (int)getpid());
-	else
-	  fprintf(stderr, "ERROR: pid %d: ", (int)getpid());
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
