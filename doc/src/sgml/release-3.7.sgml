@@ -1,6 +1,144 @@
 <!-- doc/src/sgml/release-3.7.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-7-5">
+  <title>Release 3.7.5</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2018-07-31</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+
+	<listitem>
+		<!--
+		2018-07-10 [3a3045f]
+		-->
+		<para>
+		Allow not to use <filename>pool_passwd</> in raw mode. 
+		(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=411">bug 411</ulink>) (Tatsuo Ishii)
+		</para>
+		<para>
+		Since in raw there's only 1 backend is actually involved, there's no
+		need to use pool_passwd with <literal>md5</> authentication.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-07-04 [17be8d4]
+		-->
+		<para>
+		Fix "write on backend 0 failed with error :"Success"" error.
+		(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=403">bug 403</ulink>) (Tatsuo Ishii)
+		</para>
+		<para>
+		Don't treated it as an error if <function>write()</function> returns 0.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-07-03 [bbdf0d9]
+		-->
+		<para>
+		Fix for 0000409: worker process is not restarted after failover on standby <productname>Pgpool-II</>.
+		(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=409">bug 409</ulink>) (Muhammad Usama)
+		</para>
+		<para>
+		Patch contributed by Yugo Nagata.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-28 [1648cb8]
+		-->
+		<para>
+		Fix for 0000406: failover called with wrong old-primary.
+		(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=406">bug 406</ulink>) (Muhammad Usama)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-22 [07380e4]
+		-->
+		<para>
+		Fixed that the health check process was not started after failed back.
+		(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=407">bug 407</ulink>) (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-20 [a50025b]
+		-->
+		<para>
+		Fix memory leaks related to <function>pool_extract_error_message()</function>. (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-19 [02c49ae]
+		-->
+		<para>
+		Fix an incorrect declare as bool, rather than int in <function>pool_extract_error_message()</function>. (Tatsuo Ishii)
+		</para>
+		<para>
+		This led to a segfault issue mentioned on certain platform.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-19 [cada384]
+		-->
+		<para>
+		Fix segfault in <function>per_node_error_log()</function> on armhf architecture. (Tatsuo Ishii)
+		</para>
+		<para>
+		Patch provided by Christian Ehrhardt.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-14 [3c02bd0]
+		-->
+		<para>
+		Fix for wrong backend roles on standby after the failover. (Muhammad Usama)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-07-24 [68f9645]
+		-->
+		<para>
+		Doc: Improve documents of "MD5 Password Authentication", "Installing Pgpool-II" and "pg_md5".(Bo Peng)
+		</para>
+		<para>
+		Patch provided by Takuma Hoshiai.
+		</para>
+	</listitem>
+	<listitem>
+		<!--
+		2018-06-20 [2e87b18]
+		2018-07-11 [801927a]
+		-->
+		<para>
+		Test: Fix 006.memqcache test failure. (Tatsuo Ishii)
+		</para>
+	</listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-7-4">
   <title>Release 3.7.4</title>
 

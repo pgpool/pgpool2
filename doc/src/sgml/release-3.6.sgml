@@ -1,6 +1,101 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-6-12">
+  <title>Release 3.6.12</title>
+
+  <note>
+    <title>Release Date</title>
+    <simpara>2018-07-31</simpara>
+  </note>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+	<listitem>
+		<!--
+		2018-07-04 [06a1d33]
+		-->
+		<para>
+		Fix "write on backend 0 failed with error :"Success"" error.
+		(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=403">bug 403</ulink>) (Tatsuo Ishii)
+		</para>
+		<para>
+		Don't treated it as an error if <function>write()</function> returns 0.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-07-03 [7f9aad9]
+		-->
+		<para>
+		Fix for 0000409: worker process is not restarted after failover on standby.
+		(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=409">bug 409</ulink>) (Muhammad Usama)
+		</para>
+		<para>
+		Patch contributed by Yugo Nagata.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-20 [9956328]
+		-->
+		<para>
+		Fix memory leaks related to <function>pool_extract_error_message()</function>. (Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-19 [8aadbd3]
+		-->
+		<para>
+		Fix an incorrect declare as bool, rather than int in <function>pool_extract_error_message()</function>. (Tatsuo Ishii)
+		</para>
+		<para>
+		This led to a segfault issue mentioned on certain platform.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-19 [ff2260f]
+		-->
+		<para>
+		Fix segfault in <function>per_node_error_log()</function> on armhf architecture. (Tatsuo Ishii)
+		</para>
+		<para>
+		Patch provided by Christian Ehrhardt.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-07-24 [68f9645]
+		-->
+		<para>
+		Doc: Improve documents of "MD5 Password Authentication", "Installing Pgpool-II" and "pg_md5".(Bo Peng)
+		</para>
+		<para>
+		Patch provided by Takuma Hoshiai.
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-20 [7c4aff8]
+		2018-07-11 [893b1ef]
+		-->
+		<para>
+		Test: Fix 006.memqcache test failure. (Tatsuo Ishii)
+		</para>
+	</listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
 <sect1 id="release-3-6-11">
   <title>Release 3.6.11</title>
 
@@ -90,7 +185,7 @@
 		Also I fixed <function>pgpool_recovery</function> function so that it quotes an 
 		empty string argument with double quotes. 
 		</para>
-		</listitem>
+	</listitem>
     </itemizedlist>
   </sect2>
 </sect1>

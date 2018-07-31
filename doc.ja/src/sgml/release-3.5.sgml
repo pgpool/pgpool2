@@ -1,6 +1,105 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-5-16">
+<!--
+  <title>Release 3.5.16</title>
+	-->
+  <title>リリース 3.5.16</title>
+
+  <note>
+	<!--
+    <title>Release Date</title>
+		-->
+    <title>リリース日</title>
+    <simpara>2018-07-31</simpara>
+  </note>
+
+  <sect2>
+    <title>不具合修正</title> 
+    <itemizedlist>
+	<listitem>
+		<!--
+		2018-07-04 [eec52a4]
+		-->
+		<para>
+		<!--
+		Fix "write on backend 0 failed with error :"Success"" error.
+		(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=403">bug 403</ulink>) (Tatsuo Ishii)
+		-->
+「write on backend 0 failed with error :"Success"」エラーを修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=403">bug 403</ulink>) (Tatsuo Ishii)
+		</para>
+		<para>
+<function>write()</function> が 0 を返した場合、エラーとして扱わないように修正しました。
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-20 [a73a255]
+		-->
+		<para>
+		<!--
+		Fix memory leaks related to pool_extract_error_message(). (Tatsuo Ishii)
+		-->
+<function>pool_extract_error_message()</function> で発生するメモリリークを修正しました。(Tatsuo Ishii)
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-19 [bf61ea2]
+		-->
+		<para>
+		<!--
+		Fix an incorrect declare as bool, rather than int in pool_extract_error_message(). (Tatsuo Ishii)
+		-->
+<function>pool_extract_error_message()</function> 関数での誤ったデータ型の変数宣言を修正しました。(Tatsuo Ishii)
+		</para>
+		<para>
+		<!--
+		This led to a segfault issue mentioned on certain platform.
+		-->
+これにより、特定のプラットフォームでセグメンテーション違反が発生する可能性がありました。
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-19 [95f32d2]
+		-->
+		<para>
+		<!--
+		Fix segfault in per_node_error_log() on armhf architecture. (Tatsuo Ishii)
+		-->
+<literal>armhf</literal> アーキテクチャで発生する <function>per_node_error_log()</function> のセグメンテーション違反を修正しました。(Tatsuo Ishii)
+		</para>
+		<para>
+		<!--
+		Patch provided by Christian Ehrhardt.
+		-->
+修正パッチは Christian Ehrhardt によって提供されました。
+		</para>
+	</listitem>
+
+	<listitem>
+		<!--
+		2018-06-20 [cc270ce]
+		2018-07-11 [b37e629]
+		-->
+		<para>
+		<!--
+		[Test] Fix 006.memqcache test failure. (Tatsuo Ishii)
+		-->
+Test: テスト006.memqcache の失敗を修正しました。(	Tatsuo Ishii)
+		</para>
+	</listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
+
+	
 <sect1 id="release-3-5-15">
 <!--
   <title>Release 3.5.15</title>
