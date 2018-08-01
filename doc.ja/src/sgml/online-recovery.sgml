@@ -293,9 +293,9 @@ postmasterの起動（<literal>pgpool_remote_start</literal>の実施）
           <listitem>
             <para>
 <!--
-              Port number of database to be recovered.
+              Port number of the master(primary) node.
 -->
-リカバリーされるノードのポート番号
+マスター（プライマリ）ノードのポート番号
             </para>
           </listitem>
         </itemizedlist>
