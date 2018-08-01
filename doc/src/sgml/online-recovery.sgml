@@ -274,7 +274,7 @@ rsync used in the command is killed by signal 2 for example.
           </listitem>
           <listitem>
             <para>
-              Port number of database to be recovered.
+              Port number of the master (primary) node.
             </para>
           </listitem>
         </itemizedlist>
