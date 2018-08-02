@@ -691,7 +691,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	if (pool_config->log_client_messages)
 		ereport(LOG,
-			(errmsg("Execute: Execute message from frontend."),
+			(errmsg("Execute message from frontend."),
 				errdetail("portal: \"%s\"",contents)));
 	ereport(DEBUG2,
             (errmsg("Execute: portal name <%s>", contents)));
@@ -969,7 +969,7 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	if (pool_config->log_client_messages)
 		ereport(LOG,
-			(errmsg("Parse: Parse message from frontend."),
+			(errmsg("Parse message from frontend."),
 				errdetail("statement: \"%s\", query: \"%s\"",name, stmt)));
 
 	/* parse SQL string */
@@ -1312,7 +1312,7 @@ POOL_STATUS Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 	if (pool_config->log_client_messages)
 		ereport(LOG,
-			(errmsg("Bind: Bind message from frontend."),
+			(errmsg("Bind message from frontend."),
 				errdetail("portal: \"%s\", statement: \"%s\"",portal_name, pstmt_name)));
 	parse_msg = pool_get_sent_message('Q', pstmt_name, POOL_SENT_MESSAGE_CREATED);
 	if (!parse_msg)
@@ -1458,7 +1458,7 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		if (pool_config->log_client_messages)
 			ereport(LOG,
-				(errmsg("Describe: Describe message from frontend."),
+				(errmsg("Describe message from frontend."),
 					errdetail("statement: \"%s\"",contents+1 )));
 		msg = pool_get_sent_message('Q', contents+1, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
@@ -1474,7 +1474,7 @@ POOL_STATUS Describe(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		if (pool_config->log_client_messages)
 			ereport(LOG,
-				(errmsg("Describe: Describe message from frontend."),
+				(errmsg("Describe message from frontend."),
 					errdetail("portal: \"%s\"",contents+1 )));
 		msg = pool_get_sent_message('B', contents+1, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
@@ -1543,7 +1543,7 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		msg = pool_get_sent_message('Q', contents+1, POOL_SENT_MESSAGE_CREATED);
 		if (pool_config->log_client_messages)
 			ereport(LOG,
-				(errmsg("Close: Close message from frontend."),
+				(errmsg("Close message from frontend."),
 					errdetail("statement: \"%s\"",contents+1)));
 		if (!msg)
 			msg = pool_get_sent_message('P', contents+1, POOL_SENT_MESSAGE_CREATED);
@@ -1553,7 +1553,7 @@ POOL_STATUS Close(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		if (pool_config->log_client_messages)
 			ereport(LOG,
-				(errmsg("Close: Close message from frontend."),
+				(errmsg("Close message from frontend."),
 					errdetail("portal: \"%s\"",contents+1)));
 		msg = pool_get_sent_message('B', contents+1, POOL_SENT_MESSAGE_CREATED);
 	}
@@ -2393,7 +2393,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				pfree(contents);
 			if (pool_config->log_client_messages)
 				ereport(LOG,
-					(errmsg("Terminate: Terminate message from frontend.")));
+					(errmsg("Terminate message from frontend.")));
             ereport(DEBUG5,
                 (errmsg("Frontend terminated"),
                      errdetail("received message kind 'X' from frontend")));
@@ -2403,7 +2403,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			allow_close_transaction = 1;
 			if (pool_config->log_client_messages)
 				ereport(LOG,
-					(errmsg("Query: Query message from frontend."),
+					(errmsg("Query message from frontend."),
 						errdetail("query: \"%s\"",contents)));
 			status = SimpleQuery(frontend, backend, len, contents);
 			break;
@@ -2442,7 +2442,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		case 'S':  /* Sync */
 			if (pool_config->log_client_messages)
 				ereport(LOG,
-					(errmsg("Sync: Sync message from frontendend.")));
+					(errmsg("Sync message from frontend.")));
 			pool_set_doing_extended_query_message();
 			if (pool_is_ignore_till_sync())
 				pool_unset_ignore_till_sync();
@@ -2473,7 +2473,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 				int oid;
 				memcpy(&oid, contents, sizeof(int));
 				ereport(LOG,
-					(errmsg("FunctionCall: FunctionCall message from frontend."),
+					(errmsg("FunctionCall message from frontend."),
 						errdetail("oid: \"%d\"", ntohl(oid) )));
 			}
 			/*
@@ -2505,7 +2505,7 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		case 'H':	/* Flush */
 			if (fkind == 'H' && pool_config->log_client_messages)
 				ereport(LOG,
-					(errmsg("Flush: Flush message from frontend.")));
+					(errmsg("Flush message from frontend.")));
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 			{
 				if (fkind == 'H')
@@ -2904,14 +2904,14 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 				{
 					if (pool_config->log_client_messages && copy_count !=0 )
 						ereport(LOG,
-							(errmsg("CopyData: CopyData message from frontend."),
+							(errmsg("CopyData message from frontend."),
 								errdetail("count: %d", copy_count)));
 					if (kind == 'c' && pool_config->log_client_messages)
 						ereport(LOG,
-							(errmsg("CopyDone: CopyDone message from frontend.")));
+							(errmsg("CopyDone message from frontend.")));
 					if (kind == 'f' && pool_config->log_client_messages)
 						ereport(LOG,
-							(errmsg("CopyFail: CopyFail message from frontend.")));
+							(errmsg("CopyFail message from frontend.")));
 					ereport(DEBUG1,
 						(errmsg("copy data rows"),
 							errdetail("invalid copyin kind. expected 'd' got '%c'", kind)));

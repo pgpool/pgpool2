@@ -75,55 +75,55 @@ sleep 2
 
 ./shutdownall
 #Bind
-grep -A 1 -e "Bind: Bind message from frontend." log/pgpool.log |grep -E "portal: \".*\", statement: \".*\"" >/dev/null 2>&1
+grep -A 1 -e "Bind message from frontend." log/pgpool.log |grep -E "portal: \".*\", statement: \".*\"" >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: Bind log"
 	success_count=$(( success_count + 1 ))
 fi
 #CancelRequest
-grep -A 1 -e "CancelRequest: Cancel message from frontend" log/pgpool.log |grep -E "process id: .+" >/dev/null 2>&1
+grep -A 1 -e "Cancel message from frontend." log/pgpool.log |grep -E "process id: .+" >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: CancelRequest log"
 	success_count=$(( success_count + 1 ))
 fi
 #Close
-grep -A 1 -e "Close: Close message from frontend" log/pgpool.log |grep -E "(portal|statement): \".*\"" >/dev/null 2>&1
+grep -A 1 -e "Close message from frontend." log/pgpool.log |grep -E "(portal|statement): \".*\"" >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: Close log"
 	success_count=$(( success_count + 1 ))
 fi
 #CopyData
-grep -A 1 -e "CopyData message from frontend" log/pgpool.log |grep -E "count: [0-9]+"  >/dev/null 2>&1
+grep -A 1 -e "CopyData message from frontend." log/pgpool.log |grep -E "count: [0-9]+"  >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: CopyData log"
 	success_count=$(( success_count + 1 ))
 fi
 #CopyDone
-grep -e "CopyDone message from frontend" log/pgpool.log >/dev/null 2>&1
+grep -e "CopyDone message from frontend." log/pgpool.log >/dev/null 2>&1
 if [ $? = 0 ];then
     echo "success: CopyDone log"
     success_count=$(( success_count + 1 ))
 fi
 #CopyFail
-grep -e "CopyFail message from frontend" log/pgpool.log >/dev/null 2>&1
+grep -e "CopyFail message from frontend." log/pgpool.log >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: CopyFail log"
 	success_count=$(( success_count + 1 ))
 fi
 #Describe
-grep -A 1 -e "Describe: Describe message from frontend." log/pgpool.log |grep -E "(portal|statement): \".*\"" >/dev/null 2>&1
+grep -A 1 -e "Describe message from frontend." log/pgpool.log |grep -E "(portal|statement): \".*\"" >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: Describe log"
 	success_count=$(( success_count + 1 ))
 fi
 #Execute
-grep -A 1 -e "Execute: Execute message from frontend." log/pgpool.log |grep -E "portal: \".*\"" >/dev/null 2>&1
+grep -A 1 -e "Execute message from frontend." log/pgpool.log |grep -E "portal: \".*\"" >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: Execute log"
 	success_count=$(( success_count + 1 ))
 fi
 #Flush
-grep -e "Flush: Flush message from frontend" log/pgpool.log >/dev/null 2>&1
+grep -e "Flush message from frontend." log/pgpool.log >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: Flush log"
 	success_count=$(( success_count + 1 ))
@@ -135,25 +135,25 @@ if [ $? = 0 ];then
 	success_count=$(( success_count + 1 ))
 fi
 #Parse
-grep -A 1 -e "Parse: Parse message from frontend." log/pgpool.log |grep -E "statement: \".*\", query: \".*\"" >/dev/null 2>&1
+grep -A 1 -e "Parse message from frontend." log/pgpool.log |grep -E "statement: \".*\", query: \".*\"" >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: Parse log"
 	success_count=$(( success_count + 1 ))
 fi
 #Query
-grep -A 1 -e "Query: Query message from frontend." log/pgpool.log |grep -E "query: \".*\"" >/dev/null 2>&1
+grep -A 1 -e "Query message from frontend." log/pgpool.log |grep -E "query: \".*\"" >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: Query log"
 	success_count=$(( success_count + 1 ))
 fi
 #Sync
-grep -e "Sync: Sync message from frontend." log/pgpool.log >/dev/null 2>&1
+grep -e "Sync message from frontend." log/pgpool.log >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: Sync log"
 	success_count=$(( success_count + 1 ))
 fi
 #Terminate
-grep -e "Terminate: Terminate message from frontend." log/pgpool.log >/dev/null 2>&1
+grep -e "Terminate message from frontend." log/pgpool.log >/dev/null 2>&1
 if [ $? = 0 ];then
 	echo "success: Terminate log"
 	success_count=$(( success_count + 1 ))
