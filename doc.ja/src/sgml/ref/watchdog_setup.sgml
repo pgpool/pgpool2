@@ -318,9 +318,9 @@ Pgpool-II documentation
    <para>
 <screen>
 $ watchdog_setup
-Satrting set up
+Starting set up
 ============= setting up pgpool 0 =============
-Satrting set up in streaming replication mode
+Starting set up in streaming replication mode
 creating startall and shutdownall
 creating failover script
 creating database cluster /home/t-ishii/work/pgpool-II/current/pgpool2/src/test/a/pgpool0/data0...done.
@@ -365,7 +365,7 @@ pgpool port is 50000
 pcp port is 50001
 The info above is in README.port.
 ============= setting up pgpool 1 =============
-Satrting set up in streaming replication mode
+Starting set up in streaming replication mode
 creating startall and shutdownall
 creating failover script
 creating database cluster /home/t-ishii/work/pgpool-II/current/pgpool2/src/test/a/pgpool1/data0...done.
@@ -410,7 +410,7 @@ pgpool port is 50004
 pcp port is 50005
 The info above is in README.port.
 ============= setting up pgpool 2 =============
-Satrting set up in streaming replication mode
+Starting set up in streaming replication mode
 creating startall and shutdownall
 creating failover script
 creating database cluster /home/t-ishii/work/pgpool-II/current/pgpool2/src/test/a/pgpool2/data0...done.
