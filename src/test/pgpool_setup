@@ -616,7 +616,7 @@ exec 5> $BASEDIR/pgpool_setup.log
 #-------------------------------------------
 # everything looks good. starting setup...
 #-------------------------------------------
-echo "Satrting set up in $MODENAME"
+echo "Starting set up in $MODENAME"
 
 #-------------------------------------------
 # assign base port for PostgreSQL

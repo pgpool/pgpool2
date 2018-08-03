@@ -89,7 +89,7 @@ $ cp /usr/local/etc/pgpool.conf.sample /usr/local/etc/pgpool.conf
 listen_addresses = 'localhost'
 port = 9999
           </programlisting>
-          We will use the default parameters in thie tutorial.
+          We will use the default parameters in this tutorial.
         </para>
       </sect3>
 

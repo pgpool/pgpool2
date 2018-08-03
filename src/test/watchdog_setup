@@ -278,7 +278,7 @@ fi
 #-------------------------------------------
 # everything looks good. starting setup...
 #-------------------------------------------
-echo "Satrting set up "
+echo "Starting set up "
 
 #-------------------------------------------
 # Run pgpool_setup
