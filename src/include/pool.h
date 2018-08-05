@@ -742,5 +742,6 @@ extern int pool_frontend_exists(void);
 extern pid_t pool_waitpid(int *status);
 extern int write_status_file(void);
 extern void do_health_check_child(int *node_id);
+extern int get_next_master_node(void);
 
 #endif /* POOL_H */
