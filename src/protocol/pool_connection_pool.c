@@ -880,6 +880,17 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 					/* set down status to local status area */
 					*(my_backend_status[i]) = CON_DOWN;
 
+					/* if master_node_id is not updated, the update it */
+					if (Req_info->master_node_id == i)
+					{
+						int old_master = Req_info->master_node_id;
+						Req_info->master_node_id = get_next_master_node();
+
+						ereport(LOG,
+								(errmsg("master node %d is down. Update master node to %d",
+										old_master, Req_info->master_node_id)));
+					}
+
 					/* make sure that we need to restart the process after
 					 * finishing this session
 					 */
