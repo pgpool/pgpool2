@@ -109,7 +109,6 @@ static void wakeup_children(void);
 static void reload_config(void);
 static int pool_pause(struct timeval *timeout);
 static void kill_all_children(int sig);
-static int get_next_master_node(void);
 static pid_t fork_follow_child(int old_master, int new_primary, int old_primary);
 static int read_status_file(bool discard_status);
 static RETSIGTYPE exit_handler(int sig);
@@ -1319,7 +1318,7 @@ static RETSIGTYPE exit_handler(int sig)
  * Calculate next valid master node id.
  * If no valid node found, returns -1.
  */
-static int get_next_master_node(void)
+int get_next_master_node(void)
 {
 	int i;
 

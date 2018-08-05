@@ -706,5 +706,6 @@ extern int pool_pool_index(void);
 
 extern int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps);
 extern int write_status_file(void);
+extern int get_next_master_node(void);
 
 #endif /* POOL_H */
