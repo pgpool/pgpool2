@@ -754,5 +754,6 @@ extern void do_health_check_child(int *node_id);
 extern POOL_NODE_STATUS *verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots);
 extern POOL_NODE_STATUS *pool_get_node_status(void);
 extern void pool_set_backend_status_changed_time(int backend_id);
+extern int get_next_master_node(void);
 
 #endif /* POOL_H */
