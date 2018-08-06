@@ -1053,7 +1053,6 @@ authenticate_frontend_SCRAM(POOL_CONNECTION *backend, POOL_CONNECTION *frontend,
 			(errmsg("authentication failed"),
 				 errdetail("faild to build the scram verifier")));
 
-
 	/*
 	 * SASL auth is not supported for protocol versions before 3, because it
 	 * relies on the overall message length word to determine the SASL payload
