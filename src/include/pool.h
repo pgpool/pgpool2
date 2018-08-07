@@ -567,6 +567,7 @@ extern POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 									  POOL_CONNECTION_POOL *backend,
 									  int reset_request);
 
+extern void connection_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
 extern int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp);
 extern void authenticate_frontend(POOL_CONNECTION *frontend);

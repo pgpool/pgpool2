@@ -31,6 +31,11 @@
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "auth/md5.h"
+
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -66,16 +71,247 @@ static int send_auth_ok(POOL_CONNECTION *frontend, int protoMajor);
 static void sendAuthRequest(POOL_CONNECTION *frontend, int protoMajor, int32 auth_req_type, char *extradata, int extralen);
 static long PostmasterRandom(void);
 
-static int pg_SASL_continue(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payload, int payloadlen, void *sasl_state, bool final);
-static void* pg_SASL_init(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payload, int payloadlen, char* storedPassword);
+static int pg_SASL_continue(POOL_CONNECTION *backend, char *payload, int payloadlen, void *sasl_state, bool final);
+static void* pg_SASL_init(POOL_CONNECTION *backend, char *payload, int payloadlen, char *username, char* storedPassword);
 static bool do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoMajor, int message_length,
-					 char *storedPassword, PasswordType passwordType);
+					 char *username, char *storedPassword, PasswordType passwordType);
 static void authenticate_frontend_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth, int protoMajor);
 static void authenticate_frontend_cert(POOL_CONNECTION *frontend);
 static void authenticate_frontend_SCRAM(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth);
 static void authenticate_frontend_clear_text(POOL_CONNECTION *frontend);
 static bool get_auth_password(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth,
 							  char** password, PasswordType *passwordType);
+
+/*
+ * Do authentication. Assuming the only caller is
+ * make_persistent_db_connection().
+ */
+void connection_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
+{
+	char kind;
+	int length;
+	int auth_kind;
+	char state;
+	char *p;
+	int pid, key;
+	bool keydata_done;
+
+	/*
+	 * read kind expecting 'R' packet (authentication response)
+	 */
+	pool_read_with_error(cp->con, &kind, sizeof(kind),
+						 "authentication message response type");
+
+	if (kind != 'R')
+	{
+		char *msg;
+		int sts = 0;
+
+		if (kind == 'E' || kind == 'N')
+		{
+			sts =  pool_extract_error_message(false, cp->con, cp->sp->major, false, &msg);
+		}
+
+		if (sts == 1)	/* succeeded in extracting error/notice message */
+		{
+			ereport(ERROR,
+					(errmsg("failed to authenticate"),
+					 errdetail("%s", msg)));
+			pfree(msg);
+		}
+		ereport(ERROR,
+			(errmsg("failed to authenticate"),
+				 errdetail("invalid authentication message response type, Expecting 'R' and received '%c'",kind)));
+	}
+
+	/* read message length */
+	pool_read_with_error(cp->con, &length, sizeof(length),
+						 "authentication message response length");
+
+	length = ntohl(length);
+
+	/* read auth kind */
+	pool_read_with_error(cp->con, &auth_kind, sizeof(auth_kind),
+						 "authentication method from response");
+	auth_kind = ntohl(auth_kind);
+	ereport(DEBUG1,
+			(errmsg("authenticate kind = %d",auth_kind)));
+
+	if (auth_kind == AUTH_REQ_OK)	/* trust authentication? */
+	{
+		cp->con->auth_kind = AUTH_REQ_OK;
+	}
+	else if (auth_kind == AUTH_REQ_PASSWORD) /* clear text password? */
+	{
+		kind = send_password_packet(cp->con, PROTO_MAJOR_V3, password);
+		if (kind != AUTH_REQ_OK)
+			ereport(ERROR,
+				(errmsg("password authentication failed for user:%s",cp->sp->user),
+					 errdetail("backend replied with invalid kind")));
+
+		cp->con->auth_kind = AUTH_REQ_OK;
+		return;
+	}
+	else if (auth_kind == AUTH_REQ_CRYPT) /* crypt password? */
+	{
+		char salt[3];
+		char *crypt_password;
+
+		pool_read_with_error(cp->con, &salt, 2,"crypt salt");
+		salt[2] = '\0';
+
+		crypt_password = crypt(password, salt);
+		if (crypt_password == NULL)
+			ereport(ERROR,
+				(errmsg("crypt authentication failed for user:%s",cp->sp->user),
+					 errdetail("failed to encrypt the password")));
+
+		/* Send password packet to backend and receive auth response */
+		kind = send_password_packet(cp->con, PROTO_MAJOR_V3, crypt_password);
+		if (kind != AUTH_REQ_OK)
+			ereport(ERROR,
+					(errmsg("crypt authentication failed for user:%s",cp->sp->user),
+					 errdetail("backend replied with invalid kind")));
+
+		cp->con->auth_kind = AUTH_REQ_OK;
+		return;
+	}
+	else if (auth_kind == AUTH_REQ_MD5) /* md5 password? */
+	{
+		char salt[4];
+		char *buf, *buf1;
+
+		pool_read_with_error(cp->con, &salt, sizeof(salt),"authentication md5 salt");
+
+		buf = palloc0(2 * (MD5_PASSWD_LEN + 4)); /* hash + "md5" + '\0' */
+
+		/* build md5 password */
+		buf1 = buf + MD5_PASSWD_LEN + 4;
+		pool_md5_encrypt(password, cp->sp->user, strlen(cp->sp->user), buf1);
+		pool_md5_encrypt(buf1, salt, 4, buf + 3);
+		memcpy(buf, "md5", 3);
+
+		/* Send password packet to backend and receive auth response */
+		kind = send_password_packet(cp->con, PROTO_MAJOR_V3, buf);
+		pfree(buf);
+		if (kind != AUTH_REQ_OK)
+			ereport(ERROR,
+					(errmsg("md5 authentication failed for user:%s",cp->sp->user),
+					 errdetail("backend replied with invalid kind")));
+
+		cp->con->auth_kind = AUTH_REQ_OK;
+		return;
+	}
+	else if (auth_kind == AUTH_REQ_SASL)
+	{
+		if (do_SCRAM(NULL, cp->con, PROTO_MAJOR_V3, length, cp->sp->user, password, PASSWORD_TYPE_PLAINTEXT) == false)
+		{
+			ereport(ERROR,
+				(errmsg("failed to authenticate with backend"),
+					 errdetail("SCRAM authentication failed for user:%s",cp->sp->user)));
+		}
+		ereport(DEBUG1,
+				(errmsg("SCRAM authentication successful for user:%s",cp->sp->user)));
+
+	}
+	else
+	{
+		ereport(ERROR,
+				(errmsg("failed to authenticate"),
+				 errdetail("auth kind %d is not yet supported", auth_kind)));
+	}
+
+	/*
+	 * Read backend key data and wait until Ready for query arriving or
+	 * error happens.
+	 */
+
+	keydata_done = false;
+
+	for (;;)
+	{
+		pool_read_with_error(cp->con, &kind, sizeof(kind),
+							 "authentication message kind");
+
+		switch (kind)
+		{
+			case 'K':	/* backend key data */
+				keydata_done = true;
+				ereport(DEBUG1,
+						(errmsg("authenticate backend: key data received")));
+
+				/* read message length */
+				pool_read_with_error(cp->con, &length, sizeof(length),"message length for authentication kind 'K'");
+				if (ntohl(length) != 12)
+				{
+					ereport(ERROR,
+							(errmsg("failed to authenticate"),
+							 errdetail("invalid backend key data length. received %d bytes when expecting 12 bytes"
+									   , ntohl(length))));
+				}
+
+				/* read pid */
+				pool_read_with_error(cp->con, &pid, sizeof(pid),"pid for authentication kind 'K'");
+				cp->pid = pid;
+
+				/* read key */
+				pool_read_with_error(cp->con, &key, sizeof(key),
+									 "key for authentication kind 'K'");
+				cp->key = key;
+				break;
+
+			case 'Z':	/* Ready for query */
+				/* read message length */
+				pool_read_with_error(cp->con, &length, sizeof(length),
+									 "message length for authentication kind 'Z'");
+				length = ntohl(length);
+
+				/* read transaction state */
+				pool_read_with_error(cp->con, &state, sizeof(state),
+									 "transaction state  for authentication kind 'Z'");
+
+				ereport(DEBUG1,
+						(errmsg("authenticate backend: transaction state: %c", state)));
+
+				cp->con->tstate = state;
+
+				if (!keydata_done)
+				{
+					ereport(ERROR,
+							(errmsg("failed to authenticate"),
+							 errdetail("ready for query arrived before receiving keydata")));
+				}
+				return;
+				break;
+
+			case 'S':	/* parameter status */
+			case 'N':	/* notice response */
+			case 'E':	/* error response */
+				/* Just throw away data */
+				pool_read_with_error(cp->con, &length, sizeof(length),
+									 "backend message length");
+
+				length = ntohl(length);
+				length -= 4;
+
+				p = pool_read2(cp->con, length);
+				if (p == NULL)
+					ereport(ERROR,
+							(errmsg("failed to authenticate"),
+							 errdetail("unable to read data from socket")));
+
+				break;
+
+			default:
+				ereport(ERROR,
+						(errmsg("failed to authenticate"),
+						 errdetail("unknown authentication message response received '%c'",kind)));
+				break;
+		}
+	}
+	ereport(ERROR,
+			(errmsg("failed to authenticate")));
+}
 
 /*
  * After sending the start up packet to the backend, do the
@@ -366,7 +602,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 				(errmsg("authentication backend %d",i),
 					 errdetail("trying SCRAM authentication")));
 
-			if (do_SCRAM(frontend, CONNECTION(cp, i), protoMajor, message_length, password, passwordType) == false)
+			if (do_SCRAM(frontend, CONNECTION(cp, i), protoMajor, message_length, frontend->username, password, passwordType) == false)
 			{
 				pool_send_auth_fail(frontend, cp);
 				ereport(ERROR,
@@ -1197,6 +1433,14 @@ void authenticate_frontend(POOL_CONNECTION *frontend)
 			break;
 		case uaPassword:
 			authenticate_frontend_clear_text(frontend);
+			break;
+		case uaImplicitReject:
+		case uaReject:
+			ereport(ERROR,
+					(errmsg("authentication with pgpool failed for user \"%s\" rejected",frontend->username)));
+			break;
+		case uaTrust:
+			frontend->frontend_authenticated = true;
 	}
 }
 
@@ -1398,7 +1642,7 @@ static int do_md5_single_backend(POOL_CONNECTION *backend, POOL_CONNECTION *fron
 					 errdetail("backend replied with invalid kind")));
 
 		/* If authenticated, reply back to frontend and save info */
-		if (kind == 0)
+		if (kind == AUTH_REQ_OK)
 		{
 			send_auth_ok(frontend, protoMajor);
 			backend->passwordType = PASSWORD_TYPE_MD5;
@@ -1486,7 +1730,7 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 					   strlen(frontend->username), userPassword);
 		pool_passwd = userPassword;
 	}
-	else if (frontend->passwordMapping->pgpoolUser.passwordType == PASSWORD_TYPE_MD5)
+	else if (passwordType == PASSWORD_TYPE_MD5)
 	{
 		pool_passwd = storedPassword;
 	}
@@ -1500,21 +1744,27 @@ static int do_md5(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reaut
 	/* master? */
 	if (IS_MASTER_NODE_ID(backend->db_node_id) && frontend->frontend_authenticated == false )
 	{
-		/* frontend is not yet authenticated, Do it now */
-		if (frontend->passwordType != PASSWORD_TYPE_UNKNOWN &&
-			frontend->auth_kind != AUTH_REQ_PASSWORD)
-		{
-			authenticate_frontend_md5(backend, frontend, reauth, protoMajor);
-		}
-		else
+		/*
+		 * If frontend is not authenticated and do it it first.
+		 * but if we have already received the password from frontend
+		 * using the clear text auth, we may not need to authenticate it
+		 */
+		if (pool_config->allow_clear_text_frontend_auth &&
+			frontend->auth_kind == AUTH_REQ_PASSWORD &&
+			frontend->pwd_size > 0 &&
+			frontend->passwordType == PASSWORD_TYPE_PLAINTEXT)
 		{
 			ereport(DEBUG2,
-				(errmsg("md5 authentication using the password from frontend")));
+					(errmsg("MD5 authentication using the password from frontend")));
 			/* save this password in backend for the re-auth */
 			backend->pwd_size = frontend->pwd_size;
 			memcpy(backend->password, frontend->password, frontend->pwd_size);
 			backend->password[backend->pwd_size] = 0; /* null terminate */
 			backend->passwordType = frontend->passwordType;
+		}
+		else
+		{
+			authenticate_frontend_md5(backend, frontend, reauth, protoMajor);
 		}
 	}
 
@@ -1971,7 +2221,7 @@ PostmasterRandom(void)
 
 
 static bool do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoMajor, int message_length,
-	   char *storedPassword, PasswordType passwordType)
+					 char *username, char *storedPassword, PasswordType passwordType)
 {
 	/* read the packet first */
 	void *sasl_state = NULL;
@@ -1993,15 +2243,17 @@ static bool do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int pr
 	}
 
 	/* master? */
-	if (IS_MASTER_NODE_ID(backend->db_node_id) && frontend->frontend_authenticated == false )
+	if (frontend && IS_MASTER_NODE_ID(backend->db_node_id) && frontend->frontend_authenticated == false )
 	{
-		/* frontend is not yet authenticated, Do it now */
-		if (frontend->passwordType != PASSWORD_TYPE_UNKNOWN &&
-			frontend->auth_kind != AUTH_REQ_PASSWORD)
-		{
-			authenticate_frontend_SCRAM(backend, frontend, 0);
-		}
-		else
+		/*
+		 * If frontend is not authenticated and do it it first.
+		 * but if we have already received the password from frontend
+		 * using the clear text auth, we may not need to authenticate it
+		 */
+		if (pool_config->allow_clear_text_frontend_auth &&
+			frontend->auth_kind == AUTH_REQ_PASSWORD &&
+			frontend->pwd_size > 0 &&
+			frontend->passwordType == PASSWORD_TYPE_PLAINTEXT)
 		{
 			ereport(DEBUG2,
 					(errmsg("SCRAM authentication using the password from frontend")));
@@ -2010,6 +2262,10 @@ static bool do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int pr
 			memcpy(backend->password, frontend->password, frontend->pwd_size);
 			backend->password[backend->pwd_size] = 0; /* null terminate */
 			backend->passwordType = frontend->passwordType;
+		}
+		else
+		{
+			authenticate_frontend_SCRAM(backend, frontend, 0);
 		}
 	}
 
@@ -2036,7 +2292,7 @@ static bool do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int pr
 				 * The request contains the name (as assigned by IANA) of the
 				 * authentication mechanism.
 				 */
-				sasl_state = pg_SASL_init(frontend, backend, payload, payload_len, storedPassword);
+				sasl_state = pg_SASL_init(backend, payload, payload_len, username, storedPassword);
 				if (!sasl_state)
 				{
 					ereport(ERROR,
@@ -2053,7 +2309,7 @@ static bool do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int pr
 							(errmsg("invalid authentication request from server: AUTH_REQ_SASL_CONT without AUTH_REQ_SASL")));
 					return false;
 				}
-				if (pg_SASL_continue(frontend, backend, payload, payload_len, sasl_state, (auth_kind == AUTH_REQ_SASL_FIN))!= 0)
+				if (pg_SASL_continue(backend, payload, payload_len, sasl_state, (auth_kind == AUTH_REQ_SASL_FIN))!= 0)
 				{
 					/* Use error message, if set already */
 					ereport(ERROR,
@@ -2086,7 +2342,7 @@ static bool do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int pr
 }
 
 static void*
-pg_SASL_init(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payload, int payloadlen, char* storedPassword)
+pg_SASL_init(POOL_CONNECTION *backend, char *payload, int payloadlen, char *username, char* storedPassword)
 {
 	char	   *initialresponse = NULL;
 	int			initialresponselen;
@@ -2132,7 +2388,7 @@ pg_SASL_init(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payload,
 						(errmsg("password not found")));
 			}
 
-			sasl_state = pg_fe_scram_init(frontend->username, storedPassword);
+			sasl_state = pg_fe_scram_init(username, storedPassword);
 			if (!sasl_state)
 				ereport(ERROR,
 						(errmsg("SASL authentication error\n")));
@@ -2189,7 +2445,7 @@ pg_SASL_init(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payload,
  * the protocol.
  */
 static int
-pg_SASL_continue(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payload, int payloadlen, void *sasl_state, bool final)
+pg_SASL_continue(POOL_CONNECTION *backend, char *payload, int payloadlen, void *sasl_state, bool final)
 {
 	char	   *output;
 	int			outputlen;
@@ -2233,7 +2489,7 @@ pg_SASL_continue(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, char *payl
 
 		return 0;
 	}
-	
+
 	if (done && !success)
 		return -1;
 
