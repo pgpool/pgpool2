@@ -46,6 +46,7 @@ void destroy_regex_arrary(RegArray *ar);
 typedef struct {
   char *left_token;
   char *right_token;
+  double weight_token;
 } Left_right_token;
 
 typedef struct {

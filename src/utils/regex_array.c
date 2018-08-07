@@ -193,11 +193,13 @@ void extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_to
 		int len;
 		char *left_token;
 		char *right_token;
+		char *weight_token = NULL;
 		int i,j;
 
 		len = strlen(token)+1;
 		left_token = palloc(len);
 		right_token = palloc(len);
+		weight_token = palloc(len);
 
 		for (i=0;token[i] && token[i] != delimi2;i++)
 			left_token[i] = token[i];
@@ -216,10 +218,20 @@ void extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_to
 		i++;
 		j = 0;
 
-		for (;token[i];i++)
+		for (;token[i] && token[i] != '('; i++)
 			right_token[j++] = token[i];
 
 		right_token[j] = '\0';
+
+		/* delimiter 3 */
+		int k = 0;
+		if (token[i] == '(')
+		{
+			i++;
+			for (;token[i] && token[i] != ')'; i++)
+				weight_token[k++] = token[i];
+		}
+		weight_token[k] = '\0';
 
 		if (lrtokens->pos == lrtokens->size)
 		{
@@ -228,6 +240,11 @@ void extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_to
 		}
 		lrtokens->token[lrtokens->pos].left_token = left_token;
 		lrtokens->token[lrtokens->pos].right_token = right_token;
+		if (weight_token[0] != '\0')
+			lrtokens->token[lrtokens->pos].weight_token = atof(weight_token);
+		else
+			lrtokens->token[lrtokens->pos].weight_token = 1.0;
+
 		lrtokens->pos++;
 	}
 	pfree(mystr);

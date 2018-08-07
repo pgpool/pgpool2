@@ -857,14 +857,19 @@ black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM 
          Specifies the list of <replaceable>"database-name:node id"</replaceable> pairs
          to send <acronym>SELECT</acronym> queries to a particular backend
          node for a particular database connection.
+-->
+特定のデータベース接続で<acronym>SELECT</acronym>クエリが指定したロードバランス比率で特定のバックエンドノードに送信されるように、"<replaceable>データベース名:ノードID(比率)</replaceable>"ペアのリストを指定します。ロードバランス比率は0-1の間の値を指定します。
+比率の指定を省略した場合は、デフォルトの1.0となります。
+        </para>
+        <para>
+<!--
          For example, by specifying "test:1", <productname>Pgpool-II</productname>
          will redirect all <acronym>SELECT</acronym> queries to the backend node of ID 1 for
          the connection to "test" database.
          You can specify multiple <replaceable>"database name:node id"</replaceable> pair by separating them
          using comma (,).
 -->
-特定のデータベース接続では<acronym>SELECT</acronym>クエリが特定のバックエンドノードに送信されるように、"<replaceable>データベース名:ノードID</replaceable>"ペアのリストを指定します。
-たとえば"test:1"とした場合、"test"データベースへの接続においては、<productname>Pgpool-II</productname>は全ての<acronym>SELECT</acronym>クエリをIDが1のバックエンドノードに送信します。
+たとえば"test:1(0.5)"とした場合、"test"データベースへの接続においては、<productname>Pgpool-II</productname>は50%の<acronym>SELECT</acronym>クエリをIDが1のバックエンドノードに送信します。
 複数の"<replaceable>データベース名:ノードID</replaceable>"のペアを カンマ(,)で区切って指定することができます。
         </para>
         <para>
@@ -875,10 +880,10 @@ black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM 
          if <emphasis>"standby"</emphasis> is specified, one of the standby nodes are selected randomly
          based on weights.
 -->
-データベース名には正規表現を指定することできます。
+データベース名には正規表現を指定することができます。
 <replaceable>ノードID</replaceable>には特別なキーワードを使うことができます。
 "<emphasis>primary</emphasis>"が指定された場合にはクエリはプライマリノードに送られます。
-また、"<emphasis>standby</emphasis>"が指定された場合はスタンバイノードのうちどれかをウェイトに応じてランダムに選択します。
+また、"<emphasis>standby</emphasis>"が指定された場合はスタンバイノードのうちどれかをウェイト(<xref linkend="guc-backend-weight">)に応じてランダムに選択します。
         </para>
 
         <example id="example-database-redirect-list">
@@ -909,7 +914,7 @@ black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM 
                 Route all <acronym>SELECT</acronym> queries on <literal>mydb0</literal> or on
                 <literal>mydb1</literal> databases to backend node of ID 1.
 -->
-全ての<literal>mydb0</literal>または<literal>mydb1</literal>データベースにおける<acronym>SELECT</acronym>クエリはIDが1のバックエンドノードに送る。
+全ての<literal>mydb0</literal>または<literal>mydb1</literal>データベースにおける30%の<acronym>SELECT</acronym>クエリはIDが1のバックエンドノードに送る。
               </para>
             </listitem>
             <listitem>
@@ -929,7 +934,7 @@ black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM 
 -->
 <xref linkend="guc-database-redirect-preference-list">は以下のように設定します。
               <programlisting>
-database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
+database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:standby'
               </programlisting>
           </para>
         </example>
@@ -960,7 +965,7 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
           to send <acronym>SELECT</acronym> queries to a particular backend
           node for a particular client application connection.
 -->
-特定のクライアントアプリケーションの接続では<acronym>SELECT</acronym>クエリが特定のバックエンドノードに送信されるように、"<replaceable>アプリケーション名:ノードID</replaceable>"ペアのリストを指定します。
+特定のクライアントアプリケーションの接続で<acronym>SELECT</acronym>クエリが指定したロードバランス比率で特定のバックエンドノードに送信されるように、"<replaceable>アプリケーション名:ノードID(比率)</replaceable>"ペアのリストを指定します。
         </para>
 
         <note>
@@ -1005,6 +1010,7 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
 -->
 <xref linkend="guc-app-name-redirect-preference-list">の記法は<xref linkend="guc-database-redirect-preference-list">と同じですので、アプリケーション名には正規表現も使用できます。
 同様に特別なキーワード"<emphasis>primary</emphasis>"はプライマリノードを、"<emphasis>standby</emphasis>"はスタンバイサーバのいずれかを意味します。
+ロードバランス比率は0-1の間の値を指定します。ロードバランス比率の指定を省略した場合は、デフォルトの1.0となります。
         </para>
 
         <example id="example-app-name-redirect-list">
@@ -1035,7 +1041,7 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
                 Route all <acronym>SELECT</acronym> queries from <literal>myapp1</literal>
                 client to backend node of ID 1.
 -->
-全ての<literal>myapp1</literal>クライアントからの<acronym>SELECT</acronym>クエリはIDが1のバックエンドノードに送る。
+全ての<literal>myapp1</literal>クライアントからの30%の<acronym>SELECT</acronym>クエリはIDが1のバックエンドノードに送る。
               </para>
             </listitem>
             <listitem>
@@ -1055,7 +1061,7 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
 -->
 <xref linkend="guc-app-name-redirect-preference-list">は以下のように設定します。
               <programlisting>
-app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
+app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
               </programlisting>
           </para>
         </example>
@@ -1067,6 +1073,39 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
             over the <xref linkend="guc-database-redirect-preference-list">.
 -->
 <xref linkend="guc-app-name-redirect-preference-list">は、<xref linkend="guc-database-redirect-preference-list">よりも優先されます。
+          </para>
+          <para>
+<!--
+			For example, if you set
+			<literal>database_redirect_preference_list = 'postgres:standby(1.0)'</literal> and
+			<literal>app_name_redirect_preference_list = 'psql:primary(1.0)'</literal>,
+			all SELECT from psql client on postgres database will be sent to primary backend node.
+-->
+たとえば、
+<literal>database_redirect_preference_list = 'postgres:standby(1.0)'</literal>、
+<literal>app_name_redirect_preference_list = 'myapp1:primary(1.0)'</literal>
+と設定した場合、アプリケーション<literal>myapp1</literal>、<literal>postgres</literal>データベースでの<literal>SELECT</literal>はプライマリバックエンドノードに送られます。
+          </para>
+        </note>
+
+        <note>
+          <para>
+<!--
+			In the settings of <xref linkend="guc-app-name-redirect-preference-list"> and
+			<xref linkend="guc-database-redirect-preference-list">, when multiple database
+			names and application names are matched, the first setting will be used.
+-->
+<xref linkend="guc-app-name-redirect-preference-list">及び<xref linkend="guc-database-redirect-preference-list">の設定では、複数のデータベース名やアプリケーション名にマッチした場合、最初の設定が反映されます。
+          </para>
+          <para>
+<!--
+			For example, if you set
+			database_redirect_preference_list = 'postgres:primary,postgres:standby',
+			"postgres: primary" will be used.
+-->
+たとえば、
+<literal>database_redirect_preference_list = 'postgres:primary,postgres:standby'</literal>
+と設定した場合、<literal>postgres:primary</literal>の設定が反映されます。
           </para>
         </note>
 
@@ -1081,7 +1120,7 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
             If you want to use the <xref linkend="guc-app-name-redirect-preference-list">
             feature through <acronym>JDBC</acronym>, use postgreSQL-9.4 or later version of the driver.
 -->
-<acronym>JDBC</acronym>ドライバのpostgresql-9.3以前のバージョンでは、<acronym>JDBC</acronym>ドライバの"<literal>ApplicationName</literal>" と "<literal>assumeMinServerVersion=9.0</literal>"オプションを指定してもスタートアップパケットの中にアプリケーション名を含ません。
+<acronym>JDBC</acronym>ドライバのpostgresql-9.3以前のバージョンでは、<acronym>JDBC</acronym>ドライバの"<literal>ApplicationName</literal>" と "<literal>assumeMinServerVersion=9.0</literal>"オプションを指定してもスタートアップパケットの中にアプリケーション名を含みません。
 <acronym>JDBC</acronym>から<xref linkend="guc-app-name-redirect-preference-list">機能を使用したければ、postgresql-9.4 以降のドライバをお使いください
           </para>
         </caution>

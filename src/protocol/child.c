@@ -1666,9 +1666,10 @@ int select_load_balancing_node(void)
 	int selected_slot;
 	double total_weight,r;
 	int i;
-	int index;
+	int index_db = -1, index_app = -1;
 	POOL_SESSION_CONTEXT *ses = pool_get_session_context(false);
 	int tmp;
+	int no_load_balance_node_id = -2;
 
 	/*
 	 * -2 indicates there's no database_redirect_preference_list. -1 indicates
@@ -1677,7 +1678,13 @@ int select_load_balancing_node(void)
 	 */
 	int suggested_node_id = -2;
 
-	/* 
+#if defined(sun) || defined(__sun)
+	r = (((double)rand())/RAND_MAX);
+#else
+	r = (((double)random())/RAND_MAX);
+#endif
+
+	/*
 	 * Check database_redirect_preference_list
 	 */
 	if (SL_MODE && pool_config->redirect_dbnames)
@@ -1687,23 +1694,23 @@ int select_load_balancing_node(void)
 		/* Check to see if the database matches any of
 		 * database_redirect_preference_list
 		 */
-		index = regex_array_match(pool_config->redirect_dbnames, database);
-		if (index >= 0)
+		index_db = regex_array_match(pool_config->redirect_dbnames, database);
+		if (index_db >= 0)
 		{
 			/* Matches */
 			ereport(DEBUG1,
 					(errmsg("selecting load balance node db matched"),
-					 errdetail("dbname: %s index is %d dbnode is %s", database, index, pool_config->db_redirect_tokens->token[index].right_token)));
+					 errdetail("dbname: %s index is %d dbnode is %s weight is %f", database, index_db,
+						pool_config->db_redirect_tokens->token[index_db].right_token,
+						pool_config->db_redirect_tokens->token[index_db].weight_token)));
 
-			tmp = choose_db_node_id(pool_config->db_redirect_tokens->token[index].right_token);
+			tmp = choose_db_node_id(pool_config->db_redirect_tokens->token[index_db].right_token);
 			if (tmp == -1 || (tmp >= 0 && VALID_BACKEND(tmp)))
-			{
 				suggested_node_id = tmp;
-			}
 		}
 	}
 
-	/* 
+	/*
 	 * Check app_name_redirect_preference_list
 	 */
 	if (SL_MODE && pool_config->redirect_app_names)
@@ -1716,33 +1723,64 @@ int select_load_balancing_node(void)
 		 */
 		if (app_name && strlen(app_name) > 0)
 		{
-			/* Check to see if the aplication name matches any of
+			/*
+			 * Check to see if the aplication name matches any of
 			 * app_name_redirect_preference_list.
 			 */
-			index = regex_array_match(pool_config->redirect_app_names, app_name);
-			if (index >= 0)
+			index_app = regex_array_match(pool_config->redirect_app_names, app_name);
+			if (index_app >= 0)
 			{
+
+				/*
+				 * if the aplication name matches any of app_name_redirect_preference_list,
+				 * database_redirect_preference_list will be ignored.
+				 */
+				index_db = -1;
+
 				/* Matches */
 				ereport(DEBUG1,
 						(errmsg("selecting load balance node db matched"),
-						 errdetail("app_name: %s index is %d dbnode is %s", app_name, index, pool_config->app_name_redirect_tokens->token[index].right_token)));
+						 errdetail("app_name: %s index is %d dbnode is %s weight is %f", app_name, index_app,
+							pool_config->app_name_redirect_tokens->token[index_app].right_token,
+							pool_config->app_name_redirect_tokens->token[index_app].weight_token)));
 
-				tmp = choose_db_node_id(pool_config->app_name_redirect_tokens->token[index].right_token);
+				tmp = choose_db_node_id(pool_config->app_name_redirect_tokens->token[index_app].right_token);
 				if (tmp == -1 || (tmp >= 0 && VALID_BACKEND(tmp)))
-				{
 					suggested_node_id = tmp;
-				}
 			}
 		}
 	}
 
 	if (suggested_node_id >= 0)
 	{
-		ereport(DEBUG1,
-				(errmsg("selecting load balance node"),
-				 errdetail("selected backend id is %d", suggested_node_id)));
+		/*
+		 * If the weight is bigger than random rate then send to suggested_node_id.
+		 * If the weight is less than random rate then choose load balance node from other nodes.
+		 */
+		if ((index_db >= 0 && r <= pool_config->db_redirect_tokens->token[index_db].weight_token) ||
+			(index_app >= 0 && r <= pool_config->app_name_redirect_tokens->token[index_app].weight_token))
+		{
+			ereport(DEBUG1,
+					(errmsg("selecting load balance node"),
+					 errdetail("selected backend id is %d", suggested_node_id)));
+			return suggested_node_id;
+		}
+		else
+			no_load_balance_node_id = suggested_node_id;
+	}
 
-		return suggested_node_id;
+	/* In case of sending to standby */
+	if (suggested_node_id == -1)
+	{
+		/* If the weight is less than random rate then send to primary. */
+		if ((index_db >= 0 && r > pool_config->db_redirect_tokens->token[index_db].weight_token) ||
+			(index_app >= 0 && r > pool_config->app_name_redirect_tokens->token[index_app].weight_token))
+		{
+			ereport(DEBUG1,
+					(errmsg("selecting load balance node"),
+					 errdetail("selected backend id is %d", PRIMARY_NODE_ID)));
+			return PRIMARY_NODE_ID;
+		}
 	}
 
 	/* Choose a backend in random manner with weight */
@@ -1753,6 +1791,8 @@ int select_load_balancing_node(void)
 	{
 		if (VALID_BACKEND(i))
 		{
+			if (i == no_load_balance_node_id)
+				continue;
 			if (suggested_node_id == -1)
 			{
 				if (i != PRIMARY_NODE_ID)
@@ -1772,7 +1812,7 @@ int select_load_balancing_node(void)
 	total_weight = 0.0;
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
-		if (suggested_node_id == -1 && i == PRIMARY_NODE_ID)
+		if ((suggested_node_id == -1 && i == PRIMARY_NODE_ID) || i == no_load_balance_node_id)
 			continue;
 
 		if (VALID_BACKEND(i) && BACKEND_INFO(i).backend_weight > 0.0)

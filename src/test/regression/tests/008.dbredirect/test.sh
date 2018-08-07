@@ -25,7 +25,7 @@ echo "done."
 
 source ./bashrc.ports
 
-echo "database_redirect_preference_list = 'postgres:primary,test:1,mydb[5-9]:2,test2:standby'" >> etc/pgpool.conf
+echo "database_redirect_preference_list = 'postgres:primary,test:1,mydb[5-9]:2,test2:standby,test3:primary(0.0),test4:standby(0.0),test5:primary(1.0)'" >> etc/pgpool.conf
 
 ./startall
 
@@ -34,6 +34,9 @@ wait_for_pgpool_startup
 
 $CREATEDB mydb6
 $CREATEDB test2
+$CREATEDB test3
+$CREATEDB test4
+$CREATEDB test5
 $PGBENCH -i postgres
 
 ok=yes
@@ -41,22 +44,45 @@ ok=yes
 # should be redirect to primary (node 0)
 $PSQL -c "SELECT 'test1'" postgres
 
-test `getnode "test1"` -eq 0 || ok=ng
+test `getnode "'test1'"` -eq 0 || ok=ng
+echo $ok
 
 # should be redirect to node 1
 $PSQL -c "SELECT 'test2'" test
 
-test `getnode "test2"` -eq 1 || ok=ng
+test `getnode "'test2'"` -eq 1 || ok=ng
+echo $ok
 
 # should be redirect to node 2
 $PSQL -c "SELECT 'test3'" mydb6
 
-test `getnode "test3"` -eq 2 || ok=ng
+test `getnode "'test3'"` -eq 2 || ok=ng
 
+echo $ok
 # should be redirect to either node 1 or 2
 $PSQL -c "SELECT 'test4'" test2
 
-test `getnode "test4"` -eq 1 -o `getnode "test4"` -eq 2 || ok=ng
+test `getnode "'test4'"` -eq 1 -o `getnode "test4"` -eq 2 || ok=ng
+echo $ok
+
+# should be redirect to either node 1 or 2
+$PSQL -c "SELECT 'test5'" test3
+
+test `getnode "'test5'"` -eq 1 -o `getnode "test5"` -eq 2 || ok=ng
+echo $ok
+
+# should be redirect to primary (node 0)
+$PSQL -c "SELECT 'test6'" test4
+
+test `getnode "'test6'"` -eq 0 || ok=ng
+echo $ok
+
+# should be redirect to primary (node 0)
+$PSQL -c "SELECT 'test7'" test5
+
+test `getnode "'test7'"` -eq 0 || ok=ng
+
+echo $ok
 
 echo "app_name_redirect_preference_list = 'psql:primary,pgbench:standby'" >> etc/pgpool.conf
 
@@ -66,14 +92,36 @@ sleep 1
 wait_for_pgpool_startup
 
 # should be redirect to node 0 because application name is psql
-$PSQL -c "SELECT 'test5'" mydb6
+$PSQL -c "SELECT 'test8'" mydb6
 
-test `getnode "test5"` -eq 0 || ok=ng
+test `getnode "'test8'"` -eq 0 || ok=ng
 
+echo $ok
 # should be redirect to either node 1 or 2
 $PGBENCH -t 1 -f ../select.pgbench postgres
 
-test `getnode "test6"` -eq 1 -o `getnode "test6"` -eq 2 || ok=ng
+test `getnode "'test9'"` -eq 1 -o `getnode "test9"` -eq 2 || ok=ng
+echo $ok
+
+
+echo "app_name_redirect_preference_list = 'psql:primary(0.0),pgbench:standby(1.0)'" >> etc/pgpool.conf
+
+./pgpool_reload
+sleep 1
+
+wait_for_pgpool_startup
+
+# should be redirect to either node 1 or 2
+$PSQL -c "SELECT 'test10'" mydb6
+
+test `getnode "'test10'"` -eq 1 -o `getnode "test10"` -eq 2 || ok=ng
+echo $ok
+
+# should be redirect to either node 1 or 2
+$PGBENCH -t 1 -f ../select1.pgbench postgres
+
+test `getnode "'test11'"` -eq 1 -o `getnode "test11"` -eq 2 || ok=ng
+echo $ok
 
 ./shutdownall
 
