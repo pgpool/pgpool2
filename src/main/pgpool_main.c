@@ -2301,7 +2301,8 @@ do_health_check(bool use_template_db, volatile int *health_check_node_id)
 	static char *dbname;
 	int i;
 	bool all_nodes_healthy = false;
-
+	char *password = get_pgpool_config_user_password(pool_config->health_check_user,
+													 pool_config->health_check_password);
 	/* Do not execute health check during recovery */
 	if (*InRecovery)
 		return false;
@@ -2352,13 +2353,15 @@ do_health_check(bool use_template_db, volatile int *health_check_node_id)
 											 bkinfo->backend_port,
 											 dbname,
 											 pool_config->health_check_user,
-											 pool_config->health_check_password, false);
+											 password?password:"", false);
 
 		ereport(DEBUG1,
 			(errmsg("persistent DB connection to backend node %d having status %d is successful", i, bkinfo->backend_status)));
 
 		discard_persistent_db_connection(slot);
 	}
+	if (password)
+		pfree(password);
 	return all_nodes_healthy;
 }
 #endif
@@ -3238,6 +3241,9 @@ static int find_primary_node(void)
 	int i;
 	POOL_NODE_STATUS *status;
 	int primary = -1;
+	char *password = get_pgpool_config_user_password(pool_config->sr_check_user,
+													 pool_config->sr_check_password);
+
 
 	/* Streaming replication mode? */
 	if (!SL_MODE)
@@ -3280,13 +3286,16 @@ static int find_primary_node(void)
 														 bkinfo->backend_port,
 														 pool_config->sr_check_database,
 														 pool_config->sr_check_user,
-														 pool_config->sr_check_password, true);
+														 password?password:"", true);
 		if (!slots[i])
 		{
 			ereport(LOG,
 					(errmsg("find_primary_node: make_persistent_db_connection_noerror failed on node %d", i)));
 		}
 	}
+
+	if(password)
+		pfree(password);
 
 	/* Verify backend status */
 	status = verify_backend_node_status(slots);

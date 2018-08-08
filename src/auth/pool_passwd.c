@@ -327,15 +327,16 @@ PasswordMapping *pool_get_user_credentials(char *username)
 	PasswordMapping	*pwdMapping = NULL;
 	char        buf[1024];
 
-
 	if (!username)
 		ereport(ERROR,
 				(errmsg("unable to get password, username is NULL")));
 
 	if (!passwd_fd)
-		ereport(ERROR,
+	{
+		ereport(WARNING,
 				(errmsg("unable to get password, password file descriptor is NULL")));
-
+		return NULL;
+	}
 	rewind(passwd_fd);
 
 	while (!feof(passwd_fd) && !ferror(passwd_fd))
@@ -361,10 +362,10 @@ PasswordMapping *pool_get_user_credentials(char *username)
 		t = getNextToken(t, &tok);
 		if (tok)
 		{
-			pwdMapping = palloc(sizeof(PasswordMapping));
+			pwdMapping = palloc0(sizeof(PasswordMapping));
 			pwdMapping->pgpoolUser.password = tok;
 			pwdMapping->pgpoolUser.passwordType = get_password_type(pwdMapping->pgpoolUser.password);
-			pwdMapping->pgpoolUser.userName = pstrdup(username);
+			pwdMapping->pgpoolUser.userName = (char*) pstrdup(username);
 			pwdMapping->mappedUser = false;
 		}
 		else
@@ -387,6 +388,23 @@ PasswordMapping *pool_get_user_credentials(char *username)
 		break;
 	}
 	return pwdMapping;
+}
+
+void delete_passwordMapping(PasswordMapping *pwdMapping)
+{
+	if (!pwdMapping)
+		return;
+	if (pwdMapping->pgpoolUser.password)
+		pfree(pwdMapping->pgpoolUser.password);
+	if (pwdMapping->pgpoolUser.userName)
+		pfree(pwdMapping->pgpoolUser.userName);
+
+	if (pwdMapping->backendUser.password)
+		pfree(pwdMapping->backendUser.password);
+	if (pwdMapping->backendUser.userName)
+		pfree(pwdMapping->backendUser.userName);
+
+	pfree(pwdMapping);
 }
 
 /*
@@ -413,6 +431,75 @@ void pool_reopen_passwd_file(void)
 {
 	pool_finish_pool_passwd();
 	pool_init_pool_passwd(saved_passwd_filename, pool_passwd_mode);
+}
+
+/*
+ * function first uses the password in the argument, if the
+ * argument is empty string or NULL, it looks for the password
+ * for uset in pool_passwd file.
+ * The returned password is always in plain text and palloc'd (if not null)
+ */
+char *get_pgpool_config_user_password(char *username, char *password_in_config)
+{
+	PasswordType passwordType = PASSWORD_TYPE_UNKNOWN;
+	char *password = NULL;
+	PasswordMapping*  password_mapping = NULL;
+	/*
+	 * if the password specified in confg is empty strin or NULL
+	 * look for the password in pool_passwd file
+	 */
+	if (password_in_config == NULL || strlen(password_in_config) == 0)
+	{
+		password_mapping = pool_get_user_credentials(username);
+		if (password_mapping == NULL)
+		{
+			return NULL;
+		}
+		passwordType = password_mapping->pgpoolUser.passwordType;
+		password = password_mapping->pgpoolUser.password;
+	}
+	else
+	{
+		passwordType = get_password_type(password_in_config);
+		password = password_in_config;
+	}
+
+	if (passwordType == PASSWORD_TYPE_AES)
+	{
+		/*
+		 * decrypt the stored AES password
+		 * for comparing it
+		 */
+		password = get_decrypted_password(password);
+		if (password == NULL)
+		{
+			ereport(WARNING,
+				(errmsg("could not get the password for user:%s",username),
+					 errdetail("unable to decrypt password from pool_passwd"),
+					 errhint("verify the valid pool_key exists")));
+		}
+		else
+		{
+			delete_passwordMapping(password_mapping);
+			/* the password returned by get_decrypted_password() is
+			 * already palloc'd */
+			return password;
+		}
+	}
+
+	if (passwordType != PASSWORD_TYPE_PLAINTEXT)
+	{
+		ereport(WARNING,
+				(errmsg("could not get the password for user:%s",username),
+				 errdetail("username \"%s\" has invalid password type",username)));
+		password = NULL;
+	}
+	if (password)
+		password = (char*)pstrdup(password);
+
+	delete_passwordMapping(password_mapping);
+
+	return password;
 }
 
 #ifndef POOL_PRIVATE
@@ -460,9 +547,6 @@ char *get_decrypted_password(const char *shadow_pass)
 }
 #endif
 
-/*
-* What kind of a password verifier is 'shadow_pass'?
-*/
 PasswordType
 get_password_type(const char *shadow_pass)
 {
@@ -472,6 +556,7 @@ get_password_type(const char *shadow_pass)
 		return PASSWORD_TYPE_AES;
 	if (strncmp(shadow_pass, PASSWORD_SCRAM_PREFIX, strlen(PASSWORD_SCRAM_PREFIX)) == 0)
 		return PASSWORD_TYPE_SCRAM_SHA_256;
+
 	return PASSWORD_TYPE_PLAINTEXT;
 }
 

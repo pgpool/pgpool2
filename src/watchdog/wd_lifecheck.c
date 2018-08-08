@@ -870,6 +870,9 @@ create_conn(char * hostname, int port)
 {
 	static char conninfo[1024];
 	PGconn *conn;
+	char *password = get_pgpool_config_user_password(pool_config->wd_lifecheck_user,
+													 pool_config->wd_lifecheck_password);
+
 
 	if (strlen(pool_config->wd_lifecheck_dbname) == 0)
 	{
@@ -891,9 +894,12 @@ create_conn(char * hostname, int port)
 		port,
 		pool_config->wd_lifecheck_dbname,
 		pool_config->wd_lifecheck_user,
-		pool_config->wd_lifecheck_password,
+		password?password:"",
 		pool_config->wd_interval / 2 + 1);
 	conn = PQconnectdb(conninfo);
+
+	if (password)
+		pfree(password);
 
 	if (PQstatus(conn) != CONNECTION_OK)
 	{

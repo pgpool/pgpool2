@@ -38,6 +38,7 @@
 #define PASSWORD_MD5_PREFIX 	"md5"
 #define PASSWORD_AES_PREFIX 	"AES"
 #define PASSWORD_SCRAM_PREFIX	"SCRAM-SHA-256$"
+#define PASSWORD_TEXT_PREFIX 	"TEXT"
 
 typedef enum {
 	POOL_PASSWD_R,		/* open pool_passwd in read only mode. used by pgpool-II child main process */
@@ -77,5 +78,6 @@ extern void pool_finish_pool_passwd(void);
 extern void pool_reopen_passwd_file(void);
 extern char *get_decrypted_password(const char *shadow_pass);
 extern char *read_pool_key(char *key_file_path);
-
+extern char *get_pgpool_config_user_password(char *username, char *password_in_config);
+extern void delete_passwordMapping(PasswordMapping *pwdMapping);
 #endif /* POOL_PASSWD_H */
