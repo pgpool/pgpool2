@@ -1,8 +1,8 @@
-FE=> Query(query="DROP TABLE IF EXISTS pgproto_test1")
+FE=> Query (query="DROP TABLE IF EXISTS pgproto_test1")
 <= BE NoticeResponse(S NOTICE V NOTICE C 00000 M table "pgproto_test1" does not exist, skipping F tablecmds.c L 914 R DropErrorMsgNonExistent )
 <= BE CommandComplete(DROP TABLE)
 <= BE ReadyForQuery(I)
-FE=> Query(query="CREATE TABLE pgproto_test1(i INT)")
+FE=> Query (query="CREATE TABLE pgproto_test1(i INT)")
 <= BE CommandComplete(CREATE TABLE)
 <= BE ReadyForQuery(I)
 FE=> Parse(stmt="", query="BEGIN")
@@ -15,5 +15,5 @@ FE=> Parse(stmt="", query="COMMIT")
 FE=> Bind(stmt="", portal="")
 FE=> Execute(portal="")
 FE=> Sync
-<= BE ErrorResponse(S FATAL C XX000 M unable to bind D cannot get parse message "S1" F pool_proto_modules.c L 1308 )
+<= BE ErrorResponse(S FATAL C XX000 M unable to bind D cannot get parse message "S1" F pool_proto_modules.c L 1324 )
 read_it: read(2) returns error Connection reset by peer

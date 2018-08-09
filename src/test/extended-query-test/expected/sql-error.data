@@ -15,6 +15,6 @@ FE=> Sync
 <= BE BindComplete
 <= BE CommandComplete(BEGIN)
 <= BE CloseComplete
-<= BE ErrorResponse(S ERROR V ERROR C 42P01 M relation "non_existsing_table" does not exist P 15 F parse_relation.c L 1186 R parserOpenTable )
+<= BE ErrorResponse(S ERROR V ERROR C 42P01 M relation "non_existsing_table" does not exist P 15 F parse_relation.c L 1180 R parserOpenTable )
 <= BE ReadyForQuery(E)
 FE=> Terminate

@@ -1,8 +1,8 @@
-FE=> Query(query="DROP TABLE IF EXISTS pgproto_test1")
+FE=> Query (query="DROP TABLE IF EXISTS pgproto_test1")
 <= BE NoticeResponse(S NOTICE V NOTICE C 00000 M table "pgproto_test1" does not exist, skipping F tablecmds.c L 914 R DropErrorMsgNonExistent )
 <= BE CommandComplete(DROP TABLE)
 <= BE ReadyForQuery(I)
-FE=> Query(query="CREATE TABLE pgproto_test1(i INT)")
+FE=> Query (query="CREATE TABLE pgproto_test1(i INT)")
 <= BE CommandComplete(CREATE TABLE)
 <= BE ReadyForQuery(I)
 FE=> Parse(stmt="S1", query="BEGIN")
@@ -40,7 +40,7 @@ FE=> Sync
 <= BE CommandComplete(COMMIT)
 <= BE CloseComplete
 <= BE ReadyForQuery(I)
-FE=> Query(query="DROP TABLE pgproto_test1")
+FE=> Query (query="DROP TABLE pgproto_test1")
 <= BE CommandComplete(DROP TABLE)
 <= BE ReadyForQuery(I)
 FE=> Terminate

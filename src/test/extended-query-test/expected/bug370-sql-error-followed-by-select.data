@@ -1,4 +1,4 @@
-FE=> Query(query="SET statement_timeout = '4s'")
+FE=> Query (query="SET statement_timeout = '4s'")
 <= BE CommandComplete(SET)
 <= BE ReadyForQuery(I)
 FE=> Parse(stmt="S1", query="SELECT 1/0")

@@ -11,6 +11,6 @@ FE=> Sync
 <= BE BindComplete
 <= BE CommandComplete(BEGIN)
 <= BE CloseComplete
-<= BE ErrorResponse(S ERROR V ERROR C 42601 M syntax error at or near "aaa" P 1 F scan.l L 1086 R scanner_yyerror )
+<= BE ErrorResponse(S ERROR V ERROR C 42601 M syntax error at or near "aaa" P 1 F scan.l L 1087 R scanner_yyerror )
 <= BE ReadyForQuery(E)
 FE=> Terminate
