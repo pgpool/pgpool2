@@ -550,8 +550,12 @@ char *get_decrypted_password(const char *shadow_pass)
 PasswordType
 get_password_type(const char *shadow_pass)
 {
-	if (strncmp(shadow_pass, PASSWORD_MD5_PREFIX, strlen(PASSWORD_MD5_PREFIX)) == 0 && strlen(shadow_pass) == MD5_PASSWD_LEN)
-		return PASSWORD_TYPE_MD5;
+	if (strncmp(shadow_pass, PASSWORD_MD5_PREFIX, strlen(PASSWORD_MD5_PREFIX)) == 0)
+	{
+		if ( strlen(shadow_pass) == MD5_PASSWD_LEN + strlen(PASSWORD_MD5_PREFIX))
+			return PASSWORD_TYPE_MD5;
+		return PASSWORD_TYPE_PLAINTEXT;
+	}
 	if (strncmp(shadow_pass, PASSWORD_AES_PREFIX, strlen(PASSWORD_AES_PREFIX)) == 0 )
 		return PASSWORD_TYPE_AES;
 	if (strncmp(shadow_pass, PASSWORD_SCRAM_PREFIX, strlen(PASSWORD_SCRAM_PREFIX)) == 0)

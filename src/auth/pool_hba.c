@@ -887,7 +887,6 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
                 status = POOL_CONTINUE;
                 break;
         }
-		authenticate_frontend(frontend);
     }
     PG_CATCH();
     {
@@ -897,7 +896,10 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
     PG_END_TRY();
 
  	if (status == POOL_CONTINUE)
+	{
  		sendAuthRequest(frontend, AUTH_REQ_OK);
+		authenticate_frontend(frontend);
+	}
  	else
 		auth_failed(frontend);
 }

@@ -804,37 +804,41 @@ int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
     int msglen;
 
 	protoMajor = MAJOR(cp);
-
-	switch(MASTER(cp)->auth_kind)
+	/*
+	 * if hba is enabled we would already have passed authentication
+	 */
+	if (!frontend->frontend_authenticated)
 	{
-		case AUTH_REQ_OK:
-			/* trust */
-			break;
+		switch(MASTER(cp)->auth_kind)
+		{
+			case AUTH_REQ_OK:
+				/* trust */
+				break;
 
-		case AUTH_REQ_PASSWORD:
-			/* clear text password */
-			do_clear_text_password(MASTER(cp), frontend, 1, protoMajor);
-			break;
+			case AUTH_REQ_PASSWORD:
+				/* clear text password */
+				do_clear_text_password(MASTER(cp), frontend, 1, protoMajor);
+				break;
 
-		case AUTH_REQ_CRYPT:
-			/* crypt password */
-			do_crypt(MASTER(cp), frontend, 1, protoMajor);
-			break;
+			case AUTH_REQ_CRYPT:
+				/* crypt password */
+				do_crypt(MASTER(cp), frontend, 1, protoMajor);
+				break;
 
-		case AUTH_REQ_MD5:
-			/* md5 password */
-			authenticate_frontend_md5(MASTER(cp), frontend, 1, protoMajor);
-			break;
-		case AUTH_REQ_SASL:
-			/* SCRAM */
-			authenticate_frontend_SCRAM(MASTER(cp), frontend, 1);
-			break;
-		default:
-            ereport(ERROR,
-                (errmsg("authentication failed"),
-                     errdetail("unknown authentication request code %d",MASTER(cp)->auth_kind)));
+			case AUTH_REQ_MD5:
+				/* md5 password */
+				authenticate_frontend_md5(MASTER(cp), frontend, 1, protoMajor);
+				break;
+			case AUTH_REQ_SASL:
+				/* SCRAM */
+				authenticate_frontend_SCRAM(MASTER(cp), frontend, 1);
+				break;
+			default:
+				ereport(ERROR,
+					(errmsg("authentication failed"),
+						 errdetail("unknown authentication request code %d",MASTER(cp)->auth_kind)));
+		}
 	}
-
 
     pool_write(frontend, "R", 1);
 
@@ -1231,7 +1235,6 @@ authenticate_frontend_SCRAM(POOL_CONNECTION *backend, POOL_CONNECTION *frontend,
 	char 		*logdetail = NULL;
 	char 		*shadow_pass;
 
-	
 	PasswordType storedPasswordType = PASSWORD_TYPE_UNKNOWN;
 	char *storedPassword = NULL;
 
@@ -1540,7 +1543,6 @@ static void authenticate_frontend_md5(POOL_CONNECTION *backend, POOL_CONNECTION 
 						(errmsg("md5 authentication failed"),
 						 errdetail("unable to decrypt password from pool_passwd"),
 						 errhint("verify the valid pool_key exists")));
-
 		}
 		else
 		{
@@ -1565,8 +1567,8 @@ static void authenticate_frontend_md5(POOL_CONNECTION *backend, POOL_CONNECTION 
 			(return_code(2),
 				errmsg("md5 authentication failed"),
 				 errdetail("unable to get the password for \"%s\"",frontend->username)));
-
 	}
+
 	/* Check the password using my salt + pool_passwd */
 	pg_md5_encrypt(md5+strlen("md5"), salt, sizeof(salt), encbuf);
 	if (strcmp(password, encbuf))
