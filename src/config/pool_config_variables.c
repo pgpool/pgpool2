@@ -2522,7 +2522,7 @@ static char **get_list_from_string_regex_delim(const char *input, const char *de
 		return NULL;
 
 	tokens = palloc(MAXTOKENS * sizeof(char *));
-	if (*(input + strlen(input) - 1) != *delimi)
+	if (*(input + strlen(input) - 1) != *delimi || *(input + strlen(input) - 2) == '\\')
 	{
 		int len = strlen(input) + 2;
 		str = palloc(len); 
