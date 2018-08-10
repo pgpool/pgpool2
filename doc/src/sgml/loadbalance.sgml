@@ -641,7 +641,9 @@ black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM 
             setting is ignored and the SQL should be sent only to the primary node.
           </para>
         </note>
-
+        <para>
+          Depending on the SQL patterns, performance might be 1-2% lower when using this feature.
+        </para>
         <para>
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
