@@ -30,6 +30,7 @@ clean:
 	-rm *.o
 	-rm $(PROGRAM)
 	-rm result/*.out
+	-rm result.txt
 	-rm test.diff
 
 .PHONY: all all-pre test clean
