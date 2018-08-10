@@ -8,6 +8,7 @@
 *.lo
 *.la
 *.orig
+*.patch
 .deps/
 .libs/
 Makefile
