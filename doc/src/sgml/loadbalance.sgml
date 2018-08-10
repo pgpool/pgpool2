@@ -616,7 +616,7 @@ black_function_list = 'nextval,setval,lastval,currval'
            </listitem>
            <listitem>
              <para>
-             SELECT * FROM table_name2 WHERE col LIKE '%a%';
+             SELECT col1, col2 FROM table_name2 WHERE col1 LIKE '%a%';
              </para>
            </listitem>
            <listitem>
@@ -629,7 +629,7 @@ black_function_list = 'nextval,setval,lastval,currval'
 
           <para>
           <programlisting>
-black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \\'%a%\\'\;;.*table_name3.*'
+black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
           </programlisting>
           </para>
         </example>

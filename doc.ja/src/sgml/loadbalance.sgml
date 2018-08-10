@@ -800,7 +800,7 @@ SQL のマッチングに正規表現を使うことができます。
            </listitem>
            <listitem>
              <para>
-             SELECT * FROM table_name2 WHERE col LIKE '%a%';
+             SELECT col1, col2 FROM table_name2 WHERE col1 LIKE '%a%';
              </para>
            </listitem>
            <listitem>
@@ -816,7 +816,7 @@ SQL のマッチングに正規表現を使うことができます。
 
           <para>
           <programlisting>
-black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \\'%a%\\'\;;.*table_name3.*'
+black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
           </programlisting>
           </para>
         </example>
