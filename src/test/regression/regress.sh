@@ -57,6 +57,13 @@ function verify_pginstallation
 		echo "$0: cannot locate pg_config"
 		exit 1
 	fi
+
+	# PostgreSQL lib directory
+	PGLIB=`$PG_INSTALL_DIR/pg_config --libdir`
+	if [ -z $PGLIB ]; then
+		echo "$0: cannot locate pg_config"
+		exit 1
+	fi
 }
 
 function export_env_vars
