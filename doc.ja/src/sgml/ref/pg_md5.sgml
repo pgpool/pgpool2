@@ -79,7 +79,7 @@ Pgpool-II documentation
        <!--
 	    Produce md5 authentication password.
         -->
-        md5 認証パスワードを生成します。
+        <filename>pool_passwd</filename> 認証ファイルに <literal>md5</literal> 認証パスワードを生成します。
        </para>
       </listitem>
      </varlistentry>
@@ -97,6 +97,19 @@ Pgpool-II documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>-f <replaceable class="parameter">config_file</replaceable></option></term>
+      <term><option>--config-file=<replaceable class="parameter">config_file</replaceable></option></term>
+      <listitem>
+       <para>
+       <!--
+        Specify the path to the <literal>pgpool.conf</literal> configuration file.
+        -->
+        設定ファイル <literal>pgpool.conf</literal>へのパスを指定します。
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
  </refsect1>
@@ -108,11 +121,11 @@ Pgpool-II documentation
   <title>例</title>
    <para>
    <!--
-	Here is an example output:
+	The following are examples to encrypt your password into md5 hash format for <filename>pcp.conf</filename>.
     -->
-    ここでは例を示します。
+    以下は <filename>pcp.conf</filename> に登録する <literal>md5</literal> 暗号化されたパスワードを生成する例です。
     <programlisting>
-pg_md5 -p
+$ pg_md5 -p
 password: [your password]
     </programlisting>
   </para>
@@ -120,9 +133,25 @@ password: [your password]
   または
   </para>
     <programlisting>
-./pg_md5 foo
+$ pg_md5 [your password]
 acbd18db4cc2f85cedef654fccc4a4d8
     </programlisting>
- </refsect1>
 
+    <para>
+   <!--
+      <literal>pg_md5</literal> can also be used for adding an entry of user name and 
+      <literal>md5</literal> encrypted password to 
+      <filename>pool_passwd</filename> authentication file.
+    -->
+      また、<command>pg_md5</command> は、<xref linkend="guc-pool-passwd"> に
+      ユーザー名と<literal>md5</literal> 暗号化されたパスワードのエントリを生成するためにも使用できます。
+      <programlisting>
+$pg_md5 -m -f /path/to/pgpool.conf -u username -p
+password: [your password]
+
+$ cat /path/to/pool_passwd 
+username:md55a231fcdb710d73268c4f44283487ba2
+      </programlisting>
+    </para>
+ </refsect1>
 </refentry>
