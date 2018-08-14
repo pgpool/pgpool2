@@ -203,7 +203,7 @@ static void update_pool_passwd(char *conf_file, char *username, char *password)
 	}
 	if (pool_get_config(conf_file, CFGCXT_RELOAD) == false)
 	{
-		fprintf(stderr, "Unable to get configuration. Exiting...");
+		fprintf(stderr, "Unable to get configuration. Exiting...\n\n");
 		exit(EXIT_FAILURE);
 	}
 

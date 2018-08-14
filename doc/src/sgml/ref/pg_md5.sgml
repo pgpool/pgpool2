@@ -61,7 +61,7 @@ Pgpool-II documentation
       <term><option>--md5auth</option></term>
       <listitem>
        <para>
-	 Produce md5 authentication password.
+	 Produce md5 authentication password to authentication file <filename>pool_passwd</filename>.
        </para>
       </listitem>
      </varlistentry>
@@ -76,6 +76,16 @@ Pgpool-II documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>-f <replaceable class="parameter">config_file</replaceable></option></term>
+      <term><option>--config-file=<replaceable class="parameter">config_file</replaceable></option></term>
+      <listitem>
+       <para>
+     Specify the path to the <literal>pgpool.conf</literal> configuration file.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
  </refsect1>
@@ -83,9 +93,9 @@ Pgpool-II documentation
  <refsect1>
   <title>Example</title>
    <para>
-	Here is an example output:
+	The following are examples to encrypt your password into md5 hash format for <filename>pcp.conf</filename>.
     <programlisting>
-pg_md5 -p
+$ pg_md5 -p
 password: [your password]
     </programlisting>
   </para>
@@ -93,9 +103,21 @@ password: [your password]
   or
   </para>
     <programlisting>
-./pg_md5 foo
+$ pg_md5 [your password]
 acbd18db4cc2f85cedef654fccc4a4d8
     </programlisting>
- </refsect1>
 
+    <para>
+      <literal>pg_md5</literal> can also be used for adding an entry of user name and 
+      <literal>md5</literal> encrypted password to 
+      <xref linkend="guc-pool-passwd"> authentication file.
+      <programlisting>
+$pg_md5 -m -f /path/to/pgpool.conf -u username -p
+password: [your password]
+
+$ cat /path/to/pool_passwd 
+username:md55a231fcdb710d73268c4f44283487ba2
+      </programlisting>
+    </para>
+ </refsect1>
 </refentry>
