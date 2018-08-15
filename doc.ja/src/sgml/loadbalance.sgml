@@ -774,10 +774,18 @@ SQL パターンをセミコロン区切りで指定します。
 <!--
           You can use regular expression to match function names,
           to which <literal>^</> and <literal>$</> are automatically added.
+          When using  special characters in regular expressions 
+          (such as "'", ";", "*", "(", ")", "|", "+", ".", "\", "?", "^", "$",
+          "{","}", "{" or "}", etc.)
+          in SQL patterns, you need to escape them by using "\".
+          SQL pattern specified in this parameter is case-insensitive.
 -->
 SQL のマッチングに正規表現を使うことができます。
 正規表現には自動的に<literal>^</literal>と<literal>$</literal>が付与されます。
 "'"、";" あるいは "*" などの文字を SQL パターンの中で利用する場合、"\" でエスケープする必要があります。
+SQL パターンの中で正規表現の特殊文字を使用する場合、"\" でエスケープする必要があります。
+例えば、"'"、";"、"*"、"("、")"、"|"、"+"、"."、"\"、"?"、"^"、"$"、"{","}"、"{"、"}" などの特殊文字の場合、"\" でエスケープする必要があります。
+また、指定される SQL パターンでは大文字と小文字を区別しません。
         </para>
 
         <example id="example-black-query-pattern-list-1">

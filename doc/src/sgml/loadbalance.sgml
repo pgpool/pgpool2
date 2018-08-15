@@ -600,7 +600,11 @@ black_function_list = 'nextval,setval,lastval,currval'
         <para>
           You can use regular expression to match SQL patterns,
           to which <literal>^</> and <literal>$</> are automatically added.
-          When using characters such as "'", ";" or "*" in SQL patterns, you need to escape them by using "\".
+          When using  special characters in regular expressions 
+          (such as "'", ";", "*", "(", ")", "|", "+", ".", "\", "?", "^", "$",
+          "{","}", "{" or "}", etc.)
+          in SQL patterns, you need to escape them by using "\".
+          SQL pattern specified in this parameter is case-insensitive.
         </para>
 
         <example id="example-black-query-pattern-list-1">
