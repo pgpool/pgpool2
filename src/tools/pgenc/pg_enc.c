@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 
 	if (pool_key == NULL)
 	{
-		fprintf(stderr, "encryption key not provided");
+		fprintf(stderr, "encryption key not provided\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -308,7 +308,7 @@ static void update_pool_passwd(char *conf_file, char *username, char *password, 
 	}
 	if (pool_get_config(conf_file, CFGCXT_RELOAD) == false)
 	{
-		fprintf(stderr, "Unable to get configuration. Exiting...");
+		fprintf(stderr, "Unable to get configuration. Exiting...\n\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -366,19 +366,18 @@ print_usage(const char prog[], int exit_code)
 	fprintf(stream, "Usage:\n");
 	fprintf(stream, "  %s [OPTIONS] <PASSWORD>\n",prog);
 	fprintf(stream, "  -k, --key-file=KEY_FILE\n");
-	fprintf(stream, "                       Set the path to the encryption key file\n");
-	fprintf(stream, "                       (default: %s/%s)\n",homedir, POOLKEYFILE);
-	fprintf(stream, "                       can be over ridden by %s environment variable\n",POOLKEYFILEENV);
+	fprintf(stream, "                       Set the path to the encryption key file.\n");
+	fprintf(stream, "                       Default: %s/%s\n",homedir, POOLKEYFILE);
+	fprintf(stream, "                       Can be overridden by the %s environment variable.\n",POOLKEYFILEENV);
 	fprintf(stream, "  -K, --enc-key=ENCRYPTION_KEY\n");
-	fprintf(stream, "                       Encryption key to be used for encrypting database passwords\n");
-	fprintf(stream, "                       Specify pgpool.conf\n");
+	fprintf(stream, "                       Encryption key to be used for encrypting database passwords.\n");
 	fprintf(stream, "  -f, --config-file=CONFIG_FILE\n");
-	fprintf(stream, "                       Encryption key to be used for encrypting database passwords\n");
+	fprintf(stream, "                       Specifies the pgpool.conf file.\n");
 	fprintf(stream, "  -p, --prompt         Prompt for database password using standard input.\n");
 	fprintf(stream, "  -P, --prompt-for-key Prompt for encryption key using standard input.\n");
-	fprintf(stream, "  -m, --update-pass    create encrypted password entry in pool_passwd file.\n");
-	fprintf(stream, "  -u, --username       database USER for creating pool_password entry.\n");
-	fprintf(stream, "  -h, --help           Print this help\n\n");
+	fprintf(stream, "  -m, --update-pass    Create encrypted password entry in the pool_passwd file.\n");
+	fprintf(stream, "  -u, --username       The username for the pool_password entry.\n");
+	fprintf(stream, "  -h, --help           Print this help.\n\n");
 
 	exit(exit_code);
 }
