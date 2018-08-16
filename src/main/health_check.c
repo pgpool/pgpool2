@@ -245,6 +245,9 @@ static bool establish_persistent_connection(int node)
 	{
 		retry_cnt = pool_config->health_check_params[node].health_check_max_retries;
 
+		char *password = get_pgpool_config_user_password(pool_config->health_check_params[node].health_check_user,
+														 pool_config->health_check_params[node].health_check_password);
+
 		do
 		{
 			/*
@@ -265,7 +268,7 @@ static bool establish_persistent_connection(int node)
 														 bkinfo->backend_port,
 														 pool_config->health_check_params[node].health_check_database,
 														 pool_config->health_check_params[node].health_check_user,
-														 pool_config->health_check_params[node].health_check_password, false);
+														 password?password:"", false);
 
 			if (pool_config->health_check_params[node].health_check_timeout > 0)
 			{
@@ -297,6 +300,9 @@ static bool establish_persistent_connection(int node)
 				sleep(pool_config->health_check_params[node].health_check_retry_delay);
 			}
 		} while (retry_cnt >= 0);
+
+		if (password)
+			pfree(password);
 	}
 	return true;
 }

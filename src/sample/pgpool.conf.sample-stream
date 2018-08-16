@@ -92,6 +92,11 @@ authentication_timeout = 60
                                    # Delay in seconds to complete client authentication
                                    # 0 means no timeout.
 
+allow_clear_text_frontend_auth = off
+                                   # Allow Pgpool-II to use clear text password authentication
+                                   # with clients, when pool_passwd does not
+                                   # contain the user password
+
 # - SSL Connections -
 
 ssl = off
@@ -357,6 +362,9 @@ sr_check_user = 'nobody'
                                    # replication delay check by sr_check_period = 0
 sr_check_password = ''
                                    # Password for streaming replication check user
+                                   # Leaving it empty will make Pgpool-II to first look for the
+                                   # Password in pool_passwd file before using the empty password
+
 sr_check_database = 'postgres'
                                    # Database name for streaming replication check
 delay_threshold = 10000000
@@ -395,6 +403,9 @@ health_check_user = 'nobody'
                                    # Health check user
 health_check_password = ''
                                    # Password for health check user
+                                   # Leaving it empty will make Pgpool-II to first look for the
+                                   # Password in pool_passwd file before using the empty password
+
 health_check_database = ''
                                    # Database name for health check. If '', tries 'postgres' frist, 
 health_check_max_retries = 0
@@ -479,6 +490,9 @@ recovery_user = 'nobody'
                                    # Online recovery user
 recovery_password = ''
                                    # Online recovery password
+                                   # Leaving it empty will make Pgpool-II to first look for the
+                                   # Password in pool_passwd file before using the empty password
+
 recovery_1st_stage_command = ''
                                    # Executes a command in first stage
 recovery_2nd_stage_command = ''
@@ -661,6 +675,8 @@ wd_lifecheck_user = 'nobody'
                                     # (change requires restart)
 wd_lifecheck_password = ''
                                     # Password for watchdog user in lifecheck
+                                    # Leaving it empty will make Pgpool-II to first look for the
+                                    # Password in pool_passwd file before using the empty password
                                     # (change requires restart)
 
 # - Other pgpool Connection Settings -

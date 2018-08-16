@@ -899,7 +899,29 @@
   <listitem>
    <para>
       Specifies the password for the user used for the life check of remote <productname>Pgpool-II</productname>.
-      Default is <literal>''</literal>(empty).
+   </para>
+   <para>
+        If <varname>wd_lifecheck_password</varname> is left blank <productname>Pgpool-II</productname>
+        will first try to get the password for <xref linkend="guc-wd-lifecheck-user"> from
+        <xref linkend="guc-pool-passwd"> file before using the empty password.
+    </para>
+    <para>
+        You can also specify AES256-CBC encrypted password in <varname>wd_lifecheck_password</varname> field.
+        To specify the <literal>AES</literal> encrypted password, password string must be prefixed with
+        <literal>AES</literal> after encrypting (using <literal>aes-256-cbc</literal> algorithm) and
+        encoding to <literal>base64</literal>.
+    </para>
+    <para>
+        You can also use <xref linkend="PG-ENC"> utility to create the correctly formatted
+        <literal>AES</literal> encrypted password strings.
+        <note>
+            <para>
+                <productname>Pgpool-II</productname> will require a valid decryption key at the
+                startup to use the encrypted passwords.
+                see <xref linkend="auth-aes-decryption-key"> for more details on providing the
+                decryption key to <productname>Pgpool-II</productname>
+            </para>
+        </note>
    </para>
    <para>
       <varname>wd_lifecheck_password</varname> is only applicable if the
@@ -907,6 +929,9 @@
     </para>
     <para>
       This parameter can only be set at server start.
+    </para>
+    <para>
+      Default is <literal>''</literal>(empty).
     </para>
     </listitem>
     </varlistentry>

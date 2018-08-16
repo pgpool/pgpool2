@@ -214,7 +214,10 @@ static void establish_persistent_connection(void)
 {
 	int i;
 	BackendInfo *bkinfo;
-	
+
+	char *password = get_pgpool_config_user_password(pool_config->sr_check_user,
+													 pool_config->sr_check_password);
+
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
 		if (!VALID_BACKEND(i))
@@ -227,9 +230,12 @@ static void establish_persistent_connection(void)
 											  bkinfo->backend_port,
 											  pool_config->sr_check_database,
 											  pool_config->sr_check_user,
-											  pool_config->sr_check_password, true);
+											  password?password:"", true);
 		}
 	}
+
+	if(password)
+		pfree(password);
 }
 
 /*

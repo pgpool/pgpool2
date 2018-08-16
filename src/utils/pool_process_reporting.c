@@ -213,6 +213,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "maximum time in seconds to complete client authentication", POOLCONFIG_MAXNAMELEN);
 	i++;
 
+	StrNCpy(status[i].name, "allow_clear_text_frontend_auth", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->allow_clear_text_frontend_auth);
+	StrNCpy(status[i].desc, "allow to use clear text password auth when pool_passwd does not contain password", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* - SSL Connections - */
 	StrNCpy(status[i].name, "ssl", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->ssl);

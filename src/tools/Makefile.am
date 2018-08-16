@@ -1,4 +1,4 @@
-SUBDIRS = pcp pgmd5
+SUBDIRS = pcp pgmd5 pgenc
 
 dist_bin_SCRIPTS =  pgpool_setup watchdog_setup
 

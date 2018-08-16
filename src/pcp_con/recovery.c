@@ -331,6 +331,8 @@ static void check_postmaster_started(BackendInfo *backend)
 	char port_str[16];
 	PGconn *conn;
 	char *dbname;
+	char *password = get_pgpool_config_user_password(pool_config->recovery_user,
+													 pool_config->recovery_password);
 
 	snprintf(port_str, sizeof(port_str),"%d", backend->backend_port);
 
@@ -353,13 +355,16 @@ static void check_postmaster_started(BackendInfo *backend)
 							NULL,
 							dbname,
 							pool_config->recovery_user,
-							pool_config->recovery_password);
+							password?password:NULL);
 
 		r = PQstatus(conn);
 		PQfinish(conn);
 		if (r == CONNECTION_OK)
-			return;
-
+		{
+			if (password)
+				pfree(password);
+				return;
+		}
 		ereport(LOG,
 			(errmsg("checking if postmaster is started"),
 				errdetail("failed to connect to postmaster on hostname:%s database:%s user:%s",
@@ -388,12 +393,16 @@ static void check_postmaster_started(BackendInfo *backend)
 							NULL,
 							dbname,
 							pool_config->recovery_user,
-							pool_config->recovery_password);
+							password?password:NULL);
 
 		r = PQstatus(conn);
 		PQfinish(conn);
 		if (r == CONNECTION_OK)
+		{
+			if (password)
+				pfree(password);
 			return;
+		}
 
 		ereport(LOG,
 			(errmsg("checking if postmaster is started"),
@@ -403,6 +412,9 @@ static void check_postmaster_started(BackendInfo *backend)
 		if (WAIT_RETRY_COUNT != 0)
 			sleep(3);
 	} while (i++ < WAIT_RETRY_COUNT);
+
+	if (password)
+		pfree(password);
 
 	ereport(ERROR,
 		(errmsg("recovery is checking if postmaster is started"),
@@ -414,6 +426,8 @@ static PGconn *connect_backend_libpq(BackendInfo *backend)
 {
 	char port_str[16];
 	PGconn *conn;
+	char *password = get_pgpool_config_user_password(pool_config->recovery_user,
+													 pool_config->recovery_password);
 
 	snprintf(port_str, sizeof(port_str),
 			 "%d", backend->backend_port);
@@ -423,7 +437,10 @@ static PGconn *connect_backend_libpq(BackendInfo *backend)
 						NULL,
 						"template1",
 						pool_config->recovery_user,
-						pool_config->recovery_password);
+						password?password:"");
+
+	if (password)
+		pfree(password);
 
 	if (PQstatus(conn) != CONNECTION_OK)
 	{

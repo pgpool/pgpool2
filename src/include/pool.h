@@ -28,6 +28,7 @@
 #include "pool_type.h"
 #include "pcp/libpcp_ext.h"
 #include "utils/pool_signal.h"
+#include "auth/pool_passwd.h"
 #include "parser/nodes.h"
 #include <stdio.h>
 #include <time.h>
@@ -47,6 +48,9 @@
 #define NONE_BLOCK
 
 #define POOLMAXPATHLEN 8192
+
+#define POOLKEYFILE 	".pgpoolkey"
+#define POOLKEYFILEENV "PGPOOLKEYFILE"
 
 /*
  * Brought from PostgreSQL's pg_config_manual.h.
@@ -181,6 +185,13 @@ typedef struct {
 #ifdef USE_SSL
 	SSL_CTX *ssl_ctx; /* SSL connection context */
 	SSL *ssl;	/* SSL connection */
+	X509 *peer;
+	char *cert_cn;			/* common in the ssl certificate
+							 * presented by frontend connection
+							 * Used for cert authentication
+							 */
+	bool client_cert_loaded;
+
 #endif
 	int ssl_active; /* SSL is failed if < 0, off if 0, on if > 0 */
 
@@ -215,8 +226,9 @@ typedef struct {
 	 */
 	int auth_kind;		/* 3: clear text password, 4: crypt password, 5: md5 password */
 	int pwd_size;		/* password (sent back from frontend) size in host order */
-	char password[MAX_PASSWORD_SIZE];		/* password (sent back from frontend) */
+	char password[MAX_PASSWORD_SIZE +1 ];		/* password (sent back from frontend) */
 	char salt[4];		/* password salt */
+	PasswordType	passwordType;
 
 	/*
 	 * following are used to remember current session parameter status.
@@ -240,6 +252,8 @@ typedef struct {
 	char *username;
 	char *remote_hostname;
 	int remote_hostname_resolv;
+	bool frontend_authenticated;
+	PasswordMapping *passwordMapping;
 	ConnectionInfo *con_info; /* shared memory coninfo used
 						   * for handling the query containing
 						   * pg_terminate_backend*/
@@ -553,8 +567,10 @@ extern POOL_STATUS pool_process_query(POOL_CONNECTION *frontend,
 									  POOL_CONNECTION_POOL *backend,
 									  int reset_request);
 
+extern void connection_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
 extern int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern int pool_do_reauth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp);
+extern void authenticate_frontend(POOL_CONNECTION *frontend);
 
 extern bool is_backend_cache_empty(POOL_CONNECTION_POOL *backend);
 
@@ -565,6 +581,7 @@ extern void pool_ssl_close(POOL_CONNECTION *cp);
 extern int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size);
 extern int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size);
 extern bool pool_ssl_pending(POOL_CONNECTION *cp);
+extern int SSL_ServerSide_init(void);
 
 extern POOL_STATUS ErrorResponse(POOL_CONNECTION *frontend, 
 								  POOL_CONNECTION_POOL *backend);
@@ -703,9 +720,11 @@ extern bool pool_push_pending_data(POOL_CONNECTION *backend);
 
 /* pool_auth.c */
 extern void pool_random_salt(char *md5Salt);
+extern void pool_random(void *buf, size_t len);
 
 /* main.c */
 extern void pool_sleep(unsigned int second);
+extern char *get_pool_key(void);
 
 /* pool_worker_child.c */
 extern void do_worker_child(void);

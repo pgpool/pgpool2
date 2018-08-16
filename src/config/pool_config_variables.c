@@ -516,6 +516,15 @@ static struct config_bool ConfigureNamesBool[] =
 		false,
 		NULL, NULL,NULL
 	},
+	{
+		{"allow_clear_text_frontend_auth", CFGCXT_RELOAD, GENERAL_CONFIG,
+			"allow to use clear text password authentication with clients, when pool_passwd does not contain the user password.",
+			CONFIG_VAR_TYPE_BOOL,false, 0
+		},
+		&g_pool_config.allow_clear_text_frontend_auth,
+		false,
+		NULL, NULL,NULL
+	},
 
 	/* End-of-list marker */
 	EMPTY_CONFIG_BOOL

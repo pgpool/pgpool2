@@ -352,10 +352,36 @@
 			<note>
 			  <para>
 			    To use <literal>md5</literal> authentication, you need to register
-			    the user name and password in <filename>"pool_passwd"</filename>.
+			    the user name and password in <xref linkend="guc-pool-passwd"> file.
 			    See <xref linkend="auth-md5"> for more details.
 			  </para>
 			</note>
+		      </para>
+		    </listitem>
+		  </varlistentry>
+
+          <varlistentry>
+		    <term><literal>scram-sha-256</literal></term>
+		    <listitem>
+		      <para>
+              Perform SCRAM-SHA-256 authentication to verify the user's password.
+			<note>
+			  <para>
+			    To use <literal>scram-sha-256</literal> authentication, you need to register
+			    the user name and password in <xref linkend="guc-pool-passwd"> file.
+			    See <xref linkend="auth-scram"> for more details.
+			  </para>
+			</note>
+		      </para>
+		    </listitem>
+		  </varlistentry>
+
+          <varlistentry>
+		    <term><literal>cert</literal></term>
+		    <listitem>
+		      <para>
+                Authenticate using SSL client certificates.
+			    See <xref linkend="auth-cert"> for more details.
 		      </para>
 		    </listitem>
 		  </varlistentry>
@@ -509,7 +535,7 @@
 	<para>
 	  If <productname>Pgpool-II</productname> is operated in raw
 	  mode or there's only 1 backend configured, you don't need to
-	  setup <literal>pool_passwd</literal>.
+	  setup <xref linkend="guc-pool-passwd">.
 	</para>
       </note>
 
@@ -517,7 +543,7 @@
 	<title>Authentication file format</title>
 
 	<para>
-	  This <literal>pool_passwd</literal> file should contain lines in the following format:
+	  <xref linkend="guc-pool-passwd"> file should contain lines in the following format:
 	  <programlisting>
             "username:encrypted_passwd"
 	  </programlisting>
@@ -538,7 +564,7 @@
 	  1- Login as the database's operating system user and type
 	  <command>"pg_md5 --md5auth --username=username password"</command> user name
 	  and <literal>md5</literal> encrypted password are registered
-	  into pool_passwd.  If pool_passwd does not exist yet, pg_md5
+	  into <xref linkend="guc-pool-passwd">.  If pool_passwd does not exist yet, pg_md5
 	  command will automatically create it for you.
 	  <note>
             <para>
@@ -558,6 +584,114 @@
 	  the pgpool configurations.
 	</para>
       </sect3>
+
+    </sect2>
+
+    <sect2 id="auth-scram">
+      <title>scram-sha-256 Authentication</title>
+
+      <indexterm zone="auth-scram">
+	<primary>SCRAM</primary>
+      </indexterm>
+
+      <para>
+      This authentication method also known as SCRAM is a
+      challenge-response based authentication that prevents the
+      password sniffing on untrusted connections.
+      Since <productname>Pgpool-II</productname> does not has the
+      visibility of <productname>PostgreSQL</productname>'s database user
+      password, so <literal>SCRAM</literal> authentication is supported using the
+	  <xref linkend="guc-pool-passwd"> authentication file.
+      </para>
+
+      <sect3 id="scram-authentication-file-format">
+	<title>Authentication file entry for SCRAM</title>
+
+	<para>
+      To use the <literal>SCRAM</literal> authentication
+      <xref linkend="guc-pool-passwd"> authentication file
+      must contain the user password in either plain text
+      or <literal>AES</literal> encrypted format.
+
+	  <programlisting>
+            "username:plain_text_passwd"
+	  </programlisting>
+	  <programlisting>
+            "username:AES_encrypted_passwd"
+	  </programlisting>
+	  <note>
+            <para>
+              <literal>md5</literal> type user passwords in
+              <xref linkend="guc-pool-passwd"> file can't be used for
+              <literal>scram</literal> authentication
+            </para>
+	  </note>
+	</para>
+      </sect3>
+
+      <sect3 id="setting-scram-sha-256-authentication">
+	<title>Setting scram-sha-256 Authentication</title>
+	<indexterm zone="setting-scram-sha-256-authentication">
+	  <primary>SCRAM</primary>
+	</indexterm>
+
+	<para>
+	  Here are the steps to enable <literal>scram-sha-256</literal>
+	  authentication:
+	</para>
+	<para>
+	  1- Create <xref linkend="guc-pool-passwd"> file entry
+      for database user and password in plain text or <literal>AES</literal>
+      encrypted format.
+      <xref linkend="PG-ENC"> ustility comes with <productname>Pgpool-II</productname>
+      can be used to create the <literal>AES</literal> encrypted password
+      entries in <xref linkend="guc-pool-passwd"> file.
+	  <note>
+            <para>
+              User name and password must be identical to those registered
+              in <productname>PostgreSQL</productname> server.
+            </para>
+	  </note>
+	</para>
+
+	<para>
+	  2- Add an appropriate scram-sha-256 entry to <filename>pool_hba.conf</filename>.
+	  See <xref linkend="auth-pool-hba-conf"> for more details.
+	</para>
+	<para>
+	  3- After changing SCRAM password (in both pool_passwd
+	  and <productname>PostgreSQL</productname> of course), reload
+	  the pgpool configurations.
+	</para>
+      </sect3>
+
+    </sect2>
+
+    <sect2 id="auth-cert">
+      <title>Certificate Authentication</title>
+
+      <indexterm zone="auth-cert">
+	<primary>Certificate</primary>
+      </indexterm>
+
+      <para>
+      This authentication method uses <literal>SSL</literal> client certificates
+      to perform authentication. It is therefore only available for SSL connections.
+      When using this authentication method, the <productname>Pgpool-II</productname>
+      will require that the client provide a valid certificate.
+      No password prompt will be sent to the client.
+      The <literal>cn</literal> (Common Name) attribute of the certificate will be
+      compared to the requested database user name, and if they match the login will
+      be allowed.
+      </para>
+
+      <note>
+	<para>
+	  The certificate authentication works between client and
+      <productname>Pgpool-II</productname>, for the
+	  backend authentication you can use any other authentication method
+	</para>
+      </note>
 
     </sect2>
 
@@ -596,5 +730,94 @@
       </note>
     </sect2>
   </sect1>
+
+  <sect1 id="auth-different-auth-method">
+    <title>Using different methods for frontend and backend authentication</title>
+
+    <indexterm zone="auth-different-auth-method">
+	  <primary>AUTH</primary>
+    </indexterm>
+
+    <para>
+    Since <productname>Pgpool-II</productname><emphasis>V4.0</emphasis>
+    it possible to use different authentication for client application
+    and backend <productname>PostgreSQL</productname> servers.
+    For example, a client application can use <literal>scram-sha-256</literal>
+    to connect to <productname>Pgpool-II</productname> which
+    in turn can use <literal>trust</literal> or <literal>md5</literal>
+    authentication to connect to <productname>PostgreSQL</productname>
+    backend for the same session.
+
+    </para>
+  </sect1>
+
+  <sect1 id="auth-aes-encrypted-password">
+    <title>Using AES256 encrypted passwords in <xref linkend="guc-pool-passwd"> file</title>
+
+    <indexterm zone="auth-aes-encrypted-password">
+	  <primary>AUTH</primary>
+    </indexterm>
+
+    <para>
+    Since the <literal>SCRAM</literal> authentication method explicitly
+    guards against the man-in-middle type attacks, so to use such authentication
+    methods <productname>Pgpool-II</productname> requires the
+    <productname>PostgreSQL</productname> user password to
+    authenticate with the backend.
+    </para>
+
+    <para>
+    But as storing the clear text password in the <xref linkend="guc-pool-passwd">
+    file is never a good idea, so you can store the AES256-CBC encrypted password
+    in the <xref linkend="guc-pool-passwd">. To store the AES encrypted password
+    in the <xref linkend="guc-pool-passwd"> the password is first encrypted using
+    the AES256-CBC encryption with the user provided key and then the encrypted password
+    is <literal>base64</literal> encoded and <literal>AES</literal> prefix is added
+    to the encoded string.
+    <note>
+      <para>
+        You can use the <xref linkend="PG-ENC"> utility to create the properly
+        formatted AES encrypted passwords.
+      </para>
+    </note>
+    </para>
+
+      <sect2 id="auth-create-aes-passwords">
+        <title>Creating encrypted password entries</title>
+        <para>
+          <xref linkend="PG-ENC"> can be used to create <literal>AES</literal>
+          encrypted password entries in <xref linkend="guc-pool-passwd"> file.
+          <xref linkend="PG-ENC"> requires the key for encrypting the password entries.
+          later that same key will be required by the <productname>Pgpool-II</productname>
+          to decrypt the passwords to use for authentication.
+          <note>
+            <para>
+            <productname>Pgpool-II</productname> must be build with ssl
+            (--with-openssl) support to use this encrypted password feature.
+            </para>
+          </note>
+       </para>
+      </sect2>
+
+      <sect2 id="auth-aes-decryption-key">
+        <title>Providing decryption key to <productname>Pgpool-II</productname></title>
+
+        <para>
+          If you have <literal>AES</literal> encrypted passwords stored in the
+          <xref linkend="guc-pool-passwd"> file, then <productname>Pgpool-II</productname>
+          will require the decryption key to decrypt the passwords before using them,
+          <productname>Pgpool-II</productname> tries to read the decryption key at
+          startup from the <filename>pgpoolkey</filename> file.
+        </para>
+        <para>
+          By default the <productname>Pgpool-II</productname> will look for the
+          <filename>pgpoolkey</filename> file in user's home directory or the file
+          referenced by environment variable <literal>PGPOOLKEYFILE</literal>.
+          You can also specify the key file using the (-k, --key-file=KEY_FILE)
+          command line argument to the <productname>Pgpool-II</productname> binary.
+       </para>
+      </sect2>
+
+    </sect1>
 
 </chapter>

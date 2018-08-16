@@ -277,6 +277,7 @@ chmod 755 $1/$PGPOOL_REMOTE_START_SCRIPT
 function set_postgresql_conf
 {
 	PGCONF=$1/postgresql.conf
+	PGHBACONF=$1/pg_hba.conf
 
 	echo "listen_addresses = '*'" >> $PGCONF
 	echo "port = $PORT" >> $PGCONF
@@ -309,14 +310,24 @@ function set_postgresql_conf
 		fi
 	fi
 
-	ed $1/pg_hba.conf <<EOF
+    sed -i '/host.*all.*all.*trust$/s/^/#/g' $PGHBACONF
+    sed -i '/local.*all.*all.*trust$/s/^/#/g' $PGHBACONF
+
+    echo "host      all   scram_user     0/0    scram-sha-256" >> $PGHBACONF
+    echo "host      all   md5_user       0/0    md5" >> $PGHBACONF
+    echo "host      all   all       0/0    trust" >> $PGHBACONF
+
+    echo "local      all   scram_user      scram-sha-256" >> $PGHBACONF
+    echo "local      all   md5_user        md5" >> $PGHBACONF
+    echo "local      all   all      trust" >> $PGHBACONF
+
+    ed $1/pg_hba.conf <<EOF
 /^#local *replication/s/^#//p
 /^#host *replication/s/^#//p
 /^#host *replication/s/^#//p
 w
 q
 EOF
-
 }
 
 #-------------------------------------------
@@ -556,6 +567,23 @@ EOF
 fi
 }
 
+function set_pool_hba_conf {
+    POOL_HBACONF=$1
+    sed -i '/host.*all.*all.*trust$/s/^/#/g' $POOL_HBACONF
+    sed -i '/local.*all.*all.*trust$/s/^/#/g' $POOL_HBACONF
+
+    echo "host    all         scram_user  0/0                   scram-sha-256" >> $POOL_HBACONF
+    echo "host    all         md5_user    0/0                   md5" >> $POOL_HBACONF
+
+    echo "local   all         scram_user                        scram-sha-256" >> $POOL_HBACONF
+    echo "local   all         md5_user                          md5" >> $POOL_HBACONF
+
+    echo "local   all         all                               trust" >> $POOL_HBACONF
+
+    echo "host    all         all         127.0.0.1/32          trust" >> $POOL_HBACONF
+    echo "host    all         all         ::1/128               trust" >> $POOL_HBACONF
+}
+
 #-------------------------------------------
 # set pgpool.conf
 # argument: absolute path to pgpool.conf
@@ -746,6 +774,7 @@ BASEPORT=$PGBASEPORT
 #-------------------------------------------
 test ! -d etc && mkdir etc
 cp $SAMPLE_CONF $CONF
+cp $PGPOOLDIR/pool_hba.conf.sample $BASEDIR/etc/pool_hba.conf
 
 #-------------------------------------------
 # create startall, shutdownall and pgpool_reload
@@ -818,6 +847,7 @@ do
 done
 
 set_pgpool_conf $CONF
+set_pool_hba_conf $BASEDIR/etc/pool_hba.conf
 
 PGPOOL_PORT=$ORIG_BASEPORT
 echo "port = $PGPOOL_PORT" >> $CONF

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -19,7 +19,7 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
- * pool_passwd.h: pool_passwd related definitions.
+ * pool_hba.h: pool_hba related definitions.
  *
  */
 
@@ -38,9 +38,11 @@ typedef enum UserAuth
 	/*  uaKrb5, */
 	uaTrust,
 	/*  uaIdent, */
-	/*  uaPassword, */
+	uaPassword,
 	/*  uaCrypt, */
-	uaMD5
+	uaCert,
+	uaMD5,
+	uaSCRAM
 #ifdef USE_PAM
 	,uaPAM
 #endif /* USE_PAM */

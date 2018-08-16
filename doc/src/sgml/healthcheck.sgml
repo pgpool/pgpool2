@@ -106,6 +106,29 @@
         Otherwise, health check results in an error.
       </para>
       <para>
+        If <varname>health_check_password</varname> is left blank <productname>Pgpool-II</productname>
+        will first try to get the password for <xref linkend="guc-health-check-user"> from
+        <xref linkend="guc-pool-passwd"> file before using the empty password.
+      </para>
+      <para>
+        You can also specify AES256-CBC encrypted password in <varname>health_check_password</varname> field.
+        To specify the <literal>AES</literal> encrypted password, password string must be prefixed with
+        <literal>AES</literal> after encrypting (using <literal>aes-256-cbc</literal> algorithm) and
+        encoding to <literal>base64</literal>.
+      </para>
+      <para>
+        You can also use <xref linkend="PG-ENC"> utility to create the correctly formatted
+        <literal>AES</literal> encrypted password strings.
+        <note>
+            <para>
+                <productname>Pgpool-II</productname> will require a valid decryption key at the
+                startup to use the encrypted passwords.
+                see <xref linkend="auth-aes-decryption-key"> for more details on providing the
+                decryption key to <productname>Pgpool-II</productname>
+            </para>
+        </note>
+      </para>
+      <para>
         This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
       </para>
     </listitem>

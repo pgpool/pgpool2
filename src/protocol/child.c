@@ -44,10 +44,6 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#ifdef HAVE_CRYPT_H
-#include <crypt.h>
-#endif
-
 #include "pool.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
@@ -72,7 +68,6 @@ static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE authentication_timeout(int sig);
 static void send_params(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 static void send_frontend_exits(void);
-static void s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password);
 static void connection_count_up(void);
 static void connection_count_down(void);
 static bool connect_using_existing_connection(POOL_CONNECTION *frontend,
@@ -1294,7 +1289,7 @@ POOL_CONNECTION_POOL_SLOT *make_persistent_db_connection(
 	PG_TRY();
 	{
 		send_startup_packet(cp);
-		s_do_auth(cp, password);
+		connection_do_auth(cp, password);
 	}
 	PG_CATCH();
 	{
@@ -1386,226 +1381,6 @@ void discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp)
 
 	pool_close(cp->con);
 	free_persisten_db_connection_memory(cp);
-}
-
-/*
- * Do authentication. Assuming the only caller is
- * *make_persistent_db_connection().
- */
-static void s_do_auth(POOL_CONNECTION_POOL_SLOT *cp, char *password)
-{
-	char kind;
-	int status;
-	int length;
-	int auth_kind;
-	char state;
-	char *p;
-	int pid, key;
-	bool keydata_done;
-
-	/*
-	 * read kind expecting 'R' packet (authentication response)
-	 */
-	pool_read_with_error(cp->con, &kind, sizeof(kind),
-                                  "authentication message response type");
-
-	if (kind != 'R')
-	{
-		char *msg;
-		int sts = 0;
-
-		if (kind == 'E' || kind == 'N')
-		{
-			sts =  pool_extract_error_message(false, cp->con, cp->sp->major, false, &msg);
-		}
-
-		if (sts == 1)	/* succeeded in extracting error/notice message */
-		{
-			ereport(ERROR,
-					(errmsg("failed to authenticate"),
-					 errdetail("%s", msg)));
-			pfree(msg);
-		}
-			ereport(ERROR,
-					(errmsg("failed to authenticate"),
-					 errdetail("invalid authentication message response type, Expecting 'R' and received '%c'",kind)));
-	}
-
-	/* read message length */
-	pool_read_with_error(cp->con, &length, sizeof(length),
-                         "authentication message response length");
-
-	length = ntohl(length);
-
-	/* read auth kind */
-	pool_read_with_error(cp->con, &auth_kind, sizeof(auth_kind),
-                       "authentication method from response");
-	auth_kind = ntohl(auth_kind);
-    ereport(DEBUG1,
-            (errmsg("authenticate kind = %d",auth_kind)));
-
-	if (auth_kind == 0)	/* trust authentication? */
-	{
-		cp->con->auth_kind = 0;
-	}
-	else if (auth_kind == 3) /* clear text password? */
-	{
-		int size = htonl(strlen(password) + 5);
-
-		pool_write(cp->con, "p", 1);
-		pool_write(cp->con, &size, sizeof(size));
-		pool_write_and_flush(cp->con, password, strlen(password) + 1);
-		pool_flush(cp->con);
-		s_do_auth(cp, password);
-		return;
-	}
-	else if (auth_kind == 4) /* crypt password? */
-	{
-		int size;
-		char salt[3];
-		char *crypt_password;
-
-		pool_read_with_error(cp->con, &salt, 2,"crypt salt");
-		salt[2] = '\0';
-
-		crypt_password = crypt(password, salt);
-		size = htonl(strlen(crypt_password) + 5);
-		pool_write(cp->con, "p", 1);
-		pool_write(cp->con, &size, sizeof(size));
-		pool_write_and_flush(cp->con, crypt_password, strlen(crypt_password) + 1);
-		status = pool_flush(cp->con);
-		if (status > 0)
-		{
-            ereport(ERROR,
-				(errmsg("failed to authenticate"),
-                     errdetail("error while sending crypt password")));
-		}
-		s_do_auth(cp, password);
-		return;
-	}
-	else if (auth_kind == 5) /* md5 password? */
-	{
-		char salt[4];
-		char *buf, *buf1;
-		int size;
-
-		pool_read_with_error(cp->con, &salt, 4,"authentication md5 salt");
-
-		buf = palloc0(2 * (MD5_PASSWD_LEN + 4)); /* hash + "md5" + '\0' */
-
-		/* build md5 password */
-		buf1 = buf + MD5_PASSWD_LEN + 4;
-		pool_md5_encrypt(password, cp->sp->user, strlen(cp->sp->user), buf1);
-		pool_md5_encrypt(buf1, salt, 4, buf + 3);
-		memcpy(buf, "md5", 3);
-
-		size = htonl(strlen(buf) + 5);
-		pool_write(cp->con, "p", 1);
-		pool_write(cp->con, &size, sizeof(size));
-		pool_write_and_flush(cp->con, buf, strlen(buf) + 1);
-		status = pool_flush(cp->con);
-		s_do_auth(cp, password);
-		pfree(buf);
-		return;
-	}
-	else
-	{
-        ereport(ERROR,
-			(errmsg("failed to authenticate"),
-                 errdetail("auth kind %d not supported yet", auth_kind)));
-	}
-
-	/*
-	 * Read backend key data and wait until Ready for query arriving or
-	 * error happens.
-	 */
-
-	keydata_done = false;
-
-	for (;;)
-	{
-		pool_read_with_error(cp->con, &kind, sizeof(kind),
-                                      "authentication message kind");
-
-		switch (kind)
-		{
-			case 'K':	/* backend key data */
-				keydata_done = true;
-				ereport(DEBUG1,
-					(errmsg("authenticate backend: key data received")));
-
-
-				/* read message length */
-				pool_read_with_error(cp->con, &length, sizeof(length),"message length for authentication kind 'K'");
-				if (ntohl(length) != 12)
-				{
-                    ereport(ERROR,
-						(errmsg("failed to authenticate"),
-                             errdetail("invalid backend key data length. received %d bytes when expecting 12 bytes"
-                                       , ntohl(length))));
-				}
-
-				/* read pid */
-				pool_read_with_error(cp->con, &pid, sizeof(pid),"pid for authentication kind 'K'");
-				cp->pid = pid;
-
-				/* read key */
-				pool_read_with_error(cp->con, &key, sizeof(key),
-                                     "key for authentication kind 'K'");
-				cp->key = key;
-				break;
-
-			case 'Z':	/* Ready for query */
-				/* read message length */
-				pool_read_with_error(cp->con, &length, sizeof(length),
-                                   "message length for authentication kind 'Z'");
-				length = ntohl(length);
-
-				/* read transaction state */
-				pool_read_with_error(cp->con, &state, sizeof(state),
-                                     "transaction state  for authentication kind 'Z'");
-			
-				ereport(DEBUG1,
-					(errmsg("authenticate backend: transaction state: %c", state)));
-
-				cp->con->tstate = state;
-
-				if (!keydata_done)
-				{
-                    ereport(ERROR,
-						(errmsg("failed to authenticate"),
-                             errdetail("ready for query arrived before receiving keydata")));
-				}
-				return;
-				break;
-
-			case 'S':	/* parameter status */
-			case 'N':	/* notice response */
-			case 'E':	/* error response */
-				/* Just throw away data */
-				pool_read_with_error(cp->con, &length, sizeof(length),
-                                   "backend message length");
-			
-				length = ntohl(length);
-				length -= 4;
-
-				p = pool_read2(cp->con, length);
-				if (p == NULL)
-					ereport(ERROR,
-						(errmsg("failed to authenticate"),
-                             errdetail("unable to read data from socket")));
-
-				break;
-
-			default:
-                ereport(ERROR,
-					(errmsg("failed to authenticate"),
-                         errdetail("unknown authentication message response received '%c'",kind)));
-				break;
-		}
-	}
-	ereport(ERROR,
-		(errmsg("failed to authenticate")));
 }
 
 /*

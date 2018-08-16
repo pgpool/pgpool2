@@ -134,7 +134,7 @@ next_token(char **lineptr, char *buf, int bufsz,
 static List *
 next_field_expand(const char *filename, char **lineptr,
 				  int elevel, char **err_msg);
-static POOL_STATUS CheckMd5Auth(char *username);
+static POOL_STATUS CheckUserExist(char *username);
 
 #ifdef USE_PAM
 #ifdef HAVE_PAM_PAM_APPL_H
@@ -615,8 +615,14 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 		parsedline->auth_method = uaTrust;
 	else if (strcmp(token->string, "reject") == 0)
 		parsedline->auth_method = uaReject;
+	else if (strcmp(token->string, "cert") == 0)
+		parsedline->auth_method = uaCert;
+	else if (strcmp(token->string, "password") == 0)
+		parsedline->auth_method = uaPassword;
 	else if (strcmp(token->string, "md5") == 0)
 		parsedline->auth_method = uaMD5;
+	else if (strcmp(token->string, "scram-sha-256") == 0)
+		parsedline->auth_method = uaSCRAM;
 #ifdef USE_PAM
 	else if (strcmp(token->string, "pam") == 0)
 		parsedline->auth_method = uaPAM;
@@ -767,7 +773,11 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
                         errdetail("missing or erroneous pool_hba.conf file"),
                             errhint("see pgpool log for details")));
 
-
+		/*
+		 * Get the password for the user if it is stored
+		 * in the pool_password file
+		 */
+		frontend->passwordMapping = pool_get_user_credentials(frontend->username);
         switch (frontend->pool_hba->auth_method)
         {
 			case uaImplicitReject:
@@ -816,13 +826,54 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
             case uaKrb5:
             case uaIdent:
             case uaCrypt:
+			 */
             case uaPassword:
-                break; 
-            */
+				ereport(DEBUG1,
+						(errmsg("password authentication required")));
+				status = POOL_CONTINUE;
+                break;
+			case uaCert:
+				ereport(DEBUG1,
+						(errmsg("SSL certificate authentication required")));
+				status = POOL_CONTINUE;
+				break;
 
             case uaMD5:
-                status = CheckMd5Auth(frontend->username);
+				status = POOL_CONTINUE;
+
+				if (NUM_BACKENDS <= 1)
+					break;
+
+				if (!frontend->passwordMapping)
+					ereport(FATAL,
+						(return_code(2),
+							errmsg("md5 authentication failed"),
+                               errdetail("pool_passwd file does not contain an entry for \"%s\"",frontend->username)));
+				if (frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_PLAINTEXT &&
+					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_MD5 &&
+					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_AES)
+					ereport(FATAL,
+						(return_code(2),
+                           errmsg("md5 authentication failed"),
+							 errdetail("pool_passwd file does not contain valid md5 entry for \"%s\"",frontend->username)));
                 break;
+
+			case uaSCRAM:
+				if (!frontend->passwordMapping)
+					ereport(FATAL,
+						(return_code(2),
+							errmsg("SCRAM authentication failed"),
+							 errdetail("pool_passwd file does not contain an entry for \"%s\"",frontend->username)));
+				if (frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_PLAINTEXT &&
+					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_SCRAM_SHA_256 &&
+					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_AES)
+					ereport(FATAL,
+						(return_code(2),
+							errmsg("SCRAM authentication failed"),
+							 errdetail("pool_passwd file does not contain valid SCRAM entry for \"%s\"",frontend->username)));
+
+				status = POOL_CONTINUE;
+				break;
 
 
     #ifdef USE_PAM
@@ -845,7 +896,10 @@ void ClientAuthentication(POOL_CONNECTION *frontend)
     PG_END_TRY();
 
  	if (status == POOL_CONTINUE)
+	{
  		sendAuthRequest(frontend, AUTH_REQ_OK);
+		authenticate_frontend(frontend);
+	}
  	else
 		auth_failed(frontend);
 }
@@ -986,6 +1040,18 @@ static void auth_failed(POOL_CONNECTION *frontend)
  		case uaMD5:
 			snprintf(errmessage, messagelen,
 					 "\"MD5\" authentication with pgpool failed for user \"%s\"",
+					 frontend->username);
+			break;
+
+		case uaSCRAM:
+			snprintf(errmessage, messagelen,
+					 "\"SCRAM\" authentication with pgpool failed for user \"%s\"",
+					 frontend->username);
+			break;
+
+		case uaCert:
+			snprintf(errmessage, messagelen,
+					 "\"CERT\" authentication with pgpool failed for user \"%s\"",
 					 frontend->username);
 			break;
 
@@ -1983,7 +2049,9 @@ static POOL_STATUS CheckPAMAuth(POOL_CONNECTION *frontend, char *user, char *pas
 
 #endif   /* USE_PAM */
 
-static POOL_STATUS CheckMd5Auth(char *username)
+
+
+static POOL_STATUS CheckUserExist(char *username)
 {
 	char *passwd;
 
@@ -1991,12 +2059,7 @@ static POOL_STATUS CheckMd5Auth(char *username)
 	passwd = pool_get_passwd(username);
 
 	if (passwd == NULL)
-        ereport(FATAL,
-            (return_code(2),
-                 errmsg("md5 authentication failed"),
-                    errdetail("pool_passwd file does not contain an entry for \"%s\"",username)));
-
-
+		return POOL_ERROR;
 	/*
 	 * Ok for now. Actual authentication will be performed later.
 	 */
