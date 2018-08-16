@@ -3800,7 +3800,7 @@ static const char* BackendDataDirShowFunc(int index)
 
 static const char* BackendFlagsShowFunc(int index)
 {
-	static char buffer[20];
+	static char buffer[21];
 
 	unsigned short flag = g_pool_config.backend_desc->backend_info[index].flag;
 	if (POOL_ALLOW_TO_FAILOVER(flag))
