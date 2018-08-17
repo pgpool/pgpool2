@@ -1,0 +1,474 @@
+<sect1 id="release-4-0">
+  <title>Release 4.0</title>
+  <note>
+    <title>Release Date</title>
+    <simpara>2018-xx-xx</simpara>
+  </note>
+
+    <sect2>
+    <title>Overview</title>
+    <para>
+<!--
+      This version addes support for SCRAM and CERT authentication,
+      improves load balancing control and import PostgreSQL 11 
+      new SQL parser. 
+-->
+      This version addes support for SCRAM and CERT authentication,
+      and improves load balancing control.
+    </para>
+    <para>
+      Major enhancements in <productname>Pgpool-II</productname> 4.0 include:
+    </para>
+
+    <!-- Items in this list summarize one or more items below -->
+
+    <itemizedlist>
+      <listitem>
+        <para>
+          Add <acronym>SCRAM</acronym> and <acronym>Certificate</acronym> authentication support.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Detecting "false" primary server of <productname>PostgreSQL</productname>.
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Improvements to load balancing:
+          <itemizedlist>  
+          <listitem>
+              <para>
+                More load balancing fine control after write queries.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+               Load balancing control for specific queries.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Allow to specify load balance weight ratio for load balance parameters.
+              </para>
+            </listitem>
+          </itemizedlist>  
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Add last state change timestamp to <xref linkend="SQL-SHOW-POOL-NODES">.
+        </para>
+      </listitem>
+<!--
+      <listitem>
+        <para>
+          Import PostgreSQL 11 SQL parser.
+        </para>
+      </listitem>
+-->
+      <listitem>
+        <para>
+          Logging client messages.
+        </para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>Major Enhancements</title>
+    <itemizedlist>
+      <listitem>
+        <para>
+          Add support for <acronym>SCRAM</acronym> and <acronym>Certificate</acronym> 
+          based authentication methods. (Muhammad Usama)
+          <itemizedlist>  
+            <listitem>
+              <para>
+              Able to use different auth methods for frontend and backend.
+              </para>
+              <para>
+                Now it is possible to use different authentication methods between
+                client to <productname>Pgpool-II</productname> and <productname>Pgpool-II</productname> to backend.
+              </para>
+            </listitem>
+          </itemizedlist>  
+          <itemizedlist>  
+            <listitem>
+              <para>
+                Able to use <acronym>MD5</acronym> and <acronym>SCRAM</acronym> authentication methods 
+                to connect to database without <filename>pool_passwd</filename>.
+              </para>
+              <para>
+                A new configuration parameter <xref linkend="guc-allow-clear-text-frontend-auth"> is added.
+                This parameter enables this config allows the <productname>Pgpool-II</productname>
+                to use clear-text-password authentication with frontend clients when
+                <filename>pool_passwd</filename> file does not contains the password for the connecting user,
+                and use that password (provided by client) to authenticate with the backend
+                using <acronym>MD5</acronym> and/or <acronym>SCRAM</acronym> authentication.
+              </para>
+            </listitem>
+          </itemizedlist>  
+          <itemizedlist>  
+            <listitem>
+              <para>
+                New <xref linkend="PG-ENC"> utility to create encrypted passwords.
+              </para>
+              <para>
+                A new utility <xref linkend="PG-ENC"> is added to create AES encrypted passwords.
+              </para>
+            </listitem>
+          </itemizedlist>  
+          <itemizedlist>  
+            <listitem>
+              <para>
+                Allow to specify the AES encrypted password in the <filename>pgpool.conf</filename>.
+              </para>
+              <para>
+                Allow to specify the AES encrypted password in the 
+                <filename>pgpool.conf</filename> file for <xref linkend="guc-health-check-user">, 
+                <xref linkend="guc-sr-check-user">, <xref linkend="guc-wd-lifecheck-user"> and
+                <xref linkend="guc-recovery-user"> users.
+              </para>
+            </listitem>
+          </itemizedlist>  
+        </para>
+        <para>
+          See <xref linkend="client-authentication"> for more details.
+        </para>
+      </listitem>
+
+      <listitem>
+        <!--
+        2018-04-09 [f0631a6]
+        2018-04-17 [bbc270f]
+        -->
+        <para>
+          Add new parameter <xref linkend="guc-detach-false-primary">. (Tatsuo Ishii)
+        </para>
+        <para>
+          If set <literal>detach_false_primary = on</literal>, detach false primary node. 
+          The default is off. This parameter is only valid in streaming replication mode 
+          and for <productname>PostgreSQL</productname> 9.6 or after since this feature 
+          uses <structname>pg_stat_wal_receiver</structname>. 
+          If <productname>PostgreSQL</productname> 9.5.x or older version is used, no 
+          error is raised, just the feature is ignored. 
+        </para>
+      </listitem>
+      <listitem>
+        <!--
+        2018-04-23 [33e52ba]
+        2018-04-19 [ba19a38]
+        -->
+        <para>
+          Add <xref linkend="guc-disable-load-balance-on-write"> parameter to specify 
+          load balance behavior after write queries appear. (Tatsuo Ishii)
+        </para>
+        <para>
+          This parameter allows to specify the behavior when a write query issued.
+        </para>
+      </listitem>
+
+      <listitem>
+        <!--
+        2018-08-07 [5108031]
+        -->
+        <para>
+          Allow to specify load balance weight ratio for load balance parameters. (Bo Peng)
+        </para>
+        <para>
+          Add a new feature to allow to specify load balance weight ratio for
+          <xref linkend="guc-database-redirect-preference-list"> and 
+          <xref linkend="guc-app-name-redirect-preference-list"> parameters.
+        </para>
+        <para>
+          You can specify the list of "database-name:node id(ratio)" pairs to
+          send SELECT queries to a particular backend node for a particular
+          database connection at a specified load balance ratio.
+        </para>
+        <para>
+          Also you can specify list of "application-name:node id(ratio)" pairs to
+          send SELECT queries to a particular backend node for a particular client
+          application connection at a specified load balance ratio.
+        </para>
+        <para>
+          This load balance ratio specifies a value between 0 and 1,
+          and the default is 1.0.
+        </para>
+      </listitem>
+
+      <listitem>
+        <!--
+        2018-06-14 [83906d1]
+        -->
+        <para>
+          Add new parameter <xref linkend="guc-black-query-pattern-list"> to enable 
+          specifying SQL patterns lists that should not be load-balanced. (Bo Peng)
+        </para>
+        <para>
+          Specify a semicolon separated list of SQL patterns that
+          should be sent to primary node only. Regular expression can be 
+          used in SQL patterns. Only Maste Slave mode is supported.
+        </para>
+      </listitem>
+
+      <listitem>
+        <!--
+        2018-07-27 [54503f4]
+        2018-08-02 [dac5573]
+        2018-08-01 [8745853]
+        -->
+        <para>
+          Add new parameter <xref linkend="guc-log-client-messages"> to allow logging client message. (Takuma Hoshiai, Tatsuo Ishii)
+        </para>
+        <para>
+          Set <varname>log_client_messages = on</varname>, any client messages will be logged without debugging messages.
+        </para>
+      </listitem>
+
+      <listitem>
+        <!--
+        2018-07-09 [62bd296]
+        -->
+        <para>
+          Allow to display <productname>Pgpool-II</productname> child process id and 
+          <productname>PostgreSQL</productname> backend id in <xref linkend="PCP-PROC-INFO">. (Tatsuo Ishii)
+        </para>
+        <para>
+          Add --all option to display all child processes and their available connection slots. 
+        </para>
+      </listitem>
+      <listitem>
+        <!--
+        2018-06-12 [0312dc5]
+        -->
+        <para>
+          Add <literal>last_status_change</literal> column to <xref linkend="SQL-SHOW-POOL-NODES"> command. (Tatsuo Ishii)
+        </para>
+        <para>
+          The new column indicates the time when <literal>status</literal> or <literal>role</literal> has been changed. 
+        </para>
+        <para>
+          See <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2018-June/002822.html">
+          [pgpool-hackers: 2822]</ulink> for the reasoning to add the column.
+        </para>
+      </listitem>
+      <listitem>
+        <!--
+        2018-07-03 [a8a666a]
+        -->
+        <para>
+          Add <literal>replication_delay</> and <literal>last_status_change</> to 
+          <xref linkend="PCP-NODE-INFO">. (Tatsuo Ishii)
+        </para>
+      </listitem>
+      <listitem>
+        <!--
+        2018-07-05 [c47ac16]
+        -->
+        <para>
+          Add <literal>role</>, <literal>replication_delay</> and <literal>last_status_change</> columns to pgpool_adm's 
+          <xref linkend="PGPOOL-ADM-PCP-NODE-INFO">. (Tatsuo Ishii)
+        </para>
+      </listitem>
+      </itemizedlist>
+    </sect2>
+
+    <sect2>
+    <title>Other Enhancements</title>
+    <itemizedlist>
+      <listitem>
+        <!--
+        2018-05-09 [719fbaa]
+        2018-05-10 [edd10f6]
+        -->
+        <para>
+          Add "-r" option to <command>pgpool_setup</command> to allow use of <application>pg_rewind</application>. (Tatsuo Ishii)
+        </para>
+        <para>
+          With this option, <command>pgpool_setup</command> creates <filename>basebackup.sh</filename> which tries
+          <application>pg_rewind</application> first.  If it fails, falls back to rsync.
+        </para>
+        <para>
+          Also a new environment variable "USE_PG_REWIND" to <application>pgpool_setup</application> is added.
+          This brings the same effect as "-r" option is specified.
+        </para>
+      </listitem>
+
+      <listitem>
+        <!--
+        2018-04-16 [3d63b8a]
+        2018-04-15 [4867cf2]
+        2018-04-18 [1c9a5dd]
+        2018-05-05 [50b4d27]
+        2018-04-26 [b3a361c]
+        2018-04-18 [1c9a5dd]
+        2018-04-18 [1c9a5dd]
+        -->
+        <para>
+          Add "-s" option to <application>pgpool_setup</application> to support for replication slot. (Tatsuo Ishii)
+        </para>
+        <para>
+          This eliminates the problem when standby is promoted. When a standby
+          is promoted, it changes the time line in PITR archive, which will stop
+          other standby if any because of shared archive directory.
+        </para>
+        <para>
+          Also a new environment variable "USE_REPLICATION_SLOT" to <application>pgpool_setup</application> is added.
+          This brings the same effect as "-s" option is specified.
+        </para>
+        <para>
+          If "USE_REPLICATION_SLOT=true", in streaming replication mode,
+          use replication slot instead of archive.
+        </para>
+        <para>
+          By setting USE_REPLICATION_SLOT environment variable,
+          now <application>pgpool_setup</application> in all tests uses replication slots.
+          This reduces disk space under <filename>src/test/regression</filename> from
+          6.3GB to 5,1GB (1.2GB savings).
+        </para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>Changes</title>
+    <itemizedlist>
+      <listitem>
+        <!--
+        2018-04-16 [3d63b8a]
+        2018-05-04 [2e41451]
+        -->
+        <para>
+          Add 1st/2nd stage online recovery commands parameter to 
+          get the node number to be recovered. (Tatsuo Ishii)
+        </para>
+        <para>
+          Now 1st/2nd stage online recovery commands accept 5 parameters.
+        </para>
+        <para>
+          See recovery_1st_stage_command and recovery_2nd_stage_command for more details.
+        </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2018-05-07 [05c9297]
+      -->
+      <para>
+        Downgrade most of DEBUG1 messages to DEBUG5. (Tatsuo Ishii)
+      </para>
+      <para>
+        This significantly reduces the size of pgpool log when pgpool starts
+        with -d option (this is equivalent to setting <xref linkend="guc-client-min-messages"> to
+        debug1).
+      </para>
+      <para>
+        Per discussion <ulink url="http://www.sraoss.jp/pipermail/pgpool-hackers/2018-May/002794.html">
+        [pgpool-hackers: 2794]</ulink>.
+      </para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+      <listitem>
+        <!--
+        2018-07-31 [0f45b8d]
+        -->
+        <para>
+          Fix compiler error if HAVE_ASPRINTF is not defined. (Tatsuo Ishii)
+        </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2018-07-31 [24973c0]
+      -->
+      <para>
+        Fix <filename>configure.ac</> to remove generating <filename>src/sql/pgpool_adm/Makefile.in</>. (Tatsuo Ishii)
+      </para>
+      </listitem>
+
+      <listitem>
+        <!--
+        2018-05-24 [d2b8efd]
+        -->
+        <para>
+          Fix pgpool main process segfault when <productname>PostgreSQL</productname> 9.5 is used. (Tatsuo Ishii)
+        </para>
+        <para>
+          pgpool_setup -n 3 (or greater) triggers the bug. While recovering node
+          2, pgpool main process tried to retrieve version info from backend #2
+          even if it's not running. This causes the sefault because connection
+          was not established yet. The reason why <productname>PostgreSQL 9.6</productname>
+          or later was not suffered from the bug was, <productname>PostgreSQL</productname>
+          exited the loop as soon as the server version is higher than 9.5. To fix this, 
+          call to VALID_BACKEND macro was added.
+        </para>
+      </listitem>
+
+      <listitem>
+        <!--
+        2018-05-04 [4621577]
+        -->
+        <para>
+          Add missing <xref linkend="guc-health-check-timeout"> in pgpool_setup. (Tatsuo Ishii)
+        </para>
+        <para>
+          Per node health_check_timeout was missing and this should had been
+          there since the per node health check parameter support was added.
+        </para>
+      </listitem>
+
+      <listitem>
+      <!--
+      2018-07-11 [27a0056]
+      -->
+      <para>
+        Test: Try to reduce the chance of regression 006.memcache failure. (Tatsuo Ishii)
+      </para>
+      <para>
+        It seems the occasional failure of the test is caused by replication
+        lag.  The script tries to read tables from standby but it returns a
+        table not existing error. So insert pg_sleep() after creation of
+        tables.
+      </para>
+      </listitem>
+
+      <listitem>
+        <!--
+        2018-05-21 [1d3ab38]
+        -->
+        <para>
+        Test: Fix regression test 055.backend_all_down error. (Bo Peng)
+        </para>
+      </listitem>
+
+      <listitem>
+        <!--
+        2018-05-04 [1903325]
+        -->
+        <para>
+          Doc: Enhance online recovery document. (Tatsuo Ishii)
+        </para>
+        <para>
+          Clarify that 2nd stage command is only required in native replication mode.
+        </para>
+      </listitem>
+
+      <listitem>
+        <!--
+        2018-02-27 [4eabecb]
+        -->
+        <para>
+          Test: Add new regression test <filename>017.node_0_is_down</> for node 0 not being primary. (Tatsuo Ishii)
+        </para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
