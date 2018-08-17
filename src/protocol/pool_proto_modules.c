@@ -499,7 +499,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 			}
 		}
 
-		/*
+		/*---------------------------------------------------------------------------
 		 * determine if we need to lock the table
 		 * to keep SERIAL data consistency among servers
 		 * conditions:
@@ -507,6 +507,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 * - protocol is V3
 		 * - statement is INSERT
 		 * - either "INSERT LOCK" comment exists or insert_lock directive specified
+		 *---------------------------------------------------------------------------
 		 */
 		if (!RAW_MODE && !SL_MODE)
 		{
@@ -3085,13 +3086,14 @@ void raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 	}
 }
 
-/*
+/*---------------------------------------------------
  * Check various errors from backend.  return values:
  *  0: no error
  *  1: deadlock detected
  *  2: serialization error detected
  *  3: query cancel
  * detected: 4
+ *---------------------------------------------------
  */
 static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 {
@@ -3103,7 +3105,7 @@ static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 	if (detect_deadlock_error(CONNECTION(backend, backend_id), MAJOR(backend)) == SPECIFIED_ERROR)
 		return 1;
 
-	/*
+	/*-----------------------------------------------------------------------------------
 	 * Check serialization failure error and abort
 	 * transactions on all nodes if so. Otherwise we allow
 	 * data inconsistency among DB nodes. See following
@@ -3124,11 +3126,12 @@ static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 	 * M:S1:COMMIT;
 	 * M:S2:ERROR:  could not serialize access due to concurrent update
 	 * S:S2:UPDATE t1 SET i = i + 1; <-- success in UPDATE and data becomes inconsistent!
+	 *-----------------------------------------------------------------------------------
 	 */
 	if (detect_serialization_error(CONNECTION(backend, backend_id), MAJOR(backend), true) == SPECIFIED_ERROR)
 		return 2;
 
-	/*
+	/*-------------------------------------------------------------------------------
 	 * check "SET TRANSACTION ISOLATION LEVEL must be called before any query" error.
 	 * This happens in following scenario:
 	 *
@@ -3139,7 +3142,9 @@ static int check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 	 * S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 	 * M: <-- error
 	 * S: <-- ok since no previous SELECT is sent. kind mismatch error occurs!
+	 *-------------------------------------------------------------------------------
 	 */
+
 	if (detect_active_sql_transaction_error(CONNECTION(backend, backend_id), MAJOR(backend)) == SPECIFIED_ERROR)
 		return 3;
 

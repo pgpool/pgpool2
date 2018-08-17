@@ -375,7 +375,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 								from pool_read_message_length and recheck the pg_hba.conf settings.")));
 	}
 
-	/*
+	/*-------------------------------------------------------------------------
 	 * read authentication request kind.
 	 *
 	 * 0: authentication ok
@@ -389,6 +389,7 @@ int pool_do_auth(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	 * in replication mode, we only support  kind = 0, 3. this is because "salt"
 	 * cannot be replicated.
 	 * in non replication mode, we support kind = 0, 3, 4, 5
+	 *-------------------------------------------------------------------------
 	 */
 
 	authkind = pool_read_int(cp);

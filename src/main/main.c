@@ -200,6 +200,8 @@ int main(int argc, char **argv)
 				exit(1);
 		}
 	}
+
+#ifdef NOT_USED
 //#ifdef USE_SSL
 //	/* global ssl init */
 //#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
@@ -209,6 +211,7 @@ int main(int argc, char **argv)
 //#endif
 //	SSL_load_error_strings();
 //#endif /* USE_SSL */
+#endif
 
 	myargv = save_ps_display_args(myargc, myargv);
 	/* create MemoryContexts */
