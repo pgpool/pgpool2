@@ -9,17 +9,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-enum {
+enum
+{
 	TEST_CONTINUE,
 	TEST_QUIT
 };
 
-extern int GetDatabaseEncoding(void);
+extern int	GetDatabaseEncoding(void);
 
 int
 command(const char *cmd)
 {
-	char		name[1024], value[1024];
+	char		name[1024],
+				value[1024];
 
 	if (*cmd == 'q')
 		return TEST_QUIT;
@@ -47,19 +49,20 @@ command(const char *cmd)
 	return TEST_CONTINUE;
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
-	List *tree;
-	ListCell *l;
-	int		state = TEST_CONTINUE;
-	int		notty = (!isatty(fileno(stdin)) || !isatty(fileno(stdout)));
-	char	line[1024];
+	List	   *tree;
+	ListCell   *l;
+	int			state = TEST_CONTINUE;
+	int			notty = (!isatty(fileno(stdin)) || !isatty(fileno(stdout)));
+	char		line[1024];
 
 	while (state != TEST_QUIT)
 	{
 		if (!notty)
 			fprintf(stdout, "> ");
-		
+
 		if (!fgets(line, 1024, stdin))
 			break;
 
@@ -84,7 +87,8 @@ int main(int argc, char **argv)
 		{
 			foreach(l, tree)
 			{
-				Node *node = (Node *) lfirst(l);
+				Node	   *node = (Node *) lfirst(l);
+
 				printf("%s\n", nodeToString(node));
 			}
 		}

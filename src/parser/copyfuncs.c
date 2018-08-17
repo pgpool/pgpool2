@@ -2256,7 +2256,7 @@ _copyAppendRelInfo(const AppendRelInfo *from)
  * _copyPartitionedChildRelInfo
  */
 static PartitionedChildRelInfo *
-_copyPartitionedChildRelInfo(const PartitionedChildRelInfo *from)
+_copyPartitionedChildRelInfo(const PartitionedChildRelInfo * from)
 {
 	PartitionedChildRelInfo *newnode = makeNode(PartitionedChildRelInfo);
 
@@ -4991,6 +4991,7 @@ copyObjectImpl(const void *from)
 			break;
 
 #ifdef NOT_USED_IN_PGPOOL
+
 			/*
 			 * RELATION NODES
 			 */
@@ -5017,6 +5018,7 @@ copyObjectImpl(const void *from)
 			break;
 
 #endif
+
 			/*
 			 * VALUE NODES
 			 */
@@ -5045,6 +5047,7 @@ copyObjectImpl(const void *from)
 			break;
 
 #ifdef NOT_USED_IN_PGPOOL
+
 			/*
 			 * EXTENSIBLE NODES
 			 */
@@ -5547,6 +5550,7 @@ copyObjectImpl(const void *from)
 			break;
 
 #ifdef NOT_USED_IN_PGPOOL
+
 			/*
 			 * MISCELLANEOUS NODES
 			 */

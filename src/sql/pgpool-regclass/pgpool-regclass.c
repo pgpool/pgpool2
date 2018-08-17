@@ -43,25 +43,23 @@ PG_FUNCTION_INFO_V1(pgpool_regclass);
 
 extern Datum pgpool_regclass(PG_FUNCTION_ARGS);
 
-static List *
-MystringToQualifiedNameList(const char *string);
+static List *MystringToQualifiedNameList(const char *string);
 
-static RangeVar *
-MymakeRangeVarFromNameList(List *names);
+static RangeVar *MymakeRangeVarFromNameList(List *names);
 
-extern Oid			MyDatabaseId;
+extern Oid	MyDatabaseId;
 
 #if !defined(PG_VERSION_NUM) || (PG_VERSION_NUM < 90100)
 static Oid
-get_namespace_oid(const char *nspname, bool missing_ok);
+			get_namespace_oid(const char *nspname, bool missing_ok);
 #endif
 
 Datum
 pgpool_regclass(PG_FUNCTION_ARGS)
 {
-	char		*pro_name_or_oid = PG_GETARG_CSTRING(0);
-	Oid	result;
-	List *names;
+	char	   *pro_name_or_oid = PG_GETARG_CSTRING(0);
+	Oid			result;
+	List	   *names;
 	RangeVar   *rel;
 
 	names = MystringToQualifiedNameList(pro_name_or_oid);
@@ -73,10 +71,9 @@ pgpool_regclass(PG_FUNCTION_ARGS)
 		PG_RETURN_OID(InvalidOid);
 
 	/*
-	 * Check to see if cross-database reference is used.
-	 * This is to be done in RangeVarGetRelid(). The reason
-	 * we do this here is, to avoid raising an error
-	 * in RangeVarGetRelid().
+	 * Check to see if cross-database reference is used. This is to be done in
+	 * RangeVarGetRelid(). The reason we do this here is, to avoid raising an
+	 * error in RangeVarGetRelid().
 	 */
 	if (rel->catalogname)
 	{
@@ -85,10 +82,9 @@ pgpool_regclass(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Check to see if schema exists.
-	 * This is to be done in RangeVarGetRelid(). The reason
-	 * we do this here is, to avoid raising an error
-	 * in RangeVarGetRelid().
+	 * Check to see if schema exists. This is to be done in
+	 * RangeVarGetRelid(). The reason we do this here is, to avoid raising an
+	 * error in RangeVarGetRelid().
 	 */
 	if (rel->schemaname)
 	{
@@ -98,9 +94,12 @@ pgpool_regclass(PG_FUNCTION_ARGS)
 #if !defined(PG_VERSION_NUM) || (PG_VERSION_NUM < 90200)
 	result = RangeVarGetRelid(rel, true);
 #else
-	/* RangeVarGetRelid() of PostgreSQL 9.2 or later, has third
-	 * argument "missing_ok" which suppresses ERROR exception, but
-	 * returns invlaid_oid. See include/catalog/namespace.h */
+
+	/*
+	 * RangeVarGetRelid() of PostgreSQL 9.2 or later, has third argument
+	 * "missing_ok" which suppresses ERROR exception, but returns invlaid_oid.
+	 * See include/catalog/namespace.h
+	 */
 	result = RangeVarGetRelid(rel, true, true);
 #endif
 	PG_RETURN_OID(result);
@@ -197,9 +196,9 @@ get_namespace_oid(const char *nspname, bool missing_ok)
 
 	oid = GetSysCacheOid(NAMESPACENAME, CStringGetDatum(nspname), 0, 0, 0);
 	if (!OidIsValid(oid) && !missing_ok)
-        ereport(ERROR,
-                (errcode(ERRCODE_UNDEFINED_SCHEMA),
-                 errmsg("schema \"%s\" does not exist", nspname)));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist", nspname)));
 
 	return oid;
 }

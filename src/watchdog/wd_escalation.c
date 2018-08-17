@@ -43,8 +43,8 @@
 static void
 wd_exit(int exit_signo)
 {
-	sigset_t mask;
-	
+	sigset_t	mask;
+
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGTERM);
 	sigaddset(&mask, SIGINT);
@@ -61,7 +61,8 @@ wd_exit(int exit_signo)
 pid_t
 fork_escalation_process(void)
 {
-	pid_t pid;
+	pid_t		pid;
+
 	pid = fork();
 	if (pid != 0)
 	{
@@ -76,7 +77,7 @@ fork_escalation_process(void)
 	POOL_SETMASK(&UnBlockSig);
 
 	init_ps_display("", "", "", "");
-	
+
 	pool_signal(SIGTERM, wd_exit);
 	pool_signal(SIGINT, wd_exit);
 	pool_signal(SIGQUIT, wd_exit);
@@ -85,32 +86,32 @@ fork_escalation_process(void)
 	pool_signal(SIGPIPE, SIG_IGN);
 
 	MemoryContextSwitchTo(TopMemoryContext);
-	
-	set_ps_display("watchdog escalation",false);
+
+	set_ps_display("watchdog escalation", false);
 
 	ereport(LOG,
 			(errmsg("watchdog: escalation started")));
+
 	/*
-	 * STEP 1
-	 * clear shared memory cache
+	 * STEP 1 clear shared memory cache
 	 */
 	if (pool_config->memory_cache_enabled && pool_is_shmem_cache() &&
 		pool_config->clear_memqcache_on_escalation)
 	{
 		ereport(LOG,
-			(errmsg("watchdog escalation"),
+				(errmsg("watchdog escalation"),
 				 errdetail("clearing all the query cache on shared memory")));
-		
+
 		pool_clear_memory_cache();
 	}
 
 	/*
-	 * STEP 2
-	 * execute escalation command provided by user in pgpool conf file
+	 * STEP 2 execute escalation command provided by user in pgpool conf file
 	 */
 	if (strlen(pool_config->wd_escalation_command))
 	{
-		int r = system(pool_config->wd_escalation_command);
+		int			r = system(pool_config->wd_escalation_command);
+
 		if (WIFEXITED(r))
 		{
 			if (WEXITSTATUS(r) == EXIT_SUCCESS)
@@ -130,14 +131,13 @@ fork_escalation_process(void)
 	}
 
 	/*
-	 * STEP 3
-	 * bring up the delegate IP
+	 * STEP 3 bring up the delegate IP
 	 */
 	if (strlen(pool_config->delegate_IP) != 0)
 	{
 		if (wd_IP_up() != WD_OK)
 			ereport(WARNING,
-				(errmsg("watchdog escalation failed to acquire delegate IP")));
+					(errmsg("watchdog escalation failed to acquire delegate IP")));
 
 	}
 	exit(0);
@@ -149,7 +149,7 @@ fork_escalation_process(void)
 pid_t
 fork_plunging_process(void)
 {
-	pid_t pid;
+	pid_t		pid;
 
 	pid = fork();
 	if (pid != 0)
@@ -161,32 +161,33 @@ fork_plunging_process(void)
 	}
 	on_exit_reset();
 	processType = PT_WATCHDOG_UTILITY;
-	
+
 	POOL_SETMASK(&UnBlockSig);
-	
+
 	init_ps_display("", "", "", "");
-	
+
 	pool_signal(SIGTERM, wd_exit);
 	pool_signal(SIGINT, wd_exit);
 	pool_signal(SIGQUIT, wd_exit);
 	pool_signal(SIGCHLD, SIG_DFL);
 	pool_signal(SIGHUP, SIG_IGN);
 	pool_signal(SIGPIPE, SIG_IGN);
-	
+
 	MemoryContextSwitchTo(TopMemoryContext);
-	
-	set_ps_display("watchdog de-escalation",false);
-	
+
+	set_ps_display("watchdog de-escalation", false);
+
 	ereport(LOG,
 			(errmsg("watchdog: de-escalation started")));
-	
+
 	/*
-	 * STEP 1
-	 * execute de-escalation command provided by user in pgpool conf file
+	 * STEP 1 execute de-escalation command provided by user in pgpool conf
+	 * file
 	 */
 	if (strlen(pool_config->wd_de_escalation_command))
 	{
-		int r = system(pool_config->wd_de_escalation_command);
+		int			r = system(pool_config->wd_de_escalation_command);
+
 		if (WIFEXITED(r))
 		{
 			if (WEXITSTATUS(r) == EXIT_SUCCESS)
@@ -204,12 +205,11 @@ fork_plunging_process(void)
 					(errmsg("watchdog de-escalation command exit abnormally")));
 		}
 	}
-	
+
 	/*
-	 * STEP 2
-	 * bring down the delegate IP
+	 * STEP 2 bring down the delegate IP
 	 */
-	
+
 	if (strlen(pool_config->delegate_IP) != 0)
 	{
 		if (wd_IP_down() != WD_OK)

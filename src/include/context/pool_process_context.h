@@ -3,7 +3,7 @@
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2015	PgPool Global Development Group
@@ -31,44 +31,46 @@
  * Child process context:
  * Manages per pgpool child process context
  */
-typedef struct {
+typedef struct
+{
 	/*
 	 * process start time, info on connection to backend etc.
 	 */
-	ProcessInfo	*process_info;
-	int proc_id;  /* Index to process table(ProcessInfo) (!= UNIX's PID) */
+	ProcessInfo *process_info;
+	int			proc_id;		/* Index to process table(ProcessInfo) (!=
+								 * UNIX's PID) */
 
 	/*
-	 * PostgreSQL server description. Placed on shared memory.
-	 * Includes backend up/down info, hostname, data directory etc.
+	 * PostgreSQL server description. Placed on shared memory. Includes
+	 * backend up/down info, hostname, data directory etc.
 	 */
 	BackendDesc *backend_desc;
 
-	int local_session_id;	/* local session id */
+	int			local_session_id;	/* local session id */
 
 	pool_sighandler_t last_alarm_handler;
-	time_t	last_alarm_time;
+	time_t		last_alarm_time;
 	unsigned int last_alarm_second;
 	unsigned int undo_alarm_second;
 
-} POOL_PROCESS_CONTEXT;
+}			POOL_PROCESS_CONTEXT;
 
 extern void pool_init_process_context(void);
-extern POOL_PROCESS_CONTEXT *pool_get_process_context(void);
-extern ProcessInfo *pool_get_my_process_info(void);
+extern POOL_PROCESS_CONTEXT * pool_get_process_context(void);
+extern ProcessInfo * pool_get_my_process_info(void);
 extern void pool_incremnet_local_session_id(void);
-extern int pool_coninfo_size(void);
-extern int pool_coninfo_num(void);
-extern ConnectionInfo *pool_coninfo(int child, int connection_pool, int backend);
-extern ConnectionInfo *pool_coninfo_pid(int pid, int connection_pool, int backend);
+extern int	pool_coninfo_size(void);
+extern int	pool_coninfo_num(void);
+extern ConnectionInfo * pool_coninfo(int child, int connection_pool, int backend);
+extern ConnectionInfo * pool_coninfo_pid(int pid, int connection_pool, int backend);
 extern void pool_coninfo_set_frontend_connected(int proc_id, int pool_index);
 extern void pool_coninfo_unset_frontend_connected(int proc_id, int pool_index);
 
-extern ConnectionInfo* pool_coninfo_backend_pid(int backend_pid, int* backend_node_id);
-extern void pool_set_connection_will_be_terminated(ConnectionInfo* connInfo);
-extern void pool_unset_connection_will_be_terminated(ConnectionInfo* connInfo);
+extern ConnectionInfo * pool_coninfo_backend_pid(int backend_pid, int *backend_node_id);
+extern void pool_set_connection_will_be_terminated(ConnectionInfo * connInfo);
+extern void pool_unset_connection_will_be_terminated(ConnectionInfo * connInfo);
 
 extern void pool_alarm(pool_sighandler_t handler, unsigned int second);
 extern void pool_undo_alarm(void);
 
-#endif /* POOL_PROCESS_CONTEXT_H */
+#endif							/* POOL_PROCESS_CONTEXT_H */

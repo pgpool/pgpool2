@@ -45,7 +45,9 @@ MemoryContext CurrentMemoryContext = NULL;
  */
 MemoryContext TopMemoryContext = NULL;
 MemoryContext ErrorContext = NULL;
-MemoryContext ProcessLoopContext = NULL; /* This context resets at every main loop iteration of a process */
+MemoryContext ProcessLoopContext = NULL;	/* This context resets at every
+											 * main loop iteration of a
+											 * process */
 MemoryContext CacheMemoryContext = NULL;
 MemoryContext MessageContext = NULL;
 MemoryContext QueryContext = NULL;
@@ -969,7 +971,7 @@ repalloc(void *pointer, Size size)
 		elog(ERROR, "invalid memory alloc request size %zu", size);
 
 	/* pgpool hack by Muhammad Usama <m.usama@gmail.com> */
-	if(pointer == NULL)
+	if (pointer == NULL)
 		return palloc(size);
 
 	context = GetMemoryChunkContext(pointer);

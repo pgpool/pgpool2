@@ -33,24 +33,25 @@
 #include <netinet/in.h>
 
 
-void send_row_description(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
-						  short num_fields, char **field_names)
+void
+send_row_description(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
+					 short num_fields, char **field_names)
 {
 	static char *cursorname = "blank";
-	static int oid = 0;
+	static int	oid = 0;
 	static short fsize = -1;
-	static int mod = 0;
-	short n;
-	int i;
-	short s;
-	int len;
-	short colnum;
+	static int	mod = 0;
+	short		n;
+	int			i;
+	short		s;
+	int			len;
+	short		colnum;
 
 	if (MAJOR(backend) == PROTO_MAJOR_V2)
 	{
 		/* cursor response */
 		pool_write(frontend, "P", 1);
-		pool_write(frontend, cursorname, strlen(cursorname)+1);
+		pool_write(frontend, cursorname, strlen(cursorname) + 1);
 	}
 
 	/* row description */
@@ -58,15 +59,18 @@ void send_row_description(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 
 	if (MAJOR(backend) == PROTO_MAJOR_V3)
 	{
-		/* information about computed byte in section "RowDescription (B)" here:
-		 * http://www.postgresql.org/docs/current/static/protocol-message-formats.html */
+		/*
+		 * information about computed byte in section "RowDescription (B)"
+		 * here:
+		 * http://www.postgresql.org/docs/current/static/protocol-message-formats.html
+		 */
 
-		len = 6; /* int32 + int16 */
+		len = 6;				/* int32 + int16 */
 
-		for (i=0;i<num_fields;i++)
+		for (i = 0; i < num_fields; i++)
 		{
 			/* String + '\0' + 3* int32 + 3* int16 */
-			len += strlen(field_names[i]) +1 +18;
+			len += strlen(field_names[i]) + 1 + 18;
 		}
 
 		len = htonl(len);
@@ -76,9 +80,9 @@ void send_row_description(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 	n = htons(num_fields);
 	pool_write(frontend, &n, sizeof(short));
 
-	for (i=0;i<num_fields;i++)
+	for (i = 0; i < num_fields; i++)
 	{
-		pool_write(frontend, field_names[i], strlen(field_names[i])+1);		/* field name */
+		pool_write(frontend, field_names[i], strlen(field_names[i]) + 1);	/* field name */
 
 		if (MAJOR(backend) == PROTO_MAJOR_V3)
 		{
@@ -87,10 +91,10 @@ void send_row_description(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 			pool_write(frontend, &colnum, sizeof(colnum));	/* column number */
 		}
 
-		pool_write(frontend, &oid, sizeof(oid));		/* data type oid */
+		pool_write(frontend, &oid, sizeof(oid));	/* data type oid */
 		s = htons(fsize);
-		pool_write(frontend, &s, sizeof(fsize));		/* field size */
-		pool_write(frontend, &mod, sizeof(mod));		/* modifier */
+		pool_write(frontend, &s, sizeof(fsize));	/* field size */
+		pool_write(frontend, &mod, sizeof(mod));	/* modifier */
 
 		if (MAJOR(backend) == PROTO_MAJOR_V3)
 		{
@@ -107,29 +111,34 @@ void send_row_description(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
  * if the num_row is passed with a -ve value it is not included
  * to the command complete message
  */
-void send_complete_and_ready(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,const char* message ,const int num_rows)
+void
+send_complete_and_ready(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *message, const int num_rows)
 {
-	int len;
-	int msg_len;
-	char msg[16];
+	int			len;
+	int			msg_len;
+	char		msg[16];
 
 	if (num_rows >= 0)
-		msg_len = snprintf(msg, 16, "%s %d", message,num_rows);
+		msg_len = snprintf(msg, 16, "%s %d", message, num_rows);
 	else
 		msg_len = snprintf(msg, 16, "%s", message);
 
-	/* if we had more than 16 bytes, including '\0', the string was truncatured
-	 * shouldn't happen though, as it would means more than "SELECT 99999999" */
-	if (msg_len > 15) msg_len = 15;
+	/*
+	 * if we had more than 16 bytes, including '\0', the string was
+	 * truncatured shouldn't happen though, as it would means more than
+	 * "SELECT 99999999"
+	 */
+	if (msg_len > 15)
+		msg_len = 15;
 
 	/* complete command response */
 	pool_write(frontend, "C", 1);
 	if (MAJOR(backend) == PROTO_MAJOR_V3)
 	{
-		len = htonl(4 + strlen(msg)+1);
+		len = htonl(4 + strlen(msg) + 1);
 		pool_write(frontend, &len, sizeof(len));
 	}
-	pool_write(frontend, msg, strlen(msg)+1);
+	pool_write(frontend, msg, strlen(msg) + 1);
 
 	/* ready for query */
 	pool_write(frontend, "Z", 1);
@@ -143,10 +152,12 @@ void send_complete_and_ready(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *ba
 	pool_flush(frontend);
 }
 
-POOL_REPORT_CONFIG* get_config(int *nrows)
+POOL_REPORT_CONFIG *
+get_config(int *nrows)
 {
-	int i, j;
-	int len;
+	int			i,
+				j;
+	int			len;
 
 /*
  * Report data buffer.
@@ -154,12 +165,14 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
  * In addition, we need MAX_NUM_BACKENDS*4
  * for backend descriptions.
  */
-#define MAXITEMS (256 + MAX_NUM_BACKENDS*4)		
+#define MAXITEMS (256 + MAX_NUM_BACKENDS*4)
 
-	POOL_REPORT_CONFIG* status = palloc0(MAXITEMS * sizeof(POOL_REPORT_CONFIG));
+	POOL_REPORT_CONFIG *status = palloc0(MAXITEMS * sizeof(POOL_REPORT_CONFIG));
 
-	/* we initialize the array with NULL values so when looping
-	 * on it, we can use it as stop condition */
+	/*
+	 * we initialize the array with NULL values so when looping on it, we can
+	 * use it as stop condition
+	 */
 
 	i = 0;
 
@@ -302,17 +315,17 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "printf-style string to output at beginning of each log line", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-    StrNCpy(status[i].name, "log_error_verbosity", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "log_error_verbosity", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_error_verbosity);
 	StrNCpy(status[i].desc, "controls how much detail about error should be emitted", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-    StrNCpy(status[i].name, "client_min_messages", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "client_min_messages", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->client_min_messages);
 	StrNCpy(status[i].desc, "controls which message should be sent to client", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-    StrNCpy(status[i].name, "log_min_messages", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "log_min_messages", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_min_messages);
 	StrNCpy(status[i].desc, "controls which message should be emitted to server log", POOLCONFIG_MAXDESCLEN);
 	i++;
@@ -349,7 +362,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	/* - Syslog specific -  */
 	StrNCpy(status[i].name, "syslog_facility", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "LOCAL%d", (pool_config->syslog_facility/8) - 16);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "LOCAL%d", (pool_config->syslog_facility / 8) - 16);
 	StrNCpy(status[i].desc, "syslog local faclity", POOLCONFIG_MAXDESCLEN);
 	i++;
 
@@ -379,12 +392,12 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	StrNCpy(status[i].name, "reset_query_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j=0;j<pool_config->num_reset_queries;j++)
+	for (j = 0; j < pool_config->num_reset_queries; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
 		strncat(status[i].value, pool_config->reset_query_list[j], len);
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		if (j != pool_config->num_reset_queries-1)
+		if (j != pool_config->num_reset_queries - 1)
 			strncat(status[i].value, ";", len);
 	}
 	StrNCpy(status[i].desc, "queries issued at the end of session", POOLCONFIG_MAXDESCLEN);
@@ -437,12 +450,12 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	StrNCpy(status[i].name, "white_function_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j=0;j<pool_config->num_white_function_list;j++)
+	for (j = 0; j < pool_config->num_white_function_list; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
 		strncat(status[i].value, pool_config->white_function_list[j], len);
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		if (j != pool_config->num_white_function_list-1)
+		if (j != pool_config->num_white_function_list - 1)
 			strncat(status[i].value, ",", len);
 	}
 	StrNCpy(status[i].desc, "functions those do not write to database", POOLCONFIG_MAXDESCLEN);
@@ -450,12 +463,12 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	StrNCpy(status[i].name, "black_function_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j=0;j<pool_config->num_black_function_list;j++)
+	for (j = 0; j < pool_config->num_black_function_list; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
 		strncat(status[i].value, pool_config->black_function_list[j], len);
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		if (j != pool_config->num_black_function_list-1)
+		if (j != pool_config->num_black_function_list - 1)
 			strncat(status[i].value, ",", len);
 	}
 	StrNCpy(status[i].desc, "functions those write to database", POOLCONFIG_MAXDESCLEN);
@@ -463,12 +476,12 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	StrNCpy(status[i].name, "black_query_pattern_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j=0;j<pool_config->num_black_query_pattern_list;j++)
+	for (j = 0; j < pool_config->num_black_query_pattern_list; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
 		strncat(status[i].value, pool_config->black_query_pattern_list[j], len);
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		if (j != pool_config->num_black_query_pattern_list-1)
+		if (j != pool_config->num_black_query_pattern_list - 1)
 			strncat(status[i].value, ";", len);
 	}
 	StrNCpy(status[i].desc, "query patterns that should be sent to primary node", POOLCONFIG_MAXDESCLEN);
@@ -501,7 +514,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->sr_check_user);
 	StrNCpy(status[i].desc, "sr check user", POOLCONFIG_MAXDESCLEN);
 	i++;
-#ifdef NOT_USED	/* for security reason */
+#ifdef NOT_USED					/* for security reason */
 	StrNCpy(status[i].name, "sr_check_password", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->sr_check_password);
 	StrNCpy(status[i].desc, "sr check password", POOLCONFIG_MAXDESCLEN);
@@ -554,7 +567,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->health_check_user);
 	StrNCpy(status[i].desc, "health check user", POOLCONFIG_MAXDESCLEN);
 	i++;
-#ifdef NOT_USED	/* for security reason */
+#ifdef NOT_USED					/* for security reason */
 	StrNCpy(status[i].name, "health_check_password", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->health_check_password);
 	StrNCpy(status[i].desc, "health check password", POOLCONFIG_MAXDESCLEN);
@@ -791,12 +804,12 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	StrNCpy(status[i].name, "wd_monitoring_interfaces_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j=0;j<pool_config->num_wd_monitoring_interfaces_list;j++)
+	for (j = 0; j < pool_config->num_wd_monitoring_interfaces_list; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
 		strncat(status[i].value, pool_config->wd_monitoring_interfaces_list[j], len);
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		if (j != pool_config->num_wd_monitoring_interfaces_list-1)
+		if (j != pool_config->num_wd_monitoring_interfaces_list - 1)
 			strncat(status[i].value, ",", len);
 	}
 	StrNCpy(status[i].desc, "interfaces to monitor by watchdog", POOLCONFIG_MAXDESCLEN);
@@ -878,7 +891,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	StrNCpy(status[i].name, "white_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j=0;j<pool_config->num_white_memqcache_table_list;j++)
+	for (j = 0; j < pool_config->num_white_memqcache_table_list; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
 		strncat(status[i].value, pool_config->white_memqcache_table_list[j], len);
@@ -891,7 +904,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	StrNCpy(status[i].name, "black_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j=0;j<pool_config->num_black_memqcache_table_list;j++)
+	for (j = 0; j < pool_config->num_black_memqcache_table_list; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
 		strncat(status[i].value, pool_config->black_memqcache_table_list[j], len);
@@ -920,7 +933,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		i++;
 
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend_weight%d", j);
-		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%f", BACKEND_INFO(j).backend_weight/RAND_MAX);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%f", BACKEND_INFO(j).backend_weight / RAND_MAX);
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "weight of backend #%d", j);
 		i++;
 
@@ -930,7 +943,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 		i++;
 
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend_status%d", j);
-		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s",backend_status_to_str(&BACKEND_INFO(j)) );
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", backend_status_to_str(&BACKEND_INFO(j)));
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "status of backend #%d", j);
 		i++;
 
@@ -967,7 +980,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	}
 
-	for (j =0; j < pool_config->num_hb_if; j++)
+	for (j = 0; j < pool_config->num_hb_if; j++)
 	{
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_device%d", j);
 		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_HB_IF(j).if_name);
@@ -989,121 +1002,124 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	return status;
 }
 
-void send_config_var_detail_row(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* name, const char* value, const char* description)
+void
+send_config_var_detail_row(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *name, const char *value, const char *description)
 {
-	int size;
-	int hsize;
+	int			size;
+	int			hsize;
 	static short num_fields = 3;
 
 	if (MAJOR(backend) == PROTO_MAJOR_V2)
 	{
 
-		int nbytes = (num_fields + 7)/8;
+		int			nbytes = (num_fields + 7) / 8;
 		static unsigned char nullmap[2] = {0xff, 0xff};
 
 		/* ascii row */
 		pool_write(frontend, "D", 1);
 		pool_write_and_flush(frontend, nullmap, nbytes);
-		
+
 		size = strlen(name);
-		hsize = htonl(size+4);
+		hsize = htonl(size + 4);
 		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void*)name, size);
-		
+		pool_write(frontend, (void *) name, size);
+
 		size = strlen(value);
-		hsize = htonl(size+4);
+		hsize = htonl(size + 4);
 		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void*)value, size);
-		
+		pool_write(frontend, (void *) value, size);
+
 		size = strlen(description);
-		hsize = htonl(size+4);
+		hsize = htonl(size + 4);
 		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void*)description, size);
+		pool_write(frontend, (void *) description, size);
 	}
 	else
 	{
-		short s;
+		short		s;
 
 		pool_write(frontend, "D", 1);
-		size = 6; /* int32 + int16; */
-		size += 4 + strlen(name);  /* int32 + data; */
-		size += 4 + strlen(value); /* int32 + data; */
-		size += 4 + strlen(description);  /* int32 + data; */
+		size = 6;				/* int32 + int16; */
+		size += 4 + strlen(name);	/* int32 + data; */
+		size += 4 + strlen(value);	/* int32 + data; */
+		size += 4 + strlen(description);	/* int32 + data; */
 		hsize = htonl(size);
 		pool_write(frontend, &hsize, sizeof(hsize));
 		s = htons(num_fields);
 		pool_write(frontend, &s, sizeof(s));
-		
+
 		size = strlen(name);
 		hsize = htonl(size);
 		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void*)name, size);
+		pool_write(frontend, (void *) name, size);
 
 		size = strlen(value);
 		hsize = htonl(size);
 		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void*)value, size);
+		pool_write(frontend, (void *) value, size);
 
 		size = strlen(description);
 		hsize = htonl(size);
 		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void*)description, size);
+		pool_write(frontend, (void *) description, size);
 	}
 }
 
-void send_config_var_value_only_row(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* value)
+void
+send_config_var_value_only_row(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *value)
 {
-	int size;
-	int hsize;
+	int			size;
+	int			hsize;
 	static short num_fields = 1;
-	
+
 	if (MAJOR(backend) == PROTO_MAJOR_V2)
 	{
-		
-		int nbytes = (num_fields + 7)/8;
+
+		int			nbytes = (num_fields + 7) / 8;
 		static unsigned char nullmap[2] = {0xff, 0xff};
 
 		/* ascii row */
 		pool_write(frontend, "D", 1);
 		pool_write_and_flush(frontend, nullmap, nbytes);
-		
+
 		size = strlen(value);
-		hsize = htonl(size+4);
+		hsize = htonl(size + 4);
 		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void*)value, size);
+		pool_write(frontend, (void *) value, size);
 
 	}
 	else
 	{
-		short s;
-		
+		short		s;
+
 		pool_write(frontend, "D", 1);
-		size = 6; /* int32 + int16; */
-		size += 4 + strlen(value); /* int32 + data; */
+		size = 6;				/* int32 + int16; */
+		size += 4 + strlen(value);	/* int32 + data; */
 		hsize = htonl(size);
 		pool_write(frontend, &hsize, sizeof(hsize));
 		s = htons(num_fields);
 		pool_write(frontend, &s, sizeof(s));
-		
+
 		size = strlen(value);
 		hsize = htonl(size);
 		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void*)value, size);
+		pool_write(frontend, (void *) value, size);
 	}
 }
 
-void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+void
+config_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
 	static char *field_names[] = {"item", "value", "description"};
 	static unsigned char nullmap[2] = {0xff, 0xff};
 	static short num_fields = 3;
-	short s;
-	int nbytes = (num_fields + 7)/8;
-	int len;
-	int nrows;
-	int size;
-	int hsize;
-	int i;
+	short		s;
+	int			nbytes = (num_fields + 7) / 8;
+	int			len;
+	int			nrows;
+	int			size;
+	int			hsize;
+	int			i;
 
 	POOL_REPORT_CONFIG *status = get_config(&nrows);
 
@@ -1112,23 +1128,23 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	if (MAJOR(backend) == PROTO_MAJOR_V2)
 	{
 		/* ascii row */
-		for (i=0;i<nrows;i++)
+		for (i = 0; i < nrows; i++)
 		{
 			pool_write(frontend, "D", 1);
 			pool_write_and_flush(frontend, nullmap, nbytes);
 
 			size = strlen(status[i].name);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, status[i].name, size);
 
 			size = strlen(status[i].value);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, status[i].value, size);
 
 			size = strlen(status[i].desc);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, status[i].desc, size);
 		}
@@ -1136,13 +1152,13 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	else
 	{
 		/* data row */
-		for (i=0;i<nrows;i++)
+		for (i = 0; i < nrows; i++)
 		{
 			pool_write(frontend, "D", 1);
-			len = 6; /* int32 + int16; */
-			len += 4 + strlen(status[i].name);  /* int32 + data; */
+			len = 6;			/* int32 + int16; */
+			len += 4 + strlen(status[i].name);	/* int32 + data; */
 			len += 4 + strlen(status[i].value); /* int32 + data; */
-			len += 4 + strlen(status[i].desc);  /* int32 + data; */
+			len += 4 + strlen(status[i].desc);	/* int32 + data; */
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
 			s = htons(num_fields);
@@ -1162,31 +1178,32 @@ void config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		}
 	}
 
-	send_complete_and_ready(frontend, backend,"SELECT", nrows);
+	send_complete_and_ready(frontend, backend, "SELECT", nrows);
 
 	pfree(status);
 }
 
-POOL_REPORT_NODES* get_nodes(int *nrows)
+POOL_REPORT_NODES *
+get_nodes(int *nrows)
 {
-	int i;
-	POOL_REPORT_NODES* nodes = palloc(NUM_BACKENDS * sizeof(POOL_REPORT_NODES));
+	int			i;
+	POOL_REPORT_NODES *nodes = palloc(NUM_BACKENDS * sizeof(POOL_REPORT_NODES));
 	BackendInfo *bi = NULL;
 	POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
-	struct tm tm;
+	struct tm	tm;
 
-    for (i = 0; i < NUM_BACKENDS; i++)
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-	    bi = pool_get_node_info(i);
+		bi = pool_get_node_info(i);
 
-		snprintf(nodes[i].node_id, 	POOLCONFIG_MAXIDLEN, 	"%d", 	i);
-	    StrNCpy(nodes[i].hostname, 	bi->backend_hostname, 		strlen(bi->backend_hostname)+1);
-	    snprintf(nodes[i].port, 	POOLCONFIG_MAXPORTLEN, "%d", 	bi->backend_port);
-	    snprintf(nodes[i].status, 	POOLCONFIG_MAXSTATLEN, 	"%s", 	backend_status_to_str(bi));
-	    snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight/RAND_MAX);
-	    snprintf(nodes[i].select, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_select_count(i));
-	    snprintf(nodes[i].load_balance_node, POOLCONFIG_MAXWEIGHTLEN, "%s",
-				 (session_context->load_balance_node_id == i)? "true":"false");
+		snprintf(nodes[i].node_id, POOLCONFIG_MAXIDLEN, "%d", i);
+		StrNCpy(nodes[i].hostname, bi->backend_hostname, strlen(bi->backend_hostname) + 1);
+		snprintf(nodes[i].port, POOLCONFIG_MAXPORTLEN, "%d", bi->backend_port);
+		snprintf(nodes[i].status, POOLCONFIG_MAXSTATLEN, "%s", backend_status_to_str(bi));
+		snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight / RAND_MAX);
+		snprintf(nodes[i].select, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_select_count(i));
+		snprintf(nodes[i].load_balance_node, POOLCONFIG_MAXWEIGHTLEN, "%s",
+				 (session_context->load_balance_node_id == i) ? "true" : "false");
 
 		snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, "%d", 0);
 
@@ -1220,78 +1237,79 @@ POOL_REPORT_NODES* get_nodes(int *nrows)
 	return nodes;
 }
 
-void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+void
+nodes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
-	static char *field_names[] = {"node_id","hostname", "port", "status", "lb_weight", "role", "select_cnt", "load_balance_node", "replication_delay", "last_status_change"};
-	short num_fields = sizeof(field_names)/sizeof(char *);
-	int i;
-	short s;
-	int len;
-	int nrows;
-	int size;
-	int hsize;
+	static char *field_names[] = {"node_id", "hostname", "port", "status", "lb_weight", "role", "select_cnt", "load_balance_node", "replication_delay", "last_status_change"};
+	short		num_fields = sizeof(field_names) / sizeof(char *);
+	int			i;
+	short		s;
+	int			len;
+	int			nrows;
+	int			size;
+	int			hsize;
 	static unsigned char nullmap[2] = {0xff, 0xff};
-	int nbytes = (num_fields + 7)/8;
+	int			nbytes = (num_fields + 7) / 8;
 
-	POOL_REPORT_NODES* nodes = get_nodes(&nrows);
+	POOL_REPORT_NODES *nodes = get_nodes(&nrows);
 
 	send_row_description(frontend, backend, num_fields, field_names);
 
 	if (MAJOR(backend) == PROTO_MAJOR_V2)
 	{
 		/* ascii row */
-		for (i=0;i<nrows;i++)
+		for (i = 0; i < nrows; i++)
 		{
 			pool_write(frontend, "D", 1);
 			pool_write_and_flush(frontend, nullmap, nbytes);
 
 			size = strlen(nodes[i].node_id);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].node_id, size);
 
 			size = strlen(nodes[i].hostname);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].hostname, size);
 
 			size = strlen(nodes[i].port);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].port, size);
 
 			size = strlen(nodes[i].status);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].status, size);
 
 			size = strlen(nodes[i].lb_weight);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].lb_weight, size);
 
 			size = strlen(nodes[i].role);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].role, size);
 
 			size = strlen(nodes[i].select);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].select, size);
 
 			size = strlen(nodes[i].load_balance_node);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].load_balance_node, size);
 
 			size = strlen(nodes[i].delay);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].delay, size);
 
 			size = strlen(nodes[i].last_status_change);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].last_status_change, size);
 		}
@@ -1299,20 +1317,20 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	else
 	{
 		/* data row */
-		for (i=0;i<nrows;i++)
+		for (i = 0; i < nrows; i++)
 		{
 			pool_write(frontend, "D", 1);
-			len = 6; /* int32 + int16; */
-			len += 4 + strlen(nodes[i].node_id);   /* int32 + data; */
-			len += 4 + strlen(nodes[i].hostname);  /* int32 + data; */
-			len += 4 + strlen(nodes[i].port);      /* int32 + data; */
-			len += 4 + strlen(nodes[i].status);    /* int32 + data; */
-			len += 4 + strlen(nodes[i].lb_weight); /* int32 + data; */
-			len += 4 + strlen(nodes[i].role);      /* int32 + data; */
-			len += 4 + strlen(nodes[i].select);    /* int32 + data; */
-			len += 4 + strlen(nodes[i].load_balance_node);    /* int32 + data; */
-			len += 4 + strlen(nodes[i].delay);    /* int32 + data; */
-			len += 4 + strlen(nodes[i].last_status_change);    /* int32 + data; */
+			len = 6;			/* int32 + int16; */
+			len += 4 + strlen(nodes[i].node_id);	/* int32 + data; */
+			len += 4 + strlen(nodes[i].hostname);	/* int32 + data; */
+			len += 4 + strlen(nodes[i].port);	/* int32 + data; */
+			len += 4 + strlen(nodes[i].status); /* int32 + data; */
+			len += 4 + strlen(nodes[i].lb_weight);	/* int32 + data; */
+			len += 4 + strlen(nodes[i].role);	/* int32 + data; */
+			len += 4 + strlen(nodes[i].select); /* int32 + data; */
+			len += 4 + strlen(nodes[i].load_balance_node);	/* int32 + data; */
+			len += 4 + strlen(nodes[i].delay);	/* int32 + data; */
+			len += 4 + strlen(nodes[i].last_status_change); /* int32 + data; */
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
 			s = htons(num_fields);
@@ -1366,18 +1384,22 @@ void nodes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 }
 
 
-POOL_REPORT_POOLS* get_pools(int *nrows)
+POOL_REPORT_POOLS *
+get_pools(int *nrows)
 {
-	int child, pool, poolBE, backend_id;
+	int			child,
+				pool,
+				poolBE,
+				backend_id;
 
-    ProcessInfo *pi = NULL;
-    int proc_id;
+	ProcessInfo *pi = NULL;
+	int			proc_id;
 
-    int lines = 0;
+	int			lines = 0;
 
-    POOL_REPORT_POOLS* pools = palloc(
-		pool_config->num_init_children * pool_config->max_pool * NUM_BACKENDS * sizeof(POOL_REPORT_POOLS)
-		);
+	POOL_REPORT_POOLS *pools = palloc(
+									  pool_config->num_init_children * pool_config->max_pool * NUM_BACKENDS * sizeof(POOL_REPORT_POOLS)
+	);
 
 	for (child = 0; child < pool_config->num_init_children; child++)
 	{
@@ -1388,7 +1410,7 @@ POOL_REPORT_POOLS* get_pools(int *nrows)
 		{
 			for (backend_id = 0; backend_id < NUM_BACKENDS; backend_id++)
 			{
-				poolBE = pool*MAX_NUM_BACKENDS+backend_id;
+				poolBE = pool * MAX_NUM_BACKENDS + backend_id;
 				pools[lines].pool_pid = proc_id;
 				pools[lines].start_time = pi->start_time;
 				pools[lines].pool_id = pool;
@@ -1415,45 +1437,48 @@ POOL_REPORT_POOLS* get_pools(int *nrows)
 				lines++;
 			}
 		}
-    }
+	}
 
 	*nrows = lines;
 	return pools;
 }
 
-void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+void
+pools_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
 	static short num_fields = 12;
 	static char *field_names[] = {"pool_pid", "start_time", "pool_id", "backend_id", "database", "username", "create_time",
-                                  "majorversion", "minorversion", "pool_counter", "pool_backendpid", "pool_connected"};
-	short s;
-	int len;
-	int i;
+	"majorversion", "minorversion", "pool_counter", "pool_backendpid", "pool_connected"};
+	short		s;
+	int			len;
+	int			i;
 	static unsigned char nullmap[2] = {0xff, 0xff};
-	int nbytes = (num_fields + 7)/8;
-	int nrows;
-	int size;
-	int hsize;
-	char proc_pid[16];
-	char pool_id[16];
-	char proc_start_time[20];
-	char proc_create_time[20];
-	char majorversion[5];
-	char minorversion[5];
-	char pool_counter[16];
-	char backend_id[16];
-	char backend_pid[16];
-	char connected[2];
+	int			nbytes = (num_fields + 7) / 8;
+	int			nrows;
+	int			size;
+	int			hsize;
+	char		proc_pid[16];
+	char		pool_id[16];
+	char		proc_start_time[20];
+	char		proc_create_time[20];
+	char		majorversion[5];
+	char		minorversion[5];
+	char		pool_counter[16];
+	char		backend_id[16];
+	char		backend_pid[16];
+	char		connected[2];
 
-    POOL_REPORT_POOLS *pools = get_pools(&nrows);
+	POOL_REPORT_POOLS *pools = get_pools(&nrows);
 
 	send_row_description(frontend, backend, num_fields, field_names);
 
-	if (MAJOR(backend) == PROTO_MAJOR_V2) hsize = 4;
-	else hsize = 0;
+	if (MAJOR(backend) == PROTO_MAJOR_V2)
+		hsize = 4;
+	else
+		hsize = 0;
 
 	/* ascii row */
-	for (i=0;i<nrows;i++)
+	for (i = 0; i < nrows; i++)
 	{
 		snprintf(proc_pid, sizeof(proc_pid), "%d", pools[i].pool_pid);
 		snprintf(pool_id, sizeof(pool_id), "%d", pools[i].pool_id);
@@ -1480,20 +1505,20 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		else
 		{
 			pool_write(frontend, "D", 1);
-			len = 6; /* int32 + int16; */
-			len += 4 + strlen(proc_pid);          /* int32 + data */
-			len += 4 + strlen(proc_start_time);        /* int32 + data */
-			len += 4 + strlen(pool_id);           /* int32 + data */
-			len += 4 + strlen(backend_id);        /* int32 + data */
-			len += 4 + strlen(pools[i].database);          /* int32 + data */
-			len += 4 + strlen(pools[i].username);          /* int32 + data */
-			len += 4 + strlen(proc_create_time);       /* int32 + data */
-			len += 4 + strlen(majorversion); /* int32 + data */
-			len += 4 + strlen(minorversion); /* int32 + data */
-			len += 4 + strlen(pool_counter);      /* int32 + data */
-			len += 4 + strlen(backend_pid);   /* int32 + data */
-			len += 4 + strlen(connected);    /* int32 + data */
-			
+			len = 6;			/* int32 + int16; */
+			len += 4 + strlen(proc_pid);	/* int32 + data */
+			len += 4 + strlen(proc_start_time); /* int32 + data */
+			len += 4 + strlen(pool_id); /* int32 + data */
+			len += 4 + strlen(backend_id);	/* int32 + data */
+			len += 4 + strlen(pools[i].database);	/* int32 + data */
+			len += 4 + strlen(pools[i].username);	/* int32 + data */
+			len += 4 + strlen(proc_create_time);	/* int32 + data */
+			len += 4 + strlen(majorversion);	/* int32 + data */
+			len += 4 + strlen(minorversion);	/* int32 + data */
+			len += 4 + strlen(pool_counter);	/* int32 + data */
+			len += 4 + strlen(backend_pid); /* int32 + data */
+			len += 4 + strlen(connected);	/* int32 + data */
+
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
 			s = htons(num_fields);
@@ -1501,62 +1526,62 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		}
 
 		len = strlen(proc_pid);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, proc_pid, len);
 
 		len = strlen(proc_start_time);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, proc_start_time, len);
 
 		len = strlen(pool_id);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, pool_id, len);
 
 		len = strlen(backend_id);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, backend_id, len);
 
 		len = strlen(pools[i].database);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, pools[i].database, len);
 
 		len = strlen(pools[i].username);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, pools[i].username, len);
 
 		len = strlen(proc_create_time);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, proc_create_time, len);
 
 		len = strlen(majorversion);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, majorversion, len);
 
 		len = strlen(minorversion);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, minorversion, len);
 
 		len = strlen(pool_counter);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, pool_counter, len);
 
 		len = strlen(backend_pid);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, backend_pid, len);
 
 		len = strlen(connected);
-		size = htonl(len+hsize);
+		size = htonl(len + hsize);
 		pool_write(frontend, &size, sizeof(size));
 		pool_write(frontend, connected, len);
 	}
@@ -1566,98 +1591,100 @@ void pools_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	pfree(pools);
 }
 
-POOL_REPORT_PROCESSES* get_processes(int *nrows)
+POOL_REPORT_PROCESSES *
+get_processes(int *nrows)
 {
-	int child;
-    int pool;
-    int poolBE;
-    ProcessInfo *pi = NULL;
-    int proc_id;
+	int			child;
+	int			pool;
+	int			poolBE;
+	ProcessInfo *pi = NULL;
+	int			proc_id;
 
-    POOL_REPORT_PROCESSES* processes = palloc(pool_config->num_init_children * sizeof(POOL_REPORT_PROCESSES));
+	POOL_REPORT_PROCESSES *processes = palloc(pool_config->num_init_children * sizeof(POOL_REPORT_PROCESSES));
 
 	for (child = 0; child < pool_config->num_init_children; child++)
-    {
+	{
 		proc_id = process_info[child].pid;
-	    pi = pool_get_process_info(proc_id);
+		pi = pool_get_process_info(proc_id);
 
-        snprintf(processes[child].pool_pid, POOLCONFIG_MAXCOUNTLEN, "%d", proc_id);
-	    strftime(processes[child].start_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pi->start_time));
-	    StrNCpy(processes[child].database, "", POOLCONFIG_MAXIDENTLEN);
-	    StrNCpy(processes[child].username, "", POOLCONFIG_MAXIDENTLEN);
-        StrNCpy(processes[child].create_time, "", POOLCONFIG_MAXDATELEN);
-        StrNCpy(processes[child].pool_counter, "", POOLCONFIG_MAXCOUNTLEN);
+		snprintf(processes[child].pool_pid, POOLCONFIG_MAXCOUNTLEN, "%d", proc_id);
+		strftime(processes[child].start_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pi->start_time));
+		StrNCpy(processes[child].database, "", POOLCONFIG_MAXIDENTLEN);
+		StrNCpy(processes[child].username, "", POOLCONFIG_MAXIDENTLEN);
+		StrNCpy(processes[child].create_time, "", POOLCONFIG_MAXDATELEN);
+		StrNCpy(processes[child].pool_counter, "", POOLCONFIG_MAXCOUNTLEN);
 
-        for (pool = 0; pool < pool_config->max_pool; pool++)
-        {
-            poolBE = pool*MAX_NUM_BACKENDS;
-            if (pi->connection_info[poolBE].connected && strlen(pi->connection_info[poolBE].database) > 0 && strlen(pi->connection_info[poolBE].user) > 0)
-            {
-	            StrNCpy(processes[child].database, pi->connection_info[poolBE].database, POOLCONFIG_MAXIDENTLEN);
-	            StrNCpy(processes[child].username, pi->connection_info[poolBE].user, POOLCONFIG_MAXIDENTLEN);
-	            strftime(processes[child].create_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pi->connection_info[poolBE].create_time));
-                snprintf(processes[child].pool_counter, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].counter);
-            }
-        }
-    }
+		for (pool = 0; pool < pool_config->max_pool; pool++)
+		{
+			poolBE = pool * MAX_NUM_BACKENDS;
+			if (pi->connection_info[poolBE].connected && strlen(pi->connection_info[poolBE].database) > 0 && strlen(pi->connection_info[poolBE].user) > 0)
+			{
+				StrNCpy(processes[child].database, pi->connection_info[poolBE].database, POOLCONFIG_MAXIDENTLEN);
+				StrNCpy(processes[child].username, pi->connection_info[poolBE].user, POOLCONFIG_MAXIDENTLEN);
+				strftime(processes[child].create_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pi->connection_info[poolBE].create_time));
+				snprintf(processes[child].pool_counter, POOLCONFIG_MAXCOUNTLEN, "%d", pi->connection_info[poolBE].counter);
+			}
+		}
+	}
 
 	*nrows = child;
 
 	return processes;
 }
 
-void processes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+void
+processes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
 	static short num_fields = 6;
 	static char *field_names[] = {"pool_pid", "start_time", "database", "username", "create_time", "pool_counter"};
-	short s;
-	int len;
-	int nrows;
-	int size;
-	int hsize;
-    int i;
-    static unsigned char nullmap[2] = {0xff, 0xff};
-	int nbytes = (num_fields + 7)/8;
+	short		s;
+	int			len;
+	int			nrows;
+	int			size;
+	int			hsize;
+	int			i;
+	static unsigned char nullmap[2] = {0xff, 0xff};
+	int			nbytes = (num_fields + 7) / 8;
 
-    POOL_REPORT_PROCESSES *processes = get_processes(&nrows);
+	POOL_REPORT_PROCESSES *processes = get_processes(&nrows);
 
 	send_row_description(frontend, backend, num_fields, field_names);
 
 	if (MAJOR(backend) == PROTO_MAJOR_V2)
 	{
 		/* ascii row */
-		for (i=0;i<nrows;i++)
+		for (i = 0; i < nrows; i++)
 		{
 			pool_write(frontend, "D", 1);
 			pool_write_and_flush(frontend, nullmap, nbytes);
 
 			size = strlen(processes[i].pool_pid);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, processes[i].pool_pid, size);
 
 			size = strlen(processes[i].start_time);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, processes[i].start_time, size);
 
 			size = strlen(processes[i].database);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, processes[i].database, size);
 
 			size = strlen(processes[i].username);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, processes[i].username, size);
 
 			size = strlen(processes[i].create_time);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, processes[i].create_time, size);
 
 			size = strlen(processes[i].pool_counter);
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, processes[i].pool_counter, size);
 		}
@@ -1665,16 +1692,16 @@ void processes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backen
 	else
 	{
 		/* data row */
-		for (i=0;i<nrows;i++)
+		for (i = 0; i < nrows; i++)
 		{
 			pool_write(frontend, "D", 1);
-			len = 6; /* int32 + int16; */
-			len += 4 + strlen(processes[i].pool_pid);     /* int32 + data */
-			len += 4 + strlen(processes[i].start_time);   /* int32 + data */
-			len += 4 + strlen(processes[i].database);     /* int32 + data */
-			len += 4 + strlen(processes[i].username);     /* int32 + data */
-			len += 4 + strlen(processes[i].create_time);  /* int32 + data */
-			len += 4 + strlen(processes[i].pool_counter); /* int32 + data */
+			len = 6;			/* int32 + int16; */
+			len += 4 + strlen(processes[i].pool_pid);	/* int32 + data */
+			len += 4 + strlen(processes[i].start_time); /* int32 + data */
+			len += 4 + strlen(processes[i].database);	/* int32 + data */
+			len += 4 + strlen(processes[i].username);	/* int32 + data */
+			len += 4 + strlen(processes[i].create_time);	/* int32 + data */
+			len += 4 + strlen(processes[i].pool_counter);	/* int32 + data */
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
 			s = htons(num_fields);
@@ -1711,7 +1738,8 @@ void processes_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backen
 	pfree(processes);
 }
 
-POOL_REPORT_VERSION* get_version(void)
+POOL_REPORT_VERSION *
+get_version(void)
 {
 	POOL_REPORT_VERSION *version = palloc(sizeof(POOL_REPORT_VERSION));
 
@@ -1720,17 +1748,18 @@ POOL_REPORT_VERSION* get_version(void)
 	return version;
 }
 
-void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+void
+version_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
 	static short num_fields = 1;
 	static char *field_names[] = {"pool_version"};
-	short s;
-	int len;
-	int size;
-	int hsize;
+	short		s;
+	int			len;
+	int			size;
+	int			hsize;
 
 	static unsigned char nullmap[2] = {0xff, 0xff};
-	int nbytes = (num_fields + 7)/8;
+	int			nbytes = (num_fields + 7) / 8;
 
 	POOL_REPORT_VERSION *version = get_version();
 
@@ -1743,7 +1772,7 @@ void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		pool_write_and_flush(frontend, nullmap, nbytes);
 
 		size = strlen(version[0].version);
-		hsize = htonl(size+4);
+		hsize = htonl(size + 4);
 		pool_write(frontend, &hsize, sizeof(hsize));
 		pool_write(frontend, version[0].version, size);
 	}
@@ -1751,8 +1780,8 @@ void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	{
 		/* data row */
 		pool_write(frontend, "D", 1);
-		len = 6; /* int32 + int16; */
-		len += 4 + strlen(version[0].version); /* int32 + data */
+		len = 6;				/* int32 + int16; */
+		len += 4 + strlen(version[0].version);	/* int32 + data */
 		len = htonl(len);
 		pool_write(frontend, &len, sizeof(len));
 		s = htons(num_fields);
@@ -1763,7 +1792,7 @@ void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		pool_write(frontend, version[0].version, strlen(version[0].version));
 	}
 
-	send_complete_and_ready(frontend, backend, "SELECT",1);
+	send_complete_and_ready(frontend, backend, "SELECT", 1);
 
 	pfree(version);
 }
@@ -1771,81 +1800,83 @@ void version_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 /*
  * Show in memory cache reporting
  */
-void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+void
+cache_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
 	static char *field_names[] = {"num_cache_hits", "num_selects", "cache_hit_ratio", "num_hash_entries", "used_hash_entries", "num_cache_entries", "used_cache_entries_size", "free_cache_entries_size", "fragment_cache_entries_size"};
-	short num_fields = sizeof(field_names)/sizeof(char *);
-	int i;
-	short s;
-	int len;
-	int size;
-	int hsize;
+	short		num_fields = sizeof(field_names) / sizeof(char *);
+	int			i;
+	short		s;
+	int			len;
+	int			size;
+	int			hsize;
 	static unsigned char nullmap[2] = {0xff, 0xff};
-	int nbytes = (num_fields + 7)/8;
-	volatile POOL_SHMEM_STATS *mystats;
+	int			nbytes = (num_fields + 7) / 8;
+	volatile	POOL_SHMEM_STATS *mystats;
 	pool_sigset_t oldmask;
-	double ratio;
+	double		ratio;
 
 #define POOL_CACHE_STATS_MAX_STRING_LEN 32
-	typedef struct {
-		int len;		/* length of string excluding null terminate */
-		char string[POOL_CACHE_STATS_MAX_STRING_LEN+1];
-	} MY_STRING_CACHE_STATS;
+	typedef struct
+	{
+		int			len;		/* length of string excluding null terminate */
+		char		string[POOL_CACHE_STATS_MAX_STRING_LEN + 1];
+	}			MY_STRING_CACHE_STATS;
 
 	MY_STRING_CACHE_STATS *strp;
 
-	strp = palloc(num_fields*sizeof(MY_STRING_CACHE_STATS));
+	strp = palloc(num_fields * sizeof(MY_STRING_CACHE_STATS));
 
 	/*
 	 * Get raw cache stat data
 	 */
-    POOL_SETMASK2(&BlockSig, &oldmask);
-    pool_shmem_lock();
+	POOL_SETMASK2(&BlockSig, &oldmask);
+	pool_shmem_lock();
 
-    PG_TRY();
-    {
-        mystats = pool_get_shmem_storage_stats();
-    }
-    PG_CATCH();
-    {
-        pool_shmem_unlock();
-        POOL_SETMASK(&oldmask);
-        PG_RE_THROW();
-    }
-    PG_END_TRY();
-    pool_shmem_unlock();
-    POOL_SETMASK(&oldmask);
+	PG_TRY();
+	{
+		mystats = pool_get_shmem_storage_stats();
+	}
+	PG_CATCH();
+	{
+		pool_shmem_unlock();
+		POOL_SETMASK(&oldmask);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	pool_shmem_unlock();
+	POOL_SETMASK(&oldmask);
 
 	/*
 	 * Convert to string
 	 */
 	i = 0;
-	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%lld", mystats->cache_stats.num_cache_hits);
-	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%lld", mystats->cache_stats.num_selects);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN + 1, "%lld", mystats->cache_stats.num_cache_hits);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN + 1, "%lld", mystats->cache_stats.num_selects);
 	if ((mystats->cache_stats.num_cache_hits + mystats->cache_stats.num_selects) == 0)
 	{
 		ratio = 0.0;
 	}
 	else
 	{
-		ratio = (double)mystats->cache_stats.num_cache_hits/(mystats->cache_stats.num_selects + mystats->cache_stats.num_cache_hits);
+		ratio = (double) mystats->cache_stats.num_cache_hits / (mystats->cache_stats.num_selects + mystats->cache_stats.num_cache_hits);
 	}
-	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%.2f", ratio);
-	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%d", mystats->num_hash_entries);
-	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%d", mystats->used_hash_entries);
-	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%d", mystats->num_cache_entries);
-	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%ld", mystats->used_cache_entries_size);
-	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%ld", mystats->free_cache_entries_size);
-	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN+1, "%ld", mystats->fragment_cache_entries_size);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN + 1, "%.2f", ratio);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN + 1, "%d", mystats->num_hash_entries);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN + 1, "%d", mystats->used_hash_entries);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN + 1, "%d", mystats->num_cache_entries);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN + 1, "%ld", mystats->used_cache_entries_size);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN + 1, "%ld", mystats->free_cache_entries_size);
+	snprintf(strp[i++].string, POOL_CACHE_STATS_MAX_STRING_LEN + 1, "%ld", mystats->fragment_cache_entries_size);
 
 	/*
 	 * Calculate total data length
 	 */
-	len = 2;	/* number of fields (int16) */
-	for (i=0;i<num_fields;i++)
+	len = 2;					/* number of fields (int16) */
+	for (i = 0; i < num_fields; i++)
 	{
 		strp[i].len = strlen(strp[i].string);
-		len += 4 /* length of string (int32) */
+		len += 4				/* length of string (int32) */
 			+ strp[i].len;
 	}
 
@@ -1858,10 +1889,10 @@ void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		pool_write(frontend, "D", 1);
 		pool_write(frontend, nullmap, nbytes);
 
-		for (i=0;i<num_fields;i++)
+		for (i = 0; i < num_fields; i++)
 		{
 			size = strp[i].len + 1;
-			hsize = htonl(size+4);
+			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, strp[i].string, size);
 		}
@@ -1871,13 +1902,13 @@ void cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		/* Kind */
 		pool_write(frontend, "D", 1);
 		/* Packet length */
-		len = htonl(len+sizeof(int32));
+		len = htonl(len + sizeof(int32));
 		pool_write(frontend, &len, sizeof(len));
 		/* Number of fields */
 		s = htons(num_fields);
 		pool_write(frontend, &s, sizeof(s));
 
-		for (i=0;i<num_fields;i++)
+		for (i = 0; i < num_fields; i++)
 		{
 			hsize = htonl(strp[i].len);
 			pool_write(frontend, &hsize, sizeof(hsize));

@@ -40,7 +40,8 @@
 /*
  * watchdog state
  */
-typedef enum {
+typedef enum
+{
 	WD_DEAD = 0,
 	WD_LOADING,
 	WD_JOINING,
@@ -55,24 +56,26 @@ typedef enum {
 	/* the following states are only valid on remote nodes */
 	WD_SHUTDOWN,
 	WD_ADD_MESSAGE_SENT
-} WD_STATES;
+}			WD_STATES;
 
-typedef enum {
+typedef enum
+{
 	WD_SOCK_UNINITIALIZED = 0,
 	WD_SOCK_CREATED,
 	WD_SOCK_WAITING_FOR_CONNECT,
 	WD_SOCK_CONNECTED,
 	WD_SOCK_ERROR,
 	WD_SOCK_CLOSED
-} WD_SOCK_STATE;
+}			WD_SOCK_STATE;
 
-typedef enum {
+typedef enum
+{
 	WD_EVENT_WD_STATE_CHANGED = 0,
 	WD_EVENT_TIMEOUT,
 	WD_EVENT_PACKET_RCV,
 	WD_EVENT_COMMAND_FINISHED,
 	WD_EVENT_NEW_OUTBOUND_CONNECTION,
-	
+
 	WD_EVENT_NW_IP_IS_REMOVED,
 	WD_EVENT_NW_IP_IS_ASSIGNED,
 
@@ -88,48 +91,47 @@ typedef enum {
 	WD_EVENT_NODE_CON_FOUND,
 	WD_EVENT_CLUSTER_QUORUM_CHANGED
 
-} WD_EVENTS;
+}			WD_EVENTS;
 
 typedef struct SocketConnection
 {
-	int				sock;			/* socket descriptor */
-	struct			timeval tv;		/* connect time of socket */
-	char			addr[48];		/* ip address of socket connection*/
-	WD_SOCK_STATE	sock_state;		/* current state of socket */
-}SocketConnection;
+	int			sock;			/* socket descriptor */
+	struct timeval tv;			/* connect time of socket */
+	char		addr[48];		/* ip address of socket connection */
+	WD_SOCK_STATE sock_state;	/* current state of socket */
+}			SocketConnection;
 
 typedef struct WatchdogNode
 {
-	WD_STATES state;
-	struct timeval current_state_time;		/* time value when the node state last changed*/
-	struct timeval startup_time;			/* startup time value of node */
-	struct timeval last_rcv_time;			/* timestamp when last packet
-											 * was received from the node
-											 */
-	struct timeval last_sent_time;			/* timestamp when last packet
-											 * was sent on the node
-											 */
-	char nodeName[WD_MAX_HOST_NAMELEN];		/* name of this node */
-	char hostname[WD_MAX_HOST_NAMELEN];		/* host name */
-	int wd_port;							/* watchdog port */
-	int pgpool_port;						/* pgpool port */
-	int wd_priority;						/* watchdog priority */
-	char delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
-	int	private_id;							/* ID assigned to this node
-											 * This id is consumed locally
-											 */
-	int standby_nodes_count;				/* number of standby nodes joined the cluster
-											 * only applicable when this WatchdogNode is
-											 * the master/coordinator node*/
-	int quorum_status;						/* quorum status on the node */
-	bool escalated;							/* true if the Watchdog node has
-											 * performed escalation */
-	SocketConnection server_socket;			/* socket connections for this node initiated by remote */
-	SocketConnection client_socket;			/* socket connections for this node initiated by local*/
-}WatchdogNode;
+	WD_STATES	state;
+	struct timeval current_state_time;	/* time value when the node state last
+										 * changed */
+	struct timeval startup_time;	/* startup time value of node */
+	struct timeval last_rcv_time;	/* timestamp when last packet was received
+									 * from the node */
+	struct timeval last_sent_time;	/* timestamp when last packet was sent on
+									 * the node */
+	char		nodeName[WD_MAX_HOST_NAMELEN];	/* name of this node */
+	char		hostname[WD_MAX_HOST_NAMELEN];	/* host name */
+	int			wd_port;		/* watchdog port */
+	int			pgpool_port;	/* pgpool port */
+	int			wd_priority;	/* watchdog priority */
+	char		delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
+	int			private_id;		/* ID assigned to this node This id is
+								 * consumed locally */
+	int			standby_nodes_count;	/* number of standby nodes joined the
+										 * cluster only applicable when this
+										 * WatchdogNode is the
+										 * master/coordinator node */
+	int			quorum_status;	/* quorum status on the node */
+	bool		escalated;		/* true if the Watchdog node has performed
+								 * escalation */
+	SocketConnection server_socket; /* socket connections for this node
+									 * initiated by remote */
+	SocketConnection client_socket; /* socket connections for this node
+									 * initiated by local */
+}			WatchdogNode;
 
 extern pid_t initialize_watchdog(void);
 
-#endif /* WATCHDOG_H */
-
-
+#endif							/* WATCHDOG_H */

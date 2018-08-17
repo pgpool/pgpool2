@@ -37,6 +37,7 @@ typedef struct Bitmapset
 } Bitmapset;					/* VARIABLE LENGTH STRUCT */
 
 extern Bitmapset *bms_copy(const Bitmapset *a);
+
 /* include/nodes/bitmapset.h end */
 
 /*
@@ -308,12 +309,12 @@ typedef struct Aggref
 	Oid			aggcollid;		/* OID of collation of result */
 	Oid			inputcollid;	/* OID of collation that function should use */
 	Oid			aggtranstype;	/* type Oid of aggregate's transition value */
-	List		*aggargtypes;	/* type Oids of direct and aggregated args */
-	List		*aggdirectargs;	/* direct arguments, if an ordered-set agg */
-	List		*args;			/* aggregated arguments and sort expressions */
-	List		*aggorder;		/* ORDER BY (list of SortGroupClause) */
-	List		*aggdistinct;	/* DISTINCT (list of SortGroupClause) */
-	Expr		*aggfilter;		/* FILTER expression, if any */
+	List	   *aggargtypes;	/* type Oids of direct and aggregated args */
+	List	   *aggdirectargs;	/* direct arguments, if an ordered-set agg */
+	List	   *args;			/* aggregated arguments and sort expressions */
+	List	   *aggorder;		/* ORDER BY (list of SortGroupClause) */
+	List	   *aggdistinct;	/* DISTINCT (list of SortGroupClause) */
+	Expr	   *aggfilter;		/* FILTER expression, if any */
 	bool		aggstar;		/* TRUE if argument list was really '*' */
 	bool		aggvariadic;	/* true if variadic arguments have been
 								 * combined into an array last argument */
@@ -1189,9 +1190,9 @@ typedef enum NullTestType
 typedef struct NullTest
 {
 	Expr		xpr;
-	Expr		*arg;			/* input expression */
+	Expr	   *arg;			/* input expression */
 	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
-	bool		argisrow;       /* T to perform field-by-field null checks */
+	bool		argisrow;		/* T to perform field-by-field null checks */
 	int			location;		/* token location, or -1 if unknown */
 } NullTest;
 

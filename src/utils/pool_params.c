@@ -37,15 +37,16 @@
 /*
  * initialize parameter structure
  */
-int pool_init_params(ParamStatus *params)
+int
+pool_init_params(ParamStatus * params)
 {
-    MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
-    params->num = 0;
-    params->names = palloc(MAX_PARAM_ITEMS*sizeof(char *));
-    params->values = palloc(MAX_PARAM_ITEMS*sizeof(char *));
+	params->num = 0;
+	params->names = palloc(MAX_PARAM_ITEMS * sizeof(char *));
+	params->values = palloc(MAX_PARAM_ITEMS * sizeof(char *));
 
-    MemoryContextSwitchTo(oldContext);
+	MemoryContextSwitchTo(oldContext);
 
 	return 0;
 }
@@ -53,23 +54,24 @@ int pool_init_params(ParamStatus *params)
 /*
  * discard parameter structure
  */
-void pool_discard_params(ParamStatus *params)
+void
+pool_discard_params(ParamStatus * params)
 {
-    int i;
+	int			i;
 
-    for (i=0;i<params->num;i++)
-    {
+	for (i = 0; i < params->num; i++)
+	{
 		pfree(params->names[i]);
 		pfree(params->values[i]);
-    }
-    if(params->names)
-        pfree(params->names);
-    if(params->values)
-        pfree(params->values);
-    params->num = 0;
-    params->names = NULL;
-    params->values = NULL;
-    
+	}
+	if (params->names)
+		pfree(params->names);
+	if (params->values)
+		pfree(params->values);
+	params->num = 0;
+	params->names = NULL;
+	params->values = NULL;
+
 }
 
 /*
@@ -77,25 +79,27 @@ void pool_discard_params(ParamStatus *params)
  * also, pos is set
  * if not found, NULL is returned
  */
-char *pool_find_name(ParamStatus *params, char *name, int *pos)
+char *
+pool_find_name(ParamStatus * params, char *name, int *pos)
 {
-    int i;
+	int			i;
 
-    for (i=0;i<params->num;i++)
-    {
+	for (i = 0; i < params->num; i++)
+	{
 		if (!strcmp(name, params->names[i]))
 		{
 			*pos = i;
 			return params->values[i];
 		}
-    }
-    return NULL;
+	}
+	return NULL;
 }
 
 /*
  * return name and value by index.
  */
-int pool_get_param(ParamStatus *params, int index, char **name, char **value)
+int
+pool_get_param(ParamStatus * params, int index, char **name, char **value)
 {
 	if (index < 0 || index >= params->num)
 		return -1;
@@ -109,49 +113,51 @@ int pool_get_param(ParamStatus *params, int index, char **name, char **value)
 /*
  * add or replace name/value pair
  */
-int pool_add_param(ParamStatus *params, char *name, char *value)
+int
+pool_add_param(ParamStatus * params, char *name, char *value)
 {
-    int pos;
-    MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+	int			pos;
+	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
-    if (pool_find_name(params, name, &pos))
-    {
+	if (pool_find_name(params, name, &pos))
+	{
 		/* name already exists */
 		if (strlen(params->values[pos]) < strlen(value))
 		{
 			params->values[pos] = repalloc(params->values[pos], strlen(value) + 1);
 		}
 		strcpy(params->values[pos], value);
-    }
-    else
-    {
-		int num;
+	}
+	else
+	{
+		int			num;
 
 		/* add name/value pair */
 		if (params->num >= MAX_PARAM_ITEMS)
 		{
-            ereport(ERROR,
-				(errmsg("add parameter failed"),
-                     errdetail("no more room for num")));
+			ereport(ERROR,
+					(errmsg("add parameter failed"),
+					 errdetail("no more room for num")));
 		}
 		num = params->num;
 		params->names[num] = pstrdup(name);
 		params->values[num] = pstrdup(value);
 		params->num++;
-    }
+	}
 	parser_set_param(name, value);
-    MemoryContextSwitchTo(oldContext);
+	MemoryContextSwitchTo(oldContext);
 
 	return 0;
 }
 
-void pool_param_debug_print(ParamStatus *params)
+void
+pool_param_debug_print(ParamStatus * params)
 {
-	int i;
+	int			i;
 
-    for (i=0;i<params->num;i++)
-    {
+	for (i = 0; i < params->num; i++)
+	{
 		ereport(DEBUG2,
-			(errmsg("No.%d: name: %s value: %s", i, params->names[i], params->values[i])));
+				(errmsg("No.%d: name: %s value: %s", i, params->names[i], params->values[i])));
 	}
 }

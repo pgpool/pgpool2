@@ -26,7 +26,7 @@
 /* port.h */
 
 #ifdef USE_REPL_SNPRINTF
-extern int pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
+extern int	pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 
 /*
  *  The GCC-specific code below prevents the __attribute__(... 'printf')
@@ -42,7 +42,7 @@ extern int pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 #endif
 #endif
 
-#endif   /* USE_REPL_SNPRINTF */
+#endif							/* USE_REPL_SNPRINTF */
 
 /* utils.memutils.h */
 
@@ -63,7 +63,7 @@ extern int pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
  * MemoryContextAllocHuge().  Both limits permit code to assume that it may
  * compute twice an allocation's size without overflow.
  */
-#define MaxAllocSize    ((Size) 0x3fffffff)     /* 1 gigabyte - 1 */
+#define MaxAllocSize    ((Size) 0x3fffffff) /* 1 gigabyte - 1 */
 
 
 /*-------------------------

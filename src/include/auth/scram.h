@@ -58,7 +58,7 @@ extern bool scram_verify_plain_password(const char *username,
 extern void *pg_fe_scram_init(const char *username, const char *password);
 extern void pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 					 char **output, int *outputlen,
-						  bool *done, bool *success);
+					 bool *done, bool *success);
 extern void pg_fe_scram_free(void *opaq);
 extern char *pg_fe_scram_build_verifier(const char *password);
 

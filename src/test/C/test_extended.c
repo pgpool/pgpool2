@@ -36,47 +36,52 @@
 #include "libpq-fe.h"
 #include "libpq/libpq-fs.h"
 
-int main(int argc, char **argv) {
-	char *connect_string = "user=t-ishii dbname=test port=5432";
-	int doTrace = 1;	/* set 1 to start libpq trace */
-	int doTransaction = 1;		/* set 1 to start explicit transaction */
-	int doSleep = 0;	/* set non 0 seconds to sleep after connection and beforfe starting command */
+int
+main(int argc, char **argv)
+{
+	char	   *connect_string = "user=t-ishii dbname=test port=5432";
+	int			doTrace = 1;	/* set 1 to start libpq trace */
+	int			doTransaction = 1;	/* set 1 to start explicit transaction */
+	int			doSleep = 0;	/* set non 0 seconds to sleep after connection
+								 * and beforfe starting command */
 
 	/* SQL commands to be executed */
 	static char *commands[] = {
-	  "SAVEPOINT S1",
-	  "UPDATE t1 SET k = 1",
-	  "ROLLBACK TO S1",
-	  "SELECT 1",
-	  "RELEASE SAVEPOINT S1"
+		"SAVEPOINT S1",
+		"UPDATE t1 SET k = 1",
+		"ROLLBACK TO S1",
+		"SELECT 1",
+		"RELEASE SAVEPOINT S1"
 	};
 
-	PGconn *conn;
-	PGresult *res;
-	int i;
+	PGconn	   *conn;
+	PGresult   *res;
+	int			i;
 
 	conn = PQconnectdb(connect_string);
-	if (PQstatus(conn) == CONNECTION_BAD) {
+	if (PQstatus(conn) == CONNECTION_BAD)
+	{
 		printf("Unable to connect to db\n");
 		PQfinish(conn);
 		return 1;
 	}
 
 	if (doSleep)
-	  sleep(doSleep);
+		sleep(doSleep);
 
-	if(doTrace == 1)
-	  PQtrace(conn, stdout);
+	if (doTrace == 1)
+		PQtrace(conn, stdout);
 
-	if(doTransaction)
-	  PQexec(conn,"BEGIN;");
+	if (doTransaction)
+		PQexec(conn, "BEGIN;");
 
-	for (i=0;i<sizeof(commands)/sizeof(char *);i++)
+	for (i = 0; i < sizeof(commands) / sizeof(char *); i++)
 	{
-		char *command = commands[i];
-	
+		char	   *command = commands[i];
+
 		res = PQexecParams(conn, command, 0, NULL, NULL, NULL, NULL, 0);
-		switch(PQresultStatus(res)) {
+		switch (PQresultStatus(res))
+		{
 			case PGRES_COMMAND_OK:
 			case PGRES_TUPLES_OK:
 				fprintf(stderr, "\"%s\" : succeeded\n", command);
@@ -89,10 +94,11 @@ int main(int argc, char **argv) {
 
 	}
 
-	if(doTransaction == 1) {
-		PQexec(conn,"COMMIT;");
+	if (doTransaction == 1)
+	{
+		PQexec(conn, "COMMIT;");
 	}
-	
+
 	PQfinish(conn);
 	return 0;
 }

@@ -41,10 +41,10 @@
 
 extern POOL_CONFIG g_pool_config;
 struct config_generic **all_parameters = NULL;
-static int num_all_parameters = 0;
+static int	num_all_parameters = 0;
 
-static void initialize_variables_with_default(struct config_generic * gconf);
-static bool config_enum_lookup_by_name(struct config_enum * record, const char *value, int *retval);
+static void initialize_variables_with_default(struct config_generic *gconf);
+static bool config_enum_lookup_by_name(struct config_enum *record, const char *value, int *retval);
 
 static void build_variable_groups(void);
 static void build_config_variables(void);
@@ -55,82 +55,82 @@ static struct config_generic *find_option(const char *name, int elevel);
 static bool config_post_processor(ConfigContext context, int elevel);
 
 static void sort_config_vars(void);
-static bool
-setConfigOptionArrayVarWithConfigDefault(struct config_generic *record, const char* name,
+static bool setConfigOptionArrayVarWithConfigDefault(struct config_generic *record, const char *name,
 										 const char *value, ConfigContext context, int elevel);
 
 static bool setConfigOption(const char *name, const char *value,
-							ConfigContext context, GucSource source, int elevel);
+				ConfigContext context, GucSource source, int elevel);
 static bool setConfigOptionVar(struct config_generic *record, const char *name, int index_val,
-				const char *value, ConfigContext context, GucSource source, int elevel);
+				   const char *value, ConfigContext context, GucSource source, int elevel);
 
-static bool get_index_in_var_name(struct config_generic* record,
-								  const char* name, int *index, int elevel);
+static bool get_index_in_var_name(struct config_generic *record,
+					  const char *name, int *index, int elevel);
 
 
-static bool MakeDBRedirectListRegex (char* newval, int elevel);
-static bool MakeAppRedirectListRegex (char* newval, int elevel);
+static bool MakeDBRedirectListRegex(char *newval, int elevel);
+static bool MakeAppRedirectListRegex(char *newval, int elevel);
 static bool check_redirect_node_spec(char *node_spec);
 static char **get_list_from_string(const char *str, const char *delimi, int *n);
 static char **get_list_from_string_regex_delim(const char *str, const char *delimi, int *n);
 
 
 /*show functions */
-static const char* IntValueShowFunc(int value);
-static const char* HBDestinationPortShowFunc(int index);
-static const char* HBDestinationShowFunc(int index);
-static const char* HBDeviceShowFunc(int index);
-static const char* OtherWDPortShowFunc(int index);
-static const char* OtherPPPortShowFunc(int index);
-static const char* OtherPPHostShowFunc(int index);
-static const char* BackendFlagsShowFunc(int index);
-static const char* BackendDataDirShowFunc(int index);
-static const char* BackendHostShowFunc(int index);
-static const char* BackendPortShowFunc(int index);
-static const char* BackendWeightShowFunc(int index);
+static const char *IntValueShowFunc(int value);
+static const char *HBDestinationPortShowFunc(int index);
+static const char *HBDestinationShowFunc(int index);
+static const char *HBDeviceShowFunc(int index);
+static const char *OtherWDPortShowFunc(int index);
+static const char *OtherPPPortShowFunc(int index);
+static const char *OtherPPHostShowFunc(int index);
+static const char *BackendFlagsShowFunc(int index);
+static const char *BackendDataDirShowFunc(int index);
+static const char *BackendHostShowFunc(int index);
+static const char *BackendPortShowFunc(int index);
+static const char *BackendWeightShowFunc(int index);
 
-static const char* HealthCheckPeriodShowFunc(int index);
-static const char* HealthCheckTimeOutShowFunc(int index);
-static const char* HealthCheckMaxRetriesShowFunc(int index);
-static const char* HealthCheckRetryDelayShowFunc(int index);
-static const char* HealthCheckConnectTimeOutShowFunc(int index);
-static const char* HealthCheckUserShowFunc(int index);
-static const char* HealthCheckPasswordShowFunc(int index);
-static const char* HealthCheckDatabaseShowFunc(int index);
+static const char *HealthCheckPeriodShowFunc(int index);
+static const char *HealthCheckTimeOutShowFunc(int index);
+static const char *HealthCheckMaxRetriesShowFunc(int index);
+static const char *HealthCheckRetryDelayShowFunc(int index);
+static const char *HealthCheckConnectTimeOutShowFunc(int index);
+static const char *HealthCheckUserShowFunc(int index);
+static const char *HealthCheckPasswordShowFunc(int index);
+static const char *HealthCheckDatabaseShowFunc(int index);
 
 
 /* check empty slot functions */
 static bool WdIFSlotEmptyCheckFunc(int index);
 static bool WdSlotEmptyCheckFunc(int index);
 static bool BackendSlotEmptyCheckFunc(int index);
+
 /*variable custom assign functions */
-static bool BackendPortAssignFunc (ConfigContext context, int newval, int index, int elevel);
-static bool BackendHostAssignFunc (ConfigContext context, char* newval, int index, int elevel);
-static bool BackendDataDirAssignFunc (ConfigContext context, char* newval, int index, int elevel);
-static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int index, int elevel);
-static bool BackendWeightAssignFunc (ConfigContext context, double newval, int index, int elevel);
-static bool HBDestinationAssignFunc (ConfigContext context, char* newval, int index, int elevel);
-static bool HBDestinationPortAssignFunc (ConfigContext context, int newval, int index, int elevel);
-static bool HBDeviceAssignFunc (ConfigContext context, char* newval, int index, int elevel);
-static bool OtherWDPortAssignFunc (ConfigContext context, int newval, int index, int elevel);
-static bool OtherPPPortAssignFunc (ConfigContext context, int newval, int index, int elevel);
-static bool OtherPPHostAssignFunc (ConfigContext context, char* newval, int index, int elevel);
+static bool BackendPortAssignFunc(ConfigContext context, int newval, int index, int elevel);
+static bool BackendHostAssignFunc(ConfigContext context, char *newval, int index, int elevel);
+static bool BackendDataDirAssignFunc(ConfigContext context, char *newval, int index, int elevel);
+static bool BackendFlagsAssignFunc(ConfigContext context, char *newval, int index, int elevel);
+static bool BackendWeightAssignFunc(ConfigContext context, double newval, int index, int elevel);
+static bool HBDestinationAssignFunc(ConfigContext context, char *newval, int index, int elevel);
+static bool HBDestinationPortAssignFunc(ConfigContext context, int newval, int index, int elevel);
+static bool HBDeviceAssignFunc(ConfigContext context, char *newval, int index, int elevel);
+static bool OtherWDPortAssignFunc(ConfigContext context, int newval, int index, int elevel);
+static bool OtherPPPortAssignFunc(ConfigContext context, int newval, int index, int elevel);
+static bool OtherPPHostAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 
-static bool HealthCheckPeriodAssignFunc (ConfigContext context, int newval, int index, int elevel);
-static bool HealthCheckTimeOutAssignFunc (ConfigContext context, int newval, int index, int elevel);
-static bool HealthCheckMaxRetriesAssignFunc (ConfigContext context, int newval, int index, int elevel);
-static bool HealthCheckRetryDelayAssignFunc (ConfigContext context, int newval, int index, int elevel);
-static bool HealthCheckConnectTimeOutAssignFunc (ConfigContext context, int newval, int index, int elevel);
+static bool HealthCheckPeriodAssignFunc(ConfigContext context, int newval, int index, int elevel);
+static bool HealthCheckTimeOutAssignFunc(ConfigContext context, int newval, int index, int elevel);
+static bool HealthCheckMaxRetriesAssignFunc(ConfigContext context, int newval, int index, int elevel);
+static bool HealthCheckRetryDelayAssignFunc(ConfigContext context, int newval, int index, int elevel);
+static bool HealthCheckConnectTimeOutAssignFunc(ConfigContext context, int newval, int index, int elevel);
 
-static bool HealthCheckUserAssignFunc(ConfigContext context, char* newval, int index, int elevel);
-static bool HealthCheckPasswordAssignFunc(ConfigContext context, char* newval, int index, int elevel);
-static bool HealthCheckDatabaseAssignFunc(ConfigContext context, char* newval, int index, int elevel);
+static bool HealthCheckUserAssignFunc(ConfigContext context, char *newval, int index, int elevel);
+static bool HealthCheckPasswordAssignFunc(ConfigContext context, char *newval, int index, int elevel);
+static bool HealthCheckDatabaseAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 
-static bool LogDestinationProcessFunc (char* newval, int elevel);
-static bool SyslogIdentProcessFunc (char* newval, int elevel);
-static bool SyslogFacilityProcessFunc (int newval, int elevel);
+static bool LogDestinationProcessFunc(char *newval, int elevel);
+static bool SyslogIdentProcessFunc(char *newval, int elevel);
+static bool SyslogFacilityProcessFunc(int newval, int elevel);
 
-static struct config_generic* get_index_free_record_if_any(struct config_generic* record);
+static struct config_generic *get_index_free_record_if_any(struct config_generic *record);
 
 
 #ifndef POOL_PRIVATE
@@ -140,17 +140,17 @@ static struct config_generic* get_index_free_record_if_any(struct config_generic
  * not present for tools.
  */
 
-static const char* config_enum_lookup_by_value(struct config_enum * record, int val);
+static const char *config_enum_lookup_by_value(struct config_enum *record, int val);
 
-static char *ShowOption(struct config_generic * record, int index, int elevel);
+static char *ShowOption(struct config_generic *record, int index, int elevel);
 
-static char *config_enum_get_options(struct config_enum * record, const char *prefix,
+static char *config_enum_get_options(struct config_enum *record, const char *prefix,
 						const char *suffix, const char *separator);
-static void send_row_description_for_detail_view(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
-static int send_grouped_type_variable_to_frontend(struct config_grouped_array_var* grouped_record,
-												  POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
-static int send_array_type_variable_to_frontend(struct config_generic* record,
-												POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+static void send_row_description_for_detail_view(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
+static int send_grouped_type_variable_to_frontend(struct config_grouped_array_var *grouped_record,
+									   POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
+static int send_array_type_variable_to_frontend(struct config_generic *record,
+									 POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
 
 #endif
 
@@ -232,298 +232,298 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"serialize_accept", CFGCXT_INIT, CONNECTION_CONFIG,
 			"whether to serialize accept() call to avoid thundering herd problem",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.serialize_accept,	/* variable */
-		false,								/* boot value */
-		NULL,								/* assign func */
-		NULL,								/* check func */
-		NULL								/* show hook */
+		false,					/* boot value */
+		NULL,					/* assign func */
+		NULL,					/* check func */
+		NULL					/* show hook */
 	},
 	{
 		{"failover_when_quorum_exists", CFGCXT_INIT, FAILOVER_CONFIG,
 			"Do failover only when cluster has the quorum.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.failover_when_quorum_exists,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 	{
 		{"failover_require_consensus", CFGCXT_INIT, FAILOVER_CONFIG,
 			"Only do failover when majority aggrees.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.failover_require_consensus,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 	{
 		{"allow_multiple_failover_requests_from_node", CFGCXT_INIT, FAILOVER_CONFIG,
 			"A Pgpool-II node can send multiple failover requests to build consensus.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.allow_multiple_failover_requests_from_node,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 	{
 		{"log_connections", CFGCXT_RELOAD, LOGING_CONFIG,
 			"Logs each successful connection.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.log_connections,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"log_hostname", CFGCXT_RELOAD, LOGING_CONFIG,
 			"Logs the host name in the connection logs.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.log_hostname,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"enable_pool_hba", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"Use pool_hba.conf for client authentication.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.enable_pool_hba,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"replication_mode", CFGCXT_INIT, LOGING_CONFIG,
 			"Enables replication mode.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.replication_mode,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"load_balance_mode", CFGCXT_INIT, LOAD_BALANCE_CONFIG,
 			"Enables load balancing of queries.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.load_balance_mode,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"replication_stop_on_mismatch", CFGCXT_RELOAD, REPLICATION_CONFIG,
 			"Starts degeneration and stops replication, If there's a data mismatch between master and secondary.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.replication_stop_on_mismatch,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"failover_if_affected_tuples_mismatch", CFGCXT_RELOAD, REPLICATION_CONFIG,
 			"Starts degeneration, If there's a data mismatch between master and secondary.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.failover_if_affected_tuples_mismatch,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"replicate_select", CFGCXT_RELOAD, REPLICATION_CONFIG,
 			"Replicate SELECT statements when load balancing is disabled.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.replicate_select,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"master_slave_mode", CFGCXT_INIT, MASTER_SLAVE_CONFIG,
 			"Enables Master/Slave mode.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.master_slave_mode,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"connection_cache", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"Caches connections to backends.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.connection_cache,
 		true,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"fail_over_on_backend_error", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Triggers fail over when reading/writing to backend socket fails.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.fail_over_on_backend_error,
 		true,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"detach_false_primary", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Automatically detaches false primary node.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.detach_false_primary,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"insert_lock", CFGCXT_RELOAD, REPLICATION_CONFIG,
 			"Automatically locks table with INSERT to keep SERIAL data consistency",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.insert_lock,
 		true,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"ignore_leading_white_space", CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
 			"Ignores leading white spaces of each query string.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.ignore_leading_white_space,
 		true,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"log_statement", CFGCXT_SESSION, LOGING_CONFIG,
 			"Logs all statements in the pgpool logs.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.log_statement,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"log_per_node_statement", CFGCXT_SESSION, LOGING_CONFIG,
 			"Logs per node detailed SQL statements.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.log_per_node_statement,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"log_client_messages", CFGCXT_SESSION, LOGING_CONFIG,
 			"Logs any client messages in the pgpool logs.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.log_client_messages,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"use_watchdog", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Enables the pgpool-II watchdog.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.use_watchdog,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"clear_memqcache_on_escalation", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Clears the query cache in the shared memory when pgpool-II escaltes to master watchdog node.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.clear_memqcache_on_escalation,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"ssl", CFGCXT_INIT, SSL_CONFIG,
 			"Enables SSL support for frontend and backend connections",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.ssl,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"check_temp_table", CFGCXT_SESSION, GENERAL_CONFIG,
 			"Enables temporary table check.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.check_temp_table,
 		true,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"check_unlogged_table", CFGCXT_SESSION, GENERAL_CONFIG,
 			"Enables unlogged table check.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.check_unlogged_table,
 		true,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"memory_cache_enabled", CFGCXT_RELOAD, CACHE_CONFIG,
 			"Enables the memory cache functionality.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.memory_cache_enabled,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"memqcache_auto_cache_invalidation", CFGCXT_RELOAD, CACHE_CONFIG,
 			"Automatically deletes the cache related to the updated tables.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.memqcache_auto_cache_invalidation,
 		true,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	{
 		{"allow_sql_comments", CFGCXT_SESSION, LOAD_BALANCE_CONFIG,
 			"Ignore SQL comments, while judging if load balance or query cache is possible.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.allow_sql_comments,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 	{
 		{"allow_clear_text_frontend_auth", CFGCXT_RELOAD, GENERAL_CONFIG,
 			"allow to use clear text password authentication with clients, when pool_passwd does not contain the user password.",
-			CONFIG_VAR_TYPE_BOOL,false, 0
+			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.allow_clear_text_frontend_auth,
 		false,
-		NULL, NULL,NULL
+		NULL, NULL, NULL
 	},
 
 	/* End-of-list marker */
@@ -536,31 +536,31 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"database_redirect_preference_list", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"redirect by database name.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
-		&g_pool_config.database_redirect_preference_list, /* variable */
-		NULL,/* boot value */
-		NULL,/* assign_func */
-		NULL,/* check_func */
-		MakeDBRedirectListRegex, /* process func */
-		NULL	/* show hook */
+		&g_pool_config.database_redirect_preference_list,	/* variable */
+		NULL,					/* boot value */
+		NULL,					/* assign_func */
+		NULL,					/* check_func */
+		MakeDBRedirectListRegex,	/* process func */
+		NULL					/* show hook */
 	},
 
 	{
 		{"app_name_redirect_preference_list", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"redirect by application name.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.app_name_redirect_preference_list,
 		NULL,
-		NULL,NULL,
+		NULL, NULL,
 		MakeAppRedirectListRegex, NULL
 	},
 
 	{
 		{"listen_addresses", CFGCXT_INIT, CONNECTION_CONFIG,
 			"hostname or IP address on which pgpool will listen on.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.listen_addresses,
 		"localhost",
@@ -570,17 +570,17 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"pcp_listen_addresses", CFGCXT_INIT, CONNECTION_CONFIG,
 			"hostname(s) or IP address(es) on which pcp will listen on.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.pcp_listen_addresses,
 		"*",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"socket_dir", CFGCXT_INIT, CONNECTION_CONFIG,
 			"The directory to create the UNIX domain socket for accepting pgpool-II client connections.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.socket_dir,
 		DEFAULT_SOCKET_DIR,
@@ -590,7 +590,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"pcp_socket_dir", CFGCXT_INIT, CONNECTION_CONFIG,
 			"The directory to create the UNIX domain socket for accepting pgpool-II PCP connections.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.pcp_socket_dir,
 		DEFAULT_SOCKET_DIR,
@@ -599,8 +599,8 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"wd_ipc_socket_dir", CFGCXT_INIT, CONNECTION_CONFIG,
-		"The directory to create the UNIX domain socket for accepting pgpool-II watchdog IPC connections.",
-		CONFIG_VAR_TYPE_STRING,false, 0
+			"The directory to create the UNIX domain socket for accepting pgpool-II watchdog IPC connections.",
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_ipc_socket_dir,
 		DEFAULT_SOCKET_DIR,
@@ -610,7 +610,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"log_destination", CFGCXT_RELOAD, LOGING_CONFIG,
 			"destination of pgpool-II log",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.log_destination_str,
 		"stderr",
@@ -622,7 +622,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"syslog_ident", CFGCXT_RELOAD, LOGING_CONFIG,
 			"syslog program ident string.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.syslog_ident,
 		"pgpool",
@@ -634,7 +634,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"pid_file_name", CFGCXT_INIT, FILE_LOCATION_CONFIG,
 			"Path to store pgpool-II pid file.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.pid_file_name,
 		DEFAULT_PID_FILE_NAME,
@@ -644,7 +644,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"pool_passwd", CFGCXT_INIT, FILE_LOCATION_CONFIG,
 			"File name of pool_passwd for md5 authentication.",
-			CONFIG_VAR_TYPE_STRING,false, VAR_HIDDEN_VALUE
+			CONFIG_VAR_TYPE_STRING, false, VAR_HIDDEN_VALUE
 		},
 		&g_pool_config.pool_passwd,
 		"pool_passwd",
@@ -654,7 +654,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"log_line_prefix", CFGCXT_RELOAD, LOGING_CONFIG,
 			"printf-style string to output at beginning of each log line.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.log_line_prefix,
 		"%t: pid %p: ",
@@ -664,107 +664,107 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"sr_check_user", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"The User name to perform streaming replication delay check.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.sr_check_user,
 		"nobody",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"sr_check_password", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"The password for user to perform streaming replication delay check.",
-			CONFIG_VAR_TYPE_STRING,false, VAR_HIDDEN_VALUE
+			CONFIG_VAR_TYPE_STRING, false, VAR_HIDDEN_VALUE
 		},
 		&g_pool_config.sr_check_password,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"sr_check_database", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"The database name to perform streaming replication delay check.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.sr_check_database,
 		"postgres",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"failback_command", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Command to execute when backend node is attached.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.failback_command,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"follow_master_command", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Command to execute in master/slave streaming replication mode after a master node failover.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.follow_master_command,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"failover_command", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Command to execute when backend node is detached.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.failover_command,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"recovery_user", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"User name for online recovery.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.recovery_user,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"recovery_password", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"Password for online recovery.",
-			CONFIG_VAR_TYPE_STRING,false, VAR_HIDDEN_VALUE
+			CONFIG_VAR_TYPE_STRING, false, VAR_HIDDEN_VALUE
 		},
 		&g_pool_config.recovery_password,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"recovery_1st_stage_command", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"Command to execute in first stage recovery.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.recovery_1st_stage_command,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"recovery_2nd_stage_command", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"Command to execute in second stage recovery.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.recovery_2nd_stage_command,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"lobj_lock_table", CFGCXT_RELOAD, REPLICATION_CONFIG,
 			"Table name used for large object replication control.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.lobj_lock_table,
 		"",
@@ -774,37 +774,37 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_escalation_command", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Command to execute when watchdog node becomes cluster master/leader node.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_escalation_command,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"wd_de_escalation_command", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Command to execute when watchdog node resigns from the cluster master/leader node.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_de_escalation_command,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"trusted_servers", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"List of servers to verify connectivity.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.trusted_servers,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"delegate_IP", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Delegate IP address to be used when pgpool node become a watchdog cluster master/leader.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.delegate_IP,
 		"",
@@ -814,7 +814,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_hostname", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Host name or IP address of this watchdog.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_hostname,
 		"",
@@ -824,17 +824,17 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"ping_path", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"path to ping command.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.ping_path,
 		"/bin",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"if_cmd_path", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Path to interface command.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.if_cmd_path,
 		"/sbin",
@@ -844,17 +844,17 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"if_up_cmd", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Complete command to bring UP virtual interface.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.if_up_cmd,
 		"ip addr add $_IP_$/24 dev eth0 label eth0:0",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"if_down_cmd", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Complete command to bring down virtual interface.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.if_down_cmd,
 		"ip addr del $_IP_$/24 dev eth0",
@@ -864,7 +864,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"arping_path", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"path to arping command.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.arping_path,
 		"/usr/sbin",
@@ -874,7 +874,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"arping_cmd", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"arping command.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.arping_cmd,
 		"arping -U $_IP_$ -w 1",
@@ -884,7 +884,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_lifecheck_query", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"SQL query to be used by watchdog lifecheck.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_lifecheck_query,
 		"SELECT 1",
@@ -894,7 +894,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_lifecheck_dbname", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Database name to be used for by watchdog lifecheck.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_lifecheck_dbname,
 		"postgres",
@@ -904,27 +904,27 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"wd_lifecheck_user", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"User name to be used for by watchdog lifecheck.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_lifecheck_user,
 		"nobody",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"wd_lifecheck_password", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Password for watchdog user in lifecheck.",
-			CONFIG_VAR_TYPE_STRING,false, VAR_HIDDEN_VALUE
+			CONFIG_VAR_TYPE_STRING, false, VAR_HIDDEN_VALUE
 		},
 		&g_pool_config.wd_lifecheck_password,
 		"postgres",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"wd_authkey", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Authentication key to be used in watchdog communication.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_authkey,
 		"",
@@ -934,37 +934,37 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"ssl_cert", CFGCXT_INIT, SSL_CONFIG,
 			"Path to the SSL public certificate file.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.ssl_cert,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"ssl_key", CFGCXT_INIT, SSL_CONFIG,
 			"Path to the SSL private key file.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.ssl_key,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"ssl_ca_cert", CFGCXT_INIT, SSL_CONFIG,
 			"Path to a single PEM format file.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.ssl_ca_cert,
 		"",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"ssl_ca_cert_dir", CFGCXT_INIT, SSL_CONFIG,
 			"Directory containing CA root certificate(s).",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.ssl_ca_cert_dir,
 		"",
@@ -974,7 +974,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"memqcache_oiddir", CFGCXT_INIT, CACHE_CONFIG,
 			"Tempory directory to record table oids.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.memqcache_oiddir,
 		"/var/log/pgpool/oiddir",
@@ -984,17 +984,17 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"memqcache_memcached_host", CFGCXT_INIT, CACHE_CONFIG,
 			"Hostname or IP address of memcached.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.memqcache_memcached_host,
 		"localhost",
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"logdir", CFGCXT_INIT, LOGING_CONFIG,
 			"PgPool status file logging directory.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.logdir,
 		DEFAULT_LOGDIR,
@@ -1010,20 +1010,20 @@ static struct config_string_list ConfigureNamesStringList[] =
 	{
 		{"reset_query_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
 			"list of commands sent to reset the backend connection when user session exits.",
-			CONFIG_VAR_TYPE_STRING_LIST,false, 0
+			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
-		&g_pool_config.reset_query_list,		/* variable */
-		&g_pool_config.num_reset_queries,		/* item count var  */
-		(const char*)default_reset_query_list,	/* boot value */
-		";",/* token seperator */
-		false,									/* compute_regex ?*/
-		NULL, NULL, NULL						/* assign, check, show funcs */
+		&g_pool_config.reset_query_list,	/* variable */
+		&g_pool_config.num_reset_queries,	/* item count var  */
+		(const char *) default_reset_query_list,	/* boot value */
+		";",					/* token seperator */
+		false,					/* compute_regex ? */
+		NULL, NULL, NULL		/* assign, check, show funcs */
 	},
 
 	{
 		{"white_function_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
 			"list of functions that does not writes to database.",
-			CONFIG_VAR_TYPE_STRING_LIST,false, 0
+			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
 		&g_pool_config.white_function_list,
 		&g_pool_config.num_white_function_list,
@@ -1036,11 +1036,11 @@ static struct config_string_list ConfigureNamesStringList[] =
 	{
 		{"black_function_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
 			"list of functions that writes to database.",
-			CONFIG_VAR_TYPE_STRING_LIST,false, 0
+			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
 		&g_pool_config.black_function_list,
 		&g_pool_config.num_black_function_list,
-		(const char*)default_black_function_list,
+		(const char *) default_black_function_list,
 		",",
 		true,
 		NULL, NULL, NULL
@@ -1048,7 +1048,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 	{
 		{"white_memqcache_table_list", CFGCXT_RELOAD, CACHE_CONFIG,
 			"list of tables to be cached.",
-			CONFIG_VAR_TYPE_STRING_LIST,false, 0
+			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
 		&g_pool_config.white_memqcache_table_list,
 		&g_pool_config.num_white_memqcache_table_list,
@@ -1061,7 +1061,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 	{
 		{"black_memqcache_table_list", CFGCXT_RELOAD, CACHE_CONFIG,
 			"list of tables should not be cached.",
-			CONFIG_VAR_TYPE_STRING_LIST,false, 0
+			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
 		&g_pool_config.black_memqcache_table_list,
 		&g_pool_config.num_black_memqcache_table_list,
@@ -1074,7 +1074,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 	{
 		{"black_query_pattern_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
 			"list of query patterns that should be sent to primary node.",
-			CONFIG_VAR_TYPE_STRING_LIST,false, 0
+			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
 		&g_pool_config.black_query_pattern_list,
 		&g_pool_config.num_black_query_pattern_list,
@@ -1087,7 +1087,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 	{
 		{"wd_monitoring_interfaces_list", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"List of network device names, to be monitored by the watchdog process for the network link state.",
-			CONFIG_VAR_TYPE_STRING,false, 0
+			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_monitoring_interfaces_list,
 		&g_pool_config.num_wd_monitoring_interfaces_list,
@@ -1107,33 +1107,33 @@ static struct config_long ConfigureNamesLong[] =
 	{
 		{"delay_threshold", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"standby delay threshold.",
-			CONFIG_VAR_TYPE_LONG,false, 0
+			CONFIG_VAR_TYPE_LONG, false, 0
 		},
 		&g_pool_config.delay_threshold,
 		0,
-		0,LONG_MAX,
+		0, LONG_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"relcache_expire", CFGCXT_INIT, CACHE_CONFIG,
-		"Relation cache expiration time in seconds.",
-			CONFIG_VAR_TYPE_LONG,false, 0
+			"Relation cache expiration time in seconds.",
+			CONFIG_VAR_TYPE_LONG, false, 0
 		},
 		&g_pool_config.relcache_expire,
 		0,
-		0,LONG_MAX,
+		0, LONG_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"memqcache_total_size", CFGCXT_INIT, CACHE_CONFIG,
 			"Total memory size in bytes for storing memory cache.",
-			CONFIG_VAR_TYPE_LONG,false, 0
+			CONFIG_VAR_TYPE_LONG, false, 0
 		},
 		&g_pool_config.memqcache_total_size,
-		(int64)67108864,
-		0,LONG_MAX,
+		(int64) 67108864,
+		0, LONG_MAX,
 		NULL, NULL, NULL
 	},
 
@@ -1148,11 +1148,11 @@ static struct config_int_array ConfigureNamesIntArray[] =
 	{
 		{"backend_port", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"port number of PostgreSQL backend.",
-			CONFIG_VAR_TYPE_INT_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		0,
-		1024,65535,
+		1024, 65535,
 		EMPTY_CONFIG_INT,
 		BackendPortAssignFunc, NULL, BackendPortShowFunc, BackendSlotEmptyCheckFunc
 	},
@@ -1160,11 +1160,11 @@ static struct config_int_array ConfigureNamesIntArray[] =
 	{
 		{"heartbeat_destination_port", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
 			"Destination port for sending heartbeat.",
-			CONFIG_VAR_TYPE_INT_ARRAY,true, 0, WD_MAX_IF_NUM
+			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, WD_MAX_IF_NUM
 		},
 		NULL,
 		0,
-		1024,65535,
+		1024, 65535,
 		EMPTY_CONFIG_INT,
 		HBDestinationPortAssignFunc, NULL, HBDestinationPortShowFunc, WdIFSlotEmptyCheckFunc
 	},
@@ -1172,130 +1172,130 @@ static struct config_int_array ConfigureNamesIntArray[] =
 	{
 		{"other_wd_port", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"tcp/ip watchdog port number of other pgpool node for watchdog connection..",
-			CONFIG_VAR_TYPE_INT_ARRAY,true, 0, MAX_WATCHDOG_NUM
+			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_WATCHDOG_NUM
 		},
 		NULL,
 		0,
-		1024,65535,
+		1024, 65535,
 		EMPTY_CONFIG_INT,
-		OtherWDPortAssignFunc, NULL, OtherWDPortShowFunc,WdSlotEmptyCheckFunc
+		OtherWDPortAssignFunc, NULL, OtherWDPortShowFunc, WdSlotEmptyCheckFunc
 	},
 
 	{
 		{"other_pgpool_port", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"tcp/ip pgpool port number of other pgpool node for watchdog connection.",
-			CONFIG_VAR_TYPE_INT_ARRAY,true, 0, MAX_WATCHDOG_NUM
+			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_WATCHDOG_NUM
 		},
 		NULL,
 		0,
-		1024,65535,
+		1024, 65535,
 		EMPTY_CONFIG_INT,
-		OtherPPPortAssignFunc, NULL, OtherPPPortShowFunc,WdSlotEmptyCheckFunc
+		OtherPPPortAssignFunc, NULL, OtherPPPortShowFunc, WdSlotEmptyCheckFunc
 	},
 
 	{
 		{"health_check_timeout", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Backend node health check timeout value in seconds.",
-			CONFIG_VAR_TYPE_INT_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		20,
-		0,INT_MAX,
+		0, INT_MAX,
 		{
 			{"health_check_timeout", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 				"Default health check timeout value for node for which health_check_timeout[node-id] is not specified.",
-				CONFIG_VAR_TYPE_INT,false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
+				CONFIG_VAR_TYPE_INT, false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
 			},
 			&g_pool_config.health_check_timeout,
 			20,
-			0,INT_MAX,
+			0, INT_MAX,
 			NULL, NULL, NULL
 		},
-		HealthCheckTimeOutAssignFunc, NULL, HealthCheckTimeOutShowFunc,BackendSlotEmptyCheckFunc
+		HealthCheckTimeOutAssignFunc, NULL, HealthCheckTimeOutShowFunc, BackendSlotEmptyCheckFunc
 	},
 
 	{
 		{"health_check_period", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Time interval in seconds between the health checks.",
-			CONFIG_VAR_TYPE_INT_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		0,
-		0,INT_MAX,
+		0, INT_MAX,
 		{
 			{"health_check_period", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 				"Default time interval between health checks for node for which health_check_period[node-id] is not specified.",
-				CONFIG_VAR_TYPE_INT,false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
+				CONFIG_VAR_TYPE_INT, false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
 			},
 			&g_pool_config.health_check_period,
 			0,
-			0,INT_MAX,
+			0, INT_MAX,
 			NULL, NULL, NULL
 		},
-		HealthCheckPeriodAssignFunc, NULL, HealthCheckPeriodShowFunc,BackendSlotEmptyCheckFunc
+		HealthCheckPeriodAssignFunc, NULL, HealthCheckPeriodShowFunc, BackendSlotEmptyCheckFunc
 	},
 
 	{
 		{"health_check_max_retries", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"The maximum number of times to retry a failed health check before giving up and initiating failover.",
-			CONFIG_VAR_TYPE_INT_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		0,
-		0,INT_MAX,
+		0, INT_MAX,
 		{
 			{"health_check_max_retries", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 				"Default maximum number of retries for node for which health_check_max_retries[node-id] is not specified.",
-				CONFIG_VAR_TYPE_INT,false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
+				CONFIG_VAR_TYPE_INT, false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
 			},
 			&g_pool_config.health_check_max_retries,
 			0,
-			0,INT_MAX,
+			0, INT_MAX,
 			NULL, NULL, NULL
 		},
-		HealthCheckMaxRetriesAssignFunc, NULL, HealthCheckMaxRetriesShowFunc,BackendSlotEmptyCheckFunc
+		HealthCheckMaxRetriesAssignFunc, NULL, HealthCheckMaxRetriesShowFunc, BackendSlotEmptyCheckFunc
 	},
 
 	{
 		{"health_check_retry_delay", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"The amount of time in seconds to wait between failed health check retries.",
-			CONFIG_VAR_TYPE_INT_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		1,
-		0,INT_MAX,
+		0, INT_MAX,
 		{
 			{"health_check_retry_delay", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 				"Default time between failed health check retries for node for which health_check_retry_delay[node-id] is not specified.",
-				CONFIG_VAR_TYPE_INT,false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
+				CONFIG_VAR_TYPE_INT, false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
 			},
 			&g_pool_config.health_check_retry_delay,
 			1,
-			0,INT_MAX,
+			0, INT_MAX,
 			NULL, NULL, NULL
 		},
-		HealthCheckRetryDelayAssignFunc, NULL, HealthCheckRetryDelayShowFunc,BackendSlotEmptyCheckFunc
+		HealthCheckRetryDelayAssignFunc, NULL, HealthCheckRetryDelayShowFunc, BackendSlotEmptyCheckFunc
 	},
 
 	{
 		{"connect_timeout", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Timeout in milliseconds before giving up connecting to backend.",
-			CONFIG_VAR_TYPE_INT_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		10000,
-		0,INT_MAX,
+		0, INT_MAX,
 		{
 			{"connect_timeout", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 				"Default connect_timeout value for node for which connect_timeout[node-id] is not specified.",
-				CONFIG_VAR_TYPE_INT,false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
+				CONFIG_VAR_TYPE_INT, false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
 			},
 			&g_pool_config.connect_timeout,
 			10000,
-			0,INT_MAX,
+			0, INT_MAX,
 			NULL, NULL, NULL
 		},
-		HealthCheckConnectTimeOutAssignFunc, NULL, HealthCheckConnectTimeOutShowFunc,BackendSlotEmptyCheckFunc
+		HealthCheckConnectTimeOutAssignFunc, NULL, HealthCheckConnectTimeOutShowFunc, BackendSlotEmptyCheckFunc
 	},
 	/* End-of-list marker */
 	EMPTY_CONFIG_INT_ARRAY
@@ -1315,15 +1315,15 @@ static struct config_double_array ConfigureNamesDoubleArray[] =
 	{
 		{"backend_weight", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"load balance weight of backend.",
-			CONFIG_VAR_TYPE_DOUBLE_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_DOUBLE_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		0,
-		0.0,100000000.0,
+		0.0, 100000000.0,
 		EMPTY_CONFIG_DOUBLE,
-		BackendWeightAssignFunc, NULL, BackendWeightShowFunc,BackendSlotEmptyCheckFunc
+		BackendWeightAssignFunc, NULL, BackendWeightShowFunc, BackendSlotEmptyCheckFunc
 	},
-	
+
 	/* End-of-list marker */
 	EMPTY_CONFIG_DOUBLE_ARRAY
 };
@@ -1334,91 +1334,91 @@ static struct config_string_array ConfigureNamesStringArray[] =
 	{
 		{"backend_hostname", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"hostname or IP address of PostgreSQL backend.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		"",
 		EMPTY_CONFIG_STRING,
-		BackendHostAssignFunc, NULL, BackendHostShowFunc,BackendSlotEmptyCheckFunc
+		BackendHostAssignFunc, NULL, BackendHostShowFunc, BackendSlotEmptyCheckFunc
 	},
 
 	{
 		{"backend_data_directory", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"data directory of the backend.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		"",
 		EMPTY_CONFIG_STRING,
-		BackendDataDirAssignFunc, NULL, BackendDataDirShowFunc,BackendSlotEmptyCheckFunc
-	},
-	
-	{
-		{"backend_flag", CFGCXT_RELOAD, CONNECTION_CONFIG,
-			"Controls various backend behavior.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0, MAX_NUM_BACKENDS
-		},
-		NULL,
-		"ALLOW_TO_FAILOVER",
-		EMPTY_CONFIG_STRING,
-		BackendFlagsAssignFunc, NULL, BackendFlagsShowFunc,BackendSlotEmptyCheckFunc
+		BackendDataDirAssignFunc, NULL, BackendDataDirShowFunc, BackendSlotEmptyCheckFunc
 	},
 
 	{
 		{"backend_flag", CFGCXT_RELOAD, CONNECTION_CONFIG,
 			"Controls various backend behavior.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_NUM_BACKENDS
+		},
+		NULL,
+		"ALLOW_TO_FAILOVER",
+		EMPTY_CONFIG_STRING,
+		BackendFlagsAssignFunc, NULL, BackendFlagsShowFunc, BackendSlotEmptyCheckFunc
+	},
+
+	{
+		{"backend_flag", CFGCXT_RELOAD, CONNECTION_CONFIG,
+			"Controls various backend behavior.",
+			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		"ALWAYS_MASTER",
 		EMPTY_CONFIG_STRING,
-		BackendFlagsAssignFunc, NULL, BackendFlagsShowFunc,BackendSlotEmptyCheckFunc
+		BackendFlagsAssignFunc, NULL, BackendFlagsShowFunc, BackendSlotEmptyCheckFunc
 	},
 
 	{
 		{"heartbeat_destination", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
 			"destination host for sending heartbeat signal.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0, WD_MAX_IF_NUM
+			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, WD_MAX_IF_NUM
 		},
 		NULL,
 		"",
 		EMPTY_CONFIG_STRING,
-		HBDestinationAssignFunc, NULL, HBDestinationShowFunc,WdIFSlotEmptyCheckFunc
+		HBDestinationAssignFunc, NULL, HBDestinationShowFunc, WdIFSlotEmptyCheckFunc
 	},
 
 	{
 		{"heartbeat_device", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
 			"Name of NIC device for sending hearbeat.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0, WD_MAX_IF_NUM
+			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, WD_MAX_IF_NUM
 		},
 		NULL,
 		"",
 		EMPTY_CONFIG_STRING,
-		HBDeviceAssignFunc, NULL, HBDeviceShowFunc,WdIFSlotEmptyCheckFunc
+		HBDeviceAssignFunc, NULL, HBDeviceShowFunc, WdIFSlotEmptyCheckFunc
 	},
 
 	{
 		{"other_pgpool_hostname", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
 			"Hostname of other pgpool node for watchdog connection.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0, MAX_WATCHDOG_NUM
+			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_WATCHDOG_NUM
 		},
 		NULL,
 		"localhost",
 		EMPTY_CONFIG_STRING,
-		OtherPPHostAssignFunc, NULL, OtherPPHostShowFunc,WdSlotEmptyCheckFunc
+		OtherPPHostAssignFunc, NULL, OtherPPHostShowFunc, WdSlotEmptyCheckFunc
 	},
 
 	{
 		{"health_check_user", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"User name for PostgreSQL backend health check.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		"nobody",
 		{
 			{"health_check_user", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 				"Default PostgreSQL user name to perform health check on node for which health_check_user[node-id] is not specified.",
-				CONFIG_VAR_TYPE_STRING,false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
+				CONFIG_VAR_TYPE_STRING, false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
 			},
 			&g_pool_config.health_check_user,
 			"nobody",
@@ -1430,14 +1430,14 @@ static struct config_string_array ConfigureNamesStringArray[] =
 	{
 		{"health_check_password", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Password for PostgreSQL backend health check database user.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true, VAR_HIDDEN_VALUE, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_STRING_ARRAY, true, VAR_HIDDEN_VALUE, MAX_NUM_BACKENDS
 		},
 		NULL,
 		"",
 		{
 			{"health_check_password", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 				"Default PostgreSQL user password to perform health check on node for which health_check_password[node-id] is not specified.",
-				CONFIG_VAR_TYPE_STRING,false, VAR_HIDDEN_VALUE|DEFAULT_FOR_NO_VALUE_ARRAY_VAR
+				CONFIG_VAR_TYPE_STRING, false, VAR_HIDDEN_VALUE | DEFAULT_FOR_NO_VALUE_ARRAY_VAR
 			},
 			&g_pool_config.health_check_password,
 			"",
@@ -1449,14 +1449,14 @@ static struct config_string_array ConfigureNamesStringArray[] =
 	{
 		{"health_check_database", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"The database name to be used to perform PostgreSQL backend health check.",
-			CONFIG_VAR_TYPE_STRING_ARRAY,true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
 		"postgres",
 		{
 			{"health_check_database", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 				"Default PostgreSQL database name to perform health check on node for which health_check_database[node-id] is not specified.",
-				CONFIG_VAR_TYPE_STRING,false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
+				CONFIG_VAR_TYPE_STRING, false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
 			},
 			&g_pool_config.health_check_database,
 			"postgres",
@@ -1478,297 +1478,297 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"port", CFGCXT_INIT, CONNECTION_CONFIG,
 			"tcp/IP port number on which pgpool will listen on.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.port,
 		9999,
-		1024,65535,
+		1024, 65535,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"pcp_port", CFGCXT_INIT, CONNECTION_CONFIG,
 			"tcp/IP port number on which pgpool PCP process will listen on.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.pcp_port,
 		9898,
-		1024,65535,
+		1024, 65535,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"num_init_children", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"Number of children pre-forked for client connections.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.num_init_children,
 		32,
-		1,INT_MAX,
+		1, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"listen_backlog_multiplier", CFGCXT_INIT, CONNECTION_CONFIG,
 			"length of connection queue from frontend to pgpool-II",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.listen_backlog_multiplier,
 		32,
-		1,INT_MAX,
+		1, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"child_life_time", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"pgpool-II child process life time in seconds.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.child_life_time,
 		300,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"client_idle_limit", CFGCXT_SESSION, CONNECTION_POOL_CONFIG,
 			"idle time in seconds to disconnects a client.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.client_idle_limit,
 		0,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"connection_life_time", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"Cached connections expiration time in seconds.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.connection_life_time,
 		0,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"child_max_connections", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"A pgpool-II child process will be terminated after this many connections from clients.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.child_max_connections,
 		0,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"authentication_timeout", CFGCXT_INIT, CONNECTION_CONFIG,
 			"Time out value in seconds for client authentication.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.authentication_timeout,
 		0,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"max_pool", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"Maximum number of connection pools per child process.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.max_pool,
 		4,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"sr_check_period", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"Time interval in seconds between the streaming replication delay checks.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.sr_check_period,
 		0,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"recovery_timeout", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"Maximum time in seconds to wait for the recovering PostgreSQL node.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.recovery_timeout,
 		90,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"client_idle_limit_in_recovery", CFGCXT_SESSION, RECOVERY_CONFIG,
 			"Time limit is seconds for the child connection, before it is terminated during the 2nd stage recovery.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.client_idle_limit_in_recovery,
 		0,
-		-1,INT_MAX,
+		-1, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"search_primary_node_timeout", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Max time in seconds to search for primary node after failover.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.search_primary_node_timeout,
 		300,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"wd_port", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"tcp/IP port number on which watchdog of process of pgpool will listen on.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.wd_port,
 		9000,
-		1024,INT_MAX,
+		1024, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"wd_priority", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Watchdog node priority for leader election.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.wd_priority,
 		1,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"wd_interval", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Time interval in seconds between life check.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.wd_interval,
 		10,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"wd_life_point", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Maximum number of retries before failing the life check.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.wd_life_point,
 		3,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"wd_heartbeat_port", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Port number for receiving heartbeat signal.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.wd_heartbeat_port,
 		9694,
-		1024,65535,
+		1024, 65535,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"wd_heartbeat_keepalive", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Time interval in seconds between sending the heartbeat siganl.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.wd_heartbeat_keepalive,
 		2,
-		1,INT_MAX,
+		1, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"wd_heartbeat_deadtime", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Deadtime interval in seconds for heartbeat siganl.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.wd_heartbeat_deadtime,
 		30,
-		1,INT_MAX,
+		1, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"relcache_size", CFGCXT_INIT, CACHE_CONFIG,
 			"Number of relation cache entry.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.relcache_size,
 		256,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"memqcache_memcached_port", CFGCXT_INIT, CACHE_CONFIG,
 			"Port number of Memcached server.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.memqcache_memcached_port,
 		11211,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
 		{"memqcache_max_num_cache", CFGCXT_INIT, CACHE_CONFIG,
 			"Total number of cache entries.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.memqcache_max_num_cache,
 		1000000,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"memqcache_expire", CFGCXT_INIT, CACHE_CONFIG,
 			"Memory cache entry life time specified in seconds.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.memqcache_expire,
 		0,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"memqcache_maxcache", CFGCXT_INIT, CACHE_CONFIG,
 			"Maximum SELECT result size in bytes.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.memqcache_maxcache,
 		409600,
-		0,INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
-	
+
 	{
 		{"memqcache_cache_block_size", CFGCXT_INIT, CACHE_CONFIG,
 			"Cache block size in bytes.",
-			CONFIG_VAR_TYPE_INT,false, 0
+			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.memqcache_cache_block_size,
 		1048576,
-		512,INT_MAX,
+		512, INT_MAX,
 		NULL, NULL, NULL
 	},
 
@@ -1781,7 +1781,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"syslog_facility", CFGCXT_RELOAD, LOGING_CONFIG,
 			"syslog local faclity.",
-			CONFIG_VAR_TYPE_ENUM,false, 0
+			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
 		&g_pool_config.syslog_facility,
 		LOG_LOCAL0,
@@ -1794,7 +1794,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_error_verbosity", CFGCXT_SESSION, LOGING_CONFIG,
 			"How much details about error should be emitted.",
-			CONFIG_VAR_TYPE_ENUM,false, 0
+			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
 		&g_pool_config.log_error_verbosity,
 		PGERROR_DEFAULT,
@@ -1805,7 +1805,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"client_min_messages", CFGCXT_SESSION, LOGING_CONFIG,
 			"Which messages should be sent to client.",
-			CONFIG_VAR_TYPE_ENUM,false, 0
+			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
 		&g_pool_config.client_min_messages,
 		NOTICE,
@@ -1816,20 +1816,20 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_min_messages", CFGCXT_SESSION, LOGING_CONFIG,
 			"Which messages should be emitted to server log.",
-			CONFIG_VAR_TYPE_ENUM,false, 0
+			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
 		&g_pool_config.log_min_messages,
 		WARNING,
 		server_message_level_options,
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"master_slave_sub_mode", CFGCXT_INIT, MASTER_SLAVE_CONFIG,
 			"master/slave sub mode.",
-			CONFIG_VAR_TYPE_ENUM,false, 0
+			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
-		(int*)&g_pool_config.master_slave_sub_mode,
+		(int *) &g_pool_config.master_slave_sub_mode,
 		STREAM_MODE,
 		master_slave_sub_mode_options,
 		NULL, NULL, NULL, NULL
@@ -1838,9 +1838,9 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"log_standby_delay", CFGCXT_RELOAD, MASTER_SLAVE_CONFIG,
 			"When to log standby delay.",
-			CONFIG_VAR_TYPE_ENUM,false, 0
+			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
-		(int*)&g_pool_config.log_standby_delay,
+		(int *) &g_pool_config.log_standby_delay,
 		LSD_NONE,
 		log_standby_delay_options,
 		NULL, NULL, NULL, NULL
@@ -1849,20 +1849,20 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"wd_lifecheck_method", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"method for watchdog lifecheck.",
-			CONFIG_VAR_TYPE_ENUM,false, 0
+			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
-		(int*)&g_pool_config.wd_lifecheck_method,
+		(int *) &g_pool_config.wd_lifecheck_method,
 		LIFECHECK_BY_HB,
 		wd_lifecheck_method_options,
 		NULL, NULL, NULL, NULL
 	},
-	
+
 	{
 		{"memqcache_method", CFGCXT_INIT, CACHE_CONFIG,
 			"Cache store method. either shmem(shared memory) or Memcached. shmem by default.",
-			CONFIG_VAR_TYPE_ENUM,false, 0
+			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
-		(int*)&g_pool_config.memqcache_method,
+		(int *) &g_pool_config.memqcache_method,
 		SHMEM_CACHE,
 		memqcache_method_options,
 		NULL, NULL, NULL, NULL
@@ -1871,9 +1871,9 @@ static struct config_enum ConfigureNamesEnum[] =
 	{
 		{"disable_load_balance_on_write", CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
 			"Load balance behavior when write query is received.",
-			CONFIG_VAR_TYPE_ENUM,false, 0
+			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
-		(int*)&g_pool_config.disable_load_balance_on_write,
+		(int *) &g_pool_config.disable_load_balance_on_write,
 		DLBOW_TRANSACTION,
 		disable_load_balance_on_write_options,
 		NULL, NULL, NULL, NULL
@@ -1889,33 +1889,33 @@ static struct config_grouped_array_var ConfigureVarGroups[] =
 	{
 		{"backend", CFGCXT_BOOT, CONNECTION_CONFIG,
 			"backend configuration group.",
-			CONFIG_VAR_TYPE_GROUP,false, 0
+			CONFIG_VAR_TYPE_GROUP, false, 0
 		},
-		-1, /*until initialized*/
+		-1,						/* until initialized */
 		NULL
 	},
 	{
 		{"other_pgpool", CFGCXT_BOOT, WATCHDOG_CONFIG,
 			"watchdog nodes configuration group.",
-			CONFIG_VAR_TYPE_GROUP,false, 0
+			CONFIG_VAR_TYPE_GROUP, false, 0
 		},
-		-1, /*until initialized*/
+		-1,						/* until initialized */
 		NULL
 	},
 	{
 		{"heartbeat", CFGCXT_BOOT, WATCHDOG_LIFECHECK,
 			"heartbeat configuration group.",
-			CONFIG_VAR_TYPE_GROUP,false, 0
+			CONFIG_VAR_TYPE_GROUP, false, 0
 		},
-		-1, /*until initialized*/
+		-1,						/* until initialized */
 		NULL
 	},
 	{
 		{"health_check", CFGCXT_BOOT, HEALTH_CHECK_CONFIG,
 			"backend health check configuration group.",
-			CONFIG_VAR_TYPE_GROUP,false, 0
+			CONFIG_VAR_TYPE_GROUP, false, 0
 		},
-		-1, /*until initialized*/
+		-1,						/* until initialized */
 		NULL
 	},
 	/* End-of-list marker */
@@ -1939,22 +1939,22 @@ build_config_variables(void)
 {
 	struct config_generic **all_vars;
 	int			i;
-	int num_vars = 0;
+	int			num_vars = 0;
 
 	for (i = 0; ConfigureNamesBool[i].gen.name; i++)
 	{
 		struct config_bool *conf = &ConfigureNamesBool[i];
-		
+
 		/* Rather than requiring vartype to be filled in by hand, do this: */
 		initialize_config_gen(&conf->gen);
 		conf->gen.vartype = CONFIG_VAR_TYPE_BOOL;
 		num_vars++;
 	}
-	
+
 	for (i = 0; ConfigureNamesInt[i].gen.name; i++)
 	{
 		struct config_int *conf = &ConfigureNamesInt[i];
-		
+
 		initialize_config_gen(&conf->gen);
 		conf->gen.vartype = CONFIG_VAR_TYPE_INT;
 		num_vars++;
@@ -1980,7 +1980,7 @@ build_config_variables(void)
 		}
 		num_vars++;
 	}
-	
+
 	for (i = 0; ConfigureNamesLong[i].gen.name; i++)
 	{
 		struct config_long *conf = &ConfigureNamesLong[i];
@@ -1989,7 +1989,7 @@ build_config_variables(void)
 		conf->gen.vartype = CONFIG_VAR_TYPE_LONG;
 		num_vars++;
 	}
-	
+
 	for (i = 0; ConfigureNamesDouble[i].gen.name; i++)
 	{
 		struct config_double *conf = &ConfigureNamesDouble[i];
@@ -2008,7 +2008,7 @@ build_config_variables(void)
 		conf->reset_val = NULL;
 		num_vars++;
 	}
-	
+
 	for (i = 0; ConfigureNamesEnum[i].gen.name; i++)
 	{
 		struct config_enum *conf = &ConfigureNamesEnum[i];
@@ -2031,12 +2031,13 @@ build_config_variables(void)
 	for (i = 0; ConfigureNamesStringArray[i].gen.name; i++)
 	{
 		struct config_string_array *conf = &ConfigureNamesStringArray[i];
+
 		conf->gen.dynamic_array_var = true;
 		initialize_config_gen(&conf->gen);
 
 		conf->gen.vartype = CONFIG_VAR_TYPE_STRING_ARRAY;
 		/* Assign the memory for reset vals */
-		conf->reset_vals = palloc0(sizeof(char*) * conf->gen.max_elements);
+		conf->reset_vals = palloc0(sizeof(char *) * conf->gen.max_elements);
 
 		if (conf->config_no_index.gen.name)
 		{
@@ -2052,6 +2053,7 @@ build_config_variables(void)
 	for (i = 0; ConfigureNamesDoubleArray[i].gen.name; i++)
 	{
 		struct config_double_array *conf = &ConfigureNamesDoubleArray[i];
+
 		conf->gen.dynamic_array_var = true;
 		initialize_config_gen(&conf->gen);
 
@@ -2074,10 +2076,10 @@ build_config_variables(void)
 	num_vars++;
 
 	all_vars = (struct config_generic **)
-	palloc(num_vars * sizeof(struct config_generic *));
-	
+		palloc(num_vars * sizeof(struct config_generic *));
+
 	num_vars = 0;
-	
+
 	for (i = 0; ConfigureNamesBool[i].gen.name; i++)
 		all_vars[num_vars++] = &ConfigureNamesBool[i].gen;
 
@@ -2098,10 +2100,10 @@ build_config_variables(void)
 
 	for (i = 0; ConfigureNamesStringList[i].gen.name; i++)
 		all_vars[num_vars++] = &ConfigureNamesStringList[i].gen;
-	
+
 	for (i = 0; ConfigureNamesStringArray[i].gen.name; i++)
 		all_vars[num_vars++] = &ConfigureNamesStringArray[i].gen;
-	
+
 	for (i = 0; ConfigureNamesIntArray[i].gen.name; i++)
 		all_vars[num_vars++] = &ConfigureNamesIntArray[i].gen;
 
@@ -2116,12 +2118,13 @@ build_config_variables(void)
 	build_variable_groups();
 }
 
-static void build_variable_groups(void)
+static void
+build_variable_groups(void)
 {
 	/* we build these by hand */
 	/* group 1. Backend config vars */
 	ConfigureVarGroups[0].var_count = 5;
-	ConfigureVarGroups[0].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[0].var_count);
+	ConfigureVarGroups[0].var_list = palloc0(sizeof(struct config_generic *) * ConfigureVarGroups[0].var_count);
 	ConfigureVarGroups[0].var_list[0] = find_option("backend_hostname", FATAL);
 	ConfigureVarGroups[0].var_list[0]->flags |= VAR_PART_OF_GROUP;
 	ConfigureVarGroups[0].var_list[1] = find_option("backend_port", FATAL);
@@ -2136,7 +2139,7 @@ static void build_variable_groups(void)
 
 	/* group 2. other_pgpool config vars */
 	ConfigureVarGroups[1].var_count = 3;
-	ConfigureVarGroups[1].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[1].var_count);
+	ConfigureVarGroups[1].var_list = palloc0(sizeof(struct config_generic *) * ConfigureVarGroups[1].var_count);
 	/* backend hostname */
 	ConfigureVarGroups[1].var_list[0] = find_option("other_pgpool_hostname", FATAL);
 	ConfigureVarGroups[1].var_list[0]->flags |= VAR_PART_OF_GROUP;
@@ -2149,7 +2152,7 @@ static void build_variable_groups(void)
 
 	/* group 3. heartbeat config vars */
 	ConfigureVarGroups[2].var_count = 3;
-	ConfigureVarGroups[2].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[2].var_count);
+	ConfigureVarGroups[2].var_list = palloc0(sizeof(struct config_generic *) * ConfigureVarGroups[2].var_count);
 	/* backend hostname */
 	ConfigureVarGroups[2].var_list[0] = find_option("heartbeat_device", FATAL);
 	ConfigureVarGroups[2].var_list[0]->flags |= VAR_PART_OF_GROUP;
@@ -2161,7 +2164,7 @@ static void build_variable_groups(void)
 
 	/* group 4. health_check config vars */
 	ConfigureVarGroups[3].var_count = 8;
-	ConfigureVarGroups[3].var_list = palloc0(sizeof(struct config_generic*) * ConfigureVarGroups[3].var_count);
+	ConfigureVarGroups[3].var_list = palloc0(sizeof(struct config_generic *) * ConfigureVarGroups[3].var_count);
 	ConfigureVarGroups[3].var_list[0] = find_option("health_check_period", FATAL);
 	ConfigureVarGroups[3].var_list[0]->flags |= VAR_PART_OF_GROUP;
 	ConfigureVarGroups[3].var_list[1] = find_option("health_check_timeout", FATAL);
@@ -2187,17 +2190,21 @@ static void build_variable_groups(void)
  * before the smaller ones. This ensure heartbeat_destination should not match
  * with heartbeat_destination_port, when we use strncmp to cater for the index at
  * the end of the variable names.*/
-static void sort_config_vars(void)
+static void
+sort_config_vars(void)
 {
-	int i,j;
+	int			i,
+				j;
+
 	for (i = 0; i < num_all_parameters; ++i)
 	{
-		struct config_generic* gconfi = all_parameters[i];
-		int leni = strlen(gconfi->name);
+		struct config_generic *gconfi = all_parameters[i];
+		int			leni = strlen(gconfi->name);
+
 		for (j = i + 1; j < num_all_parameters; ++j)
 		{
-			struct config_generic* gconfj = all_parameters[j];
-			int lenj = strlen(gconfj->name);
+			struct config_generic *gconfj = all_parameters[j];
+			int			lenj = strlen(gconfj->name);
 
 			if (leni < lenj)
 			{
@@ -2214,9 +2221,10 @@ static void sort_config_vars(void)
  * Initialize all variables to its compiled-in default.
  */
 static void
-initialize_variables_with_default(struct config_generic * gconf)
+initialize_variables_with_default(struct config_generic *gconf)
 {
-	int i;
+	int			i;
+
 	for (i = 0; i < gconf->max_elements; i++)
 	{
 		gconf->sources[i] = PGC_S_DEFAULT;
@@ -2228,7 +2236,8 @@ initialize_variables_with_default(struct config_generic * gconf)
 	/* Also set the default value for index free record if any */
 	if (gconf->dynamic_array_var && gconf->flags & ARRAY_VAR_ALLOW_NO_INDEX)
 	{
-		struct config_generic* idx_free_record = get_index_free_record_if_any(gconf);
+		struct config_generic *idx_free_record = get_index_free_record_if_any(gconf);
+
 		if (idx_free_record)
 		{
 			ereport(DEBUG1,
@@ -2244,223 +2253,224 @@ initialize_variables_with_default(struct config_generic * gconf)
 			break;
 
 		case CONFIG_VAR_TYPE_BOOL:
-		{
-			struct config_bool *conf = (struct config_bool *) gconf;
-			bool		newval = conf->boot_val;
+			{
+				struct config_bool *conf = (struct config_bool *) gconf;
+				bool		newval = conf->boot_val;
 
-			if (conf->assign_func)
-			{
-				(*conf->assign_func)(CFGCXT_BOOT, newval, ERROR);
+				if (conf->assign_func)
+				{
+					(*conf->assign_func) (CFGCXT_BOOT, newval, ERROR);
+				}
+				else
+				{
+					*conf->variable = conf->reset_val = newval;
+				}
+				break;
 			}
-			else
-			{
-				*conf->variable = conf->reset_val = newval;
-			}
-			break;
-		}
 
 		case CONFIG_VAR_TYPE_INT:
-		{
-			struct config_int *conf = (struct config_int *) gconf;
-			int	newval = conf->boot_val;
-			
-			if (conf->assign_func)
 			{
-				(*conf->assign_func)(CFGCXT_BOOT, newval, ERROR);
-			}
-			else
-			{
-				*conf->variable = newval;
-			}
-			conf->reset_val = newval;
+				struct config_int *conf = (struct config_int *) gconf;
+				int			newval = conf->boot_val;
 
-			break;
-		}
+				if (conf->assign_func)
+				{
+					(*conf->assign_func) (CFGCXT_BOOT, newval, ERROR);
+				}
+				else
+				{
+					*conf->variable = newval;
+				}
+				conf->reset_val = newval;
+
+				break;
+			}
 
 		case CONFIG_VAR_TYPE_DOUBLE:
-		{
-			struct config_double *conf = (struct config_double *) gconf;
-			double	newval = conf->boot_val;
-			
-			if (conf->assign_func)
 			{
-				(*conf->assign_func)(CFGCXT_BOOT, newval, ERROR);
+				struct config_double *conf = (struct config_double *) gconf;
+				double		newval = conf->boot_val;
+
+				if (conf->assign_func)
+				{
+					(*conf->assign_func) (CFGCXT_BOOT, newval, ERROR);
+				}
+				else
+				{
+					*conf->variable = newval;
+				}
+				conf->reset_val = newval;
+
+				break;
 			}
-			else
-			{
-				*conf->variable = newval;
-			}
-			conf->reset_val = newval;
-			
-			break;
-		}
 
 		case CONFIG_VAR_TYPE_INT_ARRAY:
-		{
-			struct config_int_array *conf = (struct config_int_array *) gconf;
-			int	newval = conf->boot_val;
-			int i;
-
-			for (i = 0; i < gconf->max_elements; i ++)
 			{
-				if (conf->assign_func)
+				struct config_int_array *conf = (struct config_int_array *) gconf;
+				int			newval = conf->boot_val;
+				int			i;
+
+				for (i = 0; i < gconf->max_elements; i++)
 				{
-					(*conf->assign_func)(CFGCXT_BOOT, newval, i, ERROR);
+					if (conf->assign_func)
+					{
+						(*conf->assign_func) (CFGCXT_BOOT, newval, i, ERROR);
+					}
+					else
+					{
+						*conf->variable[i] = newval;
+					}
+					conf->reset_vals[i] = newval;
 				}
-				else
-				{
-					*conf->variable[i] = newval;
-				}
-				conf->reset_vals[i] = newval;
+				break;
 			}
-			break;
-		}
 
 		case CONFIG_VAR_TYPE_DOUBLE_ARRAY:
-		{
-			struct config_double_array *conf = (struct config_double_array *) gconf;
-			double	newval = conf->boot_val;
-			int i;
-
-			for (i = 0; i < gconf->max_elements; i ++)
 			{
-				if (conf->assign_func)
+				struct config_double_array *conf = (struct config_double_array *) gconf;
+				double		newval = conf->boot_val;
+				int			i;
+
+				for (i = 0; i < gconf->max_elements; i++)
 				{
-					(*conf->assign_func)(CFGCXT_BOOT, newval, i, ERROR);
+					if (conf->assign_func)
+					{
+						(*conf->assign_func) (CFGCXT_BOOT, newval, i, ERROR);
+					}
+					else
+					{
+						*conf->variable[i] = newval;
+					}
+					conf->reset_vals[i] = newval;
 				}
-				else
-				{
-					*conf->variable[i] = newval;
-				}
-				conf->reset_vals[i] = newval;
+				break;
 			}
-			break;
-		}
 
 		case CONFIG_VAR_TYPE_LONG:
-		{
-			struct config_long *conf = (struct config_long *) gconf;
-			long	newval = conf->boot_val;
-			
-			if (conf->assign_func)
 			{
-				(*conf->assign_func)(CFGCXT_BOOT, newval, ERROR);
-			}
-			else
-			{
-				*conf->variable = conf->reset_val = newval;
-			}
-			break;
-		}
-
-		case CONFIG_VAR_TYPE_STRING:
-		{
-			struct config_string *conf = (struct config_string *) gconf;
-			char	   *newval = (char*)conf->boot_val;
-
-			if (conf->assign_func)
-			{
-				(*conf->assign_func)(CFGCXT_BOOT, newval, ERROR);
-			}
-			else
-			{
-				*conf->variable = newval?pstrdup(newval):NULL;
-			}
-
-			conf->reset_val = newval?pstrdup(newval):NULL;
-
-			if (conf->process_func)
-			{
-				(*conf->process_func)(newval, ERROR);
-			}
-			break;
-		}
-
-		case CONFIG_VAR_TYPE_STRING_ARRAY:
-		{
-			struct config_string_array *conf = (struct config_string_array *) gconf;
-			char	   *newval = (char*)conf->boot_val;
-			int i;
-
-			for (i = 0; i < gconf->max_elements; i ++)
-			{
+				struct config_long *conf = (struct config_long *) gconf;
+				long		newval = conf->boot_val;
 
 				if (conf->assign_func)
 				{
-					(*conf->assign_func)(CFGCXT_BOOT, newval, i, ERROR);
+					(*conf->assign_func) (CFGCXT_BOOT, newval, ERROR);
 				}
 				else
 				{
-					*conf->variable[i] = newval?pstrdup(newval):NULL;
+					*conf->variable = conf->reset_val = newval;
+				}
+				break;
+			}
+
+		case CONFIG_VAR_TYPE_STRING:
+			{
+				struct config_string *conf = (struct config_string *) gconf;
+				char	   *newval = (char *) conf->boot_val;
+
+				if (conf->assign_func)
+				{
+					(*conf->assign_func) (CFGCXT_BOOT, newval, ERROR);
+				}
+				else
+				{
+					*conf->variable = newval ? pstrdup(newval) : NULL;
 				}
 
-				if (newval)
-					conf->reset_vals[i] = pstrdup(newval);
+				conf->reset_val = newval ? pstrdup(newval) : NULL;
+
+				if (conf->process_func)
+				{
+					(*conf->process_func) (newval, ERROR);
+				}
+				break;
 			}
-			break;
-		}
+
+		case CONFIG_VAR_TYPE_STRING_ARRAY:
+			{
+				struct config_string_array *conf = (struct config_string_array *) gconf;
+				char	   *newval = (char *) conf->boot_val;
+				int			i;
+
+				for (i = 0; i < gconf->max_elements; i++)
+				{
+
+					if (conf->assign_func)
+					{
+						(*conf->assign_func) (CFGCXT_BOOT, newval, i, ERROR);
+					}
+					else
+					{
+						*conf->variable[i] = newval ? pstrdup(newval) : NULL;
+					}
+
+					if (newval)
+						conf->reset_vals[i] = pstrdup(newval);
+				}
+				break;
+			}
 
 		case CONFIG_VAR_TYPE_ENUM:
-		{
-			struct	config_enum *conf = (struct config_enum *) gconf;
-			int		newval = conf->boot_val;
-
-			if (conf->assign_func)
 			{
-				(*conf->assign_func)(CFGCXT_BOOT, newval, ERROR);
-			}
-			else
-			{
-				*conf->variable = newval;
-			}
-			conf->reset_val = newval;
+				struct config_enum *conf = (struct config_enum *) gconf;
+				int			newval = conf->boot_val;
 
-			if (conf->process_func)
-			{
-				(*conf->process_func)(newval, ERROR);
-			}
-
-			break;
-		}
-
-		case CONFIG_VAR_TYPE_STRING_LIST:
-		{
-			struct	config_string_list *conf = (struct config_string_list *) gconf;
-			char	*newval = (char*)conf->boot_val;
-
-			if (conf->assign_func)
-			{
-				(*conf->assign_func)(CFGCXT_BOOT, newval, ERROR);
-			}
-			else
-			{
-				if (strcmp(gconf->name, "black_query_pattern_list") == 0)
+				if (conf->assign_func)
 				{
-					*conf->variable = get_list_from_string_regex_delim(newval, conf->seperator, conf->list_elements_count);
+					(*conf->assign_func) (CFGCXT_BOOT, newval, ERROR);
 				}
 				else
 				{
-					*conf->variable = get_list_from_string(newval,conf->seperator, conf->list_elements_count);
+					*conf->variable = newval;
+				}
+				conf->reset_val = newval;
+
+				if (conf->process_func)
+				{
+					(*conf->process_func) (newval, ERROR);
 				}
 
-				if (conf->compute_regex)
+				break;
+			}
+
+		case CONFIG_VAR_TYPE_STRING_LIST:
+			{
+				struct config_string_list *conf = (struct config_string_list *) gconf;
+				char	   *newval = (char *) conf->boot_val;
+
+				if (conf->assign_func)
 				{
-					int i;
-					for (i=0;i < *conf->list_elements_count; i++)
+					(*conf->assign_func) (CFGCXT_BOOT, newval, ERROR);
+				}
+				else
+				{
+					if (strcmp(gconf->name, "black_query_pattern_list") == 0)
 					{
-						add_regex_pattern((const char*)conf->gen.name, (*conf->variable)[i]);
+						*conf->variable = get_list_from_string_regex_delim(newval, conf->seperator, conf->list_elements_count);
+					}
+					else
+					{
+						*conf->variable = get_list_from_string(newval, conf->seperator, conf->list_elements_count);
+					}
+
+					if (conf->compute_regex)
+					{
+						int			i;
+
+						for (i = 0; i < *conf->list_elements_count; i++)
+						{
+							add_regex_pattern((const char *) conf->gen.name, (*conf->variable)[i]);
+						}
 					}
 				}
+				/* save the string value */
+				conf->reset_val = newval ? pstrdup(newval) : NULL;
+
+				if (conf->current_val)
+					pfree(conf->current_val);
+
+				conf->current_val = newval ? pstrdup(newval) : NULL;
+				break;
 			}
-			/* save the string value */
-			conf->reset_val = newval?pstrdup(newval):NULL;
-
-			if (conf->current_val)
-				pfree(conf->current_val);
-
-			conf->current_val = newval?pstrdup(newval):NULL;
-			break;
-		}
 
 	}
 }
@@ -2470,12 +2480,13 @@ initialize_variables_with_default(struct config_generic * gconf)
  * array of pointers in pallocd strings. number of elements are set to
  * n.
  */
-static char **get_list_from_string(const char *str, const char *delimi, int *n)
+static char **
+get_list_from_string(const char *str, const char *delimi, int *n)
 {
-	char *token;
-	char **tokens;
-	char *temp_string;
-	const int MAXTOKENS = 256;
+	char	   *token;
+	char	  **tokens;
+	char	   *temp_string;
+	const int	MAXTOKENS = 256;
 
 	*n = 0;
 
@@ -2486,25 +2497,25 @@ static char **get_list_from_string(const char *str, const char *delimi, int *n)
 	tokens = palloc(MAXTOKENS * sizeof(char *));
 
 	ereport(DEBUG3,
-		(errmsg("extracting string tokens from [%s] based on %s", temp_string,delimi)));
-	
-	for (token = strtok(temp_string, delimi); token != NULL ; token = strtok(NULL, delimi))
+			(errmsg("extracting string tokens from [%s] based on %s", temp_string, delimi)));
+
+	for (token = strtok(temp_string, delimi); token != NULL; token = strtok(NULL, delimi))
 	{
 		tokens[*n] = pstrdup(token);
 		ereport(DEBUG3,
-			(errmsg("initializing pool configuration"),
+				(errmsg("initializing pool configuration"),
 				 errdetail("extracting string tokens [token[%d]: %s]", *n, tokens[*n])));
-		
+
 		(*n)++;
-		
-		if ( ((*n) % MAXTOKENS ) == 0)
+
+		if (((*n) % MAXTOKENS) == 0)
 		{
-			tokens = repalloc(tokens, (MAXTOKENS * sizeof(char *) * (((*n)/MAXTOKENS) +1) ));
+			tokens = repalloc(tokens, (MAXTOKENS * sizeof(char *) * (((*n) / MAXTOKENS) + 1)));
 		}
 	}
 	/* how about reclaiming the unused space */
 	if (*n > 0)
-		tokens = repalloc(tokens, (sizeof(char *) * (*n) ));
+		tokens = repalloc(tokens, (sizeof(char *) * (*n)));
 	pfree(temp_string);
 
 	return tokens;
@@ -2516,15 +2527,18 @@ static char **get_list_from_string(const char *str, const char *delimi, int *n)
  * pointers in pallocd strings. number of elements are set
  * to n.
  */
-static char **get_list_from_string_regex_delim(const char *input, const char *delimi, int *n)
+static char **
+get_list_from_string_regex_delim(const char *input, const char *delimi, int *n)
 {
 #ifndef POOL_PRIVATE
-	int j = 0;
-	char *output;
-	char *str;
-	char *buf, * str_temp;
-	char **tokens;
-	const int MAXTOKENS = 256;
+	int			j = 0;
+	char	   *output;
+	char	   *str;
+	char	   *buf,
+			   *str_temp;
+	char	  **tokens;
+	const int	MAXTOKENS = 256;
+
 	*n = 0;
 
 	if (input == NULL || *input == '\0')
@@ -2533,8 +2547,9 @@ static char **get_list_from_string_regex_delim(const char *input, const char *de
 	tokens = palloc(MAXTOKENS * sizeof(char *));
 	if (*(input + strlen(input) - 1) != *delimi || *(input + strlen(input) - 2) == '\\')
 	{
-		int len = strlen(input) + 2;
-		str = palloc(len); 
+		int			len = strlen(input) + 2;
+
+		str = palloc(len);
 		snprintf(str, len, "%s;", input);
 	}
 	else
@@ -2545,7 +2560,7 @@ static char **get_list_from_string_regex_delim(const char *input, const char *de
 	buf = str;
 	str_temp = str;
 
-	while(*str_temp != '\0')
+	while (*str_temp != '\0')
 	{
 		if (*str_temp == '\\')
 		{
@@ -2557,19 +2572,19 @@ static char **get_list_from_string_regex_delim(const char *input, const char *de
 			output = (char *) palloc(j + 1);
 			StrNCpy(output, buf, j + 1);
 
-			/* replace escape character of "'"*/
+			/* replace escape character of "'" */
 			tokens[*n] = string_replace(output, "\\'", "'");
 
 			ereport(DEBUG3,
-				(errmsg("initializing pool configuration"),
-					errdetail("extracting string tokens [token[%d]: %s]", *n, tokens[*n])));
+					(errmsg("initializing pool configuration"),
+					 errdetail("extracting string tokens [token[%d]: %s]", *n, tokens[*n])));
 
 			(*n)++;
 			buf = str_temp + 1;
 			j = 0;
 
-			if ( ((*n) % MAXTOKENS ) == 0)
-				tokens = repalloc(tokens, (MAXTOKENS * sizeof(char *) * (((*n)/MAXTOKENS) + 1) ));
+			if (((*n) % MAXTOKENS) == 0)
+				tokens = repalloc(tokens, (MAXTOKENS * sizeof(char *) * (((*n) / MAXTOKENS) + 1)));
 		}
 		else
 		{
@@ -2579,7 +2594,7 @@ static char **get_list_from_string_regex_delim(const char *input, const char *de
 	}
 
 	if (*n > 0)
-		tokens = repalloc(tokens, (sizeof(char *) * (*n) ));
+		tokens = repalloc(tokens, (sizeof(char *) * (*n)));
 
 	pfree(str);
 
@@ -2598,10 +2613,9 @@ InitializeConfigOptions(void)
 	int			i;
 
 	/*
-	 * Before we do anything set the log_min_messages to ERROR.
-	 * Reason for doing that is before the log_min_messages gets initialized
-	 * with the actual value the pgpool-II log should not get flooded by DEBUG
-	 * messages
+	 * Before we do anything set the log_min_messages to ERROR. Reason for
+	 * doing that is before the log_min_messages gets initialized with the
+	 * actual value the pgpool-II log should not get flooded by DEBUG messages
 	 */
 	g_pool_config.log_min_messages = ERROR;
 	g_pool_config.syslog_facility = LOG_LOCAL0;
@@ -2626,23 +2640,25 @@ InitializeConfigOptions(void)
  * if the index is not present at end of the name the function
  * will return true and out parameter index will be assigned with -ve value
  */
-static bool get_index_in_var_name(struct config_generic* record, const char* name, int *index, int elevel)
+static bool
+get_index_in_var_name(struct config_generic *record, const char *name, int *index, int elevel)
 {
-	char *ptr;
-	int index_start_index = strlen(record->name);
+	char	   *ptr;
+	int			index_start_index = strlen(record->name);
+
 	if (strlen(name) <= index_start_index)
 	{
 		/* no index is provided */
 		*index = -1;
 		return true;
 	}
-	ptr = (char*)(name + index_start_index);
+	ptr = (char *) (name + index_start_index);
 	while (*ptr)
 	{
 		if (isdigit(*ptr) == 0)
 		{
 			ereport(elevel,
-					(errmsg("invalid index value for parameter \"%s\" ",name),
+					(errmsg("invalid index value for parameter \"%s\" ", name),
 					 (errdetail("index part contains the invalid non digit character"))));
 			return false;
 		}
@@ -2659,16 +2675,20 @@ static bool get_index_in_var_name(struct config_generic* record, const char* nam
 static struct config_generic *
 find_option(const char *name, int elevel)
 {
-	int	i;
+	int			i;
+
 	for (i = 0; i < num_all_parameters; i++)
 	{
-		struct config_generic* gconf = all_parameters[i];
+		struct config_generic *gconf = all_parameters[i];
+
 		if (gconf->dynamic_array_var)
 		{
-			int index_start_index = strlen(gconf->name);
+			int			index_start_index = strlen(gconf->name);
+
 			/*
-			 * For dynamic array type vars the key also have the index at the end
-			 * e.g. backend_hostname0 so we only comapare the key's name part
+			 * For dynamic array type vars the key also have the index at the
+			 * end e.g. backend_hostname0 so we only comapare the key's name
+			 * part
 			 */
 			if (!strncmp(gconf->name, name, index_start_index))
 				return gconf;
@@ -2690,11 +2710,11 @@ find_option(const char *name, int elevel)
  * true. If it's not found, return FALSE and retval is set to 0.
  */
 static bool
-config_enum_lookup_by_name(struct config_enum * record, const char *value,
+config_enum_lookup_by_name(struct config_enum *record, const char *value,
 						   int *retval)
 {
 	const struct config_enum_entry *entry;
-	
+
 	for (entry = record->options; entry && entry->name; entry++)
 	{
 		if (strcasecmp(value, entry->name) == 0)
@@ -2703,7 +2723,7 @@ config_enum_lookup_by_name(struct config_enum * record, const char *value,
 			return TRUE;
 		}
 	}
-	
+
 	*retval = 0;
 	return FALSE;
 }
@@ -2711,23 +2731,26 @@ config_enum_lookup_by_name(struct config_enum * record, const char *value,
 
 bool
 set_config_options(ConfigVariable *head_p,
-				  ConfigContext context, GucSource source, int elevel)
+				   ConfigContext context, GucSource source, int elevel)
 {
 	ConfigVariable *item = head_p;
+
 	while (item)
 	{
 		ConfigVariable *next = item->next;
+
 		setConfigOption(item->name, item->value, context, source, elevel);
 		item = next;
 	}
-	return config_post_processor(context,elevel);
+	return config_post_processor(context, elevel);
 }
 
-bool set_one_config_option(const char *name, const char *value,
-						   ConfigContext context, GucSource source, int elevel)
+bool
+set_one_config_option(const char *name, const char *value,
+					  ConfigContext context, GucSource source, int elevel)
 {
 	if (setConfigOption(name, value, context, source, elevel) == true)
-		return config_post_processor(context,elevel);
+		return config_post_processor(context, elevel);
 	return false;
 }
 
@@ -2736,21 +2759,22 @@ setConfigOption(const char *name, const char *value,
 				ConfigContext context, GucSource source, int elevel)
 {
 	struct config_generic *record;
-	int		index_val = -1;
+	int			index_val = -1;
 
 	ereport(DEBUG2,
-			(errmsg("set_config_option \"%s\" = \"%s\"", name,value)));
-	
+			(errmsg("set_config_option \"%s\" = \"%s\"", name, value)));
+
 	record = find_option(name, elevel);
-	
+
 	if (record == NULL)
 	{
-		/* we emit only INFO message when setting the option from
-		 * configuration file.
-		 * As the conf file may still contain some configuration parameters only exist
-		 * in older version and does not exist anymore
+		/*
+		 * we emit only INFO message when setting the option from
+		 * configuration file. As the conf file may still contain some
+		 * configuration parameters only exist in older version and does not
+		 * exist anymore
 		 */
-		ereport(source == PGC_S_FILE?INFO:elevel,
+		ereport(source == PGC_S_FILE ? INFO : elevel,
 				(errmsg("unrecognized configuration parameter \"%s\"", name)));
 		return false;
 	}
@@ -2758,8 +2782,8 @@ setConfigOption(const char *name, const char *value,
 	{
 		if (get_index_in_var_name(record, name, &index_val, elevel) == false)
 			return false;
-		
-		if (index_val < 0 )
+
+		if (index_val < 0)
 		{
 			/* index is not provided */
 			if (record->flags & ARRAY_VAR_ALLOW_NO_INDEX)
@@ -2782,10 +2806,10 @@ setConfigOption(const char *name, const char *value,
 }
 
 static bool
-setConfigOptionArrayVarWithConfigDefault(struct config_generic *record, const char* name,
+setConfigOptionArrayVarWithConfigDefault(struct config_generic *record, const char *name,
 										 const char *value, ConfigContext context, int elevel)
 {
-	int index;
+	int			index;
 
 	if (record->dynamic_array_var == false)
 	{
@@ -2804,10 +2828,12 @@ setConfigOptionArrayVarWithConfigDefault(struct config_generic *record, const ch
 
 	for (index = 0; index < record->max_elements; index++)
 	{
-		/* only elements having the values from the default source
-		 * can be updated*/
+		/*
+		 * only elements having the values from the default source can be
+		 * updated
+		 */
 		if (record->sources[index] != PGC_S_DEFAULT
-			&& record->sources[index] != PGC_S_VALUE_DEFAULT )
+			&& record->sources[index] != PGC_S_VALUE_DEFAULT)
 			continue;
 		setConfigOptionVar(record, record->name, index, value,
 						   CFGCXT_INIT, PGC_S_VALUE_DEFAULT, elevel);
@@ -2816,10 +2842,10 @@ setConfigOptionArrayVarWithConfigDefault(struct config_generic *record, const ch
 }
 
 static bool
-setConfigOptionVar(struct config_generic *record, const char* name, int index_val, const char *value,
-				  ConfigContext context, GucSource source, int elevel)
+setConfigOptionVar(struct config_generic *record, const char *name, int index_val, const char *value,
+				   ConfigContext context, GucSource source, int elevel)
 {
-	bool reset = false;
+	bool		reset = false;
 
 	switch (record->context)
 	{
@@ -2828,10 +2854,13 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 			{
 				if (context == CFGCXT_RELOAD)
 				{
-					/* Do not treat it as an error. Since the RELOAD context is used by reload config mechanism of
-					 * pgpool-II and the configuration file always contain all the values, including
-					 * those that are not allowed to be changed in reload context.
-					 * So silently ignoring this for the time being is the best way to go until we enhance the logic
+					/*
+					 * Do not treat it as an error. Since the RELOAD context
+					 * is used by reload config mechanism of pgpool-II and the
+					 * configuration file always contain all the values,
+					 * including those that are not allowed to be changed in
+					 * reload context. So silently ignoring this for the time
+					 * being is the best way to go until we enhance the logic
 					 * around this
 					 */
 					ereport(DEBUG2,
@@ -2886,12 +2915,12 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 			break;
 
 		default:
-		{
-			ereport(elevel,
-					(errmsg("invalid record context, value for parameter \"%s\" cannot be changed",
-							name)));
-			return false;
-		}
+			{
+				ereport(elevel,
+						(errmsg("invalid record context, value for parameter \"%s\" cannot be changed",
+								name)));
+				return false;
+			}
 			break;
 	}
 
@@ -2905,19 +2934,22 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 
 			if (record->flags & ARRAY_VAR_ALLOW_NO_INDEX)
 			{
-				struct config_generic* idx_free_record = get_index_free_record_if_any(record);
+				struct config_generic *idx_free_record = get_index_free_record_if_any(record);
+
 				if (idx_free_record)
 				{
-					bool ret;
+					bool		ret;
+
 					ereport(DEBUG1,
 							(errmsg("parameter \"%s\" is an array type variable and allows index-free value as well",
 									name)));
 					ret = setConfigOptionVar(idx_free_record, name, index_val, value,
-												  context, source, elevel);
+											 context, source, elevel);
 					if (idx_free_record->flags & DEFAULT_FOR_NO_VALUE_ARRAY_VAR)
 					{
 						const char *newVal;
-						/* we need to update the default values*/
+
+						/* we need to update the default values */
 						ereport(DEBUG2,
 								(errmsg("modifying the array index values for parameter \"%s\" source = %d",
 										name, source)));
@@ -2931,7 +2963,7 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 							newVal = value;
 
 						setConfigOptionArrayVarWithConfigDefault(record, name, newVal,
-																context, elevel);
+																 context, elevel);
 					}
 					return ret;
 				}
@@ -2950,520 +2982,522 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
 	switch (record->vartype)
 	{
 		case CONFIG_VAR_TYPE_GROUP:
-			ereport(ERROR,(errmsg("invalid config variable type. operation not allowed")));
+			ereport(ERROR, (errmsg("invalid config variable type. operation not allowed")));
 			break;
 
 		case CONFIG_VAR_TYPE_BOOL:
-		{
-			struct config_bool *conf = (struct config_bool *) record;
-			bool		newval = conf->boot_val;
+			{
+				struct config_bool *conf = (struct config_bool *) record;
+				bool		newval = conf->boot_val;
 
-			if (value != NULL)
-			{
-				newval = eval_logical(value);
+				if (value != NULL)
+				{
+					newval = eval_logical(value);
 
-			}
-			else if (source == PGC_S_DEFAULT)
-			{
-				newval = conf->boot_val;
-			}
-			else
-			{
-				/* Reset */
-				newval = conf->reset_val;
-				reset = true;
-			}
-			if (conf->assign_func)
-			{
-				if ((*conf->assign_func)(context, newval, elevel) == false)
-					return false;
-			}
-			else
-				*conf->variable = newval;
+				}
+				else if (source == PGC_S_DEFAULT)
+				{
+					newval = conf->boot_val;
+				}
+				else
+				{
+					/* Reset */
+					newval = conf->reset_val;
+					reset = true;
+				}
+				if (conf->assign_func)
+				{
+					if ((*conf->assign_func) (context, newval, elevel) == false)
+						return false;
+				}
+				else
+					*conf->variable = newval;
 
-			if (context == CFGCXT_INIT)
-				conf->reset_val = newval;
-		}
+				if (context == CFGCXT_INIT)
+					conf->reset_val = newval;
+			}
 			break;
 
 		case CONFIG_VAR_TYPE_INT:
-		{
-			struct config_int *conf = (struct config_int *) record;
-			int			newval;
-			
-			if (value != NULL)
 			{
-				newval = atoi(value);
-			}
-			else if (source == PGC_S_DEFAULT)
-			{
-				newval = conf->boot_val;
-			}
-			else
-			{
-				/* Reset */
-				newval = conf->reset_val;
-				reset = true;
-			}
-			
-			if (newval < conf->min || newval > conf->max)
-			{
-				ereport(elevel,
-						(errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
-								newval, name,
-								conf->min, conf->max)));
-				return false;
-			}
+				struct config_int *conf = (struct config_int *) record;
+				int			newval;
 
-			if (conf->assign_func)
-			{
-				if ((*conf->assign_func)(context, newval, elevel) == false)
+				if (value != NULL)
+				{
+					newval = atoi(value);
+				}
+				else if (source == PGC_S_DEFAULT)
+				{
+					newval = conf->boot_val;
+				}
+				else
+				{
+					/* Reset */
+					newval = conf->reset_val;
+					reset = true;
+				}
+
+				if (newval < conf->min || newval > conf->max)
+				{
+					ereport(elevel,
+							(errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
+									newval, name,
+									conf->min, conf->max)));
 					return false;
-			}
-			else
-			{
-				*conf->variable = newval;
-			}
+				}
 
-			if (context == CFGCXT_INIT)
-				conf->reset_val = newval;
-		}
+				if (conf->assign_func)
+				{
+					if ((*conf->assign_func) (context, newval, elevel) == false)
+						return false;
+				}
+				else
+				{
+					*conf->variable = newval;
+				}
+
+				if (context == CFGCXT_INIT)
+					conf->reset_val = newval;
+			}
 			break;
 
 		case CONFIG_VAR_TYPE_DOUBLE:
-		{
-			struct config_double *conf = (struct config_double *) record;
-			double			newval;
-			
-			if (value != NULL)
 			{
-				newval = atof(value);
-			}
-			else if (source == PGC_S_DEFAULT)
-			{
-				newval = conf->boot_val;
-			}
-			else
-			{
-				/* Reset */
-				newval = conf->reset_val;
-				reset = true;
-			}
-			
-			if (newval < conf->min || newval > conf->max)
-			{
-				ereport(elevel,
-						(errmsg("%f is outside the valid range for parameter \"%s\" (%f .. %f)",
-								newval, name,
-								conf->min, conf->max)));
-				return false;
-			}
-			
-			if (conf->assign_func)
-			{
-				if ((*conf->assign_func)(context, newval, elevel) == false)
+				struct config_double *conf = (struct config_double *) record;
+				double		newval;
+
+				if (value != NULL)
+				{
+					newval = atof(value);
+				}
+				else if (source == PGC_S_DEFAULT)
+				{
+					newval = conf->boot_val;
+				}
+				else
+				{
+					/* Reset */
+					newval = conf->reset_val;
+					reset = true;
+				}
+
+				if (newval < conf->min || newval > conf->max)
+				{
+					ereport(elevel,
+							(errmsg("%f is outside the valid range for parameter \"%s\" (%f .. %f)",
+									newval, name,
+									conf->min, conf->max)));
 					return false;
-			}
-			else
-			{
-				*conf->variable = newval;
-			}
+				}
 
-			if (context == CFGCXT_INIT)
-				conf->reset_val = newval;
+				if (conf->assign_func)
+				{
+					if ((*conf->assign_func) (context, newval, elevel) == false)
+						return false;
+				}
+				else
+				{
+					*conf->variable = newval;
+				}
 
-		}
+				if (context == CFGCXT_INIT)
+					conf->reset_val = newval;
+
+			}
 			break;
 
 		case CONFIG_VAR_TYPE_INT_ARRAY:
-		{
-			struct config_int_array *conf = (struct config_int_array *) record;
-			int			newval;
+			{
+				struct config_int_array *conf = (struct config_int_array *) record;
+				int			newval;
 
-			if (index_val < 0 || index_val > record->max_elements)
-			{
-				ereport(elevel,
-						(errmsg("%d index outside the valid range for parameter \"%s\" (%d .. %d)",
-								index_val, name,
-								0, record->max_elements)));
-				return false;
-			}
-
-			if (value != NULL)
-			{
-				newval = atoi(value);
-			}
-			else if (source == PGC_S_DEFAULT)
-			{
-				newval = conf->boot_val;
-			}
-			else
-			{
-				/* Reset */
-				newval = conf->reset_vals[index_val];
-				reset = true;
-			}
-
-			if (newval < conf->min || newval > conf->max)
-			{
-				ereport(elevel,
-						(errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
-								newval, name,
-								conf->min, conf->max)));
-				return false;
-			}
-
-			if (conf->assign_func)
-			{
-				if ((*conf->assign_func)(context, newval, index_val, elevel) == false)
+				if (index_val < 0 || index_val > record->max_elements)
+				{
+					ereport(elevel,
+							(errmsg("%d index outside the valid range for parameter \"%s\" (%d .. %d)",
+									index_val, name,
+									0, record->max_elements)));
 					return false;
-			}
-			else
-			{
-				*conf->variable[index_val] = newval;
-			}
+				}
 
-			if (context == CFGCXT_INIT)
-				conf->reset_vals[index_val] = newval;
+				if (value != NULL)
+				{
+					newval = atoi(value);
+				}
+				else if (source == PGC_S_DEFAULT)
+				{
+					newval = conf->boot_val;
+				}
+				else
+				{
+					/* Reset */
+					newval = conf->reset_vals[index_val];
+					reset = true;
+				}
 
-		}
+				if (newval < conf->min || newval > conf->max)
+				{
+					ereport(elevel,
+							(errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
+									newval, name,
+									conf->min, conf->max)));
+					return false;
+				}
+
+				if (conf->assign_func)
+				{
+					if ((*conf->assign_func) (context, newval, index_val, elevel) == false)
+						return false;
+				}
+				else
+				{
+					*conf->variable[index_val] = newval;
+				}
+
+				if (context == CFGCXT_INIT)
+					conf->reset_vals[index_val] = newval;
+
+			}
 			break;
 
 		case CONFIG_VAR_TYPE_DOUBLE_ARRAY:
-		{
-			struct config_double_array *conf = (struct config_double_array *) record;
-			double			newval;
-			
-			if (index_val < 0 || index_val > record->max_elements)
 			{
-				ereport(elevel,
-						(errmsg("%d index outside the valid range for parameter \"%s\" (%d .. %d)",
-								index_val, name,
-								0, record->max_elements)));
-				return false;
-			}
-			
-			if (value != NULL)
-			{
-				newval = atof(value);
-			}
-			else if (source == PGC_S_DEFAULT)
-			{
-				newval = conf->boot_val;
-			}
-			else
-			{
-				/* Reset */
-				newval = conf->reset_vals[index_val];
-				reset = true;
-			}
-			
-			if (newval < conf->min || newval > conf->max)
-			{
-				ereport(elevel,
-						(errmsg("%f is outside the valid range for parameter \"%s\" (%f .. %f)",
-								newval, name,
-								conf->min, conf->max)));
-				return false;
-			}
-			
-			if (conf->assign_func)
-			{
-				if ((*conf->assign_func)(context, newval, index_val, elevel) ==false)
+				struct config_double_array *conf = (struct config_double_array *) record;
+				double		newval;
+
+				if (index_val < 0 || index_val > record->max_elements)
+				{
+					ereport(elevel,
+							(errmsg("%d index outside the valid range for parameter \"%s\" (%d .. %d)",
+									index_val, name,
+									0, record->max_elements)));
 					return false;
-			}
-			else
-			{
-				*conf->variable[index_val] = newval;
-			}
+				}
 
-			if (context == CFGCXT_INIT)
-				conf->reset_vals[index_val] = newval;
+				if (value != NULL)
+				{
+					newval = atof(value);
+				}
+				else if (source == PGC_S_DEFAULT)
+				{
+					newval = conf->boot_val;
+				}
+				else
+				{
+					/* Reset */
+					newval = conf->reset_vals[index_val];
+					reset = true;
+				}
 
-		}
+				if (newval < conf->min || newval > conf->max)
+				{
+					ereport(elevel,
+							(errmsg("%f is outside the valid range for parameter \"%s\" (%f .. %f)",
+									newval, name,
+									conf->min, conf->max)));
+					return false;
+				}
+
+				if (conf->assign_func)
+				{
+					if ((*conf->assign_func) (context, newval, index_val, elevel) == false)
+						return false;
+				}
+				else
+				{
+					*conf->variable[index_val] = newval;
+				}
+
+				if (context == CFGCXT_INIT)
+					conf->reset_vals[index_val] = newval;
+
+			}
 			break;
 
 
 		case CONFIG_VAR_TYPE_LONG:
-		{
-			struct config_long *conf = (struct config_long *) record;
-			int64	newval;
-			
-			if (value != NULL)
 			{
-				newval = pool_atoi64(value);
-			}
-			else if (source == PGC_S_DEFAULT)
-			{
-				newval = conf->boot_val;
-			}
-			else
-			{
-				/* Reset */
-				newval = conf->reset_val;
-				reset = true;
-			}
-			
-			if (newval < conf->min || newval > conf->max)
-			{
-				ereport(elevel,
-						(errmsg("%ld is outside the valid range for parameter \"%s\" (%ld .. %ld)",
-								newval, name,
-								conf->min, conf->max)));
-				return false;
-			}
-			
-			if (conf->assign_func)
-			{
-				if ((*conf->assign_func)(context, newval, elevel) == false)
-					return false;
-			}
-			else
-			{
-				*conf->variable = newval;
-			}
+				struct config_long *conf = (struct config_long *) record;
+				int64		newval;
 
-			if (context == CFGCXT_INIT)
-				conf->reset_val = newval;
-
-		}
-			break;
-
-		case CONFIG_VAR_TYPE_STRING:
-		{
-			struct config_string *conf = (struct config_string *) record;
-			char	   *newval = NULL;
-
-			if (value != NULL)
-			{
-				newval = (char*)value;
-			}
-			else if (source == PGC_S_DEFAULT)
-			{
-				newval = (char*)conf->boot_val;
-			}
-			else
-			{
-				/* Reset */
-				newval = conf->reset_val;
-				reset = true;
-			}
-
-			if (conf->assign_func)
-			{
-				if ((*conf->assign_func)(context, newval, elevel) == false)
-					return false;
-			}
-			else
-			{
-				if (*conf->variable)
-					pfree(*conf->variable);
-
-				*conf->variable = newval?pstrdup(newval):NULL;
-			}
-			if (context == CFGCXT_INIT)
-			{
-				if (conf->reset_val)
-					pfree(conf->reset_val);
-
-				conf->reset_val = newval?pstrdup(newval):NULL;
-			}
-			if (conf->process_func)
-			{
-				(*conf->process_func)(newval, elevel);
-			}
-		}
-			break;
-
-		case CONFIG_VAR_TYPE_STRING_ARRAY:
-		{
-			struct config_string_array *conf = (struct config_string_array *) record;
-			char	   *newval = NULL;
-
-			if (index_val < 0 || index_val > record->max_elements)
-			{
-				ereport(elevel,
-						(errmsg("%d index outside the valid range for parameter \"%s\" (%d .. %d)",
-								index_val, name,
-								0, record->max_elements)));
-				return false;
-			}
-
-			if (value != NULL)
-			{
-				newval = (char*)value;
-			}
-			else if (source == PGC_S_DEFAULT)
-			{
-				newval = (char*)conf->boot_val;
-			}
-			else
-			{
-				/* Reset */
-				newval = conf->reset_vals[index_val];
-				reset = true;
-			}
-			
-			if (conf->assign_func)
-			{
-				if ((*conf->assign_func)(context, newval, index_val,elevel) == false)
-					return false;
-			}
-			else
-			{
-				if (*conf->variable[index_val])
-					pfree(*conf->variable[index_val]);
-
-				*conf->variable[index_val] = newval?pstrdup(newval):NULL;
-			}
-			if (context == CFGCXT_INIT)
-			{
-				if (conf->reset_vals[index_val])
-					pfree(conf->reset_vals[index_val]);
-
-				conf->reset_vals[index_val] = newval?pstrdup(newval):NULL;
-			}
-		}
-			break;
-
-		case CONFIG_VAR_TYPE_STRING_LIST:
-		{
-			struct config_string_list *conf = (struct config_string_list *) record;
-			char	   *newval = NULL;
-
-			if (value != NULL)
-			{
-				newval = (char*)value;
-			}
-			else if (source == PGC_S_DEFAULT)
-			{
-				newval = (char*)conf->boot_val;
-			}
-			else
-			{
-				/* Reset */
-				newval = conf->reset_val;
-				reset = true;
-			}
-
-			if (conf->assign_func)
-			{
-				if ((*conf->assign_func)(context, newval, elevel) == false)
+				if (value != NULL)
 				{
-					return false;
+					newval = pool_atoi64(value);
 				}
-			}
-			else
-			{
-				if (*conf->variable)
+				else if (source == PGC_S_DEFAULT)
 				{
-					int i;
-					for (i=0;i < *conf->list_elements_count; i++)
-					{
-						if ((*conf->variable)[i])
-							pfree((*conf->variable)[i]);
-						(*conf->variable)[i] = NULL;
-					}
-					pfree(*conf->variable);
-				}
-
-				if (strcmp(name, "black_query_pattern_list") == 0)
-				{
-					*conf->variable = get_list_from_string_regex_delim(newval, conf->seperator, conf->list_elements_count);
+					newval = conf->boot_val;
 				}
 				else
 				{
-					*conf->variable = get_list_from_string(newval, conf->seperator, conf->list_elements_count);
+					/* Reset */
+					newval = conf->reset_val;
+					reset = true;
 				}
 
-				if (conf->compute_regex)
+				if (newval < conf->min || newval > conf->max)
 				{
-					/* TODO clear the old regex array please */
-					int i;
-					for (i=0;i < *conf->list_elements_count; i++)
+					ereport(elevel,
+							(errmsg("%ld is outside the valid range for parameter \"%s\" (%ld .. %ld)",
+									newval, name,
+									conf->min, conf->max)));
+					return false;
+				}
+
+				if (conf->assign_func)
+				{
+					if ((*conf->assign_func) (context, newval, elevel) == false)
+						return false;
+				}
+				else
+				{
+					*conf->variable = newval;
+				}
+
+				if (context == CFGCXT_INIT)
+					conf->reset_val = newval;
+
+			}
+			break;
+
+		case CONFIG_VAR_TYPE_STRING:
+			{
+				struct config_string *conf = (struct config_string *) record;
+				char	   *newval = NULL;
+
+				if (value != NULL)
+				{
+					newval = (char *) value;
+				}
+				else if (source == PGC_S_DEFAULT)
+				{
+					newval = (char *) conf->boot_val;
+				}
+				else
+				{
+					/* Reset */
+					newval = conf->reset_val;
+					reset = true;
+				}
+
+				if (conf->assign_func)
+				{
+					if ((*conf->assign_func) (context, newval, elevel) == false)
+						return false;
+				}
+				else
+				{
+					if (*conf->variable)
+						pfree(*conf->variable);
+
+					*conf->variable = newval ? pstrdup(newval) : NULL;
+				}
+				if (context == CFGCXT_INIT)
+				{
+					if (conf->reset_val)
+						pfree(conf->reset_val);
+
+					conf->reset_val = newval ? pstrdup(newval) : NULL;
+				}
+				if (conf->process_func)
+				{
+					(*conf->process_func) (newval, elevel);
+				}
+			}
+			break;
+
+		case CONFIG_VAR_TYPE_STRING_ARRAY:
+			{
+				struct config_string_array *conf = (struct config_string_array *) record;
+				char	   *newval = NULL;
+
+				if (index_val < 0 || index_val > record->max_elements)
+				{
+					ereport(elevel,
+							(errmsg("%d index outside the valid range for parameter \"%s\" (%d .. %d)",
+									index_val, name,
+									0, record->max_elements)));
+					return false;
+				}
+
+				if (value != NULL)
+				{
+					newval = (char *) value;
+				}
+				else if (source == PGC_S_DEFAULT)
+				{
+					newval = (char *) conf->boot_val;
+				}
+				else
+				{
+					/* Reset */
+					newval = conf->reset_vals[index_val];
+					reset = true;
+				}
+
+				if (conf->assign_func)
+				{
+					if ((*conf->assign_func) (context, newval, index_val, elevel) == false)
+						return false;
+				}
+				else
+				{
+					if (*conf->variable[index_val])
+						pfree(*conf->variable[index_val]);
+
+					*conf->variable[index_val] = newval ? pstrdup(newval) : NULL;
+				}
+				if (context == CFGCXT_INIT)
+				{
+					if (conf->reset_vals[index_val])
+						pfree(conf->reset_vals[index_val]);
+
+					conf->reset_vals[index_val] = newval ? pstrdup(newval) : NULL;
+				}
+			}
+			break;
+
+		case CONFIG_VAR_TYPE_STRING_LIST:
+			{
+				struct config_string_list *conf = (struct config_string_list *) record;
+				char	   *newval = NULL;
+
+				if (value != NULL)
+				{
+					newval = (char *) value;
+				}
+				else if (source == PGC_S_DEFAULT)
+				{
+					newval = (char *) conf->boot_val;
+				}
+				else
+				{
+					/* Reset */
+					newval = conf->reset_val;
+					reset = true;
+				}
+
+				if (conf->assign_func)
+				{
+					if ((*conf->assign_func) (context, newval, elevel) == false)
 					{
-						add_regex_pattern(conf->gen.name, (*conf->variable)[i]);
+						return false;
 					}
 				}
+				else
+				{
+					if (*conf->variable)
+					{
+						int			i;
+
+						for (i = 0; i < *conf->list_elements_count; i++)
+						{
+							if ((*conf->variable)[i])
+								pfree((*conf->variable)[i]);
+							(*conf->variable)[i] = NULL;
+						}
+						pfree(*conf->variable);
+					}
+
+					if (strcmp(name, "black_query_pattern_list") == 0)
+					{
+						*conf->variable = get_list_from_string_regex_delim(newval, conf->seperator, conf->list_elements_count);
+					}
+					else
+					{
+						*conf->variable = get_list_from_string(newval, conf->seperator, conf->list_elements_count);
+					}
+
+					if (conf->compute_regex)
+					{
+						/* TODO clear the old regex array please */
+						int			i;
+
+						for (i = 0; i < *conf->list_elements_count; i++)
+						{
+							add_regex_pattern(conf->gen.name, (*conf->variable)[i]);
+						}
+					}
+				}
+
+				if (context == CFGCXT_INIT)
+				{
+					if (conf->reset_val)
+						pfree(conf->reset_val);
+
+					conf->reset_val = newval ? pstrdup(newval) : NULL;
+				}
+
+				/* save the string value */
+				if (conf->current_val)
+					pfree(conf->current_val);
+
+				conf->current_val = newval ? pstrdup(newval) : NULL;
 			}
-
-			if (context == CFGCXT_INIT)
-			{
-				if (conf->reset_val)
-					pfree(conf->reset_val);
-
-				conf->reset_val = newval?pstrdup(newval):NULL;
-			}
-
-			/* save the string value */
-			if (conf->current_val)
-				pfree(conf->current_val);
-
-			conf->current_val = newval?pstrdup(newval):NULL;
-		}
 			break;
 
 		case CONFIG_VAR_TYPE_ENUM:
-		{
-			struct config_enum *conf = (struct config_enum *) record;
-			int			newval;
+			{
+				struct config_enum *conf = (struct config_enum *) record;
+				int			newval;
 
-			if (value != NULL)
-			{
-				newval = atoi(value);
-			}
-			else if (source == PGC_S_DEFAULT)
-			{
-				newval = conf->boot_val;
-			}
-			else
-			{
-				/* Reset */
-				newval = conf->reset_val;
-				reset = true;
-			}
-			
-			if (value && !config_enum_lookup_by_name(conf, value, &newval))
-			{
+				if (value != NULL)
+				{
+					newval = atoi(value);
+				}
+				else if (source == PGC_S_DEFAULT)
+				{
+					newval = conf->boot_val;
+				}
+				else
+				{
+					/* Reset */
+					newval = conf->reset_val;
+					reset = true;
+				}
 
-				char	   *hintmsg = NULL;
-				
+				if (value && !config_enum_lookup_by_name(conf, value, &newval))
+				{
+
+					char	   *hintmsg = NULL;
+
 #ifndef POOL_PRIVATE
-				hintmsg = config_enum_get_options(conf,
-												  "Available values: ",
-												  ".", ", ");
+					hintmsg = config_enum_get_options(conf,
+													  "Available values: ",
+													  ".", ", ");
 #endif
-				
-				ereport(elevel,
-						(errmsg("invalid value for parameter \"%s\": \"%s\"",
-								name, value),
-						 hintmsg ? errhint("%s",hintmsg) : 0));
-				
-				if (hintmsg)
-					pfree(hintmsg);
-				return false;
-			}
 
-			if (conf->assign_func)
-			{
-				if ((*conf->assign_func)(context, newval, elevel) == false)
+					ereport(elevel,
+							(errmsg("invalid value for parameter \"%s\": \"%s\"",
+									name, value),
+							 hintmsg ? errhint("%s", hintmsg) : 0));
+
+					if (hintmsg)
+						pfree(hintmsg);
 					return false;
-			}
-			else
-			{
-				*conf->variable = newval;
-			}
+				}
 
-			if (context == CFGCXT_INIT)
-				conf->reset_val = newval;
+				if (conf->assign_func)
+				{
+					if ((*conf->assign_func) (context, newval, elevel) == false)
+						return false;
+				}
+				else
+				{
+					*conf->variable = newval;
+				}
 
-			if (conf->process_func)
-			{
-				(*conf->process_func)(newval, elevel);
+				if (context == CFGCXT_INIT)
+					conf->reset_val = newval;
+
+				if (conf->process_func)
+				{
+					(*conf->process_func) (newval, elevel);
+				}
+
+				break;
 			}
-
-			break;
-		}
 	}
 	if (record->dynamic_array_var)
 	{
@@ -3503,16 +3537,16 @@ setConfigOptionVar(struct config_generic *record, const char* name, int index_va
  * If suffix is non-NULL, it is added to the end of the string.
  */
 static char *
-config_enum_get_options(struct config_enum * record, const char *prefix,
+config_enum_get_options(struct config_enum *record, const char *prefix,
 						const char *suffix, const char *separator)
 {
 	const struct config_enum_entry *entry;
 	StringInfoData retstr;
 	int			seplen;
-	
+
 	initStringInfo(&retstr);
 	appendStringInfoString(&retstr, prefix);
-	
+
 	seplen = strlen(separator);
 	for (entry = record->options; entry && entry->name; entry++)
 	{
@@ -3522,7 +3556,7 @@ config_enum_get_options(struct config_enum * record, const char *prefix,
 			appendBinaryStringInfo(&retstr, separator, seplen);
 		}
 	}
-	
+
 	/*
 	 * All the entries may have been hidden, leaving the string empty if no
 	 * prefix was given. This indicates a broken GUC setup, since there is no
@@ -3536,33 +3570,36 @@ config_enum_get_options(struct config_enum * record, const char *prefix,
 		retstr.data[retstr.len - seplen] = '\0';
 		retstr.len -= seplen;
 	}
-	
+
 	appendStringInfoString(&retstr, suffix);
-	
+
 	return retstr.data;
 }
 #endif
 
-static bool BackendWeightAssignFunc (ConfigContext context, double newval, int index, int elevel)
+static bool
+BackendWeightAssignFunc(ConfigContext context, double newval, int index, int elevel)
 {
-	double old_v = g_pool_config.backend_desc->backend_info[index].unnormalized_weight;
+	double		old_v = g_pool_config.backend_desc->backend_info[index].unnormalized_weight;
+
 	g_pool_config.backend_desc->backend_info[index].unnormalized_weight = newval;
+
 	/*
-	 * Log weight change event only when context is
-	 * reloading of pgpool.conf and weight is actually
-	 * changed
+	 * Log weight change event only when context is reloading of pgpool.conf
+	 * and weight is actually changed
 	 */
 	if (context == CFGCXT_RELOAD && old_v != newval)
 	{
 		ereport(LOG,
-			(errmsg("initializing pool configuration: backend weight for backend:%d changed from %f to %f", index, old_v, newval),
+				(errmsg("initializing pool configuration: backend weight for backend:%d changed from %f to %f", index, old_v, newval),
 				 errdetail("This change will be effective from next client session")));
 	}
 	return true;
 }
 
 
-static bool BackendPortAssignFunc (ConfigContext context, int newval, int index, int elevel)
+static bool
+BackendPortAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
 	BACKEND_STATUS backend_status = g_pool_config.backend_desc->backend_info[index].backend_status;
 
@@ -3580,57 +3617,63 @@ static bool BackendPortAssignFunc (ConfigContext context, int newval, int index,
 	{
 		if (context != CFGCXT_RELOAD)
 			ereport(WARNING,
-					(errmsg("backend_port%d cannot be changed in context %d and backend status = %d",index,context,backend_status)));
+					(errmsg("backend_port%d cannot be changed in context %d and backend status = %d", index, context, backend_status)));
 		return false;
 	}
 	return true;
 }
 
 
-static bool BackendHostAssignFunc (ConfigContext context, char* newval, int index, int elevel)
+static bool
+BackendHostAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 	BACKEND_STATUS backend_status = g_pool_config.backend_desc->backend_info[index].backend_status;
+
 	if (context <= CFGCXT_INIT || backend_status == CON_UNUSED)
 	{
 		if (newval == NULL || strlen(newval) == 0)
 			g_pool_config.backend_desc->backend_info[index].backend_hostname[0] = '\0';
 		else
-			strlcpy(g_pool_config.backend_desc->backend_info[index].backend_hostname, newval, MAX_DB_HOST_NAMELEN-1);
+			strlcpy(g_pool_config.backend_desc->backend_info[index].backend_hostname, newval, MAX_DB_HOST_NAMELEN - 1);
 		return true;
 	}
 	/* silent the warning in reload contxt */
 	if (context != CFGCXT_RELOAD)
 		ereport(WARNING,
-			(errmsg("backend_hostname%d cannot be changed in context %d and backend status = %d",index,context,backend_status)));
+				(errmsg("backend_hostname%d cannot be changed in context %d and backend status = %d", index, context, backend_status)));
 	return false;
 }
 
-static bool BackendDataDirAssignFunc (ConfigContext context, char* newval, int index, int elevel)
+static bool
+BackendDataDirAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 	BACKEND_STATUS backend_status = g_pool_config.backend_desc->backend_info[index].backend_status;
+
 	if (context <= CFGCXT_INIT || backend_status == CON_UNUSED || backend_status == CON_DOWN)
 	{
 		if (newval == NULL || strlen(newval) == 0)
 			g_pool_config.backend_desc->backend_info[index].backend_data_directory[0] = '\0';
 		else
-			strlcpy(g_pool_config.backend_desc->backend_info[index].backend_data_directory, newval, MAX_PATH_LENGTH-1);
+			strlcpy(g_pool_config.backend_desc->backend_info[index].backend_data_directory, newval, MAX_PATH_LENGTH - 1);
 		return true;
 	}
 	/* silent the warning in reload contxt */
 	if (context != CFGCXT_RELOAD)
 		ereport(WARNING,
-				(errmsg("backend_data_directory%d cannot be changed in context %d and backend status = %d",index,context,backend_status)));
+				(errmsg("backend_data_directory%d cannot be changed in context %d and backend status = %d", index, context, backend_status)));
 	return false;
 }
 
-static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int index, int elevel)
+static bool
+BackendFlagsAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 
 	unsigned short flag = 0;
-	int i,n;
-	bool allow_to_failover_is_specified = false;
-	bool disallow_to_failover_is_specified = false;
-	char **flags;
+	int			i,
+				n;
+	bool		allow_to_failover_is_specified = false;
+	bool		disallow_to_failover_is_specified = false;
+	char	  **flags;
 
 	flags = get_list_from_string(newval, "|", &n);
 	if (!flags || n < 0)
@@ -3639,14 +3682,15 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 			pfree(flags);
 
 		ereport(elevel,
-			(errmsg("invalid configuration for key \"backend_flag%d\"",index),
+				(errmsg("invalid configuration for key \"backend_flag%d\"", index),
 				 errdetail("unable to get backend flags")));
 		return false;
 	}
 
-	for (i=0;i<n;i++)
+	for (i = 0; i < n; i++)
 	{
-		int k;
+		int			k;
+
 		if (!strcmp(flags[i], "ALLOW_TO_FAILOVER"))
 		{
 			if (disallow_to_failover_is_specified)
@@ -3655,7 +3699,7 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 					pfree(flags[k]);
 				pfree(flags);
 				ereport(elevel,
-					(errmsg("invalid configuration for key \"backend_flag%d\"",index),
+						(errmsg("invalid configuration for key \"backend_flag%d\"", index),
 						 errdetail("cannot set ALLOW_TO_FAILOVER and DISALLOW_TO_FAILOVER at the same time")));
 				return false;
 			}
@@ -3663,7 +3707,7 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 			allow_to_failover_is_specified = true;
 
 		}
-		
+
 		else if (!strcmp(flags[i], "DISALLOW_TO_FAILOVER"))
 		{
 			if (allow_to_failover_is_specified)
@@ -3673,7 +3717,7 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 				pfree(flags);
 
 				ereport(elevel,
-					(errmsg("invalid configuration for key \"backend_flag%d\"",index),
+						(errmsg("invalid configuration for key \"backend_flag%d\"", index),
 						 errdetail("cannot set ALLOW_TO_FAILOVER and DISALLOW_TO_FAILOVER at the same time")));
 				return false;
 			}
@@ -3685,11 +3729,11 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 		{
 			flag |= POOL_ALWAYS_MASTER;
 		}
-		
+
 		else
 		{
 			ereport(elevel,
-				(errmsg("invalid configuration for key \"backend_flag%d\"",index),
+					(errmsg("invalid configuration for key \"backend_flag%d\"", index),
 					 errdetail("unknown backend flag:%s", flags[i])));
 			for (k = i; k < n; k++)
 				pfree(flags[k]);
@@ -3701,17 +3745,20 @@ static bool BackendFlagsAssignFunc (ConfigContext context, char* newval, int ind
 
 	g_pool_config.backend_desc->backend_info[index].flag = flag;
 	ereport(DEBUG1,
-		(errmsg("setting \"backend_flag%d\" flag: %04x ",index, flag)));
+			(errmsg("setting \"backend_flag%d\" flag: %04x ", index, flag)));
 	pfree(flags);
 	return true;
 }
 
-static bool LogDestinationProcessFunc (char* newval, int elevel)
+static bool
+LogDestinationProcessFunc(char *newval, int elevel)
 {
 #ifndef POOL_PRIVATE
-	char **destinations;
-	int n,i;
-	int log_destination = 0;
+	char	  **destinations;
+	int			n,
+				i;
+	int			log_destination = 0;
+
 	destinations = get_list_from_string(newval, ",", &n);
 	if (!destinations || n < 0)
 	{
@@ -3719,10 +3766,10 @@ static bool LogDestinationProcessFunc (char* newval, int elevel)
 			pfree(destinations);
 
 		ereport(elevel,
-			(errmsg("invalid value \"%s\" for log_destination",newval)));
+				(errmsg("invalid value \"%s\" for log_destination", newval)));
 		return false;
 	}
-	for (i=0;i<n;i++)
+	for (i = 0; i < n; i++)
 	{
 		if (!strcmp(destinations[i], "syslog"))
 		{
@@ -3734,10 +3781,11 @@ static bool LogDestinationProcessFunc (char* newval, int elevel)
 		}
 		else
 		{
-			int k;
+			int			k;
+
 			ereport(elevel,
-				(errmsg("invalid configuration for \"log_destination\""),
-					errdetail("unknown destination :%s", destinations[i])));
+					(errmsg("invalid configuration for \"log_destination\""),
+					 errdetail("unknown destination :%s", destinations[i])));
 			for (k = i; k < n; k++)
 				pfree(destinations[k]);
 			pfree(destinations);
@@ -3745,7 +3793,7 @@ static bool LogDestinationProcessFunc (char* newval, int elevel)
 		}
 		pfree(destinations[i]);
 	}
-	if (g_pool_config.log_destination & LOG_DESTINATION_SYSLOG )
+	if (g_pool_config.log_destination & LOG_DESTINATION_SYSLOG)
 	{
 		if (!(log_destination & LOG_DESTINATION_SYSLOG))
 			closelog();
@@ -3756,19 +3804,8 @@ static bool LogDestinationProcessFunc (char* newval, int elevel)
 	return true;
 }
 
-static bool SyslogFacilityProcessFunc (int newval, int elevel)
-{
-#ifndef POOL_PRIVATE
-#ifdef HAVE_SYSLOG
-	/* set syslog parameters */
-	set_syslog_parameters(g_pool_config.syslog_ident ? g_pool_config.syslog_ident : "pgpool",
-							  g_pool_config.syslog_facility);
-#endif
-#endif
-	return true;
-}
-
-static bool SyslogIdentProcessFunc (char* newval, int elevel)
+static bool
+SyslogFacilityProcessFunc(int newval, int elevel)
 {
 #ifndef POOL_PRIVATE
 #ifdef HAVE_SYSLOG
@@ -3780,38 +3817,59 @@ static bool SyslogIdentProcessFunc (char* newval, int elevel)
 	return true;
 }
 
-static const char* IntValueShowFunc(int value)
+static bool
+SyslogIdentProcessFunc(char *newval, int elevel)
+{
+#ifndef POOL_PRIVATE
+#ifdef HAVE_SYSLOG
+	/* set syslog parameters */
+	set_syslog_parameters(g_pool_config.syslog_ident ? g_pool_config.syslog_ident : "pgpool",
+						  g_pool_config.syslog_facility);
+#endif
+#endif
+	return true;
+}
+
+static const char *
+IntValueShowFunc(int value)
 {
 	static char buffer[10];
-	snprintf(buffer, sizeof(buffer), "%d" ,value);
+
+	snprintf(buffer, sizeof(buffer), "%d", value);
 	return buffer;
 }
 
-static const char* BackendWeightShowFunc(int index)
+static const char *
+BackendWeightShowFunc(int index)
 {
 	return IntValueShowFunc(g_pool_config.backend_desc->backend_info[index].unnormalized_weight);
 }
 
-static const char* BackendPortShowFunc(int index)
+static const char *
+BackendPortShowFunc(int index)
 {
 	return IntValueShowFunc(g_pool_config.backend_desc->backend_info[index].backend_port);
 }
 
-static const char* BackendHostShowFunc(int index)
+static const char *
+BackendHostShowFunc(int index)
 {
 	return g_pool_config.backend_desc->backend_info[index].backend_hostname;
 }
 
-static const char* BackendDataDirShowFunc(int index)
+static const char *
+BackendDataDirShowFunc(int index)
 {
 	return g_pool_config.backend_desc->backend_info[index].backend_data_directory;
 }
 
-static const char* BackendFlagsShowFunc(int index)
+static const char *
+BackendFlagsShowFunc(int index)
 {
 	static char buffer[21];
 
 	unsigned short flag = g_pool_config.backend_desc->backend_info[index].flag;
+
 	if (POOL_ALLOW_TO_FAILOVER(flag))
 		snprintf(buffer, sizeof(buffer), "ALLOW_TO_FAILOVER");
 	else if (POOL_DISALLOW_TO_FAILOVER(flag))
@@ -3819,81 +3877,98 @@ static const char* BackendFlagsShowFunc(int index)
 	return buffer;
 }
 
-static bool BackendSlotEmptyCheckFunc(int index)
+static bool
+BackendSlotEmptyCheckFunc(int index)
 {
 	return (g_pool_config.backend_desc->backend_info[index].backend_port == 0);
 }
 
-static bool WdSlotEmptyCheckFunc(int index)
+static bool
+WdSlotEmptyCheckFunc(int index)
 {
 	return (g_pool_config.wd_remote_nodes.wd_remote_node_info[index].pgpool_port == 0);
 }
 
-static bool WdIFSlotEmptyCheckFunc(int index)
+static bool
+WdIFSlotEmptyCheckFunc(int index)
 {
-	
+
 	return (index >= g_pool_config.num_hb_if);
 }
 
-static const char* OtherPPHostShowFunc(int index)
+static const char *
+OtherPPHostShowFunc(int index)
 {
 	return g_pool_config.wd_remote_nodes.wd_remote_node_info[index].hostname;
 }
 
-static const char* OtherPPPortShowFunc(int index)
+static const char *
+OtherPPPortShowFunc(int index)
 {
 	return IntValueShowFunc(g_pool_config.wd_remote_nodes.wd_remote_node_info[index].pgpool_port);
 }
 
-static const char* OtherWDPortShowFunc(int index)
+static const char *
+OtherWDPortShowFunc(int index)
 {
 	return IntValueShowFunc(g_pool_config.wd_remote_nodes.wd_remote_node_info[index].wd_port);
 }
 
-static const char* HBDeviceShowFunc(int index)
+static const char *
+HBDeviceShowFunc(int index)
 {
 	return g_pool_config.hb_if[index].if_name;
 }
 
-static const char* HBDestinationShowFunc(int index)
+static const char *
+HBDestinationShowFunc(int index)
 {
 	return g_pool_config.hb_if[index].addr;
 }
 
-static const char* HBDestinationPortShowFunc(int index)
+static const char *
+HBDestinationPortShowFunc(int index)
 {
 	return IntValueShowFunc(g_pool_config.hb_if[index].dest_port);
 }
 
-static const char* HealthCheckPeriodShowFunc(int index)
+static const char *
+HealthCheckPeriodShowFunc(int index)
 {
 	return IntValueShowFunc(g_pool_config.health_check_params[index].health_check_period);
 }
-static const char* HealthCheckTimeOutShowFunc(int index)
+static const char *
+HealthCheckTimeOutShowFunc(int index)
 {
 	return IntValueShowFunc(g_pool_config.health_check_params[index].health_check_timeout);
 }
-static const char* HealthCheckMaxRetriesShowFunc(int index)
+static const char *
+HealthCheckMaxRetriesShowFunc(int index)
 {
 	return IntValueShowFunc(g_pool_config.health_check_params[index].health_check_max_retries);
 }
-static const char* HealthCheckRetryDelayShowFunc(int index)
+static const char *
+HealthCheckRetryDelayShowFunc(int index)
 {
 	return IntValueShowFunc(g_pool_config.health_check_params[index].health_check_retry_delay);
 }
-static const char* HealthCheckConnectTimeOutShowFunc(int index)
+static const char *
+HealthCheckConnectTimeOutShowFunc(int index)
 {
 	return IntValueShowFunc(g_pool_config.health_check_params[index].connect_timeout);
 }
-static const char* HealthCheckUserShowFunc(int index)
+static const char *
+HealthCheckUserShowFunc(int index)
 {
 	return g_pool_config.health_check_params[index].health_check_user;
 }
-static const char* HealthCheckPasswordShowFunc(int index)
+static const char *
+HealthCheckPasswordShowFunc(int index)
 {
 	return g_pool_config.health_check_params[index].health_check_password;
 }
-static const char* HealthCheckDatabaseShowFunc(int index)
+static const char *
+HealthCheckDatabaseShowFunc(int index)
 {
 	return g_pool_config.health_check_params[index].health_check_database;
 }
@@ -3902,37 +3977,47 @@ static const char* HealthCheckDatabaseShowFunc(int index)
 /* Health check configuration assign functions */
 
 /*health_check_period*/
-static bool HealthCheckPeriodAssignFunc (ConfigContext context, int newval, int index, int elevel)
+static bool
+HealthCheckPeriodAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
 	g_pool_config.health_check_params[index].health_check_period = newval;
 	return true;
 }
+
 /*health_check_timeout*/
-static bool HealthCheckTimeOutAssignFunc (ConfigContext context, int newval, int index, int elevel)
+static bool
+HealthCheckTimeOutAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
 	g_pool_config.health_check_params[index].health_check_timeout = newval;
 	return true;
 }
+
 /*health_check_max_retries*/
-static bool HealthCheckMaxRetriesAssignFunc (ConfigContext context, int newval, int index, int elevel)
+static bool
+HealthCheckMaxRetriesAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
 	g_pool_config.health_check_params[index].health_check_max_retries = newval;
 	return true;
 }
+
 /*health_check_retry_delay*/
-static bool HealthCheckRetryDelayAssignFunc (ConfigContext context, int newval, int index, int elevel)
+static bool
+HealthCheckRetryDelayAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
 	g_pool_config.health_check_params[index].health_check_retry_delay = newval;
 	return true;
 }
+
 /*connect_timeout*/
-static bool HealthCheckConnectTimeOutAssignFunc (ConfigContext context, int newval, int index, int elevel)
+static bool
+HealthCheckConnectTimeOutAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
 	g_pool_config.health_check_params[index].connect_timeout = newval;
 	return true;
 }
 
-static bool HealthCheckUserAssignFunc(ConfigContext context, char* newval, int index, int elevel)
+static bool
+HealthCheckUserAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 	if (g_pool_config.health_check_params[index].health_check_user)
 		pfree(g_pool_config.health_check_params[index].health_check_user);
@@ -3943,7 +4028,8 @@ static bool HealthCheckUserAssignFunc(ConfigContext context, char* newval, int i
 	return true;
 }
 
-static bool HealthCheckPasswordAssignFunc(ConfigContext context, char* newval, int index, int elevel)
+static bool
+HealthCheckPasswordAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 	if (g_pool_config.health_check_params[index].health_check_password)
 		pfree(g_pool_config.health_check_params[index].health_check_password);
@@ -3954,7 +4040,8 @@ static bool HealthCheckPasswordAssignFunc(ConfigContext context, char* newval, i
 	return true;
 }
 
-static bool HealthCheckDatabaseAssignFunc(ConfigContext context, char* newval, int index, int elevel)
+static bool
+HealthCheckDatabaseAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 	if (g_pool_config.health_check_params[index].health_check_database)
 		pfree(g_pool_config.health_check_params[index].health_check_database);
@@ -3968,31 +4055,35 @@ static bool HealthCheckDatabaseAssignFunc(ConfigContext context, char* newval, i
 
 /* Watchdog Assign functions */
 /*other_pgpool_hostname*/
-static bool OtherPPHostAssignFunc (ConfigContext context, char* newval, int index, int elevel)
+static bool
+OtherPPHostAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 	if (newval == NULL || strlen(newval) == 0)
 		g_pool_config.wd_remote_nodes.wd_remote_node_info[index].hostname[0] = '\0';
 	else
-		strlcpy(g_pool_config.wd_remote_nodes.wd_remote_node_info[index].hostname, newval, MAX_DB_HOST_NAMELEN-1);
+		strlcpy(g_pool_config.wd_remote_nodes.wd_remote_node_info[index].hostname, newval, MAX_DB_HOST_NAMELEN - 1);
 	return true;
 }
 
 /*other_pgpool_port*/
-static bool OtherPPPortAssignFunc (ConfigContext context, int newval, int index, int elevel)
+static bool
+OtherPPPortAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
 	g_pool_config.wd_remote_nodes.wd_remote_node_info[index].pgpool_port = newval;
 	return true;
 }
 
 /*other_wd_port*/
-static bool OtherWDPortAssignFunc (ConfigContext context, int newval, int index, int elevel)
+static bool
+OtherWDPortAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
 	g_pool_config.wd_remote_nodes.wd_remote_node_info[index].wd_port = newval;
 	return true;
 }
 
 /*heartbeat_device*/
-static bool HBDeviceAssignFunc (ConfigContext context, char* newval, int index, int elevel)
+static bool
+HBDeviceAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 	if (newval == NULL || strlen(newval) == 0)
 		g_pool_config.hb_if[index].if_name[0] = '\0';
@@ -4002,17 +4093,19 @@ static bool HBDeviceAssignFunc (ConfigContext context, char* newval, int index, 
 }
 
 /*heartbeat_destination*/
-static bool HBDestinationAssignFunc (ConfigContext context, char* newval, int index, int elevel)
+static bool
+HBDestinationAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 	if (newval == NULL || strlen(newval) == 0)
 		g_pool_config.hb_if[index].addr[0] = '\0';
 	else
-		strlcpy(g_pool_config.hb_if[index].addr, newval, WD_MAX_HOST_NAMELEN -1);
+		strlcpy(g_pool_config.hb_if[index].addr, newval, WD_MAX_HOST_NAMELEN - 1);
 	return true;
 }
 
 /*heartbeat_destination_port*/
-static bool HBDestinationPortAssignFunc (ConfigContext context, int newval, int index, int elevel)
+static bool
+HBDestinationPortAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
 	g_pool_config.hb_if[index].dest_port = newval;
 	return true;
@@ -4022,60 +4115,63 @@ static bool HBDestinationPortAssignFunc (ConfigContext context, int newval, int 
  * Check DB node spec. node spec should be either "primary", "standby" or
  * numeric DB node id.
  */
-static bool check_redirect_node_spec(char *node_spec)
+static bool
+check_redirect_node_spec(char *node_spec)
 {
-	int len = strlen(node_spec);
-	int i;
-	int64 val;
-	
+	int			len = strlen(node_spec);
+	int			i;
+	int64		val;
+
 	if (len <= 0)
 		return false;
-	
+
 	if (strcasecmp("primary", node_spec) == 0)
 	{
 		return true;
 	}
-	
+
 	if (strcasecmp("standby", node_spec) == 0)
 	{
 		return true;
 	}
 
-	for (i=0;i<len;i++)
+	for (i = 0; i < len; i++)
 	{
-		if (!isdigit((int)node_spec[i]))
+		if (!isdigit((int) node_spec[i]))
 			return false;
 	}
 
 	val = pool_atoi64(node_spec);
-	
-	if (val >=0 && val < MAX_NUM_BACKENDS)
+
+	if (val >= 0 && val < MAX_NUM_BACKENDS)
 		return true;
 
 	return false;
 }
 
-static bool config_post_processor(ConfigContext context, int elevel)
+static bool
+config_post_processor(ConfigContext context, int elevel)
 {
-	double total_weight = 0.0;
+	double		total_weight = 0.0;
 	sig_atomic_t local_num_backends = 0;
-	int i;
+	int			i;
 
 	if (context == CFGCXT_BOOT)
 	{
-		char localhostname[256];
-		int res = gethostname(localhostname,sizeof(localhostname));
-		if(res !=0 )
+		char		localhostname[256];
+		int			res = gethostname(localhostname, sizeof(localhostname));
+
+		if (res != 0)
 		{
 			ereport(WARNING,
-				(errmsg("initializing pool configuration"),
+					(errmsg("initializing pool configuration"),
 					 errdetail("failed to get the local hostname")));
 			return false;
 		}
 		g_pool_config.wd_hostname = pstrdup(localhostname);
 		return true;
 	}
-	for (i=0;i<MAX_CONNECTION_SLOTS;i++)
+	for (i = 0; i < MAX_CONNECTION_SLOTS; i++)
 	{
 		BackendInfo *backend_info = &g_pool_config.backend_desc->backend_info[i];
 
@@ -4089,13 +4185,13 @@ static bool config_post_processor(ConfigContext context, int elevel)
 		else
 		{
 			total_weight += backend_info->unnormalized_weight;
-			local_num_backends = i+1;
-			
+			local_num_backends = i + 1;
+
 			/* initialize backend_hostname with a default socket path if empty */
 			if (*(backend_info->backend_hostname) == '\0')
 			{
 				ereport(LOG,
-					(errmsg("initializing pool configuration"),
+						(errmsg("initializing pool configuration"),
 						 errdetail("empty backend_hostname%d, use PostgreSQL's default unix socket path (%s)",
 								   i, DEFAULT_SOCKET_DIR)));
 				strlcpy(backend_info->backend_hostname, DEFAULT_SOCKET_DIR, MAX_DB_HOST_NAMELEN);
@@ -4107,42 +4203,44 @@ static bool config_post_processor(ConfigContext context, int elevel)
 		pool_config->backend_desc->num_backends = local_num_backends;
 
 	ereport(DEBUG1,
-		(errmsg("initializing pool configuration"),
+			(errmsg("initializing pool configuration"),
 			 errdetail("num_backends: %d total_weight: %f",
 					   pool_config->backend_desc->num_backends, total_weight)));
+
 	/*
-	 * Normalize load balancing weights. What we are doing here is,
-	 * assign 0 to RAND_MAX to each backend's weight according to the
-	 * value weightN.  For example, if two backends are assigned 1.0,
-	 * then each backend will get RAND_MAX/2 normalized weight.
+	 * Normalize load balancing weights. What we are doing here is, assign 0
+	 * to RAND_MAX to each backend's weight according to the value weightN.
+	 * For example, if two backends are assigned 1.0, then each backend will
+	 * get RAND_MAX/2 normalized weight.
 	 */
-	for (i=0;i<MAX_CONNECTION_SLOTS;i++)
+	for (i = 0; i < MAX_CONNECTION_SLOTS; i++)
 	{
 		BackendInfo *backend_info = &g_pool_config.backend_desc->backend_info[i];
 
 		if (backend_info->backend_port != 0)
 		{
 			backend_info->backend_weight =
-			(RAND_MAX) * backend_info->unnormalized_weight / total_weight;
+				(RAND_MAX) * backend_info->unnormalized_weight / total_weight;
 
 			ereport(DEBUG1,
 					(errmsg("initializing pool configuration"),
-					 errdetail("backend %d weight: %f flag: %04x", i, backend_info->backend_weight,backend_info->flag)));
+					 errdetail("backend %d weight: %f flag: %04x", i, backend_info->backend_weight, backend_info->flag)));
 		}
 	}
 
 	/* Set the number of configured Watchdog nodes */
 	g_pool_config.wd_remote_nodes.num_wd = 0;
-	for (i=0; i< MAX_WATCHDOG_NUM; i++ )
+	for (i = 0; i < MAX_WATCHDOG_NUM; i++)
 	{
-		WdRemoteNodeInfo* wdNode = &g_pool_config.wd_remote_nodes.wd_remote_node_info[i];
+		WdRemoteNodeInfo *wdNode = &g_pool_config.wd_remote_nodes.wd_remote_node_info[i];
+
 		if (wdNode->wd_port > 0)
 			g_pool_config.wd_remote_nodes.num_wd = i + 1;
 	}
 
 	/* Set the number of configured heartbeat interfaces */
 	g_pool_config.num_hb_if = 0;
-	for (i=0; i< WD_MAX_IF_NUM; i++ )
+	for (i = 0; i < WD_MAX_IF_NUM; i++)
 	{
 		if (g_pool_config.hb_if[i].dest_port > 0)
 			g_pool_config.num_hb_if = i + 1;
@@ -4152,7 +4250,7 @@ static bool config_post_processor(ConfigContext context, int elevel)
 	if (strcmp(pool_config->recovery_1st_stage_command, "") ||
 		strcmp(pool_config->recovery_2nd_stage_command, ""))
 	{
-		for (i=0;i<MAX_CONNECTION_SLOTS;i++)
+		for (i = 0; i < MAX_CONNECTION_SLOTS; i++)
 		{
 			BackendInfo *backend_info = &g_pool_config.backend_desc->backend_info[i];
 
@@ -4169,26 +4267,27 @@ static bool config_post_processor(ConfigContext context, int elevel)
 	return true;
 }
 
-static bool MakeAppRedirectListRegex (char* newval, int elevel)
+static bool
+MakeAppRedirectListRegex(char *newval, int elevel)
 {
 	/* TODO Deal with the memory */
-	int i;
+	int			i;
 	Left_right_tokens *lrtokens;
-	
+
 	if (newval == NULL)
 	{
 		pool_config->redirect_app_names = NULL;
 		pool_config->app_name_redirect_tokens = NULL;
 		return true;
 	}
-	
+
 	lrtokens = create_lrtoken_array();
 	extract_string_tokens2(newval, ",", ':', lrtokens);
-	
+
 	pool_config->redirect_app_names = create_regex_array();
 	pool_config->app_name_redirect_tokens = lrtokens;
-	
-	for (i=0;i<lrtokens->pos;i++)
+
+	for (i = 0; i < lrtokens->pos; i++)
 	{
 		if (!check_redirect_node_spec(lrtokens->token[i].right_token))
 		{
@@ -4197,8 +4296,8 @@ static bool MakeAppRedirectListRegex (char* newval, int elevel)
 					 errdetail("wrong redirect db node spec: \"%s\"", lrtokens->token[i].right_token)));
 			return false;
 		}
-		
-		
+
+
 		if (*(lrtokens->token[i].left_token) == '\0' ||
 			add_regex_array(pool_config->redirect_app_names, lrtokens->token[i].left_token))
 		{
@@ -4208,43 +4307,45 @@ static bool MakeAppRedirectListRegex (char* newval, int elevel)
 			return false;
 		}
 	}
-	
+
 	return true;
 }
 
-static bool MakeDBRedirectListRegex (char* newval, int elevel)
+static bool
+MakeDBRedirectListRegex(char *newval, int elevel)
 {
 	/* TODO Deal with the memory */
-	int i;
+	int			i;
 	Left_right_tokens *lrtokens;
+
 	if (newval == NULL)
 	{
 		pool_config->redirect_dbnames = NULL;
 		pool_config->db_redirect_tokens = NULL;
 		return true;
 	}
-	
+
 	lrtokens = create_lrtoken_array();
 	extract_string_tokens2(newval, ",", ':', lrtokens);
-	
+
 	pool_config->redirect_dbnames = create_regex_array();
 	pool_config->db_redirect_tokens = lrtokens;
-	
-	for (i=0;i<lrtokens->pos;i++)
+
+	for (i = 0; i < lrtokens->pos; i++)
 	{
 		if (!check_redirect_node_spec(lrtokens->token[i].right_token))
 		{
 			ereport(elevel,
-				(errmsg("invalid configuration for key \"database_redirect_preference_list\""),
+					(errmsg("invalid configuration for key \"database_redirect_preference_list\""),
 					 errdetail("wrong redirect db node spec: \"%s\"", lrtokens->token[i].right_token)));
 			return false;
 		}
-		
+
 		if (*(lrtokens->token[i].left_token) == '\0' ||
 			add_regex_array(pool_config->redirect_dbnames, lrtokens->token[i].left_token))
 		{
 			ereport(elevel,
-				(errmsg("invalid configuration for key \"database_redirect_preference_list\""),
+					(errmsg("invalid configuration for key \"database_redirect_preference_list\""),
 					 errdetail("wrong redirect dbname regular expression: \"%s\"", lrtokens->token[i].left_token)));
 			return false;
 		}
@@ -4252,35 +4353,38 @@ static bool MakeDBRedirectListRegex (char* newval, int elevel)
 	return true;
 }
 
-static struct config_generic*
-get_index_free_record_if_any(struct config_generic* record)
+static struct config_generic *
+get_index_free_record_if_any(struct config_generic *record)
 {
-	struct config_generic* ret = NULL;
+	struct config_generic *ret = NULL;
 
 	switch (record->vartype)
 	{
 		case CONFIG_VAR_TYPE_INT_ARRAY:
-		{
-			struct config_int_array *conf = (struct config_int_array *) record;
-			if (conf->config_no_index.gen.name)
-				ret = (struct config_generic*)&conf->config_no_index;
-		}
+			{
+				struct config_int_array *conf = (struct config_int_array *) record;
+
+				if (conf->config_no_index.gen.name)
+					ret = (struct config_generic *) &conf->config_no_index;
+			}
 			break;
 
 		case CONFIG_VAR_TYPE_DOUBLE_ARRAY:
-		{
-			struct config_double_array *conf = (struct config_double_array *) record;
-			if (conf->config_no_index.gen.name)
-				ret = (struct config_generic*)&conf->config_no_index;
-		}
+			{
+				struct config_double_array *conf = (struct config_double_array *) record;
+
+				if (conf->config_no_index.gen.name)
+					ret = (struct config_generic *) &conf->config_no_index;
+			}
 			break;
 
 		case CONFIG_VAR_TYPE_STRING_ARRAY:
-		{
-			struct config_string_array *conf = (struct config_string_array *) record;
-			if (conf->config_no_index.gen.name)
-				ret = (struct config_generic*)&conf->config_no_index;
-		}
+			{
+				struct config_string_array *conf = (struct config_string_array *) record;
+
+				if (conf->config_no_index.gen.name)
+					ret = (struct config_generic *) &conf->config_no_index;
+			}
 			break;
 		default:
 			break;
@@ -4296,7 +4400,7 @@ get_index_free_record_if_any(struct config_generic* record)
  * allocated for modification.
  */
 static const char *
-config_enum_lookup_by_value(struct config_enum * record, int val)
+config_enum_lookup_by_value(struct config_enum *record, int val)
 {
 	const struct config_enum_entry *entry;
 
@@ -4305,18 +4409,18 @@ config_enum_lookup_by_value(struct config_enum * record, int val)
 		if (entry->val == val)
 			return entry->name;
 	}
-	/* should never happen*/
+	/* should never happen */
 	return NULL;
 }
 
 static char *
-ShowOption(struct config_generic * record, int index, int elevel)
+ShowOption(struct config_generic *record, int index, int elevel)
 {
 	char		buffer[256];
 	const char *val;
-	
-	/* if the value needs to be hidden
-	 * no need to dig further
+
+	/*
+	 * if the value needs to be hidden no need to dig further
 	 */
 	if (record->flags & VAR_HIDDEN_VALUE)
 		return pstrdup("*****");
@@ -4324,178 +4428,182 @@ ShowOption(struct config_generic * record, int index, int elevel)
 	switch (record->vartype)
 	{
 		case CONFIG_VAR_TYPE_BOOL:
-		{
-			struct config_bool *conf = (struct config_bool *) record;
-			
-			if (conf->show_hook)
-				val = (*conf->show_hook) ();
-			else
-				val = *conf->variable ? "on" : "off";
-		}
-			break;
-			
-		case CONFIG_VAR_TYPE_INT:
-		{
-			struct config_int *conf = (struct config_int *) record;
-			
-			if (conf->show_hook)
-				val = (*conf->show_hook) ();
-			else
 			{
-				int		result = *conf->variable;
-				snprintf(buffer, sizeof(buffer), "%d" ,
-						 result);
-				val = buffer;
+				struct config_bool *conf = (struct config_bool *) record;
+
+				if (conf->show_hook)
+					val = (*conf->show_hook) ();
+				else
+					val = *conf->variable ? "on" : "off";
 			}
-		}
+			break;
+
+		case CONFIG_VAR_TYPE_INT:
+			{
+				struct config_int *conf = (struct config_int *) record;
+
+				if (conf->show_hook)
+					val = (*conf->show_hook) ();
+				else
+				{
+					int			result = *conf->variable;
+
+					snprintf(buffer, sizeof(buffer), "%d",
+							 result);
+					val = buffer;
+				}
+			}
 			break;
 
 		case CONFIG_VAR_TYPE_LONG:
-		{
-			struct config_long *conf = (struct config_long *) record;
+			{
+				struct config_long *conf = (struct config_long *) record;
 
-			if (conf->show_hook)
-				val = (*conf->show_hook) ();
-			else
-			{
-				int64		result = (int64)*conf->variable;
-				snprintf(buffer, sizeof(buffer), INT64_FORMAT ,
-						 result);
-				val = buffer;
+				if (conf->show_hook)
+					val = (*conf->show_hook) ();
+				else
+				{
+					int64		result = (int64) *conf->variable;
+
+					snprintf(buffer, sizeof(buffer), INT64_FORMAT,
+							 result);
+					val = buffer;
+				}
 			}
-		}
 			break;
-			
+
 		case CONFIG_VAR_TYPE_DOUBLE:
-		{
-			struct config_double *conf = (struct config_double *) record;
-			
-			if (conf->show_hook)
-				val = (*conf->show_hook)();
-			else
 			{
-				snprintf(buffer, sizeof(buffer), "%g",
-						 *conf->variable);
-				val = buffer;
+				struct config_double *conf = (struct config_double *) record;
+
+				if (conf->show_hook)
+					val = (*conf->show_hook) ();
+				else
+				{
+					snprintf(buffer, sizeof(buffer), "%g",
+							 *conf->variable);
+					val = buffer;
+				}
 			}
-		}
 			break;
-			
+
 		case CONFIG_VAR_TYPE_STRING:
-		{
-			struct config_string *conf = (struct config_string *) record;
-			
-			if (conf->show_hook)
-				val = (*conf->show_hook) ();
-			else if (*conf->variable && **conf->variable)
-				val = *conf->variable;
-			else
-				val = "";
-		}
+			{
+				struct config_string *conf = (struct config_string *) record;
+
+				if (conf->show_hook)
+					val = (*conf->show_hook) ();
+				else if (*conf->variable && **conf->variable)
+					val = *conf->variable;
+				else
+					val = "";
+			}
 			break;
-			
+
 		case CONFIG_VAR_TYPE_ENUM:
-		{
-			struct config_enum *conf = (struct config_enum *) record;
-			
-			if (conf->show_hook)
-				val = (*conf->show_hook) ();
-			else
-				val = config_enum_lookup_by_value(conf, *conf->variable);
-		}
+			{
+				struct config_enum *conf = (struct config_enum *) record;
+
+				if (conf->show_hook)
+					val = (*conf->show_hook) ();
+				else
+					val = config_enum_lookup_by_value(conf, *conf->variable);
+			}
 
 			break;
 
 		case CONFIG_VAR_TYPE_INT_ARRAY:
-		{
-			struct config_int_array *conf = (struct config_int_array *) record;
-			
-			if (index >= record->max_elements || index < 0)
 			{
-				ereport(elevel,
-					(errmsg("invalid index %d for configuration parameter \"%s\"",index, conf->gen.name),
-						 errdetail("allowed index is between 0 and %d",record->max_elements -1)));
+				struct config_int_array *conf = (struct config_int_array *) record;
 
-				val = NULL;
-			}
-			else
-			{
-				if (conf->show_hook)
-					val = (*conf->show_hook) (index);
+				if (index >= record->max_elements || index < 0)
+				{
+					ereport(elevel,
+							(errmsg("invalid index %d for configuration parameter \"%s\"", index, conf->gen.name),
+							 errdetail("allowed index is between 0 and %d", record->max_elements - 1)));
+
+					val = NULL;
+				}
 				else
 				{
-					int		result = *conf->variable[index];
-					snprintf(buffer, sizeof(buffer), "%d" ,
-							 result);
-					val = buffer;
+					if (conf->show_hook)
+						val = (*conf->show_hook) (index);
+					else
+					{
+						int			result = *conf->variable[index];
+
+						snprintf(buffer, sizeof(buffer), "%d",
+								 result);
+						val = buffer;
+					}
 				}
 			}
-		}
 			break;
 
 		case CONFIG_VAR_TYPE_DOUBLE_ARRAY:
-		{
-			struct config_double_array *conf = (struct config_double_array *) record;
-			
-			if (index >= record->max_elements || index < 0)
 			{
-				ereport(elevel,
-					(errmsg("invalid index %d for configuration parameter \"%s\"",index, conf->gen.name),
-						 errdetail("allowed index is between 0 and %d",record->max_elements -1)));
-				
-				val = NULL;
-			}
-			else
-			{
-				if (conf->show_hook)
-					val = (*conf->show_hook) (index);
+				struct config_double_array *conf = (struct config_double_array *) record;
+
+				if (index >= record->max_elements || index < 0)
+				{
+					ereport(elevel,
+							(errmsg("invalid index %d for configuration parameter \"%s\"", index, conf->gen.name),
+							 errdetail("allowed index is between 0 and %d", record->max_elements - 1)));
+
+					val = NULL;
+				}
 				else
 				{
-					double		result = *conf->variable[index];
-					snprintf(buffer, sizeof(buffer), "%g" ,
-							 result);
-					val = buffer;
+					if (conf->show_hook)
+						val = (*conf->show_hook) (index);
+					else
+					{
+						double		result = *conf->variable[index];
+
+						snprintf(buffer, sizeof(buffer), "%g",
+								 result);
+						val = buffer;
+					}
 				}
 			}
-		}
 			break;
 
 		case CONFIG_VAR_TYPE_STRING_ARRAY:
-		{
-			struct config_string_array *conf = (struct config_string_array *) record;
-			
-			if (index >= record->max_elements || index < 0)
 			{
-				ereport(elevel,
-					(errmsg("invalid index %d for configuration parameter \"%s\"",index, conf->gen.name),
-						 errdetail("allowed index is between 0 and %d",record->max_elements -1)));
-				
-				val = NULL;
+				struct config_string_array *conf = (struct config_string_array *) record;
+
+				if (index >= record->max_elements || index < 0)
+				{
+					ereport(elevel,
+							(errmsg("invalid index %d for configuration parameter \"%s\"", index, conf->gen.name),
+							 errdetail("allowed index is between 0 and %d", record->max_elements - 1)));
+
+					val = NULL;
+				}
+				else
+				{
+					if (conf->show_hook)
+						val = (*conf->show_hook) (index);
+					else if ((*conf->variable)[index] && ***conf->variable)
+						val = (*conf->variable)[index];
+					else
+						val = "";
+				}
 			}
-			else
+			break;
+		case CONFIG_VAR_TYPE_STRING_LIST:
 			{
+				struct config_string_list *conf = (struct config_string_list *) record;
+
 				if (conf->show_hook)
-					val = (*conf->show_hook) (index);
-				else if ( (*conf->variable)[index] && ***conf->variable)
-					val = (*conf->variable)[index];
+					val = (*conf->show_hook) ();
+				else if (conf->current_val)
+					val = conf->current_val;
 				else
 					val = "";
 			}
-		}
 			break;
-		case CONFIG_VAR_TYPE_STRING_LIST:
-		{
-			struct config_string_list *conf = (struct config_string_list *) record;
-			
-			if (conf->show_hook)
-				val = (*conf->show_hook) ();
-			else if (conf->current_val)
-				val = conf->current_val;
-			else
-				val = "";
-		}
-			break;
-			
+
 		default:
 			/* just to keep compiler quiet */
 			val = "???";
@@ -4507,7 +4615,8 @@ ShowOption(struct config_generic * record, int index, int elevel)
 }
 
 
-static bool value_slot_for_config_record_is_empty(struct config_generic* record, int index)
+static bool
+value_slot_for_config_record_is_empty(struct config_generic *record, int index)
 {
 	switch (record->vartype)
 	{
@@ -4519,41 +4628,46 @@ static bool value_slot_for_config_record_is_empty(struct config_generic* record,
 		case CONFIG_VAR_TYPE_ENUM:
 			return false;
 			break;
-			
+
 		case CONFIG_VAR_TYPE_INT_ARRAY:
-		{
-			struct config_int_array *conf = (struct config_int_array *) record;
-			if (conf->empty_slot_check_func)
-				return (*conf->empty_slot_check_func)(index);
-		}
+			{
+				struct config_int_array *conf = (struct config_int_array *) record;
+
+				if (conf->empty_slot_check_func)
+					return (*conf->empty_slot_check_func) (index);
+			}
 			break;
-			
+
 		case CONFIG_VAR_TYPE_DOUBLE_ARRAY:
-		{
-			struct config_double_array *conf = (struct config_double_array *) record;
-			if (conf->empty_slot_check_func)
-				return (*conf->empty_slot_check_func)(index);
-		}
+			{
+				struct config_double_array *conf = (struct config_double_array *) record;
+
+				if (conf->empty_slot_check_func)
+					return (*conf->empty_slot_check_func) (index);
+			}
 			break;
-			
+
 		case CONFIG_VAR_TYPE_STRING_ARRAY:
-		{
-			struct config_string_array *conf = (struct config_string_array *) record;
-			if (conf->empty_slot_check_func)
-				return (*conf->empty_slot_check_func)(index);
-		}
+			{
+				struct config_string_array *conf = (struct config_string_array *) record;
+
+				if (conf->empty_slot_check_func)
+					return (*conf->empty_slot_check_func) (index);
+			}
 			break;
-			
+
 		default:
 			break;
 	}
 	return false;
 }
 
-bool set_config_option_for_session(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char *name, const char *value)
+bool
+set_config_option_for_session(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *name, const char *value)
 {
-	bool ret;
+	bool		ret;
 	MemoryContext oldCxt = MemoryContextSwitchTo(TopMemoryContext);
+
 	ret = set_one_config_option(name, value, CFGCXT_SESSION, PGC_S_SESSION, FRONTEND_ONLY_ERROR);
 	if (ret == true)
 	{
@@ -4563,18 +4677,19 @@ bool set_config_option_for_session(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 	return ret;
 }
 
-bool reset_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+bool
+reset_all_variables(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
-	int i;
-	int elevel = (frontend == NULL)?FATAL:FRONTEND_ONLY_ERROR;
+	int			i;
+	int			elevel = (frontend == NULL) ? FATAL : FRONTEND_ONLY_ERROR;
 	MemoryContext oldCxt = MemoryContextSwitchTo(TopMemoryContext);
 
 	ereport(DEBUG2,
-		(errmsg("RESET ALL CONFIG VARIABLES")));
+			(errmsg("RESET ALL CONFIG VARIABLES")));
 
 	for (i = 0; i < num_all_parameters; ++i)
 	{
-		struct config_generic* record = all_parameters[i];
+		struct config_generic *record = all_parameters[i];
 
 		/* Don't reset if special exclusion from RESET ALL */
 		if (record->flags & VAR_NO_RESET_ALL)
@@ -4582,13 +4697,14 @@ bool reset_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backen
 
 		if (record->dynamic_array_var)
 		{
-			int index;
+			int			index;
+
 			for (index = 0; index < record->max_elements; index++)
 			{
 				if (record->scontexts[index] != CFGCXT_SESSION)
 					continue;
 
-				if (value_slot_for_config_record_is_empty(record,index))
+				if (value_slot_for_config_record_is_empty(record, index))
 					continue;
 
 				setConfigOptionVar(record, record->name, index, NULL,
@@ -4598,7 +4714,8 @@ bool reset_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backen
 			/* Also set the default value for index free record if any */
 			if (record->flags & ARRAY_VAR_ALLOW_NO_INDEX)
 			{
-				struct config_generic* idx_free_record = get_index_free_record_if_any(record);
+				struct config_generic *idx_free_record = get_index_free_record_if_any(record);
+
 				if (idx_free_record && idx_free_record->scontexts[0] == CFGCXT_SESSION)
 				{
 					ereport(DEBUG1,
@@ -4626,21 +4743,23 @@ bool reset_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backen
 	return true;
 }
 
-bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+bool
+report_all_variables(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
-	int i;
-	int num_rows = 0;
-	const char* value;
+	int			i;
+	int			num_rows = 0;
+	const char *value;
 
 	send_row_description_for_detail_view(frontend, backend);
 
 	/*
-	 * grouped variables are not listed in all parameter array
-	 * so start with group variables.
+	 * grouped variables are not listed in all parameter array so start with
+	 * group variables.
 	 */
 	for (i = 0; ConfigureVarGroups[i].gen.name; i++)
 	{
-		int rows = send_grouped_type_variable_to_frontend(&ConfigureVarGroups[i], frontend, backend);
+		int			rows = send_grouped_type_variable_to_frontend(&ConfigureVarGroups[i], frontend, backend);
+
 		if (rows < 0)
 			return false;
 		num_rows += rows;
@@ -4648,7 +4767,8 @@ bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 
 	for (i = 0; i < num_all_parameters; ++i)
 	{
-		struct config_generic* record = all_parameters[i];
+		struct config_generic *record = all_parameters[i];
+
 		if (record->flags & VAR_PART_OF_GROUP)
 			continue;
 
@@ -4657,7 +4777,8 @@ bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 
 		if (record->dynamic_array_var)
 		{
-			int rows = send_array_type_variable_to_frontend(record, frontend, backend);
+			int			rows = send_array_type_variable_to_frontend(record, frontend, backend);
+
 			if (rows < 0)
 				return false;
 			num_rows += rows;
@@ -4669,7 +4790,7 @@ bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 			if (value == NULL)
 				return false;
 			send_config_var_detail_row(frontend, backend, record->name, value, record->description);
-			pfree((void*)value);
+			pfree((void *) value);
 			num_rows++;
 		}
 	}
@@ -4678,25 +4799,27 @@ bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backe
 }
 
 
-bool report_config_variable(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* var_name)
+bool
+report_config_variable(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *var_name)
 {
-	int index = 0;
-	char *value;
-	int num_rows = 0;
-	struct config_generic* record;
+	int			index = 0;
+	char	   *value;
+	int			num_rows = 0;
+	struct config_generic *record;
 
-	if ( strcmp(var_name,"all") == 0)
-		return report_all_variables(frontend,backend);
+	if (strcmp(var_name, "all") == 0)
+		return report_all_variables(frontend, backend);
 
 	/* search the variable */
 	record = find_option(var_name, WARNING);
 	if (record == NULL)
 	{
-		int i;
+		int			i;
+
 		/* check if the var name match the grouped var */
 		for (i = 0; ConfigureVarGroups[i].gen.name; i++)
 		{
-			if (strcmp(ConfigureVarGroups[i].gen.name,var_name) == 0)
+			if (strcmp(ConfigureVarGroups[i].gen.name, var_name) == 0)
 			{
 				send_row_description_for_detail_view(frontend, backend);
 				num_rows = send_grouped_type_variable_to_frontend(&ConfigureVarGroups[i], frontend, backend);
@@ -4708,7 +4831,7 @@ bool report_config_variable(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 		}
 
 		ereport(FRONTEND_ONLY_ERROR,
-			(errmsg("config variable \"%s\" not found",var_name)));
+				(errmsg("config variable \"%s\" not found", var_name)));
 
 		return false;
 	}
@@ -4720,10 +4843,12 @@ bool report_config_variable(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 		if (index < 0)
 		{
-			/* Index is not included in parameter name.
-			 * this is the multi value config variable */
+			/*
+			 * Index is not included in parameter name. this is the multi
+			 * value config variable
+			 */
 			ereport(DEBUG3,
-					(errmsg("show parameter \"%s\" with out index",var_name)));
+					(errmsg("show parameter \"%s\" with out index", var_name)));
 			send_row_description_for_detail_view(frontend, backend);
 			num_rows = send_array_type_variable_to_frontend(record, frontend, backend);
 			if (num_rows < 0)
@@ -4735,29 +4860,30 @@ bool report_config_variable(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	{
 		/* single value only */
 		num_rows = 1;
-		send_row_description(frontend, backend, 1, (char**)&var_name);
+		send_row_description(frontend, backend, 1, (char **) &var_name);
 		value = ShowOption(record, index, FRONTEND_ONLY_ERROR);
 		if (value == NULL)
 			return false;
 		send_config_var_value_only_row(frontend, backend, value);
-		pfree((void*)value);
+		pfree((void *) value);
 	}
 
-	send_complete_and_ready(frontend, backend, "SELECT" ,num_rows);
+	send_complete_and_ready(frontend, backend, "SELECT", num_rows);
 
 	return true;
 }
 
-static int send_array_type_variable_to_frontend(struct config_generic* record, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+static int
+send_array_type_variable_to_frontend(struct config_generic *record, POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
 	if (record->dynamic_array_var)
 	{
-		const int MAX_NAME_LEN = 255;
-		char name[MAX_NAME_LEN +1];
-		int index;
-		int num_rows = 0;
+		const int	MAX_NAME_LEN = 255;
+		char		name[MAX_NAME_LEN + 1];
+		int			index;
+		int			num_rows = 0;
 		const char *value;
-		struct config_generic* idx_free_record = get_index_free_record_if_any(record);
+		struct config_generic *idx_free_record = get_index_free_record_if_any(record);
 
 		/* Before printing the array, print the index free value if any */
 		if (idx_free_record)
@@ -4765,47 +4891,50 @@ static int send_array_type_variable_to_frontend(struct config_generic* record, P
 			value = ShowOption(idx_free_record, 0, FRONTEND_ONLY_ERROR);
 			if (value)
 			{
-				send_config_var_detail_row(frontend, backend, (const char*)idx_free_record->name, value, record->description);
-				pfree((void*)value);
+				send_config_var_detail_row(frontend, backend, (const char *) idx_free_record->name, value, record->description);
+				pfree((void *) value);
 				num_rows++;
 			}
 		}
 		for (index = 0; index < record->max_elements; index++)
 		{
-			if (value_slot_for_config_record_is_empty(record,index))
+			if (value_slot_for_config_record_is_empty(record, index))
 				continue;
 			/* construct the name with index */
-			snprintf(name, MAX_NAME_LEN, "%s%d",record->name,index);
+			snprintf(name, MAX_NAME_LEN, "%s%d", record->name, index);
 			value = ShowOption(record, index, FRONTEND_ONLY_ERROR);
 			if (value == NULL)
 				return -1;
-			send_config_var_detail_row(frontend, backend, (const char*)name, value, record->description);
-			pfree((void*)value);
+			send_config_var_detail_row(frontend, backend, (const char *) name, value, record->description);
+			pfree((void *) value);
 			num_rows++;
 		}
 		return num_rows;
 	}
-	return -1; /* error */
+	return -1;					/* error */
 }
 
-static int send_grouped_type_variable_to_frontend(struct config_grouped_array_var* grouped_record, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+static int
+send_grouped_type_variable_to_frontend(struct config_grouped_array_var *grouped_record, POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
-	int k,index;
-	int max_elements = grouped_record->var_list[0]->max_elements;
-	int num_rows = 0;
+	int			k,
+				index;
+	int			max_elements = grouped_record->var_list[0]->max_elements;
+	int			num_rows = 0;
 	const char *value;
 
-	for (k =0; k < grouped_record->var_count; k++)
+	for (k = 0; k < grouped_record->var_count; k++)
 	{
-		struct config_generic* record = grouped_record->var_list[k];
-		struct config_generic* idx_free_record = get_index_free_record_if_any(record);
+		struct config_generic *record = grouped_record->var_list[k];
+		struct config_generic *idx_free_record = get_index_free_record_if_any(record);
+
 		if (idx_free_record)
 		{
 			value = ShowOption(idx_free_record, 0, FRONTEND_ONLY_ERROR);
 			if (value)
 			{
-				send_config_var_detail_row(frontend, backend, (const char*)idx_free_record->name, value, record->description);
-				pfree((void*)value);
+				send_config_var_detail_row(frontend, backend, (const char *) idx_free_record->name, value, record->description);
+				pfree((void *) value);
 				num_rows++;
 			}
 		}
@@ -4813,22 +4942,22 @@ static int send_grouped_type_variable_to_frontend(struct config_grouped_array_va
 
 	for (index = 0; index < max_elements; index++)
 	{
-		for (k =0; k < grouped_record->var_count; k++)
+		for (k = 0; k < grouped_record->var_count; k++)
 		{
-			const int MAX_NAME_LEN = 255;
-			char name[MAX_NAME_LEN +1];
+			const int	MAX_NAME_LEN = 255;
+			char		name[MAX_NAME_LEN + 1];
 
-			struct config_generic* record = grouped_record->var_list[k];
+			struct config_generic *record = grouped_record->var_list[k];
 
-			if (value_slot_for_config_record_is_empty(record,index))
+			if (value_slot_for_config_record_is_empty(record, index))
 				break;
 			/* construct the name with index */
-			snprintf(name, MAX_NAME_LEN, "%s%d",record->name,index);
-			value = ShowOption(record, index,FRONTEND_ONLY_ERROR);
+			snprintf(name, MAX_NAME_LEN, "%s%d", record->name, index);
+			value = ShowOption(record, index, FRONTEND_ONLY_ERROR);
 			if (value == NULL)
 				return -1;
-			send_config_var_detail_row(frontend, backend, (const char*)name, value, record->description);
-			pfree((void*)value);
+			send_config_var_detail_row(frontend, backend, (const char *) name, value, record->description);
+			pfree((void *) value);
 			num_rows++;
 		}
 	}
@@ -4836,9 +4965,11 @@ static int send_grouped_type_variable_to_frontend(struct config_grouped_array_va
 	return num_rows;
 }
 
-static void send_row_description_for_detail_view(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
+static void
+send_row_description_for_detail_view(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
 	static char *field_names[] = {"item", "value", "description"};
+
 	send_row_description(frontend, backend, 3, field_names);
 }
-#endif /* not defined POOL_FRONTEND*/
+#endif							/* not defined POOL_FRONTEND */

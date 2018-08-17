@@ -458,7 +458,7 @@ list_member(const List *list, const void *datum)
 
 	return false;
 }
-#endif /*NOT_USED_IN_PGPOOL*/
+#endif							/* NOT_USED_IN_PGPOOL */
 /*
  * Return true iff 'datum' is a member of the list. Equality is
  * determined by using simple pointer comparison.
@@ -589,7 +589,7 @@ list_delete(List *list, void *datum)
 	return list;
 }
 
-#endif /*NOT_USED_IN_PGPOOL*/
+#endif							/* NOT_USED_IN_PGPOOL */
 
 /* As above, but use simple pointer equality */
 List *
@@ -719,7 +719,7 @@ list_union(const List *list1, const List *list2)
 	check_list_invariants(result);
 	return result;
 }
-#endif /*NOT_USED_IN_PGPOOL*/
+#endif							/* NOT_USED_IN_PGPOOL */
 
 /*
  * This variant of list_union() determines duplicates via simple
@@ -884,7 +884,7 @@ list_difference(const List *list1, const List *list2)
 	check_list_invariants(result);
 	return result;
 }
-#endif /*NOT_USED_IN_PGPOOL*/
+#endif							/* NOT_USED_IN_PGPOOL */
 
 /*
  * This variant of list_difference() determines list membership via
@@ -979,7 +979,7 @@ list_append_unique(List *list, void *datum)
 		return lappend(list, datum);
 }
 
-#endif /*NOT_USED_IN_PGPOOL*/
+#endif							/* NOT_USED_IN_PGPOOL */
 
 /*
  * This variant of list_append_unique() determines list membership via
@@ -1046,7 +1046,7 @@ list_concat_unique(List *list1, List *list2)
 	check_list_invariants(list1);
 	return list1;
 }
-#endif /*NOT_USED_IN_PGPOOL*/
+#endif							/* NOT_USED_IN_PGPOOL */
 
 /*
  * This variant of list_concat_unique() determines list membership via

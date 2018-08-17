@@ -28,29 +28,30 @@
 #include "read.h"
 
 static char read_char(PGconn *conn);
-static int read_int32(PGconn *conn);
-static int read_int16(PGconn *conn);
+static int	read_int32(PGconn *conn);
+static int	read_int16(PGconn *conn);
 static char *read_bytes(int len, PGconn *conn);
 static void read_and_discard(PGconn *conn);
-static void read_it(PGconn *conn, char * buf, int len);
+static void read_it(PGconn *conn, char *buf, int len);
 
 /*
  * Read message from connection until ready for query message is received.  If
  * a positive timeout is given, wait for timeout seconds then return if no
  * data is availble from the connection.
  */
-void read_until_ready_for_query(PGconn *conn, int timeout)
+void
+read_until_ready_for_query(PGconn *conn, int timeout)
 {
-	int kind;
-	int len;
-	char *buf;
-	char c;
-	char *p;
-	int fd;
-	int cont;
+	int			kind;
+	int			len;
+	char	   *buf;
+	char		c;
+	char	   *p;
+	int			fd;
+	int			cont;
 	struct timeval timeoutval;
-	fd_set readmask;
-	int fds;
+	fd_set		readmask;
+	int			fds;
 
 	cont = 1;
 
@@ -60,7 +61,7 @@ void read_until_ready_for_query(PGconn *conn, int timeout)
 		{
 			fd = PQsocket(conn);
 
-			for(;;)
+			for (;;)
 			{
 				FD_ZERO(&readmask);
 				FD_SET(fd, &readmask);
@@ -92,37 +93,37 @@ void read_until_ready_for_query(PGconn *conn, int timeout)
 		}
 
 		kind = read_char(conn);
-		switch(kind)
+		switch (kind)
 		{
-			case '1':	/* Parse complete */
+			case '1':			/* Parse complete */
 				fprintf(stderr, "<= BE ParseComplete\n");
 				read_and_discard(conn);
 				break;
 
-			case '2':	/* Bind complete */
+			case '2':			/* Bind complete */
 				fprintf(stderr, "<= BE BindComplete\n");
 				read_and_discard(conn);
 				break;
 
-			case '3':	/* Close complete */
+			case '3':			/* Close complete */
 				fprintf(stderr, "<= BE CloseComplete\n");
 				read_and_discard(conn);
 				break;
 
-			case 'C':	/* Command complete */
+			case 'C':			/* Command complete */
 				len = read_int32(conn);
 				buf = read_bytes(len - sizeof(int), conn);
 				fprintf(stderr, "<= BE CommandComplete(%s)\n", buf);
 				pg_free(buf);
 				break;
 
-			case 'D':	/* Data row */
+			case 'D':			/* Data row */
 				fprintf(stderr, "<= BE DataRow\n");
 				read_and_discard(conn);
 				break;
 
-			case 'E':	/* Error response */
-			case 'N':	/* Notice response */
+			case 'E':			/* Error response */
+			case 'N':			/* Notice response */
 				if (kind == 'E')
 					fprintf(stderr, "<= BE ErrorResponse(");
 				else
@@ -134,7 +135,7 @@ void read_until_ready_for_query(PGconn *conn, int timeout)
 					fprintf(stderr, "%c ", *p);
 					p++;
 					fprintf(stderr, "%s ", p);
-					p += strlen(p)+1;
+					p += strlen(p) + 1;
 				}
 
 				fprintf(stderr, ")\n");
@@ -142,69 +143,69 @@ void read_until_ready_for_query(PGconn *conn, int timeout)
 				pg_free(buf);
 				break;
 
-			case 'G':	/* Copy in response */
+			case 'G':			/* Copy in response */
 				fprintf(stderr, "<= BE CopyInResponse\n");
 				read_and_discard(conn);
 				break;
 
-			case 'H':	/* Copy out response */
+			case 'H':			/* Copy out response */
 				fprintf(stderr, "<= BE CopyOutResponse\n");
 				read_and_discard(conn);
 				break;
 
-			case 'I':	/* Empty query response */
+			case 'I':			/* Empty query response */
 				fprintf(stderr, "<= BE EmptyQueryResponse\n");
 				read_and_discard(conn);
 				break;
 
-			case 'S':	/* Parameter status */
+			case 'S':			/* Parameter status */
 				fprintf(stderr, "<= BE ParameterStatus\n");
 				read_and_discard(conn);
 				break;
 
-			case 'T':	/* Row Description */
+			case 'T':			/* Row Description */
 				fprintf(stderr, "<= BE RowDescription\n");
 				read_and_discard(conn);
 				break;
 
-			case 'V':	/* Function call response */
+			case 'V':			/* Function call response */
 				fprintf(stderr, "<= BE FunctionCallResponse\n");
 				read_and_discard(conn);
 				break;
 
-			case 'W':	/* Copy both response */
+			case 'W':			/* Copy both response */
 				fprintf(stderr, "<= BE CopyBothResponse\n");
 				read_and_discard(conn);
 				break;
 
-			case 'Z':	/* Ready for Query */
+			case 'Z':			/* Ready for Query */
 				len = read_int32(conn);
 				c = read_char(conn);
 				fprintf(stderr, "<= BE ReadyForQuery(%c)\n", c);
 				cont = 0;
 				break;
 
-			case 'c':	/* Copy Done */
+			case 'c':			/* Copy Done */
 				fprintf(stderr, "<= BE CopyDone\n");
 				read_and_discard(conn);
 				break;
 
-			case 'd':	/* Copy Data */
+			case 'd':			/* Copy Data */
 				fprintf(stderr, "<= BE CopyData\n");
 				read_and_discard(conn);
 				break;
 
-			case 'n':	/* No data */
+			case 'n':			/* No data */
 				fprintf(stderr, "<= BE NoData\n");
 				read_and_discard(conn);
 				break;
 
-			case 's':	/* Portal suspended */
+			case 's':			/* Portal suspended */
 				fprintf(stderr, "<= BE PortalSuspended\n");
 				read_and_discard(conn);
 				break;
 
-			case 't':	/* Parameter description */
+			case 't':			/* Parameter description */
 				fprintf(stderr, "<= BE ParameterDescription\n");
 				read_and_discard(conn);
 				break;
@@ -218,7 +219,7 @@ void read_until_ready_for_query(PGconn *conn, int timeout)
 		/* If nap-bwteen-line is requested, nap for some time */
 		if (read_nap > 0)
 		{
-			(void)usleep(read_nap);
+			(void) usleep(read_nap);
 		}
 	}
 }
@@ -226,11 +227,12 @@ void read_until_ready_for_query(PGconn *conn, int timeout)
 /*
  * Read a character from connection.
  */
-static char read_char(PGconn *conn)
+static char
+read_char(PGconn *conn)
 {
-	char c;
+	char		c;
 
-	read_it(conn, (char *)&c, sizeof(c));
+	read_it(conn, (char *) &c, sizeof(c));
 
 	return c;
 }
@@ -238,11 +240,12 @@ static char read_char(PGconn *conn)
 /*
  * Read an integer from connection.
  */
-static int read_int32(PGconn *conn)
+static int
+read_int32(PGconn *conn)
 {
-	int len;
+	int			len;
 
-	read_it(conn, (char *)&len, sizeof(len));
+	read_it(conn, (char *) &len, sizeof(len));
 
 	return ntohl(len);
 }
@@ -250,11 +253,12 @@ static int read_int32(PGconn *conn)
 /*
  * Read a short integer from connection.
  */
-static int read_int16(PGconn *conn)
+static int
+read_int16(PGconn *conn)
 {
-	short len;
+	short		len;
 
-	read_it(conn, (char *)&len, sizeof(len));
+	read_it(conn, (char *) &len, sizeof(len));
 
 	return ntohs(len);
 }
@@ -263,9 +267,10 @@ static int read_int16(PGconn *conn)
  * Read specified length of bytes from connection.
  * pg_malloc'ed buffer is returned.
  */
-static char *read_bytes(int len, PGconn *conn)
+static char *
+read_bytes(int len, PGconn *conn)
 {
-	char *buf;
+	char	   *buf;
 
 	buf = pg_malloc(len);
 
@@ -277,10 +282,11 @@ static char *read_bytes(int len, PGconn *conn)
 /*
  * Read and discard a packet.
  */
-static void read_and_discard(PGconn *conn)
+static void
+read_and_discard(PGconn *conn)
 {
-	int len;
-	char *buf;
+	int			len;
+	char	   *buf;
 
 	len = read_int32(conn);
 
@@ -294,9 +300,10 @@ static void read_and_discard(PGconn *conn)
 /*
  * Read requested bytes from conn. exit in case of error or EOF.
  */
-static void read_it(PGconn *conn, char *buf, int len)
+static void
+read_it(PGconn *conn, char *buf, int len)
 {
-	int sts;
+	int			sts;
 
 	if (len <= 0)
 		return;
@@ -321,5 +328,5 @@ static void read_it(PGconn *conn, char *buf, int len)
 
 		if (len <= 0)
 			break;
-	}	
+	}
 }

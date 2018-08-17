@@ -56,11 +56,11 @@ typedef struct ExtensibleNodeMethods
 	const char *extnodename;
 	Size		node_size;
 	void		(*nodeCopy) (struct ExtensibleNode *newnode,
-									   const struct ExtensibleNode *oldnode);
+							 const struct ExtensibleNode *oldnode);
 	bool		(*nodeEqual) (const struct ExtensibleNode *a,
-										  const struct ExtensibleNode *b);
+							  const struct ExtensibleNode *b);
 	void		(*nodeOut) (struct StringInfoData *str,
-										const struct ExtensibleNode *node);
+							const struct ExtensibleNode *node);
 	void		(*nodeRead) (struct ExtensibleNode *node);
 } ExtensibleNodeMethods;
 
@@ -75,4 +75,4 @@ extern const ExtensibleNodeMethods *GetExtensibleNodeMethods(const char *name,
 #define CUSTOMPATH_SUPPORT_BACKWARD_SCAN	0x0001
 #define CUSTOMPATH_SUPPORT_MARK_RESTORE		0x0002
 
-#endif   /* EXTENSIBLE_H */
+#endif							/* EXTENSIBLE_H */

@@ -64,9 +64,9 @@ poolinitmask(void)
 	sigfillset(&AuthBlockSig);
 
 	/*
-	 * Unmark those signals that should never be blocked. Some of these
-	 * signal names don't exist on all platforms.  Most do, but might as
-	 * well ifdef them all for consistency...
+	 * Unmark those signals that should never be blocked. Some of these signal
+	 * names don't exist on all platforms.  Most do, but might as well ifdef
+	 * them all for consistency...
 	 */
 #ifdef SIGTRAP
 	sigdelset(&BlockSig, SIGTRAP);
@@ -155,21 +155,20 @@ pool_signal(int signo, pool_sighandler_t func)
 	if (sigaction(signo, &act, &oact) < 0)
 		return SIG_ERR;
 	return oact.sa_handler;
-#endif   /* !HAVE_POSIX_SIGNALS */
+#endif							/* !HAVE_POSIX_SIGNALS */
 }
 
-int pool_signal_parent(int sig)
+int
+pool_signal_parent(int sig)
 {
 	/*
-	 * Check if saved parent pid is same as current parent.
-	 * This is a guard against sending the signal to init process
-	 * pgpool-II parent process crashed and left the child processes
-	 * orphan.
-	 * we make a little exception for pcp process children, since their
-	 * they want to signal the main pgpool-II process but main process is
-	 * not the direct parent
+	 * Check if saved parent pid is same as current parent. This is a guard
+	 * against sending the signal to init process pgpool-II parent process
+	 * crashed and left the child processes orphan. we make a little exception
+	 * for pcp process children, since their they want to signal the main
+	 * pgpool-II process but main process is not the direct parent
 	 */
-	if(processType != PT_PCP_WORKER && mypid != getppid())
+	if (processType != PT_PCP_WORKER && mypid != getppid())
 	{
 		/*
 		 * pgpool parent is no more alive, commiting sucide.
@@ -178,9 +177,9 @@ int pool_signal_parent(int sig)
 				(errmsg("pgpool-II main process died unexpectedly. exiting current process")));
 	}
 	ereport(DEBUG1,
-		(errmsg("sending signal:%d to the parent process with PID:%d", sig ,mypid)));
+			(errmsg("sending signal:%d to the parent process with PID:%d", sig, mypid)));
 
 	return kill(mypid, sig);
 }
 
-#endif   /* WIN32 */
+#endif							/* WIN32 */

@@ -43,41 +43,42 @@
 #include "utils/pool_stream.h"
 #include "pool_config.h"
 
-static int mystrlen(char *str, int upper, int *flag);
-static int mystrlinelen(char *str, int upper, int *flag);
-static int save_pending_data(POOL_CONNECTION *cp, void *data, int len);
-static int consume_pending_data(POOL_CONNECTION *cp, void *data, int len);
+static int	mystrlen(char *str, int upper, int *flag);
+static int	mystrlinelen(char *str, int upper, int *flag);
+static int	save_pending_data(POOL_CONNECTION * cp, void *data, int len);
+static int	consume_pending_data(POOL_CONNECTION * cp, void *data, int len);
 static MemoryContext SwitchToConnectionContext(bool backend_connection);
 #ifdef DEBUG
 static void dump_buffer(char *buf, int len);
 #endif
-static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len);
+static int	pool_write_flush(POOL_CONNECTION * cp, void *buf, int len);
 
 static MemoryContext
-    SwitchToConnectionContext(bool backend_connection)
+SwitchToConnectionContext(bool backend_connection)
 {
-    /*
-     * backend connection can live as long as process life,
-     * while the frontend connection is only for one session life.
-     * So we create backend connection in long living memory context
-     */
-    if(backend_connection)
-        return MemoryContextSwitchTo(TopMemoryContext);
-    else
-        return MemoryContextSwitchTo(ProcessLoopContext);
+	/*
+	 * backend connection can live as long as process life, while the frontend
+	 * connection is only for one session life. So we create backend
+	 * connection in long living memory context
+	 */
+	if (backend_connection)
+		return MemoryContextSwitchTo(TopMemoryContext);
+	else
+		return MemoryContextSwitchTo(ProcessLoopContext);
 }
 
 /*
 * open read/write file descriptors.
 * returns POOL_CONNECTION on success otherwise NULL.
 */
-POOL_CONNECTION *pool_open(int fd, bool backend_connection)
+POOL_CONNECTION *
+pool_open(int fd, bool backend_connection)
 {
 	POOL_CONNECTION *cp;
 
-    MemoryContext oldContext = SwitchToConnectionContext(backend_connection);
+	MemoryContext oldContext = SwitchToConnectionContext(backend_connection);
 
-	cp = (POOL_CONNECTION *)palloc0(sizeof(POOL_CONNECTION));
+	cp = (POOL_CONNECTION *) palloc0(sizeof(POOL_CONNECTION));
 
 	/* initialize write buffer */
 	cp->wbuf = palloc(WRITEBUFSZ);
@@ -99,7 +100,7 @@ POOL_CONNECTION *pool_open(int fd, bool backend_connection)
 	cp->fd = fd;
 	cp->socket_state = POOL_SOCKET_VALID;
 
-    MemoryContextSwitchTo(oldContext);
+	MemoryContextSwitchTo(oldContext);
 
 	return cp;
 }
@@ -107,7 +108,8 @@ POOL_CONNECTION *pool_open(int fd, bool backend_connection)
 /*
 * close read/write file descriptors.
 */
-void pool_close(POOL_CONNECTION *cp)
+void
+pool_close(POOL_CONNECTION * cp)
 {
 	/*
 	 * shutdown connection to the client so that pgpool is not blocked
@@ -131,26 +133,29 @@ void pool_close(POOL_CONNECTION *cp)
 	pfree(cp);
 }
 
-void pool_read_with_error(POOL_CONNECTION *cp, void *buf, int len,
-                          const char* err_context )
+void
+pool_read_with_error(POOL_CONNECTION * cp, void *buf, int len,
+					 const char *err_context)
 {
 	if (pool_read(cp, buf, len) < 0)
 	{
-        ereport(ERROR,
-			(errmsg("failed to read data of length %d from DB node: %d",len,cp->db_node_id),
-                 errdetail("error occurred when reading: %s",err_context?err_context:"")));
+		ereport(ERROR,
+				(errmsg("failed to read data of length %d from DB node: %d", len, cp->db_node_id),
+				 errdetail("error occurred when reading: %s", err_context ? err_context : "")));
 	}
 }
+
 /*
 * read len bytes from cp
 * returns 0 on success otherwise throws an ereport.
 */
-int pool_read(POOL_CONNECTION *cp, void *buf, int len)
+int
+pool_read(POOL_CONNECTION * cp, void *buf, int len)
 {
 	static char readbuf[READBUFSZ];
 
-	int consume_size;
-	int readlen;
+	int			consume_size;
+	int			readlen;
 
 	consume_size = consume_pending_data(cp, buf, len);
 	len -= consume_size;
@@ -162,35 +167,35 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 		{
 			if (!IS_MASTER_NODE_ID(cp->db_node_id) && (getpid() != mypid))
 			{
-                ereport(FATAL,
-                    (errmsg("unable to read data from DB node %d",cp->db_node_id),
-                         errdetail("data is not ready in DB node")));
+				ereport(FATAL,
+						(errmsg("unable to read data from DB node %d", cp->db_node_id),
+						 errdetail("data is not ready in DB node")));
 
 			}
 			else
 			{
-                ereport(ERROR,
-                    (errmsg("unable to read data from DB node %d",cp->db_node_id),
-                         errdetail("pool_check_fd call failed with an error \"%s\"", strerror(errno))));
+				ereport(ERROR,
+						(errmsg("unable to read data from DB node %d", cp->db_node_id),
+						 errdetail("pool_check_fd call failed with an error \"%s\"", strerror(errno))));
 			}
 		}
 
 		if (cp->ssl_active > 0)
 		{
-		  readlen = pool_ssl_read(cp, readbuf, READBUFSZ);
+			readlen = pool_ssl_read(cp, readbuf, READBUFSZ);
 		}
 		else
 		{
-		  readlen = read(cp->fd, readbuf, READBUFSZ);
-		  if (cp->isbackend)
-		  {
-			  ereport(DEBUG5,
-				  (errmsg("pool_read: read %d bytes from backend %d",
-						  readlen, cp->db_node_id)));
+			readlen = read(cp->fd, readbuf, READBUFSZ);
+			if (cp->isbackend)
+			{
+				ereport(DEBUG5,
+						(errmsg("pool_read: read %d bytes from backend %d",
+								readlen, cp->db_node_id)));
 #ifdef DEBUG
-			  dump_buffer(readbuf, readlen);
+				dump_buffer(readbuf, readlen);
 #endif
-		  }
+			}
 		}
 
 		if (readlen == -1)
@@ -198,7 +203,7 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 			if (errno == EINTR || errno == EAGAIN)
 			{
 				ereport(DEBUG5,
-					(errmsg("read on socket failed with error :\"%s\"",strerror(errno)),
+						(errmsg("read on socket failed with error :\"%s\"", strerror(errno)),
 						 errdetail("retrying...")));
 				continue;
 			}
@@ -210,33 +215,36 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 				{
 					cp->con_info->swallow_termination = 0;
 					ereport(FATAL,
-						(errmsg("unable to read data from DB node %d",cp->db_node_id),
+							(errmsg("unable to read data from DB node %d", cp->db_node_id),
 							 errdetail("pg_terminate_backend was called on the backend")));
 				}
 
-				/* if fail_over_on_backend_error is true, then trigger failover */
+				/*
+				 * if fail_over_on_backend_error is true, then trigger
+				 * failover
+				 */
 				if (pool_config->fail_over_on_backend_error)
 				{
 					notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 
-                    /* If we are in the main process, we will not exit */
+					/* If we are in the main process, we will not exit */
 					child_exit(POOL_EXIT_AND_RESTART);
 					ereport(ERROR,
-							(errmsg("unable to read data from DB node %d",cp->db_node_id),
+							(errmsg("unable to read data from DB node %d", cp->db_node_id),
 							 errdetail("socket read failed with an error \"%s\"", strerror(errno))));
 				}
 				else
 				{
 					ereport(ERROR,
-							(errmsg("unable to read data from DB node %d",cp->db_node_id),
+							(errmsg("unable to read data from DB node %d", cp->db_node_id),
 							 errdetail("socket read failed with an error \"%s\"", strerror(errno))));
 				}
 			}
 			else
 			{
-                ereport(FRONTEND_ERROR,
-					(errmsg("unable to read data from frontend"),
-                         errdetail("socket read failed with an error \"%s\"", strerror(errno))));
+				ereport(FRONTEND_ERROR,
+						(errmsg("unable to read data from frontend"),
+						 errdetail("socket read failed with an error \"%s\"", strerror(errno))));
 			}
 		}
 		else if (readlen == 0)
@@ -246,28 +254,29 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 			{
 				if (processType == PT_MAIN || processType == PT_HEALTH_CHECK)
 					ereport(ERROR,
-						(errmsg("unable to read data from DB node %d",cp->db_node_id),
+							(errmsg("unable to read data from DB node %d", cp->db_node_id),
 							 errdetail("EOF encountered with backend")));
 
-                ereport(FATAL,
-					(errmsg("unable to read data from DB node %d",cp->db_node_id),
-                         errdetail("EOF encountered with backend")));
+				ereport(FATAL,
+						(errmsg("unable to read data from DB node %d", cp->db_node_id),
+						 errdetail("EOF encountered with backend")));
 			}
 			else
 			{
 				/*
-				 * if backend offers authentication method, frontend could close connection
+				 * if backend offers authentication method, frontend could
+				 * close connection
 				 */
-                ereport(FRONTEND_ERROR,
-					(errmsg("unable to read data from frontend"),
-                         errdetail("EOF encountered with frontend")));
+				ereport(FRONTEND_ERROR,
+						(errmsg("unable to read data from frontend"),
+						 errdetail("EOF encountered with frontend")));
 			}
 		}
 
 		if (len < readlen)
 		{
 			/* overrun. we need to save remaining data to pending buffer */
-			save_pending_data(cp, readbuf+len, readlen-len);
+			save_pending_data(cp, readbuf + len, readlen - len);
 			memmove(buf, readbuf, len);
 			break;
 		}
@@ -284,20 +293,21 @@ int pool_read(POOL_CONNECTION *cp, void *buf, int len)
 * read exactly len bytes from cp
 * returns buffer address on success otherwise NULL.
 */
-char *pool_read2(POOL_CONNECTION *cp, int len)
+char *
+pool_read2(POOL_CONNECTION * cp, int len)
 {
-	char *buf;
-	int req_size;
-	int alloc_size;
-	int consume_size;
-	int readlen;
-    MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+	char	   *buf;
+	int			req_size;
+	int			alloc_size;
+	int			consume_size;
+	int			readlen;
+	MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
 
 	req_size = cp->len + len;
 
 	if (req_size > cp->bufsz2)
 	{
-		alloc_size = ((req_size+1)/READBUFSZ+1)*READBUFSZ;
+		alloc_size = ((req_size + 1) / READBUFSZ + 1) * READBUFSZ;
 		cp->buf2 = repalloc(cp->buf2, alloc_size);
 		cp->bufsz2 = alloc_size;
 	}
@@ -314,30 +324,30 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 		{
 			if (!IS_MASTER_NODE_ID(cp->db_node_id))
 			{
-                ereport(FATAL,
-                    (errmsg("unable to read data from DB node %d",cp->db_node_id),
-                         errdetail("data is not ready in DB node")));
-                
+				ereport(FATAL,
+						(errmsg("unable to read data from DB node %d", cp->db_node_id),
+						 errdetail("data is not ready in DB node")));
+
 			}
 			else
 			{
-                ereport(ERROR,
-                    (errmsg("unable to read data from DB node %d",cp->db_node_id),
-                         errdetail("pool_check_fd call failed with an error \"%s\"", strerror(errno))));
-            }
+				ereport(ERROR,
+						(errmsg("unable to read data from DB node %d", cp->db_node_id),
+						 errdetail("pool_check_fd call failed with an error \"%s\"", strerror(errno))));
+			}
 		}
 
 		if (cp->ssl_active > 0)
 		{
-		  readlen = pool_ssl_read(cp, buf, len);
+			readlen = pool_ssl_read(cp, buf, len);
 		}
 		else
 		{
-		  readlen = read(cp->fd, buf, len);
-		  if (cp->isbackend)
-			  ereport(DEBUG5,
-				  (errmsg("pool_read2: read %d bytes from backend %d",
-						  readlen, cp->db_node_id)));
+			readlen = read(cp->fd, buf, len);
+			if (cp->isbackend)
+				ereport(DEBUG5,
+						(errmsg("pool_read2: read %d bytes from backend %d",
+								readlen, cp->db_node_id)));
 		}
 
 		if (readlen == -1)
@@ -345,7 +355,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 			if (errno == EINTR || errno == EAGAIN)
 			{
 				ereport(DEBUG5,
-					(errmsg("read on socket failed with error :\"%s\"",strerror(errno)),
+						(errmsg("read on socket failed with error :\"%s\"", strerror(errno)),
 						 errdetail("retrying...")));
 				continue;
 			}
@@ -357,32 +367,35 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 				{
 					cp->con_info->swallow_termination = 0;
 					ereport(FATAL,
-						(errmsg("unable to read data from DB node %d",cp->db_node_id),
+							(errmsg("unable to read data from DB node %d", cp->db_node_id),
 							 errdetail("pg_terminate_backend was called on the backend")));
 				}
 
-				/* if fail_over_on_backend_error is true, then trigger failover */
+				/*
+				 * if fail_over_on_backend_error is true, then trigger
+				 * failover
+				 */
 				if (pool_config->fail_over_on_backend_error)
 				{
 					notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 					child_exit(POOL_EXIT_AND_RESTART);
-                    /* we are in main process */
-                    ereport(ERROR,
-                            (errmsg("unable to read data from DB node %d",cp->db_node_id),
-                             errdetail("socket read failed with an error \"%s\"", strerror(errno))));
+					/* we are in main process */
+					ereport(ERROR,
+							(errmsg("unable to read data from DB node %d", cp->db_node_id),
+							 errdetail("socket read failed with an error \"%s\"", strerror(errno))));
 				}
 				else
 				{
-                    ereport(ERROR,
-                        (errmsg("unable to read data from DB node %d",cp->db_node_id),
-                             errdetail("do not failover because fail_over_on_backend_error is off")));
+					ereport(ERROR,
+							(errmsg("unable to read data from DB node %d", cp->db_node_id),
+							 errdetail("do not failover because fail_over_on_backend_error is off")));
 				}
 			}
 			else
 			{
-                ereport(ERROR,
-                    (errmsg("unable to read data from frontend"),
-                         errdetail("socket read function returned -1")));
+				ereport(ERROR,
+						(errmsg("unable to read data from frontend"),
+						 errdetail("socket read function returned -1")));
 			}
 		}
 		else if (readlen == 0)
@@ -390,18 +403,19 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 			cp->socket_state = POOL_SOCKET_EOF;
 			if (cp->isbackend)
 			{
-                ereport(ERROR,
-                    (errmsg("unable to read data from backend"),
-                         errdetail("EOF read on socket")));
+				ereport(ERROR,
+						(errmsg("unable to read data from backend"),
+						 errdetail("EOF read on socket")));
 			}
 			else
 			{
 				/*
-				 * if backend offers authentication method, frontend could close connection
+				 * if backend offers authentication method, frontend could
+				 * close connection
 				 */
-                ereport(ERROR,
-                    (errmsg("unable to read data from frontend"),
-                         errdetail("EOF read on socket")));
+				ereport(ERROR,
+						(errmsg("unable to read data from frontend"),
+						 errdetail("EOF read on socket")));
 
 			}
 		}
@@ -409,7 +423,7 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
 		buf += readlen;
 		len -= readlen;
 	}
-    MemoryContextSwitchTo(oldContext);
+	MemoryContextSwitchTo(oldContext);
 	return cp->buf2;
 }
 
@@ -417,19 +431,20 @@ char *pool_read2(POOL_CONNECTION *cp, int len)
  * write len bytes to cp the write buffer.
  * returns 0 on success otherwise -1.
  */
-int pool_write_noerror(POOL_CONNECTION *cp, void *buf, int len)
+int
+pool_write_noerror(POOL_CONNECTION * cp, void *buf, int len)
 {
 	if (len < 0)
-        return -1;
+		return -1;
 
 	if (cp->no_forward)
 		return 0;
 
 	if (len == 1 && cp->isbackend)
 	{
-		char c;
+		char		c;
 
-		c = ((char *)buf)[0];
+		c = ((char *) buf)[0];
 
 		ereport(DEBUG5,
 				(errmsg("pool_write: to backend: %d kind:%c", cp->db_node_id, c)));
@@ -437,9 +452,9 @@ int pool_write_noerror(POOL_CONNECTION *cp, void *buf, int len)
 
 	if (!cp->isbackend)
 	{
-		char c;
+		char		c;
 
-		c = ((char *)buf)[0];
+		c = ((char *) buf)[0];
 
 		if (len == 1)
 			ereport(DEBUG5,
@@ -448,10 +463,10 @@ int pool_write_noerror(POOL_CONNECTION *cp, void *buf, int len)
 			ereport(DEBUG5,
 					(errmsg("pool_write: to frontend: length:%d po:%d", len, cp->wbufpo)));
 	}
-	
+
 	while (len > 0)
 	{
-		int remainder = WRITEBUFSZ - cp->wbufpo;
+		int			remainder = WRITEBUFSZ - cp->wbufpo;
 
 		/*
 		 * If requested data cannot be added to the write buffer, flush the
@@ -471,18 +486,18 @@ int pool_write_noerror(POOL_CONNECTION *cp, void *buf, int len)
 		if (cp->wbufpo >= WRITEBUFSZ)
 		{
 			/*
-			 * Write buffer is full. so flush buffer.
-			 * wbufpo is reset in pool_flush_it().
+			 * Write buffer is full. so flush buffer. wbufpo is reset in
+			 * pool_flush_it().
 			 */
 			if (pool_flush_it(cp) == -1)
 				return -1;
-            remainder = WRITEBUFSZ;
+			remainder = WRITEBUFSZ;
 		}
-        
+
 		/* check buffer size */
 		remainder = Min(remainder, len);
 
-		memcpy(cp->wbuf+cp->wbufpo, buf, remainder);
+		memcpy(cp->wbuf + cp->wbufpo, buf, remainder);
 		cp->wbufpo += remainder;
 		buf += remainder;
 		len -= remainder;
@@ -494,19 +509,20 @@ int pool_write_noerror(POOL_CONNECTION *cp, void *buf, int len)
  * write len bytes to cp the write buffer.
  * returns 0 on success otherwise ereport.
  */
-int pool_write(POOL_CONNECTION *cp, void *buf, int len)
+int
+pool_write(POOL_CONNECTION * cp, void *buf, int len)
 {
 	if (len < 0)
-        ereport(ERROR,
-			(errmsg("unable to write data to %s",cp->isbackend?"backend":"frontend"),
-                 errdetail("invalid data size: %d", len)));
-    
-    if(pool_write_noerror(cp,buf,len))
-        ereport(ERROR,
-            (errmsg("unable to write data to %s",cp->isbackend?"backend":"frontend"),
-                 errdetail("pool_flush failed")));
+		ereport(ERROR,
+				(errmsg("unable to write data to %s", cp->isbackend ? "backend" : "frontend"),
+				 errdetail("invalid data size: %d", len)));
 
-    return 0;
+	if (pool_write_noerror(cp, buf, len))
+		ereport(ERROR,
+				(errmsg("unable to write data to %s", cp->isbackend ? "backend" : "frontend"),
+				 errdetail("pool_flush failed")));
+
+	return 0;
 }
 
 
@@ -514,11 +530,13 @@ int pool_write(POOL_CONNECTION *cp, void *buf, int len)
  * Direct write.
  * This function does not throws an ereport in case of an error
  */
-static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
+static int
+pool_write_flush(POOL_CONNECTION * cp, void *buf, int len)
 {
-	int sts;
-	int wlen;
-	int offset;
+	int			sts;
+	int			wlen;
+	int			offset;
+
 	wlen = len;
 
 	ereport(DEBUG5,
@@ -537,11 +555,11 @@ static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 
 		if (cp->ssl_active > 0)
 		{
-			sts = pool_ssl_write(cp, buf+offset, wlen);
+			sts = pool_ssl_write(cp, buf + offset, wlen);
 		}
 		else
 		{
-			sts = write(cp->fd, buf+offset, wlen);
+			sts = write(cp->fd, buf + offset, wlen);
 		}
 
 		if (sts >= 0)
@@ -579,17 +597,18 @@ static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 
 		else
 		{
-			/* If this is the backend stream, report error. Otherwise
-			 * just report debug message.
+			/*
+			 * If this is the backend stream, report error. Otherwise just
+			 * report debug message.
 			 */
 			if (cp->isbackend)
 				ereport(WARNING,
-					(errmsg("write on backend %d failed with error :\"%s\"",cp->db_node_id,strerror(errno)),
-						 errdetail("while trying to write data from offset: %d wlen: %d",offset, wlen)));
+						(errmsg("write on backend %d failed with error :\"%s\"", cp->db_node_id, strerror(errno)),
+						 errdetail("while trying to write data from offset: %d wlen: %d", offset, wlen)));
 			else
 				ereport(DEBUG5,
-					(errmsg("write on frontend failed with error :\"%s\"",strerror(errno)),
-						 errdetail("while trying to write data from offset: %d wlen: %d",offset, wlen)));
+						(errmsg("write on frontend failed with error :\"%s\"", strerror(errno)),
+						 errdetail("while trying to write data from offset: %d wlen: %d", offset, wlen)));
 			return -1;
 		}
 	}
@@ -601,11 +620,13 @@ static int pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
  * flush write buffer
  * This function does not throws an ereport in case of an error
  */
-int pool_flush_it(POOL_CONNECTION *cp)
+int
+pool_flush_it(POOL_CONNECTION * cp)
 {
-	int sts;
-	int wlen;
-	int offset;
+	int			sts;
+	int			wlen;
+	int			offset;
+
 	wlen = cp->wbufpo;
 
 	ereport(DEBUG5,
@@ -624,11 +645,11 @@ int pool_flush_it(POOL_CONNECTION *cp)
 
 		if (cp->ssl_active > 0)
 		{
-		  sts = pool_ssl_write(cp, cp->wbuf + offset, wlen);
+			sts = pool_ssl_write(cp, cp->wbuf + offset, wlen);
 		}
 		else
 		{
-		  sts = write(cp->fd, cp->wbuf + offset, wlen);
+			sts = write(cp->fd, cp->wbuf + offset, wlen);
 		}
 
 		if (sts >= 0)
@@ -667,17 +688,18 @@ int pool_flush_it(POOL_CONNECTION *cp)
 
 		else
 		{
-			/* If this is the backend stream, report error. Otherwise
-			 * just report debug message.
+			/*
+			 * If this is the backend stream, report error. Otherwise just
+			 * report debug message.
 			 */
 			if (cp->isbackend)
 				ereport(WARNING,
-					(errmsg("write on backend %d failed with error :\"%s\"",cp->db_node_id,strerror(errno)),
-						 errdetail("while trying to write data from offset: %d wlen: %d",offset, wlen)));
+						(errmsg("write on backend %d failed with error :\"%s\"", cp->db_node_id, strerror(errno)),
+						 errdetail("while trying to write data from offset: %d wlen: %d", offset, wlen)));
 			else
 				ereport(DEBUG5,
-					(errmsg("write on frontend failed with error :\"%s\"",strerror(errno)),
-						 errdetail("while trying to write data from offset: %d wlen: %d",offset, wlen)));
+						(errmsg("write on frontend failed with error :\"%s\"", strerror(errno)),
+						 errdetail("while trying to write data from offset: %d wlen: %d", offset, wlen)));
 			cp->wbufpo = 0;
 			return -1;
 		}
@@ -691,7 +713,8 @@ int pool_flush_it(POOL_CONNECTION *cp)
 /*
  * flush write buffer and degenerate/failover if error occurs
  */
-int pool_flush(POOL_CONNECTION *cp)
+int
+pool_flush(POOL_CONNECTION * cp)
 {
 	if (pool_flush_it(cp) == -1)
 	{
@@ -701,7 +724,7 @@ int pool_flush(POOL_CONNECTION *cp)
 			{
 				cp->con_info->swallow_termination = 0;
 				ereport(FATAL,
-						(errmsg("unable to read data from DB node %d",cp->db_node_id),
+						(errmsg("unable to read data from DB node %d", cp->db_node_id),
 						 errdetail("pg_terminate_backend was called on the backend")));
 			}
 
@@ -710,7 +733,7 @@ int pool_flush(POOL_CONNECTION *cp)
 			{
 				notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 				ereport(LOG,
-					(errmsg("unable to flush data to backend"),
+						(errmsg("unable to flush data to backend"),
 						 errdetail("do not failover because I am the main process")));
 
 				child_exit(POOL_EXIT_AND_RESTART);
@@ -718,25 +741,25 @@ int pool_flush(POOL_CONNECTION *cp)
 			}
 			else
 			{
-                ereport(ERROR,
-                    (errmsg("unable to flush data to backend"),
-                         errdetail("do not failover because fail_over_on_backend_error is off")));
+				ereport(ERROR,
+						(errmsg("unable to flush data to backend"),
+						 errdetail("do not failover because fail_over_on_backend_error is off")));
 			}
 		}
 		else
 		{
 			/*
 			 * If we are in replication mode, we need to continue the
-			 * processing with backends to keep consistency among
-			 * backends, thus ignore error.
+			 * processing with backends to keep consistency among backends,
+			 * thus ignore error.
 			 */
 			if (REPLICATION)
-                ereport(NOTICE,
-                    (errmsg("unable to flush data to frontend"),
-                         errdetail("pgpool is in replication mode, ignoring error to keep consistency among backends")));
+				ereport(NOTICE,
+						(errmsg("unable to flush data to frontend"),
+						 errdetail("pgpool is in replication mode, ignoring error to keep consistency among backends")));
 			else
-                ereport(FRONTEND_ERROR,
-                    (errmsg("unable to flush data to frontend")));
+				ereport(FRONTEND_ERROR,
+						(errmsg("unable to flush data to frontend")));
 
 		}
 	}
@@ -746,58 +769,60 @@ int pool_flush(POOL_CONNECTION *cp)
 /*
  * same as pool_flush() but returns -ve value instead of ereport in case of failure
  */
-int pool_flush_noerror(POOL_CONNECTION *cp)
+int
+pool_flush_noerror(POOL_CONNECTION * cp)
 {
-    if (pool_flush_it(cp) == -1)
-    {
-        if (cp->isbackend)
-        {
+	if (pool_flush_it(cp) == -1)
+	{
+		if (cp->isbackend)
+		{
 			if (cp->con_info && cp->con_info->swallow_termination == 1)
 			{
 				cp->con_info->swallow_termination = 0;
 				ereport(FATAL,
-						(errmsg("unable to read data from DB node %d",cp->db_node_id),
+						(errmsg("unable to read data from DB node %d", cp->db_node_id),
 						 errdetail("pg_terminate_backend was called on the backend")));
 			}
 
-            /* if fail_over_on_backend_erro is true, then trigger failover */
-            if (pool_config->fail_over_on_backend_error)
-            {
-                notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
-                child_exit(POOL_EXIT_AND_RESTART);
+			/* if fail_over_on_backend_erro is true, then trigger failover */
+			if (pool_config->fail_over_on_backend_error)
+			{
+				notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
+				child_exit(POOL_EXIT_AND_RESTART);
 				ereport(LOG,
-					(errmsg("unable to flush data to backend"),
+						(errmsg("unable to flush data to backend"),
 						 errdetail("do not failover because I am the main process")));
-                return -1;
-            }
-            else
-            {
+				return -1;
+			}
+			else
+			{
 				ereport(LOG,
-					(errmsg("unable to flush data to backend"),
-                         errdetail("do not failover because fail_over_on_backend_error is off")));
-                return -1;
-            }
-        }
-        else
-        {
-            /*
-             * If we are in replication mode, we need to continue the
-             * processing with backends to keep consistency among
-             * backends, thus ignore error.
-             */
-            if (REPLICATION)
-                return 0;
-            else
-                return -1;
-        }
-    }
-    return 0;
+						(errmsg("unable to flush data to backend"),
+						 errdetail("do not failover because fail_over_on_backend_error is off")));
+				return -1;
+			}
+		}
+		else
+		{
+			/*
+			 * If we are in replication mode, we need to continue the
+			 * processing with backends to keep consistency among backends,
+			 * thus ignore error.
+			 */
+			if (REPLICATION)
+				return 0;
+			else
+				return -1;
+		}
+	}
+	return 0;
 }
 
 /*
  * combo of pool_write and pool_flush
  */
-void pool_write_and_flush(POOL_CONNECTION *cp, void *buf, int len)
+void
+pool_write_and_flush(POOL_CONNECTION * cp, void *buf, int len)
 {
 	pool_write(cp, buf, len);
 	pool_flush(cp);
@@ -806,11 +831,13 @@ void pool_write_and_flush(POOL_CONNECTION *cp, void *buf, int len)
 /*
  * same as pool_write_and_flush() but does not throws ereport when error occures
  */
-int pool_write_and_flush_noerror(POOL_CONNECTION *cp, void *buf, int len)
+int
+pool_write_and_flush_noerror(POOL_CONNECTION * cp, void *buf, int len)
 {
-	int ret;
-	ret = pool_write_noerror(cp,buf,len);
-	if(ret == 0)
+	int			ret;
+
+	ret = pool_write_noerror(cp, buf, len);
+	if (ret == 0)
 		return pool_flush_noerror(cp);
 	return ret;
 }
@@ -819,14 +846,15 @@ int pool_write_and_flush_noerror(POOL_CONNECTION *cp, void *buf, int len)
  * read a string until EOF or NULL is encountered.
  * if line is not 0, read until new line is encountered.
 */
-char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
+char *
+pool_read_string(POOL_CONNECTION * cp, int *len, int line)
 {
-	int readp;
-	int readsize;
-	int readlen;
-	int strlength;
-	int flag;
-	int consume_size;
+	int			readp;
+	int			readsize;
+	int			readlen;
+	int			strlength;
+	int			flag;
+	int			consume_size;
 
 #ifdef DEBUG
 	static char pbuf[READBUFSZ];
@@ -838,9 +866,10 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 	/* initialize read buffer */
 	if (cp->sbufsz == 0)
 	{
-        MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+		MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+
 		cp->sbuf = palloc(READBUFSZ);
-        MemoryContextSwitchTo(oldContext);
+		MemoryContextSwitchTo(oldContext);
 
 		cp->sbufsz = READBUFSZ;
 		*cp->sbuf = '\0';
@@ -850,17 +879,18 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 	if (cp->len)
 	{
 		if (line)
-			strlength = mystrlinelen(cp->hp+cp->po, cp->len, &flag);
+			strlength = mystrlinelen(cp->hp + cp->po, cp->len, &flag);
 		else
-			strlength = mystrlen(cp->hp+cp->po, cp->len, &flag);
+			strlength = mystrlen(cp->hp + cp->po, cp->len, &flag);
 
 		/* buffer is too small? */
 		if ((strlength + 1) > cp->sbufsz)
 		{
-            MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
-			cp->sbufsz = ((strlength+1)/READBUFSZ+1)*READBUFSZ;
+			MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+
+			cp->sbufsz = ((strlength + 1) / READBUFSZ + 1) * READBUFSZ;
 			cp->sbuf = repalloc(cp->sbuf, cp->sbufsz);
-            MemoryContextSwitchTo(oldContext);
+			MemoryContextSwitchTo(oldContext);
 		}
 
 		/* consume pending and save to read string buffer */
@@ -871,8 +901,9 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		/* is the string null terminated? */
 		if (consume_size == strlength && !flag)
 		{
-			/* not null or line terminated.
-			 * we need to read more since we have not encountered NULL or new line yet
+			/*
+			 * not null or line terminated. we need to read more since we have
+			 * not encountered NULL or new line yet
 			 */
 			readsize = cp->sbufsz - strlength;
 			readp = strlength;
@@ -880,12 +911,13 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		else
 		{
 			ereport(DEBUG5,
-				(errmsg("reading string data"),
+					(errmsg("reading string data"),
 					 errdetail("read all from pending data. po:%d len:%d",
 							   cp->po, cp->len)));
 			return cp->sbuf;
 		}
-	} else
+	}
+	else
 	{
 		readsize = cp->sbufsz;
 	}
@@ -896,26 +928,26 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		{
 			if (!IS_MASTER_NODE_ID(cp->db_node_id))
 			{
-                ereport(FATAL,
-                    (errmsg("unable to read data from DB node %d",cp->db_node_id),
-                         errdetail("data is not ready in DB node")));
-                
+				ereport(FATAL,
+						(errmsg("unable to read data from DB node %d", cp->db_node_id),
+						 errdetail("data is not ready in DB node")));
+
 			}
 			else
 			{
-                ereport(ERROR,
-                    (errmsg("unable to read data from DB node %d",cp->db_node_id),
-                         errdetail("pool_check_fd call failed with an error \"%s\"", strerror(errno))));
-            }
+				ereport(ERROR,
+						(errmsg("unable to read data from DB node %d", cp->db_node_id),
+						 errdetail("pool_check_fd call failed with an error \"%s\"", strerror(errno))));
+			}
 		}
 
 		if (cp->ssl_active > 0)
 		{
-		  readlen = pool_ssl_read(cp, cp->sbuf+readp, readsize);
+			readlen = pool_ssl_read(cp, cp->sbuf + readp, readsize);
 		}
 		else
 		{
-		  readlen = read(cp->fd, cp->sbuf+readp, readsize);
+			readlen = read(cp->fd, cp->sbuf + readp, readsize);
 		}
 
 		if (readlen == -1)
@@ -927,21 +959,21 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 				{
 					cp->con_info->swallow_termination = 0;
 					ereport(FATAL,
-							(errmsg("unable to read data from DB node %d",cp->db_node_id),
+							(errmsg("unable to read data from DB node %d", cp->db_node_id),
 							 errdetail("pg_terminate_backend was called on the backend")));
 				}
 
 				notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 				child_exit(POOL_EXIT_AND_RESTART);
-                ereport(ERROR,
-                        (errmsg("unable to read data from frontend"),
-                         errdetail("socket read function returned -1")));
+				ereport(ERROR,
+						(errmsg("unable to read data from frontend"),
+						 errdetail("socket read function returned -1")));
 			}
 			else
 			{
-                ereport(ERROR,
-                    (errmsg("unable to read data from frontend"),
-                         errdetail("socket read function returned -1")));
+				ereport(ERROR,
+						(errmsg("unable to read data from frontend"),
+						 errdetail("socket read function returned -1")));
 
 			}
 		}
@@ -951,24 +983,24 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 			 * just returns an error, not trigger failover or degeneration
 			 */
 			cp->socket_state = POOL_SOCKET_EOF;
-            ereport(ERROR,
-                (errmsg("unable to read data from %s",cp->isbackend?"backend":"frontend"),
-                     errdetail("EOF read on socket")));
+			ereport(ERROR,
+					(errmsg("unable to read data from %s", cp->isbackend ? "backend" : "frontend"),
+					 errdetail("EOF read on socket")));
 
 		}
 
 		/* check overrun */
 		if (line)
-			strlength = mystrlinelen(cp->sbuf+readp, readlen, &flag);
+			strlength = mystrlinelen(cp->sbuf + readp, readlen, &flag);
 		else
-			strlength = mystrlen(cp->sbuf+readp, readlen, &flag);
+			strlength = mystrlen(cp->sbuf + readp, readlen, &flag);
 
 		if (strlength < readlen)
 		{
-			save_pending_data(cp, cp->sbuf+readp+strlength, readlen-strlength);
+			save_pending_data(cp, cp->sbuf + readp + strlength, readlen - strlength);
 			*len += strlength;
 			ereport(DEBUG5,
-				(errmsg("reading string data"),
+					(errmsg("reading string data"),
 					 errdetail("total read %d with pending data po:%d len:%d", *len, cp->po, cp->len)));
 			return cp->sbuf;
 		}
@@ -980,7 +1012,7 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		{
 			/* ok we have read all data */
 			ereport(DEBUG5,
-				(errmsg("reading string data"),
+					(errmsg("reading string data"),
 					 errdetail("all data read: total read %d", *len)));
 			break;
 		}
@@ -988,12 +1020,13 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 		readp += readlen;
 		readsize = READBUFSZ;
 
-		if ((*len+readsize) > cp->sbufsz)
+		if ((*len + readsize) > cp->sbufsz)
 		{
 			cp->sbufsz += READBUFSZ;
-            MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+			MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+
 			cp->sbuf = repalloc(cp->sbuf, cp->sbufsz);
-            MemoryContextSwitchTo(oldContext);
+			MemoryContextSwitchTo(oldContext);
 		}
 	}
 	return cp->sbuf;
@@ -1002,7 +1035,8 @@ char *pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 /*
  * Set db node id to connection.
  */
-void pool_set_db_node_id(POOL_CONNECTION *con, int db_node_id)
+void
+pool_set_db_node_id(POOL_CONNECTION * con, int db_node_id)
 {
 	if (!con)
 		return;
@@ -1018,20 +1052,21 @@ void pool_set_db_node_id(POOL_CONNECTION *con, int db_node_id)
  *	mystrlen("abc", 4) returns 4
  *	mystrlen("abc", 5) returns 4
  */
-static int mystrlen(char *str, int upper, int *flag)
+static int
+mystrlen(char *str, int upper, int *flag)
 {
-	int len;
+	int			len;
 
 	*flag = 0;
 
-	for (len = 0;len < upper; len++, str++)
+	for (len = 0; len < upper; len++, str++)
 	{
-	    if (!*str)
-	    {
+		if (!*str)
+		{
 			len++;
 			*flag = 1;
 			break;
-	    }
+		}
 	}
 	return len;
 }
@@ -1048,20 +1083,21 @@ static int mystrlen(char *str, int upper, int *flag)
  *	mystrlinelen("abcd\nefg", 5) returns 5
  *	mystrlinelen("abcd\nefg", 6) returns 5
  */
-static int mystrlinelen(char *str, int upper, int *flag)
+static int
+mystrlinelen(char *str, int upper, int *flag)
 {
-	int len;
+	int			len;
 
 	*flag = 0;
 
-	for (len = 0;len < upper; len++, str++)
+	for (len = 0; len < upper; len++, str++)
 	{
-	    if (!*str || *str == '\n')
-	    {
+		if (!*str || *str == '\n')
+		{
 			len++;
 			*flag = 1;
 			break;
-	    }
+		}
 	}
 	return len;
 }
@@ -1069,11 +1105,12 @@ static int mystrlinelen(char *str, int upper, int *flag)
 /*
  * save pending data
  */
-static int save_pending_data(POOL_CONNECTION *cp, void *data, int len)
+static int
+save_pending_data(POOL_CONNECTION * cp, void *data, int len)
 {
-	int reqlen;
-	size_t realloc_size;
-	char *p;
+	int			reqlen;
+	size_t		realloc_size;
+	char	   *p;
 
 	/* to be safe */
 	if (cp->len == 0)
@@ -1085,11 +1122,12 @@ static int save_pending_data(POOL_CONNECTION *cp, void *data, int len)
 	if (reqlen > cp->bufsz)
 	{
 		/* too small, enlarge it */
-		realloc_size = (reqlen/READBUFSZ+1)*READBUFSZ;
+		realloc_size = (reqlen / READBUFSZ + 1) * READBUFSZ;
 
-        MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+		MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+
 		p = repalloc(cp->hp, realloc_size);
-        MemoryContextSwitchTo(oldContext);
+		MemoryContextSwitchTo(oldContext);
 
 		cp->bufsz = realloc_size;
 		cp->hp = p;
@@ -1104,9 +1142,10 @@ static int save_pending_data(POOL_CONNECTION *cp, void *data, int len)
 /*
  * consume pending data. returns actually consumed data length.
  */
-static int consume_pending_data(POOL_CONNECTION *cp, void *data, int len)
+static int
+consume_pending_data(POOL_CONNECTION * cp, void *data, int len)
 {
-	int consume_size;
+	int			consume_size;
 
 	if (cp->len <= 0)
 		return 0;
@@ -1126,11 +1165,12 @@ static int consume_pending_data(POOL_CONNECTION *cp, void *data, int len)
 /*
  * pool_unread: Put back data to input buffer
  */
-int pool_unread(POOL_CONNECTION *cp, void *data, int len)
+int
+pool_unread(POOL_CONNECTION * cp, void *data, int len)
 {
-	void *p = cp->hp;
-	int n = cp->len + len;
-	int realloc_size;
+	void	   *p = cp->hp;
+	int			n = cp->len + len;
+	int			realloc_size;
 
 	/*
 	 * Optimization to avoid mmove. If there's enough space in front of
@@ -1146,13 +1186,14 @@ int pool_unread(POOL_CONNECTION *cp, void *data, int len)
 
 	if (cp->bufsz < n)
 	{
-		realloc_size = (n/READBUFSZ+1)*READBUFSZ;
+		realloc_size = (n / READBUFSZ + 1) * READBUFSZ;
 
-        MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+		MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+
 		p = repalloc(cp->hp, realloc_size);
-        MemoryContextSwitchTo(oldContext);
-		
-        cp->hp = p;
+		MemoryContextSwitchTo(oldContext);
+
+		cp->hp = p;
 		cp->bufsz = realloc_size;
 	}
 	if (cp->len != 0)
@@ -1166,15 +1207,16 @@ int pool_unread(POOL_CONNECTION *cp, void *data, int len)
 /*
  * pool_push: Push data into buffer stack.
  */
-int pool_push(POOL_CONNECTION *cp, void *data, int len)
+int
+pool_push(POOL_CONNECTION * cp, void *data, int len)
 {
-	char *p;
+	char	   *p;
 
 	ereport(DEBUG5,
-		(errmsg("pushing data of len: %d", len)));
+			(errmsg("pushing data of len: %d", len)));
 
 
-    MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+	MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
 
 	if (cp->bufsz3 == 0)
 	{
@@ -1189,7 +1231,7 @@ int pool_push(POOL_CONNECTION *cp, void *data, int len)
 	memcpy(p, data, len);
 	cp->bufsz3 += len;
 
-    MemoryContextSwitchTo(oldContext);
+	MemoryContextSwitchTo(oldContext);
 	return 0;
 }
 
@@ -1197,7 +1239,8 @@ int pool_push(POOL_CONNECTION *cp, void *data, int len)
  * pool_pop: Pop data from buffer stack and put back data using
  * pool_unread.
  */
-void pool_pop(POOL_CONNECTION *cp, int *len)
+void
+pool_pop(POOL_CONNECTION * cp, int *len)
 {
 	if (cp->bufsz3 == 0)
 	{
@@ -1220,7 +1263,8 @@ void pool_pop(POOL_CONNECTION *cp, int *len)
  * pool_stacklen: Returns buffer stack length
  * pool_unread.
  */
-int pool_stacklen(POOL_CONNECTION *cp)
+int
+pool_stacklen(POOL_CONNECTION * cp)
 {
 	return cp->bufsz3;
 }
@@ -1228,47 +1272,49 @@ int pool_stacklen(POOL_CONNECTION *cp)
 /*
  * set non-block flag
  */
-void pool_set_nonblock(int fd)
+void
+pool_set_nonblock(int fd)
 {
-	int var;
+	int			var;
 
 	/* set fd to none blocking */
 	var = fcntl(fd, F_GETFL, 0);
 	if (var == -1)
 	{
-        ereport(FATAL,
-            (errmsg("unable to set options on socket"),
-                 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
+		ereport(FATAL,
+				(errmsg("unable to set options on socket"),
+				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
 
 	}
 	if (fcntl(fd, F_SETFL, var | O_NONBLOCK) == -1)
 	{
-        ereport(FATAL,
-            (errmsg("unable to set options on socket"),
-                 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
+		ereport(FATAL,
+				(errmsg("unable to set options on socket"),
+				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
 	}
 }
 
 /*
  * unset non-block flag
  */
-void pool_unset_nonblock(int fd)
+void
+pool_unset_nonblock(int fd)
 {
-	int var;
+	int			var;
 
 	/* set fd to none blocking */
 	var = fcntl(fd, F_GETFL, 0);
 	if (var == -1)
 	{
-        ereport(FATAL,
-            (errmsg("unable to set options on socket"),
-                 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
+		ereport(FATAL,
+				(errmsg("unable to set options on socket"),
+				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
 	}
 	if (fcntl(fd, F_SETFL, var & ~O_NONBLOCK) == -1)
 	{
-        ereport(FATAL,
-            (errmsg("unable to set options on socket"),
-                 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
+		ereport(FATAL,
+				(errmsg("unable to set options on socket"),
+				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
 	}
 }
 
@@ -1276,7 +1322,8 @@ void pool_unset_nonblock(int fd)
 /*
  * Debug aid
  */
-static void dump_buffer(char *buf, int len)
+static void
+dump_buffer(char *buf, int len)
 {
 	while (--len)
 	{
@@ -1285,38 +1332,44 @@ static void dump_buffer(char *buf, int len)
 	}
 }
 #endif
-int socket_write(int fd, void* buf, size_t len)
+int
+socket_write(int fd, void *buf, size_t len)
 {
-	int bytes_send = 0;
+	int			bytes_send = 0;
+
 	do
 	{
-		int ret;
+		int			ret;
+
 		ret = write(fd, buf + bytes_send, (len - bytes_send));
-		if (ret <=0)
+		if (ret <= 0)
 		{
 			if (errno == EINTR || errno == EAGAIN)
 			{
 				ereport(DEBUG5,
-						(errmsg("write on socket failed with error :\"%s\"",strerror(errno)),
+						(errmsg("write on socket failed with error :\"%s\"", strerror(errno)),
 						 errdetail("retrying...")));
 				continue;
 			}
 			ereport(LOG,
-					(errmsg("write on socket failed with error :\"%s\"",strerror(errno))));
+					(errmsg("write on socket failed with error :\"%s\"", strerror(errno))));
 			return -1;
 		}
 		bytes_send += ret;
-	}while (bytes_send < len);
+	} while (bytes_send < len);
 	return bytes_send;
 }
 
-int socket_read(int fd, void* buf, size_t len, int timeout)
+int
+socket_read(int fd, void *buf, size_t len, int timeout)
 {
-	int ret, read_len;
+	int			ret,
+				read_len;
+
 	read_len = 0;
 	struct timeval timeoutval;
-	fd_set readmask;
-	int fds;
+	fd_set		readmask;
+	int			fds;
 
 	while (read_len < len)
 	{
@@ -1326,7 +1379,7 @@ int socket_read(int fd, void* buf, size_t len, int timeout)
 		timeoutval.tv_sec = timeout;
 		timeoutval.tv_usec = 0;
 
-		fds = select(fd+1, &readmask, NULL, NULL, timeout?&timeoutval:NULL);
+		fds = select(fd + 1, &readmask, NULL, NULL, timeout ? &timeoutval : NULL);
 		if (fds == -1)
 		{
 			if (errno == EAGAIN || errno == EINTR)
@@ -1341,26 +1394,26 @@ int socket_read(int fd, void* buf, size_t len, int timeout)
 			return -2;
 		}
 		ret = read(fd, buf + read_len, (len - read_len));
-		if(ret < 0)
+		if (ret < 0)
 		{
 			if (errno == EINTR || errno == EAGAIN)
 			{
 				ereport(DEBUG5,
-						(errmsg("read from socket failed with error :\"%s\"",strerror(errno)),
+						(errmsg("read from socket failed with error :\"%s\"", strerror(errno)),
 						 errdetail("retrying...")));
 				continue;
 			}
 			ereport(LOG,
-					(errmsg("read from socket failed with error :\"%s\"",strerror(errno))));
+					(errmsg("read from socket failed with error :\"%s\"", strerror(errno))));
 			return -1;
 		}
-		if(ret == 0)
+		if (ret == 0)
 		{
 			ereport(LOG,
 					(errmsg("read from socket failed, remote end closed the connection")));
 			return 0;
 		}
-		read_len +=ret;
+		read_len += ret;
 	}
 	return read_len;
 }

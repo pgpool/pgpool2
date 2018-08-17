@@ -36,37 +36,40 @@
 
 
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
-extern int _fe_error_level;
+extern int	_fe_error_level;
 
-void *pg_malloc(size_t size);
+void	   *pg_malloc(size_t size);
 
-void *pg_malloc0(size_t size);
-void *pg_realloc(void *ptr, size_t size);
-char *pg_strdup(const char *in);
-void pg_free(void *ptr);
-void *palloc(unsigned int size);
-void *palloc0(unsigned int size);
-void pfree(void *pointer);
-char *pstrdup(const char *in);
-void *repalloc(void *pointer, unsigned int size);
+void	   *pg_malloc0(size_t size);
+void	   *pg_realloc(void *ptr, size_t size);
+char	   *pg_strdup(const char *in);
+void		pg_free(void *ptr);
+void	   *palloc(unsigned int size);
+void	   *palloc0(unsigned int size);
+void		pfree(void *pointer);
+char	   *pstrdup(const char *in);
+void	   *repalloc(void *pointer, unsigned int size);
 
 #ifdef __GNUC__
-extern int errhint(const char *fmt,...)
-__attribute__((format (printf, 1, 2)));
+extern int
+errhint(const char *fmt,...)
+__attribute__((format(printf, 1, 2)));
 
-extern int errdetail(const char *fmt,...)
-__attribute__((format (printf, 1, 2)));
+extern int
+errdetail(const char *fmt,...)
+__attribute__((format(printf, 1, 2)));
 
-extern void errmsg(const char *fmt,...)
-__attribute__((format (printf, 1, 2)));
+extern void
+errmsg(const char *fmt,...)
+__attribute__((format(printf, 1, 2)));
 #else
-extern int errhint(const char *fmt,...);
-extern int errdetail(const char *fmt,...);
+extern int	errhint(const char *fmt,...);
+extern int	errdetail(const char *fmt,...);
 extern void errmsg(const char *fmt,...);
 #endif
 
 extern int errstart(int elevel, const char *filename, int lineno,
-					 const char *funcname);
+		 const char *funcname);
 extern void errfinish(int dummy,...);
 
 /*
@@ -96,10 +99,12 @@ extern void errfinish(int dummy,...);
 								 * WARNING is for unexpected messages. */
 #define ERROR		20			/* user error - abort transaction; return to
 								 * known state */
-								/* Save ERROR value in PGERROR so it can be restored when Win32 includes
-								 * modify it.  We have to use a constant rather than ERROR because macros
-								 * are expanded only when referenced outside macros.
-								 */
+
+ /*
+  * Save ERROR value in PGERROR so it can be restored when Win32 includes
+  * modify it.  We have to use a constant rather than ERROR because macros are
+  * expanded only when referenced outside macros.
+  */
 
 #ifdef WIN32
 #define PGERROR		20
@@ -108,11 +113,11 @@ extern void errfinish(int dummy,...);
 #define PANIC		22			/* take down the other backends with me */
 
 #define FRONTEND_ERROR			23	/* transformed to ERROR at errstart */
-#define FRONTEND_ONLY_ERROR		24	/* this is treated as LOG message internally
-									 * for pgpool-II but forwarded to frontend clients
-									 * just like normal errors followed by readyForQuery
-									 * message
-									 */
+#define FRONTEND_ONLY_ERROR		24	/* this is treated as LOG message
+									 * internally for pgpool-II but forwarded
+									 * to frontend clients just like normal
+									 * errors followed by readyForQuery
+									 * message */
 
 #define ereport(elevel, rest)	\
 do { \
@@ -130,6 +135,6 @@ typedef enum
 	PGERROR_TERSE,				/* single-line error messages */
 	PGERROR_DEFAULT,			/* recommended style */
 	PGERROR_VERBOSE				/* all the facts, ma'am */
-}	PGErrorVerbosity;
+}			PGErrorVerbosity;
 
-#endif   /* FE_PORTS */
+#endif							/* FE_PORTS */

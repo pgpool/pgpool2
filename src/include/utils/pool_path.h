@@ -3,7 +3,7 @@
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Portions Copyright (c) 2003-2015,	PgPool Global Development Group
@@ -52,6 +52,6 @@ extern char *last_dir_separator(const char *filename);
 extern bool get_home_directory(char *buf, int bufsize);
 extern bool get_os_username(char *buf, int bufsize);
 extern char *get_current_working_dir(void);
-extern char *make_absolute_path(const char *path, const char* base_dir);
+extern char *make_absolute_path(const char *path, const char *base_dir);
 
-#endif /* POOL_PATH_H */
+#endif							/* POOL_PATH_H */

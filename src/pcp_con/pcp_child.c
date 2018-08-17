@@ -59,11 +59,12 @@
 #include "utils/elog.h"
 #include "parser/pg_list.h"
 
-static int pcp_unix_fd, pcp_inet_fd;
+static int	pcp_unix_fd,
+			pcp_inet_fd;
 volatile bool *pcp_recovery_in_progress;
 static volatile sig_atomic_t pcp_got_sighup = 0;
 static volatile sig_atomic_t pcp_restart_request = 0;
-List *pcp_worker_children = NULL;
+List	   *pcp_worker_children = NULL;
 static volatile sig_atomic_t sigchld_request = 0;
 
 static RETSIGTYPE pcp_exit_handler(int sig);
@@ -72,7 +73,7 @@ static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE restart_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
 
-static int pcp_do_accept(int unix_fd, int inet_fd);
+static int	pcp_do_accept(int unix_fd, int inet_fd);
 static void start_pcp_command_processor_process(int port);
 static void pcp_child_will_die(int code, Datum arg);
 static void pcp_kill_all_children(int sig);
@@ -96,7 +97,8 @@ static void reaper(void);
 /*
  * main entry point for pcp child process
  */
-void pcp_main(int unix_fd, int inet_fd)
+void
+pcp_main(int unix_fd, int inet_fd)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	struct timeval uptime;
@@ -110,10 +112,11 @@ void pcp_main(int unix_fd, int inet_fd)
 
 	pcp_recovery_in_progress = pool_shared_memory_create(sizeof(bool));
 	*pcp_recovery_in_progress = false;
+
 	/*
 	 * install the call back for preparation of exit
 	 */
-	on_system_exit(pcp_child_will_die, (Datum)NULL);
+	on_system_exit(pcp_child_will_die, (Datum) NULL);
 
 	/* set up signal handlers */
 	pool_signal(SIGTERM, pcp_exit_handler);
@@ -142,16 +145,17 @@ void pcp_main(int unix_fd, int inet_fd)
 	PG_exception_stack = &local_sigjmp_buf;
 
 	ereport(DEBUG1,
-			(errmsg("I am PCP child with pid:%d",getpid())));
+			(errmsg("I am PCP child with pid:%d", getpid())));
 
-	for(;;)
+	for (;;)
 	{
-		int port;
+		int			port;
+
 		errno = 0;
 		CHECK_RESTART_REQUEST;
 
 		port = pcp_do_accept(unix_fd, inet_fd);
-		if(port > 0)
+		if (port > 0)
 		{
 			start_pcp_command_processor_process(port);
 		}
@@ -161,12 +165,12 @@ void pcp_main(int unix_fd, int inet_fd)
 static int
 pcp_do_accept(int unix_fd, int inet_fd)
 {
-	fd_set readmask;
-	int fds;
+	fd_set		readmask;
+	int			fds;
 	struct sockaddr addr;
-	socklen_t addrlen;
-	int fd = 0;
-	int afd;
+	socklen_t	addrlen;
+	int			fd = 0;
+	int			afd;
 	int inet = 0;
 
 	set_ps_display("PCP: wait for connection request", false);
@@ -176,14 +180,14 @@ pcp_do_accept(int unix_fd, int inet_fd)
 	if (inet_fd)
 		FD_SET(inet_fd, &readmask);
 
-	fds = select(Max(unix_fd, inet_fd)+1, &readmask, NULL, NULL, NULL);
+	fds = select(Max(unix_fd, inet_fd) + 1, &readmask, NULL, NULL, NULL);
 	if (fds == -1)
 	{
 		if (errno == EAGAIN || errno == EINTR)
 			return -1;
 		ereport(ERROR,
 				(errmsg("unable to accept new pcp connection"),
-				 errdetail("select system call failed with error : \"%s\"",strerror(errno))));
+				 errdetail("select system call failed with error : \"%s\"", strerror(errno))));
 	}
 	if (FD_ISSET(unix_fd, &readmask))
 	{
@@ -192,7 +196,7 @@ pcp_do_accept(int unix_fd, int inet_fd)
 	if (FD_ISSET(inet_fd, &readmask))
 	{
 		fd = inet_fd;
-		inet++;
+		inet	  ++;
 	}
 
 	addrlen = sizeof(addr);
@@ -201,17 +205,18 @@ pcp_do_accept(int unix_fd, int inet_fd)
 	if (afd < 0)
 	{
 		/*
-		 * "Resource temporarily unavailable" (EAGAIN or EWOULDBLOCK)
-		 * can be silently ignored.
+		 * "Resource temporarily unavailable" (EAGAIN or EWOULDBLOCK) can be
+		 * silently ignored.
 		 */
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
 			ereport(ERROR,
 					(errmsg("unable to accept new pcp connection"),
-					 errdetail("socket accept system call failed with error : \"%s\"",strerror(errno))));
+					 errdetail("socket accept system call failed with error : \"%s\"", strerror(errno))));
 	}
 	if (pcp_got_sighup)
 	{
 		MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+
 		pool_get_config(get_config_file_name(), CFGCXT_RELOAD);
 		MemoryContextSwitchTo(oldContext);
 		pcp_got_sighup = 0;
@@ -220,7 +225,8 @@ pcp_do_accept(int unix_fd, int inet_fd)
 			(errmsg("I am PCP child with PID:%d and accept fd:%d", getpid(), afd)));
 	if (inet)
 	{
-		int on = 1;
+		int			on = 1;
+
 		if (setsockopt(afd, IPPROTO_TCP, TCP_NODELAY,
 					   (char *) &on,
 					   sizeof(on)) < 0)
@@ -228,7 +234,7 @@ pcp_do_accept(int unix_fd, int inet_fd)
 			close(afd);
 			ereport(ERROR,
 					(errmsg("unable to accept new pcp connection"),
-					 errdetail("setsockopt system call failed with error : \"%s\"",strerror(errno))));
+					 errdetail("setsockopt system call failed with error : \"%s\"", strerror(errno))));
 		}
 		if (setsockopt(afd, SOL_SOCKET, SO_KEEPALIVE,
 					   (char *) &on,
@@ -237,7 +243,7 @@ pcp_do_accept(int unix_fd, int inet_fd)
 			close(afd);
 			ereport(ERROR,
 					(errmsg("unable to accept new pcp connection"),
-					 errdetail("setsockopt system call failed with error : \"%s\"",strerror(errno))));
+					 errdetail("setsockopt system call failed with error : \"%s\"", strerror(errno))));
 		}
 	}
 	return afd;
@@ -246,10 +252,12 @@ pcp_do_accept(int unix_fd, int inet_fd)
 /*
  * forks a new pcp worker child
  */
-static void start_pcp_command_processor_process(int port)
+static void
+start_pcp_command_processor_process(int port)
 {
-	pid_t pid = fork();
-	if (pid == 0)/* child */
+	pid_t		pid = fork();
+
+	if (pid == 0)				/* child */
 	{
 		/* Set the process type variable */
 		processType = PT_PCP_WORKER;
@@ -260,16 +268,16 @@ static void start_pcp_command_processor_process(int port)
 		/* call PCP child main */
 		if (pcp_worker_children)
 			list_free(pcp_worker_children);
-		pcp_worker_children= NULL;
+		pcp_worker_children = NULL;
 		POOL_SETMASK(&UnBlockSig);
-		pcp_worker_main(port); /* Never returns */
+		pcp_worker_main(port);	/* Never returns */
 	}
 	else if (pid == -1)
 	{
 		ereport(FATAL,
 				(errmsg("fork() failed. reason: %s", strerror(errno))));
 	}
-	else /* parent */
+	else						/* parent */
 	{
 		ereport(LOG,
 				(errmsg("forked new pcp worker, pid=%d socket=%d",
@@ -277,7 +285,7 @@ static void start_pcp_command_processor_process(int port)
 		/* close the port in parent process. It is only consumed by child */
 		close(port);
 		/* Add it to the list */
-		pcp_worker_children = lappend_int(pcp_worker_children, (int)pid);
+		pcp_worker_children = lappend_int(pcp_worker_children, (int) pid);
 	}
 }
 
@@ -288,13 +296,16 @@ static void
 pcp_kill_all_children(int sig)
 {
 	/* forward wakeup requests to children */
-	ListCell* lc;
+	ListCell   *lc;
+
 	foreach(lc, pcp_worker_children)
 	{
-		pid_t pid = (pid_t)lfirst_int(lc);
-		kill(pid,sig);
+		pid_t		pid = (pid_t) lfirst_int(lc);
+
+		kill(pid, sig);
 	}
 }
+
 /*
  * handle SIGCHLD
  */
@@ -305,10 +316,11 @@ static RETSIGTYPE reap_handler(int sig)
 	POOL_SETMASK(&UnBlockSig);
 }
 
-static void reaper(void)
+static void
+reaper(void)
 {
-	pid_t pid;
-	int status;
+	pid_t		pid;
+	int			status;
 
 	ereport(DEBUG1,
 			(errmsg("PCP child reaper handler")));
@@ -318,9 +330,9 @@ static void reaper(void)
 
 	while ((pid = pool_waitpid(&status)) > 0)
 	{
-		if(WIFEXITED(status))
+		if (WIFEXITED(status))
 		{
-			if(WEXITSTATUS(status) == POOL_EXIT_FATAL)
+			if (WEXITSTATUS(status) == POOL_EXIT_FATAL)
 				ereport(LOG,
 						(errmsg("PCP worker process with pid: %d exit with FATAL ERROR.", pid)));
 			else
@@ -330,35 +342,35 @@ static void reaper(void)
 		if (WIFSIGNALED(status))
 		{
 			/* Child terminated by segmentation fault. Report it */
-			if(WTERMSIG(status) == SIGSEGV)
+			if (WTERMSIG(status) == SIGSEGV)
 				ereport(WARNING,
-						(errmsg("PCP process with pid: %d was terminated by segmentation fault",pid)));
+						(errmsg("PCP process with pid: %d was terminated by segmentation fault", pid)));
 			else
 				ereport(LOG,
 						(errmsg("PCP process with pid: %d exits with status %d by signal %d", pid, status, WTERMSIG(status))));
 		}
 		else
 			ereport(LOG,
-					(errmsg("PCP process with pid: %d exits with status %d",pid, status)));
+					(errmsg("PCP process with pid: %d exits with status %d", pid, status)));
 		ereport(DEBUG2,
-				(errmsg("going to remove pid: %d from pid list having %d elements",pid, list_length(pcp_worker_children))));
+				(errmsg("going to remove pid: %d from pid list having %d elements", pid, list_length(pcp_worker_children))));
 		/* remove the pid of process from the list */
-		pcp_worker_children = list_delete_int(pcp_worker_children,pid);
+		pcp_worker_children = list_delete_int(pcp_worker_children, pid);
 		ereport(DEBUG2,
-				(errmsg("new list have %d elements",list_length(pcp_worker_children))));
+				(errmsg("new list have %d elements", list_length(pcp_worker_children))));
 	}
 }
 
 static RETSIGTYPE
 pcp_exit_handler(int sig)
 {
-	pid_t wpid;
+	pid_t		wpid;
 
 	POOL_SETMASK(&AuthBlockSig);
 
 	pcp_kill_all_children(sig);
 
-	if (sig == SIGTERM) /* smart shutdown */
+	if (sig == SIGTERM)			/* smart shutdown */
 	{
 		/* close the listening sockets */
 		close(pcp_unix_fd);
@@ -372,8 +384,8 @@ pcp_exit_handler(int sig)
 		do
 		{
 			wpid = wait(NULL);
-		}while (wpid > 0 || (wpid == -1 && errno == EINTR));
-		
+		} while (wpid > 0 || (wpid == -1 && errno == EINTR));
+
 		list_free(pcp_worker_children);
 	}
 	pcp_worker_children = NULL;
@@ -401,13 +413,15 @@ static RETSIGTYPE reload_config_handler(int sig)
 	pcp_got_sighup = 1;
 }
 
-static void pcp_child_will_die(int code, Datum arg)
+static void
+pcp_child_will_die(int code, Datum arg)
 {
-	pid_t wpid;
+	pid_t		wpid;
+
 	/*
 	 * This is supposed to be called from main process
 	 */
-	if(processType != PT_PCP)
+	if (processType != PT_PCP)
 		return;
 	if (list_length(pcp_worker_children) <= 0)
 		return;
@@ -416,12 +430,12 @@ static void pcp_child_will_die(int code, Datum arg)
 	do
 	{
 		wpid = wait(NULL);
-	}while (wpid > 0 || (wpid == -1 && errno == EINTR));
-	
+	} while (wpid > 0 || (wpid == -1 && errno == EINTR));
+
 	if (wpid == -1 && errno != ECHILD)
 		ereport(WARNING,
 				(errmsg("wait() on pcp worker children failed. reason:%s", strerror(errno))));
-	
+
 	POOL_SETMASK(&UnBlockSig);
 }
 
@@ -430,14 +444,16 @@ static void pcp_child_will_die(int code, Datum arg)
  * is in progress. If the flag is already set the function returns
  * false.
  */
-bool pcp_mark_recovery_in_progress(void)
+bool
+pcp_mark_recovery_in_progress(void)
 {
-	bool command_already_inprogress;
+	bool		command_already_inprogress;
 	pool_sigset_t oldmask;
-	/* 
+
+	/*
 	 * only pcp worker is allowd to make this call
 	 */
-	if(processType != PT_PCP_WORKER)
+	if (processType != PT_PCP_WORKER)
 		return false;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
@@ -453,13 +469,15 @@ bool pcp_mark_recovery_in_progress(void)
  * unsets the shared memory flag to indicate pcp recovery command
  * is finsihed.
  */
-void pcp_mark_recovery_finished(void)
+void
+pcp_mark_recovery_finished(void)
 {
 	pool_sigset_t oldmask;
+
 	/*
 	 * only pcp worker is allowd to make this call
 	 */
-	if(processType != PT_PCP_WORKER)
+	if (processType != PT_PCP_WORKER)
 		return;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
@@ -468,4 +486,3 @@ void pcp_mark_recovery_finished(void)
 	pool_semaphore_unlock(PCP_REQUEST_SEM);
 	POOL_SETMASK(&oldmask);
 }
-

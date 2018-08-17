@@ -211,8 +211,8 @@ static char *build_client_first_message(fe_scram_state *state);
 static char *build_client_final_message(fe_scram_state *state);
 static bool verify_server_signature(fe_scram_state *state);
 static void calculate_client_proof(fe_scram_state *state,
-								   const char *client_final_message_without_proof,
-								   uint8 *result);
+					   const char *client_final_message_without_proof,
+					   uint8 *result);
 
 static void read_client_first_message(scram_state *state, char *input);
 static void read_client_final_message(scram_state *state, char *input);
@@ -1084,8 +1084,8 @@ read_client_final_message(scram_state *state, char *input)
 	/*
 	 * Read channel-binding.  We don't support channel binding, so it's
 	 * expected to always be "biws", which is "n,,", base64-encoded, or
-	 * "eSws", which is "y,,".  We also have to check whether the flag is
-	 * the same one that the client originally sent.
+	 * "eSws", which is "y,,".  We also have to check whether the flag is the
+	 * same one that the client originally sent.
 	 */
 	channel_binding = read_attr_value(&p, 'c');
 	if (!(strcmp(channel_binding, "biws") == 0 && state->cbind_flag == 'n') &&
@@ -1177,6 +1177,7 @@ static char *
 GetMockAuthenticationNonce(void)
 {
 	static char mockNonce[MOCK_AUTH_NONCE_LEN] = "pgpool-II random nonce string";
+
 	return mockNonce;
 }
 static char *
@@ -1421,16 +1422,14 @@ build_client_final_message(fe_scram_state *state)
 	calculate_client_proof(state,
 						   state->client_final_message_without_proof,
 						   client_proof);
-	/////
+	/* /// */
 	appendStringInfoString(&buf, ",p=");
 
 	/*
-	char *encoded_data = palloc(pg_b64_enc_len(SCRAM_KEY_LEN) + 1);
-	int len = encoded_data = pg_b64_encode((char *) client_proof,
-										   SCRAM_KEY_LEN,
-										   encoded_data);
-	encoded_data[len] = '\0';
-	appendStringInfoString(&buf, encoded_data);
+	 * char *encoded_data = palloc(pg_b64_enc_len(SCRAM_KEY_LEN) + 1); int len
+	 * = encoded_data = pg_b64_encode((char *) client_proof, SCRAM_KEY_LEN,
+	 * encoded_data); encoded_data[len] = '\0'; appendStringInfoString(&buf,
+	 * encoded_data);
 	 */
 
 	enlargeStringInfo(&buf, pg_b64_enc_len(SCRAM_KEY_LEN));
@@ -1527,7 +1526,7 @@ read_server_final_message(fe_scram_state *state, char *input)
 		char	   *err = read_attr_value(&input, 'e');
 
 		ereport(ERROR,
-				(errmsg("error received from server in SCRAM exchange: %s",err)));
+				(errmsg("error received from server in SCRAM exchange: %s", err)));
 		return false;
 	}
 
@@ -1650,4 +1649,3 @@ pg_fe_scram_build_verifier(const char *password)
 
 	return result;
 }
-

@@ -36,163 +36,163 @@
 
 #define booltostr(x)  ((x) ? "true" : "false")
 
-void _outNode(String *str, void *obj);
+void		_outNode(String * str, void *obj);
 
-static void _outList(String *str, List *node);
-static void _outIdList(String *str, List *node);
-static void _outAlias(String *str, Alias *node);
-static void _outRangeVar(String *str, RangeVar *node);
-static void _outVar(String *str, Var *node);
-static void _outConst(String *str, Const *node);
-static void _outParam(String *str, Param *node);
-static void _outAggref(String *str, Aggref *node);
-static void _outGroupingFunc(String *str, GroupingFunc *node);
-static void _outArrayRef(String *str, ArrayRef *node);
-static void _outFuncExpr(String *str, FuncExpr *node);
-static void _outNamedArgExpr(String *str, NamedArgExpr *node);
-static void _outOpExpr(String *str, OpExpr *node);
-static void _outDistinctExpr(String *str, DistinctExpr *node);
-static void _outScalarArrayOpExpr(String *str, ScalarArrayOpExpr *node);
-static void _outBoolExpr(String *str, BoolExpr *node);
-static void _outSubLink(String *str, SubLink *node);
-static void _outSubPlan(String *str, SubPlan *node);
-static void _outFieldSelect(String *str, FieldSelect *node);
-static void _outFieldStore(String *str, FieldStore *node);
-static void _outRelabelType(String *str, RelabelType *node);
-static void _outConvertRowtypeExpr(String *str, ConvertRowtypeExpr *node);
-static void _outCaseExpr(String *str, CaseExpr *node);
-static void _outCaseWhen(String *str, CaseWhen *node);
-static void _outCaseTestExpr(String *str, CaseTestExpr *node);
-static void _outArrayExpr(String *str, ArrayExpr *node);
-static void _outRowExpr(String *str, RowExpr *node);
-static void _outCoalesceExpr(String *str, CoalesceExpr *node);
-static void _outMinMaxExpr(String *str, MinMaxExpr *node);
-static void _outNullIfExpr(String *str, NullIfExpr *node);
-static void _outNullTest(String *str, NullTest *node);
-static void _outBooleanTest(String *str, BooleanTest *node);
-static void _outCoerceToDomain(String *str, CoerceToDomain *node);
-static void _outCoerceToDomainValue(String *str, CoerceToDomainValue *node);
-static void _outSetToDefault(String *str, SetToDefault *node);
-static void _outCurrentOfExpr(String *str, CurrentOfExpr *node);
-static void _outInferenceElem(String *str, InferenceElem *node);
-static void _outTargetEntry(String *str, TargetEntry *node);
-static void _outRangeTblRef(String *str, RangeTblRef *node);
-static void _outJoinExpr(String *str, JoinExpr *node);
-static void _outFromExpr(String *str, FromExpr *node);
-static void _outCreateStmt(String *str, CreateStmt *node);
-static void _outCreateTableAsStmt(String *str, CreateTableAsStmt *node);
-static void _outCreateForeignTableStmt(String *str, CreateForeignTableStmt *node);
-static void _outImportForeignSchemaStmt(String *str, ImportForeignSchemaStmt *node);
-static void _outIndexStmt(String *str, IndexStmt *node);
-static void _outNotifyStmt(String *str, NotifyStmt *node);
-static void _outDeclareCursorStmt(String *str, DeclareCursorStmt *node);
-static void _outSelectStmt(String *str, SelectStmt *node);
-static void _outFuncCall(String *str, FuncCall *node);
-static void _outDefElem(String *str, DefElem *node);
-static void _outLockingClause(String *str, LockingClause *node);
-static void _outColumnDef(String *str, ColumnDef *node);
-static void _outTypeName(String *str, TypeName *node);
-static void _outTypeCast(String *str, TypeCast *node);
-static void _outIndexElem(String *str, IndexElem *node);
-static void _outGroupingSet(String *str, GroupingSet *node);
-static void _outWithClause(String *str, WithClause *node);
-static void _outCommonTableExpr(String *str, CommonTableExpr *node);
-static void _outSetOperationStmt(String *str, SetOperationStmt *node);
-static void _outTableSampleClause(String *str, TableSampleClause *node);
-static void _outAExpr(String *str, A_Expr *node);
-static void _outValue(String *str, Value *value);
-static void _outColumnRef(String *str, ColumnRef *node);
-static void _outParamRef(String *str, ParamRef *node);
-static void _outAConst(String *str, A_Const *node);
-static void _outA_Indices(String *str, A_Indices *node);
-static void _outA_Indirection(String *str, A_Indirection *node);
-static void _outResTarget(String *str, ResTarget *node);
-static void _outMultiAssignRef(String *str, MultiAssignRef *node);
-static void _outA_ArrayExpr(String *str, A_ArrayExpr *node);
-static void _outWindowDef(String *str, WindowDef *node);
-static void _outConstraint(String *str, Constraint *node);
+static void _outList(String * str, List *node);
+static void _outIdList(String * str, List *node);
+static void _outAlias(String * str, Alias *node);
+static void _outRangeVar(String * str, RangeVar *node);
+static void _outVar(String * str, Var *node);
+static void _outConst(String * str, Const *node);
+static void _outParam(String * str, Param *node);
+static void _outAggref(String * str, Aggref *node);
+static void _outGroupingFunc(String * str, GroupingFunc *node);
+static void _outArrayRef(String * str, ArrayRef *node);
+static void _outFuncExpr(String * str, FuncExpr *node);
+static void _outNamedArgExpr(String * str, NamedArgExpr *node);
+static void _outOpExpr(String * str, OpExpr *node);
+static void _outDistinctExpr(String * str, DistinctExpr *node);
+static void _outScalarArrayOpExpr(String * str, ScalarArrayOpExpr *node);
+static void _outBoolExpr(String * str, BoolExpr *node);
+static void _outSubLink(String * str, SubLink *node);
+static void _outSubPlan(String * str, SubPlan *node);
+static void _outFieldSelect(String * str, FieldSelect *node);
+static void _outFieldStore(String * str, FieldStore *node);
+static void _outRelabelType(String * str, RelabelType *node);
+static void _outConvertRowtypeExpr(String * str, ConvertRowtypeExpr *node);
+static void _outCaseExpr(String * str, CaseExpr *node);
+static void _outCaseWhen(String * str, CaseWhen *node);
+static void _outCaseTestExpr(String * str, CaseTestExpr *node);
+static void _outArrayExpr(String * str, ArrayExpr *node);
+static void _outRowExpr(String * str, RowExpr *node);
+static void _outCoalesceExpr(String * str, CoalesceExpr *node);
+static void _outMinMaxExpr(String * str, MinMaxExpr *node);
+static void _outNullIfExpr(String * str, NullIfExpr *node);
+static void _outNullTest(String * str, NullTest *node);
+static void _outBooleanTest(String * str, BooleanTest *node);
+static void _outCoerceToDomain(String * str, CoerceToDomain *node);
+static void _outCoerceToDomainValue(String * str, CoerceToDomainValue *node);
+static void _outSetToDefault(String * str, SetToDefault *node);
+static void _outCurrentOfExpr(String * str, CurrentOfExpr *node);
+static void _outInferenceElem(String * str, InferenceElem *node);
+static void _outTargetEntry(String * str, TargetEntry *node);
+static void _outRangeTblRef(String * str, RangeTblRef *node);
+static void _outJoinExpr(String * str, JoinExpr *node);
+static void _outFromExpr(String * str, FromExpr *node);
+static void _outCreateStmt(String * str, CreateStmt *node);
+static void _outCreateTableAsStmt(String * str, CreateTableAsStmt *node);
+static void _outCreateForeignTableStmt(String * str, CreateForeignTableStmt *node);
+static void _outImportForeignSchemaStmt(String * str, ImportForeignSchemaStmt *node);
+static void _outIndexStmt(String * str, IndexStmt *node);
+static void _outNotifyStmt(String * str, NotifyStmt *node);
+static void _outDeclareCursorStmt(String * str, DeclareCursorStmt *node);
+static void _outSelectStmt(String * str, SelectStmt *node);
+static void _outFuncCall(String * str, FuncCall *node);
+static void _outDefElem(String * str, DefElem *node);
+static void _outLockingClause(String * str, LockingClause *node);
+static void _outColumnDef(String * str, ColumnDef *node);
+static void _outTypeName(String * str, TypeName *node);
+static void _outTypeCast(String * str, TypeCast *node);
+static void _outIndexElem(String * str, IndexElem *node);
+static void _outGroupingSet(String * str, GroupingSet *node);
+static void _outWithClause(String * str, WithClause *node);
+static void _outCommonTableExpr(String * str, CommonTableExpr *node);
+static void _outSetOperationStmt(String * str, SetOperationStmt *node);
+static void _outTableSampleClause(String * str, TableSampleClause *node);
+static void _outAExpr(String * str, A_Expr *node);
+static void _outValue(String * str, Value *value);
+static void _outColumnRef(String * str, ColumnRef *node);
+static void _outParamRef(String * str, ParamRef *node);
+static void _outAConst(String * str, A_Const *node);
+static void _outA_Indices(String * str, A_Indices *node);
+static void _outA_Indirection(String * str, A_Indirection *node);
+static void _outResTarget(String * str, ResTarget *node);
+static void _outMultiAssignRef(String * str, MultiAssignRef *node);
+static void _outA_ArrayExpr(String * str, A_ArrayExpr *node);
+static void _outWindowDef(String * str, WindowDef *node);
+static void _outConstraint(String * str, Constraint *node);
 
-static void _outSortBy(String *str, SortBy *node);
-static void _outInsertStmt(String *str, InsertStmt *node);
-static void _outSetClause(String *str, List *node);
-static void _outUpdateStmt(String *str, UpdateStmt *node);
-static void _outDeleteStmt(String *str, DeleteStmt *node);
-static void _outTransactionStmt(String *str, TransactionStmt *node);
-static void _outTruncateStmt(String *str, TruncateStmt *node);
-static void _outVacuumStmt(String *str, VacuumStmt *node);
-static void _outExplainStmt(String *str, ExplainStmt *node);
-static void _outClusterStmt(String *str, ClusterStmt *node);
-static void _outCheckPointStmt(String *str, CheckPointStmt *node);
-static void _outClosePortalStmt(String *str, ClosePortalStmt *node);
-static void _outListenStmt(String *str, ListenStmt *node);
-static void _outUnlistenStmt(String *str, UnlistenStmt *node);
-static void _outLoadStmt(String *str, LoadStmt *node);
-static void _outCopyStmt(String *str, CopyStmt *node);
-static void _outDeallocateStmt(String *str, DeallocateStmt *node);
-static void _outRenameStmt(String *str, RenameStmt *node);
-static void _outCreateRoleStmt(String *str, CreateRoleStmt *node);
-static void _outAlterRoleStmt(String *str, AlterRoleStmt *node);
-static void _outDropRoleStmt(String *str, DropRoleStmt *node);
-static void _outCreateSchemaStmt(String *str, CreateSchemaStmt *node);
-static void _outVariableSetStmt(String *str, VariableSetStmt *node);
-static void _outVariableShowStmt(String *str, VariableShowStmt *node);
-static void _outConstraintsSetStmt(String *str, ConstraintsSetStmt *node);
-static void _outAlterTableStmt(String *str, AlterTableStmt *node);
-static void _outCreateSeqStmt(String *str, CreateSeqStmt *node);
-static void _outAlterSeqStmt(String *str, AlterSeqStmt *node);
-static void _outCreatePLangStmt(String *str, CreatePLangStmt *node);
-static void _outCreateTableSpaceStmt(String *str, CreateTableSpaceStmt *node);
-static void _outDropTableSpaceStmt(String *str, DropTableSpaceStmt *node);
-static void _outCreateTrigStmt(String *str, CreateTrigStmt *node);
-static void _outDefineStmt(String *str, DefineStmt *node);
-static void _outCreateOpClassStmt(String *str, CreateOpClassStmt *node);
-static void _outDropStmt(String *str, DropStmt *node);
-static void _outFetchStmt(String *str, FetchStmt *node);
-static void _outGrantStmt(String *str, GrantStmt *node);
-static void _outGrantRoleStmt(String *str, GrantRoleStmt *node);
-static void _outCreateFunctionStmt(String *str, CreateFunctionStmt *node);
-static void _outAlterFunctionStmt(String *str, AlterFunctionStmt *node);
-static void _outCreateCastStmt(String *str, CreateCastStmt *node);
-static void _outReindexStmt(String *str, ReindexStmt *node);
-static void _outRuleStmt(String *str, RuleStmt *node);
-static void _outViewStmt(String *str, ViewStmt *node);
-static void _outCreatedbStmt(String *str, CreatedbStmt *node);
-static void _outAlterDatabaseStmt(String *str, AlterDatabaseStmt *node);
-static void _outAlterDatabaseSetStmt(String *str, AlterDatabaseSetStmt *node);
-static void _outDropdbStmt(String *str, DropdbStmt *node);
-static void _outCreateDomainStmt(String *str, CreateDomainStmt *node);
-static void _outAlterDomainStmt(String *str, AlterDomainStmt *node);
-static void _outCreateConversionStmt(String *str, CreateConversionStmt *node);
-static void _outPrepareStmt(String *str, PrepareStmt *node);
-static void _outExecuteStmt(String *str, ExecuteStmt *node);
-static void _outLockStmt(String *str, LockStmt *node);
-static void _outCommentStmt(String *str, CommentStmt *node);
-static void _outDiscardStmt(String *str, DiscardStmt *node);
-static void _outCreateOpFamilyStmt(String *str, CreateOpFamilyStmt *node);
-static void _outAlterOpFamilyStmt(String *str, AlterOpFamilyStmt *node);
-static void _outCreateEnumStmt(String *str, CreateEnumStmt *node);
-static void _outDropOwnedStmt(String *str, DropOwnedStmt *node);
-static void _outReassignOwnedStmt(String *str, ReassignOwnedStmt *node);
-static void _outAlterTSDictionaryStmt(String *str, AlterTSDictionaryStmt *node);
-static void _outAlterTSConfigurationStmt(String *str, AlterTSConfigurationStmt *node);
-static void _outXmlExpr(String *str, XmlExpr *node);
-static void _outXmlSerialize(String *str, XmlSerialize *node);
+static void _outSortBy(String * str, SortBy *node);
+static void _outInsertStmt(String * str, InsertStmt *node);
+static void _outSetClause(String * str, List *node);
+static void _outUpdateStmt(String * str, UpdateStmt *node);
+static void _outDeleteStmt(String * str, DeleteStmt *node);
+static void _outTransactionStmt(String * str, TransactionStmt *node);
+static void _outTruncateStmt(String * str, TruncateStmt *node);
+static void _outVacuumStmt(String * str, VacuumStmt *node);
+static void _outExplainStmt(String * str, ExplainStmt *node);
+static void _outClusterStmt(String * str, ClusterStmt *node);
+static void _outCheckPointStmt(String * str, CheckPointStmt *node);
+static void _outClosePortalStmt(String * str, ClosePortalStmt *node);
+static void _outListenStmt(String * str, ListenStmt *node);
+static void _outUnlistenStmt(String * str, UnlistenStmt *node);
+static void _outLoadStmt(String * str, LoadStmt *node);
+static void _outCopyStmt(String * str, CopyStmt *node);
+static void _outDeallocateStmt(String * str, DeallocateStmt *node);
+static void _outRenameStmt(String * str, RenameStmt *node);
+static void _outCreateRoleStmt(String * str, CreateRoleStmt *node);
+static void _outAlterRoleStmt(String * str, AlterRoleStmt *node);
+static void _outDropRoleStmt(String * str, DropRoleStmt *node);
+static void _outCreateSchemaStmt(String * str, CreateSchemaStmt *node);
+static void _outVariableSetStmt(String * str, VariableSetStmt *node);
+static void _outVariableShowStmt(String * str, VariableShowStmt *node);
+static void _outConstraintsSetStmt(String * str, ConstraintsSetStmt *node);
+static void _outAlterTableStmt(String * str, AlterTableStmt *node);
+static void _outCreateSeqStmt(String * str, CreateSeqStmt *node);
+static void _outAlterSeqStmt(String * str, AlterSeqStmt *node);
+static void _outCreatePLangStmt(String * str, CreatePLangStmt *node);
+static void _outCreateTableSpaceStmt(String * str, CreateTableSpaceStmt *node);
+static void _outDropTableSpaceStmt(String * str, DropTableSpaceStmt *node);
+static void _outCreateTrigStmt(String * str, CreateTrigStmt *node);
+static void _outDefineStmt(String * str, DefineStmt *node);
+static void _outCreateOpClassStmt(String * str, CreateOpClassStmt *node);
+static void _outDropStmt(String * str, DropStmt *node);
+static void _outFetchStmt(String * str, FetchStmt *node);
+static void _outGrantStmt(String * str, GrantStmt *node);
+static void _outGrantRoleStmt(String * str, GrantRoleStmt *node);
+static void _outCreateFunctionStmt(String * str, CreateFunctionStmt *node);
+static void _outAlterFunctionStmt(String * str, AlterFunctionStmt *node);
+static void _outCreateCastStmt(String * str, CreateCastStmt *node);
+static void _outReindexStmt(String * str, ReindexStmt *node);
+static void _outRuleStmt(String * str, RuleStmt *node);
+static void _outViewStmt(String * str, ViewStmt *node);
+static void _outCreatedbStmt(String * str, CreatedbStmt *node);
+static void _outAlterDatabaseStmt(String * str, AlterDatabaseStmt *node);
+static void _outAlterDatabaseSetStmt(String * str, AlterDatabaseSetStmt *node);
+static void _outDropdbStmt(String * str, DropdbStmt *node);
+static void _outCreateDomainStmt(String * str, CreateDomainStmt *node);
+static void _outAlterDomainStmt(String * str, AlterDomainStmt *node);
+static void _outCreateConversionStmt(String * str, CreateConversionStmt *node);
+static void _outPrepareStmt(String * str, PrepareStmt *node);
+static void _outExecuteStmt(String * str, ExecuteStmt *node);
+static void _outLockStmt(String * str, LockStmt *node);
+static void _outCommentStmt(String * str, CommentStmt *node);
+static void _outDiscardStmt(String * str, DiscardStmt *node);
+static void _outCreateOpFamilyStmt(String * str, CreateOpFamilyStmt *node);
+static void _outAlterOpFamilyStmt(String * str, AlterOpFamilyStmt *node);
+static void _outCreateEnumStmt(String * str, CreateEnumStmt *node);
+static void _outDropOwnedStmt(String * str, DropOwnedStmt *node);
+static void _outReassignOwnedStmt(String * str, ReassignOwnedStmt *node);
+static void _outAlterTSDictionaryStmt(String * str, AlterTSDictionaryStmt *node);
+static void _outAlterTSConfigurationStmt(String * str, AlterTSConfigurationStmt *node);
+static void _outXmlExpr(String * str, XmlExpr *node);
+static void _outXmlSerialize(String * str, XmlSerialize *node);
 
-static void _outFuncName(String *str, List *func_name);
-static void _outSetRest(String *str, VariableSetStmt *node);
-static void _outSetTransactionModeList(String *str, List *list);
-static void _outAlterTableCmd(String *str, AlterTableCmd *node);
-static void _outOptSeqList(String *str, List *options);
-static void _outObjectWithArgs(String *str, ObjectWithArgs *node);
-static void _outFunctionParameter(String *str, FunctionParameter *node);
-static void _outPrivilegeList(String *str, List *list);
-static void _outFuncOptList(String *str, List *list);
-static void _outCreatedbOptList(String *str, List *options);
-static void _outOperatorArgTypes(String *str, List *args);
-static void _outRangeFunction(String *str, RangeFunction *node);
-static void _outRangeTableSample(String *str, RangeTableSample *node);
-static void _outWithDefinition(String *str, List *def_list);
-static void _outOnConflictClause(String *str, OnConflictClause *node);
+static void _outFuncName(String * str, List *func_name);
+static void _outSetRest(String * str, VariableSetStmt *node);
+static void _outSetTransactionModeList(String * str, List *list);
+static void _outAlterTableCmd(String * str, AlterTableCmd *node);
+static void _outOptSeqList(String * str, List *options);
+static void _outObjectWithArgs(String * str, ObjectWithArgs *node);
+static void _outFunctionParameter(String * str, FunctionParameter *node);
+static void _outPrivilegeList(String * str, List *list);
+static void _outFuncOptList(String * str, List *list);
+static void _outCreatedbOptList(String * str, List *options);
+static void _outOperatorArgTypes(String * str, List *args);
+static void _outRangeFunction(String * str, RangeFunction *node);
+static void _outRangeTableSample(String * str, RangeTableSample *node);
+static void _outWithDefinition(String * str, List *def_list);
+static void _outOnConflictClause(String * str, OnConflictClause *node);
 
 
 /*
@@ -209,35 +209,38 @@ static void _outOnConflictClause(String *str, OnConflictClause *node);
 char *
 NameListToString(List *names)
 {
-    StringInfoData string;
-    ListCell   *l;
+	StringInfoData string;
+	ListCell   *l;
 
-    initStringInfo(&string);
+	initStringInfo(&string);
 
-    foreach(l, names)
-    {
-        Node       *name = (Node *) lfirst(l);
+	foreach(l, names)
+	{
+		Node	   *name = (Node *) lfirst(l);
 
-        if (l != list_head(names))
-            appendStringInfoChar(&string, '.');
+		if (l != list_head(names))
+			appendStringInfoChar(&string, '.');
 
-        if (IsA(name, String))
-            appendStringInfoString(&string, strVal(name));
-        else if (IsA(name, A_Star))
-            appendStringInfoString(&string, "*");
-        else
-            elog(ERROR, "unexpected node type in name list: %d",
-                 (int) nodeTag(name));
-    }
+		if (IsA(name, String))
+			appendStringInfoString(&string, strVal(name));
+		else if (IsA(name, A_Star))
+			appendStringInfoString(&string, "*");
+		else
+			elog(ERROR, "unexpected node type in name list: %d",
+				 (int) nodeTag(name));
+	}
 
-    return string.data;
+	return string.data;
 }
 
 
-static char *escape_string(char *str)
+static char *
+escape_string(char *str)
 {
-	int len = strlen(str), i, j;
-	char *es = palloc0(len * 2 + 1);
+	int			len = strlen(str),
+				i,
+				j;
+	char	   *es = palloc0(len * 2 + 1);
 
 	if (es == NULL)
 	{
@@ -260,14 +263,15 @@ static char *escape_string(char *str)
 	return es;
 }
 
-static void _outIdList(String *str, List *node)
+static void
+_outIdList(String * str, List *node)
 {
 	ListCell   *lc;
-	char first = 0;
+	char		first = 0;
 
 	foreach(lc, node)
 	{
-		Value *v = lfirst(lc);
+		Value	   *v = lfirst(lc);
 
 		if (first == 0)
 			first = 1;
@@ -280,10 +284,11 @@ static void _outIdList(String *str, List *node)
 	}
 }
 
-static void _outListWith(String *str, List *node, char *op)
+static void
+_outListWith(String * str, List *node, char *op)
 {
 	ListCell   *lc;
-	char first = 0;
+	char		first = 0;
 
 	foreach(lc, node)
 	{
@@ -298,7 +303,8 @@ static void _outListWith(String *str, List *node, char *op)
 	}
 }
 
-static void _outList(String *str, List *node)
+static void
+_outList(String * str, List *node)
 {
 	_outListWith(str, node, ",");
 }
@@ -321,7 +327,7 @@ outToken(StringInfo str, const char *s)
 #endif
 
 static void
-_outAlias(String *str, Alias *node)
+_outAlias(String * str, Alias *node)
 {
 	string_append_char(str, " AS \"");
 	string_append_char(str, node->aliasname);
@@ -336,7 +342,7 @@ _outAlias(String *str, Alias *node)
 }
 
 static void
-_outRangeVar(String *str, RangeVar *node)
+_outRangeVar(String * str, RangeVar *node)
 {
 	if (node->catalogname)
 	{
@@ -361,31 +367,31 @@ _outRangeVar(String *str, RangeVar *node)
 }
 
 static void
-_outVar(String *str, Var *node)
+_outVar(String * str, Var *node)
 {
 
 }
 
 static void
-_outConst(String *str, Const *node)
+_outConst(String * str, Const *node)
 {
 
 }
 
 static void
-_outParam(String *str, Param *node)
+_outParam(String * str, Param *node)
 {
 
 }
 
 static void
-_outAggref(String *str, Aggref *node)
+_outAggref(String * str, Aggref *node)
 {
 
 }
 
 static void
-_outGroupingFunc(String *str, GroupingFunc *node)
+_outGroupingFunc(String * str, GroupingFunc *node)
 {
 	string_append_char(str, "GROUPING (");
 	_outNode(str, node->args);
@@ -394,18 +400,18 @@ _outGroupingFunc(String *str, GroupingFunc *node)
 }
 
 static void
-_outArrayRef(String *str, ArrayRef *node)
+_outArrayRef(String * str, ArrayRef *node)
 {
 }
 
 static void
-_outFuncExpr(String *str, FuncExpr *node)
+_outFuncExpr(String * str, FuncExpr *node)
 {
 
 }
 
 static void
-_outNamedArgExpr(String *str, NamedArgExpr *node)
+_outNamedArgExpr(String * str, NamedArgExpr *node)
 {
 	string_append_char(str, node->name);
 	string_append_char(str, " := ");
@@ -413,25 +419,25 @@ _outNamedArgExpr(String *str, NamedArgExpr *node)
 }
 
 static void
-_outOpExpr(String *str, OpExpr *node)
+_outOpExpr(String * str, OpExpr *node)
 {
 
 }
 
 static void
-_outDistinctExpr(String *str, DistinctExpr *node)
+_outDistinctExpr(String * str, DistinctExpr *node)
 {
 
 }
 
 static void
-_outScalarArrayOpExpr(String *str, ScalarArrayOpExpr *node)
+_outScalarArrayOpExpr(String * str, ScalarArrayOpExpr *node)
 {
 
 }
 
 static void
-_outBoolExpr(String *str, BoolExpr *node)
+_outBoolExpr(String * str, BoolExpr *node)
 {
 	switch (node->boolop)
 	{
@@ -456,13 +462,14 @@ _outBoolExpr(String *str, BoolExpr *node)
 }
 
 static void
-_outSubLink(String *str, SubLink *node)
+_outSubLink(String * str, SubLink *node)
 {
 	_outNode(str, node->testexpr);
 
 	if (node->operName != NIL)
 	{
-		Value *v = linitial(node->operName);
+		Value	   *v = linitial(node->operName);
+
 		if (strcmp(v->val.str, "=") == 0)
 			string_append_char(str, " IN ");
 		else
@@ -484,7 +491,8 @@ _outSubLink(String *str, SubLink *node)
 		case ANY_SUBLINK:
 			if (node->operName != NIL)
 			{
-				Value *v = linitial(node->operName);
+				Value	   *v = linitial(node->operName);
+
 				if (strcmp(v->val.str, "=") != 0)
 				{
 					string_append_char(str, v->val.str);
@@ -511,45 +519,45 @@ _outSubLink(String *str, SubLink *node)
 }
 
 static void
-_outSubPlan(String *str, SubPlan *node)
+_outSubPlan(String * str, SubPlan *node)
 {
 
 }
 
 static void
-_outFieldSelect(String *str, FieldSelect *node)
+_outFieldSelect(String * str, FieldSelect *node)
 {
 
 }
 
 static void
-_outFieldStore(String *str, FieldStore *node)
+_outFieldStore(String * str, FieldStore *node)
 {
 
 }
 
 static void
-_outRelabelType(String *str, RelabelType *node)
+_outRelabelType(String * str, RelabelType *node)
 {
 
 }
 
 static void
-_outConvertRowtypeExpr(String *str, ConvertRowtypeExpr *node)
+_outConvertRowtypeExpr(String * str, ConvertRowtypeExpr *node)
 {
 
 }
 
 static void
-_outCaseExpr(String *str, CaseExpr *node)
+_outCaseExpr(String * str, CaseExpr *node)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
 	string_append_char(str, "CASE ");
 	if (node->arg)
 		_outNode(str, node->arg);
 
-	foreach (lc, node->args)
+	foreach(lc, node->args)
 	{
 		_outNode(str, lfirst(lc));
 	}
@@ -564,7 +572,7 @@ _outCaseExpr(String *str, CaseExpr *node)
 }
 
 static void
-_outCaseWhen(String *str, CaseWhen *node)
+_outCaseWhen(String * str, CaseWhen *node)
 {
 	string_append_char(str, " WHEN ");
 	_outNode(str, node->expr);
@@ -573,13 +581,13 @@ _outCaseWhen(String *str, CaseWhen *node)
 }
 
 static void
-_outCaseTestExpr(String *str, CaseTestExpr *node)
+_outCaseTestExpr(String * str, CaseTestExpr *node)
 {
 
 }
 
 static void
-_outArrayExpr(String *str, ArrayExpr *node)
+_outArrayExpr(String * str, ArrayExpr *node)
 {
 	string_append_char(str, "[");
 	_outNode(str, node->elements);
@@ -587,7 +595,7 @@ _outArrayExpr(String *str, ArrayExpr *node)
 }
 
 static void
-_outRowExpr(String *str, RowExpr *node)
+_outRowExpr(String * str, RowExpr *node)
 {
 	if (node->row_format == COERCE_EXPLICIT_CAST)
 		string_append_char(str, "ROW (");
@@ -601,7 +609,7 @@ _outRowExpr(String *str, RowExpr *node)
 }
 
 static void
-_outCoalesceExpr(String *str, CoalesceExpr *node)
+_outCoalesceExpr(String * str, CoalesceExpr *node)
 {
 	string_append_char(str, "COALESCE (");
 	_outNode(str, node->args);
@@ -609,7 +617,7 @@ _outCoalesceExpr(String *str, CoalesceExpr *node)
 }
 
 static void
-_outMinMaxExpr(String *str, MinMaxExpr *node)
+_outMinMaxExpr(String * str, MinMaxExpr *node)
 {
 	if (node->op == IS_GREATEST)
 	{
@@ -626,13 +634,13 @@ _outMinMaxExpr(String *str, MinMaxExpr *node)
 }
 
 static void
-_outNullIfExpr(String *str, NullIfExpr *node)
+_outNullIfExpr(String * str, NullIfExpr *node)
 {
 
 }
 
 static void
-_outNullTest(String *str, NullTest *node)
+_outNullTest(String * str, NullTest *node)
 {
 	_outNode(str, node->arg);
 	if (node->nulltesttype == IS_NOT_NULL)
@@ -642,7 +650,7 @@ _outNullTest(String *str, NullTest *node)
 }
 
 static void
-_outBooleanTest(String *str, BooleanTest *node)
+_outBooleanTest(String * str, BooleanTest *node)
 {
 	_outNode(str, node->arg);
 
@@ -675,30 +683,31 @@ _outBooleanTest(String *str, BooleanTest *node)
 }
 
 static void
-_outCoerceToDomain(String *str, CoerceToDomain *node)
+_outCoerceToDomain(String * str, CoerceToDomain *node)
 {
 
 }
 
 static void
-_outCoerceToDomainValue(String *str, CoerceToDomainValue *node)
+_outCoerceToDomainValue(String * str, CoerceToDomainValue *node)
 {
 
 }
 
 static void
-_outSetToDefault(String *str, SetToDefault *node)
+_outSetToDefault(String * str, SetToDefault *node)
 {
 	string_append_char(str, "DEFAULT");
 }
 
 static void
-_outCurrentOfExpr(String *str, CurrentOfExpr *node)
+_outCurrentOfExpr(String * str, CurrentOfExpr *node)
 {
 	string_append_char(str, "CURRENT OF ");
 	if (node->cursor_name == NULL)
 	{
-		char n[10];
+		char		n[10];
+
 		snprintf(n, sizeof(n), "$%d", node->cursor_param);
 		string_append_char(str, n);
 	}
@@ -707,25 +716,25 @@ _outCurrentOfExpr(String *str, CurrentOfExpr *node)
 }
 
 static void
-_outInferenceElem(String *str, InferenceElem *node)
+_outInferenceElem(String * str, InferenceElem *node)
 {
 
 }
 
 static void
-_outTargetEntry(String *str, TargetEntry *node)
+_outTargetEntry(String * str, TargetEntry *node)
 {
 
 }
 
 static void
-_outRangeTblRef(String *str, RangeTblRef *node)
+_outRangeTblRef(String * str, RangeTblRef *node)
 {
 
 }
 
 static void
-_outJoinExpr(String *str, JoinExpr *node)
+_outJoinExpr(String * str, JoinExpr *node)
 {
 	_outNode(str, node->larg);
 
@@ -752,14 +761,14 @@ _outJoinExpr(String *str, JoinExpr *node)
 
 	if (node->usingClause != NIL && IsA(node->usingClause, List))
 	{
-		ListCell *lc;
-		char comma = 0;
+		ListCell   *lc;
+		char		comma = 0;
 
 		string_append_char(str, " USING(");
 
-		foreach (lc, node->usingClause)
+		foreach(lc, node->usingClause)
 		{
-			Value *value;
+			Value	   *value;
 
 			if (comma == 0)
 				comma = 1;
@@ -783,13 +792,13 @@ _outJoinExpr(String *str, JoinExpr *node)
 }
 
 static void
-_outFromExpr(String *str, FromExpr *node)
+_outFromExpr(String * str, FromExpr *node)
 {
 
 }
 
 static void
-_outOnConflictExpr(String *str, const OnConflictExpr *node)
+_outOnConflictExpr(String * str, const OnConflictExpr *node)
 {
 
 }
@@ -824,7 +833,7 @@ _outExtensibleNode(StringInfo str, const ExtensibleNode *node)
  *****************************************************************************/
 
 static void
-_outCreateStmt(String *str, CreateStmt *node)
+_outCreateStmt(String * str, CreateStmt *node)
 {
 	string_append_char(str, "CREATE ");
 	if (node->relation->relpersistence == RELPERSISTENCE_TEMP)
@@ -872,7 +881,7 @@ _outCreateStmt(String *str, CreateStmt *node)
 }
 
 static void
-_outCreateTableAsStmt(String *str, CreateTableAsStmt *node)
+_outCreateTableAsStmt(String * str, CreateTableAsStmt *node)
 {
 	string_append_char(str, "CREATE ");
 	if (node->into->rel->relpersistence == RELPERSISTENCE_TEMP)
@@ -918,24 +927,24 @@ _outCreateTableAsStmt(String *str, CreateTableAsStmt *node)
 	if (node->query)
 	{
 		string_append_char(str, " AS");
-		_outSelectStmt(str, (SelectStmt *)node->query);
+		_outSelectStmt(str, (SelectStmt *) node->query);
 	}
 }
 
 static void
-_outCreateForeignTableStmt(String *str, CreateForeignTableStmt *node)
+_outCreateForeignTableStmt(String * str, CreateForeignTableStmt *node)
 {
 
 }
 
 static void
-_outImportForeignSchemaStmt(String *str, ImportForeignSchemaStmt *node)
+_outImportForeignSchemaStmt(String * str, ImportForeignSchemaStmt *node)
 {
 
 }
 
 static void
-_outIndexStmt(String *str, IndexStmt *node)
+_outIndexStmt(String * str, IndexStmt *node)
 {
 	string_append_char(str, "CREATE ");
 
@@ -980,12 +989,12 @@ _outIndexStmt(String *str, IndexStmt *node)
 }
 
 static void
-_outCreateStatsStmt(String *str, CreateStatsStmt *node)
+_outCreateStatsStmt(String * str, CreateStatsStmt *node)
 {
 }
 
 static void
-_outNotifyStmt(String *str, NotifyStmt *node)
+_outNotifyStmt(String * str, NotifyStmt *node)
 {
 	string_append_char(str, "NOTIFY ");
 	string_append_char(str, "\"");
@@ -994,7 +1003,7 @@ _outNotifyStmt(String *str, NotifyStmt *node)
 }
 
 static void
-_outDeclareCursorStmt(String *str, DeclareCursorStmt *node)
+_outDeclareCursorStmt(String * str, DeclareCursorStmt *node)
 {
 	string_append_char(str, "DECLARE \"");
 	string_append_char(str, node->portalname);
@@ -1015,9 +1024,9 @@ _outDeclareCursorStmt(String *str, DeclareCursorStmt *node)
 }
 
 static void
-_outSelectStmt(String *str, SelectStmt *node)
+_outSelectStmt(String * str, SelectStmt *node)
 {
-	if (node->larg) /* SETOP */
+	if (node->larg)				/* SETOP */
 	{
 		string_append_char(str, "(");
 		_outNode(str, node->larg);
@@ -1052,11 +1061,11 @@ _outSelectStmt(String *str, SelectStmt *node)
 	}
 	else if (node->valuesLists) /* VALUES ... */
 	{
-		ListCell *lc;
-		int comma = 0;
+		ListCell   *lc;
+		int			comma = 0;
 
 		string_append_char(str, " VALUES");
-		foreach (lc, node->valuesLists)
+		foreach(lc, node->valuesLists)
 		{
 			if (comma == 0)
 				comma = 1;
@@ -1072,8 +1081,8 @@ _outSelectStmt(String *str, SelectStmt *node)
 	{
 		if (node->intoClause)
 		{
-			IntoClause *into = (IntoClause *)node->intoClause;
-			RangeVar *rel = (RangeVar *)into->rel;
+			IntoClause *into = (IntoClause *) node->intoClause;
+			RangeVar   *rel = (RangeVar *) into->rel;
 
 			string_append_char(str, "CREATE ");
 			if (rel->relpersistence == RELPERSISTENCE_TEMP)
@@ -1177,7 +1186,7 @@ _outSelectStmt(String *str, SelectStmt *node)
 	{
 		string_append_char(str, " LIMIT ");
 		if (IsA(node->limitCount, A_Const) &&
-			((A_Const *)node->limitCount)->val.type == T_Null)
+			((A_Const *) node->limitCount)->val.type == T_Null)
 		{
 			string_append_char(str, "ALL ");
 		}
@@ -1191,18 +1200,19 @@ _outSelectStmt(String *str, SelectStmt *node)
 }
 
 static void
-_outFuncCall(String *str, FuncCall *node)
+_outFuncCall(String * str, FuncCall *node)
 {
-	char *funcname;
+	char	   *funcname;
+
 	_outFuncName(str, node->funcname);
 
 	funcname = strVal(lfirst(list_head(node->funcname)));
 
-    if(strcmp(funcname,"user") == 0 ||
-       strcmp(funcname,"current_user") == 0 ||
-       strcmp(funcname,"session_user") == 0 ||
-       strcmp(funcname,"current_role") == 0)
-        return ;
+	if (strcmp(funcname, "user") == 0 ||
+		strcmp(funcname, "current_user") == 0 ||
+		strcmp(funcname, "session_user") == 0 ||
+		strcmp(funcname, "current_role") == 0)
+		return;
 
 	string_append_char(str, "(");
 
@@ -1240,18 +1250,18 @@ _outFuncCall(String *str, FuncCall *node)
 }
 
 static void
-_outDefElem(String *str, DefElem *node)
+_outDefElem(String * str, DefElem *node)
 {
 
 }
 
 static void
-_outLockingClause(String *str, LockingClause *node)
+_outLockingClause(String * str, LockingClause *node)
 {
 	if (node == NULL)
 		return;
 
-	switch(node->strength)
+	switch (node->strength)
 	{
 		case LCS_FORKEYSHARE:
 			string_append_char(str, " FOR KEY SHARE");
@@ -1289,12 +1299,12 @@ _outLockingClause(String *str, LockingClause *node)
 }
 
 static void
-_outTriggerTransition(String *str, TriggerTransition *node)
+_outTriggerTransition(String * str, TriggerTransition *node)
 {
 }
 
 static void
-_outColumnDef(String *str, ColumnDef *node)
+_outColumnDef(String * str, ColumnDef *node)
 {
 	string_append_char(str, "\"");
 	string_append_char(str, node->colname);
@@ -1304,32 +1314,31 @@ _outColumnDef(String *str, ColumnDef *node)
 }
 
 static void
-_outTypeName(String *str, TypeName *node)
+_outTypeName(String * str, TypeName *node)
 {
 
-	/* don't quote SystemType name, because
-	 * 1. char is not "char".
-	 * 2. in 8.4, interval with fields cause error.
-	 * =# SELECT '1'::"interval" year;
-	 * ERROR:  syntax error at or near "year"
-	 * LINE 1: SELECT '1'::"interval" year;
+	/*
+	 * don't quote SystemType name, because 1. char is not "char". 2. in 8.4,
+	 * interval with fields cause error. =# SELECT '1'::"interval" year;
+	 * ERROR:  syntax error at or near "year" LINE 1: SELECT '1'::"interval"
+	 * year;
 	 */
 	if (list_length(node->names) == 2 &&
 		strcmp("pg_catalog", strVal(linitial(node->names))) == 0)
-   	{
+	{
 		string_append_char(str, strVal(lsecond(node->names)));
 
 		if (strcmp("interval", strVal(lsecond(node->names))) == 0)
 		{
 			if (node->typmods != NIL)
 			{
-				A_Const		*v = (A_Const *) linitial(node->typmods);
+				A_Const    *v = (A_Const *) linitial(node->typmods);
 				int			mask = v->val.val.ival;
 
-				/* precision for SECOND field.
-				 * backword comaptibility.
-				 * use `'1.2 second'::interval(0) second'
-				 * not `'1.2 second'::interval second(0)'(standarad for 8.4).
+				/*
+				 * precision for SECOND field. backword comaptibility. use
+				 * `'1.2 second'::interval(0) second' not `'1.2
+				 * second'::interval second(0)'(standarad for 8.4).
 				 */
 				if ((INTERVAL_MASK(SECOND) & mask) &&
 					list_length(node->typmods) == 2)
@@ -1376,24 +1385,25 @@ _outTypeName(String *str, TypeName *node)
 	}
 	else
 	{
-		ListCell *lc;
-		char dot = 0;
+		ListCell   *lc;
+		char		dot = 0;
 
-		foreach (lc, node->names)
+		foreach(lc, node->names)
 		{
-			Value *v = (Value *) lfirst(lc);
-			char *typename = v->val.str;
+			Value	   *v = (Value *) lfirst(lc);
+			char	   *typename = v->val.str;
 
 			if (dot == 0)
 				dot = 1;
 			else
 				string_append_char(str, ".");
-			if(node->typemod < 0)
+			if (node->typemod < 0)
 			{
 				string_append_char(str, "\"");
 				string_append_char(str, typename);
 				string_append_char(str, "\"");
-			} else
+			}
+			else
 				string_append_char(str, typename);
 		}
 	}
@@ -1408,9 +1418,9 @@ _outTypeName(String *str, TypeName *node)
 
 	if (node->arrayBounds != NIL)
 	{
-		ListCell *lc;
+		ListCell   *lc;
 
-		foreach (lc, node->arrayBounds)
+		foreach(lc, node->arrayBounds)
 		{
 			if (intVal(lfirst(lc)) == -1)
 				string_append_char(str, "[]");
@@ -1425,7 +1435,7 @@ _outTypeName(String *str, TypeName *node)
 }
 
 static void
-_outTypeCast(String *str, TypeCast *node)
+_outTypeCast(String * str, TypeCast *node)
 {
 	_outNode(str, node->arg);
 	string_append_char(str, "::");
@@ -1434,18 +1444,18 @@ _outTypeCast(String *str, TypeCast *node)
 }
 
 static void
-_outCollateClause(String *str, const CollateClause *node)
+_outCollateClause(String * str, const CollateClause *node)
 {
 	if (node->arg)
 		_outNode(str, node->arg);
 	string_append_char(str, " COLLATE ");
 	string_append_char(str, "\"");
-	string_append_char(str, ((Value *)linitial(node->collname))->val.str);
+	string_append_char(str, ((Value *) linitial(node->collname))->val.str);
 	string_append_char(str, "\"");
 }
 
 static void
-_outIndexElem(String *str, IndexElem *node)
+_outIndexElem(String * str, IndexElem *node)
 {
 	if (node->name)
 	{
@@ -1466,7 +1476,7 @@ _outIndexElem(String *str, IndexElem *node)
 }
 
 static void
-_outGroupingSet(String *str, GroupingSet *node)
+_outGroupingSet(String * str, GroupingSet *node)
 {
 	switch (node->kind)
 	{
@@ -1494,7 +1504,7 @@ _outGroupingSet(String *str, GroupingSet *node)
 }
 
 static void
-_outWithClause(String *str, WithClause *node)
+_outWithClause(String * str, WithClause *node)
 {
 	string_append_char(str, " WITH ");
 	if (node->recursive)
@@ -1504,7 +1514,7 @@ _outWithClause(String *str, WithClause *node)
 }
 
 static void
-_outCommonTableExpr(String *str, CommonTableExpr *node)
+_outCommonTableExpr(String * str, CommonTableExpr *node)
 {
 	string_append_char(str, "\"");
 	string_append_char(str, node->ctename);
@@ -1523,29 +1533,29 @@ _outCommonTableExpr(String *str, CommonTableExpr *node)
 }
 
 static void
-_outSetOperationStmt(String *str, SetOperationStmt *node)
+_outSetOperationStmt(String * str, SetOperationStmt *node)
 {
 
 }
 
 
 static void
-_outTableSampleClause(String *str, TableSampleClause *node)
+_outTableSampleClause(String * str, TableSampleClause *node)
 {
 
 }
 
 static void
-_outAExpr(String *str, A_Expr *node)
+_outAExpr(String * str, A_Expr *node)
 {
-	Value *v;
+	Value	   *v;
 
 	switch (node->kind)
 	{
 		case AEXPR_OP:
 			if (list_length(node->name) == 1)
 			{
-				Value *op = (Value *) lfirst(list_head(node->name));
+				Value	   *op = (Value *) lfirst(list_head(node->name));
 
 				string_append_char(str, " (");
 				_outNode(str, node->lexpr);
@@ -1610,7 +1620,7 @@ _outAExpr(String *str, A_Expr *node)
 
 		case AEXPR_IN:
 			_outNode(str, node->lexpr);
-			v = (Value *)lfirst(list_head(node->name));
+			v = (Value *) lfirst(list_head(node->name));
 			if (v->val.str[0] == '=')
 				string_append_char(str, " IN (");
 			else
@@ -1621,14 +1631,15 @@ _outAExpr(String *str, A_Expr *node)
 
 		case AEXPR_LIKE:
 			_outNode(str, node->lexpr);
-			v = (Value *)lfirst(list_head(node->name));
+			v = (Value *) lfirst(list_head(node->name));
 			if (!strcmp(v->val.str, "~~"))
 				string_append_char(str, " LIKE ");
 			else
 				string_append_char(str, " NOT LIKE ");
 			if (IsA(node->rexpr, FuncCall))
 			{
-				FuncCall *rexpr = (FuncCall*)node->rexpr;
+				FuncCall   *rexpr = (FuncCall *) node->rexpr;
+
 				_outNode(str, linitial(rexpr->args));
 				string_append_char(str, " ESCAPE ");
 				_outNode(str, lsecond(rexpr->args));
@@ -1639,14 +1650,15 @@ _outAExpr(String *str, A_Expr *node)
 
 		case AEXPR_ILIKE:
 			_outNode(str, node->lexpr);
-			v = (Value *)lfirst(list_head(node->name));
+			v = (Value *) lfirst(list_head(node->name));
 			if (!strcmp(v->val.str, "~~*"))
 				string_append_char(str, " ILIKE ");
 			else
 				string_append_char(str, " NOT ILIKE ");
 			if (IsA(node->rexpr, FuncCall))
 			{
-				FuncCall *rexpr = (FuncCall*)node->rexpr;
+				FuncCall   *rexpr = (FuncCall *) node->rexpr;
+
 				_outNode(str, linitial(rexpr->args));
 				string_append_char(str, " ESCAPE ");
 				_outNode(str, lsecond(rexpr->args));
@@ -1657,14 +1669,15 @@ _outAExpr(String *str, A_Expr *node)
 
 		case AEXPR_SIMILAR:
 			_outNode(str, node->lexpr);
-			v = (Value *)lfirst(list_head(node->name));
+			v = (Value *) lfirst(list_head(node->name));
 			if (!strcmp(v->val.str, "~"))
 				string_append_char(str, " SIMILAR TO ");
 			else
 				string_append_char(str, " NOT SIMILAR TO ");
 			if (IsA(node->rexpr, FuncCall))
 			{
-				FuncCall *rexpr = (FuncCall*)node->rexpr;
+				FuncCall   *rexpr = (FuncCall *) node->rexpr;
+
 				_outNode(str, linitial(rexpr->args));
 				string_append_char(str, " ESCAPE ");
 				_outNode(str, lsecond(rexpr->args));
@@ -1676,33 +1689,33 @@ _outAExpr(String *str, A_Expr *node)
 		case AEXPR_BETWEEN:
 			_outNode(str, node->lexpr);
 			string_append_char(str, " BETWEEN ");
-			_outNode(str, linitial((List *)node->rexpr));
+			_outNode(str, linitial((List *) node->rexpr));
 			string_append_char(str, " AND ");
-			_outNode(str, lsecond((List *)node->rexpr));
+			_outNode(str, lsecond((List *) node->rexpr));
 			break;
 
 		case AEXPR_NOT_BETWEEN:
 			_outNode(str, node->lexpr);
 			string_append_char(str, " NOT BETWEEN ");
-			_outNode(str, linitial((List *)node->rexpr));
+			_outNode(str, linitial((List *) node->rexpr));
 			string_append_char(str, " AND ");
-			_outNode(str, lsecond((List *)node->rexpr));
+			_outNode(str, lsecond((List *) node->rexpr));
 			break;
 
 		case AEXPR_BETWEEN_SYM:
 			_outNode(str, node->lexpr);
 			string_append_char(str, " BETWEEN SYMMETRIC ");
-			_outNode(str, linitial((List *)node->rexpr));
+			_outNode(str, linitial((List *) node->rexpr));
 			string_append_char(str, " AND ");
-			_outNode(str, lsecond((List *)node->rexpr));
+			_outNode(str, lsecond((List *) node->rexpr));
 			break;
 
 		case AEXPR_NOT_BETWEEN_SYM:
 			_outNode(str, node->lexpr);
 			string_append_char(str, " NOT BETWEEN SYMMETRIC ");
-			_outNode(str, linitial((List *)node->rexpr));
+			_outNode(str, linitial((List *) node->rexpr));
 			string_append_char(str, " AND ");
-			_outNode(str, lsecond((List *)node->rexpr));
+			_outNode(str, lsecond((List *) node->rexpr));
 			break;
 
 		case AEXPR_PAREN:
@@ -1717,9 +1730,9 @@ _outAExpr(String *str, A_Expr *node)
 }
 
 static void
-_outValue(String *str, Value *value)
+_outValue(String * str, Value *value)
 {
-	char buf[16];
+	char		buf[16];
 
 	switch (value->type)
 	{
@@ -1748,18 +1761,18 @@ _outValue(String *str, Value *value)
 }
 
 static void
-_outColumnRef(String *str, ColumnRef *node)
+_outColumnRef(String * str, ColumnRef *node)
 {
-	ListCell *c;
-	char first = 0;
+	ListCell   *c;
+	char		first = 0;
 
-	foreach (c, node->fields)
+	foreach(c, node->fields)
 	{
-		Node *n = (Node *) lfirst(c);
+		Node	   *n = (Node *) lfirst(c);
 
 		if (IsA(n, String))
 		{
-			Value *v = (Value *) lfirst(c);
+			Value	   *v = (Value *) lfirst(c);
 
 			if (first == 0)
 				first = 1;
@@ -1783,9 +1796,9 @@ _outColumnRef(String *str, ColumnRef *node)
 }
 
 static void
-_outParamRef(String *str, ParamRef *node)
+_outParamRef(String * str, ParamRef *node)
 {
-	char buf[16];
+	char		buf[16];
 
 	snprintf(buf, 16, "%d", node->number);
 	string_append_char(str, "$");
@@ -1793,9 +1806,9 @@ _outParamRef(String *str, ParamRef *node)
 }
 
 static void
-_outAConst(String *str, A_Const *node)
+_outAConst(String * str, A_Const *node)
 {
-	char buf[16];
+	char		buf[16];
 
 	switch (node->val.type)
 	{
@@ -1824,7 +1837,7 @@ _outAConst(String *str, A_Const *node)
 }
 
 static void
-_outA_Indices(String *str, A_Indices *node)
+_outA_Indices(String * str, A_Indices *node)
 {
 	string_append_char(str, "[");
 	if (node->lidx)
@@ -1837,9 +1850,9 @@ _outA_Indices(String *str, A_Indices *node)
 }
 
 static void
-_outA_Indirection(String *str, A_Indirection *node)
+_outA_Indirection(String * str, A_Indirection *node)
 {
-	ListCell	*lc;
+	ListCell   *lc;
 
 	if (node->indirection != NIL)
 	{
@@ -1854,9 +1867,9 @@ _outA_Indirection(String *str, A_Indirection *node)
 			string_append_char(str, ")");
 		}
 
-		foreach (lc, node->indirection)
+		foreach(lc, node->indirection)
 		{
-			Node	*ind = lfirst(lc);
+			Node	   *ind = lfirst(lc);
 
 			if (IsA(ind, A_Star))
 				/* foo.* */
@@ -1869,22 +1882,22 @@ _outA_Indirection(String *str, A_Indirection *node)
 				string_append_char(str, "\"");
 			}
 			else
-				/* foo[1] (A_Indices)*/
+				/* foo[1] (A_Indices) */
 				_outNode(str, ind);
 		}
 	}
 }
 
 static void
-_outA_ArrayExpr(String *str, A_ArrayExpr *node)
+_outA_ArrayExpr(String * str, A_ArrayExpr *node)
 {
 	string_append_char(str, "ARRAY [");
 	_outNode(str, node->elements);
-	string_append_char(str,"]");
+	string_append_char(str, "]");
 }
 
 static void
-_outResTarget(String *str, ResTarget *node)
+_outResTarget(String * str, ResTarget *node)
 {
 	if (node->indirection != NIL)
 	{
@@ -1909,13 +1922,13 @@ _outResTarget(String *str, ResTarget *node)
 
 
 static void
-_outMultiAssignRef(String *str, MultiAssignRef *node)
+_outMultiAssignRef(String * str, MultiAssignRef *node)
 {
 	_outNode(str, node->source);
 }
 
 static void
-_outWindowDef(String *str, WindowDef *node)
+_outWindowDef(String * str, WindowDef *node)
 {
 	if (node->name)
 	{
@@ -2000,7 +2013,7 @@ _outWindowDef(String *str, WindowDef *node)
 }
 
 static void
-_outConstraint(String *str, Constraint *node)
+_outConstraint(String * str, Constraint *node)
 {
 	if (node->conname)
 	{
@@ -2161,7 +2174,7 @@ _outConstraint(String *str, Constraint *node)
 
 
 static void
-_outSortBy(String *str, SortBy *node)
+_outSortBy(String * str, SortBy *node)
 {
 	_outNode(str, node->node);
 
@@ -2179,7 +2192,8 @@ _outSortBy(String *str, SortBy *node)
 		string_append_char(str, " NULLS LAST ");
 }
 
-static void _outInsertStmt(String *str, InsertStmt *node)
+static void
+_outInsertStmt(String * str, InsertStmt *node)
 {
 	if (node->withClause)
 		_outWithClause(str, node->withClause);
@@ -2192,15 +2206,15 @@ static void _outInsertStmt(String *str, InsertStmt *node)
 
 	if (node->cols)
 	{
-		char comma = 0;
-		ListCell *lc;
+		char		comma = 0;
+		ListCell   *lc;
 
 		string_append_char(str, "(");
 
-		foreach (lc, node->cols)
+		foreach(lc, node->cols)
 		{
-			ResTarget *node = lfirst(lc);
-			ListCell  *lc_ind;
+			ResTarget  *node = lfirst(lc);
+			ListCell   *lc_ind;
 
 			if (comma == 0)
 				comma = 1;
@@ -2211,9 +2225,9 @@ static void _outInsertStmt(String *str, InsertStmt *node)
 			string_append_char(str, node->name);
 			string_append_char(str, "\"");
 
-			foreach (lc_ind, node->indirection)
+			foreach(lc_ind, node->indirection)
 			{
-				Node	*ind = lfirst(lc_ind);
+				Node	   *ind = lfirst(lc_ind);
 
 				if (IsA(ind, String))
 				{
@@ -2247,21 +2261,23 @@ static void _outInsertStmt(String *str, InsertStmt *node)
 	}
 }
 
-static void _outSetClause(String *str, List *node)
+static void
+_outSetClause(String * str, List *node)
 {
-	ListCell *lc;
-	char comma = 0;
+	ListCell   *lc;
+	char		comma = 0;
 
-	ResTarget *first = linitial(node);
+	ResTarget  *first = linitial(node);
+
 	string_append_char(str, " SET ");
 
 	if (IsA(first->val, MultiAssignRef))
 	{
 		string_append_char(str, "(");
-		foreach (lc, node)
+		foreach(lc, node)
 		{
-			ResTarget *node = lfirst(lc);
-			ListCell  *lc_ind;
+			ResTarget  *node = lfirst(lc);
+			ListCell   *lc_ind;
 
 			if (comma == 0)
 				comma = 1;
@@ -2272,9 +2288,9 @@ static void _outSetClause(String *str, List *node)
 			string_append_char(str, node->name);
 			string_append_char(str, "\"");
 
-			foreach (lc_ind, node->indirection)
+			foreach(lc_ind, node->indirection)
 			{
-				Node	*ind = lfirst(lc_ind);
+				Node	   *ind = lfirst(lc_ind);
 
 				if (IsA(ind, String))
 				{
@@ -2294,10 +2310,10 @@ static void _outSetClause(String *str, List *node)
 	}
 	else
 	{
-		foreach (lc, node)
+		foreach(lc, node)
 		{
-			ResTarget *node = lfirst(lc);
-			ListCell  *lc_ind;
+			ResTarget  *node = lfirst(lc);
+			ListCell   *lc_ind;
 
 			if (comma == 0)
 				comma = 1;
@@ -2308,9 +2324,9 @@ static void _outSetClause(String *str, List *node)
 			string_append_char(str, node->name);
 			string_append_char(str, "\"");
 
-			foreach (lc_ind, node->indirection)
+			foreach(lc_ind, node->indirection)
 			{
-				Node	*ind = lfirst(lc_ind);
+				Node	   *ind = lfirst(lc_ind);
 
 				if (IsA(ind, String))
 				{
@@ -2329,7 +2345,8 @@ static void _outSetClause(String *str, List *node)
 	}
 }
 
-static void _outUpdateStmt(String *str, UpdateStmt *node)
+static void
+_outUpdateStmt(String * str, UpdateStmt *node)
 {
 	if (node->withClause)
 		_outWithClause(str, node->withClause);
@@ -2359,7 +2376,8 @@ static void _outUpdateStmt(String *str, UpdateStmt *node)
 	}
 }
 
-static void _outDeleteStmt(String *str, DeleteStmt *node)
+static void
+_outDeleteStmt(String * str, DeleteStmt *node)
 {
 	if (node->withClause)
 		_outWithClause(str, node->withClause);
@@ -2387,7 +2405,8 @@ static void _outDeleteStmt(String *str, DeleteStmt *node)
 	}
 }
 
-static void _outTransactionStmt(String *str, TransactionStmt *node)
+static void
+_outTransactionStmt(String * str, TransactionStmt *node)
 {
 	switch (node->kind)
 	{
@@ -2443,13 +2462,15 @@ static void _outTransactionStmt(String *str, TransactionStmt *node)
 }
 
 
-static void _outTruncateStmt(String *str, TruncateStmt *node)
+static void
+_outTruncateStmt(String * str, TruncateStmt *node)
 {
 	string_append_char(str, "TRUNCATE ");
 	_outNode(str, node->relations);
 }
 
-static void _outVacuumStmt(String *str, VacuumStmt *node)
+static void
+_outVacuumStmt(String * str, VacuumStmt *node)
 {
 	if (node->options & VACOPT_VACUUM)
 		string_append_char(str, "VACUUM ");
@@ -2477,7 +2498,8 @@ static void _outVacuumStmt(String *str, VacuumStmt *node)
 	}
 }
 
-static void _outExplainStmt(String *str, ExplainStmt *node)
+static void
+_outExplainStmt(String * str, ExplainStmt *node)
 {
 	ListCell   *lc;
 
@@ -2519,7 +2541,8 @@ static void _outExplainStmt(String *str, ExplainStmt *node)
 	_outNode(str, node->query);
 }
 
-static void _outClusterStmt(String *str, ClusterStmt *node)
+static void
+_outClusterStmt(String * str, ClusterStmt *node)
 {
 	string_append_char(str, "CLUSTER ");
 
@@ -2533,12 +2556,14 @@ static void _outClusterStmt(String *str, ClusterStmt *node)
 		_outNode(str, node->relation);
 }
 
-static void _outCheckPointStmt(String *str, CheckPointStmt *node)
+static void
+_outCheckPointStmt(String * str, CheckPointStmt *node)
 {
 	string_append_char(str, "CHECKPOINT");
 }
 
-static void _outClosePortalStmt(String *str, ClosePortalStmt *node)
+static void
+_outClosePortalStmt(String * str, ClosePortalStmt *node)
 {
 	string_append_char(str, "CLOSE ");
 	string_append_char(str, "\"");
@@ -2546,7 +2571,8 @@ static void _outClosePortalStmt(String *str, ClosePortalStmt *node)
 	string_append_char(str, "\"");
 }
 
-static void _outListenStmt(String *str, ListenStmt *node)
+static void
+_outListenStmt(String * str, ListenStmt *node)
 {
 	string_append_char(str, "LISTEN ");
 	string_append_char(str, "\"");
@@ -2554,28 +2580,32 @@ static void _outListenStmt(String *str, ListenStmt *node)
 	string_append_char(str, "\"");
 }
 
-static void _outUnlistenStmt(String *str, UnlistenStmt *node)
+static void
+_outUnlistenStmt(String * str, UnlistenStmt *node)
 {
 	string_append_char(str, "UNLISTEN ");
 	if (node->conditionname == NULL)
 		string_append_char(str, "*");
-	else {
+	else
+	{
 		string_append_char(str, "\"");
 		string_append_char(str, node->conditionname);
 		string_append_char(str, "\"");
 	}
 }
 
-static void _outLoadStmt(String *str, LoadStmt *node)
+static void
+_outLoadStmt(String * str, LoadStmt *node)
 {
 	string_append_char(str, "LOAD '");
 	string_append_char(str, node->filename);
 	string_append_char(str, "'");
 }
 
-static void _outCopyStmt(String *str, CopyStmt *node)
+static void
+_outCopyStmt(String * str, CopyStmt *node)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
 	string_append_char(str, "COPY ");
 
@@ -2611,13 +2641,13 @@ static void _outCopyStmt(String *str, CopyStmt *node)
 
 	if (server_version_num < 90000)
 	{
-		foreach (lc, node->options)
+		foreach(lc, node->options)
 		{
-			DefElem *e = lfirst(lc);
+			DefElem    *e = lfirst(lc);
 
 			if (strcmp(e->defname, "format") == 0)
 			{
-				char *fmt = strVal(e->arg);
+				char	   *fmt = strVal(e->arg);
 
 				if (strcmp(fmt, "text") == 0)
 					;
@@ -2673,9 +2703,9 @@ static void _outCopyStmt(String *str, CopyStmt *node)
 		{
 			string_append_char(str, "(");
 
-			foreach (lc, node->options)
+			foreach(lc, node->options)
 			{
-				DefElem *e = lfirst(lc);
+				DefElem    *e = lfirst(lc);
 
 				if (list_head(node->options) != lc)
 					string_append_char(str, ", ");
@@ -2714,17 +2744,19 @@ static void _outCopyStmt(String *str, CopyStmt *node)
 	}
 }
 
-static void _outDeallocateStmt(String *str, DeallocateStmt *node)
+static void
+_outDeallocateStmt(String * str, DeallocateStmt *node)
 {
 	string_append_char(str, "DEALLOCATE \"");
 	string_append_char(str, node->name);
 	string_append_char(str, "\"");
 }
 
-static void _outRenameStmt(String *str, RenameStmt *node)
+static void
+_outRenameStmt(String * str, RenameStmt *node)
 {
-	ListCell *lc;
-	char comma = 0;
+	ListCell   *lc;
+	char		comma = 0;
 
 	string_append_char(str, "ALTER ");
 
@@ -2758,12 +2790,14 @@ static void _outRenameStmt(String *str, RenameStmt *node)
 		case OBJECT_FUNCTION:
 			string_append_char(str, "FUNCTION ");
 
-			foreach (lc, castNode(List, node->object))
+			foreach(lc, castNode(List, node->object))
 			{
-				Node *n = lfirst(lc);
+				Node	   *n = lfirst(lc);
+
 				if (IsA(n, String))
 				{
-					Value *value = (Value *) n;
+					Value	   *value = (Value *) n;
+
 					if (comma == 0)
 						comma = 1;
 					else
@@ -2867,14 +2901,14 @@ static void _outRenameStmt(String *str, RenameStmt *node)
 }
 
 static void
-_outOptRoleList(String *str, List *options)
+_outOptRoleList(String * str, List *options)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
-	foreach (lc, options)
+	foreach(lc, options)
 	{
-		DefElem *elem = lfirst(lc);
-		Value *value = (Value *) elem->arg;
+		DefElem    *elem = lfirst(lc);
+		Value	   *value = (Value *) elem->arg;
 
 		if (strcmp(elem->defname, "password") == 0)
 		{
@@ -2936,7 +2970,7 @@ _outOptRoleList(String *str, List *options)
 		}
 		else if (strcmp(elem->defname, "connectionlimit") == 0)
 		{
-			char buf[16];
+			char		buf[16];
 
 			string_append_char(str, " CONNECTION LIMIT ");
 			snprintf(buf, 16, "%ld", value->val.ival);
@@ -2955,7 +2989,7 @@ _outOptRoleList(String *str, List *options)
 		}
 		else if (strcmp(elem->defname, "sysid") == 0)
 		{
-			char buf[16];
+			char		buf[16];
 
 			string_append_char(str, " SYSID ");
 			snprintf(buf, 16, "%ld", value->val.ival);
@@ -2975,7 +3009,7 @@ _outOptRoleList(String *str, List *options)
 }
 
 static void
-_outCreateRoleStmt(String *str, CreateRoleStmt *node)
+_outCreateRoleStmt(String * str, CreateRoleStmt *node)
 {
 	string_append_char(str, "CREATE ");
 	switch (node->stmt_type)
@@ -2999,7 +3033,7 @@ _outCreateRoleStmt(String *str, CreateRoleStmt *node)
 }
 
 static void
-_outAlterRoleStmt(String *str, AlterRoleStmt *node)
+_outAlterRoleStmt(String * str, AlterRoleStmt *node)
 {
 	string_append_char(str, "ALTER ROLE \"");
 	_outNode(str, node->role);
@@ -3010,7 +3044,7 @@ _outAlterRoleStmt(String *str, AlterRoleStmt *node)
 }
 
 static void
-_outAlterRoleSetStmt(String *str, AlterRoleSetStmt *node)
+_outAlterRoleSetStmt(String * str, AlterRoleSetStmt *node)
 {
 	string_append_char(str, "ALTER ROLE \"");
 	_outNode(str, node->role);
@@ -3022,20 +3056,20 @@ _outAlterRoleSetStmt(String *str, AlterRoleSetStmt *node)
 	}
 }
 static void
-_outRoleSpec(String *str, RoleSpec *node)
+_outRoleSpec(String * str, RoleSpec *node)
 {
 	string_append_char(str, node->rolename);
 }
 
 static void
-_outSetTransactionModeList(String *str, List *list)
+_outSetTransactionModeList(String * str, List *list)
 {
-	ListCell *lc;
-	char comma = 0;
+	ListCell   *lc;
+	char		comma = 0;
 
-	foreach (lc, list)
+	foreach(lc, list)
 	{
-		DefElem *elem = lfirst(lc);
+		DefElem    *elem = lfirst(lc);
 
 		if (comma == 0)
 			comma = 1;
@@ -3044,13 +3078,15 @@ _outSetTransactionModeList(String *str, List *list)
 
 		if (strcmp(elem->defname, "transaction_isolation") == 0)
 		{
-			A_Const *v = (A_Const *) elem->arg;
+			A_Const    *v = (A_Const *) elem->arg;
+
 			string_append_char(str, " ISOLATION LEVEL ");
 			string_append_char(str, v->val.val.str);
 		}
 		else if (strcmp(elem->defname, "transaction_read_only") == 0)
 		{
-			A_Const *n = (A_Const *) elem->arg;
+			A_Const    *n = (A_Const *) elem->arg;
+
 			if (n->val.val.ival == TRUE)
 				string_append_char(str, "READ ONLY ");
 			else
@@ -3061,7 +3097,7 @@ _outSetTransactionModeList(String *str, List *list)
 
 
 static void
-_outSetRest(String *str, VariableSetStmt *node)
+_outSetRest(String * str, VariableSetStmt *node)
 {
 	if (strcmp(node->name, "timezone") == 0)
 	{
@@ -3101,7 +3137,8 @@ _outSetRest(String *str, VariableSetStmt *node)
 	}
 	else if (strcmp(node->name, "xmloption") == 0)
 	{
-		A_Const *v = linitial(node->args);
+		A_Const    *v = linitial(node->args);
+
 		string_append_char(str, "XML OPTOIN ");
 		string_append_char(str, v->val.val.str);
 	}
@@ -3129,7 +3166,7 @@ _outSetRest(String *str, VariableSetStmt *node)
 }
 
 static void
-_outDropRoleStmt(String *str, DropRoleStmt *node)
+_outDropRoleStmt(String * str, DropRoleStmt *node)
 {
 	string_append_char(str, "DROP ROLE ");
 	if (node->missing_ok == TRUE)
@@ -3138,7 +3175,7 @@ _outDropRoleStmt(String *str, DropRoleStmt *node)
 }
 
 static void
-_outCreateSchemaStmt(String *str, CreateSchemaStmt *node)
+_outCreateSchemaStmt(String * str, CreateSchemaStmt *node)
 {
 	string_append_char(str, "CREATE SCHEMA \"");
 	string_append_char(str, node->schemaname);
@@ -3153,7 +3190,7 @@ _outCreateSchemaStmt(String *str, CreateSchemaStmt *node)
 }
 
 static void
-_outVariableSetStmt(String *str, VariableSetStmt *node)
+_outVariableSetStmt(String * str, VariableSetStmt *node)
 {
 	if (node->kind == VAR_RESET_ALL)
 	{
@@ -3173,7 +3210,7 @@ _outVariableSetStmt(String *str, VariableSetStmt *node)
 }
 
 static void
-_outVariableShowStmt(String *str, VariableShowStmt *node)
+_outVariableShowStmt(String * str, VariableShowStmt *node)
 {
 	if (strcmp(node->name, "timezone") == 0)
 		string_append_char(str, "SHOW TIME ZONE");
@@ -3191,7 +3228,7 @@ _outVariableShowStmt(String *str, VariableShowStmt *node)
 }
 
 static void
-_outConstraintsSetStmt(String *str, ConstraintsSetStmt *node)
+_outConstraintsSetStmt(String * str, ConstraintsSetStmt *node)
 {
 	string_append_char(str, "SET CONSTRAINTS ");
 
@@ -3204,9 +3241,9 @@ _outConstraintsSetStmt(String *str, ConstraintsSetStmt *node)
 }
 
 static void
-_outAlterTableCmd(String *str, AlterTableCmd *node)
+_outAlterTableCmd(String * str, AlterTableCmd *node)
 {
-	char buf[16];
+	char		buf[16];
 
 	switch (node->subtype)
 	{
@@ -3379,7 +3416,7 @@ _outAlterTableCmd(String *str, AlterTableCmd *node)
 }
 
 static void
-_outAlterTableStmt(String *str, AlterTableStmt *node)
+_outAlterTableStmt(String * str, AlterTableStmt *node)
 {
 	if (node->relkind == OBJECT_TABLE)
 		string_append_char(str, "ALTER TABLE ");
@@ -3392,15 +3429,15 @@ _outAlterTableStmt(String *str, AlterTableStmt *node)
 }
 
 static void
-_outOptSeqList(String *str, List *options)
+_outOptSeqList(String * str, List *options)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
-	foreach (lc, options)
+	foreach(lc, options)
 	{
-		DefElem *e = lfirst(lc);
-		Value *v = (Value *)e->arg;
-		char buf[16];
+		DefElem    *e = lfirst(lc);
+		Value	   *v = (Value *) e->arg;
+		char		buf[16];
 
 		if (strcmp(e->defname, "cycle") == 0)
 		{
@@ -3416,7 +3453,7 @@ _outOptSeqList(String *str, List *options)
 		else if (strcmp(e->defname, "owned_by") == 0)
 		{
 			string_append_char(str, " OWNED BY ");
-			_outIdList(str, (List *)e->arg);
+			_outIdList(str, (List *) e->arg);
 		}
 		else
 		{
@@ -3445,7 +3482,7 @@ _outOptSeqList(String *str, List *options)
 }
 
 static void
-_outCreateSeqStmt(String *str, CreateSeqStmt *node)
+_outCreateSeqStmt(String * str, CreateSeqStmt *node)
 {
 	string_append_char(str, "CREATE ");
 	if (node->sequence->relpersistence == RELPERSISTENCE_TEMP)
@@ -3457,7 +3494,7 @@ _outCreateSeqStmt(String *str, CreateSeqStmt *node)
 }
 
 static void
-_outAlterSeqStmt(String *str, AlterSeqStmt *node)
+_outAlterSeqStmt(String * str, AlterSeqStmt *node)
 {
 	string_append_char(str, "ALTER SEQUENCE ");
 	_outNode(str, node->sequence);
@@ -3465,7 +3502,7 @@ _outAlterSeqStmt(String *str, AlterSeqStmt *node)
 }
 
 static void
-_outCreatePLangStmt(String *str, CreatePLangStmt *node)
+_outCreatePLangStmt(String * str, CreatePLangStmt *node)
 {
 	string_append_char(str, "CREATE ");
 	if (node->pltrusted == true)
@@ -3476,13 +3513,13 @@ _outCreatePLangStmt(String *str, CreatePLangStmt *node)
 
 	if (node->plhandler != NIL)
 	{
-		ListCell *lc;
-		char dot = 0;
+		ListCell   *lc;
+		char		dot = 0;
 
 		string_append_char(str, " HANDLER ");
-		foreach (lc, node->plhandler)
+		foreach(lc, node->plhandler)
 		{
-			Value *v = lfirst(lc);
+			Value	   *v = lfirst(lc);
 
 			if (dot == 0)
 				dot = 1;
@@ -3497,13 +3534,13 @@ _outCreatePLangStmt(String *str, CreatePLangStmt *node)
 
 	if (node->plvalidator != NIL)
 	{
-		ListCell *lc;
-		char dot = 0;
+		ListCell   *lc;
+		char		dot = 0;
 
 		string_append_char(str, " VALIDATOR ");
-		foreach (lc, node->plvalidator)
+		foreach(lc, node->plvalidator)
 		{
-			Value *v = lfirst(lc);
+			Value	   *v = lfirst(lc);
 
 			if (dot == 0)
 				dot = 1;
@@ -3519,7 +3556,7 @@ _outCreatePLangStmt(String *str, CreatePLangStmt *node)
 
 
 static void
-_outCreateTableSpaceStmt(String *str, CreateTableSpaceStmt *node)
+_outCreateTableSpaceStmt(String * str, CreateTableSpaceStmt *node)
 {
 	string_append_char(str, "CREATE TABLESPACE \"");
 	string_append_char(str, node->tablespacename);
@@ -3538,7 +3575,7 @@ _outCreateTableSpaceStmt(String *str, CreateTableSpaceStmt *node)
 }
 
 static void
-_outDropTableSpaceStmt(String *str, DropTableSpaceStmt *node)
+_outDropTableSpaceStmt(String * str, DropTableSpaceStmt *node)
 {
 	string_append_char(str, "DROP TABLESPACE \"");
 	string_append_char(str, node->tablespacename);
@@ -3546,16 +3583,16 @@ _outDropTableSpaceStmt(String *str, DropTableSpaceStmt *node)
 }
 
 static void
-_outFuncName(String *str, List *func_name)
+_outFuncName(String * str, List *func_name)
 {
-	ListCell *lc;
-	Value *v;
-	char dot = 0;
+	ListCell   *lc;
+	Value	   *v;
+	char		dot = 0;
 
 	if (func_name == NULL)
 		return;
 
-	foreach (lc, func_name)
+	foreach(lc, func_name)
 	{
 		v = (Value *) lfirst(lc);
 
@@ -3578,9 +3615,9 @@ _outFuncName(String *str, List *func_name)
 }
 
 static void
-_outCreateTrigStmt(String *str, CreateTrigStmt *node)
+_outCreateTrigStmt(String * str, CreateTrigStmt *node)
 {
-	bool	has_events = false;
+	bool		has_events = false;
 
 	if (node->isconstraint == TRUE)
 		string_append_char(str, "CREATE CONSTRAINT TRIGGER \"");
@@ -3649,18 +3686,18 @@ _outCreateTrigStmt(String *str, CreateTrigStmt *node)
 }
 
 static void
-_outDefinition(String *str, List *definition)
+_outDefinition(String * str, List *definition)
 {
-	ListCell *lc;
-	char comma = 0;
+	ListCell   *lc;
+	char		comma = 0;
 
 	if (definition == NIL)
 		return;
 
 	string_append_char(str, "(");
-	foreach (lc, definition)
+	foreach(lc, definition)
 	{
-		DefElem *e = lfirst(lc);
+		DefElem    *e = lfirst(lc);
 
 		if (comma == 0)
 			comma = 1;
@@ -3681,10 +3718,10 @@ _outDefinition(String *str, List *definition)
 }
 
 static void
-_outDefineStmt(String *str, DefineStmt *node)
+_outDefineStmt(String * str, DefineStmt *node)
 {
-	ListCell *lc;
-	char dot = 0;
+	ListCell   *lc;
+	char		dot = 0;
 
 	switch (node->kind)
 	{
@@ -3698,9 +3735,9 @@ _outDefineStmt(String *str, DefineStmt *node)
 		case OBJECT_OPERATOR:
 			string_append_char(str, "CREATE OPERATOR ");
 
-			foreach (lc, node->defnames)
+			foreach(lc, node->defnames)
 			{
-				Value *v = lfirst(lc);
+				Value	   *v = lfirst(lc);
 
 				if (dot == 0)
 					dot = 1;
@@ -3751,14 +3788,14 @@ _outDefineStmt(String *str, DefineStmt *node)
 }
 
 static void
-_outOperatorName(String *str, List *list)
+_outOperatorName(String * str, List *list)
 {
-	char dot = 0;
-	ListCell *lc;
+	char		dot = 0;
+	ListCell   *lc;
 
-	foreach (lc, list)
+	foreach(lc, list)
 	{
-		Value *v = lfirst(lc);
+		Value	   *v = lfirst(lc);
 
 		if (dot == 0)
 			dot = 1;
@@ -3770,9 +3807,9 @@ _outOperatorName(String *str, List *list)
 }
 
 static void
-_outCreateOpClassItem(String *str, CreateOpClassItem *node)
+_outCreateOpClassItem(String * str, CreateOpClassItem *node)
 {
-	char buf[16];
+	char		buf[16];
 
 	switch (node->itemtype)
 	{
@@ -3789,10 +3826,10 @@ _outCreateOpClassItem(String *str, CreateOpClassItem *node)
 				_outNode(str, node->name->objname);
 				string_append_char(str, ")");
 			}
+
 			/*
-			if (node->recheck == TRUE)
-				string_append_char(str, " RECHECK");
-			*/
+			 * if (node->recheck == TRUE) string_append_char(str, " RECHECK");
+			 */
 			break;
 
 		case OPCLASS_ITEM_FUNCTION:
@@ -3818,7 +3855,7 @@ _outCreateOpClassItem(String *str, CreateOpClassItem *node)
 }
 
 static void
-_outCreateOpClassStmt(String *str, CreateOpClassStmt *node)
+_outCreateOpClassStmt(String * str, CreateOpClassStmt *node)
 {
 	string_append_char(str, "CREATE OPERATOR CLASS ");
 	_outFuncName(str, node->opclassname);
@@ -3845,17 +3882,18 @@ _outCreateOpClassStmt(String *str, CreateOpClassStmt *node)
  * OPERATOR, DROP OPERATOR CLASS
  */
 
-static void add_function_like_objs(String *str, DropStmt *node)
+static void
+add_function_like_objs(String * str, DropStmt *node)
 {
-	ListCell *lc;
-	char comma = 0;
+	ListCell   *lc;
+	char		comma = 0;
 
 	if (node->concurrent)
 		string_append_char(str, "CONCURRENTLY ");
 	if (node->missing_ok)
 		string_append_char(str, "IF EXISTS ");
 
-	foreach (lc, node->objects)
+	foreach(lc, node->objects)
 	{
 		if (comma == 0)
 			comma = 1;
@@ -3866,9 +3904,9 @@ static void add_function_like_objs(String *str, DropStmt *node)
 }
 
 static void
-_outDropStmt(String *str, DropStmt *node)
+_outDropStmt(String * str, DropStmt *node)
 {
-	List *objname;
+	List	   *objname;
 
 	string_append_char(str, "DROP ");
 	switch (node->removeType)
@@ -3965,7 +4003,7 @@ _outDropStmt(String *str, DropStmt *node)
 			objname = lfirst(list_head(node->objects));
 			string_append_char(str, strVal(llast(objname)));
 			string_append_char(str, " ON ");
-			string_append_char(str,	NameListToString(list_truncate(list_copy(objname),
+			string_append_char(str, NameListToString(list_truncate(list_copy(objname),
 																   list_length(objname) - 1)));
 			break;
 
@@ -4018,9 +4056,9 @@ _outDropStmt(String *str, DropStmt *node)
 }
 
 static void
-_outFetchStmt(String *str, FetchStmt *node)
+_outFetchStmt(String * str, FetchStmt *node)
 {
-	char buf[16];
+	char		buf[16];
 
 	snprintf(buf, 16, "%ld", node->howMany);
 
@@ -4079,18 +4117,18 @@ _outFetchStmt(String *str, FetchStmt *node)
 }
 
 static void
-_outPrivilegeList(String *str, List *list)
+_outPrivilegeList(String * str, List *list)
 {
-	ListCell *lc;
-	char comma = 0;
+	ListCell   *lc;
+	char		comma = 0;
 
 	if (list == NIL)
 		string_append_char(str, "ALL");
 	else
 	{
-		foreach (lc, list)
+		foreach(lc, list)
 		{
-			Value *v = lfirst(lc);
+			Value	   *v = lfirst(lc);
 
 			if (comma == 0)
 				comma = 1;
@@ -4103,7 +4141,7 @@ _outPrivilegeList(String *str, List *list)
 }
 
 static void
-_outFunctionParameter(String *str, FunctionParameter *node)
+_outFunctionParameter(String * str, FunctionParameter *node)
 {
 	switch (node->mode)
 	{
@@ -4131,7 +4169,7 @@ _outFunctionParameter(String *str, FunctionParameter *node)
 }
 
 static void
-_outObjectWithArgs(String *str, ObjectWithArgs *node)
+_outObjectWithArgs(String * str, ObjectWithArgs *node)
 {
 	_outFuncName(str, node->objname);
 	string_append_char(str, "(");
@@ -4140,7 +4178,7 @@ _outObjectWithArgs(String *str, ObjectWithArgs *node)
 }
 
 static void
-_outGrantStmt(String *str, GrantStmt *node)
+_outGrantStmt(String * str, GrantStmt *node)
 {
 	if (node->is_grant == true)
 		string_append_char(str, "GRANT ");
@@ -4201,11 +4239,11 @@ _outGrantStmt(String *str, GrantStmt *node)
 			_outIdList(str, node->objects);
 			break;
 
-        case ACL_OBJECT_COLUMN:
-        case ACL_OBJECT_DOMAIN:
-        case ACL_OBJECT_LARGEOBJECT:
-        case ACL_OBJECT_TYPE:
-            break;
+		case ACL_OBJECT_COLUMN:
+		case ACL_OBJECT_DOMAIN:
+		case ACL_OBJECT_LARGEOBJECT:
+		case ACL_OBJECT_TYPE:
+			break;
 	}
 
 	if (node->is_grant == true)
@@ -4222,7 +4260,7 @@ _outGrantStmt(String *str, GrantStmt *node)
 }
 
 static void
-_outGrantRoleStmt(String *str, GrantRoleStmt *node)
+_outGrantRoleStmt(String * str, GrantRoleStmt *node)
 {
 	if (node->is_grant == true)
 		string_append_char(str, "GRANT ");
@@ -4254,14 +4292,14 @@ _outGrantRoleStmt(String *str, GrantRoleStmt *node)
 }
 
 static void
-_outFuncOptList(String *str, List *list)
+_outFuncOptList(String * str, List *list)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
-	foreach (lc, list)
+	foreach(lc, list)
 	{
-		DefElem *e = lfirst(lc);
-		Value *v = (Value *) e->arg;
+		DefElem    *e = lfirst(lc);
+		Value	   *v = (Value *) e->arg;
 
 		if (strcmp(e->defname, "strict") == 0)
 		{
@@ -4272,7 +4310,8 @@ _outFuncOptList(String *str, List *list)
 		}
 		else if (strcmp(e->defname, "volatility") == 0)
 		{
-			char *s = v->val.str;
+			char	   *s = v->val.str;
+
 			if (strcmp(s, "immutable") == 0)
 				string_append_char(str, " IMMUTABLE");
 			else if (strcmp(s, "stable") == 0)
@@ -4302,7 +4341,7 @@ _outFuncOptList(String *str, List *list)
 }
 
 static void
-_outCreateFunctionStmt(String *str, CreateFunctionStmt *node)
+_outCreateFunctionStmt(String * str, CreateFunctionStmt *node)
 {
 	string_append_char(str, "CREATE ");
 	if (node->replace == true)
@@ -4331,7 +4370,7 @@ _outCreateFunctionStmt(String *str, CreateFunctionStmt *node)
 }
 
 static void
-_outAlterFunctionStmt(String *str, AlterFunctionStmt *node)
+_outAlterFunctionStmt(String * str, AlterFunctionStmt *node)
 {
 	string_append_char(str, "ALTER FUNCTION ");
 	_outNode(str, node->func);
@@ -4340,7 +4379,7 @@ _outAlterFunctionStmt(String *str, AlterFunctionStmt *node)
 
 
 static void
-_outCreateCastStmt(String *str, CreateCastStmt *node)
+_outCreateCastStmt(String * str, CreateCastStmt *node)
 {
 	string_append_char(str, "CREATE CAST (");
 	_outNode(str, node->sourcetype);
@@ -4365,7 +4404,7 @@ _outCreateCastStmt(String *str, CreateCastStmt *node)
 }
 
 static void
-_outReindexStmt(String *str, ReindexStmt *node)
+_outReindexStmt(String * str, ReindexStmt *node)
 {
 	string_append_char(str, "REINDEX ");
 
@@ -4403,7 +4442,7 @@ _outReindexStmt(String *str, ReindexStmt *node)
 }
 
 static void
-_outAlterObjectSchemaStmt(String *str, AlterObjectSchemaStmt *node)
+_outAlterObjectSchemaStmt(String * str, AlterObjectSchemaStmt *node)
 {
 	string_append_char(str, "ALTER ");
 
@@ -4471,11 +4510,11 @@ _outAlterObjectSchemaStmt(String *str, AlterObjectSchemaStmt *node)
 }
 
 static void
-_outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
+_outAlterOwnerStmt(String * str, AlterOwnerStmt *node)
 {
 	string_append_char(str, "ALTER ");
 
-    ObjectWithArgs *owa = castNode(ObjectWithArgs, node);
+	ObjectWithArgs *owa = castNode(ObjectWithArgs, node);
 
 	switch (node->objectType)
 	{
@@ -4625,7 +4664,7 @@ _outAlterOwnerStmt(String *str, AlterOwnerStmt *node)
 }
 
 static void
-_outRuleStmt(String *str, RuleStmt *node)
+_outRuleStmt(String * str, RuleStmt *node)
 {
 	string_append_char(str, "CREATE ");
 	if (node->replace)
@@ -4676,12 +4715,12 @@ _outRuleStmt(String *str, RuleStmt *node)
 		_outNode(str, linitial(node->actions));
 	else
 	{
-		ListCell *lc;
-		char semi = 0;
+		ListCell   *lc;
+		char		semi = 0;
 
 		string_append_char(str, "(");
 
-		foreach (lc, node->actions)
+		foreach(lc, node->actions)
 		{
 			if (semi == 0)
 				semi = 1;
@@ -4696,7 +4735,7 @@ _outRuleStmt(String *str, RuleStmt *node)
 }
 
 static void
-_outViewStmt(String *str, ViewStmt *node)
+_outViewStmt(String * str, ViewStmt *node)
 {
 	if (node->replace)
 		string_append_char(str, "CREATE OR REPLACE ");
@@ -4721,15 +4760,15 @@ _outViewStmt(String *str, ViewStmt *node)
 }
 
 static void
-_outCreatedbOptList(String *str, List *options)
+_outCreatedbOptList(String * str, List *options)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
-	foreach (lc, options)
+	foreach(lc, options)
 	{
-		DefElem *e = lfirst(lc);
-		Value *v = (Value *) e->arg;
-		int sconst = false;
+		DefElem    *e = lfirst(lc);
+		Value	   *v = (Value *) e->arg;
+		int			sconst = false;
 
 		/* keyword */
 		if (strcmp(e->defname, "template") == 0)
@@ -4754,7 +4793,7 @@ _outCreatedbOptList(String *str, List *options)
 		/* value */
 		if (v == NULL)
 			string_append_char(str, "DEFAULT");
-		else if (IsA((Node *)v, String))
+		else if (IsA((Node *) v, String))
 		{
 			string_append_char(str, sconst ? "'" : "'");
 			string_append_char(str, v->val.str);
@@ -4762,7 +4801,8 @@ _outCreatedbOptList(String *str, List *options)
 		}
 		else
 		{
-			char buf[16];
+			char		buf[16];
+
 			snprintf(buf, 16, "%ld", v->val.ival);
 			string_append_char(str, buf);
 		}
@@ -4770,7 +4810,7 @@ _outCreatedbOptList(String *str, List *options)
 }
 
 static void
-_outCreatedbStmt(String *str, CreatedbStmt *node)
+_outCreatedbStmt(String * str, CreatedbStmt *node)
 {
 	string_append_char(str, "CREATE DATABASE \"");
 	string_append_char(str, node->dbname);
@@ -4780,7 +4820,7 @@ _outCreatedbStmt(String *str, CreatedbStmt *node)
 }
 
 static void
-_outAlterDatabaseStmt(String *str, AlterDatabaseStmt *node)
+_outAlterDatabaseStmt(String * str, AlterDatabaseStmt *node)
 {
 	string_append_char(str, "ALTER DATABASE \"");
 	string_append_char(str, node->dbname);
@@ -4790,7 +4830,7 @@ _outAlterDatabaseStmt(String *str, AlterDatabaseStmt *node)
 }
 
 static void
-_outAlterDatabaseSetStmt(String *str, AlterDatabaseSetStmt *node)
+_outAlterDatabaseSetStmt(String * str, AlterDatabaseSetStmt *node)
 {
 	string_append_char(str, "ALTER DATABASE \"");
 	string_append_char(str, node->dbname);
@@ -4800,7 +4840,7 @@ _outAlterDatabaseSetStmt(String *str, AlterDatabaseSetStmt *node)
 }
 
 static void
-_outDropdbStmt(String *str, DropdbStmt *node)
+_outDropdbStmt(String * str, DropdbStmt *node)
 {
 	string_append_char(str, "DROP DATABASE \"");
 	string_append_char(str, node->dbname);
@@ -4808,9 +4848,9 @@ _outDropdbStmt(String *str, DropdbStmt *node)
 }
 
 static void
-_outCreateDomainStmt(String *str, CreateDomainStmt *node)
+_outCreateDomainStmt(String * str, CreateDomainStmt *node)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
 	string_append_char(str, "CREATE DOMAIN ");
 	_outFuncName(str, node->domainname);
@@ -4818,7 +4858,7 @@ _outCreateDomainStmt(String *str, CreateDomainStmt *node)
 	_outNode(str, node->typeName);
 
 
-	foreach (lc, node->constraints)
+	foreach(lc, node->constraints)
 	{
 		string_append_char(str, " ");
 		_outNode(str, lfirst(lc));
@@ -4826,7 +4866,7 @@ _outCreateDomainStmt(String *str, CreateDomainStmt *node)
 }
 
 static void
-_outAlterDomainStmt(String *str, AlterDomainStmt *node)
+_outAlterDomainStmt(String * str, AlterDomainStmt *node)
 {
 	string_append_char(str, "ALTER DOMAIN ");
 	_outFuncName(str, node->typeName);
@@ -4867,7 +4907,7 @@ _outAlterDomainStmt(String *str, AlterDomainStmt *node)
 }
 
 static void
-_outCreateConversionStmt(String *str, CreateConversionStmt *node)
+_outCreateConversionStmt(String * str, CreateConversionStmt *node)
 {
 	string_append_char(str, "CREATE ");
 
@@ -4887,7 +4927,7 @@ _outCreateConversionStmt(String *str, CreateConversionStmt *node)
 }
 
 static void
-_outPrepareStmt(String *str, PrepareStmt *node)
+_outPrepareStmt(String * str, PrepareStmt *node)
 {
 	string_append_char(str, "PREPARE \"");
 	string_append_char(str, node->name);
@@ -4905,7 +4945,7 @@ _outPrepareStmt(String *str, PrepareStmt *node)
 }
 
 static void
-_outExecuteStmt(String *str, ExecuteStmt *node)
+_outExecuteStmt(String * str, ExecuteStmt *node)
 {
 	string_append_char(str, "EXECUTE \"");
 	string_append_char(str, node->name);
@@ -4920,7 +4960,7 @@ _outExecuteStmt(String *str, ExecuteStmt *node)
 }
 
 static void
-_outLockStmt(String *str, LockStmt *node)
+_outLockStmt(String * str, LockStmt *node)
 {
 	string_append_char(str, "LOCK TABLE ");
 	_outNode(str, node->relations);
@@ -4967,9 +5007,10 @@ _outLockStmt(String *str, LockStmt *node)
 }
 
 static void
-_outOperatorArgTypes(String *str, List *args)
+_outOperatorArgTypes(String * str, List *args)
 {
-	TypeName *left, *right;
+	TypeName   *left,
+			   *right;
 
 	left = linitial(args);
 	right = lsecond(args);
@@ -4986,15 +5027,15 @@ _outOperatorArgTypes(String *str, List *args)
 }
 
 static void
-_outCommentStmt(String *str, CommentStmt *node)
+_outCommentStmt(String * str, CommentStmt *node)
 {
-	TypeName *t;
-	Value *v;
-	char buf[16];
+	TypeName   *t;
+	Value	   *v;
+	char		buf[16];
 
 	string_append_char(str, "COMMENT ON ");
 
-    ObjectWithArgs *owa = castNode(ObjectWithArgs, node);
+	ObjectWithArgs *owa = castNode(ObjectWithArgs, node);
 
 	switch (node->objtype)
 	{
@@ -5021,7 +5062,7 @@ _outCommentStmt(String *str, CommentStmt *node)
 
 		case OBJECT_OPERATOR:
 			string_append_char(str, "OPERATOR ");
-			_outOperatorName(str,  owa->objname);
+			_outOperatorName(str, owa->objname);
 			string_append_char(str, "(");
 			_outOperatorArgTypes(str, owa->objargs);
 			string_append_char(str, ")");
@@ -5134,7 +5175,7 @@ _outCommentStmt(String *str, CommentStmt *node)
 }
 
 static void
-_outRangeSubselect(String *str, RangeSubselect *node)
+_outRangeSubselect(String * str, RangeSubselect *node)
 {
 	string_append_char(str, "(");
 	_outNode(str, node->subquery);
@@ -5145,10 +5186,11 @@ _outRangeSubselect(String *str, RangeSubselect *node)
 
 /*TODO*/
 static void
-_outRangeFunction(String *str, RangeFunction *node)
+_outRangeFunction(String * str, RangeFunction *node)
 {
-	_outNode(str, node->functions); //TODO
-	if (node->alias)
+	_outNode(str, node->functions);
+	//TODO
+		if (node->alias)
 	{
 		_outNode(str, node->alias);
 	}
@@ -5162,7 +5204,7 @@ _outRangeFunction(String *str, RangeFunction *node)
 }
 
 static void
-_outRangeTableSample(String *str, RangeTableSample *node)
+_outRangeTableSample(String * str, RangeTableSample *node)
 {
 	_outNode(str, node->relation);
 	string_append_char(str, " TABLESAMPLE ");
@@ -5171,7 +5213,8 @@ _outRangeTableSample(String *str, RangeTableSample *node)
 	_outNode(str, node->args);
 	string_append_char(str, ")");
 
-	if (node->repeatable) {
+	if (node->repeatable)
+	{
 		string_append_char(str, " REPEATABLE (");
 		_outNode(str, node->repeatable);
 		string_append_char(str, ")");
@@ -5179,17 +5222,17 @@ _outRangeTableSample(String *str, RangeTableSample *node)
 }
 
 static void
-_outRangeTableFunc(String *str, RangeTableFunc *node)
+_outRangeTableFunc(String * str, RangeTableFunc *node)
 {
 }
 
 static void
-_outRangeTableFuncCol(String *str, RangeTableFuncCol *node)
+_outRangeTableFuncCol(String * str, RangeTableFuncCol *node)
 {
 }
 
 static void
-_outDiscardStmt(String *str, DiscardStmt *node)
+_outDiscardStmt(String * str, DiscardStmt *node)
 {
 	switch (node->target)
 	{
@@ -5211,7 +5254,7 @@ _outDiscardStmt(String *str, DiscardStmt *node)
 }
 
 static void
-_outCreateOpFamilyStmt(String *str, CreateOpFamilyStmt *node)
+_outCreateOpFamilyStmt(String * str, CreateOpFamilyStmt *node)
 {
 	string_append_char(str, "CREATE OPERATOR FAMILY ");
 	_outIdList(str, node->opfamilyname);
@@ -5221,12 +5264,12 @@ _outCreateOpFamilyStmt(String *str, CreateOpFamilyStmt *node)
 }
 
 static void
-_outAlterOpFamilyStmt(String *str, AlterOpFamilyStmt *node)
+_outAlterOpFamilyStmt(String * str, AlterOpFamilyStmt *node)
 {
 }
 
 static void
-_outCreateEnumStmt(String *str, CreateEnumStmt *node)
+_outCreateEnumStmt(String * str, CreateEnumStmt *node)
 {
 	string_append_char(str, "CREATE TYPE ");
 	_outIdList(str, node->typeName);
@@ -5236,7 +5279,7 @@ _outCreateEnumStmt(String *str, CreateEnumStmt *node)
 }
 
 static void
-_outDropOwnedStmt(String *str, DropOwnedStmt *node)
+_outDropOwnedStmt(String * str, DropOwnedStmt *node)
 {
 	string_append_char(str, "DROP OWNED BY ");
 	_outIdList(str, node->roles);
@@ -5245,7 +5288,7 @@ _outDropOwnedStmt(String *str, DropOwnedStmt *node)
 }
 
 static void
-_outReassignOwnedStmt(String *str, ReassignOwnedStmt *node)
+_outReassignOwnedStmt(String * str, ReassignOwnedStmt *node)
 {
 	string_append_char(str, "REASSIGN OWNED BY ");
 	_outIdList(str, node->roles);
@@ -5255,7 +5298,7 @@ _outReassignOwnedStmt(String *str, ReassignOwnedStmt *node)
 }
 
 static void
-_outAlterTSDictionaryStmt(String *str, AlterTSDictionaryStmt *node)
+_outAlterTSDictionaryStmt(String * str, AlterTSDictionaryStmt *node)
 {
 	string_append_char(str, "ALTER TEXT SEARCH DICTIONARY ");
 	_outIdList(str, node->dictname);
@@ -5265,7 +5308,7 @@ _outAlterTSDictionaryStmt(String *str, AlterTSDictionaryStmt *node)
 }
 
 static void
-_outAlterTSConfigurationStmt(String *str, AlterTSConfigurationStmt *node)
+_outAlterTSConfigurationStmt(String * str, AlterTSConfigurationStmt *node)
 {
 	string_append_char(str, "ALTER TEXT SEARCH CONFIGURATION ");
 	_outIdList(str, node->cfgname);
@@ -5310,9 +5353,9 @@ _outAlterTSConfigurationStmt(String *str, AlterTSConfigurationStmt *node)
 }
 
 static void
-_outXmlExpr(String *str, XmlExpr *node)
+_outXmlExpr(String * str, XmlExpr *node)
 {
-	A_Const *n;
+	A_Const    *n;
 
 	switch (node->op)
 	{
@@ -5364,7 +5407,7 @@ _outXmlExpr(String *str, XmlExpr *node)
 			_outNode(str, linitial(node->args));
 			n = lsecond(node->args);
 			{
-				Node *arg = ((TypeCast *) n)->arg;
+				Node	   *arg = ((TypeCast *) n)->arg;
 
 				if (((A_Const *) arg)->val.val.str[0] == 't')
 					string_append_char(str, " PRESERVE WHITESPACE");
@@ -5380,24 +5423,25 @@ _outXmlExpr(String *str, XmlExpr *node)
 }
 
 static void
-_outXmlSerialize(String *str, XmlSerialize *node)
+_outXmlSerialize(String * str, XmlSerialize *node)
 {
 
 }
 
 static void
-_outWithDefinition(String *str, List *def_list)
+_outWithDefinition(String * str, List *def_list)
 {
-	int oid = 0;
+	int			oid = 0;
 
 	if (list_length(def_list) == 1)
 	{
-		DefElem *elem;
+		DefElem    *elem;
 
 		elem = linitial(def_list);
 		if (strcmp(elem->defname, "oids") == 0)
 		{
-			Value *v = (Value *)elem->arg;
+			Value	   *v = (Value *) elem->arg;
+
 			if (v->val.ival == 1)
 				string_append_char(str, " WITH OIDS ");
 			else
@@ -5414,7 +5458,7 @@ _outWithDefinition(String *str, List *def_list)
 }
 
 static void
-_outOnConflictClause(String *str, OnConflictClause *node)
+_outOnConflictClause(String * str, OnConflictClause *node)
 {
 	string_append_char(str, " ON CONFLICT ");
 
@@ -5462,22 +5506,22 @@ _outOnConflictClause(String *str, OnConflictClause *node)
 }
 
 static void
-_outPartitionElem(String *str, PartitionElem *node)
+_outPartitionElem(String * str, PartitionElem *node)
 {
 }
 
 static void
-_outPartitionSpec(String *str, PartitionSpec *node)
+_outPartitionSpec(String * str, PartitionSpec *node)
 {
 }
 
 static void
-_outPartitionBoundSpec(String *str, PartitionBoundSpec *node)
+_outPartitionBoundSpec(String * str, PartitionBoundSpec *node)
 {
 }
 
 static void
-_outPartitionRangeDatum(String *str, PartitionRangeDatum *node)
+_outPartitionRangeDatum(String * str, PartitionRangeDatum *node)
 {
 }
 
@@ -5486,7 +5530,7 @@ _outPartitionRangeDatum(String *str, PartitionRangeDatum *node)
  *	  converts a Node into ascii string and append it to 'str'
  */
 void
-_outNode(String *str, void *obj)
+_outNode(String * str, void *obj)
 {
 	if (obj == NULL)
 		return;
@@ -5510,11 +5554,10 @@ _outNode(String *str, void *obj)
 			case T_RangeVar:
 				_outRangeVar(str, obj);
 				break;
+
 				/*
-			case T_IntoClause:
-				_outIntoClause(str, obj);
-				break;
-				*/
+				 * case T_IntoClause: _outIntoClause(str, obj); break;
+				 */
 			case T_Var:
 				_outVar(str, obj);
 				break;
@@ -5530,11 +5573,10 @@ _outNode(String *str, void *obj)
 			case T_GroupingFunc:
 				_outGroupingFunc(str, obj);
 				break;
+
 				/*
-			case T_WindowFunc:
-				_outWindowFunc(str, obj);
-				break;
-				*/
+				 * case T_WindowFunc: _outWindowFunc(str, obj); break;
+				 */
 			case T_ArrayRef:
 				_outArrayRef(str, obj);
 				break;
@@ -5565,11 +5607,11 @@ _outNode(String *str, void *obj)
 			case T_SubPlan:
 				_outSubPlan(str, obj);
 				break;
+
 				/*
-			case T_AlternativeSubPlan:
-				_outAlternativeSubPlan(str, obj);
-				break;
-				*/
+				 * case T_AlternativeSubPlan: _outAlternativeSubPlan(str,
+				 * obj); break;
+				 */
 			case T_FieldSelect:
 				_outFieldSelect(str, obj);
 				break;
@@ -5579,22 +5621,18 @@ _outNode(String *str, void *obj)
 			case T_RelabelType:
 				_outRelabelType(str, obj);
 				break;
+
 				/*
-			case T_CoerceViaIO:
-				_outCoerceViaIO(str, obj);
-				break;
-			case T_ArrayCoerceExpr:
-				_outArrayCoerceExpr(str, obj);
-				break;
-				*/
+				 * case T_CoerceViaIO: _outCoerceViaIO(str, obj); break; case
+				 * T_ArrayCoerceExpr: _outArrayCoerceExpr(str, obj); break;
+				 */
 			case T_ConvertRowtypeExpr:
 				_outConvertRowtypeExpr(str, obj);
 				break;
+
 				/*
-			case T_CollateExpr:
-				_outCollateExpr(str, obj);
-				break;
-				*/
+				 * case T_CollateExpr: _outCollateExpr(str, obj); break;
+				 */
 			case T_CaseExpr:
 				_outCaseExpr(str, obj);
 				break;
@@ -5610,21 +5648,20 @@ _outNode(String *str, void *obj)
 			case T_RowExpr:
 				_outRowExpr(str, obj);
 				break;
+
 				/*
-			case T_RowCompareExpr:
-				_outRowCompareExpr(str, obj);
-				break;
-				*/
+				 * case T_RowCompareExpr: _outRowCompareExpr(str, obj); break;
+				 */
 			case T_CoalesceExpr:
 				_outCoalesceExpr(str, obj);
 				break;
 			case T_MinMaxExpr:
 				_outMinMaxExpr(str, obj);
 				break;
+
 				/*
-			case T_SQLValueFunction:
-				_outSQLValueFunction(str, obj);
-				*/
+				 * case T_SQLValueFunction: _outSQLValueFunction(str, obj);
+				 */
 				break;
 			case T_XmlExpr:
 				_outXmlExpr(str, obj);
@@ -5647,11 +5684,10 @@ _outNode(String *str, void *obj)
 			case T_CurrentOfExpr:
 				_outCurrentOfExpr(str, obj);
 				break;
+
 				/*
-			case T_NextValueExpr:
-				_outNextValueExpr(str, obj);
-				break;
-				*/
+				 * case T_NextValueExpr: _outNextValueExpr(str, obj); break;
+				 */
 			case T_InferenceElem:
 				_outInferenceElem(str, obj);
 				break;
@@ -5717,28 +5753,21 @@ _outNode(String *str, void *obj)
 			case T_IndexElem:
 				_outIndexElem(str, obj);
 				break;
+
 				/*
-			case T_Query:
-				_outQuery(str, obj);
-				break;
-			case T_WithCheckOption:
-				_outWithCheckOption(str, obj);
-				break;
-			case T_SortGroupClause:
-				_outSortGroupClause(str, obj);
-				break;
-				*/
+				 * case T_Query: _outQuery(str, obj); break; case
+				 * T_WithCheckOption: _outWithCheckOption(str, obj); break;
+				 * case T_SortGroupClause: _outSortGroupClause(str, obj);
+				 * break;
+				 */
 			case T_GroupingSet:
 				_outGroupingSet(str, obj);
 				break;
+
 				/*
-			case T_WindowClause:
-				_outWindowClause(str, obj);
-				break;
-			case T_RowMarkClause:
-				_outRowMarkClause(str, obj);
-				break;
-				*/
+				 * case T_WindowClause: _outWindowClause(str, obj); break;
+				 * case T_RowMarkClause: _outRowMarkClause(str, obj); break;
+				 */
 			case T_WithClause:
 				_outWithClause(str, obj);
 				break;
@@ -5748,11 +5777,10 @@ _outNode(String *str, void *obj)
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);
 				break;
-			/*
-			case T_RangeTblEntry:
-				_outRangeTblEntry(str, obj);
-				break;
-			*/
+
+				/*
+				 * case T_RangeTblEntry: _outRangeTblEntry(str, obj); break;
+				 */
 			case T_TableSampleClause:
 				_outTableSampleClause(str, obj);
 				break;
@@ -5768,11 +5796,10 @@ _outNode(String *str, void *obj)
 			case T_A_Const:
 				_outAConst(str, obj);
 				break;
+
 				/*
-			case T_A_Star:
-				_outA_Star(str, obj);
-				break;
-				*/
+				 * case T_A_Star: _outA_Star(str, obj); break;
+				 */
 			case T_A_Indices:
 				_outA_Indices(str, obj);
 				break;
@@ -5818,11 +5845,11 @@ _outNode(String *str, void *obj)
 			case T_DefElem:
 				_outDefElem(str, obj);
 				break;
+
 				/*
-			case T_TableLikeClause:
-				_outTableLikeClause(str, obj);
-				break;
-				*/
+				 * case T_TableLikeClause: _outTableLikeClause(str, obj);
+				 * break;
+				 */
 			case T_LockingClause:
 				_outLockingClause(str, obj);
 				break;
@@ -6138,17 +6165,16 @@ _outNode(String *str, void *obj)
 char *
 nodeToString(const void *obj)
 {
-	String *str;
-	char *p;
+	String	   *str;
+	char	   *p;
 
 	str = init_string("");
-	_outNode(str, (void *)obj);
-	p = palloc(str->len+1);
+	_outNode(str, (void *) obj);
+	p = palloc(str->len + 1);
 	memcpy(p, str->data, str->len);
-	*(p+str->len) = '\0';
+	*(p + str->len) = '\0';
 
 	free_string(str);
 
 	return p;
 }
-

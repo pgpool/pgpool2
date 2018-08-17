@@ -35,15 +35,16 @@
  * Send parse messae. "conn" should at the point right after the message kind
  * was read.
  */
-void process_parse(char *buf, PGconn *conn)
+void
+process_parse(char *buf, PGconn *conn)
 {
-	char *query;
-	int len;
-	char *stmt;
-	short noids;
-	int oids[MAXENTRIES];
-	int i;
-	char *bufp;
+	char	   *query;
+	int			len;
+	char	   *stmt;
+	short		noids;
+	int			oids[MAXENTRIES];
+	int			i;
+	char	   *bufp;
 
 	SKIP_TABS(buf);
 
@@ -51,13 +52,13 @@ void process_parse(char *buf, PGconn *conn)
 
 	stmt = buffer_read_string(buf, &bufp);
 	buf = bufp;
-	len += strlen(stmt)+1;
+	len += strlen(stmt) + 1;
 
 	SKIP_TABS(buf);
 
 	query = buffer_read_string(buf, &bufp);
 	buf = bufp;
-	len += strlen(query)+1;
+	len += strlen(query) + 1;
 
 	SKIP_TABS(buf);
 
@@ -72,13 +73,13 @@ void process_parse(char *buf, PGconn *conn)
 		exit(1);
 	}
 
-	len += sizeof(short) + noids*sizeof(int);
+	len += sizeof(short) + noids * sizeof(int);
 
 	if (noids > 0)
 	{
 		fprintf(stderr, ", oids={");
 
-		for (i=0;i<noids;i++)
+		for (i = 0; i < noids; i++)
 		{
 			oids[i] = buffer_read_int(buf, &bufp);
 			fprintf(stderr, "%d", oids[i]);
@@ -96,7 +97,7 @@ void process_parse(char *buf, PGconn *conn)
 	send_int16(noids, conn);
 	if (noids > 0)
 	{
-		for (i=0;i<noids;i++)
+		for (i = 0; i < noids; i++)
 		{
 			send_int(oids[i], conn);
 		}
@@ -107,20 +108,21 @@ void process_parse(char *buf, PGconn *conn)
  * Send bind messae. "conn" should be at the point right after the message kind
  * was read.
  */
-void process_bind(char *buf, PGconn *conn)
+void
+process_bind(char *buf, PGconn *conn)
 {
-	int len;
-	char *stmt;
-	char *portal;
-	short nparams;
-	short ncodes;
-	short codes[MAXENTRIES];
-	int paramlens[MAXENTRIES];
-	char *paramvals[MAXENTRIES];
-	short nresult_formatcodes;
-	short result_formatcodes[MAXENTRIES];
-	int i;
-	char *bufp;
+	int			len;
+	char	   *stmt;
+	char	   *portal;
+	short		nparams;
+	short		ncodes;
+	short		codes[MAXENTRIES];
+	int			paramlens[MAXENTRIES];
+	char	   *paramvals[MAXENTRIES];
+	short		nresult_formatcodes;
+	short		result_formatcodes[MAXENTRIES];
+	int			i;
+	char	   *bufp;
 
 	SKIP_TABS(buf);
 
@@ -128,20 +130,20 @@ void process_bind(char *buf, PGconn *conn)
 
 	portal = buffer_read_string(buf, &bufp);
 	buf = bufp;
-	len += strlen(portal)+1;
+	len += strlen(portal) + 1;
 
 	SKIP_TABS(buf);
 
 	stmt = buffer_read_string(buf, &bufp);
 	buf = bufp;
-	len += strlen(stmt)+1;
+	len += strlen(stmt) + 1;
 
 	fprintf(stderr, "FE=> Bind(stmt=\"%s\", portal=\"%s\")", stmt, portal);
 
 	SKIP_TABS(buf);
 
 	ncodes = buffer_read_int(buf, &bufp);
-	len += sizeof(short) + sizeof(short)*ncodes;
+	len += sizeof(short) + sizeof(short) * ncodes;
 	buf = bufp;
 
 	SKIP_TABS(buf);
@@ -154,7 +156,7 @@ void process_bind(char *buf, PGconn *conn)
 
 	if (ncodes > 0)
 	{
-		for (i=0;i<ncodes;i++)
+		for (i = 0; i < ncodes; i++)
 		{
 			codes[i] = buffer_read_int(buf, &bufp);
 			buf = bufp;
@@ -163,7 +165,7 @@ void process_bind(char *buf, PGconn *conn)
 	}
 
 	nparams = buffer_read_int(buf, &bufp);
-	len += sizeof(short) + sizeof(short)*nparams;
+	len += sizeof(short) + sizeof(short) * nparams;
 	buf = bufp;
 	SKIP_TABS(buf);
 
@@ -173,7 +175,7 @@ void process_bind(char *buf, PGconn *conn)
 		exit(1);
 	}
 
-	for (i=0;i<nparams;i++)
+	for (i = 0; i < nparams; i++)
 	{
 		paramlens[i] = buffer_read_int(buf, &bufp);
 		len += sizeof(int);
@@ -192,12 +194,12 @@ void process_bind(char *buf, PGconn *conn)
 
 	nresult_formatcodes = buffer_read_int(buf, &bufp);
 	buf = bufp;
-	len += sizeof(short) + sizeof(short)*nresult_formatcodes;
+	len += sizeof(short) + sizeof(short) * nresult_formatcodes;
 	SKIP_TABS(buf);
 
 	if (nresult_formatcodes >= 2)
 	{
-		for (i=0;i<nresult_formatcodes;i++)
+		for (i = 0; i < nresult_formatcodes; i++)
 		{
 			result_formatcodes[i] = buffer_read_int(buf, &bufp);
 			buf = bufp;
@@ -211,13 +213,13 @@ void process_bind(char *buf, PGconn *conn)
 	send_string(portal, conn);
 	send_string(stmt, conn);
 	send_int16(ncodes, conn);
-	for (i=0;i<ncodes;i++)
+	for (i = 0; i < ncodes; i++)
 	{
 		send_int16(codes[i], conn);
 	}
 
 	send_int16(nparams, conn);
-	for (i=0;i<nparams;i++)
+	for (i = 0; i < nparams; i++)
 	{
 		if (paramlens[i] != -1)
 		{
@@ -233,7 +235,7 @@ void process_bind(char *buf, PGconn *conn)
 	}
 
 	send_int16(nresult_formatcodes, conn);
-	for (i=0;i<nresult_formatcodes;i++)
+	for (i = 0; i < nresult_formatcodes; i++)
 	{
 		send_int16(result_formatcodes[i], conn);
 	}
@@ -243,12 +245,13 @@ void process_bind(char *buf, PGconn *conn)
  * Send execute messae. "conn" should at the point right after the message
  * kind was read.
  */
-void process_execute(char *buf, PGconn *conn)
+void
+process_execute(char *buf, PGconn *conn)
 {
-	int len;
-	char *portal;
-	int maxrows;
-	char *bufp;
+	int			len;
+	char	   *portal;
+	int			maxrows;
+	char	   *bufp;
 
 	SKIP_TABS(buf);
 
@@ -256,7 +259,7 @@ void process_execute(char *buf, PGconn *conn)
 
 	portal = buffer_read_string(buf, &bufp);
 	buf = bufp;
-	len += strlen(portal)+1;
+	len += strlen(portal) + 1;
 
 	SKIP_TABS(buf);
 
@@ -278,12 +281,13 @@ void process_execute(char *buf, PGconn *conn)
  * Send describe messae. "conn" should at the point right after the message kind
  * was read.
  */
-void process_describe(char *buf, PGconn *conn)
+void
+process_describe(char *buf, PGconn *conn)
 {
-	char kind;
-	int len;
-	char *stmt;
-	char *bufp;
+	char		kind;
+	int			len;
+	char	   *stmt;
+	char	   *bufp;
 
 	SKIP_TABS(buf);
 
@@ -297,7 +301,7 @@ void process_describe(char *buf, PGconn *conn)
 
 	stmt = buffer_read_string(buf, &bufp);
 	buf = bufp;
-	len += strlen(stmt)+1;
+	len += strlen(stmt) + 1;
 
 	SKIP_TABS(buf);
 
@@ -325,12 +329,13 @@ void process_describe(char *buf, PGconn *conn)
  * Send close messae. "conn" should at the point right after the message kind
  * was read.
  */
-void process_close(char *buf, PGconn *conn)
+void
+process_close(char *buf, PGconn *conn)
 {
-	char kind;
-	int len;
-	char *stmt;
-	char *bufp;
+	char		kind;
+	int			len;
+	char	   *stmt;
+	char	   *bufp;
 
 	SKIP_TABS(buf);
 
@@ -344,7 +349,7 @@ void process_close(char *buf, PGconn *conn)
 
 	stmt = buffer_read_string(buf, &bufp);
 	buf = bufp;
-	len += strlen(stmt)+1;
+	len += strlen(stmt) + 1;
 
 	SKIP_TABS(buf);
 

@@ -31,7 +31,7 @@
 #include "utils/builtins.h"		/* PostgreSQL 8.4 needs this for textout */
 #include "utils/guc.h"
 #if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 90300)
-#include "access/htup_details.h"		/* PostgreSQL 9.3 or later needs this */
+#include "access/htup_details.h"	/* PostgreSQL 9.3 or later needs this */
 #endif
 
 #define REMOTE_START_FILE "pgpool_remote_start"
@@ -55,20 +55,20 @@ extern Datum pgpool_switch_xlog(PG_FUNCTION_ARGS);
 static char recovery_script[1024];
 static char command_text[1024];
 
-static Oid get_function_oid(const char *funcname, const char *argtype, const char *nspname);
-char       *Log_line_prefix = NULL;
+static Oid	get_function_oid(const char *funcname, const char *argtype, const char *nspname);
+char	   *Log_line_prefix = NULL;
 
 Datum
 pgpool_recovery(PG_FUNCTION_ARGS)
 {
-	int r;
-	char *script = DatumGetCString(DirectFunctionCall1(textout,
-													   PointerGetDatum(PG_GETARG_TEXT_P(0))));
-													   
-	char *remote_host = DatumGetCString(DirectFunctionCall1(textout,
-															PointerGetDatum(PG_GETARG_TEXT_P(1))));
-	char *remote_data_directory = DatumGetCString(DirectFunctionCall1(textout,
-																	  PointerGetDatum(PG_GETARG_TEXT_P(2))));
+	int			r;
+	char	   *script = DatumGetCString(DirectFunctionCall1(textout,
+															 PointerGetDatum(PG_GETARG_TEXT_P(0))));
+
+	char	   *remote_host = DatumGetCString(DirectFunctionCall1(textout,
+																  PointerGetDatum(PG_GETARG_TEXT_P(1))));
+	char	   *remote_data_directory = DatumGetCString(DirectFunctionCall1(textout,
+																			PointerGetDatum(PG_GETARG_TEXT_P(2))));
 
 	if (!superuser())
 #ifdef ERRCODE_INSUFFICIENT_PRIVILEGE
@@ -81,17 +81,19 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 
 	if (PG_NARGS() >= 5)		/* Pgpool-II 4.0 or later */
 	{
-		char *remote_port = DatumGetCString(DirectFunctionCall1(textout,
-														  PointerGetDatum(PG_GETARG_TEXT_P(3))));
-		int recovery_node = PG_GETARG_INT32(4);
+		char	   *remote_port = DatumGetCString(DirectFunctionCall1(textout,
+																	  PointerGetDatum(PG_GETARG_TEXT_P(3))));
+		int			recovery_node = PG_GETARG_INT32(4);
+
 		snprintf(recovery_script, sizeof(recovery_script), "\"%s/%s\" \"%s\" \"%s\" \"%s\" \"%s\" %d",
 				 DataDir, script, DataDir, remote_host,
 				 remote_data_directory, remote_port, recovery_node);
 	}
-	else if (PG_NARGS() >= 4)		/* Pgpool-II 3.4 - 3.7 */
+	else if (PG_NARGS() >= 4)	/* Pgpool-II 3.4 - 3.7 */
 	{
-		char *remote_port = DatumGetCString(DirectFunctionCall1(textout,
-														  PointerGetDatum(PG_GETARG_TEXT_P(3))));
+		char	   *remote_port = DatumGetCString(DirectFunctionCall1(textout,
+																	  PointerGetDatum(PG_GETARG_TEXT_P(3))));
+
 		snprintf(recovery_script, sizeof(recovery_script), "\"%s/%s\" \"%s\" \"%s\" \"%s\" \"%s\"",
 				 DataDir, script, DataDir, remote_host,
 				 remote_data_directory, remote_port);
@@ -117,11 +119,12 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 Datum
 pgpool_remote_start(PG_FUNCTION_ARGS)
 {
-	int r;
-	char *remote_host = DatumGetCString(DirectFunctionCall1(textout,
-															PointerGetDatum(PG_GETARG_TEXT_P(0))));
-	char *remote_data_directory = DatumGetCString(DirectFunctionCall1(textout,
-																	  PointerGetDatum(PG_GETARG_TEXT_P(1))));
+	int			r;
+	char	   *remote_host = DatumGetCString(DirectFunctionCall1(textout,
+																  PointerGetDatum(PG_GETARG_TEXT_P(0))));
+	char	   *remote_data_directory = DatumGetCString(DirectFunctionCall1(textout,
+																			PointerGetDatum(PG_GETARG_TEXT_P(1))));
+
 	if (!superuser())
 #ifdef ERRCODE_INSUFFICIENT_PRIVILEGE
 		ereport(ERROR,
@@ -148,13 +151,13 @@ pgpool_remote_start(PG_FUNCTION_ARGS)
 Datum
 pgpool_pgctl(PG_FUNCTION_ARGS)
 {
-	int r;
-	char *action = DatumGetCString(DirectFunctionCall1(textout,
-	                                                   PointerGetDatum(PG_GETARG_TEXT_P(0))));
-	char *stop_mode = DatumGetCString(DirectFunctionCall1(textout,
-	                                                   PointerGetDatum(PG_GETARG_TEXT_P(1))));
-	char *pg_ctl;
-	char *data_directory;
+	int			r;
+	char	   *action = DatumGetCString(DirectFunctionCall1(textout,
+															 PointerGetDatum(PG_GETARG_TEXT_P(0))));
+	char	   *stop_mode = DatumGetCString(DirectFunctionCall1(textout,
+																PointerGetDatum(PG_GETARG_TEXT_P(1))));
+	char	   *pg_ctl;
+	char	   *data_directory;
 
 	if (!superuser())
 #ifdef ERRCODE_INSUFFICIENT_PRIVILEGE
@@ -166,8 +169,8 @@ pgpool_pgctl(PG_FUNCTION_ARGS)
 #endif
 
 #if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 90600)
-	pg_ctl = GetConfigOptionByName("pgpool.pg_ctl", NULL,false);
-	data_directory = GetConfigOptionByName("data_directory", NULL,false);
+	pg_ctl = GetConfigOptionByName("pgpool.pg_ctl", NULL, false);
+	data_directory = GetConfigOptionByName("data_directory", NULL, false);
 #else
 	pg_ctl = GetConfigOptionByName("pgpool.pg_ctl", NULL);
 	data_directory = GetConfigOptionByName("data_directory", NULL);
@@ -179,7 +182,9 @@ pgpool_pgctl(PG_FUNCTION_ARGS)
 				 "%s %s -D %s -m %s 2>/dev/null 1>/dev/null < /dev/null &",
 				 pg_ctl, action, data_directory, stop_mode);
 
-	} else {
+	}
+	else
+	{
 		snprintf(command_text, sizeof(command_text),
 				 "%s %s -D %s 2>/dev/null 1>/dev/null < /dev/null &",
 				 pg_ctl, action, data_directory);
@@ -205,24 +210,25 @@ pgpool_pgctl(PG_FUNCTION_ARGS)
 Datum
 pgpool_switch_xlog(PG_FUNCTION_ARGS)
 {
-	char *archive_dir;
-	char *filename;
-	char path[MAXPGPATH];
+	char	   *archive_dir;
+	char	   *filename;
+	char		path[MAXPGPATH];
 	struct stat fst;
-	Datum location;
-	text *filename_t;
-	text *result;
-	Oid switch_xlog_oid;
-	Oid xlogfile_name_oid;
+	Datum		location;
+	text	   *filename_t;
+	text	   *result;
+	Oid			switch_xlog_oid;
+	Oid			xlogfile_name_oid;
 
 #if !defined(PG_VERSION_NUM) || (PG_VERSION_NUM < 90400)
-	char* pg_xlogfile_name_arg_type = "text";
+	char	   *pg_xlogfile_name_arg_type = "text";
 #else
-	/* 
-	 * The argument data type of PG's pg_xlogfile_name() function
-	 * has been changed from text to pg_lsn since PostgreSQL 9.4
+
+	/*
+	 * The argument data type of PG's pg_xlogfile_name() function has been
+	 * changed from text to pg_lsn since PostgreSQL 9.4
 	 */
-	char* pg_xlogfile_name_arg_type = "pg_lsn";
+	char	   *pg_xlogfile_name_arg_type = "pg_lsn";
 #endif
 
 
@@ -232,10 +238,10 @@ pgpool_switch_xlog(PG_FUNCTION_ARGS)
 	if (stat(archive_dir, &fst) < 0)
 #ifdef ERRCODE_INSUFFICIENT_PRIVILEGE
 		ereport(ERROR,
-                (errcode_for_file_access(),
-                 errmsg("could not stat file \"%s\": %m", archive_dir)));
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m", archive_dir)));
 #else
-		elog(ERROR, "could not stat file \"%s\"", archive_dir);	
+		elog(ERROR, "could not stat file \"%s\"", archive_dir);
 #endif
 
 	switch_xlog_oid = get_function_oid("pg_switch_xlog", NULL, "pg_catalog");
@@ -259,15 +265,15 @@ pgpool_switch_xlog(PG_FUNCTION_ARGS)
 	snprintf(path, MAXPGPATH, "%s/%s", archive_dir, filename);
 	elog(LOG, "pgpool_switch_xlog: waiting for \"%s\"", path);
 
-	while(stat(path, &fst) != 0 || fst.st_size == 0 ||
-		  fst.st_size % (1024 * 1024) != 0)
+	while (stat(path, &fst) != 0 || fst.st_size == 0 ||
+		   fst.st_size % (1024 * 1024) != 0)
 	{
 		CHECK_FOR_INTERRUPTS();
 		sleep(1);
 	}
 
-    result = DatumGetTextP(DirectFunctionCall1(textin,
-                                               CStringGetDatum(path)));
+	result = DatumGetTextP(DirectFunctionCall1(textin,
+											   CStringGetDatum(path)));
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -276,12 +282,12 @@ static Oid
 get_function_oid(const char *funcname, const char *argtype, const char *nspname)
 {
 #ifndef PROCNAMENSP
-	Oid typid;
-	Oid nspid;
-	Oid funcid;
-	Oid oids[1];
-	oidvector *oid_v;
-	HeapTuple tup;
+	Oid			typid;
+	Oid			nspid;
+	Oid			funcid;
+	Oid			oids[1];
+	oidvector  *oid_v;
+	HeapTuple	tup;
 
 	if (argtype)
 	{
@@ -298,9 +304,12 @@ get_function_oid(const char *funcname, const char *argtype, const char *nspname)
 #if !defined(PG_VERSION_NUM) || (PG_VERSION_NUM < 90300)
 	nspid = LookupExplicitNamespace(nspname);
 #else
-	/* LookupExplicitNamespace() of PostgreSQL 9.3 or later, has third
-	 * argument "missing_ok" which suppresses ERROR exception, but
-	 * returns invlaid_oid. See include/catalog/namespace.h */
+
+	/*
+	 * LookupExplicitNamespace() of PostgreSQL 9.3 or later, has third
+	 * argument "missing_ok" which suppresses ERROR exception, but returns
+	 * invlaid_oid. See include/catalog/namespace.h
+	 */
 	nspid = LookupExplicitNamespace(nspname, false);
 #endif
 	elog(DEBUG1, "get_function_oid: oid of \"%s\": %d", nspname, nspid);
@@ -321,4 +330,3 @@ get_function_oid(const char *funcname, const char *argtype, const char *nspname)
 #endif
 	return 0;
 }
-

@@ -51,24 +51,24 @@ IpcSemaphoreKill(int status, Datum semId)
 	union semun semun;
 	struct semid_ds seminfo;
 
- 	/*
- 	 * Is a previously-existing sema segment still existing and in use?
- 	 */
+	/*
+	 * Is a previously-existing sema segment still existing and in use?
+	 */
 	semun.buf = &seminfo;
- 	if (semctl(semId, 0, IPC_STAT, semun) < 0
- 		&& (errno == EINVAL || errno == EACCES
+	if (semctl(semId, 0, IPC_STAT, semun) < 0
+		&& (errno == EINVAL || errno == EACCES
 #ifdef EIDRM
 			|| errno == EIDRM
 #endif
-		))
- 		return;
+			))
+		return;
 
 	semun.val = 0;				/* unused, but keep compiler quiet */
 
 	if (semctl(semId, 0, IPC_RMID) < 0)
 		ereport(LOG,
-			(errmsg("removing semaphore set"),
-				errdetail("semctl(%lu, 0, IPC_RMID, ...) failed: %s", semId, strerror(errno))));
+				(errmsg("removing semaphore set"),
+				 errdetail("semctl(%lu, 0, IPC_RMID, ...) failed: %s", semId, strerror(errno))));
 }
 
 /*
@@ -84,7 +84,7 @@ pool_semaphore_create(int numSems)
 
 	if (semId < 0)
 		ereport(FATAL,
-			(errmsg("Unable to create semaphores:%d error:\"%s\"",numSems,strerror(errno))));
+				(errmsg("Unable to create semaphores:%d error:\"%s\"", numSems, strerror(errno))));
 
 	on_shmem_exit(IpcSemaphoreKill, semId);
 
@@ -96,8 +96,8 @@ pool_semaphore_create(int numSems)
 		semun.val = 1;
 		if (semctl(semId, i, SETVAL, semun) < 0)
 			ereport(FATAL,
-				(errmsg("Unable to create semaphores:%d error:\"%s\"",numSems,strerror(errno)),
-						errdetail("semctl(%d, %d, SETVAL, %d) failed",semId,i,semun.val)));
+					(errmsg("Unable to create semaphores:%d error:\"%s\"", numSems, strerror(errno)),
+					 errdetail("semctl(%d, %d, SETVAL, %d) failed", semId, i, semun.val)));
 	}
 }
 
@@ -126,7 +126,7 @@ pool_semaphore_lock(int semNum)
 
 	if (errStatus < 0)
 		ereport(WARNING,
-			(errmsg("failed to lock semaphore error:\"%s\"",strerror(errno))));
+				(errmsg("failed to lock semaphore error:\"%s\"", strerror(errno))));
 }
 
 /*
@@ -155,5 +155,5 @@ pool_semaphore_unlock(int semNum)
 
 	if (errStatus < 0)
 		ereport(WARNING,
-				(errmsg("failed to unlock semaphore error:\"%s\"",strerror(errno))));
+				(errmsg("failed to unlock semaphore error:\"%s\"", strerror(errno))));
 }

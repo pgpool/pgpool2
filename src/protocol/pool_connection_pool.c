@@ -50,59 +50,64 @@
 #include "utils/memutils.h"
 #include "context/pool_process_context.h"
 
-static int pool_index;	/* Active pool index */
-POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
-volatile sig_atomic_t backend_timer_expired = 0; /* flag for connection closed timer is expired */
-volatile sig_atomic_t health_check_timer_expired;		/* non 0 if health check timer expired */
-static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int slot);
-static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p);
-static int check_socket_status(int fd);
+static int	pool_index;			/* Active pool index */
+POOL_CONNECTION_POOL *pool_connection_pool; /* connection pool */
+volatile sig_atomic_t backend_timer_expired = 0;	/* flag for connection
+													 * closed timer is expired */
+volatile sig_atomic_t health_check_timer_expired;	/* non 0 if health check
+													 * timer expired */
+static POOL_CONNECTION_POOL_SLOT * create_cp(POOL_CONNECTION_POOL_SLOT * cp, int slot);
+static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p);
+static int	check_socket_status(int fd);
 static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool retry);
 
 /*
 * initialize connection pools. this should be called once at the startup.
 */
-int pool_init_cp(void)
+int
+pool_init_cp(void)
 {
-	int i;
+	int			i;
 	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
-	pool_connection_pool = (POOL_CONNECTION_POOL *)palloc(sizeof(POOL_CONNECTION_POOL)*pool_config->max_pool);
-	memset(pool_connection_pool, 0, sizeof(POOL_CONNECTION_POOL)*pool_config->max_pool);
+	pool_connection_pool = (POOL_CONNECTION_POOL *) palloc(sizeof(POOL_CONNECTION_POOL) * pool_config->max_pool);
+	memset(pool_connection_pool, 0, sizeof(POOL_CONNECTION_POOL) * pool_config->max_pool);
 
 	for (i = 0; i < pool_config->max_pool; i++)
 	{
 		pool_connection_pool[i].info = pool_coninfo(pool_get_process_context()->proc_id, i, 0);
 		memset(pool_connection_pool[i].info, 0, sizeof(ConnectionInfo) * MAX_NUM_BACKENDS);
 	}
-    MemoryContextSwitchTo(oldContext);
+	MemoryContextSwitchTo(oldContext);
 	return 0;
 }
 
 /*
 * find connection by user and database
 */
-POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, int check_socket)
+POOL_CONNECTION_POOL *
+pool_get_cp(char *user, char *database, int protoMajor, int check_socket)
 {
 	pool_sigset_t oldmask;
 
-	int i, freed = 0;
+	int			i,
+				freed = 0;
 	ConnectionInfo *info;
 
 	POOL_CONNECTION_POOL *connection_pool = pool_connection_pool;
 
 	if (connection_pool == NULL)
 	{
-        /* if no connection pool exists we have no reason to live */
-        ereport(ERROR,
-                (return_code(2),
-                 errmsg("unable to get connection"),
-                  errdetail("connection pool is not initialized")));
+		/* if no connection pool exists we have no reason to live */
+		ereport(ERROR,
+				(return_code(2),
+				 errmsg("unable to get connection"),
+				 errdetail("connection pool is not initialized")));
 	}
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 
-	for (i=0;i<pool_config->max_pool;i++)
+	for (i = 0; i < pool_config->max_pool; i++)
 	{
 		if (MASTER_CONNECTION(connection_pool) &&
 			MASTER_CONNECTION(connection_pool)->sp &&
@@ -111,12 +116,12 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 			strcmp(MASTER_CONNECTION(connection_pool)->sp->user, user) == 0 &&
 			strcmp(MASTER_CONNECTION(connection_pool)->sp->database, database) == 0)
 		{
-			int sock_broken = 0;
-			int j;
+			int			sock_broken = 0;
+			int			j;
 
 			/* mark this connection is under use */
 			MASTER_CONNECTION(connection_pool)->closetime = 0;
-			for (j=0;j<NUM_BACKENDS;j++)
+			for (j = 0; j < NUM_BACKENDS; j++)
 			{
 				connection_pool->info[j].counter++;
 			}
@@ -124,12 +129,12 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 
 			if (check_socket)
 			{
-				for (j=0;j<NUM_BACKENDS;j++)
+				for (j = 0; j < NUM_BACKENDS; j++)
 				{
 					if (!VALID_BACKEND(j))
 						continue;
 
-					if  (CONNECTION_SLOT(connection_pool, j))
+					if (CONNECTION_SLOT(connection_pool, j))
 					{
 						sock_broken = check_socket_status(CONNECTION(connection_pool, j)->fd);
 						if (sock_broken < 0)
@@ -145,10 +150,10 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 				if (sock_broken < 0)
 				{
 					ereport(LOG,
-						(errmsg("connection closed."),
+							(errmsg("connection closed."),
 							 errdetail("retry to create new connection pool")));
 
-					for (j=0;j<NUM_BACKENDS;j++)
+					for (j = 0; j < NUM_BACKENDS; j++)
 					{
 						if (!VALID_BACKEND(j) || (CONNECTION_SLOT(connection_pool, j) == NULL))
 							continue;
@@ -156,7 +161,7 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 						if (!freed)
 						{
 							pool_free_startup_packet(CONNECTION_SLOT(connection_pool, j)->sp);
-                            CONNECTION_SLOT(connection_pool, j)->sp = NULL;
+							CONNECTION_SLOT(connection_pool, j)->sp = NULL;
 
 							freed = 1;
 						}
@@ -187,20 +192,22 @@ POOL_CONNECTION_POOL *pool_get_cp(char *user, char *database, int protoMajor, in
 /*
  * disconnect and release a connection to the database
  */
-void pool_discard_cp(char *user, char *database, int protoMajor)
+void
+pool_discard_cp(char *user, char *database, int protoMajor)
 {
 	POOL_CONNECTION_POOL *p = pool_get_cp(user, database, protoMajor, 0);
 	ConnectionInfo *info;
-	int i, freed = 0;
+	int			i,
+				freed = 0;
 
 	if (p == NULL)
 	{
 		ereport(LOG,
-			(errmsg("cannot get connection pool for user: \"%s\" database: \"%s\", while discarding connection pool", user, database)));
+				(errmsg("cannot get connection pool for user: \"%s\" database: \"%s\", while discarding connection pool", user, database)));
 		return;
 	}
 
-	for (i=0;i<NUM_BACKENDS;i++)
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (!VALID_BACKEND(i))
 			continue;
@@ -210,7 +217,7 @@ void pool_discard_cp(char *user, char *database, int protoMajor)
 			pool_free_startup_packet(CONNECTION_SLOT(p, i)->sp);
 			freed = 1;
 		}
-        CONNECTION_SLOT(p, i)->sp = NULL;
+		CONNECTION_SLOT(p, i)->sp = NULL;
 		pool_close(CONNECTION(p, i));
 		pfree(CONNECTION_SLOT(p, i));
 	}
@@ -225,23 +232,26 @@ void pool_discard_cp(char *user, char *database, int protoMajor)
 /*
 * create a connection pool by user and database
 */
-POOL_CONNECTION_POOL *pool_create_cp(void)
+POOL_CONNECTION_POOL *
+pool_create_cp(void)
 {
-	int i, freed = 0;
-	time_t closetime;
+	int			i,
+				freed = 0;
+	time_t		closetime;
 	POOL_CONNECTION_POOL *oldestp;
 	POOL_CONNECTION_POOL *ret;
 	ConnectionInfo *info;
 
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
-    /* if no connection pool exists we have no reason to live */
-	if (p == NULL)
-        ereport(ERROR,
-			(return_code(2),
-				 errmsg("unable to create connection"),
-					errdetail("connection pool is not initialized")));
 
-	for (i=0;i<pool_config->max_pool;i++)
+	/* if no connection pool exists we have no reason to live */
+	if (p == NULL)
+		ereport(ERROR,
+				(return_code(2),
+				 errmsg("unable to create connection"),
+				 errdetail("connection pool is not initialized")));
+
+	for (i = 0; i < pool_config->max_pool; i++)
 	{
 		if (MASTER_CONNECTION(p) == NULL)
 		{
@@ -253,24 +263,25 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 		p++;
 	}
 	ereport(DEBUG1,
-		(errmsg("creating connection pool"),
+			(errmsg("creating connection pool"),
 			 errdetail("no empty connection slot was found")));
 
 	/*
-	 * no empty connection slot was found. look for the oldest connection and discard it.
+	 * no empty connection slot was found. look for the oldest connection and
+	 * discard it.
 	 */
 	oldestp = p = pool_connection_pool;
 	closetime = MASTER_CONNECTION(p)->closetime;
 	pool_index = 0;
 
-	for (i=0;i<pool_config->max_pool;i++)
+	for (i = 0; i < pool_config->max_pool; i++)
 	{
 		ereport(DEBUG1,
-			(errmsg("creating connection pool"),
-				errdetail("user: %s database: %s closetime: %ld",
-					   MASTER_CONNECTION(p)->sp->user,
-					   MASTER_CONNECTION(p)->sp->database,
-					   MASTER_CONNECTION(p)->closetime)));
+				(errmsg("creating connection pool"),
+				 errdetail("user: %s database: %s closetime: %ld",
+						   MASTER_CONNECTION(p)->sp->user,
+						   MASTER_CONNECTION(p)->sp->database,
+						   MASTER_CONNECTION(p)->closetime)));
 
 		if (MASTER_CONNECTION(p)->closetime < closetime)
 		{
@@ -285,13 +296,13 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 	pool_send_frontend_exits(p);
 
 	ereport(DEBUG1,
-		(errmsg("creating connection pool"),
-			errdetail("discarding old %zd th connection. user: %s database: %s",
-				   oldestp - pool_connection_pool,
-				   MASTER_CONNECTION(p)->sp->user,
-				   MASTER_CONNECTION(p)->sp->database)));
+			(errmsg("creating connection pool"),
+			 errdetail("discarding old %zd th connection. user: %s database: %s",
+					   oldestp - pool_connection_pool,
+					   MASTER_CONNECTION(p)->sp->user,
+					   MASTER_CONNECTION(p)->sp->database)));
 
-	for (i=0;i<NUM_BACKENDS;i++)
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (!VALID_BACKEND(i))
 			continue;
@@ -299,7 +310,7 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 		if (!freed)
 		{
 			pool_free_startup_packet(CONNECTION_SLOT(p, i)->sp);
-            CONNECTION_SLOT(p, i)->sp = NULL;
+			CONNECTION_SLOT(p, i)->sp = NULL;
 
 			freed = 1;
 		}
@@ -320,22 +331,24 @@ POOL_CONNECTION_POOL *pool_create_cp(void)
 /*
  * set backend connection close timer
  */
-void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend)
+void
+pool_connection_pool_timer(POOL_CONNECTION_POOL * backend)
 {
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
-	int i;
+	int			i;
 
 	ereport(DEBUG1,
-		(errmsg("setting backend connection close timer"),
+			(errmsg("setting backend connection close timer"),
 			 errdetail("close time %ld", time(NULL))));
 
-	MASTER_CONNECTION(backend)->closetime = time(NULL);		/* set connection close time */
+	MASTER_CONNECTION(backend)->closetime = time(NULL); /* set connection close
+														 * time */
 
 	if (pool_config->connection_life_time == 0)
 		return;
 
 	/* look for any other timeout */
-	for (i=0;i<pool_config->max_pool;i++, p++)
+	for (i = 0; i < pool_config->max_pool; i++, p++)
 	{
 		if (!MASTER_CONNECTION(p))
 			continue;
@@ -350,7 +363,7 @@ void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend)
 
 	/* no other timer found. set my timer */
 	ereport(DEBUG1,
-		(errmsg("setting backend connection close timer"),
+			(errmsg("setting backend connection close timer"),
 			 errdetail("setting alarm after %d seconds", pool_config->connection_life_time)));
 
 	pool_alarm(pool_backend_timer_handler, pool_config->connection_life_time);
@@ -359,19 +372,22 @@ void pool_connection_pool_timer(POOL_CONNECTION_POOL *backend)
 /*
  * backend connection close timer handler
  */
-RETSIGTYPE pool_backend_timer_handler(int sig)
+RETSIGTYPE
+pool_backend_timer_handler(int sig)
 {
 	backend_timer_expired = 1;
 }
 
-void pool_backend_timer(void)
+void
+pool_backend_timer(void)
 {
 #define TMINTMAX 0x7fffffff
 
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
-	int i, j;
-	time_t now;
-	time_t nearest = TMINTMAX;
+	int			i,
+				j;
+	time_t		now;
+	time_t		nearest = TMINTMAX;
 	ConnectionInfo *info;
 
 	POOL_SETMASK(&BlockSig);
@@ -379,9 +395,9 @@ void pool_backend_timer(void)
 	now = time(NULL);
 
 	ereport(DEBUG1,
-		(errmsg("backend timer handler called at%ld", now)));
+			(errmsg("backend timer handler called at%ld", now)));
 
-	for (i=0;i<pool_config->max_pool;i++, p++)
+	for (i = 0; i < pool_config->max_pool; i++, p++)
 	{
 		if (!MASTER_CONNECTION(p))
 			continue;
@@ -393,23 +409,23 @@ void pool_backend_timer(void)
 		/* timer expire? */
 		if (MASTER_CONNECTION(p)->closetime)
 		{
-			int freed = 0;
+			int			freed = 0;
 
 			ereport(DEBUG1,
-				(errmsg("backend timer handler called"),
-					errdetail("expire time: %ld",
-						   MASTER_CONNECTION(p)->closetime+pool_config->connection_life_time)));
+					(errmsg("backend timer handler called"),
+					 errdetail("expire time: %ld",
+							   MASTER_CONNECTION(p)->closetime + pool_config->connection_life_time)));
 
-			if (now >= (MASTER_CONNECTION(p)->closetime+pool_config->connection_life_time))
+			if (now >= (MASTER_CONNECTION(p)->closetime + pool_config->connection_life_time))
 			{
 				/* discard expired connection */
 				ereport(DEBUG1,
-					(errmsg("backend timer handler called"),
-						errdetail("expired user: \"%s\" database: \"%s\"",
-							   MASTER_CONNECTION(p)->sp->user, MASTER_CONNECTION(p)->sp->database)));
+						(errmsg("backend timer handler called"),
+						 errdetail("expired user: \"%s\" database: \"%s\"",
+								   MASTER_CONNECTION(p)->sp->user, MASTER_CONNECTION(p)->sp->database)));
 				pool_send_frontend_exits(p);
 
-				for (j=0;j<NUM_BACKENDS;j++)
+				for (j = 0; j < NUM_BACKENDS; j++)
 				{
 					if (!VALID_BACKEND(j))
 						continue;
@@ -419,7 +435,7 @@ void pool_backend_timer(void)
 						pool_free_startup_packet(CONNECTION_SLOT(p, j)->sp);
 						freed = 1;
 					}
-                    CONNECTION_SLOT(p, j)->sp = NULL;
+					CONNECTION_SLOT(p, j)->sp = NULL;
 					pool_close(CONNECTION(p, j));
 					pfree(CONNECTION_SLOT(p, j));
 				}
@@ -442,7 +458,7 @@ void pool_backend_timer(void)
 	{
 		nearest = pool_config->connection_life_time - (now - nearest);
 		if (nearest <= 0)
-		  nearest = 1;
+			nearest = 1;
 		pool_alarm(pool_backend_timer_handler, nearest);
 	}
 
@@ -452,10 +468,11 @@ void pool_backend_timer(void)
 /*
  * connect to postmaster through INET domain socket
  */
-int connect_inet_domain_socket(int slot, bool retry)
+int
+connect_inet_domain_socket(int slot, bool retry)
 {
-	char *host;
-	int port;
+	char	   *host;
+	int			port;
 
 	host = pool_config->backend_desc->backend_info[slot].backend_hostname;
 	port = pool_config->backend_desc->backend_info[slot].backend_port;
@@ -466,10 +483,11 @@ int connect_inet_domain_socket(int slot, bool retry)
 /*
  * connect to postmaster through UNIX domain socket
  */
-int connect_unix_domain_socket(int slot, bool retry)
+int
+connect_unix_domain_socket(int slot, bool retry)
 {
-	int port;
-	char *socket_dir;
+	int			port;
+	char	   *socket_dir;
 
 	port = pool_config->backend_desc->backend_info[slot].backend_port;
 	socket_dir = pool_config->backend_desc->backend_info[slot].backend_hostname;
@@ -481,17 +499,18 @@ int connect_unix_domain_socket(int slot, bool retry)
  * Connect to PostgreSQL server by using UNIX domain socket.
  * If retry is true, retry to call connect() upon receiving EINTR error.
  */
-int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
+int
+connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 {
 	struct sockaddr_un addr;
-	int fd;
-	int len;
+	int			fd;
+	int			len;
 
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (fd == -1)
 	{
 		ereport(LOG,
-			(errmsg("failed to connect to PostgreSQL server by unix domain socket"),
+				(errmsg("failed to connect to PostgreSQL server by unix domain socket"),
 				 errdetail("create socket failed with error \"%s\"", strerror(errno))));
 		return -1;
 	}
@@ -506,20 +525,20 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 		if (exit_request)		/* exit request already sent */
 		{
 			ereport(LOG,
-				(errmsg("failed to connect to PostgreSQL server by unix domain socket"),
+					(errmsg("failed to connect to PostgreSQL server by unix domain socket"),
 					 errdetail("exit request has been sent")));
 			close(fd);
 			return -1;
 		}
 
-		if (connect(fd, (struct sockaddr *)&addr, len) < 0)
+		if (connect(fd, (struct sockaddr *) &addr, len) < 0)
 		{
 			if ((errno == EINTR && retry) || errno == EAGAIN)
 				continue;
 			close(fd);
 			ereport(LOG,
-				(errmsg("failed to connect to PostgreSQL server by unix domain socket"),
-					 errdetail("connect to \"%s\" failed with error \"%s\"",addr.sun_path, strerror(errno))));
+					(errmsg("failed to connect to PostgreSQL server by unix domain socket"),
+					 errdetail("connect to \"%s\" failed with error \"%s\"", addr.sun_path, strerror(errno))));
 
 			return -1;
 		}
@@ -538,14 +557,16 @@ int connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
  * purpose.
  * retry: true if need to retry
  */
-static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool retry)
+static bool
+connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool retry)
 {
 	struct timeval *tm;
 	struct timeval timeout;
-	fd_set rset, wset;
-	int sts;
-	int error;
-	socklen_t socklen;
+	fd_set		rset,
+				wset;
+	int			sts;
+	int			error;
+	socklen_t	socklen;
 
 	pool_set_nonblock(fd);
 
@@ -554,16 +575,16 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
 		if (exit_request)		/* exit request already sent */
 		{
 			ereport(LOG,
-				(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
+					(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket", host, port),
 					 errdetail("exit request has been sent")));
 			close(fd);
 			return false;
 		}
 
-		if (health_check_timer_expired)		/* has health check timer expired */
+		if (health_check_timer_expired) /* has health check timer expired */
 		{
 			ereport(LOG,
-				(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
+					(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket", host, port),
 					 errdetail("health check timer expired")));
 			close(fd);
 			return false;
@@ -587,7 +608,7 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
 			if (errno != EINPROGRESS && errno != EALREADY)
 			{
 				ereport(LOG,
-					(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" with error \"%s\"",host,port,strerror(errno))));
+						(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" with error \"%s\"", host, port, strerror(errno))));
 				return false;
 			}
 
@@ -596,22 +617,22 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
 			else
 			{
 				tm = &timeout;
-				timeout.tv_sec = pool_config->connect_timeout/1000;
+				timeout.tv_sec = pool_config->connect_timeout / 1000;
 				if (timeout.tv_sec == 0)
 				{
-					timeout.tv_usec = pool_config->connect_timeout*1000;
+					timeout.tv_usec = pool_config->connect_timeout * 1000;
 				}
 				else
 				{
-					timeout.tv_usec = (pool_config->connect_timeout - timeout.tv_sec*1000)*1000;
+					timeout.tv_usec = (pool_config->connect_timeout - timeout.tv_sec * 1000) * 1000;
 				}
 			}
 
 			FD_ZERO(&rset);
-			FD_SET(fd, &rset);	
+			FD_SET(fd, &rset);
 			FD_ZERO(&wset);
 			FD_SET(fd, &wset);
-			sts = select(fd+1, &rset, &wset, NULL, tm);
+			sts = select(fd + 1, &rset, &wset, NULL, tm);
 
 			if (sts == 0)
 			{
@@ -619,14 +640,14 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
 				if (retry)
 				{
 					ereport(LOG,
-						(errmsg("trying connecting to PostgreSQL server on \"%s:%d\" by INET socket",host,port),
+							(errmsg("trying connecting to PostgreSQL server on \"%s:%d\" by INET socket", host, port),
 							 errdetail("timed out. retrying...")));
 					continue;
 				}
 				else
 				{
 					ereport(LOG,
-						(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", timed out",host,port)));
+							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", timed out", host, port)));
 					return false;
 				}
 			}
@@ -634,11 +655,10 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
 			{
 				/*
 				 * If read data or write data was set, either connect
-				 * succeeded or error.  We need to figure it out. This
-				 * is the hardest part in using non blocking
-				 * connect(2).  See W. Richar Stevens's "UNIX Network
-				 * Programming: Volume 1, Second Edition" section
-				 * 15.4.
+				 * succeeded or error.  We need to figure it out. This is the
+				 * hardest part in using non blocking connect(2).  See W.
+				 * Richar Stevens's "UNIX Network Programming: Volume 1,
+				 * Second Edition" section 15.4.
 				 */
 				if (FD_ISSET(fd, &rset) || FD_ISSET(fd, &wset))
 				{
@@ -648,7 +668,7 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
 					{
 						/* Solaris returns error in this case */
 						ereport(LOG,
-							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() failed with error \"%s\"",host,port,strerror(errno))));
+								(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() failed with error \"%s\"", host, port, strerror(errno))));
 
 						return false;
 					}
@@ -657,24 +677,24 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
 					if (error != 0)
 					{
 						ereport(LOG,
-								(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() detected error \"%s\"",host,port,strerror(error))));
+								(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() detected error \"%s\"", host, port, strerror(error))));
 						return false;
 					}
 				}
 				else
 				{
 					ereport(LOG,
-							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", both read data and write data was not set",host,port)));
+							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", both read data and write data was not set", host, port)));
 
 					return false;
 				}
 			}
-			else		/* select returns error */
+			else				/* select returns error */
 			{
 				if ((errno == EINTR && retry) || errno == EAGAIN)
 				{
 					ereport(LOG,
-						(errmsg("trying to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
+							(errmsg("trying to connect to PostgreSQL server on \"%s:%d\" using INET socket", host, port),
 							 errdetail("select() interrupted. retrying...")));
 					continue;
 				}
@@ -697,14 +717,14 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
 				else if (health_check_timer_expired && errno == EINTR)
 				{
 					ereport(LOG,
-							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
+							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket", host, port),
 							 errdetail("health check timer expired")));
 				}
 				else
 				{
 					ereport(LOG,
-							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket",host,port),
-							 errdetail("select() system call failed with an error \"%s\"",strerror(errno))));
+							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket", host, port),
+							 errdetail("select() system call failed with an error \"%s\"", strerror(errno))));
 				}
 				close(fd);
 				return false;
@@ -721,21 +741,25 @@ static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int 
  * Connect to PostgreSQL server by using INET domain socket.
  * If retry is true, retry to call connect() upon receiving EINTR error.
  */
-int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
+int
+connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 {
-	int fd = -1;
-	int on = 1;
-	char *portstr;
-	int ret;
+	int			fd = -1;
+	int			on = 1;
+	char	   *portstr;
+	int			ret;
 	struct addrinfo *res;
 	struct addrinfo *walk;
 	struct addrinfo hints;
 
-	/* getaddrinfo() requires a string because it also accepts service names, such as "http". */
+	/*
+	 * getaddrinfo() requires a string because it also accepts service names,
+	 * such as "http".
+	 */
 	if (asprintf(&portstr, "%d", port) == -1)
 	{
 		ereport(WARNING,
-			(errmsg("failed to connect to PostgreSQL server, asprintf() failed with error \"%s\"",strerror(errno))));
+				(errmsg("failed to connect to PostgreSQL server, asprintf() failed with error \"%s\"", strerror(errno))));
 
 		return -1;
 	}
@@ -747,7 +771,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	if ((ret = getaddrinfo(host, portstr, &hints, &res)) != 0)
 	{
 		ereport(WARNING,
-			(errmsg("failed to connect to PostgreSQL server, getaddrinfo() failed with error \"%s\"",gai_strerror(ret))));
+				(errmsg("failed to connect to PostgreSQL server, getaddrinfo() failed with error \"%s\"", gai_strerror(ret))));
 
 		free(portstr);
 		return -1;
@@ -761,7 +785,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 		if (fd < 0)
 		{
 			ereport(WARNING,
-					(errmsg("failed to connect to PostgreSQL server, socket() failed with error \"%s\"",strerror(errno))));
+					(errmsg("failed to connect to PostgreSQL server, socket() failed with error \"%s\"", strerror(errno))));
 			continue;
 		}
 
@@ -771,7 +795,7 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 					   sizeof(on)) < 0)
 		{
 			ereport(WARNING,
-					(errmsg("failed to connect to PostgreSQL server, setsockopt() failed with error \"%s\"",strerror(errno))));
+					(errmsg("failed to connect to PostgreSQL server, setsockopt() failed with error \"%s\"", strerror(errno))));
 
 			close(fd);
 			freeaddrinfo(res);
@@ -791,14 +815,14 @@ int connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	freeaddrinfo(res);
 	return -1;
 }
- 
+
 /*
  * create connection pool
  */
-static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int slot)
+static POOL_CONNECTION_POOL_SLOT * create_cp(POOL_CONNECTION_POOL_SLOT * cp, int slot)
 {
 	BackendInfo *b = &pool_config->backend_desc->backend_info[slot];
-	int fd;
+	int			fd;
 
 	if (*b->backend_hostname == '/')
 	{
@@ -813,7 +837,7 @@ static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int s
 		return NULL;
 
 	cp->sp = NULL;
-	cp->con = pool_open(fd,true);
+	cp->con = pool_open(fd, true);
 	cp->closetime = 0;
 	return cp;
 }
@@ -822,26 +846,26 @@ static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int s
  * Create actual connections to backends.
  * New connection resides in TopMemoryContext.
  */
-static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
+static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 {
 	POOL_CONNECTION_POOL_SLOT *s;
-	int active_backend_count = 0;
-	int i;
+	int			active_backend_count = 0;
+	int			i;
 
-    MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
-    
-	for (i=0;i<NUM_BACKENDS;i++)
+	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		ereport(DEBUG1,
-			(errmsg("creating new connection to backend"),
+				(errmsg("creating new connection to backend"),
 				 errdetail("connecting %d backend", i)));
 
 		if (!VALID_BACKEND(i))
 		{
 			ereport(DEBUG1,
-				(errmsg("creating new connection to backend"),
-					errdetail("skipping backend slot %d because backend_status = %d",
-						   i, BACKEND_INFO(i).backend_status)));
+					(errmsg("creating new connection to backend"),
+					 errdetail("skipping backend slot %d because backend_status = %d",
+							   i, BACKEND_INFO(i).backend_status)));
 			continue;
 		}
 
@@ -856,8 +880,8 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 		{
 			ereport(DEBUG1,
 					(errmsg("creating new connection to backend"),
-					errdetail("skipping backend slot %d because global backend_status = %d",
-						   i, BACKEND_INFO(i).backend_status)));
+					 errdetail("skipping backend slot %d because global backend_status = %d",
+							   i, BACKEND_INFO(i).backend_status)));
 			continue;
 		}
 
@@ -865,14 +889,15 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 
 		if (create_cp(s, i) == NULL)
 		{
-			/* If fail_over_on_backend_error is true, do failover.
-			 * Otherwise, just exit this session or skip next health node.
+			/*
+			 * If fail_over_on_backend_error is true, do failover. Otherwise,
+			 * just exit this session or skip next health node.
 			 */
 			if (pool_config->fail_over_on_backend_error)
 			{
 				notice_backend_error(i, REQ_DETAIL_SWITCHOVER);
 				ereport(FATAL,
-					(errmsg("failed to create a backend connection"),
+						(errmsg("failed to create a backend connection"),
 						 errdetail("executing failover on backend")));
 			}
 			else
@@ -893,7 +918,8 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 					/* if master_node_id is not updated, the update it */
 					if (Req_info->master_node_id == i)
 					{
-						int old_master = Req_info->master_node_id;
+						int			old_master = Req_info->master_node_id;
+
 						Req_info->master_node_id = get_next_master_node();
 
 						ereport(LOG,
@@ -901,7 +927,8 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 										old_master, Req_info->master_node_id)));
 					}
 
-					/* make sure that we need to restart the process after
+					/*
+					 * make sure that we need to restart the process after
 					 * finishing this session
 					 */
 					pool_get_my_process_info()->need_to_restart = 1;
@@ -921,7 +948,7 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 		p->slots[i] = s;
 
 		pool_init_params(&s->con->params);
-	
+
 		if (BACKEND_INFO(i).backend_status != CON_UP)
 		{
 			BACKEND_INFO(i).backend_status = CON_UP;
@@ -930,9 +957,9 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
 		active_backend_count++;
 	}
 
-	(void)write_status_file();
+	(void) write_status_file();
 
-    MemoryContextSwitchTo(oldContext);
+	MemoryContextSwitchTo(oldContext);
 
 	if (active_backend_count > 0)
 	{
@@ -946,10 +973,11 @@ static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p)
  * RETURN: 0 => OK
  *        -1 => broken socket.
  */
-static int check_socket_status(int fd)
+static int
+check_socket_status(int fd)
 {
-	fd_set rfds;
-	int result;
+	fd_set		rfds;
+	int			result;
 	struct timeval t;
 
 	for (;;)
@@ -959,7 +987,7 @@ static int check_socket_status(int fd)
 
 		t.tv_sec = t.tv_usec = 0;
 
-		result = select(fd+1, &rfds, NULL, NULL, &t);
+		result = select(fd + 1, &rfds, NULL, NULL, &t);
 		if (result < 0 && errno == EINTR)
 		{
 			continue;
@@ -976,7 +1004,8 @@ static int check_socket_status(int fd)
 /*
  * Return current used index (i.e. frontend connected)
  */
-int pool_pool_index(void)
+int
+pool_pool_index(void)
 {
 	return pool_index;
 }

@@ -5,7 +5,7 @@
  * These are client APIs. Server program should use APIs in pcp_stream.c
  *
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2016	PgPool Global Development Group
@@ -51,36 +51,36 @@
 #define DefaultHost  "localhost"
 
 
-static int pcp_authorize(PCPConnInfo* pcpConn, char *username, char *password);
+static int	pcp_authorize(PCPConnInfo * pcpConn, char *username, char *password);
 
-static void pcp_internal_error(PCPConnInfo* pcpConn, const char *fmt,...);
+static void pcp_internal_error(PCPConnInfo * pcpConn, const char *fmt,...);
 
-static PCPResultInfo* _pcp_detach_node(PCPConnInfo* pcpConn, int nid, bool gracefully);
-static PCPResultInfo* _pcp_promote_node(PCPConnInfo* pcpConn,int nid, bool gracefully);
-static PCPResultInfo* process_pcp_response(PCPConnInfo* pcpConn, char sentMsg);
-static void setCommandSuccessful(PCPConnInfo* pcpConn);
-static void setResultStatus(PCPConnInfo* pcpConn, ResultStateType resultState);
-static void setResultBinaryData(PCPResultInfo *res, unsigned int slotno, void *value, int datalen, void (*free_func)(struct PCPConnInfo*,void*) );
-static int setNextResultBinaryData(PCPResultInfo *res, void *value, int datalen, void (*free_func)(struct PCPConnInfo*,void*) );
-static void setResultIntData(PCPResultInfo *res, unsigned int slotno, int value);
+static PCPResultInfo * _pcp_detach_node(PCPConnInfo * pcpConn, int nid, bool gracefully);
+static PCPResultInfo * _pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool gracefully);
+static PCPResultInfo * process_pcp_response(PCPConnInfo * pcpConn, char sentMsg);
+static void setCommandSuccessful(PCPConnInfo * pcpConn);
+static void setResultStatus(PCPConnInfo * pcpConn, ResultStateType resultState);
+static void setResultBinaryData(PCPResultInfo * res, unsigned int slotno, void *value, int datalen, void (*free_func) (struct PCPConnInfo *, void *));
+static int	setNextResultBinaryData(PCPResultInfo * res, void *value, int datalen, void (*free_func) (struct PCPConnInfo *, void *));
+static void setResultIntData(PCPResultInfo * res, unsigned int slotno, int value);
 
-static void process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len);
-static void process_command_complete_response(PCPConnInfo* pcpConn, char* buf, int len);
-static void process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len);
-static void process_process_info_response(PCPConnInfo* pcpConn, char* buf, int len);
-static void process_pool_status_response(PCPConnInfo* pcpConn, char* buf, int len);
-static void process_pcp_node_count_response(PCPConnInfo* pcpConn, char* buf, int len);
-static void process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len);
-static void process_salt_info_response(PCPConnInfo* pcpConn, char* buf, int len);
-static void process_error_response(PCPConnInfo* pcpConn, char toc, char* buff);
+static void process_node_info_response(PCPConnInfo * pcpConn, char *buf, int len);
+static void process_command_complete_response(PCPConnInfo * pcpConn, char *buf, int len);
+static void process_watchdog_info_response(PCPConnInfo * pcpConn, char *buf, int len);
+static void process_process_info_response(PCPConnInfo * pcpConn, char *buf, int len);
+static void process_pool_status_response(PCPConnInfo * pcpConn, char *buf, int len);
+static void process_pcp_node_count_response(PCPConnInfo * pcpConn, char *buf, int len);
+static void process_process_count_response(PCPConnInfo * pcpConn, char *buf, int len);
+static void process_salt_info_response(PCPConnInfo * pcpConn, char *buf, int len);
+static void process_error_response(PCPConnInfo * pcpConn, char toc, char *buff);
 
 
-static void setResultSlotCount(PCPConnInfo* pcpConn, unsigned int slotCount);
-static void free_processInfo(struct PCPConnInfo* pcpConn, void* ptr);
-static int PCPFlush(PCPConnInfo* pcpConn);
+static void setResultSlotCount(PCPConnInfo * pcpConn, unsigned int slotCount);
+static void free_processInfo(struct PCPConnInfo *pcpConn, void *ptr);
+static int	PCPFlush(PCPConnInfo * pcpConn);
 
 static bool getPoolPassFilename(char *pgpassfile);
-static char *PasswordFromFile(PCPConnInfo* pcpConn, char *hostname, char *port, char *username);
+static char *PasswordFromFile(PCPConnInfo * pcpConn, char *hostname, char *port, char *username);
 static char *pwdfMatchesString(char *buf, char *token);
 
 /* --------------------------------
@@ -94,32 +94,32 @@ static char *pwdfMatchesString(char *buf, char *token);
  * return 1 on successfull 0 otherwise
  */
 
-PCPConnInfo*
+PCPConnInfo *
 pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfdebug)
 {
 	struct sockaddr_in addr;
 	struct sockaddr_un unix_addr;
 	struct hostent *hp;
-	char *password_fron_file = NULL;
-	char   os_user[256];
-	PCPConnInfo* pcpConn = palloc0(sizeof(PCPConnInfo));
-	int fd;
-	int on = 1;
-	int len;
+	char	   *password_fron_file = NULL;
+	char		os_user[256];
+	PCPConnInfo *pcpConn = palloc0(sizeof(PCPConnInfo));
+	int			fd;
+	int			on = 1;
+	int			len;
 
 	pcpConn->connState = PCP_CONNECTION_NOT_CONNECTED;
 	pcpConn->Pfdebug = Pfdebug;
 
 	if (hostname == NULL || *hostname == '\0' || *hostname == '/')
 	{
-		char *path;
+		char	   *path;
 
 		fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
 		if (fd < 0)
 		{
 			pcp_internal_error(pcpConn,
-							   "ERROR: failed to create UNIX domain socket. socket error \"%s\"",strerror(errno));
+							   "ERROR: failed to create UNIX domain socket. socket error \"%s\"", strerror(errno));
 			pcpConn->connState = PCP_CONNECTION_BAD;
 
 			return pcpConn;
@@ -146,7 +146,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 			close(fd);
 
 			pcp_internal_error(pcpConn,
-							   "ERROR: connection to socket \"%s\" failed with error \"%s\"",unix_addr.sun_path,strerror(errno));
+							   "ERROR: connection to socket \"%s\" failed with error \"%s\"", unix_addr.sun_path, strerror(errno));
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 		}
@@ -157,7 +157,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		if (fd < 0)
 		{
 			pcp_internal_error(pcpConn,
-							   "ERROR: failed to create INET domain socket with error \"%s\"",strerror(errno));
+							   "ERROR: failed to create INET domain socket with error \"%s\"", strerror(errno));
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 		}
@@ -168,7 +168,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 			close(fd);
 
 			pcp_internal_error(pcpConn,
-							   "ERROR: set socket option failed with error \"%s\"",strerror(errno));
+							   "ERROR: set socket option failed with error \"%s\"", strerror(errno));
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 		}
@@ -180,7 +180,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		{
 			close(fd);
 			pcp_internal_error(pcpConn,
-							   "ERROR: could not retrieve hostname. gethostbyname failed with error \"%s\"",strerror(errno));
+							   "ERROR: could not retrieve hostname. gethostbyname failed with error \"%s\"", strerror(errno));
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 
@@ -195,7 +195,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		{
 			close(fd);
 			pcp_internal_error(pcpConn,
-							   "ERROR: connection to host \"%s\" failed with error \"%s\"",hostname,strerror(errno));
+							   "ERROR: connection to host \"%s\" failed with error \"%s\"", hostname, strerror(errno));
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 		}
@@ -213,8 +213,8 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	pcpConn->connState = PCP_CONNECTION_CONNECTED;
 
 	/*
-	 * If username is not provided. Use the os user name
-	 * and do not complain if it (getting os user name) gets failed
+	 * If username is not provided. Use the os user name and do not complain
+	 * if it (getting os user name) gets failed
 	 */
 	if (username == NULL && get_os_username(os_user, sizeof(os_user)))
 		username = os_user;
@@ -224,13 +224,14 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	 */
 	if (password == NULL || *password == '\0')
 	{
-		char port_str[100];
-		snprintf(port_str, sizeof(port_str), "%d",port);
+		char		port_str[100];
+
+		snprintf(port_str, sizeof(port_str), "%d", port);
 		password_fron_file = PasswordFromFile(pcpConn, hostname, port_str, username);
 		password = password_fron_file;
 	}
 
-	if (pcp_authorize(pcpConn,username, password) < 0)
+	if (pcp_authorize(pcpConn, username, password) < 0)
 	{
 		pcp_close(pcpConn->pcpConn);
 		pcpConn->pcpConn = NULL;
@@ -239,18 +240,19 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	else
 		pcpConn->connState = PCP_CONNECTION_OK;
 
-	if(password_fron_file)
+	if (password_fron_file)
 		pfree(password_fron_file);
 
 	return pcpConn;
 }
 
 static void
-process_salt_info_response(PCPConnInfo* pcpConn, char* buf, int len)
+process_salt_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
-	char* salt = palloc((sizeof(char) * 4));
+	char	   *salt = palloc((sizeof(char) * 4));
+
 	memcpy(salt, buf, 4);
-	if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)salt, 4, NULL) < 0 )
+	if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *) salt, 4, NULL) < 0)
 	{
 		pcp_internal_error(pcpConn,
 
@@ -262,6 +264,7 @@ process_salt_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 		setCommandSuccessful(pcpConn);
 	}
 }
+
 /* --------------------------------
  * pcp_authorize - authenticate with pgpool using username and password
  *
@@ -269,14 +272,14 @@ process_salt_info_response(PCPConnInfo* pcpConn, char* buf, int len)
  * --------------------------------
  */
 static int
-pcp_authorize(PCPConnInfo* pcpConn, char *username, char *password)
+pcp_authorize(PCPConnInfo * pcpConn, char *username, char *password)
 {
-	int wsize;
-	char salt[4];
-	char* salt_ptr;
-	char encrypt_buf[(MD5_PASSWD_LEN+1)*2];
-	char md5[MD5_PASSWD_LEN+1];
-	PCPResultInfo* pcpRes;
+	int			wsize;
+	char		salt[4];
+	char	   *salt_ptr;
+	char		encrypt_buf[(MD5_PASSWD_LEN + 1) * 2];
+	char		md5[MD5_PASSWD_LEN + 1];
+	PCPResultInfo *pcpRes;
 
 	if (password == NULL)
 		password = "";
@@ -306,11 +309,11 @@ pcp_authorize(PCPConnInfo* pcpConn, char *username, char *password)
 		return -1;
 
 	pcpRes = process_pcp_response(pcpConn, 'M');
-	if(PCPResultStatus(pcpRes) != PCP_RES_COMMAND_OK)
+	if (PCPResultStatus(pcpRes) != PCP_RES_COMMAND_OK)
 		return -1;
 
 	salt_ptr = pcp_get_binary_data(pcpRes, 0);
-	if(salt_ptr == NULL)
+	if (salt_ptr == NULL)
 		return -1;
 	memcpy(salt, salt_ptr, 4);
 
@@ -320,40 +323,41 @@ pcp_authorize(PCPConnInfo* pcpConn, char *username, char *password)
 
 	pool_md5_encrypt(md5, username, strlen(username),
 					 encrypt_buf + MD5_PASSWD_LEN + 1);
-	encrypt_buf[(MD5_PASSWD_LEN+1)*2-1] = '\0';
+	encrypt_buf[(MD5_PASSWD_LEN + 1) * 2 - 1] = '\0';
 
-	pool_md5_encrypt(encrypt_buf+MD5_PASSWD_LEN+1, salt, 4,
+	pool_md5_encrypt(encrypt_buf + MD5_PASSWD_LEN + 1, salt, 4,
 					 encrypt_buf);
 	encrypt_buf[MD5_PASSWD_LEN] = '\0';
 
 	pcp_write(pcpConn->pcpConn, "R", 1);
-	wsize = htonl((strlen(username)+1 + strlen(encrypt_buf)+1) + sizeof(int));
+	wsize = htonl((strlen(username) + 1 + strlen(encrypt_buf) + 1) + sizeof(int));
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
-	pcp_write(pcpConn->pcpConn, username, strlen(username)+1);
-	pcp_write(pcpConn->pcpConn, encrypt_buf, strlen(encrypt_buf)+1);
+	pcp_write(pcpConn->pcpConn, username, strlen(username) + 1);
+	pcp_write(pcpConn->pcpConn, encrypt_buf, strlen(encrypt_buf) + 1);
 	if (PCPFlush(pcpConn) < 0)
 		return -1;
 	pcpRes = process_pcp_response(pcpConn, 'R');
-	if(PCPResultStatus(pcpRes) != PCP_RES_COMMAND_OK)
+	if (PCPResultStatus(pcpRes) != PCP_RES_COMMAND_OK)
 		return -1;
 	pcp_free_result(pcpConn);
 	return 0;
 }
 
-static PCPResultInfo* process_pcp_response(PCPConnInfo* pcpConn, char sentMsg)
+static PCPResultInfo * process_pcp_response(PCPConnInfo * pcpConn, char sentMsg)
 {
-	char toc;
-	int rsize;
-	char* buf;
+	char		toc;
+	int			rsize;
+	char	   *buf;
 
 	/* create empty result */
-	if(pcpConn->pcpResInfo == NULL)
+	if (pcpConn->pcpResInfo == NULL)
 	{
 		pcpConn->pcpResInfo = palloc0(sizeof(PCPResultInfo));
 		pcpConn->pcpResInfo->resultSlots = 1;
 	}
 
-	while (1) {
+	while (1)
+	{
 		if (pcp_read(pcpConn->pcpConn, &toc, 1))
 		{
 			pcp_internal_error(pcpConn,
@@ -369,7 +373,7 @@ static PCPResultInfo* process_pcp_response(PCPConnInfo* pcpConn, char sentMsg)
 			return pcpConn->pcpResInfo;
 		}
 		rsize = ntohl(rsize);
-		buf = (char *)palloc(rsize);
+		buf = (char *) palloc(rsize);
 
 		if (pcp_read(pcpConn->pcpConn, buf, rsize - sizeof(int)))
 		{
@@ -380,112 +384,113 @@ static PCPResultInfo* process_pcp_response(PCPConnInfo* pcpConn, char sentMsg)
 			return pcpConn->pcpResInfo;
 		}
 
-		if(pcpConn->Pfdebug)
+		if (pcpConn->Pfdebug)
 			fprintf(pcpConn->Pfdebug, "DEBUG: recv: tos=\"%c\", len=%d\n", toc, rsize);
 
-		switch (toc) {
-			case 'r': /* Authentication Response */
-			{
-				if(sentMsg != 'R')
+		switch (toc)
+		{
+			case 'r':			/* Authentication Response */
 				{
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+					if (sentMsg != 'R')
+					{
+						setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+					}
+					else if (strcmp(buf, "AuthenticationOK") == 0)
+					{
+						pcpConn->connState = PCP_CONNECTION_OK;
+						setResultStatus(pcpConn, PCP_RES_COMMAND_OK);
+					}
+					else
+					{
+						pcp_internal_error(pcpConn,
+										   "ERROR: authentication failed. reason=\"%s\"", buf);
+						setResultStatus(pcpConn, PCP_RES_BACKEND_ERROR);
+					}
 				}
-				else if (strcmp(buf, "AuthenticationOK") == 0)
-				{
-					pcpConn->connState = PCP_CONNECTION_OK;
-					setResultStatus(pcpConn, PCP_RES_COMMAND_OK);
-				}
-				else
-				{
-					pcp_internal_error(pcpConn,
-									   "ERROR: authentication failed. reason=\"%s\"", buf);
-					setResultStatus(pcpConn, PCP_RES_BACKEND_ERROR);
-				}
-			}
-			break;
+				break;
 			case 'm':
-				if(sentMsg != 'M')
+				if (sentMsg != 'M')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_salt_info_response(pcpConn,buf,rsize);
+					process_salt_info_response(pcpConn, buf, rsize);
 				break;
 
 			case 'E':
 				setResultStatus(pcpConn, PCP_RES_BACKEND_ERROR);
-				process_error_response(pcpConn,toc,buf);
+				process_error_response(pcpConn, toc, buf);
 				break;
 
 			case 'N':
-				process_error_response(pcpConn,toc,buf);
+				process_error_response(pcpConn, toc, buf);
 				pfree(buf);
 				continue;
 				break;
 
 			case 'i':
-				if(sentMsg != 'I')
+				if (sentMsg != 'I')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_node_info_response(pcpConn,buf,rsize);
+					process_node_info_response(pcpConn, buf, rsize);
 				break;
 
 			case 'l':
-				if(sentMsg != 'L')
+				if (sentMsg != 'L')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_pcp_node_count_response(pcpConn,buf,rsize);
+					process_pcp_node_count_response(pcpConn, buf, rsize);
 				break;
 
 			case 'c':
-				if(sentMsg != 'C' && sentMsg != 'O')
+				if (sentMsg != 'C' && sentMsg != 'O')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_command_complete_response(pcpConn,buf,rsize);
+					process_command_complete_response(pcpConn, buf, rsize);
 				break;
 
 			case 'd':
-				if(sentMsg != 'D' && sentMsg != 'J')
+				if (sentMsg != 'D' && sentMsg != 'J')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_command_complete_response(pcpConn,buf,rsize);
+					process_command_complete_response(pcpConn, buf, rsize);
 				break;
 
 			case 'a':
-				if(sentMsg != 'A')
+				if (sentMsg != 'A')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_command_complete_response(pcpConn,buf,rsize);
+					process_command_complete_response(pcpConn, buf, rsize);
 				break;
 
 			case 'w':
-				if(sentMsg != 'W')
+				if (sentMsg != 'W')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_watchdog_info_response(pcpConn,buf,rsize);
+					process_watchdog_info_response(pcpConn, buf, rsize);
 				break;
 
 			case 'p':
-				if(sentMsg != 'P')
+				if (sentMsg != 'P')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_process_info_response(pcpConn,buf,rsize);
+					process_process_info_response(pcpConn, buf, rsize);
 				break;
 
 			case 'n':
-				if(sentMsg != 'N')
+				if (sentMsg != 'N')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_process_count_response(pcpConn,buf,rsize);
+					process_process_count_response(pcpConn, buf, rsize);
 				break;
 
 			case 'b':
-				if(sentMsg != 'B')
+				if (sentMsg != 'B')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_pool_status_response(pcpConn,buf,rsize);
+					process_pool_status_response(pcpConn, buf, rsize);
 				break;
 
 			case 't':
-				if(sentMsg != 'T')
+				if (sentMsg != 'T')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
 					setResultStatus(pcpConn, PCP_RES_COMMAND_OK);
@@ -498,77 +503,79 @@ static PCPResultInfo* process_pcp_response(PCPConnInfo* pcpConn, char sentMsg)
 				break;
 		}
 		pfree(buf);
-		if( PCPResultStatus(pcpConn->pcpResInfo) != PCP_RES_INCOMPLETE)
+		if (PCPResultStatus(pcpConn->pcpResInfo) != PCP_RES_INCOMPLETE)
 			break;
 	}
 	return pcpConn->pcpResInfo;
 }
 
 static void
-process_error_response(PCPConnInfo* pcpConn, char toc, char* buf)
+process_error_response(PCPConnInfo * pcpConn, char toc, char *buf)
 {
 	/* For time we only support sev, error message and details */
-	char *errorSev = NULL;
-	char *errorMsg = NULL;
-	char *errorDet = NULL;
-	char *e = buf;
+	char	   *errorSev = NULL;
+	char	   *errorMsg = NULL;
+	char	   *errorDet = NULL;
+	char	   *e = buf;
 
-	if(toc != 'E' && toc != 'N')
+	if (toc != 'E' && toc != 'N')
 		return;
 
 	while (*e)
 	{
-		char type = *e;
+		char		type = *e;
+
 		e++;
-		if(*e == 0)
+		if (*e == 0)
 			break;
 
 		if (type == 'M')
 			errorMsg = e;
-		else if(type == 'S')
+		else if (type == 'S')
 			errorSev = e;
-		else if(type == 'D')
+		else if (type == 'D')
 			errorDet = e;
 		else
 			e += strlen(e) + 1;
-		if(errorDet && errorSev && errorMsg) /* we have all what we need */
+		if (errorDet && errorSev && errorMsg)	/* we have all what we need */
 			break;
 	}
-	if(!errorSev && !errorMsg)
+	if (!errorSev && !errorMsg)
 		return;
 
-	if(toc != 'E') /* This is not an error report it as debug */
+	if (toc != 'E')				/* This is not an error report it as debug */
 	{
-		if(pcpConn->Pfdebug)
+		if (pcpConn->Pfdebug)
 			fprintf(pcpConn->Pfdebug,
-						   "BACKEND %s:  %s\n%s%s%s",errorSev, errorMsg,
-						   errorDet?"DETAIL:  ":"",
-						   errorDet?errorDet:"",
-						   errorDet?"\n":"");
+					"BACKEND %s:  %s\n%s%s%s", errorSev, errorMsg,
+					errorDet ? "DETAIL:  " : "",
+					errorDet ? errorDet : "",
+					errorDet ? "\n" : "");
 	}
 	else
 	{
 		pcp_internal_error(pcpConn,
-					   "%s:  %s\n%s%s%s",errorSev, errorMsg,
-					   errorDet?"DETAIL:  ":"",
-					   errorDet?errorDet:"",
-					   errorDet?"\n":"");
+						   "%s:  %s\n%s%s%s", errorSev, errorMsg,
+						   errorDet ? "DETAIL:  " : "",
+						   errorDet ? errorDet : "",
+						   errorDet ? "\n" : "");
 		setResultStatus(pcpConn, PCP_RES_BACKEND_ERROR);
 
 	}
 }
+
 /* --------------------------------
  * pcp_disconnect - close connection to pgpool
  * --------------------------------
  */
 void
-pcp_disconnect(PCPConnInfo* pcpConn)
+pcp_disconnect(PCPConnInfo * pcpConn)
 {
-	int wsize;
+	int			wsize;
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
+		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return;
 	}
 
@@ -577,7 +584,7 @@ pcp_disconnect(PCPConnInfo* pcpConn)
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
 	if (PCPFlush(pcpConn) < 0)
 		return;
-	if(pcpConn->Pfdebug)
+	if (pcpConn->Pfdebug)
 		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"X\", len=%d\n", (int) sizeof(int));
 
 	pcp_close(pcpConn->pcpConn);
@@ -591,13 +598,14 @@ pcp_disconnect(PCPConnInfo* pcpConn)
  * return 0 on success, -1 otherwise
  * --------------------------------
  */
-PCPResultInfo *pcp_terminate_pgpool(PCPConnInfo* pcpConn, char mode)
+PCPResultInfo *
+pcp_terminate_pgpool(PCPConnInfo * pcpConn, char mode)
 {
-	int wsize;
+	int			wsize;
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
+		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
 	pcp_write(pcpConn->pcpConn, "T", 1);
@@ -606,23 +614,24 @@ PCPResultInfo *pcp_terminate_pgpool(PCPConnInfo* pcpConn, char mode)
 	pcp_write(pcpConn->pcpConn, &mode, sizeof(char));
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"DEBUG: send: tos=\"T\", len=%d\n", ntohl(wsize));
+	if (pcpConn->Pfdebug)
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"T\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn, 'T');
 }
 
 static void
-process_pcp_node_count_response(PCPConnInfo* pcpConn, char* buf, int len)
+process_pcp_node_count_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
 	if (strcmp(buf, "CommandComplete") == 0)
 	{
-		char *index = NULL;
+		char	   *index = NULL;
 
 		index = (char *) memchr(buf, '\0', len);
 		if (index != NULL)
 		{
-			int ret;
+			int			ret;
+
 			index += 1;
 			ret = atoi(index);
 			setResultIntData(pcpConn->pcpResInfo, 0, ret);
@@ -635,21 +644,22 @@ process_pcp_node_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 	}
 	else
 		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"",buf);
+						   "command failed with reason: \"%s\"", buf);
 	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 }
+
 /* --------------------------------
  * pcp_node_count - get number of nodes currently connected to pgpool
  *
  * return array of node IDs on success, -1 otherwise
  * --------------------------------
  */
-PCPResultInfo*
-pcp_node_count(PCPConnInfo* pcpConn)
+PCPResultInfo *
+pcp_node_count(PCPConnInfo * pcpConn)
 {
-	int wsize;
+	int			wsize;
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
 		pcp_internal_error(pcpConn,
 						   "invalid PCP connection");
@@ -660,72 +670,73 @@ pcp_node_count(PCPConnInfo* pcpConn)
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
-	if(pcpConn->Pfdebug)
+	if (pcpConn->Pfdebug)
 		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"L\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn, 'L');
 }
 
 static void
-process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len)
+process_node_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
-	BackendInfo* backend_info = NULL;
+	BackendInfo *backend_info = NULL;
+
 	if (strcmp(buf, "CommandComplete") == 0)
 	{
-		char *index = NULL;
+		char	   *index = NULL;
 
-		backend_info = (BackendInfo *)palloc(sizeof(BackendInfo));
+		backend_info = (BackendInfo *) palloc(sizeof(BackendInfo));
 
 		index = (char *) memchr(buf, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		strlcpy(backend_info->backend_hostname, index, sizeof(backend_info->backend_hostname));
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		backend_info->backend_port = atoi(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		backend_info->backend_status = atoi(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		backend_info->backend_weight = atof(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
 
 		index++;
 		backend_info->role = atoi(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
 
 		index++;
 		backend_info->standby_delay = atol(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
 
 		index++;
 		backend_info->status_changed_time = atol(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
 
-		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)backend_info, sizeof(BackendInfo) , NULL) < 0)
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *) backend_info, sizeof(BackendInfo), NULL) < 0)
 			goto INVALID_RESPONSE;
 
 		setCommandSuccessful(pcpConn);
@@ -733,7 +744,7 @@ process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 	else
 	{
 		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"",buf);
+						   "command failed with reason: \"%s\"", buf);
 		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
 
@@ -741,13 +752,14 @@ process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 
 INVALID_RESPONSE:
 
-	if(backend_info)
+	if (backend_info)
 		pfree(backend_info);
 	pcp_internal_error(pcpConn,
 					   "command failed. invalid response");
 	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 
 }
+
 /* --------------------------------
  * pcp_node_info - get information of node pointed by given argument
  *
@@ -755,12 +767,12 @@ INVALID_RESPONSE:
  * --------------------------------
  */
 PCPResultInfo *
-pcp_node_info(PCPConnInfo* pcpConn, int nid)
+pcp_node_info(PCPConnInfo * pcpConn, int nid)
 {
-	int wsize;
-	char node_id[16];
+	int			wsize;
+	char		node_id[16];
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
 		pcp_internal_error(pcpConn,
 						   "invalid PCP connection");
@@ -770,26 +782,26 @@ pcp_node_info(PCPConnInfo* pcpConn, int nid)
 	snprintf(node_id, sizeof(node_id), "%d", nid);
 
 	pcp_write(pcpConn->pcpConn, "I", 1);
-	wsize = htonl(strlen(node_id)+1 + sizeof(int));
+	wsize = htonl(strlen(node_id) + 1 + sizeof(int));
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
-	pcp_write(pcpConn->pcpConn, node_id, strlen(node_id)+1);
+	pcp_write(pcpConn->pcpConn, node_id, strlen(node_id) + 1);
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"DEBUG: send: tos=\"I\", len=%d\n", ntohl(wsize));
+	if (pcpConn->Pfdebug)
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"I\", len=%d\n", ntohl(wsize));
 
-	return process_pcp_response(pcpConn,'I');
+	return process_pcp_response(pcpConn, 'I');
 }
 
 static void
-process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
+process_process_count_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
 	if (strcmp(buf, "CommandComplete") == 0)
 	{
-		int process_count;
-		int *process_list = NULL;
-		char *index = NULL;
-		int i;
+		int			process_count;
+		int		   *process_list = NULL;
+		char	   *index = NULL;
+		int			i;
 
 		index = (char *) memchr(buf, '\0', len);
 		if (index == NULL)
@@ -799,10 +811,10 @@ process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 			setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 			return;
 		}
-		index +=1;
+		index += 1;
 		process_count = atoi(index);
 
-		process_list = (int *)palloc(sizeof(int) * process_count);
+		process_list = (int *) palloc(sizeof(int) * process_count);
 
 		for (i = 0; i < process_count; i++)
 		{
@@ -814,11 +826,11 @@ process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 				setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				return;
 			}
-			index +=1;
+			index += 1;
 			process_list[i] = atoi(index);
 		}
-		setResultSlotCount(pcpConn,1);
-		if (setNextResultBinaryData(pcpConn->pcpResInfo, process_list, (sizeof(int) * process_count) , NULL) < 0)
+		setResultSlotCount(pcpConn, 1);
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, process_list, (sizeof(int) * process_count), NULL) < 0)
 		{
 			pcp_internal_error(pcpConn,
 							   "command failed. invalid response");
@@ -832,10 +844,11 @@ process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 	else
 	{
 		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"",buf);
+						   "command failed with reason: \"%s\"", buf);
 		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
 }
+
 /* --------------------------------
  * pcp_node_count - get number of nodes currently connected to pgpool
  *
@@ -844,13 +857,13 @@ process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
  */
 
 PCPResultInfo *
-pcp_process_count(PCPConnInfo* pcpConn)
+pcp_process_count(PCPConnInfo * pcpConn)
 {
-	int wsize;
+	int			wsize;
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
+		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
 
@@ -859,43 +872,45 @@ pcp_process_count(PCPConnInfo* pcpConn)
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"DEBUG: send: tos=\"N\", len=%d\n", ntohl(wsize));
+	if (pcpConn->Pfdebug)
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"N\", len=%d\n", ntohl(wsize));
 
-	return process_pcp_response(pcpConn,'N');
+	return process_pcp_response(pcpConn, 'N');
 }
 
 static void
-free_processInfo(struct PCPConnInfo* pcpConn, void* ptr)
+free_processInfo(struct PCPConnInfo *pcpConn, void *ptr)
 {
-	ProcessInfo * pi = (ProcessInfo *)ptr;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"free ProcessInfo structure \n");
+	ProcessInfo *pi = (ProcessInfo *) ptr;
+
+	if (pcpConn->Pfdebug)
+		fprintf(pcpConn->Pfdebug, "free ProcessInfo structure \n");
 
 	if (pi == NULL)
 	{
-		if(pcpConn->Pfdebug)
-			fprintf(pcpConn->Pfdebug,"ProcessInfo structure is NULL nothing to free \n");
+		if (pcpConn->Pfdebug)
+			fprintf(pcpConn->Pfdebug, "ProcessInfo structure is NULL nothing to free \n");
 		return;
 	}
-	if(pi->connection_info)
+	if (pi->connection_info)
 		pfree(pi->connection_info);
 	pfree(pi);
 }
 
 static void
-process_process_info_response(PCPConnInfo* pcpConn, char* buf, int len)
+process_process_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
-	char *index;
+	char	   *index;
 	ProcessInfo *processInfo = NULL;
 
 	if (strcmp(buf, "ArraySize") == 0)
 	{
-		int ci_size;
+		int			ci_size;
+
 		index = (char *) memchr(buf, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		ci_size = atoi(index);
 
 		setResultStatus(pcpConn, PCP_RES_INCOMPLETE);
@@ -905,79 +920,79 @@ process_process_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 	}
 	else if (strcmp(buf, "ProcessInfo") == 0)
 	{
-		if(PCPResultStatus(pcpConn->pcpResInfo) != PCP_RES_INCOMPLETE)
+		if (PCPResultStatus(pcpConn->pcpResInfo) != PCP_RES_INCOMPLETE)
 			goto INVALID_RESPONSE;
 
 		processInfo = palloc0(sizeof(ProcessInfo));
 		processInfo->connection_info = palloc0(sizeof(ConnectionInfo));
 
 		index = (char *) memchr(buf, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		processInfo->pid = atoi(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		strlcpy(processInfo->connection_info->database, index, SM_DATABASE);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		strlcpy(processInfo->connection_info->user, index, SM_USER);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		processInfo->start_time = atol(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		processInfo->connection_info->create_time = atol(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		processInfo->connection_info->major = atoi(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		processInfo->connection_info->minor = atoi(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		processInfo->connection_info->counter = atoi(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		processInfo->connection_info->backend_id = atoi(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		processInfo->connection_info->pid = atoi(index);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
+		index += 1;
 		processInfo->connection_info->connected = atoi(index);
 
-		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)processInfo, sizeof(ProcessInfo), free_processInfo) < 0)
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *) processInfo, sizeof(ProcessInfo), free_processInfo) < 0)
 			goto INVALID_RESPONSE;
 
 		return;
@@ -990,10 +1005,10 @@ process_process_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 	}
 
 INVALID_RESPONSE:
-											   
-	if(processInfo)
+
+	if (processInfo)
 	{
-		if(processInfo->connection_info)
+		if (processInfo->connection_info)
 			pfree(processInfo->connection_info);
 		pfree(processInfo);
 	}
@@ -1009,29 +1024,29 @@ INVALID_RESPONSE:
  * --------------------------------
  */
 PCPResultInfo *
-pcp_process_info(PCPConnInfo* pcpConn, int pid)
+pcp_process_info(PCPConnInfo * pcpConn, int pid)
 {
-	int wsize;
-	char process_id[16];
+	int			wsize;
+	char		process_id[16];
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
+		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
 
 	snprintf(process_id, sizeof(process_id), "%d", pid);
 
 	pcp_write(pcpConn->pcpConn, "P", 1);
-	wsize = htonl(strlen(process_id)+1 + sizeof(int));
+	wsize = htonl(strlen(process_id) + 1 + sizeof(int));
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
-	pcp_write(pcpConn->pcpConn, process_id, strlen(process_id)+1);
+	pcp_write(pcpConn->pcpConn, process_id, strlen(process_id) + 1);
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
-	if(pcpConn->Pfdebug)
+	if (pcpConn->Pfdebug)
 		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"P\", len=%d\n", ntohl(wsize));
 
-	return process_pcp_response(pcpConn,'P');
+	return process_pcp_response(pcpConn, 'P');
 }
 
 /* --------------------------------
@@ -1040,10 +1055,10 @@ pcp_process_info(PCPConnInfo* pcpConn, int pid)
  * return 0 on success, -1 otherwise
  * --------------------------------
  */
-PCPResultInfo*
-pcp_detach_node(PCPConnInfo* pcpConn, int nid)
+PCPResultInfo *
+pcp_detach_node(PCPConnInfo * pcpConn, int nid)
 {
-  return _pcp_detach_node(pcpConn, nid, FALSE);
+	return _pcp_detach_node(pcpConn, nid, FALSE);
 }
 
 /* --------------------------------
@@ -1053,46 +1068,46 @@ pcp_detach_node(PCPConnInfo* pcpConn, int nid)
  * return 0 on success, -1 otherwise
  * --------------------------------
  */
-PCPResultInfo*
-pcp_detach_node_gracefully(PCPConnInfo* pcpConn, int nid)
+PCPResultInfo *
+pcp_detach_node_gracefully(PCPConnInfo * pcpConn, int nid)
 {
-  return _pcp_detach_node(pcpConn, nid, TRUE);
+	return _pcp_detach_node(pcpConn, nid, TRUE);
 }
 
-static PCPResultInfo*
-_pcp_detach_node(PCPConnInfo* pcpConn, int nid, bool gracefully)
+static PCPResultInfo *
+_pcp_detach_node(PCPConnInfo * pcpConn, int nid, bool gracefully)
 {
-	int wsize;
-	char node_id[16];
-	char *sendchar;
+	int			wsize;
+	char		node_id[16];
+	char	   *sendchar;
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
+		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
 
 	snprintf(node_id, sizeof(node_id), "%d", nid);
 
 	if (gracefully)
-	  sendchar = "d";
+		sendchar = "d";
 	else
-	  sendchar = "D";
+		sendchar = "D";
 
 	pcp_write(pcpConn->pcpConn, sendchar, 1);
-	wsize = htonl(strlen(node_id)+1 + sizeof(int));
+	wsize = htonl(strlen(node_id) + 1 + sizeof(int));
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
-	pcp_write(pcpConn->pcpConn, node_id, strlen(node_id)+1);
+	pcp_write(pcpConn->pcpConn, node_id, strlen(node_id) + 1);
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"DEBUG: send: tos=\"D\", len=%d\n", ntohl(wsize));
+	if (pcpConn->Pfdebug)
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"D\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn, 'D');
 }
 
 static void
-process_command_complete_response(PCPConnInfo* pcpConn, char* buf, int len)
+process_command_complete_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
 	if (strcmp(buf, "CommandComplete") == 0)
 	{
@@ -1101,8 +1116,8 @@ process_command_complete_response(PCPConnInfo* pcpConn, char* buf, int len)
 	else
 	{
 		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"",buf);
-	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+						   "command failed with reason: \"%s\"", buf);
+		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
 }
 
@@ -1112,28 +1127,28 @@ process_command_complete_response(PCPConnInfo* pcpConn, char* buf, int len)
  * return 0 on success, -1 otherwise
  * --------------------------------
  */
-PCPResultInfo*
-pcp_attach_node(PCPConnInfo* pcpConn, int nid)
+PCPResultInfo *
+pcp_attach_node(PCPConnInfo * pcpConn, int nid)
 {
-	int wsize;
-	char node_id[16];
+	int			wsize;
+	char		node_id[16];
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
+		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
 
 	snprintf(node_id, sizeof(node_id), "%d", nid);
 
 	pcp_write(pcpConn->pcpConn, "C", 1);
-	wsize = htonl(strlen(node_id)+1 + sizeof(int));
+	wsize = htonl(strlen(node_id) + 1 + sizeof(int));
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
-	pcp_write(pcpConn->pcpConn, node_id, strlen(node_id)+1);
+	pcp_write(pcpConn->pcpConn, node_id, strlen(node_id) + 1);
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"DEBUG: send: tos=\"C\", len=%d\n", ntohl(wsize));
+	if (pcpConn->Pfdebug)
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"C\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn, 'C');
 }
@@ -1146,16 +1161,17 @@ pcp_attach_node(PCPConnInfo* pcpConn, int nid)
  * --------------------------------
  */
 static void
-process_pool_status_response(PCPConnInfo* pcpConn, char* buf, int len)
+process_pool_status_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
-	char *index;
+	char	   *index;
 	POOL_REPORT_CONFIG *status = NULL;
 
 	if (strcmp(buf, "ArraySize") == 0)
 	{
-		int ci_size;
+		int			ci_size;
+
 		index = (char *) memchr(buf, '\0', len) + 1;
-		ci_size = ntohl(*((int *)index));
+		ci_size = ntohl(*((int *) index));
 
 		setResultStatus(pcpConn, PCP_RES_INCOMPLETE);
 		setResultSlotCount(pcpConn, ci_size);
@@ -1164,30 +1180,30 @@ process_pool_status_response(PCPConnInfo* pcpConn, char* buf, int len)
 	}
 	else if (strcmp(buf, "ProcessConfig") == 0)
 	{
-		if(PCPResultStatus(pcpConn->pcpResInfo) != PCP_RES_INCOMPLETE)
+		if (PCPResultStatus(pcpConn->pcpResInfo) != PCP_RES_INCOMPLETE)
 			goto INVALID_RESPONSE;
 
 		status = palloc(sizeof(POOL_REPORT_CONFIG));
 
 		index = (char *) memchr(buf, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
-		strlcpy(status->name, index, POOLCONFIG_MAXNAMELEN+1);
+		index += 1;
+		strlcpy(status->name, index, POOLCONFIG_MAXNAMELEN + 1);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
-		strlcpy(status->value, index, POOLCONFIG_MAXVALLEN+1);
+		index += 1;
+		strlcpy(status->value, index, POOLCONFIG_MAXVALLEN + 1);
 
 		index = (char *) memchr(index, '\0', len);
-		if(index == NULL)
+		if (index == NULL)
 			goto INVALID_RESPONSE;
-		index +=1;
-		strlcpy(status->desc, index, POOLCONFIG_MAXDESCLEN+1);
+		index += 1;
+		strlcpy(status->desc, index, POOLCONFIG_MAXDESCLEN + 1);
 
-		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)status, sizeof(POOL_REPORT_CONFIG) , NULL) < 0)
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *) status, sizeof(POOL_REPORT_CONFIG), NULL) < 0)
 			goto INVALID_RESPONSE;
 		return;
 	}
@@ -1198,22 +1214,22 @@ process_pool_status_response(PCPConnInfo* pcpConn, char* buf, int len)
 	}
 
 INVALID_RESPONSE:
-	
-	if(status)
+
+	if (status)
 		pfree(status);
 	pcp_internal_error(pcpConn,
 					   "command failed. invalid response");
 	setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 }
 
-PCPResultInfo*
-pcp_pool_status(PCPConnInfo *pcpConn)
+PCPResultInfo *
+pcp_pool_status(PCPConnInfo * pcpConn)
 {
-	int wsize;
+	int			wsize;
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
+		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
 
@@ -1229,29 +1245,29 @@ pcp_pool_status(PCPConnInfo *pcpConn)
 
 
 PCPResultInfo *
-pcp_recovery_node(PCPConnInfo* pcpConn, int nid)
+pcp_recovery_node(PCPConnInfo * pcpConn, int nid)
 {
-	int wsize;
-	char node_id[16];
+	int			wsize;
+	char		node_id[16];
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
+		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
 
 	snprintf(node_id, sizeof(node_id), "%d", nid);
 
 	pcp_write(pcpConn->pcpConn, "O", 1);
-	wsize = htonl(strlen(node_id)+1 + sizeof(int));
+	wsize = htonl(strlen(node_id) + 1 + sizeof(int));
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
-	pcp_write(pcpConn->pcpConn, node_id, strlen(node_id)+1);
+	pcp_write(pcpConn->pcpConn, node_id, strlen(node_id) + 1);
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"DEBUG: send: tos=\"D\", len=%d\n", ntohl(wsize));
+	if (pcpConn->Pfdebug)
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"D\", len=%d\n", ntohl(wsize));
 
-	return process_pcp_response(pcpConn,'O');
+	return process_pcp_response(pcpConn, 'O');
 }
 
 /* --------------------------------
@@ -1261,9 +1277,9 @@ pcp_recovery_node(PCPConnInfo* pcpConn, int nid)
  * --------------------------------
  */
 PCPResultInfo *
-pcp_promote_node(PCPConnInfo* pcpConn,int nid)
+pcp_promote_node(PCPConnInfo * pcpConn, int nid)
 {
-  return _pcp_promote_node(pcpConn,nid, FALSE);
+	return _pcp_promote_node(pcpConn, nid, FALSE);
 }
 
 /* --------------------------------
@@ -1274,63 +1290,66 @@ pcp_promote_node(PCPConnInfo* pcpConn,int nid)
  * --------------------------------
  */
 PCPResultInfo *
-pcp_promote_node_gracefully(PCPConnInfo* pcpConn,int nid)
+pcp_promote_node_gracefully(PCPConnInfo * pcpConn, int nid)
 {
-  return _pcp_promote_node(pcpConn,nid, TRUE);
+	return _pcp_promote_node(pcpConn, nid, TRUE);
 }
 
 static PCPResultInfo *
-_pcp_promote_node(PCPConnInfo* pcpConn,int nid, bool gracefully)
+_pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool gracefully)
 {
-	int wsize;
-	char node_id[16];
-	char *sendchar;
+	int			wsize;
+	char		node_id[16];
+	char	   *sendchar;
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
+		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
 
 	snprintf(node_id, sizeof(node_id), "%d", nid);
 
 	if (gracefully)
-	  sendchar = "j";
+		sendchar = "j";
 	else
-	  sendchar = "J";
+		sendchar = "J";
 
 	pcp_write(pcpConn->pcpConn, sendchar, 1);
-	wsize = htonl(strlen(node_id)+1 + sizeof(int));
+	wsize = htonl(strlen(node_id) + 1 + sizeof(int));
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
-	pcp_write(pcpConn->pcpConn, node_id, strlen(node_id)+1);
+	pcp_write(pcpConn->pcpConn, node_id, strlen(node_id) + 1);
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"DEBUG: send: tos=\"E\", len=%d\n", ntohl(wsize));
+	if (pcpConn->Pfdebug)
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"E\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn, 'J');
 }
 
 static void
-process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
+process_watchdog_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
-	char *json_data = NULL;
-	PCPWDClusterInfo* wd_cluster_info = NULL;
-	int clusterDataSize = 0;
+	char	   *json_data = NULL;
+	PCPWDClusterInfo *wd_cluster_info = NULL;
+	int			clusterDataSize = 0;
+
 	if (strcmp(buf, "CommandComplete") == 0)
 	{
-		int tempVal;
-		char* ptr;
+		int			tempVal;
+		char	   *ptr;
+
 		json_data = (char *) memchr(buf, '\0', len);
-		if(json_data == NULL)
+		if (json_data == NULL)
 			goto INVALID_RESPONSE;
-		json_data +=1;
+		json_data += 1;
 
-		json_value* root;
-		json_value* value;
-		int i,nodeCount;
+		json_value *root;
+		json_value *value;
+		int			i,
+					nodeCount;
 
-		root = json_parse(json_data,len);
+		root = json_parse(json_data, len);
 
 		/* The root node must be object */
 		if (root == NULL || root->type != json_object)
@@ -1346,7 +1365,7 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 		}
 
 		/* find the WatchdogNodes array */
-		value = json_get_value_for_key(root,"WatchdogNodes");
+		value = json_get_value_for_key(root, "WatchdogNodes");
 		if (value == NULL)
 		{
 			json_value_free(root);
@@ -1389,7 +1408,7 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 			json_value_free(root);
 			goto INVALID_RESPONSE;
 		}
-		wd_cluster_info->escalated = tempVal==0?false:true;
+		wd_cluster_info->escalated = tempVal == 0 ? false : true;
 
 		ptr = json_get_string_value_for_key(root, "MasterNodeName");
 		if (ptr == NULL)
@@ -1397,7 +1416,7 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 			json_value_free(root);
 			goto INVALID_RESPONSE;
 		}
-		strncpy(wd_cluster_info->masterNodeName, ptr, sizeof(wd_cluster_info->masterNodeName) -1);
+		strncpy(wd_cluster_info->masterNodeName, ptr, sizeof(wd_cluster_info->masterNodeName) - 1);
 
 		ptr = json_get_string_value_for_key(root, "MasterHostName");
 		if (ptr == NULL)
@@ -1405,14 +1424,14 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 			json_value_free(root);
 			goto INVALID_RESPONSE;
 		}
-		strncpy(wd_cluster_info->masterHostName, ptr, sizeof(wd_cluster_info->masterHostName) -1);
+		strncpy(wd_cluster_info->masterHostName, ptr, sizeof(wd_cluster_info->masterHostName) - 1);
 
 		/* Get watchdog nodes data */
 		for (i = 0; i < nodeCount; i++)
 		{
-			char* ptr;
-			json_value* nodeInfoValue = value->u.array.values[i];
-			PCPWDNodeInfo* wdNodeInfo = &wd_cluster_info->nodeList[i];
+			char	   *ptr;
+			json_value *nodeInfoValue = value->u.array.values[i];
+			PCPWDNodeInfo *wdNodeInfo = &wd_cluster_info->nodeList[i];
 
 			if (nodeInfoValue->type != json_object)
 			{
@@ -1432,7 +1451,7 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 				json_value_free(root);
 				goto INVALID_RESPONSE;
 			}
-			strncpy(wdNodeInfo->nodeName, ptr, sizeof(wdNodeInfo->nodeName) -1);
+			strncpy(wdNodeInfo->nodeName, ptr, sizeof(wdNodeInfo->nodeName) - 1);
 
 			ptr = json_get_string_value_for_key(nodeInfoValue, "HostName");
 			if (ptr == NULL)
@@ -1440,7 +1459,7 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 				json_value_free(root);
 				goto INVALID_RESPONSE;
 			}
-			strncpy(wdNodeInfo->hostName, ptr, sizeof(wdNodeInfo->hostName) -1);
+			strncpy(wdNodeInfo->hostName, ptr, sizeof(wdNodeInfo->hostName) - 1);
 
 			ptr = json_get_string_value_for_key(nodeInfoValue, "DelegateIP");
 			if (ptr == NULL)
@@ -1448,7 +1467,7 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 				json_value_free(root);
 				goto INVALID_RESPONSE;
 			}
-			strncpy(wdNodeInfo->delegate_ip, ptr, sizeof(wdNodeInfo->delegate_ip) -1);
+			strncpy(wdNodeInfo->delegate_ip, ptr, sizeof(wdNodeInfo->delegate_ip) - 1);
 
 			if (json_get_int_value_for_key(nodeInfoValue, "WdPort", &wdNodeInfo->wd_port))
 			{
@@ -1474,8 +1493,8 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 				json_value_free(root);
 				goto INVALID_RESPONSE;
 			}
-			strncpy(wdNodeInfo->stateName, ptr, sizeof(wdNodeInfo->stateName) -1);
-			
+			strncpy(wdNodeInfo->stateName, ptr, sizeof(wdNodeInfo->stateName) - 1);
+
 			if (json_get_int_value_for_key(nodeInfoValue, "Priority", &wdNodeInfo->wd_priority))
 			{
 				json_value_free(root);
@@ -1485,22 +1504,22 @@ process_watchdog_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 		}
 		json_value_free(root);
 
-		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *)wd_cluster_info,clusterDataSize , NULL) < 0)
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *) wd_cluster_info, clusterDataSize, NULL) < 0)
 			goto INVALID_RESPONSE;
-		
+
 		setCommandSuccessful(pcpConn);
 	}
 	else
 	{
 		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"\n",buf);
+						   "command failed with reason: \"%s\"\n", buf);
 		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 	}
 	return;
 
 INVALID_RESPONSE:
-	
-	if(wd_cluster_info)
+
+	if (wd_cluster_info)
 		pfree(wd_cluster_info);
 	pcp_internal_error(pcpConn,
 					   "command failed. invalid response\n");
@@ -1514,45 +1533,45 @@ INVALID_RESPONSE:
  * --------------------------------
  */
 PCPResultInfo *
-pcp_watchdog_info(PCPConnInfo* pcpConn, int nid)
+pcp_watchdog_info(PCPConnInfo * pcpConn, int nid)
 {
-	int wsize;
-	char wd_index[16];
+	int			wsize;
+	char		wd_index[16];
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
+		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
 
 	snprintf(wd_index, sizeof(wd_index), "%d", nid);
 
 	pcp_write(pcpConn->pcpConn, "W", 1);
-	wsize = htonl(strlen(wd_index)+1 + sizeof(int));
+	wsize = htonl(strlen(wd_index) + 1 + sizeof(int));
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
-	pcp_write(pcpConn->pcpConn, wd_index, strlen(wd_index)+1);
+	pcp_write(pcpConn->pcpConn, wd_index, strlen(wd_index) + 1);
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"DEBUG: send: tos=\"W\", len=%d\n", ntohl(wsize));
+	if (pcpConn->Pfdebug)
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"W\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn, 'W');
 }
 
 PCPResultInfo *
-pcp_set_backend_parameter(PCPConnInfo* pcpConn,char* parameter_name, char* value)
+pcp_set_backend_parameter(PCPConnInfo * pcpConn, char *parameter_name, char *value)
 {
-	int wsize;
-	char null_chr = 0;
+	int			wsize;
+	char		null_chr = 0;
 
-	if(PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-		pcp_internal_error(pcpConn,"invalid PCP connection");
+		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"DEBUG: seting: \"%s = %s\"\n", parameter_name,value);
-	
+	if (pcpConn->Pfdebug)
+		fprintf(pcpConn->Pfdebug, "DEBUG: seting: \"%s = %s\"\n", parameter_name, value);
+
 	pcp_write(pcpConn->pcpConn, "A", 1);
 	wsize = htonl(strlen(parameter_name) + 1 +
 				  strlen(value) + 1 +
@@ -1564,10 +1583,10 @@ pcp_set_backend_parameter(PCPConnInfo* pcpConn,char* parameter_name, char* value
 	pcp_write(pcpConn->pcpConn, &null_chr, 1);
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
-	if(pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug,"DEBUG: send: tos=\"A\", len=%d\n", ntohl(wsize));
+	if (pcpConn->Pfdebug)
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"A\", len=%d\n", ntohl(wsize));
 
-	return process_pcp_response(pcpConn,'A');
+	return process_pcp_response(pcpConn, 'A');
 }
 
 /*
@@ -1579,7 +1598,7 @@ pcp_set_backend_parameter(PCPConnInfo* pcpConn,char* parameter_name, char* value
  * a trailing newline, and should not be more than one line).
  */
 static void
-pcp_internal_error(PCPConnInfo* pcpConn, const char *fmt,...)
+pcp_internal_error(PCPConnInfo * pcpConn, const char *fmt,...)
 {
 	char		msgBuf[1024];
 	va_list		args;
@@ -1592,13 +1611,13 @@ pcp_internal_error(PCPConnInfo* pcpConn, const char *fmt,...)
 	vsnprintf(msgBuf, sizeof(msgBuf), fmt, args);
 	va_end(args);
 	msgBuf[sizeof(msgBuf) - 1] = '\0';	/* make real sure it's terminated */
-	if(pcpConn->errMsg)
+	if (pcpConn->errMsg)
 		pfree(pcpConn->errMsg);
 	pcpConn->errMsg = pstrdup(msgBuf);
 }
 
 ConnStateType
-PCPConnectionStatus(const PCPConnInfo *conn)
+PCPConnectionStatus(const PCPConnInfo * conn)
 {
 	if (!conn)
 		return PCP_CONNECTION_BAD;
@@ -1606,7 +1625,7 @@ PCPConnectionStatus(const PCPConnInfo *conn)
 }
 
 ResultStateType
-PCPResultStatus(const PCPResultInfo *res)
+PCPResultStatus(const PCPResultInfo * res)
 {
 	if (!res)
 		return PCP_RES_ERROR;
@@ -1614,38 +1633,38 @@ PCPResultStatus(const PCPResultInfo *res)
 }
 
 static void
-setResultStatus(PCPConnInfo* pcpConn, ResultStateType resultState)
+setResultStatus(PCPConnInfo * pcpConn, ResultStateType resultState)
 {
-	if(pcpConn && pcpConn->pcpResInfo)
+	if (pcpConn && pcpConn->pcpResInfo)
 		pcpConn->pcpResInfo->resultStatus = resultState;
 }
 
 static void
-setCommandSuccessful(PCPConnInfo* pcpConn)
+setCommandSuccessful(PCPConnInfo * pcpConn)
 {
-	setResultStatus(pcpConn,PCP_RES_COMMAND_OK);
+	setResultStatus(pcpConn, PCP_RES_COMMAND_OK);
 }
 
 static void
-setResultSlotCount(PCPConnInfo* pcpConn, unsigned int slotCount)
+setResultSlotCount(PCPConnInfo * pcpConn, unsigned int slotCount)
 {
-	if(pcpConn && pcpConn->pcpResInfo && slotCount > 0)
+	if (pcpConn && pcpConn->pcpResInfo && slotCount > 0)
 	{
-		if(pcpConn->pcpResInfo->resultSlots == 0)
+		if (pcpConn->pcpResInfo->resultSlots == 0)
 			pcpConn->pcpResInfo->resultSlots = 1;
 
-		if(slotCount > pcpConn->pcpResInfo->resultSlots)
+		if (slotCount > pcpConn->pcpResInfo->resultSlots)
 		{
-			pcpConn->pcpResInfo = repalloc(pcpConn->pcpResInfo, sizeof(PCPResultInfo) + (sizeof(PCPResultSlot) * (slotCount -1)));
+			pcpConn->pcpResInfo = repalloc(pcpConn->pcpResInfo, sizeof(PCPResultInfo) + (sizeof(PCPResultSlot) * (slotCount - 1)));
 		}
 		pcpConn->pcpResInfo->resultSlots = slotCount;
 	}
 }
 
 static void
-setResultIntData(PCPResultInfo *res, unsigned int slotno, int value)
+setResultIntData(PCPResultInfo * res, unsigned int slotno, int value)
 {
-	if(res)
+	if (res)
 	{
 		res->resultSlot[slotno].datalen = 0;
 		res->resultSlot[slotno].isint = 1;
@@ -1655,9 +1674,9 @@ setResultIntData(PCPResultInfo *res, unsigned int slotno, int value)
 }
 
 static void
-setResultBinaryData(PCPResultInfo *res, unsigned int slotno, void *value, int datalen, void (*free_func)(struct PCPConnInfo*,void*))
+setResultBinaryData(PCPResultInfo * res, unsigned int slotno, void *value, int datalen, void (*free_func) (struct PCPConnInfo *, void *))
 {
-	if(res)
+	if (res)
 	{
 		res->resultSlot[slotno].datalen = datalen;
 		res->resultSlot[slotno].isint = 0;
@@ -1667,11 +1686,11 @@ setResultBinaryData(PCPResultInfo *res, unsigned int slotno, void *value, int da
 }
 
 static int
-setNextResultBinaryData(PCPResultInfo *res, void *value, int datalen, void (*free_func)(struct PCPConnInfo*,void*))
+setNextResultBinaryData(PCPResultInfo * res, void *value, int datalen, void (*free_func) (struct PCPConnInfo *, void *))
 {
-	if(res && res->nextFillSlot < res->resultSlots)
+	if (res && res->nextFillSlot < res->resultSlots)
 	{
-		setResultBinaryData(res,res->nextFillSlot,value,datalen, free_func);
+		setResultBinaryData(res, res->nextFillSlot, value, datalen, free_func);
 		res->nextFillSlot++;
 		return res->nextFillSlot;
 	}
@@ -1679,24 +1698,27 @@ setNextResultBinaryData(PCPResultInfo *res, void *value, int datalen, void (*fre
 }
 
 static int
-PCPFlush(PCPConnInfo* pcpConn)
+PCPFlush(PCPConnInfo * pcpConn)
 {
-	int ret = pcp_flush(pcpConn->pcpConn);
+	int			ret = pcp_flush(pcpConn->pcpConn);
+
 	if (ret)
 		pcp_internal_error(pcpConn,
-						   "ERROR: sending data to backend failed with error \"%s\"",strerror(errno));
+						   "ERROR: sending data to backend failed with error \"%s\"", strerror(errno));
 	return ret;
 }
 
-int pcp_result_slot_count(PCPResultInfo* res)
+int
+pcp_result_slot_count(PCPResultInfo * res)
 {
-	if(res)
+	if (res)
 		return res->resultSlots;
 	return 0;
 }
 
 /* Returns 1 if ResultInfo has no data. 0 otherwise */
-int pcp_result_is_empty(PCPResultInfo* res)
+int
+pcp_result_is_empty(PCPResultInfo * res)
 {
 	if (res)
 	{
@@ -1707,48 +1729,53 @@ int pcp_result_is_empty(PCPResultInfo* res)
 	return 1;
 }
 
-void *pcp_get_binary_data(const PCPResultInfo *res, unsigned int slotno)
+void *
+pcp_get_binary_data(const PCPResultInfo * res, unsigned int slotno)
 {
-	if(res && slotno < res->resultSlots && !res->resultSlot[slotno].isint)
+	if (res && slotno < res->resultSlots && !res->resultSlot[slotno].isint)
 	{
 		return res->resultSlot[slotno].data.ptr;
 	}
 	return NULL;
 }
 
-int pcp_get_int_data(const PCPResultInfo *res, unsigned int slotno)
+int
+pcp_get_int_data(const PCPResultInfo * res, unsigned int slotno)
 {
-	if(res && slotno < res->resultSlots && res->resultSlot[slotno].isint)
+	if (res && slotno < res->resultSlots && res->resultSlot[slotno].isint)
 	{
 		return res->resultSlot[slotno].data.integer;
 	}
 	return 0;
 }
 
-int pcp_get_data_length(const PCPResultInfo *res, unsigned int slotno)
+int
+pcp_get_data_length(const PCPResultInfo * res, unsigned int slotno)
 {
-	if(res && slotno < res->resultSlots)
+	if (res && slotno < res->resultSlots)
 	{
 		return res->resultSlot[slotno].datalen;
 	}
 	return 0;
 }
 
-void pcp_free_result(PCPConnInfo* pcpConn)
+void
+pcp_free_result(PCPConnInfo * pcpConn)
 {
-	if(pcpConn && pcpConn->pcpResInfo)
+	if (pcpConn && pcpConn->pcpResInfo)
 	{
-		PCPResultInfo* pcpRes = pcpConn->pcpResInfo;
-		int i;
-		for(i = 0; i< pcpRes->resultSlots; i++)
+		PCPResultInfo *pcpRes = pcpConn->pcpResInfo;
+		int			i;
+
+		for (i = 0; i < pcpRes->resultSlots; i++)
 		{
-			if(pcpRes->resultSlot[i].isint)
+			if (pcpRes->resultSlot[i].isint)
 				continue;
-			if(pcpRes->resultSlot[i].data.ptr == NULL)
+			if (pcpRes->resultSlot[i].data.ptr == NULL)
 				continue;
 
-			if(pcpRes->resultSlot[i].free_func)
-				pcpRes->resultSlot[i].free_func(pcpConn,pcpRes->resultSlot[i].data.ptr);
+			if (pcpRes->resultSlot[i].free_func)
+				pcpRes->resultSlot[i].free_func(pcpConn, pcpRes->resultSlot[i].data.ptr);
 			else
 				pfree(pcpRes->resultSlot[i].data.ptr);
 			pcpRes->resultSlot[i].data.ptr = NULL;
@@ -1758,21 +1785,23 @@ void pcp_free_result(PCPConnInfo* pcpConn)
 	}
 }
 
-void pcp_free_connection(PCPConnInfo* pcpConn)
+void
+pcp_free_connection(PCPConnInfo * pcpConn)
 {
-	if(pcpConn)
+	if (pcpConn)
 	{
 		pcp_free_result(pcpConn);
-		if(pcpConn->errMsg)
+		if (pcpConn->errMsg)
 			pfree(pcpConn->errMsg);
-		/* Should we also Disconnect it?*/
+		/* Should we also Disconnect it? */
 		pfree(pcpConn);
 	}
 }
 
-char *pcp_get_last_error(PCPConnInfo* pcpConn)
+char *
+pcp_get_last_error(PCPConnInfo * pcpConn)
 {
-	if(pcpConn)
+	if (pcpConn)
 		return pcpConn->errMsg;
 	return NULL;
 }
@@ -1784,8 +1813,8 @@ char *pcp_get_last_error(PCPConnInfo* pcpConn)
 static bool
 getPoolPassFilename(char *pgpassfile)
 {
-	char       *passfile_env;
-	
+	char	   *passfile_env;
+
 	if ((passfile_env = getenv("PCPPASSFILE")) != NULL)
 	{
 		/* use the literal path from the environment, if set */
@@ -1793,7 +1822,8 @@ getPoolPassFilename(char *pgpassfile)
 	}
 	else
 	{
-		char            homedir[MAXPGPATH];
+		char		homedir[MAXPGPATH];
+
 		if (!get_home_directory(homedir, sizeof(homedir)))
 			return false;
 		snprintf(pgpassfile, MAXPGPATH, "%s/%s", homedir, PCPPASSFILE);
@@ -1803,23 +1833,23 @@ getPoolPassFilename(char *pgpassfile)
 
 /*
  * Get a password from the password file. Return value is malloc'd.
- * format = hostname:port:username:password 
+ * format = hostname:port:username:password
  */
 static char *
-PasswordFromFile(PCPConnInfo* pcpConn, char *hostname, char *port, char *username)
+PasswordFromFile(PCPConnInfo * pcpConn, char *hostname, char *port, char *username)
 {
-	FILE        *fp;
-	char        pgpassfile[MAXPGPATH];
+	FILE	   *fp;
+	char		pgpassfile[MAXPGPATH];
 	struct stat stat_buf;
 #define LINELEN NAMEDATALEN*5
-	char        buf[LINELEN];
+	char		buf[LINELEN];
 
 	if (username == NULL || strlen(username) == 0)
 		return NULL;
 
 	if (hostname == NULL)
 		hostname = DefaultHost;
-	else if(strcmp(hostname , UNIX_DOMAIN_PATH) == 0)
+	else if (strcmp(hostname, UNIX_DOMAIN_PATH) == 0)
 		hostname = DefaultHost;
 
 	if (!getPoolPassFilename(pgpassfile))
@@ -1831,43 +1861,43 @@ PasswordFromFile(PCPConnInfo* pcpConn, char *hostname, char *port, char *usernam
 
 	if (!S_ISREG(stat_buf.st_mode))
 	{
-		if(pcpConn->Pfdebug)
-			fprintf(pcpConn->Pfdebug, "WARNING: password file \"%s\" is not a plain file\n",pgpassfile);
+		if (pcpConn->Pfdebug)
+			fprintf(pcpConn->Pfdebug, "WARNING: password file \"%s\" is not a plain file\n", pgpassfile);
 		return NULL;
 	}
-	
+
 	/* If password file is insecure, alert the user and ignore it. */
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 	{
-		if(pcpConn->Pfdebug)
+		if (pcpConn->Pfdebug)
 			fprintf(pcpConn->Pfdebug, "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n",
-				pgpassfile);
+					pgpassfile);
 		return NULL;
 	}
 
 	fp = fopen(pgpassfile, "r");
 	if (fp == NULL)
 		return NULL;
-	
+
 	while (!feof(fp) && !ferror(fp))
 	{
-		char       *t = buf,
-		*ret,
-		*p1,
-		*p2;
-		int                     len;
-		
+		char	   *t = buf,
+				   *ret,
+				   *p1,
+				   *p2;
+		int			len;
+
 		if (fgets(buf, sizeof(buf), fp) == NULL)
 			break;
-		
+
 		len = strlen(buf);
 		if (len == 0)
 			continue;
-		
+
 		/* Remove trailing newline */
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = 0;
-		
+
 		if ((t = pwdfMatchesString(t, hostname)) == NULL ||
 			(t = pwdfMatchesString(t, port)) == NULL ||
 			(t = pwdfMatchesString(t, username)) == NULL)
@@ -1883,13 +1913,13 @@ PasswordFromFile(PCPConnInfo* pcpConn, char *hostname, char *port, char *usernam
 			*p2 = *p1;
 		}
 		*p2 = '\0';
-		
+
 		return ret;
 	}
-	
+
 	fclose(fp);
 	return NULL;
-	
+
 #undef LINELEN
 }
 
@@ -1901,10 +1931,10 @@ PasswordFromFile(PCPConnInfo* pcpConn, char *hostname, char *port, char *usernam
 static char *
 pwdfMatchesString(char *buf, char *token)
 {
-	char       *tbuf,
-	*ttok;
-	bool            bslash = false;
-	
+	char	   *tbuf,
+			   *ttok;
+	bool		bslash = false;
+
 	if (buf == NULL || token == NULL)
 		return NULL;
 	tbuf = buf;

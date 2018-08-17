@@ -45,8 +45,8 @@
 
 #define MAX_ENCODED_PASSWD_LEN (MAX_POOL_KEY_LEN * 2)
 
-static void	print_usage(const char prog[], int exit_code);
-static void	set_tio_attr(int enable);
+static void print_usage(const char prog[], int exit_code);
+static void set_tio_attr(int enable);
 static void update_pool_passwd(char *conf_file, char *username, char *password, char *key);
 static bool get_pool_key_filename(char *poolKeyFile);
 
@@ -55,17 +55,17 @@ main(int argc, char *argv[])
 {
 #define PRINT_USAGE(exit_code)	print_usage(argv[0], exit_code)
 
-	char conf_file[POOLMAXPATHLEN+1];
-	char enc_key[MAX_POOL_KEY_LEN+1];
-	char pg_pass[MAX_PGPASS_LEN+1];
-	char username[MAX_USER_NAME_LEN+1];
-	char key_file_path[POOLMAXPATHLEN];
-	int opt;
-	int optindex;
-	bool updatepasswd = false;
-	bool prompt = false;
-	bool prompt_for_key = false;
-	char *pool_key = NULL;
+	char		conf_file[POOLMAXPATHLEN + 1];
+	char		enc_key[MAX_POOL_KEY_LEN + 1];
+	char		pg_pass[MAX_PGPASS_LEN + 1];
+	char		username[MAX_USER_NAME_LEN + 1];
+	char		key_file_path[POOLMAXPATHLEN];
+	int			opt;
+	int			optindex;
+	bool		updatepasswd = false;
+	bool		prompt = false;
+	bool		prompt_for_key = false;
+	char	   *pool_key = NULL;
 
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
@@ -81,8 +81,9 @@ main(int argc, char *argv[])
 
 	snprintf(conf_file, sizeof(conf_file), "%s/%s", DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
 
-	/* initialize username buffer with zeros so that we can use strlen on it later
-	   to check if a username was given on the command line
+	/*
+	 * initialize username buffer with zeros so that we can use strlen on it
+	 * later to check if a username was given on the command line
 	 */
 	memset(username, 0, sizeof(username));
 	memset(enc_key, 0, sizeof(enc_key));
@@ -92,19 +93,19 @@ main(int argc, char *argv[])
 	{
 		switch (opt)
 		{
-			case 'p':    /* prompt for postgres password */
+			case 'p':			/* prompt for postgres password */
 				prompt = true;
 				break;
 
-			case 'P':    /* prompt for encryption key */
+			case 'P':			/* prompt for encryption key */
 				prompt_for_key = true;
 				break;
 
-			case 'm':	/* update password file */
+			case 'm':			/* update password file */
 				updatepasswd = true;
 				break;
 
-			case 'f':	/* specify configuration file */
+			case 'f':			/* specify configuration file */
 				if (!optarg)
 				{
 					PRINT_USAGE(EXIT_SUCCESS);
@@ -112,7 +113,8 @@ main(int argc, char *argv[])
 				strlcpy(conf_file, optarg, sizeof(conf_file));
 				break;
 
-			case 'k':	/* specify key file for encrypting pool_password entries */
+			case 'k':			/* specify key file for encrypting
+								 * pool_password entries */
 				if (!optarg)
 				{
 					PRINT_USAGE(EXIT_SUCCESS);
@@ -120,7 +122,7 @@ main(int argc, char *argv[])
 				strlcpy(key_file_path, optarg, sizeof(key_file_path));
 				break;
 
-			case 'K':	/* specify configuration file */
+			case 'K':			/* specify configuration file */
 				if (!optarg)
 				{
 					PRINT_USAGE(EXIT_SUCCESS);
@@ -151,14 +153,14 @@ main(int argc, char *argv[])
 	/* Prompt for password. */
 	if (prompt || optind >= argc)
 	{
-		char	 buf[MAX_PGPASS_LEN];
-		int		 len;
+		char		buf[MAX_PGPASS_LEN];
+		int			len;
 
 		set_tio_attr(1);
 		printf("db password: ");
 		if (!fgets(buf, sizeof(buf), stdin))
 		{
-			int eno = errno;
+			int			eno = errno;
 
 			fprintf(stderr, "Couldn't read input from stdin. (fgets(): %s)",
 					strerror(eno));
@@ -170,40 +172,41 @@ main(int argc, char *argv[])
 
 		/* Remove LF at the end of line, if there is any. */
 		len = strlen(buf);
-		if (len > 0 && buf[len-1] == '\n')
+		if (len > 0 && buf[len - 1] == '\n')
 		{
-			buf[len-1] = '\0';
+			buf[len - 1] = '\0';
 			len--;
 		}
-		stpncpy(pg_pass,buf,sizeof(pg_pass));
+		stpncpy(pg_pass, buf, sizeof(pg_pass));
 	}
 
 	/* Read password from argv. */
 	else
 	{
-		int		len;
+		int			len;
 
 		len = strlen(argv[optind]);
 
 		if (len > MAX_PGPASS_LEN)
 		{
-			fprintf(stderr, "Error: Input exceeds maximum password length given:%d max allowed:%d!\n\n",len,MAX_PGPASS_LEN);
+			fprintf(stderr, "Error: Input exceeds maximum password length given:%d max allowed:%d!\n\n", len, MAX_PGPASS_LEN);
 			PRINT_USAGE(EXIT_FAILURE);
 		}
 
-		stpncpy(pg_pass,argv[optind],sizeof(pg_pass));
+		stpncpy(pg_pass, argv[optind], sizeof(pg_pass));
 	}
 	/* prompt for key, overrides all key related arguments */
 	if (prompt_for_key)
 	{
-		char	buf[MAX_POOL_KEY_LEN];
-		int 	len;
+		char		buf[MAX_POOL_KEY_LEN];
+		int			len;
+
 		/* we need to read the encryption key from stdin */
 		set_tio_attr(1);
 		printf("encryption key: ");
 		if (!fgets(buf, sizeof(buf), stdin))
 		{
-			int eno = errno;
+			int			eno = errno;
 
 			fprintf(stderr, "Couldn't read input from stdin. (fgets(): %s)",
 					strerror(eno));
@@ -214,9 +217,9 @@ main(int argc, char *argv[])
 		set_tio_attr(0);
 		/* Remove LF at the end of line, if there is any. */
 		len = strlen(buf);
-		if (len > 0 && buf[len-1] == '\n')
+		if (len > 0 && buf[len - 1] == '\n')
 		{
-			buf[len-1] = '\0';
+			buf[len - 1] = '\0';
 			len--;
 		}
 		if (len == 0)
@@ -224,7 +227,7 @@ main(int argc, char *argv[])
 			fprintf(stderr, "encryption key not provided\n");
 			exit(EXIT_FAILURE);
 		}
-		stpncpy(enc_key,buf,sizeof(enc_key));
+		stpncpy(enc_key, buf, sizeof(enc_key));
 	}
 	else
 	{
@@ -237,7 +240,7 @@ main(int argc, char *argv[])
 				get_pool_key_filename(key_file_path);
 			}
 
-			fprintf(stdout, "trying to read key from file %s\n",key_file_path);
+			fprintf(stdout, "trying to read key from file %s\n", key_file_path);
 
 			pool_key = read_pool_key(key_file_path);
 		}
@@ -261,21 +264,22 @@ main(int argc, char *argv[])
 	{
 		unsigned char ciphertext[MAX_ENCODED_PASSWD_LEN];
 		unsigned char b64_enc[MAX_ENCODED_PASSWD_LEN];
-		int len;
-		int cypher_len;
+		int			len;
+		int			cypher_len;
 
-		cypher_len = aes_encrypt_with_password((unsigned char*)pg_pass,
-										strlen(pg_pass), pool_key, ciphertext);
+		cypher_len = aes_encrypt_with_password((unsigned char *) pg_pass,
+											   strlen(pg_pass), pool_key, ciphertext);
 
 		/* generate the hash for the given username */
-		len = pg_b64_encode((const char*)ciphertext, cypher_len, (char*)b64_enc);
+		len = pg_b64_encode((const char *) ciphertext, cypher_len, (char *) b64_enc);
 		b64_enc[len] = 0;
-		fprintf(stdout,"\n%s\n",b64_enc);
-		fprintf(stdout,"pool_passwd string: AES%s\n",b64_enc);
+		fprintf(stdout, "\n%s\n", b64_enc);
+		fprintf(stdout, "pool_passwd string: AES%s\n", b64_enc);
 
 #ifdef DEBUG_ENCODING
 		unsigned char b64_dec[MAX_ENCODED_PASSWD_LEN];
 		unsigned char plaintext[MAX_PGPASS_LEN];
+
 		len = pg_b64_decode(b64_enc, len, b64_dec);
 		len = aes_decrypt_with_password(b64_dec, len,
 										pool_key, plaintext);
@@ -289,17 +293,18 @@ main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
-static void update_pool_passwd(char *conf_file, char *username, char *password, char *key)
+static void
+update_pool_passwd(char *conf_file, char *username, char *password, char *key)
 {
 	struct passwd *pw;
-	char pool_passwd[MAX_PGPASS_LEN+1];
-	char dirnamebuf[POOLMAXPATHLEN+1];
-	char *dirp;
-	char *user = username;
+	char		pool_passwd[MAX_PGPASS_LEN + 1];
+	char		dirnamebuf[POOLMAXPATHLEN + 1];
+	char	   *dirp;
+	char	   *user = username;
 
 	unsigned char ciphertext[MAX_ENCODED_PASSWD_LEN];
 	unsigned char b64_enc[MAX_ENCODED_PASSWD_LEN];
-	int len;
+	int			len;
 
 	if (pool_init_config())
 	{
@@ -318,7 +323,7 @@ static void update_pool_passwd(char *conf_file, char *username, char *password, 
 			 dirp, pool_config->pool_passwd);
 	pool_init_pool_passwd(pool_passwd, POOL_PASSWD_RW);
 
-	if(username == NULL || strlen(username) == 0)
+	if (username == NULL || strlen(username) == 0)
 	{
 		/* get the user information from the current uid */
 		pw = getpwuid(getuid());
@@ -331,44 +336,46 @@ static void update_pool_passwd(char *conf_file, char *username, char *password, 
 	}
 
 	/* generate the hash for the given username */
-	int cypher_len = aes_encrypt_with_password((unsigned char*)password, strlen(password), key, ciphertext);
-	if (cypher_len <= 0 )
+	int			cypher_len = aes_encrypt_with_password((unsigned char *) password, strlen(password), key, ciphertext);
+
+	if (cypher_len <= 0)
 	{
 		fprintf(stderr, "password encryption failed\n\n");
 		exit(EXIT_FAILURE);
 	}
 
 	/* copy the prefix at the start of string */
-	strcpy((char*)b64_enc, (char*)PASSWORD_AES_PREFIX);
-	len = pg_b64_encode((const char*)ciphertext, cypher_len, (char*)b64_enc + strlen(PASSWORD_AES_PREFIX));
-	if (cypher_len <= 0 )
+	strcpy((char *) b64_enc, (char *) PASSWORD_AES_PREFIX);
+	len = pg_b64_encode((const char *) ciphertext, cypher_len, (char *) b64_enc + strlen(PASSWORD_AES_PREFIX));
+	if (cypher_len <= 0)
 	{
 		fprintf(stderr, "base64 encoding failed\n\n");
 		exit(EXIT_FAILURE);
 	}
-	len+= strlen(PASSWORD_AES_PREFIX);
+	len += strlen(PASSWORD_AES_PREFIX);
 	b64_enc[len] = 0;
 
-	pool_create_passwdent(user, (char*)b64_enc);
+	pool_create_passwdent(user, (char *) b64_enc);
 	pool_finish_pool_passwd();
 }
 
 static void
 print_usage(const char prog[], int exit_code)
 {
-	char	homedir[POOLMAXPATHLEN];
-	FILE *stream = (exit_code == EXIT_SUCCESS) ? stdout : stderr;
-	if (!get_home_directory(homedir, sizeof(homedir)))
-		strncpy(homedir,"USER-HOME-DIR",POOLMAXPATHLEN);
+	char		homedir[POOLMAXPATHLEN];
+	FILE	   *stream = (exit_code == EXIT_SUCCESS) ? stdout : stderr;
 
-	fprintf(stream, "%s version %s (%s),\n",	PACKAGE, VERSION, PGPOOLVERSION);
+	if (!get_home_directory(homedir, sizeof(homedir)))
+		strncpy(homedir, "USER-HOME-DIR", POOLMAXPATHLEN);
+
+	fprintf(stream, "%s version %s (%s),\n", PACKAGE, VERSION, PGPOOLVERSION);
 	fprintf(stream, "  password encryption utility for Pgpool\n\n");
 	fprintf(stream, "Usage:\n");
-	fprintf(stream, "  %s [OPTIONS] <PASSWORD>\n",prog);
+	fprintf(stream, "  %s [OPTIONS] <PASSWORD>\n", prog);
 	fprintf(stream, "  -k, --key-file=KEY_FILE\n");
 	fprintf(stream, "                       Set the path to the encryption key file.\n");
-	fprintf(stream, "                       Default: %s/%s\n",homedir, POOLKEYFILE);
-	fprintf(stream, "                       Can be overridden by the %s environment variable.\n",POOLKEYFILEENV);
+	fprintf(stream, "                       Default: %s/%s\n", homedir, POOLKEYFILE);
+	fprintf(stream, "                       Can be overridden by the %s environment variable.\n", POOLKEYFILEENV);
 	fprintf(stream, "  -K, --enc-key=ENCRYPTION_KEY\n");
 	fprintf(stream, "                       Encryption key to be used for encrypting database passwords.\n");
 	fprintf(stream, "  -f, --config-file=CONFIG_FILE\n");
@@ -406,8 +413,8 @@ set_tio_attr(int set)
 
 		tio_save = tio;
 
-		tio.c_iflag &= ~(BRKINT|ISTRIP|IXON);
-		tio.c_lflag &= ~(ICANON|IEXTEN|ECHO|ECHOE|ECHOK|ECHONL);
+		tio.c_iflag &= ~(BRKINT | ISTRIP | IXON);
+		tio.c_lflag &= ~(ICANON | IEXTEN | ECHO | ECHOE | ECHOK | ECHONL);
 		tio.c_cc[VMIN] = 1;
 		tio.c_cc[VTIME] = 0;
 
@@ -430,7 +437,7 @@ set_tio_attr(int set)
 static bool
 get_pool_key_filename(char *poolKeyFile)
 {
-	char	*passfile_env;
+	char	   *passfile_env;
 
 	if ((passfile_env = getenv(POOLKEYFILEENV)) != NULL)
 	{
@@ -439,11 +446,11 @@ get_pool_key_filename(char *poolKeyFile)
 	}
 	else
 	{
-		char	homedir[POOLMAXPATHLEN];
+		char		homedir[POOLMAXPATHLEN];
+
 		if (!get_home_directory(homedir, sizeof(homedir)))
 			return false;
 		snprintf(poolKeyFile, POOLMAXPATHLEN, "%s/%s", homedir, POOLKEYFILE);
 	}
 	return true;
 }
-

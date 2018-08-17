@@ -28,7 +28,7 @@
 #include "utils/fe_ports.h"
 
 /* It's possible we could use a different value for this in frontend code */
-#define MaxAllocSize	((Size) 0x3fffffff)		/* 1 gigabyte - 1 */
+#define MaxAllocSize	((Size) 0x3fffffff) /* 1 gigabyte - 1 */
 
 #endif
 

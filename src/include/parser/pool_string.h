@@ -23,16 +23,16 @@
 
 typedef struct
 {
-	int size;
-	int len;
-	char *data;
-} String;
+	int			size;
+	int			len;
+	char	   *data;
+}			String;
 
 extern char *NameListToString(List *names);
-extern String *init_string(char *str);
-extern void string_append_string(String *string, String *append_data);
-extern void string_append_char(String *string, char *append_data);
-extern void free_string(String *string);
-extern String *copy_string(String *string);
+extern String * init_string(char *str);
+extern void string_append_string(String * string, String * append_data);
+extern void string_append_char(String * string, char *append_data);
+extern void free_string(String * string);
+extern String * copy_string(String * string);
 
-#endif /* POOL_STRING_H */
+#endif							/* POOL_STRING_H */

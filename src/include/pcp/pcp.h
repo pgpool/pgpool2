@@ -1,7 +1,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2016	PgPool Global Development Group
@@ -37,28 +37,28 @@
 
 typedef struct PCPWDNodeInfo
 {
-	int state;
-	char nodeName[WD_MAX_HOST_NAMELEN];
-	char hostName[WD_MAX_HOST_NAMELEN];		/* host name */
-	char stateName[WD_MAX_HOST_NAMELEN];	/* state name */
-	int wd_port;							/* watchdog port */
-	int wd_priority;						/* node priority in leader election */
-	int pgpool_port;						/* pgpool port */
-	char delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
-	int	id;
-}PCPWDNodeInfo;
+	int			state;
+	char		nodeName[WD_MAX_HOST_NAMELEN];
+	char		hostName[WD_MAX_HOST_NAMELEN];	/* host name */
+	char		stateName[WD_MAX_HOST_NAMELEN]; /* state name */
+	int			wd_port;		/* watchdog port */
+	int			wd_priority;	/* node priority in leader election */
+	int			pgpool_port;	/* pgpool port */
+	char		delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
+	int			id;
+}			PCPWDNodeInfo;
 
 typedef struct PCPWDClusterInfo
 {
-	int remoteNodeCount;
-	int quorumStatus;
-	int aliveNodeCount;
-	bool escalated;
-	char masterNodeName[WD_MAX_HOST_NAMELEN];
-	char masterHostName[WD_MAX_HOST_NAMELEN];
-	int nodeCount;
+	int			remoteNodeCount;
+	int			quorumStatus;
+	int			aliveNodeCount;
+	bool		escalated;
+	char		masterNodeName[WD_MAX_HOST_NAMELEN];
+	char		masterHostName[WD_MAX_HOST_NAMELEN];
+	int			nodeCount;
 	PCPWDNodeInfo nodeList[1];
-}PCPWDClusterInfo;
+}			PCPWDClusterInfo;
 
 /* --------------------------------
  * pcp.c
@@ -70,4 +70,4 @@ typedef struct PCPWDClusterInfo
  * ------------------------------
  */
 
-#endif /* PCP_H */
+#endif							/* PCP_H */

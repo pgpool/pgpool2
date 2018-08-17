@@ -1,7 +1,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2015	PgPool Global Development Group
@@ -39,9 +39,9 @@
 #include "utils/fe_ports.h"
 #endif
 
-static int consume_pending_data(PCP_CONNECTION *pc, void *data, int len);
-static int save_pending_data(PCP_CONNECTION *pc, void *data, int len);
-static int pcp_check_fd(PCP_CONNECTION *pc);
+static int	consume_pending_data(PCP_CONNECTION * pc, void *data, int len);
+static int	save_pending_data(PCP_CONNECTION * pc, void *data, int len);
+static int	pcp_check_fd(PCP_CONNECTION * pc);
 
 /* --------------------------------
  * pcp_open - allocate read & write buffers for PCP_CONNECTION
@@ -52,30 +52,30 @@ static int pcp_check_fd(PCP_CONNECTION *pc);
 PCP_CONNECTION *
 pcp_open(int fd)
 {
-    PCP_CONNECTION *pc;
+	PCP_CONNECTION *pc;
 
 #ifndef POOL_PRIVATE
-    MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 #endif
 
-    pc = (PCP_CONNECTION *)palloc0(sizeof(PCP_CONNECTION));
-    /* initialize write buffer */
-    pc->wbuf = palloc(WRITEBUFSZ);
-    pc->wbufsz = WRITEBUFSZ;
-    pc->wbufpo = 0;
+	pc = (PCP_CONNECTION *) palloc0(sizeof(PCP_CONNECTION));
+	/* initialize write buffer */
+	pc->wbuf = palloc(WRITEBUFSZ);
+	pc->wbufsz = WRITEBUFSZ;
+	pc->wbufpo = 0;
 
-    /* initialize pending data buffer */
-    pc->hp = palloc(READBUFSZ);
-    pc->bufsz = READBUFSZ;
-    pc->po = 0;
-    pc->len = 0;
+	/* initialize pending data buffer */
+	pc->hp = palloc(READBUFSZ);
+	pc->bufsz = READBUFSZ;
+	pc->po = 0;
+	pc->len = 0;
 
 #ifndef POOL_PRIVATE
-    MemoryContextSwitchTo(oldContext);
+	MemoryContextSwitchTo(oldContext);
 #endif
 
-    pc->fd = fd;
-    return pc;
+	pc->fd = fd;
+	return pc;
 }
 
 /* --------------------------------
@@ -83,12 +83,12 @@ pcp_open(int fd)
  * --------------------------------
  */
 void
-pcp_close(PCP_CONNECTION *pc)
+pcp_close(PCP_CONNECTION * pc)
 {
-    close(pc->fd);
-    pfree(pc->wbuf);
-    pfree(pc->hp);
-    pfree(pc);
+	close(pc->fd);
+	pfree(pc->wbuf);
+	pfree(pc->hp);
+	pfree(pc);
 }
 
 /* --------------------------------
@@ -98,50 +98,50 @@ pcp_close(PCP_CONNECTION *pc)
  * --------------------------------
  */
 int
-pcp_read(PCP_CONNECTION *pc, void *buf, int len)
+pcp_read(PCP_CONNECTION * pc, void *buf, int len)
 {
-    static char readbuf[READBUFSZ];
+	static char readbuf[READBUFSZ];
 
-    int consume_size;
-    int readlen;
+	int			consume_size;
+	int			readlen;
 
-    consume_size = consume_pending_data(pc, buf, len);
-    len -= consume_size;
-    buf += consume_size;
+	consume_size = consume_pending_data(pc, buf, len);
+	len -= consume_size;
+	buf += consume_size;
 
-    while (len > 0)
-    {
-        if (pcp_check_fd(pc))
+	while (len > 0)
+	{
+		if (pcp_check_fd(pc))
 			return -1;
 
-        readlen = read(pc->fd, readbuf, READBUFSZ);
-        if (readlen == -1)
-        {
-            if (errno == EAGAIN || errno == EINTR)
-                continue;
+		readlen = read(pc->fd, readbuf, READBUFSZ);
+		if (readlen == -1)
+		{
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
 
 			return -1;
-        }
-        else if (readlen == 0)
+		}
+		else if (readlen == 0)
 		{
 			return -1;
 		}
 
-        if (len < readlen)
-        {
-            /* overrun. we need to save remaining data to pending buffer */
-            if (save_pending_data(pc, readbuf+len, readlen-len))
-                return -1;
-            memmove(buf, readbuf, len);
-            break;
-        }
+		if (len < readlen)
+		{
+			/* overrun. we need to save remaining data to pending buffer */
+			if (save_pending_data(pc, readbuf + len, readlen - len))
+				return -1;
+			memmove(buf, readbuf, len);
+			break;
+		}
 
-        memmove(buf, readbuf, readlen);
-        buf += readlen;
-        len -= readlen;
-    }
+		memmove(buf, readbuf, readlen);
+		buf += readlen;
+		len -= readlen;
+	}
 
-    return 0;
+	return 0;
 }
 
 /* --------------------------------
@@ -151,41 +151,41 @@ pcp_read(PCP_CONNECTION *pc, void *buf, int len)
  * --------------------------------
  */
 int
-pcp_write(PCP_CONNECTION *pc, void *buf, int len)
+pcp_write(PCP_CONNECTION * pc, void *buf, int len)
 {
-    int reqlen;
+	int			reqlen;
 
-    if (len < 0)
+	if (len < 0)
 	{
-        return -1;
+		return -1;
 	}
 
-    /* check buffer size */
-    reqlen = pc->wbufpo + len;
+	/* check buffer size */
+	reqlen = pc->wbufpo + len;
 
-    if (reqlen > pc->wbufsz)
-    {
-        char *p;
+	if (reqlen > pc->wbufsz)
+	{
+		char	   *p;
 
-        reqlen = (reqlen/WRITEBUFSZ+1)*WRITEBUFSZ;
-
-#ifndef POOL_PRIVATE
-        MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
-#endif
-        p = repalloc(pc->wbuf, reqlen);
+		reqlen = (reqlen / WRITEBUFSZ + 1) * WRITEBUFSZ;
 
 #ifndef POOL_PRIVATE
-        MemoryContextSwitchTo(oldContext);
+		MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+#endif
+		p = repalloc(pc->wbuf, reqlen);
+
+#ifndef POOL_PRIVATE
+		MemoryContextSwitchTo(oldContext);
 #endif
 
-        pc->wbuf = p;
-        pc->wbufsz = reqlen;
-    }
+		pc->wbuf = p;
+		pc->wbufsz = reqlen;
+	}
 
-    memcpy(pc->wbuf+pc->wbufpo, buf, len);
-    pc->wbufpo += len;
+	memcpy(pc->wbuf + pc->wbufpo, buf, len);
+	pc->wbufpo += len;
 
-    return 0;
+	return 0;
 }
 
 /* --------------------------------
@@ -195,57 +195,58 @@ pcp_write(PCP_CONNECTION *pc, void *buf, int len)
  * --------------------------------
  */
 int
-pcp_flush(PCP_CONNECTION *pc)
+pcp_flush(PCP_CONNECTION * pc)
 {
-    int sts;
-    int wlen;
-    int offset;
-    wlen = pc->wbufpo;
+	int			sts;
+	int			wlen;
+	int			offset;
 
-    if (wlen == 0)
-    {
-        return 0;
-    }
+	wlen = pc->wbufpo;
 
-    offset = 0;
+	if (wlen == 0)
+	{
+		return 0;
+	}
 
-    for (;;)
-    {
-        errno = 0;
+	offset = 0;
 
-        sts = write(pc->fd, pc->wbuf + offset, wlen);
+	for (;;)
+	{
+		errno = 0;
 
-        if (sts > 0)
-        {
-            wlen -= sts;
+		sts = write(pc->fd, pc->wbuf + offset, wlen);
 
-            if (wlen == 0)
-            {
-                /* write completed */
-                break;
-            }
+		if (sts > 0)
+		{
+			wlen -= sts;
 
-            else if (wlen < 0)
-            {
-                return -1;
-            }
+			if (wlen == 0)
+			{
+				/* write completed */
+				break;
+			}
 
-            else
-            {
-                /* need to write remaining data */
-                offset += sts;
-                continue;
-            }
-        }
-        else if (errno == EAGAIN || errno == EINTR)
-            continue;
-        else
-            return -1;
-    }
+			else if (wlen < 0)
+			{
+				return -1;
+			}
 
-    pc->wbufpo = 0;
+			else
+			{
+				/* need to write remaining data */
+				offset += sts;
+				continue;
+			}
+		}
+		else if (errno == EAGAIN || errno == EINTR)
+			continue;
+		else
+			return -1;
+	}
 
-    return 0;
+	pc->wbufpo = 0;
+
+	return 0;
 }
 
 /* --------------------------------
@@ -255,23 +256,23 @@ pcp_flush(PCP_CONNECTION *pc)
  * --------------------------------
  */
 static int
-consume_pending_data(PCP_CONNECTION *pc, void *data, int len)
+consume_pending_data(PCP_CONNECTION * pc, void *data, int len)
 {
-    int consume_size;
+	int			consume_size;
 
-    if (pc->len <= 0)
-        return 0;
+	if (pc->len <= 0)
+		return 0;
 
-    consume_size = Min(len, pc->len);
-    memmove(data, pc->hp + pc->po, consume_size);
-    pc->len -= consume_size;
+	consume_size = Min(len, pc->len);
+	memmove(data, pc->hp + pc->po, consume_size);
+	pc->len -= consume_size;
 
-    if (pc->len <= 0)
-        pc->po = 0;
-    else
-        pc->po += consume_size;
+	if (pc->len <= 0)
+		pc->po = 0;
+	else
+		pc->po += consume_size;
 
-    return consume_size;
+	return consume_size;
 }
 
 /* --------------------------------
@@ -281,41 +282,41 @@ consume_pending_data(PCP_CONNECTION *pc, void *data, int len)
  * --------------------------------
  */
 static int
-save_pending_data(PCP_CONNECTION *pc, void *data, int len)
+save_pending_data(PCP_CONNECTION * pc, void *data, int len)
 {
-    int reqlen;
-    size_t realloc_size;
-    char *p;
+	int			reqlen;
+	size_t		realloc_size;
+	char	   *p;
 
-    /* to be safe */
-    if (pc->len == 0)
-        pc->po = 0;
+	/* to be safe */
+	if (pc->len == 0)
+		pc->po = 0;
 
-    reqlen = pc->po + pc->len + len;
+	reqlen = pc->po + pc->len + len;
 
-    /* pending buffer is enough? */
-    if (reqlen > pc->bufsz)
-    {
-        /* too small, enlarge it */
-        realloc_size = (reqlen/READBUFSZ+1)*READBUFSZ;
-
-#ifndef POOL_PRIVATE
-        MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
-#endif
-        p = repalloc(pc->hp, realloc_size);
+	/* pending buffer is enough? */
+	if (reqlen > pc->bufsz)
+	{
+		/* too small, enlarge it */
+		realloc_size = (reqlen / READBUFSZ + 1) * READBUFSZ;
 
 #ifndef POOL_PRIVATE
-        MemoryContextSwitchTo(oldContext);
+		MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+#endif
+		p = repalloc(pc->hp, realloc_size);
+
+#ifndef POOL_PRIVATE
+		MemoryContextSwitchTo(oldContext);
 #endif
 
-        pc->bufsz = realloc_size;
-        pc->hp = p;
-    }
+		pc->bufsz = realloc_size;
+		pc->hp = p;
+	}
 
-    memmove(pc->hp + pc->po + pc->len, data, len);
-    pc->len += len;
+	memmove(pc->hp + pc->po + pc->len, data, len);
+	pc->len += len;
 
-    return 0;
+	return 0;
 }
 
 /* --------------------------------
@@ -325,40 +326,40 @@ save_pending_data(PCP_CONNECTION *pc, void *data, int len)
  * --------------------------------
  */
 static int
-pcp_check_fd(PCP_CONNECTION *pc)
+pcp_check_fd(PCP_CONNECTION * pc)
 {
-    fd_set readmask;
-    fd_set exceptmask;
-    int fd;
-    int fds;
+	fd_set		readmask;
+	fd_set		exceptmask;
+	int			fd;
+	int			fds;
 
-    fd = pc->fd;
+	fd = pc->fd;
 
-    for (;;)
-    {
-        FD_ZERO(&readmask);
-        FD_ZERO(&exceptmask);
-        FD_SET(fd, &readmask);
-        FD_SET(fd, &exceptmask);
+	for (;;)
+	{
+		FD_ZERO(&readmask);
+		FD_ZERO(&exceptmask);
+		FD_SET(fd, &readmask);
+		FD_SET(fd, &exceptmask);
 
-        fds = select(fd+1, &readmask, NULL, &exceptmask, NULL);
+		fds = select(fd + 1, &readmask, NULL, &exceptmask, NULL);
 
-        if (fds == -1)
-        {
-            if (errno == EAGAIN || errno == EINTR)
-                continue;
+		if (fds == -1)
+		{
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
 
-            break;
-        }
+			break;
+		}
 
-        if (FD_ISSET(fd, &exceptmask))
-            break;
+		if (FD_ISSET(fd, &exceptmask))
+			break;
 
-        if (fds == 0)
-            break;
+		if (fds == 0)
+			break;
 
-        return 0;
-    }
+		return 0;
+	}
 
-    return -1;
+	return -1;
 }

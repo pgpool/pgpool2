@@ -42,9 +42,9 @@ static SSL_CTX *SSL_frontend_context = NULL;
 static bool SSL_initialized = false;
 static bool ssl_passwd_cb_called = false;
 static int	ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
-static int  verify_cb(int ok, X509_STORE_CTX *ctx);
-static const char * SSLerrmessage(unsigned long ecode);
-static void fetch_pool_ssl_cert(POOL_CONNECTION *cp);
+static int	verify_cb(int ok, X509_STORE_CTX *ctx);
+static const char *SSLerrmessage(unsigned long ecode);
+static void fetch_pool_ssl_cert(POOL_CONNECTION * cp);
 
 #define SSL_RETURN_VOID_IF(cond, msg) \
 	do { \
@@ -62,16 +62,19 @@ static void fetch_pool_ssl_cert(POOL_CONNECTION *cp);
 		} \
 	} while (0);
 
-#include <arpa/inet.h> /* for htonl() */
+#include <arpa/inet.h>			/* for htonl() */
 
 /* Major/minor codes to negotiate SSL prior to startup packet */
 #define NEGOTIATE_SSL_CODE ( 1234<<16 | 5679 )
 
 /* enum flag for differentiating server->client vs client->server SSL */
-enum ssl_conn_type { ssl_conn_clientserver, ssl_conn_serverclient };
+enum ssl_conn_type
+{
+	ssl_conn_clientserver, ssl_conn_serverclient
+};
 
 /* perform per-connection ssl initialization.  returns nonzero on error */
-static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype);
+static int	init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype);
 
 /* OpenSSL error message */
 static void perror_ssl(const char *context);
@@ -79,45 +82,49 @@ static void perror_ssl(const char *context);
 /* Attempt to negotiate a secure connection
  * between pgpool-II and PostgreSQL backends
  */
-void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
-	int ssl_packet[2] = { htonl(sizeof(int)*2), htonl(NEGOTIATE_SSL_CODE) };
-	char server_response;
+void
+pool_ssl_negotiate_clientserver(POOL_CONNECTION * cp)
+{
+	int			ssl_packet[2] = {htonl(sizeof(int) * 2), htonl(NEGOTIATE_SSL_CODE)};
+	char		server_response;
 
 	cp->ssl_active = -1;
 
-	if ( (!pool_config->ssl) || init_ssl_ctx(cp, ssl_conn_clientserver))
+	if ((!pool_config->ssl) || init_ssl_ctx(cp, ssl_conn_clientserver))
 		return;
 
 	ereport(DEBUG1,
-		(errmsg("attempting to negotiate a secure connection"),
+			(errmsg("attempting to negotiate a secure connection"),
 			 errdetail("sending client->server SSL request")));
-	pool_write_and_flush(cp, ssl_packet, sizeof(int)*2);
+	pool_write_and_flush(cp, ssl_packet, sizeof(int) * 2);
 
 	if (pool_read(cp, &server_response, 1) < 0)
 	{
 		ereport(WARNING,
 				(errmsg("error while attempting to negotiate a secure connection, pool_read failed")));
- 		return;
+		return;
 	}
 
 	ereport(DEBUG1,
-		(errmsg("attempting to negotiate a secure connection"),
+			(errmsg("attempting to negotiate a secure connection"),
 			 errdetail("client->server SSL response: %c", server_response)));
 
-	switch (server_response) {
+	switch (server_response)
+	{
 		case 'S':
 			SSL_set_fd(cp->ssl, cp->fd);
-			SSL_RETURN_VOID_IF( (SSL_connect(cp->ssl) < 0),
-			                    "SSL_connect");
+			SSL_RETURN_VOID_IF((SSL_connect(cp->ssl) < 0),
+							   "SSL_connect");
 			cp->ssl_active = 1;
 			break;
 		case 'N':
+
 			/*
 			 * If backend does not support SSL but pgpool does, we get this.
 			 * i.e. This is normal.
 			 */
 			ereport(DEBUG1,
-				(errmsg("attempting to negotiate a secure connection"),
+					(errmsg("attempting to negotiate a secure connection"),
 					 errdetail("server doesn't want to talk SSL")));
 			break;
 		default:
@@ -131,39 +138,49 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 /* attempt to negotiate a secure connection
  * between frontend and Pgpool-II
  */
-void pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp) {
+void
+pool_ssl_negotiate_serverclient(POOL_CONNECTION * cp)
+{
 
 	cp->ssl_active = -1;
-	if ( (!pool_config->ssl) || !SSL_frontend_context) {
+	if ((!pool_config->ssl) || !SSL_frontend_context)
+	{
 		pool_write_and_flush(cp, "N", 1);
-	} else {
+	}
+	else
+	{
 		cp->ssl = SSL_new(SSL_frontend_context);
 
 		/* write back an "SSL accept" response */
 		pool_write_and_flush(cp, "S", 1);
 
 		SSL_set_fd(cp->ssl, cp->fd);
-		SSL_RETURN_VOID_IF( (SSL_accept(cp->ssl) < 0), "SSL_accept");
+		SSL_RETURN_VOID_IF((SSL_accept(cp->ssl) < 0), "SSL_accept");
 		cp->ssl_active = 1;
 		fetch_pool_ssl_cert(cp);
 	}
 }
 
-void pool_ssl_close(POOL_CONNECTION *cp) {
-	if (cp->ssl) { 
-		SSL_shutdown(cp->ssl); 
-		SSL_free(cp->ssl); 
-	} 
+void
+pool_ssl_close(POOL_CONNECTION * cp)
+{
+	if (cp->ssl)
+	{
+		SSL_shutdown(cp->ssl);
+		SSL_free(cp->ssl);
+	}
 
-	if (cp->ssl_ctx) 
+	if (cp->ssl_ctx)
 		SSL_CTX_free(cp->ssl_ctx);
 }
 
-int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
-	int n;
-	int err;
+int
+pool_ssl_read(POOL_CONNECTION * cp, void *buf, int size)
+{
+	int			n;
+	int			err;
 
- retry:
+retry:
 	errno = 0;
 	n = SSL_read(cp->ssl, buf, size);
 	err = SSL_get_error(cp->ssl, n);
@@ -205,10 +222,11 @@ int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
 		default:
 			ereport(WARNING,
 					(errmsg("ssl read: unrecognized error code: %d", err)));
+
 			/*
-			 * We assume that the connection is broken. Returns 0
-			 * rather than -1 in this case because -1 triggers
-			 * unwanted failover in the caller (pool_read).
+			 * We assume that the connection is broken. Returns 0 rather than
+			 * -1 in this case because -1 triggers unwanted failover in the
+			 * caller (pool_read).
 			 */
 			n = 0;
 			break;
@@ -217,10 +235,11 @@ int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
 	return n;
 }
 
-int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size)
+int
+pool_ssl_write(POOL_CONNECTION * cp, const void *buf, int size)
 {
-	int n;
-	int err;
+	int			n;
+	int			err;
 
 retry:
 	errno = 0;
@@ -256,8 +275,9 @@ retry:
 			break;
 
 		default:
-		   ereport(WARNING,
-				   (errmsg("ssl write: unrecognized error code: %d", err)));
+			ereport(WARNING,
+					(errmsg("ssl write: unrecognized error code: %d", err)));
+
 			/*
 			 * We assume that the connection is broken.
 			 */
@@ -267,73 +287,89 @@ retry:
 	return n;
 }
 
-static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
-	int error = 0;
-	char *cacert = NULL, *cacert_dir = NULL;
+static int
+init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype)
+{
+	int			error = 0;
+	char	   *cacert = NULL,
+			   *cacert_dir = NULL;
 
 	/* initialize SSL members */
 #if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
-		cp->ssl_ctx = SSL_CTX_new(TLS_method());
+	cp->ssl_ctx = SSL_CTX_new(TLS_method());
 #else
-		cp->ssl_ctx = SSL_CTX_new(SSLv23_method());
+	cp->ssl_ctx = SSL_CTX_new(SSLv23_method());
 #endif
 
-	SSL_RETURN_ERROR_IF( (! cp->ssl_ctx), "SSL_CTX_new" );
+	SSL_RETURN_ERROR_IF((!cp->ssl_ctx), "SSL_CTX_new");
+
 	/*
-	 * Disable OpenSSL's moving-write-buffer sanity check, because it
-	 * causes unnecessary failures in nonblocking send cases.
+	 * Disable OpenSSL's moving-write-buffer sanity check, because it causes
+	 * unnecessary failures in nonblocking send cases.
 	 */
 	SSL_CTX_set_mode(cp->ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
-	if ( conntype == ssl_conn_serverclient) {
+	if (conntype == ssl_conn_serverclient)
+	{
 		/* between frontend and pgpool */
 		error = SSL_CTX_use_certificate_chain_file(cp->ssl_ctx,
-		                                     pool_config->ssl_cert);
-		SSL_RETURN_ERROR_IF( (error != 1), "Loading SSL certificate");
+												   pool_config->ssl_cert);
+		SSL_RETURN_ERROR_IF((error != 1), "Loading SSL certificate");
 
 		error = SSL_CTX_use_PrivateKey_file(cp->ssl_ctx,
-		                                    pool_config->ssl_key,
-		                                    SSL_FILETYPE_PEM);
-		SSL_RETURN_ERROR_IF( (error != 1), "Loading SSL private key");
-	} else {
+											pool_config->ssl_key,
+											SSL_FILETYPE_PEM);
+		SSL_RETURN_ERROR_IF((error != 1), "Loading SSL private key");
+	}
+	else
+	{
 		/* between pgpool and backend */
 		/* set extra verification if ssl_ca_cert or ssl_ca_cert_dir are set */
 		if (strlen(pool_config->ssl_ca_cert))
 			cacert = pool_config->ssl_ca_cert;
 		if (strlen(pool_config->ssl_ca_cert_dir))
 			cacert_dir = pool_config->ssl_ca_cert_dir;
-    
-		if ( cacert || cacert_dir ) {
+
+		if (cacert || cacert_dir)
+		{
 			error = SSL_CTX_load_verify_locations(cp->ssl_ctx,
-			                                        cacert,
-			                                        cacert_dir);
+												  cacert,
+												  cacert_dir);
 			SSL_RETURN_ERROR_IF((error != 1), "SSL verification setup");
 			SSL_CTX_set_verify(cp->ssl_ctx, SSL_VERIFY_PEER, NULL);
 		}
 	}
 
 	cp->ssl = SSL_new(cp->ssl_ctx);
-	SSL_RETURN_ERROR_IF( (! cp->ssl), "SSL_new");
+	SSL_RETURN_ERROR_IF((!cp->ssl), "SSL_new");
 
 	return 0;
 }
 
-static void perror_ssl(const char *context) {
+static void
+perror_ssl(const char *context)
+{
 	unsigned long err;
 	static const char *no_err_reason = "no SSL error reported";
 	const char *reason;
 
 	err = ERR_get_error();
-	if (! err) {
+	if (!err)
+	{
 		reason = no_err_reason;
-	} else {
+	}
+	else
+	{
 		reason = ERR_reason_error_string(err);
 	}
 
-	if (reason != NULL) {
+	if (reason != NULL)
+	{
 		ereport(LOG,
-			(errmsg("pool_ssl: \"%s\": \"%s\"", context, reason)));
-	} else {
+				(errmsg("pool_ssl: \"%s\": \"%s\"", context, reason)));
+	}
+	else
+	{
 		ereport(LOG,
 				(errmsg("pool_ssl: \"%s\": Unknown SSL error %lu", context, err)));
 	}
@@ -367,28 +403,33 @@ SSLerrmessage(unsigned long ecode)
 /*
  * Return true if SSL layer has any pending data in buffer
  */
-bool pool_ssl_pending(POOL_CONNECTION *cp)
+bool
+pool_ssl_pending(POOL_CONNECTION * cp)
 {
 	if (cp->ssl_active > 0 && SSL_pending(cp->ssl) > 0)
 		return true;
 	return false;
 }
 
-static void fetch_pool_ssl_cert(POOL_CONNECTION *cp)
+static void
+fetch_pool_ssl_cert(POOL_CONNECTION * cp)
 {
-	int         len;
-	X509 *peer = SSL_get_peer_certificate(cp->ssl);
+	int			len;
+	X509	   *peer = SSL_get_peer_certificate(cp->ssl);
+
 	cp->peer = peer;
 	if (peer)
 	{
 		ereport(DEBUG1,
 				(errmsg("got the SSL certificate")));
-		len = X509_NAME_get_text_by_NID(X509_get_subject_name(peer),NID_commonName, NULL, 0);
+		len = X509_NAME_get_text_by_NID(X509_get_subject_name(peer), NID_commonName, NULL, 0);
 		if (len != -1)
 		{
-			char       *peer_cn;
+			char	   *peer_cn;
+
 			peer_cn = palloc(len + 1);
-			int r = X509_NAME_get_text_by_NID(X509_get_subject_name(peer), NID_commonName, peer_cn, len + 1);
+			int			r = X509_NAME_get_text_by_NID(X509_get_subject_name(peer), NID_commonName, peer_cn, len + 1);
+
 			peer_cn[len] = '\0';
 			if (r != len)
 			{
@@ -397,7 +438,7 @@ static void fetch_pool_ssl_cert(POOL_CONNECTION *cp)
 				return;
 			}
 			cp->client_cert_loaded = true;
-			cp->cert_cn = MemoryContextStrdup(TopMemoryContext,peer_cn);
+			cp->cert_cn = MemoryContextStrdup(TopMemoryContext, peer_cn);
 			pfree(peer_cn);
 		}
 		else
@@ -430,6 +471,7 @@ ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 	buf[0] = '\0';
 	return 0;
 }
+
 /*
  *	Certificate verification callback
  *
@@ -614,7 +656,8 @@ SSL_ServerSide_init(void)
 	 */
 	if (pool_config->ssl_ca_cert)
 	{
-		char *cacert = NULL, *cacert_dir = NULL;
+		char	   *cacert = NULL,
+				   *cacert_dir = NULL;
 
 		if (strlen(pool_config->ssl_ca_cert))
 			cacert = pool_config->ssl_ca_cert;
@@ -629,6 +672,7 @@ SSL_ServerSide_init(void)
 							pool_config->ssl_ca_cert, SSLerrmessage(ERR_get_error()))));
 			goto error;
 		}
+
 		/*
 		 * Always ask for SSL client cert, but don't fail if it's not
 		 * presented.  We might fail such connections later, depending on what
@@ -663,16 +707,21 @@ error:
 	return -1;
 }
 
-#else /* USE_SSL: wrap / no-op ssl functionality if it's not available */
+#else							/* USE_SSL: wrap / no-op ssl functionality if
+								 * it's not available */
 
-void pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp) {
+void
+pool_ssl_negotiate_serverclient(POOL_CONNECTION * cp)
+{
 	ereport(DEBUG1,
 			(errmsg("SSL is requested but SSL support is not available")));
 	pool_write_and_flush(cp, "N", 1);
 	cp->ssl_active = -1;
 }
 
-void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
+void
+pool_ssl_negotiate_clientserver(POOL_CONNECTION * cp)
+{
 
 	ereport(DEBUG1,
 			(errmsg("SSL is requested but SSL support is not available")));
@@ -680,32 +729,42 @@ void pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp) {
 	cp->ssl_active = -1;
 }
 
-void pool_ssl_close(POOL_CONNECTION *cp) { return; }
+void
+pool_ssl_close(POOL_CONNECTION * cp)
+{
+	return;
+}
 
-int pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size) {
+int
+pool_ssl_read(POOL_CONNECTION * cp, void *buf, int size)
+{
 	ereport(WARNING,
 			(errmsg("pool_ssl: SSL i/o called but SSL support is not available")));
 	notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 	child_exit(POOL_EXIT_AND_RESTART);
-	return -1; /* never reached */
+	return -1;					/* never reached */
 }
 
-int pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size) {
+int
+pool_ssl_write(POOL_CONNECTION * cp, const void *buf, int size)
+{
 	ereport(WARNING,
 			(errmsg("pool_ssl: SSL i/o called but SSL support is not available")));
 	notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 	child_exit(POOL_EXIT_AND_RESTART);
-	return -1; /* never reached */
+	return -1;					/* never reached */
 }
 
-int SSL_ServerSide_init(void)
+int
+SSL_ServerSide_init(void)
 {
 	return 0;
 }
 
-bool pool_ssl_pending(POOL_CONNECTION *cp)
+bool
+pool_ssl_pending(POOL_CONNECTION * cp)
 {
 	return false;
 }
 
-#endif /* USE_SSL */
+#endif							/* USE_SSL */

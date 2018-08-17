@@ -19,7 +19,7 @@
 
 #define SKIP_TABS(p) while (*p == '\t') {p++;}
 
-extern int buffer_read_int(char *buf, char **bufp);
+extern int	buffer_read_int(char *buf, char **bufp);
 extern char *buffer_read_string(char *buf, char **bufp);
 extern char buffer_read_char(char *buf, char **bufp);
 

@@ -32,13 +32,13 @@
 #include "utils/fe_ports.h"
 
 
-int _fe_error_level = 0;
-const char* _filename;
-const char* _funcname;
-int _lineno;
-int _print_timestamp = 0;
+int			_fe_error_level = 0;
+const char *_filename;
+const char *_funcname;
+int			_lineno;
+int			_print_timestamp = 0;
 
-static const char * error_severity(int elevel);
+static const char *error_severity(int elevel);
 static char *nowsec(void);
 
 #define MAXSTRFTIME 128
@@ -66,40 +66,41 @@ errfinish(int dummy,...)
 {
 }
 
-void errmsg(const char *fmt,...)
+void
+errmsg(const char *fmt,...)
 {
 	va_list		ap;
 #ifdef HAVE_ASPRINTF
-	char		*fmt2;
-	int         len;
+	char	   *fmt2;
+	int			len;
 #endif
 
 #ifdef HAVE_ASPRINTF
 	if (_print_timestamp)
-		len = asprintf(&fmt2, "%s %s: pid %d: %s\n", nowsec(), error_severity(_fe_error_level), (int)getpid(), fmt);
+		len = asprintf(&fmt2, "%s %s: pid %d: %s\n", nowsec(), error_severity(_fe_error_level), (int) getpid(), fmt);
 	else
-		len = asprintf(&fmt2, "%s: pid %d: %s\n", error_severity(_fe_error_level),(int)getpid(), fmt);
-	
+		len = asprintf(&fmt2, "%s: pid %d: %s\n", error_severity(_fe_error_level), (int) getpid(), fmt);
+
 	if (len >= 0 && fmt2)
 	{
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt2, ap);
 		va_end(ap);
 		fflush(stderr);
-	 free(fmt2);
+		free(fmt2);
 	}
 #else
 	if (_print_timestamp)
-		fprintf(stderr, "%s %s: pid %d: ", nowsec(),error_severity(_fe_error_level), (int)getpid());
+		fprintf(stderr, "%s %s: pid %d: ", nowsec(), error_severity(_fe_error_level), (int) getpid());
 	else
-		fprintf(stderr, "%s: pid %d: ",error_severity(_fe_error_level), (int)getpid());
-	
+		fprintf(stderr, "%s: pid %d: ", error_severity(_fe_error_level), (int) getpid());
+
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fprintf(stderr, "\n");
 #endif
-	
+
 }
 
 /*
@@ -109,7 +110,7 @@ static const char *
 error_severity(int elevel)
 {
 	const char *prefix;
-	
+
 	switch (elevel)
 	{
 		case DEBUG1:
@@ -145,15 +146,16 @@ error_severity(int elevel)
 			prefix = "???";
 			break;
 	}
-	
+
 	return prefix;
 }
 
-static char *nowsec(void)
+static char *
+nowsec(void)
 {
 	static char strbuf[MAXSTRFTIME];
-	time_t now = time(NULL);
-	
+	time_t		now = time(NULL);
+
 	strftime(strbuf, MAXSTRFTIME, "%Y-%m-%d %H:%M:%S", localtime(&now));
 	return strbuf;
 }
@@ -163,10 +165,12 @@ errstart(int elevel, const char *filename, int lineno,
 		 const char *funcname)
 {
 	_fe_error_level = elevel;
-	/* 
-	 * This is a basic version and for now we just supress all messages below WARNING for frontend
+
+	/*
+	 * This is a basic version and for now we just supress all messages below
+	 * WARNING for frontend
 	 */
-	if(_fe_error_level < WARNING)
+	if (_fe_error_level < WARNING)
 		return 0;
 	_filename = filename;
 	_lineno = lineno;

@@ -3,7 +3,7 @@
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2010	PgPool Global Development Group
@@ -27,6 +27,6 @@
 #define POOL_LOBJ_H
 #include "pool.h"
 
-extern char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len, POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int* len);
+extern char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len, POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, int *len);
 
-#endif /* POOL_LOBJ_H */
+#endif							/* POOL_LOBJ_H */

@@ -34,28 +34,28 @@ typedef enum NodeState
 	NODE_EMPTY,
 	NODE_DEAD,
 	NODE_ALIVE
-}NodeStates;
+}			NodeStates;
 
 typedef struct LifeCheckNode
 {
-	NodeStates nodeState;
-	int  ID;
-	char hostName[128];
-	char nodeName[128];
-	int	 wdPort;
-	int  pgpoolPort;
-	int  retry_lives;
-	struct timeval hb_send_time; 			/* send time */
-	struct timeval hb_last_recv_time; 		/* recv time */
-}LifeCheckNode;
+	NodeStates	nodeState;
+	int ID;
+	char		hostName[128];
+	char		nodeName[128];
+	int			wdPort;
+	int			pgpoolPort;
+	int			retry_lives;
+	struct timeval hb_send_time;	/* send time */
+	struct timeval hb_last_recv_time;	/* recv time */
+}			LifeCheckNode;
 
 typedef struct lifeCheckCluster
 {
-	int nodeCount;
-	struct LifeCheckNode* lifeCheckNodes;
-}LifeCheckCluster;
+	int			nodeCount;
+	struct LifeCheckNode *lifeCheckNodes;
+}			LifeCheckCluster;
 
-extern LifeCheckCluster* gslifeCheckCluster; /* lives in shared memory */
+extern LifeCheckCluster * gslifeCheckCluster;	/* lives in shared memory */
 
 
 /* wd_lifecheck.c */

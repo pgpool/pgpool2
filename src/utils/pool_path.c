@@ -38,15 +38,17 @@
 
 static void trim_directory(char *path);
 static void trim_trailing_separator(char *path);
-static int pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
-					  size_t buflen, struct passwd ** result);
+static int pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
+		   size_t buflen, struct passwd **result);
+
 /*
  * get_parent_directory
  *
  * Modify the given string in-place to name the parent directory of the
  * named file.
  */
-void get_parent_directory(char *path)
+void
+get_parent_directory(char *path)
 {
 	trim_directory(path);
 }
@@ -57,10 +59,10 @@ void get_parent_directory(char *path)
 bool
 get_home_directory(char *buf, int bufsize)
 {
-	char            pwdbuf[BUFSIZ];
+	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
-	
+
 	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
 		return false;
 	strlcpy(buf, pwd->pw_dir, bufsize);
@@ -73,10 +75,10 @@ get_home_directory(char *buf, int bufsize)
 bool
 get_os_username(char *buf, int bufsize)
 {
-	char            pwdbuf[BUFSIZ];
+	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
-	
+
 	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
 		return false;
 	strlcpy(buf, pwd->pw_name, bufsize);
@@ -91,16 +93,16 @@ get_os_username(char *buf, int bufsize)
  * behaviour, if it is not available or required.
  */
 static int
-pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
-		   size_t buflen, struct passwd ** result)
+pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
+		   size_t buflen, struct passwd **result)
 {
 #if defined(HAVE_GETPWUID_R)
-	
+
 #ifdef GETPWUID_R_5ARG
 	/* POSIX version */
 	getpwuid_r(uid, resultbuf, buffer, buflen, result);
 #else
-	
+
 	/*
 	 * Early POSIX draft of getpwuid_r() returns 'struct passwd *'.
 	 * getpwuid_r(uid, resultbuf, buffer, buflen)
@@ -108,11 +110,11 @@ pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
 	*result = getpwuid_r(uid, resultbuf, buffer, buflen);
 #endif
 #else
-	
+
 	/* no getpwuid_r() available, just use getpwuid() */
 	*result = getpwuid(uid);
 #endif
-	
+
 	return (*result == NULL) ? -1 : 0;
 }
 
@@ -123,9 +125,10 @@ pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
  *  the last pathname component, and the slash just ahead of it --- but never
  *  remove a leading slash.
  */
-static void trim_directory(char *path)
+static void
+trim_directory(char *path)
 {
-	char *p;
+	char	   *p;
 
 	if (path[0] == '\0')
 		return;
@@ -154,14 +157,15 @@ static void trim_directory(char *path)
  *
  * ret_path can be the same as head, but not the same as tail.
  */
-void join_path_components(char *ret_path, const char *head, const char *tail)
+void
+join_path_components(char *ret_path, const char *head, const char *tail)
 {
 	if (ret_path != head)
 		StrNCpy(ret_path, head, MAXPGPATH);
 
 	/*
-	 * Remove any leading "." and ".." in the tail component,
-	 * adjusting head as needed.
+	 * Remove any leading "." and ".." in the tail component, adjusting head
+	 * as needed.
 	 */
 	for (;;)
 	{
@@ -201,19 +205,21 @@ void join_path_components(char *ret_path, const char *head, const char *tail)
  *      o  remove trailing '.'
  *      o  process trailing '..' ourselves
  */
-void canonicalize_path(char *path)
+void
+canonicalize_path(char *path)
 {
-	char *p, *to_p;
-	bool was_sep = false;
+	char	   *p,
+			   *to_p;
+	bool		was_sep = false;
 
 	/*
-	 * Removing the trailing slash on a path means we never get ugly
-	 * double trailing slashes.
+	 * Removing the trailing slash on a path means we never get ugly double
+	 * trailing slashes.
 	 */
 	trim_trailing_separator(path);
 
 	/*
-	 *  Remove duplicate adjacent separators
+	 * Remove duplicate adjacent separators
 	 */
 	p = path;
 	to_p = p;
@@ -233,7 +239,7 @@ void canonicalize_path(char *path)
 	 */
 	for (;;)
 	{
-		int len = strlen(path);
+		int			len = strlen(path);
 
 		if (len > 2 && strcmp(path + len - 2, "/.") == 0)
 			trim_directory(path);
@@ -258,8 +264,8 @@ char *
 last_dir_separator(const char *filename)
 {
 	const char *p,
-	*ret = NULL;
-	
+			   *ret = NULL;
+
 	for (p = filename; *p; p++)
 		if (IS_DIR_SEP(*p))
 			ret = p;
@@ -271,9 +277,10 @@ last_dir_separator(const char *filename)
  *
  * trim off trailing slashes, but not a leading slash
  */
-static void trim_trailing_separator(char *path)
+static void
+trim_trailing_separator(char *path)
 {
-	char *p;
+	char	   *p;
 
 	p = path + strlen(path);
 	if (p > path)
@@ -284,8 +291,8 @@ static void trim_trailing_separator(char *path)
 char *
 get_current_working_dir(void)
 {
-	char	*buf = NULL;
-	size_t	buflen = MAXPGPATH;
+	char	   *buf = NULL;
+	size_t		buflen = MAXPGPATH;
 
 	for (;;)
 	{
@@ -302,7 +309,7 @@ get_current_working_dir(void)
 		}
 		else
 		{
-			int	save_errno = errno;
+			int			save_errno = errno;
 
 			pfree(buf);
 			errno = save_errno;
@@ -313,6 +320,7 @@ get_current_working_dir(void)
 	}
 	return buf;
 }
+
 /*
  * make_absolute_path
  *
@@ -325,16 +333,18 @@ get_current_working_dir(void)
  * Logic borrowed from PostgreSQL source
  */
 char *
-make_absolute_path(const char *path, const char* base_dir)
+make_absolute_path(const char *path, const char *base_dir)
 {
-	char	*new;
+	char	   *new;
+
 	/* Returning null for null input is convenient for some callers */
 	if (path == NULL)
 		return NULL;
 
 	if (!is_absolute_path(path))
 	{
-		const char	*cwd = NULL;
+		const char *cwd = NULL;
+
 		if (base_dir == NULL)
 		{
 			cwd = get_current_working_dir();
@@ -348,7 +358,7 @@ make_absolute_path(const char *path, const char* base_dir)
 		sprintf(new, "%s/%s", cwd, path);
 
 		if (!base_dir)
-			pfree((void*)cwd);
+			pfree((void *) cwd);
 	}
 	else
 	{

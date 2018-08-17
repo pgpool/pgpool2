@@ -54,8 +54,8 @@ pool_shared_memory_create(size_t size)
 
 	if (shmid < 0)
 		ereport(FATAL,
-			(errmsg("could not create shared memory for request size: %ld",size),
-				errdetail("shared memory creation failed with error \"%s\"",strerror(errno))));
+				(errmsg("could not create shared memory for request size: %ld", size),
+				 errdetail("shared memory creation failed with error \"%s\"", strerror(errno))));
 
 	/* Register on-exit routine to delete the new segment */
 	on_shmem_exit(IpcMemoryDelete, shmid);
@@ -65,8 +65,8 @@ pool_shared_memory_create(size_t size)
 
 	if (memAddress == (void *) -1)
 		ereport(FATAL,
-			(errmsg("could not create shared memory for request size: %ld",size),
-				errdetail("attach to shared memory [id:%d] failed with reason: \"%s\"",shmid,strerror(errno))));
+				(errmsg("could not create shared memory for request size: %ld", size),
+				 errdetail("attach to shared memory [id:%d] failed with reason: \"%s\"", shmid, strerror(errno))));
 
 
 	/* Register on-exit routine to detach new segment before deleting */
@@ -84,7 +84,7 @@ IpcMemoryDetach(int status, Datum shmaddr)
 {
 	if (shmdt((void *) shmaddr) < 0)
 		ereport(LOG,
-			(errmsg("removing shared memory segments"),
+				(errmsg("removing shared memory segments"),
 				 errdetail("shmdt(%p) failed: %s", (void *) shmaddr, strerror(errno))));
 
 }
@@ -96,24 +96,24 @@ IpcMemoryDetach(int status, Datum shmaddr)
 static void
 IpcMemoryDelete(int status, Datum shmId)
 {
-  	struct shmid_ds shmStat;
+	struct shmid_ds shmStat;
 
-  	/*
-  	 * Is a previously-existing shmem segment still existing and in use?
-  	 */
-  	if (shmctl(shmId, IPC_STAT, &shmStat) < 0
-  		&& (errno == EINVAL || errno == EACCES))
-  		return;
+	/*
+	 * Is a previously-existing shmem segment still existing and in use?
+	 */
+	if (shmctl(shmId, IPC_STAT, &shmStat) < 0
+		&& (errno == EINVAL || errno == EACCES))
+		return;
 #ifdef NOT_USED
-  	else if (shmStat.shm_nattch != 0)
-  		return;
+	else if (shmStat.shm_nattch != 0)
+		return;
 #endif
 
 	if (shmctl(shmId, IPC_RMID, NULL) < 0)
 		ereport(LOG,
-			(errmsg("deleting shared memory segments"),
-				errdetail("shmctl(%lu, %d, 0) failed: %s",
-					   shmId, IPC_RMID, strerror(errno))));
+				(errmsg("deleting shared memory segments"),
+				 errdetail("shmctl(%lu, %d, 0) failed: %s",
+						   shmId, IPC_RMID, strerror(errno))));
 }
 
 void

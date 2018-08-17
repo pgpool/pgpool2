@@ -3,7 +3,7 @@
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2015	PgPool Global Development Group
@@ -35,8 +35,8 @@
 #ifdef c_plusplus
 #ifndef __cplusplus
 #define __cplusplus
-#endif /* __cplusplus */
-#endif /* c_plusplus */
+#endif							/* __cplusplus */
+#endif							/* c_plusplus */
 
 #ifndef __BEOS__
 #ifndef __cplusplus
@@ -55,8 +55,8 @@ typedef char bool;
 #ifndef FALSE
 #define FALSE ((bool) 0)
 #endif
-#endif /* not C++ */
-#endif /* __BEOS__ */
+#endif							/* not C++ */
+#endif							/* __BEOS__ */
 
 /* ----------------------------------------------------------------
  *              Section 5:  offsetof, lengthof, endof, alignment
@@ -104,15 +104,16 @@ typedef unsigned long long int uint64;
 #error must have a working 64-bit integer datatype
 #endif
 
-typedef enum {
+typedef enum
+{
 	LOAD_UNSELECTED = 0,
 	LOAD_SELECTED
-} LOAD_BALANCE_STATUS;
+}			LOAD_BALANCE_STATUS;
 
-extern int assert_enabled;
+extern int	assert_enabled;
 extern void ExceptionalCondition(const char *conditionName,
-								 const char *errorType,
-								 const char *fileName, int lineNumber) __attribute__((noreturn));
+					 const char *errorType,
+					 const char *fileName, int lineNumber) __attribute__((noreturn));
 
 #define MAXIMUM_ALIGNOF 8
 
@@ -137,15 +138,15 @@ extern void ExceptionalCondition(const char *conditionName,
 #define ss_family __ss_family
 #else
 #error struct sockaddr_storage does not provide an ss_family member
-#endif /* HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY */
-#endif /* HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY */
+#endif							/* HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY */
+#endif							/* HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY */
 
 #ifdef HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN
 #define ss_len __ss_len
 #define HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN 1
-#endif /* HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN */
+#endif							/* HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN */
 
-#else /* !HAVE_STRUCT_SOCKADDR_STORAGE */
+#else							/* !HAVE_STRUCT_SOCKADDR_STORAGE */
 
 /* Define a struct sockaddr_storage if we don't have one. */
 struct sockaddr_storage
@@ -153,10 +154,11 @@ struct sockaddr_storage
 	union
 	{
 		struct sockaddr sa;		/* get the system-dependent fields */
-		long int ss_align; /* ensures struct is properly aligned. original uses int64 */
-		char ss_pad[128];		/* ensures struct has desired size */
+		long int	ss_align;	/* ensures struct is properly aligned.
+								 * original uses int64 */
+		char		ss_pad[128];	/* ensures struct has desired size */
 	}
-	ss_stuff;
+				ss_stuff;
 };
 
 #define ss_family   ss_stuff.sa.sa_family
@@ -165,32 +167,34 @@ struct sockaddr_storage
 #define ss_len      ss_stuff.sa.sa_len
 #define HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN 1
 #endif
-#endif /* HAVE_STRUCT_SOCKADDR_STORAGE */
+#endif							/* HAVE_STRUCT_SOCKADDR_STORAGE */
 
 typedef struct
 {
 	struct sockaddr_storage addr;
-	/* ACCEPT_TYPE_ARG3 - Third argument type of accept().
-	 * It is defined in ac_func_accept_argtypes.m4
+
+	/*
+	 * ACCEPT_TYPE_ARG3 - Third argument type of accept(). It is defined in
+	 * ac_func_accept_argtypes.m4
 	 */
 	ACCEPT_TYPE_ARG3 salen;
 }
 SockAddr;
 
 
-#define AUTH_REQ_OK         0   /* User is authenticated  */
-#define AUTH_REQ_KRB4       1   /* Kerberos V4. Not supported any more. */
-#define AUTH_REQ_KRB5       2   /* Kerberos V5. Not supported any more. */
-#define AUTH_REQ_PASSWORD   3   /* Password */
-#define AUTH_REQ_CRYPT      4   /* crypt password. Not supported any more. */
-#define AUTH_REQ_MD5        5   /* md5 password */
-#define AUTH_REQ_SCM_CREDS  6   /* transfer SCM credentials */
-#define AUTH_REQ_GSS        7   /* GSSAPI without wrap() */
-#define AUTH_REQ_GSS_CONT   8   /* Continue GSS exchanges */
-#define AUTH_REQ_SSPI       9   /* SSPI negotiate without wrap() */
-#define AUTH_REQ_SASL      10   /* Begin SASL authentication */
-#define AUTH_REQ_SASL_CONT 11   /* Continue SASL authentication */
-#define AUTH_REQ_SASL_FIN  12   /* Final SASL message */
+#define AUTH_REQ_OK         0	/* User is authenticated  */
+#define AUTH_REQ_KRB4       1	/* Kerberos V4. Not supported any more. */
+#define AUTH_REQ_KRB5       2	/* Kerberos V5. Not supported any more. */
+#define AUTH_REQ_PASSWORD   3	/* Password */
+#define AUTH_REQ_CRYPT      4	/* crypt password. Not supported any more. */
+#define AUTH_REQ_MD5        5	/* md5 password */
+#define AUTH_REQ_SCM_CREDS  6	/* transfer SCM credentials */
+#define AUTH_REQ_GSS        7	/* GSSAPI without wrap() */
+#define AUTH_REQ_GSS_CONT   8	/* Continue GSS exchanges */
+#define AUTH_REQ_SSPI       9	/* SSPI negotiate without wrap() */
+#define AUTH_REQ_SASL      10	/* Begin SASL authentication */
+#define AUTH_REQ_SASL_CONT 11	/* Continue SASL authentication */
+#define AUTH_REQ_SASL_FIN  12	/* Final SASL message */
 
 
 typedef unsigned int AuthRequest;
@@ -211,7 +215,7 @@ typedef unsigned int AuthRequest;
 #define STATIC_IF_INLINE static inline
 #else
 #define STATIC_IF_INLINE
-#endif   /* PG_USE_INLINE */
+#endif							/* PG_USE_INLINE */
 
 
 typedef uint8 bits8;			/* >= 8 bits */
@@ -240,6 +244,7 @@ typedef size_t Size;
 typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
 
 typedef void (*pg_on_exit_callback) (int code, Datum arg);
+
 /*
  * NULL
   *		Null pointer.
@@ -316,7 +321,7 @@ typedef void (*pg_on_exit_callback) (int code, Datum arg);
 
 #define AssertState(condition) \
 	Trap(!(condition), "BadState")
-#endif   /* USE_ASSERT_CHECKING && !FRONTEND */
+#endif							/* USE_ASSERT_CHECKING && !FRONTEND */
 
 
 /*
@@ -343,7 +348,7 @@ typedef void (*pg_on_exit_callback) (int code, Datum arg);
 	((void) sizeof(struct { int static_assert_failure : (condition) ? 1 : -1; }))
 #define StaticAssertExpr(condition, errmessage) \
 	StaticAssertStmt(condition, errmessage)
-#endif   /* HAVE__STATIC_ASSERT */
+#endif							/* HAVE__STATIC_ASSERT */
 
 
 /*
@@ -371,7 +376,7 @@ typedef void (*pg_on_exit_callback) (int code, Datum arg);
 #define AssertVariableIsOfTypeMacro(varname, typename) \
 																((void) StaticAssertExpr(sizeof(varname) == sizeof(typename),		\
 																	 CppAsString(varname) " does not have type " CppAsString(typename)))
-#endif   /* HAVE__BUILTIN_TYPES_COMPATIBLE_P */
+#endif							/* HAVE__BUILTIN_TYPES_COMPATIBLE_P */
 /*
  * StrNCpy
  *	Like standard library function strncpy(), except that result string
@@ -495,4 +500,4 @@ typedef void (*pg_on_exit_callback) (int code, Datum arg);
 	} while (0)
 
 
-#endif /* POOL_TYPE_H */
+#endif							/* POOL_TYPE_H */

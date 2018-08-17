@@ -23,7 +23,7 @@
 
 #define WD_AUTH_HASH_LEN 64
 
-extern int pool_md5_hash(const void *buff, size_t len, char *hexsum);
-extern int pool_md5_encrypt(const char *passwd, const char *salt, size_t salt_len, char *buf);
+extern int	pool_md5_hash(const void *buff, size_t len, char *hexsum);
+extern int	pool_md5_encrypt(const char *passwd, const char *salt, size_t salt_len, char *buf);
 extern void bytesToHex(char *b, int len, char *s);
 #endif

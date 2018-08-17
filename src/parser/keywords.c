@@ -19,7 +19,7 @@
 #include "parsenodes.h"
 #ifndef FRONTEND
 
-#include "gramparse.h"	/* required before parser/parse.h! */
+#include "gramparse.h"			/* required before parser/parse.h! */
 
 #define PG_KEYWORD(a,b,c) {a,b,c},
 

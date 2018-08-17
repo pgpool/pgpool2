@@ -21,7 +21,7 @@
 #include "pool.h"
 #include "pool_config.h"
 #include <fcntl.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -51,37 +51,39 @@
 static bool get_pool_key_filename(char *poolKeyFile);
 
 static void daemonize(void);
-static char	*get_pid_file_path(void);
-static int read_pid_file(void);
+static char *get_pid_file_path(void);
+static int	read_pid_file(void);
 static void write_pid_file(void);
 static void usage(void);
 static void show_version(void);
 static void stop_me(void);
 static void FileUnlink(int code, Datum path);
 
-char *pcp_conf_file = NULL; /* absolute path of the pcp.conf */
-char *conf_file = NULL;		/* absolute path of the pgpool.conf */
-char *hba_file = NULL;		/* absolute path of the hba.conf */
-char *base_dir = NULL;		/* The working dir from where pgpool was invoked from */
+char	   *pcp_conf_file = NULL;	/* absolute path of the pcp.conf */
+char	   *conf_file = NULL;	/* absolute path of the pgpool.conf */
+char	   *hba_file = NULL;	/* absolute path of the hba.conf */
+char	   *base_dir = NULL;	/* The working dir from where pgpool was
+								 * invoked from */
 
-static int not_detach = 0;		/* non 0 if non detach option (-n) is given */
-int stop_sig = SIGTERM;		/* stopping signal default value */
-int myargc;
-char **myargv;
-int assert_enabled = 0;
-char *pool_key = NULL;
-int main(int argc, char **argv)
+static int	not_detach = 0;		/* non 0 if non detach option (-n) is given */
+int			stop_sig = SIGTERM; /* stopping signal default value */
+int			myargc;
+char	  **myargv;
+int			assert_enabled = 0;
+char	   *pool_key = NULL;
+int
+main(int argc, char **argv)
 {
-	int opt;
-	int debug_level = 0;
-	int	optindex;
-	bool discard_status = false;
-	bool clear_memcache_oidmaps = false;
+	int			opt;
+	int			debug_level = 0;
+	int			optindex;
+	bool		discard_status = false;
+	bool		clear_memcache_oidmaps = false;
 
-	char pcp_conf_file_path[POOLMAXPATHLEN+1];
-	char conf_file_path[POOLMAXPATHLEN+1];
-	char hba_file_path[POOLMAXPATHLEN+1];
-	char pool_passwd_key_file_path[POOLMAXPATHLEN+1];
+	char		pcp_conf_file_path[POOLMAXPATHLEN + 1];
+	char		conf_file_path[POOLMAXPATHLEN + 1];
+	char		hba_file_path[POOLMAXPATHLEN + 1];
+	char		pool_passwd_key_file_path[POOLMAXPATHLEN + 1];
 
 	static struct option long_options[] = {
 		{"hba-file", required_argument, NULL, 'a'},
@@ -111,7 +113,7 @@ int main(int argc, char **argv)
 	{
 		switch (opt)
 		{
-			case 'a':    /* specify hba configuration file */
+			case 'a':			/* specify hba configuration file */
 				if (!optarg)
 				{
 					usage();
@@ -120,15 +122,15 @@ int main(int argc, char **argv)
 				strlcpy(hba_file_path, optarg, sizeof(hba_file_path));
 				break;
 
-			case 'x':	/* enable cassert */
+			case 'x':			/* enable cassert */
 				assert_enabled = 1;
 				break;
 
-			case 'd':	/* debug option */
+			case 'd':			/* debug option */
 				debug_level = 1;
 				break;
 
-			case 'f':	/* specify configuration file */
+			case 'f':			/* specify configuration file */
 				if (!optarg)
 				{
 					usage();
@@ -137,7 +139,7 @@ int main(int argc, char **argv)
 				strlcpy(conf_file_path, optarg, sizeof(conf_file_path));
 				break;
 
-			case 'F':   /* specify PCP password file */
+			case 'F':			/* specify PCP password file */
 				if (!optarg)
 				{
 					usage();
@@ -146,7 +148,8 @@ int main(int argc, char **argv)
 				strlcpy(pcp_conf_file_path, optarg, sizeof(pcp_conf_file_path));
 				break;
 
-			case 'k':	/* specify key file for decrypt pool_password entries */
+			case 'k':			/* specify key file for decrypt pool_password
+								 * entries */
 				if (!optarg)
 				{
 					usage();
@@ -160,18 +163,18 @@ int main(int argc, char **argv)
 				exit(0);
 				break;
 
-			case 'm':	/* stop mode */
+			case 'm':			/* stop mode */
 				if (!optarg)
 				{
 					usage();
 					exit(1);
 				}
 				if (*optarg == 's' || !strcmp("smart", optarg))
-					stop_sig = SIGTERM;		/* smart shutdown */
+					stop_sig = SIGTERM; /* smart shutdown */
 				else if (*optarg == 'f' || !strcmp("fast", optarg))
-					stop_sig = SIGINT;		/* fast shutdown */
+					stop_sig = SIGINT;	/* fast shutdown */
 				else if (*optarg == 'i' || !strcmp("immediate", optarg))
-					stop_sig = SIGQUIT;		/* immediate shutdown */
+					stop_sig = SIGQUIT; /* immediate shutdown */
 				else
 				{
 					usage();
@@ -179,15 +182,15 @@ int main(int argc, char **argv)
 				}
 				break;
 
-			case 'n':	/* no detaching control ttys */
+			case 'n':			/* no detaching control ttys */
 				not_detach = 1;
 				break;
 
-			case 'D':	/* discard pgpool_status */
+			case 'D':			/* discard pgpool_status */
 				discard_status = true;
 				break;
 
-			case 'C': /* discard caches in memcached */
+			case 'C':			/* discard caches in memcached */
 				clear_memcache_oidmaps = true;
 				break;
 
@@ -202,24 +205,24 @@ int main(int argc, char **argv)
 	}
 
 #ifdef NOT_USED
-//#ifdef USE_SSL
-//	/* global ssl init */
-//#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
-//	OPENSSL_init_ssl(0, NULL);
-//#else
-//	SSL_library_init();
-//#endif
-//	SSL_load_error_strings();
-//#endif /* USE_SSL */
+/* #ifdef USE_SSL */
+	 /* 	/* global ssl init */ */
+/* #if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER)) */
+/* 	OPENSSL_init_ssl(0, NULL); */
+/* #else */
+/* 	SSL_library_init(); */
+/* #endif */
+/* 	SSL_load_error_strings(); */
+		 /* #endif /* USE_SSL */ */
 #endif
 
-	myargv = save_ps_display_args(myargc, myargv);
+		myargv = save_ps_display_args(myargc, myargv);
 	/* create MemoryContexts */
 	MemoryContextInit();
 
 	/* load the CWD before it is changed */
 	base_dir = get_current_working_dir();
-	/* convert all the paths to absolute paths*/
+	/* convert all the paths to absolute paths */
 	conf_file = make_absolute_path(conf_file_path, base_dir);
 	pcp_conf_file = make_absolute_path(pcp_conf_file_path, base_dir);
 	hba_file = make_absolute_path(hba_file_path, base_dir);
@@ -231,36 +234,37 @@ int main(int argc, char **argv)
 	pool_get_config(conf_file, CFGCXT_INIT);
 
 	/*
-	 * Override debug level
-	 * if command line -d arg is given adjust the log_min_message config variable
+	 * Override debug level if command line -d arg is given adjust the
+	 * log_min_message config variable
 	 */
-	if(debug_level > 0 && pool_config->log_min_messages > DEBUG1)
-		set_one_config_option("log_min_messages", "DEBUG1",CFGCXT_INIT, PGC_S_ARGV, INFO);
+	if (debug_level > 0 && pool_config->log_min_messages > DEBUG1)
+		set_one_config_option("log_min_messages", "DEBUG1", CFGCXT_INIT, PGC_S_ARGV, INFO);
 
 	/*
-	 * If a non-switch argument remains, then it should be either "reload" or "stop".
+	 * If a non-switch argument remains, then it should be either "reload" or
+	 * "stop".
 	 */
 	if (optind == (argc - 1))
 	{
 		if (!strcmp(argv[optind], "reload"))
 		{
-				pid_t pid;
+			pid_t		pid;
 
-				pid = read_pid_file();
-				if (pid < 0)
-				{
-					ereport(FATAL,
+			pid = read_pid_file();
+			if (pid < 0)
+			{
+				ereport(FATAL,
 						(return_code(1),
-                             errmsg("could not read pid file")));
-				}
+						 errmsg("could not read pid file")));
+			}
 
-				if (kill(pid, SIGHUP) == -1)
-				{
-					ereport(FATAL,
+			if (kill(pid, SIGHUP) == -1)
+			{
+				ereport(FATAL,
 						(return_code(1),
 						 errmsg("could not reload configuration file pid: %d. reason: %s", pid, strerror(errno))));
-				}
-				exit(0);
+			}
+			exit(0);
 		}
 		if (!strcmp(argv[optind], "stop"))
 		{
@@ -273,24 +277,28 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 	}
+
 	/*
-	 * else if no non-switch argument remains, then it should be a start request
+	 * else if no non-switch argument remains, then it should be a start
+	 * request
 	 */
 	else if (optind == argc)
 	{
-		int pid = read_pid_file();
+		int			pid = read_pid_file();
+
 		if (pid > 0)
 		{
 			if (kill(pid, 0) == 0)
 			{
 				ereport(FATAL,
-					(errmsg("pid file found. is another pgpool(%d) is running?\n", pid)));
+						(errmsg("pid file found. is another pgpool(%d) is running?\n", pid)));
 			}
 			else
 				ereport(NOTICE,
-					(errmsg("pid file found but it seems bogus. Trying to start pgpool anyway...\n")));
+						(errmsg("pid file found but it seems bogus. Trying to start pgpool anyway...\n")));
 		}
 	}
+
 	/*
 	 * otherwise an error...
 	 */
@@ -304,12 +312,13 @@ int main(int argc, char **argv)
 		load_hba(hba_file);
 
 #ifdef USE_SSL
+
 	/*
 	 * If ssl is enabled, initialize the SSL context
 	 */
 	if (pool_config->ssl)
 		SSL_ServerSide_init();
-#endif /* USE_SSL */
+#endif							/* USE_SSL */
 
 	/* check effective user id for watchdog */
 	/* watchdog must be started under the privileged user */
@@ -329,16 +338,16 @@ int main(int argc, char **argv)
 		write_pid_file();
 	else
 		daemonize();
+
 	/*
-	 * Locate pool_passwd
-	 * The default file name "pool_passwd" can be changed by setting
-	 * pgpool.conf's "pool_passwd" directive.
+	 * Locate pool_passwd The default file name "pool_passwd" can be changed
+	 * by setting pgpool.conf's "pool_passwd" directive.
 	 */
 	if (strcmp("", pool_config->pool_passwd))
 	{
-		char pool_passwd[POOLMAXPATHLEN+1];
-		char dirnamebuf[POOLMAXPATHLEN+1];
-		char *dirp;
+		char		pool_passwd[POOLMAXPATHLEN + 1];
+		char		dirnamebuf[POOLMAXPATHLEN + 1];
+		char	   *dirp;
 
 		strlcpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
 		dirp = dirname(dirnamebuf);
@@ -349,24 +358,28 @@ int main(int argc, char **argv)
 
 	pool_semaphore_create(MAX_NUM_SEMAPHORES);
 
-	PgpoolMain(discard_status, clear_memcache_oidmaps); /* this is an infinate loop */
+	PgpoolMain(discard_status, clear_memcache_oidmaps); /* this is an infinate
+														 * loop */
 
 	exit(0);
 
 }
 
-static void show_version(void)
+static void
+show_version(void)
 {
-	fprintf(stderr, "%s version %s (%s)\n",	PACKAGE, VERSION, PGPOOLVERSION);
+	fprintf(stderr, "%s version %s (%s)\n", PACKAGE, VERSION, PGPOOLVERSION);
 }
 
-static void usage(void)
+static void
+usage(void)
 {
-	char	homedir[POOLMAXPATHLEN];
-	if (!get_home_directory(homedir, sizeof(homedir)))
-		strncpy(homedir,"USER-HOME-DIR",POOLMAXPATHLEN);
+	char		homedir[POOLMAXPATHLEN];
 
-	fprintf(stderr, "%s version %s (%s),\n",	PACKAGE, VERSION, PGPOOLVERSION);
+	if (!get_home_directory(homedir, sizeof(homedir)))
+		strncpy(homedir, "USER-HOME-DIR", POOLMAXPATHLEN);
+
+	fprintf(stderr, "%s version %s (%s),\n", PACKAGE, VERSION, PGPOOLVERSION);
 	fprintf(stderr, "  A generic connection pool/replication/load balance server for PostgreSQL\n\n");
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "  pgpool [ -c] [ -f CONFIG_FILE ] [ -F PCP_CONFIG_FILE ] [ -a HBA_CONFIG_FILE ]\n");
@@ -377,17 +390,17 @@ static void usage(void)
 	fprintf(stderr, "Common options:\n");
 	fprintf(stderr, "  -a, --hba-file=HBA_CONFIG_FILE\n");
 	fprintf(stderr, "                      Set the path to the pool_hba.conf configuration file\n");
-	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
+	fprintf(stderr, "                      (default: %s/%s)\n", DEFAULT_CONFIGDIR, HBA_CONF_FILE_NAME);
 	fprintf(stderr, "  -f, --config-file=CONFIG_FILE\n");
 	fprintf(stderr, "                      Set the path to the pgpool.conf configuration file\n");
-	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
+	fprintf(stderr, "                      (default: %s/%s)\n", DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
 	fprintf(stderr, "  -k, --key-file=KEY_FILE\n");
 	fprintf(stderr, "                      Set the path to the pgpool key file\n");
-	fprintf(stderr, "                      (default: %s/%s)\n",homedir, POOLKEYFILE);
-	fprintf(stderr, "                      can be over ridden by %s environment variable\n",POOLKEYFILEENV);
+	fprintf(stderr, "                      (default: %s/%s)\n", homedir, POOLKEYFILE);
+	fprintf(stderr, "                      can be over ridden by %s environment variable\n", POOLKEYFILEENV);
 	fprintf(stderr, "  -F, --pcp-file=PCP_CONFIG_FILE\n");
 	fprintf(stderr, "                      Set the path to the pcp.conf configuration file\n");
-	fprintf(stderr, "                      (default: %s/%s)\n",DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
+	fprintf(stderr, "                      (default: %s/%s)\n", DEFAULT_CONFIGDIR, PCP_PASSWD_FILE_NAME);
 	fprintf(stderr, "  -h, --help          Print this help\n\n");
 	fprintf(stderr, "Start options:\n");
 	fprintf(stderr, "  -C, --clear-oidmaps Clear query cache oidmaps when memqcache_method is memcached\n");
@@ -408,7 +421,7 @@ static void usage(void)
 static bool
 get_pool_key_filename(char *poolKeyFile)
 {
-	char	*passfile_env;
+	char	   *passfile_env;
 
 	if ((passfile_env = getenv(POOLKEYFILEENV)) != NULL)
 	{
@@ -417,7 +430,8 @@ get_pool_key_filename(char *poolKeyFile)
 	}
 	else
 	{
-		char	homedir[POOLMAXPATHLEN];
+		char		homedir[POOLMAXPATHLEN];
+
 		if (!get_home_directory(homedir, sizeof(homedir)))
 			return false;
 		snprintf(poolKeyFile, POOLMAXPATHLEN, "%s/%s", homedir, POOLKEYFILE);
@@ -426,14 +440,17 @@ get_pool_key_filename(char *poolKeyFile)
 }
 
 
-char *get_pool_key(void)
+char *
+get_pool_key(void)
 {
 	return pool_key;
 }
+
 /*
 * detach control ttys
 */
-static void daemonize(void)
+static void
+daemonize(void)
 {
 	int			i;
 	pid_t		pid;
@@ -443,11 +460,11 @@ static void daemonize(void)
 	if (pid == (pid_t) -1)
 	{
 		ereport(FATAL,
-			(errmsg("could not daemonize the pgpool-II"),
-				errdetail("fork() system call failed with reason: \"%s\"", strerror(errno) )));
+				(errmsg("could not daemonize the pgpool-II"),
+				 errdetail("fork() system call failed with reason: \"%s\"", strerror(errno))));
 	}
 	else if (pid > 0)
-	{			/* parent */
+	{							/* parent */
 		exit(0);
 	}
 
@@ -455,24 +472,24 @@ static void daemonize(void)
 	if (setsid() < 0)
 	{
 		ereport(FATAL,
-			(errmsg("could not daemonize the pgpool-II"),
-				errdetail("setsid() system call failed with reason: \"%s\"", strerror(errno) )));
+				(errmsg("could not daemonize the pgpool-II"),
+				 errdetail("setsid() system call failed with reason: \"%s\"", strerror(errno))));
 	}
 #endif
 
 	mypid = getpid();
 	write_pid_file();
-	if(chdir("/"))
+	if (chdir("/"))
 		ereport(WARNING,
-			(errmsg("change directory failed"),
-                 errdetail("chdir() system call failed with reason: \"%s\"", strerror(errno) )));
+				(errmsg("change directory failed"),
+				 errdetail("chdir() system call failed with reason: \"%s\"", strerror(errno))));
 
 	/* redirect stdin, stdout and stderr to /dev/null */
 	i = open("/dev/null", O_RDWR);
-	if(i < 0)
+	if (i < 0)
 	{
 		ereport(WARNING,
-			(errmsg("failed to open \"/dev/null\", open() failed with error \"%s\"", strerror(errno))));
+				(errmsg("failed to open \"/dev/null\", open() failed with error \"%s\"", strerror(errno))));
 	}
 	else
 	{
@@ -488,34 +505,35 @@ static void daemonize(void)
 	}
 
 	/* close other file descriptors */
-    fdlimit = sysconf(_SC_OPEN_MAX);
-    for (i = 3; i < fdlimit; i++)
+	fdlimit = sysconf(_SC_OPEN_MAX);
+	for (i = 3; i < fdlimit; i++)
 		close(i);
 }
 
 /*
 * stop myself
 */
-static void stop_me(void)
+static void
+stop_me(void)
 {
-	pid_t pid;
-	char *pid_file;
+	pid_t		pid;
+	char	   *pid_file;
 
 	pid = read_pid_file();
 	if (pid < 0)
 	{
 		ereport(FATAL,
-			(errmsg("could not read pid file")));
+				(errmsg("could not read pid file")));
 	}
 
 	if (kill(pid, stop_sig) == -1)
 	{
 		ereport(FATAL,
-			(errmsg("could not stop process with pid: %d", pid),
-				errdetail("\"%s\"", strerror(errno))));
+				(errmsg("could not stop process with pid: %d", pid),
+				 errdetail("\"%s\"", strerror(errno))));
 	}
 	ereport(LOG,
-		(errmsg ("stop request sent to pgpool. waiting for termination...")));
+			(errmsg("stop request sent to pgpool. waiting for termination...")));
 
 	while (kill(pid, 0) == 0)
 	{
@@ -532,29 +550,31 @@ static void stop_me(void)
  * The function returns the palloc'd copy of pid_file_path,
  * caller must free it after use
  */
-static char *get_pid_file_path(void)
+static char *
+get_pid_file_path(void)
 {
-	char *new = NULL;
+	char	   *new = NULL;
+
 	if (!is_absolute_path(pool_config->pid_file_name))
 	{
 		/*
-		 * some implementations of dirname() may modify the
-		 * string argument passed to it, so do not use the original
-		 * conf_file as an argument
+		 * some implementations of dirname() may modify the string argument
+		 * passed to it, so do not use the original conf_file as an argument
 		 */
-		char *conf_file_copy = pstrdup(conf_file);
-		char *conf_dir = dirname(conf_file_copy);
-		size_t  path_size;
+		char	   *conf_file_copy = pstrdup(conf_file);
+		char	   *conf_dir = dirname(conf_file_copy);
+		size_t		path_size;
+
 		if (conf_dir == NULL)
 		{
 			ereport(LOG,
 					(errmsg("failed to get the dirname of pid file:\"%s\". reason: %s",
-				   pool_config->pid_file_name, strerror(errno))));
+							pool_config->pid_file_name, strerror(errno))));
 			return NULL;
 		}
 		path_size = strlen(conf_dir) + strlen(pool_config->pid_file_name) + 1 + 1;
 		new = palloc(path_size);
-		snprintf(new, path_size, "%s/%s",conf_dir, pool_config->pid_file_name);
+		snprintf(new, path_size, "%s/%s", conf_dir, pool_config->pid_file_name);
 
 		ereport(DEBUG1,
 				(errmsg("pid file location is \"%s\"",
@@ -573,12 +593,13 @@ static char *get_pid_file_path(void)
 /*
 * read the pid file
 */
-static int read_pid_file(void)
+static int
+read_pid_file(void)
 {
-	int fd;
-	int readlen;
-	char pidbuf[128];
-	char *pid_file = get_pid_file_path();
+	int			fd;
+	int			readlen;
+	char		pidbuf[128];
+	char	   *pid_file = get_pid_file_path();
 
 	if (pid_file == NULL)
 	{
@@ -598,69 +619,70 @@ static int read_pid_file(void)
 		close(fd);
 		pfree(pid_file);
 		ereport(FATAL,
-			(errmsg("could not read pid file as \"%s\". reason: %s",
-				   pool_config->pid_file_name, strerror(errno))));
+				(errmsg("could not read pid file as \"%s\". reason: %s",
+						pool_config->pid_file_name, strerror(errno))));
 	}
 	else if (readlen == 0)
 	{
 		close(fd);
 		pfree(pid_file);
 		ereport(FATAL,
-			(errmsg("EOF detected while reading pid file \"%s\". reason: %s",
-				   pool_config->pid_file_name, strerror(errno))));
+				(errmsg("EOF detected while reading pid file \"%s\". reason: %s",
+						pool_config->pid_file_name, strerror(errno))));
 	}
 	pfree(pid_file);
 	close(fd);
-	return(atoi(pidbuf));
+	return (atoi(pidbuf));
 }
 
 /*
 * write the pid file
 */
-static void write_pid_file(void)
+static void
+write_pid_file(void)
 {
-	int fd;
-	char pidbuf[128];
-	char *pid_file = get_pid_file_path();
+	int			fd;
+	char		pidbuf[128];
+	char	   *pid_file = get_pid_file_path();
 
 	if (pid_file == NULL)
 	{
 		ereport(FATAL,
 				(errmsg("failed to write pid file"),
 				 errdetail("failed to get pid file path from \"%s\"",
-						pool_config->pid_file_name)));
+						   pool_config->pid_file_name)));
 	}
 
-	fd = open(pid_file, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR);
+	fd = open(pid_file, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
 	if (fd == -1)
 	{
 		ereport(FATAL,
-			(errmsg("could not open pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno))));
+				(errmsg("could not open pid file as %s. reason: %s",
+						pool_config->pid_file_name, strerror(errno))));
 	}
-	snprintf(pidbuf, sizeof(pidbuf), "%d", (int)getpid());
-	if (write(fd, pidbuf, strlen(pidbuf)+1) == -1)
+	snprintf(pidbuf, sizeof(pidbuf), "%d", (int) getpid());
+	if (write(fd, pidbuf, strlen(pidbuf) + 1) == -1)
 	{
 		close(fd);
 		pfree(pid_file);
 		ereport(FATAL,
-			(errmsg("could not write pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno))));
+				(errmsg("could not write pid file as %s. reason: %s",
+						pool_config->pid_file_name, strerror(errno))));
 	}
 	if (fsync(fd) == -1)
 	{
 		close(fd);
 		pfree(pid_file);
 		ereport(FATAL,
-			(errmsg("could not fsync pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno))));
+				(errmsg("could not fsync pid file as %s. reason: %s",
+						pool_config->pid_file_name, strerror(errno))));
 	}
 	if (close(fd) == -1)
 	{
 		pfree(pid_file);
 		ereport(FATAL,
-			(errmsg("could not close pid file as %s. reason: %s",
-				   pool_config->pid_file_name, strerror(errno))));
+				(errmsg("could not close pid file as %s. reason: %s",
+						pool_config->pid_file_name, strerror(errno))));
 	}
 	/* register the call back to delete the pid file at system exit */
 	on_proc_exit(FileUnlink, (Datum) pid_file);
@@ -669,7 +691,8 @@ static void write_pid_file(void)
 /*
  * get_config_file_name: return full path of pgpool.conf.
  */
-char *get_config_file_name(void)
+char *
+get_config_file_name(void)
 {
 	return conf_file;
 }
@@ -677,21 +700,28 @@ char *get_config_file_name(void)
 /*
  * get_hba_file_name: return full path of pool_hba.conf.
  */
-char *get_hba_file_name(void)
+char *
+get_hba_file_name(void)
 {
 	return hba_file;
 }
+
 /*
  * Call back function to unlink the file
  */
-static void FileUnlink(int code, Datum path)
+static void
+FileUnlink(int code, Datum path)
 {
-	char* filePath = (char*)path;
-	if (unlink(filePath) == 0) return;
-	/* 
-	 * We are already exiting the system just produce a log entry to report an error
+	char	   *filePath = (char *) path;
+
+	if (unlink(filePath) == 0)
+		return;
+
+	/*
+	 * We are already exiting the system just produce a log entry to report an
+	 * error
 	 */
 	ereport(LOG,
-		(errmsg("unlink failed for file at path \"%s\"", filePath),
-			errdetail("\"%s\"", strerror(errno))));
+			(errmsg("unlink failed for file at path \"%s\"", filePath),
+			 errdetail("\"%s\"", strerror(errno))));
 }

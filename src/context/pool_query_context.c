@@ -37,12 +37,13 @@
 /*
  * Where to send query
  */
-typedef enum {
+typedef enum
+{
 	POOL_PRIMARY,
 	POOL_STANDBY,
 	POOL_EITHER,
 	POOL_BOTH
-} POOL_DEST;
+}			POOL_DEST;
 
 #define CHECK_QUERY_CONTEXT_IS_VALID \
 						do { \
@@ -52,22 +53,24 @@ typedef enum {
 						} while (0)
 
 static POOL_DEST send_to_where(Node *node, char *query);
-static void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node);
-static char* remove_read_write(int len, const char *contents, int *rewritten_len);
+static void where_to_send_deallocate(POOL_QUERY_CONTEXT * query_context, Node *node);
+static char *remove_read_write(int len, const char *contents, int *rewritten_len);
 
 /*
  * Create and initialize per query session context
  */
-POOL_QUERY_CONTEXT *pool_init_query_context(void)
+POOL_QUERY_CONTEXT *
+pool_init_query_context(void)
 {
 	MemoryContext memory_context = AllocSetContextCreate(QueryContext,
-															"QueryContextMemoryContext",
-															ALLOCSET_SMALL_MINSIZE,
-															ALLOCSET_SMALL_INITSIZE,
-															ALLOCSET_SMALL_MAXSIZE);
+														 "QueryContextMemoryContext",
+														 ALLOCSET_SMALL_MINSIZE,
+														 ALLOCSET_SMALL_INITSIZE,
+														 ALLOCSET_SMALL_MAXSIZE);
 
 	MemoryContext oldcontext = MemoryContextSwitchTo(memory_context);
 	POOL_QUERY_CONTEXT *qc;
+
 	qc = palloc0(sizeof(*qc));
 	qc->memory_context = memory_context;
 	MemoryContextSwitchTo(oldcontext);
@@ -77,7 +80,8 @@ POOL_QUERY_CONTEXT *pool_init_query_context(void)
 /*
  * Destroy query context
  */
-void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
+void
+pool_query_context_destroy(POOL_QUERY_CONTEXT * query_context)
 {
 	POOL_SESSION_CONTEXT *session_context;
 
@@ -93,7 +97,7 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 		if (!pool_is_command_success() && query_context->pg_terminate_backend_conn)
 		{
 			ereport(DEBUG1,
-				 (errmsg("clearing the connection flag for pg_terminate_backend")));
+					(errmsg("clearing the connection flag for pg_terminate_backend")));
 			pool_unset_connection_will_be_terminated(query_context->pg_terminate_backend_conn);
 		}
 		query_context->pg_terminate_backend_conn = NULL;
@@ -107,7 +111,8 @@ void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context)
 /*
  * Perform shallow copy of given query context. Used in parse_before_bind.
  */
-POOL_QUERY_CONTEXT *pool_query_context_shallow_copy(POOL_QUERY_CONTEXT *query_context)
+POOL_QUERY_CONTEXT *
+pool_query_context_shallow_copy(POOL_QUERY_CONTEXT * query_context)
 {
 	POOL_QUERY_CONTEXT *qc;
 	MemoryContext memory_context;
@@ -122,13 +127,15 @@ POOL_QUERY_CONTEXT *pool_query_context_shallow_copy(POOL_QUERY_CONTEXT *query_co
 /*
  * Start query
  */
-void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, Node *node)
+void
+pool_start_query(POOL_QUERY_CONTEXT * query_context, char *query, int len, Node *node)
 {
 	POOL_SESSION_CONTEXT *session_context;
 
 	if (query_context)
 	{
 		MemoryContext old_context;
+
 		session_context = pool_get_session_context(false);
 		old_context = MemoryContextSwitchTo(query_context->memory_context);
 		query_context->original_length = len;
@@ -151,14 +158,15 @@ void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, N
 /*
  * Specify DB node to send query
  */
-void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
+void
+pool_set_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id)
 {
 	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
 		ereport(ERROR,
-			(errmsg("setting db node for query to be sent, invalid node id:%d",node_id),
-				 errdetail("backend node id: %d out of range, node id can be between 0 and %d",node_id,MAX_NUM_BACKENDS)));
+				(errmsg("setting db node for query to be sent, invalid node id:%d", node_id),
+				 errdetail("backend node id: %d out of range, node id can be between 0 and %d", node_id, MAX_NUM_BACKENDS)));
 
 	query_context->where_to_send[node_id] = true;
 
@@ -168,14 +176,15 @@ void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 /*
  * Unspecify DB node to send query
  */
-void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
+void
+pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id)
 {
 	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
 		ereport(ERROR,
-			(errmsg("un setting db node for query to be sent, invalid node id:%d",node_id),
-				 errdetail("backend node id: %d out of range, node id can be between 0 and %d",node_id,MAX_NUM_BACKENDS)));
+				(errmsg("un setting db node for query to be sent, invalid node id:%d", node_id),
+				 errdetail("backend node id: %d out of range, node id can be between 0 and %d", node_id, MAX_NUM_BACKENDS)));
 
 	query_context->where_to_send[node_id] = false;
 
@@ -185,7 +194,8 @@ void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
 /*
  * Clear DB node map
  */
-void pool_clear_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
+void
+pool_clear_node_to_be_sent(POOL_QUERY_CONTEXT * query_context)
 {
 	CHECK_QUERY_CONTEXT_IS_VALID;
 
@@ -196,24 +206,24 @@ void pool_clear_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 /*
  * Set all DB node map entry
  */
-void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
+void
+pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT * query_context)
 {
-	int i;
+	int			i;
 	POOL_SESSION_CONTEXT *sc;
 
 	sc = pool_get_session_context(false);
 
 	CHECK_QUERY_CONTEXT_IS_VALID;
 
-	for (i=0;i<NUM_BACKENDS;i++)
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (private_backend_status[i] == CON_UP ||
 			(private_backend_status[i] == CON_CONNECT_WAIT))
 		{
 			/*
-			 * In streaming replication mode, if the node is not
-			 * primary node nor load balance node, there's no point to
-			 * send query.
+			 * In streaming replication mode, if the node is not primary node
+			 * nor load balance node, there's no point to send query.
 			 */
 			if (SL_MODE &&
 				i != PRIMARY_NODE_ID && i != sc->load_balance_node_id)
@@ -229,14 +239,15 @@ void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 /*
  * Return true if multiple nodes are targets
  */
-bool pool_multi_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
+bool
+pool_multi_node_to_be_sent(POOL_QUERY_CONTEXT * query_context)
 {
-	int i;
-	int cnt = 0;
+	int			i;
+	int			cnt = 0;
 
 	CHECK_QUERY_CONTEXT_IS_VALID;
 
-	for (i=0;i<NUM_BACKENDS;i++)
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (((BACKEND_INFO(i)).backend_status == CON_UP ||
 			 BACKEND_INFO((i)).backend_status == CON_CONNECT_WAIT) &&
@@ -255,14 +266,15 @@ bool pool_multi_node_to_be_sent(POOL_QUERY_CONTEXT *query_context)
 /*
  * Return if the DB node is needed to send query
  */
-bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
+bool
+pool_is_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id)
 {
 	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
 		ereport(ERROR,
-			(errmsg("checking if db node is needed to be sent, invalid node id:%d",node_id),
-				 errdetail("backend node id: %d out of range, node id can be between 0 and %d",node_id,MAX_NUM_BACKENDS)));
+				(errmsg("checking if db node is needed to be sent, invalid node id:%d", node_id),
+				 errdetail("backend node id: %d out of range, node id can be between 0 and %d", node_id, MAX_NUM_BACKENDS)));
 
 	return query_context->where_to_send[node_id];
 }
@@ -271,7 +283,8 @@ bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id)
  * Returns true if the DB node is needed to send query.
  * Intended to be called from VALID_BACKEND
  */
-bool pool_is_node_to_be_sent_in_current_query(int node_id)
+bool
+pool_is_node_to_be_sent_in_current_query(int node_id)
 {
 	POOL_SESSION_CONTEXT *sc;
 
@@ -292,7 +305,8 @@ bool pool_is_node_to_be_sent_in_current_query(int node_id)
 /*
  * Returns virtual master DB node id,
  */
-int pool_virtual_master_db_node_id(void)
+int
+pool_virtual_master_db_node_id(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
@@ -304,24 +318,24 @@ int pool_virtual_master_db_node_id(void)
 
 	if (sc->in_progress && sc->query_context)
 	{
-		int node_id = sc->query_context->virtual_master_node_id;
+		int			node_id = sc->query_context->virtual_master_node_id;
 
 		if (SL_MODE)
 		{
-			 /*
-			  * Make sure that virtual_master_node_id is either primary node
-			  * id or load balance node id.  If not, it is likely that
-			  * virtual_master_node_id is not set up yet. Let's use the
-			  * primary node id. except for the special case where we need
-			  * to send the query to the node which is not primary nor the
-			  * load balance node. Currently there is only one special such
-			  * case that is handling of pg_terminate_backend() function, which
-			  * may refer to the backend connection that is neither hosted by
-			  * the primary or load balance node for current child process, but
-			  * the query must be forwarded to that node. Since only that backend
-			  * node can handle that pg_terminate_backend query
-			  *
-			  */
+			/*
+			 * Make sure that virtual_master_node_id is either primary node id
+			 * or load balance node id.  If not, it is likely that
+			 * virtual_master_node_id is not set up yet. Let's use the primary
+			 * node id. except for the special case where we need to send the
+			 * query to the node which is not primary nor the load balance
+			 * node. Currently there is only one special such case that is
+			 * handling of pg_terminate_backend() function, which may refer to
+			 * the backend connection that is neither hosted by the primary or
+			 * load balance node for current child process, but the query must
+			 * be forwarded to that node. Since only that backend node can
+			 * handle that pg_terminate_backend query
+			 *
+			 */
 
 			ereport(DEBUG5,
 					(errmsg("pool_virtual_master_db_node_id: virtual_master_node_id:%d load_balance_node_id:%d PRIMARY_NODE_ID:%d",
@@ -330,8 +344,8 @@ int pool_virtual_master_db_node_id(void)
 			if (node_id != sc->load_balance_node_id && node_id != PRIMARY_NODE_ID)
 			{
 				/*
-				 * Only return the primary node id if we are not processing the
-				 * pg_terminate_backend query
+				 * Only return the primary node id if we are not processing
+				 * the pg_terminate_backend query
 				 */
 				if (sc->query_context->pg_terminate_backend_conn == NULL)
 					node_id = PRIMARY_NODE_ID;
@@ -342,9 +356,9 @@ int pool_virtual_master_db_node_id(void)
 	}
 
 	/*
-	 * No query context exists.  If in master/slave mode, returns
-	 * primary node if exists.  Otherwise returns my_master_node_id,
-	 * which represents the last REAL_MASTER_NODE_ID.
+	 * No query context exists.  If in master/slave mode, returns primary node
+	 * if exists.  Otherwise returns my_master_node_id, which represents the
+	 * last REAL_MASTER_NODE_ID.
 	 */
 	if (MASTER_SLAVE)
 	{
@@ -356,16 +370,18 @@ int pool_virtual_master_db_node_id(void)
 /*
  * The function sets the destination for the current query to the specific backend node
  */
-void pool_force_query_node_to_backend(POOL_QUERY_CONTEXT *query_context, int backend_id)
+void
+pool_force_query_node_to_backend(POOL_QUERY_CONTEXT * query_context, int backend_id)
 {
-	int i;
+	int			i;
+
 	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	ereport(DEBUG1,
-		(errmsg("forcing query destination node to backend node:%d",backend_id)));
+			(errmsg("forcing query destination node to backend node:%d", backend_id)));
 
-	pool_set_node_to_be_sent(query_context,backend_id);
-	for (i=0;i<NUM_BACKENDS;i++)
+	pool_set_node_to_be_sent(query_context, backend_id);
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (query_context->where_to_send[i])
 		{
@@ -378,11 +394,12 @@ void pool_force_query_node_to_backend(POOL_QUERY_CONTEXT *query_context, int bac
 /*
  * Decide where to send queries(thus expecting response)
  */
-void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *node)
+void
+pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION_POOL *backend;
-	int i;
+	int			i;
 
 	CHECK_QUERY_CONTEXT_IS_VALID;
 
@@ -392,11 +409,11 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	/*
 	 * Zap out DB node map
 	 */
-    pool_clear_node_to_be_sent(query_context);
+	pool_clear_node_to_be_sent(query_context);
 
 	/*
-	 * When query match the query patterns in black_query_pattern_list,
-	 * we send only to master node.
+	 * When query match the query patterns in black_query_pattern_list, we
+	 * send only to master node.
 	 */
 	if (MASTER_SLAVE && pattern_compare(query, BLACKLIST, "black_query_pattern_list") == 1)
 	{
@@ -411,7 +428,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	{
 		pool_set_node_to_be_sent(query_context,
 								 MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID);
-		for (i=0;i<NUM_BACKENDS;i++)
+		for (i = 0; i < NUM_BACKENDS; i++)
 		{
 			if (query_context->where_to_send[i])
 			{
@@ -432,18 +449,16 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	else if (MASTER_SLAVE && query_context->is_multi_statement)
 	{
 		/*
-		 * If we are in master/slave mode and we have multi statement
-		 * query, we should send it to primary server only. Otherwise
-		 * it is possible to send a write query to standby servers
-		 * because we only use the first element of the multi
-		 * statement query and don't care about the rest.  Typical
-		 * situation where we are bugged by this is, "BEGIN;DELETE
-		 * FROM table;END". Note that from pgpool-II 3.1.0
-		 * transactional statements such as "BEGIN" is unconditionally
-		 * sent to all nodes(see send_to_where() for more details).
-		 * Someday we might be able to understand all part of multi
-		 * statement queries, but until that day we need this band
-		 * aid.
+		 * If we are in master/slave mode and we have multi statement query,
+		 * we should send it to primary server only. Otherwise it is possible
+		 * to send a write query to standby servers because we only use the
+		 * first element of the multi statement query and don't care about the
+		 * rest.  Typical situation where we are bugged by this is,
+		 * "BEGIN;DELETE FROM table;END". Note that from pgpool-II 3.1.0
+		 * transactional statements such as "BEGIN" is unconditionally sent to
+		 * all nodes(see send_to_where() for more details). Someday we might
+		 * be able to understand all part of multi statement queries, but
+		 * until that day we need this band aid.
 		 */
 		if (query_context->is_multi_statement)
 		{
@@ -452,12 +467,12 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	}
 	else if (MASTER_SLAVE)
 	{
-		POOL_DEST dest;
+		POOL_DEST	dest;
 
 		dest = send_to_where(node, query);
 
 		ereport(DEBUG1,
-			(errmsg("decide where to send the query"),
+				(errmsg("decide where to send the query"),
 				 errdetail("destination = %d for query= \"%s\"", dest, query)));
 
 		/* Should be sent to primary only? */
@@ -486,10 +501,10 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 				MAJOR(backend) == PROTO_MAJOR_V3)
 			{
 				/*
-				 * If (we are outside of an explicit transaction) OR
-				 * (the transaction has not issued a write query yet, AND
-				 *	transaction isolation level is not SERIALIZABLE)
-				 * we might be able to load balance.
+				 * If (we are outside of an explicit transaction) OR (the
+				 * transaction has not issued a write query yet, AND
+				 * transaction isolation level is not SERIALIZABLE) we might
+				 * be able to load balance.
 				 */
 
 				ereport(DEBUG1,
@@ -512,7 +527,8 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					 */
 
 					/*
-					 * If replication delay is too much, we prefer to send to the primary.
+					 * If replication delay is too much, we prefer to send to
+					 * the primary.
 					 */
 					if (STREAM &&
 						pool_config->delay_threshold &&
@@ -526,8 +542,8 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					}
 
 					/*
-					 * If a writing function call is used,
-					 * we prefer to send to the primary.
+					 * If a writing function call is used, we prefer to send
+					 * to the primary.
 					 */
 					else if (pool_has_function_call(node))
 					{
@@ -539,16 +555,14 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					}
 
 					/*
-					 * If system catalog is used in the SELECT, we
-					 * prefer to send to the primary. Example: SELECT
-					 * * FROM pg_class WHERE relname = 't1'; Because
-					 * 't1' is a constant, it's hard to recognize as
-					 * table name.  Most use case such query is
-					 * against system catalog, and the table name can
-					 * be a temporary table, it's best to query
-					 * against primary system catalog.
-					 * Please note that this test must be done *before*
-					 * test using pool_has_temp_table.
+					 * If system catalog is used in the SELECT, we prefer to
+					 * send to the primary. Example: SELECT * FROM pg_class
+					 * WHERE relname = 't1'; Because 't1' is a constant, it's
+					 * hard to recognize as table name.  Most use case such
+					 * query is against system catalog, and the table name can
+					 * be a temporary table, it's best to query against
+					 * primary system catalog. Please note that this test must
+					 * be done *before* test using pool_has_temp_table.
 					 */
 					else if (pool_has_system_catalog(node))
 					{
@@ -560,8 +574,8 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					}
 
 					/*
-					 * If temporary table is used in the SELECT,
-					 * we prefer to send to the primary.
+					 * If temporary table is used in the SELECT, we prefer to
+					 * send to the primary.
 					 */
 					else if (pool_config->check_temp_table && pool_has_temp_table(node))
 					{
@@ -573,8 +587,8 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 					}
 
 					/*
-					 * If unlogged table is used in the SELECT,
-					 * we prefer to send to the primary.
+					 * If unlogged table is used in the SELECT, we prefer to
+					 * send to the primary.
 					 */
 					else if (pool_config->check_unlogged_table && pool_has_unlogged_table(node))
 					{
@@ -618,11 +632,12 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 			{
 				pool_setall_node_to_be_sent(query_context);
 			}
+
 			/*
-			 * If (we are outside of an explicit transaction) OR
-			 * (the transaction has not issued a write query yet, AND
-			 *	transaction isolation level is not SERIALIZABLE)
-			 * we might be able to load balance.
+			 * If (we are outside of an explicit transaction) OR (the
+			 * transaction has not issued a write query yet, AND transaction
+			 * isolation level is not SERIALIZABLE) we might be able to load
+			 * balance.
 			 */
 			else if (TSTATE(backend, MASTER_NODE_ID) == 'I' ||
 					 (!pool_is_writing_transaction() &&
@@ -668,9 +683,9 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 	{
 		POOL_SENT_MESSAGE *msg;
 
-		msg = pool_get_sent_message('Q', ((ExecuteStmt *)node)->name, POOL_SENT_MESSAGE_CREATED);
+		msg = pool_get_sent_message('Q', ((ExecuteStmt *) node)->name, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
-			msg = pool_get_sent_message('P', ((ExecuteStmt *)node)->name, POOL_SENT_MESSAGE_CREATED);
+			msg = pool_get_sent_message('P', ((ExecuteStmt *) node)->name, POOL_SENT_MESSAGE_CREATED);
 		if (msg)
 			pool_copy_prep_where(msg->query_context->where_to_send,
 								 query_context->where_to_send);
@@ -684,7 +699,7 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
 		where_to_send_deallocate(query_context, node);
 	}
 
-	for (i=0;i<NUM_BACKENDS;i++)
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (query_context->where_to_send[i])
 		{
@@ -703,17 +718,18 @@ void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *no
  *   0: send to all nodes
  *  >0: send to this node_id
  */
-POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
-							   int send_type, int node_id)
+POOL_STATUS
+pool_send_and_wait(POOL_QUERY_CONTEXT * query_context,
+				   int send_type, int node_id)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION *frontend;
 	POOL_CONNECTION_POOL *backend;
-	bool is_commit;
-	bool is_begin_read_write;
-	int i;
-	int len;
-	char *string;
+	bool		is_commit;
+	bool		is_begin_read_write;
+	int			i;
+	int			len;
+	char	   *string;
 
 	session_context = pool_get_session_context(false);
 	frontend = session_context->frontend;
@@ -724,9 +740,8 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	string = NULL;
 
 	/*
-	 * If the query is BEGIN READ WRITE or
-	 * BEGIN ... SERIALIZABLE in master/slave mode,
-	 * we send BEGIN to slaves/standbys instead.
+	 * If the query is BEGIN READ WRITE or BEGIN ... SERIALIZABLE in
+	 * master/slave mode, we send BEGIN to slaves/standbys instead.
 	 * original_query which is BEGIN READ WRITE is sent to primary.
 	 * rewritten_query which is BEGIN is sent to standbys.
 	 */
@@ -749,7 +764,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	}
 
 	/* Send query */
-	for (i=0;i<NUM_BACKENDS;i++)
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (!VALID_BACKEND(i))
 			continue;
@@ -769,9 +784,8 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 		}
 
 		/*
-		 * If in reset context, we send COMMIT/ABORT to nodes those
-		 * are not in I(idle) state.  This will ensure that
-		 * transactions are closed.
+		 * If in reset context, we send COMMIT/ABORT to nodes those are not in
+		 * I(idle) state.  This will ensure that transactions are closed.
 		 */
 		if (is_commit && session_context->reset_context && TSTATE(backend, i) == 'I')
 		{
@@ -799,7 +813,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	}
 
 	/* Wait for response */
-	for (i=0;i<NUM_BACKENDS;i++)
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (!VALID_BACKEND(i))
 			continue;
@@ -809,6 +823,7 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			continue;
 
 #ifdef NOT_USED
+
 		/*
 		 * If in master/slave mode, we do not send COMMIT/ABORT to
 		 * slaves/standbys if it's in I(idle) state.
@@ -821,24 +836,22 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 
 		if (is_begin_read_write)
 		{
-			if(REAL_PRIMARY_NODE_ID == i)
+			if (REAL_PRIMARY_NODE_ID == i)
 				string = query_context->original_query;
 			else
 				string = query_context->rewritten_query;
 		}
 
-        wait_for_query_response_with_trans_cleanup(frontend,
-                                                   CONNECTION(backend, i),
-                                                   MAJOR(backend),
-                                                   MASTER_CONNECTION(backend)->pid,
-                                                   MASTER_CONNECTION(backend)->key);
+		wait_for_query_response_with_trans_cleanup(frontend,
+												   CONNECTION(backend, i),
+												   MAJOR(backend),
+												   MASTER_CONNECTION(backend)->pid,
+												   MASTER_CONNECTION(backend)->key);
 
 		/*
-		 * Check if some error detected.  If so, emit
-		 * log. This is useful when invalid encoding error
-		 * occurs. In this case, PostgreSQL does not report
-		 * what statement caused that error and make users
-		 * confused.
+		 * Check if some error detected.  If so, emit log. This is useful when
+		 * invalid encoding error occurs. In this case, PostgreSQL does not
+		 * report what statement caused that error and make users confused.
 		 */
 		per_node_error_log(backend, i, string, "pool_send_and_wait: Error or notice message from backend: ", true);
 	}
@@ -853,20 +866,21 @@ POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
  *   0: send to all nodes
  *  >0: send to this node_id
  */
-POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
-										char *kind, int len, char *contents,
-										int send_type, int node_id, bool nowait)
+POOL_STATUS
+pool_extended_send_and_wait(POOL_QUERY_CONTEXT * query_context,
+							char *kind, int len, char *contents,
+							int send_type, int node_id, bool nowait)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION *frontend;
 	POOL_CONNECTION_POOL *backend;
-	bool is_commit;
-	bool is_begin_read_write;
-	int i;
-	int str_len;
-	int rewritten_len;
-	char *str;
-	char *rewritten_begin;
+	bool		is_commit;
+	bool		is_begin_read_write;
+	int			i;
+	int			str_len;
+	int			rewritten_len;
+	char	   *str;
+	char	   *rewritten_begin;
 
 	session_context = pool_get_session_context(false);
 	frontend = session_context->frontend;
@@ -879,9 +893,8 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	rewritten_begin = NULL;
 
 	/*
-	 * If the query is BEGIN READ WRITE or
-	 * BEGIN ... SERIALIZABLE in master/slave mode,
-	 * we send BEGIN to slaves/standbys instead.
+	 * If the query is BEGIN READ WRITE or BEGIN ... SERIALIZABLE in
+	 * master/slave mode, we send BEGIN to slaves/standbys instead.
 	 * original_query which is BEGIN READ WRITE is sent to primary.
 	 * rewritten_query which is BEGIN is sent to standbys.
 	 */
@@ -900,7 +913,7 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	}
 
 	/* Send query */
-	for (i=0;i<NUM_BACKENDS;i++)
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (!VALID_BACKEND(i))
 			continue;
@@ -910,9 +923,8 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			continue;
 
 		/*
-		 * If in reset context, we send COMMIT/ABORT to nodes those
-		 * are not in I(idle) state.  This will ensure that
-		 * transactions are closed.
+		 * If in reset context, we send COMMIT/ABORT to nodes those are not in
+		 * I(idle) state.  This will ensure that transactions are closed.
 		 */
 		if (is_commit && session_context->reset_context && TSTATE(backend, i) == 'I')
 		{
@@ -936,8 +948,8 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 
 		if (pool_config->log_per_node_statement)
 		{
-			char msgbuf[QUERY_STRING_BUFFER_LEN];
-			char *stmt;
+			char		msgbuf[QUERY_STRING_BUFFER_LEN];
+			char	   *stmt;
 
 			if (*kind == 'P' || *kind == 'E')
 			{
@@ -984,12 +996,12 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 		if ((*kind == 'P' || *kind == 'E' || *kind == 'C') && STREAM)
 		{
 			/*
-			 * Send flush message to backend to make sure that we get any response
-			 * from backend in Streaming replication mode.
+			 * Send flush message to backend to make sure that we get any
+			 * response from backend in Streaming replication mode.
 			 */
 
 			POOL_CONNECTION *cp = CONNECTION(backend, i);
-			int len;
+			int			len;
 
 			pool_write(cp, "H", 1);
 			len = htonl(sizeof(len));
@@ -1011,7 +1023,7 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 	if (!nowait)
 	{
 		/* Wait for response */
-		for (i=0;i<NUM_BACKENDS;i++)
+		for (i = 0; i < NUM_BACKENDS; i++)
 		{
 			if (!VALID_BACKEND(i))
 				continue;
@@ -1044,18 +1056,17 @@ POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 													   MASTER_CONNECTION(backend)->key);
 
 			/*
-			 * Check if some error detected.  If so, emit
-			 * log. This is useful when invalid encoding error
-			 * occurs. In this case, PostgreSQL does not report
-			 * what statement caused that error and make users
+			 * Check if some error detected.  If so, emit log. This is useful
+			 * when invalid encoding error occurs. In this case, PostgreSQL
+			 * does not report what statement caused that error and make users
 			 * confused.
 			 */
 			per_node_error_log(backend, i, str, "pool_send_and_wait: Error or notice message from backend: ", true);
 		}
 	}
 
-	if(rewritten_begin)
-        pfree(rewritten_begin);
+	if (rewritten_begin)
+		pfree(rewritten_begin);
 	return POOL_CONTINUE;
 }
 
@@ -1068,18 +1079,17 @@ static POOL_DEST send_to_where(Node *node, char *query)
 {
 /* From storage/lock.h */
 #define NoLock					0
-#define AccessShareLock			1		/* SELECT */
-#define RowShareLock			2		/* SELECT FOR UPDATE/FOR SHARE */
-#define RowExclusiveLock		3		/* INSERT, UPDATE, DELETE */
-#define ShareUpdateExclusiveLock 4		/* VACUUM (non-FULL),ANALYZE, CREATE
-										 * INDEX CONCURRENTLY */
-#define ShareLock				5		/* CREATE INDEX (WITHOUT CONCURRENTLY) */
-#define ShareRowExclusiveLock	6		/* like EXCLUSIVE MODE, but allows ROW
-										 * SHARE */
-#define ExclusiveLock			7		/* blocks ROW SHARE/SELECT...FOR
-										 * UPDATE */
-#define AccessExclusiveLock		8		/* ALTER TABLE, DROP TABLE, VACUUM
-										 * FULL, and unqualified LOCK TABLE */
+#define AccessShareLock			1	/* SELECT */
+#define RowShareLock			2	/* SELECT FOR UPDATE/FOR SHARE */
+#define RowExclusiveLock		3	/* INSERT, UPDATE, DELETE */
+#define ShareUpdateExclusiveLock 4	/* VACUUM (non-FULL),ANALYZE, CREATE INDEX
+									 * CONCURRENTLY */
+#define ShareLock				5	/* CREATE INDEX (WITHOUT CONCURRENTLY) */
+#define ShareRowExclusiveLock	6	/* like EXCLUSIVE MODE, but allows ROW
+									 * SHARE */
+#define ExclusiveLock			7	/* blocks ROW SHARE/SELECT...FOR UPDATE */
+#define AccessExclusiveLock		8	/* ALTER TABLE, DROP TABLE, VACUUM FULL,
+									 * and unqualified LOCK TABLE */
 
 /* From 9.5 include/nodes/node.h ("TAGS FOR STATEMENT NODES" part) */
 	static NodeTag nodemap[] = {
@@ -1100,23 +1110,23 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_ClosePortalStmt,
 		T_ClusterStmt,
 		T_CopyStmt,
-		T_CreateStmt,	/* CREATE TABLE */
-		T_DefineStmt,	/* CREATE AGGREGATE, OPERATOR, TYPE */
-		T_DropStmt,		/* DROP TABLE etc. */
+		T_CreateStmt,			/* CREATE TABLE */
+		T_DefineStmt,			/* CREATE AGGREGATE, OPERATOR, TYPE */
+		T_DropStmt,				/* DROP TABLE etc. */
 		T_TruncateStmt,
 		T_CommentStmt,
 		T_FetchStmt,
-		T_IndexStmt,	/* CREATE INDEX */
+		T_IndexStmt,			/* CREATE INDEX */
 		T_CreateFunctionStmt,
 		T_AlterFunctionStmt,
 		T_DoStmt,
-		T_RenameStmt,	/* ALTER AGGREGATE etc. */
-		T_RuleStmt,		/* CREATE RULE */
+		T_RenameStmt,			/* ALTER AGGREGATE etc. */
+		T_RuleStmt,				/* CREATE RULE */
 		T_NotifyStmt,
 		T_ListenStmt,
 		T_UnlistenStmt,
 		T_TransactionStmt,
-		T_ViewStmt,		/* CREATE VIEW */
+		T_ViewStmt,				/* CREATE VIEW */
 		T_LoadStmt,
 		T_CreateDomainStmt,
 		T_CreatedbStmt,
@@ -1195,12 +1205,11 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		T_AlterCollationStmt,
 	};
 
-	if (bsearch(&nodeTag(node), nodemap, sizeof(nodemap)/sizeof(nodemap[0]),
+	if (bsearch(&nodeTag(node), nodemap, sizeof(nodemap) / sizeof(nodemap[0]),
 				sizeof(NodeTag), compare) != NULL)
 	{
 		/*
-		 * SELECT INTO
-		 * SELECT FOR SHARE or UPDATE
+		 * SELECT INTO SELECT FOR SHARE or UPDATE
 		 */
 		if (IsA(node, SelectStmt))
 		{
@@ -1209,13 +1218,15 @@ static POOL_DEST send_to_where(Node *node, char *query)
 				return POOL_PRIMARY;
 
 			/* non-SELECT query in WITH clause ? */
-			if (((SelectStmt *)node)->withClause)
+			if (((SelectStmt *) node)->withClause)
 			{
-				List *ctes = ((SelectStmt *)node)->withClause->ctes;
+				List	   *ctes = ((SelectStmt *) node)->withClause->ctes;
 				ListCell   *cte_item;
+
 				foreach(cte_item, ctes)
 				{
-					CommonTableExpr *cte = (CommonTableExpr *)lfirst(cte_item);
+					CommonTableExpr *cte = (CommonTableExpr *) lfirst(cte_item);
+
 					if (!IsA(cte->ctequery, SelectStmt))
 						return POOL_PRIMARY;
 				}
@@ -1229,14 +1240,14 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		 */
 		else if (IsA(node, CopyStmt))
 		{
-			if (((CopyStmt *)node)->is_from)
+			if (((CopyStmt *) node)->is_from)
 				return POOL_PRIMARY;
 			else
 			{
-				if (((CopyStmt *)node)->query == NULL)
+				if (((CopyStmt *) node)->query == NULL)
 					return POOL_EITHER;
 				else
-					return (IsA(((CopyStmt *)node)->query, SelectStmt))?POOL_EITHER:POOL_PRIMARY;
+					return (IsA(((CopyStmt *) node)->query, SelectStmt)) ? POOL_EITHER : POOL_PRIMARY;
 			}
 		}
 
@@ -1245,7 +1256,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		 */
 		else if (IsA(node, LockStmt))
 		{
-			return (((LockStmt *)node)->mode >= RowExclusiveLock)?POOL_PRIMARY:POOL_BOTH;
+			return (((LockStmt *) node)->mode >= RowExclusiveLock) ? POOL_PRIMARY : POOL_BOTH;
 		}
 
 		/*
@@ -1258,18 +1269,24 @@ static POOL_DEST send_to_where(Node *node, char *query)
 			 */
 			if (is_start_transaction_query(node))
 			{
-				/* But actually, we send BEGIN to standby if it's
-				   BEGIN READ WRITE or START TRANSACTION READ WRITE */
-				if (is_read_write((TransactionStmt *)node))
+				/*
+				 * But actually, we send BEGIN to standby if it's BEGIN READ
+				 * WRITE or START TRANSACTION READ WRITE
+				 */
+				if (is_read_write((TransactionStmt *) node))
 					return POOL_BOTH;
-				/* Other TRANSACTION start commands are sent to both primary
-				   and standby */
+
+				/*
+				 * Other TRANSACTION start commands are sent to both primary
+				 * and standby
+				 */
 				else
 					return POOL_BOTH;
 			}
 			/* SAVEPOINT related commands are sent to both primary and standby */
 			else if (is_savepoint_query(node))
 				return POOL_BOTH;
+
 			/*
 			 * 2PC commands
 			 */
@@ -1286,18 +1303,19 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		else if (IsA(node, VariableSetStmt))
 		{
 			ListCell   *list_item;
-			bool ret = POOL_BOTH;
+			bool		ret = POOL_BOTH;
 
 			/*
 			 * SET transaction_read_only TO off
 			 */
-			if (((VariableSetStmt *)node)->kind == VAR_SET_VALUE &&
-				!strcmp(((VariableSetStmt *)node)->name, "transaction_read_only"))
+			if (((VariableSetStmt *) node)->kind == VAR_SET_VALUE &&
+				!strcmp(((VariableSetStmt *) node)->name, "transaction_read_only"))
 			{
-				List *options = ((VariableSetStmt *)node)->args;
+				List	   *options = ((VariableSetStmt *) node)->args;
+
 				foreach(list_item, options)
 				{
-					A_Const *v = (A_Const *)lfirst(list_item);
+					A_Const    *v = (A_Const *) lfirst(list_item);
 
 					switch (v->val.type)
 					{
@@ -1317,10 +1335,11 @@ static POOL_DEST send_to_where(Node *node, char *query)
 				return ret;
 			}
 
-			/* SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or
-			 * SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE or
-			 * SET transaction_isolation TO 'serializable'
-			 * SET default_transaction_isolation TO 'serializable'
+			/*
+			 * SET TRANSACTION ISOLATION LEVEL SERIALIZABLE or SET SESSION
+			 * CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE or
+			 * SET transaction_isolation TO 'serializable' SET
+			 * default_transaction_isolation TO 'serializable'
 			 */
 			else if (is_set_transaction_serializable(node))
 			{
@@ -1328,23 +1347,24 @@ static POOL_DEST send_to_where(Node *node, char *query)
 			}
 
 			/*
-			 * Check "SET TRANSACTION READ WRITE" "SET SESSION
-			 * CHARACTERISTICS AS TRANSACTION READ WRITE"
+			 * Check "SET TRANSACTION READ WRITE" "SET SESSION CHARACTERISTICS
+			 * AS TRANSACTION READ WRITE"
 			 */
-			else if (((VariableSetStmt *)node)->kind == VAR_SET_MULTI &&
-				(!strcmp(((VariableSetStmt *)node)->name, "TRANSACTION") ||
-				 !strcmp(((VariableSetStmt *)node)->name, "SESSION CHARACTERISTICS")))
+			else if (((VariableSetStmt *) node)->kind == VAR_SET_MULTI &&
+					 (!strcmp(((VariableSetStmt *) node)->name, "TRANSACTION") ||
+					  !strcmp(((VariableSetStmt *) node)->name, "SESSION CHARACTERISTICS")))
 			{
-				List *options = ((VariableSetStmt *)node)->args;
+				List	   *options = ((VariableSetStmt *) node)->args;
+
 				foreach(list_item, options)
 				{
-					DefElem *opt = (DefElem *) lfirst(list_item);
+					DefElem    *opt = (DefElem *) lfirst(list_item);
 
 					if (!strcmp("transaction_read_only", opt->defname))
 					{
-						bool read_only;
+						bool		read_only;
 
-						read_only = ((A_Const *)opt->arg)->val.val.ival;
+						read_only = ((A_Const *) opt->arg)->val.val.ival;
 						if (!read_only)
 							return POOL_PRIMARY;
 					}
@@ -1354,8 +1374,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 			else
 			{
 				/*
-				 * All other SET command sent to both primary and
-				 * standby
+				 * All other SET command sent to both primary and standby
 				 */
 				return POOL_BOTH;
 			}
@@ -1374,12 +1393,12 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		 */
 		else if (IsA(node, PrepareStmt))
 		{
-			PrepareStmt *prepare_statement = (PrepareStmt *)node;
+			PrepareStmt *prepare_statement = (PrepareStmt *) node;
 
-			char *string = nodeToString(prepare_statement->query);
+			char	   *string = nodeToString(prepare_statement->query);
 
 			/* Note that this is a recursive call */
-			return send_to_where((Node *)(prepare_statement->query), string);
+			return send_to_where((Node *) (prepare_statement->query), string);
 		}
 
 		/*
@@ -1387,8 +1406,9 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		 */
 		else if (IsA(node, ExecuteStmt))
 		{
-			/* This is temporary decision. where_to_send will inherit
-			 *  same destination AS PREPARE.
+			/*
+			 * This is temporary decision. where_to_send will inherit same
+			 * destination AS PREPARE.
 			 */
 			return POOL_PRIMARY;
 		}
@@ -1398,11 +1418,13 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		 */
 		else if (IsA(node, DeallocateStmt))
 		{
-			/* This is temporary decision. where_to_send will inherit
-			 *  same destination AS PREPARE.
+			/*
+			 * This is temporary decision. where_to_send will inherit same
+			 * destination AS PREPARE.
 			 */
 			return POOL_PRIMARY;
 		}
+
 		/*
 		 * SHOW
 		 */
@@ -1424,9 +1446,10 @@ static POOL_DEST send_to_where(Node *node, char *query)
 }
 
 static
-void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
+void
+where_to_send_deallocate(POOL_QUERY_CONTEXT * query_context, Node *node)
 {
-	DeallocateStmt *d = (DeallocateStmt *)node;
+	DeallocateStmt *d = (DeallocateStmt *) node;
 	POOL_SENT_MESSAGE *msg;
 
 	/* DEALLOCATE ALL? */
@@ -1455,7 +1478,8 @@ void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
  * Returns parse tree for current query.
  * Precondition: the query is in progress state.
  */
-Node *pool_get_parse_tree(void)
+Node *
+pool_get_parse_tree(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
@@ -1474,7 +1498,8 @@ Node *pool_get_parse_tree(void)
  * Returns raw query string for current query.
  * Precondition: the query is in progress state.
  */
-char *pool_get_query_string(void)
+char *
+pool_get_query_string(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
@@ -1497,21 +1522,23 @@ char *pool_get_query_string(void)
  * SET transaction_isolation TO 'serializable'
  * SET default_transaction_isolation TO 'serializable'
  */
-bool is_set_transaction_serializable(Node *node)
+bool
+is_set_transaction_serializable(Node *node)
 {
 	ListCell   *list_item;
 
 	if (!IsA(node, VariableSetStmt))
 		return false;
 
-	if (((VariableSetStmt *)node)->kind == VAR_SET_VALUE &&
-		(!strcmp(((VariableSetStmt *)node)->name, "transaction_isolation") ||
-                 !strcmp(((VariableSetStmt *)node)->name, "default_transaction_isolation")))
+	if (((VariableSetStmt *) node)->kind == VAR_SET_VALUE &&
+		(!strcmp(((VariableSetStmt *) node)->name, "transaction_isolation") ||
+		 !strcmp(((VariableSetStmt *) node)->name, "default_transaction_isolation")))
 	{
-		List *options = ((VariableSetStmt *)node)->args;
+		List	   *options = ((VariableSetStmt *) node)->args;
+
 		foreach(list_item, options)
 		{
-			A_Const *v = (A_Const *)lfirst(list_item);
+			A_Const    *v = (A_Const *) lfirst(list_item);
 
 			switch (v->val.type)
 			{
@@ -1526,18 +1553,20 @@ bool is_set_transaction_serializable(Node *node)
 		return false;
 	}
 
-	else if (((VariableSetStmt *)node)->kind == VAR_SET_MULTI &&
-			 (!strcmp(((VariableSetStmt *)node)->name, "TRANSACTION") ||
-			  !strcmp(((VariableSetStmt *)node)->name, "SESSION CHARACTERISTICS")))
+	else if (((VariableSetStmt *) node)->kind == VAR_SET_MULTI &&
+			 (!strcmp(((VariableSetStmt *) node)->name, "TRANSACTION") ||
+			  !strcmp(((VariableSetStmt *) node)->name, "SESSION CHARACTERISTICS")))
 	{
-		List *options = ((VariableSetStmt *)node)->args;
+		List	   *options = ((VariableSetStmt *) node)->args;
+
 		foreach(list_item, options)
 		{
-			DefElem *opt = (DefElem *) lfirst(list_item);
+			DefElem    *opt = (DefElem *) lfirst(list_item);
+
 			if (!strcmp("transaction_isolation", opt->defname) ||
 				!strcmp("default_transaction_isolation", opt->defname))
 			{
-				A_Const *v = (A_Const *)opt->arg;
+				A_Const    *v = (A_Const *) opt->arg;
 
 				if (!strcasecmp(v->val.val.str, "serializable"))
 					return true;
@@ -1551,40 +1580,44 @@ bool is_set_transaction_serializable(Node *node)
  * Returns true if SQL is transaction starting command (START
  * TRANSACTION or BEGIN)
  */
-bool is_start_transaction_query(Node *node)
+bool
+is_start_transaction_query(Node *node)
 {
 	TransactionStmt *stmt;
 
 	if (node == NULL || !IsA(node, TransactionStmt))
 		return false;
 
-	stmt = (TransactionStmt *)node;
+	stmt = (TransactionStmt *) node;
 	return stmt->kind == TRANS_STMT_START || stmt->kind == TRANS_STMT_BEGIN;
 }
 
 /*
  * Return true if start transaction query with "READ WRITE" option.
  */
-bool is_read_write(TransactionStmt *node)
+bool
+is_read_write(TransactionStmt *node)
 {
 	ListCell   *list_item;
 
-	List *options = node->options;
+	List	   *options = node->options;
+
 	foreach(list_item, options)
 	{
-		DefElem *opt = (DefElem *) lfirst(list_item);
+		DefElem    *opt = (DefElem *) lfirst(list_item);
 
 		if (!strcmp("transaction_read_only", opt->defname))
 		{
-			bool read_only;
+			bool		read_only;
 
-			read_only = ((A_Const *)opt->arg)->val.val.ival;
+			read_only = ((A_Const *) opt->arg)->val.val.ival;
 			if (read_only)
 				return false;	/* TRANSACTION READ ONLY */
 			else
+
 				/*
-				 * TRANSACTION READ WRITE specified. This sounds a little bit strange,
-				 * but actually the parse code works in the way.
+				 * TRANSACTION READ WRITE specified. This sounds a little bit
+				 * strange, but actually the parse code works in the way.
 				 */
 				return true;
 		}
@@ -1599,20 +1632,22 @@ bool is_read_write(TransactionStmt *node)
 /*
  * Return true if start transaction query with "SERIALIZABLE" option.
  */
-bool is_serializable(TransactionStmt *node)
+bool
+is_serializable(TransactionStmt *node)
 {
 	ListCell   *list_item;
 
-	List *options = node->options;
+	List	   *options = node->options;
+
 	foreach(list_item, options)
 	{
-		DefElem *opt = (DefElem *) lfirst(list_item);
+		DefElem    *opt = (DefElem *) lfirst(list_item);
 
 		if (!strcmp("transaction_isolation", opt->defname) &&
 			IsA(opt->arg, A_Const) &&
-			((A_Const *)opt->arg)->val.type == T_String &&
-			!strcmp("serializable", ((A_Const *)opt->arg)->val.val.str))
-				return true;
+			((A_Const *) opt->arg)->val.type == T_String &&
+			!strcmp("serializable", ((A_Const *) opt->arg)->val.val.str))
+			return true;
 	}
 	return false;
 }
@@ -1624,22 +1659,24 @@ bool is_serializable(TransactionStmt *node)
  * original_query which is BEGIN READ WRITE is sent to primary.
  * rewritten_query which is BEGIN is sent to standbys.
  */
-bool pool_need_to_treat_as_if_default_transaction(POOL_QUERY_CONTEXT *query_context)
+bool
+pool_need_to_treat_as_if_default_transaction(POOL_QUERY_CONTEXT * query_context)
 {
 	return (MASTER_SLAVE &&
 			is_start_transaction_query(query_context->parse_tree) &&
-			(is_read_write((TransactionStmt *)query_context->parse_tree) ||
-			 is_serializable((TransactionStmt *)query_context->parse_tree)));
+			(is_read_write((TransactionStmt *) query_context->parse_tree) ||
+			 is_serializable((TransactionStmt *) query_context->parse_tree)));
 }
 
 /*
  * Return true if the query is SAVEPOINT related query.
  */
-bool is_savepoint_query(Node *node)
+bool
+is_savepoint_query(Node *node)
 {
-	if (((TransactionStmt *)node)->kind == TRANS_STMT_SAVEPOINT ||
-		((TransactionStmt *)node)->kind == TRANS_STMT_ROLLBACK_TO ||
-		((TransactionStmt *)node)->kind == TRANS_STMT_RELEASE)
+	if (((TransactionStmt *) node)->kind == TRANS_STMT_SAVEPOINT ||
+		((TransactionStmt *) node)->kind == TRANS_STMT_ROLLBACK_TO ||
+		((TransactionStmt *) node)->kind == TRANS_STMT_RELEASE)
 		return true;
 
 	return false;
@@ -1648,11 +1685,12 @@ bool is_savepoint_query(Node *node)
 /*
  * Return true if the query is 2PC transaction query.
  */
-bool is_2pc_transaction_query(Node *node)
+bool
+is_2pc_transaction_query(Node *node)
 {
-	if (((TransactionStmt *)node)->kind == TRANS_STMT_PREPARE ||
-		((TransactionStmt *)node)->kind == TRANS_STMT_COMMIT_PREPARED ||
-		((TransactionStmt *)node)->kind == TRANS_STMT_ROLLBACK_PREPARED)
+	if (((TransactionStmt *) node)->kind == TRANS_STMT_PREPARE ||
+		((TransactionStmt *) node)->kind == TRANS_STMT_COMMIT_PREPARED ||
+		((TransactionStmt *) node)->kind == TRANS_STMT_ROLLBACK_PREPARED)
 		return true;
 
 	return false;
@@ -1661,9 +1699,10 @@ bool is_2pc_transaction_query(Node *node)
 /*
  * Set query state, if a current state is before it than the specified state.
  */
-void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE state)
+void
+pool_set_query_state(POOL_QUERY_CONTEXT * query_context, POOL_QUERY_STATE state)
 {
-	int i;
+	int			i;
 
 	CHECK_QUERY_CONTEXT_IS_VALID;
 
@@ -1680,11 +1719,13 @@ void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE st
  * transition order.
  * The State transition order is defined as: UNPARSED < PARSE_COMPLETE < BIND_COMPLETE < EXECUTE_COMPLETE
  */
-int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2)
+int
+statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2)
 {
-	int ret;
+	int			ret;
 
-	switch (s2) {
+	switch (s2)
+	{
 		case POOL_UNPARSED:
 			ret = (s1 == s2) ? 0 : 1;
 			break;
@@ -1716,10 +1757,11 @@ int statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2)
  * To free the return value is required.
  */
 static
-char* remove_read_write(int len, const char* contents, int *rewritten_len)
+char *
+remove_read_write(int len, const char *contents, int *rewritten_len)
 {
-	char *rewritten_query;
-	char *rewritten_contents;
+	char	   *rewritten_query;
+	char	   *rewritten_contents;
 	const char *name;
 	const char *stmt;
 
@@ -1730,8 +1772,8 @@ char* remove_read_write(int len, const char* contents, int *rewritten_len)
 	*rewritten_len = len - strlen(stmt) + strlen(rewritten_query);
 	if (len < *rewritten_len)
 	{
-        ereport(ERROR,
-            (errmsg("invalid message length of transaction packet")));
+		ereport(ERROR,
+				(errmsg("invalid message length of transaction packet")));
 	}
 
 	rewritten_contents = palloc(*rewritten_len);
@@ -1748,7 +1790,8 @@ char* remove_read_write(int len, const char* contents, int *rewritten_len)
 /*
  * Return true if current query is safe to cache.
  */
-bool pool_is_cache_safe(void)
+bool
+pool_is_cache_safe(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
@@ -1766,7 +1809,8 @@ bool pool_is_cache_safe(void)
 /*
  * Set safe to cache.
  */
-void pool_set_cache_safe(void)
+void
+pool_set_cache_safe(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
@@ -1783,7 +1827,8 @@ void pool_set_cache_safe(void)
 /*
  * Unset safe to cache.
  */
-void pool_unset_cache_safe(void)
+void
+pool_unset_cache_safe(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
@@ -1800,7 +1845,8 @@ void pool_unset_cache_safe(void)
 /*
  * Return true if current temporary query cache is exceeded
  */
-bool pool_is_cache_exceeded(void)
+bool
+pool_is_cache_exceeded(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
@@ -1820,7 +1866,8 @@ bool pool_is_cache_exceeded(void)
 /*
  * Set current temporary query cache is exceeded
  */
-void pool_set_cache_exceeded(void)
+void
+pool_set_cache_exceeded(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
@@ -1837,7 +1884,8 @@ void pool_set_cache_exceeded(void)
 /*
  * Unset current temporary query cache is exceeded
  */
-void pool_unset_cache_exceeded(void)
+void
+pool_unset_cache_exceeded(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
@@ -1860,10 +1908,11 @@ void pool_unset_cache_exceeded(void)
  *
  * Note that if the node is not a variable statement, returns false.
  */
-bool pool_is_transaction_read_only(Node *node)
+bool
+pool_is_transaction_read_only(Node *node)
 {
 	ListCell   *list_item;
-	bool ret = false;
+	bool		ret = false;
 
 	if (!IsA(node, VariableSetStmt))
 		return ret;
@@ -1871,13 +1920,14 @@ bool pool_is_transaction_read_only(Node *node)
 	/*
 	 * SET transaction_read_only TO on
 	 */
-	if (((VariableSetStmt *)node)->kind == VAR_SET_VALUE &&
-		!strcmp(((VariableSetStmt *)node)->name, "transaction_read_only"))
+	if (((VariableSetStmt *) node)->kind == VAR_SET_VALUE &&
+		!strcmp(((VariableSetStmt *) node)->name, "transaction_read_only"))
 	{
-		List *options = ((VariableSetStmt *)node)->args;
+		List	   *options = ((VariableSetStmt *) node)->args;
+
 		foreach(list_item, options)
 		{
-			A_Const *v = (A_Const *)lfirst(list_item);
+			A_Const    *v = (A_Const *) lfirst(list_item);
 
 			switch (v->val.type)
 			{
@@ -1897,23 +1947,24 @@ bool pool_is_transaction_read_only(Node *node)
 	}
 
 	/*
-	 * SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY
-	 * SET TRANSACTION READ ONLY
+	 * SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY SET TRANSACTION
+	 * READ ONLY
 	 */
-	else if (((VariableSetStmt *)node)->kind == VAR_SET_MULTI &&
-			 (!strcmp(((VariableSetStmt *)node)->name, "TRANSACTION") ||
-			  !strcmp(((VariableSetStmt *)node)->name, "SESSION CHARACTERISTICS")))
+	else if (((VariableSetStmt *) node)->kind == VAR_SET_MULTI &&
+			 (!strcmp(((VariableSetStmt *) node)->name, "TRANSACTION") ||
+			  !strcmp(((VariableSetStmt *) node)->name, "SESSION CHARACTERISTICS")))
 	{
-		List *options = ((VariableSetStmt *)node)->args;
+		List	   *options = ((VariableSetStmt *) node)->args;
+
 		foreach(list_item, options)
 		{
-			DefElem *opt = (DefElem *) lfirst(list_item);
+			DefElem    *opt = (DefElem *) lfirst(list_item);
 
 			if (!strcmp("transaction_read_only", opt->defname))
 			{
-				bool read_only;
+				bool		read_only;
 
-				read_only = ((A_Const *)opt->arg)->val.val.ival;
+				read_only = ((A_Const *) opt->arg)->val.val.ival;
 				if (read_only)
 				{
 					ret = true;

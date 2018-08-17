@@ -23,7 +23,7 @@
 #include "parsenodes.h"
 #include "scanner.h"
 
-#define AMTYPE_INDEX                    'i'     /* index access method */
+#define AMTYPE_INDEX                    'i' /* index access method */
 
 /*
  * NB: include gram.h only AFTER including scanner.h, because scanner.h

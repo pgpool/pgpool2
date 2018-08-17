@@ -36,26 +36,27 @@ static void usage(void);
 static FILE *openfile(char *filename);
 static PGconn *connect_db(char *host, char *port, char *user, char *database);
 static void read_and_process(FILE *fd, PGconn *conn);
-static int process_a_line(char *buf, PGconn *con);
-static int process_message_type(int kind, char *buf, PGconn *conn);
+static int	process_a_line(char *buf, PGconn *con);
+static int	process_message_type(int kind, char *buf, PGconn *conn);
 static void process_function_call(char *buf, PGconn *conn);
 
-int read_nap = 0;
+int			read_nap = 0;
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
-	int opt;
-	int optindex;
-	char *env;
-	char *host = "";
-	char *port = "5432";
-	char *user = "";
-	char *database = "";
-	char *data_file = PGPROTODATA;
-	int debug = 0;
-	FILE *fd;
-	PGconn *con;
-	int var;
+	int			opt;
+	int			optindex;
+	char	   *env;
+	char	   *host = "";
+	char	   *port = "5432";
+	char	   *user = "";
+	char	   *database = "";
+	char	   *data_file = PGPROTODATA;
+	int			debug = 0;
+	FILE	   *fd;
+	PGconn	   *con;
+	int			var;
 
 	static struct option long_options[] = {
 		{"host", optional_argument, NULL, 'h'},
@@ -150,12 +151,14 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-static void show_version(void)
+static void
+show_version(void)
 {
-	fprintf(stderr, "pgproto (%s) %s\n",    PACKAGE, PACKAGE_VERSION);
+	fprintf(stderr, "pgproto (%s) %s\n", PACKAGE, PACKAGE_VERSION);
 }
 
-static void usage(void)
+static void
+usage(void)
 {
 	printf("Usage: %s\n"
 		   "-h, --hostname=HOSTNAME (default: UNIX domain socket)\n"
@@ -167,16 +170,17 @@ static void usage(void)
 		   "-D, --debug\n"
 		   "-?, --help\n"
 		   "-v, --version\n",
-		PACKAGE);
+		   PACKAGE);
 }
 
 /*
  * Open protocol data and return the file descriptor.  If failed to open the
  * file, do not return and exit within this function.
  */
-static FILE *openfile(char *filename)
+static FILE *
+openfile(char *filename)
 {
-	FILE *fd = fopen(filename,"r");
+	FILE	   *fd = fopen(filename, "r");
 
 	if (fd == NULL)
 	{
@@ -190,11 +194,12 @@ static FILE *openfile(char *filename)
  * Connect to the specifed PostgreSQL. If failed, do not return and exit
  * within this function.
  */
-static PGconn *connect_db(char *host, char *port, char *user, char *database)
+static PGconn *
+connect_db(char *host, char *port, char *user, char *database)
 {
-	char conninfo[1024];
-	PGconn *conn;
-	size_t n;
+	char		conninfo[1024];
+	PGconn	   *conn;
+	size_t		n;
 
 	conninfo[0] = '\0';
 	n = sizeof(conninfo);
@@ -203,7 +208,7 @@ static PGconn *connect_db(char *host, char *port, char *user, char *database)
 	{
 		n -= sizeof("host=");
 		strncat(conninfo, "host=", n);
-		n -= strlen(host)+1;
+		n -= strlen(host) + 1;
 		strncat(conninfo, host, n);
 	}
 
@@ -211,7 +216,7 @@ static PGconn *connect_db(char *host, char *port, char *user, char *database)
 	{
 		n -= sizeof("port=");
 		strncat(conninfo, " port=", n);
-		n -= strlen(port)+1;
+		n -= strlen(port) + 1;
 		strncat(conninfo, port, n);
 	}
 
@@ -219,7 +224,7 @@ static PGconn *connect_db(char *host, char *port, char *user, char *database)
 	{
 		n -= sizeof("user=");
 		strncat(conninfo, " user=", n);
-		n -= strlen(user)+1;
+		n -= strlen(user) + 1;
 		strcat(conninfo, user);
 	}
 
@@ -227,7 +232,7 @@ static PGconn *connect_db(char *host, char *port, char *user, char *database)
 	{
 		n -= sizeof("dbname=");
 		strncat(conninfo, " dbname=", n);
-		n -= strlen(database)+1;
+		n -= strlen(database) + 1;
 		strncat(conninfo, database, n);
 	}
 
@@ -245,15 +250,16 @@ static PGconn *connect_db(char *host, char *port, char *user, char *database)
 /*
  * Read the protocol data file and process it.
  */
-static void read_and_process(FILE *fd, PGconn *conn)
+static void
+read_and_process(FILE *fd, PGconn *conn)
 {
 #define PGPROTO_READBUF_LENGTH 8192
-	int status;
-	char *buf;
-	int buflen;
-	char *p;
-	int len;
-	int readp;
+	int			status;
+	char	   *buf;
+	int			buflen;
+	char	   *p;
+	int			len;
+	int			readp;
 
 	for (;;)
 	{
@@ -270,7 +276,10 @@ static void read_and_process(FILE *fd, PGconn *conn)
 				exit(0);
 			}
 
-			/* if ends with backslash + new line, assume it's a continuous line */
+			/*
+			 * if ends with backslash + new line, assume it's a continuous
+			 * line
+			 */
 			len = strlen(p);
 			if (p[len - 2] != '\\' || p[len - 1] != '\n')
 			{
@@ -296,10 +305,11 @@ static void read_and_process(FILE *fd, PGconn *conn)
 /*
  * Process a line of protocol data.
  */
-static int process_a_line(char *buf, PGconn *conn)
+static int
+process_a_line(char *buf, PGconn *conn)
 {
-	char *p = buf;
-	int kind;
+	char	   *p = buf;
+	int			kind;
 
 #ifdef DEBUG
 	fprintf(stderr, "buf: %s", buf);
@@ -324,7 +334,7 @@ static int process_a_line(char *buf, PGconn *conn)
 
 	p++;
 
-	kind = (unsigned char)(*p++);
+	kind = (unsigned char) (*p++);
 
 	if (*p != '\'')
 	{
@@ -342,18 +352,19 @@ static int process_a_line(char *buf, PGconn *conn)
 /*
  * Read a line of message from buf and process it.
  */
-static int process_message_type(int kind, char *buf, PGconn *conn)
+static int
+process_message_type(int kind, char *buf, PGconn *conn)
 {
 #ifdef DEBUG
 	fprintf(stderr, "message kind is %c\n", kind);
 #endif
 
-	char *query;
-	char *err_msg;
-	char *data;
-	char *bufp;
+	char	   *query;
+	char	   *err_msg;
+	char	   *data;
+	char	   *bufp;
 
-	switch(kind)
+	switch (kind)
 	{
 		case 'Y':
 			read_until_ready_for_query(conn, 0);
@@ -365,19 +376,19 @@ static int process_message_type(int kind, char *buf, PGconn *conn)
 
 		case 'X':
 			fprintf(stderr, "FE=> Terminate\n");
-			send_char((char)kind, conn);
+			send_char((char) kind, conn);
 			send_int(sizeof(int), conn);
 			break;
 
 		case 'S':
 			fprintf(stderr, "FE=> Sync\n");
-			send_char((char)kind, conn);
+			send_char((char) kind, conn);
 			send_int(sizeof(int), conn);
 			break;
 
 		case 'H':
 			fprintf(stderr, "FE=> Flush\n");
-			send_char((char)kind, conn);
+			send_char((char) kind, conn);
 			send_int(sizeof(int), conn);
 			break;
 
@@ -385,8 +396,8 @@ static int process_message_type(int kind, char *buf, PGconn *conn)
 			buf++;
 			query = buffer_read_string(buf, &bufp);
 			fprintf(stderr, "FE=> Query (query=\"%s\")\n", query);
-			send_char((char)kind, conn);
-			send_int(sizeof(int)+strlen(query)+1, conn);
+			send_char((char) kind, conn);
+			send_int(sizeof(int) + strlen(query) + 1, conn);
 			send_string(query, conn);
 			pg_free(query);
 			break;
@@ -395,15 +406,15 @@ static int process_message_type(int kind, char *buf, PGconn *conn)
 			buf++;
 			data = buffer_read_string(buf, &bufp);
 			fprintf(stderr, "FE=> CopyData (copy data=\"%s\")\n", data);
-			send_char((char)kind, conn);
-			send_int(sizeof(int)+strlen(data), conn);
+			send_char((char) kind, conn);
+			send_int(sizeof(int) + strlen(data), conn);
 			send_byte(data, strlen(data), conn);
 			pg_free(data);
 			break;
 
 		case 'c':
 			fprintf(stderr, "FE=> CopyDone\n");
-			send_char((char)kind, conn);
+			send_char((char) kind, conn);
 			send_int(sizeof(int), conn);
 			break;
 
@@ -411,8 +422,8 @@ static int process_message_type(int kind, char *buf, PGconn *conn)
 			buf++;
 			err_msg = buffer_read_string(buf, &bufp);
 			fprintf(stderr, "FE=> CopyFail (error message=\"%s\")\n", err_msg);
-			send_char((char)kind, conn);
-			send_int(sizeof(int)+strlen(err_msg)+1, conn);
+			send_char((char) kind, conn);
+			send_int(sizeof(int) + strlen(err_msg) + 1, conn);
 			send_string(err_msg, conn);
 			pg_free(err_msg);
 			break;
@@ -451,18 +462,19 @@ static int process_message_type(int kind, char *buf, PGconn *conn)
 /*
  * Process function call messaage
  */
-static void process_function_call(char *buf, PGconn *conn)
+static void
+process_function_call(char *buf, PGconn *conn)
 {
-	int len;
-	int foid;
-	short nparams;
-	short ncodes;
-	short codes[MAXENTRIES];
-	int paramlens[MAXENTRIES];
-	char *paramvals[MAXENTRIES];
-	short result_formatcode;
-	int i;
-	char *bufp;
+	int			len;
+	int			foid;
+	short		nparams;
+	short		ncodes;
+	short		codes[MAXENTRIES];
+	int			paramlens[MAXENTRIES];
+	char	   *paramvals[MAXENTRIES];
+	short		result_formatcode;
+	int			i;
+	char	   *bufp;
 
 	SKIP_TABS(buf);
 
@@ -477,7 +489,7 @@ static void process_function_call(char *buf, PGconn *conn)
 
 	/* number of argument format codes */
 	ncodes = buffer_read_int(buf, &bufp);
-	len += sizeof(short) + sizeof(short)*ncodes;
+	len += sizeof(short) + sizeof(short) * ncodes;
 	buf = bufp;
 
 	SKIP_TABS(buf);
@@ -491,7 +503,7 @@ static void process_function_call(char *buf, PGconn *conn)
 	/* read each format code */
 	if (ncodes > 0)
 	{
-		for (i=0;i<ncodes;i++)
+		for (i = 0; i < ncodes; i++)
 		{
 			codes[i] = buffer_read_int(buf, &bufp);
 			buf = bufp;
@@ -512,7 +524,7 @@ static void process_function_call(char *buf, PGconn *conn)
 	}
 
 	/* read each function argument */
-	for (i=0;i<nparams;i++)
+	for (i = 0; i < nparams; i++)
 	{
 		paramlens[i] = buffer_read_int(buf, &bufp);
 		len += sizeof(int);
@@ -546,16 +558,16 @@ static void process_function_call(char *buf, PGconn *conn)
 	fprintf(stderr, "\n");
 
 	send_char('F', conn);
-	send_int(len, conn);	/* message length */
-	send_int(foid, conn);	/* function oid */
+	send_int(len, conn);		/* message length */
+	send_int(foid, conn);		/* function oid */
 	send_int16(ncodes, conn);	/* number of argument format code */
-	for (i=0;i<ncodes;i++)	/* argument format codes */
+	for (i = 0; i < ncodes; i++)	/* argument format codes */
 	{
 		send_int16(codes[i], conn);
 	}
 
 	send_int16(nparams, conn);	/* number of function arguments */
-	for (i=0;i<nparams;i++)		/* function arguments */
+	for (i = 0; i < nparams; i++)	/* function arguments */
 	{
 		send_int(paramlens[i], conn);	/* argument length */
 

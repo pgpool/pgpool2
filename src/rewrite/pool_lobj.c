@@ -50,8 +50,9 @@
  * length. This is allocated in a static memory. New packet length is
  * set to *len.
  */
-char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
-							POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, int* len)
+char *
+pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
+					  POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, int *len)
 {
 #define LO_CREAT_OID_QUERY "SELECT oid FROM pg_catalog.pg_proc WHERE proname = 'lo_creat' and pronamespace = (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = 'pg_catalog')"
 
@@ -63,31 +64,31 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 
 #define GET_MAX_LOBJ_KEY "SELECT coalesce(max(loid)::INTEGER, 0)+1 FROM pg_catalog.pg_largeobject"
 
-	static char  rewritten_packet[LO_CREATE_PACKET_LENGTH];
+	static char rewritten_packet[LO_CREATE_PACKET_LENGTH];
 
-	static POOL_RELCACHE *relcache_lo_creat;
-	static POOL_RELCACHE *relcache_lo_create;
+	static POOL_RELCACHE * relcache_lo_creat;
+	static POOL_RELCACHE * relcache_lo_create;
 
-	int lo_creat_oid;
-	int lo_create_oid;
-	int orig_fcall_oid;
+	int			lo_creat_oid;
+	int			lo_create_oid;
+	int			orig_fcall_oid;
 	POOL_STATUS status;
-	char qbuf[1024];
-	char *p;
+	char		qbuf[1024];
+	char	   *p;
 	POOL_SELECT_RESULT *result;
-	int lobjid;
-	int32 int32val;
-	int16 int16val;
-	int16 result_format_code;
+	int			lobjid;
+	int32		int32val;
+	int16		int16val;
+	int16		result_format_code;
 
 	if (kind != 'F')
-		return NULL;	/* not function call */
+		return NULL;			/* not function call */
 
-	if (!strcmp(pool_config->lobj_lock_table,""))
-		return NULL;	/* no lock table */
+	if (!strcmp(pool_config->lobj_lock_table, ""))
+		return NULL;			/* no lock table */
 
 	if (!REPLICATION)
-		return NULL;	/* not in replication mode */
+		return NULL;			/* not in replication mode */
 
 	/*
 	 * If relcache does not exist, create it.
@@ -95,12 +96,12 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	if (!relcache_lo_creat)
 	{
 		relcache_lo_creat = pool_create_relcache(1, LO_CREAT_OID_QUERY,
-										int_register_func, int_unregister_func,
-										false);
+												 int_register_func, int_unregister_func,
+												 false);
 		if (relcache_lo_creat == NULL)
 		{
 			ereport(WARNING,
-				(errmsg("unable to create relcache, while rewriting LO CREATE")));
+					(errmsg("unable to create relcache, while rewriting LO CREATE")));
 			return NULL;
 		}
 	}
@@ -108,17 +109,18 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	/*
 	 * Get lo_creat oid
 	 */
-	lo_creat_oid = (int)(intptr_t)pool_search_relcache(relcache_lo_creat, backend, "pg_proc");
+	lo_creat_oid = (int) (intptr_t) pool_search_relcache(relcache_lo_creat, backend, "pg_proc");
 
 	memmove(&orig_fcall_oid, packet, sizeof(int32));
 	orig_fcall_oid = ntohl(orig_fcall_oid);
 
 	ereport(DEBUG1,
-		(errmsg("rewriting LO CREATE"),
+			(errmsg("rewriting LO CREATE"),
 			 errdetail("orig_fcall_oid:% d lo_creat_oid: %d", orig_fcall_oid, lo_creat_oid)));
 
 	/*
-	 * This function call is calling lo_creat? */
+	 * This function call is calling lo_creat?
+	 */
 	if (orig_fcall_oid != lo_creat_oid)
 		return NULL;
 
@@ -128,8 +130,8 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	if (!relcache_lo_create)
 	{
 		relcache_lo_create = pool_create_relcache(1, LO_CREATE_OID_QUERY,
-										int_register_func, int_unregister_func,
-										false);
+												  int_register_func, int_unregister_func,
+												  false);
 		if (relcache_lo_create == NULL)
 		{
 			ereport(LOG,
@@ -141,16 +143,16 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	/*
 	 * Get lo_create oid
 	 */
-	lo_create_oid = (int)(intptr_t)pool_search_relcache(relcache_lo_create, backend, "pg_proc");
+	lo_create_oid = (int) (intptr_t) pool_search_relcache(relcache_lo_create, backend, "pg_proc");
 
 	ereport(DEBUG1,
-		(errmsg("rewriting LO CREATE"),
-			errdetail("lo_creat_oid: %d lo_create_oid: %d",lo_creat_oid, lo_create_oid)));
+			(errmsg("rewriting LO CREATE"),
+			 errdetail("lo_creat_oid: %d lo_create_oid: %d", lo_creat_oid, lo_create_oid)));
 
 	/*
 	 * Parse input packet
 	 */
-	memmove(&int16val, packet+packet_len-sizeof(int16), sizeof(int16));
+	memmove(&int16val, packet + packet_len - sizeof(int16), sizeof(int16));
 	result_format_code = ntohs(int16val);
 
 	/* sanity check */
@@ -161,7 +163,7 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 		return NULL;
 	}
 	ereport(DEBUG1,
-		(errmsg("rewriting LO CREATE"),
+			(errmsg("rewriting LO CREATE"),
 			 errdetail("return format code: %d", int16val)));
 
 	/*
@@ -185,7 +187,7 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	if (TSTATE(backend, MASTER_NODE_ID) == 'E')
 	{
 		ereport(LOG,
-			(errmsg("failed while rewriting LO CREATE"),
+				(errmsg("failed while rewriting LO CREATE"),
 				 errdetail("failed to execute: %s", qbuf)));
 		return NULL;
 	}
@@ -197,14 +199,14 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	if (!result)
 	{
 		ereport(LOG,
-			(errmsg("failed while rewriting LO CREATE"),
+				(errmsg("failed while rewriting LO CREATE"),
 				 errdetail("failed to execute: %s", GET_MAX_LOBJ_KEY)));
 		return NULL;
 	}
-		
+
 	lobjid = atoi(result->data[0]);
 	ereport(DEBUG1,
-		(errmsg("rewriting LO CREATE"),
+			(errmsg("rewriting LO CREATE"),
 			 errdetail("lobjid:%d", lobjid)));
 
 	free_select_result(result);
@@ -225,31 +227,31 @@ char *pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	*len = LO_CREATE_PACKET_LENGTH;
 
 	int32val = htonl(lo_create_oid);
-	memmove(p,&int32val, sizeof(int32));	/* lo_create oid */
+	memmove(p, &int32val, sizeof(int32));	/* lo_create oid */
 	p += sizeof(int32);
 
 	int16val = htons(1);
-	memmove(p,&int16val, sizeof(int16));	/* number of argument format code */
+	memmove(p, &int16val, sizeof(int16));	/* number of argument format code */
 	p += sizeof(int16);
 
 	int16val = htons(1);
-	memmove(p,&int16val, sizeof(int16));	/* format code */
+	memmove(p, &int16val, sizeof(int16));	/* format code */
 	p += sizeof(int16);
 
 	int16val = htons(1);
-	memmove(p,&int16val, sizeof(int16));	/* number of arguments */
+	memmove(p, &int16val, sizeof(int16));	/* number of arguments */
 	p += sizeof(int16);
 
 	int32val = htonl(4);
-	memmove(p,&int32val, sizeof(int32));	/* argument length */
+	memmove(p, &int32val, sizeof(int32));	/* argument length */
 	p += sizeof(int32);
 
 	int32val = htonl(lobjid);
-	memmove(p,&int32val, sizeof(int32));	/* argument(lobj id) */
+	memmove(p, &int32val, sizeof(int32));	/* argument(lobj id) */
 	p += sizeof(int32);
 
 	int16val = htons(result_format_code);
-	memmove(p,&int16val, sizeof(int16));	/* result format code */
+	memmove(p, &int16val, sizeof(int16));	/* result format code */
 
 	return rewritten_packet;
 }

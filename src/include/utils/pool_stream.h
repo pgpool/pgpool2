@@ -3,7 +3,7 @@
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2015	PgPool Global Development Group
@@ -42,31 +42,31 @@
        (connection)->len = 0; \
     } while (0)
 
-extern POOL_CONNECTION *pool_open(int fd, bool backend_connection);
-extern void pool_close(POOL_CONNECTION *cp);
-extern int pool_read(POOL_CONNECTION *cp, void *buf, int len);
-extern void pool_read_with_error(POOL_CONNECTION *cp, void *buf, int len,
-                                 const char* err_context );
+extern POOL_CONNECTION * pool_open(int fd, bool backend_connection);
+extern void pool_close(POOL_CONNECTION * cp);
+extern int	pool_read(POOL_CONNECTION * cp, void *buf, int len);
+extern void pool_read_with_error(POOL_CONNECTION * cp, void *buf, int len,
+					 const char *err_context);
 
-extern char *pool_read2(POOL_CONNECTION *cp, int len);
-extern int pool_write(POOL_CONNECTION *cp, void *buf, int len);
-extern int pool_write_noerror(POOL_CONNECTION *cp, void *buf, int len);
-extern int pool_flush(POOL_CONNECTION *cp);
-extern int pool_flush_noerror(POOL_CONNECTION *cp);
-extern int pool_flush_it(POOL_CONNECTION *cp);
-extern void pool_write_and_flush(POOL_CONNECTION *cp, void *buf, int len);
-extern int pool_write_and_flush_noerror(POOL_CONNECTION *cp, void *buf, int len);
-extern char *pool_read_string(POOL_CONNECTION *cp, int *len, int line);
-extern int pool_unread(POOL_CONNECTION *cp, void *data, int len);
-extern int pool_push(POOL_CONNECTION *cp, void *data, int len);
-extern void pool_pop(POOL_CONNECTION *cp, int *len);
-extern int pool_stacklen(POOL_CONNECTION *cp);
+extern char *pool_read2(POOL_CONNECTION * cp, int len);
+extern int	pool_write(POOL_CONNECTION * cp, void *buf, int len);
+extern int	pool_write_noerror(POOL_CONNECTION * cp, void *buf, int len);
+extern int	pool_flush(POOL_CONNECTION * cp);
+extern int	pool_flush_noerror(POOL_CONNECTION * cp);
+extern int	pool_flush_it(POOL_CONNECTION * cp);
+extern void pool_write_and_flush(POOL_CONNECTION * cp, void *buf, int len);
+extern int	pool_write_and_flush_noerror(POOL_CONNECTION * cp, void *buf, int len);
+extern char *pool_read_string(POOL_CONNECTION * cp, int *len, int line);
+extern int	pool_unread(POOL_CONNECTION * cp, void *data, int len);
+extern int	pool_push(POOL_CONNECTION * cp, void *data, int len);
+extern void pool_pop(POOL_CONNECTION * cp, int *len);
+extern int	pool_stacklen(POOL_CONNECTION * cp);
 extern void pool_set_nonblock(int fd);
 extern void pool_unset_nonblock(int fd);
 
-extern int socket_read(int sock, void* buf, size_t len, int timeout);
-extern int socket_write(int fd, void* buf, size_t len);
+extern int	socket_read(int sock, void *buf, size_t len, int timeout);
+extern int	socket_write(int fd, void *buf, size_t len);
 
-extern void pool_set_db_node_id(POOL_CONNECTION *con, int db_node_id);
+extern void pool_set_db_node_id(POOL_CONNECTION * con, int db_node_id);
 
-#endif /* POOL_STREAM_H */
+#endif							/* POOL_STREAM_H */

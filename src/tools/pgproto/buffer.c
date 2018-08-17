@@ -32,17 +32,18 @@
  * the data is returned to "bufp".  If the format is not follows above, exit
  * within this function.
  */
-int buffer_read_int(char *buf, char **bufp)
+int
+buffer_read_int(char *buf, char **bufp)
 {
-	char intbuf[128];
-	int i;
-	char *p;
-	int intval;
-	char *endptr;
+	char		intbuf[128];
+	int			i;
+	char	   *p;
+	int			intval;
+	char	   *endptr;
 
 	p = intbuf;
 
-    for (i=0;i<sizeof(intbuf)-1;i++)
+	for (i = 0; i < sizeof(intbuf) - 1; i++)
 	{
 		if (*buf == '\t')
 			break;
@@ -71,10 +72,12 @@ int buffer_read_int(char *buf, char **bufp)
  * afer reading the data is returned to "bufp".  If the format is not follows
  * above, exit within this function.
  */
-char *buffer_read_string(char *buf, char **bufp)
+char *
+buffer_read_string(char *buf, char **bufp)
 {
-	int len;
-	char *p, *str;
+	int			len;
+	char	   *p,
+			   *str;
 
 	if (*buf != '"')
 	{
@@ -85,7 +88,7 @@ char *buffer_read_string(char *buf, char **bufp)
 	buf++;
 
 	len = strlen(buf);
-	p = str = pg_malloc(len+1);
+	p = str = pg_malloc(len + 1);
 
 	do
 	{
@@ -100,7 +103,7 @@ char *buffer_read_string(char *buf, char **bufp)
 
 	if (p == str || *(p - 1) != '"')
 	{
-		fprintf(stderr, "buffer_read_string: given string does not end with \"(%c)", p==str?' ':*(p-1));
+		fprintf(stderr, "buffer_read_string: given string does not end with \"(%c)", p == str ? ' ' : *(p - 1));
 		exit(1);
 	}
 
@@ -117,9 +120,10 @@ char *buffer_read_string(char *buf, char **bufp)
  * reading the data is returned to "bufp".  If the format is not follows
  * above, exit within this function.
  */
-char buffer_read_char(char *buf, char **bufp)
+char
+buffer_read_char(char *buf, char **bufp)
 {
-	char c;
+	char		c;
 
 	if (*buf != '\'')
 	{

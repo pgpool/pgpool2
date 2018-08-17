@@ -82,11 +82,11 @@ static struct ONEXIT
 {
 	void		(*function) (int code, Datum arg);
 	Datum		arg;
-} on_proc_exit_list[MAX_ON_EXITS], on_shmem_exit_list[MAX_ON_EXITS];
+}			on_proc_exit_list[MAX_ON_EXITS], on_shmem_exit_list[MAX_ON_EXITS];
 
 static int	on_proc_exit_index,
 			on_shmem_exit_index;
-struct ONEXIT on_exit_prepare = {NULL,0L};
+struct ONEXIT on_exit_prepare = {NULL, 0L};
 
 /*
  * This flag tracks whether we've called atexit() in the current process
@@ -165,7 +165,9 @@ static int	errordata_stack_depth = -1; /* index of topmost active frame */
 
 static int	recursion_depth = 0;	/* to detect actual recursion */
 
-static int	frontend_error_recursion_depth = 0;	/* to detect recursion in delivering error to frontend clients */
+static int	frontend_error_recursion_depth = 0; /* to detect recursion in
+												 * delivering error to
+												 * frontend clients */
 
 
 /* Macro for checking errordata_stack_depth is reasonable */
@@ -221,6 +223,7 @@ errstart(int elevel, const char *filename, int lineno,
 	bool		output_to_client = false;
 	int			i;
 	int			frontend_invalid = false;
+
 	/*
 	 * Check some cases in which we want to promote an error into a more
 	 * severe error.  None of this logic applies for non-error messages.
@@ -283,8 +286,8 @@ errstart(int elevel, const char *filename, int lineno,
 		 * reasons and because many clients can't handle NOTICE messages
 		 * during authentication.
 		 */
-        output_to_client = (elevel >= pool_config->client_min_messages ||
-								elevel == INFO || elevel == FRONTEND_ONLY_ERROR);
+		output_to_client = (elevel >= pool_config->client_min_messages ||
+							elevel == INFO || elevel == FRONTEND_ONLY_ERROR);
 	}
 
 	/* Skip processing effort if non-error message will not be output */
@@ -323,7 +326,7 @@ errstart(int elevel, const char *filename, int lineno,
 		 * because it suggests an infinite loop of errors during error
 		 * recovery.
 		 */
-		errordata_stack_depth = -1;		/* make room on stack */
+		errordata_stack_depth = -1; /* make room on stack */
 		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
@@ -334,7 +337,9 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->frontend_invalid = frontend_invalid;
 	edata->output_to_server = output_to_server;
 	edata->output_to_client = output_to_client;
-	if(elevel == FATAL && PG_exception_stack == NULL) /* This is startup failure. Take down main process with it */
+	if (elevel == FATAL && PG_exception_stack == NULL)	/* This is startup
+														 * failure. Take down
+														 * main process with it */
 		edata->retcode = POOL_EXIT_FATAL;
 	else
 		edata->retcode = POOL_EXIT_AND_RESTART;
@@ -353,7 +358,7 @@ errstart(int elevel, const char *filename, int lineno,
 	/* the default text domain is the backend's */
 	edata->domain = domain ? domain : PG_TEXTDOMAIN("pgpool");
 
-    edata->saved_errno = errno;
+	edata->saved_errno = errno;
 
 	/*
 	 * Any allocations for this error state level should go into ErrorContext
@@ -377,7 +382,7 @@ errfinish(int dummy,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	int			elevel = edata->elevel;
-	int 		retcode = edata->retcode;
+	int			retcode = edata->retcode;
 	MemoryContext oldcontext;
 	ErrorContextCallback *econtext;
 
@@ -528,17 +533,18 @@ errcode_ign(int sqlerrcode)
 	return 0;					/* return value does not matter */
 }
 
-int pool_error_code(const char *errcode)
+int
+pool_error_code(const char *errcode)
 {
-    ErrorData  *edata = &errordata[errordata_stack_depth];
+	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
-    
+
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
-    
+
 	edata->pgpool_errcode = pstrdup(errcode);
-    
+
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
 	return 0;					/* return value does not matter */
@@ -931,7 +937,8 @@ errposition(int cursorpos)
 	return 0;					/* return value does not matter */
 }
 
-int	return_code(int retcode)
+int
+return_code(int retcode)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 
@@ -940,10 +947,11 @@ int	return_code(int retcode)
 
 	edata->retcode = retcode;
 
-	return retcode;					/* return value does not matter */
+	return retcode;				/* return value does not matter */
 }
 
-int	get_return_code(void)
+int
+get_return_code(void)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 
@@ -976,7 +984,8 @@ geterrcode(void)
  * This is only intended for use in error callback subroutines, since there
  * is no other place outside elog.c where the concept is meaningful.
  */
-bool getfrontendinvalid(void)
+bool
+getfrontendinvalid(void)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 
@@ -985,6 +994,7 @@ bool getfrontendinvalid(void)
 
 	return edata->frontend_invalid;
 }
+
 /*
  * geterrposition --- return the currently set error position (0 if none)
  *
@@ -1028,7 +1038,7 @@ elog_start(const char *filename, int lineno, const char *funcname)
 		 * else failure to convert it to client encoding could cause further
 		 * recursion.
 		 */
-		errordata_stack_depth = -1;		/* make room on stack */
+		errordata_stack_depth = -1; /* make room on stack */
 		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
@@ -1275,7 +1285,7 @@ ReThrowError(ErrorData *edata)
 		 * because it suggests an infinite loop of errors during error
 		 * recovery.
 		 */
-		errordata_stack_depth = -1;		/* make room on stack */
+		errordata_stack_depth = -1; /* make room on stack */
 		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
@@ -1338,8 +1348,8 @@ pg_re_throw(void)
 		Assert(edata->elevel == ERROR);
 		edata->elevel = FATAL;
 
-        edata->output_to_server = (FATAL >= pool_config->log_min_messages);
-        edata->output_to_client = (FATAL >= pool_config->client_min_messages);
+		edata->output_to_server = (FATAL >= pool_config->log_min_messages);
+		edata->output_to_client = (FATAL >= pool_config->client_min_messages);
 
 		/*
 		 * We can use errfinish() for the rest, but we don't want it to call
@@ -1353,7 +1363,8 @@ pg_re_throw(void)
 
 	/* Doesn't return ... */
 	ExceptionalCondition("pg_re_throw tried to return", "FailedAssertion",
-                         __FILE__, __LINE__);}
+						 __FILE__, __LINE__);
+}
 
 
 /*
@@ -1370,8 +1381,8 @@ pg_re_throw(void)
 char *
 GetErrorContextStack(void)
 {
-	ErrorData			   *edata;
-	ErrorContextCallback   *econtext;
+	ErrorData  *edata;
+	ErrorContextCallback *econtext;
 
 	/*
 	 * Okay, crank up a stack entry to store the info in.
@@ -1385,7 +1396,7 @@ GetErrorContextStack(void)
 		 * because it suggests an infinite loop of errors during error
 		 * recovery.
 		 */
-		errordata_stack_depth = -1;		/* make room on stack */
+		errordata_stack_depth = -1; /* make room on stack */
 		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
@@ -1406,8 +1417,8 @@ GetErrorContextStack(void)
 	 * into edata->context.
 	 *
 	 * Errors occurring in callback functions should go through the regular
-	 * error handling code which should handle any recursive errors, though
-	 * we double-check above, just in case.
+	 * error handling code which should handle any recursive errors, though we
+	 * double-check above, just in case.
 	 */
 	for (econtext = error_context_stack;
 		 econtext != NULL;
@@ -1531,12 +1542,10 @@ write_syslog(int level, const char *line)
 			memcpy(buf, line, buflen);
 			buf[buflen] = '\0';
 
-			/* trim to multibyte letter boundary
-			buflen = pg_mbcliplen(buf, buflen, buflen);
-			if (buflen <= 0)
-				return;
-			buf[buflen] = '\0';
-*/
+			/*
+			 * trim to multibyte letter boundary buflen = pg_mbcliplen(buf,
+			 * buflen, buflen); if (buflen <= 0) return; buf[buflen] = '\0';
+			 */
 			/* already word boundary? */
 			if (line[buflen] != '\0' &&
 				!isspace((unsigned char) line[buflen]))
@@ -1566,7 +1575,7 @@ write_syslog(int level, const char *line)
 		syslog(level, "[%lu] %s", seq, line);
 	}
 }
-#endif   /* HAVE_VSYSLOG */
+#endif							/* HAVE_VSYSLOG */
 
 #ifdef WIN32
 /*
@@ -1669,7 +1678,7 @@ write_eventlog(int level, const char *line, int len)
 				 &line,
 				 NULL);
 }
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 static void
 write_console(const char *line, int len)
@@ -1746,20 +1755,23 @@ write_console(const char *line, int len)
 static void
 send_message_to_frontend(ErrorData *edata)
 {
-	int protoVersion = PROTO_MAJOR_V3; /* default protocol version is V3 also used by pcp lib */
+	int			protoVersion = PROTO_MAJOR_V3;	/* default protocol version is
+												 * V3 also used by pcp lib */
 
-	if (pool_frontend_exists() < 0 )
+	if (pool_frontend_exists() < 0)
 		return;
+
 	/*
 	 * Leave if we are failing on sending the message to frontend.
 	 */
 	if (++frontend_error_recursion_depth > 2)
 		return;
 
-	if(processType == PT_CHILD)
+	if (processType == PT_CHILD)
 	{
 		/*
-		 * Do not forward the debug messages to client before session is initialized
+		 * Do not forward the debug messages to client before session is
+		 * initialized
 		 */
 		if (edata->elevel < ERROR && pool_get_session_context(true) == NULL)
 		{
@@ -1772,107 +1784,109 @@ send_message_to_frontend(ErrorData *edata)
 
 	if (protoVersion == PROTO_MAJOR_V2)
 	{
-		char* message = edata->message?edata->message:"missing error text";
-		pool_send_to_frontend((edata->elevel < ERROR) ? "N" : "E", 1,false);
-		pool_send_to_frontend(message, strlen(message),false);
-		pool_send_to_frontend("\n", 1,true);
+		char	   *message = edata->message ? edata->message : "missing error text";
+
+		pool_send_to_frontend((edata->elevel < ERROR) ? "N" : "E", 1, false);
+		pool_send_to_frontend(message, strlen(message), false);
+		pool_send_to_frontend("\n", 1, true);
 	}
 
 	else if (protoVersion == PROTO_MAJOR_V3)
 	{
-        /*
-         * Buffer length for each message part
-         */
+		/*
+		 * Buffer length for each message part
+		 */
 #define MAXMSGBUF 256
-        /*
-         * Buffer length for result message buffer.
-         * Since msg is consisted of 7 parts, msg buffer should be large
-         * enough to hold those message parts
-         */
+		/*
+		 * Buffer length for result message buffer. Since msg is consisted of
+		 * 7 parts, msg buffer should be large enough to hold those message
+		 * parts
+		 */
 #define MAXDATA	(MAXMSGBUF+1)*7+1
 
-		char data[MAXDATA];
-		char msgbuf[MAXMSGBUF+1];
-		int len;
-		int thislen;
-		int sendlen;
-        
+		char		data[MAXDATA];
+		char		msgbuf[MAXMSGBUF + 1];
+		int			len;
+		int			thislen;
+		int			sendlen;
+
 		len = 0;
 		memset(data, 0, MAXDATA);
 		pool_send_to_frontend((edata->elevel < ERROR) ? "N" : "E", 1, false);
 
 		/* error level */
-		thislen = snprintf(msgbuf, MAXMSGBUF, "S%s", error_severity(edata->elevel,true));
+		thislen = snprintf(msgbuf, MAXMSGBUF, "S%s", error_severity(edata->elevel, true));
 		thislen = Min(thislen, MAXMSGBUF);
-		memcpy(data +len, msgbuf, thislen+1);
+		memcpy(data + len, msgbuf, thislen + 1);
 		len += thislen + 1;
-        
+
 		/* code */
-		thislen = snprintf(msgbuf, MAXMSGBUF, "C%s", edata->pgpool_errcode?edata->pgpool_errcode:"XX000");
+		thislen = snprintf(msgbuf, MAXMSGBUF, "C%s", edata->pgpool_errcode ? edata->pgpool_errcode : "XX000");
 		thislen = Min(thislen, MAXMSGBUF);
-		memcpy(data +len, msgbuf, thislen+1);
+		memcpy(data + len, msgbuf, thislen + 1);
 		len += thislen + 1;
-        
+
 		/* message */
-		thislen = snprintf(msgbuf, MAXMSGBUF, "M%s", edata->message?edata->message:"missing error text");
+		thislen = snprintf(msgbuf, MAXMSGBUF, "M%s", edata->message ? edata->message : "missing error text");
 		thislen = Min(thislen, MAXMSGBUF);
-		memcpy(data +len, msgbuf, thislen+1);
+		memcpy(data + len, msgbuf, thislen + 1);
 		len += thislen + 1;
-        
+
 		/* detail */
 		if (edata->detail)
 		{
 			thislen = snprintf(msgbuf, MAXMSGBUF, "D%s", edata->detail);
 			thislen = Min(thislen, MAXMSGBUF);
-			memcpy(data +len, msgbuf, thislen+1);
+			memcpy(data + len, msgbuf, thislen + 1);
 			len += thislen + 1;
 		}
-        
+
 		/* hint */
-		if (edata->hint )
+		if (edata->hint)
 		{
 			thislen = snprintf(msgbuf, MAXMSGBUF, "H%s", edata->hint);
 			thislen = Min(thislen, MAXMSGBUF);
-			memcpy(data +len, msgbuf, thislen+1);
+			memcpy(data + len, msgbuf, thislen + 1);
 			len += thislen + 1;
 		}
-        
+
 		/* file */
 		thislen = snprintf(msgbuf, MAXMSGBUF, "F%s", edata->filename);
 		thislen = Min(thislen, MAXMSGBUF);
-		memcpy(data +len, msgbuf, thislen+1);
+		memcpy(data + len, msgbuf, thislen + 1);
 		len += thislen + 1;
-        
+
 		/* line */
 		thislen = snprintf(msgbuf, MAXMSGBUF, "L%d", edata->lineno);
 		thislen = Min(thislen, MAXMSGBUF);
-		memcpy(data +len, msgbuf, thislen+1);
+		memcpy(data + len, msgbuf, thislen + 1);
 		len += thislen + 1;
-        
+
 		/* stop null */
 		len++;
 		*(data + len - 1) = '\0';
-        
+
 		sendlen = len;
 		len = htonl(len + 4);
 
-		pool_send_to_frontend((char*)&len, sizeof(len), false);
+		pool_send_to_frontend((char *) &len, sizeof(len), false);
 		pool_send_to_frontend(data, sendlen, true);
 
 	}
 	if (edata->elevel == FRONTEND_ONLY_ERROR)
 	{
-		/* send the ready for query to complete
-		 * the frontend error cycle
+		/*
+		 * send the ready for query to complete the frontend error cycle
 		 */
 		/* ready for query */
-		pool_send_to_frontend((char*)"Z", 1, true);
+		pool_send_to_frontend((char *) "Z", 1, true);
 
 		if (protoVersion == PROTO_MAJOR_V3)
 		{
-			int len = htonl(5);
-			pool_send_to_frontend((char*)&len, sizeof(len), false);
-			pool_send_to_frontend((char*)"I", 1, true);
+			int			len = htonl(5);
+
+			pool_send_to_frontend((char *) &len, sizeof(len), false);
+			pool_send_to_frontend((char *) "I", 1, true);
 		}
 	}
 
@@ -1894,24 +1908,24 @@ process_log_prefix_padding(const char *p, int *ppadding)
 {
 	int			paddingsign = 1;
 	int			padding = 0;
-	
+
 	if (*p == '-')
 	{
 		p++;
-		
+
 		if (*p == '\0')			/* Did the buf end in %- ? */
 			return NULL;
 		paddingsign = -1;
 	}
-	
+
 	/* generate an int version of the numerical string */
 	while (*p >= '0' && *p <= '9')
 		padding = padding * 10 + (*p++ - '0');
-	
+
 	/* format is invalid if it ends with the padding number */
 	if (*p == '\0')
 		return NULL;
-	
+
 	padding *= paddingsign;
 	*ppadding = padding;
 	return p;
@@ -1934,7 +1948,8 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 
 	POOL_CONNECTION *frontend = NULL;
 	POOL_SESSION_CONTEXT *session = pool_get_session_context(true);
-	if(session)
+
+	if (session)
 		frontend = session->frontend;
 
 	/*
@@ -1949,7 +1964,7 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 		log_my_pid = MyProcPid;
 	}
 	log_line_number++;
-	
+
 	if (line_prefix == NULL)
 		return;					/* in case guc hasn't run yet */
 
@@ -1961,7 +1976,7 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 			appendStringInfoChar(buf, *p);
 			continue;
 		}
-		
+
 		/* must be a '%', so skip to the next char */
 		p++;
 		if (*p == '\0')
@@ -1991,29 +2006,30 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 			padding = 0;
 		else if ((p = process_log_prefix_padding(p, &padding)) == NULL)
 			break;
-		
+
 		/* process the option */
 		switch (*p)
 		{
-			case 'a':	/* application name */
-			{
+			case 'a':			/* application name */
+				{
 
-				/*
-				 * Do not use MASTER_CONNECTION macro here since it calls
-				 * pool_virtual_master_db_node_id() which eventually calls
-				 * ereport() if operated in DEBUG mode.
-				 */
-				StartupPacket *sp = session? (session->backend->slots[REAL_MASTER_NODE_ID])->sp : NULL ;
-				const char *appname = sp? sp->application_name : "[No Connection]";
-				if (appname == NULL || *appname == '\0')
-					appname = "[unknown]";
-				if (padding != 0)
-					appendStringInfo(buf, "%*s", padding, appname);
-				else
-					appendStringInfoString(buf, appname);
-			}
+					/*
+					 * Do not use MASTER_CONNECTION macro here since it calls
+					 * pool_virtual_master_db_node_id() which eventually calls
+					 * ereport() if operated in DEBUG mode.
+					 */
+					StartupPacket *sp = session ? (session->backend->slots[REAL_MASTER_NODE_ID])->sp : NULL;
+					const char *appname = sp ? sp->application_name : "[No Connection]";
+
+					if (appname == NULL || *appname == '\0')
+						appname = "[unknown]";
+					if (padding != 0)
+						appendStringInfo(buf, "%*s", padding, appname);
+					else
+						appendStringInfoString(buf, appname);
+				}
 				break;
-			case 'P':	/* process name */
+			case 'P':			/* process name */
 				{
 					if (padding != 0)
 						appendStringInfo(buf, "%*s", padding, process_name());
@@ -2023,7 +2039,8 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 				break;
 			case 'u':
 				{
-					const char *username = frontend? frontend->username : "[No Connection]";
+					const char *username = frontend ? frontend->username : "[No Connection]";
+
 					if (username == NULL || *username == '\0')
 						username = "[unknown]";
 
@@ -2035,7 +2052,7 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 				break;
 			case 'd':
 				{
-					const char *dbname = frontend? frontend->database : "[No Connection]";
+					const char *dbname = frontend ? frontend->database : "[No Connection]";
 
 					if (dbname == NULL || *dbname == '\0')
 						dbname = "[unknown]";
@@ -2059,16 +2076,17 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 					appendStringInfo(buf, "%ld", log_line_number);
 				break;
 			case 't':
-			{
-				char strbuf[129];
-				time_t now = time(NULL);
-				strftime(strbuf, 128, "%Y-%m-%d %H:%M:%S", localtime(&now));
+				{
+					char		strbuf[129];
+					time_t		now = time(NULL);
 
-				if (padding != 0)
-					appendStringInfo(buf, "%*s", padding, strbuf);
-				else
-					appendStringInfoString(buf, strbuf);
-			}
+					strftime(strbuf, 128, "%Y-%m-%d %H:%M:%S", localtime(&now));
+
+					if (padding != 0)
+						appendStringInfo(buf, "%*s", padding, strbuf);
+					else
+						appendStringInfoString(buf, strbuf);
+				}
 				break;
 			default:
 				/* format error - ignore it */
@@ -2088,7 +2106,7 @@ send_message_to_server_log(ErrorData *edata)
 	initStringInfo(&buf);
 
 	log_line_prefix(&buf, pool_config->log_line_prefix, edata);
-	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel,false));
+	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel, false));
 
 
 	if (edata->message)
@@ -2164,7 +2182,7 @@ send_message_to_server_log(ErrorData *edata)
 #ifdef HAVE_VSYSLOG
 	/* Write to syslog, if enabled */
 	if (pool_config->log_destination & LOG_DESTINATION_SYSLOG)
-    {
+	{
 		int			syslog_level;
 
 		switch (edata->elevel)
@@ -2199,7 +2217,7 @@ send_message_to_server_log(ErrorData *edata)
 		}
 		write_syslog(syslog_level, buf.data);
 	}
-#endif   /* HAVE_VSYSLOG */
+#endif							/* HAVE_VSYSLOG */
 
 	if (pool_config->log_destination & LOG_DESTINATION_STDERR)
 	{
@@ -2550,15 +2568,16 @@ proc_exit_prepare(int code)
 	 * elog(FATAL) for example.)
 	 */
 	error_context_stack = NULL;
-    /* 
-     * call on exit prepare if some function is specified
-     * this extention is added by pgpool
-     */
-    if(on_exit_prepare.function)
-    {
-        (*on_exit_prepare.function) (code,on_exit_prepare.arg);
-        on_exit_prepare.function = NULL;
-    }
+
+	/*
+	 * call on exit prepare if some function is specified this extention is
+	 * added by pgpool
+	 */
+	if (on_exit_prepare.function)
+	{
+		(*on_exit_prepare.function) (code, on_exit_prepare.arg);
+		on_exit_prepare.function = NULL;
+	}
 	/* do our shared memory exits first */
 	shmem_exit(code);
 
@@ -2576,7 +2595,7 @@ proc_exit_prepare(int code)
 	 */
 	while (--on_proc_exit_index >= 0)
 		(*on_proc_exit_list[on_proc_exit_index].function) (code,
-								  on_proc_exit_list[on_proc_exit_index].arg);
+														   on_proc_exit_list[on_proc_exit_index].arg);
 
 	on_proc_exit_index = 0;
 }
@@ -2601,7 +2620,7 @@ shmem_exit(int code)
 	 */
 	while (--on_shmem_exit_index >= 0)
 		(*on_shmem_exit_list[on_shmem_exit_index].function) (code,
-								on_shmem_exit_list[on_shmem_exit_index].arg);
+															 on_shmem_exit_list[on_shmem_exit_index].arg);
 
 	on_shmem_exit_index = 0;
 }
@@ -2677,6 +2696,7 @@ on_shmem_exit(pg_on_exit_callback function, Datum arg)
 		atexit_callback_setup = true;
 	}
 }
+
 /* ----------------------------------------------------------------
  *		on_system_exit
  *
@@ -2684,10 +2704,11 @@ on_shmem_exit(pg_on_exit_callback function, Datum arg)
  *		just before calling shmem_exit callbacks at process exit
  * ----------------------------------------------------------------
  */
-void on_system_exit(pg_on_exit_callback function, Datum arg)
+void
+on_system_exit(pg_on_exit_callback function, Datum arg)
 {
-    on_exit_prepare.function = function;
-    on_exit_prepare.arg = arg;
+	on_exit_prepare.function = function;
+	on_exit_prepare.arg = arg;
 }
 
 /* ----------------------------------------------------------------
@@ -2722,6 +2743,6 @@ on_exit_reset(void)
 {
 	on_shmem_exit_index = 0;
 	on_proc_exit_index = 0;
-    on_exit_prepare.function = NULL;
-    on_exit_prepare.arg = (Datum)NULL;
+	on_exit_prepare.function = NULL;
+	on_exit_prepare.arg = (Datum) NULL;
 }

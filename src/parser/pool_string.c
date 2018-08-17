@@ -27,12 +27,13 @@
 #include "value.h"
 
 /* String Library */
-String *init_string(char *str)
+String *
+init_string(char *str)
 {
-	String *string = palloc(sizeof(String));
-	int size;
+	String	   *string = palloc(sizeof(String));
+	int			size;
 
-	string->len = (str != NULL)? strlen(str): 0;
+	string->len = (str != NULL) ? strlen(str) : 0;
 
 	size = (string->len + 1) / STRING_SIZE + 1;
 	string->size = size;
@@ -42,24 +43,28 @@ String *init_string(char *str)
 
 	if (str != NULL)
 		memcpy(string->data, str, string->len);
-	
+
 	return string;
 }
 
-void string_append_string(String *string, String *data)
+void
+string_append_string(String * string, String * data)
 {
 	string_append_char(string, data->data);
 }
 
-void string_append_char(String *string, char *append_data)
+void
+string_append_char(String * string, char *append_data)
 {
-	int len = strlen(append_data);
-	
+	int			len = strlen(append_data);
+
 	if (string->len + len + 1 > string->size * STRING_SIZE)
 	{
-		int size, old_size;
+		int			size,
+					old_size;
+
 		size = (string->len + len + 1) / STRING_SIZE + 1;
-		old_size = string->size; 
+		old_size = string->size;
 		string->size = size;
 		string->data = repalloc(string->data, string->size * STRING_SIZE);
 		memset(string->data + (old_size * STRING_SIZE),
@@ -69,20 +74,22 @@ void string_append_char(String *string, char *append_data)
 	string->len += len;
 }
 
-void free_string(String *string)
+void
+free_string(String * string)
 {
 	pfree(string->data);
 	pfree(string);
 }
 
-String *copy_string(String *string)
+String *
+copy_string(String * string)
 {
-	String *copy = palloc(sizeof(String));
+	String	   *copy = palloc(sizeof(String));
 
 	copy->size = string->size;
 	copy->len = string->len;
 	copy->data = palloc(string->size * STRING_SIZE);
 	memcpy(copy->data, string->data, string->size * STRING_SIZE);
-	
+
 	return copy;
 }

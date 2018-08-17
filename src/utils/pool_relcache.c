@@ -34,12 +34,14 @@
 #include "utils/elog.h"
 
 static void SearchRelCacheErrorCb(void *arg);
+
 /*
  * Create relation cache
  */
-POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
-									func_ptr register_func, func_ptr unregister_func,
-									bool issessionlocal)
+POOL_RELCACHE *
+pool_create_relcache(int cachesize, char *sql,
+					 func_ptr register_func, func_ptr unregister_func,
+					 bool issessionlocal)
 {
 	POOL_RELCACHE *p;
 	PoolRelCache *ip;
@@ -51,14 +53,15 @@ POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
 				(errmsg("failed to create relcache: wrong cache size: %d", cachesize)));
 		return NULL;
 	}
+
 	/*
 	 * Create the relcache in session context if the cache is session local,
 	 * otherwise make home in TopMemoryContext
 	 */
 	old_context = MemoryContextSwitchTo(TopMemoryContext);
 
-	ip = (PoolRelCache *)palloc0(sizeof(PoolRelCache)*cachesize);
-	p = (POOL_RELCACHE *)palloc(sizeof(POOL_RELCACHE));
+	ip = (PoolRelCache *) palloc0(sizeof(PoolRelCache) * cachesize);
+	p = (POOL_RELCACHE *) palloc(sizeof(POOL_RELCACHE));
 
 	MemoryContextSwitchTo(old_context);
 
@@ -69,19 +72,21 @@ POOL_RELCACHE *pool_create_relcache(int cachesize, char *sql,
 	p->cache_is_session_local = issessionlocal;
 	p->no_cache_if_zero = false;
 	p->cache = ip;
-	
+
 	return p;
 }
+
 /*
  * Discard relation cache.
  */
-void pool_discard_relcache(POOL_RELCACHE *relcache)
+void
+pool_discard_relcache(POOL_RELCACHE * relcache)
 {
-	int i;
+	int			i;
 
-	for (i=0;i<relcache->num;i++)
+	for (i = 0; i < relcache->num; i++)
 	{
-		(*relcache->unregister_func)(relcache->cache[i].data);
+		(*relcache->unregister_func) (relcache->cache[i].data);
 	}
 	pfree(relcache->cache);
 	pfree(relcache);
@@ -91,17 +96,18 @@ void pool_discard_relcache(POOL_RELCACHE *relcache)
  * Search relcache. If found, return user data. Otherwise return 0.
  * If not found in cache, do the query and store the result into cache and return it.
  */
-void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, char *table)
+void *
+pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, char *table)
 {
-	char *dbname;
-	int i;
-	int maxrefcnt = INT_MAX;
-	char query[1024];
+	char	   *dbname;
+	int			i;
+	int			maxrefcnt = INT_MAX;
+	char		query[1024];
 	POOL_SELECT_RESULT *res = NULL;
-	int index = 0;
-	int local_session_id;
-	time_t now;
-	void *result;
+	int			index = 0;
+	int			local_session_id;
+	time_t		now;
+	void	   *result;
 	ErrorContextCallback callback;
 
 	local_session_id = pool_get_local_session_id();
@@ -114,7 +120,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	now = time(NULL);
 
 	/* Look for cache first */
-	for (i=0;i<relcache->num;i++)
+	for (i = 0; i < relcache->num; i++)
 	{
 		/*
 		 * If cache is session local, we need to check session id
@@ -133,7 +139,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 				if (now > relcache->cache[i].expire)
 				{
 					ereport(DEBUG1,
-						(errmsg("searching relcache"),
+							(errmsg("searching relcache"),
 							 errdetail("relcache for database:%s table:%s expired. now:%ld expiration time:%ld", dbname, table, now, relcache->cache[i].expire)));
 
 					relcache->cache[i].refcnt = 0;
@@ -169,7 +175,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	/*
 	 * Look for replacement in cache
 	 */
-	for (i=0;i<relcache->num;i++)
+	for (i = 0; i < relcache->num; i++)
 	{
 		/*
 		 * If cache is session local, we can discard old cache immediately
@@ -200,12 +206,12 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	if (relcache->cache[index].refcnt != 0)
 	{
 		ereport(LOG,
-			(errmsg("searching relcache. cache replacement occured")));
+				(errmsg("searching relcache. cache replacement occured")));
 
 	}
 
 	/* Register cache */
-	result = (*relcache->register_func)(res);
+	result = (*relcache->register_func) (res);
 
 	if (!pool_is_ignore_till_sync() && (!relcache->no_cache_if_zero || result))
 	{
@@ -221,36 +227,39 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 		{
 			relcache->cache[index].expire = 0;
 		}
+
 		/*
 		 * Call user defined unregister/register function.
 		 */
-		(*relcache->unregister_func)(relcache->cache[index].data);
+		(*relcache->unregister_func) (relcache->cache[index].data);
 		relcache->cache[index].data = result;
 	}
 	free_select_result(res);
 
-	return 	result;
+	return result;
 }
 
-static void SearchRelCacheErrorCb(void *arg)
+static void
+SearchRelCacheErrorCb(void *arg)
 {
 	errcontext("while searching system catalog, When relcache is missed");
 }
 
 
-char *remove_quotes_and_schema_from_relname(char *table)
+char *
+remove_quotes_and_schema_from_relname(char *table)
 {
 	static char rel[MAX_ITEM_LENGTH];
-	char *p;
-	int i = 0;
+	char	   *p;
+	int			i = 0;
 
 	/* get rid of schema name */
 	p = strchr(table, '.');
 	if (p)
-		table = p+1;
+		table = p + 1;
 
 	/* get rid of quotation marks */
-	for (i=0; *table; table++)
+	for (i = 0; *table; table++)
 	{
 		if (*table != '"')
 			rel[i++] = *table;
@@ -264,27 +273,31 @@ char *remove_quotes_and_schema_from_relname(char *table)
  * Standard register/unregister function for "SELECT count(*)" type
  * query. Returns row count.
  */
-void *int_register_func(POOL_SELECT_RESULT *res)
+void *
+int_register_func(POOL_SELECT_RESULT * res)
 {
 	if (res->numrows >= 1)
-		return (void *)atol(res->data[0]);
-	return (void *)0;
+		return (void *) atol(res->data[0]);
+	return (void *) 0;
 }
 
-void *int_unregister_func(void *data)
+void *
+int_unregister_func(void *data)
 {
 	/* Nothing to do since no memory was allocated */
 	return NULL;
 }
 
-void *string_register_func(POOL_SELECT_RESULT *res)
+void *
+string_register_func(POOL_SELECT_RESULT * res)
 {
-	return (res->numrows > 0) ? strdup(res->data[0]): NULL;
+	return (res->numrows > 0) ? strdup(res->data[0]) : NULL;
 }
 
-void *string_unregister_func(void *data)
+void *
+string_unregister_func(void *data)
 {
-	if(data)
+	if (data)
 		free(data);
-	return (void *)0;
+	return (void *) 0;
 }

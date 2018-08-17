@@ -123,7 +123,7 @@ typedef struct Query
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasWindowFuncs; /* has window functions in tlist */
-	bool		hasTargetSRFs;  /* has set-returning functions in tlist */
+	bool		hasTargetSRFs;	/* has set-returning functions in tlist */
 	bool		hasSubLinks;	/* has subquery SubLink */
 	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
 	bool		hasRecursive;	/* WITH RECURSIVE was specified */
@@ -255,7 +255,7 @@ typedef enum A_Expr_Kind
 	AEXPR_OP_ANY,				/* scalar op ANY (array) */
 	AEXPR_OP_ALL,				/* scalar op ALL (array) */
 	AEXPR_DISTINCT,				/* IS DISTINCT FROM - name must be "=" */
-	AEXPR_NOT_DISTINCT,         /* IS NOT DISTINCT FROM - name must be "=" */
+	AEXPR_NOT_DISTINCT,			/* IS NOT DISTINCT FROM - name must be "=" */
 	AEXPR_NULLIF,				/* NULLIF - name must be "=" */
 	AEXPR_OF,					/* IS [NOT] OF - name must be "=" or "<>" */
 	AEXPR_IN,					/* [NOT] IN - name must be "=" or "<>" */
@@ -380,8 +380,8 @@ typedef struct A_Indices
 {
 	NodeTag		type;
 	bool		is_slice;		/* true if slice (i.e., colon present) */
-	Node		*lidx;			/* slice lower bound, if any */
-	Node		*uidx;			/* subscript, or slice upper bound if any */
+	Node	   *lidx;			/* slice lower bound, if any */
+	Node	   *uidx;			/* subscript, or slice upper bound if any */
 } A_Indices;
 
 /*
@@ -1844,7 +1844,7 @@ typedef enum GrantObjectType
 	ACL_OBJECT_NAMESPACE,		/* namespace */
 	ACL_OBJECT_TABLESPACE,		/* tablespace */
 	ACL_OBJECT_TYPE				/* type */
-} GrantObjectType;
+}			GrantObjectType;
 
 typedef struct GrantStmt
 {
@@ -1932,15 +1932,15 @@ typedef struct AlterDefaultPrivilegesStmt
 typedef struct CopyStmt
 {
 	NodeTag		type;
-	RangeVar	*relation;		/* the relation to copy */
-	Node		*query;			/* the query (SELECT or DML statement with
+	RangeVar   *relation;		/* the relation to copy */
+	Node	   *query;			/* the query (SELECT or DML statement with
 								 * RETURNING) to copy, as a raw parse tree */
-	List		*attlist;		/* List of column names (as Strings), or NIL
+	List	   *attlist;		/* List of column names (as Strings), or NIL
 								 * for all columns */
 	bool		is_from;		/* TO or FROM */
 	bool		is_program;		/* is 'filename' a program to popen? */
-	char		*filename;		/* filename, or NULL for STDIN/STDOUT */
-	List		*options;		/* List of DefElem nodes */
+	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
+	List	   *options;		/* List of DefElem nodes */
 } CopyStmt;
 
 /* ----------------------
@@ -3088,7 +3088,7 @@ typedef enum VacuumOption
 	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
 	VACOPT_NOWAIT = 1 << 5,		/* don't wait to get lock (autovacuum only) */
 	VACOPT_SKIPTOAST = 1 << 6,	/* don't process the TOAST table, if any */
-	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7		/* don't skip any pages */
+	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7	/* don't skip any pages */
 } VacuumOption;
 
 typedef struct VacuumStmt

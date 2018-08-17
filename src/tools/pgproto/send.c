@@ -31,9 +31,10 @@
 /*
  * Send a character to the connection.
  */
-void send_char(char c, PGconn *conn)
+void
+send_char(char c, PGconn *conn)
 {
-	int status;
+	int			status;
 
 	status = write(PQsocket(conn), &c, 1);
 }
@@ -41,10 +42,11 @@ void send_char(char c, PGconn *conn)
 /*
  * Send a 4-byte integer to the connection.
  */
-void send_int(int intval, PGconn *conn)
+void
+send_int(int intval, PGconn *conn)
 {
-	int status;
-	int l = htonl(intval);
+	int			status;
+	int			l = htonl(intval);
 
 	status = write(PQsocket(conn), &l, sizeof(l));
 }
@@ -52,10 +54,11 @@ void send_int(int intval, PGconn *conn)
 /*
  * Send a 2-byte integer to the connection.
  */
-void send_int16(short shortval, PGconn *conn)
+void
+send_int16(short shortval, PGconn *conn)
 {
-	int status;
-	short s = htons(shortval);
+	int			status;
+	short		s = htons(shortval);
 
 	status = write(PQsocket(conn), &s, sizeof(s));
 }
@@ -63,19 +66,21 @@ void send_int16(short shortval, PGconn *conn)
 /*
  * Send a string to the connection. buf must be NULL terminated.
  */
-void send_string(char *buf, PGconn *conn)
+void
+send_string(char *buf, PGconn *conn)
 {
-	int status;
+	int			status;
 
-	status = write(PQsocket(conn), buf, strlen(buf)+1);
+	status = write(PQsocket(conn), buf, strlen(buf) + 1);
 }
 
 /*
  * Send byte to the connection.
  */
-void send_byte(char *buf, int len, PGconn *conn)
+void
+send_byte(char *buf, int len, PGconn *conn)
 {
-	int status;
+	int			status;
 
 	status = write(PQsocket(conn), buf, len);
 }

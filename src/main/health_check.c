@@ -62,8 +62,8 @@
 #include "auth/pool_hba.h"
 #include "utils/pool_stream.h"
 
-char remote_ps_data[NI_MAXHOST];		/* used for set_ps_display */
-static POOL_CONNECTION_POOL_SLOT	*slot;
+char		remote_ps_data[NI_MAXHOST]; /* used for set_ps_display */
+static POOL_CONNECTION_POOL_SLOT * slot;
 static volatile sig_atomic_t reload_config_request = 0;
 static volatile sig_atomic_t restart_request = 0;
 static bool establish_persistent_connection(int node);
@@ -74,9 +74,9 @@ static void reload_config(void);
 static RETSIGTYPE health_check_timer_handler(int sig);
 
 #ifdef HEALTHCHECK_OPTS
-  #if HEALTHCHECK_OPTS > 0
-  #define HEALTHCHECK_DEBUG
-  #endif
+#if HEALTHCHECK_OPTS > 0
+#define HEALTHCHECK_DEBUG
+#endif
 #endif
 
 #ifdef HEALTHCHECK_DEBUG
@@ -106,11 +106,12 @@ static bool check_backend_down_request(int node);
 /*
 * health check child main loop
 */
-void do_health_check_child(int *node_id)
+void
+do_health_check_child(int *node_id)
 {
-    sigjmp_buf	local_sigjmp_buf;
+	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext HealthCheckMemoryContext;
-	char psbuffer[NI_MAXHOST];
+	char		psbuffer[NI_MAXHOST];
 
 	ereport(DEBUG1,
 			(errmsg("I am health check process pid:%d DB node id:%d", getpid(), *node_id)));
@@ -131,9 +132,9 @@ void do_health_check_child(int *node_id)
 	signal(SIGUSR2, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 
-    /* Create per loop iteration memory context */
+	/* Create per loop iteration memory context */
 	HealthCheckMemoryContext = AllocSetContextCreate(TopMemoryContext,
-                                             "health_check_main_loop",
+													 "health_check_main_loop",
 													 ALLOCSET_DEFAULT_MINSIZE,
 													 ALLOCSET_DEFAULT_INITSIZE,
 													 ALLOCSET_DEFAULT_MAXSIZE);
@@ -146,7 +147,7 @@ void do_health_check_child(int *node_id)
 	/* Initialize per process context */
 	pool_init_process_context();
 
-    if (sigsetjmp(local_sigjmp_buf, 1) != 0)
+	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
 		pool_signal(SIGALRM, SIG_IGN);
 		error_context_stack = NULL;
@@ -160,7 +161,7 @@ void do_health_check_child(int *node_id)
 
 	for (;;)
 	{
-        MemoryContextSwitchTo(HealthCheckMemoryContext);
+		MemoryContextSwitchTo(HealthCheckMemoryContext);
 		MemoryContextResetAndDeleteChildren(HealthCheckMemoryContext);
 
 		CHECK_REQUEST;
@@ -176,7 +177,7 @@ void do_health_check_child(int *node_id)
 		 */
 		else if (pool_config->health_check_params[*node_id].health_check_period > 0)
 		{
-			bool result;
+			bool		result;
 
 			result = establish_persistent_connection(*node_id);
 
@@ -194,14 +195,14 @@ void do_health_check_child(int *node_id)
 				}
 				else
 				{
-					bool partial;
+					bool		partial;
 
 					ereport(LOG, (errmsg("health check failed on node %d (timeout:%d)",
 										 *node_id, health_check_timer_expired)));
 
 					/* trigger failover */
-					partial = health_check_timer_expired?false:true;
-					degenerate_backend_set(node_id, 1, partial?REQ_DETAIL_SWITCHOVER:0);
+					partial = health_check_timer_expired ? false : true;
+					degenerate_backend_set(node_id, 1, partial ? REQ_DETAIL_SWITCHOVER : 0);
 				}
 			}
 
@@ -217,16 +218,16 @@ void do_health_check_child(int *node_id)
  * Establish persistent connection to backend.
  * Return true if connection test is done.
  */
-static bool establish_persistent_connection(int node)
+static bool
+establish_persistent_connection(int node)
 {
 	BackendInfo *bkinfo;
-	int retry_cnt;
+	int			retry_cnt;
 
 	bkinfo = pool_get_node_info(node);
 
 	/*
-	 * If the node is already in down status or unused,
-	 * do nothing.
+	 * If the node is already in down status or unused, do nothing.
 	 */
 	if (bkinfo->backend_status == CON_UNUSED ||
 		bkinfo->backend_status == CON_DOWN)
@@ -245,15 +246,14 @@ static bool establish_persistent_connection(int node)
 	{
 		retry_cnt = pool_config->health_check_params[node].health_check_max_retries;
 
-		char *password = get_pgpool_config_user_password(pool_config->health_check_params[node].health_check_user,
-														 pool_config->health_check_params[node].health_check_password);
+		char	   *password = get_pgpool_config_user_password(pool_config->health_check_params[node].health_check_user,
+															   pool_config->health_check_params[node].health_check_password);
 
 		do
 		{
 			/*
-			 * Set health checker timeout. we want to detect
-			 * communication path failure much earlier before
-			 * TCP/IP stack detects it.
+			 * Set health checker timeout. we want to detect communication
+			 * path failure much earlier before TCP/IP stack detects it.
 			 */
 			if (pool_config->health_check_params[node].health_check_timeout > 0)
 			{
@@ -268,7 +268,7 @@ static bool establish_persistent_connection(int node)
 														 bkinfo->backend_port,
 														 pool_config->health_check_params[node].health_check_database,
 														 pool_config->health_check_params[node].health_check_user,
-														 password?password:"", false);
+														 password ? password : "", false);
 
 			if (pool_config->health_check_params[node].health_check_timeout > 0)
 			{
@@ -285,7 +285,7 @@ static bool establish_persistent_connection(int node)
 							(errmsg("health check retrying on DB node: %d succeeded",
 									node)));
 				}
-				break;	/* Success */
+				break;			/* Success */
 			}
 
 			retry_cnt--;
@@ -310,7 +310,8 @@ static bool establish_persistent_connection(int node)
 /*
  * Discard persistent connection to backend
  */
-static void discard_persistent_connection(int node)
+static void
+discard_persistent_connection(int node)
 {
 	if (slot)
 	{
@@ -321,7 +322,7 @@ static void discard_persistent_connection(int node)
 
 static RETSIGTYPE my_signal_handler(int sig)
 {
-	int save_errno = errno;
+	int			save_errno = errno;
 
 	POOL_SETMASK(&BlockSig);
 
@@ -350,30 +351,35 @@ static RETSIGTYPE my_signal_handler(int sig)
 
 static RETSIGTYPE reload_config_handler(int sig)
 {
-	int save_errno = errno;
+	int			save_errno = errno;
+
 	POOL_SETMASK(&BlockSig);
 	reload_config_request = 1;
 	POOL_SETMASK(&UnBlockSig);
 	errno = save_errno;
 }
 
-static void reload_config(void)
+static void
+reload_config(void)
 {
 	ereport(LOG,
 			(errmsg("reloading config file")));
-    MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+
 	pool_get_config(get_config_file_name(), CFGCXT_RELOAD);
-    MemoryContextSwitchTo(oldContext);
+	MemoryContextSwitchTo(oldContext);
 	if (pool_config->enable_pool_hba)
 		load_hba(get_hba_file_name());
 	reload_config_request = 0;
 }
+
 /*
  * health check timer handler
  */
 static RETSIGTYPE health_check_timer_handler(int sig)
 {
-	int save_errno = errno;
+	int			save_errno = errno;
+
 	POOL_SETMASK(&BlockSig);
 	health_check_timer_expired = 1;
 	POOL_SETMASK(&UnBlockSig);
@@ -388,7 +394,7 @@ static RETSIGTYPE health_check_timer_handler(int sig)
  * will return true.
  */
 
-# define BACKEND_DOWN_REQUEST_FILE	"backend_down_request"
+#define BACKEND_DOWN_REQUEST_FILE	"backend_down_request"
 
 /*
  * Check backend down request file with specified backend node id.  If it's
@@ -396,20 +402,21 @@ static RETSIGTYPE health_check_timer_handler(int sig)
  * prevent repeatable * failover. If it's other than "down", returns false.
 */
 
-static bool check_backend_down_request(int node)
+static bool
+check_backend_down_request(int node)
 {
-	static char	backend_down_request_file[POOLMAXPATHLEN];
-	FILE *fd;
-	int i;
+	static char backend_down_request_file[POOLMAXPATHLEN];
+	FILE	   *fd;
+	int			i;
 #define MAXLINE 128
-	char linebuf[MAXLINE];
-	char readbuf[MAXLINE];
-	char buf[MAXLINE];
-	char *writebuf;
-	char *p;
-	bool found = false;
-	int node_id;
-	char status[MAXLINE];
+	char		linebuf[MAXLINE];
+	char		readbuf[MAXLINE];
+	char		buf[MAXLINE];
+	char	   *writebuf;
+	char	   *p;
+	bool		found = false;
+	int			node_id;
+	char		status[MAXLINE];
 
 	if (backend_down_request_file[0] == '\0')
 	{
@@ -423,21 +430,21 @@ static bool check_backend_down_request(int node)
 		ereport(WARNING,
 				(errmsg("check_backend_down_request: failed to open file %s",
 						backend_down_request_file),
-				 errdetail("\"%s\"",strerror(errno))));
+				 errdetail("\"%s\"", strerror(errno))));
 		return false;
 	}
 
 	writebuf = NULL;
 
-	for (i=0;;i++)
+	for (i = 0;; i++)
 	{
-		readbuf[MAXLINE-1] = '\0';
-		if (fgets(readbuf, MAXLINE-1, fd) == 0)
+		readbuf[MAXLINE - 1] = '\0';
+		if (fgets(readbuf, MAXLINE - 1, fd) == 0)
 			break;
 
 		strncpy(buf, readbuf, sizeof(buf));
-		if (strlen(readbuf) > 0 && readbuf[strlen(readbuf)-1] == '\n')
-			buf[strlen(readbuf)-1] = '\0';
+		if (strlen(readbuf) > 0 && readbuf[strlen(readbuf) - 1] == '\n')
+			buf[strlen(readbuf) - 1] = '\0';
 
 		p = readbuf;
 		if (found == false)
@@ -453,11 +460,11 @@ static bool check_backend_down_request(int node)
 
 		if (writebuf == NULL)
 		{
-			writebuf = malloc(strlen(p)+1);
-			memset(writebuf, 0, strlen(p)+1);
+			writebuf = malloc(strlen(p) + 1);
+			memset(writebuf, 0, strlen(p) + 1);
 		}
 		else
-			writebuf = realloc(writebuf, strlen(p)+strlen(writebuf)+1);
+			writebuf = realloc(writebuf, strlen(p) + strlen(writebuf) + 1);
 		if (!writebuf)
 		{
 			fclose(fd);
@@ -475,18 +482,18 @@ static bool check_backend_down_request(int node)
 	if (!fd)
 	{
 		ereport(WARNING,
-                (errmsg("check_backend_down_request: failed to open file for writing %s",
+				(errmsg("check_backend_down_request: failed to open file for writing %s",
 						backend_down_request_file),
-				 errdetail("\"%s\"",strerror(errno))));
+				 errdetail("\"%s\"", strerror(errno))));
 		return false;
 	}
 
 	if (fwrite(writebuf, 1, strlen(writebuf), fd) != strlen(writebuf))
 	{
 		ereport(WARNING,
-                (errmsg("check_backend_down_request: failed to write %s",
+				(errmsg("check_backend_down_request: failed to write %s",
 						backend_down_request_file),
-				 errdetail("\"%s\"",strerror(errno))));
+				 errdetail("\"%s\"", strerror(errno))));
 		fclose(fd);
 		return false;
 	}

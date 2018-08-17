@@ -52,19 +52,19 @@
 #include "utils/pool_ip.h"
 #include "pool_config.h"
 #include "utils/elog.h"
-static int rangeSockAddrAF_INET(const struct sockaddr_in * addr,
-					 const struct sockaddr_in * netaddr,
-					 const struct sockaddr_in * netmask);
+static int rangeSockAddrAF_INET(const struct sockaddr_in *addr,
+					 const struct sockaddr_in *netaddr,
+					 const struct sockaddr_in *netmask);
 
-static int rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
-					  const struct sockaddr_in6 * netaddr,
-					  const struct sockaddr_in6 * netmask);
+static int rangeSockAddrAF_INET6(const struct sockaddr_in6 *addr,
+					  const struct sockaddr_in6 *netaddr,
+					  const struct sockaddr_in6 *netmask);
 
 static int getaddrinfo_unix(const char *path,
-				 const struct addrinfo * hintsp,
-				 struct addrinfo ** result);
+				 const struct addrinfo *hintsp,
+				 struct addrinfo **result);
 
-static int getnameinfo_unix(const struct sockaddr_un * sa, int salen,
+static int getnameinfo_unix(const struct sockaddr_un *sa, int salen,
 				 char *node, int nodelen,
 				 char *service, int servicelen,
 				 int flags);
@@ -73,7 +73,8 @@ static int getnameinfo_unix(const struct sockaddr_un * sa, int salen,
  * pool_getnameinfo_all - get name info for Unix, IPv4 and IPv6 sockets
  * caller MUST allocate NI_MAXHOST, NI_MAXSERV bytes for remote_host and remote_port
  */
-void pool_getnameinfo_all(SockAddr *saddr, char *remote_host, char *remote_port)
+void
+pool_getnameinfo_all(SockAddr *saddr, char *remote_host, char *remote_port)
 {
 	remote_host[0] = '\0';
 	remote_port[0] = '\0';
@@ -83,13 +84,14 @@ void pool_getnameinfo_all(SockAddr *saddr, char *remote_host, char *remote_port)
 						remote_port, NI_MAXSERV,
 						(pool_config->log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV))
 	{
-		int ret = getnameinfo_all(&saddr->addr, saddr->salen,
-								  remote_host, NI_MAXHOST,
-								  remote_port, NI_MAXSERV,
-								  NI_NUMERICHOST | NI_NUMERICSERV);
+		int			ret = getnameinfo_all(&saddr->addr, saddr->salen,
+										  remote_host, NI_MAXHOST,
+										  remote_port, NI_MAXSERV,
+										  NI_NUMERICHOST | NI_NUMERICSERV);
+
 		if (ret)
 			ereport(WARNING,
-				(errmsg("getnameinfo failed with error: \"%s\"",gai_strerror(ret))));
+					(errmsg("getnameinfo failed with error: \"%s\"", gai_strerror(ret))));
 	}
 }
 
@@ -98,7 +100,7 @@ void pool_getnameinfo_all(SockAddr *saddr, char *remote_host, char *remote_port)
  */
 int
 getaddrinfo_all(const char *hostname, const char *servname,
-				const struct addrinfo * hintp, struct addrinfo ** result)
+				const struct addrinfo *hintp, struct addrinfo **result)
 {
 	/* not all versions of getaddrinfo() zero *result on failure */
 	*result = NULL;
@@ -122,7 +124,7 @@ getaddrinfo_all(const char *hostname, const char *servname,
  * not safe to look at ai_family in the addrinfo itself.
  */
 void
-freeaddrinfo_all(int hint_ai_family, struct addrinfo * ai)
+freeaddrinfo_all(int hint_ai_family, struct addrinfo *ai)
 {
 	if (hint_ai_family == AF_UNIX)
 	{
@@ -154,7 +156,7 @@ freeaddrinfo_all(int hint_ai_family, struct addrinfo * ai)
  * guaranteed to be filled with something even on failure return.
  */
 int
-getnameinfo_all(const struct sockaddr_storage * addr, int salen,
+getnameinfo_all(const struct sockaddr_storage *addr, int salen,
 				char *node, int nodelen,
 				char *service, int servicelen,
 				int flags)
@@ -176,7 +178,7 @@ getnameinfo_all(const struct sockaddr_storage * addr, int salen,
 						 flags);
 
 	}
-			
+
 	if (rc != 0)
 	{
 		if (node)
@@ -194,7 +196,7 @@ const char *
 gai_strerror(int errcode)
 {
 #ifdef HAVE_HSTRERROR
-	int         hcode;
+	int			hcode;
 
 	switch (errcode)
 	{
@@ -250,9 +252,9 @@ gai_strerror(int errcode)
 		default:
 			return "Unknown server error";
 	}
-#endif   /* HAVE_HSTRERROR */
+#endif							/* HAVE_HSTRERROR */
 }
-#endif /* HAVE_GAI_STRERROR */
+#endif							/* HAVE_GAI_STRERROR */
 
 
 /*
@@ -264,8 +266,8 @@ gai_strerror(int errcode)
  *
  */
 static int
-getaddrinfo_unix(const char *path, const struct addrinfo * hintsp,
-				 struct addrinfo ** result)
+getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
+				 struct addrinfo **result)
 {
 	struct addrinfo hints;
 	struct addrinfo *aip;
@@ -330,7 +332,7 @@ getaddrinfo_unix(const char *path, const struct addrinfo * hintsp,
  * Convert an address to a hostname.
  */
 static int
-getnameinfo_unix(const struct sockaddr_un * sa, int salen,
+getnameinfo_unix(const struct sockaddr_un *sa, int salen,
 				 char *node, int nodelen,
 				 char *service, int servicelen,
 				 int flags)
@@ -366,9 +368,9 @@ getnameinfo_unix(const struct sockaddr_un * sa, int salen,
 
 
 static int
-rangeSockAddrAF_INET(const struct sockaddr_in * addr,
-					 const struct sockaddr_in * netaddr,
-					 const struct sockaddr_in * netmask)
+rangeSockAddrAF_INET(const struct sockaddr_in *addr,
+					 const struct sockaddr_in *netaddr,
+					 const struct sockaddr_in *netmask)
 {
 	if (((addr->sin_addr.s_addr ^ netaddr->sin_addr.s_addr) &
 		 netmask->sin_addr.s_addr) == 0)
@@ -379,9 +381,9 @@ rangeSockAddrAF_INET(const struct sockaddr_in * addr,
 
 
 static int
-rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
-					  const struct sockaddr_in6 * netaddr,
-					  const struct sockaddr_in6 * netmask)
+rangeSockAddrAF_INET6(const struct sockaddr_in6 *addr,
+					  const struct sockaddr_in6 *netaddr,
+					  const struct sockaddr_in6 *netmask)
 {
 	int			i;
 
@@ -404,7 +406,7 @@ rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
  * Return value is 0 if okay, -1 if not.
  */
 int
-SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
+SockAddr_cidr_mask(struct sockaddr_storage *mask, char *numbits, int family)
 {
 	long		bits;
 	char	   *endptr;
@@ -478,7 +480,7 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
  * that rangeSockAddr will look at.
  */
 void
-promote_v4_to_v6_addr(struct sockaddr_storage * addr)
+promote_v4_to_v6_addr(struct sockaddr_storage *addr)
 {
 	struct sockaddr_in addr4;
 	struct sockaddr_in6 addr6;
@@ -513,7 +515,7 @@ promote_v4_to_v6_addr(struct sockaddr_storage * addr)
  * that rangeSockAddr will look at.
  */
 void
-promote_v4_to_v6_mask(struct sockaddr_storage * addr)
+promote_v4_to_v6_mask(struct sockaddr_storage *addr)
 {
 	struct sockaddr_in addr4;
 	struct sockaddr_in6 addr6;
@@ -546,17 +548,17 @@ promote_v4_to_v6_mask(struct sockaddr_storage * addr)
  */
 int
 rangeSockAddr(const struct sockaddr_storage *addr,
-				  const struct sockaddr_storage *netaddr,
-				  const struct sockaddr_storage *netmask)
+			  const struct sockaddr_storage *netaddr,
+			  const struct sockaddr_storage *netmask)
 {
 	if (addr->ss_family == AF_INET)
 		return rangeSockAddrAF_INET((const struct sockaddr_in *) addr,
-									  (const struct sockaddr_in *) netaddr,
-									  (const struct sockaddr_in *) netmask);
+									(const struct sockaddr_in *) netaddr,
+									(const struct sockaddr_in *) netmask);
 	else if (addr->ss_family == AF_INET6)
 		return rangeSockAddrAF_INET6((const struct sockaddr_in6 *) addr,
-									   (const struct sockaddr_in6 *) netaddr,
-									   (const struct sockaddr_in6 *) netmask);
+									 (const struct sockaddr_in6 *) netaddr,
+									 (const struct sockaddr_in6 *) netmask);
 	else
 		return 0;
 }
@@ -602,6 +604,7 @@ run_ifaddr_callback(PgIfAddrCallback callback, void *cb_data,
 
 	(*callback) (addr, mask, cb_data);
 }
+
 /*
  * Enumerate the system's network interface addresses and call the callback
  * for each one.  Returns 0 if successful, -1 if trouble.
@@ -613,7 +616,7 @@ int
 pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 {
 	struct ifaddrs *ifa,
-	*l;
+			   *l;
 
 	if (getifaddrs(&ifa) < 0)
 		return -1;

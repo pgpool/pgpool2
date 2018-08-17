@@ -23,17 +23,17 @@
 #include <string.h>
 #include "pool_parser.h"
 #include "utils/palloc.h"
-#include "gramparse.h"	/* required before parser/gram.h! */
+#include "gramparse.h"			/* required before parser/gram.h! */
 #include "gram.h"
 #include "parser.h"
 #include "pg_wchar.h"
 #include "utils/elog.h"
 
-int server_version_num = 0;
+int			server_version_num = 0;
 static pg_enc server_encoding = PG_SQL_ASCII;
 
 static int
-parse_version(const char *versionString);
+			parse_version(const char *versionString);
 
 
 /*
@@ -51,7 +51,7 @@ raw_parser(const char *str, bool *error)
 	base_yy_extra_type yyextra;
 	int			yyresult;
 
-    MemoryContext oldContext = CurrentMemoryContext;
+	MemoryContext oldContext = CurrentMemoryContext;
 
 	/* initialize error flag */
 	*error = false;
@@ -99,8 +99,8 @@ raw_parser(const char *str, bool *error)
 Node *
 raw_parser2(List *parse_tree_list)
 {
-	Node *node = NULL;
-	RawStmt *rstmt;
+	Node	   *node = NULL;
+	RawStmt    *rstmt;
 
 	rstmt = (RawStmt *) lfirst(list_head(parse_tree_list));
 	node = (Node *) rstmt->stmt;
@@ -245,8 +245,8 @@ parse_version(const char *versionString)
 {
 	int			cnt;
 	int			vmaj,
-	vmin,
-	vrev;
+				vmin,
+				vrev;
 
 	cnt = sscanf(versionString, "%d.%d.%d", &vmaj, &vmin, &vrev);
 
@@ -293,4 +293,3 @@ pg_mblen(const char *mbstr)
 {
 	return pg_utf_mblen((const unsigned char *) mbstr);
 }
-

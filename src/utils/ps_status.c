@@ -103,9 +103,9 @@ static const size_t ps_buffer_size = PS_BUFFER_SIZE;
 #else							/* PS_USE_CLOBBER_ARGV */
 static char *ps_buffer;			/* will point to argv area */
 static size_t ps_buffer_size;	/* space determined at run time */
-#endif   /* PS_USE_CLOBBER_ARGV */
+#endif							/* PS_USE_CLOBBER_ARGV */
 
-static size_t ps_buffer_fixed_size;		/* size of the constant prefix */
+static size_t ps_buffer_fixed_size; /* size of the constant prefix */
 
 /* save the original argv[] location here */
 static int	save_argc;
@@ -176,7 +176,7 @@ save_ps_display_args(int argc, char **argv)
 		new_environ[i] = NULL;
 		environ = new_environ;
 	}
-#endif   /* PS_USE_CLOBBER_ARGV */
+#endif							/* PS_USE_CLOBBER_ARGV */
 
 #if defined(PS_USE_CHANGE_ARGV) || defined(PS_USE_CLOBBER_ARGV)
 
@@ -212,7 +212,7 @@ save_ps_display_args(int argc, char **argv)
 
 		argv = new_argv;
 	}
-#endif   /* PS_USE_CHANGE_ARGV or PS_USE_CLOBBER_ARGV */
+#endif							/* PS_USE_CHANGE_ARGV or PS_USE_CLOBBER_ARGV */
 
 	return argv;
 }
@@ -242,7 +242,7 @@ init_ps_display(const char *username, const char *dbname,
 #ifdef PS_USE_CHANGE_ARGV
 	save_argv[0] = ps_buffer;
 	save_argv[1] = NULL;
-#endif   /* PS_USE_CHANGE_ARGV */
+#endif							/* PS_USE_CHANGE_ARGV */
 
 #ifdef PS_USE_CLOBBER_ARGV
 	{
@@ -252,7 +252,7 @@ init_ps_display(const char *username, const char *dbname,
 		for (i = 1; i < save_argc; i++)
 			save_argv[i] = ps_buffer + ps_buffer_size;
 	}
-#endif   /* PS_USE_CLOBBER_ARGV */
+#endif							/* PS_USE_CLOBBER_ARGV */
 
 	/*
 	 * Make fixed prefix of ps display.
@@ -261,8 +261,8 @@ init_ps_display(const char *username, const char *dbname,
 #ifdef PS_USE_SETPROCTITLE
 
 	/*
-	 * apparently setproctitle() already adds a `progname: ' prefix to the
-	 * ps line
+	 * apparently setproctitle() already adds a `progname: ' prefix to the ps
+	 * line
 	 */
 	snprintf(ps_buffer, ps_buffer_size, "");
 #else
@@ -273,7 +273,7 @@ init_ps_display(const char *username, const char *dbname,
 	ps_buffer_fixed_size = strlen(ps_buffer);
 
 	set_ps_display(initial_str, true);
-#endif   /* not PS_USE_NONE */
+#endif							/* not PS_USE_NONE */
 }
 
 
@@ -314,12 +314,12 @@ set_ps_display(const char *activity, bool force)
 		pst.pst_command = ps_buffer;
 		pstat(PSTAT_SETCMD, pst, strlen(ps_buffer), 0, 0);
 	}
-#endif   /* PS_USE_PSTAT */
+#endif							/* PS_USE_PSTAT */
 
 #ifdef PS_USE_PS_STRINGS
 	PS_STRINGS->ps_nargvstr = 1;
 	PS_STRINGS->ps_argvstr = ps_buffer;
-#endif   /* PS_USE_PS_STRINGS */
+#endif							/* PS_USE_PS_STRINGS */
 
 #ifdef PS_USE_CLOBBER_ARGV
 	{
@@ -329,7 +329,7 @@ set_ps_display(const char *activity, bool force)
 		buflen = strlen(ps_buffer);
 		memset(ps_buffer + buflen, PS_PADDING, ps_buffer_size - buflen);
 	}
-#endif   /* PS_USE_CLOBBER_ARGV */
+#endif							/* PS_USE_CLOBBER_ARGV */
 
 #ifdef PS_USE_WIN32
 	{
@@ -348,9 +348,9 @@ set_ps_display(const char *activity, bool force)
 
 		ident_handle = CreateEvent(NULL, TRUE, FALSE, name);
 	}
-#endif   /* PS_USE_WIN32 */
+#endif							/* PS_USE_WIN32 */
 
-#endif   /* not PS_USE_NONE */
+#endif							/* not PS_USE_NONE */
 }
 
 
@@ -389,10 +389,11 @@ get_ps_display(int *displen)
 /*
  * Show ps idle status
  */
-void pool_ps_idle_display(POOL_CONNECTION_POOL *backend)
+void
+pool_ps_idle_display(POOL_CONNECTION_POOL * backend)
 {
 	StartupPacket *sp;
-	char psbuf[1024];
+	char		psbuf[1024];
 
 	sp = MASTER_CONNECTION(backend)->sp;
 	if (MASTER(backend)->tstate == 'T')

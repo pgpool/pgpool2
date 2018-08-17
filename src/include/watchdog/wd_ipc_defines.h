@@ -27,12 +27,11 @@
 
 typedef enum WDFailoverCMDResults
 {
-	FAILOVER_RES_ERROR = 0,				/* processing of command is failed */
-	FAILOVER_RES_TRANSITION,			/* cluster is transitioning and is
-										 * currently not accepting any commands.
-										 * retry is the best option when this result
-										 * is returned by watchdog
-										 */
+	FAILOVER_RES_ERROR = 0,		/* processing of command is failed */
+	FAILOVER_RES_TRANSITION,	/* cluster is transitioning and is currently
+								 * not accepting any commands. retry is the
+								 * best option when this result is returned by
+								 * watchdog */
 	FAILOVER_RES_SUCCESS,
 	FAILOVER_RES_PROCEED,
 	FAILOVER_RES_NO_QUORUM,
@@ -43,7 +42,7 @@ typedef enum WDFailoverCMDResults
 	FAILOVER_RES_BUILDING_CONSENSUS,
 	FAILOVER_RES_CONSENSUS_MAY_FAIL,
 	FAILOVER_RES_TIMEOUT
-}WDFailoverCMDResults;
+}			WDFailoverCMDResults;
 
 typedef enum WDValueDataType
 {
@@ -51,7 +50,7 @@ typedef enum WDValueDataType
 	VALUE_DATA_TYPE_STRING,
 	VALUE_DATA_TYPE_BOOL,
 	VALUE_DATA_TYPE_LONG
-}WDValueDataType;
+}			WDValueDataType;
 
 /* IPC MESSAGES TYPES */
 #define WD_REGISTER_FOR_NOTIFICATION		'0'
@@ -91,16 +90,20 @@ typedef enum WDValueDataType
 #define WD_FAILOVER_ID_KEY				"FAILOVER_COMMAND_ID"
 
 
-#define WD_IPC_AUTH_KEY			"IPCAuthKey"	/* JSON data key for authentication.
-												 * watchdog IPC server use the value for this key
-												 * to authenticate the external IPC clients
-												 * The valid value for this key is wd_authkey
-												 * configuration parameter
-												 */
-#define WD_IPC_SHARED_KEY		"IPCSharedKey"	/* JSON data key for authentication.
-												 * watchdog IPC server use the value of this key
-												 * to authenticate the internal pgpool-II processes
-												 */
+#define WD_IPC_AUTH_KEY			"IPCAuthKey"	/* JSON data key for
+												 * authentication. watchdog
+												 * IPC server use the value
+												 * for this key to
+												 * authenticate the external
+												 * IPC clients The valid value
+												 * for this key is wd_authkey
+												 * configuration parameter */
+#define WD_IPC_SHARED_KEY		"IPCSharedKey"	/* JSON data key for
+												 * authentication. watchdog
+												 * IPC server use the value of
+												 * this key to authenticate
+												 * the internal pgpool-II
+												 * processes */
 
 /* Watchdog runtime variable names */
 

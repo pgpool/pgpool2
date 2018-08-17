@@ -498,12 +498,12 @@ typedef enum NodeTag
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
 	T_FdwRoutine,				/* in foreign/fdwapi.h */
-	T_IndexAmRoutine,           /* in access/amapi.h */
-	TsmRoutine,                 /* in access/tsmapi.h */
-	T_ForeignKeyCacheInfo,       /* in utils/rel.h */
+	T_IndexAmRoutine,			/* in access/amapi.h */
+	TsmRoutine ,				/* in access/tsmapi.h */
+				T_ForeignKeyCacheInfo,	/* in utils/rel.h */
 	/* pgpool Extention */
-	T_PgpoolVariableSetStmt,
-	T_PgpoolVariableShowStmt
+				T_PgpoolVariableSetStmt,
+				T_PgpoolVariableShowStmt
 
 } NodeTag;
 
@@ -743,8 +743,8 @@ typedef enum AggStrategy
 {
 	AGG_PLAIN,					/* simple agg across all input rows */
 	AGG_SORTED,					/* grouped agg, input must be sorted */
-	AGG_HASHED,                                     /* grouped agg, use internal hashtable */
-	AGG_MIXED                                       /* grouped agg, hash and sort both used */
+	AGG_HASHED,					/* grouped agg, use internal hashtable */
+	AGG_MIXED					/* grouped agg, hash and sort both used */
 } AggStrategy;
 
 /*

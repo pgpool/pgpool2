@@ -121,20 +121,22 @@ typedef enum
 /* pgpool-II extension. This is same as ERROR but sets the
  * do not cache connection flag before transforming to ERROR.
  */
-#define FRONTEND_ERROR			23			/* transformed to ERROR at errstart */
-#define FRONTEND_ONLY_ERROR		24			/* this is treated as LOG message internally
-											 * for pgpool-II but forwarded to frontend clients
-											 * just like normal errors followed by readyForQuery
-											 * message
-											 */
+#define FRONTEND_ERROR			23	/* transformed to ERROR at errstart */
+#define FRONTEND_ONLY_ERROR		24	/* this is treated as LOG message
+									 * internally for pgpool-II but forwarded
+									 * to frontend clients just like normal
+									 * errors followed by readyForQuery
+									 * message */
 
  /* #define DEBUG DEBUG1 */	/* Backward compatibility with pre-7.3 */
-#define POOL_EXIT_NO_RESTART	0	/* child exiting with this error will not be
-									 * restarted by pgpool main process
-									 * but the pgpool main will remain unaffected by this */
-#define POOL_EXIT_AND_RESTART	1	/* child process exit with this error code will
-									 * be restarted by the pgpool main */
-#define POOL_EXIT_FATAL			3	/* This exit code from child also takes down the pgpool main with it */
+#define POOL_EXIT_NO_RESTART	0	/* child exiting with this error will not
+									 * be restarted by pgpool main process but
+									 * the pgpool main will remain unaffected
+									 * by this */
+#define POOL_EXIT_AND_RESTART	1	/* child process exit with this error code
+									 * will be restarted by the pgpool main */
+#define POOL_EXIT_FATAL			3	/* This exit code from child also takes
+									 * down the pgpool main with it */
 
 
 
@@ -196,7 +198,7 @@ typedef enum
 		if (elevel_ >= ERROR  && elevel_ != FRONTEND_ONLY_ERROR) \
 			pg_unreachable(); \
 	} while(0)
-#endif   /* HAVE__BUILTIN_CONSTANT_P */
+#endif							/* HAVE__BUILTIN_CONSTANT_P */
 
 #define ereport(elevel, rest)	\
 	ereport_domain(elevel, TEXTDOMAIN, rest)
@@ -292,7 +294,7 @@ extern int	errposition(int cursorpos);
 
 #define pg_unreachable() exit(0)
 
-extern bool  getfrontendinvalid(void);
+extern bool getfrontendinvalid(void);
 extern int	geterrcode(void);
 extern int	geterrposition(void);
 extern int	getinternalerrposition(void);
@@ -328,12 +330,12 @@ extern int	getinternalerrposition(void);
 		if (elevel_ >= ERROR  && (elevel) != FRONTEND_ONLY_ERROR) \
 			pg_unreachable(); \
 	} while(0)
-#endif   /* HAVE__BUILTIN_CONSTANT_P */
+#endif							/* HAVE__BUILTIN_CONSTANT_P */
 #else							/* !HAVE__VA_ARGS */
 #define elog  \
 	elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO), \
 	elog_finish
-#endif   /* HAVE__VA_ARGS */
+#endif							/* HAVE__VA_ARGS */
 
 extern void elog_start(const char *filename, int lineno, const char *funcname);
 extern void
@@ -434,8 +436,8 @@ extern PGDLLIMPORT sigjmp_buf *PG_exception_stack;
 typedef struct ErrorData
 {
 	int			elevel;			/* error level */
-	bool		output_to_server;		/* will report to server log? */
-	bool		output_to_client;		/* will report to client? */
+	bool		output_to_server;	/* will report to server log? */
+	bool		output_to_client;	/* will report to client? */
 	bool		show_funcname;	/* true to force funcname inclusion */
 	bool		hide_stmt;		/* true to prevent STATEMENT: inclusion */
 	const char *filename;		/* __FILE__ of ereport() call */
@@ -444,8 +446,9 @@ typedef struct ErrorData
 	const char *domain;			/* message domain */
 	const char *context_domain; /* message domain for context message */
 	int			sqlerrcode;		/* encoded ERRSTATE */
-	bool		frontend_invalid;/* true when frontend connection is not valid */
-	char	   *pgpool_errcode;	/* error code to be sent to client */
+	bool		frontend_invalid;	/* true when frontend connection is not
+									 * valid */
+	char	   *pgpool_errcode; /* error code to be sent to client */
 	char	   *message;		/* primary error message */
 	char	   *detail;			/* detail error message */
 	char	   *detail_log;		/* detail error message for server log only */
@@ -457,7 +460,7 @@ typedef struct ErrorData
 	char	   *datatype_name;	/* name of datatype */
 	char	   *constraint_name;	/* name of constraint */
 	int			cursorpos;		/* cursor index into query string */
-	int			retcode;			/* return code to be used in exit() code */
+	int			retcode;		/* return code to be used in exit() code */
 	int			internalpos;	/* cursor index into internalquery */
 	char	   *internalquery;	/* text of internally-generated query */
 	char	   *client_error_code;	/* error code to report to client */
@@ -488,7 +491,7 @@ typedef enum
 	PGERROR_TERSE,				/* single-line error messages */
 	PGERROR_DEFAULT,			/* recommended style */
 	PGERROR_VERBOSE				/* all the facts, ma'am */
-}	PGErrorVerbosity;
+}			PGErrorVerbosity;
 
 
 /* Log destination bitmap */
@@ -514,11 +517,11 @@ write_stderr(const char *fmt,...)
    the supplied arguments. */
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
-void shmem_exit(int code);
-void on_exit_reset(void);
-void cancel_shmem_exit(pg_on_exit_callback function, Datum arg);
-void on_proc_exit(pg_on_exit_callback function, Datum arg);
-void on_shmem_exit(pg_on_exit_callback function, Datum arg);
-void on_system_exit(pg_on_exit_callback function, Datum arg);
+void		shmem_exit(int code);
+void		on_exit_reset(void);
+void		cancel_shmem_exit(pg_on_exit_callback function, Datum arg);
+void		on_proc_exit(pg_on_exit_callback function, Datum arg);
+void		on_shmem_exit(pg_on_exit_callback function, Datum arg);
+void		on_system_exit(pg_on_exit_callback function, Datum arg);
 
-#endif   /* ELOG_H */
+#endif							/* ELOG_H */

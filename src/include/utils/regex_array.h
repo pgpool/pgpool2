@@ -1,7 +1,7 @@
 /* -*-pgsql-c-*- */
 /*
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2014	PgPool Global Development Group
@@ -29,33 +29,36 @@
 /*
  * Regular expression array
  */
-typedef struct {
-  int size;	/* regex array size */
-  int pos;	/* next regex array index position */
-  regex_t **regex;	/* regular expression array */
-} RegArray;
+typedef struct
+{
+	int			size;			/* regex array size */
+	int			pos;			/* next regex array index position */
+	regex_t   **regex;			/* regular expression array */
+}			RegArray;
 
-RegArray *create_regex_array(void);
-int add_regex_array(RegArray *ar, char *pattern);
-int regex_array_match(RegArray *ar, char *pattern);
-void destroy_regex_arrary(RegArray *ar);
+RegArray   *create_regex_array(void);
+int			add_regex_array(RegArray * ar, char *pattern);
+int			regex_array_match(RegArray * ar, char *pattern);
+void		destroy_regex_arrary(RegArray * ar);
 
 /*
  * String left-right token type
  */
-typedef struct {
-  char *left_token;
-  char *right_token;
-  double weight_token;
-} Left_right_token;
+typedef struct
+{
+	char	   *left_token;
+	char	   *right_token;
+	double		weight_token;
+}			Left_right_token;
 
-typedef struct {
-  int pos;
-  int size;
-  Left_right_token *token;
-} Left_right_tokens;
+typedef struct
+{
+	int			pos;
+	int			size;
+	Left_right_token *token;
+}			Left_right_tokens;
 
 Left_right_tokens *create_lrtoken_array(void);
-void extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_tokens *lrtokens);
+void		extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_tokens * lrtokens);
 
 #endif

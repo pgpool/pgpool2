@@ -43,7 +43,7 @@ typedef enum
 	WATCHDOG_LIFECHECK,
 	GENERAL_CONFIG,
 	CACHE_CONFIG
-} config_group;
+}			config_group;
 
 typedef enum
 {
@@ -58,7 +58,7 @@ typedef enum
 	CONFIG_VAR_TYPE_DOUBLE_ARRAY,
 	CONFIG_VAR_TYPE_STRING_ARRAY,
 	CONFIG_VAR_TYPE_GROUP
-}config_type;
+}			config_type;
 
 /*
  * The possible values of an enum variable are specified by an array of
@@ -86,10 +86,13 @@ typedef enum
 /* Config variable flags bit values */
 #define VAR_PART_OF_GROUP			0x0001
 #define VAR_HIDDEN_VALUE			0x0002	/* for password type variables */
-#define VAR_HIDDEN_IN_SHOW_ALL		0x0004	/* for variables hidden in show all*/
-#define VAR_NO_RESET_ALL			0x0008	/* for variables not to be reset with reset all*/
-#define ARRAY_VAR_ALLOW_NO_INDEX	0x0010	/* for array type vars that also alows
-											 * variable with same naem with out index*/
+#define VAR_HIDDEN_IN_SHOW_ALL		0x0004	/* for variables hidden in show
+											 * all */
+#define VAR_NO_RESET_ALL			0x0008	/* for variables not to be reset
+											 * with reset all */
+#define ARRAY_VAR_ALLOW_NO_INDEX	0x0010	/* for array type vars that also
+											 * alows variable with same naem
+											 * with out index */
 #define DEFAULT_FOR_NO_VALUE_ARRAY_VAR	0x0020
 
 /*
@@ -103,44 +106,52 @@ typedef bool (*IndexedVarEmptySlotCheck) (int index);
 typedef bool (*ConfigBoolAssignFunc) (ConfigContext scontext, bool newval, int elevel);
 typedef bool (*ConfigEnumAssignFunc) (ConfigContext scontext, int newval, int elevel);
 
-typedef bool (*ConfigStringListAssignFunc) (ConfigContext scontext, char* newval, int index);
+typedef bool (*ConfigStringListAssignFunc) (ConfigContext scontext, char *newval, int index);
 
-typedef bool (*ConfigInt64AssignFunc)  (ConfigContext scontext, int64 newval, int elevel);
+typedef bool (*ConfigInt64AssignFunc) (ConfigContext scontext, int64 newval, int elevel);
 
-typedef bool (*ConfigStringAssignFunc) (ConfigContext scontext, char* newval, int elevel);
-typedef bool (*ConfigStringArrayAssignFunc) (ConfigContext scontext, char* newval, int index, int elevel);
+typedef bool (*ConfigStringAssignFunc) (ConfigContext scontext, char *newval, int elevel);
+typedef bool (*ConfigStringArrayAssignFunc) (ConfigContext scontext, char *newval, int index, int elevel);
 
-typedef bool (*ConfigIntAssignFunc)	(ConfigContext scontext, int newval, int elevel);
+typedef bool (*ConfigIntAssignFunc) (ConfigContext scontext, int newval, int elevel);
 typedef bool (*ConfigIntArrayAssignFunc) (ConfigContext scontext, int newval, int index, int elevel);
 
 typedef bool (*ConfigDoubleAssignFunc) (ConfigContext scontext, double newval, int elevel);
 typedef bool (*ConfigDoubleArrayAssignFunc) (ConfigContext scontext, double newval, int index, int elevel);
 
-typedef bool (*ConfigStringProcessingFunc) (char* newval,int elevel);
-typedef bool (*ConfigEnumProcessingFunc) (int newval,int elevel);
+typedef bool (*ConfigStringProcessingFunc) (char *newval, int elevel);
+typedef bool (*ConfigEnumProcessingFunc) (int newval, int elevel);
 
 
 struct config_generic
 {
 	/* constant fields, must be set correctly in initial value: */
-	const char		*name;			/* name of variable - MUST BE FIRST */
-	ConfigContext	context;		/* context required to set the variable */
-	config_group	group;			/* to help organize variables by function */
-	const char		*description;	/* short desc. of this variable's purpose */
-	config_type		vartype;		/* type of variable (set only at startup) */
-	bool			dynamic_array_var;	/* true if the variable name contains index postfix */
-	int				flags;			/* flags */
-	int				max_elements;	/* number of maximum elements, only valid for array type configs */
-	int				status;			/* status bits, see below */
-	int				sourceline;		/* line in source file */
+	const char *name;			/* name of variable - MUST BE FIRST */
+	ConfigContext context;		/* context required to set the variable */
+	config_group group;			/* to help organize variables by function */
+	const char *description;	/* short desc. of this variable's purpose */
+	config_type vartype;		/* type of variable (set only at startup) */
+	bool		dynamic_array_var;	/* true if the variable name contains
+									 * index postfix */
+	int			flags;			/* flags */
+	int			max_elements;	/* number of maximum elements, only valid for
+								 * array type configs */
+	int			status;			/* status bits, see below */
+	int			sourceline;		/* line in source file */
 
 
-	GucSource		*sources;		/* source of the current actual value, For array type config elements
-									 * it contains the corosponding source of each individual element */
-	GucSource		*reset_sources;	/* source of the reset value, For array type config elements
-									 * it contains the corosponding source of each individual element */
-	ConfigContext	*scontexts;		/* context that set the current value, For array type config elements
-									 * it contains the corosponding context of each individual element */
+	GucSource  *sources;		/* source of the current actual value, For
+								 * array type config elements it contains the
+								 * corosponding source of each individual
+								 * element */
+	GucSource  *reset_sources;	/* source of the reset value, For array type
+								 * config elements it contains the
+								 * corosponding source of each individual
+								 * element */
+	ConfigContext *scontexts;	/* context that set the current value, For
+								 * array type config elements it contains the
+								 * corosponding context of each individual
+								 * element */
 
 };
 
@@ -170,33 +181,34 @@ struct config_int
 	ConfigIntAssignFunc assign_func;
 	ConfigIntAssignFunc check_func;
 	VarShowHook show_hook;
-	int		reset_val;
+	int			reset_val;
 };
 
 struct config_int_array
 {
 	struct config_generic gen;
 	/* constant fields, must be set correctly in initial value: */
-	int		   **variable;
+	int		  **variable;
 	int			boot_val;
 	int			min;
 	int			max;
 
-	struct config_int	config_no_index; /* int type record if the array also includes
-										  * master value (value without index postfix )*/
+	struct config_int config_no_index;	/* int type record if the array also
+										 * includes master value (value
+										 * without index postfix ) */
 
 	ConfigIntArrayAssignFunc assign_func;
 	ConfigIntArrayAssignFunc check_func;
 	IndexedVarShowHook show_hook;
-	IndexedVarEmptySlotCheck	empty_slot_check_func;
-	int			*reset_vals;	/* Array of reset values */
+	IndexedVarEmptySlotCheck empty_slot_check_func;
+	int		   *reset_vals;		/* Array of reset values */
 };
 
 struct config_double
 {
 	struct config_generic gen;
 	/* constant fields, must be set correctly in initial value: */
-	double		*variable;
+	double	   *variable;
 	double		boot_val;
 	double		min;
 	double		max;
@@ -210,25 +222,26 @@ struct config_double_array
 {
 	struct config_generic gen;
 	/* constant fields, must be set correctly in initial value: */
-	double		**variable;
+	double	  **variable;
 	double		boot_val;
 	double		min;
 	double		max;
 
-	struct config_double	config_no_index; /* record if the array also includes
-											  * master value (value without index postfix )*/
+	struct config_double config_no_index;	/* record if the array also
+											 * includes master value (value
+											 * without index postfix ) */
 	ConfigDoubleArrayAssignFunc assign_func;
 	ConfigDoubleArrayAssignFunc check_func;
 	IndexedVarShowHook show_hook;
-	IndexedVarEmptySlotCheck	empty_slot_check_func;
-	double		*reset_vals;
+	IndexedVarEmptySlotCheck empty_slot_check_func;
+	double	   *reset_vals;
 };
 
 struct config_long
 {
 	struct config_generic gen;
 	/* constant fields, must be set correctly in initial value: */
-	int64		*variable;
+	int64	   *variable;
 	int64		boot_val;
 	int64		min;
 	int64		max;
@@ -248,39 +261,40 @@ struct config_string
 	ConfigStringAssignFunc check_func;
 	ConfigStringProcessingFunc process_func;
 	VarShowHook show_hook;
-	char*		reset_val;
+	char	   *reset_val;
 };
 
 struct config_string_array
 {
 	struct config_generic gen;
 	/* constant fields, must be set correctly in initial value: */
-	char		***variable;
-	const char	*boot_val;
+	char	 ***variable;
+	const char *boot_val;
 
-	struct config_string		config_no_index; /* record if the array also includes
-												  * master value (value without index postfix )*/
+	struct config_string config_no_index;	/* record if the array also
+											 * includes master value (value
+											 * without index postfix ) */
 	ConfigStringArrayAssignFunc assign_func;
 	ConfigStringArrayAssignFunc check_func;
 	IndexedVarShowHook show_hook;
-	IndexedVarEmptySlotCheck	empty_slot_check_func;
-	char		**reset_vals;
+	IndexedVarEmptySlotCheck empty_slot_check_func;
+	char	  **reset_vals;
 };
 
 struct config_string_list
 {
 	struct config_generic gen;
 	/* constant fields, must be set correctly in initial value: */
-	char		***variable;
-	int			*list_elements_count;
-	const char	*boot_val;
-	const char	*seperator;
+	char	 ***variable;
+	int		   *list_elements_count;
+	const char *boot_val;
+	const char *seperator;
 	bool		compute_regex;
 	ConfigStringListAssignFunc assign_func;
 	ConfigStringListAssignFunc check_func;
 	VarShowHook show_hook;
-	char		*reset_val;
-	char		*current_val;
+	char	   *reset_val;
+	char	   *current_val;
 };
 
 struct config_enum
@@ -294,30 +308,30 @@ struct config_enum
 	ConfigEnumAssignFunc check_func;
 	ConfigEnumProcessingFunc process_func;
 	VarShowHook show_hook;
-	int		reset_val;
+	int			reset_val;
 };
 
 struct config_grouped_array_var
 {
 	struct config_generic gen;
-	int var_count;
+	int			var_count;
 	struct config_generic **var_list;
 };
 
 
 extern void InitializeConfigOptions(void);
 extern bool set_one_config_option(const char *name, const char *value,
-						   ConfigContext context, GucSource source, int elevel);
+					  ConfigContext context, GucSource source, int elevel);
 
 extern bool set_config_options(ConfigVariable *head_p,
-							   ConfigContext context, GucSource source, int elevel);
+				   ConfigContext context, GucSource source, int elevel);
 
 
 #ifndef POOL_PRIVATE
-extern bool report_config_variable(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char* var_name);
-extern bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
-extern bool set_config_option_for_session(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char *name, const char *value);
-bool reset_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+extern bool report_config_variable(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *var_name);
+extern bool report_all_variables(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
+extern bool set_config_option_for_session(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *name, const char *value);
+bool		reset_all_variables(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
 #endif
 
-#endif /* POOL_CONFIG_VARIABLES_H */
+#endif							/* POOL_CONFIG_VARIABLES_H */

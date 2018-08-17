@@ -43,8 +43,8 @@
 /* Maximum number of characters allowed for input. */
 #define MAX_INPUT_SIZE	MAX_USER_NAME_LEN
 
-static void	print_usage(const char prog[], int exit_code);
-static void	set_tio_attr(int enable);
+static void print_usage(const char prog[], int exit_code);
+static void set_tio_attr(int enable);
 static void update_pool_passwd(char *conf_file, char *username, char *password);
 
 int
@@ -52,12 +52,12 @@ main(int argc, char *argv[])
 {
 #define PRINT_USAGE(exit_code)	print_usage(argv[0], exit_code)
 
-	char conf_file[POOLMAXPATHLEN+1];
-	char username[MAX_INPUT_SIZE+1];
-	int opt;
-	int optindex;
-	bool md5auth = false;
-	bool prompt = false;
+	char		conf_file[POOLMAXPATHLEN + 1];
+	char		username[MAX_INPUT_SIZE + 1];
+	int			opt;
+	int			optindex;
+	bool		md5auth = false;
+	bool		prompt = false;
 
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
@@ -70,24 +70,25 @@ main(int argc, char *argv[])
 
 	snprintf(conf_file, sizeof(conf_file), "%s/%s", DEFAULT_CONFIGDIR, POOL_CONF_FILE_NAME);
 
-	/* initialize username buffer with zeros so that we can use strlen on it later
-	   to check if a username was given on the command line
+	/*
+	 * initialize username buffer with zeros so that we can use strlen on it
+	 * later to check if a username was given on the command line
 	 */
-	memset(username, 0, MAX_INPUT_SIZE+1);
+	memset(username, 0, MAX_INPUT_SIZE + 1);
 
-    while ((opt = getopt_long(argc, argv, "hpmf:u:", long_options, &optindex)) != -1)
+	while ((opt = getopt_long(argc, argv, "hpmf:u:", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
-			case 'p':    /* prompt for password */
+			case 'p':			/* prompt for password */
 				prompt = true;
 				break;
 
-			case 'm':	/* produce md5 authentication password */
+			case 'm':			/* produce md5 authentication password */
 				md5auth = true;
 				break;
 
-			case 'f':	/* specify configuration file */
+			case 'f':			/* specify configuration file */
 				if (!optarg)
 				{
 					PRINT_USAGE(EXIT_SUCCESS);
@@ -113,20 +114,20 @@ main(int argc, char *argv[])
 				PRINT_USAGE(EXIT_SUCCESS);
 				break;
 		}
-	}				
+	}
 
 	/* Prompt for password. */
 	if (prompt)
 	{
-		char	 md5[MD5_PASSWD_LEN+1];
-		char	 buf[MAX_INPUT_SIZE+1];
-		int		 len;
+		char		md5[MD5_PASSWD_LEN + 1];
+		char		buf[MAX_INPUT_SIZE + 1];
+		int			len;
 
 		set_tio_attr(1);
 		printf("password: ");
-		if (!fgets(buf, (MAX_INPUT_SIZE+1), stdin))
+		if (!fgets(buf, (MAX_INPUT_SIZE + 1), stdin))
 		{
-			int eno = errno;
+			int			eno = errno;
 
 			fprintf(stderr, "Couldn't read input from stdin. (fgets(): %s)",
 					strerror(eno));
@@ -138,9 +139,9 @@ main(int argc, char *argv[])
 
 		/* Remove LF at the end of line, if there is any. */
 		len = strlen(buf);
-		if (len > 0 && buf[len-1] == '\n')
+		if (len > 0 && buf[len - 1] == '\n')
 		{
-			buf[len-1] = '\0';
+			buf[len - 1] = '\0';
 			len--;
 		}
 
@@ -158,14 +159,14 @@ main(int argc, char *argv[])
 	/* Read password from argv. */
 	else
 	{
-		char	md5[POOL_PASSWD_LEN+1];
-		int		len;
+		char		md5[POOL_PASSWD_LEN + 1];
+		int			len;
 
 		if (optind >= argc)
 		{
 			PRINT_USAGE(EXIT_FAILURE);
 		}
-			
+
 		len = strlen(argv[optind]);
 
 		if (len > MAX_INPUT_SIZE)
@@ -188,13 +189,14 @@ main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
-static void update_pool_passwd(char *conf_file, char *username, char *password)
+static void
+update_pool_passwd(char *conf_file, char *username, char *password)
 {
 	struct passwd *pw;
-	char	 md5[POOL_PASSWD_LEN+1];
-	char pool_passwd[POOLMAXPATHLEN+1];
-	char dirnamebuf[POOLMAXPATHLEN+1];
-	char *dirp;
+	char		md5[POOL_PASSWD_LEN + 1];
+	char		pool_passwd[POOLMAXPATHLEN + 1];
+	char		dirnamebuf[POOLMAXPATHLEN + 1];
+	char	   *dirp;
 
 	if (pool_init_config())
 	{
@@ -283,8 +285,8 @@ set_tio_attr(int set)
 
 		tio_save = tio;
 
-		tio.c_iflag &= ~(BRKINT|ISTRIP|IXON);
-		tio.c_lflag &= ~(ICANON|IEXTEN|ECHO|ECHOE|ECHOK|ECHONL);
+		tio.c_iflag &= ~(BRKINT | ISTRIP | IXON);
+		tio.c_lflag &= ~(ICANON | IEXTEN | ECHO | ECHOE | ECHOK | ECHONL);
 		tio.c_cc[VMIN] = 1;
 		tio.c_cc[VTIME] = 0;
 

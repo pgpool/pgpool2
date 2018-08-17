@@ -38,14 +38,15 @@
 /*
  * Create RegArray object
  */
-RegArray *create_regex_array(void)
+RegArray *
+create_regex_array(void)
 {
-	RegArray *ar;
+	RegArray   *ar;
 
 	ar = palloc(sizeof(RegArray));
 	ar->pos = 0;
 	ar->size = AR_ALLOC_UNIT;
-	ar->regex = (regex_t **)palloc(sizeof(regex_t *) * ar->size);
+	ar->regex = (regex_t **) palloc(sizeof(regex_t *) * ar->size);
 
 	return ar;
 }
@@ -53,12 +54,13 @@ RegArray *create_regex_array(void)
 /*
  * Add an regular expression pattern
  */
-int add_regex_array(RegArray *ar, char *pattern)
+int
+add_regex_array(RegArray * ar, char *pattern)
 {
-	int regex_flags;
-	regex_t *regex;
-	char *pat;
-	int len;
+	int			regex_flags;
+	regex_t    *regex;
+	char	   *pat;
+	int			len;
 
 	if (ar == NULL)
 	{
@@ -84,7 +86,7 @@ int add_regex_array(RegArray *ar, char *pattern)
 	/* Add extended regex search */
 	regex_flags |= REG_EXTENDED;
 
-	pat = palloc(sizeof(char)*(len+3));
+	pat = palloc(sizeof(char) * (len + 3));
 	if (strncmp(pattern, "^", 1) != 0)
 	{
 		strncpy(pat, "^", 2);
@@ -126,9 +128,10 @@ int add_regex_array(RegArray *ar, char *pattern)
 /*
  * Execute regex matching. Returns matched array index.
  */
-int regex_array_match(RegArray *ar, char *pattern)
+int
+regex_array_match(RegArray * ar, char *pattern)
 {
-	int i;
+	int			i;
 
 	if (ar == NULL)
 	{
@@ -144,7 +147,7 @@ int regex_array_match(RegArray *ar, char *pattern)
 		return -1;
 	}
 
-	for (i=0;i<ar->pos;i++)
+	for (i = 0; i < ar->pos; i++)
 	{
 		if (regexec(ar->regex[i], pattern, 0, 0, 0) == 0)
 			return i;
@@ -155,7 +158,8 @@ int regex_array_match(RegArray *ar, char *pattern)
 /*
  * Destroy RegArray object
  */
-void destroy_regex_arrary(RegArray *ar)
+void
+destroy_regex_arrary(RegArray * ar)
 {
 	pfree(ar->regex);
 	pfree(ar);
@@ -164,14 +168,15 @@ void destroy_regex_arrary(RegArray *ar)
 /*
  * Create L-R token array
  */
-Left_right_tokens *create_lrtoken_array(void)
+Left_right_tokens *
+create_lrtoken_array(void)
 {
 	Left_right_tokens *ar;
 
 	ar = palloc(sizeof(Left_right_tokens));
 	ar->pos = 0;
 	ar->size = AR_ALLOC_UNIT;
-	ar->token = (Left_right_token *)palloc(sizeof(Left_right_token) * ar->size);
+	ar->token = (Left_right_token *) palloc(sizeof(Left_right_token) * ar->size);
 
 	return ar;
 }
@@ -181,32 +186,34 @@ Left_right_tokens *create_lrtoken_array(void)
  * and token lists are returned to left_tokens and right_tokens respectively.
  * Nnumber of tokens is set to *n.
  */
-void extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_tokens *lrtokens)
+void
+extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_tokens * lrtokens)
 {
-	char *token;
-	char *mystr;
+	char	   *token;
+	char	   *mystr;
 
 	mystr = pstrdup(str);
 
 	for (token = strtok(mystr, delimi); token != NULL; token = strtok(NULL, delimi))
 	{
-		int len;
-		char *left_token;
-		char *right_token;
-		char *weight_token = NULL;
-		int i,j;
+		int			len;
+		char	   *left_token;
+		char	   *right_token;
+		char	   *weight_token = NULL;
+		int			i,
+					j;
 
-		len = strlen(token)+1;
+		len = strlen(token) + 1;
 		left_token = palloc(len);
 		right_token = palloc(len);
 		weight_token = palloc(len);
 
-		for (i=0;token[i] && token[i] != delimi2;i++)
+		for (i = 0; token[i] && token[i] != delimi2; i++)
 			left_token[i] = token[i];
 
 		left_token[i] = '\0';
 
-		if (i == len -1)
+		if (i == len - 1)
 		{
 			pfree(left_token);
 			pfree(right_token);
@@ -218,17 +225,18 @@ void extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_to
 		i++;
 		j = 0;
 
-		for (;token[i] && token[i] != '('; i++)
+		for (; token[i] && token[i] != '('; i++)
 			right_token[j++] = token[i];
 
 		right_token[j] = '\0';
 
 		/* delimiter 3 */
-		int k = 0;
+		int			k = 0;
+
 		if (token[i] == '(')
 		{
 			i++;
-			for (;token[i] && token[i] != ')'; i++)
+			for (; token[i] && token[i] != ')'; i++)
 				weight_token[k++] = token[i];
 		}
 		weight_token[k] = '\0';

@@ -90,4 +90,4 @@ extern size_t pvsnprintf(char *buf, size_t len, const char *fmt, va_list args) p
 /* Get a bit mask of the bits set in non-long aligned addresses */
 #define LONG_ALIGN_MASK (sizeof(long) - 1)
 
-#endif   /* FE_MEMUTILS_H */
+#endif							/* FE_MEMUTILS_H */

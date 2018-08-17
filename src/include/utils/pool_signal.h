@@ -3,7 +3,7 @@
  *
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Portions Copyright (c) 2003-2008,	PgPool Global Development Group
@@ -66,5 +66,5 @@ int			pqsigsetmask(int mask);
 typedef void (*pool_sighandler_t) (int);
 extern pool_sighandler_t pool_signal(int signo, pool_sighandler_t func);
 extern void poolinitmask(void);
-extern int pool_signal_parent(int sig);
-#endif /* POOL_SIGNAL_H */
+extern int	pool_signal_parent(int sig);
+#endif							/* POOL_SIGNAL_H */

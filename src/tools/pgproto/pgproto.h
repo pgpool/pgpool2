@@ -27,13 +27,14 @@
  * Protocol data representation read from the data file.
  * We assume that the protocol version is V3.
  */
-typedef struct {
-	char type;	/* message type */
-	int	size;	/* message length excluding this (in host order) */
-	char message[1];	/* actual message (variable length) */
-} PROTO_DATA;
+typedef struct
+{
+	char		type;			/* message type */
+	int			size;			/* message length excluding this (in host
+								 * order) */
+	char		message[1];		/* actual message (variable length) */
+}			PROTO_DATA;
 
-extern int read_nap;
+extern int	read_nap;
 
-#endif	/* PGPROTO_H */
-
+#endif							/* PGPROTO_H */
