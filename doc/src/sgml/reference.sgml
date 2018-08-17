@@ -114,6 +114,7 @@
 
     &pgMd5;
     &pgEnc;
+    &pgproto;
     &pgpoolSetup;
     &watchdoglSetup;
 

@@ -7,11 +7,6 @@ TESTDIR=`pwd`/testdir
 PSQL=$PGBIN/psql
 PGBENCH=$PGBENCH_PATH
 WHOAMI=`whoami`
-PGPROTO=`which pgproto`
-if [ $? != 0 ];then
-   echo -n "pgproto not found. skipping test"
-   exit 0
-fi
 LD_LIBRARY_PATH=$PGBIN/../lib
 
 #test parameter
@@ -58,7 +53,7 @@ tests=`(ls tests)`
 for i in $tests
 do
 	echo -n "testing $i ..."
-	timeout $timeout $PGPROTO -u $WHOAMI -p $PGPOOL_PORT -d test -f tests/$i
+	timeout $timeout $PGPOOL_INSTALL_DIR/bin/pgproto -u $WHOAMI -p $PGPOOL_PORT -d test -f tests/$i
 done
 
 # send cancel request

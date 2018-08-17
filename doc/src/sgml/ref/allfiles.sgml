@@ -18,6 +18,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY pcpRecoveryNode     SYSTEM "pcp_recovery_node.sgml">
 <!ENTITY pgMd5               SYSTEM "pg_md5.sgml">
 <!ENTITY pgEnc               SYSTEM "pg_enc.sgml">
+<!ENTITY pgproto             SYSTEM "pgproto.sgml">
 <!ENTITY pgpool              SYSTEM "pgpool.sgml">
 <!ENTITY pgpoolSetup         SYSTEM "pgpool_setup.sgml">
 <!ENTITY watchdoglSetup      SYSTEM "watchdog_setup.sgml">
