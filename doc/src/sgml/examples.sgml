@@ -701,7 +701,7 @@ arping_cmd = 'arping -U $_IP_$ -w 1'
     </sect1>
 
     <sect1 id="example-cluster">
-      <title><productname>Pgpoo-II</productname> + Watchdog Setup Example</title>
+      <title><productname>Pgpool-II</productname> + Watchdog Setup Example</title>
       <para>
 This section shows an example of streaming replication configuration using <productname>Pgpool-II</productname>. In this example, we use 3 <productname>Pgpool-II</productname> servers to manage <productname>PostgreSQL</productname> servers to create a robust cluster system and avoid the single point of failure or split brain.
       </para>

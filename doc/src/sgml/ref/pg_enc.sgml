@@ -17,7 +17,7 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pg_enc</refname>
   <refpurpose>
-    password encryption utility
+    AES256 password encryption utility
   </refpurpose>
  </refnamediv>
 
@@ -38,7 +38,7 @@ Pgpool-II documentation
   <title>Description</title>
   <para>
   <command>pg_enc</command>
-  password encryption utility.
+  AES256 password encryption utility.
   </para>
  </refsect1>
 

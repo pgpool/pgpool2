@@ -270,7 +270,7 @@
         <filename>"pool_passwd"</filename> file, then enabling
         <literal>allow_clear_text_frontend_auth</literal> will allow the
         <productname>Pgpool-II</productname> to use clear-text-password
-        authentication with frontend clients to get the password in palin text form
+        authentication with frontend clients to get the password in plain text form
         from the client and use it for backend authentication.
 	  </para>
 	  <para>
