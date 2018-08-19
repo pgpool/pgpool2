@@ -6666,7 +6666,7 @@ verify_pool_configurations(WatchdogNode * wdNode, POOL_CONFIG * config)
 	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, replication_stop_on_mismatch);
 	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, allow_clear_text_frontend_auth);
 	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, failover_if_affected_tuples_mismatch);
-	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, fail_over_on_backend_error);
+	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, failover_on_backend_error);
 	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, replicate_select);
 	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, master_slave_mode);
 	WD_VERIFY_RECEIVED_CONFIG_PARAMETER_VAL_BOOL(config, wdNode, connection_cache);

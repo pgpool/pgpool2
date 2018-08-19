@@ -88,7 +88,7 @@ get_pool_config_from_json(char *json_data, int data_len)
 		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "health_check_retry_delay", &config->health_check_retry_delay))
 		goto ERROR_EXIT;
-	if (json_get_bool_value_for_key(root, "fail_over_on_backend_error", &config->fail_over_on_backend_error))
+	if (json_get_bool_value_for_key(root, "failover_on_backend_error", &config->failover_on_backend_error))
 		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "recovery_timeout", &config->recovery_timeout))
 		goto ERROR_EXIT;
@@ -198,7 +198,7 @@ get_pool_config_json(void)
 	jw_put_int(jNode, "health_check_period", pool_config->health_check_period);
 	jw_put_int(jNode, "health_check_max_retries", pool_config->health_check_max_retries);
 	jw_put_int(jNode, "health_check_retry_delay", pool_config->health_check_retry_delay);
-	jw_put_bool(jNode, "fail_over_on_backend_error", pool_config->fail_over_on_backend_error);
+	jw_put_bool(jNode, "failover_on_backend_error", pool_config->failover_on_backend_error);
 	jw_put_int(jNode, "recovery_timeout", pool_config->recovery_timeout);
 	jw_put_int(jNode, "search_primary_node_timeout", pool_config->search_primary_node_timeout);
 	jw_put_int(jNode, "client_idle_limit_in_recovery", pool_config->client_idle_limit_in_recovery);

@@ -104,6 +104,7 @@ static bool WdSlotEmptyCheckFunc(int index);
 static bool BackendSlotEmptyCheckFunc(int index);
 
 /*variable custom assign functions */
+static bool FailOverOnBackendErrorAssignMessage(ConfigContext scontext, bool newval, int elevel);
 static bool BackendPortAssignFunc(ConfigContext context, int newval, int index, int elevel);
 static bool BackendHostAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 static bool BackendDataDirAssignFunc(ConfigContext context, char *newval, int index, int elevel);
@@ -369,10 +370,20 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"fail_over_on_backend_error", CFGCXT_RELOAD, FAILOVER_CONFIG,
+			"Old config parameter for failover_on_backend_error.",
+			CONFIG_VAR_TYPE_BOOL, false, VAR_HIDDEN_IN_SHOW_ALL
+		},
+		NULL,
+		true,
+		FailOverOnBackendErrorAssignMessage, NULL, NULL
+	},
+
+	{
+		{"failover_on_backend_error", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Triggers fail over when reading/writing to backend socket fails.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
-		&g_pool_config.fail_over_on_backend_error,
+		&g_pool_config.failover_on_backend_error,
 		true,
 		NULL, NULL, NULL
 	},
@@ -4111,6 +4122,20 @@ HBDestinationPortAssignFunc(ConfigContext context, int newval, int index, int el
 	return true;
 }
 
+/*
+ * Throws warning for if someone uses the removed fail_over_on_backend
+ * configuration parameter
+ */
+static bool
+FailOverOnBackendErrorAssignMessage(ConfigContext scontext, bool newval, int elevel)
+{
+	if (scontext != CFGCXT_BOOT)
+		ereport(WARNING,
+				(errmsg("fail_over_on_backend_error is changed to failover_on_backend_error"),
+				 errdetail("setting failover_on_backend_error has no effect"),
+				 errhint("use failover_on_backend_error instead")));
+	return true;
+}
 /*
  * Check DB node spec. node spec should be either "primary", "standby" or
  * numeric DB node id.

@@ -113,7 +113,7 @@
 	  <para>
 	    However from <productname>Pgpool-II</productname> 3.6, In
 	    the steaming replication mode, client sessions will not be
-	    disconnected when a fail-over occurs any more if the
+	    disconnected when a failover occurs any more if the
 	    session does not use the failed standby server. If the
 	    primary server goes down, still all sessions will be
 	    disconnected. Health check timeout case will also cause
@@ -304,10 +304,10 @@
       </listitem>
     </varlistentry>
 
-    <varlistentry id="guc-fail-over-on-backend-error" xreflabel="fail_over_on_backend_error">
-      <term><varname>fail_over_on_backend_error</varname> (<type>boolean</type>)
+    <varlistentry id="guc-failover-on-backend-error" xreflabel="failover_on_backend_error">
+      <term><varname>failover_on_backend_error</varname> (<type>boolean</type>)
         <indexterm>
-          <primary><varname>fail_over_on_backend_error</varname> configuration parameter</primary>
+          <primary><varname>failover_on_backend_error</varname> configuration parameter</primary>
         </indexterm>
       </term>
       <listitem>
@@ -322,7 +322,7 @@
           <para>
             It is recommended to turn on the backend health checking
             (see <xref linkend="runtime-config-health-check">)
-            when <varname>fail_over_on_backend_error</varname> is set to off.
+            when <varname>failover_on_backend_error</varname> is set to off.
             Note, however, that <productname>Pgpool-II</productname> still triggers the
             failover when it detects the administrative shutdown of
             <productname>PostgreSQL</> backend server.
@@ -332,6 +332,12 @@
         <para>
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
+        <note>
+        <para>
+            Prior to <productname>Pgpool-II</productname> <emphasis>V4.0</emphasis>,
+            this configuration parameter name was <varname>fail</varname><emphasis>_</emphasis><varname>over_on_backend_error</varname>
+        </para>
+        </note>
       </listitem>
     </varlistentry>
 

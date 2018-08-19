@@ -262,7 +262,7 @@ typedef struct
 										 * ended */
 	char	   *failback_command;	/* execute command when failback happens */
 
-	bool		fail_over_on_backend_error; /* If true, trigger fail over when
+	bool		failover_on_backend_error; /* If true, trigger fail over when
 											 * writing to the backend
 											 * communication socket fails.
 											 * This is the same behavior of

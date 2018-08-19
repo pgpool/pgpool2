@@ -220,10 +220,10 @@ pool_read(POOL_CONNECTION * cp, void *buf, int len)
 				}
 
 				/*
-				 * if fail_over_on_backend_error is true, then trigger
+				 * if failover_on_backend_error is true, then trigger
 				 * failover
 				 */
-				if (pool_config->fail_over_on_backend_error)
+				if (pool_config->failover_on_backend_error)
 				{
 					notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 
@@ -372,10 +372,10 @@ pool_read2(POOL_CONNECTION * cp, int len)
 				}
 
 				/*
-				 * if fail_over_on_backend_error is true, then trigger
+				 * if failover_on_backend_error is true, then trigger
 				 * failover
 				 */
-				if (pool_config->fail_over_on_backend_error)
+				if (pool_config->failover_on_backend_error)
 				{
 					notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 					child_exit(POOL_EXIT_AND_RESTART);
@@ -388,7 +388,7 @@ pool_read2(POOL_CONNECTION * cp, int len)
 				{
 					ereport(ERROR,
 							(errmsg("unable to read data from DB node %d", cp->db_node_id),
-							 errdetail("do not failover because fail_over_on_backend_error is off")));
+							 errdetail("do not failover because failover_on_backend_error is off")));
 				}
 			}
 			else
@@ -728,8 +728,8 @@ pool_flush(POOL_CONNECTION * cp)
 						 errdetail("pg_terminate_backend was called on the backend")));
 			}
 
-			/* if fail_over_on_backend_error is true, then trigger failover */
-			if (pool_config->fail_over_on_backend_error)
+			/* if failover_on_backend_error is true, then trigger failover */
+			if (pool_config->failover_on_backend_error)
 			{
 				notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 				ereport(LOG,
@@ -743,7 +743,7 @@ pool_flush(POOL_CONNECTION * cp)
 			{
 				ereport(ERROR,
 						(errmsg("unable to flush data to backend"),
-						 errdetail("do not failover because fail_over_on_backend_error is off")));
+						 errdetail("do not failover because failover_on_backend_error is off")));
 			}
 		}
 		else
@@ -785,7 +785,7 @@ pool_flush_noerror(POOL_CONNECTION * cp)
 			}
 
 			/* if fail_over_on_backend_erro is true, then trigger failover */
-			if (pool_config->fail_over_on_backend_error)
+			if (pool_config->failover_on_backend_error)
 			{
 				notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
 				child_exit(POOL_EXIT_AND_RESTART);
@@ -798,7 +798,7 @@ pool_flush_noerror(POOL_CONNECTION * cp)
 			{
 				ereport(LOG,
 						(errmsg("unable to flush data to backend"),
-						 errdetail("do not failover because fail_over_on_backend_error is off")));
+						 errdetail("do not failover because failover_on_backend_error is off")));
 				return -1;
 			}
 		}

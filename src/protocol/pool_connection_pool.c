@@ -890,10 +890,10 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 		if (create_cp(s, i) == NULL)
 		{
 			/*
-			 * If fail_over_on_backend_error is true, do failover. Otherwise,
+			 * If failover_on_backend_error is true, do failover. Otherwise,
 			 * just exit this session or skip next health node.
 			 */
-			if (pool_config->fail_over_on_backend_error)
+			if (pool_config->failover_on_backend_error)
 			{
 				notice_backend_error(i, REQ_DETAIL_SWITCHOVER);
 				ereport(FATAL,
@@ -910,7 +910,7 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 				{
 					ereport(LOG,
 							(errmsg("failed to create a backend %d connection", i),
-							 errdetail("skip this backend because because fail_over_on_backend_error is off and we are in streaming replication mode and node is standby node")));
+							 errdetail("skip this backend because because failover_on_backend_error is off and we are in streaming replication mode and node is standby node")));
 
 					/* set down status to local status area */
 					*(my_backend_status[i]) = CON_DOWN;
@@ -938,7 +938,7 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 				{
 					ereport(FATAL,
 							(errmsg("failed to create a backend %d connection", i),
-							 errdetail("not executing failover because fail_over_on_backend_error is off")));
+							 errdetail("not executing failover because failover_on_backend_error is off")));
 				}
 			}
 			child_exit(POOL_EXIT_AND_RESTART);

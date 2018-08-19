@@ -2174,9 +2174,9 @@
 
       <listitem>
 	<para>
-	  Improve the behavior of fail-over. In the steaming
+	  Improve the behavior of failover. In the steaming
 	  replication mode, client sessions will not be disconnected
-	  when a fail-over occurs any more if the session does not use
+	  when a failover occurs any more if the session does not use
 	  the failed standby server. If the primary server goes down,
 	  still all sessions will be disconnected. Also it is possible
 	  to connect to <productname>Pgpool-II</productname> even if
@@ -2218,7 +2218,7 @@
       <listitem>
 	<para>
 	  In some cases pg_terminate_backend() now does not trigger a
-	  fail-over.
+	  failover.
 	</para>
       </listitem>
 
@@ -2248,11 +2248,11 @@
 	    2016-05-05 [0d66032] Allow to access to pgpool while doing health checking
 	  -->
 	<para>
-	  Improve the behavior of fail-over. (Tatsuo Ishii)
+	  Improve the behavior of failover. (Tatsuo Ishii)
 	</para>
 	<para>
 	  In the steaming replication mode, client sessions will not
-	  be disconnected when a fail-over occurs any more if the
+	  be disconnected when a failover occurs any more if the
 	  session does not use the failed standby server. If the
 	  primary server goes down, still all sessions will be
 	  disconnected. Health check timeout case will also cause the
@@ -2264,9 +2264,9 @@
 	<para>
 	  For user's convenience, "show pool_nodes" command shows the
 	  session local load balance node info since this is important
-	  for users in case of fail-over. If the load balance node is
+	  for users in case of failover. If the load balance node is
 	  not the failed node, the session will not be affected by
-	  fail-over.
+	  failover.
 	</para>
 
 	<para>
@@ -2277,12 +2277,12 @@
 	  health checking retries.  Before any attempt to connect to
 	  <productname>Pgpool-II</productname> fails if it is doing a
 	  health check against failed node even if
-	  <xref linkend="guc-fail-over-on-backend-error"> is off
+	  <xref linkend="guc-failover-on-backend-error"> is off
 	  because <productname>Pgpool-II</productname> child first
 	  tries to connect to all backend including the failed one and
 	  exits if it fails to connect to a backend (of course it
 	  fails). This is a temporary situation and will be resolved
-	  once pgpool executes fail-over. However if the health check
+	  once pgpool executes failover. However if the health check
 	  is retrying, the temporary situation keeps longer depending
 	  on the setting
 	  of <xref linkend="guc-health-check-max-retries"> and
@@ -2409,7 +2409,7 @@
 	    2016-08-26 [f284be4] Handling of pg_terminate_backend for simple query protocol
 	  -->
 	<para>
-	  In some cases <function>pg_terminate_backend()</function> now does not trigger a fail-over. (Muhammad Usama)
+	  In some cases <function>pg_terminate_backend()</function> now does not trigger a failover. (Muhammad Usama)
 	</para>
 	<para>
     Because PostgreSQL returns exactly the same error code as postmaster
@@ -2976,7 +2976,7 @@
         -->
         <para>
         Fix that <function>pool_read()</function> does not emit error messages when <function>read(2)</function> returns -1 if
-        <xref linkend="guc-fail-over-on-backend-error"> is off. (Tatsuo Ishii)
+        <xref linkend="guc-failover-on-backend-error"> is off. (Tatsuo Ishii)
         </para>
       </listitem>
       <listitem>

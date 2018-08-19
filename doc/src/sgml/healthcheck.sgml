@@ -174,7 +174,7 @@
         </tip>
         <tip>
           <para>
-            It is advised that <xref linkend="guc-fail-over-on-backend-error"> must be disabled,
+            It is advised that <xref linkend="guc-failover-on-backend-error"> must be disabled,
             if you want to enable <varname>health_check_max_retries</>.
           </para>
         </tip>

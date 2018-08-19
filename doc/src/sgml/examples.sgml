@@ -1930,7 +1930,7 @@ PING 35.163.178.3 (35.163.178.3) 56(84) bytes of data.
 	    </listitem>
 	    <listitem>
 	      <para>
-		Disable <xref linkend="guc-fail-over-on-backend-error">
+		Disable <xref linkend="guc-failover-on-backend-error">
 		to avoid failover when connecting to the backend or
 		detecting errors on backend side while executing
 		queries for the same reasons above.
