@@ -257,11 +257,11 @@
               </row>
               <row>
                 <entry>%m</entry>
-                <entry>	New master node ID</entry>
+                <entry>	New primary node ID</entry>
               </row>
               <row>
                 <entry>%H</entry>
-                <entry>Hostname of the new master node</entry>
+                <entry>Hostname of the new primary node</entry>
               </row>
               <row>
                 <entry>%P</entry>
@@ -269,11 +269,11 @@
               </row>
               <row>
                 <entry>%r</entry>
-                <entry>Port number of the new master node</entry>
+                <entry>Port number of the new primary node</entry>
               </row>
               <row>
                 <entry>%R</entry>
-                <entry>Database cluster directory of the new master node</entry>
+                <entry>Database cluster directory of the new primary node</entry>
               </row>
               <row>
                 <entry>%%</entry>
