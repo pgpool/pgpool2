@@ -330,6 +330,18 @@
           6.3GB to 5,1GB (1.2GB savings).
         </para>
       </listitem>
+      <listitem>
+        <!--
+        2018-08-17 [3b51aa7]
+        -->
+        <para>
+          Introduce <xref linkend="PGPROTO"> to <productname>Pgpool-II</productname>. (Takuma Hoshiai)
+        </para>
+        <para>
+         A new utility <xref linkend="PGPROTO"> is added to test <productname>PostgreSQL</productname> 
+         or any other servers that understand the frontend/backend protocol.
+        </para>
+      </listitem>
     </itemizedlist>
   </sect2>
 
