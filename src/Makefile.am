@@ -100,6 +100,7 @@ EXTRA_DIST = sample/pgpool.pam \
 		sql/pgpool-recovery/pgpool-recovery.c \
 		sql/pgpool-recovery/pgpool-recovery.sql.in \
 		sql/pgpool-recovery/uninstall_pgpool-recovery.sql \
+		sql/pgpool-recovery/pgpool_recovery--1.2.sql \
 		sql/pgpool-recovery/pgpool_recovery--1.1.sql \
 		sql/pgpool-recovery/pgpool_recovery.control \
 		sql/pgpool-recovery/Makefile \
@@ -112,8 +113,9 @@ EXTRA_DIST = sample/pgpool.pam \
 		sql/pgpool_adm/pgpool_adm.c \
 		sql/pgpool_adm/pgpool_adm.h \
 		sql/pgpool_adm/pgpool_adm.control \
+		sql/pgpool_adm/pgpool_adm--1.1.sql \
+		sql/pgpool_adm/pgpool_adm--1.0--1.1.sql \
 		sql/pgpool_adm/pgpool_adm--1.0.sql \
-		sql/pgpool_adm/pgpool_adm.sql.in \
 		sql/pgpool_adm/Makefile \
 		test/parser/expected/copy.out test/parser/expected/create.out \
 		test/parser/expected/cursor.out test/parser/expected/delete.out \
