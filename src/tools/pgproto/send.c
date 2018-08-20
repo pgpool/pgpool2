@@ -14,7 +14,7 @@
  */
 
 #include "../../include/config.h"
-#include "pgproto.h"
+#include "pgproto/pgproto.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -23,10 +23,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
-#include "fe_memutils.h"
+#include "pgproto/fe_memutils.h"
 #include <libpq-fe.h>
-#include "read.h"
-#include "send.h"
+#include "pgproto/read.h"
+#include "pgproto/send.h"
 
 /*
  * Send a character to the connection.

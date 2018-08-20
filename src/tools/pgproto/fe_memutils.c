@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "fe_memutils.h"
+#include "pgproto/fe_memutils.h"
 
 static inline void *
 pg_malloc_internal(size_t size, int flags)

@@ -14,7 +14,7 @@
  */
 
 #include "../../include/config.h"
-#include "pgproto.h"
+#include "pgproto/pgproto.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,10 +22,10 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include "fe_memutils.h"
+#include "pgproto/fe_memutils.h"
 #include <libpq-fe.h>
-#include "read.h"
-#include "buffer.h"
+#include "pgproto/read.h"
+#include "pgproto/buffer.h"
 
 /*
  * Read integer field and returns it.  The pointer in the buffer afer reading
