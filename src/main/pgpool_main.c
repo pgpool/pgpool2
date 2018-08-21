@@ -3360,9 +3360,7 @@ find_primary_node(void)
 	int			i;
 	POOL_NODE_STATUS *status;
 	int			primary = -1;
-	char	   *password = get_pgpool_config_user_password(pool_config->sr_check_user,
-														   pool_config->sr_check_password);
-
+	char	   *password = NULL;
 
 	/* Streaming replication mode? */
 	if (!SL_MODE)
@@ -3389,6 +3387,9 @@ find_primary_node(void)
 			return i;
 		}
 	}
+
+	password = get_pgpool_config_user_password(pool_config->sr_check_user,
+											   pool_config->sr_check_password);
 
 	/*
 	 * Establish connections to backend
