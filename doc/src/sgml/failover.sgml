@@ -111,7 +111,7 @@
             which makes it ready again to accept client connections.
           </para>
 	  <para>
-	    However from <productname>Pgpool-II</productname> 3.6, In
+	    However from <productname>Pgpool-II</productname> 3.6, in
 	    the steaming replication mode, client sessions will not be
 	    disconnected when a fail-over occurs any more if the
 	    session does not use the failed standby server. If the
@@ -122,6 +122,19 @@
 	    disconnection.
 	  </para>
         </note>
+
+	<note>
+	  <para>
+	    You can run <command>psql</command> (or whatever command)
+	    against backend to retrieve some information in the
+	    script, but you cannot run <command>psql</command> against
+	    <productname>Pgpool-II</productname> itself, since the
+	    script is called from <productname>Pgpool-II</productname>
+	    and it needs to run
+	    while <productname>Pgpool-II</productname> is working on
+	    failover.
+	  </para>
+	</note>
 
         <para>
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
@@ -202,6 +215,19 @@
             </tbody>
           </tgroup>
         </table>
+
+	<note>
+	  <para>
+	    You can run <command>psql</command> (or whatever command)
+	    against backend to retrieve some information in the
+	    script, but you cannot run <command>psql</command> against
+	    <productname>Pgpool-II</productname> itself, since the
+	    script is called from <productname>Pgpool-II</productname>
+	    and it needs to run
+	    while <productname>Pgpool-II</productname> is working on
+	    failover.
+	  </para>
+	</note>
 
         <para>
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
@@ -286,7 +312,7 @@
 
         <note>
         <para>
-          If <varname>follow_master_command</varname>> is not empty, then after failover
+          If <varname>follow_master_command</varname> is not empty, then after failover
           on the primary node gets completed in Master Slave mode with streaming replication,
           <productname>Pgpool-II</productname> degenerates all nodes excepted the new primary
           and starts new child processes to be ready again to accept connections from the clients.

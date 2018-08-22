@@ -135,18 +135,55 @@
         <note>
           <para>
 <!--
-            When a failover is performed, <productname>Pgpool-II</productname> kills all
-            its child processes, which will in turn terminate all the active sessions to
+            When a failover is performed,
+            basically <productname>Pgpool-II</productname> kills all
+            its child processes, which will in turn terminate all the
+            active sessions to
             <productname>Pgpool-II</productname>. After that <productname>Pgpool-II</productname>
             invokes the <command>failover_command</command> and after the command completion
             <productname>Pgpool-II</productname> starts new child processes
             which makes it ready again to accept client connections.
 -->
-フェイルオーバーが実行されると、<productname>Pgpool-II</productname>は子プロセスを切断します。
+フェイルオーバーが実行されると、基本的に<productname>Pgpool-II</productname>は子プロセスを切断します。
 これにより、<productname>Pgpool-II</productname>への全てのアクティブセッションが終了されます。
 その後、<productname>Pgpool-II</productname>は<command>failover_command</command>を実行し、コマンドが完了した後に<productname>Pgpool-II</productname>はクライアントからの接続を再び受け付ける準備のため新しい子プロセスを起動します。
           </para>
+	  <para>
+<!--
+	    However from <productname>Pgpool-II</productname> 3.6, in
+	    the steaming replication mode, client sessions will not be
+	    disconnected when a failover occurs any more if the
+	    session does not use the failed standby server. If the
+	    primary server goes down, still all sessions will be
+	    disconnected. Health check timeout case will also cause
+	    the full session disconnection. Other health check error,
+	    including retry over case does not trigger full session
+	    disconnection.
+-->
+しかし、<productname>Pgpool-II</productname> 3.6以降では、そのセッションがダウンしたスタンバイを使用していない場合には、フェイルオーバが起こってもセッションが切断されません。
+プライマリサーバがダウンしたときには、依然としてすべてのセッションが切断されます。
+ヘルスチェックがタイムアウトした場合にも、すべてのセッションが切断されます。
+それ以外のケース、たとえばヘルスチェックの再試行回数がオーバーした場合には、全セッションの切断は起きません。
+	  </para>
         </note>
+
+	<note>
+	  <para>
+<!--
+	    You can run <command>psql</command> (or whatever command)
+	    against backend to retrieve some information in the
+	    script, but you cannot run <command>psql</command> against
+	    <productname>Pgpool-II</productname> itself, since the
+	    script is called from <productname>Pgpool-II</productname>
+	    and it needs to run
+	    while <productname>Pgpool-II</productname> is working on
+	    failover.
+-->
+スクリプトの中で<command>psql</command>やその他のコマンドを使ってバックエンドにアクセスし、情報を取り出すことはできますが、<command>psql</command>を <productname>Pgpool-II</productname>自体に対して実行することはできません。
+スクリプトは<productname>Pgpool-II</productname>から呼ばれ、<productname>Pgpool-II</productname>がフェイルオーバーを実行している間に動作するからです。
+	  </para>
+	</note>
+
         <para>
 <!--
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
@@ -273,6 +310,23 @@
             </tbody>
           </tgroup>
         </table>
+
+	<note>
+	  <para>
+<!--
+	    You can run <command>psql</command> (or whatever command)
+	    against backend to retrieve some information in the
+	    script, but you cannot run <command>psql</command> against
+	    <productname>Pgpool-II</productname> itself, since the
+	    script is called from <productname>Pgpool-II</productname>
+	    and it needs to run
+	    while <productname>Pgpool-II</productname> is working on
+	    failover.
+-->
+スクリプトの中で<command>psql</command>やその他のコマンドを使ってバックエンドにアクセスし、情報を取り出すことはできますが、<command>psql</command>を <productname>Pgpool-II</productname>自体に対して実行することはできません。
+スクリプトは<productname>Pgpool-II</productname>から呼ばれ、<productname>Pgpool-II</productname>がフェイルオーバーを実行している間に動作するからです。
+	  </para>
+	</note>
 
         <para>
 <!--
