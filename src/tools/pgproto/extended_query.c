@@ -93,7 +93,9 @@ process_parse(char *buf, PGconn *conn)
 	send_char('P', conn);
 	send_int(len, conn);
 	send_string(stmt, conn);
+	free(stmt);
 	send_string(query, conn);
+	free(query);
 	send_int16(noids, conn);
 	if (noids > 0)
 	{
@@ -105,7 +107,7 @@ process_parse(char *buf, PGconn *conn)
 }
 
 /*
- * Send bind messae. "conn" should be at the point right after the message kind
+ * Send bind message. "conn" should be at the point right after the message kind
  * was read.
  */
 void
@@ -323,6 +325,7 @@ process_describe(char *buf, PGconn *conn)
 	send_int(len, conn);
 	send_char(kind, conn);
 	send_string(stmt, conn);
+	free(stmt);
 }
 
 /*
