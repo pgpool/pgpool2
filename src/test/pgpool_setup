@@ -96,6 +96,10 @@ INITDB=$PGBIN/initdb
 PG_CTL=$PGBIN/pg_ctl
 PSQL=$PGBIN/psql
 
+# get PostgreSQL major version
+PGVERSION=`$INITDB -V|awk '{print $3}'|sed 's/\..*//'`
+echo PostgreSQL major version: $PGVERSION
+
 # pgpool-II configuration file localtion.
 CONF=$BASEDIR/etc/pgpool.conf
 # failover script
@@ -313,12 +317,20 @@ function set_postgresql_conf
     sed -i '/host.*all.*all.*trust$/s/^/#/g' $PGHBACONF
     sed -i '/local.*all.*all.*trust$/s/^/#/g' $PGHBACONF
 
-    echo "host      all   scram_user     0/0    scram-sha-256" >> $PGHBACONF
-    echo "host      all   md5_user       0/0    md5" >> $PGHBACONF
+    if [ $PGVERSION -gt 9 ];
+    then
+	echo "host      all   scram_user     0/0    scram-sha-256" >> $PGHBACONF
+	echo "host      all   md5_user       0/0    md5" >> $PGHBACONF
+    fi
+
     echo "host      all   all       0/0    trust" >> $PGHBACONF
 
-    echo "local      all   scram_user      scram-sha-256" >> $PGHBACONF
-    echo "local      all   md5_user        md5" >> $PGHBACONF
+    if [ $PGVERSION -gt 9 ];
+    then
+	echo "local      all   scram_user      scram-sha-256" >> $PGHBACONF
+	echo "local      all   md5_user        md5" >> $PGHBACONF
+    fi
+
     echo "local      all   all      trust" >> $PGHBACONF
 
     ed $1/pg_hba.conf <<EOF
@@ -572,11 +584,14 @@ function set_pool_hba_conf {
     sed -i '/host.*all.*all.*trust$/s/^/#/g' $POOL_HBACONF
     sed -i '/local.*all.*all.*trust$/s/^/#/g' $POOL_HBACONF
 
-    echo "host    all         scram_user  0/0                   scram-sha-256" >> $POOL_HBACONF
-    echo "host    all         md5_user    0/0                   md5" >> $POOL_HBACONF
+    if [ $PGVERSION -gt 9 ];
+    then
+	echo "host    all         scram_user  0/0                   scram-sha-256" >> $POOL_HBACONF
+	echo "host    all         md5_user    0/0                   md5" >> $POOL_HBACONF
 
-    echo "local   all         scram_user                        scram-sha-256" >> $POOL_HBACONF
-    echo "local   all         md5_user                          md5" >> $POOL_HBACONF
+	echo "local   all         scram_user                        scram-sha-256" >> $POOL_HBACONF
+	echo "local   all         md5_user                          md5" >> $POOL_HBACONF
+    fi
 
     echo "local   all         all                               trust" >> $POOL_HBACONF
 

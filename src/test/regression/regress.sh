@@ -102,16 +102,18 @@ function export_env_vars
 	export JDBC_DRIVER=$JDBC_DRIVER
 	export PGBENCH_PATH=$PGBENCH_PATH
 	export PGSOCKET_DIR=$PGSOCKET_DIR
+	export PGVERSION=`$PGBIN/initdb -V|awk '{print $3}'|sed 's/\..*//'`
 }
 function print_info
 {
 	echo ${CBLUE}"*************************"${CNORM}
 
-	echo "REGRESSION MODE : "${CBLUE}$MODE${CNORM}
-	echo "PGPOOL-II       : "${CBLUE}$PGPOOL_PATH${CNORM}
-	echo "PostgreSQL bin  : "${CBLUE}$PGBIN${CNORM}
-	echo "pgbench         : "${CBLUE}$PGBENCH_PATH${CNORM}
-	echo "PostgreSQL jdbc : "${CBLUE}$JDBC_DRIVER${CNORM}
+	echo "REGRESSION MODE          : "${CBLUE}$MODE${CNORM}
+	echo "PGPOOL-II                : "${CBLUE}$PGPOOL_PATH${CNORM}
+	echo "PostgreSQL bin           : "${CBLUE}$PGBIN${CNORM}
+	echo "PostgreSQL Major version : "${CBLUE}$PGVERSION${CNORM}
+	echo "pgbench                  : "${CBLUE}$PGBENCH_PATH${CNORM}
+	echo "PostgreSQL jdbc          : "${CBLUE}$JDBC_DRIVER${CNORM}
 	echo ${CBLUE}"*************************"${CNORM}
 }
 

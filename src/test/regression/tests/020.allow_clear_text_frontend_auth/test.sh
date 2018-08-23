@@ -3,6 +3,12 @@
 # test script for scram and md5 authentication test
 # when allow_clear_text_frontend_auth is set
 #
+
+# This test is only valid with PostgreSQL 10 or later.
+if [ $PGVERSION -le 9 ];then
+    exit 0
+fi
+
 source $TESTLIBS
 TESTDIR=testdir
 PSQL=$PGBIN/psql

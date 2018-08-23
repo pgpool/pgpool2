@@ -4,6 +4,12 @@
 # where password is stored in pool_passwd file and
 # frontend uses different auth from backends
 #
+
+# This test is only valid with PostgreSQL 10 or later.
+if [ $PGVERSION -le 9 ];then
+    exit 0
+fi
+
 source $TESTLIBS
 TESTDIR=testdir
 PSQL=$PGBIN/psql
