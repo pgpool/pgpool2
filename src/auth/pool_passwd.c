@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2018	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -91,6 +91,7 @@ int pool_create_passwdent(char *username, char *passwd)
 	char name[MAX_USER_NAME_LEN];
 	char *p;
 	int readlen;
+	int passwdlen;
 
 	if (!passwd_fd)
 		ereport(ERROR,
@@ -103,8 +104,37 @@ int pool_create_passwdent(char *username, char *passwd)
 	len = strlen(passwd);
 	if (len != POOL_PASSWD_LEN)
 		ereport(ERROR,
-				(errmsg("error updating password, invalid password length:%d",len)));
+				(errmsg("error updating password, invalid password length: %d", len)));
 
+	rewind(passwd_fd);
+	while (!feof(passwd_fd))
+	{
+		p = name;
+		readlen = 0;
+		while (readlen < sizeof(name))
+		{
+			c = fgetc(passwd_fd);
+			if (c == EOF)
+				break;
+			else if (c == ':')
+				break;
+			readlen++;
+			*p++ = c;
+		}
+		*p = '\0';
+
+		passwdlen=0;
+		if (readlen)
+		{
+			while ((c = fgetc(passwd_fd)) != EOF && c != '\n')
+			{
+				passwdlen++;
+			}
+			if (passwdlen != POOL_PASSWD_LEN)
+				ereport(ERROR,
+					(errmsg("error updating password, invalid password length in pool_passwd file. username: %s", name)));
+		}
+	}
 	rewind(passwd_fd);
 	name[0] = '\0';
 
