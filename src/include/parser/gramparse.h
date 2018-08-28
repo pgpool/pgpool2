@@ -8,8 +8,8 @@
  * Definitions that are needed outside the core parser should be in parser.h.
  *
  *
- * Portions Copyright (c) 2003-2017, PgPool Global Development Group
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2018, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/gramparse.h

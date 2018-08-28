@@ -3629,7 +3629,7 @@ flatten_set_variable_args(const char *name, List *args)
 		switch (nodeTag(&con->val))
 		{
 			case T_Integer:
-				appendStringInfo(&buf, "%ld", intVal(&con->val));
+				appendStringInfo(&buf, "%d", intVal(&con->val));
 				break;
 			case T_Float:
 				/* represented as a string, so just copy it */

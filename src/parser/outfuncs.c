@@ -3,8 +3,8 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
- * Portions Copyright (c) 2003-2017, PgPool Global Development Group
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2018, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1737,7 +1737,7 @@ _outValue(String * str, Value *value)
 	switch (value->type)
 	{
 		case T_Integer:
-			sprintf(buf, "%ld", value->val.ival);
+			sprintf(buf, "%d", value->val.ival);
 			string_append_char(str, buf);
 			break;
 
@@ -1813,7 +1813,7 @@ _outAConst(String * str, A_Const *node)
 	switch (node->val.type)
 	{
 		case T_Integer:
-			sprintf(buf, "%ld", node->val.val.ival);
+			sprintf(buf, "%d", node->val.val.ival);
 			string_append_char(str, buf);
 			break;
 
@@ -1973,13 +1973,13 @@ _outWindowDef(String * str, WindowDef *node)
 			string_append_char(str, " UNBOUNDED FOLLOWING");
 		else if (node->frameOptions & FRAMEOPTION_START_CURRENT_ROW)
 			string_append_char(str, " UNBOUNDED CURRENT ROW");
-		else if (node->frameOptions & FRAMEOPTION_START_VALUE_PRECEDING)
+		else if (node->frameOptions & FRAMEOPTION_START_OFFSET_PRECEDING)
 		{
 			string_append_char(str, " ");
 			_outNode(str, node->startOffset);
 			string_append_char(str, " PRECEDING");
 		}
-		else if (node->frameOptions & FRAMEOPTION_START_VALUE_FOLLOWING)
+		else if (node->frameOptions & FRAMEOPTION_START_OFFSET_FOLLOWING)
 		{
 			string_append_char(str, " ");
 			_outNode(str, node->startOffset);
@@ -1995,13 +1995,13 @@ _outWindowDef(String * str, WindowDef *node)
 				string_append_char(str, " UNBOUNDED FOLLOWING");
 			else if (node->frameOptions & FRAMEOPTION_END_CURRENT_ROW)
 				string_append_char(str, " UNBOUNDED CURRENT ROW");
-			else if (node->frameOptions & FRAMEOPTION_END_VALUE_PRECEDING)
+			else if (node->frameOptions & FRAMEOPTION_END_OFFSET_PRECEDING)
 			{
 				string_append_char(str, " ");
 				_outNode(str, node->endOffset);
 				string_append_char(str, " PRECEDING");
 			}
-			else if (node->frameOptions & FRAMEOPTION_END_VALUE_FOLLOWING)
+			else if (node->frameOptions & FRAMEOPTION_END_OFFSET_FOLLOWING)
 			{
 				string_append_char(str, " ");
 				_outNode(str, node->endOffset);
@@ -2489,12 +2489,18 @@ _outVacuumStmt(String * str, VacuumStmt *node)
 	if (node->options & VACOPT_VACUUM && node->options & VACOPT_ANALYZE)
 		string_append_char(str, "ANALYZE ");
 
-	_outNode(str, node->relation);
-	if (node->va_cols)
+	ListCell   *lc;
+	foreach(lc, node->rels)
 	{
-		string_append_char(str, "(");
-		_outIdList(str, node->va_cols);
-		string_append_char(str, ") ");
+		VacuumRelation *vrel = lfirst_node(VacuumRelation, lc);
+
+		_outNode(str, vrel->relation);
+		if (vrel->va_cols)
+		{
+			string_append_char(str, "(");
+			_outIdList(str, vrel->va_cols);
+			string_append_char(str, ") ");
+		}
 	}
 }
 
@@ -2973,7 +2979,7 @@ _outOptRoleList(String * str, List *options)
 			char		buf[16];
 
 			string_append_char(str, " CONNECTION LIMIT ");
-			snprintf(buf, 16, "%ld", value->val.ival);
+			snprintf(buf, 16, "%d", value->val.ival);
 			string_append_char(str, buf);
 		}
 		else if (strcmp(elem->defname, "validUntil") == 0)
@@ -2992,7 +2998,7 @@ _outOptRoleList(String * str, List *options)
 			char		buf[16];
 
 			string_append_char(str, " SYSID ");
-			snprintf(buf, 16, "%ld", value->val.ival);
+			snprintf(buf, 16, "%d", value->val.ival);
 			string_append_char(str, buf);
 		}
 		else if (strcmp(elem->defname, "adminmembers") == 0)
@@ -3281,7 +3287,7 @@ _outAlterTableCmd(String * str, AlterTableCmd *node)
 			string_append_char(str, "ALTER \"");
 			string_append_char(str, node->name);
 			string_append_char(str, "\" SET STATISTICS ");
-			snprintf(buf, 16, "%ld", ((Value *) node->def)->val.ival);
+			snprintf(buf, 16, "%d", ((Value *) node->def)->val.ival);
 			string_append_char(str, buf);
 			break;
 
@@ -3474,7 +3480,7 @@ _outOptSeqList(String * str, List *options)
 				string_append_char(str, v->val.str);
 			else
 			{
-				snprintf(buf, 16, "%ld", v->val.ival);
+				snprintf(buf, 16, "%d", v->val.ival);
 				string_append_char(str, buf);
 			}
 		}
@@ -4195,54 +4201,91 @@ _outGrantStmt(String * str, GrantStmt *node)
 
 	switch (node->objtype)
 	{
-		case ACL_OBJECT_RELATION:
+		case OBJECT_TABLE:
 			_outNode(str, node->objects);
 			break;
 
-		case ACL_OBJECT_SEQUENCE:
+		case OBJECT_SEQUENCE:
 			string_append_char(str, "SEQUENCE ");
 			_outNode(str, node->objects);
 			break;
 
-		case ACL_OBJECT_FUNCTION:
+		case OBJECT_FUNCTION:
 			string_append_char(str, "FUNCTION ");
 			_outNode(str, node->objects);
 			break;
 
-		case ACL_OBJECT_DATABASE:
+		case OBJECT_DATABASE:
 			string_append_char(str, "DATABASE ");
 			_outIdList(str, node->objects);
 			break;
 
-		case ACL_OBJECT_LANGUAGE:
+		case OBJECT_LANGUAGE:
 			string_append_char(str, "LANGUAGE ");
 			_outIdList(str, node->objects);
 			break;
 
-		case ACL_OBJECT_NAMESPACE:
+		case OBJECT_SCHEMA:
 			string_append_char(str, "SCHEMA ");
 			_outIdList(str, node->objects);
 			break;
 
-		case ACL_OBJECT_TABLESPACE:
+		case OBJECT_TABLESPACE:
 			string_append_char(str, "TABLESPACE ");
 			_outIdList(str, node->objects);
 			break;
 
-		case ACL_OBJECT_FDW:
+		case OBJECT_FDW:
 			string_append_char(str, "FOREIGN DATA WRAPPER ");
 			_outIdList(str, node->objects);
 			break;
 
-		case ACL_OBJECT_FOREIGN_SERVER:
+		case OBJECT_FOREIGN_SERVER:
 			string_append_char(str, "FOREIGN SERVER ");
 			_outIdList(str, node->objects);
 			break;
 
-		case ACL_OBJECT_COLUMN:
-		case ACL_OBJECT_DOMAIN:
-		case ACL_OBJECT_LARGEOBJECT:
-		case ACL_OBJECT_TYPE:
+		case OBJECT_COLUMN:
+		case OBJECT_DOMAIN:
+		case OBJECT_LARGEOBJECT:
+		case OBJECT_TYPE:
+		case OBJECT_ACCESS_METHOD:
+		case OBJECT_AGGREGATE:
+		case OBJECT_AMOP:
+		case OBJECT_AMPROC:
+		case OBJECT_ATTRIBUTE:
+		case OBJECT_CAST:
+		case OBJECT_COLLATION:
+		case OBJECT_CONVERSION:
+		case OBJECT_DEFAULT:
+		case OBJECT_DEFACL:
+		case OBJECT_DOMCONSTRAINT:
+		case OBJECT_EVENT_TRIGGER:
+		case OBJECT_EXTENSION:
+		case OBJECT_FOREIGN_TABLE:
+		case OBJECT_INDEX:
+		case OBJECT_MATVIEW:
+		case OBJECT_OPCLASS:
+		case OBJECT_OPERATOR:
+		case OBJECT_OPFAMILY:
+		case OBJECT_POLICY:
+		case OBJECT_PROCEDURE:
+		case OBJECT_PUBLICATION:
+		case OBJECT_PUBLICATION_REL:
+		case OBJECT_ROLE:
+		case OBJECT_ROUTINE:
+		case OBJECT_RULE:
+		case OBJECT_SUBSCRIPTION:
+		case OBJECT_STATISTIC_EXT:
+		case OBJECT_TABCONSTRAINT:
+		case OBJECT_TRANSFORM:
+		case OBJECT_TRIGGER:
+		case OBJECT_TSCONFIGURATION:
+		case OBJECT_TSDICTIONARY:
+		case OBJECT_TSPARSER:
+		case OBJECT_TSTEMPLATE:
+		case OBJECT_USER_MAPPING:
+		case OBJECT_VIEW:
 			break;
 	}
 
@@ -4361,12 +4404,6 @@ _outCreateFunctionStmt(String * str, CreateFunctionStmt *node)
 	}
 
 	_outFuncOptList(str, node->options);
-
-	if (node->withClause)
-	{
-		string_append_char(str, " WITH ");
-		_outDefinition(str, node->withClause);
-	}
 }
 
 static void
@@ -4803,7 +4840,7 @@ _outCreatedbOptList(String * str, List *options)
 		{
 			char		buf[16];
 
-			snprintf(buf, 16, "%ld", v->val.ival);
+			snprintf(buf, 16, "%d", v->val.ival);
 			string_append_char(str, buf);
 		}
 	}
@@ -5108,7 +5145,7 @@ _outCommentStmt(String * str, CommentStmt *node)
 				string_append_char(str, v->val.str);
 			else if (IsA(v, Integer))
 			{
-				snprintf(buf, 16, "%ld", v->val.ival);
+				snprintf(buf, 16, "%d", v->val.ival);
 				string_append_char(str, buf);
 			}
 			break;

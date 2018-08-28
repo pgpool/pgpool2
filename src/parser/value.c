@@ -4,7 +4,7 @@
  *	  implementation of Value nodes
  *
  *
- * Portions Copyright (c) 2003-2017, PgPool Global Development Group
+ * Portions Copyright (c) 2003-2018, PgPool Global Development Group
  * Copyright (c) 2003-2017, PostgreSQL Global Development Group
  *
  *
@@ -23,7 +23,7 @@
  *	makeInteger
  */
 Value *
-makeInteger(long i)
+makeInteger(int i)
 {
 	Value	   *v = makeNode(Value);
 

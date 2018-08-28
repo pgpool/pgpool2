@@ -10,8 +10,8 @@
  * analyze.c and related files.
  *
  *
- * Portions Copyright (c) 2003-2017, PgPool Global Development Group
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2018, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -105,6 +105,31 @@ raw_parser2(List *parse_tree_list)
 	rstmt = (RawStmt *) lfirst(list_head(parse_tree_list));
 	node = (Node *) rstmt->stmt;
 	return node;
+}
+
+/*
+ * from src/backend/commands/define.c
+ * Extract an int32 value from a DefElem.
+ */
+int32
+defGetInt32(DefElem *def)
+{
+	if (def->arg == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("%s requires an integer value",
+						def->defname)));
+	switch (nodeTag(def->arg))
+	{
+		case T_Integer:
+			return (int32) intVal(def->arg);
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("%s requires an integer value",
+							def->defname)));
+	}
+	return 0;					/* keep compiler quiet */
 }
 
 /*

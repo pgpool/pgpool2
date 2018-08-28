@@ -4,8 +4,8 @@
  *	  Definitions for tagged nodes.
  *
  *
- * Portions Copyright (c) 2003-2017, PgPool Global Development Group
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2018, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/nodes.h
@@ -37,6 +37,7 @@ typedef enum NodeTag
 	T_ExprContext,
 	T_ProjectionInfo,
 	T_JunkFilter,
+	T_OnConflictSetState,
 	T_ResultRelInfo,
 	T_EState,
 	T_TupleTableSlot,
@@ -89,6 +90,10 @@ typedef enum NodeTag
 	/* these aren't subclasses of Plan: */
 	T_NestLoopParam,
 	T_PlanRowMark,
+	T_PartitionPruneInfo,
+	T_PartitionedRelPruneInfo,
+	T_PartitionPruneStepOp,
+	T_PartitionPruneStepCombine,
 	T_PlanInvalItem,
 
 	/*
@@ -263,7 +268,6 @@ typedef enum NodeTag
 	T_PlaceHolderVar,
 	T_SpecialJoinInfo,
 	T_AppendRelInfo,
-	T_PartitionedChildRelInfo,
 	T_PlaceHolderInfo,
 	T_MinMaxAggInfo,
 	T_PlannerParamItem,
@@ -277,6 +281,7 @@ typedef enum NodeTag
 	T_MemoryContext,
 	T_AllocSetContext,
 	T_SlabContext,
+	T_GenerationContext,
 
 	/*
 	 * TAGS FOR VALUE NODES (value.h)
@@ -416,6 +421,7 @@ typedef enum NodeTag
 	T_DropSubscriptionStmt,
 	T_CreateStatsStmt,
 	T_AlterCollationStmt,
+	T_CallStmt,
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
@@ -471,6 +477,7 @@ typedef enum NodeTag
 	T_PartitionBoundSpec,
 	T_PartitionRangeDatum,
 	T_PartitionCmd,
+	T_VacuumRelation,
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)
@@ -500,7 +507,8 @@ typedef enum NodeTag
 	T_FdwRoutine,				/* in foreign/fdwapi.h */
 	T_IndexAmRoutine,			/* in access/amapi.h */
 	TsmRoutine ,				/* in access/tsmapi.h */
-				T_ForeignKeyCacheInfo,	/* in utils/rel.h */
+	T_ForeignKeyCacheInfo,      /* in utils/rel.h */
+	T_CallContext,              /* in nodes/parsenodes.h */
 	/* pgpool Extention */
 				T_PgpoolVariableSetStmt,
 				T_PgpoolVariableShowStmt

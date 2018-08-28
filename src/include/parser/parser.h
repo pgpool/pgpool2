@@ -5,8 +5,8 @@
  *
  * This is the external API for the raw lexing/parsing functions.
  *
- * Portions Copyright (c) 2003-2017, PgPool Global Development Group
- * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2018, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/parser.h
@@ -31,10 +31,12 @@ extern int	backslash_quote;
 extern bool escape_string_warning;
 extern PGDLLIMPORT bool standard_conforming_strings;
 
-
 /* Primary entry point for the raw parsing functions */
 extern List *raw_parser(const char *str, bool *error);
 extern Node *raw_parser2(List *parse_tree_list);
+
+/* from src/backend/commands/define.c */
+extern int32 defGetInt32(DefElem *def);
 
 /* Utility functions exported by gram.y (perhaps these should be elsewhere) */
 extern List *SystemFuncName(char *name);
