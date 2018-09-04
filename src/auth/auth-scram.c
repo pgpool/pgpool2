@@ -484,7 +484,6 @@ scram_verify_plain_password(const char *username, const char *password,
 	uint8		stored_key[SCRAM_KEY_LEN];
 	uint8		server_key[SCRAM_KEY_LEN];
 	uint8		computed_key[SCRAM_KEY_LEN];
-	char	   *prep_password = NULL;
 
 	if (!parse_scram_verifier(verifier, &iterations, &encoded_salt,
 							  stored_key, server_key))
@@ -510,13 +509,11 @@ scram_verify_plain_password(const char *username, const char *password,
 	scram_SaltedPassword(password, salt, saltlen, iterations, salted_password);
 	scram_ServerKey(salted_password, computed_key);
 
-	if (prep_password)
-		pfree(prep_password);
-
 	/*
 	 * Compare the verifier's Server Key with the one computed from the
 	 * user-supplied password.
 	 */
+	pfree(encoded_salt);
 	return memcmp(computed_key, server_key, SCRAM_KEY_LEN) == 0;
 }
 
@@ -572,6 +569,8 @@ parse_scram_verifier(const char *verifier, int *iterations, char **salt,
 	 */
 	decoded_salt_buf = palloc(pg_b64_dec_len(strlen(salt_str)));
 	decoded_len = pg_b64_decode(salt_str, strlen(salt_str), decoded_salt_buf);
+	pfree(decoded_salt_buf);
+
 	if (decoded_len < 0)
 		goto invalid_verifier;
 	*salt = pstrdup(salt_str);
@@ -1132,6 +1131,7 @@ build_server_final_message(scram_state *state)
 	char	   *server_signature_base64;
 	int			siglen;
 	scram_HMAC_ctx ctx;
+	char *res;
 
 	/* calculate ServerSignature */
 	scram_HMAC_init(&ctx, state->ServerKey, SCRAM_KEY_LEN);
@@ -1164,7 +1164,9 @@ build_server_final_message(scram_state *state)
 	 *
 	 *------
 	 */
-	return psprintf("v=%s", server_signature_base64);
+	res = psprintf("v=%s", server_signature_base64);
+	pfree(server_signature_base64);
+	return res;
 }
 
 

@@ -541,9 +541,17 @@
 
       <sect3 id="md5-authentication-file-format">
 	<title>Authentication file format</title>
-
+     <para>
+      To use the <literal>md5</literal> authentication
+      <xref linkend="guc-pool-passwd"> authentication file
+      must contain the user password in either plain text
+      <literal>md5</literal> or <literal>AES</literal> encrypted format.
+    </para>
 	<para>
 	  The <xref linkend="guc-pool-passwd"> file should contain lines in the following format:
+	  <programlisting>
+            "username:plain_text_passwd"
+	  </programlisting>
 	  <programlisting>
             "username:encrypted_passwd"
 	  </programlisting>

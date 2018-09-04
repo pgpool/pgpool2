@@ -480,6 +480,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 									str, gai_strerror(ret));
 				if (gai_result)
 					freeaddrinfo_all(hints.ai_family, gai_result);
+				pfree(str);
 				return NULL;
 			}
 
@@ -498,6 +499,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 										line_num, HbaFileName)));
 					*err_msg = psprintf("specifying both host name and CIDR mask is invalid: \"%s\"",
 										token->string);
+					pfree(str);
 					return NULL;
 				}
 
@@ -512,6 +514,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 										line_num, HbaFileName)));
 					*err_msg = psprintf("invalid CIDR mask in address \"%s\"",
 										token->string);
+					pfree(str);
 					return NULL;
 				}
 				pfree(str);
@@ -761,6 +764,7 @@ void
 ClientAuthentication(POOL_CONNECTION * frontend)
 {
 	POOL_STATUS status = POOL_END;
+	MemoryContext oldContext;
 
 	PG_TRY();
 	{
@@ -774,8 +778,15 @@ ClientAuthentication(POOL_CONNECTION * frontend)
 		/*
 		 * Get the password for the user if it is stored in the pool_password
 		 * file
+		 * authentication process is called in the temporary memory
+		 * context, but password mappings has to live till the life time
+		 * of frontend connection, so call the pool_get_user_credentials in
+		 * ProcessLoopContext memory context
 		 */
+		oldContext = MemoryContextSwitchTo(ProcessLoopContext);
 		frontend->passwordMapping = pool_get_user_credentials(frontend->username);
+		MemoryContextSwitchTo(oldContext);
+
 		switch (frontend->pool_hba->auth_method)
 		{
 			case uaImplicitReject:
@@ -791,32 +802,28 @@ ClientAuthentication(POOL_CONNECTION * frontend)
 					 * We're merely helping out the less clueful good guys.
 					 */
 					char		hostinfo[NI_MAXHOST];
-					char	   *errmessage;
-					int			messagelen;
 
 					getnameinfo_all(&frontend->raddr.addr, frontend->raddr.salen,
 									hostinfo, sizeof(hostinfo),
 									NULL, 0,
 									NI_NUMERICHOST);
 
-					messagelen = sizeof(hostinfo) +
-						strlen(frontend->username) + strlen(frontend->database) + 80;
-					errmessage = (char *) palloc(messagelen + 1);
 #ifdef USE_SSL
-					snprintf(errmessage, messagelen + 7,	/* +7 is for "SSL off" */
-							 "no pool_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
-							 hostinfo, frontend->username, frontend->database,
-							 frontend->ssl ? "SSL on" : "SSL off");
+					ereport(FATAL,
+						(return_code(2),
+							 errmsg("client authentication failed"),
+							 errdetail("no pool_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
+									   hostinfo, frontend->username, frontend->database,
+									   frontend->ssl ? "SSL on" : "SSL off"),
+							 errhint("see pgpool log for details")));
 #else
-					snprintf(errmessage, messagelen,
-							 "no pool_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
-							 hostinfo, frontend->username, frontend->database);
-#endif
 					ereport(FATAL,
 							(return_code(2),
 							 errmsg("client authentication failed"),
-							 errdetail("%s", errmessage),
+							 errdetail("no pool_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
+									   hostinfo, frontend->username, frontend->database),
 							 errhint("see pgpool log for details")));
+#endif
 					break;
 				}
 
@@ -847,6 +854,7 @@ ClientAuthentication(POOL_CONNECTION * frontend)
 							 errdetail("pool_passwd file does not contain an entry for \"%s\"", frontend->username)));
 				if (frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_PLAINTEXT &&
 					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_MD5 &&
+					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_TEXT_PREFIXED &&
 					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_AES)
 					ereport(FATAL,
 							(return_code(2),
@@ -861,6 +869,7 @@ ClientAuthentication(POOL_CONNECTION * frontend)
 							 errmsg("SCRAM authentication failed"),
 							 errdetail("pool_passwd file does not contain an entry for \"%s\"", frontend->username)));
 				if (frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_PLAINTEXT &&
+					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_TEXT_PREFIXED &&
 					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_SCRAM_SHA_256 &&
 					frontend->passwordMapping->pgpoolUser.passwordType != PASSWORD_TYPE_AES)
 					ereport(FATAL,

@@ -502,7 +502,15 @@ get_pgpool_config_user_password(char *username, char *password_in_config)
 		}
 	}
 
-	if (passwordType != PASSWORD_TYPE_PLAINTEXT)
+	if (passwordType == PASSWORD_TYPE_TEXT_PREFIXED)
+	{
+		/* convert the TEXT prefixed password to plain text password */
+		passwordType = PASSWORD_TYPE_PLAINTEXT;
+		if (password)
+			password = (char*)(password + strlen(PASSWORD_TEXT_PREFIX));
+	}
+
+	if (password && strlen(password) && passwordType != PASSWORD_TYPE_PLAINTEXT)
 	{
 		ereport(WARNING,
 				(errmsg("could not get the password for user:%s", username),
@@ -577,6 +585,8 @@ get_password_type(const char *shadow_pass)
 		return PASSWORD_TYPE_AES;
 	if (strncmp(shadow_pass, PASSWORD_SCRAM_PREFIX, strlen(PASSWORD_SCRAM_PREFIX)) == 0)
 		return PASSWORD_TYPE_SCRAM_SHA_256;
+	if (strncmp(shadow_pass, PASSWORD_TEXT_PREFIX, strlen(PASSWORD_TEXT_PREFIX)) == 0)
+		return PASSWORD_TYPE_TEXT_PREFIXED;
 
 	return PASSWORD_TYPE_PLAINTEXT;
 }
@@ -605,16 +615,13 @@ read_pool_key(char *key_file_path)
 	if (!S_ISREG(stat_buf.st_mode))
 	{
 		ereport(WARNING,
-				(errmsg("pool key file \"%s\" is not a text file\n", key_file_path)));
+				(errmsg("pool key file \"%s\" is not a plain file\n", key_file_path)));
 		return NULL;
 	}
 
 	/* If password file is insecure, alert the user. */
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 	{
-		ereport(WARNING,
-				(errmsg("pool key file \"%s\" is not a text file\n", key_file_path)));
-
 		ereport(WARNING,
 				(errmsg("pool key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n",
 						key_file_path)));

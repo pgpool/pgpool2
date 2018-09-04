@@ -662,6 +662,8 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
 	int			i,
 				freed = 0;
 	StartupPacket *topmem_sp = NULL;
+	MemoryContext oldContext;
+	MemoryContext frontend_auth_cxt;
 
 	/*
 	 * Save startup packet info
@@ -672,7 +674,7 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
 		{
 			if (!freed)
 			{
-				MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+				oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
 				topmem_sp = StartupPacketCopy(sp);
 				MemoryContextSwitchTo(oldContext);
@@ -687,8 +689,15 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
 	}
 
 	/* Reuse existing connection to backend */
+	frontend_auth_cxt = AllocSetContextCreate(CurrentMemoryContext,
+															"frontend_auth",
+															ALLOCSET_DEFAULT_SIZES);
+	oldContext = MemoryContextSwitchTo(frontend_auth_cxt);
 
 	pool_do_reauth(frontend, backend);
+
+	MemoryContextSwitchTo(oldContext);
+	MemoryContextDelete(frontend_auth_cxt);
 
 	if (MAJOR(backend) == 3)
 	{
@@ -896,6 +905,7 @@ static POOL_CONNECTION_POOL * connect_backend(StartupPacket *sp, POOL_CONNECTION
 
 	PG_TRY();
 	{
+		MemoryContext frontend_auth_cxt;
 		MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
 		topmem_sp = StartupPacketCopy(sp);
@@ -927,7 +937,16 @@ static POOL_CONNECTION_POOL * connect_backend(StartupPacket *sp, POOL_CONNECTION
 		/*
 		 * do authentication stuff
 		 */
+		frontend_auth_cxt = AllocSetContextCreate(CurrentMemoryContext,
+																"frontend_auth",
+																ALLOCSET_DEFAULT_SIZES);
+		oldContext = MemoryContextSwitchTo(frontend_auth_cxt);
+
 		pool_do_auth(frontend, backend);
+
+		MemoryContextSwitchTo(oldContext);
+		MemoryContextDelete(frontend_auth_cxt);
+
 	}
 	PG_CATCH();
 	{
@@ -2158,8 +2177,15 @@ retry_startup:
 		 * do client authentication. Note that ClientAuthentication does not
 		 * return if frontend was rejected; it simply terminates this process.
 		 */
+		MemoryContext frontend_auth_cxt = AllocSetContextCreate(CurrentMemoryContext,
+										"frontend_auth",
+										ALLOCSET_DEFAULT_SIZES);
+		MemoryContext oldContext = MemoryContextSwitchTo(frontend_auth_cxt);
 
 		ClientAuthentication(frontend);
+
+		MemoryContextSwitchTo(oldContext);
+		MemoryContextDelete(frontend_auth_cxt);
 	}
 
 	/*

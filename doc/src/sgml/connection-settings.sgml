@@ -244,12 +244,35 @@
 	</term>
 	<listitem>
 	  <para>
-	    Specify the password file name for md5 authentication.
+	    Specify the password file name for authentication.
 	    Default value is <literal>"pool_passwd"</literal>.
 	    Specifying <literal>''</literal> (empty) disables the use
-	    of password file.  See <xref linkend="auth-md5"> for more
-	    details.
+	    of password file.
 	  </para>
+      <para>
+        Passwords can be stored in the pool_passwd file using three formats.
+        AES256 encrypted format, plain text format and md5 format.
+        <productname>Pgpool-II</productname> identifies the password format type
+        by it's prefix, so each password entry in the pool_passwd must be prefixed
+        as per the password format.
+      </para>
+      <para>
+        To store the password in the plain text format use <literal>TEXT</literal> prefix.
+        For example. to store clear text password string <literal>"mypassword"</literal>
+        in the pool_passwd, prepend the password string with <literal>TEXT</literal> prefix.
+        e.g. <literal>TEXTmypassword</literal>
+      </para>
+      <para>
+        similarly md5 hashed passwords must be prefixed with <literal>md5</literal> and
+        AES256 encrypted password types can be stored using <literal>AES</literal> prefix.
+        see <xref linkend="auth-aes-encrypted-password"> for more details on using
+        AES256 encrypted passwords.
+      </para>
+
+      <para>
+        In the absence of a valid prefix, <productname>Pgpool-II</productname> will
+        be considered the string as a plain text password
+      </para>
 	  <para>
 	    This parameter can only be set at server start.
 	  </para>
