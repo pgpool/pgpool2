@@ -654,7 +654,7 @@ SSL_ServerSide_init(void)
 	/*
 	 * Load CA store, so we can verify client certificates if needed.
 	 */
-	if (pool_config->ssl_ca_cert)
+	if (pool_config->ssl_ca_cert && strlen(pool_config->ssl_ca_cert))
 	{
 		char	   *cacert = NULL,
 				   *cacert_dir = NULL;
