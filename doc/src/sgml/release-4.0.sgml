@@ -8,13 +8,9 @@
     <sect2>
     <title>Overview</title>
     <para>
-<!--
       This version addes support for SCRAM and CERT authentication,
       improves load balancing control and import PostgreSQL 11 
       new SQL parser. 
--->
-      This version addes support for SCRAM and CERT authentication,
-      and improves load balancing control.
     </para>
     <para>
       Major enhancements in <productname>Pgpool-II</productname> 4.0 include:
@@ -25,7 +21,7 @@
     <itemizedlist>
       <listitem>
         <para>
-          Add <acronym>SCRAM</acronym> and <acronym>Certificate</acronym> authentication support.
+          Add <acronym>SCRAM</acronym> and Certificate authentication support.
         </para>
       </listitem>
       <listitem>
@@ -62,13 +58,11 @@
           Add last state change timestamp to <xref linkend="SQL-SHOW-POOL-NODES">.
         </para>
       </listitem>
-<!--
       <listitem>
         <para>
           Import PostgreSQL 11 SQL parser.
         </para>
       </listitem>
--->
       <listitem>
         <para>
           Logging client messages.
@@ -78,13 +72,83 @@
   </sect2>
 
   <sect2>
+   <title>Migration to Version 4.0</title>
+   <para>
+    Version 4.0 contains a number of changes that may affect compatibility with 
+    previous releases. Observe the following incompatibilities:
+   </para>
+   <itemizedlist>
+    <listitem>
+<!--
+2018-04-16 [3d63b8a]
+2018-05-04 [2e41451]
+-->
+     <para>
+      Add 1st/2nd stage online recovery commands parameter to get the node number to be recovered. (Tatsuo Ishii) 
+     </para>
+     <para>
+      Online recovery script now accepts 5 parameters, rather than 4 (the 5th
+      parameter is node number to be recovered). Existing
+      4-parameter-style recovery scripts can be used if you don't care
+      about information provided by the 5th parameter.
+     </para>
+     <para>
+      See <xref linkend="guc-recovery-1st-stage-command"> and 
+      <xref linkend="guc-recovery-2nd-stage-command"> for more details.
+     </para>
+    </listitem>
+    <listitem>
+<!--
+2018-08-19 [e47f8a3]
+-->
+     <para>
+      <varname>fail_over_on_backend_error</varname> parameter is renamed to 
+      <xref linkend="guc-failover-on-backend-error">. (Muhammad Usama)
+     </para>
+     <para>
+      Now we throw a warning message when old config name <varname>fail_over_on_backend_error</varname>
+      is used instead of <xref linkend="guc-failover-on-backend-error">.
+      Using the old config variable name will have no effect.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+
+  <sect2>
     <title>Major Enhancements</title>
     <itemizedlist>
       <listitem>
+<!--
+2018-09-05 [536b155]
+2018-08-19 [ccc9280]
+2018-08-17 [2644612]
+-->
         <para>
-          Add support for <acronym>SCRAM</acronym> and <acronym>Certificate</acronym> 
+          Add support for <acronym>SCRAM</acronym> and Certificate 
           based authentication methods. (Muhammad Usama)
           <itemizedlist>  
+            <listitem>
+              <para>
+               Add support for <acronym>SCRAM</acronym> authentication method.
+              </para>
+              <para>
+               SCRAM authentication is supported using the pool_passwd authentication file. 
+              </para>
+              <para>
+               See <xref linkend="AUTH-SCRAM"> for more details.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+               Allow to use <acronym>CERT</acronym> authentication between <productname>Pgpool-II</productname> and frontend.
+              </para>
+              <para>
+               To use this authentication method, Pgpool-II will require that the client provide a valid certificate.
+              </para>
+              <para>
+               See <xref linkend="AUTH-CERT"> for more details.
+              </para>
+            </listitem>
             <listitem>
               <para>
               Able to use different auth methods for frontend and backend.
@@ -94,18 +158,45 @@
                 client to <productname>Pgpool-II</productname> and <productname>Pgpool-II</productname> to backend.
               </para>
             </listitem>
+          </itemizedlist>
+          <itemizedlist>
+            <listitem>
+              <para>
+               Now <xref linkend="GUC-POOL-PASSWD"> can store three format passwords. AES256 encrypted format, plain text format and md5 format. 
+               </para>
+               <para>
+                <productname>Pgpool-II</productname> identifies the password format type by it's prefix, 
+                so each password entry in the pool_passwd must be prefixed as per the password format.
+               </para>
+               <para>
+                md5 hashed passwords will be prefixed with <literal>md5</literal> and AES256 encrypted password types
+                will be stored using <literal>AES</literal> prefix.
+                To store the password in the plain text format <literal>TEXT</literal> prefix can be used.
+               </para>
+               <para>
+                In the absence of a valid prefix, Pgpool-II will be considered the string as a plain text password.
+               </para>
+               <para>
+                For example:
+<programlisting>
+username1:AESIFwI86k+ZbVdf6C+t3qpGA==
+username2:md59c6583185ba6a85bdcd1f129ec8cabb4
+username3:TEXTmypassword
+</programlisting>
+               </para>
+            </listitem>
           </itemizedlist>  
           <itemizedlist>  
             <listitem>
               <para>
                 Able to use <acronym>MD5</acronym> and <acronym>SCRAM</acronym> authentication methods 
-                to connect to database without <filename>pool_passwd</filename>.
+                to connect to database without <xref linkend="GUC-pool-passwd">.
               </para>
               <para>
                 A new configuration parameter <xref linkend="guc-allow-clear-text-frontend-auth"> is added.
                 This parameter enables this config allows the <productname>Pgpool-II</productname>
                 to use clear-text-password authentication with frontend clients when
-                <filename>pool_passwd</filename> file does not contains the password for the connecting user,
+                <xref linkend="GUC-pool-passwd"> file does not contains the password for the connecting user,
                 and use that password (provided by client) to authenticate with the backend
                 using <acronym>MD5</acronym> and/or <acronym>SCRAM</acronym> authentication.
               </para>
@@ -118,19 +209,6 @@
               </para>
               <para>
                 A new utility <xref linkend="PG-ENC"> is added to create AES encrypted passwords.
-              </para>
-            </listitem>
-          </itemizedlist>  
-          <itemizedlist>  
-            <listitem>
-              <para>
-                Allow to specify the AES encrypted password in the <filename>pgpool.conf</filename>.
-              </para>
-              <para>
-                Allow to specify the AES encrypted password in the 
-                <filename>pgpool.conf</filename> file for <xref linkend="guc-health-check-user">, 
-                <xref linkend="guc-sr-check-user">, <xref linkend="guc-wd-lifecheck-user"> and
-                <xref linkend="guc-recovery-user"> users.
               </para>
             </listitem>
           </itemizedlist>  
@@ -349,22 +427,23 @@
     <title>Changes</title>
     <itemizedlist>
       <listitem>
-        <!--
-        2018-04-16 [3d63b8a]
-        2018-05-04 [2e41451]
-        -->
+      <!--
+      2018-08-17 [2644612]
+      -->
         <para>
-          Add 1st/2nd stage online recovery commands parameter to 
-          get the node number to be recovered. (Tatsuo Ishii)
+         Allow to specify the AES encrypted password in the <filename>pgpool.conf</filename>. (Muhammad Usama)
         </para>
         <para>
-          Now 1st/2nd stage online recovery commands accept 5 parameters.
+         Since 4.0, you can specify the AES encrypted password in the 
+         <filename>pgpool.conf</filename> file for <xref linkend="guc-health-check-password">, 
+         <xref linkend="guc-sr-check-password">, <xref linkend="guc-wd-lifecheck-password"> and
+         <xref linkend="guc-recovery-password">.
         </para>
         <para>
-          See recovery_1st_stage_command and recovery_2nd_stage_command for more details.
+         To specify the unencrypted clear text password, prefix the password string with <literal>TEXT</literal>.
+         In the absence of a valid prefix, <productname>Pgpool-II</productname> will considered the string as a plain text password.  
         </para>
       </listitem>
-
       <listitem>
       <!--
       2018-05-07 [05c9297]
