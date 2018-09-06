@@ -511,7 +511,7 @@ IPアドレス切り替え後にARPリクエストを送信するコマンドで
         <para>
 <!--
           This command is executed just before bringing up the
-          virtual/floating IP if that is configured on the node.
+          virtual IP if that is configured on the node.
 -->
 コマンドは、そのノードに仮想IPが設定されていた場合、それが立ち上がる直前のタイミングで実行されます。
         </para>
@@ -1408,6 +1408,45 @@ heartbeat_destinationX:heartbeat_destination_portXで指定されるハートビ
    </para>
    <para>
 <!--
+        If <varname>wd_lifecheck_password</varname> is left blank <productname>Pgpool-II</productname>
+        will first try to get the password for <xref linkend="guc-wd-lifecheck-user"> from
+        <xref linkend="guc-pool-passwd"> file before using the empty password.
+-->
+<varname>wd_lifecheck_password</varname>が空白のままであった場合、<productname>Pgpool-II</productname>は空のパスワードを使用する前に<xref linkend="guc-pool-passwd">ファイルから<xref linkend="guc-wd-lifecheck-user">のパスワードの取得を試みます。
+   </para>
+   <para>
+<!--
+        You can also specify AES256-CBC encrypted password in <varname>wd_lifecheck_password</varname> field.
+        To specify the <literal>AES</literal> encrypted password, password string must be prefixed with
+        <literal>AES</literal> after encrypting (using <literal>aes-256-cbc</literal> algorithm) and
+        encoding to <literal>base64</literal>.
+-->
+<varname>wd_lifecheck_password</varname>にAES256-CBCで暗号化されたパスワードも指定することができます。
+AESで暗号化されたパスワードを指定するためには、パスワード文字列は暗号化（<literal>aes-256-cbc</literal>アルゴリズムを使用）および<literal>base64</literal>でエンコードした後、<literal>AES</literal>を接頭辞として付けなければいけません。
+   </para>
+   <para>
+<!--
+        You can also use <xref linkend="PG-ENC"> utility to create the correctly formatted
+       <literal>AES</literal> encrypted password strings.
+-->
+正しくフォーマットされたAESで暗号化されたパスワード文字列を<xref linkend="PG-ENC">コマンドを使用して作成することもできます。
+       <note>
+           <para>
+<!--
+               <productname>Pgpool-II</productname> will require a valid decryption key at the
+               startup to use the encrypted passwords.
+               see <xref linkend="auth-aes-decryption-key"> for more details on providing the
+               decryption key to <productname>Pgpool-II</productname>
+-->
+<productname>Pgpool-II</productname>は暗号化されたパスワードを使うために起動時に有効な復号鍵を要求します。
+<productname>Pgpool-II</productname>に復号鍵を提供する方法の詳細は<xref linkend="auth-aes-decryption-key">を参照してください。
+           </para>
+
+       </note>
+   </para>
+   <para>
+
+<!--
       <varname>wd_lifecheck_password</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
 -->
@@ -1418,6 +1457,12 @@ heartbeat_destinationX:heartbeat_destination_portXで指定されるハートビ
       This parameter can only be set at server start.
 -->
 このパラメータは、サーバ起動時にのみ設定できます。
+    </para>
+    <para>
+<!--
+      Default is <literal>''</literal>(empty).
+-->
+デフォルトは<literal>''</literal>（空文字）です.
     </para>
     </listitem>
     </varlistentry>

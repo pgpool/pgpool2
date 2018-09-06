@@ -1036,7 +1036,7 @@ arping_cmd = 'arping -U $_IP_$ -w 1'
   </sect1>
 
   <sect1 id="example-cluster">
-    <title><productname>Pgpoo-II</productname> + Watchdogの構築の例</title>
+    <title><productname>Pgpool-II</productname> + Watchdogの構築の例</title>
     <para>
 ここでは、ストリーミングレプリケーション構成の<productname>PostgreSQL</productname>を<productname>Pgpool-II</productname>で管理するシステムの構成例を示します。この例では、3台の<productname>Pgpool-II</productname>を使って<productname>PostgreSQL</productname>を管理し、単一障害点やスプリットブレインの起きない堅牢なクラスタを運用することが可能です。
     </para>
@@ -2415,12 +2415,12 @@ PING 35.163.178.3 (35.163.178.3) 56(84) bytes of data.
 	    <listitem>
 	      <para>
 		<!--
-		Disable <xref linkend="guc-fail-over-on-backend-error">
+		Disable <xref linkend="guc-failover-on-backend-error">
 		to avoid failover when connecting to the backend or
 		detecting errors on backend side while executing
 		queries for the same reasons above.
 		  -->
-		同様の理由により、接続時あるいは問い合わせ実行中のエラーによるフェイルオーバを避けるために、<xref linkend="guc-fail-over-on-backend-error">をオフにしてください。
+同様の理由により、接続時あるいは問い合わせ実行中のエラーによるフェイルオーバを避けるために、<xref linkend="guc-failover-on-backend-error">をオフにしてください。
 	      </para>
 	    </listitem>
 	  </itemizedlist>

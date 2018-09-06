@@ -169,6 +169,44 @@ TCP接続が時間内に成功せずにバックエンドの<productname>Postgre
       </para>
       <para>
 <!--
+        If <varname>health_check_password</varname> is left blank <productname>Pgpool-II</productname>
+        will first try to get the password for <xref linkend="guc-health-check-user"> from
+        <xref linkend="guc-pool-passwd"> file before using the empty password.
+-->
+<varname>health_check_password</varname>が空白のままの場合、 <productname>Pgpool-II</productname>は空のパスワードを使用する前にまず<xref linkend="guc-pool-passwd">ファイルから<xref linkend="guc-health-check-user">のパスワードを取得できるか試みます。
+      </para>
+      <para>
+<!--
+        You can also specify AES256-CBC encrypted password in <varname>health_check_password</varname> field.
+        To specify the <literal>AES</literal> encrypted password, password string must be prefixed with
+        <literal>AES</literal> after encrypting (using <literal>aes-256-cbc</literal> algorithm) and
+        encoding to <literal>base64</literal>.
+-->
+<varname>health_check_password</varname>にAES256-CBCで暗号化されたパスワードも指定することができます。
+<literal>AES</literal>で暗号化されたパスワードを指定するためには、パスワード文字列は暗号化（<literal>aes-256-cbc</literal>アルゴリズムを使用）および<literal>base64</literal>でエンコードした後、<literal>AES</literal>を接頭辞として付けなければいけません。
+      </para>
+      <para>
+<!--
+        You can also use <xref linkend="PG-ENC"> utility to create the correctly formatted
+        <literal>AES</literal> encrypted password strings.
+-->
+正しくフォーマットされた<literal>AES</literal>暗号化パスワード文字を<xref linkend="PG-ENC">コマンドを使用して作成することもできます。
+        <note>
+            <para>
+<!--
+                <productname>Pgpool-II</productname> will require a valid decryption key at the
+                startup to use the encrypted passwords.
+                see <xref linkend="auth-aes-decryption-key"> for more details on providing the
+                decryption key to <productname>Pgpool-II</productname>
+-->
+<productname>Pgpool-II</productname>は暗号化されたパスワードを使うために起動時に有効な復号鍵を要求します。
+<productname>Pgpool-II</productname>に復号鍵を提供する方法の詳細は<xref linkend="auth-aes-decryption-key">を参照してください。
+            </para>
+
+        </note>
+      </para>
+      <para>
+<!--
         This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 -->
 このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
@@ -234,10 +272,10 @@ TCP接続が時間内に成功せずにバックエンドの<productname>Postgre
         <tip>
           <para>
 <!--
-            It is advised that <xref linkend="guc-fail-over-on-backend-error"> must be disabled,
+            It is advised that <xref linkend="guc-failover-on-backend-error"> must be disabled,
             if you want to enable <varname>health_check_max_retries</>.
 -->
-<varname>health_check_max_retreis</>を有効にする場合は、<xref linkend="guc-fail-over-on-backend-error">を無効にするのが望ましいです。 
+<varname>health_check_max_retreis</>を有効にする場合は、<xref linkend="guc-failover-on-backend-error">を無効にするのが望ましいです。
           </para>
         </tip>
 <!--

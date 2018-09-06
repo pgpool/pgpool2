@@ -12,19 +12,18 @@
     works with Master Slave mode (<xref linkend="runtime-config-master-slave-mode">)
     and Replication mode (<xref linkend="runtime-config-replication-mode">). When enabled
     <productname>Pgpool-II</productname> sends the writing queries to the
-    <acronym>primay node</acronym> in Master Slave mode, all of the backend nodes
-    in Replication mode, and other queries get load balanced among all backend nodes.
-    To which node
-    the load balancing mechanism sends read queries is decided at the
-    session start time and will not be changed until the session
-    ends. The only exception is by writing special SQL comments. See
-    below for more details.
+    <acronym>primay node</acronym> in Master Slave mode, all of the
+    backend nodes in Replication mode, and other queries get load
+    balanced among all backend nodes.  To which node the load
+    balancing mechanism sends read queries is decided at the session
+    start time and will not be changed until the session ends. However
+    there are some exceptions.  See below for more details.
 -->
 <productname>Pgpool-II</productname>のSELECTクエリの負荷分散はマスタースレーブモード（<xref linkend="runtime-config-master-slave-mode">）とレプリケーションモード（<xref linkend="runtime-config-replication-mode">）で動作します。
 有効時、<productname>Pgpool-II</productname>は更新を伴うクエリを、マスタースレーブモードでは<acronym>プライマリノード</acronym>に、レプリケーションモードでは全てのバックエンドノードに対し送信します。
 そして、その他のクエリは全てのバックエンドの間で負荷分散されます。
 負荷分散メカニズムが参照クエリをどのノードに送信するかはセッション開始時に決められ、セッションの終了まで変更されません。
-唯一の例外は特別なSQLコマンドが発行されたときです。
+ただし、いくつかの例外があります。
 詳細については以下をご覧ください。
   </para>
   <note>
@@ -249,6 +248,77 @@ autocommit を無効にすると、ドライバが内部でBEGINおよびCOMMIT�
     </para>
   </note>
 
+ </sect2>
+
+ <sect2 id="runtime-config-writing-queries-may-affect-load-balancing">
+
+<!--
+   <title>Writing queries may affect Load Balancing</title>
+-->
+   <title>更新を伴うクエリは負荷分散に影響する可能性がある</title>
+   <para>
+<!--
+     In general, read queries are load balanced if certain conditions
+     are met. However, writing queries may affect the load
+     balancing. Here "writing queries" mean all the queries except
+     below:
+-->
+一般的には、特定の条件を満している場合、参照クエリは負荷分散します。
+ただし、更新を伴うクエリは負荷分散に影響する可能性があります。
+ここで、”更新を伴うクエリ”とは以下の例を除く全てのクエリを指します。
+   </para>
+
+   <para>
+   <itemizedlist>
+     <listitem>
+       <para>
+<!--
+     SELECT/WITH without FOR UPDATE/SHARE
+-->
+FOR UPDATE/SHARE がないSELECT/WITH
+       </para>
+     </listitem>
+
+     <listitem>
+       <para>
+     COPY TO STDOUT
+       </para>
+     </listitem>
+
+     <listitem>
+       <para>
+     EXPLAIN
+       </para>
+     </listitem>
+
+     <listitem>
+       <para>
+<!--
+     EXPLAIN ANALYZE and the query is SELECT not including writing functions
+-->
+EXPLAIN ANALYZEおよびクエリが書き込み関数を含まないSELECT
+       </para>
+     </listitem>
+
+     <listitem>
+       <para>
+     SHOW
+       </para>
+     </listitem>
+
+   </itemizedlist>
+   </para>
+
+   <para>
+<!--
+     If writing queires appear, succeeding read queries may not be
+     load balanced. i.e. sent to primary node (in streaming
+     replication mode) or master node (in other mode) depending on the
+     setting of <xref linkend="guc-disable-load-balance-on-write">.
+-->
+更新を伴うクエリが存在する場合、続いて実行される参照クエリは負荷分散しません。
+すなわち、<xref linkend="guc-disable-load-balance-on-write">の設定に応じて（ストリーミングレプリケーションの）プライマリノードまたは（その他のモードの）マスターノードに送ります。
+   </para>
  </sect2>
 
  <sect2 id="runtime-config-load-balancing-in-streaming-raplication">

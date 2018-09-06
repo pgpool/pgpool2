@@ -490,16 +490,54 @@ IPv6書式のエントリは、システムのCライブラリがIPv6アドレ�
         <para>
 <!--
          To use <literal>md5</literal> authentication, you need to register
-         the user name and password in <filename>"pool_passwd"</filename>.
+         the user name and password in <xref linkend="guc-pool-passwd"> file.
          See <xref linkend="auth-md5"> for more details.
 -->
-<literal>md5</literal>認証を使うには、ユーザ名とパスワードを<filename>pool_passwd</filename>というパスワードファイルに登録する必要があります。
+<literal>md5</literal>認証を使うには、ユーザ名とパスワードを<xref linkend="guc-pool-passwd">というパスワードファイルに登録する必要があります。
 詳細は<xref linkend="auth-md5">を参照してください。
          </para>
         </note>
          </para>
         </listitem>
        </varlistentry>
+
+          <varlistentry>
+            <term><literal>scram-sha-256</literal></term>
+            <listitem>
+              <para>
+<!--
+              Perform SCRAM-SHA-256 authentication to verify the user's password.
+-->
+ユーザのパスワードを確認するため、SCRAM-SHA-256認証を行います。
+            <note>
+              <para>
+<!--
+                To use <literal>scram-sha-256</literal> authentication, you need to register
+                the user name and password in <xref linkend="guc-pool-passwd"> file.
+                See <xref linkend="auth-scram"> for more details.
+-->
+<literal>scram-sha-256</literal>認証を使用するためには、<xref linkend="guc-pool-passwd">ファイルにユーザ名とパスワードを登録する必要があります。
+詳細は<xref linkend="auth-scram">を参照してください。
+              </para>
+            </note>
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>cert</literal></term>
+            <listitem>
+              <para>
+<!--
+                Authenticate using SSL client certificates.
+                See <xref linkend="auth-cert"> for more details.
+-->
+SSLクライアント証明書を使って認証します。
+詳細は<xref linkend="auth-cert">を参照してください。
+              </para>
+            </listitem>
+          </varlistentry>
+
 
        <varlistentry>
         <term><literal>pam</></term>
@@ -699,9 +737,9 @@ host    postgres        all             192.168.12.10/32        md5
 <!--
 	  If <productname>Pgpool-II</productname> is operated in raw
 	  mode or there's only 1 backend configured, you don't need to
-	  setup <literal>pool_passwd</literal>.
+	  setup <xref linkend="guc-pool-passwd">.
 -->
-<productname>Pgpool-II</productname>をrawモードで使用している場合、あるいはバックエンドが1つしかない場合は、<literal>pool_passwd</literal>を設定する必要はありません。
+<productname>Pgpool-II</productname>をrawモードで使用している場合、あるいはバックエンドが1つしかない場合は、<xref linkend="guc-pool-passwd">を設定する必要はありません。
 	</para>
       </note>
 
@@ -713,9 +751,9 @@ host    postgres        all             192.168.12.10/32        md5
 
     <para>
 <!--
-        This <literal>pool_passwd</literal> file should contain lines in the following format:
+        The <xref linkend="guc-pool-passwd"> file should contain lines in the following format:
 -->
-        <literal>pool_passwd</literal>ファイルは以下の形式の行を含みます。
+<literal>pool_passwd</literal>ファイルは以下の形式の行を含みます。
     <programlisting>
         "username:encrypted_passwd"
     </programlisting>
@@ -742,11 +780,11 @@ host    postgres        all             192.168.12.10/32        md5
         1- Login as the database's operating system user and type
         <command>"pg_md5 &#045;&#045;md5auth &#045;&#045;username=username password"</command>
         user name and <literal>md5</literal> encrypted password are registered
-        into pool_passwd.
+        into <xref linkend="guc-pool-passwd">.
         If pool_passwd does not exist yet, pg_md5 command will automatically create it for you.
 -->
 1. データベースのOSユーザとしてログインし、<command>"pg_md5 --md5auth --username=ユーザ名 パスワード"</command> を実行します。
-pool_passwdがまだ存在していなかった場合は、pg_md5コマンドが自動的にこれを生成します。
+<xref linkend="guc-pool-passwd">がまだ存在していなかった場合は、pg_md5コマンドが自動的にこれを生成します。
         <note>
         <para>
 <!--
@@ -770,11 +808,168 @@ pool_passwdがまだ存在していなかった場合は、pg_md5コマンドが
         3- After changing md5 password(in both pool_passwd and <productname>PostgreSQL</> of course),
         reload the <productname>Pgpool-II</> configurations.
 -->
-3. （もちろんpool_passwdと<productname>PostgreSQL</>の両方で）のmd5パスワードを変更したら、<productname>Pgpool-II</>設定の再読み込みを実行してください。
+3. （もちろんpool_passwdと<productname>PostgreSQL</>の両方で）md5パスワードを変更したら、<productname>Pgpool-II</>設定の再読み込みを実行してください。
     </para>
     </sect3>
 
   </sect2>
+
+    <sect2 id="auth-scram">
+<!--
+      <title>scram-sha-256 Authentication</title>
+-->
+      <title>scram-sha-256認証</title>
+
+      <indexterm zone="auth-scram">
+    <primary>SCRAM</primary>
+      </indexterm>
+
+      <para>
+<!--
+      This authentication method also known as SCRAM is a
+      challenge-response based authentication that prevents the
+      password sniffing on untrusted connections.
+      Since <productname>Pgpool-II</productname> does not has the
+      visibility of <productname>PostgreSQL</productname>'s database user
+      password, so <literal>SCRAM</literal> authentication is supported using the
+      <xref linkend="guc-pool-passwd"> authentication file.
+-->
+SCRAMとも呼ばれるこの認証方式は、信頼できない接続におけるパスワードの盗聴を防ぐチャレンジレスポンス認証です。
+<productname>Pgpool-II</productname>は、<productname>PostgreSQL</productname>データベースユーザのパスワードの可視性を持たないため、<literal>SCRAM</literal>認証は<xref linkend="guc-pool-passwd">認証ファイルを使用してサポートされています。
+      </para>
+
+      <sect3 id="scram-authentication-file-format">
+<!--
+    <title>Authentication file entry for SCRAM</title>
+-->
+    <title>SCRAMの認証ファイルエントリ</title>
+
+    <para>
+<!--
+      To use the <literal>SCRAM</literal> authentication
+      <xref linkend="guc-pool-passwd"> authentication file
+      must contain the user password in either plain text
+      or <literal>AES</literal> encrypted format.
+-->
+<literal>SCRAM</literal>認証を使用する場合、<xref linkend="guc-pool-passwd">認証ファイルは平文もしくは<literal>AES</literal>暗号化ファーマットのユーザパスワードを含んでる必要があります。
+
+      <programlisting>
+            "username:plain_text_passwd"
+      </programlisting>
+      <programlisting>
+            "username:AES_encrypted_passwd"
+      </programlisting>
+      <note>
+            <para>
+<!--
+              <literal>md5</literal> type user passwords in
+              <xref linkend="guc-pool-passwd"> file can't be used for
+              <literal>scram</literal> authentication
+-->
+<xref linkend="guc-pool-passwd">ファイル内の<literal>md5</literal>形式のユーザパスワードは<literal>SCRAM</literal>認証に使用できません。
+            </para>
+      </note>
+    </para>
+      </sect3>
+
+      <sect3 id="setting-scram-sha-256-authentication">
+<!--
+    <title>Setting scram-sha-256 Authentication</title>
+-->
+    <title>scram-sha-256認証の設定</title>
+    <indexterm zone="setting-scram-sha-256-authentication">
+      <primary>SCRAM</primary>
+    </indexterm>
+
+    <para>
+<!--
+      Here are the steps to enable <literal>scram-sha-256</literal>
+      authentication:
+-->
+以下が<literal>scram-sha-256</literal>認証を有効にする手順です。
+    </para>
+    <para>
+<!--
+      1- Create <xref linkend="guc-pool-passwd"> file entry
+      for database user and password in plain text or <literal>AES</literal>
+      encrypted format.
+      The <xref linkend="PG-ENC"> utility that comes with <productname>Pgpool-II</productname>
+      can be used to create the <literal>AES</literal> encrypted password
+      entries in the <xref linkend="guc-pool-passwd"> file.
+-->
+1- 平文または<literal>AES</literal>暗号化フォーマットのデータベースユーザとパスワードの<xref linkend="guc-pool-passwd">ファイルエントリを作成します。
+<productname>Pgpool-II</productname>付属の<xref linkend="PG-ENC">コマンドで<xref linkend="guc-pool-passwd">ファイル内に<literal>AES</literal>暗号化パスワードエントリを作成することができます。
+      <note>
+            <para>
+<!--
+              User name and password must be identical to those registered
+              in the <productname>PostgreSQL</productname> server.
+-->
+ユーザ名とパスワードは<productname>PostgreSQL</productname>サーバに登録されているものと一致している必要があります。
+            </para>
+      </note>
+    </para>
+
+    <para>
+<!--
+      2- Add an appropriate scram-sha-256 entry to <filename>pool_hba.conf</filename>.
+      See <xref linkend="auth-pool-hba-conf"> for more details.
+-->
+2- <filename>pool_hba.conf</filename>に適切なscram-sha-256エントリを追加します。
+詳細は<xref linkend="auth-pool-hba-conf">を参照してください。
+    </para>
+    <para>
+<!--
+      3- After changing SCRAM password (in both pool_passwd
+      and <productname>PostgreSQL</productname> of course), reload
+      the <productname>Pgpool-II</productname> configuration.
+-->
+3- （もちろんpool_passwdと<productname>PostgreSQL</productname>の両方で）SCRAMパスワードを変更したら、<productname>Pgpool-II</productname>の設定の再読み込みを実行してください。
+    </para>
+      </sect3>
+
+    </sect2>
+
+    <sect2 id="auth-cert">
+<!--
+      <title>Certificate Authentication</title>
+-->
+      <title>証明書認証</title>
+
+      <indexterm zone="auth-cert">
+    <primary>Certificate</primary>
+      </indexterm>
+
+      <para>
+<!--
+      This authentication method uses <literal>SSL</literal> client certificates
+      to perform authentication. It is therefore only available for SSL connections.
+      When using this authentication method, the <productname>Pgpool-II</productname>
+      will require that the client provide a valid certificate.
+      No password prompt will be sent to the client.
+      The <literal>cn</literal> (Common Name) attribute of the certificate will be
+      compared to the requested database user name, and if they match the login will
+      be allowed.
+-->
+この認証方式は認証を実施するために<literal>SSL</literal>クライアント証明書を使用します。
+この認証方式を使っている場合、<productname>Pgpool-II</productname>はクライアントが提供する有効な証明書を要求します。
+パスワードプロンプトがクライアントに送信されません。
+
+証明書の<literal>cn</literal>（コモンネーム）の属性は要求されたデータベースユーザ名と比較され、一致した場合ログインが許可されます。
+      </para>
+
+      <note>
+    <para>
+<!--
+      The certificate authentication works between client and
+      <productname>Pgpool-II</productname>, for the
+      backend authentication you can use any other authentication method
+-->
+証明書認証はクライアントと<productname>Pgpool-II</productname>の間で使用され、バックエンド認証にはその他の認証方式を使用できます。
+    </para>
+      </note>
+
+    </sect2>
 
   <sect2 id="auth-pam">
 <!--
@@ -827,5 +1022,138 @@ PAMサポートを有効にするには、<productname>Pgpool-II</productname>�
    </note>
   </sect2>
  </sect1>
+
+  <sect1 id="auth-different-auth-method">
+<!--
+    <title>Using different methods for frontend and backend authentication</title>
+-->
+    <title>フロンエンドとバックエンド認証に対する異なる認証方式の使用</title>
+
+    <indexterm zone="auth-different-auth-method">
+      <primary>AUTH</primary>
+    </indexterm>
+
+    <para>
+<!--
+    Since <productname>Pgpool-II</productname><emphasis>V4.0</emphasis>
+    it possible to use different authentication for client application
+    and backend <productname>PostgreSQL</productname> servers.
+    For example, a client application can use <literal>scram-sha-256</literal>
+    to connect to <productname>Pgpool-II</productname> which
+    in turn can use <literal>trust</literal> or <literal>md5</literal>
+    authentication to connect to <productname>PostgreSQL</productname>
+    backend for the same session.
+-->
+<productname>Pgpool-II</productname><emphasis>V4.0</emphasis>以降では、クライアントアプリケーションとバックエンドの<productname>PostgreSQL</productname>サーバに対して異なる認証を使用することが可能です。
+例えば、クライアントアプリケーションは<productname>Pgpool-II</productname>への接続に<literal>scram-sha-256</literal>を使用し、次に同じセッションの<productname>PostgreSQL</productname>バックエンドへの接続に<literal>trust</literal>または<literal>md5</literal>認証を使用できます。
+
+    </para>
+  </sect1>
+
+  <sect1 id="auth-aes-encrypted-password">
+<!--
+    <title>Using AES256 encrypted passwords in pool_passwd</title>
+-->
+    <title>pool_passwdにおけるAES256暗号化パスワードの使用</title>
+
+    <indexterm zone="auth-aes-encrypted-password">
+      <primary>AUTH</primary>
+    </indexterm>
+
+    <para>
+<!--
+    <literal>SCRAM</literal> authentication guards against the man-in-the-middle
+    type of attack, so <productname>Pgpool-II</productname> requires the user password
+    to authenticate with the <productname>PostgreSQL</productname> backend.
+-->
+<literal>SCRAM</literal>認証は中間者攻撃から保護します。
+そのため、<productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>バックエンドの認証のためにユーザパスワードを要求します。
+    </para>
+
+    <para>
+<!--
+    However, storing the clear text passwords in the <filename>"pool_passwd"</filename> file
+    is not a good idea.
+-->
+しかしながら、<filename>"pool_passwd"</filename>ファイルにクリアテキストパスワードを保存するのは良い案ではありません。
+    </para>
+    <para>
+<!--
+        You can instead store AES256 encrypted passwords, which will be used for authentication.
+        The password is first encrypted using the AES256 encryption with the user provided key
+        and then the encrypted password is <literal>base64</literal> encoded and
+        an <literal>AES</literal> prefix is added to the encoded string.
+-->
+代わりにAES256で暗号化されたパスワードを保存し認証に使用することができます。
+パスワードは、最初にユーザが提供した鍵を使ってAES暗号で暗号化され、暗号化されたパスワードを<literal>base64</literal>でエンコードし、エンコードされた文字列の接頭に<literal>AES</literal>を追加します。
+        <note>
+            <para>
+<!--
+                You can use the <xref linkend="PG-ENC"> utility to create the properly
+                formatted AES256 encrypted password.
+-->
+適切にフォーマットされたAES256暗号化パスワードを作成するために <xref linkend="PG-ENC">コマンドを使用できます。
+            </para>
+        </note>
+    </para>
+
+      <sect2 id="auth-create-aes-passwords">
+<!--
+        <title>Creating encrypted password entries</title>
+-->
+        <title>暗号化パスワードエントリの作成</title>
+        <para>
+<!--
+          <xref linkend="PG-ENC"> can be used to create <literal>AES</literal>
+          encrypted password entries in <xref linkend="guc-pool-passwd"> file.
+          <xref linkend="PG-ENC"> requires the key for encrypting the password entries.
+          Later that same key will be required by <productname>Pgpool-II</productname>
+          to decrypt the passwords to use for authentication.
+-->
+<xref linkend="PG-ENC"> は<xref linkend="guc-pool-passwd">ファイル上に<literal>AES</literal>暗号化パスワードエントリを作成するために使用できます。
+<xref linkend="PG-ENC">はパスワードエントリ暗号化のための鍵を要求します。
+その後、認証に使うパスワードを復号化するため、<productname>Pgpool-II</productname>で同じ鍵が必要になります。
+          <note>
+            <para>
+<!--
+            <productname>Pgpool-II</productname> must be built with SSL
+            (&#045;&#045;with-openssl) support to use the encrypted password feature.
+-->
+暗号化パスワード機能を使うためにSSL(--with-openssl)サポート付で<productname>Pgpool-II</productname>をビルドする必要があります。
+            </para>
+          </note>
+       </para>
+      </sect2>
+
+      <sect2 id="auth-aes-decryption-key">
+<!--
+        <title>Providing decryption key to <productname>Pgpool-II</productname></title>
+-->
+        <title><productname>Pgpool-II</productname>への復号鍵の提供</title>
+
+        <para>
+<!--
+          If you have <literal>AES</literal> encrypted passwords stored in the
+          <xref linkend="guc-pool-passwd"> file, then <productname>Pgpool-II</productname>
+          will require the decryption key to decrypt the passwords before using them,
+          <productname>Pgpool-II</productname> tries to read the decryption key at
+          startup from the <filename>pgpoolkey</filename> file.
+-->
+もし、<xref linkend="guc-pool-passwd"> ファイルに<literal>AES</literal>暗号化パスワードが保存されていた場合、<productname>Pgpool-II</productname>はそれらのパスワードを復号化するために復号鍵が必要となり、<productname>Pgpool-II</productname>は起動時に<filename>.pgpoolkey</filename>ファイルから復号鍵を読み込もうとします。
+        </para>
+        <para>
+<!--
+          By default the <productname>Pgpool-II</productname> will look for the
+          <filename>pgpoolkey</filename> file in the user's home directory or the file
+          referenced by environment variable <literal>PGPOOLKEYFILE</literal>.
+          You can also specify the key file using the (-k, &#045;&#045;key-file=KEY_FILE)
+          command line argument to the <productname>Pgpool-II</productname> binary.
+-->
+デフォルトでは、<productname>Pgpool-II</productname>はユーザのホームディレクトリの<filename>.pgpoolkey</filename>もしくは<literal>PGPOOLKEYFILE</literal>環境変数により設定されるファイルを探します。
+<xref linkend="PGPOOL">コマンドの(-k, --key-file=KEY_FILE)オプションを使用し、鍵ファイルを指定をすることもできます。
+       </para>
+      </sect2>
+
+    </sect1>
 
  </chapter>

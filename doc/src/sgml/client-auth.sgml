@@ -814,14 +814,14 @@
           <xref linkend="guc-pool-passwd"> file, then <productname>Pgpool-II</productname>
           will require the decryption key to decrypt the passwords before using them,
           <productname>Pgpool-II</productname> tries to read the decryption key at
-          startup from the <filename>pgpoolkey</filename> file.
+          startup from the <filename>.pgpoolkey</filename> file.
         </para>
         <para>
           By default the <productname>Pgpool-II</productname> will look for the
-          <filename>pgpoolkey</filename> file in the user's home directory or the file
+          <filename>.pgpoolkey</filename> file in the user's home directory or the file
           referenced by environment variable <literal>PGPOOLKEYFILE</literal>.
           You can also specify the key file using the (-k, --key-file=KEY_FILE)
-          command line argument to the <productname>Pgpool-II</productname> binary.
+          command line argument to the <xref linkend="PGPOOL"> command.
        </para>
       </sect2>
 

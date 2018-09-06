@@ -95,6 +95,17 @@ Pgpool-II documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-k <replaceable class="parameter">key_file</replaceable></option></term>
+      <term><option>--key-file=<replaceable class="parameter">key_file</replaceable></option></term>
+      <listitem>
+       <para>
+         Set the path to the <filename>.pgpoolkey</filename> file.
+	 Mandatory if you use AES256 encrypted password and the file is placed other than the standard locatiaon and used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-h</option></term>
       <term><option>--help</option></term>
       <listitem>

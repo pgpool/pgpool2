@@ -361,7 +361,7 @@
         <note>
         <para>
             Prior to <productname>Pgpool-II</productname> <emphasis>V4.0</emphasis>,
-            this configuration parameter name was <varname>fail</varname><emphasis>_</emphasis><varname>over_on_backend_error</varname>
+            this configuration parameter name was <varname>fail</varname><emphasis>_</emphasis><varname>over_on_backend_error</varname>.
         </para>
         </note>
       </listitem>

@@ -2411,9 +2411,9 @@ doc.jaの下で "make xslthtml"を実行できるように修正しました。(
 
       <listitem>
     <!--
-	  Improve the behavior of fail-over. In the steaming
+	  Improve the behavior of failover. In the steaming
 	  replication mode, client sessions will not be disconnected
-	  when a fail-over occurs any more if the session does not use
+	  when a failover occurs any more if the session does not use
 	  the failed standby server. If the primary server goes down,
 	  still all sessions will be disconnected. Also it is possible
 	  to connect to <productname>Pgpool-II</productname> even if
@@ -2422,7 +2422,7 @@ doc.jaの下で "make xslthtml"を実行できるように修正しました。(
 	  while doing health checking retries.
       -->
       <para>
-      fail-over の挙動が改善されました。
+      failover の挙動が改善されました。
       </para>
       <para>
       Streaming Replicationモードで、フェイルオーバーが発生した時に、ダウンしたスタンバイサーバを利用しなければ、クライアントセッションが切断されなくなります。
@@ -2479,7 +2479,7 @@ Watchdogが大幅に改善されました。
 	<para>
     <!--
 	  In some cases pg_terminate_backend() now does not trigger a
-	  fail-over.
+	  failover.
       -->
 特定の場合に<function>pg_terminate_backend()</function>がフェイルオーバを起こさないようになりました。
 	</para>
@@ -2521,14 +2521,14 @@ Watchdogが大幅に改善されました。
 	  -->
 	<para>
     <!--
-	  Improve the behavior of fail-over. (Tatsuo Ishii)
+	  Improve the behavior of failover. (Tatsuo Ishii)
     -->
-      fail-over の挙動が改善されました。(Tatsuo Ishii)
+      failover の挙動が改善されました。(Tatsuo Ishii)
 	</para>
 	<para>
     <!--
 	  In the steaming replication mode, client sessions will not
-	  be disconnected when a fail-over occurs any more if the
+	  be disconnected when a failover occurs any more if the
 	  session does not use the failed standby server. If the
 	  primary server goes down, still all sessions will be
 	  disconnected. Health check timeout case will also cause the
@@ -2546,11 +2546,11 @@ Watchdogが大幅に改善されました。
     <!--
 	  For user's convenience, "show pool_nodes" command shows the
 	  session local load balance node info since this is important
-	  for users in case of fail-over. If the load balance node is
+	  for users in case of failover. If the load balance node is
 	  not the failed node, the session will not be affected by
-	  fail-over.
+	  failover.
       -->
-fail-over が発生する場合にローカル負荷分散ノードの情報が重要なので、<command>show pool_nodes</command> コマンドで、ローカル負荷分散ノードの情報が利用者の便宜のために表示されるようになりました。
+failover が発生する場合にローカル負荷分散ノードの情報が重要なので、<command>show pool_nodes</command> コマンドで、ローカル負荷分散ノードの情報が利用者の便宜のために表示されるようになりました。
 負荷分散ノードがダウンしたノードではない場合、フェイルオーバーによる影響はありません。
 	</para>
 
@@ -2563,12 +2563,12 @@ fail-over が発生する場合にローカル負荷分散ノードの情報が�
 	  health checking retries.  Before any attempt to connect to
 	  <productname>Pgpool-II</productname> fails if it is doing a
 	  health check against failed node even if
-	  <xref linkend="guc-fail-over-on-backend-error"> is off
+	  <xref linkend="guc-failover-on-backend-error"> is off
 	  because <productname>Pgpool-II</productname> child first
 	  tries to connect to all backend including the failed one and
 	  exits if it fails to connect to a backend (of course it
 	  fails). This is a temporary situation and will be resolved
-	  once pgpool executes fail-over. However if the health check
+	  once pgpool executes failover. However if the health check
 	  is retrying, the temporary situation keeps longer depending
 	  on the setting
 	  of <xref linkend="guc-health-check-max-retries"> and
@@ -2576,7 +2576,7 @@ fail-over が発生する場合にローカル負荷分散ノードの情報が�
 	  good. Attached patch tries to mitigate the problem:
       -->
       また、ヘルスチェックのリトライの最中でも <productname>Pgpool-II</productname> に接続できるようになりました。
-以前は、<xref linkend="guc-fail-over-on-backend-error">がオフの場合でも<productname>Pgpool-II</productname>への接続は、ヘルスチェックのリトライをしている間はすべて失敗していました。
+以前は、<xref linkend="guc-failover-on-backend-error">がオフの場合でも<productname>Pgpool-II</productname>への接続は、ヘルスチェックのリトライをしている間はすべて失敗していました。
 これは、<productname>Pgpool-II</productname>の子プロセスがまず失敗したバックエンドを含めてすべてのバックエンドへの接続を試み、失敗した場合終了するためです（これはもちろん失敗します）。
 これは一時的な状況であり、<productname>Pgpool-II</productname>がフェールオーバーを行えば解決します。
 しかし、ヘルスチェックの再試行が行っている場合は、この一時的な状況は
@@ -2759,7 +2759,7 @@ fail-over が発生する場合にローカル負荷分散ノードの情報が�
 	<para>
     <!--
 	  In some cases pg_terminate_backend() now does not trigger a
-	  fail-over. (Muhammad Usama)
+	  failover. (Muhammad Usama)
     Because PostgreSQL returns exactly the same error code as postmaster
     down case and <function>pg_terminate_backend()</function> case, using
     <function>pg_terminate_backend()</function> raises a failover which user might not want. To
@@ -3597,7 +3597,7 @@ watchdogクラスタでのフェイルオーバーコマンドの転送処理が
         <!--
 	    Fix confusing error messages. (Tatsuo Ishii)
         -->
-        <xref linkend="guc-fail-over-on-backend-error"> が off の場合、
+        <xref linkend="guc-failover-on-backend-error"> が off の場合、
         <function>read(2)</function> が -1 を返しても
         <function>pool_read()</function> がエラーメッセージを発行しない不具合が修正されました。(Tatsuo Ishii)
         </para>

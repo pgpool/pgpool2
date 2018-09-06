@@ -222,9 +222,48 @@ postmasterの起動（<literal>pgpool_remote_start</literal>の実施）
         <para>
 <!--
           Specifies the password for the <productname>PostgreSQL</> user name configured in
+          <xref linkend="guc-recovery-user"> to perform online recovery.
 -->
 オンラインリカバリを行うための PostgreSQL ユーザパスワードです。
         </para>
+        <para>
+<!--
+            If <varname>recovery_password</varname> is left blank <productname>Pgpool-II</productname>
+            will first try to get the password for <xref linkend="guc-recovery-user"> from
+            <xref linkend="guc-pool-passwd"> file before using the empty password.
+-->
+<varname>recovery_password</varname>が空白のままの場合、 <productname>Pgpool-II</productname>は空のパスワードを使用する前にまず<xref linkend="guc-pool-passwd">ファイルから<xref linkend="guc-recovery-user">のパスワードを取得できるか試みます。
+        </para>
+        <para>
+<!--
+            You can also specify AES256-CBC encrypted password in <varname>recovery_password</varname> field.
+            To specify the <literal>AES</literal> encrypted password, password string must be prefixed with
+            <literal>AES</literal> after encrypting (using <literal>aes-256-cbc</literal> algorithm) and
+            encoding to <literal>base64</literal>.
+-->
+<varname>recovery_password</varname>にAES256-CBCで暗号化されたパスワードも指定することができます。
+<literal>AES</literal>で暗号化されたパスワードを指定するためには、パスワード文字列は暗号化（<literal>aes-256-cbc</literal>アルゴリズムを使用）および<literal>base64</literal>でエンコードした後、<literal>AES</literal>を接頭辞として付けなければいけません。
+        </para>
+        <para>
+<!--
+            You can also use <xref linkend="PG-ENC"> utility to create the correctly formatted
+            <literal>AES</literal> encrypted password strings.
+-->
+正しくフォーマットされた<literal>AES</literal>暗号化パスワードを<xref linkend="PG-ENC">コマンドを使用して作成することもできます。
+            <note>
+                <para>
+<!--
+                    <productname>Pgpool-II</productname> will require a valid decryption key at the
+                    startup to use the encrypted passwords.
+                    see <xref linkend="auth-aes-decryption-key"> for more details on providing the
+                    decryption key to <productname>Pgpool-II</productname>
+-->
+<productname>Pgpool-II</productname>は暗号化されたパスワードを使うために起動時に有効な復号鍵を要求します。
+<productname>Pgpool-II</productname>に復号鍵を提供する方法の詳細は<xref linkend="auth-aes-decryption-key">を参照してください。
+                </para>
+            </note>
+        </para>
+
         <para>
 <!--
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.

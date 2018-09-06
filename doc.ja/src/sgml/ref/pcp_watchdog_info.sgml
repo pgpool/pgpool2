@@ -129,7 +129,7 @@ Pgpool-II documentation
     -->
     ここでは，出力例を示します。
     <programlisting>
-$ pcp_watchdog_info -h localhost -u postgres
+$ pcp_watchdog_info -h localhost -U postgres
 
 3 NO Linux_host1.localdomain_9991 host1
 
@@ -188,7 +188,7 @@ Next is the list of watchdog nodes:
 	<option>verbose</option> モードは結果の詳細を表示できます。例えば:
   </para>
     <programlisting>
-$ pcp_watchdog_info -h localhost -v -u postgres
+$ pcp_watchdog_info -h localhost -v -U postgres
 
 Watchdog Cluster Information
 Total Nodes          : 3

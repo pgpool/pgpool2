@@ -390,7 +390,7 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
 md5 認証で用いるパスワードのファイルのファイル名を指定します。
 デフォルト値は<literal>"pool_passwd"</literal>です。
 <literal>''</literal>（空文字列）を指定すると パスワードファイルの使用は無効になります。
-詳細は<xref linkend="auth-md5">を参照してください
+詳細は<xref linkend="auth-md5">を参照してください。
 					</para>
 					<para>
 <!--
@@ -399,6 +399,51 @@ md5 認証で用いるパスワードのファイルのファイル名を指定�
 このパラメータはサーバ起動時にのみ設定可能です。
 					</para>
 				</listitem>
+			</varlistentry>
+
+			<varlistentry id="guc-allow-clear-text-frontend-auth" xreflabel="allow_clear_text_frontend_auth">
+		<term><varname>allow_clear_text_frontend_auth</varname> (<type>boolean</type>)
+			<indexterm>
+				<primary><varname>allow_clear_text_frontend_auth</varname> configuration parameter</primary>
+			</indexterm>
+		</term>
+		<listitem>
+			<para>
+<!--
+				If <productname>PostgreSQL</productname> backend servers require
+				<literal>md5</literal> or <literal> SCRAM</literal> authentication for some
+				user's authentication but the password for that user is not present in the
+				<filename>"pool_passwd"</filename> file, then enabling
+				<literal>allow_clear_text_frontend_auth</literal> will allow the
+				<productname>Pgpool-II</productname> to use clear-text-password
+				authentication with frontend clients to get the password in plain text form
+				from the client and use it for backend authentication.
+-->
+<productname>PostgreSQL</productname>バックエンドサーバはあるユーザの認証に対して<literal>md5</literal>または<literal>SCRAM</literal>認証を必要としており、そのユーザのパスワードが<filename>"pool_passwd"</filename>ファイルに存在しない場合、<literal>allow_clear_text_frontend_auth</literal>は<productname>Pgpool-II</productname>がフロントエンドクライアントとクリアテキストパスワード認証を行い、クライアントから平文形式のパスワードを取得しバックエンド認証のために使用することを許可します。
+			</para>
+			<para>
+
+<!--
+				Default is <literal>false</literal>
+-->
+デフォルトは<literal>false</literal>です。
+			</para>
+			<para>
+<!--
+				 This parameter can be changed by reloading
+				the <productname>Pgpool-II</productname> configurations.
+-->
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+			</para>
+			<note>
+				<para>
+<!--
+					<literal>allow_clear_text_frontend_auth</literal> only works when <xref linkend="guc-enable-pool-hba"> is not enabled
+-->
+<literal>allow_clear_text_frontend_auth</literal>は<xref linkend="guc-enable-pool-hba">が有効でない場合のみ機能します。
+				</para>
+			</note>
+		</listitem>
 			</varlistentry>
 
 			<varlistentry id="guc-authentication-timeout" xreflabel="authentication_timeout">

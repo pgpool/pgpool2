@@ -227,7 +227,7 @@
 	    authentication.  See <xref linkend="auth-pool-hba-conf">
 	    for details on how to configure
 	      <filename>pool_hba.conf</filename> for client authentication.
-	      Default is <literal>false</literal>
+	      Default is <literal>false</literal>.
 	  </para>
 	  <para>
 	    This parameter can be changed by reloading
@@ -271,7 +271,7 @@
 
       <para>
         In the absence of a valid prefix, <productname>Pgpool-II</productname> will
-        be considered the string as a plain text password
+        be considered the string as a plain text password.
       </para>
 	  <para>
 	    This parameter can only be set at server start.
@@ -297,7 +297,7 @@
         from the client and use it for backend authentication.
 	  </para>
 	  <para>
-	      Default is <literal>false</literal>
+	      Default is <literal>false</literal>.
 	  </para>
 	  <para>
 	    This parameter can be changed by reloading
@@ -322,7 +322,7 @@
 	    Specify the timeout in seconds
 	    for <productname>Pgpool-II</productname>
 	    authentication. Specifying 0 disables the time out.
-	    Default value is 60
+	    Default value is 60.
 	  </para>
 	  <para>
 	    This parameter can be changed by reloading

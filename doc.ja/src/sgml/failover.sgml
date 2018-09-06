@@ -488,10 +488,10 @@
       </listitem>
     </varlistentry>
 
-    <varlistentry id="guc-fail-over-on-backend-error" xreflabel="fail_over_on_backend_error">
-      <term><varname>fail_over_on_backend_error</varname> (<type>boolean</type>)
+    <varlistentry id="guc-failover-on-backend-error" xreflabel="failover_on_backend_error">
+      <term><varname>failover_on_backend_error</varname> (<type>boolean</type>)
         <indexterm>
-          <primary><varname>fail_over_on_backend_error</varname> 設定パラメータ</primary>
+          <primary><varname>failover_on_backend_error</varname> 設定パラメータ</primary>
         </indexterm>
       </term>
       <listitem>
@@ -511,12 +511,12 @@ offに設定した場合、そのようなエラーの場合でも<productname>P
 <!--
             It is recommended to turn on the backend health checking
             (see <xref linkend="runtime-config-health-check">)
-            when <varname>fail_over_on_backend_error</varname> is set to off.
+            when <varname>failover_on_backend_error</varname> is set to off.
             Note, however, that <productname>Pgpool-II</productname> still triggers the
             failover when it detects the administrative shutdown of
             <productname>PostgreSQL</> backend server.
 -->
-<varname>fail_over_on_backend_error</varname>をoffにする場合は、バックエンドのヘルスチェックを有効にすることをお勧めします（<xref linkend="runtime-config-health-check">をご覧ください）。
+<varname>failover_on_backend_error</varname>をoffにする場合は、バックエンドのヘルスチェックを有効にすることをお勧めします（<xref linkend="runtime-config-health-check">をご覧ください）。
   なお、<productname>PostgreSQL</>バックエンドサーバが管理コマンドでシャットダウンされたことを<productname>Pgpool-II</productname>が検知した場合には、依然としてフェイルオーバが起こることに注意してください。
 この場合にもフェイルオーバを避けたい場合には、<xref linkend="guc-backend-flag">でDISALLOW_TO_FAILOVERを指定してください。
           </para>
@@ -527,6 +527,15 @@ offに設定した場合、そのようなエラーの場合でも<productname>P
 -->
 このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
         </para>
+        <note>
+        <para>
+<!--
+            Prior to <productname>Pgpool-II</productname> <emphasis>V4.0</emphasis>,
+            this configuration parameter name was <varname>fail</varname><emphasis>_</emphasis><varname>over_on_backend_error</varname>
+-->
+<productname>Pgpool-II</productname> <emphasis>V4.0</emphasis>より前では、この設定パラメータの名前は<varname>fail</varname><emphasis>_</emphasis><varname>over_on_backend_error</varname>でした。
+        </para>
+        </note>
       </listitem>
     </varlistentry>
 
