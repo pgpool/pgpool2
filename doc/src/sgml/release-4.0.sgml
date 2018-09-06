@@ -111,6 +111,34 @@
       Using the old config variable name will have no effect.
      </para>
     </listitem>
+    <listitem>
+      <!--
+      2018-08-17 [2644612]
+      -->
+        <para>
+         Allow to specify the AES encrypted password in the <filename>pgpool.conf</filename>. (Muhammad Usama)
+        </para>
+        <para>
+         Since 4.0, you can specify the AES encrypted password in the 
+         <filename>pgpool.conf</filename> file for <xref linkend="guc-health-check-password">, 
+         <xref linkend="guc-sr-check-password">, <xref linkend="guc-wd-lifecheck-password"> and
+         <xref linkend="guc-recovery-password">.
+        </para>
+        <para>
+         To specify the unencrypted clear text password, prefix the password string with <literal>TEXT</literal>.
+         In the absence of a valid prefix, <productname>Pgpool-II</productname> will considered the string as a plain text password.  
+        </para>
+        <para>
+         The empty password string specified in the 
+         <filename>pgpool.conf</filename> file for <xref linkend="guc-health-check-password">, 
+         <xref linkend="guc-sr-check-password">, <xref linkend="guc-wd-lifecheck-password"> and
+         <xref linkend="guc-recovery-password"> will only be used when the <xref linkend="GUC-pool-passwd"> 
+         does not contain the password for that specific user.
+         If these parameters are left blank, <productname>Pgpool-II</productname> will first try to 
+         get the password for that specific user from <xref linkend="GUC-pool-passwd"> file before 
+         using the empty password.
+        </para>
+     </listitem>
    </itemizedlist>
   </sect2>
 
@@ -305,19 +333,6 @@ username3:TEXTmypassword
           Set <varname>log_client_messages = on</varname>, any client messages will be logged without debugging messages.
         </para>
       </listitem>
-
-      <listitem>
-        <!--
-        2018-07-09 [62bd296]
-        -->
-        <para>
-          Allow to display <productname>Pgpool-II</productname> child process id and 
-          <productname>PostgreSQL</productname> backend id in <xref linkend="PCP-PROC-INFO">. (Tatsuo Ishii)
-        </para>
-        <para>
-          Add --all option to display all child processes and their available connection slots. 
-        </para>
-      </listitem>
       <listitem>
         <!--
         2018-06-12 [0312dc5]
@@ -335,20 +350,16 @@ username3:TEXTmypassword
       </listitem>
       <listitem>
         <!--
-        2018-07-03 [a8a666a]
+        2018-08-28 [8b43ac3]
         -->
         <para>
-          Add <literal>replication_delay</> and <literal>last_status_change</> to 
-          <xref linkend="PCP-NODE-INFO">. (Tatsuo Ishii)
+          Import <productname>PostgreSQL</productname> 11's SQL  parser. (Bo Peng)
         </para>
-      </listitem>
-      <listitem>
-        <!--
-        2018-07-05 [c47ac16]
-        -->
         <para>
-          Add <literal>role</>, <literal>replication_delay</> and <literal>last_status_change</> columns to pgpool_adm's 
-          <xref linkend="PGPOOL-ADM-PCP-NODE-INFO">. (Tatsuo Ishii)
+         Now <productname>Pgpool-II</productname> can fully understand the newly added SQL syntax
+         in <productname>PostgreSQL</productname> 11, 
+         such as <literal>CREATE/ALTER/DROP PROCEDURE</literal>, 
+         <literal>{ RANGE | ROWS | GROUPS } frame_start [ frame_exclusion ]</literal>, etc. 
         </para>
       </listitem>
       </itemizedlist>
@@ -420,30 +431,42 @@ username3:TEXTmypassword
          or any other servers that understand the frontend/backend protocol.
         </para>
       </listitem>
+      <listitem>
+        <!--
+        2018-07-09 [62bd296]
+        -->
+        <para>
+          Allow to display <productname>Pgpool-II</productname> child process id and 
+          <productname>PostgreSQL</productname> backend id in <xref linkend="PCP-PROC-INFO">. (Tatsuo Ishii)
+        </para>
+        <para>
+          Add --all option to display all child processes and their available connection slots. 
+        </para>
+      </listitem>
+      <listitem>
+        <!--
+        2018-07-03 [a8a666a]
+        -->
+        <para>
+          Add <literal>replication_delay</> and <literal>last_status_change</> to 
+          <xref linkend="PCP-NODE-INFO">. (Tatsuo Ishii)
+        </para>
+      </listitem>
+      <listitem>
+        <!--
+        2018-07-05 [c47ac16]
+        -->
+        <para>
+          Add <literal>role</>, <literal>replication_delay</> and <literal>last_status_change</> columns to pgpool_adm's 
+          <xref linkend="PGPOOL-ADM-PCP-NODE-INFO">. (Tatsuo Ishii)
+        </para>
+      </listitem>
     </itemizedlist>
   </sect2>
 
   <sect2>
     <title>Changes</title>
     <itemizedlist>
-      <listitem>
-      <!--
-      2018-08-17 [2644612]
-      -->
-        <para>
-         Allow to specify the AES encrypted password in the <filename>pgpool.conf</filename>. (Muhammad Usama)
-        </para>
-        <para>
-         Since 4.0, you can specify the AES encrypted password in the 
-         <filename>pgpool.conf</filename> file for <xref linkend="guc-health-check-password">, 
-         <xref linkend="guc-sr-check-password">, <xref linkend="guc-wd-lifecheck-password"> and
-         <xref linkend="guc-recovery-password">.
-        </para>
-        <para>
-         To specify the unencrypted clear text password, prefix the password string with <literal>TEXT</literal>.
-         In the absence of a valid prefix, <productname>Pgpool-II</productname> will considered the string as a plain text password.  
-        </para>
-      </listitem>
       <listitem>
       <!--
       2018-05-07 [05c9297]
