@@ -45,6 +45,9 @@ echo "backend_hostname0 = 'localhost'" >> etc/pgpool.conf
 # connectins is being established is, look into the debug log.
 echo "log_min_messages = debug5" >> etc/pgpool.conf
 
+# allow to access IPv6 localhost
+echo "host    all             all             ::1/128                 trust" >> data0/pg_hba.conf
+
 source ./bashrc.ports
 
 ./startall
