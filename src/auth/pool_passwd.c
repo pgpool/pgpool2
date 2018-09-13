@@ -512,9 +512,13 @@ get_pgpool_config_user_password(char *username, char *password_in_config)
 
 	if (password && strlen(password) && passwordType != PASSWORD_TYPE_PLAINTEXT)
 	{
-		ereport(WARNING,
+		/*
+		 * Could not find plain text password in pool_passwd corresponding to the user.
+		 * This is normal. Just use empty password in pgpool.conf.
+		 */
+		ereport(DEBUG5,
 				(errmsg("could not get the password for user:%s", username),
-				 errdetail("username \"%s\" has invalid password type", username)));
+				 errdetail("username \"%s\" has invalid password type: %d", username, passwordType)));
 		password = NULL;
 	}
 	if (password)
