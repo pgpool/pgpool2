@@ -65,7 +65,7 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 	/*
 	 * Handle misc process which is neccessary when query context exists.
 	 */
-	if (session_context->query_context != NULL && !SL_MODE)
+	if (session_context->query_context != NULL && (!SL_MODE || (SL_MODE && !pool_is_doing_extended_query_message())))
 		handle_query_context(backend);
 
 	/*
