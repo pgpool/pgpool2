@@ -185,6 +185,18 @@ TCP接続が時間内に成功せずにバックエンドの<productname>Postgre
 <varname>health_check_password</varname>にAES256-CBCで暗号化されたパスワードも指定することができます。
 <literal>AES</literal>で暗号化されたパスワードを指定するためには、パスワード文字列は暗号化（<literal>aes-256-cbc</literal>アルゴリズムを使用）および<literal>base64</literal>でエンコードした後、<literal>AES</literal>を接頭辞として付けなければいけません。
       </para>
+        <para>
+<!--
+            To specify the unencrypted clear text password, prefix the password string with
+            <literal>TEXT</literal>. For example if you want to set <literal>mypass</literal> as
+            a password, you should specify <literal>TEXTmypass</literal> in the password field.
+            In the absence of a valid prefix, <productname>Pgpool-II</productname> will considered
+            the string as a plain text password.
+-->
+暗号化されていないクリアテキストパスワードを指定するためには、<literal>TEXT</literal>をパスワード文字列の前に付けます。
+例えば、パスワードとして<literal>mypass</literal>を設定したい場合、パスワードフィールドに<literal>TEXTmypass</literal>と指定すべきです。
+有効な接頭辞がない場合、<productname>Pgpool-II</productname>は平文のパスワードとして文字列を見なします。
+        </para>
       <para>
 <!--
         You can also use <xref linkend="PG-ENC"> utility to create the correctly formatted

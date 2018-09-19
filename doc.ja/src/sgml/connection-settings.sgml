@@ -382,16 +382,56 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
 				<listitem>
 					<para>
 <!--
-						Specify the password file name for md5 authentication.
-						Default value is <literal>"pool_passwd"</literal>.
-						Specifying <literal>''</literal> (empty) disables the use of password file.
-						See <xref linkend="auth-md5"> for more details.
+        Specify the password file name for authentication.
+        Default value is <literal>"pool_passwd"</literal>.
+        Specifying <literal>''</literal> (empty) disables the use
+        of password file.
 -->
-md5 認証で用いるパスワードのファイルのファイル名を指定します。
+認証に用いるパスワードファイルのファイル名を指定します。
 デフォルト値は<literal>"pool_passwd"</literal>です。
 <literal>''</literal>（空文字列）を指定すると パスワードファイルの使用は無効になります。
-詳細は<xref linkend="auth-md5">を参照してください。
 					</para>
+      <para>
+<!--
+        Passwords can be stored in the pool_passwd file using three formats.
+        AES256 encrypted format, plain text format and md5 format.
+        <productname>Pgpool-II</productname> identifies the password format type
+        by it's prefix, so each password entry in the pool_passwd must be prefixed
+        as per the password format.
+-->
+パスワードは、3つの形式でpool_passwdファイルに保存できます。
+AES256暗号化形式、平文形式、md5形式です。
+<productname>Pgpool-II</productname>は接頭辞によってパスワードの形式を確認するため、pool_passwd内の各パスワードのエントリはパスワードの形式を接頭語として付ける必要があります。
+      </para>
+      <para>
+<!--
+        To store the password in the plain text format use <literal>TEXT</literal> prefix.
+        For example. to store clear text password string <literal>"mypassword"</literal>
+        in the pool_passwd, prepend the password string with <literal>TEXT</literal> prefix.
+        e.g. <literal>TEXTmypassword</literal>
+-->
+平文形式のパスワードを保存するためには、<literal>TEXT</literal>接頭辞を使用します。
+例として、pool_passwd内にクリアテキストパスワード文字列<literal>"mypassword"</literal>を保存する場合、パスワード文字列の先頭に<literal>TEXT</literal>接頭辞を追加します。
+例えば、<literal>TEXTmypassword</literal>となります。
+      </para>
+      <para>
+<!--
+        similarly md5 hashed passwords must be prefixed with <literal>md5</literal> and
+        AES256 encrypted password types can be stored using <literal>AES</literal> prefix.
+        see <xref linkend="auth-aes-encrypted-password"> for more details on using
+        AES256 encrypted passwords.
+-->
+同様に、md5ハッシュパスワードは<literal>md5</literal>接頭辞、AES256暗号化パスワード形式は<literal>AES</literal>接頭辞を使って保存することができます。
+AES256暗号化パスワードの詳細は、<xref linkend="auth-aes-encrypted-password">を参照してください。
+      </para>
+
+      <para>
+<!--
+        In the absence of a valid prefix, <productname>Pgpool-II</productname> will
+        be considered the string as a plain text password
+-->
+有効な接頭辞がない場合、<productname>Pgpool-II</productname>は平文のパスワードとして文字列を見なします。
+      </para>
 					<para>
 <!--
 						This parameter can only be set at server start.

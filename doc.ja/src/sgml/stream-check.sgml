@@ -140,6 +140,18 @@
         </para>
         <para>
 <!--
+                 To specify the unencrypted clear text password, prefix the password string with
+            <literal>TEXT</literal>. For example if you want to set <literal>mypass</literal> as
+            a password, you should specify <literal>TEXTmypass</literal> in the password field.
+            In the absence of a valid prefix, <productname>Pgpool-II</productname> will considered
+            the string as a plain text password.
+-->
+暗号化されていないクリアテキストパスワードを指定するためには、<literal>TEXT</literal>をパスワード文字列の前に付けます。
+例えば、パスワードとして<literal>mypass</literal>を設定したい場合、パスワードフィールドに<literal>TEXTmypass</literal>と指定すべきです。
+有効な接頭辞がない場合、<productname>Pgpool-II</productname>は平文のパスワードとして文字列を見なします。
+        </para>
+        <para>
+<!--
             You can also use <xref linkend="PG-ENC"> utility to create the correctly formatted
             <literal>AES</literal> encrypted password strings.
 -->
