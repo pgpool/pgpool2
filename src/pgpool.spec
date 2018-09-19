@@ -215,8 +215,10 @@ fi
 %{_bindir}/pcp_recovery_node
 %{_bindir}/pcp_watchdog_info
 %{_bindir}/pg_md5
+%{_bindir}/pg_enc
 %{_bindir}/pgpool_setup
 %{_bindir}/watchdog_setup
+%{_bindir}/pgproto
 %{_mandir}/man8/*.8.gz
 %{_mandir}/man1/*.1.gz
 %{_datadir}/%{short_name}/insert_lock.sql
@@ -247,10 +249,12 @@ fi
 %files extensions
 %defattr(-,root,root,-)
 %{pghome}/share/extension/pgpool-recovery.sql
-%{pghome}/share/extension/pgpool_recovery--1.1.sql
+%{pghome}/share/extension/pgpool_recovery--1.2.sql
+%{pghome}/share/extension/pgpool_recovery--1.1--1.2.sql
 %{pghome}/share/extension/pgpool_recovery.control
 %{pghome}/lib/pgpool-recovery.so
-%{pghome}/share/extension/pgpool_adm--1.0.sql
+%{pghome}/share/extension/pgpool_adm--1.1.sql
+%{pghome}/share/extension/pgpool_adm--1.0--1.1.sql
 %{pghome}/share/extension/pgpool_adm.control
 %{pghome}/lib/pgpool_adm.so
 # From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
@@ -263,6 +267,12 @@ fi
 %endif
 
 %changelog
+* Wed Sep 19 2018 Bo Peng <pengbo@sraoss.co.jp> 4.0
+- Update to 4.0
+
+* Tue Oct 17 2017 Bo Peng <pengbo@sraoss.co.jp> 3.7.0
+- Update to 4.0
+
 * Tue Nov 22 2016 Bo Peng <pengbo@sraoss.co.jp> 3.6.0
 - Update to 3.6.0
 
