@@ -88,8 +88,10 @@
      </para>
      <para>
       Online recovery script now accepts 5 parameters, rather than 4 (the 5th
-      parameter is node number to be recovered). Existing
-      4-parameter-style recovery scripts can be used if you don't care
+      parameter is node number to be recovered).
+      Run <command>ALTER EXTENSION pgpool_recovery UPDATE TO '1.2'</command>
+      to update <literal>pgpool_recovery</literal> version.
+      Existing 4-parameter-style recovery scripts can be used if you don't care
       about information provided by the 5th parameter.
      </para>
      <para>

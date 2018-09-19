@@ -144,11 +144,14 @@ PostgreSQL11のSQLパーサの取込
      <para>
 <!--
       Online recovery script now accepts 5 parameters, rather than 4 (the 5th
-      parameter is node number to be recovered). Existing
-      4-parameter-style recovery scripts can be used if you don't care
+      parameter is node number to be recovered).
+      Run <command>ALTER EXTENSION pgpool_recovery UPDATE TO '1.2'</command>
+      to update <literal>pgpool_recovery</literal> version.
+      Existing 4-parameter-style recovery scripts can be used if you don't care
       about information provided by the 5th parameter.
 -->
 オンラインリカバリスクリプトは4つではなく5つのパラメータを受け取るようになりました（5番目のパラメータはリカバリされるノードの番号です）。
+<literal>pgpool_recovery</literal>をバージョンアップするためには、<command>ALTER EXTENSION pgpool_recovery UPDATE TO '1.2'</command>を実行してください。
 5番目のパラメータの情報を必要としない場合、既存の4つのパラメータの形式でリカバリスクリプト使用することが出来ます。
      </para>
      <para>

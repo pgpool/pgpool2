@@ -1159,10 +1159,13 @@ PAMサポートを有効にするには、<productname>Pgpool-II</productname>�
           <filename>pgpoolkey</filename> file in the user's home directory or the file
           referenced by environment variable <literal>PGPOOLKEYFILE</literal>.
           You can also specify the key file using the (-k, &#045;&#045;key-file=KEY_FILE)
-          command line argument to the <productname>Pgpool-II</productname> binary.
+          command line argument to the <productname>Pgpool-II</productname> command.
+          The permissions on .pgpoolkey must disallow any access to world or group.
+          Change file permissions by the command <command>chmod 0600 ~/.pgpoolkey</command>.
 -->
 デフォルトでは、<productname>Pgpool-II</productname>はユーザのホームディレクトリの<filename>.pgpoolkey</filename>もしくは<literal>PGPOOLKEYFILE</literal>環境変数により設定されるファイルを探します。
 <xref linkend="PGPOOL">コマンドの(-k, --key-file=KEY_FILE)オプションを使用し、鍵ファイルを指定をすることもできます。
+<filename>.pgpoolkey</filename>の権限はグループ、他者へのアクセスをすべて拒否しなければなりませんので、<command>chmod 0600 ~/.pgpoolkey</command>コマンドによって設定します。
        </para>
       </sect2>
 

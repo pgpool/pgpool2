@@ -822,6 +822,8 @@
           referenced by environment variable <literal>PGPOOLKEYFILE</literal>.
           You can also specify the key file using the (-k, --key-file=KEY_FILE)
           command line argument to the <xref linkend="PGPOOL"> command.
+          The permissions on .pgpoolkey must disallow any access to world or group.
+          Change the file permissions by the command <command>chmod 0600 ~/.pgpoolkey</command>.
        </para>
       </sect2>
 
