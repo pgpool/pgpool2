@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Create root cert
-openssl req -new -x509 -nodes -out root.crt -keyout root.key -subj /CN=MyRootCA
+openssl req -new -x509 -nodes -out root.crt -keyout root.key -days 365 -subj /CN=MyRootCA
 # PostgreSQL/Pgpool cert
 openssl req -new -out server.req -keyout server.key -nodes -subj "/CN=postgresql"
 openssl x509 -req -in server.req -CAkey root.key -CA root.crt -days 365 -CAcreateserial -out server.crt
