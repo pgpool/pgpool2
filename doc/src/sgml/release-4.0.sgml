@@ -128,7 +128,7 @@
         </para>
         <para>
          To specify the unencrypted clear text password, prefix the password string with <literal>TEXT</literal>.
-         In the absence of a valid prefix, <productname>Pgpool-II</productname> will considered the string as a plain text password.  
+         In the absence of a valid prefix, <productname>Pgpool-II</productname> will consider the string as a plain text password.  
         </para>
         <para>
          The empty password string specified in the 
