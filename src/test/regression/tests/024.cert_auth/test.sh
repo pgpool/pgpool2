@@ -17,6 +17,7 @@ SSL_CRT=$dir/server.crt
 ROOT_CRT=$dir/root.crt
 FRONTEND_KEY=$dir/frontend.key
 FRONTEND_CRT=$dir/frontend.crt
+chmod 600 *.key
 
 rm -fr $TESTDIR
 mkdir $TESTDIR
