@@ -2815,10 +2815,11 @@ void pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache)
 		pool_discard_buffer(temp_cache->buffer);
 	if (temp_cache->oids)
 		pool_discard_buffer(temp_cache->oids);
-	pfree(temp_cache);
 
 	ereport(DEBUG1,
 			(errmsg("pool_discard_temp_query_cache: cache discarded: %p", temp_cache)));
+
+	pfree(temp_cache);
 }
 
 /*
