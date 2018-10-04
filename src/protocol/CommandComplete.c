@@ -72,6 +72,8 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 	 */
 	if (STREAM && pool_is_doing_extended_query_message())
 	{
+		p1 = NULL;
+
 		for (i=0;i<NUM_BACKENDS;i++)
 		{
 			if (VALID_BACKEND(i))
@@ -88,6 +90,8 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				p = pool_read2(con, len);
 				if (p == NULL)
 					return POOL_END;
+				if (p1 != NULL)
+					pfree(p1);
 				p1 = palloc(len);
 				memcpy(p1, p, len);
 
