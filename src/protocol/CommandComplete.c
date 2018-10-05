@@ -81,7 +81,11 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				con = CONNECTION(backend, i);
 
 				if (pool_read(con, &len, sizeof(len)) < 0)
+				{
+					if (p1 != NULL)
+						pfree(p1);
 					return POOL_END;
+				}
 
 				len = ntohl(len);
 				len -= 4;
@@ -89,7 +93,11 @@ POOL_STATUS CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 
 				p = pool_read2(con, len);
 				if (p == NULL)
+				{
+					if (p1 != NULL)
+						pfree(p1);
 					return POOL_END;
+				}
 				if (p1 != NULL)
 					pfree(p1);
 				p1 = palloc(len);
