@@ -28,6 +28,8 @@ do
 	$PGPOOL_SETUP -m $mode -n $n || exit 1
 	echo "done."
 
+	echo "log_client_messages = on" >> etc/pgpool.conf
+
 	source ./bashrc.ports
 
 # create Java property file
