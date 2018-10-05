@@ -3349,11 +3349,12 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 			pool_invalidate_query_cache(num_oids, oids, true, 0);
 		}
 
-		/*
+		/*--------------------------------------------------------------------
 		 * If we have something in the query cache buffer, that means either:
-		 * - We only had SELECTs in the transaction - We had only SELECTs
-		 * after last DML Thus we can register SELECT results to cache
-		 * storage.
+		 * - We only had SELECTs in the transaction
+		 * - We had only SELECTs after the last DML
+		 * Thus we can register SELECT results to cache storage.
+		 *--------------------------------------------------------------------
 		 */
 		num_caches = session_context->query_cache_array->num_caches;
 		for (i = 0; i < num_caches; i++)
@@ -3459,6 +3460,7 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 					 * DML/DDL modifies the TABLE which SELECT uses.
 					 */
 					pool_check_and_discard_cache_buffer(num_oids, oids);
+					pool_reset_memqcache_buffer();
 				}
 			}
 			else if (num_oids == 0)
