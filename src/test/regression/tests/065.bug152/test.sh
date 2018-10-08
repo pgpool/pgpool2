@@ -16,7 +16,7 @@ do
 
 # create test environment
 	echo -n "creating test environment..."
-	$PGPOOL_SETUP -m $mode -n 2 || exit 1
+	$PGPOOL_SETUP -m $mode -n 1 || exit 1
 	echo "done."
 
 	source ./bashrc.ports
