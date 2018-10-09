@@ -2783,6 +2783,8 @@ static int trigger_failover_command(int node, const char *command_line,
 		r = system(exec_cmd->data);
 	}
 
+	free_string(exec_cmd);
+
 	return r;
 }
 /*
