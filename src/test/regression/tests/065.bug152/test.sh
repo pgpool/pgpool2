@@ -22,6 +22,7 @@ do
 	source ./bashrc.ports
 
 	echo "memory_cache_enabled = on" >> etc/pgpool.conf
+	echo "log_client_messages = on" >> etc/pgpool.conf
 
 	./startall
 
