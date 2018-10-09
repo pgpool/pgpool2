@@ -3504,6 +3504,8 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				(errmsg("reading backend data packet kind. Error on master while all slaves are normal"),
 					 errdetail("do not degenerate because it is likely caused by a delayed commit")));
 
+			if (SL_MODE && pool_is_doing_extended_query_message() && msg)
+				pool_pending_message_free_pending_message(msg);				
 			return;
 		}
 		else if (max_count <= NUM_BACKENDS / 2.0)
