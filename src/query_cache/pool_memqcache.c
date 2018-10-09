@@ -3362,6 +3362,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 					 * if DML/DDL modifies the TABLE which SELECT uses.
 					 */
 					pool_check_and_discard_cache_buffer(num_oids, oids);
+					pool_reset_memqcache_buffer();
 				} 
 			}
 			else if (num_oids == 0)
