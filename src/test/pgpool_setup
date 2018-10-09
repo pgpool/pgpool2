@@ -97,7 +97,7 @@ PG_CTL=$PGBIN/pg_ctl
 PSQL=$PGBIN/psql
 
 # get PostgreSQL major version
-PGVERSION=`$INITDB -V|awk '{print $3}'|sed 's/\..*//'`
+PGVERSION=`$INITDB -V|awk '{print $3}'|sed 's/\..*//'|sed 's/\([0-9]*\)[a-zA-Z].*/\1/'`
 echo PostgreSQL major version: $PGVERSION
 
 # pgpool-II configuration file localtion.
