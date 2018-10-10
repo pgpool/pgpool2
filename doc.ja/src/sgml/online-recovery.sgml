@@ -579,6 +579,23 @@ rsync used in the command is killed by signal 2 for example.
 -->
 これは、だらしないクライアントや<productname>Pgpool-II</productname>の間のTCP/IPコネクションの不調（例えばケーブルの切断など）によって、<productname>Pgpool-II</productname>のリカバリが邪魔されるのを防止するのに役立ちます。
         </para>
+
+        <note>
+          <para>
+<!--
+	    <varname>client_idle_limit_in_recovery</varname> must be smaller than
+	    <xref linkend="guc-recovery-timeout">.
+              Otherwise, <xref linkend="guc-recovery-timeout"> comes
+              first and you will see following error while executing online recovery:
+-->
+<varname>client_idle_limit_in_recovery</varname>は、<xref linkend="guc-recovery-timeout">よりも小さな値でなければなりません。
+さもないと、<xref linkend="guc-recovery-timeout">のタイムアウトが先に起こり、オンラインリカバリを実行中に以下のエラーとなります。
+		<programlisting>
+ERROR:  node recovery failed, waiting connection closed in the other pgpools timeout
+		</programlisting>
+          </para>
+        </note>
+
         <para>
 <!--
           If set to -1, all clients get immediately disconnected when the second
