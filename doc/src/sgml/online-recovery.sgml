@@ -348,11 +348,25 @@ rsync used in the command is killed by signal 2 for example.
           connection between the client and <productname>Pgpool-II</productname>
           is accidentally down (a cut cable for instance).
         </para>
+
+        <note>
+          <para>
+	    <varname>client_idle_limit_in_recovery</varname> must be smaller than
+	    <xref linkend="guc-recovery-timeout">.
+              Otherwise, <xref linkend="guc-recovery-timeout"> comes
+              first and you will see following error while executing online recovery:
+		<programlisting>
+ERROR:  node recovery failed, waiting connection closed in the other pgpools timeout
+		</programlisting>
+          </para>
+        </note>
+
         <para>
           If set to -1, all clients get immediately disconnected when the second
           stage of online recovery starts.
           The default is 0, which turns off the feature.
         </para>
+
 
         <para>
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
