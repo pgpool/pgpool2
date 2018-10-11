@@ -1726,7 +1726,8 @@ pool_reset_memqcache_buffer(void)
 		 * if the query context is still under use, we cannot discard
 		 * temporary cache.
 		 */
-		if (can_query_context_destroy(session_context->query_context))
+		if ((SL_MODE && pool_is_doing_extended_query_message()) ||
+			can_query_context_destroy(session_context->query_context))
 		{
 			ereport(DEBUG1,
 					(errmsg("memcache reset buffer"),
