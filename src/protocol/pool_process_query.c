@@ -4800,6 +4800,9 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 	bool pending_data_existed = false;
 	static char random_statement[] = "pgpool_non_existent";
 
+	int num_pending_messages;
+	int num_pushed_messages;
+
 	if (!pool_get_session_context(true) || !pool_is_doing_extended_query_message())
 		return false;
 
@@ -4852,6 +4855,9 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 				(errmsg("pool_push_pending_data: send flush message to %d", con->db_node_id)));
 	}
 
+	num_pending_messages = pool_pending_message_get_message_num_by_backend_id(backend->db_node_id);
+	num_pushed_messages = 0;
+
 	for(;;)
 	{
 		int len;
@@ -4878,7 +4884,7 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 
 		if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend) && kind != 'E')
 		{
-			if (kind != '3' || pending_data_existed)
+			if (kind != '3' || pending_data_existed || num_pushed_messages < num_pending_messages)
 				pool_set_timeout(-1);
 			else
 				pool_set_timeout(0);
@@ -4914,6 +4920,7 @@ bool pool_push_pending_data(POOL_CONNECTION *backend)
 			pool_set_ignore_till_sync();
 			break;
 		}
+		num_pushed_messages++;
 	}
 	return data_pushed;
 }

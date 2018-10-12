@@ -1513,6 +1513,35 @@ int pool_pending_message_get_target_backend_id(POOL_PENDING_MESSAGE *msg)
 }
 
 /*
+ * Get number of pending message list entries of which target backend is same as specified one.
+ */
+int
+pool_pending_message_get_message_num_by_backend_id(int backend_id)
+{
+	ListCell   *cell;
+	ListCell   *next;
+	int        cnt = 0;
+
+	if (!session_context)
+	{
+		ereport(ERROR,
+				(errmsg("pool_pending_message_get_message_num_by_backend_id: session context is not initialized")));
+		return 0;
+	}
+
+	for (cell = list_head(session_context->pending_messages); cell; cell = next)
+	{
+		POOL_PENDING_MESSAGE *msg = (POOL_PENDING_MESSAGE *) lfirst(cell);
+
+		if (msg->node_ids[0] == backend_id || msg->node_ids[1] == backend_id) 
+			cnt++;
+
+		next = lnext(cell);
+	}
+	return cnt;
+}
+
+/*
  * Dump whole pending message list
  */
 void dump_pending_message(void)
