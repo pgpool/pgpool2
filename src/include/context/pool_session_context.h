@@ -323,6 +323,7 @@ extern const char *pool_pending_message_type_to_string(POOL_MESSAGE_TYPE type);
 extern void pool_check_pending_message_and_reply(POOL_MESSAGE_TYPE type, char kind);
 extern POOL_PENDING_MESSAGE * pool_pending_message_find_lastest_by_query_context(POOL_QUERY_CONTEXT * qc);
 extern int	pool_pending_message_get_target_backend_id(POOL_PENDING_MESSAGE * msg);
+extern int	pool_pending_message_get_message_num_by_backend_id(int backend_id);
 extern void dump_pending_message(void);
 extern void pool_set_major_version(int major);
 extern void pool_set_minor_version(int minor);
