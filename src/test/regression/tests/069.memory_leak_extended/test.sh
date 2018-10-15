@@ -35,7 +35,7 @@ do
 	# initialize tables
 	$PGBENCH -i test
 
-	$PGBENCH -S -T 1 test
+	$PGBENCH -S -T 10 test
 	
 	# find pgpool-II child process id and grab initial process size (virtual size)
 	foo=`ps x|grep "pgpool: wait for connection request"`
