@@ -8,7 +8,7 @@
     <title>Release Date</title>
 -->
     <title>リリース日</title>
-    <simpara>2018-xx-xx</simpara>
+    <simpara>2018-10-19</simpara>
   </note>
 
     <sect2>
@@ -54,7 +54,7 @@
       <listitem>
         <para>
 <!--
-          Improvements to load balancing:
+          Improvement of load balancing:
 -->
 ロードバランスの改善:
           <itemizedlist>
@@ -360,7 +360,7 @@ username3:TEXTmypassword
                 A new configuration parameter <xref linkend="guc-allow-clear-text-frontend-auth"> is added.
                 This parameter enables this config allows the <productname>Pgpool-II</productname>
                 to use clear-text-password authentication with frontend clients when
-                <xref linkend="GUC-pool-passwd"> file does not contains the password for the connecting user,
+                <xref linkend="GUC-pool-passwd"> file does not contain the password for the connecting user,
                 and use that password (provided by client) to authenticate with the backend
                 using <acronym>MD5</acronym> and/or <acronym>SCRAM</acronym> authentication.
 -->
