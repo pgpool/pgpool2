@@ -460,6 +460,12 @@ _outSubLink(String *str, SubLink *node)
 {
 	_outNode(str, node->testexpr);
 
+	/*
+	 * If the source was "x IN (select)", convert to "x = ANY (select)".
+	 */
+	if (node->subLinkType == ANY_SUBLINK && node->operName == NIL)
+		node->operName = list_make1(makeString("="));
+
 	if (node->operName != NIL)
 	{
 		Value *v = linitial(node->operName);
