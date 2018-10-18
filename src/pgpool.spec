@@ -37,7 +37,10 @@ Patch1:         pgpool-II-head.patch
 Patch2:         pgpool_socket_dir.patch
 %endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel
+BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl
+%if %{pg_version} >= 11 && %{rhel} >= 7
+BuildRequires:  llvm-toolset-7 llvm-toolset-7-llvm-devel llvm5.0
+%endif
 %if %{systemd_enabled}
 BuildRequires:    systemd
 Requires:         systemd
@@ -261,8 +264,19 @@ fi
   %{pghome}/share/extension/pgpool-regclass.sql
   %{pghome}/lib/pgpool-regclass.so
 %endif
+# From PostgerSQL 11 the relevant files have to be installed 
+# into $pkglibdir/bitcode/
+%if %{pg_version} >= 11 && %{rhel} >= 7
+  %{pghome}/lib/bitcode/pgpool-recovery.index.bc
+  %{pghome}/lib/bitcode/pgpool-recovery/pgpool-recovery.bc
+  %{pghome}/lib/bitcode/pgpool_adm.index.bc
+  %{pghome}/lib/bitcode/pgpool_adm/pgpool_adm.bc
+%endif
 
 %changelog
+* Tue Oct 17 2017 Bo Peng <pengbo@sraoss.co.jp> 3.7.0
+- Update to 3.7.0
+
 * Tue Nov 22 2016 Bo Peng <pengbo@sraoss.co.jp> 3.6.0
 - Update to 3.6.0
 
