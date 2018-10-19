@@ -494,6 +494,18 @@ username3:TEXTmypassword
     <itemizedlist>
       <listitem>
         <!--
+        2018-10-18 [0b059bd]
+        -->
+        <para>
+		  Fix syntax error in native replication, when queries including time functions
+		  (<literal>now()</literal>, etc.) and <literal>IN (SELECT ...)</literal> 
+		  in <literal>WHERE</literal> clause. 
+		  (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=433">bug 433</ulink>) (Bo Peng)
+        </para>
+      </listitem>
+
+      <listitem>
+        <!--
         2018-07-31 [0f45b8d]
         -->
         <para>
