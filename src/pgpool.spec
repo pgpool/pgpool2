@@ -269,6 +269,8 @@ fi
   %{pghome}/share/extension/pgpool_regclass.control
   %{pghome}/share/extension/pgpool-regclass.sql
   %{pghome}/lib/pgpool-regclass.so
+  %{pghome}/lib/bitcode/pgpool-regclass.index.bc
+  %{pghome}/lib/bitcode/pgpool-regclass/pgpool-regclass.bc
 %endif
 # From PostgerSQL 11 the relevant files have to be installed 
 # into $pkglibdir/bitcode/
