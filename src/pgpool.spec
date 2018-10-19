@@ -111,7 +111,7 @@ make %{?_smp_mflags} DESTDIR=%{buildroot} install
 
 # install to PostgreSQL
 make %{?_smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool-recovery
-%if %{pg_version} <= 93
+%if %{pg_version} <= 93 && %{pg_version} > 11
 # From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
 # because 9.4 or later has to_regclass.
 make %{?_smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool-regclass
