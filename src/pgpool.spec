@@ -38,7 +38,7 @@ Patch2:         pgpool_socket_dir.patch
 %endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl
-%if %{pg_version} = 11 && %{rhel} >= 7
+%if %{pg_version} == 11 && %{rhel} >= 7
 BuildRequires:  llvm-toolset-7 llvm-toolset-7-llvm-devel llvm5.0
 %endif
 %if %{systemd_enabled}
@@ -272,7 +272,7 @@ fi
 %endif
 # From PostgerSQL 11 the relevant files have to be installed 
 # into $pkglibdir/bitcode/
-%if %{pg_version} = 11 && %{rhel} >= 7
+%if %{pg_version} == 11 && %{rhel} >= 7
   %{pghome}/lib/bitcode/pgpool-recovery.index.bc
   %{pghome}/lib/bitcode/pgpool-recovery/pgpool-recovery.bc
   %{pghome}/lib/bitcode/pgpool_adm.index.bc
