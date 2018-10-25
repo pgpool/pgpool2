@@ -255,7 +255,7 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 
 	StrNCpy(status[i].name, "child_max_connections", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->child_max_connections);
-	StrNCpy(status[i].desc, "if max_connections received, chile exits", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if max_connections received, child exits", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "connection_life_time", POOLCONFIG_MAXNAMELEN);
