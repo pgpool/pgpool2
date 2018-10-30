@@ -1,6 +1,313 @@
 <!-- doc/src/sgml/release-3.7.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-3-7-6">
+  <title>Release 3.7.6</title>
+
+  <note>
+   <title>Release Date</title>
+   <simpara>2018-10-30</simpara>
+  </note>
+
+  <sect2>
+   <title>Changes</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2018-10-18 [8cc799a]
+-->
+     <para>
+      Change <filename>pgpool.spec</filename> file to install extension to DB server which supports LLVM JIT. (Bo Peng)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-10 [1cff05c]
+-->
+     <para>
+     Doc: Add note to online recovery doc. (Tatsuo Ishii)
+     </para>
+     <para>
+     This warns that <xref linkend="guc-client-idle-limit-in-recovery"> must be smaller than <xref linkend="guc-recovery-timeout">.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-29 [209ef0e]
+-->
+     <para>
+      Test: Add regression test for SSL connection. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-22 [760e6eb]
+-->
+     <para>
+      Doc: Add notes regarding failover script. (Tatsuo Ishii)
+     </para>
+     <para>
+      It's not recommended to access against <productname>Pgpool-II</productname> itself from failover/failback scripts.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-14 [2c15faa]
+-->
+     <para>
+      Doc: Improve <xref linkend="PG-MD5"> docs and error message. (Bo Peng)
+     </para>
+     <para>
+      Patch provided by Jesper Pedersen and modified by me.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-10 [0e3b085]
+-->
+     <para>
+      Test: Add definition of PGLIB in <filename>regress.sh</filename>. (Bo Peng)
+     </para>
+     <para>
+      Patch provided by Jesper Pedersen.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+  </sect2>
+
+  <sect2>
+   <title>Bug fixes</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2018-10-25 [1bea94d]
+-->
+     <para>
+      Fix typo in <varname>child_max_connections</varname> description of <command>SHOW POOL_STATUS</command> output. (Tatsuo Ishii)
+     </para>
+     <para>
+      Patch provided by Phil Ramirez.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-22 [5bbce64]
+-->
+     <para>
+      Fix segmentation fault when error query and Sync message are sent in native replication mode. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=434">bug 434</ulink>) (Takuma Hoshiai)
+     </para>
+     <para>
+      In native replication mode, segmentation fault occurs when Sync messages is sent just after a query error.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-18 [d532925]
+-->
+     <para>
+     Fix syntax error when queries including time functions and <literal>IN (SELECT ...)</literal> in 
+     <literal>WHERE</literal> clause in native replication mode. 
+     (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=433">bug 433</ulink>) (Bo Peng)
+     </para>
+     <para>
+      In native replication mode, queries including time functions (e.g. <function>now()</function>, <function>CURRENT_TIMESTAMP</function> etc.) are rewritten to a timestamp constant value. 
+      However, <productname>Pgpool-II</productname> doesn't support queries including time functions and <literal>IN (SELECT ...)</literal> in <literal>WHERE</literal> clause.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-12 [7a58317]
+-->
+     <para>
+      Fix occasional less data returned to frontend with extended protocol. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=432">bug432</ulink>) (Tatsuo Ishii)
+     </para>
+     <para>
+      The idea for fix is, use pending message data list. It records
+      messages from frontend, and it is expected that we will receive same
+      number of messages.
+     </para>
+     <para>
+      Initial patch is created by Yugo Nagata and fixed by Tatsuo Ishii.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-11 [d620888]
+-->
+     <para>
+     Fix memory leak when query cache enabled in streaming replication mode + extended query case. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-11 [1413c7f]
+-->
+     <para>
+      Fix memory leak in <function>trigger_failover_command()</function>. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-09 [43e25be]
+-->
+     <para>
+      Fix memory leak when memory_cache_enabled = on and write SQLs are sent. (Bo Peng)
+     </para>
+     <para>
+      In a explicit transaction, the <literal>SELECT</literal> results are cached in temporary buffer.
+      If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffe should be reset.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-09 [e2cdd31]
+-->
+     <para>
+      Test: Fix occasional failure in regression 065.bug152. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-09-21 [9f0528b]
+-->
+     <para>
+      Test: Add <literal>EXECUTE/DEALLOCATE</literal> regression test. (Takuma Hoshiai)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-09-19 [cdd734e]
+-->
+     <para>
+      Add missing <filename>pgpool_recovery--1.0--1.1.sql</filename> file to update 
+      <function>pgpool_recovery()</function> function version to 1.1. (Bo Peng)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-09-13 [e22933a]
+-->
+     <para>
+      Fix kind mismatch error when <literal>DEALLOCATE</literal> statement is issued. (Bo Peng)
+     </para>
+     <para>
+      <literal>PREPARE</literal> should be add to pool_add_sent_message, 
+      so that <literal>EXECUTE</literal> and <literal>DEALLOCATE</literal>
+      can be sent to the same node as <literal>PREPARE</literal>.
+     </para>
+     <para>
+      See <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-September/006284.html">[pgpool-general: 6226]</ulink> for more details.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-27 [7e9c385]
+-->
+     <para>
+      Do not update <xref linkend="guc-pool-passwd"> if the password length is incorrect. 
+      (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=419">bug 419</ulink>) (Takuma Hoshiai, Tatsuo Ishii)
+     </para>
+     <para>
+      For <productname>Pgpool-II</productname> 3.7 or before, the password stored in 
+      <xref linkend="guc-pool-passwd"> is <literal>MD5</literal> password only. 
+      So check the correctness of <xref linkend="guc-pool-passwd"> by scanning entire file.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-20 [57b43ae]
+-->
+     <para>
+      Doc: Change <xref linkend="GUC-FOLLOW-MASTER-COMMAND"> description "new master" to "new primary". (Bo Peng)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-16 [bca1eaa]
+-->
+     <para>
+      Fix newer version of gcc warnings. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-10 [2aae169]
+-->
+     <para>
+      Test: Update <filename>clean.sh</filename> which clean up regression test results. (Bo Peng)
+     </para>
+     <para>
+      Patch provided by Jesper Pedersen.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-10 [6c261b3]
+-->
+     <para>
+      Add .gitignore files. (Bo Peng)
+     </para>
+     <para>
+      Patch provided by Jesper Pedersen.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-05 [a2f3ac6]
+-->
+     <para>
+      Fix segfault when node 0 is in down status in case of both health check 
+      and <xref linkend="guc-failover-on-backend-error"> are disabled. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-03 [09a3ae1]
+-->
+     <para>
+      Doc: Fix typos in documents and scripts. (Tatsuo Ishii)
+     </para>
+     <para>
+      Patch contributed by Jesper Pedersen.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-01 [f5eddf0]
+-->
+     <para>
+      Doc: Fix document mistakes of <xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND"> and <xref linkend="GUC-RECOVERY-2ND-STAGE-COMMAND">. (Bo Peng)
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
+
 <sect1 id="release-3-7-5">
   <title>Release 3.7.5</title>
 

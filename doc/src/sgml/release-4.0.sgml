@@ -1,3 +1,44 @@
+<!-- doc/src/sgml/release-4.0.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-4-0-1">
+  <title>Release 4.0.1</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2018-10-31</simpara>
+  </note>
+
+  <sect2>
+   <title>Bug fixes</title>
+   <itemizedlist>
+
+    <listitem>
+<!--
+2018-10-25 [3189c36]
+-->
+     <para>
+      Fix typo in <varname>child_max_connections</varname> description of <command>SHOW POOL_STATUS</command> output. (Tatsuo Ishii)
+     </para>
+     <para>
+      Patch provided by Phil Ramirez.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-22 [5e6d598]
+-->
+     <para>
+      Fix segmentation fault when error query and Sync message are sent in native replication mode. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=434">bug 434</ulink>) (Takuma Hoshiai)
+     </para>
+     <para>
+      In native replication mode, segmentation fault occurs when Sync messages is sent just after a query error.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
 <sect1 id="release-4-0">
   <title>Release 4.0</title>
   <note>
