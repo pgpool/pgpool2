@@ -29,6 +29,7 @@
 
 #define POOL_PASSWD_FILENAME "pool_passwd"
 #define POOL_PASSWD_LEN 35
+#define MAX_POOL_PASSWD_LEN 132 /* In case of TEXT prefix(4byte) and plain text password(128byte)*/
 
 #define MAX_USER_NAME_LEN	128
 #define MAX_PGPASS_LEN		128
