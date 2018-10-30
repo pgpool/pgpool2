@@ -40,6 +40,7 @@
 
 static FILE *passwd_fd = NULL;	/* File descriptor for pool_passwd */
 static char saved_passwd_filename[POOLMAXPATHLEN + 1];
+static char *userMatchesString(char *buf, char *user);
 static POOL_PASSWD_MODE pool_passwd_mode;
 
 /*
@@ -93,11 +94,12 @@ pool_init_pool_passwd(char *pool_passwd_filename, POOL_PASSWD_MODE mode)
 int
 pool_create_passwdent(char *username, char *passwd)
 {
-	int			len;
-	int			c;
-	char		name[MAX_USER_NAME_LEN];
-	char	   *p;
-	int			readlen;
+#define LINE_LEN \
+		MAX_USER_NAME_LEN + 1 + MAX_POOL_PASSWD_LEN + 2
+	char 	linebuf[LINE_LEN];
+	char 	*writebuf = NULL;
+	int		len;
+	bool 	updated = false;
 
 	if (!passwd_fd)
 		ereport(ERROR,
@@ -113,62 +115,64 @@ pool_create_passwdent(char *username, char *passwd)
 				(errmsg("error updating password, invalid password length:%d", len)));
 
 	rewind(passwd_fd);
-	name[0] = '\0';
 
-	while (!feof(passwd_fd))
+	while (!feof(passwd_fd) && !ferror(passwd_fd))
 	{
-		p = name;
-		readlen = 0;
+		char       *t = linebuf;
+		int         len;
 
-		while (readlen < sizeof(name))
+		if (fgets(linebuf, sizeof(linebuf), passwd_fd) == NULL)
+			break;
+
+		len = strlen(linebuf);
+		if (len == 0)
+			continue;
+
+		if (!updated && userMatchesString(t, username))
 		{
-			c = fgetc(passwd_fd);
-			if (c == EOF)
-				break;
-			else if (c == ':')
-				break;
-
-			readlen++;
-			*p++ = c;
+			len = snprintf(linebuf, sizeof(linebuf), "%s:%s\n", username, passwd);
+			updated = true;
 		}
-		*p = '\0';
 
-		if (!strcmp(username, name))
-		{
-			/* User name found. Update password. */
-			while ((c = *passwd++))
-			{
-				fputc(c, passwd_fd);
-			}
-			fputc('\n', passwd_fd);
-			return 0;
-		}
+		if (writebuf == NULL)
+			writebuf = palloc0(len + 1);
 		else
 		{
-			/* Skip password */
-			while ((c = fgetc(passwd_fd)) != EOF &&
-				   c != '\n')
-				;
+			writebuf = repalloc(writebuf, (len + strlen(writebuf) + 1));
 		}
+		strcat(writebuf, linebuf);
 	}
 
-	fseek(passwd_fd, 0, SEEK_END);
-
-	/*
-	 * Not found the user name. Create a new entry.
-	 */
-	while ((c = *username++))
+	if (!updated)
 	{
-		fputc(c, passwd_fd);
+		/* password was not update, append this at the end */
+		len = snprintf(linebuf, sizeof(linebuf), "%s:%s\n", username, passwd);
+		if (writebuf == NULL)
+			writebuf = palloc0(len + 1);
+		else
+		{
+			writebuf = repalloc(writebuf, (len + strlen(writebuf) + 1));
+		}
+		strcat(writebuf, linebuf);
 	}
-	fputc(':', passwd_fd);
-	while ((c = *passwd++))
-	{
-		fputc(c, passwd_fd);
-	}
-	fputc('\n', passwd_fd);
 
+	if(!writebuf)
+		return 0;
+
+	fclose(passwd_fd);
+	passwd_fd = fopen(saved_passwd_filename, "w+");
+	if (!passwd_fd)
+	{
+		ereport(ERROR,
+				(errmsg("pool_passwd reopen failed")));
+	}
+
+	/* write pool_passwd file.  */
+	fwrite(writebuf, 1, strlen(writebuf), passwd_fd);
+	pfree(writebuf);
 	return 0;
+
+#undef LINE_LEN
 }
 
 /*
@@ -181,7 +185,7 @@ pool_get_passwd(char *username)
 {
 	int			c;
 	char		name[MAX_USER_NAME_LEN + 1];
-	static char passwd[POOL_PASSWD_LEN + 1];
+	static char passwd[MAX_POOL_PASSWD_LEN + 1];
 	char	   *p;
 	int			readlen;
 
