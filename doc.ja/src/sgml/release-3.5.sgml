@@ -1,10 +1,348 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-3-5-17">
+<!--
+  <title>Release 3.5.17</title>
+-->
+  <title>リリース 3.5.17</title>
+
+  <note>
+<!--
+   <title>Release Date</title>
+-->
+   <title>リリース日</title>
+    <simpara>2018-10-31</simpara>
+  </note>
+
+  <sect2>
+<!--
+   <title>Changes</title>
+-->
+   <title>変更点</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2018-10-18 [d3c29b7]
+-->
+     <para>
+<!--
+      Change <filename>pgpool.spec</filename> file to install extension to DB server which supports LLVM JIT. (Bo Peng)
+-->
+LLVM JITをサポートするDBサーバに拡張機能をインストールするために、<filename>pgpool.spec</filename>ファイルを変更しました。(Bo Peng)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-29 [ed8bfa5]
+-->
+     <para>
+<!--
+      Test: Add regression test for SSL connection. (Tatsuo Ishii)
+-->
+Test: SSL 接続のレグレッションテストを追加しました。(Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-10 [e41a92a]
+-->
+     <para>
+<!--
+      Test: Add definition of PGLIB in <filename>regress.sh</filename>. (Bo Peng)
+-->
+Test: <filename>regress.sh</filename>にPGLIBの定義を追加しました。 (Bo Peng)
+     </para>
+     <para>
+<!--
+      Patch provided by Jesper Pedersen.
+-->
+パッチはJesper Pedersenにより提供されました。
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+
+  <sect2>
+<!--
+   <title>Bug fixes</title>
+-->
+   <title>不具合修正</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2018-10-25 [c031a7e]
+-->
+     <para>
+<!--
+      Fix typo in <varname>child_max_connections</varname> description of <command>SHOW POOL_STATUS</command> output. (Tatsuo Ishii)
+-->
+<command>SHOW POOL_STATUS</command>コマンドの出力の<varname>child_max_connections</varname>の説明のタイポを修正しました。(Tatsuo Ishii)
+     </para>
+     <para>
+<!--
+      Patch provided by Phil Ramirez.
+-->
+パッチはPhil Ramirezにより提供されました。
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-22 [f1b13a4]
+-->
+     <para>
+<!--
+      Fix segmentation fault when error query and Sync message are sent in native replication mode. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=434">bug 434</ulink>) (Takuma Hoshiai)
+-->
+ネイティブレプリケーションモードでエラークエリと同期メッセージが送信されたときのセグメンテーション違反を修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=434">bug 434</ulink>) (Takuma Hoshiai)
+     </para>
+     <para>
+<!--
+      In native replication mode, segmentation fault occurs when Sync messages is sent just after a query error.
+-->
+ネイティブレプリケーションモードで、クエリエラーの後に同期メッセージが送信されるとセグメンテーション違反が発生していました。
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-18 [22e9242]
+-->
+     <para>
+<!--
+     Fix syntax error when queries including time functions and <literal>IN (SELECT ...)</literal> in 
+     <literal>WHERE</literal> clause in native replication mode. 
+     (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=433">bug 433</ulink>) (Bo Peng)
+-->
+ネイティブレプリケーションモードで、クエリに時刻関数を含み、かつ<literal>WHERE</literal>句に<literal>IN (SELECT ...)</literal>を含むと構文エラーになる不具合を修正しました。(Bo Peng)
+      </para>
+      <para>
+<!--
+      In native replication mode, queries including time functions (e.g. <function>now()</function>, <function>CURRENT_TIMESTAMP</function> etc.) are rewritten to a timestamp constant value. 
+      However, <productname>Pgpool-II</productname> doesn't support queries including time functions and <literal>IN (SELECT ...)</literal> in <literal>WHERE</literal> clause.
+-->
+ネイティブレプリケーションモードで、クエリに<function>now()</function>、<function>CURRENT_TIMESTAMP</function>などの時刻関数を利用した場合、
+タイムスタンプ型の定数に書き換えるようになっています。
+しかし、<productname>Pgpool-II</productname>は時刻関数含み、かつ<literal>WHERE</literal>句に<literal>IN (SELECT ...)</literal>を含むクエリを対応しませんでした。
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-12 [75cff9a]
+-->
+     <para>
+<!--
+      Fix occasional less data returned to frontend with extended protocol. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=432">bug432</ulink>) (Tatsuo Ishii)
+-->
+拡張問い合わせの場合、時々期待される応答がフロントエンドに返されないことがあったので、修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=432">bug 432</ulink>) (Tatsuo Ishii)
+     </para>
+     <para>
+<!--
+      The idea for fix is, use pending message data list. It records
+      messages from frontend, and it is expected that we will receive same
+      number of messages.
+-->
+解決策は、保留中のメッセージデータリストを使用することです。それはフロントエンドからのメッセージを記録し、同じ数のメッセージを受け取ることが期待されます。
+     </para>
+     <para>
+<!--
+      Initial patch is created by Yugo Nagata and fixed by Tatsuo Ishii.
+-->
+パッチは Yugo Nagata によって作成され、Tatsuo Ishii により修正されました。 
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-11 [be2e21c]
+-->
+     <para>
+<!--
+      Fix memory leak in <function>trigger_failover_command()</function>. (Tatsuo Ishii)
+-->
+<function>trigger_failover_command()</function> 関数で発生するメモリリークを修正しました。 (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-11 [ebbdd6f]
+-->
+     <para>
+<!--
+     Fix memory leak when query cache enabled in streaming replication mode + extended query case. (Tatsuo Ishii)
+-->
+ストリーミングレプリケーションモードかつ拡張問い合わせの場合、クエリキャッシュを有効にするときに発生するメモリリークを修正しました。(Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-09 [5072e78]
+-->
+     <para>
+<!--
+      Fix memory leak when memory_cache_enabled = on and write SQLs are sent. (Bo Peng)
+-->
+ストリーミングレプリケーションモードかつクエリキャッシュが有効の場合に更新クエリが発行された場合に発生するメモリリークを修正しました。(Bo Peng)
+     </para>
+     <para>
+<!--
+      In a explicit transaction, the <literal>SELECT</literal> results are cached in temporary buffer.
+      If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffe should be reset.
+-->
+明示的なトランザクションでは、<literal>SELECT</literal>の結果は一時バッファにキャッシュされます。
+テーブルを変更する書込み<acronym>SQL</acronym>が送信されると、一時的なバッファをリセットしなければなりません。
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-09 [26642f7]
+-->
+     <para>
+<!--
+      Test: Fix occasional failure in regression 065.bug152. (Tatsuo Ishii)
+-->
+Test: 時々発生するレグレッションテスト 065.bug152 のエラーを修正しました。(Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-09-21 [011e56b]
+-->
+     <para>
+<!--
+      Test: Add <literal>EXECUTE/DEALLOCATE</literal> regression test. (Takuma Hoshiai)
+-->
+Test: <literal>EXECUTE/DEALLOCATE</literal>のレグレッションテストを追加しました。(Takuma Hoshiai)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-09-19 [576f576]
+-->
+     <para>
+<!--
+      Add missing <filename>pgpool_recovery/-/-1.0/-/-1.1.sql</filename> file to update 
+      <function>pgpool_recovery()</function> function version to 1.1. (Bo Peng)
+-->
+<function>pgpool_recovery()</function>関数のバージョンを1.1に更新するための<filename>pgpool_recovery--1.0--1.1.sql</filename>ファイルを追加しました。 (Bo Peng)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-09-13 [f771dd1]
+-->
+     <para>
+<!--
+      Fix kind mismatch error when <literal>DEALLOCATE</literal> statement is issued. (Bo Peng)
+-->
+<literal>DEALLOCATE</literal>ステートメントが発行された場合に発生するkind mismatchエラーを修正しました。(Bo Peng)
+     </para>
+     <para>
+<!--
+      <literal>PREPARE</literal> should be add to pool_add_sent_message, 
+      so that <literal>EXECUTE</literal> and <literal>DEALLOCATE</literal>
+      can be sent to the same node as <literal>PREPARE</literal>.
+-->
+<literal>EXECUTE</literal>と<literal>DEALLOCATE</literal>が<literal>PREPARE</literal>と同じノードに送信されるために、<literal>PREPARE</literal>をpool_add_sent_messageに追加するように修正しました。
+     </para>
+     <para>
+<!--
+      See <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-September/006284.html">[pgpool-general: 6226]</ulink> for more details.
+-->
+詳細は<ulink url="https://www.pgpool.net/pipermail/pgpool-general/2018-September/006284.html">[pgpool-general: 6226]</ulink>を参照してください。
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-27 [afb0617]
+-->
+     <para>
+<!--
+      Do not update <xref linkend="guc-pool-passwd"> if the password length is incorrect. 
+      (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=419">bug 419</ulink>) (Takuma Hoshiai, Tatsuo Ishii)
+-->
+パスワードの長さが正しくない場合、<xref linkend="guc-pool-passwd">を更新しないように修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=419">bug 419</ulink>) (Takuma Hoshiai, Tatsuo Ishii)
+     </para>
+     <para>
+<!--
+      For <productname>Pgpool-II</productname> 3.7 or before, the password stored in 
+      <xref linkend="guc-pool-passwd"> is <literal>MD5</literal> password only. 
+      So check the correctness of <xref linkend="guc-pool-passwd"> by scanning entire file.
+-->
+<productname>Pgpool-II 3.7</productname>以前では、<xref linkend="guc-pool-passwd">に保存されているパスワードは<literal>MD5</literal> パスワードのみです。
+<xref linkend="guc-pool-passwd">ファイルのパスワードの長さをチェックするように修正しました。
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-10 [3d4e5f6]
+-->
+     <para>
+<!--
+      Test: Update <filename>clean.sh</filename> which clean up regression test results. (Bo Peng)
+-->
+Test: レグレッションテストの結果を削除するための<filename>clean.sh</filename>ファイルを更新しました。(Bo Peng)
+     </para>
+     <para>
+<!--
+      Patch provided by Jesper Pedersen.
+-->
+パッチはJesper Pedersenにより提供されました。
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-10 [5abd56e]
+-->
+     <para>
+<!--
+      Add .gitignore files. (Bo Peng)
+-->
+.gitignoreファイルを追加しました。(Bo Peng)
+    </para>
+    <para>
+<!--
+      Patch provided by Jesper Pedersen.
+-->
+パッチはJesper Pedersenにより提供されました。
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-08-05 [d56f618]
+-->
+     <para>
+<!--
+      Fix segfault when node 0 is in down status in case of both health check and fail_over_on_backend_error are disabled. (Tatsuo Ishii)
+-->
+ヘルスチェックと<xref linkend="guc-failover-on-backend-error">の両方が無効になっている場合に、ノード0がダウンしたときに発生するセグメンテーション違反を修正しました。(Tatsuo Ishii)
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
 <sect1 id="release-3-5-16">
 <!--
   <title>Release 3.5.16</title>
-	-->
+-->
   <title>リリース 3.5.16</title>
 
   <note>

@@ -1,3 +1,65 @@
+<!-- doc/src/sgml/release-4.0.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-4-0-1">
+<!--
+  <title>Release 4.0.1</title>
+-->
+  <title>リリース 4.0.1</title>
+  <note>
+<!--
+   <title>Release Date</title>
+-->
+   <title>リリース日</title>
+   <simpara>2018-10-31</simpara>
+  </note>
+
+  <sect2>
+<!--
+   <title>Bug fixes</title>
+-->
+   <title>不具合修正</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2018-10-25 [3189c36]
+-->
+     <para>
+<!--
+      Fix typo in <varname>child_max_connections</varname> description of <command>SHOW POOL_STATUS</command> output. (Tatsuo Ishii)
+-->
+<command>SHOW POOL_STATUS</command>コマンドの出力の<varname>child_max_connections</varname>の説明のタイポを修正しました。(Tatsuo Ishii)
+     </para>
+     <para>
+<!--
+      Patch provided by Phil Ramirez.
+-->
+パッチはPhil Ramirezにより提供されました。
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-22 [5e6d598]
+-->
+     <para>
+<!--
+      Fix segmentation fault when error query and Sync message are sent in native replication mode. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=434">bug 434</ulink>) (Takuma Hoshiai)
+-->
+ネイティブレプリケーションモードでエラークエリと同期メッセージが送信されたときのセグメンテーション違反を修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=434">bug 434</ulink>) (Takuma Hoshiai)
+     </para>
+     <para>
+<!--
+      In native replication mode, segmentation fault occurs when Sync messages is sent just after a query error.
+-->
+ネイティブレプリケーションモードで、クエリエラーの後に同期メッセージが送信されるとセグメンテーション違反が発生していました。
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
 <sect1 id="release-4-0">
 <!--
   <title>Release 4.0</title>
