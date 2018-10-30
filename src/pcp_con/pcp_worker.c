@@ -216,8 +216,7 @@ static void
 pcp_process_command(char tos, char *buf, int buf_len)
 {
 
-	if (tos == 'C' || tos == 'd' || tos == 'D' || tos == 'j' ||
-		tos == 'J' || tos == 'O' || tos == 'T')
+	if (tos == 'O' || tos == 'T')
 	{
 		if (Req_info->switching)
 		{
