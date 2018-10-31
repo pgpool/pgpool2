@@ -23,6 +23,18 @@
    <itemizedlist>
     <listitem>
 <!--
+2018-10-30 [3d0311b]
+-->
+     <para>
+<!--
+      Allow <command>PCP[attach/detach/promote]</command> commands during failover. (Muhammad Usama)
+-->
+フェイルオーバ時に<command>PCP[attach/detach/promote]</command>コマンドを許可するようになりました。(Muhammad Usama)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 2018-10-18 [d3c29b7]
 -->
      <para>

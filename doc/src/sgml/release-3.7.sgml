@@ -6,12 +6,21 @@
 
   <note>
    <title>Release Date</title>
-   <simpara>2018-10-30</simpara>
+   <simpara>2018-10-31</simpara>
   </note>
 
   <sect2>
    <title>Changes</title>
    <itemizedlist>
+    <listitem>
+<!--
+2018-10-30 [3d0311b]
+-->
+     <para>
+      Allow <command>PCP[attach/detach/promote]</command> commands during failover. (Muhammad Usama)
+     </para>
+    </listitem>
+
     <listitem>
 <!--
 2018-10-18 [8cc799a]
