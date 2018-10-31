@@ -16,10 +16,57 @@
 
   <sect2>
 <!--
+   <title>Changes</title>
+-->
+   <title>変更点</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2018-10-30 [25a3024]
+-->
+     <para>
+<!--
+      Allow ssl key files to be owned by users other than <productname>Pgpool-II</productname> user and root. (Muhammad Usama)
+-->
+<productname>Pgpool-II</productname>の実行ユーザとrootユーザ以外のユーザがsslキーファイルを所有することができるようになりました。(Muhammad Usama)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2018-10-30 [3d0311b]
+-->
+     <para>
+<!--
+      Allow <command>PCP[attach/detach/promote]</command> commands during failover. (Muhammad Usama)
+-->
+フェイルオーバ時に<command>PCP[attach/detach/promote]</command>コマンドを許可するようになりました。(Muhammad Usama)
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+
+  <sect2>
+<!--
    <title>Bug fixes</title>
 -->
    <title>不具合修正</title>
    <itemizedlist>
+    <listitem>
+<!--
+2018-10-30 [d48cc28]
+-->
+     <para>
+<!--
+      Fix corruption of <xref linkend="GUC-pool-passwd"> file due to the different lengths of md5, AES and text type passwords. (Muhammad Usama)
+-->
+<literal>MD5</literal>、<literal>AES</literal>及びテキストパスワードの長さが異なることによって時々発生する<xref linkend="GUC-pool-passwd">ファイルの破損を修正しました。(Muhammad Usama)
+     </para>
+     <para>
+パッチはHoshiau Takumaによって提供され、Muhammad Usamaによって修正されました。
+     </para>
+    </listitem>
+
     <listitem>
 <!--
 2018-10-25 [3189c36]
