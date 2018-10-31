@@ -96,6 +96,8 @@ EXTRA_DIST = sample/pgpool.pam \
 		sql/pgpool-recovery/pgpool-recovery.sql.in \
 		sql/pgpool-recovery/uninstall_pgpool-recovery.sql \
 		sql/pgpool-recovery/pgpool_recovery--1.1.sql \
+		sql/pgpool-recovery/pgpool_recovery--1.0--1.1.sql \
+		sql/pgpool-recovery/pgpool_recovery--1.0.sql \
 		sql/pgpool-recovery/pgpool_recovery.control \
 		sql/pgpool-recovery/Makefile \
 		sql/pgpool-regclass/pgpool-regclass.c \
