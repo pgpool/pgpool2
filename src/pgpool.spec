@@ -251,6 +251,8 @@ fi
 %defattr(-,root,root,-)
 %{pghome}/share/extension/pgpool-recovery.sql
 %{pghome}/share/extension/pgpool_recovery--1.1.sql
+%{pghome}/share/extension/pgpool_recovery--1.0--1.1.sql
+%{pghome}/share/extension/pgpool_recovery--1.0.sql
 %{pghome}/share/extension/pgpool_recovery.control
 %{pghome}/lib/pgpool-recovery.so
 %{pghome}/share/extension/pgpool_adm--1.0.sql
