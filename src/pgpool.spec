@@ -38,7 +38,7 @@ Patch2:         pgpool_socket_dir.patch
 %endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl
-%if %{pg_version} >= 11 && %{rhel} >= 7
+%if %{pg_version} == 11 && %{rhel} >= 7
 BuildRequires:  llvm-toolset-7 llvm-toolset-7-llvm-devel llvm5.0
 %endif
 %if %{systemd_enabled}
@@ -111,7 +111,7 @@ make %{?_smp_mflags} DESTDIR=%{buildroot} install
 
 # install to PostgreSQL
 make %{?_smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool-recovery
-%if %{pg_version} <= 93
+%if %{pg_version} <= 93 && %{pg_version} > 11
 # From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
 # because 9.4 or later has to_regclass.
 make %{?_smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool-regclass
@@ -260,7 +260,7 @@ fi
 %{pghome}/lib/pgpool_adm.so
 # From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
 # because 9.4 or later has to_regclass.
-%if %{pg_version} <= 93
+%if %{pg_version} <= 93 && %{pg_version} > 11
   %{pghome}/share/extension/pgpool_regclass--1.0.sql
   %{pghome}/share/extension/pgpool_regclass.control
   %{pghome}/share/extension/pgpool-regclass.sql
@@ -268,7 +268,7 @@ fi
 %endif
 # From PostgerSQL 11 the relevant files have to be installed 
 # into $pkglibdir/bitcode/
-%if %{pg_version} >= 11 && %{rhel} >= 7
+%if %{pg_version} == 11 && %{rhel} >= 7
   %{pghome}/lib/bitcode/pgpool-recovery.index.bc
   %{pghome}/lib/bitcode/pgpool-recovery/pgpool-recovery.bc
   %{pghome}/lib/bitcode/pgpool_adm.index.bc
