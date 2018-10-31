@@ -63,7 +63,7 @@
 <literal>MD5</literal>、<literal>AES</literal>及びテキストパスワードの長さが異なることによって時々発生する<xref linkend="GUC-pool-passwd">ファイルの破損を修正しました。(Muhammad Usama)
      </para>
      <para>
-パッチはHoshiau Takumaによって提供され、Muhammad Usamaによって修正されました。
+パッチはTakuma Hoshiaiによって提供され、Muhammad Usamaによって修正されました。
      </para>
     </listitem>
 
