@@ -782,6 +782,16 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				len += hexlen;
 			}
 
+			/*
+			 * If bind message is sent again to an existing prepared statement,
+			 * it is possible that query_w_hex remains. Before setting newly
+			 * allocated query_w_hex's pointer to the query context, free the
+			 * previously allocated memory.
+			 */
+			if (query_context->query_w_hex)
+			{
+				pfree(query_context->query_w_hex);
+			}
 			query_context->query_w_hex = search_query;
 
 			/*
