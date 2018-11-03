@@ -3087,6 +3087,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 	bool parse_was_sent = false;
 	bool backup[MAX_NUM_BACKENDS];
 	POOL_QUERY_CONTEXT *qc = message->query_context;
+	POOL_SENT_MESSAGE *msg;
 
 	memcpy(backup, qc->where_to_send, sizeof(qc->where_to_send));
 
@@ -3155,6 +3156,12 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 
 			/* Replace the query context of bind message */
 			bind_message->query_context = new_qc;
+
+			/* Remove old sent message */
+			pool_remove_sent_message('P', contents);
+			/* Create and add sent message of this parse message */
+			msg = pool_create_sent_message('P', len, contents, 0, contents, new_qc);
+			pool_add_sent_message(msg);
 
 			return POOL_CONTINUE;
 		}
