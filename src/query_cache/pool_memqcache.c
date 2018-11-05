@@ -75,9 +75,10 @@ static int pool_get_dml_table_oid(int **oid);
 static int pool_get_dropdb_table_oids(int **oids, int dboid);
 static void pool_discard_dml_table_oid(void);
 static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlink, int dboid);
+
 static int pool_get_database_oid(void);
 static void pool_add_table_oid_map(POOL_CACHEKEY *cachkey, int num_table_oids, int *table_oids);
-static void pool_reset_memqcache_buffer(void);
+static void pool_reset_memqcache_buffer(bool reset_dml_oids);
 static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char *data, int size);
 static POOL_CACHEID *pool_find_item_on_shmem_cache(POOL_QUERY_HASH *query_hash);
 static char *pool_get_item_shmem_cache(POOL_QUERY_HASH *query_hash, int *size, int *sts);
@@ -1634,9 +1635,10 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 }
 
 /*
- * Reset SELECT data buffers
+ * Reset SELECT data buffers.  If reset_dml_oids is true, call
+ * pool_discard_dml_table_oid() to reset table oids used in DML statements.
  */
-static void pool_reset_memqcache_buffer(void)
+static void pool_reset_memqcache_buffer(bool reset_dml_oids)
 {
 	POOL_SESSION_CONTEXT * session_context;
 
@@ -1676,7 +1678,10 @@ static void pool_reset_memqcache_buffer(void)
 			session_context->query_context->temp_cache = NULL;
 		}
 	}
-	pool_discard_dml_table_oid();
+
+	if (reset_dml_oids)
+		pool_discard_dml_table_oid();
+
 	pool_tmp_stats_reset_num_selects();
 }
 
@@ -3167,7 +3172,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			pool_stats_count_up_num_selects(1);
 
 			/* Reset temp buffer */
-			pool_reset_memqcache_buffer();
+			pool_reset_memqcache_buffer(true);
 		}
 		else
 		{
@@ -3219,7 +3224,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 	else if (is_rollback_query(node))	/* Rollback? */
 	{
 		/* Discard buffered data */
-		pool_reset_memqcache_buffer();
+		pool_reset_memqcache_buffer(true);
 	}
 	else if (is_commit_query(node))		/* Commit? */
 	{
@@ -3271,7 +3276,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 		/* Count up number of SELECT stats */
 		pool_stats_count_up_num_selects(pool_tmp_stats_get_num_selects());
 
-		pool_reset_memqcache_buffer();
+		pool_reset_memqcache_buffer(true);
 	}
 	else		/* Non cache safe queries */
 	{
@@ -3282,7 +3287,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 			{
 				/* Count up SELECT stats */
 				pool_stats_count_up_num_selects(1);
-				pool_reset_memqcache_buffer();
+				pool_reset_memqcache_buffer(true);
 			}
 			else
 			{
@@ -3305,7 +3310,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 				pool_invalidate_query_cache(num_oids, oids, true, dboid);
 				pool_discard_oid_maps_by_db(dboid);
 				pool_shmem_unlock();
-				pool_reset_memqcache_buffer();
+				pool_reset_memqcache_buffer(true);
 
 				pfree(oids);
 				ereport(DEBUG2,
@@ -3334,7 +3339,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 					pool_invalidate_query_cache(num_oids, oids, true, 0);
 					pool_shmem_unlock();
 					POOL_SETMASK(&oldmask);
-					pool_reset_memqcache_buffer();
+					pool_reset_memqcache_buffer(true);
 				}
 				else
 				{
@@ -3345,8 +3350,8 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 					 * if DML/DDL modifies the TABLE which SELECT uses.
 					 */
 					pool_check_and_discard_cache_buffer(num_oids, oids);
-					pool_reset_memqcache_buffer();
-				} 
+					pool_reset_memqcache_buffer(false);
+				}
 			}
 			else if (num_oids == 0)
 			{
@@ -3354,7 +3359,7 @@ void pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *n
 				 * It is also necessary to clear cache buffers in case of
 				 * no oid queries (like BEGIN, CHECKPOINT, VACUUM, etc) too.
 				 */
-				pool_reset_memqcache_buffer();
+				pool_reset_memqcache_buffer(true);
 			}
 		}
 	}
