@@ -590,7 +590,7 @@ static bool is_temp_table(char *table_name)
  * regclass (or its variant) here, because temporary tables never have
  * schema qualified name.
  */
-#define ISTEMPQUERY83 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname ~ '^pg_temp_'"
+#define ISTEMPQUERY83 "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname ~ '^pg_temp_'"
 
 /*
  * Query to know if the target table is a temporary one.  This query
