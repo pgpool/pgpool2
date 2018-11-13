@@ -678,7 +678,7 @@ wd_cluster_initialize(void)
 		struct utsname unameData;
 
 		uname(&unameData);
-		snprintf(g_cluster.localNode->nodeName, WD_MAX_HOST_NAMELEN, "%s:%d %s %s",
+		snprintf(g_cluster.localNode->nodeName, sizeof(g_cluster.localNode->nodeName), "%s:%d %s %s",
 				 pool_config->wd_hostname,
 				 pool_config->port,
 				 unameData.sysname,

@@ -450,7 +450,7 @@ get_pool_key_filename(char *poolKeyFile)
 
 		if (!get_home_directory(homedir, sizeof(homedir)))
 			return false;
-		snprintf(poolKeyFile, POOLMAXPATHLEN, "%s/%s", homedir, POOLKEYFILE);
+		snprintf(poolKeyFile, POOLMAXPATHLEN + sizeof(POOLKEYFILE) + 1, "%s/%s", homedir, POOLKEYFILE);
 	}
 	return true;
 }

@@ -107,7 +107,7 @@ static int	child_unix_fd = 0;
 extern int	myargc;
 extern char **myargv;
 
-char		remote_ps_data[NI_MAXHOST]; /* used for set_ps_display */
+char		remote_ps_data[NI_MAXHOST + NI_MAXSERV + 2]; /* used for set_ps_display */
 
 volatile sig_atomic_t got_sighup = 0;
 

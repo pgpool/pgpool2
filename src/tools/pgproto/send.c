@@ -34,9 +34,7 @@
 void
 send_char(char c, PGconn *conn)
 {
-	int			status;
-
-	status = write(PQsocket(conn), &c, 1);
+	write(PQsocket(conn), &c, 1);
 }
 
 /*
@@ -45,10 +43,9 @@ send_char(char c, PGconn *conn)
 void
 send_int(int intval, PGconn *conn)
 {
-	int			status;
 	int			l = htonl(intval);
 
-	status = write(PQsocket(conn), &l, sizeof(l));
+	write(PQsocket(conn), &l, sizeof(l));
 }
 
 /*
@@ -57,10 +54,9 @@ send_int(int intval, PGconn *conn)
 void
 send_int16(short shortval, PGconn *conn)
 {
-	int			status;
 	short		s = htons(shortval);
 
-	status = write(PQsocket(conn), &s, sizeof(s));
+	write(PQsocket(conn), &s, sizeof(s));
 }
 
 /*
@@ -69,9 +65,7 @@ send_int16(short shortval, PGconn *conn)
 void
 send_string(char *buf, PGconn *conn)
 {
-	int			status;
-
-	status = write(PQsocket(conn), buf, strlen(buf) + 1);
+	write(PQsocket(conn), buf, strlen(buf) + 1);
 }
 
 /*
@@ -80,7 +74,5 @@ send_string(char *buf, PGconn *conn)
 void
 send_byte(char *buf, int len, PGconn *conn)
 {
-	int			status;
-
-	status = write(PQsocket(conn), buf, len);
+	write(PQsocket(conn), buf, len);
 }

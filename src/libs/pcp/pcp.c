@@ -1,5 +1,5 @@
 /*
- * $Header$
+FILE * $Header$
  *
  * Handles PCP connection, and protocol communication with pgpool-II
  * These are client APIs. Server program should use APIs in pcp_stream.c
@@ -1826,7 +1826,7 @@ getPoolPassFilename(char *pgpassfile)
 
 		if (!get_home_directory(homedir, sizeof(homedir)))
 			return false;
-		snprintf(pgpassfile, MAXPGPATH, "%s/%s", homedir, PCPPASSFILE);
+		snprintf(pgpassfile, MAXPGPATH + sizeof(PCPPASSFILE) + 1, "%s/%s", homedir, PCPPASSFILE);
 	}
 	return true;
 }
@@ -1839,7 +1839,7 @@ static char *
 PasswordFromFile(PCPConnInfo * pcpConn, char *hostname, char *port, char *username)
 {
 	FILE	   *fp;
-	char		pgpassfile[MAXPGPATH];
+	char		pgpassfile[MAXPGPATH + sizeof(PCPPASSFILE) + 1];
 	struct stat stat_buf;
 #define LINELEN NAMEDATALEN*5
 	char		buf[LINELEN];

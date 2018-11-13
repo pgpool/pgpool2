@@ -1440,6 +1440,14 @@ authenticate_frontend(POOL_CONNECTION * frontend)
 			break;
 		case uaTrust:
 			frontend->frontend_authenticated = true;
+			break;
+#ifdef USE_PAM
+		case uaPAM:
+			ereport(ERROR,
+					(errmsg("authenticate_frontend called with PAM")));
+			break;
+#endif							/* USE_PAM */
+
 	}
 }
 
