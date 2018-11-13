@@ -29,7 +29,6 @@
 
 static char read_char(PGconn *conn);
 static int	read_int32(PGconn *conn);
-static int	read_int16(PGconn *conn);
 static char *read_bytes(int len, PGconn *conn);
 static void read_and_discard(PGconn *conn);
 static void read_it(PGconn *conn, char *buf, int len);
@@ -248,19 +247,6 @@ read_int32(PGconn *conn)
 	read_it(conn, (char *) &len, sizeof(len));
 
 	return ntohl(len);
-}
-
-/*
- * Read a short integer from connection.
- */
-static int
-read_int16(PGconn *conn)
-{
-	short		len;
-
-	read_it(conn, (char *) &len, sizeof(len));
-
-	return ntohs(len);
 }
 
 /*

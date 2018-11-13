@@ -128,7 +128,9 @@ static bool next_token(char **lineptr, char *buf, int bufsz,
 		   int elevel, char **err_msg);
 static List *next_field_expand(const char *filename, char **lineptr,
 				  int elevel, char **err_msg);
+#ifdef NOT_USED
 static POOL_STATUS CheckUserExist(char *username);
+#endif
 
 #ifdef USE_PAM
 #ifdef HAVE_PAM_PAM_APPL_H
@@ -2063,8 +2065,7 @@ static POOL_STATUS CheckPAMAuth(POOL_CONNECTION * frontend, char *user, char *pa
 
 #endif							/* USE_PAM */
 
-
-
+#ifdef NOT_USED
 static POOL_STATUS CheckUserExist(char *username)
 {
 	char	   *passwd;
@@ -2080,3 +2081,4 @@ static POOL_STATUS CheckUserExist(char *username)
 	 */
 	return POOL_CONTINUE;
 }
+#endif

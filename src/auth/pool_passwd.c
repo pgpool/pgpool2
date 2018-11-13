@@ -577,6 +577,7 @@ get_decrypted_password(const char *shadow_pass)
 {
 	ereport(ERROR,
 			(errmsg("unable to decrypt password")));
+	return NULL;
 }
 #endif
 

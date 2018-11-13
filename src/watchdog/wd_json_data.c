@@ -796,7 +796,7 @@ parse_wd_node_function_json(char *json_data, int data_len, char **func_name, int
 	}
 	*func_name = pstrdup(ptr);
 	/* If it is a node function ? */
-	if (json_get_int_value_for_key(root, "Flags", flags))
+	if (json_get_int_value_for_key(root, "Flags", (int *)flags))
 	{
 		/* node count not found, But we don't care much about this */
 		*flags = 0;

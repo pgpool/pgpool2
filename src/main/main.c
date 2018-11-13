@@ -83,7 +83,7 @@ main(int argc, char **argv)
 	char		pcp_conf_file_path[POOLMAXPATHLEN + 1];
 	char		conf_file_path[POOLMAXPATHLEN + 1];
 	char		hba_file_path[POOLMAXPATHLEN + 1];
-	char		pool_passwd_key_file_path[POOLMAXPATHLEN + 1];
+	char		pool_passwd_key_file_path[POOLMAXPATHLEN + 1 + sizeof(POOLKEYFILE) + 1];
 
 	static struct option long_options[] = {
 		{"hba-file", required_argument, NULL, 'a'},
@@ -204,19 +204,7 @@ main(int argc, char **argv)
 		}
 	}
 
-#ifdef NOT_USED
-/* #ifdef USE_SSL */
-	 /* 	/* global ssl init */ */
-/* #if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER)) */
-/* 	OPENSSL_init_ssl(0, NULL); */
-/* #else */
-/* 	SSL_library_init(); */
-/* #endif */
-/* 	SSL_load_error_strings(); */
-		 /* #endif /* USE_SSL */ */
-#endif
-
-		myargv = save_ps_display_args(myargc, myargv);
+	myargv = save_ps_display_args(myargc, myargv);
 	/* create MemoryContexts */
 	MemoryContextInit();
 
@@ -434,7 +422,7 @@ get_pool_key_filename(char *poolKeyFile)
 
 		if (!get_home_directory(homedir, sizeof(homedir)))
 			return false;
-		snprintf(poolKeyFile, POOLMAXPATHLEN, "%s/%s", homedir, POOLKEYFILE);
+		snprintf(poolKeyFile, POOLMAXPATHLEN + sizeof(POOLKEYFILE) + 1, "%s/%s", homedir, POOLKEYFILE);
 	}
 	return true;
 }

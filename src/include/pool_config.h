@@ -26,12 +26,15 @@
 #ifndef POOL_CONFIG_H
 #define POOL_CONFIG_H
 
+#include <sys/utsname.h>
+
 #include "pcp/libpcp_ext.h"
 
 /*
  * watchdog
  */
 #define WD_MAX_HOST_NAMELEN (128)
+#define WD_MAX_NODE_NAMELEN (WD_MAX_HOST_NAMELEN + POOLCONFIG_MAXPORTLEN + sizeof(((struct utsname *)NULL)->sysname) + sizeof(((struct utsname *)NULL)->nodename) + 3)
 #define WD_MAX_PATH_LEN (128)
 #define MAX_WATCHDOG_NUM (128)
 #define WD_SEND_TIMEOUT (1)

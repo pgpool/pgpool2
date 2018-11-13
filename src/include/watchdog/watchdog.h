@@ -111,7 +111,7 @@ typedef struct WatchdogNode
 									 * from the node */
 	struct timeval last_sent_time;	/* timestamp when last packet was sent on
 									 * the node */
-	char		nodeName[WD_MAX_HOST_NAMELEN];	/* name of this node */
+	char		nodeName[WD_MAX_NODE_NAMELEN];	/* name of this node */
 	char		hostname[WD_MAX_HOST_NAMELEN];	/* host name */
 	int			wd_port;		/* watchdog port */
 	int			pgpool_port;	/* pgpool port */
