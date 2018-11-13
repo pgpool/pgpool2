@@ -326,7 +326,7 @@ rewrite_timestamp_walker(Node *node, void *context)
 					TypeCast	*tc = makeNode(TypeCast);
 					tc->arg = makeTsExpr(ctx);
 					tc->typeName = SystemTypeName("text");
-	
+
 					fcall->funcname = SystemFuncName("timestamptz");
 					fcall->args = list_make1(tc);
 					ctx->rewrite = true;
@@ -850,7 +850,8 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
 {
 	int16		 tmp2,
 				 num_params,
-				 num_formats;
+				 num_formats,
+				 num_formats_new;
 	int32		 tmp4;
 	int			 i,
 				 ts_len,
@@ -863,10 +864,11 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
 
 #ifdef TIMESTAMPDEBUG
 	fprintf(stderr, "message length:%d\n", *len);
-	for(i=0;i<*len;i++)
+	for(i = 0; i < *len; i++)
 	{
 		fprintf(stderr, "%02x ", orig_msg[i]);
 	}
+	fprintf(stderr, "\n");
 #endif
 
 	ts = get_current_timestamp(backend);
@@ -884,59 +886,86 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
 	/* allocate extra memory for parameter formats */
 	num_org_params = message->query_context->num_original_params;
 	new_msg = copy_to = (char *) palloc(*len + sizeof(int16) * (message->num_tsparams + num_org_params));
+
 	copy_from = orig_msg;
 
-	/* portal_name */
+	/* 1. portal_name */
 	copy_len = strlen(copy_from) + 1;
 	memcpy(copy_to, copy_from, copy_len);
-	copy_to += copy_len; copy_from += copy_len;
+	copy_to += copy_len;
+	copy_from += copy_len;
 
-	/* stmt_name */
+	/* 2. stmt_name */
 	copy_len = strlen(copy_from) + 1;
 	memcpy(copy_to, copy_from, copy_len);
-	copy_to += copy_len; copy_from += copy_len;
+	copy_to += copy_len;
+	copy_from += copy_len;
 
-	/* format code */
+	/* 3. format codes */
+
+	/* 3.1. the number of format codes */
 	memcpy(&tmp2, copy_from, sizeof(int16));
-	copy_len = sizeof(int16);
-	tmp2 = num_formats = ntohs(tmp2);
+	num_formats = ntohs(tmp2);
 
-	if (num_formats >= 1)
+	if (num_formats == 0)
 	{
-		/* this means the specified format code is applied all original parameters */
+		/*
+		 * If num_formats is 0, the original message has no parameters or the parameter formats are all text,
+		 * so we don't need additional format codes since timestamp parametes use text as its format.
+		 */
+		num_formats_new = 0;
+	}
+	else
+	{
+		/* If num formats is 1, this means the specified format code is applied for all original parameters,
+		 * so enlarge message length to specify format codes for each of original paramters. */
 		if (num_formats == 1)
-		{
 			*len += (num_org_params - 1) * sizeof(int16);
-			tmp2 += num_org_params - 1;
-		}
 
 		/* enlarge message length for timestamp parameter's formats */
 		*len += message->num_tsparams * sizeof(int16);
-		tmp2 += message->num_tsparams;
+		num_formats_new = num_org_params + message->num_tsparams;
 	}
 
-	tmp2 = htons(tmp2);
-	memcpy(copy_to, &tmp2, copy_len);	/* copy number of format codes */
-	copy_to += copy_len; copy_from += copy_len;
+	/* copy the number of format codes */
+	tmp2 = htons(num_formats_new);
+	copy_len = sizeof(int16);
+	memcpy(copy_to, &tmp2, copy_len);
+	copy_to += copy_len;
+	copy_from += copy_len;
 
-	copy_len = num_formats * sizeof(int16);
-
-	memcpy(copy_to, copy_from, copy_len);		/* copy format codes */
-	copy_to += copy_len; copy_from += copy_len;
-
+	/* 3.2. the format codes */
 	if (num_formats >= 1)
 	{
-		/* copy the specified format code as numbers of original parameters */
+
+		/* If num_formats is 1, copy the specified format code as numbers of original parameters */
 		if (num_formats == 1)
 		{
-			memcpy(copy_to, copy_from, (num_org_params - 1) * sizeof(int16));
-			copy_to += (num_org_params - 1) * sizeof(int16);
+			int16	org_format_code;
+			memcpy(&org_format_code, copy_from, sizeof(int16));
+			copy_from += copy_len;
+
+			for (i = 0; i < num_org_params; i++)
+			{
+				memcpy(copy_to, &org_format_code, sizeof(int16));
+				copy_to += sizeof(int16);
+			}
+		}
+		/* otherwize, copy the original format codes as they are*/
+		else
+		{
+			copy_len = num_formats * sizeof(int16);
+			memcpy(copy_to, copy_from, copy_len);
+			copy_to += copy_len;
+			copy_from += copy_len;
 		}
 
 		/* set additional format codes to zero(text) */
 		memset(copy_to, 0, message->num_tsparams * sizeof(int16));
 		copy_to += sizeof(int16) * message->num_tsparams;
 	}
+
+	/* 4. parameters */
 
 	/* num params */
 	memcpy(&tmp2, copy_from, sizeof(int16));
@@ -946,7 +975,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
 	memcpy(copy_to, &tmp2, sizeof(int16));
 	copy_to += copy_len; copy_from += copy_len;
 
-	/* params */
+	/* original params */
 	copy_len = 0;
 	for (i = 0; i < num_params; i++)
 	{
@@ -965,6 +994,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
 	memcpy(copy_to, copy_from, copy_len);
 	copy_to += copy_len; copy_from += copy_len;
 
+	/* timestamp params */
 	tmp4 = htonl(ts_len);
 	for (i = 0; i < message->num_tsparams; i++)
 	{
@@ -974,11 +1004,20 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
 		copy_to += ts_len;
 	}
 
-	/* result format code */
+	/* 5. result format code */
 	memcpy(&tmp2, copy_from, sizeof(int16));
 	copy_len = sizeof(int16);
 	copy_len += sizeof(int16) * ntohs(tmp2);
 	memcpy(copy_to, copy_from, copy_len);
+
+#ifdef TIMESTAMPDEBUG
+	fprintf(stderr, "message length:%d\n", *len);
+	for(i = 0; i < *len; i++)
+	{
+		fprintf(stderr, "%02x ", new_msg[i]);
+	}
+	fprintf(stderr, "\n");
+#endif
 
 	return new_msg;
 }
