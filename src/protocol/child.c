@@ -2115,7 +2115,7 @@ static void validate_backend_connectivity(int front_end_fd)
 		if(front_end_fd > 0)
 		{
 			POOL_CONNECTION *cp;
-			StartupPacket *sp;
+			volatile StartupPacket *sp;
 
 			/* 
              * we do not want to report socket error, as above errors
@@ -2145,6 +2145,7 @@ static void validate_backend_connectivity(int front_end_fd)
                 FlushErrorState();
 				ereport(FATAL,
 					(errmsg("%s",error_msg),errdetail("%s",error_detail),errhint("%s",error_hint)));
+				pfree(sp);
 			}
 			PG_END_TRY();
 		}
