@@ -59,7 +59,7 @@ main(int argc, char *argv[])
 	char		enc_key[MAX_POOL_KEY_LEN + 1];
 	char		pg_pass[MAX_PGPASS_LEN + 1];
 	char		username[MAX_USER_NAME_LEN + 1];
-	char		key_file_path[POOLMAXPATHLEN];
+	char		key_file_path[POOLMAXPATHLEN + sizeof(POOLKEYFILE) + 1];
 	int			opt;
 	int			optindex;
 	bool		updatepasswd = false;
