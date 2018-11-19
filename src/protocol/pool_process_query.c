@@ -75,7 +75,7 @@ static int	reset_backend(POOL_CONNECTION_POOL * backend, int qcnt);
 static char *get_insert_command_table_name(InsertStmt *node);
 static bool is_cache_empty(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
 static bool is_panic_or_fatal_error(const char *message, int major);
-static int	detect_error(POOL_CONNECTION * master, char *error_code, int major, char class, bool unread);
+static int	extract_message(POOL_CONNECTION * master, char *error_code, int major, char class, bool unread);
 static int	detect_postmaster_down_error(POOL_CONNECTION * master, int major);
 static bool is_internal_transaction_needed(Node *node);
 static bool pool_has_insert_lock(void);
@@ -4199,7 +4199,7 @@ is_panic_or_fatal_error(const char *message, int major)
 static int
 detect_postmaster_down_error(POOL_CONNECTION * backend, int major)
 {
-	int			r = detect_error(backend, ADMIN_SHUTDOWN_ERROR_CODE, major, 'E', false);
+	int			r = extract_message(backend, ADMIN_SHUTDOWN_ERROR_CODE, major, 'E', false);
 
 	if (r < 0)
 	{
@@ -4221,7 +4221,7 @@ detect_postmaster_down_error(POOL_CONNECTION * backend, int major)
 		return r;
 	}
 
-	r = detect_error(backend, CRASH_SHUTDOWN_ERROR_CODE, major, 'N', false);
+	r = extract_message(backend, CRASH_SHUTDOWN_ERROR_CODE, major, 'N', false);
 	if (r < 0)
 	{
 		ereport(LOG,
@@ -4239,7 +4239,7 @@ detect_postmaster_down_error(POOL_CONNECTION * backend, int major)
 int
 detect_active_sql_transaction_error(POOL_CONNECTION * backend, int major)
 {
-	int			r = detect_error(backend, ACTIVE_SQL_TRANSACTION_ERROR_CODE, major, 'E', true);
+	int			r = extract_message(backend, ACTIVE_SQL_TRANSACTION_ERROR_CODE, major, 'E', true);
 
 	if (r == SPECIFIED_ERROR)
 	{
@@ -4253,7 +4253,7 @@ detect_active_sql_transaction_error(POOL_CONNECTION * backend, int major)
 int
 detect_deadlock_error(POOL_CONNECTION * backend, int major)
 {
-	int			r = detect_error(backend, DEADLOCK_ERROR_CODE, major, 'E', true);
+	int			r = extract_message(backend, DEADLOCK_ERROR_CODE, major, 'E', true);
 
 	if (r == SPECIFIED_ERROR)
 		ereport(DEBUG1,
@@ -4265,7 +4265,7 @@ detect_deadlock_error(POOL_CONNECTION * backend, int major)
 int
 detect_serialization_error(POOL_CONNECTION * backend, int major, bool unread)
 {
-	int			r = detect_error(backend, SERIALIZATION_FAIL_ERROR_CODE, major, 'E', unread);
+	int			r = extract_message(backend, SERIALIZATION_FAIL_ERROR_CODE, major, 'E', unread);
 
 	if (r == SPECIFIED_ERROR)
 		ereport(DEBUG1,
@@ -4277,7 +4277,7 @@ detect_serialization_error(POOL_CONNECTION * backend, int major, bool unread)
 int
 detect_query_cancel_error(POOL_CONNECTION * backend, int major)
 {
-	int			r = detect_error(backend, QUERY_CANCEL_ERROR_CODE, major, 'E', true);
+	int			r = extract_message(backend, QUERY_CANCEL_ERROR_CODE, major, 'E', true);
 
 	if (r == SPECIFIED_ERROR)
 		ereport(DEBUG1,
@@ -4287,12 +4287,12 @@ detect_query_cancel_error(POOL_CONNECTION * backend, int major)
 }
 
 /*
- * detect_error: Detect specified error from error code.
- * returns 0 in case of sucess or 1 in cause of specified error.
- * and throws an ereport for all other errors
+ * extract_message: extract specified error by an error code.
+ * returns 0 in case of sucess or 1 in case of specified error.
+ * throws an ereport for all other errors.
  */
 static int
-detect_error(POOL_CONNECTION * backend, char *error_code, int major, char class, bool unread)
+extract_message(POOL_CONNECTION * backend, char *error_code, int major, char class, bool unread)
 {
 	int			is_error = 0;
 	char		kind;
@@ -4310,7 +4310,7 @@ detect_error(POOL_CONNECTION * backend, char *error_code, int major, char class,
 	p += sizeof(kind);
 
 	ereport(DEBUG5,
-			(errmsg("detect error: kind: %c", kind)));
+			(errmsg("extract_message: kind: %c", kind)));
 
 
 	/* Specified class? */
@@ -4335,7 +4335,7 @@ detect_error(POOL_CONNECTION * backend, char *error_code, int major, char class,
 
 			if (readlen >= sizeof(buf))
 				ereport(ERROR,
-						(errmsg("unable to detect error"),
+						(errmsg("unable to extract message"),
 						 errdetail("not enough space in buffer")));
 
 			memcpy(p, str, len);
@@ -4364,7 +4364,7 @@ detect_error(POOL_CONNECTION * backend, char *error_code, int major, char class,
 
 			if (readlen >= sizeof(buf))
 				ereport(ERROR,
-						(errmsg("unable to detect error"),
+						(errmsg("unable to extract message"),
 						 errdetail("not enough space in buffer")));
 
 			memcpy(p, str, len);
