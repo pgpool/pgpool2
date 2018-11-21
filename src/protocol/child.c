@@ -511,6 +511,12 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	int protov;
 	int len;
 	char *p;
+	char **guc_options;
+	int opt_num = 0;
+	char *sp_sort;
+	char *tmpopt;
+	int i;
+	int j;
 
 	sp = (StartupPacket *)palloc0(sizeof(*sp));
 	enable_authentication_timeout();
@@ -537,7 +543,6 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	memcpy(&protov, sp->startup_packet, sizeof(protov));
 	sp->major = ntohl(protov)>>16;
 	sp->minor = ntohl(protov) & 0x0000ffff;
-	p = sp->startup_packet;
     cp->protoVersion = sp->major;
 
 	switch(sp->major)
@@ -554,6 +559,57 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 			break;
 
 		case PROTO_MAJOR_V3: /* V3 */
+			/* copy startup_packet */
+			sp_sort = palloc0(len);
+			memcpy(sp_sort,sp->startup_packet,len);
+
+			p = sp_sort;
+			p += sizeof(int);	/* skip protocol version info */
+			/* count the number of options */
+			while(*p)
+			{
+				p += (strlen(p) + 1); /* skip option name */
+				p += (strlen(p) + 1); /* skip option value */
+				opt_num ++;
+			}
+			guc_options = (char **)palloc0(opt_num * sizeof(char *));
+			/* get guc_option name list */
+			p = sp_sort + sizeof(int);
+			for(i = 0; i < opt_num; i++)
+			{
+				guc_options[i] = p;
+				p += (strlen(p) + 1); /* skip option name */
+				p += (strlen(p) + 1); /* skip option value */
+			}
+			/* sort option name using bubble sort */
+			for (i = 0; i < opt_num - 1 ; i++)
+			{
+				for (j = i + 1; j < opt_num; j++)
+				{
+					if (strcmp(guc_options[i], guc_options[j]) > 0)
+					{
+						tmpopt = guc_options[i];
+						guc_options[i] = guc_options[j];
+						guc_options[j] = tmpopt;
+					}
+				}
+			}
+
+			p = sp->startup_packet + sizeof(int);	/* skip protocol version info */
+			for (i = 0; i < opt_num; i++)
+			{
+				tmpopt = guc_options[i];
+				memcpy(p, tmpopt ,strlen(tmpopt) + 1); /* memcpy option name */
+				p += (strlen(tmpopt) + 1);
+				tmpopt += (strlen(tmpopt) + 1);
+				memcpy(p, tmpopt ,strlen(tmpopt) + 1); /* memcpy option value */
+				p += (strlen(tmpopt) + 1);
+			}
+
+			pfree(guc_options);
+			pfree(sp_sort);
+
+			p = sp->startup_packet;
 			p += sizeof(int);	/* skip protocol version info */
 
 			while(*p)
