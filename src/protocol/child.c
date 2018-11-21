@@ -91,6 +91,7 @@ static bool backend_cleanup(POOL_CONNECTION* volatile *frontend, POOL_CONNECTION
 static void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp);
 static int choose_db_node_id(char *str);
 static void child_will_go_down(int code, Datum arg);
+static int opt_sort(const void *a, const void *b);
 /*
  * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
  */
@@ -512,7 +513,6 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 	char *sp_sort;
 	char *tmpopt;
 	int i;
-	int j;
 
 	sp = (StartupPacket *)palloc0(sizeof(*sp));
 	enable_authentication_timeout();
@@ -577,19 +577,8 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 				p += (strlen(p) + 1); /* skip option name */
 				p += (strlen(p) + 1); /* skip option value */
 			}
-			/* sort option name using bubble sort */
-			for (i = 0; i < opt_num - 1 ; i++)
-			{
-				for (j = i + 1; j < opt_num; j++)
-				{
-					if (strcmp(guc_options[i], guc_options[j]) > 0)
-					{
-						tmpopt = guc_options[i];
-						guc_options[i] = guc_options[j];
-						guc_options[j] = tmpopt;
-					}
-				}
-			}
+			/* sort option name using quick sort */
+			qsort( (void *)guc_options, opt_num, sizeof(char *), opt_sort );
 
 			p = sp->startup_packet + sizeof(int);	/* skip protocol version info */
 			for (i = 0; i < opt_num; i++)
@@ -2540,4 +2529,9 @@ int pg_frontend_exists(void)
 	if (processType != PT_CHILD || child_frontend == NULL)
 		return -1;
 	return 0;
+}
+
+static int opt_sort(const void *a, const void *b)
+{
+	return strcmp( *(char **)a, *(char **)b);
 }
