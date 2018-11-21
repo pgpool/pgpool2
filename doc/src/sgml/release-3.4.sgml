@@ -1,6 +1,85 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id=release-3-4-21> 
+  <title>Release 3.4.21</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2018-11-22</simpara>
+  </note>
+
+  <sect2>
+   <title>Bug fixes</title>
+  <itemizedlist>
+
+   <listitem>
+<!--
+2018-11-21 [8be3528]
+-->
+    
+    <para>
+     Fix to sort startup packet's parameters sent by client. 
+     (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=444">bug 444</ulink>)(Takuma Hoshiai)
+    </para>
+    <para>
+     If order of startup packet's parameters differ between cached connection
+     pools and connection request, did't use connection pool ,and created new
+     connection pool.
+    </para>
+   </listitem>
+    
+   <listitem>
+<!--
+2018-11-13 [8d445dd]
+-->
+    
+    <para>
+     Fix segmentation fault occurs when a certain Bind message is sent in native replication mode. 
+     (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=443">bug 443</ulink>)(Bo Peng)
+    </para>
+    <para>
+     If the number of parameter format codes is specified to one, but the number
+     of the original query's parameter is zero, <function>bind_rewrite_timestamp()</>
+	 will call <function>memcpy</> with a negative value. 
+	 This causes segmentation fault.
+    </para>
+    <para>
+     Patch is provided by Yugo Nagata.
+    </para>
+   </listitem>
+    
+   <listitem>
+<!--
+2018-11-08 [6d17384]
+-->
+    
+    <para>
+     Fix a query passed to relcache so that it uses schema qualified table name. (Tatsuo Ishii)
+    </para>
+   </listitem>
+    
+   <listitem>
+<!--
+2018-11-05 [ca3466a]
+-->
+    
+    <para>
+     Fix query cache invalidation bug. (Tatsuo Ishii)
+    </para>
+   </listitem>
+    
+   <listitem>
+<!--
+2018-11-01 [ca3dc43]
+-->
+    <para>
+     Fix memory leak in extended query + query cache enabled. (Tatsuo Ishii)
+    </para>
+   </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
  <sect1 id="release-3-4-20">
   <title>Release 3.4.20</title>
 

@@ -1,6 +1,130 @@
 <!-- doc/src/sgml/release-3.7.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id=release-3-7-7> 
+<!--
+  <title>Release 3.7.7</title>
+-->
+  <title>リリース 3.7.7</title>
+  <note>
+<!--
+   <title>Release Date</title>
+-->
+   <title>リリース日</title>
+   <simpara>2018-11-22</simpara>
+  </note>
+
+  <sect2>
+<!--
+   <title>Bug fixes</title>
+-->
+   <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+<!--
+2018-11-21 [14af2f3]
+-->
+    <para>
+<!--
+     Fix to sort startup packet's parameters sent by client. 
+     (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=444">bug 444</ulink>)(Takuma Hoshiai)
+-->
+クライアントから送信された startup パケットのパラメータをソートするように修正します。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=444">bug 444</ulink>)(Takuma Hoshiai)
+    </para>
+    <para>
+<!--
+     If order of startup packet's parameters differ between cached connection
+     pools and connection request, did't use connection pool ,and created new
+     connection pool.
+-->
+キャッシュされたコネクションプールと接続要求のstartupパケットのパラメータの順序が異なる場合、
+コネクションプールを使用せず、新しいコネクションプールを作成しまていました。
+    </para>
+   </listitem>
+    
+   <listitem>
+<!--
+2018-11-13 [2f5942f]
+-->
+    <para>
+<!--
+     Fix segmentation fault occurs when a certain Bind message is sent in native replication mode. 
+     (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=443">bug 443</ulink>)(Bo Peng)
+-->
+ネイティブレプリケーションモードで特定のBindメッセージが送信されたときに発生するセグメンテーション違反を修正しました。
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=443">bug 443</ulink>) (Bo Peng)
+    </para>
+    <para>
+<!--
+     If the number of parameter format codes is specified to one, but the number
+     of the original query's parameter is zero, bind_rewrite_timestamp() will
+     call memcpy with a negative value. This causes segmentation fault.
+-->
+パラメータ書式コードの数が 1 に指定されて、元のクエリのパラメータの数が 0 の場合、
+<function>bind_rewrite_timestamp()</>に負の値を指定して<function>memcpy</>を呼び出していました。
+これによりセグメンテーション違反が発生していました。
+    </para>
+    <para>
+<!--
+     Patch is provided by Yugo Nagata.
+-->
+パッチがYugo Nagataにより提供されました。
+    </para>
+   </listitem>
+    
+   <listitem>
+<!--
+2018-11-08 [fe23abd]
+-->
+    <para>
+<!--
+     Fix a query passed to relcache so that it uses schema qualified table name. (Tatsuo Ishii)
+-->
+スキーマ名で修飾されたテーブル名を使用するようにクエリキャッシュに渡されるクエリを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+    
+   <listitem>
+<!--
+2018-11-05 [b6dd79b]
+-->
+    <para>
+<!--
+     Fix query cache invalidation bug. (Tatsuo Ishii)
+-->
+クエリキャッシュ無効化のバグを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+    
+   <listitem>
+<!--
+2018-11-03 [d0bdefa]
+-->
+    <para>
+<!--
+     Fix segfault in extended query + query cache case. (Tatsuo Ishii)
+-->
+拡張問い合わせかつクエリキャッシュ有効の場合に発生するセグメンテーション違反を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+    
+   <listitem>
+<!--
+2018-11-01 [c04d979]
+-->
+    <para>
+<!--
+     Fix memory leak in extended query + query cache enabled. (Tatsuo Ishii)
+-->
+拡張問い合わせかつクエリキャッシュ有効の場合に発生するメモリリークを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
  <sect1 id="release-3-7-6">
 <!--
   <title>Release 3.7.6</title>
