@@ -2105,15 +2105,17 @@ validate_backend_connectivity(int front_end_fd)
 										error_hint,
 										__FILE__,
 										__LINE__);
+				
 			}
 			PG_CATCH();
 			{
+				pool_free_startup_packet(sp);
 				FlushErrorState();
 				ereport(FATAL,
 						(errmsg("%s", error_msg), errdetail("%s", error_detail), errhint("%s", error_hint)));
-				pfree(sp);
 			}
 			PG_END_TRY();
+			pool_free_startup_packet(sp);
 		}
 		ereport(FATAL,
 				(errmsg("%s", error_msg), errdetail("%s", error_detail), errhint("%s", error_hint)));
