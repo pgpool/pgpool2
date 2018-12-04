@@ -68,7 +68,7 @@ static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE authentication_timeout(int sig);
 static void send_params(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
 static void send_frontend_exits(void);
-static void connection_count_up(void);
+static int	connection_count_up(void);
 static void connection_count_down(void);
 static bool connect_using_existing_connection(POOL_CONNECTION * frontend,
 								  POOL_CONNECTION_POOL * backend,
@@ -287,6 +287,7 @@ do_child(int *fds)
 		StartupPacket *sp;
 		int			front_end_fd;
 		SockAddr	saddr;
+		int			con_count;
 
 		/* reset per iteration memory context */
 		MemoryContextSwitchTo(ProcessLoopContext);
@@ -317,7 +318,32 @@ do_child(int *fds)
 		if (front_end_fd == RETRY)
 			continue;
 
-		connection_count_up();
+		/*
+		 * Check if max connections from clients execeeded.
+		 */
+		con_count = connection_count_up();
+		if (con_count > (pool_config->num_init_children - pool_config->reserved_connections))
+		{
+			POOL_CONNECTION * cp;
+			cp = pool_open(front_end_fd, false);
+			if (cp == NULL)
+			{
+				connection_count_down();
+				continue;
+			}
+			connection_count_down();
+			pool_send_fatal_message(cp, 3, "53300",
+									"Sorry, too many clients already",
+									"",
+									"",
+									__FILE__, __LINE__);
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+					 errmsg("Sorry, too many clients already")));
+			pool_close(cp);
+			continue;
+		}
+
 		accepted = 1;
 
 		check_config_reload();
@@ -1490,10 +1516,11 @@ discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT * cp)
 }
 
 /*
- * Count up connection counter (from frontend to pgpool)
- * in shared memory
+ * Count up connection counter (from frontend to pgpool) in shared memory and
+ * returns current counter value.  Please note that the returned value may not
+ * be up to date since locking has been already released.
  */
-static void
+static int
 connection_count_up(void)
 {
 	pool_sigset_t oldmask;
@@ -1501,8 +1528,10 @@ connection_count_up(void)
 	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(CONN_COUNTER_SEM);
 	Req_info->conn_counter++;
+	elog(DEBUG5, "connection_count_up: number of connected children: %d", Req_info->conn_counter);
 	pool_semaphore_unlock(CONN_COUNTER_SEM);
 	POOL_SETMASK(&oldmask);
+	return Req_info->conn_counter;
 }
 
 /*
@@ -1526,6 +1555,7 @@ connection_count_down(void)
 	 */
 	if (Req_info->conn_counter > 0)
 		Req_info->conn_counter--;
+	elog(DEBUG5, "connection_count_down: number of connected children: %d", Req_info->conn_counter);
 	pool_semaphore_unlock(CONN_COUNTER_SEM);
 	POOL_SETMASK(&oldmask);
 }

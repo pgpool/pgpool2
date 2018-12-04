@@ -161,6 +161,7 @@ typedef struct
 	int			num_init_children;	/* # of children initially pre-forked */
 	int			listen_backlog_multiplier;	/* determines the size of the
 											 * connection queue */
+	int			reserved_connections;	/* # of reserved connections */
 	bool		serialize_accept;	/* if non 0, serialize call to accept() to
 									 * avoid thundering herd problem */
 	int			child_life_time;	/* if idle for this seconds, child exits */

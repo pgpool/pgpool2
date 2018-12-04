@@ -223,14 +223,15 @@ PCPプロセスが接続を受け付けるUNIXドメインソケットを置く�
 			<productname>Pgpool-II</productname>, <emphasis>they are
 			blocked (not rejected with an error, like <productname>PostgreSQL</>)
 			until a connection to any <productname>Pgpool-II</productname>
-			process is closed</emphasis>.  Up to
+			process is closed</emphasis> unless <xref linkend="guc-reserved-connections">
+			is set to 1 or more..  Up to
 			<xref linkend="guc-listen-backlog-multiplier">*
 			num_init_children can be queued.
 -->
 preforkする<productname>Pgpool-II</productname>のサーバプロセスの数です。
 デフォルト値は32です。
 num_init_childrenは<productname>Pgpool-II</productname>に対してクライアントが同時に接続できる上限の数でもあります。
-num_init_childrenより多いクライアントが<productname>Pgpool-II</productname>に接続しようとした場合、<emphasis>それらのクライアントは、<productname>Pgpool-II</productname>のどれかのプロセスへの接続が閉じられるまで待たされます(<productname>PostgreSQL</>のように接続拒否エラーにはなりません。)</emphasis>。
+num_init_childrenより多いクライアントが<productname>Pgpool-II</productname>に接続しようとした場合、<xref linkend="guc-reserved-connections">が1以上に設定されている場合を除き、<emphasis>それらのクライアントは、<productname>Pgpool-II</productname>のどれかのプロセスへの接続が閉じられるまで待たされます(<productname>PostgreSQL</>のように接続拒否エラーにはなりません。)</emphasis>。
 
 待たされる数の上限は、<xref linkend="guc-listen-backlog-multiplier"> * num_init_children です。
 		</para>
@@ -327,8 +328,58 @@ max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connect
 このパラメータはサーバ起動時にのみ設定可能です。
 		</para>
 	</listitem>
-			</varlistentry>
-		</variablelist>
+	</varlistentry>
+
+      <varlistentry id="guc-reserved-connections" xreflabel="reserved_connections">
+	<term><varname>reserved_connections</varname> (<type>integer</type>)
+	  <indexterm>
+<!--
+	    <primary><varname>reserverd_connections</varname> configuration parameter</primary>
+-->
+	    <primary><varname>reserverd_connections</varname>設定パラメータ</primary>
+	  </indexterm>
+	</term>
+	<listitem>
+	  <para>
+<!--
+	    When this parameter is set to 1 or greater, incoming
+	    connections from clients are not accepted with error
+	    message "Sorry, too many clients already", rather than
+	    blocked if the number of current connections from clients
+	    is more than (<xref linkend="guc-num-init-children"> -
+	    <varname>reserved_connections</varname>). For example,
+	    if <varname>reserved_connections</varname> = 1
+	    and <xref linkend="guc-num-init-children"> = 32, then the
+	    32th connection from a client will be refused. This
+	    behavior is similar
+	    to <productname>PostgreSQL</productname> and good for
+	    systems on which the number of connections from clients is
+	    large and each session may take long time. In this case
+	    length of the listen queue could be very long and may
+	    cause the system unstable. In this situation setting this
+	    parameter to non 0 is a good idea to prevent the listen
+	    queue becomes very long.
+-->
+このパラメータが1以上に設定されていると、(<xref linkend="guc-num-init-children"> - <varname>reserved_connections</varname>)以上のクライアントからの接続はブロックされるのではなく受け付けられず、"Sorry, too many clients already"というエラーになります。
+たとえば、<varname>reserved_connections</varname> = 1で、<xref linkend="guc-num-init-children"> = 32なら、32番目のクライアントからの接続は拒否されます。
+これは、<productname>PostgreSQL</productname>と似た挙動で、クライアントからの接続数が多く、各セッションが長時間に渡るようなシステムで有効です。
+この場合、listenキューが非常に長くなる可能性があり、システムを不安定にさせます。
+こうした状況では、このパラメータを0以外にして、listenキューが長くなるのを防ぐのは良い考えです。
+	    </para>
+	    <para>
+<!--
+	     If this parameter is set to 0, no connection from clients
+	     will be refused. The default value is 0.
+	     This parameter can only be set at server start.
+-->
+このパラメータを0にすると、クライアントからの接続要求は拒否されなくなります。
+デフォルト値は0です。
+このパラメータはサーバ起動時にのみ設定可能です。
+	    </para>
+	</listitem>
+      </varlistentry>
+
+	</variablelist>
 	</sect2>
 
 	<sect2 id="runtime-config-authentication-settings">

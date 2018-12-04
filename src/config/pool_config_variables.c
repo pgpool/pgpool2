@@ -1520,6 +1520,17 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"reserved_connections", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
+			"Number of reserved connections.",
+			CONFIG_VAR_TYPE_INT, false, 0
+		},
+		&g_pool_config.reserved_connections,
+		0,
+		0, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"listen_backlog_multiplier", CFGCXT_INIT, CONNECTION_CONFIG,
 			"length of connection queue from frontend to pgpool-II",
 			CONFIG_VAR_TYPE_INT, false, 0
