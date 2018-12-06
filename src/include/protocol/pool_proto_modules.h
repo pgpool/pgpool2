@@ -168,6 +168,7 @@ extern int detect_deadlock_error(POOL_CONNECTION *master, int major);
 extern int detect_serialization_error(POOL_CONNECTION *master, int major, bool unread);
 extern int detect_active_sql_transaction_error(POOL_CONNECTION *backend, int major);
 extern int detect_query_cancel_error(POOL_CONNECTION *backend, int major);
+extern int	detect_idle_in_transaction_sesion_timeout_error(POOL_CONNECTION * backend, int major);
 extern bool is_partition_table(POOL_CONNECTION_POOL *backend, Node *node);
 extern POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL *cp);
 extern void query_cache_register(char kind, POOL_CONNECTION *frontend, char *database, char *data, int data_len);
