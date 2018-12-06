@@ -67,6 +67,7 @@
 #define QUERY_CANCEL_ERROR_CODE "57014"
 #define ADMIN_SHUTDOWN_ERROR_CODE "57P01"
 #define CRASH_SHUTDOWN_ERROR_CODE "57P02"
+#define IDLE_IN_TRANSACTION_SESSION_TIMEOUT_ERROR_CODE "25P03"
 
 static int reset_backend(POOL_CONNECTION_POOL *backend, int qcnt);
 static char *get_insert_command_table_name(InsertStmt *node);
@@ -4213,6 +4214,19 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 	return is_error;
 }
 
+
+int
+detect_idle_in_transaction_sesion_timeout_error(POOL_CONNECTION * backend, int major)
+{
+	int			r = detect_error(backend, IDLE_IN_TRANSACTION_SESSION_TIMEOUT_ERROR_CODE, major, 'E', true);
+
+	if (r == SPECIFIED_ERROR)
+		ereport(DEBUG1,
+				(errmsg("detecting idle in transaction session timeout error"),
+				 errdetail("idle in transaction session timeout error message from backend")));
+	return r;
+}
+
 /*
  * The function forwards the NOTICE mesaage received from one backend
  * to the frontend and also puts the human readable message to the
@@ -4644,6 +4658,17 @@ pool_config->client_idle_limit)));
                                  errdetail("User was holding a relation lock for too long."),
                                     errhint("In a moment you should be able to reconnect to the database and repeat your command.")));
 
+				}
+
+				/*
+				 * connection was terminated due to idle_in_transaction_sesion_timeout expired
+				 */
+				r = detect_idle_in_transaction_sesion_timeout_error(CONNECTION(backend, i), MAJOR(backend));
+				if (r == SPECIFIED_ERROR)
+				{
+					ereport(FATAL,
+							(pool_error_code(IDLE_IN_TRANSACTION_SESSION_TIMEOUT_ERROR_CODE),
+							 errmsg("terminating connection due to idle-in-transaction timeout")));
 				}
 
 				/*
