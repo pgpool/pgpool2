@@ -2759,7 +2759,8 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 						pmsg = pool_pending_message_pull_out();
 						pool_pending_message_free_pending_message(pmsg);
 
-						pool_unset_query_in_progress();
+						if (pool_is_doing_extended_query_message())
+							pool_unset_query_in_progress();
 						pool_set_command_success();
 						status = POOL_CONTINUE;
 						break;
@@ -2768,7 +2769,8 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 
 				status = CloseComplete(frontend, backend);
 				pool_set_command_success();
-				pool_unset_query_in_progress();
+				if (pool_is_doing_extended_query_message())
+					pool_unset_query_in_progress();
 				break;
 
 			case 'E':			/* ErrorResponse */
