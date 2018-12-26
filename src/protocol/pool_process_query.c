@@ -851,13 +851,18 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 	pool_write(frontend, &sendlen, sizeof(sendlen));
 
 	/*
-	 * Optimization for "Data Row" message.  Since it is too often to receive
-	 * and forward "Data Row" message, we do not flush the message to frontend
-	 * now. We expect that "Command Complete" message (or "Error response" or
-	 * "Notice response" message) follows the stream of data row message
-	 * anyway, so flushing will be done at that time.
+	 * Optimization for "Data Row" and "CopyData" message.  Since it is too
+	 * often to receive and forward "Data Row" message, we do not flush the
+	 * message to frontend now. We expect that "Command Complete" message (or
+	 * "Error response" or "Notice response" message) follows the stream of
+	 * data row message anyway, so flushing will be done at that time.
+	 *
+	 * Same thing can be said to CopyData message. Tremendous number of
+	 * CopyData messages are sent to frontend (typical use case is pg_dump).
+	 * So eliminating per CopyData flush significantly enhances performance
+	 * lot.
 	 */
-	if (kind == 'D')
+	if (kind == 'D' || kind == 'd')
 	{
 		pool_write(frontend, p1, len1);
 	}
