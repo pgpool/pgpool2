@@ -220,10 +220,10 @@ unloggedテーブルをチェックするため<productname>Pgpool-II</productna
 
         <para>
 <!--
-          Specifies the full path to a directory to store the <literal>pool_status</literal>.
+          Specifies the full path to a directory to store the <literal>pgpool_status</literal>.
           Default is <literal>"/tmp"</literal>.
 -->
-<literal>pool_status</literal>ファイルを格納するディレクトリのフルパスを指定します。
+<literal>pgpool_status</literal>ファイルを格納するディレクトリのフルパスを指定します。
 デフォルトは<literal>"/tmp"</literal>です。
         </para>
 
