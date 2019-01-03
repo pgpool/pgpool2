@@ -152,7 +152,7 @@
       <listitem>
 
         <para>
-          Specifies the full path to a directory to store the <literal>pool_status</literal>.
+          Specifies the full path to a directory to store the <literal>pgpool_status</literal>.
           Default is <literal>"/tmp"</literal>.
         </para>
 
