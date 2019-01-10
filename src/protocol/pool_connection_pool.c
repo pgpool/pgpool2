@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -882,6 +882,9 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 					(errmsg("creating new connection to backend"),
 					 errdetail("skipping backend slot %d because global backend_status = %d",
 							   i, BACKEND_INFO(i).backend_status)));
+
+			/* sync local status with global status */
+			*(my_backend_status[i]) = BACKEND_INFO(i).backend_status;
 			continue;
 		}
 
@@ -915,7 +918,7 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 					/* set down status to local status area */
 					*(my_backend_status[i]) = CON_DOWN;
 
-					/* if master_node_id is not updated, the update it */
+					/* if master_node_id is not updated, then update it */
 					if (Req_info->master_node_id == i)
 					{
 						int			old_master = Req_info->master_node_id;
