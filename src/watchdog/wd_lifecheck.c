@@ -62,6 +62,7 @@ typedef struct
 {
 	LifeCheckNode *lifeCheckNode;
 	int			retry;			/* retry times (not used?) */
+	char		*password;
 }			WdPgpoolThreadArg;
 
 typedef struct WdUpstreamConnectionData
@@ -80,7 +81,7 @@ static bool wd_ping_all_server(void);
 static WdUpstreamConnectionData * wd_get_server_from_pid(pid_t pid);
 
 static void *thread_ping_pgpool(void *arg);
-static PGconn *create_conn(char *hostname, int port);
+static PGconn *create_conn(char *hostname, int port, char *password);
 
 static pid_t lifecheck_main(void);
 static void check_pgpool_status(void);
@@ -103,7 +104,7 @@ static const char *lifecheck_child_name(pid_t pid);
 static void reaper(void);
 static int	is_wd_lifecheck_ready(void);
 static int	wd_lifecheck(void);
-static int	wd_ping_pgpool(LifeCheckNode * node);
+static int	wd_ping_pgpool(LifeCheckNode * node, char *password);
 static pid_t fork_lifecheck_child(void);
 
 
@@ -640,6 +641,7 @@ is_wd_lifecheck_ready(void)
 {
 	int			rtn = WD_OK;
 	int			i;
+	char	   *password = NULL;
 
 	for (i = 0; i < gslifeCheckCluster->nodeCount; i++)
 	{
@@ -648,7 +650,10 @@ is_wd_lifecheck_ready(void)
 		/* query mode */
 		if (pool_config->wd_lifecheck_method == LIFECHECK_BY_QUERY)
 		{
-			if (wd_ping_pgpool(node) == WD_NG)
+			if (!password)
+				password = get_pgpool_config_user_password(pool_config->wd_lifecheck_user,
+														   pool_config->wd_lifecheck_password);
+			if (wd_ping_pgpool(node, password) == WD_NG)
 			{
 				ereport(DEBUG1,
 						(errmsg("watchdog checking life check is ready"),
@@ -681,6 +686,9 @@ is_wd_lifecheck_ready(void)
 							pool_config->wd_lifecheck_method)));
 		}
 	}
+
+	if (password)
+		pfree(password);
 
 	return rtn;
 }
@@ -803,6 +811,8 @@ check_pgpool_status_by_query(void)
 	LifeCheckNode *node;
 	int			rc,
 				i;
+	char	   *password = get_pgpool_config_user_password(pool_config->wd_lifecheck_user,
+														   pool_config->wd_lifecheck_password);
 
 	/* thread init */
 	pthread_attr_init(&attr);
@@ -813,6 +823,7 @@ check_pgpool_status_by_query(void)
 	{
 		node = &gslifeCheckCluster->lifeCheckNodes[i];
 		thread_arg[i].lifeCheckNode = node;
+		thread_arg[i].password = password;
 		rc = watchdog_thread_create(&thread[i], &attr, thread_ping_pgpool, (void *) &thread_arg[i]);
 	}
 
@@ -875,6 +886,9 @@ check_pgpool_status_by_query(void)
 			}
 		}
 	}
+
+	if (password)
+		pfree(password);
 }
 
 /*
@@ -886,8 +900,7 @@ thread_ping_pgpool(void *arg)
 {
 	uintptr_t	rtn;
 	WdPgpoolThreadArg *thread_arg = (WdPgpoolThreadArg *) arg;
-
-	rtn = (uintptr_t) wd_ping_pgpool(thread_arg->lifeCheckNode);
+	rtn = (uintptr_t) wd_ping_pgpool(thread_arg->lifeCheckNode,thread_arg->password);
 
 	pthread_exit((void *) rtn);
 }
@@ -896,12 +909,10 @@ thread_ping_pgpool(void *arg)
  * Create connection to pgpool
  */
 static PGconn *
-create_conn(char *hostname, int port)
+create_conn(char *hostname, int port, char *password)
 {
 	static char conninfo[1024];
 	PGconn	   *conn;
-	char	   *password = get_pgpool_config_user_password(pool_config->wd_lifecheck_user,
-														   pool_config->wd_lifecheck_password);
 
 
 	if (strlen(pool_config->wd_lifecheck_dbname) == 0)
@@ -927,9 +938,6 @@ create_conn(char *hostname, int port)
 			 password ? password : "",
 			 pool_config->wd_interval / 2 + 1);
 	conn = PQconnectdb(conninfo);
-
-	if (password)
-		pfree(password);
 
 	if (PQstatus(conn) != CONNECTION_OK)
 	{
@@ -987,11 +995,11 @@ wd_check_heartbeat(LifeCheckNode * node)
  * Check if pgpool can accept the lifecheck query.
  */
 static int
-wd_ping_pgpool(LifeCheckNode * node)
+wd_ping_pgpool(LifeCheckNode * node, char* password)
 {
 	PGconn	   *conn;
 
-	conn = create_conn(node->hostName, node->pgpoolPort);
+	conn = create_conn(node->hostName, node->pgpoolPort, password);
 	if (conn == NULL)
 		return WD_NG;
 	return ping_pgpool(conn);
