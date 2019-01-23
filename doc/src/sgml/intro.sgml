@@ -88,7 +88,7 @@
 	<productname>Pgpool-II</productname> maintains established
 	connections to the <productname>PostgreSQL</productname>
 	servers, and reuses them whenever a new connection with the
-	same properties (i.e. user name, database, protocol version)
+	same properties (i.e. user name, database, protocol version, and other connection parameters if any)
 	comes in. It reduces the connection overhead, and improves
 	system's overall throughput.
       </para>
@@ -157,8 +157,36 @@
 	performance. <productname>Pgpool-II</productname> also has a
 	limit on the maximum number of connections, but extra
 	connections will be queued instead of returning an error
-	immediately.
+	immediately. However, you can configure to return an error
+	when the connection limit is exceeded (4.1 or later).
 	</para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Watchdog</term>
+    <listitem>
+      <para>
+	Watchdog can coordinate multiple <productname>Pgpool-II</productname>,
+	create a robust cluster system and avoid the single point of failure or split brain.
+	Watchdog can perform lifecheck against other <productname>pgpool-II</productname> nodes,
+	to detect a fault of <productname>Pgpoll-II</productname>.
+	If active <productname>Pgpool-II</productname> goes down, standby
+	<productname>Pgpool-II</productname> can be promoted to active, and take over Virtual IP.
+	  </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>In Memory Query Cache</term>
+    <listitem>
+      <para>
+	In memory query cache allows to save a pair of SELECT statement and its result.
+	If an identical SELECTs comes in, <productname>Pgpool-II</productname> returns the
+	value from cache. Since no SQL parsing nor access to <productname>PostgreSQL</productname>
+	are involved, using in memory cache is extremely fast. On the other hand, it might
+	be slower than the normal path in some cases, because it adds some overhead of storing cache data.
+	  </para>
     </listitem>
    </varlistentry>
 
