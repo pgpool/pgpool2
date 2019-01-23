@@ -177,7 +177,7 @@ function set_watchdog_params {
     cat >> $conf <<EOF
 use_watchdog = on
 wd_interval = 1
-wd_priorty = $priority
+wd_priority = $priority
 wd_hostname = 'localhost'
 wd_port = $wd_port
 wd_heartbeat_port = $wd_heartbeat_port
