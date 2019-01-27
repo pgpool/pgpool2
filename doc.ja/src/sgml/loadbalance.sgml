@@ -703,6 +703,13 @@ white_function_list = 'get_.*,select_.*'
           </para>
         </example>
 
+        <note>
+          <para>
+	    <productname>Pgpool-II</productname>はリストを参照する際に、暗黙のうちに入力SQLの関数名からスキーマ修飾部分を削除するため、<xref linkend="guc-white-function-list">でスキーマ修飾を使えません。
+	    その結果、リスト中のスキーマ修飾された関数名は、決して入力SQLの関数と一致しません。
+          </para>
+        </note>
+
         <para>
 <!--
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
@@ -761,6 +768,13 @@ black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
           </programlisting>
           </para>
         </example>
+
+        <note>
+          <para>
+	    <productname>Pgpool-II</productname>はリストを参照する際に、暗黙のうちに入力SQLの関数名からスキーマ修飾部分を削除するため、<xref linkend="guc-black-function-list">でスキーマ修飾を使えません。
+	    その結果、リスト中のスキーマ修飾された関数名は、決して入力SQLの関数と一致しません。
+          </para>
+        </note>
 
         <note>
           <para>
