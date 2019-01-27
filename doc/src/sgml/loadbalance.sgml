@@ -506,6 +506,19 @@ white_function_list = 'get_.*,select_.*'
           </para>
         </example>
 
+        <note>
+          <para>
+            Schema qualifications can not be used
+	    in <xref linkend="guc-white-function-list">
+	    because <productname>Pgpool-II</productname> slilently
+	    ignores a schema qualification in function names appearing
+	    in an input SQL while comparing the list and the input
+	    SQL. As a result, a schema qualified function name in the
+	    list never matches function names appearing in the input
+	    SQL.
+          </para>
+        </note>
+
         <para>
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
@@ -543,6 +556,19 @@ black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
           </programlisting>
           </para>
         </example>
+
+        <note>
+          <para>
+            Schema qualifications can not be used
+	    in <xref linkend="guc-black-function-list">
+	    because <productname>Pgpool-II</productname> slilently
+	    ignores a schema qualification in function names appearing
+	    in an input SQL while comparing the list and the input
+	    SQL. As a result, a schema qualified function name in the
+	    list never matches function names appearing in the input
+	    SQL.
+          </para>
+        </note>
 
         <note>
           <para>
