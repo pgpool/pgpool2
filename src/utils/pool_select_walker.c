@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -191,7 +191,14 @@ int pattern_compare(char *str, const int type, const char *param_name)
 	}
 
 	s = strip_quote(str);
-	for (i = 0; i < *pattc; i++) {
+	if (!s)
+	{
+		elog(WARNING, "pattern_compare: strip_quote() returns error");
+		return -1;
+	}
+
+	for (i = 0; i < *pattc; i++)
+	{
 		if (lists_patterns[i].type != type)
 			continue;
 
@@ -233,12 +240,31 @@ int pattern_compare(char *str, const int type, const char *param_name)
 	return result;
 }
 
-static char *strip_quote(char *str)
+/*
+ * Returns double quotes stripped version of malloced string.
+ * Callers must free() after using it.
+ * Returns NULL on error.
+ */
+static char *
+strip_quote(char *str)
 {
-	char *after;
-	int i = 0;
+	char	   *after;
+	int		   len;
+	int			i = 0;
 
-	after = malloc(sizeof(char) * strlen(str) + 1);
+	len = strlen(str);
+	after = malloc(sizeof(char) * len + 1);
+	if (!after)
+	{
+		return NULL;
+	}
+
+	if (len == 0)
+	{
+		/* empty string case */
+		*after = '\0';
+		return after;
+	}
 
 	do {
 		if (*str != '"')
