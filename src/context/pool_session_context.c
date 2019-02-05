@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -133,6 +133,9 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 
 	/* Backends have not ignored messages yet */
 	pool_unset_ignore_till_sync();
+
+	/* Unset suspend reading from frontend flag */
+	pool_unset_suspend_reading_from_frontend();
 
 	/* Initialize where to send map for PREPARE statements */
 #ifdef NOT_USED
@@ -1619,6 +1622,33 @@ int pool_get_minor_version(void)
 		return session_context->minor;
 	}
 	return 0;
+}
+
+/*
+ * Is suspend_reading_from_frontend flag set?
+ */
+bool
+pool_is_suspend_reading_from_frontend(void)
+{
+	return session_context->suspend_reading_from_frontend;
+}
+
+/*
+ * Set suspend_reading_from_frontend flag.
+ */
+void
+pool_set_suspend_reading_from_frontend(void)
+{
+	session_context->suspend_reading_from_frontend = true;
+}
+
+/*
+ * Unset suspend_reading_from_frontend flag.
+ */
+void
+pool_unset_suspend_reading_from_frontend(void)
+{
+	session_context->suspend_reading_from_frontend = false;
 }
 
 #ifdef NOT_USED

@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -96,9 +96,10 @@ static char *
 flatten_set_variable_args(const char *name, List *args);
 static bool
 process_pg_terminate_backend_func(POOL_QUERY_CONTEXT *query_context);
-static void pool_wait_till_ready_for_query(POOL_CONNECTION_POOL *backend);
 static void pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION *frontend,
 														 POOL_CONNECTION_POOL *backend);
+static void pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION * frontend,
+											 POOL_CONNECTION_POOL * backend);
 
 /*
  * This is the workhorse of processing the pg_terminate_backend function to
@@ -2297,6 +2298,10 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 	if (pool_read_buffer_is_empty(frontend) && frontend->no_forward != 0)
 		return POOL_CONTINUE;
 
+	/* Are we suspending reading from frontend? */
+	if (pool_is_suspend_reading_from_frontend())
+		return POOL_CONTINUE;
+
 	pool_read(frontend, &fkind, 1);
 
 	ereport(DEBUG1,
@@ -2435,8 +2440,11 @@ POOL_STATUS ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 			if (SL_MODE)
 			{
-				/* Wait till Ready for query received */
-				pool_wait_till_ready_for_query(backend);
+				/*
+				 * From now on suspend to read from frontend until we receive
+				 * ready for query message from backend.
+				 */
+				pool_set_suspend_reading_from_frontend();
 			}
 			break;
 
@@ -2571,6 +2579,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				ereport(DEBUG1,
 					(errmsg("processing backend response"),
 						 errdetail("Ready For Query received")));
+				pool_unset_suspend_reading_from_frontend();
 				status = ReadyForQuery(frontend, backend, true, true);
 #ifdef DEBUG
 				extern bool stop_now;
@@ -2653,6 +2662,7 @@ POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 				{
 					pool_set_ignore_till_sync();
 					pool_unset_query_in_progress();
+					pool_unset_suspend_reading_from_frontend();
 					if (SL_MODE)
 						pool_discard_except_sync_and_ready_for_query(frontend, backend);
 				}
@@ -3504,6 +3514,7 @@ flatten_set_variable_args(const char *name, List *args)
 	return buf.data;
 }
 
+#ifdef NOT_USED
 /* Called when sync message is received.
  * Wait till ready for query received.
  */
@@ -3545,6 +3556,7 @@ static void pool_wait_till_ready_for_query(POOL_CONNECTION_POOL *backend)
 		}
 	}
 }
+#endif
 
 /*
  * Called when error response received in streaming replication mode and doing
