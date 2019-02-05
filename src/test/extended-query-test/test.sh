@@ -194,7 +194,7 @@ do
     ./shutdownall >/dev/null 2>&1
     cp pgpool.conf.back etc/pgpool.conf 
     process=`ps x|grep pgpool|grep idle`
-    if [ ! -z $process ]
+    if [ ! -z "$process" ]
     then
 	echo "Some process remains. Aborting tests"
 	exit 1
