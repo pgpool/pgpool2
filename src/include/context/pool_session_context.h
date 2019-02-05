@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -256,6 +256,15 @@ typedef struct
 	int			major;
 	/* Protocol minor version number */
 	int			minor;
+
+	/*
+	 * Do not read messages from frontend. Used in extended protocol +
+	 * streaming replication.  If sync message is received from frontend, this
+	 * flag prevent from reading any message from frontend until read for
+	 * query message arrives from backend.
+	 */
+	bool		suspend_reading_from_frontend;
+
 #ifdef NOT_USED
 	/* Preferred "master" node id. Only used for SimpleForwardToFrontend. */
 	int			preferred_master_node_id;
@@ -328,6 +337,10 @@ extern void dump_pending_message(void);
 extern void pool_set_major_version(int major);
 extern void pool_set_minor_version(int minor);
 extern int	pool_get_minor_version(void);
+extern bool pool_is_suspend_reading_from_frontend(void);
+extern void pool_set_suspend_reading_from_frontend(void);
+extern void pool_unset_suspend_reading_from_frontend(void);
+
 #ifdef NOT_USED
 extern void pool_set_preferred_master_node_id(int node_id);
 extern int	pool_get_preferred_master_node_id(void);
