@@ -249,7 +249,6 @@ typedef struct {
 	 */
 	bool		suspend_reading_from_frontend;
 
->>>>>>> 51e3562f... Reduce memory usage when large data set is returned from backend.
 #ifdef NOT_USED
 	/* Preferred "master" node id. Only used for SimpleForwardToFrontend. */
 	int preferred_master_node_id;
