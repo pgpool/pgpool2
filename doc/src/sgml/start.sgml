@@ -30,16 +30,18 @@
     <para>
       Before going further, you should properly set
       up <filename>pgpool.conf</filename> with streaming replication
-      mode. For this at least
-      following two directives must be set:
-      <programlisting>
-master_slave_mode = on
-master_slave_sub_mode = 'stream'
-      </programlisting>
+      mode. Sample configulations are provided with
+      <productname>Pgpool-II</productname>, there configuration file
+      are located at /usr/local/etc with default installation from
+      source code. you can copy
+      <filename>pgpool.conf.sample-stream</filename> as pgpool.conf.
+<programlisting>
+cp /usr/local/etc/pgpool.conf.sample-stream pgpool.conf
+</programlisting>
     </para>
     <para>
       If you plan to use <command>pgpool_setup</command>, type:
-      <programlisting>
+<programlisting>
 pgpool_setup
 </programlisting>
       This will create
@@ -63,65 +65,24 @@ pgpool_setup
     </para>
     <para>
       Once the system starts, you can check the cluster status by
-      issuing a pseudo SQL command called "show pool_node" to any of
+      issuing a pseudo SQL command called "show pool_nodes" to any of
       databases. <command>pgpool_setup</command> automatically creates
       "test" database. We use the database. Note that the port number
       is 11000, which is the default port number assigned
       to <productname>Pgpool-II</productname>
       by <command>pgpool_setup</command>.
-      <programlisting>
+<programlisting>
 $ psql -p 11000 -c "show pool_nodes" test
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
----------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
- 0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | false             | 0
- 1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | true              | 0
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | last_status_change
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+---------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | false             | 0                 | 2019-01-31 10:23:09
+ 1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | true              | 0                 | 2019-01-31 10:23:09
 (2 rows)
-      </programlisting>
+</programlisting>
       The result shows that the "status" column is "up", which means
       the
       <productname>PostgreSQL</productname> is up and running, which
       is good.
-    </para>
-  </sect1>
-
-  <sect1 id="tutorial-testing-load-balance">
-    <title>Testing Load Balance</title>
-    <para>
-      <productname>Pgpool-II</productname> allows read query load
-      balancing. It is enabled by default. To see the effect, let's
-      use <command>pgbench -S</command> command.
-      <programlisting>
-$ pgbench -p 11000 -c 10 -S -T 10 test
-starting vacuum...end.
-transaction type: &lt;builtin: select only>
-scaling factor: 1
-query mode: simple
-number of clients: 10
-number of threads: 1
-duration: 10 s
-number of transactions actually processed: 148044
-latency average = 0.676 ms
-tps = 14802.897506 (including connections establishing)
-tps = 14810.213749 (excluding connections establishing)
-
-$ psql -p 11000 -c "show pool_nodes" test
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
----------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
- 0       | /tmp     | 11002 | up     | 0.500000  | primary | 75152      | true              | 0
- 1       | /tmp     | 11003 | up     | 0.500000  | standby | 72893      | false             | 0
-(2 rows)
-      </programlisting>
-      "select_cnt" column shows how many SELECT are dispatched to each
-      node. Since with the default
-      configuration, <productname>Pgpool-II</productname> tries to
-      dispatch equal number of SELECT, the column shows almost same
-      numbers.
-    </para>
-    <para>
-      <productname>Pgpool-II</productname> offers more sophisticated
-      strategy for load
-      balancing. See <xref linkend="runtime-config-load-balancing">
-      for more details.
     </para>
   </sect1>
 
@@ -133,13 +94,13 @@ $ psql -p 11000 -c "show pool_nodes" test
       tool <command>pgbench</command>, which comes with the
       standard <productname>PostgreSQL</productname> installation.
       Type following to create the benchmark tables.
-      <programlisting>
+<programlisting>
 $ pgbench -i -p 11000 test
-      </programlisting>
+</programlisting>
       To see if the replication works correctly, directly connect to
       the primary and the standby server to see if they return
       identical results.
-      <programlisting>
+<programlisting>
 $ psql -p 11002 test
 \dt
               List of relations
@@ -161,11 +122,11 @@ $ psql -p 11003 test
  public | pgbench_history  | table | t-ishii
  public | pgbench_tellers  | table | t-ishii
 (4 rows)
-      </programlisting>
+</programlisting>
       The primary server (port 11002) and the standby server (port
       11003) return identical results. Next, let's run pgbench for a
       while and check to results.
-      <programlisting>
+<programlisting>
 $ pgbench -p 11000 -T 10 test
 starting vacuum...end.
 transaction type: &lt;builtin: TPC-B (sort of)&gt;
@@ -174,24 +135,67 @@ query mode: simple
 number of clients: 1
 number of threads: 1
 duration: 10 s
-number of transactions actually processed: 2171
-latency average = 4.692 ms
-tps = 213.147520 (including connections establishing)
-tps = 213.258008 (excluding connections establishing)
+number of transactions actually processed: 4276
+latency average = 2.339 ms
+tps = 427.492167 (including connections establishing)
+tps = 427.739078 (excluding connections establishing)
 
 $ psql -p 11002 -c "SELECT sum(abalance) FROM pgbench_accounts" test
-  sum   
+  sum
 --------
- 192112
+ 216117
 (1 row)
 
 $ psql -p 11003 -c "SELECT sum(abalance) FROM pgbench_accounts" test
-  sum   
+  sum
 --------
- 192112
+ 216117
 (1 row)
-      </programlisting>
+</programlisting>
       Again, the results are identical.
+    </para>
+  </sect1>
+
+  <sect1 id="tutorial-testing-load-balance">
+    <title>Testing Load Balance</title>
+    <para>
+      <productname>Pgpool-II</productname> allows read query load
+      balancing. It is enabled by default. To see the effect, let's
+      use <command>pgbench -S</command> command.
+<programlisting>
+$ ./shutdownall
+$ ./startall
+$ pgbench -p 11000 -c 10 -j 10 -S -T 60 test
+starting vacuum...end.
+transaction type: &lt;builtin: select only>
+scaling factor: 1
+query mode: simple
+number of clients: 10
+number of threads: 10
+duration: 60 s
+number of transactions actually processed: 1086766
+latency average = 0.552 ms
+tps = 18112.487043 (including connections establishing)
+tps = 18125.572952 (excluding connections establishing)
+
+$ psql -p 11000 -c "show pool_nodes" test
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | last_status_change
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+---------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 537644     | false             | 0                 | 2019-01-31 11:51:58
+ 1       | /tmp     | 11003 | up     | 0.500000  | standby | 548582     | true              | 0                 | 2019-01-31 11:51:58
+(2 rows)
+</programlisting>
+      "select_cnt" column shows how many SELECT are dispatched to each
+      node. Since with the default
+      configuration, <productname>Pgpool-II</productname> tries to
+      dispatch equal number of SELECT, the column shows almost same
+      numbers.
+    </para>
+    <para>
+      <productname>Pgpool-II</productname> offers more sophisticated
+      strategy for load
+      balancing. See <xref linkend="runtime-config-load-balancing">
+      for more details.
     </para>
   </sect1>
 
@@ -204,64 +208,58 @@ $ psql -p 11003 -c "SELECT sum(abalance) FROM pgbench_accounts" test
       down. In this case <productname>Pgpool-II</productname> sets the
       status of the server to "down" and continue the database
       operation using remaining servers.
-      <programlisting>
+<programlisting>
 $ pg_ctl -D data1 stop
 waiting for server to shut down.... done
 server stopped
 $ psql -p 11000 -c "show pool_nodes" test
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
----------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
- 0       | /tmp     | 11002 | up     | 0.500000  | primary | 2172       | true              | 0
- 1       | /tmp     | 11003 | down   | 0.500000  | standby | 0          | false             | 0
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | last_status_change
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+---------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 4276       | true              | 0                 | 2019-01-31 12:00:09
+ 1       | /tmp     | 11003 | down   | 0.500000  | standby | 1          | false             | 0                 | 2019-01-31 12:03:07
 (2 rows)
-
-$ psql -p 11000 -c "SELECT sum(abalance) FROM pgbench_accounts" test
-  sum   
---------
- 192112
-(1 row)
-      </programlisting>
+</programlisting>
       The standby node was shut down by pg_ctl
       command. <productname>Pgpool-II</productname> detects it and
       detaches the standby node. "show pool_nodes" command shows that
       the standby node is in down status. You can continue to use the
       cluster without the standby node:
-      <programlisting>
+<programlisting>
 $ psql -p 11000 -c "SELECT sum(abalance) FROM pgbench_accounts" test
   sum   
 --------
- 192112
+ 216117
 (1 row)
-      </programlisting>
+</programlisting>
       What happens if the primary server goes down? In this case, one
       of remaining standby server is promoted to new primary
       server. For this testing, we start from the state in which both
       nodes are up.
-      <programlisting>
+<programlisting>
 $ psql -p 11000 -c "show pool_nodes" test
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
----------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
- 0       | /tmp     | 11002 | up     | 0.500000  | primary | 2173       | true              | 0
- 1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | false             | 0
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | last_status_change
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+---------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | false             | 0                 | 2019-01-31 12:04:58
+ 1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | true              | 0                 | 2019-01-31 12:04:58
 (2 rows)
 
 $ pg_ctl -D data0 stop
 waiting for server to shut down.... done
 server stopped
 $ psql -p 11000 -c "show pool_nodes" test
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
----------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
- 0       | /tmp     | 11002 | down   | 0.500000  | standby | 2173       | false             | 0
- 1       | /tmp     | 11003 | up     | 0.500000  | primary | 0          | true              | 0
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | last_status_change
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+---------------------
+ 0       | /tmp     | 11002 | down   | 0.500000  | standby | 0          | false             | 0                 | 2019-01-31 12:05:20
+ 1       | /tmp     | 11003 | up     | 0.500000  | primary | 0          | true              | 0                 | 2019-01-31 12:05:20
 (2 rows)
-      </programlisting>
+</programlisting>
       Now the primary node is changed from 0 to 1. What happens
       inside? When the node 0 goes
       down, <productname>Pgpool-II</productname> detects it and
-      executes "fail_over_script" defined
+      executes <varname>failover_command</varname> defined
       in <filename>pgpool.conf</filename>.  Here is the content of the
       file.
-      <programlisting>
+<programlisting>
 #! /bin/sh
 # Execute command by failover.
 # special values:  %d = node id
@@ -298,14 +296,16 @@ if [ a"$failed_node_id" = a"$old_primary_node_id" ];then	# master failed
 ! 	new_primary_db_cluster=${mydir}/data"$new_master_id"
 	echo $pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
 	$pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
+	sleep 2
 fi
-      </programlisting>
+</programlisting>
       The script receives necessary information as parameters
       from <productname>Pgpool-II</productname>. If the primary server
       goes down, it executes "pg_ctl -D data1 promote", which should
       promote the standby server to a new primary server.
     </para>
   </sect1>
+
 
   <sect1 id="tutorial-testing-online-recovery">
     <title>Testing Online Recovery</title>
@@ -318,32 +318,32 @@ fi
       configuration, the standby will receive WAL log and applies it
       to catch up the primary. To test online recovery, let's start
       with previous cluster, where node 0 is in down state.
-      <programlisting>
-$ pcp_recovery_node -p 11001 0
+<programlisting>
+$ pcp_recovery_node -p 11001 -n 0
 Password: 
 pcp_recovery_node -- Command Successful
 
 $ psql -p 11000 -c "show pool_nodes" test
- node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay 
----------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
- 0       | /tmp     | 11002 | up     | 0.500000  | standby | 2173       | true              | 0
- 1       | /tmp     | 11003 | up     | 0.500000  | primary | 0          | false             | 0
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | last_status_change
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+---------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | standby | 0          | false             | 0                 | 2019-01-31 12:06:48
+ 1       | /tmp     | 11003 | up     | 0.500000  | primary | 0          | true              | 0                 | 2019-01-31 12:05:20
 (2 rows)
-      </programlisting>
+</programlisting>
       <xref linkend="pcp-recovery-node"> is one of control commands
       coming with <productname>Pgpool-II</productname>
       installation. The argument -p is to specify the port number
       assigned to the command, which is 11001 set
-      by <command>pgpool_setup</command>. The second argument is the
-      target node id. After executing the command, node 0 returned to
-      "up" status.
+      by <command>pgpool_setup</command>. The argument -n is to
+      specify the node id to be receovered. After executing the command,
+      node 0 returned to "up" status.
     </para>
     <para>
       The script executed by <command>pcp_recovery_node</command> is
       specified as "recovery_1st_stage_command"
       in <filename>pgpool.conf</filename>. Here is the file installed
       by <command>pgpool_setup</command>.
-      <programlisting>
+<programlisting>
 #! /bin/sh
 psql=/usr/local/pgsql/bin/psql
 DATADIR_BASE=/home/t-ishii/tmp/Tutorial
@@ -353,12 +353,18 @@ master_db_cluster=$1
 recovery_node_host_name=$2
 DEST_CLUSTER=$3
 PORT=$4
+recovery_node=$5
+
+pg_rewind_failed="true"
 
 log=$DATADIR_BASE/log/recovery.log
+echo >> $log
+date >> $log
+if [ $pg_rewind_failed = "true" ];then
 
 $psql -p $PORT -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
 
-echo "source: $master_db_cluster dest: $DEST_CLUSTER" > $log
+echo "source: $master_db_cluster dest: $DEST_CLUSTER" >> $log
 
 rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
 --exclude postmaster.opts --exclude pg_log \
@@ -370,14 +376,22 @@ rm -fr $DEST_CLUSTER/pg_xlog
 mkdir $DEST_CLUSTER/pg_xlog
 chmod 700 $DEST_CLUSTER/pg_xlog
 rm $DEST_CLUSTER/recovery.done
+fi
 cat > $DEST_CLUSTER/recovery.conf $lt;$lt;REOF
 standby_mode          = 'on'
 primary_conninfo      = 'port=$PORT user=$PGSUPERUSER'
 recovery_target_timeline='latest'
+restore_command = 'cp $DATADIR_BASE/archivedir/%f "%p" 2> /dev/null'
 REOF
 
+if [ $pg_rewind_failed = "true" ];then
 $psql -p $PORT -c "SELECT pg_stop_backup()" postgres
-      </programlisting>
+fi
+
+if [ $pg_rewind_failed = "false" ];then
+    cp /tmp/postgresql.conf $DEST_CLUSTER/
+fi
+</programlisting>
     </para>
   </sect1>
 
@@ -404,7 +418,6 @@ $psql -p $PORT -c "SELECT pg_stop_backup()" postgres
       connections from it, no matter what kind of languages or drivers
       it uses.
     </para>
-
     <para>
       <productname>Pgpool-II</productname> consists of multiple
       process. There is a main process, which is the parent process of
