@@ -3319,6 +3319,15 @@ per_node_error_log(POOL_CONNECTION_POOL * backend, int node_id, char *query, cha
 {
 	POOL_CONNECTION_POOL_SLOT *slot = backend->slots[node_id];
 	char	   *message;
+	char	   kind;
+
+	pool_read(CONNECTION(backend, node_id), &kind, sizeof(kind));
+	pool_unread(CONNECTION(backend, node_id), &kind, sizeof(kind));
+
+	if (kind != 'E' && kind != 'N')
+	{
+		return;
+	}
 
 	if (pool_extract_error_message(true, CONNECTION(backend, node_id), MAJOR(backend), true, &message) == 1)
 	{
