@@ -446,8 +446,33 @@ int wait_connection_closed(void)
 
 		if (WAIT_RETRY_COUNT != 0)
 			sleep(3);
+
 	} while (i++ < WAIT_RETRY_COUNT);
 	ereport(LOG,
 			(errmsg("wait_connection_closed: existing connections did not close in %d sec.", pool_config->recovery_timeout)));
+
+	/*
+	 * recovery_timeout was expired. Before returning with failure status,
+	 * let's check if this is caused by the malformed conn_counter. If a child
+	 * process abnormally exits (killed by SIGKILL or SEGFAULT, for example),
+	 * then conn_counter is not decremented at process exit, thus it will
+	 * never be returning to 0. This could be detected by checking if
+	 * client_idle_limit_in_recovery is enabled and less value than
+	 * recovery_timeout because all clients must be kicked out by the time
+	 * when client_idle_limit_in_recovery is expired. If so, we should reset
+	 * conn_counter to 0 also.
+	 *
+	 * See bug 431 for more info.
+	 */
+	if (pool_config->client_idle_limit_in_recovery == -1 ||
+		(pool_config->client_idle_limit_in_recovery > 0 &&
+		 pool_config->recovery_timeout >= pool_config->client_idle_limit_in_recovery))
+	{
+		ereport(LOG,
+				(errmsg("wait_connection_closed: mulformed conn_counter (%d) detected. reset it to 0",
+						Req_info->conn_counter)));
+		Req_info->conn_counter = 0;
+		return 0;
+	}
 	return 1;
 }
