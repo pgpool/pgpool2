@@ -2965,7 +2965,7 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 		}
 
         else if (!strcmp(key, "memory_cache_enabled") &&
-                 CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
+                 CHECK_CONTEXT(INIT_CONFIG, context))
         {
             int v = eval_logical(yytext);
 
