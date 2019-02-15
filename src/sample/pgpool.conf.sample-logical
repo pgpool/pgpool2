@@ -725,6 +725,7 @@ check_unlogged_table = on
 #------------------------------------------------------------------------------
 memory_cache_enabled = off
 								   # If on, use the memory cache functionality, off by default
+                                   # (change requires restart)
 memqcache_method = 'shmem'
 								   # Cache storage method. either 'shmem'(shared memory) or
 								   # 'memcached'. 'shmem' by default

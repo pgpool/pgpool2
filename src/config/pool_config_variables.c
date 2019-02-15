@@ -499,7 +499,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"memory_cache_enabled", CFGCXT_RELOAD, CACHE_CONFIG,
+		{"memory_cache_enabled", CFGCXT_INIT, CACHE_CONFIG,
 			"Enables the memory cache functionality.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
