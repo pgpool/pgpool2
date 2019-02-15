@@ -109,9 +109,9 @@ from the in memory cache is extremely fast.
 	</para>
 	<para>
 	  <!--
-              This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+            This parameter can only be set at server start.
 	    -->
-	  このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+	  このパラメータはサーバ起動時にのみ設定可能です。
 </para>
 </listitem>
 </varlistentry>
