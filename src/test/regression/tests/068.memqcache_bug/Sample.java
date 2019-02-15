@@ -1,4 +1,5 @@
 import java.io.PrintWriter;
+import java.io.FileInputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -14,13 +15,13 @@ public class Sample {
     public static void main(String[] args) throws Exception {
         ResultSet rs;
         Properties props = new Properties();
-        props.setProperty("user", "t-ishii");
-        props.setProperty("password", "");
-        props.setProperty("protocolVersion", "3");
+        props.load(new FileInputStream("javatest.prop"));
+        String url = props.getProperty("jdbc.url");
+        String user = props.getProperty("jdbc.user");
+        String pwd = props.getProperty("jdbc.password");
+
         DriverManager.setLogWriter(new PrintWriter(System.out));
-        Driver.setLogLevel(2);
-        Connection conn = DriverManager.getConnection(
-                "jdbc:postgresql://localhost:11000/test", props);
+        Connection conn = DriverManager.getConnection(url, user, pwd);
         conn.setAutoCommit(true);
         Statement st = conn.createStatement();
         st.setFetchSize(100);
