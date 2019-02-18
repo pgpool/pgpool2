@@ -4337,6 +4337,10 @@ get_info_from_conninfo(char *conninfo, char *host, char *port)
 	p = strstr(conninfo, "host");
 	if (p)
 	{
+		/* skip "host=" */
+		while (*p && *p++ != '=')
+			;
+
 		while (*p && *p != ' ')
 			*host++ = *p++;
 		*host = '\0';
