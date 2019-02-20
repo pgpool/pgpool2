@@ -9,6 +9,20 @@
   </note>
 
   <sect2>
+   <title>Changes</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2019-02-20 [6136946]
+-->
+     <para>
+      Doc: Update configuration example <xref linkend="EXAMPLE-CLUSTER">. (Bo Peng)
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+
+  <sect2>
    <title>Bug fixes</title>
    <itemizedlist>
     <listitem>
