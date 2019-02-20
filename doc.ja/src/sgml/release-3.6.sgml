@@ -1,6 +1,166 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id=release-3-6-15> 
+<!--
+  <title>Release 3.6.15</title>
+-->
+  <title>リリース 3.6.15</title>
+  <note>
+<!--
+   <title>Release Date</title>
+-->
+   <title>リリース日</title>
+   <simpara>2019-02-21</simpara>
+  </note>
+
+  <sect2>
+<!--
+   <title>Bug fixes</title>
+-->
+   <title>不具合修正</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2019-02-15 [84e0496]
+-->
+     <para>
+<!--
+     Test: Fix old JDBC functions and typos in regression test 068.memqcache_bug. (Takuma Hoshiai)
+-->
+Test: レグレッションテスト068.memqcache_bugの古いJDBCの関数及びタイポを修正しました。(Takuma Hoshiai)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-02-15 [8ae3dfa]
+-->
+     <para>
+<!--
+     Doc: Fix configuration change timing regarding memory_cache_enabled. (Tatsuo Ishii)
+-->
+Doc: <xref linkend="GUC-MEMORY-CACHE-ENABLED">パラメータはサーバ起動時にのみ設定可能なことをドキュメントに追加しました。(Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-02-12 [3aac064]
+-->
+     <para>
+<!--
+     Fix online recovery failed due to client_idle_limit_in_recovery in certain cases. 
+	 (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=431">bug 431</ulink>)(Tatsuo Ishii)
+-->
+特定の場合に、<xref linkend="GUC-CLIENT-IDLE-LIMIT-IN-RECOVERY">によって、オンラインリカバリが失敗する不具合を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=431">bug 431</ulink>)(Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-01-29 [f7d0c96]
+-->
+     <para>
+<!--
+      Fix corner case bug when strip_quote() handle a empty query string. <ulink url="http://www.pgpool.net/mantisbt/view.php?id=458">(bug 458</ulink>) (Tatsuo Ishii)
+-->
+<function>strip_quote()</function>が空のクエリを処理するときに発生するセグメンテーション違反を修正しました。<ulink url="http://www.pgpool.net/mantisbt/view.php?id=458">(bug 458</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2019-01-27 [d6b4f02]
+-->
+    <para>
+<!--
+     Doc: Mention that schema qualifications cannot be used in white/black_function_list. (Tatsuo Ishii)
+-->
+Doc: white/black_function_list 設定パラメータでスキーマ修飾が使えないという説明を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2019-01-23 [76ac6bb]
+-->
+    <para>
+<!--
+     Fix typo about wd_priority in watchdog_setup. (Takuma Hoshiai)
+-->
+<command>watchdog_setup</command>スクリプトの<xref linkend="GUC-WD-PRIORITY">に関するタイポを修正しました。(Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2019-01-10 [776ee0a]
+-->
+    <para>
+<!--
+     Fix Pgpool child segfault if failover occurs when trying to establish a connection. (Tatsuo Ishii)
+-->
+接続を確立しようとするとき、フェイルオーバが発生する場合に発生しうるセグメンテーション違反を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+参照: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2019-January/003214.html">[pgpool-hackers: 3214]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2019-01-03 [79ef2b0]
+-->
+    <para>
+<!--
+     Doc: fix typo in logdir description. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=453">bug 453</ulink>)(Tatsuo Ishii)
+-->
+Doc: <xref linkend="GUC-LOGDIR">に関するドキュメントのタイポを修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=453">bug 453</ulink>)(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2018-12-12 [733852e]
+-->
+    <para>
+<!--
+     Fix Pgpool-II hang if a client sends a extended query message such as close after sync message but before next simple query. (Tatsuo Ishii)
+-->
+クライアントがsyncメッセージの後、次の簡易問い合わせの前にcloseメッセージを送ると発生しうるハングアップを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+参照: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2018-December/003164.html">[pgpool-hackers: 3164]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2018-12-06 [f8f8e3d]
+-->
+    <para>
+<!--
+     Fix Pgpool-II hang when "idle_in_transaction_session_timeout=on". (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=448">bug 448</ulink>)(Tatsuo Ishii)
+-->
+<productname>PostgreSQL</productname>の<varname>idle_in_transaction_session_timeout</varname>が有効な場合に発生しうる<productname>Pgpool-II</productname>のハングアップを修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=448">bug 448</ulink>)(Tatsuo Ishii)
+    </para>
+    </listitem>
+    <listitem>
+<!--
+2018-12-05 [6a37de1]
+-->
+     <para>
+<!--
+      Doc: Fix Japanese document typo in <xref linkend="PCP-COMMON-OPTIONS">. (Bo Peng)
+-->
+Doc: 日本語ドキュメント<xref linkend="PCP-COMMON-OPTIONS">のタイポを修正しました。(Bo Peng)
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
  <sect1 id=release-3-6-14> 
 <!--
   <title>Release 3.6.14</title>
