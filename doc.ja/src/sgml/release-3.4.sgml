@@ -1,6 +1,92 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id=release-3-4-22> 
+<!--
+  <title>Release 3.4.22</title>
+-->
+  <title>リリース 3.4.22</title>
+  <note>
+<!--
+   <title>Release Date</title>
+-->
+   <title>リリース日</title>
+   <simpara>2019-02-21</simpara>
+  </note>
+
+  <sect2>
+<!--
+   <title>Bug fixes</title>
+-->
+   <title>不具合修正</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2019-02-15 [8ae3dfa]
+-->
+     <para>
+<!--
+     Doc: Fix configuration change timing regarding memory_cache_enabled. (Tatsuo Ishii)
+-->
+Doc: <xref linkend="GUC-MEMORY-CACHE-ENABLED">パラメータはサーバ起動時にのみ設定可能なことをドキュメントに追加しました。(Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-02-12 [3aac064]
+-->
+     <para>
+<!--
+     Fix online recovery failed due to client_idle_limit_in_recovery in certain cases. 
+	 (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=431">bug 431</ulink>)(Tatsuo Ishii)
+-->
+特定の場合に、<xref linkend="GUC-CLIENT-IDLE-LIMIT-IN-RECOVERY">によって、オンラインリカバリが失敗する不具合を修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=431">bug 431</ulink>)(Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-01-29 [3645252]
+-->
+     <para>
+<!--
+      Fix corner case bug when strip_quote() handle a empty query string. <ulink url="http://www.pgpool.net/mantisbt/view.php?id=458">(bug 458</ulink>) (Tatsuo Ishii)
+-->
+<function>strip_quote()</function>が空のクエリを処理するときに発生するセグメンテーション違反を修正しました。<ulink url="http://www.pgpool.net/mantisbt/view.php?id=458">(bug 458</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2019-01-10 [776ee0a]
+-->
+    <para>
+<!--
+     Fix Pgpool child segfault if failover occurs when trying to establish a connection. (Tatsuo Ishii)
+-->
+接続を確立しようとするとき、フェイルオーバが発生する場合に発生しうるセグメンテーション違反を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+参照: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2019-January/003214.html">[pgpool-hackers: 3214]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2018-12-06 [f8f8e3d]
+-->
+    <para>
+<!--
+     Fix Pgpool-II hang when "idle_in_transaction_session_timeout=on". (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=448">bug 448</ulink>)(Tatsuo Ishii)
+-->
+<productname>PostgreSQL</productname>の<varname>idle_in_transaction_session_timeout</varname>が有効な場合に発生しうる<productname>Pgpool-II</productname>のハングアップを修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=448">bug 448</ulink>)(Tatsuo Ishii)
+    </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
  <sect1 id=release-3-4-21> 
 <!--
   <title>Release 3.4.21</title>

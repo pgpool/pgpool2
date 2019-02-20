@@ -1,6 +1,90 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id=release-3-5-19> 
+  <title>Release 3.5.19</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2019-02-21</simpara>
+  </note>
+
+  <sect2>
+   <title>Bug fixes</title>
+   <itemizedlist>
+
+    <listitem>
+<!--
+2019-02-15 [2e4c67f]
+-->
+     <para>
+      Test: Fix old JDBC functions and typos in regression test 068.memqcache_bug. (Takuma Hoshiai)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-02-15 [fee0584]
+-->
+     <para>
+      Doc: Fix configuration change timing regarding <xref linkend="GUC-MEMORY-CACHE-ENABLED">. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-02-12 [8bf96bf]
+-->
+     <para>
+     Fix online recovery failed due to <xref linkend="GUC-CLIENT-IDLE-LIMIT-IN-RECOVERY"> in certain cases. 
+	 (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=431">bug 431</ulink>) (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-01-29 [8a94657]
+-->
+     <para>
+      Fix corner case bug when <function>strip_quote()</function> handle a empty query string. <ulink url="http://www.pgpool.net/mantisbt/view.php?id=458">(bug 458</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2019-01-10 [fc47d5f]
+-->
+    <para>
+     Fix Pgpool child segfault if failover occurs when trying to establish a connection. (Tatsuo Ishii)
+    </para>
+    <para>
+See <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2019-January/003214.html">[pgpool-hackers: 3214]</ulink> for discussion.
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2018-12-12 [e979e6b]
+-->
+    <para>
+     Fix <productname>Pgpool-II</productname> hang if a client sends a extended query message such as close after sync message but before next simple query. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2018-December/003164.html">[pgpool-hackers: 3164]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2018-12-06 [21d6ae8]
+-->
+    <para>
+     Fix <productname>Pgpool-II</productname> hang when <varname>idle_in_transaction_session_timeout = on</varname>. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=448">bug 448</ulink>) (Tatsuo Ishii)
+    </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
  <sect1 id=release-3-5-18> 
   <title>Release 3.5.18</title>
   <note>
