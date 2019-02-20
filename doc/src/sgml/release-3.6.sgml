@@ -1,6 +1,122 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id=release-3-6-15> 
+  <title>Release 3.6.15</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2019-02-21</simpara>
+  </note>
+
+  <sect2>
+   <title>Bug fixes</title>
+   <itemizedlist>
+
+    <listitem>
+<!--
+2019-02-15 [84e0496]
+-->
+     <para>
+      Test: Fix old JDBC functions and typos in regression test 068.memqcache_bug. (Takuma Hoshiai)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-02-15 [8ae3dfa]
+-->
+     <para>
+      Doc: Fix configuration change timing regarding <xref linkend="GUC-MEMORY-CACHE-ENABLED">. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-02-12 [3aac064]
+-->
+     <para>
+     Fix online recovery failed due to <xref linkend="GUC-CLIENT-IDLE-LIMIT-IN-RECOVERY"> in certain cases. 
+	 (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=431">bug 431</ulink>) (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-01-29 [f7d0c96]
+-->
+     <para>
+      Fix corner case bug when <function>strip_quote()</function> handle a empty query string. <ulink url="http://www.pgpool.net/mantisbt/view.php?id=458">(bug 458</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2019-01-27 [d6b4f02]
+-->
+    <para>
+     Doc: Mention that schema qualifications cannot be used in white/black_function_list. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2019-01-23 [76ac6bb]
+-->
+    <para>
+     Fix typo about wd_priority in <command>watchdog_setup</command>. (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2019-01-10 [776ee0a]
+-->
+    <para>
+     Fix Pgpool child segfault if failover occurs when trying to establish a connection. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2019-01-03 [79ef2b0]
+-->
+    <para>
+     Doc: fix typo in <xref linkend="GUC-LOGDIR"> description. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=453">bug 453</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2018-12-12 [733852e]
+-->
+    <para>
+     Fix <productname>Pgpool-II</productname> hang if a client sends a extended query message such as close after sync message but before next simple query. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2018-December/003164.html">[pgpool-hackers: 3164]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+2018-12-06 [f8f8e3d]
+-->
+    <para>
+     Fix <productname>Pgpool-II</productname> hang when <varname>idle_in_transaction_session_timeout = on</varname>. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=448">bug 448</ulink>) (Tatsuo Ishii)
+    </para>
+    </listitem>
+    <listitem>
+<!--
+2018-12-05 [6a37de1]
+-->
+     <para>
+      Doc: Fix Japanese document typo in <xref linkend="PCP-COMMON-OPTIONS">. (Bo Peng)
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
  <sect1 id=release-3-6-14> 
   <title>Release 3.6.14</title>
   <note>
