@@ -16,6 +16,26 @@
 
   <sect2>
 <!--
+   <title>Changes</title>
+-->
+   <title>変更点</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2019-02-20 [6136946]
+-->
+     <para>
+<!--
+      Doc: Update configuration example <xref linkend="EXAMPLE-CLUSTER">. (Bo Peng)
+-->
+Doc: 設定の例<xref linkend="EXAMPLE-CLUSTER">を更新しました. (Bo Peng)
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+
+  <sect2>
+<!--
    <title>Bug fixes</title>
 -->
    <title>不具合修正</title>
