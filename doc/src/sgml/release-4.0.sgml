@@ -119,7 +119,7 @@
      Fixed segfault when <varname>wd_lifecheck_method = 'query'</varname>. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=455">bug 455</ulink>) (Muhammad Usama)
     </para>
     <para>
-     The fix was proposed by me and some adjustments to the patch and testing is done by Yugo Nagata.
+     The fix was proposed by Muhammad Usama and some adjustments to the patch and testing is done by Yugo Nagata.
     </para>
    </listitem>
 
