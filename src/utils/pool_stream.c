@@ -3,7 +3,7 @@
 * pgpool: a language independent connection pool server for PostgreSQL
 * written by Tatsuo Ishii
 *
-* Copyright (c) 2003-2018	PgPool Global Development Group
+* Copyright (c) 2003-2019	PgPool Global Development Group
 *
 * Permission to use, copy, modify, and distribute this software and
 * its documentation for any purpose and without fee is hereby
@@ -52,6 +52,9 @@ static MemoryContext SwitchToConnectionContext(bool backend_connection);
 static void dump_buffer(char *buf, int len);
 #endif
 static int	pool_write_flush(POOL_CONNECTION * cp, void *buf, int len);
+
+/* timeout sec for pool_check_fd */
+static int	timeoutsec = -1;
 
 static MemoryContext
 SwitchToConnectionContext(bool backend_connection)
@@ -163,7 +166,11 @@ pool_read(POOL_CONNECTION * cp, void *buf, int len)
 
 	while (len > 0)
 	{
-		if (pool_check_fd(cp))
+		/*
+		 * If select(2) timeout is disabled, there's no need to call
+		 * pool_check_fd().
+		 */
+		if (pool_get_timeout() >= 0 && pool_check_fd(cp))
 		{
 			if (!IS_MASTER_NODE_ID(cp->db_node_id) && (getpid() != mypid))
 			{
@@ -320,7 +327,11 @@ pool_read2(POOL_CONNECTION * cp, int len)
 
 	while (len > 0)
 	{
-		if (pool_check_fd(cp))
+		/*
+		 * If select(2) timeout is disabled, there's no need to call
+		 * pool_check_fd().
+		 */
+		if (pool_get_timeout() >= 0 && pool_check_fd(cp))
 		{
 			if (!IS_MASTER_NODE_ID(cp->db_node_id))
 			{
@@ -1416,4 +1427,102 @@ socket_read(int fd, void *buf, size_t len, int timeout)
 		read_len += ret;
 	}
 	return read_len;
+}
+
+/*
+ * Set timeout in seconds for pool_check_fd
+ * if timeoutval < 0, we assume no timeout (wait forever).
+ */
+void
+pool_set_timeout(int timeoutval)
+{
+	if (timeoutval >= 0)
+		timeoutsec = timeoutval;
+	else
+		timeoutsec = -1;
+}
+
+/*
+ * Get timeout in seconds for pool_check_fd
+ */
+int
+pool_get_timeout(void)
+{
+	return timeoutsec;
+}
+
+/*
+ * Wait until read data is ready.
+ * return values: 0: normal 1: data is not ready -1: error
+ */
+int
+pool_check_fd(POOL_CONNECTION * cp)
+{
+	fd_set		readmask;
+	fd_set		exceptmask;
+	int			fd;
+	int			fds;
+	struct timeval timeout;
+	struct timeval *timeoutp;
+	int			save_errno;
+
+	/*
+	 * If SSL is enabled, we need to check SSL internal buffer is empty or not
+	 * first. Otherwise select(2) will stuck.
+	 */
+	if (pool_ssl_pending(cp))
+	{
+		return 0;
+	}
+
+	fd = cp->fd;
+
+	if (timeoutsec >= 0)
+	{
+		timeout.tv_sec = timeoutsec;
+		timeout.tv_usec = 0;
+		timeoutp = &timeout;
+	}
+	else
+		timeoutp = NULL;
+
+	for (;;)
+	{
+		FD_ZERO(&readmask);
+		FD_ZERO(&exceptmask);
+		FD_SET(fd, &readmask);
+		FD_SET(fd, &exceptmask);
+
+		fds = select(fd + 1, &readmask, NULL, &exceptmask, timeoutp);
+		save_errno = errno;
+		if (fds == -1)
+		{
+			if (processType == PT_MAIN && processState == PERFORMING_HEALTH_CHECK && errno == EINTR && health_check_timer_expired)
+			{
+				ereport(WARNING,
+						(errmsg("health check timed out while waiting for reading data")));
+				errno = save_errno;
+				return 1;
+			}
+
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
+
+			ereport(WARNING,
+					(errmsg("waiting for reading data. select failed with error: \"%s\"", strerror(errno))));
+			break;
+		}
+		else if (fds == 0)		/* timeout */
+			return 1;
+
+		if (FD_ISSET(fd, &exceptmask))
+		{
+			ereport(WARNING,
+					(errmsg("waiting for reading data. exception occurred in select ")));
+			break;
+		}
+		errno = save_errno;
+		return 0;
+	}
+	return -1;
 }

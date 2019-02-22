@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -626,10 +626,6 @@ extern bool degenerate_backend_set(int *node_id_set, int count, unsigned char fl
 extern bool degenerate_backend_set_ex(int *node_id_set, int count, unsigned char flags, bool error, bool test_only);
 extern bool promote_backend(int node_id, unsigned char flags);
 extern bool send_failback_request(int node_id, bool throw_error, unsigned char flags);
-
-
-extern void pool_set_timeout(int timeoutval);
-extern int	pool_check_fd(POOL_CONNECTION * cp);
 
 extern void pool_send_frontend_exits(POOL_CONNECTION_POOL * backend);
 
