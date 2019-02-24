@@ -137,6 +137,11 @@
 	</note>
 
         <para>
+	  A complete failover_command example can be found
+	  in <xref linkend="example-cluster">.
+        </para>
+
+        <para>
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
         </para>
       </listitem>
@@ -314,15 +319,26 @@
         <para>
           If <varname>follow_master_command</varname> is not empty, then after failover
           on the primary node gets completed in Master Slave mode with streaming replication,
-          <productname>Pgpool-II</productname> degenerates all nodes excepted the new primary
+          <productname>Pgpool-II</productname> degenerates all nodes except the new primary
           and starts new child processes to be ready again to accept connections from the clients.
           After this, <productname>Pgpool-II</productname> executes the command configured
           in the <varname>follow_master_command</varname> for each degenerated backend nodes.
         </para>
         </note>
         <para>
-          Typically <varname>follow_master_command</varname> command is used to recover
-          the slave from the new primary by calling the pcp_recovery_node command.
+          Typically <varname>follow_master_command</varname> command
+          is used to recover the slave from the new primary by calling
+          the pcp_recovery_node command.  In
+          the <varname>follow_master_command</varname>, it is
+          recommended to check whether
+          target <productname>PostgreSQL</productname> node is running
+          or not using pg_ctl since already stopped node usually has a
+          reason to be stopped: for example, it's broken by hardware
+          problems or administrator is maintaining the node.  If the
+          node is stopped, skip the node. If the node is running, stop
+          the node first and recovery it.  A
+          complete <varname>follow_master_command</varname> example
+          can be found in <xref linkend="example-cluster">.
         </para>
         <para>
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.

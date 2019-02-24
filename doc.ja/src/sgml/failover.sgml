@@ -186,6 +186,14 @@
 
         <para>
 <!--
+	  A complete failover_command example can be found
+	  in <xref linkend="example-cluster">.
+-->
+failover_commandの完全な例が<xref linkend="example-cluster">にあります。
+        </para>
+
+        <para>
+<!--
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
 -->
 このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
@@ -473,11 +481,26 @@
         </para>
         </note>
         <para>
-<!--
-          Typically <varname>follow_master_command</varname>> command is used to recover
-          the slave from the new primary by calling the pcp_recovery_node command.
+<!-- Typically <varname>follow_master_command</varname> command is
+          used to recover the slave from the new primary by calling
+          the pcp_recovery_node command.  In
+          the <varname>follow_master_command</varname>, it is
+          recommended to check whether
+          target <productname>PostgreSQL</productname> node is running
+          or not using pg_ctl since already stopped node usually has a
+          reason to be stopped: for example, it's broken by hardware
+          problems or administrator is maintaining the node.  If the
+          node is stopped, skip the node. If the node is running, stop
+          the node first and recovery it.  A
+          complete <varname>follow_master_command</varname> example
+          can be found in <xref linkend="example-cluster">.
 -->
 通常は、<varname>follow_master_command</varname>コマンドは<xref linkend="PCP-RECOVERY-NODE">コマンドを呼んで新しいプライマリからスレーブをリカバリするために使用します。
+<varname>follow_master_command</varname>中では、pg_ctlを使ってターゲットの<productname>PostgreSQL</productname>ノードが動いているかどうかを確認することをお勧めします。
+たとえば、そのノードはハードウェア障害で停止しているかも知れませんし、管理者が保守のために停止しているのかも知れません。
+ノードが停止している場合は、そのノードをスキップしてください。
+ノードが動いている場合は、まずそのノードを停止してからリカバリしてください。
+<varname>follow_master_command</varname>の完全な例は、<xref linkend="example-cluster">にあります。
         </para>
         <para>
 <!--
