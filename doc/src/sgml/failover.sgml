@@ -438,6 +438,27 @@
 	  than 0, the false primaries checking will be performed at
 	  the same timing of streaming replication delay checking.
 	</para>
+
+	<note>
+	  <para>
+	    <xref linkend="guc-sr-check-user"> must
+	      be <productname>PostgreSQL</productname> super user or
+	      in "pg_monitor" group to use this feature. To
+	      make <xref linkend="guc-sr-check-user"> in pg_monitor
+	      group, execute following SQL command
+	      by <productname>PostgreSQL</productname> super user
+	      (replace "sr_check_user" with the setting
+	      of <xref linkend="guc-sr-check-user">):
+	      <programlisting>
+GRANT pg_monitor TO sr_check_user;
+	      </programlisting>
+	      For <productname>PostgreSQL</productname> 9.6, there's
+	      no pg_monitor group
+	      and <xref linkend="guc-sr-check-user"> must
+	      be <productname>PostgreSQL</productname> super user.
+	  </para>
+	</note>
+
         <para>
           This parameter is only applicable in the streaming replication mode.
         </para>

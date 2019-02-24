@@ -650,6 +650,34 @@ onにすると、不正なプライマリを切り離します。
 <productname>Pgpool-II</productname>が起動した時、不正なプライマリのチェックは<productname>Pgpool-II</productname>のメインプロセスの中で一度だけ行われます。
 もし<xref linkend="guc-sr-check-period">が0より大きければ、不正なプライマリのチェックは、ストリーミングレプリケーションの遅延チェックと同じタイミングで行われます。
 	</para>
+
+	<note>
+	  <para>
+<!--
+	    <xref linkend="guc-sr-check-user"> must
+	      be <productname>PostgreSQL</productname> super user or
+	      in "pg_monitor" group to use this feature. To
+	      make <xref linkend="guc-sr-check-user"> in pg_monitor
+	      group, execute following SQL command
+	      by <productname>PostgreSQL</productname> super user
+	      (replace "sr_check_user" with the setting
+	      of <xref linkend="guc-sr-check-user">):
+-->
+この機能を使うためには、<xref linkend="guc-sr-check-user">は<productname>PostgreSQL</productname>のスーパーユーザーであるか、"pg_monitor"グループに所属していなければなりません。
+<xref linkend="guc-sr-check-user">をpg_monitorグループに所属させるには、以下のSQLコマンドを<productname>PostgreSQL</productname>スーパーユーザーで実行してください（"sr_check_user"を<xref linkend="guc-sr-check-user">の設定値で置き換えてください）
+	      <programlisting>
+GRANT pg_monitor TO sr_check_user;
+	      </programlisting>
+<!--
+	      For <productname>PostgreSQL</productname> 9.6, there's
+	      no pg_monitor group
+	      and <xref linkend="guc-sr-check-user"> must
+	      be <productname>PostgreSQL</productname> super user.
+-->
+<productname>PostgreSQL</productname> 9.6にはpg_monitorグループがないので、<xref linkend="guc-sr-check-user">は<productname>PostgreSQL</productname>のスーパーユーザーでなければなりません。
+	  </para>
+	</note>
+
         <para>
 <!--
           This parameter is only applicable in the streaming replication mode.
