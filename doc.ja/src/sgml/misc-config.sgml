@@ -95,6 +95,54 @@
       </listitem>
     </varlistentry>
 
+    <varlistentry id="guc-enable-shared-relcache" xreflabel="enable_shared_relcache">
+      <term><varname>enable_shared_relcache</varname> (<type>boolean</type>)
+        <indexterm>
+<!--
+          <primary><varname>enable_shared_relcache</varname> configuration parameter</primary>
+-->
+          <primary><varname>enable_shared_relcache</varname> 設定パラメータ</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+<!--
+          Setting to on, relation cache shared among <productname>Pgpool-II</productname>
+          child processes using the query cache. Default is off. Each child process
+          executed same query to refer to system catalog from <productname>PostgreSQL</productname>,
+          but using query cache can expect to execute only same query once.
+          Expiration time on query cache is <xref linkend="guc-relcache-expire"> parameter.
+          This parameter enables even if <xref linkend="guc-memory-cache-enabled"> is off.
+-->
+onにするとクエリキャッシュを利用して子プロセス間でリレーションキャッシュを共有します。
+デフォルトはoffです。
+それぞれの子プロセスは<productname>PostgreSQL</productname>のシステムカタログを参照するために同じクエリを実行していましたが、クエリキャッシュにより同じクエリの実行を1回だけとすることが期待できます。
+クエリキャッシュ上の寿命は、<xref linkend="guc-relcache-expire">の値となります。
+本パラメータは、<xref linkend="guc-memory-cache-enabled">がoffの場合も有効です。
+        </para>
+        <para>
+<!--
+          <productname>Pgpool-II</productname> searh relation cache on local
+          for a cache entry first, if this is on. When it is not found on relation cache,
+          query cache is searched for it next. If it is found on query cache,
+          it is copied to relation cache on local. if a cache entry is not found
+          on anywhere, execute the query for <productname>PostgreSQL</productname>,
+          the result is registered with relation cache and local cache.
+-->
+このパラメータがonなら、<productname>Pgpool-II</productname>はローカルのリレーションキャッシュをまず検索します。
+該当するキャッシュエントリが見つからない場合は、次にクエリキャッシュを検索します。
+もしクエリキャッシュに該当エントリが見つかったら、ローカルキャッシュにコピーします。
+見つからなかった場合には、<productname>PostgreSQL</productname>にクエリを発行して問い合わせを実行し、結果をクエリキャッシュに登録するとともに、ローカルキャッシュにも登録します。
+        </para>
+        <para>
+<!--
+          This parameter can only be set at server start.
+-->
+このパラメータはサーバ起動時にのみ設定可能です
+        </para>
+      </listitem>
+    </varlistentry>
+
     <varlistentry id="guc-check-temp-table" xreflabel="check_temp_table">
       <term><varname>check_temp_table</varname> (<type>boolean</type>)
         <indexterm>

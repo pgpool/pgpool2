@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -672,6 +672,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].name, "check_unlogged_table", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->check_unlogged_table);
 	StrNCpy(status[i].desc, "enable unlogged table check", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	StrNCpy(status[i].name, "enable_shared_relcache", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->enable_shared_relcache);
+	StrNCpy(status[i].desc, "If true, relation cache stored in memory cache", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/*

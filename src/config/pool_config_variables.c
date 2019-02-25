@@ -509,6 +509,16 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
+		{"enable_shared_relcache", CFGCXT_INIT, CACHE_CONFIG,
+			"relation cache stored in memory cache.",
+			CONFIG_VAR_TYPE_BOOL, false, 0
+		},
+		&g_pool_config.enable_shared_relcache,
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"memqcache_auto_cache_invalidation", CFGCXT_RELOAD, CACHE_CONFIG,
 			"Automatically deletes the cache related to the updated tables.",
 			CONFIG_VAR_TYPE_BOOL, false, 0

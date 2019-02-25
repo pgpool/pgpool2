@@ -65,6 +65,35 @@
       </listitem>
     </varlistentry>
 
+    <varlistentry id="guc-enable-shared-relcache" xreflabel="enable_shared_relcache">
+      <term><varname>enable_shared_relcache</varname> (<type>boolean</type>)
+        <indexterm>
+          <primary><varname>enable_shared_relcache</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+          Setting to on, relation cache shared among <productname>Pgpool-II</productname>
+          child processes using the query cache. Default is off. Each child process
+          executed same query to refer to system catalog from <productname>PostgreSQL</productname>,
+          but using query cache can expect to execute only same query once.
+          Expiration time on query cache is <xref linkend="guc-relcache-expire"> parameter.
+          This parameter enables even if <xref linkend="guc-memory-cache-enabled"> is off.
+        </para>
+        <para>
+          <productname>Pgpool-II</productname> searh relation cache on local
+          for a cache entry first, if this is on. When it is not found on relation cache,
+          query cache is searched for it next. If it is found on query cache,
+          it is copied to relation cache on local. if a cache entry is not found
+          on anywhere, execute the query for <productname>PostgreSQL</productname>,
+          the result is registered with relation cache and local cache.
+        </para>
+        <para>
+          This parameter can only be set at server start.
+        </para>
+      </listitem>
+    </varlistentry>
+
     <varlistentry id="guc-check-temp-table" xreflabel="check_temp_table">
       <term><varname>check_temp_table</varname> (<type>boolean</type>)
         <indexterm>

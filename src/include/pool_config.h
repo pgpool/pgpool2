@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -338,6 +338,7 @@ typedef struct
 	int			relcache_size;	/* number of relation cache life entry */
 	bool		check_temp_table;	/* enable temporary table check */
 	bool		check_unlogged_table;	/* enable unlogged table check */
+	bool		enable_shared_relcache;	/* If true, relation cache stored in memory cache */
 
 	/*
 	 * followings are for regex support and do not exist in the configuration

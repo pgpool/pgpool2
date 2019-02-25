@@ -120,7 +120,8 @@ pool_process_query(POOL_CONNECTION * frontend,
 
 
 	/* Try to connect memcached */
-	if (pool_config->memory_cache_enabled && !pool_is_shmem_cache())
+	if ((pool_config->memory_cache_enabled || pool_config->enable_shared_relcache)
+		&& !pool_is_shmem_cache())
 	{
 		memcached_connect();
 	}

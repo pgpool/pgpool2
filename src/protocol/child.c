@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1276,7 +1276,8 @@ child_will_go_down(int code, Datum arg)
 	if (accepted)
 		connection_count_down();
 
-	if (pool_config->memory_cache_enabled && !pool_is_shmem_cache())
+	if ((pool_config->memory_cache_enabled || pool_config->enable_shared_relcache)
+		&& !pool_is_shmem_cache())
 	{
 		memcached_disconnect();
 	}

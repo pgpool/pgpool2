@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -55,7 +55,6 @@
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 
-
 #ifdef USE_MEMCACHED
 memcached_st *memc;
 #endif
@@ -65,7 +64,6 @@ static char *encode_key(const char *s, char *buf, POOL_CONNECTION_POOL * backend
 static void dump_cache_data(const char *data, size_t len);
 #endif
 static int	pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_t datalen, int num_oids, int *oids);
-static int	pool_fetch_cache(POOL_CONNECTION_POOL * backend, const char *query, char **buf, size_t *len);
 static int	send_cached_messages(POOL_CONNECTION * frontend, const char *qcache, int qcachelen);
 static void send_message(POOL_CONNECTION * conn, char kind, int len, const char *data);
 #ifdef USE_MEMCACHED
@@ -78,7 +76,7 @@ static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool
 static int	pool_get_database_oid(void);
 static void pool_add_table_oid_map(POOL_CACHEKEY * cachkey, int num_table_oids, int *table_oids);
 static void pool_reset_memqcache_buffer(bool reset_dml_oids);
-static POOL_CACHEID * pool_add_item_shmem_cache(POOL_QUERY_HASH * query_hash, char *data, int size);
+static POOL_CACHEID * pool_add_item_shmem_cache(POOL_QUERY_HASH * query_hash, char *data, int size, time_t expire);
 static POOL_CACHEID * pool_find_item_on_shmem_cache(POOL_QUERY_HASH * query_hash);
 static char *pool_get_item_shmem_cache(POOL_QUERY_HASH * query_hash, int *size, int *sts);
 static POOL_QUERY_CACHE_ARRAY * pool_add_query_cache_array(POOL_QUERY_CACHE_ARRAY * cache_array, POOL_TEMP_QUERY_CACHE * cache);
@@ -123,6 +121,11 @@ static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
 static void put_back_hash_element(volatile POOL_HASH_ELEMENT * element);
 static bool is_free_hash_element(void);
 static void inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen);
+
+/*
+ * if true, shared memory is locked in this process now.
+ */
+static int is_shmem_locked;
 
 /*
  * Connect to Memcached
@@ -253,10 +256,10 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 	ereport(DEBUG1,
 			(errmsg("commiting SELECT results to cache storage"),
 			 errdetail("Query=\"%s\"", query)));
-
 #ifdef DEBUG
 	dump_cache_data(data, datalen);
 #endif
+
 
 	/* encode md5key for memcached */
 	encode_key(query, tmpkey, backend);
@@ -290,7 +293,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 		}
 		else
 		{
-			cacheid = pool_add_item_shmem_cache(&query_hash, data, datalen);
+			cacheid = pool_add_item_shmem_cache(&query_hash, data, datalen,memqcache_expire);
 			if (cacheid == NULL)
 			{
 				ereport(LOG,
@@ -326,13 +329,118 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 	}
 #endif
 
-	/*
-	 * Register cache id to oid map
-	 */
+/*
+ * Register cache id to oid map
+ */
 	pool_add_table_oid_map(&cachekey, num_oids, oids);
 
 	return 0;
 }
+
+/*
+ * Commit SELECT system catalog results to cache storage.
+ */
+int
+pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_t datalen)
+{
+#ifdef USE_MEMCACHED
+	memcached_return rc;
+#endif
+	POOL_CACHEKEY cachekey;
+	char		tmpkey[MAX_KEY];
+	time_t		memqcache_expire;
+
+	/*
+	 * get_buflen() will return -1 if query result exceeds memqcache_maxcache
+	 */
+	if (datalen == -1)
+	{
+		return -1;
+	}
+
+	/* query disabled */
+	if (strlen(query) <= 0)
+	{
+		return -1;
+	}
+	ereport(DEBUG1,
+			(errmsg("commiting relation cache to cache storage"),
+			 errdetail("Query=\"%s\"", query)));
+
+#ifdef DEBUG
+	dump_cache_data(data, datalen);
+#endif
+
+	/* encode md5key for memcached */
+	encode_key(query, tmpkey, backend);
+	ereport(DEBUG2,
+			(errmsg("commiting relation cache to cache storage"),
+			 errdetail("search key : \"%s\"", tmpkey)));
+
+	memcpy(cachekey.hashkey, tmpkey, 32);
+
+	memqcache_expire = pool_config->relcache_expire;
+	ereport(DEBUG1,
+			(errmsg("commiting relation cache to cache storage"),
+			 errdetail("memqcache_expire = %ld", memqcache_expire)));
+
+	if (pool_is_shmem_cache())
+	{
+		POOL_CACHEID *cacheid;
+		POOL_QUERY_HASH query_hash;
+
+		memcpy(query_hash.query_hash, tmpkey, sizeof(query_hash.query_hash));
+
+		cacheid = pool_hash_search(&query_hash);
+
+		if (cacheid != NULL)
+		{
+			ereport(DEBUG1,
+					(errmsg("commiting relation cache to cache storage"),
+					 errdetail("item already exists")));
+
+			return 0;
+		}
+		else
+		{
+			cacheid = pool_add_item_shmem_cache(&query_hash, data, datalen, memqcache_expire);
+			if (cacheid == NULL)
+			{
+				ereport(LOG,
+						(errmsg("failed to add item to shmem cache")));
+				return -1;
+			}
+			else
+			{
+				ereport(DEBUG2,
+						(errmsg("commiting relation cache to cache storage"),
+						 errdetail("blockid: %d itemid: %d",
+								   cacheid->blockid, cacheid->itemid)));
+			}
+			cachekey.cacheid.blockid = cacheid->blockid;
+			cachekey.cacheid.itemid = cacheid->itemid;
+		}
+	}
+
+#ifdef USE_MEMCACHED
+	else
+	{
+		rc = memcached_set(memc, tmpkey, 32,
+						   data, datalen, (time_t) memqcache_expire, 0);
+		if (rc != MEMCACHED_SUCCESS)
+		{
+			ereport(WARNING,
+					(errmsg("cache commit failed with error:\"%s\"", memcached_strerror(memc, rc))));
+			return -1;
+		}
+		ereport(DEBUG1,
+				(errmsg("commiting relation cache to cache storage"),
+				 errdetail("set cache succeeded")));
+	}
+#endif
+	return 0;
+}
+
 
 /*
  * Fetch from memory cache.
@@ -340,7 +448,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
  * 0: fetch success,
  * 1: not found
  */
-static int
+int
 pool_fetch_cache(POOL_CONNECTION_POOL * backend, const char *query, char **buf, size_t *len)
 {
 	char	   *ptr;
@@ -2115,7 +2223,7 @@ pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space)
  * The cache id is overwritten by the subsequent call to this function.
  * On error returns NULL.
  */
-static POOL_CACHEID * pool_add_item_shmem_cache(POOL_QUERY_HASH * query_hash, char *data, int size)
+static POOL_CACHEID * pool_add_item_shmem_cache(POOL_QUERY_HASH * query_hash, char *data, int size, time_t expire)
 {
 	static POOL_CACHEID cacheid;
 	POOL_CACHE_BLOCKID blockid;
@@ -2320,6 +2428,7 @@ static POOL_CACHEID * pool_add_item_shmem_cache(POOL_QUERY_HASH * query_hash, ch
 
 	/* Fill in cache item header */
 	ci.header.timestamp = time(NULL);
+	ci.header.expire = expire;
 	ci.header.total_length = sizeof(POOL_CACHE_ITEM_HEADER) + size;
 
 	/* Calculate item body address */
@@ -2464,15 +2573,15 @@ static POOL_CACHEID * pool_find_item_on_shmem_cache(POOL_QUERY_HASH * query_hash
 	cih = item_header(block_address(c->blockid), c->itemid);
 
 	/* Check cache expiration */
-	if (pool_config->memqcache_expire > 0)
+	if (cih->expire > 0)
 	{
 		now = time(NULL);
-		if (now > (cih->timestamp + pool_config->memqcache_expire))
+		if (now > (cih->timestamp + cih->expire))
 		{
 			ereport(DEBUG1,
 					(errmsg("memcache finding item"),
 					 errdetail("cache expired: now: %ld timestamp: %ld",
-							   now, cih->timestamp + pool_config->memqcache_expire)));
+							   now, cih->timestamp + cih->expire)));
 			pool_delete_item_shmem_cache(c);
 			return NULL;
 		}
@@ -2696,10 +2805,10 @@ pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid)
 void
 pool_shmem_lock(void)
 {
-	if (pool_is_shmem_cache())
+	if (pool_is_shmem_cache() && !is_shmem_locked)
 	{
 		pool_semaphore_lock(SHM_CACHE_SEM);
-
+		is_shmem_locked = true;
 	}
 }
 
@@ -2709,10 +2818,20 @@ pool_shmem_lock(void)
 void
 pool_shmem_unlock(void)
 {
-	if (pool_is_shmem_cache())
+	if (pool_is_shmem_cache() && is_shmem_locked)
 	{
 		pool_semaphore_unlock(SHM_CACHE_SEM);
+		is_shmem_locked = false;
 	}
+}
+
+/*
+ * check lock
+ */
+bool
+pool_is_shmem_lock(void)
+{
+	return is_shmem_locked;
 }
 
 /*
