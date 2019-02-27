@@ -3398,7 +3398,7 @@ static int read_status_file(bool discard_status)
 /*
 * Write the status file
 */
-int write_status_file()
+int write_status_file(void)
 {
 	FILE *fd;
 	int fdnum;
