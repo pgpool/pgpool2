@@ -60,6 +60,7 @@
 <!ENTITY memcache      SYSTEM "memcache.sgml">
 <!ENTITY ssl           SYSTEM "ssl.sgml">
 <!ENTITY watchdog      SYSTEM "watchdog.sgml">
+<!ENTITY performance   SYSTEM "performance.sgml">
 <!ENTITY misc-config   SYSTEM "misc-config.sgml">
 <!ENTITY config-last   SYSTEM "config-last.sgml">
 <!ENTITY user-manag    SYSTEM "user-manag.sgml">
