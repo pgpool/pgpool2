@@ -66,6 +66,7 @@
   &misc-config;
   &config-last;
   &client-auth;
+  &performance;
  </part>
 
  &examples;
