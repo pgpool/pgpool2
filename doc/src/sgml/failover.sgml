@@ -244,8 +244,39 @@
       <listitem>
 
         <para>
-          Specifies a user command to run after failover on the primary node failover.
-		  This works only in Master Replication mode with streaming replication.
+          Specifies a user command to run after failover on the
+	  primary node failover. In case of standby node failover, the
+	  command will not be executed. This command also runs if a
+	  node promote request is issued by
+	  <xref linkend="PCP-PROMOTE-NODE"> command. This works only
+	  in Master Replication mode with streaming replication.
+	</para>
+
+	<para>
+	  Since the command is executed within a child process forked
+	  off by <productname>Pgpool-II</productname> after failover
+	  is completed, execution of follow master command does not
+	  block the service
+	  of <productname>Pgpool-II</productname>. Here is a pseud
+	  code to illustrate how the command is executed:
+	  <programlisting>
+for each backend node
+{
+    if (the node is not the new primary)
+        set down node status to shared memory status
+        memorize that folllow master command is needed to execute
+}
+if (we need to executed follow master command)
+    fork a child process
+    (within the child process)
+
+    for each backend node
+        if (the node status in shared memory is down)
+            execute follow master command
+	  </programlisting>
+	</para>
+
+	<para>
           <productname>Pgpool-II</productname> replaces the following special characters
           with the backend specific information before excuting the command.
         </para>
