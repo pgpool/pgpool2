@@ -579,7 +579,7 @@ wd_lifecheck_user = 'nobody'
                                     # watchdog user monitoring pgpools in lifecheck
                                     # (change requires restart)
 wd_lifecheck_password = ''
-                                    # Password for watchdog user in lifecheck.
+                                    # Password for watchdog user in lifecheck
                                     # (change requires restart)
 
 # - Other pgpool Connection Settings -
@@ -644,6 +644,7 @@ check_unlogged_table = on
 #------------------------------------------------------------------------------
 memory_cache_enabled = off
                                    # If on, use the memory cache functionality, off by default
+                                   # (change requires restart)
 memqcache_method = 'shmem'
                                    # Cache storage method. either 'shmem'(shared memory) or
                                    # 'memcached'. 'shmem' by default
