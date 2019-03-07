@@ -339,7 +339,6 @@ sr_check_user = 'nobody'
                                    # sr_check_period = 0
 sr_check_password = ''
                                    # Password for streaming replication check user
-
 sr_check_database = 'postgres'
                                    # Database name for streaming replication check
 delay_threshold = 0
@@ -608,7 +607,7 @@ wd_lifecheck_user = 'nobody'
                                     # watchdog user monitoring pgpools in lifecheck
                                     # (change requires restart)
 wd_lifecheck_password = ''
-                                    # Password for watchdog user in lifecheck.
+                                    # Password for watchdog user in lifecheck
                                     # (change requires restart)
 
 # - Other pgpool Connection Settings -
@@ -673,6 +672,7 @@ check_unlogged_table = on
 #------------------------------------------------------------------------------
 memory_cache_enabled = off
                                    # If on, use the memory cache functionality, off by default
+                                   # (change requires restart)
 memqcache_method = 'shmem'
                                    # Cache storage method. either 'shmem'(shared memory) or
                                    # 'memcached'. 'shmem' by default
