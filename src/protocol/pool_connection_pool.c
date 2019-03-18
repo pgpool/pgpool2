@@ -851,6 +851,7 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 	POOL_CONNECTION_POOL_SLOT *s;
 	int			active_backend_count = 0;
 	int			i;
+	bool		status_changed = false;
 
 	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
@@ -956,11 +957,13 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 		{
 			BACKEND_INFO(i).backend_status = CON_UP;
 			pool_set_backend_status_changed_time(i);
+			status_changed = true;
 		}
 		active_backend_count++;
 	}
 
-	(void) write_status_file();
+	if (status_changed)
+		(void) write_status_file();
 
 	MemoryContextSwitchTo(oldContext);
 
