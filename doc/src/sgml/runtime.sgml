@@ -104,7 +104,58 @@ password: <userinput>your_password</userinput>
       starting <productname>Pgpool-II</productname>
       using <option>-f</option> option.
       <filename>pgpool.conf</filename> is located
-      at <filename>$prefix/etc/pgpool.conf</filename> by default.
+      at <filename>$prefix/etc/pgpool.conf</filename> by default,
+      if it installed from source code.
+    </para>
+
+    <para>
+      For each <productname>Pgpool-II</productname> operation mode,
+      there are sample configurations.
+    </para>
+
+    <table id="pgpool-conf-samples-table">
+     <title>pgpool.conf samples</title>
+
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>Operation mode</entry>
+        <entry>Configuration file name</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry>Streaming replication mode</entry>
+       </row>
+       <row>
+        <entry>Replication mode</entry>
+	<entry><literal>pgpool.conf.sample-replication</literal></entry>
+       </row>
+       <row>
+        <entry>Master slave mode</entry>
+       </row>
+       <row>
+        <entry>Raw mode</entry>
+	<entry><literal>pgpool.conf.sample</literal> </entry>
+       </row>
+       <row>
+        <entry>Logical replication mode</entry>
+	<entry><literal>pgpool.conf.sample-logical</literal> </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+    <para>
+      These configuration files are located at /usr/local/etc with
+      default installation from source code.
+      You can copy one of them as <filename>pgpool.conf</filename>.
+      (probably you need root privilege for this)
+      <programlisting>
+# cd /usr/local/etc
+# cp pgpool.conf.sample-stream pgpool.conf
+      </programlisting>
     </para>
   </sect2>
 
@@ -133,10 +184,7 @@ password: <userinput>your_password</userinput>
       logical replication mode, master slave mode (slony mode), native
       replication mode and raw mode. In any
       mode, <productname>Pgpool-II</> provides connection pooling,
-      automatic fail over and online recovery. The sample
-      configuration files for each mode are provied. They are located
-      under <filename>$prefix/etc</filename>. You can copy one of them
-      to <filename>$prefix/etc/pgpool.conf</filename>.
+      automatic fail over and online recovery.
     </para>
 
     <para>
@@ -153,8 +201,7 @@ password: <userinput>your_password</userinput>
       responsible for synchronizing databases. This mode is widely
       used and most recommended way to
       use <productname>Pgpool-II</>. Load balancing is possible in the
-      mode.  The sample configuration file
-      is <filename>$prefix/etc/pgpool.conf.sample-stream</filename>.
+      mode.
     </para>
 
     <para>
@@ -167,8 +214,7 @@ password: <userinput>your_password</userinput>
       could be load balanced. <productname>Pgpool-II</> load balaces
       all tables. This means that if a table is not
       replicated, <productname>Pgpool-II</> may lookup outdated tables
-      in the subscriber side. The sample configuration file
-      is <filename>$prefix/etc/pgpool.conf.sample-logical</filename>.
+      in the subscriber side.
     </para>
 
     <para>
@@ -181,8 +227,7 @@ password: <userinput>your_password</userinput>
       streaming replication, we do not recommend to use this mode
       unless you have specific reason to
       use <productname>Slony</>. Load balancing is possible in the
-      mode. The sample configuration file
-      is <filename>$prefix/etc/pgpool.conf.sample-master-slave</filename>.
+      mode.
     </para>
 
     <para>
@@ -208,8 +253,7 @@ password: <userinput>your_password</userinput>
       mode with <literal>synchronous_commit = remote_apply</literal>.
     </para>
     <para>
-      Load balancing is possible in the mode. The sample configuration
-      file <filename>$prefix/etc/pgpool.conf.sample-replication</filename>.
+      Load balancing is possible in the mode.
     </para>
 
     <para>
@@ -217,9 +261,7 @@ password: <userinput>your_password</userinput>
       mode</firstterm>, <productname>Pgpool-II</> does not care about
       the database synchronization. It's user's responsibility to make
       the whole system does a meaningfull thing. Load balancing
-      is <emphasis>not</emphasis> possible in the mode. The sample
-      configuration
-      file <filename>$prefix/etc/pgpool.conf.sample</filename>.
+      is <emphasis>not</emphasis> possible in the mode.
     </para>
   </sect2>
  </sect1>

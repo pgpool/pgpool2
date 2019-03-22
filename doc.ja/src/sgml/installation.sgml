@@ -99,6 +99,18 @@ Windows はサポートされてません。
      </para>
     </listitem>
 
+    <listitem>
+     <para>
+<!--
+     Several packages of <productname>PostgreSQL</productname> are required to
+     install <productname>Pgpool-II</productname>. You install postgresql-libs
+     and postgresql-devel packages from rpm.
+-->
+<productname>Pgpool-II</productname>をインストールするためには<productname>PostgreSQL</productname>のいくつかのパッケージが必要となります。
+<productname>PostgreSQL</productname>をソースコードからインストールする、もしくは<application>postgresql-libs</application>,<application>postgresql-devel</application>のパッケージをインストールしてください。
+     </para>
+    </listitem>
+
    </itemizedlist>
   </para>
 
@@ -368,12 +380,27 @@ make install
     <title>pgpool_recoveryのインストール</title>
     <para>
 <!--
+      <productname>Pgpool-II</productname> need function of <function>pgpool_recovery</function>,
+      <function>pgpool_remote_start</function> and <function>pgpool_switch_xlog</function>,
+      when you use the online recovery that discribes latter.
+      Also pgpoolAdmin of management tool, stop, restart or reload a
+      <productname>PostgreSQL </prodcutname> on the screen by use <function>pgpool_pgctl<function>.
+      It is enough, if these function installed in template1 fisrt. These
+      function do not needed that install in all databases.
+-->
+後述の オンラインリカバリ の機能を使う場合には、 pgpool_recovery, pgpool_remote_start, pgpool_switch_xlog という関数が必要です。
+また管理ツールである pgpoolAdmin の画面上から、バックエンドノードの PostgreSQL を停止・再起動・設定再読み込みを行なうことができますが、これには pgpool_pgctl という関数が使われます。
+これらの関数は、すべてのデータベースにインストールされている必要はなく、template1 にだけで 構いません。
+    </para>
+
+    <para>
+<!--
       This is required in all <productname>Pgpool-II</productname>
       installation.
 -->
 これは全ての<productname>Pgpool-II</productname>のインストールで必要です。
       <programlisting>
-$ cd pgpool-II-x.x.x/src/sql/pgpool-recovery
+$ cd pgpool-II-&version/src/sql/pgpool-recovery
 $ make
 $ make install
       </programlisting>
@@ -461,7 +488,7 @@ $ pg_ctl reload -D /usr/local/pgsql/data
 
     <para>
       <programlisting>
-$ cd pgpool-II-x.x.x/src/sql/pgpool-regclass
+$ cd pgpool-II-&version/src/sql/pgpool-regclass
 $ make
 $ make install
       </programlisting>
@@ -534,7 +561,7 @@ $ psql -f pgpool-regclass.sql template1
 このテーブルに対するロックは、<command>VACUUM</command>と競合するため、<command>INSERT</command>処理が長時間待たされ続ける可能性があります。
 
       <programlisting>
-	$ cd pgpool-II-x.x.x/src/sql
+	$ cd pgpool-II-&version/src/sql
 	$ psql -f insert_lock.sql template1
       </programlisting>
 
@@ -551,96 +578,6 @@ $ psql -f pgpool-regclass.sql template1
 -->
 <filename>insert_lock.sql</filename>は、pgpool-II経由で利用するデータベース毎に必要になります。
 ただし、"psql -f insert_lock.sql template1"の実行後に作成されたデータベースでは、新しいデータベース作成のためにテンプレートデータベースが複製されるため、これを実行する必要はありません。
-    </para>
-  </sect1>
-
-  <sect1 id="setting-up-pgpool-conf">
-<!--
-    <title>Setting up pgpool.conf</title>
--->
-    <title>pgpool.confの設定</title>
-
-    <para>
-<!--
-      For each <productname>Pgpool-II</productname> operation mode,
-      there are sample configurations.
--->
-各<productname>Pgpool-II</productname>の動作モードについて設定のサンプルがあります。
-
-    </para>
-
-    <table id="pgpool-conf-samples-table">
-<!--
-     <title>pgpool.conf samples</title>
--->
-     <title>pgpool.confのサンプル</title>
-
-     <tgroup cols="2">
-      <thead>
-       <row>
-<!--
-        <entry>Operation mode</entry>
-        <entry>Configuration file name</entry>
--->
-        <entry>動作モード</entry>
-        <entry>設定ファイル名</entry>
-       </row>
-      </thead>
-
-      <tbody>
-       <row>
-<!--
-        <entry>Streaming replication mode</entry>
--->
-        <entry>ストリーミングレプリケーションモード</entry>
-	<entry><literal>pgpool.conf.sample-stream</literal></entry>
-       </row>
-       <row>
-<!--
-        <entry>Replication mode</entry>
--->
-        <entry>ネイティブレプリケーションモード</entry>
-	<entry><literal>pgpool.conf.sample-replication</literal></entry>
-       </row>
-       <row>
-<!--
-        <entry>Master slave mode</entry>
--->
-        <entry>マスタースレーブモード</entry>
-	<entry><literal>pgpool.conf.sample-master-slave</literal></entry>
-       </row>
-       <row>
-<!--
-        <entry>Raw mode</entry>
--->
-        <entry>Rawモード</entry>
-	<entry><literal>pgpool.conf.sample</literal> </entry>
-       </row>
-       <row>
-<!--
-        <entry>Logical replication mode</entry>
--->
-        <entry>ロジカルレプリケーションモード</entry>
-	<entry><literal>pgpool.conf.sample-logical</literal> </entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
-
-    <para>
-<!--
-      These configuration files are located at /usr/local/etc with
-      default installation from source code.
-      You can copy one of them as <filename>pgpool.conf</filename>.
-      (probably you need root privilege for this)
--->
-これらの設定ファイルはデフォルトのソースコードからのインストールでは/usr/local/etcに配置されています。
-これらを<filename>pgpool.conf</filename>としてコピーして使うことが可能です。
-（もしかするとそのためにはroot権限が必要かもしれません。）
-      <programlisting>
-# cd /usr/local/etc
-# cp pgpool.conf.sample-stream pgpool.conf
-      </programlisting>
     </para>
   </sect1>
 

@@ -122,7 +122,7 @@ watchdog死活監視は、高可用性のために、watchdogクラスタに所�
       exchange between <productname>Pgpool-II</productname> nodes.
       This is the default and recommended mode to be used for health checking.
 -->
-<literal>heartbeat</literal>モードでは、watchdogは他の<productname>Pgpool-II</productname>プロセスを<literal>heartbeat</literal>信号で監視します。
+<literal>heartbeat</literal>モードでは、watchdogは他の<productname>Pgpool-II</productname>プロセスをハートビート信号で監視します。
 watchdogは、定期的に他の<productname>Pgpool-II</productname>から送られたハートビート信号を受信します。
 一定期間信号が受信されなければ、watchdogはその<productname>Pgpool-II</productname>に障害が起こったとみなします。
 冗長性のために<productname>Pgpool-II</productname>ノード間で取り交わされるハートビート通信のためのネットワーク接続を複数使うことができます。
@@ -224,7 +224,7 @@ watchdogは、定期的に他の<productname>Pgpool-II</productname>から送ら
       <productname>Pgpool-II</productname> to work using the same
       IP address even when servers are switched.
 -->
-スタンバイ<productname>Pgpool-II</productname>サーバが昇格すると、新しいアクティブサーバは仮想IPインターフェスを立ち上げます。
+スタンバイ<productname>Pgpool-II</productname>サーバが昇格すると、新しいアクティブサーバは仮想IPインターフェイスを立ち上げます。
 一方、以前のアクティブサーバは、仮想IPインターフェイスを停止します。
 これにより、サーバが切り替わっても<productname>Pgpool-II</productname>は同じIPアドレスを使うことができます。
     </para>
@@ -272,7 +272,7 @@ watchdogは、定期的に他の<productname>Pgpool-II</productname>から送ら
       the watchdog for bringing up and bringing down the VIP require the
       root privileges. <productname>Pgpool-II</productname> requires the
       user running <productname>Pgpool-II</productname> to have root
-      privileges when the watchdog is enabled along with delegate IP.
+      privileges when the watchdog is enabled along with virtual IP.
       This is however not good security practice to run the
       <productname>Pgpool-II</productname> as root user, the alternative
       and preferred way is to run the <productname>Pgpool-II</productname>
@@ -298,7 +298,7 @@ watchdogは、<productname>Pgpool-II</productname>の下位プロセスとして
 <para>
 watchdogは仮想IPインターフェイスを制御します。
 VIPを起動、停止するために実行されるコマンドにはroot権限が必要です。
-watchdogが委任IPを伴って起動される際には、<productname>Pgpool-II</productname>は、<productname>Pgpool-II</productname>を実行しているユーザがroot権限を持つことを要求します。
+watchdogが仮想IPを伴って起動される際には、<productname>Pgpool-II</productname>は、<productname>Pgpool-II</productname>を実行しているユーザがroot権限を持つことを要求します。
 しかし、<productname>Pgpool-II</productname>をrootユーザで実行するのは良いセキュリティの実践とは言えません。
 別の推奨する方法は、<productname>Pgpool-II</productname>を通常のユーザとして起動し、<command>sudo</command>を使って<xref linkend="guc-if-up-cmd">、<xref linkend="guc-if-down-cmd">、<xref linkend="guc-arping-cmd">にカスタムコマンドを設定するか、<literal>if_*</literal>コマンドに<command>setuid</command>("set user ID upon execution")することです。
 </para>
@@ -1065,11 +1065,11 @@ IPCソケットは、watchdogと通信する外部/サードパーティシス�
 <!--
         Watchdog lifecheck is the sub-component of watchdog that monitors the health
         of <productname>Pgpool-II</productname> nodes participating in the watchdog
-        cluster. <productname>Pgpool-II</productname> watchdog provides two built-in
-        methods of remote node health checking, "heartbeat" and "query" mode.
+        cluster. <productname>Pgpool-II</productname> watchdog provides three built-in
+        methods of remote node health checking, "heartbeat", "query" and "external" mode.
 -->
 Watchdogにおける死活監視は、watchdogクラスタに参加している<productname>Pgpool-II</productname>ノードの健全性を監視するwatchdogの下位コンポーネントです。
-<productname>Pgpool-II</productname> watchdogは、リモートノードの健全性をチェックする2つの方法、"heartbeat"と"query"モードを提供します。
+<productname>Pgpool-II</productname> watchdogは、リモートノードの健全性をチェックする3つの方法、"heartbeat"と"query"とexternal"モードを提供します。
       </para>
       <para>
 <!--
@@ -1081,6 +1081,8 @@ Watchdogにおける死活監視は、watchdogクラスタに参加している<
         interface for querying the remote <productname>Pgpool-II</productname>.
         And in this mode the lifecheck process creates a new thread for each health
         check query which gets destroyed as soon as the query finishes.
+        While in "external" mode, this mode disables the built in lifecheck of
+        <productname>Pgpool-II</productname>, and expects that the external system will monitor local and remote node instead.
 -->
 "heartbeat"モードでは、死活監視プロセスは<acronym>UDP</acronym>を使ってリモートノードにアクセスできるかどうか確認します。
 各ノード毎に死活監視の親プロセスは2つの子プロセスを起動します。
@@ -1088,6 +1090,7 @@ Watchdogにおける死活監視は、watchdogクラスタに参加している<
 "query"モードでは、死活監視プロセスはPostgreSQLのlibpqインターフェイスを使ってリモートの<productname>Pgpool-II</productname>に問い合わせを送ります。
 このモードでは、各死活監視プロセスは、死活監視のために新しくスレッドを作成します。
 クエリが終了すると、直ちにそのスレッドは破棄されます。
+"external"モードでは、<productname>Pgpool-II</productname>の死活監視は無効になり、代わりに外部システムがローカルノードとリモートノードを監視することを期待します。
       </para>
       <para>
 <!--

@@ -181,7 +181,7 @@
       the watchdog for bringing up and bringing down the VIP require the
       root privileges. <productname>Pgpool-II</productname> requires the
       user running <productname>Pgpool-II</productname> to have root
-      privileges when the watchdog is enabled along with delegate IP.
+      privileges when the watchdog is enabled along with virtual IP.
       This is however not good security practice to run the
       <productname>Pgpool-II</productname> as root user, the alternative
       and preferred way is to run the <productname>Pgpool-II</productname>
@@ -705,8 +705,8 @@
       <para>
         Watchdog lifecheck is the sub-component of watchdog that monitors the health
         of <productname>Pgpool-II</productname> nodes participating in the watchdog
-        cluster. <productname>Pgpool-II</productname> watchdog provides two built-in
-        methods of remote node health checking, "heartbeat" and "query" mode.
+        cluster. <productname>Pgpool-II</productname> watchdog provides three built-in
+        methods of remote node health checking, "heartbeat", "query" and "external" mode.
       </para>
       <para>
         In "heartbeat" mode, The lifecheck process sends and receives the data over
@@ -717,6 +717,9 @@
         interface for querying the remote <productname>Pgpool-II</productname>.
         And in this mode the lifecheck process creates a new thread for each health
         check query which gets destroyed as soon as the query finishes.
+        While in "external" mode, this mode disables the built in lifecheck of
+        <productname>Pgpool-II</productname>, and expects that the external system
+        will monitor local and remote node instead.
       </para>
       <para>
         Apart from remote node health checking watchdog lifecheck can also check the

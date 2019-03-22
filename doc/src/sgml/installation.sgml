@@ -64,6 +64,13 @@
      </para>
     </listitem>
 
+    <listitem>
+     <para>
+     Several packages of <productname>PostgreSQL</productname> are required to
+     install <productname>Pgpool-II</productname>. You install postgresql-libs
+     and postgresql-devel packages from rpm.
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
 
@@ -256,10 +263,20 @@ make install
   <sect1 id="install-pgpool-recovery">
     <title>Installing pgpool_recovery</title>
     <para>
+      <productname>Pgpool-II</productname> need function of <function>pgpool_recovery</function>,
+      <function>pgpool_remote_start</function> and <function>pgpool_switch_xlog</function>,
+      when you use the online recovery that discribes latter.
+      Also pgpoolAdmin of management tool, stop, restart or reload a
+      <productname>PostgreSQL</productname> on the screen by use <function>pgpool_pgctl</function>.
+      It is enough, if these function installed in template1 fisrt. These
+      function do not needed that install in all databases.
+    </para>
+
+    <para>
       This is required in all <productname>Pgpool-II</productname>
       installation.
       <programlisting>
-$ cd pgpool-II-x.x.x/src/sql/pgpool-recovery
+$ cd pgpool-II-&version/src/sql/pgpool-recovery
 $ make
 $ make install
       </programlisting>
@@ -319,7 +336,7 @@ $ pg_ctl reload -D /usr/local/pgsql/data
 
     <para>
       <programlisting>
-$ cd pgpool-II-x.x.x/src/sql/pgpool-regclass
+$ cd pgpool-II-&version/src/sql/pgpool-regclass
 $ make
 $ make install
       </programlisting>
@@ -366,7 +383,7 @@ $ psql -f pgpool-regclass.sql template1
       processing may be thereby kept waiting for a long time.
 
       <programlisting>
-	$ cd pgpool-II-x.x.x/src/sql
+	$ cd pgpool-II-&version/src/sql
 	$ psql -f insert_lock.sql template1
       </programlisting>
 
@@ -379,62 +396,6 @@ $ psql -f pgpool-regclass.sql template1
       do this for a database created after the execution of
       <command>psql -f insert_lock.sql template1</command>, as this
       template database will be cloned to create new databases.
-    </para>
-  </sect1>
-
-  <sect1 id="setting-up-pgpool-conf">
-    <title>Setting up pgpool.conf</title>
-
-    <para>
-      For each <productname>Pgpool-II</productname> operation mode,
-      there are sample configurations.
-    </para>
-
-    <table id="pgpool-conf-samples-table">
-     <title>pgpool.conf samples</title>
-
-     <tgroup cols="2">
-      <thead>
-       <row>
-        <entry>Operation mode</entry>
-        <entry>Configuration file name</entry>
-       </row>
-      </thead>
-
-      <tbody>
-       <row>
-        <entry>Streaming replication mode</entry>
-	<entry><literal>pgpool.conf.sample-stream</literal></entry>
-       </row>
-       <row>
-        <entry>Replication mode</entry>
-	<entry><literal>pgpool.conf.sample-replication</literal></entry>
-       </row>
-       <row>
-        <entry>Master slave mode</entry>
-	<entry><literal>pgpool.conf.sample-master-slave</literal></entry>
-       </row>
-       <row>
-        <entry>Raw mode</entry>
-	<entry><literal>pgpool.conf.sample</literal> </entry>
-       </row>
-       <row>
-        <entry>Logical replication mode</entry>
-	<entry><literal>pgpool.conf.sample-logical</literal> </entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
-
-    <para>
-      These configuration files are located at /usr/local/etc with
-      default installation from source code.
-      You can copy one of them as <filename>pgpool.conf</filename>.
-      (probably you need root privilege for this)
-      <programlisting>
-# cd /usr/local/etc
-# cp pgpool.conf.sample-stream pgpool.conf
-      </programlisting>
     </para>
   </sect1>
 

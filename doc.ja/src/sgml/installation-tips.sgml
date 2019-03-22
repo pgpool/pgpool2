@@ -29,6 +29,18 @@
 
      <para>
 <!--
+       First, allow to access port that <productname>Pgpool-II</productname> use.
+-->
+まず、<productname>Pgpool-II</productname>の使用するポートを開放します。
+
+       <programlisting>
+firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp  --add-port=9694/tcp
+firewall-cmd --permanent --zone=public --add-port=9999/udp --add-port=9898/udp --add-port=9000/udp  --add-port=9694/udp
+firewall-cmd --reload
+       </programlisting>
+     </para>
+     <para>
+<!--
        Here is an example for CentOS/RHEL7 when access
        to <productname>PostgreSQL</productname> is required.
 -->

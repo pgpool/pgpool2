@@ -36,19 +36,19 @@
 -->
 RHELとその派生ディストリビューションでは、以下を一度行ってください。
      <programlisting>
-yum install http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6-1.noarch.rpm
+yum install http://www.pgpool.net/yum/rpms/4.0/redhat/rhel-7-x86_64/pgpool-II-release-4.0-1.noarch.rpm
      </programlisting>
 <!--
      Then:
 -->
 そして以下を実施してください。
      <programlisting>
-yum install pgpool-II-pg96
+yum install pgpool-II-pg11
      </programlisting>
 
 <!--
-     <literal>pg96</literal> means <literal>PostgreSQL
-     9.6</literal>. <productname>Pgpool-II</productname>
+     <literal>pg11</literal> means <literal>PostgreSQL
+     11</literal>. <productname>Pgpool-II</productname>
      needs <productname>PostgreSQL</productname>'s library and
      extensions directory. Since the directory paths are different in
      the particular <productname>PostgreSQL</productname> versions,
@@ -60,12 +60,12 @@ yum install pgpool-II-pg96
 
      Optionally you can install:
 -->
-<literal>pg96</literal>は、<literal>PostgreSQL 9.6</literal>を意味しています。
+<literal>pg11</literal>は、<literal>PostgreSQL 11</literal>を意味しています。
 <productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>のライブラリと拡張のディレクトリが必要です。
 そのディレクトリへのパスは<productname>PostgreSQL</productname>のバージョンごとに異なっているので、<productname>PostgreSQL</productname>に対応するRPMを選んでください。
 またRPMは、<ulink url="https://www.postgresql.org/download/linux/redhat/"><productname>PostgreSQL</productname>コミュニティRPM</ulink>を使用することを前提としています。
      <programlisting>
-yum install pgpool-II-pg96-debuginfo
+yum install pgpool-II-pg11-debuginfo
      </programlisting>
 <!--
      which makes it easier to retrieve debugging symbols from the core
@@ -77,7 +77,7 @@ yum install pgpool-II-pg96-debuginfo
 インストールすることを推奨します。
 開発向けのオプションパッケージがあります。
      <programlisting>
-yum install pgpool-II-pg96-devel
+yum install pgpool-II-pg11-devel
      </programlisting>
 <!--
      This installs header files which developers are interested in
@@ -92,7 +92,7 @@ yum install pgpool-II-pg96-devel
 -->
 すべての<productname>PostgreSQL</productname>サーバに、以下をインストールしてください。
      <programlisting>
-yum install pgpool-II-pg96-extensions
+yum install pgpool-II-pg11-extensions
      </programlisting>
 
    </para>
@@ -107,11 +107,11 @@ yum install pgpool-II-pg96-extensions
 <!--
      All the <productname>Pgpool-II</productname> configuration files
      live in <filename>/etc/pgpool-II</filename>. Please refer
-     to <xref linkend="setting-up-pgpool-conf"> to see how to set up
+     to <xref linkend="configuring-pgpool"> to see how to set up
      configuration files.
 -->
 すべての<productname>Pgpool-II</productname>設定ファイルは<filename>/etc/pgpool-II</filename>にあります。
-設定方法については<xref linkend="setting-up-pgpool-conf">を参照ください。
+設定方法については<xref linkend="configuring-pgpool">を参照ください。
    </para>
    </sect2>
 
@@ -124,28 +124,30 @@ yum install pgpool-II-pg96-extensions
 <!--
 RHEL7/CentOS 7では、以下を一度行ってください。
 -->
-
+<!--
+       Do this once, if set the automatic startup of <productname>Pgpool-II</productname>.
+-->
+<productname>Pgpool-II</productname>の自動起動を設定する場合、以下を実行してください。
        <programlisting>
 systemctl enable pgpool.service
        </programlisting>
 
 <!--
-       After this, restart the whole system or:
+       After this, restart the whole system or do this. Please note that
+       <productname>PostgreSQL</productname> servers must have been started
+       before this.
 -->
 この後システム全体を再起動するか、以下を実行してください。
-
+<productname>PostgreSQL</productname>サーバは、これよりも前に起動済みでなければならないことに注意してください。
        <programlisting>
 systemctl start pgpool.service 
        </programlisting>
 
 <!--
-       Please note that <productname>PostgreSQL</productname> servers
-       must have been started before this.
-
-       To stop <productname>Pgpool-II</productname>:
+       To stop <productname>Pgpool-II</productname>, do this once.
+       <productname>Pgpool-II</productname> must need to stop, before <productname>PostgreSQL</productname> is stopped.
 -->
-<productname>PostgreSQL</productname>サーバは、これよりも前に起動済みでなければならないことに注意してください。
-
+<productname>Pgpool-II</productname>を停止するには、以下を実行してください。<productname>PostgreSQL</productname>を停止する場合、<productname>Pgpool-II</productname>を先に停止する必要があります。
        <programlisting>
 systemctl stop pgpool.service 
        </programlisting>

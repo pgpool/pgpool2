@@ -20,15 +20,15 @@
    <para>
      For RHEL and its derivatives do following once:
      <programlisting>
-yum install http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6-1.noarch.rpm
+yum install http://www.pgpool.net/yum/rpms/4.0/redhat/rhel-7-x86_64/pgpool-II-release-4.0-1.noarch.rpm
      </programlisting>
      Then:
      <programlisting>
-yum install pgpool-II-pg96
+yum install pgpool-II-pg11
      </programlisting>
 
-     <literal>pg96</literal> means <literal>PostgreSQL
-     9.5</literal>. <productname>Pgpool-II</productname>
+     <literal>pg11</literal> means <literal>PostgreSQL
+     11</literal>. <productname>Pgpool-II</productname>
      needs <productname>PostgreSQL</productname>'s library and
      extensions directory. Since the directory paths are different in
      the particular <productname>PostgreSQL</productname> versions,
@@ -40,14 +40,14 @@ yum install pgpool-II-pg96
 
      Optionally you can install:
      <programlisting>
-yum install pgpool-II-pg96-debuginfo
+yum install pgpool-II-pg11-debuginfo
      </programlisting>
      which makes it easier to retrieve debugging symbols from the core
      or the backtrace. We recommend to install it.
 
      There is an optional package for developers.
      <programlisting>
-yum install pgpool-II-pg96-devel
+yum install pgpool-II-pg11-devel
      </programlisting>
      This installs header files which developers are interested in
    </para>
@@ -56,7 +56,7 @@ yum install pgpool-II-pg96-devel
      On all the <productname>PostgreSQL</productname> servers you need
      to install:
      <programlisting>
-yum install pgpool-II-pg96-extensions
+yum install pgpool-II-pg11-extensions
      </programlisting>
 
    </para>
@@ -67,7 +67,7 @@ yum install pgpool-II-pg96-extensions
    <para>
      All the <productname>Pgpool-II</productname> configuration files
      live in <filename>/etc/pgpool-II</filename>. Please refer
-     to <xref linkend="setting-up-pgpool-conf"> to see how to set up
+     to <xref linkend="configuring-pgpool"> to see how to set up
      configuration files.
    </para>
    </sect2>
@@ -76,21 +76,21 @@ yum install pgpool-II-pg96-extensions
      <title>Starting/stopping Pgpool-II</title>
      <para>
        On RHEL7/CentOS 7, do this once.
-
+       Do this once, if set the automatic startup of <productname>Pgpool-II</productname>.
        <programlisting>
 systemctl enable pgpool.service
        </programlisting>
 
-       After this, restart the whole system or:
+       After this, restart the whole system or do this. Please note that
+       <productname>PostgreSQL</productname> servers must have been started
+       before this.
 
        <programlisting>
 systemctl start pgpool.service 
        </programlisting>
 
-       Please note that <productname>PostgreSQL</productname> servers
-       must have been started before this.
-
-       To stop <productname>Pgpool-II</productname>:
+       To stop <productname>Pgpool-II</productname>, do this once.
+       <productname>Pgpool-II</productname> must need to stop, before <productname>PostgreSQL</productname> is stopped.
        <programlisting>
 systemctl stop pgpool.service 
        </programlisting>
