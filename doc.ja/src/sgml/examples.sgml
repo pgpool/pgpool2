@@ -1263,6 +1263,8 @@ Pgpool-IIのヘルスチェック及びレプリケーションの遅延チェ�
 また、<productname>PostgreSQL</productname>プライマリサーバ<literal>server1</literal>でレプリケーション専用ユーザ<literal>repl</literal>を作成します。
 <productname>Pgpool-II</productname>4.0からSCRAM認証を利用できるようになりました。この設定例では、<literal>scram-sha-256</literal>認証方式を利用します。
 まず、<literal>password_encryption = 'scram-sha-256'</literal>に変更してから、ユーザを登録します。
+	</para>
+
     <table id="example-cluster-user">
       <title>ユーザ</title>
       <tgroup cols="3">
@@ -1303,6 +1305,17 @@ postgres=# \password repl
 postgres=# \password postgres
           </programlisting>
 
+	  <note>
+	    <para>
+<xref linkend="guc-detach-false-primary">を利用する予定がある場合、"pgpool" ロールは<productname>PostgreSQL</productname>のスーパーユーザーであるか、"pg_monitor" グループに所属する必要があります。
+"pgpool"ユーザをそのグループに所属させるには以下のようにします。
+          <programlisting>
+GRANT pg_monitor TO pgpool;
+	  </programlisting>
+	    </para>
+	  </note>
+
+	  <para>
 <productname>Pgpool-II</productname>サーバと<productname>PostgreSQL</productname>バックエンドサーバが<literal>192.168.137.0/24</literal>のネットワークにあることを想定し、各ユーザが<literal>scram-sha-256</literal>認証方式で接続できるように、<filename>pg_hba.conf</filename>を編集しておきます。
           </para>
           <programlisting>
