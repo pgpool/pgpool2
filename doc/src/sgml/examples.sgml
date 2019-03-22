@@ -965,6 +965,20 @@ postgres=# \password repl
 postgres=# \password postgres
           </programlisting>
 
+	  <note>
+	    <para>
+	      If you plan to
+	      use <xref linkend="guc-detach-false-primary">, role
+	      "pgpool" needs to
+	      be <productname>PostgreSQL</productname> super user or
+	      or in "pg_monitor" group to use this feature. To let
+	      "pgpool" role be in the group, you can do:
+          <programlisting>
+GRANT pg_monitor TO pgpool;
+	  </programlisting>
+	    </para>
+	  </note>
+
           <para>
 Assuming that all the <productname>Pgpool-II</productname> servers and the 
 <productname>PostgreSQL</productname> servers are in the network of 
