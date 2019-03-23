@@ -114,7 +114,9 @@ ssl = off
                                    # Directory containing CA root certificate(s)
                                    # (change requires restart)
 
-
+ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'
+                                   # Allowed SSL ciphers
+                                   # (change requires restart)
 #------------------------------------------------------------------------------
 # POOLS
 #------------------------------------------------------------------------------

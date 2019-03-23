@@ -126,6 +126,31 @@
       </listitem>
     </varlistentry>
 
+    <varlistentry id="guc-ssl-ciphers" xreflabel="ssl_ciphers">
+      <term><varname>ssl_ciphers</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>ssl_ciphers</varname> configuration parameter</primary>
+        </indexterm>
+    </term>
+    <listitem>
+      <para>
+        Specifies a list of <acronym>SSL</acronym> cipher suites that
+        are allowed to be used on secure connections.  See
+        the <citerefentry><refentrytitle>ciphers</refentrytitle></citerefentry>
+        manual page in the <application>OpenSSL</application> package
+        for the syntax of this setting and a list of supported values.
+        The default value
+        is <literal>HIGH:MEDIUM:+3DES:!aNULL</literal>, which is same
+        as <productname>PostgreSQL</productname>.
+        See <productname>PostgreSQL</productname> manual to know why
+        the value is chosen.
+      </para>
+      <para>
+        This parameter can only be set at server start.
+      </para>
+      </listitem>
+    </varlistentry>
+
   </variablelist>
  </sect2>
 
