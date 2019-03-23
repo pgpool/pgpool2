@@ -266,6 +266,13 @@ static int init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype) {
 	 */
 	SSL_CTX_set_mode(cp->ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
+	/* set up the allowed cipher list */
+	error = SSL_CTX_set_cipher_list(cp->ssl_ctx, pool_config->ssl_ciphers);
+	SSL_RETURN_ERROR_IF((error != 1), "Setting allowed cipher list");
+
+	/* Let server choose order */
+	SSL_CTX_set_options(cp->ssl_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+
 	if ( conntype == ssl_conn_serverclient) {
 		error = SSL_CTX_use_certificate_chain_file(cp->ssl_ctx,
 		                                     pool_config->ssl_cert);

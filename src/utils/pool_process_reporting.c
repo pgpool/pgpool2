@@ -239,6 +239,11 @@ POOL_REPORT_CONFIG* get_config(int *nrows)
 	StrNCpy(status[i].desc, "directory containing CA root certificate(s)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "ssl_ciphers", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_ciphers);
+	StrNCpy(status[i].desc, "allowed SSL ciphers", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* POOLS */
 
 	/* - Pool size -  */

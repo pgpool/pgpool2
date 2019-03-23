@@ -230,6 +230,7 @@ typedef struct {
 	char *ssl_key;							/* path to ssl key (frontend only) */
 	char *ssl_ca_cert;						/* path to root (CA) certificate */
 	char *ssl_ca_cert_dir;					/* path to directory containing CA certificates */
+	char	   *ssl_ciphers;				/* allowed ssl ciphers */
 
 	int64 relcache_expire;					/* relation cache life time in seconds */
 	int relcache_size;						/* number of relation cache life entry */
