@@ -993,6 +993,16 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"ssl_ciphers", CFGCXT_INIT, SSL_CONFIG,
+			"Allowed SSL ciphers.",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.ssl_ciphers,
+		"",
+		NULL, NULL, NULL, NULL
+	},
+
+	{
 		{"memqcache_oiddir", CFGCXT_INIT, CACHE_CONFIG,
 			"Tempory directory to record table oids.",
 			CONFIG_VAR_TYPE_STRING, false, 0
