@@ -151,6 +151,24 @@
       </listitem>
     </varlistentry>
 
+    <varlistentry id="guc-ssl-prefer-server-ciphers" xreflabel="ssl_prefer_server_ciphers">
+      <term><varname>ssl_prefer_server_ciphers</varname> (<type>boolean</type>)
+        <indexterm>
+          <primary><varname>ssl_prefer_server_ciphers</varname> configuration parameter</primary>
+        </indexterm>
+    </term>
+    <listitem>
+      <para>
+        Specifies whether to use the server's <acronym>SSL</acronym>
+        cipher preferences, rather than the client's.
+        The default value is false.
+      </para>
+      <para>
+        This parameter can only be set at server start.
+      </para>
+      </listitem>
+    </varlistentry>
+
   </variablelist>
  </sect2>
 
