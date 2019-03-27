@@ -232,6 +232,31 @@ SSLサポートを有効にするためには、<productname>Pgpool-II</productn
       </listitem>
     </varlistentry>
 
+    <varlistentry id="guc-ssl-prefer-server-ciphers" xreflabel="ssl_prefer_server_ciphers">
+      <term><varname>ssl_prefer_server_ciphers</varname> (<type>boolean</type>)
+        <indexterm>
+          <primary><varname>ssl_prefer_server_ciphers</varname>設定パラメータ</primary>
+        </indexterm>
+    </term>
+    <listitem>
+      <para>
+<!--
+        Specifies whether to use the server's <acronym>SSL</acronym>
+        cipher preferences, rather than the client's.
+        The default value is false.
+-->
+クライアントではなく、サーバ指定の<acronym>SSL</acronym>暗号を選択します。
+デフォルト値はoffです。
+      </para>
+      <para>
+<!--
+        This parameter can only be set at server start.
+-->
+このパラメータはサーバ起動時にのみ設定可能です。
+      </para>
+      </listitem>
+    </varlistentry>
+
   </variablelist>
  </sect2>
 
