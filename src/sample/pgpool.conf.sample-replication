@@ -117,6 +117,10 @@ ssl = off
 ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'
                                    # Allowed SSL ciphers
                                    # (change requires restart)
+ssl_prefer_server_ciphers = off
+                                   # Use server's SSL cipher preferences,
+                                   # rather than the client's
+                                   # (change requires restart)
 #------------------------------------------------------------------------------
 # POOLS
 #------------------------------------------------------------------------------

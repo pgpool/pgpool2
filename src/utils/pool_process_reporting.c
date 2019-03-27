@@ -262,6 +262,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "allowed SSL ciphers", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "ssl_prefer_server_ciphers", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->ssl_prefer_server_ciphers);
+	StrNCpy(status[i].desc, "Use server's SSL cipher preferences", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* POOLS */
 
 	/* - Pool size -  */
