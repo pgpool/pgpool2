@@ -208,6 +208,7 @@ int pool_init_config(void)
 	pool_config->ssl_ca_cert = "";
 	pool_config->ssl_ca_cert_dir = "";
 	pool_config->ssl_ciphers = "HIGH:MEDIUM:+3DES:!aNULL";
+	pool_config->ssl_prefer_server_ciphers = 0;
 	pool_config->debug_level = 0;
 	pool_config->relcache_expire = 0;
 	pool_config->relcache_size = 256;
@@ -2904,6 +2905,22 @@ int pool_get_config(char *confpath, POOL_CONFIG_CONTEXT context)
 				return(-1);
 			}
 			pool_config->ssl_ciphers = str;
+		}
+
+		else if (!strcmp(key, "ssl_prefer_server_ciphers") && CHECK_CONTEXT(INIT_CONFIG, context))
+		{
+			int v = eval_logical(yytext);
+			
+			if (v < 0)
+			{
+				fclose(fd);
+				ereport(error_level,
+				(errmsg("invalid configuration for key \"%s\"",key),
+				errdetail("invalid value:\"%s\" for key:\"%s\"", yytext,key)));
+				
+				return(-1);
+			}
+			pool_config->ssl_prefer_server_ciphers = v;
 		}
 
 		else if (!strcmp(key, "debug_level") && CHECK_CONTEXT(INIT_CONFIG|RELOAD_CONFIG, context))
