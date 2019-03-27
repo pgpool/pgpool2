@@ -998,7 +998,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.ssl_ciphers,
-		"",
+		"HIGH:MEDIUM:+3DES:!aNULL",
 		NULL, NULL, NULL, NULL
 	},
 
