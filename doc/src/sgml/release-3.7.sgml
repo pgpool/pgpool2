@@ -1,6 +1,78 @@
 <!-- doc/src/sgml/release-3.7.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id=release-3-7-9> 
+  <title>Release 3.7.9</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2019-03-29</simpara>
+  </note>
+
+  <sect2>
+   <title>Enhancements</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2019-03-27 [14e516c]
+-->
+    <para>
+     Add new configuration option <xref linkend="guc-ssl-prefer-server-ciphers">. (Muhammad Usama)
+    </para>
+    <para>
+     Add the new setting <xref linkend="guc-ssl-prefer-server-ciphers"> to let users configure if they
+     want client's or server's cipher order to take preference.
+    </para>
+    <para>
+     The default for this parameter is off, which prioritize the client's
+     cipher order as usual. However this is just for keeping backward
+     compatibility, and it is possible that a malicious client uses weak
+     ciphers. For this reason we recommend to set this parameter to on at
+     all times.
+    </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-03-27 [c4cf944]
+2019-03-23 [baba568]
+-->
+    <para>
+     Allow to set a client cipher list. (Tatsuo Ishii, Yugo Nagata)
+    </para>
+    <para>
+     For this purpose new parameter <xref linkend="guc-ssl-ciphers">, which specifies the cipher
+     list to be accepted by <productname>Pgpool-II</>, is added.
+     This is already implemented in <productname>PostgreSQL</> and useful to enhance security when SSL is enabled. 
+    </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+
+  <sect2>
+   <title>Bug fixes</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2019-03-18 [486a766]
+-->
+    <para>
+     Fix unnecessary <function>fsync()</> to <filename>pgpool_status</> file. (Tatsuo Ishii)
+    </para>
+    <para>
+     Whenever new connections are created to PostgreSQL backend, <function>fsync()</>
+     was issued to <filename>pgpool_status</> file, which could generate excessive I/O
+     in certain conditions.
+     So reduce the chance of issuing <function>fsync()</> so that it is issued only when
+     backend status is changed.
+    </para>
+    <para>
+     Discussion: <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2019-February/006494.html">[pgpool-general: 6436]</ulink>
+    </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
  <sect1 id=release-3-7-8> 
   <title>Release 3.7.8</title>
   <note>
