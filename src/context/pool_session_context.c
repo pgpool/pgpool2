@@ -462,6 +462,30 @@ void pool_clear_sent_message_list(void)
 	}
 }
 
+/*
+ * Zap query context info in sent messages to indicate that the query context
+ * has been already removed.
+ */
+void
+pool_zap_query_context_in_sent_messages(POOL_QUERY_CONTEXT *query_context)
+{
+	int			i;
+	POOL_SENT_MESSAGE_LIST *msglist;
+
+	msglist = &pool_get_session_context(false)->message_list;
+
+	for (i = 0; i < msglist->size; i++)
+	{
+		elog(LOG, "checking zapping sent message: %p query_context: %p",
+			 &msglist->sent_messages[i], msglist->sent_messages[i]->query_context);
+		if (msglist->sent_messages[i]->query_context == query_context)
+		{
+			msglist->sent_messages[i]->query_context = NULL;
+			elog(LOG, "Zap sent message: %p", &msglist->sent_messages[i]);
+		}
+	}
+}
+
 static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m)
 {
 	ereport(DEBUG1,
@@ -571,7 +595,7 @@ void pool_add_sent_message(POOL_SENT_MESSAGE *message)
 }
 
 /*
- * Get a sent message
+ * Find a sent message by kind and name.
  */
 POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name, POOL_SENT_MESSAGE_STATE state)
 {
@@ -588,6 +612,29 @@ POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name, POOL_SENT_
 		if (msglist->sent_messages[i]->kind == kind &&
 			!strcmp(msglist->sent_messages[i]->name, name) &&
 			msglist->sent_messages[i]->state == state)
+			return msglist->sent_messages[i];
+	}
+
+	return NULL;
+}
+
+/*
+ * Find a sent message by query context.
+ */
+POOL_SENT_MESSAGE *
+pool_get_sent_message_by_query_context(POOL_QUERY_CONTEXT * query_context)
+{
+	int			i;
+	POOL_SENT_MESSAGE_LIST *msglist;
+
+	msglist = &pool_get_session_context(false)->message_list;
+
+	if (query_context == NULL)
+		return NULL;
+
+	for (i = 0; i < msglist->size; i++)
+	{
+		if (msglist->sent_messages[i]->query_context == query_context)
 			return msglist->sent_messages[i];
 	}
 
