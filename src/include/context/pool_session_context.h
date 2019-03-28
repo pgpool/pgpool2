@@ -271,6 +271,8 @@ extern void pool_clear_sent_message_list(void);
 extern void pool_sent_message_destroy(POOL_SENT_MESSAGE *message);
 extern POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name, POOL_SENT_MESSAGE_STATE state);
 extern void pool_set_sent_message_state(POOL_SENT_MESSAGE *message);
+extern void pool_zap_query_context_in_sent_messages(POOL_QUERY_CONTEXT *query_context);
+extern POOL_SENT_MESSAGE * pool_get_sent_message_by_query_context(POOL_QUERY_CONTEXT * query_context);
 extern void pool_unset_writing_transaction(void);
 extern void pool_set_writing_transaction(void);
 extern bool pool_is_writing_transaction(void);
