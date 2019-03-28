@@ -36,6 +36,12 @@ Patch1:         pgpool-II-head.patch
 %if %{pg_version} >=94 && %{rhel} >= 7
 Patch2:         pgpool_socket_dir.patch
 %endif
+%if %{pg_version} == 10 && %{rhel} >= 7
+Patch2:         pgpool_socket_dir.patch
+%endif
+%if %{pg_version} == 11 && %{rhel} >= 7
+Patch2:         pgpool_socket_dir.patch
+%endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel
 %if %{pg_version} == 11 && %{rhel} >= 7
