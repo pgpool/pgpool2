@@ -216,6 +216,31 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 		pool_at_command_success(frontend, backend);
 		pool_unset_query_in_progress();
 		pool_pending_message_reset_previous_message();
+
+		if (session_context->query_context == NULL)
+		{
+			elog(WARNING, "At command complete there's no query context");
+		}
+		else
+		{
+			/*
+			 * Destroy query context if it is not referenced from sent
+			 * messages and pending messages except bound to named statements
+			 * or portals.  Named statements and portals should remain until
+			 * they are explicitly closed.
+			 */
+			if (can_query_context_destroy(session_context->query_context))
+
+			{
+				POOL_SENT_MESSAGE * msg = pool_get_sent_message_by_query_context(session_context->query_context);
+
+				if (!msg || (msg && *msg->name == '\0'))
+				{
+					pool_zap_query_context_in_sent_messages(session_context->query_context);
+					pool_query_context_destroy(session_context->query_context);
+				}
+			}
+		}
 	}
 
 	return POOL_CONTINUE;
