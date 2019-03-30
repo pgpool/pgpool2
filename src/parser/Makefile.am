@@ -26,6 +26,7 @@ endif
 
 EXTRA_DIST = scan.c scan.l
 
+ARFLAGS = cr
 
 AM_YFLAGS = -d
 
