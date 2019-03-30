@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018	Tatsuo Ishii
+ * Copyright (c) 2017-2019	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -28,13 +28,15 @@
 #include "pgproto/read.h"
 #include "pgproto/send.h"
 
+static	void write_it(int fd, void *buf, int len);
+
 /*
  * Send a character to the connection.
  */
 void
 send_char(char c, PGconn *conn)
 {
-	write(PQsocket(conn), &c, 1);
+	write_it(PQsocket(conn), &c, 1);
 }
 
 /*
@@ -45,7 +47,7 @@ send_int(int intval, PGconn *conn)
 {
 	int			l = htonl(intval);
 
-	write(PQsocket(conn), &l, sizeof(l));
+	write_it(PQsocket(conn), &l, sizeof(l));
 }
 
 /*
@@ -56,7 +58,7 @@ send_int16(short shortval, PGconn *conn)
 {
 	short		s = htons(shortval);
 
-	write(PQsocket(conn), &s, sizeof(s));
+	write_it(PQsocket(conn), &s, sizeof(s));
 }
 
 /*
@@ -65,7 +67,7 @@ send_int16(short shortval, PGconn *conn)
 void
 send_string(char *buf, PGconn *conn)
 {
-	write(PQsocket(conn), buf, strlen(buf) + 1);
+	write_it(PQsocket(conn), buf, strlen(buf) + 1);
 }
 
 /*
@@ -74,5 +76,21 @@ send_string(char *buf, PGconn *conn)
 void
 send_byte(char *buf, int len, PGconn *conn)
 {
-	write(PQsocket(conn), buf, len);
+	write_it(PQsocket(conn), buf, len);
 }
+
+/*
+ * Wrapper for write(2).
+ */
+static
+void write_it(int fd, void *buf, int len)
+{
+	int errsave = errno;
+	errno = 0;
+	if (write(fd, buf, len) < 0)
+	{
+		fprintf(stderr, "write_it: warning write(2) failed: %s\n", strerror(errno));
+	}
+	errno = errsave;
+}
+
