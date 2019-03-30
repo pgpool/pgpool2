@@ -2112,7 +2112,7 @@ validate_backend_connectivity(int front_end_fd)
 		if (front_end_fd > 0)
 		{
 			POOL_CONNECTION *cp;
-			volatile StartupPacket *sp;
+			StartupPacket *volatile sp;
 
 			/*
 			 * we do not want to report socket error, as above errors will be
