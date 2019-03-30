@@ -24,6 +24,7 @@ libsql_parser_a_SOURCES  = \
 
 EXTRA_DIST = scan.c scan.l
 
+ARFLAGS = cr
 
 AM_YFLAGS = -d
 
