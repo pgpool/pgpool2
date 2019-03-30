@@ -205,6 +205,12 @@ BACKEND_STATUS* my_backend_status[MAX_NUM_BACKENDS];		/* Backend status buffer *
 int my_master_node_id;		/* Master node id buffer */
 
 /*
+ * Dummy varibale to suppress compiler warnings by discarding return values
+ * from write(2) in signal handlers
+ */
+static int dummy_status;
+
+/*
 * pgpool main program
 */
 
@@ -1427,7 +1433,7 @@ static RETSIGTYPE sigusr1_handler(int sig)
 	POOL_SETMASK(&BlockSig);
 	sigusr1_request = 1;
 
-	write(pipe_fds[1], "\0", 1);
+	dummy_status = write(pipe_fds[1], "\0", 1);
 
 #ifdef NOT_USED
 	if(write(pipe_fds[1], "\0", 1) < 0)
@@ -2337,7 +2343,7 @@ static RETSIGTYPE reap_handler(int sig)
 
 	if (pipe_fds[1])
 	{
-		write(pipe_fds[1], "\0", 1);
+		dummy_status = write(pipe_fds[1], "\0", 1);
 	}
 
 #ifdef NOT_USED
@@ -2665,7 +2671,7 @@ static RETSIGTYPE wakeup_handler(int sig)
 	if (processState != INITIALIZING)
 	{
 		POOL_SETMASK(&BlockSig);
-		write(pipe_fds[1], "\0", 1);
+		dummy_status = write(pipe_fds[1], "\0", 1);
 #ifdef NOT_USED
 		if(write(pipe_fds[1], "\0", 1) < 0)
 			ereport(WARNING,
@@ -2686,7 +2692,7 @@ static RETSIGTYPE reload_config_handler(int sig)
 
 	POOL_SETMASK(&BlockSig);
 	reload_config_request = 1;
-	write(pipe_fds[1], "\0", 1);
+	dummy_status = write(pipe_fds[1], "\0", 1);
 #ifdef NOT_USED
 	if(write(pipe_fds[1], "\0", 1) < 0)
         ereport(WARNING,
