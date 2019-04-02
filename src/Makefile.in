@@ -83,7 +83,7 @@ bin_PROGRAMS = pgpool$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/mkinstalldirs config/pool_config.c \
-	$(top_srcdir)/depcomp $(top_srcdir)/ylwrap
+	$(top_srcdir)/ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
@@ -156,9 +156,8 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/src/include
-depcomp = $(SHELL) $(top_srcdir)/depcomp
-am__depfiles_maybe = depfiles
-am__mv = mv -f
+depcomp =
+am__depfiles_maybe =
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -563,9 +562,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -636,192 +635,99 @@ clean-binPROGRAMS:
 main/$(am__dirstamp):
 	@$(MKDIR_P) main
 	@: > main/$(am__dirstamp)
-main/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) main/$(DEPDIR)
-	@: > main/$(DEPDIR)/$(am__dirstamp)
-main/main.$(OBJEXT): main/$(am__dirstamp) \
-	main/$(DEPDIR)/$(am__dirstamp)
-main/pool_globals.$(OBJEXT): main/$(am__dirstamp) \
-	main/$(DEPDIR)/$(am__dirstamp)
-main/pgpool_main.$(OBJEXT): main/$(am__dirstamp) \
-	main/$(DEPDIR)/$(am__dirstamp)
+main/main.$(OBJEXT): main/$(am__dirstamp)
+main/pool_globals.$(OBJEXT): main/$(am__dirstamp)
+main/pgpool_main.$(OBJEXT): main/$(am__dirstamp)
 config/$(am__dirstamp):
 	@$(MKDIR_P) config
 	@: > config/$(am__dirstamp)
-config/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) config/$(DEPDIR)
-	@: > config/$(DEPDIR)/$(am__dirstamp)
-config/pool_config.$(OBJEXT): config/$(am__dirstamp) \
-	config/$(DEPDIR)/$(am__dirstamp)
+config/pool_config.$(OBJEXT): config/$(am__dirstamp)
 pcp_con/$(am__dirstamp):
 	@$(MKDIR_P) pcp_con
 	@: > pcp_con/$(am__dirstamp)
-pcp_con/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) pcp_con/$(DEPDIR)
-	@: > pcp_con/$(DEPDIR)/$(am__dirstamp)
-pcp_con/pcp_child.$(OBJEXT): pcp_con/$(am__dirstamp) \
-	pcp_con/$(DEPDIR)/$(am__dirstamp)
-pcp_con/recovery.$(OBJEXT): pcp_con/$(am__dirstamp) \
-	pcp_con/$(DEPDIR)/$(am__dirstamp)
+pcp_con/pcp_child.$(OBJEXT): pcp_con/$(am__dirstamp)
+pcp_con/recovery.$(OBJEXT): pcp_con/$(am__dirstamp)
 auth/$(am__dirstamp):
 	@$(MKDIR_P) auth
 	@: > auth/$(am__dirstamp)
-auth/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) auth/$(DEPDIR)
-	@: > auth/$(DEPDIR)/$(am__dirstamp)
-auth/md5.$(OBJEXT): auth/$(am__dirstamp) \
-	auth/$(DEPDIR)/$(am__dirstamp)
-auth/pool_auth.$(OBJEXT): auth/$(am__dirstamp) \
-	auth/$(DEPDIR)/$(am__dirstamp)
-auth/pool_passwd.$(OBJEXT): auth/$(am__dirstamp) \
-	auth/$(DEPDIR)/$(am__dirstamp)
-auth/pool_hba.$(OBJEXT): auth/$(am__dirstamp) \
-	auth/$(DEPDIR)/$(am__dirstamp)
+auth/md5.$(OBJEXT): auth/$(am__dirstamp)
+auth/pool_auth.$(OBJEXT): auth/$(am__dirstamp)
+auth/pool_passwd.$(OBJEXT): auth/$(am__dirstamp)
+auth/pool_hba.$(OBJEXT): auth/$(am__dirstamp)
 protocol/$(am__dirstamp):
 	@$(MKDIR_P) protocol
 	@: > protocol/$(am__dirstamp)
-protocol/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) protocol/$(DEPDIR)
-	@: > protocol/$(DEPDIR)/$(am__dirstamp)
-protocol/pool_proto2.$(OBJEXT): protocol/$(am__dirstamp) \
-	protocol/$(DEPDIR)/$(am__dirstamp)
-protocol/child.$(OBJEXT): protocol/$(am__dirstamp) \
-	protocol/$(DEPDIR)/$(am__dirstamp)
-protocol/pool_process_query.$(OBJEXT): protocol/$(am__dirstamp) \
-	protocol/$(DEPDIR)/$(am__dirstamp)
-protocol/pool_connection_pool.$(OBJEXT): protocol/$(am__dirstamp) \
-	protocol/$(DEPDIR)/$(am__dirstamp)
-protocol/pool_proto_modules.$(OBJEXT): protocol/$(am__dirstamp) \
-	protocol/$(DEPDIR)/$(am__dirstamp)
+protocol/pool_proto2.$(OBJEXT): protocol/$(am__dirstamp)
+protocol/child.$(OBJEXT): protocol/$(am__dirstamp)
+protocol/pool_process_query.$(OBJEXT): protocol/$(am__dirstamp)
+protocol/pool_connection_pool.$(OBJEXT): protocol/$(am__dirstamp)
+protocol/pool_proto_modules.$(OBJEXT): protocol/$(am__dirstamp)
 query_cache/$(am__dirstamp):
 	@$(MKDIR_P) query_cache
 	@: > query_cache/$(am__dirstamp)
-query_cache/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) query_cache/$(DEPDIR)
-	@: > query_cache/$(DEPDIR)/$(am__dirstamp)
-query_cache/pool_memqcache.$(OBJEXT): query_cache/$(am__dirstamp) \
-	query_cache/$(DEPDIR)/$(am__dirstamp)
+query_cache/pool_memqcache.$(OBJEXT): query_cache/$(am__dirstamp)
 system_db/$(am__dirstamp):
 	@$(MKDIR_P) system_db
 	@: > system_db/$(am__dirstamp)
-system_db/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) system_db/$(DEPDIR)
-	@: > system_db/$(DEPDIR)/$(am__dirstamp)
-system_db/pool_system.$(OBJEXT): system_db/$(am__dirstamp) \
-	system_db/$(DEPDIR)/$(am__dirstamp)
+system_db/pool_system.$(OBJEXT): system_db/$(am__dirstamp)
 context/$(am__dirstamp):
 	@$(MKDIR_P) context
 	@: > context/$(am__dirstamp)
-context/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) context/$(DEPDIR)
-	@: > context/$(DEPDIR)/$(am__dirstamp)
-context/pool_session_context.$(OBJEXT): context/$(am__dirstamp) \
-	context/$(DEPDIR)/$(am__dirstamp)
-context/pool_process_context.$(OBJEXT): context/$(am__dirstamp) \
-	context/$(DEPDIR)/$(am__dirstamp)
-context/pool_query_context.$(OBJEXT): context/$(am__dirstamp) \
-	context/$(DEPDIR)/$(am__dirstamp)
+context/pool_session_context.$(OBJEXT): context/$(am__dirstamp)
+context/pool_process_context.$(OBJEXT): context/$(am__dirstamp)
+context/pool_query_context.$(OBJEXT): context/$(am__dirstamp)
 streaming_replication/$(am__dirstamp):
 	@$(MKDIR_P) streaming_replication
 	@: > streaming_replication/$(am__dirstamp)
-streaming_replication/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) streaming_replication/$(DEPDIR)
-	@: > streaming_replication/$(DEPDIR)/$(am__dirstamp)
 streaming_replication/pool_worker_child.$(OBJEXT):  \
-	streaming_replication/$(am__dirstamp) \
-	streaming_replication/$(DEPDIR)/$(am__dirstamp)
+	streaming_replication/$(am__dirstamp)
 rewrite/$(am__dirstamp):
 	@$(MKDIR_P) rewrite
 	@: > rewrite/$(am__dirstamp)
-rewrite/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) rewrite/$(DEPDIR)
-	@: > rewrite/$(DEPDIR)/$(am__dirstamp)
-rewrite/pool_timestamp.$(OBJEXT): rewrite/$(am__dirstamp) \
-	rewrite/$(DEPDIR)/$(am__dirstamp)
-rewrite/pool_lobj.$(OBJEXT): rewrite/$(am__dirstamp) \
-	rewrite/$(DEPDIR)/$(am__dirstamp)
+rewrite/pool_timestamp.$(OBJEXT): rewrite/$(am__dirstamp)
+rewrite/pool_lobj.$(OBJEXT): rewrite/$(am__dirstamp)
 parallel_query/$(am__dirstamp):
 	@$(MKDIR_P) parallel_query
 	@: > parallel_query/$(am__dirstamp)
-parallel_query/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) parallel_query/$(DEPDIR)
-	@: > parallel_query/$(DEPDIR)/$(am__dirstamp)
 parallel_query/pool_rewrite_query.$(OBJEXT):  \
-	parallel_query/$(am__dirstamp) \
-	parallel_query/$(DEPDIR)/$(am__dirstamp)
+	parallel_query/$(am__dirstamp)
 parallel_query/pool_rewrite_outfuncs.$(OBJEXT):  \
-	parallel_query/$(am__dirstamp) \
-	parallel_query/$(DEPDIR)/$(am__dirstamp)
+	parallel_query/$(am__dirstamp)
 utils/$(am__dirstamp):
 	@$(MKDIR_P) utils
 	@: > utils/$(am__dirstamp)
-utils/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) utils/$(DEPDIR)
-	@: > utils/$(DEPDIR)/$(am__dirstamp)
-utils/pool_select_walker.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/strlcpy.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/psprintf.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/pool_params.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/ps_status.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/pool_shmem.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/pool_sema.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/pool_signal.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/pool_path.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/pool_ip.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/pool_relcache.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/pool_process_reporting.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/pool_ssl.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/pool_stream.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
-utils/getopt_long.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
+utils/pool_select_walker.$(OBJEXT): utils/$(am__dirstamp)
+utils/strlcpy.$(OBJEXT): utils/$(am__dirstamp)
+utils/psprintf.$(OBJEXT): utils/$(am__dirstamp)
+utils/pool_params.$(OBJEXT): utils/$(am__dirstamp)
+utils/ps_status.$(OBJEXT): utils/$(am__dirstamp)
+utils/pool_shmem.$(OBJEXT): utils/$(am__dirstamp)
+utils/pool_sema.$(OBJEXT): utils/$(am__dirstamp)
+utils/pool_signal.$(OBJEXT): utils/$(am__dirstamp)
+utils/pool_path.$(OBJEXT): utils/$(am__dirstamp)
+utils/pool_ip.$(OBJEXT): utils/$(am__dirstamp)
+utils/pool_relcache.$(OBJEXT): utils/$(am__dirstamp)
+utils/pool_process_reporting.$(OBJEXT): utils/$(am__dirstamp)
+utils/pool_ssl.$(OBJEXT): utils/$(am__dirstamp)
+utils/pool_stream.$(OBJEXT): utils/$(am__dirstamp)
+utils/getopt_long.$(OBJEXT): utils/$(am__dirstamp)
 utils/mmgr/$(am__dirstamp):
 	@$(MKDIR_P) utils/mmgr
 	@: > utils/mmgr/$(am__dirstamp)
-utils/mmgr/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) utils/mmgr/$(DEPDIR)
-	@: > utils/mmgr/$(DEPDIR)/$(am__dirstamp)
-utils/mmgr/mcxt.$(OBJEXT): utils/mmgr/$(am__dirstamp) \
-	utils/mmgr/$(DEPDIR)/$(am__dirstamp)
-utils/mmgr/aset.$(OBJEXT): utils/mmgr/$(am__dirstamp) \
-	utils/mmgr/$(DEPDIR)/$(am__dirstamp)
+utils/mmgr/mcxt.$(OBJEXT): utils/mmgr/$(am__dirstamp)
+utils/mmgr/aset.$(OBJEXT): utils/mmgr/$(am__dirstamp)
 utils/error/$(am__dirstamp):
 	@$(MKDIR_P) utils/error
 	@: > utils/error/$(am__dirstamp)
-utils/error/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) utils/error/$(DEPDIR)
-	@: > utils/error/$(DEPDIR)/$(am__dirstamp)
-utils/error/elog.$(OBJEXT): utils/error/$(am__dirstamp) \
-	utils/error/$(DEPDIR)/$(am__dirstamp)
-utils/error/assert.$(OBJEXT): utils/error/$(am__dirstamp) \
-	utils/error/$(DEPDIR)/$(am__dirstamp)
+utils/error/elog.$(OBJEXT): utils/error/$(am__dirstamp)
+utils/error/assert.$(OBJEXT): utils/error/$(am__dirstamp)
 utils/pcp/$(am__dirstamp):
 	@$(MKDIR_P) utils/pcp
 	@: > utils/pcp/$(am__dirstamp)
-utils/pcp/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) utils/pcp/$(DEPDIR)
-	@: > utils/pcp/$(DEPDIR)/$(am__dirstamp)
-utils/pcp/pcp_stream.$(OBJEXT): utils/pcp/$(am__dirstamp) \
-	utils/pcp/$(DEPDIR)/$(am__dirstamp)
-utils/pcp/pcp_error.$(OBJEXT): utils/pcp/$(am__dirstamp) \
-	utils/pcp/$(DEPDIR)/$(am__dirstamp)
-utils/pcp/pcp_timeout.$(OBJEXT): utils/pcp/$(am__dirstamp) \
-	utils/pcp/$(DEPDIR)/$(am__dirstamp)
-utils/regex_array.$(OBJEXT): utils/$(am__dirstamp) \
-	utils/$(DEPDIR)/$(am__dirstamp)
+utils/pcp/pcp_stream.$(OBJEXT): utils/pcp/$(am__dirstamp)
+utils/pcp/pcp_error.$(OBJEXT): utils/pcp/$(am__dirstamp)
+utils/pcp/pcp_timeout.$(OBJEXT): utils/pcp/$(am__dirstamp)
+utils/regex_array.$(OBJEXT): utils/$(am__dirstamp)
 
 pgpool$(EXEEXT): $(pgpool_OBJECTS) $(pgpool_DEPENDENCIES) $(EXTRA_pgpool_DEPENDENCIES) 
 	@rm -f pgpool$(EXEEXT)
@@ -848,78 +754,14 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@auth/$(DEPDIR)/md5.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@auth/$(DEPDIR)/pool_auth.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@auth/$(DEPDIR)/pool_hba.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@auth/$(DEPDIR)/pool_passwd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/pool_config.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@context/$(DEPDIR)/pool_process_context.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@context/$(DEPDIR)/pool_query_context.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@context/$(DEPDIR)/pool_session_context.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/main.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/pgpool_main.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@main/$(DEPDIR)/pool_globals.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@parallel_query/$(DEPDIR)/pool_rewrite_outfuncs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@parallel_query/$(DEPDIR)/pool_rewrite_query.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@pcp_con/$(DEPDIR)/pcp_child.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@pcp_con/$(DEPDIR)/recovery.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/child.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/pool_connection_pool.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/pool_process_query.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/pool_proto2.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@protocol/$(DEPDIR)/pool_proto_modules.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@query_cache/$(DEPDIR)/pool_memqcache.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@rewrite/$(DEPDIR)/pool_lobj.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@rewrite/$(DEPDIR)/pool_timestamp.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@streaming_replication/$(DEPDIR)/pool_worker_child.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@system_db/$(DEPDIR)/pool_system.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/getopt_long.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_ip.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_params.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_path.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_process_reporting.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_relcache.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_select_walker.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_sema.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_shmem.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_signal.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_ssl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/pool_stream.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/ps_status.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/psprintf.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/regex_array.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/strlcpy.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/error/$(DEPDIR)/assert.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/error/$(DEPDIR)/elog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/mmgr/$(DEPDIR)/aset.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/mmgr/$(DEPDIR)/mcxt.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/pcp/$(DEPDIR)/pcp_error.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/pcp/$(DEPDIR)/pcp_stream.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utils/pcp/$(DEPDIR)/pcp_timeout.Po@am__quote@
-
 .c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
+	$(AM_V_CC)$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+	$(AM_V_CC)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+	$(AM_V_CC)$(LTCOMPILE) -c -o $@ $<
 
 .l.c:
 	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
@@ -1160,35 +1002,20 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
-	-rm -f auth/$(DEPDIR)/$(am__dirstamp)
 	-rm -f auth/$(am__dirstamp)
-	-rm -f config/$(DEPDIR)/$(am__dirstamp)
 	-rm -f config/$(am__dirstamp)
-	-rm -f context/$(DEPDIR)/$(am__dirstamp)
 	-rm -f context/$(am__dirstamp)
-	-rm -f main/$(DEPDIR)/$(am__dirstamp)
 	-rm -f main/$(am__dirstamp)
-	-rm -f parallel_query/$(DEPDIR)/$(am__dirstamp)
 	-rm -f parallel_query/$(am__dirstamp)
-	-rm -f pcp_con/$(DEPDIR)/$(am__dirstamp)
 	-rm -f pcp_con/$(am__dirstamp)
-	-rm -f protocol/$(DEPDIR)/$(am__dirstamp)
 	-rm -f protocol/$(am__dirstamp)
-	-rm -f query_cache/$(DEPDIR)/$(am__dirstamp)
 	-rm -f query_cache/$(am__dirstamp)
-	-rm -f rewrite/$(DEPDIR)/$(am__dirstamp)
 	-rm -f rewrite/$(am__dirstamp)
-	-rm -f streaming_replication/$(DEPDIR)/$(am__dirstamp)
 	-rm -f streaming_replication/$(am__dirstamp)
-	-rm -f system_db/$(DEPDIR)/$(am__dirstamp)
 	-rm -f system_db/$(am__dirstamp)
-	-rm -f utils/$(DEPDIR)/$(am__dirstamp)
 	-rm -f utils/$(am__dirstamp)
-	-rm -f utils/error/$(DEPDIR)/$(am__dirstamp)
 	-rm -f utils/error/$(am__dirstamp)
-	-rm -f utils/mmgr/$(DEPDIR)/$(am__dirstamp)
 	-rm -f utils/mmgr/$(am__dirstamp)
-	-rm -f utils/pcp/$(DEPDIR)/$(am__dirstamp)
 	-rm -f utils/pcp/$(am__dirstamp)
 
 maintainer-clean-generic:
@@ -1200,7 +1027,6 @@ clean: clean-recursive
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-recursive
-	-rm -rf auth/$(DEPDIR) config/$(DEPDIR) context/$(DEPDIR) main/$(DEPDIR) parallel_query/$(DEPDIR) pcp_con/$(DEPDIR) protocol/$(DEPDIR) query_cache/$(DEPDIR) rewrite/$(DEPDIR) streaming_replication/$(DEPDIR) system_db/$(DEPDIR) utils/$(DEPDIR) utils/error/$(DEPDIR) utils/mmgr/$(DEPDIR) utils/pcp/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1246,7 +1072,6 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-recursive
-	-rm -rf auth/$(DEPDIR) config/$(DEPDIR) context/$(DEPDIR) main/$(DEPDIR) parallel_query/$(DEPDIR) pcp_con/$(DEPDIR) protocol/$(DEPDIR) query_cache/$(DEPDIR) rewrite/$(DEPDIR) streaming_replication/$(DEPDIR) system_db/$(DEPDIR) utils/$(DEPDIR) utils/error/$(DEPDIR) utils/mmgr/$(DEPDIR) utils/pcp/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
