@@ -97,7 +97,6 @@ CONFIG_HEADER = $(top_builddir)/src/include/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
-ARFLAGS = cru
 AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
@@ -343,6 +342,7 @@ libsql_parser_a_SOURCES = copyfuncs.c gram.y keywords.c list.c \
 	$(top_srcdir)/src/utils/error/elog.c wchar.c scan.c \
 	$(am__append_1)
 EXTRA_DIST = scan.c scan.l
+ARFLAGS = cr
 AM_YFLAGS = -d
 all: all-am
 
