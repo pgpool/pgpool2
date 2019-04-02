@@ -960,6 +960,29 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
 	</para>
       </listitem>
     </varlistentry>
+   <varlistentry id="guc-statement-level-load-balance" xreflabel="statement_level_load_balance">
+      <term><varname>statement_level_load_balance</varname> (<type>boolean</type>)
+        <indexterm>
+          <primary><varname>statement_level_load_balance</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+		 When set to on, the load balancing node is decided for each read query.
+		 When set to off, load balancing node is decided at the session start time
+		 and will not be changed until the session ends.
+		 For example, in applications that use connection pooling remain connections
+		 open to the backend server, because the session may be held for a long time,
+		 the load balancing node does not change until the session ends.
+		 In such applications, When <varname>statement_level_load_balance</varname> is enabled,
+		 it is possible to decide load balancing node per query, not per session.
+		 The default is off.
+        </para>
+        <para>
+          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+        </para>
+      </listitem>
+    </varlistentry>
 
   </variablelist>
  </sect2>

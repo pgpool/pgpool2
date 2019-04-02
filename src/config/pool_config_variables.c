@@ -557,6 +557,16 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"statement_level_load_balance", CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
+			"Enables statement level load balancing",
+			CONFIG_VAR_TYPE_BOOL, false, 0
+		},
+		&g_pool_config.statement_level_load_balance,
+		false,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	EMPTY_CONFIG_BOOL
 

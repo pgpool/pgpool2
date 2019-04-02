@@ -1153,7 +1153,7 @@ pool_pending_message_create(char kind, int len, char *contents)
 	msg->portal[0] = '\0';
 	msg->is_rows_returned = false;
 	msg->not_forward_to_frontend = false;
-	msg->node_ids[0] = msg->node_ids[1] = -1;
+	memset(msg->node_ids, false, sizeof(msg->node_ids));
 
 	MemoryContextSwitchTo(old_context);
 
@@ -1167,22 +1167,17 @@ pool_pending_message_create(char kind, int len, char *contents)
 void
 pool_pending_message_dest_set(POOL_PENDING_MESSAGE * message, POOL_QUERY_CONTEXT * query_context)
 {
-	int			i;
-	int			j = 0;
+	//int			i;
 
+	/*
 	for (i = 0; i < MAX_NUM_BACKENDS; i++)
 	{
 		if (query_context->where_to_send[i])
-		{
-			if (j > 1)
-			{
-				ereport(ERROR,
-						(errmsg("pool_pending_messages_dest_set: node ids exceeds 2")));
-				return;
-			}
-			message->node_ids[j++] = i;
-		}
+			message->node_ids[i] = true;
 	}
+	*/
+
+	memcpy(message->node_ids, query_context->where_to_send, sizeof(message->node_ids));
 
 	message->query_context = query_context;
 
@@ -1210,11 +1205,11 @@ pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE * message, POOL
 	/* Rewrite where_to_send map */
 	memset(query_context->where_to_send, 0, sizeof(query_context->where_to_send));
 
-	for (i = 0; i < 2; i++)
+	for (i = 0; i < MAX_NUM_BACKENDS; i++)
 	{
-		if (message->node_ids[i] != -1)
+		if (message->node_ids[i])
 		{
-			query_context->where_to_send[message->node_ids[i]] = 1;
+			query_context->where_to_send[i] = 1;
 		}
 	}
 }
@@ -1633,12 +1628,18 @@ int
 pool_pending_message_get_target_backend_id(POOL_PENDING_MESSAGE * msg)
 {
 	int			backend_id = -1;
+	int			i;
 
-	if (msg->node_ids[0] != -1)
-		backend_id = msg->node_ids[0];
-	else if (msg->node_ids[1] != -1)
-		backend_id = msg->node_ids[1];
-	else
+	for (i = 0; i < MAX_NUM_BACKENDS; i++)
+	{
+		if (msg->node_ids[i])
+		{
+			backend_id = i;
+			break;
+		}
+	}
+
+	if (backend_id == -1)
 		ereport(ERROR,
 				(errmsg("pool_pending_message_get_target_backend_id: no target backend id found")));
 
@@ -1654,6 +1655,7 @@ pool_pending_message_get_message_num_by_backend_id(int backend_id)
 	ListCell   *cell;
 	ListCell   *next;
 	int        cnt = 0;
+	int        i;
 
 	if (!session_context)
 	{
@@ -1666,8 +1668,14 @@ pool_pending_message_get_message_num_by_backend_id(int backend_id)
 	{
 		POOL_PENDING_MESSAGE *msg = (POOL_PENDING_MESSAGE *) lfirst(cell);
 
-		if (msg->node_ids[0] == backend_id || msg->node_ids[1] == backend_id) 
-			cnt++;
+		for (i = 0; i < MAX_NUM_BACKENDS; i++)
+		{
+			if (msg->node_ids[i] && i == backend_id)
+			{
+				cnt++;
+				break;
+			}
+		}
 
 		next = lnext(cell);
 	}

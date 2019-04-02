@@ -507,6 +507,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "Load balance behavior when write query is received", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "statement_level_load_balance", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->statement_level_load_balance);
+	StrNCpy(status[i].desc, "statement level load balancing", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* MASTER/SLAVE MODE */
 
 	StrNCpy(status[i].name, "master_slave_mode", POOLCONFIG_MAXNAMELEN);

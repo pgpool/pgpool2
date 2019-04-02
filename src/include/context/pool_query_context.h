@@ -62,6 +62,7 @@ typedef struct
 	Node	   *rewritten_parse_tree;	/* rewritten raw parser output if any */
 	bool		where_to_send[MAX_NUM_BACKENDS];	/* DB node map to send
 													 * query */
+	int         load_balance_node_id;	/* load balance node id per statement */
 	int			virtual_master_node_id; /* the 1st DB node to send query */
 	POOL_QUERY_STATE query_state[MAX_NUM_BACKENDS]; /* for extended query
 													 * protocol */
@@ -97,7 +98,6 @@ extern void pool_query_context_destroy(POOL_QUERY_CONTEXT * query_context);
 extern POOL_QUERY_CONTEXT * pool_query_context_shallow_copy(POOL_QUERY_CONTEXT * query_context);
 extern void pool_start_query(POOL_QUERY_CONTEXT * query_context, char *query, int len, Node *node);
 extern void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id);
-extern void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id);
 extern bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id);
 extern void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id);
 extern void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id);

@@ -1709,7 +1709,7 @@ select_load_balancing_node(void)
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (VALID_BACKEND(i))
+		if (VALID_BACKEND_RAW(i))
 		{
 			if (i == no_load_balance_node_id)
 				continue;
@@ -1735,7 +1735,7 @@ select_load_balancing_node(void)
 		if ((suggested_node_id == -1 && i == PRIMARY_NODE_ID) || i == no_load_balance_node_id)
 			continue;
 
-		if (VALID_BACKEND(i) && BACKEND_INFO(i).backend_weight > 0.0)
+		if (VALID_BACKEND_RAW(i) && BACKEND_INFO(i).backend_weight > 0.0)
 		{
 			if (r >= total_weight)
 				selected_slot = i;

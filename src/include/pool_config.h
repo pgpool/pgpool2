@@ -442,6 +442,8 @@ typedef struct
 												 * will not be load balanced
 												 * until the session ends. */
 
+	bool		statement_level_load_balance; /* if on, select load balancing node per statement */
+
 	/*
 	 * add for watchdog
 	 */

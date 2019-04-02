@@ -3379,6 +3379,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
 			memset(new_qc->where_to_send, 0, sizeof(new_qc->where_to_send));
 			new_qc->where_to_send[PRIMARY_NODE_ID] = 1;
 			new_qc->virtual_master_node_id = PRIMARY_NODE_ID;
+			new_qc->load_balance_node_id = PRIMARY_NODE_ID;
 
 			/*
 			 * Before sending the parse message to the primary, we need to

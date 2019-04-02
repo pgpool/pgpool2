@@ -335,6 +335,9 @@ allow_sql_comments = off
                                    # If off, SQL comments effectively prevent the judgment
                                    # (pre 3.4 behavior).
 
+statement_level_load_balance = off
+                                   # Enables statement level load balancing
+
 #------------------------------------------------------------------------------
 # MASTER/SLAVE MODE
 #------------------------------------------------------------------------------

@@ -140,13 +140,9 @@ typedef struct
 	bool		not_forward_to_frontend;	/* Do not forward response from
 											 * backend to frontend. This is
 											 * used by parse_before_bind() */
-	int			node_ids[2];	/* backend node ids this message was sent to.
-								 * -1 means no message was sent. */
+	bool		node_ids[MAX_NUM_BACKENDS];	/* backend node map which this message was sent to */
 	POOL_QUERY_CONTEXT *query_context;	/* query context */
 }			POOL_PENDING_MESSAGE;
-
-/* Return true if node_id is one of node_ids */
-#define IS_SENT_NODE_ID(msg, node_id)	(msg->node_ids[0] == node_id || msg->node_ids[1] == node_id)
 
 /*
  * Per session context:

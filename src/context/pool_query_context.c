@@ -145,6 +145,7 @@ pool_start_query(POOL_QUERY_CONTEXT * query_context, char *query, int len, Node 
 		query_context->rewritten_query = NULL;
 		query_context->parse_tree = node;
 		query_context->virtual_master_node_id = my_master_node_id;
+		query_context->load_balance_node_id = my_master_node_id;
 		query_context->is_cache_safe = false;
 		query_context->num_original_params = -1;
 		if (pool_config->memory_cache_enabled)
@@ -226,7 +227,7 @@ pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT * query_context)
 			 * In streaming replication mode, if the node is not primary node
 			 * nor load balance node, there's no point to send query.
 			 */
-			if (SL_MODE &&
+			if (SL_MODE && !pool_config->statement_level_load_balance &&
 				i != PRIMARY_NODE_ID && i != sc->load_balance_node_id)
 			{
 				continue;
@@ -342,7 +343,7 @@ pool_virtual_master_db_node_id(void)
 					(errmsg("pool_virtual_master_db_node_id: virtual_master_node_id:%d load_balance_node_id:%d PRIMARY_NODE_ID:%d",
 							node_id, sc->load_balance_node_id, PRIMARY_NODE_ID)));
 
-			if (node_id != sc->load_balance_node_id && node_id != PRIMARY_NODE_ID)
+			if (node_id != sc->query_context->load_balance_node_id && node_id != PRIMARY_NODE_ID)
 			{
 				/*
 				 * Only return the primary node id if we are not processing
@@ -602,8 +603,12 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 
 					else
 					{
+						if (pool_config->statement_level_load_balance)
+							session_context->load_balance_node_id = select_load_balancing_node();
+
+						session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
 						pool_set_node_to_be_sent(query_context,
-												 session_context->load_balance_node_id);
+												 session_context->query_context->load_balance_node_id);
 					}
 				}
 				else
@@ -645,9 +650,17 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 					  !pool_is_failed_transaction() &&
 					  pool_get_transaction_isolation() != POOL_SERIALIZABLE))
 			{
+
+
+
 				/* load balance */
+				if (pool_config->statement_level_load_balance)
+					session_context->load_balance_node_id = select_load_balancing_node();
+
+				session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
+
 				pool_set_node_to_be_sent(query_context,
-										 session_context->load_balance_node_id);
+										 session_context->query_context->load_balance_node_id);
 			}
 			else
 			{
