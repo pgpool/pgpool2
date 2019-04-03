@@ -60,7 +60,7 @@ done
 #export PCPPASSFILE=/home/usama/work/community/pgpool2/src/test/regression/tests/067.bug231/testdir/pcppass
 $PGPOOL_INSTALL_DIR/bin/pcp_detach_node -w -h localhost -p $PCP_PORT 1 2>&1
 
-$PSQL -p 11000 -c "show pool_nodes" 2>&1
+wait_for_pgpool_startup
 
 $PSQL -p 11000 -c "show pool_nodes" test|grep standby|grep down >/dev/null 2>&1
 if [ $? = 0 ];then
