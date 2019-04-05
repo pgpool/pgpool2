@@ -484,7 +484,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 		/*
 		 * check if we can use md5 authentication.
 		 */
-		if (NUM_BACKENDS > 1)
+		if (!RAW_MODE && NUM_BACKENDS > 1)
 		{
 			if (get_auth_password(MASTER(cp), frontend, 0,
 								  &password, &passwordType) == false)
@@ -1705,7 +1705,7 @@ do_md5(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int pr
 	char		encbuf[POOL_PASSWD_LEN + 1];
 	char	   *pool_passwd = NULL;
 
-	if (NUM_BACKENDS == 1)
+	if (RAW_MODE || NUM_BACKENDS == 1)
 		return do_md5_single_backend(backend, frontend, reauth, protoMajor);
 
 	if (passwordType == PASSWORD_TYPE_AES)
