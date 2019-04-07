@@ -258,6 +258,11 @@
              Large objects creation commands
              </para>
            </listitem>
+           <listitem>
+             <para>
+             Multi-stament queries (multiple SQL commands on single line)
+             </para>
+           </listitem>
          </itemizedlist>
        </para>
      </listitem>
