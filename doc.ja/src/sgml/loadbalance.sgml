@@ -438,7 +438,7 @@ ROW EXCLUSIVE MODEよりも強いLOCK
 <!--
              Som sequence functions (nextval and setval)
 -->
-シーケンス関連の関数(nextvalやsetvalなど)の呼び出し。
+シーケンス関連の関数(nextvalやsetvalなど)の呼び出し
              </para>
            </listitem>
            <listitem>
@@ -447,6 +447,11 @@ ROW EXCLUSIVE MODEよりも強いLOCK
              Large objects creation commands
 -->
 ラージオブジェクトの生成
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+マルチステートメントSQL(1行の中に複数のSQLが含まれている)
              </para>
            </listitem>
          </itemizedlist>
