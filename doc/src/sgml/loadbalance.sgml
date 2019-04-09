@@ -260,7 +260,7 @@
            </listitem>
            <listitem>
              <para>
-             Multi-stament queries (multiple SQL commands on single line)
+             Multi-statement queries (multiple SQL commands on single line)
              </para>
            </listitem>
          </itemizedlist>
