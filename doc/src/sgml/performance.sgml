@@ -74,18 +74,18 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
 	32 (the default), you will need 160MB.
 	</para>
       </sect3>
+    </sect2>
 
-      <sect3 id="disk-requirement">
-	<title>Disk Requirement</title>
-	<para>
-	  <productname>Pgpool-II</productname> does not consume much
-	  disk space. Also it does not require high speed disk because
-	  disk I/O traffic caused
-	  by <productname>Pgpool-II</productname> is small. However,
-	  if you plan to emit much logs, of course you need disk space
-	  for them.
-	</para>
-      </sect3>
+    <sect2 id="disk-requirement">
+      <title>Disk Requirement</title>
+      <para>
+	<productname>Pgpool-II</productname> does not consume much
+	disk space. Also it does not require high speed disk because
+	disk I/O traffic caused
+	by <productname>Pgpool-II</productname> is small. However,
+	if you plan to emit much logs, of course you need disk space
+	for them.
+      </para>
     </sect2>
   </sect1>
 
@@ -95,12 +95,12 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
       As the number of client connections accepted is growing, the
       number of <productname>Pgpool-II</productname> child process
       which can accept new connections from client is decreasing and
-      finally reaches to 0. In this new clients need to wait until a
-      child process becomes free. Under heavy load, it could be
-      possible that the queue of waiting clients could be getting
-      longer and longer and finally hits the system's limit (you might
-      see "535 times the listen queue of a socket overflowed"
-      error"). In this case you need to increase the queue
+      finally reaches to 0. In this situation new clients need to wait
+      until a child process becomes free. Under heavy load, it could
+      be possible that the queue length of waiting clients could be
+      getting longer and longer and finally hits the system's limit
+      (you might see "535 times the listen queue of a socket
+      overflowed" error"). In this case you need to increase the queue
       limit. There are several ways to deal with this problem.
     </para>
 
