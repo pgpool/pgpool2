@@ -43,6 +43,16 @@
    </varlistentry>
 
    <varlistentry>
+    <term>Load Balancing</term>
+    <listitem>
+     <para>
+マルチステートメントSQL(1行の中に複数のSQLが含まれている)は、常にプライマリノード(ストリーミングレプリケーションモードの場合)かマスターノード(それ以外のモード)に送られます。
+通常<productname>Pgpool-II</productname>はクエリの種類を見て適切なノードにクエリを送りますが、マルチステートメントSQLではこれが適用されません。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
 <!--
     <term>Authentication/Access Controls</term>
 -->
