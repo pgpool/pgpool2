@@ -10,8 +10,8 @@
 
   <para>
     There are many configuration parameters that affect the performance of
-    <productname>Pgpool-II</productname>. In this chapter explanations
-    how to tune them are given.
+    <productname>Pgpool-II</productname>. In this chapter we present
+    how to tune them.
   </para>
 
   <sect1 id="resource-requiremente">
@@ -74,6 +74,91 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
 	32 (the default), you will need 160MB.
 	</para>
       </sect3>
+
+      <sect3 id="disk-requirement">
+	<title>Disk Requirement</title>
+	<para>
+	  <productname>Pgpool-II</productname> does not consume much
+	  disk space. Also it does not require high speed disk because
+	  disk I/O traffic caused
+	  by <productname>Pgpool-II</productname> is small. However,
+	  if you plan to emit much logs, of course you need disk space
+	  for them.
+	</para>
+      </sect3>
     </sect2>
+  </sect1>
+
+  <sect1 id="managing-client-connections">
+    <title>Managing Client Connections</title>
+    <para>
+      As the number of client connections accepted is growing, the
+      number of <productname>Pgpool-II</productname> child process
+      which can accept new connections from client is decreasing and
+      finally reaches to 0. In this new clients need to wait until a
+      child process becomes free. Under heavy load, it could be
+      possible that the queue of waiting clients could be getting
+      longer and longer and finally hits the system's limit (you might
+      see "535 times the listen queue of a socket overflowed"
+      error"). In this case you need to increase the queue
+      limit. There are several ways to deal with this problem.
+    </para>
+
+    <sect2 id="controling-num-init-children">
+      <title>Controling num_init_children</title>
+      <para>
+	The obvious way is increasing the number of child
+	process. This can be done by
+	tweaking <xref linkend="guc-num-init-children">. However
+	increasing child process requires more CPU and memory
+	resource. Also you have to be very careful about
+	max_connections parameter
+	of <productname>PostgreSQL</productname> because once the
+	number of child process is greater than
+	max_connections, <productname>PostgreSQL</productname> refuses
+	to accept new connections, and failover will be triggered.
+      </para>
+      <para>
+	Another drawback of increasing num_init_children is, so called
+	"thundering herd problem".  When new connection request comes
+	in, the kernel wake up any sleeping child process to issue
+	accept() system call. This triggers fight of process to get
+	the socket and could give heavy load to the system. To
+	mitigate the problem, you could set serialize_accept to on so
+	that there's only one process to grab the accepting socket.
+      </para>
+    </sect2>
+
+    <sect2 id="controling-listen-backlog-multiplier">
+      <title>Controling listen_backlog_multiplier</title>
+      <para>
+	Another solution would be increasing the connection request
+	queue. This could be done by
+	increasing <xref linkend="guc-listen-backlog-multiplier">.
+      </para>
+    </sect2>
+
+    <sect2 id="when-to-use-reserved-connections">
+      <title>When to use reserved_connections</title>
+      <para>
+	However, none of above solutions guarantees that the
+	connection accepting the queue would not be filled up. If a
+	client connection request arrives quicker than the rate of
+	processing queries, the queue will be filled in someday. For
+	example, if there are some heavy queries that take long time,
+	it could easily trigger the problem.
+      </para>
+      <para>
+	The solution is
+	setting <xref linkend="guc-reserved-connections"> so that
+	overflowed connection requests are rejected
+	as <productname>PostgreSQL</productname> already does. This
+	gives visible errors to applications ("Sorry max_connections
+	already") and force them retrying. So the solution should only
+	be used when you cannot foresee the upper limit of system
+	load.
+      </para>
+    </sect2>
+
   </sect1>
 </chapter>
