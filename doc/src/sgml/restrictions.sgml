@@ -26,6 +26,20 @@
    </varlistentry>
 
    <varlistentry>
+    <term>Load Balancing</term>
+    <listitem>
+     <para>
+       Multi-statement queries (multiple SQL commands on single line)
+       are always sent to primary node (in streaming replication mode)
+       or master node (in other
+       modes). Usually <productname>Pgpool-II</productname> dispatch
+       query to appropriate node, but it's not applied to
+       multi-statement queries.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term>Authentication/Access Controls</term>
     <listitem>
       <para>
