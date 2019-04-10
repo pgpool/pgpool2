@@ -60,17 +60,18 @@
     <listitem>
       <para>
 <!--
-	In the replication mode or master/slave mode, trust, clear
-        text password, and pam methods are supported. md5 in also
-        supported since <productname>Pgpool-II</productname> 3.0.  md5
+	In the replication mode or master/slave mode, trust and pam methods are supported. md5 is also
+        supported since <productname>Pgpool-II</productname> 3.0. md5
         is supported by using a authencitaion file <filename>pool_passwd</filename>.
+        scram-sha-256, cert, and clear text password is also supported since
+        <productname>Pgpool-II</productname> 4.0.
         <filename>pool_passwd</filename> is default name of the
         authentication file. Here are the
         steps to enable md5 authentication:
 -->
-レプリケーションモードまたマスタ/スレーブモード時にはtrust、reject、clear text password、pam認証方式が利用できます。
-crypt認証は利用できません。
+レプリケーションモードまたマスタ/スレーブモード時にはtrust、reject、pam認証方式が利用できます。
 <productname>Pgpool-II</productname> 3.0以降では、<filename>pool_passwd</filename>というファイルを使ってmd5認証も使えます。
+<productname>Pgpool-II</productname> 4.0以降では、scram-sha-256、cert、clear text password認証も使えます。
 <filename>pool_passwd</filename>はデフォルトの認証ファイル名です。
 md5認証を有効にする手順を示します。
       </para>
@@ -375,6 +376,54 @@ INSERT INTO rel1(c1) SELECT 1
 	be used in extended query mode.
 -->
 <link linkend="sql-commands">SQL型コマンド</link>は、拡張クエリモードでは使用できません。
+      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>マルチバイト文字</term>
+    <listitem>
+      <para>
+<!--
+	<productname>Pgpool-II</productname> does not perform encoding converion between client and
+	<productname>PostgreSQL</productname> for multi-byte characters.
+	The encoding for the client and backends must be the same.
+-->
+現在の実装では、クライアントと<productname>PostgreSQL</productname>の間でマルチバイト文字の変換処理を行いません。
+クライアントエンコーディング、バックエンドノードのサーバエンコーディングを一致させるようにしてください。
+      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>マルチステートメント</term>
+    <listitem>
+      <para>
+<!--
+	<productname>Pgpool-II</productname> cannot process multi-statement queries.
+	However, when <productname>Pgpool-II</productname> is connected by <command>psql</command>, It is no problem.
+	<command>psql</command> parse multi-statement, send a statement one by one.
+-->
+マルチステートメント（';'で区切って複数の文をまとめたSQL）を<productname>Pgpool-II</productname>が正しく処理することができません。
+必ず文を分けて送信してください。
+なお、<command>psql</command>を使って<productname>Pgpool-II</productname>に接続した場合は、<command>psql</command>内部でマルチステートメントを分解し、1つずつ送信するので、実際には問題になりません。
+      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>libpq</term>
+    <listitem>
+      <para>
+<!--
+	libpq is linked while building <productname>Pgpool-II</productname>.
+	libpq version must be 3.0 or later. Building <productname>Pgpool-II</productname> with libpq version 2.0 will fail.
+-->
+<productname>pgpool-II</productname> では libpq をリンクします。
+libpq のバージョンは 2.0 の場合、configureに失敗します。
+必ず libpq 3.0 以降(<productname>PostgreSQL</productname> 7.4以降)をリンクするようにしてください。
+マルチステートメント（';'で区切って複数の文をまとめたSQL）を<productname>Pgpool-II</productname>が正しく処理することができません。
+必ず文を分けて送信してください。
       </para>
     </listitem>
    </varlistentry>

@@ -43,10 +43,11 @@
     <term>Authentication/Access Controls</term>
     <listitem>
       <para>
-	In the replication mode or master/slave mode, trust, clear
-        text password, and pam methods are supported. md5 in also
+	In the replication mode or master/slave mode, trust and pam methods are supported. md5 is also
         supported since <productname>Pgpool-II</productname> 3.0.  md5
         is supported by using a authencitaion file <filename>pool_passwd</filename>.
+        scram-sha-256, cert, and clear text password is also supported since
+        <productname>Pgpool-II</productname> 4.0.
         <filename>pool_passwd</filename> is default name of the
         authentication file. Here are the
         steps to enable md5 authentication:
@@ -247,6 +248,38 @@ INSERT INTO rel1(c1) SELECT 1
       <para>
 	<link linkend="sql-commands">SQL type commands</link> cannot
 	be used in extended query mode.
+      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Multi-byte Characters</term>
+    <listitem>
+      <para>
+	<productname>Pgpool-II</productname> does not perform encoding converion between client and
+	<productname>PostgreSQL</productname> for multi-byte characters.
+	The encoding for the client and backends must be the same.
+      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Multi-statement Query</term>
+    <listitem>
+      <para>
+	<productname>Pgpool-II</productname> cannot process multi-statement queries.
+	However, when <productname>Pgpool-II</productname> is connected by <command>psql</command>, It is no problem.
+	<command>psql</command> parse multi-statement, send a statement one by one.
+      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>libpq</term>
+    <listitem>
+      <para>
+	libpq is linked while building <productname>Pgpool-II</productname>.
+	libpq version must be 3.0 or later. Building <productname>Pgpool-II</productname> with libpq version 2.0 will fail.
       </para>
     </listitem>
    </varlistentry>
