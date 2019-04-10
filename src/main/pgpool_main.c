@@ -3716,8 +3716,8 @@ read_status_file(bool discard_status)
 				ereport(LOG,
 						(errmsg("read_status_file: %d th backend is set to down status", i)));
 			}
-			else if (BACKEND_INFO(i).backend_status == CON_CONNECT_WAIT ||
-					 BACKEND_INFO(i).backend_status == CON_UP)
+			else if (backend_rec.status[i] == CON_CONNECT_WAIT ||
+					 backend_rec.status[i] == CON_UP)
 			{
 				BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
 				pool_set_backend_status_changed_time(i);
