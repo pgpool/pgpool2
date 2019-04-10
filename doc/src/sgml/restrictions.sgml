@@ -251,6 +251,38 @@ INSERT INTO rel1(c1) SELECT 1
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>Multi-byte Characters</term>
+    <listitem>
+      <para>
+	<productname>Pgpool-II</productname> does not perform encoding converion between client and
+	<productname>PostgreSQL</productname> for multi-byte characters.
+	The encoding for the client and backends must be the same.
+      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Multi-statement Query</term>
+    <listitem>
+      <para>
+	<productname>Pgpool-II</productname> cannot process multi-statement queries.
+	However, when <productname>Pgpool-II</productname> is connected by <command>psql</command>, It is no problem.
+	<command>psql</command> parse multi-statement, send a statement one by one.
+      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>libpq</term>
+    <listitem>
+      <para>
+	libpq is linked while building <productname>Pgpool-II</productname>.
+	libpq version must be 3.0 or later. Building <productname>Pgpool-II</productname> with libpq version 2.0 will fail.
+      </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </para>
 </sect1>
