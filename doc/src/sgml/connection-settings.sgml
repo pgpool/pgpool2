@@ -1002,7 +1002,7 @@
 	  <para>
 	    <varname>backend_weight</varname> specifies the load balance
 	    ratio of the backends. It may be set to any interger or
-	    floating point value greater than or equeal zero.
+	    floating point value greater than or equal to zero.
 	    Multiple backends can be specified by
 	    adding a number at the end of the parameter name
 	    (e.g. backend_weight0). If you plan to use only one
