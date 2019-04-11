@@ -97,18 +97,18 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
       which can accept new connections from client is decreasing and
       finally reaches to 0. In this situation new clients need to wait
       until a child process becomes free. Under heavy load, it could
-      be possible that the queue length of waiting clients could be
-      getting longer and longer and finally hits the system's limit
-      (you might see "535 times the listen queue of a socket
-      overflowed" error"). In this case you need to increase the queue
+      be possible that the queue length of waiting clients is getting
+      longer and longer and finally hits the system's limit (you might
+      see "535 times the listen queue of a socket overflowed"
+      error"). In this case you need to increase the queue
       limit. There are several ways to deal with this problem.
     </para>
 
     <sect2 id="controling-num-init-children">
       <title>Controling num_init_children</title>
       <para>
-	The obvious way is increasing the number of child
-	process. This can be done by
+	The obvious way to deal with the problem is increasing the
+	number of child process. This can be done by
 	tweaking <xref linkend="guc-num-init-children">. However
 	increasing child process requires more CPU and memory
 	resource. Also you have to be very careful about
@@ -161,4 +161,60 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
     </sect2>
 
   </sect1>
+
+  <sect1 id="read-query-load-balancing">
+    <title>Read Query Load Balancing</title>
+    <para>
+      If there are multiple <productname>PostgreSQL</productname>
+      nodes and <productname>Pgpool-II</productname> operates in
+      streaming replication mode, logical replication mode, slony mode
+      more replication mode (for those running mode
+      see <xref linkend="running-mode"> for more details), it is
+      possible to distribute read queries among those database nodes
+      to get more throughput since each database nodes processes
+      smaller number of queries. To enable the feature you need to
+      turn on <xref linkend="guc-load-balance-mode">.
+    </para>
+
+    <para>
+      At this point vast majority of systems use streaming replication
+      mode, so from now on we focus on the mode.
+    </para>
+
+    <sect2 id="session-level-load-balancing-vs-statement-level-load-balancing">
+      <title>Session Level Load Balancing vs. Statement Level Load Balancing</title>
+      <para>
+	By default load balance mode is "session level" which means
+	the node read queries are sent is determined when a client
+	connects to <productname>Pgpool-II</productname>. For example,
+	if we have node 0 and node 1, one of the node is selected
+	randomly each time new session is created. In the long term,
+	the possibility which node is chosen will be getting closer to
+	the ratio specified by <xref linkend="guc-backend-weight">0
+	and
+	<xref linkend="guc-backend-weight">1. If those two values are
+	eqaul, the chance each node is chosen will be even.
+      </para>
+
+      <para>
+	On the other hand, if
+	<xref linkend="guc-statement-level-load-balance"> is set to
+	on, the load balance node is determined at the time each query
+	starts.  This is useful in case when application has its own
+	connection pooling as it keeps on connecting
+	to <productname>Pgpool-II</productname> and the load balance
+	node will not be changed once the application starts. Another
+	use case is a batch application. It issues tremendous number
+	of queries but there's only 1 session. With statement level
+	load balancing it can utilize multiple servers.
+      </para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="in-memory-query-caching">
+    <title>In Memory Query Caching</title>
+    <para>
+    </para>
+  </sect1>
+
 </chapter>
