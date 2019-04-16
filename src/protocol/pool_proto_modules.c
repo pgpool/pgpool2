@@ -489,17 +489,37 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 */
 		if (is_drop_database(node))
 		{
-			int stime = 5;	/* XXX give arbitrary time to allow closing idle connections */
+			struct timeval stime;
 
+			stime.tv_usec = 0;
+			stime.tv_sec = 5;	/* XXX give arbitrary time to allow
+									 * closing idle connections */
 			ereport(DEBUG1,
 					(errmsg("Query: sending SIGUSR1 signal to parent")));
+
+			ignore_sigusr1 = 1;	/* disable SIGUSR1 handler */
 			register_node_operation_request(CLOSE_IDLE_REQUEST, NULL, 0, 0);
 
-			/* we need to loop over here since we will get USR1 signal while sleeping */
-			while (stime > 0)
+			/*
+			 * We need to loop over here since we might get some signals while
+			 * sleeping
+			 */
+			for (;;)
 			{
-				stime = sleep(stime);
+				int sts;
+
+				errno = 0;
+				sts = select(0, NULL, NULL, NULL, &stime);
+				if (stime.tv_usec == 0 && stime.tv_sec == 0)
+					break;
+				if (sts != 0 && errno != EINTR)
+				{
+					elog(DEBUG1, "select(2) returns error: %s", strerror(errno));
+					break;
+				}
 			}
+
+			ignore_sigusr1 = 0;
 		}
 
 		/*
