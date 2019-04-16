@@ -91,11 +91,15 @@ static void child_will_go_down(int code, Datum arg);
 static int opt_sort(const void *a, const void *b);
 
 /*
- * non 0 means SIGTERM(smart shutdown) or SIGINT(fast shutdown) has arrived
+ * Non 0 means SIGTERM (smart shutdown) or SIGINT (fast shutdown) has arrived
  */
 volatile sig_atomic_t exit_request = 0;
 static volatile sig_atomic_t alarm_enabled = false;
 
+/*
+ * Ignore SIGUSR1 if requested. Used when DROP DATABASE is requested.
+ */
+volatile sig_atomic_t ignore_sigusr1 = 0;
 
 static int	idle;				/* non 0 means this child is in idle state */
 static int	accepted = 0;
@@ -1075,6 +1079,12 @@ static RETSIGTYPE close_idle_connection(int sig)
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 	ConnectionInfo *info;
 	int			save_errno = errno;
+
+	/*
+	 * DROP DATABSE is ongoing.
+	 */
+	if (ignore_sigusr1)
+		return;
 
 #ifdef NOT_USED
 	ereport(DEBUG1,
