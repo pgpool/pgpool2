@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2013-2018 PgPool Global Development Group
+# Copyright (c) 2013-2019 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby
@@ -345,6 +345,7 @@ EOF
 #-------------------------------------------
 # create basebackup.sh for streaming replication mode
 # argument1: PostgreSQL database cluster
+# argument2: cluster node number
 #-------------------------------------------
 function create_basebackup_stream {
 SCRIPT=basebackup.sh
@@ -419,7 +420,7 @@ fi
 cat >> $1/$SCRIPT <<'EOF'
 cat > $DEST_CLUSTER/recovery.conf <<REOF
 standby_mode          = 'on'
-primary_conninfo      = 'port=$PORT user=$PGSUPERUSER'
+primary_conninfo      = 'port=$PORT user=$PGSUPERUSER application_name=''server$recovery_node'''
 recovery_target_timeline='latest'
 EOF
 
@@ -567,7 +568,7 @@ fi
 
 cat > $1/$fname <<EOF
 standby_mode          = 'on'
-primary_conninfo      = 'port=$BASEPORT user=$WHOAMI'
+primary_conninfo      = 'port=$BASEPORT user=$WHOAMI application_name=''server$2'''
 recovery_target_timeline='latest'
 EOF
 if [ $USE_REPLICATION_SLOT = true ];then
