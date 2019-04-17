@@ -4216,26 +4216,20 @@ detect_idle_in_transaction_sesion_timeout_error(POOL_CONNECTION * backend, int m
 
 /*
  * extract_message: extract specified error by an error code.
- * returns 0 in case of sucess or 1 in case of specified error.
- * throws an ereport for all other errors.
+ * returns 0 in case of success or 1 in case of specified error.
+ * throw an ereport for all other errors.
  */
 static int
 extract_message(POOL_CONNECTION * backend, char *error_code, int major, char class, bool unread)
 {
 	int			is_error = 0;
 	char		kind;
-	int			readlen = 0,
-				len;
-	static char buf[8192];		/* memory space is large enough */
-	char	   *p,
-			   *str;
+	int			len;
+	int			nlen = 0;
+	char		*str = NULL;
 
 	if (pool_read(backend, &kind, sizeof(kind)))
 		return -1;
-	readlen += sizeof(kind);
-	p = buf;
-	memcpy(p, &kind, sizeof(kind));
-	p += sizeof(kind);
 
 	ereport(DEBUG5,
 			(errmsg("extract_message: kind: %c", kind)));
@@ -4249,28 +4243,16 @@ extract_message(POOL_CONNECTION * backend, char *error_code, int major, char cla
 		{
 			char	   *e;
 
-			if (pool_read(backend, &len, sizeof(len)) < 0)
+			if (pool_read(backend, &nlen, sizeof(nlen)) < 0)
 				return -1;
-			readlen += sizeof(len);
-			memcpy(p, &len, sizeof(len));
-			p += sizeof(len);
 
-			len = ntohl(len) - 4;
+			len = ntohl(nlen) - 4;
 			str = palloc(len);
-
 			pool_read(backend, str, len);
-			readlen += len;
-
-			if (readlen >= sizeof(buf))
-				ereport(ERROR,
-						(errmsg("unable to extract message"),
-						 errdetail("not enough space in buffer")));
-
-			memcpy(p, str, len);
 
 			/*
-			 * Checks error code which is formatted 'Cxxxxxx' (xxxxxx is error
-			 * code).
+			 * Check error code which is formatted 'Cxxxxxx' (xxxxxx is the
+			 * error code).
 			 */
 			e = str;
 			while (*e)
@@ -4283,26 +4265,27 @@ extract_message(POOL_CONNECTION * backend, char *error_code, int major, char cla
 				else
 					e = e + strlen(e) + 1;
 			}
-			pfree(str);
 		}
 		else
 		{
 			str = pool_read_string(backend, &len, 0);
-			readlen += len;
-
-			if (readlen >= sizeof(buf))
-				ereport(ERROR,
-						(errmsg("unable to extract message"),
-						 errdetail("not enough space in buffer")));
-
-			memcpy(p, str, len);
 		}
 	}
+
 	if (unread || !is_error)
 	{
-		/* put a message to read buffer */
-		pool_unread(backend, buf, readlen);
+		/* put back  message to read buffer */
+		if (str)
+		{
+			pool_unread(backend, str, len);
+		}
+		if (nlen != 0)
+			pool_unread(backend, &nlen, sizeof(nlen));
+		pool_unread(backend, &kind, sizeof(kind));
 	}
+
+	if (str)
+		pfree(str);
 
 	return is_error;
 }
