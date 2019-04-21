@@ -2516,6 +2516,15 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 				 * way for frontend to handle error case. The only way
 				 * is closing this session.
 				 */
+				if (processType == PT_WORKER)
+				{
+					/*
+					 * sleep appropreate time to avoid pool_worker_child
+					 * exit/fork storm.
+					 */
+					sleep(pool_config->sr_check_period);
+				}
+
                 ereport(FATAL,
                     (return_code(1),
                         errmsg("Backend throw an error message"),
