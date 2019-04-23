@@ -3,7 +3,7 @@
  * pgpool_adm.c
  *
  *
- * Copyright (c) 2002-2018, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2019, PostgreSQL Global Development Group
  *
  * Author: Jehan-Guillaume (ioguix) de Rorthais <jgdr@dalibo.com>
  *
@@ -130,8 +130,8 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	PCPResultInfo *pcpResInfo;
 
 	BackendInfo *backend_info = NULL;
-	Datum		values[7];		/* values to build the returned tuple from */
-	bool		nulls[] = {false, false, false, false, false, false, false};
+	Datum		values[9];		/* values to build the returned tuple from */
+	bool		nulls[] = {false, false, false, false, false, false, false, false, false};
 	TupleDesc	tupledesc;
 	HeapTuple	tuple;
 	struct tm	tm;
@@ -175,14 +175,16 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	/**
 	 * Construct a tuple descriptor for the result rows.
 	 **/
-	tupledesc = CreateTemplateTupleDesc(7, false);
+	tupledesc = CreateTemplateTupleDesc(9, false);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 1, "hostname", TEXTOID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 2, "port", INT4OID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 3, "status", TEXTOID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 4, "weight", FLOAT4OID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 5, "role", TEXTOID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 6, "replication_delay", INT8OID, -1, 0);
-	TupleDescInitEntry(tupledesc, (AttrNumber) 7, "last_status_change", TIMESTAMPOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 7, "replcation_state", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 8, "replcation_sync_state", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 9, "last_status_change", TIMESTAMPOID, -1, 0);
 	tupledesc = BlessTupleDesc(tupledesc);
 
 	backend_info = (BackendInfo *) pcp_get_binary_data(pcpResInfo, 0);
@@ -218,9 +220,15 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	values[5] = Int64GetDatum(backend_info->standby_delay);
 
 	nulls[6] = false;
+	values[6] = CStringGetTextDatum(backend_info->replication_state);
+
+	nulls[7] = false;
+	values[7] = CStringGetTextDatum(backend_info->replication_sync_state);
+
+	nulls[8] = false;
 	localtime_r(&backend_info->status_changed_time, &tm);
 	strftime(datebuf, sizeof(datebuf), "%F %T", &tm);
-	values[6] = DatumGetTimestamp(DirectFunctionCall3(timestamp_in,
+	values[8] = DatumGetTimestamp(DirectFunctionCall3(timestamp_in,
 													  CStringGetDatum(datebuf),
 													  ObjectIdGetDatum(InvalidOid),
 													  Int32GetDatum(-1)));

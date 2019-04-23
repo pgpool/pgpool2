@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -42,6 +42,7 @@
 #define MAX_CONNECTION_SLOTS MAX_NUM_BACKENDS
 #define MAX_DB_HOST_NAMELEN	 128
 #define MAX_PATH_LENGTH 256
+#define NAMEDATALEN 64
 
 typedef enum
 {
@@ -86,6 +87,7 @@ typedef struct
 	double		backend_weight; /* normalized backend load balance ratio */
 	double		unnormalized_weight;	/* descripted parameter */
 	char		backend_data_directory[MAX_PATH_LENGTH];
+	char		backend_application_name[NAMEDATALEN];	/* application_name for walreciever */
 	unsigned short flag;		/* various flags */
 	bool		quarantine;		/* true if node is CON_DOWN because of
 								 * quarantine */
@@ -93,6 +95,8 @@ typedef struct
 	SERVER_ROLE role;			/* Role of server. used by pcp_node_info and
 								 * failover() to keep track of quarantined
 								 * primary node */
+	char		replication_state [NAMEDATALEN];	/* "state" from pg_stat_replication */
+	char		replication_sync_state [NAMEDATALEN];	/* "sync_state" from pg_stat_replication */
 }			BackendInfo;
 
 typedef struct
@@ -188,6 +192,8 @@ typedef struct
 	char		select[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		load_balance_node[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		delay[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		rep_state[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		rep_sync_state[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		last_status_change[POOLCONFIG_MAXDATELEN];
 }			POOL_REPORT_NODES;
 

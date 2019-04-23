@@ -38,6 +38,8 @@ Pgpool-II documentation
        <paramdef>out <parameter>weight float4</parameter></paramdef>
        <paramdef>out <parameter>role text</parameter></paramdef>
        <paramdef>out <parameter>replication_delay bigint</parameter></paramdef>
+       <paramdef>out <parameter>replication_state text</parameter></paramdef>
+       <paramdef>out <parameter>replication_sync_state text</parameter></paramdef>
        <paramdef>out <parameter>last_status_change timestamp</parameter></paramdef>
      </funcprototype>
 
@@ -49,6 +51,8 @@ Pgpool-II documentation
        <paramdef>out <parameter>weight float4</parameter></paramdef>
        <paramdef>out <parameter>role text</parameter></paramdef>
        <paramdef>out <parameter>replication_delay bigint</parameter></paramdef>
+       <paramdef>out <parameter>replication_state text</parameter></paramdef>
+       <paramdef>out <parameter>replication_sync_state text</parameter></paramdef>
        <paramdef>out <parameter>last_status_change timestamp</parameter></paramdef>
      </funcprototype>
 
@@ -130,10 +134,10 @@ pcpサーバの外部サーバ名
 -->
 使用例です。
 	<programlisting>
-test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
- host | port  |      status       | weight |  role   | replication_delay | last_status_change  
-------+-------+-------------------+--------+---------+-------------------+---------------------
- /tmp | 11002 | Connection in use |      0 | Primary |                 0 | 2018-07-04 17:34:39
+test=# SELECT * FROM pcp_node_info(1,'',11001,'t-ishii','t-ishii');
+ host | port  |      status       | weight |  role   | replication_delay | replication_state | replication_sync_state | last_status_change  
+------+-------+-------------------+--------+---------+-------------------+-------------------+------------------------+---------------------
+ /tmp | 11003 | Connection in use |      0 | Standby |                 0 | streaming         | async                  | 2019-04-23 15:02:46
 (1 row)
     </programlisting>
   </para>
@@ -151,12 +155,23 @@ test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
        </programlisting>
 -->
 <parameter>role</parameter>, <parameter>replication_delay</parameter>, <parameter>last_status_change</parameter>出力パラメータは<productname>Pgpool-II</productname> 4.0で追加されました。
-すでに4.0以前のpgpool_adm拡張をインストールされている場合は、ALTER EXTENSION SQLコマンドを使って更新が可能です。
+すでに4.0以前のpgpool_adm拡張をインストールしている場合は、ALTER EXTENSION SQLコマンドを使って更新が可能です。
        <programlisting>
 	 ALTER EXTENSION pgpool_adm UPDATE;
        </programlisting>
     </para>
   </note>
+
+  <note>
+    <para>
+<parameter>role</parameter>, <parameter>replication_delay</parameter>, <parameter>last_status_change</parameter>出力パラメータは<productname>Pgpool-II</productname> 4.1で追加されました。
+すでに4.0以前のpgpool_adm拡張をインストールしている場合は、ALTER EXTENSION SQLコマンドを使って更新が可能です。
+       <programlisting>
+	 ALTER EXTENSION pgpool_adm UPDATE;
+       </programlisting>
+    </para>
+  </note>
+
  </refsect1>
 
 </refentry>

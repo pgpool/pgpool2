@@ -1167,6 +1167,30 @@
 	</listitem>
       </varlistentry>
 
+      <varlistentry id="guc-backend-application-name" xreflabel="backend_application_name">
+	<term><varname>backend_application_name</varname> (<type>string</type>)
+	  <indexterm>
+	    <primary><varname>backend_application_name</varname> configuration parameter</primary>
+	  </indexterm>
+	</term>
+
+	<listitem>
+	  <para>
+	    <varname>backend_application_name</varname> specifies the
+	    application name for walsender, which receives WAL log
+	    from primary node. Thus in other than streaming
+	    replication mode, this parameter does not need to be set.
+	    Also this parameter is required to if you want to show
+	    "replication_state" and "replication_sync_state" column
+	    in <xref linkend="SQL-SHOW-POOL-NODES"> command.
+	  </para>
+	  <para>
+	    This parameter can be changed by reloading
+	    the <productname>Pgpool-II</productname> configurations.
+	  </para>
+	</listitem>
+      </varlistentry>
+
     </variablelist>
 
   </sect2>

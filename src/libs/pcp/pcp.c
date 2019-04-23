@@ -730,6 +730,20 @@ process_node_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 			goto INVALID_RESPONSE;
 
 		index++;
+		strlcpy(backend_info->replication_state, index, sizeof(backend_info->replication_state));
+
+		index = (char *) memchr(index, '\0', len);
+		if (index == NULL)
+			goto INVALID_RESPONSE;
+
+		index++;
+		strlcpy(backend_info->replication_sync_state, index, sizeof(backend_info->replication_sync_state));
+
+		index = (char *) memchr(index, '\0', len);
+		if (index == NULL)
+			goto INVALID_RESPONSE;
+		
+		index++;
 		backend_info->status_changed_time = atol(index);
 
 		index = (char *) memchr(index, '\0', len);

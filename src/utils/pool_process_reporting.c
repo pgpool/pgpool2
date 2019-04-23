@@ -981,6 +981,11 @@ get_config(int *nrows)
 		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_flag_to_str(BACKEND_INFO(j).flag));
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "backend #%d flag", j);
 		i++;
+
+		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend_application_name%d", j);
+		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", BACKEND_INFO(j).backend_application_name);
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "application_name for backend #%d", j);
+		i++;
 	}
 
 	for (j = 0; j < MAX_WATCHDOG_NUM; j++)
@@ -1208,6 +1213,9 @@ config_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 	pfree(status);
 }
 
+/*
+ * for SHOW pool_nodes
+ */
 POOL_REPORT_NODES *
 get_nodes(int *nrows)
 {
@@ -1255,6 +1263,10 @@ get_nodes(int *nrows)
 		/* status last changed */
 		localtime_r(&bi->status_changed_time, &tm);
 		strftime(nodes[i].last_status_change, POOLCONFIG_MAXDATELEN, "%F %T", &tm);
+
+		/* from pg_stat_replication */
+		snprintf(nodes[i].rep_state, POOLCONFIG_MAXWEIGHTLEN, "%s", bi->replication_state);
+		snprintf(nodes[i].rep_sync_state, POOLCONFIG_MAXWEIGHTLEN, "%s", bi->replication_sync_state);
 	}
 
 	*nrows = i;
@@ -1262,10 +1274,13 @@ get_nodes(int *nrows)
 	return nodes;
 }
 
+/*
+ * SHOW pool_nodes;
+ */
 void
 nodes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
-	static char *field_names[] = {"node_id", "hostname", "port", "status", "lb_weight", "role", "select_cnt", "load_balance_node", "replication_delay", "last_status_change"};
+	static char *field_names[] = {"node_id", "hostname", "port", "status", "lb_weight", "role", "select_cnt", "load_balance_node", "replication_delay", "replication_state", "replication_sync_state", "last_status_change"};
 	short		num_fields = sizeof(field_names) / sizeof(char *);
 	int			i;
 	short		s;
@@ -1333,6 +1348,16 @@ nodes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 			pool_write(frontend, &hsize, sizeof(hsize));
 			pool_write(frontend, nodes[i].delay, size);
 
+			size = strlen(nodes[i].rep_state);
+			hsize = htonl(size + 4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, nodes[i].rep_state, size);
+
+			size = strlen(nodes[i].rep_sync_state);
+			hsize = htonl(size + 4);
+			pool_write(frontend, &hsize, sizeof(hsize));
+			pool_write(frontend, nodes[i].rep_sync_state, size);
+
 			size = strlen(nodes[i].last_status_change);
 			hsize = htonl(size + 4);
 			pool_write(frontend, &hsize, sizeof(hsize));
@@ -1355,6 +1380,8 @@ nodes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 			len += 4 + strlen(nodes[i].select); /* int32 + data; */
 			len += 4 + strlen(nodes[i].load_balance_node);	/* int32 + data; */
 			len += 4 + strlen(nodes[i].delay);	/* int32 + data; */
+			len += 4 + strlen(nodes[i].rep_state);	/* int32 + data; */
+			len += 4 + strlen(nodes[i].rep_sync_state);	/* int32 + data; */
 			len += 4 + strlen(nodes[i].last_status_change); /* int32 + data; */
 			len = htonl(len);
 			pool_write(frontend, &len, sizeof(len));
@@ -1396,6 +1423,14 @@ nodes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 			len = htonl(strlen(nodes[i].delay));
 			pool_write(frontend, &len, sizeof(len));
 			pool_write(frontend, nodes[i].delay, strlen(nodes[i].delay));
+
+			len = htonl(strlen(nodes[i].rep_state));
+			pool_write(frontend, &len, sizeof(len));
+			pool_write(frontend, nodes[i].rep_state, strlen(nodes[i].rep_state));
+
+			len = htonl(strlen(nodes[i].rep_sync_state));
+			pool_write(frontend, &len, sizeof(len));
+			pool_write(frontend, nodes[i].rep_sync_state, strlen(nodes[i].rep_sync_state));
 
 			len = htonl(strlen(nodes[i].last_status_change));
 			pool_write(frontend, &len, sizeof(len));

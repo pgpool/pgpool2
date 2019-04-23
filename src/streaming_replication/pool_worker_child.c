@@ -90,6 +90,7 @@ static void reload_config(void);
 
 
 #define PG10_SERVER_VERSION	100000	/* PostgreSQL 10 server version num */
+#define PG91_SERVER_VERSION	90100	/* PostgreSQL 9.1 server version num */
 
 /*
 * worker child main loop
@@ -271,11 +272,22 @@ check_replication_time_lag(void)
 	int			i;
 	int			active_nodes = 0;
 	POOL_SELECT_RESULT *res;
+	POOL_SELECT_RESULT *res_rep;	/* query results of pg_stat_replication */
 	unsigned long long int lsn[MAX_NUM_BACKENDS];
 	char	   *query;
+	char	   *stat_rep_query;
 	BackendInfo *bkinfo;
 	unsigned long long int lag;
 	ErrorContextCallback callback;
+
+	/* clear replication state */
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		bkinfo = pool_get_node_info(i);
+
+		*bkinfo->replication_state = '\0';
+		*bkinfo->replication_sync_state = '\0';
+	}
 
 	if (NUM_BACKENDS <= 1)
 	{
@@ -312,6 +324,7 @@ check_replication_time_lag(void)
 	callback.arg = NULL;
 	callback.previous = error_context_stack;
 	error_context_stack = &callback;
+	stat_rep_query = "";
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
@@ -350,6 +363,11 @@ check_replication_time_lag(void)
 				query = "SELECT pg_current_wal_lsn()";
 			else
 				query = "SELECT pg_current_xlog_location()";
+
+			if (server_version[i] == PG91_SERVER_VERSION)
+				stat_rep_query = "SELECT application_name, state, '' AS sync_state FROM pg_stat_replication";
+			else if (server_version[i] > PG91_SERVER_VERSION)
+				stat_rep_query = "SELECT application_name, state, sync_state FROM pg_stat_replication";
 		}
 		else
 		{
@@ -370,6 +388,42 @@ check_replication_time_lag(void)
 		}
 	}
 
+	/* call pg_stat_replication */
+	if (slots[PRIMARY_NODE_ID] && stat_rep_query)
+	{
+		char	*query_buf;
+		int	alloc_len;
+
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			bkinfo = pool_get_node_info(i);
+
+			*bkinfo->replication_state = '\0';
+			*bkinfo->replication_sync_state = '\0';
+
+			if (i == PRIMARY_NODE_ID)
+				continue;
+			if (!VALID_BACKEND(i))
+				continue;
+			if (*stat_rep_query == '\0')
+				continue;
+
+			alloc_len = strlen(stat_rep_query) + 256;
+			query_buf = palloc(alloc_len);
+			snprintf(query_buf, alloc_len, "%s WHERE application_name = '%s'",
+					 stat_rep_query, bkinfo->backend_application_name);
+			if (get_query_result(slots, PRIMARY_NODE_ID, query_buf, &res_rep) == 0 &&
+				res_rep->numrows > 0 &&
+				res_rep->nullflags[0] != -1)
+			{
+				strlcpy(bkinfo->replication_state, res_rep->data[1], NAMEDATALEN);
+				strlcpy(bkinfo->replication_sync_state, res_rep->data[2], NAMEDATALEN);
+				free_select_result(res_rep);				
+			}
+			pfree(query_buf);
+		}
+	}
+	
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (!VALID_BACKEND(i))

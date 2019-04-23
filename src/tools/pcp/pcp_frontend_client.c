@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -25,6 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
 
 #include "utils/fe_ports.h"
 #include "utils/pool_path.h"
@@ -49,6 +50,7 @@ static void output_poolstatus_result(PCPResultInfo * pcpResInfo, bool verbose);
 static void output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose);
 static void output_nodecount_result(PCPResultInfo * pcpResInfo, bool verbose);
 static char *backend_status_to_string(BackendInfo * bi);
+static char *format_titles(const char **titles, const char **types, int ntitles);
 
 typedef enum
 {
@@ -473,7 +475,12 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose)
 
 	if (verbose)
 	{
-		printf("Hostname          : %s\nPort              : %d\nStatus            : %d\nWeight            : %f\nStatus Name       : %s\nRole              : %s\nReplication Delay : %lu\nLast Status Change: %s\n",
+		const char *titles[] = {"Hostname", "Port", "Status", "Weight", "Status Name", "Role", "Replication Delay", "Replication State", "Replication Sync State", "Last Status Change"};
+		const char *types[] = {"s", "d", "d", "f", "s", "s", "lu", "s", "s", "s"};
+		char *format_string;
+
+		format_string = format_titles(titles, types, sizeof(titles)/sizeof(char *));
+		printf(format_string,
 			   backend_info->backend_hostname,
 			   backend_info->backend_port,
 			   backend_info->backend_status,
@@ -481,11 +488,13 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose)
 			   backend_status_to_string(backend_info),
 			   role_to_str(backend_info->role),
 			   backend_info->standby_delay,
+			   backend_info->replication_state,
+			   backend_info->replication_sync_state,
 			   last_status_change);
 	}
 	else
 	{
-		printf("%s %d %d %f %s %s %lu %s\n",
+		printf("%s %d %d %f %s %s %lu %s %s %s\n",
 			   backend_info->backend_hostname,
 			   backend_info->backend_port,
 			   backend_info->backend_status,
@@ -493,6 +502,8 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose)
 			   backend_status_to_string(backend_info),
 			   role_to_str(backend_info->role),
 			   backend_info->standby_delay,
+			   backend_info->replication_state,
+			   backend_info->replication_sync_state,
 			   last_status_change);
 	}
 }
@@ -831,4 +842,39 @@ role_to_str(SERVER_ROLE role)
 	if (role < ROLE_MASTER || role > ROLE_STANDBY)
 		return "unknown";
 	return role_str[role];
+}
+
+/*
+ * Build format string for -v output mode.
+ *
+ * titles: title string array
+ * types:  printf format type string array (example: "d")
+ * ntitles: size of the arrary
+ */
+static char *
+format_titles(const char **titles, const char **types, int ntitles)
+{
+	int	i;
+	int	maxlen = 0;
+	static char	formatbuf[8192];
+
+	for(i = 0; i < ntitles; i++)
+	{
+		int l = strlen(titles[i]);
+		maxlen = (l > maxlen)? l : maxlen;
+	}
+
+	*formatbuf = '\0';
+
+	for(i = 0; i < ntitles; i++)
+	{
+		char buf[64];
+		char buf2[64];
+
+		snprintf(buf, sizeof(buf), "%%-%ds : %%%%%s", maxlen, types[i]);
+		snprintf(buf2, sizeof(buf2), buf, titles[i], types[i]);
+		strncat(formatbuf, buf2, sizeof(formatbuf));
+		strncat(formatbuf, "\n", sizeof(formatbuf));
+	}
+	return formatbuf;
 }

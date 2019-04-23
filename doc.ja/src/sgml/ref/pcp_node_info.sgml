@@ -96,7 +96,7 @@ Pgpool-II documentation
     ここでは例を示します。
     <programlisting>
 $ pcp_node_info -h localhost -U postgres 1
-/tmp 11003 2 0.500000 up standby 208 2018-07-03 08:26:39
+/tmp 11003 2 0.500000 up standby 0 streaming async 2019-04-23 13:58:40
     </programlisting>
   </para>
   <para>
@@ -113,7 +113,9 @@ $ pcp_node_info -h localhost -U postgres 1
 5. status name
 6. backend role
 7. replication delay
-8. last status change time
+8. replication state (PostgreSQL 9.1以降。pg_stat_replicationから取得)
+9. sync replication state (PostgreSQL 9.2以降。pg_stat_replicationから取得)
+10. last status change time
 -->
 1. ノードのホスト名
 2. ノードのポート番号
@@ -122,7 +124,9 @@ $ pcp_node_info -h localhost -U postgres 1
 5. バックエンド状態名
 6. バックエンドの役割
 7. レプリケーションの遅延
-8. 最終ステータス変更時刻
+8. レプリケーション状態 (PostgreSQL 9.1以降。pg_stat_replicationから取得)
+9. 同期レプリケーション状態 (PostgreSQL 9.2以降。pg_stat_replicationから取得)
+10. 最終ステータス変更時刻
 </literallayout>
   </para>
   <para>
@@ -157,14 +161,16 @@ $ pcp_node_info -h localhost -U postgres 1
   </para>
     <programlisting>
 $ pcp_node_info --verbose -h localhost -U postgres 1
-Hostname          : /tmp
-Port              : 11003
-Status            : 2
-Weight            : 0.500000
-Status Name       : up
-Role              : standby
-Replication Delay : 208
-Last Status Change: 2018-07-03 08:26:39
+Hostname               : /tmp
+Port                   : 11003
+Status                 : 2
+Weight                 : 0.500000
+Status Name            : up
+Role                   : standby
+Replication Delay      : 0
+Replication State      : streaming
+Replication Sync State : async
+Last Status Change     : 2019-04-23 13:58:40
     </programlisting>
  </refsect1>
 

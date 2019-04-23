@@ -1698,8 +1698,25 @@ DBノードIDが0のバックエンドは「マスターノード」と呼ばれ
 		</para>
 
 	</listitem>
-			</varlistentry>
+      </varlistentry>
+      <varlistentry id="guc-backend-application-name" xreflabel="backend_application_name">
+	<term><varname>backend_application_name</varname> (<type>string</type>)
+	  <indexterm>
+	    <primary><varname>backend_application_name</varname> configuration parameter</primary>
+	  </indexterm>
+	</term>
 
+	<listitem>
+	  <para>
+	    <varname>backend_application_name</varname>はWAL logをプライマリサーバから読み込むwalsenderのために使用するapplication_nameを設定します。
+ですから、ストリーミングレプリケーションモード以外では設定する必要がありません。
+また、このパラメータは<xref linkend="SQL-SHOW-POOL-NODES">コマンド中に表示される"replication_state"と"replication_sync_state"のために使用されます。
+	  </para>
+	  <para>
+このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+	  </para>
+	</listitem>
+      </varlistentry>
 		</variablelist>
 
 	</sect2>

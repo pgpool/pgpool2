@@ -87,6 +87,7 @@ static const char *BackendDataDirShowFunc(int index);
 static const char *BackendHostShowFunc(int index);
 static const char *BackendPortShowFunc(int index);
 static const char *BackendWeightShowFunc(int index);
+static const char *BackendAppNameShowFunc(int index);
 
 static const char *HealthCheckPeriodShowFunc(int index);
 static const char *HealthCheckTimeOutShowFunc(int index);
@@ -110,6 +111,7 @@ static bool BackendHostAssignFunc(ConfigContext context, char *newval, int index
 static bool BackendDataDirAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 static bool BackendFlagsAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 static bool BackendWeightAssignFunc(ConfigContext context, double newval, int index, int elevel);
+static bool BackendAppNameAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 static bool HBDestinationAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 static bool HBDestinationPortAssignFunc(ConfigContext context, int newval, int index, int elevel);
 static bool HBDeviceAssignFunc(ConfigContext context, char *newval, int index, int elevel);
@@ -1402,6 +1404,17 @@ static struct config_string_array ConfigureNamesStringArray[] =
 		"",
 		EMPTY_CONFIG_STRING,
 		BackendDataDirAssignFunc, NULL, BackendDataDirShowFunc, BackendSlotEmptyCheckFunc
+	},
+
+	{
+		{"backend_application_name", CFGCXT_RELOAD, CONNECTION_CONFIG,
+			"applicaton_name of the backend.",
+			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_NUM_BACKENDS
+		},
+		NULL,
+		"",
+		EMPTY_CONFIG_STRING,
+		BackendAppNameAssignFunc, NULL, BackendAppNameShowFunc, BackendSlotEmptyCheckFunc
 	},
 
 	{
@@ -3813,6 +3826,26 @@ BackendFlagsAssignFunc(ConfigContext context, char *newval, int index, int eleve
 }
 
 static bool
+BackendAppNameAssignFunc(ConfigContext context, char *newval, int index, int elevel)
+{
+	BACKEND_STATUS backend_status = g_pool_config.backend_desc->backend_info[index].backend_status;
+
+	if (context <= CFGCXT_INIT || backend_status == CON_UNUSED)
+	{
+		if (newval == NULL || strlen(newval) == 0)
+			g_pool_config.backend_desc->backend_info[index].backend_application_name[0] = '\0';
+		else
+			strlcpy(g_pool_config.backend_desc->backend_info[index].backend_application_name, newval, NAMEDATALEN - 1);
+		return true;
+	}
+	/* silent the warning in reload contxt */
+	if (context != CFGCXT_RELOAD)
+		ereport(WARNING,
+				(errmsg("backend_application_name%d cannot be changed in context %d and backend status = %d", index, context, backend_status)));
+	return false;
+}
+
+static bool
 LogDestinationProcessFunc(char *newval, int elevel)
 {
 #ifndef POOL_PRIVATE
@@ -3937,6 +3970,12 @@ BackendFlagsShowFunc(int index)
 	else if (POOL_DISALLOW_TO_FAILOVER(flag))
 		snprintf(buffer, sizeof(buffer), "DISALLOW_TO_FAILOVER");
 	return buffer;
+}
+
+static const char *
+BackendAppNameShowFunc(int index)
+{
+	return g_pool_config.backend_desc->backend_info[index].backend_application_name;
 }
 
 static bool

@@ -69,7 +69,7 @@ Pgpool-II documentation
 	Here is an example output:
     <programlisting>
 $ pcp_node_info -h localhost -U postgres 1
-/tmp 11003 2 0.500000 up standby 208 2018-07-03 08:26:39
+/tmp 11003 2 0.500000 up standby 0 streaming async 2019-04-23 13:58:40
     </programlisting>
   </para>
   <para>
@@ -82,7 +82,9 @@ $ pcp_node_info -h localhost -U postgres 1
 5. status name
 6. backend role
 7. replication delay
-8. last status change time
+8. replication state (taken from pg_stat_replication, if PostgreSQL is 9.1 or later)
+9. sync replication state (taken from pg_stat_replication, if PostgreSQL is 9.2 or later)
+10. last status change time
 </literallayout>
   </para>
   <para>
@@ -102,14 +104,16 @@ $ pcp_node_info -h localhost -U postgres 1
   </para>
     <programlisting>
 $ pcp_node_info --verbose -h localhost -U postgres 1
-Hostname          : /tmp
-Port              : 11003
-Status            : 2
-Weight            : 0.500000
-Status Name       : up
-Role              : standby
-Replication Delay : 208
-Last Status Change: 2018-07-03 08:26:39
+Hostname               : /tmp
+Port                   : 11003
+Status                 : 2
+Weight                 : 0.500000
+Status Name            : up
+Role                   : standby
+Replication Delay      : 0
+Replication State      : streaming
+Replication Sync State : async
+Last Status Change     : 2019-04-23 13:58:40
     </programlisting>
  </refsect1>
 
