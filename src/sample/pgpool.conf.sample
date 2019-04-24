@@ -77,11 +77,14 @@ backend_flag0 = 'ALLOW_TO_FAILOVER'
                                    # Controls various backend behavior
                                    # ALLOW_TO_FAILOVER, DISALLOW_TO_FAILOVER
 				   # or ALWAYS_MASTER
+backend_application_name0 = 'server0'
+                                   # walsender's application_name, used for "show pool_nodes" command
 #backend_hostname1 = 'host2'
 #backend_port1 = 5433
 #backend_weight1 = 1
 #backend_data_directory1 = '/data1'
 #backend_flag1 = 'ALLOW_TO_FAILOVER'
+#backend_application_name1 = 'server1'
 
 # - Authentication -
 
