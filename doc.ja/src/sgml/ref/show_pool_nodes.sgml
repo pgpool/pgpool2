@@ -61,6 +61,7 @@ SHOW POOL_NODES
     重み(ロードバランスモードで運用しているときにのみ意味があります)、
     ノードの役割、発行された SELECT の数、ロードバランスノードであるかどうか、
     レプリケーション遅延 (ストリーミングレプリケーションモードのみ) 、最終状態変更時刻が表示されます。
+    これらに加えて、<productname>Pgpool-II</productname> 4.1以降では、スタンバイサーバの行でレプリケーション状態と、同期レプリケーション状態が表示されます。
     状態(status)の意味については、 <xref linkend="pcp-node-info"> リファレンスで説明されています。
     ホスト名が "/tmp" のように表示される場合、UNIX ドメインソケットを使用して
     <productname>Pgpool-II</productname> が <productname>PostgreSQL</productname> に接続していることを意味します。
