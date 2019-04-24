@@ -934,6 +934,7 @@ EOF
 	echo "backend_port$n = $PORT" >> $CONF
 	echo "backend_weight$n = 1" >> $CONF
 	echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+	echo "backend_application_name$n = 'server$n'" >> $CONF
 
 # temporarily start pgpool
 	echo "temporarily start pgpool-II to create standby nodes"
@@ -953,6 +954,7 @@ EOF
 			CLUSTER="data"`expr $n`
 			CLUSTERDIR=$BASEDIR/$CLUSTER
 			echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+			echo "backend_application_name$n = 'server$n'" >> $CONF
 			n=`expr $n + 1`
 		done
 		$PGPOOL_INSTALL_DIR/bin/pgpool -f $BASEDIR/etc/pgpool.conf reload
