@@ -1177,7 +1177,7 @@
 	<listitem>
 	  <para>
 	    <varname>backend_application_name</varname> specifies the
-	    application name for walsender, which receives WAL log
+	    application name of walsender, which receives WAL log
 	    from primary node. Thus in other than streaming
 	    replication mode, this parameter does not need to be set.
 	    Also this parameter is required to if you want to show
