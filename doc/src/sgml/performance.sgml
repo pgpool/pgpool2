@@ -9,7 +9,8 @@
   </indexterm>
 
   <para>
-    There are many configuration parameters that affect the performance of
+    There are number of configuration parameters that affect the
+    performance of
     <productname>Pgpool-II</productname>. In this chapter we present
     how to tune them.
   </para>
@@ -168,7 +169,7 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
       If there are multiple <productname>PostgreSQL</productname>
       nodes and <productname>Pgpool-II</productname> operates in
       streaming replication mode, logical replication mode, slony mode
-      more replication mode (for those running mode
+      or replication mode (for those running mode
       see <xref linkend="running-mode"> for more details), it is
       possible to distribute read queries among those database nodes
       to get more throughput since each database nodes processes
@@ -200,8 +201,8 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
 	On the other hand, if
 	<xref linkend="guc-statement-level-load-balance"> is set to
 	on, the load balance node is determined at the time each query
-	starts.  This is useful in case when application has its own
-	connection pooling as it keeps on connecting
+	starts.  This is useful in case that application has its own
+	connection pooling which keeps on connecting
 	to <productname>Pgpool-II</productname> and the load balance
 	node will not be changed once the application starts. Another
 	use case is a batch application. It issues tremendous number
@@ -209,12 +210,118 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
 	load balancing it can utilize multiple servers.
       </para>
     </sect2>
+
+    <sect2 id="creating-specific-purpose-database-node">
+      <title>Creating Specific Purpose Database Node</title>
+      <para>
+	In OLAP environment sometimes it is desirable to have a large
+	read-only database for specific purpose. By creating such a
+	database is possible by creating a replica database using
+	streaming replication. In this case it is possible to redirect
+	read queries to the database in two ways: specifying database
+	names(s) or specifying application name(s). For former,
+	use <xref linkend="guc-database-redirect-preference-list">. For
+	latter use <xref linkend="guc-app-name-redirect-preference-list">.
+      </para>
+    </sect2>
+
   </sect1>
 
   <sect1 id="in-memory-query-caching">
     <title>In Memory Query Caching</title>
     <para>
+      <productname>Pgpool-II</productname> allows to cache read query
+      results for later use. This will bring huge benefit for a type
+      of applications which issue same read queries many times. If
+      there are two queries and the query strings (parameter for
+      prepared statements if any) are identical, two queries are
+      regarded as "same". For the first time the query is
+      sent, <productname>Pgpool-II</productname> saves the query
+      result, and use it for the second query without asking anything
+      to <productname>PostgreSQL</productname>. This technique is
+      explained in <xref linkend="runtime-in-memory-query-cache">.
     </para>
+
+    <sect2 id="when-not-to-use-in-memory-query-caching">
+      <title>When not to Use in Memory Query Caching</title>
+      <para>
+	When a table is modified, query results against the table
+	could be changed. To avoid
+	inconsistency, <productname>Pgpool-II</productname> discards
+	query cache data when corresponding table is modified. So
+	frequently updated database will not be suitable to use in
+	memory query caching. You can check if your database is
+	suitable to use query caching or not, you could
+	use <xref linkend="SQL-SHOW-POOL-CACHE">. If query cache hit
+	ration is lower than 70%, probably you want to avoid using the
+	query cache.
+      </para>
+    </sect2>
   </sect1>
 
+  <sect1 id="relation-cache">
+    <title>Relation Cache</title>
+    <para>
+      Sometimes <productname>Pgpool-II</productname> needs to
+      ask <productname>PostgreSQL</productname> to get meta
+      information, such as whether a table is a temporay one or
+      not. To get those
+      information, <productname>Pgpool-II</productname> sends queires
+      primary <productname>PostgreSQL</productname> which could be up
+      to as many as 10 queries. To reduce the
+      overhead, <productname>Pgpool-II</productname> maintains
+      "relation cahche". Next time same table is included in a
+      query, <productname>Pgpool-II</productname> extracts the
+      information from the cahe.
+    </para>
+    <para>
+      There are some parameters to configure the relation
+      cahce. See <xref linkend="guc-relcache-expire">, <xref linkend="guc-relcache-size">
+      for more details.
+    </para>
+
+    <sect2 id="shared-relation-cache">
+      <title>Shared Relation Cache</title>
+      <para>
+	The relation cache basically lives in process private memory,
+	which is bound to a session. So even if a relation cache is
+	created to for a table, in different session the relation
+	cache might not be created yet. After all, until a relation
+	cache entry is created in all process, queries continue to
+	sent to <productname>PostgreSQL</productname>.
+	<productname>Pgpool-II</productname> 4.1 overcomes the issue
+	by creating relation cahce in shared memory. If a session
+	creates a relation cache entry in the shared memory, other
+	sessions will get the cache result by looking at the shared
+	relation
+	cache. See <xref linkend="guc-enable-shared-relcache">
+	configuration parameter section for more details. This feature
+	is pretty effective and we recommend this feature be enabled.
+      </para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="other-performance-considerations">
+    <title>Other Performance Considerations</title>
+    <para>
+      This section introduces some other performance considerations.
+    </para>
+
+  <sect2 id="thundering-herd-problem">
+    <title>Thundering Herd Problem</title>
+    <para>
+      If <xref linkend="guc-num-init-children"> is large, it is
+      possible that many <productname>Pgpool-II</productname> process
+      are woke up and heavy context switching happens. This leads to
+      high system load and hurt the overall system performance. This
+      problem is called "the thundering herd
+      problem". Enabling <xref linkend="guc-serialize-accept"> could
+      solve the problem. Please note that for
+      smaller <xref linkend="guc-num-init-children">, <xref linkend="guc-serialize-accept">
+      might make the system performance worse. Please take a look at
+      the guidance in <xref linkend="guc-serialize-accept"> section.
+    </para>
+  </sect2>
+
+  </sect1>
 </chapter>
