@@ -4,7 +4,7 @@
  *
  * pgpool-recovery: exec online recovery script from SELECT statement.
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -27,6 +27,7 @@
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_proc.h"
 #include "utils/syscache.h"
 #include "utils/builtins.h"		/* PostgreSQL 8.4 needs this for textout */
 #include "utils/guc.h"
@@ -312,7 +313,9 @@ get_function_oid(const char *funcname, const char *argtype, const char *nspname)
 	 */
 	nspid = LookupExplicitNamespace(nspname, false);
 #endif
+
 	elog(DEBUG1, "get_function_oid: oid of \"%s\": %d", nspname, nspid);
+
 
 	tup = SearchSysCache(PROCNAMEARGSNSP,
 						 PointerGetDatum(funcname),
@@ -322,7 +325,12 @@ get_function_oid(const char *funcname, const char *argtype, const char *nspname)
 
 	if (HeapTupleIsValid(tup))
 	{
+#if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 120000)
+		Form_pg_proc proctup = (Form_pg_proc) GETSTRUCT(tup);
+		funcid = proctup->oid;
+#else
 		funcid = HeapTupleGetOid(tup);
+#endif
 		elog(DEBUG1, "get_function_oid: oid of \"%s\": %d", funcname, funcid);
 		ReleaseSysCache(tup);
 		return funcid;
