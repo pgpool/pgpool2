@@ -305,6 +305,11 @@ function set_postgresql_conf
 		    num_slots=`expr $NUMCLUSTERS + 10`
 		    echo "max_replication_slots = $num_slots" >> $PGCONF
 		fi
+
+		if [ $PGVERSION -ge 12 ];then
+		    echo "include_if_exists = 'myrecovery.conf'" >> $PGCONF
+		fi
+
 	elif [ $MODE = 'r' -o $MODE = 'l' -o $MODE = 'y' ];then
 		echo "wal_level = archive" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
@@ -392,6 +397,8 @@ EOF
 fi
 
 cat >> $1/$SCRIPT <<'EOF'
+touch standby.signal
+
 if [ $pg_rewind_failed = "true" ];then
 
 $psql -p $PORT -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
@@ -407,7 +414,8 @@ $master_db_cluster/ $DEST_CLUSTER/
 rm -fr $DEST_CLUSTER/pg_xlog 
 mkdir $DEST_CLUSTER/pg_xlog
 chmod 700 $DEST_CLUSTER/pg_xlog
-rm $DEST_CLUSTER/recovery.done
+rm $DEST_CLUSTER/recovery.done standby.signal
+rm standby.signal
 fi
 EOF
 
@@ -417,12 +425,22 @@ $psql -p $PORT -c "SELECT * FROM pg_create_physical_replication_slot('pgpool_set
 EOF
 fi
 
-cat >> $1/$SCRIPT <<'EOF'
+if [ $PGVERSION -ge 12 ];then
+    cat >> $1/$SCRIPT <<'EOF'
+cat > $DEST_CLUSTER/myrecovery.conf <<REOF
+primary_conninfo      = 'port=$PORT user=$PGSUPERUSER application_name=''server$recovery_node'''
+recovery_target_timeline='latest'
+EOF
+
+else
+
+    cat >> $1/$SCRIPT <<'EOF'
 cat > $DEST_CLUSTER/recovery.conf <<REOF
 standby_mode          = 'on'
 primary_conninfo      = 'port=$PORT user=$PGSUPERUSER application_name=''server$recovery_node'''
 recovery_target_timeline='latest'
 EOF
+fi
 
 if [ $USE_REPLICATION_SLOT = "false" ];then
     cat >> $1/$SCRIPT <<'EOF'
@@ -560,24 +578,31 @@ chmod 755 $1/$SCRIPT
 # argument2: cluster No. We assume that data0 is primary
 #-------------------------------------------
 function create_recovery_conf {
-if [ $2 = "0" ];then
+    if [ $PGVERSION -ge 12 ];then
+	fname=myrecovery.conf
+    elif [ $2 = "0" ];then
 	fname=recovery.done
-else
+    else
 	fname=recovery.conf
-fi
+    fi
 
-cat > $1/$fname <<EOF
+    if [ $PGVERSION -lt 12 ];then
+	cat > $1/$fname <<EOF
 standby_mode          = 'on'
+EOF
+    fi
+
+    cat > $1/$fname <<EOF
 primary_conninfo      = 'port=$BASEPORT user=$WHOAMI application_name=''server$2'''
 recovery_target_timeline='latest'
 EOF
-if [ $USE_REPLICATION_SLOT = true ];then
-    echo "primary_slot_name = 'pgpool_setup_slot$2'" >> $1/$fname
-else
-cat >> $1/$fname <<EOF
+    if [ $USE_REPLICATION_SLOT = true ];then
+	echo "primary_slot_name = 'pgpool_setup_slot$2'" >> $1/$fname
+    else
+	cat >> $1/$fname <<EOF
 restore_command = 'cp $BASEDIR/archivedir/%f "%p" 2> /dev/null'
 EOF
-fi
+    fi
 }
 
 function set_pool_hba_conf {
