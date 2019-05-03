@@ -2707,6 +2707,7 @@ static int find_primary_node_repeatedly(void)
 {
 	int sec;
 	int node_id = -1;
+	int			i;
 
 	/* Streaming replication mode? */
 	if (pool_config->master_slave_mode == 0 ||
@@ -2717,6 +2718,22 @@ static int find_primary_node_repeatedly(void)
 		 */
 		ereport(DEBUG1, 
 			(errmsg("find_primary_node: not in streaming replication mode")));
+		return -1;
+	}
+
+	/*
+	 * If all of the backends are down, there's no point to keep on searching
+	 * primary node.
+	 */
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (VALID_BACKEND(i))
+			break;
+	}
+	if (i == NUM_BACKENDS)
+	{
+		ereport(LOG,
+				(errmsg("find_primary_node_repeatedly: all of the backends are down. Giving up finding primary node")));
 		return -1;
 	}
 
