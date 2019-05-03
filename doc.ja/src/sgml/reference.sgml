@@ -75,7 +75,8 @@
 	 else.
      -->
      PCP ユーザ名とパスワードが <filename>$prefix/etc</filename> ディレクトリ内の <filename>pcp.conf</filename>
-     で宣言されている必要があります。<filename>pcp.conf</filename> が他の場所にある場合には、
+    で宣言されている必要があります(このファイルを作る方法については<xref linkend="configuring-pcp-conf">を参照してください)。
+      <filename>pcp.conf</filename> が他の場所にある場合には、
      <productname>Pgpool-II</productname> の起動時に <option>-F</option> オプションで指定することができます。
        </para>
      </sect1>
