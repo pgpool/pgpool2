@@ -33,18 +33,23 @@
     <partintro>
       <para>
 	This part contains reference information for PCP commands.
-	PCP commands are UNIX commands which manipulate pgpool-II via the network.
-	Please note that the parameter format for all PCP commands has been changed since pgpool-II 3.5.
+	PCP commands are UNIX commands which manipulate pgpool-II via
+	the network.  Please note that the parameter format for all
+	PCP commands has been changed since <productname>Pgpool-II
+	3.5</productname>.
       </para>
 
       <sect1 id="pcp-connection-authentication">
 	<title>PCP connection authentication</title>
 	<para>
 	  PCP user names and passwords must be declared in
-	  <filename>pcp.conf</filename> in <filename>$prefix/etc</filename>
-	  directory. <option>-F</option> option can be used when starting
-	  pgpool-II if <filename>pcp.conf</filename> is placed somewhere
-	  else.
+	  <filename>pcp.conf</filename>
+	  in <filename>$prefix/etc</filename> directory
+	  (see <xref linkend="configuring-pcp-conf"> to know to create
+	  the file). <option>-F</option> option can be used when
+	  starting
+	  <productname>Pgpool-II</productname>
+	  if <filename>pcp.conf</filename> is placed somewhere else.
 	</para>
       </sect1>
 
@@ -60,7 +65,7 @@
 	  This file should contain lines of the following format:
 
 	  <programlisting>
-	    hostname:port:username:password
+hostname:port:username:password
 	  </programlisting>
 	</para>
 
