@@ -49,7 +49,8 @@
 
         <para>
           Specifies the <productname>PostgreSQL</> user name to perform streaming replication check.
-          The user must exist on all the <productname>PostgreSQL</> backends.
+          The user must have LOGIN privilege and exist on all the
+          <productname>PostgreSQL</> backends.
         </para>
         <note>
           <para>

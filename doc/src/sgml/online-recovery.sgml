@@ -24,7 +24,8 @@
     <xref linkend="guc-backend-hostname"> and its associated
     parameters.  This will register the new server
     to <productname>Pgpool-II</productname> as a detached backend
-    node.
+    node, after that you execute <xref linkend="pcp-recovery-node"> command,
+    the server is add.
   </para>
 <!--
   <caution>
@@ -59,7 +60,8 @@
     mode the second stage is not performed and you don't need to
     provide a script for the stage
     in <xref linkend="guc-recovery-2nd-stage-command">. i.e. you can
-    safely leave it as an empty string.
+    safely leave it as an empty string. Those scripts example can be found in
+    <xref linkend="example-cluster-pgpool-config-online-recovery">.
   </para>
   <para>
     Connections from cliens are not allowd only in the second stage
@@ -101,6 +103,28 @@
     <listitem>
       <para>
         Start up postmaster (perform <literal>pgpool_remote_start</literal>)
+      </para>
+      <para>
+        The <literal>pgpool_remote_start</literal> is script to start up the <productname>PostgreSQL</productname> node of recovery target.
+        <literal>pgpool_remote_start</literal> receives following 2 parameters:
+        <itemizedlist>
+          <listitem>
+            <para>
+              Hostname of the backend node to be recovered.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Path to the database cluster of the master(primary) node.
+            </para>
+          </listitem>
+        </itemizedlist>
+      The script example can be found in <xref linkend="example-cluster-pgpool-config-online-recovery">.
+            <note>
+                <para>
+                    The script path and filename are hard coded, <command>$PGDATA/pgpool_remote_start</command> is executed on master(primary) node.
+                </para>
+            </note>
       </para>
     </listitem>
     <listitem>
@@ -278,15 +302,14 @@ rsync used in the command is killed by signal 2 for example.
 
         <para>
           Specifies a command to be run by master node at the second
-          stage of online recovery. This parameter only neccessary for
-          <xref linkend="guc-replication-mode">. The command file must
-          be placed in the database cluster directory for security
-          reasons.  For example,
-          if <varname>recovery_2nd_stage_command</varname> = <literal>
-          'sync-command'</literal>,
-          then <productname>Pgpool-II</productname> will look for the
-          command scrit in <literal>$PGDATA</literal> directory and
-          will try to execute <command>$PGDATA/sync-command</command>.
+          stage of online recovery. This command is required only
+          <xref linkend="guc-replication-mode">, so for other modes don't need
+          to provide a command file. The command file must be placed in the
+          database cluster directory for security reasons.
+          For example, if <varname>recovery_2nd_stage_command</varname> = <literal>
+          'sync-command'</literal>, then <productname>Pgpool-II</productname> will
+          look for the command scrit in <literal>$PGDATA</literal> directory and will
+          try to execute <command>$PGDATA/sync-command</command>.
         </para>
         <para>
           <varname>recovery_2nd_stage_command</varname> receives following 5 parameters:

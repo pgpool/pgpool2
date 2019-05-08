@@ -156,12 +156,22 @@
 	    length of the listen queue is called "backlog".  There is
 	    an upper limit of the backlog in some systems, and if
 	    num_init_children*<xref linkend="guc-listen-backlog-multiplier">
-	      exceeds the number, you need to set the backlog higher.
-	      Otherwise, following problems may occur in heavy loaded systems:
-	      1) connecting to <productname>Pgpool-II</productname> fails
-	      2) connecting to <productname>Pgpool-II</productname> is
-	      getting slow because of retries in the kernel.  You can
-	      check if the listen queue is actually overflowed by using
+	    exceeds the number, you need to set the backlog higher.
+	    Otherwise, following problems may occur in heavy loaded systems:
+	    <itemizedlist>
+	      <listitem>
+	        <para>
+	          connecting to <productname>Pgpool-II</productname> fails
+	        </para>
+	      </listitem>
+	      <listitem>
+	        <para>
+	          connecting to <productname>Pgpool-II</productname> is
+	          getting slow because of retries in the kernel.
+	        </para>
+	      </listitem>
+	    </itemizedlist>
+	      You can check if the listen queue is actually overflowed by using
 	      "netstat -s" command.  If you find something like:
 	      <programlisting>
 		535 times the listen queue of a socket overflowed
@@ -453,15 +463,15 @@
 
 	      <tbody>
 		<row>
-		  <entry><literal>'slony'</literal></entry>
-		  <entry>Suitable for <acronym>Slony-I</acronym></entry>
-		</row>
-
-		<row>
 		  <entry><literal>'stream'</literal></entry>
 		  <entry>Suitable
 		    for <productname>PostgreSQL</productname>'s built-in
 		    replication system (Streaming Replication)</entry>
+		</row>
+
+		<row>
+		  <entry><literal>'slony'</literal></entry>
+		  <entry>Suitable for <acronym>Slony-I</acronym></entry>
 		</row>
 
 		<row>
@@ -476,7 +486,7 @@
 	  </table>
 
 	  <para>
-	    Default is <literal>'slony'</literal>.
+	    Default is <literal>'stream'</literal>.
 	  </para>
 	  <para>
 	    This parameter can only be set at server start.

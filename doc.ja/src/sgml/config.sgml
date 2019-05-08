@@ -139,10 +139,11 @@
 <!--
     The most fundamental way to set these parameters is to edit the file
     <filename>pgpool.conf</><indexterm><primary>pgpool.conf</></>,
-    which is located in <literal>$prefix/etc/pgpool.conf</literal>.
-    An example of what this file might look like is:
+    which is located in <literal>$prefix/etc/pgpool.conf</literal>, if it
+    installed from source code. An example of what this file might look like is:
 -->
-これらのパラメータを設定する最も基本的な方法は、<filename>pgpool.conf</><indexterm><primary>pgpool.conf</></>ファイルを編集することで、これは通常<literal>$prefix/ext/pgpool.conf</literal>に配置されています。
+これらのパラメータを設定する最も基本的な方法は、<filename>pgpool.conf</><indexterm><primary>pgpool.conf</></>ファイルを編集することです。
+ソースコードからインストールした場合、<literal>$prefix/ext/pgpool.conf</literal>に配置されています。
 このファイルがどういったものかの例を示します。
     <programlisting>
   # This is a comment

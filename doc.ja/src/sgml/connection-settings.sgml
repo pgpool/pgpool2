@@ -243,18 +243,34 @@ num_init_childrenより多いクライアントが<productname>Pgpool-II</produc
 			num_init_children*<xref linkend="guc-listen-backlog-multiplier">
 			exceeds the number, you need to set the backlog higher.
 			Otherwise, following problems may occur in heavy loaded systems:
-			1) connecting to <productname>Pgpool-II</productname> fails
-			2) connecting to <productname>Pgpool-II</productname> is
-			getting slow because of retries in the kernel.  You can
-			check if the listen queue is actually overflowed by using
-			"netstat -s" command.  If you find something like:
 -->
 待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。
 listenキューの長さは「バックログ」と呼ばれます。
 システムによってはバックログの上限が設定されており、<xref linkend="guc-listen-backlog-multiplier">*num_init_childrenがこれを越える場合はバックログを大きく設定する必要があります。
 さもないと高負荷時に以下のような問題が発生する可能性があります:
-1) <productname>Pgpool-II</productname>への接続が失敗する。
-2) カーネル内で行われるリトライにより<productname>Pgpool-II</productname>への接続が遅くなる。
+			<itemizedlist>
+				<listitem>
+					<para>
+<!--
+			connecting to <productname>Pgpool-II</productname> fails
+-->
+<productname>Pgpool-II</productname>への接続が失敗する。
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+<!--
+			connecting to <productname>Pgpool-II</productname> is
+			getting slow because of retries in the kernel.
+-->
+カーネル内で行われるリトライにより<productname>Pgpool-II</productname>への接続が遅くなる。
+					</para>
+				</listitem>
+			</itemizedlist>
+<!--
+			You can check if the listen queue is actually overflowed by using
+			"netstat -s" command.  If you find something like:
+-->
 実際にlistenキューが溢れているかどうかは、"netstat -s"コマンドを使って確認できます。
 もし、以下のような出力があった場合、
 			<programlisting>
@@ -589,7 +605,7 @@ AES256暗号化パスワードの詳細は、<xref linkend="auth-aes-encrypted-p
 			with another master/slave replication software (like <acronym>Slony-I</acronym>
 			and Streaming replication), that is responsible for doing the actual data replication.
 -->
-このモードは<productname>Pgpool-II</productname>と（<acronym>Slony-I</acronym>やストリームレプリケーションのような）他のマスター/スレーブ型のレプリケーションソフトウェアと組み合わせるのに使用されます。
+このモードは<productname>Pgpool-II</productname>と（<acronym>Slony-I</acronym>やストリーミングレプリケーションのような）他のマスター/スレーブ型のレプリケーションソフトウェアと組み合わせるのに使用されます。
 実際にデータレプリケーションを行うのはこれらのソフトウェアに任されます。
 		</para>
 
@@ -698,19 +714,19 @@ AES256暗号化パスワードの詳細は、<xref linkend="auth-aes-encrypted-p
 
 							<tbody>
 								<row>
-									<entry><literal>'slony'</literal></entry>
-<!--
-									<entry>Suitable for <acronym>Slony-I</acronym></entry>
--->
-									<entry> <acronym>Slony-I</acronym>に適合</entry>
-								</row>
-
-								<row>
 									<entry><literal>'stream'</literal></entry>
 <!--
 									<entry>Suitable for <productname>PostgreSQL</>'s built-in replication system (Streaming Replication)</entry>
 -->
 									<entry><productname>PostgreSQL</>の組み込みレプリケーションシステム（ストリーミングレプリケーション）に適合</entry>
+								</row>
+
+								<row>
+									<entry><literal>'slony'</literal></entry>
+<!--
+									<entry>Suitable for <acronym>Slony-I</acronym></entry>
+-->
+									<entry> <acronym>Slony-I</acronym>に適合</entry>
 								</row>
 
 								<row>
@@ -727,9 +743,9 @@ AES256暗号化パスワードの詳細は、<xref linkend="auth-aes-encrypted-p
 
 					<para>
 <!--
-						Default is <literal>'slony'</literal>.
+						Default is <literal>'stream'</literal>.
 -->
-デフォルトは<literal>'slony'</literal>です。
+デフォルトは<literal>'stream'</literal>です。
 					</para>
 					<para>
 <!--

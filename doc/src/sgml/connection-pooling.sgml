@@ -48,7 +48,8 @@
 	    in each <productname>Pgpool-II</productname> child
 	    process.  <productname>Pgpool-II</productname> reuses the
 	    cached connection if an incoming connection is connecting
-	    to the same database with the same user name.  If not,
+	    to the same database with the same user name and the same
+	    run-time parameters.  If not,
 	    <productname>Pgpool-II</productname> creates a new
 	    connection to the backend.  If the number of cached
 	    connections exceeds max_pool, the oldest connection will

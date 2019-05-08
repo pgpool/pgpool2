@@ -25,9 +25,10 @@
     <para>
       If you don't want a query that qualifies for the load balancing to be
       load balanced by <productname>Pgpool-II</productname>, you can put
-      <emphasis>/*NO LOAD BALANCE*/</emphasis> comment before the <acronym>SELECT
-      </acronym> statement. This will disable the load balance of the particular query
-      and <productname>Pgpool-II</productname> will send it to the master node (the primary node in Master Slave mode).
+      arbitrary comment(<emphasis>/*NO LOAD BALANCE*/</emphasis> is usually used)
+      before the <acronym>SELECT</acronym> statement. This will disable the
+      load balance of the particular query and <productname>Pgpool-II</productname>
+      will send it to the master node (the primary node in Master Slave mode).
     </para>
   </note>
 

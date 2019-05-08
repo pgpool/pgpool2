@@ -37,10 +37,11 @@
     <xref linkend="guc-backend-hostname"> and its associated
     parameters.  This will register the new server
     to <productname>Pgpool-II</productname> as a detached backend
-    node.
+    node, after that you execute <xref linkend="pcp-recovery-node"> command,
+    the server is add.
 -->
 新しい<productname>PostgreSQL</>サーバを動的に追加したい場合には、<xref linkend="guc-backend-hostname">および関連パラメータを追加した後に<filename>pgpool.conf</filename>を再読み込みします。
-これにより新しいサーバが切り離された状態のバックエンドノードとして<productname>Pgpool-II</productname>に登録されます。
+これにより新しいサーバが切り離された状態のバックエンドノードとして<productname>Pgpool-II</productname>に登録されるので、その後<xref linkend="pcp-recovery-node">コマンドを実行しサーバを追加できます。
   </para>
 <!--
   <caution>
@@ -83,12 +84,8 @@ PostgreSQLのPITRを使っている場合は適用されません。
     mode the second stage is not performed and you don't need to
     provide a script for the stage
     in <xref linkend="guc-recovery-2nd-stage-command">. i.e. you can
-    safely leave it as an empty string.
-
-    Online recovery is performed in two phases. Connections from cliens are
-    not allowd in second phase of online recovery while the data can be
-    updated or retrieved during the first phase.
-    <productname>Pgpool-II</productname> performs the follows steps in online recovery:
+    safely leave it as an empty string. Those scripts example can be found in
+    <xref linkend="example-cluster-pgpool-config-online-recovery">.
 -->
 オンラインリカバリは2段階に分けて実施されます。
 第1段階は「ファーストステージ」、第2段階は「セカンドステージ」と呼ばれます。
@@ -96,6 +93,7 @@ PostgreSQLのPITRを使っている場合は適用されません。
 <xref linkend="guc-replication-mode">の時のみセカンドステージが必要です。
 ストリーミングレプリケーションモードを含むその他のモードでは、セカンドステージは実施されず、<xref linkend="guc-recovery-2nd-stage-command">用のスクリプトを用意する必要はありません。
 つまり、そのエントリを空文字にしておいても問題ありません。
+これらのスクリプトの例は<xref linkend="example-cluster-pgpool-config-online-recovery">にあります。
 </para>
 <para>
 <!--
@@ -153,6 +151,45 @@ PostgreSQLのPITRを使っている場合は適用されません。
 -->
 postmasterの起動（<literal>pgpool_remote_start</literal>の実施）
       </para>
+      <para>
+<!--
+        The <literal>pgpool_remote_start</literal> is script to start up the <productname>PostgreSQL</productname> node of recovery target.
+        <literal>pgpool_remote_start</literal> receives following 2 parameters:
+-->
+<literal>pgpool_remote_start</literal>は、リカバリ対象の<productname>PostgreSQL</productname>を起動するためのスクリプトです。
+<literal>pgpool_remote_start</literal>は次の2つの引数を受けとります。
+        <itemizedlist>
+          <listitem>
+            <para>
+<!--
+              Hostname of the backend node to be recovered.
+-->
+リカバリされるバックエンドノードのホスト名
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+<!--
+              Path to the database cluster of the master(primary) node.
+-->
+リカバリされるバックエンドノードのデータベースクラスタへのパス
+            </para>
+          </listitem>
+        </itemizedlist>
+<!--
+      The script example can be found in <xref linkend="example-cluster-pgpool-config-online-recovery">.
+-->
+スクリプトの例は<xref linkend="example-cluster-pgpool-config-online-recovery">にあります。
+            <note>
+                <para>
+<!--
+                    The script path and filename are hard coded, <command>$PGDATA/pgpool_remote_start</command> is executed on master(primary) node.
+-->
+スクリプトのパスおよびファイル名は固定されており、マスタ(プライマリ)ノード上で<command>$PGDATA/pgpool_remote_start</command>が実行されます。
+
+                </para>
+            </note>
+      </para>
     </listitem>
     <listitem>
       <para>
@@ -197,8 +234,12 @@ postmasterの起動（<literal>pgpool_remote_start</literal>の実施）
       <para>
 <!--
         Specifies the <productname>PostgreSQL</> user name to perform online recovery.
+        <varname>recovery_user</varname> must specify superuser,
+        beacause <function>pgpool_recovery</function> function is executed
+        during online recovery, require superuser privilege.
 -->
 オンラインリカバリを行うための<productname>PostgreSQL</>ユーザ名です。
+オンラインリカバリで実行される<function>pgpool_recovery</function>関数はPostgreSQLのスーパーユーザ権限が必要なため、<varname>recovery_user</varname>にスーパーユーザを指定しなければなりません。
       </para>
         <para>
 <!--
@@ -416,15 +457,18 @@ rsync used in the command is killed by signal 2 for example.
 
         <para>
 <!--
-          Specifies a command file to be run by master(primary) node at the
-          second stage of online recovery. The command file must be placed in the
+          Specifies a command to be run by master node at the second
+          stage of online recovery. This command is required only
+          <xref linkend="guc-replication-mode">, so for other modes don't need
+          to provide a command file. The command file must be placed in the
           database cluster directory for security reasons.
           For example, if <varname>recovery_2nd_stage_command</varname> = <literal>
           'sync-command'</literal>, then <productname>Pgpool-II</productname> will
           look for the command scrit in <literal>$PGDATA</literal> directory and will
           try to execute <command>$PGDATA/sync-command</command>.
 -->
-オンラインリカバリのセカンドステージでマスタ（プライマリ）ノードで実行されるコマンドを指定します。
+オンラインリカバリのセカンドステージでマスタノードで実行されるコマンドを指定します。
+これは<xref linkend="guc-replication-mode">時のみ必要であるため、他のモードではコマンドファイルを用意する必要はありません。
 コマンドファイルはセキュリティ上の観点からデータベースクラスタ内に配置される必要があります。
 例えば、<varname>recovery_2nd_stage_command</varname> = <literal>'sync-command'</literal>となっている場合、<productname>Pgpool-II</productname>はコマンドスクリプトを<literal>$PGDATA</literal>ディレクトリの中で探し、<command>$PGDATA/sync-command</command>を起動しようとします。
         </para>

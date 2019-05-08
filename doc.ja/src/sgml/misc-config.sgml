@@ -29,6 +29,8 @@
           table is a temporary table or not). The cache is maintained in
           the local memory space of <productname>Pgpool-II</productname>
           child process and its lifetime is same as of the child process.
+          The cache is also maintained in shared memory to share among child
+          processes,if enable  <xref linkend="guc-enable-shared-relcache">.
           So If the table is modified using <command>ALTER TABLE</command>
           or some other means, the relcache becomes inconsistent.
           For this purpose, <varname>relcache_expire</varname> controls
@@ -38,6 +40,7 @@
 リレーションキャッシュの寿命を秒単位で指定します。
 リレーションキャッシュは、<productname>Pgpool-II</productname>がテーブルの構造を含む様々な情報を取得したり、テーブルのタイプ（たとえば、参照されているテーブルが一時テーブルかどうかなど）をチェックするために使う<productname>PostgreSQL</>のシステムカタログの問い合わせ結果を保存しておくものです。
 キャッシュはpgpoolの子プロセスのローカルメモリ空間に保管されています。
+<xref linkend="guc-enable-shared-relcache">が有効な場合、子プロセス間で共有するために共有メモリにも保管されます。
 もし<command>ALTER TABLE</command>でテーブルが変更された場合などは、リレーションキャッシュと一致しなくなります。
 そのため、<varname>relcache_expire</varname>がキャッシュの寿命をコントロールしています。
 デフォルトは0で、キャッシュの期限が切れることはありません。
@@ -66,11 +69,14 @@
 
         <para>
 <!--
-          Specifies the number of relcache entries.
-          Default is 256.
+          Specifies the number of relcache entries. Default is 256.
+          The cache is created  about 10 entries per table. So you can estimate
+          the required number of relation cache at "number of using table * 10".
 -->
 リレーションキャッシュのエントリ数を指定します。
 デフォルトは256です。
+リレーションキャッシュは、一つのテーブルあたり最大10個程度のエントリが作成されます。
+そのため、必要なリレーションキャッシュのサイズは、使用するテーブル数 * 10 で見積れます。
         </para>
         <note>
           <para>
@@ -113,12 +119,16 @@
           but using query cache can expect to execute only same query once.
           Expiration time on query cache is <xref linkend="guc-relcache-expire"> parameter.
           This parameter enables even if <xref linkend="guc-memory-cache-enabled"> is off.
+          In this case some query cache parameters(<xref linkend="guc-memqcache-method">,
+          <xref linkend="guc-memqcache-maxcache"> and each cache storage parameter)
+          is used together.
 -->
 onにするとクエリキャッシュを利用して子プロセス間でリレーションキャッシュを共有します。
 デフォルトはoffです。
 それぞれの子プロセスは<productname>PostgreSQL</productname>のシステムカタログを参照するために同じクエリを実行していましたが、クエリキャッシュにより同じクエリの実行を1回だけとすることが期待できます。
 クエリキャッシュ上の寿命は、<xref linkend="guc-relcache-expire">の値となります。
 本パラメータは、<xref linkend="guc-memory-cache-enabled">がoffの場合も有効です。
+この場合、一部のクエリキャッシュのパラメータ（<xref linkend="guc-memqcache-method">と<xref linkend="guc-memqcache-maxcache">、および各キャッシュストレージ用のパラメータ）も有効になります。
         </para>
         <para>
 <!--

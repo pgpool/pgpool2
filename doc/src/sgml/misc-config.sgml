@@ -22,6 +22,8 @@
           table is a temporary table or not). The cache is maintained in
           the local memory space of <productname>Pgpool-II</productname>
           child process and its lifetime is same as of the child process.
+          The cache is also maintained in shared memory to share among child
+          processes,if enable  <xref linkend="guc-enable-shared-relcache">.
           So If the table is modified using <command>ALTER TABLE</command>
           or some other means, the relcache becomes inconsistent.
           For this purpose, <varname>relcache_expire</varname> controls
@@ -45,8 +47,9 @@
       <listitem>
 
         <para>
-          Specifies the number of relcache entries.
-          Default is 256.
+          Specifies the number of relcache entries. Default is 256.
+          The cache is created  about 10 entries per table. So you can estimate
+          the required number of relation cache at "number of using table * 10".
         </para>
         <note>
           <para>
@@ -79,6 +82,9 @@
           but using query cache can expect to execute only same query once.
           Expiration time on query cache is <xref linkend="guc-relcache-expire"> parameter.
           This parameter enables even if <xref linkend="guc-memory-cache-enabled"> is off.
+          In this case some query cache parameters(<xref linkend="guc-memqcache-method">,
+          <xref linkend="guc-memqcache-maxcache"> and each cache storage parameter)
+          is used together.
         </para>
         <para>
           <productname>Pgpool-II</productname> searh relation cache on local

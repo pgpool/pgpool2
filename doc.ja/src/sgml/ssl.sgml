@@ -73,11 +73,13 @@ SSLサポートを有効にするためには、<productname>Pgpool-II</productn
       <para>
 <!--
         Specifies the path to the private key file to be used for
-        incoming frontend connections.
+        incoming frontend connections. If specifies relative path, it is based
+        on the directory where pgpool is starting up.
         There is no default value for this option, and if left unset
         <acronym>SSL</acronym> will be disabled for incoming frontend connections.
 -->
 フロントエンドとの接続に使用するプライベートキーファイルのパスを指定します。
+相対パスで指定した場合、Pgpool-IIの実行ディレクトリが基準となります。
 このオプションのデフォルト値はありません。
 設定がない場合は、フロントエンドとの接続で<acronym>SSL</acronym>が使用されなくなります。 
       </para>
@@ -103,11 +105,13 @@ SSLサポートを有効にするためには、<productname>Pgpool-II</productn
       <para>
 <!--
         Specifies the path to the public x509 certificate file to be used
-        for the incoming frontend connections.
+        for the incoming frontend connections. If specifies relative path, based
+        path is Pgpool-II is run directory.
         There is no default value for this option, and if left unset
         <acronym>SSL</acronym> will be disabled for incoming frontend connections.
 -->
 フロントエンドとの接続に使用する公開x509証明書のフルパスを指定します。 
+相対パスで指定した場合、Pgpool-IIの実行ディレクトリが基準となります。
 このオプションのデフォルト値はありません。
 設定がない場合は、フロントエンドとの接続で<acronym>SSL</acronym>が使用されなくなります。 
       </para>

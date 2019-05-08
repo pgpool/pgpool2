@@ -112,7 +112,21 @@ from the in memory cache is extremely fast.
             This parameter can only be set at server start.
 	    -->
 	  このパラメータはサーバ起動時にのみ設定可能です。
-</para>
+    </para>
+
+    <note>
+      <para>
+        <!--
+            The query cache is used the relation cache too, if <xref linkend="guc-enable-shared-relcache"> is on.
+            You notes that the query cache is used regardless <xref linkend="guc-memory-cache-enabled"> parameter, when It is used by relation cache.
+            See <xref linkend="runtime-misc"> for more details to relation cache.
+          -->
+<xref linkend="guc-enable-shared-relcache">が有効の場合、クエリキャッシュはリレーションキャッシュでも使用されます。
+リレーションキャッシュで使用される場合、<xref linkend="guc-memory-cache-enabled">パラメータのオン、オフに関わらずクエリキャッシュが使用されることに注意してください。
+リレーションキャッシュの詳細は<xref linkend="runtime-misc">を参照してください。
+      </para>
+    </note>
+
 </listitem>
 </varlistentry>
 </variablelist>

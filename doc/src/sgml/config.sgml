@@ -79,8 +79,8 @@
   <para>
     The most fundamental way to set these parameters is to edit the file
     <filename>pgpool.conf</><indexterm><primary>pgpool.conf</></>,
-    which is located in <literal>$prefix/etc/pgpool.conf</literal>.
-    An example of what this file might look like is:
+    which is located in <literal>$prefix/etc/pgpool.conf</literal>, if it
+    installed from source code. An example of what this file might look like is:
     <programlisting>
   # This is a comment
   listen_addresses = 'localhost'

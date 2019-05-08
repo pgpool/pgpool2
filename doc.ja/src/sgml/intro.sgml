@@ -184,6 +184,27 @@ SELECTクエリをサーバに分散させ、システム全体のスループ�
    </varlistentry>
 
    <varlistentry>
+<!--
+    <term>Online Recovery</term>
+-->
+    <term>オンラインリカバリ</term>
+    <listitem>
+      <para>
+<!--
+	<productname>Pgpool-II</productname> can perform online recovery of database
+	node by executing one command. When the online recovery is used with the
+	automated fail over, a detached node by fail over is possible to attach as
+	standby node automatically. It is possible to synchronize and attach new
+	<productname>PostgreSQL</productname> server too.
+-->
+<productname>Pgpool-II</productname>はコマンド一つでデータベースノードのオンラインリカバリができます。
+自動フェイルオーバと組み合わせることで、フェイルオーバにより切り離されたノードをスタンバイとして自動で復帰させることも可能です。
+新しいPostgreSQLサーバを同期しノードとして追加することもできます。
+      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term>レプリケーション</term>
     <listitem>
       <para>
