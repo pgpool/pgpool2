@@ -916,12 +916,12 @@ static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION 
 	backend = pool_create_cp();
 	if (backend == NULL)
 	{
-		pool_send_error_message(frontend, sp->major, "XX000", "connection cache is full", "",
-								"increase max_pool", __FILE__, __LINE__);
+		pool_send_error_message(frontend, sp->major, "XX000", "all backend nodes are down, pgpool requires at least one valid node", "",
+								"repair the backend nodes and restart pgpool", __FILE__, __LINE__);
 		ereport(ERROR,
-			(errmsg("unable to connect to backend"),
-				errdetail("connection cache is full"),
-					errhint("increase the \"max_pool\" configuration value, current max_pool is %d",pool_config->max_pool)));
+				(errmsg("unable to connect to backend"),
+				 errdetail("all backend nodes are down, pgpool requires at least one valid node"),
+				 errhint("repair the backend nodes and restart pgpool")));
 	}
 	
 	PG_TRY();
