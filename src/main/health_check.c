@@ -177,6 +177,7 @@ void do_health_check_child(int *node_id)
 		else if (pool_config->health_check_params[*node_id].health_check_period > 0)
 		{
 			bool result;
+			BackendInfo *bkinfo = pool_get_node_info(*node_id);
 
 			result = establish_persistent_connection(*node_id);
 
@@ -199,10 +200,26 @@ void do_health_check_child(int *node_id)
 					ereport(LOG, (errmsg("health check failed on node %d (timeout:%d)",
 										 *node_id, health_check_timer_expired)));
 
-					/* trigger failover */
-					partial = health_check_timer_expired?false:true;
-					degenerate_backend_set(node_id, 1, partial?REQ_DETAIL_SWITCHOVER:0);
+					if (bkinfo->backend_status == CON_DOWN && bkinfo->quarantine == true)
+					{
+						ereport(LOG, (errmsg("health check failed on quarantine node %d (timeout:%d)",
+											 *node_id, health_check_timer_expired),
+									  errdetail("ignoring..")));
+					}
+					else
+					{
+						/* trigger failover */
+						partial = health_check_timer_expired ? false : true;
+						degenerate_backend_set(node_id, 1, partial ? REQ_DETAIL_SWITCHOVER : 0);
+					}
 				}
+			}
+			else if (bkinfo->backend_status == CON_DOWN && bkinfo->quarantine == true)
+			{
+				/* The node has become reachable again. Reset
+				 * the quarantine state
+				 */
+				send_failback_request(*node_id, false, REQ_DETAIL_UPDATE | REQ_DETAIL_WATCHDOG);
 			}
 
 			/* Discard persistent connections */
@@ -225,11 +242,13 @@ static bool establish_persistent_connection(int node)
 	bkinfo = pool_get_node_info(node);
 
 	/*
-	 * If the node is already in down status or unused,
-	 * do nothing.
+	 * If the node is already in down status or unused, do nothing.
+	 * except when the node state is down because of quarantine operation
+	 * since we want to detect when the node cames back to life again to
+	 * remove it from the quarantine state
 	 */
 	if (bkinfo->backend_status == CON_UNUSED ||
-		bkinfo->backend_status == CON_DOWN)
+		(bkinfo->backend_status == CON_DOWN && bkinfo->quarantine == false))
 		return false;
 
 	/*
