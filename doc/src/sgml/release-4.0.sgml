@@ -1,6 +1,222 @@
 <!-- doc/src/sgml/release-4.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id=release-4-0-5> 
+  <title>Release 4.0.5</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2019-05-16</simpara>
+  </note>
+
+  <sect2>
+   <title>Enhancements</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2019-05-04 [ad4323b]
+-->
+     <para>
+      Doc: Improve <xref linkend="PCP-COMMANDS"> document. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-05-03 [bd6757e]
+-->
+     <para>
+      Speed up failover when all of backends are down. (Tatsuo Ishii)
+     </para>
+     <para>
+      If all of the backend are in down status, immediately give up finding 
+      primary node regardless search_primary_node_timeout and promptly 
+      finish the failover process.
+     </para>
+     <para>
+      Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2019-May/003321.html">[pgpool-hackers: 3321]</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-30 [50d2d6a]
+2019-04-30 [bd43ca8]
+-->
+     <para>
+      pgpool-recovery extension and <command>pgpool_setup</> is now ready for the next major release <productname>PostgreSQL</> 12. (Tatsuo Ishii)
+     </para>
+    </listitem>
+    <listitem>
+<!--
+2019-04-10 [c845e30]
+2019-04-09 [5d2078b]
+-->
+     <para>
+      Doc: add <xref linkend="RESTRICTIONS"> entry. (Takuma Hoshiai)
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+
+  <sect2>
+   <title>Bug fixes</title>
+   <itemizedlist>
+    <listitem>
+<!--
+2019-05-09 [6e925e8]
+-->
+     <para>
+      Fix the wrong error message "ERROR: connection cache is full", when all backend nodes are down. 
+      (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=487">bug 487</>) (Bo Peng)
+     </para>
+     <para>
+      When all backend nodes are down, <productname>Pgpool-II</> throws an uncorrect
+      error message "ERROR: connection cache is full". Change the error
+      message to "all backend nodes are down, pgpool requires at least one valid node".
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-24 [bb594b2]
+-->
+     <para>
+      Remove unused .sgml file. (Takuma Hoshiai)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-21 [c670dbf]
+-->
+     <para>
+      Avoid exit/fork storm of pool_worker_child process. (Tatsuo Ishii)
+     </para>
+     <para>
+      pool_worker_child issues query to get WAL position using <function>do_query()</>,
+      which could throws FATAL error. In this case pool_worker_child process
+      exits and <productname>Pgpool-II</> parent immediately forks new process. This cycle
+      indefinitely repeats and gives high load to the system.
+      To avoid the exit/fork storm, sleep <varname>sr_check_period</>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-18 [9b1bb1f]
+-->
+     <para>
+      Fix <xref linkend="GUC-BLACK-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-17 [51131a2]
+-->
+     <para>
+      Fix "not enough space in buffer" error. 
+      (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=499">bug 499</>) (Tatsuo Ishii)
+     </para>
+     <para>
+      The error occurred while processing error message returned from
+      backend and the cause is that the query string in question is too
+      big. Problem is, the buffer is in fixed size (8192 bytes).
+      Eliminate the fixed size buffer and use palloced buffer
+      instead. This also saves some memory copy work.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-16 [e765df5]
+-->
+     <para>
+      Fix DROP DATABASE failure. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-10 [89ad3d5]
+-->
+     <para>
+      Fix wrong variable in <function>read_status_file()</> function.
+(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=493">bug 493</>) (Takuma Hoshiai)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-08 [7984154]
+-->
+     <para>
+      Add missing <filename>test/watchdog_setup</> to EXTRA_DIST. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=470">bug 470</>) (Bo Peng)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-07 [df4c94f]
+-->
+     <para>
+      Doc: mention that multi-statement queries are sent to primary node only. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=492">bug 492</>) (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-05 [8168c31]
+-->
+     <para>
+      Fix md5 auth broken in raw mode with more than 1 backends. 
+      (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=491">bug 491</>) (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-03 [5cdc21f]
+-->
+     <para>
+      Test: Fix occasional regression test failure of 014.watchdog_test_quorum_bypass. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-04-02 [816d508]
+-->
+     <para>
+      Abort session if failover/failback is ongoing to prevent potential segfault. 
+      (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=481">bug 481</ulink>, 
+      <ulink url="http://www.pgpool.net/mantisbt/view.php?id=482">bug 482</ulink>) (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-03-30 [508f1c4]
+2019-03-30 [37162de]
+-->
+     <para>
+      Fix compiler warnings. (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2019-03-28 [3688592]
+-->
+     <para>
+      Fix memory leak in "batch" mode in extended query. 
+      (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=468">bug 468</>) (Tatsuo Ishii)
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect2>
+ </sect1>
+
  <sect1 id=release-4-0-4> 
   <title>Release 4.0.4</title>
   <note>
