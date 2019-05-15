@@ -6,8 +6,58 @@
 -->
  <title>フェイルオーバとフェイルバック</title>
 
- <sect2 id="runtime-config-failover-settings">
+   <para>
+     フェイルオーバは、<productname>Pgpool-II</productname>から見て使用できなくなった<productname>PostgreSQL</productname>バックエンドノードを<productname>Pgpool-II</productname>が自動的に切り離す処理を指します。
+     これは<productname>Pgpool-II</productname>の設定に関わらず、自動的に行われるいわゆる<emphasis>自動フェイルオーバ</emphasis>処理です。
+     <productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>バックエンドノードが使用できなくなったことを、以下の方法で確認します。
 
+　　　<itemizedlist>
+       <listitem>
+	 <para>
+	   定期的に実行されるヘルスチェック処理で確認する(詳細は<xref linkend="runtime-config-health-check">を参照)。
+	   ヘルスチェックは、<productname>Pgpool-II</productname>から<productname>PostgreSQL</productname>バックエンドノードへ接続を試行することによって<productname>PostgreSQL</productname>バックエンドノードが正常に動いていることを確認します。
+	   正常に接続できない場合、<productname>Pgpool-II</productname>から<productname>PostgreSQL</productname>へのネットワーク接続のどこかがおかしいか、<productname>PostgreSQL</productname>自体が正常に動作していないか、あるいはその両方である可能性がありますが、<productname>Pgpool-II</productname>はそれを特に区別せず、単にヘルスチェックが失敗したら、該当<productname>PostgreSQL</productname>ノードが使用できないと判断します。
+	 </para>
+       </listitem>
+
+       <listitem>
+	 <para>
+	   <productname>PostgreSQL</productname>ノードへの接続の際、あるいは接続中にネットワークレベルのエラーが発生した場合。
+	   ただし、<xref linkend="guc-failover-on-backend-error">がオフの場合はそのようなエラーの場合でも<productname>Pgpool-II</productname>は単にエラーをレポートしセッションが切断するのみです。
+	 </para>
+       </listitem>
+
+       <listitem>
+	   <para>
+	     クライアントが<productname>Pgpool-II</productname>に接続済みであり、<productname>PostgreSQL</productname>においてシャットダウン処理が実施された場合（クライアントがまったく<productname>Pgpool-II</productname>に接続していない場合は、<productname>PostgreSQL</productname>がシャットダウンされてもフェイルオーバしないことに注意してください）。
+	   </para>
+       </listitem>
+     </itemizedlist>
+
+   </para>
+
+   <para>
+     <xref linkend="guc-failover-command">が設定済みでフェイルオーバが行われると、<xref linkend="guc-failover-command">が起動されます。
+     <xref linkend="guc-failover-command">はユーザが記述すべきもので、主な役割としては、たとえばストリーミングレプリケーションのプライマリサーバがダウンした時に、新しいプライマリサーバをスタンバイサーバの中から選択して昇格させることなどが上げられます。
+     そのほか、ファイルオーバが発生したことを管理者にメールで通知することなども考えられます。
+   </para>
+
+   <para>
+     フェイルオーバはこのように障害時に発生しますが、手動で意図的にフェイルオーバさせることもできます。
+     これを<emphasis>スイッチオーバ</emphasis>と呼びます。
+     たとえば、スィッチオーバで<productname>PostgreSQL</productname>を意図的に切り離して、その間にバックアップを取得するなどの運用が考えられます。
+     スィッチオーバでは、単に<productname>Pgpool-II</productname>内の状態情報をダウン状態にするだけ（ただし、<xref linkend="guc-failover-command">は起動される）で、<productname>PostgreSQL</productname>をダウンさせるわけではないことに注意してください。
+     スィッチオーバは<xref linkend="PCP-DETACH-NODE">コマンドで実行できます。
+   </para>
+
+   <para>
+     フェイルオーバないしスィッチオーバで切り離された<productname>PostgreSQL</productname>ノードは、自動ではもとの状態（アタッチ状態）には戻りません。
+     -D オプションを指定して<productname>Pgpool-II</productname>を再起動するか、<xref linkend="PCP-ATTACH-NODE">コマンドを使用します。
+     その際、<xref linkend="SQL-SHOW-POOL-NODES">を使って、replication_stateが"streaming"になっていることを確認することをお勧めします。
+     これは、スタンバイサーバがプライマリサーバとストリーミングレプリケーションで正常に接続されており、データベース内容の整合性が取れていることを示します。
+   </para>
+
+ <sect2 id="runtime-config-failover-settings">
 <!--
   <title>Failover and Failback Settings</title>
 -->
