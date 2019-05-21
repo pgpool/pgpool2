@@ -163,7 +163,11 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	/**
 	 * Construct a tuple descriptor for the result rows.
 	 **/
+#if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 120000)
+	tupledesc = CreateTemplateTupleDesc(4);
+#else
 	tupledesc = CreateTemplateTupleDesc(4, false);
+#endif
 	TupleDescInitEntry(tupledesc, (AttrNumber) 1, "hostname", TEXTOID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 2, "port", INT4OID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 3, "status", TEXTOID, -1, 0);
@@ -273,7 +277,11 @@ _pcp_pool_status(PG_FUNCTION_ARGS)
 		nrows = pcp_result_slot_count(pcpResInfo);
 		pcp_disconnect(pcpConnInfo);
 		/* Construct a tuple descriptor for the result rows */
+#if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 120000)
+		tupdesc = CreateTemplateTupleDesc(3);
+#else
 		tupdesc = CreateTemplateTupleDesc(3, false);
+#endif
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "item", TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "value", TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "description", TEXTOID, -1, 0);
