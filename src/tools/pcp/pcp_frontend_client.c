@@ -873,8 +873,8 @@ format_titles(const char **titles, const char **types, int ntitles)
 
 		snprintf(buf, sizeof(buf), "%%-%ds : %%%%%s", maxlen, types[i]);
 		snprintf(buf2, sizeof(buf2), buf, titles[i], types[i]);
-		strncat(formatbuf, buf2, sizeof(formatbuf));
-		strncat(formatbuf, "\n", sizeof(formatbuf));
+		strncat(formatbuf, buf2, sizeof(buf2));
+		strcat(formatbuf, "\n");
 	}
 	return formatbuf;
 }
