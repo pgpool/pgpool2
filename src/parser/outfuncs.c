@@ -1680,6 +1680,7 @@ static void
 _outValue(String *str, Value *value)
 {
 	char buf[16];
+	char		*p;
 
 	switch (value->type)
 	{
@@ -1694,7 +1695,9 @@ _outValue(String *str, Value *value)
 
 		case T_String:
 			string_append_char(str, "'");
-			string_append_char(str, escape_string(value->val.str));
+			p = escape_string(value->val.str);
+			string_append_char(str, p);
+			pfree(p);
 			string_append_char(str, "'");
 			break;
 
@@ -1756,6 +1759,7 @@ static void
 _outAConst(String *str, A_Const *node)
 {
 	char buf[16];
+	char		*p;
 
 	switch (node->val.type)
 	{
@@ -1770,7 +1774,9 @@ _outAConst(String *str, A_Const *node)
 
 		case T_String:
 			string_append_char(str, "'");
-			string_append_char(str, escape_string(node->val.val.str));
+			p = escape_string(node->val.val.str);
+			string_append_char(str, p);
+			pfree(p);
 			string_append_char(str, "'");
 			break;
 
@@ -3830,6 +3836,7 @@ static void
 _outDropStmt(String *str, DropStmt *node)
 {
 	List *objname;
+	char		*p;
 
 	string_append_char(str, "DROP ");
 	switch (node->removeType)
@@ -3943,7 +3950,9 @@ _outDropStmt(String *str, DropStmt *node)
 			string_append_char(str, strVal(llast(objname)));
 			string_append_char(str, " USING ");
 			string_append_char(str, "'");
-			string_append_char(str, escape_string(NameListToString(list_truncate(list_copy(objname), list_length(objname) - 1))));
+			p = escape_string(NameListToString(list_truncate(list_copy(objname), list_length(objname) - 1)));
+			string_append_char(str, p);
+			pfree(p);
 			string_append_char(str, "'");
 
 			break;
