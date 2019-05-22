@@ -324,7 +324,7 @@ check_replication_time_lag(void)
 	callback.arg = NULL;
 	callback.previous = error_context_stack;
 	error_context_stack = &callback;
-	stat_rep_query = "";
+	stat_rep_query = NULL;
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
