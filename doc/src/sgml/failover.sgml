@@ -292,7 +292,7 @@
               </row>
               <row>
                 <entry>%P</entry>
-                <entry>	Old primary node ID</entry>
+                <entry>	Current primary node ID</entry>
               </row>
               <row>
                 <entry>%r</entry>
@@ -417,7 +417,7 @@ if (we need to executed follow master command)
               </row>
               <row>
                 <entry>%P</entry>
-                <entry>	Old primary node ID</entry>
+                <entry>	Current primary node ID</entry>
               </row>
               <row>
                 <entry>%r</entry>
