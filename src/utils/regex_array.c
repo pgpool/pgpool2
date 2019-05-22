@@ -218,6 +218,7 @@ extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_tokens 
 			pfree(left_token);
 			pfree(right_token);
 			pfree(mystr);
+			pfree(weight_token);
 			return;
 		}
 
@@ -254,6 +255,7 @@ extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_tokens 
 			lrtokens->token[lrtokens->pos].weight_token = 1.0;
 
 		lrtokens->pos++;
+		pfree(weight_token);
 	}
 	pfree(mystr);
 }
