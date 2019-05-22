@@ -209,6 +209,7 @@ void extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_to
 			pfree(left_token);
 			pfree(right_token);
 			pfree(mystr);
+			pfree(weight_token);
 			return;
 		}
 
@@ -229,6 +230,7 @@ void extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_to
 		lrtokens->token[lrtokens->pos].left_token = left_token;
 		lrtokens->token[lrtokens->pos].right_token = right_token;
 		lrtokens->pos++;
+		pfree(weight_token);
 	}
 	pfree(mystr);
 }
