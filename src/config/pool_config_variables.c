@@ -2198,7 +2198,7 @@ build_variable_groups(void)
 {
 	/* we build these by hand */
 	/* group 1. Backend config vars */
-	ConfigureVarGroups[0].var_count = 5;
+	ConfigureVarGroups[0].var_count = 6;
 	ConfigureVarGroups[0].var_list = palloc0(sizeof(struct config_generic *) * ConfigureVarGroups[0].var_count);
 	ConfigureVarGroups[0].var_list[0] = find_option("backend_hostname", FATAL);
 	ConfigureVarGroups[0].var_list[0]->flags |= VAR_PART_OF_GROUP;
@@ -2208,8 +2208,10 @@ build_variable_groups(void)
 	ConfigureVarGroups[0].var_list[2]->flags |= VAR_PART_OF_GROUP;
 	ConfigureVarGroups[0].var_list[3] = find_option("backend_data_directory", FATAL);
 	ConfigureVarGroups[0].var_list[3]->flags |= VAR_PART_OF_GROUP;
-	ConfigureVarGroups[0].var_list[4] = find_option("backend_flag", FATAL);
+	ConfigureVarGroups[0].var_list[4] = find_option("backend_application_name", FATAL);
 	ConfigureVarGroups[0].var_list[4]->flags |= VAR_PART_OF_GROUP;
+	ConfigureVarGroups[0].var_list[5] = find_option("backend_flag", FATAL);
+	ConfigureVarGroups[0].var_list[5]->flags |= VAR_PART_OF_GROUP;
 	ConfigureVarGroups[0].gen.max_elements = ConfigureVarGroups[0].var_list[0]->max_elements;
 
 	/* group 2. other_pgpool config vars */
