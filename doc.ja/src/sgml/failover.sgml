@@ -428,9 +428,9 @@
               <row>
                 <entry>%P</entry>
 <!--
-                <entry>	Current primary node ID</entry>
+                <entry>	Old primary node ID</entry>
 -->
-                <entry>現在のプライマリノードのID</entry>
+                <entry>古いプライマリノードのID</entry>
               </row>
               <row>
                 <entry>%r</entry>
