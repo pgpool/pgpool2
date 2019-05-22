@@ -291,7 +291,7 @@
               </row>
               <row>
                 <entry>%P</entry>
-                <entry>	Current primary node ID</entry>
+                <entry>	Old primary node ID</entry>
               </row>
               <row>
                 <entry>%r</entry>
