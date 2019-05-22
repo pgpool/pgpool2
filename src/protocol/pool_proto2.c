@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2010	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -103,7 +103,8 @@ POOL_STATUS AsciiRow(POOL_CONNECTION *frontend,
 
 			/* forward to frontend */
 			pool_write(frontend, &size, sizeof(int));
-			pool_write(frontend, sendbuf, size1);
+			if (size1 > 0)
+				pool_write(frontend, sendbuf, size1);
 			snprintf(msgbuf, Min(sizeof(msgbuf), size1+1), "%s", sendbuf);
 			ereport(DEBUG1,
 				(errmsg("processing ASCII row"),
