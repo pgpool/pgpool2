@@ -312,12 +312,6 @@ pool_virtual_master_db_node_id(void)
 {
 	POOL_SESSION_CONTEXT *sc;
 
-	sc = pool_get_session_context(true);
-	if (!sc)
-	{
-		return REAL_MASTER_NODE_ID;
-	}
-
 	/*
 	 * Check whether failover is in progress. If so, just abort this session.
 	 */
@@ -330,6 +324,12 @@ pool_virtual_master_db_node_id(void)
 				 errhint("In a moment you should be able to reconnect to the database")));
 		POOL_SETMASK(&UnBlockSig);
 		child_exit(POOL_EXIT_AND_RESTART);
+	}
+
+	sc = pool_get_session_context(true);
+	if (!sc)
+	{
+		return REAL_MASTER_NODE_ID;
 	}
 
 	if (sc->in_progress && sc->query_context)
