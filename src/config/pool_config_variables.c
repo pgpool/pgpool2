@@ -3830,7 +3830,7 @@ BackendAppNameAssignFunc(ConfigContext context, char *newval, int index, int ele
 {
 	BACKEND_STATUS backend_status = g_pool_config.backend_desc->backend_info[index].backend_status;
 
-	if (context <= CFGCXT_INIT || backend_status == CON_UNUSED)
+	if (context <= CFGCXT_INIT || backend_status == CON_UNUSED || backend_status == CON_DOWN)
 	{
 		if (newval == NULL || strlen(newval) == 0)
 			g_pool_config.backend_desc->backend_info[index].backend_application_name[0] = '\0';
