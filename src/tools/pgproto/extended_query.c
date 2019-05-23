@@ -213,7 +213,9 @@ process_bind(char *buf, PGconn *conn)
 	send_char('B', conn);
 	send_int(len, conn);
 	send_string(portal, conn);
+	free(portal);
 	send_string(stmt, conn);
+	free(stmt);
 	send_int16(ncodes, conn);
 	for (i = 0; i < ncodes; i++)
 	{
@@ -277,6 +279,7 @@ process_execute(char *buf, PGconn *conn)
 	send_int(len, conn);
 	send_string(portal, conn);
 	send_int(maxrows, conn);
+	free(portal);
 }
 
 /*
@@ -374,4 +377,5 @@ process_close(char *buf, PGconn *conn)
 	send_int(len, conn);
 	send_char(kind, conn);
 	send_string(stmt, conn);
+	free(stmt);
 }
