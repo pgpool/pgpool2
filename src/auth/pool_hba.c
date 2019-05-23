@@ -30,6 +30,10 @@
 #include <errno.h>
 #include <netdb.h>
 
+#ifdef __FreeBSD__
+#include <netinet/in.h>
+#endif
+
 #include "pool.h"
 #include "auth/pool_hba.h"
 #include "utils/pool_path.h"
