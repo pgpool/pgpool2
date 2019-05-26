@@ -80,7 +80,7 @@ static RETSIGTYPE health_check_timer_handler(int sig);
 #endif
 
 #ifdef HEALTHCHECK_DEBUG
-static bool check_backend_down_request(int node);
+static bool check_backend_down_request(int node, bool done_requests);
 #endif
 
 #undef CHECK_REQUEST
@@ -183,7 +183,7 @@ do_health_check_child(int *node_id)
 			result = establish_persistent_connection(*node_id);
 
 #ifdef HEALTHCHECK_DEBUG
-			if (check_backend_down_request(*node_id) || (result && slot == NULL))
+			if (check_backend_down_request(*node_id, false) || (result && slot == NULL))
 #else
 			if (result && slot == NULL)
 #endif
@@ -220,7 +220,10 @@ do_health_check_child(int *node_id)
 				/* The node has become reachable again. Reset
 				 * the quarantine state
 				 */
-				send_failback_request(*node_id, false, REQ_DETAIL_UPDATE | REQ_DETAIL_WATCHDOG);
+#ifdef HEALTHCHECK_DEBUG
+				if (check_backend_down_request(*node_id, true) == false)
+#endif
+					send_failback_request(*node_id, false, REQ_DETAIL_UPDATE | REQ_DETAIL_WATCHDOG);
 			}
 
 			/* Discard persistent connections */
@@ -420,10 +423,13 @@ static RETSIGTYPE health_check_timer_handler(int sig)
  * Check backend down request file with specified backend node id.  If it's
  * down ("down"), returns true and set the status to "already_down" to
  * prevent repeatable * failover. If it's other than "down", returns false.
-*/
+ *
+ * When done_requests is true (second arg to function) the function returns
+ * true if the node has already_done status in the file.
+ */
 
 static bool
-check_backend_down_request(int node)
+check_backend_down_request(int node, bool done_requests)
 {
 	static char backend_down_request_file[POOLMAXPATHLEN];
 	FILE	   *fd;
@@ -465,11 +471,20 @@ check_backend_down_request(int node)
 		strncpy(buf, readbuf, sizeof(buf));
 		if (strlen(readbuf) > 0 && readbuf[strlen(readbuf) - 1] == '\n')
 			buf[strlen(readbuf) - 1] = '\0';
+		sscanf(buf, "%d\t%s", &node_id, status);
 
+		if (done_requests)
+		{
+			if (node_id == node && !strcmp(status, "already_down"))
+			{
+				fclose(fd);
+				return true;
+			}
+			continue;
+		}
 		p = readbuf;
 		if (found == false)
 		{
-			sscanf(buf, "%d\t%s", &node_id, status);
 			if (node_id == node && !strcmp(status, "down"))
 			{
 				snprintf(linebuf, sizeof(linebuf), "%d\t%s\n", node_id, "already_down");
