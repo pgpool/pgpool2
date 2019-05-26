@@ -3,6 +3,92 @@
 <sect1 id="runtime-config-failover">
  <title>Failover and Failback</title>
 
+   <para>
+     Failover means automatically
+     detaching <productname>PostgreSQL</productname>backend node which
+     is not accessible by <productname>Pgpool-II</productname>.  This
+     happens automatically regardless the configuration parameter
+     settings and is so called <emphasis>automatic failover</emphasis>
+     process. <productname>Pgpool-II</productname> confirms the
+     inacceibility of <productname>PostgreSQL</productname> backend
+     node by using following methods:
+
+     <itemizedlist>
+       <listitem>
+	 <para>
+	   Regular health check process
+	   (see <xref linkend="runtime-config-health-check"> for more
+	   details). The heath check process tries to connect
+	   from <productname>Pgpool-II</productname>
+	   to <productname>PostgreSQL</productname> node to confirm
+	   its healthiness. If it fails to connect, it is possible
+	   that there's something wrong with network connection
+	   between <productname>Pgpool-II</productname>
+	   and <productname>PostgreSQL</productname>,
+	   and/or <productname>PostgreSQL</productname> does not work
+	   properly. <productname>Pgpool-II</productname> does not
+	   distinguish each case and just decides that the
+	   particular <productname>PostgreSQL</productname> node is
+	   not available if health check fails.
+	 </para>
+       </listitem>
+
+       <listitem>
+	 <para>
+	   An error occurs while connecting
+	   to <productname>PostgreSQL</productname>, or network level
+	   erros occur while communicating with it.
+	   <productname>Pgpool-II</productname> will just disconnect
+	   the session to client
+	   if <xref linkend="guc-failover-on-backend-error"> is off in
+	   that case However.
+	 </para>
+       </listitem>
+
+       <listitem>
+	 <para>
+	   In the case When clients already connect
+	   to <productname>Pgpool-II</productname>
+	   and <productname>PostgreSQL</productname> is shutdown
+	   (please note that if no client connects
+	   to <productname>Pgpool-II</productname> at all, shutting
+	   down of <productname>PostgreSQL</productname> does not
+	   trigger a failover).
+	 </para>
+       </listitem>
+     </itemizedlist>
+
+   </para>
+
+   <para>
+     If <xref linkend="guc-failover-command"> is configured and a
+     failover happens, <xref linkend="guc-failover-command"> gets
+     executed. <xref linkend="guc-failover-command"> should be
+     provided by user and the major role is choosing new primary
+     server from existing standby servers and promoting it for
+     example. Another example would be let the administrator know that
+     a failover happens by sending a mail.
+   </para>
+
+   <para>
+     While a failover could happen when a failure occurs, it is
+     possible to trigger it by hand. This is called a <emphasis>switch
+     over</emphasis>. For instance, switching over
+     a <productname>PostgreSQL</productname> to take its backup would
+     be possible. Note that switching over just sets the status to
+     down and never bringing <productname>PostgreSQL</productname>
+     down. A switch over can be triggered by
+     using <xref linkend="PCP-DETACH-NODE"> command.
+   </para>
+
+   <para>
+     A <productname>PostgreSQL</productname> node detached by failover
+     or switch over will never return to the previous state (attached
+     state). Restarting <productname>Pgpool-II</productname> with -D
+     option or running <xref linkend="PCP-ATTACH-NODE"> makes it to
+     the attached state.
+   </para>
+
  <sect2 id="runtime-config-failover-settings">
 
   <title>Failover and Failback Settings</title>
