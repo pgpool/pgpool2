@@ -2132,6 +2132,7 @@ service_expired_failovers(void)
 {
 	ListCell   *lc;
 	List	   *failovers_to_del = NULL;
+	bool		need_to_resign = false;
 	struct timeval currTime;
 
 	if (get_local_node_state() != WD_COORDINATOR)
@@ -2149,9 +2150,40 @@ service_expired_failovers(void)
 			{
 				failovers_to_del = lappend(failovers_to_del, failoverObj);
 				ereport(DEBUG1,
-						(errmsg("failover request from %d nodes with ID:%d is expired", failoverObj->request_count, failoverObj->failoverID),
+					(errmsg("failover request from %d nodes with ID:%d is expired", failoverObj->request_count, failoverObj->failoverID),
 						 errdetail("marking the failover object for removal")));
-
+				if (!need_to_resign && failoverObj->reqKind == NODE_DOWN_REQUEST)
+				{
+					ListCell   *lc;
+					/* search the in the requesting node list if we are also the ones
+					 * who think the failover must have been done
+					 */
+					foreach(lc, failoverObj->requestingNodes)
+					{
+						WatchdogNode *reqWdNode = lfirst(lc);
+						if (g_cluster.localNode == reqWdNode)
+						{
+							/* verify if that node requested by us is now quarantined */
+							int	 i;
+							for (i = 0; i < failoverObj->nodesCount; i++)
+							{
+								int node_id = failoverObj->nodeList[i];
+								if (node_id != -1)
+								{
+									if (Req_info->primary_node_id == -1 &&
+										BACKEND_INFO(node_id).quarantine == true &&
+										BACKEND_INFO(node_id).role == ROLE_PRIMARY)
+									{
+										ereport(LOG,
+												(errmsg("We are not able to build consensus for our primary node failover request, got %d votesonly for failover request ID:%d", failoverObj->request_count, failoverObj->failoverID),
+												 errdetail("resigning from the coordinator")));
+										need_to_resign = true;
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -2164,6 +2196,13 @@ service_expired_failovers(void)
 		remove_failover_object(failoverObj);
 	}
 	list_free(failovers_to_del);
+	if (need_to_resign)
+	{
+		/* lower my wd_priority for moment */
+		g_cluster.localNode->wd_priority = -1;
+		send_cluster_service_message(NULL, NULL, CLUSTER_IAM_RESIGNING_FROM_MASTER);
+		set_state(WD_JOINING);
+	}
 }
 
 static bool
@@ -5427,6 +5466,8 @@ watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode * wdNode, WDPac
 							(errmsg("printing all remote node information")));
 					print_watchdog_node_info(wdNode);
 				}
+				/* Also reset my priority as per the original configuration */
+				g_cluster.localNode->wd_priority = pool_config->wd_priority;
 			}
 			break;
 
@@ -6114,6 +6155,8 @@ watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode * wdNode, WDPacketD
 	{
 		case WD_EVENT_WD_STATE_CHANGED:
 			send_cluster_command(WD_MASTER_NODE, WD_JOIN_COORDINATOR_MESSAGE, 5);
+			/* Also reset my priority as per the original configuration */
+			g_cluster.localNode->wd_priority = pool_config->wd_priority;
 			break;
 
 		case WD_EVENT_TIMEOUT:
