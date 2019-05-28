@@ -411,6 +411,22 @@
         any useable master backend node.
         </para>
         <para>
+        Moreover, unlike for the failed nodes, Pgpool-II keeps the health-check running on the quarantined nodes
+        and as soon as the quarantined node becomes reachable again it gets automatically re-attached.
+        </para>
+        <para>
+        From <productname>Pgpool-II </productname><emphasis>V4.1</emphasis> onwards. If the watchdog-master node
+        fails to build the consensus for primary backend node failover and the primary backend node gets into a
+        quarantine state, then it resigns from its master/coordinator responsibilities and lowers its wd_priority
+        for next leader election and let the cluster elect some different new leader.
+            <note>
+            <para>
+            When the master node fails to build the consensus for standby backend node failure, it takes no action
+            and similarly quarantined standby backend nodes on watchdog-master do not trigger a new leader election.
+            </para>
+            </note>
+        </para>
+        <para>
           Default is on.
         </para>
         <para>
