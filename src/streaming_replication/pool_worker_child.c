@@ -416,8 +416,18 @@ check_replication_time_lag(void)
 				res_rep->numrows > 0 &&
 				res_rep->nullflags[0] != -1)
 			{
-				strlcpy(bkinfo->replication_state, res_rep->data[1], NAMEDATALEN);
-				strlcpy(bkinfo->replication_sync_state, res_rep->data[2], NAMEDATALEN);
+				char	*s;
+
+				/*
+				 * If sr_check_user has enough privilege, it should return
+				 * some string. If not, NULL pointer will be returned for
+				 * res_rep->data[1] and [2]. So we need to prepare for the
+				 * latter case.
+				 */
+				s = res_rep->data[1]? res_rep->data[1] : "";
+				strlcpy(bkinfo->replication_state, s, NAMEDATALEN);
+				s = res_rep->data[1]? res_rep->data[2] : "";
+				strlcpy(bkinfo->replication_sync_state, s, NAMEDATALEN);
 				free_select_result(res_rep);				
 			}
 			pfree(query_buf);
