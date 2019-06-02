@@ -146,12 +146,20 @@ acbd18db4cc2f85cedef654fccc4a4d8
       また、<command>pg_md5</command> は、<xref linkend="guc-pool-passwd"> に
       ユーザー名と<literal>md5</literal> 暗号化されたパスワードのエントリを生成するためにも使用できます。
       <programlisting>
-$pg_md5 -m -f /path/to/pgpool.conf -u username -p
+$ pg_md5 -m -f /path/to/pgpool.conf -u username -p
 password: [your password]
 
 $ cat /path/to/pool_passwd 
 username:md55a231fcdb710d73268c4f44283487ba2
       </programlisting>
+
+      <xref linkend="guc-pool-passwd"> にエントリを登録せず、md5ハッシュされた文字列だけを表示させるには、引数としてパスワードとユーザ名を連結した文字列を渡します。
+	例として、パスワードに"password"、ユーザ名に"user"を渡す例を示します。
+      <programlisting>
+$ pg_md5 passworduser
+4d45974e13472b5a0be3533de4666414
+      </programlisting>
+      実際に<xref linkend="guc-pool-passwd">に登録するエントリは、先頭に"md5"を挿入してください。つまり、"md54d45974e13472b5a0be3533de4666414"となることに注意してください。
     </para>
  </refsect1>
 </refentry>
