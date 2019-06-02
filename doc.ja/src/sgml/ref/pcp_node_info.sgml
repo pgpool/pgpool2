@@ -103,7 +103,7 @@ $ pcp_node_info -h localhost -U postgres 1
   <!--
 	The result is in the following order:
     -->
-    結果は以下の順のとおりです。
+  結果は以下の順のとおりです。
 <literallayout class="monospaced">
 <!--
 1. hostname
@@ -133,7 +133,20 @@ $ pcp_node_info -h localhost -U postgres 1
   <!--
 	Status is represented by a digit from [0 to 3].
     -->
-    ステータスは [0..3] までの数字で表わされます。各数字の意味は以下のとおりです。
+  7, 8, 9は、<xref linkend="guc-sr-check-period">が0以外でなければ正しく表示されません。
+    また、8, 9は、<xref linkend="guc-sr-check-user">が<productname>PostgreSQL</productname>のスーパーユーザーであるか、"pg_monitor"グループに所属していなけれ正しく表示されません。
+      <note>
+	<para>
+	  <xref linkend="guc-sr-check-user">をpg_monitorグループに所属させるには、以下のSQLコマンドを<productname>PostgreSQL</productname>スーパーユーザーで実行してください（"sr_check_user"を<xref linkend="guc-sr-check-user">の設定値で置き換えてください）
+	      <programlisting>
+GRANT pg_monitor TO sr_check_user;
+	      </programlisting>
+	      <productname>PostgreSQL</productname> 9.6にはpg_monitorグループがないので、<xref linkend="guc-sr-check-user">は<productname>PostgreSQL</productname>のスーパーユーザーでなければなりません。
+	</para>
+      </note>
+      ステータスは [0..3] までの数字で表わされます。各数字の意味は以下のとおりです。
+  </para>
+  <para>
 	<itemizedlist>
 <!--
 	  <listitem><para>0 - This state is only used during the initialization. PCP will never display it. </para></listitem>

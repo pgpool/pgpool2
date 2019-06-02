@@ -88,8 +88,29 @@ $ pcp_node_info -h localhost -U postgres 1
 </literallayout>
   </para>
   <para>
-	Status is represented by a digit from [0 to 3].
-	<itemizedlist>
+    Status is represented by a digit from [0 to 3].  To correctly 7,
+    8, 9 are displayed, <xref linkend="guc-sr-check-period"> must not
+    be 0.  8, 9 will not be displayed
+    if <xref linkend="guc-sr-check-user"> is
+    not <productname>PostgreSQL</productname> super user nor it's not
+    in "pg_monitor" group.
+      <note>
+	<para>
+	  To make <xref linkend="guc-sr-check-user"> in pg_monitor
+	  group, execute following SQL command
+	  by <productname>PostgreSQL</productname> super user (replace
+	  "sr_check_user" with the setting
+	  of <xref linkend="guc-sr-check-user">):
+	  <programlisting>
+GRANT pg_monitor TO sr_check_user;
+	  </programlisting>
+	  For <productname>PostgreSQL</productname> 9.6, there's no
+	  pg_monitor group and <xref linkend="guc-sr-check-user"> must
+	  be <productname>PostgreSQL</productname> super user.
+	</para>
+      </note>
+
+      <itemizedlist>
 	  <listitem><para>0 - This state is only used during the initialization. PCP will never display it. </para></listitem>
 	  <listitem><para>1 - Node is up. No connections yet. </para></listitem>
 	  <listitem><para>2 - Node is up. Connections are pooled. </para></listitem>
