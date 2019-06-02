@@ -112,12 +112,21 @@ acbd18db4cc2f85cedef654fccc4a4d8
       <literal>md5</literal> encrypted password to 
       <xref linkend="guc-pool-passwd"> authentication file.
       <programlisting>
-$pg_md5 -m -f /path/to/pgpool.conf -u username -p
+$ pg_md5 -m -f /path/to/pgpool.conf -u username -p
 password: [your password]
 
 $ cat /path/to/pool_passwd 
 username:md55a231fcdb710d73268c4f44283487ba2
       </programlisting>
+      To just display the md5 hashed string, not adding an entry to <xref linkend="guc-pool-passwd">, pass a string concatenating password and user name.
+	For example, if password is "password" and user name is "user", the output would be:
+      <programlisting>
+$ pg_md5 passworduser
+4d45974e13472b5a0be3533de4666414
+      </programlisting>
+      Please note that the actual entry to be inserted into
+      <xref linkend="guc-pool-passwd"> should have "md5" on top of the
+      result string. That is: "md54d45974e13472b5a0be3533de4666414".
     </para>
  </refsect1>
 </refentry>
