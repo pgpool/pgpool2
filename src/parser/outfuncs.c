@@ -255,7 +255,8 @@ escape_string(char *str)
 		}
 		else if (str[i] == '\\')
 		{
-			es[j++] = '\\';
+			if (!standard_conforming_strings)
+				es[j++] = '\\';
 		}
 		es[j] = str[i];
 	}
