@@ -187,9 +187,18 @@ connection_do_auth(POOL_CONNECTION_POOL_SLOT * cp, char *password)
 
 		buf = palloc0(2 * (MD5_PASSWD_LEN + 4));	/* hash + "md5" + '\0' */
 
-		/* build md5 password */
+		/* set buffer address for building md5 password */
 		buf1 = buf + MD5_PASSWD_LEN + 4;
-		pool_md5_encrypt(password, cp->sp->user, strlen(cp->sp->user), buf1);
+
+		/*
+		 * If the supplied password is already in md5 hash format, we just
+		 * copy it. Otherwise calculate the md5 hash value.
+		 */
+		if (!strncmp("md5", password, 3) && (strlen(password) - 3) == MD5_PASSWD_LEN)
+			memcpy(buf1, password + 3, MD5_PASSWD_LEN + 1);
+		else
+			pool_md5_encrypt(password, cp->sp->user, strlen(cp->sp->user), buf1);
+
 		pool_md5_encrypt(buf1, salt, 4, buf + 3);
 		memcpy(buf, "md5", 3);
 

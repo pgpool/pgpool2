@@ -85,31 +85,64 @@
             will first try to get the password for <xref linkend="guc-sr-check-user"> from
             <xref linkend="guc-pool-passwd"> file before using the empty password.
         </para>
-        <para>
-            You can also specify AES256-CBC encrypted password in <varname>sr_check_password</varname> field.
-            To specify the <literal>AES</literal> encrypted password, password string must be prefixed with
-            <literal>AES</literal> after encrypting (using <literal>aes-256-cbc</literal> algorithm) and
-            encoding to <literal>base64</literal>.
-        </para>
-        <para>
-            To specify the unencrypted clear text password, prefix the password string with
-            <literal>TEXT</literal>. For example if you want to set <literal>mypass</literal> as
-            a password, you should specify <literal>TEXTmypass</literal> in the password field.
-            In the absence of a valid prefix, <productname>Pgpool-II</productname> will considered
-            the string as a plain text password.
-        </para>
-        <para>
-            You can also use <xref linkend="PG-ENC"> utility to create the correctly formatted
-            <literal>AES</literal> encrypted password strings.
-            <note>
-                <para>
+
+	<para>
+	  <productname>Pgpool-II</productname> accepts following forms
+	  of password in either <varname>sr_check_password</varname>
+	  or <xref linkend="guc-pool-passwd"> file:
+          <variablelist>
+
+	    <varlistentry>
+	      <term>AES256-CBC encrypted password</term>
+	      <listitem>
+		<para>
+		  Most secure and recommended way to store password. The
+		  password string must be prefixed
+		  with <literal>AES</literal>.
+		  You can use <xref linkend="PG-ENC"> utility to create the correctly formatted
+		    <literal>AES</literal> encrypted password strings.
                     <productname>Pgpool-II</productname> will require a valid decryption key at the
                     startup to use the encrypted passwords.
                     see <xref linkend="auth-aes-decryption-key"> for more details on providing the
-                    decryption key to <productname>Pgpool-II</productname>
-                </para>
-            </note>
-        </para>
+                      decryption key to <productname>Pgpool-II</productname>
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term>MD5 hashed password</term>
+	      <listitem>
+		<para>
+		  Not so secure as AES256, but still better than clear
+		  text password. The password string must be prefixed
+		  with <literal>MD5</literal>. Note that the backend
+		  must set up MD5 authentication as well.  You can
+		  use <xref linkend="PG-MD5"> utility to create the
+		    correctly formatted
+		    <literal>MD5</literal> hashed password strings.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term>Plain text password</term>
+	      <listitem>
+		<para>
+		  Not encrypted, clear text password. You should avoid
+		  to use this if possible. The password string must be
+		  prefixed with <literal>TEXT</literal>. For example if
+		  you want to set <literal>mypass</literal> as a
+		  password, you should
+		  specify <literal>TEXTmypass</literal> in the password
+		  field.  In the absence of a valid
+		  prefix, <productname>Pgpool-II</productname> will
+		  considered the string as a plain text password.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	  </variablelist>
+	</para>
 
         <para>
           This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
