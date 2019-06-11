@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -935,21 +935,24 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
  */
 static void terminate_all_childrens()
 {
-    pid_t wpid;
-    /*
-     * This is supposed to be called from main process
-     */
-	if(processType != PT_MAIN)
+	pid_t		wpid;
+	int			i;
+
+	/*
+	 * This is supposed to be called from main process
+	 */
+	if (processType != PT_MAIN)
 		return;
 	POOL_SETMASK(&BlockSig);
 
-    kill_all_children(SIGINT);
-    if(pcp_pid > 0)
-        kill(pcp_pid, SIGINT);
-    pcp_pid = 0;
-    if(worker_pid > 0)
-        kill(worker_pid, SIGINT);
-    worker_pid = 0;
+	kill_all_children(SIGINT);
+	if (pcp_pid != 0)
+		kill(pcp_pid, SIGINT);
+	pcp_pid = 0;
+	if (worker_pid != 0)
+		kill(worker_pid, SIGINT);
+	worker_pid = 0;
+
 	if (pool_config->use_watchdog)
 	{
 		if (pool_config->use_watchdog)
@@ -964,10 +967,19 @@ static void terminate_all_childrens()
 		}
 	}
 
-    /* wait for all children to exit */
-    do
-    {
-		int ret_pid;
+	for (i = 0 ; i < MAX_NUM_BACKENDS; i++)
+	{
+		if (health_check_pids[i] != 0)
+		{
+			kill(health_check_pids[i], SIGINT);
+			health_check_pids[i] = 0;
+		}
+	}
+
+	/* wait for all children to exit */
+	do
+	{
+		int			ret_pid;
 
         wpid = waitpid(-1, &ret_pid, 0);
     } while (wpid > 0 || (wpid == -1 && errno == EINTR));
@@ -1341,8 +1353,9 @@ static RETSIGTYPE exit_handler(int sig)
 
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
-		pid_t pid = process_info[i].pid;
-		if (pid)
+		pid_t		pid = process_info[i].pid;
+
+		if (pid != 0)
 		{
 			kill(pid, sig);
 			process_info[i].pid = 0;
@@ -1351,27 +1364,28 @@ static RETSIGTYPE exit_handler(int sig)
 
 	for (i = 0; i < MAX_NUM_BACKENDS; i++)
 	{
-		if (health_check_pids[i] > 0)
+		if (health_check_pids[i] != 0)
 		{
 			kill(health_check_pids[i], sig);
+			health_check_pids[i] = 0;
 		}
 	}
 
-    if (pcp_pid > 0)
-        kill(pcp_pid, sig);
-    pcp_pid = 0;
+	if (pcp_pid != 0)
+		kill(pcp_pid, sig);
+	pcp_pid = 0;
 
-    if (worker_pid > 0)
-        kill(worker_pid, sig);
-    worker_pid = 0;
+	if (worker_pid != 0)
+		kill(worker_pid, sig);
+	worker_pid = 0;
 
 	if (pool_config->use_watchdog)
 	{
-		if (watchdog_pid)
+		if (watchdog_pid != 0)
 			kill(watchdog_pid, sig);
 		watchdog_pid = 0;
 
-		if (wd_lifecheck_pid)
+		if (wd_lifecheck_pid != 0)
 			kill(wd_lifecheck_pid, sig);
 		wd_lifecheck_pid = 0;
 	}
