@@ -284,13 +284,13 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
       <title>Shared Relation Cache</title>
       <para>
 	The relation cache basically lives in process private memory,
-	which is bound to a session. So even if a relation cache is
-	created to for a table, in different session the relation
+	which is bound to a process. So even if a relation cache is
+	created to for a table, in different process the relation
 	cache might not be created yet. After all, until a relation
 	cache entry is created in all process, queries continue to
 	sent to <productname>PostgreSQL</productname>.
 	<productname>Pgpool-II</productname> 4.1 overcomes the issue
-	by creating relation cahce in shared memory. If a session
+	by creating relation cachce in shared memory. If a session
 	creates a relation cache entry in the shared memory, other
 	sessions will get the cache result by looking at the shared
 	relation
