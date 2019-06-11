@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1001,6 +1001,7 @@ static void
 terminate_all_childrens()
 {
 	pid_t		wpid;
+	int			i;
 
 	/*
 	 * This is supposed to be called from main process
@@ -1010,10 +1011,10 @@ terminate_all_childrens()
 	POOL_SETMASK(&BlockSig);
 
 	kill_all_children(SIGINT);
-	if (pcp_pid > 0)
+	if (pcp_pid != 0)
 		kill(pcp_pid, SIGINT);
 	pcp_pid = 0;
-	if (worker_pid > 0)
+	if (worker_pid != 0)
 		kill(worker_pid, SIGINT);
 	worker_pid = 0;
 	if (pool_config->use_watchdog)
@@ -1027,6 +1028,15 @@ terminate_all_childrens()
 			if (wd_lifecheck_pid)
 				kill(wd_lifecheck_pid, SIGINT);
 			wd_lifecheck_pid = 0;
+		}
+	}
+
+	for (i = 0 ; i < MAX_NUM_BACKENDS; i++)
+	{
+		if (health_check_pids[i] != 0)
+		{
+			kill(health_check_pids[i], SIGINT);
+			health_check_pids[i] = 0;
 		}
 	}
 
@@ -1423,7 +1433,7 @@ static RETSIGTYPE exit_handler(int sig)
 	{
 		pid_t		pid = process_info[i].pid;
 
-		if (pid)
+		if (pid != 0)
 		{
 			kill(pid, sig);
 			process_info[i].pid = 0;
@@ -1432,27 +1442,28 @@ static RETSIGTYPE exit_handler(int sig)
 
 	for (i = 0; i < MAX_NUM_BACKENDS; i++)
 	{
-		if (health_check_pids[i] > 0)
+		if (health_check_pids[i] != 0)
 		{
 			kill(health_check_pids[i], sig);
+			health_check_pids[i] = 0;
 		}
 	}
 
-	if (pcp_pid > 0)
+	if (pcp_pid != 0)
 		kill(pcp_pid, sig);
 	pcp_pid = 0;
 
-	if (worker_pid > 0)
+	if (worker_pid != 0)
 		kill(worker_pid, sig);
 	worker_pid = 0;
 
 	if (pool_config->use_watchdog)
 	{
-		if (watchdog_pid)
+		if (watchdog_pid != 0)
 			kill(watchdog_pid, sig);
 		watchdog_pid = 0;
 
-		if (wd_lifecheck_pid)
+		if (wd_lifecheck_pid != 0)
 			kill(wd_lifecheck_pid, sig);
 		wd_lifecheck_pid = 0;
 	}
