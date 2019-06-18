@@ -125,6 +125,12 @@ ssl_prefer_server_ciphers = off
                                    # Use server's SSL cipher preferences,
                                    # rather than the client's
                                    # (change requires restart)
+ssl_ecdh_curve = 'prime256v1'
+                                   # Name of the curve to use in ECDH key exchange
+ssl_dh_params_file = ''
+                                   # Name of the file containing Diffie-Hellman parameters used
+                                   # for so-called ephemeral DH family of SSL cipher.
+
 #------------------------------------------------------------------------------
 # POOLS
 #------------------------------------------------------------------------------

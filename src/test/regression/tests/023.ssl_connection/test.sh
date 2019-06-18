@@ -33,6 +33,8 @@ dir=`pwd`
 echo "ssl = on" >> etc/pgpool.conf
 echo "ssl_key = '$dir/etc/$SSL_KEY'" >> etc/pgpool.conf
 echo "ssl_cert = '$dir/etc/$SSL_CRT'" >> etc/pgpool.conf
+echo "ssl_prefer_server_ciphers = on" >> etc/pgpool.conf
+echo "ssl_ciphers = 'EECDH:HIGH:MEDIUM:+3DES:!aNULL'" >> etc/pgpool.conf
 
 echo "ssl = on" >> data0/postgresql.conf
 echo "ssl_cert_file = '$SSL_CRT'" >> data0/postgresql.conf
@@ -70,6 +72,19 @@ if [ $? != 0 ];then
 fi
 
 echo "Checking SSL connection between frontend and Pgpool-II was ok."
+
+$PSQL -h localhost test <<EOF | grep SSL | grep ECDH
+\conninfo
+\q
+EOF
+
+if [ $? != 0 ];then
+    echo "Checking SSL connection with ECDH between frontend and Pgpool-II failed."
+    ./shutdownall
+    exit 1
+fi
+
+echo "Checking SSL connection with ECDH between frontend and Pgpool-II was ok."
 
 grep "client->server SSL response: S" log/pgpool.log >/dev/null
 if [ $? != 0 ];then

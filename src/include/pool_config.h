@@ -335,6 +335,8 @@ typedef struct
 									 * certificates */
 	char	   *ssl_ciphers;	/* allowed ssl ciphers */
 	bool		ssl_prefer_server_ciphers; /*Use SSL cipher preferences, rather than the client's*/
+	char	   *ssl_ecdh_curve; /* the curve to use in ECDH key exchange */
+	char	   *ssl_dh_params_file; /* path to the Diffie-Hellman parameters contained file */
 	int64		relcache_expire;	/* relation cache life time in seconds */
 	int			relcache_size;	/* number of relation cache life entry */
 	bool		check_temp_table;	/* enable temporary table check */

@@ -267,6 +267,8 @@ AC_FUNC_WAIT3
 AC_FUNC_ACCEPT_ARGTYPES
 AC_CHECK_FUNCS(setsid select socket sigprocmask strdup strerror strftime strtok asprintf vasprintf gai_strerror hstrerror pstat setproctitle vsyslog)
 
+PGAC_C_TYPES_COMPATIBLE
+
 dnl Checks for pg_config command.
 AC_CHECK_PROGS(PGCONFIG, pg_config)
 

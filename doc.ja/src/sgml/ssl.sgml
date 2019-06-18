@@ -261,6 +261,81 @@ SSLサポートを有効にするためには、<productname>Pgpool-II</productn
       </listitem>
     </varlistentry>
 
+    <varlistentry id="guc-ssl-ecdh-curve" xreflabel="ssl_ecdh_curve">
+      <term><varname>ssl_ecdh_curve</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>ssl_ecdh_curve</varname>設定パラメータ</primary>
+        </indexterm>
+    </term>
+    <listitem>
+      <para>
+<!--
+        Specifies the name of the curve to use in <acronym>ECDH</acronym> key
+        exchange. It needs to be supported by all clients that connect.
+        It does not need to be the same curve used by the server's Elliptic
+        Curve key. The default value is <literal>prime256v1</literal>.
+-->
+<acronym>ECDH</acronym>キー交換で使われる曲線の名前を指定します。
+接続する全てのクライアントがこの設定をサポートしている必要があります。
+サーバの楕円曲線キーで使用されるのと同じ曲線である必要はありません。
+クライアントではなく、サーバ指定の<acronym>SSL</acronym>暗号を選択します。
+デフォルト値は<literal>prime256v1</literal>です。
+      </para>
+      <para>
+<!--
+        OpenSSL names for the most common curves are:
+-->
+OpenSSLはよく使われる曲線に名前を付けています。
+        <literal>prime256v1</literal> (NIST P-256),
+        <literal>secp384r1</literal> (NIST P-384),
+        <literal>secp521r1</literal> (NIST P-521)。
+<!--
+        The full list of available curves can be shown with the command
+        <command>openssl ecparam -list_curves</command>. Not all of them
+        are usable in <acronym>TLS</acronym> though.
+-->
+利用できる曲線の完全なリストは<command>openssl ecparam -list_curves</command>で得られます。
+ただし、<acronym>TLS</acronym>ではこのすべてが利用できるわけではありません。
+      </para>
+      <para>
+<!--
+        This parameter can only be set at server start.
+-->
+このパラメータはサーバ起動時にのみ設定可能です。
+      </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry id="guc-ssl-dh-params-file" xreflabel="ssl_dh_params_file">
+      <term><varname>ssl_dh_params_file</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>ssl_dh_params_file</varname>設定パラメータ</primary>
+        </indexterm>
+    </term>
+    <listitem>
+      <para>
+<!--
+        Specifies the name of the file containing Diffie-Hellman parameters
+        used for so-called ephemeral DH family of SSl ciphers. The default is
+        empty. In which case compiled-in default DH parameters used. Using
+        Custom DH parameters reduces the exposure if an attacker manages to
+        crack the well-known compiled-in DH parameters. You can create your own
+        DH parameters file with the command <command>openssl -out dhparams.pem 2048</command>.
+-->
+いわゆる短命DH系SSL暗号で使用するディフィー・ヘルマンパラメータを格納するファイル名を指定します。
+デフォルトは空で、この場合はコンパイル時に決められたデフォルトのDHパラメータが使用されます。
+攻撃者が、よく知られたコンパイル時設定のDHパラメータを解読しようとしている場合には、カスタムDHパラメータを使うことでその危険性を低減できます。
+<command>openssl dhparam -out dhparams.pem 2048</command>を使って、独自のDHパラメータファイルを作ることができます。
+      </para>
+      <para>
+<!--
+        This parameter can only be set at server start.
+-->
+このパラメータはサーバ起動時にのみ設定可能です。
+      </para>
+      </listitem>
+    </varlistentry>
+
   </variablelist>
  </sect2>
 

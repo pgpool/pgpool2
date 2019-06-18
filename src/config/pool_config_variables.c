@@ -1025,6 +1025,26 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"ssl_ecdh_curve", CFGCXT_INIT, SSL_CONFIG,
+			"The curve to use in ECDH key exchange.",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.ssl_ecdh_curve,
+		"prime256v1",
+		NULL, NULL, NULL, NULL
+	},
+
+	{
+		{"ssl_dh_params_file", CFGCXT_INIT, SSL_CONFIG,
+			"Path to the Diffie-Hellman parameters contained file",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.ssl_dh_params_file,
+		"",
+		NULL, NULL, NULL, NULL
+	},
+
+	{
 		{"memqcache_oiddir", CFGCXT_INIT, CACHE_CONFIG,
 			"Tempory directory to record table oids.",
 			CONFIG_VAR_TYPE_STRING, false, 0
