@@ -367,7 +367,7 @@ $ for port in 5432 5433 5434; do
       <title>Watchdog Configuration Example</title>
 
       <para>
-	This tutrial explains the simple way to try "Watchdog".
+	This tutorial explains the simple way to try "Watchdog".
 	What you need is 2 Linux boxes on which <productname>
 	  Pgpool-II</productname> is installed and a <productname>PostgreSQL</productname>
 	on the same machine or in the other one. It is enough
@@ -1548,7 +1548,7 @@ postgres=> show pool_nodes;
       <title>AWS Configuration Example</title>
 
       <para>
-	This tutrial explains the simple way to try "Watchdog"
+	This tutorial explains the simple way to try "Watchdog"
 	on <ulink url="https://aws.amazon.com/">AWS</ulink> and using
 	the <ulink url="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html">
 	  Elastic IP Address</ulink> as the Virtual IP for the high availability solution.
