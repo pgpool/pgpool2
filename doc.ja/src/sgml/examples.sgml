@@ -562,7 +562,7 @@ $ for port in 5432 5433 5434; do
 
     <para>
 <!--
-      This tutrial explains the simple way to try "Watchdog".
+      This tutorial explains the simple way to try "Watchdog".
       What you need is 2 Linux boxes on which <productname>
       Pgpool-II</productname> is installed and a <productname>PostgreSQL</>
       on the same machine or in the other one. It is enough
@@ -1605,10 +1605,11 @@ EOT
         if [[ $? -ne 0 ]]; then
             logger -i -p local1.error follow_master.sh: end: pcp_attach_node failed
             exit 1
-        else
-            logger -i -p local1.error follow_master.sh: end: follow master failed
-            exit 1
         fi
+    else
+        logger -i -p local1.error follow_master.sh: end: follow master failed
+        exit 1
+    fi
 
 else
     logger -i -p local1.info follow_master.sh: failed_nod_id=${FAILED_NODE_ID} is not running. skipping follow master command.
@@ -2322,7 +2323,7 @@ pcp_recovery_node -- Command Successful
 
     <para>
 <!--
-      This tutrial explains the simple way to try "Watchdog"
+      This tutorial explains the simple way to try "Watchdog"
       on <ulink url="https://aws.amazon.com/">AWS</ulink> and using
       the <ulink url="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html">
       Elastic IP Address</ulink> as the Virtual IP for the high availability solution.
