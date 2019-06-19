@@ -63,7 +63,7 @@
 	In the replication mode or master/slave mode, trust, clear
         text password, and pam methods are supported. md5 in also
         supported since <productname>Pgpool-II</productname> 3.0.  md5
-        is supported by using a authencitaion file <filename>pool_passwd</filename>.
+        is supported by using an authencitaion file <filename>pool_passwd</filename>.
         <filename>pool_passwd</filename> is default name of the
         authentication file. Here are the
         steps to enable md5 authentication:
