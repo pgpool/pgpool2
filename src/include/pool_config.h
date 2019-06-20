@@ -93,6 +93,12 @@ typedef enum DLBOW_OPTION
 	DLBOW_ALWAYS
 }			DLBOW_OPTION;
 
+typedef enum RELQTARGET_OPTION
+{
+	RELQTARGET_MASTER = 1,
+	RELQTARGET_LOAD_BALANCE_NODE
+}			RELQTARGET_OPTION;
+
 /*
  * Flags for backendN_flag
  */
@@ -342,6 +348,7 @@ typedef struct
 	bool		check_temp_table;	/* enable temporary table check */
 	bool		check_unlogged_table;	/* enable unlogged table check */
 	bool		enable_shared_relcache;	/* If true, relation cache stored in memory cache */
+	RELQTARGET_OPTION	relcache_query_target;	/* target node to send relcache queries */
 
 	/*
 	 * followings are for regex support and do not exist in the configuration

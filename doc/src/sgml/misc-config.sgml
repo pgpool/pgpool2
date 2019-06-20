@@ -100,6 +100,45 @@
       </listitem>
     </varlistentry>
 
+    <varlistentry id="guc-relcache-query-target" xreflabel="relcache_query_target">
+      <term><varname>relcache_query_target</varname> (<type>string</type>)
+        <indexterm>
+          <primary><varname>relache_query_target</varname> configuration parameter</primary>
+        </indexterm>
+      </term>
+      <listitem>
+        <para>
+	  The target node to send queries to create relation cache
+          entries. If set to 'master', queries will be sent to master
+          (primary) node. This is the default and recommended to most
+          users because the query could get the latest information.
+          If you want to lower the load of master (primary) node, you
+          can set the parameter to 'load_balance_node', which will
+          send queries to the load balance node. This is especially
+          useful for such a system
+          where <productname>Pgpool-II</productname>/primary server is
+          on a continent A while
+          other <productname>Pgpool-II</productname>/standby server is
+          on other continent B. Clients on B want read data from the
+          standby because it's much geographically closer. In this
+          case you can set backend_weight0 (this represents primary)
+          to 0, backend_weight1 to 1 (this represents standby) and set
+          relache_query_target to 'load_balance_node'.
+	</para>
+	<para>
+	  Note, however, if you send query to the standby node,
+	  recently created tables and rows might not be available on
+	  the standby server yet because of replication delay. Thus
+	  such a configuration is not recommended for systems where
+	  data modification activity is high.
+	</para>
+        <para>
+          This parameter can be changed by reloading
+          the <productname>Pgpool-II</> configurations.
+        </para>
+      </listitem>
+    </varlistentry>
+
     <varlistentry id="guc-check-temp-table" xreflabel="check_temp_table">
       <term><varname>check_temp_table</varname> (<type>boolean</type>)
         <indexterm>

@@ -118,13 +118,39 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	int			query_cache_not_found = 1;
 	char		*query_cache_data = NULL;
 	size_t		query_cache_len;
+	POOL_SESSION_CONTEXT *session_context;
+	int			node_id;
+
+	session_context = pool_get_session_context(false);
 
 	local_session_id = pool_get_local_session_id();
 	if (local_session_id < 0)
 		return NULL;
 
-	/* Obtain database name */
-	dbname = MASTER_CONNECTION(backend)->sp->database;
+	/*
+	 * Obtain database name and node id to be sent query.  If
+	 * relcache_query_target is RELQTARGET_LOADL_BALANCE_NODE, we consider
+	 * load balance node id to be used to send queries.
+	 * 
+	 * Note that we need to use VALID_BACKEND_RAW, rather than VALID_BACKEND
+	 * since pool_is_node_to_be_sent_in_current_query(being called by
+	 * VALID_BACKEND) assumes that if query context exists, where_to_send map
+	 * is already setup but it's not always the case because
+	 * pool_search_relcache is mostly called *before* the where_to_send map is
+	 * established.
+	 */
+	if (pool_config->relcache_query_target == RELQTARGET_LOAD_BALANCE_NODE &&
+		session_context && VALID_BACKEND_RAW(session_context->load_balance_node_id) &&
+		backend->slots[session_context->load_balance_node_id])
+	{
+		dbname = backend->slots[session_context->load_balance_node_id]->sp->database;
+		node_id = session_context->load_balance_node_id;
+	}
+	else
+	{
+		dbname = MASTER_CONNECTION(backend)->sp->database;
+		node_id = MASTER_NODE_ID;
+	}
 
 	now = time(NULL);
 
@@ -171,7 +197,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	/* Not in cache. Check the system catalog */
 	snprintf(query, sizeof(query), relcache->sql, table);
 
-	per_node_statement_log(backend, MASTER_NODE_ID, query);
+	per_node_statement_log(backend, node_id, query);
 
 	/*
 	 * Register a error context callback to throw proper context message
@@ -213,7 +239,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 				(errmsg("not hit local relation cache and query cache"),
 				errdetail("query:%s", query)));
 
-		do_query(MASTER(backend), query, &res, MAJOR(backend));
+		do_query(CONNECTION(backend, node_id), query, &res, MAJOR(backend));
 		/* Register cache */
 		result = (*relcache->register_func) (res);
 		/* save local catalog cache in query cache */

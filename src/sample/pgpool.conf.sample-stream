@@ -763,6 +763,8 @@ enable_shared_relcache = off
                                    # Default is off.
                                    # (change requires restart)
 
+relcache_query_target = 'master'   # Target node to send relcache queries. Default is master (primary) node.
+		      		   # If 'load_balance_node' is specified, queries will be sent to load balance node.
 #------------------------------------------------------------------------------
 # IN MEMORY QUERY MEMORY CACHE
 #------------------------------------------------------------------------------

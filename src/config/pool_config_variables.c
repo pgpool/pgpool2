@@ -1,3 +1,26 @@
+/* -*-pgsql-c-*- */
+/*
+ *
+ * pgpool: a language independent connection pool server for PostgreSQL
+ * written by Tatsuo Ishii
+ *
+ * Copyright (c) 2003-2019	PgPool Global Development Group
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby
+ * granted, provided that the above copyright notice appear in all
+ * copies and that both that copyright notice and this permission
+ * notice appear in supporting documentation, and that the name of the
+ * author not be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission. The author makes no representations about the
+ * suitability of this software for any purpose.  It is provided "as
+ * is" without express or implied warranty.
+ *
+ * pool_config_variables.c.
+ *
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -227,6 +250,12 @@ static const struct config_enum_entry disable_load_balance_on_write_options[] = 
 	{"transaction", DLBOW_TRANSACTION, false},
 	{"trans_transaction", DLBOW_TRANS_TRANSACTION, false},
 	{"always", DLBOW_ALWAYS, false},
+	{NULL, 0, false}
+};
+
+static const struct config_enum_entry relcache_query_target_options[] = {
+	{"master", RELQTARGET_MASTER, false},
+	{"load_balance_node", RELQTARGET_LOAD_BALANCE_NODE, false},
 	{NULL, 0, false}
 };
 
@@ -1971,6 +2000,17 @@ static struct config_enum ConfigureNamesEnum[] =
 		(int *) &g_pool_config.disable_load_balance_on_write,
 		DLBOW_TRANSACTION,
 		disable_load_balance_on_write_options,
+		NULL, NULL, NULL, NULL
+	},
+
+	{
+		{"relcache_query_target", CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
+			"Target node to send relache queries.",
+			CONFIG_VAR_TYPE_ENUM, false, 0
+		},
+		(int *) &g_pool_config.relcache_query_target,
+		RELQTARGET_MASTER,
+		relcache_query_target_options,
 		NULL, NULL, NULL, NULL
 	},
 

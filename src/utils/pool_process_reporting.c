@@ -704,6 +704,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "If true, relation cache stored in memory cache", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "relcache_query_target", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->relcache_query_target);
+	StrNCpy(status[i].desc, "Target node to send relcache queries", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/*
 	 * add for watchdog
 	 */
