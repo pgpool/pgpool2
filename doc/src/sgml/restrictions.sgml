@@ -4,7 +4,7 @@
  <title>Restrictions</title>
 
  <para>
-  This section descibes current restrictions of <productname>Pgpool-II</productname>.
+  This section describes current restrictions of <productname>Pgpool-II</productname>.
 
   <variablelist>
 
@@ -46,7 +46,7 @@
 	In the replication mode or master/slave mode, trust, clear
         text password, and pam methods are supported. md5 in also
         supported since <productname>Pgpool-II</productname> 3.0.  md5
-        is supported by using an authencitaion file <filename>pool_passwd</filename>.
+        is supported by using an authentication file <filename>pool_passwd</filename>.
         <filename>pool_passwd</filename> is default name of the
         authentication file. Here are the
         steps to enable md5 authentication:
@@ -255,7 +255,7 @@ INSERT INTO rel1(c1) SELECT 1
     <term>Multi-byte Characters</term>
     <listitem>
       <para>
-	<productname>Pgpool-II</productname> does not perform encoding converion between client and
+	<productname>Pgpool-II</productname> does not perform encoding conversion between client and
 	<productname>PostgreSQL</productname> for multi-byte characters.
 	The encoding for the client and backends must be the same.
       </para>
