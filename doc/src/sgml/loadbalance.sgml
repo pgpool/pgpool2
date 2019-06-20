@@ -8,7 +8,7 @@
     works with Master Slave mode (<xref linkend="runtime-config-master-slave-mode">)
     and Replication mode (<xref linkend="runtime-config-replication-mode">). When enabled
     <productname>Pgpool-II</productname> sends the writing queries to the
-    <acronym>primay node</acronym> in Master Slave mode, all of the
+    <acronym>primary node</acronym> in Master Slave mode, all of the
     backend nodes in Replication mode, and other queries get load
     balanced among all backend nodes.  To which node the load
     balancing mechanism sends read queries is decided at the session
@@ -144,7 +144,7 @@
 /*REPLICATION*/ SELECT ...
    </programlisting>
    <para>
-   If you want to use comments without supressing load balancing, you can set
+   If you want to use comments without suppressing load balancing, you can set
    <xref linkend="guc-allow-sql-comments"> to on.
    Please refer to <xref linkend="guc-replicate-select"> as well.
    </para>
@@ -492,7 +492,7 @@
           <emphasis>DO NOT</emphasis> update the database. SELECTs including
           functions <emphasis>not specified </emphasis> in this list are not load balanced.
           These are replicated among all the DB nodes in Replication mode,
-          sent to the primary node only in Maste Slave mode.
+          sent to the primary node only in Master Slave mode.
         </para>
         <para>
           You can use regular expression to match function names,
@@ -515,7 +515,7 @@ white_function_list = 'get_.*,select_.*'
           <para>
             Schema qualifications can not be used
 	    in <xref linkend="guc-white-function-list">
-	    because <productname>Pgpool-II</productname> slilently
+	    because <productname>Pgpool-II</productname> silently
 	    ignores a schema qualification in function names appearing
 	    in an input SQL while comparing the list and the input
 	    SQL. As a result, a schema qualified function name in the
@@ -543,7 +543,7 @@ white_function_list = 'get_.*,select_.*'
           SELECTs including functions <emphasis>specified</emphasis> in this list are
           not load balanced.
           These are replicated among all the DB nodes in Replication mode,
-          sent to the primary node only in Maste Slave mode.
+          sent to the primary node only in Master Slave mode.
         </para>
         <para>
           You can use regular expression to match function names,
@@ -566,7 +566,7 @@ black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
           <para>
             Schema qualifications can not be used
 	    in <xref linkend="guc-black-function-list">
-	    because <productname>Pgpool-II</productname> slilently
+	    because <productname>Pgpool-II</productname> silently
 	    ignores a schema qualification in function names appearing
 	    in an input SQL while comparing the list and the input
 	    SQL. As a result, a schema qualified function name in the
@@ -626,7 +626,7 @@ black_function_list = 'nextval,setval,lastval,currval'
           should be sent to primary node.
           SQL that matched patterns specified in this list are
           not load balanced.
-          Only Maste Slave mode is supported.
+          Only Master Slave mode is supported.
         </para>
         <para>
           You can use regular expression to match SQL patterns,

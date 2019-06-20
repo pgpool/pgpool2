@@ -70,7 +70,7 @@
       (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=487">bug 487</>) (Bo Peng)
      </para>
      <para>
-      When all backend nodes are down, <productname>Pgpool-II</> throws an uncorrect
+      When all backend nodes are down, <productname>Pgpool-II</> throws an incorrect
       error message "ERROR: connection cache is full". Change the error
       message to "all backend nodes are down, pgpool requires at least one valid node".
      </para>
@@ -513,7 +513,7 @@
     </para>
     <para>
      If order of startup packet's  parameters differ between cached connection
-     pools and connection request, did't use connection pool ,and created new
+     pools and connection request, didn't use connection pool and created new
      connection pool.
     </para>
    </listitem>
@@ -1004,7 +1004,7 @@ username3:TEXTmypassword
         <para>
           Specify a semicolon separated list of SQL patterns that
           should be sent to primary node only. Regular expression can be 
-          used in SQL patterns. Only Maste Slave mode is supported.
+          used in SQL patterns. Only Master Slave mode is supported.
         </para>
       </listitem>
 
@@ -1218,7 +1218,7 @@ username3:TEXTmypassword
         <para>
           pgpool_setup -n 3 (or greater) triggers the bug. While recovering node
           2, pgpool main process tried to retrieve version info from backend #2
-          even if it's not running. This causes the sefault because connection
+          even if it's not running. This causes the segfault because connection
           was not established yet. The reason why <productname>PostgreSQL 9.6</productname>
           or later was not suffered from the bug was, <productname>PostgreSQL</productname>
           exited the loop as soon as the server version is higher than 9.5. To fix this, 

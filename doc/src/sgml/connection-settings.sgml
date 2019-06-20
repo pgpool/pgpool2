@@ -1001,7 +1001,7 @@
 	<listitem>
 	  <para>
 	    <varname>backend_weight</varname> specifies the load balance
-	    ratio of the backends. It may be set to any interger or
+	    ratio of the backends. It may be set to any integer or
 	    floating point value greater than or equal to zero.
 	    Multiple backends can be specified by
 	    adding a number at the end of the parameter name
@@ -1013,7 +1013,7 @@
 	    reloading a configuration file. However, this will take
 	    effect only for new established client sessions.
 	    <productname>Pgpool-II</productname> <emphasis>V2.2.6</emphasis>, <emphasis>V2.3</emphasis>
-	    or later allows alllow updating the values by reloading a
+	    or later allows updating the values by reloading a
 	    configuration file.  This is useful if you want to prevent
 	    any query sent to slaves to perform some administrative
 	    work in master/slave mode.
@@ -1094,7 +1094,7 @@
 		</row>
 		<row>
 		  <entry><literal>DISALLOW_TO_FAILOVER</literal></entry>
-		  <entry>Disllow to failover or detaching backend
+		  <entry>Disallow to failover or detaching backend
 		    This is useful when you protect backend by
 		    using HA (High Availability) softwares such as
 		    <productname>Heartbeat</productname>

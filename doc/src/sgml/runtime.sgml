@@ -164,7 +164,7 @@ password: <userinput>your_password</userinput>
       responsible for synchronizing tables. Load balancing is possible
       in the mode. Since logical replication does not replicate all
       tables, it's user's responsibility to replicate the table which
-      could be load balanced. <productname>Pgpool-II</> load balaces
+      could be load balanced. <productname>Pgpool-II</> load balances
       all tables. This means that if a table is not
       replicated, <productname>Pgpool-II</> may lookup outdated tables
       in the subscriber side. The sample configuration file
@@ -203,7 +203,7 @@ password: <userinput>your_password</userinput>
       session Y commits data on node B. If session X tries to update
       data on node B based on the data seen on node A, then data
       consistency between node A and B might be lost. To avoid the
-      problem, user need to issue an explict lock on the data. This is
+      problem, user need to issue an explicit lock on the data. This is
       another reason why we recommend to use streaming replication
       mode with <literal>synchronous_commit = remote_apply</literal>.
     </para>
@@ -216,10 +216,8 @@ password: <userinput>your_password</userinput>
       In the <firstterm>raw
       mode</firstterm>, <productname>Pgpool-II</> does not care about
       the database synchronization. It's user's responsibility to make
-      the whole system does a meaningfull thing. Load balancing
-      is <emphasis>not</emphasis> possible in the mode. The sample
-      configuration
-      file <filename>$prefix/etc/pgpool.conf.sample</filename>.
+      the whole system does a meaningful thing. Load balancing
+      is <emphasis>not</emphasis> possible in the mode.
     </para>
   </sect2>
  </sect1>
@@ -232,7 +230,7 @@ password: <userinput>your_password</userinput>
     backend servers, you need to configure <varname>backend*</varname>
     in <filename>pgpool.conf</filename>.  For starters, at
     least <xref linkend="guc-backend-hostname">
-    and <xref linkend="guc-backend-port"> paramters are required to
+    and <xref linkend="guc-backend-port"> parameters are required to
     be set up to start <productname>Pgpool-II</> server.
   </para>
 
