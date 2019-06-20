@@ -932,7 +932,7 @@ To allow Pgpool-II to accept all incoming connections, we set <varname>listen_ad
 listen_addresses = '*'
         </programlisting>
         <para>
-Specifiy replication delay check user and password.
+Specify replication delay check user and password.
         </para>
         <programlisting>
 sr_check_user = 'pgpool'

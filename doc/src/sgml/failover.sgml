@@ -170,7 +170,7 @@
 
 	<note>
 	  <para>
-	    The "master node" referes to a node which has the
+	    The "master node" refers to a node which has the
 	    "youngest (or the smallest) node id" among live the
 	    database nodes. In <link linkend="running-mode">streaming
 	    replication mode</link>, this may be different from
@@ -333,7 +333,7 @@
           Specifies a user command to run after failover on the primary node failover.
 		  This works only in Master Replication mode with streaming replication.
           <productname>Pgpool-II</productname> replaces the following special characters
-          with the backend specific information before excuting the command.
+          with the backend specific information before executing the command.
         </para>
 
         <table id="follow-master-command-table">

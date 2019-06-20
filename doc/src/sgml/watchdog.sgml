@@ -87,7 +87,7 @@
           Specifies the authentication key used for all watchdog communications.
           All <productname>Pgpool-II</productname> must have the same key.
           Packets from watchdog having different key will get rejected.
-          This authentication is also applied to the heatrbeat singals
+          This authentication is also applied to the heartbeat signals
           when the <literal>heartbeat</> mode is used as a lifecheck method.
         </para>
         <para>
@@ -392,7 +392,7 @@
       <literal>'query'</literal> or <literal>'external'</literal>.
       </para>
       <para>
-       <literal>heartbeat</literal>: In this mode, watchdog sends the heartbeat singals (<acronym>UDP</acronym> packets)
+       <literal>heartbeat</literal>: In this mode, watchdog sends the heartbeat signals (<acronym>UDP</acronym> packets)
        periodically to other <productname>Pgpool-II</productname>. Similarly watchdog also receives the signals
        from other <productname>Pgpool-II</productname> .
        If there are no signal for a certain period, watchdog regards is as failure
@@ -600,7 +600,7 @@
    <para>
       Specifies the <acronym>IP</acronym> address or <acronym>hostname</acronym> of destination the remote
       <productname>Pgpool-II</productname> for sending the heartbeat signals.
-      Multiple destinations can be configured for the heartbeat singnals,
+      Multiple destinations can be configured for the heartbeat signals,
 	  the number at the end of the parameter name is
       referred as the "destination number", that starts from 0.
    </para>
@@ -624,7 +624,7 @@
    <para>
       Specifies the destination port number of the remote
       <productname>Pgpool-II</productname> for sending the heartbeat signals.
-      Multiple destinations can be configured for the heartbeat singnals,
+      Multiple destinations can be configured for the heartbeat signals,
 	  the number at the end of the parameter name is
       referred as the "destination number", that starts from 0.
    </para>

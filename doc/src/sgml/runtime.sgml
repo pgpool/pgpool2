@@ -150,63 +150,11 @@ password: <userinput>your_password</userinput>
     </para>
 
     <para>
-<<<<<<< HEAD
       The master slave mode mode can be used with <productname>PostgreSQL</> servers
       operating <productname>Slony</>. In this mode, <productname>Slony</>/<productname>PostgreSQL</> is responsible for
       synchronizing databases. Since <productname>Slony</> is being obsoletd by streaming
       replication, we do not recommend to use this mode unless you have
       specific reason to use <productname>Slony</>. Load balancing is possible in the
-=======
-      The <firstterm>logical replication mode</firstterm> can be used
-      with <productname>PostgreSQL</> servers operating logical
-      replication. In this mode, <productname>PostgreSQL</> is
-      responsible for synchronizing tables. Load balancing is possible
-      in the mode. Since logical replication does not replicate all
-      tables, it's user's responsibility to replicate the table which
-      could be load balanced. <productname>Pgpool-II</> load balaces
-      all tables. This means that if a table is not
-      replicated, <productname>Pgpool-II</> may lookup outdated tables
-      in the subscriber side. The sample configuration file
-      is <filename>$prefix/etc/pgpool.conf.sample-logical</filename>.
-    </para>
-
-    <para>
-      The <firstterm>master slave mode</firstterm> mode (slony mode)
-      can be used with <productname>PostgreSQL</> servers
-      operating <productname>Slony</>. In this
-      mode, <productname>Slony</>/<productname>PostgreSQL</> is
-      responsible for synchronizing
-      databases. Since <productname>Slony-I</> is being obsoleted by
-      streaming replication, we do not recommend to use this mode
-      unless you have specific reason to
-      use <productname>Slony</>. Load balancing is possible in the
-      mode. The sample configuration file
-      is <filename>$prefix/etc/pgpool.conf.sample-master-slave</filename>.
-    </para>
-
-    <para>
-      In the native replication mode, <productname>Pgpool-II</> is responsible for
-      synchronizing databases. The advantage for the mode is the
-      synchronization is done in synchronous way: writing to the
-      database does not return until all of <productname>PostgreSQL</>
-      servers finish the write operation. However, you could get a
-      similar effect using <productname>PostgreSQL</> 9.6 or later
-      with <literal>synchronous_commit = remote_apply</literal> being
-      set in streaming replication. If you could use the setting, we
-      strongly recommend to use it instead of native replication mode
-      because you can avoid some <xref linkend="restrictions"> in the
-      native replication mode.  Since <productname>PostgreSQL</> does
-      not provide cross node snapshot control, it is possible that
-      session X can see data on node A committed by session Y before
-      session Y commits data on node B. If session X tries to update
-      data on node B based on the data seen on node A, then data
-      consistency between node A and B might be lost. To avoid the
-      problem, user need to issue an explict lock on the data. This is
-      another reason why we recommend to use streaming replication
-      mode with <literal>synchronous_commit = remote_apply</literal>.
-    </para>
-    <para>
->>>>>>> 7c29a53... Fix document typo.
       Load balancing is possible in the mode. The sample configuration
       file <filename>$prefix/etc/pgpool.conf.sample-replication</filename>.
     </para>
@@ -230,7 +178,7 @@ password: <userinput>your_password</userinput>
     backend servers, you need to configure <varname>backend*</varname>
     in <filename>pgpool.conf</filename>.  For starters, at
     least <xref linkend="guc-backend-hostname">
-    and <xref linkend="guc-backend-port"> paramters are required to
+    and <xref linkend="guc-backend-port"> parameters are required to
     be set up to start <productname>Pgpool-II</> server.
   </para>
 
