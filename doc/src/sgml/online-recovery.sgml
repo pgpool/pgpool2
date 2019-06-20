@@ -14,7 +14,7 @@
     For online recovery, the recovery target node must be in detached
     state. This means the node must be either manually detached by
     <xref linkend="pcp-detach-node"> or automatically detached
-    by <productname>Pgpool-II</productname> as a consequnece of
+    by <productname>Pgpool-II</productname> as a consequence of
     failover.
   </para>
   <para>
@@ -64,8 +64,8 @@
     <xref linkend="example-cluster-pgpool-config-online-recovery">.
   </para>
   <para>
-    Connections from cliens are not allowd only in the second stage
-    while the data can be updated or retrieved during the first statge.
+    Connections from cliens are not allowed only in the second stage
+    while the data can be updated or retrieved during the first stage.
   </para>
   <para>
     <productname>Pgpool-II</productname> performs the follows steps in online recovery:
@@ -226,7 +226,7 @@
           database cluster directory for security reasons.
           For example, if <varname>recovery_1st_stage_command</varname> = <literal>
           'sync-command'</literal>, then <productname>Pgpool-II</productname> will
-          look for the command scrit in <literal>$PGDATA</literal> directory and will
+          look for the command script in <literal>$PGDATA</literal> directory and will
           try to execute <command>$PGDATA/sync-command</command>.
         </para>
         <para>
@@ -273,7 +273,7 @@
           <para>
             <varname>recovery_1st_stage command</varname> runs as a <acronym>SQL</acronym>
             command from PostgreSQL's point of view. So <varname>recovery_1st_stage command
-            </varname> can get prematuraly killed by PostgreSQL if the PostgreSQL's
+            </varname> can get prematurely killed by PostgreSQL if the PostgreSQL's
             <varname>statement_time_out</varname> is configured with the value that is
             smaller than the time <varname>recovery_1st_stage_command</varname> takes for
             completion.
@@ -359,7 +359,7 @@ rsync used in the command is killed by signal 2 for example.
           <para>
             <varname>recovery_2nd_stage command</varname> runs as a <acronym>SQL</acronym>
             command from PostgreSQL's point of view. Therefore, <varname>recovery_2nd_stage command
-            </varname> can get prematuraly killed by PostgreSQL if the PostgreSQL's
+            </varname> can get prematurely killed by PostgreSQL if the PostgreSQL's
             <varname>statement_time_out</varname> is configured with the value that is
             smaller than the time <varname>recovery_2nd_stage_command</varname> takes for
             completion.

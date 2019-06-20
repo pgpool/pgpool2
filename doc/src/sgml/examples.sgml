@@ -1052,7 +1052,7 @@ To allow Pgpool-II to accept all incoming connections, we set <varname>listen_ad
 listen_addresses = '*'
         </programlisting>
         <para>
-Specifiy replication delay check user and password. In this example, we leave 
+Specify replication delay check user and password. In this example, we leave 
 <xref linkend="GUC-SR-CHECK-USER"> empty, and create the entry in <xref linkend="GUC-POOL-PASSWD">.  
 From <productname>Pgpool-II</productname> 4.0, if these parameters are left blank, 
 <productname>Pgpool-II</productname> will first try to get the password for that 
@@ -1064,7 +1064,7 @@ sr_check_user = 'pgpool'
 sr_check_password = ''
         </programlisting>
         <para>
-Enable health check so that pgpool-II performs failover. Also, if the network is unstable, 
+Enable health check so that <productname>Pgpool-II</> performs failover. Also, if the network is unstable, 
 the health check fails even though the backend is running properly, failover or degenerate operation may occur. 
 In order to prevent such incorrect detection of health check, we set <varname>health_check_max_retries = 3</varname>.
 Specify <xref linkend="GUC-HEALTH-CHECK-USER"> and <xref linkend="GUC-HEALTH-CHECK-PASSWORD"> in the same way like <xref linkend="GUC-SR-CHECK-USER"> and <xref linkend="GUC-SR-CHECK-PASSWORD">.
@@ -1428,7 +1428,7 @@ Because in the section <link linkend="EXAMPLE-CLUSTER-PRE-SETUP">Before Starting
 we already set <productname>PostgreSQL</productname> authentication method to 
 <acronym>scram-sha-256</acronym>, it is necessary to set a client authentication by 
 <productname>Pgpool-II</productname> to connect to backend nodes. 
-Please note that only AES encrypted password or clear text passowrd can be specified
+Please note that only AES encrypted password or clear text password can be specified
 in <xref linkend="guc-health-check-password">, <xref linkend="guc-sr-check-password">, 
 <xref linkend="guc-wd-lifecheck-password">, <xref linkend="guc-recovery-password"> in <filename>pgpool.conf</filename>.
 When installing with RPM, 

@@ -270,13 +270,13 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
       primary <productname>PostgreSQL</productname> which could be up
       to as many as 10 queries. To reduce the
       overhead, <productname>Pgpool-II</productname> maintains
-      "relation cahche". Next time same table is included in a
+      "relation cache". Next time same table is included in a
       query, <productname>Pgpool-II</productname> extracts the
-      information from the cahe.
+      information from the cache.
     </para>
     <para>
       There are some parameters to configure the relation
-      cahce. See <xref linkend="guc-relcache-expire">, <xref linkend="guc-relcache-size">
+      cache. See <xref linkend="guc-relcache-expire">, <xref linkend="guc-relcache-size">
       for more details.
     </para>
 
@@ -290,7 +290,7 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
 	cache entry is created in all process, queries continue to
 	sent to <productname>PostgreSQL</productname>.
 	<productname>Pgpool-II</productname> 4.1 overcomes the issue
-	by creating relation cachce in shared memory. If a session
+	by creating relation cache in shared memory. If a session
 	creates a relation cache entry in the shared memory, other
 	sessions will get the cache result by looking at the shared
 	relation

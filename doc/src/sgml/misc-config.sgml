@@ -87,7 +87,7 @@
           is used together.
         </para>
         <para>
-          <productname>Pgpool-II</productname> searh relation cache on local
+          <productname>Pgpool-II</productname> search relation cache on local
           for a cache entry first, if this is on. When it is not found on relation cache,
           query cache is searched for it next. If it is found on query cache,
           it is copied to relation cache on local. if a cache entry is not found
