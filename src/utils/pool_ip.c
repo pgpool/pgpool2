@@ -422,6 +422,12 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 			return -1;
 	}
 
+    switch (family)
+	{
+		case AF_INET:
+			{
+				struct sockaddr_in mask4;
+				long            maskl;
 
 				if (bits < 0 || bits > 32)
 					return -1;
