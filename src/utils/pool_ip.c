@@ -9,7 +9,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2014	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2019	PgPool Global Development Group
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -401,6 +401,8 @@ rangeSockAddrAF_INET6(const struct sockaddr_in6 *addr,
  *	SockAddr_cidr_mask - make a network mask of the appropriate family
  *	  and required number of significant bits
  *
+ * numbits can be null, in which case the mask is fully set.
+ *
  * The resulting mask is placed in *mask, which had better be big enough.
  *
  * Return value is 0 if okay, -1 if not.
@@ -411,17 +413,17 @@ SockAddr_cidr_mask(struct sockaddr_storage *mask, char *numbits, int family)
 	long		bits;
 	char	   *endptr;
 
-	bits = strtol(numbits, &endptr, 10);
-
-	if (*numbits == '\0' || *endptr != '\0')
-		return -1;
-
-	switch (family)
+	if (numbits == NULL)
 	{
-		case AF_INET:
-			{
-				struct sockaddr_in mask4;
-				long		maskl;
+		bits = (family == AF_INET) ? 32 : 128;
+	}
+	else
+	{
+		bits = strtol(numbits, &endptr, 10);
+		if (*numbits == '\0' || *endptr != '\0')
+			return -1;
+	}
+
 
 				if (bits < 0 || bits > 32)
 					return -1;
