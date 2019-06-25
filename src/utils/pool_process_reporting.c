@@ -268,12 +268,12 @@ get_config(int *nrows)
 	i++;
 
 	StrNCpy(status[i].name, "ssl_ecdh_curve", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->ssl_ecdh_curve);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_ecdh_curve);
 	StrNCpy(status[i].desc, "the curve to use in ECDH key exchange", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "ssl_dh_params_file", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->ssl_dh_params_file);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_dh_params_file);
 	StrNCpy(status[i].desc, "path to the Diffie-Hellman parameters contained file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
