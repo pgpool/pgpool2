@@ -523,8 +523,7 @@ view_walker(Node *node, void *context)
 }
 
 /*
- * Judge the table used in a query represented by node is a system
- * catalog or not.
+ * Determine whether table_name is a system catalog or not.
  */
 static bool
 is_system_catalog(char *table_name)
@@ -543,9 +542,7 @@ is_system_catalog(char *table_name)
 
 #define ISBELONGTOPGCATALOGQUERY3 "SELECT count(*) FROM pg_class AS c, pg_namespace AS n WHERE c.oid = pg_catalog.to_regclass('\"%s\"') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
 
-	int			hasreliscatalog;
 	bool		result;
-	static POOL_RELCACHE * hasreliscatalog_cache;
 	static POOL_RELCACHE * relcache;
 	POOL_CONNECTION_POOL *backend;
 
@@ -560,28 +557,9 @@ is_system_catalog(char *table_name)
 	backend = pool_get_session_context(false)->backend;
 
 	/*
-	 * Check if pg_namespace exists
+	 * Check if pg_namespace exists. PostgreSQL 7.3 or later has it.
 	 */
-	if (!hasreliscatalog_cache)
-	{
-		char	   *query;
-
-		query = HASPGNAMESPACEQUERY;
-
-		hasreliscatalog_cache = pool_create_relcache(pool_config->relcache_size, query,
-													 int_register_func, int_unregister_func,
-													 false);
-		if (hasreliscatalog_cache == NULL)
-		{
-			ereport(WARNING,
-					(errmsg("unable to create relcache, while checking for system catalog")));
-			return false;
-		}
-	}
-
-	hasreliscatalog = pool_search_relcache(hasreliscatalog_cache, backend, "pg_namespace") == 0 ? 0 : 1;
-
-	if (hasreliscatalog)
+	if (Pgversion(backend)->major >= 73)
 	{
 		/*
 		 * If relcache does not exist, create it.
@@ -630,8 +608,7 @@ is_system_catalog(char *table_name)
 }
 
 /*
- * Judge the table used in a query represented by node is a temporary
- * table or not.
+ * Returns true if table_name is a temporary table.
  */
 static POOL_RELCACHE * is_temp_table_relcache;
 
@@ -659,12 +636,10 @@ is_temp_table(char *table_name)
  * name.
  */
 #define ISTEMPQUERY84 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.relname = '%s' AND c.relistemp"
-
-	int			hasrelistemp;
 	bool		result;
-	static POOL_RELCACHE * hasrelistemp_cache;
 	char	   *query;
 	POOL_CONNECTION_POOL *backend;
+	int			major;
 
 	if (table_name == NULL)
 	{
@@ -674,26 +649,19 @@ is_temp_table(char *table_name)
 	backend = pool_get_session_context(false)->backend;
 
 	/*
-	 * Check backend version
+	 * Check backend version.
 	 */
-	if (!hasrelistemp_cache)
-	{
-		hasrelistemp_cache = pool_create_relcache(pool_config->relcache_size, HASRELITEMPPQUERY,
-												  int_register_func, int_unregister_func,
-												  false);
-		if (hasrelistemp_cache == NULL)
-		{
-			ereport(WARNING,
-					(errmsg("unable to create relcache, while checking for temporary table")));
-			return false;
-		}
-	}
-
-	hasrelistemp = pool_search_relcache(hasrelistemp_cache, backend, "pg_class") == 0 ? 0 : 1;
-	if (hasrelistemp)
+	major = Pgversion(backend)->major;
+	if (major == 73 || major == 83 || major >= 91)
+		query = ISTEMPQUERY83;
+	else if (major == 84 || major == 90)
 		query = ISTEMPQUERY84;
 	else
-		query = ISTEMPQUERY83;
+	{
+		ereport(WARNING,
+				(errmsg("is_temp_table: unexpected PostgreSQL version: %s", Pgversion(backend)->version_string)));
+		return false;	/* fall back to assume that the table is not a temporary table. */
+	}
 
 	/*
 	 * If relcache does not exist, create it.
@@ -732,8 +700,7 @@ discard_temp_table_relcache(void)
 }
 
 /*
- * Judge the table used in a query represented by node is a unlogged
- * table or not.
+ * Returns true if table_name is an unlogged table.
  */
 bool
 is_unlogged_table(char *table_name)
@@ -754,10 +721,9 @@ is_unlogged_table(char *table_name)
 
 #define ISUNLOGGEDQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pg_catalog.to_regclass('%s') AND c.relpersistence = 'u'"
 
-	int			hasrelpersistence;
-	static POOL_RELCACHE * hasrelpersistence_cache;
 	static POOL_RELCACHE * relcache;
 	POOL_CONNECTION_POOL *backend;
+	int		major;
 
 	if (table_name == NULL)
 	{
@@ -770,23 +736,10 @@ is_unlogged_table(char *table_name)
 	backend = pool_get_session_context(false)->backend;
 
 	/*
-	 * Check backend version
+	 * Check backend version.
 	 */
-	if (!hasrelpersistence_cache)
-	{
-		hasrelpersistence_cache = pool_create_relcache(pool_config->relcache_size, HASRELPERSISTENCEQUERY,
-													   int_register_func, int_unregister_func,
-													   false);
-		if (hasrelpersistence_cache == NULL)
-		{
-			ereport(WARNING,
-					(errmsg("unable to create relcache, while checking for unlogged table")));
-			return false;
-		}
-	}
-
-	hasrelpersistence = pool_search_relcache(hasrelpersistence_cache, backend, "pg_class") == 0 ? 0 : 1;
-	if (hasrelpersistence)
+	major = Pgversion(backend)->major;
+	if (major >= 91)
 	{
 		bool		result;
 		char	   *query;
@@ -835,7 +788,8 @@ is_unlogged_table(char *table_name)
 }
 
 /*
- * Judge the table used in a query is a view or not.
+ * Returns true if table_name is a view.
+ * This function is called by query cache module.
  */
 bool
 is_view(char *table_name)
@@ -937,39 +891,22 @@ pool_has_pgpool_regclass(void)
 }
 
 /*
- * Judge if we have to_regclass or not.
+ * Returns true if we have to_regclass().
  */
 bool
 pool_has_to_regclass(void)
 {
-/*
- * Query to know if to_regclass exists.
- */
-#define HAS_TOREGCLASSQUERY "SELECT count(*) from (SELECT has_function_privilege('%s', 'pg_catalog.to_regclass(cstring)', 'execute') WHERE EXISTS(SELECT * FROM pg_catalog.pg_proc AS p WHERE p.proname = 'to_regclass')) AS s"
-
-	bool		result;
-	static POOL_RELCACHE * relcache;
 	POOL_CONNECTION_POOL *backend;
-	char	   *user;
+	PGVersion	*pgversion;
 
 	backend = pool_get_session_context(false)->backend;
-	user = MASTER_CONNECTION(backend)->sp->user;
+	pgversion = Pgversion(backend);
 
-	if (!relcache)
-	{
-		relcache = pool_create_relcache(pool_config->relcache_size, HAS_TOREGCLASSQUERY,
-										int_register_func, int_unregister_func,
-										false);
-		if (relcache == NULL)
-		{
-			ereport(WARNING,
-					(errmsg("unable to create relcache, while checking to_regclass presence")));
-			return false;
-		}
-	}
+	/* PostgreSQL 9.4 or above has to_regclass() */
+	if (pgversion->major >= 94)
+		return true;
 
-	result = pool_search_relcache(relcache, backend, user) == 0 ? 0 : 1;
-	return result;
+	return false;
 }
 
 /*
