@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -329,6 +329,68 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 
 			pool_unset_failed_transaction();
 			pool_unset_transaction_isolation();
+		}
+		else if (stmt->kind == 	TRANS_STMT_COMMIT)
+		{
+			/* Commit ongoing CRETAE/DROP temp table status */
+			pool_temp_tables_commit_pending();			
+		}
+		else if (stmt->kind == TRANS_STMT_ROLLBACK)
+		{
+			/* Remove ongoing CRETAE/DROP temp table status */
+			pool_temp_tables_remove_pending();
+		}
+	}
+	else if (IsA(node, CreateStmt))
+	{
+		CreateStmt *stmt = (CreateStmt *) node;
+		POOL_TEMP_TABLE_STATE	state;
+
+		/* Is this a temporary table? */
+		if (stmt->relation->relpersistence == 't')
+		{
+			if (TSTATE(backend, MASTER_NODE_ID ) == 'T')	/* Are we inside a transaction? */
+			{
+				state = TEMP_TABLE_CREATING;
+			}
+			else
+			{
+				state = TEMP_TABLE_CREATE_COMMITTED;
+			}
+			ereport(DEBUG1,
+					(errmsg("Creating temp table: %s. commit status: %d",
+							stmt->relation->relname, state)));
+			pool_temp_tables_add(stmt->relation->relname, state);
+		}
+	}
+	else if (IsA(node, DropStmt))
+	{
+		DropStmt *stmt = (DropStmt *) node;
+		POOL_TEMP_TABLE_STATE	state;
+
+		if (stmt->removeType == OBJECT_TABLE)
+		{
+			/* Loop through stmt->objects */
+			ListCell   *cell;
+			ListCell   *next;
+
+			if (TSTATE(backend, MASTER_NODE_ID ) == 'T')	/* Are we inside a transaction? */
+			{
+				state = TEMP_TABLE_DROPPING;
+			}
+			else
+			{
+				state = TEMP_TABLE_DROP_COMMITTED;
+			}
+
+			for (cell = list_head(session_context->temp_tables); cell; cell = next)
+			{
+				char *tablename = (char *)lfirst(cell);
+				ereport(DEBUG1,
+						(errmsg("Dropping temp table: %s", tablename)));
+				pool_temp_tables_delete(tablename, state);
+				next = lnext(cell);
+			}
 		}
 	}
 }

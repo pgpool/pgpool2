@@ -99,6 +99,13 @@ typedef enum RELQTARGET_OPTION
 	RELQTARGET_LOAD_BALANCE_NODE
 }			RELQTARGET_OPTION;
 
+typedef enum CHECK_TEMP_TABLE_OPTION
+{
+	CHECK_TEMP_CATALOG = 1,
+	CHECK_TEMP_TRACE,
+	CHECK_TEMP_NONE
+}			CHECK_TEMP_TABLE_OPTION;
+
 /*
  * Flags for backendN_flag
  */
@@ -345,7 +352,7 @@ typedef struct
 	char	   *ssl_dh_params_file; /* path to the Diffie-Hellman parameters contained file */
 	int64		relcache_expire;	/* relation cache life time in seconds */
 	int			relcache_size;	/* number of relation cache life entry */
-	bool		check_temp_table;	/* enable temporary table check */
+	CHECK_TEMP_TABLE_OPTION		check_temp_table;	/* how to check temporary table */
 	bool		check_unlogged_table;	/* enable unlogged table check */
 	bool		enable_shared_relcache;	/* If true, relation cache stored in memory cache */
 	RELQTARGET_OPTION	relcache_query_target;	/* target node to send relcache queries */

@@ -140,7 +140,7 @@
     </varlistentry>
 
     <varlistentry id="guc-check-temp-table" xreflabel="check_temp_table">
-      <term><varname>check_temp_table</varname> (<type>boolean</type>)
+      <term><varname>check_temp_table</varname> (<type>string</type>)
         <indexterm>
           <primary><varname>check_temp_table</varname> configuration parameter</primary>
         </indexterm>
@@ -148,19 +148,36 @@
       <listitem>
 
         <para>
-          Setting to on, enables the temporary table check in the <acronym>SELECT</acronym>
-          statements. To check the temporary table <productname>Pgpool-II</productname>
-          queries the system catalog of primary/master <productname>PostgreSQL</> backend, which increases
-          the load on the primary/master server.
-          If you are absolutely sure that your system never uses temporary tables, then
-          you can safely turn off the <varname>check_temp_table</varname>.
-          Default is on.
+          Setting to 'catalog' or 'trace', enables the temporary table
+          check in the <acronym>SELECT</acronym> statements. To check
+          the temporary table <productname>Pgpool-II</productname>
+          queries the system catalog of
+          primary/master <productname>PostgreSQL</productname> backend
+          if 'catalog' is specified, which increases the load on the
+          primary/master server.
+	</para>
+	<para>
+	  If 'trace' is set, <productname>Pgpool-II</productname>
+          traces temporary table creation and dropping to obtain
+          temporary table info. So no need to access system
+          catalogs. However, if temporary table creation is invisible
+          to <productname>Pgpool-II</productname> (done in functions
+          or triggers, for
+          example), <productname>Pgpool-II</productname> cannot
+          recognize the creation of temporary tables.
+	</para>
+	<para>
+	  If you are absolutely sure that your system never uses
+          temporary tables, then you can safely set to 'none'.
         </para>
-
+	<para>
+	  Default is 'catalog'.
+	</para>
         <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
-					this parameter for a current session.
+          This parameter can be changed by reloading
+	  the <productname>Pgpool-II</productname> configurations.
+	  You can also use <xref linkend="SQL-PGPOOL-SET"> command to
+	  alter the value of this parameter for a current session.
         </para>
 
       </listitem>

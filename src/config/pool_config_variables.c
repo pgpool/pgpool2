@@ -259,6 +259,13 @@ static const struct config_enum_entry relcache_query_target_options[] = {
 	{NULL, 0, false}
 };
 
+static const struct config_enum_entry check_temp_table_options[] = {
+	{"catalog", CHECK_TEMP_CATALOG, false},
+	{"trace", CHECK_TEMP_TRACE, false},
+	{"none", CHECK_TEMP_NONE, false},
+	{NULL, 0, false}
+};
+
 static struct config_bool ConfigureNamesBool[] =
 {
 	{
@@ -516,16 +523,6 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&g_pool_config.ssl_prefer_server_ciphers,
 		false,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"check_temp_table", CFGCXT_SESSION, GENERAL_CONFIG,
-			"Enables temporary table check.",
-			CONFIG_VAR_TYPE_BOOL, false, 0
-		},
-		&g_pool_config.check_temp_table,
-		true,
 		NULL, NULL, NULL
 	},
 
@@ -2011,6 +2008,17 @@ static struct config_enum ConfigureNamesEnum[] =
 		(int *) &g_pool_config.relcache_query_target,
 		RELQTARGET_MASTER,
 		relcache_query_target_options,
+		NULL, NULL, NULL, NULL
+	},
+
+	{
+		{"check_temp_table", CFGCXT_RELOAD, GENERAL_CONFIG,
+			"Enables temporary table check.",
+			CONFIG_VAR_TYPE_BOOL, false, 0
+		},
+		(int *) &g_pool_config.check_temp_table,
+		CHECK_TEMP_CATALOG,
+		check_temp_table_options,
 		NULL, NULL, NULL, NULL
 	},
 

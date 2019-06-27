@@ -160,6 +160,9 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 	/* Initialize previous pending message */
 	pool_pending_message_reset_previous_message();
 
+	/* Initialize temp tables */
+	pool_temp_tables_init();
+	
 #ifdef NOT_USED
 	/* Initialize preferred master node id */
 	pool_reset_preferred_master_node_id();
@@ -1825,3 +1828,210 @@ pool_reset_preferred_master_node_id(void)
 	session_context->preferred_master_node_id = -1;
 }
 #endif
+
+/*-----------------------------------------------------------------------
+ * Temporary table list management modules.
+ *-----------------------------------------------------------------------
+ */
+
+/*
+ * Initialize temp table list
+ */
+void
+pool_temp_tables_init(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_temp_tables_init: session context is not initialized")));
+
+	session_context->temp_tables = NIL;
+}
+
+/*
+ * Destroy temp table list
+ */
+void
+pool_temp_tables_destroy(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_temp_tables_destory: session context is not initialized")));
+
+	list_free(session_context->temp_tables);
+}
+
+/*
+ * Add a temp table to the tail of the list.
+ * If the table already exists, just replace state.
+ */
+void
+pool_temp_tables_add(char * tablename, POOL_TEMP_TABLE_STATE state)
+{
+	MemoryContext old_context;
+	POOL_TEMP_TABLE * table;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_temp_tables_add: session context is not initialized")));
+
+	old_context = MemoryContextSwitchTo(session_context->memory_context);
+
+	table = pool_temp_tables_find(tablename);
+	if (table)
+	{
+		/* Table already exists. Just replace state. */
+		table->state = state;
+	}
+	else
+	{
+		table = palloc(sizeof(POOL_TEMP_TABLE));
+		StrNCpy(table->tablename, tablename, sizeof(table->tablename));
+		table->state = state;
+		session_context->temp_tables = lappend(session_context->temp_tables, table);
+	}
+
+	MemoryContextSwitchTo(old_context);
+}
+
+/*
+ * Returns pointer to the table cell if specified tablename is in the temp table list.
+ */
+
+POOL_TEMP_TABLE *
+pool_temp_tables_find(char * tablename)
+{
+	ListCell   *cell;
+	ListCell   *next;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_temp_tables_find: session context is not initialized")));
+
+	for (cell = list_head(session_context->temp_tables); cell; cell = next)
+	{
+		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
+		if (strcmp(tablename, table->tablename) == 0)
+			return table;
+
+		next = lnext(cell);
+	}
+	return NULL;
+}
+
+/*
+ * If requested state or table state is TEMP_TABLE_DROP_COMMITTED, removes the
+ * temp table entry from the list.  Otherwise just set the requested state to
+ * the table state.
+ */
+void
+pool_temp_tables_delete(char * tablename, POOL_TEMP_TABLE_STATE state)
+{
+	POOL_TEMP_TABLE * table;
+	MemoryContext old_context;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_temp_tables_delete: session context is not initialized")));
+
+	ereport(LOG,
+			(errmsg("pool_temp_tables_delete: table: %s state: %d", tablename, state)));
+
+	old_context = MemoryContextSwitchTo(session_context->memory_context);
+
+	table = pool_temp_tables_find(tablename);
+
+	if (table)
+	{
+		if (table->state == TEMP_TABLE_DROP_COMMITTED || state == TEMP_TABLE_DROP_COMMITTED)
+		{
+			ereport(LOG,
+					(errmsg("pool_temp_tables_delete: remove %s. previous state: %d requested state: %d",
+							table->tablename, table->state, state)));
+
+			session_context->temp_tables = list_delete_ptr(session_context->temp_tables, table);
+		}
+		else
+		{
+			ereport(LOG,
+					(errmsg("pool_temp_tables_delete: set state %s. previous state: %d requested state: %d",
+							table->tablename, table->state, state)));
+			table->state = state;
+		}
+	}
+
+	MemoryContextSwitchTo(old_context);
+}
+
+/*
+ * Commits creating entries. Also remove dropping entries. This is supposed to
+ * be called when an explicit transaction commits.
+ */
+void
+pool_temp_tables_commit_pending(void)
+{
+	ListCell   *cell;
+	ListCell   *next;
+	MemoryContext old_context;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_temp_tables_commit_pending: session context is not initialized")));
+
+	old_context = MemoryContextSwitchTo(session_context->memory_context);
+
+	for (cell = list_head(session_context->temp_tables); cell; cell = next)
+	{
+		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
+
+		if (table->state == TEMP_TABLE_CREATING)
+		{
+			ereport(LOG,
+					(errmsg("pool_temp_tables_commit_pending: commit: %s", table->tablename)));
+
+			table->state = TEMP_TABLE_CREATE_COMMITTED;
+		}
+		else if (table->state == TEMP_TABLE_DROPPING)
+		{
+			ereport(LOG,
+					(errmsg("pool_temp_tables_commit_pending: remove: %s", table->tablename)));
+			session_context->temp_tables = list_delete_ptr(session_context->temp_tables, table);
+		}
+		next = lnext(cell);
+	}
+
+	MemoryContextSwitchTo(old_context);
+}
+
+/*
+ * Removes all ongoing creating or dropping entries. This is supposed to be
+ * called when an explicit transaction aborts.
+ */
+void
+pool_temp_tables_remove_pending(void)
+{
+	ListCell   *cell;
+	ListCell   *next;
+	MemoryContext old_context;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_temp_tables_remove_pending: session context is not initialized")));
+
+	old_context = MemoryContextSwitchTo(session_context->memory_context);
+
+	for (cell = list_head(session_context->temp_tables); cell; cell = next)
+	{
+		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
+
+		if (table->state == TEMP_TABLE_CREATING || table->state == TEMP_TABLE_DROPPING)
+		{
+			ereport(LOG,
+					(errmsg("pool_temp_tables_remove_pending: remove: %s", table->tablename)));
+
+			session_context->temp_tables = list_delete_ptr(session_context->temp_tables, table);
+		}
+		next = lnext(cell);
+	}
+
+	MemoryContextSwitchTo(old_context);
+}

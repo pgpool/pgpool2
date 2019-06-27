@@ -641,12 +641,32 @@ is_temp_table(char *table_name)
 	POOL_CONNECTION_POOL *backend;
 	int			major;
 
-	if (table_name == NULL)
+	if (table_name == NULL || pool_config->check_temp_table == CHECK_TEMP_NONE)
 	{
 		return false;
 	}
 
 	backend = pool_get_session_context(false)->backend;
+
+	if (pool_config->check_temp_table == CHECK_TEMP_TRACE)
+	{
+		POOL_TEMP_TABLE	*temp_table;
+
+		temp_table = pool_temp_tables_find(table_name);
+		if (temp_table && (temp_table->state == TEMP_TABLE_CREATE_COMMITTED ||
+						   temp_table->state == TEMP_TABLE_CREATING))
+		{
+			ereport(DEBUG1,
+					(errmsg("is_temp_table: %s is a temp table", table_name)));
+			return true;
+		}
+		else
+		{
+			ereport(DEBUG1,
+					(errmsg("is_temp_table: %s is not a temp table", table_name)));
+			return false;
+		}
+	}
 
 	/*
 	 * Check backend version.

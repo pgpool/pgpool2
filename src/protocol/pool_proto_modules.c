@@ -2802,7 +2802,12 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 				pool_unset_command_success();
 				if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID :
 						   REAL_MASTER_NODE_ID) != 'I')
+				{
 					pool_set_failed_transaction();
+
+					/* Remove ongoing CRETAE/DROP temp tables */
+					pool_temp_tables_remove_pending();
+				}
 				if (pool_is_doing_extended_query_message())
 				{
 					pool_set_ignore_till_sync();
