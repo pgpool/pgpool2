@@ -109,13 +109,14 @@
       <listitem>
         <para>
 	  The target node to send queries to create relation cache
-          entries. If set to 'master', queries will be sent to master
-          (primary) node. This is the default and recommended to most
-          users because the query could get the latest information.
-          If you want to lower the load of master (primary) node, you
-          can set the parameter to 'load_balance_node', which will
-          send queries to the load balance node. This is especially
-          useful for such a system
+          entries. If set to <literal>'master'</literal>, queries will
+          be sent to master (primary) node. This is the default and
+          recommended to most users because the query could get the
+          latest information.  If you want to lower the load of master
+          (primary) node, you can set the parameter to
+          <literal>'load_balance_node'</literal>, which will send
+          queries to the load balance node. This is especially useful
+          for such a system
           where <productname>Pgpool-II</productname>/primary server is
           on a continent A while
           other <productname>Pgpool-II</productname>/standby server is
@@ -123,7 +124,8 @@
           standby because it's much geographically closer. In this
           case you can set backend_weight0 (this represents primary)
           to 0, backend_weight1 to 1 (this represents standby) and set
-          relache_query_target to 'load_balance_node'.
+          relache_query_target
+          to <literal>'load_balance_node'</literal>.
 	</para>
 	<para>
 	  Note, however, if you send query to the standby node,
@@ -148,19 +150,21 @@
       <listitem>
 
         <para>
-          Setting to 'catalog' or 'trace', enables the temporary table
+          Setting to <literal>'catalog'</literal>
+          or <literal>'trace'</literal>, enables the temporary table
           check in the <acronym>SELECT</acronym> statements. To check
           the temporary table <productname>Pgpool-II</productname>
           queries the system catalog of
           primary/master <productname>PostgreSQL</productname> backend
-          if 'catalog' is specified, which increases the load on the
-          primary/master server.
+          if <literal>'catalog'</literal> is specified, which
+          increases the load on the primary/master server.
 	</para>
 	<para>
-	  If 'trace' is set, <productname>Pgpool-II</productname>
-          traces temporary table creation and dropping to obtain
-          temporary table info. So no need to access system
-          catalogs. However, if temporary table creation is invisible
+	  If <literal>'trace'</literal> is
+          set, <productname>Pgpool-II</productname> traces temporary
+          table creation and dropping to obtain temporary table
+          info. So no need to access system catalogs. However, if
+          temporary table creation is invisible
           to <productname>Pgpool-II</productname> (done in functions
           or triggers, for
           example), <productname>Pgpool-II</productname> cannot
@@ -171,7 +175,7 @@
           temporary tables, then you can safely set to 'none'.
         </para>
 	<para>
-	  Default is 'catalog'.
+	  Default is <literal>'catalog'</literal>.
 	</para>
         <para>
           This parameter can be changed by reloading
@@ -244,7 +248,7 @@
 
         <para>
           Specifies the full path to a directory to store the <literal>pgpool_status</literal>.
-          Default is <literal>"/tmp"</literal>.
+          Default is <literal>'/tmp'</literal>.
         </para>
 
         <para>

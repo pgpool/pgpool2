@@ -162,13 +162,13 @@ onにするとクエリキャッシュを利用して子プロセス間でリレ
       <listitem>
         <para>
 	  リレーションキャッシュを作成するためのクエリを送る先のノードを指定します。
-	  'master'にすると、クエリはマスタ（プライマリ）に送られます。
+	  <literal>'master'</literal>にすると、クエリはマスタ（プライマリ）に送られます。
 	  これがデフォルトで、最新のデータを入手できるため、ほとんどのユーザに推奨する設定です。
-	  もしマスタ（プライマリ）の負荷を下げたい場合は、このパラメータを'load_balance_node'に設定できます。
+	  もしマスタ（プライマリ）の負荷を下げたい場合は、このパラメータを<literal>'load_balance_node'</literal>に設定できます。
 	  これにより、クエリは負荷分散ノードに送られます。
 	  これは特に、大陸Aに<productname>Pgpool-II</productname>とプライマリサーバがあり、一方大陸Bに<productname>Pgpool-II</productname>とスタンバイサーバがあるような構成で有効です。
 	  Bのユーザは地理的にスタンバイサーバが近いため、スタンバイからデータを読みたいと思うでしょう。
-	  その場合は、backend_weight0 (これはプライマリの設定です)を0に、backend_weight1(これはスタンバイの設定です)を1にし、relache_query_targetを'load_balance_node'にします。
+	  その場合は、backend_weight0 (これはプライマリの設定です)を0に、backend_weight1(これはスタンバイの設定です)を1にし、relache_query_targetを<literal>'load_balance_node'</literal>にします。
 	</para>
 	<para>
 	  しかし、スタンバイにクエリを送る場合、レプリケーションの遅延により、最近作られたテーブルや行はスタンバイサーバにはまだないかもしれないことに注意してください。
@@ -181,7 +181,7 @@ onにするとクエリキャッシュを利用して子プロセス間でリレ
     </varlistentry>
 
     <varlistentry id="guc-check-temp-table" xreflabel="check_temp_table">
-      <term><varname>check_temp_table</varname> (<type>boolean</type>)
+      <term><varname>check_temp_table</varname> (<type>string</type>)
         <indexterm>
 <!--
           <primary><varname>check_temp_table</varname> configuration parameter</primary>
@@ -192,19 +192,19 @@ onにするとクエリキャッシュを利用して子プロセス間でリレ
       <listitem>
 
         <para>
-<!--
-          Setting to on, enables the temporary table check in the <acronym>SELECT</acronym>
-          statements. To check the temporary table <productname>Pgpool-II</productname>
-          queries the system catalog of primary/master <productname>PostgreSQL</> backend, which increases
-          the load on the primary/master server.
-          If you are absolutely sure that your system never uses temporary tables, then
-          you can safely turn off the <varname>check_temp_table</varname>.
-          Default is on.
--->
-onに設定されたとき、<acronym>SELECT</acronym>に含まれるテーブルが一時テーブルかどうかのチェックを行います。
-一時テーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/マスター<productname>PostgreSQL</>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
-もしシステムが決して一時テーブルを使用しないことが確かならば、安全に<varname>check_tmp_table</varname>をoffにすることができます。
-デフォルトはonです。
+	  <literal>'catalog'</literal>あるいは<literal>'trace'</literal>に設定されたとき、<acronym>SELECT</acronym>に含まれるテーブルが一時テーブルかどうかのチェックを行います。
+	  <literal>'catalog'</literal>に設定すると一時テーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/マスター<productname>PostgreSQL</productname>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
+	</para>
+	<para>
+	  <literal>'trace'</literal>に設定されていると、一時テーブルの情報を入手するために<productname>Pgpool-II</productname>は一時テーブルの作成と削除を追跡します。
+	  ですからシステムカタログへアクセする必要がありません。
+	  しかし、一時テーブルの生成が<productname>Pgpool-II</productname>から見えない場合（たとえば関数やトリガの中で行われる場合）、<productname>Pgpool-II</productname>は一時テーブルの生成を認識できません。
+	</para>
+	<para>
+	  もしシステムが決して一時テーブルを使用しないことが確かならば、安全に<varname>check_tmp_table</varname>を<literal>'none'</literal>にすることができます。
+	</para>
+	<para>
+デフォルトは<literal>'catalog'></literal>です。
         </para>
 
         <para>
@@ -309,7 +309,7 @@ unloggedテーブルをチェックするため<productname>Pgpool-II</productna
           Default is <literal>"/tmp"</literal>.
 -->
 <literal>pgpool_status</literal>ファイルを格納するディレクトリのフルパスを指定します。
-デフォルトは<literal>"/tmp"</literal>です。
+デフォルトは<literal>'/tmp'</literal>です。
         </para>
 
         <para>
