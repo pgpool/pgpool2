@@ -21,6 +21,18 @@ export PGPORT=$PGPOOL_PORT
 ./startall
 wait_for_pgpool_startup
 
+# test1: default (check_temp_table = 'catalog')
+
+$PSQL -a -f ../temp_table.sql test > results.txt
+
+cmp results.txt ../expected.txt || exit 1
+
+# test2: trace
+
+echo "check_temp_table = 'trace'" >> etc/pgpoo.conf
+
+./pgpool_reload
+
 $PSQL -a -f ../temp_table.sql test > results.txt
 
 cmp results.txt ../expected.txt || exit 1
