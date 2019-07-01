@@ -1942,9 +1942,9 @@ pool_temp_tables_delete(char * tablename, POOL_TEMP_TABLE_STATE state)
 
 	if (table)
 	{
-		if (table->state == TEMP_TABLE_DROP_COMMITTED || state == TEMP_TABLE_DROP_COMMITTED)
+		if (table->state == TEMP_TABLE_DROP_COMMITTED)
 		{
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("pool_temp_tables_delete: remove %s. previous state: %d requested state: %d",
 							table->tablename, table->state, state)));
 
@@ -1952,7 +1952,7 @@ pool_temp_tables_delete(char * tablename, POOL_TEMP_TABLE_STATE state)
 		}
 		else
 		{
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("pool_temp_tables_delete: set state %s. previous state: %d requested state: %d",
 							table->tablename, table->state, state)));
 			table->state = state;
@@ -1985,14 +1985,14 @@ pool_temp_tables_commit_pending(void)
 
 		if (table->state == TEMP_TABLE_CREATING)
 		{
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("pool_temp_tables_commit_pending: commit: %s", table->tablename)));
 
 			table->state = TEMP_TABLE_CREATE_COMMITTED;
 		}
 		else if (table->state == TEMP_TABLE_DROPPING)
 		{
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("pool_temp_tables_commit_pending: remove: %s", table->tablename)));
 			session_context->temp_tables = list_delete_ptr(session_context->temp_tables, table);
 		}
@@ -2025,7 +2025,7 @@ pool_temp_tables_remove_pending(void)
 
 		if (table->state == TEMP_TABLE_CREATING || table->state == TEMP_TABLE_DROPPING)
 		{
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("pool_temp_tables_remove_pending: remove: %s", table->tablename)));
 
 			session_context->temp_tables = list_delete_ptr(session_context->temp_tables, table);
