@@ -76,9 +76,9 @@
               <para>
               transaction has not issued a write query yet (until a write
               query is issued, load balance is possible. Here "write query"
-              means non SELECT DML or DDL. SELECTs having write functions as
-              specified in black or white function list is not regarded as
-              a write query. This may be changed in the future.)
+              means non SELECT DML or DDL. <EMPHASIS>Before <productname>Pgpool-II</> 4.1</>,
+              SELECTs having write functions as specified in black or
+              white function list is not regarded as a write query.)
               </para>
             </listitem>
             <listitem>

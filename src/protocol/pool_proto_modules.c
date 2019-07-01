@@ -966,8 +966,9 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		/*
 		 * Take care of "writing transaction" flag.
 		 */
-		if (!is_select_query(node, query) && !is_start_transaction_query(node) &&
-			!is_commit_or_rollback_query(node))
+		if ((!is_select_query(node, query) || pool_has_function_call(node)) &&
+			 !is_start_transaction_query(node) &&
+			 !is_commit_or_rollback_query(node))
 		{
 			ereport(DEBUG1,
 					(errmsg("Execute: TSTATE:%c",
@@ -3959,7 +3960,7 @@ pool_at_command_success(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backe
 		close_standby_transactions(frontend, backend);
 	}
 
-	else if (!is_select_query(node, query))
+	else if (!is_select_query(node, query) || pool_has_function_call(node))
 	{
 		/*
 		 * If the query was not READ SELECT, and we are in an explicit

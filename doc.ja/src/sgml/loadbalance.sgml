@@ -120,15 +120,15 @@
 <!--
               transaction has not issued a write query yet (until a write
               query is issued, load balance is possible. Here "write query"
-              means non SELECT DML or DDL. SELECTs having write functions as
-              specified in black or white function list is not regarded as
-              a write query. This may be changed in the future.)
+              means non SELECT DML or DDL. <EMPHASIS>Before <productname>Pgpool-II</> 4.1</>,
+              SELECTs having write functions as specified in black or
+              white function list is not regarded as a write query.)
 -->
 トランザクション内で更新を伴うクエリが実行されていない
 (更新を伴うクエリが実行されるまでは負荷分散されます。
 ここで「更新を伴うクエリ」とは、SELECT以外のDDLやDMLを指します。
-black/white function listで指定される更新関数を含むSELECTは更新を伴うクエリとは見なされません。
-この仕様は将来変更される可能性があります)
+<EMPHASIS><productname>Pgpool-II</>4.1以前</>のバージョンでは、black/white function list
+で指定される更新関数を含むSELECTは更新を伴うクエリとは見なされません。)
               </para>
             </listitem>
             <listitem>
