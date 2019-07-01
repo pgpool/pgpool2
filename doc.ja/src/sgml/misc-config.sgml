@@ -204,7 +204,7 @@ onにするとクエリキャッシュを利用して子プロセス間でリレ
 	  もしシステムが決して一時テーブルを使用しないことが確かならば、安全に<varname>check_tmp_table</varname>を<literal>'none'</literal>にすることができます。
 	</para>
 	<para>
-デフォルトは<literal>'catalog'></literal>です。
+デフォルトは<literal>'catalog'</literal>です。
         </para>
 
         <para>
