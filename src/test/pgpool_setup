@@ -718,6 +718,7 @@ chmod 755 $STARTALL
 echo 'dir=`pwd`' > $SHUTDOWNALL
 echo "PGPOOL_INSTALL_DIR=$PGPOOL_INSTALL_DIR" >> $SHUTDOWNALL
 echo '$PGPOOL_INSTALL_DIR/bin/pgpool -f $dir/etc/pgpool.conf -m f stop' >> $SHUTDOWNALL
+echo 'while [ -f $dir/run/pgpool.pid ];do sleep 1;done' >> $SHUTDOWNALL
 chmod 755 $SHUTDOWNALL
 echo 'dir=`pwd`' > $PGPOOL_RELOAD
 echo "PGPOOL_INSTALL_DIR=$PGPOOL_INSTALL_DIR" >> $PGPOOL_RELOAD
