@@ -190,8 +190,8 @@
   <sect1 id="relation-cache">
     <title>リレーションキャッシュ</title>
     <para>
-      <productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>に時々、テーブルが一時テーブルかどうかなどのメタ情報を問い合わせる必要があります。
-      それらの情報を得るために、<productname>Pgpool-II</productname>はプライマリ<productname>PostgreSQL</productname>に10本ものクエリを送信します。
+      raw mode (<xref linkend="running-mode">参照)あるいは<xref linkend="guc-load-balance-mode">がoffに設定されている場合を除き<productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>に時々、テーブルが一時テーブルかどうかなどのメタ情報を問い合わせる必要があります。
+      それらの情報を得るために、<productname>Pgpool-II</productname>はプライマリ<productname>PostgreSQL</productname>にときには10本ものクエリを送信することがあります（4.1以降ではその数は大幅に減っていますが、それでも完全に問い合わせの送信がなくなったわけではありません)。
       このオーバーヘッドを減らすために、<productname>Pgpool-II</productname>は「リレーションキャッシュ」を保持しています。
       次にクエリに同じテーブルが含まれていると、<productname>Pgpool-II</productname>はキャッシュからその情報を取り出します。
     </para>

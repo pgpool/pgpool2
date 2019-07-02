@@ -262,13 +262,16 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
   <sect1 id="relation-cache">
     <title>Relation Cache</title>
     <para>
-      Sometimes <productname>Pgpool-II</productname> needs to
+      Except in raw mode (see <xref linkend="running-mode">)
+      or <xref linkend="guc-load-balance-mode"> is set to off,
+      sometimes <productname>Pgpool-II</productname> needs to
       ask <productname>PostgreSQL</productname> to get meta
       information, such as whether a table is a temporay one or
       not. To get those
       information, <productname>Pgpool-II</productname> sends queires
       primary <productname>PostgreSQL</productname> which could be up
-      to as many as 10 queries. To reduce the
+      to as many as 10 queries (in 4.1 or after, the number of queries
+      has been decreased, it is not zero, however). To reduce the
       overhead, <productname>Pgpool-II</productname> maintains
       "relation cache". Next time same table is included in a
       query, <productname>Pgpool-II</productname> extracts the
