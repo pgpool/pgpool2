@@ -742,9 +742,9 @@ relcache_size = 256
                                    # "pool_search_relcache: cache replacement happend"
                                    # in the pgpool log, you might want to increate this number.
 
-check_temp_table = 'catalog'
-                                   # Temporary table check method. 'catalog', 'trace' or 'none'.
-                                   # Default is 'catalog'.
+check_temp_table = catalog
+                                   # Temporary table check method. catalog, trace or none.
+                                   # Default is catalog.
 
 check_unlogged_table = on
                                    # If on, enable unlogged table check in SELECT statements.

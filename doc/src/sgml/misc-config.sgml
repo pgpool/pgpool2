@@ -52,7 +52,7 @@
           the required number of relation cache at "number of using table * 10".
         </para>
         <note>
-          <para>
+	  <para>
             If the below message frequently appears in the
             <productname>Pgpool-II</productname> log, you may need to
             increase the <varname>relcache_size</varname> for better performance.
@@ -142,7 +142,7 @@
     </varlistentry>
 
     <varlistentry id="guc-check-temp-table" xreflabel="check_temp_table">
-      <term><varname>check_temp_table</varname> (<type>string</type>)
+      <term><varname>check_temp_table</varname> (<type>enum</type>)
         <indexterm>
           <primary><varname>check_temp_table</varname> configuration parameter</primary>
         </indexterm>
@@ -150,17 +150,17 @@
       <listitem>
 
         <para>
-          Setting to <literal>'catalog'</literal>
-          or <literal>'trace'</literal>, enables the temporary table
+          Setting to <literal>catalog</literal>
+          or <literal>trace</literal>, enables the temporary table
           check in the <acronym>SELECT</acronym> statements. To check
           the temporary table <productname>Pgpool-II</productname>
           queries the system catalog of
           primary/master <productname>PostgreSQL</productname> backend
-          if <literal>'catalog'</literal> is specified, which
+          if <literal>catalog</literal> is specified, which
           increases the load on the primary/master server.
 	</para>
 	<para>
-	  If <literal>'trace'</literal> is
+	  If <literal>trace</literal> is
           set, <productname>Pgpool-II</productname> traces temporary
           table creation and dropping to obtain temporary table
           info. So no need to access system catalogs. However, if
@@ -172,10 +172,20 @@
 	</para>
 	<para>
 	  If you are absolutely sure that your system never uses
-          temporary tables, then you can safely set to 'none'.
+          temporary tables, then you can safely set to none.
         </para>
+	<note>
+	  <para>
+	    For a backward compatibily sake for 4.0 or
+	    before, <productname>Pgpool-II</productname>
+	    accepts <literal>on</literal>, which is same
+	    as <literal>catalog</literal> and <literal>off</literal>,
+	    which is same as <literal>none</literal>, they may be
+	    deleted in the future version.
+	  </para>
+	</note>
 	<para>
-	  Default is <literal>'catalog'</literal>.
+	  Default is <literal>catalog</literal>.
 	</para>
         <para>
           This parameter can be changed by reloading

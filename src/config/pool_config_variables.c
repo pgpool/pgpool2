@@ -260,9 +260,11 @@ static const struct config_enum_entry relcache_query_target_options[] = {
 };
 
 static const struct config_enum_entry check_temp_table_options[] = {
-	{"catalog", CHECK_TEMP_CATALOG, false},
-	{"trace", CHECK_TEMP_TRACE, false},
-	{"none", CHECK_TEMP_NONE, false},
+	{"catalog", CHECK_TEMP_CATALOG, false},	/* search system catalogs */
+	{"trace", CHECK_TEMP_TRACE, false},		/* tracing temp tables */
+	{"none", CHECK_TEMP_NONE, false},		/* do not check temp tables */
+	{"on", CHECK_TEMP_ON, false},			/* same as CHECK_TEMP_CATALOG. Just for backward compatibilty. */
+	{"off", CHECK_TEMP_OFF, false},			/* same as CHECK_TEMP_NONE. Just for backward compatibilty. */
 	{NULL, 0, false}
 };
 

@@ -181,7 +181,7 @@ onにするとクエリキャッシュを利用して子プロセス間でリレ
     </varlistentry>
 
     <varlistentry id="guc-check-temp-table" xreflabel="check_temp_table">
-      <term><varname>check_temp_table</varname> (<type>string</type>)
+      <term><varname>check_temp_table</varname> (<type>enum</type>)
         <indexterm>
 <!--
           <primary><varname>check_temp_table</varname> configuration parameter</primary>
@@ -192,19 +192,24 @@ onにするとクエリキャッシュを利用して子プロセス間でリレ
       <listitem>
 
         <para>
-	  <literal>'catalog'</literal>あるいは<literal>'trace'</literal>に設定されたとき、<acronym>SELECT</acronym>に含まれるテーブルが一時テーブルかどうかのチェックを行います。
-	  <literal>'catalog'</literal>に設定すると一時テーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/マスター<productname>PostgreSQL</productname>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
+	  <literal>catalog</literal>あるいは<literal>trace</literal>に設定されたとき、<acronym>SELECT</acronym>に含まれるテーブルが一時テーブルかどうかのチェックを行います。
+	  <literal>catalog</literal>に設定すると一時テーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/マスター<productname>PostgreSQL</productname>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
 	</para>
 	<para>
-	  <literal>'trace'</literal>に設定されていると、一時テーブルの情報を入手するために<productname>Pgpool-II</productname>は一時テーブルの作成と削除を追跡します。
+	  <literal>trace</literal>に設定されていると、一時テーブルの情報を入手するために<productname>Pgpool-II</productname>は一時テーブルの作成と削除を追跡します。
 	  ですからシステムカタログへアクセする必要がありません。
 	  しかし、一時テーブルの生成が<productname>Pgpool-II</productname>から見えない場合（たとえば関数やトリガの中で行われる場合）、<productname>Pgpool-II</productname>は一時テーブルの生成を認識できません。
 	</para>
 	<para>
-	  もしシステムが決して一時テーブルを使用しないことが確かならば、安全に<varname>check_tmp_table</varname>を<literal>'none'</literal>にすることができます。
+	  もしシステムが決して一時テーブルを使用しないことが確かならば、安全に<varname>check_tmp_table</varname>を<literal>none</literal>にすることができます。
 	</para>
+	<note>
+	  <para>
+	    4.0以前のバージョンとの互換性のために、<literal>catalog</literal>と同じ意味の<literal>on</literal>、<literal>none</literal>と同じ意味の<literal>off</literal>も受け付けますが、将来のバージョンではこれらは削除されるかもしれません。
+	  </para>
+	</note>
 	<para>
-デフォルトは<literal>'catalog'</literal>です。
+デフォルトは<literal>catalog</literal>です。
         </para>
 
         <para>

@@ -641,7 +641,8 @@ is_temp_table(char *table_name)
 	POOL_CONNECTION_POOL *backend;
 	int			major;
 
-	if (table_name == NULL || pool_config->check_temp_table == CHECK_TEMP_NONE)
+	if (table_name == NULL || pool_config->check_temp_table == CHECK_TEMP_NONE ||
+		pool_config->check_temp_table == CHECK_TEMP_OFF)
 	{
 		return false;
 	}
@@ -667,6 +668,10 @@ is_temp_table(char *table_name)
 			return false;
 		}
 	}
+
+	/*
+	 * Below is check_temp_table == CHECK_TEMP_CATALOG or CHECK_TEMP_ON case.
+	 */
 
 	/*
 	 * Check backend version.
