@@ -279,7 +279,7 @@ Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-ini
     </para>
     <para>
       There are some parameters to configure the relation
-      cache. See <xref linkend="guc-relcache-expire">, <xref linkend="guc-relcache-size">
+      cache. See <xref linkend="guc-relcache-expire">, <xref linkend="guc-relcache-size">, <xref linkend="guc-check-temp-table">, <xref linkend="guc-check-unlogged-table">
       for more details.
     </para>
 

@@ -196,8 +196,8 @@
       次にクエリに同じテーブルが含まれていると、<productname>Pgpool-II</productname>はキャッシュからその情報を取り出します。
     </para>
     <para>
-      リレーションキャッシュを設定するためのパラメータがあります。
-      詳細は<xref linkend="guc-relcache-expire">、<xref linkend="guc-relcache-size">をご覧ください。
+      リレーションキャッシュの性能に関する設定するためのパラメータがあります。
+      詳細は<xref linkend="guc-relcache-expire">、<xref linkend="guc-relcache-size">、<xref linkend="guc-check-temp-table">、<xref linkend="guc-check-unlogged-table">をご覧ください。
     </para>
 
     <sect2 id="shared-relation-cache">
