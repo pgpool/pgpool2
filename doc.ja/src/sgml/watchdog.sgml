@@ -601,13 +601,19 @@ IPアドレス切り替え後にARPリクエストを送信するコマンドで
         </term>
       <listitem>
         <para>
-<!--
-        When enabled, <productname>Pgpool-II</productname> will perform the degenerate/failover on
-        backend node if the quorum exists. In the absence of the quorum, <productname>Pgpool-II</productname>
-        node that detects the backend failure will quarantine the failed backend node until the quorum exists again.
--->
-このパラメータを有効にすると、クォーラムが存在する場合、<productname>Pgpool-II</productname>はバックエンドノードで縮退/フェイルオーバを実行します。
-クォーラムが存在しない場合、クォーラムが再び存在するまで、バックエンドの障害を検出する<productname>Pgpool-II</productname>ノードは、障害の発生したバックエンドノードを隔離します。
+	  このパラメータを有効にすると、クォーラムが存在する場合、<productname>Pgpool-II</productname>はバックエンドノードで縮退/フェイルオーバを実行します。
+	</para>
+	<para>
+	  「クォーラムが存在する」とは、生きているwatchdogノードの数(<productname>Pgpool-II</productname>の数)を全部足して、すべてのwatchdogノードの数に対して多数派を形成できる場合のことを指します。たとえば、watchdogノード数が5のとき、生きているノード数が3以上なら多数派を形成できるのでクォーラムは存在しますが、生きているノード数が2以下なら多数派を形成できないのでクォーラムは存在しません。
+	  なお、watchdogノード数が偶数の場合は、生きているノード数が1以上ならクォーラムが存在するとみなします。
+	</para>
+
+	<para>
+クォーラムが存在しない場合、クォーラムが再び存在するまで、バックエンドの障害を検出した<productname>Pgpool-II</productname>ノードは、障害の発生したバックエンドノードを隔離します。
+        </para>
+
+	<para>
+	  隔離されたノードを<command>pcp_detach_node</command>コマンドで強制的にフェイルオーバさせることは可能ですが、<command>pcp_attach_node</command>コマンドで再びアタッチ状態にすることはできません。
         </para>
         <para>
 <!--
@@ -619,7 +625,7 @@ IPアドレス切り替え後にARPリクエストを送信するコマンドで
 		-->
 隔離されたノードの動作は切り離されたバックエンドノードと似ていますが、フェイルオーバ/縮退と異なり、隔離ステータスはwatchdogクラスタ内の他の<productname>Pgpool-II</productname>ノードに伝播されません。
 したがって、他の<productname>Pgpool-II</productname>ノードは引き続きそのバックエンドを使用し続ける可能性があります。
-        </para>
+	</para>
         <para>
 <!--
         Although there are many similarities in quarantine and failover operations, but they both differ in a very
@@ -633,6 +639,24 @@ IPアドレス切り替え後にARPリクエストを送信するコマンドで
 隔離操作は<xref linkend="guc-failover-command">を実行せず、障害の発生したノードを隔離します。
 この隔離されたノードがマスタの場合、<productname>Pgpool-II</productname>はスタンバイをマスタに昇格させないので、マスタノードが隔離されている間は、使用可能なマスタバックエンドノードはありません。
         </para>
+        <para>
+	  更に、障害ノードとは違い、<productname>Pgpool-II</productname>は隔離されたノードに対してはヘルスチェックを実行し続けます。
+	  隔離されたノードが到達可能になり次第、そのノードは自動的に再度アタッチされます。
+        </para>
+
+	<para>
+	  <productname>Pgpool-II </productname><emphasis>V4.1</emphasis>以後では、プライマリノードのフェイルオーバに関してwatchdogのマスタノードが合意形成に失敗し、その結果プライマリバックエンドが隔離状態になった場合、そのマスタノードはマスタ/コーディネータの枠割を辞退し、次のリーダの選挙の際にwd_priorityを引き下げることにより、クラスタが新しいリーダを選ぶように仕向けます。
+	  <note>
+	    <para>
+	      スタンバイバックエンドの障害時にマスタノードが合意形成に失敗した場合は、特にアクションは起こしません。
+	      watchdogマスタが管理する隔離されたスタンバイバックエンドは新しいリーダの選挙を引き起こしません。
+	    </para>
+	  </note>
+	</para>
+	<para>
+	  このパラメータがoffなら、クォーラムが存在しなくても障害が発生するとフェイルオーバします。
+	</para>
+
         <para>
 <!--
           Default is on.
@@ -680,6 +704,11 @@ failover_when_quorum_existsは<productname>Pgpool-II </productname><emphasis>V3.
 -->
 たとえば、3ノードの<application>watchdog</application>のクラスタでは、フェイルオーバは、少なくとも2つのノードが特定のバックエンドノードに対してフェイルオーバの実行要求をするときのみ実行されます。
         </para>
+
+	<para>
+	  このパラメータがoffなら、投票で合意が取れなくてもフェイルオーバします。
+	</para>
+
         <para>
 <!--
           Default is on.
@@ -756,6 +785,11 @@ failover_when_quorum_existsは<productname>Pgpool-II </productname><emphasis>V3.
 -->
 たとえば、3ノードの<application>watchdog</application>クラスタでは、1つの<productname>Pgpool-II</productname>ノードが特定のバックエンドノードのフェイルオーバに対して2つのフェイルオーバ要求を送信すると、両方の要求が別の投票としてカウントされ、たとえ他の<productname>Pgpool-II</productname>ノードからの投票を得なくても、<productname>Pgpool-II</productname>がフェイルオーバを実行します。 
         </para>
+
+	<para>
+	  たとえば、ヘルスチェックでエラーが検出されても有効投票数に達しない場合、障害が引き続き発生していて次のヘルスチェックで再度エラーが検出されれば、都合2票が投票されることになります。ほかのwatchdogが検出しない恒久的な障害が発生した際にフェイルオーバを引き起こしたい時に有用です。
+	</para>
+
         <para>
 <!--
           Default is off.

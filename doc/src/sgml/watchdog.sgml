@@ -391,10 +391,34 @@
         </term>
       <listitem>
         <para>
-        When enabled, <productname>Pgpool-II</productname> will perform the degenerate/failover on
-        backend node if the quorum exists. In the absence of the quorum, <productname>Pgpool-II</productname>
-        node that detects the backend failure will quarantine the failed backend node until the quorum exists again.
+          When enabled, <productname>Pgpool-II</productname> will perform the degenerate/failover on
+          backend node if the quorum exists.
         </para>
+	<para>
+	  We can say that "quorum exists" if the number of live
+	  watchdog nodes (that is number
+	  of <productname>Pgpool-II</productname> nodes) can be a
+	  majority against the total number of watchdog nodes. For
+	  example, suppose number of watchdog nodes is 5. If number of
+	  live nodes is greater than or equal to 3, then quorum
+	  exists. On the other hand if number of live nodes is 2 or
+	  lower, quorum does not exist since it never be
+	  majority. Please note that if the number ofwatchdog nodes is
+	  even, we regard that quorum exists when number of live nodes
+	  is greater than or equal to 1.
+	</para>
+	<para>
+	  In the absence of the
+          quorum, <productname>Pgpool-II</productname> node that
+          detects the backend failure will quarantine the failed
+          backend node until the quorum exists again.
+	</para>
+	<para>
+	  Although it is possible to force detaching the quarantine
+	  node by using <command>pcp_detach_node</command> command, it
+	  is not possible to attach the node again by
+	  using <command>pcp_attach_node</command> command.
+	</para>
         <para>
         The quarantine nodes behaves similar to the detached backend nodes but unlike failed/degenerated backends
         the quarantine status is not propagated to the other <productname>Pgpool-II</productname> nodes in the
@@ -408,17 +432,20 @@
         and silently detaches the problematic node, So in the case when the master backend node is quarantined, the
         <productname>Pgpool-II</productname> will not promote the standby to take over the master responsibilities
         and until the master node is quarantined the <productname>Pgpool-II</productname> will not have
-        any useable master backend node.
+        any usable master backend node.
         </para>
         <para>
-        Moreover, unlike for the failed nodes, Pgpool-II keeps the health-check running on the quarantined nodes
-        and as soon as the quarantined node becomes reachable again it gets automatically re-attached.
+          Moreover, unlike for the failed
+          nodes, <productname>Pgpool-II</productname> keeps the
+          health-check running on the quarantined nodes and as soon as
+          the quarantined node becomes reachable again it gets
+          automatically re-attached.
         </para>
         <para>
-        From <productname>Pgpool-II </productname><emphasis>V4.1</emphasis> onwards. If the watchdog-master node
-        fails to build the consensus for primary backend node failover and the primary backend node gets into a
-        quarantine state, then it resigns from its master/coordinator responsibilities and lowers its wd_priority
-        for next leader election and let the cluster elect some different new leader.
+          From <productname>Pgpool-II </productname><emphasis>V4.1</emphasis> onwards, if the watchdog-master node
+          fails to build the consensus for primary backend node failover and the primary backend node gets into a
+          quarantine state, then it resigns from its master/coordinator responsibilities and lowers its wd_priority
+          for next leader election and let the cluster elect some different new leader.
             <note>
             <para>
             When the master node fails to build the consensus for standby backend node failure, it takes no action
@@ -426,6 +453,10 @@
             </para>
             </note>
         </para>
+	<para>
+	  If this parameter is off, failover will be triggered even if
+	  quorum does not exist.
+	</para>
         <para>
           Default is on.
         </para>
@@ -455,6 +486,10 @@
         For example, in a three node watchdog cluster, the failover will only be performed until at
         least two nodes ask for performing the failover on the particular backend node.
         </para>
+	<para>
+	  If this parameter is off, failover will be triggered even if
+	  there's no consensus.
+	</para>
         <para>
           Default is on.
         </para>
@@ -503,7 +538,14 @@
         vote in the favor of the failover and <productname>Pgpool-II</productname> will execute the failover,
         even if it does not get the vote from any other <productname>Pgpool-II</productname> node.
         </para>
-        <para>
+	<para>
+	  For example, if an error found in a health check round does
+	  not get enough vote and the error still persists, next round
+	  of health check will give one more vote.  This parameter is
+	  useful if you want to detect a persistent error which might
+	  not be found by other watchdog nodes.
+        </para>
+	<para>
           Default is off.
         </para>
         <para>
