@@ -498,12 +498,12 @@ pool_zap_query_context_in_sent_messages(POOL_QUERY_CONTEXT *query_context)
 
 	for (i = 0; i < msglist->size; i++)
 	{
-		elog(LOG, "checking zapping sent message: %p query_context: %p",
+		elog(DEBUG5, "checking zapping sent message: %p query_context: %p",
 			 &msglist->sent_messages[i], msglist->sent_messages[i]->query_context);
 		if (msglist->sent_messages[i]->query_context == query_context)
 		{
 			msglist->sent_messages[i]->query_context = NULL;
-			elog(LOG, "Zap sent message: %p", &msglist->sent_messages[i]);
+			elog(DEBUG5, "Zap sent message: %p", &msglist->sent_messages[i]);
 		}
 	}
 }
