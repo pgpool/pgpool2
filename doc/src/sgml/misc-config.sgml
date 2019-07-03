@@ -101,7 +101,7 @@
     </varlistentry>
 
     <varlistentry id="guc-relcache-query-target" xreflabel="relcache_query_target">
-      <term><varname>relcache_query_target</varname> (<type>string</type>)
+      <term><varname>relcache_query_target</varname> (<type>enum</type>)
         <indexterm>
           <primary><varname>relache_query_target</varname> configuration parameter</primary>
         </indexterm>
@@ -109,12 +109,12 @@
       <listitem>
         <para>
 	  The target node to send queries to create relation cache
-          entries. If set to <literal>'master'</literal>, queries will
+          entries. If set to <literal>master</literal>, queries will
           be sent to master (primary) node. This is the default and
           recommended to most users because the query could get the
           latest information.  If you want to lower the load of master
           (primary) node, you can set the parameter to
-          <literal>'load_balance_node'</literal>, which will send
+          <literal>load_balance_node</literal>, which will send
           queries to the load balance node. This is especially useful
           for such a system
           where <productname>Pgpool-II</productname>/primary server is
@@ -125,7 +125,7 @@
           case you can set backend_weight0 (this represents primary)
           to 0, backend_weight1 to 1 (this represents standby) and set
           relache_query_target
-          to <literal>'load_balance_node'</literal>.
+          to <literal>load_balance_node</literal>.
 	</para>
 	<para>
 	  Note, however, if you send query to the standby node,
