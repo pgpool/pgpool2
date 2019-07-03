@@ -746,7 +746,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 #endif
 			pool_ps_idle_display(backend);
 			pool_stats_count_up_num_cache_hits();
-			session_context->query_context->skip_cache_commit = true;
+			query_context->skip_cache_commit = true;
 #ifdef DEBUG
 			stop_now = true;
 #endif
@@ -760,7 +760,7 @@ POOL_STATUS Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			}
 		}
 		else
-			session_context->query_context->skip_cache_commit = false;
+			query_context->skip_cache_commit = false;
 	}
 
 	session_context->query_context = query_context;
