@@ -2671,6 +2671,16 @@ static void kill_all_children(int sig)
 	/* make PCP process reload as well */
 	if (sig == SIGHUP && pcp_pid > 0)
 		kill(pcp_pid, sig);
+
+	/* make health check process reload as well */
+	if (sig == SIGHUP)
+	{
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if (health_check_pids[i] > 0)
+				kill(health_check_pids[i], sig);
+		}
+	}
 }
 
 /*
