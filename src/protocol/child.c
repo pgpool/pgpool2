@@ -2538,6 +2538,13 @@ Pgversion(POOL_CONNECTION_POOL * backend)
 	 * valid digit (in our case 'b')). So "12beta1" should be converted to 12.
 	 */
 	p = strchr(result, ' ');
+	if (p == NULL)
+	{
+		ereport(FATAL,
+				(errmsg("Pgversion: unable to find the first space in the version string: %s", result)));
+		return NULL;
+	}
+
 	p++;
 	i = 0;
 	while (i < VERSION_BUF_SIZE - 1 && p && *p != '.')
