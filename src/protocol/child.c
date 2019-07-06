@@ -2473,7 +2473,7 @@ static int opt_sort(const void *a, const void *b)
  *
  * Note:
  * Must be called while query context already exists.
- * If there's something goes wrong, this raises FATA. So never returns to caller.
+ * If there's something goes wrong, this raises FATAL. So never returns to caller.
  *
  */
 PGVersion *
@@ -2530,14 +2530,17 @@ Pgversion(POOL_CONNECTION_POOL * backend)
 			(errmsg("Pgversion: version string: %s", result)));
 
 	/*
-	 * Extract major version number.
-	 * We create major version as "version" * 10.  For example, for V10, major
-	 * will be 100, for V9.6 major will be 96, and so on.
+	 * Extract major version number.  We create major version as "version" *
+	 * 10.  For example, for V10, the major version number will be 100, for
+	 * V9.6 it will be 96, and so on.  For alpha or beta version, the version
+	 * string could be something like "12beta1". In this case we assume that
+	 * atoi(3) is smart enough to stop at the first character which is not a
+	 * valid digit (in our case 'b')). So "12beta1" should be converted to 12.
 	 */
 	p = strchr(result, ' ');
 	p++;
 	i = 0;
-	while (i < VERSION_BUF_SIZE && p && *p != '.')
+	while (i < VERSION_BUF_SIZE - 1 && p && *p != '.')
 	{
 		buf[i++] = *p++;
 	}
@@ -2566,7 +2569,7 @@ Pgversion(POOL_CONNECTION_POOL * backend)
 	{
 		p++;
 		i = 0;
-		while (i < VERSION_BUF_SIZE && p && *p != '.' && *p != ' ')
+		while (i < VERSION_BUF_SIZE -1 && p && *p != '.' && *p != ' ')
 		{
 			buf[i++] = *p++;
 		}
@@ -2582,7 +2585,7 @@ Pgversion(POOL_CONNECTION_POOL * backend)
 	 */
 	p++;
 	i = 0;
-	while (i < VERSION_BUF_SIZE && p && *p != '.' && *p != ' ')
+	while (i < VERSION_BUF_SIZE -1 && p && *p != '.' && *p != ' ')
 	{
 		buf[i++] = *p++;
 	}
