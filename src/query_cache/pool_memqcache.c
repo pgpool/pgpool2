@@ -1032,7 +1032,7 @@ int pool_extract_table_oids(Node *node, int **oidsp)
 		 */
 		foreach(cell, stmt->objects)
 		{
-			if (num_oids > POOL_MAX_DML_OIDS)
+			if (num_oids >= POOL_MAX_DML_OIDS)
 			{
 				ereport(LOG,
 						(errmsg("memcache: error while extracting table oids. too many oids:%d", num_oids)));
