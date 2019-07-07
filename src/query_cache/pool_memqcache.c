@@ -1087,7 +1087,7 @@ pool_extract_table_oids(Node *node, int **oidsp)
 
 		foreach(cell, stmt->relations)
 		{
-			if (num_oids > POOL_MAX_DML_OIDS)
+			if (num_oids >= POOL_MAX_DML_OIDS)
 			{
 				ereport(LOG,
 						(errmsg("memcache: error while extracting table oids. too many oids:%d", num_oids)));
@@ -1115,6 +1115,13 @@ pool_extract_table_oids(Node *node, int **oidsp)
 	oid = pool_table_name_to_oid(table);
 	if (oid > 0)
 	{
+		if (num_oids >= POOL_MAX_DML_OIDS)
+		{
+			ereport(LOG,
+					(errmsg("memcache: error while extracting table oids. too many oids:%d", num_oids)));
+			return 0;
+		}
+
 		oids[num_oids++] = pool_table_name_to_oid(table);
 		ereport(DEBUG1,
 				(errmsg("memcache: extracting table oids: table: \"%s\" oid:%d", table, oid)));
