@@ -893,6 +893,8 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 
 		if (create_cp(s, i) == NULL)
 		{
+			pfree(s);
+
 			/*
 			 * If failover_on_backend_error is true, do failover. Otherwise,
 			 * just exit this session or skip next health node.
@@ -947,19 +949,21 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 			}
 			child_exit(POOL_EXIT_AND_RESTART);
 		}
-
-		p->info[i].create_time = time(NULL);
-		p->slots[i] = s;
-
-		pool_init_params(&s->con->params);
-
-		if (BACKEND_INFO(i).backend_status != CON_UP)
+		else
 		{
-			BACKEND_INFO(i).backend_status = CON_UP;
-			pool_set_backend_status_changed_time(i);
-			status_changed = true;
+			p->info[i].create_time = time(NULL);
+			p->slots[i] = s;
+
+			pool_init_params(&s->con->params);
+
+			if (BACKEND_INFO(i).backend_status != CON_UP)
+			{
+				BACKEND_INFO(i).backend_status = CON_UP;
+				pool_set_backend_status_changed_time(i);
+				status_changed = true;
+			}
+			active_backend_count++;
 		}
-		active_backend_count++;
 	}
 
 	if (status_changed)
