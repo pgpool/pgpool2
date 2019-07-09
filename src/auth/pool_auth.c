@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1042,7 +1042,7 @@ do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, in
 		return 0;
 	}
 
-	size = pwd ? strlen(pwd) : 0;
+	size = strlen(pwd);
 
 	/* connection reusing? */
 	if (reauth)
