@@ -391,8 +391,7 @@
         </term>
       <listitem>
         <para>
-          When enabled, <productname>Pgpool-II</productname> will perform the degenerate/failover on
-          backend node if the quorum exists.
+          When enabled, <productname>Pgpool-II</productname> will consider quorum when it performs the degenerate/failover on backend node.
         </para>
 	<para>
 	  We can say that "quorum exists" if the number of live
@@ -403,9 +402,25 @@
 	  live nodes is greater than or equal to 3, then quorum
 	  exists. On the other hand if number of live nodes is 2 or
 	  lower, quorum does not exist since it never be
-	  majority. Please note that if the number ofwatchdog nodes is
-	  even, we regard that quorum exists when number of live nodes
-	  is greater than or equal to 1.
+	  majority.
+	</para>
+	<para>
+	  If the quorum exists, <productname>Pgpool-II</productname>
+	  could work better on failure detection because even if a
+	  watchdog node mistakenly detects a failure of backend node,
+	  it would be denied by other major watchdog nodes.
+	  <productname>Pgpool-II</productname> works that way
+	  when <xref linkend="guc-failover-require-consensus"> is on
+	  (the default), but you can change it so that immediate
+	  failover happens when a failure is detected.
+	  A <productname>Pgpool-II</productname> node which mistakenly
+	  detects failure of backend node will quarantine the backend
+	  node.
+	</para>
+	<para>
+	  Please note that if the number of watchdog nodes is even, we
+	  regard that quorum exists when the number of live nodes is
+	  greater than or equal to half of total watchdog nodes.
 	</para>
 	<para>
 	  In the absence of the
