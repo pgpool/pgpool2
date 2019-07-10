@@ -1901,19 +1901,16 @@ POOL_TEMP_TABLE *
 pool_temp_tables_find(char * tablename)
 {
 	ListCell   *cell;
-	ListCell   *next;
 
 	if (!session_context)
 		ereport(ERROR,
 				(errmsg("pool_temp_tables_find: session context is not initialized")));
 
-	for (cell = list_head(session_context->temp_tables); cell; cell = next)
+	foreach(cell, session_context->temp_tables)
 	{
 		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
 		if (strcmp(tablename, table->tablename) == 0)
 			return table;
-
-		next = lnext(cell);
 	}
 	return NULL;
 }
@@ -1970,7 +1967,6 @@ void
 pool_temp_tables_commit_pending(void)
 {
 	ListCell   *cell;
-	ListCell   *next;
 	MemoryContext old_context;
 
 	if (!session_context)
@@ -1979,7 +1975,7 @@ pool_temp_tables_commit_pending(void)
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
 
-	for (cell = list_head(session_context->temp_tables); cell; cell = next)
+	foreach(cell, session_context->temp_tables)
 	{
 		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
 
@@ -1996,7 +1992,6 @@ pool_temp_tables_commit_pending(void)
 					(errmsg("pool_temp_tables_commit_pending: remove: %s", table->tablename)));
 			session_context->temp_tables = list_delete_ptr(session_context->temp_tables, table);
 		}
-		next = lnext(cell);
 	}
 
 	MemoryContextSwitchTo(old_context);
@@ -2010,7 +2005,6 @@ void
 pool_temp_tables_remove_pending(void)
 {
 	ListCell   *cell;
-	ListCell   *next;
 	MemoryContext old_context;
 
 	if (!session_context)
@@ -2019,7 +2013,7 @@ pool_temp_tables_remove_pending(void)
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
 
-	for (cell = list_head(session_context->temp_tables); cell; cell = next)
+	foreach(cell, session_context->temp_tables)
 	{
 		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
 
@@ -2030,7 +2024,6 @@ pool_temp_tables_remove_pending(void)
 
 			session_context->temp_tables = list_delete_ptr(session_context->temp_tables, table);
 		}
-		next = lnext(cell);
 	}
 
 	MemoryContextSwitchTo(old_context);
