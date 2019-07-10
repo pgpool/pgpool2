@@ -1976,6 +1976,8 @@ _outWindowDef(String * str, WindowDef *node)
 			string_append_char(str, " RANGE");
 		else if (node->frameOptions & FRAMEOPTION_ROWS)
 			string_append_char(str, " ROWS");
+		else if (node->frameOptions & FRAMEOPTION_GROUPS)
+			string_append_char(str, " GROUPS");
 
 		if (node->frameOptions & FRAMEOPTION_BETWEEN)
 			string_append_char(str, " BETWEEN");
@@ -2020,6 +2022,19 @@ _outWindowDef(String * str, WindowDef *node)
 				_outNode(str, node->endOffset);
 				string_append_char(str, " FOLLOWING");
 			}
+		}
+
+		if (node->frameOptions & FRAMEOPTION_EXCLUDE_CURRENT_ROW)
+		{
+			string_append_char(str, " EXCLUDE CURRENT ROW");
+		}
+		else if (node->frameOptions & FRAMEOPTION_EXCLUDE_GROUP)
+		{
+			string_append_char(str, " EXCLUDE GROUP");
+		}
+		else if (node->frameOptions & FRAMEOPTION_EXCLUDE_TIES)
+		{
+			string_append_char(str, " EXCLUDE TIES");
 		}
 	}
 	string_append_char(str, ")");
