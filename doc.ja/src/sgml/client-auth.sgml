@@ -57,11 +57,19 @@
   By default, pool_hba authentication is disabled, and setting <varname>enable_pool_hba</varname>
   to <literal>on</literal> enables it. see the <xref linkend="guc-enable-pool-hba"> configuration parameter.
 -->
-<productname>PostgreSQL</>の<filename>pg_hba.conf</filename>と同じように<productname>Pgpool-II</productname>でも<filename>pool_hba.conf</filename>とよばれる設定ファイルを使った同様のクライアント認証機能をサポートしています。
+<productname>PostgreSQL</productname>の<filename>pg_hba.conf</filename>と同じように<productname>Pgpool-II</productname>でも<filename>pool_hba.conf</filename>とよばれる設定ファイルを使った同様のクライアント認証機能をサポートしています。
 <productname>Pgpool-II</productname>をインストールするとデフォルトインストール先の設定ファイルディレクトリ（<literal>"/usr/local/etc"</literal>）にサンプルの<filename>pool_hba.conf.sample</filename>が含まれています。
 デフォルトではpool_hbaによる認証は無効になっており、<varname>enable_pool_hba</varname>を<literal>on</literal>に設定することで有効になります。
 <xref linkend="guc-enable-pool-hba">設定パラメータをご覧ください。
   </para>
+
+  <note>
+    <para>
+      <productname>PostgreSQL</productname>の数が1台のみ、あるいはraw mode(<xref linkend="running-mode">参照)では、<filename>pool_hba.conf</filename>は必要なく、<varname>enable_pool_hba</varname>はoffのままで構いません。
+	この場合、クライアントの認証方式は<productname>PostgreSQL</productname>に完全に任されます。
+	<productname>PostgreSQL</productname>の数が複数台、あるいはraw mode以外の場合でも、<productname>PostgreSQL</productname>での認証方式が<literal>trust</literal>なら、やはり<filename>pool_hba.conf</filename>は必要なく、<varname>enable_pool_hba</varname>はoffのままで構いません。
+    </para>
+  </note>
 
   <para>
 <!--
@@ -495,6 +503,7 @@ IPv6書式のエントリは、システムのCライブラリがIPv6アドレ�
 -->
 <literal>md5</literal>認証を使うには、ユーザ名とパスワードを<xref linkend="guc-pool-passwd">というパスワードファイルに登録する必要があります。
 詳細は<xref linkend="auth-md5">を参照してください。
+なお、<filename>pool_passwd</filename>でパスワードを管理したくない場合は、<xref linkend="guc-allow-clear-text-frontend-auth">を使うこともできます。
          </para>
         </note>
          </para>
@@ -518,6 +527,7 @@ IPv6書式のエントリは、システムのCライブラリがIPv6アドレ�
 -->
 <literal>scram-sha-256</literal>認証を使用するためには、<xref linkend="guc-pool-passwd">ファイルにユーザ名とパスワードを登録する必要があります。
 詳細は<xref linkend="auth-scram">を参照してください。
+なお、<filename>pool_passwd</filename>でパスワードを管理したくない場合は、<xref linkend="guc-allow-clear-text-frontend-auth">を使うこともできます。
               </para>
             </note>
               </para>

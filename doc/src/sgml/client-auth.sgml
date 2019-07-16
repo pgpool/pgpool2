@@ -52,6 +52,24 @@
       parameter.
     </para>
 
+    <note>
+      <para>
+	If number of <productname>PostgreSQL</productname> servers is
+	only one, or when running in raw mode
+	(see <xref linkend="running-mode">),
+	<filename>pool_hba.conf</filename> is not necessary
+	thus <varname>enable_pool_hba</varname> may be being set to off.
+	In this case the client authentication method is completely
+	managed by <productname>PostgreSQL</productname>. Also number
+	of <productname>PostgreSQL</productname> servers is more than
+	one, or not running in raw
+	mode, <varname>enable_pool_hba</varname> may be being set to off
+	as long as the authentication method defined
+	by <productname>PostgreSQL</productname>
+	is <literal>trust</literal>.
+    </para>
+   </note>
+
     <para>
       The format of the <filename>pool_hba.conf</filename> file
       follows very
@@ -351,9 +369,16 @@
 
 			<note>
 			  <para>
-			    To use <literal>md5</literal> authentication, you need to register
-			    the user name and password in <xref linkend="guc-pool-passwd"> file.
-			    See <xref linkend="auth-md5"> for more details.
+			    To use <literal>md5</literal>
+			    authentication, you need to register the
+			    user name and password
+			    in <xref linkend="guc-pool-passwd"> file.
+			    See <xref linkend="auth-md5"> for more
+			    details.  If you don't want to manage
+			    password by
+			    using <filename>pool_passwd</filename>,
+			    you could
+			    use <xref linkend="guc-allow-clear-text-frontend-auth">.
 			  </para>
 			</note>
 		      </para>
@@ -367,9 +392,16 @@
               Perform SCRAM-SHA-256 authentication to verify the user's password.
 			<note>
 			  <para>
-			    To use <literal>scram-sha-256</literal> authentication, you need to register
-			    the user name and password in <xref linkend="guc-pool-passwd"> file.
-			    See <xref linkend="auth-scram"> for more details.
+			    To use <literal>scram-sha-256</literal>
+			    authentication, you need to register the
+			    user name and password
+			    in <xref linkend="guc-pool-passwd"> file.
+			    See <xref linkend="auth-scram"> for more
+			    details.  If you don't want to manage
+			    password by
+			    using <filename>pool_passwd</filename>,
+			    you could
+			    use <xref linkend="guc-allow-clear-text-frontend-auth">.
 			  </para>
 			</note>
 		      </para>
