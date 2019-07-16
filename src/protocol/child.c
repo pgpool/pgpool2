@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -59,6 +59,7 @@
 #include "utils/elog.h"
 #include "auth/md5.h"
 #include "auth/pool_passwd.h"
+#include "utils/pool_relcache.h"
 
 static StartupPacket *read_startup_packet(POOL_CONNECTION *cp);
 static POOL_CONNECTION_POOL *connect_backend(StartupPacket *sp, POOL_CONNECTION *frontend);
@@ -2490,4 +2491,157 @@ int pg_frontend_exists(void)
 static int opt_sort(const void *a, const void *b)
 {
 	return strcmp( *(char **)a, *(char **)b);
+}
+
+/*
+ * Returns PostgreSQL version.
+ * The returned PgVersion struct is in static memory.
+ * Caller must not modify it.
+ *
+ * Note:
+ * Must be called while query context already exists.
+ * If there's something goes wrong, this raises FATAL. So never returns to caller.
+ *
+ */
+PGVersion *
+Pgversion(POOL_CONNECTION_POOL * backend)
+{
+#define VERSION_BUF_SIZE	10
+	static	PGVersion	pgversion;
+	static	POOL_RELCACHE *relcache;
+	char	*result;
+	char	*p;
+	char	buf[VERSION_BUF_SIZE];
+	int		i;
+	int		major;
+	int		minor;
+
+	/*
+	 * First, check local cache. If cache is set, just return it.
+	 */
+	if (pgversion.major != 0)
+	{
+		ereport(DEBUG5,
+				(errmsg("Pgversion: local cache returned")));
+
+		return &pgversion;
+	}
+
+	if (!relcache)
+	{
+		/*
+		 * Create relcache.
+		 */
+		relcache = pool_create_relcache(pool_config->relcache_size, "SELECT version()",
+										string_register_func, string_unregister_func, false);
+		if (relcache == NULL)
+		{
+			ereport(FATAL,
+					(errmsg("Pgversion: unable to create relcache while getting PostgreSQL version.")));
+			return NULL;
+		}
+	}
+
+	/*
+	 * Search relcache.
+	 */
+	result = (char *)pool_search_relcache(relcache, backend, "version");
+	if (result == 0)
+	{
+		ereport(FATAL,
+				(errmsg("Pgversion: unable to search relcache while getting PostgreSQL version.")));
+		return NULL;
+	}
+
+	ereport(DEBUG5,
+			(errmsg("Pgversion: version string: %s", result)));
+
+	/*
+	 * Extract major version number.  We create major version as "version" *
+	 * 10.  For example, for V10, the major version number will be 100, for
+	 * V9.6 it will be 96, and so on.  For alpha or beta version, the version
+	 * string could be something like "12beta1". In this case we assume that
+	 * atoi(3) is smart enough to stop at the first character which is not a
+	 * valid digit (in our case 'b')). So "12beta1" should be converted to 12.
+	 */
+	p = strchr(result, ' ');
+	if (p == NULL)
+	{
+		ereport(FATAL,
+				(errmsg("Pgversion: unable to find the first space in the version string: %s", result)));
+		return NULL;
+	}
+
+	p++;
+	i = 0;
+	while (i < VERSION_BUF_SIZE - 1 && p && *p != '.')
+	{
+		buf[i++] = *p++;
+	}
+	buf[i] = '\0';
+	major = atoi(buf);
+	ereport(DEBUG5,
+			(errmsg("Pgversion: major version: %d", major)));
+
+	/* Assuming PostgreSQL V100 is the final release:-) */
+	if (major < 6 || major > 100)
+	{
+		ereport(FATAL,
+				(errmsg("Pgversion: wrong major version: %d", major)));
+		return NULL;
+	}
+
+	/*
+	 * If major version is 10 or above, we are done to extract major.
+	 * Otherwise extract below decimal point part.
+	 */
+	if (major >= 10)
+	{
+		major *= 10;
+	}
+	else
+	{
+		p++;
+		i = 0;
+		while (i < VERSION_BUF_SIZE -1 && p && *p != '.' && *p != ' ')
+		{
+			buf[i++] = *p++;
+		}
+		buf[i] = '\0';
+		major = major * 10 + atoi(buf);
+		ereport(DEBUG5,
+				(errmsg("Pgversion: major version: %d", major)));
+		pgversion.major = major;
+	}
+
+	/*
+	 * Extract minor version.
+	 */
+	p++;
+	i = 0;
+	while (i < VERSION_BUF_SIZE -1 && p && *p != '.' && *p != ' ')
+	{
+		buf[i++] = *p++;
+	}
+	buf[i] = '\0';
+	minor = atoi(buf);
+	ereport(DEBUG5,
+			(errmsg("Pgversion: minor version: %d", minor)));
+
+	if (minor < 0 || minor > 100)
+	{
+		ereport(FATAL,
+				(errmsg("Pgversion: wrong minor version: %d", minor)));
+		return NULL;
+	}
+
+
+	/*
+	 * Ok, everything looks good. Set the local cache.
+	 */
+	pgversion.major = major;
+	pgversion.minor = minor;
+	strncpy(pgversion.version_string, result, sizeof(pgversion.version_string) - 1);
+
+	return &pgversion;
 }
