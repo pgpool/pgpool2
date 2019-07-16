@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -482,6 +482,22 @@ typedef enum
     EXITING
 } ProcessState;
 
+#define MAX_PG_VERSION_STRING	512
+
+/*
+ * PostgreSQL version descriptor
+ */
+typedef struct
+{
+	short	major;	/* major version number in up to 3 digits decimal.
+					 * Examples: 120, 110, 100, 96.
+					 */
+	short	minor;	/* minor version number in up to 2 digits decimal.
+					 * Examples: 0, 1, 2, 10, 23.
+					 */
+	char	version_string[MAX_PG_VERSION_STRING+1];	/* original version string */
+}			PGVersion;
+
 extern ProcessState processState;
 
 extern POOL_CONNECTION_POOL *pool_connection_pool;	/* connection pool */
@@ -663,6 +679,7 @@ extern int send_to_pg_frontend(char* data, int len, bool flush);
 extern int pg_frontend_exists(void);
 extern int set_pg_frontend_blocking(bool blocking);
 extern int get_frontend_protocol_version(void);
+extern PGVersion *Pgversion(POOL_CONNECTION_POOL * backend);
 
 /* pool_process_query.c */
 extern void reset_variables(void);
