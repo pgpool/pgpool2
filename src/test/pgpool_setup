@@ -61,6 +61,7 @@
 # $BASEPORT + 2, $BASEPORT + 3 and so on.
 # pgpool port and pcp_port will be assigned to $BASEPORT and $BASEPORT +1 .
 BASEPORT=${BASEBOPRT:-"11000"}
+ORIGBASEPORT=$BASEPORT
 # PostgreSQL startig port number.
 PGBASEPORT=`expr $BASEPORT + 2`
 # Default number of PostgreSQL database clusters
@@ -829,6 +830,7 @@ echo 'dir=`pwd`' > $SHUTDOWNALL
 echo "PGPOOL_INSTALL_DIR=$PGPOOL_INSTALL_DIR" >> $SHUTDOWNALL
 echo '$PGPOOL_INSTALL_DIR/bin/pgpool -f $dir/etc/pgpool.conf -m f stop' >> $SHUTDOWNALL
 echo 'while [ -f $dir/run/pgpool.pid ];do sleep 1;done' >> $SHUTDOWNALL
+echo "while  netstat -a|grep $ORIGBASEPORT ;do sleep 1;done" >> $SHUTDOWNALL
 chmod 755 $SHUTDOWNALL
 echo 'dir=`pwd`' > $PGPOOL_RELOAD
 echo "PGPOOL_INSTALL_DIR=$PGPOOL_INSTALL_DIR" >> $PGPOOL_RELOAD
