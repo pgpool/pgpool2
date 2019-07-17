@@ -1783,6 +1783,7 @@ static void failover(void)
 			{
 				/* only if the failover is against the current primary */
 				if (((reqkind == NODE_DOWN_REQUEST) &&
+					 Req_info->primary_node_id >= 0 &&
 					 (nodes[Req_info->primary_node_id])) ||
 					(node_id >= 0 && (reqkind == PROMOTE_NODE_REQUEST) &&
 					 (VALID_BACKEND(node_id))))
