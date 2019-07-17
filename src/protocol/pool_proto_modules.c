@@ -572,11 +572,6 @@ SimpleQuery(POOL_CONNECTION * frontend,
 				}
 			}
 		}
-		else if (REPLICATION && contents == NULL && start_internal_transaction(frontend, backend, node))
-		{
-			pool_query_context_destroy(query_context);
-			return POOL_ERROR;
-		}
 	}
 
 	if (MAJOR(backend) == PROTO_MAJOR_V2 && is_start_transaction_query(node))
