@@ -645,6 +645,16 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "detach false primary", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "auto_failback", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->auto_failback);
+	StrNCpy(status[i].desc, "auto_failback", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	StrNCpy(status[i].name, "auto_failback_interval", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->auto_failback_interval);
+	StrNCpy(status[i].desc, "auto_failback_interval", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* ONLINE RECOVERY */
 
 	StrNCpy(status[i].name, "recovery_user", POOLCONFIG_MAXNAMELEN);

@@ -66,6 +66,7 @@ char		remote_ps_data[NI_MAXHOST]; /* used for set_ps_display */
 static POOL_CONNECTION_POOL_SLOT * slot;
 static volatile sig_atomic_t reload_config_request = 0;
 static volatile sig_atomic_t restart_request = 0;
+static time_t auto_failback_interval = 0; /* resume time of auto_failback */
 static bool establish_persistent_connection(int node);
 static void discard_persistent_connection(int node);
 static RETSIGTYPE my_signal_handler(int sig);
@@ -243,6 +244,8 @@ establish_persistent_connection(int node)
 {
 	BackendInfo *bkinfo;
 	int			retry_cnt;
+	bool		check_failback = false;
+	time_t		now;
 
 	bkinfo = pool_get_node_info(node);
 
@@ -254,7 +257,20 @@ establish_persistent_connection(int node)
 	 */
 	if (bkinfo->backend_status == CON_UNUSED ||
 		(bkinfo->backend_status == CON_DOWN && bkinfo->quarantine == false))
-		return false;
+	{
+		/* get current time to use auto_faliback_interval */
+		now = time(NULL);
+
+		if (pool_config->auto_failback && auto_failback_interval < now &&
+			STREAM && !strcmp(bkinfo->replication_state, "streaming") && !Req_info->switching)
+		{
+				ereport(DEBUG1,
+						(errmsg("health check DB node: %d (status:%d) for auto_failback", node, bkinfo->backend_status)));
+				check_failback = true;
+		}
+		else
+			return false;
+	}
 
 	/*
 	 * If database is not specified, "postgres" database is assumed.
@@ -326,6 +342,21 @@ establish_persistent_connection(int node)
 
 		if (password)
 			pfree(password);
+		if (check_failback && !Req_info->switching && slot)
+		{
+				ereport(LOG,
+					(errmsg("request auto failback, node id:%d", node)));
+				/* get current time to use auto_faliback_interval */
+				now = time(NULL);
+				auto_failback_interval = now + pool_config->auto_failback_interval;
+
+				send_failback_request(node, true, REQ_DETAIL_CONFIRMED);
+		}
+	}
+	/* if check_failback is true, backend_status is DOWN or UNUSED. */
+	if (check_failback)
+	{
+		return false;
 	}
 	return true;
 }

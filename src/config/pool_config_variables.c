@@ -597,6 +597,16 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"auto_failback", CFGCXT_RELOAD, FAILOVER_CONFIG,
+			"Enables nodes automatically reattach, when dettached node continue streaming replication.",
+			CONFIG_VAR_TYPE_BOOL, false, 0
+		},
+		&g_pool_config.auto_failback,
+		false,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	EMPTY_CONFIG_BOOL
 
@@ -1892,6 +1902,17 @@ static struct config_int ConfigureNamesInt[] =
 		&g_pool_config.memqcache_cache_block_size,
 		1048576,
 		512, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"auto_failback_interval", CFGCXT_RELOAD, FAILOVER_CONFIG,
+			"min interval of executing auto_failback in seconds",
+			CONFIG_VAR_TYPE_INT, false, 0
+		},
+		&g_pool_config.auto_failback_interval,
+		60,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
 

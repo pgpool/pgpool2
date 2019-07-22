@@ -1819,7 +1819,7 @@ check_restart_request(void)
 	if (pool_get_my_process_info()->need_to_restart)
 	{
 		ereport(LOG,
-				(errmsg("failback event detected"),
+				(errmsg("failover or failback event detected"),
 				 errdetail("restarting myself")));
 
 		pool_get_my_process_info()->need_to_restart = 0;
@@ -2294,7 +2294,7 @@ retry_startup:
 	{
 		ereport(LOG,
 				(errmsg("selecting backend connection"),
-				 errdetail("failback event detected, discarding existing connections")));
+				 errdetail("failover or failback event detected, discarding existing connections")));
 
 		pool_get_my_process_info()->need_to_restart = 0;
 		close_idle_connection(0);

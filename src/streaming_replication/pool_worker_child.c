@@ -308,7 +308,7 @@ check_replication_time_lag(void)
 			active_nodes++;
 	}
 
-	if (active_nodes <= 1)
+	if (active_nodes <= 1 && !pool_config->auto_failback)
 	{
 		/*
 		 * If there's only one or less active node, there's no point to do
@@ -403,8 +403,6 @@ check_replication_time_lag(void)
 
 			if (i == PRIMARY_NODE_ID)
 				continue;
-			if (!VALID_BACKEND(i))
-				continue;
 			if (*stat_rep_query == '\0')
 				continue;
 
@@ -428,7 +426,7 @@ check_replication_time_lag(void)
 				strlcpy(bkinfo->replication_state, s, NAMEDATALEN);
 				s = res_rep->data[1]? res_rep->data[2] : "";
 				strlcpy(bkinfo->replication_sync_state, s, NAMEDATALEN);
-				free_select_result(res_rep);				
+				free_select_result(res_rep);
 			}
 			pfree(query_buf);
 		}
@@ -601,26 +599,6 @@ get_query_result(POOL_CONNECTION_POOL_SLOT * *slots, int backend_id, char *query
 		return sts;
 	}
 
-/*
-	if ((*res)->data[0] == NULL)
-	{
-		free_select_result(*res);
-		ereport(LOG,
-				(errmsg("get_query_result: no rows returned"),
-				 errdetail("node id (%d)", backend_id)));
-		return sts;
-	}
-
-
-	if ((*res)->nullflags[0] == -1)
-	{
-		free_select_result(*res);
-		ereport(LOG,
-				(errmsg("get_query_result: NULL data returned"),
-				 errdetail("node id (%d)", backend_id)));
-		return sts;
-	}
-*/
 	sts = 0;
 	return sts;
 }

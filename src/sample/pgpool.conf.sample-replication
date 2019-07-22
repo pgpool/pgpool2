@@ -501,6 +501,13 @@ search_primary_node_timeout = 300
                                    # 0 means no timeout, keep searching
                                    # for a primary node forever.
 
+auto_failback = off
+                                   # Dettached backend node reattach automatically
+                                   # if replication_state is 'streaming'.
+auto_failback_interval = 60
+                                   # Min interval of executing auto_failback in
+                                   # seconds.
+
 #------------------------------------------------------------------------------
 # ONLINE RECOVERY
 #------------------------------------------------------------------------------

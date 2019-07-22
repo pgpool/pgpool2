@@ -229,6 +229,10 @@ typedef struct
 														 * false, just abort the
 														 * transaction to keep
 														 * the consistency. */
+	bool		auto_failback;	/* If true, backend node reattach,
+								 * when backend node detached and
+								 * replication_status is 'stream' */
+	int			auto_failback_interval;	/* min interval of executing auto_failback */
 	bool		replicate_select;	/* replicate SELECT statement when load
 									 * balancing is disabled. */
 	char	  **reset_query_list;	/* comma separated list of queries to be
