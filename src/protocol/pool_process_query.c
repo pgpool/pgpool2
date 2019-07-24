@@ -2403,11 +2403,17 @@ int need_insert_lock(POOL_CONNECTION_POOL *backend, char *query, Node *node)
  * Query to know if the target table has SERIAL column or not.
  * This query is valid through PostgreSQL 7.3 or higher.
  */
-#define NEXTVALQUERY "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.relname = '%s'"
+#define NEXTVALQUERY (Pgversion(backend)->major >= 73 ? \
+	"SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND pg_get_expr(d.adbin, d.adrelid) ~ 'nextval' AND c.relname = '%s'" : \
+	"SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.relname = '%s'")
 
-#define NEXTVALQUERY2 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = pgpool_regclass('%s')"
+#define NEXTVALQUERY2 (Pgversion(backend)->major >= 73 ? \
+	"SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND pg_get_expr(d.adbin, d.adrelid) ~ 'nextval' AND c.oid = pgpool_regclass('%s')" : \
+	"SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = pgpool_regclass('%s')")
 
-#define NEXTVALQUERY3 "SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = pg_catalog.to_regclass('%s')"
+#define NEXTVALQUERY3 (Pgversion(backend)->major >= 73 ? \
+	"SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND pg_get_expr(d.adbin, d.adrelid) ~ 'nextval' AND c.oid = pg_catalog.to_regclass('%s')" : \
+	"SELECT count(*) FROM pg_catalog.pg_attrdef AS d, pg_catalog.pg_class AS c WHERE d.adrelid = c.oid AND d.adsrc ~ 'nextval' AND c.oid = pg_catalog.to_regclass('%s')")
 
 	char *table;
 	int result;
