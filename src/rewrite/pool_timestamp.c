@@ -129,7 +129,21 @@ ts_unregister_func(void *data)
 static TSRel*
 relcache_lookup(TSRewriteContext *ctx)
 {
-#define ATTRDEFQUERY "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%' OR" \
+#define ATTRDEFQUERY (Pgversion(ctx->backend)->major >= 73 ? \
+	"SELECT attname, pg_get_expr(d.adbin, d.adrelid), coalesce((pg_get_expr(d.adbin, d.adrelid) LIKE '%%now()%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%''now''::text%%' OR" \
+	" pg_get_expr(d.adbin, d.adrelid) LIKE '%%CURRENT_TIMESTAMP%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%CURRENT_TIME%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%CURRENT_DATE%%' OR" \
+	" pg_get_expr(d.adbin, d.adrelid) LIKE '%%LOCALTIME%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%LOCALTIMESTAMP%%')" \
+	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
+	" a.atttypid = 'timestamp with time zone'::regtype::oid OR" \
+	" a.atttypid = 'date'::regtype::oid OR" \
+	" a.atttypid = 'time'::regtype::oid OR" \
+	" a.atttypid = 'time with time zone'::regtype::oid)" \
+    " , false)" \
+	" FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a " \
+	" LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum)" \
+	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.relname = '%s'" \
+	" ORDER BY a.attnum" : \
+	"SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%' OR" \
 	" d.adsrc LIKE '%%CURRENT_TIMESTAMP%%' OR d.adsrc LIKE '%%CURRENT_TIME%%' OR d.adsrc LIKE '%%CURRENT_DATE%%' OR" \
 	" d.adsrc LIKE '%%LOCALTIME%%' OR d.adsrc LIKE '%%LOCALTIMESTAMP%%')" \
 	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
@@ -141,9 +155,23 @@ relcache_lookup(TSRewriteContext *ctx)
 	" FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a " \
 	" LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum)" \
 	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.relname = '%s'" \
-	" ORDER BY a.attnum"
+	" ORDER BY a.attnum")
 
-#define ATTRDEFQUERY2 "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%' OR" \
+#define ATTRDEFQUERY2 (Pgversion(ctx->backend)->major >= 73 ? \
+	"SELECT attname, pg_get_expr(d.adbin, d.adrelid), coalesce((pg_get_expr(d.adbin, d.adrelid) LIKE '%%now()%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%''now''::text%%' OR" \
+	" pg_get_expr(d.adbin, d.adrelid) LIKE '%%CURRENT_TIMESTAMP%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%CURRENT_TIME%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%CURRENT_DATE%%' OR" \
+	" pg_get_expr(d.adbin, d.adrelid) LIKE '%%LOCALTIME%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%LOCALTIMESTAMP%%')" \
+	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
+	" a.atttypid = 'timestamp with time zone'::regtype::oid OR" \
+	" a.atttypid = 'date'::regtype::oid OR" \
+	" a.atttypid = 'time'::regtype::oid OR" \
+	" a.atttypid = 'time with time zone'::regtype::oid)" \
+    " , false)" \
+	" FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a " \
+	" LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum)" \
+	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = pgpool_regclass('%s')" \
+	" ORDER BY a.attnum" : \
+	"SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%' OR" \
 	" d.adsrc LIKE '%%CURRENT_TIMESTAMP%%' OR d.adsrc LIKE '%%CURRENT_TIME%%' OR d.adsrc LIKE '%%CURRENT_DATE%%' OR" \
 	" d.adsrc LIKE '%%LOCALTIME%%' OR d.adsrc LIKE '%%LOCALTIMESTAMP%%')" \
 	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
@@ -155,9 +183,23 @@ relcache_lookup(TSRewriteContext *ctx)
 	" FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a " \
 	" LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum)" \
 	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = pgpool_regclass('%s')" \
-	" ORDER BY a.attnum"
+	" ORDER BY a.attnum")
 
-#define ATTRDEFQUERY3 "SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%' OR" \
+#define ATTRDEFQUERY3 (Pgversion(ctx->backend)->major >= 73 ? \
+	"SELECT attname, pg_get_expr(d.adbin, d.adrelid), coalesce((pg_get_expr(d.adbin, d.adrelid) LIKE '%%now()%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%''now''::text%%' OR" \
+	" pg_get_expr(d.adbin, d.adrelid) LIKE '%%CURRENT_TIMESTAMP%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%CURRENT_TIME%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%CURRENT_DATE%%' OR" \
+	" pg_get_expr(d.adbin, d.adrelid) LIKE '%%LOCALTIME%%' OR pg_get_expr(d.adbin, d.adrelid) LIKE '%%LOCALTIMESTAMP%%')" \
+	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
+	" a.atttypid = 'timestamp with time zone'::regtype::oid OR" \
+	" a.atttypid = 'date'::regtype::oid OR" \
+	" a.atttypid = 'time'::regtype::oid OR" \
+	" a.atttypid = 'time with time zone'::regtype::oid)" \
+    " , false)" \
+	" FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a " \
+	" LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum)" \
+	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = to_regclass('%s')" \
+	" ORDER BY a.attnum" : \
+	"SELECT attname, d.adsrc, coalesce((d.adsrc LIKE '%%now()%%' OR d.adsrc LIKE '%%''now''::text%%' OR" \
 	" d.adsrc LIKE '%%CURRENT_TIMESTAMP%%' OR d.adsrc LIKE '%%CURRENT_TIME%%' OR d.adsrc LIKE '%%CURRENT_DATE%%' OR" \
 	" d.adsrc LIKE '%%LOCALTIME%%' OR d.adsrc LIKE '%%LOCALTIMESTAMP%%')" \
 	" AND (a.atttypid = 'timestamp'::regtype::oid OR" \
@@ -169,7 +211,7 @@ relcache_lookup(TSRewriteContext *ctx)
 	" FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a " \
 	" LEFT JOIN pg_catalog.pg_attrdef d ON (a.attrelid = d.adrelid AND a.attnum = d.adnum)" \
 	" WHERE c.oid = a.attrelid AND a.attnum >= 1 AND a.attisdropped = 'f' AND c.oid = to_regclass('%s')" \
-	" ORDER BY a.attnum"
+	" ORDER BY a.attnum")
 
 	char *query;
 	char *table_name;
