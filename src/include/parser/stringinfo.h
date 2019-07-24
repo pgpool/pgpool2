@@ -7,8 +7,8 @@
  * It can be used to buffer either ordinary C strings (null-terminated text)
  * or arbitrary binary data.  All storage is allocated with palloc().
  *
- * Portions Copyright (c) 2003-2018, PgPool Global Development Group
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2019, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/lib/stringinfo.h
@@ -190,7 +190,7 @@ extern void appendStringInfoSpaces(StringInfo str, int count);
  * if necessary.
  */
 extern void appendBinaryStringInfo(StringInfo str,
-					   const char *data, int datalen);
+								   const char *data, int datalen);
 
 /*------------------------
  * appendBinaryStringInfoNT
@@ -198,7 +198,7 @@ extern void appendBinaryStringInfo(StringInfo str,
  * if necessary. Does not ensure a trailing null-byte exists.
  */
 extern void appendBinaryStringInfoNT(StringInfo str,
-						 const char *data, int datalen);
+									 const char *data, int datalen);
 
 /*------------------------
  * enlargeStringInfo

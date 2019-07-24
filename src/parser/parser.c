@@ -10,8 +10,8 @@
  * analyze.c and related files.
  *
  *
- * Portions Copyright (c) 2003-2018, PgPool Global Development Group
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2019, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -26,6 +26,7 @@
 #include "gramparse.h"			/* required before parser/gram.h! */
 #include "gram.h"
 #include "parser.h"
+#include "kwlist_d.h"
 #include "pg_wchar.h"
 #include "utils/elog.h"
 
@@ -58,7 +59,7 @@ raw_parser(const char *str, bool *error)
 
 	/* initialize the flex scanner */
 	yyscanner = scanner_init(str, &yyextra.core_yy_extra,
-							 ScanKeywords, NumScanKeywords);
+							 &ScanKeywords, ScanKeywordTokens);
 
 	/* base_yylex() only needs this much initialization */
 	yyextra.have_lookahead = false;

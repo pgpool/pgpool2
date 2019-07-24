@@ -8,8 +8,8 @@
  * Definitions that are needed outside the core parser should be in parser.h.
  *
  *
- * Portions Copyright (c) 2003-2018, PgPool Global Development Group
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2019, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/gramparse.h
@@ -24,6 +24,7 @@
 #include "scanner.h"
 
 #define AMTYPE_INDEX                    'i' /* index access method */
+#define AMTYPE_TABLE                    't' /* table access method */
 
 /*
  * NB: include gram.h only AFTER including scanner.h, because scanner.h
@@ -68,8 +69,8 @@ typedef struct base_yy_extra_type
 
 
 /* from parser.c */
-extern int base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp,
-		   core_yyscan_t yyscanner);
+extern int	base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp,
+					   core_yyscan_t yyscanner);
 
 /* from gram.y */
 extern void parser_init(base_yy_extra_type *yyext);

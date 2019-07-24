@@ -6,8 +6,8 @@
  * for developers.  If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * Portions Copyright (c) 2003-2018, PgPool Global Development Group
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2019, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/pg_config_manual.h
@@ -41,8 +41,8 @@
 #define pg_attribute_printf(f,a)
 #endif
 /*
- * This is default value for wal_segment_size to be used at initdb when run
- * without --walsegsize option. Must be a valid segment size.
+ * This is the default value for wal_segment_size to be used when initdb is run
+ * without the --wal-segsize option.  It must be a valid segment size.
  */
 #define DEFAULT_XLOG_SEG_SIZE	(16*1024*1024)
 
@@ -163,7 +163,9 @@
 /*
  * USE_PREFETCH code should be compiled only if we have a way to implement
  * prefetching.  (This is decoupled from USE_POSIX_FADVISE because there
- * might in future be support for alternative low-level prefetch APIs.)
+ * might in future be support for alternative low-level prefetch APIs.
+ * If you change this, you probably need to adjust the error message in
+ * check_effective_io_concurrency.)
  */
 #ifdef USE_POSIX_FADVISE
 #define USE_PREFETCH
@@ -313,6 +315,13 @@
  * copyObject().
  */
 /* #define COPY_PARSE_PLAN_TREES */
+
+/*
+ * Define this to force all parse and plan trees to be passed through
+ * outfuncs.c/readfuncs.c, to facilitate catching errors and omissions in
+ * those modules.
+ */
+/* #define WRITE_READ_PARSE_PLAN_TREES */
 
 /*
  * Define this to force all raw parse trees for DML statements to be scanned

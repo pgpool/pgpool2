@@ -6,8 +6,8 @@
  * It can be used to buffer either ordinary C strings (null-terminated text)
  * or arbitrary binary data.  All storage is allocated with palloc().
  *
- * Portions Copyright (c) 2003-2018, PgPool Global Development Group
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2019, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	  src/backend/lib/stringinfo.c
@@ -16,6 +16,7 @@
  */
 #include <string.h>
 #include <stdarg.h>
+#include <errno.h>
 #include "pool_type.h"
 #include "stringinfo.h"
 #include "utils/palloc.h"
@@ -78,12 +79,15 @@ resetStringInfo(StringInfo str)
 void
 appendStringInfo(StringInfo str, const char *fmt,...)
 {
+	int			save_errno = errno;
+
 	for (;;)
 	{
 		va_list		args;
 		int			needed;
 
 		/* Try to format the data. */
+		errno = save_errno;
 		va_start(args, fmt);
 		needed = appendStringInfoVA(str, fmt, args);
 		va_end(args);
@@ -105,6 +109,9 @@ appendStringInfo(StringInfo str, const char *fmt,...)
  * of the space needed, without modifying str.  Typically the caller should
  * pass the return value to enlargeStringInfo() before trying again; see
  * appendStringInfo for standard usage pattern.
+ *
+ * Caution: callers must be sure to preserve their entry-time errno
+ * when looping, in case the fmt contains "%m".
  *
  * XXX This API is ugly, but there seems no alternative given the C spec's
  * restrictions on what can portably be done with va_list arguments: you have

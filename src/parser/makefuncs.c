@@ -4,8 +4,8 @@
  *	  creator functions for primitive nodes. The functions here are for
  *	  the most frequently created nodes.
  *
- * Portions Copyright (c) 2003-2018, PgPool Global Development Group
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2019, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -494,7 +494,6 @@ makeColumnDef(const char *colname, Oid typeOid, int32 typmod, Oid collOid)
 	n->is_local = true;
 	n->is_not_null = false;
 	n->is_from_type = false;
-	n->is_from_parent = false;
 	n->storage = 0;
 	n->raw_default = NULL;
 	n->cooked_default = NULL;

@@ -74,6 +74,19 @@ pool_get_major_version(void)
 	return PROTO_MAJOR_V3;
 }
 
+
+PGVersion *
+Pgversion(POOL_CONNECTION_POOL * backend)
+{
+#define VERSION_BUF_SIZE	10
+	static	PGVersion	pgversion;
+
+	pgversion.major = 12;
+	pgversion.minor = 0;
+
+	return &pgversion;
+}
+
 POOL_RELCACHE *
 pool_create_relcache(int cachesize, char *sql, func_ptr register_func, func_ptr unregister_func, bool issessionlocal)
 {

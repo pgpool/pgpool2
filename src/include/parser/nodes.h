@@ -4,8 +4,8 @@
  *	  Definitions for tagged nodes.
  *
  *
- * Portions Copyright (c) 2003-2018, PgPool Global Development Group
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2019, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/nodes.h
@@ -157,7 +157,7 @@ typedef enum NodeTag
 	T_Aggref,
 	T_GroupingFunc,
 	T_WindowFunc,
-	T_ArrayRef,
+	T_SubscriptingRef,
 	T_FuncExpr,
 	T_NamedArgExpr,
 	T_OpExpr,
@@ -218,7 +218,7 @@ typedef enum NodeTag
 	T_DomainConstraintState,
 
 	/*
-	 * TAGS FOR PLANNER NODES (relation.h)
+	 * TAGS FOR PLANNER NODES (pathnodes.h)
 	 */
 	T_PlannerInfo,
 	T_PlannerGlobal,
@@ -240,7 +240,7 @@ typedef enum NodeTag
 	T_HashPath,
 	T_AppendPath,
 	T_MergeAppendPath,
-	T_ResultPath,
+	T_GroupResultPath,
 	T_MaterialPath,
 	T_UniquePath,
 	T_GatherPath,
@@ -265,6 +265,7 @@ typedef enum NodeTag
 	T_PathKey,
 	T_PathTarget,
 	T_RestrictInfo,
+	T_IndexClause,
 	T_PlaceHolderVar,
 	T_SpecialJoinInfo,
 	T_AppendRelInfo,
@@ -506,6 +507,7 @@ typedef enum NodeTag
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
 	T_FdwRoutine,				/* in foreign/fdwapi.h */
 	T_IndexAmRoutine,			/* in access/amapi.h */
+	T_TableAmRoutine,           /* in access/tableam.h */
 	TsmRoutine ,				/* in access/tsmapi.h */
 	T_ForeignKeyCacheInfo,      /* in utils/rel.h */
 	T_CallContext,              /* in nodes/parsenodes.h */
@@ -608,16 +610,19 @@ struct StringInfoData;			/* not to include stringinfo.h here */
 extern void outNode(struct StringInfoData *str, const void *obj);
 extern void outToken(struct StringInfoData *str, const char *s);
 extern void outBitmapset(struct StringInfoData *str,
-			 const struct Bitmapset *bms);
+						 const struct Bitmapset *bms);
 extern void outDatum(struct StringInfoData *str, uintptr_t value,
-		 int typlen, bool typbyval);
+					 int typlen, bool typbyval);
 extern char *nodeToString(const void *obj);
 extern char *bmsToString(const struct Bitmapset *bms);
 
 /*
  * nodes/{readfuncs.c,read.c}
  */
-extern void *stringToNode(char *str);
+extern void *stringToNode(const char *str);
+#ifdef WRITE_READ_PARSE_PLAN_TREES
+extern void *stringToNodeWithLocations(const char *str);
+#endif
 extern struct Bitmapset *readBitmapset(void);
 extern uintptr_t readDatum(bool typbyval);
 extern bool *readBoolCols(int numCols);
@@ -745,7 +750,7 @@ typedef enum JoinType
  * AggStrategy -
  *	  overall execution strategies for Agg plan nodes
  *
- * This is needed in both plannodes.h and relation.h, so put it here...
+ * This is needed in both pathnodes.h and plannodes.h, so put it here...
  */
 typedef enum AggStrategy
 {
@@ -759,7 +764,7 @@ typedef enum AggStrategy
  * AggSplit -
  *	  splitting (partial aggregation) modes for Agg plan nodes
  *
- * This is needed in both plannodes.h and relation.h, so put it here...
+ * This is needed in both pathnodes.h and plannodes.h, so put it here...
  */
 
 /* Primitive options supported by nodeAgg.c: */
@@ -789,7 +794,7 @@ typedef enum AggSplit
  * SetOpCmd and SetOpStrategy -
  *	  overall semantics and execution strategies for SetOp plan nodes
  *
- * This is needed in both plannodes.h and relation.h, so put it here...
+ * This is needed in both pathnodes.h and plannodes.h, so put it here...
  */
 typedef enum SetOpCmd
 {

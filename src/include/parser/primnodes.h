@@ -6,8 +6,8 @@
  *	  Currently, these are mostly nodes for executable expressions
  *	  and join trees.
  *
- * Portions Copyright (c) 2003-2018, PgPool Global Development Group *
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2019, PgPool Global Development Group *
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/primnodes.h
@@ -88,12 +88,15 @@ typedef struct RangeVar
 
 /*
  * TableFunc - node for a table function, such as XMLTABLE.
+ *
+ * Entries in the ns_names list are either string Value nodes containing
+ * literal namespace names, or NULL pointers to represent DEFAULT.
  */
 typedef struct TableFunc
 {
 	NodeTag		type;
-	List	   *ns_uris;		/* list of namespace uri */
-	List	   *ns_names;		/* list of namespace names */
+	List	   *ns_uris;		/* list of namespace URI expressions */
+	List	   *ns_names;		/* list of namespace names or NULL */
 	Node	   *docexpr;		/* input document expression */
 	Node	   *rowexpr;		/* row filter expression */
 	List	   *colnames;		/* column names (list of String) */
@@ -121,6 +124,7 @@ typedef struct IntoClause
 
 	RangeVar   *rel;			/* target relation name */
 	List	   *colNames;		/* column names to assign, or NIL */
+	char	   *accessMethod;	/* table access method */
 	List	   *options;		/* options from WITH clause */
 	OnCommitAction onCommit;	/* what do we do at COMMIT? */
 	char	   *tableSpaceName; /* table space to use, or NULL */
@@ -378,18 +382,19 @@ typedef struct WindowFunc
 } WindowFunc;
 
 /* ----------------
- *	ArrayRef: describes an array subscripting operation
+ *	SubscriptingRef: describes a subscripting operation over a container
+ *			(array, etc).
  *
- * An ArrayRef can describe fetching a single element from an array,
- * fetching a subarray (array slice), storing a single element into
- * an array, or storing a slice.  The "store" cases work with an
- * initial array value and a source value that is inserted into the
- * appropriate part of the array; the result of the operation is an
- * entire new modified array value.
+ * A SubscriptingRef can describe fetching a single element from a container,
+ * fetching a part of container (e.g. array slice), storing a single element into
+ * a container, or storing a slice.  The "store" cases work with an
+ * initial container value and a source value that is inserted into the
+ * appropriate part of the container; the result of the operation is an
+ * entire new modified container value.
  *
- * If reflowerindexpr = NIL, then we are fetching or storing a single array
- * element at the subscripts given by refupperindexpr.  Otherwise we are
- * fetching or storing an array slice, that is a rectangular subarray
+ * If reflowerindexpr = NIL, then we are fetching or storing a single container
+ * element at the subscripts given by refupperindexpr. Otherwise we are
+ * fetching or storing a container slice, that is a rectangular subcontainer
  * with lower and upper bounds given by the index expressions.
  * reflowerindexpr must be the same length as refupperindexpr when it
  * is not NIL.
@@ -401,28 +406,29 @@ typedef struct WindowFunc
  * element; but it is the array type when doing subarray fetch or either
  * type of store.
  *
- * Note: for the cases where an array is returned, if refexpr yields a R/W
- * expanded array, then the implementation is allowed to modify that object
+ * Note: for the cases where a container is returned, if refexpr yields a R/W
+ * expanded container, then the implementation is allowed to modify that object
  * in-place and return the same object.)
  * ----------------
  */
-typedef struct ArrayRef
+typedef struct SubscriptingRef
 {
 	Expr		xpr;
-	Oid			refarraytype;	/* type of the array proper */
-	Oid			refelemtype;	/* type of the array elements */
-	int32		reftypmod;		/* typmod of the array (and elements too) */
+	Oid			refcontainertype;	/* type of the container proper */
+	Oid			refelemtype;	/* type of the container elements */
+	int32		reftypmod;		/* typmod of the container (and elements too) */
 	Oid			refcollid;		/* OID of collation, or InvalidOid if none */
 	List	   *refupperindexpr;	/* expressions that evaluate to upper
-									 * array indexes */
+									 * container indexes */
 	List	   *reflowerindexpr;	/* expressions that evaluate to lower
-									 * array indexes, or NIL for single array
-									 * element */
-	Expr	   *refexpr;		/* the expression that evaluates to an array
-								 * value */
+									 * container indexes, or NIL for single
+									 * container element */
+	Expr	   *refexpr;		/* the expression that evaluates to a
+								 * container value */
+
 	Expr	   *refassgnexpr;	/* expression for the source value, or NULL if
 								 * fetch */
-} ArrayRef;
+} SubscriptingRef;
 
 /*
  * CoercionContext - distinguishes the allowed set of type casts
@@ -765,7 +771,7 @@ typedef struct FieldSelect
  *
  * FieldStore represents the operation of modifying one field in a tuple
  * value, yielding a new tuple value (the input is not touched!).  Like
- * the assign case of ArrayRef, this is used to implement UPDATE of a
+ * the assign case of SubscriptingRef, this is used to implement UPDATE of a
  * portion of a column.
  *
  * resulttype is always a named composite type (not a domain).  To update
@@ -944,8 +950,20 @@ typedef struct CaseWhen
  * This is effectively like a Param, but can be implemented more simply
  * since we need only one replacement value at a time.
  *
- * We also use this in nested UPDATE expressions.
- * See transformAssignmentIndirection().
+ * We also abuse this node type for some other purposes, including:
+ *	* Placeholder for the current array element value in ArrayCoerceExpr;
+ *	  see build_coercion_expression().
+ *	* Nested FieldStore/ArrayRef assignment expressions in INSERT/UPDATE;
+ *	  see transformAssignmentIndirection().
+ *
+ * The uses in CaseExpr and ArrayCoerceExpr are safe only to the extent that
+ * there is not any other CaseExpr or ArrayCoerceExpr between the value source
+ * node and its child CaseTestExpr(s).  This is true in the parse analysis
+ * output, but the planner's function-inlining logic has to be careful not to
+ * break it.
+ *
+ * The nested-assignment-expression case is safe because the only node types
+ * that can be above such CaseTestExprs are FieldStore and ArrayRef.
  */
 typedef struct CaseTestExpr
 {

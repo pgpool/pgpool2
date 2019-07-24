@@ -4,8 +4,8 @@
  *	  implementation for PostgreSQL generic linked list package
  *
  *
- * Portions Copyright (c) 2003-2018, PgPool Global Development Group
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2019, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1026,8 +1026,11 @@ list_append_unique_oid(List *list, Oid datum)
  * via equal().
  *
  * This is almost the same functionality as list_union(), but list1 is
- * modified in-place rather than being copied.  Note also that list2's cells
- * are not inserted in list1, so the analogy to list_concat() isn't perfect.
+ * modified in-place rather than being copied. However, callers of this
+ * function may have strict ordering expectations -- i.e. that the relative
+ * order of those list2 elements that are not duplicates is preserved. Note
+ * also that list2's cells are not inserted in list1, so the analogy to
+ * list_concat() isn't perfect.
  */
 List *
 list_concat_unique(List *list1, List *list2)
