@@ -604,10 +604,18 @@ IPアドレス切り替え後にARPリクエストを送信するコマンドで
 	  このパラメータを有効にすると、<productname>Pgpool-II</productname>がバックエンドノードの縮退/フェイルオーバを実行する際にクォーラムが存在するかどうかを考慮するようになります。
 	</para>
 	<para>
-	  「クォーラムが存在する」とは、生きているwatchdogノードの数(<productname>Pgpool-II</productname>の数)を全部足して、すべてのwatchdogノードの数に対して多数派を形成できる場合のことを指します。たとえば、watchdogノード数が5のとき、生きているノード数が3以上なら多数派を形成できるのでクォーラムは存在しますが、生きているノード数が2以下なら多数派を形成できないのでクォーラムは存在しません。
+	  「クォーラムが存在する」とは、生きているwatchdogノードの数(<productname>Pgpool-II</productname>の数)を全部足して、すべてのwatchdogノードの数に対して多数派を形成できる場合のことを指します。
+	  たとえば、watchdogノード数が5のとき、生きているノード数が3以上なら多数派を形成できるのでクォーラムは存在しますが、生きているノード数が2以下なら多数派を形成できないのでクォーラムは存在しません。
+	  </para>
+	  <para>
 	  クォーラムが存在すると、一つのwatchdogノードがバックエンドの障害を誤検知しても他の多数派のノードに否決されるので、障害誤検知に対して堅牢になります。
 	  これは<xref linkend="guc-failover-require-consensus">がオン(デフォルト)の動作ですが、設定によって多数派を形成しなくても直ちにフェイルオーバするようにすることもできます。
 	  バックエンドの障害を誤って検出した<productname>Pgpool-II</productname>ノードは、障害の発生したバックエンドノードを隔離します。
+	</para>
+	<para>
+  	  クォーラムの存在の有無は、<xref linkend="pcp-watchdog-info">コマンドを<literal>--verbose</literal>オプション付きで起動することで確認できます。
+	  <literal>Quorum state</literal>が<literal>QUORUM EXIST</literal>または<literal>QUORUM IS ON THE EDGE</literal>ならクォーラムは存在します。
+	  <literal>Quorum state</literal>が<literal>QUORUM ABSENT</literal>ならクォーラムは存在しません。
 	</para>
 	<para>
 	  なお、watchdogノード数が偶数の場合は、生きているノード数がすべてのwatchdogノード数の半数以上ならクォーラムが存在するとみなします。
