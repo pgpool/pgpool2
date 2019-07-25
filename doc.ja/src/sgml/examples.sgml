@@ -65,7 +65,7 @@ $ make install
           such as the installation directory. <productname>Pgpool-II</productname>
           will be installed to <literal>/usr/local</literal> directory by default.
 -->
-<command>configure</command>スクリプトはシステム情報を収集しコンパイル処理に利用します。
+<link linkend="INSTALL-PGPOOL"><command>configure</command>スクリプト</link>はシステム情報を収集しコンパイル処理に利用します。
 <command>configure</>スクリプトにコマンドライン引数を指定することにより、インストール先ディレクトリなど、デフォルトの動作を変更することができます。
 デフォルトでは<productname>Pgpool-II</> は<literal>/usr/local</literal>ディレクトリ以下にインストールされます。
         </para>
@@ -139,10 +139,10 @@ $ cp /usr/local/etc/pgpool.conf.sample /usr/local/etc/pgpool.conf
           </programlisting>
 <!--
           <productname>Pgpool-II</productname> only accepts connections from the localhost
-          using port 9999. If you wish to receive conenctions from other hosts,
+          using port 9999 by the default. If you wish to receive conenctions from other hosts,
           set <xref linkend="guc-listen-addresses"> to <literal>'*'</literal>.
 -->
-<productname>Pgpool-II</> はローカルホストからのポート番号9999への接続のみを受け付けます。
+<productname>Pgpool-II</> はデフォルトではローカルホストからのポート番号9999への接続のみを受け付けます。
 <productname>Pgpool-II</> と異なるホストからの接続を受け付けたい場合は、<xref linkend="guc-listen-addresses">を<literal>'*'</literal>に設定します。
           <programlisting>
 listen_addresses = 'localhost'
@@ -177,8 +177,8 @@ port = 9999
 <acronym>PCP</acronym>コマンドを使用するにはユーザ認証が必要になります。
 この認証は<productname>PostgreSQL</>ユーザの認証とは異なります。
 ユーザ名とパスワードが<literal>pcp.conf</literal>ファイルに定義されている必要があります。
-このファイルでは、1行ごとにユーザ名とパスワードがペアとしてリストされており、これららコロン(:)で区切られています。
-パスワードは<literal>MD5</literal>ハッシュ形式で暗号化されています。
+このファイルでは、1行ごとにユーザ名とパスワードがペアとしてリストされており、これらがコロン(:)で区切られています。
+パスワードは<literal>MD5</literal>ハッシュ形式で暗号化されている必要があります。
 
           <programlisting>
 postgres:e8a48653851e28c69d0506508fb27fc5
@@ -206,7 +206,7 @@ $ cp /usr/local/etc/pcp.conf.sample /usr/local/etc/pcp.conf
 <command>pg_md5</command>コマンドは、コマンドライン引数として文字列を指定すると、それをMD5ハッシュ化したものを表示します。
 例えば、以下のようにコマンドライン引数として<literal>"postgres"</literal>を指定して実行すると、それをMD5ハッシュ化しテキストが標準出力に表示されます。
           <programlisting>
-$ /usr/bin/pg_md5 postgres
+$ /usr/local/bin/pg_md5 postgres
 e8a48653851e28c69d0506508fb27fc5
           </programlisting>
 <!--
@@ -400,8 +400,8 @@ $ pgpool -m fast stop
         <command>pgbench</command></ulink> benchmark program.
 -->
 レプリケーション（<xref linkend="runtime-config-replication-mode">を参照）では複数のデータベースノードに同じデータを複製して格納します。
-ここでは、<xref linkend="example-configs-begin">で準備した 3 台のデータベースノードを使用し、一歩一歩データベースクラスタシステムを作っていきまししょう。
-複製させるサンプルのデータ<ulink url="https://www.postgresql.org/docs/current/static/pgbench.html"><command>pgbench</command></ulink>ベンチマークプログラムで生成することにします。
+ここでは、<xref linkend="example-configs-begin">で準備した 3 台のデータベースノードを使用し、一歩一歩データベースクラスタシステムを作っていきましょう。
+複製させるサンプルのデータは<ulink url="https://www.postgresql.org/docs/current/static/pgbench.html"><command>pgbench</command></ulink>ベンチマークプログラムで生成することにします。
       </para>
 
       <sect3 id="example-configs-config-replication">
@@ -446,7 +446,7 @@ load_balance_mode = true
 		    <title>レプリケーションの確認</title>
         <para>
 <!--
-          To reflect the changes in <literal>pgpool.conf</literal>,
+          To reflect the above changes in <literal>pgpool.conf</literal>,
           <productname>Pgpool-II</productname> must be restarted.
           Please refer to "Starting/Stopping <productname>Pgpool-II</productname>"
           <xref linkend="example-configs-start-stop-pgpool">.
@@ -461,7 +461,7 @@ load_balance_mode = true
           <productname>Pgpool-II</productname>, and the database will be created
           on all the nodes.
 -->
-<literal>pgpool.conf</literal>の変更を<productname>Pgpool-II</>に反映させるには<productname>Pgpool-II</>を再起動する必要があります。
+上記の<literal>pgpool.conf</literal>の変更を<productname>Pgpool-II</>に反映させるには<productname>Pgpool-II</>を再起動する必要があります。
 「<productname>Pgpool-II</> の起動と停止」<xref linkend="example-configs-start-stop-pgpool">を参照してください。
 <literal>pgpool.conf</literal>の設定と再起動がすんだら、実際にレプリケーションを試してうまく行くことを確認しましょう。
 まず、複製するデータベースを作成する必要があります。
@@ -487,7 +487,7 @@ $ pgbench -i -p 9999 bench_replication
         <command>pgbench -i</command></ulink>. If, on all the nodes, the listed tables and
           data are created, replication is working correctly.
 -->
-<ulink url="https://www.postgresql.org/docs/current/static/pgbench.html"><command>pgbench -i</command></ulink>によいって作成されるテーブルとデータを以下の表にまとめます。
+<ulink url="https://www.postgresql.org/docs/current/static/pgbench.html"><command>pgbench -i</command></ulink>によって作成されるテーブルとデータを以下の表にまとめます。
 すべてのノードにおいてこれらのテーブルおよびデータが作成されていれば、正常にレプリケーションが動作していることになります。
         </para>
 
@@ -971,23 +971,42 @@ lo        ...
         <para>
 <!--
           There are the parameters about watchdog's monitoring.
-          Specify the interval to check <xref linkend="guc-wd-interval">,
-          the count to retry <xref linkend="guc-wd-life-point">,
-          the qyery to check <xref linkend="guc-wd-lifecheck-query"> and
-          finaly the type of lifecheck <xref linkend="guc-wd-lifecheck-method">.
+          Specify the interval to check <xref linkend="guc-wd-interval"> and
+          the type of lifecheck <xref linkend="guc-wd-lifecheck-method">.
+          The <literal>hearbeat</literal> method specify the time to detect
+          a fault <xref linkend="guc-wd-heartbeat-deadtime">, the port number to
+          receive <xref linkend="guc-wd-heartbeat-port">, the interval to send
+          <xref linkend="guc-wd-heartbeat-keepalive">, the IP address or hostname
+          of destination <xref linkend="guc-heartbeat-destination"> and finally
+          the destination port number <xref linkend="guc-heartbeat-destination-port">.
 -->
 watchdog の監視方法について設定するパラメータがあります。
-監視間隔秒を指定する<xref linkend="guc-wd-interval">、リトライ回数を指定する<xref linkend="guc-wd-life-point">、 監視に使うクエリを指定する<xref linkend="guc-wd-lifecheck-query">、死活監視のタイプを指定する<xref linkend="guc-wd-lifecheck-method">を記述します。
+監視間隔秒を指定する<xref linkend="guc-wd-interval">、死活監視のタイプを指定する<xref linkend="guc-wd-lifecheck-method">を記述します。
+<literal>heartbeat</literal>方式では、障害と判断する秒数を指定する<xref linkend="guc-wd-heartbeat-deadtime">、受信ポート番号を指定する<xref linkend="guc-wd-heartbeat-port">、ハートビート信号の送信間隔秒を指定する<xref linkend="guc-wd-heartbeat-keepalive">、送信先<xref linkend="guc-heartbeat-destination">、<xref linkend="guc-heartbeat-destination-port">を記述します。
           <programlisting>
-wd_lifecheck_method = 'query'
+wd_lifecheck_method = 'heartbeat'
                                     # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
                                     # (change requires restart)
 wd_interval = 10
                                     # lifecheck interval (sec) > 0
-wd_life_point = 3
-                                    # lifecheck retry times
-wd_lifecheck_query = 'SELECT 1'
-                                    # lifecheck query to pgpool from watchdog
+wd_heartbeat_port = 9694
+                                    # Port number for receiving heartbeat signal
+                                    # (change requires restart)
+wd_heartbeat_keepalive = 2
+                                    # Interval time of sending heartbeat signal (sec)
+                                    # (change requires restart)
+wd_heartbeat_deadtime = 30
+                                    # Deadtime interval for heartbeat signal (sec)
+                                    # (change requires restart)
+heartbeat_destination0 = 'host0_ip1'
+                                    # Host name or IP address of destination 0
+                                    # for sending heartbeat signal.
+                                    # (change requires restart)
+heartbeat_destination_port0 = 9694
+                                    # Port number of destination 0 for sending
+                                    # heartbeat signal. Usually this is the
+                                    # same as wd_heartbeat_port.
+                                    # (change requires restart)
         </programlisting>
 
         </para>
@@ -1011,11 +1030,11 @@ IP アドレスの切り替えコマンドについて設定するパラメー�
 仮想 IP を切り替える際に使うコマンドとして<xref linkend="guc-if-up-cmd">、<xref linkend="guc-if-down-cmd">、そのパスを指定する<xref linkend="guc-if-cmd-path">を記述します。
 また、仮想IP切り替え後のARPリクエスト送信コマンドを指定する<xref linkend="guc-arping-cmd">、そのパスを指定する<xref linkend="guc-arping-path">を記述します。
           <programlisting>
-ifconfig_path = '/sbin'
-                                    # ifconfig command path
-if_up_cmd = 'ifconfig eth0:0 inet $_IP_$ netmask 255.255.255.0'
+if_cmd_path = '/sbin'
+                                    # path to the directory where if_up/down_cmd exists
+if_up_cmd = 'ip addr add $_IP_$/24 dev eth0 label eth0:0'
                                     # startup delegate IP command
-if_down_cmd = 'ifconfig eth0:0 down'
+if_down_cmd = 'ip addr del $_IP_$/24 dev eth0'
                                     # shutdown delegate IP command
 
 arping_path = '/usr/sbin'           # arping command path
@@ -1023,11 +1042,11 @@ arping_path = '/usr/sbin'           # arping command path
 arping_cmd = 'arping -U $_IP_$ -w 1'
         </programlisting>
 <!--
-        You can also use the custom scripts to bring up and bring down the
-        virtual IP using <xref linkend="guc-wd-escalation-command"> and
-        <xref linkend="guc-wd-de-escalation-command"> configurations.
+        You can also bring up and bring down the virtual IP using arbitrary scripts
+        specified <xref linkend="guc-wd-escalation-command"> and
+        <xref linkend="guc-wd-de-escalation-command"> parameters.
 -->
-<xref linkend="guc-wd-escalation-command">および<xref linkend="guc-wd-de-escalation-command">の設定を用いて仮想IPの起動・停止を行う同時にスクリプトを使うこともできます。
+<xref linkend="guc-wd-escalation-command">および<xref linkend="guc-wd-de-escalation-command">パラメータに指定した任意のスクリプトで仮想IPの起動・停止を行うこともできます。
 
         </para>
       </sect3>

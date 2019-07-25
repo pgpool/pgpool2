@@ -107,8 +107,10 @@ test t-ishii 2018-07-09 16:43:53 2018-07-09 16:44:08 3 0 1 1436 1 1406 1
 </literallayout>
   </para>
   <para>
-  If there is no connection to the backends, nothing will be displayed.
-  If there are multiple connections, one connection's information will be displayed on each line multiple times.
+  If <literal>-a</literal> or <literal>--all</literal> option is not specified and
+  there is no connection to the backends, nothing will be displayed. If there are
+  multiple connections, one connection's information will be displayed on each
+  line multiple times. Timestamps are displayed in EPOCH format.
   </para>
   <para>
 	The <option>--verbose</option> option can help understand the output. For example:

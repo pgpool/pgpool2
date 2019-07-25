@@ -157,11 +157,12 @@ test t-ishii 2018-07-09 16:43:53 2018-07-09 16:44:08 3 0 1 1436 1 1406 1
   </para>
   <para>
   <!--
-  If there is no connection to the backends, nothing will be displayed.
-  If there are multiple connections, one connection's information will be displayed on each line multiple times.
-  Timestamps are displayed in EPOCH format.
+  If <literal>a</literal> or <literal>all</literal> option is not specified and
+  there is no connection to the backends, nothing will be displayed. If there are
+  multiple connections, one connection's information will be displayed on each
+  line multiple times. Timestamps are displayed in EPOCH format.
   -->
-  コネクションがバックエンドに対して張られていない場合、データは表示されません。 コネクション情報が複数ある場合、複数行に 1 行 1 コネクション情報で表示されます。
+  <literal>-a</literal> もしくは <literal>--all</literal>オプションが指定されておらずコネクションがバックエンドに対して張られていない場合、データは表示されません。 コネクション情報が複数ある場合、複数行に 1 行 1 コネクション情報で表示されます。
   </para>
   <para>
   <!--

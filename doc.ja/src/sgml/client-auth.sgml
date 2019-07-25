@@ -51,14 +51,14 @@
   Just like the <filename>pg_hba.conf</filename> file for <productname>PostgreSQL</>,
   <productname>Pgpool-II</productname> supports a similar client authentication
   function using a configuration file called <filename>pool_hba.conf</filename>.
-  <productname>Pgpool-II</productname> installation also includes the sample
+  If <productname>Pgpool-II</productname> is installed from source code, it also includes the sample
   <filename>pool_hba.conf.sample</filename> file in the default configuration directory
   (<literal>"/usr/local/etc"</literal>).
   By default, pool_hba authentication is disabled, and setting <varname>enable_pool_hba</varname>
   to <literal>on</literal> enables it. see the <xref linkend="guc-enable-pool-hba"> configuration parameter.
 -->
 <productname>PostgreSQL</productname>の<filename>pg_hba.conf</filename>と同じように<productname>Pgpool-II</productname>でも<filename>pool_hba.conf</filename>とよばれる設定ファイルを使った同様のクライアント認証機能をサポートしています。
-<productname>Pgpool-II</productname>をインストールするとデフォルトインストール先の設定ファイルディレクトリ（<literal>"/usr/local/etc"</literal>）にサンプルの<filename>pool_hba.conf.sample</filename>が含まれています。
+<productname>Pgpool-II</productname>をソースコードからインストールした場合、デフォルトインストール先の設定ファイルディレクトリ（<literal>"/usr/local/etc"</literal>）にサンプルの<filename>pool_hba.conf.sample</filename>が含まれています。
 デフォルトではpool_hbaによる認証は無効になっており、<varname>enable_pool_hba</varname>を<literal>on</literal>に設定することで有効になります。
 <xref linkend="guc-enable-pool-hba">設定パラメータをご覧ください。
   </para>
@@ -92,7 +92,7 @@
 レコードは行をまたいで続けることはできません。
 レコードはスペースもしくはタブ、もしくはその両方で区切られた、複数のフィールドで構成されています。
 フィールドには、フィールド値が二重引用符付きの場合空白文字を含むことができます。
-データベース、ユーザもしくはアドレスフィールド内のキーワード(例：<literal>all</>または<literal>replication</>)の一つを引用するとその特別な意味が失われ、その名称のデータベース、ユーザもしくはホストと一致するようになります。
+データベース、ユーザもしくはアドレスフィールド内のキーワード(例：<literal>all</>または<literal>replication</>)の一つを引用符で囲むとその特別な意味が失われ、その名称のデータベース、ユーザもしくはホストと一致するようになります。
   </para>
 
   <para>
@@ -1068,7 +1068,6 @@ PAMサポートを有効にするには、<productname>Pgpool-II</productname>�
 -->
 <productname>Pgpool-II</productname><emphasis>V4.0</emphasis>以降では、クライアントアプリケーションとバックエンドの<productname>PostgreSQL</productname>サーバに対して異なる認証を使用することが可能です。
 例えば、クライアントアプリケーションは<productname>Pgpool-II</productname>への接続に<literal>scram-sha-256</literal>を使用し、次に同じセッションの<productname>PostgreSQL</productname>バックエンドへの接続に<literal>trust</literal>または<literal>md5</literal>認証を使用できます。
-
     </para>
   </sect1>
 

@@ -612,7 +612,9 @@
     </para>
     <para>
        <literal>query</literal>: In this mode, watchdog sends the monitoring queries
-       to other <productname>Pgpool-II</productname> and checks the response
+       to other <productname>Pgpool-II</productname> and checks the response.
+       When installation location between <productname>Pgpool-II</productname>
+       servers is far, <literal>query</literal> may be useful.
        <caution>
        <para>
         In query mode, you need to set <xref linkend="guc-num-init-children">

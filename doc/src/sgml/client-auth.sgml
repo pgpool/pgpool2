@@ -42,7 +42,7 @@
       Just like the <filename>pg_hba.conf</filename> file for <productname>PostgreSQL</productname>,
       <productname>Pgpool-II</productname> supports a similar client authentication
       function using a configuration file called <filename>pool_hba.conf</filename>.
-      <productname>Pgpool-II</productname> installation also includes the sample
+      If <productname>Pgpool-II</productname> is installed from source code, it also includes the sample
       <filename>pool_hba.conf.sample</filename> file in the default
       configuration directory (<literal>"/usr/local/etc"</literal>).
       By default, pool_hba authentication is disabled, and
