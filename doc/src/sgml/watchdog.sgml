@@ -353,7 +353,7 @@
         watchdog node when that node resigns from the master node responsibilities.
         A master watchdog node can resign from being a master node,
         when the master node <productname>Pgpool-II</productname> shuts down, detects a network
-        blackout or detects the lost of quorum.
+        blackout or detects the lost of <indexterm><primary>quorum</primary></indexterm><firstterm>quorum</firstterm>.
         </para>
         <para>
           This command is executed before bringing down the virtual/floating IP address
@@ -391,7 +391,7 @@
         </term>
       <listitem>
         <para>
-          When enabled, <productname>Pgpool-II</productname> will consider quorum when it performs the degenerate/failover on backend node.
+          When enabled, <productname>Pgpool-II</productname> will consider <indexterm><primary>quorum</primary></indexterm>quorum when it performs the degenerate/failover on backend node.
         </para>
 	<para>
 	  We can say that "quorum exists" if the number of live

@@ -543,7 +543,7 @@ IPアドレス切り替え後にARPリクエストを送信するコマンドで
         blackout or detects the lost of quorum.
 -->
 <productname>Pgpool-II</productname>のマスターwatchdogが責務を辞退し降格するときに、ここで指定したコマンドが実行されます。
-マスターwatchdogノードは、そのマスターノードの<productname>Pgpool-II</productname>が停止したとき、ネットワーク切断やクォーラムが失われたことを検出した時に、マスターから辞任します。
+マスターwatchdogノードは、そのマスターノードの<productname>Pgpool-II</productname>が停止したとき、ネットワーク切断や<firstterm>クォーラム(quorum)</firstterm><indexterm><primary>クォーラム</primary></indexterm><indexterm><primary>quorum</primary></indexterm>が失われたことを検出した時に、マスターから辞任します。
         </para>
         <para>
 <!--
@@ -601,7 +601,7 @@ IPアドレス切り替え後にARPリクエストを送信するコマンドで
         </term>
       <listitem>
         <para>
-	  このパラメータを有効にすると、<productname>Pgpool-II</productname>がバックエンドノードの縮退/フェイルオーバを実行する際にクォーラムが存在するかどうかを考慮するようになります。
+	  このパラメータを有効にすると、<productname>Pgpool-II</productname>がバックエンドノードの縮退/フェイルオーバを実行する際にクォーラム<indexterm><primary>quorum</primary></indexterm><indexterm><primary>クォーラム</primary></indexterm>が存在するかどうかを考慮するようになります。
 	</para>
 	<para>
 	  「クォーラムが存在する」とは、生きているwatchdogノードの数(<productname>Pgpool-II</productname>の数)を全部足して、すべてのwatchdogノードの数に対して多数派を形成できる場合のことを指します。
