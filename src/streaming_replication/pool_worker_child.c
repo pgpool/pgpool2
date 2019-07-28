@@ -401,6 +401,8 @@ check_replication_time_lag(void)
 			*bkinfo->replication_state = '\0';
 			*bkinfo->replication_sync_state = '\0';
 
+			if (!VALID_BACKEND(i))
+				continue;
 			if (i == PRIMARY_NODE_ID)
 				continue;
 			if (*stat_rep_query == '\0')
