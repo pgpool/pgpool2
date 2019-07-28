@@ -206,7 +206,8 @@ date >> $log
 echo "failed_node_id $failed_node_id failed_host_name $failed_host_name failed_port $failed_port failed_db_cluster $failed_db_cluster new_master_id $new_master_id old_master_id $old_master_id new_master_host_name $new_master_host_name old_primary_node_id $old_primary_node_id new_master_port_number $new_master_port_number new_master_db_cluster $new_master_db_cluster" >> $log
 
 # Stop standby node if it's running
-if $pg_ctl -D $failed_db_cluster status|grep "is running" >/dev/null 2>&1
+$pg_ctl -D $failed_db_cluster status >/dev/null 2>&1
+if [ $? = 0 ]
 then
 	$pg_ctl -w -m f -D $failed_db_cluster stop >> $log 2>&1
 	sleep 10
