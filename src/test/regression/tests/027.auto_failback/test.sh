@@ -38,7 +38,7 @@ fi
 # trigger failover on node 1
 $PG_CTL -D data1 -w -m f stop
 wait_for_pgpool_startup
-echo "backend node 1 is stooped"
+echo "backend node 1 is stopped"
 
 $PSQL -c "show pool_nodes" test |grep down
 if [ $? != 0 ];then
@@ -65,7 +65,7 @@ echo `date` ":test auto_failback_interval"
 # trigger failover on node 1
 $PG_CTL -D data1 -w -m f stop > /dev/null
 wait_for_pgpool_startup
-echo `date` ":backend node 1 is stooped"
+echo `date` ":backend node 1 is stopped"
 $PSQL -c "show pool_nodes" test |grep down
 if [ $? != 0 ];then
 	./shutdownall
