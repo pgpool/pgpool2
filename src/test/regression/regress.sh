@@ -47,6 +47,9 @@ function install_pgpool
 	echo "moving pgpool_setup to temporary installation path ..."
         cp $dir/../pgpool_setup ${PGPOOL_PATH}/pgpool_setup
 	export PGPOOL_SETUP=$PGPOOL_PATH/pgpool_setup
+	echo "moving watchdog_setup to temporary installation path ..."
+        cp $dir/../watchdog_setup ${PGPOOL_PATH}/watchdog_setup
+	export WATCHDOG_SETUP=$PGPOOL_PATH/watchdog_setup
 }
 
 function verify_pginstallation
@@ -72,6 +75,7 @@ function export_env_vars
 		# check if pgpool is in the path
 		PGPOOL_PATH=/usr/local
 		export PGPOOL_SETUP=$HOME/bin/pgpool_setup
+		export WATCHDOG_SETUP=$HOME/bin/watchdog_setup
  	fi
 	
 	if [[ -z "$PGBENCH_PATH" ]]; then
@@ -160,6 +164,7 @@ elif [ "$MODE" = "noinstall" ]; then
 		PGPOOL_PATH=$PGPOOL_INSTALL_PATH
 	fi
         export PGPOOL_SETUP=$dir/../pgpool_setup
+        export WATCHDOG_SETUP=$dir/../watchdog_setup
 else
 	echo $MODE : Invalid mode
 	exit -1
