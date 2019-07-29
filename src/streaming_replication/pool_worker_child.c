@@ -270,7 +270,6 @@ check_replication_time_lag(void)
 	static int	server_version[MAX_NUM_BACKENDS];
 
 	int			i;
-	int			active_nodes = 0;
 	POOL_SELECT_RESULT *res;
 	POOL_SELECT_RESULT *res_rep;	/* query results of pg_stat_replication */
 	unsigned long long int lsn[MAX_NUM_BACKENDS];
@@ -298,22 +297,6 @@ check_replication_time_lag(void)
 	if (REAL_PRIMARY_NODE_ID < 0)
 	{
 		/* No need to check if there's no primary */
-		return;
-	}
-
-	/* Count healthy nodes */
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (VALID_BACKEND(i))
-			active_nodes++;
-	}
-
-	if (active_nodes <= 1 && !pool_config->auto_failback)
-	{
-		/*
-		 * If there's only one or less active node, there's no point to do
-		 * checking
-		 */
 		return;
 	}
 
@@ -388,11 +371,20 @@ check_replication_time_lag(void)
 		}
 	}
 
-	/* call pg_stat_replication */
-	if (slots[PRIMARY_NODE_ID] && stat_rep_query)
+	/*
+	 * Call pg_stat_replication and fill the replication status.
+	 */
+	if (slots[PRIMARY_NODE_ID] && stat_rep_query != NULL)
 	{
-		char	*query_buf;
-		int	alloc_len;
+		int		status;
+
+		status = get_query_result(slots, PRIMARY_NODE_ID, stat_rep_query, &res_rep);
+
+		if (status != 0)
+		{
+			ereport(LOG,
+					(errmsg("get_query_result falied: status: %d", status)));
+		}
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
@@ -401,39 +393,35 @@ check_replication_time_lag(void)
 			*bkinfo->replication_state = '\0';
 			*bkinfo->replication_sync_state = '\0';
 
-			if (!VALID_BACKEND(i))
-				continue;
 			if (i == PRIMARY_NODE_ID)
 				continue;
-			if (*stat_rep_query == '\0')
-				continue;
 
-			alloc_len = strlen(stat_rep_query) + 256;
-			query_buf = palloc(alloc_len);
-			snprintf(query_buf, alloc_len, "%s WHERE application_name = '%s'",
-					 stat_rep_query, bkinfo->backend_application_name);
-			if (get_query_result(slots, PRIMARY_NODE_ID, query_buf, &res_rep) == 0 &&
-				res_rep->numrows > 0 &&
-				res_rep->nullflags[0] != -1)
+			if (status == 0)
 			{
+				int		j;
 				char	*s;
 
-				/*
-				 * If sr_check_user has enough privilege, it should return
-				 * some string. If not, NULL pointer will be returned for
-				 * res_rep->data[1] and [2]. So we need to prepare for the
-				 * latter case.
-				 */
-				s = res_rep->data[1]? res_rep->data[1] : "";
-				strlcpy(bkinfo->replication_state, s, NAMEDATALEN);
-				s = res_rep->data[1]? res_rep->data[2] : "";
-				strlcpy(bkinfo->replication_sync_state, s, NAMEDATALEN);
-				free_select_result(res_rep);
+				for (j = 0; j < res_rep->numrows; j++)
+				{
+					if (strcmp(res_rep->data[j*3], bkinfo->backend_application_name) == 0)
+					{
+						/*
+						 * If sr_check_user has enough privilege, it should return
+						 * some string. If not, NULL pointer will be returned for
+						 * res_rep->data[1] and [2]. So we need to prepare for the
+						 * latter case.
+						 */
+						s = res_rep->data[j*3+1]? res_rep->data[j*3+1] : "";
+						strlcpy(bkinfo->replication_state, s, NAMEDATALEN);
+						s = res_rep->data[j*3+2]? res_rep->data[j*3+2] : "";
+						strlcpy(bkinfo->replication_sync_state, s, NAMEDATALEN);
+					}
+				}
 			}
-			pfree(query_buf);
 		}
+		free_select_result(res_rep);
 	}
-	
+
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (!VALID_BACKEND(i))
