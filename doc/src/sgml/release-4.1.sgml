@@ -1,0 +1,703 @@
+<!-- doc/src/sgml/release-4.1.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-4-1">
+  <title>Release 4.1</title>
+  <note>
+    <title>Release Date</title>
+    <simpara>2019-10-04</simpara>
+  </note>
+
+    <sect2>
+    <title>Overview</title>
+    <para>
+      This version implements long awaited features including
+      <xref linkend="guc-statement-level-load-balance">
+      and <xref linkend="guc-auto-failback">. Also it enhances number
+      of areas related to performance. Finally it
+      imports <productname>PostgreSQL</productname> 12's new SQL
+      parser.
+    </para>
+    <para>
+      Major enhancements in <productname>Pgpool-II</productname> 4.1 include:
+    </para>
+
+    <!-- Items in this list summarize one or more items below -->
+
+    <itemizedlist>
+      <listitem>
+        <para>
+          Statement level load
+          balancing. Previously <productname>Pgpool-II</productname>
+          only allows session level load balancing. This version
+          allows to use <literal>statement level load
+          balancing</literal>, which is useful for frontends
+          permanently connecting
+          to <productname>Pgpool-II</productname> but want to use
+          existing standby server resources.
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+	  Auto failback allows to automatically attach streaming
+	  replication standby servers, which are considered safe
+	  enough to failback.
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+	  Enhance performance in number of areas.
+          <itemizedlist>
+          <listitem>
+              <para>
+		Shared relation cache allows to reuse relation cache
+		among sessions to reduce internal queries
+		against <productname>PostgreSQL</productname> system
+		catalogs.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+               Load balancing control for specific queries.
+              </para>
+            </listitem>
+          </itemizedlist>
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>
+          Import PostgreSQL 12 SQL parser.
+        </para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+   <title>Migration to Version 4.1</title>
+   <para>
+    Version 4.1 contains some changes that may affect compatibility
+    with previous releases. Observe the following incompatibilities:
+   </para>
+
+   <itemizedlist>
+      <listitem>
+	<!--
+	    2019-04-17 [daa530a7]
+	    2019-04-23 [35cb1dc2]
+	    2019-04-24 [4d9f8b98]
+	  -->
+	<para>
+	  Add <varname>replication_state</varname> and
+	  <varname>replication_sync_state</varname> columns
+	  of <xref linkend="SQL-SHOW-POOL-NODES"> and friends. (Tatsuo
+	  Ishii)
+	</para>
+	<para>
+	  This allows to show important information from
+	  <command>pg_stat_replication</command>, which is available
+	  from <productname>PostgreSQL</productname> 9.1 (also with
+	  <varname>replication_state_sync</varname>. it's only
+	  available since 9.2 however).  For this purpose
+	  new <xref linkend="guc-backend-application-name"> parameter is
+	  added to each backend_host configuration parameters.
+	  <command>pg_stat_replication</command> is called from
+	  streaming replication delay checking process. So
+	  if <xref linkend="guc-sr-check-period"> is 0, those new columns
+	  are not available.
+	</para>
+	<para>
+	  Also <xref linkend="pcp-node-info">
+	  and <xref linkend="pgpool-adm-pcp-node-info"> function are
+	  modified.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-07-02 [d86c71d1]
+	  -->
+	<para>
+	  Down grade LOG to DEBUG5 in sent message module. (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+    </itemizedlist>
+
+  </sect2>
+
+  <sect2>
+    <title>Major Enhancements</title>
+    <itemizedlist>
+
+      <listitem>
+	<!--
+	    2019-04-02 [1099ba61]
+	  -->
+	<para>
+	  Allow to use statement level load balancing. (Bo Peng)
+	</para>
+	<para>
+	  This feature enables selecting load balancing node per
+	  statement.  The current feature for load balancing, the load
+	  balancing node is decided at the session start time and will
+	  not be changed until the session ends.  When set to
+	  <xref linkend="guc-statement-level-load-balance"> = on,
+	  the load balancing node is decided for each read query.  For
+	  example, in applications that use connection pooling remain
+	  connections open to the backend server, because the session
+	  may be held for a long time, the load balancing node does
+	  not change until the session ends.  In such applications,
+	  when statement_level_load_balance is enabled, it is possible
+	  to decide load balancing node per query, not per session.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-07-22 [3e2ecc97]
+	    2019-07-22 [6a1f16e8]
+	  -->
+	<para>
+	  Add <xref linkend="guc-auto-failback"> (Takuma Hoshiai).
+	</para>
+	<para>
+	  This allows to reattach backend node automatically that is
+	  in DOWN status but actually it is running normally.
+	</para>
+	<para>
+	  To use this feature it is required
+	  that <productname>PostgreSQL</productname> is 9.1 or later
+	  and new configuration
+	  variable <varname>auto_failback</varname> is
+	  enabled. Also <productname>Pgpool-II</productname> must be
+	  operating in streaming-replication mode, with sr_check and
+	  health_check are
+	  enabled. <productname>Pgpool-II</productname> calls
+	  pg_stat_replication on
+	  the <productname>PostgreSQL</productname> primary server to
+	  make sure that the standby node in question is running and
+	  receiving replication stream from the primary server.
+	</para>
+	<para>
+	  This feature is useful in the case that a standby server
+	  fails over due to a temporary network failure.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-02-25 [46917d54]
+	  -->
+	<para>
+	  Add new <xref linkend="guc-enable-shared-relcache">
+	  parameter. (Takuma Hoshiai)
+	</para>
+	<para>
+	  The relation cache were stored in local cache of child
+	  processes, so all child processes executed same query to get
+	  relation cache.  If <xref linkend="guc-enable-shared-relcache">
+	  is on, the relation cache is stored in memory cache and all
+	  child process share it.  It will expect to reduce the load
+	  that same query is executed.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-06-27 [7a0471bb]
+	  -->
+	<para>
+	  Add new parameter <xref linkend="guc-check-temp-table"> to
+	  check temporary tables. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Checking temporary tables is slow because it needs to lookup
+	  system catalogs. To eliminate the lookup, new method to
+	  trace <command>CREATE TEMP TABLE/DROP TABLE</command> is
+	  added. To use the new method,
+	  set <xref linkend="guc-check-temp-table">
+	  to <literal>trace</literal>.
+	</para>
+	<para>
+	  Note that it is impossible to trace tables created in
+	  functions and triggers. In this case existing method should
+	  be used.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-06-26 [6282805d]
+	  -->
+	<para>
+	  Reduce internal queries against system catalogs. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Currently the relcache module issues 7+ queries to obtain
+	  various info from <productname>PostgreSQL</productname>
+	  system catalogs. Some of them are necessary for
+	  <productname>Pgpool-II</productname> to work with multiple
+	  version of <productname>PostgreSQL</productname>.  To reduce
+	  such internal queries,
+	  get <productname>PostgreSQL</productname> version to know
+	  what kind of queries are needed. For example, we need to
+	  know if pg_namespace exists and for this purpose we send a
+	  query against pg_class. But if we know that pg_namespace was
+	  introduced in <productname>PostgreSQL</productname> 7.3, we
+	  do not need to inquire pg_class.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-07-24 [f694283c]
+	  -->
+	<para>
+	  Import PostgreSQL 12 beta2 new parser. (Bo Peng)
+	</para>
+	<para>
+	  Major chanegs of PostgreSQL 12 parser include:
+
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	      Add new VACUUM options:SKIP_LOCKED, INDEX_CLEANUP and TRUNCATE.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Add COMMIT AND CHAIN and ROLLBACK AND CHAIN commands.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Add a WHERE clause to COPY FROM.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Allow to use CREATE OR REPLACE AGGREGATE command.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Allow to use mcv (most-common-value) in CREATE STATISTICS.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      ADD REINDEX option CONCURRENTLY.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Add EXPLAIN option SETTINGS.
+	    </para>
+	  </listitem>
+	</itemizedlist>
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-06-20 [46986ebc]
+	    2019-07-03 [beac296d]
+	  -->
+	<para>
+	  Allow to route relcache queries to load balance node. (Tatsuo Ishii)
+	</para>
+	<para>
+	  Queries to build relcache entries were always sent to master (primary)
+	  node. This is usually good because we could eliminate the bad effect
+	  of replication delay. However if users want to lower the load of
+	  master node, it would be nice if we could route the queries to other
+	  than master node. This patch introduces new parameter
+	  <xref linkend="guc-relcache-query-target">. If it is set to
+	  <literal>load_balance_node</literal>, relcache queries will
+	  be routed to load balance node.  If it is set
+	  to <literal>master</literal>, the queries are routed to
+	  master node, which is same as before (this is the default).
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-07-01 [3ddf9aa0]
+	  -->
+	<para>
+	  Disable load balance after a SELECT having functions
+	  specified in black function list or not specified in white
+	  function list. (Bo Peng)
+	</para>
+	<para>
+	  In <productname>Pgpool-II</productname> 4.0 or earlier, if
+	  we set <xref linkend="guc-disable-load-balance-on-write"> =
+	  <literal>transaction</literal>, when a write query is issued
+	  inside an explicit truncation, subsequent queries should be
+	  sent to primary only until the end of this transactionin in
+	  order to avoid the replication delay.  However, the SELECTs
+	  having write functions specified
+	  in <xref linkend="guc-black-function-list"> or not specified
+	  in <xref linkend="guc-white-function-list"> are not regarded
+	  as a write query and the subsequent read queries are still
+	  load balanced. This commit will disable load balance after
+	  a SELECT having functions specified in black function list
+	  or not specified in white function list.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2018-12-04 [693a6284]
+	  -->
+	<para>
+	  Implement new feature to not accept incoming
+	  connections. (Tatsuo Ishii)
+	</para>
+	<para>
+	  <productname>Pgpool-II</productname> accepts up to
+	  <xref linkend="guc-num-init-children"> frontends and queues
+	  up more connection requests until one of child process
+	  becomes free. This mostly works well, but if each session
+	  take long time, the queue grows long and the whole system
+	  does not work smoothly.  To overcome the problem, a new way
+	  to deal with many connection requests from frontend is
+	  implemented: just complain and refuse to connect to
+	  <productname>Pgpool-II</productname> if number of
+	  <xref linkend="guc-num-init-children"> already exceeds. This
+	  is exactly the same behavior
+	  as <productname>PostgreSQL</productname>.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-02-22 [cf5fe7eb]
+	  -->
+	<para>
+	  Enhance performance by eliminating select(2) system calls
+	  when they are not necessary. (Tatsuo Ishii, Jesper Pedersen)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-02-09 [778f611e]
+	  -->
+	<para>
+	  Enhance performance while sending message to
+	  frontend. (Tatsuo Ishii)
+	</para>
+	<para>
+	  SimpleForwardToFrontend(), which is responsible for sending
+	  message to frontend, does write buffering only if it is
+	  either 'D' (DataRow) or 'd' (CopyData). Other message types
+	  were immediately written to socket. But actually this was
+	  not necessary. So if the messages are not critical, just
+	  write to buffer.  With this 10-17% performance enhance was
+	  observed.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-02-09 [eb6c5b17]
+	  -->
+	<para>
+	  Avoid error or notice message analysis if it's not
+	  necessary. (Tatsuo Ishii)
+	</para>
+	<para>
+	  After sending query to
+	  backend, <productname>Pgpool-II</productname> always calls
+	  pool_extract_error_message() via per_node_error_log(). In
+	  the function memory allocation is performed even if error or
+	  notice message is returned from backend. To avoid the waste
+	  of CPU cycle, check message kind and avoid calling
+	  pool_extract_error_message() if it's not error or notice
+	  message.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2018-12-26 [702f7c86]
+	  -->
+	<para>
+	  Enhance performance of CopyData message handling. (Tatsuo Ishii)
+	</para>
+	<para>
+	  When COPY XX FROM STDIN gets executed (typical client is
+	  pg_dump), each copy row data is sent
+	  from <productname>Pgpool-II</productname> to frontend using
+	  CopyData message. Previously, one CopyData message was
+	  followed by a flush, which costed a lot. Instead, now flush
+	  is done in subsequent Command Complete, Notice message or
+	  Error message.  A quick test reveals that this change brings
+	  x2.5 speed up.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-06-07 [dc974267]
+	  -->
+	<para>
+	  Allow to use MD5 hashed password
+	  in <xref linkend="guc-health-check-password"> and
+	  sr_<xref linkend="guc-sr-check-password">. (Tatsuo Ishii)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-06-18 [51bc494a]
+	  -->
+	<para>
+	  Support ECDH key exchange with SSL (Takuma Hoshiai)
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-05-22 [82b5392b]
+	  -->
+	<para>
+	  Add backend_application_name to "pgpool show backend" group. (Tatsuo Ishii)
+	</para>
+	<para>
+
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-04-30 [23fb4c12]
+	    2019-04-30 [fda13a93]
+	    2019-05-22 [68725c03]
+	  -->
+	<para>
+	  Deal with PostgreSQL 12. (Tatsuo Ishii)
+	</para>
+	<para>
+	  recovery.conf cannot be used anymore. Standby's recovery configuration
+	  is now in postgresql.conf. Also "standby.signal" file is needed in
+	  PostgreSQL database cluster directory to start postmaster as a standby
+	  server.
+	</para>
+	<para>
+	  HeapTupleGetOid() is not available any more in PostgreSQL 12. Use
+	  GETSTRUCT() and refer to oid column of Form_pg_proc.
+	</para>
+	<para>
+	  Change pgpool_adm extension. Now that <literal>oid</literal>
+	  is gone, the signature of CreateTemplateTupleDesc() has been
+	  changed.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-05-03 [ff3c54eb]
+	  -->
+	<para>
+	  Speed up failover when all of backends are down. (Tatsuo
+	  Ishii)
+	</para>
+	<para>
+	  <productname>Pgpool-II</productname> tries to find primary
+	  node till <xref linkend="guc-search-primary-node-timeout">
+	  expires even if all of the backend are in down status. This
+	  is not only a waste of time but
+	  makes <productname>Pgpool-II</productname> looked like
+	  hanged because while searching primary node failover process
+	  is suspended and all of
+	  the <productname>Pgpool-II</productname> child process are
+	  in defunct state, thus there's no process which accepts
+	  connection requests from clients. Since the default value of
+	  searching primary is 300 seconds, typically this keeps on
+	  for 300 seconds. This is not comfortable for users.
+	</para>
+	<para>
+	  To fix this immediately give up finding primary node
+	  regardless
+	  <xref linkend="guc-search-primary-node-timeout"> and
+	  promptly finish the failover process if all of the backend
+	  are in down status.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-01-27 [f03ebdba]
+	    2019-02-07 [5f259f3b]
+	    2019-02-20 [0c9f7167]
+	    2019-02-24 [b1f18e32]
+	    2019-02-24 [9c236d08]
+	    2019-02-28 [c706e0d6]
+	    2019-03-06 [06ad56e6]
+	    2019-03-22 [5abb77f1]
+	    2019-03-22 [b69e94e9]
+	    2019-04-07 [05cbf04b]
+	    2019-04-09 [709196da]
+	    2019-04-11 [a935a7df]
+	    2019-04-24 [9b9291f8]
+	    2019-04-27 [269042f8]
+	    2019-05-04 [21a66742]
+	    2019-05-04 [854659a1]
+	    2019-05-08 [c013bad0]
+	    2019-05-15 [e6a90863]
+	    2019-06-02 [d7d1b0e5]
+	    2019-06-02 [e0067db2]
+	    2019-07-16 [285fd88f]
+	    2019-07-09 [c20312d2]
+	    2019-07-02 [6a74642c]
+	    2019-07-02 [75fdbb25]
+	    2019-07-02 [05ba5cf3]
+	  -->
+	<para>
+	  Documentation enhancements:
+
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		Add performance chapter (<xref linkend="performance">). (Tatsuo Ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Enhance 'getting started' of 'tutorial' chapter,
+		'watchdog' of 'tutorial' and some sections of 'server
+		administration'(takuma hoshiai)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Update configuration example "Pgpool-II + watchdog
+		setup example". (bo peng)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Mention that schema qualifications cannot be used in
+		Add performance chapterwhite/black_function_list. (tatsuo
+		Ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Enhance explanation
+		about <xref linkend="guc-failover-command">
+		and <xref linkend="guc-follow-master-command">. (tatsuo
+		ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Add note to detach_false_primary configuration
+		parameter. (tatsuo ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Add more explanation to follow_master_command. (tatsuo
+		ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Enhance watchdog/pgpool-ii example so that it mentions
+		about pg_monitor role. (tatsuo ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Mention that multi-statement queries are sent to
+		primary node only. (tatsuo ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Add load balancing description. (tatsuo ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Add useful link how to create pcp.conf in the pcp
+		reference page. (tatsuo ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Add more description to pcp_node_info manual. (tatsuo
+		ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Add description to pg_md5 man page how to show
+		pool_passwd ready string. (tatsuo ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Enhance client authentication docs. (tatsuo ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Enhance watchdog documents regarding quorum
+		failover. (tatsuo ishii)
+	      </para>
+	    </listitem>
+
+
+	    <listitem>
+	      <para>
+		Mention that in raw mode or load_balance_mode = off
+		case for relation cache. (tatsuo ishii)
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Add general description about failover. (tatsuo ishii)
+	      </para>
+	    </listitem>
+
+	  </itemizedlist>
+	</para>
+      </listitem>
+
+    </itemizedlist>
+  </sect2>
+
+  <sect2>
+    <title>Bug fixes</title>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  In this release same bug fixes as Pgpool-II 4.0.x are
+	  already applied. See xxx for more details of those fixes.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+</sect1>
