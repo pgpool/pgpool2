@@ -362,14 +362,17 @@
 	  <xref linkend="guc-num-init-children"> frontends and queues
 	  up more connection requests until one of child process
 	  becomes free. This mostly works well, but if each session
-	  take long time, the queue grows long and the whole system
+	  takes long time, the queue grows longer and the whole system
 	  does not work smoothly.  To overcome the problem, a new way
 	  to deal with many connection requests from frontend is
-	  implemented: just complain and refuse to connect to
-	  <productname>Pgpool-II</productname> if number of
-	  <xref linkend="guc-num-init-children"> already exceeds. This
-	  is exactly the same behavior
-	  as <productname>PostgreSQL</productname>.
+	  implemented: When <xref linkend="guc-reserved-connections">
+	  is set to 1 or greater, incoming connections from clients
+	  are not accepted with error message "Sorry, too many clients
+	  already", rather than blocked if the number of current
+	  connections from clients is more than
+	  (<varname>num_init_children</varname> -
+	    <varname>reserved_connections</varname>). This is exactly
+	  the same behavior as <productname>PostgreSQL</productname>.
 	</para>
       </listitem>
 
