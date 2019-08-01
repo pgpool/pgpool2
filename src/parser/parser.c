@@ -25,11 +25,13 @@
 #include "utils/palloc.h"
 #include "gramparse.h"			/* required before parser/gram.h! */
 #include "gram.h"
+#include "gram_minimal.h"
 #include "parser.h"
+#include "pg_list.h"
 #include "kwlist_d.h"
 #include "pg_wchar.h"
+#include "makefuncs.h"
 #include "utils/elog.h"
-
 int			server_version_num = 0;
 static pg_enc server_encoding = PG_SQL_ASCII;
 
@@ -46,7 +48,7 @@ static int
  * Set *error to true if there's any parse error.
  */
 List *
-raw_parser(const char *str, bool *error)
+raw_parser(const char *str, int len, bool *error, bool use_minimal)
 {
 	core_yyscan_t yyscanner;
 	base_yy_extra_type yyextra;
@@ -58,20 +60,32 @@ raw_parser(const char *str, bool *error)
 	*error = false;
 
 	/* initialize the flex scanner */
-	yyscanner = scanner_init(str, &yyextra.core_yy_extra,
+	yyscanner = scanner_init(str, len, &yyextra.core_yy_extra,
 							 &ScanKeywords, ScanKeywordTokens);
 
 	/* base_yylex() only needs this much initialization */
 	yyextra.have_lookahead = false;
 
 	/* initialize the bison parser */
-	parser_init(&yyextra);
-
+    if (use_minimal)
+    {
+        ereport(DEBUG2,
+                (errmsg("invoking the minimal parser")));
+       minimal_parser_init(&yyextra);
+    }
+    else
+    {
+        ereport(DEBUG2,
+                (errmsg("invoking the standard parser")));
+       parser_init(&yyextra);
+    }
 	PG_TRY();
 	{
 		/* Parse! */
-		yyresult = base_yyparse(yyscanner);
-
+        if (use_minimal)
+           yyresult = minimal_base_yyparse(yyscanner);
+        else
+           yyresult = base_yyparse(yyscanner);
 		/* Clean up (release memory) */
 		scanner_finish(yyscanner);
 	}
@@ -108,6 +122,57 @@ raw_parser2(List *parse_tree_list)
 	return node;
 }
 
+//"INSERT INTO foo VALUES(1)"
+Node *
+get_dummy_insert_query_node(void)
+{
+	InsertStmt *insert = makeNode(InsertStmt);
+	SelectStmt *select = makeNode(SelectStmt);
+	select->valuesLists = list_make1(makeInteger(1));
+	insert->relation = makeRangeVar("pgpool", "foo", 0);
+	insert->selectStmt = (Node*)select;
+	return (Node *)insert;
+}
+
+List *
+get_dummy_read_query_tree(void)
+{
+	RawStmt    *rs;
+	SelectStmt *n = makeNode(SelectStmt);
+	n->targetList = list_make1(makeString("pgpool: unable to parse the query"));
+	rs = makeNode(RawStmt);
+	rs->stmt = (Node *)n;
+	rs->stmt_location = 0;
+	rs->stmt_len = 0;			/* might get changed later */
+	return list_make1((Node *)rs);
+}
+
+List *
+get_dummy_write_query_tree(void)
+{
+	ColumnRef  *c1,*c2;
+	RawStmt    *rs;
+	DeleteStmt *n = makeNode(DeleteStmt);
+	n->relation = makeRangeVar("pgpool", "foo", 0);
+
+	c1 = makeNode(ColumnRef);
+	c1->fields = list_make1(makeString("col"));
+
+	c2 = makeNode(ColumnRef);
+	c2->fields = list_make1(makeString("pgpool: unable to parse the query"));
+
+	n->whereClause = (Node*)makeSimpleA_Expr(AEXPR_OP, "=", (Node*)c1, (Node*)c2, 0);
+	/*
+	 * Assign the node directly to the parsetree and exit the scanner
+	 * we don't want to keep parsing for information we don't need
+	 */
+	rs = makeNode(RawStmt);
+	rs->stmt = (Node *)n;
+	rs->stmt_location = 0;
+	rs->stmt_len = 0;			/* might get changed later */
+
+	return list_make1((Node *)rs);
+}
 /*
  * from src/backend/commands/define.c
  * Extract an int32 value from a DefElem.
@@ -264,6 +329,11 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 	}
 
 	return cur_token;
+}
+int
+minimal_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
+{
+    return base_yylex(lvalp, llocp, yyscanner);
 }
 
 static int

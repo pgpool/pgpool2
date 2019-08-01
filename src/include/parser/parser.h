@@ -32,7 +32,7 @@ extern bool escape_string_warning;
 extern PGDLLIMPORT bool standard_conforming_strings;
 
 /* Primary entry point for the raw parsing functions */
-extern List *raw_parser(const char *str, bool *error);
+extern List *raw_parser(const char *str, int len, bool *error, bool use_minimal);
 extern Node *raw_parser2(List *parse_tree_list);
 
 /* from src/backend/commands/define.c */
@@ -48,4 +48,7 @@ extern Node *makeTypeCast(Node *arg, TypeName *typename, int location);
 extern Node *makeStringConstCast(char *str, int location, TypeName *typename);
 extern Node *makeIntConst(int val, int location);
 
+extern List *get_dummy_write_query_tree(void);
+extern List *get_dummy_read_query_tree(void);
+extern Node * get_dummy_insert_query_node(void);
 #endif							/* PARSER_H */

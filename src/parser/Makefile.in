@@ -81,7 +81,8 @@ host_triplet = @host@
 @use_repl_snprintf_TRUE@am__append_1 = snprintf.c
 subdir = src/parser
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(top_srcdir)/mkinstalldirs gram.h gram.c $(top_srcdir)/ylwrap
+	$(top_srcdir)/mkinstalldirs gram.h gram.c gram_minimal.h \
+	gram_minimal.c $(top_srcdir)/ylwrap README
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/docbook.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
@@ -103,19 +104,19 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libsql_parser_a_AR = $(AR) $(ARFLAGS)
 libsql_parser_a_LIBADD =
-am__libsql_parser_a_SOURCES_DIST = copyfuncs.c gram.y keywords.c \
-	kwlookup.c list.c makefuncs.c nodes.c outfuncs.c parser.c \
-	pool_string.c scansup.c stringinfo.c value.c \
+am__libsql_parser_a_SOURCES_DIST = copyfuncs.c gram.y gram_minimal.y \
+	keywords.c kwlookup.c list.c makefuncs.c nodes.c outfuncs.c \
+	parser.c pool_string.c scansup.c stringinfo.c value.c \
 	$(top_srcdir)/src/utils/mmgr/mcxt.c \
 	$(top_srcdir)/src/utils/mmgr/aset.c \
 	$(top_srcdir)/src/utils/error/elog.c wchar.c scan.c snprintf.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @use_repl_snprintf_TRUE@am__objects_1 = snprintf.$(OBJEXT)
 am_libsql_parser_a_OBJECTS = copyfuncs.$(OBJEXT) gram.$(OBJEXT) \
-	keywords.$(OBJEXT) kwlookup.$(OBJEXT) list.$(OBJEXT) \
-	makefuncs.$(OBJEXT) nodes.$(OBJEXT) outfuncs.$(OBJEXT) \
-	parser.$(OBJEXT) pool_string.$(OBJEXT) scansup.$(OBJEXT) \
-	stringinfo.$(OBJEXT) value.$(OBJEXT) \
+	gram_minimal.$(OBJEXT) keywords.$(OBJEXT) kwlookup.$(OBJEXT) \
+	list.$(OBJEXT) makefuncs.$(OBJEXT) nodes.$(OBJEXT) \
+	outfuncs.$(OBJEXT) parser.$(OBJEXT) pool_string.$(OBJEXT) \
+	scansup.$(OBJEXT) stringinfo.$(OBJEXT) value.$(OBJEXT) \
 	$(top_srcdir)/src/utils/mmgr/mcxt.$(OBJEXT) \
 	$(top_srcdir)/src/utils/mmgr/aset.$(OBJEXT) \
 	$(top_srcdir)/src/utils/error/elog.$(OBJEXT) wchar.$(OBJEXT) \
@@ -275,6 +276,7 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 STYLE = @STYLE@
+SUNIFDEF = @SUNIFDEF@
 VERSION = @VERSION@
 XMLLINT = @XMLLINT@
 XSLTPROC = @XSLTPROC@
@@ -335,9 +337,9 @@ top_srcdir = @top_srcdir@
 parser_incdir = $(top_srcdir)/src/include/parser
 AM_CPPFLAGS = -D_GNU_SOURCE -I $(parser_incdir) -I @PGSQL_INCLUDE_DIR@
 noinst_LIBRARIES = libsql-parser.a
-libsql_parser_a_SOURCES = copyfuncs.c gram.y keywords.c kwlookup.c \
-	list.c makefuncs.c nodes.c outfuncs.c parser.c pool_string.c \
-	scansup.c stringinfo.c value.c \
+libsql_parser_a_SOURCES = copyfuncs.c gram.y gram_minimal.y keywords.c \
+	kwlookup.c list.c makefuncs.c nodes.c outfuncs.c parser.c \
+	pool_string.c scansup.c stringinfo.c value.c \
 	$(top_srcdir)/src/utils/mmgr/mcxt.c \
 	$(top_srcdir)/src/utils/mmgr/aset.c \
 	$(top_srcdir)/src/utils/error/elog.c wchar.c scan.c \
@@ -385,6 +387,9 @@ clean-noinstLIBRARIES:
 gram.h: gram.c
 	@if test ! -f $@; then rm -f gram.c; else :; fi
 	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) gram.c; else :; fi
+gram_minimal.h: gram_minimal.c
+	@if test ! -f $@; then rm -f gram_minimal.c; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) gram_minimal.c; else :; fi
 $(top_srcdir)/src/utils/mmgr/$(am__dirstamp):
 	@$(MKDIR_P) $(top_srcdir)/src/utils/mmgr
 	@: > $(top_srcdir)/src/utils/mmgr/$(am__dirstamp)
@@ -549,6 +554,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 	-rm -f gram.c
 	-rm -f gram.h
+	-rm -f gram_minimal.c
+	-rm -f gram_minimal.h
 clean: clean-am
 
 clean-am: clean-generic clean-libtool clean-noinstLIBRARIES \
@@ -636,8 +643,16 @@ uninstall-am:
 
 
 gram.c: gram.y scan.c
+gram_minimal.c: gram_minimal.y scan.c
+
 scan.c: scan.l
 	$(LEX) -o'scan.c' $<
+
+generate_parsers: gram_template.y
+	$(SUNIFDEF) --undef pgpool_minimal_parser gram_template.y > gram.y||:
+	$(SUNIFDEF) --define pgpool_minimal_parser gram_template.y > gram_minimal.y||:
+
+.PHONY: generate_parsers 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

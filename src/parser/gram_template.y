@@ -178,8 +178,13 @@ typedef struct ImportQual
 #define parser_yyerror(msg)  scanner_yyerror(msg, yyscanner)
 #define parser_errposition(pos)  scanner_errposition(pos, yyscanner)
 
+#ifdef pgpool_minimal_parser
+static void minimal_base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner,
+						 const char *msg);
+#else
 static void base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner,
 						 const char *msg);
+#endif
 static RawStmt *makeRawStmt(Node *stmt, int stmt_location);
 static void updateRawStmtEnd(RawStmt *rs, int end_location);
 static Node *makeColumnRef(char *colname, List *indirection,
@@ -229,7 +234,11 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %pure-parser
 %expect 0
+#ifdef pgpool_minimal_parser
+%name-prefix="minimal_base_yy"
+#else
 %name-prefix="base_yy"
+#endif
 %locations
 
 %parse-param {core_yyscan_t yyscanner}
@@ -305,12 +314,18 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		DropTransformStmt
 		DropUserMappingStmt ExplainStmt FetchStmt
 		GrantStmt GrantRoleStmt ImportForeignSchemaStmt IndexStmt InsertStmt
+#ifdef pgpool_minimal_parser
+InsertStmtShort
+#endif
 		ListenStmt LoadStmt LockStmt NotifyStmt ExplainableStmt PreparableStmt
 		CreateFunctionStmt AlterFunctionStmt ReindexStmt RemoveAggrStmt
 		RemoveFuncStmt RemoveOperStmt RenameStmt RevokeStmt RevokeRoleStmt
 		RuleActionStmt RuleActionStmtOrEmpty RuleStmt
 		SecLabelStmt SelectStmt TransactionStmt TruncateStmt
 		UnlistenStmt UpdateStmt
+#ifdef pgpool_minimal_parser
+UpdateStmtShort
+#endif
 		VacuumStmt
 		VariableResetStmt VariableSetStmt VariableShowStmt
 		ViewStmt CheckPointStmt CreateConversionStmt
@@ -957,7 +972,11 @@ stmt :
 			| GrantRoleStmt
 			| ImportForeignSchemaStmt
 			| IndexStmt
+#ifdef pgpool_minimal_parser
+			| InsertStmtShort
+#else
 			| InsertStmt
+#endif
 			| ListenStmt
 			| RefreshMatViewStmt
 			| LoadStmt
@@ -978,7 +997,11 @@ stmt :
 			| TransactionStmt
 			| TruncateStmt
 			| UnlistenStmt
+#ifdef pgpool_minimal_parser
+			| UpdateStmtShort
+#else
 			| UpdateStmt
+#endif
 			| VacuumStmt
 			| VariableResetStmt
 			| VariableSetStmt
@@ -10912,6 +10935,22 @@ InsertStmt:
 					$$ = (Node *) $5;
 				}
 		;
+#ifdef pgpool_minimal_parser
+InsertStmtShort:
+			opt_with_clause INSERT INTO insert_target
+			{
+				InsertStmt *insert = makeNode(InsertStmt);
+				insert->relation = $4;
+				$$ = (Node *) insert;
+				/*
+				 * Assign the node directly to the parsetree and exit the scanner
+				 * we don't want to keep parsing for information we don't need
+				 */
+				pg_yyget_extra(yyscanner)->parsetree = list_make1(makeRawStmt($$, 0));
+				YYACCEPT;
+			}
+		;
+#endif
 
 /*
  * Can't easily make AS optional here, because VALUES in insert_rest would
@@ -11137,6 +11176,22 @@ UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 					$$ = (Node *)n;
 				}
 		;
+#ifdef pgpool_minimal_parser
+UpdateStmtShort: opt_with_clause UPDATE relation_expr_opt_alias
+				{
+					UpdateStmt *n = makeNode(UpdateStmt);
+					n->relation = $3;
+					n->targetList = NULL;
+					n->fromClause = NULL;
+					n->whereClause = NULL;
+					n->returningList = NULL;
+					n->withClause = $1;
+					$$ = (Node *)n;
+					pg_yyget_extra(yyscanner)->parsetree = list_make1(makeRawStmt($$, 0));
+					YYACCEPT;
+				}
+		;
+#endif
 set_clause_list:
 			set_clause							{ $$ = $1; }
 			| set_clause_list ',' set_clause	{ $$ = list_concat($1,$3); }
@@ -15570,7 +15625,11 @@ reserved_keyword:
  * available from the scanner.
  */
 static void
+#ifdef pgpool_minimal_parser
+minimal_base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner, const char *msg)
+#else
 base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner, const char *msg)
+#endif
 {
 	parser_yyerror(msg);
 }
@@ -15654,6 +15713,7 @@ makeColumnRef(char *colname, List *indirection,
 	return (Node *) c;
 }
 
+#ifndef pgpool_minimal_parser
 Node *
 makeTypeCast(Node *arg, TypeName *typename, int location)
 {
@@ -15663,6 +15723,7 @@ makeTypeCast(Node *arg, TypeName *typename, int location)
 	n->location = location;
 	return (Node *) n;
 }
+#endif
 
 static Node *
 makeStringConst(char *str, int location)
@@ -15676,6 +15737,7 @@ makeStringConst(char *str, int location)
 	return (Node *)n;
 }
 
+#ifndef pgpool_minimal_parser
 Node *
 makeStringConstCast(char *str, int location, TypeName *typename)
 {
@@ -15695,6 +15757,7 @@ makeIntConst(int val, int location)
 
 	return (Node *)n;
 }
+#endif
 
 static Node *
 makeFloatConst(char *str, int location)
@@ -15981,6 +16044,7 @@ makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg)
 	return (Node *) n;
 }
 
+#ifndef pgpool_minimal_parser
 /* SystemFuncName()
  * Build a properly-qualified reference to a built-in function.
  */
@@ -16002,6 +16066,7 @@ SystemTypeName(char *name)
 	return makeTypeNameFromNameList(list_make2(makeString("pg_catalog"),
 											   makeString(name)));
 }
+#endif
 /* doNegate()
  * Handle negation of a numeric constant.
  *
@@ -16414,8 +16479,13 @@ makeRecursiveViewSelect(char *relname, List *aliases, Node *query)
 /* parser_init()
  * Initialize to parse one query string
  */
+#ifdef pgpool_minimal_parser
+void
+minimal_parser_init(base_yy_extra_type *yyext)
+#else
 void
 parser_init(base_yy_extra_type *yyext)
+#endif
 {
 	yyext->parsetree = NIL;		/* in case grammar forgets to set it */
 }

@@ -650,6 +650,7 @@ STYLE_ENV_SET_FALSE
 STYLE_ENV_SET_TRUE
 STYLE
 XSLTPROC_HTML_FLAGS
+SUNIFDEF
 LYNX
 PERL
 OSX
@@ -790,6 +791,7 @@ enable_float8_byval
 with_pgsql
 with_pgsql_includedir
 with_pgsql_libdir
+with_sunifdef
 with_openssl
 with_pam
 with_memcached
@@ -1458,6 +1460,7 @@ Optional Packages:
   --with-pgsql=DIR     site header files for PostgreSQL in DIR
   --with-pgsql-includedir=DIR     site header files for PostgreSQL in DIR
   --with-pgsql-libdir=DIR     site library files for PostgreSQL in DIR
+  --with-sunifdef=DIR     install path for sunifdef utility
   --with-openssl     build with OpenSSL support
   --with-pam     build with PAM support
   --with-memcached=DIR     site header files for libmemcached in DIR
@@ -12302,6 +12305,48 @@ fi
   test -n "$LYNX" && break
 done
 
+for ac_prog in sunifdef
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_SUNIFDEF+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$SUNIFDEF"; then
+  ac_cv_prog_SUNIFDEF="$SUNIFDEF" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_SUNIFDEF="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+SUNIFDEF=$ac_cv_prog_SUNIFDEF
+if test -n "$SUNIFDEF"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SUNIFDEF" >&5
+$as_echo "$SUNIFDEF" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$SUNIFDEF" && break
+done
+
 
 
 
@@ -14689,6 +14734,19 @@ fi
 
 
 
+# Check whether --with-sunifdef was given.
+if test "${with_sunifdef+set}" = set; then :
+  withval=$with_sunifdef;
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    as_fn_error $? "*** You must supply an argument to the --with-sunifdef option." "$LINENO" 5
+	  ;;
+	esac
+	SUNIFDEF="$withval"/sunifdef
+
+fi
+
+
 
 # Check whether --with-openssl was given.
 if test "${with_openssl+set}" = set; then :
@@ -14903,6 +14961,7 @@ fi
 done
 
 fi
+
 
 
 # Check whether --with-memcached was given.

@@ -199,12 +199,13 @@ SimpleQuery(POOL_CONNECTION * frontend,
 
 	/* log query to log file if necessary */
 	if (pool_config->log_statement)
-		ereport(pool_config->log_statement ? LOG : DEBUG1, (errmsg("statement: %s", contents)));
+		ereport(LOG, (errmsg("statement: %s", contents)));
 
 	/*
 	 * Fetch memory cache if possible
 	 */
-	is_likely_select = pool_is_likely_select(contents);
+	if (pool_config->memory_cache_enabled)
+	    is_likely_select = pool_is_likely_select(contents);
 
 	/*
 	 * If memory query cache enabled and the query seems to be a SELECT use
@@ -247,7 +248,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 
 	/* parse SQL string */
-	parse_tree_list = raw_parser(contents, &error);
+	parse_tree_list = raw_parser(contents, len, &error, !REPLICATION);
 
 	if (parse_tree_list == NIL)
 	{
@@ -259,7 +260,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			 * the empty query with SELECT command not to affect load balance.
 			 * [Pgpool-general] Confused about JDBC and load balancing
 			 */
-			parse_tree_list = raw_parser(POOL_DUMMY_READ_QUERY, &error);
+			parse_tree_list = get_dummy_read_query_tree();
 		}
 		else
 		{
@@ -282,7 +283,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 				ereport(LOG,
 						(errmsg("Unable to parse the query: \"%s\" from client %s(%s)", contents, remote_host, remote_port)));
 			}
-			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY, &error);
+			parse_tree_list = get_dummy_write_query_tree();
 			query_context->is_parse_error = true;
 		}
 	}
@@ -767,22 +768,25 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 
 	ereport(DEBUG2, (errmsg("Execute: query string = <%s>", query)));
 
-	ereport(DEBUG1, (errmsg("Execute: pool_is_likely_select: %d pool_is_writing_transaction: %d TSTATE: %c",
-							pool_is_likely_select(query), pool_is_writing_transaction(),
+	ereport(DEBUG1, (errmsg("Execute: pool_is_writing_transaction: %d TSTATE: %c",
+							pool_is_writing_transaction(),
 							TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID))));
 
 	/*
 	 * Fetch memory cache if possible
 	 */
-	if (pool_config->memory_cache_enabled && pool_is_likely_select(query) &&
-		!pool_is_writing_transaction() &&
-		(TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != 'E'))
+	if (pool_config->memory_cache_enabled && !pool_is_writing_transaction() &&
+		(TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != 'E')
+		&& pool_is_likely_select(query))
 	{
 		POOL_STATUS status;
 		char	   *search_query = NULL;
 		int			len;
 
 #define STR_ALLOC_SIZE 1024
+		ereport(DEBUG1, (errmsg("Execute: pool_is_likely_select: true pool_is_writing_transaction: %d TSTATE: %c",
+								pool_is_writing_transaction(),
+								TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID))));
 
 		len = strlen(query) + 1;
 		search_query = MemoryContextStrdup(query_context->memory_context, query);
@@ -1033,7 +1037,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	/* parse SQL string */
 	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 
-	parse_tree_list = raw_parser(stmt, &error);
+	parse_tree_list = raw_parser(stmt, strlen(stmt),&error,!REPLICATION);
 
 	if (parse_tree_list == NIL)
 	{
@@ -1045,7 +1049,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 			 * the empty query with SELECT command not to affect load balance.
 			 * [Pgpool-general] Confused about JDBC and load balancing
 			 */
-			parse_tree_list = raw_parser(POOL_DUMMY_READ_QUERY, &error);
+			parse_tree_list = get_dummy_read_query_tree();
 		}
 		else
 		{
@@ -1068,7 +1072,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 				ereport(LOG,
 						(errmsg("Unable to parse the query: \"%s\" from client %s(%s)", stmt, remote_host, remote_port)));
 			}
-			parse_tree_list = raw_parser(POOL_DUMMY_WRITE_QUERY, &error);
+			parse_tree_list = get_dummy_write_query_tree();
 			query_context->is_parse_error = true;
 		}
 	}
@@ -2482,8 +2486,6 @@ ProcessFrontendResponse(POOL_CONNECTION * frontend,
 			POOL_QUERY_CONTEXT *query_context;
 			char	   *query;
 			Node	   *node;
-			List	   *parse_tree_list;
-			bool		error;
 
 		case 'X':				/* Terminate */
 			if (contents)
@@ -2585,8 +2587,7 @@ ProcessFrontendResponse(POOL_CONNECTION * frontend,
 			query = "INSERT INTO foo VALUES(1)";
 			MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 
-			parse_tree_list = raw_parser(query, &error);
-			node = raw_parser2(parse_tree_list);
+			node = get_dummy_insert_query_node();
 			pool_start_query(query_context, query, strlen(query) + 1, node);
 
 			MemoryContextSwitchTo(old_context);

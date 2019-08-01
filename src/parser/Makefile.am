@@ -5,6 +5,7 @@ noinst_LIBRARIES = libsql-parser.a
 libsql_parser_a_SOURCES  = \
 	copyfuncs.c \
 	gram.y \
+	gram_minimal.y \
 	keywords.c \
 	kwlookup.c \
 	list.c \
@@ -26,11 +27,18 @@ if use_repl_snprintf
 endif
 
 EXTRA_DIST = scan.c scan.l
-
 ARFLAGS = cr
 
 AM_YFLAGS = -d
 
 gram.c: gram.y scan.c
+gram_minimal.c: gram_minimal.y scan.c
+
 scan.c: scan.l
 	$(LEX) -o'scan.c' $<
+
+generate_parsers: gram_template.y
+	$(SUNIFDEF) --undef pgpool_minimal_parser gram_template.y > gram.y||:
+	$(SUNIFDEF) --define pgpool_minimal_parser gram_template.y > gram_minimal.y||:
+
+.PHONY: generate_parsers 

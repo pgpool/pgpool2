@@ -79,7 +79,7 @@ do
 	./startall
 	wait_for_pgpool_startup
 	# shutdown node 0
-	pg_ctl -D data0 -m f stop
+	$PG_CTL -D data0 -m f stop
 	wait_for_pgpool_startup
 	$PSQL -c "show pool_nodes" postgres
 	# try to issue write query
@@ -108,7 +108,7 @@ do
 	./startall
 	wait_for_pgpool_startup
 	# shutdown node 0
-	pg_ctl -D data0 -m f stop
+	$PG_CTL -D data0 -m f stop
 	wait_for_pgpool_startup
 	$PSQL -c "show pool_nodes" postgres
 	# try to issue write query expecting error: executing failover on backend.

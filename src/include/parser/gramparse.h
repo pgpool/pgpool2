@@ -71,9 +71,15 @@ typedef struct base_yy_extra_type
 /* from parser.c */
 extern int	base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp,
 					   core_yyscan_t yyscanner);
+extern int	minimal_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp,
+					   core_yyscan_t yyscanner);
 
 /* from gram.y */
 extern void parser_init(base_yy_extra_type *yyext);
 extern int	base_yyparse(core_yyscan_t yyscanner);
+
+/* from gram_minimal.y */
+extern void minimal_parser_init(base_yy_extra_type *yyext);
+extern int	minimal_base_yyparse(core_yyscan_t yyscanner);
 
 #endif							/* GRAMPARSE_H */

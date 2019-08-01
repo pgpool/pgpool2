@@ -1167,11 +1167,11 @@ scanner_yyerror(const char *message, core_yyscan_t yyscanner)
  */
 core_yyscan_t
 scanner_init(const char *str,
+             int slen,
 			 core_yy_extra_type *yyext,
 			 const ScanKeywordList *keywordlist,
 			 const uint16 *keyword_tokens)
 {
-	Size		slen = strlen(str);
 	yyscan_t	scanner;
 
 	if (yylex_init(&scanner) != 0)

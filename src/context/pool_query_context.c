@@ -428,16 +428,6 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 	pool_clear_node_to_be_sent(query_context);
 
 	/*
-	 * When query match the query patterns in black_query_pattern_list, we
-	 * send only to master node.
-	 */
-	if (MASTER_SLAVE && pattern_compare(query, BLACKLIST, "black_query_pattern_list") == 1)
-	{
-		pool_set_node_to_be_sent(query_context, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID);
-		return;
-	}
-
-	/*
 	 * If there is "NO LOAD BALANCE" comment, we send only to master node.
 	 */
 	if (!strncasecmp(query, NO_LOAD_BALANCE, NO_LOAD_BALANCE_COMMENT_SZ))
@@ -558,19 +548,6 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 					}
 
 					/*
-					 * If a writing function call is used, we prefer to send
-					 * to the primary.
-					 */
-					else if (pool_has_function_call(node))
-					{
-						ereport(DEBUG1,
-								(errmsg("could not load balance because writing functions are used"),
-								 errdetail("destination = %d for query= \"%s\"", dest, query)));
-
-						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
-					}
-
-					/*
 					 * If system catalog is used in the SELECT, we prefer to
 					 * send to the primary. Example: SELECT * FROM pg_class
 					 * WHERE relname = 't1'; Because 't1' is a constant, it's
@@ -614,7 +591,26 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
+					/*
+					 * When query match the query patterns in black_query_pattern_list, we
+					 * send only to master node.
+					 */
+					else if (pattern_compare(query, BLACKLIST, "black_query_pattern_list") == 1)
+					{
+						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+					}
+					/*
+					 * If a writing function call is used, we prefer to send
+					 * to the primary.
+					 */
+					else if (pool_has_function_call(node))
+					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because writing functions are used"),
+								 errdetail("destination = %d for query= \"%s\"", dest, query)));
 
+						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+					}
 					else
 					{
 						if (pool_config->statement_level_load_balance)

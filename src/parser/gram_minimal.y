@@ -178,7 +178,7 @@ typedef struct ImportQual
 #define parser_yyerror(msg)  scanner_yyerror(msg, yyscanner)
 #define parser_errposition(pos)  scanner_errposition(pos, yyscanner)
 
-static void base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner,
+static void minimal_base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner,
 						 const char *msg);
 static RawStmt *makeRawStmt(Node *stmt, int stmt_location);
 static void updateRawStmtEnd(RawStmt *rs, int end_location);
@@ -229,7 +229,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %pure-parser
 %expect 0
-%name-prefix="base_yy"
+%name-prefix="minimal_base_yy"
 %locations
 
 %parse-param {core_yyscan_t yyscanner}
@@ -305,12 +305,14 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		DropTransformStmt
 		DropUserMappingStmt ExplainStmt FetchStmt
 		GrantStmt GrantRoleStmt ImportForeignSchemaStmt IndexStmt InsertStmt
+InsertStmtShort
 		ListenStmt LoadStmt LockStmt NotifyStmt ExplainableStmt PreparableStmt
 		CreateFunctionStmt AlterFunctionStmt ReindexStmt RemoveAggrStmt
 		RemoveFuncStmt RemoveOperStmt RenameStmt RevokeStmt RevokeRoleStmt
 		RuleActionStmt RuleActionStmtOrEmpty RuleStmt
 		SecLabelStmt SelectStmt TransactionStmt TruncateStmt
 		UnlistenStmt UpdateStmt
+UpdateStmtShort
 		VacuumStmt
 		VariableResetStmt VariableSetStmt VariableShowStmt
 		ViewStmt CheckPointStmt CreateConversionStmt
@@ -957,7 +959,7 @@ stmt :
 			| GrantRoleStmt
 			| ImportForeignSchemaStmt
 			| IndexStmt
-			| InsertStmt
+			| InsertStmtShort
 			| ListenStmt
 			| RefreshMatViewStmt
 			| LoadStmt
@@ -978,7 +980,7 @@ stmt :
 			| TransactionStmt
 			| TruncateStmt
 			| UnlistenStmt
-			| UpdateStmt
+			| UpdateStmtShort
 			| VacuumStmt
 			| VariableResetStmt
 			| VariableSetStmt
@@ -10912,6 +10914,20 @@ InsertStmt:
 					$$ = (Node *) $5;
 				}
 		;
+InsertStmtShort:
+			opt_with_clause INSERT INTO insert_target
+			{
+				InsertStmt *insert = makeNode(InsertStmt);
+				insert->relation = $4;
+				$$ = (Node *) insert;
+				/*
+				 * Assign the node directly to the parsetree and exit the scanner
+				 * we don't want to keep parsing for information we don't need
+				 */
+				pg_yyget_extra(yyscanner)->parsetree = list_make1(makeRawStmt($$, 0));
+				YYACCEPT;
+			}
+		;
 
 /*
  * Can't easily make AS optional here, because VALUES in insert_rest would
@@ -11135,6 +11151,20 @@ UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 					n->returningList = $8;
 					n->withClause = $1;
 					$$ = (Node *)n;
+				}
+		;
+UpdateStmtShort: opt_with_clause UPDATE relation_expr_opt_alias
+				{
+					UpdateStmt *n = makeNode(UpdateStmt);
+					n->relation = $3;
+					n->targetList = NULL;
+					n->fromClause = NULL;
+					n->whereClause = NULL;
+					n->returningList = NULL;
+					n->withClause = $1;
+					$$ = (Node *)n;
+					pg_yyget_extra(yyscanner)->parsetree = list_make1(makeRawStmt($$, 0));
+					YYACCEPT;
 				}
 		;
 set_clause_list:
@@ -15570,7 +15600,7 @@ reserved_keyword:
  * available from the scanner.
  */
 static void
-base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner, const char *msg)
+minimal_base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner, const char *msg)
 {
 	parser_yyerror(msg);
 }
@@ -15654,15 +15684,6 @@ makeColumnRef(char *colname, List *indirection,
 	return (Node *) c;
 }
 
-Node *
-makeTypeCast(Node *arg, TypeName *typename, int location)
-{
-	TypeCast *n = makeNode(TypeCast);
-	n->arg = arg;
-	n->typeName = typename;
-	n->location = location;
-	return (Node *) n;
-}
 
 static Node *
 makeStringConst(char *str, int location)
@@ -15676,25 +15697,6 @@ makeStringConst(char *str, int location)
 	return (Node *)n;
 }
 
-Node *
-makeStringConstCast(char *str, int location, TypeName *typename)
-{
-	Node *s = makeStringConst(str, location);
-
-	return makeTypeCast(s, typename, -1);
-}
-
-Node *
-makeIntConst(int val, int location)
-{
-	A_Const *n = makeNode(A_Const);
-
-	n->val.type = T_Integer;
-	n->val.val.ival = val;
-	n->location = location;
-
-	return (Node *)n;
-}
 
 static Node *
 makeFloatConst(char *str, int location)
@@ -15981,27 +15983,6 @@ makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg)
 	return (Node *) n;
 }
 
-/* SystemFuncName()
- * Build a properly-qualified reference to a built-in function.
- */
-List *
-SystemFuncName(char *name)
-{
-	return list_make2(makeString("pg_catalog"), makeString(name));
-}
-
-/* SystemTypeName()
- * Build a properly-qualified reference to a built-in type.
- *
- * typmod is defaulted, but may be changed afterwards by caller.
- * Likewise for the location.
- */
-TypeName *
-SystemTypeName(char *name)
-{
-	return makeTypeNameFromNameList(list_make2(makeString("pg_catalog"),
-											   makeString(name)));
-}
 /* doNegate()
  * Handle negation of a numeric constant.
  *
@@ -16415,7 +16396,7 @@ makeRecursiveViewSelect(char *relname, List *aliases, Node *query)
  * Initialize to parse one query string
  */
 void
-parser_init(base_yy_extra_type *yyext)
+minimal_parser_init(base_yy_extra_type *yyext)
 {
 	yyext->parsetree = NIL;		/* in case grammar forgets to set it */
 }

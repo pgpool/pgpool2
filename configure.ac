@@ -29,6 +29,7 @@ AC_CHECK_PROGS(XMLLINT, xmllint)
 AC_CHECK_PROGS(OSX, [osx sgml2xml sx])
 AC_CHECK_PROGS(PERL, perl)
 AC_CHECK_PROGS(LYNX, lynx)
+AC_CHECK_PROGS(SUNIFDEF, sunifdef)
 
 AC_SUBST([XSLTPROC_HTML_FLAGS])
 AC_SUBST([STYLE])
@@ -315,6 +316,16 @@ AC_ARG_WITH(pgsql-libdir,
 	PGSQL_LIB_DIR="$withval"
     ])
 
+AC_ARG_WITH(sunifdef,
+    [  --with-sunifdef=DIR     install path for sunifdef utility ],
+    [
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    AC_MSG_ERROR([*** You must supply an argument to the --with-sunifdef option.])
+	  ;;
+	esac
+	SUNIFDEF="$withval"/sunifdef
+    ])
 
 AC_ARG_WITH(openssl,
     [  --with-openssl     build with OpenSSL support],
@@ -346,6 +357,7 @@ if test "$with_pam" = yes ; then
                     [AC_CHECK_HEADERS(pam/pam_appl.h, [],
                                       [AC_MSG_ERROR([header file <security/pam_appl.h> or <pam/pam_appl.h> is required for PAM.])])])
 fi
+
 
 AC_ARG_WITH(memcached,
     [  --with-memcached=DIR     site header files for libmemcached in DIR],
