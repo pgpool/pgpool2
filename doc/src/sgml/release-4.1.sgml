@@ -50,12 +50,18 @@
         <para>
 	  Enhance performance in number of areas.
           <itemizedlist>
-          <listitem>
+            <listitem>
               <para>
 		Shared relation cache allows to reuse relation cache
 		among sessions to reduce internal queries
 		against <productname>PostgreSQL</productname> system
 		catalogs.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+		Have separate SQL parser for DML statements to
+		eliminate unnecessary parsing effort.
               </para>
             </listitem>
             <listitem>
@@ -248,6 +254,47 @@
 	  query against pg_class. But if we know that pg_namespace was
 	  introduced in <productname>PostgreSQL</productname> 7.3, we
 	  do not need to inquire pg_class.
+	</para>
+      </listitem>
+
+      <listitem>
+	<!--
+	    2019-08-02 [310c5c4a]
+	  -->
+	<para>
+	  Performance enhancements for the large INSERT and UPDATE
+	  statements. (Muhammd Usama)
+	</para>
+	<para>
+	  <productname>Pgpool-II</productname> only needs very little
+	  information, especially for the INSERT and UPDATE statements
+	  to decide where it needs to send the query.  For example: In
+	  master-slave mode, for the INSERT
+	  statements <productname>Pgpool-II</productname> only
+	  requires the relation name referenced in the statement while
+	  it doesn't care much about the column values and other
+	  parameters. But since the parser we use
+	  in <productname>Pgpool-II</productname> is taken
+	  from <productname>PostgreSQL</productname> source which
+	  parses the complete query including the value lists which
+	  seems harmless for smaller statements but in case of INSERT
+	  and UPDATE with lots of column values and large data in
+	  value items, consumes significant time.
+	</para>
+	<para>
+	  So the idea here is to short circuit the INSERT and UPDATE
+	  statement parsing as soon as we have the required
+	  information. For that purpose, the commit adds the second
+	  minimal parser that gets invoked in master-slave mode and
+	  tries to extract the performance for large INSERT and UPDATE
+	  statements.
+	</para>
+	<para>
+	  Apart from the second parser addition, changes aiming
+	  towards the performance enhancements are also part of the
+	  commit. See
+	  the <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=310c5c4a289cbe6cee01abef7d2e7bc3550944fb">commit
+	  log</ulink> for more details.
 	</para>
       </listitem>
 
