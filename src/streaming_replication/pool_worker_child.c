@@ -419,7 +419,8 @@ check_replication_time_lag(void)
 				}
 			}
 		}
-		free_select_result(res_rep);
+		if (status == 0)
+			free_select_result(res_rep);
 	}
 
 	for (i = 0; i < NUM_BACKENDS; i++)
