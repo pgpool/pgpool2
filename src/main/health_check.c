@@ -66,7 +66,6 @@ char		remote_ps_data[NI_MAXHOST]; /* used for set_ps_display */
 static POOL_CONNECTION_POOL_SLOT * slot;
 static volatile sig_atomic_t reload_config_request = 0;
 static volatile sig_atomic_t restart_request = 0;
-static time_t auto_failback_interval = 0; /* resume time of auto_failback */
 static bool establish_persistent_connection(int node);
 static void discard_persistent_connection(int node);
 static RETSIGTYPE my_signal_handler(int sig);
@@ -237,6 +236,7 @@ establish_persistent_connection(int node)
 {
 	BackendInfo *bkinfo;
 	int			retry_cnt;
+	static time_t auto_failback_interval = 0; /* resume time of auto_failback */
 	bool		check_failback = false;
 	time_t		now;
 
