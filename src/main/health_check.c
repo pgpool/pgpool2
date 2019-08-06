@@ -183,11 +183,7 @@ do_health_check_child(int *node_id)
 
 			result = establish_persistent_connection(*node_id);
 
-#ifdef HEALTHCHECK_DEBUG
-			if (check_backend_down_request(*node_id, false) || (result && slot == NULL))
-#else
 			if (result && slot == NULL)
-#endif
 			{
 				if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(*node_id).flag))
 				{
@@ -216,15 +212,12 @@ do_health_check_child(int *node_id)
 					}
 				}
 			}
-			else if (bkinfo->backend_status == CON_DOWN && bkinfo->quarantine == true)
+			else if (slot && bkinfo->backend_status == CON_DOWN && bkinfo->quarantine == true)
 			{
 				/* The node has become reachable again. Reset
 				 * the quarantine state
 				 */
-#ifdef HEALTHCHECK_DEBUG
-				if (check_backend_down_request(*node_id, true) == false)
-#endif
-					send_failback_request(*node_id, false, REQ_DETAIL_UPDATE | REQ_DETAIL_WATCHDOG);
+				send_failback_request(*node_id, false, REQ_DETAIL_UPDATE | REQ_DETAIL_WATCHDOG);
 			}
 
 			/* Discard persistent connections */
@@ -316,6 +309,13 @@ establish_persistent_connection(int node)
 				CLEAR_ALARM;
 			}
 
+#ifdef HEALTHCHECK_DEBUG
+			if (slot && check_backend_down_request(node, false) == true)
+			{
+				discard_persistent_connection(node);
+			}
+#endif
+
 			if (slot)
 			{
 				if (retry_cnt != pool_config->health_check_params[node].health_check_max_retries)
@@ -342,6 +342,7 @@ establish_persistent_connection(int node)
 
 		if (password)
 			pfree(password);
+
 		if (check_failback && !Req_info->switching && slot)
 		{
 				ereport(LOG,
@@ -544,6 +545,7 @@ check_backend_down_request(int node, bool done_requests)
 	if (!found)
 		return false;
 
+#ifdef NOT_USED
 	fd = fopen(backend_down_request_file, "w");
 	if (!fd)
 	{
@@ -564,6 +566,7 @@ check_backend_down_request(int node, bool done_requests)
 		return false;
 	}
 	fclose(fd);
+#endif
 
 	return true;
 }
