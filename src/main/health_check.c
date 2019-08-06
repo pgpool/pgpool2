@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -80,7 +80,7 @@ static RETSIGTYPE health_check_timer_handler(int sig);
 #endif
 
 #ifdef HEALTHCHECK_DEBUG
-static bool check_backend_down_request(int node);
+static bool check_backend_down_request(int node, bool done_requests);
 #endif
 
 #undef CHECK_REQUEST
@@ -181,11 +181,7 @@ void do_health_check_child(int *node_id)
 
 			result = establish_persistent_connection(*node_id);
 
-#ifdef HEALTHCHECK_DEBUG
-			if (check_backend_down_request(*node_id) || (result && slot == NULL))
-#else
 			if (result && slot == NULL)
-#endif
 			{
 				if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(*node_id).flag))
 				{
@@ -214,7 +210,7 @@ void do_health_check_child(int *node_id)
 					}
 				}
 			}
-			else if (bkinfo->backend_status == CON_DOWN && bkinfo->quarantine == true)
+			else if (slot && bkinfo->backend_status == CON_DOWN && bkinfo->quarantine == true)
 			{
 				/* The node has become reachable again. Reset
 				 * the quarantine state
@@ -292,6 +288,13 @@ static bool establish_persistent_connection(int node)
 				pool_signal(SIGALRM, SIG_IGN);
 				CLEAR_ALARM;
 			}
+
+#ifdef HEALTHCHECK_DEBUG
+			if (slot && check_backend_down_request(node, false) == true)
+			{
+				discard_persistent_connection(node);
+			}
+#endif
 
 			if (slot)
 			{
@@ -409,7 +412,8 @@ static RETSIGTYPE health_check_timer_handler(int sig)
  * prevent repeatable * failover. If it's other than "down", returns false.
 */
 
-static bool check_backend_down_request(int node)
+static bool
+check_backend_down_request(int node, bool done_requests)
 {
 	static char	backend_down_request_file[POOLMAXPATHLEN];
 	FILE *fd;
@@ -484,6 +488,7 @@ static bool check_backend_down_request(int node)
 	if (!found)
 		return false;
 
+#ifdef NOT_USED
 	fd = fopen(backend_down_request_file, "w");
 	if (!fd)
 	{
@@ -504,6 +509,7 @@ static bool check_backend_down_request(int node)
 		return false;
 	}
 	fclose(fd);
+#endif
 
 	return true;
 }
