@@ -4151,17 +4151,6 @@ sync_backend_from_watchdog(void)
 	ereport(DEBUG1,
 			(errmsg("primary node on master watchdog node \"%s\" is %d", backendStatus->nodeName, backendStatus->primary_node_id)));
 
-	if (Req_info->primary_node_id != backendStatus->primary_node_id)
-	{
-		/* Do not produce this log message if we are starting up the Pgpool-II */
-		if (processState != INITIALIZING)
-			ereport(LOG,
-					(errmsg("primary node:%d on master watchdog node \"%s\" is different from local primary node:%d",
-							backendStatus->primary_node_id, backendStatus->nodeName, Req_info->primary_node_id)));
-
-		Req_info->primary_node_id = backendStatus->primary_node_id;
-		primary_changed = true;
-	}
 
 	/*
 	 * update the local backend status Also remove quarantine flags
@@ -4204,6 +4193,34 @@ sync_backend_from_watchdog(void)
 			}
 		}
 	}
+
+	if (Req_info->primary_node_id != backendStatus->primary_node_id)
+	{
+		/* Do not produce this log message if we are starting up the Pgpool-II */
+		if (processState != INITIALIZING)
+			ereport(LOG,
+					(errmsg("primary node:%d on master watchdog node \"%s\" is different from local primary node:%d",
+							backendStatus->primary_node_id, backendStatus->nodeName, Req_info->primary_node_id)));
+		/*
+		 * master node returns primary_node_id = -1 when the node primary
+		 * node is in  quarantine state on the master.
+		 * So we will not update our primary node id when the status of current primary node
+		 * is not CON_DOWN while primary_node_id sent by master watchdong node is -1
+		 */
+		if (backendStatus->primary_node_id == -1 && BACKEND_INFO(Req_info->primary_node_id).backend_status != CON_DOWN)
+		{
+			ereport(LOG,
+                (errmsg("primary node:%d on master watchdog node \"%s\" seems to be quarantined",
+					Req_info->primary_node_id, backendStatus->nodeName),
+                errdetail("keeping the current primary")));
+		}
+		else
+		{
+			Req_info->primary_node_id = backendStatus->primary_node_id;
+			primary_changed = true;
+		}
+	}
+
 	pfree(backendStatus);
 
 	if (reload_maste_node_id)
