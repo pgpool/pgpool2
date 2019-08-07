@@ -111,6 +111,7 @@ timeoutcnt=0
 
 # Selecting load balancing node per session or per statement
 lb_level=(session statement)
+specified_tests=$1
 for lb in ${lb_level[@]}
 do
 	cd $dir
@@ -121,7 +122,7 @@ do
 	rm -f $diffs
 
 	if [ $# -gt 0 ];then
-		tests=`(cd tests;ls |grep $1)`
+		tests=`(cd tests;ls |grep $specified_tests)`
 	else
 		tests=`(cd tests;ls)`
 	fi
@@ -221,20 +222,24 @@ done
 cd $dir
 testdir=$dir/tests_n3
 if [ $# -gt 0 ];then
-	tests_n3=`(cd tests_n3;ls | grep $1)`
+	tests_n3=`(cd tests_n3;ls | grep $specified_tests)`
 else
 	tests_n3=`(cd tests_n3;ls)`
 fi
-rm -fr testdata
-mkdir testdata
-cd testdata
-echo -n "creating test database with 3 nodes..."
-$PGPOOL_SETUP -n 3 > /dev/null 2>&1
-echo "done."
-cp etc/pgpool.conf pgpool.conf.back
 
-for i in $tests_n3
-do
+if [ "$tests_n3" = "" ];then
+    echo "No test data for 3 nodes. Skipping 3 nodes tests."
+else
+    rm -fr testdata
+    mkdir testdata
+    cd testdata
+    echo -n "creating test database with 3 nodes..."
+    $PGPOOL_SETUP -n 3 > /dev/null 2>&1
+    echo "done."
+    cp etc/pgpool.conf pgpool.conf.back
+
+    for i in $tests_n3
+    do
 	echo -n "testing $i ... "
 
 	# check if modification to pgpool.conf specified.
@@ -242,7 +247,7 @@ do
 	grep '^##' $testdir/$i > $d
 	if [ -s $d ]
 	then
-		sed -e 's/^##//' $d >> etc/pgpool.conf
+	    sed -e 's/^##//' $d >> etc/pgpool.conf
 	fi
 	rm -f $d
 
@@ -250,51 +255,51 @@ do
 
 	while :
 	do
-	psql -c "select 1" test >/dev/null 2>&1
-	if [ $? = 0 ]
-	then
+	    psql -c "select 1" test >/dev/null 2>&1
+	    if [ $? = 0 ]
+	    then
 		break
-	fi
-	sleep 1
+	    fi
+	    sleep 1
 	done
 
 	timeout $timeout $PGPROTO -f $testdir/$i > $results/$i 2>&1
 	if [ $? = 124 ]
 	then
-		echo "timeout."
-		timeoutcnt=`expr $timeoutcnt + 1`
+	    echo "timeout."
+	    timeoutcnt=`expr $timeoutcnt + 1`
 	else
-		sed -e 's/L [0-9]*/L xxx/g' $expected/$i > expected_tmp
-		sed -e 's/L [0-9]*/L xxx/g' $results/$i > results_tmp
-		cmp expected_tmp results_tmp >/dev/null 2>&1
-		if [ $? != 0 ]
+	    sed -e 's/L [0-9]*/L xxx/g' $expected/$i > expected_tmp
+	    sed -e 's/L [0-9]*/L xxx/g' $results/$i > results_tmp
+	    cmp expected_tmp results_tmp >/dev/null 2>&1
+	    if [ $? != 0 ]
+	    then
+		echo "failed."
+		echo "=== $i ===" >> $diffs
+		diff -N $expected/$i $results/$i >> $diffs
+		failcnt=`expr $failcnt + 1`
+	    else
+		extra_fail=0
+		# excute extra scripts if exists.
+		if [ -x $extra_scripts/$i ]
 		then
-			echo "failed."
-			echo "=== $i ===" >> $diffs
-			diff -N $expected/$i $results/$i >> $diffs
+		    $extra_scripts/$i > $results/$i.extra 2>&1
+
+		    if [ $? != 0 ]
+		    then
+			echo "extra test failed."
+			extra_fail=1
 			failcnt=`expr $failcnt + 1`
-		else
-			extra_fail=0
-			# excute extra scripts if exists.
-			if [ -x $extra_scripts/$i ]
-			then
-				$extra_scripts/$i > $results/$i.extra 2>&1
-
-				if [ $? != 0 ]
-				then
-					echo "extra test failed."
-					extra_fail=1
-					failcnt=`expr $failcnt + 1`
-				fi
-			fi
-
-			if [ $extra_fail = 0 ]
-			then
-				echo "ok."
-				okcnt=`expr $okcnt + 1`
-			fi
+		    fi
 		fi
-		rm expected_tmp results_tmp
+
+		if [ $extra_fail = 0 ]
+		then
+		    echo "ok."
+		    okcnt=`expr $okcnt + 1`
+		fi
+	    fi
+	    rm expected_tmp results_tmp
 	fi
 	grep pool_check_pending_message_and_reply log/pgpool.log
 	./shutdownall >/dev/null 2>&1
@@ -302,12 +307,12 @@ do
 	process=`ps x|grep pgpool|grep idle`
 	if [ ! -z "$process" ]
 	then
-		echo "Some process remains. Aborting tests"
-	exit 1
+	    echo "Some process remains. Aborting tests"
+	    exit 1
 	fi
 
-done
-
+    done
+fi
 ######
 total=`expr $okcnt + $failcnt + $timeoutcnt`
 echo "out of $total ok: $okcnt failed: $failcnt timeout: $timeoutcnt."
