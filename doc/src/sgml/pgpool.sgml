@@ -36,7 +36,6 @@
   </partintro>
 
   &start;
-  &advanced;
 
  </part>
 
@@ -52,6 +51,7 @@
 
   &installation;
   &runtime;
+  &advanced;
   &config;
   &connection-settings;
   &connection-pooling;
