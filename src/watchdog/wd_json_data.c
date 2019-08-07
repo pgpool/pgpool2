@@ -324,7 +324,7 @@ get_backend_node_status_json(WatchdogNode * wdNode)
 		if (backend_status == CON_DOWN && pool_config->backend_desc->backend_info[i].quarantine)
 		{
 			/*
-			 * since quarantine nodes are not cluster wide so send CON_WATI
+			 * since quarantine nodes are not cluster wide so send CON_WAIT
 			 * status for quarantine nodes
 			 */
 			backend_status = CON_CONNECT_WAIT;
