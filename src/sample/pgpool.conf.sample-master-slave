@@ -44,9 +44,9 @@ serialize_accept = off
                                    # whether to serialize accept() call to avoid thundering herd problem
                                    # (change requires restart)
 reserved_connections = 0
-				   # Number of reserved connections.
-				   # Pgpool-II does not accept connections if over
-				   # num_init_chidlren - reserved_connections.
+                                   # Number of reserved connections.
+                                   # Pgpool-II does not accept connections if over
+                                   # num_init_chidlren - reserved_connections.
 
 # - pgpool Communication Manager Connection Settings -
 
@@ -397,16 +397,18 @@ delay_threshold = 0
 follow_master_command = ''
                                    # Executes this command after master failover
                                    # Special values:
-                                   #   %d = node id
-                                   #   %h = host name
-                                   #   %p = port number
-                                   #   %D = database cluster path
+                                   #   %d = failed node id
+                                   #   %h = failed node host name
+                                   #   %p = failed node port number
+                                   #   %D = failed node database cluster path
                                    #   %m = new master node id
-                                   #   %H = hostname of the new master node
+                                   #   %H = new master node hostname
                                    #   %M = old master node id
                                    #   %P = old primary node id
                                    #   %r = new master port number
                                    #   %R = new master database cluster path
+                                   #   %N = old primary node hostname
+                                   #   %S = old primary node port number
                                    #   %% = '%' character
 
 #------------------------------------------------------------------------------
@@ -458,31 +460,34 @@ connect_timeout = 10000
 failover_command = ''
                                    # Executes this command at failover
                                    # Special values:
-                                   #   %d = node id
-                                   #   %h = host name
-                                   #   %p = port number
-                                   #   %D = database cluster path
+                                   #   %d = failed node id
+                                   #   %h = failed node host name
+                                   #   %p = failed node port number
+                                   #   %D = failed node database cluster path
                                    #   %m = new master node id
-                                   #   %H = hostname of the new master node
+                                   #   %H = new master node hostname
                                    #   %M = old master node id
                                    #   %P = old primary node id
                                    #   %r = new master port number
                                    #   %R = new master database cluster path
-
+                                   #   %N = old primary node hostname
+                                   #   %S = old primary node port number
                                    #   %% = '%' character
 failback_command = ''
                                    # Executes this command at failback.
                                    # Special values:
-                                   #   %d = node id
-                                   #   %h = host name
-                                   #   %p = port number
-                                   #   %D = database cluster path
+                                   #   %d = failed node id
+                                   #   %h = failed node host name
+                                   #   %p = failed node port number
+                                   #   %D = failed node database cluster path
                                    #   %m = new master node id
-                                   #   %H = hostname of the new master node
+                                   #   %H = new master node hostname
                                    #   %M = old master node id
                                    #   %P = old primary node id
                                    #   %r = new master port number
                                    #   %R = new master database cluster path
+                                   #   %N = old primary node hostname
+                                   #   %S = old primary node port number
                                    #   %% = '%' character
 
 failover_on_backend_error = on
@@ -764,8 +769,8 @@ enable_shared_relcache = off
                                    # Default is off.
                                    # (change requires restart)
 
-relcache_query_target = master	   # Target node to send relcache queries. Default is master (primary) node.
-		      		   # If load_balance_node is specified, queries will be sent to load balance node.
+relcache_query_target = master     # Target node to send relcache queries. Default is master (primary) node.
+                                   # If load_balance_node is specified, queries will be sent to load balance node.
 #------------------------------------------------------------------------------
 # IN MEMORY QUERY MEMORY CACHE
 #------------------------------------------------------------------------------

@@ -171,6 +171,20 @@
                 <entry>新しいマスターノードのデータベースクラスタパス</entry>
               </row>
               <row>
+                <entry>%N</entry>
+<!--
+                <entry>Hostname of the old primary node</entry>
+-->
+                <entry>古いプライマリノードのホスト名(<productname>Pgpool-II</productname> 4.1以降)</entry>
+              </row>
+              <row>
+                <entry>%S</entry>
+<!--
+                <entry>Port number of the old primary node</entry>
+-->
+                <entry>古いプライマリノードのポート番号(<productname>Pgpool-II</productname> 4.1以降)</entry>
+              </row>
+              <row>
                 <entry>%%</entry>
 <!--
                 <entry>	'%' character</entry>
@@ -358,6 +372,20 @@ failover_commandの完全な例が<xref linkend="example-cluster">にありま�
                 <entry>新しいマスターノードのデータベースクラスタパス</entry>
               </row>
               <row>
+                <entry>%N</entry>
+<!--
+                <entry>Hostname of the old primary node</entry>
+-->
+                <entry>古いプライマリノードのホスト名(<productname>Pgpool-II</productname> 4.1以降)</entry>
+              </row>
+              <row>
+                <entry>%S</entry>
+<!--
+                <entry>Port number of the old primary node</entry>
+-->
+                <entry>古いプライマリノードのポート番号(<productname>Pgpool-II</productname> 4.1以降)</entry>
+              </row>
+              <row>
                 <entry>%%</entry>
 <!--
                 <entry>	'%' character</entry>
@@ -540,6 +568,20 @@ if (we need to executed follow master command)
                 <entry>Database cluster directory of the new primary node</entry>
 -->
                 <entry>新しいプライマリノードのデータベースクラスタパス</entry>
+              </row>
+              <row>
+                <entry>%N</entry>
+<!--
+                <entry>Hostname of the old primary node</entry>
+-->
+                <entry>古いプライマリノードのホスト名(<productname>Pgpool-II</productname> 4.1以降)</entry>
+              </row>
+              <row>
+                <entry>%S</entry>
+<!--
+                <entry>Port number of the old primary node</entry>
+-->
+                <entry>古いプライマリノードのポート番号(<productname>Pgpool-II</productname> 4.1以降)</entry>
               </row>
               <row>
                 <entry>%%</entry>

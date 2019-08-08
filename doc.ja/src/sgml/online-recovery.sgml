@@ -398,6 +398,14 @@ postmasterの起動（<literal>pgpool_remote_start</literal>の実施）
 リカバリされるノードの番号（<productname>Pgpool-II</productname> 4.0以降）
             </para>
           </listitem>
+          <listitem>
+            <para>
+<!--
+              Port number to be recovered (<productname>Pgpool-II</productname> 4.1 or after)
+-->
+リカバリされるノードのポート番号（<productname>Pgpool-II</productname> 4.1以降）
+            </para>
+          </listitem>
         </itemizedlist>
 
         <note>

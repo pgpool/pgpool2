@@ -145,7 +145,7 @@
               </row>
               <row>
                 <entry>%m</entry>
-                <entry>	New master node ID</entry>
+                <entry>New master node ID</entry>
               </row>
               <row>
                 <entry>%H</entry>
@@ -153,7 +153,7 @@
               </row>
               <row>
                 <entry>%P</entry>
-                <entry>	Old primary node ID</entry>
+                <entry>Old primary node ID</entry>
               </row>
               <row>
                 <entry>%r</entry>
@@ -162,6 +162,14 @@
               <row>
                 <entry>%R</entry>
                 <entry>Database cluster directory of the new master node</entry>
+              </row>
+              <row>
+                <entry>%N</entry>
+                <entry>Hostname of the old primary node (<productname>Pgpool-II</productname> 4.1 or after)</entry>
+              </row>
+              <row>
+                <entry>%S</entry>
+                <entry>Port number of the old primary node (<productname>Pgpool-II</productname> 4.1 or after)</entry>
               </row>
               <row>
                 <entry>%%</entry>
@@ -303,6 +311,14 @@
                 <entry>Database cluster directory of the new master node</entry>
               </row>
               <row>
+                <entry>%N</entry>
+                <entry>Hostname of the old primary node (<productname>Pgpool-II</productname> 4.1 or after)</entry>
+              </row>
+              <row>
+                <entry>%S</entry>
+                <entry>Port number of the old primary node (<productname>Pgpool-II</productname> 4.1 or after)</entry>
+              </row>
+              <row>
                 <entry>%%</entry>
                 <entry>	'%' character</entry>
               </row>
@@ -426,6 +442,14 @@ if (we need to executed follow master command)
               <row>
                 <entry>%R</entry>
                 <entry>Database cluster directory of the new primary node</entry>
+              </row>
+              <row>
+                <entry>%N</entry>
+                <entry>Hostname of the old primary node (<productname>Pgpool-II</productname> 4.1 or after)</entry>
+              </row>
+              <row>
+                <entry>%S</entry>
+                <entry>Port number of the old primary node (<productname>Pgpool-II</productname> 4.1 or after)</entry>
               </row>
               <row>
                 <entry>%%</entry>

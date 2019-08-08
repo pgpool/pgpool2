@@ -2980,6 +2980,7 @@ trigger_failover_command(int node, const char *command_line,
 	char		buf[2];
 	BackendInfo *info;
 	BackendInfo *newmaster;
+	BackendInfo *oldprimary;
 
 	if (command_line == NULL || (strlen(command_line) == 0))
 		return 0;
@@ -3065,6 +3066,17 @@ trigger_failover_command(int node, const char *command_line,
 
 					case 'P':	/* old primary node id */
 						snprintf(port_buf, sizeof(port_buf), "%d", old_primary);
+						string_append_char(exec_cmd, port_buf);
+						break;
+
+					case 'N':	/* old primary host name */
+						oldprimary = pool_get_node_info(old_primary);
+						string_append_char(exec_cmd, oldprimary->backend_hostname);
+						break;
+
+					case 'S':	/* old primary port */
+						oldprimary = pool_get_node_info(old_primary);
+						snprintf(port_buf, sizeof(port_buf), "%d", oldprimary->backend_port);
 						string_append_char(exec_cmd, port_buf);
 						break;
 

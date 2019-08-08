@@ -259,6 +259,11 @@
               Node number to be recovered (<productname>Pgpool-II</productname> 4.0 or after)
             </para>
           </listitem>
+          <listitem>
+            <para>
+              Port number to be recovered (<productname>Pgpool-II</productname> 4.1 or after)
+            </para>
+          </listitem>
         </itemizedlist>
 
         <note>

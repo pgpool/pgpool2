@@ -255,12 +255,13 @@ exec_recovery(PGconn *conn, BackendInfo * master_backend, BackendInfo * recovery
 	 */
 	snprintf(recovery_command,
 			 sizeof(recovery_command),
-			 "SELECT pgpool_recovery('%s', '%s', '%s', '%d', %d)",
+			 "SELECT pgpool_recovery('%s', '%s', '%s', '%d', %d, '%d')",
 			 script,
 			 hostname,
 			 recovery_backend->backend_data_directory,
 			 master_backend->backend_port,
-			 recovery_node
+			 recovery_node,
+			 recovery_backend->backend_port
 		);
 
 	ereport(LOG,

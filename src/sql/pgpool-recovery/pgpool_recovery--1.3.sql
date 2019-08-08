@@ -4,8 +4,9 @@
 CREATE FUNCTION pgpool_recovery(IN script_name text,
 	   IN remote_host text,
 	   IN remote_data_directory text,
-	   IN remote_port text,
-	   IN recovery_node integer)
+	   IN primary_port text,
+	   IN remote_node integer,
+	   IN remote_port text)
 RETURNS bool
 AS 'MODULE_PATHNAME', 'pgpool_recovery'
 LANGUAGE C STRICT;
@@ -13,7 +14,16 @@ LANGUAGE C STRICT;
 CREATE FUNCTION pgpool_recovery(IN script_name text,
 	   IN remote_host text,
 	   IN remote_data_directory text,
-	   IN remote_port text)
+	   IN primary_port text,
+	   IN remote_node integer)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'pgpool_recovery'
+LANGUAGE C STRICT;
+
+CREATE FUNCTION pgpool_recovery(IN script_name text,
+	   IN remote_host text,
+	   IN remote_data_directory text,
+	   IN primary_port text)
 RETURNS bool
 AS 'MODULE_PATHNAME', 'pgpool_recovery'
 LANGUAGE C STRICT;
