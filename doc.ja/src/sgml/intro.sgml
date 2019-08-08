@@ -1,13 +1,13 @@
 <!-- doc/src/sgml/intro.sgml -->
 
 <preface id="preface">
-<!--
+ <!--
  <title>Preface</title>
--->
+ -->
  <title>はじめに</title>
 
  <para>
-<!--
+  <!--
   This book is the official documentation of
   <productname>Pgpool-II</productname>.  It has been written by the
   <productname>Pgpool-II</productname> developers and other
@@ -15,349 +15,349 @@
   <productname>Pgpool-II</productname> software.  It describes all
   the functionality that the current version of
   <productname>Pgpool-II</productname> officially supports.
--->
-本書は、<productname>Pgpool-II</productname>のオフィシャルドキュメントです。
-<productname>Pgpool-II</productname>ソフトウェアの開発と並行して、<productname>Pgpool-II</productname>の開発者とそれ以外のボランティアによって作成されてきました。
-現在のバージョンの<productname>Pgpool-II</productname>が正式にサポートするすべての機能について説明しています。
+  -->
+  本書は、<productname>Pgpool-II</productname>のオフィシャルドキュメントです。
+  <productname>Pgpool-II</productname>ソフトウェアの開発と並行して、<productname>Pgpool-II</productname>の開発者とそれ以外のボランティアによって作成されてきました。
+  現在のバージョンの<productname>Pgpool-II</productname>が正式にサポートするすべての機能について説明しています。
  </para>
 
  <para>
-<!--
+  <!--
   To make the large amount of information about
   <productname>Pgpool-II</productname> manageable, this book has been
   organized in several parts.  Each part is targeted at a different
   class of users, or at users in different stages of their
   <productname>Pgpool-II</productname> experience:
--->
-<productname>Pgpool-II</productname>に関する膨大な情報を管理しやすくするために、本書はいくつかの部分に分かれています。
-それぞれの部分のユーザの層の違い、あるいは<productname>Pgpool-II</productname>の経験の違いに合せて構成されてます。
+  -->
+  <productname>Pgpool-II</productname>に関する膨大な情報を管理しやすくするために、本書はいくつかの部分に分かれています。
+  それぞれの部分のユーザの層の違い、あるいは<productname>Pgpool-II</productname>の経験の違いに合せて構成されてます。
 
   <itemizedlist>
    <listitem>
     <para>
-<!--
+     <!--
      <xref linkend="tutorial"> is an informal introduction for new users.
--->
-<xref linkend="tutorial">は入門者のための導入情報です。
+     -->
+     <xref linkend="tutorial">は入門者のための導入情報です。
     </para>
    </listitem>
 
    <listitem>
     <para>
-<!--
+     <!--
      <xref linkend="admin"> describes the installation and
      administration of the server.  Everyone who runs a
      <productname>Pgpool-II</productname> server, be it for private
      use or for others, should read this part.
--->
-<xref linkend="admin">では、サーバのインストールと管理について記述しています。
-個人目的であれ、他の人のために動かすのであれ、<productname>Pgpool-II</productname>サーバを動かす人はこの章を読んでください。
+     -->
+     <xref linkend="admin">では、サーバのインストールと管理について記述しています。
+      個人目的であれ、他の人のために動かすのであれ、<productname>Pgpool-II</productname>サーバを動かす人はこの章を読んでください。
     </para>
    </listitem>
 
    <listitem>
     <para>
-<!--
+     <!--
      <xref linkend="examples"> explains several configuration examples
      so that users can choose the starting point of their actual systems.
--->
-<xref linkend="examples">では、ユーザが実際のシステムで使う際の起点として選択できるように何種類かの構成例を説明しています。
+     -->
+     <xref linkend="examples">では、ユーザが実際のシステムで使う際の起点として選択できるように何種類かの構成例を説明しています。
     </para>
    </listitem>
 
    <listitem>
     <para>
-<!--
+     <!--
      <xref linkend="reference"> contains reference information about
      SQL commands, client and server programs.  This part supports
      the other parts with structured information sorted by command or
      program.
--->
-<xref linkend="reference">には、SQLコマンド、クライアント、サーバプログラムが含まれます。
-コマンドあるいはプログラムでソートされた構造的な情報となっており、本書の他の部分をサポートするように考慮されています。
+     -->
+     <xref linkend="reference">には、SQLコマンド、クライアント、サーバプログラムが含まれます。
+      コマンドあるいはプログラムでソートされた構造的な情報となっており、本書の他の部分をサポートするように考慮されています。
     </para>
    </listitem>
 
    <listitem>
     <para>
-<!--
+     <!--
      <xref linkend="appendixes"> is an appendix information such as release notes.
--->
-<xref linkend="appendixes">はリリースノートのような追加情報です。
+     -->
+     <xref linkend="appendixes">はリリースノートのような追加情報です。
     </para>
    </listitem>
 
-<!--
+   <!--
    <listitem>
-    <para>
-     <xref linkend="internals"> contains assorted information that might be of
-     use to <productname>PostgreSQL</> developers.
-    </para>
-   </listitem>
--->
+   <para>
+   <xref linkend="internals"> contains assorted information that might be of
+   use to <productname>PostgreSQL</> developers.
+  </para>
+  </listitem>
+   -->
 
   </itemizedlist>
  </para>
 
  <sect1 id="intro-whatis">
-<!--
+  <!--
   <title> What is <productname>Pgpool-II</productname>?</title>
--->
+  -->
   <title><productname>Pgpool-II</productname>とは？</title>
 
   <para>
-<!--
-    <productname>Pgpool-II</productname> is a proxy software that sits
-    between <productname>PostgreSQL</productname> servers and a
-    <productname>PostgreSQL</productname> database client. It provides
-    the following features:
--->
-<productname>Pgpool-II</productname>は、<productname>PostgreSQL</productname>サーバと<productname>PostgreSQL</productname>データベースクライアントの間に位置するプロキシソフトウェアです。
-以下のような機能を提供します。
+   <!--
+   <productname>Pgpool-II</productname> is a proxy software that sits
+   between <productname>PostgreSQL</productname> servers and a
+   <productname>PostgreSQL</productname> database client. It provides
+   the following features:
+   -->
+   <productname>Pgpool-II</productname>は、<productname>PostgreSQL</productname>サーバと<productname>PostgreSQL</productname>データベースクライアントの間に位置するプロキシソフトウェアです。
+   以下のような機能を提供します。
 
-  <variablelist>
+   <variablelist>
 
-   <varlistentry>
-<!--
-    <term>Connection Pooling</term>
--->
-    <term>コネクションプーリング</term>
-    <listitem>
+    <varlistentry>
+     <!--
+     <term>Connection Pooling</term>
+     -->
+     <term>コネクションプーリング</term>
+     <listitem>
       <para>
-<!--
-	<productname>Pgpool-II</productname> maintains established
-	connections to the <productname>PostgreSQL</productname>
-	servers, and reuses them whenever a new connection with the
-	same properties (i.e. user name, database, protocol version, and other connection parameters if any)
-	comes in. It reduces the connection overhead, and improves
-	system's overall throughput.
--->
-<productname>Pgpool-II</productname>は、<productname>PostgreSQL</productname>サーバへの確立された接続を維持し、プロパティ（つまりユーザ名、データベース、プロトコルバージョン、他に指定されていれば接続パラメータも）が同じ新規のコネクションが到着する度に再利用します。
-コネクションオーバヘッドを軽減することによって、システム全体のスループットを改善します。
+       <!--
+       <productname>Pgpool-II</productname> maintains established
+       connections to the <productname>PostgreSQL</productname>
+       servers, and reuses them whenever a new connection with the
+       same properties (i.e. user name, database, protocol version, and other connection parameters if any)
+       comes in. It reduces the connection overhead, and improves
+       system's overall throughput.
+       -->
+       <productname>Pgpool-II</productname>は、<productname>PostgreSQL</productname>サーバへの確立された接続を維持し、プロパティ（つまりユーザ名、データベース、プロトコルバージョン、他に指定されていれば接続パラメータも）が同じ新規のコネクションが到着する度に再利用します。
+       コネクションオーバヘッドを軽減することによって、システム全体のスループットを改善します。
       </para>
-    </listitem>
-   </varlistentry>
+     </listitem>
+    </varlistentry>
 
-   <varlistentry>
-<!--
-    <term>Load Balancing</term>
--->
-    <term>負荷分散</term>
-    <listitem>
+    <varlistentry>
+     <!--
+     <term>Load Balancing</term>
+     -->
+     <term>負荷分散</term>
+     <listitem>
       <para>
-<!--
-	If a database is replicated (because running in either
-	replication mode or master/slave mode), performing a SELECT
-	query on any server will return the same result. <productname>Pgpool-II</productname>
-	takes advantage of the replication feature in order to reduce
-	the load on each PostgreSQL server.  It does that by
-	distributing SELECT queries among available servers, improving
-	the system's overall throughput. In an ideal scenario, read
-	performance could improve proportionally to the number of
-	PostgreSQL servers. Load balancing works best in a scenario
-	where there are a lot of users executing many read-only
-	queries at the same time.
--->
-（レプリケーションモードあるいはマスタースレーブモードで動作しているので）データベースがレプリケーションされている場合は、どのサーバにSELECTを発行しても同じ結果が得られます。
-<productname>Pgpool-II</productname>は、個々のPostgreSQLサーバの負荷を軽減するために、レプリケーションを利用します。
-SELECTクエリをサーバに分散させ、システム全体のスループットを改善します。
-理想的には、PostgreSQLサーバの数に比例して検索性能が向上します。
-多数のユーザが検索のみのクエリを同時に発行するようなシナリオで、負荷分散は最大の効果を発揮します。
+       <!--
+       If a database is replicated (because running in either
+       replication mode or master/slave mode), performing a SELECT
+       query on any server will return the same result. <productname>Pgpool-II</productname>
+       takes advantage of the replication feature in order to reduce
+       the load on each PostgreSQL server.  It does that by
+       distributing SELECT queries among available servers, improving
+       the system's overall throughput. In an ideal scenario, read
+       performance could improve proportionally to the number of
+       PostgreSQL servers. Load balancing works best in a scenario
+       where there are a lot of users executing many read-only
+       queries at the same time.
+       -->
+       （レプリケーションモードあるいはマスタースレーブモードで動作しているので）データベースがレプリケーションされている場合は、どのサーバにSELECTを発行しても同じ結果が得られます。
+       <productname>Pgpool-II</productname>は、個々のPostgreSQLサーバの負荷を軽減するために、レプリケーションを利用します。
+       SELECTクエリをサーバに分散させ、システム全体のスループットを改善します。
+       理想的には、PostgreSQLサーバの数に比例して検索性能が向上します。
+       多数のユーザが検索のみのクエリを同時に発行するようなシナリオで、負荷分散は最大の効果を発揮します。
       </para>
-    </listitem>
-   </varlistentry>
+     </listitem>
+    </varlistentry>
 
-   <varlistentry>
-    <term>自動フェイルオーバ</term>
-    <listitem>
+    <varlistentry>
+     <term>自動フェイルオーバ</term>
+     <listitem>
       <para>
-<!--
-	If one of database servers goes down or becomes unrechable,
-	<productname>Pgpool-II</productname> will detaches it and continues operations using rest
-	of database servers. There are some sophiscated features which
-	help the automated fail over including timeout and retries.
--->
-データベースサーバのどれかがダウンしたり、到達できなくなったときは、<productname>Pgpool-II</productname>はそのサーバを切り離し、残ったサーバで運用を継続します。
-自動フェイルオーバの助けになるような、タイムアウト、リトライといった洗練された機能もあります。
+       <!--
+       If one of database servers goes down or becomes unrechable,
+       <productname>Pgpool-II</productname> will detaches it and continues operations using rest
+       of database servers. There are some sophiscated features which
+       help the automated fail over including timeout and retries.
+       -->
+       データベースサーバのどれかがダウンしたり、到達できなくなったときは、<productname>Pgpool-II</productname>はそのサーバを切り離し、残ったサーバで運用を継続します。
+       自動フェイルオーバの助けになるような、タイムアウト、リトライといった洗練された機能もあります。
       </para>
-    </listitem>
-   </varlistentry>
+     </listitem>
+    </varlistentry>
 
-   <varlistentry>
-<!--
-    <term>Online Recovery</term>
--->
-    <term>オンラインリカバリ</term>
-    <listitem>
+    <varlistentry>
+     <!--
+     <term>Online Recovery</term>
+     -->
+     <term>オンラインリカバリ</term>
+     <listitem>
       <para>
-<!--
-	<productname>Pgpool-II</productname> can perform online recovery of database
-	node by executing one command. When the online recovery is used with the
-	automated fail over, a detached node by fail over is possible to attach as
-	standby node automatically. It is possible to synchronize and attach new
-	<productname>PostgreSQL</productname> server too.
--->
-<productname>Pgpool-II</productname>はコマンド一つでデータベースノードのオンラインリカバリができます。
-自動フェイルオーバと組み合わせることで、フェイルオーバにより切り離されたノードをスタンバイとして自動で復帰させることも可能です。
-新しいPostgreSQLサーバを同期しノードとして追加することもできます。
+       <!--
+       <productname>Pgpool-II</productname> can perform online recovery of database
+       node by executing one command. When the online recovery is used with the
+       automated fail over, a detached node by fail over is possible to attach as
+       standby node automatically. It is possible to synchronize and attach new
+       <productname>PostgreSQL</productname> server too.
+       -->
+       <productname>Pgpool-II</productname>はコマンド一つでデータベースノードのオンラインリカバリができます。
+       自動フェイルオーバと組み合わせることで、フェイルオーバにより切り離されたノードをスタンバイとして自動で復帰させることも可能です。
+       新しいPostgreSQLサーバを同期しノードとして追加することもできます。
       </para>
-    </listitem>
-   </varlistentry>
+     </listitem>
+    </varlistentry>
 
-   <varlistentry>
-    <term>レプリケーション</term>
-    <listitem>
+    <varlistentry>
+     <term>レプリケーション</term>
+     <listitem>
       <para>
-<!--
-	<productname>Pgpool-II</productname> can manage
-	multiple <productname>PostgreSQL</productname>
-	servers. Activating the replication feature makes it possible
-	to create a real time backup on 2 or
-	more <productname>PostgreSQL</productname> clusters, so that
-	the service can continue without interruption if one of those
-	clusters fails. <productname>Pgpool-II</productname> has
-	built-in replication (native replication). However user can
-	use external replication features including streaming
-	replication of <productname>PostgreSQL</productname>.
--->
-<productname>Pgpool-II</productname>は複数の<productname>PostgreSQL</productname>サーバを管理することができます。
-レプリケーション機能を有効にすることにより、2つあるいはそれ以上の<productname>PostgreSQL</productname>クラスタのリアルタイムバックアップを作成できます。
-これによって、クラスタの一つがダウンしても、中断なしにサービスを継続できます。
-<productname>Pgpool-II</productname>には、組み込みレプリケーション（ネィティブレプリケーション）機能があります。
-しかし、<productname>PostgreSQL</productname>のストリーミングレプリケーションのような、外部のレプリケーション機能を使うこともできます。
+       <!--
+       <productname>Pgpool-II</productname> can manage
+       multiple <productname>PostgreSQL</productname>
+       servers. Activating the replication feature makes it possible
+       to create a real time backup on 2 or
+       more <productname>PostgreSQL</productname> clusters, so that
+       the service can continue without interruption if one of those
+       clusters fails. <productname>Pgpool-II</productname> has
+       built-in replication (native replication). However user can
+       use external replication features including streaming
+       replication of <productname>PostgreSQL</productname>.
+       -->
+       <productname>Pgpool-II</productname>は複数の<productname>PostgreSQL</productname>サーバを管理することができます。
+       レプリケーション機能を有効にすることにより、2つあるいはそれ以上の<productname>PostgreSQL</productname>クラスタのリアルタイムバックアップを作成できます。
+       これによって、クラスタの一つがダウンしても、中断なしにサービスを継続できます。
+       <productname>Pgpool-II</productname>には、組み込みレプリケーション（ネィティブレプリケーション）機能があります。
+       しかし、<productname>PostgreSQL</productname>のストリーミングレプリケーションのような、外部のレプリケーション機能を使うこともできます。
       </para>
-    </listitem>
-   </varlistentry>
+     </listitem>
+    </varlistentry>
 
-   <varlistentry>
-    <term>限度を超えた接続の制限</term>
-    <listitem>
+    <varlistentry>
+     <term>限度を超えた接続の制限</term>
+     <listitem>
       <para>
-<!--
-	There is a limit on the maximum number of concurrent
-	connections with <productname>PostgreSQL</productname>, and
-	new connections are rejected when this number is
-	reached. Raising this maximum number of connections, however,
-	increases resource consumption and has a negative impact on
-	overall system
-	performance. <productname>Pgpool-II</productname> also has a
-	limit on the maximum number of connections, but extra
-	connections will be queued instead of returning an error
-	immediately. However, you can configure to return an error
-	when the connection limit is exceeded (4.1 or later).
--->
-<productname>PostgreSQL</productname>への最大同時接続数には制限があり、その制限に達すると新しいコネクションは拒否されます。
-最大接続数を大きくすると、リソースの消費が増え、システム全体の性能に悪影響があります。
-<productname>Pgpool-II</productname>にも最大接続数の制限があります。
-しかし、制限を超えた接続要求はすぐにエラーが返るのではなく、待ち行列に入ります。
-ただし、制限を超えた接続要求に対してエラーを返すように設定することも可能です(4.1 以降)。
-	</para>
-    </listitem>
-   </varlistentry>
+       <!--
+       There is a limit on the maximum number of concurrent
+       connections with <productname>PostgreSQL</productname>, and
+       new connections are rejected when this number is
+       reached. Raising this maximum number of connections, however,
+       increases resource consumption and has a negative impact on
+       overall system
+       performance. <productname>Pgpool-II</productname> also has a
+       limit on the maximum number of connections, but extra
+       connections will be queued instead of returning an error
+       immediately. However, you can configure to return an error
+       when the connection limit is exceeded (4.1 or later).
+       -->
+       <productname>PostgreSQL</productname>への最大同時接続数には制限があり、その制限に達すると新しいコネクションは拒否されます。
+       最大接続数を大きくすると、リソースの消費が増え、システム全体の性能に悪影響があります。
+       <productname>Pgpool-II</productname>にも最大接続数の制限があります。
+       しかし、制限を超えた接続要求はすぐにエラーが返るのではなく、待ち行列に入ります。
+       ただし、制限を超えた接続要求に対してエラーを返すように設定することも可能です(4.1 以降)。
+      </para>
+     </listitem>
+    </varlistentry>
 
-   <varlistentry>
-    <term>Watchdog</term>
-    <listitem>
+    <varlistentry>
+     <term>Watchdog</term>
+     <listitem>
       <para>
-<!--
-	Watchdog can coordinate multiple <productname>Pgpool-II</productname>,
-	create a robust cluster system and avoid the single point of failure or split brain.
-	Watchdog can perform lifecheck against other <productname>pgpool-II</productname> nodes,
-	to detect a fault of <productname>Pgpoll-II</productname>.
-	If active <productname>Pgpool-II</productname> goes down, standby
-	<productname>Pgpool-II</productname> can be promoted to active, and take over Virtual IP.
--->
-Watchdogは、複数の<productname>Pgpool-II</productname>を協調させて動作させることにより、単一障害点やスプリットブレインの起きない堅牢なクラスタを運用することが可能です。
-他の<productname>Pgpool-II</productname>の死活監視を行い、障害を検出することができます。
-稼働系の<productname>Pgpool-II</productname>がダウンしても、待機系の<productname>Pgpool-II</productname>が稼動系に昇格し、仮想IPを引き継ぐことができます。
-	  </para>
-    </listitem>
-   </varlistentry>
+       <!--
+       Watchdog can coordinate multiple <productname>Pgpool-II</productname>,
+       create a robust cluster system and avoid the single point of failure or split brain.
+       Watchdog can perform lifecheck against other <productname>pgpool-II</productname> nodes,
+       to detect a fault of <productname>Pgpoll-II</productname>.
+       If active <productname>Pgpool-II</productname> goes down, standby
+       <productname>Pgpool-II</productname> can be promoted to active, and take over Virtual IP.
+       -->
+       Watchdogは、複数の<productname>Pgpool-II</productname>を協調させて動作させることにより、単一障害点やスプリットブレインの起きない堅牢なクラスタを運用することが可能です。
+       他の<productname>Pgpool-II</productname>の死活監視を行い、障害を検出することができます。
+       稼働系の<productname>Pgpool-II</productname>がダウンしても、待機系の<productname>Pgpool-II</productname>が稼動系に昇格し、仮想IPを引き継ぐことができます。
+      </para>
+     </listitem>
+    </varlistentry>
 
-   <varlistentry>
-    <term>インメモリキャッシュ</term>
-    <listitem>
+    <varlistentry>
+     <term>インメモリキャッシュ</term>
+     <listitem>
       <para>
-<!--
-	In memory query cache allows to save a pair of SELECT statement and its result.
-	If an identical SELECTs comes in, <productname>Pgpool-II</productname> returns the
-	value from cache. Since no SQL parsing nor access to <productname>PostgreSQL</productname>
-	are involved, using in memory cache is extremely fast. On the other hand, it might
-	be slower than the normal path in some cases, because it adds some overhead of storing cache data.
--->
-SELECT文とその検索結果をキャッシュに保存できます。同じSELECT文が発行された場合、<productname>Pgpool-II</productname>はキャッシュから結果を返します。
-SQLの解析も<productname>PostgreSQL</productname>へのアクセスも行われないため、インメモリキャッシュの利用は非常に高速です。
-反面、キャッシュを保存するオーバヘッドが生じるので、通常の方法より遅くなる場合もあります。
-	  </para>
-    </listitem>
-   </varlistentry>
+       <!--
+       In memory query cache allows to save a pair of SELECT statement and its result.
+       If an identical SELECTs comes in, <productname>Pgpool-II</productname> returns the
+       value from cache. Since no SQL parsing nor access to <productname>PostgreSQL</productname>
+       are involved, using in memory cache is extremely fast. On the other hand, it might
+       be slower than the normal path in some cases, because it adds some overhead of storing cache data.
+       -->
+       SELECT文とその検索結果をキャッシュに保存できます。同じSELECT文が発行された場合、<productname>Pgpool-II</productname>はキャッシュから結果を返します。
+       SQLの解析も<productname>PostgreSQL</productname>へのアクセスも行われないため、インメモリキャッシュの利用は非常に高速です。
+       反面、キャッシュを保存するオーバヘッドが生じるので、通常の方法より遅くなる場合もあります。
+      </para>
+     </listitem>
+    </varlistentry>
 
-  </variablelist>
+   </variablelist>
 
   </para>
 
   <para>
-<!--
-    <productname>Pgpool-II</productname> speaks PostgreSQL's backend
-    and frontend protocol, and relays messages between a backend and a
-    frontend. Therefore, a database application (frontend) thinks
-    that <productname>Pgpool-II</productname> is the
-    actual <productname>PostgreSQL</productname> server, and the
-    server (backend) sees <productname>Pgpool-II</productname> as one
-    of its clients. Because
-    <productname>Pgpool-II</productname> is transparent to both the server and the client, an
-    existing database application can be used with <productname>Pgpool-II</productname> almost
-    without a change to its source code.
--->
-<productname>Pgpool-II</productname>は、PostgreSQLのバックエンドフロントエンドプロトコルを理解し、バックエンドとフロントエンドの間でメッセージを転送します。
-つまり、データベースアプリケーション（フロントエンド）には<productname>Pgpool-II</productname>が実際の<productname>PostgreSQL</productname>サーバであるように見えます。
-サーバ（バックエンド）には、<productname>Pgpool-II</productname>がフロントエンドであるように見えます。
-<productname>Pgpool-II</productname>は、サーバとクライアントに対して透過なので、既存のデータベースアプリケーションは、ソースコードに変更を加えることなく<productname>Pgpool-II</productname>を利用できます。
+   <!--
+   <productname>Pgpool-II</productname> speaks PostgreSQL's backend
+   and frontend protocol, and relays messages between a backend and a
+   frontend. Therefore, a database application (frontend) thinks
+   that <productname>Pgpool-II</productname> is the
+   actual <productname>PostgreSQL</productname> server, and the
+   server (backend) sees <productname>Pgpool-II</productname> as one
+   of its clients. Because
+   <productname>Pgpool-II</productname> is transparent to both the server and the client, an
+   existing database application can be used with <productname>Pgpool-II</productname> almost
+   without a change to its source code.
+   -->
+   <productname>Pgpool-II</productname>は、PostgreSQLのバックエンドフロントエンドプロトコルを理解し、バックエンドとフロントエンドの間でメッセージを転送します。
+   つまり、データベースアプリケーション（フロントエンド）には<productname>Pgpool-II</productname>が実際の<productname>PostgreSQL</productname>サーバであるように見えます。
+   サーバ（バックエンド）には、<productname>Pgpool-II</productname>がフロントエンドであるように見えます。
+   <productname>Pgpool-II</productname>は、サーバとクライアントに対して透過なので、既存のデータベースアプリケーションは、ソースコードに変更を加えることなく<productname>Pgpool-II</productname>を利用できます。
   </para>
 
   <para>
-<!--
-    <productname>Pgpool-II</productname> works on Linux, Solaris,
-    FreeBSD, and most of the UNIX-like architectures. Windows is not
-    supported. Supported PostgreSQL server's versions are 6.4 and
-    higher.  If you are using <productname>PostgreSQL</productname>
-    7.3 or older, some features
-    of <productname>Pgpool-II</productname> won't be available. But
-    you shouldn't use such an old release anyway.  You must also make
-    sure that all of your <productname>PostgreSQL</productname>
-    servers are using the same major version. In addition to this, we
-    do not recommend mixing
-    different <productname>PostgreSQL</productname> installation with
-    different build options: including supporting SSL or not, to use
-    &#045;&#045disable-integer-datetimes or not, different block size. These
-    might affect part of functionality
-    of <productname>Pgpool-II</productname>. The difference of
-    <productname>PostgreSQL</productname> minor versions is not
-    usually a problem. However we do not test every occurrence of
-    minor versions and we recommend to use exact same minor version of
-    <productname>PostgreSQL</productname>.
--->
-<productname>Pgpool-II</productname> は、Linuxをはじめ、SolarisやFreeBSDなどのほとんどのUNIX環境で動作します。
-Windows では動きません。
-対応する<productname>PostgreSQL</productname>のバージョンは、6.4 以降です。
-また、<productname>PostgreSQL</productname> 7.4 より前のバージョンでは、使用できる機能に制限事項があります。
-もっとも、そのような古いバージョンの<productname>PostgreSQL</productname> はそもそも使うべきではありません。
-<productname>Pgpool-II</productname>配下で利用する<productname>PostgreSQL</productname>サーバのメジャーバージョン、
-OS やハードウェアアーキテクチャを同じものにしなければなりません。
-また、バージョンが同じであっても、<productname>PostgreSQL</productname> のビルド方法が違うものを混ぜている場合の動作は保証できません。
-たとえば、SSL サポートの有無、日付型の実装方法 (--disable-integer-datetimes)、ブロックサイズの違いなどは、<productname>Pgpool-II</productname>の一部の機能に影響を与えるでしょう。
-<productname>PostgreSQL</productname> のマイナーバージョンが違う場合は大抵の場合問題になりませんが、
-すべての<productname>PostgreSQL</productname>のマイナーバージョンを検証したわけではないので、
-できればマイナーバージョンを合わせておくことをお勧めします。
+   <!--
+   <productname>Pgpool-II</productname> works on Linux, Solaris,
+   FreeBSD, and most of the UNIX-like architectures. Windows is not
+   supported. Supported PostgreSQL server's versions are 6.4 and
+   higher.  If you are using <productname>PostgreSQL</productname>
+   7.3 or older, some features
+   of <productname>Pgpool-II</productname> won't be available. But
+   you shouldn't use such an old release anyway.  You must also make
+   sure that all of your <productname>PostgreSQL</productname>
+   servers are using the same major version. In addition to this, we
+   do not recommend mixing
+   different <productname>PostgreSQL</productname> installation with
+   different build options: including supporting SSL or not, to use
+   &#045;&#045disable-integer-datetimes or not, different block size. These
+   might affect part of functionality
+   of <productname>Pgpool-II</productname>. The difference of
+   <productname>PostgreSQL</productname> minor versions is not
+   usually a problem. However we do not test every occurrence of
+   minor versions and we recommend to use exact same minor version of
+   <productname>PostgreSQL</productname>.
+   -->
+   <productname>Pgpool-II</productname> は、Linuxをはじめ、SolarisやFreeBSDなどのほとんどのUNIX環境で動作します。
+   Windows では動きません。
+   対応する<productname>PostgreSQL</productname>のバージョンは、6.4 以降です。
+   また、<productname>PostgreSQL</productname> 7.4 より前のバージョンでは、使用できる機能に制限事項があります。
+   もっとも、そのような古いバージョンの<productname>PostgreSQL</productname> はそもそも使うべきではありません。
+   <productname>Pgpool-II</productname>配下で利用する<productname>PostgreSQL</productname>サーバのメジャーバージョン、
+   OS やハードウェアアーキテクチャを同じものにしなければなりません。
+   また、バージョンが同じであっても、<productname>PostgreSQL</productname> のビルド方法が違うものを混ぜている場合の動作は保証できません。
+   たとえば、SSL サポートの有無、日付型の実装方法 (--disable-integer-datetimes)、ブロックサイズの違いなどは、<productname>Pgpool-II</productname>の一部の機能に影響を与えるでしょう。
+   <productname>PostgreSQL</productname> のマイナーバージョンが違う場合は大抵の場合問題になりませんが、
+   すべての<productname>PostgreSQL</productname>のマイナーバージョンを検証したわけではないので、
+   できればマイナーバージョンを合わせておくことをお勧めします。
   </para>
 
   <para>
-<!--
-    There are some restrictions to using SQL via <productname>Pgpool-II</productname>.
-    See <link linkend="restrictions">Restrictions</link> for more details.
--->
-<productname>Pgpool-II</productname>でSQLを使うにあたっては、制限事項があります。
-詳細は<link linkend="restrictions">制限事項</link>をご覧ください。
+   <!--
+   There are some restrictions to using SQL via <productname>Pgpool-II</productname>.
+   See <link linkend="restrictions">Restrictions</link> for more details.
+   -->
+   <productname>Pgpool-II</productname>でSQLを使うにあたっては、制限事項があります。
+   詳細は<link linkend="restrictions">制限事項</link>をご覧ください。
   </para>
 
  </sect1>

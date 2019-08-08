@@ -1,354 +1,354 @@
     <sect1 id="example-watchdog">
-      <title>Watchdog Configuration Example</title>
+ <title>Watchdog Configuration Example</title>
 
-      <para>
-	This tutorial explains the simple way to try "Watchdog".
-	What you need is 2 Linux boxes on which <productname>
-	  Pgpool-II</productname> is installed and a <productname>PostgreSQL</productname>
-	on the same machine or in the other one. It is enough
-	that 1 node for backend exists.
-	You can use watchdog with <productname>
-	  Pgpool-II</productname> in any mode: replication mode,
-	master/slave mode and raw mode.
-      </para>
-      <para>
-	This example uses use "osspc16" as an Active node and
-	"osspc20" as a Standby node. "Someserver" means one of them.
-      </para>
+ <para>
+  This tutorial explains the simple way to try "Watchdog".
+  What you need is 2 Linux boxes on which <productname>
+   Pgpool-II</productname> is installed and a <productname>PostgreSQL</productname>
+  on the same machine or in the other one. It is enough
+  that 1 node for backend exists.
+  You can use watchdog with <productname>
+   Pgpool-II</productname> in any mode: replication mode,
+  master/slave mode and raw mode.
+ </para>
+ <para>
+  This example uses use "osspc16" as an Active node and
+  "osspc20" as a Standby node. "Someserver" means one of them.
+ </para>
 
-      <sect2 id="example-watchdog-configuration">
-	<title>Common configurations</title>
-	<para>
-	  Set the following parameters in both of active and standby nodes.
-	</para>
+ <sect2 id="example-watchdog-configuration">
+  <title>Common configurations</title>
+  <para>
+   Set the following parameters in both of active and standby nodes.
+  </para>
 
-	<sect3 id="example-watchdog-config-enable">
-	  <title>Enabling watchdog</title>
-	  <para>
-	    First of all, set <xref linkend="guc-use-watchdog"> to on.
-              <programlisting>
-use_watchdog = on
-# Activates watchdog
-              </programlisting>
-	  </para>
-	</sect3>
+  <sect3 id="example-watchdog-config-enable">
+   <title>Enabling watchdog</title>
+   <para>
+    First of all, set <xref linkend="guc-use-watchdog"> to on.
+     <programlisting>
+      use_watchdog = on
+      # Activates watchdog
+     </programlisting>
+   </para>
+  </sect3>
 
-	<sect3 id="example-watchdog-config-upstream">
-	  <title>Configure Up stream servers</title>
-	  <para>
-	    Specify the up stream servers (e.g. application servers).
-	    Leaving it blank is also fine.
-	    <programlisting>
-trusted_servers = ''
-  # trusted server list which are used
-  # to confirm network connection
-  # (hostA,hostB,hostC,...)
-	    </programlisting>
-	  </para>
-	</sect3>
+  <sect3 id="example-watchdog-config-upstream">
+   <title>Configure Up stream servers</title>
+   <para>
+    Specify the up stream servers (e.g. application servers).
+    Leaving it blank is also fine.
+    <programlisting>
+     trusted_servers = ''
+     # trusted server list which are used
+     # to confirm network connection
+     # (hostA,hostB,hostC,...)
+    </programlisting>
+   </para>
+  </sect3>
 
-	<sect3 id="example-watchdog-config-wd-comm">
-	  <title>Watchdog Communication</title>
-	  <para>
-	    Specify the TCP port number for watchdog communication.
-	    <programlisting>
-wd_port = 9000
-  # port number for watchdog service
-	    </programlisting>
-	  </para>
-	</sect3>
+  <sect3 id="example-watchdog-config-wd-comm">
+   <title>Watchdog Communication</title>
+   <para>
+    Specify the TCP port number for watchdog communication.
+    <programlisting>
+     wd_port = 9000
+     # port number for watchdog service
+    </programlisting>
+   </para>
+  </sect3>
 
-	<sect3 id="example-watchdog-config-wd-vip">
-	  <title>Virtual IP</title>
-	  <para>
-	    Specify the IP address to be used as a virtual IP address
-	    in the <xref linkend="guc-delegate-IP">.
-              <programlisting>
-delegate_IP = '133.137.177.143'
-# delegate IP address
-              </programlisting>
-	  </para>
-	  <note>
-	    <para>
-              Make sure the IP address configured as a Virtual IP should be
-              free and is not used by any other machine.
-	    </para>
-	  </note>
-	</sect3>
-      </sect2>
+  <sect3 id="example-watchdog-config-wd-vip">
+   <title>Virtual IP</title>
+   <para>
+    Specify the IP address to be used as a virtual IP address
+    in the <xref linkend="guc-delegate-IP">.
+     <programlisting>
+      delegate_IP = '133.137.177.143'
+      # delegate IP address
+     </programlisting>
+   </para>
+   <note>
+    <para>
+     Make sure the IP address configured as a Virtual IP should be
+     free and is not used by any other machine.
+    </para>
+   </note>
+  </sect3>
+ </sect2>
 
-      <sect2 id="example-watchdog-configuration-each-server">
-	<title>Individual Server Configurations</title>
-	<para>
-	  Next, set the following parameters for each <productname>
-	    Pgpool-II</productname>.
-	  Specify <xref linkend="guc-other-pgpool-hostname">,
-	    <xref linkend="guc-other-pgpool-port"> and
-              <xref linkend="guc-other-wd-port"> with the values of
-		other <productname>Pgpool-II</productname> server values.
-	</para>
+ <sect2 id="example-watchdog-configuration-each-server">
+  <title>Individual Server Configurations</title>
+  <para>
+   Next, set the following parameters for each <productname>
+    Pgpool-II</productname>.
+   Specify <xref linkend="guc-other-pgpool-hostname">,
+    <xref linkend="guc-other-pgpool-port"> and
+     <xref linkend="guc-other-wd-port"> with the values of
+      other <productname>Pgpool-II</productname> server values.
+  </para>
 
-	<sect3 id="example-watchdog-configuration-active-server">
-	  <title>Active (osspc16) Server configurations</title>
-	  <para>
-	    <programlisting>
-other_pgpool_hostname0 = 'osspc20'
-  # Host name or IP address to connect to for other pgpool 0
-other_pgpool_port0 = 9999
-  # Port number for other pgpool 0
-other_wd_port0 = 9000
-  # Port number for other watchdog 0
-	    </programlisting>
-	  </para>
-	</sect3>
+  <sect3 id="example-watchdog-configuration-active-server">
+   <title>Active (osspc16) Server configurations</title>
+   <para>
+    <programlisting>
+     other_pgpool_hostname0 = 'osspc20'
+     # Host name or IP address to connect to for other pgpool 0
+     other_pgpool_port0 = 9999
+     # Port number for other pgpool 0
+     other_wd_port0 = 9000
+     # Port number for other watchdog 0
+    </programlisting>
+   </para>
+  </sect3>
 
-	<sect3 id="example-watchdog-configuration-standby-server">
-	  <title>Standby (osspc20) Server configurations</title>
-	  <para>
-	    <programlisting>
-other_pgpool_hostname0 = 'osspc16'
-  # Host name or IP address to connect to for other pgpool 0
-other_pgpool_port0 = 9999
-  # Port number for other pgpool 0
-other_wd_port0 = 9000
-  # Port number for other watchdog 0
-	    </programlisting>
-	  </para>
-	</sect3>
-      </sect2>
+  <sect3 id="example-watchdog-configuration-standby-server">
+   <title>Standby (osspc20) Server configurations</title>
+   <para>
+    <programlisting>
+     other_pgpool_hostname0 = 'osspc16'
+     # Host name or IP address to connect to for other pgpool 0
+     other_pgpool_port0 = 9999
+     # Port number for other pgpool 0
+     other_wd_port0 = 9000
+     # Port number for other watchdog 0
+    </programlisting>
+   </para>
+  </sect3>
+ </sect2>
 
-      <sect2 id="example-watchdog-start-server">
-	<title>Starting <productname>Pgpool-II</productname></title>
-	<para>
-	  Start <productname>Pgpool-II</productname> on each servers from
-	  <literal>root</literal> user with <literal>"-n"</literal> switch
-	  and redirect log messages into pgpool.log file.
-	</para>
+ <sect2 id="example-watchdog-start-server">
+  <title>Starting <productname>Pgpool-II</productname></title>
+  <para>
+   Start <productname>Pgpool-II</productname> on each servers from
+   <literal>root</literal> user with <literal>"-n"</literal> switch
+   and redirect log messages into pgpool.log file.
+  </para>
 
-	<sect3 id="example-watchdog-start-active-server">
-	  <title>Starting pgpool in Active server (osspc16)</title>
-	  <para>
-	    First start the <productname>Pgpool-II</productname> on Active server.
-	    <programlisting>
-[user@osspc16]$ su -
-[root@osspc16]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf > pgpool.log 2>&1
-	    </programlisting>
-	    Log messages will show that <productname>Pgpool-II</productname>
-	    has the virtual IP address and starts watchdog process.
-	    <programlisting>
-LOG:  I am announcing my self as master/coordinator watchdog node
-LOG:  I am the cluster leader node
-DETAIL:  our declare coordinator message is accepted by all nodes
-LOG:  I am the cluster leader node. Starting escalation process
-LOG:  escalation process started with PID:59449
-<emphasis>LOG:  watchdog process is initialized
-LOG:  watchdog: escalation started
-LOG:  I am the master watchdog node</emphasis>
-  DETAIL:  using the local backend node status
-	    </programlisting>
-	  </para>
-	</sect3>
+  <sect3 id="example-watchdog-start-active-server">
+   <title>Starting pgpool in Active server (osspc16)</title>
+   <para>
+    First start the <productname>Pgpool-II</productname> on Active server.
+    <programlisting>
+     [user@osspc16]$ su -
+     [root@osspc16]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf > pgpool.log 2>&1
+    </programlisting>
+    Log messages will show that <productname>Pgpool-II</productname>
+    has the virtual IP address and starts watchdog process.
+    <programlisting>
+     LOG:  I am announcing my self as master/coordinator watchdog node
+     LOG:  I am the cluster leader node
+     DETAIL:  our declare coordinator message is accepted by all nodes
+     LOG:  I am the cluster leader node. Starting escalation process
+     LOG:  escalation process started with PID:59449
+     <emphasis>LOG:  watchdog process is initialized
+      LOG:  watchdog: escalation started
+      LOG:  I am the master watchdog node</emphasis>
+     DETAIL:  using the local backend node status
+    </programlisting>
+   </para>
+  </sect3>
 
-	<sect3 id="example-watchdog-start-standby-server">
-	  <title>Starting pgpool in Standby server (osspc20)</title>
-	  <para>
-	    Now start the <productname>Pgpool-II</productname> on Standby server.
-	    <programlisting>
-[user@osspc20]$ su -
-[root@osspc20]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf > pgpool.log 2>&1
-	    </programlisting>
-	    Log messages will show that <productname>Pgpool-II</productname>
-	    has joind the watchdog cluster as standby watchdog.
-	    <programlisting>
-LOG:  watchdog cluster configured with 1 remote nodes
-LOG:  watchdog remote node:0 on Linux_osspc16_9000:9000
-LOG:  interface monitoring is disabled in watchdog
-LOG:  IPC socket path: "/tmp/.s.PGPOOLWD_CMD.9000"
-LOG:  watchdog node state changed from [DEAD] to [LOADING]
-LOG:  new outbound connection to Linux_osspc16_9000:9000
-LOG:  watchdog node state changed from [LOADING] to [INITIALIZING]
-LOG:  watchdog node state changed from [INITIALIZING] to [STANDBY]
-<emphasis>
-LOG:  successfully joined the watchdog cluster as standby node
-DETAIL:  our join coordinator request is accepted by cluster leader node "Linux_osspc16_9000"
-LOG:  watchdog process is initialized
-</emphasis>
-	    </programlisting>
-	  </para>
-	</sect3>
-      </sect2>
+  <sect3 id="example-watchdog-start-standby-server">
+   <title>Starting pgpool in Standby server (osspc20)</title>
+   <para>
+    Now start the <productname>Pgpool-II</productname> on Standby server.
+    <programlisting>
+     [user@osspc20]$ su -
+     [root@osspc20]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf > pgpool.log 2>&1
+    </programlisting>
+    Log messages will show that <productname>Pgpool-II</productname>
+    has joind the watchdog cluster as standby watchdog.
+    <programlisting>
+     LOG:  watchdog cluster configured with 1 remote nodes
+     LOG:  watchdog remote node:0 on Linux_osspc16_9000:9000
+     LOG:  interface monitoring is disabled in watchdog
+     LOG:  IPC socket path: "/tmp/.s.PGPOOLWD_CMD.9000"
+     LOG:  watchdog node state changed from [DEAD] to [LOADING]
+     LOG:  new outbound connection to Linux_osspc16_9000:9000
+     LOG:  watchdog node state changed from [LOADING] to [INITIALIZING]
+     LOG:  watchdog node state changed from [INITIALIZING] to [STANDBY]
+     <emphasis>
+      LOG:  successfully joined the watchdog cluster as standby node
+      DETAIL:  our join coordinator request is accepted by cluster leader node "Linux_osspc16_9000"
+      LOG:  watchdog process is initialized
+     </emphasis>
+    </programlisting>
+   </para>
+  </sect3>
+ </sect2>
 
-      <sect2 id="example-watchdog-try">
-	<title>Try it out</title>
-	<para>
-	  Confirm to ping to the virtual IP address.
-	  <programlisting>
-[user@someserver]$ ping 133.137.177.142
-PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
-64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
-64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
-64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
-	  </programlisting>
-	  Confirm if the Active server which started at first has the virtual IP address.
-	  <programlisting>
-[root@osspc16]# ifconfig
-eth0      ...
+ <sect2 id="example-watchdog-try">
+  <title>Try it out</title>
+  <para>
+   Confirm to ping to the virtual IP address.
+   <programlisting>
+    [user@someserver]$ ping 133.137.177.142
+    PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+    64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+    64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+    64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+   </programlisting>
+   Confirm if the Active server which started at first has the virtual IP address.
+   <programlisting>
+    [root@osspc16]# ifconfig
+    eth0      ...
 
-eth0:0    inet addr:133.137.177.143 ...
+    eth0:0    inet addr:133.137.177.143 ...
 
-lo        ...
-	  </programlisting>
-	  Confirm if the Standby server which started not at first doesn't have the virtual IP address.
-	  <programlisting>
-[root@osspc20]# ifconfig
-eth0      ...
+    lo        ...
+   </programlisting>
+   Confirm if the Standby server which started not at first doesn't have the virtual IP address.
+   <programlisting>
+    [root@osspc20]# ifconfig
+    eth0      ...
 
-lo        ...
-	  </programlisting>
+    lo        ...
+   </programlisting>
 
-	  Try to connect <productname>PostgreSQL</productname> by "psql -h delegate_IP -p port".
-	  <programlisting>
-[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
-	  </programlisting>
-	</para>
-      </sect2>
+   Try to connect <productname>PostgreSQL</productname> by "psql -h delegate_IP -p port".
+   <programlisting>
+    [user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+   </programlisting>
+  </para>
+ </sect2>
 
-      <sect2 id="example-watchdog-vip-switch">
-	<title>Switching virtual IP</title>
-	<para>
-	  Confirm how the Standby server works when the Active server can't provide its service.
-	  Stop <productname>Pgpool-II</productname> on the Active server.
-	  <programlisting>
-[root@osspc16]# {installed_dir}/bin/pgpool stop
-	  </programlisting>
+ <sect2 id="example-watchdog-vip-switch">
+  <title>Switching virtual IP</title>
+  <para>
+   Confirm how the Standby server works when the Active server can't provide its service.
+   Stop <productname>Pgpool-II</productname> on the Active server.
+   <programlisting>
+    [root@osspc16]# {installed_dir}/bin/pgpool stop
+   </programlisting>
 
-	  Then, the Standby server starts to use the virtual IP address. Log shows:
+   Then, the Standby server starts to use the virtual IP address. Log shows:
 
-	  <programlisting>
-<emphasis>
-LOG:  remote node "Linux_osspc16_9000" is shutting down
-LOG:  watchdog cluster has lost the coordinator node
-</emphasis>
-LOG:  watchdog node state changed from [STANDBY] to [JOINING]
-LOG:  watchdog node state changed from [JOINING] to [INITIALIZING]
-LOG:  I am the only alive node in the watchdog cluster
-HINT:  skipping stand for coordinator state
-LOG:  watchdog node state changed from [INITIALIZING] to [MASTER]
-LOG:  I am announcing my self as master/coordinator watchdog node
-LOG:  I am the cluster leader node
-DETAIL:  our declare coordinator message is accepted by all nodes
-<emphasis>
-LOG:  I am the cluster leader node. Starting escalation process
-LOG:  watchdog: escalation started
-</emphasis>
-LOG:  watchdog escalation process with pid: 59551 exit with SUCCESS.
-	  </programlisting>
+   <programlisting>
+    <emphasis>
+     LOG:  remote node "Linux_osspc16_9000" is shutting down
+     LOG:  watchdog cluster has lost the coordinator node
+    </emphasis>
+    LOG:  watchdog node state changed from [STANDBY] to [JOINING]
+    LOG:  watchdog node state changed from [JOINING] to [INITIALIZING]
+    LOG:  I am the only alive node in the watchdog cluster
+    HINT:  skipping stand for coordinator state
+    LOG:  watchdog node state changed from [INITIALIZING] to [MASTER]
+    LOG:  I am announcing my self as master/coordinator watchdog node
+    LOG:  I am the cluster leader node
+    DETAIL:  our declare coordinator message is accepted by all nodes
+    <emphasis>
+     LOG:  I am the cluster leader node. Starting escalation process
+     LOG:  watchdog: escalation started
+    </emphasis>
+    LOG:  watchdog escalation process with pid: 59551 exit with SUCCESS.
+   </programlisting>
 
-	  Confirm to ping to the virtual IP address.
-	  <programlisting>
-[user@someserver]$ ping 133.137.177.142
-PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
-64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
-64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
-64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
-	  </programlisting>
+   Confirm to ping to the virtual IP address.
+   <programlisting>
+    [user@someserver]$ ping 133.137.177.142
+    PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+    64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+    64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+    64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+   </programlisting>
 
-	  Confirm that the Active server doesn't use the virtual IP address any more.
-	  <programlisting>
-[root@osspc16]# ifconfig
-eth0      ...
+   Confirm that the Active server doesn't use the virtual IP address any more.
+   <programlisting>
+    [root@osspc16]# ifconfig
+    eth0      ...
 
-lo        ...
-	  </programlisting>
+    lo        ...
+   </programlisting>
 
-	  Confirm that the Standby server uses the virtual IP address.
-	  <programlisting>
-[root@osspc20]# ifconfig
-eth0      ...
+   Confirm that the Standby server uses the virtual IP address.
+   <programlisting>
+    [root@osspc20]# ifconfig
+    eth0      ...
 
-eth0:0    inet addr:133.137.177.143 ...
+    eth0:0    inet addr:133.137.177.143 ...
 
-lo        ...
-	  </programlisting>
+    lo        ...
+   </programlisting>
 
-	  Try to connect <productname>PostgreSQL</productname> by "psql -h delegate_IP -p port".
-	  <programlisting>
-[user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
-	  </programlisting>
+   Try to connect <productname>PostgreSQL</productname> by "psql -h delegate_IP -p port".
+   <programlisting>
+    [user@someserver]$ psql -h 133.137.177.142 -p 9999 -l
+   </programlisting>
 
-	</para>
-      </sect2>
+  </para>
+ </sect2>
 
-      <sect2 id="example-watchdog-more">
-	<title>More</title>
+ <sect2 id="example-watchdog-more">
+  <title>More</title>
 
-	<sect3 id="example-watchdog-more-lifecheck">
-	  <title>Lifecheck</title>
-	  <para>
-	    There are the parameters about watchdog's monitoring.
-	    Specify the interval to check <xref linkend="guc-wd-interval"> and
-	    the type of lifecheck <xref linkend="guc-wd-lifecheck-method">.
-	    The <literal>hearbeat</literal> method specify the time to detect
-	    a fault <xref linkend="guc-wd-heartbeat-deadtime">, the port number to
-	    receive <xref linkend="guc-wd-heartbeat-port">, the interval to send
-	    <xref linkend="guc-wd-heartbeat-keepalive">, the IP address or hostname
-	    of destination <xref linkend="guc-heartbeat-destination"> and finally
-	    the destination port number <xref linkend="guc-heartbeat-destination-port">.
-		    <programlisting>
-wd_lifecheck_method = 'heartbeat'
-      # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
-      # (change requires restart)
-wd_interval = 10
-      # lifecheck interval (sec) > 0
-wd_heartbeat_port = 9694
-                                    # Port number for receiving heartbeat signal
-                                    # (change requires restart)
-wd_heartbeat_keepalive = 2
-                                    # Interval time of sending heartbeat signal (sec)
-                                    # (change requires restart)
-wd_heartbeat_deadtime = 30
-                                    # Deadtime interval for heartbeat signal (sec)
-                                    # (change requires restart)
-heartbeat_destination0 = 'host0_ip1'
-                                    # Host name or IP address of destination 0
-                                    # for sending heartbeat signal.
-                                    # (change requires restart)
-heartbeat_destination_port0 = 9694
-                                    # Port number of destination 0 for sending
-                                    # heartbeat signal. Usually this is the
-                                    # same as wd_heartbeat_port.
-                                    # (change requires restart)
-		    </programlisting>
+  <sect3 id="example-watchdog-more-lifecheck">
+   <title>Lifecheck</title>
+   <para>
+    There are the parameters about watchdog's monitoring.
+    Specify the interval to check <xref linkend="guc-wd-interval"> and
+     the type of lifecheck <xref linkend="guc-wd-lifecheck-method">.
+      The <literal>hearbeat</literal> method specify the time to detect
+      a fault <xref linkend="guc-wd-heartbeat-deadtime">, the port number to
+       receive <xref linkend="guc-wd-heartbeat-port">, the interval to send
+	<xref linkend="guc-wd-heartbeat-keepalive">, the IP address or hostname
+	 of destination <xref linkend="guc-heartbeat-destination"> and finally
+	  the destination port number <xref linkend="guc-heartbeat-destination-port">.
+	   <programlisting>
+	    wd_lifecheck_method = 'heartbeat'
+	    # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
+	    # (change requires restart)
+	    wd_interval = 10
+	    # lifecheck interval (sec) > 0
+	    wd_heartbeat_port = 9694
+	    # Port number for receiving heartbeat signal
+	    # (change requires restart)
+	    wd_heartbeat_keepalive = 2
+	    # Interval time of sending heartbeat signal (sec)
+	    # (change requires restart)
+	    wd_heartbeat_deadtime = 30
+	    # Deadtime interval for heartbeat signal (sec)
+	    # (change requires restart)
+	    heartbeat_destination0 = 'host0_ip1'
+	    # Host name or IP address of destination 0
+	    # for sending heartbeat signal.
+	    # (change requires restart)
+	    heartbeat_destination_port0 = 9694
+	    # Port number of destination 0 for sending
+	    # heartbeat signal. Usually this is the
+	    # same as wd_heartbeat_port.
+	    # (change requires restart)
+	   </programlisting>
 
-	  </para>
-	</sect3>
+   </para>
+  </sect3>
 
-	<sect3 id="example-watchdog-more-vip-switching">
-	  <title>Switching virtual IP address</title>
-	  <para>
-	    There are the parameters for switching the virtual IP address.
-	    Specify switching commands <xref linkend="guc-if-up-cmd">,
-              <xref linkend="guc-if-down-cmd">, the path to them
-		<xref linkend="guc-if-cmd-path">, the command executed after
-		  switching to send ARP request <xref linkend="guc-arping-cmd">
-		    and the path to it <xref linkend="guc-arping-path">.
-		      <programlisting>
-if_cmd_path = '/sbin'
-                                    # path to the directory where if_up/down_cmd exists
-if_up_cmd = 'ip addr add $_IP_$/24 dev eth0 label eth0:0'
-                                     # startup delegate IP command
-if_down_cmd = 'ip addr del $_IP_$/24 dev eth0'
-                                     # shutdown delegate IP command
+  <sect3 id="example-watchdog-more-vip-switching">
+   <title>Switching virtual IP address</title>
+   <para>
+    There are the parameters for switching the virtual IP address.
+    Specify switching commands <xref linkend="guc-if-up-cmd">,
+     <xref linkend="guc-if-down-cmd">, the path to them
+      <xref linkend="guc-if-cmd-path">, the command executed after
+       switching to send ARP request <xref linkend="guc-arping-cmd">
+	and the path to it <xref linkend="guc-arping-path">.
+	 <programlisting>
+	  if_cmd_path = '/sbin'
+	  # path to the directory where if_up/down_cmd exists
+	  if_up_cmd = 'ip addr add $_IP_$/24 dev eth0 label eth0:0'
+	  # startup delegate IP command
+	  if_down_cmd = 'ip addr del $_IP_$/24 dev eth0'
+	  # shutdown delegate IP command
 
-arping_path = '/usr/sbin'           # arping command path
+	  arping_path = '/usr/sbin'           # arping command path
 
-arping_cmd = 'arping -U $_IP_$ -w 1'
-		      </programlisting>
-	    You can also bring up and bring down the virtual IP using arbitrary scripts
-	    specified <xref linkend="guc-wd-escalation-command"> and
-	    <xref linkend="guc-wd-de-escalation-command"> parameters.
-	  </para>
-	</sect3>
+	  arping_cmd = 'arping -U $_IP_$ -w 1'
+	 </programlisting>
+	 You can also bring up and bring down the virtual IP using arbitrary scripts
+	 specified <xref linkend="guc-wd-escalation-command"> and
+	  <xref linkend="guc-wd-de-escalation-command"> parameters.
+   </para>
+  </sect3>
 
-      </sect2>
+ </sect2>
     </sect1>

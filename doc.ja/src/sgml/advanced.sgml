@@ -28,7 +28,7 @@
    Watchdogは、最初に<productname>Pgpool-II</productname> <emphasis>V3.2</emphasis>で導入され、<productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>で常にクォーラムを保つように大きく改善されました。
    この機能追加により、watchdogはより対障害性が増し、スプリットブレイン障害とネットワーク分割に対する対処および防止が強固になりました。
    また、<emphasis>V3.7</emphasis>ではクォーラムフェイルオーバ (<xref linkend="config-watchdog-failover-behavior">参照)が導入され、<productname>PostgreSQL</productname>サーバの故障誤検知によるフェイルオーバが起こりにくくなりました。
-   クォーラム機構を正しく動かすためには、<productname>Pgpool-II</productname>ノードの数は奇数であり、かつ3以上でなければなりません。
+    クォーラム機構を正しく動かすためには、<productname>Pgpool-II</productname>ノードの数は奇数であり、かつ3以上でなければなりません。
   </para>
 
   <sect2 id="tutorial-watchdog-coordinating-nodes">

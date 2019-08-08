@@ -17,7 +17,7 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pcp_pool_status</refname>
   <refpurpose>
-	displays the parameter values as defined in <filename>pgpool.conf</filename></refpurpose>
+   displays the parameter values as defined in <filename>pgpool.conf</filename></refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -30,40 +30,40 @@ Pgpool-II documentation
  <refsect1 id="R1-PCP-POOL-STATUS-1">
   <title>Description</title>
   <para>
-  <command>pcp_pool_status</command>
-  	displays the parameter values as defined in <filename>pgpool.conf</filename>.
+   <command>pcp_pool_status</command>
+   displays the parameter values as defined in <filename>pgpool.conf</filename>.
   </para>
  </refsect1>
 
  <refsect1>
   <title>Options</title>
-   <para>
-	 See <xref linkend="pcp-common-options">.
-   </para>
+  <para>
+   See <xref linkend="pcp-common-options">.
+  </para>
  </refsect1>
 
  <refsect1>
   <title>Example</title>
-   <para>
-	Here is an example output:
-    <programlisting>
-$ pcp_pool_status -h localhost -U postgres
-name : listen_addresses
-value: localhost
-desc : host name(s) or IP address(es) to listen to
+  <para>
+   Here is an example output:
+   <programlisting>
+    $ pcp_pool_status -h localhost -U postgres
+    name : listen_addresses
+    value: localhost
+    desc : host name(s) or IP address(es) to listen to
 
-name : port
-value: 9999
-desc : pgpool accepting port number
+    name : port
+    value: 9999
+    desc : pgpool accepting port number
 
-name : socket_dir
-value: /tmp
-desc : pgpool socket directory
+    name : socket_dir
+    value: /tmp
+    desc : pgpool socket directory
 
-name : pcp_port
-value: 9898
-desc : PCP port # to bind
-    </programlisting>
+    name : pcp_port
+    value: 9898
+    desc : PCP port # to bind
+   </programlisting>
   </para>
  </refsect1>
 

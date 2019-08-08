@@ -17,72 +17,72 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pgpool_adm_pcp_node_count</refname>
   <refpurpose>
-    a function to retrieves number of backend nodes.
+   a function to retrieves number of backend nodes.
   </refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
-   <funcsynopsis>
-     <funcprototype>
-       <funcdef><function>pcp_node_count</function> returns integer</funcdef>
-       <paramdef>text <parameter>host</parameter></paramdef>
-       <paramdef>integer <parameter>port</parameter></paramdef>
-       <paramdef>text <parameter>username</parameter></paramdef>
-       <paramdef>text <parameter>password</parameter></paramdef>
-     </funcprototype>
+  <funcsynopsis>
+   <funcprototype>
+    <funcdef><function>pcp_node_count</function> returns integer</funcdef>
+    <paramdef>text <parameter>host</parameter></paramdef>
+    <paramdef>integer <parameter>port</parameter></paramdef>
+    <paramdef>text <parameter>username</parameter></paramdef>
+    <paramdef>text <parameter>password</parameter></paramdef>
+   </funcprototype>
 
-     <funcprototype>
-       <funcdef><function>pcp_node_count</function> returns integer</funcdef>
-       <paramdef>text <parameter>pcp_server</parameter></paramdef>
-     </funcprototype>
+   <funcprototype>
+    <funcdef><function>pcp_node_count</function> returns integer</funcdef>
+    <paramdef>text <parameter>pcp_server</parameter></paramdef>
+   </funcprototype>
 
-   </funcsynopsis>
+  </funcsynopsis>
  </refsynopsisdiv>
 
  <refsect1 id="R3-PCP-NODE-COUNT-3">
   <title>Description</title>
   <para>
-    <function>pcp_node_count</function> retrieves number of DB nodes.
+   <function>pcp_node_count</function> retrieves number of DB nodes.
   </para>
  </refsect1>
 
  <refsect1>
   <title>Arguments</title>
-   <para>
-    <variablelist>
+  <para>
+   <variablelist>
 
-     <varlistentry>
-      <term><replaceable class="parameter">pcp_server</replaceable></term>
-      <listitem>
-	<para>
-	  The foreign server name for pcp server.
-	</para>
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term><replaceable class="parameter">pcp_server</replaceable></term>
+     <listitem>
+      <para>
+       The foreign server name for pcp server.
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term><option>Other arguments </option></term>
-      <listitem>
-       <para>
-	 See <xref linkend="pcp-common-options">.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
+    <varlistentry>
+     <term><option>Other arguments </option></term>
+     <listitem>
+      <para>
+       See <xref linkend="pcp-common-options">.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
  </refsect1>
 
  <refsect1>
   <title>Example</title>
-   <para>
-	Here is an example output:
-	<programlisting>
-test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
- node_count
-------------
-          2
-(1 row)
-	</programlisting>
+  <para>
+   Here is an example output:
+   <programlisting>
+    test=# SELECT * FROM pcp_node_count('localhost',11001,'t-ishii','t-ishii');
+    node_count
+    ------------
+    2
+    (1 row)
+   </programlisting>
   </para>
 
  </refsect1>

@@ -4,157 +4,157 @@
   -->
 
 <refentry id="SQL-SHOW-POOL-PROCESSES">
-  <indexterm zone="sql-show-pool-processes">
-    <primary>SHOW POOL_PROCESSES</primary>
-  </indexterm>
+ <indexterm zone="sql-show-pool-processes">
+  <primary>SHOW POOL_PROCESSES</primary>
+ </indexterm>
 
-  <refmeta>
-    <refentrytitle>SHOW POOL_PROCESSES</refentrytitle>
-    <manvolnum>1</manvolnum>
-    <refmiscinfo>SQL - Language Statements</refmiscinfo>
-  </refmeta>
+ <refmeta>
+  <refentrytitle>SHOW POOL_PROCESSES</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
 
-  <refnamediv>
-    <refname>SHOW POOL_PROCESSES</refname>
-    <refpurpose>
-    <!--
-      sends back a list of all <productname>Pgpool-II</productname>
-      processes waiting for connections and dealing with a connection
-      -->
-      接続待ち、あるいは接続中 <productname>Pgpool-II</productname> の子プロセスの状態を表示する
-    </refpurpose>
-  </refnamediv>
+ <refnamediv>
+  <refname>SHOW POOL_PROCESSES</refname>
+  <refpurpose>
+   <!--
+   sends back a list of all <productname>Pgpool-II</productname>
+   processes waiting for connections and dealing with a connection
+   -->
+   接続待ち、あるいは接続中 <productname>Pgpool-II</productname> の子プロセスの状態を表示する
+  </refpurpose>
+ </refnamediv>
 
-  <refsynopsisdiv>
-    <synopsis>
-SHOW POOL_PROCESSES
-    </synopsis>
-  </refsynopsisdiv>
+ <refsynopsisdiv>
+  <synopsis>
+   SHOW POOL_PROCESSES
+  </synopsis>
+ </refsynopsisdiv>
 
-  <refsect1>
+ <refsect1>
   <!--
-    <title>Description</title>
-    -->
-    <title>説明</title>
+  <title>Description</title>
+  -->
+  <title>説明</title>
 
-    <para>
-    <!--
-      <command>SHOW pool_processes</command> sends back a list of all
-      <productname>Pgpool-II</productname> processes waiting for
-      connections and dealing with a connection.
+  <para>
+   <!--
+   <command>SHOW pool_processes</command> sends back a list of all
+   <productname>Pgpool-II</productname> processes waiting for
+   connections and dealing with a connection.
+   -->
+   <command>SHOW POOL_PROCESSES</command> は接続待ち、あるいは接続中
+   <productname>Pgpool-II</productname> の子プロセスの状態を表示します。
+  </para>
+  <para>
+   <!--
+   It has 6 columns:
+   -->
+   6つのカラムがあります。
+   <itemizedlist>
+    <listitem>
+     <para>
+      <!--
+      <literal>pool_pid</literal> is the PID of the
+      displayed <productname>Pgpool-II</productname> process.
       -->
-      <command>SHOW POOL_PROCESSES</command> は接続待ち、あるいは接続中
-      <productname>Pgpool-II</productname> の子プロセスの状態を表示します。
-    </para>
-    <para>
-    <!--
-      It has 6 columns:
+      <literal>pool_pid</literal> は <productname>Pgpool-II</productname> プロセスのプロセス ID です。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <!--
+      <literal>start_time</literal> is the timestamp of when
+      this process was launched.
       -->
-      6つのカラムがあります。
-      <itemizedlist>
-	<listitem>
-	  <para>
+      <literal>start_time</literal> はこのプロセスが起動された時刻です。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
       <!--
-	    <literal>pool_pid</literal> is the PID of the
-	    displayed <productname>Pgpool-II</productname> process.
-        -->
-        <literal>pool_pid</literal> は <productname>Pgpool-II</productname> プロセスのプロセス ID です。
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-      <!--
-	    <literal>start_time</literal> is the timestamp of when
-	    this process was launched.
-        -->
-        <literal>start_time</literal> はこのプロセスが起動された時刻です。
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-      <!--
-	    <literal>database</literal> is the database name of the
-	    currently active backend for this process.
-        -->
-        <literal>database</literal> はこのプロセスが接続しているデータベース名です。
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-      <!--
-	    <literal>username</literal> is the user name used in the
-	    connection of the currently active backend for this
-	    process.
-        -->
-        <literal>username</literal> はこのプロセスの接続で使用しているユーザ名です。
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-      <!--
-	    <literal>create_time</literal> is the creation time and
-	    date of the connection.
-        -->
-        <literal>create_time</literal> はこの接続が作成された時刻です。
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-      <!--
-	    <literal>pool_counter</literal> counts the number of times
-	    this pool of connections (process) has been used by
-	    clients.
-        -->
-        <literal>pool_counter</literal> はこの接続が使用された回数です。
-	    </para>
-	  </listitem>
-	</itemizedlist>
-    </para>
-    <para>
-    <!--
-      Here is an example session:
+      <literal>database</literal> is the database name of the
+      currently active backend for this process.
       -->
-      ここでは例を示します。
+      <literal>database</literal> はこのプロセスが接続しているデータベース名です。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <!--
+      <literal>username</literal> is the user name used in the
+      connection of the currently active backend for this
+      process.
+      -->
+      <literal>username</literal> はこのプロセスの接続で使用しているユーザ名です。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <!--
+      <literal>create_time</literal> is the creation time and
+      date of the connection.
+      -->
+      <literal>create_time</literal> はこの接続が作成された時刻です。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <!--
+      <literal>pool_counter</literal> counts the number of times
+      this pool of connections (process) has been used by
+      clients.
+      -->
+      <literal>pool_counter</literal> はこの接続が使用された回数です。
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+  <para>
+   <!--
+   Here is an example session:
+   -->
+   ここでは例を示します。
 
-<programlisting>
-test=# show pool_processes;
- pool_pid |     start_time      | database | username |     create_time     | pool_counter
-----------+---------------------+----------+----------+---------------------+--------------
- 19696    | 2016-10-17 13:24:17 | postgres | t-ishii  | 2016-10-17 13:35:12 | 1
- 19697    | 2016-10-17 13:24:17 |          |          |                     |
- 19698    | 2016-10-17 13:24:17 |          |          |                     |
- 19699    | 2016-10-17 13:24:17 |          |          |                     |
- 19700    | 2016-10-17 13:24:17 |          |          |                     |
- 19701    | 2016-10-17 13:24:17 |          |          |                     |
- 19702    | 2016-10-17 13:24:17 |          |          |                     |
- 19703    | 2016-10-17 13:24:17 |          |          |                     |
- 19704    | 2016-10-17 13:24:17 |          |          |                     |
- 19705    | 2016-10-17 13:24:17 |          |          |                     |
- 19706    | 2016-10-17 13:24:17 |          |          |                     |
- 19707    | 2016-10-17 13:24:17 |          |          |                     |
- 19708    | 2016-10-17 13:24:17 |          |          |                     |
- 19709    | 2016-10-17 13:24:17 |          |          |                     |
- 19710    | 2016-10-17 13:24:17 |          |          |                     |
- 19711    | 2016-10-17 13:24:17 |          |          |                     |
- 19712    | 2016-10-17 13:24:17 |          |          |                     |
- 19713    | 2016-10-17 13:24:17 |          |          |                     |
- 19714    | 2016-10-17 13:24:17 |          |          |                     |
- 19715    | 2016-10-17 13:24:17 |          |          |                     |
- 19716    | 2016-10-17 13:24:17 |          |          |                     |
- 19717    | 2016-10-17 13:24:17 |          |          |                     |
- 19718    | 2016-10-17 13:24:17 |          |          |                     |
- 19719    | 2016-10-17 13:24:17 |          |          |                     |
- 19720    | 2016-10-17 13:24:17 |          |          |                     |
- 20024    | 2016-10-17 13:33:46 |          |          |                     |
- 19722    | 2016-10-17 13:24:17 | test     | t-ishii  | 2016-10-17 13:34:42 | 1
- 19723    | 2016-10-17 13:24:17 |          |          |                     |
- 19724    | 2016-10-17 13:24:17 |          |          |                     |
- 19725    | 2016-10-17 13:24:17 |          |          |                     |
- 19726    | 2016-10-17 13:24:17 |          |          |                     |
- 19727    | 2016-10-17 13:24:17 |          |          |                     |
-(32 rows)
-</programlisting>
-    </para>
-  </refsect1>
+   <programlisting>
+    test=# show pool_processes;
+    pool_pid |     start_time      | database | username |     create_time     | pool_counter
+    ----------+---------------------+----------+----------+---------------------+--------------
+    19696    | 2016-10-17 13:24:17 | postgres | t-ishii  | 2016-10-17 13:35:12 | 1
+    19697    | 2016-10-17 13:24:17 |          |          |                     |
+    19698    | 2016-10-17 13:24:17 |          |          |                     |
+    19699    | 2016-10-17 13:24:17 |          |          |                     |
+    19700    | 2016-10-17 13:24:17 |          |          |                     |
+    19701    | 2016-10-17 13:24:17 |          |          |                     |
+    19702    | 2016-10-17 13:24:17 |          |          |                     |
+    19703    | 2016-10-17 13:24:17 |          |          |                     |
+    19704    | 2016-10-17 13:24:17 |          |          |                     |
+    19705    | 2016-10-17 13:24:17 |          |          |                     |
+    19706    | 2016-10-17 13:24:17 |          |          |                     |
+    19707    | 2016-10-17 13:24:17 |          |          |                     |
+    19708    | 2016-10-17 13:24:17 |          |          |                     |
+    19709    | 2016-10-17 13:24:17 |          |          |                     |
+    19710    | 2016-10-17 13:24:17 |          |          |                     |
+    19711    | 2016-10-17 13:24:17 |          |          |                     |
+    19712    | 2016-10-17 13:24:17 |          |          |                     |
+    19713    | 2016-10-17 13:24:17 |          |          |                     |
+    19714    | 2016-10-17 13:24:17 |          |          |                     |
+    19715    | 2016-10-17 13:24:17 |          |          |                     |
+    19716    | 2016-10-17 13:24:17 |          |          |                     |
+    19717    | 2016-10-17 13:24:17 |          |          |                     |
+    19718    | 2016-10-17 13:24:17 |          |          |                     |
+    19719    | 2016-10-17 13:24:17 |          |          |                     |
+    19720    | 2016-10-17 13:24:17 |          |          |                     |
+    20024    | 2016-10-17 13:33:46 |          |          |                     |
+    19722    | 2016-10-17 13:24:17 | test     | t-ishii  | 2016-10-17 13:34:42 | 1
+    19723    | 2016-10-17 13:24:17 |          |          |                     |
+    19724    | 2016-10-17 13:24:17 |          |          |                     |
+    19725    | 2016-10-17 13:24:17 |          |          |                     |
+    19726    | 2016-10-17 13:24:17 |          |          |                     |
+    19727    | 2016-10-17 13:24:17 |          |          |                     |
+    (32 rows)
+   </programlisting>
+  </para>
+ </refsect1>
 
 </refentry>

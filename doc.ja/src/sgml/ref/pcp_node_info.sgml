@@ -17,10 +17,10 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pcp_node_info</refname>
   <refpurpose>
-  <!--
-	displays the information on the given node ID</refpurpose>
-    -->
-	指定されたノードの情報を表示する</refpurpose>
+   <!--
+   displays the information on the given node ID</refpurpose>
+   -->
+   指定されたノードの情報を表示する</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -32,159 +32,159 @@ Pgpool-II documentation
  </refsynopsisdiv>
 
  <refsect1 id="R1-PCP-NODE-INFO-1">
- <!--
+  <!--
   <title>Description</title>
   -->
   <title>説明</title>
   <para>
-  <command>pcp_node_info</command>
-  <!--
-	displays the information on the given node ID.
-    -->
-    指定されたノードの情報を表示します。
+   <command>pcp_node_info</command>
+   <!--
+   displays the information on the given node ID.
+   -->
+   指定されたノードの情報を表示します。
   </para>
  </refsect1>
 
  <refsect1>
- <!--
+  <!--
   <title>Options</title>
   -->
   <title>オプション</title>
-   <para>
-    <variablelist>
+  <para>
+   <variablelist>
 
-     <varlistentry>
-      <term><option>-n <replaceable class="parameter">node_id</replaceable></option></term>
-      <term><option>--node-id=<replaceable class="parameter">node_id</replaceable></option></term>
-      <listitem>
-       <para>
+    <varlistentry>
+     <term><option>-n <replaceable class="parameter">node_id</replaceable></option></term>
+     <term><option>--node-id=<replaceable class="parameter">node_id</replaceable></option></term>
+     <listitem>
+      <para>
        <!--
-	 The index of backend node to get information of.
-     -->
-     情報を表示するバックエンドノードのインデックスを指定します。
-       </para>
-      </listitem>
-     </varlistentry>
+       The index of backend node to get information of.
+       -->
+       情報を表示するバックエンドノードのインデックスを指定します。
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
- <!--
-      <term><option>Other options </option></term>
- -->
-      <term><option>その他 </option></term>
-      <listitem>
-       <para>
-       <!--
-	 See <xref linkend="pcp-common-options">.
+    <varlistentry>
+     <!--
+     <term><option>Other options </option></term>
      -->
-	 <xref linkend="pcp-common-options"> を参照してください。
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
+     <term><option>その他 </option></term>
+     <listitem>
+      <para>
+       <!--
+       See <xref linkend="pcp-common-options">.
+       -->
+       <xref linkend="pcp-common-options"> を参照してください。
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
  </refsect1>
 
  <refsect1>
- <!--
+  <!--
   <title>Example</title>
   -->
   <title>例</title>
-   <para>
+  <para>
    <!--
-	Here is an example output:
-    -->
-    ここでは例を示します。
-    <programlisting>
-$ pcp_node_info -h localhost -U postgres 1
-/tmp 11003 2 0.500000 up standby 0 streaming async 2019-04-23 13:58:40
-    </programlisting>
+   Here is an example output:
+   -->
+   ここでは例を示します。
+   <programlisting>
+    $ pcp_node_info -h localhost -U postgres 1
+    /tmp 11003 2 0.500000 up standby 0 streaming async 2019-04-23 13:58:40
+   </programlisting>
   </para>
   <para>
-  <!--
-	The result is in the following order:
+   <!--
+   The result is in the following order:
+   -->
+   結果は以下の順のとおりです。
+   <literallayout class="monospaced">
+    <!--
+    1. hostname
+    2. port number
+    3. status
+    4. load balance weight
+    5. status name
+    6. backend role
+    7. replication delay
+    8. replication state (PostgreSQL 9.1以降。pg_stat_replicationから取得)
+    9. sync replication state (PostgreSQL 9.2以降。pg_stat_replicationから取得)
+    10. last status change time
     -->
-  結果は以下の順のとおりです。
-<literallayout class="monospaced">
-<!--
-1. hostname
-2. port number
-3. status
-4. load balance weight
-5. status name
-6. backend role
-7. replication delay
-8. replication state (PostgreSQL 9.1以降。pg_stat_replicationから取得)
-9. sync replication state (PostgreSQL 9.2以降。pg_stat_replicationから取得)
-10. last status change time
--->
-1. ノードのホスト名
-2. ノードのポート番号
-3. ステータス
-4. ロードバランスウェイト
-5. バックエンド状態名
-6. バックエンドの役割
-7. レプリケーションの遅延
-8. レプリケーション状態 (PostgreSQL 9.1以降。pg_stat_replicationから取得)
-9. 同期レプリケーション状態 (PostgreSQL 9.2以降。pg_stat_replicationから取得)
-10. 最終ステータス変更時刻
-</literallayout>
+    1. ノードのホスト名
+    2. ノードのポート番号
+    3. ステータス
+    4. ロードバランスウェイト
+    5. バックエンド状態名
+    6. バックエンドの役割
+    7. レプリケーションの遅延
+    8. レプリケーション状態 (PostgreSQL 9.1以降。pg_stat_replicationから取得)
+    9. 同期レプリケーション状態 (PostgreSQL 9.2以降。pg_stat_replicationから取得)
+    10. 最終ステータス変更時刻
+   </literallayout>
   </para>
   <para>
-  <!--
-	Status is represented by a digit from [0 to 3].
-    -->
-  7, 8, 9は、<xref linkend="guc-sr-check-period">が0以外でなければ正しく表示されません。
+   <!--
+   Status is represented by a digit from [0 to 3].
+   -->
+   7, 8, 9は、<xref linkend="guc-sr-check-period">が0以外でなければ正しく表示されません。
     また、8, 9は、<xref linkend="guc-sr-check-user">が<productname>PostgreSQL</productname>のスーパーユーザーであるか、"pg_monitor"グループに所属していなけれ正しく表示されません。
-      <note>
-	<para>
-	  <xref linkend="guc-sr-check-user">をpg_monitorグループに所属させるには、以下のSQLコマンドを<productname>PostgreSQL</productname>スーパーユーザーで実行してください（"sr_check_user"を<xref linkend="guc-sr-check-user">の設定値で置き換えてください）
-	      <programlisting>
-GRANT pg_monitor TO sr_check_user;
-	      </programlisting>
-	      <productname>PostgreSQL</productname> 9.6にはpg_monitorグループがないので、<xref linkend="guc-sr-check-user">は<productname>PostgreSQL</productname>のスーパーユーザーでなければなりません。
-	</para>
-      </note>
-      ステータスは [0..3] までの数字で表わされます。各数字の意味は以下のとおりです。
+     <note>
+      <para>
+       <xref linkend="guc-sr-check-user">をpg_monitorグループに所属させるには、以下のSQLコマンドを<productname>PostgreSQL</productname>スーパーユーザーで実行してください（"sr_check_user"を<xref linkend="guc-sr-check-user">の設定値で置き換えてください）
+	 <programlisting>
+	  GRANT pg_monitor TO sr_check_user;
+	 </programlisting>
+	 <productname>PostgreSQL</productname> 9.6にはpg_monitorグループがないので、<xref linkend="guc-sr-check-user">は<productname>PostgreSQL</productname>のスーパーユーザーでなければなりません。
+      </para>
+     </note>
+     ステータスは [0..3] までの数字で表わされます。各数字の意味は以下のとおりです。
   </para>
   <para>
-	<itemizedlist>
-<!--
-	  <listitem><para>0 - This state is only used during the initialization. PCP will never display it. </para></listitem>
-	  <listitem><para>1 - Node is up. No connections yet. </para></listitem>
-	  <listitem><para>2 - Node is up. Connections are pooled. </para></listitem>
-	  <listitem><para>3 - Node is down. </para></listitem>
--->
-	  <listitem><para>0 - 初期化時のみに表われる。PCP コマンドで表示されることはない。 </para></listitem>
-	  <listitem><para>1 - ノード稼働中。接続無し </para></listitem>
-	  <listitem><para>2 - ノード稼働中。接続有り </para></listitem>
-	  <listitem><para>3 -  ノードダウン </para></listitem>
-	</itemizedlist>
-  </para>
-  <para>
-  <!--
-	The load balance weight is displayed in normalized format.
+   <itemizedlist>
+    <!--
+    <listitem><para>0 - This state is only used during the initialization. PCP will never display it. </para></listitem>
+    <listitem><para>1 - Node is up. No connections yet. </para></listitem>
+    <listitem><para>2 - Node is up. Connections are pooled. </para></listitem>
+    <listitem><para>3 - Node is down. </para></listitem>
     -->
-    ロードバランスウェイトは Normalize されたフォーマットで出力されます。
+    <listitem><para>0 - 初期化時のみに表われる。PCP コマンドで表示されることはない。 </para></listitem>
+    <listitem><para>1 - ノード稼働中。接続無し </para></listitem>
+    <listitem><para>2 - ノード稼働中。接続有り </para></listitem>
+    <listitem><para>3 -  ノードダウン </para></listitem>
+   </itemizedlist>
   </para>
   <para>
-  <!--
-	The <option>verbose</option> option can help understand the output. For example:
-    -->
-    <option>--verbose</option> オプションは出力内容を理解するのに役に立ちます。例：
+   <!--
+   The load balance weight is displayed in normalized format.
+   -->
+   ロードバランスウェイトは Normalize されたフォーマットで出力されます。
   </para>
-    <programlisting>
-$ pcp_node_info --verbose -h localhost -U postgres 1
-Hostname               : /tmp
-Port                   : 11003
-Status                 : 2
-Weight                 : 0.500000
-Status Name            : up
-Role                   : standby
-Replication Delay      : 0
-Replication State      : streaming
-Replication Sync State : async
-Last Status Change     : 2019-04-23 13:58:40
-    </programlisting>
+  <para>
+   <!--
+   The <option>verbose</option> option can help understand the output. For example:
+   -->
+   <option>--verbose</option> オプションは出力内容を理解するのに役に立ちます。例：
+  </para>
+  <programlisting>
+   $ pcp_node_info --verbose -h localhost -U postgres 1
+   Hostname               : /tmp
+   Port                   : 11003
+   Status                 : 2
+   Weight                 : 0.500000
+   Status Name            : up
+   Role                   : standby
+   Replication Delay      : 0
+   Replication State      : streaming
+   Replication Sync State : async
+   Last Status Change     : 2019-04-23 13:58:40
+  </programlisting>
  </refsect1>
 
 </refentry>

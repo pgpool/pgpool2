@@ -20,11 +20,11 @@
    guarding against the split-brain syndrome and network
    partitioning. In addition, <emphasis>V3.7</emphasis> introduced
    quorum failover (see <xref
-   linkend="config-watchdog-failover-behavior">) to reduce the false
-   positives of <productname>PostgreSQL</productname> server
-   failures. To ensure the quorum mechanism properly works, the number
-   of <productname>pgpool-II</productname> nodes must be odd in number
-   and greater than or equal to 3.
+    linkend="config-watchdog-failover-behavior">) to reduce the false
+    positives of <productname>PostgreSQL</productname> server
+    failures. To ensure the quorum mechanism properly works, the number
+    of <productname>pgpool-II</productname> nodes must be odd in number
+    and greater than or equal to 3.
   </para>
 
   <sect2 id="tutorial-watchdog-coordinating-nodes">

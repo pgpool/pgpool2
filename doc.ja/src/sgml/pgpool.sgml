@@ -13,9 +13,9 @@
 
 <book id="Pgpool-II" lang="ja">
 
-<!--
+ <!--
  <title>pgpool-II &version; Documentation</title>
--->
+ -->
  <title>Pgpool-II &version; 文書</title>
 
 
@@ -29,17 +29,17 @@
  &intro;
 
  <part id="tutorial">
-<!--
+  <!--
   <title>Tutorial</title>
--->
+  -->
   <title>チュートリアル</title>
 
   <partintro>
    <para>
-<!--
+    <!--
     This chapter explains how to get start with <productname>Pgpool-II</productname>.
--->
-この章では、<productname>Pgpool-II</productname>を使いはじめる方法を説明します。
+    -->
+    この章では、<productname>Pgpool-II</productname>を使いはじめる方法を説明します。
    </para>
 
   </partintro>
@@ -49,18 +49,18 @@
  </part>
 
  <part id="admin">
-<!--
+  <!--
   <title>Server Administration</title>
--->
+  -->
   <title>サーバ管理</title>
 
   <partintro>
    <para>
-<!--
+    <!--
     This part covers topics that are of interest
     to <productname>Pgpool-II</productname> administrators.
--->
-ここでは<productname>Pgpool-II</productname>管理者にとって関心のある事項を扱います。
+    -->
+    ここでは<productname>Pgpool-II</productname>管理者にとって関心のある事項を扱います。
    </para>
   </partintro>
 
@@ -68,18 +68,18 @@
   &runtime;
   &advanced;
   &config;
-  &connection-settings;
-  &connection-pooling;
-  &loadbalance;
-  &healthcheck;
-  &failover;
-  &online-recovery;
-  &stream-check;
-  &memcache;
-  &ssl;
-  &watchdog;
-  &misc-config;
-  &config-last;
+   &connection-settings;
+   &connection-pooling;
+   &loadbalance;
+   &healthcheck;
+   &failover;
+   &online-recovery;
+   &stream-check;
+   &memcache;
+   &ssl;
+   &watchdog;
+   &misc-config;
+   &config-last;
   &client-auth;
   &performance;
  </part>
@@ -88,49 +88,49 @@
 
  &reference;
 
-<!--
+ <!--
  <part id="internals">
-  <title>Internals</title>
+ <title>Internals</title>
 
-  <partintro>
-   <para>
-    This part contains assorted information that might be of use to
-    <productname>PostgreSQL</> developers.
+ <partintro>
+ <para>
+ This part contains assorted information that might be of use to
+ <productname>PostgreSQL</> developers.
    </para>
   </partintro>
 
-  &arch-dev;
-  &catalogs;
-  &protocol;
-  &sources;
-  &nls;
-  &plhandler;
-  &fdwhandler;
-  &tablesample-method;
-  &custom-scan;
-  &geqo;
-  &indexam;
-  &gist;
-  &spgist;
-  &gin;
-  &brin;
-  &storage;
-  &bki;
-  &planstats;
+ &arch-dev;
+ &catalogs;
+ &protocol;
+ &sources;
+ &nls;
+ &plhandler;
+ &fdwhandler;
+ &tablesample-method;
+ &custom-scan;
+ &geqo;
+ &indexam;
+ &gist;
+ &spgist;
+ &gin;
+ &brin;
+ &storage;
+ &bki;
+ &planstats;
 
  </part>
--->
+ -->
 
  <part id="appendixes">
- <!--
+  <!--
   <title>Appendixes</title>
   -->
   <title>付録</title>
 
   <partintro>
-    <para>
+   <para>
     something...
-    </para>
+   </para>
   </partintro>
 
   &release;
