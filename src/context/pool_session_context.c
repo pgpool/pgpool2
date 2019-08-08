@@ -1170,16 +1170,6 @@ pool_pending_message_create(char kind, int len, char *contents)
 void
 pool_pending_message_dest_set(POOL_PENDING_MESSAGE * message, POOL_QUERY_CONTEXT * query_context)
 {
-	//int			i;
-
-	/*
-	for (i = 0; i < MAX_NUM_BACKENDS; i++)
-	{
-		if (query_context->where_to_send[i])
-			message->node_ids[i] = true;
-	}
-	*/
-
 	memcpy(message->node_ids, query_context->where_to_send, sizeof(message->node_ids));
 
 	message->query_context = query_context;
