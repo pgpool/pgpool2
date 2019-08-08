@@ -682,6 +682,7 @@ extern void pool_ps_idle_display(POOL_CONNECTION_POOL *backend);
 extern void start_recovery(int recovery_node);
 extern void finish_recovery(void);
 extern int wait_connection_closed(void);
+extern int ensure_conn_counter_validity(void);
 
 /* child.c */
 extern void cancel_request(CancelPacket *sp);
