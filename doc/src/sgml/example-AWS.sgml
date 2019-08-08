@@ -1,0 +1,305 @@
+<!-- doc/src/sgml/example-AWS.sgml -->
+
+<sect1 id="example-AWS">
+ <title>AWS Configuration Example</title>
+
+ <para>
+  This tutorial explains the simple way to try "Watchdog"
+  on <ulink url="https://aws.amazon.com/">AWS</ulink> and using
+  the <ulink url="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html">
+   Elastic IP Address</ulink> as the Virtual IP for the high availability solution.
+  <note>
+   <para>
+    You can use watchdog with <productname>
+     Pgpool-II</productname> in any mode: replication mode,
+    master/slave mode and raw mode.
+   </para>
+  </note>
+ </para>
+
+ <sect2 id="example-AWS-setup">
+  <title>AWS Setup</title>
+  <para>
+   For this example, we will use two node <productname>
+    Pgpool-II</productname> watchdog cluster. So we will set up two
+   Linux Amazon EC2 instances and one Elastic IP address.
+   So for this example, do the following steps:
+  </para>
+
+  <itemizedlist>
+
+   <listitem>
+    <para>
+     Launch two Linux Amazon EC2 instances. For this example, we name these
+     instances as "instance-1" and "instance-2"
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Configure the security group for the instances and allow inbound traffic
+     on ports used by pgpool-II and watchdog.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Install the <productname>Pgpool-II</productname> on both instances.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Allocate an Elastic IP address.
+     For this example, we will use "35.163.178.3" as an Elastic IP address"
+    </para>
+   </listitem>
+
+  </itemizedlist>
+
+ </sect2>
+
+ <sect2 id="example-AWS-pgpool-config">
+  <title><productname>Pgpool-II</productname> configurations</title>
+  <para>
+   Mostly the <productname>Pgpool-II</productname> configurations for this
+   example will be same as in the <xref linkend="example-watchdog">, except the
+   <xref linkend="guc-delegate-ip"> which we will not set in this example instead
+   we will use <xref linkend="guc-wd-escalation-command"> and
+   <xref linkend="guc-wd-de-escalation-command"> to switch the
+   Elastic IP address to the maste/Active <productname>Pgpool-II</productname> node.
+  </para>
+
+  <sect3 id="example-AWS-pgpool-config-instance-1">
+   <title><productname>Pgpool-II</productname> configurations on Instance-1</title>
+   <para>
+
+<programlisting>
+use_watchdog = on
+delegate_IP = ''
+wd_hostname = 'instance-1-private-ip'
+other_pgpool_hostname0 = 'instance-2-private-ip'
+other_pgpool_port0 = 9999
+other_wd_port0 = 9000
+wd_escalation_command = '$path_to_script/aws-escalation.sh'
+wd_de_escalation_command = '$path_to_script/aws-de-escalation.sh'
+</programlisting>
+
+   </para>
+  </sect3>
+
+  <sect3 id="example-AWS-pgpool-config-instance-2">
+   <title><productname>Pgpool-II</productname> configurations on Instance-2</title>
+   <para>
+
+<programlisting>
+use_watchdog = on
+delegate_IP = ''
+wd_hostname = 'instance-2-private-ip'
+other_pgpool_hostname0 = 'instance-1-private-ip'
+other_pgpool_port0 = 9999
+other_wd_port0 = 9000
+wd_escalation_command = '$path_to_script/aws-escalation.sh'
+wd_de_escalation_command = '$path_to_script/aws-de-escalation.sh'
+</programlisting>
+
+   </para>
+  </sect3>
+ </sect2>
+
+ <sect2 id="example-AWS-pgpool-aws-escalation-instance">
+  <title>escalation and de-escalation Scripts</title>
+  <para>
+   Create the aws-escalation.sh and aws-de-escalation.sh scripts on both
+   instances and point the <xref linkend="guc-wd-escalation-command"> and
+   <xref linkend="guc-wd-de-escalation-command"> to the respective scripts.
+  </para>
+
+  <note>
+   <para>
+    You may need to configure the AWS CLI first on all AWS instances
+    to enable the execution of commands used by wd-escalation.sh and wd-de-escalation.sh.
+    See <ulink url="http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html">configure AWS CLI</ulink>
+   </para>
+  </note>
+
+  <sect3 id="example-AWS-pgpool-aws-escalation-script">
+   <title>escalation script</title>
+
+   <para>
+    This script will be executed by the watchdog
+    to assign the Elastic IP on the instance when the watchdog becomes the active/master node.
+    Change the INSTANCE_ID and ELASTIC_IP values as per your AWS setup values.
+   </para>
+   <para>
+    <emphasis>aws-escalation.sh:</emphasis>
+<programlisting>
+#! /bin/sh
+
+ELASTIC_IP=35.163.178.3
+# replace it with the Elastic IP address you
+# allocated from the aws console
+INSTANCE_ID=i-0a9b64e449b17ed4b
+# replace it with the instance id of the Instance
+# this script is installed on
+
+echo "Assigning Elastic IP $ELASTIC_IP to the instance $INSTANCE_ID"
+# bring up the Elastic IP
+aws ec2 associate-address --instance-id $INSTANCE_ID --public-ip $ELASTIC_IP
+
+exit 0
+</programlisting>
+
+   </para>
+  </sect3>
+
+  <sect3 id="example-AWS-pgpool-aws-de-escalation-script">
+   <title>de-escalation script</title>
+
+    <para>
+     This script will be executed by watchdog
+     to remove the Elastic IP from the instance when the watchdog resign from the active/master node.
+    </para>
+    <para>
+     <emphasis>aws-de-escalation.sh:</emphasis>
+<programlisting>
+#! /bin/sh
+
+ELASTIC_IP=35.163.178.3
+# replace it with the Elastic IP address you
+# allocated from the aws console
+
+echo "disassociating the Elastic IP $ELASTIC_IP from the instance"
+# bring down the Elastic IP
+aws ec2 disassociate-address --public-ip $ELASTIC_IP
+exit 0
+</programlisting>
+   </para>
+   </sect3>
+
+   <bibliography>
+   <title>AWS Command References</title>
+
+   <biblioentry>
+    <biblioset relation="article">
+     <title><ulink url="http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html">Configure AWS CLI</ulink></title>
+    </biblioset>
+    <biblioset relation="book">
+     <title>AWS Documentation: Configuring the AWS Command Line Interface</title>
+    </biblioset>
+   </biblioentry>
+
+   <biblioentry>
+    <biblioset relation="article">
+     <title><ulink url="http://docs.aws.amazon.com/cli/latest/reference/ec2/associate-address.html">associate-address</ulink></title>
+    </biblioset>
+    <biblioset relation="book">
+     <title>AWS Documentation: associate-address reference</title>
+    </biblioset>
+   </biblioentry>
+
+   <biblioentry>
+    <biblioset relation="article">
+     <title><ulink url="http://docs.aws.amazon.com/cli/latest/reference/ec2/disassociate-address.html">disassociate-address</ulink></title>
+    </biblioset>
+    <biblioset relation="book">
+     <title>AWS Documentation: disassociate-address reference</title>
+    </biblioset>
+   </biblioentry>
+
+   </bibliography>
+  </sect2>
+
+  <sect2 id="example-AWS-try">
+   <title>Try it out</title>
+   <para>
+Start <productname>Pgpool-II</productname> on each server with "-n" switch
+         and redirect log messages to the pgpool.log file.
+         The log message of master/active <productname>Pgpool-II</productname> node
+         will show the message of Elastic IP assignment.
+<programlisting>
+LOG:  I am the cluster leader node. Starting escalation process
+LOG:  escalation process started with PID:23543
+LOG:  watchdog: escalation started
+<emphasis>
+Assigning Elastic IP 35.163.178.3 to the instance i-0a9b64e449b17ed4b
+{
+"AssociationId": "eipassoc-39853c42"
+}
+</emphasis>
+LOG:  watchdog escalation successful
+LOG:  watchdog escalation process with pid: 23543 exit with SUCCESS.
+</programlisting>
+   </para>
+
+   <para>
+    Confirm to ping to the Elastic IP address.
+<programlisting>
+[user@someserver]$ ping 35.163.178.3
+PING 35.163.178.3 (35.163.178.3) 56(84) bytes of data.
+64 bytes from 35.163.178.3: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 35.163.178.3: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 35.163.178.3: icmp_seq=3 ttl=64 time=0.412 ms
+</programlisting>
+   </para>
+
+   <para>
+    Try to connect <productname>PostgreSQL</productname> by "psql -h ELASTIC_IP -p port".
+<programlisting>
+[user@someserver]$ psql -h 35.163.178.3 -p 9999 -l
+</programlisting>
+   </para>
+  </sect2>
+
+  <sect2 id="example-AWS-vip-switch">
+   <title>Switching Elastic IP</title>
+    <para>
+     To confirm if the Standby server acquires the Elastic IP when the
+     Active server becomes unavailable, Stop the <productname>Pgpool-II</productname>
+     on the Active server. Then, the Standby server should start using the Elastic IP address,
+     And the <productname>Pgpool-II</productname> log will show the below messages.
+
+<programlisting>
+<emphasis>
+LOG:  remote node "172.31.2.94:9999 [Linux ip-172-31-2-94]" is shutting down
+LOG:  watchdog cluster has lost the coordinator node
+</emphasis>
+LOG:  watchdog node state changed from [STANDBY] to [JOINING]
+LOG:  watchdog node state changed from [JOINING] to [INITIALIZING]
+LOG:  I am the only alive node in the watchdog cluster
+HINT:  skipping stand for coordinator state
+LOG:  watchdog node state changed from [INITIALIZING] to [MASTER]
+LOG:  I am announcing my self as master/coordinator watchdog node
+LOG:  I am the cluster leader node
+DETAIL:  our declare coordinator message is accepted by all nodes
+LOG:  I am the cluster leader node. Starting escalation process
+LOG:  escalation process started with PID:23543
+LOG:  watchdog: escalation started
+<emphasis>
+Assigning Elastic IP 35.163.178.3 to the instance i-0dd3e60734a6ebe14
+{
+"AssociationId": "eipassoc-39853c42"
+}
+</emphasis>
+LOG:  watchdog escalation successful
+LOG:  watchdog escalation process with pid: 61581 exit with SUCCESS.
+</programlisting>
+         
+   Confirm to ping to the Elastic IP address again.
+
+<programlisting>
+[user@someserver]$ ping 35.163.178.3
+PING 35.163.178.3 (35.163.178.3) 56(84) bytes of data.
+64 bytes from 35.163.178.3: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 35.163.178.3: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 35.163.178.3: icmp_seq=3 ttl=64 time=0.412 ms
+</programlisting>
+  </para>
+  <para>
+   Try to connect <productname>PostgreSQL</productname> by "psql -h ELASTIC_IP -p port".
+<programlisting>
+[user@someserver]$ psql -h 35.163.178.3 -p 9999 -l
+</programlisting>
+  </para>
+ </sect2>
+</sect1>
