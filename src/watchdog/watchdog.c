@@ -6465,7 +6465,10 @@ process_remote_online_recovery_command(WatchdogNode * wdNode, WDPacketData * pkt
 				}
 				else if (pool_config->recovery_timeout <= 0)
 				{
-					reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
+					if (ensure_conn_counter_validity() == 0)
+						reply_with_minimal_message(wdNode, WD_ACCEPT_MESSAGE, pkt);
+					else
+						reply_with_minimal_message(wdNode, WD_REJECT_MESSAGE, pkt);
 				}
 				else
 				{
@@ -6589,7 +6592,11 @@ process_wd_command_timer_event(bool timer_expired, WDFunctionCommandData * wd_fu
 				WDPacketData emptyPkt;
 
 				emptyPkt.command_id = wd_func_command->commandID;
-				reply_with_minimal_message(wd_func_command->wdNode, WD_REJECT_MESSAGE, &emptyPkt);
+
+				if (ensure_conn_counter_validity() == 0)
+					reply_with_minimal_message(wd_func_command->wdNode, WD_ACCEPT_MESSAGE, &emptyPkt);
+				else
+					reply_with_minimal_message(wd_func_command->wdNode, WD_REJECT_MESSAGE, &emptyPkt);
 				return true;
 			}
 			return false;

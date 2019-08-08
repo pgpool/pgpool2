@@ -483,7 +483,11 @@ wait_connection_closed(void)
 	} while (i++ < WAIT_RETRY_COUNT);
 	ereport(LOG,
 			(errmsg("wait_connection_closed: existing connections did not close in %d sec.", pool_config->recovery_timeout)));
+	return ensure_conn_counter_validity();
+}
 
+int ensure_conn_counter_validity(void)
+{
 	/*
 	 * recovery_timeout was expired. Before returning with failure status,
 	 * let's check if this is caused by the malformed conn_counter. If a child
