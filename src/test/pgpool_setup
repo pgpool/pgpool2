@@ -70,6 +70,8 @@ LPATH=${PGLIB:-"/usr/local/pgsql/lib"}
 PGSOCKET_DIR=${PGSOCKET_DIR:-"/tmp"}
 # initdb args
 INITDBARG="--no-locale -E UTF_8"
+# Check TIME_WAIT in shutdownall script
+CHECK_TIME_WAIT=${CHECK_TIME_WAIT:-"false"}
 #-------------------------------------------
 # End of configuration section
 #-------------------------------------------
@@ -691,7 +693,9 @@ echo 'dir=`pwd`' > $SHUTDOWNALL
 echo "PGPOOL_INSTALL_DIR=$PGPOOL_INSTALL_DIR" >> $SHUTDOWNALL
 echo '$PGPOOL_INSTALL_DIR/bin/pgpool -f $dir/etc/pgpool.conf -m f stop' >> $SHUTDOWNALL
 echo 'while [ -f $dir/run/pgpool.pid ];do sleep 1;done' >> $SHUTDOWNALL
-echo "while  netstat -a|grep $ORIGBASEPORT ;do sleep 1;done" >> $SHUTDOWNALL
+if [ $CHECK_TIME_WAIT != "false" ];then
+   echo "while  netstat -a|grep $ORIGBASEPORT ;do sleep 1;done" >> $SHUTDOWNALL
+fi
 chmod 755 $SHUTDOWNALL
 echo 'dir=`pwd`' > $PGPOOL_RELOAD
 echo "PGPOOL_INSTALL_DIR=$PGPOOL_INSTALL_DIR" >> $PGPOOL_RELOAD
