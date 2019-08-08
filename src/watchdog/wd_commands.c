@@ -594,7 +594,7 @@ wd_start_recovery(void)
 												 shared_key ? *shared_key : 0, pool_config->wd_authkey);
 
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_IPC_ONLINE_RECOVERY_COMMAND,
-													   pool_config->recovery_timeout,
+													   pool_config->recovery_timeout + WD_DEFAULT_IPC_COMMAND_TIMEOUT,
 													   func, strlen(func), true);
 
 	pfree(func);
@@ -707,7 +707,7 @@ wd_send_failover_func_status_command(bool start)
 	char	   *json_data = get_wd_failover_state_json(start);
 
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_FAILOVER_INDICATION
-													   ,pool_config->recovery_timeout,
+													   ,WD_DEFAULT_IPC_COMMAND_TIMEOUT,
 													   json_data, strlen(json_data), true);
 
 	pfree(json_data);
