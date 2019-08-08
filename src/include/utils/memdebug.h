@@ -31,4 +31,17 @@
 #define VALGRIND_MEMPOOL_CHANGE(context, optr, nptr, size)	do {} while (0)
 #endif
 
+#ifdef CLOBBER_FREED_MEMORY
+
+/* Wipe freed memory for debugging purposes */
+static inline void
+wipe_mem(void *ptr, size_t size)
+{
+	VALGRIND_MAKE_MEM_UNDEFINED(ptr, size);
+	memset(ptr, 0x7F, size);
+	VALGRIND_MAKE_MEM_NOACCESS(ptr, size);
+}
+
+#endif	/* CLOBBER_FREED_MEMORY */
+
 #endif   /* MEMDEBUG_H */
