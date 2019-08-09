@@ -299,6 +299,13 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		pool_start_query(query_context, contents, len, node);
 
 		/*
+		 * Create PostgreSQL version cache.  Since the provided query might
+		 * cause a syntax error, we want to issue "SELECT version()" which is
+		 * called inside Pgversion() here.
+		 */
+		Pgversion(backend);
+
+		/*
 		 * If the query is DROP DATABASE, after executing it, cache files
 		 * directory must be discarded. So we have to get the DB's oid before
 		 * it will be DROPped.
@@ -1096,6 +1103,13 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		 * Start query context
 		 */
 		pool_start_query(query_context, pstrdup(stmt), strlen(stmt) + 1, node);
+
+		/*
+		 * Create PostgreSQL version cache.  Since the provided query might
+		 * cause a syntax error, we want to issue "SELECT version()" which is
+		 * called inside Pgversion() here.
+		 */
+		Pgversion(backend);
 
 		msg = pool_create_sent_message('P', len, contents, 0, name, query_context);
 
