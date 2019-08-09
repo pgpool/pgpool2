@@ -3179,11 +3179,19 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 			/* Replace the query context of bind message */
 			bind_message->query_context = new_qc;
 
+#ifdef NOT_USED
+			/*
+			 * XXX 	pool_remove_sent_message() will pfree memory allocated by "contents".
+			 */
+
 			/* Remove old sent message */
 			pool_remove_sent_message('P', contents);
 			/* Create and add sent message of this parse message */
 			msg = pool_create_sent_message('P', len, contents, 0, contents, new_qc);
 			pool_add_sent_message(msg);
+#endif
+			/* Replace the query context of parse message */
+			message->query_context = new_qc;
 
 			return POOL_CONTINUE;
 		}
