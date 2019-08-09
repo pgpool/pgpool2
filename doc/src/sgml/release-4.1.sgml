@@ -582,6 +582,37 @@
 
    <listitem>
     <!--
+    2019-05-27 [33df0d33]
+    2019-08-08 [3922c12c]
+    -->
+    <para>
+     Resign the master watchdog node from master responsibilities if
+     the primary backend node gets into quarantine state on that. (Muhammd Usama)
+    </para>
+    <para>
+     By doing this, we could avoid the situation on which there's no
+     primary <productname>PostgreSQL</productname> server exists.  To
+     implement this, make the master/coordinator watchdog node resign
+     from its status if it fails to get the consensus for the
+     quarantined primary node failover, within
+     FAILOVER_COMMAND_FINISH_TIMEOUT(15) seconds.
+    </para>
+    <para>
+     When the watchdog master resigns, because of quarantined primary
+     node its wd_priority is decreased to (-1), so that it should get
+     the least preference in the next election for the
+     master/coordinator node selection. And once the election is
+     concluded the wd_priority for the node gets restored to the
+     original configured value.
+    </para>
+    <para>
+     In case of failed consensus for standby node failover no action
+     is taken.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2019-01-27 [f03ebdba]
     2019-02-07 [5f259f3b]
     2019-02-20 [0c9f7167]
