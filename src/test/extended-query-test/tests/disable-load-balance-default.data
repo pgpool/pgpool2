@@ -55,8 +55,9 @@
 'B'	""	""	0	0	0
 'E'	""	0
 
-# Issue Bind/Execute SELECT. This should be sent to node 1 because
-# disable_load_balance_on_write = 'transaction'.
+# Issue Bind/Execute SELECT. This should be sent to node 0 despite
+# disable_load_balance_on_write = 'transaction' because previous prase
+# messge was sent to primary node which was done by parse_before_bind.
 'B'	""	"S1"	0	0	0
 'E'	""	0
 

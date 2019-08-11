@@ -2,7 +2,7 @@
 
 # expected results: Parse: 1 Parse: 0 Execute: 0 Parse: 0 Execute: 0
 # Parse: 1 Execute: 1 Parse: 1 Execute: 1 Parse: 1 Execute: 1
-set 1 0 0 0 0 1 1 1 1 1
+set 1 0 0 0 0 1 1 0 1 1
 
 grep "SELECT" $PGPOOLLOG |awk '{print $9}' | while read node
 do
