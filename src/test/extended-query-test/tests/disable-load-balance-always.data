@@ -4,15 +4,9 @@
 # Force load balance node to 1.
 ##backend_weight0 = 0
 ##backend_weight1 = 1
+##disable_load_balance_on_write = 'always'
 
-# Disable load balance in current transaction only.
-# (default behavior)
-
-# Create test table
-'Q'	"DROP TABLE IF EXISTS pgproto_test1"
-'Y'
-'Q'	"CREATE TABLE pgproto_test1(i INT)"
-'Y'
+# Always disable load balance.
 
 # Start a transaction
 'P'	""	"BEGIN"	0
@@ -22,8 +16,8 @@
 # Issue Parse SELECT. This should be sent to node 1.
 'P'	"S1"	"SELECT 1"	0
 
-# Issue INSERT
-'P'	""	"INSERT INTO pgproto_test1 VALUES(1)"	0
+# Issue query treaed as write query
+'P'	""	"SET debug_print_parse = off"	0
 'B'	""	""	0	0	0
 'E'	""	0
 
@@ -84,10 +78,6 @@
 'Q'	"SELECT 1"
 'Y'
 
-# Issue INSERT
-'Q'	"INSERT INTO pgproto_test1 VALUES(1)"
-'Y'
-
 # Issue another SELECT. This should be sent to primary node.
 'Q'	"SELECT 2"
 'Y'
@@ -110,10 +100,6 @@
 
 # Issue COMMIT
 'Q'	"COMMIT"
-'Y'
-
-# DROP test table
-'Q'	"DROP TABLE pgproto_test1"
 'Y'
 
 'X'
