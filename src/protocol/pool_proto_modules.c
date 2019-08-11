@@ -1435,7 +1435,8 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	 * primary node.
 	 */
 	if (pool_config->load_balance_mode && pool_is_writing_transaction() &&
-		TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
+		TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T' &&
+		pool_config->disable_load_balance_on_write != DLBOW_OFF)
 	{
 		if (!SL_MODE)
 		{
