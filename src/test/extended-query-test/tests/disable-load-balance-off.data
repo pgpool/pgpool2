@@ -4,9 +4,7 @@
 # Force load balance node to 1.
 ##backend_weight0 = 0
 ##backend_weight1 = 1
-
-# Disable load balance in current transaction only.
-# (default behavior)
+##disable_load_balance_on_write = 'off'
 
 # Create test table
 'Q'	"DROP TABLE IF EXISTS pgproto_test1"
