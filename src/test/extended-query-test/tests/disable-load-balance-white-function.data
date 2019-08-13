@@ -14,6 +14,10 @@
 'Q'	"CREATE FUNCTION f1(INTEGER) returns INTEGER AS 'SELECT $1' LANGUAGE SQL"
 'Y'
 
+# Wait a while to the standby synced with primary.
+'Q'	"SELECT pg_sleep(5)"
+'Y'
+
 # Start a transaction
 'P'	""	"BEGIN"	0
 'B'	""	""	0	0	0
