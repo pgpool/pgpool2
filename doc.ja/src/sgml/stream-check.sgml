@@ -82,12 +82,10 @@
     </para>
     <note>
      <para>
-      <!--
-      <varname>sr_check_user</varname>> and <xref linkend="guc-sr-check-password">
-      are used even when <xref linkend="guc-sr-check-period"> is set to 0 (disabled)
-      for the identification of the primary server.
-      -->
-      <varname>sr_check_user</varname>と<xref linkend="guc-sr-check-password">は、<xref linkend="guc-sr-check-period">が0（無効）であっても、プライマリサーバの特定に使用されます。
+      <xref linkend="guc-sr-check-user">と<xref
+      linkend="guc-sr-check-password">は、<xref
+      linkend="guc-sr-check-period">が0 (無効)の場合でもプライマリサー
+      バの特定のために使用されます。
      </para>
     </note>
 

@@ -54,9 +54,10 @@
     </para>
     <note>
      <para>
-      <varname>sr_check_user</varname>> and <xref linkend="guc-sr-check-password">
-       are used even when <xref linkend="guc-sr-check-period"> is set to 0 (disabled)
-	for the identification of the primary server.
+      <xref linkend="guc-sr-check-user"> and <xref
+      linkend="guc-sr-check-password"> are used even when <xref
+      linkend="guc-sr-check-period"> is set to 0 (disabled) for the
+      identification of the primary server.
      </para>
     </note>
 
