@@ -3968,6 +3968,8 @@ _outDropStmt(String * str, DropStmt *node)
 {
 	List	   *objname;
 	char		*p;
+	char		*p1;
+	List		*l;
 
 	string_append_char(str, "DROP ");
 	switch (node->removeType)
@@ -4064,8 +4066,12 @@ _outDropStmt(String * str, DropStmt *node)
 			objname = lfirst(list_head(node->objects));
 			string_append_char(str, strVal(llast(objname)));
 			string_append_char(str, " ON ");
-			string_append_char(str, NameListToString(list_truncate(list_copy(objname),
-																   list_length(objname) - 1)));
+			l = list_truncate(list_copy(objname),
+							  list_length(objname) - 1);
+			p = NameListToString(l);
+			string_append_char(str, p);
+			pfree(p);
+			list_free(l);
 			break;
 
 		case OBJECT_OPERATOR:
@@ -4081,11 +4087,15 @@ _outDropStmt(String * str, DropStmt *node)
 			string_append_char(str, strVal(llast(objname)));
 			string_append_char(str, " USING ");
 			string_append_char(str, "'");
-			p = escape_string(NameListToString(list_truncate(list_copy(objname), list_length(objname) - 1)));
-			string_append_char(str, p);
+			l = list_truncate(list_copy(objname),
+							  list_length(objname) - 1);
+			p = NameListToString(l);
+			p1 = escape_string(p);
+			string_append_char(str, p1);
+			pfree(p1);
 			pfree(p);
+			list_free(l);
 			string_append_char(str, "'");
-
 			break;
 
 		case OBJECT_CAST:
