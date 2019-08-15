@@ -1965,6 +1965,9 @@ pool_temp_tables_commit_pending(void)
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
 
+	pool_temp_tables_dump();
+
+Retry:
 	foreach(cell, session_context->temp_tables)
 	{
 		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
@@ -1981,6 +1984,8 @@ pool_temp_tables_commit_pending(void)
 			ereport(DEBUG1,
 					(errmsg("pool_temp_tables_commit_pending: remove: %s", table->tablename)));
 			session_context->temp_tables = list_delete_ptr(session_context->temp_tables, table);
+			pool_temp_tables_dump();
+			goto Retry;
 		}
 	}
 
@@ -2003,6 +2008,9 @@ pool_temp_tables_remove_pending(void)
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
 
+	pool_temp_tables_dump();
+
+Retry:
 	foreach(cell, session_context->temp_tables)
 	{
 		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
@@ -2013,8 +2021,30 @@ pool_temp_tables_remove_pending(void)
 					(errmsg("pool_temp_tables_remove_pending: remove: %s", table->tablename)));
 
 			session_context->temp_tables = list_delete_ptr(session_context->temp_tables, table);
+			pool_temp_tables_dump();
+			goto Retry;
 		}
 	}
 
 	MemoryContextSwitchTo(old_context);
+}
+
+void
+pool_temp_tables_dump(void)
+{
+#ifdef TEMP_TABLES_DEBUG
+	ListCell   *cell;
+
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("pool_temp_tables_dump: session context is not initialized")));
+
+	foreach(cell, session_context->temp_tables)
+	{
+		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
+		ereport(DEBUG1,
+				(errmsg("pool_temp_tables_dump: table %s state: %d",
+						table->tablename, table->state)));
+	}
+#endif
 }

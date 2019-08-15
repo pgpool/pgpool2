@@ -363,6 +363,7 @@ extern POOL_TEMP_TABLE * pool_temp_tables_find(char * tablename);
 extern void pool_temp_tables_delete(char * tablename, POOL_TEMP_TABLE_STATE state);
 extern void	pool_temp_tables_commit_pending(void);
 extern void	pool_temp_tables_remove_pending(void);
+extern void	pool_temp_tables_dump(void);
 
 #ifdef NOT_USED
 extern void pool_set_preferred_master_node_id(int node_id);
