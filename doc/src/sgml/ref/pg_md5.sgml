@@ -17,7 +17,7 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pg_md5</refname>
   <refpurpose>
-	produces encrypted password in md5</refpurpose>
+   produces encrypted password in md5</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -36,97 +36,97 @@ Pgpool-II documentation
  <refsect1 id="R1-PG-MD5-1">
   <title>Description</title>
   <para>
-  <command>pg_md5</command>
-  	produces encrypted password in md5.
+   <command>pg_md5</command>
+   produces encrypted password in md5.
   </para>
  </refsect1>
 
  <refsect1>
   <title>Options</title>
-   <para>
-    <variablelist>
+  <para>
+   <variablelist>
 
-     <varlistentry>
-      <term><option>-p</option></term>
-      <term><option>--prompt</option></term>
-      <listitem>
-       <para>
-	 Prompt password using standard input.
-       </para>
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term><option>-p</option></term>
+     <term><option>--prompt</option></term>
+     <listitem>
+      <para>
+       Prompt password using standard input.
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term><option>-m</option></term>
-      <term><option>--md5auth</option></term>
-      <listitem>
-       <para>
-	 Produce md5 authentication password to authentication file <filename>pool_passwd</filename>.
-       </para>
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term><option>-m</option></term>
+     <term><option>--md5auth</option></term>
+     <listitem>
+      <para>
+       Produce md5 authentication password to authentication file <filename>pool_passwd</filename>.
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term><option>-u <replaceable class="parameter">your_username</replaceable></option></term>
-      <term><option>--username=<replaceable class="parameter">your_username</replaceable></option></term>
-      <listitem>
-       <para>
-	 When producing a md5 authentication password, create the pool_passwd entry for <literal>your_username</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term><option>-u <replaceable class="parameter">your_username</replaceable></option></term>
+     <term><option>--username=<replaceable class="parameter">your_username</replaceable></option></term>
+     <listitem>
+      <para>
+       When producing a md5 authentication password, create the pool_passwd entry for <literal>your_username</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term><option>-f <replaceable class="parameter">config_file</replaceable></option></term>
-      <term><option>--config-file=<replaceable class="parameter">config_file</replaceable></option></term>
-      <listitem>
-       <para>
-     Specify the path to the <literal>pgpool.conf</literal> configuration file.
-       </para>
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term><option>-f <replaceable class="parameter">config_file</replaceable></option></term>
+     <term><option>--config-file=<replaceable class="parameter">config_file</replaceable></option></term>
+     <listitem>
+      <para>
+       Specify the path to the <literal>pgpool.conf</literal> configuration file.
+      </para>
+     </listitem>
+    </varlistentry>
 
-    </variablelist>
-   </para>
+   </variablelist>
+  </para>
  </refsect1>
 
  <refsect1>
   <title>Example</title>
-   <para>
-	The following are examples to encrypt your password into md5 hash format for <filename>pcp.conf</filename>.
-    <programlisting>
-$ pg_md5 -p
-password: [your password]
-    </programlisting>
+  <para>
+   The following are examples to encrypt your password into md5 hash format for <filename>pcp.conf</filename>.
+   <programlisting>
+    $ pg_md5 -p
+    password: [your password]
+   </programlisting>
   </para>
   <para>
-  or
+   or
   </para>
+  <programlisting>
+   $ pg_md5 [your password]
+   acbd18db4cc2f85cedef654fccc4a4d8
+  </programlisting>
+
+  <para>
+   <literal>pg_md5</literal> can also be used for adding an entry of user name and 
+   <literal>md5</literal> encrypted password to 
+   <xref linkend="guc-pool-passwd"> authentication file.
     <programlisting>
-$ pg_md5 [your password]
-acbd18db4cc2f85cedef654fccc4a4d8
+     $ pg_md5 -m -f /path/to/pgpool.conf -u username -p
+     password: [your password]
+
+     $ cat /path/to/pool_passwd 
+     username:md55a231fcdb710d73268c4f44283487ba2
     </programlisting>
-
-    <para>
-      <literal>pg_md5</literal> can also be used for adding an entry of user name and 
-      <literal>md5</literal> encrypted password to 
-      <xref linkend="guc-pool-passwd"> authentication file.
-      <programlisting>
-$ pg_md5 -m -f /path/to/pgpool.conf -u username -p
-password: [your password]
-
-$ cat /path/to/pool_passwd 
-username:md55a231fcdb710d73268c4f44283487ba2
-      </programlisting>
-      To just display the md5 hashed string, not adding an entry to <xref linkend="guc-pool-passwd">, pass a string concatenating password and user name.
-	For example, if password is "password" and user name is "user", the output would be:
-      <programlisting>
-$ pg_md5 passworduser
-4d45974e13472b5a0be3533de4666414
-      </programlisting>
-      Please note that the actual entry to be inserted into
-      <xref linkend="guc-pool-passwd"> should have "md5" on top of the
+    To just display the md5 hashed string, not adding an entry to <xref linkend="guc-pool-passwd">, pass a string concatenating password and user name.
+     For example, if password is "password" and user name is "user", the output would be:
+     <programlisting>
+      $ pg_md5 passworduser
+      4d45974e13472b5a0be3533de4666414
+     </programlisting>
+     Please note that the actual entry to be inserted into
+     <xref linkend="guc-pool-passwd"> should have "md5" on top of the
       result string. That is: "md54d45974e13472b5a0be3533de4666414".
-    </para>
+  </para>
  </refsect1>
 </refentry>

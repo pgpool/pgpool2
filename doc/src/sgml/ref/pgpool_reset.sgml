@@ -20,28 +20,28 @@ PostgreSQL documentation
  </refnamediv>
 
  <refsynopsisdiv>
-<synopsis>
-PGPOOL RESET <replaceable class="PARAMETER">configuration_parameter</replaceable>
-PGPOOL RESET ALL
-</synopsis>
+  <synopsis>
+   PGPOOL RESET <replaceable class="PARAMETER">configuration_parameter</replaceable>
+   PGPOOL RESET ALL
+  </synopsis>
  </refsynopsisdiv>
 
  <refsect1>
   <title>Description</title>
 
   <para>
-    <command>PGPOOL RESET</command> command restores the value of
-    <productname>Pgpool-II</productname> configuration parameters to
-    the default value.
-    The default value is defined as the value that the parameter would have had,
-    if no <command>PGPOOL SET</command> had ever been issued for it in the
-    current session.
+   <command>PGPOOL RESET</command> command restores the value of
+   <productname>Pgpool-II</productname> configuration parameters to
+   the default value.
+   The default value is defined as the value that the parameter would have had,
+   if no <command>PGPOOL SET</command> had ever been issued for it in the
+   current session.
 
-    This command is similar to the
-    <ulink url="https://www.postgresql.org/docs/current/static/sql-reset.html">
+   This command is similar to the
+   <ulink url="https://www.postgresql.org/docs/current/static/sql-reset.html">
     <command>RESET</command></ulink> command in PostgreSQL with an addition
-    of <acronym>PGPOOL</acronym> keyword to distinguish it from the
-    PostgreSQL RESET command.
+   of <acronym>PGPOOL</acronym> keyword to distinguish it from the
+   PostgreSQL RESET command.
 
   </para>
 
@@ -78,15 +78,15 @@ PGPOOL RESET ALL
 
   <para>
    Reset the value of <xref linkend="guc-client-idle-limit"> parameter:
-<screen>
-PGPOOL RESET client_idle_limit;
-</screen></para>
+    <screen>
+     PGPOOL RESET client_idle_limit;
+    </screen></para>
 
   <para>
    Reset the value of all parameter to default:
-<screen>
-PGPOOL RESET ALL;
-</screen></para>
+   <screen>
+    PGPOOL RESET ALL;
+   </screen></para>
  </refsect1>
 
 

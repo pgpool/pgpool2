@@ -21,7 +21,7 @@ Pgpool-II documentation
   displays the total number of database nodes</refpurpose>
   -->
   <refpurpose>
-  <productname>Pgpool-II</productname> の <filename>pgpool.conf</filename> で定義されたノードの総数を表示する</refpurpose>
+   <productname>Pgpool-II</productname> の <filename>pgpool.conf</filename> で定義されたノードの総数を表示する</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -33,50 +33,50 @@ Pgpool-II documentation
 
  <refsect1 id="R1-PCP-NODE-COUNT-1">
   <title>
-  <!--
+   <!--
    Description
    -->
    説明
   </title>
   <para>
-  <command>pcp_node_count</command>
-  <!--
-  displays the total number of database nodes defined in <filename>pgpool.conf</filename>. It does
-  not distinguish between nodes status, ie attached/detached. ALL nodes are counted.
-  -->
-  は <productname>Pgpool-II</productname> の <filename>pgpool.conf</filename>
-  で定義されたノードの総数を表示します。 切り離されているノードの区別はしません。
+   <command>pcp_node_count</command>
+   <!--
+   displays the total number of database nodes defined in <filename>pgpool.conf</filename>. It does
+   not distinguish between nodes status, ie attached/detached. ALL nodes are counted.
+   -->
+   は <productname>Pgpool-II</productname> の <filename>pgpool.conf</filename>
+   で定義されたノードの総数を表示します。 切り離されているノードの区別はしません。
   </para>
  </refsect1>
 
  <refsect1>
- <!--
+  <!--
   <title>Options</title>
   -->
   <title>オプション</title>
-   <para>
+  <para>
    <!--
-     See <xref linkend="pcp-common-options">.
-     -->
-     <xref linkend="pcp-common-options"> を参照してください。
-   </para>
+   See <xref linkend="pcp-common-options">.
+   -->
+   <xref linkend="pcp-common-options"> を参照してください。
+  </para>
  </refsect1>
 
  <refsect1>
- <!--
+  <!--
   <title>Example</title>
   -->
   <title>例</title>
-   <para>
+  <para>
    <!--
-	Here is an example output:
-    -->
-    ここでは例を示します。
-    <programlisting>
-$ pcp_node_count -p 11001
-Password:
-2
-    </programlisting>
-   </para>
+   Here is an example output:
+   -->
+   ここでは例を示します。
+   <programlisting>
+    $ pcp_node_count -p 11001
+    Password:
+    2
+   </programlisting>
+  </para>
  </refsect1>
 </refentry>

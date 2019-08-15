@@ -17,7 +17,7 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pcp_attach_node</refname>
   <refpurpose>
-	attaches the given node to Pgpool-II.</refpurpose>
+   attaches the given node to Pgpool-II.</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -31,37 +31,37 @@ Pgpool-II documentation
  <refsect1 id="R1-PCP-ATTACH-NODE-1">
   <title>Description</title>
   <para>
-  <command>pcp_attach_node</command>
-  attaches the given node to Pgpool-II.
+   <command>pcp_attach_node</command>
+   attaches the given node to Pgpool-II.
   </para>
  </refsect1>
 
  <refsect1>
   <title>Options</title>
-   <para>
-    <variablelist>
+  <para>
+   <variablelist>
 
-     <varlistentry>
-      <term><option>-n <replaceable class="parameter">node_id</replaceable></option></term>
-      <term><option>--node_id=<replaceable class="parameter">node_id</replaceable></option></term>
-      <listitem>
-       <para>
-	The index of backend node to attach.
-       </para>
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term><option>-n <replaceable class="parameter">node_id</replaceable></option></term>
+     <term><option>--node_id=<replaceable class="parameter">node_id</replaceable></option></term>
+     <listitem>
+      <para>
+       The index of backend node to attach.
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term><option>Other options </option></term>
-      <listitem>
-       <para>
-	 See <xref linkend="pcp-common-options">.
-       </para>
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term><option>Other options </option></term>
+     <listitem>
+      <para>
+       See <xref linkend="pcp-common-options">.
+      </para>
+     </listitem>
+    </varlistentry>
 
-    </variablelist>
-   </para>
+   </variablelist>
+  </para>
  </refsect1>
 
 </refentry>
