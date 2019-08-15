@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2013-2017 PgPool Global Development Group
+# Copyright (c) 2013-2019 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby
@@ -226,6 +226,10 @@ do
     if [ $1 = "-wn" ];then
 	shift
 	W_NUM_PGPOOL=$1
+	if [ "$W_NUM_PGPOOL" -le 1 ];then
+	    echo "number of Pgpool-II nodes must be greater than 1"
+	    exit 1
+	fi
     elif [ $1 = "-wp" ];then
 	shift
 	W_BASE_PORT=$1
