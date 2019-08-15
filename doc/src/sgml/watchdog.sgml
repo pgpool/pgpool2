@@ -1,575 +1,575 @@
 <!-- doc/src/sgml/config.sgml -->
 
 <sect1 id="runtime-watchdog-config">
-  <title>Watchdog</title>
+ <title>Watchdog</title>
 
-<indexterm zone="runtime-watchdog-config">
+ <indexterm zone="runtime-watchdog-config">
   <primary>configuring watchdog</primary>
  </indexterm>
+ <para>
+  Watchdog configuration parameters are described in pgpool.conf.
+  There is sample configuration in the WATCHDOG section of
+  <filename>pgpool.conf.sample</filename> file.
+  All following options are required to be specified in watchdog process.
+ </para>
+
+ <sect2 id="config-enable-watchdog">
+  <title>Enable watchdog</title>
+
+  <variablelist>
+   <varlistentry id="guc-use-watchdog" xreflabel="use_watchdog">
+    <term><varname>use_watchdog</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>use_watchdog</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      If on, activates the watchdog. Default is off
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect2>
+
+ <sect2 id="config-communication-watchdog">
+  <title>Watchdog communication</title>
+
+  <variablelist>
+
+   <varlistentry id="guc-wd-hostname" xreflabel="wd_hostname">
+    <term><varname>wd_hostname</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>wd_hostname</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the hostname or IP address of
+      <productname>Pgpool-II</productname> server.
+      This is used for sending/receiving queries and packets,
+      and also as an identifier of the watchdog node.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-wd-port" xreflabel="wd_port">
+    <term><varname>wd_port</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>wd_port</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the port number to be used by watchdog
+      process to listen for connections. Default is 9000.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-wd-authkey" xreflabel="wd_authkey">
+    <term><varname>wd_authkey</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>wd_authkey</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the authentication key used for all watchdog communications.
+      All <productname>Pgpool-II</productname> must have the same key.
+      Packets from watchdog having different key will get rejected.
+      This authentication is also applied to the heartbeat signals
+      when the <literal>heartbeat</> mode is used as a lifecheck method.
+     </para>
+     <para>
+      Since in <productname>Pgpool-II</productname><emphasis>V3.5</emphasis> or beyond
+      <varname>wd_authkey</varname> is also used to authenticate
+      the watchdog IPC clients,
+      all clients communicating with <productname>Pgpool-II</productname>
+      watchdog process needs to provide this wd_authkey value
+      for <literal>"IPCAuthKey"</literal> key in the JSON data
+      of the command.
+     </para>
+     <para>
+      Default is <literal>''</literal> (empty) which means disables
+      the watchdog authentication.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect2>
+
+ <sect2 id="config-watchdog-upstream-connections">
+  <title>Upstream server connection</title>
+
+  <variablelist>
+
+   <varlistentry id="guc-trusted-servers" xreflabel="trusted_servers">
+    <term><varname>trusted_servers</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>trusted_servers</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the list of trusted servers to check the up stream connections.
+      Each server in the list is required to respond to ping.
+      Specify a comma separated list of servers such as
+      <literal>"hostA,hostB,hostC"</literal>.
+      If none of the server are reachable, watchdog will regard it as
+      failure of the <productname>Pgpool-II</productname>.
+      Therefore, it is recommended to specify multiple servers.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-ping-path" xreflabel="ping_path">
+    <term><varname>ping_path</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>ping_path</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the path of a ping command for monitoring
+      connection to the upper servers. Set the only path of the directory containing the
+      ping utility, such as <literal>"/bin"</literal> or such directory.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect2>
+
+ <sect2 id="config-watchdog-vip-control">
+  <title>Virtual IP control</title>
+
+  <variablelist>
+
+   <varlistentry id="guc-delegate-IP" xreflabel="delegate_IP">
+    <term><varname>delegate_IP</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>delegate_IP</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the virtual IP address (VIP) of pgpool-II that is
+      connected from client servers (application servers etc.).
+      When a <productname>Pgpool-II</productname> is switched from standby to active,
+      the <productname>Pgpool-II</productname> takes over
+      this VIP.
+      Default is <literal>''</literal>(empty): which means virtual
+      IP will never be brought up.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-if-cmd-path" xreflabel="if_cmd_path">
+    <term><varname>if_cmd_path</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>if_cmd_path</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the path to the command that <productname>Pgpool-II</productname>
+      will use to switch the virtual IP on the system.
+      Set only the path of the directory containing the binary,
+      such as <literal>"/sbin"</literal> or such directory.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-if-up-cmd" xreflabel="if_up_cmd">
+    <term><varname>if_up_cmd</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>if_up_cmd</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the command to bring up the virtual IP.
+      Set the command and parameters such as
+      <command>"ip addr add $_IP_$/24 dev eth0 label eth0:0"</command>
+      <literal>$_IP_$</literal> will get replaced by the IP address
+      specified in the <xref linkend="guc-delegate-IP">.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-if-down-cmd" xreflabel="if_down_cmd">
+    <term><varname>if_down_cmd</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>if_down_cmd</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the command to bring down the virtual IP.
+      Set the command and parameters such as
+      <literal>"ip addr del $_IP_$/24 dev eth0"</literal>.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-arping-path" xreflabel="arping_path">
+    <term><varname>arping_path</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>arping_path</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the path to the command that <productname>Pgpool-II</productname>
+      will use to send the ARP requests after the virtual IP switch.
+      Set only the path of the directory containing the binary,
+      such as <literal>"/usr/sbin"</literal> or such directory.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-arping-cmd" xreflabel="arping_cmd">
+    <term><varname>arping_cmd</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>arping_cmd</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the command to use for sending the ARP requests
+      after the virtual IP switch.
+      Set the command and parameters such as
+      <literal>"arping -U $_IP_$ -w 1"</literal>.
+      <literal>$_IP_$</literal> will get replaced by
+      the IP address specified in the <varname>delegate_IP</varname>.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </sect2>
+
+ <sect2 id="config-watchdog-escalation-de-escalation">
+  <title>Behaivor on escalation and de-escalation</title>
+
   <para>
-   Watchdog configuration parameters are described in pgpool.conf.
-   There is sample configuration in the WATCHDOG section of
-   <filename>pgpool.conf.sample</filename> file.
-   All following options are required to be specified in watchdog process.
-</para>
+   Configuration about behavior when <productname>Pgpool-II</productname>
+   escalates to active (virtual IP holder)
+  </para>
 
-  <sect2 id="config-enable-watchdog">
-    <title>Enable watchdog</title>
+  <variablelist>
 
-    <variablelist>
-      <varlistentry id="guc-use-watchdog" xreflabel="use_watchdog">
-        <term><varname>use_watchdog</varname> (<type>boolean</type>)
-          <indexterm>
-            <primary><varname>use_watchdog</varname> configuration parameter</primary>
-          </indexterm>
-        </term>
-        <listitem>
-          <para>
-            If on, activates the watchdog. Default is off
-          </para>
-          <para>
-            This parameter can only be set at server start.
-          </para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </sect2>
+   <varlistentry id="guc-clear-memqcache-on-escalation" xreflabel="clear_memqcache_on_escalation">
+    <term><varname>clear_memqcache_on_escalation</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>clear_memqcache_on_escalation</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When set to on, watchdog clears all the query cache in the shared memory
+      when pgpool-II escaltes to active. This prevents the new active <productname>Pgpool-II</productname>
+      from using old query caches inconsistence to the old active.
+     </para>
+     <para>
+      Default is on.
+     </para>
+     <para>
+      This works only if <xref linkend="guc-memqcache-method">
+       is <literal>'shmem'</literal>.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-  <sect2 id="config-communication-watchdog">
-    <title>Watchdog communication</title>
+   <varlistentry id="guc-wd-escalation-command" xreflabel="wd_escalation_command">
+    <term><varname>wd_escalation_command</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>wd_escalation_command</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Watchdog executes this command on the node that is escalated
+      to the master watchdog.
+     </para>
+     <para>
+      This command is executed just before bringing up the
+      virtual IP if that is configured on the node.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-    <variablelist>
-
-      <varlistentry id="guc-wd-hostname" xreflabel="wd_hostname">
-        <term><varname>wd_hostname</varname> (<type>string</type>)
-          <indexterm>
-            <primary><varname>wd_hostname</varname> configuration parameter</primary>
-          </indexterm>
-        </term>
-        <listitem>
-          <para>
-            Specifies the hostname or IP address of
-            <productname>Pgpool-II</productname> server.
-            This is used for sending/receiving queries and packets,
-            and also as an identifier of the watchdog node.
-          </para>
-          <para>
-             This parameter can only be set at server start.
-          </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="guc-wd-port" xreflabel="wd_port">
-        <term><varname>wd_port</varname> (<type>integer</type>)
-          <indexterm>
-            <primary><varname>wd_port</varname> configuration parameter</primary>
-          </indexterm>
-        </term>
-        <listitem>
-          <para>
-            Specifies the port number to be used by watchdog
-            process to listen for connections. Default is 9000.
-          </para>
-          <para>
-            This parameter can only be set at server start.
-          </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="guc-wd-authkey" xreflabel="wd_authkey">
-        <term><varname>wd_authkey</varname> (<type>string</type>)
-          <indexterm>
-            <primary><varname>wd_authkey</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Specifies the authentication key used for all watchdog communications.
-          All <productname>Pgpool-II</productname> must have the same key.
-          Packets from watchdog having different key will get rejected.
-          This authentication is also applied to the heartbeat signals
-          when the <literal>heartbeat</> mode is used as a lifecheck method.
-        </para>
-        <para>
-          Since in <productname>Pgpool-II</productname><emphasis>V3.5</emphasis> or beyond
-          <varname>wd_authkey</varname> is also used to authenticate
-          the watchdog IPC clients,
-          all clients communicating with <productname>Pgpool-II</productname>
-          watchdog process needs to provide this wd_authkey value
-          for <literal>"IPCAuthKey"</literal> key in the JSON data
-          of the command.
-        </para>
-        <para>
-           Default is <literal>''</literal> (empty) which means disables
-           the watchdog authentication.
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-      </varlistentry>
-    </variablelist>
-  </sect2>
-
-  <sect2 id="config-watchdog-upstream-connections">
-    <title>Upstream server connection</title>
-
-    <variablelist>
-
-      <varlistentry id="guc-trusted-servers" xreflabel="trusted_servers">
-        <term><varname>trusted_servers</varname> (<type>string</type>)
-          <indexterm>
-            <primary><varname>trusted_servers</varname> configuration parameter</primary>
-          </indexterm>
-        </term>
-        <listitem>
-          <para>
-            Specifies the list of trusted servers to check the up stream connections.
-            Each server in the list is required to respond to ping.
-            Specify a comma separated list of servers such as
-            <literal>"hostA,hostB,hostC"</literal>.
-            If none of the server are reachable, watchdog will regard it as
-            failure of the <productname>Pgpool-II</productname>.
-            Therefore, it is recommended to specify multiple servers.
-          </para>
-          <para>
-            This parameter can only be set at server start.
-          </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry id="guc-ping-path" xreflabel="ping_path">
-        <term><varname>ping_path</varname> (<type>string</type>)
-          <indexterm>
-            <primary><varname>ping_path</varname> configuration parameter</primary>
-          </indexterm>
-        </term>
-        <listitem>
-          <para>
-            Specifies the path of a ping command for monitoring
-            connection to the upper servers. Set the only path of the directory containing the
-            ping utility, such as <literal>"/bin"</literal> or such directory.
-           </para>
-          <para>
-            This parameter can only be set at server start.
-          </para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </sect2>
-
-  <sect2 id="config-watchdog-vip-control">
-    <title>Virtual IP control</title>
-
-    <variablelist>
-
-      <varlistentry id="guc-delegate-IP" xreflabel="delegate_IP">
-        <term><varname>delegate_IP</varname> (<type>string</type>)
-          <indexterm>
-            <primary><varname>delegate_IP</varname> configuration parameter</primary>
-           </indexterm>
-        </term>
-      <listitem>
-        <para>
-          Specifies the virtual IP address (VIP) of pgpool-II that is
-          connected from client servers (application servers etc.).
-          When a <productname>Pgpool-II</productname> is switched from standby to active,
-          the <productname>Pgpool-II</productname> takes over
-          this VIP.
-          Default is <literal>''</literal>(empty): which means virtual
-          IP will never be brought up.
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry id="guc-if-cmd-path" xreflabel="if_cmd_path">
-      <term><varname>if_cmd_path</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>if_cmd_path</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Specifies the path to the command that <productname>Pgpool-II</productname>
-          will use to switch the virtual IP on the system.
-          Set only the path of the directory containing the binary,
-          such as <literal>"/sbin"</literal> or such directory.
-         </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry id="guc-if-up-cmd" xreflabel="if_up_cmd">
-      <term><varname>if_up_cmd</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>if_up_cmd</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Specifies the command to bring up the virtual IP.
-          Set the command and parameters such as
-          <command>"ip addr add $_IP_$/24 dev eth0 label eth0:0"</command>
-          <literal>$_IP_$</literal> will get replaced by the IP address
-          specified in the <xref linkend="guc-delegate-IP">.
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry id="guc-if-down-cmd" xreflabel="if_down_cmd">
-      <term><varname>if_down_cmd</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>if_down_cmd</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Specifies the command to bring down the virtual IP.
-          Set the command and parameters such as
-          <literal>"ip addr del $_IP_$/24 dev eth0"</literal>.
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry id="guc-arping-path" xreflabel="arping_path">
-      <term><varname>arping_path</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>arping_path</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Specifies the path to the command that <productname>Pgpool-II</productname>
-          will use to send the ARP requests after the virtual IP switch.
-          Set only the path of the directory containing the binary,
-          such as <literal>"/usr/sbin"</literal> or such directory.
-         </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry id="guc-arping-cmd" xreflabel="arping_cmd">
-      <term><varname>arping_cmd</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>arping_cmd</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Specifies the command to use for sending the ARP requests
-          after the virtual IP switch.
-          Set the command and parameters such as
-          <literal>"arping -U $_IP_$ -w 1"</literal>.
-          <literal>$_IP_$</literal> will get replaced by
-          the IP address specified in the <varname>delegate_IP</varname>.
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
-
+   <varlistentry id="guc-wd-de-escalation-command" xreflabel="wd_de_escalation_command">
+    <term><varname>wd_de_escalation_command</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>wd_de_escalation_command</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Watchdog executes this command on the master <productname>Pgpool-II</productname>
+      watchdog node when that node resigns from the master node responsibilities.
+      A master watchdog node can resign from being a master node,
+      when the master node <productname>Pgpool-II</productname> shuts down, detects a network
+      blackout or detects the lost of quorum.
+     </para>
+     <para>
+      This command is executed before bringing down the virtual/floating IP address
+      if it is configured on the watchdog node.
+     </para>
+     <para>
+      <varname>wd_de_escalation_command</varname> is not available prior to
+      <productname>Pgpool-II </productname><emphasis>V3.5</emphasis>.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
-</sect2>
+ </sect2>
 
-<sect2 id="config-watchdog-escalation-de-escalation">
-    <title>Behaivor on escalation and de-escalation</title>
+ <sect2 id="config-watchdog-failover-behavior" xreflabel="Controlling the Failover behavior">
+  <title>Controlling the Failover behavior</title>
 
-    <para>
-      Configuration about behavior when <productname>Pgpool-II</productname>
-      escalates to active (virtual IP holder)
-    </para>
+  <para>
+   These settings are used to control the behavior of backend node failover when the watchdog is enabled.
+   The effect of these configurations is limited to the failover/degenerate requests initiated by
+   <productname>Pgpool-II</productname> internally, while the user initiated detach backend requests
+   (using PCP command) by-pass these configuration settings.
+  </para>
 
-    <variablelist>
+  <variablelist>
 
-      <varlistentry id="guc-clear-memqcache-on-escalation" xreflabel="clear_memqcache_on_escalation">
-        <term><varname>clear_memqcache_on_escalation</varname> (<type>boolean</type>)
-          <indexterm>
-            <primary><varname>clear_memqcache_on_escalation</varname> configuration parameter</primary>
-          </indexterm>
-        </term>
-      <listitem>
-        <para>
-          When set to on, watchdog clears all the query cache in the shared memory
-          when pgpool-II escaltes to active. This prevents the new active <productname>Pgpool-II</productname>
-          from using old query caches inconsistence to the old active.
-        </para>
-        <para>
-          Default is on.
-        </para>
-        <para>
-          This works only if <xref linkend="guc-memqcache-method">
-          is <literal>'shmem'</literal>.
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
+   <varlistentry id="guc-failover-when-quorum-exists" xreflabel="failover_when_quorum_exists">
+    <term><varname>failover_when_quorum_exists</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>failover_when_quorum_exists</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When enabled, <productname>Pgpool-II</productname> will perform the degenerate/failover on
+      backend node if the quorum exists. In the absence of the quorum, <productname>Pgpool-II</productname>
+      node that detects the backend failure will quarantine the failed backend node until the quorum exists again.
+     </para>
+     <para>
+      The quarantine nodes behaves similar to the detached backend nodes but unlike failed/degenerated backends
+      the quarantine status is not propagated to the other <productname>Pgpool-II</productname> nodes in the
+      watchdog cluster, So even if the backend node is in the quarantine state on one
+      <productname>Pgpool-II</productname> node, other <productname>Pgpool-II</productname> nodes may
+      still continue to use that backend.
+     </para>
+     <para>
+      Although there are many similarities in quarantine and failover operations, but they both differ in a very
+      fundamental way. The quarantine operations does not executes the <xref linkend="guc-failover-command">
+       and silently detaches the problematic node, So in the case when the master backend node is quarantined, the
+       <productname>Pgpool-II</productname> will not promote the standby to take over the master responsibilities
+       and until the master node is quarantined the <productname>Pgpool-II</productname> will not have
+       any useable master backend node.
+     </para>
+     <para>
+      Default is on.
+     </para>
+     <para>
+      <varname>failover_when_quorum_exists</varname> is not available prior to
+      <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-    <varlistentry id="guc-wd-escalation-command" xreflabel="wd_escalation_command">
-      <term><varname>wd_escalation_command</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>wd_escalation_command</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Watchdog executes this command on the node that is escalated
-          to the master watchdog.
-        </para>
-        <para>
-          This command is executed just before bringing up the
-          virtual IP if that is configured on the node.
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
+   <varlistentry id="guc-failover-require-consensus" xreflabel="failover_require_consensus">
+    <term><varname>failover_require_consensus</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>failover_require_consensus</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When enabled, <productname>Pgpool-II</productname> will perform the degenerate/failover on a
+      backend node if the watchdog quorum exists and at-least minimum number of nodes necessary
+      for the quorum vote for the failover.
+     </para>
+     <para>
+      For example, in a three node watchdog cluster, the failover will only be performed until at
+      least two nodes ask for performing the failover on the particular backend node.
+     </para>
+     <para>
+      Default is on.
+     </para>
 
-    <varlistentry id="guc-wd-de-escalation-command" xreflabel="wd_de_escalation_command">
-      <term><varname>wd_de_escalation_command</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>wd_de_escalation_command</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-        Watchdog executes this command on the master <productname>Pgpool-II</productname>
-        watchdog node when that node resigns from the master node responsibilities.
-        A master watchdog node can resign from being a master node,
-        when the master node <productname>Pgpool-II</productname> shuts down, detects a network
-        blackout or detects the lost of quorum.
-        </para>
-        <para>
-          This command is executed before bringing down the virtual/floating IP address
-          if it is configured on the watchdog node.
-        </para>
-        <para>
-        <varname>wd_de_escalation_command</varname> is not available prior to
-        <productname>Pgpool-II </productname><emphasis>V3.5</emphasis>.
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  </sect2>
-
-<sect2 id="config-watchdog-failover-behavior" xreflabel="Controlling the Failover behavior">
-    <title>Controlling the Failover behavior</title>
-
-    <para>
-      These settings are used to control the behavior of backend node failover when the watchdog is enabled.
-      The effect of these configurations is limited to the failover/degenerate requests initiated by
-      <productname>Pgpool-II</productname> internally, while the user initiated detach backend requests
-      (using PCP command) by-pass these configuration settings.
-    </para>
-
-    <variablelist>
-
-      <varlistentry id="guc-failover-when-quorum-exists" xreflabel="failover_when_quorum_exists">
-        <term><varname>failover_when_quorum_exists</varname> (<type>boolean</type>)
-          <indexterm>
-            <primary><varname>failover_when_quorum_exists</varname> configuration parameter</primary>
-          </indexterm>
-        </term>
-      <listitem>
-        <para>
-        When enabled, <productname>Pgpool-II</productname> will perform the degenerate/failover on
-        backend node if the quorum exists. In the absence of the quorum, <productname>Pgpool-II</productname>
-        node that detects the backend failure will quarantine the failed backend node until the quorum exists again.
-        </para>
-        <para>
-        The quarantine nodes behaves similar to the detached backend nodes but unlike failed/degenerated backends
-        the quarantine status is not propagated to the other <productname>Pgpool-II</productname> nodes in the
-        watchdog cluster, So even if the backend node is in the quarantine state on one
-        <productname>Pgpool-II</productname> node, other <productname>Pgpool-II</productname> nodes may
-        still continue to use that backend.
-        </para>
-        <para>
-        Although there are many similarities in quarantine and failover operations, but they both differ in a very
-        fundamental way. The quarantine operations does not executes the <xref linkend="guc-failover-command">
-        and silently detaches the problematic node, So in the case when the master backend node is quarantined, the
-        <productname>Pgpool-II</productname> will not promote the standby to take over the master responsibilities
-        and until the master node is quarantined the <productname>Pgpool-II</productname> will not have
-        any useable master backend node.
-        </para>
-        <para>
-          Default is on.
-        </para>
-        <para>
-        <varname>failover_when_quorum_exists</varname> is not available prior to
-        <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>.
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
-
-      <varlistentry id="guc-failover-require-consensus" xreflabel="failover_require_consensus">
-        <term><varname>failover_require_consensus</varname> (<type>boolean</type>)
-          <indexterm>
-            <primary><varname>failover_require_consensus</varname> configuration parameter</primary>
-          </indexterm>
-        </term>
-      <listitem>
-        <para>
-        When enabled, <productname>Pgpool-II</productname> will perform the degenerate/failover on a
-        backend node if the watchdog quorum exists and at-least minimum number of nodes necessary
-        for the quorum vote for the failover.
-        </para>
-        <para>
-        For example, in a three node watchdog cluster, the failover will only be performed until at
-        least two nodes ask for performing the failover on the particular backend node.
-        </para>
-        <para>
-          Default is on.
-        </para>
-
-	<caution>
-	  <para>
-            When <varname>failover_require_consensus</varname> is
-            enabled, <productname>Pgpool-II</productname> does not
-            execute the failover until it get enough votes from
-            other <productname>Pgpool-II</productname> nodes. So it is
-            strongly recommended to enable the backend health check on
-            all
-            <productname>Pgpool-II</productname> nodes to ensure
-	    proper detection of backend node failures.  For more
-	    details of health check,
-	    see <xref linkend="runtime-config-health-check">.
-	  </para>
-	</caution>
-
-        <para>
-        <varname>failover_require_consensus</varname> is not available prior to
-        <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>. and it is only
-        effective when <xref linkend="guc-failover-when-quorum-exists"> is enabled
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
-
-      <varlistentry id="guc-allow-multiple-failover-requests-from-node" xreflabel="allow_multiple_failover_requests_from_node">
-        <term><varname>allow_multiple_failover_requests_from_node</varname> (<type>boolean</type>)
-          <indexterm>
-            <primary><varname>allow_multiple_failover_requests_from_node</varname> configuration parameter</primary>
-          </indexterm>
-        </term>
-      <listitem>
-        <para>
-        This parameter works in connection with the
-        <xref linkend="guc-failover-require-consensus">. When enabled, a single <productname>Pgpool-II</productname>
-        node can cast multiple votes for the failover.
-        </para>
-        <para>
-        For example, in a three node watchdog cluster, if one <productname>Pgpool-II</productname> node sends two
-        failover requests for a particular backend node failover, Both requests will be counted as a separate
-        vote in the favor of the failover and <productname>Pgpool-II</productname> will execute the failover,
-        even if it does not get the vote from any other <productname>Pgpool-II</productname> node.
-        </para>
-        <para>
-          Default is off.
-        </para>
-        <para>
-        <varname>allow_multiple_failover_requests_from_node</varname> is not available prior to
-        <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>. and it is only
-        effective when both <xref linkend="guc-failover-when-quorum-exists"> and
-        <xref linkend="guc-failover-require-consensus"> are enabled
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
-
-  </variablelist>
-  </sect2>
-
-<sect2 id="config-watchdog-lifecheck">
-    <title>Life checking <productname>Pgpool-II</productname> </title>
-
+     <caution>
       <para>
-       Watchdog checks pgpool-II status periodically. This is called "life check".
+       When <varname>failover_require_consensus</varname> is
+       enabled, <productname>Pgpool-II</productname> does not
+       execute the failover until it get enough votes from
+       other <productname>Pgpool-II</productname> nodes. So it is
+       strongly recommended to enable the backend health check on
+       all
+       <productname>Pgpool-II</productname> nodes to ensure
+       proper detection of backend node failures.  For more
+       details of health check,
+       see <xref linkend="runtime-config-health-check">.
       </para>
+     </caution>
 
-    <variablelist>
+     <para>
+      <varname>failover_require_consensus</varname> is not available prior to
+      <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>. and it is only
+      effective when <xref linkend="guc-failover-when-quorum-exists"> is enabled
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-wd-lifecheck-method" xreflabel="wd_lifecheck_method">
-  <term><varname>wd_lifecheck_method</varname> (<type>string</type>)
-    <indexterm>
+   <varlistentry id="guc-allow-multiple-failover-requests-from-node" xreflabel="allow_multiple_failover_requests_from_node">
+    <term><varname>allow_multiple_failover_requests_from_node</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>allow_multiple_failover_requests_from_node</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      This parameter works in connection with the
+      <xref linkend="guc-failover-require-consensus">. When enabled, a single <productname>Pgpool-II</productname>
+       node can cast multiple votes for the failover.
+     </para>
+     <para>
+      For example, in a three node watchdog cluster, if one <productname>Pgpool-II</productname> node sends two
+      failover requests for a particular backend node failover, Both requests will be counted as a separate
+      vote in the favor of the failover and <productname>Pgpool-II</productname> will execute the failover,
+      even if it does not get the vote from any other <productname>Pgpool-II</productname> node.
+     </para>
+     <para>
+      Default is off.
+     </para>
+     <para>
+      <varname>allow_multiple_failover_requests_from_node</varname> is not available prior to
+      <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>. and it is only
+      effective when both <xref linkend="guc-failover-when-quorum-exists"> and
+       <xref linkend="guc-failover-require-consensus"> are enabled
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </sect2>
+
+ <sect2 id="config-watchdog-lifecheck">
+  <title>Life checking <productname>Pgpool-II</productname> </title>
+
+  <para>
+   Watchdog checks pgpool-II status periodically. This is called "life check".
+  </para>
+
+  <variablelist>
+
+   <varlistentry id="guc-wd-lifecheck-method" xreflabel="wd_lifecheck_method">
+    <term><varname>wd_lifecheck_method</varname> (<type>string</type>)
+     <indexterm>
       <primary><varname>wd_lifecheck_method</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-      <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the method of life check. This can be either of <literal>'heartbeat'</literal> (default),
       <literal>'query'</literal> or <literal>'external'</literal>.
-      </para>
-      <para>
-       <literal>heartbeat</literal>: In this mode, watchdog sends the heartbeat signals (<acronym>UDP</acronym> packets)
-       periodically to other <productname>Pgpool-II</productname>. Similarly watchdog also receives the signals
-       from other <productname>Pgpool-II</productname> .
-       If there are no signal for a certain period, watchdog regards is as failure
-       of the <productname>Pgpool-II</productname> .
-    </para>
-    <para>
-       <literal>query</literal>: In this mode, watchdog sends the monitoring queries
-       to other <productname>Pgpool-II</productname> and checks the response
-       <caution>
+     </para>
+     <para>
+      <literal>heartbeat</literal>: In this mode, watchdog sends the heartbeat signals (<acronym>UDP</acronym> packets)
+      periodically to other <productname>Pgpool-II</productname>. Similarly watchdog also receives the signals
+      from other <productname>Pgpool-II</productname> .
+      If there are no signal for a certain period, watchdog regards is as failure
+      of the <productname>Pgpool-II</productname> .
+     </para>
+     <para>
+      <literal>query</literal>: In this mode, watchdog sends the monitoring queries
+      to other <productname>Pgpool-II</productname> and checks the response
+      <caution>
        <para>
         In query mode, you need to set <xref linkend="guc-num-init-children">
-        large enough if you plan to use watchdog.
-        This is because the watchdog process connects to
-        <productname>Pgpool-II</productname> as a client.
-      </para>
+	 large enough if you plan to use watchdog.
+	 This is because the watchdog process connects to
+	 <productname>Pgpool-II</productname> as a client.
+       </para>
       </caution>
-    </para>
-    <para>
+     </para>
+     <para>
       <literal>external</literal>: This mode disables the built
       in lifecheck of <productname>Pgpool-II</productname> watchdog
       and relies on external system to provide node health checking
       of local and remote watchdog nodes.
-    </para>
+     </para>
 
-    <para>
+     <para>
       <literal>external</literal> mode is not available in versions prior to
       <productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>.
-    </para>
+     </para>
 
-    <para>
+     <para>
       This parameter can only be set at server start.
-    </para>
-  </listitem>
-      </varlistentry>
+     </para>
+    </listitem>
+   </varlistentry>
 
-  <varlistentry id="guc-wd-monitoring-interfaces-list" xreflabel="wd_monitoring_interfaces_list">
+   <varlistentry id="guc-wd-monitoring-interfaces-list" xreflabel="wd_monitoring_interfaces_list">
     <term><varname>wd_monitoring_interfaces_list</varname> (<type>string</type>)
-    <indexterm>
+     <indexterm>
       <primary><varname>wd_monitoring_interfaces_list</varname> configuration parameter</primary>
-    </indexterm>
+     </indexterm>
     </term>
     <listitem>
-    <para>
+     <para>
       Specify a comma separated list of network device names, to be monitored by the watchdog process
       for the network link state. If all network interfaces in the list becomes inactive
       (disabled or cable unplugged), the watchdog will consider it as a complete network failure
@@ -577,434 +577,434 @@
       Specifying an <literal>''</literal>(empty) list disables the network interface monitoring.
       Setting it to <literal>'any'</literal> enables the monitoring on all available network interfaces
       except the loopback. Default is <literal>''</literal> empty list (monitoring disabled).
-    </para>
+     </para>
 
-    <para>
+     <para>
       <varname>wd_monitoring_interfaces_list</varname> is not available in versions prior to
       <productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>.
-    </para>
+     </para>
 
-    <para>
+     <para>
       This parameter can only be set at server start.
-    </para>
-  </listitem>
-  </varlistentry>
-
-  <varlistentry id="guc-wd-interval" xreflabel="wd_interval">
-  <term><varname>wd_interval</varname> (<type>integer</type>)
-    <indexterm>
-      <primary><varname>wd_interval</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-    <para>
-      Specifies the interval between life checks of <productname>Pgpool-II</productname>
-      in seconds. (A number greater than or equal to 1) Default is 10.
-  </para>
-
-   <para>
-      This parameter can only be set at server start.
-   </para>
-   </listitem>
+     </para>
+    </listitem>
    </varlistentry>
 
-    <varlistentry id="guc-wd-priority" xreflabel="wd_priority">
-  <term><varname>wd_priority</varname> (<type>integer</type>)
-    <indexterm>
+   <varlistentry id="guc-wd-interval" xreflabel="wd_interval">
+    <term><varname>wd_interval</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>wd_interval</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the interval between life checks of <productname>Pgpool-II</productname>
+      in seconds. (A number greater than or equal to 1) Default is 10.
+     </para>
+
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-wd-priority" xreflabel="wd_priority">
+    <term><varname>wd_priority</varname> (<type>integer</type>)
+     <indexterm>
       <primary><varname>wd_priority</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       This parameter can be used to elevate the local watchdog node priority in the elections
       to select master watchdog node.
       The node with the higher <varname>wd_priority</varname> value will get selected
       as master watchdog node when cluster will be electing its new master node
       at the time of cluster startup or in the event of old master watchdog node failure
-   </para>
-  <para>
-     <varname>wd_priority</varname> is not available in versions prior to
-    <productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>.
-  </para>
+     </para>
+     <para>
+      <varname>wd_priority</varname> is not available in versions prior to
+      <productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>.
+     </para>
 
-  <para>
+     <para>
       This parameter can only be set at server start.
-  </para>
-  </listitem>
-  </varlistentry>
+     </para>
+    </listitem>
+   </varlistentry>
 
-  <varlistentry id="guc-wd-ipc-socket-dir" xreflabel="wd_ipc_socket_dir">
-   <term><varname>wd_ipc_socket_dir</varname> (<type>string</type>)
-    <indexterm>
+   <varlistentry id="guc-wd-ipc-socket-dir" xreflabel="wd_ipc_socket_dir">
+    <term><varname>wd_ipc_socket_dir</varname> (<type>string</type>)
+     <indexterm>
       <primary><varname>wd_ipc_socket_dir</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-    <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       The directory where the <acronym>UNIX</acronym> domain socket
-	  accepting <productname>Pgpool-II</productname>
+      accepting <productname>Pgpool-II</productname>
       watchdog <acronym>IPC</acronym> connections will be created.
       Default is <literal>'/tmp'</literal>.
       Be aware that this socket might be deleted by a cron job.
       We recommend to set this value to <literal>'/var/run'</literal> or such directory.
-    </para>
-    <para>
+     </para>
+     <para>
       <varname>wd_ipc_socket_dir</varname> is not available in versions prior to
       <productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>.
-    </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
+     </para>
     </listitem>
-    </varlistentry>
+   </varlistentry>
 
-   </variablelist>
-  </sect2>
+  </variablelist>
+ </sect2>
 
-  <sect2 id="config-watchdog-lifecheck-heartbeat">
-    <title>Lifecheck Heartbeat mode configuration</title>
+ <sect2 id="config-watchdog-lifecheck-heartbeat">
+  <title>Lifecheck Heartbeat mode configuration</title>
 
-    <variablelist>
-      <varlistentry id="guc-wd-heartbeat-port" xreflabel="wd_heartbeat_port">
-  <term><varname>wd_heartbeat_port</varname> (<type>integer</type>)
-    <indexterm>
+  <variablelist>
+   <varlistentry id="guc-wd-heartbeat-port" xreflabel="wd_heartbeat_port">
+    <term><varname>wd_heartbeat_port</varname> (<type>integer</type>)
+     <indexterm>
       <primary><varname>wd_heartbeat_port</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-    <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the <acronym>UDP</acronym> port number to receive heartbeat signals.
       Default is 9694.
       <varname>wd_heartbeat_port</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-    </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
-  </listitem>
-</varlistentry>
+     </para>
+    </listitem>
+   </varlistentry>
 
-     <varlistentry id="guc-wd-heartbeat-keepalive" xreflabel="wd_heartbeat_keepalive">
-  <term><varname>wd_heartbeat_keepalive</varname> (<type>integer</type>)
-    <indexterm>
+   <varlistentry id="guc-wd-heartbeat-keepalive" xreflabel="wd_heartbeat_keepalive">
+    <term><varname>wd_heartbeat_keepalive</varname> (<type>integer</type>)
+     <indexterm>
       <primary><varname>wd_heartbeat_keepalive</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-    <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the interval time in seconds between sending the heartbeat signals.
       Default is 2.
       <varname>wd_heartbeat_keepalive</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-    </para>
+     </para>
 
-    <para>
+     <para>
       This parameter can only be set at server start.
-    </para>
-  </listitem>
-  </varlistentry>
+     </para>
+    </listitem>
+   </varlistentry>
 
-  <varlistentry id="guc-wd-heartbeat-deadtime" xreflabel="wd_heartbeat_deadtime">
-  <term><varname>wd_heartbeat_deadtime</varname> (<type>integer</type>)
-    <indexterm>
+   <varlistentry id="guc-wd-heartbeat-deadtime" xreflabel="wd_heartbeat_deadtime">
+    <term><varname>wd_heartbeat_deadtime</varname> (<type>integer</type>)
+     <indexterm>
       <primary><varname>wd_heartbeat_deadtime</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-    <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the time in seconds before marking the remote watchdog node as failed/dead node,
       if no heartbeat signal is received within that time.
       Default is <literal>30</literal>
       <varname>wd_heartbeat_deadtime</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-  </para>
-   <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-   </para>
+     </para>
 
-   </listitem>
-    </varlistentry>
-    <varlistentry id="guc-heartbeat-destination" xreflabel="heartbeat_destination<emphasis>0</emphasis>">
-     <term><varname>heartbeat_destination0</varname> (<type>string</type>)
+    </listitem>
+   </varlistentry>
+   <varlistentry id="guc-heartbeat-destination" xreflabel="heartbeat_destination<emphasis>0</emphasis>">
+    <term><varname>heartbeat_destination0</varname> (<type>string</type>)
      <indexterm>
       <primary><varname>heartbeat_destination</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the <acronym>IP</acronym> address or <acronym>hostname</acronym> of destination the remote
       <productname>Pgpool-II</productname> for sending the heartbeat signals.
       Multiple destinations can be configured for the heartbeat signals,
-	  the number at the end of the parameter name is
+      the number at the end of the parameter name is
       referred as the "destination number", that starts from 0.
-   </para>
-  <para>
+     </para>
+     <para>
       <varname>heartbeat_destination</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-  </para>
-  <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-  </para>
-  </listitem>
-  </varlistentry>
+     </para>
+    </listitem>
+   </varlistentry>
 
-  <varlistentry id="guc-heartbeat-destination-port" xreflabel="heartbeat_destination_port<emphasis>0</emphasis>">
-   <term><varname>heartbeat_destination_port0</varname> (<type>integer</type>)
-    <indexterm>
+   <varlistentry id="guc-heartbeat-destination-port" xreflabel="heartbeat_destination_port<emphasis>0</emphasis>">
+    <term><varname>heartbeat_destination_port0</varname> (<type>integer</type>)
+     <indexterm>
       <primary><varname>heartbeat_destination_port</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the destination port number of the remote
       <productname>Pgpool-II</productname> for sending the heartbeat signals.
       Multiple destinations can be configured for the heartbeat signals,
-	  the number at the end of the parameter name is
+      the number at the end of the parameter name is
       referred as the "destination number", that starts from 0.
-   </para>
-   <para>
+     </para>
+     <para>
       <varname>heartbeat_destination_port</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-    </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
+     </para>
     </listitem>
-    </varlistentry>
+   </varlistentry>
 
-  <varlistentry id="guc-heartbeat-device" xreflabel="heartbeat_device">
-   <term><varname>heartbeat_device0</varname> (<type>string</type>)
-    <indexterm>
+   <varlistentry id="guc-heartbeat-device" xreflabel="heartbeat_device">
+    <term><varname>heartbeat_device0</varname> (<type>string</type>)
+     <indexterm>
       <primary><varname>heartbeat_device</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the network device name for sending the heartbeat signals to the destination specified by
       heartbeat_destinationX:heartbeat_destination_portX
       Different heartbeat devices can be configured for each heartbeat destination
       by changing the value of X(destination number).
       at the end of parameter name. The destination index number starts from 0.
-   </para>
-   <para>
+     </para>
+     <para>
       <varname>heartbeat_device</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-    </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
+     </para>
     </listitem>
-    </varlistentry>
+   </varlistentry>
 
-   </variablelist>
-  </sect2>
+  </variablelist>
+ </sect2>
 
-  <sect2 id="config-watchdog-lifecheck-query">
-    <title>Lifecheck Query mode configuration</title>
+ <sect2 id="config-watchdog-lifecheck-query">
+  <title>Lifecheck Query mode configuration</title>
   <variablelist>
 
-<varlistentry id="guc-wd-life-point" xreflabel="wd_life_point">
-   <term><varname>wd_life_point</varname> (<type>integer</type>)
-    <indexterm>
+   <varlistentry id="guc-wd-life-point" xreflabel="wd_life_point">
+    <term><varname>wd_life_point</varname> (<type>integer</type>)
+     <indexterm>
       <primary><varname>wd_life_point</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the number of times to retry a failed life check of pgpool-II.
       Valid value could be a number greater than or equal to 1.
       Default is 3.
-   </para>
-   <para>
+     </para>
+     <para>
       <varname>wd_life_point</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
-    </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
+     </para>
     </listitem>
-    </varlistentry>
+   </varlistentry>
 
-<varlistentry id="guc-wd-lifecheck-query" xreflabel="wd_lifecheck_query">
-   <term><varname>wd_lifecheck_query</varname> (<type>string</type>)
-    <indexterm>
+   <varlistentry id="guc-wd-lifecheck-query" xreflabel="wd_lifecheck_query">
+    <term><varname>wd_lifecheck_query</varname> (<type>string</type>)
+     <indexterm>
       <primary><varname>wd_lifecheck_query</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the query to use for the life check of remote <productname>Pgpool-II</productname>.
       Default is <literal>"SELECT 1"</literal>.
-   </para>
-   <para>
+     </para>
+     <para>
       <varname>wd_lifecheck_query</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
-    </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
+     </para>
     </listitem>
-    </varlistentry>
+   </varlistentry>
 
-  <varlistentry id="guc-wd-lifecheck-dbname" xreflabel="wd_lifecheck_dbname">
-   <term><varname>wd_lifecheck_dbname</varname> (<type>string</type>)
-    <indexterm>
+   <varlistentry id="guc-wd-lifecheck-dbname" xreflabel="wd_lifecheck_dbname">
+    <term><varname>wd_lifecheck_dbname</varname> (<type>string</type>)
+     <indexterm>
       <primary><varname>wd_lifecheck_dbname</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the database name for the connection used for the
-	  life check of remote <productname>Pgpool-II</productname>.
+      life check of remote <productname>Pgpool-II</productname>.
       Default is <literal>"template1"</literal>.
-   </para>
-   <para>
+     </para>
+     <para>
       <varname>wd_lifecheck_dbname</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
-    </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
+     </para>
     </listitem>
-    </varlistentry>
+   </varlistentry>
 
-<varlistentry id="guc-wd-lifecheck-user" xreflabel="wd_lifecheck_user">
-   <term><varname>wd_lifecheck_user</varname> (<type>string</type>)
-    <indexterm>
+   <varlistentry id="guc-wd-lifecheck-user" xreflabel="wd_lifecheck_user">
+    <term><varname>wd_lifecheck_user</varname> (<type>string</type>)
+     <indexterm>
       <primary><varname>wd_lifecheck_user</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the user name for the connection used for the life
-	  check of remote <productname>Pgpool-II</productname>.
+      check of remote <productname>Pgpool-II</productname>.
       Default is <literal>"nobody"</literal>.
-   </para>
-   <para>
+     </para>
+     <para>
       <varname>wd_lifecheck_user</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
-    </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
+     </para>
     </listitem>
-    </varlistentry>
+   </varlistentry>
 
-  <varlistentry id="guc-wd-lifecheck-password" xreflabel="wd_lifecheck_password">
-   <term><varname>wd_lifecheck_password</varname> (<type>string</type>)
-    <indexterm>
+   <varlistentry id="guc-wd-lifecheck-password" xreflabel="wd_lifecheck_password">
+    <term><varname>wd_lifecheck_password</varname> (<type>string</type>)
+     <indexterm>
       <primary><varname>wd_lifecheck_password</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the password for the user used for the life check of remote <productname>Pgpool-II</productname>.
-   </para>
-   <para>
-        If <varname>wd_lifecheck_password</varname> is left blank <productname>Pgpool-II</productname>
-        will first try to get the password for <xref linkend="guc-wd-lifecheck-user"> from
-        <xref linkend="guc-pool-passwd"> file before using the empty password.
-    </para>
-    <para>
-        You can also specify AES256-CBC encrypted password in <varname>wd_lifecheck_password</varname> field.
-        To specify the <literal>AES</literal> encrypted password, password string must be prefixed with
-        <literal>AES</literal> after encrypting (using <literal>aes-256-cbc</literal> algorithm) and
-        encoding to <literal>base64</literal>.
-    </para>
-    <para>
-        To specify the unencrypted clear text password, prefix the password string with
-        <literal>TEXT</literal>. For example if you want to set <literal>mypass</literal> as
-        a password, you should specify <literal>TEXTmypass</literal> in the password field.
-        In the absence of a valid prefix, <productname>Pgpool-II</productname> will considered
-        the string as a plain text password.
-    </para>
-    <para>
-        You can also use <xref linkend="PG-ENC"> utility to create the correctly formatted
-        <literal>AES</literal> encrypted password strings.
-        <note>
-            <para>
-                <productname>Pgpool-II</productname> will require a valid decryption key at the
-                startup to use the encrypted passwords.
-                see <xref linkend="auth-aes-decryption-key"> for more details on providing the
-                decryption key to <productname>Pgpool-II</productname>
-            </para>
-        </note>
-   </para>
-   <para>
+     </para>
+     <para>
+      If <varname>wd_lifecheck_password</varname> is left blank <productname>Pgpool-II</productname>
+      will first try to get the password for <xref linkend="guc-wd-lifecheck-user"> from
+       <xref linkend="guc-pool-passwd"> file before using the empty password.
+     </para>
+     <para>
+      You can also specify AES256-CBC encrypted password in <varname>wd_lifecheck_password</varname> field.
+      To specify the <literal>AES</literal> encrypted password, password string must be prefixed with
+      <literal>AES</literal> after encrypting (using <literal>aes-256-cbc</literal> algorithm) and
+      encoding to <literal>base64</literal>.
+     </para>
+     <para>
+      To specify the unencrypted clear text password, prefix the password string with
+      <literal>TEXT</literal>. For example if you want to set <literal>mypass</literal> as
+      a password, you should specify <literal>TEXTmypass</literal> in the password field.
+      In the absence of a valid prefix, <productname>Pgpool-II</productname> will considered
+      the string as a plain text password.
+     </para>
+     <para>
+      You can also use <xref linkend="PG-ENC"> utility to create the correctly formatted
+       <literal>AES</literal> encrypted password strings.
+       <note>
+	<para>
+	 <productname>Pgpool-II</productname> will require a valid decryption key at the
+	 startup to use the encrypted passwords.
+	 see <xref linkend="auth-aes-decryption-key"> for more details on providing the
+	  decryption key to <productname>Pgpool-II</productname>
+	</para>
+       </note>
+     </para>
+     <para>
       <varname>wd_lifecheck_password</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
-    </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
-    <para>
+     </para>
+     <para>
       Default is <literal>''</literal>(empty).
-    </para>
+     </para>
     </listitem>
-    </varlistentry>
+   </varlistentry>
 
-   </variablelist>
-  </sect2>
+  </variablelist>
+ </sect2>
 
-  <sect2 id="config-watchdog-server-configuration">
-    <title>Watchdog servers configurations</title>
+ <sect2 id="config-watchdog-server-configuration">
+  <title>Watchdog servers configurations</title>
   <variablelist>
 
-  <varlistentry id="guc-other-pgpool-hostname" xreflabel="other_pgpool_hostname">
-   <term><varname>other_pgpool_hostname0</varname> (<type>string</type>)
-    <indexterm>
+   <varlistentry id="guc-other-pgpool-hostname" xreflabel="other_pgpool_hostname">
+    <term><varname>other_pgpool_hostname0</varname> (<type>string</type>)
+     <indexterm>
       <primary><varname>other_pgpool_hostname</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the hostname of remote <productname>Pgpool-II</productname> server for watchdog node.
       The number at the end of the parameter name is referred as "server id", and it starts from 0.
-   </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
+     </para>
     </listitem>
-    </varlistentry>
+   </varlistentry>
 
-  <varlistentry id="guc-other-pgpool-port" xreflabel="other_pgpool_port">
-   <term><varname>other_pgpool_port0</varname> (<type>integer</type>)
-    <indexterm>
+   <varlistentry id="guc-other-pgpool-port" xreflabel="other_pgpool_port">
+    <term><varname>other_pgpool_port0</varname> (<type>integer</type>)
+     <indexterm>
       <primary><varname>other_pgpool_port</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the port number of the remote <productname>Pgpool-II</productname>
       server for watchdog node.
       The number at the end of the parameter name is referred
       as "server id", and it starts from 0.
-   </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
+     </para>
     </listitem>
-    </varlistentry>
+   </varlistentry>
 
-  <varlistentry id="guc-other-wd-port" xreflabel="other_wd_port">
-   <term><varname>other_wd_port0</varname> (<type>integer</type>)
-    <indexterm>
+   <varlistentry id="guc-other-wd-port" xreflabel="other_wd_port">
+    <term><varname>other_wd_port0</varname> (<type>integer</type>)
+     <indexterm>
       <primary><varname>other_wd_port0</varname> configuration parameter</primary>
-    </indexterm>
-  </term>
-  <listitem>
-   <para>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
       Specifies the watchdog port number of the remote
       <productname>Pgpool-II</productname> server for watchdog node.
       The number at the end of the parameter name is referred
       as "server id", and it starts from 0.
-   </para>
-    <para>
+     </para>
+     <para>
       This parameter can only be set at server start.
-    </para>
+     </para>
     </listitem>
-    </varlistentry>
+   </varlistentry>
 
-   </variablelist>
-  </sect2>
+  </variablelist>
+ </sect2>
 </sect1>

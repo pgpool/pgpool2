@@ -1,1138 +1,1138 @@
 <!-- doc/src/sgml/config.sgml -->
 
 <sect1 id="runtime-config-connection">
-  <title>Connections and Authentication</title>
+ <title>Connections and Authentication</title>
 
-  <sect2 id="runtime-config-connection-settings">
-    <title>Connection Settings</title>
+ <sect2 id="runtime-config-connection-settings">
+  <title>Connection Settings</title>
 
-    <variablelist>
+  <variablelist>
 
-      <varlistentry id="guc-listen-addresses" xreflabel="listen_addresses">
-	<term><varname>listen_addresses</varname> (<type>string</type>)
-	  <indexterm>
-	    <primary><varname>listen_addresses</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    Specifies the hostname or IP address, on
-	    which <productname>Pgpool-II</productname> will accept
-	    TCP/IP connections. <literal>'*'</literal> accepts all
-	    incoming connections. <literal>''</literal> disables
-	    TCP/IP connections. Default
-	    is <literal>'localhost'</literal>. Connections via UNIX
-	    domain socket are always accepted.
-	  </para>
-	  <para>
-	    This parameter can only be set at server start.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry id="guc-listen-addresses" xreflabel="listen_addresses">
+    <term><varname>listen_addresses</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>listen_addresses</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the hostname or IP address, on
+      which <productname>Pgpool-II</productname> will accept
+      TCP/IP connections. <literal>'*'</literal> accepts all
+      incoming connections. <literal>''</literal> disables
+      TCP/IP connections. Default
+      is <literal>'localhost'</literal>. Connections via UNIX
+      domain socket are always accepted.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-port" xreflabel="port">
-	<term><varname>port</varname> (<type>integer</type>)
-	  <indexterm>
-	    <primary><varname>port</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    The port number used
-	    by <productname>Pgpool-II</productname> to listen for
-	    connections. Default is 9999.
-	  </para>
-	  <para>
-	    This parameter can only be set at server start.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry id="guc-port" xreflabel="port">
+    <term><varname>port</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>port</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      The port number used
+      by <productname>Pgpool-II</productname> to listen for
+      connections. Default is 9999.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-socket-dir" xreflabel="socket_dir">
-	<term><varname>socket_dir</varname> (<type>string</type>)
-	  <indexterm>
-	    <primary><varname>socket_dir</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    The directory where the UNIX domain socket accepting connections for
-	    <productname>Pgpool-II</productname> will be
-	    created. Default is <literal>/tmp</literal>. Be aware that
-	    this socket might be deleted by a cron job. We recommend
-	    to set this value to <literal>/var/run</literal> or such
-	    directory.
-	  </para>
-	  <para>
-	    This parameter can only be set at server start.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry id="guc-socket-dir" xreflabel="socket_dir">
+    <term><varname>socket_dir</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>socket_dir</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      The directory where the UNIX domain socket accepting connections for
+      <productname>Pgpool-II</productname> will be
+      created. Default is <literal>/tmp</literal>. Be aware that
+      this socket might be deleted by a cron job. We recommend
+      to set this value to <literal>/var/run</literal> or such
+      directory.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-pcp-listen-addresses" xreflabel="pcp_listen_addresses">
-	<term><varname>pcp_listen_addresses</varname> (<type>string</type>)
-	  <indexterm>
-	    <primary><varname>pcp_listen_addresses</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    Specifies the hostname or IP address, on which pcp process
-	    will accept TCP/IP connections. <literal>*</literal>
-	    accepts all incoming connections. <literal>"" </literal>
-	    disables TCP/IP connections. Default
-	    is <literal>*</literal>. Connections via UNIX domain
-	    socket are always accepted.
-	  </para>
-	  <para>
-	    This parameter can only be set at server start.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry id="guc-pcp-listen-addresses" xreflabel="pcp_listen_addresses">
+    <term><varname>pcp_listen_addresses</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>pcp_listen_addresses</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the hostname or IP address, on which pcp process
+      will accept TCP/IP connections. <literal>*</literal>
+      accepts all incoming connections. <literal>"" </literal>
+      disables TCP/IP connections. Default
+      is <literal>*</literal>. Connections via UNIX domain
+      socket are always accepted.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-pcp-port" xreflabel="pcp_port">
-	<term><varname>pcp_port</varname> (<type>integer</type>)
-	  <indexterm>
-	    <primary><varname>pcp_port</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    The port number used by PCP
-	    process to listen for connections. Default is 9898.
-	  </para>
-	  <para>
-	    This parameter can only be set at server start.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry id="guc-pcp-port" xreflabel="pcp_port">
+    <term><varname>pcp_port</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>pcp_port</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      The port number used by PCP
+      process to listen for connections. Default is 9898.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-pcp-socket-dir" xreflabel="pcp_socket_dir">
-	<term><varname>pcp_socket_dir</varname> (<type>string</type>)
-	  <indexterm>
-	    <primary><varname>pcp_socket_dir</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    The directory where the UNIX domain socket accepting
-	    connections for PCP process will be created. Default
-	    is <literal>/tmp</literal>. Be aware that this socket
-	    might be deleted by a cron job. We recommend to set this
-	    value to <literal>/var/run</literal> or such directory.
-	  </para>
-	  <para>
-	    This parameter can only be set at server start.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry id="guc-pcp-socket-dir" xreflabel="pcp_socket_dir">
+    <term><varname>pcp_socket_dir</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>pcp_socket_dir</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      The directory where the UNIX domain socket accepting
+      connections for PCP process will be created. Default
+      is <literal>/tmp</literal>. Be aware that this socket
+      might be deleted by a cron job. We recommend to set this
+      value to <literal>/var/run</literal> or such directory.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-num-init-children" xreflabel="num_init_children">
-	<term><varname>num_init_children</varname> (<type>integer</type>)
-	  <indexterm>
-	    <primary><varname>num_init_children</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    The number of
-	    preforked <productname>Pgpool-II</productname> server
-	    processes. Default is 32.  num_init_children is also the
-	    concurrent connections limit
-	    to <productname>Pgpool-II</productname> from clients.  If
-	    more than num_init_children clients try to connect to
-	    <productname>Pgpool-II</productname>, <emphasis>they are
-	      blocked (not rejected with an error,
-	      like <productname>PostgreSQL</productname>) until a
-	      connection to any <productname>Pgpool-II</productname>
-	      process is closed</emphasis>.  Up to
-	    <xref linkend="guc-listen-backlog-multiplier">*
-	      num_init_children can be queued.
-	  </para>
-	  <para>
-	    The queue is inside the kernel called "listen queue". The
-	    length of the listen queue is called "backlog".  There is
-	    an upper limit of the backlog in some systems, and if
-	    num_init_children*<xref linkend="guc-listen-backlog-multiplier">
-	      exceeds the number, you need to set the backlog higher.
-	      Otherwise, following problems may occur in heavy loaded systems:
-	      1) connecting to <productname>Pgpool-II</productname> fails
-	      2) connecting to <productname>Pgpool-II</productname> is
-	      getting slow because of retries in the kernel.  You can
-	      check if the listen queue is actually overflowed by using
-	      "netstat -s" command.  If you find something like:
-	      <programlisting>
-		535 times the listen queue of a socket overflowed
-	      </programlisting>
-	      then the listen queue is definitely overflowed.  You
-	      should increase the backlog in this case (you will be
-	      required a super user privilege).
-	      <programlisting>
-		# sysctl net.core.somaxconn
-		net.core.somaxconn = 128
-		# sysctl -w net.core.somaxconn = 256
-	      </programlisting>
-	      You could add following to /etc/sysctl.conf instead.
-	      <programlisting>
-		net.core.somaxconn = 256
-	      </programlisting>
-	  </para>
-	  <para>
-	    Number of connections to
-	    each <productname>PostgreSQL</productname> is roughly
-	    max_pool*num_init_children.
-	  </para>
+   <varlistentry id="guc-num-init-children" xreflabel="num_init_children">
+    <term><varname>num_init_children</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>num_init_children</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      The number of
+      preforked <productname>Pgpool-II</productname> server
+      processes. Default is 32.  num_init_children is also the
+      concurrent connections limit
+      to <productname>Pgpool-II</productname> from clients.  If
+      more than num_init_children clients try to connect to
+      <productname>Pgpool-II</productname>, <emphasis>they are
+       blocked (not rejected with an error,
+       like <productname>PostgreSQL</productname>) until a
+       connection to any <productname>Pgpool-II</productname>
+       process is closed</emphasis>.  Up to
+      <xref linkend="guc-listen-backlog-multiplier">*
+       num_init_children can be queued.
+     </para>
+     <para>
+      The queue is inside the kernel called "listen queue". The
+      length of the listen queue is called "backlog".  There is
+      an upper limit of the backlog in some systems, and if
+      num_init_children*<xref linkend="guc-listen-backlog-multiplier">
+       exceeds the number, you need to set the backlog higher.
+       Otherwise, following problems may occur in heavy loaded systems:
+       1) connecting to <productname>Pgpool-II</productname> fails
+       2) connecting to <productname>Pgpool-II</productname> is
+       getting slow because of retries in the kernel.  You can
+       check if the listen queue is actually overflowed by using
+       "netstat -s" command.  If you find something like:
+       <programlisting>
+	535 times the listen queue of a socket overflowed
+       </programlisting>
+       then the listen queue is definitely overflowed.  You
+       should increase the backlog in this case (you will be
+       required a super user privilege).
+       <programlisting>
+	# sysctl net.core.somaxconn
+	net.core.somaxconn = 128
+	# sysctl -w net.core.somaxconn = 256
+       </programlisting>
+       You could add following to /etc/sysctl.conf instead.
+       <programlisting>
+	net.core.somaxconn = 256
+       </programlisting>
+     </para>
+     <para>
+      Number of connections to
+      each <productname>PostgreSQL</productname> is roughly
+      max_pool*num_init_children.
+     </para>
 
-	  <para>
-	    However, canceling a query creates another
-	    connection to the backend; thus, a query cannot be canceled if
-	    all the connections are in use. If you want to ensure that queries can
-	    be canceled, set this value to twice the expected connections.
-	  </para>
-	  <para>
-	    In addition, <productname>PostgreSQL</productname> allows concurrent
-	    connections for non superusers up to max_connections -
-	    superuser_reserved_connections.
-	  </para>
-	  <para>
-	    In summary, max_pool, num_init_children, max_connections,
-	    superuser_reserved_connections must satisfy the following formula:
-	    <programlisting>
-	      max_pool*num_init_children &lt;= (max_connections - superuser_reserved_connections) (no query canceling needed)
-	      max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connections) (query canceling needed)
-	    </programlisting>
-	  </para>
-	  <para>
-	    This parameter can only be set at server start.
-	  </para>
-	</listitem>
-      </varlistentry>
-    </variablelist>
-  </sect2>
+     <para>
+      However, canceling a query creates another
+      connection to the backend; thus, a query cannot be canceled if
+      all the connections are in use. If you want to ensure that queries can
+      be canceled, set this value to twice the expected connections.
+     </para>
+     <para>
+      In addition, <productname>PostgreSQL</productname> allows concurrent
+      connections for non superusers up to max_connections -
+      superuser_reserved_connections.
+     </para>
+     <para>
+      In summary, max_pool, num_init_children, max_connections,
+      superuser_reserved_connections must satisfy the following formula:
+      <programlisting>
+       max_pool*num_init_children &lt;= (max_connections - superuser_reserved_connections) (no query canceling needed)
+       max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connections) (query canceling needed)
+      </programlisting>
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect2>
 
-  <sect2 id="runtime-config-authentication-settings">
-    <title>Authentication Settings</title>
-    <variablelist>
+ <sect2 id="runtime-config-authentication-settings">
+  <title>Authentication Settings</title>
+  <variablelist>
 
-      <varlistentry id="guc-enable-pool-hba" xreflabel="enable_pool_hba">
-	<term><varname>enable_pool_hba</varname> (<type>boolean</type>)
-	  <indexterm>
-	    <primary><varname>enable_pool_hba</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    If <literal>true</literal>, <productname>Pgpool-II</productname> will use the
-	    <filename>pool_hba.conf</filename> for the client
-	    authentication.  See <xref linkend="auth-pool-hba-conf">
-	    for details on how to configure
-	      <filename>pool_hba.conf</filename> for client authentication.
-	      Default is <literal>false</literal>.
-	  </para>
-	  <para>
-	    This parameter can be changed by reloading
-	    the <productname>Pgpool-II</productname> configurations.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry id="guc-enable-pool-hba" xreflabel="enable_pool_hba">
+    <term><varname>enable_pool_hba</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>enable_pool_hba</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      If <literal>true</literal>, <productname>Pgpool-II</productname> will use the
+      <filename>pool_hba.conf</filename> for the client
+      authentication.  See <xref linkend="auth-pool-hba-conf">
+       for details on how to configure
+       <filename>pool_hba.conf</filename> for client authentication.
+       Default is <literal>false</literal>.
+     </para>
+     <para>
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-pool-passwd" xreflabel="pool_passwd">
-	<term><varname>pool_passwd</varname> (<type>string</type>)
-	  <indexterm>
-	    <primary><varname>pool_passwd</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    Specify the password file name for authentication.
-	    Default value is <literal>"pool_passwd"</literal>.
-	    Specifying <literal>''</literal> (empty) disables the use
-	    of password file.
-	  </para>
+   <varlistentry id="guc-pool-passwd" xreflabel="pool_passwd">
+    <term><varname>pool_passwd</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>pool_passwd</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specify the password file name for authentication.
+      Default value is <literal>"pool_passwd"</literal>.
+      Specifying <literal>''</literal> (empty) disables the use
+      of password file.
+     </para>
+     <para>
+      Passwords can be stored in the pool_passwd file using three formats.
+      AES256 encrypted format, plain text format and md5 format.
+      <productname>Pgpool-II</productname> identifies the password format type
+      by it's prefix, so each password entry in the pool_passwd must be prefixed
+      as per the password format.
+     </para>
+     <para>
+      To store the password in the plain text format use <literal>TEXT</literal> prefix.
+      For example. to store clear text password string <literal>"mypassword"</literal>
+      in the pool_passwd, prepend the password string with <literal>TEXT</literal> prefix.
+      e.g. <literal>TEXTmypassword</literal>
+     </para>
+     <para>
+      similarly md5 hashed passwords must be prefixed with <literal>md5</literal> and
+      AES256 encrypted password types can be stored using <literal>AES</literal> prefix.
+      see <xref linkend="auth-aes-encrypted-password"> for more details on using
+       AES256 encrypted passwords.
+     </para>
+
+     <para>
+      In the absence of a valid prefix, <productname>Pgpool-II</productname> will
+      be considered the string as a plain text password.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-allow-clear-text-frontend-auth" xreflabel="allow_clear_text_frontend_auth">
+    <term><varname>allow_clear_text_frontend_auth</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>allow_clear_text_frontend_auth</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      If <productname>PostgreSQL</productname> backend servers require
+      <literal>md5</literal> or <literal> SCRAM</literal> authentication for some
+      user's authentication but the password for that user is not present in the
+      <filename>"pool_passwd"</filename> file, then enabling
+      <literal>allow_clear_text_frontend_auth</literal> will allow the
+      <productname>Pgpool-II</productname> to use clear-text-password
+      authentication with frontend clients to get the password in plain text form
+      from the client and use it for backend authentication.
+     </para>
+     <para>
+      Default is <literal>false</literal>.
+     </para>
+     <para>
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+     </para>
+     <note>
       <para>
-        Passwords can be stored in the pool_passwd file using three formats.
-        AES256 encrypted format, plain text format and md5 format.
-        <productname>Pgpool-II</productname> identifies the password format type
-        by it's prefix, so each password entry in the pool_passwd must be prefixed
-        as per the password format.
+       <literal>allow_clear_text_frontend_auth</literal> only works when <xref linkend="guc-enable-pool-hba"> is not enabled
       </para>
-      <para>
-        To store the password in the plain text format use <literal>TEXT</literal> prefix.
-        For example. to store clear text password string <literal>"mypassword"</literal>
-        in the pool_passwd, prepend the password string with <literal>TEXT</literal> prefix.
-        e.g. <literal>TEXTmypassword</literal>
-      </para>
-      <para>
-        similarly md5 hashed passwords must be prefixed with <literal>md5</literal> and
-        AES256 encrypted password types can be stored using <literal>AES</literal> prefix.
-        see <xref linkend="auth-aes-encrypted-password"> for more details on using
-        AES256 encrypted passwords.
-      </para>
+     </note>
+    </listitem>
+   </varlistentry>
 
-      <para>
-        In the absence of a valid prefix, <productname>Pgpool-II</productname> will
-        be considered the string as a plain text password.
-      </para>
-	  <para>
-	    This parameter can only be set at server start.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry id="guc-authentication-timeout" xreflabel="authentication_timeout">
+    <term><varname>authentication_timeout</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>authentication_timeout</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specify the timeout in seconds
+      for <productname>Pgpool-II</productname>
+      authentication. Specifying 0 disables the time out.
+      Default value is 60.
+     </para>
+     <para>
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-allow-clear-text-frontend-auth" xreflabel="allow_clear_text_frontend_auth">
-	<term><varname>allow_clear_text_frontend_auth</varname> (<type>boolean</type>)
-	  <indexterm>
-	    <primary><varname>allow_clear_text_frontend_auth</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-        If <productname>PostgreSQL</productname> backend servers require
-        <literal>md5</literal> or <literal> SCRAM</literal> authentication for some
-        user's authentication but the password for that user is not present in the
-        <filename>"pool_passwd"</filename> file, then enabling
-        <literal>allow_clear_text_frontend_auth</literal> will allow the
-        <productname>Pgpool-II</productname> to use clear-text-password
-        authentication with frontend clients to get the password in plain text form
-        from the client and use it for backend authentication.
-	  </para>
-	  <para>
-	      Default is <literal>false</literal>.
-	  </para>
-	  <para>
-	    This parameter can be changed by reloading
-	    the <productname>Pgpool-II</productname> configurations.
-	  </para>
-      <note>
-        <para>
-          <literal>allow_clear_text_frontend_auth</literal> only works when <xref linkend="guc-enable-pool-hba"> is not enabled
-        </para>
-      </note>
-	</listitem>
-      </varlistentry>
+  </variablelist>
 
-      <varlistentry id="guc-authentication-timeout" xreflabel="authentication_timeout">
-	<term><varname>authentication_timeout</varname> (<type>integer</type>)
-	  <indexterm>
-	    <primary><varname>authentication_timeout</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    Specify the timeout in seconds
-	    for <productname>Pgpool-II</productname>
-	    authentication. Specifying 0 disables the time out.
-	    Default value is 60.
-	  </para>
-	  <para>
-	    This parameter can be changed by reloading
-	    the <productname>Pgpool-II</productname> configurations.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-    </variablelist>
-
-  </sect2>
+ </sect2>
 </sect1>
 
 <sect1 id="runtime-config-running-mode">
-  <title>Running mode</title>
+ <title>Running mode</title>
 
-  <sect2 id="runtime-config-master-slave-mode">
-    <title>Master slave mode</title>
+ <sect2 id="runtime-config-master-slave-mode">
+  <title>Master slave mode</title>
 
-    <para>
-      This mode is used to couple <productname>Pgpool-II</productname>
-      with another master/slave replication software
-      (like <acronym>Slony-I</acronym> and Streaming replication),
-      that is responsible for doing the actual data replication.
-    </para>
+  <para>
+   This mode is used to couple <productname>Pgpool-II</productname>
+   with another master/slave replication software
+   (like <acronym>Slony-I</acronym> and Streaming replication),
+   that is responsible for doing the actual data replication.
+  </para>
 
-    <note>
+  <note>
+   <para>
+    The number of slave nodes are not limited to 1 and
+    <productname>Pgpool-II</productname> can have up to 127 slave nodes.
+    master/slave mode can also work just master node without any slave nodes.
+   </para>
+  </note>
+
+  <para>
+   Load balancing (see <xref linkend="runtime-config-load-balancing"> ) can
+    also be used with master/slave mode to distribute the read load on the
+    standby backend nodes.
+  </para>
+  <para>
+   Following options are required to be specified for master/slave mode.
+  </para>
+
+  <variablelist>
+
+   <varlistentry id="guc-master-slave-mode" xreflabel="master_slave_mode">
+    <term><varname>master_slave_mode</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>master_slave_mode</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Setting to on enables the master/slave mode.
+      Default is off.
+     </para>
+     <note>
       <para>
-	The number of slave nodes are not limited to 1 and
-	<productname>Pgpool-II</productname> can have up to 127 slave nodes.
-	master/slave mode can also work just master node without any slave nodes.
+       <xref linkend="guc-master-slave-mode"> and <xref linkend="guc-replication-mode">
+	 are mutually exclusive and only one can be enabled at a time.
       </para>
-    </note>
+     </note>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-    <para>
-      Load balancing (see <xref linkend="runtime-config-load-balancing"> ) can
-	also be used with master/slave mode to distribute the read load on the
-	standby backend nodes.
-    </para>
-    <para>
-      Following options are required to be specified for master/slave mode.
-    </para>
+   <varlistentry id="guc-master-slave-sub-mode" xreflabel="master_slave_sub_mode">
+    <term><varname>master_slave_sub_mode</varname> (<type>enum</type>)
+     <indexterm>
+      <primary><varname>master_slave_sub_mode</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the external replication system used for data
+      replication between
+      <productname>PostgreSQL</productname> nodes.
+      Below table contains the list of valid values for the parameter.
+     </para>
 
-    <variablelist>
+     <table id="master-slave-sub-mode-table">
+      <title>master slave sub mode options</title>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Value</entry>
+	 <entry>Description</entry>
+	</row>
+       </thead>
 
-      <varlistentry id="guc-master-slave-mode" xreflabel="master_slave_mode">
-	<term><varname>master_slave_mode</varname> (<type>boolean</type>)
-	  <indexterm>
-	    <primary><varname>master_slave_mode</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    Setting to on enables the master/slave mode.
-	    Default is off.
-	  </para>
-	  <note>
-	    <para>
-	      <xref linkend="guc-master-slave-mode"> and <xref linkend="guc-replication-mode">
-		  are mutually exclusive and only one can be enabled at a time.
-	    </para>
-	  </note>
-	  <para>
-	    This parameter can only be set at server start.
-	  </para>
-	</listitem>
-      </varlistentry>
+       <tbody>
+	<row>
+	 <entry><literal>'slony'</literal></entry>
+	 <entry>Suitable for <acronym>Slony-I</acronym></entry>
+	</row>
 
-      <varlistentry id="guc-master-slave-sub-mode" xreflabel="master_slave_sub_mode">
-	<term><varname>master_slave_sub_mode</varname> (<type>enum</type>)
-	  <indexterm>
-	    <primary><varname>master_slave_sub_mode</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    Specifies the external replication system used for data
-	    replication between
-	    <productname>PostgreSQL</productname> nodes.
-	    Below table contains the list of valid values for the parameter.
-	  </para>
+	<row>
+	 <entry><literal>'stream'</literal></entry>
+	 <entry>Suitable
+	  for <productname>PostgreSQL</productname>'s built-in
+	  replication system (Streaming Replication)</entry>
+	</row>
 
-	  <table id="master-slave-sub-mode-table">
-	    <title>master slave sub mode options</title>
-	    <tgroup cols="2">
-	      <thead>
-		<row>
-		  <entry>Value</entry>
-		  <entry>Description</entry>
-		</row>
-	      </thead>
+	<row>
+	 <entry><literal>'logical'</literal></entry>
+	 <entry>Suitable
+	  for <productname>PostgreSQL</productname>'s built-in
+	  replication system (Logical Replication)</entry>
+	</row>
 
-	      <tbody>
-		<row>
-		  <entry><literal>'slony'</literal></entry>
-		  <entry>Suitable for <acronym>Slony-I</acronym></entry>
-		</row>
+       </tbody>
+      </tgroup>
+     </table>
 
-		<row>
-		  <entry><literal>'stream'</literal></entry>
-		  <entry>Suitable
-		    for <productname>PostgreSQL</productname>'s built-in
-		    replication system (Streaming Replication)</entry>
-		</row>
+     <para>
+      Default is <literal>'slony'</literal>.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-		<row>
-		  <entry><literal>'logical'</literal></entry>
-		  <entry>Suitable
-		    for <productname>PostgreSQL</productname>'s built-in
-		    replication system (Logical Replication)</entry>
-		</row>
+  </variablelist>
+ </sect2>
 
-	      </tbody>
-	    </tgroup>
-	  </table>
+ <sect2 id="runtime-config-replication-mode">
+  <title>Replication mode</title>
 
-	  <para>
-	    Default is <literal>'slony'</literal>.
-	  </para>
-	  <para>
-	    This parameter can only be set at server start.
-	  </para>
-	</listitem>
-      </varlistentry>
+  <para>
+   This mode makes the <productname>Pgpool-II</productname> to
+   replicate data between <productname>PostgreSQL</productname>
+   backends.
+  </para>
 
-    </variablelist>
-  </sect2>
+  <para>
+   Load balancing
+   (see <xref linkend="runtime-config-load-balancing"> ) can also
+    be used with replication mode to distribute the load to the
+    attached backend nodes.
+  </para>
+  <para>
+   Following options affect the behavior of
+   <productname>Pgpool-II</productname> in the replication mode.
+  </para>
 
-  <sect2 id="runtime-config-replication-mode">
-    <title>Replication mode</title>
+  <variablelist>
 
-    <para>
-      This mode makes the <productname>Pgpool-II</productname> to
-      replicate data between <productname>PostgreSQL</productname>
-      backends.
-    </para>
+   <varlistentry id="guc-replication-mode" xreflabel="replication_mode">
+    <term><varname>replication_mode</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>replication_mode</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Setting to on enables the replication mode.
+      Default is off.
+     </para>
+     <note>
+      <para>
+       <xref linkend="guc-replication-mode">
+	and <xref linkend="guc-master-slave-mode"> are
+	 mutually exclusive and only one can be enabled at a
+	 time.
+      </para>
+     </note>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
-    <para>
-      Load balancing
-	(see <xref linkend="runtime-config-load-balancing"> ) can also
-	be used with replication mode to distribute the load to the
-	attached backend nodes.
-    </para>
-    <para>
-      Following options affect the behavior of
-      <productname>Pgpool-II</productname> in the replication mode.
-    </para>
+   <varlistentry id="guc-replication-stop-on-mismatch" xreflabel="replication_stop_on_mismatch">
+    <term><varname>replication_stop_on_mismatch</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>replication_stop_on_mismatch</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When set to on, and all nodes do not reply with the same
+      packet kind to the query that was sent to
+      all <productname>PostgreSQL</productname> backend nodes,
+      then the backend node whose reply differs from the
+      majority is degenerated by
+      the <productname>Pgpool-II</productname>.
+      If <varname>replication_stop_on_mismatch</varname> is set
+      to off and a similar situation happens then
+      the <productname>Pgpool-II</productname> only terminates
+      the current user session but does not degenerate a backend
+      node.
+     </para>
 
-    <variablelist>
+     <note>
+      <para>
+       <productname>Pgpool-II</productname> does not examine
+       the data returned by the backends and takes the decision
+       only by comparing the result packet types.
+      </para>
+     </note>
 
-      <varlistentry id="guc-replication-mode" xreflabel="replication_mode">
-	<term><varname>replication_mode</varname> (<type>boolean</type>)
-	  <indexterm>
-	    <primary><varname>replication_mode</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    Setting to on enables the replication mode.
-	    Default is off.
-	  </para>
-	  <note>
-	    <para>
-	      <xref linkend="guc-replication-mode">
-		  and <xref linkend="guc-master-slave-mode"> are
-		  mutually exclusive and only one can be enabled at a
-		  time.
-	    </para>
-	  </note>
-	  <para>
-	    This parameter can only be set at server start.
-	  </para>
-	</listitem>
-      </varlistentry>
+     <para>
+      A typical use case of enabling
+      the <varname>replication_stop_on_mismatch</varname> is to
+      guard against the data inconsistency among the backend
+      nodes.  For example, you may want to degenerate a backend
+      node if an UPDATE statement fails on one backend node
+      while passes on others.
+     </para>
+     <para>
+      Default is off.
+     </para>
+     <para>
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-replication-stop-on-mismatch" xreflabel="replication_stop_on_mismatch">
-	<term><varname>replication_stop_on_mismatch</varname> (<type>boolean</type>)
-	  <indexterm>
-	    <primary><varname>replication_stop_on_mismatch</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    When set to on, and all nodes do not reply with the same
-	    packet kind to the query that was sent to
-	    all <productname>PostgreSQL</productname> backend nodes,
-	    then the backend node whose reply differs from the
-	    majority is degenerated by
-	    the <productname>Pgpool-II</productname>.
-	    If <varname>replication_stop_on_mismatch</varname> is set
-	    to off and a similar situation happens then
-	    the <productname>Pgpool-II</productname> only terminates
-	    the current user session but does not degenerate a backend
-	    node.
-	  </para>
+   <varlistentry id="guc-failover-if-affected-tuples-mismatch" xreflabel="failover_if_affected_tuples_mismatch">
+    <term><varname>failover_if_affected_tuples_mismatch</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>failover_if_affected_tuples_mismatch</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When set to on, and all nodes do not reply with the same
+      number of affected tuples to the INSERT/UPDATE/DELETE
+      query, then the backend node whose reply differs from the
+      majority is degenerated by
+      the <productname>Pgpool-II</productname>.
+      If <varname>failover_if_affected_tuples_mismatch</varname>
+      is set to off and a similar situation happens then
+      the <productname>Pgpool-II</productname> only terminates
+      the current user session but does not degenerate a backend
+      node.
+     </para>
 
-	  <note>
-	    <para>
-	      <productname>Pgpool-II</productname> does not examine
-	      the data returned by the backends and takes the decision
-	      only by comparing the result packet types.
-	    </para>
-	  </note>
+     <note>
+      <para>
+       In case of a tie, when two or more groups have the same
+       number of nodes, then the group containing the master
+       node (backend node having the youngest node id) gets the
+       precedence.
+      </para>
+     </note>
 
-	  <para>
-	    A typical use case of enabling
-	    the <varname>replication_stop_on_mismatch</varname> is to
-	    guard against the data inconsistency among the backend
-	    nodes.  For example, you may want to degenerate a backend
-	    node if an UPDATE statement fails on one backend node
-	    while passes on others.
-	  </para>
-	  <para>
-	    Default is off.
-	  </para>
-	  <para>
-	    This parameter can be changed by reloading
-	    the <productname>Pgpool-II</productname> configurations.
-	  </para>
-	</listitem>
-      </varlistentry>
+     <para>
+      Default is off.
+     </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</productname> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-failover-if-affected-tuples-mismatch" xreflabel="failover_if_affected_tuples_mismatch">
-	<term><varname>failover_if_affected_tuples_mismatch</varname> (<type>boolean</type>)
-	  <indexterm>
-	    <primary><varname>failover_if_affected_tuples_mismatch</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    When set to on, and all nodes do not reply with the same
-	    number of affected tuples to the INSERT/UPDATE/DELETE
-	    query, then the backend node whose reply differs from the
-	    majority is degenerated by
-	    the <productname>Pgpool-II</productname>.
-	    If <varname>failover_if_affected_tuples_mismatch</varname>
-	    is set to off and a similar situation happens then
-	    the <productname>Pgpool-II</productname> only terminates
-	    the current user session but does not degenerate a backend
-	    node.
-	  </para>
+   <varlistentry id="guc-replicate-select" xreflabel="replicate_select">
+    <term><varname>replicate_select</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>replicate_select</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When set to on, <productname>Pgpool-II</productname> enables the
+      SELECT query replication mode. i.e. The SELECT queries are sent
+      to all backend nodes.
+     </para>
 
-	  <note>
-	    <para>
-	      In case of a tie, when two or more groups have the same
-	      number of nodes, then the group containing the master
-	      node (backend node having the youngest node id) gets the
-	      precedence.
-	    </para>
-	  </note>
+     <table id="replicate-select-affect-table">
+      <title>replicate_select with <xref linkend="guc-load-balance-mode"> affects on SELECT routing</title>
+      <tgroup cols="6" align="center">
+       <colspec colname="_1" colwidth="1*">
+	<colspec colname="_2" colwidth="1*">
+	 <colspec colname="_3" colwidth="1*">
+	  <colspec colname="_4" colwidth="1*">
+	   <colspec colname="_5" colwidth="1*">
+	    <colspec colname="_6" colwidth="1*">
 
-	  <para>
-	    Default is off.
-	  </para>
-	  <para>
-	    This parameter can be changed by reloading the <productname>Pgpool-II</productname> configurations.
-	  </para>
-	</listitem>
-      </varlistentry>
+	     <tbody>
+	      <row>
+	       <entry>replicate_select is true</entry>
+	       <entry align="center">Y</entry>
+	       <entry align="center" nameend="_6" namest="_3">N</entry>
+	      </row>
 
-      <varlistentry id="guc-replicate-select" xreflabel="replicate_select">
-	<term><varname>replicate_select</varname> (<type>boolean</type>)
-	  <indexterm>
-	    <primary><varname>replicate_select</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    When set to on, <productname>Pgpool-II</productname> enables the
-	    SELECT query replication mode. i.e. The SELECT queries are sent
-	    to all backend nodes.
-	  </para>
+	      <row>
+	       <entry>load_balance_mode is true</entry>
+	       <entry>ANY</entry>
+	       <entry align="center" nameend="_5" namest="_3">Y</entry>
+	       <entry align="center">N</entry>
+	      </row>
 
-	  <table id="replicate-select-affect-table">
-	    <title>replicate_select with <xref linkend="guc-load-balance-mode"> affects on SELECT routing</title>
-	    <tgroup cols="6" align="center">
-	      <colspec colname="_1" colwidth="1*">
-		<colspec colname="_2" colwidth="1*">
-		  <colspec colname="_3" colwidth="1*">
-		    <colspec colname="_4" colwidth="1*">
-		      <colspec colname="_5" colwidth="1*">
-			<colspec colname="_6" colwidth="1*">
+	      <row>
+	       <entry>SELECT is inside a transaction block</entry>
+	       <entry align="center">ANY</entry>
+	       <entry nameend="_4" namest="_3" align="center"> Y </entry>
+	       <entry align="center">N</entry>
+	       <entry align="center">ANY</entry>
+	      </row>
 
-			  <tbody>
-			    <row>
-			      <entry>replicate_select is true</entry>
-			      <entry align="center">Y</entry>
-			      <entry align="center" nameend="_6" namest="_3">N</entry>
-			    </row>
+	      <row>
+	       <entry>
+		Transaction isolation level is SERIALIZABLE and
+		the transaction has issued a write query
+	       </entry>
+	       <entry align="center">ANY</entry>
+	       <entry align="center">Y</entry>
+	       <entry align="center">N</entry>
+	       <entry align="center">ANY</entry>
+	       <entry align="center">ANY</entry>
+	      </row>
 
-			    <row>
-			      <entry>load_balance_mode is true</entry>
-			      <entry>ANY</entry>
-			      <entry align="center" nameend="_5" namest="_3">Y</entry>
-			      <entry align="center">N</entry>
-			    </row>
+	      <row>
+	       <entry>
+		results(R:replication, M: send only to master, L: load balance)
+	       </entry>
+	       <entry align="center">R</entry>
+	       <entry align="center">M</entry>
+	       <entry align="center">L</entry>
+	       <entry align="center">L</entry>
+	       <entry align="center">M</entry>
+	      </row>
 
-			    <row>
-			      <entry>SELECT is inside a transaction block</entry>
-			      <entry align="center">ANY</entry>
-			      <entry nameend="_4" namest="_3" align="center"> Y </entry>
-			      <entry align="center">N</entry>
-			      <entry align="center">ANY</entry>
-			    </row>
+	     </tbody>
+      </tgroup>
+     </table>
 
-			    <row>
-			      <entry>
-				Transaction isolation level is SERIALIZABLE and
-				the transaction has issued a write query
-			      </entry>
-			      <entry align="center">ANY</entry>
-			      <entry align="center">Y</entry>
-			      <entry align="center">N</entry>
-			      <entry align="center">ANY</entry>
-			      <entry align="center">ANY</entry>
-			    </row>
+     <para>
+      Default is off.
+     </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</productname> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
-			    <row>
-			      <entry>
-				results(R:replication, M: send only to master, L: load balance)
-			      </entry>
-			      <entry align="center">R</entry>
-			      <entry align="center">M</entry>
-			      <entry align="center">L</entry>
-			      <entry align="center">L</entry>
-			      <entry align="center">M</entry>
-			    </row>
+   <varlistentry id="guc-insert-lock" xreflabel="insert_lock">
+    <term><varname>insert_lock</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>insert_lock</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When set to on, <productname>Pgpool-II</productname> will
+      automatically lock the table
+      on <productname>PostgreSQL</productname> before an INSERT
+      statement is issued for that.
+     </para>
 
-			  </tbody>
-	    </tgroup>
-	  </table>
+     <para>
+      When replicating a table with SERIAL data type, the SERIAL
+      column value may get different values on the different
+      backends.  The workaround to this problem is to explicitly
+      lock the table before issuing the INSERT.
+     </para>
+     <para>
+      So for automatically locking the
+      table <productname>Pgpool-II</productname> do the
+      following transformation:
+      <programlisting>
+       INSERT INTO ...
+      </programlisting>
+      to
+      <programlisting>
+       BEGIN;
+       LOCK TABLE ...
+       INSERT INTO ...
+       COMMIT;
+      </programlisting>
+     </para>
+     <caution>
+      <para>
+       This approach severely degrades the transactions'
+       parallelism
+      </para>
+     </caution>
 
-	  <para>
-	    Default is off.
-	  </para>
-	  <para>
-	    This parameter can be changed by reloading the <productname>Pgpool-II</productname> configurations.
-	  </para>
-	</listitem>
-      </varlistentry>
+     <para>
+      <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>
+      or later, automatically detects whether the table has a
+      SERIAL columns or not, so it never locks the table if it
+      desn't have the SERIAL columns.
+     </para>
 
-      <varlistentry id="guc-insert-lock" xreflabel="insert_lock">
-	<term><varname>insert_lock</varname> (<type>boolean</type>)
-	  <indexterm>
-	    <primary><varname>insert_lock</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    When set to on, <productname>Pgpool-II</productname> will
-	    automatically lock the table
-	    on <productname>PostgreSQL</productname> before an INSERT
-	    statement is issued for that.
-	  </para>
+     <para>
+      <productname>Pgpool-II</productname> <emphasis>V3.0</emphasis> until
+      <productname>Pgpool-II</productname> <emphasis>V3.0.4</emphasis>
+      uses a row lock against the sequence relation, rather than
+      table lock.  This is intended to minimize lock conflict
+      with <acronym>VACUUM</acronym> (including autovacuum).
+      However this can lead to another problem. After
+      transaction wraparound happens, row locking against the
+      sequence relation causes PostgreSQL internal error (more
+      precisely, access error on pg_clog, which keeps
+      transaction status).  To prevent
+      this, <productname>PostgreSQL</productname> core
+      developers decided to disallow row locking against
+      sequences and this broke
+      the <productname>Pgpool-II</productname>, of course (the
+      "fixed" version of PostgreSQL was released as 9.0.5,
+      8.4.9, 8.3.16 and 8.2.22).
+     </para>
 
-	  <para>
-	    When replicating a table with SERIAL data type, the SERIAL
-	    column value may get different values on the different
-	    backends.  The workaround to this problem is to explicitly
-	    lock the table before issuing the INSERT.
-	  </para>
-	  <para>
-	    So for automatically locking the
-	    table <productname>Pgpool-II</productname> do the
-	    following transformation:
-	    <programlisting>
-	      INSERT INTO ...
-	    </programlisting>
-	    to
-	    <programlisting>
-	      BEGIN;
-	      LOCK TABLE ...
-	      INSERT INTO ...
-	      COMMIT;
-	    </programlisting>
-	  </para>
-	  <caution>
-	    <para>
-	      This approach severely degrades the transactions'
-	      parallelism
-	    </para>
-	  </caution>
+     <para>
+      <productname>Pgpool-II</productname> <emphasis>V3.0.5</emphasis>
+      or later uses a row lock
+      against <literal>pgpool_catalog.insert_lock</literal>
+      table because new PostgreSQL disallows a row lock against
+      the sequence relation.  So creating insert_lock table in
+      all databases which are accessed via
+      <productname>Pgpool-II</productname> beforehand is
+      required.  See <xref linkend="create-installlock-table">
+       for more details.  If does not exist insert_lock
+       table, <productname>Pgpool-II</productname> locks the
+       insert target table.  This behavior is same
+       as <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>
+       and <emphasis>V2.3</emphasis> series.
+     </para>
+     <para>
+      If you want to use <varname>insert_lock</varname> which is
+      compatible with older releases, you can specify lock
+      method by configure script.
+      See <xref linkend="install-pgpool"> for more details.
+     </para>
 
-	  <para>
-	    <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>
-	    or later, automatically detects whether the table has a
-	    SERIAL columns or not, so it never locks the table if it
-	    desn't have the SERIAL columns.
-	  </para>
+     <para>
+      For fine (per statement) control:
+     </para>
 
-	  <para>
-	    <productname>Pgpool-II</productname> <emphasis>V3.0</emphasis> until
-	    <productname>Pgpool-II</productname> <emphasis>V3.0.4</emphasis>
-	    uses a row lock against the sequence relation, rather than
-	    table lock.  This is intended to minimize lock conflict
-	    with <acronym>VACUUM</acronym> (including autovacuum).
-	    However this can lead to another problem. After
-	    transaction wraparound happens, row locking against the
-	    sequence relation causes PostgreSQL internal error (more
-	    precisely, access error on pg_clog, which keeps
-	    transaction status).  To prevent
-	    this, <productname>PostgreSQL</productname> core
-	    developers decided to disallow row locking against
-	    sequences and this broke
-	    the <productname>Pgpool-II</productname>, of course (the
-	    "fixed" version of PostgreSQL was released as 9.0.5,
-	    8.4.9, 8.3.16 and 8.2.22).
-	  </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+	set insert_lock to true, and add /*NO INSERT LOCK*/ at
+	the beginning of an INSERT statement for which you do
+	not want to acquire the table lock.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	set insert_lock to false, and add /*INSERT LOCK*/ at
+	the beginning of an INSERT statement for which you
+	want to acquire the table lock.
+       </para>
+      </listitem>
 
-	  <para>
-	    <productname>Pgpool-II</productname> <emphasis>V3.0.5</emphasis>
-	    or later uses a row lock
-	    against <literal>pgpool_catalog.insert_lock</literal>
-	    table because new PostgreSQL disallows a row lock against
-	    the sequence relation.  So creating insert_lock table in
-	    all databases which are accessed via
-	    <productname>Pgpool-II</productname> beforehand is
-	    required.  See <xref linkend="create-installlock-table">
-	    for more details.  If does not exist insert_lock
-	    table, <productname>Pgpool-II</productname> locks the
-	    insert target table.  This behavior is same
-	    as <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>
-	    and <emphasis>V2.3</emphasis> series.
-	  </para>
-	  <para>
-	    If you want to use <varname>insert_lock</varname> which is
-	    compatible with older releases, you can specify lock
-	    method by configure script.
-	    See <xref linkend="install-pgpool"> for more details.
-	  </para>
+     </itemizedlist>
+     <note>
+      <para>
+       If insert_lock is enabled, the regression tests for
+       PostgreSQL 8.0 gets fail in transactions, privileges,
+       rules, and alter_table.
+      </para>
+      <para>
+       The reason for this is
+       that <productname>Pgpool-II</productname> tries to LOCK
+       the VIEW for the rule test, and it produces the below
+       error message:
+       <programlisting>
+	! ERROR: current transaction is aborted, commands ignored until
+	end of transaction block
+       </programlisting>
+       For example, the transactions test tries an INSERT into
+       a table which does not exist,
+       and <productname>Pgpool-II</productname>
+       causes <productname>PostgreSQL</productname> to acquire
+       the lock for the table. Of cause this results in an
+       error.  The transaction will be aborted, and the
+       following INSERT statement produces the above error
+       message.
+      </para>
+     </note>
+     <para>
+      Default is off.
+     </para>
+     <para>
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
-	  <para>
-	    For fine (per statement) control:
-	  </para>
+   <varlistentry id="guc-lobj-lock-table" xreflabel="lobj_lock_table">
+    <term><varname>lobj_lock_table</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>lobj_lock_table</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies a table name used for large object replication control.
+      If it is specified, <productname>Pgpool-II</productname> will lock
+      the table specified by <varname>lobj_lock_table</varname> and generate
+      a large object id by looking into <literal>pg_largeobject</literal>
+      system catalog and then call <literal>lo_create</literal> to create
+      the large object.
+      This procedure guarantees that <productname>Pgpool-II</productname>
+      will get the same large object id in all DB nodes in replication mode.
+     </para>
+     <note>
+      <para>
+       <productname>PostgreSQL</productname> 8.0 and older does
+       not have <literal>lo_create</literal>, so this feature
+       does not work with PostgreSQL 8.0 and older versions.
+      </para>
+     </note>
+     <para>
+      A call to the <literal>libpq</literal>
+      function <literal>lo_creat()</literal> triggers this
+      feature. Also large object creation
+      through <acronym>Java</acronym> API
+      (<acronym>JDBC</acronym> driver), <acronym>PHP</acronym>
+      API (<literal>pg_lo_create</literal>, or similar API in
+      PHP library such as PDO), and this same API in various
+      programming languages are known to use a similar protocol,
+      and thus should work.
+     </para>
 
-	  <itemizedlist>
-	    <listitem>
-	      <para>
-		set insert_lock to true, and add /*NO INSERT LOCK*/ at
-		the beginning of an INSERT statement for which you do
-		not want to acquire the table lock.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		set insert_lock to false, and add /*INSERT LOCK*/ at
-		the beginning of an INSERT statement for which you
-		want to acquire the table lock.
-	      </para>
-	    </listitem>
+     <para>
+      This feature does not works with following operations on large objects.
+     </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+	All APIs using <literal>lo_create</literal>, <literal>lo_import_with_oid</literal>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<literal>lo_import</literal> function in backend called in SELECT.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<literal>lo_create</literal> function in backend called in SELECT.
+       </para>
+      </listitem>
+     </itemizedlist>
 
-	  </itemizedlist>
-	  <note>
-	    <para>
-	      If insert_lock is enabled, the regression tests for
-	      PostgreSQL 8.0 gets fail in transactions, privileges,
-	      rules, and alter_table.
-	    </para>
-	    <para>
-	      The reason for this is
-	      that <productname>Pgpool-II</productname> tries to LOCK
-	      the VIEW for the rule test, and it produces the below
-	      error message:
-	      <programlisting>
-		! ERROR: current transaction is aborted, commands ignored until
-		end of transaction block
-	      </programlisting>
-	      For example, the transactions test tries an INSERT into
-	      a table which does not exist,
-	      and <productname>Pgpool-II</productname>
-	      causes <productname>PostgreSQL</productname> to acquire
-	      the lock for the table. Of cause this results in an
-	      error.  The transaction will be aborted, and the
-	      following INSERT statement produces the above error
-	      message.
-	    </para>
-	  </note>
-	  <para>
-	    Default is off.
-	  </para>
-	  <para>
-	    This parameter can be changed by reloading
-	    the <productname>Pgpool-II</productname> configurations.
-	  </para>
-	</listitem>
-      </varlistentry>
+     <note>
+      <para>
+       All <productname>PostgreSQL</productname> users must
+       have a write access
+       on <varname>lobj_lock_table</varname> and it can be
+       created in any schema.
+      </para>
+     </note>
 
-      <varlistentry id="guc-lobj-lock-table" xreflabel="lobj_lock_table">
-	<term><varname>lobj_lock_table</varname> (<type>string</type>)
-	  <indexterm>
-	    <primary><varname>lobj_lock_table</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
-	<listitem>
-	  <para>
-	    Specifies a table name used for large object replication control.
-	    If it is specified, <productname>Pgpool-II</productname> will lock
-	    the table specified by <varname>lobj_lock_table</varname> and generate
-	    a large object id by looking into <literal>pg_largeobject</literal>
-	    system catalog and then call <literal>lo_create</literal> to create
-	    the large object.
-	    This procedure guarantees that <productname>Pgpool-II</productname>
-	    will get the same large object id in all DB nodes in replication mode.
-	  </para>
-	  <note>
-	    <para>
-	      <productname>PostgreSQL</productname> 8.0 and older does
-	      not have <literal>lo_create</literal>, so this feature
-	      does not work with PostgreSQL 8.0 and older versions.
-	    </para>
-	  </note>
-	  <para>
-	    A call to the <literal>libpq</literal>
-	    function <literal>lo_creat()</literal> triggers this
-	    feature. Also large object creation
-	    through <acronym>Java</acronym> API
-	    (<acronym>JDBC</acronym> driver), <acronym>PHP</acronym>
-	    API (<literal>pg_lo_create</literal>, or similar API in
-	    PHP library such as PDO), and this same API in various
-	    programming languages are known to use a similar protocol,
-	    and thus should work.
-	  </para>
+     <para>
+      Example to create a large object lock table:
+      <programlisting>
+       CREATE TABLE public.my_lock_table ();
+       GRANT ALL ON public.my_lock_table TO PUBLIC;
+      </programlisting>
+     </para>
+     <para>
+      Default is <literal>''</literal>(empty), which disables the feature.
+     </para>
+    </listitem>
+   </varlistentry>
 
-	  <para>
-	    This feature does not works with following operations on large objects.
-	  </para>
-	  <itemizedlist>
-	    <listitem>
-	      <para>
-		All APIs using <literal>lo_create</literal>, <literal>lo_import_with_oid</literal>.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<literal>lo_import</literal> function in backend called in SELECT.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<literal>lo_create</literal> function in backend called in SELECT.
-	      </para>
-	    </listitem>
-	  </itemizedlist>
-
-	  <note>
-	    <para>
-	      All <productname>PostgreSQL</productname> users must
-	      have a write access
-	      on <varname>lobj_lock_table</varname> and it can be
-	      created in any schema.
-	    </para>
-	  </note>
-
-	  <para>
-	    Example to create a large object lock table:
-	    <programlisting>
-	      CREATE TABLE public.my_lock_table ();
-	      GRANT ALL ON public.my_lock_table TO PUBLIC;
-	    </programlisting>
-	  </para>
-	  <para>
-	    Default is <literal>''</literal>(empty), which disables the feature.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-    </variablelist>
-  </sect2>
+  </variablelist>
+ </sect2>
 
 </sect1>
 
 <sect1 id="runtime-config-backend-settings">
-  <title>Backend Settings</title>
+ <title>Backend Settings</title>
 
-  <sect2 id="runtime-config-backend-connection-settings">
-    <title>Backend Connection Settings</title>
+ <sect2 id="runtime-config-backend-connection-settings">
+  <title>Backend Connection Settings</title>
 
-    <variablelist>
+  <variablelist>
 
-      <varlistentry id="guc-backend-hostname" xreflabel="backend_hostname">
-	<term><varname>backend_hostname</varname> (<type>string</type>)
-	  <indexterm>
-	    <primary><varname>backend_hostname</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
+   <varlistentry id="guc-backend-hostname" xreflabel="backend_hostname">
+    <term><varname>backend_hostname</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>backend_hostname</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
 
-	<listitem>
-	  <para>
-	    <varname>backend_hostname</varname> specifies the
-	    <productname>PostgreSQL</productname> backend to be
-	    connected to.  It is used
-	    by <productname>Pgpool-II</productname> to communicate
-	    with the server.
-	  </para>
+    <listitem>
+     <para>
+      <varname>backend_hostname</varname> specifies the
+      <productname>PostgreSQL</productname> backend to be
+      connected to.  It is used
+      by <productname>Pgpool-II</productname> to communicate
+      with the server.
+     </para>
 
-	  <para>
-	    For TCP/IP communication, this parameter can take a
-	    hostname or an IP address. If this begins with a
-	    slash(<literal>/</literal>), it specifies Unix-domain
-	    communication rather than TCP/IP; the value is the name of
-	    the directory in which the socket file is stored. The
-	    default behavior when backend_hostname is empty
-	    (<literal>''</literal>) is to connect to a Unix-domain
-	    socket in <filename>/tmp</filename>.
-	  </para>
+     <para>
+      For TCP/IP communication, this parameter can take a
+      hostname or an IP address. If this begins with a
+      slash(<literal>/</literal>), it specifies Unix-domain
+      communication rather than TCP/IP; the value is the name of
+      the directory in which the socket file is stored. The
+      default behavior when backend_hostname is empty
+      (<literal>''</literal>) is to connect to a Unix-domain
+      socket in <filename>/tmp</filename>.
+     </para>
 
-	  <para>
-	    Multiple backends can be specified by adding a number at the
-	    end of the parameter name (e.g.backend_hostname0). This
-	    number is referred to as "DB node ID", and it starts from
-	    0. The backend which was given the DB node ID of 0 will be
-	    called "master node". When multiple backends are defined, the
-	    service can be continued even if the master node is down (not
-	    true in some modes). In this case, the youngest DB node ID
-	    alive will be the new master node.
-	  </para>
+     <para>
+      Multiple backends can be specified by adding a number at the
+      end of the parameter name (e.g.backend_hostname0). This
+      number is referred to as "DB node ID", and it starts from
+      0. The backend which was given the DB node ID of 0 will be
+      called "master node". When multiple backends are defined, the
+      service can be continued even if the master node is down (not
+      true in some modes). In this case, the youngest DB node ID
+      alive will be the new master node.
+     </para>
 
-	  <para>
-	    Please note that the DB node which has id 0 has no special
-	    meaning if operated in streaming replication mode. Rather,
-	    you should care about if the DB node is the "primary node" or
-	    not. See <xref linkend="runtime-config-load-balancing">,
-	      <xref linkend="runtime-config-failover">,
-		<xref linkend="runtime-streaming-replication-check">
-		  for more details.
-	  </para>
+     <para>
+      Please note that the DB node which has id 0 has no special
+      meaning if operated in streaming replication mode. Rather,
+      you should care about if the DB node is the "primary node" or
+      not. See <xref linkend="runtime-config-load-balancing">,
+       <xref linkend="runtime-config-failover">,
+	<xref linkend="runtime-streaming-replication-check">
+	 for more details.
+     </para>
 
-	  <para>
-	    If you plan to use only
-	    one <productname>PostgreSQL</productname> server, specify
-	    it by backend_hostname0.
-	  </para>
+     <para>
+      If you plan to use only
+      one <productname>PostgreSQL</productname> server, specify
+      it by backend_hostname0.
+     </para>
 
-	  <para>
-	    New nodes can be added by adding parameter rows and
-	    reloading a configuration file. However, the existing
-	    values cannot be updated, so you must
-	    restart <productname>Pgpool-II</productname> in that case.
-	  </para>
+     <para>
+      New nodes can be added by adding parameter rows and
+      reloading a configuration file. However, the existing
+      values cannot be updated, so you must
+      restart <productname>Pgpool-II</productname> in that case.
+     </para>
 
-	</listitem>
+    </listitem>
 
-      </varlistentry>
+   </varlistentry>
 
-      <varlistentry id="guc-backend-port" xreflabel="backend_port">
-	<term><varname>backend_port</varname> (<type>integer</type>)
-	  <indexterm>
-	    <primary><varname>backend_port</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
+   <varlistentry id="guc-backend-port" xreflabel="backend_port">
+    <term><varname>backend_port</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>backend_port</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
 
-	<listitem>
-	  <para>
-	    <varname>backend_port</varname> specifies the port number
-	    of the backends. Multiple backends can be specified by
-	    adding a number at the end of the parameter name
-	    (e.g. backend_port0). If you plan to use only one
-	    <productname>PostgreSQL</productname> server, specify it by backend_port0.
-	  </para>
-	  <para>
-	    New backend ports can be added by adding parameter rows
-	    and reloading a configuration file. However, the existing
-	    values cannot be updated, so you must
-	    restart <productname>Pgpool-II</productname> in that case.
-	  </para>
-	</listitem>
-      </varlistentry>
+    <listitem>
+     <para>
+      <varname>backend_port</varname> specifies the port number
+      of the backends. Multiple backends can be specified by
+      adding a number at the end of the parameter name
+      (e.g. backend_port0). If you plan to use only one
+      <productname>PostgreSQL</productname> server, specify it by backend_port0.
+     </para>
+     <para>
+      New backend ports can be added by adding parameter rows
+      and reloading a configuration file. However, the existing
+      values cannot be updated, so you must
+      restart <productname>Pgpool-II</productname> in that case.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-backend-weight" xreflabel="backend_weight">
-	<term><varname>backend_weight</varname> (<type>floating point</type>)
-	  <indexterm>
-	    <primary><varname>backend_weight</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
+   <varlistentry id="guc-backend-weight" xreflabel="backend_weight">
+    <term><varname>backend_weight</varname> (<type>floating point</type>)
+     <indexterm>
+      <primary><varname>backend_weight</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
 
-	<listitem>
-	  <para>
-	    <varname>backend_weight</varname> specifies the load balance
-	    ratio of the backends. It may be set to any integer or
-	    floating point value greater than or equal to zero.
-	    Multiple backends can be specified by
-	    adding a number at the end of the parameter name
-	    (e.g. backend_weight0). If you plan to use only one
-	    PostgreSQL server, specify it by backend_weight0.
-	  </para>
-	  <para>
-	    New <varname>backend_weight</varname> can be added in this parameter by
-	    reloading a configuration file. However, this will take
-	    effect only for new established client sessions.
-	    <productname>Pgpool-II</productname> <emphasis>V2.2.6</emphasis>, <emphasis>V2.3</emphasis>
-	    or later allows updating the values by reloading a
-	    configuration file.  This is useful if you want to prevent
-	    any query sent to slaves to perform some administrative
-	    work in master/slave mode.
-	  </para>
-	</listitem>
-      </varlistentry>
+    <listitem>
+     <para>
+      <varname>backend_weight</varname> specifies the load balance
+      ratio of the backends. It may be set to any integer or
+      floating point value greater than or equal to zero.
+      Multiple backends can be specified by
+      adding a number at the end of the parameter name
+      (e.g. backend_weight0). If you plan to use only one
+      PostgreSQL server, specify it by backend_weight0.
+     </para>
+     <para>
+      New <varname>backend_weight</varname> can be added in this parameter by
+      reloading a configuration file. However, this will take
+      effect only for new established client sessions.
+      <productname>Pgpool-II</productname> <emphasis>V2.2.6</emphasis>, <emphasis>V2.3</emphasis>
+      or later allows updating the values by reloading a
+      configuration file.  This is useful if you want to prevent
+      any query sent to slaves to perform some administrative
+      work in master/slave mode.
+     </para>
+    </listitem>
+   </varlistentry>
 
-    </variablelist>
-  </sect2>
+  </variablelist>
+ </sect2>
 
-  <sect2 id="runtime-config-backend-data">
-    <title>Backend Data Settings</title>
+ <sect2 id="runtime-config-backend-data">
+  <title>Backend Data Settings</title>
 
-    <variablelist>
+  <variablelist>
 
-      <varlistentry id="guc-backend-data-directory" xreflabel="backend_data_directory">
-	<term><varname>backend_data_directory</varname> (<type>string</type>)
-	  <indexterm>
-	    <primary><varname>backend_data_directory</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
+   <varlistentry id="guc-backend-data-directory" xreflabel="backend_data_directory">
+    <term><varname>backend_data_directory</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>backend_data_directory</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
 
-	<listitem>
-	  <para>
-	    <varname>backend_data_directory</varname> specifies the
-	    database cluster directory of the backend. Multiple backends can be
-	    specified by adding a number at the end of the parameter
-	    name (e.g. backend_data_directory0). If you plan to use
-	    only one PostgreSQL server, specify it by
-	    backend_data_directory0.
-	  </para>
-	  <para>
-	    New <varname>backend data_directory</varname> can be added by adding parameter rows and reloading a
-	    configuration file. However, the existing values cannot be updated, so
-	    you must restart <productname>Pgpool-II</productname> in
-	    that case.
-	  </para>
-	</listitem>
-      </varlistentry>
+    <listitem>
+     <para>
+      <varname>backend_data_directory</varname> specifies the
+      database cluster directory of the backend. Multiple backends can be
+      specified by adding a number at the end of the parameter
+      name (e.g. backend_data_directory0). If you plan to use
+      only one PostgreSQL server, specify it by
+      backend_data_directory0.
+     </para>
+     <para>
+      New <varname>backend data_directory</varname> can be added by adding parameter rows and reloading a
+      configuration file. However, the existing values cannot be updated, so
+      you must restart <productname>Pgpool-II</productname> in
+      that case.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry id="guc-backend-flag" xreflabel="backend_flag">
-	<term><varname>backend_flag</varname> (<type>string</type>)
-	  <indexterm>
-	    <primary><varname>backend_flag</varname> configuration parameter</primary>
-	  </indexterm>
-	</term>
+   <varlistentry id="guc-backend-flag" xreflabel="backend_flag">
+    <term><varname>backend_flag</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>backend_flag</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
 
-	<listitem>
-	  <para>
-	    <varname>backend_flag</varname> controls various backend
-	    behavior. Multiple backends can be specified by adding a
-	    number at the end of the parameter name
-	    (e.g. backend_flag0). If you plan to use only one
-	    PostgreSQL server, specify it by backend_flag0.
-	  </para>
-	  <para>
-	    New backend flags can be added by adding parameter rows and reloading a
-	    configuration file. Currently followings are allowed. Multiple flags can
-	    be specified by using "|".
-	  </para>
+    <listitem>
+     <para>
+      <varname>backend_flag</varname> controls various backend
+      behavior. Multiple backends can be specified by adding a
+      number at the end of the parameter name
+      (e.g. backend_flag0). If you plan to use only one
+      PostgreSQL server, specify it by backend_flag0.
+     </para>
+     <para>
+      New backend flags can be added by adding parameter rows and reloading a
+      configuration file. Currently followings are allowed. Multiple flags can
+      be specified by using "|".
+     </para>
 
-	  <table id="backend-flag-table">
-	    <title>Backend flags</title>
-	    <tgroup cols="2">
-	      <thead>
-		<row>
-		  <entry>Flag</entry>
-		  <entry>Description</entry>
-		</row>
-	      </thead>
+     <table id="backend-flag-table">
+      <title>Backend flags</title>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Flag</entry>
+	 <entry>Description</entry>
+	</row>
+       </thead>
 
-	      <tbody>
-		<row>
-		  <entry><literal>ALLOW_TO_FAILOVER</literal></entry>
-		  <entry>Allow to failover or detaching backend. This
-		    is the default. You cannot specify with
-		    DISALLOW_TO_FAILOVER at a same time.</entry>
-		</row>
-		<row>
-		  <entry><literal>DISALLOW_TO_FAILOVER</literal></entry>
-		  <entry>Disallow to failover or detaching backend
-		    This is useful when you protect backend by
-		    using HA (High Availability) softwares such as
-		    <productname>Heartbeat</productname>
-		    or <productname>Pacemaker</productname>. You cannot specify with
-		    ALLOW_TO_FAILOVER at a same time.
-		  </entry>
-		</row>
+       <tbody>
+	<row>
+	 <entry><literal>ALLOW_TO_FAILOVER</literal></entry>
+	 <entry>Allow to failover or detaching backend. This
+	  is the default. You cannot specify with
+	  DISALLOW_TO_FAILOVER at a same time.</entry>
+	</row>
+	<row>
+	 <entry><literal>DISALLOW_TO_FAILOVER</literal></entry>
+	 <entry>Disallow to failover or detaching backend
+	  This is useful when you protect backend by
+	  using HA (High Availability) softwares such as
+	  <productname>Heartbeat</productname>
+	  or <productname>Pacemaker</productname>. You cannot specify with
+	  ALLOW_TO_FAILOVER at a same time.
+	 </entry>
+	</row>
 
-		<row>
-		  <entry><literal>ALWAYS_MASTER</literal></entry>
-		  <entry>This is only useful in streaming replication
-		  mode. See <xref linkend="running-mode"> about
-		  streaming replication mode.  If this flag is set to
-		  one of
-		  backends, <productname>Pgpool-II</productname> will
-		  not find the primary node by inspecting
-		  backend. Instead, always regard the node which the
-		  flag is set as the primary node. This is useful for
-		  systems including <productname>Amazon Aurora for
-		  PostgreSQL Compatibility</productname> which has
-		  fixed master server name. See <xref linkend="example-Aurora">
-		  for an example settings.
-		  </entry>
-		</row>
+	<row>
+	 <entry><literal>ALWAYS_MASTER</literal></entry>
+	 <entry>This is only useful in streaming replication
+	  mode. See <xref linkend="running-mode"> about
+	   streaming replication mode.  If this flag is set to
+	   one of
+	   backends, <productname>Pgpool-II</productname> will
+	   not find the primary node by inspecting
+	   backend. Instead, always regard the node which the
+	   flag is set as the primary node. This is useful for
+	   systems including <productname>Amazon Aurora for
+	    PostgreSQL Compatibility</productname> which has
+	   fixed master server name. See <xref linkend="example-Aurora">
+	    for an example settings.
+	 </entry>
+	</row>
 
-	      </tbody>
-	    </tgroup>
-	  </table>
-	  <para>
-	    This parameter can be changed by reloading
-	    the <productname>Pgpool-II</productname> configurations.
-	  </para>
+       </tbody>
+      </tgroup>
+     </table>
+     <para>
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+     </para>
 
-	</listitem>
-      </varlistentry>
+    </listitem>
+   </varlistentry>
 
-    </variablelist>
+  </variablelist>
 
-  </sect2>
+ </sect2>
 
 </sect1>

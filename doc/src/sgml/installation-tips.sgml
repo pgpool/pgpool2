@@ -1,47 +1,47 @@
 <!-- doc/src/sgml/installation-tips.sgml -->
 
  <sect1 id="installation-tips">
-  <title>Tips for Installation</title>
-   <para>
-     This chapter gathers random tips for installing <productname>Pgpool-II</productname>.
-   </para>
+ <title>Tips for Installation</title>
+ <para>
+  This chapter gathers random tips for installing <productname>Pgpool-II</productname>.
+ </para>
 
-   <sect2 id="firewall">
-     <title>Firewalls</title>
-     <para>
-       When <productname>Pgpool-II</productname> connects to
-       other <productname>Pgpool-II</productname> servers
-       or <productname>PostgreSQL</productname> servers, the target port
-       must be accessible by enabling firewall management softwares.
-     </para>
+ <sect2 id="firewall">
+  <title>Firewalls</title>
+  <para>
+   When <productname>Pgpool-II</productname> connects to
+   other <productname>Pgpool-II</productname> servers
+   or <productname>PostgreSQL</productname> servers, the target port
+   must be accessible by enabling firewall management softwares.
+  </para>
 
-     <para>
-       Here is an example for CentOS/RHEL7 when access
-       to <productname>PostgreSQL</productname> is required.
-       <programlisting>
-firewall-cmd --permanent --zone=public --add-service=postgresql
-firewall-cmd --reload
-       </programlisting>
-       "postgresql" is the service name assigned
-       to <productname>PostgreSQL</productname>. The list of service
-       names can be obtained by:
-       <programlisting>
- firewall-cmd --get-services
-       </programlisting>
-       Note that you can define your own service name in
-       /usr/lib/firewalld/services/.
-     </para>
+  <para>
+   Here is an example for CentOS/RHEL7 when access
+   to <productname>PostgreSQL</productname> is required.
+   <programlisting>
+    firewall-cmd --permanent --zone=public --add-service=postgresql
+    firewall-cmd --reload
+   </programlisting>
+   "postgresql" is the service name assigned
+   to <productname>PostgreSQL</productname>. The list of service
+   names can be obtained by:
+   <programlisting>
+    firewall-cmd --get-services
+   </programlisting>
+   Note that you can define your own service name in
+   /usr/lib/firewalld/services/.
+  </para>
 
-     <para>
-       If <productname>PostgreSQL</productname> is listening on 11002
-       port, rather than the standard 5432 port, you can do:
-       <programlisting>
- firewall-cmd --zone=public --remove-service=popstgresql --permanent
- firewall-cmd --zone=public --add-port=11002/tcp --permanent
- firewall-cmd --reload
-       </programlisting>
-     </para>
+  <para>
+   If <productname>PostgreSQL</productname> is listening on 11002
+   port, rather than the standard 5432 port, you can do:
+   <programlisting>
+    firewall-cmd --zone=public --remove-service=popstgresql --permanent
+    firewall-cmd --zone=public --add-port=11002/tcp --permanent
+    firewall-cmd --reload
+   </programlisting>
+  </para>
 
-   </sect2>
+ </sect2>
 
  </sect1>

@@ -17,7 +17,7 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pcp_node_count</refname>
   <refpurpose>
-  displays the total number of database nodes</refpurpose>
+   displays the total number of database nodes</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -32,28 +32,28 @@ Pgpool-II documentation
    Description
   </title>
   <para>
-  <command>pcp_node_count</command>
-  displays the total number of database nodes defined in <filename>pgpool.conf</filename>. It does
-  not distinguish between nodes status, ie attached/detached. ALL nodes are counted.
+   <command>pcp_node_count</command>
+   displays the total number of database nodes defined in <filename>pgpool.conf</filename>. It does
+   not distinguish between nodes status, ie attached/detached. ALL nodes are counted.
   </para>
  </refsect1>
 
  <refsect1>
   <title>Options</title>
-   <para>
-     See <xref linkend="pcp-common-options">.
-   </para>
+  <para>
+   See <xref linkend="pcp-common-options">.
+  </para>
  </refsect1>
 
  <refsect1>
   <title>Example</title>
-   <para>
-	Here is an example output:
-    <programlisting>
-$ pcp_node_count -p 11001
-Password:
-2
-    </programlisting>
-   </para>
+  <para>
+   Here is an example output:
+   <programlisting>
+    $ pcp_node_count -p 11001
+    Password:
+    2
+   </programlisting>
+  </para>
  </refsect1>
 </refentry>

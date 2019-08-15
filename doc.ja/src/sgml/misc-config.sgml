@@ -1,241 +1,241 @@
 <!-- doc/src/sgml/config.sgml -->
 
 <sect1 id="runtime-misc">
-<!--
-  <title>Misc Configuration Parameters</title>
--->
-  <title>その他の設定パラメータ</title>
+ <!--
+ <title>Misc Configuration Parameters</title>
+ -->
+ <title>その他の設定パラメータ</title>
 
-  <variablelist>
+ <variablelist>
 
-    <varlistentry id="guc-relcache-expire" xreflabel="relcache_expire">
-      <term><varname>relcache_expire</varname> (<type>integer</type>)
-        <indexterm>
-<!--
-          <primary><varname>relcache_expire</varname> configuration parameter</primary>
--->
-          <primary><varname>relcache_expire</varname> 設定パラメータ</primary>
-        </indexterm>
-      </term>
-      <listitem>
+  <varlistentry id="guc-relcache-expire" xreflabel="relcache_expire">
+   <term><varname>relcache_expire</varname> (<type>integer</type>)
+    <indexterm>
+     <!--
+     <primary><varname>relcache_expire</varname> configuration parameter</primary>
+     -->
+     <primary><varname>relcache_expire</varname> 設定パラメータ</primary>
+    </indexterm>
+   </term>
+   <listitem>
 
-        <para>
-<!--
-          Specifies the relation cache expiration time in seconds.
-          The relation cache is used for caching the query result of
-          <productname>PostgreSQL</> system catalogs that is used by <productname>Pgpool-II
-          </productname> to get various informations including the table
-          structures and to check table types(e.g. To check if the referred
-          table is a temporary table or not). The cache is maintained in
-          the local memory space of <productname>Pgpool-II</productname>
-          child process and its lifetime is same as of the child process.
-          So If the table is modified using <command>ALTER TABLE</command>
-          or some other means, the relcache becomes inconsistent.
-          For this purpose, <varname>relcache_expire</varname> controls
-          the life time of the cache.
-          Default is 0, which means the cache never expires.
--->
-リレーションキャッシュの寿命を秒単位で指定します。
-リレーションキャッシュは、<productname>Pgpool-II</productname>がテーブルの構造を含む様々な情報を取得したり、テーブルのタイプ（たとえば、参照されているテーブルが一時テーブルかどうかなど）をチェックするために使う<productname>PostgreSQL</>のシステムカタログの問い合わせ結果を保存しておくものです。
-キャッシュはpgpoolの子プロセスのローカルメモリ空間に保管されています。
-もし<command>ALTER TABLE</command>でテーブルが変更された場合などは、リレーションキャッシュと一致しなくなります。
-そのため、<varname>relcache_expire</varname>がキャッシュの寿命をコントロールしています。
-デフォルトは0で、キャッシュの期限が切れることはありません。
-        </para>
+    <para>
+     <!--
+     Specifies the relation cache expiration time in seconds.
+     The relation cache is used for caching the query result of
+     <productname>PostgreSQL</> system catalogs that is used by <productname>Pgpool-II
+    </productname> to get various informations including the table
+     structures and to check table types(e.g. To check if the referred
+     table is a temporary table or not). The cache is maintained in
+     the local memory space of <productname>Pgpool-II</productname>
+     child process and its lifetime is same as of the child process.
+     So If the table is modified using <command>ALTER TABLE</command>
+     or some other means, the relcache becomes inconsistent.
+     For this purpose, <varname>relcache_expire</varname> controls
+     the life time of the cache.
+     Default is 0, which means the cache never expires.
+     -->
+     リレーションキャッシュの寿命を秒単位で指定します。
+     リレーションキャッシュは、<productname>Pgpool-II</productname>がテーブルの構造を含む様々な情報を取得したり、テーブルのタイプ（たとえば、参照されているテーブルが一時テーブルかどうかなど）をチェックするために使う<productname>PostgreSQL</>のシステムカタログの問い合わせ結果を保存しておくものです。
+     キャッシュはpgpoolの子プロセスのローカルメモリ空間に保管されています。
+     もし<command>ALTER TABLE</command>でテーブルが変更された場合などは、リレーションキャッシュと一致しなくなります。
+     そのため、<varname>relcache_expire</varname>がキャッシュの寿命をコントロールしています。
+     デフォルトは0で、キャッシュの期限が切れることはありません。
+    </para>
 
-        <para>
-<!--
-          This parameter can only be set at server start.
--->
-このパラメータは、サーバ起動時にのみ設定できます。
-        </para>
+    <para>
+     <!--
+     This parameter can only be set at server start.
+     -->
+     このパラメータは、サーバ起動時にのみ設定できます。
+    </para>
 
-      </listitem>
-    </varlistentry>
+   </listitem>
+  </varlistentry>
 
-    <varlistentry id="guc-relcache-size" xreflabel="relcache_size">
-      <term><varname>relcache_size</varname> (<type>integer</type>)
-        <indexterm>
-<!--
-          <primary><varname>relcache_size</varname> configuration parameter</primary>
--->
-          <primary><varname>relcache_size</varname> 設定パラメータ</primary>
-        </indexterm>
-      </term>
-      <listitem>
+  <varlistentry id="guc-relcache-size" xreflabel="relcache_size">
+   <term><varname>relcache_size</varname> (<type>integer</type>)
+    <indexterm>
+     <!--
+     <primary><varname>relcache_size</varname> configuration parameter</primary>
+     -->
+     <primary><varname>relcache_size</varname> 設定パラメータ</primary>
+    </indexterm>
+   </term>
+   <listitem>
 
-        <para>
-<!--
-          Specifies the number of relcache entries.
-          Default is 256.
--->
-リレーションキャッシュのエントリ数を指定します。
-デフォルトは256です。
-        </para>
-        <note>
-          <para>
-<!--
-            If the below message frequently appears in the
-            <productname>Pgpool-II</productname> log, you may need to
-            increase the <varname>relcache_size</varname> for better performance.
--->
-もし以下のようなメッセージが<productname>Pgpool-II</productname>ログに頻繁に出る場合は、パフォーマンス向上のため<varname>relcache_size</varname>を大きくしてください。
-            <programlisting>
-"pool_search_relcache: cache replacement happened"
-            </programlisting>
-          </para>
-        </note>
-        <para>
-<!--
-          This parameter can only be set at server start.
--->
-このパラメータは、サーバ起動時にのみ設定できます。
-        </para>
+    <para>
+     <!--
+     Specifies the number of relcache entries.
+     Default is 256.
+     -->
+     リレーションキャッシュのエントリ数を指定します。
+     デフォルトは256です。
+    </para>
+    <note>
+     <para>
+      <!--
+      If the below message frequently appears in the
+      <productname>Pgpool-II</productname> log, you may need to
+      increase the <varname>relcache_size</varname> for better performance.
+      -->
+      もし以下のようなメッセージが<productname>Pgpool-II</productname>ログに頻繁に出る場合は、パフォーマンス向上のため<varname>relcache_size</varname>を大きくしてください。
+      <programlisting>
+       "pool_search_relcache: cache replacement happened"
+      </programlisting>
+     </para>
+    </note>
+    <para>
+     <!--
+     This parameter can only be set at server start.
+     -->
+     このパラメータは、サーバ起動時にのみ設定できます。
+    </para>
 
-      </listitem>
-    </varlistentry>
+   </listitem>
+  </varlistentry>
 
-    <varlistentry id="guc-check-temp-table" xreflabel="check_temp_table">
-      <term><varname>check_temp_table</varname> (<type>boolean</type>)
-        <indexterm>
-<!--
-          <primary><varname>check_temp_table</varname> configuration parameter</primary>
--->
-          <primary><varname>check_temp_table</varname> 設定パラメータ</primary>
-        </indexterm>
-      </term>
-      <listitem>
+  <varlistentry id="guc-check-temp-table" xreflabel="check_temp_table">
+   <term><varname>check_temp_table</varname> (<type>boolean</type>)
+    <indexterm>
+     <!--
+     <primary><varname>check_temp_table</varname> configuration parameter</primary>
+     -->
+     <primary><varname>check_temp_table</varname> 設定パラメータ</primary>
+    </indexterm>
+   </term>
+   <listitem>
 
-        <para>
-<!--
-          Setting to on, enables the temporary table check in the <acronym>SELECT</acronym>
-          statements. To check the temporary table <productname>Pgpool-II</productname>
-          queries the system catalog of primary/master <productname>PostgreSQL</> backend, which increases
-          the load on the primary/master server.
-          If you are absolutely sure that your system never uses temporary tables, then
-          you can safely turn off the <varname>check_temp_table</varname>.
-          Default is on.
--->
-onに設定されたとき、<acronym>SELECT</acronym>に含まれるテーブルが一時テーブルかどうかのチェックを行います。
-一時テーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/マスター<productname>PostgreSQL</>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
-もしシステムが決して一時テーブルを使用しないことが確かならば、安全に<varname>check_tmp_table</varname>をoffにすることができます。
-デフォルトはonです。
-        </para>
+    <para>
+     <!--
+     Setting to on, enables the temporary table check in the <acronym>SELECT</acronym>
+     statements. To check the temporary table <productname>Pgpool-II</productname>
+     queries the system catalog of primary/master <productname>PostgreSQL</> backend, which increases
+     the load on the primary/master server.
+     If you are absolutely sure that your system never uses temporary tables, then
+     you can safely turn off the <varname>check_temp_table</varname>.
+     Default is on.
+     -->
+     onに設定されたとき、<acronym>SELECT</acronym>に含まれるテーブルが一時テーブルかどうかのチェックを行います。
+     一時テーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/マスター<productname>PostgreSQL</>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
+     もしシステムが決して一時テーブルを使用しないことが確かならば、安全に<varname>check_tmp_table</varname>をoffにすることができます。
+     デフォルトはonです。
+    </para>
 
-        <para>
-<!--
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
-					this parameter for a current session.
--->
-このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
-現在のセッションでのパラメータ値は、<xref linkend="SQL-PGPOOL-SET">コマンドで変更することもできます。
-        </para>
+    <para>
+     <!--
+     This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+     this parameter for a current session.
+     -->
+     このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     現在のセッションでのパラメータ値は、<xref linkend="SQL-PGPOOL-SET">コマンドで変更することもできます。
+    </para>
 
-      </listitem>
-    </varlistentry>
+   </listitem>
+  </varlistentry>
 
-    <varlistentry id="guc-check-unlogged-table" xreflabel="check_unlogged_table">
-      <term><varname>check_unlogged_table</varname> (<type>boolean</type>)
-        <indexterm>
-<!--
-          <primary><varname>check_unlogged_table</varname> configuration parameter</primary>
--->
-          <primary><varname>check_unlogged_table</varname> 設定パラメータ</primary>
-        </indexterm>
-      </term>
-      <listitem>
+  <varlistentry id="guc-check-unlogged-table" xreflabel="check_unlogged_table">
+   <term><varname>check_unlogged_table</varname> (<type>boolean</type>)
+    <indexterm>
+     <!--
+     <primary><varname>check_unlogged_table</varname> configuration parameter</primary>
+     -->
+     <primary><varname>check_unlogged_table</varname> 設定パラメータ</primary>
+    </indexterm>
+   </term>
+   <listitem>
 
-        <para>
-<!--
-          Setting to on, enables the unlogged table check in the <acronym>SELECT</acronym>
-          statements. To check the unlogged table <productname>Pgpool-II</productname>
-          queries the system catalog of primary/master <productname>PostgreSQL</> backend which increases
-          the load on the primary/master server.
-          If you are absolutely sure that your system never uses the unlogged tables
-          (for example, you are using 9.0 or earlier version of <productname>PostgreSQL</>) then you
-          can safely turn off the <varname>check_unlogged_table</varname>.
-          Default is on.
--->
-onに設定されたとき、<acronym>SELECT</acronym>に含まれるテーブルがunloggedテーブルかどうかのチェックを行います。
-unloggedテーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/マスター<productname>PostgreSQL</>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
-もしシステムが決してunloggedテーブルを使用しないことが確かならば（たとえば、9.0 以前のバージョンの<productname>PostgreSQL</>を使っている）、安全に<varname>check_unlogged_table</varname>をoffにすることができます。
-デフォルトはonです。
-        </para>
+    <para>
+     <!--
+     Setting to on, enables the unlogged table check in the <acronym>SELECT</acronym>
+     statements. To check the unlogged table <productname>Pgpool-II</productname>
+     queries the system catalog of primary/master <productname>PostgreSQL</> backend which increases
+     the load on the primary/master server.
+     If you are absolutely sure that your system never uses the unlogged tables
+     (for example, you are using 9.0 or earlier version of <productname>PostgreSQL</>) then you
+     can safely turn off the <varname>check_unlogged_table</varname>.
+     Default is on.
+     -->
+     onに設定されたとき、<acronym>SELECT</acronym>に含まれるテーブルがunloggedテーブルかどうかのチェックを行います。
+     unloggedテーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/マスター<productname>PostgreSQL</>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
+     もしシステムが決してunloggedテーブルを使用しないことが確かならば（たとえば、9.0 以前のバージョンの<productname>PostgreSQL</>を使っている）、安全に<varname>check_unlogged_table</varname>をoffにすることができます。
+     デフォルトはonです。
+    </para>
 
-        <para>
-<!--
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-					You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
-					this parameter for a current session.
--->
-このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
-現在のセッションでのパラメータ値は、<xref linkend="SQL-PGPOOL-SET">コマンドで変更することもできます。
-        </para>
+    <para>
+     <!--
+     This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+     this parameter for a current session.
+     -->
+     このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     現在のセッションでのパラメータ値は、<xref linkend="SQL-PGPOOL-SET">コマンドで変更することもできます。
+    </para>
 
-      </listitem>
-    </varlistentry>
+   </listitem>
+  </varlistentry>
 
-    <varlistentry id="guc-pid-file-name" xreflabel="pid_file_name">
-      <term><varname>pid_file_name</varname> (<type>string</type>)
-        <indexterm>
-<!--
-          <primary><varname>pid_file_name</varname> configuration parameter</primary>
--->
-          <primary><varname>pid_file_name</varname> 設定パラメータ</primary>
-        </indexterm>
-      </term>
-      <listitem>
+  <varlistentry id="guc-pid-file-name" xreflabel="pid_file_name">
+   <term><varname>pid_file_name</varname> (<type>string</type>)
+    <indexterm>
+     <!--
+     <primary><varname>pid_file_name</varname> configuration parameter</primary>
+     -->
+     <primary><varname>pid_file_name</varname> 設定パラメータ</primary>
+    </indexterm>
+   </term>
+   <listitem>
 
-        <para>
-<!--
-          Specifies the full path to a file to store the <productname>Pgpool-II
-          </productname> process id.
-          Default is <literal>"/var/run/pgpool/pgpool.pid"</literal>.
--->
-<productname>Pgpool-II</productname>のプロセスIDを格納するファイルのフルパスを指定します。
-デフォルトは<literal>'/var/run/pgpool/pgpool.pid'</literal>です。
-        </para>
+    <para>
+     <!--
+     Specifies the full path to a file to store the <productname>Pgpool-II
+    </productname> process id.
+     Default is <literal>"/var/run/pgpool/pgpool.pid"</literal>.
+     -->
+     <productname>Pgpool-II</productname>のプロセスIDを格納するファイルのフルパスを指定します。
+     デフォルトは<literal>'/var/run/pgpool/pgpool.pid'</literal>です。
+    </para>
 
-        <para>
-<!--
-          This parameter can only be set at server start.
--->
-このパラメータは、サーバ起動時にのみ設定できます。
-        </para>
+    <para>
+     <!--
+     This parameter can only be set at server start.
+     -->
+     このパラメータは、サーバ起動時にのみ設定できます。
+    </para>
 
-      </listitem>
-    </varlistentry>
+   </listitem>
+  </varlistentry>
 
-    <varlistentry id="guc-logdir" xreflabel="logdir">
-      <term><varname>logdir</varname> (<type>string</type>)
-        <indexterm>
-<!--
-          <primary><varname>logdir</varname> configuration parameter</primary>
--->
-          <primary><varname>logdir</varname> 設定パラメータ</primary>
-        </indexterm>
-      </term>
-      <listitem>
+  <varlistentry id="guc-logdir" xreflabel="logdir">
+   <term><varname>logdir</varname> (<type>string</type>)
+    <indexterm>
+     <!--
+     <primary><varname>logdir</varname> configuration parameter</primary>
+     -->
+     <primary><varname>logdir</varname> 設定パラメータ</primary>
+    </indexterm>
+   </term>
+   <listitem>
 
-        <para>
-<!--
-          Specifies the full path to a directory to store the <literal>pgpool_status</literal>.
-          Default is <literal>"/tmp"</literal>.
--->
-<literal>pgpool_status</literal>ファイルを格納するディレクトリのフルパスを指定します。
-デフォルトは<literal>"/tmp"</literal>です。
-        </para>
+    <para>
+     <!--
+     Specifies the full path to a directory to store the <literal>pgpool_status</literal>.
+     Default is <literal>"/tmp"</literal>.
+     -->
+     <literal>pgpool_status</literal>ファイルを格納するディレクトリのフルパスを指定します。
+     デフォルトは<literal>"/tmp"</literal>です。
+    </para>
 
-        <para>
-<!--
-          This parameter can only be set at server start.
--->
-このパラメータは、サーバ起動時にのみ設定できます。
-        </para>
+    <para>
+     <!--
+     This parameter can only be set at server start.
+     -->
+     このパラメータは、サーバ起動時にのみ設定できます。
+    </para>
 
-      </listitem>
-    </varlistentry>
+   </listitem>
+  </varlistentry>
 
-  </variablelist>
+ </variablelist>
 </sect1>

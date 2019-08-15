@@ -3,91 +3,91 @@
 <sect1 id="runtime-config-failover">
  <title>Failover and Failback</title>
 
-   <para>
-     Failover means automatically
-     detaching <productname>PostgreSQL</productname>backend node which
-     is not accessible by <productname>Pgpool-II</productname>.  This
-     happens automatically regardless the configuration parameter
-     settings and is so called <emphasis>automatic failover</emphasis>
-     process. <productname>Pgpool-II</productname> confirms the
-     inacceibility of <productname>PostgreSQL</productname> backend
-     node by using following methods:
+ <para>
+  Failover means automatically
+  detaching <productname>PostgreSQL</productname>backend node which
+  is not accessible by <productname>Pgpool-II</productname>.  This
+  happens automatically regardless the configuration parameter
+  settings and is so called <emphasis>automatic failover</emphasis>
+  process. <productname>Pgpool-II</productname> confirms the
+  inacceibility of <productname>PostgreSQL</productname> backend
+  node by using following methods:
 
-     <itemizedlist>
-       <listitem>
-	 <para>
-	   Regular health check process
-	   (see <xref linkend="runtime-config-health-check"> for more
-	   details). The heath check process tries to connect
-	   from <productname>Pgpool-II</productname>
-	   to <productname>PostgreSQL</productname> node to confirm
-	   its healthiness. If it fails to connect, it is possible
-	   that there's something wrong with network connection
-	   between <productname>Pgpool-II</productname>
-	   and <productname>PostgreSQL</productname>,
-	   and/or <productname>PostgreSQL</productname> does not work
-	   properly. <productname>Pgpool-II</productname> does not
-	   distinguish each case and just decides that the
-	   particular <productname>PostgreSQL</productname> node is
-	   not available if health check fails.
-	 </para>
-       </listitem>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Regular health check process
+     (see <xref linkend="runtime-config-health-check"> for more
+      details). The heath check process tries to connect
+      from <productname>Pgpool-II</productname>
+      to <productname>PostgreSQL</productname> node to confirm
+      its healthiness. If it fails to connect, it is possible
+      that there's something wrong with network connection
+      between <productname>Pgpool-II</productname>
+      and <productname>PostgreSQL</productname>,
+      and/or <productname>PostgreSQL</productname> does not work
+      properly. <productname>Pgpool-II</productname> does not
+      distinguish each case and just decides that the
+      particular <productname>PostgreSQL</productname> node is
+      not available if health check fails.
+    </para>
+   </listitem>
 
-       <listitem>
-	 <para>
-	   An error occurs while connecting
-	   to <productname>PostgreSQL</productname>, or network level
-	   erros occur while communicating with it.
-	   <productname>Pgpool-II</productname> will just disconnect
-	   the session to client
-	   if <xref linkend="guc-failover-on-backend-error"> is off in
-	   that case However.
-	 </para>
-       </listitem>
+   <listitem>
+    <para>
+     An error occurs while connecting
+     to <productname>PostgreSQL</productname>, or network level
+     erros occur while communicating with it.
+     <productname>Pgpool-II</productname> will just disconnect
+     the session to client
+     if <xref linkend="guc-failover-on-backend-error"> is off in
+      that case However.
+    </para>
+   </listitem>
 
-       <listitem>
-	 <para>
-	   In the case When clients already connect
-	   to <productname>Pgpool-II</productname>
-	   and <productname>PostgreSQL</productname> is shutdown
-	   (please note that if no client connects
-	   to <productname>Pgpool-II</productname> at all, shutting
-	   down of <productname>PostgreSQL</productname> does not
-	   trigger a failover).
-	 </para>
-       </listitem>
-     </itemizedlist>
+   <listitem>
+    <para>
+     In the case When clients already connect
+     to <productname>Pgpool-II</productname>
+     and <productname>PostgreSQL</productname> is shutdown
+     (please note that if no client connects
+     to <productname>Pgpool-II</productname> at all, shutting
+     down of <productname>PostgreSQL</productname> does not
+     trigger a failover).
+    </para>
+   </listitem>
+  </itemizedlist>
 
-   </para>
+ </para>
 
-   <para>
-     If <xref linkend="guc-failover-command"> is configured and a
-     failover happens, <xref linkend="guc-failover-command"> gets
-     executed. <xref linkend="guc-failover-command"> should be
+ <para>
+  If <xref linkend="guc-failover-command"> is configured and a
+   failover happens, <xref linkend="guc-failover-command"> gets
+    executed. <xref linkend="guc-failover-command"> should be
      provided by user and the major role is choosing new primary
      server from existing standby servers and promoting it for
      example. Another example would be let the administrator know that
      a failover happens by sending a mail.
-   </para>
+ </para>
 
-   <para>
-     While a failover could happen when a failure occurs, it is
-     possible to trigger it by hand. This is called a <emphasis>switch
-     over</emphasis>. For instance, switching over
-     a <productname>PostgreSQL</productname> to take its backup would
-     be possible. Note that switching over just sets the status to
-     down and never bringing <productname>PostgreSQL</productname>
-     down. A switch over can be triggered by
-     using <xref linkend="PCP-DETACH-NODE"> command.
-   </para>
+ <para>
+  While a failover could happen when a failure occurs, it is
+  possible to trigger it by hand. This is called a <emphasis>switch
+   over</emphasis>. For instance, switching over
+  a <productname>PostgreSQL</productname> to take its backup would
+  be possible. Note that switching over just sets the status to
+  down and never bringing <productname>PostgreSQL</productname>
+  down. A switch over can be triggered by
+  using <xref linkend="PCP-DETACH-NODE"> command.
+ </para>
 
-   <para>
-     A <productname>PostgreSQL</productname> node detached by failover
-     or switch over will never return to the previous state (attached
-     state). Restarting <productname>Pgpool-II</productname> with -D
-     option or running <xref linkend="PCP-ATTACH-NODE"> makes it to
-     the attached state.
-   </para>
+ <para>
+  A <productname>PostgreSQL</productname> node detached by failover
+  or switch over will never return to the previous state (attached
+  state). Restarting <productname>Pgpool-II</productname> with -D
+  option or running <xref linkend="PCP-ATTACH-NODE"> makes it to
+   the attached state.
+ </para>
 
  <sect2 id="runtime-config-failover-settings">
 
@@ -95,508 +95,508 @@
 
   <variablelist>
 
-    <varlistentry id="guc-failover-command" xreflabel="failover_command">
-      <term><varname>failover_command</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>failover_command</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Specifies a user command to run when a <productname>PostgreSQL</> backend node gets detached.
-          <productname>Pgpool-II</productname> replaces the following special characters
-          with the backend specific information.
-        </para>
+   <varlistentry id="guc-failover-command" xreflabel="failover_command">
+    <term><varname>failover_command</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>failover_command</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies a user command to run when a <productname>PostgreSQL</> backend node gets detached.
+      <productname>Pgpool-II</productname> replaces the following special characters
+      with the backend specific information.
+     </para>
 
-        <table id="failover-command-table">
-          <title>failover command options</title>
-          <tgroup cols="2">
-            <thead>
-              <row>
-                <entry>Special character</entry>
-                <entry>Description</entry>
-              </row>
-            </thead>
+     <table id="failover-command-table">
+      <title>failover command options</title>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Special character</entry>
+	 <entry>Description</entry>
+	</row>
+       </thead>
 
-            <tbody>
-              <row>
-                <entry>%d</entry>
-                <entry>DB node ID of the detached node</entry>
-              </row>
-              <row>
-                <entry>%h</entry>
-                <entry>Hostname of the detached node</entry>
-              </row>
-              <row>
-                <entry>%p</entry>
-                <entry>Port number of the detached node</entry>
-              </row>
-              <row>
-                <entry>%D</entry>
-                <entry>Database cluster directory of the detached node</entry>
-              </row>
-              <row>
-                <entry>%M</entry>
-                <entry>Old master node ID</entry>
-              </row>
-              <row>
-                <entry>%m</entry>
-                <entry>	New master node ID</entry>
-              </row>
-              <row>
-                <entry>%H</entry>
-                <entry>Hostname of the new master node</entry>
-              </row>
-              <row>
-                <entry>%P</entry>
-                <entry>	Old primary node ID</entry>
-              </row>
-              <row>
-                <entry>%r</entry>
-                <entry>Port number of the new master node</entry>
-              </row>
-              <row>
-                <entry>%R</entry>
-                <entry>Database cluster directory of the new master node</entry>
-              </row>
-              <row>
-                <entry>%%</entry>
-                <entry>	'%' character</entry>
-              </row>
+       <tbody>
+	<row>
+	 <entry>%d</entry>
+	 <entry>DB node ID of the detached node</entry>
+	</row>
+	<row>
+	 <entry>%h</entry>
+	 <entry>Hostname of the detached node</entry>
+	</row>
+	<row>
+	 <entry>%p</entry>
+	 <entry>Port number of the detached node</entry>
+	</row>
+	<row>
+	 <entry>%D</entry>
+	 <entry>Database cluster directory of the detached node</entry>
+	</row>
+	<row>
+	 <entry>%M</entry>
+	 <entry>Old master node ID</entry>
+	</row>
+	<row>
+	 <entry>%m</entry>
+	 <entry>	New master node ID</entry>
+	</row>
+	<row>
+	 <entry>%H</entry>
+	 <entry>Hostname of the new master node</entry>
+	</row>
+	<row>
+	 <entry>%P</entry>
+	 <entry>	Old primary node ID</entry>
+	</row>
+	<row>
+	 <entry>%r</entry>
+	 <entry>Port number of the new master node</entry>
+	</row>
+	<row>
+	 <entry>%R</entry>
+	 <entry>Database cluster directory of the new master node</entry>
+	</row>
+	<row>
+	 <entry>%%</entry>
+	 <entry>	'%' character</entry>
+	</row>
 
-            </tbody>
-          </tgroup>
-        </table>
+       </tbody>
+      </tgroup>
+     </table>
 
-	<note>
-	  <para>
-	    The "master node" refers to a node which has the
-	    "youngest (or the smallest) node id" among live the
-	    database nodes. In <link linkend="running-mode">streaming
-	    replication mode</link>, this may be different from
-	    primary node. In <xref linkend="failover-command-table">,
-	    %m is the new master node chosen
-	    by <productname>Pgpool-II</productname>. It is the node
-	    being assigned the youngest (smallest) node id which is
-	    alive. For example if you have 3 nodes, namely node 0, 1,
-	    2. Suppose node 1 the primary and all of them are healthy
-	    (no down node). If node 1 fails, failover_command is
-	    called with %m = 0.
-	  </para>
-	</note>
+     <note>
+      <para>
+       The "master node" refers to a node which has the
+       "youngest (or the smallest) node id" among live the
+       database nodes. In <link linkend="running-mode">streaming
+	replication mode</link>, this may be different from
+       primary node. In <xref linkend="failover-command-table">,
+	%m is the new master node chosen
+	by <productname>Pgpool-II</productname>. It is the node
+	being assigned the youngest (smallest) node id which is
+	alive. For example if you have 3 nodes, namely node 0, 1,
+	2. Suppose node 1 the primary and all of them are healthy
+	(no down node). If node 1 fails, failover_command is
+	called with %m = 0.
+      </para>
+     </note>
 
-        <note>
-          <para>
-            When a failover is performed,
-            basically <productname>Pgpool-II</productname> kills all
-            its child processes, which will in turn terminate all the
-            active sessions to
-            <productname>Pgpool-II</productname>. After that <productname>Pgpool-II</productname>
-            invokes the <command>failover_command</command> and after the command completion
-            <productname>Pgpool-II</productname> starts new child processes
-            which makes it ready again to accept client connections.
-          </para>
-	  <para>
-	    However from <productname>Pgpool-II</productname> 3.6, in
-	    the steaming replication mode, client sessions will not be
-	    disconnected when a failover occurs any more if the
-	    session does not use the failed standby server. If the
-	    primary server goes down, still all sessions will be
-	    disconnected. Health check timeout case will also cause
-	    the full session disconnection. Other health check error,
-	    including retry over case does not trigger full session
-	    disconnection.
-	  </para>
-        </note>
+     <note>
+      <para>
+       When a failover is performed,
+       basically <productname>Pgpool-II</productname> kills all
+       its child processes, which will in turn terminate all the
+       active sessions to
+       <productname>Pgpool-II</productname>. After that <productname>Pgpool-II</productname>
+       invokes the <command>failover_command</command> and after the command completion
+       <productname>Pgpool-II</productname> starts new child processes
+       which makes it ready again to accept client connections.
+      </para>
+      <para>
+       However from <productname>Pgpool-II</productname> 3.6, in
+       the steaming replication mode, client sessions will not be
+       disconnected when a failover occurs any more if the
+       session does not use the failed standby server. If the
+       primary server goes down, still all sessions will be
+       disconnected. Health check timeout case will also cause
+       the full session disconnection. Other health check error,
+       including retry over case does not trigger full session
+       disconnection.
+      </para>
+     </note>
 
-	<note>
-	  <para>
-	    You can run <command>psql</command> (or whatever command)
-	    against backend to retrieve some information in the
-	    script, but you cannot run <command>psql</command> against
-	    <productname>Pgpool-II</productname> itself, since the
-	    script is called from <productname>Pgpool-II</productname>
-	    and it needs to run
-	    while <productname>Pgpool-II</productname> is working on
-	    failover.
-	  </para>
-	</note>
+     <note>
+      <para>
+       You can run <command>psql</command> (or whatever command)
+       against backend to retrieve some information in the
+       script, but you cannot run <command>psql</command> against
+       <productname>Pgpool-II</productname> itself, since the
+       script is called from <productname>Pgpool-II</productname>
+       and it needs to run
+       while <productname>Pgpool-II</productname> is working on
+       failover.
+      </para>
+     </note>
 
-        <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-        </para>
-      </listitem>
-    </varlistentry>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
-  <varlistentry id="guc-failback-command" xreflabel="failback_command">
-      <term><varname>failback_command</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>failback_command</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Specifies a user command to run when a <productname>PostgreSQL</> backend node gets attached to
-          <productname>Pgpool-II</productname>. <productname>Pgpool-II</productname>
-          replaces the following special characters with the backend specific information.
-          before excuting the command.
-        </para>
+   <varlistentry id="guc-failback-command" xreflabel="failback_command">
+    <term><varname>failback_command</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>failback_command</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies a user command to run when a <productname>PostgreSQL</> backend node gets attached to
+      <productname>Pgpool-II</productname>. <productname>Pgpool-II</productname>
+      replaces the following special characters with the backend specific information.
+      before excuting the command.
+     </para>
 
-        <table id="ffailback-command-table">
-          <title>failback command options</title>
-          <tgroup cols="2">
-            <thead>
-              <row>
-                <entry>Special character</entry>
-                <entry>Description</entry>
-              </row>
-            </thead>
+     <table id="ffailback-command-table">
+      <title>failback command options</title>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Special character</entry>
+	 <entry>Description</entry>
+	</row>
+       </thead>
 
-            <tbody>
-              <row>
-                <entry>%d</entry>
-                <entry>DB node ID of the attached node</entry>
-              </row>
-              <row>
-                <entry>%h</entry>
-                <entry>Hostname of the attached node</entry>
-              </row>
-              <row>
-                <entry>%p</entry>
-                <entry>Port number of the attached node</entry>
-              </row>
-              <row>
-                <entry>%D</entry>
-                <entry>Database cluster directory of the attached node</entry>
-              </row>
-              <row>
-                <entry>%M</entry>
-                <entry>Old master node ID</entry>
-              </row>
-              <row>
-                <entry>%m</entry>
-                <entry>	New master node ID</entry>
-              </row>
-              <row>
-                <entry>%H</entry>
-                <entry>Hostname of the new master node</entry>
-              </row>
-              <row>
-                <entry>%P</entry>
-                <entry>	Current primary node ID</entry>
-              </row>
-              <row>
-                <entry>%r</entry>
-                <entry>Port number of the new master node</entry>
-              </row>
-              <row>
-                <entry>%R</entry>
-                <entry>Database cluster directory of the new master node</entry>
-              </row>
-              <row>
-                <entry>%%</entry>
-                <entry>	'%' character</entry>
-              </row>
+       <tbody>
+	<row>
+	 <entry>%d</entry>
+	 <entry>DB node ID of the attached node</entry>
+	</row>
+	<row>
+	 <entry>%h</entry>
+	 <entry>Hostname of the attached node</entry>
+	</row>
+	<row>
+	 <entry>%p</entry>
+	 <entry>Port number of the attached node</entry>
+	</row>
+	<row>
+	 <entry>%D</entry>
+	 <entry>Database cluster directory of the attached node</entry>
+	</row>
+	<row>
+	 <entry>%M</entry>
+	 <entry>Old master node ID</entry>
+	</row>
+	<row>
+	 <entry>%m</entry>
+	 <entry>	New master node ID</entry>
+	</row>
+	<row>
+	 <entry>%H</entry>
+	 <entry>Hostname of the new master node</entry>
+	</row>
+	<row>
+	 <entry>%P</entry>
+	 <entry>	Current primary node ID</entry>
+	</row>
+	<row>
+	 <entry>%r</entry>
+	 <entry>Port number of the new master node</entry>
+	</row>
+	<row>
+	 <entry>%R</entry>
+	 <entry>Database cluster directory of the new master node</entry>
+	</row>
+	<row>
+	 <entry>%%</entry>
+	 <entry>	'%' character</entry>
+	</row>
 
-            </tbody>
-          </tgroup>
-        </table>
+       </tbody>
+      </tgroup>
+     </table>
 
-	<note>
-	  <para>
-	    You can run <command>psql</command> (or whatever command)
-	    against backend to retrieve some information in the
-	    script, but you cannot run <command>psql</command> against
-	    <productname>Pgpool-II</productname> itself, since the
-	    script is called from <productname>Pgpool-II</productname>
-	    and it needs to run
-	    while <productname>Pgpool-II</productname> is working on
-	    failover.
-	  </para>
-	</note>
+     <note>
+      <para>
+       You can run <command>psql</command> (or whatever command)
+       against backend to retrieve some information in the
+       script, but you cannot run <command>psql</command> against
+       <productname>Pgpool-II</productname> itself, since the
+       script is called from <productname>Pgpool-II</productname>
+       and it needs to run
+       while <productname>Pgpool-II</productname> is working on
+       failover.
+      </para>
+     </note>
 
-        <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-        </para>
-      </listitem>
-    </varlistentry>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
-    <varlistentry id="guc-follow-master-command" xreflabel="follow_master_command">
-      <term><varname>follow_master_command</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>follow_master_command</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
+   <varlistentry id="guc-follow-master-command" xreflabel="follow_master_command">
+    <term><varname>follow_master_command</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>follow_master_command</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
 
-        <para>
-          Specifies a user command to run after failover on the
-	  primary node failover. In case of standby node failover, the
-	  command will not be executed. This command also runs if a
-	  node promote request is issued by
-	  <xref linkend="PCP-PROMOTE-NODE"> command. This works only
-	  in Master Replication mode with streaming replication.
-	</para>
+     <para>
+      Specifies a user command to run after failover on the
+      primary node failover. In case of standby node failover, the
+      command will not be executed. This command also runs if a
+      node promote request is issued by
+      <xref linkend="PCP-PROMOTE-NODE"> command. This works only
+       in Master Replication mode with streaming replication.
+     </para>
 
-	<para>
-	  Since the command is executed within a child process forked
-	  off by <productname>Pgpool-II</productname> after failover
-	  is completed, execution of follow master command does not
-	  block the service
-	  of <productname>Pgpool-II</productname>. Here is a pseud
-	  code to illustrate how the command is executed:
+     <para>
+      Since the command is executed within a child process forked
+      off by <productname>Pgpool-II</productname> after failover
+      is completed, execution of follow master command does not
+      block the service
+      of <productname>Pgpool-II</productname>. Here is a pseud
+      code to illustrate how the command is executed:
+      <programlisting>
+       for each backend node
+       {
+       if (the node is not the new primary)
+       set down node status to shared memory status
+       memorize that follow master command is needed to execute
+       }
+       if (we need to executed follow master command)
+       fork a child process
+       (within the child process)
+
+       for each backend node
+       if (the node status in shared memory is down)
+       execute follow master command
+      </programlisting>
+     </para>
+
+     <para>
+      <productname>Pgpool-II</productname> replaces the following special characters
+      with the backend specific information before executing the command.
+     </para>
+
+     <table id="follow-master-command-table">
+      <title>follow master command options</title>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Special character</entry>
+	 <entry>Description</entry>
+	</row>
+       </thead>
+
+       <tbody>
+	<row>
+	 <entry>%d</entry>
+	 <entry>DB node ID of the detached node</entry>
+	</row>
+	<row>
+	 <entry>%h</entry>
+	 <entry>Hostname of the detached node</entry>
+	</row>
+	<row>
+	 <entry>%p</entry>
+	 <entry>Port number of the detached node</entry>
+	</row>
+	<row>
+	 <entry>%D</entry>
+	 <entry>Database cluster directory of the detached node</entry>
+	</row>
+	<row>
+	 <entry>%M</entry>
+	 <entry>Old master node ID</entry>
+	</row>
+	<row>
+	 <entry>%m</entry>
+	 <entry>	New primary node ID</entry>
+	</row>
+	<row>
+	 <entry>%H</entry>
+	 <entry>Hostname of the new primary node</entry>
+	</row>
+	<row>
+	 <entry>%P</entry>
+	 <entry>	Old primary node ID</entry>
+	</row>
+	<row>
+	 <entry>%r</entry>
+	 <entry>Port number of the new primary node</entry>
+	</row>
+	<row>
+	 <entry>%R</entry>
+	 <entry>Database cluster directory of the new primary node</entry>
+	</row>
+	<row>
+	 <entry>%%</entry>
+	 <entry>	'%' character</entry>
+	</row>
+
+       </tbody>
+      </tgroup>
+     </table>
+
+     <note>
+      <para>
+       If <varname>follow_master_command</varname> is not empty, then after failover
+       on the primary node gets completed in Master Slave mode with streaming replication,
+       <productname>Pgpool-II</productname> degenerates all nodes excepted the new primary
+       and starts new child processes to be ready again to accept connections from the clients.
+       After this, <productname>Pgpool-II</productname> executes the command configured
+       in the <varname>follow_master_command</varname> for each degenerated backend nodes.
+      </para>
+     </note>
+     <para>
+      Typically <varname>follow_master_command</varname> command is used to recover
+      the slave from the new primary by calling the pcp_recovery_node command.
+     </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-failover-on-backend-error" xreflabel="failover_on_backend_error">
+    <term><varname>failover_on_backend_error</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>failover_on_backend_error</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When set to on, <productname>Pgpool-II</productname> considers the reading/writing
+      errors on the PostgreSQL backend connection as the backend node failure and trigger the
+      failover on that node after disconnecting the current session.
+      When this is set to off, <productname>Pgpool-II</productname> only report an error
+      and disconnect the session in case of such errors.
+     </para>
+     <note>
+      <para>
+       It is recommended to turn on the backend health checking
+       (see <xref linkend="runtime-config-health-check">)
+	when <varname>failover_on_backend_error</varname> is set to off.
+	Note, however, that <productname>Pgpool-II</productname> still triggers the
+	failover when it detects the administrative shutdown of
+	<productname>PostgreSQL</> backend server.
+	If you want to avoid a fail over even in this case, you need to specify DISALLOW_TO_FAILOVER on <xref linkend="guc-backend-flag">.
+      </para>
+     </note>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+     <note>
+      <para>
+       Prior to <productname>Pgpool-II</productname> <emphasis>V4.0</emphasis>,
+       this configuration parameter name was <varname>fail</varname><emphasis>_</emphasis><varname>over_on_backend_error</varname>.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-search-primary-node-timeout" xreflabel="search_primary_node_timeout">
+    <term><varname>search_primary_node_timeout</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>search_primary_node_timeout</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the maximum amount of time in seconds to search for the
+      primary node when a failover scenario occurs.
+      <productname>Pgpool-II</productname> will give up looking for the primary
+      node if it is not found with-in this configured time.
+      Default is 300 and Setting this parameter to 0 means keep trying forever.
+     </para>
+     <para>
+      This parameter is only applicable in the streaming replication mode.
+     </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-detach-false-primary" xreflabel="detach_false_primary">
+    <term><varname>detach_false_primary</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>detach_false_primary</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      If set to on, detach false primary node. The default is
+      off. This parameter is only valid in streaming replication
+      mode and for <productname>PostgreSQL</productname> 9.6 or
+      after since this feature
+      uses <function>pg_stat_wal_receiver</function>.
+      If <productname>PostgreSQL</productname> 9.5.x or older
+      version is used, no error is raised, just the feature is
+      ignored.
+     </para>
+     <para>
+      If there's no primary node, no checking will be performed.
+     </para>
+     <para>
+      If there's no standby node, and there's only one primary
+      node, no checking will be performed.
+     </para>
+     <para>
+      If there's no standby node, and there's multiple primary
+      nodes, leave the primary node which has the youngest node
+      id and detach rest of primary nodes.
+     </para>
+     <para>
+      If there are one or more primaries and one or more standbys,
+      check the connectivity between primary and standby nodes by
+      using <function>pg_stat_wal_receiver</function>
+      if <productname>PostgreSQL</productname> 9.6 or after. In
+      this case if a primary node connects to all standby nodes,
+      the primary is regarded as "true" primary. Other primaries
+      are regarded as "false" primary and the false primaries will
+      be detached if <varname>detach_false_primary</varname> is
+      true.  If no "true" primary is found, nothing will happen.
+     </para>
+     <para>
+      When <productname>Pgpool-II</productname> starts, the
+      checking of false primaries are performed only once in
+      the <productname>Pgpool-II</productname> main
+      process. If <xref linkend="guc-sr-check-period"> is greater
+       than 0, the false primaries checking will be performed at
+       the same timing of streaming replication delay checking.
+     </para>
+
+     <note>
+      <para>
+       <xref linkend="guc-sr-check-user"> must
+	be <productname>PostgreSQL</productname> super user or
+	in "pg_monitor" group to use this feature. To
+	make <xref linkend="guc-sr-check-user"> in pg_monitor
+	 group, execute following SQL command
+	 by <productname>PostgreSQL</productname> super user
+	 (replace "sr_check_user" with the setting
+	 of <xref linkend="guc-sr-check-user">):
 	  <programlisting>
-for each backend node
-{
-    if (the node is not the new primary)
-        set down node status to shared memory status
-        memorize that follow master command is needed to execute
-}
-if (we need to executed follow master command)
-    fork a child process
-    (within the child process)
-
-    for each backend node
-        if (the node status in shared memory is down)
-            execute follow master command
+	   GRANT pg_monitor TO sr_check_user;
 	  </programlisting>
-	</para>
+	  For <productname>PostgreSQL</productname> 9.6, there's
+	  no pg_monitor group
+	  and <xref linkend="guc-sr-check-user"> must
+	   be <productname>PostgreSQL</productname> super user.
+      </para>
+     </note>
 
-	<para>
-          <productname>Pgpool-II</productname> replaces the following special characters
-          with the backend specific information before executing the command.
-        </para>
+     <para>
+      This parameter is only applicable in the streaming replication mode.
+     </para>
+     <para>
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+     </para>
 
-        <table id="follow-master-command-table">
-          <title>follow master command options</title>
-          <tgroup cols="2">
-            <thead>
-              <row>
-                <entry>Special character</entry>
-                <entry>Description</entry>
-              </row>
-            </thead>
+     <para>
+      <figure>
+       <title>Detecting false primaries</title>
+       <mediaobject>
+	<imageobject>
+	 <imagedata fileref="detach_false_primary.gif">
+	</imageobject>
+       </mediaobject>
+      </figure>
+     </para>
 
-            <tbody>
-              <row>
-                <entry>%d</entry>
-                <entry>DB node ID of the detached node</entry>
-              </row>
-              <row>
-                <entry>%h</entry>
-                <entry>Hostname of the detached node</entry>
-              </row>
-              <row>
-                <entry>%p</entry>
-                <entry>Port number of the detached node</entry>
-              </row>
-              <row>
-                <entry>%D</entry>
-                <entry>Database cluster directory of the detached node</entry>
-              </row>
-              <row>
-                <entry>%M</entry>
-                <entry>Old master node ID</entry>
-              </row>
-              <row>
-                <entry>%m</entry>
-                <entry>	New primary node ID</entry>
-              </row>
-              <row>
-                <entry>%H</entry>
-                <entry>Hostname of the new primary node</entry>
-              </row>
-              <row>
-                <entry>%P</entry>
-                <entry>	Old primary node ID</entry>
-              </row>
-              <row>
-                <entry>%r</entry>
-                <entry>Port number of the new primary node</entry>
-              </row>
-              <row>
-                <entry>%R</entry>
-                <entry>Database cluster directory of the new primary node</entry>
-              </row>
-              <row>
-                <entry>%%</entry>
-                <entry>	'%' character</entry>
-              </row>
-
-            </tbody>
-          </tgroup>
-        </table>
-
-        <note>
-        <para>
-          If <varname>follow_master_command</varname> is not empty, then after failover
-          on the primary node gets completed in Master Slave mode with streaming replication,
-          <productname>Pgpool-II</productname> degenerates all nodes excepted the new primary
-          and starts new child processes to be ready again to accept connections from the clients.
-          After this, <productname>Pgpool-II</productname> executes the command configured
-          in the <varname>follow_master_command</varname> for each degenerated backend nodes.
-        </para>
-        </note>
-        <para>
-          Typically <varname>follow_master_command</varname> command is used to recover
-          the slave from the new primary by calling the pcp_recovery_node command.
-        </para>
-        <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-        </para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry id="guc-failover-on-backend-error" xreflabel="failover_on_backend_error">
-      <term><varname>failover_on_backend_error</varname> (<type>boolean</type>)
-        <indexterm>
-          <primary><varname>failover_on_backend_error</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          When set to on, <productname>Pgpool-II</productname> considers the reading/writing
-          errors on the PostgreSQL backend connection as the backend node failure and trigger the
-          failover on that node after disconnecting the current session.
-          When this is set to off, <productname>Pgpool-II</productname> only report an error
-          and disconnect the session in case of such errors.
-        </para>
-        <note>
-          <para>
-            It is recommended to turn on the backend health checking
-            (see <xref linkend="runtime-config-health-check">)
-            when <varname>failover_on_backend_error</varname> is set to off.
-            Note, however, that <productname>Pgpool-II</productname> still triggers the
-            failover when it detects the administrative shutdown of
-            <productname>PostgreSQL</> backend server.
-            If you want to avoid a fail over even in this case, you need to specify DISALLOW_TO_FAILOVER on <xref linkend="guc-backend-flag">.
-          </para>
-        </note>
-        <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-        </para>
-        <note>
-        <para>
-            Prior to <productname>Pgpool-II</productname> <emphasis>V4.0</emphasis>,
-            this configuration parameter name was <varname>fail</varname><emphasis>_</emphasis><varname>over_on_backend_error</varname>.
-        </para>
-        </note>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry id="guc-search-primary-node-timeout" xreflabel="search_primary_node_timeout">
-      <term><varname>search_primary_node_timeout</varname> (<type>integer</type>)
-        <indexterm>
-          <primary><varname>search_primary_node_timeout</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Specifies the maximum amount of time in seconds to search for the
-          primary node when a failover scenario occurs.
-          <productname>Pgpool-II</productname> will give up looking for the primary
-          node if it is not found with-in this configured time.
-          Default is 300 and Setting this parameter to 0 means keep trying forever.
-        </para>
-        <para>
-          This parameter is only applicable in the streaming replication mode.
-        </para>
-        <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-        </para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry id="guc-detach-false-primary" xreflabel="detach_false_primary">
-      <term><varname>detach_false_primary</varname> (<type>boolean</type>)
-        <indexterm>
-          <primary><varname>detach_false_primary</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-	  If set to on, detach false primary node. The default is
-          off. This parameter is only valid in streaming replication
-          mode and for <productname>PostgreSQL</productname> 9.6 or
-          after since this feature
-          uses <function>pg_stat_wal_receiver</function>.
-          If <productname>PostgreSQL</productname> 9.5.x or older
-          version is used, no error is raised, just the feature is
-          ignored.
-	</para>
-	<para>
-	  If there's no primary node, no checking will be performed.
-	</para>
-	<para>
-	  If there's no standby node, and there's only one primary
-	  node, no checking will be performed.
-	</para>
-	<para>
-	  If there's no standby node, and there's multiple primary
-	  nodes, leave the primary node which has the youngest node
-	  id and detach rest of primary nodes.
-	</para>
-	<para>
-	  If there are one or more primaries and one or more standbys,
-	  check the connectivity between primary and standby nodes by
-	  using <function>pg_stat_wal_receiver</function>
-	  if <productname>PostgreSQL</productname> 9.6 or after. In
-	  this case if a primary node connects to all standby nodes,
-	  the primary is regarded as "true" primary. Other primaries
-	  are regarded as "false" primary and the false primaries will
-	  be detached if <varname>detach_false_primary</varname> is
-	  true.  If no "true" primary is found, nothing will happen.
-        </para>
-	<para>
-	  When <productname>Pgpool-II</productname> starts, the
-	  checking of false primaries are performed only once in
-	  the <productname>Pgpool-II</productname> main
-	  process. If <xref linkend="guc-sr-check-period"> is greater
-	  than 0, the false primaries checking will be performed at
-	  the same timing of streaming replication delay checking.
-	</para>
-
-	<note>
-	  <para>
-	    <xref linkend="guc-sr-check-user"> must
-	      be <productname>PostgreSQL</productname> super user or
-	      in "pg_monitor" group to use this feature. To
-	      make <xref linkend="guc-sr-check-user"> in pg_monitor
-	      group, execute following SQL command
-	      by <productname>PostgreSQL</productname> super user
-	      (replace "sr_check_user" with the setting
-	      of <xref linkend="guc-sr-check-user">):
-	      <programlisting>
-GRANT pg_monitor TO sr_check_user;
-	      </programlisting>
-	      For <productname>PostgreSQL</productname> 9.6, there's
-	      no pg_monitor group
-	      and <xref linkend="guc-sr-check-user"> must
-	      be <productname>PostgreSQL</productname> super user.
-	  </para>
-	</note>
-
-        <para>
-          This parameter is only applicable in the streaming replication mode.
-        </para>
-        <para>
-          This parameter can be changed by reloading
-          the <productname>Pgpool-II</productname> configurations.
-        </para>
-
-	<para>
-	  <figure>
-	    <title>Detecting false primaries</title>
-	    <mediaobject>
-	      <imageobject>
-		<imagedata fileref="detach_false_primary.gif">
-	      </imageobject>
-	    </mediaobject>
-	  </figure>
-	</para>
-
-      </listitem>
-    </varlistentry>
+    </listitem>
+   </varlistentry>
 
   </variablelist>
  </sect2>
@@ -606,13 +606,13 @@ GRANT pg_monitor TO sr_check_user;
   <title>Failover in the raw Mode</title>
 
   <para>
-  Failover can be performed in raw mode if multiple backend servers are defined.
-  <productname>Pgpool-II</> usually accesses the backend specified by
-  <literal>backend_hostname0</> during normal operation. If the
-  <literal>backend_hostname0</> fails for some reason,
-  <productname>Pgpool-II</> tries to access the backend specified by
-  <literal>backend_hostname1</>. If that fails, <productname>Pgpool-II</>
-  tries the <literal>backend_hostname2, 3</> and so on.
+   Failover can be performed in raw mode if multiple backend servers are defined.
+   <productname>Pgpool-II</> usually accesses the backend specified by
+   <literal>backend_hostname0</> during normal operation. If the
+   <literal>backend_hostname0</> fails for some reason,
+   <productname>Pgpool-II</> tries to access the backend specified by
+   <literal>backend_hostname1</>. If that fails, <productname>Pgpool-II</>
+   tries the <literal>backend_hostname2, 3</> and so on.
   </para>
 
  </sect2>

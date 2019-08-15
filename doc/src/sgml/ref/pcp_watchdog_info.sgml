@@ -17,7 +17,7 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pcp_watchdog_info</refname>
   <refpurpose>
-	displays the watchdog status of the Pgpool-II</refpurpose>
+   displays the watchdog status of the Pgpool-II</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -31,122 +31,122 @@ Pgpool-II documentation
  <refsect1 id="R1-PCP-WATCHDOG-INFO-1">
   <title>Description</title>
   <para>
-  <command>pcp_node_info</command>
-	displays the information on the given node ID.
+   <command>pcp_node_info</command>
+   displays the information on the given node ID.
   </para>
  </refsect1>
 
  <refsect1>
   <title>Options</title>
-   <para>
-    <variablelist>
+  <para>
+   <variablelist>
 
-     <varlistentry>
-      <term><option>-n <replaceable class="parameter">watcgdog_id</replaceable></option></term>
-      <term><option>--node-id=<replaceable class="parameter">watcgdog_id</replaceable></option></term>
-      <listitem>
-       <para>
-	 The index of other Pgpool-II to get information for.
-       </para>
-	   <para>
-	 Index 0 gets one's self watchdog information.
-       </para>
-	   <para>
-	 If ommitted then gets information of all watchdog nodes.
-       </para>
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term><option>-n <replaceable class="parameter">watcgdog_id</replaceable></option></term>
+     <term><option>--node-id=<replaceable class="parameter">watcgdog_id</replaceable></option></term>
+     <listitem>
+      <para>
+       The index of other Pgpool-II to get information for.
+      </para>
+      <para>
+       Index 0 gets one's self watchdog information.
+      </para>
+      <para>
+       If ommitted then gets information of all watchdog nodes.
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term><option>Other options </option></term>
-      <listitem>
-       <para>
-	 See <xref linkend="pcp-common-options">.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
+    <varlistentry>
+     <term><option>Other options </option></term>
+     <listitem>
+      <para>
+       See <xref linkend="pcp-common-options">.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
  </refsect1>
 
  <refsect1>
   <title>Example</title>
-   <para>
-	Here is an example output:
-    <programlisting>
-$ pcp_watchdog_info -h localhost -U postgres
+  <para>
+   Here is an example output:
+   <programlisting>
+    $ pcp_watchdog_info -h localhost -U postgres
 
-3 NO Linux_host1.localdomain_9991 host1
+    3 NO Linux_host1.localdomain_9991 host1
 
-Linux_host1.localdomain_9991 host1 9991 9001 7 STANDBY
-Linux_host2.localdomain_9992 host2 9992 9002 4 MASTER
-Linux_host3.localdomain_9993 host3 9993 9003 7 STANDBY
-    </programlisting>
+    Linux_host1.localdomain_9991 host1 9991 9001 7 STANDBY
+    Linux_host2.localdomain_9992 host2 9992 9002 4 MASTER
+    Linux_host3.localdomain_9993 host3 9993 9003 7 STANDBY
+   </programlisting>
   </para>
   <para>
-	The result is in the following order:
-<literallayout class="monospaced">
-The first output line describes the watchdog cluster information:
+   The result is in the following order:
+   <literallayout class="monospaced">
+    The first output line describes the watchdog cluster information:
 
-1. Total watchdog nodes in the cluster
-2. Is VIP is up on current node?
-3. Master node name
-4. Master node host
-</literallayout>
-<literallayout class="monospaced">
-Next is the list of watchdog nodes:
+    1. Total watchdog nodes in the cluster
+    2. Is VIP is up on current node?
+    3. Master node name
+    4. Master node host
+   </literallayout>
+   <literallayout class="monospaced">
+    Next is the list of watchdog nodes:
 
-1. node name
-2. hostname
-3. pgpool port
-4. watchdog port
-5. current node state
-6. current node state name
-</literallayout>
+    1. node name
+    2. hostname
+    3. pgpool port
+    4. watchdog port
+    5. current node state
+    6. current node state name
+   </literallayout>
   </para>
   <para>
-	The <option>--verbose</option> option can help understand the output. For example:
+   The <option>--verbose</option> option can help understand the output. For example:
   </para>
-    <programlisting>
-$ pcp_watchdog_info -h localhost -v -U postgres
+  <programlisting>
+   $ pcp_watchdog_info -h localhost -v -U postgres
 
-Watchdog Cluster Information
-Total Nodes          : 3
-Remote Nodes         : 2
-Quorum state         : QUORUM EXIST
-Alive Remote Nodes   : 2
-VIP up on local node : NO
-Master Node Name     : Linux_host2.localdomain_9992
-Master Host Name     : localhost
+   Watchdog Cluster Information
+   Total Nodes          : 3
+   Remote Nodes         : 2
+   Quorum state         : QUORUM EXIST
+   Alive Remote Nodes   : 2
+   VIP up on local node : NO
+   Master Node Name     : Linux_host2.localdomain_9992
+   Master Host Name     : localhost
 
-Watchdog Node Information
-Node Name      : Linux_host1.localdomain_9991
-Host Name      : host1
-Delegate IP    : 192.168.1.10
-Pgpool port    : 9991
-Watchdog port  : 9001
-Node priority  : 1
-Status         : 7
-Status Name    : STANDBY
+   Watchdog Node Information
+   Node Name      : Linux_host1.localdomain_9991
+   Host Name      : host1
+   Delegate IP    : 192.168.1.10
+   Pgpool port    : 9991
+   Watchdog port  : 9001
+   Node priority  : 1
+   Status         : 7
+   Status Name    : STANDBY
 
-Node Name      : Linux_host2.localdomain_9992
-Host Name      : host2
-Delegate IP    : 192.168.1.10
-Pgpool port    : 9992
-Watchdog port  : 9002
-Node priority  : 1
-Status         : 4
-Status Name    : MASTER
+   Node Name      : Linux_host2.localdomain_9992
+   Host Name      : host2
+   Delegate IP    : 192.168.1.10
+   Pgpool port    : 9992
+   Watchdog port  : 9002
+   Node priority  : 1
+   Status         : 4
+   Status Name    : MASTER
 
-Node Name      : Linux_host3.localdomain_9993
-Host Name      : host3
-Delegate IP    : 192.168.1.10
-Pgpool port    : 9993
-Watchdog port  : 9003
-Node priority  : 1
-Status         : 7
-Status Name    : STANDBY
-    </programlisting>
+   Node Name      : Linux_host3.localdomain_9993
+   Host Name      : host3
+   Delegate IP    : 192.168.1.10
+   Pgpool port    : 9993
+   Watchdog port  : 9003
+   Node priority  : 1
+   Status         : 7
+   Status Name    : STANDBY
+  </programlisting>
  </refsect1>
 
 </refentry>

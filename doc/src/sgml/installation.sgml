@@ -9,12 +9,12 @@
 
  <sect1 id="install-source">
   <title>Installation of Pgpool-II</title>
-   <para>
-     This chapter describes the installation
-     of <productname>Pgpool-II</productname>.  First, installation from
-     source code distribution is explained. Then installation from RPM
-     packages is explained.
-   </para>
+  <para>
+   This chapter describes the installation
+   of <productname>Pgpool-II</productname>.  First, installation from
+   source code distribution is explained. Then installation from RPM
+   packages is explained.
+  </para>
  </sect1>
 
  <sect1 id="install-requirements">
@@ -41,9 +41,9 @@
       (<acronym>GNU</> <application>make</> is sometimes installed under
       the name <filename>gmake</filename>.)  To test for <acronym>GNU</acronym>
       <application>make</application> enter:
-<screen>
-<userinput>make --version</userinput>
-</screen>
+      <screen>
+       <userinput>make --version</userinput>
+      </screen>
      </para>
     </listitem>
 
@@ -105,9 +105,9 @@
   <para>
    If you need to get a <acronym>GNU</acronym> package, you can find
    it at your local <acronym>GNU</acronym> mirror site (see <ulink
-   url="http://www.gnu.org/order/ftp.html"></>
+    url="http://www.gnu.org/order/ftp.html"></>
    for a list) or at <ulink
-   url="ftp://ftp.gnu.org/gnu/"></ulink>.
+    url="ftp://ftp.gnu.org/gnu/"></ulink>.
   </para>
 
   <para>
@@ -130,9 +130,9 @@
    get a file
    named <filename>pgpool-II-&version;.tar.gz</filename>. After you
    have obtained the file, unpack it:
-<screen>
-<userinput>tar xf pgpool-II-&version;.tar.gz</userinput>
-</screen>
+   <screen>
+    <userinput>tar xf pgpool-II-&version;.tar.gz</userinput>
+   </screen>
    This will create a directory
    <filename>pgpool-II-&version;</filename> under the current directory
    with the <productname>Pgpool-II</> sources.
@@ -142,339 +142,339 @@
 
  </sect1>
 
-  <sect1 id="install-pgpool">
-    <title>Installing Pgpool-II</title>
-    <para>
-      After extracting the source tarball, execute the <filename>configure</> script.
-<programlisting>
-./configure
-</programlisting>
-    </para>
+ <sect1 id="install-pgpool">
+  <title>Installing Pgpool-II</title>
+  <para>
+   After extracting the source tarball, execute the <filename>configure</> script.
+   <programlisting>
+    ./configure
+   </programlisting>
+  </para>
 
-    <para>
-    You can customize the build and installation process by supplying one
-    or more of the following command line options to
-    <filename>configure</filename>:
-    </para>
+  <para>
+   You can customize the build and installation process by supplying one
+   or more of the following command line options to
+   <filename>configure</filename>:
+  </para>
 
-    <variablelist>
+  <variablelist>
 
-      <varlistentry>
-	<term><option>--prefix=path</option></term>
-	<listitem>
-      <para>
+   <varlistentry>
+    <term><option>--prefix=path</option></term>
+    <listitem>
+     <para>
       Specifies the top directory where <productname>Pgpool-II</> binaries and related
       files like docs will be installed in. Default value is <filename>/usr/local</filename>.
-	  </para>
-	</listitem>
-      </varlistentry>
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry>
-	<term><option>--with-pgsql=path</option></term>
-	<listitem>
-      <para>
+   <varlistentry>
+    <term><option>--with-pgsql=path</option></term>
+    <listitem>
+     <para>
       Specifies the top directory where <productname>PostgreSQL</>'s client libraries are
       installed. Default value is the path provided by <command>pg_config</command> command.
-	  </para>
-	</listitem>
-      </varlistentry>
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry>
-	<term><option>--with-openssl</option></term>
-	<listitem>
-          <para>
-	   <productname>Pgpool-II</productname> binaries will be built
-           with <productname>OpenSSL</productname>
-           support.  <productname>OpenSSL</productname> support is
-           disabled by default.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry>
+    <term><option>--with-openssl</option></term>
+    <listitem>
+     <para>
+      <productname>Pgpool-II</productname> binaries will be built
+      with <productname>OpenSSL</productname>
+      support.  <productname>OpenSSL</productname> support is
+      disabled by default.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry>
-	<term><option>--enable-sequence-lock</option></term>
-	<listitem>
-          <para>
-	    Use insert_lock compatible
-            with <productname>Pgpool-II</productname> 3.0 series
-            (until 3.0.4).  <productname>Pgpool-II</productname> locks
-            against a row in the sequence
-            table. <productname>PostgreSQL</productname> 8.2 or later
-            which was released after June 2011 cannot use this lock
-            method.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry>
+    <term><option>--enable-sequence-lock</option></term>
+    <listitem>
+     <para>
+      Use insert_lock compatible
+      with <productname>Pgpool-II</productname> 3.0 series
+      (until 3.0.4).  <productname>Pgpool-II</productname> locks
+      against a row in the sequence
+      table. <productname>PostgreSQL</productname> 8.2 or later
+      which was released after June 2011 cannot use this lock
+      method.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry>
-	<term><option>--enable-table-lock</option></term>
-	<listitem>
-          <para>
-	    Use insert_lock compatible
-            with <productname>Pgpool-II</productname> 2.2 and 2.3
-            series.  <productname>Pgpool-II</productname> locks
-            against the insert target table.  This lock method is
-            deprecated because it causes a lock conflict
-            with <command>VACUUM</command>.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry>
+    <term><option>--enable-table-lock</option></term>
+    <listitem>
+     <para>
+      Use insert_lock compatible
+      with <productname>Pgpool-II</productname> 2.2 and 2.3
+      series.  <productname>Pgpool-II</productname> locks
+      against the insert target table.  This lock method is
+      deprecated because it causes a lock conflict
+      with <command>VACUUM</command>.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry>
-	<term><option>--with-memcached=path</option></term>
-	<listitem>
-          <para>
-	    <productname>Pgpool-II</productname> binaries will use <productname>memcached</productname> for in
-          memory query cache.  You have to
-          install <ulink url="http://libmemcached.org/libMemcached.html">libmemcached</ulink>.
-	  </para>
-	</listitem>
-      </varlistentry>
+   <varlistentry>
+    <term><option>--with-memcached=path</option></term>
+    <listitem>
+     <para>
+      <productname>Pgpool-II</productname> binaries will use <productname>memcached</productname> for in
+      memory query cache.  You have to
+      install <ulink url="http://libmemcached.org/libMemcached.html">libmemcached</ulink>.
+     </para>
+    </listitem>
+   </varlistentry>
 
-      <varlistentry>
-        <term><option>--with-pam</option></term>
-        <listitem>
-          <para>
-            <productname>Pgpool-II</productname> binaries will be built with PAM authentication support.
-          PAM authentication support is disabled by dafault.
-          </para>
-        </listitem>
-      </varlistentry>
+   <varlistentry>
+    <term><option>--with-pam</option></term>
+    <listitem>
+     <para>
+      <productname>Pgpool-II</productname> binaries will be built with PAM authentication support.
+      PAM authentication support is disabled by dafault.
+     </para>
+    </listitem>
+   </varlistentry>
 
-    </variablelist>
+  </variablelist>
 
-    <para>
-      <programlisting>
-make
-make install
-      </programlisting>
-      This will install <productname>Pgpool-II</>. (If you use <productname>Solaris</> or <productname>FreeBSD</>, replace <command>make</> with <command>gmake</>)
-    </para>
+  <para>
+   <programlisting>
+    make
+    make install
+   </programlisting>
+   This will install <productname>Pgpool-II</>. (If you use <productname>Solaris</> or <productname>FreeBSD</>, replace <command>make</> with <command>gmake</>)
+  </para>
 
-  </sect1>
+ </sect1>
 
-  <sect1 id="install-pgpool-recovery">
-    <title>Installing pgpool_recovery</title>
-    <para>
-      This is required in all <productname>Pgpool-II</productname>
-      installation.
-      <programlisting>
-$ cd pgpool-II-x.x.x/src/sql/pgpool-recovery
-$ make
-$ make install
-      </programlisting>
-After this:
-      <programlisting>
-$ psql template1
-=# CREATE EXTENSION pgpool_recovery;
-      </programlisting>
+ <sect1 id="install-pgpool-recovery">
+  <title>Installing pgpool_recovery</title>
+  <para>
+   This is required in all <productname>Pgpool-II</productname>
+   installation.
+   <programlisting>
+    $ cd pgpool-II-x.x.x/src/sql/pgpool-recovery
+    $ make
+    $ make install
+   </programlisting>
+   After this:
+   <programlisting>
+    $ psql template1
+    =# CREATE EXTENSION pgpool_recovery;
+   </programlisting>
 
-      or
-      <programlisting>
-$ psql -f pgpool-recovery.sql template1
-      </programlisting>
+   or
+   <programlisting>
+    $ psql -f pgpool-recovery.sql template1
+   </programlisting>
 
-    </para>
+  </para>
 
-    <para>
-      With <productname>Pgpool-II</productname> 3.3 or later, you need
-      to tweak <filename>postgresql.conf</filename>.  Suppose the path
-      to <command>pg_ctl</command>
-      is <filename>/usr/local/pgsql/bin/pg_ctl</filename>. Then you
-      add following to <filename>postgresql.conf</filename>.
+  <para>
+   With <productname>Pgpool-II</productname> 3.3 or later, you need
+   to tweak <filename>postgresql.conf</filename>.  Suppose the path
+   to <command>pg_ctl</command>
+   is <filename>/usr/local/pgsql/bin/pg_ctl</filename>. Then you
+   add following to <filename>postgresql.conf</filename>.
 
-      <programlisting>
-pgpool.pg_ctl = '/usr/local/pgsql/bin/pg_ctl'
-      </programlisting>
+   <programlisting>
+    pgpool.pg_ctl = '/usr/local/pgsql/bin/pg_ctl'
+   </programlisting>
 
-      Probably you want to execute following after this:
-      <programlisting>
-$ pg_ctl reload -D /usr/local/pgsql/data
-      </programlisting>
+   Probably you want to execute following after this:
+   <programlisting>
+    $ pg_ctl reload -D /usr/local/pgsql/data
+   </programlisting>
 
-    </para>
-  </sect1>
+  </para>
+ </sect1>
 
-  <sect1 id="install-pgpool-regclass">
-    <title>Installing pgpool-regclass</title>
-    <para>
-      If you are using <productname>PostgreSQL</productname> 9.4 or
-      later, you can skip this section.
-    </para>
+ <sect1 id="install-pgpool-regclass">
+  <title>Installing pgpool-regclass</title>
+  <para>
+   If you are using <productname>PostgreSQL</productname> 9.4 or
+   later, you can skip this section.
+  </para>
 
-    <para>
-      If you are using <productname>PostgreSQL</productname> 8.0
-      to <productname>PostgreSQL</productname> 9.3, installing
-      <function>pgpool_regclass</function> function on
-      all <productname>PostgreSQL</productname> to be accessed by
-      <productname>Pgpool-II</productname> is strongly recommended, as
-      it is used internally by <productname>Pgpool-II</productname>.
-      Without this, handling of duplicate table names in different
-      schema might cause trouble (temporary tables aren't a problem).
-      If you are using <productname>PostgreSQL</productname> 9.4 or
-      later, installing <function>pgpool_regclass</function> is not
-      necessary since an equivalent (<function>to_regclass</function>)
-      is included in the <productname>PostgreSQL</productname> core.
-    </para>
+  <para>
+   If you are using <productname>PostgreSQL</productname> 8.0
+   to <productname>PostgreSQL</productname> 9.3, installing
+   <function>pgpool_regclass</function> function on
+   all <productname>PostgreSQL</productname> to be accessed by
+   <productname>Pgpool-II</productname> is strongly recommended, as
+   it is used internally by <productname>Pgpool-II</productname>.
+   Without this, handling of duplicate table names in different
+   schema might cause trouble (temporary tables aren't a problem).
+   If you are using <productname>PostgreSQL</productname> 9.4 or
+   later, installing <function>pgpool_regclass</function> is not
+   necessary since an equivalent (<function>to_regclass</function>)
+   is included in the <productname>PostgreSQL</productname> core.
+  </para>
 
-    <para>
-      <programlisting>
-$ cd pgpool-II-x.x.x/src/sql/pgpool-regclass
-$ make
-$ make install
-      </programlisting>
-      After this:
+  <para>
+   <programlisting>
+    $ cd pgpool-II-x.x.x/src/sql/pgpool-regclass
+    $ make
+    $ make install
+   </programlisting>
+   After this:
 
-      <programlisting>
-$ psql template1
-=# CREATE EXTENSION pgpool_regclass;
-      </programlisting>
+   <programlisting>
+    $ psql template1
+    =# CREATE EXTENSION pgpool_regclass;
+   </programlisting>
 
-or 
+   or 
 
-      <programlisting>
-$ psql -f pgpool-regclass.sql template1
-      </programlisting>
+   <programlisting>
+    $ psql -f pgpool-regclass.sql template1
+   </programlisting>
 
-      Executing <command>CREATE EXTENSION</command>
-      or <filename>pgpool-regclass.sql</filename> should be performed
-      on every databases accessed
-      via <productname>Pgpool-II</productname>.  However, you do not need to
-      do this for a database created after the execution of
-      <command>CREATE EXTENSION</command> or
-      <command>psql -f pgpool-regclass.sql template1</command>,
-	  as this template database will be cloned to create new databases.
-    </para>
+   Executing <command>CREATE EXTENSION</command>
+   or <filename>pgpool-regclass.sql</filename> should be performed
+   on every databases accessed
+   via <productname>Pgpool-II</productname>.  However, you do not need to
+   do this for a database created after the execution of
+   <command>CREATE EXTENSION</command> or
+   <command>psql -f pgpool-regclass.sql template1</command>,
+   as this template database will be cloned to create new databases.
+  </para>
 
-  </sect1>
+ </sect1>
 
-  <sect1 id="create-installlock-table">
-    <title>Creating insert_lock table</title>
+ <sect1 id="create-installlock-table">
+  <title>Creating insert_lock table</title>
 
-    <para>
-      If you are not going to use the native replication mode, you can skip this section.
-    </para>
+  <para>
+   If you are not going to use the native replication mode, you can skip this section.
+  </para>
 
-    <para>
-      If you plan to use native replication mode and insert_lock,
-      creating <structname>pgpool_catalog.insert_lock</structname>
-      table for mutual exclusion is strongly recommended.  Without
-      this, insert_lock works so far. However in that
-      case <productname>Pgpool-II</productname> locks against the
-      insert target table. This behavior is same
-      table lock conflicts with <command>VACUUM</command>, so <command>INSERT</command>
-      processing may be thereby kept waiting for a long time.
+  <para>
+   If you plan to use native replication mode and insert_lock,
+   creating <structname>pgpool_catalog.insert_lock</structname>
+   table for mutual exclusion is strongly recommended.  Without
+   this, insert_lock works so far. However in that
+   case <productname>Pgpool-II</productname> locks against the
+   insert target table. This behavior is same
+   table lock conflicts with <command>VACUUM</command>, so <command>INSERT</command>
+   processing may be thereby kept waiting for a long time.
 
-      <programlisting>
-	$ cd pgpool-II-x.x.x/src/sql
-	$ psql -f insert_lock.sql template1
-      </programlisting>
+   <programlisting>
+    $ cd pgpool-II-x.x.x/src/sql
+    $ psql -f insert_lock.sql template1
+   </programlisting>
 
-    </para>
+  </para>
 
-    <para>
-      Executing <filename>insert_lock.sql</filename> should be
-      performed on every databases accessed
-      via <productname>Pgpool-II</productname>.  You do not need to
-      do this for a database created after the execution of
-      <command>psql -f insert_lock.sql template1</command>, as this
-      template database will be cloned to create new databases.
-    </para>
-  </sect1>
+  <para>
+   Executing <filename>insert_lock.sql</filename> should be
+   performed on every databases accessed
+   via <productname>Pgpool-II</productname>.  You do not need to
+   do this for a database created after the execution of
+   <command>psql -f insert_lock.sql template1</command>, as this
+   template database will be cloned to create new databases.
+  </para>
+ </sect1>
 
-  <sect1 id="setting-up-pgpool-conf">
-    <title>Setting up pgpool.conf</title>
+ <sect1 id="setting-up-pgpool-conf">
+  <title>Setting up pgpool.conf</title>
 
-    <para>
-      For each <productname>Pgpool-II</productname> operation mode,
-      there are sample configurations.
-    </para>
+  <para>
+   For each <productname>Pgpool-II</productname> operation mode,
+   there are sample configurations.
+  </para>
 
-    <table id="pgpool-conf-samples-table">
-     <title>pgpool.conf samples</title>
+  <table id="pgpool-conf-samples-table">
+   <title>pgpool.conf samples</title>
 
-     <tgroup cols="2">
-      <thead>
-       <row>
-        <entry>Operation mode</entry>
-        <entry>Configuration file name</entry>
-       </row>
-      </thead>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Operation mode</entry>
+      <entry>Configuration file name</entry>
+     </row>
+    </thead>
 
-      <tbody>
-       <row>
-        <entry>Streaming replication mode</entry>
-	<entry><literal>pgpool.conf.sample-stream</literal></entry>
-       </row>
-       <row>
-        <entry>Replication mode</entry>
-	<entry><literal>pgpool.conf.sample-replication</literal></entry>
-       </row>
-       <row>
-        <entry>Master slave mode</entry>
-	<entry><literal>pgpool.conf.sample-master-slave</literal></entry>
-       </row>
-       <row>
-        <entry>Raw mode</entry>
-	<entry><literal>pgpool.conf.sample</literal> </entry>
-       </row>
-       <row>
-        <entry>Logical replication mode</entry>
-	<entry><literal>pgpool.conf.sample-logical</literal> </entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+    <tbody>
+     <row>
+      <entry>Streaming replication mode</entry>
+      <entry><literal>pgpool.conf.sample-stream</literal></entry>
+     </row>
+     <row>
+      <entry>Replication mode</entry>
+      <entry><literal>pgpool.conf.sample-replication</literal></entry>
+     </row>
+     <row>
+      <entry>Master slave mode</entry>
+      <entry><literal>pgpool.conf.sample-master-slave</literal></entry>
+     </row>
+     <row>
+      <entry>Raw mode</entry>
+      <entry><literal>pgpool.conf.sample</literal> </entry>
+     </row>
+     <row>
+      <entry>Logical replication mode</entry>
+      <entry><literal>pgpool.conf.sample-logical</literal> </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
 
-    <para>
-      These configuration files are located at /usr/local/etc with
-      default installation from source code.
-      You can copy one of them as <filename>pgpool.conf</filename>.
-      (probably you need root privilege for this)
-      <programlisting>
-# cd /usr/local/etc
-# cp pgpool.conf.sample-stream pgpool.conf
-      </programlisting>
-    </para>
-  </sect1>
+  <para>
+   These configuration files are located at /usr/local/etc with
+   default installation from source code.
+   You can copy one of them as <filename>pgpool.conf</filename>.
+   (probably you need root privilege for this)
+   <programlisting>
+    # cd /usr/local/etc
+    # cp pgpool.conf.sample-stream pgpool.conf
+   </programlisting>
+  </para>
+ </sect1>
 
-  <sect1 id="install-docs">
-    <title>Compiling and installing documents</title>
+ <sect1 id="install-docs">
+  <title>Compiling and installing documents</title>
 
-    <sect2 id="install-docs-tool-sets">
-      <title>Tool Sets</title>
+  <sect2 id="install-docs-tool-sets">
+   <title>Tool Sets</title>
 
-      <para>
-	<productname>Pgpool-II</productname> documents are written in
-	SGML (more precisely, DocBook, which is a language implemented
-	using SGML). To generate readable HTML documents, you need to
-	compile them using docbook tools. To install Docbook tools on
-	RHEL or similar systems, use:
-	<programlisting>
-	  yum install docbook-dtds docbook-style-dsssl docbook-style-xsl libxslt openjade
-	</programlisting>
-      </para>
-    </sect2>
-    
-    <sect2 id="install-docs-make">
-      <title>Compiling docs</title>
-      <para>
-	Once the tool sets are installed on the system, you can compile the docs:
-	<programlisting>
-	  $ cd doc
-	  $ make
-	  $ cd ..
-	  $ cd doc.ja
-	  $ make
-	</programlisting>
-	You will see English HTML docs under doc/src/sgml/html, and online docs under sgml/man[1-8].
-	Japanese docs can be found under doc.ja/src/sgml/html, and online docs under sgml/man[1-8].
-      </para>
-    </sect2>
-  </sect1>
+   <para>
+    <productname>Pgpool-II</productname> documents are written in
+    SGML (more precisely, DocBook, which is a language implemented
+    using SGML). To generate readable HTML documents, you need to
+    compile them using docbook tools. To install Docbook tools on
+    RHEL or similar systems, use:
+    <programlisting>
+     yum install docbook-dtds docbook-style-dsssl docbook-style-xsl libxslt openjade
+    </programlisting>
+   </para>
+  </sect2>
+  
+  <sect2 id="install-docs-make">
+   <title>Compiling docs</title>
+   <para>
+    Once the tool sets are installed on the system, you can compile the docs:
+    <programlisting>
+     $ cd doc
+     $ make
+     $ cd ..
+     $ cd doc.ja
+     $ make
+    </programlisting>
+    You will see English HTML docs under doc/src/sgml/html, and online docs under sgml/man[1-8].
+    Japanese docs can be found under doc.ja/src/sgml/html, and online docs under sgml/man[1-8].
+   </para>
+  </sect2>
+ </sect1>
 
-  &installation-rpm;
+ &installation-rpm;
 
-  &installation-tips;
+ &installation-tips;
 
 </chapter>
