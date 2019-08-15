@@ -17,10 +17,10 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pcp_proc_count</refname>
   <refpurpose>
-  <!--
-	displays the list of Pgpool-II children process IDs</refpurpose>
-    -->
-	<productname>Pgpool-II</productname> の子プロセスのプロセス ID を一覧表示する</refpurpose>
+   <!--
+   displays the list of Pgpool-II children process IDs</refpurpose>
+   -->
+   <productname>Pgpool-II</productname> の子プロセスのプロセス ID を一覧表示する</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -31,30 +31,30 @@ Pgpool-II documentation
  </refsynopsisdiv>
 
  <refsect1 id="R1-PCP-PROC-COUNT-1">
- <!--
+  <!--
   <title>Description</title>
   -->
   <title>説明</title>
   <para>
-  <command>pcp_proc_count</command>
- <!--
-  	displays the list of Pgpool-II children process IDs. If there is more than one process, IDs will be delimited by a white space.
-  -->
-  は <productname> Pgpool-II</productname> の子プロセスのプロセス ID を一覧表示します。複数ある場合は空白文字で区切られます。
+   <command>pcp_proc_count</command>
+   <!--
+   displays the list of Pgpool-II children process IDs. If there is more than one process, IDs will be delimited by a white space.
+   -->
+   は <productname> Pgpool-II</productname> の子プロセスのプロセス ID を一覧表示します。複数ある場合は空白文字で区切られます。
   </para>
  </refsect1>
 
  <refsect1>
- <!--
+  <!--
   <title>Options</title>
   -->
   <title>オプション</title>
-   <para>
+  <para>
    <!--
-	 See <xref linkend="pcp-common-options">.
-     -->
-	 <xref linkend="pcp-common-options"> を参照してください。
-   </para>
+   See <xref linkend="pcp-common-options">.
+   -->
+   <xref linkend="pcp-common-options"> を参照してください。
+  </para>
  </refsect1>
 
 </refentry>

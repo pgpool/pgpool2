@@ -41,45 +41,45 @@ For new features, add links to the documentation sections.
 <appendix id="release">
  <title>Release Notes</title>
 
-  <para>
-   The release notes contain the significant changes in each
-   <productname>Pgpool-II</> release, with major features and migration
-   issues listed at the top.  The release notes do not contain changes
-   that affect only a few users or changes that are internal and therefore not
-   user-visible.
-  </para>
+ <para>
+  The release notes contain the significant changes in each
+  <productname>Pgpool-II</> release, with major features and migration
+  issues listed at the top.  The release notes do not contain changes
+  that affect only a few users or changes that are internal and therefore not
+  user-visible.
+ </para>
 
-  <para>
-   A complete list of changes for each release can be obtained by
-   viewing the <!--<link linkend="git">-->Git<!--</link>--> logs for each release.
-   The <ulink
+ <para>
+  A complete list of changes for each release can be obtained by
+  viewing the <!--<link linkend="git">-->Git<!--</link>--> logs for each release.
+  The <ulink
    url="http://www.pgpool.net/pipermail/pgpool-committers/"><literal>pgpool-committers</literal>
    email list</ulink> records all source code changes as well.  There is also
-   a <ulink url="http://git.postgresql.org/gitweb?p=pgpool2.git;a=summary">web
+  a <ulink url="http://git.postgresql.org/gitweb?p=pgpool2.git;a=summary">web
    interface</ulink> that shows changes to specific files.
-  </para>
+ </para>
 
-  <para>
-   The name appearing next to each item represents the major developer for
-   that item.  Of course all changes involve community discussion and patch
-   review, so each item is truly a community effort.
-  </para>
+ <para>
+  The name appearing next to each item represents the major developer for
+  that item.  Of course all changes involve community discussion and patch
+  review, so each item is truly a community effort.
+ </para>
 
-<!--
-  To add a new major-release series, add an entry here and in filelist.sgml.
+ <!--
+ To add a new major-release series, add an entry here and in filelist.sgml.
 
-  The reason for splitting the release notes this way is so that appropriate
-  subsets can easily be copied into back branches.
--->
+ The reason for splitting the release notes this way is so that appropriate
+ subsets can easily be copied into back branches.
+ -->
 
-<!--
-&release-3.7;
--->
-&release-3.6;
-&release-3.5;
-&release-3.4;
-&release-3.3;
-&release-3.2;
-&release-3.1;
+ <!--
+ &release-3.7;
+ -->
+ &release-3.6;
+ &release-3.5;
+ &release-3.4;
+ &release-3.3;
+ &release-3.2;
+ &release-3.1;
 
 </appendix>

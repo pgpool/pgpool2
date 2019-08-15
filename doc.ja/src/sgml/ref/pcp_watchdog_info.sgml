@@ -17,10 +17,10 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pcp_watchdog_info</refname>
   <refpurpose>
-  <!--
-	displays the watchdog status of the Pgpool-II</refpurpose>
-    -->
-    <productname>Pgpool-II</productname> の watchdog ステータスを表示します</refpurpose>
+   <!--
+   displays the watchdog status of the Pgpool-II</refpurpose>
+   -->
+   <productname>Pgpool-II</productname> の watchdog ステータスを表示します</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -32,201 +32,201 @@ Pgpool-II documentation
  </refsynopsisdiv>
 
  <refsect1 id="R1-PCP-WATCHDOG-INFO-1">
- <!--
+  <!--
   <title>Description</title>
   -->
   <title>説明</title>
   <para>
-  <command>pcp_watchdog_info</command> は、
-<!--
-    Displays the watchdog status of the pgpool-II. watchdog_id is the index of watchdog node to get information for. If this is omitted, display the watchdog status of all watchdog nodes in the cluster.
+   <command>pcp_watchdog_info</command> は、
+   <!--
+   Displays the watchdog status of the pgpool-II. watchdog_id is the index of watchdog node to get information for. If this is omitted, display the watchdog status of all watchdog nodes in the cluster.
 
-    watchdog_id = 0 is reserved for local pgpool-II node, So the index of remote watchdog nodes starts from 1. Note that since the index numbering in pcp_watchdog_info utility starts from 1 while the pgpool.conf file uses 0 based indexing to define remote watchdog nodes, so you will require to add one to the other watchdog index to get its information using pcp_watchdog_info utility.
+   watchdog_id = 0 is reserved for local pgpool-II node, So the index of remote watchdog nodes starts from 1. Note that since the index numbering in pcp_watchdog_info utility starts from 1 while the pgpool.conf file uses 0 based indexing to define remote watchdog nodes, so you will require to add one to the other watchdog index to get its information using pcp_watchdog_info utility.
 
-    For example, to get the information of first remote watchdog node configured with prefix 0 defined by other_pgpool_hostname0 parameters you will use watchdog_id = 1 for pcp_watchdog_info.
+   For example, to get the information of first remote watchdog node configured with prefix 0 defined by other_pgpool_hostname0 parameters you will use watchdog_id = 1 for pcp_watchdog_info.
 
--->
-    <productname>Pgpool-II</productname> の <filename>pgpool.conf</filename>
-    の watchdog セクションで定義された <productname>Pgpool-II</productname> の watchdog ステータスを表示します。
-    watchdog_id は情報を取得する watchdog ノードのインデックスです。
-    省略された場合には、クラスタ中の全ての Pgpool-II の watchdog ノードのステータスが表示されます。
-    </para>
-    <para>
-    watchdog_id = 0 はローカルの <productname>Pgpool-II</productname> ノードのために予約されています。
-    そのため、リモートの watchdog ノードのインデックスは 1 から始まります。
-    <filename>pgpool.conf</filename> ではリモート watchdog ノードのインデックスは 0 をベースにしていますが、
-    <command>pcp_watchdog_info</command> ではそれが 1 から始まることに注意してください。
-    </para>
-    <para>
-    <command>pcp_watchdog_info</command> コマンドで情報を取得する際には、他の watchdog のインデックスに 1 を足す必要があります。
-    </para>
-    <para>
-    例えば、<varname>other_pgpool_hostname0</varname> パラメータで定義されている、添字 0 である最初のリモート watchdog ノードの情報を取得するには、
-    <command>pcp_watchdog_info</command> で watchdog_id = 1 を指定します。
-    </para>
+   -->
+   <productname>Pgpool-II</productname> の <filename>pgpool.conf</filename>
+   の watchdog セクションで定義された <productname>Pgpool-II</productname> の watchdog ステータスを表示します。
+   watchdog_id は情報を取得する watchdog ノードのインデックスです。
+   省略された場合には、クラスタ中の全ての Pgpool-II の watchdog ノードのステータスが表示されます。
+  </para>
+  <para>
+   watchdog_id = 0 はローカルの <productname>Pgpool-II</productname> ノードのために予約されています。
+   そのため、リモートの watchdog ノードのインデックスは 1 から始まります。
+   <filename>pgpool.conf</filename> ではリモート watchdog ノードのインデックスは 0 をベースにしていますが、
+   <command>pcp_watchdog_info</command> ではそれが 1 から始まることに注意してください。
+  </para>
+  <para>
+   <command>pcp_watchdog_info</command> コマンドで情報を取得する際には、他の watchdog のインデックスに 1 を足す必要があります。
+  </para>
+  <para>
+   例えば、<varname>other_pgpool_hostname0</varname> パラメータで定義されている、添字 0 である最初のリモート watchdog ノードの情報を取得するには、
+   <command>pcp_watchdog_info</command> で watchdog_id = 1 を指定します。
+  </para>
 
  </refsect1>
 
  <refsect1>
- <!--
+  <!--
   <title>Options</title>
   -->
   <title>オプション</title>
-   <para>
-    <variablelist>
+  <para>
+   <variablelist>
 
-     <varlistentry>
-      <term><option>-n <replaceable class="parameter">watchdog_id</replaceable></option></term>
-      <term><option>--node-id=<replaceable class="parameter">watchdog_id</replaceable></option></term>
-      <listitem>
-       <para>
+    <varlistentry>
+     <term><option>-n <replaceable class="parameter">watchdog_id</replaceable></option></term>
+     <term><option>--node-id=<replaceable class="parameter">watchdog_id</replaceable></option></term>
+     <listitem>
+      <para>
        <!--
-	 The index of other Pgpool-II to get information for.
-     -->
-     情報を取得する他の <productname>Pgpool-II</productname> のインデックスを指定します。
-       </para>
-	   <para>
+       The index of other Pgpool-II to get information for.
+       -->
+       情報を取得する他の <productname>Pgpool-II</productname> のインデックスを指定します。
+      </para>
+      <para>
        <!--
-	 Index 0 gets one's self watchdog information.
-     -->
-     0 の場合はローカルの watchdog の情報を取得します。
-       </para>
-	   <para>
+       Index 0 gets one's self watchdog information.
+       -->
+       0 の場合はローカルの watchdog の情報を取得します。
+      </para>
+      <para>
        <!--
-	 If ommitted then gets information of all watchdog nodes.
-     -->
-     省略された場合は、全ての watchdog ノードの情報を取得します。
-       </para>
-      </listitem>
-     </varlistentry>
+       If ommitted then gets information of all watchdog nodes.
+       -->
+       省略された場合は、全ての watchdog ノードの情報を取得します。
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
+    <varlistentry>
      <!--
-      <term><option>Other options </option></term>
-      -->
-      <term><option>その他 </option></term>
-      <listitem>
-       <para>
-       <!--
-	 See <xref linkend="pcp-common-options">.
+     <term><option>Other options </option></term>
      -->
-	 <xref linkend="pcp-common-options"> を参照してください。
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
+     <term><option>その他 </option></term>
+     <listitem>
+      <para>
+       <!--
+       See <xref linkend="pcp-common-options">.
+       -->
+       <xref linkend="pcp-common-options"> を参照してください。
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
  </refsect1>
 
  <refsect1>
- <!--
+  <!--
   <title>Example</title>
   -->
   <title>出力例</title>
-   <para>
+  <para>
    <!--
-	Here is an example output:
-    -->
-    ここでは，出力例を示します。
-    <programlisting>
-$ pcp_watchdog_info -h localhost -u postgres
+   Here is an example output:
+   -->
+   ここでは，出力例を示します。
+   <programlisting>
+    $ pcp_watchdog_info -h localhost -u postgres
 
-3 NO Linux_host1.localdomain_9991 host1
+    3 NO Linux_host1.localdomain_9991 host1
 
-Linux_host1.localdomain_9991 host1 9991 9001 7 STANDBY
-Linux_host2.localdomain_9992 host2 9992 9002 4 MASTER
-Linux_host3.localdomain_9993 host3 9993 9003 7 STANDBY
-    </programlisting>
+    Linux_host1.localdomain_9991 host1 9991 9001 7 STANDBY
+    Linux_host2.localdomain_9992 host2 9992 9002 4 MASTER
+    Linux_host3.localdomain_9993 host3 9993 9003 7 STANDBY
+   </programlisting>
   </para>
   <para>
-  <!--
-	The result is in the following order:
+   <!--
+   The result is in the following order:
+   -->
+   結果は以下の順のとおりです。
+   <literallayout class="monospaced">
+    <!--
+    The first output line describes the watchdog cluster information:
     -->
-    結果は以下の順のとおりです。
-<literallayout class="monospaced">
-<!--
-The first output line describes the watchdog cluster information:
--->
-最初に出力される行は、watchdog クラスタの情報を示しています:
-<!--
-1. Total watchdog nodes in the cluster
-2. Is VIP is up on current node?
-3. Master node name
-4. Master node host
--->
+    最初に出力される行は、watchdog クラスタの情報を示しています:
+    <!--
+    1. Total watchdog nodes in the cluster
+    2. Is VIP is up on current node?
+    3. Master node name
+    4. Master node host
+    -->
 
-1. クラスタ内の全 watchdog ノード数
-2. 仮想 IP がこのノードで起動しているか？
-3. マスターノード名
-4. マスターノードホスト
-</literallayout>
-<literallayout class="monospaced">
-<!--
-Next is the list of watchdog nodes:
+    1. クラスタ内の全 watchdog ノード数
+    2. 仮想 IP がこのノードで起動しているか？
+    3. マスターノード名
+    4. マスターノードホスト
+   </literallayout>
+   <literallayout class="monospaced">
+    <!--
+    Next is the list of watchdog nodes:
 
-1. node name
-2. hostname
-3. pgpool port
-4. watchdog port
-5. current node state
-6. current node state name
--->
-それ以降は watchdog ノードのリストが出力されます:
+    1. node name
+    2. hostname
+    3. pgpool port
+    4. watchdog port
+    5. current node state
+    6. current node state name
+    -->
+    それ以降は watchdog ノードのリストが出力されます:
 
-1. ノード名
-2. ホスト名
-3. pgpool ポート番号
-4. watchdog ポート番号
-5. 現在のノードステータス
-6. 現在のノードステータス名
-</literallayout>
+    1. ノード名
+    2. ホスト名
+    3. pgpool ポート番号
+    4. watchdog ポート番号
+    5. 現在のノードステータス
+    6. 現在のノードステータス名
+   </literallayout>
   </para>
   <para>
-<!--
-	The verbose option can help understand the output. For example:
--->
-	<option>verbose</option> モードは結果の詳細を表示できます。例えば:
+   <!--
+   The verbose option can help understand the output. For example:
+   -->
+   <option>verbose</option> モードは結果の詳細を表示できます。例えば:
   </para>
-    <programlisting>
-$ pcp_watchdog_info -h localhost -v -u postgres
+  <programlisting>
+   $ pcp_watchdog_info -h localhost -v -u postgres
 
-Watchdog Cluster Information
-Total Nodes          : 3
-Remote Nodes         : 2
-Quorum state         : QUORUM EXIST
-Alive Remote Nodes   : 2
-VIP up on local node : NO
-Master Node Name     : Linux_host2.localdomain_9992
-Master Host Name     : localhost
+   Watchdog Cluster Information
+   Total Nodes          : 3
+   Remote Nodes         : 2
+   Quorum state         : QUORUM EXIST
+   Alive Remote Nodes   : 2
+   VIP up on local node : NO
+   Master Node Name     : Linux_host2.localdomain_9992
+   Master Host Name     : localhost
 
-Watchdog Node Information
-Node Name      : Linux_host1.localdomain_9991
-Host Name      : host1
-Delegate IP    : 192.168.1.10
-Pgpool port    : 9991
-Watchdog port  : 9001
-Node priority  : 1
-Status         : 7
-Status Name    : STANDBY
+   Watchdog Node Information
+   Node Name      : Linux_host1.localdomain_9991
+   Host Name      : host1
+   Delegate IP    : 192.168.1.10
+   Pgpool port    : 9991
+   Watchdog port  : 9001
+   Node priority  : 1
+   Status         : 7
+   Status Name    : STANDBY
 
-Node Name      : Linux_host2.localdomain_9992
-Host Name      : host2
-Delegate IP    : 192.168.1.10
-Pgpool port    : 9992
-Watchdog port  : 9002
-Node priority  : 1
-Status         : 4
-Status Name    : MASTER
+   Node Name      : Linux_host2.localdomain_9992
+   Host Name      : host2
+   Delegate IP    : 192.168.1.10
+   Pgpool port    : 9992
+   Watchdog port  : 9002
+   Node priority  : 1
+   Status         : 4
+   Status Name    : MASTER
 
-Node Name      : Linux_host3.localdomain_9993
-Host Name      : host3
-Delegate IP    : 192.168.1.10
-Pgpool port    : 9993
-Watchdog port  : 9003
-Node priority  : 1
-Status         : 7
-Status Name    : STANDBY
-    </programlisting>
+   Node Name      : Linux_host3.localdomain_9993
+   Host Name      : host3
+   Delegate IP    : 192.168.1.10
+   Pgpool port    : 9993
+   Watchdog port  : 9003
+   Node priority  : 1
+   Status         : 7
+   Status Name    : STANDBY
+  </programlisting>
  </refsect1>
 
 </refentry>

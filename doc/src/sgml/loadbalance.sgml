@@ -1,12 +1,12 @@
 <!-- doc/src/sgml/config.sgml -->
 
 <sect1 id="runtime-config-load-balancing">
-  <title>Load Balancing</title>
+ <title>Load Balancing</title>
 
-  <para>
-    <productname>Pgpool-II</productname> load balancing of SELECT queries
-    works with Master Slave mode (<xref linkend="runtime-config-master-slave-mode">)
-    and Replication mode (<xref linkend="runtime-config-replication-mode">). When enabled
+ <para>
+  <productname>Pgpool-II</productname> load balancing of SELECT queries
+  works with Master Slave mode (<xref linkend="runtime-config-master-slave-mode">)
+   and Replication mode (<xref linkend="runtime-config-replication-mode">). When enabled
     <productname>Pgpool-II</productname> sends the writing queries to the
     <acronym>primary node</acronym> in Master Slave mode, all of the backend nodes
     in Replication mode, and other queries get load balanced among all backend nodes.
@@ -15,352 +15,352 @@
     session start time and will not be changed until the session
     ends. The only exception is by writing special SQL comments. See
     below for more details.
+ </para>
+ <note>
+  <para>
+   Queries which are sent to primary node or replicated because they cannot be balanced are
+   also accounted for in the load balancing algorithm.
   </para>
-  <note>
-    <para>
-      Queries which are sent to primary node or replicated because they cannot be balanced are
-      also accounted for in the load balancing algorithm.
-    </para>
-  </note>
-  <note>
-    <para>
-      If you don't want a query that qualifies for the load balancing to be
-      load balanced by <productname>Pgpool-II</productname>, you can put
-      <emphasis>/*NO LOAD BALANCE*/</emphasis> comment before the <acronym>SELECT
-      </acronym> statement. This will disable the load balance of the particular query
-      and <productname>Pgpool-II</productname> will send it to the master node (the primary node in Master Slave mode).
-    </para>
-  </note>
+ </note>
+ <note>
+  <para>
+   If you don't want a query that qualifies for the load balancing to be
+   load balanced by <productname>Pgpool-II</productname>, you can put
+   <emphasis>/*NO LOAD BALANCE*/</emphasis> comment before the <acronym>SELECT
+   </acronym> statement. This will disable the load balance of the particular query
+   and <productname>Pgpool-II</productname> will send it to the master node (the primary node in Master Slave mode).
+  </para>
+ </note>
 
-  <note>
-    <para>
-      You can check which DB node is assigned as the load balancing
-      node by using <xref linkend="sql-show-pool-nodes">.
-    </para>
-  </note>
-      
+ <note>
+  <para>
+   You can check which DB node is assigned as the load balancing
+   node by using <xref linkend="sql-show-pool-nodes">.
+  </para>
+ </note>
+ 
  <sect2 id="runtime-config-load-balancing-condition">
   <title>Condition for Load Balancing</title>
 
   <para>
-  For a query to be load balanced, all the following requirements
-  must be met:
-  <itemizedlist>
+   For a query to be load balanced, all the following requirements
+   must be met:
+   <itemizedlist>
     <listitem>
-      <para>
+     <para>
       <productname>PostgreSQL</> version 7.4 or later
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-      either in replication mode or master slave mode
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-      the query must not be in an explicitly declared transaction
-      (i.e. not in a BEGIN ~ END block)
-      </para>
-      <itemizedlist>
-        <listitem>
-          <para>
-          However, if following conditions are met, load balance is possible
-          even if in an explicit transaction
-          <itemizedlist>
-            <listitem>
-              <para>
-              transaction isolation level is not SERIALIZABLE
-              </para>
-            </listitem>
-            <listitem>
-              <para>
-              transaction has not issued a write query yet (until a write
-              query is issued, load balance is possible. Here "write query"
-              means non SELECT DML or DDL. SELECTs having write functions as
-              specified in black or white function list is not regarded as
-              a write query. This may be changed in the future.)
-              </para>
-            </listitem>
-            <listitem>
-              <para>
-              If black and white function list is empty, SELECTs having
-              functions is regarded as a read only query.
-              </para>
-            </listitem>
-          </itemizedlist>
-          </para>
-        </listitem>
-      </itemizedlist>
-    </listitem>
-    <listitem>
-      <para>
-      it's not SELECT INTO
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-      it's not SELECT FOR UPDATE nor FOR SHARE
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-      it starts with "SELECT" or one of COPY TO STDOUT, EXPLAIN,
-      EXPLAIN ANALYZE SELECT... <xref linkend="guc-ignore-leading-white-space"> = <literal>true</>
-      will ignore leading white space.
-     (Except for SELECTs using writing functions specified in <xref linkend="guc-black-function-list"> or
-     <xref linkend="guc-white-function-list">)
      </para>
     </listitem>
     <listitem>
-      <para>
-      in master slave mode, in addition to above, following conditions must be met:
-      </para>
-        <itemizedlist>
-          <listitem>
-            <para>
-            does not use temporary tables
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-            does not use unlogged tables
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-            does not use system catalogs
-            </para>
-          </listitem>
-        </itemizedlist>
+     <para>
+      either in replication mode or master slave mode
+     </para>
     </listitem>
-  </itemizedlist>
+    <listitem>
+     <para>
+      the query must not be in an explicitly declared transaction
+      (i.e. not in a BEGIN ~ END block)
+     </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+	However, if following conditions are met, load balance is possible
+	even if in an explicit transaction
+	<itemizedlist>
+	 <listitem>
+	  <para>
+	   transaction isolation level is not SERIALIZABLE
+	  </para>
+	 </listitem>
+	 <listitem>
+	  <para>
+	   transaction has not issued a write query yet (until a write
+	   query is issued, load balance is possible. Here "write query"
+	   means non SELECT DML or DDL. SELECTs having write functions as
+	   specified in black or white function list is not regarded as
+	   a write query. This may be changed in the future.)
+	  </para>
+	 </listitem>
+	 <listitem>
+	  <para>
+	   If black and white function list is empty, SELECTs having
+	   functions is regarded as a read only query.
+	  </para>
+	 </listitem>
+	</itemizedlist>
+       </para>
+      </listitem>
+     </itemizedlist>
+    </listitem>
+    <listitem>
+     <para>
+      it's not SELECT INTO
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      it's not SELECT FOR UPDATE nor FOR SHARE
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      it starts with "SELECT" or one of COPY TO STDOUT, EXPLAIN,
+      EXPLAIN ANALYZE SELECT... <xref linkend="guc-ignore-leading-white-space"> = <literal>true</>
+       will ignore leading white space.
+       (Except for SELECTs using writing functions specified in <xref linkend="guc-black-function-list"> or
+	<xref linkend="guc-white-function-list">)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      in master slave mode, in addition to above, following conditions must be met:
+     </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+	does not use temporary tables
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	does not use unlogged tables
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	does not use system catalogs
+       </para>
+      </listitem>
+     </itemizedlist>
+    </listitem>
+   </itemizedlist>
   </para>
 
   <note>
-    <para>
+   <para>
     You could suppress load balancing by inserting arbitrary
     comments just in front of the SELECT query:
-    </para>
-    <programlisting>
-/*REPLICATION*/ SELECT ...
+   </para>
+   <programlisting>
+    /*REPLICATION*/ SELECT ...
    </programlisting>
    <para>
-   If you want to use comments without suppressing load balancing, you can set
-   <xref linkend="guc-allow-sql-comments"> to on.
-   Please refer to <xref linkend="guc-replicate-select"> as well.
+    If you want to use comments without suppressing load balancing, you can set
+    <xref linkend="guc-allow-sql-comments"> to on.
+     Please refer to <xref linkend="guc-replicate-select"> as well.
    </para>
   </note>
 
   <note>
-    <para>
+   <para>
     The JDBC driver has an autocommit option. If the autocommit is false,
     the JDBC driver sends "BEGIN" and "COMMIT" by itself. In this case
     the same restriction above regarding load balancing will be applied.
-    </para>
+   </para>
   </note>
 
  </sect2>
 
  <sect2 id="runtime-config-load-balancing-in-streaming-raplication">
 
-   <title>Load Balancing in Streaming Replication</title>
+  <title>Load Balancing in Streaming Replication</title>
 
-   <para>
+  <para>
    While using Streaming replication and Hot Standby, it is important to
    determine which query can be sent to the primary or the standby,
    and which one should not be sent to the standby.
    <productname>Pgpool-II</>'s Streaming Replication mode carefully
    takes care of this.
-   </para>
+  </para>
 
-   <para>
+  <para>
    We distinguish which query should be sent to which node by looking
    at the query itself.
-     <itemizedlist>
+   <itemizedlist>
+    <listitem>
+     <para>
+      These queries should be sent to the primary node only
+      <itemizedlist>
        <listitem>
-         <para>
-         These queries should be sent to the primary node only
-         <itemizedlist>
-           <listitem>
-             <para>
-             INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE, CREATE, DROP, ALTER, COMMENT
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             SELECT ... FOR SHARE | UPDATE
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             SELECT in transaction isolation level SERIALIZABLE
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             LOCK command more strict than ROW EXCLUSIVE MODE
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-                DECLARE, FETCH, CLOSE
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             SHOW
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             Some transactional commands:
-             <itemizedlist>
-               <listitem>
-                 <para>
-                 BEGIN READ WRITE, START TRANSACTION READ WRITE
-                 </para>
-               </listitem>
-               <listitem>
-                 <para>
-                 SET TRANSACTION READ WRITE, SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE
-                 </para>
-               </listitem>
-               <listitem>
-                 <para>
-                 SET transaction_read_only = off
-                 </para>
-               </listitem>
-             </itemizedlist>
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             Two phase commit commands: PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             LISTEN, UNLISTEN, NOTIFY
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             VACUUM
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             Some sequence functions (nextval and setval)
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             Large objects creation commands
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             Multi-statement queries (multiple SQL commands on single line)
-             </para>
-           </listitem>
-         </itemizedlist>
-       </para>
-     </listitem>
-     <listitem>
-       <para>
-       These queries can be sent to both the primary node and the standby node.
-       If load balancing is enabled, these types of queries can be sent to the standby node.
-       However, if delay_threshold is set and the replication delay is higher than
-       <xref linkend="guc-delay-threshold">, queries are sent to the primary node.
-
-         <itemizedlist>
-           <listitem>
-             <para>
-             SELECT not listed above
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             COPY TO
-             </para>
-           </listitem>
-         </itemizedlist>
-        </para>
-      </listitem>
-      <listitem>
-        <para>
-        These queries are sent to both the primary node and the standby node
-          <itemizedlist>
-           <listitem>
-             <para>
-             SET
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             DISCARD
-             </para>
-           </listitem>
-           <listitem>
-             <para>
-             DEALLOCATE ALL
-             </para>
-           </listitem>
-          </itemizedlist>
-        </para>
+	<para>
+	 INSERT, UPDATE, DELETE, COPY FROM, TRUNCATE, CREATE, DROP, ALTER, COMMENT
+	</para>
        </listitem>
-     </itemizedlist>
-   </para>
+       <listitem>
+	<para>
+	 SELECT ... FOR SHARE | UPDATE
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 SELECT in transaction isolation level SERIALIZABLE
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 LOCK command more strict than ROW EXCLUSIVE MODE
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 DECLARE, FETCH, CLOSE
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 SHOW
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Some transactional commands:
+	 <itemizedlist>
+	  <listitem>
+	   <para>
+	    BEGIN READ WRITE, START TRANSACTION READ WRITE
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+	    SET TRANSACTION READ WRITE, SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+	    SET transaction_read_only = off
+	   </para>
+	  </listitem>
+	 </itemizedlist>
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Two phase commit commands: PREPARE TRANSACTION, COMMIT PREPARED, ROLLBACK PREPARED
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 LISTEN, UNLISTEN, NOTIFY
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 VACUUM
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Some sequence functions (nextval and setval)
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Large objects creation commands
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Multi-statement queries (multiple SQL commands on single line)
+	</para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      These queries can be sent to both the primary node and the standby node.
+      If load balancing is enabled, these types of queries can be sent to the standby node.
+      However, if delay_threshold is set and the replication delay is higher than
+      <xref linkend="guc-delay-threshold">, queries are sent to the primary node.
 
-   <para>
+       <itemizedlist>
+	<listitem>
+	 <para>
+	  SELECT not listed above
+	 </para>
+	</listitem>
+	<listitem>
+	 <para>
+	  COPY TO
+	 </para>
+	</listitem>
+       </itemizedlist>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      These queries are sent to both the primary node and the standby node
+      <itemizedlist>
+       <listitem>
+	<para>
+	 SET
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 DISCARD
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 DEALLOCATE ALL
+	</para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
    In an explicit transaction:
-     <itemizedlist>
+   <itemizedlist>
 
-       <listitem>
-         <para>
-         Transaction starting commands such as BEGIN are sent to both the primary node
-         and the standby node.
-         </para>
-       </listitem>
-       <listitem>
-         <para>
-         Following SELECT and some other queries that can be sent to both
-         primary or standby are executed in the transaction or on the standby node.
-         </para>
-       </listitem>
-       <listitem>
-         <para>
-          Commands which cannot be executed on the standby such as INSERT are sent
-          to the primary.
-          After one of these commands, even SELECTs are sent to the primary node,
-          This is because these SELECTs might want to see the result of an INSERT immediately.
-          This behavior continues until the transaction closes or aborts.
-         </para>
-       </listitem>
-     </itemizedlist>
-   </para>
+    <listitem>
+     <para>
+      Transaction starting commands such as BEGIN are sent to both the primary node
+      and the standby node.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Following SELECT and some other queries that can be sent to both
+      primary or standby are executed in the transaction or on the standby node.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Commands which cannot be executed on the standby such as INSERT are sent
+      to the primary.
+      After one of these commands, even SELECTs are sent to the primary node,
+      This is because these SELECTs might want to see the result of an INSERT immediately.
+      This behavior continues until the transaction closes or aborts.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
 
-   <para>
+  <para>
    In the extended protocol, it is possible to determine if the query can
    be sent to standby or not in load balance mode while parsing the query.
    The rules are the same as for the non extended protocol.
    For example, INSERTs are sent to the primary node.
    Following bind, describe and execute will be sent to the primary node as well.
-   </para>
+  </para>
 
-   <note>
-     <para>
-      If the parse of a SELECT statement is sent to the standby node due to load
-      balancing, and then a DML statement, such as an INSERT, is sent to <productname>Pgpool-II</>,
-      then the parsed SELECT will have to be executed on the primary node.
-      Therefore, we re-parse the SELECT on the primary node.
-     </para>
-   </note>
-
+  <note>
    <para>
-    Lastly, queries that <productname>Pgpool-II</>'s parser thinks to be an
-    error are sent to the primary node.
+    If the parse of a SELECT statement is sent to the standby node due to load
+    balancing, and then a DML statement, such as an INSERT, is sent to <productname>Pgpool-II</>,
+    then the parsed SELECT will have to be executed on the primary node.
+    Therefore, we re-parse the SELECT on the primary node.
    </para>
+  </note>
+
+  <para>
+   Lastly, queries that <productname>Pgpool-II</>'s parser thinks to be an
+   error are sent to the primary node.
+  </para>
  </sect2>
 
  <sect2 id="runtime-config-load-balancing-settings">
@@ -369,372 +369,372 @@
 
   <variablelist>
 
-    <varlistentry id="guc-load-balance-mode" xreflabel="load_balance_mode">
-      <term><varname>load_balance_mode</varname> (<type>boolean</type>)
-        <indexterm>
-          <primary><varname>load_balance_mode</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          When set to on, <productname>Pgpool-II</productname> enables the
-          load balancing on incoming <acronym>SELECT</acronym> queries.
-          i.e. <acronym>SELECT</acronym> queries from the clients gets distributed to
-          the configured <productname>PostgreSQL</> backends.
-          Default is off.
-        </para>
-        <para>
-          This parameter can only be set at server start.
-        </para>
-      </listitem>
-    </varlistentry>
+   <varlistentry id="guc-load-balance-mode" xreflabel="load_balance_mode">
+    <term><varname>load_balance_mode</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>load_balance_mode</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When set to on, <productname>Pgpool-II</productname> enables the
+      load balancing on incoming <acronym>SELECT</acronym> queries.
+      i.e. <acronym>SELECT</acronym> queries from the clients gets distributed to
+      the configured <productname>PostgreSQL</> backends.
+      Default is off.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
 
    <varlistentry id="guc-ignore-leading-white-space" xreflabel="ignore_leading_white_space">
-      <term><varname>ignore_leading_white_space</varname> (<type>boolean</type>)
-        <indexterm>
-          <primary><varname>ignore_leading_white_space</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          When set to on, <productname>Pgpool-II</productname> ignores the
-          white spaces at the beginning of SQL queries in load balancing.
-          It is useful if used with APIs like DBI/DBD:Pg which adds
-          white spaces against the user's intention.
-        </para>
-        <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-        </para>
-      </listitem>
-    </varlistentry>
+    <term><varname>ignore_leading_white_space</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>ignore_leading_white_space</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When set to on, <productname>Pgpool-II</productname> ignores the
+      white spaces at the beginning of SQL queries in load balancing.
+      It is useful if used with APIs like DBI/DBD:Pg which adds
+      white spaces against the user's intention.
+     </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
    <varlistentry id="guc-white-function-list" xreflabel="white_function_list">
-      <term><varname>white_function_list</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>white_function_list</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Specifies a comma separated list of function names that
-          <emphasis>DO NOT</emphasis> update the database. SELECTs including
-          functions <emphasis>not specified </emphasis> in this list are not load balanced.
-          These are replicated among all the DB nodes in Replication mode,
-          sent to the primary node only in Master Slave mode.
-        </para>
-        <para>
-          You can use regular expression to match function names,
-          to which <literal>^</> and <literal>$</> are automatically added.
-        </para>
+    <term><varname>white_function_list</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>white_function_list</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies a comma separated list of function names that
+      <emphasis>DO NOT</emphasis> update the database. SELECTs including
+      functions <emphasis>not specified </emphasis> in this list are not load balanced.
+      These are replicated among all the DB nodes in Replication mode,
+      sent to the primary node only in Master Slave mode.
+     </para>
+     <para>
+      You can use regular expression to match function names,
+      to which <literal>^</> and <literal>$</> are automatically added.
+     </para>
 
-        <example id="example-white-function-list-1">
-          <title>Using regular expression</title>
-          <para>
-            If you have prefixed all your read only function
-            with 'get_' or 'select_', You can
-            set the <xref linkend="guc-white-function-list"> like below:
-          <programlisting>
-white_function_list = 'get_.*,select_.*'
-          </programlisting>
-          </para>
-        </example>
+     <example id="example-white-function-list-1">
+      <title>Using regular expression</title>
+      <para>
+       If you have prefixed all your read only function
+       with 'get_' or 'select_', You can
+       set the <xref linkend="guc-white-function-list"> like below:
+	<programlisting>
+	 white_function_list = 'get_.*,select_.*'
+	</programlisting>
+      </para>
+     </example>
 
-        <note>
-          <para>
-            Schema qualifications can not be used
-	    in <xref linkend="guc-white-function-list">
-	    because <productname>Pgpool-II</productname> silently
-	    ignores a schema qualification in function names appearing
-	    in an input SQL while comparing the list and the input
-	    SQL. As a result, a schema qualified function name in the
-	    list never matches function names appearing in the input
-	    SQL.
-          </para>
-        </note>
+     <note>
+      <para>
+       Schema qualifications can not be used
+       in <xref linkend="guc-white-function-list">
+	because <productname>Pgpool-II</productname> silently
+	ignores a schema qualification in function names appearing
+	in an input SQL while comparing the list and the input
+	SQL. As a result, a schema qualified function name in the
+	list never matches function names appearing in the input
+	SQL.
+      </para>
+     </note>
 
-        <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-        </para>
-      </listitem>
-    </varlistentry>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
    <varlistentry id="guc-black-function-list" xreflabel="black_function_list">
-      <term><varname>black_function_list</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>black_function_list</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-          Specifies a comma separated list of function names that
-          <emphasis>DO</emphasis> update the database.
-          SELECTs including functions <emphasis>specified</emphasis> in this list are
-          not load balanced.
-          These are replicated among all the DB nodes in Replication mode,
-          sent to the primary node only in Master Slave mode.
-        </para>
-        <para>
-          You can use regular expression to match function names,
-          to which <literal>^</> and <literal>$</> are automatically added.
-        </para>
+    <term><varname>black_function_list</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>black_function_list</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies a comma separated list of function names that
+      <emphasis>DO</emphasis> update the database.
+      SELECTs including functions <emphasis>specified</emphasis> in this list are
+      not load balanced.
+      These are replicated among all the DB nodes in Replication mode,
+      sent to the primary node only in Master Slave mode.
+     </para>
+     <para>
+      You can use regular expression to match function names,
+      to which <literal>^</> and <literal>$</> are automatically added.
+     </para>
 
-        <example id="example-black-function-list-1">
-          <title>Using regular expression</title>
-          <para>
-            If you have prefixed all your updating functions
-            with 'set_', 'update_', 'delete_' or 'insert_', You can
-            set the <xref linkend="guc-black-function-list"> like below:
-          <programlisting>
-black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
-          </programlisting>
-          </para>
-        </example>
+     <example id="example-black-function-list-1">
+      <title>Using regular expression</title>
+      <para>
+       If you have prefixed all your updating functions
+       with 'set_', 'update_', 'delete_' or 'insert_', You can
+       set the <xref linkend="guc-black-function-list"> like below:
+	<programlisting>
+	 black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
+	</programlisting>
+      </para>
+     </example>
 
-        <note>
-          <para>
-            Schema qualifications can not be used
-	    in <xref linkend="guc-black-function-list">
-	    because <productname>Pgpool-II</productname> silently
-	    ignores a schema qualification in function names appearing
-	    in an input SQL while comparing the list and the input
-	    SQL. As a result, a schema qualified function name in the
-	    list never matches function names appearing in the input
-	    SQL.
-          </para>
-        </note>
+     <note>
+      <para>
+       Schema qualifications can not be used
+       in <xref linkend="guc-black-function-list">
+	because <productname>Pgpool-II</productname> silently
+	ignores a schema qualification in function names appearing
+	in an input SQL while comparing the list and the input
+	SQL. As a result, a schema qualified function name in the
+	list never matches function names appearing in the input
+	SQL.
+      </para>
+     </note>
 
-        <note>
-          <para>
-            <xref linkend="guc-black-function-list"> and <xref linkend="guc-white-function-list">
-            are mutually exclusive and only one of the two lists can be set in the configuration.
-          </para>
-        </note>
+     <note>
+      <para>
+       <xref linkend="guc-black-function-list"> and <xref linkend="guc-white-function-list">
+	 are mutually exclusive and only one of the two lists can be set in the configuration.
+      </para>
+     </note>
 
-        <example id="example-black-function-list-2">
-          <title>Configuring using <literal>nextval()</literal> and <literal>setval()</literal> to land on proper backend</title>
-          <para>
-            Prior to <productname>Pgpool-II</productname><emphasis>V3.0</emphasis>,
-            <literal>nextval()</literal> and <literal>setval()</literal> were known as functions writing to the database.
-            You can configure this by setting <xref linkend="guc-black-function-list">
-            and <xref linkend="guc-white-function-list"> as follows
-              <programlisting>
-white_function_list = ''
-black_function_list = 'nextval,setval,lastval,currval'
-              </programlisting>
-          </para>
-          </example>
+     <example id="example-black-function-list-2">
+      <title>Configuring using <literal>nextval()</literal> and <literal>setval()</literal> to land on proper backend</title>
+      <para>
+       Prior to <productname>Pgpool-II</productname><emphasis>V3.0</emphasis>,
+       <literal>nextval()</literal> and <literal>setval()</literal> were known as functions writing to the database.
+       You can configure this by setting <xref linkend="guc-black-function-list">
+	and <xref linkend="guc-white-function-list"> as follows
+	 <programlisting>
+	  white_function_list = ''
+	  black_function_list = 'nextval,setval,lastval,currval'
+	 </programlisting>
+      </para>
+     </example>
 
-        <note>
-          <para>
-            <productname>PostgreSQL</> also contains <literal>lastval()</literal> and
-            <literal>currval()</literal> in addition to
-            <literal>nextval()</literal> and <literal>setval()</literal>.
-            Though <literal>lastval()</literal> and <literal>currval()</literal>
-            are not writing function type, but it is advised to treat
-            <literal>lastval()</literal> and <literal>currval()</literal>
-            as writing functions to avoid errors which occur when
-            these functions are accidentally load balanced.
-          </para>
-        </note>
-        <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-        </para>
-      </listitem>
-    </varlistentry>
+     <note>
+      <para>
+       <productname>PostgreSQL</> also contains <literal>lastval()</literal> and
+       <literal>currval()</literal> in addition to
+       <literal>nextval()</literal> and <literal>setval()</literal>.
+       Though <literal>lastval()</literal> and <literal>currval()</literal>
+       are not writing function type, but it is advised to treat
+       <literal>lastval()</literal> and <literal>currval()</literal>
+       as writing functions to avoid errors which occur when
+       these functions are accidentally load balanced.
+      </para>
+     </note>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
    <varlistentry id="guc-database-redirect-preference-list" xreflabel="database_redirect_preference_list">
-      <term><varname>database_redirect_preference_list</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>database_redirect_preference_list</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-         Specifies the list of <replaceable>"database-name:node id"</replaceable> pairs
-         to send <acronym>SELECT</acronym> queries to a particular backend
-         node for a particular database connection.
-         For example, by specifying "test:1", <productname>Pgpool-II</productname>
-         will redirect all <acronym>SELECT</acronym> queries to the backend node of ID 1 for
-         the connection to "test" database.
-         You can specify multiple <replaceable>"database name:node id"</replaceable> pair by separating them
-         using comma (,).
-        </para>
-        <para>
-         Regular expressions are also accepted for database name.
-         You can use special keywords as <replaceable>node id</replaceable>.
-         If <emphasis>"primary"</emphasis> is specified, queries are sent to the primary node, and
-         if <emphasis>"standby"</emphasis> is specified, one of the standby nodes are selected randomly
-         based on weights.
-        </para>
+    <term><varname>database_redirect_preference_list</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>database_redirect_preference_list</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the list of <replaceable>"database-name:node id"</replaceable> pairs
+      to send <acronym>SELECT</acronym> queries to a particular backend
+      node for a particular database connection.
+      For example, by specifying "test:1", <productname>Pgpool-II</productname>
+      will redirect all <acronym>SELECT</acronym> queries to the backend node of ID 1 for
+      the connection to "test" database.
+      You can specify multiple <replaceable>"database name:node id"</replaceable> pair by separating them
+      using comma (,).
+     </para>
+     <para>
+      Regular expressions are also accepted for database name.
+      You can use special keywords as <replaceable>node id</replaceable>.
+      If <emphasis>"primary"</emphasis> is specified, queries are sent to the primary node, and
+      if <emphasis>"standby"</emphasis> is specified, one of the standby nodes are selected randomly
+      based on weights.
+     </para>
 
-        <example id="example-database-redirect-list">
-          <title>Using database_redirect_preference_list</title>
-          <para>
-            If you want to configure the following <acronym>SELECT</acronym> query routing rules:
-          </para>
+     <example id="example-database-redirect-list">
+      <title>Using database_redirect_preference_list</title>
+      <para>
+       If you want to configure the following <acronym>SELECT</acronym> query routing rules:
+      </para>
 
-          <itemizedlist>
-            <listitem>
-              <para>
-                Route all <acronym>SELECT</acronym> queries on <literal>postgres</literal>
-                database to the primary backend node.
-              </para>
-            </listitem>
-            <listitem>
-              <para>
-                Route all <acronym>SELECT</acronym> queries on <literal>mydb0</literal> or on
-                <literal>mydb1</literal> databases to backend node of ID 1.
-              </para>
-            </listitem>
-            <listitem>
-              <para>
-                Route all <acronym>SELECT</acronym> queries on <literal>mydb2</literal>
-                database to standby backend nodes.
-              </para>
-            </listitem>
+      <itemizedlist>
+       <listitem>
+	<para>
+	 Route all <acronym>SELECT</acronym> queries on <literal>postgres</literal>
+	 database to the primary backend node.
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Route all <acronym>SELECT</acronym> queries on <literal>mydb0</literal> or on
+	 <literal>mydb1</literal> databases to backend node of ID 1.
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Route all <acronym>SELECT</acronym> queries on <literal>mydb2</literal>
+	 database to standby backend nodes.
+	</para>
+       </listitem>
 
-          </itemizedlist>
-          <para>
-            then the <xref linkend="guc-database-redirect-preference-list"> will be configured as follows:
-              <programlisting>
-database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
-              </programlisting>
-          </para>
-        </example>
+      </itemizedlist>
+      <para>
+       then the <xref linkend="guc-database-redirect-preference-list"> will be configured as follows:
+	<programlisting>
+	 database_redirect_preference_list = 'postgres:primary,mydb[01]:1,mydb2:standby'
+	</programlisting>
+      </para>
+     </example>
 
-        <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-        </para>
-      </listitem>
-    </varlistentry>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
    <varlistentry id="guc-app-name-redirect-preference-list" xreflabel="app_name_redirect_preference_list">
-      <term><varname>app_name_redirect_preference_list</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>app_name_redirect_preference_list</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
+    <term><varname>app_name_redirect_preference_list</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>app_name_redirect_preference_list</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
 
-        <para>
-          Specifies the list of <replaceable>"application-name:node id"</replaceable> pairs
-          to send <acronym>SELECT</acronym> queries to a particular backend
-          node for a particular client application connection.
-        </para>
+     <para>
+      Specifies the list of <replaceable>"application-name:node id"</replaceable> pairs
+      to send <acronym>SELECT</acronym> queries to a particular backend
+      node for a particular client application connection.
+     </para>
 
-        <note>
-          <para>
-            In <productname>PostgreSQL</> <emphasis>V9.0</> or later the "Application name" is a name specified
-            by a client when it connects to database.
-          </para>
-         </note>
+     <note>
+      <para>
+       In <productname>PostgreSQL</> <emphasis>V9.0</> or later the "Application name" is a name specified
+       by a client when it connects to database.
+      </para>
+     </note>
 
-        <para>
-          For example, application name of <command>psql</command> command is
-          <literal>"psql"</literal>
-        </para>
+     <para>
+      For example, application name of <command>psql</command> command is
+      <literal>"psql"</literal>
+     </para>
 
-        <note>
-          <para>
-            <productname>Pgpool-II</productname> recognizes the application name
-            only specified in the start-up packet.
-            Although a client can provide the application name
-            later in the session, but that does not get considered by the
-            <productname>Pgpool-II</productname> for query routing.
-          </para>
-        </note>
+     <note>
+      <para>
+       <productname>Pgpool-II</productname> recognizes the application name
+       only specified in the start-up packet.
+       Although a client can provide the application name
+       later in the session, but that does not get considered by the
+       <productname>Pgpool-II</productname> for query routing.
+      </para>
+     </note>
 
-        <para>
-          The notion of <xref linkend="guc-app-name-redirect-preference-list">
-          is same as the <xref linkend="guc-database-redirect-preference-list">
-          thus you can also use the regular expressions for application names.
-          Similarly special keyword <emphasis>"primary"</emphasis> indicates the primary node and
-         <emphasis>"standby"</emphasis> indicates one of standby nodes.
-        </para>
+     <para>
+      The notion of <xref linkend="guc-app-name-redirect-preference-list">
+       is same as the <xref linkend="guc-database-redirect-preference-list">
+	thus you can also use the regular expressions for application names.
+	Similarly special keyword <emphasis>"primary"</emphasis> indicates the primary node and
+	<emphasis>"standby"</emphasis> indicates one of standby nodes.
+     </para>
 
-        <example id="example-app-name-redirect-list">
-          <title>Using app-name_redirect_preference_list</title>
-          <para>
-            If you want to configure the following <acronym>SELECT</acronym> query routing rules:
-          </para>
+     <example id="example-app-name-redirect-list">
+      <title>Using app-name_redirect_preference_list</title>
+      <para>
+       If you want to configure the following <acronym>SELECT</acronym> query routing rules:
+      </para>
 
-          <itemizedlist>
-            <listitem>
-              <para>
-                Route all <acronym>SELECT</acronym> from <literal>psql</literal>
-                client to the primary backend node.
-              </para>
-            </listitem>
-            <listitem>
-              <para>
-                Route all <acronym>SELECT</acronym> queries from <literal>myapp1</literal>
-                client to backend node of ID 1.
-              </para>
-            </listitem>
-            <listitem>
-              <para>
-                Route all <acronym>SELECT</acronym> queries from <literal>myapp2</literal>
-                client to standby backend nodes.
-              </para>
-            </listitem>
+      <itemizedlist>
+       <listitem>
+	<para>
+	 Route all <acronym>SELECT</acronym> from <literal>psql</literal>
+	 client to the primary backend node.
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Route all <acronym>SELECT</acronym> queries from <literal>myapp1</literal>
+	 client to backend node of ID 1.
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 Route all <acronym>SELECT</acronym> queries from <literal>myapp2</literal>
+	 client to standby backend nodes.
+	</para>
+       </listitem>
 
-          </itemizedlist>
-          <para>
-            then the <xref linkend="guc-app-name-redirect-preference-list"> will be configured as follows:
-              <programlisting>
-app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
-              </programlisting>
-          </para>
-        </example>
+      </itemizedlist>
+      <para>
+       then the <xref linkend="guc-app-name-redirect-preference-list"> will be configured as follows:
+	<programlisting>
+	 app_name_redirect_preference_list = 'psql:primary,myapp1:1,myapp2:standby'
+	</programlisting>
+      </para>
+     </example>
 
-        <note>
-          <para>
-            <xref linkend="guc-app-name-redirect-preference-list"> takes precedence
-            over the <xref linkend="guc-database-redirect-preference-list">.
-          </para>
-        </note>
+     <note>
+      <para>
+       <xref linkend="guc-app-name-redirect-preference-list"> takes precedence
+	over the <xref linkend="guc-database-redirect-preference-list">.
+      </para>
+     </note>
 
-        <caution>
-          <para>
-            <acronym>JDBC</acronym> driver postgreSQL-9.3 and earlier versions
-            does not send the application name in the startup packet even if
-            the application name is specified using the <acronym>JDBC</acronym>
-            driver option <literal>"ApplicationName"</literal> and
-            <literal>"assumeMinServerVersion=9.0"</literal>.
-            So if you want to use the <xref linkend="guc-app-name-redirect-preference-list">
-            feature through <acronym>JDBC</acronym>, Use postgreSQL-9.4 or later version of the driver.
-          </para>
-        </caution>
+     <caution>
+      <para>
+       <acronym>JDBC</acronym> driver postgreSQL-9.3 and earlier versions
+       does not send the application name in the startup packet even if
+       the application name is specified using the <acronym>JDBC</acronym>
+       driver option <literal>"ApplicationName"</literal> and
+       <literal>"assumeMinServerVersion=9.0"</literal>.
+       So if you want to use the <xref linkend="guc-app-name-redirect-preference-list">
+	feature through <acronym>JDBC</acronym>, Use postgreSQL-9.4 or later version of the driver.
+      </para>
+     </caution>
 
-        <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-        </para>
-      </listitem>
-    </varlistentry>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
 
    <varlistentry id="guc-allow-sql-comments" xreflabel="allow_sql_comments">
-      <term><varname>allow_sql_comments</varname> (<type>boolean</type>)
-        <indexterm>
-          <primary><varname>allow_sql_comments</varname> configuration parameter</primary>
-        </indexterm>
-      </term>
-      <listitem>
-        <para>
-        When set to on, <productname>Pgpool-II</productname> ignore the
-        <acronym>SQL</acronym> comments when identifying if the load balance
-        or query cache is possible on the query.
-        When this parameter is set to off, the <acronym>SQL</acronym> comments
-        on the query could effectively prevent the query from being
-        load balanced or cached (pre <productname>Pgpool-II</productname>
-        <emphasis>V3.4</emphasis> behavior).
-        </para>
-        <para>
-          This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
-                    You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
-                    this parameter for a current session.
-        </para>
-      </listitem>
-    </varlistentry>
+    <term><varname>allow_sql_comments</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>allow_sql_comments</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When set to on, <productname>Pgpool-II</productname> ignore the
+      <acronym>SQL</acronym> comments when identifying if the load balance
+      or query cache is possible on the query.
+      When this parameter is set to off, the <acronym>SQL</acronym> comments
+      on the query could effectively prevent the query from being
+      load balanced or cached (pre <productname>Pgpool-II</productname>
+      <emphasis>V3.4</emphasis> behavior).
+     </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+       this parameter for a current session.
+     </para>
+    </listitem>
+   </varlistentry>
 
   </variablelist>
  </sect2>

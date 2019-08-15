@@ -17,7 +17,7 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pcp_detach_node</refname>
   <refpurpose>
-	detaches the given node from Pgpool-II. Exisiting connections to Pgpool-II are forced to be disconnected.</refpurpose>
+   detaches the given node from Pgpool-II. Exisiting connections to Pgpool-II are forced to be disconnected.</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -32,47 +32,47 @@ Pgpool-II documentation
  <refsect1 id="R1-PCP-DETACH-NODE-1">
   <title>Description</title>
   <para>
-  <command>pcp_detach_node</command>
-  detaches the given node from Pgpool-II. Exisiting connections to Pgpool-II are forced to be disconnected.
+   <command>pcp_detach_node</command>
+   detaches the given node from Pgpool-II. Exisiting connections to Pgpool-II are forced to be disconnected.
   </para>
  </refsect1>
 
  <refsect1>
   <title>Options</title>
-   <para>
-    <variablelist>
+  <para>
+   <variablelist>
 
-     <varlistentry>
-      <term><option>-n <replaceable class="parameter">node_id</replaceable></option></term>
-      <term><option>--node_id=<replaceable class="parameter">node_id</replaceable></option></term>
-      <listitem>
-       <para>
-	The index of backend node to detach.
-       </para>
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term><option>-n <replaceable class="parameter">node_id</replaceable></option></term>
+     <term><option>--node_id=<replaceable class="parameter">node_id</replaceable></option></term>
+     <listitem>
+      <para>
+       The index of backend node to detach.
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term><option>-g</option></term>
-      <term><option>--gracefully</option></term>
-      <listitem>
-       <para>
-	 wait until all clients are disconnected (unless client_idle_limit_in_recovery is -1 or recovery_timeout is expired).
-       </para>
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term><option>-g</option></term>
+     <term><option>--gracefully</option></term>
+     <listitem>
+      <para>
+       wait until all clients are disconnected (unless client_idle_limit_in_recovery is -1 or recovery_timeout is expired).
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term><option>Other options </option></term>
-      <listitem>
-       <para>
-	 See <xref linkend="pcp-common-options">.
-       </para>
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term><option>Other options </option></term>
+     <listitem>
+      <para>
+       See <xref linkend="pcp-common-options">.
+      </para>
+     </listitem>
+    </varlistentry>
 
-    </variablelist>
-   </para>
+   </variablelist>
+  </para>
  </refsect1>
 
 </refentry>

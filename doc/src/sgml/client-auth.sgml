@@ -21,7 +21,7 @@
   Therefore, for the client host based authentications <productname>Pgpool-II</productname> has the
   <literal>pool_hba</literal> mechanism similar to the <literal>pg_hba</literal> mechanism for
   authenticating the incomming client connections.
--->
+  -->
  </para>
 
  <sect1 id="auth-pool-hba-conf">
@@ -32,14 +32,14 @@
   </indexterm>
 
   <para>
-  Just like the <filename>pg_hba.conf</filename> file for <productname>PostgreSQL</>,
-  <productname>Pgpool-II</productname> supports a similar client authentication
-  function using a configuration file called <filename>pool_hba.conf</filename>.
-  <productname>Pgpool-II</productname> installation also includes the sample
-  <filename>pool_hba.conf.sample</filename> file in the default configuration directory
-  (<literal>"/usr/local/etc"</literal>).
-  By default, pool_hba authentication is disabled, and setting <varname>enable_pool_hba</varname>
-  to <literal>on</literal> enables it. see the <xref linkend="guc-enable-pool-hba"> configuration parameter.
+   Just like the <filename>pg_hba.conf</filename> file for <productname>PostgreSQL</>,
+   <productname>Pgpool-II</productname> supports a similar client authentication
+   function using a configuration file called <filename>pool_hba.conf</filename>.
+   <productname>Pgpool-II</productname> installation also includes the sample
+   <filename>pool_hba.conf.sample</filename> file in the default configuration directory
+   (<literal>"/usr/local/etc"</literal>).
+   By default, pool_hba authentication is disabled, and setting <varname>enable_pool_hba</varname>
+   to <literal>on</literal> enables it. see the <xref linkend="guc-enable-pool-hba"> configuration parameter.
   </para>
 
   <para>
@@ -71,10 +71,10 @@
 
   <para>
    A record can have one of the following formats
-<synopsis>
-local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-</synopsis>
+   <synopsis>
+    local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+    host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+   </synopsis>
    The meaning of the fields is as follows:
 
    <variablelist>
@@ -98,15 +98,15 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        <acronym>SSL</acronym> or non-<acronym>SSL</acronym> connection
        attempts.
       </para>
-     <note>
-      <para>
-       Remote TCP/IP connections will not be possible unless
-       the server is started with an appropriate value for the
-       <xref linkend="guc-listen-addresses"> configuration parameter,
-       since the default behavior is to listen for TCP/IP connections
-       only on the local loopback address <literal>localhost</>.
-      </para>
-     </note>
+      <note>
+       <para>
+	Remote TCP/IP connections will not be possible unless
+	the server is started with an appropriate value for the
+	<xref linkend="guc-listen-addresses"> configuration parameter,
+	 since the default behavior is to listen for TCP/IP connections
+	 only on the local loopback address <literal>localhost</>.
+       </para>
+      </note>
      </listitem>
     </varlistentry>
 
@@ -116,16 +116,16 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       <para>
        Specifies which database name(s) this record matches.  The value
        <literal>all</literal> specifies that it matches all databases.
-      <note>
-       <para>
-       <literal>"samegroup"</literal> for database field is not supported:
-       </para>
-       <para>
-        Since <productname>Pgpool-II</productname> does not know anything about
-        users in the <productname>PostgreSQL</> backend server, the database name is simply
-        compared against the entries in the databaseE field of <filename>pool_hba.conf</filename>.
-       </para>
-      </note>
+       <note>
+	<para>
+	 <literal>"samegroup"</literal> for database field is not supported:
+	</para>
+	<para>
+	 Since <productname>Pgpool-II</productname> does not know anything about
+	 users in the <productname>PostgreSQL</> backend server, the database name is simply
+	 compared against the entries in the databaseE field of <filename>pool_hba.conf</filename>.
+	</para>
+       </note>
       </para>
      </listitem>
     </varlistentry>
@@ -139,15 +139,15 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        matches all users.  Otherwise, this is the name of a specific
        database user
        <note>
-       <para>
-       group names following <literal>"+"</literal> for user field is not supported:
-       </para>
-       <para>
-       This is for the same reason as for the <literal>"samegroup"</literal> of database field.
-       A user name is simply checked against the entries in the user field of
-       <filename>pool_hba.conf</filename>.
-       </para>
-      </note>
+	<para>
+	 group names following <literal>"+"</literal> for user field is not supported:
+	</para>
+	<para>
+	 This is for the same reason as for the <literal>"samegroup"</literal> of database field.
+	 A user name is simply checked against the entries in the user field of
+	 <filename>pool_hba.conf</filename>.
+	</para>
+       </note>
       </para>
      </listitem>
     </varlistentry>
@@ -167,9 +167,9 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        <literal>/</literal>, and the CIDR mask length.
 
        <note>
-       <para>
-       Pv6 IP address/mask is currently not supported
-       </para>
+	<para>
+	 Pv6 IP address/mask is currently not supported
+	</para>
        </note>
       </para>
 
@@ -187,71 +187,71 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        this record. The possible choices are summarized here; details
        are in <xref linkend="auth-methods">.
 
-       <variablelist>
-        <varlistentry>
-         <term><literal>trust</></term>
-         <listitem>
-         <para>
-          Allow the connection unconditionally. This method
-          allows anyone that can connect to the
-          <productname>Pgpool-II</productname>.
-         </para>
-        </listitem>
-       </varlistentry>
+	<variablelist>
+	 <varlistentry>
+	  <term><literal>trust</></term>
+	  <listitem>
+	   <para>
+	    Allow the connection unconditionally. This method
+	    allows anyone that can connect to the
+	    <productname>Pgpool-II</productname>.
+	   </para>
+	  </listitem>
+	 </varlistentry>
 
-       <varlistentry>
-        <term><literal>reject</></term>
-        <listitem>
-         <para>
-          Reject the connection unconditionally. This is useful for
-          <quote>filtering out</> certain hosts, for example a
-          <literal>reject</> line could block a specific host from connecting.
-         </para>
-        </listitem>
-       </varlistentry>
+	 <varlistentry>
+	  <term><literal>reject</></term>
+	  <listitem>
+	   <para>
+	    Reject the connection unconditionally. This is useful for
+	    <quote>filtering out</> certain hosts, for example a
+	    <literal>reject</> line could block a specific host from connecting.
+	   </para>
+	  </listitem>
+	 </varlistentry>
 
-       <varlistentry>
-        <term><literal>md5</></term>
-        <listitem>
-         <para>
-          Require the client to supply a double-MD5-hashed password for
-          authentication.
+	 <varlistentry>
+	  <term><literal>md5</></term>
+	  <listitem>
+	   <para>
+	    Require the client to supply a double-MD5-hashed password for
+	    authentication.
 
-        <note>
-        <para>
-         To use <literal>md5</literal> authentication, you need to register
-         the user name and password in <filename>"pool_passwd"</filename>.
-         See <xref linkend="auth-md5"> for more details.
-         </para>
-        </note>
-         </para>
-        </listitem>
-       </varlistentry>
+	    <note>
+	     <para>
+	      To use <literal>md5</literal> authentication, you need to register
+	      the user name and password in <filename>"pool_passwd"</filename>.
+	      See <xref linkend="auth-md5"> for more details.
+	     </para>
+	    </note>
+	   </para>
+	  </listitem>
+	 </varlistentry>
 
-       <varlistentry>
-        <term><literal>pam</></term>
-        <listitem>
-         <para>
-          Authenticate using the Pluggable Authentication Modules
-          (PAM) service provided by the operating system.
-          See <xref linkend="auth-pam"> for details.
-         </para>
-         <para>
-         PAM authentication is supported using user information on the host
-         where <productname>Pgpool-II</productname> is running.
-         To enable PAM support the <productname>Pgpool-II</productname>
-         must be configured with <command>"--with-pam"</command>
-         </para>
-         <para>
-         To enable PAM authentication, you must create a service-configuration file
-         for <productname>Pgpool-II</productname> in the system's PAM configuration
-         directory (that is usually located at <literal>"/etc/pam.d"</literal>).
-         A sample service-configuration file is also installed as <literal>"share/pgpool.pam"</literal>
-         under the install directory.
-         </para>
-        </listitem>
-       </varlistentry>
-      </variablelist>
+	 <varlistentry>
+	  <term><literal>pam</></term>
+	  <listitem>
+	   <para>
+	    Authenticate using the Pluggable Authentication Modules
+	    (PAM) service provided by the operating system.
+	    See <xref linkend="auth-pam"> for details.
+	   </para>
+	   <para>
+	    PAM authentication is supported using user information on the host
+	    where <productname>Pgpool-II</productname> is running.
+	    To enable PAM support the <productname>Pgpool-II</productname>
+	    must be configured with <command>"--with-pam"</command>
+	   </para>
+	   <para>
+	    To enable PAM authentication, you must create a service-configuration file
+	    for <productname>Pgpool-II</productname> in the system's PAM configuration
+	    directory (that is usually located at <literal>"/etc/pam.d"</literal>).
+	    A sample service-configuration file is also installed as <literal>"share/pgpool.pam"</literal>
+	    under the install directory.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
 
       </para>
      </listitem>
@@ -285,21 +285,21 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
   </para>
 
   <tip>
-    <para>
-        All pool_hba authentication options described in this section are
-        about the authentication taking place between a client and the
-        <productname>Pgpool-II</productname>.
-        A client still has to go through the <productname>PostgreSQL</>'s authentication
-        process and must have the <literal>CONNECT</> privilege for the
-        database on the backend <productname>PostgreSQL</> server.
-    </para>
-    <para>
-        As far as pool_hba is concerned, it does not matter if a user name
-        and/or database name given by a client
-        (i.e. <command>psql -U testuser testdb</command>)
-        really exists in the backend. pool_hba only cares if a match in the
-        <filename>pool_hba.conf</filename> can be found or not.
-    </para>
+   <para>
+    All pool_hba authentication options described in this section are
+    about the authentication taking place between a client and the
+    <productname>Pgpool-II</productname>.
+    A client still has to go through the <productname>PostgreSQL</>'s authentication
+    process and must have the <literal>CONNECT</> privilege for the
+    database on the backend <productname>PostgreSQL</> server.
+   </para>
+   <para>
+    As far as pool_hba is concerned, it does not matter if a user name
+    and/or database name given by a client
+    (i.e. <command>psql -U testuser testdb</command>)
+    really exists in the backend. pool_hba only cares if a match in the
+    <filename>pool_hba.conf</filename> can be found or not.
+   </para>
   </tip>
 
   <para>
@@ -307,28 +307,28 @@ host       <replaceable>database</replaceable>  <replaceable>user</replaceable> 
    See the next section for details on the different authentication methods.
   </para>
 
-   <example id="example-pg-hba.conf">
-    <title>Example <filename>pool_hba.conf</filename> Entries</title>
-<programlisting>
-# Allow any user on the local system to connect to any database with
-# any database user name using Unix-domain sockets (the default for local
-# connections).
-#
-# TYPE  DATABASE        USER            ADDRESS                 METHOD
-local   all             all                                     trust
+  <example id="example-pg-hba.conf">
+   <title>Example <filename>pool_hba.conf</filename> Entries</title>
+   <programlisting>
+    # Allow any user on the local system to connect to any database with
+    # any database user name using Unix-domain sockets (the default for local
+    # connections).
+    #
+    # TYPE  DATABASE        USER            ADDRESS                 METHOD
+    local   all             all                                     trust
 
-# The same using local loopback TCP/IP connections.
-#
-# TYPE  DATABASE        USER            ADDRESS                 METHOD
-host    all             all             127.0.0.1/32            trust
+    # The same using local loopback TCP/IP connections.
+    #
+    # TYPE  DATABASE        USER            ADDRESS                 METHOD
+    host    all             all             127.0.0.1/32            trust
 
-# Allow any user from host 192.168.12.10 to connect to database
-# "postgres" if the user's password is correctly supplied.
-#
-# TYPE  DATABASE        USER            ADDRESS                 METHOD
-host    postgres        all             192.168.12.10/32        md5
-</programlisting>
-   </example>
+    # Allow any user from host 192.168.12.10 to connect to database
+    # "postgres" if the user's password is correctly supplied.
+    #
+    # TYPE  DATABASE        USER            ADDRESS                 METHOD
+    host    postgres        all             192.168.12.10/32        md5
+   </programlisting>
+  </example>
  </sect1>
 
  <sect1 id="auth-methods">
@@ -365,48 +365,48 @@ host    postgres        all             192.168.12.10/32        md5
     <xref linkend="guc-pool-passwd"> authentication file.
    </para>
 
-    <sect3 id="md5-authentication-file-format">
+   <sect3 id="md5-authentication-file-format">
     <title>Authentication file format</title>
 
     <para>
-        This <literal>pool_passwd</literal> file should contain lines in the following format:
-    <programlisting>
-        "username:encrypted_passwd"
-    </programlisting>
+     This <literal>pool_passwd</literal> file should contain lines in the following format:
+     <programlisting>
+      "username:encrypted_passwd"
+     </programlisting>
     </para>
-    </sect3>
+   </sect3>
 
-    <sect3 id="setting-md5-authentication">
+   <sect3 id="setting-md5-authentication">
     <title>Setting md5 Authentication</title>
     <indexterm zone="setting-md5-authentication">
-        <primary>MD5</primary>
+     <primary>MD5</primary>
     </indexterm>
 
     <para>
-        here are the steps to enable <literal>md5</literal> authentication:
+     here are the steps to enable <literal>md5</literal> authentication:
     </para>
     <para>
-        1- Login as the database's operating system user and type
-        <command>"pg_md5 --md5auth --username=username password"</command>
-        user name and <literal>md5</literal> encrypted password are registered
-        into pool_passwd.
-        If pool_passwd does not exist yet, pg_md5 command will automatically create it for you.
-        <note>
-        <para>
-        user name and password must be identical to those registered in <productname>PostgreSQL</> server
-        </para>
-        </note>
+     1- Login as the database's operating system user and type
+     <command>"pg_md5 --md5auth --username=username password"</command>
+     user name and <literal>md5</literal> encrypted password are registered
+     into pool_passwd.
+     If pool_passwd does not exist yet, pg_md5 command will automatically create it for you.
+     <note>
+      <para>
+       user name and password must be identical to those registered in <productname>PostgreSQL</> server
+      </para>
+     </note>
     </para>
 
     <para>
-        2- Add an appropriate md5 entry to <filename>pool_hba.conf</filename>.
-        See <xref linkend="auth-pool-hba-conf"> for more details.
+     2- Add an appropriate md5 entry to <filename>pool_hba.conf</filename>.
+     See <xref linkend="auth-pool-hba-conf"> for more details.
     </para>
     <para>
-        3- After changing md5 password(in both pool_passwd and <productname>PostgreSQL</> of course),
-        reload the pgpool configurations.
+     3- After changing md5 password(in both pool_passwd and <productname>PostgreSQL</> of course),
+     reload the pgpool configurations.
     </para>
-    </sect3>
+   </sect3>
 
   </sect2>
 
@@ -426,7 +426,7 @@ host    postgres        all             192.168.12.10/32        md5
     For more
     information about PAM, please read the
     <ulink url="http://www.kernel.org/pub/linux/libs/pam/">
-    <productname>Linux-PAM</> Page</ulink>.
+     <productname>Linux-PAM</> Page</ulink>.
    </para>
 
    <para>

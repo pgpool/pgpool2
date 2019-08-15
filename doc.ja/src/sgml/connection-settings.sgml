@@ -1,1536 +1,1536 @@
 <!-- doc/src/sgml/config.sgml -->
 
 <sect1 id="runtime-config-connection">
-<!--
-	<title>Connections and Authentication</title>
--->
-	<title>接続と認証</title>
+ <!--
+ <title>Connections and Authentication</title>
+ -->
+ <title>接続と認証</title>
 
-	<sect2 id="runtime-config-connection-settings">
-<!--
-		<title>Connection Settings</title>
--->
-		<title>接続設定</title>
+ <sect2 id="runtime-config-connection-settings">
+  <!--
+  <title>Connection Settings</title>
+  -->
+  <title>接続設定</title>
 
-		<variablelist>
+  <variablelist>
 
-			<varlistentry id="guc-listen-addresses" xreflabel="listen_addresses">
-	<term><varname>listen_addresses</varname> (<type>string</type>)
-		<indexterm>
-<!--
-			<primary><varname>listen_addresses</varname> configuration parameter</primary>
--->
-			<primary><varname>listen_addresses</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
-	<listitem>
-		<para>
-<!--
-			Specifies the hostname or IP address, on which <productname>Pgpool-II</>
-			will accept TCP/IP connections. <literal>'*'</literal>
-			accepts all incoming connections. <literal>''</literal>
-			disables TCP/IP connections. Default
-			is <literal>'localhost'</literal>. Connections via UNIX
-			domain socket are always accepted.
--->
-<productname>Pgpool-II</>がTCP/IP接続を受け付けるホスト名またはIPアドレスを指定します。
-<literal>*</literal>を指定すると入ってくる全ての接続を受け付けます。
-<literal>''</literal>を指定するとTCP/IP接続を受け付けません。
-デフォルト値は<literal>'localhost'</literal>です。
-UNIXドメインソケット経由の接続は常に受け付けます。
-		</para>
-		<para>
-<!--
-			This parameter can only be set at server start.
--->
-このパラメータはサーバ起動時にのみ設定可能です。
-		</para>
-	</listitem>
-			</varlistentry>
+   <varlistentry id="guc-listen-addresses" xreflabel="listen_addresses">
+    <term><varname>listen_addresses</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>listen_addresses</varname> configuration parameter</primary>
+      -->
+      <primary><varname>listen_addresses</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies the hostname or IP address, on which <productname>Pgpool-II</>
+      will accept TCP/IP connections. <literal>'*'</literal>
+      accepts all incoming connections. <literal>''</literal>
+      disables TCP/IP connections. Default
+      is <literal>'localhost'</literal>. Connections via UNIX
+      domain socket are always accepted.
+      -->
+      <productname>Pgpool-II</>がTCP/IP接続を受け付けるホスト名またはIPアドレスを指定します。
+      <literal>*</literal>を指定すると入ってくる全ての接続を受け付けます。
+      <literal>''</literal>を指定するとTCP/IP接続を受け付けません。
+      デフォルト値は<literal>'localhost'</literal>です。
+      UNIXドメインソケット経由の接続は常に受け付けます。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-port" xreflabel="port">
-	<term><varname>port</varname> (<type>integer</type>)
-		<indexterm>
-<!--
-			<primary><varname>port</varname> configuration parameter</primary>
--->
-			<primary><varname>port</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
-	<listitem>
-		<para>
-<!--
-			The port number used
-			by <productname>Pgpool-II</productname> to listen for
-			connections. Default is 9999.
--->
-<productname>Pgpool-II</>が接続を受け付けるために監視するポート番号です。
-デフォルト値は9999です。
-		</para>
-		<para>
-<!--
-			This parameter can only be set at server start.
--->
-このパラメータはサーバ起動時にのみ設定可能です。
-		</para>
-	</listitem>
-			</varlistentry>
+   <varlistentry id="guc-port" xreflabel="port">
+    <term><varname>port</varname> (<type>integer</type>)
+     <indexterm>
+      <!--
+      <primary><varname>port</varname> configuration parameter</primary>
+      -->
+      <primary><varname>port</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      The port number used
+      by <productname>Pgpool-II</productname> to listen for
+      connections. Default is 9999.
+      -->
+      <productname>Pgpool-II</>が接続を受け付けるために監視するポート番号です。
+      デフォルト値は9999です。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-socket-dir" xreflabel="socket_dir">
-	<term><varname>socket_dir</varname> (<type>string</type>)
-		<indexterm>
-<!--
-			<primary><varname>socket_dir</varname> configuration parameter</primary>
--->
-			<primary><varname>socket_dir</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
-	<listitem>
-		<para>
-<!--
-			The directory where the UNIX domain socket accepting connections for
-			<productname>Pgpool-II</productname> will be
-			created. Default is <literal>/tmp</literal>. Be aware that this
-			socket might be deleted by a cron job. We recommend to set this
-			value to <literal>/var/run</literal> or such directory.
--->
-<productname>Pgpool-II</productname>が接続を受け付けるUNIXドメインソケットを置くディレクトリです。
-デフォルト値は<literal>/tmp</literal>です。
-このソケットは、cron によって削除されることがあるので注意してください。
-<literal>/var/run</literal>などのディレクトリに変更することをお勧めします。
-		</para>
-		<para>
-<!--
-			This parameter can only be set at server start.
--->
-このパラメータはサーバ起動時にのみ設定可能です。
-		</para>
-	</listitem>
-			</varlistentry>
+   <varlistentry id="guc-socket-dir" xreflabel="socket_dir">
+    <term><varname>socket_dir</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>socket_dir</varname> configuration parameter</primary>
+      -->
+      <primary><varname>socket_dir</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      The directory where the UNIX domain socket accepting connections for
+      <productname>Pgpool-II</productname> will be
+      created. Default is <literal>/tmp</literal>. Be aware that this
+      socket might be deleted by a cron job. We recommend to set this
+      value to <literal>/var/run</literal> or such directory.
+      -->
+      <productname>Pgpool-II</productname>が接続を受け付けるUNIXドメインソケットを置くディレクトリです。
+      デフォルト値は<literal>/tmp</literal>です。
+      このソケットは、cron によって削除されることがあるので注意してください。
+      <literal>/var/run</literal>などのディレクトリに変更することをお勧めします。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-pcp-listen-addresses" xreflabel="pcp_listen_addresses">
-	<term><varname>pcp_listen_addresses</varname> (<type>string</type>)
-		<indexterm>
-<!--
-			<primary><varname>pcp_listen_addresses</varname> configuration parameter</primary>
--->
-			<primary><varname>pcp_listen_addresses</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
-	<listitem>
-		<para>
-<!--
-			Specifies the hostname or IP address, on which PCP process
-			will accept TCP/IP connections. <literal>*</literal>
-			accepts all incoming connections. <literal>''</literal>
-			disables TCP/IP connections. Default
-			is <literal>*</literal>. Connections via UNIX domain
-			socket are always accepted.
--->
-PCPプロセスがTCP/IP接続を受け付けるホスト名またはIPアドレスを指定します。
-<literal>*</literal>を指定すると入ってくる全ての接続を受け付けます。
-<literal>''</literal>を指定するとTCP/IP接続を受け付けません。
-デフォルト値は<literal>*</literal>です。
-UNIXドメインソケット経由のコネクションは常に受け付けます。
-		</para>
-		<para>
-<!--
-			This parameter can only be set at server start.
--->
-このパラメータはサーバ起動時にのみ設定可能です。
-		</para>
-	</listitem>
-			</varlistentry>
+   <varlistentry id="guc-pcp-listen-addresses" xreflabel="pcp_listen_addresses">
+    <term><varname>pcp_listen_addresses</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>pcp_listen_addresses</varname> configuration parameter</primary>
+      -->
+      <primary><varname>pcp_listen_addresses</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies the hostname or IP address, on which PCP process
+      will accept TCP/IP connections. <literal>*</literal>
+      accepts all incoming connections. <literal>''</literal>
+      disables TCP/IP connections. Default
+      is <literal>*</literal>. Connections via UNIX domain
+      socket are always accepted.
+      -->
+      PCPプロセスがTCP/IP接続を受け付けるホスト名またはIPアドレスを指定します。
+      <literal>*</literal>を指定すると入ってくる全ての接続を受け付けます。
+      <literal>''</literal>を指定するとTCP/IP接続を受け付けません。
+      デフォルト値は<literal>*</literal>です。
+      UNIXドメインソケット経由のコネクションは常に受け付けます。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-pcp-port" xreflabel="pcp_port">
-	<term><varname>pcp_port</varname> (<type>integer</type>)
-		<indexterm>
-<!--
-			<primary><varname>pcp_port</varname> configuration parameter</primary>
--->
-			<primary><varname>pcp_port</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
-	<listitem>
-		<para>
-<!--
-			The port number used by PCP
-			process to listen for connections. Default is 9898.
--->
-PCPプロセスが接続を受け付けるために監視するポート番号です。
-デフォルト値は9898です。
-		</para>
-		<para>
-<!--
-			This parameter can only be set at server start.
--->
-このパラメータはサーバ起動時にのみ設定可能です。
-		</para>
-	</listitem>
-			</varlistentry>
+   <varlistentry id="guc-pcp-port" xreflabel="pcp_port">
+    <term><varname>pcp_port</varname> (<type>integer</type>)
+     <indexterm>
+      <!--
+      <primary><varname>pcp_port</varname> configuration parameter</primary>
+      -->
+      <primary><varname>pcp_port</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      The port number used by PCP
+      process to listen for connections. Default is 9898.
+      -->
+      PCPプロセスが接続を受け付けるために監視するポート番号です。
+      デフォルト値は9898です。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-pcp-socket-dir" xreflabel="pcp_socket_dir">
-	<term><varname>pcp_socket_dir</varname> (<type>string</type>)
-		<indexterm>
-<!--
-			<primary><varname>pcp_socket_dir</varname> configuration parameter</primary>
--->
-			<primary><varname>pcp_socket_dir</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
-	<listitem>
-		<para>
-<!--
-			The directory where the UNIX domain socket accepting connections for
-			PCP process will be
-			created. Default is <literal>/tmp</literal>. Be aware that
-			this socket might be deleted by a cron job. We recommend
-			to set this value to <literal>/var/run</literal> or such
-			directory.
--->
-PCPプロセスが接続を受け付けるUNIXドメインソケットを置くディレクトリです。
-デフォルト値は<literal>/tmp</literal>です。
-このソケットは、cron によって削除されることがあるので注意してください。
-<literal>/var/run</literal>などのディレクトリに変更することをお勧めします。
-		</para>
-		<para>
-<!--
-			This parameter can only be set at server start.
--->
-このパラメータはサーバ起動時にのみ設定可能です。
-		</para>
-	</listitem>
-			</varlistentry>
+   <varlistentry id="guc-pcp-socket-dir" xreflabel="pcp_socket_dir">
+    <term><varname>pcp_socket_dir</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>pcp_socket_dir</varname> configuration parameter</primary>
+      -->
+      <primary><varname>pcp_socket_dir</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      The directory where the UNIX domain socket accepting connections for
+      PCP process will be
+      created. Default is <literal>/tmp</literal>. Be aware that
+      this socket might be deleted by a cron job. We recommend
+      to set this value to <literal>/var/run</literal> or such
+      directory.
+      -->
+      PCPプロセスが接続を受け付けるUNIXドメインソケットを置くディレクトリです。
+      デフォルト値は<literal>/tmp</literal>です。
+      このソケットは、cron によって削除されることがあるので注意してください。
+      <literal>/var/run</literal>などのディレクトリに変更することをお勧めします。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-num-init-children" xreflabel="num_init_children">
-	<term><varname>num_init_children</varname> (<type>integer</type>)
-		<indexterm>
-<!--
-			<primary><varname>num_init_children</varname> configuration parameter</primary>
--->
-			<primary><varname>num_init_children</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
-	<listitem>
-		<para>
-<!--
-			The number of
-			preforked <productname>Pgpool-II</productname> server
-			processes. Default is 32.  num_init_children is also the
-			concurrent connections limit
-			to <productname>Pgpool-II</productname> from clients.  If
-			more than num_init_children clients try to connect to
-			<productname>Pgpool-II</productname>, <emphasis>they are
-			blocked (not rejected with an error, like <productname>PostgreSQL</>)
-			until a connection to any <productname>Pgpool-II</productname>
-			process is closed</emphasis>.  Up to
-			<xref linkend="guc-listen-backlog-multiplier">*
-			num_init_children can be queued.
--->
-preforkする<productname>Pgpool-II</productname>のサーバプロセスの数です。
-デフォルト値は32です。
-num_init_childrenは<productname>Pgpool-II</productname>に対してクライアントが同時に接続できる上限の数でもあります。
-num_init_childrenより多いクライアントが<productname>Pgpool-II</productname>に接続しようとした場合、<emphasis>それらのクライアントは、<productname>Pgpool-II</productname>のどれかのプロセスへの接続が閉じられるまで待たされます(<productname>PostgreSQL</>のように接続拒否エラーにはなりません。)</emphasis>。
+   <varlistentry id="guc-num-init-children" xreflabel="num_init_children">
+    <term><varname>num_init_children</varname> (<type>integer</type>)
+     <indexterm>
+      <!--
+      <primary><varname>num_init_children</varname> configuration parameter</primary>
+      -->
+      <primary><varname>num_init_children</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      The number of
+      preforked <productname>Pgpool-II</productname> server
+      processes. Default is 32.  num_init_children is also the
+      concurrent connections limit
+      to <productname>Pgpool-II</productname> from clients.  If
+      more than num_init_children clients try to connect to
+      <productname>Pgpool-II</productname>, <emphasis>they are
+      blocked (not rejected with an error, like <productname>PostgreSQL</>)
+      until a connection to any <productname>Pgpool-II</productname>
+      process is closed</emphasis>.  Up to
+      <xref linkend="guc-listen-backlog-multiplier">*
+      num_init_children can be queued.
+      -->
+      preforkする<productname>Pgpool-II</productname>のサーバプロセスの数です。
+      デフォルト値は32です。
+      num_init_childrenは<productname>Pgpool-II</productname>に対してクライアントが同時に接続できる上限の数でもあります。
+      num_init_childrenより多いクライアントが<productname>Pgpool-II</productname>に接続しようとした場合、<emphasis>それらのクライアントは、<productname>Pgpool-II</productname>のどれかのプロセスへの接続が閉じられるまで待たされます(<productname>PostgreSQL</>のように接続拒否エラーにはなりません。)</emphasis>。
 
-待たされる数の上限は、<xref linkend="guc-listen-backlog-multiplier"> * num_init_children です。
-		</para>
-		<para>
-<!--
-			The queue is inside the kernel called "listen queue". The
-			length of the listen queue is called "backlog".  There is
-			an upper limit of the backlog in some systems, and if
-			num_init_children*<xref linkend="guc-listen-backlog-multiplier">
-			exceeds the number, you need to set the backlog higher.
-			Otherwise, following problems may occur in heavy loaded systems:
-			1) connecting to <productname>Pgpool-II</productname> fails
-			2) connecting to <productname>Pgpool-II</productname> is
-			getting slow because of retries in the kernel.  You can
-			check if the listen queue is actually overflowed by using
-			"netstat -s" command.  If you find something like:
--->
-待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。
-listenキューの長さは「バックログ」と呼ばれます。
-システムによってはバックログの上限が設定されており、<xref linkend="guc-listen-backlog-multiplier">*num_init_childrenがこれを越える場合はバックログを大きく設定する必要があります。
-さもないと高負荷時に以下のような問題が発生する可能性があります:
-1) <productname>Pgpool-II</productname>への接続が失敗する。
-2) カーネル内で行われるリトライにより<productname>Pgpool-II</productname>への接続が遅くなる。
-実際にlistenキューが溢れているかどうかは、"netstat -s"コマンドを使って確認できます。
-もし、以下のような出力があった場合、
-			<programlisting>
-535 times the listen queue of a socket overflowed
-			</programlisting>
-<!--
-			then the listen queue is definitely overflowed.
-			You should increase the backlog in this case (you will be required a super user privilege).
--->
-listenキューが溢れています。
-この場合にはバックログを増やす必要があります（スーパユーザ権限が必要になります)。
+      待たされる数の上限は、<xref linkend="guc-listen-backlog-multiplier"> * num_init_children です。
+     </para>
+     <para>
+      <!--
+      The queue is inside the kernel called "listen queue". The
+      length of the listen queue is called "backlog".  There is
+      an upper limit of the backlog in some systems, and if
+      num_init_children*<xref linkend="guc-listen-backlog-multiplier">
+      exceeds the number, you need to set the backlog higher.
+      Otherwise, following problems may occur in heavy loaded systems:
+      1) connecting to <productname>Pgpool-II</productname> fails
+      2) connecting to <productname>Pgpool-II</productname> is
+      getting slow because of retries in the kernel.  You can
+      check if the listen queue is actually overflowed by using
+      "netstat -s" command.  If you find something like:
+      -->
+      待ち行列は、OS内部に作られ、「listenキュー」と呼ばれます。
+      listenキューの長さは「バックログ」と呼ばれます。
+      システムによってはバックログの上限が設定されており、<xref linkend="guc-listen-backlog-multiplier">*num_init_childrenがこれを越える場合はバックログを大きく設定する必要があります。
+       さもないと高負荷時に以下のような問題が発生する可能性があります:
+       1) <productname>Pgpool-II</productname>への接続が失敗する。
+       2) カーネル内で行われるリトライにより<productname>Pgpool-II</productname>への接続が遅くなる。
+       実際にlistenキューが溢れているかどうかは、"netstat -s"コマンドを使って確認できます。
+       もし、以下のような出力があった場合、
+       <programlisting>
+	535 times the listen queue of a socket overflowed
+       </programlisting>
+       <!--
+       then the listen queue is definitely overflowed.
+       You should increase the backlog in this case (you will be required a super user privilege).
+       -->
+       listenキューが溢れています。
+       この場合にはバックログを増やす必要があります（スーパユーザ権限が必要になります)。
 
-			<programlisting>
-# sysctl net.core.somaxconn
-net.core.somaxconn = 128
-# sysctl -w net.core.somaxconn = 256
-			</programlisting>
-<!--
-You could add following to /etc/sysctl.conf instead.
--->
-/etc/sysctl.confに以下のように書いても構いません。
-			<programlisting>
-net.core.somaxconn = 256
-			</programlisting>
-		</para>
-		<para>
-<!--
-			Number of connections to each <productname>PostgreSQL</> is roughly max_pool*num_init_children.
--->
-<productname>PostgreSQL</>へ貼られる接続数は大まかにはmax_pool*num_init_childrenとなります。
-		</para>
+       <programlisting>
+	# sysctl net.core.somaxconn
+	net.core.somaxconn = 128
+	# sysctl -w net.core.somaxconn = 256
+       </programlisting>
+       <!--
+       You could add following to /etc/sysctl.conf instead.
+       -->
+       /etc/sysctl.confに以下のように書いても構いません。
+       <programlisting>
+	net.core.somaxconn = 256
+       </programlisting>
+     </para>
+     <para>
+      <!--
+      Number of connections to each <productname>PostgreSQL</> is roughly max_pool*num_init_children.
+      -->
+      <productname>PostgreSQL</>へ貼られる接続数は大まかにはmax_pool*num_init_childrenとなります。
+     </para>
 
-		<para>
-<!--
-						However, canceling a query creates another
-						connection to the backend; thus, a query cannot be canceled if
-						all the connections are in use. If you want to ensure that queries can
-						be canceled, set this value to twice the expected connections.
--->
-ただし、問い合わせのキャンセルを行うとバックエンドに対して別の接続が張られます。
-したがって、すべての接続が使用中の場合には問い合わせのキャンセルができなくなります。
-問い合わせのキャンセルを必ず保証したい場合は、想定されるコネクション数の倍の値を設定してください。
-		</para>
-		<para>
-<!--
-						In addition, <productname>PostgreSQL</productname> allows concurrent
-						connections for non superusers up to max_connections -
-						superuser_reserved_connections.
--->
-また、<productname>PostgreSQL</productname>は一般ユーザによる同時接続をmax_connections - superuser_reserved_connections個まで許しています。
-		</para>
-		<para>
-<!--
-			In summary, max_pool, num_init_children, max_connections,
-			superuser_reserved_connections must satisfy the following formula:
--->
-まとめると、max_pool、num_init_children、max_connections、superuser_reserved_connectionsは、以下の式を満たしていなければなりません。
-			<programlisting>
-<!--
-max_pool*num_init_children &lt;= (max_connections - superuser_reserved_connections) (no query canceling needed)
-max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connections) (query canceling needed)
--->
-max_pool*num_init_children &lt;= (max_connections - superuser_reserved_connections) (クエリのキャンセルを考慮しない場合)
-max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connections) (クエリのキャンセルを考慮する場合)
-			</programlisting>
-		</para>
-		<para>
-<!--
-			This parameter can only be set at server start.
--->
-このパラメータはサーバ起動時にのみ設定可能です。
-		</para>
-	</listitem>
-			</varlistentry>
-		</variablelist>
-	</sect2>
+     <para>
+      <!--
+      However, canceling a query creates another
+      connection to the backend; thus, a query cannot be canceled if
+      all the connections are in use. If you want to ensure that queries can
+      be canceled, set this value to twice the expected connections.
+      -->
+      ただし、問い合わせのキャンセルを行うとバックエンドに対して別の接続が張られます。
+      したがって、すべての接続が使用中の場合には問い合わせのキャンセルができなくなります。
+      問い合わせのキャンセルを必ず保証したい場合は、想定されるコネクション数の倍の値を設定してください。
+     </para>
+     <para>
+      <!--
+      In addition, <productname>PostgreSQL</productname> allows concurrent
+      connections for non superusers up to max_connections -
+      superuser_reserved_connections.
+      -->
+      また、<productname>PostgreSQL</productname>は一般ユーザによる同時接続をmax_connections - superuser_reserved_connections個まで許しています。
+     </para>
+     <para>
+      <!--
+      In summary, max_pool, num_init_children, max_connections,
+      superuser_reserved_connections must satisfy the following formula:
+      -->
+      まとめると、max_pool、num_init_children、max_connections、superuser_reserved_connectionsは、以下の式を満たしていなければなりません。
+      <programlisting>
+       <!--
+       max_pool*num_init_children &lt;= (max_connections - superuser_reserved_connections) (no query canceling needed)
+       max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connections) (query canceling needed)
+       -->
+       max_pool*num_init_children &lt;= (max_connections - superuser_reserved_connections) (クエリのキャンセルを考慮しない場合)
+       max_pool*num_init_children*2 &lt;= (max_connections - superuser_reserved_connections) (クエリのキャンセルを考慮する場合)
+      </programlisting>
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect2>
 
-	<sect2 id="runtime-config-authentication-settings">
-<!--
-		<title>Authentication Settings</title>
--->
-		<title>認証設定</title>
-		<variablelist>
+ <sect2 id="runtime-config-authentication-settings">
+  <!--
+  <title>Authentication Settings</title>
+  -->
+  <title>認証設定</title>
+  <variablelist>
 
-			<varlistentry id="guc-enable-pool-hba" xreflabel="enable_pool_hba">
-				<term><varname>enable_pool_hba</varname> (<type>boolean</type>)
-					<indexterm>
-<!--
-						<primary><varname>enable_pool_hba</varname> configuration parameter</primary>
--->
-						<primary><varname>enable_pool_hba</varname> 設定パラメータ</primary>
-					</indexterm>
-				</term>
-				<listitem>
-					<para>
-<!--
-						If true, <productname>Pgpool-II</productname> will use the
-						<filename>pool_hba.conf</filename> for the client authentication.
-						See <xref linkend="auth-pool-hba-conf"> for details on how to configure
-						<filename>pool_hba.conf</filename> for client authentication.
-						Default is <literal>false</literal>
--->
-<literal>true</literal>の場合、<productname>Pgpool-II</productname>はクライアント認証に<filename>pool_hba.conf</filename>を使用します。
-クライアント認証のため<filename>pool_hba.conf</filename>を設定する方法について、詳細は<xref linkend="auth-pool-hba-conf">を参照してください。
-デフォルトは<literal>false</literal>です。
+   <varlistentry id="guc-enable-pool-hba" xreflabel="enable_pool_hba">
+    <term><varname>enable_pool_hba</varname> (<type>boolean</type>)
+     <indexterm>
+      <!--
+      <primary><varname>enable_pool_hba</varname> configuration parameter</primary>
+      -->
+      <primary><varname>enable_pool_hba</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      If true, <productname>Pgpool-II</productname> will use the
+      <filename>pool_hba.conf</filename> for the client authentication.
+      See <xref linkend="auth-pool-hba-conf"> for details on how to configure
+      <filename>pool_hba.conf</filename> for client authentication.
+      Default is <literal>false</literal>
+      -->
+      <literal>true</literal>の場合、<productname>Pgpool-II</productname>はクライアント認証に<filename>pool_hba.conf</filename>を使用します。
+      クライアント認証のため<filename>pool_hba.conf</filename>を設定する方法について、詳細は<xref linkend="auth-pool-hba-conf">を参照してください。
+       デフォルトは<literal>false</literal>です。
 
-					</para>
-					<para>
-<!--
-						This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
--->
-このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
-					</para>
-				</listitem>
-			</varlistentry>
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-pool-passwd" xreflabel="pool_passwd">
-				<term><varname>pool_passwd</varname> (<type>string</type>)
-					<indexterm>
-<!--
-						<primary><varname>pool_passwd</varname> configuration parameter</primary>
--->
-						<primary><varname>pool_passwd</varname> 設定パラメータ</primary>
-					</indexterm>
-				</term>
-				<listitem>
-					<para>
-<!--
-						Specify the password file name for md5 authentication.
-						Default value is <literal>"pool_passwd"</literal>.
-						Specifying <literal>''</literal> (empty) disables the use of password file.
-						See <xref linkend="auth-md5"> for more details.
--->
-md5 認証で用いるパスワードのファイルのファイル名を指定します。
-デフォルト値は<literal>"pool_passwd"</literal>です。
-<literal>''</literal>（空文字列）を指定すると パスワードファイルの使用は無効になります。
-詳細は<xref linkend="auth-md5">を参照してください
-					</para>
-					<para>
-<!--
-						This parameter can only be set at server start.
--->
-このパラメータはサーバ起動時にのみ設定可能です。
-					</para>
-				</listitem>
-			</varlistentry>
+   <varlistentry id="guc-pool-passwd" xreflabel="pool_passwd">
+    <term><varname>pool_passwd</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>pool_passwd</varname> configuration parameter</primary>
+      -->
+      <primary><varname>pool_passwd</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specify the password file name for md5 authentication.
+      Default value is <literal>"pool_passwd"</literal>.
+      Specifying <literal>''</literal> (empty) disables the use of password file.
+      See <xref linkend="auth-md5"> for more details.
+      -->
+      md5 認証で用いるパスワードのファイルのファイル名を指定します。
+      デフォルト値は<literal>"pool_passwd"</literal>です。
+      <literal>''</literal>（空文字列）を指定すると パスワードファイルの使用は無効になります。
+      詳細は<xref linkend="auth-md5">を参照してください
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-authentication-timeout" xreflabel="authentication_timeout">
-				<term><varname>authentication_timeout</varname> (<type>integer</type>)
-					<indexterm>
-<!--
-						<primary><varname>authentication_timeout</varname> configuration parameter</primary>
--->
-						<primary><varname>authentication_timeout</varname> 設定パラメータ</primary>
-					</indexterm>
-				</term>
-				<listitem>
-					<para>
-<!--
-						Specify the timeout in seconds for <productname>Pgpool-II</productname>
-						authentication. Specifying 0 disables the time out.
-						Default value is 60
--->
-<productname>Pgpool-II</productname>の認証処理のタイムアウト時間を秒単位で指定します。
-0 を指定するとタイムアウトを無効にします。
-デフォルト値は60です。
-					</para>
-					<para>
-<!--
-						This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
--->
-このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
-					</para>
-				</listitem>
-			</varlistentry>
+   <varlistentry id="guc-authentication-timeout" xreflabel="authentication_timeout">
+    <term><varname>authentication_timeout</varname> (<type>integer</type>)
+     <indexterm>
+      <!--
+      <primary><varname>authentication_timeout</varname> configuration parameter</primary>
+      -->
+      <primary><varname>authentication_timeout</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specify the timeout in seconds for <productname>Pgpool-II</productname>
+      authentication. Specifying 0 disables the time out.
+      Default value is 60
+      -->
+      <productname>Pgpool-II</productname>の認証処理のタイムアウト時間を秒単位で指定します。
+      0 を指定するとタイムアウトを無効にします。
+      デフォルト値は60です。
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-		</variablelist>
+  </variablelist>
 
-	</sect2>
+ </sect2>
 </sect1>
 
 <sect1 id="runtime-config-runnung-mode">
-<!--
-	<title>Running mode</title>
--->
-	<title>動作モード</title>
+ <!--
+ <title>Running mode</title>
+ -->
+ <title>動作モード</title>
 
-	<sect2 id="runtime-config-master-slave-mode">
-<!--
-		<title>Master slave mode</title>
--->
-		<title>マスタースレーブモード</title>
+ <sect2 id="runtime-config-master-slave-mode">
+  <!--
+  <title>Master slave mode</title>
+  -->
+  <title>マスタースレーブモード</title>
 
-		<para>
-<!--
-			This mode is used to couple <productname>Pgpool-II</productname>
-			with another master/slave replication software (like <acronym>Slony-I</acronym>
-			and Streaming replication), that is responsible for doing the actual data replication.
--->
-このモードは<productname>Pgpool-II</productname>と（<acronym>Slony-I</acronym>やストリームレプリケーションのような）他のマスター/スレーブ型のレプリケーションソフトウェアと組み合わせるのに使用されます。
-実際にデータレプリケーションを行うのはこれらのソフトウェアに任されます。
-		</para>
+  <para>
+   <!--
+   This mode is used to couple <productname>Pgpool-II</productname>
+   with another master/slave replication software (like <acronym>Slony-I</acronym>
+   and Streaming replication), that is responsible for doing the actual data replication.
+   -->
+   このモードは<productname>Pgpool-II</productname>と（<acronym>Slony-I</acronym>やストリームレプリケーションのような）他のマスター/スレーブ型のレプリケーションソフトウェアと組み合わせるのに使用されます。
+   実際にデータレプリケーションを行うのはこれらのソフトウェアに任されます。
+  </para>
 
-		<note>
-			<para>
-<!--
-				The number of slave nodes are not limited to 1 and
-				<productname>Pgpool-II</productname> can have up to 127 slave nodes.
-				master/slave mode can also work just master node without any slave nodes.
--->
-スレーブノードの数は1つに限定されず、<productname>Pgpool-II</productname>は127個までのスレーブノードを持つことができます。
-マスタースレーブモードは、スレーブノードが1つも存在しない場合マスターノードのみを動作させることができます。
-			</para>
-		</note>
+  <note>
+   <para>
+    <!--
+    The number of slave nodes are not limited to 1 and
+    <productname>Pgpool-II</productname> can have up to 127 slave nodes.
+    master/slave mode can also work just master node without any slave nodes.
+    -->
+    スレーブノードの数は1つに限定されず、<productname>Pgpool-II</productname>は127個までのスレーブノードを持つことができます。
+    マスタースレーブモードは、スレーブノードが1つも存在しない場合マスターノードのみを動作させることができます。
+   </para>
+  </note>
 
-		<para>
-<!--
-			Load balancing (see <xref linkend="runtime-config-load-balancing"> ) can
-			also be used with master/slave mode to distribute the read load on the
-			standby backend nodes.
--->
-参照負荷をスタンバイバックエンドノードに振り分ける負荷分散（<xref linkend="runtime-config-load-balancing">を参照）もマスタースレーブモードと共に使用可能です。
-		</para>
-		<para>
-<!--
-				 Following options are required to be specified for master/slave mode.
--->
-マスタースレーブモードでは以下のオプションを設定する必要があります。
-		</para>
+  <para>
+   <!--
+   Load balancing (see <xref linkend="runtime-config-load-balancing"> ) can
+   also be used with master/slave mode to distribute the read load on the
+   standby backend nodes.
+   -->
+   参照負荷をスタンバイバックエンドノードに振り分ける負荷分散（<xref linkend="runtime-config-load-balancing">を参照）もマスタースレーブモードと共に使用可能です。
+  </para>
+  <para>
+   <!--
+   Following options are required to be specified for master/slave mode.
+   -->
+   マスタースレーブモードでは以下のオプションを設定する必要があります。
+  </para>
 
-		<variablelist>
+  <variablelist>
 
-			<varlistentry id="guc-master-slave-mode" xreflabel="master_slave_mode">
-				<term><varname>master_slave_mode</varname> (<type>boolean</type>)
-					<indexterm>
-<!--
-						<primary><varname>master_slave_mode</varname> configuration parameter</primary>
--->
-						<primary><varname>master_slave_mode</varname> 設定パラメータ</primary>
-					</indexterm>
-				</term>
-				<listitem>
-					<para>
-<!--
-						Setting to on enables the master/slave mode.
-						Default is off.
--->
-マスタースレーブモードを有効にします。
-デフォルトはoffです。
-					</para>
-					<note>
-						<para>
-<!--
-							<xref linkend="guc-master-slave-mode"> and <xref linkend="guc-replication-mode">
-							are mutually exclusive and only one can be enabled at a time.
--->
-<xref linkend="guc-master-slave-mode">と<xref linkend="guc-replication-mode">は相互に排他的で、一度に一方しか有効にすることができません。
-						</para>
-					</note>
-					<para>
-<!--
-						This parameter can only be set at server start.
--->
-このパラメータはサーバ起動時にのみ設定可能です。
-					</para>
-				</listitem>
-			</varlistentry>
+   <varlistentry id="guc-master-slave-mode" xreflabel="master_slave_mode">
+    <term><varname>master_slave_mode</varname> (<type>boolean</type>)
+     <indexterm>
+      <!--
+      <primary><varname>master_slave_mode</varname> configuration parameter</primary>
+      -->
+      <primary><varname>master_slave_mode</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Setting to on enables the master/slave mode.
+      Default is off.
+      -->
+      マスタースレーブモードを有効にします。
+      デフォルトはoffです。
+     </para>
+     <note>
+      <para>
+       <!--
+       <xref linkend="guc-master-slave-mode"> and <xref linkend="guc-replication-mode">
+       are mutually exclusive and only one can be enabled at a time.
+       -->
+       <xref linkend="guc-master-slave-mode">と<xref linkend="guc-replication-mode">は相互に排他的で、一度に一方しか有効にすることができません。
+      </para>
+     </note>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-master-slave-sub-mode" xreflabel="master_slave_sub_mode">
-				<term><varname>master_slave_sub_mode</varname> (<type>enum</type>)
-					<indexterm>
-<!--
-						<primary><varname>master_slave_sub_mode</varname> configuration parameter</primary>
--->
-						<primary><varname>master_slave_sub_mode</varname> 設定パラメータ</primary>
-					</indexterm>
-				</term>
-				<listitem>
-					<para>
-<!--
-						Specifies the external replication system used for data replication between
-						<productname>PostgreSQL</> nodes.
-						Below table contains the list of valid values for the parameter.
--->
-<productname>PostgreSQL</>ノード間のデータレプリケーションに用いる外部のレプリケーションシステムを指定します。
-以下の表にこのパラメータで有効な値のリストを示します。
+   <varlistentry id="guc-master-slave-sub-mode" xreflabel="master_slave_sub_mode">
+    <term><varname>master_slave_sub_mode</varname> (<type>enum</type>)
+     <indexterm>
+      <!--
+      <primary><varname>master_slave_sub_mode</varname> configuration parameter</primary>
+      -->
+      <primary><varname>master_slave_sub_mode</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies the external replication system used for data replication between
+      <productname>PostgreSQL</> nodes.
+      Below table contains the list of valid values for the parameter.
+      -->
+      <productname>PostgreSQL</>ノード間のデータレプリケーションに用いる外部のレプリケーションシステムを指定します。
+      以下の表にこのパラメータで有効な値のリストを示します。
 
-					</para>
+     </para>
 
-					<table id="master-slave-sub-mode-table">
-<!--
-						<title>master slave sub mode options</title>
--->
-						<title>master_slave_sub_modeオプション</title>
-						<tgroup cols="2">
-							<thead>
-								<row>
-<!--
-									<entry>Value</entry>
-									<entry>Description</entry>
--->
-									<entry>値</entry>
-									<entry>説明</entry>
-								</row>
-							</thead>
+     <table id="master-slave-sub-mode-table">
+      <!--
+      <title>master slave sub mode options</title>
+      -->
+      <title>master_slave_sub_modeオプション</title>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <!--
+	 <entry>Value</entry>
+	 <entry>Description</entry>
+	 -->
+	 <entry>値</entry>
+	 <entry>説明</entry>
+	</row>
+       </thead>
 
-							<tbody>
-								<row>
-									<entry><literal>'slony'</literal></entry>
-<!--
-									<entry>Suitable for <acronym>Slony-I</acronym></entry>
--->
-									<entry> <acronym>Slony-I</acronym>に適合</entry>
-								</row>
+       <tbody>
+	<row>
+	 <entry><literal>'slony'</literal></entry>
+	 <!--
+	 <entry>Suitable for <acronym>Slony-I</acronym></entry>
+	 -->
+	 <entry> <acronym>Slony-I</acronym>に適合</entry>
+	</row>
 
-								<row>
-									<entry><literal>'stream'</literal></entry>
-<!--
-									<entry>Suitable for <productname>PostgreSQL</>'s built-in replication system (Streaming Replication)</entry>
--->
-									<entry><productname>PostgreSQL</>の組み込みレプリケーションシステム（ストリーミングレプリケーション）に適合</entry>
-								</row>
+	<row>
+	 <entry><literal>'stream'</literal></entry>
+	 <!--
+	 <entry>Suitable for <productname>PostgreSQL</>'s built-in replication system (Streaming Replication)</entry>
+	 -->
+	 <entry><productname>PostgreSQL</>の組み込みレプリケーションシステム（ストリーミングレプリケーション）に適合</entry>
+	</row>
 
-							</tbody>
-						</tgroup>
-					</table>
+       </tbody>
+      </tgroup>
+     </table>
 
-					<para>
-<!--
-						Default is <literal>'slony'</literal>.
--->
-デフォルトは<literal>'slony'</literal>です。
-					</para>
-					<para>
-<!--
-						This parameter can only be set at server start.
--->
-このパラメータはサーバ起動時にのみ設定可能です。
-					</para>
-				</listitem>
-			</varlistentry>
+     <para>
+      <!--
+      Default is <literal>'slony'</literal>.
+      -->
+      デフォルトは<literal>'slony'</literal>です。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-		</variablelist>
-	</sect2>
+  </variablelist>
+ </sect2>
 
-	<sect2 id="runtime-config-replication-mode">
-<!--
-		<title>Replication mode</title>
--->
-		<title>レプリケーションモード</title>
+ <sect2 id="runtime-config-replication-mode">
+  <!--
+  <title>Replication mode</title>
+  -->
+  <title>レプリケーションモード</title>
 
-		<para>
-<!--
-			This mode makes the <productname>Pgpool-II</productname> to replicate data
-			between <productname>PostgreSQL</> backends.
--->
-このモードでは<productname>PostgreSQL</>間のデータレプリケーションを<productname>Pgpool-II</productname>に行わせます。
-		</para>
+  <para>
+   <!--
+   This mode makes the <productname>Pgpool-II</productname> to replicate data
+   between <productname>PostgreSQL</> backends.
+   -->
+   このモードでは<productname>PostgreSQL</>間のデータレプリケーションを<productname>Pgpool-II</productname>に行わせます。
+  </para>
 
-		<para>
-<!--
-			Load balancing (see <xref linkend="runtime-config-load-balancing"> ) can
-			also be used with replication mode to distribute the load to the
-			attached backend nodes.
--->
-参照負荷をスタンバイバックエンドノードに振り分ける負荷分散（<xref linkend="runtime-config-load-balancing">を参照）もレプリケーションモードと共に使用可能です。
-		</para>
-		<para>
-<!--
-				 Following options affect the behavior of
-				 <productname>Pgpool-II</productname> in the replication mode.
--->
-以下のオプションがレプリケーションモードにおける<productname>Pgpool-II</productname>の動作に影響します。
-		</para>
+  <para>
+   <!--
+   Load balancing (see <xref linkend="runtime-config-load-balancing"> ) can
+   also be used with replication mode to distribute the load to the
+   attached backend nodes.
+   -->
+   参照負荷をスタンバイバックエンドノードに振り分ける負荷分散（<xref linkend="runtime-config-load-balancing">を参照）もレプリケーションモードと共に使用可能です。
+  </para>
+  <para>
+   <!--
+   Following options affect the behavior of
+   <productname>Pgpool-II</productname> in the replication mode.
+   -->
+   以下のオプションがレプリケーションモードにおける<productname>Pgpool-II</productname>の動作に影響します。
+  </para>
 
-		<variablelist>
+  <variablelist>
 
-			<varlistentry id="guc-replication-mode" xreflabel="replication_mode">
-				<term><varname>replication_mode</varname> (<type>boolean</type>)
-					<indexterm>
-<!--
-						<primary><varname>replication_mode</varname> configuration parameter</primary>
--->
-						<primary><varname>replication_mode</varname> 設定パラメータ</primary>
-					</indexterm>
-				</term>
-				<listitem>
-					<para>
-<!--
-						Setting to on enables the replication mode.
-						Default is off.
--->
-レプリケーションモードを有効にします。
-デフォルトはoffです。
-					</para>
-					<note>
-						<para>
-<!--
-							<xref linkend="guc-replication-mode"> and <xref linkend="guc-master-slave-mode">
-							are mutually exclusive and only one can be enabled at a time.
--->
-<xref linkend="guc-replication-mode">と<xref linkend="guc-master-slave-mode">は相互に排他的で、一度に一方しか有効にすることができません。
-						</para>
-					</note>
-					<para>
-<!--
-						This parameter can only be set at server start.
--->
-このパラメータはサーバ起動時にのみ設定可能です。
-					</para>
-				</listitem>
-			</varlistentry>
+   <varlistentry id="guc-replication-mode" xreflabel="replication_mode">
+    <term><varname>replication_mode</varname> (<type>boolean</type>)
+     <indexterm>
+      <!--
+      <primary><varname>replication_mode</varname> configuration parameter</primary>
+      -->
+      <primary><varname>replication_mode</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Setting to on enables the replication mode.
+      Default is off.
+      -->
+      レプリケーションモードを有効にします。
+      デフォルトはoffです。
+     </para>
+     <note>
+      <para>
+       <!--
+       <xref linkend="guc-replication-mode"> and <xref linkend="guc-master-slave-mode">
+       are mutually exclusive and only one can be enabled at a time.
+       -->
+       <xref linkend="guc-replication-mode">と<xref linkend="guc-master-slave-mode">は相互に排他的で、一度に一方しか有効にすることができません。
+      </para>
+     </note>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-replication-stop-on-mismatch" xreflabel="replication_stop_on_mismatch">
-				<term><varname>replication_stop_on_mismatch</varname> (<type>boolean</type>)
-					<indexterm>
-<!--
-						<primary><varname>replication_stop_on_mismatch</varname> configuration parameter</primary>
--->
-						<primary><varname>replication_stop_on_mismatch</varname> 設定パラメータ</primary>
-					</indexterm>
-				</term>
-				<listitem>
-					<para>
-<!--
-						When set to on, and all nodes do not reply with the same packet kind
-						to the query that was sent to all <productname>PostgreSQL</> backend nodes, then the
-						backend node whose reply differs from the majority is degenerated
-						by the <productname>Pgpool-II</productname>.
-						If <varname>replication_stop_on_mismatch</varname> is set to off and
-						a similar situation happens then the <productname>Pgpool-II</productname>
-						only terminates the current user session but does not degenerate a backend node.
--->
+   <varlistentry id="guc-replication-stop-on-mismatch" xreflabel="replication_stop_on_mismatch">
+    <term><varname>replication_stop_on_mismatch</varname> (<type>boolean</type>)
+     <indexterm>
+      <!--
+      <primary><varname>replication_stop_on_mismatch</varname> configuration parameter</primary>
+      -->
+      <primary><varname>replication_stop_on_mismatch</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      When set to on, and all nodes do not reply with the same packet kind
+      to the query that was sent to all <productname>PostgreSQL</> backend nodes, then the
+      backend node whose reply differs from the majority is degenerated
+      by the <productname>Pgpool-II</productname>.
+      If <varname>replication_stop_on_mismatch</varname> is set to off and
+      a similar situation happens then the <productname>Pgpool-II</productname>
+      only terminates the current user session but does not degenerate a backend node.
+      -->
 
-これがonで、全ての<productname>PostgreSQL</>バックエンドノードに送られたクエリに対して、全てのノードが同じパケット種類で応答しなかった場合、多数派とは異なる応答したバックエンドノードは<productname>Pgpool-II</productname>により切り離されます。
-<varname>replication_stop_on_mismatch</varname>がoffの場合に同様の状況が発生したときには、<productname>Pgpool-II</productname>は現在のユーザセッションを強制終了するだけにとどめ、バックエンドの切り離しは行いません。
+      これがonで、全ての<productname>PostgreSQL</>バックエンドノードに送られたクエリに対して、全てのノードが同じパケット種類で応答しなかった場合、多数派とは異なる応答したバックエンドノードは<productname>Pgpool-II</productname>により切り離されます。
+      <varname>replication_stop_on_mismatch</varname>がoffの場合に同様の状況が発生したときには、<productname>Pgpool-II</productname>は現在のユーザセッションを強制終了するだけにとどめ、バックエンドの切り離しは行いません。
 
-					</para>
+     </para>
 
-					<note>
-						<para>
-<!--
-							<productname>Pgpool-II</productname> does not examine the data returned
-							by the backends and takes the decision only by comparing the result packet
-							types.
--->
-<productname>Pgpool-II</productname>はバックエンドから返されたデータは調べずに、結果パケットの種類の比較のみにより決断します。
-						</para>
-					</note>
+     <note>
+      <para>
+       <!--
+       <productname>Pgpool-II</productname> does not examine the data returned
+       by the backends and takes the decision only by comparing the result packet
+       types.
+       -->
+       <productname>Pgpool-II</productname>はバックエンドから返されたデータは調べずに、結果パケットの種類の比較のみにより決断します。
+      </para>
+     </note>
 
-					<para>
-<!--
-						A typical use case of enabling the <varname>replication_stop_on_mismatch</varname>
-						is to guard against the data inconsistency among the backend nodes.
-						For example, you may want to degenerate a backend node if an UPDATE statement
-						fails on one backend node while passes on others.
--->
-<varname>replication_stop_on_mismatch</varname>を有効にする典型的なユースケースは、バックエンドノード間のデータ不整合の防止です。
-例えば、UPDATE文が他のノードでは成功しているのにあるバックエンドノードでは失敗した場合、そのバックエンドノードを切り離したいかもしれません。
-					</para>
-					<para>
-<!--
-						Default is off.
--->
-デフォルトはoffです。
-					</para>
-					<para>
-<!--
-						This parameter can be changed by reloading the Pgpool-II configurations.
--->
-このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
-					</para>
-				</listitem>
-			</varlistentry>
+     <para>
+      <!--
+      A typical use case of enabling the <varname>replication_stop_on_mismatch</varname>
+      is to guard against the data inconsistency among the backend nodes.
+      For example, you may want to degenerate a backend node if an UPDATE statement
+      fails on one backend node while passes on others.
+      -->
+      <varname>replication_stop_on_mismatch</varname>を有効にする典型的なユースケースは、バックエンドノード間のデータ不整合の防止です。
+      例えば、UPDATE文が他のノードでは成功しているのにあるバックエンドノードでは失敗した場合、そのバックエンドノードを切り離したいかもしれません。
+     </para>
+     <para>
+      <!--
+      Default is off.
+      -->
+      デフォルトはoffです。
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading the Pgpool-II configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-failover-if-affected-tuples-mismatch" xreflabel="failover_if_affected_tuples_mismatch">
-				<term><varname>failover_if_affected_tuples_mismatch</varname> (<type>boolean</type>)
-					<indexterm>
-<!--
-						<primary><varname>failover_if_affected_tuples_mismatch</varname> configuration parameter</primary>
--->
-						<primary><varname>failover_if_affected_tuples_mismatch</varname> 設定パラメータ</primary>
-					</indexterm>
-				</term>
-				<listitem>
-					<para>
-<!--
-						When set to on, and all nodes do not reply with the same number of
-						affected tuples to the INSERT/UPDATE/DELETE query, then the
-						backend node whose reply differs from the majority is degenerated
-						by the <productname>Pgpool-II</productname>.
-						If <varname>failover_if_affected_tuples_mismatch</varname> is set to off and
-						a similar situation happens then the <productname>Pgpool-II</productname>
-						only terminates the current user session but does not degenerate a backend node.
--->
-これがonで、全てのノードの応答でINSERT/UPDATE/DELETEクエリの影響を受けたタプルの数が同じでなかった場合、多数派とは異なる応答したバックエンドノードは<productname>Pgpool-II</productname>による切り離されます。
-<varname>failover_if_affected_tuples_mismatch</varname>がoffの場合に同様の状況が発生したときには、<productname>Pgpool-II</productname>は現在のユーザセッションを強制終了するだけにとどめ、バックエンドの切り離しは行いません。
-					</para>
+   <varlistentry id="guc-failover-if-affected-tuples-mismatch" xreflabel="failover_if_affected_tuples_mismatch">
+    <term><varname>failover_if_affected_tuples_mismatch</varname> (<type>boolean</type>)
+     <indexterm>
+      <!--
+      <primary><varname>failover_if_affected_tuples_mismatch</varname> configuration parameter</primary>
+      -->
+      <primary><varname>failover_if_affected_tuples_mismatch</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      When set to on, and all nodes do not reply with the same number of
+      affected tuples to the INSERT/UPDATE/DELETE query, then the
+      backend node whose reply differs from the majority is degenerated
+      by the <productname>Pgpool-II</productname>.
+      If <varname>failover_if_affected_tuples_mismatch</varname> is set to off and
+      a similar situation happens then the <productname>Pgpool-II</productname>
+      only terminates the current user session but does not degenerate a backend node.
+      -->
+      これがonで、全てのノードの応答でINSERT/UPDATE/DELETEクエリの影響を受けたタプルの数が同じでなかった場合、多数派とは異なる応答したバックエンドノードは<productname>Pgpool-II</productname>による切り離されます。
+      <varname>failover_if_affected_tuples_mismatch</varname>がoffの場合に同様の状況が発生したときには、<productname>Pgpool-II</productname>は現在のユーザセッションを強制終了するだけにとどめ、バックエンドの切り離しは行いません。
+     </para>
 
-					<note>
-						<para>
-<!--
-							In case of a tie, when two or more groups have the same number of nodes,
-							then the group containing the master node (backend node having
-							the youngest node id) gets the precedence.
--->
-もし同票で、2つ以上のグループで同じノード数だった場合は、マスターノード(最も若いDBノード番号のバックエンドノード)を含むグループが優先されます。
-						</para>
-					</note>
+     <note>
+      <para>
+       <!--
+       In case of a tie, when two or more groups have the same number of nodes,
+       then the group containing the master node (backend node having
+       the youngest node id) gets the precedence.
+       -->
+       もし同票で、2つ以上のグループで同じノード数だった場合は、マスターノード(最も若いDBノード番号のバックエンドノード)を含むグループが優先されます。
+      </para>
+     </note>
 
-					<para>
-<!--
-						Default is off.
--->
-デフォルトはoffです。
+     <para>
+      <!--
+      Default is off.
+      -->
+      デフォルトはoffです。
 
-					</para>
-					<para>
-<!--
-						This parameter can be changed by reloading the Pgpool-II configurations.
--->
-このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
-					</para>
-				</listitem>
-			</varlistentry>
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading the Pgpool-II configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-replicate-select" xreflabel="replicate_select">
-				<term><varname>replicate_select</varname> (<type>boolean</type>)
-					<indexterm>
-<!--
-						<primary><varname>replicate_select</varname> configuration parameter</primary>
--->
-						<primary><varname>replicate_select</varname> 設定パラメータ</primary>
-					</indexterm>
-				</term>
-				<listitem>
-					<para>
-<!--
-						When set to on, <productname>Pgpool-II</productname> enables the
-						SELECT query replication mode. i.e. The SELECT queries are sent
-						to all backend nodes.
--->
-onを設定すると、<productname>Pgpool-II</productname>はSELECTクエリのレプリケーションモードを有効にします。
-すなわち、SELECTクエリが全てのバックエンドノードに送信されます。
-					</para>
+   <varlistentry id="guc-replicate-select" xreflabel="replicate_select">
+    <term><varname>replicate_select</varname> (<type>boolean</type>)
+     <indexterm>
+      <!--
+      <primary><varname>replicate_select</varname> configuration parameter</primary>
+      -->
+      <primary><varname>replicate_select</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      When set to on, <productname>Pgpool-II</productname> enables the
+      SELECT query replication mode. i.e. The SELECT queries are sent
+      to all backend nodes.
+      -->
+      onを設定すると、<productname>Pgpool-II</productname>はSELECTクエリのレプリケーションモードを有効にします。
+      すなわち、SELECTクエリが全てのバックエンドノードに送信されます。
+     </para>
 
-					<table id="replicate-select-affect-table">
-<!--
-						<title>replicate_select with <xref linkend="guc-load-balance-mode"> affects on SELECT routing</title>
--->
-						<title>replicate_selectと<xref linkend="guc-load-balance-mode">がSELECTのルーティングに与える影響</title>
-						<tgroup cols="6" align="center">
-							<colspec colname="_1" colwidth="1*">
-							<colspec colname="_2" colwidth="1*">
-							<colspec colname="_3" colwidth="1*">
-							<colspec colname="_4" colwidth="1*">
-							<colspec colname="_5" colwidth="1*">
-							<colspec colname="_6" colwidth="1*">
+     <table id="replicate-select-affect-table">
+      <!--
+      <title>replicate_select with <xref linkend="guc-load-balance-mode"> affects on SELECT routing</title>
+      -->
+      <title>replicate_selectと<xref linkend="guc-load-balance-mode">がSELECTのルーティングに与える影響</title>
+      <tgroup cols="6" align="center">
+       <colspec colname="_1" colwidth="1*">
+	<colspec colname="_2" colwidth="1*">
+	 <colspec colname="_3" colwidth="1*">
+	  <colspec colname="_4" colwidth="1*">
+	   <colspec colname="_5" colwidth="1*">
+	    <colspec colname="_6" colwidth="1*">
 
-							<tbody>
-								<row>
-<!--
-									<entry>replicate_select is true</entry>
--->
-									<entry>replicate_selectがtrue</entry>
-									<entry align="center">Y</entry>
-									<entry align="center" nameend="_6" namest="_3">N</entry>
-								</row>
+	     <tbody>
+	      <row>
+	       <!--
+	       <entry>replicate_select is true</entry>
+	       -->
+	       <entry>replicate_selectがtrue</entry>
+	       <entry align="center">Y</entry>
+	       <entry align="center" nameend="_6" namest="_3">N</entry>
+	      </row>
 
-								<row>
-<!--
-									<entry>load_balance_mode is true</entry>
--->
-									<entry>load_balance_modeがtrue</entry>
-									<entry>ANY</entry>
-									<entry align="center" nameend="_5" namest="_3">Y</entry>
-									<entry align="center">N</entry>
-								</row>
+	      <row>
+	       <!--
+	       <entry>load_balance_mode is true</entry>
+	       -->
+	       <entry>load_balance_modeがtrue</entry>
+	       <entry>ANY</entry>
+	       <entry align="center" nameend="_5" namest="_3">Y</entry>
+	       <entry align="center">N</entry>
+	      </row>
 
-								<row>
-<!--
-									<entry>SELECT is inside a transaction block</entry>
--->
-									<entry>SELECTがトランザクションブロックの内部にある</entry>
-									<entry align="center">ANY</entry>
-									<entry nameend="_4" namest="_3" align="center"> Y </entry>
-									<entry align="center">N</entry>
-									<entry align="center">ANY</entry>
-								</row>
+	      <row>
+	       <!--
+	       <entry>SELECT is inside a transaction block</entry>
+	       -->
+	       <entry>SELECTがトランザクションブロックの内部にある</entry>
+	       <entry align="center">ANY</entry>
+	       <entry nameend="_4" namest="_3" align="center"> Y </entry>
+	       <entry align="center">N</entry>
+	       <entry align="center">ANY</entry>
+	      </row>
 
-								<row>
-									<entry>
-<!--
-										Transaction isolation level is SERIALIZABLE and
-										the transaction has issued a write query
--->
-										トランザクション分離レベルがSERIALIZABLEで、トランザクションが更新クエリを発行済
-									</entry>
-									<entry align="center">ANY</entry>
-									<entry align="center">Y</entry>
-									<entry align="center">N</entry>
-									<entry align="center">ANY</entry>
-									<entry align="center">ANY</entry>
-								</row>
+	      <row>
+	       <entry>
+		<!--
+		Transaction isolation level is SERIALIZABLE and
+		the transaction has issued a write query
+		-->
+		トランザクション分離レベルがSERIALIZABLEで、トランザクションが更新クエリを発行済
+	       </entry>
+	       <entry align="center">ANY</entry>
+	       <entry align="center">Y</entry>
+	       <entry align="center">N</entry>
+	       <entry align="center">ANY</entry>
+	       <entry align="center">ANY</entry>
+	      </row>
 
-								<row>
-									<entry>
-<!--
-										results(R:replication, M: send only to master, L: load balance)
--->
-										結果（R:レプリケーション、M:マスターのみに送信、L:負荷分散）
-									</entry>
-									<entry align="center">R</entry>
-									<entry align="center">M</entry>
-									<entry align="center">L</entry>
-									<entry align="center">L</entry>
-									<entry align="center">M</entry>
-								</row>
+	      <row>
+	       <entry>
+		<!--
+		results(R:replication, M: send only to master, L: load balance)
+		-->
+		結果（R:レプリケーション、M:マスターのみに送信、L:負荷分散）
+	       </entry>
+	       <entry align="center">R</entry>
+	       <entry align="center">M</entry>
+	       <entry align="center">L</entry>
+	       <entry align="center">L</entry>
+	       <entry align="center">M</entry>
+	      </row>
 
-							</tbody>
-						</tgroup>
-					</table>
+	     </tbody>
+      </tgroup>
+     </table>
 
-					<para>
-<!--
-						Default is off.
--->
-デフォルトはoffです。
-					</para>
-					<para>
-<!--
-						This parameter can be changed by reloading the Pgpool-II configurations.
--->
-このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
-					</para>
-				</listitem>
-			</varlistentry>
+     <para>
+      <!--
+      Default is off.
+      -->
+      デフォルトはoffです。
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading the Pgpool-II configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-insert-lock" xreflabel="insert_lock">
-				<term><varname>insert_lock</varname> (<type>boolean</type>)
-					<indexterm>
-<!--
-						<primary><varname>insert_lock</varname> configuration parameter</primary>
--->
-						<primary><varname>insert_lock</varname> 設定パラメータ</primary>
-					</indexterm>
-				</term>
-				<listitem>
-					<para>
-<!--
-						When set to on, <productname>Pgpool-II</productname> will automatically lock
-						the table on <productname>PostgreSQL</> before an INSERT statement is issued for that.
--->
-onに設定すると、<productname>Pgpool-II</productname>はINSERT文が発行される前に<productname>PostgreSQL</>上のテーブルを自動的にロックします。
-					</para>
+   <varlistentry id="guc-insert-lock" xreflabel="insert_lock">
+    <term><varname>insert_lock</varname> (<type>boolean</type>)
+     <indexterm>
+      <!--
+      <primary><varname>insert_lock</varname> configuration parameter</primary>
+      -->
+      <primary><varname>insert_lock</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      When set to on, <productname>Pgpool-II</productname> will automatically lock
+      the table on <productname>PostgreSQL</> before an INSERT statement is issued for that.
+      -->
+      onに設定すると、<productname>Pgpool-II</productname>はINSERT文が発行される前に<productname>PostgreSQL</>上のテーブルを自動的にロックします。
+     </para>
 
-					<para>
-<!--
-						When replicating a table with SERIAL data type,
-						the SERIAL column value may get different values
-						on the different backends.
-						The workaround to this problem is to explicitly lock the table
-						before issuing the INSERT.
--->
-SERIAL型を使っているテーブルをレプリケーションすると、SERIAL型の列の値がDBノードの間で一致しなくなることがあります。
-この問題の回避策は、INSERT実行前に該当テーブルを明示的にロックすることです。
-					</para>
-					<para>
-<!--
-						So for automatically locking the table <productname>Pgpool-II</productname> do the following transformation:
--->
-テーブルの自動ロックのため、<productname>Pgpool-II</productname>は以下の変換を行います。
-							<programlisting>
-INSERT INTO ...
-							</programlisting>
-<!--
-						to
--->
-これを次のように変換します。
+     <para>
+      <!--
+      When replicating a table with SERIAL data type,
+      the SERIAL column value may get different values
+      on the different backends.
+      The workaround to this problem is to explicitly lock the table
+      before issuing the INSERT.
+      -->
+      SERIAL型を使っているテーブルをレプリケーションすると、SERIAL型の列の値がDBノードの間で一致しなくなることがあります。
+      この問題の回避策は、INSERT実行前に該当テーブルを明示的にロックすることです。
+     </para>
+     <para>
+      <!--
+      So for automatically locking the table <productname>Pgpool-II</productname> do the following transformation:
+      -->
+      テーブルの自動ロックのため、<productname>Pgpool-II</productname>は以下の変換を行います。
+      <programlisting>
+       INSERT INTO ...
+      </programlisting>
+      <!--
+      to
+      -->
+      これを次のように変換します。
 
-							<programlisting>
-BEGIN;
-LOCK TABLE ...
-INSERT INTO ...
-COMMIT;
-							</programlisting>
-					</para>
-					<caution>
-						<para>
-<!--
-							This approach severely degrades the transactions' parallelism
--->
-この方法はトランザクションの並列実行性を大きく劣化させます。
-						</para>
-					</caution>
+      <programlisting>
+       BEGIN;
+       LOCK TABLE ...
+       INSERT INTO ...
+       COMMIT;
+      </programlisting>
+     </para>
+     <caution>
+      <para>
+       <!--
+       This approach severely degrades the transactions' parallelism
+       -->
+       この方法はトランザクションの並列実行性を大きく劣化させます。
+      </para>
+     </caution>
 
-					<para>
-<!--
-						<productname>Pgpool-II</productname> <emphasis>V2.2</emphasis> or later,
-						automatically detects whether the table has a SERIAL columns or not,
-						so it never  locks the table if it desn't have the SERIAL columns.
--->
-<productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>以降では、テーブルがSERIAL列を持つかどうか自動判別するため、SERIAL列がなければ決してテーブルをロックしません。
-					</para>
+     <para>
+      <!--
+      <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis> or later,
+      automatically detects whether the table has a SERIAL columns or not,
+      so it never  locks the table if it desn't have the SERIAL columns.
+      -->
+      <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>以降では、テーブルがSERIAL列を持つかどうか自動判別するため、SERIAL列がなければ決してテーブルをロックしません。
+     </para>
 
-					<para>
-<!--
-						<productname>Pgpool-II</productname> <emphasis>V3.0</emphasis> until
-						<productname>Pgpool-II</productname> <emphasis>V3.0.4</emphasis> uses a row lock
-						against the sequence relation, rather than table lock.
-						This is intended to minimize lock conflict with <acronym>VACUUM</acronym>
-						(including autovacuum).
-						However this can lead to another problem. After transaction wraparound happens,
-						row locking against the sequence relation causes PostgreSQL internal error
-						(more precisely, access error on pg_clog, which keeps transaction status).
-						To prevent this, <productname>PostgreSQL</> core developers decided to disallow row locking
-						against sequences and this broke the <productname>Pgpool-II</productname>,
-						of course (the "fixed" version of PostgreSQL was released as
-						9.0.5, 8.4.9, 8.3.16 and 8.2.22).
--->
-<productname>Pgpool-II</productname> <emphasis>V3.0.4</emphasis>までの<productname>Pgpool-II</productname> <emphasis>V3.0</emphasis>では、テーブルロックではなくシーケンステーブルに対して行ロックをかけます。
-これはVACUUM(autovacuumを含む)とのロック競合を最小化することを意図しています。
-しかし、これは他の問題を引き起こします。
-トランザクション周回が起きた後、シーケンステーブルに対する行ロックはPostgreSQLの内部エラー (詳細には、トランザクション状態を保持するpg_clogへのアクセスエラー)を起こします。
-これを防ぐため、PostgreSQLのコア開発者はシーケンステーブルに対する行ロックを許可しないことを決定しました。
-これはもちろん<productname>Pgpool-II</productname>を動作不能にします(修正されたPostgreSQLはバージョン 9.0.5, 8.4.9, 8.3.16そして8.2.22としてリリースされました)。
+     <para>
+      <!--
+      <productname>Pgpool-II</productname> <emphasis>V3.0</emphasis> until
+      <productname>Pgpool-II</productname> <emphasis>V3.0.4</emphasis> uses a row lock
+      against the sequence relation, rather than table lock.
+      This is intended to minimize lock conflict with <acronym>VACUUM</acronym>
+      (including autovacuum).
+      However this can lead to another problem. After transaction wraparound happens,
+      row locking against the sequence relation causes PostgreSQL internal error
+      (more precisely, access error on pg_clog, which keeps transaction status).
+      To prevent this, <productname>PostgreSQL</> core developers decided to disallow row locking
+      against sequences and this broke the <productname>Pgpool-II</productname>,
+      of course (the "fixed" version of PostgreSQL was released as
+      9.0.5, 8.4.9, 8.3.16 and 8.2.22).
+      -->
+      <productname>Pgpool-II</productname> <emphasis>V3.0.4</emphasis>までの<productname>Pgpool-II</productname> <emphasis>V3.0</emphasis>では、テーブルロックではなくシーケンステーブルに対して行ロックをかけます。
+      これはVACUUM(autovacuumを含む)とのロック競合を最小化することを意図しています。
+      しかし、これは他の問題を引き起こします。
+      トランザクション周回が起きた後、シーケンステーブルに対する行ロックはPostgreSQLの内部エラー (詳細には、トランザクション状態を保持するpg_clogへのアクセスエラー)を起こします。
+      これを防ぐため、PostgreSQLのコア開発者はシーケンステーブルに対する行ロックを許可しないことを決定しました。
+      これはもちろん<productname>Pgpool-II</productname>を動作不能にします(修正されたPostgreSQLはバージョン 9.0.5, 8.4.9, 8.3.16そして8.2.22としてリリースされました)。
 
-					</para>
+     </para>
 
-					<para>
-<!--
-						<productname>Pgpool-II</productname> <emphasis>V3.0.5</emphasis> or later
-						uses a row lock against <literal>pgpool_catalog.insert_lock</literal> table
-						because new PostgreSQL disallows a row lock against the sequence relation.
-						So creating insert_lock table in all databases which are accessed via
-						<productname>Pgpool-II</productname> beforehand is required.
-						See <xref linkend="create-installlock-table"> for more details.
-						If does not exist insert_lock table, <productname>Pgpool-II</productname>
-						locks the insert target table.
-						This behavior is same as <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>
-						and <emphasis>V2.3</emphasis> series.
--->
-<productname>Pgpool-II</productname> <emphasis>V3.0.5</emphasis>以降では、新しいPostgreSQLがシーケンステーブルに対するロックを許可しなくなったため、<literal>pgpool_catalog.insert_lock</literal>テーブルに対して行ロックをかけます。
-したがって、<productname>Pgpool-II</productname>経由でアクセスするすべてのデータベースにinsert_lockテーブルをあらかじめ作成しておく必要があります。
-詳細は<xref linkend="create-installlock-table">をご覧ください。
-もし、insert_lockテーブルが存在しない場合は、挿入対象のテーブルに対してロックを行います。
-これは、<productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>と<emphasis>V2.3</emphasis>シリーズと同じ動作です。
-					</para>
-					<para>
-<!--
-						If you want to use <varname>insert_lock</varname> which is compatible
-						with older releases, you can specify lock method by configure script.
-						See <xref linkend="install-pgpool"> for more details.
--->
-過去のバージョンと互換性のある<varname>insert_lock</varname>を使用したい場合は、configureスクリプトでロック方法を指定できます。
-詳細は<xref linkend="install-pgpool">をご覧下さい。
-					</para>
+     <para>
+      <!--
+      <productname>Pgpool-II</productname> <emphasis>V3.0.5</emphasis> or later
+      uses a row lock against <literal>pgpool_catalog.insert_lock</literal> table
+      because new PostgreSQL disallows a row lock against the sequence relation.
+      So creating insert_lock table in all databases which are accessed via
+      <productname>Pgpool-II</productname> beforehand is required.
+      See <xref linkend="create-installlock-table"> for more details.
+      If does not exist insert_lock table, <productname>Pgpool-II</productname>
+      locks the insert target table.
+      This behavior is same as <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>
+      and <emphasis>V2.3</emphasis> series.
+      -->
+      <productname>Pgpool-II</productname> <emphasis>V3.0.5</emphasis>以降では、新しいPostgreSQLがシーケンステーブルに対するロックを許可しなくなったため、<literal>pgpool_catalog.insert_lock</literal>テーブルに対して行ロックをかけます。
+      したがって、<productname>Pgpool-II</productname>経由でアクセスするすべてのデータベースにinsert_lockテーブルをあらかじめ作成しておく必要があります。
+      詳細は<xref linkend="create-installlock-table">をご覧ください。
+       もし、insert_lockテーブルが存在しない場合は、挿入対象のテーブルに対してロックを行います。
+       これは、<productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>と<emphasis>V2.3</emphasis>シリーズと同じ動作です。
+     </para>
+     <para>
+      <!--
+      If you want to use <varname>insert_lock</varname> which is compatible
+      with older releases, you can specify lock method by configure script.
+      See <xref linkend="install-pgpool"> for more details.
+      -->
+      過去のバージョンと互換性のある<varname>insert_lock</varname>を使用したい場合は、configureスクリプトでロック方法を指定できます。
+      詳細は<xref linkend="install-pgpool">をご覧下さい。
+     </para>
 
-					<para>
-<!--
-						For fine (per statement) control:
--->
-（文ごとの）細かい制御:
-					</para>
+     <para>
+      <!--
+      For fine (per statement) control:
+      -->
+      （文ごとの）細かい制御:
+     </para>
 
-					<itemizedlist>
-						<listitem>
-							<para>
-<!--
-								set insert_lock to true, and add /*NO INSERT LOCK*/ at the beginning of an
-								INSERT statement for which you do not want to acquire the table lock.
--->
-insert_lockをtrueにして、テーブルロックを獲得してほしくないINSERT文には、先頭に/*NO INSERT LOCK*/コメントを追加します。
-							</para>
-						</listitem>
-						<listitem>
-							<para>
-<!--
-								set insert_lock to false, and add /*INSERT LOCK*/ at the beginning of an
-								INSERT statement for which you want to acquire the table lock.
--->
-insert_lockをfalseにして、テーブルロックを獲得してほしいINSERT文には、先頭に/*INSERT LOCK*/コメントを追加します。
-							</para>
-						</listitem>
+     <itemizedlist>
+      <listitem>
+       <para>
+	<!--
+	set insert_lock to true, and add /*NO INSERT LOCK*/ at the beginning of an
+	INSERT statement for which you do not want to acquire the table lock.
+	-->
+	insert_lockをtrueにして、テーブルロックを獲得してほしくないINSERT文には、先頭に/*NO INSERT LOCK*/コメントを追加します。
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<!--
+	set insert_lock to false, and add /*INSERT LOCK*/ at the beginning of an
+	INSERT statement for which you want to acquire the table lock.
+	-->
+	insert_lockをfalseにして、テーブルロックを獲得してほしいINSERT文には、先頭に/*INSERT LOCK*/コメントを追加します。
+       </para>
+      </listitem>
 
-					</itemizedlist>
-					<note>
-						<para>
-<!--
-							If insert_lock is enabled, the regression tests for PostgreSQL 8.0 gets fail
-							in transactions, privileges, rules, and alter_table.
--->
-insert_lockを有効にしてregression testを実行すると、PostgreSQL 8.0では transactions, privileges, rules, alter_tableがfailします。
-						</para>
-						<para>
-<!--
-							The reason for this is that <productname>Pgpool-II</productname>
-							tries to LOCK the VIEW for the rule test, and it produces the below error message:
--->
-その理由は、ruleテストで<productname>Pgpool-II</productname>がビューにLOCKを実行しようとするため、そして以下のエラーメッセージが出てしまうためです。
-								<programlisting>
-! ERROR: current transaction is aborted, commands ignored until
-end of transaction block
-							</programlisting>
-<!--
-								For example, the transactions test tries an INSERT into a table which does not exist,
-								and <productname>Pgpool-II</productname> causes <productname>PostgreSQL</productname> to
-								acquire the lock for the table. Of cause this results in an error.
-								The transaction will be aborted, and the following INSERT statement produces the above error message.
--->
-たとえば、transactionsテストでは、存在しないテーブルに対してINSERTを試みており、<productname>Pgpool-II</productname>は<productname>PostgerSQL</productname>にそのテーブルのロックを獲得させることになります。
-これはもちろんエラーとなります。
-トランザクションがアボート状態になり、続くINSERTでは上記エラーが出てしまいます。
-						</para>
-					</note>
-					<para>
-<!--
-						Default is off.
--->
-デフォルトはoffです。
-					</para>
-					<para>
-<!--
-						This parameter can be changed by reloading the Pgpool-II configurations.
--->
-このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
-					</para>
-				</listitem>
-			</varlistentry>
+     </itemizedlist>
+     <note>
+      <para>
+       <!--
+       If insert_lock is enabled, the regression tests for PostgreSQL 8.0 gets fail
+       in transactions, privileges, rules, and alter_table.
+       -->
+       insert_lockを有効にしてregression testを実行すると、PostgreSQL 8.0では transactions, privileges, rules, alter_tableがfailします。
+      </para>
+      <para>
+       <!--
+       The reason for this is that <productname>Pgpool-II</productname>
+       tries to LOCK the VIEW for the rule test, and it produces the below error message:
+       -->
+       その理由は、ruleテストで<productname>Pgpool-II</productname>がビューにLOCKを実行しようとするため、そして以下のエラーメッセージが出てしまうためです。
+       <programlisting>
+	! ERROR: current transaction is aborted, commands ignored until
+	end of transaction block
+       </programlisting>
+       <!--
+       For example, the transactions test tries an INSERT into a table which does not exist,
+       and <productname>Pgpool-II</productname> causes <productname>PostgreSQL</productname> to
+       acquire the lock for the table. Of cause this results in an error.
+       The transaction will be aborted, and the following INSERT statement produces the above error message.
+       -->
+       たとえば、transactionsテストでは、存在しないテーブルに対してINSERTを試みており、<productname>Pgpool-II</productname>は<productname>PostgerSQL</productname>にそのテーブルのロックを獲得させることになります。
+       これはもちろんエラーとなります。
+       トランザクションがアボート状態になり、続くINSERTでは上記エラーが出てしまいます。
+      </para>
+     </note>
+     <para>
+      <!--
+      Default is off.
+      -->
+      デフォルトはoffです。
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading the Pgpool-II configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-lobj-lock-table" xreflabel="lobj_lock_table">
-				<term><varname>lobj_lock_table</varname> (<type>string</type>)
-					<indexterm>
-<!--
-						<primary><varname>lobj_lock_table</varname> configuration parameter</primary>
--->
-						<primary><varname>lobj_lock_table</varname> 設定パラメータ</primary>
-					</indexterm>
-				</term>
-				<listitem>
-					<para>
-<!--
-						Specifies a table name used for large object replication control.
-						If it is specified, <productname>Pgpool-II</productname> will lock
-						the table specified by <varname>lobj_lock_table</varname> and generate
-						a large object id by looking into <literal>pg_largeobject</literal>
-						system catalog and then call <literal>lo_create</literal> to create
-						the large object.
-						This procedure guarantees that <productname>Pgpool-II</productname>
-						will get the same large object id in all DB nodes in replication mode.
--->
-ラージオブジェクトのレプリケーションを行いたいときにロック管理に使うためのテーブル名を指定します。
-このテーブルが指定されている場合、<productname>Pgpool-II</productname>は、<varname>lobj_lock_table</varname>で指定されているテーブルをロックした後、<literal>pg_largeobject</literal>システムカタログを参照してラージオブジェクトIDを生成し、<literal>lo_create()</literal>を呼び出してラージオブジェクトの作成を行います。
-この方法により、レプリケーションモードにおいて<productname>Pgpool-II</productname>が全てのDBノードで同じラージオブジェクトIDを得られることが保証されます。
+   <varlistentry id="guc-lobj-lock-table" xreflabel="lobj_lock_table">
+    <term><varname>lobj_lock_table</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>lobj_lock_table</varname> configuration parameter</primary>
+      -->
+      <primary><varname>lobj_lock_table</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies a table name used for large object replication control.
+      If it is specified, <productname>Pgpool-II</productname> will lock
+      the table specified by <varname>lobj_lock_table</varname> and generate
+      a large object id by looking into <literal>pg_largeobject</literal>
+      system catalog and then call <literal>lo_create</literal> to create
+      the large object.
+      This procedure guarantees that <productname>Pgpool-II</productname>
+      will get the same large object id in all DB nodes in replication mode.
+      -->
+      ラージオブジェクトのレプリケーションを行いたいときにロック管理に使うためのテーブル名を指定します。
+      このテーブルが指定されている場合、<productname>Pgpool-II</productname>は、<varname>lobj_lock_table</varname>で指定されているテーブルをロックした後、<literal>pg_largeobject</literal>システムカタログを参照してラージオブジェクトIDを生成し、<literal>lo_create()</literal>を呼び出してラージオブジェクトの作成を行います。
+      この方法により、レプリケーションモードにおいて<productname>Pgpool-II</productname>が全てのDBノードで同じラージオブジェクトIDを得られることが保証されます。
 
-						</para>
-						<note>
-							<para>
-<!--
-								<productname>PostgreSQL</> 8.0 and older does not have <literal>lo_create</literal>,
-								so this feature does not work with PostgreSQL 8.0 and older versions.
--->
-<productname>PostgreSQL</> 8.0以前は<literal>lo_create</literal>を持たないため、<productname>PostgreSQL</> 8.0以前のバージョンではこの処理は行われません。
-							</para>
-						</note>
-						<para>
-<!--
-							A call to the <literal>libpq</literal> function <literal>lo_creat()</literal>
-							triggers this feature. Also large object creation through <acronym>Java</acronym>
-							API (<acronym>JDBC</acronym> driver), <acronym>PHP</acronym> API
-							(<literal>pg_lo_create</literal>, or similar API in PHP library such as PDO),
-							and this same API in various programming languages are known to use a
-							similar protocol, and thus should work.
--->
-<literal>libpq</literal>の関数<literal>lo_creat()</literal>の呼び出しがこの機能の契機となります。
-<acronym>Java</acronym> API（<acronym>JDBC</acronym>ドライバ）、<acronym>PHP</acronym> API（<literal>pg_lo_create</literal>、またはPDOといったPHPライブラリの同様のAPI）、様々なプログラミング言語の同様のAPIを経由したラージオブジェクトの生成においても同じプロトコルが使われることがわかっているので、この機能は動作するはずです。
-					</para>
+     </para>
+     <note>
+      <para>
+       <!--
+       <productname>PostgreSQL</> 8.0 and older does not have <literal>lo_create</literal>,
+       so this feature does not work with PostgreSQL 8.0 and older versions.
+       -->
+       <productname>PostgreSQL</> 8.0以前は<literal>lo_create</literal>を持たないため、<productname>PostgreSQL</> 8.0以前のバージョンではこの処理は行われません。
+      </para>
+     </note>
+     <para>
+      <!--
+      A call to the <literal>libpq</literal> function <literal>lo_creat()</literal>
+      triggers this feature. Also large object creation through <acronym>Java</acronym>
+      API (<acronym>JDBC</acronym> driver), <acronym>PHP</acronym> API
+      (<literal>pg_lo_create</literal>, or similar API in PHP library such as PDO),
+      and this same API in various programming languages are known to use a
+      similar protocol, and thus should work.
+      -->
+      <literal>libpq</literal>の関数<literal>lo_creat()</literal>の呼び出しがこの機能の契機となります。
+      <acronym>Java</acronym> API（<acronym>JDBC</acronym>ドライバ）、<acronym>PHP</acronym> API（<literal>pg_lo_create</literal>、またはPDOといったPHPライブラリの同様のAPI）、様々なプログラミング言語の同様のAPIを経由したラージオブジェクトの生成においても同じプロトコルが使われることがわかっているので、この機能は動作するはずです。
+     </para>
 
-					<para>
-<!--
-						This feature does not works with following operations on large objects.
--->
-この機能はラージオブジェクトに対する以下の操作では動作しません。
+     <para>
+      <!--
+      This feature does not works with following operations on large objects.
+      -->
+      この機能はラージオブジェクトに対する以下の操作では動作しません。
 
-					</para>
-					<itemizedlist>
-						<listitem>
-							<para>
-<!--
-								All APIs using <literal>lo_create</literal>, <literal>lo_import_with_oid</literal>.
--->
-								<literal>lo_create</literal>、<literal>lo_import_with_oid</literal>を使う全てのAPI。
-							</para>
-						</listitem>
-						<listitem>
-							<para>
-<!--
-								<literal>lo_import</literal> function in backend called in SELECT.
--->
-								バックエンドの<literal>lo_import</literal>関数をSELECTで呼び出す場合
-							</para>
-						</listitem>
-						<listitem>
-							<para>
-<!--
-								<literal>lo_create</literal> function in backend called in SELECT.
--->
-								バックエンドの<literal>lo_create</literal>関数をSELECTで呼び出す場合
-							</para>
-						</listitem>
-					</itemizedlist>
+     </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+	<!--
+	All APIs using <literal>lo_create</literal>, <literal>lo_import_with_oid</literal>.
+	-->
+	<literal>lo_create</literal>、<literal>lo_import_with_oid</literal>を使う全てのAPI。
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<!--
+	<literal>lo_import</literal> function in backend called in SELECT.
+	-->
+	バックエンドの<literal>lo_import</literal>関数をSELECTで呼び出す場合
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<!--
+	<literal>lo_create</literal> function in backend called in SELECT.
+	-->
+	バックエンドの<literal>lo_create</literal>関数をSELECTで呼び出す場合
+       </para>
+      </listitem>
+     </itemizedlist>
 
-					<note>
-						<para>
-<!--
-							All <productname>PostgreSQL</> users must have a write access on <varname>lobj_lock_table</varname>
-							and it can be created in any schema.
--->
-全ての<productname>PostgreSQL</>ユーザは<varname>lobj_lock_table</varname>へ書き込み可能である必要が有ります。
-また、これはどのスキーマに作成されてもかまいません。
-						</para>
-					</note>
+     <note>
+      <para>
+       <!--
+       All <productname>PostgreSQL</> users must have a write access on <varname>lobj_lock_table</varname>
+       and it can be created in any schema.
+       -->
+       全ての<productname>PostgreSQL</>ユーザは<varname>lobj_lock_table</varname>へ書き込み可能である必要が有ります。
+       また、これはどのスキーマに作成されてもかまいません。
+      </para>
+     </note>
 
-					<para>
-<!--
-						Example to create a large object lock table:
--->
-ラージオブジェクトロックテーブルを作る例を示します。
-						<programlisting>
-CREATE TABLE public.my_lock_table ();
-GRANT ALL ON public.my_lock_table TO PUBLIC;
-						</programlisting>
-					</para>
-					<para>
-<!--
-						Default is <literal>''</literal>(empty), which disables the feature.
--->
-デフォルトは<literal>''</literal>（空文字列）で、この機能は無効です。
-					</para>
-				</listitem>
-			</varlistentry>
+     <para>
+      <!--
+      Example to create a large object lock table:
+      -->
+      ラージオブジェクトロックテーブルを作る例を示します。
+      <programlisting>
+       CREATE TABLE public.my_lock_table ();
+       GRANT ALL ON public.my_lock_table TO PUBLIC;
+      </programlisting>
+     </para>
+     <para>
+      <!--
+      Default is <literal>''</literal>(empty), which disables the feature.
+      -->
+      デフォルトは<literal>''</literal>（空文字列）で、この機能は無効です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-		</variablelist>
-	</sect2>
+  </variablelist>
+ </sect2>
 
 </sect1>
 
 <sect1 id="runtime-config-backend-settings">
-<!--
-	<title>Backend Settings</title>
--->
-	<title>バックエンドの設定</title>
+ <!--
+ <title>Backend Settings</title>
+ -->
+ <title>バックエンドの設定</title>
 
-	<sect2 id="runtime-config-backend-connection-settings">
-<!--
-		<title>Backend Connection Settings</title>
--->
-		<title>バックエンド接続の設定</title>
+ <sect2 id="runtime-config-backend-connection-settings">
+  <!--
+  <title>Backend Connection Settings</title>
+  -->
+  <title>バックエンド接続の設定</title>
 
-		<variablelist>
+  <variablelist>
 
-			<varlistentry id="guc-backend-hostname" xreflabel="backend_hostname">
-	<term><varname>backend_hostname</varname> (<type>string</type>)
-		<indexterm>
-<!--
-			<primary><varname>backend_hostname</varname> configuration parameter</primary>
--->
-			<primary><varname>backend_hostname</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
+   <varlistentry id="guc-backend-hostname" xreflabel="backend_hostname">
+    <term><varname>backend_hostname</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>backend_hostname</varname> configuration parameter</primary>
+      -->
+      <primary><varname>backend_hostname</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
 
-	<listitem>
-		<para>
-<!--
-						<varname>backend_hostname</varname> specifies the
-						<productname>PostgreSQL</productname> backend to be connected to.
-						It is used by <productname>Pgpool-II</productname> to communicate
-						with the server.
--->
-<varname>backend_hostname</varname>には接続先の<productname>PostgreSQL</productname>バックエンドを指定します。
-<productname>Pgpool-II</productname>がサーバと通信するのに使われます。
-		</para>
+    <listitem>
+     <para>
+      <!--
+      <varname>backend_hostname</varname> specifies the
+      <productname>PostgreSQL</productname> backend to be connected to.
+      It is used by <productname>Pgpool-II</productname> to communicate
+      with the server.
+      -->
+      <varname>backend_hostname</varname>には接続先の<productname>PostgreSQL</productname>バックエンドを指定します。
+      <productname>Pgpool-II</productname>がサーバと通信するのに使われます。
+     </para>
 
-		<para>
-<!--
-			For TCP/IP communication, this parameter can take a hostname
-			or an IP address. If this begins with a slash(<literal>/</literal>), it specifies
-			Unix-domain communication rather than TCP/IP; the value is
-			the name of the directory in which the socket file is
-			stored. The default behavior when <varname>backend_hostname</varname> is empty
-			(<literal>''</literal>) is to connect to a Unix-domain socket in <filename>/tmp</>.
--->
-TCP/IP通信では、このパラメータはホスト名またはIPアドレスをとることができます。
-スラッシュ（<literal>/</literal>）で始まる場合、TCP/IPではなくUNIXドメインでの通信が使用され、値はソケットファイルが作成されるディレクトリ名となります。
-<varname>backend_hostname</varname>に空文字(<literal>''</literal>)が指定された場合のデフォルトの動作は、<filename>/tmp</filename>に作成したUNIXドメインソケットで接続します。
-		</para>
+     <para>
+      <!--
+      For TCP/IP communication, this parameter can take a hostname
+      or an IP address. If this begins with a slash(<literal>/</literal>), it specifies
+      Unix-domain communication rather than TCP/IP; the value is
+      the name of the directory in which the socket file is
+      stored. The default behavior when <varname>backend_hostname</varname> is empty
+      (<literal>''</literal>) is to connect to a Unix-domain socket in <filename>/tmp</>.
+      -->
+      TCP/IP通信では、このパラメータはホスト名またはIPアドレスをとることができます。
+      スラッシュ（<literal>/</literal>）で始まる場合、TCP/IPではなくUNIXドメインでの通信が使用され、値はソケットファイルが作成されるディレクトリ名となります。
+      <varname>backend_hostname</varname>に空文字(<literal>''</literal>)が指定された場合のデフォルトの動作は、<filename>/tmp</filename>に作成したUNIXドメインソケットで接続します。
+     </para>
 
-		<para>
-<!--
-			Multiple backends can be specified by adding a number at the
-			end of the parameter name (e.g.backend_hostname0). This
-			number is referred to as "DB node ID", and it starts from
-			0. The backend which was given the DB node ID of 0 will be
-			called "master node". When multiple backends are defined, the
-			service can be continued even if the master node is down (not
-			true in some modes). In this case, the youngest DB node ID
-			alive will be the new master node.
--->
-パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_hostname0)。
-この数字のことを「DBノードID」と呼び、0から開始します。
-DBノードIDが0のバックエンドは「マスターノード」と呼ばれます。
-複数のDBノードを定義している場合、条件によってはマスターノードがダウンしても運用を続けることができます（いくつかのモードを除きます）。
-この場合は、稼働中かつDBノードIDがもっとも若いものが新しいマスターノードになります。
-		</para>
+     <para>
+      <!--
+      Multiple backends can be specified by adding a number at the
+      end of the parameter name (e.g.backend_hostname0). This
+      number is referred to as "DB node ID", and it starts from
+      0. The backend which was given the DB node ID of 0 will be
+      called "master node". When multiple backends are defined, the
+      service can be continued even if the master node is down (not
+      true in some modes). In this case, the youngest DB node ID
+      alive will be the new master node.
+      -->
+      パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_hostname0)。
+      この数字のことを「DBノードID」と呼び、0から開始します。
+      DBノードIDが0のバックエンドは「マスターノード」と呼ばれます。
+      複数のDBノードを定義している場合、条件によってはマスターノードがダウンしても運用を続けることができます（いくつかのモードを除きます）。
+      この場合は、稼働中かつDBノードIDがもっとも若いものが新しいマスターノードになります。
+     </para>
 
-		<para>
-<!--
-			Please note that the DB node which has id 0 has no special
-			meaning if operated in streaming replication mode. Rather,
-			you should care about if the DB node is the "primary node" or
-			not. See <xref linkend="runtime-config-load-balancing">,
-			<xref linkend="runtime-config-failover">,
-			<xref linkend="runtime-streaming-replication-check">
-			for more details.
--->
-ストリーミングレプリケーションモードで運用している場合は、DBノードIDが0のノードには特別な意味はないことに注意して下さい。
-むしろ、そのDBノードが「プライマリノード」かどうかを気にするべきです。
-詳細は<xref linkend="runtime-config-load-balancing">、 <xref linkend="runtime-config-failover">、<xref linkend="runtime-streaming-replication-check">をご覧ください。
-		</para>
+     <para>
+      <!--
+      Please note that the DB node which has id 0 has no special
+      meaning if operated in streaming replication mode. Rather,
+      you should care about if the DB node is the "primary node" or
+      not. See <xref linkend="runtime-config-load-balancing">,
+      <xref linkend="runtime-config-failover">,
+      <xref linkend="runtime-streaming-replication-check">
+      for more details.
+      -->
+      ストリーミングレプリケーションモードで運用している場合は、DBノードIDが0のノードには特別な意味はないことに注意して下さい。
+      むしろ、そのDBノードが「プライマリノード」かどうかを気にするべきです。
+      詳細は<xref linkend="runtime-config-load-balancing">、 <xref linkend="runtime-config-failover">、<xref linkend="runtime-streaming-replication-check">をご覧ください。
+     </para>
 
-		<para>
-<!--
-			If you plan to use only one <productname>PostgreSQL</> server, specify it by
-			backend_hostname0.
--->
-1台しか<productname>PostgreSQL</>を使用しない場合は、backend_hostname0で指定してください。
-		</para>
+     <para>
+      <!--
+      If you plan to use only one <productname>PostgreSQL</> server, specify it by
+      backend_hostname0.
+      -->
+      1台しか<productname>PostgreSQL</>を使用しない場合は、backend_hostname0で指定してください。
+     </para>
 
-		<para>
-<!--
-			New nodes can be added by adding parameter rows and reloading a
-			configuration file. However, the existing values cannot be updated, so
-			you must restart <productname>Pgpool-II</productname> in
-			that case.
--->
-新しいノードはパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
-ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。
-		</para>
+     <para>
+      <!--
+      New nodes can be added by adding parameter rows and reloading a
+      configuration file. However, the existing values cannot be updated, so
+      you must restart <productname>Pgpool-II</productname> in
+      that case.
+      -->
+      新しいノードはパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
+      ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。
+     </para>
 
-	</listitem>
+    </listitem>
 
-			</varlistentry>
+   </varlistentry>
 
-			<varlistentry id="guc-backend-port" xreflabel="backend_port">
-	<term><varname>backend_port</varname> (<type>integer</type>)
-		<indexterm>
-<!--
-			<primary><varname>backend_port</varname> configuration parameter</primary>
--->
-			<primary><varname>backend_port</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
+   <varlistentry id="guc-backend-port" xreflabel="backend_port">
+    <term><varname>backend_port</varname> (<type>integer</type>)
+     <indexterm>
+      <!--
+      <primary><varname>backend_port</varname> configuration parameter</primary>
+      -->
+      <primary><varname>backend_port</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
 
-	<listitem>
-		<para>
-<!--
-						<varname>backend_port</varname> specifies the port number
-						of the backends. Multiple backends can be specified by
-						adding a number at the end of the parameter name
-						(e.g. backend_port0). If you plan to use only one
-						<productname>PostgreSQL</> server, specify it by backend_port0.
--->
-<varname>backend_port</varname>にはバックエンドのポート番号を指定します。
-パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_port0)。
-1台しか<productname>PostgreSQL</>を使用しない場合は、backend_port0で指定してください。
-		</para>
-		<para>
-<!--
-			New backend ports can be added by adding parameter rows and reloading a
-			configuration file. However, the existing values cannot be updated, so
-			you must restart <productname>Pgpool-II</productname> in
-			that case.
--->
-新しいノードはパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
-ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。
-		</para>
+    <listitem>
+     <para>
+      <!--
+      <varname>backend_port</varname> specifies the port number
+      of the backends. Multiple backends can be specified by
+      adding a number at the end of the parameter name
+      (e.g. backend_port0). If you plan to use only one
+      <productname>PostgreSQL</> server, specify it by backend_port0.
+      -->
+      <varname>backend_port</varname>にはバックエンドのポート番号を指定します。
+      パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_port0)。
+      1台しか<productname>PostgreSQL</>を使用しない場合は、backend_port0で指定してください。
+     </para>
+     <para>
+      <!--
+      New backend ports can be added by adding parameter rows and reloading a
+      configuration file. However, the existing values cannot be updated, so
+      you must restart <productname>Pgpool-II</productname> in
+      that case.
+      -->
+      新しいノードはパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
+      ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。
+     </para>
 
-	</listitem>
-			</varlistentry>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-backend-weight" xreflabel="backend_weight">
-	<term><varname>backend_weight</varname> (<type>floating point</type>)
-		<indexterm>
-<!--
-			<primary><varname>backend_weight</varname> configuration parameter</primary>
--->
-			<primary><varname>backend_weight</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
+   <varlistentry id="guc-backend-weight" xreflabel="backend_weight">
+    <term><varname>backend_weight</varname> (<type>floating point</type>)
+     <indexterm>
+      <!--
+      <primary><varname>backend_weight</varname> configuration parameter</primary>
+      -->
+      <primary><varname>backend_weight</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
 
-	<listitem>
-		<para>
-<!--
-						<varname>backend_weight</varname> specifies the load balance
-						ratio of the backends. It may be set to any interger or
-						floating point value greater than or equeal zero.
-						Multiple backends can be specified by
-						adding a number at the end of the parameter name
-						(e.g. backend_weight0). If you plan to use only one
-						PostgreSQL server, specify it by backend_weight0.
--->
-<varname>backend_weight</varname>にはバックエンドの負荷分散の比率を指定します。
-0以上の整数または浮動小数点を指定できます。
-パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_weight0)。
-1台しか<productname>PostgreSQL</>を使用しない場合は、backend_weight0で指定してください。
-		</para>
-		<para>
-<!--
-			New <varname>backend_weight</> can be added by adding parameter rows and
-			reloading a configuration file. However, this will take
-			effect only for new established client sessions.
-			<productname>Pgpool-II</> <emphasis>V2.2.6</>, <emphasis>V2.3</> or later
-			allows alllow updating the values by reloading a configuration file.
-			This is useful if you want to prevent any query sent to
-			slaves to perform some administrative work in master/slave mode.
--->
-新しい<varname>backend_weight</>はパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
-<productname>Pgpool-II</> <emphasis>V2.2.6</>、<emphasis>V2.3</>以降では、設定ファイルの再読込みで値を変更できます。
-ただし、この効果が反映されるのは新しく確立されたクライアントセッションからです。
-マスタースレーブモードにおいて、スレーブに対して管理業務を実施する都合上、問い合わせがそのスレーブに送られるのを防ぎたい場合に有用です。
-		</para>
-	</listitem>
-			</varlistentry>
+    <listitem>
+     <para>
+      <!--
+      <varname>backend_weight</varname> specifies the load balance
+      ratio of the backends. It may be set to any interger or
+      floating point value greater than or equeal zero.
+      Multiple backends can be specified by
+      adding a number at the end of the parameter name
+      (e.g. backend_weight0). If you plan to use only one
+      PostgreSQL server, specify it by backend_weight0.
+      -->
+      <varname>backend_weight</varname>にはバックエンドの負荷分散の比率を指定します。
+      0以上の整数または浮動小数点を指定できます。
+      パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_weight0)。
+      1台しか<productname>PostgreSQL</>を使用しない場合は、backend_weight0で指定してください。
+     </para>
+     <para>
+      <!--
+      New <varname>backend_weight</> can be added by adding parameter rows and
+      reloading a configuration file. However, this will take
+      effect only for new established client sessions.
+      <productname>Pgpool-II</> <emphasis>V2.2.6</>, <emphasis>V2.3</> or later
+      allows alllow updating the values by reloading a configuration file.
+      This is useful if you want to prevent any query sent to
+      slaves to perform some administrative work in master/slave mode.
+      -->
+      新しい<varname>backend_weight</>はパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
+      <productname>Pgpool-II</> <emphasis>V2.2.6</>、<emphasis>V2.3</>以降では、設定ファイルの再読込みで値を変更できます。
+      ただし、この効果が反映されるのは新しく確立されたクライアントセッションからです。
+      マスタースレーブモードにおいて、スレーブに対して管理業務を実施する都合上、問い合わせがそのスレーブに送られるのを防ぎたい場合に有用です。
+     </para>
+    </listitem>
+   </varlistentry>
 
-		</variablelist>
-	</sect2>
+  </variablelist>
+ </sect2>
 
-	<sect2 id="runtime-config-backend-data">
-<!--
-		<title>Backend Data Settings</title>
--->
-		<title>バックエンドデータの設定</title>
+ <sect2 id="runtime-config-backend-data">
+  <!--
+  <title>Backend Data Settings</title>
+  -->
+  <title>バックエンドデータの設定</title>
 
-		<variablelist>
+  <variablelist>
 
-			<varlistentry id="guc-backend-data-directory" xreflabel="backend_data_directory">
-	<term><varname>backend_data_directory</varname> (<type>string</type>)
-		<indexterm>
-<!--
-			<primary><varname>backend_data_directory</varname> configuration parameter</primary>
--->
-			<primary><varname>backend_data_directory</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
+   <varlistentry id="guc-backend-data-directory" xreflabel="backend_data_directory">
+    <term><varname>backend_data_directory</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>backend_data_directory</varname> configuration parameter</primary>
+      -->
+      <primary><varname>backend_data_directory</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
 
-	<listitem>
-		<para>
-<!--
-						<varname>backend_data_directory</varname> specifies the
-						database cluster directory of the backend. Multiple backends can be
-						specified by adding a number at the end of the parameter
-						name (e.g. backend_data_directory0). If you plan to use
-						only one PostgreSQL server, specify it by
-						backend_data_directory0.
--->
-<varname>backend_data_directory</varname>にはバックエンドのデータベースクラスタのディレクトリを指定します。
-パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_data_directory0)。
-1台しか<productname>PostgreSQL</>を使用しない場合は、backend_data_directory0で指定してください。
-    使用する PostgreSQL サーバのデータベースクラスタのパスを指定します。 実際には、"backend_data_directory"の後にDBノードIDを付加して使用する複数のPostgreSQLを区別します。 このパラメータはオンラインリカバリの際に使用します。 オンラインリカバリを使用しない場合には設定する必要はありません。
-		</para>
-		<para>
-<!--
-			New <varname>backend data_directory</> can be added by adding parameter rows and reloading a
-			configuration file. However, the existing values cannot be updated, so
-			you must restart <productname>Pgpool-II</productname> in
-			that case.
--->
-新しい<varname>backend_data_directory</>はパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
-ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。
-		</para>
-	</listitem>
-			</varlistentry>
+    <listitem>
+     <para>
+      <!--
+      <varname>backend_data_directory</varname> specifies the
+      database cluster directory of the backend. Multiple backends can be
+      specified by adding a number at the end of the parameter
+      name (e.g. backend_data_directory0). If you plan to use
+      only one PostgreSQL server, specify it by
+      backend_data_directory0.
+      -->
+      <varname>backend_data_directory</varname>にはバックエンドのデータベースクラスタのディレクトリを指定します。
+      パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_data_directory0)。
+      1台しか<productname>PostgreSQL</>を使用しない場合は、backend_data_directory0で指定してください。
+      使用する PostgreSQL サーバのデータベースクラスタのパスを指定します。 実際には、"backend_data_directory"の後にDBノードIDを付加して使用する複数のPostgreSQLを区別します。 このパラメータはオンラインリカバリの際に使用します。 オンラインリカバリを使用しない場合には設定する必要はありません。
+     </para>
+     <para>
+      <!--
+      New <varname>backend data_directory</> can be added by adding parameter rows and reloading a
+      configuration file. However, the existing values cannot be updated, so
+      you must restart <productname>Pgpool-II</productname> in
+      that case.
+      -->
+      新しい<varname>backend_data_directory</>はパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
+      ただし、既存の値を変更することはできないので、その場合には<productname>Pgpool-II</productname>を再起動してください。
+     </para>
+    </listitem>
+   </varlistentry>
 
-			<varlistentry id="guc-backend-flag" xreflabel="backend_flag">
-	<term><varname>backend_flag</varname> (<type>string</type>)
-		<indexterm>
-<!--
-			<primary><varname>backend_flag</varname> configuration parameter</primary>
--->
-			<primary><varname>backend_flag</varname> 設定パラメータ</primary>
-		</indexterm>
-	</term>
+   <varlistentry id="guc-backend-flag" xreflabel="backend_flag">
+    <term><varname>backend_flag</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>backend_flag</varname> configuration parameter</primary>
+      -->
+      <primary><varname>backend_flag</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
 
-	<listitem>
-		<para>
-<!--
-						<varname>backend_flag</varname> controls various backend
-						behavior. Multiple backends can be specified by adding a
-						number at the end of the parameter name
-						(e.g. backend_flag0). If you plan to use only one
-						PostgreSQL server, specify it by backend_flag0.
--->
-<varname>backend_flag</varname>はバックエンド単位での様々な挙動を制御するフラグです。
-パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_flag0)。
-1台しか<productname>PostgreSQL</>を使用しない場合は、backend_flag0で指定してください。
-		</para>
-		<para>
-<!--
-			New backend flags can be added by adding parameter rows and reloading a
-			configuration file. Currently followings are allowed. Multiple flags can
-			be specified by using "|".
--->
-新しいバックエンドフラグはパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
-現在以下のものがあります。
-複数のフラグを"|"で連結して指定することができます。
-		</para>
+    <listitem>
+     <para>
+      <!--
+      <varname>backend_flag</varname> controls various backend
+      behavior. Multiple backends can be specified by adding a
+      number at the end of the parameter name
+      (e.g. backend_flag0). If you plan to use only one
+      PostgreSQL server, specify it by backend_flag0.
+      -->
+      <varname>backend_flag</varname>はバックエンド単位での様々な挙動を制御するフラグです。
+      パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_flag0)。
+      1台しか<productname>PostgreSQL</>を使用しない場合は、backend_flag0で指定してください。
+     </para>
+     <para>
+      <!--
+      New backend flags can be added by adding parameter rows and reloading a
+      configuration file. Currently followings are allowed. Multiple flags can
+      be specified by using "|".
+      -->
+      新しいバックエンドフラグはパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
+      現在以下のものがあります。
+      複数のフラグを"|"で連結して指定することができます。
+     </para>
 
-		<table id="backend-flag-table">
-<!--
-			<title>Backend flags</title>
--->
-			<title>バックエンドフラグ</title>
-			<tgroup cols="2">
-				<thead>
-		<row>
-<!--
-			<entry>Flag</entry>
-			<entry>Description</entry>
--->
-			<entry>フラグ</entry>
-			<entry>説明</entry>
-		</row>
-				</thead>
+     <table id="backend-flag-table">
+      <!--
+      <title>Backend flags</title>
+      -->
+      <title>バックエンドフラグ</title>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <!--
+	 <entry>Flag</entry>
+	 <entry>Description</entry>
+	 -->
+	 <entry>フラグ</entry>
+	 <entry>説明</entry>
+	</row>
+       </thead>
 
-				<tbody>
-		<row>
-			<entry><literal>ALLOW_TO_FAILOVER</literal></entry>
-<!--
-			<entry>Allow to failover or detaching backend. This
-				is the default. You cannot specify with
-				DISALLOW_TO_FAILOVER at a same time.</entry>
--->
-			<entry>フェイルオーバやデタッチが可能になります。
-			これがデフォルトの動作です。
-			DISALLOW_TO_FAILOVERと同時には指定できません。
-			</entry>
-		</row>
-		<row>
-			<entry><literal>DISALLOW_TO_FAILOVER</literal></entry>
-<!--
-			<entry>Disllow to failover or detaching backend
-				This is useful when you protect backend by
-				using HA (High Availability) softwares such as
-				<productname>Heartbeat</> or <productname>Pacemaker</>. You cannot specify with
-				ALLOW_TO_FAILOVER at a same time.
-			</entry>
--->
-			<entry>フェイルオーバやデタッチを禁止します。
-			<productname>Heartbeat</>や<productname>Pacemaker</>などのHA (High Availability)ソフトでバックエンドを保護しているなどの場合に有用です。
-			ALLOW_TO_FAILOVERと同時には指定できません。
-			</entry>
-		</row>
-				</tbody>
-			</tgroup>
-		</table>
-		<para>
-<!--
-			This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
--->
-このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
-		</para>
+       <tbody>
+	<row>
+	 <entry><literal>ALLOW_TO_FAILOVER</literal></entry>
+	 <!--
+	 <entry>Allow to failover or detaching backend. This
+	 is the default. You cannot specify with
+	 DISALLOW_TO_FAILOVER at a same time.</entry>
+	 -->
+	 <entry>フェイルオーバやデタッチが可能になります。
+	  これがデフォルトの動作です。
+	  DISALLOW_TO_FAILOVERと同時には指定できません。
+	 </entry>
+	</row>
+	<row>
+	 <entry><literal>DISALLOW_TO_FAILOVER</literal></entry>
+	 <!--
+	 <entry>Disllow to failover or detaching backend
+	 This is useful when you protect backend by
+	 using HA (High Availability) softwares such as
+	 <productname>Heartbeat</> or <productname>Pacemaker</>. You cannot specify with
+	 ALLOW_TO_FAILOVER at a same time.
+	</entry>
+	 -->
+	 <entry>フェイルオーバやデタッチを禁止します。
+	  <productname>Heartbeat</>や<productname>Pacemaker</>などのHA (High Availability)ソフトでバックエンドを保護しているなどの場合に有用です。
+	  ALLOW_TO_FAILOVERと同時には指定できません。
+	 </entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+     <para>
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     </para>
 
-	</listitem>
-			</varlistentry>
+    </listitem>
+   </varlistentry>
 
-		</variablelist>
+  </variablelist>
 
-	</sect2>
+ </sect2>
 
 </sect1>
