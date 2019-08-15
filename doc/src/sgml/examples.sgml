@@ -705,12 +705,10 @@ arping_cmd = 'arping -U $_IP_$ -w 1'
       <para>
 This section shows an example of streaming replication configuration using <productname>Pgpool-II</productname>. In this example, we use 3 <productname>Pgpool-II</productname> servers to manage <productname>PostgreSQL</productname> servers to create a robust cluster system and avoid the single point of failure or split brain.
       </para>
-      <sect2 id="example-cluster-requirement">
-        <title>Requirements</title>
-        <para>
-We assume that all the Pgpool-II servers and the <productname>PostgreSQL</productname> servers are in the same subnet.
-        </para>
-      </sect2>
+      <para>
+       <productname>PostgreSQL</productname> 11 is used in this configuration example,
+       but all scripts have been tested with <productname>PostgreSQL</productname> 12.
+      </para>
 
       <sect2 id="example-cluster-structure">
         <title>Cluster System Configuration</title>
@@ -864,6 +862,56 @@ We use 3 servers with CentOS 7.4. Let these servers be <literal>server1</literal
     </table>
       </sect2>
 
+      <sect2 id="example-cluster-requirement">
+        <title>Requirements</title>
+        <itemizedlist>
+        <listitem>
+        <para>
+We assume that all the Pgpool-II servers and the <productname>PostgreSQL</productname> servers are in the same subnet.
+        </para>
+        </listitem>
+        <listitem>
+         <para>
+     To use the automated failover and online recovery of <productname>Pgpool-II</productname>, 
+     the settings that allow <emphasis>passwordless</emphasis> SSH to all backend servers
+     between <productname>Pgpool-II</productname> execution user (default root user)
+     and <literal>postgres</literal> user and between <literal>postgres</literal> user
+     and <literal>postgres</literal> user are necessary. Execute the following command on all servers
+     to set up passwordless <literal>SSH</literal>. The generated key file name is <literal>id_rsa_pgpool</literal>.
+    </para>
+<programlisting>
+[all servers]# cd ~/.ssh
+[all servers]# ssh-keygen -t rsa -f id_rsa_pgpool
+[all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
+[all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server2
+[all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
+
+[all servers]# su - postgres
+[all servers]$ cd ~/.ssh
+[all servers]$ ssh-keygen -t rsa -f id_rsa_pgpool
+[all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
+[all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server2
+[all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
+</programlisting>
+          <para>
+     After setting, use <command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command> command to
+     make sure that you can log in without entering a password. Edit <filename>/etc/ssh/sshd_config</filename>
+     if necessary and restart sshd.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+When connect to <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname> servers, the target port must be accessible by enabling firewall management softwares. Following is an example for <systemitem>CentOS/RHEL7</systemitem>.
+          </para>
+            <programlisting>
+[all servers]# firewall-cmd --permanent --zone=public --add-service=postgresql
+[all servers]# firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp  --add-port=9694/udp
+[all servers]# firewall-cmd --reload
+            </programlisting>
+        </listitem>
+       </itemizedlist>
+      </sect2>
+
       <sect2 id="example-cluster-installation">
         <title>Installation</title>
         <para>
@@ -912,6 +960,9 @@ Then we edit the configuration file <filename>$PGDATA/postgresql.conf</filename>
 listen_addresses = '*'
 archive_mode = on
 archive_command = 'cp "%p" "/var/lib/pgsql/archivedir/%f"'
+max_wal_senders = 10
+max_replication_slots = 10
+wal_level = replica
           </programlisting>
           <para>
 We use the online recovery functionality of <productname>Pgpool-II</productname> to setup standby server after the primary server is started.
@@ -959,7 +1010,7 @@ replication delay check and health check of <productname>Pgpool-II</productname>
 [server1]# psql -U postgres -p 5432
 postgres=# SET password_encryption = 'scram-sha-256';
 postgres=# CREATE ROLE pgpool WITH LOGIN;
-postgres=# CREATE ROLE repl WITH REPLICATION;
+postgres=# CREATE ROLE repl WITH REPLICATION LOGIN;
 postgres=# \password pgpool
 postgres=# \password repl
 postgres=# \password postgres
@@ -986,17 +1037,9 @@ Assuming that all the <productname>Pgpool-II</productname> servers and the
 enable <literal>scram-sha-256</literal> authentication method.
           </para>
           <programlisting>
-host    all             pgpool          192.168.137.0/24         scram-sha-256
-host    all             all             0.0.0.0/0                scram-sha-256
-
-host    replication     repl            192.168.137.0/24         scram-sha-256
+host    all             all             samenet                 scram-sha-256
+host    replication     all             samenet                 scram-sha-256
           </programlisting>
-        </listitem>
-
-        <listitem>
-          <para>
-To use the failover and online recovery of <productname>Pgpool-II</productname>, the settings that allow SSH without passowrd to other servers are necessary.
-          </para>
         </listitem>
 
         <listitem>
@@ -1013,18 +1056,6 @@ server1:5432:replication:repl:&lt;repl user password&gt;
 server2:5432:replication:repl:&lt;repl user passowrd&gt;
 server3:5432:replication:repl:&lt;repl user passowrd&gt;
 [all servers]$ chmod 600  /var/lib/pgsql/.pgpass
-            </programlisting>
-        </listitem>
-
-        <listitem>
-          <para>
-When connect to <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname> servers, the target port must be accessible by enabling firewall management softwares. Following is an example for <systemitem>CentOS/RHEL7</systemitem>.
-          </para>
-            <programlisting>
-[all servers]# firewall-cmd --permanent --zone=public --add-service=postgresql
-[all servers]# firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp  --add-port=9694/tcp
-[all servers]# firewall-cmd --permanent --zone=public --add-port=9999/udp --add-port=9898/udp --add-port=9000/udp  --add-port=9694/udp
-[all servers]# firewall-cmd --reload
             </programlisting>
         </listitem>
       </itemizedlist>
@@ -1172,33 +1203,38 @@ NEW_MASTER_NODE_PGDATA="${10}"
 
 PGHOME=/usr/pgsql-11
 
-logger -i -p local1.info failover.sh: start: failed_node_id=$FAILED_NODE_ID old_primary_node_id=$OLD_PRIMARY_NODE_ID \
-	failed_host=$FAILED_NODE_HOST new_master_host=$NEW_MASTER_NODE_HOST
+logger -i -p local1.info failover.sh: start: failed_node_id=${FAILED_NODE_ID} old_primary_node_id=${OLD_PRIMARY_NODE_ID} \
+    failed_host=${FAILED_NODE_HOST} new_master_host=${NEW_MASTER_NODE_HOST}
+
+## Test passwrodless SSH
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
+
+if [ $? -ne 0 ]; then
+    logger -i -p local1.error failover.sh: passwrodless SSH to postgres@${NEW_MASTER_NODE_HOST} failed. Please setup passwrodless SSH.
+    exit 1
+fi
 
 # If standby node is down, skip failover.
-if [ $FAILED_NODE_ID -ne $OLD_PRIMARY_NODE_ID ]; then
+if [ ${FAILED_NODE_ID} -ne ${OLD_PRIMARY_NODE_ID} ]; then
     logger -i -p local1.info failover.sh: Standby node is down. Skipping failover.
     exit 0
 fi
 
 # Promote standby node.
-logger -i -p local1.info failover.sh: ssh: postgres@$NEW_MASTER_NODE_HOST pg_ctl promote
-if [ $UID -eq 0 ]; then
-    su postgres -c "ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-    postgres@$NEW_MASTER_NODE_HOST ${PGHOME}/bin/pg_ctl -D ${NEW_MASTER_NODE_PGDATA} -w promote"
-else
-    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-    postgres@$NEW_MASTER_NODE_HOST ${PGHOME}/bin/pg_ctl -D ${NEW_MASTER_NODE_PGDATA} -w promote
-fi
+logger -i -p local1.info failover.sh: Primary node is down, promote standby node PostgreSQL@${NEW_MASTER_NODE_HOST}.
 
-if [[ $? -ne 0 ]]; then
-    logger -i -p local1.error failover.sh: new_master_host=$NEW_MASTER_NODE_HOST promote failed
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ${PGHOME}/bin/pg_ctl -D ${NEW_MASTER_NODE_PGDATA} -w promote
+
+
+if [ $? -ne 0 ]; then
+    logger -i -p local1.error failover.sh: new_master_host=${NEW_MASTER_NODE_HOST} promote failed
     exit 1
 fi
 
 logger -i -p local1.info failover.sh: end: new_master_node_id=$NEW_MASTER_NODE_ID started as the primary node
 exit 0
-          </programlisting>
+</programlisting>
         </listitem>
       </itemizedlist>
 
@@ -1209,7 +1245,7 @@ exit 0
           </para>
           <programlisting>
 #!/bin/bash
-# This script is run after failover_command to recover the slave from the new primary.
+# This script is run after failover_command to synchronize the Standby with the new Primary.
 
 set -o xtrace
 exec &gt; &gt;(logger -i -p local1.info) 2&gt;&1
@@ -1245,55 +1281,95 @@ PCP_PORT=9898
 
 
 # Recovery the slave from the new primary
-logger -i -p local1.info follow_master.sh: start: pg_basebackup for $FAILED_NODE_ID
+logger -i -p local1.info follow_master.sh: start: synchronize the Standby node PostgreSQL@${FAILED_NODE_HOST} with the new Primary node PostgreSQL@${NEW_MASTER_NODE_HOST}
+
+## Test passwrodless SSH
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
+
+if [ $? -ne 0 ]; then
+    logger -i -p local1.error follow_master.sh: passwrodless SSH to postgres@${NEW_MASTER_NODE_HOST} failed. Please setup passwrodless SSH.
+    exit 1
+fi
+
+## Get PostgreSQL major version
+PGVERSION=`${PGHOME}/bin/initdb -V | awk '{print $3}' | sed 's/\..*//' | sed 's/\([0-9]*\)[a-zA-Z].*/\1/'`
+
+if [ ${PGVERSION} -ge 12 ]; then
+    RECOVERYCONF=${FAILED_NODE_PGDATA}/myrecovery.conf
+else
+    RECOVERYCONF=${FAILED_NODE_PGDATA}/recovery.conf
+fi
 
 # Check the status of standby
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-    postgres@${FAILED_NODE_HOST} ${PGHOME}/bin/pg_ctl -w -D ${FAILED_NODE_PGDATA} status >/dev/null 2>&1
+    postgres@${FAILED_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ${PGHOME}/bin/pg_ctl -w -D ${FAILED_NODE_PGDATA} status
 
-# If slave is running, recover the slave from the new primary.
-if [[ $? -eq 0 ]]; then
+## If Standby is running, run pg_basebackup.
+if [ $? -eq 0 ]; then
 
-    # Execute pg_basebackup at slave
-    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${FAILED_NODE_HOST} "
+    # Execute pg_basebackup
+    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${FAILED_NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
+
+        set -o errexit
         ${PGHOME}/bin/pg_ctl -w -m f -D ${FAILED_NODE_PGDATA} stop
 
         rm -rf ${FAILED_NODE_PGDATA}
-        ${PGHOME}/bin/pg_basebackup -h ${NEW_MASTER_NODE_HOST} -U ${REPL_USER} -p ${NEW_MASTER_NODE_PORT} -D ${FAILED_NODE_PGDATA} -X stream -R
-
-        if [[ $? -ne 0 ]]; then
-            logger -i -p local1.error follow_master.sh: end: pg_basebackup failed
-            exit 1
-        fi
         rm -rf ${ARCHIVEDIR}/*
-cat &gt;&gt; ${FAILED_NODE_PGDATA}/recovery.conf &lt;&lt; EOT
+
+        ${PGHOME}/bin/pg_basebackup -h ${NEW_MASTER_NODE_HOST} -U ${REPL_USER} -p ${NEW_MASTER_NODE_PORT} -D ${FAILED_NODE_PGDATA} -X stream
+
+        if [ ${PGVERSION} -ge 12 ]; then
+            sed -i -e \"\\\$ainclude_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'\" \
+                   -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${FAILED_NODE_PGDATA}/postgresql.conf
+        fi
+      
+        cat > ${RECOVERYCONF} &lt;&lt; EOT
+primary_conninfo = 'host=${NEW_MASTER_NODE_HOST} port=${NEW_MASTER_NODE_PORT} user=${REPL_USER} passfile=''/var/lib/pgsql/.pgpass'''
+recovery_target_timeline = 'latest'
 restore_command = 'scp ${NEW_MASTER_NODE_HOST}:${ARCHIVEDIR}/%f %p'
 EOT
-        $PGHOME/bin/pg_ctl -l /dev/null -w -D ${FAILED_NODE_PGDATA} start
+
+        if [ ${PGVERSION} -ge 12 ]; then
+            touch ${FAILED_NODE_PGDATA}/standby.signal
+        else
+            echo \"standby_mode = 'on'\" &gt;&gt; ${RECOVERYCONF}
+        fi
     "
 
-    if [[ $? -eq 0 ]]; then
+    if [ $? -ne 0 ]; then
+        logger -i -p local1.error follow_master.sh: end: pg_basebackup failed
+        exit 1
+    fi
 
-        # Run pcp_attact_node to attach this slave to Pgpool-II.
-        ${PGPOOL_PATH}/pcp_attach_node -w -h localhost -U ${PCP_USER} -p ${PCP_PORT} -n ${FAILED_NODE_ID}
+    # start Standby node on ${FAILED_NODE_HOST}
+    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            postgres@${FAILED_NODE_HOST} -i ~/.ssh/id_rsa_pgpool $PGHOME/bin/pg_ctl -l /dev/null -w -D ${FAILED_NODE_PGDATA} start
 
-        if [[ $? -ne 0 ]]; then
+    # If start Standby successfully, attach this node
+    if [ $? -eq 0 ]; then
+
+        # Run pcp_attact_node to attach Standby node to Pgpool-II.
+        ${PGPOOL_PATH}/pcp_attach_node -w -h localhost -U $PCP_USER -p ${PCP_PORT} -n ${FAILED_NODE_ID}
+
+        if [ $? -ne 0 ]; then
             logger -i -p local1.error follow_master.sh: end: pcp_attach_node failed
             exit 1
         fi
+
+    # If start Standby failed, drop replication slot "${FAILED_NODE_HOST}"
     else
-        logger -i -p local1.error follow_master.sh: end: follow master failed
+        logger -i -p local1.error follow_master.sh: end: follow master command failed
         exit 1
     fi
 
 else
-    logger -i -p local1.info follow_master.sh: failed_nod_id=${FAILED_NODE_ID} is not running. skipping follow master command.
+    logger -i -p local1.info follow_master.sh: failed_nod_id=${FAILED_NODE_ID} is not running. skipping follow master command
     exit 0
 fi
 
-logger -i -p local1.info follow_master.sh: end: follow master is finished
+logger -i -p local1.info follow_master.sh: end: follow master command complete
 exit 0
-          </programlisting>
+</programlisting>
         </listitem>
       </itemizedlist>
 
@@ -1332,7 +1408,7 @@ recovery_1st_stage_command = 'recovery_1st_stage'
             </para>
             <programlisting>
 #!/bin/bash
-# This script is run by recovery_1st_stage to recovery the slave from the primary.
+# This script is executed by "recovery_1st_stage" to recovery a Standby node.
 
 set -o xtrace
 exec &gt; &gt;(logger -i -p local1.info) 2&gt;&1
@@ -1340,40 +1416,69 @@ exec &gt; &gt;(logger -i -p local1.info) 2&gt;&1
 PRIMARY_NODE_PGDATA="$1"
 DEST_NODE_HOST="$2"
 DEST_NODE_PGDATA="$3"
-PRIMARY_NODE_PGPORT=$4
+PRIMARY_NODE_PORT="$4"
+DEST_NODE_PORT=5432
 
-PRIMARY_NODE_HOST=$(hostname -s)
+PRIMARY_NODE_HOST=$(hostname)
 PGHOME=/usr/pgsql-11
 ARCHIVEDIR=/var/lib/pgsql/archivedir
-REPLUSER=repl
+REPL_USER=repl
 
+logger -i -p local1.info recovery_1st_stage: start: pg_basebackup for Standby node PostgreSQL@{$DEST_NODE_HOST}
 
-logger -i -p local1.info online_recovery.sh: start: pg_basebackup for $DEST_NODE_HOST
+## Test passwrodless SSH
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
 
-# Run pg_basebackup to recovery the slave from the primary
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DEST_NODE_HOST "
-rm -rf $DEST_NODE_PGDATA
-${PGHOME}/bin/pg_basebackup -h $PRIMARY_NODE_HOST -U $REPLUSER -p $PRIMARY_NODE_PGPORT -D $DEST_NODE_PGDATA -X stream -R
-"
-if [[ $? -ne 0 ]]; then
-    logger -i -p local1.error online_recovery.sh: end: pg_basebackup failed. online recovery failed.
+if [ $? -ne 0 ]; then
+    logger -i -p local1.error recovery_1st_stage: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
     exit 1
 fi
 
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DEST_NODE_HOST "
-rm -rf $ARCHIVEDIR/*
-cat &gt;&gt; $DEST_NODE_PGDATA/recovery.conf &lt;&lt; EOT
-restore_command = 'scp $PRIMARY_NODE_HOST:$archivedir/%f %p'
-EOT
-"
-
-if [[ $? -ne 0 ]]; then
-    logger -i -p local1.error online_recovery.sh: end: online recovery failed
-    exit 1
+## Get PostgreSQL major version
+PGVERSION=`${PGHOME}/bin/initdb -V | awk '{print $3}' | sed 's/\..*//' | sed 's/\([0-9]*\)[a-zA-Z].*/\1/'`
+if [ $PGVERSION -ge 12 ]; then
+    RECOVERYCONF=${DEST_NODE_PGDATA}/myrecovery.conf
 else
-    logger -i -p local1.info online_recovery.sh: end: online recovery is finished
-    exit 0
+    RECOVERYCONF=${DEST_NODE_PGDATA}/recovery.conf
 fi
+
+## Execute pg_basebackup to recovery Standby node
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DEST_NODE_HOST -i ~/.ssh/id_rsa_pgpool "
+
+    set -o errexit
+
+    rm -rf $DEST_NODE_PGDATA
+    rm -rf $ARCHIVEDIR/*
+
+    ${PGHOME}/bin/pg_basebackup -h ${PRIMARY_NODE_HOST} -U ${REPL_USER} -p ${PRIMARY_NODE_PORT} -D ${DEST_NODE_PGDATA} -X stream
+
+    if [ ${PGVERSION} -ge 12 ]; then
+        sed -i -e \"\\\$ainclude_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'\" \
+               -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${DEST_NODE_PGDATA}/postgresql.conf
+    fi
+
+    cat &gt; ${RECOVERYCONF} &lt;&lt; EOT
+primary_conninfo = 'host=${PRIMARY_NODE_HOST} port=${PRIMARY_NODE_PORT} user=${REPL_USER} passfile=''/var/lib/pgsql/.pgpass'''
+recovery_target_timeline = 'latest'
+restore_command = 'scp ${PRIMARY_NODE_HOST}:${ARCHIVEDIR}/%f %p'
+EOT
+
+    if [ ${PGVERSION} -ge 12 ]; then
+        touch ${DEST_NODE_PGDATA}/standby.signal
+    else
+        echo \"standby_mode = 'on'\" &gt;&gt; ${RECOVERYCONF}
+    fi
+
+    sed -i \"s/#*port = .*/port = ${DEST_NODE_PORT}/\" ${DEST_NODE_PGDATA}/postgresql.conf
+"
+
+if [ $? -ne 0 ]; then
+    logger -i -p local1.error recovery_1st_stage: end: pg_basebackup failed. online recovery failed
+    exit 1
+fi
+
+logger -i -p local1.info recovery_1st_stage: end: recovery_1st_stage complete
+exit 0
             </programlisting>
           </listitem>
           <listitem>
@@ -1383,28 +1488,39 @@ fi
           </para>
           <programlisting>
 #!/bin/bash
-# This script is run to start slave node after recovery.
+# This script is run after recovery_1st_stage to start Standby node.
 
 set -o xtrace
 exec &gt; &gt;(logger -i -p local1.info) 2&gt;&1
 
 PGHOME=/usr/pgsql-11
-DEST_HOST="$1"
-DEST_HOST_PGDATA="$2"
+DEST_NODE_HOST="$1"
+DEST_NODE_PGDATA="$2"
 
 
-logger -i -p local1.info pgpool_remote_start: start: remote start PostgreSQL@$DEST_HOST
+logger -i -p local1.info pgpool_remote_start: start: remote start Standby node PostgreSQL@$DEST_NODE_HOST
 
-# Start slave node
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DEST_HOST $PGHOME/bin/pg_ctl -l /dev/null -w -D $DEST_HOST_PGDATA start
+## Test passwrodless SSH
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
 
-if [[ $? -ne 0 ]]; then
-    logger -i -p local1.info  pgpool_remote_start: $DEST_HOST start failed.
+if [ $? -ne 0 ]; then
+    logger -i -p local1.error pgpool_remote_start: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
     exit 1
 fi
 
-logger -i -p local1.info pgpool_remote_start: end: $DEST_HOST PostgreSQL started successfully.
-          </programlisting>
+## Start Standby node
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DEST_NODE_HOST -i ~/.ssh/id_rsa_pgpool "
+    $PGHOME/bin/pg_ctl -l /dev/null -w -D $DEST_NODE_PGDATA start
+"
+
+if [ $? -ne 0 ]; then
+    logger -i -p local1.error pgpool_remote_start: PostgreSQL@$DEST_NODE_HOST start failed.
+    exit 1
+fi
+
+logger -i -p local1.info pgpool_remote_start: end: PostgreSQL@$DEST_NODE_HOST started successfully.
+exit 0
+</programlisting>
           </listitem>
         </itemizedlist>
 
@@ -1814,9 +1930,6 @@ LOCAL1.*                                                /var/log/pgpool-II/pgpoo
         <listitem>
           <para>
 Starting <productname>Pgpool-II</productname>
-          </para>
-          <para>
-            In section <link linkend="EXAMPLE-CLUSTER-PRE-SETUP">Before Starting</link>, we already set the auto-start of <productname>Pgpool-II</productname>. To start <productname>Pgpool-II</productname>, restart the whole system or execute the following command.
           </para>
           <programlisting>
 # systemctl start pgpool.service
