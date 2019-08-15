@@ -40,7 +40,7 @@
 	   erros occur while communicating with it.
 	   <productname>Pgpool-II</productname> will just disconnect
 	   the session to client
-	   if <xref linkend="guc-failover-on-backend-error"> is off in
+	   if <xref linkend="guc-fail-over-on-backend-error"> is off in
 	   that case However.
 	 </para>
        </listitem>

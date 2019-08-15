@@ -23,7 +23,7 @@
        <listitem>
 	 <para>
 	   <productname>PostgreSQL</productname>ノードへの接続の際、あるいは接続中にネットワークレベルのエラーが発生した場合。
-	   ただし、<xref linkend="guc-failover-on-backend-error">がオフの場合はそのようなエラーの場合でも<productname>Pgpool-II</productname>は単にエラーをレポートしセッションが切断するのみです。
+	   ただし、<xref linkend="guc-fail-over-on-backend-error">がオフの場合はそのようなエラーの場合でも<productname>Pgpool-II</productname>は単にエラーをレポートしセッションが切断するのみです。
 	 </para>
        </listitem>
 
