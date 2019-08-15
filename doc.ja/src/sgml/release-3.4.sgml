@@ -1,6 +1,182 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-4-25> 
+ <!--
+ <title>Release 3.4.25</title>
+ -->
+ <title>リリース 3.4.25</title>
+ <note>
+ <!--
+ <title>Release Date</title>
+ -->
+ <title>リリース日</title>
+  <simpara>2019-08-15</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2019-08-08 [7ea54a1]
+    -->
+    <para>
+     <!--
+     Import some of memory manager debug facilities from <productname>PostgreSQL</productname>. (Tatsuo Ishii)
+     -->
+     <productname>PostgreSQL</productname>からメモリマネージャデバッグ機能の一部をインポートしました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-28 [34dc12f]
+    -->
+    <para>
+     <!--
+     Fix <xref linkend="PGPOOL-SETUP"> to produce correct follow master command. (Tatsuo Ishii)
+     -->
+     <xref linkend="PGPOOL-SETUP">が正しい<varname>follow master command</varname>を生成するように修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-24 [717411f]
+    -->
+    <para>
+     <!--
+     Use <function>pg_get_expr()</function> instead of <literal>pg_attrdef.adsrc</literal> to support for <productname>PostgreSQL</productname> 12. (Bo Peng)
+     -->
+     <productname>PostgreSQL</productname> 12に対応するために、<literal>pg_attrdef.adsrc</literal>のかわりに
+     <function>pg_get_expr()</function>を使用するように修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-07 [44f8e2d]
+    -->
+    <para>
+     <!--
+     Fix query cache module so that it checks oid array's bound. (Tatsuo Ishii)
+     -->
+     クエリキャッシュモジュールでoid配列の境界をチェックするように修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-07 [bb3af6f]
+    -->
+    <para>
+     <!--
+     Fix off-by-one error in query cache module. (Tatsuo Ishii)
+     -->
+     クエリキャッシュモジュールのOff-by-oneエラーを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-11 [c553e51]
+    2019-07-17 [6b89f9e]
+    2019-07-02 [3b32bc4]
+    -->
+    <para>
+     <!--
+     Enhance shutdown script of <xref linkend="PGPOOL-SETUP">. (Tatsuo Ishii)
+     -->
+     <xref linkend="PGPOOL-SETUP">のshutdownスクリプトを改良しました。(Tatsuo Ishii)
+     <itemizedlist> 
+      <listitem>
+       <para>
+        <!--
+        Make shutdownall to wait for completion of shutdown of <productname>Pgpool-II</productname>.
+        -->
+        shutdownスクリプトが<productname>Pgpool-II</productname>のシャットダウン完了を待つように修正しました。
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        <!--
+        if environment variable <varname>CHECK_TIME_WAIT</varname> is set to true, use <command>netstat</command> command to confirm usage of the <literal>TCP/IP</literal> port while executing shutdown script.
+        -->
+        環境変数<varname>CHECK_TIME_WAIT</varname>が<literal>true</literal>に設定されているとき、shutdownスクリプト実行時に<command>netstat</command>コマンドで<literal>TCP/IP</literal>ポートの使用を確認するように修正しました。 
+       </para>
+      </listitem>
+     </itemizedlist> 
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-24 [8742f9f]
+    -->
+    <para>
+     <!--
+     Fix segfault when <literal>samenet</literal> is specified in <filename>pool_hba.conf</filename>. (Tatsuo Ishii)
+     -->
+     <filename>pool_hba.conf</filename>に<literal>samenet</literal>が指定されている場合に発生するセグメンテーション違反を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <!--
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2019-June/006659.html">[pgpool-general: 6601]</ulink>.
+     -->
+     詳細は<ulink url="https://www.pgpool.net/pipermail/pgpool-general/2019-June/006659.html">[pgpool-general: 6601]</ulink>をご参照ください。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-07 [48a45fc]
+    -->
+    <para>
+     <!--
+     Fix to deal with backslashes according to the config of <varname>standard_conforming_strings</varname> in native replication mode.
+     -->
+     ネイティブレプリケーションモードの場合、<varname>standard_conforming_strings</varname>の設定に応じてバックスラッシュを処理するように修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=467">bug 467</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2018-08-14 [5765ed7]
+    2019-05-23 [0e8c1c2]
+    2019-05-22 [c264275]
+    2019-05-22 [53e7af0]
+    2019-05-22 [19cfda2]
+    -->
+    <para>
+     <!--
+     Fix memory leaks. (Tatsuo Ishii)
+     -->
+     いくつかのメモリリークを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-05-22 [57cd1d4]
+    -->
+    <para>
+     <!--
+     Deal <literal>pgpool_adm</literal> extension with <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
+     -->
+     <literal>pgpool_adm</literal>拡張が<productname>PostgreSQL</productname> 12 に対応するように修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
  <sect1 id=release-3-4-24> 
 <!--
   <title>Release 3.4.24</title>
