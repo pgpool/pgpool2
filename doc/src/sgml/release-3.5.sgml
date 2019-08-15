@@ -9,6 +9,58 @@
  </note>
 
  <sect2>
+  <title>Enhancements</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2019-08-08 [94b0ce1]
+    -->
+    <para>
+     Import some of memory manager debug facilities from <productname>PostgreSQL</productname>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-07-24 [d3493f7]
+    -->
+    <para>
+     Use <function>pg_get_expr()</function> instead of <literal>pg_attrdef.adsrc</literal> to support for <productname>PostgreSQL</productname> 12. (Bo Peng)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-08-11 [c553e51]
+    2019-08-08 [94364ad]
+    2019-07-17 [5730d28]
+    2019-07-02 [b364caa]
+    -->
+    <para>
+     Enhance shutdown script of <xref linkend="PGPOOL-SETUP">. (Tatsuo Ishii)
+     <itemizedlist> 
+      <listitem>
+       <para>
+        Make shutdownall to wait for completion of shutdown of <productname>Pgpool-II</productname>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        If environment variable <varname>CHECK_TIME_WAIT</varname> is set to true, use <command>netstat</command> command to confirm usage of the <literal>TCP/IP</literal> port while executing shutdown script.
+       </para>
+      </listitem>
+     </itemizedlist> 
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-05-22 [57cd1d4]
+    -->
+    <para>
+     Deal <literal>pgpool_adm</literal> extension with <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+ <sect2>
   <title>Bug fixes</title>
   <itemizedlist>
 
@@ -34,28 +86,10 @@
 
    <listitem>
     <!--
-    2019-08-08 [94b0ce1]
-    -->
-    <para>
-     Import some of memory manager debug facilities from <productname>PostgreSQL</productname>. (Tatsuo Ishii)
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
     2019-07-28 [fbe8fdc]
     -->
     <para>
      Fix <xref linkend="PGPOOL-SETUP"> to produce correct follow master command. (Tatsuo Ishii)
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
-    2019-07-24 [d3493f7]
-    -->
-    <para>
-     Use <function>pg_get_expr()</function> instead of <literal>pg_attrdef.adsrc</literal> to support for <productname>PostgreSQL</productname> 12. (Bo Peng)
     </para>
    </listitem>
 
@@ -83,30 +117,6 @@
     -->
     <para>
      Fix sefault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
-    2019-08-11 [c553e51]
-    2019-08-08 [94364ad]
-    2019-07-17 [5730d28]
-    2019-07-02 [b364caa]
-    -->
-    <para>
-     Enhance shutdown script of <xref linkend="PGPOOL-SETUP">. (Tatsuo Ishii)
-     <itemizedlist> 
-      <listitem>
-       <para>
-        Make shutdownall to wait for completion of shutdown of <productname>Pgpool-II</productname>.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        If environment variable <varname>CHECK_TIME_WAIT</varname> is set to true, use <command>netstat</command> command to confirm usage of the <literal>TCP/IP</literal> port while executing shutdown script.
-       </para>
-      </listitem>
-     </itemizedlist> 
     </para>
    </listitem>
 
@@ -163,15 +173,6 @@
     -->
     <para>
      Make failover in progress check more aggressively to avoid potential segfault. (Tatsuo Ishii)
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
-    2019-05-22 [57cd1d4]
-    -->
-    <para>
-     Deal <literal>pgpool_adm</literal> extension with <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
     </para>
    </listitem>
   </itemizedlist>

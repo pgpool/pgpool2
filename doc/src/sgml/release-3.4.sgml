@@ -9,9 +9,8 @@
  </note>
 
  <sect2>
-  <title>Bug fixes</title>
+  <title>Enhancements</title>
   <itemizedlist>
-
    <listitem>
     <!--
     2019-08-08 [94b0ce1]
@@ -20,16 +19,6 @@
      Import some of memory manager debug facilities from <productname>PostgreSQL</productname>. (Tatsuo Ishii)
     </para>
    </listitem>
-
-   <listitem>
-    <!--
-    2019-07-28 [fbe8fdc]
-    -->
-    <para>
-     Fix <xref linkend="PGPOOL-SETUP"> to produce correct follow master command. (Tatsuo Ishii)
-    </para>
-   </listitem>
-
    <listitem>
     <!--
     2019-07-24 [d3493f7]
@@ -38,25 +27,6 @@
      Use <function>pg_get_expr()</function> instead of <literal>pg_attrdef.adsrc</literal> to support for <productname>PostgreSQL</productname> 12. (Bo Peng)
     </para>
    </listitem>
-
-   <listitem>
-    <!--
-    2019-07-07 [44f8e2d]
-    -->
-    <para>
-     Fix query cache module so that it checks oid array's bound. (Tatsuo Ishii)
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
-    2019-07-07 [ae45e93]
-    -->
-    <para>
-     Fix off-by-one error in query cache module. (Tatsuo Ishii)
-    </para>
-   </listitem>
-
    <listitem>
     <!--
     2019-08-11 [c553e51]
@@ -78,6 +48,45 @@
        </para>
       </listitem>
      </itemizedlist> 
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-05-22 [57cd1d4]
+    -->
+    <para>
+     Deal <literal>pgpool_adm</literal> extension with <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2019-07-28 [fbe8fdc]
+    -->
+    <para>
+     Fix <xref linkend="PGPOOL-SETUP"> to produce correct follow master command. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-07 [44f8e2d]
+    -->
+    <para>
+     Fix query cache module so that it checks oid array's bound. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-07 [ae45e93]
+    -->
+    <para>
+     Fix off-by-one error in query cache module. (Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -113,15 +122,6 @@
     -->
     <para>
      Fix memory leaks. (Tatsuo Ishii)
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
-    2019-05-22 [57cd1d4]
-    -->
-    <para>
-     Deal <literal>pgpool_adm</literal> extension with <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
     </para>
    </listitem>
   </itemizedlist>

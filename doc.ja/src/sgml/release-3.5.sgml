@@ -16,6 +16,79 @@
 
  <sect2>
   <!--
+  <title>Enhancements</title>
+  -->
+  <title>改善点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2019-08-08 [7ea54a1]
+    -->
+    <para>
+     <!--
+     Import some of memory manager debug facilities from <productname>PostgreSQL</productname>. (Tatsuo Ishii)
+     -->
+     <productname>PostgreSQL</productname>からメモリマネージャデバッグ機能の一部をインポートしました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-07-24 [717411f]
+    -->
+    <para>
+     <!--
+     Use <function>pg_get_expr()</function> instead of <literal>pg_attrdef.adsrc</literal> to support for <productname>PostgreSQL</productname> 12. (Bo Peng)
+     -->
+     <productname>PostgreSQL</productname> 12に対応するために、<literal>pg_attrdef.adsrc</literal>のかわりに
+     <function>pg_get_expr()</function>を使用するように修正しました。(Bo Peng)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-08-11 [c553e51]
+    2019-07-17 [6b89f9e]
+    2019-07-02 [3b32bc4]
+    -->
+    <para>
+     <!--
+     Enhance shutdown script of <xref linkend="PGPOOL-SETUP">. (Tatsuo Ishii)
+     -->
+     <xref linkend="PGPOOL-SETUP">のshutdownスクリプトを改良しました。(Tatsuo Ishii)
+     <itemizedlist> 
+      <listitem>
+       <para>
+        <!--
+        Make shutdownall to wait for completion of shutdown of <productname>Pgpool-II</productname>.
+        -->
+        shutdownスクリプトが<productname>Pgpool-II</productname>のシャットダウン完了を待つように修正しました。
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        <!--
+        if environment variable <varname>CHECK_TIME_WAIT</varname> is set to true, use <command>netstat</command> command to confirm usage of the <literal>TCP/IP</literal> port while executing shutdown script.
+        -->
+        環境変数<varname>CHECK_TIME_WAIT</varname>が<literal>true</literal>に設定されているとき、shutdownスクリプト実行時に<command>netstat</command>コマンドで<literal>TCP/IP</literal>ポートの使用を確認するように修正しました。 
+       </para>
+      </listitem>
+     </itemizedlist> 
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-05-22 [57cd1d4]
+    -->
+    <para>
+     <!--
+     Deal <literal>pgpool_adm</literal> extension with <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
+     -->
+     <literal>pgpool_adm</literal>拡張が<productname>PostgreSQL</productname> 12 に対応するように修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+ <sect2>
+  <!--
   <title>Bug fixes</title>
   -->
   <title>不具合修正</title>
@@ -53,18 +126,6 @@
 
    <listitem>
     <!--
-    2019-08-08 [7ea54a1]
-    -->
-    <para>
-     <!--
-     Import some of memory manager debug facilities from <productname>PostgreSQL</productname>. (Tatsuo Ishii)
-     -->
-     <productname>PostgreSQL</productname>からメモリマネージャデバッグ機能の一部をインポートしました。(Tatsuo Ishii)
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
     2019-07-28 [34dc12f]
     -->
     <para>
@@ -72,19 +133,6 @@
      Fix <xref linkend="PGPOOL-SETUP"> to produce correct follow master command. (Tatsuo Ishii)
      -->
      <xref linkend="PGPOOL-SETUP">が正しい<varname>follow master command</varname>を生成するように修正しました。(Tatsuo Ishii)
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
-    2019-07-24 [717411f]
-    -->
-    <para>
-     <!--
-     Use <function>pg_get_expr()</function> instead of <literal>pg_attrdef.adsrc</literal> to support for <productname>PostgreSQL</productname> 12. (Bo Peng)
-     -->
-     <productname>PostgreSQL</productname> 12に対応するために、<literal>pg_attrdef.adsrc</literal>のかわりに
-     <function>pg_get_expr()</function>を使用するように修正しました。(Bo Peng)
     </para>
    </listitem>
 
@@ -121,38 +169,6 @@
      Fix sefault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
      -->
      クエリキャッシュが有効な場合に発生するセグメンテーション違反を修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
-    2019-08-11 [c553e51]
-    2019-07-17 [6b89f9e]
-    2019-07-02 [3b32bc4]
-    -->
-    <para>
-     <!--
-     Enhance shutdown script of <xref linkend="PGPOOL-SETUP">. (Tatsuo Ishii)
-     -->
-     <xref linkend="PGPOOL-SETUP">のshutdownスクリプトを改良しました。(Tatsuo Ishii)
-     <itemizedlist> 
-      <listitem>
-       <para>
-        <!--
-        Make shutdownall to wait for completion of shutdown of <productname>Pgpool-II</productname>.
-        -->
-        shutdownスクリプトが<productname>Pgpool-II</productname>のシャットダウン完了を待つように修正しました。
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        <!--
-        if environment variable <varname>CHECK_TIME_WAIT</varname> is set to true, use <command>netstat</command> command to confirm usage of the <literal>TCP/IP</literal> port while executing shutdown script.
-        -->
-        環境変数<varname>CHECK_TIME_WAIT</varname>が<literal>true</literal>に設定されているとき、shutdownスクリプト実行時に<command>netstat</command>コマンドで<literal>TCP/IP</literal>ポートの使用を確認するように修正しました。 
-       </para>
-      </listitem>
-     </itemizedlist> 
     </para>
    </listitem>
 
@@ -230,18 +246,6 @@
      Make failover in progress check more aggressively to avoid potential segfault. (Tatsuo Ishii)
      -->
      潜在的なセグメンテーション違反を回避するために、フェイルオーバ実行中であるかどうかのチェックをより積極的に行うように修正しました。(Tatsuo Ishii)
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
-    2019-05-22 [57cd1d4]
-    -->
-    <para>
-     <!--
-     Deal <literal>pgpool_adm</literal> extension with <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
-     -->
-     <literal>pgpool_adm</literal>拡張が<productname>PostgreSQL</productname> 12 に対応するように修正しました。(Tatsuo Ishii)
     </para>
    </listitem>
   </itemizedlist>
