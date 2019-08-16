@@ -1,9 +1,9 @@
 <!-- doc/src/sgml/legal.sgml -->
 
-<date>2018</date>
+<date>2019</date>
 
 <copyright>
- <year>2003-2018</year>
+ <year>2003-2019</year>
  <holder>The Pgpool Global Development Group</holder>
 </copyright>
 
@@ -11,12 +11,12 @@
  <title>Legal Notice</title>
 
  <para>
-  <productname>Pgpool and Pgpool-II</productname> are Copyright &copy; 2003-2018
+  <productname>Pgpool and Pgpool-II</productname> are Copyright &copy; 2003-2019
   by the Pgpool Global Development Group.
  </para>
 
  <para>
-  <productname>PostgreSQL</productname> are Copyright &copy; 1996-2018
+  <productname>PostgreSQL</productname> are Copyright &copy; 1996-2019
   by the PostgreSQL Global Development Group.
  </para>
 
