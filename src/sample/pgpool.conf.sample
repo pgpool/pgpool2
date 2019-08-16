@@ -609,7 +609,7 @@ if_down_cmd = 'ip addr del $_IP_$/24 dev eth0'
 arping_path = '/usr/sbin'
                                     # arping command path
                                     # (change requires restart)
-arping_cmd = 'arping -U $_IP_$ -w 1'
+arping_cmd = 'arping -U $_IP_$ -w 1 -I eth0'
                                     # arping command
                                     # (change requires restart)
 
