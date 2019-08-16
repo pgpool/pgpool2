@@ -326,5 +326,25 @@
    </para>
   </sect2>
 
+  <sect2 id="disaster-recovery-settings">
+   <title>Disaster recovery settings</title>
+   <para>
+    To create a disaster recovery setting, it is possible to deploy a
+    <productname>Pgpool-II</productname> plus
+    <productname>PostgreSQL</productname> primary server, and another
+    <productname>Pgpool-II</productname> plus standby
+    <productname>PostgreSQL</productname> server in a geographically
+    distant place. Clients close to the standby server send read only
+    queries to the <productname>Pgpool-II</productname>, being close
+    to the standby server. However, since standby
+    <productname>Pgpool-II</productname> sends internal queries to
+    system catalog of primary <productname>PostgreSQL</productname>
+    server, query performance may be getting worse. To avoid the
+    problem, it is possible to use <xref
+    linkend="guc-relcache-query-target"> so that such queries are sent
+    to the standby. See <xref linkend="guc-relcache-query-target"> for
+    more details.
+   </para>
+  </sect2>
  </sect1>
 </chapter>

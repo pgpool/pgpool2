@@ -232,5 +232,15 @@
    </para>
   </sect2>
 
+  <sect2 id="disaster-recovery-settings">
+   <title>ディザスタリカバリ設定</title>
+   <para>
+    ディザスタリカバリ設定を行う場合、<productname>Pgpool-II</productname>とプライマリ<productname>PostgreSQL</productname>サーバから地理的に離れた場所に、もう1台の<productname>Pgpool-II</productname>とスタンバイ<productname>PostgreSQL</productname>サーバを設置することが考えられます。
+    そしてスタンバイサーバ側に近いクライアントは、読み出し専用のクエリに関してはスタンバイサーバに近い<productname>Pgpool-II</productname>にアクセスしたいとします。
+    しかしスタンバイ側の<productname>Pgpool-II</productname>は、内部的にシステムカタログへの問い合わせをプライマリ<productname>PostgreSQL</productname>サーバに発行することがあり、性能が低下してしまいます。
+    この問題を回避するために、<xref linkend="guc-relcache-query-target">を使用して、そうした問い合わせをスタンバイサーバ側に送るようにすることができます。
+    詳細は<xref linkend="guc-relcache-query-target">をご覧ください。
+   </para>
+  </sect2>
  </sect1>
 </chapter>
