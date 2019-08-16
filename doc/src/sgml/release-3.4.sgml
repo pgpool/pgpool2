@@ -1,7 +1,134 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
- <sect1 id=release-3-4-24> 
+<sect1 id=release-3-4-25> 
+ <title>Release 3.4.25</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2019-08-15</simpara>
+ </note>
+
+ <sect2>
+  <title>Enhancements</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2019-08-08 [94b0ce1]
+    -->
+    <para>
+     Import some of memory manager debug facilities from <productname>PostgreSQL</productname>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-07-24 [d3493f7]
+    -->
+    <para>
+     Use <function>pg_get_expr()</function> instead of <literal>pg_attrdef.adsrc</literal> to support for <productname>PostgreSQL</productname> 12. (Bo Peng)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-08-11 [c553e51]
+    2019-08-08 [94364ad]
+    2019-07-17 [5730d28]
+    2019-07-02 [b364caa]
+    -->
+    <para>
+     Enhance shutdown script of <xref linkend="PGPOOL-SETUP">. (Tatsuo Ishii)
+      <itemizedlist> 
+       <listitem>
+	<para>
+	 Make shutdownall to wait for completion of shutdown of <productname>Pgpool-II</productname>.
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 If environment variable <varname>CHECK_TIME_WAIT</varname> is set to true, use <command>netstat</command> command to confirm usage of the <literal>TCP/IP</literal> port while executing shutdown script.
+	</para>
+       </listitem>
+      </itemizedlist> 
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-05-22 [57cd1d4]
+    -->
+    <para>
+     Deal <literal>pgpool_adm</literal> extension with <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2019-07-28 [fbe8fdc]
+    -->
+    <para>
+     Fix <xref linkend="PGPOOL-SETUP"> to produce correct follow master command. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-07 [44f8e2d]
+    -->
+    <para>
+     Fix query cache module so that it checks oid array's bound. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-07 [ae45e93]
+    -->
+    <para>
+     Fix off-by-one error in query cache module. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-24 [057a635]
+    -->
+    <para>
+     Fix segfault when <literal>samenet</literal> is specified in <filename>pool_hba.conf</filename>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2019-June/006659.html">[pgpool-general: 6601]</ulink>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-07 [9d7c5ba]
+    -->
+    <para>
+     Fix to deal with backslashes according to the config of <varname>standard_conforming_strings</varname> in native replication mode.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=467">bug 467</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-14 [0d6fdbc]
+    2019-05-23 [0e8c1c2]
+    2019-05-22 [c264275]
+    2019-05-22 [53e7af0]
+    2019-05-22 [19cfda2]
+    -->
+    <para>
+     Fix memory leaks. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
+<sect1 id=release-3-4-24> 
  <title>Release 3.4.24</title>
  <note>
   <title>Release Date</title>
@@ -129,9 +256,9 @@
    </listitem>
   </itemizedlist>
  </sect2>
- </sect1>
+</sect1>
 
- <sect1 id=release-3-4-23> 
+<sect1 id=release-3-4-23> 
  <title>Release 3.4.23</title>
  <note>
   <title>Release Date</title>
@@ -200,9 +327,9 @@
    </listitem>
   </itemizedlist>
  </sect2>
- </sect1>
+</sect1>
 
- <sect1 id=release-3-4-22> 
+<sect1 id=release-3-4-22> 
  <title>Release 3.4.22</title>
  <note>
   <title>Release Date</title>
@@ -263,9 +390,9 @@
    </listitem>
   </itemizedlist>
  </sect2>
- </sect1>
+</sect1>
 
- <sect1 id=release-3-4-21> 
+<sect1 id=release-3-4-21> 
  <title>Release 3.4.21</title>
  <note>
   <title>Release Date</title>
@@ -342,9 +469,9 @@
    </listitem>
   </itemizedlist>
  </sect2>
- </sect1>
+</sect1>
 
- <sect1 id="release-3-4-20">
+<sect1 id="release-3-4-20">
  <title>Release 3.4.20</title>
 
  <note>
@@ -522,7 +649,7 @@
    </listitem>
   </itemizedlist>
  </sect2>
- </sect1>
+</sect1>
 
 <sect1 id="release-3-4-19">
  <title>Release 3.4.19</title>

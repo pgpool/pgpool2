@@ -1,7 +1,288 @@
 <!-- doc/src/sgml/release-3.7.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
- <sect1 id=release-3-7-10> 
+<sect1 id=release-3-7-11> 
+ <title>Release 3.7.11</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2019-08-15</simpara>
+ </note>
+ <sect2>
+  <title>Enhancements</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2019-08-08 [94b0ce1]
+    -->
+    <para>
+     Import some of memory manager debug facilities from <productname>PostgreSQL</productname>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-07-24 [d3493f7]
+    -->
+    <para>
+     Use <function>pg_get_expr()</function> instead of <literal>pg_attrdef.adsrc</literal> to support for <productname>PostgreSQL</productname> 12. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-11 [c553e51]
+    2019-08-08 [94364ad]
+    2019-07-17 [5730d28]
+    2019-07-02 [b364caa]
+    -->
+    <para>
+     Enhance shutdown script of <xref linkend="PGPOOL-SETUP">. (Tatsuo Ishii)
+      <itemizedlist> 
+       <listitem>
+	<para>
+	 Make shutdownall to wait for completion of shutdown of <productname>Pgpool-II</productname>.
+	</para>
+       </listitem>
+       <listitem>
+	<para>
+	 If environment variable <varname>CHECK_TIME_WAIT</varname> is set to true, use <command>netstat</command> command to confirm usage of the <literal>TCP/IP</literal> port while executing shutdown script.
+	</para>
+       </listitem>
+      </itemizedlist> 
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-02 [45f0160]
+    -->
+    <para>
+     Doc: add description to <xref linkend="PG-MD5"> man page how to show <filename>pool_passwd</filename> hashed string. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-05-26 [e21e7a9]
+    -->
+    <para>
+     Doc: add general description about failover. (Tatsuo Ishii)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-05-22 [57cd1d4]
+    -->
+    <para>
+     Deal <literal>pgpool_adm</literal> extension with <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2019-08-09 [c896d21]
+    -->
+    <para>
+     Fix "unable to bind. cannot get parse message" error.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=531">bug 531</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-08 [0da5292]
+    -->
+    <para>
+     Fix online-recovery is blocked after a child process exits abnormally with replication mode and watchdog. 
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=483">bug 483</ulink>) (Muhammad Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-05-16 [0dbf6eb]
+    -->
+    <para>
+     Fix for keep the backend health check running on quarantined nodes. (Muhammad Usama)
+    </para>
+    <para>
+     Pgpool should keep the backend health check running on quarantined nodes so
+     that when the connectivity resumes, they should automatically get removed
+     from the quarantine. 
+    </para>
+    <para>
+     See <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2019-April/003295.html">[pgpool-hackers: 3295]</ulink> for more details. 
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-07 [2d7702c]
+    -->
+    <para>
+     Fix for no primary on standby pgpool when primary is quarantined on master. (Muhammad Usama)
+    </para>
+    <para>
+     Master watchdog Pgpool sends the backend status sync message if the primary node is quarantined on it.
+     So standby watchdog pgpool must not update its status when the status of current primary node
+     is not DOWN.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-29 [9b830d9]
+    -->
+    <para>
+     Fix <xref linkend="WATCHDOG-SETUP"> command <literal>mode</literal> option to work correctly. (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-28 [fbe8fdc]
+    -->
+    <para>
+     Fix <xref linkend="PGPOOL-SETUP"> to produce correct follow master command. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-07 [44f8e2d]
+    -->
+    <para>
+     Fix query cache module so that it checks oid array's bound. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-07 [ae45e93]
+    -->
+    <para>
+     Fix off-by-one error in query cache module. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-05 [27c2476]
+    -->
+    <para>
+     Allow health check process to reload. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-03 [380d8a5]
+    -->
+    <para>
+     Fix sefault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-02 [b8137d6]
+    -->
+    <para>
+     Down grade LOG "checking zapping sent message ..." to DEBUG5. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2019-June/006678.html">[pgpool-general: 6620]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-24 [057a635]
+    -->
+    <para>
+     Fix segfault when <literal>samenet</literal> is specified in <filename>pool_hba.conf</filename>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2019-June/006659.html">[pgpool-general: 6601]</ulink>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-20 [957e3f8]
+    2019-06-19 [79ae3f7]
+    2019-06-19 [df42ac3]
+    -->
+    <para>
+     Doc: Fix documentation mistakes in <filename>follow_master.sh</filename> script and typos. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-11 [b9ee841]
+    -->
+    <para>
+     Fix health check process is not shutting down in certain cases. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-07 [9d7c5ba]
+    -->
+    <para>
+     Fix to deal with backslashes according to the config of <varname>standard_conforming_strings</varname> in native replication mode.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=467">bug 467</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-05-23 [81b9c11]
+    -->
+    <para>
+     Fix compile error on FreeBSD.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=512">bug 512</ulink>,
+     <ulink url="https://www.pgpool.net/mantisbt/view.php?id=519">bug 519</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-14 [0d6fdbc]
+    2019-05-23 [0e8c1c2]
+    2019-05-22 [c264275]
+    2019-05-22 [53e7af0]
+    2019-05-22 [19cfda2]
+    -->
+    <para>
+     Fix memory leaks. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-05-23 [827a056]
+    -->
+    <para>
+     Make failover in progress check more aggressively to avoid potential segfault. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
+<sect1 id=release-3-7-10> 
  <title>Release 3.7.10</title>
  <note>
   <title>Release Date</title>
@@ -205,9 +486,9 @@
    </listitem>
   </itemizedlist>
  </sect2>
- </sect1>
+</sect1>
 
- <sect1 id=release-3-7-9> 
+<sect1 id=release-3-7-9> 
  <title>Release 3.7.9</title>
  <note>
   <title>Release Date</title>
@@ -277,9 +558,9 @@
    </listitem>
   </itemizedlist>
  </sect2>
- </sect1>
+</sect1>
 
- <sect1 id=release-3-7-8> 
+<sect1 id=release-3-7-8> 
  <title>Release 3.7.8</title>
  <note>
   <title>Release Date</title>
@@ -411,9 +692,9 @@
    </listitem>
   </itemizedlist>
  </sect2>
- </sect1>
+</sect1>
 
- <sect1 id=release-3-7-7> 
+<sect1 id=release-3-7-7> 
  <title>Release 3.7.7</title>
  <note>
   <title>Release Date</title>
@@ -499,9 +780,9 @@
    </listitem>
   </itemizedlist>
  </sect2>
- </sect1>
+</sect1>
 
- <sect1 id="release-3-7-6">
+<sect1 id="release-3-7-6">
  <title>Release 3.7.6</title>
 
  <note>
@@ -814,7 +1095,7 @@
    </listitem>
   </itemizedlist>
  </sect2>
- </sect1>
+</sect1>
 
 
 <sect1 id="release-3-7-5">
