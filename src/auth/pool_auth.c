@@ -1019,12 +1019,35 @@ do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, in
 		/* frontend and backend are both authenticated already */
 		return 0;
 	}
+
 	if (get_auth_password(backend, frontend, reauth, &pwd, &passwordType) == false)
 	{
-		ereport(FATAL,
-				(return_code(2),
-				 errmsg("clear text password authentication failed"),
-				 errdetail("unable to get the password for user: \"%s\"", frontend->username)));
+		/*
+		 * We do not have any passeord, we can still get the password
+		 * from client using plain text authentication if it is
+		 * allowed by user
+		 */
+
+		if (frontend->pool_hba == NULL ||
+			frontend->pool_hba->auth_method == uaPassword ||
+			pool_config->allow_clear_text_frontend_auth )
+		{
+			ereport(DEBUG1,
+				(errmsg("using clear text authentication with frontend"),
+					 errdetail("backend is using password authentication")));
+
+			authenticate_frontend_clear_text(frontend);
+
+			/* now check again if we have a password now */
+
+			if (get_auth_password(backend, frontend, reauth, &pwd, &passwordType) == false)
+			{
+				ereport(FATAL,
+						(return_code(2),
+							errmsg("clear text password authentication failed"),
+							errdetail("unable to get the password for user: \"%s\"", frontend->username)));
+			}
+		}
 	}
 
 	if (passwordType == PASSWORD_TYPE_AES)
