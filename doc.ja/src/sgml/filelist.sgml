@@ -187,6 +187,7 @@
 <!ENTITY sourcerepo SYSTEM "sourcerepo.sgml">
 
 <!ENTITY release    SYSTEM "release.sgml">
+<!ENTITY release-4.1    SYSTEM "release-4.1.sgml">
 <!ENTITY release-4.0    SYSTEM "release-4.0.sgml">
 <!ENTITY release-3.7    SYSTEM "release-3.7.sgml">
 <!ENTITY release-3.6    SYSTEM "release-3.6.sgml">

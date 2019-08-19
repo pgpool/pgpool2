@@ -1,0 +1,1115 @@
+<!-- doc/src/sgml/release-4.1.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-4-1">
+<!--
+ <title>Release 4.1</title>
+-->
+ <title>リリース 4.1</title>
+ <note>
+<!--
+  <title>Release Date</title>
+-->
+  <title>リリース日</title>
+  <simpara>2019-10-04</simpara>
+ </note>
+
+ <sect2>
+<!--
+  <title>Overview</title>
+-->
+  <title>概要</title>
+  <para>
+<!--
+   This version implements long awaited features including
+   <xref linkend="guc-statement-level-load-balance">
+    and <xref linkend="guc-auto-failback">. Also it enhances number
+     of areas related to performance. Finally it
+     imports <productname>PostgreSQL</productname> 12's new SQL
+     parser.
+-->
+   このバージョンでは、待望の<xref linkend="guc-statement-level-load-balance">、<xref linkend="guc-auto-failback">機能を実装しています。
+   また、パフォーマンスに関連する分野も強化しています。
+   <productname>PostgreSQL</productname>12の新しい<literal>SQL</literal>パーサを取り込んでいます。
+  </para>
+  <para>
+<!--
+   Major enhancements in <productname>Pgpool-II</productname> 4.1 include:
+-->
+   <productname>Pgpool-II</productname>4.1の主な改善点は以下のとおりです。
+  </para>
+
+  <!-- Items in this list summarize one or more items below -->
+
+  <itemizedlist>
+   <listitem>
+    <para>
+<!--
+     Statement level load
+     balancing. Previously <productname>Pgpool-II</productname>
+     only allows session level load balancing. This version
+     allows to use <literal>statement level load
+      balancing</literal>, which is useful for frontends
+     permanently connecting
+     to <productname>Pgpool-II</productname> but want to use
+     existing standby server resources.
+-->
+     ステートメントレベルの負荷分散に対応しました。
+     以前の<productname>Pgpool-II</productname>は、セッションレベルの負荷分散のみ可能でした。
+     このバージョンでは、<literal>statement level load balancing</literal>を使用でき、フロントエンドが<productname>Pgpool-II</productname>に常時接続しているが、存在するスタンバイサーバのリソースを使用したい場合に便利です。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+<!--
+     Auto failback allows to automatically attach streaming
+     replication standby servers, which are considered safe
+     enough to failback.
+-->
+     自動フェイルバックは、フェイルバックするために十分な安全を考慮しストリーミングレプリケーションのスタンバイサーバを自動的にアタッチできます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+<!--
+     Enhance performance in number of areas.
+-->
+     多くの領域でのパフォーマンス向上が向上しました。
+     <itemizedlist>
+      <listitem>
+       <para>
+<!--
+	Shared relation cache allows to reuse relation cache
+	among sessions to reduce internal queries
+	against <productname>PostgreSQL</productname> system
+	catalogs.
+-->
+        共有リレーションキャッシュは、セッション間でリレーションキャッシュを再利用でき、<productname>PostgreSQL</productname>システムカタログに対する内部的なクエリを減らすことができます。
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+<!--
+	Have separate SQL parser for DML statements to
+	eliminate unnecessary parsing effort.
+-->
+        不必要なパース処理を取り除くためにDML文用にSQLパーサを持ちます。
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+<!--
+	Load balancing control for specific queries.
+-->
+        特定クエリの負荷分散を制御します。
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+<!--
+     Import PostgreSQL 12 SQL parser.
+-->
+     PostgreSQL12のSQLパーサを取り込みました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+<!--
+  <title>Migration to Version 4.1</title>
+-->
+  <title>バージョン4.1への移行</title>
+  <para>
+<!--
+   Version 4.1 contains some changes that may affect compatibility
+   with previous releases. Observe the following incompatibilities:
+-->
+   バージョン4.1には、以前のバージョンとの互換性に影響するいくつかの変更点が含まれています。
+   以下の非互換性に注意してください。
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <!--
+    2019-04-17 [daa530a7]
+    2019-04-23 [35cb1dc2]
+    2019-04-24 [4d9f8b98]
+    -->
+    <para>
+<!--
+     Add <varname>replication_state</varname> and
+     <varname>replication_sync_state</varname> columns
+     of <xref linkend="SQL-SHOW-POOL-NODES"> and friends. (Tatsuo
+      Ishii)
+-->
+     <xref linkend="SQL-SHOW-POOL-NODES">および同様のコマンドに<varname>replication_state</varname>と<varname>replication_sync_state</varname>列を追加しました。(Tatsuo Ishii)
+    </para>
+    <para>
+<!--
+     This allows to show important information from
+     <command>pg_stat_replication</command>, which is available
+     from <productname>PostgreSQL</productname> 9.1 (also with
+     <varname>replication_state_sync</varname>. it's only
+     available since 9.2 however).  For this purpose
+     new <xref linkend="guc-backend-application-name"> parameter is
+      added to each backend_host configuration parameters.
+      <command>pg_stat_replication</command> is called from
+      streaming replication delay checking process. So
+      if <xref linkend="guc-sr-check-period"> is 0, those new columns
+       are not available.
+-->
+     <productname>PostgreSQL</productname> 9.1 で利用可能な<command>pg_stat_replication</command> (<varname>replication_state_sync</varname>も使用します。しかし、9.2以降でのみ利用可能です。)から重要な情報を表示できます。
+     この目的のために各バックエンドホストの設定パラメータに新しい<xref linkend="guc-backend-application-name">パラメータが追加しました。
+     <command>pg_stat_replication</command>はストリーミングレプリケーションの遅延チェックプロセスから呼び出されます。
+     そのため、<xref linkend="guc-sr-check-period">が0の場合、これらの新しい列は利用できません。
+    </para>
+    <para>
+<!--
+     Also <xref linkend="pcp-node-info">
+      and <xref linkend="pgpool-adm-pcp-node-info"> function are
+       modified.
+-->
+     <xref linkend="pcp-node-info">および<xref linkend="pgpool-adm-pcp-node-info">関数も変更されています。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-02 [d86c71d1]
+    -->
+    <para>
+<!--
+     Down grade LOG to DEBUG5 in sent message module. (Tatsuo Ishii)
+-->
+     sent messageモジュールのログをLOGからDEBUG5にダウングレードしました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+
+ </sect2>
+
+ <sect2>
+<!--
+  <title>Major Enhancements</title>
+-->
+  <title>主な改善点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2019-04-02 [1099ba61]
+    -->
+    <para>
+<!--
+     Allow to use statement level load balancing. (Bo Peng)
+-->
+     ステートメントレベルの負荷分散を使うことができます (Bo Peng)
+    </para>
+    <para>
+<!--
+     This feature enables selecting load balancing node per
+     statement.  The current feature for load balancing, the load
+     balancing node is decided at the session start time and will
+     not be changed until the session ends.  When set to
+     <xref linkend="guc-statement-level-load-balance"> = on,
+      the load balancing node is decided for each read query.  For
+      example, in applications that use connection pooling remain
+      connections open to the backend server, because the session
+      may be held for a long time, the load balancing node does
+      not change until the session ends.  In such applications,
+      when statement_level_load_balance is enabled, it is possible
+      to decide load balancing node per query, not per session.
+-->
+     この機能ではステートメント単位の負荷分散ノードの選択を有効にします。
+     負荷分散の現在の機能では、負荷分散ノードはセッション開始時に決定され、セッションの終了まで変更されませんでした。
+     <xref linkend="guc-statement-level-load-balance"> = on に設定すると、負荷分散ノードは参照クエリごとに決定されます。
+     例えば、コネクションプーリングを使用するアプリケーションでは、セッションは長い時間保持される可能性があり負荷分散ノードはセッションの終了まで変更しないため、バックエンドサーバとのコネクションが開いたまま残ります。
+     statement_level_load_balanceが有効の場合、セッション毎ではなくクエリ毎に負荷分散ノードを決定することができます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-22 [3e2ecc97]
+    2019-07-22 [6a1f16e8]
+    -->
+    <para>
+<!--
+     Add <xref linkend="guc-auto-failback"> (Takuma Hoshiai).
+-->
+     <xref linkend="guc-auto-failback">を追加しました。(Takuma Hoshiai)
+    </para>
+    <para>
+<!--
+     This allows to reattach backend node automatically that is
+     in DOWN status but actually it is running normally.
+-->
+     実際には正常に稼働しているがDOWN状態のバックエンドノードを自動で再アタッチできます。
+    </para>
+    <para>
+<!--
+     To use this feature it is required
+     that <productname>PostgreSQL</productname> is 9.1 or later
+     and new configuration
+     variable <varname>auto_failback</varname> is
+     enabled. Also <productname>Pgpool-II</productname> must be
+     operating in streaming-replication mode, with sr_check and
+     health_check are
+     enabled. <productname>Pgpool-II</productname> calls
+     pg_stat_replication on
+     the <productname>PostgreSQL</productname> primary server to
+     make sure that the standby node in question is running and
+     receiving replication stream from the primary server.
+-->
+     この機能を使うためには、<productname>PostgreSQL</productname>が9.1以降、かつ新しい設定変数 <varname>auto_failback</varname>が有効である必要があります。
+     <productname>Pgpool-II</productname>は、sr_checkとhealth_checkが有効なストリーミングレプリケーションモードで動作している必要もあります。
+     <productname>Pgpool-II</productname>は、問題のスタンバイノードが稼動しており、プライマリサーバからレプリケーションストリームを受け取れるか確認するため<productname>PostgreSQL</productname>プライマリサーバ上のpg_stat_replicationを呼び出します。
+    </para>
+    <para>
+<!--
+     This feature is useful in the case that a standby server
+     fails over due to a temporary network failure.
+-->
+   この機能は、一時的なネットワーク障害が原因でスタンバイサーバがフェイルオーバした場合に役立ちます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-02-25 [46917d54]
+    -->
+    <para>
+<!--
+     Add new <xref linkend="guc-enable-shared-relcache">
+      parameter. (Takuma Hoshiai)
+-->
+     新しい<xref linkend="guc-enable-shared-relcache">を追加しました。(Takuma Hoshiai)
+    </para>
+    <para>
+<!--
+     The relation cache were stored in local cache of child
+     processes, so all child processes executed same query to get
+     relation cache.  If <xref linkend="guc-enable-shared-relcache">
+      is on, the relation cache is stored in memory cache and all
+      child process share it.  It will expect to reduce the load
+      that same query is executed.
+-->
+     リレーションキャッシュは、子プロセスのローカルキャッシュに蓄積されるため、すべての子プロセスはリレーションキャッシュを取得するために同じクエリを実行していました。
+     <xref linkend="guc-enable-shared-relcache">がonの場合は、リレーションキャッシュがメモリキャッシュに蓄積され全ての子プロセスで共有します。
+     同じクエリが実行されることによる負荷の軽減が期待できます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-27 [7a0471bb]
+    -->
+    <para>
+<!--
+     Add new parameter <xref linkend="guc-check-temp-table"> to
+      check temporary tables. (Tatsuo Ishii)
+-->
+     一時テーブルを確認するための新しいパラメータ<xref linkend="guc-check-temp-table">を追加しました。
+    </para>
+    <para>
+<!--
+     Checking temporary tables is slow because it needs to lookup
+     system catalogs. To eliminate the lookup, new method to
+     trace <command>CREATE TEMP TABLE/DROP TABLE</command> is
+     added. To use the new method,
+     set <xref linkend="guc-check-temp-table">
+      to <literal>trace</literal>.
+-->
+     一時テーブルの確認はシステムカタログを参照する必要があるため遅いです。
+     システムカタログの参照を除外するため、<command>CREATE TEMP TABLE/DROP TABLE</command>をトレースする新しい方式が追加されました。
+     新しい方式を使用するためには、<xref linkend="guc-check-temp-table">を<literal>trace</literal>に設定してください。
+    </para>
+    <para>
+<!--
+     Note that it is impossible to trace tables created in
+     functions and triggers. In this case existing method should
+     be used.
+-->
+     関数やトリガ内で作られたテーブルをトレースすることができないことに注意してください。
+     この場合、従来の方式を使用すべきです。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-26 [6282805d]
+    -->
+    <para>
+<!--
+     Reduce internal queries against system catalogs. (Tatsuo Ishii)
+-->
+     システムカタログに対する内部クエリを減らしました。(Tatsuo Ishii)
+    </para>
+    <para>
+<!--
+     Currently the relcache module issues 7+ queries to obtain
+     various info from <productname>PostgreSQL</productname>
+     system catalogs. Some of them are necessary for
+     <productname>Pgpool-II</productname> to work with multiple
+     version of <productname>PostgreSQL</productname>.  To reduce
+     such internal queries,
+     get <productname>PostgreSQL</productname> version to know
+     what kind of queries are needed. For example, we need to
+     know if pg_namespace exists and for this purpose we send a
+     query against pg_class. But if we know that pg_namespace was
+     introduced in <productname>PostgreSQL</productname> 7.3, we
+     do not need to inquire pg_class.
+-->
+     現在、リレーションキャッシュモジュールは、<productname>PostgreSQL</productname>から様々な情報を取得するために7つ以上のクエリを発行しています。
+     これらのいくつかは、 <productname>Pgpool-II</productname>が<productname>PostgreSQL</productname>の複数のバージョンで動作するために必要となります。
+     このような内部クエリを削減するためには、どんな種類のクエリが必要とされているかを知るために<productname>PostgreSQL</productname>バージョンを取得します。
+     例えばpg_namespaceが存在するか知る必要がある場合、この目的のためにpg_classにクエリを送ります。
+     しかし、pg_namespaceは<productname>PostgreSQL</productname> 7.3で導入されていることを知っていれば、pg_classを調べる必要はありません。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-02 [310c5c4a]
+    -->
+    <para>
+<!--
+     Performance enhancements for the large INSERT and UPDATE
+     statements. (Muhammd Usama)
+-->
+     大規模なINSERTとUPDATE文のパフォーマンスの強化。(Muhammd Usama)
+    </para>
+    <para>
+<!--
+     <productname>Pgpool-II</productname> only needs very little
+     information, especially for the INSERT and UPDATE statements
+     to decide where it needs to send the query.  For example: In
+     master-slave mode, for the INSERT
+     statements <productname>Pgpool-II</productname> only
+     requires the relation name referenced in the statement while
+     it doesn't care much about the column values and other
+     parameters. But since the parser we use
+     in <productname>Pgpool-II</productname> is taken
+     from <productname>PostgreSQL</productname> source which
+     parses the complete query including the value lists which
+     seems harmless for smaller statements but in case of INSERT
+     and UPDATE with lots of column values and large data in
+     value items, consumes significant time.
+-->
+     <productname>Pgpool-II</productname>では、特にINSERTとUPDATE文のクエリをどこに送る必要があるか決定するためにとても小さな情報だけを必要とします。
+     例えば、マスタースレーブモードでINSERT文の場合、<productname>Pgpool-II</productname>は列の値と他のパラメータについては気にせずステートメント内で参照されるリレーション名だけを必要とします。
+     しかし、<productname>Pgpool-II</productname>で使うパーサーは、<productname>PostgreSQL</productname>のソースから取り込んだものなので、値のリストを含む完全なクエリを構文解析します。小さいステートメントでは無害と考えられますが、INSERTとUPDATEで多くの列値と値の中に巨大なデータがある場合、かなりの時間を消費します。
+    </para>
+    <para>
+<!--
+     So the idea here is to short circuit the INSERT and UPDATE
+     statement parsing as soon as we have the required
+     information. For that purpose, the commit adds the second
+     minimal parser that gets invoked in master-slave mode and
+     tries to extract the performance for large INSERT and UPDATE
+     statements.
+-->
+     このアイデアは、必要な情報を確認したら直ちにINSERTやUPDATE文の構文解析を省くことです。
+     この目的のため、マスタースレーブモード内で呼び出される二つ目の小さなパーサーを追加し、巨大なINSERTやUPDATE文に関するパフォーマンスを引き出そうとしています。
+    </para>
+    <para>
+<!--
+     Apart from the second parser addition, changes aiming
+     towards the performance enhancements are also part of the
+     commit. See
+     the <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=310c5c4a289cbe6cee01abef7d2e7bc3550944fb">commit
+      log</ulink> for more details.
+-->
+     二つ目のパーサの追加とは別に、パフォーマンスの強化に向けた変更も含まれています。
+     詳細は、<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=310c5c4a289cbe6cee01abef7d2e7bc3550944fb">commit</ulink>を参照してください。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-24 [f694283c]
+    -->
+    <para>
+<!--
+     Import PostgreSQL 12 beta2 new parser. (Bo Peng)
+-->
+     PostgreSQL 12 beta2の新しいパーサを取り込みました。(Bo Peng)
+    </para>
+    <para>
+<!--
+     Major chanegs of PostgreSQL 12 parser include:
+-->
+     PostgreSQL12のパーサの主な改善点は以下のとおりです。
+
+     <itemizedlist>
+      <listitem>
+       <para>
+<!--
+	Add new VACUUM options:SKIP_LOCKED, INDEX_CLEANUP and TRUNCATE.
+-->
+        新しいVACUUMのオプション: SKIP_LOCKED、INDEX_CLEANUP、TRUNCATEの対応
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+<!--
+	Add COMMIT AND CHAIN and ROLLBACK AND CHAIN commands.
+-->
+        COMMIT AND CHAINとROLLBACK AND CHAINコマンドの対応
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+<!--
+	Add a WHERE clause to COPY FROM.
+-->
+        WHERE句のCOPY FROMの対応
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+<!--
+	Allow to use CREATE OR REPLACE AGGREGATE command.
+-->
+        CREATE OR REPLACE AGGREGATEコマンドの対応
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+<!--
+	Allow to use mcv (most-common-value) in CREATE STATISTICS.
+-->
+        CREATE STATISTICSのMCV(most-common-value)対応
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+<!--
+	ADD REINDEX option CONCURRENTLY.
+-->
+        REINDEXのCONCURRENTLYオプションの対応
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+<!--
+	Add EXPLAIN option SETTINGS.
+-->
+        EXPLAINのSETTINGSオプションの対応
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-20 [46986ebc]
+    2019-07-03 [beac296d]
+    -->
+    <para>
+<!--
+     Allow to route relcache queries to load balance node. (Tatsuo Ishii)
+-->
+     リレーションキャッシュのクエリを負荷分散ノードに送ることができます。(Tatsuo Ishii)
+    </para>
+    <para>
+<!--
+     Queries to build relcache entries were always sent to master (primary)
+     node. This is usually good because we could eliminate the bad effect
+     of replication delay. However if users want to lower the load of
+     master node, it would be nice if we could route the queries to other
+     than master node. This patch introduces new parameter
+     <xref linkend="guc-relcache-query-target">. If it is set to
+      <literal>load_balance_node</literal>, relcache queries will
+      be routed to load balance node.  If it is set
+      to <literal>master</literal>, the queries are routed to
+      master node, which is same as before (this is the default).
+-->
+     リレーションキャッシュ項目を作るためのクエリは、常にマスタ(プライマリ)ノードに送られていました。
+     レプリケーションの遅延による悪い影響を取り除けるため、これは通常適しています。
+     しかしながら、もしマスタノードの負荷を下げたい場合、マスタノード以外の他ノードにそのクエリを送ることができるので便利です。
+     このパッチは、新しいパラメータ<xref linkend="guc-relcache-query-target">を導入します。
+     もし<literal>load_balance_node</literal>に設定した場合、リレーションキャッシュのクエリは負荷分散ノードに送られるでしょう。
+     もし<literal>master</literal>に設定した場合、クエリは今迄と同様にマスタノードに送られます(これがデフォルトです)。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-07-01 [3ddf9aa0]
+    -->
+    <para>
+<!--
+     Disable load balance after a SELECT having functions
+     specified in black function list or not specified in white
+     function list. (Bo Peng)
+-->
+     black function listで指定された、もしくはwhite function listで指定されていない関数を持つSELECT後の負荷分散を無効化します。(Bo Peng)
+    </para>
+    <para>
+<!--
+     In <productname>Pgpool-II</productname> 4.0 or earlier, if
+     we set <xref linkend="guc-disable-load-balance-on-write"> =
+      <literal>transaction</literal>, when a write query is issued
+      inside an explicit truncation, subsequent queries should be
+      sent to primary only until the end of this transactionin in
+      order to avoid the replication delay.  However, the SELECTs
+      having write functions specified
+      in <xref linkend="guc-black-function-list"> or not specified
+       in <xref linkend="guc-white-function-list"> are not regarded
+	as a write query and the subsequent read queries are still
+	load balanced. This commit will disable load balance after
+	a SELECT having functions specified in black function list
+	or not specified in white function list.
+-->
+     <productname>Pgpool-II</productname>4.0以前では、<xref linkend="guc-disable-load-balance-on-write"> = <literal>transaction</literal>に設定することで明確なトランザクション内で更新を伴うクエリが発行されたとき、後続のクエリはレプリケーション遅延を避けるためにトランザクションが終了するまでプライマリのみに送られるべきです。
+     しかしながら、<xref linkend="guc-black-function-list">で指定された、もしくは<xref linkend="guc-white-function-list">で指定されていない 更新を伴う関数は、white queryとは見なされず、後続の参照クエリはまだ負荷分散します。
+     このcommitは、black function listで指定された、もしくはwhite function listで指定されていない関数を持つSELECT後の負荷分散を無効化します。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2018-12-04 [693a6284]
+    -->
+    <para>
+<!--
+     Implement new feature to not accept incoming
+     connections. (Tatsuo Ishii)
+-->
+     フロントエンドからの新しい接続を許可しないための新しい機能を実装しました。(Tatsuo Ishii)
+    </para>
+    <para>
+<!--
+     <productname>Pgpool-II</productname> accepts up to
+     <xref linkend="guc-num-init-children"> frontends and queues
+      up more connection requests until one of child process
+      becomes free. This mostly works well, but if each session
+      takes long time, the queue grows longer and the whole system
+      does not work smoothly.  To overcome the problem, a new way
+      to deal with many connection requests from frontend is
+      implemented: When <xref linkend="guc-reserved-connections">
+       is set to 1 or greater, incoming connections from clients
+       are not accepted with error message "Sorry, too many clients
+       already", rather than blocked if the number of current
+       connections from clients is more than
+       (<varname>num_init_children</varname> -
+       <varname>reserved_connections</varname>). This is exactly
+       the same behavior as <productname>PostgreSQL</productname>.
+-->
+     <productname>Pgpool-II</productname>は、最大<xref linkend="guc-num-init-children">フロントエンドまでを許可し、子プロセスの1つが解放されるまで多くの接続要求をキューします。
+     これはほとんどの場合うまく動作しますが、各セッションで長い時間が掛かるとキューが長くなり、システム全体が円滑に動作しなくなります。
+     問題は克服するため、フロントエンドからの多くの接続要求を処理する新しい方式を実装しました。
+     <xref linkend="guc-reserved-connections">を1以上に設定すると、クライアントからの現在の接続数が(<varname>num_init_children</varname> - <varname>reserved_connections</varname>)以上になった場合、ブロックするのではなくクライアントからの後続の接続は受理されずエラーメッセージ"Sorry, too many clients already"を返します。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-02-22 [cf5fe7eb]
+    -->
+    <para>
+<!--
+     Enhance performance by eliminating select(2) system calls
+     when they are not necessary. (Tatsuo Ishii, Jesper Pedersen)
+-->
+     必要のないselect(2)システムコールを取り除くことによりパフォーマンスを向上しました。(Tatsuo Ishii, Jesper Pedersen)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-02-09 [778f611e]
+    -->
+    <para>
+<!--
+     Enhance performance while sending message to
+     frontend. (Tatsuo Ishii)
+-->
+     フロントエンドへメッセージを送信している間のパフォーマンスを向上しました。(Tatsuo Ishii)
+    </para>
+    <para>
+<!--
+     SimpleForwardToFrontend(), which is responsible for sending
+     message to frontend, does write buffering only if it is
+     either 'D' (DataRow) or 'd' (CopyData). Other message types
+     were immediately written to socket. But actually this was
+     not necessary. So if the messages are not critical, just
+     write to buffer.  With this 10-17% performance enhance was
+     observed.
+-->
+     フロントエンドへメッセージを送信するSimpleForwardToFrontend()は、'D'もしくは'd'の場合のみバッファに書き込みます。
+     その他のメッセージ種類は即座にソケットに書き込まれます。
+     しかし、実際にはこれは必要ではありませんでした。
+     そのため、致命的でないメッセージだけバッファに書き込むようにしました。
+     これによって10～17%のパフォーマンス向上が見られます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-02-09 [eb6c5b17]
+    -->
+    <para>
+<!--
+     Avoid error or notice message analysis if it's not
+     necessary. (Tatsuo Ishii)
+-->
+     必要のない警告もしくはエラーメッセージの解析を回避しました。(Tatsuo Ishii)
+    </para>
+    <para>
+<!--
+     After sending query to
+     backend, <productname>Pgpool-II</productname> always calls
+     pool_extract_error_message() via per_node_error_log(). In
+     the function memory allocation is performed even if error or
+     notice message is returned from backend. To avoid the waste
+     of CPU cycle, check message kind and avoid calling
+     pool_extract_error_message() if it's not error or notice
+     message.
+-->
+     バックエンドへクエリを送信後、<productname>Pgpool-II</productname>はいつもper_node_error_log()によってpool_extract_error_message()を呼び出していました。
+     エラーもしくは警告メッセージがバックエンドから返された場合も、関数内でメモリの割り当てが実行されていました。
+     CPUサイクルの消費を避けるため、メッセージの種類を確認し、エラーもしくは警告メッセージでなければpool_extract_error_message()の呼び出しを避けます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2018-12-26 [702f7c86]
+    -->
+    <para>
+<!--
+     Enhance performance of CopyData message handling. (Tatsuo Ishii)
+-->
+     CopyDataメッセージ操作のパフォーマンスを向上しました
+    </para>
+    <para>
+<!--
+     When COPY XX FROM STDIN gets executed (typical client is
+     pg_dump), each copy row data is sent
+     from <productname>Pgpool-II</productname> to frontend using
+     CopyData message. Previously, one CopyData message was
+     followed by a flush, which costed a lot. Instead, now flush
+     is done in subsequent Command Complete, Notice message or
+     Error message.  A quick test reveals that this change brings
+     x2.5 speed up.
+-->
+     COPY XX FROM STDINが実行されるとき(代表的なクライアントはpg_dump)、それぞれのコピー行データは、CopyDataメッセージを用いて<productname>Pgpool-II</productname>からフロントエンドに送られます。
+     以前は、一つのCopyDataメッセージに続いてフラッシュをしており、多大なコストがかかっていました。
+     代わりに、現在はコマンドの完了、警告メッセージもしくはエラーメッセージの後にフラッシュされます。
+     簡易テストでは、この変更により2.5倍速度が向上することが分かりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-07 [dc974267]
+    -->
+    <para>
+<!--
+     Allow to use MD5 hashed password
+     in <xref linkend="guc-health-check-password"> and
+      sr_<xref linkend="guc-sr-check-password">. (Tatsuo Ishii)
+-->
+     <xref linkend="guc-health-check-password">および<xref linkend="guc-sr-check-password">内でMD5ハッシュパスワードが使用できます。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-06-18 [51bc494a]
+    -->
+    <para>
+<!--
+     Support ECDH key exchange with SSL (Takuma Hoshiai)
+-->
+     SSLでのEDDHキー交換に対応しました。(Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-05-22 [82b5392b]
+    -->
+    <para>
+<!--
+     Add backend_application_name to "pgpool show backend" group. (Tatsuo Ishii)
+-->
+     "pgpool show backend"グループにbackend_application_nameを追加しました。(Tatsuo Ishii)
+    </para>
+    <para>
+
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-04-30 [23fb4c12]
+    2019-04-30 [fda13a93]
+    2019-05-22 [68725c03]
+    -->
+    <para>
+<!--
+     Deal with PostgreSQL 12. (Tatsuo Ishii)
+-->
+     PostgreSQL 12に対応しました。(Tatsuo Ishii)
+    </para>
+    <para>
+<!--
+     recovery.conf cannot be used anymore. Standby's recovery configuration
+     is now in postgresql.conf. Also "standby.signal" file is needed in
+     PostgreSQL database cluster directory to start postmaster as a standby
+     server.
+-->
+     recovery.confは今後使用されません。
+     スタンバイのリカバリ設定は現在postgresql.conf内となります。
+     "standby.signal"ファイルもまた、スタンバイサーバとしてpostmasterを起動するためにPostgreSQLデータベースクラスタディレクトリ内で必要となります。
+    </para>
+    <para>
+<!--
+     HeapTupleGetOid() is not available any more in PostgreSQL 12. Use
+     GETSTRUCT() and refer to oid column of Form_pg_proc.
+-->
+     HeapTupleGetOid()はPostgreSQL12では今後使用できません。
+     GETSTRUCT()を使用し、Form_pg_procのoid列を参照します。
+    </para>
+    <para>
+<!--
+     Change pgpool_adm extension. Now that <literal>oid</literal>
+     is gone, the signature of CreateTemplateTupleDesc() has been
+     changed.
+-->
+     pgpool_admエクステンションを変更します。
+     現在は、 <literal>oid</literal>が無くなったため、CreateTemplateTupleDesc()の定義が変更されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-05-03 [ff3c54eb]
+    -->
+    <para>
+<!--
+     Speed up failover when all of backends are down. (Tatsuo
+     Ishii)
+-->
+     バックエンドが全てダウンしている際、フェイルオーバの速度が向上しました。(Tatsuo Ishii)
+    </para>
+    <para>
+<!--
+     <productname>Pgpool-II</productname> tries to find primary
+     node till <xref linkend="guc-search-primary-node-timeout">
+      expires even if all of the backend are in down status. This
+      is not only a waste of time but
+      makes <productname>Pgpool-II</productname> looked like
+      hanged because while searching primary node failover process
+      is suspended and all of
+      the <productname>Pgpool-II</productname> child process are
+      in defunct state, thus there's no process which accepts
+      connection requests from clients. Since the default value of
+      searching primary is 300 seconds, typically this keeps on
+      for 300 seconds. This is not comfortable for users.
+-->
+     すべてのバックエンドがダウン状態であっても、<productname>Pgpool-II</productname>は<xref linkend="guc-search-primary-node-timeout">の期限までプライマリノードを探します。
+     これは時間の浪費だけではなく、プライマリノードの検索中はフェイルオーバプロセスが一時中断され、<productname>Pgpool-II</productname>の全ての子プロセスが機能していない状態になるため、<productname>Pgpool-II</productname>はハングしているように見えます。従って、クライアントからの接続要求を受け入れるプロセスがありません。
+     プライマリ検索のデフォルト値は300秒であるため、これは通常300秒間維持します。
+     これはユーザにって快適ではありません。
+    </para>
+    <para>
+<!--
+     To fix this immediately give up finding primary node
+     regardless
+     <xref linkend="guc-search-primary-node-timeout"> and
+      promptly finish the failover process if all of the backend
+      are in down status.
+-->
+     この修正では、もしすべてのバックエンドがダウン状態であれば、<xref linkend="guc-search-primary-node-timeout">に関係なくプライマリノードを探すことを即時に諦めフェイルオーバプロセスが即時に終了します
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-05-27 [33df0d33]
+    2019-08-08 [3922c12c]
+    -->
+    <para>
+<!--
+     Resign the master watchdog node from master responsibilities if
+     the primary backend node gets into quarantine state on that. (Muhammd Usama)
+-->
+     プライマリバックエンドノードがqurantine状態になるのであれば、マスタwatchdogノードを辞退します。(Muhammd Usama)
+    </para>
+    <para>
+<!--
+     By doing this, we could avoid the situation on which there's no
+     primary <productname>PostgreSQL</productname> server exists.  To
+     implement this, make the master/coordinator watchdog node resign
+     from its status if it fails to get the consensus for the
+     quarantined primary node failover, within
+     FAILOVER_COMMAND_FINISH_TIMEOUT(15) seconds.
+-->
+     こうすることで、プライマリ<productname>PostgreSQL</productname>サーバが存在しない状況を避けることができます。
+     この実装のためには、隔離されたプライマリノードのフェイルオーバに関する合意の取得に失敗する場合、マスタ/コーディネータのwatchdogノードはその状態からFAILOVER_COMMAND_FINISH_TIMEOUT(15)秒以内に辞退します。
+    </para>
+    <para>
+<!--
+     When the watchdog master resigns, because of quarantined primary
+     node its wd_priority is decreased to (-1), so that it should get
+     the least preference in the next election for the
+     master/coordinator node selection. And once the election is
+     concluded the wd_priority for the node gets restored to the
+     original configured value.
+-->
+     隔離されたプライマリノードのためにwatchdogのマスタが辞退する場合、wd_priorityが-1に減少するため、マスタ/コーディネータノード選択のための次の選挙で最も低い優先度となるはずです。
+     そして一度選挙で完了されると、ノードのwd_priorityは元の設定値に戻ります。
+    </para>
+    <para>
+<!--
+     In case of failed consensus for standby node failover no action
+     is taken.
+-->
+     スタンバイノードのフェイルオーバの合意に失敗した場合、何もしません。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-01-27 [f03ebdba]
+    2019-02-07 [5f259f3b]
+    2019-02-20 [0c9f7167]
+    2019-02-24 [b1f18e32]
+    2019-02-24 [9c236d08]
+    2019-02-28 [c706e0d6]
+    2019-03-06 [06ad56e6]
+    2019-03-22 [5abb77f1]
+    2019-03-22 [b69e94e9]
+    2019-04-07 [05cbf04b]
+    2019-04-09 [709196da]
+    2019-04-11 [a935a7df]
+    2019-04-24 [9b9291f8]
+    2019-04-27 [269042f8]
+    2019-05-04 [21a66742]
+    2019-05-04 [854659a1]
+    2019-05-08 [c013bad0]
+    2019-05-15 [e6a90863]
+    2019-06-02 [d7d1b0e5]
+    2019-06-02 [e0067db2]
+    2019-07-16 [285fd88f]
+    2019-07-09 [c20312d2]
+    2019-07-02 [6a74642c]
+    2019-07-02 [75fdbb25]
+    2019-07-02 [05ba5cf3]
+    -->
+    <para>
+<!--
+     Documentation enhancements:
+-->
+     ドキュメントを強化しました。
+     <itemizedlist>
+      <listitem>
+       <para>
+<!--
+	Add performance chapter (<xref linkend="performance">). (Tatsuo Ishii)
+-->
+        パフォーマンスの章(<xref linkend="performance">)を追加しました。(Tatsuo Ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Enhance 'getting started' of 'tutorial' chapter,
+	'watchdog' of 'tutorial' and some sections of 'server
+	administration'(takuma hoshiai)
+-->
+        "チュートリアル"の"さあ始めましょう"と"Watchdog"、および"サーバ管理"のいくつかの節を強化しました。(takuma hoshiai)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Update configuration example "Pgpool-II + watchdog
+	setup example". (bo peng)
+-->
+        設定の例の"Pgpool-II + Watchdogの構築の例"を更新しました。(bo peng)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Mention that schema qualifications cannot be used in
+	Add performance chapterwhite/black_function_list. (tatsuo
+	Ishii)
+-->
+        white/black_function_listでスキーマ修飾が使用出来ないことを記述しました。(tatsuo Ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Enhance explanation
+	about <xref linkend="guc-failover-command">
+	 and <xref linkend="guc-follow-master-command">. (tatsuo
+	  ishii)
+-->
+        <xref linkend="guc-failover-command">と<xref linkend="guc-follow-master-command">について説明を強化しました。(tatsuo Ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Add note to detach_false_primary configuration
+	parameter. (tatsuo ishii)
+-->
+        detach_false_primary設定パラメータの注釈を追加しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Add more explanation to follow_master_command. (tatsuo
+	ishii)
+-->
+        follow_master_commandに説明を追加しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Enhance watchdog/pgpool-ii example so that it mentions
+	about pg_monitor role. (tatsuo ishii)
+-->
+        watchdog/pgpool-IIの例を強化しpg_monitorロールについて記述しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Mention that multi-statement queries are sent to
+	primary node only. (tatsuo ishii)
+-->
+        マルチステートメントクエリがプライマリノードにのみ送られることを記述しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Add load balancing description. (tatsuo ishii)
+-->
+        負荷分散の説明を追加しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Add useful link how to create pcp.conf in the pcp
+	reference page. (tatsuo ishii)
+-->
+        pcpのリファレンスページにpcp.confの作成方法に役立つリンクを追加しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Add more description to pcp_node_info manual. (tatsuo
+	ishii)
+-->
+        pcp_node_infoのマニュアルの説明を追加しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Add description to pg_md5 man page how to show
+	pool_passwd ready string. (tatsuo ishii)
+-->
+        pg_md5のマニュアルページにpool_paswd文字列の表現の仕方の説明を追加しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Enhance client authentication docs. (tatsuo ishii)
+-->
+        クライアント認証のドキュメントを強化しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Enhance watchdog documents regarding quorum
+	failover. (tatsuo ishii)
+-->
+        クォーラムによるフェイルオーバに関するドキュメントを強化しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+
+      <listitem>
+       <para>
+<!--
+	Mention that in raw mode or load_balance_mode = off
+	case for relation cache. (tatsuo ishii)
+-->
+        rawモードもしくはload_balance_mode = offの場合のリレーションキャッシュについて記述しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+<!--
+	Add general description about failover. (tatsuo ishii)
+-->
+        フェイルオーバについての一般的な説明を追加しました。(tatsuo ishii)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+<!--
+  <title>Bug fixes</title>
+-->
+  <title>バグ修正</title>
+  <itemizedlist>
+   <listitem>
+    <para>
+<!--
+     In this release same bug fixes as Pgpool-II 4.0.x are
+     already applied. See xxx for more details of those fixes.
+-->
+     このリリースではPgpool-II 4.0.x と同様のバグ修正が既に適用されています。
+     修正の詳細はxxxを参照してください。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
