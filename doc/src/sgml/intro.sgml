@@ -118,10 +118,10 @@
      <term>Automated fail over</term>
      <listitem>
       <para>
-       If one of database servers goes down or becomes unreachable,
-       <productname>Pgpool-II</productname> will detaches it and continues operations using rest
-       of database servers. There are some sophisticated features which
-       help the automated fail over including timeout and retries.
+       If one of the database servers goes down or becomes unreachable,
+       <productname>Pgpool-II</productname> will detach it and will continue operations by using the rest
+       of database servers. There are some sophisticated features that
+       help the automated failover including timeouts and retries.
       </para>
      </listitem>
     </varlistentry>
