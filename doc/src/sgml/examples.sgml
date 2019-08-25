@@ -1000,41 +1000,41 @@
 	/etc/pgpool-II/failover.sh
        </para>
        <programlisting>
-	#! /bin/sh -x
-	# Execute command by failover.
-	# special values:  %d = node id
-	#                  %h = host name
-	#                  %p = port number
-	#                  %D = database cluster path
-	#                  %m = new master node id
-	#                  %M = old master node id
-	#                  %H = new master node host name
-	#                  %P = old primary node id
-	#                  %R = new master database cluster path
-	#                  %r = new master port number
-	#                  %% = '%' character
+#! /bin/sh -x
+# Execute command by failover.
+# special values:  %d = node id
+#                  %h = host name
+#                  %p = port number
+#                  %D = database cluster path
+#                  %m = new master node id
+#                  %M = old master node id
+#                  %H = new master node host name
+#                  %P = old primary node id
+#                  %R = new master database cluster path
+#                  %r = new master port number
+#                  %% = '%' character
 
-	falling_node=$1          # %d
-	old_primary=$2           # %P
-	new_primary=$3           # %H
-	pgdata=$4                # %R
+falling_node=$1          # %d
+old_primary=$2           # %P
+new_primary=$3           # %H
+pgdata=$4                # %R
 
-	pghome=/usr/pgsql-9.6
-	log=/var/log/pgpool/failover.log
+pghome=/usr/pgsql-9.6
+log=/var/log/pgpool/failover.log
 
-	date >> $log
-	echo "failed_node_id=$falling_node new_primary=$new_primary" >> $log
+date >> $log
+echo "failed_node_id=$falling_node new_primary=$new_primary" >> $log
 
-	if [ $falling_node = $old_primary ]; then
-	if [ $UID -eq 0 ]
-	then
-        su postgres -c "ssh -T postgres@$new_primary $pghome/bin/pg_ctl promote -D $pgdata"
-	else
+if [ $falling_node = $old_primary ]; then
+    if [ $UID -eq 0 ]
+    then
+       su postgres -c "ssh -T postgres@$new_primary $pghome/bin/pg_ctl promote -D $pgdata"
+    else
         ssh -T postgres@$new_primary $pghome/bin/pg_ctl promote -D $pgdata
-	fi
-	exit 0;
-	fi;
-	exit 0;
+    fi
+    exit 0;
+fi;
+exit 0;
        </programlisting>
       </listitem>
      </itemizedlist>
@@ -1067,33 +1067,33 @@
 	/var/lib/pgsql/9.6/data/recovery_1st_stage
        </para>
        <programlisting>
-	#!/bin/bash -x
-	# Recovery script for streaming replication.
+#!/bin/bash -x
+# Recovery script for streaming replication.
 
-	pgdata=$1
-	remote_host=$2
-	remote_pgdata=$3
-	port=$4
+pgdata=$1
+remote_host=$2
+remote_pgdata=$3
+port=$4
 
-	pghome=/usr/pgsql-9.6
-	archivedir=/var/lib/pgsql/archivedir
-	hostname=$(hostname)
+pghome=/usr/pgsql-9.6
+archivedir=/var/lib/pgsql/archivedir
+hostname=$(hostname)
 
-	ssh -T postgres@$remote_host "
-	rm -rf $remote_pgdata
-	$pghome/bin/pg_basebackup -h $hostname -U repl -D $remote_pgdata -x -c fast
-	rm -rf $archivedir/*
+ssh -T postgres@$remote_host "
+rm -rf $remote_pgdata
+$pghome/bin/pg_basebackup -h $hostname -U repl -D $remote_pgdata -x -c fast
+rm -rf $archivedir/*
 
-	cd $remote_pgdata
-	cp postgresql.conf postgresql.conf.bak
-	sed -e 's/#*hot_standby = off/hot_standby = on/' postgresql.conf.bak > postgresql.conf
-	rm -f postgresql.conf.bak
-	cat > recovery.conf &lt;&lt; EOT
-	standby_mode = 'on'
-	primary_conninfo = 'host="$hostname" port=$port user=repl'
-	restore_command = 'scp $hostname:$archivedir/%f %p'
-	EOT
-	"
+cd $remote_pgdata
+cp postgresql.conf postgresql.conf.bak
+sed -e 's/#*hot_standby = off/hot_standby = on/' postgresql.conf.bak > postgresql.conf
+rm -f postgresql.conf.bak
+cat > recovery.conf &lt;&lt; EOT
+standby_mode = 'on'
+primary_conninfo = 'host="$hostname" port=$port user=repl'
+restore_command = 'scp $hostname:$archivedir/%f %p'
+EOT
+"
        </programlisting>
       </listitem>
       <listitem>
@@ -1102,14 +1102,14 @@
 	/var/lib/pgsql/9.6/data/pgpool_remote_start
        </para>
        <programlisting>
-	#! /bin/sh -x
+#! /bin/sh -x
 
-	pghome=/usr/pgsql-9.6
-	remote_host=$1
-	remote_pgdata=$2
+pghome=/usr/pgsql-9.6
+remote_host=$1
+remote_pgdata=$2
 
-	# Start recovery target PostgreSQL server
-	ssh -T $remote_host $pghome/bin/pg_ctl -w -D $remote_pgdata start > /dev/null 2>&1 < /dev/null &
+# Start recovery target PostgreSQL server
+ssh -T $remote_host $pghome/bin/pg_ctl -w -D $remote_pgdata start > /dev/null 2>&1 < /dev/null &
        </programlisting>
       </listitem>
      </itemizedlist>
