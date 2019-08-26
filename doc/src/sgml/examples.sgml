@@ -943,11 +943,7 @@
      </para>
      <programlisting>
       health_check_period = 5
-      # Health check period
-      # Disabled (0) by default
       health_check_timeout = 20
-      # Health check timeout
-      # 0 means no timeout
       health_check_user = 'pgpool'
       health_check_password = 'pgpool'
 
@@ -960,16 +956,11 @@
       # - Backend Connection Settings -
 
       backend_hostname0 = 'osspc19'
-      # Host name or IP address to connect to for backend 0
       backend_port0 = 5432
-      # Port number for backend 0
       backend_weight0 = 1
-      # Weight for backend 0 (only in load balancing mode)
       backend_data_directory0 = '/var/lib/pgsql/9.6/data'
-      # Data directory for backend 0
       backend_flag0 = 'ALLOW_TO_FAILOVER'
-      # Controls various backend behavior
-      # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
+
       backend_hostname1 = 'osspc20'
       backend_port1 = 5432
       backend_weight1 = 1
@@ -1048,9 +1039,7 @@ exit 0;
      </para>
      <programlisting>
       recovery_user = 'postgres'
-      # Online recovery user
       recovery_password = 'postgres'
-      # Online recovery password
 
       recovery_1st_stage_command = 'recovery_1st_stage'
      </programlisting>
@@ -1207,14 +1196,9 @@ ssh -T $remote_host $pghome/bin/pg_ctl -w -D $remote_pgdata start > /dev/null 2>
 	# - Other pgpool Connection Settings -
 
 	other_pgpool_hostname0 = 'osspc17'
-	# Host name or IP address to connect to for other pgpool 0
-	# (change requires restart)
 	other_pgpool_port0 = 9999
-	# Port number for other pgpool 0
-	# (change requires restart)
 	other_wd_port0 = 9000
-	# Port number for other watchdog 0
-	# (change requires restart)
+
 	other_pgpool_hostname1 = 'osspc18'
 	other_pgpool_port1 = 9999
 	other_wd_port1 = 9000
@@ -1228,14 +1212,9 @@ ssh -T $remote_host $pghome/bin/pg_ctl -w -D $remote_pgdata start > /dev/null 2>
 	# - Other pgpool Connection Settings -
 
 	other_pgpool_hostname0 = 'osspc16'
-	# Host name or IP address to connect to for other pgpool 0
-	# (change requires restart)
 	other_pgpool_port0 = 9999
-	# Port number for other pgpool 0
-	# (change requires restart)
 	other_wd_port0 = 9000
-	# Port number for other watchdog 0
-	# (change requires restart)
+
 	other_pgpool_hostname1 = 'osspc18'
 	other_pgpool_port1 = 9999
 	other_wd_port1 = 9000
@@ -1249,14 +1228,9 @@ ssh -T $remote_host $pghome/bin/pg_ctl -w -D $remote_pgdata start > /dev/null 2>
 	# - Other pgpool Connection Settings -
 
 	other_pgpool_hostname0 = 'osspc16'
-	# Host name or IP address to connect to for other pgpool 0
-	# (change requires restart)
 	other_pgpool_port0 = 9999
-	# Port number for other pgpool 0
-	# (change requires restart)
 	other_wd_port0 = 9000
-	# Port number for other watchdog 0
-	# (change requires restart)
+
 	other_pgpool_hostname1 = 'osspc17'
 	other_pgpool_port1 = 9999
 	other_wd_port1 = 9000
@@ -1274,21 +1248,8 @@ ssh -T $remote_host $pghome/bin/pg_ctl -w -D $remote_pgdata start > /dev/null 2>
        </para>
        <programlisting>
 	heartbeat_destination0 = 'osspc17'
-	# Host name or IP address of destination 0
-	# for sending heartbeat signal.
-	# (change requires restart)
 	heartbeat_destination_port0 = 9694
-	# Port number of destination 0 for sending
-	# heartbeat signal. Usually this is the
-	# same as wd_heartbeat_port.
-	# (change requires restart)
 	heartbeat_device0 = ''
-	# Name of NIC device (such like 'eth0')
-	# used for sending/receiving heartbeat
-	# signal to/from destination 0.
-	# This works only when this is not empty
-	# and pgpool has root privilege.
-	# (change requires restart)
 
 	heartbeat_destination1 = 'osspc18'
 	heartbeat_destination_port1 = 9694
@@ -1302,21 +1263,8 @@ ssh -T $remote_host $pghome/bin/pg_ctl -w -D $remote_pgdata start > /dev/null 2>
        </para>
        <programlisting>
 	heartbeat_destination0 = 'osspc16'
-	# Host name or IP address of destination 0
-	# for sending heartbeat signal.
-	# (change requires restart)
 	heartbeat_destination_port0 = 9694
-	# Port number of destination 0 for sending
-	# heartbeat signal. Usually this is the
-	# same as wd_heartbeat_port.
-	# (change requires restart)
 	heartbeat_device0 = ''
-	# Name of NIC device (such like 'eth0')
-	# used for sending/receiving heartbeat
-	# signal to/from destination 0.
-	# This works only when this is not empty
-	# and pgpool has root privilege.
-	# (change requires restart)
 
 	heartbeat_destination1 = 'osspc18'
 	heartbeat_destination_port1 = 9694
@@ -1330,21 +1278,8 @@ ssh -T $remote_host $pghome/bin/pg_ctl -w -D $remote_pgdata start > /dev/null 2>
        </para>
        <programlisting>
 	heartbeat_destination0 = 'osspc16'
-	# Host name or IP address of destination 0
-	# for sending heartbeat signal.
-	# (change requires restart)
 	heartbeat_destination_port0 = 9694
-	# Port number of destination 0 for sending
-	# heartbeat signal. Usually this is the
-	# same as wd_heartbeat_port.
-	# (change requires restart)
 	heartbeat_device0 = ''
-	# Name of NIC device (such like 'eth0')
-	# used for sending/receiving heartbeat
-	# signal to/from destination 0.
-	# This works only when this is not empty
-	# and pgpool has root privilege.
-	# (change requires restart)
 
 	heartbeat_destination1 = 'osspc17'
 	heartbeat_destination_port1 = 9694
