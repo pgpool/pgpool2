@@ -309,6 +309,15 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"enable_consensus_with_half_votes", CFGCXT_INIT, FAILOVER_CONFIG,
+			"apply majority rule for consensus and quorum computation at 50% of votes in a cluster with an even number of nodes.",
+			CONFIG_VAR_TYPE_BOOL, false, 0
+		},
+		&g_pool_config.enable_consensus_with_half_votes,
+		false,
+		NULL, NULL, NULL
+	},
+	{
 		{"log_connections", CFGCXT_RELOAD, LOGING_CONFIG,
 			"Logs each successful connection.",
 			CONFIG_VAR_TYPE_BOOL, false, 0

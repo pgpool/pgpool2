@@ -478,6 +478,13 @@ typedef struct
 															 * can send multiple
 															 * failover requests to
 															 * build consensus */
+	bool		enable_consensus_with_half_votes;
+											/* apply majority rule for consensus
+											 * and quorum computation at 50% of
+											 * votes in a cluster with an even
+											 * number of nodes.
+											 */
+
 	WdLifeCheckMethod wd_lifecheck_method;	/* method of lifecheck.
 											 * 'heartbeat' or 'query' */
 	bool		clear_memqcache_on_escalation;	/* Clear query cache on shmem

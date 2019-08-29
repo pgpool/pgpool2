@@ -626,6 +626,16 @@ enable_multiple_failover_requests_from_node = off
                                     # A Pgpool-II node can cast multiple votes
                                     # for building the consensus on failover
 
+enable_consensus_with_half_votes = off
+                                    # apply majority rule for consensus and quorum computation
+                                    # at 50% of votes in a cluster with even number of nodes.
+                                    # when enabled the existence of quorum and consensus
+                                    # on failover is resolved after receiving half of the
+                                    # total votes in the cluster, otherwise both these
+                                    # decisions require at least one more vote than
+                                    # half of the total votes.
+                                    # (change requires restart)
+
 # - Lifecheck Setting -
 
 # -- common --

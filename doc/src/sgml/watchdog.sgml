@@ -580,6 +580,66 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-enable-consensus-with-half-votes" xreflabel="enable_consensus_with_half_votes">
+    <term><varname>enable_consensus_with_half_votes</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>cenable_consensus_with_half_votes</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      This parameter configures how the majority rule computation
+      is made by <productname>Pgpool-II</productname> for calculating
+      the quorum and resolving the consensus for failover.
+     </para>
+     <para>
+      when enabled the existence of quorum and consensus on failover requires only half of
+      the total number of votes configured in the cluster. Otherwise, both of these
+      decisions require at least one more vote than half of the total number of votes.
+      For failover, this parameter works in conjunction with the
+      <xref linkend="guc-failover-require-consensus">. In both cases, whether making a
+      decision of quorum existence or building the consensus on failover this
+      parameter only comes into play when the watchdog cluster is configured for even
+      number of <productname>Pgpool-II</productname> nodes.
+      The majority rule decision in the watchdog cluster having an odd number of participants.
+      It is not affected by the value of this configuration parameter.
+     </para>
+     <para>
+      For example, when this parameter is enabled in a two node watchdog
+      cluster, one <productname>Pgpool-II</productname> node needs to
+      be alive to make the quorum exist. If the parameter is off, two
+      nodes need to be alive to make quorum exist.
+     </para>
+     <para>
+      When this parameter is enabled in a four node watchdog cluster,
+      two <productname>Pgpool-II</productname> node needs to be alive
+      to make the quorum exist. If the parameter is off, three nodes
+      need to be alive to make quorum exist.
+     </para>
+     <para>
+      By enabling this parameter, you should aware that you take a
+      risk to make split-brain happen. For example, in four node
+      cluster consisted of node A, B, C and D, it is possible that the
+      cluster goes into two separated networks (A, B) and (C, D). For
+      (A, B) and (C, D) the quorum still exist since for both groups
+      there are two live nodes out of 4. The two groups choose their
+      own master watchdog, which is a split-brain.
+     </para>
+     <para>
+      Default is off.
+     </para>
+     <para>
+      <varname>enable_consensus_with_half_votes</varname> is not available
+      prior to <productname>Pgpool-II
+      </productname><emphasis>V4.1</emphasis>. The prior versions work
+      as if the parameter is on.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </sect2>
 

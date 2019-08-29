@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -420,7 +420,8 @@ static void service_internal_command(void);
 static unsigned int get_next_commandID(void);
 static WatchdogNode * parse_node_info_message(WDPacketData * pkt, char **authkey);
 static void update_quorum_status(void);
-static int	get_mimimum_nodes_required_for_quorum(void);
+static int	get_mimimum_remote_nodes_required_for_quorum(void);
+static int	get_minimum_votes_to_resolve_consensus(void);
 
 static bool write_packet_to_socket(int sock, WDPacketData * pkt, bool ipcPacket);
 static int	read_sockets(fd_set *rmask, int pending_fds_count);
@@ -2384,7 +2385,7 @@ static WDFailoverCMDResults compute_failover_consensus(POOL_REQUEST_KIND reqKind
 		bool		duplicate = false;
 		WDFailoverObject *failoverObj = add_failover(reqKind, node_id_list, node_count, wdNode, *flags, &duplicate);
 
-		if (failoverObj->request_count <= get_mimimum_nodes_required_for_quorum())
+		if (failoverObj->request_count < get_minimum_votes_to_resolve_consensus())
 		{
 			ereport(LOG, (
 						  errmsg("failover requires the majority vote, waiting for consensus"),
@@ -6333,14 +6334,19 @@ update_quorum_status(void)
 {
 	int			quorum_status = g_cluster.quorum_status;
 
-	if (g_cluster.clusterMasterInfo.standby_nodes_count > get_mimimum_nodes_required_for_quorum())
+	if (g_cluster.clusterMasterInfo.standby_nodes_count > get_mimimum_remote_nodes_required_for_quorum())
 	{
 		g_cluster.quorum_status = 1;
 	}
-	else if (g_cluster.clusterMasterInfo.standby_nodes_count == get_mimimum_nodes_required_for_quorum())
+	else if (g_cluster.clusterMasterInfo.standby_nodes_count == get_mimimum_remote_nodes_required_for_quorum())
 	{
 		if (g_cluster.remoteNodeCount % 2 != 0)
-			g_cluster.quorum_status = 0;	/* on the edge */
+		{
+			if (pool_config->enable_consensus_with_half_votes)
+				g_cluster.quorum_status = 0;	/* on the edge */
+			else
+				g_cluster.quorum_status = -1;
+		}
 		else
 			g_cluster.quorum_status = 1;
 	}
@@ -6355,24 +6361,76 @@ update_quorum_status(void)
 	}
 }
 
-/* returns the minimum number of remote nodes required for quorum */
+/*
+ * returns the minimum number of remote nodes required for quorum
+ */
 static int
-get_mimimum_nodes_required_for_quorum(void)
+get_mimimum_remote_nodes_required_for_quorum(void)
 {
 	/*
 	 * Even numner of remote nodes, That means total number of nodes are odd,
-	 * so minimum quorum is just remote/2
+	 * so minimum quorum is just remote/2.
 	 */
 	if (g_cluster.remoteNodeCount % 2 == 0)
-		return (g_cluster.remoteNodeCount / 2);
+			return (g_cluster.remoteNodeCount / 2);
 
 	/*
-	 * Total nodes including self are even, So we consider 50% nodes as
-	 * quorum, should we?
+	 * Total nodes including self are even, So we return 50% nodes as quorum
+	 * requirements
 	 */
 	return ((g_cluster.remoteNodeCount - 1) / 2);
 }
 
+/*
+ * returns the minimum number of votes required for consensus
+ */
+static int
+get_minimum_votes_to_resolve_consensus(void)
+{
+	/*
+	 * Since get_mimimum_remote_nodes_required_for_quorum() returns
+	 * the number of remote nodes required to complete the quorum
+	 * that is always one less than the total number of nodes required
+	 * for the cluster to build quorum or consensus, reason being
+	 * in get_mimimum_remote_nodes_required_for_quorum()
+	 * we always consider the local node as a valid pre-casted vote.
+	 * But when it comes to count the number of votes required to build
+	 * consensus for any type of decision, for example for building the
+	 * consensus on backend failover, the local node can vote on either
+	 * side. So it's vote is not explicitly counted and for the consensus
+	 * we actually need one more vote than the total number of remote nodes
+	 * required for the quorum
+	 *
+	 * For example
+	 * If Total nodes in cluster = 4
+	 * 		remote node will be = 3
+	 * 		get_mimimum_remote_nodes_required_for_quorum() return = 1
+	 *		Minimum number of votes required for consensu will be
+	 *
+	 *		if(pool_config->enable_consensus_with_half_votes = true)
+	 *			(exact 50% n/2) ==> 4/2 = 2
+	 *
+	 *		if(pool_config->enable_consensus_with_half_votes = false)
+	 *			(exact 50% +1 ==> (n/2)+1) ==> (4/2)+1 = 3
+	 *
+	 */
+
+	int required_node_count = get_mimimum_remote_nodes_required_for_quorum()  + 1;
+	/*
+	 * When the total number of nodes in the watchdog cluster including the
+	 * local node are even, The number of votes required for the consensus
+	 * depends on the enable_consensus_with_half_votes.
+	 * So for even number of nodes when enable_consensus_with_half_votes is
+	 * not allowed than we would nedd one more vote than exact 50%
+	 */
+	if (g_cluster.remoteNodeCount % 2 != 0)
+	{
+		if (pool_config->enable_consensus_with_half_votes == false)
+			required_node_count += 1;
+	}
+
+	return required_node_count;
+}
 
 /*
  * sets the state of local watchdog node, and fires a state change event
