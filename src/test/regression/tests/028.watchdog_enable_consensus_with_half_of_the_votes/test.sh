@@ -34,7 +34,7 @@ function wait_for_watchdog_startup
 # retun 0 if quorum exists.
 function quorum_exists
 {
-    pcp_watchdog_info -v -w -p $PCP_PORT |grep QUORUM|egrep 'EXIST|EDGE'>/dev/null
+    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -p $PCP_PORT |grep QUORUM|egrep 'EXIST|EDGE'>/dev/null
 }
 
 # shutdown half of nodes for even total number of nodes.
@@ -66,6 +66,7 @@ dir=`pwd`
 
 failed=false
 export CHECK_TIME_WAIT=true
+export PCPPASSFILE=$dir/pgpool0/etc/pcp.conf
 
 for nodes in 2 3 4
 do
