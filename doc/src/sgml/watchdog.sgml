@@ -171,13 +171,15 @@
     </term>
     <listitem>
      <para>
-      Specifies the virtual IP address (VIP) of pgpool-II that is
-      connected from client servers (application servers etc.).
-      When a <productname>Pgpool-II</productname> is switched from standby to active,
-      the <productname>Pgpool-II</productname> takes over
-      this VIP.
-      Default is <literal>''</literal>(empty): which means virtual
-      IP will never be brought up.
+      Specifies the virtual IP address (VIP) of
+      <productname>Pgpool-II</productname> that is connected from
+      client servers (application servers etc.).  When a
+      <productname>Pgpool-II</productname> is switched from standby to
+      active, the <productname>Pgpool-II</productname> takes over this
+      VIP.  If <xref linkend="guc-failover-require-consensus"> is on
+      (the default), VIP will not be brought up in case the quorum
+      does not exist.  Default is <literal>''</literal>(empty): which
+      means virtual IP will never be brought up.
      </para>
      <para>
       This parameter can only be set at server start.
