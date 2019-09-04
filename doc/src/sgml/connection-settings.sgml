@@ -290,8 +290,10 @@
     </term>
     <listitem>
      <para>
-      Specify the password file name for authentication.
-      Default value is <literal>"pool_passwd"</literal>.
+      Specify the path (absolute or relative) to password file for
+      authentication. Default value is <literal>"pool_passwd"</literal>.
+      A relative path will be interpreted with respect to the directory
+      where configuration file is placed.
       Specifying <literal>''</literal> (empty) disables the use
       of password file.
      </para>

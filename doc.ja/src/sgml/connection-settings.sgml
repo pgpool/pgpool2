@@ -449,13 +449,16 @@
     <listitem>
      <para>
       <!--
-      Specify the password file name for authentication.
-      Default value is <literal>"pool_passwd"</literal>.
+      Specify the path (absolute or relative) to password file for
+      authentication. Default value is <literal>"pool_passwd"</literal>.
+      A relative path will be interpreted with respect to the directory
+      where configuration file is placed.
       Specifying <literal>''</literal> (empty) disables the use
       of password file.
       -->
-      認証に用いるパスワードファイルのファイル名を指定します。
-      デフォルト値は<literal>"pool_passwd"</literal>です。
+      認証用のパスワードファイルへのパス(絶対パスまたは相対パス)を指定します。 
+      デフォルト値は<literal>"pool_passwd"</literal>です。 
+      相対パスは、設定ファイルが置かれているディレクトリを基準としています。
       <literal>''</literal>（空文字列）を指定すると パスワードファイルの使用は無効になります。
      </para>
      <para>

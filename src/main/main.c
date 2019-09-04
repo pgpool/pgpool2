@@ -337,10 +337,17 @@ main(int argc, char **argv)
 		char		dirnamebuf[POOLMAXPATHLEN + 1];
 		char	   *dirp;
 
-		strlcpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
-		dirp = dirname(dirnamebuf);
-		snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
-				 dirp, pool_config->pool_passwd);
+		if (pool_config->pool_passwd[0] != '/')
+		{
+			strlcpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
+			dirp = dirname(dirnamebuf);
+			snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
+					 dirp, pool_config->pool_passwd);
+		}
+		else
+			strlcpy(pool_passwd, pool_config->pool_passwd,
+				 sizeof(pool_passwd));
+
 		pool_init_pool_passwd(pool_passwd, POOL_PASSWD_R);
 	}
 
