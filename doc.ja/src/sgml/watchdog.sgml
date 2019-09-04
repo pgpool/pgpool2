@@ -830,6 +830,50 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-enable-consensus-with-half-votes" xreflabel="enable_consensus_with_half_votes">
+    <term><varname>enable_consensus_with_half_votes</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>cenable_consensus_with_half_votes</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      このパラメータは<productname>Pgpool-II</productname>が、クォーラムとフェイルオーバにおける合意を解決する際に、どのように多数決ルールにおける計算を行うかを設定します。
+     </para>
+     <para>
+      このパラメータがオンなら、クォーラムとフェイルオーバの合意のために、全体のうち半数の投票だけでよくなります。
+      そうでなければ、全体のうち少なくとも半数に加えて1票の投票が必要になります。
+      フェイルオーバにおいては、これは<xref linkend="guc-failover-require-consensus">と同期して動作します。
+      クォーラムの存在決定、フェイルオーバにおける合意形成の両方において、watchdogクラスタが偶数の<productname>Pgpool-II</productname>ノードから構成されている場合にのみこのパラメータは効果があります。
+      参加者が奇数のwatchdogクラスタにおける多数決決定の際には、このパラメータの設定値は影響しません。
+     </para>
+     <para>
+      たとえば、このパラメータがオンのときは、2ノードのwatchdogクラスタではクォーラムが存在するためには一つの<productname>Pgpool-II</productname>ノードが生きている必要があります。
+      このパラメータがオフのときは、2ノードのwatchdogクラスタではクォーラムが存在するためには2つの<productname>Pgpool-II</productname>ノードが生きている必要があります。
+     </para>
+     <para>
+      このパラメータがオンのときは、4ノードのwatchdogクラスタではクォーラムが存在するためには2つの<productname>Pgpool-II</productname>ノードが生きている必要があります。
+      このパラメータがオフのときは、3ノードのwatchdogクラスタではクォーラムが存在するためには2つの<productname>Pgpool-II</productname>ノードが生きている必要があります。
+     </para>
+     <para>
+      このパラメータがオンのときは、split-brainが発生するリスクがあることに注意してください。
+      たとえば、ノードA, B, C, Dからなる4ノードのクラスタでは、(A, B)と(C, D)の分断された2つのネットワークになる可能性があります。
+      (A, B)と(C, D)にとっては、それぞれ生きた2つのノードが存在するので、クォーラムは依然として存在します。
+      各々のグループはそれぞれのマスタwatchdogを選び、これはすなわちsplit-brainです。
+     </para>
+     <para>
+      デフォルト値はオフです。
+     </para>
+     <para>
+      <varname>enable_consensus_with_half_votes</varname>は<productname>Pgpool-II</productname><emphasis>V4.1</emphasis>よりも前には存在しません。
+      以前のバージョンは、あたかもこのパラメータがオンであるかのように動作します。
+     </para>
+     <para>
+      このパラメータは、サーバの起動時にのみ設定できます。
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </sect2>
 

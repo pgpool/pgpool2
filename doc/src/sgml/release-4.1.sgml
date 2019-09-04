@@ -81,7 +81,7 @@
   </itemizedlist>
  </sect2>
 
- <sect2>
+ <sect2 id="migration-to-version-4-1">
   <title>Migration to Version 4.1</title>
   <para>
    Version 4.1 contains some changes that may affect compatibility
@@ -118,6 +118,34 @@
      Also <xref linkend="pcp-node-info">
       and <xref linkend="pgpool-adm-pcp-node-info"> function are
        modified.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-29 [69419ac4]
+    -->
+    <para>
+     Add parameter <xref
+     linkend="guc-enable-consensus-with-half-votes"> to configure
+     majority rule calculations. (Muhammd Usama, Tatsuo Ishii)
+    </para>
+    <para>
+     This changes the behavior of the decision of quorum existence and
+     failover consensus on even number (i.e. 2, 4, 6...) of watchdog
+     clusters. Odd number of clusters (3, 5, 7...) are not
+     affected. When this parameter is off (the default), a 2 node
+     watchdog cluster needs to have both 2 nodes are alive to have a
+     quorum. If the quorum does not exist and 1 node goes down, then
+     1) VIP will be lost, 2) failover srcript is not executed and 3)
+     no watchdog master exists. Especially #2 could be troublesome
+     because no new primary <productname>PostgreSQL</productname>
+     exists if existing primary goes down. Probably 2 node watchdog
+     cluster users want to turn on this parameter to keep the existing
+     behavior. On the other hand 4 or more even number of watchdog
+     cluster users will benefit from this parameter is off because now
+     it prevents possible split brain when a half of watchdog nodes go
+     down.
     </para>
    </listitem>
 
@@ -608,6 +636,29 @@
     <para>
      In case of failed consensus for standby node failover no action
      is taken.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-29 [69419ac4]
+    -->
+    <para>
+     Add parameter <xref
+     linkend="guc-enable-consensus-with-half-votes"> to configure
+     majority rule calculations. (Muhammd Usama, Tatsuo Ishii)
+    </para>
+    <para>
+     Pgpool-II takes the decision of quorum existence and failover
+     consensus after receiving the exact 50% of votes when the
+     watchdog cluster is configured with an even number of nodes. With
+     <xref linkend="guc-enable-consensus-with-half-votes"> parameter,
+     users can tell <productname>Pgpool-II</productname>, whether the
+     distributed consensus in an even number of nodes cluster requires
+     (n/2) or ((n/2) +1) votes to decide the majority.  Odd number of
+     clusters (3, 5, 7...) are not affected. Extra caution is needed
+     for 2 node watchdog cluster users. See <xref
+     linkend="migration-to-version-4-1"> for more details.
     </para>
    </listitem>
 

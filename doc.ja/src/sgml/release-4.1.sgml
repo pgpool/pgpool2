@@ -121,7 +121,7 @@
   </itemizedlist>
  </sect2>
 
- <sect2>
+ <sect2 id="migration-to-version-4-1">
 <!--
   <title>Migration to Version 4.1</title>
 -->
@@ -177,6 +177,25 @@
        modified.
 -->
      <xref linkend="pcp-node-info">および<xref linkend="pgpool-adm-pcp-node-info">関数も変更されています。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-29 [69419ac4]
+    -->
+    <para>
+     多数決ルールを設定する<xref linkend="guc-enable-consensus-with-half-votes">パラメータを追加しました。 (Muhammd Usama, Tatsuo Ishii)
+    </para>
+    <para>
+     これは、偶数（すなわち、2, 4, 6...) watchdogクラスタにおけるクォーラムの存在および多数決の決定における振る舞いを変更します。
+     奇数のクラスタ（3, 5, 7...）は影響を受けません。
+     このパラメータがオフ（デフォルトです）の場合、2ノードのwatchdogクラスタは、クォーラムを持つためには2ノードの両方が生存している必要があります。
+     クォーラムが存在しないと、1) VIPが失われます 2) フェイルオーバスクリプトが実行されません 3) watchdogのマスターが存在しなくなります。
+     特に#2は、既存の<productname>PostgreSQL</productname>がダウンしても新しいプライマリが存在しなくなるので、困ったことになるでしょう。
+     おそらく2ノードのwatchdogクラスタユーザはi、このパラメータをオンにして、今までと同様に振る舞まうようにしたいでしょう。
+     一方4ノード以上の偶数watchdogクラスタユーザはこのパラメータがオフであることにメリットがあります。
+     なぜなら、半分のwatchdogノードがダウンしてsplit brainになる可能性を防ぐことができるからです。
     </para>
    </listitem>
 
