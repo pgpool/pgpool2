@@ -900,6 +900,23 @@
      スタンバイノードのフェイルオーバの合意に失敗した場合、何もしません。
     </para>
    </listitem>
+   <listitem>
+    <!--
+    2019-09-04 [fcb64ebe]
+    -->
+    <para>
+<!--
+     Allow to specify absolute path in <xref linkend="guc-pool-passwd">. (Bo Peng)
+-->
+     <xref linkend="guc-pool-passwd">に絶対パスを指定できるようになりました。(Bo Peng)
+    </para>
+    <para>
+<!--
+     Patch is provided by Danylo Hlynskyi.
+-->
+     パッチはDanylo Hlynskyiにより提供されました。
+    </para>
+   </listitem>
 
    <listitem>
     <!--

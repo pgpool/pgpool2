@@ -664,6 +664,18 @@
 
    <listitem>
     <!--
+    2019-09-04 [fcb64ebe]
+    -->
+    <para>
+     Allow to specify absolute path in <xref linkend="guc-pool-passwd">. (Bo Peng)
+    </para>
+    <para>
+     Patch is provided by Danylo Hlynskyi.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2019-01-27 [f03ebdba]
     2019-02-07 [5f259f3b]
     2019-02-20 [0c9f7167]
