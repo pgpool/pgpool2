@@ -950,8 +950,8 @@
      Allow failover.sh, follow_master.sh, recovery_1st_stage, recovery_2nd_stage,
      pgpool_remote_start scripts to be included in distributions.
 -->
-     failover.sh、follow_master.sh、recovery_1st_stage、recovery_2nd_stage、
-     pgpool_remote_startのサンプルスクリプトを配布別に含めるようにします。
+     failover.sh.sample、follow_master.sh.sample、recovery_1st_stage.sample、recovery_2nd_stage.sample、
+     pgpool_remote_start.sampleのサンプルスクリプトを配布別に含めるようにします。
     </para>
    </listitem>
 

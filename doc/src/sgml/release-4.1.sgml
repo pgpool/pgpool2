@@ -683,8 +683,8 @@
      Add various sample scripts. (Bo Peng)
     </para>
     <para>
-     Allow failover.sh, follow_master.sh, recovery_1st_stage, recovery_2nd_stage,
-     pgpool_remote_start scripts to be included in distributions.
+     Allow failover.sh.sample, follow_master.sh.sample, recovery_1st_stage.sample, recovery_2nd_stage.sample,
+     pgpool_remote_start.sample scripts to be included in distributions.
     </para>
    </listitem>
 
