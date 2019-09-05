@@ -336,7 +336,7 @@
      Add new parameter <xref linkend="guc-check-temp-table"> to
       check temporary tables. (Tatsuo Ishii)
 -->
-     一時テーブルを確認するための新しいパラメータ<xref linkend="guc-check-temp-table">を追加しました。
+     一時テーブルを確認するための新しいパラメータ<xref linkend="guc-check-temp-table">を追加しました。(Tatsuo Ishii)
     </para>
     <para>
 <!--
