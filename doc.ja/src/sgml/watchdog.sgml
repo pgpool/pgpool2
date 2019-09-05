@@ -638,7 +638,7 @@
       <productname>Pgpool-II</productname> node, other <productname>Pgpool-II</productname> nodes may
       still continue to use that backend.
       -->
-      隔離されたノードの動作は切り離されたバックエンドノードと似ていますが、フェイルオーバ/縮退と異なり、隔離ステータスはwatchdogクラスタ内の他の<productname>Pgpool-II</productname>ノードに伝播されません。
+      <indexterm><primary>quarantine</primary></indexterm><indexterm><primary>隔離</primary></indexterm>隔離されたノードの動作は切り離されたバックエンドノードと似ていますが、フェイルオーバ/縮退と異なり、隔離ステータスはwatchdogクラスタ内の他の<productname>Pgpool-II</productname>ノードに伝播されません。
       したがって、他の<productname>Pgpool-II</productname>ノードは引き続きそのバックエンドを使用し続ける可能性があります。
      </para>
      <para>

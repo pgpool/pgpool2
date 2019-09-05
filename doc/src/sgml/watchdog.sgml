@@ -442,11 +442,14 @@
       using <command>pcp_attach_node</command> command.
      </para>
      <para>
-      The quarantine nodes behaves similar to the detached backend nodes but unlike failed/degenerated backends
-      the quarantine status is not propagated to the other <productname>Pgpool-II</productname> nodes in the
-      watchdog cluster, So even if the backend node is in the quarantine state on one
-      <productname>Pgpool-II</productname> node, other <productname>Pgpool-II</productname> nodes may
-      still continue to use that backend.
+      The <indexterm><primary>quarantine</primary></indexterm>
+      quarantine nodes behaves similar to the detached backend nodes
+      but unlike failed/degenerated backends the quarantine status is
+      not propagated to the other <productname>Pgpool-II</productname>
+      nodes in the watchdog cluster, So even if the backend node is in
+      the quarantine state on one <productname>Pgpool-II</productname>
+      node, other <productname>Pgpool-II</productname> nodes may still
+      continue to use that backend.
      </para>
      <para>
       Although there are many similarities in quarantine and failover operations, but they both differ in a very
