@@ -649,11 +649,12 @@
      majority rule calculations. (Muhammd Usama, Tatsuo Ishii)
     </para>
     <para>
-     Pgpool-II takes the decision of quorum existence and failover
-     consensus after receiving the exact 50% of votes when the
-     watchdog cluster is configured with an even number of nodes. With
-     <xref linkend="guc-enable-consensus-with-half-votes"> parameter,
-     users can tell <productname>Pgpool-II</productname>, whether the
+     <productname>Pgpool-II</productname> takes the decision of quorum
+     existence and failover consensus after receiving the exact 50% of
+     votes when the watchdog cluster is configured with an even number
+     of nodes. With <xref
+     linkend="guc-enable-consensus-with-half-votes"> parameter, users
+     can tell <productname>Pgpool-II</productname>, whether the
      distributed consensus in an even number of nodes cluster requires
      (n/2) or ((n/2) +1) votes to decide the majority.  Odd number of
      clusters (3, 5, 7...) are not affected. Extra caution is needed

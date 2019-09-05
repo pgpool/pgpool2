@@ -900,6 +900,23 @@
      スタンバイノードのフェイルオーバの合意に失敗した場合、何もしません。
     </para>
    </listitem>
+
+   <listitem>
+    <!--
+    2019-08-29 [69419ac4]
+    -->
+    <para>
+     多数決ルールの計算方法を設定する<xref linkend="guc-enable-consensus-with-half-votes">パラメータを追加しました。(Muhammd Usama, Tatsuo Ishii)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>はwatchdogクラスタが偶数のノードで構成されている場合、ちょうど50%の賛成を得られたときにクォーラムの存在とフェイルオーバの合意を決定します。
+     <xref linkend="guc-enable-consensus-with-half-votes">パラメータにより、ユーザは<productname>Pgpool-II</productname>に対して、偶数ノードのクラスタにおける分散合意が(n/2)なのか、((n/2) +1)なのかを設定できます。
+     奇数ノードのクラスタ(3, 5, 7...)は、影響を受けません。
+     2ノードのクラスタでは特別な注意が必要です。
+     詳細は<xref linkend="migration-to-version-4-1">をご覧ください。
+    </para>
+   </listitem>
+
    <listitem>
     <!--
     2019-09-04 [fcb64ebe]
