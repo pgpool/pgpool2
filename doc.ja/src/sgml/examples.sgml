@@ -1041,7 +1041,7 @@
     ここでは、ストリーミングレプリケーション構成の<productname>PostgreSQL</productname>を<productname>Pgpool-II</productname>で管理するシステムの構成例を示します。この例では、3台の<productname>Pgpool-II</productname>を使って<productname>PostgreSQL</productname>を管理し、単一障害点やスプリットブレインの起きない堅牢なクラスタを運用することが可能です。
    </para>
    <para>
-    この設定例では<productname>PostgreSQL</productname> 11を使っていますが、各種スクリプトは<productname>PostgreSQL</productname> 12で動作確認を行っています。
+    この設定例では<productname>PostgreSQL</productname> 11を使っていますが、各種スクリプトは<productname>PostgreSQL</productname> 12でも動作確認を行っています。
    </para>
 
    <sect2 id="example-cluster-structure">

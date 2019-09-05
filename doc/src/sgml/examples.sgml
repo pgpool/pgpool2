@@ -707,7 +707,7 @@
    </para>
    <para>
     <productname>PostgreSQL</productname> 11 is used in this configuration example,
-    but all scripts have been tested with <productname>PostgreSQL</productname> 12.
+    all scripts have also been tested with <productname>PostgreSQL</productname> 12.
    </para>
 
    <sect2 id="example-cluster-structure">
