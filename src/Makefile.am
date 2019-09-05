@@ -70,7 +70,13 @@ sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pgpool.conf.sample-replication \
 			   sample/pgpool.conf.sample-master-slave \
 			   sample/pgpool.conf.sample-stream \
-			   sample/pgpool.conf.sample-logical
+			   sample/pgpool.conf.sample-logical \
+			   sample/scripts/failover.sh.sample \
+			   sample/scripts/follow_master.sh.sample \
+			   sample/scripts/pgpool_remote_start.sample \
+			   sample/scripts/recovery_1st_stage.sample \
+			   sample/scripts/recovery_2nd_stage.sample
+
 
 pkgdata_DATA = sql/insert_lock.sql \
 			   sample/pgpool.pam
@@ -91,7 +97,11 @@ endif
 AM_YFLAGS = -d
 
 EXTRA_DIST = sample/pgpool.pam \
-		sample/pgpool_remote_start sample/pgpool_recovery sample/pgpool_recovery_pitr \
+		sample/scripts/failover.sh.sample \
+		sample/scripts/follow_master.sh.sample \
+		sample/scripts/pgpool_remote_start.sample \
+		sample/scripts/recovery_1st_stage.sample \
+		sample/scripts/recovery_2nd_stage.sample \
 		sample/pgpool.conf.sample sample/pool_hba.conf.sample \
 		sample/pgpool.conf.sample-replication sample/pgpool.conf.sample-master-slave \
 		sample/pgpool.conf.sample-stream sample/pgpool.conf.sample-logical sample/pcp.conf.sample \

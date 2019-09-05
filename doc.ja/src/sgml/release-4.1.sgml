@@ -937,6 +937,26 @@
 
    <listitem>
     <!--
+    2019-09-04 [0afbf1d6]
+    -->
+    <para>
+<!--
+     Add various sample scripts. (Bo Peng)
+-->
+     フェイルオーバ、オンライリカバリで実行される各種サンプルスクリプトを追加しました。(Bo Peng)
+    </para>
+    <para>
+<!--
+     Allow failover.sh, follow_master.sh, recovery_1st_stage, recovery_2nd_stage,
+     pgpool_remote_start scripts to be included in distributions.
+-->
+     failover.sh、follow_master.sh、recovery_1st_stage、recovery_2nd_stage、
+     pgpool_remote_startのサンプルスクリプトを配布別に含めるようにします。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2019-01-27 [f03ebdba]
     2019-02-07 [5f259f3b]
     2019-02-20 [0c9f7167]

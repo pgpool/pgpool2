@@ -236,6 +236,11 @@ fi
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-replication
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-stream
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-logical
+%{_sysconfdir}/%{short_name}/failover.sh.sample
+%{_sysconfdir}/%{short_name}/follow_master.sh.sample
+%{_sysconfdir}/%{short_name}/pgpool_remote_start.sample
+%{_sysconfdir}/%{short_name}/recovery_1st_stage.sample
+%{_sysconfdir}/%{short_name}/recovery_2nd_stage.sample
 %{_libdir}/libpcp.so.*
 %if %{systemd_enabled}
 %ghost %{_varrundir}
