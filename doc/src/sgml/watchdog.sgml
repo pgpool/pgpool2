@@ -460,11 +460,16 @@
        any usable master backend node.
      </para>
      <para>
-      Moreover, unlike for the failed
-      nodes, <productname>Pgpool-II</productname> keeps the
-      health-check running on the quarantined nodes and as soon as
-      the quarantined node becomes reachable again it gets
-      automatically re-attached.
+      Moreover, unlike for the failed nodes,
+      <productname>Pgpool-II</productname> keeps the health-check
+      running on the quarantined nodes and as soon as the quarantined
+      node becomes reachable again it gets automatically
+      re-attached. Note that this is only applied to
+      <productname>Pgpool-II </productname><emphasis>V4.1</emphasis>
+      or greater. If you are using previous versions you need to
+      re-attach the quarantined node by using <xref
+      linkend="pcp-attach-node"> when the connectivity issue is
+      solved.
      </para>
      <para>
       From <productname>Pgpool-II </productname><emphasis>V4.1</emphasis> onwards, if the watchdog-master node

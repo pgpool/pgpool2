@@ -657,6 +657,8 @@
      <para>
       更に、障害ノードとは違い、<productname>Pgpool-II</productname>は隔離されたノードに対してはヘルスチェックを実行し続けます。
       隔離されたノードが到達可能になり次第、そのノードは自動的に再度アタッチされます。
+      これは<productname>Pgpool-II </productname><emphasis>V4.1</emphasis>以降にのみ適用されることに注意してください。
+      それ以前のバージョンをお使いの場合は、隔離されたノードに対する接続性の問題が解決されたら、<xref linkend="pcp-attach-node">を使ってそのノードを復帰させさなければなりません。
      </para>
 
      <para>
