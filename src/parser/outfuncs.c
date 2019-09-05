@@ -1535,7 +1535,14 @@ _outCommonTableExpr(String * str, CommonTableExpr *node)
 		string_append_char(str, ") ");
 	}
 
-	string_append_char(str, "AS (");
+	string_append_char(str, "AS ");
+
+	if (node->ctematerialized & CTEMaterializeAlways)
+		string_append_char(str, "MATERIALIZED ");
+	else if (node->ctematerialized & CTEMaterializeNever)
+		string_append_char(str, "NOT MATERIALIZED ");
+
+	string_append_char(str, "(");
 	_outNode(str, node->ctequery);
 	string_append_char(str, ")");
 }
