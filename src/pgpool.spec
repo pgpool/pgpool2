@@ -293,6 +293,9 @@ fi
 %endif
 
 %changelog
+* Thu Sep 5 2019 Bo Peng <pengbo@sraoss.co.jp> 4.1.0
+- Add sample scripts
+
 * Wed Sep 19 2018 Bo Peng <pengbo@sraoss.co.jp> 4.0.0
 - Update to 4.0
 
