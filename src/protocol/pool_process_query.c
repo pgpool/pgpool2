@@ -3256,7 +3256,8 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 				(errmsg("reading backend data packet kind"),
 					 errdetail("received notification message for master node %d",
 							   MASTER_NODE_ID)));
-
+			if (msg)
+				pool_pending_message_free_pending_message(msg);
 			return;
 		}
 		pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
