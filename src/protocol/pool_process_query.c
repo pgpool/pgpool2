@@ -3585,6 +3585,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 						if (pending_message)
 							pool_pending_message_free_pending_message(pending_message);
 					}
+					pool_pending_message_free_pending_message(msg);
 					return;
 				}
 
