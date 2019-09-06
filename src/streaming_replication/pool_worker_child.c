@@ -282,6 +282,8 @@ static void check_replication_time_lag(void)
 
 	for (i=0;i<NUM_BACKENDS;i++)
 	{
+		lsn[i] = 0;
+
 		if (!VALID_BACKEND(i))
 			continue;
 
@@ -327,10 +329,6 @@ static void check_replication_time_lag(void)
 		{
 			lsn[i] = text_to_lsn(res->data[0]);
 			free_select_result(res);
-		}
-		else
-		{
-			lsn[i] = 0;
 		}
 	}
 
