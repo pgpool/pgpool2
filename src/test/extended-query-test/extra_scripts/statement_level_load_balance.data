@@ -32,7 +32,7 @@ fi
 
 # select load balance node per query
 n=`grep "selecting load balance node" $PGPOOLLOG | wc -l`
-if [ $n != 3 ]; then
+if [ $n != 5 ]; then
 	exit 1
 fi
 
