@@ -147,6 +147,9 @@ pcp_main(int unix_fd, int inet_fd)
 	ereport(DEBUG1,
 			(errmsg("I am PCP child with pid:%d", getpid())));
 
+	ereport(LOG,
+			(errmsg("PCP process: %d started", getpid())));
+
 	for (;;)
 	{
 		int			port;
