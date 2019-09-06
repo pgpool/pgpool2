@@ -273,6 +273,8 @@ fi
 %{pghome}/share/extension/pgpool_adm--1.0.sql
 %{pghome}/share/extension/pgpool_adm--1.1.sql
 %{pghome}/share/extension/pgpool_adm--1.0--1.1.sql
+%{pghome}/share/extension/pgpool_adm--1.2.sql
+%{pghome}/share/extension/pgpool_adm--1.1--1.2.sql
 %{pghome}/share/extension/pgpool_adm.control
 %{pghome}/lib/pgpool_adm.so
 # From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
