@@ -727,9 +727,12 @@
 
    <note>
     <para>
-     The certificate authentication works between client and
-     <productname>Pgpool-II</productname>, for the
-     backend authentication you can use any other authentication method
+     The certificate authentication works between only client and
+     <productname>Pgpool-II</productname>. The certificate
+     authentication does not work between
+     <productname>Pgpool-II</productname> and
+     <productname>PostgreSQL</productname>.  For backend
+     authentication you can use any other authentication method.
     </para>
    </note>
 
