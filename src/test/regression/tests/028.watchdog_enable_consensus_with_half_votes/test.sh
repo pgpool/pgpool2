@@ -107,6 +107,7 @@ do
     echo "done."
 
     echo "=== Testing total nodes: $nodes. enable_consensus_with_half_of_the_votes: $val ==="
+    quorum_exists
     shutdown_nodes
 
     if quorum_exists
