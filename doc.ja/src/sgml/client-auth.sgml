@@ -973,11 +973,16 @@
    <note>
     <para>
      <!--
-     The certificate authentication works between client and
-     <productname>Pgpool-II</productname>, for the
-     backend authentication you can use any other authentication method
+     The certificate authentication works between only client and
+     <productname>Pgpool-II</productname>. The certificate
+     authentication does not work between
+     <productname>Pgpool-II</productname> and
+     <productname>PostgreSQL</productname>.  For backend
+     authentication you can use any other authentication method.
      -->
-     証明書認証はクライアントと<productname>Pgpool-II</productname>の間で使用され、バックエンド認証にはその他の認証方式を使用できます。
+     証明書認証はクライアントと<productname>Pgpool-II</productname>の間でのみ使用できます。
+     証明書認証は<productname>Pgpool-II</productname>と<productname>PostgreSQL</productname>の間では使用できません。
+     バックエンド認証にはその他の認証方式を使用できます。
     </para>
    </note>
 
