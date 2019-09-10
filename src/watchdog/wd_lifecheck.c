@@ -358,7 +358,7 @@ fork_lifecheck_child(void)
 		/* Set the process type variable */
 		processType = PT_LIFECHECK;
 
-		/* call PCP child main */
+		/* call lifecheck child main */
 		POOL_SETMASK(&UnBlockSig);
 		lifecheck_main();
 	}
