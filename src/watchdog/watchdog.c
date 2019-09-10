@@ -1023,8 +1023,7 @@ static pid_t fork_watchdog_child(void)
 		
 		/* Set the process type variable */
 		processType = PT_WATCHDOG;
-		
-		/* call PCP child main */
+		/* call watchdog child main */
 		POOL_SETMASK(&UnBlockSig);
 		watchdog_main();
 	}
