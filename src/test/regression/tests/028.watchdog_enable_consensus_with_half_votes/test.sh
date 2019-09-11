@@ -34,12 +34,12 @@ function wait_for_watchdog_startup
 # retun 0 if quorum exists.
 function quorum_exists
 {
-    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -p $PCP_PORT >/dev/null 2>&1
+    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -h $PGSOCKET_DIR -p $PCP_PORT >/dev/null 2>&1
     if [ $? != 0 ];then
 	echo "pcp_watchdog_info is not still available"
 	for i in 1 2 3 4 5
 	do
-	    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -p $PCP_PORT >/dev/null 2>&1
+	    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -h $PGSOCKET_DIR -p $PCP_PORT >/dev/null 2>&1
 	    if [ $? = 0 ];then
 		break;
 	    fi
@@ -48,7 +48,7 @@ function quorum_exists
 	done
     fi
 
-    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -p $PCP_PORT |grep QUORUM|egrep 'EXIST|EDGE'>/dev/null
+    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -h $PGSOCKET_DIR -p $PCP_PORT |grep QUORUM|egrep 'EXIST|EDGE'>/dev/null
 }
 
 # shutdown half of nodes for even total number of nodes.
