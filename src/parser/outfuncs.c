@@ -4906,9 +4906,9 @@ _outCreatedbOptList(String * str, List *options)
 			string_append_char(str, "DEFAULT");
 		else if (IsA((Node *) v, String))
 		{
-			string_append_char(str, sconst ? "'" : "'");
+			string_append_char(str, "'");
 			string_append_char(str, v->val.str);
-			string_append_char(str, sconst ? "'" : "'");
+			string_append_char(str, "'");
 		}
 		else
 		{
