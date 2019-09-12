@@ -1095,7 +1095,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		/*
 		 * Start query context
 		 */
-		pool_start_query(query_context, pstrdup(stmt), strlen(stmt) + 1, node);
+		pool_start_query(query_context, stmt, strlen(stmt) + 1, node);
 
 		msg = pool_create_sent_message('P', len, contents, 0, name, query_context);
 
