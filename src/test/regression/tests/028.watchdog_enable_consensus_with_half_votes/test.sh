@@ -80,7 +80,7 @@ dir=`pwd`
 
 failed=false
 export CHECK_TIME_WAIT=true
-export PCPPASSFILE=$dir/pgpool0/pcppass
+export PCPPASSFILE=$dir/$TESTDIR/pgpool0/pcppass
 
 for nodes in 2 3 4
 do
