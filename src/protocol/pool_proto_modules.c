@@ -486,6 +486,8 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 										   query_context);
 			session_context->uncompleted_message =  msg;
 		}
+		else
+			session_context->uncompleted_message = NULL;
 	}
 
 
