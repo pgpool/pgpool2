@@ -1272,10 +1272,13 @@ void where_to_send_deallocate(POOL_QUERY_CONTEXT *query_context, Node *node)
 			/* Inherit same map from PREPARE or PARSE */
 			pool_copy_prep_where(msg->query_context->where_to_send,
 								 query_context->where_to_send);
-			return;
+
+			/* copy load balance node id as well */
+			query_context->load_balance_node_id = msg->query_context->load_balance_node_id;
 		}
-		/* prepared statement was not found */
-		pool_setall_node_to_be_sent(query_context);
+		else
+			/* prepared statement was not found */
+			pool_setall_node_to_be_sent(query_context);
 	}
 }
 
