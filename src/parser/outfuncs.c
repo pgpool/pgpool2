@@ -4488,7 +4488,6 @@ _outCreatedbOptList(String *str, List *options)
 	{
 		DefElem *e = lfirst(lc);
 		Value *v = (Value *) e->arg;
-		int sconst = false;
 
 		/* keyword */
 		if (strcmp(e->defname, "template") == 0)
@@ -4496,14 +4495,12 @@ _outCreatedbOptList(String *str, List *options)
 		else if (strcmp(e->defname, "location") == 0)
 		{
 			string_append_char(str, " LOCATION ");
-			sconst = true;
 		}
 		else if (strcmp(e->defname, "tablespace") == 0)
 			string_append_char(str, " TABLESPACE ");
 		else if (strcmp(e->defname, "encoding") == 0)
 		{
 			string_append_char(str, " ENCODING ");
-			sconst = true;
 		}
 		else if (strcmp(e->defname, "owner") == 0)
 			string_append_char(str, " OWNER ");
@@ -4522,7 +4519,7 @@ _outCreatedbOptList(String *str, List *options)
 		else
 		{
 			char buf[16];
-			snprintf(buf, 16, "%ld", v->val.ival);
+			snprintf(buf, sizeof(buf), "%ld", v->val.ival);
 			string_append_char(str, buf);
 		}
 	}
