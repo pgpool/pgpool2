@@ -3111,7 +3111,6 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION *frontend,
 	bool parse_was_sent = false;
 	bool backup[MAX_NUM_BACKENDS];
 	POOL_QUERY_CONTEXT *qc = message->query_context;
-	POOL_SENT_MESSAGE *msg;
 
 	memcpy(backup, qc->where_to_send, sizeof(qc->where_to_send));
 
