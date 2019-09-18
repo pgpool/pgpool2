@@ -34,12 +34,12 @@ function wait_for_watchdog_startup
 # retun 0 if quorum exists.
 function quorum_exists
 {
-    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -p $PCP_PORT >/dev/null 2>&1
+    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -h localhost -p $PCP_PORT >/dev/null 2>&1
     if [ $? != 0 ];then
 	echo "pcp_watchdog_info is not still available"
 	for i in 1 2 3 4 5
 	do
-	    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -p $PCP_PORT >/dev/null 2>&1
+	    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -h localhost -p $PCP_PORT >/dev/null 2>&1
 	    if [ $? = 0 ];then
 		break;
 	    fi
@@ -48,7 +48,7 @@ function quorum_exists
 	done
     fi
 
-    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -p $PCP_PORT |grep QUORUM|egrep 'EXIST|EDGE'>/dev/null
+    $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -h localhost -p $PCP_PORT |grep QUORUM|egrep 'EXIST|EDGE'>/dev/null
 }
 
 # shutdown half of nodes for even total number of nodes.
@@ -80,7 +80,7 @@ dir=`pwd`
 
 failed=false
 export CHECK_TIME_WAIT=true
-export PCPPASSFILE=$dir/pgpool0/etc/pcp.conf
+export PCPPASSFILE=$dir/$TESTDIR/pgpool0/pcppass
 
 for nodes in 2 3 4
 do
@@ -107,6 +107,7 @@ do
     echo "done."
 
     echo "=== Testing total nodes: $nodes. enable_consensus_with_half_of_the_votes: $val ==="
+    quorum_exists
     shutdown_nodes
 
     if quorum_exists
