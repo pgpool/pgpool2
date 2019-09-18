@@ -1184,7 +1184,7 @@ makeTypeCastFromSvfOp(SQLValueFunctionOp op)
 			location = 0;
 			break;
 		case SVFOP_LOCALTIMESTAMP_N:
-			typename = SystemTypeName("timestamp");;
+			typename = SystemTypeName("timestamp");
 			typename->typmods = lcons(makeIntConst(0, 0), NIL);
 			location = -3;
 			break;
@@ -1194,6 +1194,8 @@ makeTypeCastFromSvfOp(SQLValueFunctionOp op)
 		case SVFOP_SESSION_USER:
 		case SVFOP_CURRENT_CATALOG:
 		case SVFOP_CURRENT_SCHEMA:
+			typename = SystemTypeName("name");
+			location = 0;
 			break;
 	}
 
