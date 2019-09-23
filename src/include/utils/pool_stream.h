@@ -26,6 +26,8 @@
 #ifndef POOL_STREAM_H
 #define POOL_STREAM_H
 
+#include "utils/socket_stream.h"
+
 #define READBUFSZ 1024
 #define WRITEBUFSZ 8192
 
@@ -61,11 +63,6 @@ extern int	pool_unread(POOL_CONNECTION * cp, void *data, int len);
 extern int	pool_push(POOL_CONNECTION * cp, void *data, int len);
 extern void pool_pop(POOL_CONNECTION * cp, int *len);
 extern int	pool_stacklen(POOL_CONNECTION * cp);
-extern void pool_set_nonblock(int fd);
-extern void pool_unset_nonblock(int fd);
-
-extern int	socket_read(int sock, void *buf, size_t len, int timeout);
-extern int	socket_write(int fd, void *buf, size_t len);
 
 extern void pool_set_db_node_id(POOL_CONNECTION * con, int db_node_id);
 

@@ -673,9 +673,9 @@ pool_send_frontend_exits(POOL_CONNECTION_POOL * backend)
 			 * famous "lost synchronization with server, resetting connection"
 			 * message)
 			 */
-			pool_set_nonblock(CONNECTION(backend, i)->fd);
+			socket_set_nonblock(CONNECTION(backend, i)->fd);
 			pool_flush_it(CONNECTION(backend, i));
-			pool_unset_nonblock(CONNECTION(backend, i)->fd);
+			socket_unset_nonblock(CONNECTION(backend, i)->fd);
 		}
 	}
 }
@@ -1282,7 +1282,7 @@ pool_send_severity_message(POOL_CONNECTION * frontend, int protoMajor,
 */
 #define MAXDATA	(MAXMSGBUF+1)*7+1
 
-	pool_set_nonblock(frontend->fd);
+	socket_set_nonblock(frontend->fd);
 
 	if (protoMajor == PROTO_MAJOR_V2)
 	{
@@ -1363,7 +1363,7 @@ pool_send_severity_message(POOL_CONNECTION * frontend, int protoMajor,
 		ereport(ERROR,
 				(errmsg("send_error_message: unknown protocol major %d", protoMajor)));
 
-	pool_unset_nonblock(frontend->fd);
+	socket_unset_nonblock(frontend->fd);
 }
 
 void

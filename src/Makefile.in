@@ -129,13 +129,14 @@ am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	utils/pool_relcache.$(OBJEXT) \
 	utils/pool_process_reporting.$(OBJEXT) \
 	utils/pool_ssl.$(OBJEXT) utils/pool_stream.$(OBJEXT) \
-	utils/getopt_long.$(OBJEXT) utils/mmgr/mcxt.$(OBJEXT) \
-	utils/mmgr/aset.$(OBJEXT) utils/error/elog.$(OBJEXT) \
-	utils/error/assert.$(OBJEXT) utils/pcp/pcp_stream.$(OBJEXT) \
-	utils/regex_array.$(OBJEXT) utils/json_writer.$(OBJEXT) \
-	utils/json.$(OBJEXT) utils/scram-common.$(OBJEXT) \
-	utils/base64.$(OBJEXT) utils/sha2.$(OBJEXT) \
-	utils/ssl_utils.$(OBJEXT) utils/statistics.$(OBJEXT)
+	utils/socket_stream.$(OBJEXT) utils/getopt_long.$(OBJEXT) \
+	utils/mmgr/mcxt.$(OBJEXT) utils/mmgr/aset.$(OBJEXT) \
+	utils/error/elog.$(OBJEXT) utils/error/assert.$(OBJEXT) \
+	utils/pcp/pcp_stream.$(OBJEXT) utils/regex_array.$(OBJEXT) \
+	utils/json_writer.$(OBJEXT) utils/json.$(OBJEXT) \
+	utils/scram-common.$(OBJEXT) utils/base64.$(OBJEXT) \
+	utils/sha2.$(OBJEXT) utils/ssl_utils.$(OBJEXT) \
+	utils/statistics.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a parser/nodes.o \
 	watchdog/lib-watchdog.a
@@ -470,6 +471,7 @@ pgpool_SOURCES = main/main.c \
 	utils/pool_process_reporting.c \
 	utils/pool_ssl.c \
 	utils/pool_stream.c \
+	utils/socket_stream.c \
 	utils/getopt_long.c \
 	utils/mmgr/mcxt.c \
 	utils/mmgr/aset.c \
@@ -739,6 +741,7 @@ utils/pool_relcache.$(OBJEXT): utils/$(am__dirstamp)
 utils/pool_process_reporting.$(OBJEXT): utils/$(am__dirstamp)
 utils/pool_ssl.$(OBJEXT): utils/$(am__dirstamp)
 utils/pool_stream.$(OBJEXT): utils/$(am__dirstamp)
+utils/socket_stream.$(OBJEXT): utils/$(am__dirstamp)
 utils/getopt_long.$(OBJEXT): utils/$(am__dirstamp)
 utils/mmgr/$(am__dirstamp):
 	@$(MKDIR_P) utils/mmgr

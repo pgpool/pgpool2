@@ -22,7 +22,7 @@
 
 #ifndef pgpool_xcode_json_writer_h
 #define pgpool_xcode_json_writer_h
-
+#include "parser/stringinfo.h"
 #define MAX_STACK_DEPTH 10
 typedef enum JWElementType
 {

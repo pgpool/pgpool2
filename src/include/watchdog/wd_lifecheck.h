@@ -39,7 +39,9 @@ typedef enum NodeState
 typedef struct LifeCheckNode
 {
 	NodeStates	nodeState;
-	int ID;
+	int 		ID;
+	WD_STATES	wdState;
+	char		stateName[128];
 	char		hostName[128];
 	char		nodeName[128];
 	int			wdPort;

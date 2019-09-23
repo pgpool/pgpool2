@@ -45,6 +45,7 @@ pgpool_SOURCES = main/main.c \
 	utils/pool_process_reporting.c \
 	utils/pool_ssl.c \
 	utils/pool_stream.c \
+	utils/socket_stream.c \
 	utils/getopt_long.c \
 	utils/mmgr/mcxt.c \
 	utils/mmgr/aset.c \

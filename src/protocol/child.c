@@ -163,7 +163,7 @@ do_child(int *fds)
 #ifdef NONE_BLOCK
 	/* set listen fds to none-blocking */
 	for (walk = fds; *walk != -1; walk++)
-		pool_set_nonblock(*walk);
+		socket_set_nonblock(*walk);
 #endif
 	for (walk = fds; *walk != -1; walk++)
 	{
@@ -355,7 +355,7 @@ do_child(int *fds)
 		child_frontend = get_connection(front_end_fd, &saddr);
 
 		/* set frontend fd to blocking */
-		pool_unset_nonblock(child_frontend->fd);
+		socket_unset_nonblock(child_frontend->fd);
 
 		/* reset busy flag */
 		idle = 0;
@@ -1518,9 +1518,9 @@ discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT * cp)
 	 * This could happen in copy command (remember the famous "lost
 	 * synchronization with server, resetting connection" message)
 	 */
-	pool_set_nonblock(cp->con->fd);
+	socket_set_nonblock(cp->con->fd);
 	pool_flush_it(cp->con);
-	pool_unset_nonblock(cp->con->fd);
+	socket_unset_nonblock(cp->con->fd);
 
 	pool_close(cp->con);
 	free_persisten_db_connection_memory(cp);
@@ -1859,7 +1859,7 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 				tmback = {0, 0};
 
 	for (walk = fds; *walk != -1; walk++)
-		pool_set_nonblock(*walk);
+		socket_set_nonblock(*walk);
 
 	if (SERIALIZE_ACCEPT)
 		set_ps_display("wait for accept lock", false);
@@ -2042,7 +2042,7 @@ retry_accept:
 	/*
 	 * Make sure that the socket is non blocking.
 	 */
-	pool_unset_nonblock(afd);
+	socket_unset_nonblock(afd);
 
 #ifdef ACCEPT_PERFORMANCE
 	gettimeofday(&now2, 0);
@@ -2439,9 +2439,9 @@ set_pg_frontend_blocking(bool blocking)
 	if (child_frontend->socket_state != POOL_SOCKET_VALID)
 		return -1;
 	if (blocking)
-		pool_unset_nonblock(child_frontend->fd);
+		socket_unset_nonblock(child_frontend->fd);
 	else
-		pool_set_nonblock(child_frontend->fd);
+		socket_set_nonblock(child_frontend->fd);
 	return 0;
 }
 

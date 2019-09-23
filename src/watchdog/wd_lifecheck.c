@@ -43,7 +43,7 @@
 #include "watchdog/wd_utils.h"
 #include "watchdog/wd_lifecheck.h"
 #include "watchdog/wd_ipc_defines.h"
-#include "watchdog/wd_ipc_commands.h"
+#include "watchdog/wd_internal_commands.h"
 #include "watchdog/wd_json_data.h"
 
 #include "libpq-fe.h"
@@ -551,7 +551,7 @@ inform_node_status(LifeCheckNode * node, char *message)
 static bool
 fetch_watchdog_nodes_data(void)
 {
-	char	   *json_data = wd_get_watchdog_nodes(-1);
+	char	   *json_data = wd_internal_get_watchdog_nodes_json(-1);
 
 	if (json_data == NULL)
 	{
@@ -620,9 +620,11 @@ load_watchdog_nodes_from_json(char *json_data, int len)
 	gslifeCheckCluster->lifeCheckNodes = pool_shared_memory_create(sizeof(LifeCheckNode) * gslifeCheckCluster->nodeCount);
 	for (i = 0; i < nodeCount; i++)
 	{
-		WDNodeInfo *nodeInfo = get_WDNodeInfo_from_wd_node_json(value->u.array.values[i]);
-
-		gslifeCheckCluster->lifeCheckNodes[i].nodeState = NODE_EMPTY;
+		WDNodeInfo *nodeInfo = parse_watchdog_node_info_from_wd_node_json(value->u.array.values[i]);
+		
+		gslifeCheckCluster->lifeCheckNodes[i].wdState = nodeInfo->state;
+		strcpy(gslifeCheckCluster->lifeCheckNodes[i].stateName, nodeInfo->stateName);
+		gslifeCheckCluster->lifeCheckNodes[i].nodeState = NODE_EMPTY; /* This is local health check state*/
 		gslifeCheckCluster->lifeCheckNodes[i].ID = nodeInfo->id;
 		strcpy(gslifeCheckCluster->lifeCheckNodes[i].hostName, nodeInfo->hostName);
 		strcpy(gslifeCheckCluster->lifeCheckNodes[i].nodeName, nodeInfo->nodeName);

@@ -46,7 +46,7 @@
 #include "utils/elog.h"
 #include "utils/json_writer.h"
 #include "utils/json.h"
-#include "utils/pool_stream.h"
+#include "utils/socket_stream.h"
 #include "pool_config.h"
 
 #include <net/if.h>
@@ -55,7 +55,7 @@
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_json_data.h"
 #include "watchdog/wd_ipc_defines.h"
-#include "watchdog/wd_ipc_commands.h"
+#include "watchdog/wd_internal_commands.h"
 #include "parser/stringinfo.h"
 
 /* These defines enables the consensus building feature
@@ -780,7 +780,7 @@ wd_create_recv_socket(int port)
 				 errdetail("create socket failed with reason: \"%s\"", strerror(errno))));
 	}
 
-	pool_set_nonblock(sock);
+	socket_set_nonblock(sock);
 
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1)
 	{
@@ -901,7 +901,7 @@ wd_create_client_socket(char *hostname, int port, bool *connected)
 	len = sizeof(struct sockaddr_in);
 
 	/* set socket to non blocking */
-	pool_set_nonblock(sock);
+	socket_set_nonblock(sock);
 
 	if (connect(sock, (struct sockaddr *) &addr, len) < 0)
 	{
@@ -911,7 +911,7 @@ wd_create_client_socket(char *hostname, int port, bool *connected)
 		}
 		if (errno == EISCONN)
 		{
-			pool_unset_nonblock(sock);
+			socket_unset_nonblock(sock);
 			*connected = true;
 			return sock;
 		}
@@ -922,7 +922,7 @@ wd_create_client_socket(char *hostname, int port, bool *connected)
 		return -1;
 	}
 	/* set socket to blocking again */
-	pool_unset_nonblock(sock);
+	socket_unset_nonblock(sock);
 	*connected = true;
 	return sock;
 }
@@ -3230,7 +3230,7 @@ update_successful_outgoing_cons(fd_set *wmask, int pending_fds_count)
 						ereport(LOG,
 								(errmsg("new outbound connection to %s:%d ", wdNode->hostname, wdNode->wd_port)));
 						/* set socket to blocking again */
-						pool_unset_nonblock(wdNode->client_socket.sock);
+						socket_unset_nonblock(wdNode->client_socket.sock);
 						watchdog_state_machine(WD_EVENT_NEW_OUTBOUND_CONNECTION, wdNode, NULL, NULL);
 					}
 				}

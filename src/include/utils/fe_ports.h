@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #ifndef FE_PORTS
 #define FE_PORTS
-
+#include "parser/pg_config_manual.h"
 #include "pool_type.h"
 
 
@@ -119,6 +119,13 @@ extern void errfinish(int dummy,...);
 									 * errors followed by readyForQuery
 									 * message */
 
+#define exprLocation(x)  errcode_ign(0)
+#define _(x) (x)
+#define gettext(x) (x)
+#define dgettext(d,x) (x)
+#define ngettext(s,p,n) ((n) == 1 ? (s) : (p))
+#define dngettext(d,s,p,n) ((n) == 1 ? (s) : (p))
+
 #define ereport(elevel, rest)	\
 do { \
 	const int elevel_ = (elevel); \
@@ -136,5 +143,9 @@ typedef enum
 	PGERROR_DEFAULT,			/* recommended style */
 	PGERROR_VERBOSE				/* all the facts, ma'am */
 }			PGErrorVerbosity;
+
+/* sprintf into a palloc'd buffer --- these are in psprintf.c */
+extern char *psprintf(const char *fmt,...) pg_attribute_printf(1, 2);
+extern size_t pvsnprintf(char *buf, size_t len, const char *fmt, va_list args) pg_attribute_printf(3, 0);
 
 #endif							/* FE_PORTS */

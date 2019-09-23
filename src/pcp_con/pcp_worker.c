@@ -47,7 +47,7 @@
 #include "context/pool_process_context.h"
 #include "utils/pool_process_reporting.h"
 #include "watchdog/wd_json_data.h"
-#include "watchdog/wd_ipc_commands.h"
+#include "watchdog/wd_internal_commands.h"
 #include "utils/elog.h"
 
 #define MAX_FILE_LINE_LEN    512
@@ -782,7 +782,7 @@ inform_watchdog_info(PCP_CONNECTION * frontend, char *buf)
 
 	wd_index = atoi(buf);
 
-	json_data = wd_get_watchdog_nodes(wd_index);
+	json_data = wd_internal_get_watchdog_nodes_json(wd_index);
 	if (json_data == NULL)
 		ereport(ERROR,
 				(errmsg("PCP: informing watchdog info failed"),

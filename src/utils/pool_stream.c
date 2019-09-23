@@ -32,14 +32,12 @@
 #include <errno.h>
 #include <unistd.h>
 
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include "pool.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
+#include "utils/socket_stream.h"
 #include "utils/pool_stream.h"
 #include "pool_config.h"
 
@@ -1280,55 +1278,6 @@ pool_stacklen(POOL_CONNECTION * cp)
 	return cp->bufsz3;
 }
 
-/*
- * set non-block flag
- */
-void
-pool_set_nonblock(int fd)
-{
-	int			var;
-
-	/* set fd to none blocking */
-	var = fcntl(fd, F_GETFL, 0);
-	if (var == -1)
-	{
-		ereport(FATAL,
-				(errmsg("unable to set options on socket"),
-				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
-
-	}
-	if (fcntl(fd, F_SETFL, var | O_NONBLOCK) == -1)
-	{
-		ereport(FATAL,
-				(errmsg("unable to set options on socket"),
-				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
-	}
-}
-
-/*
- * unset non-block flag
- */
-void
-pool_unset_nonblock(int fd)
-{
-	int			var;
-
-	/* set fd to none blocking */
-	var = fcntl(fd, F_GETFL, 0);
-	if (var == -1)
-	{
-		ereport(FATAL,
-				(errmsg("unable to set options on socket"),
-				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
-	}
-	if (fcntl(fd, F_SETFL, var & ~O_NONBLOCK) == -1)
-	{
-		ereport(FATAL,
-				(errmsg("unable to set options on socket"),
-				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
-	}
-}
-
 #ifdef DEBUG
 /*
  * Debug aid
@@ -1343,91 +1292,6 @@ dump_buffer(char *buf, int len)
 	}
 }
 #endif
-int
-socket_write(int fd, void *buf, size_t len)
-{
-	int			bytes_send = 0;
-
-	do
-	{
-		int			ret;
-
-		ret = write(fd, buf + bytes_send, (len - bytes_send));
-		if (ret <= 0)
-		{
-			if (errno == EINTR || errno == EAGAIN)
-			{
-				ereport(DEBUG5,
-						(errmsg("write on socket failed with error :\"%s\"", strerror(errno)),
-						 errdetail("retrying...")));
-				continue;
-			}
-			ereport(LOG,
-					(errmsg("write on socket failed with error :\"%s\"", strerror(errno))));
-			return -1;
-		}
-		bytes_send += ret;
-	} while (bytes_send < len);
-	return bytes_send;
-}
-
-int
-socket_read(int fd, void *buf, size_t len, int timeout)
-{
-	int			ret,
-				read_len;
-
-	read_len = 0;
-	struct timeval timeoutval;
-	fd_set		readmask;
-	int			fds;
-
-	while (read_len < len)
-	{
-		FD_ZERO(&readmask);
-		FD_SET(fd, &readmask);
-
-		timeoutval.tv_sec = timeout;
-		timeoutval.tv_usec = 0;
-
-		fds = select(fd + 1, &readmask, NULL, NULL, timeout ? &timeoutval : NULL);
-		if (fds == -1)
-		{
-			if (errno == EAGAIN || errno == EINTR)
-				continue;
-
-			ereport(WARNING,
-					(errmsg("select failed with error: \"%s\"", strerror(errno))));
-			return -1;
-		}
-		else if (fds == 0)
-		{
-			return -2;
-		}
-		ret = read(fd, buf + read_len, (len - read_len));
-		if (ret < 0)
-		{
-			if (errno == EINTR || errno == EAGAIN)
-			{
-				ereport(DEBUG5,
-						(errmsg("read from socket failed with error :\"%s\"", strerror(errno)),
-						 errdetail("retrying...")));
-				continue;
-			}
-			ereport(LOG,
-					(errmsg("read from socket failed with error :\"%s\"", strerror(errno))));
-			return -1;
-		}
-		if (ret == 0)
-		{
-			ereport(LOG,
-					(errmsg("read from socket failed, remote end closed the connection")));
-			return 0;
-		}
-		read_len += ret;
-	}
-	return read_len;
-}
 
 /*
  * Set timeout in seconds for pool_check_fd

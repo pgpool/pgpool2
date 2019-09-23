@@ -8,6 +8,8 @@ lib_watchdog_a_SOURCES = \
 	wd_if.c \
 	wd_lifecheck.c \
 	wd_commands.c \
+	wd_internal_commands.c \
+	wd_ipc_conn.c \
 	wd_json_data.c \
 	wd_ping.c \
 	wd_heartbeat.c \

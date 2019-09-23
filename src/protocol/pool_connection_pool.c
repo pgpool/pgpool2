@@ -568,7 +568,7 @@ connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool r
 	int			error;
 	socklen_t	socklen;
 
-	pool_set_nonblock(fd);
+	socket_set_nonblock(fd);
 
 	for (;;)
 	{
@@ -733,7 +733,7 @@ connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool r
 		break;
 	}
 
-	pool_unset_nonblock(fd);
+	socket_unset_nonblock(fd);
 	return true;
 }
 

@@ -33,7 +33,7 @@
 
 #include "libpq-fe.h"
 
-#include "watchdog/wd_ipc_commands.h"
+#include "watchdog/wd_internal_commands.h"
 
 #define WAIT_RETRY_COUNT (pool_config->recovery_timeout / 3)
 

@@ -14,11 +14,13 @@
  *-------------------------------------------------------------------------
  */
 
-#ifndef POOL_PRIVATE
 
 #include <errno.h>
 #include <stdarg.h>
 #include "pool.h"
+
+#ifndef POOL_PRIVATE
+
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"

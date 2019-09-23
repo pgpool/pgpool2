@@ -57,7 +57,7 @@
 #include "auth/pool_passwd.h"
 #include "auth/pool_hba.h"
 #include "query_cache/pool_memqcache.h"
-#include "watchdog/wd_ipc_commands.h"
+#include "watchdog/wd_internal_commands.h"
 #include "watchdog/wd_lifecheck.h"
 
 #include "watchdog/watchdog.h"
@@ -1552,7 +1552,7 @@ sigusr1_interupt_processor(void)
 				(errmsg("Pgpool-II parent process received watchdog quorum change signal from watchdog")));
 
 		user1SignalSlot->signalFlags[SIG_WATCHDOG_QUORUM_CHANGED] = false;
-		if (get_watchdog_quorum_state() >= 0)
+		if (wd_internal_get_watchdog_quorum_state() >= 0)
 		{
 			ereport(LOG,
 					(errmsg("watchdog cluster now holds the quorum"),
@@ -1576,7 +1576,7 @@ sigusr1_interupt_processor(void)
 				(errmsg("Pgpool-II parent process received sync backend signal from watchdog")));
 
 		user1SignalSlot->signalFlags[SIG_BACKEND_SYNC_REQUIRED] = false;
-		if (get_watchdog_local_node_state() == WD_STANDBY)
+		if (wd_internal_get_watchdog_local_node_state() == WD_STANDBY)
 		{
 			ereport(LOG,
 					(errmsg("master watchdog has performed failover"),
@@ -1591,7 +1591,7 @@ sigusr1_interupt_processor(void)
 				(errmsg("Pgpool-II parent process received watchdog state change signal from watchdog")));
 
 		user1SignalSlot->signalFlags[SIG_WATCHDOG_STATE_CHANGED] = false;
-		if (get_watchdog_local_node_state() == WD_STANDBY)
+		if (wd_internal_get_watchdog_local_node_state() == WD_STANDBY)
 		{
 			ereport(LOG,
 					(errmsg("we have joined the watchdog cluster as STANDBY node"),
@@ -4076,7 +4076,7 @@ update_backend_quarantine_status(void)
 	 * Reset the quarantine flag from each backend and set it to con_wait
 	 */
 	int			i;
-	WD_STATES	wd_state = get_watchdog_local_node_state();
+	WD_STATES	wd_state = wd_internal_get_watchdog_local_node_state();
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{

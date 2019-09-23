@@ -344,8 +344,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = pcp pgmd5 pgenc pgproto
-dist_bin_SCRIPTS = pgpool_setup watchdog_setup
+SUBDIRS = pcp pgmd5 pgenc pgproto watchdog
+dist_bin_SCRIPTS = pgpool_setup
 all: all-recursive
 
 .SUFFIXES:
@@ -699,9 +699,6 @@ uninstall-am: uninstall-dist_binSCRIPTS
 
 pgpool_setup:
 	ln -s ../test/pgpool_setup .
-
-watchdog_setup:
-	ln -s ../test/watchdog_setup .
 
 clean-local:
 	-rm -f $(dist_bin_SCRIPTS)
