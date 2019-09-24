@@ -939,7 +939,8 @@ StartupPacketCopy(StartupPacket *sp)
 static POOL_CONNECTION_POOL * connect_backend(StartupPacket *sp, POOL_CONNECTION * frontend)
 {
 	POOL_CONNECTION_POOL *backend;
-	StartupPacket *topmem_sp;
+	StartupPacket *volatile topmem_sp = NULL;
+	volatile bool	topmem_sp_set = false;
 	int			i;
 
 	/* connect to the backend */
@@ -979,6 +980,7 @@ static POOL_CONNECTION_POOL * connect_backend(StartupPacket *sp, POOL_CONNECTION
 				 * save startup packet info
 				 */
 				CONNECTION_SLOT(backend, i)->sp = topmem_sp;
+				topmem_sp_set = true;
 
 				/* send startup packet */
 				send_startup_packet(CONNECTION_SLOT(backend, i));
@@ -1002,9 +1004,16 @@ static POOL_CONNECTION_POOL * connect_backend(StartupPacket *sp, POOL_CONNECTION
 	PG_CATCH();
 	{
 		pool_discard_cp(sp->user, sp->database, sp->major);
+		topmem_sp = NULL;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	/* At this point, we need to free previously allocated memory for the
+	 * startup packet if no backend is up.
+	 */
+	if (!topmem_sp_set && topmem_sp != NULL)
+		pfree(topmem_sp);
 
 	return backend;
 }
