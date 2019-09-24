@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018	Tatsuo Ishii
+ * Copyright (c) 2017-2019	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -178,7 +178,11 @@ read_until_ready_for_query(PGconn *conn, int timeout)
 				break;
 
 			case 'Z':			/* Ready for Query */
-				len = read_int32(conn);
+				if (read_int32(conn) < 0)
+				{
+					fprintf(stderr, "read_int32() failed\n");
+					exit(1);
+				}
 				c = read_char(conn);
 				fprintf(stderr, "<= BE ReadyForQuery(%c)\n", c);
 				cont = 0;
