@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018	Tatsuo Ishii
+ * Copyright (c) 2017-2019	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -578,6 +578,8 @@ process_function_call(char *buf, PGconn *conn)
 			 * Actually we only support text format only for now.  To support
 			 * binary format, we need a binary expression in the data file.
 			 */
+			send_byte(paramvals[i], paramlens[i], conn);
+#ifdef NOT_USED
 			if (ncodes == 0)	/* text format? */
 			{
 				send_byte(paramvals[i], paramlens[i], conn);
@@ -596,6 +598,7 @@ process_function_call(char *buf, PGconn *conn)
 				else
 					send_byte(paramvals[i], paramlens[i], conn);
 			}
+#endif
 		}
 	}
 
