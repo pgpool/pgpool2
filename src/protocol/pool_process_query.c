@@ -2763,10 +2763,10 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 				}
 				else if (lock_kind == 2)
 				{
-					POOL_SELECT_RESULT *result;
-
 					per_node_statement_log(backend, i, qbuf);
 					do_query(CONNECTION(backend, i), qbuf, &result, MAJOR(backend));
+					if (result)
+						free_select_result(result);
 				}
 			}
 
