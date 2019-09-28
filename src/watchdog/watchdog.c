@@ -128,6 +128,7 @@ typedef enum IPC_CMD_PREOCESS_RES
 #define CLUSTER_IAM_NOT_TRUE_MASTER			'X'
 #define CLUSTER_IAM_RESIGNING_FROM_MASTER	'R'
 #define CLUSTER_NODE_INVALID_VERSION		'V'
+#define CLUSTER_NODE_REQUIRE_TO_RELOAD		'I'
 
 #define WD_MASTER_NODE getMasterWatchdogNode()
 
@@ -197,7 +198,8 @@ char	   *wd_event_name[] =
 	"THIS NODE FOUND",
 	"NODE CONNECTION LOST",
 	"NODE CONNECTION FOUND",
-	"CLUSTER QUORUM STATUS CHANGED"
+	"CLUSTER QUORUM STATUS CHANGED",
+	"NODE REQUIRE TO RELOAD STATE"
 };
 
 char	   *wd_state_names[] = {
@@ -1496,7 +1498,10 @@ read_sockets(fd_set *rmask, int pending_fds_count)
 								close_socket_connection(&wdNode->server_socket);
 								strlcpy(wdNode->delegate_ip, tempNode->delegate_ip, WD_MAX_HOST_NAMELEN);
 								strlcpy(wdNode->nodeName, tempNode->nodeName, WD_MAX_HOST_NAMELEN);
+								strlcpy(wdNode->pgp_version, tempNode->pgp_version, MAX_VERSION_STR_LEN);
 								wdNode->state = tempNode->state;
+								wdNode->wd_data_major_version = tempNode->wd_data_major_version;
+								wdNode->wd_data_minor_version = tempNode->wd_data_minor_version;
 								wdNode->startup_time.tv_sec = tempNode->startup_time.tv_sec;
 								wdNode->wd_priority = tempNode->wd_priority;
 								wdNode->server_socket = *conn;
@@ -1515,7 +1520,13 @@ read_sockets(fd_set *rmask, int pending_fds_count)
 						{
 							/* reply with node info message */
 							ereport(LOG,
-									(errmsg("new node joined the cluster hostname:\"%s\" port:%d pgpool_port:%d", tempNode->hostname, tempNode->wd_port, tempNode->pgpool_port)));
+									(errmsg("new node joined the cluster hostname:\"%s\" port:%d pgpool_port:%d", wdNode->hostname,
+											wdNode->wd_port,
+											wdNode->pgpool_port),
+									 errdetail("Pgpool-II version:\"%s\" watchdog messaging version: %d.%d",
+											   wdNode->pgp_version,
+											   wdNode->wd_data_major_version,
+											   wdNode->wd_data_minor_version)));
 
 							watchdog_state_machine(WD_EVENT_PACKET_RCV, wdNode, pkt, NULL);
 						}
@@ -2008,7 +2019,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDCommandData *
 {
 	int			nodeStatus;
 	int			nodeID;
-	char	   *message;
+	char	   *message = NULL;
 	bool		ret;
 
 	if (ipcCommand->sourcePacket.len <= 0 || ipcCommand->sourcePacket.data == NULL)
@@ -2025,11 +2036,12 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDCommandData *
 	}
 
 	if (message)
+	{
 		ereport(LOG,
 				(errmsg("received node status change ipc message"),
 				 errdetail("%s", message)));
-	pfree(message);
-
+		pfree(message);
+	}
 	if (fire_node_status_event(nodeID, nodeStatus) == false)
 		return IPC_CMD_ERROR;
 
@@ -3725,7 +3737,7 @@ cluster_service_message_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 		case CLUSTER_NEEDS_ELECTION:
 			{
 				ereport(LOG,
-						(errmsg("remote node \"%s\" detected the split-brain and wants to re-initialize the cluster", wdNode->nodeName)));
+						(errmsg("remote node \"%s\" detected the problem and asking us to rejoin the cluster", wdNode->nodeName)));
 
 				set_state(WD_JOINING);
 			}
@@ -3755,6 +3767,12 @@ cluster_service_message_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 							 errdetail("but it was not our coordinator/master anyway. ignoring the message")));
 				}
 			}
+			break;
+
+		case CLUSTER_NODE_REQUIRE_TO_RELOAD:
+		{
+			watchdog_state_machine(WD_EVENT_WD_STATE_REQUIRE_RELOAD, NULL, NULL, NULL);
+		}
 			break;
 
 		case CLUSTER_NODE_INVALID_VERSION:
@@ -5662,6 +5680,39 @@ watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode * wdNode, WDPac
 			}
 			break;
 
+		case WD_EVENT_REMOTE_NODE_FOUND:
+		{
+			ereport(LOG,
+				(errmsg("remote node \"%s\" is reachable again", wdNode->nodeName),
+					errdetail("trying to add it back as a standby")));
+			/* If I am the cluster master. Ask for the node info and to re-send the join message */
+			send_message_of_type(wdNode, WD_REQ_INFO_MESSAGE, NULL);
+			if (wdNode->wd_data_major_version >= 1 && wdNode->wd_data_minor_version >= 1)
+			{
+				/*
+				 * Since data version 1.1 we support CLUSTER_NODE_REQUIRE_TO_RELOAD
+				 * which makes the standby nodes to re-send the join master node
+				 */
+				ereport(DEBUG1,
+					(errmsg("asking remote node \"%s\" to rejoin master", wdNode->nodeName),
+						errdetail("watchdog data version %s",WD_MESSAGE_DATA_VERSION)));
+
+				send_cluster_service_message(wdNode, pkt, CLUSTER_NODE_REQUIRE_TO_RELOAD);
+			}
+			else
+			{
+				/*
+				 * The node is on older version
+				 * So ask it to re-join the cluster
+				 */
+				ereport(DEBUG1,
+					(errmsg("asking remote node \"%s\" to rejoin cluster", wdNode->nodeName),
+						errdetail("watchdog data version %s",WD_MESSAGE_DATA_VERSION)));
+				send_cluster_service_message(wdNode, pkt, CLUSTER_NEEDS_ELECTION);
+			}
+			break;
+		}
+
 		case WD_EVENT_PACKET_RCV:
 			{
 				switch (pkt->type)
@@ -6162,6 +6213,14 @@ watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode * wdNode, WDPacketD
 
 		case WD_EVENT_TIMEOUT:
 			set_timeout(5);
+			break;
+
+		case WD_EVENT_WD_STATE_REQUIRE_RELOAD:
+
+			ereport(LOG,
+					(errmsg("re-sending join coordinator message to master node: \"%s\"", WD_MASTER_NODE->nodeName)));
+
+			send_cluster_command(WD_MASTER_NODE, WD_JOIN_COORDINATOR_MESSAGE, 5);
 			break;
 
 		case WD_EVENT_COMMAND_FINISHED:
