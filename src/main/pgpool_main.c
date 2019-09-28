@@ -316,7 +316,8 @@ int PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		}
 
 		ereport (LOG,
-				 (errmsg("watchdog process is initialized")));
+				 (errmsg("watchdog process is initialized"),
+				 errdetail("watchdog messaging data version: %s",WD_MESSAGE_DATA_VERSION)));
 		/*
 		 * initialize the lifecheck process
 		 */

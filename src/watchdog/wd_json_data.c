@@ -401,6 +401,10 @@ char* get_watchdog_node_info_json(WatchdogNode* wdNode, char* authkey)
 
 	JsonNode* jNode = jw_create_with_object(true);
 
+	jw_put_string(jNode, "PGPOOL_VERSION", VERSION);
+	jw_put_string(jNode, "DATA_VERSION_MAJOR", WD_MESSAGE_DATA_VERSION_MAJOR);
+	jw_put_string(jNode, "DATA_VERSION_MINOR", WD_MESSAGE_DATA_VERSION_MINOR);
+
 	jw_put_int(jNode, "State", wdNode->state);
 	jw_put_int(jNode, "WdPort", wdNode->wd_port);
 	jw_put_int(jNode, "PgpoolPort", wdNode->pgpool_port);
@@ -499,6 +503,24 @@ WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len, char** 
 		goto ERROR_EXIT;
 	strncpy(wdNode->delegate_ip, ptr, sizeof(wdNode->delegate_ip) -1);
 
+	ptr = json_get_string_value_for_key(root, "DATA_VERSION_MAJOR");
+	if (ptr == NULL)
+		wdNode->wd_data_major_version = 1;
+	else
+		wdNode->wd_data_major_version = atoi(ptr);
+
+	ptr = json_get_string_value_for_key(root, "DATA_VERSION_MINOR");
+	if (ptr == NULL)
+		wdNode->wd_data_minor_version = 0;
+	else
+		wdNode->wd_data_minor_version = atoi(ptr);
+
+	ptr = json_get_string_value_for_key(root, "PGPOOL_VERSION");
+	if (ptr != NULL)
+		strncpy(wdNode->pgp_version, ptr, sizeof(wdNode->pgp_version) - 1);
+	else
+		wdNode->pgp_version[0] = '0';
+
 	if (authkey)
 	{
 		ptr = json_get_string_value_for_key(root, "authkey");
@@ -507,6 +529,7 @@ WatchdogNode* get_watchdog_node_from_json(char* json_data, int data_len, char** 
 		else
 			*authkey = NULL;
 	}
+
 	return wdNode;
 
 	ERROR_EXIT:
