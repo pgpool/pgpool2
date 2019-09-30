@@ -26,7 +26,7 @@
 #include "utils/memutils.h"
 
 #else
-
+#include <string.h>
 #include "utils/fe_ports.h"
 
 /* It's possible we could use a different value for this in frontend code */
