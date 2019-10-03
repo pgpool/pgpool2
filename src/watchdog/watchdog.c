@@ -2640,7 +2640,14 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData *ipcCo
 
 			if (root && root->type == json_object)
 			{
-				json_get_int_value_for_key(root, "FailoverFuncState", &failoverState);
+				if (json_get_int_value_for_key(root, "FailoverFuncState", &failoverState))
+				{
+					ereport(LOG,
+							(errmsg("unable to process failover indication"),
+							 errdetail("failed to get failover state from json data in command packet")));
+					res = FAILOVER_RES_INVALID_FUNCTION;
+				}
+
 			}
 			else
 			{
@@ -4006,6 +4013,8 @@ static void node_lost_while_ipc_command(WatchdogNode* wdNode)
 		WDCommandData* ipcCommand = lfirst(lc);
 		cleanUpIPCCommand(ipcCommand);
 	}
+
+	list_free(ipcCommands_to_del);
 }
 
 
@@ -4090,6 +4099,8 @@ static void service_internal_command(void)
 		g_cluster.clusterCommands = list_delete_ptr(g_cluster.clusterCommands,clusterCommand);
 		MemoryContextDelete(clusterCommand->memoryContext);
 	}
+
+	list_free(finishedCommands);
 }
 
 /* remove the unreachable nodes from cluster */
@@ -4240,6 +4251,8 @@ static void check_for_current_command_timeout(void)
 		g_cluster.clusterCommands = list_delete_ptr(g_cluster.clusterCommands,clusterCommand);
 		MemoryContextDelete(clusterCommand->memoryContext);
 	}
+
+	list_free(finishedCommands);
 }
 
 
@@ -4319,6 +4332,9 @@ static int issue_watchdog_internal_command(WatchdogNode* wdNode, WDPacketData *p
 		if (nodeResult == NULL)
 		{
 			/* should never hapen */
+			ereport(WARNING,
+					(errmsg("Internal error. Not able to locate node result slot")));
+			MemoryContextDelete(clusterCommand->memoryContext);
 			return -1;
 		}
 		if (send_message_to_node(nodeResult->wdNode, pkt) == false)
@@ -4754,6 +4770,9 @@ static int watchdog_state_machine(WD_EVENTS event, WatchdogNode* wdNode, WDPacke
 				ereport(DEBUG1,
 						(errmsg("IP = %s",ip?ip:"NULL")));
 			}
+
+			list_free_deep(local_addresses);
+			local_addresses = NULL;
 		}
 	}
 
@@ -5356,18 +5375,19 @@ static int watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode* wdN
 							vip_exists = true;
 							break;
 						}
+						if (vip_exists == false)
+						{
+							/*
+							 * Okay this is the case when only our VIP is lost
+							 * but network interface seems to be working fine
+							 * try to re-aquire the VIP
+							 */
+							wd_IP_up();
+						}
 					}
-					if (vip_exists == false)
-					{
-						/* Okay this is the case when only our VIP is lost
-						 * but network interface seems to be working fine
-						 * try to re-aquire the VIP
-						 */
-						wd_IP_up();
-					}
-					list_free_deep(local_addresses);
-					local_addresses = NULL;
 				}
+				list_free_deep(local_addresses);
+				local_addresses = NULL;
 			}
 		}
 			break;
@@ -6370,6 +6390,8 @@ static void process_wd_func_commands_for_timer_events(void)
 	{
 		g_cluster.wd_timer_commands = list_delete_ptr(g_cluster.wd_timer_commands,lfirst(lc));
 	}
+
+	list_free(timers_to_del);
 }
 
 static void add_wd_command_for_timer_events(unsigned int expire_secs, bool need_tics, WDFunctionCommandData* wd_func_command)
