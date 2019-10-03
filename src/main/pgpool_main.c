@@ -537,6 +537,7 @@ register_node_operation_request(POOL_REQUEST_KIND kind, int *node_id_set, int co
 	if ((Req_info->request_queue_tail - MAX_REQUEST_QUEUE_SIZE) == Req_info->request_queue_head)
 	{
 		pool_semaphore_unlock(REQUEST_INFO_SEM);
+		POOL_SETMASK(&oldmask);
 		return false;
 	}
 	Req_info->request_queue_tail++;
