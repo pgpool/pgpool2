@@ -786,6 +786,13 @@ check_pgpool_status_by_query(void)
 		node = &gslifeCheckCluster->lifeCheckNodes[i];
 		thread_arg[i].lifeCheckNode = node;
 		rc = watchdog_thread_create(&thread[i], &attr, thread_ping_pgpool, (void*)&thread_arg[i]);
+		if (rc)
+		{
+			ereport(WARNING,
+					(errmsg("failed to create thread for checking pgpool status by query for  %d (%s:%d)",
+							i, node->hostName, node->pgpoolPort),
+					 errdetail("pthread_create failed with error code %d: %s",rc, strerror(rc))));
+		}
 	}
 
 	pthread_attr_destroy(&attr);
