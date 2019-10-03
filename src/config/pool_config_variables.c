@@ -2563,7 +2563,6 @@ get_list_from_string_regex_delim(const char *input, const char *delimi, int *n)
 {
 #ifndef POOL_PRIVATE
 	int			j = 0;
-	char	   *output;
 	char	   *str;
 	char	   *buf,
 			   *str_temp;
@@ -2600,12 +2599,12 @@ get_list_from_string_regex_delim(const char *input, const char *delimi, int *n)
 		}
 		else if (*str_temp == *delimi)
 		{
-			output = (char *) palloc(j + 1);
+			char *output = (char *) palloc(j + 1);
 			StrNCpy(output, buf, j + 1);
 
 			/* replace escape character of "'" */
 			tokens[*n] = string_replace(output, "\\'", "'");
-
+			pfree(output);
 			ereport(DEBUG3,
 					(errmsg("initializing pool configuration"),
 					 errdetail("extracting string tokens [token[%d]: %s]", *n, tokens[*n])));
