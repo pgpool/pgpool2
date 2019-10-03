@@ -502,6 +502,9 @@ scram_verify_plain_password(const char *username, const char *password,
 	{
 		ereport(LOG,
 				(errmsg("invalid SCRAM verifier for user \"%s\"", username)));
+
+		pfree(encoded_salt);
+		pfree(salt);
 		return false;
 	}
 
@@ -514,6 +517,7 @@ scram_verify_plain_password(const char *username, const char *password,
 	 * user-supplied password.
 	 */
 	pfree(encoded_salt);
+	pfree(salt);
 	return memcmp(computed_key, server_key, SCRAM_KEY_LEN) == 0;
 }
 
@@ -591,6 +595,8 @@ parse_scram_verifier(const char *verifier, int *iterations, char **salt,
 								(char *) server_key);
 	if (decoded_len != SCRAM_KEY_LEN)
 		goto invalid_verifier;
+
+	pfree(v);
 
 	return true;
 
