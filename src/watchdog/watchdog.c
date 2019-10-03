@@ -2784,7 +2784,14 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData * ipcC
 
 			if (root && root->type == json_object)
 			{
-				json_get_int_value_for_key(root, "FailoverFuncState", &failoverState);
+				if (json_get_int_value_for_key(root, "FailoverFuncState", &failoverState))
+				{
+					ereport(LOG,
+							(errmsg("unable to process failover indication"),
+							 errdetail("failed to get failover state from json data in command packet")));
+					res = FAILOVER_RES_INVALID_FUNCTION;
+				}
+
 			}
 			else
 			{
@@ -4221,6 +4228,8 @@ node_lost_while_ipc_command(WatchdogNode * wdNode)
 
 		cleanUpIPCCommand(ipcCommand);
 	}
+
+	list_free(ipcCommands_to_del);
 }
 
 
@@ -4313,6 +4322,8 @@ service_internal_command(void)
 		g_cluster.clusterCommands = list_delete_ptr(g_cluster.clusterCommands, clusterCommand);
 		MemoryContextDelete(clusterCommand->memoryContext);
 	}
+
+	list_free(finishedCommands);
 }
 
 /* remove the unreachable nodes from cluster */
@@ -4470,6 +4481,8 @@ check_for_current_command_timeout(void)
 		g_cluster.clusterCommands = list_delete_ptr(g_cluster.clusterCommands, clusterCommand);
 		MemoryContextDelete(clusterCommand->memoryContext);
 	}
+
+	list_free(finishedCommands);
 }
 
 
@@ -4553,6 +4566,9 @@ issue_watchdog_internal_command(WatchdogNode * wdNode, WDPacketData * pkt, int t
 		if (nodeResult == NULL)
 		{
 			/* should never hapen */
+			ereport(WARNING,
+					(errmsg("Internal error. Not able to locate node result slot")));
+			MemoryContextDelete(clusterCommand->memoryContext);
 			return -1;
 		}
 		if (send_message_to_node(nodeResult->wdNode, pkt) == false)
@@ -5015,6 +5031,9 @@ watchdog_state_machine(WD_EVENTS event, WatchdogNode * wdNode, WDPacketData * pk
 				ereport(DEBUG1,
 						(errmsg("IP = %s", ip ? ip : "NULL")));
 			}
+
+			list_free_deep(local_addresses);
+			local_addresses = NULL;
 		}
 	}
 
@@ -5657,9 +5676,9 @@ watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode * wdNode, WDPac
 							 */
 							wd_IP_up();
 						}
-						list_free_deep(local_addresses);
-						local_addresses = NULL;
 					}
+					list_free_deep(local_addresses);
+					local_addresses = NULL;
 				}
 			}
 			break;
@@ -6760,6 +6779,8 @@ process_wd_func_commands_for_timer_events(void)
 	{
 		g_cluster.wd_timer_commands = list_delete_ptr(g_cluster.wd_timer_commands, lfirst(lc));
 	}
+
+	list_free(timers_to_del);
 }
 
 static void
