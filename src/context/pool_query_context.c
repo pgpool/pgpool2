@@ -297,12 +297,14 @@ int pool_virtual_master_db_node_id(void)
 	 */
 	if (Req_info->switching)
 	{
+#ifdef NOT_USED
 		POOL_SETMASK(&BlockSig);
 		ereport(WARNING,
 				(errmsg("failover/failback is in progress"),
 						errdetail("executing failover or failback on backend"),
 				 errhint("In a moment you should be able to reconnect to the database")));
 		POOL_SETMASK(&UnBlockSig);
+#endif
 		child_exit(POOL_EXIT_AND_RESTART);
 	}
 
