@@ -62,7 +62,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <ctype.h>
-#ifdef HAVE_VSYSLOG
+#ifdef HAVE_SYSLOG
 #include <syslog.h>
 #endif
 #include <string.h>
@@ -126,7 +126,7 @@ extern bool redirection_done;
  */
 emit_log_hook_type emit_log_hook = NULL;
 
-#ifdef HAVE_VSYSLOG
+#ifdef HAVE_SYSLOG
 
 /*
  * Max string length to send to syslog().  Note that this doesn't count the
@@ -1442,7 +1442,7 @@ GetErrorContextStack(void)
 }
 
 
-#ifdef HAVE_VSYSLOG
+#ifdef HAVE_SYSLOG
 
 /*
  * Set or update the parameters for syslog logging
@@ -1575,7 +1575,7 @@ write_syslog(int level, const char *line)
 		syslog(level, "[%lu] %s", seq, line);
 	}
 }
-#endif							/* HAVE_VSYSLOG */
+#endif							/* HAVE_SYSLOG */
 
 #ifdef WIN32
 /*
@@ -2179,7 +2179,7 @@ send_message_to_server_log(ErrorData *edata)
 		}
 	}
 
-#ifdef HAVE_VSYSLOG
+#ifdef HAVE_SYSLOG
 	/* Write to syslog, if enabled */
 	if (pool_config->log_destination & LOG_DESTINATION_SYSLOG)
 	{
@@ -2217,7 +2217,7 @@ send_message_to_server_log(ErrorData *edata)
 		}
 		write_syslog(syslog_level, buf.data);
 	}
-#endif							/* HAVE_VSYSLOG */
+#endif							/* HAVE_SYSLOG */
 
 	if (pool_config->log_destination & LOG_DESTINATION_STDERR)
 	{
