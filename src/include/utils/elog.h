@@ -491,7 +491,7 @@ typedef enum
 
 extern bool in_error_recursion_trouble(void);
 
-#ifdef HAVE_VSYSLOG
+#ifdef HAVE_SYSLOG
 extern void set_syslog_parameters(const char *ident, int facility);
 #endif
 

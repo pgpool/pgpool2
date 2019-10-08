@@ -299,7 +299,7 @@ int main(int argc, char **argv)
 	else
 		daemonize();
 	
-#ifdef HAVE_VSYSLOG
+#ifdef HAVE_SYSLOG
     set_syslog_parameters(pool_config->syslog_ident ? pool_config->syslog_ident : "pgpool",
                           pool_config->syslog_facility);
 #endif
