@@ -1968,7 +1968,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 		/*
 		 * Send descrive message if the query is SELECT.
 		 */
-		if (!strcasecmp(query, "SELECT"))
+		if (!strncasecmp(query, "SELECT", strlen("SELECT")))
 		{
 			/*
 			 * Send descrive message
