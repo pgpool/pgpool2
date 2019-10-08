@@ -266,7 +266,7 @@ AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_FUNC_WAIT3
 AC_FUNC_ACCEPT_ARGTYPES
-AC_CHECK_FUNCS(setsid select socket sigprocmask strdup strerror strftime strtok asprintf vasprintf gai_strerror hstrerror pstat setproctitle vsyslog)
+AC_CHECK_FUNCS(setsid select socket sigprocmask strdup strerror strftime strtok asprintf vasprintf gai_strerror hstrerror pstat setproctitle syslog)
 
 PGAC_C_TYPES_COMPATIBLE
 
