@@ -77,7 +77,7 @@
    <listitem>
     <para>
      Setting to on, relation cache shared among <productname>Pgpool-II</productname>
-     child processes using the query cache. Default is off. Each child process
+     child processes using the query cache. Default is on. Each child process
      executed same query to refer to system catalog from <productname>PostgreSQL</productname>,
      but using query cache can expect to execute only same query once.
      Expiration time on query cache is <xref linkend="guc-relcache-expire"> parameter.

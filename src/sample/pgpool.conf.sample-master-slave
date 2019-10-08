@@ -773,10 +773,10 @@ check_unlogged_table = on
                                    # If you are absolutely sure that your system never uses unlogged tables
                                    # and you want to save access to primary/master, you could turn this off.
                                    # Default is on.
-enable_shared_relcache = off
+enable_shared_relcache = on
                                    # If on, relation cache stored in memory cache,
                                    # the cache is shared among child process.
-                                   # Default is off.
+                                   # Default is on.
                                    # (change requires restart)
 
 relcache_query_target = master     # Target node to send relcache queries. Default is master (primary) node.
