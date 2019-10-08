@@ -563,7 +563,7 @@ static struct config_bool ConfigureNamesBool[] =
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.enable_shared_relcache,
-		false,
+		true,
 		NULL, NULL, NULL
 	},
 

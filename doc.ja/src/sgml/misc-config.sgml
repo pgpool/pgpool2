@@ -114,7 +114,7 @@
     <para>
      <!--
      Setting to on, relation cache shared among <productname>Pgpool-II</productname>
-     child processes using the query cache. Default is off. Each child process
+     child processes using the query cache. Default is on. Each child process
      executed same query to refer to system catalog from <productname>PostgreSQL</productname>,
      but using query cache can expect to execute only same query once.
      Expiration time on query cache is <xref linkend="guc-relcache-expire"> parameter.
@@ -124,7 +124,7 @@
      is used together.
      -->
      onにするとクエリキャッシュを利用して子プロセス間でリレーションキャッシュを共有します。
-     デフォルトはoffです。
+     デフォルトはonです。
      それぞれの子プロセスは<productname>PostgreSQL</productname>のシステムカタログを参照するために同じクエリを実行していましたが、クエリキャッシュにより同じクエリの実行を1回だけとすることが期待できます。
      クエリキャッシュ上の寿命は、<xref linkend="guc-relcache-expire">の値となります。
       本パラメータは、<xref linkend="guc-memory-cache-enabled">がoffの場合も有効です。
