@@ -937,7 +937,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.if_up_cmd,
-		"ip addr add $_IP_$/24 dev eth0 label eth0:0",
+		"/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev eth0 label eth0:0",
 		NULL, NULL, NULL, NULL
 	},
 
@@ -947,7 +947,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.if_down_cmd,
-		"ip addr del $_IP_$/24 dev eth0",
+		"/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev eth0",
 		NULL, NULL, NULL, NULL
 	},
 
@@ -967,7 +967,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.arping_cmd,
-		"arping -U $_IP_$ -w 1",
+		"/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I eth0",
 		NULL, NULL, NULL, NULL
 	},
 

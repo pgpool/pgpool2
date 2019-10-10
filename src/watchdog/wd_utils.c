@@ -72,6 +72,9 @@ wd_check_network_command_configurations(void)
 
 	/* check setuid bit of ifup command */
 	command = wd_get_cmd(pool_config->if_up_cmd);
+	if (command[0] == '/')
+		return;
+
 	if (command)
 	{
 		snprintf(path, sizeof(path), "%s/%s", pool_config->if_cmd_path, command);
