@@ -280,17 +280,8 @@ fi
 %endif
 
 %changelog
-* Thu Oct 10 2019 Bo Peng <pengbo@sraoss.co.jp> 4.1.0
+* Thu Oct 10 2019 Bo Peng <pengbo@sraoss.co.jp> 3.6.19
 - Update to support PostgreSQL 12
-
-* Thu Sep 5 2019 Bo Peng <pengbo@sraoss.co.jp> 4.1.0
-- Add sample scripts
-
-* Wed Sep 19 2018 Bo Peng <pengbo@sraoss.co.jp> 4.0.0
-- Update to 4.0
-
-* Tue Oct 17 2017 Bo Peng <pengbo@sraoss.co.jp> 3.7.0
-- Update to 4.0
 
 * Tue Nov 22 2016 Bo Peng <pengbo@sraoss.co.jp> 3.6.0
 - Update to 3.6.0
