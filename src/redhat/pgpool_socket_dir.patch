@@ -1,5 +1,5 @@
-*** src/sample/pgpool.conf.sample	2019-03-28 20:25:36.786906212 +0900
---- pgpool.conf.sample	2019-03-28 20:24:56.417225338 +0900
+*** src/sample/pgpool.conf.sample	2019-10-10 13:34:12.187791527 +0900
+--- pgpool.conf.sample	2019-10-10 13:52:09.165333265 +0900
 ***************
 *** 31,37 ****
   port = 9999
@@ -18,7 +18,7 @@
                                      # The Debian package defaults to
                                      # /var/run/postgresql
 ***************
-*** 53,59 ****
+*** 57,63 ****
   pcp_port = 9898
                                      # Port number for pcp
                                      # (change requires restart)
@@ -26,7 +26,7 @@
                                      # Unix domain socket path for pcp
                                      # The Debian package defaults to
                                      # /var/run/postgresql
---- 53,59 ----
+--- 57,63 ----
   pcp_port = 9898
                                      # Port number for pcp
                                      # (change requires restart)
@@ -35,7 +35,7 @@
                                      # The Debian package defaults to
                                      # /var/run/postgresql
 ***************
-*** 499,505 ****
+*** 584,590 ****
                                       # Authentication key for watchdog communication
                                       # (change requires restart)
   
@@ -43,7 +43,7 @@
                                       # Unix domain socket path for watchdog IPC socket
                                       # The Debian package defaults to
                                       # /var/run/postgresql
---- 499,505 ----
+--- 584,590 ----
                                       # Authentication key for watchdog communication
                                       # (change requires restart)
   
