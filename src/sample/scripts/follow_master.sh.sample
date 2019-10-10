@@ -3,7 +3,7 @@
 # First try pg_rewind. If pg_rewind failed, use pg_basebackup.
 
 set -o xtrace
-exec &gt; &gt;(logger -i -p local1.info) 2&gt;&1
+exec > >(logger -i -p local1.info) 2>&1
 
 # Special values:
 #   %d = failed node id
@@ -78,7 +78,7 @@ if [ $? -eq 0 ]; then
 
         ${PGHOME}/bin/pg_ctl -w -m f -D ${FAILED_NODE_PGDATA} stop
 
-        cat &gt; ${RECOVERYCONF} &lt;&lt; EOT
+        cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${NEW_MASTER_NODE_HOST} port=${NEW_MASTER_NODE_PORT} user=${REPLUSER} application_name=${FAILED_NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
 restore_command = 'scp ${NEW_MASTER_NODE_HOST}:${ARCHIVEDIR}/%f %p'
@@ -88,7 +88,7 @@ EOT
         if [ ${PGVERSION} -ge 12 ]; then
             touch ${FAILED_NODE_PGDATA}/standby.signal
         else
-            echo \"standby_mode = 'on'\" &gt;&gt; ${RECOVERYCONF}
+            echo \"standby_mode = 'on'\" >> ${RECOVERYCONF}
         fi
 
         ${PGHOME}/bin/pg_rewind -D ${FAILED_NODE_PGDATA} --source-server=\"user=postgres host=${NEW_MASTER_NODE_HOST} port=${NEW_MASTER_NODE_PORT}\"
@@ -112,7 +112,7 @@ EOT
                        -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${FAILED_NODE_PGDATA}/postgresql.conf
             fi
      
-            cat > ${RECOVERYCONF} &lt;&lt; EOT
+            cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${NEW_MASTER_NODE_HOST} port=${NEW_MASTER_NODE_PORT} user=${REPLUSER} application_name=${FAILED_NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
 restore_command = 'scp ${NEW_MASTER_NODE_HOST}:${ARCHIVEDIR}/%f %p'
@@ -120,9 +120,9 @@ primary_slot_name = '${FAILED_NODE_HOST}'
 EOT
 
             if [ ${PGVERSION} -ge 12 ]; then
-                    touch ${FAILED_NODE_PGDATA}/standby.signal
+                touch ${FAILED_NODE_PGDATA}/standby.signal
             else
-                    echo \"standby_mode = 'on'\" &gt;&gt; ${RECOVERYCONF}
+                echo \"standby_mode = 'on'\" >> ${RECOVERYCONF}
             fi
         "
 
