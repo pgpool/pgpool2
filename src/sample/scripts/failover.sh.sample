@@ -2,7 +2,7 @@
 # This script is run by failover_command.
 
 set -o xtrace
-exec &gt; &gt;(logger -i -p local1.info) 2&gt;&1
+exec > >(logger -i -p local1.info) 2>&1
 
 # Special values:
 #   %d = failed node id

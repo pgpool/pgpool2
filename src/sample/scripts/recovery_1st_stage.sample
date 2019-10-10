@@ -2,7 +2,7 @@
 # This script is executed by "recovery_1st_stage" to recovery a Standby node.
 
 set -o xtrace
-exec &gt; &gt;(logger -i -p local1.info) 2&gt;&1
+exec > >(logger -i -p local1.info) 2>&1
 
 PRIMARY_NODE_PGDATA="$1"
 DEST_NODE_HOST="$2"
@@ -35,7 +35,7 @@ else
 fi
 
 ## Create replication slot "${DEST_NODE_HOST}"
-${PGHOME}/bin/psql -p ${PRIMARY_NODE_PORT} &lt;&lt; EOQ
+${PGHOME}/bin/psql -p ${PRIMARY_NODE_PORT} << EOQ
 SELECT pg_create_physical_replication_slot('${DEST_NODE_HOST}');
 EOQ
 
@@ -54,7 +54,7 @@ ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DES
                -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${DEST_NODE_PGDATA}/postgresql.conf
     fi
 
-    cat &gt; ${RECOVERYCONF} &lt;&lt; EOT
+    cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${PRIMARY_NODE_HOST} port=${PRIMARY_NODE_PORT} user=${REPLUSER} application_name=${DEST_NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
 restore_command = 'scp ${PRIMARY_NODE_HOST}:${ARCHIVEDIR}/%f %p'
@@ -62,9 +62,9 @@ primary_slot_name = '${DEST_NODE_HOST}'
 EOT
 
     if [ ${PGVERSION} -ge 12 ]; then
-            touch ${DEST_NODE_PGDATA}/standby.signal
+        touch ${DEST_NODE_PGDATA}/standby.signal
     else
-            echo \"standby_mode = 'on'\" &gt;&gt; ${RECOVERYCONF}
+        echo \"standby_mode = 'on'\" >> ${RECOVERYCONF}
     fi
 
     sed -i \"s/#*port = .*/port = ${DEST_NODE_PORT}/\" ${DEST_NODE_PGDATA}/postgresql.conf
@@ -72,7 +72,7 @@ EOT
 
 if [ $? -ne 0 ]; then
 
-    ${PGHOME}/bin/psql -p ${PRIMARY_NODE_PORT} &lt;&lt; EOQ
+    ${PGHOME}/bin/psql -p ${PRIMARY_NODE_PORT} << EOQ
 SELECT pg_drop_replication_slot('${DEST_NODE_HOST}');
 EOQ
 
