@@ -1,5 +1,10 @@
 # How to build RPM:
-#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4.0" --define="pg_version 93" --define="pghome /usr/pgsql-9.3" --define="dist .rhel6"
+#
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4.0" --define="pg_version 93" --define="pghome /usr/pgsql-9.3" --define="dist .rhel6" --define="pgsql_ver 93"
+#
+# OR
+#
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4.0" --define="pg_version 11" --define="pghome /usr/pgsql-11" --define="dist .rhel6" --define="pgsql_ver 110"
 #
 # expecting RPM name are:
 #   pgpool-II-pg{pg_version}-{pgpool_version}-{rel}pgdg.rhel{v}.{arch}.rpm
@@ -33,18 +38,12 @@ Source3:        pgpool.service
 %endif
 Source4:        pgpool_rhel7.sysconfig
 Patch1:         pgpool-II-head.patch
-%if %{pg_version} >=94 && %{rhel} >= 7
-Patch2:         pgpool_socket_dir.patch
-%endif
-%if %{pg_version} == 10 && %{rhel} >= 7
-Patch2:         pgpool_socket_dir.patch
-%endif
-%if %{pg_version} == 11 && %{rhel} >= 7
+%if %{pgsql_ver} >=94 && %{rhel} >= 7
 Patch2:         pgpool_socket_dir.patch
 %endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel
-%if %{pg_version} == 11 && %{rhel} >= 7
+%if %{pgsql_ver} >= 110 && %{rhel} >= 7
 BuildRequires:  llvm-toolset-7 llvm-toolset-7-llvm-devel llvm5.0
 %endif
 %if %{systemd_enabled}
@@ -92,7 +91,7 @@ Postgresql extensions libraries and sql files for pgpool-II.
 %prep
 %setup -q -n %{archive_name}
 %patch1 -p1
-%if %{pg_version} >=94 && %{rhel} >= 7
+%if %{pgsql_ver} >=94 && %{rhel} >= 7
 %patch2 -p0
 %endif
 
@@ -116,7 +115,7 @@ make %{?_smp_mflags} DESTDIR=%{buildroot} install
 
 # install to PostgreSQL
 make %{?_smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool-recovery
-%if %{pg_version} <= 93 && %{pg_version} > 11
+%if %{pgsql_ver} <= 93
 # From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
 # because 9.4 or later has to_regclass.
 make %{?_smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool-regclass
@@ -252,7 +251,7 @@ fi
 %{pghome}/lib/pgpool_adm.so
 # From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
 # because 9.4 or later has to_regclass.
-%if %{pg_version} <= 93 && %{pg_version} > 11
+%if %{pgsql_ver} <= 93
   %{pghome}/share/extension/pgpool_regclass--1.0.sql
   %{pghome}/share/extension/pgpool_regclass.control
   %{pghome}/share/extension/pgpool-regclass.sql
@@ -260,7 +259,7 @@ fi
 %endif
 # From PostgerSQL 11 the relevant files have to be installed 
 # into $pkglibdir/bitcode/
-%if %{pg_version} == 11 && %{rhel} >= 7
+%if %{pgsql_ver} >= 110 && %{rhel} >= 7
   %{pghome}/lib/bitcode/pgpool-recovery.index.bc
   %{pghome}/lib/bitcode/pgpool-recovery/pgpool-recovery.bc
   %{pghome}/lib/bitcode/pgpool_adm.index.bc
@@ -268,6 +267,9 @@ fi
 %endif
 
 %changelog
+* Thu Oct 10 2019 Bo Peng <pengbo@sraoss.co.jp> 3.5.23
+- Update to support PostgreSQL 12
+
 * Mon Dec 28 2015 Yugo Nagata <nagata@sraoss.co.jp> 3.5.0
 - Add Chinese document
 
