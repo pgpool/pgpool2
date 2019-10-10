@@ -150,8 +150,8 @@
      </row>
      <row>
       <entry>Pgpool-II起動ユーザ</entry>
-      <entry>root</entry>
-      <entry>通常のユーザで<productname>Pgpool-II</productname>を起動する場合の設定方法は<xref linkend="TUTORIAL-WATCHDOG-START-STOP">をご参照ください。</entry>
+      <entry>postgres (Pgpool-II 4.1以降)</entry>
+	  <entry>Pgpool-II 4.0 及び 4.0 以前のバージョンでは、デフォルトではrootでPgpool-IIを起動する</entry>
      </row>
      <row>
       <entry>Pgpool-II動作モード</entry>
@@ -376,7 +376,7 @@
     RPMからインストールした場合、すべての<productname>Pgpool-II</productname>の設定ファイルは<filename>/etc/pgpool-II</filename>にあります。今回はストリーミングレプリケーションモードのテンプレートとして<filename>pgpool.conf.sample-stream</filename>サンプルファイルを使用します。
    </para>
    <programlisting>
-    [全サーバ]# cp /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
+    [全サーバ]# cp -p /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
    </programlisting>
    <para>
     <productname>Pgpool-II</productname>が全てのIPアドレスから接続を受け付けるように、<xref linkend="GUC-LISTEN-ADDRESSES">パラメータに<literal>'*'</literal>を設定します。
@@ -981,25 +981,25 @@ exit 0
 
    <para>
     仮想IPの起動/停止、ARPリクエストの送信を行う設定パラメータ<xref linkend="GUC-IF-UP-CMD">、<xref linkend="GUC-IF-DOWN-CMD">、<xref linkend="GUC-ARPING-CMD">に、ネットワーク環境に合わせてネットワークインターフェース名を設定します。
-       今回の例で使ったネットワークインターフェースは「enp0s8」となっています。
+    今回の例で使ったネットワークインターフェースは「enp0s8」となっています。
+    <varname>if_up/down_cmd</varname>や<varname>arping_cmd</varname>を実行するにはroot権限が必要となりますので、
+    一般ユーザが実行できるように<command>ip/arping</command>コマンドに<literal>setuid</literal>を設定するか、
+    <productname>Pgpool-II</productname>起動ユーザ、デフォルトでは<literal>postgres</literal>ユーザ (<productname>Pgpool-II</productname> 4.1以降) がパスワードなしに<command>sudo</command>を実行できるように設定する必要があります。
+    ここでは、<command>sudo</command>を介して実行するように設定します。RPMからインストールした場合、<literal>postgres</literal>ユーザがパスワードなしに<command>sudo</command>を介して<command>ip/arping</command>を実行できるように設定済みです。
    </para>
    <programlisting>
-    if_up_cmd = 'ip addr add $_IP_$/24 dev enp0s8 label enp0s8:0'
-    # startup delegate IP command
-    if_down_cmd = 'ip addr del $_IP_$/24 dev enp0s8'
-    # shutdown delegate IP command
-    arping_cmd = 'arping -U $_IP_$ -w 1 -I enp0s8'
-    # arping command
+if_up_cmd = '/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev enp0s8 label enp0s8:0'
+if_down_cmd = '/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev enp0s8'
+arping_cmd = '/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I enp0s8'
    </programlisting>
 
    <para>
-    ipコマンドやarpingコマンドのパスがデフォルトのパスと異なる場合、環境に合わせて<xref linkend="GUC-IF-CMD-PATH">や<xref linkend="GUC-ARPING-PATH">を設定しておいてください。
+	ipコマンドやarpingコマンドのパスがデフォルトのパスと異なる場合、環境に合わせて<xref linkend="GUC-IF-CMD-PATH">や<xref linkend="GUC-ARPING-PATH">を設定しておいてください。
+    ただし、 <varname>if_up/down_cmd</varname>及び<varname>arping_cmd</varname>に指定したコマンドが"/"で始まる場合、 フルパスとみなし<varname>if_cmd_path</varname>及び<varname>arping_path</varname>の設定を無視します。
    </para>
    <programlisting>
-    if_cmd_path = '/sbin'
-    # path to the directory where if_up/down_cmd exists
-    arping_path = '/usr/sbin'
-    # arping command path
+if_cmd_path = '/sbin'
+arping_path = '/usr/sbin'
    </programlisting>
    <para>
     各watchdog が稼働するサーバ情報を設定しておきます。
