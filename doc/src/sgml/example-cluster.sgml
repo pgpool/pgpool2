@@ -153,8 +153,8 @@
      </row>
      <row>
       <entry>Pgpool-II start user</entry>
-      <entry>root</entry>
-      <entry>See <xref linkend="TUTORIAL-WATCHDOG-START-STOP"> to startup Pgpool-II with non-root user</entry>
+      <entry>postgres (Pgpool-II 4.1 or later)</entry>
+      <entry>Pgpool-II 4.0 or before, the default startup user is root</entry>
      </row>
      <row>
       <entry>Running mode</entry>
@@ -393,7 +393,7 @@
     In this example, we copy the sample configuration file for streaming replicaton mode.
    </para>
    <programlisting>
-    # cp /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
+    # cp -p /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
    </programlisting>
    <para>
     To allow Pgpool-II to accept all incoming connections, we set <varname>listen_addresses = '*'</varname>.
@@ -1029,25 +1029,26 @@ exit 0
 
    <para>
     To bring up/down the virtual IP and send the ARP requests, we set <xref linkend="GUC-IF-UP-CMD">, <xref linkend="GUC-IF-DOWN-CMD"> and <xref linkend="GUC-ARPING-CMD">.
-       The network interface used in this example is "enp0s8".
+    The network interface used in this example is "enp0s8".
+    Since root privilege is required to execute <varname>if_up/down_cmd</varname> or
+    <varname>arping_cmd</varname> command, use setuid on these command or allow 
+    <productname>Pgpool-II</productname> startup user, <literal>postgres</literal> user (Pgpool-II 4.1 or later) to run <command>sudo</command> command without a password.
+    If installed from RPM, the <literal>postgres</literal> user has been configured to run
+    <command>ip/arping</command> via <command>sudo</command> without a password.
    </para>
    <programlisting>
-    if_up_cmd = 'ip addr add $_IP_$/24 dev enp0s8 label enp0s8:0'
-    # startup delegate IP command
-    if_down_cmd = 'ip addr del $_IP_$/24 dev enp0s8'
-    # shutdown delegate IP command
-    arping_cmd = 'arping -U $_IP_$ -w 1 -I enp0s8'
-    # arping command
+if_up_cmd = '/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev enp0s8 label enp0s8:0'
+if_down_cmd = '/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev enp0s8'
+arping_cmd = '/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I enp0s8'
    </programlisting>
    <para>
     Set <xref linkend="GUC-IF-CMD-PATH"> and <xref linkend="GUC-ARPING-PATH"> according to the
-      command path.
+    command path.
+    If <varname>if_up/down_cmd</varname> or <varname>arping_cmd</varname> starts with "/", these parameters will be ignored. 
    </para>
    <programlisting>
-    if_cmd_path = '/sbin'
-    # path to the directory where if_up/down_cmd exists
-    arping_path = '/usr/sbin'
-    # arping command path
+if_cmd_path = '/sbin'
+arping_path = '/usr/sbin'
    </programlisting>
    <para>
     Specify the hostname and port number of each <productname>Pgpool-II</productname> server.
