@@ -4,6 +4,9 @@ After=syslog.target network.target
 
 [Service]
 
+User=postgres
+Group=postgres
+
 EnvironmentFile=-/etc/sysconfig/pgpool
 
 ExecStart=/usr/bin/pgpool -f /etc/pgpool-II/pgpool.conf $OPTS
