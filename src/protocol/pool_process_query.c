@@ -4238,7 +4238,7 @@ static int detect_error(POOL_CONNECTION *backend, char *error_code, int major, c
 		pool_unread(backend, &kind, sizeof(kind));
 	}
 
-	if (str)
+	if (major == PROTO_MAJOR_V3 && str)
 		pfree(str);
 
 	return is_error;
@@ -4329,7 +4329,7 @@ static bool pool_process_notice_message_from_one_backend(POOL_CONNECTION *fronte
 
 		/* produce a pgpool log entry */
 		ereport(LOG,
-				(errmsg("backend [%d]: NOTICE: %s",backend_idx,str)));
+				(errmsg("backend [%d]: %s", backend_idx, str)));
 		/* forward it to the frontend */
 		pool_write(frontend, &kind, 1);
 		pool_write_and_flush(frontend, str, len);
@@ -4427,7 +4427,8 @@ int pool_extract_error_message(bool read_kind, POOL_CONNECTION *backend, int maj
         {
             str = pool_read_string(backend, &len, 0);
             readlen += len;
-			appendStringInfoString(str_message_buf, str);
+			appendBinaryStringInfo(str_message_buf, str, len);
+			appendBinaryStringInfo(str_buf, str, len);
         }
 
         if (unread)
