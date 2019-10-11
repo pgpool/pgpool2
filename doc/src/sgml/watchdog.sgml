@@ -131,6 +131,7 @@
       If none of the server are reachable, watchdog will regard it as
       failure of the <productname>Pgpool-II</productname>.
       Therefore, it is recommended to specify multiple servers.
+      Please note that you should not assign PostgreSQL servers to this parameter.
      </para>
      <para>
       This parameter can only be set at server start.
