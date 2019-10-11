@@ -199,12 +199,14 @@
       If none of the server are reachable, watchdog will regard it as
       failure of the <productname>Pgpool-II</productname>.
       Therefore, it is recommended to specify multiple servers.
+      Please note that you should not assign PostgreSQL servers to this parameter.
       -->
       上位接続を確認するための信頼できるサーバのリストを指定します。
       リスト中の各サーバは、pingの応答に答える必要があります。
       <literal>"hostA,hostB,hostC"</literal>のようにカンマで区切って複数のサーバを指定できます。
       全てのサーバに到達できなくなると、watchdogは<productname>Pgpool-II</productname>に障害が発生したと判断します。
       そのため、複数のサーバを指定することを推奨します。
+      なお、このパラメータにPostgreSQLサーバを指定することはしないでください。
      </para>
      <para>
       <!--
