@@ -1,6 +1,6 @@
 top_builddir = ../..
 AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
-
+WATCHDOG_DEBUG=0
 noinst_LIBRARIES = lib-watchdog.a
 
 lib_watchdog_a_SOURCES = \
@@ -16,3 +16,4 @@ lib_watchdog_a_SOURCES = \
 	wd_utils.c \
 	wd_escalation.c
 
+DEFS = @DEFS@ -DWATCHDOG_DEBUG_OPTS=$(WATCHDOG_DEBUG)
