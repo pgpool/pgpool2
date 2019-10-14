@@ -38,7 +38,7 @@ function install_pgpool
 
 	test -d $log || mkdir $log
         
-	make install HEALTHCHECK_DEBUG=1 -C $dir/../../ -e prefix=${PGPOOL_PATH} >& regression.log 2>&1
+	make install HEALTHCHECK_DEBUG=1 WATCHDOG_DEBUG=1 -C $dir/../../ -e prefix=${PGPOOL_PATH} >& regression.log 2>&1
 
 	if [ $? != 0 ];then
 	    echo "make install failed"
