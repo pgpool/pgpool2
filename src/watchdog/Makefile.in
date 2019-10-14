@@ -188,7 +188,7 @@ COLLATEINDEX = @COLLATEINDEX@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEFS = @DEFS@
+DEFS = @DEFS@ -DWATCHDOG_DEBUG_OPTS=$(WATCHDOG_DEBUG)
 DLLTOOL = @DLLTOOL@
 DOCBOOKSTYLE = @DOCBOOKSTYLE@
 DSYMUTIL = @DSYMUTIL@
@@ -311,6 +311,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = ../..
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
+WATCHDOG_DEBUG = 0
 noinst_LIBRARIES = lib-watchdog.a
 lib_watchdog_a_SOURCES = \
 	watchdog.c \

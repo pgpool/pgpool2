@@ -79,7 +79,8 @@ typedef enum
 	WD_IN_NW_TROUBLE,
 	/* the following states are only valid on remote nodes */
 	WD_SHUTDOWN,
-	WD_ADD_MESSAGE_SENT
+	WD_ADD_MESSAGE_SENT,
+	WD_NETWORK_ISOLATION
 }			WD_STATES;
 
 typedef enum
@@ -114,8 +115,20 @@ typedef enum
 	WD_EVENT_NODE_CON_LOST,
 	WD_EVENT_NODE_CON_FOUND,
 	WD_EVENT_CLUSTER_QUORUM_CHANGED,
-	WD_EVENT_WD_STATE_REQUIRE_RELOAD
+	WD_EVENT_WD_STATE_REQUIRE_RELOAD,
+	WD_EVENT_I_AM_APPEARING_LOST,
+	WD_EVENT_I_AM_APPEARING_FOUND
 }			WD_EVENTS;
+
+typedef enum {
+	NODE_LOST_UNKNOWN_REASON,
+	NODE_LOST_BY_LIFECHECK,
+	NODE_LOST_BY_SEND_FAILURE,
+	NODE_LOST_BY_MISSING_BEACON,
+	NODE_LOST_BY_RECEIVE_TIMEOUT,
+	NODE_LOST_BY_NOT_REACHABLE,
+	NODE_LOST_SHUTDOWN
+} WD_NODE_LOST_REASONS;
 
 typedef struct SocketConnection
 {
@@ -135,6 +148,20 @@ typedef struct WatchdogNode
 									 * from the node */
 	struct timeval last_sent_time;	/* timestamp when last packet was sent on
 									 * the node */
+	bool   has_lost_us;             /*
+									 * True when this remote node thinks
+									 * we are lost
+									 */
+	int    sending_failures_count;  /* number of times we have failed
+									 * to send message to the node.
+									 * Gets reset after successfull sent
+									 */
+	int    missed_beacon_count;     /* number of times the node has
+									 * failed to reply for beacon.
+									 * message
+									 */
+	WD_NODE_LOST_REASONS node_lost_reason;
+
 	char		pgp_version[MAX_VERSION_STR_LEN];		/* Pgpool-II version */
 	int			wd_data_major_version;	/* watchdog messaging version major*/
 	int			wd_data_minor_version;  /* watchdog messaging version minor*/
