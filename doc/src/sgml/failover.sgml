@@ -181,7 +181,8 @@
 	alive. For example if you have 3 nodes, namely node 0, 1,
 	2. Suppose node 1 the primary and all of them are healthy
 	(no down node). If node 1 fails, failover_command is
-	called with %m = 0.
+	called with %m = 0. And, if all standby nodes are down and primary node
+	failover happens, failover_command is called with %m = -1 and %H,%R,$r = "".
       </para>
      </note>
 

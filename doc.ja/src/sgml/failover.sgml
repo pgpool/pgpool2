@@ -183,6 +183,33 @@
      <note>
       <para>
        <!--
+       The "master node" refers to a node which has the
+       "youngest (or the smallest) node id" among live the
+       database nodes. In <link linkend="running-mode">streaming
+	replication mode</link>, this may be different from
+       primary node. In <xref linkend="failover-command-table">,
+	%m is the new master node chosen
+	by <productname>Pgpool-II</productname>. It is the node
+	being assigned the youngest (smallest) node id which is
+	alive. For example if you have 3 nodes, namely node 0, 1,
+	2. Suppose node 1 the primary and all of them are healthy
+	(no down node). If node 1 fails, failover_command is
+	called with %m = 0. And, if all standby nodes are down and primary node
+	failover happens, failover_command is called with %m = -1 and %H,%R,$r = "".
+       -->
+       マスターノードは、生きているデータベースノードの中から一番若い(小さい)ノードIDを持つノードを参照します。
+       <link linkend="running-mode">ストリーミングレプリケーションモード</link>では、このノードはプライマリノードとは異なる場合があります。
+       <xref linkend="failover-command-table">内では、 %mは<productname>Pgpool-II</productname>によって選出された新しいマスターノードとなります。
+       新しいマスターノードには生きているノードで一番若い(小さい)ノードが割り当てられます。
+       例えば、ノード0、1、2という3つのノードを持ち、ノード1がプライマリノード、全てのノードは正常である（ダウンしているノードがない）と仮定します。
+      ノード1がダウンした場合、failover_command は %m = 0 で呼び出されます。
+      また、全てのスタンバイノードがダウンした状態でプライマリノードのフェイルオーバが起きた場合、failover_commandは %m = -1、および%H,%R,%r = "" で呼び出されます。
+      </para>
+     </note>
+
+     <note>
+      <para>
+       <!--
        When a failover is performed,
        basically <productname>Pgpool-II</productname> kills all
        its child processes, which will in turn terminate all the
