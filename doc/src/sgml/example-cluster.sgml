@@ -554,6 +554,12 @@ PGHOME=/usr/pgsql-11
 
 logger -i -p local1.info failover.sh: start: failed_node_id=$FAILED_NODE_ID old_primary_node_id=$OLD_PRIMARY_NODE_ID failed_host=$FAILED_NODE_HOST new_master_host=$NEW_MASTER_NODE_HOST
 
+## If there's no master node anymore, skip failover.
+if [ $NEW_MASTER_NODE_ID -lt 0 ]; then
+    logger -i -p local1.info failover.sh: All nodes are down. Skipping failover.
+	exit 0
+fi
+
 ## Test passwrodless SSH
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
 
