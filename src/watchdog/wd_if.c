@@ -119,6 +119,7 @@ wd_IP_up(void)
 	if (command)
 	{
 
+		/* If if_up_cmd starts with "/", the setting specified in "if_cmd_path" will be ignored */
 		if (command[0] == '/')
 			snprintf(path, sizeof(path), "%s", command);
 		else
@@ -140,10 +141,11 @@ wd_IP_up(void)
 		command = wd_get_cmd(pool_config->arping_cmd);
 		if (command)
 		{
+			/* If arping_cmd starts with "/", the setting specified in "arping_path" will be ignored */
 			if (command[0] == '/')
 				snprintf(path, sizeof(path), "%s", command);
 			else
-				snprintf(path, sizeof(path), "%s/%s", pool_config->if_cmd_path, command);
+				snprintf(path, sizeof(path), "%s/%s", pool_config->arping_path, command);
 
 			rtn = exec_if_cmd(path, pool_config->arping_cmd);
 			pfree(command);
@@ -200,6 +202,7 @@ wd_IP_down(void)
 	command = wd_get_cmd(pool_config->if_down_cmd);
 	if (command)
 	{
+		/* If if_down_cmd starts with "/", the setting specified in "if_cmd_path" will be ignored */
 		if (command[0] == '/')
 			snprintf(path, sizeof(path), "%s", command);
 		else
