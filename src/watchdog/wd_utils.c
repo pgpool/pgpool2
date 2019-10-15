@@ -76,7 +76,10 @@ wd_check_network_command_configurations(void)
 	if (command)
 	{
 		if (command[0] == '/')
+		{
+			pfree(command);
 			return;
+		}
 
 		snprintf(path, sizeof(path), "%s/%s", pool_config->if_cmd_path, command);
 		pfree(command);
