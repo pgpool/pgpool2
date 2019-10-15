@@ -794,6 +794,7 @@ process_process_count_response(PCPConnInfo* pcpConn, char* buf, int len)
 				pcp_internal_error(pcpConn,
 								   "command failed. invalid response");
 				setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				pfree(process_list);
 				return;
 			}
 			index +=1;
