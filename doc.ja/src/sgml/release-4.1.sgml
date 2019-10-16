@@ -201,6 +201,43 @@
 
    <listitem>
     <!--
+    2019-10-10 [422038d9]
+    -->
+    <para>
+<!--
+     If installing from RPMs, by default <productname>Pgpool-II</productname>
+     is started by <literal>postgres</literal> user. (Bo Peng)
+-->
+     RPMs からインストールする場合、デフォルトでは<literal>postgres</literal>ユーザで
+     <productname>Pgpool-II</productname>を起動するようになりました。(Bo Peng)
+    </para>
+    <para>
+<!--
+     Because of the security reason, the <productname>Pgpool-II</productname> default
+     startup user is changed to <literal>postgres</literal> user.
+-->
+     セキュリティ上の理由で、<productname>Pgpool-II</productname>のデフォルトの起動ユーザが
+     <literal>postgres</literal>ユーザに変更されました。
+    </para>
+    <para>
+<!--
+     If installing from RPMs, <literal>postrges</literal> user will be allowed to
+     run <varname>if_up/down_cmd</varname> and <varname>arping_cmd</varname>
+     with sudo without a password.
+     If <varname>if_up/down_cmd</varname> or <varname>arping_cmd</varname> starts with "/",
+     the setting specified in <varname>if_cmd_path</varname> or <varname>arping_path</varname>
+     will be ignored.
+-->
+     RPMsからインストールする場合、<literal>postgres</literal>ユーザがパスワードなしに
+     <command>sudo</command>を介して<varname>if_up/down_cmd</varname>及び<varname>arping_cmd</varname>を
+     実行できるように設定されています。
+     また、<varname>if_up/down_cmd</varname>や<varname>arping_cmd</varname>に指定したコマンドが"/"で始まる場合、 
+     フルパスとみなし<varname>if_cmd_path</varname>や<varname>arping_path</varname>の設定を無視します。 
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2019-07-02 [d86c71d1]
     -->
     <para>

@@ -151,6 +151,28 @@
 
    <listitem>
     <!--
+    2019-10-10 [422038d9]
+    -->
+    <para>
+     If installing from RPMs, by default <productname>Pgpool-II</productname>
+     is started by <literal>postgres</literal> user. (Bo Peng)
+    </para>
+    <para>
+     Because of the security reason, the <productname>Pgpool-II</productname> default
+     startup user is changed to <literal>postgres</literal> user.
+    </para>
+    <para>
+     If installing from RPMs, <literal>postrges</literal> user will be allowed to
+     run <varname>if_up/down_cmd</varname> and <varname>arping_cmd</varname>
+     with <command>sudo</command> without a password.
+     If <varname>if_up/down_cmd</varname> or <varname>arping_cmd</varname> starts with "/",
+     the setting specified in <varname>if_cmd_path</varname> or <varname>arping_path</varname>
+     will be ignored.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2019-07-02 [d86c71d1]
     -->
     <para>
