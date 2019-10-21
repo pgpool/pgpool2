@@ -207,6 +207,13 @@ pool_read(POOL_CONNECTION * cp, void *buf, int len)
 
 		if (readlen == -1)
 		{
+			if (processType == PT_HEALTH_CHECK && health_check_timer_expired && errno == EINTR)
+			{
+				ereport(ERROR,
+						(errmsg("health check timed out while waiting for reading data")));
+				return -1;
+			}
+
 			if (errno == EINTR || errno == EAGAIN)
 			{
 				ereport(DEBUG5,
@@ -1497,7 +1504,7 @@ pool_check_fd(POOL_CONNECTION * cp)
 		save_errno = errno;
 		if (fds == -1)
 		{
-			if (processType == PT_MAIN && processState == PERFORMING_HEALTH_CHECK && errno == EINTR && health_check_timer_expired)
+			if (processType == PT_HEALTH_CHECK && errno == EINTR && health_check_timer_expired)
 			{
 				ereport(WARNING,
 						(errmsg("health check timed out while waiting for reading data")));
