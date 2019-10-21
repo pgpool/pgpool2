@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -698,7 +698,7 @@ pool_check_fd(POOL_CONNECTION * cp)
 		save_errno = errno;
 		if (fds == -1)
 		{
-			if (processType == PT_MAIN && processState == PERFORMING_HEALTH_CHECK && errno == EINTR && health_check_timer_expired)
+			if (processType == PT_HEALTH_CHECK && errno == EINTR && health_check_timer_expired)
 			{
 				ereport(WARNING,
 						(errmsg("health check timed out while waiting for reading data")));
