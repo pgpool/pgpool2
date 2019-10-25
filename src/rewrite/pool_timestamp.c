@@ -901,6 +901,43 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 			}
 		}
 	}
+	else if (IsA(stmt, CreateTableAsStmt))
+	{
+		CreateTableAsStmt *c_stmt = (CreateTableAsStmt *) stmt;
+
+		/*
+		 * CREATE TABLE t1 AS SELECT now();
+		 */
+		if (IsA(c_stmt->query, SelectStmt))
+		{
+			/* rewrite params */
+			raw_expression_tree_walker(
+									   (Node *) c_stmt->query,
+									   rewrite_timestamp_walker, (void *) &ctx);
+
+			rewrite = ctx.rewrite;
+		}
+	}
+	else if (IsA(stmt, SelectStmt))
+	{
+		SelectStmt *s_stmt = (SelectStmt *) stmt;
+
+		/*
+		 * SELECT now() INTO t1;
+		 */
+		raw_expression_tree_walker(
+								   (Node *) s_stmt,
+								   rewrite_timestamp_walker, (void *) &ctx);
+
+		/*
+		 * WITH ins AS ( INSERT INTO t1 SELECT now()) SELECT;
+		 */
+		raw_expression_tree_walker(
+								   (Node *) s_stmt->withClause,
+								   rewrite_timestamp_walker, (void *) &ctx);
+
+		rewrite = ctx.rewrite;
+	}
 	else
 		;
 
