@@ -41,8 +41,11 @@ Patch1:         pgpool.conf.sample.patch
 Patch2:         pgpool-II-head.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel
-%if %{pgsql_ver} >= 110 && %{rhel} >= 7
+%if %{pgsql_ver} >= 110 && %{rhel} == 7
 BuildRequires:  llvm-toolset-7 llvm-toolset-7-llvm-devel llvm5.0
+%endif
+%if %{pgsql_ver} >= 110 && %{rhel} >= 8
+BuildRequires:  llvm-devel >= 6.0.0 clang-devel >= 6.0.0
 %endif
 %if %{systemd_enabled}
 BuildRequires:    systemd
