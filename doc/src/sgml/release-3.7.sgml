@@ -1,6 +1,162 @@
 <!-- doc/src/sgml/release-3.7.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-7-12> 
+ <title>Release 3.7.12</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2019-10-31</simpara>
+ </note>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2019-10-25 [45a3469]
+    -->
+    <para>
+     Fix incorrect query rewrite in replication mode. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-21 [1d87df7]
+    -->
+    <para>
+	 Fix that health check timeout does work in certain case. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2019-October/003458.html">[pgpool-hackers: 3458]</ulink>, <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2019-October/003459.html">[pgpool-hackers: 3459]</ulink> 
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-15 [339bd21]
+    -->
+    <para>
+	 Doc: add <xref linkend="guc-failover-command"> description when all standby nodes are down. (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-11 [32a9f5d]
+    -->
+    <para>
+     Doc: add note not to assign <productname>PostgreSQL</productname> servers to <xref linkend="guc-trusted-servers">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-14 [30aed19]
+    -->
+    <para>
+     Fix for miscellaneous watchdog issues. (Muhammad Usama)
+    </para>
+    <para>
+	 The lost nodes reported by life-check are treated as hard failures even when the node 
+	 is reachable from the watchdog core.
+    </para>
+    <para>
+     In the case of network partitioning or partial life-check failure, 
+	 the kicked out standby node was too aggressive in trying to connect 
+	 to the master or become a master itself so that potentially put the 
+	 unnecessary burden on the network and the cluster nodes.
+	 Fix is to make the isolated node a bit calm and wait between trying to connect to 
+	 master or become a master.
+    </para>
+    <para>
+     See details:
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=547">bug 547</ulink>),
+     <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2019-August/006730.html">[pgpool-general: 6672]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-10 [4b726df]
+    -->
+    <para>
+ 	 Fix assorted ancient v2 protocol bugs. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-08 [45ac39b]
+    -->
+    <para>
+	 Fix problem that <xref linkend="guc-syslog-facility"> doesn't change by reload. 
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=548">bug 548</ulink>) (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-03 [fed3d6b]
+    -->
+    <para>
+     Fix Pgpool-II shutdown failed in certain case. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-29 [94b96ed]
+    -->
+    <para>
+     Allow the lost standby node to rejoin the master watchdog node when it gets rediscovered by the lifecheck.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=545">bug 545</ulink>) (Muhammad Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-25 [8e9cf76]
+    -->
+    <para>
+	 Overhaul health check debug facility. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-15 [a333a45]
+    -->
+    <para>
+     Fix segfault when executing an erroneous query after DEALLOCATE a named statement.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=546">bug 546</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-04 [3ba4e73]
+    -->
+    <para>
+     Doc: mention that VIP will not be brougt up if quorum does not exist. (Tatsuo Ishii)
+    </para>
+    <para>
+     
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-16 [956c040]
+    -->
+    <para>
+     Add "-I" option to <xref linkend="guc-arping-cmd"> command default setting. (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-7-11> 
  <title>Release 3.7.11</title>
  <note>

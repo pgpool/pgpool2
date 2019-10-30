@@ -1,6 +1,115 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-6-19> 
+ <title>Release 3.6.19</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2019-10-31</simpara>
+ </note>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2019-10-25 [45a3469]
+    -->
+    <para>
+     Fix incorrect query rewrite in replication mode. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-15 [339bd21]
+    -->
+    <para>
+	 Doc: add <xref linkend="guc-failover-command"> description when all standby nodes are down. (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-11 [32a9f5d]
+    -->
+    <para>
+     Doc: add note not to assign <productname>PostgreSQL</productname> servers to <xref linkend="guc-trusted-servers">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-10 [4b726df]
+    -->
+    <para>
+ 	 Fix assorted ancient v2 protocol bugs. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-08 [45ac39b]
+    -->
+    <para>
+	 Fix problem that <xref linkend="guc-syslog-facility"> doesn't change by reload. 
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=548">bug 548</ulink>) (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-03 [fed3d6b]
+    -->
+    <para>
+     Fix Pgpool-II shutdown failed in certain case. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-29 [94b96ed]
+    -->
+    <para>
+     Allow the lost standby node to rejoin the master watchdog node when it gets rediscovered by the lifecheck.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=545">bug 545</ulink>) (Muhammad Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-15 [a333a45]
+    -->
+    <para>
+     Fix segfault when executing an erroneous query after DEALLOCATE a named statement.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=546">bug 546</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-04 [3ba4e73]
+    -->
+    <para>
+     Doc: mention that VIP will not be brougt up if quorum does not exist. (Tatsuo Ishii)
+    </para>
+    <para>
+     
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-16 [956c040]
+    -->
+    <para>
+     Add "-I" option to <xref linkend="guc-arping-cmd"> command default setting. (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-6-18> 
  <title>Release 3.6.18</title>
  <note>
