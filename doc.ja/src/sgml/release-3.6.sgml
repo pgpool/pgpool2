@@ -1,6 +1,155 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-6-19> 
+ <!--
+ <title>Release 3.6.19</title>
+ -->
+ <title>リリース 3.6.19</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2019-10-31</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2019-10-25 [45a3469]
+    -->
+    <para>
+     <!--
+     Fix incorrect query rewrite in replication mode. (Bo Peng)
+     -->
+	 レプリケーションモードでの誤ったクエリの書き換えを修正しました。 (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-15 [339bd21]
+    -->
+    <para>
+    <!--
+	 Doc: add <xref linkend="guc-failover-command"> description when all standby nodes are down. (Takuma Hoshiai)
+     -->
+	 Doc: すべてのスタンバイノードがダウンした場合の<xref linkend="guc-failover-command">の説明を追加しました。(Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-11 [32a9f5d]
+    -->
+    <para>
+    <!--
+     Doc: add note not to assign <productname>PostgreSQL</productname> servers to <xref linkend="guc-trusted-servers">. (Tatsuo Ishii)
+     -->
+	 Doc: <productname>PostgreSQL</productname>サーバを<xref linkend="guc-trusted-servers">に指定しないように注意事項を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-10 [4b726df]
+    -->
+    <para>
+    <!--
+ 	 Fix assorted ancient v2 protocol bugs. (Tatsuo Ishii)
+     -->
+     各種のv2プロトコルのバグを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-08 [45ac39b]
+    -->
+    <para>
+    <!--
+	 Fix problem that <xref linkend="guc-syslog-facility"> doesn't change by reload. 
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=548">bug 548</ulink>) (Takuma Hoshiai)
+     -->
+     <xref linkend="guc-syslog-facility">の変更がリロードによって反映されない不具合を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=548">bug 548</ulink>) (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-03 [fed3d6b]
+    -->
+    <para>
+     <!--
+     Fix Pgpool-II shutdown failed in certain case. (Tatsuo Ishii)
+     -->
+     特定の場合に<productname>Pgpool-II</productname>のシャットダウンが失敗する不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-29 [94b96ed]
+    -->
+    <para>
+    <!--
+     Allow the lost standby node to rejoin the master watchdog node when it gets rediscovered by the lifecheck.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=545">bug 545</ulink>) (Muhammad Usama)
+     -->
+	 切り離されたスタンバイノードがlifecheckによって再発見されたときに、マスターウォッチドッグノードに再参加できるように修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=545">bug 545</ulink>) (Muhammad Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-15 [a333a45]
+    -->
+    <para>
+     <!--
+     Fix segfault when executing an erroneous query after DEALLOCATE a named statement.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=546">bug 546</ulink>) (Tatsuo Ishii)
+     -->
+	 名前付きステートメントをDEALLOCATEした後に、誤ったクエリを実行すると
+     セグメンテーション違反が発生する不具合を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=546">bug 546</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-04 [3ba4e73]
+    -->
+    <para>
+     <!--
+     Doc: mention that VIP will not be brougt up if quorum does not exist. (Tatsuo Ishii)
+     -->
+	 Doc: クォーラムが存在しない場合、VIPは起動されないことをドキュメントに追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-08-16 [956c040]
+    -->
+    <para>
+     <!--
+     Add "-I" option to <xref linkend="guc-arping-cmd"> command default setting. (Bo Peng)
+     -->
+	 <xref linkend="guc-arping-cmd">パラメータのデフォルト値にネットワークインターフェイスオプション -I を含めるように修正しました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-6-18> 
  <!--
  <title>Release 3.6.18</title>
