@@ -1,6 +1,93 @@
 <!-- doc/src/sgml/release-3.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-4-26> 
+ <!--
+ <title>Release 3.4.26</title>
+ -->
+ <title>リリース 3.4.26</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2019-10-31</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2019-10-25 [45a3469]
+    -->
+    <para>
+     <!--
+     Fix incorrect query rewrite in replication mode. (Bo Peng)
+     -->
+	 レプリケーションモードでの誤ったクエリの書き換えを修正しました。 (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-10 [4b726df]
+    -->
+    <para>
+    <!--
+ 	 Fix assorted ancient v2 protocol bugs. (Tatsuo Ishii)
+     -->
+     各種のv2プロトコルのバグを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-08 [45ac39b]
+    -->
+    <para>
+    <!--
+	 Fix problem that <xref linkend="guc-syslog-facility"> doesn't change by reload. 
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=548">bug 548</ulink>) (Takuma Hoshiai)
+     -->
+     <xref linkend="guc-syslog-facility">の変更がリロードによって反映されない不具合を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=548">bug 548</ulink>) (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-10-03 [fed3d6b]
+    -->
+    <para>
+     <!--
+     Fix Pgpool-II shutdown failed in certain case. (Tatsuo Ishii)
+     -->
+     特定の場合に<productname>Pgpool-II</productname>のシャットダウンが失敗する不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-15 [a333a45]
+    -->
+    <para>
+     <!--
+     Fix segfault when executing an erroneous query after DEALLOCATE a named statement.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=546">bug 546</ulink>) (Tatsuo Ishii)
+     -->
+	 名前付きステートメントをDEALLOCATEした後に、誤ったクエリを実行すると
+     セグメンテーション違反が発生する不具合を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=546">bug 546</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1> 
+
 <sect1 id=release-3-4-25> 
  <!--
  <title>Release 3.4.25</title>
