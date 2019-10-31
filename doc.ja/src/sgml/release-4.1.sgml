@@ -1,11 +1,11 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
-<sect1 id="release-4-1">
+<sect1 id="release-4-1-0">
 <!--
- <title>Release 4.1</title>
+ <title>Release 4.1.0</title>
 -->
- <title>リリース 4.1</title>
+ <title>リリース 4.1.0</title>
  <note>
 <!--
   <title>Release Date</title>
@@ -1213,11 +1213,11 @@
    <listitem>
     <para>
 <!--
-     In this release same bug fixes as Pgpool-II 4.0.x are
-     already applied. See xxx for more details of those fixes.
+     In this release same bug fixes as <productname>Pgpool-II</productname> 4.0.7 are
+     already applied. See <xref linkend="release-4-0-7"> for more details of those fixes.
 -->
-     このリリースではPgpool-II 4.0.x と同様のバグ修正が既に適用されています。
-     修正の詳細はxxxを参照してください。
+     このリリースでは<productname>Pgpool-II</productname> 4.0.7 と同様のバグ修正が既に適用されています。
+     修正の詳細は<xref linkend="release-4-0-7">を参照してください。
     </para>
    </listitem>
   </itemizedlist>
