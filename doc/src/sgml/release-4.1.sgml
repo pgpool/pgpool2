@@ -1,8 +1,8 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
-<sect1 id="release-4-1">
- <title>Release 4.1</title>
+<sect1 id="release-4-1-0">
+ <title>Release 4.1.0</title>
  <note>
   <title>Release Date</title>
   <simpara>2019-10-xx</simpara>
@@ -874,8 +874,8 @@
   <itemizedlist>
    <listitem>
     <para>
-     In this release same bug fixes as Pgpool-II 4.0.x are
-     already applied. See xxx for more details of those fixes.
+     In this release same bug fixes as <productname>Pgpool-II</productname> 4.0.7 are
+     already applied. See <xref linkend="release-4-0-7"> for more details of those fixes.
     </para>
    </listitem>
   </itemizedlist>
