@@ -827,7 +827,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 		/*
 		 * CREATE TABLE t1 AS SELECT now();
 		 */
-		if (IsA(c_stmt->query, SelectStmt))
+		if (IsA(c_stmt->query, SelectStmt) && c_stmt->relkind == OBJECT_TABLE)
 		{
 			/* rewrite params */
 			raw_expression_tree_walker(
@@ -844,16 +844,12 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 		/*
 		 * SELECT now() INTO t1;
 		 */
-		raw_expression_tree_walker(
-								   (Node *) s_stmt,
-								   rewrite_timestamp_walker, (void *) &ctx);
-
-		/*
-		 * WITH ins AS ( INSERT INTO t1 SELECT now()) SELECT;
-		 */
-		raw_expression_tree_walker(
-								   (Node *) s_stmt->withClause,
-								   rewrite_timestamp_walker, (void *) &ctx);
+		if (s_stmt->intoClause)
+		{
+			raw_expression_tree_walker(
+									   (Node *) s_stmt,
+									   rewrite_timestamp_walker, (void *) &ctx);
+		}
 
 		rewrite = ctx.rewrite;
 	}
