@@ -277,7 +277,6 @@
       -->
       （アプリケーションサーバなど）クライアントサーバから接続される<productname>Pgpool-II</productname>の仮想IP（VIP） アドレスを指定します。
       <productname>Pgpool-II</productname>がスタンバイからアクティブに切り替わった時、<productname>Pgpool-II</productname>はこのVIPを引き継ぎます。
-      <xref linkend="guc-failover-require-consensus">がオンの場合（デフォルトです）、クォーラムが存在しなければVIPは立ち上がりません。
       デフォルトは<literal>''</literal>（空文字）で、この場合仮想IPは決して立ち上がりません。
      </para>
      <para>
