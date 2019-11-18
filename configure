@@ -754,7 +754,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -849,7 +848,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1102,15 +1100,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1248,7 +1237,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1401,7 +1390,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -3359,6 +3347,9 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+
+am__api_version='1.13'
+
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
   if test -f "$ac_dir/install-sh"; then
@@ -3387,71 +3378,6 @@ ac_config_guess="$SHELL $ac_aux_dir/config.guess"  # Please don't use this var.
 ac_config_sub="$SHELL $ac_aux_dir/config.sub"  # Please don't use this var.
 ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
-
-# Expand $ac_aux_dir to an absolute path.
-am_aux_dir=`cd "$ac_aux_dir" && pwd`
-
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC understands -c and -o together" >&5
-$as_echo_n "checking whether $CC understands -c and -o together... " >&6; }
-if ${am_cv_prog_cc_c_o+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-  # Make sure it works both with $CC and with simple cc.
-  # Following AC_PROG_CC_C_O, we do the test twice because some
-  # compilers refuse to overwrite an existing .o file with -o,
-  # though they will create one.
-  am_cv_prog_cc_c_o=yes
-  for am_i in 1 2; do
-    if { echo "$as_me:$LINENO: $CC -c conftest.$ac_ext -o conftest2.$ac_objext" >&5
-   ($CC -c conftest.$ac_ext -o conftest2.$ac_objext) >&5 2>&5
-   ac_status=$?
-   echo "$as_me:$LINENO: \$? = $ac_status" >&5
-   (exit $ac_status); } \
-         && test -f conftest2.$ac_objext; then
-      : OK
-    else
-      am_cv_prog_cc_c_o=no
-      break
-    fi
-  done
-  rm -f core conftest*
-  unset am_i
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_prog_cc_c_o" >&5
-$as_echo "$am_cv_prog_cc_c_o" >&6; }
-if test "$am_cv_prog_cc_c_o" != yes; then
-   # Losing compiler, so override with the script.
-   # FIXME: It is wrong to rewrite CC.
-   # But if we don't then we get into trouble of one sort or another.
-   # A longer-term fix would be to have automake use am__CC in this case,
-   # and then we could set am__CC="\$(top_srcdir)/compile \$(CC)"
-   CC="$am_aux_dir/compile $CC"
-fi
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-
-
-am__api_version='1.15'
 
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
@@ -3623,6 +3549,9 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
+# expand $ac_aux_dir to an absolute path
+am_aux_dir=`cd $ac_aux_dir && pwd`
+
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
   *\ * | *\	*)
@@ -3640,7 +3569,7 @@ else
 $as_echo "$as_me: WARNING: 'missing' script is too old or missing" >&2;}
 fi
 
-if test x"${install_sh+set}" != xset; then
+if test x"${install_sh}" != xset; then
   case $am_aux_dir in
   *\ * | *\	*)
     install_sh="\${SHELL} '$am_aux_dir/install-sh'" ;;
@@ -3968,8 +3897,8 @@ MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 # <http://lists.gnu.org/archive/html/automake/2012-07/msg00014.html>
 mkdir_p='$(MKDIR_P)'
 
-# We need awk for the "check" target (and possibly the TAP driver).  The
-# system "awk" is bad on some platforms.
+# We need awk for the "check" target.  The system "awk" is bad on
+# some platforms.
 # Always define AMTAR for backward compatibility.  Yes, it's still used
 # in the wild :-(  We should find a proper way to deprecate it ...
 AMTAR='$${TAR-tar}'
@@ -3984,48 +3913,6 @@ am__tar='$${TAR-tar} chof - "$$tardir"' am__untar='$${TAR-tar} xf -'
 
 
 
-
-# POSIX will say in a future version that running "rm -f" with no argument
-# is OK; and we want to be able to make that assumption in our Makefile
-# recipes.  So use an aggressive probe to check that the usage we want is
-# actually supported "in the wild" to an acceptable degree.
-# See automake bug#10828.
-# To make any issue more visible, cause the running configure to be aborted
-# by default if the 'rm' program in use doesn't match our expectations; the
-# user can still override this though.
-if rm -f && rm -fr && rm -rf; then : OK; else
-  cat >&2 <<'END'
-Oops!
-
-Your 'rm' program seems unable to run without file operands specified
-on the command line, even when the '-f' option is present.  This is contrary
-to the behaviour of most rm programs out there, and not conforming with
-the upcoming POSIX standard: <http://austingroupbugs.net/view.php?id=542>
-
-Please tell bug-automake@gnu.org about your system, including the value
-of your $PATH and any error possibly output before this message.  This
-can help us improve future automake versions.
-
-END
-  if test x"$ACCEPT_INFERIOR_RM_PROGRAM" = x"yes"; then
-    echo 'Configuration will proceed anyway, since you have set the' >&2
-    echo 'ACCEPT_INFERIOR_RM_PROGRAM variable to "yes"' >&2
-    echo >&2
-  else
-    cat >&2 <<'END'
-Aborting the configuration process, to ensure you take notice of the issue.
-
-You can download and install GNU coreutils to get an 'rm' implementation
-that behaves properly: <http://www.gnu.org/software/coreutils/>.
-
-If you want to complete the configuration process using your problematic
-'rm' anyway, export the environment variable ACCEPT_INFERIOR_RM_PROGRAM
-to "yes", and re-run configure.
-
-END
-    as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
-  fi
-fi
 
 
 
@@ -11857,6 +11744,131 @@ fi
 done
 test -n "$YACC" || YACC="yacc"
 
+if test "x$CC" != xcc; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC and cc understand -c and -o together" >&5
+$as_echo_n "checking whether $CC and cc understand -c and -o together... " >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether cc understands -c and -o together" >&5
+$as_echo_n "checking whether cc understands -c and -o together... " >&6; }
+fi
+set dummy $CC; ac_cc=`$as_echo "$2" |
+		      sed 's/[^a-zA-Z0-9_]/_/g;s/^[0-9]/_/'`
+if eval \${ac_cv_prog_cc_${ac_cc}_c_o+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+# Make sure it works both with $CC and with simple cc.
+# We do the test twice because some compilers refuse to overwrite an
+# existing .o file with -o, though they will create one.
+ac_try='$CC -c conftest.$ac_ext -o conftest2.$ac_objext >&5'
+rm -f conftest2.*
+if { { case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } &&
+   test -f conftest2.$ac_objext && { { case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; };
+then
+  eval ac_cv_prog_cc_${ac_cc}_c_o=yes
+  if test "x$CC" != xcc; then
+    # Test first that cc exists at all.
+    if { ac_try='cc -c conftest.$ac_ext >&5'
+  { { case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }; then
+      ac_try='cc -c conftest.$ac_ext -o conftest2.$ac_objext >&5'
+      rm -f conftest2.*
+      if { { case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } &&
+	 test -f conftest2.$ac_objext && { { case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; };
+      then
+	# cc works too.
+	:
+      else
+	# cc exists but doesn't like -o.
+	eval ac_cv_prog_cc_${ac_cc}_c_o=no
+      fi
+    fi
+  fi
+else
+  eval ac_cv_prog_cc_${ac_cc}_c_o=no
+fi
+rm -f core conftest*
+
+fi
+if eval test \$ac_cv_prog_cc_${ac_cc}_c_o = yes; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+$as_echo "#define NO_MINUS_C_MINUS_O 1" >>confdefs.h
+
+fi
+
+# FIXME: we rely on the cache variable name because
+# there is no other way.
+set dummy $CC
+am_cc=`echo $2 | sed 's/[^a-zA-Z0-9_]/_/g;s/^[0-9]/_/'`
+eval am_t=\$ac_cv_prog_cc_${am_cc}_c_o
+if test "$am_t" != yes; then
+   # Losing compiler, so override with the script.
+   # FIXME: It is wrong to rewrite CC.
+   # But if we don't then we get into trouble of one sort or another.
+   # A longer-term fix would be to have automake use am__CC in this case,
+   # and then we could set am__CC="\$(top_srcdir)/compile \$(CC)"
+   CC="$am_aux_dir/compile $CC"
+fi
+
 
 
 
@@ -13143,7 +13155,7 @@ fi
 
 
 # Macros to detect C compiler features
-# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.19 2008/06/27 00:36:16 tgl Exp $
+# config/c-compiler.m4
 
 
 # PGAC_C_SIGNED
@@ -13153,12 +13165,38 @@ fi
 
 
 
+# PGAC_C_PRINTF_ARCHETYPE
+# -----------------------
+# Select the format archetype to be used by gcc to check printf-type functions.
+# We prefer "gnu_printf", as that most closely matches the features supported
+# by src/port/snprintf.c (particularly the %m conversion spec).  However,
+# on some NetBSD versions, that doesn't work while "__syslog__" does.
+# If all else fails, use "printf".
+# PGAC_PRINTF_ARCHETYPE
+
+# Subroutine: test $pgac_cv_printf_archetype, set $ac_archetype_ok to yes or no
+# PGAC_TEST_PRINTF_ARCHETYPE
+
+
 # PGAC_TYPE_64BIT_INT(TYPE)
 # -------------------------
 # Check if TYPE is a working 64 bit integer type. Set HAVE_TYPE_64 to
 # yes or no respectively, and define HAVE_TYPE_64 if yes.
 # PGAC_TYPE_64BIT_INT
 
+
+# PGAC_TYPE_128BIT_INT
+# ---------------------
+# Check if __int128 is a working 128 bit integer type, and if so
+# define PG_INT128_TYPE to that typename, and define ALIGNOF_PG_INT128_TYPE
+# as its alignment requirement.
+#
+# This currently only detects a GCC/clang extension, but support for other
+# environments may be added in the future.
+#
+# For the moment we only test for support for 128bit math; support for
+# 128bit literals and snprintf is not required.
+# PGAC_TYPE_128BIT_INT
 
 
 # PGAC_C_FUNCNAME_SUPPORT
@@ -13169,11 +13207,137 @@ fi
 
 
 
+# PGAC_C_STATIC_ASSERT
+# --------------------
+# Check if the C compiler understands _Static_assert(),
+# and define HAVE__STATIC_ASSERT if so.
+#
+# We actually check the syntax ({ _Static_assert(...) }), because we need
+# gcc-style compound expressions to be able to wrap the thing into macros.
+# PGAC_C_STATIC_ASSERT
+
+
+
+# PGAC_C_TYPEOF
+# -------------
+# Check if the C compiler understands typeof or a variant.  Define
+# HAVE_TYPEOF if so, and define 'typeof' to the actual key word.
+#
+# PGAC_C_TYPEOF
+
+
+
+# PGAC_C_TYPES_COMPATIBLE
+# -----------------------
+# Check if the C compiler understands __builtin_types_compatible_p,
+# and define HAVE__BUILTIN_TYPES_COMPATIBLE_P if so.
+#
+# We check usage with __typeof__, though it's unlikely any compiler would
+# have the former and not the latter.
+# PGAC_C_TYPES_COMPATIBLE
+
+
+# PGAC_C_BUILTIN_CONSTANT_P
+# -------------------------
+# Check if the C compiler understands __builtin_constant_p(),
+# and define HAVE__BUILTIN_CONSTANT_P if so.
+# We need __builtin_constant_p("string literal") to be true, but some older
+# compilers don't think that, so test for that case explicitly.
+# PGAC_C_BUILTIN_CONSTANT_P
+
+
+
+# PGAC_C_BUILTIN_OP_OVERFLOW
+# -------------------------
+# Check if the C compiler understands __builtin_$op_overflow(),
+# and define HAVE__BUILTIN_OP_OVERFLOW if so.
+#
+# Check for the most complicated case, 64 bit multiplication, as a
+# proxy for all of the operations.  To detect the case where the compiler
+# knows the function but library support is missing, we must link not just
+# compile, and store the results in global variables so the compiler doesn't
+# optimize away the call.
+# PGAC_C_BUILTIN_OP_OVERFLOW
+
+
+
+# PGAC_C_BUILTIN_UNREACHABLE
+# --------------------------
+# Check if the C compiler understands __builtin_unreachable(),
+# and define HAVE__BUILTIN_UNREACHABLE if so.
+#
+# NB: Don't get the idea of putting a for(;;); or such before the
+# __builtin_unreachable() call.  Some compilers would remove it before linking
+# and only a warning instead of an error would be produced.
+# PGAC_C_BUILTIN_UNREACHABLE
+
+
+
+# PGAC_C_COMPUTED_GOTO
+# -----------------------
+# Check if the C compiler knows computed gotos (gcc extension, also
+# available in at least clang).  If so, define HAVE_COMPUTED_GOTO.
+#
+# Checking whether computed gotos are supported syntax-wise ought to
+# be enough, as the syntax is otherwise illegal.
+# PGAC_C_COMPUTED_GOTO
+
+
+
+# PGAC_CHECK_BUILTIN_FUNC
+# -----------------------
+# This is similar to AC_CHECK_FUNCS(), except that it will work for compiler
+# builtin functions, as that usually fails to.
+# The first argument is the function name, eg [__builtin_clzl], and the
+# second is its argument list, eg [unsigned long x].  The current coding
+# works only for a single argument named x; we might generalize that later.
+# It's assumed that the function's result type is coercible to int.
+# On success, we define "HAVEfuncname" (there's usually more than enough
+# underscores already, so we don't add another one).
+# PGAC_CHECK_BUILTIN_FUNC
+
+
+
+# PGAC_PROG_VARCC_VARFLAGS_OPT
+# -----------------------
+# Given a compiler, variable name and a string, check if the compiler
+# supports the string as a command-line option. If it does, add the
+# string to the given variable.
+# PGAC_PROG_VARCC_VARFLAGS_OPT
+
+
+
 # PGAC_PROG_CC_CFLAGS_OPT
 # -----------------------
 # Given a string, check if the compiler supports the string as a
 # command-line option. If it does, add the string to CFLAGS.
 # PGAC_PROG_CC_CFLAGS_OPT
+
+
+
+# PGAC_PROG_CC_VAR_OPT
+# -----------------------
+# Given a variable name and a string, check if the compiler supports
+# the string as a command-line option. If it does, add the string to
+# the given variable.
+# PGAC_PROG_CC_VAR_OPT
+
+
+
+# PGAC_PROG_VARCXX_VARFLAGS_OPT
+# -----------------------
+# Given a compiler, variable name and a string, check if the compiler
+# supports the string as a command-line option. If it does, add the
+# string to the given variable.
+# PGAC_PROG_VARCXX_VARFLAGS_OPT
+
+
+
+# PGAC_PROG_CXX_CFLAGS_OPT
+# -----------------------
+# Given a string, check if the compiler supports the string as a
+# command-line option. If it does, add the string to CXXFLAGS.
+# PGAC_PROG_CXX_VAR_OPT
 
 
 
@@ -13186,6 +13350,69 @@ fi
 # In fact, we must actually check that the resulting program runs :-(
 # PGAC_PROG_CC_LDFLAGS_OPT
 
+# PGAC_HAVE_GCC__SYNC_CHAR_TAS
+# -------------------------
+# Check if the C compiler understands __sync_lock_test_and_set(char),
+# and define HAVE_GCC__SYNC_CHAR_TAS
+#
+# NB: There are platforms where test_and_set is available but compare_and_swap
+# is not, so test this separately.
+# NB: Some platforms only do 32bit tas, others only do 8bit tas. Test both.
+# PGAC_HAVE_GCC__SYNC_CHAR_TAS
+
+# PGAC_HAVE_GCC__SYNC_INT32_TAS
+# -------------------------
+# Check if the C compiler understands __sync_lock_test_and_set(),
+# and define HAVE_GCC__SYNC_INT32_TAS
+# PGAC_HAVE_GCC__SYNC_INT32_TAS
+
+# PGAC_HAVE_GCC__SYNC_INT32_CAS
+# -------------------------
+# Check if the C compiler understands __sync_compare_and_swap() for 32bit
+# types, and define HAVE_GCC__SYNC_INT32_CAS if so.
+# PGAC_HAVE_GCC__SYNC_INT32_CAS
+
+# PGAC_HAVE_GCC__SYNC_INT64_CAS
+# -------------------------
+# Check if the C compiler understands __sync_compare_and_swap() for 64bit
+# types, and define HAVE_GCC__SYNC_INT64_CAS if so.
+# PGAC_HAVE_GCC__SYNC_INT64_CAS
+
+# PGAC_HAVE_GCC__ATOMIC_INT32_CAS
+# -------------------------
+# Check if the C compiler understands __atomic_compare_exchange_n() for 32bit
+# types, and define HAVE_GCC__ATOMIC_INT32_CAS if so.
+# PGAC_HAVE_GCC__ATOMIC_INT32_CAS
+
+# PGAC_HAVE_GCC__ATOMIC_INT64_CAS
+# -------------------------
+# Check if the C compiler understands __atomic_compare_exchange_n() for 64bit
+# types, and define HAVE_GCC__ATOMIC_INT64_CAS if so.
+# PGAC_HAVE_GCC__ATOMIC_INT64_CAS
+
+# PGAC_SSE42_CRC32_INTRINSICS
+# -----------------------
+# Check if the compiler supports the x86 CRC instructions added in SSE 4.2,
+# using the _mm_crc32_u8 and _mm_crc32_u32 intrinsic functions. (We don't
+# test the 8-byte variant, _mm_crc32_u64, but it is assumed to be present if
+# the other ones are, on x86-64 platforms)
+#
+# An optional compiler flag can be passed as argument (e.g. -msse4.2). If the
+# intrinsics are supported, sets pgac_sse42_crc32_intrinsics, and CFLAGS_SSE42.
+# PGAC_SSE42_CRC32_INTRINSICS
+
+
+# PGAC_ARMV8_CRC32C_INTRINSICS
+# -----------------------
+# Check if the compiler supports the CRC32C instructions using the __crc32cb,
+# __crc32ch, __crc32cw, and __crc32cd intrinsic functions. These instructions
+# were first introduced in ARMv8 in the optional CRC Extension, and became
+# mandatory in ARMv8.1.
+#
+# An optional compiler flag can be passed as argument (e.g.
+# -march=armv8-a+crc). If the intrinsics are supported, sets
+# pgac_armv8_crc32c_intrinsics, and CFLAGS_ARMV8_CRC32C.
+# PGAC_ARMV8_CRC32C_INTRINSICS
 
 # Macros that test various C library quirks
 # $PostgreSQL: pgsql/config/c-library.m4,v 1.33 2008/08/21 13:53:28 petere Exp $
@@ -13471,8 +13698,10 @@ int does_int64_work()
     return 0;
   return 1;
 }
+
+int
 main() {
-  exit(! does_int64_work());
+  return (! does_int64_work());
 }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
@@ -13551,8 +13780,10 @@ int does_int64_work()
     return 0;
   return 1;
 }
+
+int
 main() {
-  exit(! does_int64_work());
+  return (! does_int64_work());
 }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
@@ -13681,6 +13912,51 @@ else
   # Here if we are not using 'long long int' at all
   INT64_FORMAT='"%ld"'
   UINT64_FORMAT='"%lu"'
+fi
+
+# disable useless truncation warnings from gcc 8+
+NOT_THE_CFLAGS=""
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CC} supports -Wformat-truncation, for NOT_THE_CFLAGS" >&5
+$as_echo_n "checking whether ${CC} supports -Wformat-truncation, for NOT_THE_CFLAGS... " >&6; }
+if ${pgac_cv_prog_CC_cflags__Wformat_truncation+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+pgac_save_CC=$CC
+CC=${CC}
+CFLAGS="${NOT_THE_CFLAGS} -Wformat-truncation"
+ac_save_c_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag=yes
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pgac_cv_prog_CC_cflags__Wformat_truncation=yes
+else
+  pgac_cv_prog_CC_cflags__Wformat_truncation=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_c_werror_flag
+CFLAGS="$pgac_save_CFLAGS"
+CC="$pgac_save_CC"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_CC_cflags__Wformat_truncation" >&5
+$as_echo "$pgac_cv_prog_CC_cflags__Wformat_truncation" >&6; }
+if test x"$pgac_cv_prog_CC_cflags__Wformat_truncation" = x"yes"; then
+  NOT_THE_CFLAGS="${NOT_THE_CFLAGS} -Wformat-truncation"
+fi
+
+
+if test -n "$NOT_THE_CFLAGS"; then
+  CFLAGS="$CFLAGS -Wno-format-truncation"
 fi
 
 
