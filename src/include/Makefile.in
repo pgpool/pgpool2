@@ -106,8 +106,6 @@ AM_V_at = $(am__v_at_@AM_V@)
 am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
-depcomp =
-am__depfiles_maybe =
 SOURCES =
 DIST_SOURCES =
 am__can_run_installinfo = \
@@ -285,9 +283,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps src/include/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/include/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps src/include/Makefile
+	  $(AUTOMAKE) --gnu src/include/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
