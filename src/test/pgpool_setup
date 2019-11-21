@@ -620,7 +620,6 @@ EOF
 
     cat > $1/$fname <<EOF
 primary_conninfo      = 'port=$BASEPORT user=$WHOAMI application_name=''server$2'''
->>>>>>> 23fb4c12... Deal with PostgreSQL 12.
 recovery_target_timeline='latest'
 EOF
     if [ $USE_REPLICATION_SLOT = true ];then
