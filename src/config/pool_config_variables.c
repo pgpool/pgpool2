@@ -3896,14 +3896,24 @@ BackendDataDirShowFunc(int index)
 static const char *
 BackendFlagsShowFunc(int index)
 {
-	static char buffer[21];
+	static char buffer[1024];
 
 	unsigned short flag = g_pool_config.backend_desc->backend_info[index].flag;
+
+	*buffer = '\0';
 
 	if (POOL_ALLOW_TO_FAILOVER(flag))
 		snprintf(buffer, sizeof(buffer), "ALLOW_TO_FAILOVER");
 	else if (POOL_DISALLOW_TO_FAILOVER(flag))
 		snprintf(buffer, sizeof(buffer), "DISALLOW_TO_FAILOVER");
+
+	if (POOL_ALWAYS_MASTER & flag)
+	{
+		if (*buffer == '\0')
+			snprintf(buffer, sizeof(buffer), "ALWAYS_MASTER");
+		else
+			snprintf(buffer+strlen(buffer), sizeof(buffer), "|ALWAYS_MASTER");
+	}
 	return buffer;
 }
 
