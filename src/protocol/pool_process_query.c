@@ -2309,7 +2309,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 
 							res->nullflags[num_data] = len;
 
-							if (len > 0)	/* NOT NULL? */
+							if (len >= 0)	/* NOT NULL? */
 							{
 								res->data[num_data] = palloc(len + 1);
 								memcpy(res->data[num_data], p, len);
@@ -2332,7 +2332,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 
 								res->nullflags[num_data] = len;
 
-								if (len > 0)
+								if (len >= 0)
 								{
 									p = pool_read2(backend, len);
 									res->data[num_data] = palloc(len + 1);
