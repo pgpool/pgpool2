@@ -27,6 +27,9 @@ source ./bashrc.ports
 
 echo "database_redirect_preference_list = 'postgres:primary,test:1,mydb[5-9]:2,test2:standby'" >> etc/pgpool.conf
 
+# disable replication delay check to not prevent db/app redirecting
+echo "delay_threshold = 0" >> etc/pgpool.conf
+
 ./startall
 
 export PGPORT=$PGPOOL_PORT
