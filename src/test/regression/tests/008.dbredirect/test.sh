@@ -37,6 +37,34 @@ wait_for_pgpool_startup
 
 $CREATEDB mydb6
 $CREATEDB test2
+
+# check to see if all databases have been replicated
+
+for p in 3 4
+do
+    # set standby port
+    myport=`expr $PGPOOL_PORT + $p`
+
+    for r in 1 2 3 4 5
+    do
+	ok=true
+	for i in mydb6 test2
+	do
+	    echo "try to connect to $i:$myport"
+	    $PSQL -p $myport -c "select 1" $i
+	    if [ $? != 0 ];then
+		ok=false
+		break
+	    fi
+	done
+	if [ $ok = "false" ];then
+	    sleep 1
+	else
+	    break
+	fi
+    done
+done
+
 $PGBENCH -i postgres
 
 ok=yes
