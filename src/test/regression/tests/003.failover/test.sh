@@ -27,7 +27,8 @@ do
 	# trigger failover on node 1
 	$PG_CTL -D data1 -m f stop
 	wait_for_pgpool_startup
-	$PSQL -c "show pool_nodes" test |sed -e 's/true /false/'> result
+	$PSQL -c "show pool_nodes" test |sed -e 's/true /false/' -e 's/....-..-.. ..:..:../XXXX-XX-XX XX:XX:XX/g'|
+	    sed -e 's/streaming/         /' | sed -e 's/async/     /'> result
 
 	# check the output of "show pool_nodes".
 	LANG=C $PSQL -f ../create_expected.sql -v mode="'$mode'" -v dir="'$PGSOCKET_DIR'" test | tail -n 6 > expected
