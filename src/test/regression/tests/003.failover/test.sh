@@ -18,6 +18,10 @@ do
 	$PGPOOL_SETUP -m $mode -n 2 --no-stop|| exit 1
 	echo "done."
 
+	# disable replication delay check so that comparison between
+	# expected and actual result is not confused.
+	echo "sr_check_period = 0" >> etc/pgpool.conf
+
 	source ./bashrc.ports
 
 	export PGPORT=$PGPOOL_PORT
