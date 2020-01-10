@@ -6,6 +6,9 @@ source $TESTLIBS
 TESTDIR=testdir
 PSQL=$PGBIN/psql
 
+# sleep time after reload in seconds
+st=10
+
 for mode in s r
 do
 	rm -fr $TESTDIR
@@ -61,7 +64,7 @@ EOF
 	echo "black_function_list = ''" >> etc/pgpool.conf
 
 	./pgpool_reload
-	sleep 1
+	sleep $t
 
 	$PSQL test <<EOF
 SELECT f1(1);		-- this does load balance
@@ -120,7 +123,6 @@ EOF
 	fi
 	echo ok: black query pattern list works.
 
-
 # in replication mode if load_balance_mode = off, SELECT query inside
 # an explicit transaction should be sent to master only.
 	if [ $mode = "r" ];then
@@ -153,7 +155,7 @@ EOF
 		echo "black_function_list = 'f1'" >> etc/pgpool.conf
 		echo "white_function_list = ''" >> etc/pgpool.conf
 		./pgpool_reload
-		sleep 1
+		sleep $st
 		$PSQL test <<EOF
 SELECT f1(2);		-- this should be sent to all the nodes
 EOF
