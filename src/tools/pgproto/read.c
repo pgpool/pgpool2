@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019	Tatsuo Ishii
+ * Copyright (c) 2017-2020	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -32,6 +32,7 @@ static int	read_int32(PGconn *conn);
 static char *read_bytes(int len, PGconn *conn);
 static void read_and_discard(PGconn *conn);
 static void read_it(PGconn *conn, char *buf, int len);
+static char *read_string(PGconn *conn);
 
 /*
  * Read message from connection until ready for query message is received.  If
@@ -94,6 +95,9 @@ read_until_ready_for_query(PGconn *conn, int timeout)
 		kind = read_char(conn);
 		switch (kind)
 		{
+			char	*channel, *payload;
+			int		pid;
+
 			case '1':			/* Parse complete */
 				fprintf(stderr, "<= BE ParseComplete\n");
 				read_and_discard(conn);
@@ -213,6 +217,34 @@ read_until_ready_for_query(PGconn *conn, int timeout)
 				read_and_discard(conn);
 				break;
 
+			case 'A':			/* Notification response */
+				len = read_int32(conn);
+				pid = read_int32(conn);
+
+				channel = read_string(conn);
+				if (channel)
+				{
+					payload = read_string(conn);
+					if (payload)
+					{
+						fprintf(stderr, "<= BE Notification response. pid: %d channel: %s payload: \"%s\"\n",
+								pid, channel, payload);
+						free(payload);
+					}
+					else
+					{
+						fprintf(stderr, "<= BE Notification response. pid: %d channel: %s\n",
+								pid, channel);
+					}
+					free(channel);
+				}
+				else
+				{
+					fprintf(stderr, "<= BE Notification response. pid: %d\n",
+						pid);
+				}
+				break;
+
 			default:
 				fprintf(stderr, "<= BE (%c)\n", kind);
 				read_and_discard(conn);
@@ -319,4 +351,56 @@ read_it(PGconn *conn, char *buf, int len)
 		if (len <= 0)
 			break;
 	}
+}
+
+/*
+ * Read a string from conn and returns malloced buffer pointer.
+ */
+static char *
+read_string(PGconn *conn)
+{
+#define	PROTO_ALLOC_SIZE	512
+
+	int			sts;
+	char		*buf;
+	char		*p;
+	int			alloc_factor = 1;
+	int			len;
+
+	buf = pg_malloc(PROTO_ALLOC_SIZE);
+	len = PROTO_ALLOC_SIZE;
+	p = buf;
+
+	for (;;)
+	{
+		sts = read(PQsocket(conn), p, 1);
+
+		if (sts == 0)
+		{
+			fprintf(stderr, "read_string: EOF detected");
+			exit(1);
+		}
+		else if (sts < 0)
+		{
+			fprintf(stderr, "read_string: read(2) returns error %s\n", strerror(errno));
+			exit(1);
+		}
+
+
+		if (*p == '\0')
+		{
+			return buf;
+		}
+
+		len--;
+		p++;
+
+		if (len <= 0)
+		{
+			alloc_factor++;
+			buf = pg_realloc(buf, PROTO_ALLOC_SIZE * alloc_factor);
+			len = PROTO_ALLOC_SIZE;
+		}
+	}
+
 }
