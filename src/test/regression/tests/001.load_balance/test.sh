@@ -63,7 +63,7 @@ EOF
 	echo "black_function_list = ''" >> etc/pgpool.conf
 
 	./pgpool_reload
-	sleep $t
+	sleep $st
 
 	$PSQL test <<EOF
 SELECT f1(1);		-- this does load balance
