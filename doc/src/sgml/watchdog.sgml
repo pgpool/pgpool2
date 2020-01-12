@@ -610,7 +610,7 @@
    <varlistentry id="guc-enable-consensus-with-half-votes" xreflabel="enable_consensus_with_half_votes">
     <term><varname>enable_consensus_with_half_votes</varname> (<type>boolean</type>)
      <indexterm>
-      <primary><varname>cenable_consensus_with_half_votes</varname> configuration parameter</primary>
+      <primary><varname>enable_consensus_with_half_votes</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -620,7 +620,7 @@
       the quorum and resolving the consensus for failover.
      </para>
      <para>
-      when enabled the existence of quorum and consensus on failover requires only half of
+      When enabled the existence of quorum and consensus on failover requires only half of
       the total number of votes configured in the cluster. Otherwise, both of these
       decisions require at least one more vote than half of the total number of votes.
       For failover, this parameter works in conjunction with the
