@@ -3707,6 +3707,10 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	/* Initialize statistics area */
 	stat_set_stat_area(pool_shared_memory_create(stat_shared_memory_size()));
 	stat_init_stat_area();
+
+	/* Initialize health check statistics area */
+	health_check_stats_init(pool_shared_memory_create(health_check_stats_shared_memory_size()));
+
 	/* initialize watchdog IPC unix domain socket address */
 	if (pool_config->use_watchdog)
 	{

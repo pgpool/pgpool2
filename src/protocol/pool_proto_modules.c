@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -175,6 +175,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	static char *sq_nodes = "pool_nodes";
 	static char *sq_version = "pool_version";
 	static char *sq_cache = "pool_cache";
+	static char *sq_health_check_stats = "pool_health_check_stats";
 	int			commit;
 	List	   *parse_tree_list;
 	Node	   *node = NULL;
@@ -429,6 +430,14 @@ SimpleQuery(POOL_CONNECTION * frontend,
 						(errmsg("SimpleQuery"),
 						 errdetail("cache reporting")));
 				cache_reporting(frontend, backend);
+			}
+			else if (!strcmp(sq_health_check_stats, vnode->name))
+			{
+				is_valid_show_command = true;
+				ereport(DEBUG1,
+						(errmsg("SimpleQuery"),
+						 errdetail("health check stats")));
+				show_health_check_stats(frontend, backend);
 			}
 
 			if (is_valid_show_command)

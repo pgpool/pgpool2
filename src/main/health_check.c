@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -62,10 +62,15 @@
 #include "auth/pool_hba.h"
 #include "utils/pool_stream.h"
 
+volatile POOL_HEALTH_CHECK_STATISTICS	*health_check_stats;	/* health check stats area in shared memory */
+
 char		remote_ps_data[NI_MAXHOST]; /* used for set_ps_display */
 static POOL_CONNECTION_POOL_SLOT * slot;
 static volatile sig_atomic_t reload_config_request = 0;
 static volatile sig_atomic_t restart_request = 0;
+/*static POOL_HEALTH_CHECK_STATISTICS	stats;*/
+volatile POOL_HEALTH_CHECK_STATISTICS *stats;
+
 static bool establish_persistent_connection(int node);
 static void discard_persistent_connection(int node);
 static RETSIGTYPE my_signal_handler(int sig);
@@ -112,6 +117,12 @@ do_health_check_child(int *node_id)
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext HealthCheckMemoryContext;
 	char		psbuffer[NI_MAXHOST];
+	static struct timeval	start_time;
+	static struct timeval	end_time;
+	long	diff_t;
+
+	POOL_HEALTH_CHECK_STATISTICS	mystat;
+	stats = &health_check_stats[*node_id];
 
 	ereport(DEBUG1,
 			(errmsg("I am health check process pid:%d DB node id:%d", getpid(), *node_id)));
@@ -158,16 +169,20 @@ do_health_check_child(int *node_id)
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
 
+	/* Initialize health check stats area */
+	stats->min_health_check_duration = INT_MAX;
 
 	for (;;)
 	{
 		MemoryContextSwitchTo(HealthCheckMemoryContext);
 		MemoryContextResetAndDeleteChildren(HealthCheckMemoryContext);
+		bool	skipped = false;
 
 		CHECK_REQUEST;
 
 		if (pool_config->health_check_params[*node_id].health_check_period <= 0)
 		{
+			stats->min_health_check_duration = 0;
 			sleep(30);
 		}
 
@@ -180,10 +195,19 @@ do_health_check_child(int *node_id)
 			bool		result;
 			BackendInfo *bkinfo = pool_get_node_info(*node_id);
 
+			stats->total_count++;
+			gettimeofday(&start_time, NULL);
+			ereport(LOG,
+					(errmsg("node: %d start time: %ld %ld", *node_id, start_time.tv_sec, start_time.tv_usec)));
+
+			stats->last_health_check = time(NULL);
+
 			result = establish_persistent_connection(*node_id);
 
 			if (result && slot == NULL)
 			{
+				stats->last_failed_health_check = time(NULL);
+
 				if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(*node_id).flag))
 				{
 					ereport(LOG,
@@ -193,6 +217,8 @@ do_health_check_child(int *node_id)
 				else
 				{
 					bool		partial;
+
+					stats->fail_count++;
 
 					ereport(LOG, (errmsg("health check failed on node %d (timeout:%d)",
 										 *node_id, health_check_timer_expired)));
@@ -213,14 +239,57 @@ do_health_check_child(int *node_id)
 			}
 			else if (slot && bkinfo->backend_status == CON_DOWN && bkinfo->quarantine == true)
 			{
+				stats->success_count++;
+				stats->last_successful_health_check = time(NULL);
+
 				/* The node has become reachable again. Reset
 				 * the quarantine state
 				 */
 				send_failback_request(*node_id, false, REQ_DETAIL_UPDATE | REQ_DETAIL_WATCHDOG);
 			}
+			else if (result && slot)
+			{
+				/* Health check succeeded */
+				stats->success_count++;
+				stats->last_successful_health_check = time(NULL);
+			}
+			else if (!result)
+			{
+				/* Health check skipped */
+				stats->skip_count++;
+				stats->last_skip_health_check = time(NULL);
+				skipped = true;
+			}
 
 			/* Discard persistent connections */
 			discard_persistent_connection(*node_id);
+
+			/*
+			 Update health check duration only if health check was not skipped
+			 since the duration could be very small (probably 0) if health
+			 check is skipped.
+			 */
+
+			if (!skipped)
+			{
+				gettimeofday(&end_time, NULL);
+
+				if (end_time.tv_sec > start_time.tv_sec)
+					diff_t = end_time.tv_usec - start_time.tv_usec + 1000000 * (end_time.tv_sec - start_time.tv_sec);
+				else
+					diff_t = end_time.tv_usec - start_time.tv_usec;
+
+				diff_t /= 1000;
+				stats->total_health_check_duration += diff_t;
+
+				if (diff_t > stats->max_health_check_duration)
+					stats->max_health_check_duration = diff_t;
+				if (diff_t < stats->min_health_check_duration)
+					stats->min_health_check_duration = diff_t;
+			}
+
+			memcpy(&mystat, (void *)stats, sizeof(mystat));
+
 			sleep(pool_config->health_check_params[*node_id].health_check_period);
 		}
 	}
@@ -276,10 +345,10 @@ establish_persistent_connection(int node)
 	 */
 	if (slot == NULL)
 	{
-		retry_cnt = pool_config->health_check_params[node].health_check_max_retries;
-
 		char	   *password = get_pgpool_config_user_password(pool_config->health_check_params[node].health_check_user,
 															   pool_config->health_check_params[node].health_check_password);
+
+		retry_cnt = pool_config->health_check_params[node].health_check_max_retries;
 
 		do
 		{
@@ -331,6 +400,8 @@ establish_persistent_connection(int node)
 
 			if (retry_cnt >= 0)
 			{
+				stats->retry_count++;
+
 				ereport(LOG,
 						(errmsg("health check retrying on DB node: %d (round:%d)",
 								node,
@@ -339,6 +410,19 @@ establish_persistent_connection(int node)
 				sleep(pool_config->health_check_params[node].health_check_retry_delay);
 			}
 		} while (retry_cnt >= 0);
+
+		/* Check if we need to refresh max retry count */
+
+		if (retry_cnt != pool_config->health_check_params[node].health_check_max_retries)
+		{
+			int ret_cnt;
+
+			retry_cnt++;
+			ret_cnt = pool_config->health_check_params[node].health_check_max_retries - retry_cnt;
+
+			if (ret_cnt > stats->max_retry_count)
+				stats->max_retry_count = ret_cnt;
+		}
 
 		if (password)
 			pfree(password);
@@ -354,6 +438,7 @@ establish_persistent_connection(int node)
 				send_failback_request(node, true, REQ_DETAIL_CONFIRMED);
 		}
 	}
+
 	/* if check_failback is true, backend_status is DOWN or UNUSED. */
 	if (check_failback)
 	{
@@ -439,6 +524,36 @@ static RETSIGTYPE health_check_timer_handler(int sig)
 	health_check_timer_expired = 1;
 	POOL_SETMASK(&UnBlockSig);
 	errno = save_errno;
+}
+
+/*
+ * Returns the byte size of health check statistics area
+ */
+size_t
+health_check_stats_shared_memory_size(void)
+{
+	size_t	size;
+
+	size =  MAXALIGN(sizeof(POOL_HEALTH_CHECK_STATISTICS) * MAX_NUM_BACKENDS);
+	elog(LOG, "health_check_stats_shared_memory_size: requested size: %lu", size);
+	return size;
+}
+
+/*
+ * Initialize health check statistics area
+ */
+void
+health_check_stats_init(POOL_HEALTH_CHECK_STATISTICS *addr)
+{
+	int	i;
+
+	health_check_stats = addr;
+	memset((void *) health_check_stats, 0, health_check_stats_shared_memory_size());
+
+	for (i = 0 ;i < MAX_NUM_BACKENDS; i++)
+	{
+		health_check_stats[i].min_health_check_duration = INT_MAX;
+	}
 }
 
 #ifdef HEALTHCHECK_DEBUG

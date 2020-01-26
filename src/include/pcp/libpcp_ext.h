@@ -171,6 +171,7 @@ typedef struct
 #define POOLCONFIG_MAXWEIGHTLEN 20
 #define POOLCONFIG_MAXDATELEN 128
 #define POOLCONFIG_MAXCOUNTLEN 16
+#define POOLCONFIG_MAXLONGCOUNTLEN 20
 
 /* config report struct*/
 typedef struct
@@ -230,6 +231,31 @@ typedef struct
 {
 	char		version[POOLCONFIG_MAXVALLEN + 1];
 }			POOL_REPORT_VERSION;
+
+/* health check statistics report struct */
+typedef struct
+{
+	char		node_id[POOLCONFIG_MAXIDLEN + 1];
+	char		hostname[MAX_DB_HOST_NAMELEN + 1];
+	char		port[POOLCONFIG_MAXPORTLEN + 1];
+	char		status[POOLCONFIG_MAXSTATLEN + 1];
+	char		role[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		last_status_change[POOLCONFIG_MAXDATELEN];
+	char		total_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
+	char		success_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
+	char		fail_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
+	char		skip_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
+	char		retry_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
+	char		average_retry_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
+	char		max_retry_count[POOLCONFIG_MAXCOUNTLEN+1];
+	char		max_health_check_duration[POOLCONFIG_MAXCOUNTLEN+1];
+	char		min_health_check_duration[POOLCONFIG_MAXCOUNTLEN+1];
+	char		average_health_check_duration[POOLCONFIG_MAXLONGCOUNTLEN+1];
+	char		last_health_check[POOLCONFIG_MAXDATELEN];
+	char		last_successful_health_check[POOLCONFIG_MAXDATELEN];
+	char		last_skip_health_check[POOLCONFIG_MAXDATELEN];
+	char		last_failed_health_check[POOLCONFIG_MAXDATELEN];
+}			POOL_HEALTH_CHECK_STATS;
 
 typedef enum
 {

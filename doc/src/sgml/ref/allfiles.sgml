@@ -1,6 +1,6 @@
 <!--
 doc/src/sgml/ref/allfiles.sgml
-PostgreSQL documentation
+Pgpool-II documentation
 Complete list of usable sgml source files in this directory.
 -->
 
@@ -31,6 +31,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY showPoolPools       SYSTEM "show_pool_pools.sgml">
 <!ENTITY showPoolVersion     SYSTEM "show_pool_version.sgml">
 <!ENTITY showPoolCache       SYSTEM "show_pool_cache.sgml">
+<!ENTITY showPoolHealthCheckStats SYSTEM "show_pool_health_check_stats.sgml">
 <!ENTITY pgpoolAdmPcpNodeInfo SYSTEM "pgpool_adm_pcp_node_info.sgml">
 <!ENTITY pgpoolAdmPcpPoolStatus SYSTEM "pgpool_adm_pcp_pool_status.sgml">
 <!ENTITY pgpoolAdmPcpNodeCount SYSTEM "pgpool_adm_pcp_node_count.sgml">
