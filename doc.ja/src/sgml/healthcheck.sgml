@@ -30,6 +30,12 @@
  </para>
 
  <para>
+  ヘルスチェックプロセスは、ヘルスチェックの合計実行回数のような様々な統計情報データを収集します。
+  統計情報を調べるには、<xref linkend="SQL-SHOW-POOL-HEALTH-CHECK-STATS">コマンドを使用してください。
+  なお、このデータは共有メモリ領域に格納されるので、<productname>Pgpool-II</productname>の起動時に初期化されることに注意してください。
+ </para>
+
+ <para>
   <!-- Following parameter names can also have numeric suffix at the end
   of each name.  The suffix corresponds to backend id, which is
   defined in backend information, such

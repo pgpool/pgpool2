@@ -19,6 +19,15 @@
  </para>
 
  <para>
+  The health check process collects various statistics data such as
+  number of health check count in total. To inspect the statistics
+  data, use <xref linkend="SQL-SHOW-POOL-HEALTH-CHECK-STATS">
+  command. Please note that the data is stored in the shared memory
+  area and it will be initialized upon
+  <productname>Pgpool-II</productname> starting up.
+ </para>
+
+ <para>
   Following parameter names can also have numeric suffix at the end
   of each name.  The suffix corresponds to backend id, which is
   defined in backend information, such

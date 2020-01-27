@@ -219,6 +219,7 @@
   &showPoolPools
   &showPoolVersion
   &showPoolCache
+  &showPoolHealthCheckStats
 
  </reference>
  <reference id="pgpool-adm">
