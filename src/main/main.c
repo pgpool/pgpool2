@@ -263,12 +263,11 @@ int main(int argc, char **argv)
 		{
 			if (kill(pid, 0) == 0)
 			{
-				ereport(FATAL,
-					(errmsg("pid file found. is another pgpool(%d) is running?\n", pid)));
+				fprintf(stderr, "ERROR: pid file found. is another pgpool(%d) is running?\n", pid);
+				exit(EXIT_FAILURE);
 			}
 			else
-				ereport(NOTICE,
-					(errmsg("pid file found but it seems bogus. Trying to start pgpool anyway...\n")));
+				fprintf(stderr, "NOTICE: pid file found but it seems bogus. Trying to start pgpool anyway...\n");
 		}
 	}
 	/*
