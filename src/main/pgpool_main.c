@@ -896,6 +896,9 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 	int status;
 	int len;
 
+	/* Delete any pre-existing socket file to avoid failure at bind() time */
+	unlink(un_addr_tmp.sun_path);
+
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (fd == -1)
 	{
