@@ -463,7 +463,7 @@
    </para>
    <programlisting>
     failover_command = '/etc/pgpool-II/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S'
-    follow_master_command = '/etc/pgpool-II/follow_master.sh %d %h %p %D %m %M %H %P %r %R'
+    follow_master_command = '/etc/pgpool-II/follow_master.sh %d %h %p %D %m %H %M %P %r %R'
    </programlisting>
    <note>
     <para>
@@ -605,8 +605,8 @@ FAILED_NODE_HOST="$2"
 FAILED_NODE_PORT="$3"
 FAILED_NODE_PGDATA="$4"
 NEW_MASTER_NODE_ID="$5"
-OLD_MASTER_NODE_ID="$6"
-NEW_MASTER_NODE_HOST="$7"
+NEW_MASTER_NODE_HOST="$6"
+OLD_MASTER_NODE_ID="$7"
 OLD_PRIMARY_NODE_ID="$8"
 NEW_MASTER_NODE_PORT="$9"
 NEW_MASTER_NODE_PGDATA="${10}"
