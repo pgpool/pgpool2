@@ -9,7 +9,7 @@
  </indexterm>
 
  <refmeta>
-  <refentrytitle>SHOW POOL HEALTH_CHECK_STATS</refentrytitle>
+  <refentrytitle>SHOW POOL_HEALTH_CHECK_STATS</refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
