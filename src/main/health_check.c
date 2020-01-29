@@ -68,7 +68,6 @@ char		remote_ps_data[NI_MAXHOST]; /* used for set_ps_display */
 static POOL_CONNECTION_POOL_SLOT * slot;
 static volatile sig_atomic_t reload_config_request = 0;
 static volatile sig_atomic_t restart_request = 0;
-/*static POOL_HEALTH_CHECK_STATISTICS	stats;*/
 volatile POOL_HEALTH_CHECK_STATISTICS *stats;
 
 static bool establish_persistent_connection(int node);
@@ -197,8 +196,6 @@ do_health_check_child(int *node_id)
 
 			stats->total_count++;
 			gettimeofday(&start_time, NULL);
-			ereport(LOG,
-					(errmsg("node: %d start time: %ld %ld", *node_id, start_time.tv_sec, start_time.tv_usec)));
 
 			stats->last_health_check = time(NULL);
 
