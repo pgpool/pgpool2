@@ -243,7 +243,7 @@
     <listitem>
      <para>
       <productname>Pgpool-II</productname> binaries will be built with PAM authentication support.
-      PAM authentication support is disabled by dafault.
+      PAM authentication support is disabled by default.
      </para>
     </listitem>
    </varlistentry>
