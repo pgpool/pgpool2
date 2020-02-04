@@ -349,7 +349,7 @@
      <para>
       <!--
       <productname>Pgpool-II</productname> binaries will be built with PAM authentication support.
-      PAM authentication support is disabled by dafault.
+      PAM authentication support is disabled by default.
       -->
       <productname>Pgpool-II</productname>バイナリがPAM認証サポート付で構築されます。
       デフォルトでは、PAM認証サポートは無効です。
