@@ -72,9 +72,10 @@
 
      <note>
       <para>
-       The query cache is used the relation cache too, if <xref linkend="guc-enable-shared-relcache"> is on.
-	You notes that the query cache is used regardless <xref linkend="guc-memory-cache-enabled"> parameter, when It is used by relation cache.
-	 See <xref linkend="runtime-misc"> for more details to relation cache.
+       The query cache will also be used by shared relation cache if
+       <xref linkend="guc-enable-shared-relcache"> is set to on. Moreover the
+       query cache is used even if <xref linkend="guc-memory-cache-enabled">
+       parameter is set to off. See <xref linkend="runtime-misc"> for more details to relation cache.
       </para>
      </note>
     </listitem>
