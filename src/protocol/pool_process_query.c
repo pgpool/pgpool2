@@ -864,7 +864,7 @@ POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 	}
 	else if (len < 0)
         ereport(ERROR,
-            (errmsg("unable to forward message to frontend"),
+            (errmsg("unable to forward message to backend"),
                  errdetail("invalid message length:%d for message:%c", len, kind)));
 
 
