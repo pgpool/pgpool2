@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2013-2019 PgPool Global Development Group
+# Copyright (c) 2013-2020 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby
@@ -435,12 +435,17 @@ echo "source: $master_db_cluster dest: $DEST_CLUSTER" >> $log
 rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
 --exclude postmaster.opts --exclude pg_log \
 --exclude recovery.conf --exclude recovery.done \
---exclude pg_xlog \
+--exclude pg_xlog pg_wal \
 $master_db_cluster/ $DEST_CLUSTER/
 
 rm -fr $DEST_CLUSTER/pg_xlog 
 mkdir $DEST_CLUSTER/pg_xlog
 chmod 700 $DEST_CLUSTER/pg_xlog
+
+rm -fr $DEST_CLUSTER/pg_wal 
+mkdir $DEST_CLUSTER/pg_wal
+chmod 700 $DEST_CLUSTER/pg_wal
+
 rm $DEST_CLUSTER/recovery.done standby.signal
 rm standby.signal
 fi
@@ -533,12 +538,16 @@ REOF
 rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
 --exclude postmaster.opts --exclude pg_log \
 --exclude recovery.done \
---exclude pg_xlog \
+--exclude pg_xlog pg_wal \
 $master_db_cluster/ $DEST_CLUSTER/
 
 rm -fr $DEST_CLUSTER/pg_xlog 
 mkdir $DEST_CLUSTER/pg_xlog
 chmod 700 $DEST_CLUSTER/pg_xlog
+
+rm -fr $DEST_CLUSTER/pg_wal
+mkdir $DEST_CLUSTER/pg_wal
+chmod 700 $DEST_CLUSTER/pg_wal
 
 $psql -p $PORT -c "SELECT pg_stop_backup()" postgres
 EOF
