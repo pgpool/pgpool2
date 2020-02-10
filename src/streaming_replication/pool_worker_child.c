@@ -278,6 +278,7 @@ check_replication_time_lag(void)
 	BackendInfo *bkinfo;
 	unsigned long long int lag;
 	ErrorContextCallback callback;
+	int		active_standby_node;
 
 	/* clear replication state */
 	for (i = 0; i < NUM_BACKENDS; i++)
@@ -308,6 +309,7 @@ check_replication_time_lag(void)
 	callback.previous = error_context_stack;
 	error_context_stack = &callback;
 	stat_rep_query = NULL;
+	active_standby_node = 0;
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
@@ -360,6 +362,8 @@ check_replication_time_lag(void)
 				query = "SELECT pg_last_wal_replay_lsn()";
 			else
 				query = "SELECT pg_last_xlog_replay_location()";
+
+			active_standby_node++;
 		}
 
 		if (get_query_result(slots, i, query, &res) == 0 && res->nullflags[0] != -1)
@@ -378,7 +382,7 @@ check_replication_time_lag(void)
 
 		status = get_query_result(slots, PRIMARY_NODE_ID, stat_rep_query, &res_rep);
 
-		if (status != 0)
+		if (status == -1 || (status == -2 && active_standby_node > 0))
 		{
 			ereport(LOG,
 					(errmsg("get_query_result falied: status: %d", status)));
@@ -546,9 +550,9 @@ reload_config(void)
 
 /*
  * Execute query against specified backend using an established connection to
- * backend.  Return -1 on failure or 0 otherwise.  Caller must prepare memory
- * for POOL_SELECT_RESULT and pass it as "res". It is guaranteed that no
- * exception occurs within this function.
+ * backend.  Return -1 on failure, -2 on no rows returned, or 0 otherwise.
+ * Caller must prepare memory for POOL_SELECT_RESULT and pass it as "res". It
+ * is guaranteed that no exception occurs within this function.
  */
 int
 get_query_result(POOL_CONNECTION_POOL_SLOT * *slots, int backend_id, char *query, POOL_SELECT_RESULT * *res)
@@ -582,10 +586,10 @@ get_query_result(POOL_CONNECTION_POOL_SLOT * *slots, int backend_id, char *query
 	if ((*res)->numrows <= 0)
 	{
 		free_select_result(*res);
-		ereport(LOG,
+		ereport(DEBUG1,
 				(errmsg("get_query_result: no rows returned"),
 				 errdetail("node id (%d)", backend_id)));
-		return sts;
+		return -2;
 	}
 
 	sts = 0;
