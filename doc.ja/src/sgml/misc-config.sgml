@@ -112,35 +112,20 @@
    </term>
    <listitem>
     <para>
-     <!--
-     Setting to on, relation cache shared among <productname>Pgpool-II</productname>
-     child processes using the query cache. Default is on. Each child process
-     executed same query to refer to system catalog from <productname>PostgreSQL</productname>,
-     but using query cache can expect to execute only same query once.
-     Expiration time on query cache is <xref linkend="guc-relcache-expire"> parameter.
-     This parameter enables even if <xref linkend="guc-memory-cache-enabled"> is off.
-     In this case some query cache parameters(<xref linkend="guc-memqcache-method">,
-     <xref linkend="guc-memqcache-maxcache"> and each cache storage parameter)
-     is used together.
-     -->
-     onにするとクエリキャッシュを利用して子プロセス間でリレーションキャッシュを共有します。
+     onにするとインメモリクエリキャッシュ(<xref linkend="runtime-in-memory-query-cache-enabling">参照)を利用して子プロセス間でリレーションキャッシュを共有します。
      デフォルトはonです。
-     それぞれの子プロセスは<productname>PostgreSQL</productname>のシステムカタログを参照するために同じクエリを実行していましたが、クエリキャッシュにより同じクエリの実行を1回だけとすることが期待できます。
-     クエリキャッシュ上の寿命は、<xref linkend="guc-relcache-expire">の値となります。
+     それぞれの子プロセスは<productname>PostgreSQL</productname>のシステムカタログを参照するためにクエリを実行します。
+     この機能を有効にすると、他のプロセスはクエリキャッシュからカタログを参照した結果を得ることができるので、クエリの実行頻度が減ることが期待できます。
+     システムカタログが変更されてもキャッシュは削除されません。
+     ですから時間によるキャッシュの削除を<xref linkend="guc-relcache-expire">を使って行うことを強くお勧めします。
+    </para>
+    <para>
       本パラメータは、<xref linkend="guc-memory-cache-enabled">がoffの場合も有効です。
        この場合、一部のクエリキャッシュのパラメータ（<xref linkend="guc-memqcache-method">と<xref linkend="guc-memqcache-maxcache">、および各キャッシュストレージ用のパラメータ）も有効になります。
     </para>
     <para>
-     <!--
-     <productname>Pgpool-II</productname> searh relation cache on local
-     for a cache entry first, if this is on. When it is not found on relation cache,
-     query cache is searched for it next. If it is found on query cache,
-     it is copied to relation cache on local. if a cache entry is not found
-     on anywhere, execute the query for <productname>PostgreSQL</productname>,
-     the result is registered with relation cache and local cache.
-     -->
      このパラメータがonなら、<productname>Pgpool-II</productname>はローカルのリレーションキャッシュをまず検索します。
-     該当するキャッシュエントリが見つからない場合は、次にクエリキャッシュを検索します。
+     該当するキャッシュエントリが見つからない場合は、次に共有クエリキャッシュを検索します。
      もしクエリキャッシュに該当エントリが見つかったら、ローカルキャッシュにコピーします。
      見つからなかった場合には、<productname>PostgreSQL</productname>にクエリを発行して問い合わせを実行し、結果をクエリキャッシュに登録するとともに、ローカルキャッシュにも登録します。
     </para>

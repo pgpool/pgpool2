@@ -76,23 +76,35 @@
    </term>
    <listitem>
     <para>
-     Setting to on, relation cache shared among <productname>Pgpool-II</productname>
-     child processes using the query cache. Default is on. Each child process
-     executed same query to refer to system catalog from <productname>PostgreSQL</productname>,
-     but using query cache can expect to execute only same query once.
-     Expiration time on query cache is <xref linkend="guc-relcache-expire"> parameter.
-      This parameter enables even if <xref linkend="guc-memory-cache-enabled"> is off.
-       In this case some query cache parameters(<xref linkend="guc-memqcache-method">,
-	<xref linkend="guc-memqcache-maxcache"> and each cache storage parameter)
-	 is used together.
+     By setting to on, relation cache is shared among
+     <productname>Pgpool-II</productname> child processes using the in
+     memory query cache (see <xref
+     linkend="runtime-in-memory-query-cache-enabling"> for more
+     details). Default is on. Each child process needs to access to
+     the system catalog from <productname>PostgreSQL</productname>.
+     By enabling this feature, other process can extract the catalog
+     lookup result from the query cache and it should reduce the
+     frequency of the query. Cache invalidation is not happen even if
+     the system catalog is modified. So it is strongly recommend to
+     set time out base cache invalidation by using <xref
+     linkend="guc-relcache-expire"> parameter.
     </para>
     <para>
-     <productname>Pgpool-II</productname> search relation cache on local
-     for a cache entry first, if this is on. When it is not found on relation cache,
-     query cache is searched for it next. If it is found on query cache,
-     it is copied to relation cache on local. if a cache entry is not found
-     on anywhere, execute the query for <productname>PostgreSQL</productname>,
-     the result is registered with relation cache and local cache.
+     This parameter can be used even if <xref
+     linkend="guc-memory-cache-enabled"> is off.  In this case some
+     query cache parameters(<xref linkend="guc-memqcache-method">,
+     <xref linkend="guc-memqcache-maxcache"> and each cache storage
+     parameter) is used together.
+    </para>
+    <para>
+     <productname>Pgpool-II</productname> search the local relation
+     cache first. If it is not found on the cache, the shared relation
+     query cache is searched if this feature is enabled. If it is
+     found on query cache, it is copied into the local relation
+     cache. If a cache entry is not found on anywhere,
+     <productname>Pgpool-II</productname> executes the query against
+     <productname>PostgreSQL</productname>, and the result is stored
+     into the shared relation cache and the local cache.
     </para>
     <para>
      This parameter can only be set at server start.
