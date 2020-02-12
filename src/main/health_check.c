@@ -234,6 +234,7 @@ static bool establish_persistent_connection(int node)
 {
 	BackendInfo *bkinfo;
 	int retry_cnt;
+	char		*dbname;
 
 	bkinfo = pool_get_node_info(node);
 
@@ -251,7 +252,9 @@ static bool establish_persistent_connection(int node)
 	 * If database is not specified, "postgres" database is assumed.
 	 */
 	if (*pool_config->health_check_params[node].health_check_database == '\0')
-		pool_config->health_check_params[node].health_check_database = "postgres";
+		dbname = "postgres";
+	else
+		dbname = pool_config->health_check_params[node].health_check_database;
 
 	/*
 	 * Try to connect to the database.
@@ -278,7 +281,7 @@ static bool establish_persistent_connection(int node)
 
 			slot = make_persistent_db_connection_noerror(node, bkinfo->backend_hostname,
 														 bkinfo->backend_port,
-														 pool_config->health_check_params[node].health_check_database,
+														 dbname,
 														 pool_config->health_check_params[node].health_check_user,
 														 pool_config->health_check_params[node].health_check_password, false);
 
