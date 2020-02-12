@@ -239,6 +239,7 @@ establish_persistent_connection(int node)
 	static time_t auto_failback_interval = 0; /* resume time of auto_failback */
 	bool		check_failback = false;
 	time_t		now;
+	char		*dbname;
 
 	bkinfo = pool_get_node_info(node);
 
@@ -269,7 +270,9 @@ establish_persistent_connection(int node)
 	 * If database is not specified, "postgres" database is assumed.
 	 */
 	if (*pool_config->health_check_params[node].health_check_database == '\0')
-		pool_config->health_check_params[node].health_check_database = "postgres";
+		dbname = "postgres";
+	else
+		dbname = pool_config->health_check_params[node].health_check_database;
 
 	/*
 	 * Try to connect to the database.
@@ -298,7 +301,7 @@ establish_persistent_connection(int node)
 
 			slot = make_persistent_db_connection_noerror(node, bkinfo->backend_hostname,
 														 bkinfo->backend_port,
-														 pool_config->health_check_params[node].health_check_database,
+														 dbname,
 														 pool_config->health_check_params[node].health_check_user,
 														 password ? password : "", false);
 
