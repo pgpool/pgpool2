@@ -175,8 +175,8 @@ useradd -M -g postgres -o -r -d /var/lib/pgsql -s /bin/bash \
 
 %post
 /sbin/ldconfig
-echo 'postgres ALL=NOPASSWD: /sbin/ip' | sudo EDITOR='tee -a' visudo
-echo 'postgres ALL=NOPASSWD: /usr/sbin/arping' | sudo EDITOR='tee -a' visudo
+echo 'postgres ALL=NOPASSWD: /sbin/ip' | sudo EDITOR='tee -a' visudo >/dev/null 2>&1 || :
+echo 'postgres ALL=NOPASSWD: /usr/sbin/arping' | sudo EDITOR='tee -a' visudo >/dev/null 2>&1 || :
 
 %if %{systemd_enabled}
 %systemd_post pgpool.service
