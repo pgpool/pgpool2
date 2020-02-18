@@ -518,7 +518,12 @@
      <para>
       This parameter can only be set at server start.
      </para>
-    </listitem>
+	<note>
+		<para>
+		enabling <varname>failover_when_quorum_exists</varname> is not allowed in native replication mode.
+		</para>
+    </note>
+   </listitem>
    </varlistentry>
 
    <varlistentry id="guc-failover-require-consensus" xreflabel="failover_require_consensus">
@@ -559,6 +564,12 @@
        see <xref linkend="runtime-config-health-check">.
       </para>
      </caution>
+
+	<note>
+		<para>
+		enabling <varname>failover_require_consensus</varname> is not allowed in native replication mode.
+		</para>
+    </note>
 
      <para>
       <varname>failover_require_consensus</varname> is not available prior to
