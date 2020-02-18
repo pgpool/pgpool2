@@ -600,7 +600,7 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 		 */
 		if (!commit)
 		{
-			char *rewrite_query;
+			char	   *rewrite_query = NULL;
 
 			if (node)
 		   	{
@@ -618,7 +618,9 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				}
 
 				/* rewrite `now()' to timestamp literal */
-				rewrite_query = rewrite_timestamp(backend, query_context->parse_tree, false, msg);
+				if (!is_select_query(node, query_context->original_query) ||
+					pool_has_function_call(node) || pool_config->replicate_select)
+					rewrite_query = rewrite_timestamp(backend, query_context->parse_tree, false, msg);
 
 				/*
 				 * If the query is BEGIN READ WRITE or
