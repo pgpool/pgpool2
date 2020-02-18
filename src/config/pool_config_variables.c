@@ -4040,6 +4040,20 @@ static bool config_post_processor(ConfigContext context, int elevel)
 		}
 	}
 
+	/*
+	 * Quarantine state in native replication mode is dangerous and it can
+	 * potentially cause data inconsistency.
+	 * So as per the discussions, we agreed on disallowing setting
+	 * failover_when_quorum_exists in native replication mode
+	 */
+
+	if (pool_config->failover_when_quorum_exists && pool_config->replication_mode)
+	{
+		pool_config->failover_when_quorum_exists = false;
+		ereport(elevel,
+				(errmsg("invalid configuration, failover_when_quorum_exists is not allowed in native replication mode")));
+		return false;
+	}
 	return true;
 }
 
