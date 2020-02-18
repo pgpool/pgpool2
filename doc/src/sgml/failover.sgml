@@ -210,14 +210,15 @@
        which makes it ready again to accept client connections.
       </para>
       <para>
-       However from <productname>Pgpool-II</productname> 3.6, in
-       the steaming replication mode, client sessions will not be
-       disconnected when a failover occurs any more if the
-       session does not use the failed standby server. If the
-       primary server goes down, still all sessions will be
-       disconnected. Health check timeout case will also cause
-       the full session disconnection. Other health check error,
-       including retry over case does not trigger full session
+       However from <productname>Pgpool-II</productname> 3.6, in the
+       steaming replication mode, client sessions will not be
+       disconnected any more when a failover occurs if the session
+       does not use the failed standby server. Please note that if a
+       query is sent while failover is processing, the session will be
+       disconnected. If the primary server goes down, still all
+       sessions will be disconnected. Health check timeout case will
+       also cause the full session disconnection. Other health check
+       error, including retry over case does not trigger full session
        disconnection.
       </para>
      </note>

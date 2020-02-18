@@ -240,18 +240,8 @@
        その後、<productname>Pgpool-II</productname>は<command>failover_command</command>を実行し、コマンドが完了した後に<productname>Pgpool-II</productname>はクライアントからの接続を再び受け付ける準備のため新しい子プロセスを起動します。
       </para>
       <para>
-       <!--
-       However from <productname>Pgpool-II</productname> 3.6, in
-       the steaming replication mode, client sessions will not be
-       disconnected when a failover occurs any more if the
-       session does not use the failed standby server. If the
-       primary server goes down, still all sessions will be
-       disconnected. Health check timeout case will also cause
-       the full session disconnection. Other health check error,
-       including retry over case does not trigger full session
-       disconnection.
-       -->
        しかし、<productname>Pgpool-II</productname> 3.6以降では、そのセッションがダウンしたスタンバイを使用していない場合には、フェイルオーバが起こってもセッションが切断されません。
+       (ただし、フェイルオーバ処理中にそのセッションを使って問い合わせを発行すると、そのセッションは切断されるので注意してください。)
        プライマリサーバがダウンしたときには、依然としてすべてのセッションが切断されます。
        ヘルスチェックがタイムアウトした場合にも、すべてのセッションが切断されます。
        それ以外のケース、たとえばヘルスチェックの再試行回数がオーバーした場合には、全セッションの切断は起きません。
