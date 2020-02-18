@@ -814,8 +814,35 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 		stmt = ((PrepareStmt *) node)->query;
 		ctx.rewrite_to_params = true;
 	}
+	/*
+	 * CopyStmt
+	 */
 	else if (IsA(node, CopyStmt) &&((CopyStmt *) node)->query != NULL)
 		stmt = ((CopyStmt *) node)->query;
+	/*
+	 * ExplainStmt
+	 */
+	else if (IsA(node, ExplainStmt))
+	{
+		ListCell   *lc;
+		bool        analyze = false;
+
+		/* Check to see if this is EXPLAIN ANALYZE */
+		foreach(lc, ((ExplainStmt *) node)->options)
+		{
+			DefElem    *opt = (DefElem *) lfirst(lc);
+
+			if (strcmp(opt->defname, "analyze") == 0)
+			{
+				stmt = ((ExplainStmt *) node)->query;
+				analyze = true;
+				break;
+			}
+		}
+
+		if (!analyze)
+			return NULL;
+	}
 	else
 		stmt = node;
 
@@ -929,6 +956,13 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 		{
 			raw_expression_tree_walker(
 									   (Node *) s_stmt,
+									   rewrite_timestamp_walker, (void *) &ctx);
+		}
+
+		if (s_stmt->withClause)
+		{
+			raw_expression_tree_walker(
+									   (Node *) s_stmt->withClause,
 									   rewrite_timestamp_walker, (void *) &ctx);
 		}
 
