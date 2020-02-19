@@ -1,6 +1,95 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-6-20> 
+ <title>Release 3.6.20</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2020-02-20</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-01-28 [d60e6b7]
+    -->
+    <para>
+     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failire. (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-02-18 [8b9eb65]
+    -->
+    <para>
+     Fix incorrect query rewriting in native replication mode. 
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=551">bug 551</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-02-18 [c5df050]
+    2020-02-04 [8d2949a]
+    -->
+    <para>
+     Doc: Update documentation and fix documentation typos. (Takuma Hoshiai, Tatsuo Ishii, Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-02-08 [0a5e38e]
+    -->
+    <para>
+     Fix <xref linkend="PGPOOL-SETUP"> to support <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2020-01-11 [2f5c9a2]
+    2020-01-10 [d1d490f]
+    2020-01-04 [78364ae]
+    2019-12-31 [0591a76]
+    2019-12-27 [d4365d8]
+    2019-12-26 [a308b49]
+    -->
+    <para>
+     Fix occasional regression test failure. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-12-12 [dc4f169]
+    -->
+    <para>
+     Fix replication delay worker segfault when application_name in primary_conninfo is an empty string.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=565">bug 565</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-11-18 [3a19033]
+    2019-11-15 [0cc9caf]
+    -->
+    <para>
+     Fix the bug with ignored syslog setting. (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-6-19> 
  <title>Release 3.6.19</title>
  <note>
