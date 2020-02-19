@@ -1,6 +1,114 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-5-24> 
+ <!--
+ <title>Release 3.5.24</title>
+ -->
+ <title>リリース 3.5.24</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2020-02-20</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Changes</title>
+  -->
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-01-28 [218886b]
+    -->
+    <para>
+     <!--
+     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failire. (Bo Peng)
+     -->
+     起動時のbind()エラーを回避するために、ソケットファイルが存在するかどうかを確認し、
+     PIDファイルが存在しない場合、それらのソケットファイルを削除するように修正しました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-02-18 [e20c60b]
+    -->
+    <para>
+     <!--
+     Fix incorrect query rewriting in native replication mode. 
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=551">bug 551</ulink>) (Bo Peng)
+     -->
+     レプリケーションモードの場合に、クエリのタイムスタンプがリライトされない不具合を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=551">bug 551</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2020-02-08 [97446c3]
+    -->
+    <para>
+     <!--
+     Fix <xref linkend="PGPOOL-SETUP"> to support <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
+     -->
+     <xref linkend="PGPOOL-SETUP">が<productname>PostgreSQL</productname> 12 に対応するように修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2020-01-11 [2f5c9a2]
+    2020-01-10 [d1d490f]
+    2020-01-04 [78364ae]
+    2019-12-31 [0591a76]
+    2019-12-27 [d4365d8]
+    2019-12-26 [a308b49]
+    -->
+    <para>
+     <!--
+     Fix occasional regression test failure. (Tatsuo Ishii)
+     -->
+     時々起こるリグレッションテストの失敗を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-12-12 [88f1179]
+    -->
+    <para>
+     Fix replication delay worker segfault when application_name in primary_conninfo is an empty string.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=565">bug 565</ulink>) (Tatsuo Ishii)
+     -->
+     primary_conninfoのapplication_nameが空の場合に発生するレプリケーション遅延チェックワーカープロセスのセグメンテーション違反を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=565">bug 565</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2019-11-18 [2a4be9b]
+    2019-11-15 [0a7d632]
+    -->
+    <para>
+     <!--
+     Fix the bug with ignored syslog setting. (Bo Peng)
+     -->
+     <literal>syslog</literal>が出力されない不具合を修正しました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-5-23> 
  <!--
  <title>Release 3.5.23</title>
