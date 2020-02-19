@@ -655,6 +655,14 @@
       -->
       このパラメータは、サーバーの起動時にのみ設定できます。
      </para>
+     <note>
+      <para>
+       <!--
+       enabling <varname>failover_when_quorum_exists</varname> is not allowed in native replication mode.
+       -->
+       ネイティブレプリケーションモードでは<varname>failover_when_quorum_exists</varname>機能は利用できません。
+      </para>
+     </note>
     </listitem>
    </varlistentry>
 
@@ -714,6 +722,16 @@
 	ヘルスチェックに関する詳細については、<xref linkend="runtime-config-health-check">をご覧ください。
        </para>
       </caution>
+
+      <note>
+       <para>
+        <!--
+        enabling <varname>failover_require_consensus</varname> is not allowed in native replication mode.
+        -->
+        ネイティブレプリケーションモードでは<varname>failover_require_consensus</varname>機能は利用できません。
+       </para>
+      </note>
+
       <!--
       <varname>failover_require_consensus</varname> is not available prior to
       <productname>Pgpool-II </productname><emphasis>V3.7</emphasis>. and it is only
