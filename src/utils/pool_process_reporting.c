@@ -2017,7 +2017,6 @@ get_health_check_stats(int *nrows)
 	int			i;
 	POOL_HEALTH_CHECK_STATS *stats = palloc0(NUM_BACKENDS * sizeof(POOL_HEALTH_CHECK_STATS));
 	BackendInfo *bi = NULL;
-	struct tm	tm;
 	time_t		t;
 	double		f;
 
@@ -2050,8 +2049,9 @@ get_health_check_stats(int *nrows)
 		}
 
 		/* status last changed */
-		localtime_r(&bi->status_changed_time, &tm);
-		strftime(stats[i].last_status_change, POOLCONFIG_MAXDATELEN, "%F %T", &tm);
+		t = bi->status_changed_time;
+		ereport(LOG,(errmsg("status_changed_time %ld", t)));
+		strftime(stats[i].last_status_change, POOLCONFIG_MAXDATELEN, "%F %T", localtime(&t));
 
 		snprintf(stats[i].total_count, POOLCONFIG_MAXLONGCOUNTLEN, UINT64_FORMAT, health_check_stats[i].total_count);
 		snprintf(stats[i].success_count, POOLCONFIG_MAXLONGCOUNTLEN, UINT64_FORMAT, health_check_stats[i].success_count);

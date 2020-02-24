@@ -59,7 +59,8 @@ pgpool_SOURCES = main/main.c \
 	utils/base64.c \
 	utils/sha2.c \
 	utils/ssl_utils.c \
-    utils/statistics.c
+	utils/statistics.c \
+	utils/pool_health_check_stats.c
 
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\" \

@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -74,6 +74,7 @@ static void inform_process_info(PCP_CONNECTION * frontend, char *buf);
 static void inform_watchdog_info(PCP_CONNECTION * frontend, char *buf);
 static void inform_node_info(PCP_CONNECTION * frontend, char *buf);
 static void inform_node_count(PCP_CONNECTION * frontend);
+static void inform_health_check_stats(PCP_CONNECTION *frontend, char *buf);
 static void process_detach_node(PCP_CONNECTION * frontend, char *buf, char tos);
 static void process_attach_node(PCP_CONNECTION * frontend, char *buf);
 static void process_recovery_request(PCP_CONNECTION * frontend, char *buf);
@@ -217,7 +218,6 @@ pcp_worker_main(int port)
 static void
 pcp_process_command(char tos, char *buf, int buf_len)
 {
-
 	if (tos == 'O' || tos == 'T')
 	{
 		if (Req_info->switching)
@@ -258,6 +258,11 @@ pcp_process_command(char tos, char *buf, int buf_len)
 		case 'L':				/* node count */
 			set_ps_display("PCP: processing node count request", false);
 			inform_node_count(pcp_frontend);
+			break;
+
+		case 'H':				/* health check stats */
+			set_ps_display("PCP: processing health check stats request", false);
+			inform_health_check_stats(pcp_frontend, buf);
 			break;
 
 		case 'I':				/* node info */
@@ -888,6 +893,84 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 	pcp_write(frontend, bi->replication_sync_state, strlen(bi->replication_sync_state) + 1);
 	pcp_write(frontend, status_changed_time_str, strlen(status_changed_time_str) + 1);
 
+	do_pcp_flush(frontend);
+}
+
+/*
+ * Send out health check stats data to pcp client.  node id is provided as a
+ * string in buf parameter.
+ *
+ * The protocol starts with 'h', followed by 4-byte packet length integer in
+ * network byte order including self.  Each data is represented as a null
+ * terminted string. The order of each data is defined in
+ * POOL_HEALTH_CHECK_STATS struct.
+ */
+static void
+inform_health_check_stats(PCP_CONNECTION *frontend, char *buf)
+{
+	POOL_HEALTH_CHECK_STATS *stats;
+	POOL_HEALTH_CHECK_STATS *s;
+	int		*offsets;
+	int		n;
+	int		nrows;
+	int		i;
+	int		node_id;
+	bool	node_id_ok = false;
+	int		wsize;
+	char	code[] = "CommandComplete";
+
+	node_id = atoi(buf);
+
+	if (node_id < 0 || node_id > NUM_BACKENDS)
+	{
+		ereport(ERROR,
+				(errmsg("informing health check stats info failed"),
+				 errdetail("invalid node ID %d", node_id)));
+	}
+	
+	stats = get_health_check_stats(&nrows);
+
+	for (i = 0; i < nrows; i++)
+	{
+		if (atoi(stats[i].node_id) == node_id)
+		{
+			node_id_ok = true;
+			s = &stats[i];
+			break;
+		}
+	}
+
+	if (!node_id_ok)
+	{
+		ereport(ERROR,
+				(errmsg("informing health check stats info failed"),
+				 errdetail("stats data for node ID %d does not exist", node_id)));
+	}
+
+	pcp_write(frontend, "h", 1);	/* indicate that this is a reply to health check stats request */
+
+	wsize = sizeof(code) + sizeof(int);
+
+	/* Calculate total packet length */
+	offsets = pool_health_check_stats_offsets(&n);
+
+	for (i = 0; i < n; i++)
+	{
+		wsize += strlen((char *)s + offsets[i]) + 1;
+	}
+	wsize = htonl(wsize);	/* convert to network byte order */
+
+	/* send packet length to frontend */
+	pcp_write(frontend, &wsize, sizeof(int));
+	/* send "Command Complete" to frontend */
+	pcp_write(frontend, code, sizeof(code));
+
+	/* send each health check stats data to frontend */
+	for (i = 0; i < n; i++)
+	{
+		pcp_write(frontend, (char *)s + offsets[i], strlen((char *)s + offsets[i]) + 1);
+	}
+	pfree(stats);
 	do_pcp_flush(frontend);
 }
 

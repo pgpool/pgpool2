@@ -4,6 +4,7 @@ AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
 bin_PROGRAMS =  pcp_stop_pgpool \
 				pcp_node_count \
 				pcp_node_info \
+				pcp_health_check_stats \
 				pcp_proc_count \
 				pcp_proc_info \
 				pcp_detach_node \
@@ -20,6 +21,8 @@ pcp_stop_pgpool_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_node_count_SOURCES = $(client_sources)
 pcp_node_count_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_node_info_SOURCES = $(client_sources)
+pcp_health_check_stats_LDADD = $(libs_dir)/pcp/libpcp.la
+pcp_health_check_stats_SOURCES = $(client_sources) ../../utils/pool_health_check_stats.c
 pcp_node_info_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_proc_count_SOURCES = $(client_sources)
 pcp_proc_count_LDADD = $(libs_dir)/pcp/libpcp.la

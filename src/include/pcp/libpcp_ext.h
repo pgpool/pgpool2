@@ -316,7 +316,7 @@ extern void pcp_disconnect(PCPConnInfo * pcpConn);
 extern PCPResultInfo * pcp_terminate_pgpool(PCPConnInfo * pcpCon, char mode);
 extern PCPResultInfo * pcp_node_count(PCPConnInfo * pcpCon);
 extern PCPResultInfo * pcp_node_info(PCPConnInfo * pcpCon, int nid);
-
+extern PCPResultInfo * pcp_health_check_stats(PCPConnInfo * pcpCon, int nid);
 extern PCPResultInfo * pcp_process_count(PCPConnInfo * pcpConn);
 extern PCPResultInfo * pcp_process_info(PCPConnInfo * pcpConn, int pid);
 
@@ -344,6 +344,8 @@ extern char *pcp_get_last_error(PCPConnInfo * pcpConn);
 extern int	pcp_result_is_empty(PCPResultInfo * res);
 
 extern char *role_to_str(SERVER_ROLE role);
+
+extern	int * pool_health_check_stats_offsets(int *n);
 
 /* ------------------------------
  * pcp_error.c

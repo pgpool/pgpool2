@@ -95,6 +95,7 @@
   &pcpCommonOptions;
   &pcpNodeCount;
   &pcpNodeInfo;
+  &pcpHealthCheckStats;
   &pcpWatchdogInfo;
   &pcpProcCount;
   &pcpProcInfo;

@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -48,6 +48,7 @@ static void output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool ve
 static void output_proccount_result(PCPResultInfo * pcpResInfo, bool verbose);
 static void output_poolstatus_result(PCPResultInfo * pcpResInfo, bool verbose);
 static void output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose);
+static void output_health_check_stats_result(PCPResultInfo * pcpResInfo, bool verbose);
 static void output_nodecount_result(PCPResultInfo * pcpResInfo, bool verbose);
 static char *backend_status_to_string(BackendInfo * bi);
 static char *format_titles(const char **titles, const char **types, int ntitles);
@@ -58,6 +59,7 @@ typedef enum
 	PCP_DETACH_NODE,
 	PCP_NODE_COUNT,
 	PCP_NODE_INFO,
+	PCP_HEALTH_CHECK_STATS,
 	PCP_POOL_STATUS,
 	PCP_PROC_COUNT,
 	PCP_PROC_INFO,
@@ -82,6 +84,7 @@ struct AppTypes AllAppTypes[] =
 	{"pcp_detach_node", PCP_DETACH_NODE, "n:h:p:U:gwWvd", "detach a node from pgpool-II"},
 	{"pcp_node_count", PCP_NODE_COUNT, "h:p:U:wWvd", "display the total number of nodes under pgpool-II's control"},
 	{"pcp_node_info", PCP_NODE_INFO, "n:h:p:U:wWvd", "display a pgpool-II node's information"},
+	{"pcp_health_check_stats", PCP_HEALTH_CHECK_STATS, "n:h:p:U:wWvd", "display a pgpool-II health check stats data"},
 	{"pcp_pool_status", PCP_POOL_STATUS, "h:p:U:wWvd", "display pgpool configuration and status"},
 	{"pcp_proc_count", PCP_PROC_COUNT, "h:p:U:wWvd", "display the list of pgpool-II child process PIDs"},
 	{"pcp_proc_info", PCP_PROC_INFO, "h:p:P:U:awWvd", "display a pgpool-II child process' information"},
@@ -366,6 +369,11 @@ main(int argc, char **argv)
 		pcpResInfo = pcp_node_info(pcpConn, nodeID);
 	}
 
+	else if (current_app_type->app_type == PCP_HEALTH_CHECK_STATS)
+	{
+		pcpResInfo = pcp_health_check_stats(pcpConn, nodeID);
+	}
+
 	else if (current_app_type->app_type == PCP_POOL_STATUS)
 	{
 		pcpResInfo = pcp_pool_status(pcpConn);
@@ -428,6 +436,9 @@ main(int argc, char **argv)
 
 		if (current_app_type->app_type == PCP_NODE_INFO)
 			output_nodeinfo_result(pcpResInfo, verbose);
+
+		if (current_app_type->app_type == PCP_HEALTH_CHECK_STATS)
+			output_health_check_stats_result(pcpResInfo, verbose);
 
 		if (current_app_type->app_type == PCP_POOL_STATUS)
 			output_poolstatus_result(pcpResInfo, verbose);
@@ -505,6 +516,75 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose)
 			   backend_info->replication_state,
 			   backend_info->replication_sync_state,
 			   last_status_change);
+	}
+}
+
+/*
+ * Format and output health check stats
+ */
+static void
+output_health_check_stats_result(PCPResultInfo * pcpResInfo, bool verbose)
+{
+	POOL_HEALTH_CHECK_STATS *stats = (POOL_HEALTH_CHECK_STATS *)pcp_get_binary_data(pcpResInfo, 0);
+
+	if (verbose)
+	{
+		const char *titles[] = {"Node Id", "Host Name", "Port", "Status", "Role", "Last Status Change",
+								"Total Count", "Success Count", "Fail Count", "Skip Count", "Retry Count",
+								"Average Retry Count", "Max Retry Count", "Max Health Check Duration",
+								"Minimum Health Check Duration", "Average Health Check Duration",
+								"Last Health Check", "Last Successful Health Check",
+								"Last Skip Health Check", "Last Failed Health Check"};
+		const char *types[] = {"s", "s", "s", "s", "s", "s", "s", "s", "s", "s",
+							   "s", "s", "s", "s", "s", "s", "s", "s", "s", "s"};
+		char *format_string;
+
+		format_string = format_titles(titles, types, sizeof(titles)/sizeof(char *));
+		printf(format_string,
+			   stats->node_id,
+			   stats->hostname,
+			   stats->port,
+			   stats->status,
+			   stats->role,
+			   stats->last_status_change,
+			   stats->total_count,
+			   stats->success_count,
+			   stats->fail_count,
+			   stats->skip_count,
+			   stats->retry_count,
+			   stats->average_retry_count,
+			   stats->max_retry_count,
+			   stats->max_health_check_duration,
+			   stats->min_health_check_duration,
+			   stats->average_health_check_duration,
+			   stats->last_health_check,
+			   stats->last_successful_health_check,
+			   stats->last_skip_health_check,
+			   stats->last_failed_health_check);
+	}
+	else
+	{
+		printf("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+			   stats->node_id,
+			   stats->hostname,
+			   stats->port,
+			   stats->status,
+			   stats->role,
+			   stats->last_status_change,
+			   stats->total_count,
+			   stats->success_count,
+			   stats->fail_count,
+			   stats->skip_count,
+			   stats->retry_count,
+			   stats->average_retry_count,
+			   stats->max_retry_count,
+			   stats->max_health_check_duration,
+			   stats->min_health_check_duration,
+			   stats->average_health_check_duration,
+			   stats->last_health_check,
+			   stats->last_successful_health_check,
+			   stats->last_skip_health_check,
+			   stats->last_failed_health_check);
 	}
 }
 
@@ -701,6 +781,7 @@ app_require_nodeID(void)
 	return (current_app_type->app_type == PCP_ATTACH_NODE ||
 			current_app_type->app_type == PCP_DETACH_NODE ||
 			current_app_type->app_type == PCP_NODE_INFO ||
+			current_app_type->app_type == PCP_HEALTH_CHECK_STATS ||
 			current_app_type->app_type == PCP_PROMOTE_NODE ||
 			current_app_type->app_type == PCP_RECOVERY_NODE);
 }
