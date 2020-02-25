@@ -79,11 +79,11 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = pcp_stop_pgpool$(EXEEXT) pcp_node_count$(EXEEXT) \
-	pcp_node_info$(EXEEXT) pcp_proc_count$(EXEEXT) \
-	pcp_proc_info$(EXEEXT) pcp_detach_node$(EXEEXT) \
-	pcp_attach_node$(EXEEXT) pcp_recovery_node$(EXEEXT) \
-	pcp_promote_node$(EXEEXT) pcp_pool_status$(EXEEXT) \
-	pcp_watchdog_info$(EXEEXT)
+	pcp_node_info$(EXEEXT) pcp_health_check_stats$(EXEEXT) \
+	pcp_proc_count$(EXEEXT) pcp_proc_info$(EXEEXT) \
+	pcp_detach_node$(EXEEXT) pcp_attach_node$(EXEEXT) \
+	pcp_recovery_node$(EXEEXT) pcp_promote_node$(EXEEXT) \
+	pcp_pool_status$(EXEEXT) pcp_watchdog_info$(EXEEXT)
 subdir = src/tools/pcp
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/mkinstalldirs
@@ -116,6 +116,10 @@ am__v_lt_1 =
 am_pcp_detach_node_OBJECTS = $(am__objects_1)
 pcp_detach_node_OBJECTS = $(am_pcp_detach_node_OBJECTS)
 pcp_detach_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
+am_pcp_health_check_stats_OBJECTS = $(am__objects_1) \
+	../../utils/pool_health_check_stats.$(OBJEXT)
+pcp_health_check_stats_OBJECTS = $(am_pcp_health_check_stats_OBJECTS)
+pcp_health_check_stats_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_node_count_OBJECTS = $(am__objects_1)
 pcp_node_count_OBJECTS = $(am_pcp_node_count_OBJECTS)
 pcp_node_count_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
@@ -177,17 +181,17 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(pcp_attach_node_SOURCES) $(pcp_detach_node_SOURCES) \
-	$(pcp_node_count_SOURCES) $(pcp_node_info_SOURCES) \
-	$(pcp_pool_status_SOURCES) $(pcp_proc_count_SOURCES) \
-	$(pcp_proc_info_SOURCES) $(pcp_promote_node_SOURCES) \
-	$(pcp_recovery_node_SOURCES) $(pcp_stop_pgpool_SOURCES) \
-	$(pcp_watchdog_info_SOURCES)
+	$(pcp_health_check_stats_SOURCES) $(pcp_node_count_SOURCES) \
+	$(pcp_node_info_SOURCES) $(pcp_pool_status_SOURCES) \
+	$(pcp_proc_count_SOURCES) $(pcp_proc_info_SOURCES) \
+	$(pcp_promote_node_SOURCES) $(pcp_recovery_node_SOURCES) \
+	$(pcp_stop_pgpool_SOURCES) $(pcp_watchdog_info_SOURCES)
 DIST_SOURCES = $(pcp_attach_node_SOURCES) $(pcp_detach_node_SOURCES) \
-	$(pcp_node_count_SOURCES) $(pcp_node_info_SOURCES) \
-	$(pcp_pool_status_SOURCES) $(pcp_proc_count_SOURCES) \
-	$(pcp_proc_info_SOURCES) $(pcp_promote_node_SOURCES) \
-	$(pcp_recovery_node_SOURCES) $(pcp_stop_pgpool_SOURCES) \
-	$(pcp_watchdog_info_SOURCES)
+	$(pcp_health_check_stats_SOURCES) $(pcp_node_count_SOURCES) \
+	$(pcp_node_info_SOURCES) $(pcp_pool_status_SOURCES) \
+	$(pcp_proc_count_SOURCES) $(pcp_proc_info_SOURCES) \
+	$(pcp_promote_node_SOURCES) $(pcp_recovery_node_SOURCES) \
+	$(pcp_stop_pgpool_SOURCES) $(pcp_watchdog_info_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -358,6 +362,8 @@ pcp_stop_pgpool_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_node_count_SOURCES = $(client_sources)
 pcp_node_count_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_node_info_SOURCES = $(client_sources)
+pcp_health_check_stats_LDADD = $(libs_dir)/pcp/libpcp.la
+pcp_health_check_stats_SOURCES = $(client_sources) ../../utils/pool_health_check_stats.c
 pcp_node_info_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_proc_count_SOURCES = $(client_sources)
 pcp_proc_count_LDADD = $(libs_dir)/pcp/libpcp.la
@@ -475,6 +481,12 @@ pcp_attach_node$(EXEEXT): $(pcp_attach_node_OBJECTS) $(pcp_attach_node_DEPENDENC
 pcp_detach_node$(EXEEXT): $(pcp_detach_node_OBJECTS) $(pcp_detach_node_DEPENDENCIES) $(EXTRA_pcp_detach_node_DEPENDENCIES) 
 	@rm -f pcp_detach_node$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(pcp_detach_node_OBJECTS) $(pcp_detach_node_LDADD) $(LIBS)
+../../utils/pool_health_check_stats.$(OBJEXT):  \
+	../../utils/$(am__dirstamp)
+
+pcp_health_check_stats$(EXEEXT): $(pcp_health_check_stats_OBJECTS) $(pcp_health_check_stats_DEPENDENCIES) $(EXTRA_pcp_health_check_stats_DEPENDENCIES) 
+	@rm -f pcp_health_check_stats$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(pcp_health_check_stats_OBJECTS) $(pcp_health_check_stats_LDADD) $(LIBS)
 
 pcp_node_count$(EXEEXT): $(pcp_node_count_OBJECTS) $(pcp_node_count_DEPENDENCIES) $(EXTRA_pcp_node_count_DEPENDENCIES) 
 	@rm -f pcp_node_count$(EXEEXT)

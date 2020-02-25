@@ -136,7 +136,8 @@ am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	utils/json_writer.$(OBJEXT) utils/json.$(OBJEXT) \
 	utils/scram-common.$(OBJEXT) utils/base64.$(OBJEXT) \
 	utils/sha2.$(OBJEXT) utils/ssl_utils.$(OBJEXT) \
-	utils/statistics.$(OBJEXT)
+	utils/statistics.$(OBJEXT) \
+	utils/pool_health_check_stats.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a parser/nodes.o \
 	watchdog/lib-watchdog.a
@@ -485,7 +486,8 @@ pgpool_SOURCES = main/main.c \
 	utils/base64.c \
 	utils/sha2.c \
 	utils/ssl_utils.c \
-    utils/statistics.c
+	utils/statistics.c \
+	utils/pool_health_check_stats.c
 
 sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pcp.conf.sample \
@@ -765,6 +767,7 @@ utils/base64.$(OBJEXT): utils/$(am__dirstamp)
 utils/sha2.$(OBJEXT): utils/$(am__dirstamp)
 utils/ssl_utils.$(OBJEXT): utils/$(am__dirstamp)
 utils/statistics.$(OBJEXT): utils/$(am__dirstamp)
+utils/pool_health_check_stats.$(OBJEXT): utils/$(am__dirstamp)
 
 pgpool$(EXEEXT): $(pgpool_OBJECTS) $(pgpool_DEPENDENCIES) $(EXTRA_pgpool_DEPENDENCIES) 
 	@rm -f pgpool$(EXEEXT)

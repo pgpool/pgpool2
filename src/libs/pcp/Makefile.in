@@ -129,7 +129,7 @@ libpcp_la_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
 dist_libpcp_la_OBJECTS = pcp.lo ../../utils/pool_path.lo \
 	../../tools/fe_port.lo ../../tools/fe_memutils.lo \
-	../../utils/strlcpy.lo
+	../../utils/strlcpy.lo ../../utils/pool_health_check_stats.lo
 nodist_libpcp_la_OBJECTS = pcp_stream.lo md5.lo json.lo
 libpcp_la_OBJECTS = $(dist_libpcp_la_OBJECTS) \
 	$(nodist_libpcp_la_OBJECTS)
@@ -345,7 +345,8 @@ dist_libpcp_la_SOURCES = pcp.c \
 					../../utils/pool_path.c \
 					../../tools/fe_port.c \
 					../../tools/fe_memutils.c \
-					../../utils/strlcpy.c
+					../../utils/strlcpy.c \
+					../../utils/pool_health_check_stats.c
 
 nodist_libpcp_la_SOURCES = pcp_stream.c \
 					md5.c \
@@ -435,6 +436,7 @@ clean-libLTLIBRARIES:
 ../../tools/fe_port.lo: ../../tools/$(am__dirstamp)
 ../../tools/fe_memutils.lo: ../../tools/$(am__dirstamp)
 ../../utils/strlcpy.lo: ../../utils/$(am__dirstamp)
+../../utils/pool_health_check_stats.lo: ../../utils/$(am__dirstamp)
 
 libpcp.la: $(libpcp_la_OBJECTS) $(libpcp_la_DEPENDENCIES) $(EXTRA_libpcp_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libpcp_la_LINK) -rpath $(libdir) $(libpcp_la_OBJECTS) $(libpcp_la_LIBADD) $(LIBS)
