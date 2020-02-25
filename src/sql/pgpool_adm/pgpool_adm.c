@@ -3,7 +3,7 @@
  * pgpool_adm.c
  *
  *
- * Copyright (c) 2002-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2020, PostgreSQL Global Development Group
  *
  * Author: Jehan-Guillaume (ioguix) de Rorthais <jgdr@dalibo.com>
  *
@@ -38,7 +38,7 @@
 
 static PCPConnInfo * connect_to_server(char *host, int port, char *user, char *pass);
 static PCPConnInfo * connect_to_server_from_foreign_server(char *name);
-
+static Timestamp	str2timestamp(char *str);
 
 /**
  * Wrapper around pcp_connect
@@ -570,3 +570,162 @@ _pcp_detach_node(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(true);
 }
+
+/**
+ * nodeID: the node id to get info from
+ * host_or_srv: server name or ip address of the pgpool server
+ * port: pcp port number
+ * user: user to connect with
+ * pass: password
+ **/
+Datum
+_pcp_health_check_stats(PG_FUNCTION_ARGS)
+{
+	int16		nodeID = PG_GETARG_INT16(0);
+	char	   *host_or_srv = text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	PCPConnInfo *pcpConnInfo;
+	PCPResultInfo *pcpResInfo;
+
+	POOL_HEALTH_CHECK_STATS *stats;
+	Datum		values[20];		/* values to build the returned tuple from */
+	bool		nulls[] = {false, false, false, false, false, false, false, false, false, false,
+						   false, false, false, false, false, false, false, false, false, false};
+	TupleDesc	tupledesc;
+	HeapTuple	tuple;
+	AttrNumber	an;
+	int			i;
+
+	if (nodeID < 0 || nodeID >= MAX_NUM_BACKENDS)
+		ereport(ERROR, (0, errmsg("NodeID is out of range.")));
+
+	if (PG_NARGS() == 5)
+	{
+		char	   *user,
+				   *pass;
+		int			port;
+
+		port = PG_GETARG_INT16(2);
+		user = text_to_cstring(PG_GETARG_TEXT_PP(3));
+		pass = text_to_cstring(PG_GETARG_TEXT_PP(4));
+		pcpConnInfo = connect_to_server(host_or_srv, port, user, pass);
+	}
+	else if (PG_NARGS() == 2)
+	{
+		pcpConnInfo = connect_to_server_from_foreign_server(host_or_srv);
+	}
+	else
+	{
+		ereport(ERROR, (0, errmsg("Wrong number of argument.")));
+	}
+
+	pcpResInfo = pcp_health_check_stats(pcpConnInfo, nodeID);
+	if (pcpResInfo == NULL || PCPResultStatus(pcpResInfo) != PCP_RES_COMMAND_OK)
+	{
+		char	   *error = pcp_get_last_error(pcpConnInfo) ? pstrdup(pcp_get_last_error(pcpConnInfo)) : NULL;
+
+		pcp_disconnect(pcpConnInfo);
+		pcp_free_connection(pcpConnInfo);
+		ereport(ERROR, (0,
+						errmsg("failed to get node information"),
+						errdetail("%s\n", error ? error : "unknown reason")));
+	}
+
+	/**
+	 * Construct a tuple descriptor for the result rows.
+	 **/
+#if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 120000)
+	tupledesc = CreateTemplateTupleDesc(20);
+#else
+	tupledesc = CreateTemplateTupleDesc(20, false);
+#endif
+	an = 1;
+	TupleDescInitEntry(tupledesc, an++, "node_id", INT4OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "hostname", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "port", INT4OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "status", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "role", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "last_status_change", TIMESTAMPOID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "total_count", INT8OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "success_count", INT8OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "fail_count", INT8OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "skip_count", INT8OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "retry_count", INT8OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "average_retry_count", FLOAT4OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "max_retry_count", INT8OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "max_health_check_duration", INT8OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "min_health_check_duration", INT8OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "average_health_check_duration", FLOAT4OID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "last_health_check", TIMESTAMPOID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "last_successful_health_check", TIMESTAMPOID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "last_skip_health_check", TIMESTAMPOID, -1, 0);
+	TupleDescInitEntry(tupledesc, an++, "last_failed_health_check", TIMESTAMPOID, -1, 0);
+
+	tupledesc = BlessTupleDesc(tupledesc);
+
+	stats = (POOL_HEALTH_CHECK_STATS *) pcp_get_binary_data(pcpResInfo, 0);
+
+	/* set values */
+	i = 0;
+	values[i++] = Int32GetDatum(nodeID);
+	values[i++] = CStringGetTextDatum(stats->hostname);
+	values[i++] = Int32GetDatum(atoi(stats->port));
+	values[i++] = CStringGetTextDatum(stats->status);
+	values[i++] = CStringGetTextDatum(stats->role);
+
+	if (*stats->last_status_change == '\0')
+		nulls[i++] = true;
+	else
+		values[i++] = str2timestamp(stats->last_status_change);
+
+	values[i++] = Int64GetDatum(atol(stats->total_count));
+	values[i++] = Int64GetDatum(atol(stats->success_count));
+	values[i++] = Int64GetDatum(atol(stats->fail_count));
+	values[i++] = Int64GetDatum(atol(stats->skip_count));
+	values[i++] = Int64GetDatum(atol(stats->retry_count));
+	values[i++] = Float4GetDatum(atof(stats->average_retry_count));
+	values[i++] = Int64GetDatum(atol(stats->max_retry_count));
+	values[i++] = Int64GetDatum(atol(stats->max_health_check_duration));
+	values[i++] = Int64GetDatum(atol(stats->min_health_check_duration));
+	values[i++] = Float4GetDatum(atof(stats->average_health_check_duration));
+
+	if (*stats->last_health_check =='\0' )
+		nulls[i++] = true;
+	else
+		values[i++] = str2timestamp(stats->last_health_check);
+
+	if (*stats->last_successful_health_check == '\0')
+		nulls[i++] = true;
+	else
+		values[i++] = str2timestamp(stats->last_successful_health_check);
+
+	if (*stats->last_skip_health_check == '\0')
+		nulls[i++] = true;
+	else
+		values[i++] = str2timestamp(stats->last_skip_health_check);
+
+	if (*stats->last_failed_health_check == '\0')
+		nulls[i++] = true;
+	else
+		values[i++] = str2timestamp(stats->last_failed_health_check);
+
+	pcp_disconnect(pcpConnInfo);
+	pcp_free_connection(pcpConnInfo);
+
+	/* build and return the tuple */
+	tuple = heap_form_tuple(tupledesc, values, nulls);
+
+	ReleaseTupleDesc(tupledesc);
+
+	PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
+}
+
+static
+Timestamp str2timestamp(char *str)
+{
+	return (DatumGetTimestamp(DirectFunctionCall3(timestamp_in,
+												  CStringGetDatum(str),
+												  ObjectIdGetDatum(InvalidOid),
+												  Int32GetDatum(-1))));
+}
+

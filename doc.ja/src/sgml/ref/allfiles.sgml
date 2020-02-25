@@ -34,6 +34,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY showPoolCache       SYSTEM "show_pool_cache.sgml">
 <!ENTITY showPoolHealthCheckStats SYSTEM "show_pool_health_check_stats.sgml">
 <!ENTITY pgpoolAdmPcpNodeInfo SYSTEM "pgpool_adm_pcp_node_info.sgml">
+<!ENTITY pgpoolAdmPcpHealthCheckStats SYSTEM "pgpool_adm_pcp_health_check_stats.sgml">
 <!ENTITY pgpoolAdmPcpPoolStatus SYSTEM "pgpool_adm_pcp_pool_status.sgml">
 <!ENTITY pgpoolAdmPcpNodeCount SYSTEM "pgpool_adm_pcp_node_count.sgml">
 <!ENTITY pgpoolAdmPcpAttachNode SYSTEM "pgpool_adm_pcp_attach_node.sgml">

@@ -239,6 +239,7 @@
   </partintro>
 
   &pgpoolAdmPcpNodeInfo
+  &pgpoolAdmPcpHealthCheckStats
   &pgpoolAdmPcpPoolStatus
   &pgpoolAdmPcpNodeCount
   &pgpoolAdmPcpAttachNode
