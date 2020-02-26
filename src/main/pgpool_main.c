@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2019	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3312,15 +3312,6 @@ static int read_status_file(bool discard_status)
 	int i;
 	bool someone_wakeup = false;
 	bool is_old_format;
-
-	/*
-	 * Set backend status changed timestamp so that it is set even if there's
-	 * no status file or discard status option is specified.
-	 */
-	for (i = 0; i < MAX_NUM_BACKENDS; i++)
-	{
-		pool_set_backend_status_changed_time(i);
-	}
 
 	snprintf(fnamebuf, sizeof(fnamebuf), "%s/%s", pool_config->logdir, STATUS_FILE_NAME);
 	fd = fopen(fnamebuf, "r");
