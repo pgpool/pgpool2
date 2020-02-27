@@ -182,6 +182,7 @@
       <para>
        Watchdog can coordinate multiple <productname>Pgpool-II</productname>,
        create a robust cluster system and avoid the single point of failure or split brain.
+       To avoid the split brain, you need at least 3 <productname>Pgpool-II</productname> nodes.
        Watchdog can perform lifecheck against other <productname>pgpool-II</productname> nodes,
        to detect a fault of <productname>Pgpoll-II</productname>.
        If active <productname>Pgpool-II</productname> goes down, standby

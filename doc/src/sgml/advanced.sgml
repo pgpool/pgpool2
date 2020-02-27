@@ -11,10 +11,10 @@
    <productname>Pgpool-II</productname> to add high
    availability. Watchdog is used to resolve the single point of
    failure by coordinating multiple
-   <productname>pgpool-II</productname> nodes. The watchdog was first
+   <productname>Pgpool-II</productname> nodes. The watchdog was first
    introduced in <productname>pgpool-II</productname>
    <emphasis>V3.2</emphasis> and is significantly enhanced in
-   <productname>pgpool-II</productname> <emphasis>V3.5</emphasis>, to
+   <productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>, to
    ensure the presence of a quorum at all time. This new addition to
    watchdog makes it more fault tolerant and robust in handling and
    guarding against the split-brain syndrome and network
@@ -22,9 +22,9 @@
    quorum failover (see <xref
     linkend="config-watchdog-failover-behavior">) to reduce the false
     positives of <productname>PostgreSQL</productname> server
-    failures. To ensure the quorum mechanism properly works, the number
-    of <productname>pgpool-II</productname> nodes must be odd in number
-    and greater than or equal to 3.
+    failures. <emphasis>To ensure the quorum mechanism properly works, the number
+    of <productname>Pgpool-II</productname> nodes must be odd in number
+    and greater than or equal to 3.</emphasis>
   </para>
 
   <sect2 id="tutorial-watchdog-coordinating-nodes">
