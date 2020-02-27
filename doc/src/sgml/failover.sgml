@@ -4,14 +4,14 @@
  <title>Failover and Failback</title>
 
  <para>
-  Failover means automatically
-  detaching <productname>PostgreSQL</productname>backend node which
-  is not accessible by <productname>Pgpool-II</productname>.  This
-  happens automatically regardless the configuration parameter
-  settings and is so called <emphasis>automatic failover</emphasis>
+  <emphasis>Failover</emphasis> means automatically detaching
+  <productname>PostgreSQL</productname>backend node which is not
+  accessible by <productname>Pgpool-II</productname>.  This happens
+  automatically regardless the configuration parameter settings and is
+  so called <emphasis>automatic failover</emphasis>
   process. <productname>Pgpool-II</productname> confirms the
-  inacceibility of <productname>PostgreSQL</productname> backend
-  node by using following methods:
+  inacceibility of <productname>PostgreSQL</productname> backend node
+  by using following methods:
 
   <itemizedlist>
    <listitem>
@@ -62,12 +62,17 @@
 
  <para>
   If <xref linkend="guc-failover-command"> is configured and a
-   failover happens, <xref linkend="guc-failover-command"> gets
-    executed. <xref linkend="guc-failover-command"> should be
-     provided by user and the major role is choosing new primary
-     server from existing standby servers and promoting it for
-     example. Another example would be let the administrator know that
-     a failover happens by sending a mail.
+  failover happens, <xref linkend="guc-failover-command"> gets
+  executed. <xref linkend="guc-failover-command"> should be provided
+  by user. From 4.1 an example script for failover command is provided
+  as <filename>failover.sh.sample</filename> which can be a good
+  starting point for you.
+ </para>
+ <para>
+  The major role of failover command is choosing new primary server
+  from existing standby servers and promoting it for example. Another
+  example would be let the administrator know that a failover happens
+  by sending a mail.
  </para>
 
  <para>
@@ -82,15 +87,21 @@
  </para>
 
  <para>
-  A <productname>PostgreSQL</productname> node detached by failover
-  or switch over will never return to the previous state (attached
-  state). Restarting <productname>Pgpool-II</productname> with -D
-  option or running <xref linkend="PCP-ATTACH-NODE"> makes it to
-   the attached state. It is recommended to confirm the
-   replication_state of <xref linkend="SQL-SHOW-POOL-NODES"> is
-    "streaming" before doing that. The state indicates that the
-    standby server is properly connected to the primary server
-    through streaming replication and both databases are in sync.
+  A <productname>PostgreSQL</productname> node detached by failover or
+  switch over will never return to the previous state (attached state)
+  automatically in the default setting. Restarting
+  <productname>Pgpool-II</productname> with -D option or running <xref
+  linkend="PCP-ATTACH-NODE"> makes it to the attached state again. It
+  is recommended to confirm the replication_state of <xref
+  linkend="SQL-SHOW-POOL-NODES"> is "streaming" before doing that. The
+  state indicates that the standby server is properly connected to the
+  primary server through streaming replication and both databases are
+  in sync.
+ </para>
+ <para>
+  From 4.1 a new parameter <xref linkend="guc-auto-failback"> can be
+  used to do above automatically. See <xref
+  linkend="guc-auto-failback"> for more details.
  </para>
 
  <sect2 id="runtime-config-failover-settings">
