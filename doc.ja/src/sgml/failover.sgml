@@ -7,7 +7,7 @@
  <title>フェイルオーバとフェイルバック</title>
 
  <para>
-  フェイルオーバは、<productname>Pgpool-II</productname>から見て使用できなくなった<productname>PostgreSQL</productname>バックエンドノードを<productname>Pgpool-II</productname>が自動的に切り離す処理を指します。
+  <emphasis>フェイルオーバ</emphasis>は、<productname>Pgpool-II</productname>から見て使用できなくなった<productname>PostgreSQL</productname>バックエンドノードを<productname>Pgpool-II</productname>が自動的に切り離す処理を指します。
   これは<productname>Pgpool-II</productname>の設定に関わらず、自動的に行われるいわゆる<emphasis>自動フェイルオーバ</emphasis>処理です。
   <productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>バックエンドノードが使用できなくなったことを、以下の方法で確認します。
 
@@ -38,8 +38,10 @@
 
  <para>
   <xref linkend="guc-failover-command">が設定済みでフェイルオーバが行われると、<xref linkend="guc-failover-command">が起動されます。
-    <xref linkend="guc-failover-command">はユーザが記述すべきもので、主な役割としては、たとえばストリーミングレプリケーションのプライマリサーバがダウンした時に、新しいプライマリサーバをスタンバイサーバの中から選択して昇格させることなどが上げられます。
-     そのほか、ファイルオーバが発生したことを管理者にメールで通知することなども考えられます。
+  <xref linkend="guc-failover-command">はユーザが記述すべきものです。
+  4.1からはフェイルオーバコマンド用のサンプルスクリプトが<filename>failover.sh.sample</filename>として提供されており、スクリプトを書く際の良い例になるでしょう。
+  フェイルオーバコマンドの主な役割としては、たとえばストリーミングレプリケーションのプライマリサーバがダウンした時に、新しいプライマリサーバをスタンバイサーバの中から選択して昇格させることなどが上げられます。
+  そのほか、ファイルオーバが発生したことを管理者にメールで通知することなども考えられます。
  </para>
 
  <para>
@@ -51,10 +53,14 @@
  </para>
 
  <para>
-  フェイルオーバないしスィッチオーバで切り離された<productname>PostgreSQL</productname>ノードは、自動ではもとの状態（アタッチ状態）には戻りません。
+  フェイルオーバないしスィッチオーバで切り離された<productname>PostgreSQL</productname>ノードは、デフォルト設定においては自動でもとの状態（アタッチ状態）には戻りません。
   -D オプションを指定して<productname>Pgpool-II</productname>を再起動するか、<xref linkend="PCP-ATTACH-NODE">コマンドを使用します。
    その際、<xref linkend="SQL-SHOW-POOL-NODES">を使って、replication_stateが"streaming"になっていることを確認することをお勧めします。
     これは、スタンバイサーバがプライマリサーバとストリーミングレプリケーションで正常に接続されており、データベース内容の整合性が取れていることを示します。
+ </para>
+ <para>
+  4.1から<xref linkend="guc-auto-failback">という新しいパラメータが上に書いてあることを自動で行ってくれます。
+  詳細は<xref linkend="guc-auto-failback">をご覧ください。
  </para>
 
  <sect2 id="runtime-config-failover-settings">
