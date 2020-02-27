@@ -259,15 +259,8 @@
      <term>Watchdog</term>
      <listitem>
       <para>
-       <!--
-       Watchdog can coordinate multiple <productname>Pgpool-II</productname>,
-       create a robust cluster system and avoid the single point of failure or split brain.
-       Watchdog can perform lifecheck against other <productname>pgpool-II</productname> nodes,
-       to detect a fault of <productname>Pgpoll-II</productname>.
-       If active <productname>Pgpool-II</productname> goes down, standby
-       <productname>Pgpool-II</productname> can be promoted to active, and take over Virtual IP.
-       -->
        Watchdogは、複数の<productname>Pgpool-II</productname>を協調させて動作させることにより、単一障害点やスプリットブレインの起きない堅牢なクラスタを運用することが可能です。
+       スプリットブレインを防ぐためには、少なくとも3台の<productname>Pgpool-II</productname>ノードが必要です。
        他の<productname>Pgpool-II</productname>の死活監視を行い、障害を検出することができます。
        稼働系の<productname>Pgpool-II</productname>がダウンしても、待機系の<productname>Pgpool-II</productname>が稼動系に昇格し、仮想IPを引き継ぐことができます。
       </para>
