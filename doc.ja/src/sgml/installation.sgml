@@ -12,6 +12,60 @@
   <primary>インストール</primary>
  </indexterm>
 
+ <sect1 id="planning">
+  <title>プランニング</title>
+  <para>
+   <productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>を管理するツールなので、まずは<productname>PostgreSQL</productname>の利用形態を決めなければなりません。
+   加えて、<productname>Pgpool-II</productname>ではそれ自体の可用性を高めるために、複数の<productname>Pgpool-II</productname>を導入することができます。
+   何本の<productname>Pgpool-II</productname>を導入するのが適切なのかを事前に計画しなければなりません。
+   この節では最初に<productname>PostgreSQL</productname>の動作モードを議論し、次に<productname>Pgpool-II</productname>の導入形態を議論します。
+  </para>
+
+  <sect2 id="planning-postgresql">
+   <title>PostgreSQLの動作モード</title>
+   <para>
+    <productname>PostgreSQL</productname>の導入台数は1以上が可能ですが、1台ではその<productname>PostgreSQL</productname>がダウンした時にデータベースシステム全体が使えなくなるため、通常2台以上の<productname>PostgreSQL</productname>を導入します。
+    2台以上の<productname>PostgreSQL</productname>を用いる場合、何らかの方法でそれらのデータベース内容を同じになるようにしなければなりません。
+    データベースの同期方法の違いをここでは「動作モード」と呼びます。
+    もっとも広く使われている動作モードは、「ストリーミングレプリケーションモード」です。
+    特に何か特別な考慮が必要でなければ、ストリーミングレプリケーションモードを選択することをお勧めします。
+    動作モードの詳細については<xref linkend="running-mode">をご覧ください。
+   </para>
+   <para>
+    次に考えなければならないのは、何台の<productname>PostgreSQL</productname>を使うかです。
+    2台あれば最低限片方の<productname>PostgreSQL</productname>がダウンしてもデータベースの運用は継続できますが、検索処理を複数のサーバで分担させる検索負荷分散処理を行うのであれば、3台以上の<productname>PostgreSQL</productname>を使うことも珍しくありません。
+    <productname>Pgpool-II</productname>は豊富な負荷分散の調整パラメータを用意しています。
+    詳細は<xref linkend="runtime-config-load-balancing">をご覧ください。
+   </para>
+   <para>
+    <productname>Pgpool-II</productname>では柔軟に<productname>PostgreSQL</productname>サーバを後から追加できるので、とりあえず<productname>Pgpool-II</productname>を使ってみたい、という方は2台の<productname>PostgreSQL</productname>から始めるのが良いでしょう。
+   </para>
+  </sect2>
+
+  <sect2 id="planning-pgpool">
+   <title>Pgpool-IIの導入形態</title>
+   <para>
+    <productname>Pgpool-II</productname>は1台でも利用が可能ですが、その<productname>Pgpool-II</productname>が停止するとデータベース全体が利用できなくなるので、複数の<productname>Pgpool-II</productname>を導入することをお勧めします。
+    複数の<productname>Pgpool-II</productname>はwatchdogと言う仕組みで連携を取りつつお互いを監視し、その中の1台が「マスタ」と呼ばれて仮想IPを持つので、クライアントはその仮想IPにアクセスすればばよく、複数の<productname>Pgpool-II</productname>が導入されていることを意識する必要はありません。
+    (watchdogについては<xref linkend="tutorial-watchdog-intro">をご覧ください。)
+    もしある<productname>Pgpool-II</productname>がダウンすると、別の<productname>Pgpool-II</productname>が取って代わってマスタになります。
+   </para>
+   <para>
+    マスタは複数存在してはいけないので、新しいマスタを決める際にはwatchdogは投票を行ないます。
+    この時<productname>Pgpool-II</productname>が偶数台だと多数決でマスタを決めることができなくなってしまいます。
+    ですから<productname>Pgpool-II</productname>は3台以上の奇数台で構成することをお勧めします。
+   </para>
+   <para>
+    なお、<productname>Pgpool-II</productname>と<productname>PostgreSQL</productname>は同じサーバに同居していても構いません。
+    たとえば、リソースを節約するために3台のサーバのみを用意し、それぞれに<productname>Pgpool-II</productname>と<productname>PostgreSQL</productname>を動かすこともできます。
+   </para>
+   <para>
+    <productname>Pgpool-II</productname>3台、<productname>PostgreSQL</productname>2台をストリーミングレプリケーションモードで動作させる本格的な例が
+    <xref linkend="example-cluster">で詳しく紹介されているので、すぐにプロダクションレベルで<productname>Pgpool-II</productname>を動かしたい方はそれを参考にすると良いでしょう。
+   </para>
+  </sect2>
+ </sect1>
+
  <sect1 id="install-source">
   <!--
   <title>Installation of Pgpool-II</title>
