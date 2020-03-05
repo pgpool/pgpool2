@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -174,28 +174,31 @@ wd_get_ping_result(char *hostname, int exit_status, int outfd)
 	}
 	else
 	{
-		char		result[WD_MAX_PING_RESULT];
-		int			i = 0;
-		int			r_size = 0;
+		StringInfoData  result;
+		char		buf[WD_MAX_PING_RESULT];
+		int		r_size = 0;
 
 		ereport(DEBUG1,
 				(errmsg("watchdog ping process for host \"%s\" exited successfully", hostname)));
 
-		while (((r_size = read(outfd, &result[i], sizeof(result) - i - 1)) > 0) && (errno == EINTR))
+		initStringInfo(&result);
+		while ((r_size = read(outfd, &buf, sizeof(buf) - 1)) > 0)
 		{
-			i += r_size;
+			buf[r_size] = '\0';
+			appendStringInfoString(&result, buf);
 		}
-		result[sizeof(result) - 1] = '\0';
 		/* Check whether average RTT >= 0 */
-		if (get_result(result) >= 0)
+		if (get_result(result.data) >= 0)
 		{
 			ereport(DEBUG1,
 					(errmsg("watchdog succeeded to ping a host \"%s\"", hostname)));
+			pfree(result.data);
 			return true;
 		}
 		ereport(WARNING,
 				(errmsg("ping host\"%s\" failed", hostname),
 				 errdetail("average RTT value is not greater than zero")));
+		pfree(result.data);
 	}
 	return false;
 }
