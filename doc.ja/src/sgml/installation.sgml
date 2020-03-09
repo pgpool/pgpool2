@@ -22,12 +22,12 @@
   </para>
 
   <sect2 id="planning-postgresql">
-   <title>PostgreSQLの動作モード</title>
+   <title>PostgreSQLのクラスタリングモード</title>
    <para>
     <productname>PostgreSQL</productname>の導入台数は1以上が可能ですが、1台ではその<productname>PostgreSQL</productname>がダウンした時にデータベースシステム全体が使えなくなるため、通常2台以上の<productname>PostgreSQL</productname>を導入します。
     2台以上の<productname>PostgreSQL</productname>を用いる場合、何らかの方法でそれらのデータベース内容を同じになるようにしなければなりません。
-    データベースの同期方法の違いをここでは「動作モード」と呼びます。
-    もっとも広く使われている動作モードは、「ストリーミングレプリケーションモード」です。
+    データベースの同期方法の違いをここでは「クラスタリングモード」と呼びます。
+    もっとも広く使われているクラスタリングモードは、「ストリーミングレプリケーションモード」です。
     特に何か特別な考慮が必要でなければ、ストリーミングレプリケーションモードを選択することをお勧めします。
     動作モードの詳細については<xref linkend="running-mode">をご覧ください。
    </para>

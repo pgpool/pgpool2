@@ -204,6 +204,14 @@ static const struct config_enum_entry server_message_level_options[] = {
 	{NULL, 0, false}
 };
 
+static const struct config_enum_entry backend_clustering_mode_options[] = {
+	{"streaming_replication", CM_STREAMING_REPLICATION, false},
+	{"native_replication", CM_NATIVE_REPLICATION, false},
+	{"logical_replication", CM_LOGICAL_REPLICATION, false},
+	{"slony", CM_SLONY, false},
+	{"raw", CM_RAW, false},
+	{NULL, 0, false}
+};
 
 static const struct config_enum_entry master_slave_sub_mode_options[] = {
 	{"slony", SLONY_MODE, false},
@@ -1931,6 +1939,18 @@ static struct config_int ConfigureNamesInt[] =
 
 static struct config_enum ConfigureNamesEnum[] =
 {
+	{
+		{"backend_clustering_mode", CFGCXT_INIT, MASTER_SLAVE_CONFIG,
+			"backend clustering mode.",
+			CONFIG_VAR_TYPE_ENUM, false, 0
+		},
+		(int *) &g_pool_config.backend_clustering_mode,
+		CM_STREAMING_REPLICATION,
+		backend_clustering_mode_options,
+		NULL, NULL, NULL, NULL
+	},
+
+
 	{
 		{"syslog_facility", CFGCXT_RELOAD, LOGING_CONFIG,
 			"syslog local faclity.",

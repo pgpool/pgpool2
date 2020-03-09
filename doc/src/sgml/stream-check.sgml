@@ -7,8 +7,8 @@
   <productname>Pgpool-II</productname> can work with <productname>PostgreSQL</> native
   Streaming Replication, that is available since <productname>PostgreSQL</> 9.0.
   To configure <productname>Pgpool-II</productname> with streaming
-  replication, enable <xref linkend="guc-master-slave-mode"> and set
-   <xref linkend="guc-master-slave-sub-mode"> to <literal>'stream'</literal>.
+  replication, set
+   <xref linkend="guc-backend-clustering-mode"> to <literal>'streaming-replication'</literal>.
  </para>
  <para>
   <productname>Pgpool-II</productname> assumes that Streaming Replication

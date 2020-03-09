@@ -805,13 +805,13 @@ case $MODE in
 		SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-stream
 		;;
 	n ) MODENAME="raw mode"
-		SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample
+		SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-raw
 		;;
 	l ) MODENAME="logical replication mode"
 	    SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-logical
 	    ;;
 	y ) MODENAME="slony mode"
-	    SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-master-slave
+	    SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-slony
 	    ;;
 esac
 

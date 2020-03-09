@@ -3737,7 +3737,7 @@
      <!--
      Change master_slave_sub_mode default to 'stream'. (Tatsuo Ishii)
      -->
-     <xref linkend="guc-master-slave-sub-mode">パラメータのデフォルト値を「stream」に変更しました。(Tatsuo Ishii)
+     master_slave_sub_modeパラメータのデフォルト値を「stream」に変更しました。(Tatsuo Ishii)
     </para>
     <para>
      <!--

@@ -64,6 +64,15 @@ typedef enum MasterSlaveSubModes
 	LOGICAL_MODE
 }			MasterSlaveSubModes;
 
+typedef enum ClusteringModes
+{
+	CM_STREAMING_REPLICATION = 1,
+	CM_NATIVE_REPLICATION,
+	CM_LOGICAL_REPLICATION,
+	CM_SLONY,
+	CM_RAW
+}			ClusteringModes;
+
 typedef enum LogStandbyDelayModes
 {
 	LSD_ALWAYS = 1,
@@ -166,6 +175,7 @@ typedef struct
  */
 typedef struct
 {
+	ClusteringModes	backend_clustering_mode;	/* Backend clustering mode */
 	char	   *listen_addresses;	/* hostnames/IP addresses to listen on */
 	int			port;			/* port # to bind */
 	char	   *pcp_listen_addresses;	/* PCP listen address to listen on */

@@ -5,8 +5,7 @@
 
  <para>
   <productname>Pgpool-II</productname> load balancing of SELECT queries
-  works with Master Slave mode (<xref linkend="runtime-config-master-slave-mode">)
-   and Replication mode (<xref linkend="runtime-config-replication-mode">). When enabled
+  works with any clustering mode except raw mode. When enabled
     <productname>Pgpool-II</productname> sends the writing queries to the
     <acronym>primary node</acronym> in Master Slave mode, all of the
     backend nodes in Replication mode, and other queries get load

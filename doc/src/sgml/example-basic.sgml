@@ -230,7 +230,7 @@
  <sect2 id="example-configs-replication">
   <title>Your First Replication</title>
   <para>
-   Replication (see <xref linkend="runtime-config-replication-mode">) enables
+   Replication (see <xref linkend="guc-replication-mode">) enables
     the same data to be copied to multiple database nodes.
     In this section, we'll use three database nodes, which we have already set
     up in <xref linkend="example-configs-begin">, and takes you step by step to

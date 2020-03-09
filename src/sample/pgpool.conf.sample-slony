@@ -21,8 +21,9 @@
 # BACKEND CLUSTERING MODE
 # Choose one of: 'streaming_replication', 'native_replication',
 #	'logical_replication', 'slony' or 'raw'
+# (change requires restart)
 #------------------------------------------------------------------------------
-backend_clustering_mode = 'logical_replication'
+backend_clustering_mode = 'slony'
 
 #------------------------------------------------------------------------------
 # CONNECTIONS
@@ -42,11 +43,17 @@ socket_dir = '/tmp'
                                    # The Debian package defaults to
                                    # /var/run/postgresql
                                    # (change requires restart)
+listen_backlog_multiplier = 2
+                                   # Set the backlog parameter of listen(2) to
+                                   # num_init_children * listen_backlog_multiplier.
+                                   # (change requires restart)
+serialize_accept = off
+                                   # whether to serialize accept() call to avoid thundering herd problem
+                                   # (change requires restart)
 reserved_connections = 0
-				   # Number of reserved connections.
-				   # Pgpool-II does not accept connections if over
-				   # num_init_chidlren - reserved_connections.
-
+                                   # Number of reserved connections.
+                                   # Pgpool-II does not accept connections if over
+                                   # num_init_chidlren - reserved_connections.
 
 # - pgpool Communication Manager Connection Settings -
 
@@ -61,13 +68,6 @@ pcp_socket_dir = '/tmp'
                                    # Unix domain socket path for pcp
                                    # The Debian package defaults to
                                    # /var/run/postgresql
-                                   # (change requires restart)
-listen_backlog_multiplier = 2
-                                   # Set the backlog parameter of listen(2) to
-                                   # num_init_children * listen_backlog_multiplier.
-                                   # (change requires restart)
-serialize_accept = off
-                                   # whether to serialize accept() call to avoid thundering herd problem
                                    # (change requires restart)
 
 # - Backend Connection Settings -
@@ -84,14 +84,11 @@ backend_flag0 = 'ALLOW_TO_FAILOVER'
                                    # Controls various backend behavior
                                    # ALLOW_TO_FAILOVER, DISALLOW_TO_FAILOVER
                                    # or ALWAYS_MASTER
-backend_application_name0 = 'server0'
-                                   # walsender's application_name, used for "show pool_nodes" command
 #backend_hostname1 = 'host2'
 #backend_port1 = 5433
 #backend_weight1 = 1
 #backend_data_directory1 = '/data1'
 #backend_flag1 = 'ALLOW_TO_FAILOVER'
-#backend_application_name1 = 'server1'
 
 # - Authentication -
 
@@ -198,7 +195,7 @@ log_per_node_statement = off
                                    # with node and backend informations
 log_client_messages = off
                                    # Log any client messages
-log_standby_delay = 'if_over_threshold'
+log_standby_delay = 'none'
                                    # Log standby delay
                                    # Valid values are combinations of always,
                                    # if_over_threshold, none
@@ -350,12 +347,22 @@ allow_sql_comments = off
                                    # If off, SQL comments effectively prevent the judgment
                                    # (pre 3.4 behavior).
 
+disable_load_balance_on_write = 'transaction'
+                                   # Load balance behavior when write query is issued
+                                   # in an explicit transaction.
+                                   # Note that any query not in an explicit transaction
+                                   # is not affected by the parameter.
+                                   # 'transaction' (the default): if a write query is issued,
+                                   # subsequent read queries will not be load balanced
+                                   # until the transaction ends.
+                                   # 'trans_transaction': if a write query is issued,
+                                   # subsequent read queries in an explicit transaction
+                                   # will not be load balanced until the session ends.
+                                   # 'always': if a write query is issued, read queries will
+                                   # not be load balanced until the session ends.
+
 statement_level_load_balance = off
                                    # Enables statement level load balancing
-
-#------------------------------------------------------------------------------
-# MASTER/SLAVE MODE
-#------------------------------------------------------------------------------
 
 # - Streaming -
 
@@ -366,14 +373,15 @@ sr_check_user = 'nobody'
                                    # Streaming replication check user
                                    # This is neccessary even if you disable streaming
                                    # replication delay check by sr_check_period = 0
+
 sr_check_password = ''
-                                   # Password for streaming replication check user.
+                                   # Password for streaming replication check user
                                    # Leaving it empty will make Pgpool-II to first look for the
                                    # Password in pool_passwd file before using the empty password
 
 sr_check_database = 'postgres'
                                    # Database name for streaming replication check
-delay_threshold = 10000000
+delay_threshold = 0
                                    # Threshold before not dispatching query to standby node
                                    # Unit is in bytes
                                    # Disabled (0) by default
@@ -571,7 +579,6 @@ wd_ipc_socket_dir = '/tmp'
                                     # /var/run/postgresql
                                     # (change requires restart)
 
-
 # - Virtual IP control Setting -
 
 delegate_IP = ''
@@ -590,7 +597,7 @@ if_down_cmd = '/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev eth0'
                                     # (change requires restart)
 arping_path = '/usr/sbin'
                                     # arping command path
-                                    # If arping_cmd starts with "/", if_cmd_path will be ignored.
+                                    # If arping_cmd starts with "/", arping_path will be ignored.
                                     # (change requires restart)
 arping_cmd = '/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I eth0'
                                     # arping command
@@ -611,19 +618,25 @@ wd_escalation_command = ''
 wd_de_escalation_command = ''
                                     # Executes this command when master pgpool resigns from being master.
                                     # (change requires restart)
+
 # - Watchdog consensus settings for failover -
 
 failover_when_quorum_exists = on
                                     # Only perform backend node failover
                                     # when the watchdog cluster holds the quorum
+                                    # (change requires restart)
+
 
 failover_require_consensus = on
                                     # Perform failover when majority of Pgpool-II nodes
                                     # aggrees on the backend node status change
+                                    # (change requires restart)
 
-enable_multiple_failover_requests_from_node = off
+allow_multiple_failover_requests_from_node = off
                                     # A Pgpool-II node can cast multiple votes
                                     # for building the consensus on failover
+                                    # (change requires restart)
+
 
 enable_consensus_with_half_votes = off
                                     # apply majority rule for consensus and quorum computation
@@ -644,6 +657,7 @@ wd_monitoring_interfaces_list = ''  # Comma separated list of interfaces names t
                                     # consider the network is fine
                                     # 'any' to enable monitoring on all interfaces except loopback
                                     # '' to disable monitoring
+                                    # (change requires restart)
 
 wd_lifecheck_method = 'heartbeat'
                                     # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
@@ -767,57 +781,57 @@ relcache_query_target = master     # Target node to send relcache queries. Defau
 # IN MEMORY QUERY MEMORY CACHE
 #------------------------------------------------------------------------------
 memory_cache_enabled = off
-                                    # If on, use the memory cache functionality, off by default
-                                    # (change requires restart)
+                                   # If on, use the memory cache functionality, off by default
+                                   # (change requires restart)
 memqcache_method = 'shmem'
-                                    # Cache storage method. either 'shmem'(shared memory) or
-                                    # 'memcached'. 'shmem' by default
-                                    # (change requires restart)
+                                   # Cache storage method. either 'shmem'(shared memory) or
+                                   # 'memcached'. 'shmem' by default
+                                   # (change requires restart)
 memqcache_memcached_host = 'localhost'
-                                    # Memcached host name or IP address. Mandatory if
-                                    # memqcache_method = 'memcached'.
-                                    # Defaults to localhost.
-                                    # (change requires restart)
+                                   # Memcached host name or IP address. Mandatory if
+                                   # memqcache_method = 'memcached'.
+                                   # Defaults to localhost.
+                                   # (change requires restart)
 memqcache_memcached_port = 11211
-                                    # Memcached port number. Mondatory if memqcache_method = 'memcached'.
-                                    # Defaults to 11211.
-                                    # (change requires restart)
+                                   # Memcached port number. Mondatory if memqcache_method = 'memcached'.
+                                   # Defaults to 11211.
+                                   # (change requires restart)
 memqcache_total_size = 67108864
-                                    # Total memory size in bytes for storing memory cache.
-                                    # Mandatory if memqcache_method = 'shmem'.
-                                    # Defaults to 64MB.
-                                    # (change requires restart)
+                                   # Total memory size in bytes for storing memory cache.
+                                   # Mandatory if memqcache_method = 'shmem'.
+                                   # Defaults to 64MB.
+                                   # (change requires restart)
 memqcache_max_num_cache = 1000000
-                                    # Total number of cache entries. Mandatory
-                                    # if memqcache_method = 'shmem'.
-                                    # Each cache entry consumes 48 bytes on shared memory.
-                                    # Defaults to 1,000,000(45.8MB).
-                                    # (change requires restart)
+                                   # Total number of cache entries. Mandatory
+                                   # if memqcache_method = 'shmem'.
+                                   # Each cache entry consumes 48 bytes on shared memory.
+                                   # Defaults to 1,000,000(45.8MB).
+                                   # (change requires restart)
 memqcache_expire = 0
-                                    # Memory cache entry life time specified in seconds.
-                                    # 0 means infinite life time. 0 by default.
-                                    # (change requires restart)
+                                   # Memory cache entry life time specified in seconds.
+                                   # 0 means infinite life time. 0 by default.
+                                   # (change requires restart)
 memqcache_auto_cache_invalidation = on
-                                    # If on, invalidation of query cache is triggered by corresponding
-                                    # DDL/DML/DCL(and memqcache_expire).  If off, it is only triggered
-                                    # by memqcache_expire.  on by default.
-                                    # (change requires restart)
+                                   # If on, invalidation of query cache is triggered by corresponding
+                                   # DDL/DML/DCL(and memqcache_expire).  If off, it is only triggered
+                                   # by memqcache_expire.  on by default.
+                                   # (change requires restart)
 memqcache_maxcache = 409600
-                                    # Maximum SELECT result size in bytes.
-                                    # Must be smaller than memqcache_cache_block_size. Defaults to 400KB.
-                                    # (change requires restart)
+                                   # Maximum SELECT result size in bytes.
+                                   # Must be smaller than memqcache_cache_block_size. Defaults to 400KB.
+                                   # (change requires restart)
 memqcache_cache_block_size = 1048576
-                                    # Cache block size in bytes. Mandatory if memqcache_method = 'shmem'.
-                                    # Defaults to 1MB.
-                                    # (change requires restart)
+                                   # Cache block size in bytes. Mandatory if memqcache_method = 'shmem'.
+                                   # Defaults to 1MB.
+                                   # (change requires restart)
 memqcache_oiddir = '/var/log/pgpool/oiddir'
-                                    # Temporary work directory to record table oids
-                                    # (change requires restart)
+                                   # Temporary work directory to record table oids
+                                   # (change requires restart)
 white_memqcache_table_list = ''
-                                    # Comma separated list of table names to memcache
-                                    # that don't write to database
-                                    # Regexp are accepted
+                                   # Comma separated list of table names to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted
 black_memqcache_table_list = ''
-                                    # Comma separated list of table names not to memcache
-                                    # that don't write to database
-                                    # Regexp are accepted
+                                   # Comma separated list of table names not to memcache
+                                   # that don't write to database
+                                   # Regexp are accepted

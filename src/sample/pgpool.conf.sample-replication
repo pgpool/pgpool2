@@ -17,6 +17,13 @@
 # take effect.
 #
 
+#------------------------------------------------------------------------------
+# BACKEND CLUSTERING MODE
+# Choose one of: 'streaming_replication', 'native_replication',
+#	'logical_replication', 'slony' or 'raw'
+# (change requires restart)
+#------------------------------------------------------------------------------
+backend_clustering_mode = 'native_replication'
 
 #------------------------------------------------------------------------------
 # CONNECTIONS
@@ -264,9 +271,6 @@ reset_query_list = 'ABORT; DISCARD ALL'
 # REPLICATION MODE
 #------------------------------------------------------------------------------
 
-replication_mode = on
-                                   # Activate replication mode
-                                   # (change requires restart)
 replicate_select = off
                                    # Replicate SELECT statements
                                    # when in replication mode

@@ -143,7 +143,7 @@ main(int argc, char **argv)
 
 	MemoryContextInit();
 
-	pool_config->replication_mode = 1;
+	pool_config->backend_clustering_mode = CM_NATIVE_REPLICATION;
 
 	if (argc != 2)
 	{

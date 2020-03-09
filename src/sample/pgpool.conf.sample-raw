@@ -17,6 +17,13 @@
 # take effect.
 #
 
+#------------------------------------------------------------------------------
+# BACKEND CLUSTERING MODE
+# Choose one of: 'streaming_replication', 'native_replication',
+#	'logical_replication', 'slony' or 'raw'
+# (change requires restart)
+#------------------------------------------------------------------------------
+backend_clustering_mode = 'raw'
 
 #------------------------------------------------------------------------------
 # CONNECTIONS
@@ -36,17 +43,11 @@ socket_dir = '/tmp'
                                    # The Debian package defaults to
                                    # /var/run/postgresql
                                    # (change requires restart)
-listen_backlog_multiplier = 2
-                                   # Set the backlog parameter of listen(2) to
-                                   # num_init_children * listen_backlog_multiplier.
-                                   # (change requires restart)
-serialize_accept = off
-                                   # whether to serialize accept() call to avoid thundering herd problem
-                                   # (change requires restart)
 reserved_connections = 0
                                    # Number of reserved connections.
                                    # Pgpool-II does not accept connections if over
                                    # num_init_chidlren - reserved_connections.
+
 
 # - pgpool Communication Manager Connection Settings -
 
@@ -61,6 +62,13 @@ pcp_socket_dir = '/tmp'
                                    # Unix domain socket path for pcp
                                    # The Debian package defaults to
                                    # /var/run/postgresql
+                                   # (change requires restart)
+listen_backlog_multiplier = 2
+                                   # Set the backlog parameter of listen(2) to
+                                   # num_init_children * listen_backlog_multiplier.
+                                   # (change requires restart)
+serialize_accept = off
+                                   # whether to serialize accept() call to avoid thundering herd problem
                                    # (change requires restart)
 
 # - Backend Connection Settings -
@@ -77,11 +85,14 @@ backend_flag0 = 'ALLOW_TO_FAILOVER'
                                    # Controls various backend behavior
                                    # ALLOW_TO_FAILOVER, DISALLOW_TO_FAILOVER
                                    # or ALWAYS_MASTER
+backend_application_name0 = 'server0'
+                                   # walsender's application_name, used for "show pool_nodes" command
 #backend_hostname1 = 'host2'
 #backend_port1 = 5433
 #backend_weight1 = 1
 #backend_data_directory1 = '/data1'
 #backend_flag1 = 'ALLOW_TO_FAILOVER'
+#backend_application_name1 = 'server1'
 
 # - Authentication -
 
@@ -188,7 +199,7 @@ log_per_node_statement = off
                                    # with node and backend informations
 log_client_messages = off
                                    # Log any client messages
-log_standby_delay = 'none'
+log_standby_delay = 'if_over_threshold'
                                    # Log standby delay
                                    # Valid values are combinations of always,
                                    # if_over_threshold, none
@@ -265,9 +276,6 @@ reset_query_list = 'ABORT; DISCARD ALL'
 # REPLICATION MODE
 #------------------------------------------------------------------------------
 
-replication_mode = off
-                                   # Activate replication mode
-                                   # (change requires restart)
 replicate_select = off
                                    # Replicate SELECT statements
                                    # when in replication mode
@@ -357,29 +365,15 @@ disable_load_balance_on_write = 'transaction'
 statement_level_load_balance = off
                                    # Enables statement level load balancing
 
-#------------------------------------------------------------------------------
-# MASTER/SLAVE MODE
-#------------------------------------------------------------------------------
-
-master_slave_mode = on
-                                   # Activate master/slave mode
-                                   # (change requires restart)
-master_slave_sub_mode = 'slony'
-                                   # Master/slave sub mode
-                                   # Valid values are combinations stream, slony
-                                   # or logical. Default is stream.
-                                   # (change requires restart)
-
 # - Streaming -
 
-sr_check_period = 0
+sr_check_period = 10
                                    # Streaming replication check period
                                    # Disabled (0) by default
 sr_check_user = 'nobody'
                                    # Streaming replication check user
                                    # This is neccessary even if you disable streaming
                                    # replication delay check by sr_check_period = 0
-
 sr_check_password = ''
                                    # Password for streaming replication check user
                                    # Leaving it empty will make Pgpool-II to first look for the
@@ -387,7 +381,7 @@ sr_check_password = ''
 
 sr_check_database = 'postgres'
                                    # Database name for streaming replication check
-delay_threshold = 0
+delay_threshold = 10000000
                                    # Threshold before not dispatching query to standby node
                                    # Unit is in bytes
                                    # Disabled (0) by default
@@ -508,13 +502,6 @@ search_primary_node_timeout = 300
                                    # 0 means no timeout, keep searching
                                    # for a primary node forever.
 
-auto_failback = off
-                                   # Dettached backend node reattach automatically
-                                   # if replication_state is 'streaming'.
-auto_failback_interval = 60
-                                   # Min interval of executing auto_failback in
-                                   # seconds.
-
 #------------------------------------------------------------------------------
 # ONLINE RECOVERY
 #------------------------------------------------------------------------------
@@ -541,6 +528,12 @@ client_idle_limit_in_recovery = 0
                                    # 0 means no disconnection
                                    # -1 means immediate disconnection
 
+auto_failback = off
+                                   # Dettached backend node reattach automatically
+                                   # if replication_state is 'streaming'.
+auto_failback_interval = 60
+                                   # Min interval of executing auto_failback in
+                                   # seconds.
 
 #------------------------------------------------------------------------------
 # WATCHDOG
@@ -585,6 +578,7 @@ wd_ipc_socket_dir = '/tmp'
                                     # /var/run/postgresql
                                     # (change requires restart)
 
+
 # - Virtual IP control Setting -
 
 delegate_IP = ''
@@ -603,7 +597,7 @@ if_down_cmd = '/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev eth0'
                                     # (change requires restart)
 arping_path = '/usr/sbin'
                                     # arping command path
-                                    # If arping_cmd starts with "/", arping_path will be ignored.
+                                    # If arping_cmd starts with "/", if_cmd_path will be ignored.
                                     # (change requires restart)
 arping_cmd = '/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I eth0'
                                     # arping command
@@ -631,7 +625,6 @@ failover_when_quorum_exists = on
                                     # Only perform backend node failover
                                     # when the watchdog cluster holds the quorum
                                     # (change requires restart)
-
 
 failover_require_consensus = on
                                     # Perform failover when majority of Pgpool-II nodes

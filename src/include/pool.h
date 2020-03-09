@@ -455,6 +455,7 @@ typedef enum
 	POOL_NODE_STATUS_INVALID	/* invalid node (split branin, stand alone) */
 }			POOL_NODE_STATUS;
 
+#ifdef NO_USED
 #define REPLICATION (pool_config->replication_mode)
 #define MASTER_SLAVE (pool_config->master_slave_mode)
 #define STREAM (MASTER_SLAVE && pool_config->master_slave_sub_mode == STREAM_MODE)
@@ -463,6 +464,20 @@ typedef enum
 #define DUAL_MODE (REPLICATION || MASTER_SLAVE)
 #define RAW_MODE (!REPLICATION && !MASTER_SLAVE)
 #define SL_MODE (STREAM || LOGICAL) /* streaming or logical replication mode */
+#endif
+
+/* Clustering mode macros */
+#define REPLICATION (pool_config->backend_clustering_mode == CM_NATIVE_REPLICATION)
+#define MASTER_SLAVE (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION || \
+					  pool_config->backend_clustering_mode == CM_LOGICAL_REPLICATION || \
+					  pool_config->backend_clustering_mode == CM_SLONY)
+#define STREAM (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION)
+#define LOGICAL (pool_config->backend_clustering_mode == CM_LOGICAL_REPLICATION)
+#define SLONY (pool_config->backend_clustering_mode == CM_SLONY)
+#define DUAL_MODE (REPLICATION || MASTER_SLAVE)
+#define RAW_MODE (pool_config->backend_clustering_mode == CM_RAW)
+#define SL_MODE (STREAM || LOGICAL) /* streaming or logical replication mode */
+
 #define MAJOR(p) (pool_get_major_version())
 #define TSTATE(p, i) (CONNECTION(p, i)->tstate)
 #define INTERNAL_TRANSACTION_STARTED(p, i) (CONNECTION(p, i)->is_internal_transaction_started)

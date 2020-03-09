@@ -17,6 +17,13 @@
 # take effect.
 #
 
+#------------------------------------------------------------------------------
+# BACKEND CLUSTERING MODE
+# Choose one of: 'streaming_replication', 'native_replication',
+#	'logical_replication', 'slony' or 'raw'
+# (change requires restart)
+#------------------------------------------------------------------------------
+backend_clustering_mode = 'streaming_replication'
 
 #------------------------------------------------------------------------------
 # CONNECTIONS
@@ -360,19 +367,6 @@ disable_load_balance_on_write = 'transaction'
 
 statement_level_load_balance = off
                                    # Enables statement level load balancing
-
-#------------------------------------------------------------------------------
-# MASTER/SLAVE MODE
-#------------------------------------------------------------------------------
-
-master_slave_mode = on
-                                   # Activate master/slave mode
-                                   # (change requires restart)
-master_slave_sub_mode = 'stream'
-                                   # Master/slave sub mode
-                                   # Valid values are combinations stream, slony
-                                   # or logical. Default is stream.
-                                   # (change requires restart)
 
 # - Streaming -
 

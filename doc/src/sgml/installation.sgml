@@ -23,7 +23,7 @@
    </para>
 
    <sect2 id="planning-postgresql">
-    <title>Running mode of PostgreSQL</title>
+    <title>Clustering mode of PostgreSQL</title>
     <para>
      It is possible to have more than or equal to one installation of
      <productname>PostgreSQL</productname>, it is common to have more
@@ -32,11 +32,11 @@
      <productname>PostgreSQL</productname> is not available.  When we
      use two or more <productname>PostgreSQL</productname> servers, it
      is necessary to sync the databases in some way.  We call the
-     methods of syncing databases as "running mode".  The most popular
-     mode ever used is "streaming replication mode".  Unless there's
-     necessity to have special consideration, it is recommended to use
-     the streaming replication mode. See <xref linkend="running-mode">
-     for more details of running mode.
+     methods of syncing databases as "clustering running mode".  The
+     most popular mode ever used is "streaming replication mode".
+     Unless there's necessity to have special consideration, it is
+     recommended to use the streaming replication mode. See <xref
+     linkend="running-mode"> for more details of running mode.
     </para>
     <para>
      The next thing we need to consider is how many

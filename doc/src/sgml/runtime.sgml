@@ -109,7 +109,7 @@
    </para>
 
    <para>
-    For each <productname>Pgpool-II</productname> operation mode,
+    For each <productname>Pgpool-II</productname> clustering mode,
     there are sample configurations.
    </para>
 
@@ -119,7 +119,7 @@
     <tgroup cols="2">
      <thead>
       <row>
-       <entry>Operation mode</entry>
+       <entry>Clustering mode</entry>
        <entry>Configuration file name</entry>
       </row>
      </thead>
@@ -127,21 +127,23 @@
      <tbody>
       <row>
        <entry>Streaming replication mode</entry>
+       <entry><literal>pgpool.conf.sample-stream</literal></entry>
       </row>
       <row>
        <entry>Replication mode</entry>
        <entry><literal>pgpool.conf.sample-replication</literal></entry>
       </row>
       <row>
-       <entry>Master slave mode</entry>
+       <entry>Logical replication mode</entry>
+       <entry><literal>pgpool.conf.sample-logical</literal> </entry>
+      </row>
+      <row>
+       <entry>Slony mode</entry>
+       <entry><literal>pgpool.conf.sample-slony</literal></entry>
       </row>
       <row>
        <entry>Raw mode</entry>
-       <entry><literal>pgpool.conf.sample</literal> </entry>
-      </row>
-      <row>
-       <entry>Logical replication mode</entry>
-       <entry><literal>pgpool.conf.sample-logical</literal> </entry>
+       <entry><literal>pgpool.conf.sample-raw</literal> </entry>
       </row>
      </tbody>
     </tgroup>

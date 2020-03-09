@@ -385,166 +385,102 @@
 </sect1>
 
 <sect1 id="runtime-config-running-mode">
- <title>Running mode</title>
+ <title>Clustering mode</title>
+ <para>
+  <variablelist>
+   <varlistentry id="guc-backend-clustering-mode" xreflabel="backend_clustering_mode">
+    <term><varname>backend_clustering_mode</varname> (<type>enum</type>)
+     <indexterm>
+      <primary><varname>backend_clustering_mode</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Clustering mode is the method to sync
+      <productname>PostgreSQL</productname> servers. To set the clustering
+      mode, <varname>backend_clustering_mode</varname> can be used. In
+      this section we discusss how to set the clustering mode. See <xref
+       linkend="planning-postgresql"> for more details.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </para>
 
- <sect2 id="runtime-config-master-slave-mode">
-  <title>Master slave mode</title>
+ <sect2 id="runtime-config-streaming-replication-mode">
+  <title>Streaming replication mode</title>
+
+  <para>
+   This mode is most poplular and recommended clustering mode. In this
+   mode <productname>PostgreSQL</productname> is responsible to
+   replicate each servers. To enable this mode, use
+   'streaming_replication' for
+   <varname>backend_clustering_mode</varname>.
+    <programlisting>
+backend_clustering_mode = 'streaming_replication'
+    </programlisting>
+   In this mode you can have up to 127 streaming replication standby servers.
+   Also it is possible not to have standby server at all.
+  </para>
+  <para>
+   See <xref linkend="runtime-streaming-replication-check"> for
+    additional parameters for streaming replication mode.
+  </para>
+ </sect2>
+ 
+ <sect2 id="runtime-config-logical-replication-mode">
+  <title>Logical replication mode</title>
+
+  <para>
+   This mode is recently added. In this mode
+   <productname>PostgreSQL</productname> is responsible to replicate
+   each servers. To enable this mode, use 'logical_replication' for
+   <varname>backend_clustering_mode</varname>.
+    <programlisting>
+backend_clustering_mode = 'logical_replication'
+    </programlisting>
+   In this mode you can have up to 127 logical replication standby servers.
+   Also it is possible not to have standby server at all.
+  </para>
+ </sect2>
+
+ <sect2 id="runtime-config-slony-mode">
+  <title>Slony mode</title>
 
   <para>
    This mode is used to couple <productname>Pgpool-II</productname>
-   with another master/slave replication software
-   (like <acronym>Slony-I</acronym> and Streaming replication),
-   that is responsible for doing the actual data replication.
+   with <acronym>Slony-I</acronym>.  Slony-I is responsible for doing
+   the actual data replication.  To enable this mode, use 'slony' for
+   <varname>backend_clustering_mode</varname>.
+    <programlisting>
+backend_clustering_mode = 'slony'
+    </programlisting>
+   In this mode you can have up to 127 slave servers.  Also it is
+   possible not to have slave server at all.
   </para>
-
-  <note>
-   <para>
-    The number of slave nodes are not limited to 1 and
-    <productname>Pgpool-II</productname> can have up to 127 slave nodes.
-    master/slave mode can also work just master node without any slave nodes.
-   </para>
-  </note>
-
-  <para>
-   Load balancing (see <xref linkend="runtime-config-load-balancing"> ) can
-    also be used with master/slave mode to distribute the read load on the
-    standby backend nodes.
-  </para>
-  <para>
-   Following options are required to be specified for master/slave mode.
-  </para>
-
-  <variablelist>
-
-   <varlistentry id="guc-master-slave-mode" xreflabel="master_slave_mode">
-    <term><varname>master_slave_mode</varname> (<type>boolean</type>)
-     <indexterm>
-      <primary><varname>master_slave_mode</varname> configuration parameter</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      Setting to on enables the master/slave mode.
-      Default is off.
-     </para>
-     <note>
-      <para>
-       <xref linkend="guc-master-slave-mode"> and <xref linkend="guc-replication-mode">
-	 are mutually exclusive and only one can be enabled at a time.
-      </para>
-     </note>
-     <para>
-      This parameter can only be set at server start.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry id="guc-master-slave-sub-mode" xreflabel="master_slave_sub_mode">
-    <term><varname>master_slave_sub_mode</varname> (<type>enum</type>)
-     <indexterm>
-      <primary><varname>master_slave_sub_mode</varname> configuration parameter</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      Specifies the external replication system used for data
-      replication between
-      <productname>PostgreSQL</productname> nodes.
-      Below table contains the list of valid values for the parameter.
-     </para>
-
-     <table id="master-slave-sub-mode-table">
-      <title>master slave sub mode options</title>
-      <tgroup cols="2">
-       <thead>
-	<row>
-	 <entry>Value</entry>
-	 <entry>Description</entry>
-	</row>
-       </thead>
-
-       <tbody>
-	<row>
-	 <entry><literal>'stream'</literal></entry>
-	 <entry>Suitable
-	  for <productname>PostgreSQL</productname>'s built-in
-	  replication system (Streaming Replication)</entry>
-	</row>
-
-	<row>
-	 <entry><literal>'slony'</literal></entry>
-	 <entry>Suitable for <acronym>Slony-I</acronym></entry>
-	</row>
-
-	<row>
-	 <entry><literal>'logical'</literal></entry>
-	 <entry>Suitable
-	  for <productname>PostgreSQL</productname>'s built-in
-	  replication system (Logical Replication)</entry>
-	</row>
-
-       </tbody>
-      </tgroup>
-     </table>
-
-     <para>
-      Default is <literal>'stream'</literal>.
-     </para>
-     <para>
-      This parameter can only be set at server start.
-     </para>
-    </listitem>
-   </varlistentry>
-
-  </variablelist>
  </sect2>
 
- <sect2 id="runtime-config-replication-mode">
-  <title>Replication mode</title>
+ <sect2 id="guc-replication-mode" xreflabel="native_replication_mode">
+  <title>Native replication mode</title>
 
   <para>
    This mode makes the <productname>Pgpool-II</productname> to
    replicate data between <productname>PostgreSQL</productname>
-   backends.
+   backends.  To enable this mode, use 'native_replication' for
+   <varname>backend_clustering_mode</varname>.
+    <programlisting>
+backend_clustering_mode = 'native_replication'
+    </programlisting>
+   In this mode you can have up to 127 slabe replication servers.
+   Also it is possible not to have slave server at all.
   </para>
 
-  <para>
-   Load balancing
-   (see <xref linkend="runtime-config-load-balancing"> ) can also
-    be used with replication mode to distribute the load to the
-    attached backend nodes.
-  </para>
   <para>
    Following options affect the behavior of
    <productname>Pgpool-II</productname> in the replication mode.
   </para>
 
   <variablelist>
-
-   <varlistentry id="guc-replication-mode" xreflabel="replication_mode">
-    <term><varname>replication_mode</varname> (<type>boolean</type>)
-     <indexterm>
-      <primary><varname>replication_mode</varname> configuration parameter</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      Setting to on enables the replication mode.
-      Default is off.
-     </para>
-     <note>
-      <para>
-       <xref linkend="guc-replication-mode">
-	and <xref linkend="guc-master-slave-mode"> are
-	 mutually exclusive and only one can be enabled at a
-	 time.
-      </para>
-     </note>
-     <para>
-      This parameter can only be set at server start.
-     </para>
-    </listitem>
-   </varlistentry>
 
    <varlistentry id="guc-replication-stop-on-mismatch" xreflabel="replication_stop_on_mismatch">
     <term><varname>replication_stop_on_mismatch</varname> (<type>boolean</type>)

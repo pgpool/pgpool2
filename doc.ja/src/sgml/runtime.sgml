@@ -176,11 +176,7 @@
    </para>
 
    <para>
-    <!--
-    For each <productname>Pgpool-II</productname> operation mode,
-    there are sample configurations.
-    -->
-    各<productname>Pgpool-II</productname>の動作モードについて設定のサンプルがあります。
+    各<productname>Pgpool-II</productname>のクラスタリングモードについて設定のサンプルがあります。
 
    </para>
 
@@ -197,7 +193,7 @@
        <entry>Operation mode</entry>
        <entry>Configuration file name</entry>
        -->
-       <entry>動作モード</entry>
+       <entry>クラスタリングモード</entry>
        <entry>設定ファイル名</entry>
       </row>
      </thead>
@@ -218,25 +214,12 @@
        <entry><literal>pgpool.conf.sample-replication</literal></entry>
       </row>
       <row>
-       <!--
-       <entry>Master slave mode</entry>
-       -->
-       <entry>マスタースレーブモード</entry>
-       <entry><literal>pgpool.conf.sample-master-slave</literal></entry>
-      </row>
-      <row>
-       <!--
-       <entry>Raw mode</entry>
-       -->
-       <entry>Rawモード</entry>
-       <entry><literal>pgpool.conf.sample</literal> </entry>
-      </row>
-      <row>
-       <!--
-       <entry>Logical replication mode</entry>
-       -->
        <entry>ロジカルレプリケーションモード</entry>
-       <entry><literal>pgpool.conf.sample-logical</literal> </entry>
+       <entry><literal>pgpool.conf.sample-logical</literal></entry>
+      </row>
+      <row>
+       <entry>Rawモード</entry>
+       <entry><literal>pgpool.conf.sample-raw</literal> </entry>
       </row>
      </tbody>
     </tgroup>
@@ -263,7 +246,7 @@
    <!--
    <title>Running mode of Pgpool-II</title>
    -->
-   <title> Pgpool-IIの動作モード</title>
+   <title>Pgpool-IIのクラスタリングモード</title>
    <indexterm zone="running-mode">
     <!--
     <primary>streaming replication mode</primary>
@@ -293,13 +276,7 @@
    </indexterm>
 
    <para>
-    <!--
-    There are four different running modes in <productname>Pgpool-II</>: streaming
-    replication mode, master slave mode, native replication mode and
-    raw mode. In any mode, <productname>Pgpool-II</> provides connection pooling,
-    automatic fail over and online recovery.
-    -->
-    <productname>Pgpool-II</>にはストリーミングレプリケーションモード、ロジカルレプリケーションモード、マスタースレーブモード（slonyモード)、ネイティブレプリケーションモード、rawモードの5つの動作モードがあります。
+    <productname>Pgpool-II</>にはストリーミングレプリケーションモード、ロジカルレプリケーションモード、Slonyモード、ネイティブレプリケーションモード、rawモードの5つのクラスタリングモードがあります。
     いずれのモードにおいても、<productname>Pgpool-II</>はコネクションプーリング、自動フェイルオーバ、オンラインリカバリの機能を提供します。
    </para>
 

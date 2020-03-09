@@ -377,7 +377,7 @@
    <ulink url="https://www.postgresql.org/docs/current/static/pgbench.html">
    <command>pgbench</command></ulink> benchmark program.
    -->
-   レプリケーション（<xref linkend="runtime-config-replication-mode">を参照）では複数のデータベースノードに同じデータを複製して格納します。
+   ネィティブレプリケーションモード（<xref linkend="guc-replication-mode">を参照）では複数のデータベースノードに同じデータを複製して格納します。
     ここでは、<xref linkend="example-configs-begin">で準備した 3 台のデータベースノードを使用し、一歩一歩データベースクラスタシステムを作っていきましょう。
      複製させるサンプルのデータは<ulink url="https://www.postgresql.org/docs/current/static/pgbench.html"><command>pgbench</command></ulink>ベンチマークプログラムで生成することにします。
   </para>
