@@ -4889,6 +4889,19 @@ SELECT_RETRY:
 					}
 
 					/*
+					 * In native replication mode, we need to trigger failover
+					 * to avoid data inconsistency.
+					 */
+					else if (REPLICATION)
+					{
+						was_error = 1;
+						if (!VALID_BACKEND(i))
+							break;
+						notice_backend_error(i, REQ_DETAIL_SWITCHOVER);
+						sleep(5);
+					}
+
+					/*
 					 * Just set local status to down.
 					 */
 					else
