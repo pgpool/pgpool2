@@ -2369,7 +2369,7 @@ do_SCRAM(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, int protoMajor, 
 				ereport(ERROR,
 						(errmsg("invalid authentication request from server: unknown auth kind %d", auth_kind)));
 		}
-		/* Read next packend */
+		/* Read next backend */
 		pool_read(backend, &kind, sizeof(kind));
 		pool_read(backend, &len, sizeof(len));
 		if (kind != 'R')
@@ -2377,7 +2377,7 @@ do_SCRAM(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, int protoMajor, 
 					(errmsg("backend authentication failed"),
 					 errdetail("backend response with kind \'%c\' when expecting \'R\'", kind)));
 		message_length = ntohl(len);
-		if (len <= 8)
+		if (message_length < 8)
 			ereport(ERROR,
 					(errmsg("backend authentication failed"),
 					 errdetail("backend response with no data ")));
