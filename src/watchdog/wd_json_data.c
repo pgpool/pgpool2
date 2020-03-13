@@ -66,7 +66,7 @@ get_pool_config_from_json(char *json_data, int data_len)
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "enable_pool_hba", &config->enable_pool_hba))
 		goto ERROR_EXIT;
-	if (json_get_int_value_for_key(root, "load_balance_mode", (int *) &config->load_balance_mode))
+	if (json_get_bool_value_for_key(root, "load_balance_mode", &config->load_balance_mode))
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "replication_stop_on_mismatch", &config->replication_stop_on_mismatch))
 		goto ERROR_EXIT;
@@ -76,7 +76,7 @@ get_pool_config_from_json(char *json_data, int data_len)
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "replicate_select", &config->replicate_select))
 		goto ERROR_EXIT;
-	if (json_get_int_value_for_key(root, "master_slave_mode", (int *) &config->master_slave_mode))
+	if (json_get_bool_value_for_key(root, "master_slave_mode", &config->master_slave_mode))
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "connection_cache", &config->connection_cache))
 		goto ERROR_EXIT;
@@ -187,12 +187,12 @@ get_pool_config_json(void)
 	jw_put_int(jNode, "max_pool", pool_config->max_pool);
 	jw_put_bool(jNode, "replication_mode", pool_config->replication_mode);
 	jw_put_bool(jNode, "enable_pool_hba", pool_config->enable_pool_hba);
-	jw_put_int(jNode, "load_balance_mode", pool_config->load_balance_mode);
+	jw_put_bool(jNode, "load_balance_mode", pool_config->load_balance_mode);
 	jw_put_bool(jNode, "allow_clear_text_frontend_auth", pool_config->allow_clear_text_frontend_auth);
 	jw_put_bool(jNode, "replication_stop_on_mismatch", pool_config->replication_stop_on_mismatch);
 	jw_put_bool(jNode, "failover_if_affected_tuples_mismatch", pool_config->failover_if_affected_tuples_mismatch);
 	jw_put_bool(jNode, "replicate_select", pool_config->replicate_select);
-	jw_put_int(jNode, "master_slave_mode", pool_config->master_slave_mode);
+	jw_put_bool(jNode, "master_slave_mode", pool_config->master_slave_mode);
 	jw_put_bool(jNode, "connection_cache", pool_config->connection_cache);
 	jw_put_int(jNode, "health_check_timeout", pool_config->health_check_timeout);
 	jw_put_int(jNode, "health_check_period", pool_config->health_check_period);
@@ -792,6 +792,7 @@ parse_wd_node_function_json(char *json_data, int data_len, char **func_name, int
 	char	   *ptr;
 	int			node_count = 0;
 	int			i;
+	int			tmpflags = 0;
 
 	*node_id_set = NULL;
 	*func_name = NULL;
@@ -819,12 +820,17 @@ parse_wd_node_function_json(char *json_data, int data_len, char **func_name, int
 	}
 	*func_name = pstrdup(ptr);
 	/* If it is a node function ? */
-	if (json_get_int_value_for_key(root, "Flags", (int *)flags))
+	if (json_get_int_value_for_key(root, "Flags", &tmpflags))
 	{
 		/* node count not found, But we don't care much about this */
 		*flags = 0;
 		/* it may be from the old version */
 	}
+	else
+	{
+		*flags = (unsigned char)tmpflags;
+	}
+
 	if (json_get_int_value_for_key(root, "NodeCount", &node_count))
 	{
 		/* node count not found, But we don't care much about this */
