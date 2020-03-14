@@ -128,6 +128,25 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-ssl-crl-file" xreflabel="ssl_crl_file">
+    <term><varname>ssl_crl_file</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>ssl_crl_file</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the path to the file containing the SSL server
+      certificate revocation list (CRL). The default is empty,
+      meaning no <acronym>CRL</acronym> file is loaded.
+     </para>
+
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-ssl-ciphers" xreflabel="ssl_ciphers">
     <term><varname>ssl_ciphers</varname> (<type>string</type>)
      <indexterm>

@@ -198,6 +198,24 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-ssl-crl-file" xreflabel="ssl_crl_file">
+    <term><varname>ssl_crl_file</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>ssl_crl_file</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      SSSLサーバ証明書失効リスト（CRL）が入っているファイルのパス名を設定します。
+      デフォルトは空で、この場合<acronym>CRL</acronym>ファイルは読み込まれません。
+     </para>
+
+     <para>
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-ssl-ciphers" xreflabel="ssl_ciphers">
     <term><varname>ssl_ciphers</varname> (<type>string</type>)
      <indexterm>

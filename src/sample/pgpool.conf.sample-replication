@@ -124,6 +124,9 @@ ssl = off
 #ssl_ca_cert_dir = ''
                                    # Directory containing CA root certificate(s)
                                    # (change requires restart)
+#ssl_crl_file = ''
+                                   # Path to the SSL certificate revocation list file
+                                   # (change requires restart)
 
 ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'
                                    # Allowed SSL ciphers

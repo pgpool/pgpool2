@@ -259,6 +259,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "directory containing CA root certificate(s)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "ssl_crl_file", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_crl_file);
+	StrNCpy(status[i].desc, "path to the SSL certificate revocation list file", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "ssl_ciphers", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_ciphers);
 	StrNCpy(status[i].desc, "allowed SSL ciphers", POOLCONFIG_MAXDESCLEN);

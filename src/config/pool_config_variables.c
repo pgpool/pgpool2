@@ -1070,6 +1070,16 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"ssl_crl_file", CFGCXT_INIT, SSL_CONFIG,
+			"Path to the SSL certificate revocation list file",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.ssl_crl_file,
+		"",
+		NULL, NULL, NULL, NULL
+	},
+
+	{
 		{"ssl_ciphers", CFGCXT_INIT, SSL_CONFIG,
 			"Allowed SSL ciphers.",
 			CONFIG_VAR_TYPE_STRING, false, 0

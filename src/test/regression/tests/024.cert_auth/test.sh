@@ -14,6 +14,7 @@ export PGDATABASE=test
 dir=`pwd`
 SSL_KEY=$dir/server.key
 SSL_CRT=$dir/server.crt
+SSL_CRL=$dir/server.crl
 ROOT_CRT=$dir/root.crt
 FRONTEND_KEY=$dir/frontend.key
 FRONTEND_CRT=$dir/frontend.crt
@@ -52,6 +53,7 @@ wait_for_pgpool_startup
 
 export PGSSLCERT=$FRONTEND_CRT
 export PGSSLKEY=$FRONTEND_KEY
+export PGSSLROOTCERT=$ROOT_CRT
 
 $PSQL -h localhost -c "select 1" test
 
@@ -65,4 +67,80 @@ fi
 echo "Checking cert auth between Pgpool-II and frontend was ok."
 
 ./shutdownall
+
+
+# Starting CRL verfication
+# Adding valid CRL file in pgpool.conf file.
+echo "ssl_crl_file = '$SSL_CRL'" >> etc/pgpool.conf
+
+# Check pgpool configuration is updated successfully
+grep "server.crl" etc/pgpool.conf
+if [ $? != 0 ];then
+    echo "pgpool.conf is not updated with CRL file."
+    ./shutdownall
+    exit 1
+fi
+
+# Start Server and PgPool
+./startall
+
+export PGPORT=$PGPOOL_PORT
+
+wait_for_pgpool_startup
+
+export PGSSLCERT=$FRONTEND_CRT
+export PGSSLKEY=$FRONTEND_KEY
+export PGSSLROOTCERT=$ROOT_CRT
+
+$PSQL -h localhost -c "select 1" test
+
+grep "SSL certificate authentication for user" log/pgpool.log|grep successful
+if [ $? != 0 ];then
+    echo "Checking cert auth between Pgpool-II and frontend with clean CRL failed."
+    ./shutdownall
+    exit 1
+fi
+
+echo "Checking cert auth between Pgpool-II and frontend with clean CRL was ok."
+
+./shutdownall
+
+
+# Adding CRL file with revoked certification entry in pgpool.conf file.
+echo "Updating pgpool.conf with revoked CRL file"
+
+sed -i 's/server.crl/server_revoked.crl/' etc/pgpool.conf
+
+# Check pgpool configuration is updated successfully
+grep "server_revoked.crl" etc/pgpool.conf
+if [ $? != 0 ];then
+    echo "pgpool.conf is not updated with revoked CRL file."
+    ./shutdownall
+    exit 1
+fi
+
+# Start Server and PgPool
+./startall
+
+export PGPORT=$PGPOOL_PORT
+
+wait_for_pgpool_startup
+
+export PGSSLCERT=$FRONTEND_CRT
+export PGSSLKEY=$FRONTEND_KEY
+export PGSSLROOTCERT=$ROOT_CRT
+
+$PSQL -h localhost -c "select 1" test
+
+grep "certificate verify failed" log/pgpool.log
+if [ $? != 0 ];then
+    echo "Checking cert auth between Pgpool-II and frontend with revoked entry in CRL failed."
+    ./shutdownall
+    exit 1
+fi
+
+echo "Checking cert auth between Pgpool-II and frontend with revoked entry in CRL was ok."
+
+./shutdownall
+
 exit 0

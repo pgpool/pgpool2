@@ -362,6 +362,7 @@ typedef struct
 	char	   *ssl_ca_cert;	/* path to root (CA) certificate */
 	char	   *ssl_ca_cert_dir;	/* path to directory containing CA
 									 * certificates */
+	char	   *ssl_crl_file;	/* path to the SSL certificate revocation list file */
 	char	   *ssl_ciphers;	/* allowed ssl ciphers */
 	bool		ssl_prefer_server_ciphers; /*Use SSL cipher preferences, rather than the client's*/
 	char	   *ssl_ecdh_curve; /* the curve to use in ECDH key exchange */

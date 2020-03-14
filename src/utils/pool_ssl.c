@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -675,7 +675,47 @@ SSL_ServerSide_init(void)
 							pool_config->ssl_ca_cert, SSLerrmessage(ERR_get_error()))));
 			goto error;
 		}
+	}
 
+	/*----------
+	 * Load the Certificate Revocation List (CRL).
+	 * http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,00.html
+	 *----------
+	 */
+	if (pool_config->ssl_crl_file && strlen(pool_config->ssl_crl_file))
+	{
+		X509_STORE *cvstore = SSL_CTX_get_cert_store(context);
+
+		if (cvstore)
+		{
+			/* Set the flags to check against the complete CRL chain */
+			if (X509_STORE_load_locations(cvstore, pool_config->ssl_crl_file, NULL) == 1)
+			{
+				/* OpenSSL 0.9.6 does not support X509_V_FLAG_CRL_CHECK */
+#ifdef X509_V_FLAG_CRL_CHECK
+				X509_STORE_set_flags(cvstore,
+									 X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
+#else
+				ereport(LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("SSL certificate revocation list file \"%s\" ignored",
+								pool_config->ssl_crl_file),
+						 errdetail("SSL library does not support certificate revocation lists.")));
+#endif
+			}
+			else
+			{
+				ereport(WARNING,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("could not load SSL certificate revocation list file \"%s\": %s",
+								pool_config->ssl_crl_file, SSLerrmessage(ERR_get_error()))));
+				goto error;
+			}
+		}
+	}
+
+	if (pool_config->ssl_ca_cert && strlen(pool_config->ssl_ca_cert))
+	{
 		/*
 		 * Always ask for SSL client cert, but don't fail if it's not
 		 * presented.  We might fail such connections later, depending on what
