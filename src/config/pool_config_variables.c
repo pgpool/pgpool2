@@ -1519,7 +1519,7 @@ static struct config_string_array ConfigureNamesStringArray[] =
 			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
-		"ALWAYS_MASTER",
+		"",	/* for ALWAYS_MASTER */
 		EMPTY_CONFIG_STRING,
 		BackendFlagsAssignFunc, NULL, BackendFlagsShowFunc, BackendSlotEmptyCheckFunc
 	},
@@ -3874,24 +3874,16 @@ static bool
 BackendFlagsAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 
-	unsigned short flag = 0;
+	unsigned short flag;
 	int			i,
 				n;
 	bool		allow_to_failover_is_specified = false;
 	bool		disallow_to_failover_is_specified = false;
 	char	  **flags;
 
-	flags = get_list_from_string(newval, "|", &n);
-	if (!flags || n < 0)
-	{
-		if (flags)
-			pfree(flags);
+	flag = g_pool_config.backend_desc->backend_info[index].flag;
 
-		ereport(elevel,
-				(errmsg("invalid configuration for key \"backend_flag%d\"", index),
-				 errdetail("unable to get backend flags")));
-		return false;
-	}
+	flags = get_list_from_string(newval, "|", &n);
 
 	for (i = 0; i < n; i++)
 	{
@@ -3952,7 +3944,8 @@ BackendFlagsAssignFunc(ConfigContext context, char *newval, int index, int eleve
 	g_pool_config.backend_desc->backend_info[index].flag = flag;
 	ereport(DEBUG1,
 			(errmsg("setting \"backend_flag%d\" flag: %04x ", index, flag)));
-	pfree(flags);
+	if (flags)
+		pfree(flags);
 	return true;
 }
 
