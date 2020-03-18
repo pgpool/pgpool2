@@ -79,6 +79,16 @@ Pgpool-II documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>-i <replaceable class="parameter">INPUT_FILE</replaceable></option></term>
+     <term><option>--input-file=<replaceable class="parameter">INPUT_FILE</replaceable></option></term>
+     <listitem>
+      <para>
+       Specifies file containing username and password pairs.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-p</option></term>
      <term><option>--prompt</option></term>
      <listitem>
@@ -160,6 +170,26 @@ Pgpool-II documentation
    </programlisting>
    which will add an entry for <literal>username</literal> with the password given.
   </para>
+  <para>
+   To avoid password prompt or password in command parameter,
+   <literal>pg_enc</literal> can read user name:password pairs from file.
+   It will add all user names and encrypted password to
+   <xref linkend="guc-pool-passwd"> authentication file.
+   <programlisting>
+    $ cat users.txt
+    username1:secretpassword1
+    username2:secretpassword2
+
+    $ pg_enc -m -f /path/to/pgpool.conf -i users.txt
+    trying to read key from file /home/pgpool/.pgpoolkey
+    trying to read user:password pairs from file users.text
+
+    $ cat /path/to/pool_passwd
+    username1:AESrx5QdpGyW/+4CB80KWtwhg==
+    username2:AESUAdohy7nCUhWliRI9WiYQA==
+   </programlisting>
+  </para>
+
  </refsect1>
 
 </refentry>

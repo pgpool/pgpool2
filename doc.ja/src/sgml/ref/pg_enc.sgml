@@ -114,6 +114,16 @@ Pgpool-II documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>-i <replaceable class="parameter">INPUT_FILE</replaceable></option></term>
+     <term><option>--input-file=<replaceable class="parameter">INPUT_FILE</replaceable></option></term>
+     <listitem>
+      <para>
+       ユーザ名とパスワードのペアを含むファイルを指定します。
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-P</option></term>
      <term><option>--prompt-for-key</option></term>
      <listitem>
@@ -211,6 +221,23 @@ Pgpool-II documentation
    which will add an entry for <literal>username</literal> with the password given.
    -->
    入力したパスワードと<literal>username</literal>のエントリが追加されます。
+  </para>
+  <para>
+   パスワードの入力が促されたりコマンド引数の中でパスワードを指定するのを避けたい場合は<literal>pg_enc</literal>は名前:パスワードのペアをファイルから読むことができます。
+   すべてのユーザ名と暗号化されたパスワードが<xref linkend="guc-pool-passwd">認証ファイルに追加されます。
+   <programlisting>
+    $ cat users.txt
+    username1:secretpassword1
+    username2:secretpassword2
+
+    $ pg_enc -m -f /path/to/pgpool.conf -i users.txt
+    trying to read key from file /home/pgpool/.pgpoolkey
+    trying to read user:password pairs from file users.text
+
+    $ cat /path/to/pool_passwd
+    username1:AESrx5QdpGyW/+4CB80KWtwhg==
+    username2:AESUAdohy7nCUhWliRI9WiYQA==
+   </programlisting>
   </para>
  </refsect1>
 

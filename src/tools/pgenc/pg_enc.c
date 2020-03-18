@@ -47,7 +47,9 @@
 
 static void print_usage(const char prog[], int exit_code);
 static void set_tio_attr(int enable);
+static void print_encrypted_password(char *pg_pass, char *pool_key);
 static void update_pool_passwd(char *conf_file, char *username, char *password, char *key);
+static void process_input_file(char *conf_file, char *input_file, char *key, bool updatepasswd);
 static bool get_pool_key_filename(char *poolKeyFile);
 
 int
@@ -56,6 +58,7 @@ main(int argc, char *argv[])
 #define PRINT_USAGE(exit_code)	print_usage(argv[0], exit_code)
 
 	char		conf_file[POOLMAXPATHLEN + 1];
+	char		input_file[POOLMAXPATHLEN + 1];
 	char		enc_key[MAX_POOL_KEY_LEN + 1];
 	char		pg_pass[MAX_PGPASS_LEN + 1];
 	char		username[MAX_USER_NAME_LEN + 1];
@@ -65,6 +68,7 @@ main(int argc, char *argv[])
 	bool		updatepasswd = false;
 	bool		prompt = false;
 	bool		prompt_for_key = false;
+	bool		use_input_file = false;
 	char	   *pool_key = NULL;
 
 	static struct option long_options[] = {
@@ -76,6 +80,7 @@ main(int argc, char *argv[])
 		{"enc-key", required_argument, NULL, 'K'},
 		{"key-file", required_argument, NULL, 'k'},
 		{"config-file", required_argument, NULL, 'f'},
+		{"input-file", required_argument, NULL, 'i'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -89,7 +94,7 @@ main(int argc, char *argv[])
 	memset(enc_key, 0, sizeof(enc_key));
 	memset(key_file_path, 0, sizeof(key_file_path));
 
-	while ((opt = getopt_long(argc, argv, "hPpmf:u:k:K:", long_options, &optindex)) != -1)
+	while ((opt = getopt_long(argc, argv, "hPpmf:i:u:k:K:", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
@@ -111,6 +116,15 @@ main(int argc, char *argv[])
 					PRINT_USAGE(EXIT_SUCCESS);
 				}
 				strlcpy(conf_file, optarg, sizeof(conf_file));
+				break;
+
+			case 'i':			/* specify users password input file */
+				if (!optarg)
+				{
+					PRINT_USAGE(EXIT_SUCCESS);
+				}
+				strlcpy(input_file, optarg, sizeof(input_file));
+				use_input_file = true;
 				break;
 
 			case 'k':			/* specify key file for encrypting
@@ -150,51 +164,55 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/* Prompt for password. */
-	if (prompt || optind >= argc)
+	if (!use_input_file)
 	{
-		char		buf[MAX_PGPASS_LEN];
-		int			len;
-
-		set_tio_attr(1);
-		printf("db password: ");
-		if (!fgets(buf, sizeof(buf), stdin))
+		/* Prompt for password. */
+		if (prompt || optind >= argc)
 		{
-			int			eno = errno;
+			char		buf[MAX_PGPASS_LEN];
+			int			len;
 
-			fprintf(stderr, "Couldn't read input from stdin. (fgets(): %s)",
-					strerror(eno));
+			set_tio_attr(1);
+			printf("db password: ");
+			if (!fgets(buf, sizeof(buf), stdin))
+			{
+				int			eno = errno;
 
-			exit(EXIT_FAILURE);
+				fprintf(stderr, "Couldn't read input from stdin. (fgets(): %s)",
+						strerror(eno));
+
+				exit(EXIT_FAILURE);
+			}
+			printf("\n");
+			set_tio_attr(0);
+
+			/* Remove LF at the end of line, if there is any. */
+			len = strlen(buf);
+			if (len > 0 && buf[len - 1] == '\n')
+			{
+				buf[len - 1] = '\0';
+				len--;
+			}
+			stpncpy(pg_pass, buf, sizeof(pg_pass));
 		}
-		printf("\n");
-		set_tio_attr(0);
 
-		/* Remove LF at the end of line, if there is any. */
-		len = strlen(buf);
-		if (len > 0 && buf[len - 1] == '\n')
+		/* Read password from argv. */
+		else
 		{
-			buf[len - 1] = '\0';
-			len--;
+			int			len;
+
+			len = strlen(argv[optind]);
+
+			if (len > MAX_PGPASS_LEN)
+			{
+				fprintf(stderr, "Error: Input exceeds maximum password length given:%d max allowed:%d!\n\n", len, MAX_PGPASS_LEN);
+				PRINT_USAGE(EXIT_FAILURE);
+			}
+
+			stpncpy(pg_pass, argv[optind], sizeof(pg_pass));
 		}
-		stpncpy(pg_pass, buf, sizeof(pg_pass));
 	}
 
-	/* Read password from argv. */
-	else
-	{
-		int			len;
-
-		len = strlen(argv[optind]);
-
-		if (len > MAX_PGPASS_LEN)
-		{
-			fprintf(stderr, "Error: Input exceeds maximum password length given:%d max allowed:%d!\n\n", len, MAX_PGPASS_LEN);
-			PRINT_USAGE(EXIT_FAILURE);
-		}
-
-		stpncpy(pg_pass, argv[optind], sizeof(pg_pass));
-	}
 	/* prompt for key, overrides all key related arguments */
 	if (prompt_for_key)
 	{
@@ -256,12 +274,27 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	if (updatepasswd)
+	/* Use input file */
+	if (use_input_file)
 	{
-		update_pool_passwd(conf_file, username, pg_pass, pool_key);
+		process_input_file(conf_file, input_file, pool_key, updatepasswd);
+		return EXIT_SUCCESS;
 	}
+
+	if (updatepasswd)
+		update_pool_passwd(conf_file, username, pg_pass, pool_key);
 	else
-	{
+		print_encrypted_password(pg_pass, pool_key);
+
+	if (pool_key != enc_key)
+		free(pool_key);
+
+	return EXIT_SUCCESS;
+}
+
+static void
+print_encrypted_password(char *pg_pass, char *pool_key)
+{
 		unsigned char ciphertext[MAX_ENCODED_PASSWD_LEN];
 		unsigned char b64_enc[MAX_ENCODED_PASSWD_LEN];
 		int			len;
@@ -285,12 +318,81 @@ main(int argc, char *argv[])
 										pool_key, plaintext);
 		plaintext[len] = 0;
 #endif
+}
+
+static void
+process_input_file(char *conf_file, char *input_file, char *key, bool updatepasswd)
+{
+	FILE	*input_file_fd;
+	char	*buf = NULL;
+	char	username[MAX_USER_NAME_LEN + 1];
+	char	password[MAX_PGPASS_LEN + 1];
+	char	*pch;
+	size_t	len=0;
+	int 	nread = 0;
+	int		line_count;
+
+	fprintf(stdout, "trying to read username:password pairs from file %s\n", input_file);
+	input_file_fd = fopen(input_file, "r");
+	if (input_file_fd == NULL)
+	{
+		fprintf(stderr, "failed to open input_file \"%s\" (%m)\n\n", input_file);
+		exit(EXIT_FAILURE);
 	}
 
-	if (pool_key != enc_key)
-		free(pool_key);
+	line_count = 0;
+	while ((nread = getline(&buf, &len, input_file_fd)) != -1)
+	{
+		line_count++;
+		/* Remove trailing newline */
+		if (buf[nread - 1] == '\n')
+			buf[nread-- - 1] = '\0';
 
-	return EXIT_SUCCESS;
+		memset(username, 0, MAX_USER_NAME_LEN + 1);
+		memset(password, 0, MAX_PGPASS_LEN + 1);
+
+		/* Check blank line */
+		if (nread == 0 || *buf == '\n')
+			goto clear_buffer;
+
+		/* Split username and passwords */
+		pch = buf;
+		while( pch && pch != buf + nread && *pch != ':')
+			pch++;
+		if (*pch == ':')
+			pch++;
+		if (!strlen(pch))
+		{
+			fprintf(stderr, "LINE#%02d: invalid username:password pair\n", line_count);
+			goto clear_buffer;
+		}
+
+		if( (pch-buf) > sizeof(username))
+		{
+			fprintf(stderr, "LINE#%02d: input exceeds maximum username length %d\n",line_count,  MAX_USER_NAME_LEN);
+			goto clear_buffer;
+		}
+		strncpy(username, buf, pch-buf-1);
+
+		if (strlen(pch) >= sizeof(password))
+		{
+			fprintf(stderr, "LINE#%02d: input exceeds maximum password length %d\n",line_count, MAX_PGPASS_LEN);
+			goto clear_buffer;
+		}
+		strncpy(password, pch, strlen(pch));
+
+		if (updatepasswd)
+			update_pool_passwd(conf_file, username, password, key);
+		else
+			print_encrypted_password(password, key);
+clear_buffer:
+		if(buf)
+			free(buf);
+		buf = NULL;
+		len = 0;
+	}
+
+	fclose(input_file_fd);
 }
 
 static void
@@ -380,6 +482,8 @@ print_usage(const char prog[], int exit_code)
 	fprintf(stream, "                       Encryption key to be used for encrypting database passwords.\n");
 	fprintf(stream, "  -f, --config-file=CONFIG_FILE\n");
 	fprintf(stream, "                       Specifies the pgpool.conf file.\n");
+	fprintf(stream, "  -i, --input-file=INPUT-FILE\n");
+	fprintf(stream, "                       Specify file containing username and password pairs.\n");
 	fprintf(stream, "  -p, --prompt         Prompt for database password using standard input.\n");
 	fprintf(stream, "  -P, --prompt-for-key Prompt for encryption key using standard input.\n");
 	fprintf(stream, "  -m, --update-pass    Create encrypted password entry in the pool_passwd file.\n");
