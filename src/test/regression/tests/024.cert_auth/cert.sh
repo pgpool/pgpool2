@@ -49,10 +49,14 @@ emailAddress            = optional
 
 [req]
 distinguished_name  = req_distinguished_name
+default_bits        = 2048
 
 [req_distinguished_name]
 
 EOF
+
+# Print OpenSSL version
+openssl version
 
 # Create root cert
 openssl req -new -x509 -nodes -out root.crt -keyout root.key -config crl_openssl.conf -days 365 -subj /CN=MyRootCA
