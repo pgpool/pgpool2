@@ -130,9 +130,10 @@ export PGSSLCERT=$FRONTEND_CRT
 export PGSSLKEY=$FRONTEND_KEY
 export PGSSLROOTCERT=$ROOT_CRT
 
-$PSQL -h localhost -c "select 1" test
+$PSQL -h localhost -c "select 1" test > $dir/crl_session.log  2>&1
 
-grep "certificate verify failed" log/pgpool.log
+grep "sslv3 alert certificate revoked" $dir/crl_session.log
+
 if [ $? != 0 ];then
     echo "Checking cert auth between Pgpool-II and frontend with revoked entry in CRL failed."
     ./shutdownall
