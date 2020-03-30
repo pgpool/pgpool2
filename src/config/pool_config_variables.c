@@ -1110,6 +1110,17 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"ssl_passphrase_command", CFGCXT_INIT, SSL_CONFIG,
+			"Path to the Diffie-Hellman parameters contained file",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.ssl_passphrase_command,
+		"",
+		NULL, NULL, NULL, NULL
+	},
+
+
+	{
 		{"memqcache_oiddir", CFGCXT_INIT, CACHE_CONFIG,
 			"Tempory directory to record table oids.",
 			CONFIG_VAR_TYPE_STRING, false, 0

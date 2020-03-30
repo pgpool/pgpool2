@@ -354,6 +354,35 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-ssl-passphrase-command" xreflabel="ssl_passphrase_command">
+    <term><varname>ssl_passphrase_command</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>ssl_passphrase_command</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      秘密鍵などのSSLファイルを復号する際に、パスフレーズの入手が必要な時に起動される外部コマンドを設定します。
+      デフォルトではこのパラメータは空文字で、この場合はパスフレーズが要求されてもSSLファイルはロードされません。
+     </para>
+     <para>
+      このコマンドは、パスフレーズを標準出力に書き出し、コード0で終了しなければなりません。
+      パラメータの値の<literal>%p</literal>はプロンプト文字列に置き換えられます。
+      （<literal>%</literal>を使いたい場合は<literal>%%</literal>としてください。）
+      プロンプト文字列はおそらく空白文字を含むので、適切に引用符付けするように注意してください。
+      出力の最後に一個の改行があれば、削除されます。
+     </para>
+     <para>
+      このコマンドは実際にはパスフレーズ用にユーザにプロンプトを表示する必要はありません。
+      ファイルからパスフレーズが読めるなら、キーチェーン機構やその他から取得します。
+      選択された仕組みが適切にセキュアかどうかを確認するのはユーザ次第です。
+     </para>
+     <para>
+      このパラメータはサーバ起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </sect2>
 

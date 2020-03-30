@@ -40,8 +40,9 @@
 
 static SSL_CTX *SSL_frontend_context = NULL;
 static bool SSL_initialized = false;
-static bool ssl_passwd_cb_called = false;
-static int	ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
+static bool dummy_ssl_passwd_cb_called = false;
+static int  dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
+static int  ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static const char *SSLerrmessage(unsigned long ecode);
 static void fetch_pool_ssl_cert(POOL_CONNECTION * cp);
@@ -49,6 +50,7 @@ static DH *load_dh_file(char *filename);
 static DH *load_dh_buffer(const char *, size_t);
 static bool initialize_dh(SSL_CTX *context);
 static bool initialize_ecdh(SSL_CTX *context);
+static int run_ssl_passphrase_command(const char *prompt, char *buf, int size);
 
 #define SSL_RETURN_VOID_IF(cond, msg) \
 	do { \
@@ -474,14 +476,28 @@ fetch_pool_ssl_cert(POOL_CONNECTION * cp)
  * function that just returns an empty passphrase, guaranteeing failure.
  */
 static int
-ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
+dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 {
 	/* Set flag to change the error message we'll report */
-	ssl_passwd_cb_called = true;
+	dummy_ssl_passwd_cb_called = true;
 	/* And return empty string */
 	Assert(size > 0);
 	buf[0] = '\0';
 	return 0;
+}
+
+/*
+ *	Passphrase collection callback using ssl_passphrase_command
+ */
+static int
+ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdata)
+{
+	/* same prompt as OpenSSL uses internally */
+	const char *prompt = "Enter PEM pass phrase:";
+
+	Assert(rwflag == 0);
+
+	return run_ssl_passphrase_command(prompt, buf, size);
 }
 
 /*
@@ -557,7 +573,10 @@ SSL_ServerSide_init(void)
 	/*
 	 * prompt for password for passphrase-protected files
 	 */
-	SSL_CTX_set_default_passwd_cb(context, ssl_passwd_cb);
+	if(pool_config->ssl_passphrase_command && strlen(pool_config->ssl_passphrase_command))
+		SSL_CTX_set_default_passwd_cb(context, ssl_external_passwd_cb);
+	else
+		SSL_CTX_set_default_passwd_cb(context, dummy_ssl_passwd_cb);
 
 	/*
 	 * Load and verify server's certificate and private key
@@ -611,13 +630,13 @@ SSL_ServerSide_init(void)
 	/*
 	 * OK, try to load the private key file.
 	 */
-	ssl_passwd_cb_called = false;
+	dummy_ssl_passwd_cb_called = false;
 
 	if (SSL_CTX_use_PrivateKey_file(context,
 									pool_config->ssl_key,
 									SSL_FILETYPE_PEM) != 1)
 	{
-		if (ssl_passwd_cb_called)
+		if (dummy_ssl_passwd_cb_called)
 			ereport(WARNING,
 					(errmsg("private key file \"%s\" cannot be reloaded because it requires a passphrase",
 							pool_config->ssl_key)));
@@ -903,6 +922,95 @@ load_dh_buffer(const char *buffer, size_t len)
 	BIO_free(bio);
 
 	return dh;
+}
+
+/*
+ * Run ssl_passphrase_command
+ *
+ * The result will be put in buffer buf, which is of size size.  The return
+ * value is the length of the actual result.
+ */
+int
+run_ssl_passphrase_command(const char *prompt, char *buf, int size)
+{
+	int			loglevel = ERROR;
+	StringInfoData command;
+	char	   *p;
+	FILE		*fh;
+	int			pclose_rc;
+	size_t		len = 0;
+
+	Assert(prompt);
+	Assert(size > 0);
+	buf[0] = '\0';
+
+	initStringInfo(&command);
+
+	for (p = pool_config->ssl_passphrase_command; *p; p++)
+	{
+		if (p[0] == '%')
+		{
+			switch (p[1])
+			{
+				case 'p':
+					appendStringInfoString(&command, prompt);
+					p++;
+					break;
+				case '%':
+					appendStringInfoChar(&command, '%');
+					p++;
+					break;
+				default:
+					appendStringInfoChar(&command, p[0]);
+			}
+		}
+		else
+			appendStringInfoChar(&command, p[0]);
+	}
+
+	fh = popen(command.data, "r");
+	if (fh == NULL)
+	{
+		ereport(loglevel,
+				(errmsg("could not execute command \"%s\": %m",
+						command.data)));
+		goto error;
+	}
+
+	if (!fgets(buf, size, fh))
+	{
+		if (ferror(fh))
+		{
+			ereport(loglevel,
+					(errmsg("could not read from command \"%s\": %m",
+							command.data)));
+			goto error;
+		}
+	}
+
+	pclose_rc = pclose(fh);
+	if (pclose_rc == -1)
+	{
+		ereport(loglevel,
+				(errmsg("could not close pipe to external command: %m")));
+		goto error;
+	}
+	else if (pclose_rc != 0)
+	{
+		ereport(loglevel,
+				(errmsg("command \"%s\" failed",
+						command.data)));
+		goto error;
+	}
+
+	/* strip trailing newline */
+	len = strlen(buf);
+	if (len > 0 && buf[len - 1] == '\n')
+		buf[--len] = '\0';
+
+error:
+	pfree(command.data);
+	return len;
 }
 
 #else							/* USE_SSL: wrap / no-op ssl functionality if

@@ -284,6 +284,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "path to the Diffie-Hellman parameters contained file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "ssl_passphrase_command", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_passphrase_command);
+	StrNCpy(status[i].desc, "external command to be invoked when a passphrase for decrypting an SSL file such as a private key needs to be obtained", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* POOLS */
 
 	/* - Pool size -  */

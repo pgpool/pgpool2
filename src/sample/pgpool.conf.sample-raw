@@ -145,6 +145,10 @@ ssl_ecdh_curve = 'prime256v1'
 ssl_dh_params_file = ''
                                    # Name of the file containing Diffie-Hellman parameters used
                                    # for so-called ephemeral DH family of SSL cipher.
+#ssl_passphrase_command=''
+                                   # Sets an external command to be invoked when a passphrase
+                                   # for decrypting an SSL file needs to be obtained
+                                   # (change requires restart)
 
 #------------------------------------------------------------------------------
 # POOLS
