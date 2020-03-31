@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3004,16 +3004,19 @@ bool is_backend_cache_empty(POOL_CONNECTION_POOL *backend)
 */
 static bool is_cache_empty(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
-	/*
-	 * If SSL is enabled, we need to check SSL internal buffer
-	 * is empty or not first.
-	 */
-	if (pool_ssl_pending(frontend))
-		return false;
+	/* Are we suspending reading from frontend? */
+	if (!pool_is_suspend_reading_from_frontend())
+	{
+		/*
+		 * If SSL is enabled, we need to check SSL internal buffer is empty or not
+		 * first.
+		 */
+		if (pool_ssl_pending(frontend))
+			return false;
 
-	if (!pool_read_buffer_is_empty(frontend))
-		return false;
-
+		if (!pool_read_buffer_is_empty(frontend))
+			return false;
+	}
 	return is_backend_cache_empty(backend);
 }
 

@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -4024,6 +4024,20 @@ static void inject_cached_message(POOL_CONNECTION *backend, char *qcache, int qc
 	 */
 	for(;;)
 	{
+		/* check if there's any pending data */
+		if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
+		{
+			pool_set_timeout(timeout);
+			if (pool_check_fd(backend) != 0)
+			{
+				ereport(DEBUG1,
+						(errmsg("inject_cached_message: select shows no pending data")));
+				pool_set_timeout(-1);
+				break;
+			}
+			pool_set_timeout(-1);
+		}
+
 		pool_read(backend, &kind, 1);
 		ereport(DEBUG1,
 				(errmsg("inject_cached_message: push message kind: '%c'", kind)));
@@ -4041,20 +4055,6 @@ static void inject_cached_message(POOL_CONNECTION *backend, char *qcache, int qc
 		{
 			buf = pool_read2(backend, ntohl(len)-sizeof(len));
 			pool_push(backend, buf, ntohl(len)-sizeof(len));
-		}
-
-		/* check if there's any pending data */
-		if (!pool_ssl_pending(backend) && pool_read_buffer_is_empty(backend))
-		{
-			pool_set_timeout(timeout);
-			if (pool_check_fd(backend) != 0)
-			{
-				ereport(DEBUG1,
-						(errmsg("inject_cached_message: select shows no pending data")));
-				pool_set_timeout(-1);
-				break;
-			}
-			pool_set_timeout(-1);
 		}
 	}
 
