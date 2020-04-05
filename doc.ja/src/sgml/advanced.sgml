@@ -537,7 +537,7 @@
        <entry>NODE STATUS CHANGE</entry>
        <entry>'2'</entry>
        <entry>Command packet</entry>
-       <entry>Command to inform watchdog about node status change of watchddog node</entry>
+       <entry>Command to inform watchdog about node status change of watchdog node</entry>
       </row>
        <row>
        <entry>GET NODES LIST</entry>
