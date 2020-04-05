@@ -110,6 +110,16 @@ Pgpool-II documentation
      </listitem>
     </varlistentry>
 
+    <varlistentry>
+     <term><option>-i <replaceable class="parameter">INPUT_FILE</replaceable></option></term>
+     <term><option>--input-file=<replaceable class="parameter">INPUT_FILE</replaceable></option></term>
+     <listitem>
+      <para>
+       ユーザ名とパスワードのペアを含むファイルを指定します。
+      </para>
+     </listitem>
+    </varlistentry>
+
    </variablelist>
   </para>
  </refsect1>
@@ -151,6 +161,21 @@ Pgpool-II documentation
 
      $ cat /path/to/pool_passwd 
      username:md55a231fcdb710d73268c4f44283487ba2
+    </programlisting>
+
+   パスワードの入力が促されたりコマンド引数の中でパスワードを指定するのを避けたい場合は<literal>pg_md5</literal>は名前:パスワードのペアをファイルから読むことができます。
+   すべてのユーザ名と暗号化されたパスワードが<xref linkend="guc-pool-passwd">認証ファイルに追加されます。
+    <programlisting>
+     $ cat users.txt
+     username1:secretpassword1
+     username2:secretpassword1
+
+     $ pg_md5 -m -f /path/to/pgpool.conf -i users.txt
+     trying to read username:password pairs from file users.txt
+
+     $ cat /path/to/pool_passwd
+     username1:md533314126ba0b187df1e37f5ce6a489a8
+     username2:md58ae92c6e1d6a48d80e2583fe715e2b36
     </programlisting>
 
     <xref linkend="guc-pool-passwd"> にエントリを登録せず、md5ハッシュされた文字列だけを表示させるには、引数としてパスワードとユーザ名を連結した文字列を渡します。

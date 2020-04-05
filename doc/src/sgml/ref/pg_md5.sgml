@@ -86,6 +86,16 @@ Pgpool-II documentation
      </listitem>
     </varlistentry>
 
+    <varlistentry>
+     <term><option>-i <replaceable class="parameter">input_file</replaceable></option></term>
+     <term><option>--input-file=<replaceable class="parameter">input_file</replaceable></option></term>
+     <listitem>
+      <para>
+       Specifies file containing user name and password pairs.
+      </para>
+     </listitem>
+    </varlistentry>
+
    </variablelist>
   </para>
  </refsect1>
@@ -118,6 +128,24 @@ Pgpool-II documentation
      $ cat /path/to/pool_passwd 
      username:md55a231fcdb710d73268c4f44283487ba2
     </programlisting>
+
+   To avoid password prompt or password in command parameter,
+   <literal>pg_md5</literal> can read user name:password pairs from file.
+   It will add all user names and <literal>md5</literal> hashed password to
+   <xref linkend="guc-pool-passwd"> authentication file.
+    <programlisting>
+     $ cat users.txt
+     username1:secretpassword1
+     username2:secretpassword1
+
+     $ pg_md5 -m -f /path/to/pgpool.conf -i users.txt
+     trying to read username:password pairs from file users.txt
+
+     $ cat /path/to/pool_passwd
+     username1:md533314126ba0b187df1e37f5ce6a489a8
+     username2:md58ae92c6e1d6a48d80e2583fe715e2b36
+    </programlisting>
+
     To just display the md5 hashed string, not adding an entry to <xref linkend="guc-pool-passwd">, pass a string concatenating password and user name.
      For example, if password is "password" and user name is "user", the output would be:
      <programlisting>

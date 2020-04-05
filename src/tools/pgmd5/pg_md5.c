@@ -39,13 +39,16 @@
 #endif
 #include <pwd.h>
 #include <libgen.h>
+#include <sys/stat.h>
 
 /* Maximum number of characters allowed for input. */
 #define MAX_INPUT_SIZE	MAX_USER_NAME_LEN
+#define MAX_BUFFER_SIZE	MAX_INPUT_SIZE + 1 + MAX_INPUT_SIZE
 
 static void print_usage(const char prog[], int exit_code);
 static void set_tio_attr(int enable);
 static void update_pool_passwd(char *conf_file, char *username, char *password);
+static void update_pool_passwd_from_file(char *conf_file, char *input_file, bool md5auth);
 
 int
 main(int argc, char *argv[])
@@ -53,11 +56,13 @@ main(int argc, char *argv[])
 #define PRINT_USAGE(exit_code)	print_usage(argv[0], exit_code)
 
 	char		conf_file[POOLMAXPATHLEN + 1];
+	char		input_file[POOLMAXPATHLEN + 1];
 	char		username[MAX_INPUT_SIZE + 1];
 	int			opt;
 	int			optindex;
 	bool		md5auth = false;
 	bool		prompt = false;
+	bool		use_input_file = false;
 
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
@@ -65,6 +70,7 @@ main(int argc, char *argv[])
 		{"md5auth", no_argument, NULL, 'm'},
 		{"username", required_argument, NULL, 'u'},
 		{"config-file", required_argument, NULL, 'f'},
+		{"input-file", required_argument, NULL, 'i'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -76,7 +82,7 @@ main(int argc, char *argv[])
 	 */
 	memset(username, 0, MAX_INPUT_SIZE + 1);
 
-	while ((opt = getopt_long(argc, argv, "hpmf:u:", long_options, &optindex)) != -1)
+	while ((opt = getopt_long(argc, argv, "hpmf:i:u:", long_options, &optindex)) != -1)
 	{
 		switch (opt)
 		{
@@ -94,6 +100,15 @@ main(int argc, char *argv[])
 					PRINT_USAGE(EXIT_SUCCESS);
 				}
 				strlcpy(conf_file, optarg, sizeof(conf_file));
+				break;
+
+			case 'i':			/* specify users password input file */
+				if (!optarg)
+				{
+					PRINT_USAGE(EXIT_SUCCESS);
+				}
+				strlcpy(input_file, optarg, sizeof(input_file));
+				use_input_file = true;
 				break;
 
 			case 'u':
@@ -114,6 +129,12 @@ main(int argc, char *argv[])
 				PRINT_USAGE(EXIT_SUCCESS);
 				break;
 		}
+	}
+	/* Use input file */
+	if (use_input_file)
+	{
+		update_pool_passwd_from_file(conf_file, input_file, md5auth);
+		return EXIT_SUCCESS;
 	}
 
 	/* Prompt for password. */
@@ -190,6 +211,91 @@ main(int argc, char *argv[])
 }
 
 static void
+update_pool_passwd_from_file(char *conf_file, char *input_file, bool md5auth)
+{
+	FILE	*fp;
+	struct stat stat_buf;
+
+	char	buf[MAX_BUFFER_SIZE + 1];
+	char	username[MAX_INPUT_SIZE + 1];
+	char	password[MAX_INPUT_SIZE + 1];
+	char	md5[MD5_PASSWD_LEN + 1];
+	char	*pch;
+	int		len;
+	int		line_count;
+
+
+	fprintf(stdout, "trying to read username:password pairs from file %s\n", input_file);
+	fp = fopen(input_file, "r");
+	if (fp == NULL)
+	{
+		fprintf(stderr, "failed to open input_file \"%s\" (%m)\n\n", input_file);
+		exit(EXIT_FAILURE);
+	}
+
+	line_count = 0;
+	while (!feof(fp) && !ferror(fp))
+	{
+		line_count++;
+
+		memset(buf, 0, MAX_BUFFER_SIZE + 1);
+		memset(username, 0, MAX_INPUT_SIZE + 1);
+		memset(password, 0, MAX_INPUT_SIZE + 1);
+
+		if (fgets(buf, sizeof(buf), fp) == NULL)
+			break;
+		fprintf(stdout, "LINE#%02d: ", line_count);
+		len = strlen(buf);
+		if (len == 0 || *buf == '\n')
+		{
+			fprintf(stdout, "BLANK LINE\n");
+			continue;
+		}
+
+		/* Remove trailing newline */
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+
+		/* Split username and passwords */
+		pch = buf;
+		while( pch && pch != buf + len && *pch != ':')
+			pch++;
+		if (*pch == ':')
+			pch++;
+
+		if (!strlen(pch))
+		{
+			fprintf(stdout, "Invalid username:password pair\n");
+			continue;
+		}
+
+		if( (pch-buf) > sizeof(username))
+		{
+			fprintf(stdout, "input exceeds maximum username length %d\n\n", MAX_USER_NAME_LEN);
+			continue;
+		}
+		strncpy(username, buf, pch-buf-1);
+
+		if (strlen(pch) >= sizeof(password))
+		{
+			fprintf(stdout, "input exceeds maximum password length %d\n", MAX_PGPASS_LEN);
+			continue;
+		}
+		strncpy(password, pch, strlen(pch));
+
+		fprintf(stdout, "USER: <%s>\n", username);
+		if(md5auth)
+			update_pool_passwd(conf_file, username, password);
+		else
+		{
+			pool_md5_hash(password, strlen(password), md5);
+			printf("%s\n", md5);
+		}
+	}
+	fclose(fp);
+}
+
+static void
 update_pool_passwd(char *conf_file, char *username, char *password)
 {
 	struct passwd *pw;
@@ -250,12 +356,13 @@ print_usage(const char prog[], int exit_code)
   --username, -u USER  When producing a md5 authentication password,\n\
                        create the pool_passwd entry for USER.\n\
   --config-file, -f CONFIG-FILE  Specify pgpool.conf.\n\
+  --input-file, -i INPUT-FILE  Specify file containing username and password pairs.\n\
   --help, -h           This help menu.\n\
 \n\
 Warning: At most %d characters are allowed for input.\n\
 Warning: Plain password argument is deprecated for security concerns\n\
          and kept for compatibility. Please prefer using password\n\
-         prompt.\n",
+         prompt or input file method.\n",
 			prog, prog, MAX_INPUT_SIZE);
 
 	exit(exit_code);
