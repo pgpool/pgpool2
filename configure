@@ -15057,7 +15057,7 @@ CFLAGS="$CFLAGS -fno-strict-aliasing"
 
 
 OLD_LDFLAGS="$LDFLAGS"
-LDFLAGS="-L$PGSQL_LIB_DIR"
+LDFLAGS="-L$PGSQL_LIB_DIR $LDFLAGS"
 OLD_LIBS="$LIBS"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQexecPrepared in -lpq" >&5
 $as_echo_n "checking for PQexecPrepared in -lpq... " >&6; }
