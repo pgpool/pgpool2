@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -139,6 +139,8 @@ do_child(int *fds)
 								 * frontend */
 	int			connections_count = 0;	/* used if child_max_connections > 0 */
 	char		psbuf[NI_MAXHOST + 128];
+
+	set_application_name(PT_CHILD);
 
 	ereport(DEBUG2,
 			(errmsg("I am Pgpool Child process with pid: %d", getpid())));
@@ -804,6 +806,7 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
 			}
 
 			pool_add_param(&MASTER(backend)->params, "application_name", sp->application_name);
+			set_application_name_with_string(sp->application_name);
 		}
 
 		send_params(frontend, backend);

@@ -923,8 +923,15 @@ ParameterStatus(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 			if (IS_MASTER_NODE_ID(i))
 			{
 				len1 = len;
+				int	pos;
+
 				memcpy(parambuf, p, len);
 				pool_add_param(&CONNECTION(backend, i)->params, name, value);
+
+				if (!strcmp("application_name", name))
+				{
+					set_application_name_with_string(pool_find_name(&CONNECTION(backend, i)->params, name, &pos));
+				}
 			}
 
 #ifdef DEBUG
@@ -3354,7 +3361,16 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 								 errdetail("parameter name: %s value: \"%s\"", p, value)));
 
 						if (IS_MASTER_NODE_ID(i))
+						{
+							int		pos;
 							pool_add_param(&CONNECTION(backend, i)->params, p, value);
+
+							if (!strcmp("application_name", p))
+							{
+								set_application_name_with_string(pool_find_name(&CONNECTION(backend, i)->params, p, &pos));
+							}
+						}
+
 					}
 					else
 					{

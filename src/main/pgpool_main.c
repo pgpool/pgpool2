@@ -240,6 +240,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	/* Set the process type variable */
 	processType = PT_MAIN;
+	set_application_name(processType);
 	processState = INITIALIZING;
 
 	/*
@@ -705,6 +706,7 @@ static pid_t worker_fork_a_child(ProcessType type, void (*func) (), void *params
 
 		/* Set the process type variable */
 		processType = type;
+		set_application_name(type);
 
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
@@ -4461,4 +4463,83 @@ pool_set_backend_status_changed_time(int backend_id)
 
 	tval = time(NULL);
 	BACKEND_INFO(backend_id).status_changed_time = tval;
+}
+
+/*
+ * Application name
+ */
+static	char	*process_application_name = "main";
+
+/*
+ * Fixed application names. ordered by ProcessType.
+ */
+char	*application_names[] = {"main",
+								"child",
+								"sr_check_worker",
+								"heart_beat_sender",
+								"heart_beat_receiver",
+								"watchdog",
+								"life_check",
+								"follow_child",
+								"watchdog_utility",
+								"pcp_main",
+								"pcp_child",
+								"health_check"
+};
+
+/*
+ * Set application name by ProcessType
+ */
+void
+set_application_name(ProcessType ptype)
+{
+	if (ptype < 0 || ptype >= PT_LAST_PTYPE)
+	{
+		ereport(ERROR,
+				(errmsg("failed to set application name. process type: %d", ptype)));
+	}
+
+	process_application_name = application_names[ptype];
+
+	return;
+}
+
+/*
+ * Set application name with arbitrary string. The storage for the string must
+ * be persistent at least in the session.
+ */
+void
+set_application_name_with_string(char *string)
+{
+	process_application_name = string;
+}
+
+/*
+ * Set application name with suffix
+ */
+void
+set_application_name_with_suffix(ProcessType ptype, int suffix)
+{
+	char	*appname_buf;
+
+	if (ptype < 0 || ptype > PT_LAST_PTYPE)
+	{
+		ereport(ERROR,
+				(errmsg("failed to set application name. process type: %d", ptype)));
+	}
+
+	appname_buf = MemoryContextAlloc(TopMemoryContext, POOLCONFIG_MAXNAMELEN);
+	snprintf(appname_buf, POOLCONFIG_MAXNAMELEN, "%s%d", application_names[ptype], suffix);
+	process_application_name = appname_buf;
+
+	return;
+}
+
+/*
+ * Get current application name
+ */
+char *
+get_application_name(void)
+{
+	return process_application_name;
 }

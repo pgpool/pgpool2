@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -362,6 +362,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if)
 
 	on_exit_reset();
 	processType = PT_HB_RECEIVER;
+	set_application_name(processType);
 
 	if (fork_wait_time > 0)
 	{
@@ -495,6 +496,7 @@ wd_hb_sender(int fork_wait_time, WdHbIf * hb_if)
 
 	on_exit_reset();
 	processType = PT_HB_SENDER;
+	set_application_name(processType);
 
 	if (fork_wait_time > 0)
 	{

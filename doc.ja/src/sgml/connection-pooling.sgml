@@ -1010,7 +1010,7 @@
      </para>
 
      <table id="log-line-prefix-table">
-      <title>log_line_prefix escape options</title>
+      <title>log_line_prefixのエスケープオプション</title>
 
       <tgroup cols="2">
        <thead>
@@ -1027,10 +1027,13 @@
        <tbody>
 	<row>
 	 <entry>%a</entry>
-	 <!--
-	 <entry>Client application name</entry>
-	 -->
-	 <entry>クライアントのアプリケーション名</entry>
+	 <entry>
+	  アプリケーション名。
+	  子プロセス（セッションプロセス）の初期値は"child"です。
+	  クライアントがアプリケーション名（スタートアップメッセージあるいはSETコマンドを使って）を設定すると、アプリケーション名は変更されます。
+	  他の種類のプロセスでは、アプリケーション名はハードコードされた文字列です。
+	  <xref linkend="application-name-table">を参照してください。
+	 </entry>
 	</row>
 
 	<row>
@@ -1092,6 +1095,84 @@
        </tbody>
       </tgroup>
      </table>
+
+     <table id="application-name-table">
+      <title>各プロセスのアプリケーション名</title>
+
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>プロセスの種類</entry>
+	 <entry>アプリケーション名</entry>
+	</row>
+       </thead>
+
+       <tbody>
+
+	<row>
+	 <entry>main</entry>
+	 <entry>main</entry>
+	</row>
+
+	<row>
+	 <entry>child</entry>
+	 <entry>child</entry>
+	</row>
+
+	<row>
+	 <entry>streaming replication delay check worker</entry>
+	 <entry>sr_check_workder</entry>
+	</row>
+
+	<row>
+	 <entry>watchdog heart beat sender</entry>
+	 <entry>heart_beat_sender</entry>
+	</row>
+
+	<row>
+	 <entry>watchdog heart beat reciever</entry>
+	 <entry>heart_beat_receiver</entry>
+	</row>
+
+	<row>
+	 <entry>watchdog</entry>
+	 <entry>watchdog</entry>
+	</row>
+
+	<row>
+	 <entry>watchdog life check</entry>
+	 <entry>life_check</entry>
+	</row>
+
+	<row>
+	 <entry>follow master child</entry>
+	 <entry>follow_child</entry>
+	</row>
+
+	<row>
+	 <entry>watchdog utility</entry>
+	 <entry>watchdog_utility</entry>
+	</row>
+
+	<row>
+	 <entry>pcp main</entry>
+	 <entry>pcp_main</entry>
+	</row>
+
+	<row>
+	 <entry>pcp child</entry>
+	 <entry>pcp_child</entry>
+	</row>
+
+	<row>
+	 <entry>health check process</entry>
+	 <entry>health_check%d (%dはバックエンドノードIDに置換されます)</entry>
+	</row>
+
+       </tbody>
+      </tgroup>
+     </table>
+
      <para>
       <!--
       This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.

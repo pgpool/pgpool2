@@ -219,3 +219,9 @@ void		ExceptionalCondition
 			 const char *fileName, int lineNumber)
 {
 }
+
+char *
+get_application_name(void)
+{
+	return NULL;
+}

@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1095,6 +1095,7 @@ fork_watchdog_child(void)
 
 		/* Set the process type variable */
 		processType = PT_WATCHDOG;
+		set_application_name(processType);
 
 		/* call watchdog child main */
 		POOL_SETMASK(&UnBlockSig);

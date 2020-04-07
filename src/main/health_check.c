@@ -123,6 +123,9 @@ do_health_check_child(int *node_id)
 	POOL_HEALTH_CHECK_STATISTICS	mystat;
 	stats = &health_check_stats[*node_id];
 
+	/* Set application name */
+	set_application_name_with_suffix(PT_HEALTH_CHECK, *node_id);
+
 	ereport(DEBUG1,
 			(errmsg("I am health check process pid:%d DB node id:%d", getpid(), *node_id)));
 

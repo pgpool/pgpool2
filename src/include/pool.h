@@ -606,9 +606,14 @@ typedef enum
  */
 extern pid_t mypid;				/* parent pid */
 
+/*
+ * Process types.  DO NOT change the order of each enum meber!  If you do
+ * that, you must change application_name array in src/main/pgpool_main.c
+ * accordingly.
+ */
 typedef enum
 {
-	PT_MAIN,
+	PT_MAIN = 0,
 	PT_CHILD,
 	PT_WORKER,
 	PT_HB_SENDER,
@@ -619,7 +624,8 @@ typedef enum
 	PT_WATCHDOG_UTILITY,
 	PT_PCP,
 	PT_PCP_WORKER,
-	PT_HEALTH_CHECK
+	PT_HEALTH_CHECK,
+	PT_LAST_PTYPE
 }			ProcessType;
 
 extern ProcessType processType;
@@ -902,6 +908,10 @@ extern POOL_NODE_STATUS * verify_backend_node_status(POOL_CONNECTION_POOL_SLOT *
 extern POOL_NODE_STATUS * pool_get_node_status(void);
 extern void pool_set_backend_status_changed_time(int backend_id);
 extern int	get_next_master_node(void);
+extern void set_application_name(ProcessType ptype);
+extern void set_application_name_with_string(char *string);
+extern void set_application_name_with_suffix(ProcessType ptype, int suffix);
+extern char *get_application_name(void);
 
 /* health_check.c */
 extern size_t	health_check_stats_shared_memory_size(void);
