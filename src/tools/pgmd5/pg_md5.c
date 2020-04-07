@@ -214,7 +214,6 @@ static void
 update_pool_passwd_from_file(char *conf_file, char *input_file, bool md5auth)
 {
 	FILE	*fp;
-	struct stat stat_buf;
 
 	char	buf[MAX_BUFFER_SIZE + 1];
 	char	username[MAX_INPUT_SIZE + 1];
