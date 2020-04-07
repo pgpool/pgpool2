@@ -742,7 +742,7 @@
 
 	<row>
 	 <entry>streaming replication delay check worker</entry>
-	 <entry>sr_check_workder</entry>
+	 <entry>sr_check_worker</entry>
 	</row>
 
 	<row>
