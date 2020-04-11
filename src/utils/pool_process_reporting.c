@@ -108,39 +108,31 @@ send_row_description(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 }
 
 /*
- * send the command complete and ready for query message
+ * Send the command complete and ready for query message
  * to frontend.
- * if the num_row is passed with a -ve value it is not included
- * to the command complete message
+ * If the num_row is lower than 0, it is not included
+ * to the command complete message.
  */
 void
 send_complete_and_ready(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *message, const int num_rows)
 {
 	int			len;
 	int			msg_len;
-	char		msg[16];
+	char		msg[64];
 
 	if (num_rows >= 0)
-		msg_len = snprintf(msg, 16, "%s %d", message, num_rows);
+		msg_len = snprintf(msg, sizeof(msg), "%s %d", message, num_rows);
 	else
-		msg_len = snprintf(msg, 16, "%s", message);
-
-	/*
-	 * if we had more than 16 bytes, including '\0', the string was
-	 * truncatured shouldn't happen though, as it would means more than
-	 * "SELECT 99999999"
-	 */
-	if (msg_len > 15)
-		msg_len = 15;
+		msg_len = snprintf(msg, sizeof(msg), "%s", message);
 
 	/* complete command response */
 	pool_write(frontend, "C", 1);
 	if (MAJOR(backend) == PROTO_MAJOR_V3)
 	{
-		len = htonl(4 + strlen(msg) + 1);
+		len = htonl(4 + msg_len + 1);
 		pool_write(frontend, &len, sizeof(len));
 	}
-	pool_write(frontend, msg, strlen(msg) + 1);
+	pool_write(frontend, msg, msg_len + 1);
 
 	/* ready for query */
 	pool_write(frontend, "Z", 1);
