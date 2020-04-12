@@ -10,8 +10,8 @@
   happens automatically regardless the configuration parameter
   settings and is so called <emphasis>automatic failover</emphasis>
   process. <productname>Pgpool-II</productname> confirms the
-  inacceibility of <productname>PostgreSQL</productname> backend
-  node by using following methods:
+  inaccessibility of <productname>PostgreSQL</productname> backend node
+  by using following methods:
 
   <itemizedlist>
    <listitem>
@@ -37,7 +37,7 @@
     <para>
      An error occurs while connecting
      to <productname>PostgreSQL</productname>, or network level
-     erros occur while communicating with it.
+     errors occur while communicating with it.
      <productname>Pgpool-II</productname> will just disconnect
      the session to client
      if <xref linkend="guc-failover-on-backend-error"> is off in
