@@ -395,6 +395,8 @@ pool_get_user_credentials(char *username)
 				pwdMapping->backendUser.passwordType = get_password_type(pwdMapping->backendUser.password);
 				pwdMapping->mappedUser = true;
 			}
+			else
+				pfree(tok);
 		}
 		break;
 	}
