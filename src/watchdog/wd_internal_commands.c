@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -304,9 +304,6 @@ wd_send_failover_func_status_command(bool start)
 
 static WDFailoverCMDResults wd_get_failover_result_from_data(WDIPCCmdResult * result, unsigned int *wd_failover_id)
 {
-	if (result == NULL)
-		return FAILOVER_RES_ERROR;
-
 	if (result == NULL)
 	{
 		ereport(WARNING,
