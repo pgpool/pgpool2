@@ -151,7 +151,7 @@
      <row>
       <entry>Pgpool-II起動ユーザ</entry>
       <entry>postgres (Pgpool-II 4.1以降)</entry>
-	  <entry>Pgpool-II 4.0 及び 4.0 以前のバージョンでは、デフォルトではrootでPgpool-IIを起動する</entry>
+	  <entry>Pgpool-II 4.0 以前のバージョンでは、デフォルトではrootでPgpool-IIを起動する</entry>
      </row>
      <row>
       <entry>Pgpool-II動作モード</entry>
@@ -948,20 +948,22 @@ exit 0
    </note>
    <para>
     <productname>Pgpool-II</productname>のクライアント認証で用いるデフォルトのパスワードファイル名はpool_passwdです。
-    <literal>scram-sha-256</literal>認証を利用する場合、<productname>Pgpool-II</productname>はそれらのパスワードを復号化するために復号鍵が必要となります。全サーバで復号鍵ファイルをrootユーザのホームディレクトリ配下に作成します。
+    <literal>scram-sha-256</literal>認証を利用する場合、<productname>Pgpool-II</productname>はそれらのパスワードを復号化するために復号鍵が必要となります。全サーバで復号鍵ファイルを<productname>Pgpool-II</productname>の起動ユーザ<literal>postgres</literal>(<productname>Pgpool-II</productname> 4.1以降)のホームディレクトリ配下に作成します。(<productname>Pgpool-II</productname> 4.0 以前のバージョンでは、デフォルトでは<literal>root</literal>ユーザで<productname>Pgpool-II</productname>を起動する)
    </para>
    <programlisting>
-    [全サーバ]# echo '任意の文字列' > ~/.pgpoolkey 
-    [全サーバ]# chmod 600 ~/.pgpoolkey
+    [全サーバ]# su - postgres
+    [全サーバ]$ echo '任意の文字列' > ~/.pgpoolkey 
+    [全サーバ]$ chmod 600 ~/.pgpoolkey
    </programlisting>
    <para>
     「pg_enc -m -k /path/to/.pgpoolkey -u ユーザ名 -p」 コマンドを実行すると、ユーザ名と<literal>AES256</literal>で暗号化したパスワードのエントリが<xref linkend="GUC-POOL-PASSWD">に登録されます。 
      <xref linkend="GUC-POOL-PASSWD"> がまだ存在しなければ、<filename>pgpool.conf</filename>と同じディレクトリ内に作成されます。
    </para>
    <programlisting>
-    [全サーバ]# pg_enc -m -k /root/.pgpoolkey -u pgpool -p
+    [全サーバ]# su - postgres
+    [全サーバ]$ pg_enc -m -k ~/.pgpoolkey -u pgpool -p
     db password: [pgpoolユーザのパスワード]
-    [全サーバ]# pg_enc -m -k /root/.pgpoolkey -u postgres -p
+    [全サーバ]$ pg_enc -m -k ~/.pgpoolkey -u postgres -p
     db password: [postgresユーザのパスワード]
 
     # cat /etc/pgpool-II/pool_passwd 

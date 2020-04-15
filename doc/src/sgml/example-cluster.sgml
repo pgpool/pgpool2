@@ -992,22 +992,27 @@ exit 0
    <para>
     The default password file name for authentication is <xref linkend="GUC-POOL-PASSWD">.
      To use <literal>scram-sha-256</literal> authentication, the decryption key to decrypt the passwords
-     is required. We create the .pgpoolkey file in root user's home directory.
+     is required. We create the <literal>.pgpoolkey</literal> file in <productname>Pgpool-II</productname>
+     start user <literal>postgres</literal>'s (<productname>Pgpool-II</productname> 4.1 or later) home directory.
+     (<productname>Pgpool-II</productname> 4.0 or before, by default <productname>Pgpool-II</productname>
+     is started as <literal>root</literal>)
      <programlisting>
-      [all servers]# echo 'some string' > ~/.pgpoolkey 
-      [all servers]# chmod 600 ~/.pgpoolkey
+      [all servers]# su - postgres
+      [all servers]$ echo 'some string' > ~/.pgpoolkey
+      [all servers]$ chmod 600 ~/.pgpoolkey
      </programlisting>
    </para>
    <para>
     Execute command <command>pg_enc -m -k /path/to/.pgpoolkey -u username -p</command> to regist user 
-    name and <literal>AES</literal> encrypted password in file <filename>pool_passwd</filename>. 
+    name and <literal>AES</literal> encrypted password in file <filename>pool_passwd</filename>.
     If <filename>pool_passwd</filename> doesn't exist yet, it will be created in the same directory as
     <filename>pgpool.conf</filename>.
    </para>
    <programlisting>
-    [all servers]# pg_enc -m -k /root/.pgpoolkey -u pgpool -p
+    [all servers]# su - postgres
+    [all servers]$ pg_enc -m -k ~/.pgpoolkey -u pgpool -p
     db password: [pgpool user's password]
-    [all servers]# pg_enc -m -k /root/.pgpoolkey -u postgres -p
+    [all servers]$ pg_enc -m -k ~/.pgpoolkey -u postgres -p
     db password: [postgres user's passowrd]
 
     # cat /etc/pgpool-II/pool_passwd 
