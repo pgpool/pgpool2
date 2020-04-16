@@ -101,7 +101,6 @@ pcp_worker_main(int port)
 	struct timeval uptime;
 	char tos;
 	int rsize;
-	char *buf = NULL;
 
 	ereport(DEBUG1,
 			(errmsg("I am PCP worker child with pid:%d",getpid())));
@@ -158,6 +157,8 @@ pcp_worker_main(int port)
 	
 	for(;;)
 	{
+		char *buf = NULL;
+
 		MemoryContextSwitchTo(PCPMemoryContext);
 		MemoryContextResetAndDeleteChildren(PCPMemoryContext);
 
@@ -206,7 +207,6 @@ pcp_worker_main(int port)
 
 		/* process a request */
 		pcp_process_command(tos, buf, rsize);
-		pfree(buf);
 	}
 	exit(0);
 }
