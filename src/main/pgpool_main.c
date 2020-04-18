@@ -4522,7 +4522,7 @@ set_application_name_with_suffix(ProcessType ptype, int suffix)
 {
 	char	*appname_buf;
 
-	if (ptype < 0 || ptype > PT_LAST_PTYPE)
+	if (ptype < 0 || ptype >= PT_LAST_PTYPE)
 	{
 		ereport(ERROR,
 				(errmsg("failed to set application name. process type: %d", ptype)));
