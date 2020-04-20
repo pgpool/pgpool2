@@ -625,7 +625,7 @@ typedef enum
 	PT_PCP,
 	PT_PCP_WORKER,
 	PT_HEALTH_CHECK,
-	PT_LAST_PTYPE
+	PT_LAST_PTYPE	/* last ptype marker. any ptype must be above this. */
 }			ProcessType;
 
 extern ProcessType processType;
