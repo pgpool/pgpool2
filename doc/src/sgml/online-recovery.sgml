@@ -62,7 +62,7 @@
     safely leave it as an empty string.
  </para>
  <para>
-  Connections from cliens are not allowed only in the second stage
+  Connections from clients are not allowed only in the second stage
   while the data can be updated or retrieved during the first stage.
  </para>
  <para>
@@ -278,14 +278,14 @@
 
     <para>
      Specifies a command to be run by master node at the second
-     stage of online recovery. This parameter only neccessary for
+     stage of online recovery. This parameter only necessary for
      <xref linkend="guc-replication-mode">. The command file must
       be placed in the database cluster directory for security
       reasons.  For example,
       if <varname>recovery_2nd_stage_command</varname> = <literal>
        'sync-command'</literal>,
       then <productname>Pgpool-II</productname> will look for the
-      command scrit in <literal>$PGDATA</literal> directory and
+      command script in <literal>$PGDATA</literal> directory and
       will try to execute <command>$PGDATA/sync-command</command>.
     </para>
     <para>

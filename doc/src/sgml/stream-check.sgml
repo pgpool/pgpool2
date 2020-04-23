@@ -158,7 +158,7 @@
     </para>
 
     <para>
-     This parameter can be changed by reloading the <productname>Pgpool-II conf</>igurations.
+     This parameter can be changed by reloading the <productname>Pgpool-II</>configurations.
     </para>
 
    </listitem>

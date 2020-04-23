@@ -17,7 +17,7 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pcp_detach_node</refname>
   <refpurpose>
-   detaches the given node from Pgpool-II. Exisiting connections to Pgpool-II are forced to be disconnected.</refpurpose>
+   detaches the given node from Pgpool-II. Existing connections to Pgpool-II are forced to be disconnected.</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -33,7 +33,7 @@ Pgpool-II documentation
   <title>Description</title>
   <para>
    <command>pcp_detach_node</command>
-   detaches the given node from Pgpool-II. Exisiting connections to Pgpool-II are forced to be disconnected.
+   detaches the given node from Pgpool-II. Existing connections to Pgpool-II are forced to be disconnected.
   </para>
  </refsect1>
 

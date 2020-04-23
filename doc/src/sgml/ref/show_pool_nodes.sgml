@@ -35,7 +35,7 @@
    hostname, the port, the status, the weight (only meaningful if
    you use the load balancing mode), the role, the SELECT query
    counts issued to each backend, whether each node is the load
-   bakance node or not, the replication delay (only if in streaming
+   balance node or not, the replication delay (only if in streaming
    replication mode) and last status change time. The possible
    values in the status column are explained in
    the <xref linkend="pcp-node-info"> reference. If the hostname is

@@ -9,14 +9,14 @@
   <para>
    <firstterm>Watchdog</firstterm> is a sub process of <productname>Pgpool-II</productname>
    to add high availability. Watchdog is used to resolve the single
-   point of failure by coordinating multiple <productname>pgpool-II</productname>
-   nodes. The watchdog was first introduced in <productname>pgpool-II</productname>
+   point of failure by coordinating multiple <productname>Pgpool-II</productname>
+   nodes. The watchdog was first introduced in <productname>Pgpool-II</productname>
    <emphasis>V3.2</emphasis> and is significantly enhanced in
-   <productname>pgpool-II</productname> <emphasis>V3.5</emphasis>, to ensure the presence of a
+   <productname>Pgpool-II</productname> <emphasis>V3.5</emphasis>, to ensure the presence of a
    quorum at all time. This new addition to watchdog makes it more fault tolerant
    and robust in handling and guarding against the split-brain syndrome
    and network partitioning. However to ensure the quorum mechanism properly
-   works, the number of pgpool-II nodes must be odd in number and greater than or
+   works, the number of Pgpool-II nodes must be odd in number and greater than or
    equal to 3.
   </para>
 
@@ -410,7 +410,7 @@
        the "NODES LIST DATA" result packet.
     </para>
     <para>
-     The result packet returnd by watchdog for the "GET NODES LIST"
+     The result packet returned by watchdog for the "GET NODES LIST"
      will contains the list of all configured watchdog nodes to do
      health check on in the <acronym>JSON</acronym> format.
      The <acronym>JSON</acronym> of the watchdog nodes contains the
@@ -516,7 +516,7 @@
     status and brings the virtual IP assigned to watchdog down.
     Thus clients of <productname>Pgpool-II</productname> cannot
     connect to <productname>Pgpool-II</productname> using the
-    virtual IP any more. This is neccessary to avoid split-brain,
+    virtual IP any more. This is necessary to avoid split-brain,
     that is, situations where there are multiple active
     <productname>Pgpool-II</productname>.
    </para>

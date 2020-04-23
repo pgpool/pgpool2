@@ -83,7 +83,7 @@
        $ cp /usr/local/etc/pgpool.conf.sample /usr/local/etc/pgpool.conf
       </programlisting>
       <productname>Pgpool-II</productname> only accepts connections from the localhost
-      using port 9999. If you wish to receive conenctions from other hosts,
+      using port 9999. If you wish to receive connections from other hosts,
       set <xref linkend="guc-listen-addresses"> to <literal>'*'</literal>.
        <programlisting>
 	listen_addresses = 'localhost'
@@ -523,7 +523,7 @@
        [root@osspc20]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf > pgpool.log 2>&1
       </programlisting>
       Log messages will show that <productname>Pgpool-II</productname>
-      has joind the watchdog cluster as standby watchdog.
+      has joined the watchdog cluster as standby watchdog.
       <programlisting>
        LOG:  watchdog cluster configured with 1 remote nodes
        LOG:  watchdog remote node:0 on Linux_osspc16_9000:9000
@@ -653,8 +653,8 @@
       There are the parameters about watchdog's monitoring.
       Specify the interval to check <xref linkend="guc-wd-interval">,
        the count to retry <xref linkend="guc-wd-life-point">,
-	the qyery to check <xref linkend="guc-wd-lifecheck-query"> and
-	 finaly the type of lifecheck <xref linkend="guc-wd-lifecheck-method">.
+	the query to check <xref linkend="guc-wd-lifecheck-query"> and
+	 finally the type of lifecheck <xref linkend="guc-wd-lifecheck-method">.
 	  <programlisting>
 	   wd_lifecheck_method = 'query'
 	   # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
@@ -982,7 +982,7 @@
         <thead>
 	 <row>
 	  <entry>User Name</entry>
-	  <entry>Passowrd</entry>
+	  <entry>Password</entry>
 	  <entry>Detail</entry>
 	 </row>
         </thead>
@@ -1046,7 +1046,7 @@
       <para>
        To allow <literal>repl</literal> user without specifying password for streaming 
        replication and online recovery, we create the <filename>.pgpass</filename> file 
-       in <literal>postgres</literal> user's home directory and change the permisson  to 
+       in <literal>postgres</literal> user's home directory and change the permission  to
        <literal>600</literal> on each <productname>PostgreSQL</productname> server.
       </para>
       <programlisting>
@@ -1071,7 +1071,7 @@
      <para>
       When installing <productname>Pgpool-II</productname> from RPM,  all the 
       <productname>Pgpool-II</productname> configuration files are in <filename>/etc/pgpool-II</filename>. 
-      In this example, we copy the sample configuration file for streaming replicaton mode.
+      In this example, we copy the sample configuration file for streaming replication mode.
      </para>
      <programlisting>
       # cp /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
@@ -1113,7 +1113,7 @@
       health_check_max_retries = 3
      </programlisting>
      <para>
-      Specify the <productname>PostgreSQL</productname> backend informations.
+      Specify the <productname>PostgreSQL</productname> backend information.
       Multiple backends can be specified by adding a number at the end of the parameter name.
      </para>
      <programlisting>
@@ -1573,7 +1573,7 @@ exit 0
        </programlisting>
      </para>
      <para>
-      Execute command <command>pg_enc -m -k /path/to/.pgpoolkey -u username -p</command> to regist user 
+      Execute command <command>pg_enc -m -k /path/to/.pgpoolkey -u username -p</command> to register user
       name and <literal>AES</literal> encrypted password in file <filename>pool_passwd</filename>. 
       If <filename>pool_passwd</filename> doesn't exist yet, it will be created in the same directory as
       <filename>pgpool.conf</filename>.
@@ -1912,7 +1912,7 @@ exit 0
      </programlisting>
      <para>
       After executing <command>pcp_recovery_node</command> command, 
-      vertify that <literal>server2</literal> and <literal>server3</literal> 
+      verify that <literal>server2</literal> and <literal>server3</literal>
       are started as <productname>PostgreSQL</productname> standby server.
      </para>
      <programlisting>
@@ -1957,7 +1957,7 @@ exit 0
       server3:9999 Linux server3 server3 9999 9000 7 STANDBY    #server3 runs as STANDBY
      </programlisting>
      <para>
-      Start <productname>Pgpool-II</productname> (<literal>server1</literal>) which we have stopped again, and vertify that <literal>server1</literal> runs as a standby.
+      Start <productname>Pgpool-II</productname> (<literal>server1</literal>) which we have stopped again, and verify that <literal>server1</literal> runs as a standby.
      </para>
      <programlisting>
       [server1]# systemctl start pgpool.service
@@ -1975,7 +1975,7 @@ exit 0
     <sect3 id="example-cluster-try-failover">
      <title>Failover</title>
      <para>
-      First, use <command>psql</command> to connect to <productname>PostgreSQL</productname> via virtual IP, and verify the backend informations.
+      First, use <command>psql</command> to connect to <productname>PostgreSQL</productname> via virtual IP, and verify the backend information.
      </para>
      <programlisting>
       # psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
@@ -2141,7 +2141,7 @@ exit 0
       <xref linkend="guc-delegate-ip"> which we will not set in this example instead
        we will use <xref linkend="guc-wd-escalation-command"> and
 	<xref linkend="guc-wd-de-escalation-command"> to switch the
-	 Elastic IP address to the maste/Active <productname>Pgpool-II</productname> node.
+	 Elastic IP address to the master/Active <productname>Pgpool-II</productname> node.
     </para>
 
     <sect3 id="example-AWS-pgpool-config-instance-1">
@@ -2407,7 +2407,7 @@ exit 0
 	Set <xref linkend="guc-sr-check-period"> to 0 to
 	 disable streaming replication delay checking.  This
 	 is because <productname>Aurora</productname> does
-	 not provide neccessary functions to check the
+	 not provide necessary functions to check the
 	 replication delay.
        </para>
       </listitem>
@@ -2431,7 +2431,7 @@ exit 0
 	 Aurora writer node.  Set
 	 other <xref linkend="guc-backend-hostname"> for the
 	  Aurora reader node.  Set
-	  appropreate <xref linkend="guc-backend-weight"> as
+	  appropriate <xref linkend="guc-backend-weight"> as
 	   usual. You don't need to
 	   set <xref linkend="guc-backend-data-directory">
        </para>

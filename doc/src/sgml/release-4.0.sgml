@@ -35,7 +35,7 @@
     2020-01-28 [304e091]
     -->
     <para>
-     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failire. (Bo Peng)
+     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failure. (Bo Peng)
     </para>
    </listitem>
   </itemizedlist>
@@ -93,7 +93,7 @@
     2020-01-28 [f8bbd91]
     -->
     <para>
-     Doc: Change the sample follow_master_command script %M %H paramater's order. (Bo Peng)
+     Doc: Change the sample follow_master_command script %M %H parameter's order. (Bo Peng)
     </para>
     <para>
      
@@ -303,7 +303,7 @@
     2019-09-04 [3ba4e73]
     -->
     <para>
-     Doc: mention that VIP will not be brougt up if quorum does not exist. (Tatsuo Ishii)
+     Doc: mention that VIP will not be brought up if quorum does not exist. (Tatsuo Ishii)
     </para>
     <para>
      
@@ -550,7 +550,7 @@
     2019-07-03 [5d042e4]
     -->
     <para>
-     Fix sefault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
+     Fix segfault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -1337,7 +1337,7 @@
  <sect2>
   <title>Overview</title>
   <para>
-   This version addes support for SCRAM and CERT authentication,
+   This version adds support for SCRAM and CERT authentication,
    improves load balancing control and import PostgreSQL 11 
    new SQL parser. 
   </para>
