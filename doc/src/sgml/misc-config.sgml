@@ -17,7 +17,7 @@
      Specifies the relation cache expiration time in seconds.
      The relation cache is used for caching the query result of
      <productname>PostgreSQL</> system catalogs that is used by <productname>Pgpool-II
-     </productname> to get various informations including the table
+     </productname> to get various information including the table
      structures and to check table types(e.g. To check if the referred
      table is a temporary table or not). The cache is maintained in
      the local memory space of <productname>Pgpool-II</productname>
@@ -115,7 +115,7 @@
   <varlistentry id="guc-relcache-query-target" xreflabel="relcache_query_target">
    <term><varname>relcache_query_target</varname> (<type>enum</type>)
     <indexterm>
-     <primary><varname>relache_query_target</varname> configuration parameter</primary>
+     <primary><varname>relcache_query_target</varname> configuration parameter</primary>
     </indexterm>
    </term>
    <listitem>
@@ -136,7 +136,7 @@
      standby because it's much geographically closer. In this
      case you can set backend_weight0 (this represents primary)
      to 0, backend_weight1 to 1 (this represents standby) and set
-     relache_query_target
+     relcache_query_target
      to <literal>load_balance_node</literal>.
     </para>
     <para>
@@ -188,7 +188,7 @@
     </para>
     <note>
      <para>
-      For a backward compatibily sake for 4.0 or
+      For a backward compatibility sake for 4.0 or
       before, <productname>Pgpool-II</productname>
       accepts <literal>on</literal>, which is same
       as <literal>catalog</literal> and <literal>off</literal>,

@@ -4,7 +4,7 @@
  <title>Installation from RPM</title>
  <para>
   This chapter describes the installation
-  of <productname>Pgpool-II</productname> from PRM.  If you are
+  of <productname>Pgpool-II</productname> from RPM.  If you are
   going to install from the source code, please
   check <xref linkend="install-source">.
  </para>

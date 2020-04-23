@@ -35,7 +35,7 @@
     2020-01-28 [b0b52ef]
     -->
     <para>
-     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failire. (Bo Peng)
+     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failure. (Bo Peng)
     </para>
    </listitem>
   </itemizedlist>
@@ -114,7 +114,7 @@
     2020-01-10 [d0252d8]
     -->
     <para>
-     Doc: Change the sample follow_master_command script %M %H paramater's order. (Bo Peng)
+     Doc: Change the sample follow_master_command script %M %H parameter's order. (Bo Peng)
     </para>
    </listitem>
 
@@ -301,7 +301,7 @@
     <para>
      Add parameter <xref
      linkend="guc-enable-consensus-with-half-votes"> to configure
-     majority rule calculations. (Muhammd Usama, Tatsuo Ishii)
+     majority rule calculations. (Muhammad Usama, Tatsuo Ishii)
     </para>
     <para>
      This changes the behavior of the decision of quorum existence and
@@ -310,7 +310,7 @@
      affected. When this parameter is off (the default), a 2 node
      watchdog cluster needs to have both 2 nodes are alive to have a
      quorum. If the quorum does not exist and 1 node goes down, then
-     1) VIP will be lost, 2) failover srcript is not executed and 3)
+     1) VIP will be lost, 2) failover script is not executed and 3)
      no watchdog master exists. Especially #2 could be troublesome
      because no new primary <productname>PostgreSQL</productname>
      exists if existing primary goes down. Probably 2 node watchdog
@@ -486,7 +486,7 @@
     -->
     <para>
      Performance enhancements for the large INSERT and UPDATE
-     statements. (Muhammd Usama)
+     statements. (Muhammad Usama)
     </para>
     <para>
      <productname>Pgpool-II</productname> only needs very little
@@ -529,7 +529,7 @@
      Import PostgreSQL 12 beta2 new parser. (Bo Peng)
     </para>
     <para>
-     Major chanegs of PostgreSQL 12 parser include:
+     Major changes of PostgreSQL 12 parser include:
 
      <itemizedlist>
       <listitem>
@@ -607,7 +607,7 @@
      we set <xref linkend="guc-disable-load-balance-on-write"> =
       <literal>transaction</literal>, when a write query is issued
       inside an explicit truncation, subsequent queries should be
-      sent to primary only until the end of this transactionin in
+      sent to primary only until the end of this transaction in
       order to avoid the replication delay.  However, the SELECTs
       having write functions specified
       in <xref linkend="guc-black-function-list"> or not specified
@@ -810,7 +810,7 @@
     -->
     <para>
      Resign the master watchdog node from master responsibilities if
-     the primary backend node gets into quarantine state on that. (Muhammd Usama)
+     the primary backend node gets into quarantine state on that. (Muhammad Usama)
     </para>
     <para>
      By doing this, we could avoid the situation on which there's no
@@ -841,7 +841,7 @@
     <para>
      Add parameter <xref
      linkend="guc-enable-consensus-with-half-votes"> to configure
-     majority rule calculations. (Muhammd Usama, Tatsuo Ishii)
+     majority rule calculations. (Muhammad Usama, Tatsuo Ishii)
     </para>
     <para>
      <productname>Pgpool-II</productname> takes the decision of quorum
@@ -939,8 +939,7 @@
       <listitem>
        <para>
 	Mention that schema qualifications cannot be used in
-	Add performance chapterwhite/black_function_list. (tatsuo
-	Ishii)
+	white/black_function_list. (tatsuo Ishii)
        </para>
       </listitem>
 

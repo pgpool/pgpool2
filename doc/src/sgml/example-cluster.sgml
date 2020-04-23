@@ -254,7 +254,7 @@
       <thead>
        <row>
 	<entry>User Name</entry>
-	<entry>Passowrd</entry>
+	<entry>Password</entry>
 	<entry>Detail</entry>
        </row>
       </thead>
@@ -351,7 +351,7 @@
      To allow <literal>repl</literal> user without specifying password for streaming 
      replication and online recovery, and execute <application>pg_rewind</application>
      using <literal>postgres</literal>, we create the <filename>.pgpass</filename> file 
-     in <literal>postgres</literal> user's home directory and change the permisson to 
+     in <literal>postgres</literal> user's home directory and change the permission to
      <literal>600</literal> on each <productname>PostgreSQL</productname> server.
     </para>
     <programlisting>
@@ -390,7 +390,7 @@
    <para>
     When installing <productname>Pgpool-II</productname> from RPM,  all the 
     <productname>Pgpool-II</productname> configuration files are in <filename>/etc/pgpool-II</filename>. 
-    In this example, we copy the sample configuration file for streaming replicaton mode.
+    In this example, we copy the sample configuration file for streaming replication mode.
    </para>
    <programlisting>
     # cp -p /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
@@ -433,7 +433,7 @@
     health_check_max_retries = 3
    </programlisting>
    <para>
-    Specify the <productname>PostgreSQL</productname> backend informations.
+    Specify the <productname>PostgreSQL</productname> backend information.
     Multiple backends can be specified by adding a number at the end of the parameter name.
    </para>
    <programlisting>
@@ -1003,7 +1003,7 @@ exit 0
      </programlisting>
    </para>
    <para>
-    Execute command <command>pg_enc -m -k /path/to/.pgpoolkey -u username -p</command> to regist user 
+    Execute command <command>pg_enc -m -k /path/to/.pgpoolkey -u username -p</command> to register user
     name and <literal>AES</literal> encrypted password in file <filename>pool_passwd</filename>.
     If <filename>pool_passwd</filename> doesn't exist yet, it will be created in the same directory as
     <filename>pgpool.conf</filename>.
@@ -1411,7 +1411,7 @@ arping_path = '/usr/sbin'
    </programlisting>
    <para>
     After executing <command>pcp_recovery_node</command> command, 
-    vertify that <literal>server2</literal> and <literal>server3</literal> 
+    verify that <literal>server2</literal> and <literal>server3</literal>
     are started as <productname>PostgreSQL</productname> standby server.
    </para>
    <programlisting>
@@ -1459,7 +1459,7 @@ arping_path = '/usr/sbin'
    </programlisting>
    <para>
     Start <productname>Pgpool-II</productname> (<literal>server1</literal>) which we have stopped again,
-    and vertify that <literal>server1</literal> runs as a standby.
+    and verify that <literal>server1</literal> runs as a standby.
    </para>
    <programlisting>
     [server1]# systemctl start pgpool.service
@@ -1478,7 +1478,7 @@ arping_path = '/usr/sbin'
    <title>Failover</title>
    <para>
     First, use <command>psql</command> to connect to <productname>PostgreSQL</productname> via virtual IP,
-    and verify the backend informations.
+    and verify the backend information.
    </para>
    <programlisting>
     # psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"

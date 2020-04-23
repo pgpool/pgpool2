@@ -181,7 +181,7 @@
 
     <listitem>
      <para>
-      COPY TO STODUT
+      COPY TO STDOUT
      </para>
     </listitem>
 
@@ -207,7 +207,7 @@
   </para>
 
   <para>
-   If writing queires appear, succeeding read queries may not be
+   If writing queries appear, succeeding read queries may not be
    load balanced. i.e. sent to primary node (in streaming
    replication mode) or master node (in other mode) depending on the
    setting of <xref linkend="guc-disable-load-balance-on-write">.
@@ -657,7 +657,7 @@
 	 </listitem>
 	 <listitem>
 	  <para>
-	   SQL including table_nama3
+	   SQL including table_name3
 	  </para>
 	 </listitem>
 	</itemizedlist>
@@ -864,13 +864,13 @@
 
      <caution>
       <para>
-       <acronym>JDBC</acronym> driver postgreSQL-9.3 and earlier versions
+       <acronym>JDBC</acronym> driver PostgreSQL-9.3 and earlier versions
        does not send the application name in the startup packet even if
        the application name is specified using the <acronym>JDBC</acronym>
        driver option <literal>"ApplicationName"</literal> and
        <literal>"assumeMinServerVersion=9.0"</literal>.
        So if you want to use the <xref linkend="guc-app-name-redirect-preference-list">
-	feature through <acronym>JDBC</acronym>, Use postgreSQL-9.4 or later version of the driver.
+	feature through <acronym>JDBC</acronym>, Use PostgreSQL-9.4 or later version of the driver.
       </para>
      </caution>
 

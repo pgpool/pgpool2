@@ -67,7 +67,7 @@
     <xref linkend="guc-delegate-ip"> which we will not set in this example instead
      we will use <xref linkend="guc-wd-escalation-command"> and
       <xref linkend="guc-wd-de-escalation-command"> to switch the
-       Elastic IP address to the maste/Active <productname>Pgpool-II</productname> node.
+       Elastic IP address to the master/Active <productname>Pgpool-II</productname> node.
   </para>
 
   <sect3 id="example-AWS-pgpool-config-instance-1">

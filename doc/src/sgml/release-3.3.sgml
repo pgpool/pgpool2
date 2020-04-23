@@ -133,7 +133,7 @@
      Change the <filename>pgpool.service</filename> and sysconfig files to output <productname>Pgpool-II</productname> log. (Bo Peng)
     </para>
     <para>
-     Removeing "Type=forking" and add OPTS=" -n" to
+     Removing "Type=forking" and add OPTS=" -n" to
      run <productname>Pgpool-II</productname> with non-daemon mode, because we need to redirect logs.
      Using <command>"journalctl"</command> command to see <productname>Pgpool-II</productname> systemd log.
     </para>
@@ -167,7 +167,7 @@
      frontend. In most cases this is good. However if other than primary
      node or master node returns an error state (this could happen if load
      balance node is other than primary or master node and the query is an
-     errornous SELECT), this should be returned to frontend, because the
+     erroneous SELECT), this should be returned to frontend, because the
      frontend already received an error.
     </para>
    </listitem>
@@ -208,7 +208,7 @@
      Fix bug mistakenly overriding global backend status right after failover. (Tatsuo Ishii)
     </para>
     <para>
-     See <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink> for mor details.
+     See <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink> for more details.
     </para>
    </listitem>
 
@@ -416,7 +416,7 @@
     2017-03-24 [dab2ff0]
     -->
     <para>
-     Fix for 0000296: PGPool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
+     Fix for 0000296: Pgpool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
      <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
     </para>
    </listitem>
@@ -476,7 +476,7 @@
     </para>
 
     <para>
-     This status mismatch should be fixe by pcp_promote_node, but when the node
+     This status mismatch should be fixed by pcp_promote_node, but when the node
      is the master node (the first alive node), it fails as mentioned above.
     </para>
 
@@ -589,7 +589,7 @@
     2016-12-28 [afebadf]
     -->
     <para>
-     Fix authentication timeout that can occur right after client connecttions. (Yugo Nagata)
+     Fix authentication timeout that can occur right after client connections. (Yugo Nagata)
     </para>
    </listitem>
 

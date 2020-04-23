@@ -32,7 +32,7 @@
     in <productname>Pgpool-II</productname>: shared memory and
     process private memory. The former is allocated at the startup
     of <productname>Pgpool-II</productname> main server process
-    and will not be freeed until
+    and will not be freed until
     whole <productname>Pgpool-II</productname> servers shut down.
     The latter is allocated within
     each <productname>Pgpool-II</productname> child process and
@@ -43,7 +43,7 @@
     <title>Shared Memory Requirement</title>
 
     <para>
-     Here is a fomula to calculate the shared memory requirement.
+     Here is a formula to calculate the shared memory requirement.
      <programlisting>
       Shared memory requirement (in bytes) = <xref linkend="guc-num-init-children"> * <xref linkend="guc-max-pool"> * 17408
      </programlisting>
@@ -67,7 +67,7 @@
     <title>Process Memory Requirement</title>
     <para>
 
-     Here is a fomula to calculate the process memory requirement.
+     Here is a formula to calculate the process memory requirement.
      <programlisting>
       Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-init-children"> * 5
      </programlisting>
@@ -105,8 +105,8 @@
    limit. There are several ways to deal with this problem.
   </para>
 
-  <sect2 id="controling-num-init-children">
-   <title>Controling num_init_children</title>
+  <sect2 id="controlling-num-init-children">
+   <title>Controlling num_init_children</title>
    <para>
     The obvious way to deal with the problem is increasing the
     number of child process. This can be done by
@@ -130,8 +130,8 @@
    </para>
   </sect2>
 
-  <sect2 id="controling-listen-backlog-multiplier">
-   <title>Controling listen_backlog_multiplier</title>
+  <sect2 id="controlling-listen-backlog-multiplier">
+   <title>Controlling listen_backlog_multiplier</title>
    <para>
     Another solution would be increasing the connection request
     queue. This could be done by
@@ -194,7 +194,7 @@
     the ratio specified by <xref linkend="guc-backend-weight">0
      and
      <xref linkend="guc-backend-weight">1. If those two values are
-      eqaul, the chance each node is chosen will be even.
+      equal, the chance each node is chosen will be even.
    </para>
 
    <para>
@@ -266,9 +266,9 @@
     or <xref linkend="guc-load-balance-mode"> is set to off,
      sometimes <productname>Pgpool-II</productname> needs to
      ask <productname>PostgreSQL</productname> to get meta
-     information, such as whether a table is a temporay one or
+     information, such as whether a table is a temporary one or
      not. To get those
-     information, <productname>Pgpool-II</productname> sends queires
+     information, <productname>Pgpool-II</productname> sends queries
      primary <productname>PostgreSQL</productname> which could be up
      to as many as 10 queries (in 4.1 or after, the number of queries
      has been decreased, it is not zero, however). To reduce the
