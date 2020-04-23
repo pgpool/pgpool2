@@ -13,8 +13,8 @@
   a <productname>PostgreSQL</productname> database client, so when a
   client application connects to
   the <productname>Pgpool-II</productname>, <productname>Pgpool-II</productname>
-  inturn connects to the <productname>PostgreSQL</productname> servers
-  using the same credentials to serve the incomming client
+  in turn connects to the <productname>PostgreSQL</productname> servers
+  using the same credentials to serve the incoming client
   connection. Thus, all the access privileges and restrictions defined
   for the user in <productname>PostgreSQL</productname> gets
   automatically applied to all <productname>Pgpool-II</productname>
@@ -28,7 +28,7 @@
   <productname>Pgpool-II</productname> server and not that of the actual client.
   Therefore, for the client host based authentications <productname>Pgpool-II</productname> has the
   <literal>pool_hba</literal> mechanism similar to the <literal>pg_hba</literal> mechanism for
-  authenticating the incomming client connections.
+  authenticating the incoming client connections.
  </para>
 
  <sect1 id="auth-pool-hba-conf">

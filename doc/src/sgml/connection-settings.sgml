@@ -227,7 +227,7 @@
       authentication.  See <xref linkend="auth-pool-hba-conf">
        for details on how to configure
        <filename>pool_hba.conf</filename> for client authentication.
-       Default is <literal>false</literal>
+       Default is <literal>false</literal>.
      </para>
      <para>
       This parameter can be changed by reloading
@@ -267,7 +267,7 @@
       Specify the timeout in seconds
       for <productname>Pgpool-II</productname>
       authentication. Specifying 0 disables the time out.
-      Default value is 60
+      Default value is 60.
      </para>
      <para>
       This parameter can be changed by reloading
@@ -655,7 +655,7 @@
       <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>
       or later, automatically detects whether the table has a
       SERIAL columns or not, so it never locks the table if it
-      desn't have the SERIAL columns.
+      doesn't have the SERIAL columns.
      </para>
 
      <para>

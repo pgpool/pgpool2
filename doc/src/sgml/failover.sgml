@@ -141,7 +141,7 @@
 	</row>
 	<row>
 	 <entry>%m</entry>
-	 <entry>	New master node ID</entry>
+	 <entry>New master node ID</entry>
 	</row>
 	<row>
 	 <entry>%H</entry>
@@ -149,7 +149,7 @@
 	</row>
 	<row>
 	 <entry>%P</entry>
-	 <entry>	Old primary node ID</entry>
+	 <entry>Old primary node ID</entry>
 	</row>
 	<row>
 	 <entry>%r</entry>
@@ -241,7 +241,7 @@
       Specifies a user command to run when a <productname>PostgreSQL</> backend node gets attached to
       <productname>Pgpool-II</productname>. <productname>Pgpool-II</productname>
       replaces the following special characters with the backend specific information.
-      before excuting the command.
+      before executing the command.
      </para>
 
      <table id="ffailback-command-table">
@@ -402,7 +402,7 @@
       <para>
        If <varname>follow_master_command</varname> is not empty, then after failover
        on the primary node gets completed in Master Slave mode with streaming replication,
-       <productname>Pgpool-II</productname> degenerates all nodes excepted the new primary
+       <productname>Pgpool-II</productname> degenerates all nodes except the new primary
        and starts new child processes to be ready again to accept connections from the clients.
        After this, <productname>Pgpool-II</productname> executes the command configured
        in the <varname>follow_master_command</varname> for each degenerated backend nodes.

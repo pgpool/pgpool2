@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/config.sgml -->
 
 <sect1 id="runtime-ssl">
- <title>Secure Sockect Layer (SSL)</title>
+ <title>Secure Socket Layer (SSL)</title>
 
  <sect2 id="runtime-config-ssl-settings">
 

@@ -52,7 +52,7 @@ Pgpool-II documentation
        Index 0 gets one's self watchdog information.
       </para>
       <para>
-       If ommitted then gets information of all watchdog nodes.
+       If omitted then gets information of all watchdog nodes.
       </para>
      </listitem>
     </varlistentry>
