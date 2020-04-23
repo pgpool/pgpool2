@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1095,7 +1095,7 @@ do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, in
 	kind = send_password_packet(backend, protoMajor, pwd);
 
 	/* if authenticated, save info */
-	if (!reauth && kind == AUTH_REQ_OK)
+	if (kind == AUTH_REQ_OK)
 	{
 		if (IS_MASTER_NODE_ID(backend->db_node_id))
 		{
@@ -1238,7 +1238,7 @@ do_crypt(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int 
 	pool_read(backend, &kind, sizeof(kind));
 
 	/* if authenticated, save info */
-	if (!reauth && kind == 0)
+	if (kind == 0)
 	{
 		int			msglen;
 
