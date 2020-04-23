@@ -69,7 +69,7 @@
      $ cp /usr/local/etc/pgpool.conf.sample /usr/local/etc/pgpool.conf
     </programlisting>
     <productname>Pgpool-II</productname> only accepts connections from the localhost
-    using port 9999 by the default. If you wish to receive conenctions from other hosts,
+    using port 9999 by the default. If you wish to receive connections from other hosts,
     set <xref linkend="guc-listen-addresses"> to <literal>'*'</literal>.
      <programlisting>
       listen_addresses = 'localhost'

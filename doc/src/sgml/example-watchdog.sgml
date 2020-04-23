@@ -158,7 +158,7 @@
      [root@osspc20]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf > pgpool.log 2>&1
     </programlisting>
     Log messages will show that <productname>Pgpool-II</productname>
-    has joind the watchdog cluster as standby watchdog.
+    has joined the watchdog cluster as standby watchdog.
     <programlisting>
      LOG:  watchdog cluster configured with 1 remote nodes
      LOG:  watchdog remote node:0 on Linux_osspc16_9000:9000

@@ -399,7 +399,7 @@
       Clustering mode is the method to sync
       <productname>PostgreSQL</productname> servers. To set the clustering
       mode, <varname>backend_clustering_mode</varname> can be used. In
-      this section we discusss how to set the clustering mode. See <xref
+      this section we discuss how to set the clustering mode. See <xref
        linkend="planning-postgresql"> for more details.
      </para>
     </listitem>
@@ -411,7 +411,7 @@
   <title>Streaming replication mode</title>
 
   <para>
-   This mode is most poplular and recommended clustering mode. In this
+   This mode is most popular and recommended clustering mode. In this
    mode <productname>PostgreSQL</productname> is responsible to
    replicate each servers. To enable this mode, use
    'streaming_replication' for
@@ -471,7 +471,7 @@ backend_clustering_mode = 'slony'
     <programlisting>
 backend_clustering_mode = 'native_replication'
     </programlisting>
-   In this mode you can have up to 127 slabe replication servers.
+   In this mode you can have up to 127 slave replication servers.
    Also it is possible not to have slave server at all.
   </para>
 
@@ -694,7 +694,7 @@ backend_clustering_mode = 'native_replication'
       <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>
       or later, automatically detects whether the table has a
       SERIAL columns or not, so it never locks the table if it
-      desn't have the SERIAL columns.
+      doesn't have the SERIAL columns.
      </para>
 
      <para>

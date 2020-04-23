@@ -63,7 +63,7 @@
      Although it is possible to use only one
      <productname>Pgpool-II</productname>, we recommend to use more
      than 1 <productname>Pgpool-II</productname> to avoid whole
-     database inavailability due to the
+     database unavailability due to the
      <productname>Pgpool-II</productname> being down. Multiple
      <productname>Pgpool-II</productname> work together and monitor
      each other. One of them is called "master" and it has a virtual
@@ -76,7 +76,7 @@
     </para>
     <para>
      Since it is not allowed to have multiple master, watchdog votes to
-     deicude a new master. If there are even number of
+     decide a new master. If there are even number of
      <productname>Pgpool-II</productname>, it is impossible to decide
      the new master by voting. Thus we recommend to deploy
      <productname>Pgpool-II</productname> in more than 3 odd numbers.
@@ -95,7 +95,7 @@
      <productname>PostgreSQL</productname> in streaming replication
      mode in <xref linkend="example-cluster"> for those who want to
      have a production level <productname>Pgpool-II</productname>
-     installtion today.
+     installation today.
     </para>
    </sect2>
   </sect1>
@@ -358,10 +358,10 @@
   <para>
    <productname>Pgpool-II</productname> need function of <function>pgpool_recovery</function>,
    <function>pgpool_remote_start</function> and <function>pgpool_switch_xlog</function>,
-   when you use the online recovery that discribes latter.
+   when you use the online recovery that describes latter.
    Also pgpoolAdmin of management tool, stop, restart or reload a
    <productname>PostgreSQL</productname> on the screen by use <function>pgpool_pgctl</function>.
-   It is enough, if these function installed in template1 fisrt. These
+   It is enough, if these function installed in template1 first. These
    function do not needed that install in all databases.
   </para>
 

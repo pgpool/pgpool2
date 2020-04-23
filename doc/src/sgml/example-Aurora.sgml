@@ -29,7 +29,7 @@
       Set <xref linkend="guc-sr-check-period"> to 0 to
        disable streaming replication delay checking.  This
        is because <productname>Aurora</productname> does
-       not provide neccessary functions to check the
+       not provide necessary functions to check the
        replication delay.
      </para>
     </listitem>
@@ -53,7 +53,7 @@
        Aurora writer node.  Set
        other <xref linkend="guc-backend-hostname"> for the
 	Aurora reader node.  Set
-	appropreate <xref linkend="guc-backend-weight"> as
+	appropriate <xref linkend="guc-backend-weight"> as
 	 usual. You don't need to
 	 set <xref linkend="guc-backend-data-directory">
      </para>

@@ -417,7 +417,7 @@
        the "NODES LIST DATA" result packet.
     </para>
     <para>
-     The result packet returnd by watchdog for the "GET NODES LIST"
+     The result packet returned by watchdog for the "GET NODES LIST"
      will contains the list of all configured watchdog nodes to do
      health check on in the <acronym>JSON</acronym> format.
      The <acronym>JSON</acronym> of the watchdog nodes contains the
@@ -523,7 +523,7 @@
     status and brings the virtual IP assigned to watchdog down.
     Thus clients of <productname>Pgpool-II</productname> cannot
     connect to <productname>Pgpool-II</productname> using the
-    virtual IP any more. This is neccessary to avoid split-brain,
+    virtual IP any more. This is necessary to avoid split-brain,
     that is, situations where there are multiple active
     <productname>Pgpool-II</productname>.
    </para>

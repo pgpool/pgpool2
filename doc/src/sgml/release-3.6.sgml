@@ -16,7 +16,7 @@
     2020-01-28 [d60e6b7]
     -->
     <para>
-     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failire. (Bo Peng)
+     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failure. (Bo Peng)
     </para>
    </listitem>
   </itemizedlist>
@@ -180,7 +180,7 @@
     2019-09-04 [3ba4e73]
     -->
     <para>
-     Doc: mention that VIP will not be brougt up if quorum does not exist. (Tatsuo Ishii)
+     Doc: mention that VIP will not be brought up if quorum does not exist. (Tatsuo Ishii)
     </para>
     <para>
      
@@ -349,7 +349,7 @@
     2019-07-03 [380d8a5]
     -->
     <para>
-     Fix sefault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
+     Fix segfault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -502,7 +502,7 @@
      (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=487">bug 487</>) (Bo Peng)
     </para>
     <para>
-     When all backend nodes are down, <productname>Pgpool-II</> throws an uncorrect
+     When all backend nodes are down, <productname>Pgpool-II</> throws an incorrect
      error message "ERROR: connection cache is full". Change the error
      message to "all backend nodes are down, pgpool requires at least one valid node".
     </para>
@@ -840,7 +840,7 @@
     </para>
     <para>
      If order of startup packet's  parameters differ between cached connection
-     pools and connection request, did't use connection pool ,and created new
+     pools and connection request, didn't use connection pool ,and created new
      connection pool.
     </para>
    </listitem>
@@ -1082,7 +1082,7 @@
     </para>
     <para>
      In a explicit transaction, the <literal>SELECT</literal> results are cached in temporary buffer.
-     If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffe should be reset.
+     If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffer should be reset.
     </para>
    </listitem>
 
@@ -1687,7 +1687,7 @@
      Change the <filename>pgpool.service</filename> and sysconfig files to output <productname>Pgpool-II</productname> log. (Bo Peng)
     </para>
     <para>
-     Removeing "Type=forking" and add OPTS=" -n" to
+     Removing "Type=forking" and add OPTS=" -n" to
      run <productname>Pgpool-II</productname> with non-daemon mode, because we need to redirect logs.
      Using <command>"journalctl"</command> command to see <productname>Pgpool-II</productname> systemd log.
     </para>
@@ -1797,7 +1797,7 @@
      frontend. In most cases this is good. However if other than primary
      node or master node returns an error state (this could happen if load
      balance node is other than primary or master node and the query is an
-     errornous SELECT), this should be returned to frontend, because the
+     erroneous SELECT), this should be returned to frontend, because the
      frontend already received an error.
     </para>
    </listitem>
@@ -1919,7 +1919,7 @@
      Fix bug mistakenly overriding global backend status right after failover. (Tatsuo Ishii)
     </para>
     <para>
-     See <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink> for mor details.
+     See <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink> for more details.
     </para>
    </listitem>
 
@@ -1989,7 +1989,7 @@
     2017-09-01 [b661a8b]
     -->
     <para>
-     Fix <varname>wd_authkey</varname> bug in that a request to add new node to the clusetr is rejected by master. (Yugo Nagata)
+     Fix <varname>wd_authkey</varname> bug in that a request to add new node to the cluster is rejected by master. (Yugo Nagata)
     </para>
     <para>
      This is a bug due to the implementation of 3.5.6 and 3.6.3.
@@ -2215,7 +2215,7 @@
     2017-08-21 [1812a84]
     -->
     <para>
-     Doc: Add new English and Japanese documents of <link linkend="example-cluster">Pgpoo-II + Watchdog Setup Example</link>. (Bo Peng)
+     Doc: Add new English and Japanese documents of <link linkend="example-cluster">Pgpool-II + Watchdog Setup Example</link>. (Bo Peng)
     </para>
    </listitem>
 
@@ -2301,11 +2301,11 @@
     2017-06-09 [d9b0b83]
     -->
     <para>
-     Fix a posible hang with streaming replication and extended protocol. (Yugo Nagata)
+     Fix a possible hang with streaming replication and extended protocol. (Yugo Nagata)
     </para>
 
     <para>
-     This hang occured under a certain condition. The following is an example.
+     This hang occurred under a certain condition. The following is an example.
     </para>
 
     <programlisting>
@@ -2316,7 +2316,7 @@
     </programlisting>
 
     <para>
-     Without using <productname>JDBC</productname>, we can reproduce the problem by <productname>pgproto</productname> with the followeing messages.
+     Without using <productname>JDBC</productname>, we can reproduce the problem by <productname>pgproto</productname> with the following messages.
     </para>
 
     <programlisting>
@@ -2599,7 +2599,7 @@
     2017-04-14 [50fb9a4]
     -->
     <para>
-     Removing the function defined but not used warnings from pool_config_vatiable.c (Muhammad Usama)
+     Removing the function defined but not used warnings from pool_config_variable.c (Muhammad Usama)
     </para>
    </listitem>
 
@@ -2855,7 +2855,7 @@
     2017-03-24 [c2a0cc5]
     -->
     <para>
-     Fix for 0000296: PGPool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
+     Fix for 0000296: Pgpool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
      <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
     </para>
    </listitem>
@@ -2915,7 +2915,7 @@
     </para>
 
     <para>
-     This status mismatch should be fixe by pcp_promote_node, but when the node
+     This status mismatch should be fixed by pcp_promote_node, but when the node
      is the master node (the first alive node), it fails as mentioned above.
     </para>
 
@@ -3170,7 +3170,7 @@
     2016-12-28 [afebadf]
     -->
     <para>
-     Fix authentication timeout that can occur right after client connecttions. (Yugo Nagata)
+     Fix authentication timeout that can occur right after client connections. (Yugo Nagata)
     </para>
    </listitem>
 
@@ -3273,7 +3273,7 @@
       </listitem>
       <listitem>
        <para>
-	Pgool-II forward it to backend 1
+	Pgpool-II forward it to backend 1
        </para>
       </listitem>
       <listitem>
@@ -3283,7 +3283,7 @@
       </listitem>
       <listitem>
        <para>
-	Pgool-II forward it to backend 0 & 1
+	Pgpool-II forward it to backend 0 & 1
        </para>
       </listitem>
       <listitem>
@@ -3293,7 +3293,7 @@
       </listitem>
       <listitem>
        <para>
-	Pgool-II forward it to backend 0 & 1
+	Pgpool-II forward it to backend 0 & 1
        </para>
       </listitem>
       <listitem>
@@ -3569,7 +3569,7 @@
     restart. Watchdog not syncing status.
     -->
     <para>
-     Sync inconsitent status
+     Sync inconsistent status
      of <productname>PostgreSQL</productname> nodes
      in <productname>Pgpool-II</productname> instances after
      restart. (bug 218) (Muhammad Usama)
@@ -3703,7 +3703,7 @@
     2016-08-18 [d3211dc] Let watchdog_setup to be installed.
     -->
     <para>
-     Add new script called "watchdog_setup". (Tatstuo Ishii)
+     Add new script called "watchdog_setup". (Tatsuo Ishii)
     </para>
     <para>
      <xref linkend="WATCHDOG-SETUP"> is a command to create a
@@ -3754,7 +3754,7 @@
      Do not update status file if all backend nodes are in down status. (Chris Pacejo, Tatsuo Ishii)
     </para>
     <para>
-     This commit tries to remove the data inconsitency in
+     This commit tries to remove the data inconsistency in
      replication mode found
      in <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2015-August/003974.html">[pgpool-general:
       3918]</ulink> by not recording the status file when all
@@ -3851,7 +3851,7 @@
     -->
     <para>
      Change the default value of
-     <xref linkend="guc-search-primary-node-timeout"> from 10 to 300. (Tatstuo Ishii)
+     <xref linkend="guc-search-primary-node-timeout"> from 10 to 300. (Tatsuo Ishii)
     </para>
     <para>
      Prior default value 10 seconds is sometimes too short for a standby to
@@ -4093,10 +4093,10 @@
    </listitem>
    <listitem>
     <!--
-    2016-08-01 [024eaea]  Fix for 215: pgpool doesnt escalate ip in case of another node inavailability
+    2016-08-01 [024eaea]  Fix for 215: pgpool doesnt escalate ip in case of another node unavailability
     -->
     <para>
-     Fix <productname>Pgpool-II</productname> doesn't escalate ip in case of another node inavailability. (bug 215) (Muhammad Usama)
+     Fix <productname>Pgpool-II</productname> doesn't escalate ip in case of another node unavailability. (bug 215) (Muhammad Usama)
     </para>
     <para>
      The heartbeat receiver fails to identify the heartbeat sender watchdog node when
@@ -4272,16 +4272,16 @@
    </listitem>
    <listitem>
     <!--
-    2016-06-08 [294cf4a]  Fix a posible hang during health checking
+    2016-06-08 [294cf4a]  Fix a possible hang during health checking
     -->
     <para>
-     Fix a posible hang during health checking. (bug 204) (Yugo Nagata)
+     Fix a possible hang during health checking. (bug 204) (Yugo Nagata)
     </para>
     <para>
-     Helath checking was hang when any data wasn't sent
+     Health checking was hang when any data wasn't sent
      from backend after <function>connect(2)</function> succeeded. To fix this,
      <function>pool_check_fd()</function> returns 1 when <function>select(2)</function> exits with
-     EINTR due to SIGALRM while health checkking is performed.
+     EINTR due to SIGALRM while health checking is performed.
     </para>
    </listitem>
    <listitem>
@@ -4360,13 +4360,13 @@
    </listitem>
    <listitem>
     <!--
-    2016-05-11 [de905f6]  Fix documetation bug about raw mode
+    2016-05-11 [de905f6]  Fix documentation bug about raw mode
     -->
     <para>
-     Fix  Japanese and Chinese documetation bug about raw mode. (Yugo Nagata, Bo Peng)
+     Fix  Japanese and Chinese documentation bug about raw mode. (Yugo Nagata, Bo Peng)
     </para>
     <para>
-     Connection pool is avalilable in raw mode.
+     Connection pool is available in raw mode.
     </para>
    </listitem>
    <listitem>
@@ -4476,7 +4476,7 @@
      Fix pgpool hung after receiving error state from backend. (bug #169) (Tatsuo Ishii)
     </para>
     <para>
-     This could happend if we execute an extended protocol query and it
+     This could happen if we execute an extended protocol query and it
      fails.
     </para>
    </listitem>
@@ -4485,7 +4485,7 @@
     2016-03-03 [bb295a2]  Fix query stack problems in extended protocol case.
     -->
     <para>
-     Fix query stack problems in extended protocol case. (bug 167, 168) (Tatstuo Ishii)
+     Fix query stack problems in extended protocol case. (bug 167, 168) (Tatsuo Ishii)
     </para>
     <para>
     </para>
@@ -4532,10 +4532,10 @@
    </listitem>
    <listitem>
     <!--
-    2016-02-03 [48e9d4b]  Fix for [pgpool-II 0000166]: compile issue on freebsd
+    2016-02-03 [48e9d4b]  Fix for [pgpool-II 0000166]: compile issue on FreeBSD
     -->
     <para>
-     Fix compile issue on freebsd. (Muhammad Usama)
+     Fix compile issue on FreeBSD. (Muhammad Usama)
     </para>
     <para>
      Add missing include files. The patch is contributed by
@@ -4559,7 +4559,7 @@
     </para>
     <para>
      Sometimes <xref linkend="guc-wd-authkey"> calculation fails for some reason other than
-      authkey mismatch. The additional messages make these distingushable
+      authkey mismatch. The additional messages make these distinguishable
       for each other.
     </para>
    </listitem>

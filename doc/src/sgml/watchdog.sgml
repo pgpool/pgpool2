@@ -309,7 +309,7 @@
  </sect2>
 
  <sect2 id="config-watchdog-escalation-de-escalation">
-  <title>Behaivor on escalation and de-escalation</title>
+  <title>Behaviour on escalation and de-escalation</title>
 
   <para>
    Configuration about behavior when <productname>Pgpool-II</productname>
@@ -327,8 +327,8 @@
     <listitem>
      <para>
       When set to on, watchdog clears all the query cache in the shared memory
-      when pgpool-II escaltes to active. This prevents the new active <productname>Pgpool-II</productname>
-      from using old query caches inconsistence to the old active.
+      when pgpool-II escalates to active. This prevents the new active <productname>Pgpool-II</productname>
+      from using old query caches inconsistent to the old active.
      </para>
      <para>
       Default is on.
@@ -493,7 +493,7 @@
       solved.
      </para>
      <para>
-      From <productname>Pgpool-II </productname><emphasis>V4.1</emphasis> onwards, if the watchdog-master node
+      From <productname>Pgpool-II </productname><emphasis>V4.1</emphasis> onward, if the watchdog-master node
       fails to build the consensus for primary backend node failover and the primary backend node gets into a
       quarantine state, then it resigns from its master/coordinator responsibilities and lowers its wd_priority
       for next leader election and let the cluster elect some different new leader.

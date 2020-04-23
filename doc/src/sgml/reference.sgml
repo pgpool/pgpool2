@@ -190,7 +190,7 @@
     to <productname>PostgreSQL</productname> with the result
     (3). <productname>PostgreSQL</productname> returns the result
     to <productname>Pgpool-II</productname> (5)
-    and <productname>Pgpool-II</productname> fowards the data to
+    and <productname>Pgpool-II</productname> forwards the data to
     the user (6).
    </para>
    <para>
@@ -215,7 +215,7 @@
     of <productname>PostgreSQL</productname>.  The pcp port number
     is hard coded as 9898, the pcp user name is assumes to be same
     as caller's <productname>PostgreSQL</productname> user name.
-    password is extraced from $HOME/.pcppass.
+    password is extracted from $HOME/.pcppass.
    </para>
 
    <sect1 id="installing-pgpool-adm">

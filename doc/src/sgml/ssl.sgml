@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/config.sgml -->
 
 <sect1 id="runtime-ssl">
- <title>Secure Sockect Layer (SSL)</title>
+ <title>Secure Socket Layer (SSL)</title>
 
  <sect2 id="runtime-config-ssl-settings">
 
@@ -227,7 +227,7 @@
     <listitem>
      <para>
       Specifies the name of the file containing Diffie-Hellman parameters
-      used for so-called ephemeral DH family of SSl ciphers. The default is
+      used for so-called ephemeral DH family of SSL ciphers. The default is
       empty. In which case compiled-in default DH parameters used. Using
       Custom DH parameters reduces the exposure if an attacker manages to
       crack the well-known compiled-in DH parameters. You can create your own

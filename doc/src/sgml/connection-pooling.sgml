@@ -122,7 +122,7 @@
      </para>
 
      <para>
-      But serialization has its own overheads, and it is recomended
+      But serialization has its own overheads, and it is recommended
       to be used only with the larger values of <xref linkend="guc-num-init-children">.
        For the small number of <xref linkend="guc-num-init-children">,
 	the serialize accept can degrade the performance because of
@@ -131,8 +131,8 @@
 
      <note>
       <para>
-       It is recomended to do a benchmark before deciding wether to use
-       <varname>serialize_accept</varname> or not, because the corelation
+       It is recommended to do a benchmark before deciding whether to use
+       <varname>serialize_accept</varname> or not, because the correlation
        of <xref linkend="guc-num-init-children"> and <varname>serialize_accept</varname>
 	can be different on different environments.
       </para>
@@ -751,7 +751,7 @@
 	</row>
 
 	<row>
-	 <entry>watchdog heart beat reciever</entry>
+	 <entry>watchdog heart beat receiver</entry>
 	 <entry>heart_beat_receiver</entry>
 	</row>
 
