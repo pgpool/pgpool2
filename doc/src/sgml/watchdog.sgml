@@ -287,7 +287,7 @@
  </sect2>
 
  <sect2 id="config-watchdog-escalation-de-escalation">
-  <title>Behaivor on escalation and de-escalation</title>
+  <title>Behaviour on escalation and de-escalation</title>
 
   <para>
    Configuration about behavior when <productname>Pgpool-II</productname>
@@ -305,8 +305,8 @@
     <listitem>
      <para>
       When set to on, watchdog clears all the query cache in the shared memory
-      when pgpool-II escaltes to active. This prevents the new active <productname>Pgpool-II</productname>
-      from using old query caches inconsistence to the old active.
+      when pgpool-II escalates to active. This prevents the new active <productname>Pgpool-II</productname>
+      from using old query caches inconsistent to the old active.
      </para>
      <para>
       Default is on.

@@ -614,7 +614,7 @@
      <para>
       <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis> or later,
       automatically detects whether the table has a SERIAL columns or not,
-      so it never  locks the table if it desn't have the SERIAL columns.
+      so it never  locks the table if it doesn't have the SERIAL columns.
      </para>
 
      <para>

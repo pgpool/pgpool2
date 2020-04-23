@@ -218,7 +218,7 @@ Pgpool-II documentation
   <para>
    Reload configuration file
    of <productname>Pgpool-II</productname>. No specific options
-   exist for realod mode. Common options are applicable.
+   exist for reload mode. Common options are applicable.
   </para>
  </refsect1>
 

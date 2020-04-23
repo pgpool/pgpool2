@@ -216,7 +216,7 @@
     </para>
 
     <para>
-     This status mismatch should be fixe by pcp_promote_node, but when the node
+     This status mismatch should be fixed by pcp_promote_node, but when the node
      is the master node (the first alive node), it fails as mentioned above.
     </para>
 
@@ -299,7 +299,7 @@
     2016-12-28 [afebadf]
     -->
     <para>
-     Fix authentication timeout that can occur right after client connecttions. (Yugo Nagata)
+     Fix authentication timeout that can occur right after client connections. (Yugo Nagata)
     </para>
    </listitem>
 

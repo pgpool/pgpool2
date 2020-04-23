@@ -422,7 +422,7 @@
   </para>
   <para>
    <figure>
-    <title>Process architecure of <productname>Pgpool-II</productname></title>
+    <title>Process architecture of <productname>Pgpool-II</productname></title>
     <mediaobject>
      <imageobject>
       <imagedata fileref="process-diagram.gif">

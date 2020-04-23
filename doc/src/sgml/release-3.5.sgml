@@ -16,7 +16,7 @@
     2020-01-28 [d60e6b7]
     -->
     <para>
-     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failire. (Bo Peng)
+     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failure. (Bo Peng)
     </para>
    </listitem>
   </itemizedlist>
@@ -262,7 +262,7 @@
     2019-07-03 [380d8a5]
     -->
     <para>
-     Fix sefault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
+     Fix segfault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -376,7 +376,7 @@
      (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=487">bug 487</>) (Bo Peng)
     </para>
     <para>
-     When all backend nodes are down, <productname>Pgpool-II</> throws an uncorrect
+     When all backend nodes are down, <productname>Pgpool-II</> throws an incorrect
      error message "ERROR: connection cache is full". Change the error
      message to "all backend nodes are down, pgpool requires at least one valid node".
     </para>
@@ -654,7 +654,7 @@
     </para>
     <para>
      If order of startup packet's  parameters differ between cached connection
-     pools and connection request, did't use connection pool ,and created new
+     pools and connection request, didn't use connection pool ,and created new
      connection pool.
     </para>
    </listitem>
@@ -859,7 +859,7 @@
     </para>
     <para>
      In a explicit transaction, the <literal>SELECT</literal> results are cached in temporary buffer.
-     If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffe should be reset.
+     If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffer should be reset.
     </para>
    </listitem>
 
@@ -1298,7 +1298,7 @@
      Change the <filename>pgpool.service</filename> and sysconfig files to output <productname>Pgpool-II</productname> log. (Bo Peng)
     </para>
     <para>
-     Removeing "Type=forking" and add OPTS=" -n" to
+     Removing "Type=forking" and add OPTS=" -n" to
      run <productname>Pgpool-II</productname> with non-daemon mode, because we need to redirect logs.
      Using <command>"journalctl"</command> command to see <productname>Pgpool-II</productname> systemd log.
     </para>
@@ -1384,7 +1384,7 @@
      frontend. In most cases this is good. However if other than primary
      node or master node returns an error state (this could happen if load
      balance node is other than primary or master node and the query is an
-     errornous SELECT), this should be returned to frontend, because the
+     erroneous SELECT), this should be returned to frontend, because the
      frontend already received an error.
     </para>
    </listitem>
@@ -1497,7 +1497,7 @@
      Fix bug mistakenly overriding global backend status right after failover. (Tatsuo Ishii)
     </para>
     <para>
-     See <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink> for mor details.
+     See <ulink url="http://www.sraoss.jp/pipermail/pgpool-general/2017-September/005786.html">[pgpool-general: 5728]</ulink> for more details.
     </para>
    </listitem>
 
@@ -1558,7 +1558,7 @@
     2017-09-01 [ad90886]
     -->
     <para>
-     Fix <varname>wd_authkey</varname> bug in that a request to add new node to the clusetr is rejected by master. (Yugo Nagata)
+     Fix <varname>wd_authkey</varname> bug in that a request to add new node to the cluster is rejected by master. (Yugo Nagata)
     </para>
     <para>
      This is a bug due to the implementation of 3.5.6 and 3.6.3.
@@ -1850,10 +1850,10 @@
     2017-06-09 [b86e7b7]
     -->
     <para>
-     Fix a posible hang with streaming replication and extended protocol (Yugo Nagata)
+     Fix a possible hang with streaming replication and extended protocol (Yugo Nagata)
     </para>
     <para>
-     This hang occured under a certain condition. The following is an example.
+     This hang occurred under a certain condition. The following is an example.
     </para>
 
     <programlisting>
@@ -1864,7 +1864,7 @@
     </programlisting>
 
     <para>
-     Without using <productname>JDBC</productname>, we can reproduce the problem by <productname>pgproto</productname> with the followeing messages.
+     Without using <productname>JDBC</productname>, we can reproduce the problem by <productname>pgproto</productname> with the following messages.
     </para>
 
     <programlisting>
@@ -2271,7 +2271,7 @@
     2017-03-24 [d726c3a]
     -->
     <para>
-     Fix for 0000296: PGPool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
+     Fix for 0000296: Pgpool v3.6.2 terminated by systemd because the service Type has been set to 'forking'.
      <ulink url="http://www.pgpool.net/mantisbt/view.php?id=296">(Bug 296)</ulink> (Muhammad Usama)
     </para>
    </listitem>
@@ -2330,7 +2330,7 @@
     </para>
 
     <para>
-     This status mismatch should be fixe by pcp_promote_node, but when the node
+     This status mismatch should be fixed by pcp_promote_node, but when the node
      is the master node (the first alive node), it fails as mentioned above.
     </para>
 
@@ -2584,7 +2584,7 @@
     2016-12-28 [afebadf]
     -->
     <para>
-     Fix authentication timeout that can occur right after client connecttions. (Yugo Nagata)
+     Fix authentication timeout that can occur right after client connections. (Yugo Nagata)
     </para>
    </listitem>
 
@@ -2689,7 +2689,7 @@
       </listitem>
       <listitem>
        <para>
-	Pgool-II forward it to backend 1
+	Pgpool-II forward it to backend 1
        </para>
       </listitem>
       <listitem>
@@ -2699,7 +2699,7 @@
       </listitem>
       <listitem>
        <para>
-	Pgool-II forward it to backend 0 & 1
+	Pgpool-II forward it to backend 0 & 1
        </para>
       </listitem>
       <listitem>
@@ -2709,7 +2709,7 @@
       </listitem>
       <listitem>
        <para>
-	Pgool-II forward it to backend 0 & 1
+	Pgpool-II forward it to backend 0 & 1
        </para>
       </listitem>
       <listitem>

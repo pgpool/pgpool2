@@ -128,7 +128,7 @@
     replication mode, master slave mode, native replication mode and
     raw mode. In any mode, <productname>Pgpool-II</> provides connection pooling,
     automatic fail over and online recovery. The sample configuration
-    files for each mode are provied. They are located
+    files for each mode are provided. They are located
     under <filename>$prefix/etc</filename>. You can copy one of them
     to <filename>$prefix/etc/pgpool.conf</filename>.
    </para>
@@ -152,7 +152,7 @@
    <para>
     The master slave mode mode can be used with <productname>PostgreSQL</> servers
     operating <productname>Slony</>. In this mode, <productname>Slony</>/<productname>PostgreSQL</> is responsible for
-    synchronizing databases. Since <productname>Slony</> is being obsoletd by streaming
+    synchronizing databases. Since <productname>Slony</> is being obsoleted by streaming
     replication, we do not recommend to use this mode unless you have
     specific reason to use <productname>Slony</>. Load balancing is possible in the
     Load balancing is possible in the mode. The sample configuration
@@ -162,7 +162,7 @@
    <para>
     In the raw mode, <productname>Pgpool-II</> does not care about the database
     synchronization. It's user's responsibility to make the whole
-    system does a meaningfull thing. Load balancing
+    system does a meaningful thing. Load balancing
     is <emphasis>not</emphasis> possible in the mode. The sample
     configuration
     file <filename>$prefix/etc/pgpool.conf.sample</filename>.
