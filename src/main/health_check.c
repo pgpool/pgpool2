@@ -62,7 +62,6 @@
 #include "auth/pool_hba.h"
 #include "utils/pool_stream.h"
 
-char remote_ps_data[NI_MAXHOST];		/* used for set_ps_display */
 static POOL_CONNECTION_POOL_SLOT	*slot;
 static volatile sig_atomic_t reload_config_request = 0;
 static volatile sig_atomic_t restart_request = 0;
