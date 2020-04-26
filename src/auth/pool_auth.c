@@ -985,7 +985,7 @@ authenticate_frontend_clear_text(POOL_CONNECTION * frontend)
 				(errmsg("clear text authentication failed"),
 				 errdetail("password does not match")));
 	}
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("clear text authentication successful with frontend")));
 
 	if (frontend->passwordMapping->pgpoolUser.passwordType == PASSWORD_TYPE_AES)
@@ -1589,7 +1589,7 @@ authenticate_frontend_md5(POOL_CONNECTION * backend, POOL_CONNECTION * frontend,
 				(errmsg("md5 authentication failed"),
 				 errdetail("password does not match")));
 	}
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("md5 authentication successful with frontend")));
 
 	frontend->frontend_authenticated = true;
