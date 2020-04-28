@@ -792,6 +792,10 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 							pool_is_writing_transaction(),
 							TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID))));
 
+	/* log query to log file if necessary */
+	if (pool_config->log_statement)
+		ereport(LOG, (errmsg("statement: %s", query)));
+
 	/*
 	 * Fetch memory cache if possible
 	 */
@@ -889,7 +893,6 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 #ifdef DEBUG
 			extern bool stop_now;
 #endif
-			pool_ps_idle_display(backend);
 			pool_stats_count_up_num_cache_hits();
 			query_context->skip_cache_commit = true;
 #ifdef DEBUG
@@ -907,6 +910,9 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		else
 			query_context->skip_cache_commit = false;
 	}
+
+	/* show ps status */
+	query_ps_status(query, backend);
 
 	session_context->query_context = query_context;
 

@@ -977,7 +977,7 @@ pool_extended_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 			char		msgbuf[QUERY_STRING_BUFFER_LEN];
 			char	   *stmt;
 
-			if (*kind == 'P' || *kind == 'E')
+			if (*kind == 'P' || *kind == 'E' || *kind == 'B')
 			{
 				if (query_context->rewritten_query)
 				{
@@ -1000,6 +1000,8 @@ pool_extended_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 
 				if (*kind == 'P')
 					snprintf(msgbuf, sizeof(msgbuf), "Parse: %s", stmt);
+				else if (*kind == 'B')
+					snprintf(msgbuf, sizeof(msgbuf), "Bind: %s", stmt);
 				else
 					snprintf(msgbuf, sizeof(msgbuf), "Execute: %s", stmt);
 			}
