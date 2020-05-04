@@ -21,6 +21,9 @@
  * watchdog.c: child process main
  *
  */
+
+
+
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -34,12 +37,14 @@
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <net/if.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <ctype.h>
 
 #include "pool.h"
+#include "pool_config.h"
 #include "auth/md5.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
@@ -47,9 +52,10 @@
 #include "utils/json_writer.h"
 #include "utils/json.h"
 #include "utils/socket_stream.h"
-#include "pool_config.h"
-
-#include <net/if.h>
+#include "utils/pool_signal.h"
+#include "utils/ps_status.h"
+#include "main/pool_internal_comms.h"
+#include "pcp/recovery.h"
 
 #include "watchdog/wd_utils.h"
 #include "watchdog/watchdog.h"
@@ -189,13 +195,6 @@ packet_types all_packet_types[] = {
 	{WD_NO_MESSAGE, ""}
 };
 
-
-char	   *wd_failover_lock_name[] =
-{
-	"FAILOVER",
-	"FAILBACK",
-	"FOLLOW MASTER"
-};
 
 char	   *wd_event_name[] =
 {"STATE CHANGED",

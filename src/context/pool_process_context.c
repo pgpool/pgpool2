@@ -23,6 +23,7 @@
 
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <time.h>
 #include "pool.h"
 #include "utils/elog.h"
 #include "context/pool_process_context.h"

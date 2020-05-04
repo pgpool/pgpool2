@@ -8,6 +8,7 @@ pgpool_SOURCES = main/main.c \
 	main/pool_globals.c \
 	main/pgpool_main.c \
 	main/health_check.c \
+	main/pool_internal_comms.c \
 	config/pool_config.l \
 	config/pool_config_variables.c \
 	pcp_con/pcp_child.c \
@@ -20,6 +21,7 @@ pgpool_SOURCES = main/main.c \
 	auth/auth-scram.c \
 	protocol/pool_proto2.c \
 	protocol/child.c \
+	protocol/pool_pg_utils.c \
 	protocol/pool_process_query.c \
 	protocol/pool_connection_pool.c \
 	protocol/pool_proto_modules.c \

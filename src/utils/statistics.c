@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2014	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  */
 /*--------------------------------------------------------------------
@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "pool.h"
+#include "utils/statistics.h"
 #include "parser/nodes.h"
 
 /*

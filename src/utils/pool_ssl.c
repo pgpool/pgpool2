@@ -23,17 +23,19 @@
  */
 
 #include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#include "config.h"
 #include "pool.h"
+#include "config.h"
+#include "pool_config.h"
+#include "utils/pool_ssl.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "utils/pool_stream.h"
-#include "pool_config.h"
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include "main/pool_internal_comms.h"
 
 
 #ifdef USE_SSL

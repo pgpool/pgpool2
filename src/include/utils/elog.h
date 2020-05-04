@@ -478,6 +478,7 @@ extern void ReThrowError(ErrorData *edata) __attribute__((noreturn));
 extern void pg_re_throw(void) __attribute__((noreturn));
 
 extern char *GetErrorContextStack(void);
+extern void proc_exit(int);
 
 /* Hook for intercepting messages before they are sent to the server log */
 typedef void (*emit_log_hook_type) (ErrorData *edata);
@@ -523,5 +524,6 @@ void		cancel_shmem_exit(pg_on_exit_callback function, Datum arg);
 void		on_proc_exit(pg_on_exit_callback function, Datum arg);
 void		on_shmem_exit(pg_on_exit_callback function, Datum arg);
 void		on_system_exit(pg_on_exit_callback function, Datum arg);
+
 
 #endif							/* ELOG_H */

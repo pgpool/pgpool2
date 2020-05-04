@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include "pool.h"
 #include "pool_config.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
+#include "protocol/pool_pg_utils.h"
 #include "utils/pool_relcache.h"
 #include "rewrite/pool_timestamp.h"
 #include "parser/parser.h"

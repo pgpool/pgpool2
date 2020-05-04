@@ -31,6 +31,7 @@
 #include "pool.h"
 #include "rewrite/pool_lobj.h"
 #include "utils/pool_relcache.h"
+#include "protocol/pool_process_query.h"
 #include "utils/elog.h"
 #include "pool_config.h"
 

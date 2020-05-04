@@ -29,6 +29,7 @@
 #include "parser/parsenodes.h"
 #include "context/pool_session_context.h"
 #include "rewrite/pool_timestamp.h"
+#include "protocol/pool_pg_utils.h"
 
 static bool function_call_walker(Node *node, void *context);
 static bool system_catalog_walker(Node *node, void *context);

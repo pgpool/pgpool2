@@ -190,4 +190,19 @@ extern void pool_at_command_success(POOL_CONNECTION * frontend, POOL_CONNECTION_
  */
 extern POOL_STATUS CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool command_complete);
 
+extern int	pool_read_message_length(POOL_CONNECTION_POOL * cp);
+extern int *pool_read_message_length2(POOL_CONNECTION_POOL * cp);
+extern signed char pool_read_kind(POOL_CONNECTION_POOL * cp);
+extern int	pool_read_int(POOL_CONNECTION_POOL * cp);
+
+/* pool_proto2.c */
+extern POOL_STATUS ErrorResponse(POOL_CONNECTION * frontend,
+								 POOL_CONNECTION_POOL * backend);
+
+extern void NoticeResponse(POOL_CONNECTION * frontend,
+			   POOL_CONNECTION_POOL * backend);
+
+extern void per_node_error_log(POOL_CONNECTION_POOL * backend, int node_id,
+char *query, char *prefix, bool unread);
+
 #endif

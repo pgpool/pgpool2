@@ -29,4 +29,9 @@ extern void shmem_exit(int code);
 extern void on_shmem_exit(void (*function) (int code, Datum arg), Datum arg);
 extern void on_exit_reset(void);
 
+/*pool_sema.c*/
+extern void pool_semaphore_create(int numSems);
+extern void pool_semaphore_lock(int semNum);
+extern void pool_semaphore_unlock(int semNum);
+
 #endif							/* IPC_H */

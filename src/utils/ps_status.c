@@ -9,7 +9,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2012	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2020	PgPool Global Development Group
  *
  */
 /*--------------------------------------------------------------------
@@ -38,12 +38,14 @@
 #include <crt_externs.h>
 #endif
 
-#include "pool.h"
+#include "utils/ps_status.h"
+#include "pool_type.h"
 #include <stdlib.h>
 #include <string.h>
 
 extern char **environ;
 bool		update_process_title = true;
+char		remote_ps_data[NI_MAXHOST + NI_MAXSERV + 2]; /* used for set_ps_display */
 
 
 /*

@@ -30,6 +30,7 @@
 /*
  * Signal stuff. Stolen from PostgreSQL source code.
  */
+#include "config.h"
 #include <signal.h>
 
 #ifdef HAVE_SIGPROCMASK

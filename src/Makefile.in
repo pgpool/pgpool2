@@ -104,13 +104,15 @@ PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	main/pgpool_main.$(OBJEXT) main/health_check.$(OBJEXT) \
+	main/pool_internal_comms.$(OBJEXT) \
 	config/pool_config.$(OBJEXT) \
 	config/pool_config_variables.$(OBJEXT) \
-	pcp_con/pcp_child.$(OBJEXT) pcp_con/pcp_worker.$(OBJEXT) \
-	pcp_con/recovery.$(OBJEXT) auth/md5.$(OBJEXT) \
-	auth/pool_auth.$(OBJEXT) auth/pool_passwd.$(OBJEXT) \
-	auth/pool_hba.$(OBJEXT) auth/auth-scram.$(OBJEXT) \
-	protocol/pool_proto2.$(OBJEXT) protocol/child.$(OBJEXT) \
+	utils/ps_status.$(OBJEXT) pcp_con/pcp_child.$(OBJEXT) \
+	pcp_con/pcp_worker.$(OBJEXT) pcp_con/recovery.$(OBJEXT) \
+	auth/md5.$(OBJEXT) auth/pool_auth.$(OBJEXT) \
+	auth/pool_passwd.$(OBJEXT) auth/pool_hba.$(OBJEXT) \
+	auth/auth-scram.$(OBJEXT) protocol/pool_proto2.$(OBJEXT) \
+	protocol/child.$(OBJEXT) protocol/pool_pg_utils.$(OBJEXT) \
 	protocol/pool_process_query.$(OBJEXT) \
 	protocol/pool_connection_pool.$(OBJEXT) \
 	protocol/pool_proto_modules.$(OBJEXT) \
@@ -123,10 +125,9 @@ am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	rewrite/pool_timestamp.$(OBJEXT) rewrite/pool_lobj.$(OBJEXT) \
 	utils/pool_select_walker.$(OBJEXT) utils/strlcpy.$(OBJEXT) \
 	utils/psprintf.$(OBJEXT) utils/pool_params.$(OBJEXT) \
-	utils/ps_status.$(OBJEXT) utils/pool_shmem.$(OBJEXT) \
-	utils/pool_sema.$(OBJEXT) utils/pool_signal.$(OBJEXT) \
-	utils/pool_path.$(OBJEXT) utils/pool_ip.$(OBJEXT) \
-	utils/pool_relcache.$(OBJEXT) \
+	utils/pool_shmem.$(OBJEXT) utils/pool_sema.$(OBJEXT) \
+	utils/pool_signal.$(OBJEXT) utils/pool_path.$(OBJEXT) \
+	utils/pool_ip.$(OBJEXT) utils/pool_relcache.$(OBJEXT) \
 	utils/pool_process_reporting.$(OBJEXT) \
 	utils/pool_ssl.$(OBJEXT) utils/pool_stream.$(OBJEXT) \
 	utils/socket_stream.$(OBJEXT) utils/getopt_long.$(OBJEXT) \
@@ -435,8 +436,10 @@ pgpool_SOURCES = main/main.c \
 	main/pool_globals.c \
 	main/pgpool_main.c \
 	main/health_check.c \
+	main/pool_internal_comms.c \
 	config/pool_config.l \
 	config/pool_config_variables.c \
+	utils/ps_status.c \
 	pcp_con/pcp_child.c \
 	pcp_con/pcp_worker.c \
 	pcp_con/recovery.c \
@@ -447,6 +450,7 @@ pgpool_SOURCES = main/main.c \
 	auth/auth-scram.c \
 	protocol/pool_proto2.c \
 	protocol/child.c \
+	protocol/pool_pg_utils.c \
 	protocol/pool_process_query.c \
 	protocol/pool_connection_pool.c \
 	protocol/pool_proto_modules.c \
@@ -462,7 +466,6 @@ pgpool_SOURCES = main/main.c \
 	utils/strlcpy.c \
 	utils/psprintf.c \
 	utils/pool_params.c \
-	utils/ps_status.c \
 	utils/pool_shmem.c \
 	utils/pool_sema.c \
 	utils/pool_signal.c \
@@ -680,11 +683,16 @@ main/main.$(OBJEXT): main/$(am__dirstamp)
 main/pool_globals.$(OBJEXT): main/$(am__dirstamp)
 main/pgpool_main.$(OBJEXT): main/$(am__dirstamp)
 main/health_check.$(OBJEXT): main/$(am__dirstamp)
+main/pool_internal_comms.$(OBJEXT): main/$(am__dirstamp)
 config/$(am__dirstamp):
 	@$(MKDIR_P) config
 	@: > config/$(am__dirstamp)
 config/pool_config.$(OBJEXT): config/$(am__dirstamp)
 config/pool_config_variables.$(OBJEXT): config/$(am__dirstamp)
+utils/$(am__dirstamp):
+	@$(MKDIR_P) utils
+	@: > utils/$(am__dirstamp)
+utils/ps_status.$(OBJEXT): utils/$(am__dirstamp)
 pcp_con/$(am__dirstamp):
 	@$(MKDIR_P) pcp_con
 	@: > pcp_con/$(am__dirstamp)
@@ -704,6 +712,7 @@ protocol/$(am__dirstamp):
 	@: > protocol/$(am__dirstamp)
 protocol/pool_proto2.$(OBJEXT): protocol/$(am__dirstamp)
 protocol/child.$(OBJEXT): protocol/$(am__dirstamp)
+protocol/pool_pg_utils.$(OBJEXT): protocol/$(am__dirstamp)
 protocol/pool_process_query.$(OBJEXT): protocol/$(am__dirstamp)
 protocol/pool_connection_pool.$(OBJEXT): protocol/$(am__dirstamp)
 protocol/pool_proto_modules.$(OBJEXT): protocol/$(am__dirstamp)
@@ -728,14 +737,10 @@ rewrite/$(am__dirstamp):
 	@: > rewrite/$(am__dirstamp)
 rewrite/pool_timestamp.$(OBJEXT): rewrite/$(am__dirstamp)
 rewrite/pool_lobj.$(OBJEXT): rewrite/$(am__dirstamp)
-utils/$(am__dirstamp):
-	@$(MKDIR_P) utils
-	@: > utils/$(am__dirstamp)
 utils/pool_select_walker.$(OBJEXT): utils/$(am__dirstamp)
 utils/strlcpy.$(OBJEXT): utils/$(am__dirstamp)
 utils/psprintf.$(OBJEXT): utils/$(am__dirstamp)
 utils/pool_params.$(OBJEXT): utils/$(am__dirstamp)
-utils/ps_status.$(OBJEXT): utils/$(am__dirstamp)
 utils/pool_shmem.$(OBJEXT): utils/$(am__dirstamp)
 utils/pool_sema.$(OBJEXT): utils/$(am__dirstamp)
 utils/pool_signal.$(OBJEXT): utils/$(am__dirstamp)

@@ -45,6 +45,8 @@
 #include "rewrite/pool_timestamp.h"
 #include "rewrite/pool_lobj.h"
 #include "protocol/pool_proto_modules.h"
+#include "protocol/pool_process_query.h"
+#include "protocol/pool_pg_utils.h"
 #include "pool_config.h"
 #include "parser/pool_string.h"
 #include "context/pool_session_context.h"
@@ -53,10 +55,12 @@
 #include "utils/pool_select_walker.h"
 #include "utils/pool_relcache.h"
 #include "utils/pool_stream.h"
-#include "query_cache/pool_memqcache.h"
+#include "utils/ps_status.h"
 #include "utils/pool_signal.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
+#include "query_cache/pool_memqcache.h"
+#include "main/pool_internal_comms.h"
 #include "pool_config_variables.h"
 
 char	   *copy_table = NULL;	/* copy table name */
@@ -530,7 +534,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 					(errmsg("Query: sending SIGUSR1 signal to parent")));
 
 			ignore_sigusr1 = 1;	/* disable SIGUSR1 handler */
-			register_node_operation_request(CLOSE_IDLE_REQUEST, NULL, 0, 0);
+			close_idle_connections();
 
 			/*
 			 * We need to loop over here since we might get some signals while
@@ -4033,4 +4037,197 @@ pool_at_command_success(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backe
 				discard_temp_table_relcache();
 		}
 	}
+}
+
+/*
+ * read message length (V3 only)
+ */
+int
+pool_read_message_length(POOL_CONNECTION_POOL * cp)
+{
+	int			length,
+				length0;
+	int			i;
+
+	/* read message from master node */
+	pool_read(CONNECTION(cp, MASTER_NODE_ID), &length0, sizeof(length0));
+	length0 = ntohl(length0);
+
+	ereport(DEBUG5,
+			(errmsg("reading message length"),
+			 errdetail("slot: %d length: %d", MASTER_NODE_ID, length0)));
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
+		{
+			continue;
+		}
+
+		pool_read(CONNECTION(cp, i), &length, sizeof(length));
+
+		length = ntohl(length);
+		ereport(DEBUG5,
+				(errmsg("reading message length"),
+				 errdetail("slot: %d length: %d", i, length)));
+
+		if (length != length0)
+			ereport(ERROR,
+					(errmsg("unable to read message length"),
+					 errdetail("message length (%d) in slot %d does not match with slot 0(%d)", length, i, length0)));
+
+	}
+
+	if (length0 < 0)
+		ereport(ERROR,
+				(errmsg("unable to read message length"),
+				 errdetail("invalid message length (%d)", length)));
+
+	return length0;
+}
+
+/*
+ * read message length2 (V3 only)
+ * unlike pool_read_message_length, this returns an array of message length.
+ * The array is in the static storage, thus it will be destroyed by subsequent calls.
+ */
+int *
+pool_read_message_length2(POOL_CONNECTION_POOL * cp)
+{
+	int			length,
+				length0;
+	int			i;
+	static int	length_array[MAX_CONNECTION_SLOTS];
+
+	/* read message from master node */
+	pool_read(CONNECTION(cp, MASTER_NODE_ID), &length0, sizeof(length0));
+
+	length0 = ntohl(length0);
+	length_array[MASTER_NODE_ID] = length0;
+	ereport(DEBUG5,
+			(errmsg("reading message length"),
+			 errdetail("master slot: %d length: %d", MASTER_NODE_ID, length0)));
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		{
+			pool_read(CONNECTION(cp, i), &length, sizeof(length));
+
+			length = ntohl(length);
+			ereport(DEBUG5,
+					(errmsg("reading message length"),
+					 errdetail("master slot: %d length: %d", i, length)));
+
+			if (length != length0)
+			{
+				ereport(LOG,
+						(errmsg("reading message length"),
+						 errdetail("message length (%d) in slot %d does not match with slot 0(%d)", length, i, length0)));
+			}
+
+			if (length < 0)
+			{
+				ereport(ERROR,
+						(errmsg("unable to read message length"),
+						 errdetail("invalid message length (%d)", length)));
+			}
+
+			length_array[i] = length;
+		}
+
+	}
+	return &length_array[0];
+}
+
+signed char
+pool_read_kind(POOL_CONNECTION_POOL * cp)
+{
+	char		kind0,
+				kind;
+	int			i;
+
+	kind = -1;
+	kind0 = 0;
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (!VALID_BACKEND(i))
+		{
+			continue;
+		}
+
+		pool_read(CONNECTION(cp, i), &kind, sizeof(kind));
+
+		if (IS_MASTER_NODE_ID(i))
+		{
+			kind0 = kind;
+		}
+		else
+		{
+			if (kind != kind0)
+			{
+				char	   *message;
+
+				if (kind0 == 'E')
+				{
+					if (pool_extract_error_message(false, MASTER(cp), MAJOR(cp), true, &message) == 1)
+					{
+						ereport(LOG,
+								(errmsg("pool_read_kind: error message from master backend:%s", message)));
+						pfree(message);
+					}
+				}
+				else if (kind == 'E')
+				{
+					if (pool_extract_error_message(false, CONNECTION(cp, i), MAJOR(cp), true, &message) == 1)
+					{
+						ereport(LOG,
+								(errmsg("pool_read_kind: error message from %d th backend:%s", i, message)));
+						pfree(message);
+					}
+				}
+				ereport(ERROR,
+						(errmsg("unable to read message kind"),
+						 errdetail("kind does not match between master(%x) slot[%d] (%x)", kind0, i, kind)));
+			}
+		}
+	}
+
+	return kind;
+}
+
+int
+pool_read_int(POOL_CONNECTION_POOL * cp)
+{
+	int			data0,
+				data;
+	int			i;
+
+	data = -1;
+	data0 = 0;
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (!VALID_BACKEND(i))
+		{
+			continue;
+		}
+		pool_read(CONNECTION(cp, i), &data, sizeof(data));
+		if (IS_MASTER_NODE_ID(i))
+		{
+			data0 = data;
+		}
+		else
+		{
+			if (data != data0)
+			{
+				ereport(ERROR,
+						(errmsg("unable to read int value"),
+						 errdetail("data does not match between between master(%x) slot[%d] (%x)", data0, i, data)));
+
+			}
+		}
+	}
+	return data;
 }

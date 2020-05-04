@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -22,17 +22,21 @@
  *
  */
 
-#include "config.h"
 
-#include <unistd.h>
-#include <string.h>
-#include "utils/elog.h"
+#include "config.h"
 
 #include "pool.h"
 #include "pool_config.h"
 
+#include <unistd.h>
+#include <string.h>
+#include "pcp/recovery.h"
+#include "utils/elog.h"
+#include "utils/pool_signal.h"
+
 #include "libpq-fe.h"
 
+#include "main/pool_internal_comms.h"
 #include "watchdog/wd_internal_commands.h"
 
 #define WAIT_RETRY_COUNT (pool_config->recovery_timeout / 3)

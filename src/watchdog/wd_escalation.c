@@ -31,10 +31,11 @@
 #include <sys/wait.h>
 #endif
 
-#include "pool.h"
+#include "utils/pool_signal.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
+#include "utils/ps_status.h"
 #include "pool_config.h"
 #include "watchdog/wd_utils.h"
 

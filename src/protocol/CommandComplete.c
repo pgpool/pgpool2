@@ -29,6 +29,7 @@
 
 #include "pool.h"
 #include "protocol/pool_proto_modules.h"
+#include "protocol/pool_process_query.h"
 #include "parser/pg_config_manual.h"
 #include "parser/pool_string.h"
 #include "pool_config.h"

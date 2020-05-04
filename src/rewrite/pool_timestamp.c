@@ -34,6 +34,8 @@
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "context/pool_session_context.h"
+#include "protocol/pool_process_query.h"
+#include "protocol/pool_pg_utils.h"
 
 typedef struct
 {

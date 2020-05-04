@@ -9,7 +9,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2008	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2020	PgPool Global Development Group
  * Portions Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
@@ -61,6 +61,8 @@ extern void promote_v4_to_v6_addr(struct sockaddr_storage *addr);
 extern void promote_v4_to_v6_mask(struct sockaddr_storage *addr);
 
 extern int	pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data);
+
+extern void pool_getnameinfo_all(SockAddr *saddr, char *remote_host, char *remote_port);
 
 #define IS_AF_INET(fam) ((fam) == AF_INET)
 #define IS_AF_UNIX(fam) ((fam) == AF_UNIX)

@@ -34,12 +34,14 @@
 
 
 #include "pool.h"
+#include "pool_config.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "utils/socket_stream.h"
 #include "utils/pool_stream.h"
-#include "pool_config.h"
+#include "utils/pool_ssl.h"
+#include "main/pool_internal_comms.h"
 
 static int	mystrlen(char *str, int upper, int *flag);
 static int	mystrlinelen(char *str, int upper, int *flag);

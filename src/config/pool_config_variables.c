@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "pool.h"
 #include "pool_config.h"

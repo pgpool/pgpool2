@@ -21,15 +21,18 @@
  * Process pgPool-II "SHOW" queries.
  */
 #include "pool.h"
+#include "main/health_check.h"
 #include "protocol/pool_proto_modules.h"
 #include "utils/elog.h"
 #include "utils/pool_stream.h"
+#include "utils/statistics.h"
 #include "pool_config.h"
 #include "query_cache/pool_memqcache.h"
 #include "version.h"
 
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <netinet/in.h>
 
 static void write_one_field(POOL_CONNECTION * frontend, char *field);

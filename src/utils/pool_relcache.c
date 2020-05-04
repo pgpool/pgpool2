@@ -24,11 +24,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <limits.h>
+#include <time.h>
 
 #include "pool.h"
 #include "utils/pool_relcache.h"
 #include "context/pool_session_context.h"
 #include "query_cache/pool_memqcache.h"
+#include "protocol/pool_process_query.h"
 #include "pool_config.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"

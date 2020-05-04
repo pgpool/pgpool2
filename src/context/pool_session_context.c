@@ -27,8 +27,11 @@
 #include "utils/memutils.h"
 #include "utils/elog.h"
 #include "pool_config.h"
-#include "context/pool_session_context.h"
 #include "protocol/pool_proto_modules.h"
+#include "protocol/pool_process_query.h"
+#include "protocol/pool_connection_pool.h"
+#include "protocol/pool_pg_utils.h"
+#include "context/pool_session_context.h"
 
 static POOL_SESSION_CONTEXT session_context_d;
 static POOL_SESSION_CONTEXT * session_context = NULL;

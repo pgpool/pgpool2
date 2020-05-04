@@ -44,14 +44,17 @@
 #endif
 
 #include "pool.h"
+#include "pool_config.h"
+#include "utils/pool_signal.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "utils/elog.h"
-#include "pool_config.h"
+#include "utils/ps_status.h"
 #include "auth/md5.h"
 #include "watchdog/watchdog.h"
 #include "watchdog/wd_lifecheck.h"
 #include "watchdog/wd_utils.h"
+
 
 #define MAX_BIND_TRIES 5
 /*

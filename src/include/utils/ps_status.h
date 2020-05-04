@@ -1,7 +1,4 @@
-/* -*-pgsql-c-*- */
 /*
- *
- * $Header$
  *
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
@@ -19,18 +16,22 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
- * pool_steam.h.: pool_stream.c related header file
- *
  */
 
-#ifndef SOCKET_STREAM_H
-#define SOCKET_STREAM_H
+#ifndef ps_status_h
+#define ps_status_h
 
-extern void socket_set_nonblock(int fd);
-extern void socket_unset_nonblock(int fd);
+#include "pool.h"
+#include <netdb.h>
 
-extern int	socket_read(int sock, void *buf, size_t len, int timeout);
-extern int	socket_write(int fd, void *buf, size_t len);
+extern char remote_ps_data[NI_MAXHOST + NI_MAXSERV + 2];	/* used for set_ps_display */
+
+extern char **save_ps_display_args(int argc, char **argv);
+extern void init_ps_display(const char *username, const char *dbname,
+				const char *host_info, const char *initial_str);
+extern void set_ps_display(const char *activity, bool force);
+extern const char *get_ps_display(int *displen);
+extern void pool_ps_idle_display(POOL_CONNECTION_POOL * backend);
 
 
-#endif							/* SOCKET_STREAM_H */
+#endif /* ps_status_h */

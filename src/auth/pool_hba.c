@@ -36,9 +36,12 @@
 
 #include "pool.h"
 #include "auth/pool_hba.h"
+#include "auth/pool_auth.h"
+#include "protocol/pool_connection_pool.h"
 #include "utils/pool_path.h"
 #include "utils/pool_ip.h"
 #include "utils/pool_stream.h"
+#include "utils/pool_signal.h"
 #include "pool_config.h"
 #include "pool_type.h"
 #include "utils/palloc.h"
@@ -46,6 +49,7 @@
 #include "utils/elog.h"
 #include "parser/pg_list.h"
 #include "auth/pool_passwd.h"
+#include "protocol/pool_process_query.h"
 
 #define MULTI_VALUE_SEP "\001"	/* delimiter for multi-valued column strings */
 
@@ -106,7 +110,6 @@ static MemoryContext tokenize_file(const char *filename, FILE *file,
 			  List **tok_lines, int elevel);
 static void sendAuthRequest(POOL_CONNECTION * frontend, AuthRequest areq);
 static void auth_failed(POOL_CONNECTION * frontend);
-static void close_all_backend_connections(void);
 static bool hba_getauthmethod(POOL_CONNECTION * frontend);
 static bool check_hba(POOL_CONNECTION * frontend);
 static bool check_user(char *user, List *tokens);
@@ -1095,34 +1098,6 @@ auth_failed(POOL_CONNECTION * frontend)
 			 errdetail("%s", errmessage),
 			 errhint("see pgpool log for details")));
 
-}
-
-
-/*
- *  Close all of the cached backend connections.
- *
- *  This is exactly the same as send_frontend_exits() in child.c.
- */
-static void
-close_all_backend_connections(void)
-{
-	int			i;
-	POOL_CONNECTION_POOL *p = pool_connection_pool;
-
-	pool_sigset_t oldmask;
-
-	POOL_SETMASK2(&BlockSig, &oldmask);
-
-	for (i = 0; i < pool_config->max_pool; i++, p++)
-	{
-		if (!MASTER_CONNECTION(p))
-			continue;
-		if (MASTER_CONNECTION(p)->sp->user == NULL)
-			continue;
-		pool_send_frontend_exits(p);
-	}
-
-	POOL_SETMASK(&oldmask);
 }
 
 

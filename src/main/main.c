@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -20,6 +20,9 @@
  */
 #include "pool.h"
 #include "pool_config.h"
+#include "version.h"
+#include "pool_config_variables.h"
+
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -35,17 +38,20 @@
 #include <errno.h>
 #include <string.h>
 #include <libgen.h>
+
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "utils/pool_path.h"
+#include "utils/pool_signal.h"
+#include "utils/pool_ipc.h"
+#include "utils/ps_status.h"
+#include "utils/pool_ssl.h"
 
-#include "version.h"
 #include "auth/pool_passwd.h"
 #include "auth/pool_hba.h"
 #include "query_cache/pool_memqcache.h"
 #include "watchdog/wd_utils.h"
-#include "pool_config_variables.h"
 
 
 static bool get_pool_key_filename(char *poolKeyFile);

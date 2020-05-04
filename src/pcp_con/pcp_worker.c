@@ -21,10 +21,8 @@
  *
  */
 
+
 #include "config.h"
-#include "pool.h"
-#include "utils/palloc.h"
-#include "utils/memutils.h"
 
 #include <arpa/inet.h>
 #include <signal.h>
@@ -40,15 +38,24 @@
 #include <fcntl.h>
 #endif
 
+#include "pool.h"
+#include "pool_config.h"
+
 #include "pcp/pcp_stream.h"
 #include "pcp/pcp.h"
+#include "pcp/pcp_worker.h"
+#include "pcp/recovery.h"
 #include "auth/md5.h"
-#include "pool_config.h"
+#include "auth/pool_auth.h"
 #include "context/pool_process_context.h"
 #include "utils/pool_process_reporting.h"
+#include "utils/palloc.h"
+#include "utils/memutils.h"
+#include "utils/ps_status.h"
+#include "utils/elog.h"
 #include "watchdog/wd_json_data.h"
 #include "watchdog/wd_internal_commands.h"
-#include "utils/elog.h"
+#include "main/pool_internal_comms.h"
 
 #define MAX_FILE_LINE_LEN    512
 
@@ -1263,32 +1270,16 @@ static void
 process_shutown_request(PCP_CONNECTION * frontend, char mode)
 {
 	char		code[] = "CommandComplete";
-	pid_t		ppid = getppid();
-	int			sig,
-				len;
+	int			len;
 
-	if (mode == 's')
-	{
-		ereport(DEBUG1,
-				(errmsg("PCP: processing shutdown request"),
-				 errdetail("sending SIGTERM to the parent process with PID:%d", ppid)));
-		sig = SIGTERM;
-	}
-	else if (mode == 'f')
-	{
-		ereport(DEBUG1,
-				(errmsg("PCP: processing shutdown request"),
-				 errdetail("sending SIGINT to the parent process with PID:%d", ppid)));
-		sig = SIGINT;
-	}
-	else if (mode == 'i')
-	{
-		ereport(DEBUG1,
-				(errmsg("PCP: processing shutdown request"),
-				 errdetail("sending SIGQUIT to the parent process with PID:%d", ppid)));
-		sig = SIGQUIT;
-	}
-	else
+	ereport(DEBUG1,
+			(errmsg("PCP: processing shutdown request"),
+			 errdetail("shutdown mode \"%c\"", mode)));
+
+	/* quickly bail out if invalid mode is specified
+	 * because we do not want to propogate the command
+	 * with invalid mode over the watchdog network */
+	if (mode != 's' && mode != 'i' && mode != 'f' )
 	{
 		ereport(ERROR,
 				(errmsg("PCP: error while processing shutdown request"),
@@ -1301,7 +1292,7 @@ process_shutown_request(PCP_CONNECTION * frontend, char mode)
 	pcp_write(frontend, code, sizeof(code));
 	do_pcp_flush(frontend);
 
-	pool_signal_parent(sig);
+	terminate_pgpool(mode, true);
 }
 
 static void

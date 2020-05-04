@@ -25,6 +25,11 @@
 #include "pool.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
+#include "utils/pool_signal.h"
+#include "utils/pool_ipc.h"
+#include "utils/ps_status.h"
+
+#include "pcp/pcp_worker.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>

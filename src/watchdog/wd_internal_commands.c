@@ -40,12 +40,14 @@
 #include <sys/wait.h>
 
 #include "pool.h"
-#include "utils/elog.h"
-#include "utils/json_writer.h"
-#include "utils/json.h"
 #include "pool_config.h"
 #include "watchdog/wd_json_data.h"
 #include "watchdog/wd_internal_commands.h"
+#include "utils/elog.h"
+#include "utils/json_writer.h"
+#include "utils/pool_signal.h"
+#include "utils/json.h"
+#include "auth/pool_auth.h"
 
 #define WD_DEFAULT_IPC_COMMAND_TIMEOUT	8	/* default number of seconds to
 											 * wait for IPC command results */

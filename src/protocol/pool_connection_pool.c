@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -34,7 +34,7 @@
 #include <netinet/tcp.h>
 #endif
 #include <netdb.h>
-
+#include <time.h>
 #include <stdio.h>
 #include <errno.h>
 #include <signal.h>
@@ -48,6 +48,12 @@
 #include "pool_config.h"
 #include "utils/elog.h"
 #include "utils/memutils.h"
+#include "protocol/pool_connection_pool.h"
+#include "protocol/pool_process_query.h"
+#include "protocol/pool_pg_utils.h"
+#include "main/pool_internal_comms.h"
+
+
 #include "context/pool_process_context.h"
 
 static int	pool_index;			/* Active pool index */
@@ -1018,4 +1024,34 @@ int
 pool_pool_index(void)
 {
 	return pool_index;
+}
+
+/*
+ * send frontend exiting messages to all connections.  this is called
+ * in any case when child process exits, for example failover, child
+ * life time expires or child max connections expires.
+ */
+
+void
+close_all_backend_connections(void)
+{
+	int			i;
+	POOL_CONNECTION_POOL *p = pool_connection_pool;
+
+	pool_sigset_t oldmask;
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
+
+	for (i = 0; i < pool_config->max_pool; i++, p++)
+	{
+		if (!MASTER_CONNECTION(p))
+			continue;
+		if (!MASTER_CONNECTION(p)->sp)
+			continue;
+		if (MASTER_CONNECTION(p)->sp->user == NULL)
+			continue;
+		pool_send_frontend_exits(p);
+	}
+
+	POOL_SETMASK(&oldmask);
 }

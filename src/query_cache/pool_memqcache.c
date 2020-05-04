@@ -29,6 +29,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
@@ -44,9 +45,11 @@
 #include "auth/md5.h"
 #include "pool_config.h"
 #include "protocol/pool_proto_modules.h"
+#include "protocol/pool_process_query.h"
 #include "parser/parsenodes.h"
 #include "context/pool_session_context.h"
 #include "query_cache/pool_memqcache.h"
+#include "utils/pool_ssl.h"
 #include "utils/pool_relcache.h"
 #include "utils/pool_select_walker.h"
 #include "utils/pool_stream.h"
@@ -54,6 +57,7 @@
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
+#include "utils/pool_ipc.h"
 
 #ifdef USE_MEMCACHED
 memcached_st *memc;
