@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -62,12 +62,19 @@ typedef enum WDValueDataType
 #define WD_IPC_CMD_RESULT_OK				'7'
 #define WD_IPC_CMD_TIMEOUT					'8'
 
+#define WD_EXECUTE_CLUSTER_COMMAND			'c'
 #define WD_IPC_FAILOVER_COMMAND				'f'
-#define WD_IPC_ONLINE_RECOVERY_COMMAND		'r'
-#define WD_FAILOVER_LOCKING_REQUEST			's'
+#define WD_IPC_ONLINE_RECOVERY_COMMAND	'r'
+#define WD_FAILOVER_LOCKING_REQUEST		's'
 #define WD_GET_MASTER_DATA_REQUEST			'd'
 #define WD_GET_RUNTIME_VARIABLE_VALUE		'v'
 #define WD_FAILOVER_INDICATION				'i'
+
+
+#define WD_COMMAND_RESTART_CLUSTER		"RESTART_CLUSTER"
+#define WD_COMMAND_REELECT_MASTER		"REELECT_MASTER"
+#define WD_COMMAND_SHUTDOWN_CLUSTER	"SHUTDOWN_CLUSTER"
+
 
 #define WD_FUNCTION_START_RECOVERY		"START_RECOVERY"
 #define WD_FUNCTION_END_RECOVERY		"END_RECOVERY"
@@ -112,7 +119,7 @@ typedef enum WDValueDataType
 #define WD_RUNTIME_VAR_ESCALATION_STATE	"Escalated"
 
 /* Use to inform node new node status by lifecheck */
-#define WD_LIFECHECK_NODE_STATUS_DEAD	1
+#define WD_LIFECHECK_NODE_STATUS_DEAD 	1
 #define WD_LIFECHECK_NODE_STATUS_ALIVE	2
 
 

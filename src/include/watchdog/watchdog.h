@@ -187,6 +187,18 @@ typedef struct WatchdogNode
 									 * initiated by local */
 }			WatchdogNode;
 
+/*
+ * Argument for WD Exec cluster command
+ */
+#define WD_MAX_ARG_NAME_LEN		64
+#define WD_MAX_ARG_VALUE_LEN	64
+
+typedef struct WDExecCommandArg
+{
+	char arg_name[WD_MAX_ARG_NAME_LEN];
+	char arg_value[WD_MAX_ARG_VALUE_LEN];
+}			WDExecCommandArg;
+
 extern pid_t initialize_watchdog(void);
 
 #endif							/* WATCHDOG_H */

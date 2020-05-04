@@ -60,6 +60,23 @@ Pgpool-II documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>-s <replaceable class="parameter">scope</replaceable></option></term>
+     <term><option>--scope=<replaceable class="parameter">scope</replaceable></option></term>
+     <listitem>
+      <para>
+       Shutdown mode for terminating the Pgpool-II process.
+      </para>
+      <para>
+       The supported command scopes are as follows:
+       <itemizedlist>
+	<listitem><para>c, cluster : terminates all Pgpool-II nodes part of the cluster </para></listitem>
+	<listitem><para>l, local : terminates local Pgpool-II node only </para></listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>Other options </option></term>
      <listitem>
       <para>

@@ -90,7 +90,7 @@ struct AppTypes AllAppTypes[] =
 	{"pcp_proc_info", PCP_PROC_INFO, "h:p:P:U:awWvd", "display a pgpool-II child process' information"},
 	{"pcp_promote_node", PCP_PROMOTE_NODE, "n:h:p:U:gwWvd", "promote a node as new master from pgpool-II"},
 	{"pcp_recovery_node", PCP_RECOVERY_NODE, "n:h:p:U:wWvd", "recover a node"},
-	{"pcp_stop_pgpool", PCP_STOP_PGPOOL, "m:h:p:U:wWvd", "terminate pgpool-II"},
+	{"pcp_stop_pgpool", PCP_STOP_PGPOOL, "m:h:p:U:s:wWvda", "terminate pgpool-II"},
 	{"pcp_watchdog_info", PCP_WATCHDOG_INFO, "n:h:p:U:wWvd", "display a pgpool-II watchdog's information"},
 	{NULL, UNKNOWN, NULL, NULL},
 };
@@ -107,6 +107,7 @@ main(int argc, char **argv)
 	int			processID = 0;
 	int			ch;
 	char		shutdown_mode = 's';
+	char		command_scope = 'l';
 	int			optindex;
 	int			i;
 	bool		all = false;
@@ -129,6 +130,7 @@ main(int argc, char **argv)
 		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
 		{"mode", required_argument, NULL, 'm'},
+		{"scope", required_argument, NULL, 's'},
 		{"gracefully", no_argument, NULL, 'g'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"all", no_argument, NULL, 'a'},
@@ -191,6 +193,26 @@ main(int argc, char **argv)
 
 			case 'g':
 				gracefully = true;
+				break;
+
+			case 's':
+				if (current_app_type->app_type == PCP_STOP_PGPOOL)
+				{
+					if (strcmp(optarg, "c") == 0 || strcmp(optarg, "cluster") == 0)
+						command_scope = 'c';
+					else if (strcmp(optarg, "l") == 0 || strcmp(optarg, "local") == 0)
+						command_scope = 'l';
+					else
+					{
+						fprintf(stderr, "%s: Invalid command socpe \"%s\", must be either \"cluster\" or \"local\" \n", progname, optarg);
+						exit(1);
+					}
+				}
+				else
+				{
+					fprintf(stderr, "Invalid argument \"%s\", Try \"%s --help\" for more information.\n", optarg, progname);
+					exit(1);
+				}
 				break;
 
 			case 'm':
@@ -404,7 +426,7 @@ main(int argc, char **argv)
 
 	else if (current_app_type->app_type == PCP_STOP_PGPOOL)
 	{
-		pcpResInfo = pcp_terminate_pgpool(pcpConn, shutdown_mode);
+		pcpResInfo = pcp_terminate_pgpool(pcpConn, shutdown_mode, command_scope);
 	}
 
 	else if (current_app_type->app_type == PCP_WATCHDOG_INFO)
@@ -819,6 +841,9 @@ usage(void)
 	if (current_app_type->app_type == PCP_STOP_PGPOOL)
 	{
 		fprintf(stderr, "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n");
+		fprintf(stderr, "  -s, --scope=SCOPE      SCOPE can be \"cluster\", or \"local\"\n");
+		fprintf(stderr, "                         cluster scope terminates all Pgpool-II nodes part\n");
+		fprintf(stderr, "                         of the watchdog cluster\n");
 	}
 	if (current_app_type->app_type == PCP_PROMOTE_NODE ||
 		current_app_type->app_type == PCP_DETACH_NODE)

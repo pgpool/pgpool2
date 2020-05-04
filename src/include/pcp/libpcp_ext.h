@@ -313,7 +313,7 @@ struct WdInfo;
 extern PCPConnInfo * pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfdebug);
 extern void pcp_disconnect(PCPConnInfo * pcpConn);
 
-extern PCPResultInfo * pcp_terminate_pgpool(PCPConnInfo * pcpCon, char mode);
+extern PCPResultInfo * pcp_terminate_pgpool(PCPConnInfo * pcpConn, char mode, char command_scope);
 extern PCPResultInfo * pcp_node_count(PCPConnInfo * pcpCon);
 extern PCPResultInfo * pcp_node_info(PCPConnInfo * pcpCon, int nid);
 extern PCPResultInfo * pcp_health_check_stats(PCPConnInfo * pcpCon, int nid);

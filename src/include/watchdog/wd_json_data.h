@@ -69,4 +69,14 @@ extern char *get_simple_request_json(char *key, char *value, unsigned int shared
 extern bool parse_data_request_json(char *json_data, int data_len, char **request_type);
 extern char *get_data_request_json(char *request_type, unsigned int sharedKey, char *authKey);
 
+extern bool
+parse_wd_exec_cluster_command_json(char *json_data, int data_len,
+								   char **clusterCommand,
+								   int *nArgs, WDExecCommandArg **wdExecCommandArg);
+
+extern char *
+get_wd_exec_cluster_command_json(char *clusterCommand,int nArgs,
+								 WDExecCommandArg *wdExecCommandArg,
+								unsigned int sharedKey, char *authKey);
+
 #endif

@@ -87,7 +87,7 @@ static void process_attach_node(PCP_CONNECTION * frontend, char *buf);
 static void process_recovery_request(PCP_CONNECTION * frontend, char *buf);
 static void process_status_request(PCP_CONNECTION * frontend);
 static void process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos);
-static void process_shutown_request(PCP_CONNECTION * frontend, char mode);
+static void process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos);
 static void process_set_configration_parameter(PCP_CONNECTION * frontend, char *buf, int len);
 
 static void pcp_worker_will_go_down(int code, Datum arg);
@@ -304,8 +304,9 @@ pcp_process_command(char tos, char *buf, int buf_len)
 			break;
 
 		case 'T':
+		case 't':
 			set_ps_display("PCP: processing shutdown request", false);
-			process_shutown_request(pcp_frontend, buf[0]);
+			process_shutown_request(pcp_frontend, buf[0], tos);
 			break;
 
 		case 'O':				/* recovery request */
@@ -1267,7 +1268,7 @@ send_md5salt(PCP_CONNECTION * frontend, char *salt)
 }
 
 static void
-process_shutown_request(PCP_CONNECTION * frontend, char mode)
+process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos)
 {
 	char		code[] = "CommandComplete";
 	int			len;
@@ -1284,6 +1285,22 @@ process_shutown_request(PCP_CONNECTION * frontend, char mode)
 		ereport(ERROR,
 				(errmsg("PCP: error while processing shutdown request"),
 				 errdetail("invalid shutdown mode \"%c\"", mode)));
+	}
+
+	if (tos == 't' && pool_config->use_watchdog)
+	{
+		WDExecCommandArg wdExecCommandArg;
+
+		strncpy(wdExecCommandArg.arg_name, "mode", sizeof(wdExecCommandArg.arg_name) - 1);
+		snprintf(wdExecCommandArg.arg_value, sizeof(wdExecCommandArg.arg_name) - 1, "%c",mode);
+
+		ereport(LOG,
+				(errmsg("PCP: sending command to watchdog to shutdown cluster")));
+
+		if (wd_execute_cluster_command(WD_COMMAND_SHUTDOWN_CLUSTER,1, &wdExecCommandArg) != COMMAND_OK)
+			ereport(ERROR,
+					(errmsg("PCP: error while processing shutdown cluster request"),
+					 errdetail("failed to propogate shutdown command through watchdog")));
 	}
 
 	pcp_write(frontend, "t", 1);

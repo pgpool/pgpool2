@@ -134,6 +134,8 @@ typedef enum IPC_CMD_PREOCESS_RES
 #define WD_CMD_REPLY_IN_DATA				'-'
 #define WD_CLUSTER_SERVICE_MESSAGE			'#'
 
+#define WD_EXECUTE_COMMAND_REQUEST			'!'
+
 #define WD_FAILOVER_START					'F'
 #define WD_FAILOVER_END						'H'
 #define WD_FAILOVER_WAITING_FOR_CONSENSUS	'K'
@@ -150,6 +152,7 @@ typedef enum IPC_CMD_PREOCESS_RES
 #define CLUSTER_NODE_REQUIRE_TO_RELOAD		'I'
 #define CLUSTER_NODE_APPEARING_LOST 		'Y'
 #define CLUSTER_NODE_APPEARING_FOUND 		'Z'
+
 
 #define WD_MASTER_NODE getMasterWatchdogNode()
 
@@ -175,6 +178,7 @@ packet_types all_packet_types[] = {
 	{WD_STAND_FOR_COORDINATOR_MESSAGE, "STAND FOR COORDINATOR"},
 	{WD_REMOTE_FAILOVER_REQUEST, "REPLICATE FAILOVER REQUEST"},
 	{WD_IPC_ONLINE_RECOVERY_COMMAND, "ONLINE RECOVERY REQUEST"},
+	{WD_EXECUTE_CLUSTER_COMMAND, "EXECUTE CLUSTER COMMAND"},
 	{WD_IPC_FAILOVER_COMMAND, "FAILOVER FUNCTION COMMAND"},
 	{WD_INFORM_I_AM_GOING_DOWN, "INFORM I AM GOING DOWN"},
 	{WD_ASK_FOR_POOL_CONFIG, "ASK FOR POOL CONFIG"},
@@ -192,6 +196,7 @@ packet_types all_packet_types[] = {
 	{WD_IPC_CMD_RESULT_BAD, "IPC RESPONSE BAD"},
 	{WD_IPC_CMD_RESULT_OK, "IPC RESPONSE GOOD"},
 	{WD_IPC_CMD_TIMEOUT, "IPC TIMEOUT"},
+	{WD_EXECUTE_COMMAND_REQUEST, "WD EXECUTE COMMAND"},
 	{WD_NO_MESSAGE, ""}
 };
 
@@ -540,6 +545,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData * ipcC
 static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_master(WDCommandData * ipcCommand);
 static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData * ipcCommand);
 static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandData * ipcCommand);
+static IPC_CMD_PREOCESS_RES process_IPC_execute_cluster_command(WDCommandData * ipcCommand);
 
 static bool write_ipc_command_with_result_data(WDCommandData * ipcCommand, char type, char *data, int len);
 
@@ -578,6 +584,7 @@ static void clear_standby_nodes_list(void);
 static int	standby_node_left_cluster(WatchdogNode * wdNode);
 static int	standby_node_join_cluster(WatchdogNode * wdNode);
 static void update_missed_beacon_count(WDCommandData* ipcCommand, bool clear);
+static void wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt);
 
 /* global variables */
 wd_cluster	g_cluster;
@@ -2000,12 +2007,20 @@ static IPC_CMD_PREOCESS_RES process_IPC_command(WDCommandData * ipcCommand)
 
 		case WD_FAILOVER_INDICATION:
 			return process_IPC_failover_indication(ipcCommand);
+			break;
 
 		case WD_GET_MASTER_DATA_REQUEST:
 			return process_IPC_data_request_from_master(ipcCommand);
+			break;
 
 		case WD_GET_RUNTIME_VARIABLE_VALUE:
 			return process_IPC_get_runtime_variable_value_request(ipcCommand);
+			break;
+
+		case WD_EXECUTE_CLUSTER_COMMAND:
+			return process_IPC_execute_cluster_command(ipcCommand);
+			break;
+
 		default:
 			ipcCommand->errorMessage = MemoryContextStrdup(ipcCommand->memoryContext, "unknown IPC command type");
 			break;
@@ -2013,6 +2028,56 @@ static IPC_CMD_PREOCESS_RES process_IPC_command(WDCommandData * ipcCommand)
 	return IPC_CMD_ERROR;
 }
 
+static IPC_CMD_PREOCESS_RES
+process_IPC_execute_cluster_command(WDCommandData * ipcCommand)
+{
+	/* get the json for node list */
+	char 	*clusterCommand = NULL;
+	int 	nArgs;
+	WDExecCommandArg *wdExecCommandArg = NULL;
+
+	if (ipcCommand->sourcePacket.len <= 0 || ipcCommand->sourcePacket.data == NULL)
+		return IPC_CMD_ERROR;
+
+	if (!parse_wd_exec_cluster_command_json(ipcCommand->sourcePacket.data, ipcCommand->sourcePacket.len,
+									   &clusterCommand, &nArgs, &wdExecCommandArg))
+	{
+		goto ERROR_EXIT;
+	}
+	if (strcasecmp(WD_COMMAND_SHUTDOWN_CLUSTER, clusterCommand) == 0)
+	{
+		ereport(LOG,
+				(errmsg("Watchdog has received shutdown cluster command from IPC channel")));
+	}
+	else
+	{
+		ipcCommand->errorMessage = MemoryContextStrdup(ipcCommand->memoryContext,
+													   "unknown cluster command requested");
+		goto ERROR_EXIT;
+	}
+
+	/*
+	 * Just broadcast the execute command request to destination node
+	 * Processing the command on the local node is the responsibility of caller
+	 * process
+	 */
+	reply_with_message(NULL, WD_EXECUTE_COMMAND_REQUEST,
+					   ipcCommand->sourcePacket.data, ipcCommand->sourcePacket.len,
+					   NULL);
+
+	if (wdExecCommandArg)
+		pfree(wdExecCommandArg);
+	if (clusterCommand)
+		pfree(clusterCommand);
+	return IPC_CMD_OK;
+
+ERROR_EXIT:
+	if (wdExecCommandArg)
+		pfree(wdExecCommandArg);
+	if (clusterCommand)
+		pfree(clusterCommand);
+	return IPC_CMD_ERROR;
+}
 
 static IPC_CMD_PREOCESS_RES process_IPC_get_runtime_variable_value_request(WDCommandData * ipcCommand)
 {
@@ -3921,6 +3986,66 @@ cluster_service_message_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 	}
 }
 
+static void
+wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt)
+{
+	/* get the json for node list */
+	char 	*clusterCommand = NULL;
+	int 	nArgs;
+	WDExecCommandArg *wdExecCommandArg = NULL;
+
+	if (pkt->type != WD_EXECUTE_COMMAND_REQUEST)
+		return;
+
+	if (pkt->len <= 0 || pkt->data == NULL)
+	{
+		ereport(LOG,
+				(errmsg("node \"%s\" sent an empty execute cluster command message", wdNode->nodeName)));
+		return;
+	}
+
+	if (!parse_wd_exec_cluster_command_json(pkt->data, pkt->len,
+									   &clusterCommand, &nArgs, &wdExecCommandArg))
+	{
+		ereport(LOG,
+				(errmsg("node \"%s\" sent an invalid JSON data in cluster command message", wdNode->nodeName)));
+		return;
+	}
+
+	ereport(DEBUG1,
+			(errmsg("received \"%s\" command from node \"%s\"",clusterCommand, wdNode->nodeName)));
+
+	if (strcasecmp(WD_COMMAND_SHUTDOWN_CLUSTER, clusterCommand) == 0)
+	{
+		int i;
+		char mode = 's';
+		for ( i =0; i < nArgs; i++)
+		{
+			if (strcmp(wdExecCommandArg[i].arg_name, "mode") == 0)
+			{
+				mode = wdExecCommandArg[i].arg_value[0];
+			}
+			else
+				ereport(LOG,
+						(errmsg("unsupported argument \"%s\" in shutdown command from remote node \"%s\"", wdExecCommandArg[i].arg_name, wdNode->nodeName)));
+		}
+		ereport(LOG,
+				(errmsg("processing shutdown command from remote node \"%s\"", wdNode->nodeName)));
+		terminate_pgpool(mode, false);
+	}
+	else
+	{
+		ereport(WARNING,
+				(errmsg("received \"%s\" command from node \"%s\" is not supported",clusterCommand, wdNode->nodeName)));
+	}
+
+	if (wdExecCommandArg)
+		pfree(wdExecCommandArg);
+	if (clusterCommand)
+		pfree(clusterCommand);
+	return;
+}
+
 static int
 standard_packet_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 {
@@ -3932,6 +4057,10 @@ standard_packet_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 			ereport(LOG,
 					(errmsg("remote node \"%s\" is asking to inform about quarantined backend nodes", wdNode->nodeName)));
 			register_inform_quarantine_nodes_req();
+			break;
+
+		case WD_EXECUTE_COMMAND_REQUEST:
+			wd_execute_cluster_command_processor(wdNode, pkt);
 			break;
 
 		case WD_CLUSTER_SERVICE_MESSAGE:
@@ -7419,6 +7548,7 @@ check_and_report_IPC_authentication(WDCommandData * ipcCommand)
 
 		case WD_IPC_FAILOVER_COMMAND:
 		case WD_IPC_ONLINE_RECOVERY_COMMAND:
+		case WD_EXECUTE_CLUSTER_COMMAND:
 		case WD_GET_MASTER_DATA_REQUEST:
 			/* only allowed internaly. */
 			internal_client_only = true;

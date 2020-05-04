@@ -266,6 +266,56 @@ wd_end_recovery(void)
 	return COMMAND_FAILED;
 }
 
+WdCommandResult
+wd_execute_cluster_command(char* clusterCommand,
+						   int nArgs, WDExecCommandArg *wdExecCommandArg)
+{
+	char		type;
+	unsigned int *shared_key = get_ipc_shared_key();
+
+	char	   *func = get_wd_exec_cluster_command_json(clusterCommand, nArgs, wdExecCommandArg,
+												 shared_key ? *shared_key : 0, pool_config->wd_authkey);
+
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_EXECUTE_CLUSTER_COMMAND,
+													   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
+													   func, strlen(func), true);
+
+	pfree(func);
+
+	if (result == NULL)
+	{
+		ereport(WARNING,
+				(errmsg("execute cluster command failed"),
+				 errdetail("issue command to watchdog returned NULL")));
+		return COMMAND_FAILED;
+	}
+
+	type = result->type;
+	FreeCmdResult(result);
+
+	if (type == WD_IPC_CMD_CLUSTER_IN_TRAN)
+	{
+		ereport(WARNING,
+				(errmsg("execute cluster command failed"),
+				 errdetail("watchdog cluster is not in stable state"),
+				 errhint("try again when the cluster is fully initialized")));
+		return CLUSTER_IN_TRANSATIONING;
+	}
+	else if (type == WD_IPC_CMD_TIMEOUT)
+	{
+		ereport(WARNING,
+				(errmsg("execute cluster command failed"),
+				 errdetail("ipc command timeout")));
+		return COMMAND_TIMEOUT;
+	}
+	else if (type == WD_IPC_CMD_RESULT_OK)
+	{
+		return COMMAND_OK;
+	}
+	return COMMAND_FAILED;
+}
+
+
 static char *
 get_wd_failover_state_json(bool start)
 {

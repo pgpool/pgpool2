@@ -805,3 +805,121 @@ get_wd_simple_message_json(char *message)
 	jw_destroy(jNode);
 	return json_str;
 }
+
+char *
+get_wd_exec_cluster_command_json(char *clusterCommand, int nArgs,
+								 WDExecCommandArg *wdExecCommandArg,
+								 unsigned int sharedKey, char *authKey)
+{
+	int i;
+	char	   *json_str;
+	JsonNode   *jNode = jw_create_with_object(true);
+
+	jw_put_int(jNode, WD_IPC_SHARED_KEY, sharedKey);	/* put the shared key */
+
+	if (authKey != NULL && strlen(authKey) > 0)
+		jw_put_string(jNode, WD_IPC_AUTH_KEY, authKey); /* put the auth key */
+
+	jw_put_string(jNode, "Command", clusterCommand);
+
+	jw_put_int(jNode, "nArgs", nArgs);
+
+	/* Array of arguments */
+	jw_start_array(jNode, "argument_list");
+	for (i = 0; i < nArgs; i++)
+	{
+		jw_start_object(jNode, "Arg");
+		jw_put_string(jNode, "arg_name", wdExecCommandArg[i].arg_name);
+		jw_put_string(jNode, "arg_value", wdExecCommandArg[i].arg_value);
+		jw_end_element(jNode);
+	}
+	jw_end_element(jNode);		/* argument_list array End */
+
+	jw_finish_document(jNode);
+	json_str = pstrdup(jw_get_json_string(jNode));
+	jw_destroy(jNode);
+	return json_str;
+}
+
+bool
+parse_wd_exec_cluster_command_json(char *json_data, int data_len,
+								   char **clusterCommand,
+								   int *nArgs, WDExecCommandArg **wdExecCommandArg)
+{
+	json_value *root;
+	char	*ptr = NULL;
+	int		i;
+
+	root = json_parse(json_data, data_len);
+
+	/* The root node must be object */
+	if (root == NULL || root->type != json_object)
+	{
+		json_value_free(root);
+		ereport(LOG,
+				(errmsg("watchdog is unable to parse exec cluster command json"),
+				 errdetail("invalid json data \"%.*s\"", data_len, json_data)));
+		return false;
+	}
+	ptr = json_get_string_value_for_key(root, "Command");
+	if (ptr == NULL)
+	{
+		json_value_free(root);
+		ereport(LOG,
+				(errmsg("watchdog is unable to parse exec cluster command json"),
+				 errdetail("command node not found in json data \"%s\"", json_data)));
+		return false;
+	}
+	*clusterCommand = pstrdup(ptr);
+
+	if (json_get_int_value_for_key(root, "nArgs", nArgs))
+	{
+		/* nArgs not found, Just ignore it */
+		*nArgs = 0;
+		/* it may be from the old version */
+	}
+	if (*nArgs > 0)
+	{
+		json_value *value;
+
+		*wdExecCommandArg = palloc0(sizeof(WDExecCommandArg) * *nArgs);
+
+		/* backend_desc array */
+		value = json_get_value_for_key(root, "argument_list");
+		if (value == NULL || value->type != json_array)
+			goto ERROR_EXIT;
+
+		if (*nArgs!= value->u.array.length)
+		{
+			ereport(LOG,
+					(errmsg("watchdog is unable to parse exec cluster command json"),
+					 errdetail("nArgs is different than argument array length \"%s\"", json_data)));
+			goto ERROR_EXIT;
+		}
+		for (i = 0; i < *nArgs; i++)
+		{
+			json_value *arr_value = value->u.array.values[i];
+			char	   *ptr;
+
+			ptr = json_get_string_value_for_key(arr_value, "arg_name");
+			if (ptr == NULL)
+				goto ERROR_EXIT;
+			strncpy(wdExecCommandArg[i]->arg_name, ptr, sizeof(wdExecCommandArg[i]->arg_name) - 1);
+
+			ptr = json_get_string_value_for_key(arr_value, "arg_value");
+			if (ptr == NULL)
+				goto ERROR_EXIT;
+			strncpy(wdExecCommandArg[i]->arg_value, ptr, sizeof(wdExecCommandArg[i]->arg_value) - 1);
+		}
+	}
+
+	json_value_free(root);
+	return true;
+
+	ERROR_EXIT:
+	if (root)
+		json_value_free(root);
+	if (*wdExecCommandArg )
+		pfree(*wdExecCommandArg);
+	return false;
+}

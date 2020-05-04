@@ -608,7 +608,7 @@ pcp_disconnect(PCPConnInfo * pcpConn)
  * --------------------------------
  */
 PCPResultInfo *
-pcp_terminate_pgpool(PCPConnInfo * pcpConn, char mode)
+pcp_terminate_pgpool(PCPConnInfo * pcpConn, char mode, char command_scope)
 {
 	int			wsize;
 
@@ -617,7 +617,10 @@ pcp_terminate_pgpool(PCPConnInfo * pcpConn, char mode)
 		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
-	pcp_write(pcpConn->pcpConn, "T", 1);
+	if (command_scope == 'l')	/*local only*/
+		pcp_write(pcpConn->pcpConn, "T", 1);
+	else
+		pcp_write(pcpConn->pcpConn, "t", 1);
 	wsize = htonl(sizeof(int) + sizeof(char));
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
 	pcp_write(pcpConn->pcpConn, &mode, sizeof(char));
