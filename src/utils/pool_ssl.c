@@ -309,14 +309,6 @@ init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype)
 	 */
 	SSL_CTX_set_mode(cp->ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
-	/* set up the allowed cipher list */
-	error = SSL_CTX_set_cipher_list(cp->ssl_ctx, pool_config->ssl_ciphers);
-	SSL_RETURN_ERROR_IF((error != 1), "Setting allowed cipher list");
-
-	/* Let server choose order */
-	if (pool_config->ssl_prefer_server_ciphers)
-		SSL_CTX_set_options(cp->ssl_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
-
 	if (conntype == ssl_conn_serverclient)
 	{
 		/* between frontend and pgpool */
@@ -500,9 +492,6 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 /*
  *	Initialize global SSL context.
  *
- * If isServerStart is true, report any errors as FATAL (so we don't return).
- * Otherwise, log errors at LOG level and return -1 to indicate trouble,
- * preserving the old SSL state if any.  Returns 0 if OK.
  */
 int
 SSL_ServerSide_init(void)
@@ -642,6 +631,14 @@ SSL_ServerSide_init(void)
 
 	/* disallow SSL session caching, too */
 	SSL_CTX_set_session_cache_mode(context, SSL_SESS_CACHE_OFF);
+
+	/* set up the allowed cipher list */
+	if (SSL_CTX_set_cipher_list(context, pool_config->ssl_ciphers) != 1)
+		goto error;
+
+	/* Let server choose order */
+	if (pool_config->ssl_prefer_server_ciphers)
+		SSL_CTX_set_options(context, SSL_OP_CIPHER_SERVER_PREFERENCE);
 
 	/*
 	 * Load CA store, so we can verify client certificates if needed.
