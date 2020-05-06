@@ -41,7 +41,7 @@ Pgpool-II documentation
    <!--
    terminates the Pgpool-II process.
    -->
-   は <productname>Pgpool-II</productname> を指定されたモードでシャットダウンします。
+   は <productname>Pgpool-II</productname> を指定されたモードで停止します。
   </para>
  </refsect1>
 
@@ -61,13 +61,14 @@ Pgpool-II documentation
        <!--
        Shutdown mode for terminating the Pgpool-II process.
        -->
-       シャットダウンモードを指定します。
+       停止モードを指定します。
       </para>
       <para>
        <!--
        The available modes are as follows:
        -->
        指定できるモードは以下のとおりです。
+       デフォルトは"smart"です。
        <itemizedlist>
 	<!--
 	<listitem><para>s, smart : smart mode </para></listitem>
@@ -81,6 +82,24 @@ Pgpool-II documentation
       </para>
       <para>
        ※ 現在は fast モードと immediate シャットダウンの処理に区別はありません。 命令を送った時点でクライアントがいる・いないに関わらずシャットダウン処理を即座に行います。
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-s <replaceable class="parameter">scope</replaceable></option></term>
+     <term><option>--scope=<replaceable class="parameter">scope</replaceable></option></term>
+     <listitem>
+      <para>
+       Pgpool-IIプロセスの停止モードを指定します。
+      </para>
+      <para>
+　　　　サポートされているコマンドスコープは以下です。
+       デフォルトは"local"です。
+       <itemizedlist>
+	<listitem><para>c, cluster : クラスタを構成するすべてのPgpool-IIノードを停止します。</para></listitem>
+	<listitem><para>l, local : ローカルPgpool-IIノードのみを停止します。</para></listitem>
+       </itemizedlist>
       </para>
      </listitem>
     </varlistentry>

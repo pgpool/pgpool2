@@ -49,7 +49,7 @@ Pgpool-II documentation
        Shutdown mode for terminating the Pgpool-II process.
       </para>
       <para>
-       The available modes are as follows:
+       The available modes are as follows (The default is "smart"):
        <itemizedlist>
 	<listitem><para>s, smart : smart mode </para></listitem>
 	<listitem><para>f, fast : fast mode </para></listitem>
@@ -67,7 +67,7 @@ Pgpool-II documentation
        Shutdown mode for terminating the Pgpool-II process.
       </para>
       <para>
-       The supported command scopes are as follows:
+       The supported command scopes are as follows (The default is "local"):
        <itemizedlist>
 	<listitem><para>c, cluster : terminates all Pgpool-II nodes part of the cluster </para></listitem>
 	<listitem><para>l, local : terminates local Pgpool-II node only </para></listitem>
