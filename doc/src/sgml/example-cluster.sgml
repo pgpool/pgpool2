@@ -1052,6 +1052,12 @@ if_up_cmd = '/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev enp0s8 label enp0s8:0
 if_down_cmd = '/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev enp0s8'
 arping_cmd = '/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I enp0s8'
    </programlisting>
+   <note>
+    <para>
+     If "Defaults requiretty" is set in the <filename>/etc/sudoers</filename>,
+     please ensure that the <productname>pgpool</productname> startup user can execute the <command>if_up_cmd</command>, <command>if_down_cmd</command> and <command>arping_cmd</command> command without a tty.
+    </para>
+   </note>
    <para>
     Set <xref linkend="GUC-IF-CMD-PATH"> and <xref linkend="GUC-ARPING-PATH"> according to the
     command path.
