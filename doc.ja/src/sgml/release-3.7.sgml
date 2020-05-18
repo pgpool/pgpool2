@@ -1,6 +1,168 @@
 <!-- doc/src/sgml/release-3.7.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-7-14> 
+ <!--
+ <title>Release 3.7.14</title>
+ -->
+ <title>リリース 3.7.14</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2020-05-21</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-05-16 [2fd983b]
+    2020-04-26 [1304dcc]
+    -->
+    <para>
+     <!--
+     Fix build error on some system (Fedora 32). (Tatsuo Ishii)
+     -->
+     一部のシステム(Fedora 32)で発生するビルドエラーを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-23 [1221a65]
+    -->
+    <para>
+     <!--
+     Fix unnecessary checks. (Tatsuo Ishii)
+     -->
+     不要なチェックを削除しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <!--
+     Patch contributed by sherlockcpp. Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2020-April/007062.html">[pgpool-general: 7004]</ulink>
+     -->
+     パッチはsherlockcppによって提供されました。Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2020-April/007062.html">[pgpool-general: 7004]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-23 [8ea84b9]
+    -->
+    <para>
+     <!--
+     Doc: Fix typo. (Tatsuo Ishii)
+     -->
+     Doc: ドキュメントのタイポを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <!--
+     Patch contributed by Umar Hayat. 
+     -->
+     パッチはUmar Hayatによって提供されました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2020-April/003587.html">[pgpool-hackers: 3587]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-16 [75432c0]
+    -->
+    <para>
+     <!--
+     Fix for segmentation fault in PCP process. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=598">bug 598</ulink>) (Muhammad Usama)
+     -->
+     PCP プロセスのセグメンテーション違反を修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=598">bug 598</ulink>) (Muhammad Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-12 [237793e]
+    2020-04-06 [225290a]
+    -->
+    <para>
+     <!--
+     Doc: Fix typo. (Tatsuo Ishii, Bo Peng)
+     -->
+     Doc: タイポを修正しました。(Tatsuo Ishii, Bo Peng)
+    </para>
+    <para>
+     <!--
+     Patch provided by sherlockcpp.
+     -->
+     パッチはsherlockcppによって提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-31 [9151b53]
+    -->
+    <para>
+     <!--
+     Fix <productname>Pgpool-II</productname> hangs when an Execute message is issued right after Sync message and query cache hits. (Tatsuo Ishii)
+     -->
+     Syncメッセージの直後にExecuteメッセージが発行され、クエリキャッシュがヒットすると、<productname>Pgpool-II</productname>がハングアップする不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-13 [a558287]
+    -->
+    <para>
+     <!--
+     Fix problems in watchdog source code processing json data. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=596">bug 596</ulink>) (Tatsuo Ishii)
+     -->
+     Watchdogのソースコードの不適切なJSONデータの処理を修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=596">bug 596</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     <!--
+     Patch is provided by Greg Nancarrow (Fujitsu Australia).
+     -->
+     パッチはGreg Nancarrow (Fujitsu Australia)によって提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-11 [a639141]
+    -->
+    <para>
+     <!--
+     Fix possible data inconsistency in native replication mode. (Tatsuo Ishii)
+     -->
+     ネイティブレプリケーションモードで起こりうるデータの不整合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     Discussions:
+     <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2020-March/006954.html">[pgpool-general: 6896]</ulink>
+     <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2020-March/003540.html">[pgpool-hackers: 3540]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-06 [5ce6273]
+    -->
+    <para>
+     <!--
+     Fix watchdog ping probes fail with long hostnames due to small buffer. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=516">bug 516</ulink>) (Bo Peng)
+     -->
+     ホスト名が長い場合、バッファサイズの制限によってWatchdogのpingが失敗する問題を修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=516">bug 516</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-7-13> 
  <!--
  <title>Release 3.7.13</title>
