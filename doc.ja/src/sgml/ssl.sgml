@@ -72,14 +72,14 @@
     <listitem>
      <para>
       <!--
-      Specifies the path to the private key file to be used for
-      incoming frontend connections. If specifies relative path, it is based
-      on the directory where pgpool is starting up.
+      Specifies the private key file to be used for
+      incoming frontend connections. Relative paths are relative to
+      <productname>Pgpool-II</productname> configuration directory.
       There is no default value for this option, and if left unset
       <acronym>SSL</acronym> will be disabled for incoming frontend connections.
       -->
       フロントエンドとの接続に使用するプライベートキーファイルのパスを指定します。
-      相対パスで指定した場合、Pgpool-IIの実行ディレクトリが基準となります。
+      相対パスで指定した場合、<productname>Pgpool-II</productname>の設定ファイルディレクトリが基準となります。
       このオプションのデフォルト値はありません。
       設定がない場合は、フロントエンドとの接続で<acronym>SSL</acronym>が使用されなくなります。 
      </para>
@@ -104,14 +104,14 @@
     <listitem>
      <para>
       <!--
-      Specifies the path to the public x509 certificate file to be used
-      for the incoming frontend connections. If specifies relative path, based
-      path is Pgpool-II is run directory.
+      Specifies the public x509 certificate file to be used
+      for the incoming frontend connections. Relative paths are relative to
+      <productname>Pgpool-II</productname> configuration directory.
       There is no default value for this option, and if left unset
       <acronym>SSL</acronym> will be disabled for incoming frontend connections.
       -->
-      フロントエンドとの接続に使用する公開x509証明書のフルパスを指定します。 
-      相対パスで指定した場合、Pgpool-IIの実行ディレクトリが基準となります。
+      フロントエンドとの接続に使用する公開x509証明書のパスを指定します。 
+      相対パスで指定した場合、<productname>Pgpool-II</productname>の設定ファイルディレクトリが基準となります。
       このオプションのデフォルト値はありません。
       設定がない場合は、フロントエンドとの接続で<acronym>SSL</acronym>が使用されなくなります。 
      </para>
@@ -169,14 +169,16 @@
     <listitem>
      <para>
       <!--
-      Specifies the path to a directory containing <acronym>PEM</acronym>
-      format <acronym>CA</acronym> certificate files, which can be used
-      to verify the backend server certificates. This is analogous to
-      the <command>-CApath</command> option of the
+      Specifies a <acronym>PEM</acronym> format <acronym>CA</acronym>
+      certificate file, which can be used to verify the backend server
+      certificates. Relative paths are relative to
+      <productname>Pgpool-II</productname> configuration directory. This is
+      analogous to the <command>-CApath</command> option of the
       <command>OpenSSL verify(1)</command> command.
       -->
       <acronym>PEM</acronym>形式の<acronym>CA</acronym>ルート証明書ファイルが格納されているディレクトリへのパスを指定します。
       これはバックエンドサーバ証明書の検証に用いられます。
+      相対パスで指定した場合、<productname>Pgpool-II</productname>の設定ファイルディレクトリが基準となります。
       このオプションは<command>OpenSSL verify(1)</command>コマンドにおける<command>-CAfile</command>オプションと同様の機能を提供します。
      </para>
      <para>
@@ -206,7 +208,8 @@
     </term>
     <listitem>
      <para>
-      SSSLサーバ証明書失効リスト（CRL）が入っているファイルのパス名を設定します。
+      SSSLサーバ証明書失効リスト（CRL）が入っているファイルのパスを設定します。
+      相対パスで指定した場合、<productname>Pgpool-II</productname>の設定ファイルディレクトリが基準となります。
       デフォルトは空で、この場合<acronym>CRL</acronym>ファイルは読み込まれません。
      </para>
 

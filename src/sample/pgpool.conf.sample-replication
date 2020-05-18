@@ -111,21 +111,21 @@ allow_clear_text_frontend_auth = off
 ssl = off
                                    # Enable SSL support
                                    # (change requires restart)
-#ssl_key = './server.key'
-                                   # Path to the SSL private key file
+#ssl_key = 'server.key'
+                                   # SSL private key file
                                    # (change requires restart)
-#ssl_cert = './server.cert'
-                                   # Path to the SSL public certificate file
+#ssl_cert = 'server.crt'
+                                   # SSL public certificate file
                                    # (change requires restart)
 #ssl_ca_cert = ''
-                                   # Path to a single PEM format file
-                                   # containing CA root certificate(s)
+                                   # Single PEM format file containing
+                                   # CA root certificate(s)
                                    # (change requires restart)
 #ssl_ca_cert_dir = ''
                                    # Directory containing CA root certificate(s)
                                    # (change requires restart)
 #ssl_crl_file = ''
-                                   # Path to the SSL certificate revocation list file
+                                   # SSL certificate revocation list file
                                    # (change requires restart)
 
 ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'

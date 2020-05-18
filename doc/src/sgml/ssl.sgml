@@ -48,9 +48,9 @@
     </term>
     <listitem>
      <para>
-      Specifies the path to the private key file to be used for
-      incoming frontend connections. If specifies relative path, it is based
-      on the directory where pgpool is starting up.
+      Specifies the private key file to be used for
+      incoming frontend connections. Relative paths are relative to
+      <productname>Pgpool-II</productname> configuration directory.
       There is no default value for this option, and if left unset
       <acronym>SSL</acronym> will be disabled for incoming frontend connections.
      </para>
@@ -68,9 +68,9 @@
     </term>
     <listitem>
      <para>
-      Specifies the path to the public x509 certificate file to be used
-      for the incoming frontend connections. If specifies relative path, based
-      path is Pgpool-II is run directory.
+      Specifies the public x509 certificate file to be used
+      for the incoming frontend connections. Relative paths are relative to
+      <productname>Pgpool-II</productname> configuration directory.
       There is no default value for this option, and if left unset
       <acronym>SSL</acronym> will be disabled for incoming frontend connections.
      </para>
@@ -89,10 +89,11 @@
     </term>
     <listitem>
      <para>
-      Specifies the path to a <acronym>PEM</acronym>
-      format <acronym>CA</acronym> certificate files, which can be used
-      to verify the backend server certificates. This is analogous to
-      the <command>-CApath</command> option of the
+      Specifies a <acronym>PEM</acronym> format <acronym>CA</acronym>
+      certificate file, which can be used to verify the backend server
+      certificates. Relative paths are relative to
+      <productname>Pgpool-II</productname> configuration directory. This is
+      analogous to the <command>-CApath</command> option of the
       <command>OpenSSL verify(1)</command> command.
      </para>
 
@@ -136,9 +137,10 @@
     </term>
     <listitem>
      <para>
-      Specifies the path to the file containing the SSL server
-      certificate revocation list (CRL). The default is empty,
-      meaning no <acronym>CRL</acronym> file is loaded.
+      Specifies the file containing the SSL server certificate
+      revocation list (CRL). Relative paths are relative to
+      <productname>Pgpool-II</productname> configuration directory.
+      The default is empty, meaning no <acronym>CRL</acronym> file is loaded.
      </para>
 
      <para>

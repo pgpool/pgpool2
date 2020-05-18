@@ -236,17 +236,17 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "ssl_key", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_key);
-	StrNCpy(status[i].desc, "path to the SSL private key file", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "SSL private key file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "ssl_cert", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_cert);
-	StrNCpy(status[i].desc, "path to the SSL public certificate file", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "SSL public certificate file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "ssl_ca_cert", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_ca_cert);
-	StrNCpy(status[i].desc, "path to a single PEM format file", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "single PEM format file containing CA root certificate(s)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "ssl_ca_cert_dir", POOLCONFIG_MAXNAMELEN);
@@ -256,7 +256,7 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "ssl_crl_file", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->ssl_crl_file);
-	StrNCpy(status[i].desc, "path to the SSL certificate revocation list file", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "SSL certificate revocation list file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "ssl_ciphers", POOLCONFIG_MAXNAMELEN);

@@ -1032,7 +1032,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"ssl_cert", CFGCXT_INIT, SSL_CONFIG,
-			"Path to the SSL public certificate file.",
+			"SSL public certificate file.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.ssl_cert,
@@ -1042,7 +1042,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"ssl_key", CFGCXT_INIT, SSL_CONFIG,
-			"Path to the SSL private key file.",
+			"SSL private key file.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.ssl_key,
@@ -1052,7 +1052,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"ssl_ca_cert", CFGCXT_INIT, SSL_CONFIG,
-			"Path to a single PEM format file.",
+			"Single PEM format file containing CA root certificate(s).",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.ssl_ca_cert,
@@ -1072,7 +1072,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"ssl_crl_file", CFGCXT_INIT, SSL_CONFIG,
-			"Path to the SSL certificate revocation list file",
+			"SSL certificate revocation list file",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.ssl_crl_file,

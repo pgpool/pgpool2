@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <libgen.h>
 
 #include "pool.h"
 #include "config.h"
@@ -35,6 +36,7 @@
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "utils/pool_stream.h"
+#include "utils/pool_path.h"
 #include "main/pool_internal_comms.h"
 
 
@@ -53,6 +55,7 @@ static DH *load_dh_buffer(const char *, size_t);
 static bool initialize_dh(SSL_CTX *context);
 static bool initialize_ecdh(SSL_CTX *context);
 static int run_ssl_passphrase_command(const char *prompt, char *buf, int size);
+static void pool_ssl_make_absolute_path(char *artifact_path, char *config_dir, char *absolute_path);
 
 #define SSL_RETURN_VOID_IF(cond, msg) \
 	do { \
@@ -302,6 +305,17 @@ init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype)
 	char	   *cacert = NULL,
 			   *cacert_dir = NULL;
 
+	char ssl_cert_path[POOLMAXPATHLEN + 1];
+	char ssl_key_path[POOLMAXPATHLEN + 1];
+	char ssl_ca_cert_path[POOLMAXPATHLEN + 1];
+
+	char *conf_file_copy = pstrdup(get_config_file_name());
+	char *conf_dir = dirname(conf_file_copy);
+
+	pool_ssl_make_absolute_path(pool_config->ssl_cert, conf_dir, ssl_cert_path);
+	pool_ssl_make_absolute_path(pool_config->ssl_key, conf_dir, ssl_key_path);
+	pool_ssl_make_absolute_path(pool_config->ssl_ca_cert, conf_dir, ssl_ca_cert_path);
+
 	/* initialize SSL members */
 #if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
 	cp->ssl_ctx = SSL_CTX_new(TLS_method());
@@ -321,11 +335,11 @@ init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype)
 	{
 		/* between frontend and pgpool */
 		error = SSL_CTX_use_certificate_chain_file(cp->ssl_ctx,
-												   pool_config->ssl_cert);
+												   ssl_cert_path);
 		SSL_RETURN_ERROR_IF((error != 1), "Loading SSL certificate");
 
 		error = SSL_CTX_use_PrivateKey_file(cp->ssl_ctx,
-											pool_config->ssl_key,
+											ssl_key_path,
 											SSL_FILETYPE_PEM);
 		SSL_RETURN_ERROR_IF((error != 1), "Loading SSL private key");
 	}
@@ -333,8 +347,8 @@ init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype)
 	{
 		/* between pgpool and backend */
 		/* set extra verification if ssl_ca_cert or ssl_ca_cert_dir are set */
-		if (strlen(pool_config->ssl_ca_cert))
-			cacert = pool_config->ssl_ca_cert;
+		if (strlen(ssl_ca_cert_path))
+			cacert = ssl_ca_cert_path;
 		if (strlen(pool_config->ssl_ca_cert_dir))
 			cacert_dir = pool_config->ssl_ca_cert_dir;
 
@@ -351,6 +365,7 @@ init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype)
 	cp->ssl = SSL_new(cp->ssl_ctx);
 	SSL_RETURN_ERROR_IF((!cp->ssl), "SSL_new");
 
+	pfree(conf_file_copy);
 	return 0;
 }
 
@@ -521,6 +536,16 @@ SSL_ServerSide_init(void)
 	STACK_OF(X509_NAME) *root_cert_list = NULL;
 	SSL_CTX    *context;
 	struct stat buf;
+	char ssl_cert_path[POOLMAXPATHLEN + 1] = "";
+	char ssl_key_path[POOLMAXPATHLEN + 1] = "";
+	char ssl_ca_cert_path[POOLMAXPATHLEN + 1] = "";
+
+	char *conf_file_copy = pstrdup(get_config_file_name());
+	char *conf_dir = dirname(conf_file_copy);
+
+	pool_ssl_make_absolute_path(pool_config->ssl_cert, conf_dir, ssl_cert_path);
+	pool_ssl_make_absolute_path(pool_config->ssl_key, conf_dir, ssl_key_path);
+	pool_ssl_make_absolute_path(pool_config->ssl_ca_cert, conf_dir, ssl_ca_cert_path);
 
 	/* This stuff need be done only once. */
 	if (!SSL_initialized)
@@ -572,19 +597,19 @@ SSL_ServerSide_init(void)
 	/*
 	 * Load and verify server's certificate and private key
 	 */
-	if (SSL_CTX_use_certificate_chain_file(context, pool_config->ssl_cert) != 1)
+	if (SSL_CTX_use_certificate_chain_file(context, ssl_cert_path) != 1)
 	{
 		ereport(WARNING,
 				(errmsg("could not load server certificate file \"%s\": %s",
-						pool_config->ssl_cert, SSLerrmessage(ERR_get_error()))));
+						ssl_cert_path, SSLerrmessage(ERR_get_error()))));
 		goto error;
 	}
 
-	if (stat(pool_config->ssl_key, &buf) != 0)
+	if (stat(ssl_key_path, &buf) != 0)
 	{
 		ereport(WARNING,
 				(errmsg("could not access private key file \"%s\": %m",
-						pool_config->ssl_key)));
+						ssl_key_path)));
 		goto error;
 	}
 
@@ -592,7 +617,7 @@ SSL_ServerSide_init(void)
 	{
 		ereport(WARNING,
 				(errmsg("private key file \"%s\" is not a regular file",
-						pool_config->ssl_key)));
+						ssl_key_path)));
 		goto error;
 	}
 
@@ -613,7 +638,7 @@ SSL_ServerSide_init(void)
 	{
 		ereport(WARNING,
 				(errmsg("private key file \"%s\" has group or world access",
-						pool_config->ssl_key),
+						ssl_key_path),
 				 errdetail("File must have permissions u=rw (0600) or less if owned by the Pgpool-II user, or permissions u=rw,g=r (0640) or less if owned by root.")));
 	}
 #endif
@@ -624,17 +649,17 @@ SSL_ServerSide_init(void)
 	dummy_ssl_passwd_cb_called = false;
 
 	if (SSL_CTX_use_PrivateKey_file(context,
-									pool_config->ssl_key,
+									ssl_key_path,
 									SSL_FILETYPE_PEM) != 1)
 	{
 		if (dummy_ssl_passwd_cb_called)
 			ereport(WARNING,
 					(errmsg("private key file \"%s\" cannot be reloaded because it requires a passphrase",
-							pool_config->ssl_key)));
+							ssl_key_path)));
 		else
 			ereport(WARNING,
 					(errmsg("could not load private key file \"%s\": %s",
-							pool_config->ssl_key, SSLerrmessage(ERR_get_error()))));
+							ssl_key_path, SSLerrmessage(ERR_get_error()))));
 		goto error;
 	}
 
@@ -675,13 +700,11 @@ SSL_ServerSide_init(void)
 	/*
 	 * Load CA store, so we can verify client certificates if needed.
 	 */
-	if (pool_config->ssl_ca_cert && strlen(pool_config->ssl_ca_cert))
+	if (strlen(ssl_ca_cert_path))
 	{
-		char	   *cacert = NULL,
+		char	   *cacert = ssl_ca_cert_path,
 				   *cacert_dir = NULL;
 
-		if (strlen(pool_config->ssl_ca_cert))
-			cacert = pool_config->ssl_ca_cert;
 		if (strlen(pool_config->ssl_ca_cert_dir))
 			cacert_dir = pool_config->ssl_ca_cert_dir;
 
@@ -690,7 +713,7 @@ SSL_ServerSide_init(void)
 		{
 			ereport(WARNING,
 					(errmsg("could not load root certificate file \"%s\": %s",
-							pool_config->ssl_ca_cert, SSLerrmessage(ERR_get_error()))));
+							cacert, SSLerrmessage(ERR_get_error()))));
 			goto error;
 		}
 	}
@@ -702,12 +725,15 @@ SSL_ServerSide_init(void)
 	 */
 	if (pool_config->ssl_crl_file && strlen(pool_config->ssl_crl_file))
 	{
+		char ssl_crl_path[POOLMAXPATHLEN + 1] = "";
+		pool_ssl_make_absolute_path(pool_config->ssl_crl_file, conf_dir, ssl_crl_path);
+
 		X509_STORE *cvstore = SSL_CTX_get_cert_store(context);
 
 		if (cvstore)
 		{
 			/* Set the flags to check against the complete CRL chain */
-			if (X509_STORE_load_locations(cvstore, pool_config->ssl_crl_file, NULL) == 1)
+			if (X509_STORE_load_locations(cvstore, ssl_crl_path, NULL) == 1)
 			{
 				/* OpenSSL 0.9.6 does not support X509_V_FLAG_CRL_CHECK */
 #ifdef X509_V_FLAG_CRL_CHECK
@@ -717,7 +743,7 @@ SSL_ServerSide_init(void)
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("SSL certificate revocation list file \"%s\" ignored",
-								pool_config->ssl_crl_file),
+								ssl_crl_path),
 						 errdetail("SSL library does not support certificate revocation lists.")));
 #endif
 			}
@@ -726,13 +752,13 @@ SSL_ServerSide_init(void)
 				ereport(WARNING,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("could not load SSL certificate revocation list file \"%s\": %s",
-								pool_config->ssl_crl_file, SSLerrmessage(ERR_get_error()))));
+								ssl_crl_path, SSLerrmessage(ERR_get_error()))));
 				goto error;
 			}
 		}
 	}
 
-	if (pool_config->ssl_ca_cert && strlen(pool_config->ssl_ca_cert))
+	if (strlen(ssl_ca_cert_path))
 	{
 		/*
 		 * Always ask for SSL client cert, but don't fail if it's not
@@ -763,6 +789,7 @@ SSL_ServerSide_init(void)
 	return 0;
 
 error:
+	pfree(conf_file_copy);
 	if (context)
 		SSL_CTX_free(context);
 	return -1;
@@ -1010,6 +1037,18 @@ run_ssl_passphrase_command(const char *prompt, char *buf, int size)
 error:
 	pfree(command.data);
 	return len;
+}
+
+void
+pool_ssl_make_absolute_path(char *artifact_path, char *config_dir, char *absolute_path)
+{
+	if (artifact_path && strlen(artifact_path))
+	{
+		if(is_absolute_path(artifact_path))
+			strncpy(absolute_path, artifact_path, POOLMAXPATHLEN);
+		else
+			snprintf(absolute_path, POOLMAXPATHLEN, "%s/%s", config_dir, artifact_path);
+	}
 }
 
 #else							/* USE_SSL: wrap / no-op ssl functionality if

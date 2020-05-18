@@ -7,18 +7,19 @@ TESTDIR=testdir
 PSQL=$PGBIN/psql
 PG_CTL=$PGBIN/pg_ctl
 export PGDATABASE=test
+SSL_KEY=server.key
+SSL_CRT=server.crt
+SSL_CRL=server.crl
+SSL_CRL2=server_revoked.crl
+ROOT_CRT=root.crt
 
 # Generate certifications
 ./cert.sh
+chmod 600 *.key
 
 dir=`pwd`
-SSL_KEY=$dir/server.key
-SSL_CRT=$dir/server.crt
-SSL_CRL=$dir/server.crl
-ROOT_CRT=$dir/root.crt
 FRONTEND_KEY=$dir/frontend.key
 FRONTEND_CRT=$dir/frontend.crt
-chmod 600 *.key
 
 rm -fr $TESTDIR
 mkdir $TESTDIR
@@ -29,7 +30,13 @@ echo -n "creating test environment..."
 $PGPOOL_SETUP -m s -n 1 || exit 1
 echo "done."
 
-dir=`pwd`
+# setup SSL key and crt file
+cp -p ../$SSL_KEY etc/
+chmod og-rwx etc/$SSL_KEY
+cp -p ../$SSL_CRT etc/
+cp -p ../$SSL_CRL etc/
+cp -p ../$SSL_CRL2 etc/
+cp -p ../$ROOT_CRT etc/
 
 echo "ssl = on" >> etc/pgpool.conf
 echo "ssl_key = '$SSL_KEY'" >> etc/pgpool.conf
@@ -53,7 +60,7 @@ wait_for_pgpool_startup
 
 export PGSSLCERT=$FRONTEND_CRT
 export PGSSLKEY=$FRONTEND_KEY
-export PGSSLROOTCERT=$ROOT_CRT
+export PGSSLROOTCERT=$dir/$ROOT_CRT
 
 $PSQL -h localhost -c "select 1" test
 
@@ -90,7 +97,7 @@ wait_for_pgpool_startup
 
 export PGSSLCERT=$FRONTEND_CRT
 export PGSSLKEY=$FRONTEND_KEY
-export PGSSLROOTCERT=$ROOT_CRT
+export PGSSLROOTCERT=$dir/$ROOT_CRT
 
 $PSQL -h localhost -c "select 1" test
 
@@ -128,7 +135,7 @@ wait_for_pgpool_startup
 
 export PGSSLCERT=$FRONTEND_CRT
 export PGSSLKEY=$FRONTEND_KEY
-export PGSSLROOTCERT=$ROOT_CRT
+export PGSSLROOTCERT=$dir/$ROOT_CRT
 
 $PSQL -h localhost -c "select 1" test > $dir/crl_session.log  2>&1
 

@@ -31,8 +31,8 @@ cp -p ../$SSL_CRT data0/
 dir=`pwd`
 
 echo "ssl = on" >> etc/pgpool.conf
-echo "ssl_key = '$dir/etc/$SSL_KEY'" >> etc/pgpool.conf
-echo "ssl_cert = '$dir/etc/$SSL_CRT'" >> etc/pgpool.conf
+echo "ssl_key = '$SSL_KEY'" >> etc/pgpool.conf
+echo "ssl_cert = '$SSL_CRT'" >> etc/pgpool.conf
 echo "ssl_prefer_server_ciphers = on" >> etc/pgpool.conf
 echo "ssl_ciphers = 'EECDH:HIGH:MEDIUM:+3DES:!aNULL'" >> etc/pgpool.conf
 
