@@ -1,6 +1,190 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-4-1-2> 
+ <title>Release 4.1.2</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2020-05-21</simpara>
+ </note>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-05-16 [2fd983b]
+    2020-04-26 [1304dcc]
+    -->
+    <para>
+     Fix build error on some system (Fedora 32). (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-10 [f106b2b]
+    -->
+    <para>
+     Doc: Add note about <xref linkend="guc-if-up-cmd"> and <xref linkend="guc-if-down-cmd"> command. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-06 [7c13a60]
+    -->
+    <para>
+     Fix pgpool ssl front end accept all ciphers. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=608">bug 608</ulink>) (Muhammad Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-26 [311cdc7]
+    -->
+    <para>
+     Downgrade too verbose authentication logs. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-23 [1221a65]
+    -->
+    <para>
+     Fix unnecessary checks. (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch contributed by sherlockcpp. Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2020-April/007062.html">[pgpool-general: 7004]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-23 [8ea84b9]
+    -->
+    <para>
+     Doc: Fix typo. (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch contributed by Umar Hayat. Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2020-April/003587.html">[pgpool-hackers: 3587]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-16 [75432c0]
+    -->
+    <para>
+     Fix for segmentation fault in PCP process. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=598">bug 598</ulink>) (Muhammad Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-15 [595a3ec]
+    -->
+    <para>
+     Fix a warning message is never output in watchdog. (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch provided by sherlockcpp. Discussion: (<ulink url="https://www.pgpool.net/pipermail/pgpool-general/2020-April/007014.html">[pgpool-general: 6956]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-12 [237793e]
+    2020-04-06 [225290a]
+    -->
+    <para>
+     Doc: Fix typo. (Tatsuo Ishii, Bo Peng)
+    </para>
+    <para>
+     Patch provided by sherlockcpp.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-31 [9151b53]
+    -->
+    <para>
+     Fix <productname>Pgpool-II</productname> hangs when an Execute message is issued right after Sync message and query cache hits. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-13 [a558287]
+    -->
+    <para>
+     Fix problems in watchdog source code processing json data. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=596">bug 596</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch is provided by Greg Nancarrow (Fujitsu Australia).
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-12 [0c1649e]
+    -->
+    <para>
+     Fix <literal>SCRAM</literal> auth handling bug. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=596">bug 596</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch is provided by Greg Nancarrow (Fujitsu Australia).
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-11 [a639141]
+    -->
+    <para>
+     Fix possible data inconsistency in native replication mode. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussions:
+     <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2020-March/006954.html">[pgpool-general: 6896]</ulink>
+     <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2020-March/003540.html">[pgpool-hackers: 3540]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-06 [5ce6273]
+    -->
+    <para>
+     Fix watchdog ping probes fail with long hostnames due to small buffer. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=516">bug 516</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-02 [ffb3c59]
+    2020-02-27 [d0774d5]
+    2020-02-27 [f1e3ac9]
+    -->
+    <para>
+     Doc: Enhance documents. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-02-26 [99abd2e]
+    -->
+    <para>
+     Fix "last status change" timestamp is not set properly. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-4-1-1> 
  <title>Release 4.1.1</title>
  <note>
