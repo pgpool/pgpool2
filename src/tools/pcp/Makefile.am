@@ -12,7 +12,8 @@ bin_PROGRAMS =  pcp_stop_pgpool \
 				pcp_recovery_node \
 				pcp_promote_node \
 				pcp_pool_status \
-				pcp_watchdog_info
+				pcp_watchdog_info\
+				pcp_reload_config
 
 client_sources = pcp_frontend_client.c ../fe_memutils.c ../../utils/sprompt.c ../../utils/pool_path.c
 
@@ -40,4 +41,6 @@ pcp_promote_node_SOURCES = $(client_sources)
 pcp_promote_node_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_watchdog_info_SOURCES = $(client_sources)
 pcp_watchdog_info_LDADD = $(libs_dir)/pcp/libpcp.la
+pcp_reload_config_SOURCES = $(client_sources)
+pcp_reload_config_LDADD = $(libs_dir)/pcp/libpcp.la
 

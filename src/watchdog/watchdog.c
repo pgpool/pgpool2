@@ -2049,6 +2049,11 @@ process_IPC_execute_cluster_command(WDCommandData * ipcCommand)
 		ereport(LOG,
 				(errmsg("Watchdog has received shutdown cluster command from IPC channel")));
 	}
+	else if (strcasecmp(WD_COMMAND_RELOAD_CONFIG_CLUSTER, clusterCommand) == 0)
+	{
+		ereport(LOG,
+				(errmsg("Watchdog has received reload config cluster command from IPC channel")));
+	}
 	else
 	{
 		ipcCommand->errorMessage = MemoryContextStrdup(ipcCommand->memoryContext,
@@ -4032,6 +4037,12 @@ wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 		ereport(LOG,
 				(errmsg("processing shutdown command from remote node \"%s\"", wdNode->nodeName)));
 		terminate_pgpool(mode, false);
+	}
+	else if (strcasecmp(WD_COMMAND_RELOAD_CONFIG_CLUSTER, clusterCommand) == 0)
+	{
+		ereport(LOG,
+				(errmsg("processing reload config command from remote node \"%s\"", wdNode->nodeName)));
+		pool_signal_parent(SIGHUP);
 	}
 	else
 	{

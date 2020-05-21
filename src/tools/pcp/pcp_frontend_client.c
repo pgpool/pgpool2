@@ -43,6 +43,7 @@ char	   *last_dir_separator(const char *filename);
 
 static void usage(void);
 static inline bool app_require_nodeID(void);
+static inline bool app_support_cluster_mode(void);
 static void output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose);
 static void output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose);
 static void output_proccount_result(PCPResultInfo * pcpResInfo, bool verbose);
@@ -67,6 +68,7 @@ typedef enum
 	PCP_RECOVERY_NODE,
 	PCP_STOP_PGPOOL,
 	PCP_WATCHDOG_INFO,
+	PCP_RELOAD_CONFIG,
 	UNKNOWN,
 }			PCP_UTILITIES;
 
@@ -92,6 +94,7 @@ struct AppTypes AllAppTypes[] =
 	{"pcp_recovery_node", PCP_RECOVERY_NODE, "n:h:p:U:wWvd", "recover a node"},
 	{"pcp_stop_pgpool", PCP_STOP_PGPOOL, "m:h:p:U:s:wWvda", "terminate pgpool-II"},
 	{"pcp_watchdog_info", PCP_WATCHDOG_INFO, "n:h:p:U:wWvd", "display a pgpool-II watchdog's information"},
+	{"pcp_reload_config",PCP_RELOAD_CONFIG,"h:p:U:s:wWvd", "reload a pgpool-II config file"},
 	{NULL, UNKNOWN, NULL, NULL},
 };
 struct AppTypes *current_app_type;
@@ -196,7 +199,7 @@ main(int argc, char **argv)
 				break;
 
 			case 's':
-				if (current_app_type->app_type == PCP_STOP_PGPOOL)
+				if (app_support_cluster_mode())
 				{
 					if (strcmp(optarg, "c") == 0 || strcmp(optarg, "cluster") == 0)
 						command_scope = 'c';
@@ -432,6 +435,11 @@ main(int argc, char **argv)
 	else if (current_app_type->app_type == PCP_WATCHDOG_INFO)
 	{
 		pcpResInfo = pcp_watchdog_info(pcpConn, nodeID);
+	}
+
+	else if (current_app_type->app_type == PCP_RELOAD_CONFIG)
+	{
+		pcpResInfo = pcp_reload_config(pcpConn,command_scope);
 	}
 
 	else
@@ -808,6 +816,12 @@ app_require_nodeID(void)
 			current_app_type->app_type == PCP_RECOVERY_NODE);
 }
 
+static inline bool
+app_support_cluster_mode(void)
+{
+	return (current_app_type->app_type == PCP_STOP_PGPOOL ||
+			current_app_type->app_type == PCP_RELOAD_CONFIG);
+}
 
 static void
 usage(void)
@@ -837,13 +851,16 @@ usage(void)
 	{
 		fprintf(stderr, "  -n, --node-id=NODEID   ID of a backend node\n");
 	}
-
 	if (current_app_type->app_type == PCP_STOP_PGPOOL)
 	{
 		fprintf(stderr, "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n");
+	}
+
+	if (app_support_cluster_mode())
+	{
 		fprintf(stderr, "  -s, --scope=SCOPE      SCOPE can be \"cluster\", or \"local\"\n");
-		fprintf(stderr, "                         cluster scope terminates all Pgpool-II nodes part\n");
-		fprintf(stderr, "                         of the watchdog cluster\n");
+		fprintf(stderr, "                         cluster scope do operations on all Pgpool-II nodes\n");
+		fprintf(stderr, "                         part of the watchdog cluster\n");
 	}
 	if (current_app_type->app_type == PCP_PROMOTE_NODE ||
 		current_app_type->app_type == PCP_DETACH_NODE)

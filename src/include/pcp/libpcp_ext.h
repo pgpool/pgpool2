@@ -319,6 +319,7 @@ extern PCPResultInfo * pcp_node_info(PCPConnInfo * pcpCon, int nid);
 extern PCPResultInfo * pcp_health_check_stats(PCPConnInfo * pcpCon, int nid);
 extern PCPResultInfo * pcp_process_count(PCPConnInfo * pcpConn);
 extern PCPResultInfo * pcp_process_info(PCPConnInfo * pcpConn, int pid);
+extern PCPResultInfo * pcp_reload_config(PCPConnInfo * pcpConn,char command_scope);
 
 extern PCPResultInfo * pcp_detach_node(PCPConnInfo * pcpConn, int nid);
 extern PCPResultInfo * pcp_detach_node_gracefully(PCPConnInfo * pcpConn, int nid);

@@ -825,15 +825,19 @@ get_wd_exec_cluster_command_json(char *clusterCommand, int nArgs,
 	jw_put_int(jNode, "nArgs", nArgs);
 
 	/* Array of arguments */
-	jw_start_array(jNode, "argument_list");
-	for (i = 0; i < nArgs; i++)
+	if(nArgs > 0)
 	{
-		jw_start_object(jNode, "Arg");
-		jw_put_string(jNode, "arg_name", wdExecCommandArg[i].arg_name);
-		jw_put_string(jNode, "arg_value", wdExecCommandArg[i].arg_value);
-		jw_end_element(jNode);
+		jw_start_array(jNode, "argument_list");
+		for (i = 0; i < nArgs; i++)
+		{
+			jw_start_object(jNode, "Arg");
+			jw_put_string(jNode, "arg_name", wdExecCommandArg[i].arg_name);
+			jw_put_string(jNode, "arg_value", wdExecCommandArg[i].arg_value);
+			jw_end_element(jNode);
+		}
+		jw_end_element(jNode);		/* argument_list array End */
 	}
-	jw_end_element(jNode);		/* argument_list array End */
+
 
 	jw_finish_document(jNode);
 	json_str = pstrdup(jw_get_json_string(jNode));
