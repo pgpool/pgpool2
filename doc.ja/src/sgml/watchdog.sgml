@@ -1121,10 +1121,18 @@
       to select master watchdog node.
       The node with the higher <varname>wd_priority</varname> value will get selected
       as master watchdog node when cluster will be electing its new master node
-      at the time of cluster startup or in the event of old master watchdog node failure
+      in the event of old master watchdog node failure.
+      <varname>wd_priority</varname> is also valid at the time of cluster startup.
+      When some watchdog nodes start up at same time,a node with the higher <varname>wd_priority</varname>
+      value is selected as a master node.
+      So we should start watchdog nodes in order of <varname>wd_priority</varname> priority to prevent 
+      unintended nodes from being selected as masters.
       -->
       このパラメータによってローカルのwatchdogノードがマスターに選ばれる優先度を上げることができます。
-      クラスタの初期起動時や古いマスターノードが故障した状況でクラスタがマスターノードの選択を行う際に、<varname>wd_priority</varname>が高いノードがマスターwatchdogノードに選ばれます。
+      古いマスターノードが故障した状況でクラスタがマスターノードの選択を行う際に、<varname>wd_priority</varname>が高いノードがマスターwatchdogノードに選ばれます。
+      <varname>wd_priority</varname>はクラスタの初期起動時にも有効なので、
+      複数のwatchdogノードを同時に起動した場合、<varname>wd_priority</varname>が高いノードがマスターwatchdogノードに選ばれます。
+      このため、watchdogノードは意図しないノードがマスターに選ばれることが無いように<varname>wd_priority</varname>の優先順位が高い順に起動するべきです。
      </para>
      <para>
       <!--
