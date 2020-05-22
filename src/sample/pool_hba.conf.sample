@@ -10,12 +10,16 @@
 # can access.  Records take one of these forms:
 #
 # local      DATABASE  USER  METHOD  [OPTION]
-# host       DATABASE  USER  CIDR-ADDRESS  METHOD  [OPTION]
+# host       DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostssl    DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostnossl  DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
 #
 # (The uppercase items must be replaced by actual values.)
 #
 # The first field is the connection type: "local" is a Unix-domain
 # socket, "host" is either a plain or SSL-encrypted TCP/IP socket.
+# "hostssl" is an SSL-encrypted TCP/IP socket, and "hostnossl" is a
+# plain TCP/IP socket.
 #
 # DATABASE can be "all", "sameuser", a database name, or a comma-separated
 # list thereof. Note that "samegroup" like in PostgreSQL's pg_hba.conf
