@@ -797,7 +797,12 @@
       to select master watchdog node.
       The node with the higher <varname>wd_priority</varname> value will get selected
       as master watchdog node when cluster will be electing its new master node
-      at the time of cluster startup or in the event of old master watchdog node failure
+      in the event of old master watchdog node failure.
+      <varname>wd_priority</varname> is also valid at the time of cluster startup.
+      When some watchdog nodes start up at same time,a node with the higher <varname>wd_priority</varname>
+      value is selected as a master node.
+      So we should start watchdog nodes in order of <varname>wd_priority</varname> priority to prevent
+      unintended nodes from being selected as masters.
      </para>
      <para>
       <varname>wd_priority</varname> is not available in versions prior to
