@@ -68,8 +68,8 @@ Pgpool-II documentation
        Set the path to the encryption key file. Default is the <literal>.pgpoolkey</literal> file
        located in the users home directory.
        -->
-       暗号化鍵ファイルのパスをを指定します。
-       デフォルトはユーザのホームディレクトリ配下の<literal>.pgpoolkey</literal>ファイルです。
+       暗号化鍵ファイルのパスを指定します。
+       デフォルトはユーザのホームディレクトリ配下の<literal>.pgpoolkey</literal>ファイルですが、環境変数<varname>PGPOOLKEYFILE</varname>があればそちらでの指定が優先されます。
       </para>
      </listitem>
     </varlistentry>
