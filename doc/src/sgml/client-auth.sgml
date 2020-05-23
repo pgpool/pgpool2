@@ -850,6 +850,10 @@
      will require the decryption key to decrypt the passwords before using them,
      <productname>Pgpool-II</productname> tries to read the decryption key at
      startup from the <filename>.pgpoolkey</filename> file.
+     <indexterm><primary>pgpoolkey</primary></indexterm>
+     <indexterm><primary>PGPOOLKEYFILE</primary></indexterm>
+     <filename>.pgpoolkey</filename> is a plain text file which
+     contains the decryption key string.
    </para>
    <para>
     By default the <productname>Pgpool-II</productname> will look for the
