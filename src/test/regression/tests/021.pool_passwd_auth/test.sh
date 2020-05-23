@@ -33,9 +33,17 @@ echo "allow_clear_text_frontend_auth = off" >> etc/pgpool.conf
 echo "num_init_children = 1" >> etc/pgpool.conf
 echo "enable_pool_hba = on" >> etc/pgpool.conf
 
-#create pool_passwd file
-echo "scram_user:scram_password" >> etc/pool_passwd
-echo "md5_user:md5_password" >> etc/pool_passwd
+# create pgpoolkey file
+echo "pgpool secret key" > etc/pgpool_key
+chmod 0600 etc/pgpool_key
+export PGPOOLKEYFILE=$PWD/etc/pgpool_key
+
+#create pool_passwd file using AES256 encrypted password
+#echo "scram_user:scram_password" >> etc/pool_passwd
+#echo "md5_user:md5_password" >> etc/pool_passwd
+pg_enc -m -f etc/pgpool.conf -u scram_user scram_password
+pg_enc -m -f etc/pgpool.conf -u md5_user md5_password
+
 #copy the pool_hba to etc dir
 cp ../pool_hba.conf etc/
 ./startall
