@@ -53,7 +53,7 @@ Pgpool-II documentation
      <listitem>
       <para>
        Set the path to the encryption key file. Default is the <literal>.pgpoolkey</literal> file
-       located in the users home directory.
+       located in the users home directory, which can be overridden by the environment variable <varname>PGPOOLKEYFILE</varname>.
       </para>
      </listitem>
     </varlistentry>
