@@ -13,7 +13,7 @@ source $TESTLIBS
 TESTDIR=testdir
 PSQL=$PGBIN/psql
 CREATEUSER=$PGBIN/createuser
-
+PG_ENC=$PGPOOL_INSTALL_DIR/bin/pg_enc
 
 rm -fr $TESTDIR
 mkdir $TESTDIR
@@ -41,8 +41,8 @@ export PGPOOLKEYFILE=$PWD/etc/pgpool_key
 #create pool_passwd file using AES256 encrypted password
 #echo "scram_user:scram_password" >> etc/pool_passwd
 #echo "md5_user:md5_password" >> etc/pool_passwd
-pg_enc -m -f etc/pgpool.conf -u scram_user scram_password
-pg_enc -m -f etc/pgpool.conf -u md5_user md5_password
+$PG_ENC -m -f etc/pgpool.conf -u scram_user scram_password
+$PG_ENC -m -f etc/pgpool.conf -u md5_user md5_password
 
 #copy the pool_hba to etc dir
 cp ../pool_hba.conf etc/
