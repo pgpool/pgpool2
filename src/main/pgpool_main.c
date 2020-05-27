@@ -3854,7 +3854,12 @@ sync_backend_from_watchdog(void)
 		}
 	}
 
-	if (Req_info->primary_node_id != backendStatus->primary_node_id)
+	/*
+	 * Update primary node id info on the shared memory area if it's different
+	 * from the one on master watchdog node. This should be done only in streaming
+	 * or logical replication mode.
+	 */
+	if (SL_MODE && Req_info->primary_node_id != backendStatus->primary_node_id)
 	{
 		/* Do not produce this log message if we are starting up the Pgpool-II */
 		if (processState != INITIALIZING)
@@ -3862,12 +3867,18 @@ sync_backend_from_watchdog(void)
 					(errmsg("primary node:%d on master watchdog node \"%s\" is different from local primary node:%d",
 							backendStatus->primary_node_id, backendStatus->nodeName, Req_info->primary_node_id)));
 		/*
-		 * master node returns primary_node_id = -1 when the node primary
-		 * node is in  quarantine state on the master.
-		 * So we will not update our primary node id when the status of current primary node
-		 * is not CON_DOWN while primary_node_id sent by master watchdong node is -1
+		 * master node returns primary_node_id = -1 when the primary node is
+		 * in quarantine state on the master.  So we will not update our
+		 * primary node id when the status of current primary node is not
+		 * CON_DOWN while primary_node_id sent by master watchdong node is -1
+		 *
+		 * Note that Req_info->primary_node_id could be -2, which is the
+		 * initial value. So we need to avoid crash by checking the value is
+		 * not lower than 0. Otherwise we will get crash while looking up
+		 * BACKEND_INFO array. See Mantis bug id 614 for more details.
 		 */
-		if (backendStatus->primary_node_id == -1 && BACKEND_INFO(Req_info->primary_node_id).backend_status != CON_DOWN)
+		if (Req_info->primary_node_id >= 0 &&
+			backendStatus->primary_node_id == -1 && BACKEND_INFO(Req_info->primary_node_id).backend_status != CON_DOWN)
 		{
 			ereport(LOG,
                 (errmsg("primary node:%d on master watchdog node \"%s\" seems to be quarantined",
