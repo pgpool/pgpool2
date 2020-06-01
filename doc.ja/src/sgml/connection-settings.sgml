@@ -350,9 +350,9 @@
     <term><varname>reserved_connections</varname> (<type>integer</type>)
      <indexterm>
       <!--
-      <primary><varname>reserverd_connections</varname> configuration parameter</primary>
+      <primary><varname>reserved_connections</varname> configuration parameter</primary>
       -->
-      <primary><varname>reserverd_connections</varname>設定パラメータ</primary>
+      <primary><varname>reserved_connections</varname>設定パラメータ</primary>
      </indexterm>
     </term>
     <listitem>

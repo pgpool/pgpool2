@@ -223,7 +223,7 @@
    <varlistentry id="guc-reserved-connections" xreflabel="reserved_connections">
     <term><varname>reserved_connections</varname> (<type>integer</type>)
      <indexterm>
-      <primary><varname>reserverd_connections</varname> configuration parameter</primary>
+      <primary><varname>reserved_connections</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
