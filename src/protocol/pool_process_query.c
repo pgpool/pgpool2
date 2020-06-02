@@ -4758,8 +4758,17 @@ pool_config->client_idle_limit)));
 						was_error = 1;
 						if (!VALID_BACKEND(i))
 							break;
-						notice_backend_error(i, REQ_DETAIL_SWITCHOVER);
-						sleep(5);
+						if (CONNECTION(backend, i)->con_info->swallow_termination == 1)
+						{
+							ereport(FATAL,
+									(errmsg("connection to postmaster on DB node %d was lost due to pg_terminate_backend", i),
+									 errdetail("pg_terminate_backend was called on the backend")));
+						}
+						else
+						{
+							notice_backend_error(i, REQ_DETAIL_SWITCHOVER);
+							sleep(5);
+						}
 					}
 
 					/*
