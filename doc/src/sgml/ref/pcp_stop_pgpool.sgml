@@ -64,7 +64,7 @@ Pgpool-II documentation
      <term><option>--scope=<replaceable class="parameter">scope</replaceable></option></term>
      <listitem>
       <para>
-       Shutdown mode for terminating the Pgpool-II process.
+       Specifies the breadth of a command's impact.
       </para>
       <para>
        The supported command scopes are as follows (The default is "local"):

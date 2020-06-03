@@ -104,6 +104,7 @@
   &pcpAttachNode;
   &pcpPromoteNode;
   &pcpStopPgpool;
+  &pcpReloadConfig;
   &pcpRecoveryNode;
 
  </reference>
