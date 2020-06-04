@@ -91,7 +91,7 @@ Pgpool-II documentation
      <term><option>--scope=<replaceable class="parameter">scope</replaceable></option></term>
      <listitem>
       <para>
-       Pgpool-IIプロセスの停止モードを指定します。
+       コマンドの与える影響範囲を指定します。
       </para>
       <para>
 　　　　サポートされているコマンドスコープは以下です。
