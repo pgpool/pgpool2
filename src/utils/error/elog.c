@@ -1988,7 +1988,8 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 				 * pool_virtual_master_db_node_id() which eventually calls
 				 * ereport() if operated in DEBUG mode.
 				 */
-				StartupPacket *sp = session? (session->backend->slots[REAL_MASTER_NODE_ID])->sp : NULL ;
+				StartupPacket *sp = (session && session->backend && (session->backend->slots[REAL_MASTER_NODE_ID]))? \
+						(session->backend->slots[REAL_MASTER_NODE_ID])->sp: NULL;
 				const char *appname = sp? sp->application_name : "[No Connection]";
 				if (appname == NULL || *appname == '\0')
 					appname = "[unknown]";
