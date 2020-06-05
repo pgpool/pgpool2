@@ -902,17 +902,9 @@
 
      </para>
      <para>
-      <!--
-      To use this feature, <xref linkend="runtime-streaming-replication-check">
-      must be enabled, and <productname>PostgreSQL</productname> 9.1 or later
-      is required as backend nodes. This feature use <function>pg_stat_replicatoin</function>
-      on primary node, the automatic failback is performed to standby node only.
-      Note that failback_command will be executed as well if failback_commnad is not empty.
-      If you plan to detach standby node for maintenance, set this parameter to off beforehand.
-      Otherwise  it's possible that standby node is reattached against your intention.
-      -->
       この機能を使用するためには、streaming replication check (<xref linkend="runtime-streaming-replication-check">参照)が有効であり、バックエンドノードとして<productname>PostgreSQL</productname>が9.1以降である必要があります。
        この機能は、プライマリノードで<function>pg_stat_replication</function>を実行します。自動フェイルバックはスタンバイノードに対してのみ実行されます。
+       failback_commandが空でなければ、failback_commandも実行されることに注意してください。
        メンテナンスなどで、一時的にスタンバイノードを切り離す場合は、このパラメータをOFFにしてから実施してください。
        意図せずスタンバイノードが復帰してしまう可能性があります。
      </para>
