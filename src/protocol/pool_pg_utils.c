@@ -686,7 +686,7 @@ choose_db_node_id(char *str)
  *---------------------------------------------------------------------------------
  */
 
-#ifdef SI_DEBUB_LOG
+#ifdef SI_DEBUG_LOG
 #define SI_DEBUG_LOG_LEVEL	LOG
 #else
 #define SI_DEBUG_LOG_LEVEL	DEBUG5

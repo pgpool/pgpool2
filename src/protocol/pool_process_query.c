@@ -3991,6 +3991,7 @@ POOL_STATUS
 start_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node *node)
 {
 	int			i;
+	bool		commit_request_done = false;
 
 	/*
 	 * If we are not in a transaction block, start a new transaction
@@ -4002,6 +4003,12 @@ start_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * ba
 			if (VALID_BACKEND(i) && !INTERNAL_TRANSACTION_STARTED(backend, i) &&
 				TSTATE(backend, i) == 'I')
 			{
+				if (!commit_request_done && pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
+				{
+					si_commit_request();
+					commit_request_done = true;
+				}
+
 				per_node_statement_log(backend, i, "BEGIN");
 
 				if (do_command(frontend, CONNECTION(backend, i), "BEGIN", MAJOR(backend),
