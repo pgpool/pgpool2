@@ -213,6 +213,11 @@ int			my_master_node_id;	/* Master node id buffer */
 static int dummy_status;
 
 /*
+ * Snapshot Isolation manage area
+ */
+volatile SI_ManageInfo *si_manage_info;
+
+/*
 * pgpool main program
 */
 
@@ -3376,6 +3381,14 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	{
 		wd_ipc_initialize_data();
 	}
+
+	/* Initialize Snapshot Isolation manage area */
+	size = MAXALIGN(sizeof(SI_ManageInfo));
+	si_manage_info = pool_shared_memory_create(size);
+	memset((void *)si_manage_info, 0, size);
+	size = MAXALIGN(pool_config->num_init_children * sizeof(pid_t));
+	si_manage_info->snapshot_waiting_children = pool_shared_memory_create(size);
+	si_manage_info->commit_waiting_children = pool_shared_memory_create(size);
 }
 
 /*

@@ -66,7 +66,7 @@ Pgpool-II documentation
    logical replication mode.  To support watchdog,
    see <xref linkend="WATCHDOG-SETUP"> for details.
    -->
-   現在、「ストリーミングレプリケーションモード」、「ネイティブレプリケーションモード」、「raw モード」及び「ロジカルレプリケーションモード」に対応しています。
+   現在、「ストリーミングレプリケーションモード」、「ネイティブレプリケーションモード」、「raw モード」、「ロジカルレプリケーションモード」及び「スナップショットアイソレーションモード」に対応しています。
    Watchdog  の対応については  <xref linkend="WATCHDOG-SETUP"> をご参照下さい。
   </para>
  </refsect1>
@@ -96,7 +96,7 @@ Pgpool-II documentation
        omitted, <literal>s</literal> is assumed.
        -->
        動作モードを指定します。<replaceable>mode</replaceable>は
-       <literal>r</literal> (ネイティブレプリケーションモード), <literal>s</literal> (ストリーミングレプリケーションモード)、<literal>n</literal> (raw モード)、<literal>l</literal> (ロジカルレプリケーションモード)または<literal>l</literal>（slonyモード）を指定できます。
+       <literal>r</literal> (ネイティブレプリケーションモード), <literal>s</literal> (ストリーミングレプリケーションモード)、<literal>n</literal> (raw モード)、<literal>l</literal> (ロジカルレプリケーションモード)、<literal>l</literal>（slonyモード）及び<literal>i</literal>（スナップショットアイソレーションモード）を指定できます。
        指定しない場合は、<literal>s</literal> (ストリーミングレプリケーションモード) を指定した見なされます。
       </para>
      </listitem>

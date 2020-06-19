@@ -876,6 +876,92 @@ backend_clustering_mode = 'native_replication'
   </variablelist>
  </sect2>
 
+ <sect2 id="guc-snapshot-isolation-mode" xreflabel="snapshot_isolation_mode">
+  <title>Snapshot Isolation Mode</title>
+
+  <para>
+   This mode is similar to the native replication mode except it adds
+   the visibility consistency among nodes. The implemenation is based
+   on a research paper <xref linkend="mishima2009">. For example, you
+   can avoid following inconsistency among nodes caused by the
+   visibility inconsistency. Here S1 and S2 denotes sessions, while N1
+   and N2 denotes the PostgreSQL server 1 and 2 respectively.
+   <programlisting>
+S1/N1: BEGIN;
+S1/N2: BEGIN;
+S1/N1: UPDATE t1 SET i = i + 1;	-- i = 1
+S1/N2: UPDATE t1 SET i = i + 1; -- i = 1
+S1/N1: COMMIT;
+S2/N1: BEGIN;
+S2/N2: BEGIN;
+S2/N2: DELETE FROM t1 WHERE i = 1; -- delete 1 row since S1/N2 is not committed yet
+S2/N1: DELETE FROM t1 WHERE i = 1; -- delete no row since S1/N1 is committed and i is not 1 anymore
+S1/N2: COMMIT;
+S2/N1: COMMIT;
+S2/N2: COMMIT;
+   </programlisting>
+   In the snapshot isolation mode, the result will be either one of
+   them below and it never damages the data consistency among database
+   nodes.
+   <programlisting>
+S1/N1: BEGIN;
+S1/N2: BEGIN;
+S1/N1: UPDATE t1 SET i = i + 1;	-- i = 1
+S1/N2: UPDATE t1 SET i = i + 1; -- i = 1
+S2/N1: BEGIN;
+S2/N2: BEGIN;
+S1/N1: COMMIT;
+S1/N2: COMMIT;
+S2/N1: DELETE FROM t1 WHERE i = 1; -- delete no row since S1/N1 is committed and i is not 1 anymore
+S2/N2: DELETE FROM t1 WHERE i = 1; -- delete no row since S1/N2 is committed and i is not 1 anymore
+S2/N1: COMMIT;
+S2/N2: COMMIT;
+   </programlisting>
+
+   <programlisting>
+S1/N1: BEGIN;
+S1/N2: BEGIN;
+S1/N1: UPDATE t1 SET i = i + 1;	-- i = 1
+S1/N2: UPDATE t1 SET i = i + 1; -- i = 1
+S2/N1: BEGIN;
+S2/N2: BEGIN;
+S2/N1: DELETE FROM t1 WHERE i = 1; -- delete 1 row since S1/N1 is not committed yet
+S2/N2: DELETE FROM t1 WHERE i = 1; -- delete 1 row since S1/N2 is not committed yet
+S1/N1: COMMIT;
+S1/N2: COMMIT;
+S2/N1: COMMIT;
+S2/N2: COMMIT;
+   </programlisting>
+
+   Please note that there are some limitations in this mode and
+   currently (in <productname>Pgpool-II</productname> 4.2) this mode
+   is regarded as "experimental implementation. Be warned that careful
+   testings are required before you implement this in a production
+   system.
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     It is necessary to set the transaction isolation level to
+     REPEATABLE READ.  That means you need to set it in
+     <filename>postgresql.conf</filename> like this:
+     <programlisting>
+      default_transaction_isolation = 'repeatable read'
+     </programlisting>
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Consistent visibility in SERIAL data type and sequences are not
+     guaranteed.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+
+ </sect2>
+
 </sect1>
 
 <sect1 id="runtime-config-backend-settings">

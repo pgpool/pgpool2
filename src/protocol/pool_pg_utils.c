@@ -21,10 +21,14 @@
 
 #include <string.h>
 #include <arpa/inet.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "protocol/pool_pg_utils.h"
 #include "protocol/pool_connection_pool.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
+#include "utils/pool_ipc.h"
 #include "utils/pool_stream.h"
 #include "utils/pool_ssl.h"
 #include "utils/elog.h"
@@ -37,6 +41,8 @@
 
 static int	choose_db_node_id(char *str);
 static void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT * cp);
+static void si_enter_critical_region(void);
+static void si_leave_critical_region(void);
 
 /*
  * create a persistent connection
@@ -644,4 +650,222 @@ choose_db_node_id(char *str)
 			node_id = tmp;
 	}
 	return node_id;
+}
+/*
+ *---------------------------------------------------------------------------------
+ * Snapshot Isolation modules
+ * Pgpool-II's native replication mode has not consider snapshot isolation
+ * among backend nodes.  This leads to database inconsistency among backend
+ * nodes. A new mode called "snapshot_isolation" solves the problem.
+ *
+ * Consider following example. S1, S2 are concurrent sessions. N1, N2 are
+ * backend nodes. The initial value of t1.i is 0. S2/N2 does see the row
+ * having i = 1 and successfully deletes the row. However S2/N1 does not see
+ * the row having i = 1 since S1/N1 has not committed yet at the when S2/S1
+ * tries to delete the row. As a result, t1.i is not consistent among N1 and
+ * N2. There's no way to avoid this in the native replication mode. So we
+ * propose the new mode which uses snapshot isolation (i.e. REPEATABLE READ or
+ * SERIALIZABLE mode in PostgreSQL) and controlling the timing of snapshot
+ * acquisition in a transaction and commit timing. The algorithm was proposed
+ * in "Pangea: An Eager Database Replication Middleware guaranteeing Snapshot
+ * Isolation without Modification of Database Servers"
+ * (http://www.vldb.org/pvldb/vol2/vldb09-694.pdf).
+ *
+ * S1/N1: BEGIN;
+ * S1/N2: BEGIN;
+ * S1/N1: UPDATE t1 SET i = i + 1;	-- i = 1
+ * S1/N2: UPDATE t1 SET i = i + 1;  -- i = 1
+ * S1/N2: COMMIT;
+ * S2/N1: BEGIN;
+ * S2/N2: BEGIN;
+ * S2/N1: DELETE FROM t1 WHERE i = 1;
+ * S2/N2: DELETE FROM t1 WHERE i = 1;
+ * S1/N1: COMMIT;
+ * S2/N2: COMMIT;
+ * S2/N1: COMMIT;
+ *---------------------------------------------------------------------------------
+ */
+
+#ifdef SI_DEBUB_LOG
+#define SI_DEBUG_LOG_LEVEL	LOG
+#else
+#define SI_DEBUG_LOG_LEVEL	DEBUG5
+#endif
+
+/*
+ * Enter critical region. All SI operations must be protected by this.
+ */
+static void
+si_enter_critical_region(void)
+{
+	elog(SI_DEBUG_LOG_LEVEL, "si_enter_critical_region called");
+	pool_semaphore_lock(SI_CRITICAL_REGION_SEM);
+}
+
+/*
+ * Leave critical region.
+ */
+static void
+si_leave_critical_region(void)
+{
+	elog(SI_DEBUG_LOG_LEVEL, "si_leave_critical_region called");
+	pool_semaphore_unlock(SI_CRITICAL_REGION_SEM);
+}
+
+/*
+ * Returns true if snapshot is already prepared in this session.
+ */
+bool
+si_snapshot_prepared(void)
+{
+	POOL_SESSION_CONTEXT *session;
+
+	session = pool_get_session_context(true);
+	return session->si_state == SI_SNAPSHOT_PREPARED;
+}
+
+/*
+ * Aquire snapshot
+ */
+void
+si_aquire_snapshot(void)
+{
+	POOL_SESSION_CONTEXT *session;
+
+	session = pool_get_session_context(true);
+
+	if (session->si_state == SI_NO_SNAPSHOT)
+	{
+		for (;;)
+		{
+			si_enter_critical_region();
+			elog(SI_DEBUG_LOG_LEVEL, "si_aquire_snapshot called: counter: %d", si_manage_info->snapshot_counter);
+
+			if (si_manage_info->commit_counter > 0)
+			{
+				si_manage_info->commit_waiting_children[my_proc_id] = getpid();
+				si_leave_critical_region();
+				elog(SI_DEBUG_LOG_LEVEL, "si_aquire_snapshot left critical region");
+				sleep(1);
+			}
+			else
+				break;
+		}
+		si_manage_info->snapshot_counter++;
+
+		si_leave_critical_region();
+	}
+}
+
+/*
+ * Notice that snapshot is aquired
+ */
+void
+si_snapshot_aquired(void)
+{
+	POOL_SESSION_CONTEXT *session;
+	int		i;
+
+	session = pool_get_session_context(true);
+
+	if (session->si_state == SI_NO_SNAPSHOT)
+	{
+		si_enter_critical_region();
+
+		elog(SI_DEBUG_LOG_LEVEL, "si_snapshot_aquired called: counter: %d", si_manage_info->snapshot_counter);
+
+		si_manage_info->snapshot_counter--;
+
+		if (si_manage_info->snapshot_counter == 0)
+		{
+			/* wakeup all waiting children */
+			for (i = 0; i < pool_config->num_init_children ; i++)
+			{
+				pid_t pid = si_manage_info->snapshot_waiting_children[i];
+				if (pid > 0)
+				{
+					elog(SI_DEBUG_LOG_LEVEL, "si_snapshot_aquired: send SIGUSR2 to %d", pid);
+					kill(pid, SIGUSR2);
+					si_manage_info->snapshot_waiting_children[i] = 0;
+				}
+			}
+		}
+
+		si_leave_critical_region();
+		session->si_state = SI_SNAPSHOT_PREPARED;
+	}
+}
+
+/*
+ * Commit request
+ */
+void
+si_commit_request(void)
+{
+	POOL_SESSION_CONTEXT *session;
+
+	session = pool_get_session_context(true);
+
+	elog(SI_DEBUG_LOG_LEVEL, "si_commit_request called");
+
+	if (session->si_state == SI_SNAPSHOT_PREPARED)
+	{
+		for (;;)
+		{
+			si_enter_critical_region();
+			if (si_manage_info->snapshot_counter > 0)
+			{
+				si_manage_info->snapshot_waiting_children[my_proc_id] = getpid();
+				si_leave_critical_region();
+				sleep(1);
+			}
+			else
+				break;
+		}
+
+		elog(SI_DEBUG_LOG_LEVEL, "si_commit_request: commit_counter: %d", si_manage_info->commit_counter);
+		si_manage_info->commit_counter++;
+
+		si_leave_critical_region();
+	}
+}
+
+/*
+ * Notice that commit is done
+ */
+void
+si_commit_done(void)
+{
+	POOL_SESSION_CONTEXT *session;
+	int		i;
+
+	session = pool_get_session_context(true);
+
+	elog(SI_DEBUG_LOG_LEVEL, "si_commit_done called");
+
+	if (session->si_state == SI_SNAPSHOT_PREPARED)
+	{
+		si_enter_critical_region();
+
+		elog(SI_DEBUG_LOG_LEVEL, "si_commit_done: commit_counter: %d", si_manage_info->commit_counter);
+		si_manage_info->commit_counter--;
+
+		if (si_manage_info->commit_counter == 0)
+		{
+			/* wakeup all waiting children */
+			for (i = 0; i < pool_config->num_init_children ; i++)
+			{
+				pid_t pid = si_manage_info->commit_waiting_children[i];
+				if (pid > 0)
+				{
+					elog(SI_DEBUG_LOG_LEVEL, "si_commit_done: send SIGUSR2 to %d", pid);
+					kill(pid, SIGUSR2);
+					si_manage_info->commit_waiting_children[i] = 0;
+				}
+			}
+		}
+
+		si_leave_critical_region();
+		session->si_state = SI_NO_SNAPSHOT;
+	}
 }

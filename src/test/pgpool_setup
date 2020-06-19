@@ -24,6 +24,7 @@
 # -m n: create an installation as raw mode.
 # -m l: create an installation as logical replication mode.
 # -m y: create an installation as slony mode.
+# -m i: create an installation as snapshot isolation mode.
 # -n num_clusters: create num_clusters PostgreSQL database cluster nodes
 # -p base_port: specify base port. pgpool port is base_port.
 #  pcp port is base_port + 1. The first PostgreSQL node's port is
@@ -337,7 +338,7 @@ function set_postgresql_conf
 		    echo "include_if_exists = 'myrecovery.conf'" >> $PGCONF
 		fi
 
-	elif [ $MODE = 'r' -o $MODE = 'l' -o $MODE = 'y' ];then
+	elif [ $MODE = 'r' -o $MODE = 'l' -o $MODE = 'y' -o $MODE = 'i' ];then
 		echo "wal_level = archive" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
 		echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
@@ -671,7 +672,7 @@ function set_pgpool_conf {
 	echo "recovery_password = ''"  >> $CONF
 	echo "recovery_1st_stage_command = 'basebackup.sh'" >> $CONF
 
-	if [ $MODE = "r" ];then
+	if [ $MODE = "r" -o $MODE = "i" ];then
 		echo "recovery_2nd_stage_command = 'pgpool_recovery_pitr'" >> $CONF
 	fi
 
@@ -744,7 +745,7 @@ function wait_for_pgpool_reload {
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s|n|l|y] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d] [-s] [-r]";exit 1
+	echo "usage: $0 [-m r|s|n|l|y|i] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d] [-s] [-r]";exit 1
 }
 
 #-------------------------------------------
@@ -766,6 +767,7 @@ do
 			n ) MODE="n";;
 			l ) MODE="l";;
 			y ) MODE="y";;
+			i ) MODE="i";;
 			* ) usage;;
 		esac
 	elif [ $1 = "-n" ];then
@@ -812,6 +814,9 @@ case $MODE in
 	    ;;
 	y ) MODENAME="slony mode"
 	    SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-slony
+	    ;;
+	i ) MODENAME="snapshot isolation mode"
+	    SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-snapshot
 	    ;;
 esac
 
@@ -907,7 +912,7 @@ do
 	# create basebackup.sh
 	if [ $MODE = 's' ];then
 		create_basebackup_stream $CLUSTERDIR $n >&5 2>&1
-	elif [ $MODE = 'r' ];then
+	elif [ $MODE = 'r' -o $MODE = 'i' ];then
 		create_basebackup_replication $CLUSTERDIR >&5 2>&1
 		create_pgpool_recovery_pitr $CLUSTERDIR >&5 2>&1
 	fi
@@ -1092,7 +1097,7 @@ EOF
 	echo "done."
 fi
 
-if [ $MODE = "r" -o $MODE = "n" ];then
+if [ $MODE = "r" -o $MODE = "n" -o $MODE = "i" ];then
 	echo "create extensions"
 	$PSQL -p $PGPOOL_PORT template1 >&5 2>&1 <<EOF
 CREATE EXTENSION pgpool_regclass;

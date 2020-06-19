@@ -53,4 +53,11 @@ extern int	select_load_balancing_node(void);
 
 extern PGVersion *Pgversion(POOL_CONNECTION_POOL * backend);
 
+/* pool_pg_utils.c */
+extern bool si_snapshot_prepared(void);
+extern void si_aquire_snapshot(void);
+extern void si_snapshot_aquired(void);
+extern void si_commit_request(void);
+extern void si_commit_done(void);
+
 #endif /* pool_pg_utils_h */

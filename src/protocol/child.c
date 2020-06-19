@@ -107,6 +107,11 @@ static volatile sig_atomic_t alarm_enabled = false;
  */
 volatile sig_atomic_t ignore_sigusr1 = 0;
 
+/*
+ * si modules use SIGUSR2
+ */
+volatile sig_atomic_t sigusr2_received = 0;
+
 static int	idle;				/* non 0 means this child is in idle state */
 static int	accepted = 0;
 
@@ -1329,6 +1334,7 @@ connection_count_down(void)
  */
 static RETSIGTYPE wakeup_handler(int sig)
 {
+	sigusr2_received = 1;
 }
 
 

@@ -356,7 +356,8 @@ typedef enum
 }			POOL_NODE_STATUS;
 
 /* Clustering mode macros */
-#define REPLICATION (pool_config->backend_clustering_mode == CM_NATIVE_REPLICATION)
+#define REPLICATION (pool_config->backend_clustering_mode == CM_NATIVE_REPLICATION || \
+					 pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
 #define MASTER_SLAVE (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION || \
 					  pool_config->backend_clustering_mode == CM_LOGICAL_REPLICATION || \
 					  pool_config->backend_clustering_mode == CM_SLONY)
@@ -375,13 +376,14 @@ typedef enum
 #define Min(x, y)		((x) < (y) ? (x) : (y))
 
 
-#define MAX_NUM_SEMAPHORES		6
+#define MAX_NUM_SEMAPHORES		7
 #define CONN_COUNTER_SEM		0
 #define REQUEST_INFO_SEM		1
 #define SHM_CACHE_SEM			2
 #define QUERY_CACHE_STATS_SEM	3
 #define PCP_REQUEST_SEM			4
 #define ACCEPT_FD_SEM			5
+#define SI_CRITICAL_REGION_SEM	6
 #define MAX_REQUEST_QUEUE_SIZE	10
 
 #define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 10	/* time in seconds to keep
@@ -519,14 +521,25 @@ typedef enum
 }			ProcessState;
 
 /*
+ * Snapshot isolation manage area in shared memory
+ */
+typedef struct
+{
+	uint32		commit_counter;		/* number of committing children */
+	uint32		snapshot_counter;	/* number of snapshot acquiring children */
+	pid_t		*snapshot_waiting_children;		/* array size is num_init_children */
+	pid_t		*commit_waiting_children;		/* array size is num_init_children */
+} SI_ManageInfo;
+
+/*
  * global variables
  * pool_global.c
  */
 extern pid_t mypid;				/* parent pid */
 extern ProcessType processType;
 extern ProcessState processState;
-
-
+extern volatile SI_ManageInfo *si_manage_info;
+extern volatile sig_atomic_t sigusr2_received;
 
 extern volatile sig_atomic_t backend_timer_expired; /* flag for connection
 													 * closed timer is expired */
@@ -578,8 +591,6 @@ extern int	set_pg_frontend_blocking(bool blocking);
 extern int	get_frontend_protocol_version(void);
 
 
-
-
 /*pool_shmem.c*/
 extern void *pool_shared_memory_create(size_t size);
 extern void pool_shmem_exit(int code);
@@ -615,6 +626,5 @@ extern size_t strlcpy(char *dst, const char *src, size_t siz);
 /* pool_worker_child.c */
 extern void do_worker_child(void);
 extern int	get_query_result(POOL_CONNECTION_POOL_SLOT * *slots, int backend_id, char *query, POOL_SELECT_RESULT * *res);
-
 
 #endif							/* POOL_H */

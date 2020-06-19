@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -170,6 +170,9 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 	/* Initialize preferred master node id */
 	pool_reset_preferred_master_node_id();
 #endif
+
+	/* Snapshot isolation state */
+	session_context->si_state = SI_NO_SNAPSHOT;
 }
 
 /*

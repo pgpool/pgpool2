@@ -20,7 +20,7 @@
 #------------------------------------------------------------------------------
 # BACKEND CLUSTERING MODE
 # Choose one of: 'streaming_replication', 'native_replication',
-#	'logical_replication', 'slony' or 'raw'
+#	'logical_replication', 'slony', 'raw' or 'snapshot_isolation'
 #------------------------------------------------------------------------------
 backend_clustering_mode = 'logical_replication'
 

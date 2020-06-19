@@ -180,11 +180,15 @@
     <primary>logical replication mode</primary>
    </indexterm>
 
+   <indexterm zone="running-mode">
+    <primary>snapshot isolation mode</primary>
+   </indexterm>
+
    <para>
-    There are four different running modes
-    in <productname>Pgpool-II</>: streaming replication mode,
-    logical replication mode, master slave mode (slony mode), native
-    replication mode and raw mode. In any
+    There are four different running modes in
+    <productname>Pgpool-II</>: streaming replication mode, logical
+    replication mode, master slave mode (slony mode), native
+    replication mode, raw mode and snapshot isolaton mode. In any
     mode, <productname>Pgpool-II</> provides connection pooling,
     automatic fail over and online recovery.
    </para>
@@ -257,6 +261,36 @@
    <para>
     Load balancing is possible in the mode.
    </para>
+
+   <para>
+    The <firstterm>snapshot isolation mode</firstterm> is similar to
+    the native replication mode and it adds the visibility consistency
+    among nodes.  Please note that there are some limitations in this
+    mode and currently (in <productname>Pgpool-II</productname> 4.2)
+    this mode is regarded as "experimental" implementation. Be warned
+    that careful testings are required before you implement this in a
+    production system.
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      It is necessary to set the transaction isolation level to
+      REPEATABLE READ.  That means you need to set it in
+      <filename>postgresql.conf</filename> like this:
+      <programlisting>
+       default_transaction_isolation = 'repeatable read'
+      </programlisting>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Consistent visibility in SERIAL data type and sequences are not
+      guaranteed.
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
    <para>
     In the <firstterm>raw

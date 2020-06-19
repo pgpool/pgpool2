@@ -211,6 +211,7 @@ static const struct config_enum_entry backend_clustering_mode_options[] = {
 	{"logical_replication", CM_LOGICAL_REPLICATION, false},
 	{"slony", CM_SLONY, false},
 	{"raw", CM_RAW, false},
+	{"snapshot_isolation", CM_SNAPSHOT_ISOLATION, false},
 	{NULL, 0, false}
 };
 

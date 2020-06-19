@@ -119,6 +119,7 @@
 
  </part>
 
+ &biblio;
 
  <![%include-index;[&bookindex;]]>
  <![%include-xslt-index;[<index id="bookindex"></index>]]>

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -156,6 +156,13 @@ typedef struct {
 	POOL_TEMP_TABLE_STATE	state;	/* see above */
 }			POOL_TEMP_TABLE;
 
+
+typedef enum
+{
+	SI_NO_SNAPSHOT,
+	SI_SNAPSHOT_PREPARED
+} SI_STATE;
+
 /*
  * Per session context:
  */
@@ -282,6 +289,9 @@ typedef struct
 	/* Preferred "master" node id. Only used for SimpleForwardToFrontend. */
 	int			preferred_master_node_id;
 #endif
+
+	/* Whether snapshot is aquired in this transaction. Only used by Snapshot Isolation mode. */
+	SI_STATE	si_state;
 }			POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);

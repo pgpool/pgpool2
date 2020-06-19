@@ -1220,6 +1220,83 @@ backend_clustering_mode = 'slony'
   </variablelist>
  </sect2>
 
+ <sect2 id="guc-snapshot-isolation-mode" xreflabel="snapshot_isolation_mode">
+  <title>スナップショットアイソレーションモード</title>
+
+  <para>
+   このモードは、ネィティブレプリケーションモードと似ていますが、更にノードをまたがる可視性の一貫性を保証します。
+   実装は研究論文<xref linkend="mishima2009">に基づいています。
+   たとえば、以下のようなノードにまたがる可視性の一貫性がないことからくるノード間のデータ不整合を防ぐことができます。
+   ここで、S1, S2はセッションを表し、N1, N2はPostgreSQLのサーバ1と2を表します。
+   <programlisting>
+S1/N1: BEGIN;
+S1/N2: BEGIN;
+S1/N1: UPDATE t1 SET i = i + 1;	-- i = 1
+S1/N2: UPDATE t1 SET i = i + 1; -- i = 1
+S1/N1: COMMIT;
+S2/N1: BEGIN;
+S2/N2: BEGIN;
+S2/N2: DELETE FROM t1 WHERE i = 1; -- delete 1 row since S1/N2 is not committed yet
+S2/N1: DELETE FROM t1 WHERE i = 1; -- delete no row since S1/N1 is committed and i is not 1 anymore
+S1/N2: COMMIT;
+S2/N1: COMMIT;
+S2/N2: COMMIT;
+   </programlisting>
+   スナップショットアイソレーションモードでは、以下のどちらかとなり、いずれにしてもノード間のデータの一貫性は損なわれません。
+   <programlisting>
+S1/N1: BEGIN;
+S1/N2: BEGIN;
+S1/N1: UPDATE t1 SET i = i + 1;	-- i = 1
+S1/N2: UPDATE t1 SET i = i + 1; -- i = 1
+S2/N1: BEGIN;
+S2/N2: BEGIN;
+S1/N1: COMMIT;
+S1/N2: COMMIT;
+S2/N1: DELETE FROM t1 WHERE i = 1; -- delete no row since S1/N1 is committed and i is not 1 anymore
+S2/N2: DELETE FROM t1 WHERE i = 1; -- delete no row since S1/N2 is committed and i is not 1 anymore
+S2/N1: COMMIT;
+S2/N2: COMMIT;
+   </programlisting>
+
+   <programlisting>
+S1/N1: BEGIN;
+S1/N2: BEGIN;
+S1/N1: UPDATE t1 SET i = i + 1;	-- i = 1
+S1/N2: UPDATE t1 SET i = i + 1; -- i = 1
+S2/N1: BEGIN;
+S2/N2: BEGIN;
+S2/N1: DELETE FROM t1 WHERE i = 1; -- delete 1 row since S1/N1 is not committed yet
+S2/N2: DELETE FROM t1 WHERE i = 1; -- delete 1 row since S1/N2 is not committed yet
+S1/N1: COMMIT;
+S1/N2: COMMIT;
+S2/N1: COMMIT;
+S2/N2: COMMIT;
+   </programlisting>
+
+   ただし、制限事項がいくつかあり、今の所(<productname>Pgpool-II</productname> 4.2)では「実験的な実装」という位置づけです。
+   業務で使用する場合には慎重なテストをお勧めします。
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     PostgreSQLのトランザクション分離レベルをREPEATABLE READにする必要があります。
+     具体的には、<filename>postgresql.conf</filename>に以下のように記述します。
+     <programlisting>
+      default_transaction_isolation = 'repeatable read'
+     </programlisting>
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     シリアル型やシーケンスに関する一貫した可視性を保証しません。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+
+ </sect2>
+
 </sect1>
 
 <sect1 id="runtime-config-backend-settings">

@@ -70,7 +70,8 @@ typedef enum ClusteringModes
 	CM_NATIVE_REPLICATION,
 	CM_LOGICAL_REPLICATION,
 	CM_SLONY,
-	CM_RAW
+	CM_RAW,
+	CM_SNAPSHOT_ISOLATION
 }			ClusteringModes;
 
 typedef enum LogStandbyDelayModes

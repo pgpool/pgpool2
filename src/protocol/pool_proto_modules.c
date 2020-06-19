@@ -502,6 +502,37 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		}
 
 		/*
+		 * From now on it is possible that query is actually sent to backend.
+		 * So we need to acquire snapshot while there's no committing backend
+		 * in snapshot isolation mode except while processing reset queries.
+		 * For this purpose, we send dummy "SELECT 1" to all the backend.
+		 * Sending actualy user's query is not possible because it might cause
+		 * rw-conflict, which in turn causes a deadlock.
+		 */
+		if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION &&
+			!is_start_transaction_query(node) &&
+			!si_snapshot_prepared() &&
+			frontend && frontend->no_forward == 0)
+		{
+			int	i;
+
+			si_aquire_snapshot();
+
+			for (i = 0; i < NUM_BACKENDS; i++)
+			{
+				static	char *dummy_query = "SELECT 1";
+				POOL_SELECT_RESULT *res;
+
+				do_query(CONNECTION(backend, i), dummy_query, &res, MAJOR(backend));
+				if (res)
+					free_select_result(res);
+				per_node_statement_log(backend, i, dummy_query);
+			}
+
+			si_snapshot_aquired();
+		}
+
+		/*
 		 * pg_terminate function needs special handling, process it if the
 		 * query contains one, otherwise use pool_where_to_send() to decide
 		 * destination backend node for the query
@@ -676,9 +707,12 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			/*
 			 * Optimization effort: If there's only one session, we do not
 			 * need to wait for the master node's response, and could execute
-			 * the query concurrently.
+			 * the query concurrently.  In snapshot isolation mode we cannot
+			 * do this optimization because we need to wait for master's
+			 * response first.
 			 */
-			if (pool_config->num_init_children == 1)
+			if (pool_config->num_init_children == 1 &&
+				pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
 			{
 				/* Send query to all DB nodes at once */
 				status = pool_send_and_wait(query_context, 0, 0);
@@ -713,9 +747,19 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		else
 		{
 			/*
+			 * If commit command and Snapshot Isolation mode, wait for until
+			 * snapshot prepared.
+			 */
+			if (commit && pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
+			{
+				si_commit_request();
+			}
+
+			/*
 			 * Send the query to other than master node.
 			 */
 			pool_send_and_wait(query_context, -1, MASTER_NODE_ID);
+
 		}
 
 		/*
@@ -723,7 +767,20 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		 * "COMMIT" or "ROLLBACK"
 		 */
 		if (commit)
+		{
 			pool_send_and_wait(query_context, 1, MASTER_NODE_ID);
+
+			/*
+			 * If we are in the snapshot isolation mode, we need to declare
+			 * that commit has been done. This would wake up other children
+			 * waiting for acquiring snapshot.
+			 */
+			if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
+			{
+				si_commit_done();
+			}
+		}
+
 	}
 	else
 	{
@@ -1949,8 +2006,20 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 	/* if (pool_is_query_in_progress() && allow_close_transaction) */
 	if (allow_close_transaction)
 	{
+		bool internal_transaction_started = INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID);
+
 		if (end_internal_transaction(frontend, backend) != POOL_CONTINUE)
 			return POOL_END;
+
+		/*
+		 * If we are running in snapshot isolation mode and started an
+		 * internal transaction, notice that commit is done.
+		 */
+		if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION &&
+			internal_transaction_started)
+		{
+			si_commit_done();
+		}
 	}
 
 	if (MAJOR(backend) == PROTO_MAJOR_V3)
