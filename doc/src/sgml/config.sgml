@@ -64,6 +64,30 @@
 
     <listitem>
      <para>
+      <emphasis>Numeric with Unit:</emphasis>
+	  The numeric parameters that describe the quantities of
+	  memory or time have an implicit unit.
+	  The unit might be kilobytes, megabytes,  milliseconds,
+	  seconds, or minutes.
+	  For example:
+
+	 <programlisting>
+	  search_primary_node_timeout = 6min
+	  memqcache_total_size = 64MB
+	  </programlisting>
+	  An unadorned numeric value for one of these settings will use
+	  the parameter's default unit.
+	  </para>
+	  <para>
+	  The unit name is case-sensitive, and there can be whitespace between the numeric value and the unit.
+	  </para>
+	  <para>Valid memory units are kB (kilobytes), MB (megabytes), GB (gigabytes), and TB (terabytes).</para>
+	  <para>Valid time units are ms (milliseconds), s (seconds), min (minutes), h (hours), and d (days).</para>
+
+    </listitem>
+
+    <listitem>
+     <para>
       <emphasis>Enumerated:</emphasis>
       Enumerated-type parameters are written in the same way as string
       parameters, but are restricted to have one of a limited set of

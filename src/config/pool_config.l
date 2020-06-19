@@ -73,7 +73,8 @@ SIGN            ("-"|"+")
 DIGIT           [0-9]
 HEXDIGIT        [0-9a-fA-F]
 
-INTEGER         {SIGN}?({DIGIT}+|0x{HEXDIGIT}+)
+UNIT_LETTER     [a-zA-Z]
+INTEGER         {SIGN}?({DIGIT}+|0x{HEXDIGIT}+){UNIT_LETTER}*
 
 EXPONENT        [Ee]{SIGN}?{DIGIT}+
 REAL            {SIGN}?{DIGIT}*"."{DIGIT}*{EXPONENT}?

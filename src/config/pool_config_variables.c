@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <limits.h>
+#include <math.h>
 
 #include "pool.h"
 #include "pool_config.h"
@@ -159,8 +160,16 @@ static bool SyslogFacilityProcessFunc(int newval, int elevel);
 
 static struct config_generic *get_index_free_record_if_any(struct config_generic *record);
 
+static bool parse_int(const char *value, int64 *result, int flags, const char **hintmsg, int64 MaxVal);
+static bool convert_to_base_unit(double value, const char *unit,
+								 int base_unit, double *base_value);
 
 #ifndef POOL_PRIVATE
+
+static void convert_int_from_base_unit(int64 base_value, int base_unit,
+						   int64 *value, const char **unit);
+
+
 /* These functions are used to provide Hints for enum type config parameters and
  * to output the vslues of the parameters.
  * These functuons are not available for tools since they use the stringInfo that is
@@ -278,6 +287,84 @@ static const struct config_enum_entry check_temp_table_options[] = {
 	{NULL, 0, false}
 };
 
+/* From PostgreSQL's guc.c */
+/*
+ * Unit conversion tables.
+ *
+ * There are two tables, one for memory units, and another for time units.
+ * For each supported conversion from one unit to another, we have an entry
+ * in the table.
+ *
+ * To keep things simple, and to avoid possible roundoff error,
+ * conversions are never chained.  There needs to be a direct conversion
+ * between all units (of the same type).
+ *
+ * The conversions for each base unit must be kept in order from greatest to
+ * smallest human-friendly unit; convert_xxx_from_base_unit() rely on that.
+ * (The order of the base-unit groups does not matter.)
+ */
+#define MAX_UNIT_LEN		3	/* length of longest recognized unit string */
+
+typedef struct
+{
+	char		unit[MAX_UNIT_LEN + 1]; /* unit, as a string, like "kB" or
+										 * "min" */
+	int			base_unit;		/* GUC_UNIT_XXX */
+	double		multiplier;		/* Factor for converting unit -> base_unit */
+} unit_conversion;
+
+static const char *memory_units_hint = "Valid units for this parameter are \"B\", \"kB\", \"MB\", \"GB\", and \"TB\".";
+
+static const unit_conversion memory_unit_conversion_table[] =
+{
+	{"TB", GUC_UNIT_BYTE, 1024.0 * 1024.0 * 1024.0 * 1024.0},
+	{"GB", GUC_UNIT_BYTE, 1024.0 * 1024.0 * 1024.0},
+	{"MB", GUC_UNIT_BYTE, 1024.0 * 1024.0},
+	{"kB", GUC_UNIT_BYTE, 1024.0},
+	{"B", GUC_UNIT_BYTE, 1.0},
+
+	{"TB", GUC_UNIT_KB, 1024.0 * 1024.0 * 1024.0},
+	{"GB", GUC_UNIT_KB, 1024.0 * 1024.0},
+	{"MB", GUC_UNIT_KB, 1024.0},
+	{"kB", GUC_UNIT_KB, 1.0},
+	{"B", GUC_UNIT_KB, 1.0 / 1024.0},
+
+	{"TB", GUC_UNIT_MB, 1024.0 * 1024.0},
+	{"GB", GUC_UNIT_MB, 1024.0},
+	{"MB", GUC_UNIT_MB, 1.0},
+	{"kB", GUC_UNIT_MB, 1.0 / 1024.0},
+	{"B", GUC_UNIT_MB, 1.0 / (1024.0 * 1024.0)},
+
+	{""}						/* end of table marker */
+};
+
+static const char *time_units_hint = "Valid units for this parameter are \"us\", \"ms\", \"s\", \"min\", \"h\", and \"d\".";
+
+static const unit_conversion time_unit_conversion_table[] =
+{
+	{"d", GUC_UNIT_MS, 1000 * 60 * 60 * 24},
+	{"h", GUC_UNIT_MS, 1000 * 60 * 60},
+	{"min", GUC_UNIT_MS, 1000 * 60},
+	{"s", GUC_UNIT_MS, 1000},
+	{"ms", GUC_UNIT_MS, 1},
+	{"us", GUC_UNIT_MS, 1.0 / 1000},
+
+	{"d", GUC_UNIT_S, 60 * 60 * 24},
+	{"h", GUC_UNIT_S, 60 * 60},
+	{"min", GUC_UNIT_S, 60},
+	{"s", GUC_UNIT_S, 1},
+	{"ms", GUC_UNIT_S, 1.0 / 1000},
+	{"us", GUC_UNIT_S, 1.0 / (1000 * 1000)},
+
+	{"d", GUC_UNIT_MIN, 60 * 24},
+	{"h", GUC_UNIT_MIN, 60},
+	{"min", GUC_UNIT_MIN, 1},
+	{"s", GUC_UNIT_MIN, 1.0 / 60},
+	{"ms", GUC_UNIT_MIN, 1.0 / (1000 * 60)},
+	{"us", GUC_UNIT_MIN, 1.0 / (1000 * 1000 * 60)},
+
+	{""}						/* end of table marker */
+};
 static struct config_bool ConfigureNamesBool[] =
 {
 	{
@@ -1257,8 +1344,8 @@ static struct config_long ConfigureNamesLong[] =
 {
 	{
 		{"delay_threshold", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
-			"standby delay threshold.",
-			CONFIG_VAR_TYPE_LONG, false, 0
+			"standby delay threshold in bytes.",
+			CONFIG_VAR_TYPE_LONG, false, GUC_UNIT_BYTE
 		},
 		&g_pool_config.delay_threshold,
 		0,
@@ -1269,7 +1356,7 @@ static struct config_long ConfigureNamesLong[] =
 	{
 		{"relcache_expire", CFGCXT_INIT, CACHE_CONFIG,
 			"Relation cache expiration time in seconds.",
-			CONFIG_VAR_TYPE_LONG, false, 0
+			CONFIG_VAR_TYPE_LONG, false, GUC_UNIT_S
 		},
 		&g_pool_config.relcache_expire,
 		0,
@@ -1280,7 +1367,7 @@ static struct config_long ConfigureNamesLong[] =
 	{
 		{"memqcache_total_size", CFGCXT_INIT, CACHE_CONFIG,
 			"Total memory size in bytes for storing memory cache.",
-			CONFIG_VAR_TYPE_LONG, false, 0
+			CONFIG_VAR_TYPE_LONG, false, GUC_UNIT_BYTE
 		},
 		&g_pool_config.memqcache_total_size,
 		(int64) 67108864,
@@ -1347,7 +1434,7 @@ static struct config_int_array ConfigureNamesIntArray[] =
 	{
 		{"health_check_timeout", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Backend node health check timeout value in seconds.",
-			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_INT_ARRAY, true, GUC_UNIT_S, MAX_NUM_BACKENDS
 		},
 		NULL,
 		20,
@@ -1368,7 +1455,7 @@ static struct config_int_array ConfigureNamesIntArray[] =
 	{
 		{"health_check_period", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Time interval in seconds between the health checks.",
-			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_INT_ARRAY, true, GUC_UNIT_S, MAX_NUM_BACKENDS
 		},
 		NULL,
 		0,
@@ -1410,7 +1497,7 @@ static struct config_int_array ConfigureNamesIntArray[] =
 	{
 		{"health_check_retry_delay", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"The amount of time in seconds to wait between failed health check retries.",
-			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_INT_ARRAY, true, GUC_UNIT_S, MAX_NUM_BACKENDS
 		},
 		NULL,
 		1,
@@ -1431,7 +1518,7 @@ static struct config_int_array ConfigureNamesIntArray[] =
 	{
 		{"connect_timeout", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 			"Timeout in milliseconds before giving up connecting to backend.",
-			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_NUM_BACKENDS
+			CONFIG_VAR_TYPE_INT_ARRAY, true, GUC_UNIT_MS, MAX_NUM_BACKENDS
 		},
 		NULL,
 		10000,
@@ -1695,7 +1782,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"child_life_time", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"pgpool-II child process life time in seconds.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.child_life_time,
 		300,
@@ -1706,7 +1793,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"client_idle_limit", CFGCXT_SESSION, CONNECTION_POOL_CONFIG,
 			"idle time in seconds to disconnects a client.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.client_idle_limit,
 		0,
@@ -1717,7 +1804,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"connection_life_time", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
 			"Cached connections expiration time in seconds.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.connection_life_time,
 		0,
@@ -1739,7 +1826,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"authentication_timeout", CFGCXT_INIT, CONNECTION_CONFIG,
 			"Time out value in seconds for client authentication.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.authentication_timeout,
 		0,
@@ -1761,7 +1848,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"sr_check_period", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"Time interval in seconds between the streaming replication delay checks.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.sr_check_period,
 		0,
@@ -1772,7 +1859,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"recovery_timeout", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"Maximum time in seconds to wait for the recovering PostgreSQL node.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.recovery_timeout,
 		90,
@@ -1783,7 +1870,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"client_idle_limit_in_recovery", CFGCXT_SESSION, RECOVERY_CONFIG,
 			"Time limit is seconds for the child connection, before it is terminated during the 2nd stage recovery.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.client_idle_limit_in_recovery,
 		0,
@@ -1794,7 +1881,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"search_primary_node_timeout", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"Max time in seconds to search for primary node after failover.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.search_primary_node_timeout,
 		300,
@@ -1827,7 +1914,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wd_interval", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Time interval in seconds between life check.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.wd_interval,
 		10,
@@ -1860,7 +1947,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wd_heartbeat_keepalive", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Time interval in seconds between sending the heartbeat siganl.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.wd_heartbeat_keepalive,
 		2,
@@ -1871,7 +1958,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wd_heartbeat_deadtime", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Deadtime interval in seconds for heartbeat siganl.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.wd_heartbeat_deadtime,
 		30,
@@ -1915,7 +2002,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"memqcache_expire", CFGCXT_INIT, CACHE_CONFIG,
 			"Memory cache entry life time specified in seconds.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.memqcache_expire,
 		0,
@@ -1926,7 +2013,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"memqcache_maxcache", CFGCXT_INIT, CACHE_CONFIG,
 			"Maximum SELECT result size in bytes.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_BYTE
 		},
 		&g_pool_config.memqcache_maxcache,
 		409600,
@@ -1937,7 +2024,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"memqcache_cache_block_size", CFGCXT_INIT, CACHE_CONFIG,
 			"Cache block size in bytes.",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_BYTE
 		},
 		&g_pool_config.memqcache_cache_block_size,
 		1048576,
@@ -1948,7 +2035,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"auto_failback_interval", CFGCXT_RELOAD, FAILOVER_CONFIG,
 			"min interval of executing auto_failback in seconds",
-			CONFIG_VAR_TYPE_INT, false, 0
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.auto_failback_interval,
 		60,
@@ -3244,7 +3331,19 @@ setConfigOptionVar(struct config_generic *record, const char *name, int index_va
 
 				if (value != NULL)
 				{
-					newval = atoi(value);
+					int64 newval64;
+					const char *hintmsg;
+
+					if (!parse_int(value, &newval64,
+								   conf->gen.flags, &hintmsg, INT_MAX))
+					{
+						ereport(elevel,
+								(errmsg("invalid value for parameter \"%s\": \"%s\"",
+										name, value),
+								 hintmsg ? errhint("%s", _(hintmsg)) : 0));
+						return false;
+					}
+					newval = (int)newval64;
 				}
 				else if (source == PGC_S_DEFAULT)
 				{
@@ -3342,7 +3441,19 @@ setConfigOptionVar(struct config_generic *record, const char *name, int index_va
 
 				if (value != NULL)
 				{
-					newval = atoi(value);
+					int64 newval64;
+					const char *hintmsg;
+
+					if (!parse_int(value, &newval64,
+								   conf->gen.flags, &hintmsg, INT_MAX))
+					{
+						ereport(elevel,
+								(errmsg("invalid value for parameter \"%s\": \"%s\"",
+										name, value),
+								 hintmsg ? errhint("%s", _(hintmsg)) : 0));
+						return false;
+					}
+					newval = (int)newval64;
 				}
 				else if (source == PGC_S_DEFAULT)
 				{
@@ -3442,7 +3553,17 @@ setConfigOptionVar(struct config_generic *record, const char *name, int index_va
 
 				if (value != NULL)
 				{
-					newval = pool_atoi64(value);
+					const char *hintmsg;
+
+					if (!parse_int(value, &newval,
+								   conf->gen.flags, &hintmsg, conf->max))
+					{
+						ereport(elevel,
+								(errmsg("invalid value for parameter \"%s\": \"%s\"",
+										name, value),
+								 hintmsg ? errhint("%s", _(hintmsg)) : 0));
+						return false;
+					}
 				}
 				else if (source == PGC_S_DEFAULT)
 				{
@@ -4668,7 +4789,204 @@ get_index_free_record_if_any(struct config_generic *record)
 	return ret;
 }
 
+/*
+ * Try to parse value as an integer.  The accepted formats are the
+ * usual decimal, octal, or hexadecimal formats, as well as floating-point
+ * formats (which will be rounded to integer after any units conversion).
+ * Optionally, the value can be followed by a unit name if "flags" indicates
+ * a unit is allowed.
+ *
+ * If the string parses okay, return true, else false.
+ * If okay and result is not NULL, return the value in *result.
+ * If not okay and hintmsg is not NULL, *hintmsg is set to a suitable
+ * HINT message, or NULL if no hint provided.
+ */
+static bool
+parse_int(const char *value, int64 *result, int flags, const char **hintmsg, int64 MaxVal)
+{
+	/*
+	 * We assume here that double is wide enough to represent any integer
+	 * value with adequate precision.
+	 */
+	double		val;
+	char	   *endptr;
+
+	/* To suppress compiler warnings, always set output params */
+	if (result)
+		*result = 0;
+	if (hintmsg)
+		*hintmsg = NULL;
+
+	/*
+	 * Try to parse as an integer (allowing octal or hex input).  If the
+	 * conversion stops at a decimal point or 'e', or overflows, re-parse as
+	 * float.  This should work fine as long as we have no unit names starting
+	 * with 'e'.  If we ever do, the test could be extended to check for a
+	 * sign or digit after 'e', but for now that's unnecessary.
+	 */
+	errno = 0;
+	val = strtol(value, &endptr, 0);
+	if (*endptr == '.' || *endptr == 'e' || *endptr == 'E' ||
+		errno == ERANGE)
+	{
+		errno = 0;
+		val = strtod(value, &endptr);
+	}
+
+	if (endptr == value || errno == ERANGE)
+		return false;			/* no HINT for these cases */
+
+	/* reject NaN (infinities will fail range check below) */
+	if (isnan(val))
+		return false;			/* treat same as syntax error; no HINT */
+
+
+	/* allow whitespace between number and unit */
+	while (isspace((unsigned char) *endptr))
+		endptr++;
+
+	/* Handle possible unit */
+	if (*endptr != '\0')
+	{
+		if ((flags & GUC_UNIT) == 0)
+		{
+			return false;		/* this setting does not accept a unit */
+		}
+		if (!convert_to_base_unit(val,
+								  endptr, (flags & GUC_UNIT),
+								  &val))
+		{
+			/* invalid unit, or garbage after the unit; set hint and fail. */
+			if (hintmsg)
+			{
+				if (flags & GUC_UNIT_MEMORY)
+					*hintmsg = memory_units_hint;
+				else
+					*hintmsg = time_units_hint;
+			}
+			return false;
+		}
+	}
+
+	/* Round to int, then check for overflow */
+	val = rint(val);
+
+	if (val > MaxVal || val < INT_MIN)
+	{
+		if (hintmsg)
+			*hintmsg = "Value exceeds allowed range.";
+		return false;
+	}
+
+	if (result)
+		*result = (int64) val;
+	return true;
+}
+/*
+ * Convert a value from one of the human-friendly units ("kB", "min" etc.)
+ * to the given base unit.  'value' and 'unit' are the input value and unit
+ * to convert from (there can be trailing spaces in the unit string).
+ * The converted value is stored in *base_value.
+ * It's caller's responsibility to round off the converted value as necessary
+ * and check for out-of-range.
+ *
+ * Returns true on success, false if the input unit is not recognized.
+ */
+
+static bool
+convert_to_base_unit(double value, const char *unit,
+					 int base_unit, double *base_value)
+{
+	char		unitstr[MAX_UNIT_LEN + 1];
+	int			unitlen;
+	const unit_conversion *table;
+	int			i;
+
+	/* extract unit string to compare to table entries */
+	unitlen = 0;
+	while (*unit != '\0' && !isspace((unsigned char) *unit) &&
+		   unitlen < MAX_UNIT_LEN)
+		unitstr[unitlen++] = *(unit++);
+	unitstr[unitlen] = '\0';
+	/* allow whitespace after unit */
+	while (isspace((unsigned char) *unit))
+		unit++;
+	if (*unit != '\0')
+		return false;			/* unit too long, or garbage after it */
+
+	/* now search the appropriate table */
+	if (base_unit & GUC_UNIT_MEMORY)
+		table = memory_unit_conversion_table;
+	else
+		table = time_unit_conversion_table;
+
+	for (i = 0; *table[i].unit; i++)
+	{
+		if (base_unit == table[i].base_unit &&
+			strcmp(unitstr, table[i].unit) == 0)
+		{
+			double		cvalue = value * table[i].multiplier;
+
+			/*
+			 * If the user gave a fractional value such as "30.1GB", round it
+			 * off to the nearest multiple of the next smaller unit, if there
+			 * is one.
+			 */
+			if (*table[i + 1].unit &&
+				base_unit == table[i + 1].base_unit)
+				cvalue = rint(cvalue / table[i + 1].multiplier) *
+					table[i + 1].multiplier;
+
+			*base_value = cvalue;
+			return true;
+		}
+	}
+	return false;
+}
 #ifndef POOL_PRIVATE
+
+/*
+ * Convert an integer value in some base unit to a human-friendly unit.
+ *
+ * The output unit is chosen so that it's the greatest unit that can represent
+ * the value without loss.  For example, if the base unit is GUC_UNIT_KB, 1024
+ * is converted to 1 MB, but 1025 is represented as 1025 kB.
+ */
+static void
+convert_int_from_base_unit(int64 base_value, int base_unit,
+						   int64 *value, const char **unit)
+{
+	const unit_conversion *table;
+	int			i;
+
+	*unit = NULL;
+
+	if (base_unit & GUC_UNIT_MEMORY)
+		table = memory_unit_conversion_table;
+	else
+		table = time_unit_conversion_table;
+
+	for (i = 0; *table[i].unit; i++)
+	{
+		if (base_unit == table[i].base_unit)
+		{
+			/*
+			 * Accept the first conversion that divides the value evenly.  We
+			 * assume that the conversions for each base unit are ordered from
+			 * greatest unit to the smallest!
+			 */
+			if (table[i].multiplier <= 1.0 ||
+				base_value % (int64) table[i].multiplier == 0)
+			{
+				*value = (int64) rint(base_value / table[i].multiplier);
+				*unit = table[i].unit;
+				break;
+			}
+		}
+	}
+
+	Assert(*unit != NULL);
+}
 
 /*
  * Lookup the name for an enum option with the selected value.
@@ -4722,10 +5040,23 @@ ShowOption(struct config_generic *record, int index, int elevel)
 					val = (*conf->show_hook) ();
 				else
 				{
-					int			result = *conf->variable;
 
-					snprintf(buffer, sizeof(buffer), "%d",
-							 result);
+					/*
+					 * Use int64 arithmetic to avoid overflows in units
+					 * conversion.
+					 */
+					int64		result = (int64) *conf->variable;
+					const char *unit;
+
+					if (result > 0 && (record->flags & GUC_UNIT))
+						convert_int_from_base_unit(result,
+												   record->flags & GUC_UNIT,
+												   &result, &unit);
+					else
+						unit = "";
+
+					snprintf(buffer, sizeof(buffer), INT64_FORMAT "%s",
+							 result, unit);
 					val = buffer;
 				}
 			}
@@ -4740,9 +5071,17 @@ ShowOption(struct config_generic *record, int index, int elevel)
 				else
 				{
 					int64		result = (int64) *conf->variable;
+					const char *unit;
 
-					snprintf(buffer, sizeof(buffer), INT64_FORMAT,
-							 result);
+					if (result > 0 && (record->flags & GUC_UNIT))
+						convert_int_from_base_unit(result,
+												   record->flags & GUC_UNIT,
+												   &result, &unit);
+					else
+						unit = "";
+
+					snprintf(buffer, sizeof(buffer), INT64_FORMAT "%s",
+							 result, unit);
 					val = buffer;
 				}
 			}

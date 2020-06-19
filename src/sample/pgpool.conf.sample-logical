@@ -101,7 +101,7 @@ pool_passwd = 'pool_passwd'
                                    # File name of pool_passwd for md5 authentication.
                                    # "" disables pool_passwd.
                                    # (change requires restart)
-authentication_timeout = 60
+authentication_timeout = 1min
                                    # Delay in seconds to complete client authentication
                                    # 0 means no timeout.
 
@@ -495,7 +495,7 @@ detach_false_primary = off
                                    # mode and with PostgreSQL 9.6 or
                                    # after.
 
-search_primary_node_timeout = 300
+search_primary_node_timeout = 5min
                                    # Timeout in seconds to search for the
                                    # primary node when a failover occurs.
                                    # 0 means no timeout, keep searching
@@ -504,7 +504,7 @@ search_primary_node_timeout = 300
 auto_failback = off
                                    # Dettached backend node reattach automatically
                                    # if replication_state is 'streaming'.
-auto_failback_interval = 60
+auto_failback_interval = 1min
                                    # Min interval of executing auto_failback in
                                    # seconds.
 
@@ -789,7 +789,7 @@ memqcache_memcached_port = 11211
                                     # Memcached port number. Mondatory if memqcache_method = 'memcached'.
                                     # Defaults to 11211.
                                     # (change requires restart)
-memqcache_total_size = 67108864
+memqcache_total_size = 64MB
                                     # Total memory size in bytes for storing memory cache.
                                     # Mandatory if memqcache_method = 'shmem'.
                                     # Defaults to 64MB.
@@ -809,11 +809,11 @@ memqcache_auto_cache_invalidation = on
                                     # DDL/DML/DCL(and memqcache_expire).  If off, it is only triggered
                                     # by memqcache_expire.  on by default.
                                     # (change requires restart)
-memqcache_maxcache = 409600
+memqcache_maxcache = 400kB
                                     # Maximum SELECT result size in bytes.
                                     # Must be smaller than memqcache_cache_block_size. Defaults to 400KB.
                                     # (change requires restart)
-memqcache_cache_block_size = 1048576
+memqcache_cache_block_size = 1MB
                                     # Cache block size in bytes. Mandatory if memqcache_method = 'shmem'.
                                     # Defaults to 1MB.
                                     # (change requires restart)
