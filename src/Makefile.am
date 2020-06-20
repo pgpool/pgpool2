@@ -76,6 +76,7 @@ sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pgpool.conf.sample-stream \
 			   sample/pgpool.conf.sample-logical \
 			   sample/pgpool.conf.sample-raw \
+			   sample/pgpool.conf.sample-snapshot \
 			   sample/scripts/failover.sh.sample \
 			   sample/scripts/follow_master.sh.sample \
 			   sample/scripts/pgpool_remote_start.sample \
