@@ -23,12 +23,13 @@ do
 	export PGPORT=$PGPOOL_PORT
 
 
+	echo "log_min_messages = 'debug5'" >> etc/pgpool.conf
 	# start pgpool-II
 	./startall
 
 	sleep 1
 
-	$PSQL test -p $PGPORT -c "SELECT pg_sleep(20);" &
+	$PSQL test -p $PGPORT -c "SELECT pg_sleep(10);" &
 
 	sleep 2
 	# get process id which query is executed
@@ -48,6 +49,17 @@ do
 	grep "failover" log/pgpool.log
 	if [ $? -eq 0 ];then
 		echo "Failed pg_terminate_backend. failover is executing."
+		./shutdownall
+		exit 1
+	fi
+
+	COUNT_UP=`grep "connection_count_up" log/pgpool.log |wc -l`
+	COUNT_DOWN=`grep "connection_count_down" log/pgpool.log |wc -l`
+
+	echo "count_up: ${COUNT_UP}"
+	echo "count_down: ${COUNT_DOWN}"
+	if [ ${COUNT_UP} != ${COUNT_DOWN} ];then
+		echo "connection count is not matched."
 		./shutdownall
 		exit 1
 	fi
