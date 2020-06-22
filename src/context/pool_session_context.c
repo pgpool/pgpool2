@@ -173,6 +173,9 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 
 	/* Snapshot isolation state */
 	session_context->si_state = SI_NO_SNAPSHOT;
+
+	/* Transaction read only */
+	session_context->transaction_read_only = false;
 }
 
 /*

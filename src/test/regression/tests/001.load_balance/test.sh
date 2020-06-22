@@ -9,7 +9,7 @@ PSQL=$PGBIN/psql
 # sleep time after reload in seconds
 st=10
 
-for mode in s r
+for mode in s r i
 do
 	rm -fr $TESTDIR
 	mkdir $TESTDIR

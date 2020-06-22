@@ -505,12 +505,14 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		 * From now on it is possible that query is actually sent to backend.
 		 * So we need to acquire snapshot while there's no committing backend
 		 * in snapshot isolation mode except while processing reset queries.
-		 * For this purpose, we send dummy "SELECT 1" to all the backend.
-		 * Sending actualy user's query is not possible because it might cause
-		 * rw-conflict, which in turn causes a deadlock.
+		 * For this purpose, we send a query to know whether the transaction
+		 * is READ ONLY or not.  Sending actual user's query is not possible
+		 * because it might cause rw-conflict, which in turn causes a
+		 * deadlock.
 		 */
 		if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION &&
-			!is_start_transaction_query(node) &&
+			TSTATE(backend, MASTER_NODE_ID) == 'T' &&
+			si_snapshot_aquire_command(node) &&
 			!si_snapshot_prepared() &&
 			frontend && frontend->no_forward == 0)
 		{
@@ -520,13 +522,19 @@ SimpleQuery(POOL_CONNECTION * frontend,
 
 			for (i = 0; i < NUM_BACKENDS; i++)
 			{
-				static	char *dummy_query = "SELECT 1";
+				static	char *si_query = "SELECT current_setting('transaction_read_only')";
 				POOL_SELECT_RESULT *res;
 
-				do_query(CONNECTION(backend, i), dummy_query, &res, MAJOR(backend));
+				do_query(CONNECTION(backend, i), si_query, &res, MAJOR(backend));
 				if (res)
+				{
+					if (res->data[0] && !strcmp(res->data[0], "on"))
+						session_context->transaction_read_only = true;
+					else
+						session_context->transaction_read_only = false;
 					free_select_result(res);
-				per_node_statement_log(backend, i, dummy_query);
+				}
+				per_node_statement_log(backend, i, si_query);
 			}
 
 			si_snapshot_aquired();
@@ -712,7 +720,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			 * response first.
 			 */
 			if (pool_config->num_init_children == 1 &&
-				pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
+				pool_config->backend_clustering_mode != CM_SNAPSHOT_ISOLATION)
 			{
 				/* Send query to all DB nodes at once */
 				status = pool_send_and_wait(query_context, 0, 0);
@@ -778,6 +786,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
 			{
 				si_commit_done();
+				session_context->transaction_read_only = false;
 			}
 		}
 
@@ -2019,6 +2028,8 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 			internal_transaction_started)
 		{
 			si_commit_done();
+			/* reset transaction readonly flag */
+			session_context->transaction_read_only = false;
 		}
 	}
 

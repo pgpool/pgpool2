@@ -725,6 +725,17 @@ si_snapshot_prepared(void)
 }
 
 /*
+ * Reurns true if the command will aquire snapshot.
+ */
+bool
+si_snapshot_aquire_command(Node *node)
+{
+	return !is_start_transaction_query(node) &&
+		!IsA(node, VariableSetStmt) &&
+		!IsA(node, VariableShowStmt);
+}
+
+/*
  * Aquire snapshot
  */
 void

@@ -59,6 +59,8 @@ typedef enum
 static POOL_DEST send_to_where(Node *node, char *query);
 static void where_to_send_deallocate(POOL_QUERY_CONTEXT * query_context, Node *node);
 static char *remove_read_write(int len, const char *contents, int *rewritten_len);
+static void set_virtual_master_node(POOL_QUERY_CONTEXT *query_context);
+static void set_load_balance_info(POOL_QUERY_CONTEXT *query_context);
 
 /*
  * Create and initialize per query session context
@@ -647,6 +649,61 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 			MAJOR(backend) == PROTO_MAJOR_V3)
 		{
 			/*
+			 * In snapshot isolation mode, we always load balance if current
+			 * transaction is read only unless load balance mode is off.
+			 */
+			if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION &&
+				pool_config->load_balance_mode)
+			{
+				if (TSTATE(backend, MASTER_NODE_ID) == 'T')
+				{
+					/*
+					 * We are in an explicit transaction. If the transaction is
+					 * read only, we can load balance.
+					 */
+					if (session_context->transaction_read_only)
+					{
+						set_load_balance_info(query_context);
+					}
+
+					/* Set virtual master node according to the where_to_send map. */
+					set_virtual_master_node(query_context);
+
+					return;
+				}
+				else if (TSTATE(backend, MASTER_NODE_ID) == 'I')
+				{
+					/*
+					 * We are out side transaction. If default transaction is read only,
+					 * we can load balance.
+					 */
+					static	char *si_query = "SELECT current_setting('transaction_read_only')";
+					POOL_SELECT_RESULT *res;
+					bool	load_balance = false;
+
+					do_query(CONNECTION(backend, MASTER_NODE_ID), si_query, &res, MAJOR(backend));
+					if (res)
+					{
+						if (res->data[0] && !strcmp(res->data[0], "on"))
+						{
+							load_balance = true;
+						}
+						free_select_result(res);
+					}
+
+					per_node_statement_log(backend, MASTER_NODE_ID, si_query);
+
+					if (load_balance)
+					{
+						/* Ok, we can load balance. We are don! */
+						set_load_balance_info(query_context);
+						set_virtual_master_node(query_context);
+						return;
+					}
+				}
+			}
+			
+			/*
 			 * If a writing function call is used or replicate_select is true,
 			 * we prefer to send to all nodes.
 			 */
@@ -666,17 +723,7 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 					  !pool_is_failed_transaction() &&
 					  pool_get_transaction_isolation() != POOL_SERIALIZABLE))
 			{
-
-
-
-				/* load balance */
-				if (pool_config->statement_level_load_balance)
-					session_context->load_balance_node_id = select_load_balancing_node();
-
-				session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
-
-				pool_set_node_to_be_sent(query_context,
-										 session_context->query_context->load_balance_node_id);
+				set_load_balance_info(query_context);
 			}
 			else
 			{
@@ -729,14 +776,8 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 		where_to_send_deallocate(query_context, node);
 	}
 
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (query_context->where_to_send[i])
-		{
-			query_context->virtual_master_node_id = i;
-			break;
-		}
-	}
+	/* Set virtual master node according to the where_to_send map. */
+	set_virtual_master_node(query_context);
 
 	return;
 }
@@ -2009,4 +2050,40 @@ pool_is_transaction_read_only(Node *node)
 		}
 	}
 	return ret;
+}
+
+/*
+ * Set virtual master node according to the where_to_send map.
+ */
+static void
+set_virtual_master_node(POOL_QUERY_CONTEXT *query_context)
+{
+	int	i;
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (query_context->where_to_send[i])
+		{
+			query_context->virtual_master_node_id = i;
+			break;
+		}
+	}
+}
+
+/*
+ * Set load balance info.
+ */
+static void
+set_load_balance_info(POOL_QUERY_CONTEXT *query_context)
+{
+	POOL_SESSION_CONTEXT *session_context;
+	session_context = pool_get_session_context(false);
+
+	if (pool_config->statement_level_load_balance)
+		session_context->load_balance_node_id = select_load_balancing_node();
+
+	session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
+
+	pool_set_node_to_be_sent(query_context,
+							 query_context->load_balance_node_id);
 }

@@ -292,6 +292,9 @@ typedef struct
 
 	/* Whether snapshot is aquired in this transaction. Only used by Snapshot Isolation mode. */
 	SI_STATE	si_state;
+	/* Whether transaction is read only. Only used by Snapshot Isolation mode. */
+	SI_STATE	transaction_read_only;
+
 }			POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
