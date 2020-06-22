@@ -240,7 +240,10 @@ void do_child(int *fds)
 		MemoryContextSwitchTo(ProcessLoopContext);
 
 		if (accepted)
+		{
+			accepted = 0;
 			connection_count_down();
+		}
         
         backend_cleanup(&child_frontend, backend, frontend_invalid);
 
