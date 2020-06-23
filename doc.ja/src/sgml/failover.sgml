@@ -915,6 +915,19 @@
       デフォルトはoffです。
       このパラメータは<productname>Pgpool-II</productname>の設定を再読み込みすることで変更可能です。
      </para>
+
+     <note>
+      <para>
+       <!--
+       <xref linkend="guc-auto-failback"> may not work, when replication slot is used.
+       There’s possibility that the streaming replication is stopped, bacause
+       <xref linkend="guc-failover-command"> is executed and replication slot is deleted by
+       the command.
+       -->
+       レプリケーションスロットを使用している場合、<xref linkend="guc-auto-failback">が動作しない可能性があることに注意してください。
+       スタンバイノードがダウンした際に<xref linkend="guc-failover-command">によりスタンバイのレプリケーションスロットが削除され、レプリケーションが停止している可能性があるためです。
+      </para>
+     </note>
     </listitem>
    </varlistentry>
 

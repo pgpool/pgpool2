@@ -680,6 +680,15 @@
      <para>
       The default is off. This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
      </para>
+
+     <note>
+      <para>
+       <xref linkend="guc-auto-failback"> may not work, when replication slot is used.
+       There’s possibility that the streaming replication is stopped, bacause
+       <xref linkend="guc-failover-command"> is executed and replication slot is deleted by
+       the command.
+      </para>
+     </note>
     </listitem>
    </varlistentry>
 
