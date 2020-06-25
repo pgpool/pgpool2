@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -107,6 +107,9 @@ pcp_main(int unix_fd, int inet_fd)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	struct timeval uptime;
+
+	/* set application name */
+	set_application_name(PT_PCP);
 
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
@@ -269,6 +272,10 @@ start_pcp_command_processor_process(int port)
 	{
 		/* Set the process type variable */
 		processType = PT_PCP_WORKER;
+
+		/* set application name */
+		set_application_name(processType);
+
 		on_exit_reset();
 		/* Close the listen sockets sockets */
 		close(pcp_unix_fd);
