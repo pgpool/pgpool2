@@ -663,13 +663,11 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 					 */
 					if (session_context->transaction_read_only)
 					{
+						/* Ok, we can load balance. We are done! */
 						set_load_balance_info(query_context);
+						set_virtual_master_node(query_context);
+						return;
 					}
-
-					/* Set virtual master node according to the where_to_send map. */
-					set_virtual_master_node(query_context);
-
-					return;
 				}
 				else if (TSTATE(backend, MASTER_NODE_ID) == 'I')
 				{
@@ -695,7 +693,7 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 
 					if (load_balance)
 					{
-						/* Ok, we can load balance. We are don! */
+						/* Ok, we can load balance. We are done! */
 						set_load_balance_info(query_context);
 						set_virtual_master_node(query_context);
 						return;
