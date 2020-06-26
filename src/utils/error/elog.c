@@ -69,6 +69,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <sys/fcntl.h>
+#include "main/pgpool_logger.h"
 #include "utils/elog.h"
 #include "utils/memutils.h"
 #include "pool_config.h"
@@ -115,7 +116,6 @@ ErrorContextCallback *error_context_stack = NULL;
 
 sigjmp_buf *PG_exception_stack = NULL;
 
-extern bool redirection_done;
 
 /*
  * Hook for intercepting messages before they are sent to the server log.
@@ -148,6 +148,7 @@ static void write_syslog(int level, const char *line);
 
 static void send_message_to_server_log(ErrorData *edata);
 static void send_message_to_frontend(ErrorData *edata);
+static void write_pipe_chunks(char *data, int len, int dest);
 static void write_console(const char *line, int len);
 static void log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata);
 static const char *process_log_prefix_padding(const char *p, int *ppadding);
@@ -1748,6 +1749,57 @@ write_console(const char *line, int len)
 	(void) rc;
 }
 
+/*
+ * Send data to the syslogger using the chunked protocol
+ *
+ * Note: when there are multiple backends writing into the syslogger pipe,
+ * it's critical that each write go into the pipe indivisibly, and not
+ * get interleaved with data from other processes.  Fortunately, the POSIX
+ * spec requires that writes to pipes be atomic so long as they are not
+ * more than PIPE_BUF bytes long.  So we divide long messages into chunks
+ * that are no more than that length, and send one chunk per write() call.
+ * The collector process knows how to reassemble the chunks.
+ *
+ * Because of the atomic write requirement, there are only two possible
+ * results from write() here: -1 for failure, or the requested number of
+ * bytes.  There is not really anything we can do about a failure; retry would
+ * probably be an infinite loop, and we can't even report the error usefully.
+ * (There is noplace else we could send it!)  So we might as well just ignore
+ * the result from write().  However, on some platforms you get a compiler
+ * warning from ignoring write()'s result, so do a little dance with casting
+ * rc to void to shut up the compiler.
+ */
+static void
+write_pipe_chunks(char *data, int len, int dest)
+{
+	PipeProtoChunk p;
+	int			fd = fileno(stderr);
+	int			rc;
+
+	Assert(len > 0);
+
+	p.proto.nuls[0] = p.proto.nuls[1] = '\0';
+	p.proto.pid = myProcPid;
+
+	/* write all but the last chunk */
+	while (len > PIPE_MAX_PAYLOAD)
+	{
+		p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'F' : 'f');
+		p.proto.len = PIPE_MAX_PAYLOAD;
+		memcpy(p.proto.data, data, PIPE_MAX_PAYLOAD);
+		rc = write(fd, &p, PIPE_HEADER_SIZE + PIPE_MAX_PAYLOAD);
+		(void) rc;
+		data += PIPE_MAX_PAYLOAD;
+		len -= PIPE_MAX_PAYLOAD;
+	}
+
+	/* write the last chunk */
+	p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'T' : 't');
+	p.proto.len = len;
+	memcpy(p.proto.data, data, len);
+	rc = write(fd, &p, PIPE_HEADER_SIZE + len);
+	(void) rc;
+}
 
 /*
  * Write error report to frontend log
@@ -1944,7 +1996,6 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 	static int	log_my_pid = 0;
 	int			padding;
 	const char *p;
-	int			MyProcPid = getpid();
 
 	POOL_CONNECTION *frontend = NULL;
 	POOL_SESSION_CONTEXT *session = pool_get_session_context(true);
@@ -1958,10 +2009,10 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 	 * MyProcPid changes. MyStartTime also changes when MyProcPid does, so
 	 * reset the formatted start timestamp too.
 	 */
-	if (log_my_pid != MyProcPid)
+	if (log_my_pid != myProcPid)
 	{
 		log_line_number = 0;
-		log_my_pid = MyProcPid;
+		log_my_pid = myProcPid;
 	}
 	log_line_number++;
 
@@ -2059,9 +2110,9 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 				break;
 			case 'p':
 				if (padding != 0)
-					appendStringInfo(buf, "%*d", padding, MyProcPid);
+					appendStringInfo(buf, "%*d", padding, myProcPid);
 				else
-					appendStringInfo(buf, "%d", MyProcPid);
+					appendStringInfo(buf, "%d", myProcPid);
 				break;
 			case 'l':
 				if (padding != 0)
@@ -2215,7 +2266,16 @@ send_message_to_server_log(ErrorData *edata)
 
 	if (pool_config->log_destination & LOG_DESTINATION_STDERR)
 	{
-		write_console(buf.data, buf.len);
+		/*
+		 * Use the chunking protocol if we know the syslogger should be
+		 * catching stderr output, and we are not ourselves the syslogger.
+		 * Otherwise, just do a vanilla write to stderr.
+		 */
+
+		if (redirection_done && processType != PT_LOGGER)
+			write_pipe_chunks(buf.data, buf.len, LOG_DESTINATION_STDERR);
+		else
+			write_console(buf.data, buf.len);
 	}
 	pfree(buf.data);
 }

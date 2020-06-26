@@ -280,6 +280,7 @@ start_pcp_command_processor_process(int port)
 		/* Close the listen sockets sockets */
 		close(pcp_unix_fd);
 		close(pcp_inet_fd);
+		myProcPid = getpid();
 		/* call PCP child main */
 		if (pcp_worker_children)
 			list_free(pcp_worker_children);

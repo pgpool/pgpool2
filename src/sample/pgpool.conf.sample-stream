@@ -165,7 +165,7 @@ max_pool = 4
 
 # - Life time -
 
-child_life_time = 300
+child_life_time = 5min
                                    # Pool exits after being idle for this many seconds
 child_max_connections = 0
                                    # Pool exits after receiving that many connections
@@ -248,6 +248,37 @@ syslog_ident = 'pgpool'
                                         #   fatal
                                         #   panic
 
+# This is used when logging to stderr:
+#logging_collector = off                # Enable capturing of stderr
+                                        # into log files.
+                                        # (change requires restart)
+
+# -- Only used if logging_collector is on ---
+
+#log_directory = '/tmp/pgpool_log'      # directory where log files are written,
+                                        # can be absolute
+#log_filename = 'pgpool-%Y-%m-%d_%H%M%S.log'
+                                        # log file name pattern,
+                                        # can include strftime() escapes
+
+#log_file_mode = 0600                   # creation mode for log files,
+                                        # begin with 0 to use octal notation
+
+#log_truncate_on_rotation = off         # If on, an existing log file with the
+                                        # same name as the new log file will be
+                                        # truncated rather than appended to.
+                                        # But such truncation only occurs on
+                                        # time-driven rotation, not on restarts
+                                        # or size-driven rotation.  Default is
+                                        # off, meaning append to existing files
+                                        # in all cases.
+
+#log_rotation_age = 1d                  # Automatic rotation of logfiles will
+                                        # happen after that (minutes)time.
+                                        # 0 disables time based rotation.
+#log_rotation_size = 10MB               # Automatic rotation of logfiles will
+                                        # happen after that much (KB) log output.
+                                        # 0 disables size based rotation.
 #------------------------------------------------------------------------------
 # FILE LOCATIONS
 #------------------------------------------------------------------------------

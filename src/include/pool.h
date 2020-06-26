@@ -505,6 +505,7 @@ typedef enum
 	PT_PCP,
 	PT_PCP_WORKER,
 	PT_HEALTH_CHECK,
+	PT_LOGGER,
 	PT_LAST_PTYPE	/* last ptype marker. any ptype must be above this. */
 }			ProcessType;
 
@@ -536,6 +537,7 @@ typedef struct
  * pool_global.c
  */
 extern pid_t mypid;				/* parent pid */
+extern pid_t myProcPid;			/* process pid */
 extern ProcessType processType;
 extern ProcessState processState;
 extern volatile SI_ManageInfo *si_manage_info;

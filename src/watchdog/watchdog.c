@@ -1101,6 +1101,7 @@ fork_watchdog_child(void)
 
 		/* Set the process type variable */
 		processType = PT_WATCHDOG;
+		myProcPid = getpid();
 		set_application_name(processType);
 
 		/* call watchdog child main */

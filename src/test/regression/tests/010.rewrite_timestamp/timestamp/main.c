@@ -17,7 +17,7 @@ POOL_REQUEST_INFO *Req_info = &_req_info;
 POOL_CONFIG _pool_config;
 POOL_CONFIG *pool_config = &_pool_config;
 ProcessType processType;
-
+bool redirection_done = false;
 typedef struct
 {
 	char	   *attrname;		/* attribute name */

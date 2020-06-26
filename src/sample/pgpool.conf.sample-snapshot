@@ -160,7 +160,7 @@ max_pool = 4
 
 # - Life time -
 
-child_life_time = 300
+child_life_time = 5min
                                    # Pool exits after being idle for this many seconds
 child_max_connections = 0
                                    # Pool exits after receiving that many connections
@@ -242,6 +242,38 @@ syslog_ident = 'pgpool'
                                         #   log
                                         #   fatal
                                         #   panic
+
+# This is used when logging to stderr:
+#logging_collector = off                # Enable capturing of stderr
+                                        # into log files.
+                                        # (change requires restart)
+
+# -- Only used if logging_collector is on ---
+
+#log_directory = '/tmp/pgpool_log'      # directory where log files are written,
+                                        # can be absolute
+#log_filename = 'pgpool-%Y-%m-%d_%H%M%S.log'
+                                        # log file name pattern,
+                                        # can include strftime() escapes
+
+#log_file_mode = 0600                   # creation mode for log files,
+                                        # begin with 0 to use octal notation
+
+#log_truncate_on_rotation = off         # If on, an existing log file with the
+                                        # same name as the new log file will be
+                                        # truncated rather than appended to.
+                                        # But such truncation only occurs on
+                                        # time-driven rotation, not on restarts
+                                        # or size-driven rotation.  Default is
+                                        # off, meaning append to existing files
+                                        # in all cases.
+
+#log_rotation_age = 1d                  # Automatic rotation of logfiles will
+                                        # happen after that (minutes)time.
+                                        # 0 disables time based rotation.
+#log_rotation_size = 10MB               # Automatic rotation of logfiles will
+                                        # happen after that much (KB) log output.
+                                        # 0 disables size based rotation.
 
 #------------------------------------------------------------------------------
 # FILE LOCATIONS
@@ -512,7 +544,7 @@ detach_false_primary = off
                                    # mode and with PostgreSQL 9.6 or
                                    # after.
 
-search_primary_node_timeout = 300
+search_primary_node_timeout = 5min
                                    # Timeout in seconds to search for the
                                    # primary node when a failover occurs.
                                    # 0 means no timeout, keep searching
@@ -521,7 +553,7 @@ search_primary_node_timeout = 300
 auto_failback = off
                                    # Dettached backend node reattach automatically
                                    # if replication_state is 'streaming'.
-auto_failback_interval = 60
+auto_failback_interval = 1min
                                    # Min interval of executing auto_failback in
                                    # seconds.
 
@@ -815,7 +847,7 @@ memqcache_memcached_port = 11211
                                    # Memcached port number. Mondatory if memqcache_method = 'memcached'.
                                    # Defaults to 11211.
                                    # (change requires restart)
-memqcache_total_size = 67108864
+memqcache_total_size = 64MB
                                    # Total memory size in bytes for storing memory cache.
                                    # Mandatory if memqcache_method = 'shmem'.
                                    # Defaults to 64MB.
@@ -835,11 +867,11 @@ memqcache_auto_cache_invalidation = on
                                    # DDL/DML/DCL(and memqcache_expire).  If off, it is only triggered
                                    # by memqcache_expire.  on by default.
                                    # (change requires restart)
-memqcache_maxcache = 409600
+memqcache_maxcache = 400kB
                                    # Maximum SELECT result size in bytes.
                                    # Must be smaller than memqcache_cache_block_size. Defaults to 400KB.
                                    # (change requires restart)
-memqcache_cache_block_size = 1048576
+memqcache_cache_block_size = 1MB
                                    # Cache block size in bytes. Mandatory if memqcache_method = 'shmem'.
                                    # Defaults to 1MB.
                                    # (change requires restart)

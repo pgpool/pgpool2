@@ -74,6 +74,7 @@ fork_escalation_process(void)
 	}
 	on_exit_reset();
 	processType = PT_WATCHDOG_UTILITY;
+	myProcPid = getpid();
 	set_application_name(processType);
 
 	POOL_SETMASK(&UnBlockSig);
@@ -162,6 +163,7 @@ fork_plunging_process(void)
 		return pid;
 	}
 	on_exit_reset();
+	myProcPid = getpid();
 	processType = PT_WATCHDOG_UTILITY;
 	set_application_name(processType);
 

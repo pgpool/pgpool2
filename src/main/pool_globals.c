@@ -23,5 +23,6 @@
 #include "pool.h"
 
 pid_t		mypid;				/* pgpool parent process id */
+pid_t		myProcPid;		/* process pid */
 ProcessType processType;
 ProcessState processState;

@@ -83,7 +83,8 @@ bin_PROGRAMS = pcp_stop_pgpool$(EXEEXT) pcp_node_count$(EXEEXT) \
 	pcp_proc_count$(EXEEXT) pcp_proc_info$(EXEEXT) \
 	pcp_detach_node$(EXEEXT) pcp_attach_node$(EXEEXT) \
 	pcp_recovery_node$(EXEEXT) pcp_promote_node$(EXEEXT) \
-	pcp_pool_status$(EXEEXT) pcp_watchdog_info$(EXEEXT)
+	pcp_pool_status$(EXEEXT) pcp_watchdog_info$(EXEEXT) \
+	pcp_reload_config$(EXEEXT)
 subdir = src/tools/pcp
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/mkinstalldirs
@@ -141,6 +142,9 @@ pcp_promote_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_recovery_node_OBJECTS = $(am__objects_1)
 pcp_recovery_node_OBJECTS = $(am_pcp_recovery_node_OBJECTS)
 pcp_recovery_node_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
+am_pcp_reload_config_OBJECTS = $(am__objects_1)
+pcp_reload_config_OBJECTS = $(am_pcp_reload_config_OBJECTS)
+pcp_reload_config_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
 am_pcp_stop_pgpool_OBJECTS = $(am__objects_1)
 pcp_stop_pgpool_OBJECTS = $(am_pcp_stop_pgpool_OBJECTS)
 pcp_stop_pgpool_DEPENDENCIES = $(libs_dir)/pcp/libpcp.la
@@ -185,13 +189,15 @@ SOURCES = $(pcp_attach_node_SOURCES) $(pcp_detach_node_SOURCES) \
 	$(pcp_node_info_SOURCES) $(pcp_pool_status_SOURCES) \
 	$(pcp_proc_count_SOURCES) $(pcp_proc_info_SOURCES) \
 	$(pcp_promote_node_SOURCES) $(pcp_recovery_node_SOURCES) \
-	$(pcp_stop_pgpool_SOURCES) $(pcp_watchdog_info_SOURCES)
+	$(pcp_reload_config_SOURCES) $(pcp_stop_pgpool_SOURCES) \
+	$(pcp_watchdog_info_SOURCES)
 DIST_SOURCES = $(pcp_attach_node_SOURCES) $(pcp_detach_node_SOURCES) \
 	$(pcp_health_check_stats_SOURCES) $(pcp_node_count_SOURCES) \
 	$(pcp_node_info_SOURCES) $(pcp_pool_status_SOURCES) \
 	$(pcp_proc_count_SOURCES) $(pcp_proc_info_SOURCES) \
 	$(pcp_promote_node_SOURCES) $(pcp_recovery_node_SOURCES) \
-	$(pcp_stop_pgpool_SOURCES) $(pcp_watchdog_info_SOURCES)
+	$(pcp_reload_config_SOURCES) $(pcp_stop_pgpool_SOURCES) \
+	$(pcp_watchdog_info_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -381,6 +387,8 @@ pcp_promote_node_SOURCES = $(client_sources)
 pcp_promote_node_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_watchdog_info_SOURCES = $(client_sources)
 pcp_watchdog_info_LDADD = $(libs_dir)/pcp/libpcp.la
+pcp_reload_config_SOURCES = $(client_sources)
+pcp_reload_config_LDADD = $(libs_dir)/pcp/libpcp.la
 all: all-am
 
 .SUFFIXES:
@@ -515,6 +523,10 @@ pcp_promote_node$(EXEEXT): $(pcp_promote_node_OBJECTS) $(pcp_promote_node_DEPEND
 pcp_recovery_node$(EXEEXT): $(pcp_recovery_node_OBJECTS) $(pcp_recovery_node_DEPENDENCIES) $(EXTRA_pcp_recovery_node_DEPENDENCIES) 
 	@rm -f pcp_recovery_node$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(pcp_recovery_node_OBJECTS) $(pcp_recovery_node_LDADD) $(LIBS)
+
+pcp_reload_config$(EXEEXT): $(pcp_reload_config_OBJECTS) $(pcp_reload_config_DEPENDENCIES) $(EXTRA_pcp_reload_config_DEPENDENCIES) 
+	@rm -f pcp_reload_config$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(pcp_reload_config_OBJECTS) $(pcp_reload_config_LDADD) $(LIBS)
 
 pcp_stop_pgpool$(EXEEXT): $(pcp_stop_pgpool_OBJECTS) $(pcp_stop_pgpool_DEPENDENCIES) $(EXTRA_pcp_stop_pgpool_DEPENDENCIES) 
 	@rm -f pcp_stop_pgpool$(EXEEXT)

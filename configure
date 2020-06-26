@@ -793,6 +793,7 @@ with_pgsql_includedir
 with_pgsql_libdir
 with_sunifdef
 with_openssl
+with_ldap
 with_pam
 with_memcached
 enable_rpath
@@ -1462,6 +1463,7 @@ Optional Packages:
   --with-pgsql-libdir=DIR     site library files for PostgreSQL in DIR
   --with-sunifdef=DIR     install path for sunifdef utility
   --with-openssl     build with OpenSSL support
+  --with-ldap     build with LDAP support
   --with-pam     build with PAM support
   --with-memcached=DIR     site header files for libmemcached in DIR
 
@@ -14874,6 +14876,89 @@ _ACEOF
 else
   as_fn_error $? "library 'ssl' is required for OpenSSL" "$LINENO" 5
 fi
+
+fi
+
+
+# Check whether --with-ldap was given.
+if test "${with_ldap+set}" = set; then :
+  withval=$with_ldap;
+$as_echo "#define USE_LDAP 1" >>confdefs.h
+
+fi
+
+if test "$with_ldap" = yes ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ldap_bind in -lldap" >&5
+$as_echo_n "checking for ldap_bind in -lldap... " >&6; }
+if ${ac_cv_lib_ldap_ldap_bind+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lldap $EXTRA_LDAP_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ldap_bind ();
+int
+main ()
+{
+return ldap_bind ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_ldap_ldap_bind=yes
+else
+  ac_cv_lib_ldap_ldap_bind=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ldap_ldap_bind" >&5
+$as_echo "$ac_cv_lib_ldap_ldap_bind" >&6; }
+if test "x$ac_cv_lib_ldap_ldap_bind" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBLDAP 1
+_ACEOF
+
+  LIBS="-lldap $LIBS"
+
+else
+  as_fn_error $? "library 'ldap' is required for LDAP" "$LINENO" 5
+fi
+
+  for ac_header in ldap.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "ldap.h" "ac_cv_header_ldap_h" "$ac_includes_default"
+if test "x$ac_cv_header_ldap_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LDAP_H 1
+_ACEOF
+
+else
+  as_fn_error $? "header file <ldap.h> is required for LDAP" "$LINENO" 5
+fi
+
+done
+
+  for ac_func in ldap_initialize
+do :
+  ac_fn_c_check_func "$LINENO" "ldap_initialize" "ac_cv_func_ldap_initialize"
+if test "x$ac_cv_func_ldap_initialize" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LDAP_INITIALIZE 1
+_ACEOF
+
+fi
+done
 
 fi
 

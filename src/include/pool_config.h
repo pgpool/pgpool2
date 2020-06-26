@@ -261,6 +261,15 @@ typedef struct
 										 * sent to client */
 	int			log_min_messages;	/* controls which message should be
 									 * emitted to server log */
+	/* log collector settings */
+	bool		logging_collector;
+	int			log_rotation_age;
+	int			log_rotation_size;
+	char		*log_directory;
+	char		*log_filename;
+	bool		log_truncate_on_rotation;
+	int			log_file_mode;
+
 	bool		master_slave_mode;	/* operate in master/slave mode */
 	MasterSlaveSubModes master_slave_sub_mode;	/* either "slony" or "stream" */
 	int64		delay_threshold;	/* If the standby server delays more than

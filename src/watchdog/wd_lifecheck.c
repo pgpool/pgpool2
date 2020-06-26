@@ -359,6 +359,7 @@ fork_lifecheck_child(void)
 
 		/* Set the process type variable */
 		processType = PT_LIFECHECK;
+		myProcPid = getpid();
 		set_application_name(processType);
 
 		/* call lifecheck child main */

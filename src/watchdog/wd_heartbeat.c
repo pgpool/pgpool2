@@ -365,6 +365,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if)
 
 	on_exit_reset();
 	processType = PT_HB_RECEIVER;
+	myProcPid = getpid();
 	set_application_name(processType);
 
 	if (fork_wait_time > 0)
@@ -498,6 +499,7 @@ wd_hb_sender(int fork_wait_time, WdHbIf * hb_if)
 	}
 
 	on_exit_reset();
+	myProcPid = getpid();
 	processType = PT_HB_SENDER;
 	set_application_name(processType);
 

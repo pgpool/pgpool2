@@ -39,6 +39,7 @@
 #include "pool_config.h"
 #include "main/health_check.h"
 #include "main/pool_internal_comms.h"
+#include "main/pgpool_logger.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
@@ -138,7 +139,7 @@ static int trigger_failover_command(int node, const char *command_line,
 						 int old_master, int new_master, int old_primary);
 static int	find_primary_node(void);
 static int	find_primary_node_repeatedly(void);
-static void terminate_all_childrens();
+static void terminate_all_childrens(int sig);
 static void system_will_go_down(int code, Datum arg);
 static char *process_name_from_pid(pid_t pid);
 static void sync_backend_from_watchdog(void);
@@ -170,7 +171,7 @@ BACKEND_STATUS private_backend_status[MAX_NUM_BACKENDS];
  */
 ConnectionInfo *con_info;
 
-static int *fds;				/* listening file descriptors (UNIX socket,
+static int *fds = NULL;				/* listening file descriptors (UNIX socket,
 								 * inet domain sockets) */
 
 static int	pcp_unix_fd;		/* unix domain socket fd for PCP (not used) */
@@ -200,6 +201,7 @@ static pid_t follow_pid = 0;	/* pid for child process handling follow
 								 * command */
 static pid_t pcp_pid = 0;		/* pid for child process handling PCP */
 static pid_t watchdog_pid = 0;	/* pid for watchdog child process */
+static pid_t pgpool_logger_pid = 0; /* pid for pgpool_logger process */
 static pid_t wd_lifecheck_pid = 0;	/* pid for child process handling watchdog
 									 * lifecheck */
 
@@ -264,13 +266,28 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	/* set up signal handlers */
 	pool_signal(SIGPIPE, SIG_IGN);
 
-	/* create unix domain socket */
-	fds = malloc(sizeof(int) * 2);
-	if (fds == NULL)
-		ereport(FATAL,
-				(errmsg("failed to allocate memory in startup process")));
+
+	/* start the log collector if enabled */
+	pgpool_logger_pid = SysLogger_Start();
+    /*
+     * If using syslogger, close the read side of the pipe.  We don't bother
+     * tracking this in fd.c, either.
+     */
+	if (syslogPipe[0] >= 0)
+		close(syslogPipe[0]);
+	syslogPipe[0] = -1;
 
 	initialize_shared_mem_objects(clear_memcache_oidmaps);
+
+	/* setup signal handlers */
+	pool_signal(SIGCHLD, reap_handler);
+	pool_signal(SIGUSR1, sigusr1_handler);
+	pool_signal(SIGUSR2, wakeup_handler);
+	pool_signal(SIGTERM, exit_handler);
+	pool_signal(SIGINT, exit_handler);
+	pool_signal(SIGQUIT, exit_handler);
+	pool_signal(SIGHUP, reload_config_handler);
+
 	if (pool_config->use_watchdog)
 	{
 		sigset_t	mask;
@@ -278,20 +295,15 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		wakeup_request = 0;
 
 		/*
-		 * Watchdog process fires SIGUSR2 once in stable state, so install the
-		 * SIGUSR2 handler first up. In addition, when wathcodg fails to start
-		 * with FATAL, the process exits and SIGCHLD is fired, so SIGCHLD
-		 * handelr is also needed. Finally, we also need to set the SIGUSR1
-		 * handler for the failover requests from other watchdog nodes. In
+		 * Watchdog process fires SIGUSR2 once in stable state
+		 * In addition, when wathcodg fails to start with FATAL, the process
+		 * exits and SIGCHLD is fired, so we can also expect SIGCHLD from
+		 * watchdog process. Finally, we also need to look for the SIGUSR1
+		 * signla for the failover requests from other watchdog nodes. In
 		 * case a request arrives at the same time when the watchdog has just
 		 * been initialized.
-		 */
-		pool_signal(SIGUSR2, wakeup_handler);
-		pool_signal(SIGCHLD, reap_handler);
-		pool_signal(SIGUSR1, sigusr1_handler);
-
-		/*
-		 * okay as we need to wait until watchdog is in stable state so only
+		 *
+		 * So we need to wait until watchdog is in stable state so only
 		 * wait for SIGUSR1, SIGCHLD, and signals those are necessary to make
 		 * sure we respond to user requests of shutdown if it arrives while we
 		 * are in waiting state.
@@ -309,6 +321,8 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		sigdelset(&mask, SIGTERM);
 		sigdelset(&mask, SIGINT);
 		sigdelset(&mask, SIGQUIT);
+		sigdelset(&mask, SIGHUP);
+
 		watchdog_pid = initialize_watchdog();
 		ereport(LOG,
 				(errmsg("waiting for watchdog to initialize")));
@@ -339,6 +353,12 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 			sigusr1_request = 0;
 		}
 	}
+
+	/* create unix domain socket */
+	fds = malloc(sizeof(int) * 2);
+	if (fds == NULL)
+		ereport(FATAL,
+				(errmsg("failed to allocate memory in startup process")));
 
 	fds[0] = create_unix_domain_socket(un_addr);
 	fds[1] = -1;
@@ -385,16 +405,6 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		process_info[i].pid = fork_a_child(fds, i);
 		process_info[i].start_time = time(NULL);
 	}
-
-	/* set up signal handlers */
-
-	pool_signal(SIGTERM, exit_handler);
-	pool_signal(SIGINT, exit_handler);
-	pool_signal(SIGQUIT, exit_handler);
-	pool_signal(SIGCHLD, reap_handler);
-	pool_signal(SIGUSR1, sigusr1_handler);
-	pool_signal(SIGUSR2, wakeup_handler);
-	pool_signal(SIGHUP, reload_config_handler);
 
 	/* create pipe for delivering event */
 	if (pipe(pipe_fds) < 0)
@@ -612,7 +622,7 @@ pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 
 		/* Set the process type variable */
 		processType = PT_PCP;
-
+		myProcPid = getpid();
 		/* call PCP child main */
 		POOL_SETMASK(&UnBlockSig);
 		health_check_timer_expired = 0;
@@ -706,6 +716,7 @@ worker_fork_a_child(ProcessType type, void (*func) (), void *params)
 
 		/* Set the process type variable */
 		processType = type;
+		myProcPid = getpid();
 		set_application_name(type);
 
 		/* call child main */
@@ -1002,38 +1013,74 @@ create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 }
 
 /*
- * function called as shared memory exit call back to kill all childrens
+ * sends the kill signal to all Pgpool children except to
+ * the pgpool_logger child
+ * wait for the termination of all killed children before returning.
  */
 static void
-terminate_all_childrens()
+terminate_all_childrens(int sig)
 {
 	pid_t		wpid;
 	int			i;
-
+	int			killed_count = 0;
+	int			terminated_count = 0;
 	/*
 	 * This is supposed to be called from main process
 	 */
 	if (processType != PT_MAIN)
 		return;
-	POOL_SETMASK(&BlockSig);
 
-	kill_all_children(SIGINT);
+	if (sig != SIGTERM && sig != SIGINT && sig != SIGQUIT)
+	{
+		ereport(LOG,
+				(errmsg("invalid terminate signal: \"%d\"", sig),
+				 errdetail("ignoring")));
+
+		return;
+	}
+
+	for (i = 0; i < pool_config->num_init_children; i++)
+	{
+		pid_t		pid = process_info[i].pid;
+
+		if (pid != 0)
+		{
+			kill(pid, sig);
+			process_info[i].pid = 0;
+			killed_count++;
+		}
+	}
+
 	if (pcp_pid != 0)
-		kill(pcp_pid, SIGINT);
+	{
+		kill(pcp_pid, sig);
+		killed_count++;
+	}
 	pcp_pid = 0;
+
 	if (worker_pid != 0)
-		kill(worker_pid, SIGINT);
+	{
+		kill(worker_pid, sig);
+		killed_count++;
+	}
 	worker_pid = 0;
+
 	if (pool_config->use_watchdog)
 	{
 		if (pool_config->use_watchdog)
 		{
 			if (watchdog_pid)
-				kill(watchdog_pid, SIGINT);
+			{
+				kill(watchdog_pid, sig);
+				killed_count++;
+			}
 			watchdog_pid = 0;
 
 			if (wd_lifecheck_pid)
-				kill(wd_lifecheck_pid, SIGINT);
+			{
+				kill(wd_lifecheck_pid, sig);
+				killed_count++;
+			}
 			wd_lifecheck_pid = 0;
 		}
 	}
@@ -1042,33 +1089,32 @@ terminate_all_childrens()
 	{
 		if (health_check_pids[i] != 0)
 		{
-			kill(health_check_pids[i], SIGINT);
+			kill(health_check_pids[i], sig);
 			health_check_pids[i] = 0;
+			killed_count++;
 		}
 	}
-
-	/* wait for all children to exit */
+	/* wait for all killed children to exit */
 	do
 	{
 		int			ret_pid;
 
 		wpid = waitpid(-1, &ret_pid, 0);
-	} while (wpid > 0 || (wpid == -1 && errno == EINTR));
+		if (wpid > 0)
+			terminated_count++;
+	} while (terminated_count < killed_count &&
+			 (wpid > 0 || (wpid == -1 && errno == EINTR)));
 
 	if (wpid == -1 && errno != ECHILD)
 		ereport(LOG,
 				(errmsg("wait() failed. reason:%s", strerror(errno))));
 
-	POOL_SETMASK(&UnBlockSig);
 }
 
 
 static RETSIGTYPE exit_handler(int sig)
 {
-	int			i;
-	pid_t		wpid;
 	int		   *walk;
-
 	int			save_errno = errno;
 
 	POOL_SETMASK(&AuthBlockSig);
@@ -1092,57 +1138,23 @@ static RETSIGTYPE exit_handler(int sig)
 	exiting = 1;
 	processState = EXITING;
 
-	/* Close listen socket */
-	for (walk = fds; *walk != -1; walk++)
-		close(*walk);
-
-	for (i = 0; i < pool_config->num_init_children; i++)
+	ereport(LOG,
+			(errmsg("shutting down")));
+	/* Close listen socket if they are already initialized */
+	if (fds)
 	{
-		pid_t		pid = process_info[i].pid;
-
-		if (pid != 0)
-		{
-			kill(pid, sig);
-			process_info[i].pid = 0;
-		}
+		for (walk = fds; *walk != -1; walk++)
+			close(*walk);
 	}
 
-	for (i = 0; i < MAX_NUM_BACKENDS; i++)
-	{
-		if (health_check_pids[i] != 0)
-		{
-			kill(health_check_pids[i], sig);
-			health_check_pids[i] = 0;
-		}
-	}
+	ereport(LOG,
+			(errmsg("terminating all child processes")));
+	terminate_all_childrens(sig);
 
-	if (pcp_pid != 0)
-		kill(pcp_pid, sig);
-	pcp_pid = 0;
-
-	if (worker_pid != 0)
-		kill(worker_pid, sig);
-	worker_pid = 0;
-
-	if (pool_config->use_watchdog)
-	{
-		if (watchdog_pid != 0)
-			kill(watchdog_pid, sig);
-		watchdog_pid = 0;
-
-		if (wd_lifecheck_pid != 0)
-			kill(wd_lifecheck_pid, sig);
-		wd_lifecheck_pid = 0;
-	}
 
 	POOL_SETMASK(&UnBlockSig);
-	do
-	{
-		int			ret_pid;
-
-		wpid = waitpid(-1, &ret_pid, 0);
-	} while (wpid > 0 || (wpid == -1 && errno == EINTR));
-
+	ereport(LOG,
+			(errmsg("Pgpool-II system is shutdown")));
 	process_info = NULL;
 	exit(0);
 }
@@ -2207,6 +2219,8 @@ process_name_from_pid(pid_t pid)
 		else if (pid == wd_lifecheck_pid)
 			return "watchdog lifecheck";
 	}
+	if (pid == pgpool_logger_pid)
+		return "pgpool log collector";
 	return "child";
 }
 
@@ -2328,6 +2342,15 @@ reaper(void)
 			}
 			else
 				worker_pid = 0;
+		}
+		else if (pid == pgpool_logger_pid)
+		{
+			if (restart_child)
+			{
+				pgpool_logger_pid = SysLogger_Start();
+			}
+			else
+				pgpool_logger_pid = 0;
 		}
 
 		/* exiting process was watchdog process */
@@ -3229,7 +3252,7 @@ fork_follow_child(int old_master, int new_primary, int old_primary)
 	{
 		on_exit_reset();
 		processType = PT_FOLLOWCHILD;
-
+		myProcPid = getpid();
 		ereport(LOG,
 				(errmsg("start triggering follow command.")));
 		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
@@ -3714,8 +3737,13 @@ system_will_go_down(int code, Datum arg)
 	 * Terminate all childrens. But we may already have killed all the
 	 * childrens if we come to this function because of shutdown signal.
 	 */
+
 	if (processState != EXITING)
-		terminate_all_childrens();
+	{
+		ereport(LOG,
+				(errmsg("shutting down")));
+		terminate_all_childrens(SIGINT);
+	}
 	processState = EXITING;
 	POOL_SETMASK(&UnBlockSig);
 

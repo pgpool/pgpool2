@@ -712,6 +712,24 @@ static struct config_bool ConfigureNamesBool[] =
 		false,
 		NULL, NULL, NULL
 	},
+	{
+		{"logging_collector", CFGCXT_INIT, LOGING_CONFIG,
+			"Enable capturing of stderr into log files.",
+			CONFIG_VAR_TYPE_BOOL, false, 0
+		},
+		&g_pool_config.logging_collector,
+		false,
+		NULL, NULL, NULL
+	},
+	{
+		{"log_truncate_on_rotation", CFGCXT_INIT, LOGING_CONFIG,
+			"If on, an existing log file gets truncated on time based log rotation.",
+			CONFIG_VAR_TYPE_BOOL, false, 0
+		},
+		&g_pool_config.log_truncate_on_rotation,
+		false,
+		NULL, NULL, NULL
+	},
 
 	/* End-of-list marker */
 	EMPTY_CONFIG_BOOL
@@ -1236,6 +1254,25 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&g_pool_config.logdir,
 		DEFAULT_LOGDIR,
+		NULL, NULL, NULL, NULL
+	},
+	{
+		{"log_directory", CFGCXT_INIT, LOGING_CONFIG,
+			"directory where log files are written.",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.log_directory,
+		"/tmp/pgpool_logs",
+		NULL, NULL, NULL, NULL
+	},
+
+	{
+		{"log_filename", CFGCXT_INIT, LOGING_CONFIG,
+			"log file name pattern.",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.log_filename,
+		"pgpool-%Y-%m-%d_%H%M%S.log",
 		NULL, NULL, NULL, NULL
 	},
 
@@ -2042,6 +2079,37 @@ static struct config_int ConfigureNamesInt[] =
 		0, INT_MAX,
 		NULL, NULL, NULL
 	},
+	{
+		{"log_rotation_age", CFGCXT_INIT, LOGING_CONFIG,
+			"Automatic rotation of logfiles will happen after that (minutes) time.",
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_MIN
+		},
+		&g_pool_config.log_rotation_age,
+		1440,/*1 day*/
+		10, INT_MAX,
+		NULL, NULL, NULL
+	},
+	{
+		{"log_rotation_size", CFGCXT_INIT, LOGING_CONFIG,
+			"Automatic rotation of logfiles will happen after that much (kilobytes) log output.",
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_KB
+		},
+		&g_pool_config.log_rotation_size,
+		0,
+		1, INT_MAX,
+		NULL, NULL, NULL
+	},
+	{
+		{"log_file_mode", CFGCXT_INIT, LOGING_CONFIG,
+			"creation mode for log files.",
+			CONFIG_VAR_TYPE_INT, false, 0
+		},
+		&g_pool_config.log_file_mode,
+		0600,
+		0, INT_MAX,
+		NULL, NULL, NULL
+	},
+
 
 	/* End-of-list marker */
 	EMPTY_CONFIG_INT

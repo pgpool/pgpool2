@@ -9,6 +9,7 @@ pgpool_SOURCES = main/main.c \
 	main/pgpool_main.c \
 	main/health_check.c \
 	main/pool_internal_comms.c \
+	main/pgpool_logger.c \
 	config/pool_config.l \
 	config/pool_config_variables.c \
 	pcp_con/pcp_child.c \
