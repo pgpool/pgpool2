@@ -348,6 +348,18 @@ if test "$with_openssl" = yes || test "$with_openssl" = auto; then
    AC_CHECK_LIB(ssl,    SSL_new, [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])
 fi
 
+AC_ARG_WITH(ldap,
+    [  --with-ldap     build with LDAP support],
+    [AC_DEFINE([USE_LDAP], 1, [Define to 1 to build with LDAP support. (--with-ldap)])])
+if test "$with_ldap" = yes ; then
+  AC_CHECK_LIB(ldap, ldap_bind, [],
+       [AC_MSG_ERROR([library 'ldap' is required for LDAP])],
+       [$EXTRA_LDAP_LIBS])
+  AC_CHECK_HEADERS(ldap.h, [],
+                    [AC_MSG_ERROR([header file <ldap.h> is required for LDAP])])
+  AC_CHECK_FUNCS([ldap_initialize])
+fi
+
 AC_ARG_WITH(pam,
     [  --with-pam     build with PAM support],
     [AC_DEFINE([USE_PAM], 1, [Define to 1 to build with PAM support. (--with-pam)])])

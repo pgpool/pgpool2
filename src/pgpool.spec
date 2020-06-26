@@ -103,6 +103,7 @@ Postgresql extensions libraries and sql files for pgpool-II.
            --disable-static \
            --with-pam \
            --with-openssl \
+           --with-ldap \
            --with-memcached=%{_usr} \
            --disable-rpath \
            --sysconfdir=%{_sysconfdir}/%{short_name}/

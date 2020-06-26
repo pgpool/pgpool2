@@ -29,6 +29,10 @@
 #include "parser/pg_list.h"
 #include "pool.h"
 
+#ifdef USE_LDAP
+#include  <ldap.h>
+#endif
+
 /* UserAuth type used for HBA which indicates the authentication method */
 typedef enum UserAuth
 {
@@ -46,6 +50,9 @@ typedef enum UserAuth
 #ifdef USE_PAM
 	,uaPAM
 #endif							/* USE_PAM */
+#ifdef USE_LDAP
+	,uaLDAP
+#endif							/* USE_LDAP */
 }
 UserAuth;
 
@@ -79,6 +86,21 @@ struct HbaLine
 	UserAuth	auth_method;
 	char	   *pamservice;
 	bool		pam_use_hostname;
+
+	bool		ldaptls;
+	char	   *ldapscheme;
+	char	   *ldapserver;
+	int			ldapport;
+	char	   *ldapbinddn;
+	char	   *ldapbindpasswd;
+	char	   *ldapsearchattribute;
+	char	   *ldapsearchfilter;
+	char	   *ldapbasedn;
+	int			ldapscope;
+	char	   *ldapprefix;
+	char	   *ldapsuffix;
+	/* Additional LDAPl option with pgpool */
+	bool		backend_use_passwd; /* If true, pgpool use same password to auth backend */
 };
 
 extern bool load_hba(char *hbapath);

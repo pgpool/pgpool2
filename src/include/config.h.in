@@ -46,6 +46,12 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the <ldap.h> header file. */
+#undef HAVE_LDAP_H
+
+/* Define to 1 if you have the `ldap_initialize' function. */
+#undef HAVE_LDAP_INITIALIZE
+
 /* Define to 1 if you have the `BSD' library (-lBSD). */
 #undef HAVE_LIBBSD
 
@@ -63,6 +69,9 @@
 
 /* Define to 1 if you have the `lc' library (-llc). */
 #undef HAVE_LIBLC
+
+/* Define to 1 if you have the `ldap' library (-lldap). */
+#undef HAVE_LIBLDAP
 
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
@@ -321,6 +330,9 @@
 /* Define to 1 if you want float8, int8, etc values to be passed by value.
    (--enable-float8-byval) */
 #undef USE_FLOAT8_BYVAL
+
+/* Define to 1 to build with LDAP support. (--with-ldap) */
+#undef USE_LDAP
 
 /* Define to 1 to build with memcached support */
 #undef USE_MEMCACHED

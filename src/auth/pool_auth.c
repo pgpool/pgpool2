@@ -1478,6 +1478,10 @@ authenticate_frontend(POOL_CONNECTION * frontend)
 		case uaPAM:
 			break;
 #endif							/* USE_PAM */
+#ifdef USE_LDAP
+		case uaLDAP:
+			break;
+#endif							/* USE_LDAP */
 
 	}
 }

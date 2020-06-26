@@ -584,11 +584,31 @@
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	</variablelist>
 
-      </para>
-     </listitem>
-    </varlistentry>
+     <varlistentry>
+      <term><literal>ldap</literal></term>
+      <listitem>
+       <para>
+	    <!--
+	    Authenticate using LDAP server.
+	    See <xref linkend="auth-cert"> for more details.
+	    -->
+	    LDAPサーバを使って認証します。
+	    詳細は<xref linkend="auth-ldap">を参照してください。
+       </para>
+       <para>
+	    <!--
+	    To enable LDAP support the <productname>Pgpool-II</productname>
+	    must be configured with <command>"&#045;&#045;with-ldap"</command>
+	    -->
+	    LDAPサポートを有効にするには、<productname>Pgpool-II</productname>が<command>"--with-ldap"</command>をつけてconfigureされていなければなりません。
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </listitem>
+ </varlistentry>
 
     <varlistentry>
      <term><replaceable>auth-options</replaceable></term>
@@ -1045,6 +1065,459 @@
      must be configured with <command>"&#045;&#045;with-pam"</command>
      -->
      PAMサポートを有効にするには、<productname>Pgpool-II</productname>が<command>"--with-pam"</command>をつけてconfigureされていなければなりません。
+    </para>
+   </note>
+  </sect2>
+
+  <sect2 id="auth-ldap">
+   <!--
+   <title>LDAP Authentication</title>
+   -->
+   <title>LDAP認証</title>
+
+   <indexterm zone="auth-ldap">
+    <primary>LDAP</primary>
+   </indexterm>
+
+   <para>
+    <!--
+    This authentication method uses LDAP as the password cerification method.
+    LDAP is used only to validate the user name/password pairs. Therefore the user must
+    already exist in the database before LDAP can be used for authentication.
+    -->
+この認証方式はパスワード確認にLDAPを使用します。
+LDAPはユーザの名前とパスワードの組み合わせのみに使用されます。
+そのため、LDAPを使用して認証を行うようにする前に、ユーザはデータベースに存在しなければなりません。
+   </para>
+
+   <para>
+    <!--
+    LDAP authentication can operate in two modes. In the first mode, which we
+    will call the simple bind mode, the server will bind to the distinguished
+    name constructed as
+    <replaceable>prefix</replaceable> <replaceable>username</replaceable> <replaceable>suffix</replaceable>.
+    Typically, the <replaceable>prefix</replaceable> parameter is used to specify
+    <literal>cn=</literal>, or <replaceable>DOMAIN</replaceable><literal>\</literal>
+    in an Active Directory environment.  <replaceable>suffix</replaceable> is used
+    to specify the remaining part of the DN in a non-Active Directory environment.
+   -->
+LDAP認証は2つのモードで動作します。1つ目のモードでは、それは単なるバインド・モードを呼び出すものですが、サーバは<replaceable>prefix</replaceable> <replaceable>username</replaceable> <replaceable>suffix</replaceable>として区別された名前にバインドします。
+一般的に、<replaceable>prefix</replaceable>パラメータはActive Directory環境での<literal>cn=</literal>や<replaceable>DOMAIN</replaceable><literal>\</literal>を特定するために使用されます。
+<replaceable>suffix</replaceable>は、Active Directory環境ではない場合でのDNの残りの部分を特定するために使用されます。
+   </para>
+
+   <para>
+    <!--
+    In the second mode, which we will call the search+bind mode, the server first
+    binds to the LDAP directory with a fixed user name and password, specified
+    with <replaceable>ldapbinddn</replaceable> and <replaceable>ldapbindpasswd</replaceable>,
+    and performs a search for the user trying to log in to the database. If no
+    user and password is configured, an anonymous bind will be attempted to the
+    directory. The search will be performed over the subtree at
+    <replaceable>ldapbasedn</replaceable>, and will try to do an exact match of
+    the attribute specified in <replaceable>ldapsearchattribute</replaceable>.
+    Once the user has been found in this search, the server disconnects and
+    re-binds to the directory as this user, using the password specified by the
+    client, to verify that the login is correct. This mode is the same as that
+    used by LDAP authentication schemes in other software, such as Apache
+    <literal>mod_authnz_ldap</literal> and <literal>pam_ldap</literal>. This
+    method allows for significantly more flexibility in where the user objects
+    are located in the directory, but will cause two separate connections to the
+    LDAP server to be made.
+    -->
+2つ目のモードでは、それはsearch/bindモードを呼び出すもので、サーバは最初に<replaceable>ldapbinddn</replaceable>と<replaceable>ldapbindpasswd</replaceable>で指定された、固定されたユーザ名とパスワードを使用してLDAPディレクトリにバインドします。
+それからデータベースにログインしようとしているユーザを検索します。
+もしユーザとパスワードが指定されていなかった場合、ディレクトリに対して匿名でバインドします。
+検索は<replaceable>ldapbasedn</replaceable>のサブツリーまで行われ、<replaceable>ldapsearchattribute</replaceable>で指定された属性に正確に一致するかどうかまで行われます。
+この検索において、一度ユーザが見つかるとサーバは切断して、クライアントで指定されたパスワードを使用してこのユーザとして再度ディレクトリにバインドします。
+これはそのログインが正しいかどうかを検証するためです。
+このモードはApache <literal>mod_authzn_heap</literal>および<literal>pam_ldap</literal>のように他のソフトウェアと同じように、LDAP認証の仕組みで使用されるものと同じです。
+この方法は、ユーザオブジェクトがディレクトリに配置されている場合に、かなりの柔軟性があります。
+しかし、LDAPサーバへの2つの分離した接続が作成されます。
+   </para>
+
+   <para>
+    <!--
+    The following configuration options are used in both modes:
+    -->
+次の設定オプションは両方のモードで使用されます。
+    <variablelist>
+     <varlistentry>
+      <term><literal>ldapserver</literal></term>
+      <listitem>
+       <para>
+        <!--
+        Names or IP addresses of LDAP servers to connect to. Multiple servers
+        may be specified, separated by spaces.
+        -->
+接続するLDAPサーバの名称もしくはIPアドレスの名称。空白で区切ることで複数のサーバを指定できます。
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapport</literal></term>
+      <listitem>
+       <para>
+        <!--
+        Port number on LDAP server to connect to. If no port is specified, the
+        LDAP library's default port setting will be used.
+        -->
+LDAPサーバに接続するためのポート番号。
+もしポートが指定されていない場合はLDAPライブラリ内のデフォルトポート設定が使用されます。
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapscheme</literal></term>
+      <listitem>
+       <para>
+        <!--
+        Set to <literal>ldaps</literal> to use LDAPS.  This is a non-standard
+        way of using LDAP over SSL, supported by some LDAP server implementations.
+        See also the <literal>ldaptls</literal> option for an alternative.
+        -->
+<literal>ldaps</literal>に設定するとLDAPSを使用します。
+これはいくつかのLDAPサーバーの実装でサポートされている、SSL経由のLDAPを使用する非標準の方法です。
+代替方法については、<literal>ldaptls</literal>オプションを参照してください。
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldaptls</literal></term>
+      <listitem>
+       <para>
+        <!--
+        Set to 1 to make the connection between Pgpool-II and the LDAP server
+        use TLS encryption. This uses the <literal>StartTLS</literal> operation
+        per RFC 4513. See also the <literal>ldapscheme</literal> option for an alternative.
+        -->
+1に設定すると、Pgpool-IIとLDAPサーバ間の接続にTLSによる暗号化を使用します。
+これはRFC 4513の<literal>StartTLS</literal>操作を使用します。
+代替方法については、<literal>ldapscheme</literal>オプションを参照して下さい。
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    <!--
+    Note that using <literal>ldapscheme</literal> or
+    <literal>ldaptls</literal> only encrypts the traffic between the
+    Pgpool-II server and the LDAP server.  The connection between the
+    Pgpool-II server and the client will still be unencrypted
+    unless SSL is used there as well.
+    -->
+<literal>ldapscheme</literal>や<literal>ldaptls</literal>を使うときにはPgpool-IIサーバとLDAPサーバ間のトラフィックのみが暗号化されることに注意して下さい。
+SSLがそこでも使用されていない限り、Pgpool-IIサーバとクライアントとの接続は、暗号化されません。
+   </para>
+
+   <para>
+    <!--
+    The following options are used in simple bind mode only:
+     -->
+以下のオプションは単純バインド・モードのみで使用されます。
+    <variablelist>
+     <varlistentry>
+      <term><literal>ldapprefix</literal></term>
+      <listitem>
+       <para>
+        <!--
+        String to prepend to the user name when forming the DN to bind as,
+        when doing simple bind authentication.
+        -->
+単純なバインド認証を行う場合のDNを生成する際にユーザ名の前に追加する文字列
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapsuffix</literal></term>
+      <listitem>
+       <para>
+        <!--
+        String to append to the user name when forming the DN to bind as,
+        when doing simple bind authentication.
+        -->
+単純なバインド認証を行う場合のDNを生成する際にユーザ名の後に追加する文字列
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    <!--
+    The following options are used in search+bind mode only:
+    -->
+以下のオプションはsearch/bindモードのみで使用されます。
+    <variablelist>
+     <varlistentry>
+      <term><literal>ldapbasedn</literal></term>
+      <listitem>
+       <para>
+        <!--
+        Root DN to begin the search for the user in, when doing search+bind
+        authentication.
+        -->
+検索とバインドの認証を行う場合のユーザ名がログインするための検索を始めるためのルートDN
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapbinddn</literal></term>
+      <listitem>
+       <para>
+        <!--
+        DN of user to bind to the directory with to perform the search when
+        doing search+bind authentication.
+        -->
+検索とバインドの認証を行う場合のディレクトリと検索をバインドするためのユーザのDN
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapbindpasswd</literal></term>
+      <listitem>
+       <para>
+        <!--
+        Password for user to bind to the directory with to perform the search
+        when doing search+bind authentication.
+        -->
+検索とバインドの認証を行う場合のディレクトリと検索をバインドするためのユーザのパスワード
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapsearchattribute</literal></term>
+      <listitem>
+       <para>
+        <!--
+        Attribute to match against the user name in the search when doing
+        search+bind authentication. If no attribute is specified, the
+        <literal>uid</literal> attribute will be used.
+        -->
+検索とバインドの認証を行う場合の検索時のユーザ名に対して一致させる属性。
+属性が指定されない場合、属性<literal>uid</literal>が使用されます。
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapsearchfilter</literal></term>
+      <listitem>
+       <para>
+        <!--
+        The search filter to use when doing search+bind authentication.
+        Occurrences of <literal>$username</literal> will be replaced with the
+        user name.  This allows for more flexible search filters than
+        <literal>ldapsearchattribute</literal>.
+        -->
+search/bind認証を行うときに使用する検索フィルタです。
+<literal>$username</literal>の出現はユーザ名に置き換えられます。
+これにより<literal>ldapsearchattribute</literal>よりも柔軟な検索フィルタが可能になります。
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>ldapurl</literal></term>
+      <listitem>
+       <para>
+        <!--
+        An RFC 4516 LDAP URL.  This is an alternative way to write some of the
+        other LDAP options in a more compact and standard form.  The format is
+        -->
+RFC 4516 LDAP URL。これはその他いくつかのLDAPオプションをより簡潔、かつ一般的な形式で記述する別の方法です。
+フォーマットは以下のようになっています。
+<synopsis>
+ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replaceable>basedn</replaceable>[?[<replaceable>attribute</replaceable>][?[<replaceable>scope</replaceable>][?[<replaceable>filter</replaceable>]]]]
+</synopsis>
+        <!--
+        <replaceable>scope</replaceable> must be one of <literal>base</literal>,
+        <literal>one</literal>, <literal>sub</literal>, typically the last.
+        (The default is <literal>base</literal>, which is normally not useful
+        in this application.) <replaceable>attribute</replaceable> can nominate
+        a single attribute, in which case it is used as a value for <literal>ldapsearchattribute</literal>.
+        If <replaceable>attribute</replaceable> is empty then <replaceable>filter</replaceable>
+        can be used as a value for <literal>ldapsearchfilter</literal>.
+        -->
+<replaceable>scope</replaceable>は<literal>base</literal>、<literal>one</literal>、<literal>sub</literal>のいずれかでなくてはならず、一般的には最後のものです。
+ （デフォルトは<literal>base</literal>です。これは通常このアプリケーションでは役に立ちません。）
+<replaceable>attribute</replaceable>は単一の属性を指定できます。その場合、それは<literal>ldapsearchattribute</literal>の値として使用されます。
+もし<replaceable>attribute</replaceable>が空の場合は、<literal>ldapsearchfilter</literal>の値として<replaceable>filter</replaceable>を使用することができます。
+       </para>
+
+       <para>
+        <!--
+        The URL scheme <literal>ldaps</literal> chooses the LDAPS method for
+        making LDAP connections over SSL, equivalent to using <literal>ldapscheme=ldaps</literal>.
+        To use encrypted LDAP connections using the <literal>StartTLS</literal>
+        operation, use the normal URL scheme <literal>ldap</literal> and specify the
+        <literal>ldaptls</literal> option in addition to <literal>ldapurl</literal>.
+        -->
+ URLスキーム<literal>ldaps</literal>は、<literal>ldapscheme=ldaps</literal>を使用するのと同じ、SSL上のLDAP接続をするLDAPS方式を選択します。
+<literal>StartTLS</literal>操作による暗号化されたLDAP接続を使用するには、通常のURLスキーム<literal>ldap</literal>を使用し、<literal>ldapurl</literal>に加え<literal>ldaptls</literal>オプションを使用しなければなりません。
+       </para>
+
+       <para>
+        <!--
+        For non-anonymous binds, <literal>ldapbinddn</literal> and
+        <literal>ldapbindpasswd</literal> must be specified as separate options.
+        -->
+非匿名バインド（non-anonymous bind）に対し、<literal>ldapbinddn</literal>および<literal>ldapbindpasswd</literal>は個別のオプションとして指定されなければなりません。
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>usebackendpasswd</literal></term>
+      <listitem>
+       <para>
+        <!--
+        Set to 1 to make the password used for LDAP authentication use authetication
+        between <productname>Pgpool-II</productname> and backend.
+        -->
+1に設定すると、LDAP認証で使用されたパスワードを<productname>Pgpool-II</productname>とバックエンド間の認証に使用します。
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    <!--
+    It is an error to mix configuration options for simple bind with options
+    for search+bind.
+    -->
+seartch/bindオプションと単純バインドに対するオプションの設定を混在させるのはエラーです。
+   </para>
+
+   <para>
+    <!--
+    When using search+bind mode, the search can be performed using a single
+    attribute specified with <literal>ldapsearchattribute</literal>, or using
+    a custom search filter specified with
+    <literal>ldapsearchfilter</literal>.
+    Specifying <literal>ldapsearchattribute=foo</literal> is equivalent to
+    specifying <literal>ldapsearchfilter="(foo=$username)"</literal>.  If neither
+    option is specified the default is
+    <literal>ldapsearchattribute=uid</literal>.
+    -->
+search/bindモードを使用するときは、<literal>ldapsearchattribute</literal>で指定される単一の属性を使って、あるいは<literal>ldapsearchfilter</literal>で指定されるカスタム検索フィルターを使って、検索を実行できます。
+<literal>ldapsearchattribute=foo</literal>の指定は、<literal>ldapsearchfilter="(foo=$username)"</literal>と同等です。
+どちらのオプションもない場合は、<literal>ldapsearchattribute=uid</literal>がデフォルトです。
+   </para>
+
+   <para>
+     <!--
+     If <productname>Pgpool-II</productname> was compiled with
+     <productname>OpenLDAP</productname> as the LDAP client library, the
+     <literal>ldapserver</literal> setting may be omitted.  In that case, a
+     list of host names and ports is looked up via RFC 2782 DNS SRV records.
+     The name <literal>_ldap._tcp.DOMAIN</literal> is looked up, where
+     <literal>DOMAIN</literal> is extracted from <literal>ldapbasedn</literal>.
+     -->
+<productname>Pgpool-II</productname>が、LDAPクライアントライブラリとして<productname>OpenLDAP</productname>を使用するようにコンパイルされていた場合、<literal>ldapserver</literal>の設定は省略出来ます。
+その場合、ホスト名とポート番号のリストは、RFC 2782 DNS SRVレコードを使用して検索されます。
+<literal>_ldap._tcp.DOMAIN</literal>という名前が検索され、<literal>ldapbasedn</literal>から<literal>DOMAIN</literal>が抽出されます。
+   </para>
+
+   <para>
+    <!--
+    Here is an example for a simple-bind LDAP configuration:
+    -->
+以下に単純バインドLDAP設定の例を示します。
+<programlisting>
+host ... ldap ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
+</programlisting>
+    <!--
+    When a connection to the database server as database
+    user <literal>foo</literal> is requested, Pgpool-II will attempt to
+    bind to the LDAP server using the DN <literal>cn=foo, dc=example,
+    dc=net</literal> and the password provided by the client.  If that connection
+    succeeds, the database access is granted.
+    -->
+データベースのユーザ、<literal>foo</literal>からデータベースサーバに接続を要求された場合、Pgpool-IIはDN <literal>cn=foo, dc=example, dc=net</literal>およびクライアントから提供されたパスワードを用いてLDAPサーバにバインドを試みます。
+その接続が成功すればデータベースへのアクセスが認められます。
+   </para>
+
+   <para>
+    <!--
+    Here is an example for a search+bind configuration:
+    -->
+以下はsearch/bind設定の例です。
+<programlisting>
+host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapsearchattribute=uid
+</programlisting>
+    <!--
+    When a connection to the database server as database
+    user <literal>foo</literal> is requested, Pgpool-II will attempt to
+    bind anonymously (since <literal>ldapbinddn</literal> was not specified) to
+    the LDAP server, perform a search for <literal>(uid=foo)</literal>
+    under the specified base DN.  If an entry is found, it will then attempt to
+    bind using that found information and the password supplied by the client.
+    If that second connection succeeds, the database access is granted.
+    -->
+データベースユーザ<literal>foo</literal>としてデータベースに接続するとき、Pgpool-IIは（<literal>ldapbinddn</literal>が指定されていないので）匿名的にバインドを試み、指定されたベースDNの基で<literal>(uid=foo)</literal>の検索を行います。あるエントリが見つかると、見つかった情報とクライアントから与えられたパスワードを用いて、その結果バインドを試みます。その二番目の接続が成功するとデータベースアクセスが認められます。
+   </para>
+
+   <para>
+    <!--
+    Here is the same search+bind configuration written as a URL:
+    -->
+URLとして記述した同じsearch/bind設定の例です。
+<programlisting>
+host ... ldap ldapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
+</programlisting>
+    <!--
+    Some other software that supports authentication against LDAP uses the
+    same URL format, so it will be easier to share the configuration.
+    -->
+LDAPに対し認証をサポートする幾つかの他のソフトウェアは同じURLフォーマットを使用します。
+従って、設定をより簡易に共有することができます。
+   </para>
+
+   <para>
+    <!--
+    Here is an example for a search+bind configuration that uses
+    <literal>ldapsearchfilter</literal> instead of
+    <literal>ldapsearchattribute</literal> to allow authentication by
+    user ID or email address:
+    -->
+<literal>ldapsearchattribute</literal>の代わりに<literal>ldapsearchfilter</literal>を使用してユーザーIDまたは電子メールアドレスによる認証を可能にするsearch/bind設定の例です。
+<programlisting>
+host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapsearchfilter="(|(uid=$username)(mail=$username))"
+</programlisting>
+   </para>
+
+   <para>
+    <!--
+    Here is an example for a search+bind configuration that uses DNS SRV
+    discovery to find the host name(s) and port(s) for the LDAP service for the
+    domain name <literal>example.net</literal>:
+    -->
+DNS SRV検出を使用してドメイン名<literal>example.net</literal>のLDAPサービスのホスト名とポート番号を検索する、search/bind設定の例です。
+<programlisting>
+host ... ldap ldapbasedn="dc=example,dc=net"
+</programlisting>
+   </para>
+
+   <tip>
+    <para>
+     <!--
+     Since LDAP often uses commas and spaces to separate the different
+     parts of a DN, it is often necessary to use double-quoted parameter
+     values when configuring LDAP options, as shown in the examples.
+     -->
+LDAPはDNの異なる構成要素を区別するため往々にしてコンマとスペースを使用します。
+例で示されたように、LDAPオプションを設定する場合、二重引用符で括られたパラメータ値を使用することが必須となることがしばしば必須となります。
+    </para>
+   </tip>
+
+   <note>
+    <para>
+     <!--
+     To enable LDAP support the <productname>Pgpool-II</productname>
+     must be configured with <command>"&#045;&#045;with-ldap"</command>
+     -->
+     LDAPサポートを有効にするには、<productname>Pgpool-II</productname>が<command>"--with-ldap"</command>をつけてconfigureされていなければなりません。
     </para>
    </note>
   </sect2>

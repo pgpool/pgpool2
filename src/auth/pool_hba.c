@@ -51,6 +51,10 @@
 #include "auth/pool_passwd.h"
 #include "protocol/pool_process_query.h"
 
+#ifdef USE_LDAP
+#include <ldap.h>
+#endif
+
 #define MULTI_VALUE_SEP "\001"	/* delimiter for multi-valued column strings */
 
 #define MAX_TOKEN	256
@@ -152,13 +156,6 @@ static POOL_STATUS CheckUserExist(char *username);
 static POOL_STATUS CheckPAMAuth(POOL_CONNECTION * frontend, char *user, char *password);
 static int	pam_passwd_conv_proc(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr);
 
-/*
- * recv_password_packet is usually used with authentications that require a client
- * password. However, pgpool's hba function only uses it for PAM authentication,
- * so declare a prototype here in "#ifdef USE_PAM" to avoid compilation warning.
- */
-static char *recv_password_packet(POOL_CONNECTION * frontend);
-
 static struct pam_conv pam_passw_conv = {
 	&pam_passwd_conv_proc,
 	NULL
@@ -170,6 +167,28 @@ static POOL_CONNECTION * pam_frontend_kludge;	/* Workaround for passing
 												 * into pam_passwd_conv_proc */
 #endif							/* USE_PAM */
 
+#ifdef USE_LDAP
+#include <ldap.h>
+
+static POOL_STATUS CheckLDAPAuth(POOL_CONNECTION *frontend);
+
+/* LDAP_OPT_DIAGNOSTIC_MESSAGE is the newer spelling */
+#ifndef LDAP_OPT_DIAGNOSTIC_MESSAGE
+#define LDAP_OPT_DIAGNOSTIC_MESSAGE LDAP_OPT_ERROR_STRING
+#endif
+
+#endif							/* USE_LDAP */
+
+
+#if defined(USE_PAM) || defined(USE_LDAP)
+/*
+ * recv_password_packet is usually used with authentications that require a client
+ * password. However, pgpool's hba function uses it for PAM or LDAP authentication,
+ * so declare a prototype here in "#if defined(USE_PAM or USE_LDAP)" to avoid
+ * compilation warning.
+ */
+static char *recv_password_packet(POOL_CONNECTION * frontend);
+#endif							/* USE_PAM or USE_LDAP */
 
 /*
  * Read the config file and create a List of HbaLine records for the contents.
@@ -274,6 +293,56 @@ load_hba(char *hbapath)
 
 	return true;
 }
+
+/*
+ * Macros used to check and report on invalid configuration options.
+ * On error: log a message at level elevel, set *err_msg, and exit the function.
+ * These macros are not as general-purpose as they look, because they know
+ * what the calling function's error-exit value is.
+ *
+ * INVALID_AUTH_OPTION = reports when an option is specified for a method where it's
+ *						 not supported.
+ * REQUIRE_AUTH_OPTION = same as INVALID_AUTH_OPTION, except it also checks if the
+ *						 method is actually the one specified. Used as a shortcut when
+ *						 the option is only valid for one authentication method.
+ * MANDATORY_AUTH_ARG  = check if a required option is set for an authentication method,
+ *						 reporting error if it's not.
+ */
+#define INVALID_AUTH_OPTION(optname, validmethods) \
+do { \
+	ereport(elevel, \
+			(errcode(ERRCODE_CONFIG_FILE_ERROR), \
+			 /* translator: the second %s is a list of auth methods */ \
+			 errmsg("authentication option \"%s\" is only valid for authentication methods %s", \
+					optname, _(validmethods)), \
+			 errcontext("line %d of configuration file \"%s\"", \
+					line_num, HbaFileName))); \
+	*err_msg = psprintf("authentication option \"%s\" is only valid for authentication methods %s", \
+						optname, validmethods); \
+	return false; \
+} while (0)
+
+#define REQUIRE_AUTH_OPTION(methodval, optname, validmethods) \
+do { \
+	if (hbaline->auth_method != methodval) \
+		INVALID_AUTH_OPTION(optname, validmethods); \
+} while (0)
+
+#define MANDATORY_AUTH_ARG(argvar, argname, authname) \
+do { \
+	if (argvar == NULL) { \
+		ereport(elevel, \
+				(errcode(ERRCODE_CONFIG_FILE_ERROR), \
+				 errmsg("authentication method \"%s\" requires argument \"%s\" to be set", \
+						authname, argname), \
+				 errcontext("line %d of configuration file \"%s\"", \
+						line_num, HbaFileName))); \
+		*err_msg = psprintf("authentication method \"%s\" requires argument \"%s\" to be set", \
+							authname, argname); \
+		return NULL; \
+	} \
+} while (0)
+
 
 static HbaLine *
 parse_hba_line(TokenizedLine *tok_line, int elevel)
@@ -634,6 +703,10 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	else if (strcmp(token->string, "pam") == 0)
 		parsedline->auth_method = uaPAM;
 #endif
+#ifdef USE_LDAP
+	else if (strcmp(token->string, "ldap") == 0)
+		parsedline->auth_method = uaLDAP;
+#endif
 	else
 	{
 		ereport(elevel,
@@ -685,6 +758,71 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 		}
 	}
 
+#ifdef USE_LDAP
+	/*
+	 * Check if the selected authentication method has any mandatory arguments
+	 * that are not set.
+	 */
+	if (parsedline->auth_method == uaLDAP)
+	{
+#ifndef HAVE_LDAP_INITIALIZE
+		/* Not mandatory for OpenLDAP, because it can use DNS SRV records */
+		MANDATORY_AUTH_ARG(parsedline->ldapserver, "ldapserver", "ldap");
+#endif
+
+		/*
+		 * LDAP can operate in two modes: either with a direct bind, using
+		 * ldapprefix and ldapsuffix, or using a search+bind, using
+		 * ldapbasedn, ldapbinddn, ldapbindpasswd and one of
+		 * ldapsearchattribute or ldapsearchfilter.  Disallow mixing these
+		 * parameters.
+		 */
+		if (parsedline->ldapprefix || parsedline->ldapsuffix)
+		{
+			if (parsedline->ldapbasedn ||
+				parsedline->ldapbinddn ||
+				parsedline->ldapbindpasswd ||
+				parsedline->ldapsearchattribute ||
+				parsedline->ldapsearchfilter)
+			{
+				ereport(elevel,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, ldapsearchattribute, ldapsearchfilter, or ldapurl together with ldapprefix"),
+						 errcontext("line %d of configuration file \"%s\"",
+									line_num, HbaFileName)));
+				*err_msg = "cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, ldapsearchattribute, ldapsearchfilter, or ldapurl together with ldapprefix";
+				return NULL;
+			}
+		}
+		else if (!parsedline->ldapbasedn)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("authentication method \"ldap\" requires argument \"ldapbasedn\", \"ldapprefix\", or \"ldapsuffix\" to be set"),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+			*err_msg = "authentication method \"ldap\" requires argument \"ldapbasedn\", \"ldapprefix\", or \"ldapsuffix\" to be set";
+			return NULL;
+		}
+
+		/*
+		 * When using search+bind, you can either use a simple attribute
+		 * (defaulting to "uid") or a fully custom search filter.  You can't
+		 * do both.
+		 */
+		if (parsedline->ldapsearchattribute && parsedline->ldapsearchfilter)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("cannot use ldapsearchattribute together with ldapsearchfilter"),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+			*err_msg = "cannot use ldapsearchattribute together with ldapsearchfilter";
+			return NULL;
+		}
+	}
+#endif
+
 	return parsedline;
 }
 
@@ -699,6 +837,10 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 				   int elevel, char **err_msg)
 {
 	int			line_num = hbaline->linenumber;
+
+#ifdef USE_LDAP
+	hbaline->ldapscope = LDAP_SCOPE_SUBTREE;
+#endif
 
 	if (strcmp(name, "pamservice") == 0)
 	{
@@ -751,6 +893,258 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 		*err_msg = "pamservice authentication option cannot be used because PAM is not supported by this build";
 
 #endif
+	}
+	else if (strcmp(name, "ldapurl") == 0)
+	{
+#ifdef USE_LDAP
+#ifdef LDAP_API_FEATURE_X_OPENLDAP
+		LDAPURLDesc *urldata;
+		int			rc;
+#endif
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapurl", "ldap");
+
+#ifdef LDAP_API_FEATURE_X_OPENLDAP
+		rc = ldap_url_parse(val, &urldata);
+		if (rc != LDAP_SUCCESS)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("could not parse LDAP URL \"%s\": %s", val, ldap_err2string(rc))));
+			*err_msg = psprintf("could not parse LDAP URL \"%s\": %s",
+								val, ldap_err2string(rc));
+			return false;
+		}
+
+		if (strcmp(urldata->lud_scheme, "ldap") != 0 &&
+			strcmp(urldata->lud_scheme, "ldaps") != 0)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("unsupported LDAP URL scheme: %s", urldata->lud_scheme)));
+			*err_msg = psprintf("unsupported LDAP URL scheme: %s",
+								urldata->lud_scheme);
+			ldap_free_urldesc(urldata);
+			return false;
+		}
+
+		if (urldata->lud_scheme)
+			hbaline->ldapscheme = pstrdup(urldata->lud_scheme);
+		if (urldata->lud_host)
+			hbaline->ldapserver = pstrdup(urldata->lud_host);
+		hbaline->ldapport = urldata->lud_port;
+		if (urldata->lud_dn)
+			hbaline->ldapbasedn = pstrdup(urldata->lud_dn);
+
+		if (urldata->lud_attrs)
+			hbaline->ldapsearchattribute = pstrdup(urldata->lud_attrs[0]);	/* only use first one */
+		hbaline->ldapscope = urldata->lud_scope;
+		if (urldata->lud_filter)
+			hbaline->ldapsearchfilter = pstrdup(urldata->lud_filter);
+		ldap_free_urldesc(urldata);
+#else							/* not OpenLDAP */
+		ereport(elevel,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("LDAP URLs not supported on this platform")));
+		*err_msg = "LDAP URLs not supported on this platform";
+#endif							/* not OpenLDAP */
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "ldaptls") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldaptls", "ldap");
+		if (strcmp(val, "1") == 0)
+			hbaline->ldaptls = true;
+		else
+			hbaline->ldaptls = false;
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "ldapscheme") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapscheme", "ldap");
+		if (strcmp(val, "ldap") != 0 && strcmp(val, "ldaps") != 0)
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("invalid ldapscheme value: \"%s\"", val),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+		hbaline->ldapscheme = pstrdup(val);
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "ldapserver") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapserver", "ldap");
+		hbaline->ldapserver = pstrdup(val);
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "ldapport") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapport", "ldap");
+		hbaline->ldapport = atoi(val);
+		if (hbaline->ldapport == 0)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("invalid LDAP port number: \"%s\"", val),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+			*err_msg = psprintf("invalid LDAP port number: \"%s\"", val);
+			return false;
+		}
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "ldapbinddn") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapbinddn", "ldap");
+		hbaline->ldapbinddn = pstrdup(val);
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "ldapbindpasswd") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapbindpasswd", "ldap");
+		hbaline->ldapbindpasswd = pstrdup(val);
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "ldapsearchattribute") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapsearchattribute", "ldap");
+		hbaline->ldapsearchattribute = pstrdup(val);
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "ldapsearchfilter") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapsearchfilter", "ldap");
+		hbaline->ldapsearchfilter = pstrdup(val);
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "ldapbasedn") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapbasedn", "ldap");
+		hbaline->ldapbasedn = pstrdup(val);
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "ldapprefix") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapprefix", "ldap");
+		hbaline->ldapprefix = pstrdup(val);
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "ldapsuffix") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapsuffix", "ldap");
+		hbaline->ldapsuffix = pstrdup(val);
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
+	}
+	else if (strcmp(name, "backend_use_passwd") == 0)
+	{
+#ifdef USE_LDAP
+		REQUIRE_AUTH_OPTION(uaLDAP, "backend_use_passwd", "ldap");
+		if (strcmp(val, "1") == 0)
+			hbaline->backend_use_passwd = true;
+		else
+			hbaline->backend_use_passwd = false;
+#else							/* USE_LDAP */
+		ereport(elevel,
+				(errmsg("ldap authentication option can only be configured for authentication method \"ldap\""),
+				 errhint("Compile with --with-ldap to use LDAP authentication."),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		*err_msg = "ldap authentication option cannot be used because LDAP is not supported by this build";
+#endif							/* USE_LDAP */
 	}
 	else
 	{
@@ -897,6 +1291,12 @@ ClientAuthentication(POOL_CONNECTION * frontend)
 				break;
 #endif							/* USE_PAM */
 
+#ifdef USE_LDAP
+			case uaLDAP:
+				status = CheckLDAPAuth(frontend);
+				break;
+#endif							/* USE_LDAP */
+
 			case uaTrust:
 				status = POOL_CONTINUE;
 				break;
@@ -960,7 +1360,7 @@ sendAuthRequest(POOL_CONNECTION * frontend, AuthRequest areq)
 }
 
 
-#ifdef USE_PAM					/* see the prototype comment  */
+#if defined(USE_PAM) || defined(USE_LDAP)
 
 /*
  * Collect password response packet from frontend.
@@ -1012,7 +1412,7 @@ recv_password_packet(POOL_CONNECTION * frontend)
 	return returnVal;
 }
 
-#endif							/* USE_PAM */
+#endif							/* USE_PAM or USE_LDAP */
 
 /*
  * Tell the user the authentication failed.
@@ -1084,7 +1484,14 @@ auth_failed(POOL_CONNECTION * frontend)
 					 "PAM authentication with pgpool failed for user \"%s\"",
 					 frontend->username);
 			break;
-#endif							/* USE_PAM */
+#endif							/* USE_LDAP */
+#ifdef USE_LDAP
+		case uaLDAP:
+			snprintf(errmessage, messagelen,
+					 "LDAP authentication with pgpool failed for user \"%s\"",
+					 frontend->username);
+			break;
+#endif							/* USE_LDAP */
 		default:
 			snprintf(errmessage, messagelen,
 					 "authentication with pgpool failed for user \"%s\": invalid authentication method",
@@ -2043,6 +2450,476 @@ static POOL_STATUS CheckPAMAuth(POOL_CONNECTION * frontend, char *user, char *pa
 }
 
 #endif							/* USE_PAM */
+
+#ifdef USE_LDAP
+
+/*
+ * Add a detail error message text to the current error if one can be
+ * constructed from the LDAP 'diagnostic message'.
+ */
+static int
+errdetail_for_ldap(LDAP *ldap)
+{
+	char	   *message;
+	int			rc;
+
+	rc = ldap_get_option(ldap, LDAP_OPT_DIAGNOSTIC_MESSAGE, &message);
+	if (rc == LDAP_SUCCESS && message != NULL)
+	{
+		errdetail("LDAP diagnostics: %s", message);
+		ldap_memfree(message);
+	}
+
+	return 0;
+}
+
+
+static int
+InitializeLDAPConnection(POOL_CONNECTION *frontend, LDAP **ldap)
+{
+	const char *scheme;
+	int			ldapversion = LDAP_VERSION3;
+	int			r;
+
+	scheme = frontend->pool_hba->ldapscheme;
+	if (scheme == NULL)
+		scheme = "ldap";
+#ifdef HAVE_LDAP_INITIALIZE
+
+	/*
+	 * OpenLDAP provides a non-standard extension ldap_initialize() that takes
+	 * a list of URIs, allowing us to request "ldaps" instead of "ldap".  It
+	 * also provides ldap_domain2hostlist() to find LDAP servers automatically
+	 * using DNS SRV.  They were introduced in the same version, so for now we
+	 * don't have an extra configure check for the latter.
+	 */
+	{
+		StringInfoData uris;
+		char	   *hostlist = NULL;
+		char	   *p;
+		bool		append_port;
+
+		/* We'll build a space-separated scheme://hostname:port list here */
+		initStringInfo(&uris);
+
+		/*
+		 * If pg_hba.conf provided no hostnames, we can ask OpenLDAP to try to
+		 * find some by extracting a domain name from the base DN and looking
+		 * up DSN SRV records for _ldap._tcp.<domain>.
+		 */
+		if (!frontend->pool_hba->ldapserver || frontend->pool_hba->ldapserver[0] == '\0')
+		{
+			char	   *domain;
+
+			/* ou=blah,dc=foo,dc=bar -> foo.bar */
+			if (ldap_dn2domain(frontend->pool_hba->ldapbasedn, &domain))
+			{
+				ereport(LOG,
+						(errmsg("could not extract domain name from ldapbasedn")));
+				return -1;
+			}
+
+			/* Look up a list of LDAP server hosts and port numbers */
+			if (ldap_domain2hostlist(domain, &hostlist))
+			{
+				ereport(LOG,
+						(errmsg("LDAP authentication could not find DNS SRV records for \"%s\"",
+								domain),
+						 (errhint("Set an LDAP server name explicitly."))));
+				ldap_memfree(domain);
+				return -1;
+			}
+			ldap_memfree(domain);
+
+			/* We have a space-separated list of host:port entries */
+			p = hostlist;
+			append_port = false;
+		}
+		else
+		{
+			/* We have a space-separated list of hosts from pg_hba.conf */
+			p = frontend->pool_hba->ldapserver;
+			append_port = true;
+		}
+
+		/* Convert the list of host[:port] entries to full URIs */
+		do
+		{
+			size_t		size;
+
+			/* Find the span of the next entry */
+			size = strcspn(p, " ");
+
+			/* Append a space separator if this isn't the first URI */
+			if (uris.len > 0)
+				appendStringInfoChar(&uris, ' ');
+
+			/* Append scheme://host:port */
+			appendStringInfoString(&uris, scheme);
+			appendStringInfoString(&uris, "://");
+			appendBinaryStringInfo(&uris, p, size);
+			if (append_port)
+				appendStringInfo(&uris, ":%d", frontend->pool_hba->ldapport);
+
+			/* Step over this entry and any number of trailing spaces */
+			p += size;
+			while (*p == ' ')
+				++p;
+		} while (*p);
+
+		/* Free memory from OpenLDAP if we looked up SRV records */
+		if (hostlist)
+			ldap_memfree(hostlist);
+
+		/* Finally, try to connect using the URI list */
+		r = ldap_initialize(ldap, uris.data);
+		pfree(uris.data);
+		if (r != LDAP_SUCCESS)
+		{
+			ereport(LOG,
+					(errmsg("could not initialize LDAP: %s",
+							ldap_err2string(r))));
+
+			return -1;
+		}
+	}
+#else
+	if (strcmp(scheme, "ldaps") == 0)
+	{
+		ereport(LOG,
+				(errmsg("ldaps not supported with this LDAP library")));
+
+		return -1;
+	}
+	*ldap = ldap_init(frontend->pool_hba->ldapserver, frontend->pool_hba->ldapport);
+	if (!*ldap)
+	{
+		ereport(LOG,
+				(errmsg("could not initialize LDAP: %m")));
+
+		return -1;
+	}
+#endif
+
+	if ((r = ldap_set_option(*ldap, LDAP_OPT_PROTOCOL_VERSION, &ldapversion)) != LDAP_SUCCESS)
+	{
+		ereport(LOG,
+				(errmsg("could not set LDAP protocol version: %s",
+						ldap_err2string(r)),
+				 errdetail_for_ldap(*ldap)));
+		ldap_unbind(*ldap);
+		return -1;
+	}
+
+	if (frontend->pool_hba->ldaptls)
+	{
+		if ((r = ldap_start_tls_s(*ldap, NULL, NULL)) != LDAP_SUCCESS)
+		{
+			ereport(LOG,
+					(errmsg("could not start LDAP TLS session: %s",
+							ldap_err2string(r)),
+					 errdetail_for_ldap(*ldap)));
+			ldap_unbind(*ldap);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+/* Placeholders recognized by FormatSearchFilter.  For now just one. */
+#define LPH_USERNAME "$username"
+#define LPH_USERNAME_LEN (sizeof(LPH_USERNAME) - 1)
+
+/* Not all LDAP implementations define this. */
+#ifndef LDAP_NO_ATTRS
+#define LDAP_NO_ATTRS "1.1"
+#endif
+
+/* Not all LDAP implementations define this. */
+#ifndef LDAPS_PORT
+#define LDAPS_PORT 636
+#endif
+
+/*
+ * Return a newly allocated C string copied from "pattern" with all
+ * occurrences of the placeholder "$username" replaced with "user_name".
+ */
+static char *
+FormatSearchFilter(const char *pattern, const char *user_name)
+{
+	StringInfoData output;
+
+	initStringInfo(&output);
+	while (*pattern != '\0')
+	{
+		if (strncmp(pattern, LPH_USERNAME, LPH_USERNAME_LEN) == 0)
+		{
+			appendStringInfoString(&output, user_name);
+			pattern += LPH_USERNAME_LEN;
+		}
+		else
+			appendStringInfoChar(&output, *pattern++);
+	}
+
+	return output.data;
+}
+
+
+
+/*
+ * Check authentication against LDAP.
+ */
+static POOL_STATUS CheckLDAPAuth(POOL_CONNECTION * frontend)
+{
+	char	   *passwd;
+	LDAP	   *ldap;
+	int			r;
+	char	   *fulluser;
+	const char *server_name;
+
+#ifdef HAVE_LDAP_INITIALIZE
+
+	/*
+	 * For OpenLDAP, allow empty hostname if we have a basedn.  We'll look for
+	 * servers with DNS SRV records via OpenLDAP library facilities.
+	 */
+	if ((!frontend->pool_hba->ldapserver || frontend->pool_hba->ldapserver[0] == '\0') &&
+		(!frontend->pool_hba->ldapbasedn || frontend->pool_hba->ldapbasedn[0] == '\0'))
+	{
+		ereport(LOG,
+				(errmsg("LDAP server not specified, and no ldapbasedn")));
+		return -1;
+	}
+#else
+	if (!frontend->pool_hba->ldapserver || frontend->pool_hba->ldapserver[0] == '\0')
+	{
+		ereport(LOG,
+				(errmsg("LDAP server not specified")));
+		return -1;
+	}
+#endif
+
+	/*
+	 * If we're using SRV records, we don't have a server name so we'll just
+	 * show an empty string in error messages.
+	 */
+	server_name = frontend->pool_hba->ldapserver ? frontend->pool_hba->ldapserver : "";
+
+	if (frontend->pool_hba->ldapport == 0)
+	{
+		if (frontend->pool_hba->ldapscheme != NULL &&
+			strcmp(frontend->pool_hba->ldapscheme, "ldaps") == 0)
+			frontend->pool_hba->ldapport = LDAPS_PORT;
+		else
+			frontend->pool_hba->ldapport = LDAP_PORT;
+	}
+
+	sendAuthRequest(frontend, AUTH_REQ_PASSWORD);
+
+	passwd = recv_password_packet(frontend);
+	if (passwd == NULL)
+		return -2;		/* client wouldn't send password */
+
+	if (InitializeLDAPConnection(frontend, &ldap) == -1)
+	{
+		/* Error message already sent */
+		pfree(passwd);
+		return -1;
+	}
+
+	if (frontend->pool_hba->backend_use_passwd)
+	{
+		frontend->pwd_size = strlen(passwd);
+		memcpy(frontend->password, passwd, frontend->pwd_size);
+		frontend->passwordType = PASSWORD_TYPE_PLAINTEXT;
+	}
+
+	if (frontend->pool_hba->ldapbasedn)
+	{
+		/*
+		 * First perform an LDAP search to find the DN for the user we are
+		 * trying to log in as.
+		 */
+		char	   *filter;
+		LDAPMessage *search_message;
+		LDAPMessage *entry;
+		char	   *attributes[] = {LDAP_NO_ATTRS, NULL};
+		char	   *dn;
+		char	   *c;
+		int			count;
+
+		/*
+		 * Disallow any characters that we would otherwise need to escape,
+		 * since they aren't really reasonable in a username anyway. Allowing
+		 * them would make it possible to inject any kind of custom filters in
+		 * the LDAP filter.
+		 */
+		for (c = frontend->username; *c; c++)
+		{
+			if (*c == '*' ||
+				*c == '(' ||
+				*c == ')' ||
+				*c == '\\' ||
+				*c == '/')
+			{
+				ereport(LOG,
+						(errmsg("invalid character in user name for LDAP authentication")));
+				ldap_unbind(ldap);
+				pfree(passwd);
+				return -1;
+			}
+		}
+
+		/*
+		 * Bind with a pre-defined username/password (if available) for
+		 * searching. If none is specified, this turns into an anonymous bind.
+		 */
+		r = ldap_simple_bind_s(ldap,
+							   frontend->pool_hba->ldapbinddn ? frontend->pool_hba->ldapbinddn : "",
+							   frontend->pool_hba->ldapbindpasswd ? frontend->pool_hba->ldapbindpasswd : "");
+		if (r != LDAP_SUCCESS)
+		{
+			ereport(LOG,
+					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s",
+							frontend->pool_hba->ldapbinddn ? frontend->pool_hba->ldapbinddn : "",
+							server_name,
+							ldap_err2string(r)),
+					 errdetail_for_ldap(ldap)));
+			ldap_unbind(ldap);
+			pfree(passwd);
+			return -1;
+		}
+
+		/* Build a custom filter or a single attribute filter? */
+		if (frontend->pool_hba->ldapsearchfilter)
+			filter = FormatSearchFilter(frontend->pool_hba->ldapsearchfilter, frontend->username);
+		else if (frontend->pool_hba->ldapsearchattribute)
+			filter = psprintf("(%s=%s)", frontend->pool_hba->ldapsearchattribute, frontend->username);
+		else
+			filter = psprintf("(uid=%s)", frontend->username);
+
+		r = ldap_search_s(ldap,
+						  frontend->pool_hba->ldapbasedn,
+						  frontend->pool_hba->ldapscope,
+						  filter,
+						  attributes,
+						  0,
+						  &search_message);
+
+		if (r != LDAP_SUCCESS)
+		{
+			ereport(LOG,
+					(errmsg("could not search LDAP for filter \"%s\" on server \"%s\": %s",
+							filter, server_name, ldap_err2string(r)),
+					 errdetail_for_ldap(ldap)));
+			ldap_unbind(ldap);
+			pfree(passwd);
+			pfree(filter);
+			return -1;
+		}
+
+		count = ldap_count_entries(ldap, search_message);
+		if (count != 1)
+		{
+			if (count == 0)
+				ereport(LOG,
+						(errmsg("LDAP user \"%s\" does not exist", frontend->username),
+						 errdetail("LDAP search for filter \"%s\" on server \"%s\" returned no entries.",
+								   filter, server_name)));
+			else
+				ereport(LOG,
+						(errmsg("LDAP user \"%s\" is not unique", frontend->username),
+						 errdetail_plural("LDAP search for filter \"%s\" on server \"%s\" returned %d entry.",
+										  "LDAP search for filter \"%s\" on server \"%s\" returned %d entries.",
+										  count,
+										  filter, server_name, count)));
+
+			ldap_unbind(ldap);
+			pfree(passwd);
+			pfree(filter);
+			ldap_msgfree(search_message);
+			return -1;
+		}
+
+		entry = ldap_first_entry(ldap, search_message);
+		dn = ldap_get_dn(ldap, entry);
+		if (dn == NULL)
+		{
+			int			error;
+
+			(void) ldap_get_option(ldap, LDAP_OPT_ERROR_NUMBER, &error);
+			ereport(LOG,
+					(errmsg("could not get dn for the first entry matching \"%s\" on server \"%s\": %s",
+							filter, server_name,
+							ldap_err2string(error)),
+					 errdetail_for_ldap(ldap)));
+			ldap_unbind(ldap);
+			pfree(passwd);
+			pfree(filter);
+			ldap_msgfree(search_message);
+			return -1;
+		}
+		fulluser = pstrdup(dn);
+
+		pfree(filter);
+		ldap_memfree(dn);
+		ldap_msgfree(search_message);
+
+		/* Unbind and disconnect from the LDAP server */
+		r = ldap_unbind_s(ldap);
+		if (r != LDAP_SUCCESS)
+		{
+			ereport(LOG,
+					(errmsg("could not unbind after searching for user \"%s\" on server \"%s\"",
+							fulluser, server_name)));
+			pfree(passwd);
+			pfree(fulluser);
+			return -1;
+		}
+
+		/*
+		 * Need to re-initialize the LDAP connection, so that we can bind to
+		 * it with a different username.
+		 */
+		if (InitializeLDAPConnection(frontend, &ldap) == -1)
+		{
+			pfree(passwd);
+			pfree(fulluser);
+
+			/* Error message already sent */
+			return -1;
+		}
+	}
+	else
+		fulluser = psprintf("%s%s%s",
+							frontend->pool_hba->ldapprefix ? frontend->pool_hba->ldapprefix : "",
+							frontend->username,
+							frontend->pool_hba->ldapsuffix ? frontend->pool_hba->ldapsuffix : "");
+
+	r = ldap_simple_bind_s(ldap, fulluser, passwd);
+
+	if (r != LDAP_SUCCESS)
+	{
+		ereport(LOG,
+				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": %s",
+						fulluser, server_name, ldap_err2string(r)),
+				 errdetail_for_ldap(ldap)));
+		ldap_unbind(ldap);
+		pfree(passwd);
+		pfree(fulluser);
+		return -1;
+	}
+
+	ldap_unbind(ldap);
+	pfree(passwd);
+	pfree(fulluser);
+
+	return 0;
+}
+
+
+#endif							/* USE_LDAP */
 
 #ifdef NOT_USED
 static POOL_STATUS CheckUserExist(char *username)
