@@ -645,6 +645,10 @@ read_startup_packet(POOL_CONNECTION * cp)
 							(errmsg("reading startup packet"),
 							 errdetail("application_name: %s", p)));
 				}
+				else
+				{
+					p += (strlen(p) + 1);
+				}
 
 				p += (strlen(p) + 1);
 			}
