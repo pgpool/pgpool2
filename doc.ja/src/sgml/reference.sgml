@@ -280,11 +280,11 @@
     and <productname>Pgpool-II</productname> reply back
     to <productname>PostgreSQL</productname> with the result (3).
     <productname>PostgreSQL</productname> replies back the data to
-    the user (6).
+    the user (4).
     -->
     (2)の場合には、<productname>PostgreSQL</productname>がクエリをユーザから受け付けます(2)。
     <productname>PostgreSQL</productname>は<productname>Pgpool-II</productname>に接続し(5)、<productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>に(3)の結果を返します。
-    <productname>PostgreSQL</productname>はそのデータをユーザに返します(6)。
+    <productname>PostgreSQL</productname>はそのデータをユーザに返します(4)。
    </para>
    <para>
     <!--
