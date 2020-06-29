@@ -197,7 +197,7 @@
     and <productname>Pgpool-II</productname> reply back
     to <productname>PostgreSQL</productname> with the result (3).
     <productname>PostgreSQL</productname> replies back the data to
-    the user (6).
+    the user (4).
    </para>
    <para>
     There are two forms to call pgpool_adm functions: first form
