@@ -3999,7 +3999,7 @@ pool_hash_insert(POOL_QUERY_HASH * key, POOL_CACHEID * cacheid, bool update)
 }
 
 /*
- * Delete MD5 key and associated cache id into shmem hash table.
+ * Delete MD5 key and associated cache id from shmem hash table.
  */
 int
 pool_hash_delete(POOL_QUERY_HASH * key)
@@ -4058,7 +4058,7 @@ pool_hash_delete(POOL_QUERY_HASH * key)
 }
 
 /*
- * Calculate 32bit binary hash key(i.e. location in hash header) from MD5
+ * Calculate 32bit binary hash key (i.e. location in hash header) from MD5
  * string. We use top most 8 characters of MD5 string for calculation.
 */
 static uint32
@@ -4153,7 +4153,7 @@ pool_get_shmem_storage_stats(void)
 		return &mystats;
 
 	/*
-	 * Cop cache hit data
+	 * Copy cache hit data
 	 */
 	mystats.cache_stats.num_selects = stats->num_selects;
 	mystats.cache_stats.num_cache_hits = stats->num_cache_hits;
