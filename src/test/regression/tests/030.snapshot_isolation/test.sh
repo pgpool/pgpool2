@@ -20,10 +20,6 @@ echo "done."
 
 dir=`pwd`
 
-# SI mode requires REPEATABLE READ transaction isolation mode.
-echo "default_transaction_isolation = 'repeatable read'" >> data0/postgresql.conf
-echo "default_transaction_isolation = 'repeatable read'" >> data1/postgresql.conf
-
 source ./bashrc.ports
 
 ./startall

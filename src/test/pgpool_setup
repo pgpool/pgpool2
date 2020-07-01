@@ -347,6 +347,11 @@ function set_postgresql_conf
 		fi
 	fi
 
+	# Snapshot isolation mode requires REPEATABLE READ transaction isolation mode.
+	if [ $MODE = 'i' ];then
+	    echo "default_transaction_isolation = 'repeatable read'" >> $PGCONF
+	fi
+
     sed -i '/host.*all.*all.*trust$/s/^/#/g' $PGHBACONF
     sed -i '/local.*all.*all.*trust$/s/^/#/g' $PGHBACONF
 
