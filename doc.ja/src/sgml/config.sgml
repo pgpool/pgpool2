@@ -112,6 +112,27 @@
 
     <listitem>
      <para>
+      <emphasis>単位付きの数値:</emphasis>
+      メモリの量や時間について記述する数値型のパラメータは暗黙的な単位を持ちます。
+      単位はキロバイト、メガバイト、ミリ秒、秒、分です。
+      例を示します。
+      <programlisting>
+       search_primary_node_timeout = 6min
+       memqcache_total_size = 64MB
+      </programlisting>
+      修飾無しの数値によるこれらの設定においては、 パラメータごとのデフォルト値が採用されます。
+     </para>
+     <para>
+      単位名は大文字小文字を区別し、数値と単位の間に空白があっても構いません。
+      有効なメモリの単位は<literal>kB</literal> (キロバイト)、<literal>MB</literal> (メガバイト)、 <literal>GB</literal> (ギガバイト), <literal>TB</literal> (テラバイト)です。
+     </para>
+     <para>
+      有効な時間の単位は<literal>ms</literal> (ミリ秒)、<literal>s</literal> (秒)、<literal>min</literal> (分)、<literal>h</literal> (時間)、<literal>d</literal> (日数) です。
+      </para>
+    </listitem>
+
+    <listitem>
+     <para>
       <!--
       <emphasis>Enumerated:</emphasis>
       -->
