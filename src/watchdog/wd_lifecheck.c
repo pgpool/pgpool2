@@ -356,11 +356,7 @@ fork_lifecheck_child(void)
 	if (pid == 0)
 	{
 		on_exit_reset();
-
-		/* Set the process type variable */
-		processType = PT_LIFECHECK;
-		myProcPid = getpid();
-		set_application_name(processType);
+		SetProcessGlobalVaraibles(PT_LIFECHECK);
 
 		/* call lifecheck child main */
 		POOL_SETMASK(&UnBlockSig);

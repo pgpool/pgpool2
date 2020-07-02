@@ -222,7 +222,8 @@ main(int argc, char **argv)
 	hba_file = make_absolute_path(hba_file_path, base_dir);
 
 	mypid = getpid();
-	myProcPid = mypid;
+	SetProcessGlobalVaraibles(PT_MAIN);
+
 
 	pool_init_config();
 
@@ -479,7 +480,7 @@ daemonize(void)
 #endif
 
 	mypid = getpid();
-	myProcPid = mypid;
+	SetProcessGlobalVaraibles(PT_MAIN);
 	write_pid_file();
 	if (chdir("/"))
 		ereport(WARNING,

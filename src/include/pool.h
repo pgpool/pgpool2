@@ -540,6 +540,14 @@ extern pid_t mypid;				/* parent pid */
 extern pid_t myProcPid;			/* process pid */
 extern ProcessType processType;
 extern ProcessState processState;
+extern void set_application_name(ProcessType ptype);
+extern void set_application_name_with_string(char *string);
+extern void set_application_name_with_suffix(ProcessType ptype, int suffix);
+extern char *get_application_name(void);
+extern char *get_application_name_for_procees(ProcessType ptype);
+
+void SetProcessGlobalVaraibles(ProcessType pType);
+
 extern volatile SI_ManageInfo *si_manage_info;
 extern volatile sig_atomic_t sigusr2_received;
 
@@ -613,10 +621,6 @@ extern POOL_NODE_STATUS * verify_backend_node_status(POOL_CONNECTION_POOL_SLOT *
 extern POOL_NODE_STATUS * pool_get_node_status(void);
 extern void pool_set_backend_status_changed_time(int backend_id);
 extern int	get_next_master_node(void);
-extern void set_application_name(ProcessType ptype);
-extern void set_application_name_with_string(char *string);
-extern void set_application_name_with_suffix(ProcessType ptype, int suffix);
-extern char *get_application_name(void);
 
 
 

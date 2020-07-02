@@ -21,8 +21,7 @@ nodist_wd_cli_SOURCES = ssl_utils.c \
 		socket_stream.c \
 		regex_array.c \
 		psprintf.c \
-		md5.c \
-		pool_globals.c
+		md5.c
 
 DEFS = @DEFS@ \
     -DDEFAULT_CONFIGDIR=\"$(sysconfdir)\" -DPOOL_TOOLS
@@ -66,8 +65,6 @@ pool_config_variables.c: ../../../src/config/pool_config_variables.c
 pool_config.c: ../../../src/config/pool_config.c
 	rm -f $@ && ln -s $< .
 fe_memutils.c: ../../../src/tools/fe_memutils.c
-	rm -f $@ && ln -s $< .
-pool_globals.c: ../../../src/main/pool_globals.c
 	rm -f $@ && ln -s $< .
 
 clean-local:

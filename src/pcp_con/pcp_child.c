@@ -108,9 +108,6 @@ pcp_main(int unix_fd, int inet_fd)
 	sigjmp_buf	local_sigjmp_buf;
 	struct timeval uptime;
 
-	/* set application name */
-	set_application_name(PT_PCP);
-
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
 
@@ -270,17 +267,12 @@ start_pcp_command_processor_process(int port)
 
 	if (pid == 0)				/* child */
 	{
-		/* Set the process type variable */
-		processType = PT_PCP_WORKER;
-
-		/* set application name */
-		set_application_name(processType);
+		SetProcessGlobalVaraibles(PT_PCP_WORKER);
 
 		on_exit_reset();
 		/* Close the listen sockets sockets */
 		close(pcp_unix_fd);
 		close(pcp_inet_fd);
-		myProcPid = getpid();
 		/* call PCP child main */
 		if (pcp_worker_children)
 			list_free(pcp_worker_children);

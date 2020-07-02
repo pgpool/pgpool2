@@ -311,9 +311,7 @@ exec_if_cmd(char *path, char *command)
 	if (pid == 0)
 	{
 		on_exit_reset();
-		processType = PT_WATCHDOG_UTILITY;
-		set_application_name(processType);
-		myProcPid = getpid();
+		SetProcessGlobalVaraibles(PT_WATCHDOG_UTILITY);
 		close(STDOUT_FILENO);
 		dup2(pfd[1], STDOUT_FILENO);
 		close(pfd[0]);

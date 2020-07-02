@@ -239,9 +239,6 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	/* For PostmasterRandom */
 	gettimeofday(&random_start_time, NULL);
 
-	/* Set the process type variable */
-	processType = PT_MAIN;
-	set_application_name(processType);
 	processState = INITIALIZING;
 
 	/*
@@ -616,13 +613,11 @@ pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	if (pid == 0)
 	{
 		on_exit_reset();
+		SetProcessGlobalVaraibles(PT_PCP);
 
 		close(pipe_fds[0]);
 		close(pipe_fds[1]);
 
-		/* Set the process type variable */
-		processType = PT_PCP;
-		myProcPid = getpid();
 		/* call PCP child main */
 		POOL_SETMASK(&UnBlockSig);
 		health_check_timer_expired = 0;
@@ -666,8 +661,7 @@ fork_a_child(int *fds, int id)
 			close(pipe_fds[1]);
 		}
 
-		/* Set the process type variable */
-		processType = PT_CHILD;
+		SetProcessGlobalVaraibles(PT_CHILD);
 
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
@@ -714,10 +708,7 @@ worker_fork_a_child(ProcessType type, void (*func) (), void *params)
 			close(pipe_fds[1]);
 		}
 
-		/* Set the process type variable */
-		processType = type;
-		myProcPid = getpid();
-		set_application_name(type);
+		SetProcessGlobalVaraibles(type);
 
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
@@ -3251,8 +3242,7 @@ fork_follow_child(int old_master, int new_primary, int old_primary)
 	if (pid == 0)
 	{
 		on_exit_reset();
-		processType = PT_FOLLOWCHILD;
-		myProcPid = getpid();
+		SetProcessGlobalVaraibles(PT_FOLLOWCHILD);
 		ereport(LOG,
 				(errmsg("start triggering follow command.")));
 		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
@@ -4155,83 +4145,4 @@ pool_set_backend_status_changed_time(int backend_id)
 
 	tval = time(NULL);
 	BACKEND_INFO(backend_id).status_changed_time = tval;
-}
-
-/*
- * Application name
- */
-static	char	*process_application_name = "main";
-
-/*
- * Fixed application names. ordered by ProcessType.
- */
-char	*application_names[] = {"main",
-								"child",
-								"sr_check_worker",
-								"heart_beat_sender",
-								"heart_beat_receiver",
-								"watchdog",
-								"life_check",
-								"follow_child",
-								"watchdog_utility",
-								"pcp_main",
-								"pcp_child",
-								"health_check"
-};
-
-/*
- * Set application name by ProcessType
- */
-void
-set_application_name(ProcessType ptype)
-{
-	if (ptype < 0 || ptype >= PT_LAST_PTYPE)
-	{
-		ereport(ERROR,
-				(errmsg("failed to set application name. process type: %d", ptype)));
-	}
-
-	process_application_name = application_names[ptype];
-
-	return;
-}
-
-/*
- * Set application name with arbitrary string. The storage for the string must
- * be persistent at least in the session.
- */
-void
-set_application_name_with_string(char *string)
-{
-	process_application_name = string;
-}
-
-/*
- * Set application name with suffix
- */
-void
-set_application_name_with_suffix(ProcessType ptype, int suffix)
-{
-	char	*appname_buf;
-
-	if (ptype < 0 || ptype >= PT_LAST_PTYPE)
-	{
-		ereport(ERROR,
-				(errmsg("failed to set application name. process type: %d", ptype)));
-	}
-
-	appname_buf = MemoryContextAlloc(TopMemoryContext, POOLCONFIG_MAXNAMELEN);
-	snprintf(appname_buf, POOLCONFIG_MAXNAMELEN, "%s%d", application_names[ptype], suffix);
-	process_application_name = appname_buf;
-
-	return;
-}
-
-/*
- * Get current application name
- */
-char *
-get_application_name(void)
-{
-	return process_application_name;
 }

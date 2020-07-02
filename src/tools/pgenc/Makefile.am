@@ -7,14 +7,12 @@ nodist_pg_enc_SOURCES = ssl_utils.c \
 		md5.c \
 		base64.c \
 		pool_passwd.c \
-		pool_signal.c \
 		strlcpy.c \
 		regex_array.c \
 		pool_config_variables.c \
 		pool_config.c \
 		fe_memutils.c \
-		pool_path.c \
-		pool_globals.c
+		pool_path.c
 
 DEFS = @DEFS@ \
     -DDEFAULT_CONFIGDIR=\"$(sysconfdir)\" -DPOOL_TOOLS
@@ -35,8 +33,6 @@ base64.h: ../../../src/include/utils/base64.h
 	rm -f $@ && ln -s $< .
 ssl_utils.h: ../../../src/include/utils/ssl_utils.h
 	rm -f $@ && ln -s $< .
-pool_signal.c: ../../../src/utils/pool_signal.c
-	rm -f $@ && ln -s $< .
 strlcpy.c: ../../../src/utils/strlcpy.c
 	rm -f $@ && ln -s $< .
 regex_array.c: ../../../src/utils/regex_array.c
@@ -46,8 +42,6 @@ pool_config_variables.c: ../../../src/config/pool_config_variables.c
 pool_config.c: ../../../src/config/pool_config.c
 	rm -f $@ && ln -s $< .
 fe_memutils.c: ../../../src/tools/fe_memutils.c
-	rm -f $@ && ln -s $< .
-pool_globals.c: ../../../src/main/pool_globals.c
 	rm -f $@ && ln -s $< .
 
 clean-local:

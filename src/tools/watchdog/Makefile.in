@@ -106,7 +106,7 @@ nodist_wd_cli_OBJECTS = ssl_utils.$(OBJEXT) wd_ipc_conn.$(OBJEXT) \
 	pool_config_variables.$(OBJEXT) pool_config.$(OBJEXT) \
 	fe_memutils.$(OBJEXT) stringinfo.$(OBJEXT) strlcpy.$(OBJEXT) \
 	socket_stream.$(OBJEXT) regex_array.$(OBJEXT) \
-	psprintf.$(OBJEXT) md5.$(OBJEXT) pool_globals.$(OBJEXT)
+	psprintf.$(OBJEXT) md5.$(OBJEXT)
 wd_cli_OBJECTS = $(dist_wd_cli_OBJECTS) $(nodist_wd_cli_OBJECTS)
 wd_cli_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -360,8 +360,7 @@ nodist_wd_cli_SOURCES = ssl_utils.c \
 		socket_stream.c \
 		regex_array.c \
 		psprintf.c \
-		md5.c \
-		pool_globals.c
+		md5.c
 
 all: all-am
 
@@ -759,8 +758,6 @@ pool_config_variables.c: ../../../src/config/pool_config_variables.c
 pool_config.c: ../../../src/config/pool_config.c
 	rm -f $@ && ln -s $< .
 fe_memutils.c: ../../../src/tools/fe_memutils.c
-	rm -f $@ && ln -s $< .
-pool_globals.c: ../../../src/main/pool_globals.c
 	rm -f $@ && ln -s $< .
 
 clean-local:

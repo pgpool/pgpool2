@@ -149,8 +149,6 @@ do_child(int *fds)
 	int			connections_count = 0;	/* used if child_max_connections > 0 */
 	char		psbuf[NI_MAXHOST + 128];
 
-	set_application_name(PT_CHILD);
-
 	ereport(DEBUG2,
 			(errmsg("I am Pgpool Child process with pid: %d", getpid())));
 

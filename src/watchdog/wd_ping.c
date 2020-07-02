@@ -134,9 +134,8 @@ wd_issue_ping_command(char *hostname, int *outfd)
 	{
 		/* CHILD */
 		on_exit_reset();
-		processType = PT_WATCHDOG_UTILITY;
-		myProcPid = getpid();
-		set_application_name(processType);
+		SetProcessGlobalVaraibles(PT_WATCHDOG_UTILITY);
+
 		close(STDOUT_FILENO);
 		dup2(pfd[1], STDOUT_FILENO);
 		close(pfd[0]);

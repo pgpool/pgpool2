@@ -101,11 +101,10 @@ PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
 dist_pg_enc_OBJECTS = pg_enc.$(OBJEXT) ../fe_port.$(OBJEXT)
 nodist_pg_enc_OBJECTS = ssl_utils.$(OBJEXT) md5.$(OBJEXT) \
-	base64.$(OBJEXT) pool_passwd.$(OBJEXT) pool_signal.$(OBJEXT) \
-	strlcpy.$(OBJEXT) regex_array.$(OBJEXT) \
-	pool_config_variables.$(OBJEXT) pool_config.$(OBJEXT) \
-	fe_memutils.$(OBJEXT) pool_path.$(OBJEXT) \
-	pool_globals.$(OBJEXT)
+	base64.$(OBJEXT) pool_passwd.$(OBJEXT) strlcpy.$(OBJEXT) \
+	regex_array.$(OBJEXT) pool_config_variables.$(OBJEXT) \
+	pool_config.$(OBJEXT) fe_memutils.$(OBJEXT) \
+	pool_path.$(OBJEXT)
 pg_enc_OBJECTS = $(dist_pg_enc_OBJECTS) $(nodist_pg_enc_OBJECTS)
 pg_enc_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -319,14 +318,12 @@ nodist_pg_enc_SOURCES = ssl_utils.c \
 		md5.c \
 		base64.c \
 		pool_passwd.c \
-		pool_signal.c \
 		strlcpy.c \
 		regex_array.c \
 		pool_config_variables.c \
 		pool_config.c \
 		fe_memutils.c \
-		pool_path.c \
-		pool_globals.c
+		pool_path.c
 
 all: all-am
 
@@ -665,8 +662,6 @@ base64.h: ../../../src/include/utils/base64.h
 	rm -f $@ && ln -s $< .
 ssl_utils.h: ../../../src/include/utils/ssl_utils.h
 	rm -f $@ && ln -s $< .
-pool_signal.c: ../../../src/utils/pool_signal.c
-	rm -f $@ && ln -s $< .
 strlcpy.c: ../../../src/utils/strlcpy.c
 	rm -f $@ && ln -s $< .
 regex_array.c: ../../../src/utils/regex_array.c
@@ -676,8 +671,6 @@ pool_config_variables.c: ../../../src/config/pool_config_variables.c
 pool_config.c: ../../../src/config/pool_config.c
 	rm -f $@ && ln -s $< .
 fe_memutils.c: ../../../src/tools/fe_memutils.c
-	rm -f $@ && ln -s $< .
-pool_globals.c: ../../../src/main/pool_globals.c
 	rm -f $@ && ln -s $< .
 
 clean-local:

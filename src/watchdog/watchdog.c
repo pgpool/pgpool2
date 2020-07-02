@@ -1099,10 +1099,7 @@ fork_watchdog_child(void)
 	{
 		on_exit_reset();
 
-		/* Set the process type variable */
-		processType = PT_WATCHDOG;
-		myProcPid = getpid();
-		set_application_name(processType);
+		SetProcessGlobalVaraibles(PT_WATCHDOG);
 
 		/* call watchdog child main */
 		POOL_SETMASK(&UnBlockSig);

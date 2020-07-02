@@ -525,8 +525,7 @@ SysLogger_Start(void)
 
 		case 0:
 			on_exit_reset();
-			myProcPid = getpid();
-			processType = PT_LOGGER;
+			SetProcessGlobalVaraibles(PT_LOGGER);
 			/* do the work */
 			SysLoggerMain(0, NULL);
 			break;
