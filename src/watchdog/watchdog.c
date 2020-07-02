@@ -2073,8 +2073,8 @@ process_IPC_execute_cluster_command(WDCommandData * ipcCommand)
 
 	if (wdExecCommandArg)
 		pfree(wdExecCommandArg);
-	if (clusterCommand)
-		pfree(clusterCommand);
+
+	pfree(clusterCommand);
 	return IPC_CMD_OK;
 
 ERROR_EXIT:
@@ -4053,8 +4053,7 @@ wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 
 	if (wdExecCommandArg)
 		pfree(wdExecCommandArg);
-	if (clusterCommand)
-		pfree(clusterCommand);
+	pfree(clusterCommand);
 	return;
 }
 
