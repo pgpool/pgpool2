@@ -282,4 +282,6 @@ extern void pool_shmem_lock(void);
 extern void pool_shmem_unlock(void);
 extern bool pool_is_shmem_lock(void);
 
+extern void InvalidateQueryCache(int tableoid, int dboid);
+
 #endif							/* POOL_MEMQCACHE_H */

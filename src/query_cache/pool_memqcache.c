@@ -4348,3 +4348,21 @@ inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen)
 	 */
 	pool_pop(backend, &len);
 }
+
+/*
+ * Public API to invalidate query cache specified by the table/database oids.
+ */
+void
+InvalidateQueryCache(int tableoid, int dboid)
+{
+	pool_sigset_t oldmask;
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
+	pool_shmem_lock();
+
+	/* Invalidate query cache */
+	pool_invalidate_query_cache(1, &tableoid, true, dboid);
+
+	pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+	POOL_SETMASK(&oldmask);
+}
