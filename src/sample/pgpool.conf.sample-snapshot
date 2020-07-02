@@ -97,7 +97,7 @@ pool_passwd = 'pool_passwd'
                                    # File name of pool_passwd for md5 authentication.
                                    # "" disables pool_passwd.
                                    # (change requires restart)
-authentication_timeout = 60
+authentication_timeout = 1min
                                    # Delay in seconds to complete client authentication
                                    # 0 means no timeout.
 
