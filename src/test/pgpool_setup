@@ -705,6 +705,7 @@ function set_pgpool_conf {
 
 	echo "socket_dir = '$PGSOCKET_DIR'" >> $CONF
 	echo "pcp_socket_dir = '$PGSOCKET_DIR'" >> $CONF
+	echo "log_line_prefix = '%t: %a pid %p: '" >> $CONF
 }
 
 #-------------------------------------------
