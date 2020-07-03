@@ -645,6 +645,271 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-logging-collector" xreflabel="logging_collector">
+    <term><varname>logging_collector</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>logging_collector</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+<!--
+	 This parameter enables the logging collector, which is a background process that captures
+	 log messages sent to stderr and redirects them into log files.
+-->
+      このパラメータは<firstterm>ログ収集機構</firstterm>を有効にします。
+      それは<systemitem>stderr</systemitem>に送られたログメッセージを捕捉し、ログファイルにリダイレクトするバックグラウンドプロセスです。
+     </para>
+     <note>
+      <para>
+<!--
+       It is possible to log to stderr without using the logging collector; the log messages will
+       just go to wherever the server's stderr is directed. However, that method is only suitable
+       for low log volumes, since it provides no convenient way to rotate log files.
+-->
+       ログ収集機構を使わずに<systemitem>stderr</systemitem>にログを出力することもできます。
+       その場合はログメッセージはサーバの<systemitem>stderr</systemitem>がリダイレクトされたところに単に出力されます。
+       しかしこの方法はログの量が少ない場合にのみ適切な方法です。
+       ログを巡回させる便利な方法がないからです。
+      </para>
+     </note>
+     <para>
+<!--
+      This parameter can only be set at the Pgpool-II start.
+-->
+      このパラメータはサーバ起動時のみ設定可能です。
+     </para>
+     <para>
+<!--
+      <varname>logging_collector</varname> is not available prior to
+      <productname>Pgpool-II </productname><emphasis>V4.2</emphasis>.
+-->
+      <varname>logging_collector</varname>は<productname>Pgpool-II </productname><emphasis>V4.2</emphasis>以降でのみ使用可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-log-directory" xreflabel="log_directory">
+    <term><varname>log_directory</varname> (<type>string</type>)
+     <indexterm>
+<!--
+      <primary><varname>log_directory</varname> configuration parameter</primary>
+-->
+      <primary><varname>log_directory</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+<!--
+	 When <xref linkend="guc-logging-collector"> is enabled, this parameter determines
+	 the directory in which log files will be created.
+-->
+      <xref linkend="guc-logging-collector">を有効と設定した場合、このパラメータはログファイルが作成されるディレクトリを確定します。
+     </para>
+<!--
+     <para>The default is <literal>/tmp/pgpool_logs</literal>.</para>
+-->
+     <para>
+      デフォルトは<literal>/tmp/pgpool_logs</literal>です。
+      </para>
+     <para>
+<!--
+	 This parameter can only be set at the Pgpool-II start.
+-->
+      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+     </para>
+
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-log-filename" xreflabel="log_filename">
+    <term><varname>log_filename</varname> (<type>string</type>)
+     <indexterm>
+<!--
+      <primary><varname>log_filename</varname> configuration parameter</primary>
+-->
+      <primary><varname>log_filename</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+<!--
+	 When <xref linkend="guc-logging-collector"> is enabled, this parameter sets the
+	 file names of the created log files. The value is treated as a
+	 <literal>strftime</literal> pattern, so %-escapes can be used to specify time-varying
+	 file names.
+	 The supported %-escapes are similar to those listed in the Open Group's
+	 <ulink url="https://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html">strftime</ulink>specification.
+-->
+      <xref linkend="guc-logging-collector">が有効な場合、このパラメータは作成されたログファイルのファイル名を設定します。
+      値は<function>strftime</function>パターンとして扱われるため、<literal>%</literal>エスケープを使用して、時刻によって変動するファイル名を指定することができます。
+      サポートされている<literal>%</literal>-エスケープは<ulink url="http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html">strftime</ulink> 仕様によく似ています。
+     </para>
+     <para>
+<!--
+	 If you specify a file name without escapes, you should plan to use a log rotation
+	 utility to avoid eventually filling the entire disk.
+-->
+      エスケープすることなくファイル名を指定する場合、ディスク全体を使い切ってしまうことを防止するためにログローテーションを行うユーティリティを使用することを計画するべきです。
+     </para>
+     <para>
+<!--
+	 The default is <literal>pgpool-%Y-%m-%d_%H%M%S.log</literal>.
+-->
+      デフォルトは<literal>pgpool-%Y-%m-%d_%H%M%S.log</literal>です。
+     </para>
+     <para>
+<!--
+	 This parameter can only be set at the Pgpool-II start.
+-->
+      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+     </para>
+
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-log-file-mode" xreflabel="log_file_mode">
+    <term><varname>log_file_mode</varname> (<type>integer</type>)
+     <indexterm>
+<!--
+      <primary><varname>log_file_mode</varname> configuration parameter</primary>
+-->
+      <primary><varname>log_file_mode</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+<!--
+	 This parameter sets the permissions for log files when <xref linkend="guc-logging-collector">
+	 is enabled. The parameter value is expected to be a numeric mode specified in the format
+	 accepted by the <literal>chmod</literal> and <literal>umask</literal> system calls.
+-->
+      <xref linkend="guc-logging-collector">が有効になっている場合、このパラメータはログファイルのパーミッションを設定します。
+       パラメータの値は<function>chmod</function> および <function>umask</function>システムコールで許容されるフォーマットで指定される数値モードであると期待されます。
+     </para>
+
+     <note>
+      <para>
+<!--
+       To use the customary octal format the number must start with a 0 (zero).
+-->
+       8進数を使うには、数値を0（ゼロ）で開始してください。
+      </para>
+     </note>
+
+     <para>
+<!--
+	 This parameter can only be set at the Pgpool-II start.
+-->
+      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-log-rotation-age" xreflabel="log_rotation_age">
+    <term><varname>log_rotation_age</varname> (<type>integer</type>)
+     <indexterm>
+<!--
+      <primary><varname>log_rotation_age</varname> configuration parameter</primary>
+-->
+      <primary><varname>log_rotation_age</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+<!--
+      When <xref linkend="guc-logging-collector"> is enabled, this parameter determines
+      the maximum amount of time to use an individual log file, after which a new log
+      file will be created. If this value is specified without units,
+      it is taken as minutes. The default is 24 hours.
+-->
+      <xref linkend="guc-logging-collector">が有効な場合、このパラメータは個々のログファイルの最大寿命を決定します。
+     </para>
+     <para>
+<!--
+      Set to zero to disable size-based creation of new log files.
+-->
+      ゼロに設定することで、サイズに基づいた新しいログファイルの生成は無効になります。
+     </para>
+     <para>
+<!--
+      This parameter can only be set at the Pgpool-II start.
+-->
+      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-log-rotation-size" xreflabel="log_rotation_size">
+    <term><varname>log_rotation_size</varname> (<type>integer</type>)
+     <indexterm>
+<!--
+      <primary><varname>log_rotation_size</varname> configuration parameter</primary>
+-->
+      <primary><varname>log_rotation_size</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+<!--
+      When <xref linkend="guc-logging-collector"> is enabled, this parameter determines
+      the maximum size of an individual log file. After this many kilobytes have been
+      emitted into a log file, a new log file will be created.
+-->
+      <xref linkend="guc-logging-collector">が有効な場合、このパラメータは個々のログファイルの最大容量を決定します。
+       ここでキロバイト単位で指定したデータ量がログファイルに出力された後、新しいログファイルが生成されます。
+     </para>
+     <para>
+<!--
+      Set to zero to disable size-based creation of new log files.
+-->
+      ゼロに設定することで、サイズに基づいた新しいログファイルの生成は無効になります。
+     </para>
+     <para>
+<!--
+      This parameter can only be set at the Pgpool-II start.
+-->
+      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-log-truncate-on-rotation" xreflabel="log_truncate_on_rotation">
+    <term><varname>log_truncate_on_rotation</varname> (<type>boolean</type>)
+     <indexterm>
+<!--
+      <primary><varname>log_truncate_on_rotation</varname> configuration parameter</primary>
+-->
+      <primary><varname>log_truncate_on_rotation</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+<!--
+      When <xref linkend="guc-logging-collector"> is enabled,
+      this parameter will cause <productname>Pgpool-II</> to truncate (overwrite),
+      rather than append to, any existing log file of the same name.
+      However, truncation will occur only when a new file is being opened due to
+      time-based rotation, not during the startup or size-based rotation.
+      When off, pre-existing files will be appended to in all cases.
+      For example, using this setting in combination with a <xref linkend="guc-log-filename">
+      like pgpool-%H.log would result in generating twenty-four hourly log
+      files and then cyclically overwriting them.
+-->
+      <xref linkend="guc-logging-collector">が有効な場合、<productname>PostgreSQL</productname>は既存の同名のファイルに追加するのではなく、そのファイルを切り詰める（上書きする）ようになります。
+       しかし、切り詰めは時間を基にしたローテーションのために新規にファイルが開かれた時にのみ発生し、サーバ起動時やサイズを基にしたローテーションでは発生しません。
+       オフの場合、全ての場合において既存のファイルに追記されます。
+       例えば、この設定を<literal>pgpool-%H.log</literal>のような<xref linkend="guc-log-filename">と組み合わせて使用すると、24個の時別のログファイルが生成され、それらは周期的に上書きされることになります。
+     </para>
+     <para>
+<!--
+      This parameter can only be set at the Pgpool-II start.
+-->
+      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+   
    <varlistentry id="guc-syslog-facility" xreflabel="syslog_facility">
     <term><varname>syslog_facility</varname> (<type>enum</type>)
      <indexterm>
