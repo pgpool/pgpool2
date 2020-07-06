@@ -129,7 +129,7 @@ Pgpool-II documentation
   <para>
    使用例です。
    <programlisting>
-test=# select * from pcp_health_check_stats(0,'',11001,'t-ishii','t-ishii');
+test=# select * from pcp_health_check_stats(node_id => 0, host => '', port => 11001, username => 't-ishii', password => 't-ishii');
 -[ RECORD 1 ]-----------------+--------------------
 node_id                       | 0
 host                          | /tmp

@@ -136,7 +136,7 @@ Pgpool-II documentation
    -->
    使用例です。
    <programlisting>
-    test=# SELECT * FROM pcp_detach_node(1, 'false', 'localhost',11001,'t-ishii','t-ishii');
+    test=# SELECT * FROM pcp_detach_node(node_id => 1, gracefully => 'false', host => 'localhost', port => 11001, username => 't-ishii', password => 't-ishii');
     node_detached
     ---------------
     t

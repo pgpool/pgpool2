@@ -121,7 +121,7 @@ Pgpool-II documentation
    -->
    使用例です。
    <programlisting>
-    test=# SELECT * FROM pcp_attach_node(1,'localhost',11001,'t-ishii','t-ishii');
+    test=# SELECT * FROM pcp_attach_node(node_id => 1, host => 'localhost', port => 11001, username => 't-ishii', password => 't-ishii');
     node_attached
     ---------------
     t
