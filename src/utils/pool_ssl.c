@@ -305,9 +305,9 @@ init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype)
 	char	   *cacert = NULL,
 			   *cacert_dir = NULL;
 
-	char ssl_cert_path[POOLMAXPATHLEN + 1];
-	char ssl_key_path[POOLMAXPATHLEN + 1];
-	char ssl_ca_cert_path[POOLMAXPATHLEN + 1];
+	char ssl_cert_path[POOLMAXPATHLEN + 1] = "";
+	char ssl_key_path[POOLMAXPATHLEN + 1] = "";
+	char ssl_ca_cert_path[POOLMAXPATHLEN + 1] = "";
 
 	char *conf_file_copy = pstrdup(get_config_file_name());
 	char *conf_dir = dirname(conf_file_copy);
@@ -315,6 +315,8 @@ init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype)
 	pool_ssl_make_absolute_path(pool_config->ssl_cert, conf_dir, ssl_cert_path);
 	pool_ssl_make_absolute_path(pool_config->ssl_key, conf_dir, ssl_key_path);
 	pool_ssl_make_absolute_path(pool_config->ssl_ca_cert, conf_dir, ssl_ca_cert_path);
+
+	pfree(conf_file_copy);
 
 	/* initialize SSL members */
 #if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
@@ -365,7 +367,6 @@ init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype)
 	cp->ssl = SSL_new(cp->ssl_ctx);
 	SSL_RETURN_ERROR_IF((!cp->ssl), "SSL_new");
 
-	pfree(conf_file_copy);
 	return 0;
 }
 
@@ -546,6 +547,8 @@ SSL_ServerSide_init(void)
 	pool_ssl_make_absolute_path(pool_config->ssl_cert, conf_dir, ssl_cert_path);
 	pool_ssl_make_absolute_path(pool_config->ssl_key, conf_dir, ssl_key_path);
 	pool_ssl_make_absolute_path(pool_config->ssl_ca_cert, conf_dir, ssl_ca_cert_path);
+
+	pfree(conf_file_copy);
 
 	/* This stuff need be done only once. */
 	if (!SSL_initialized)
@@ -789,7 +792,6 @@ SSL_ServerSide_init(void)
 	return 0;
 
 error:
-	pfree(conf_file_copy);
 	if (context)
 		SSL_CTX_free(context);
 	return -1;
