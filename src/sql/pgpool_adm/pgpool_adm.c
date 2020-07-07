@@ -51,7 +51,7 @@ connect_to_server(char *host, int port, char *user, char *pass)
 
 	pcpConnInfo = pcp_connect(host, port, user, pass, NULL);
 	if (PCPConnectionStatus(pcpConnInfo) != PCP_CONNECTION_OK)
-		ereport(ERROR, (0,
+		ereport(ERROR, (errcode(ERRCODE_CONNECTION_FAILURE),
 						errmsg("connection to PCP server failed."),
 						errdetail("%s\n", pcp_get_last_error(pcpConnInfo) ? pcp_get_last_error(pcpConnInfo) : "unknown reason")));
 
@@ -138,7 +138,7 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	char		datebuf[20];
 
 	if (nodeID < 0 || nodeID >= MAX_NUM_BACKENDS)
-		ereport(ERROR, (0, errmsg("NodeID is out of range.")));
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("NodeID is out of range.")));
 
 	if (PG_NARGS() == 5)
 	{
@@ -157,7 +157,7 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		ereport(ERROR, (0, errmsg("Wrong number of argument.")));
+		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Wrong number of argument.")));
 	}
 
 	pcpResInfo = pcp_node_info(pcpConnInfo, nodeID);
@@ -167,7 +167,7 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 
 		pcp_disconnect(pcpConnInfo);
 		pcp_free_connection(pcpConnInfo);
-		ereport(ERROR, (0,
+		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 						errmsg("failed to get node information"),
 						errdetail("%s\n", error ? error : "unknown reason")));
 	}
@@ -289,7 +289,7 @@ _pcp_pool_status(PG_FUNCTION_ARGS)
 		else
 		{
 			MemoryContextSwitchTo(oldcontext);
-			ereport(ERROR, (0, errmsg("Wrong number of argument.")));
+			ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Wrong number of argument.")));
 		}
 
 		pcpResInfo = pcp_pool_status(pcpConnInfo);
@@ -301,7 +301,7 @@ _pcp_pool_status(PG_FUNCTION_ARGS)
 			pcp_free_connection(pcpConnInfo);
 
 			MemoryContextSwitchTo(oldcontext);
-			ereport(ERROR, (0,
+			ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 							errmsg("failed to get pool status"),
 							errdetail("%s\n", error ? error : "unknown reason")));
 		}
@@ -413,7 +413,7 @@ _pcp_node_count(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		ereport(ERROR, (0, errmsg("Wrong number of argument.")));
+		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Wrong number of argument.")));
 	}
 
 	pcpResInfo = pcp_node_count(pcpConnInfo);
@@ -424,7 +424,7 @@ _pcp_node_count(PG_FUNCTION_ARGS)
 
 		pcp_disconnect(pcpConnInfo);
 		pcp_free_connection(pcpConnInfo);
-		ereport(ERROR, (0,
+		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 						errmsg("failed to get node count"),
 						errdetail("%s\n", error ? error : "unknown reason")));
 	}
@@ -454,7 +454,7 @@ _pcp_attach_node(PG_FUNCTION_ARGS)
 	PCPResultInfo *pcpResInfo;
 
 	if (nodeID < 0 || nodeID >= MAX_NUM_BACKENDS)
-		ereport(ERROR, (0, errmsg("NodeID is out of range.")));
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("NodeID is out of range.")));
 
 	if (PG_NARGS() == 5)
 	{
@@ -473,7 +473,7 @@ _pcp_attach_node(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		ereport(ERROR, (0, errmsg("Wrong number of argument.")));
+		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Wrong number of argument.")));
 	}
 
 	pcpResInfo = pcp_attach_node(pcpConnInfo, nodeID);
@@ -484,7 +484,7 @@ _pcp_attach_node(PG_FUNCTION_ARGS)
 
 		pcp_disconnect(pcpConnInfo);
 		pcp_free_connection(pcpConnInfo);
-		ereport(ERROR, (0,
+		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 						errmsg("failed to attach node"),
 						errdetail("%s\n", error ? error : "unknown reason")));
 	}
@@ -515,7 +515,7 @@ _pcp_detach_node(PG_FUNCTION_ARGS)
 	PCPResultInfo *pcpResInfo;
 
 	if (nodeID < 0 || nodeID >= MAX_NUM_BACKENDS)
-		ereport(ERROR, (0, errmsg("NodeID is out of range.")));
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("NodeID is out of range.")));
 
 	if (PG_NARGS() == 6)
 	{
@@ -534,7 +534,7 @@ _pcp_detach_node(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		ereport(ERROR, (0, errmsg("Wrong number of argument.")));
+		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Wrong number of argument.")));
 	}
 
 	if (gracefully)
@@ -552,7 +552,7 @@ _pcp_detach_node(PG_FUNCTION_ARGS)
 
 		pcp_disconnect(pcpConnInfo);
 		pcp_free_connection(pcpConnInfo);
-		ereport(ERROR, (0,
+		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 						errmsg("failed to detach node"),
 						errdetail("%s\n", error ? error : "unknown reason")));
 	}
@@ -562,3 +562,4 @@ _pcp_detach_node(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(true);
 }
+
