@@ -3367,7 +3367,7 @@ per_node_error_log(POOL_CONNECTION_POOL * backend, int node_id, char *query, cha
 		return;
 	}
 
-	if (pool_extract_error_message(true, CONNECTION(backend, node_id), MAJOR(backend), true, &message) == 1)
+	if (pool_extract_error_message(true, CONNECTION(backend, node_id), MAJOR(backend), unread, &message) == 1)
 	{
 		ereport(LOG,
 				(errmsg("%s: DB node id: %d backend pid: %d statement: \"%s\" message: \"%s\"",
