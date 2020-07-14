@@ -1200,6 +1200,12 @@ select_table_walker(Node *node, void *context)
 		}
 	}
 
+	/* Skip Data-Modifying Statements in SELECT. */
+	else if (IsA(node, InsertStmt) || IsA(node, DeleteStmt) || IsA(node, UpdateStmt))
+	{
+		return false;
+	}
+
 	return raw_expression_tree_walker(node, select_table_walker, context);
 }
 
