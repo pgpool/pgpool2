@@ -242,6 +242,7 @@ extern bool pool_is_table_in_black_list(const char *table_name);
 extern bool pool_is_table_in_white_list(const char *table_name);
 extern bool pool_is_allow_to_cache(Node *node, char *query);
 extern int	pool_extract_table_oids(Node *node, int **oidsp);
+extern int	pool_extract_withclause_oids(Node *with, int *oidsp);
 extern void pool_add_dml_table_oid(int oid);
 extern void pool_discard_oid_maps(void);
 extern int	pool_get_database_oid_from_dbname(char *dbname);
