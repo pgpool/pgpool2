@@ -452,8 +452,11 @@ POOL_STATUS SimpleQuery(POOL_CONNECTION *frontend,
 				pool_unset_cache_safe();
 			}
 
-			/* If table is to be cached and the query is DML, save the table oid */
-			if (!is_select_query && !query_context->is_parse_error)
+			/*
+			 * If table is to be cached and the query is DML, save the table
+			 * oid
+			 */
+			if (!query_context->is_parse_error)
 			{
 				num_oids = pool_extract_table_oids(node, &oids);
 
