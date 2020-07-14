@@ -10919,6 +10919,7 @@ InsertStmtShort:
 			{
 				InsertStmt *insert = makeNode(InsertStmt);
 				insert->relation = $4;
+				insert->withClause= $1;
 				$$ = (Node *) insert;
 				/*
 				 * Assign the node directly to the parsetree and exit the scanner

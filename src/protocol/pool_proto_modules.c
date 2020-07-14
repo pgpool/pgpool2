@@ -473,7 +473,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			 * If table is to be cached and the query is DML, save the table
 			 * oid
 			 */
-			if (!is_select_query && !query_context->is_parse_error)
+			if (!query_context->is_parse_error)
 			{
 				num_oids = pool_extract_table_oids(node, &oids);
 
