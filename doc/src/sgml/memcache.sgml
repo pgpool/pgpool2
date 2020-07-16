@@ -303,7 +303,7 @@
 	#to refer the table1 then the black_memqcache_table_list
 	#would be configured as follows.
 
-	black_function_list = "table1,public.table1"
+	black_memqcache_table_list = "table1,public.table1"
 
        </programlisting>
 
