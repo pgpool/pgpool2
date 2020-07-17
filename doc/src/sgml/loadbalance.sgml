@@ -12,7 +12,7 @@
     backend nodes in Replication mode, and other queries get load
     balanced among all backend nodes.  To which node the load
     balancing mechanism sends read queries is decided at the session
-    start time and will not be changed until the session ends. However
+    start time and will not be changed until the session ends unless <xref linkend="guc-statement-level-load-balance"> is specified. However
     there are some exceptions.  See below for more details.
  </para>
  <note>

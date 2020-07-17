@@ -22,7 +22,7 @@
   <productname>Pgpool-II</productname>のSELECTクエリの負荷分散はマスタースレーブモード（<xref linkend="runtime-config-master-slave-mode">）とレプリケーションモード（<xref linkend="runtime-config-replication-mode">）で動作します。
     有効時、<productname>Pgpool-II</productname>は更新を伴うクエリを、マスタースレーブモードでは<acronym>プライマリノード</acronym>に、レプリケーションモードでは全てのバックエンドノードに対し送信します。
     そして、その他のクエリは全てのバックエンドの間で負荷分散されます。
-    負荷分散メカニズムが参照クエリをどのノードに送信するかはセッション開始時に決められ、セッションの終了まで変更されません。
+    <xref linkend="guc-statement-level-load-balance">が指定されている場合を除き、負荷分散メカニズムが参照クエリをどのノードに送信するかはセッション開始時に決められ、セッションの終了まで変更されません。
     ただし、いくつかの例外があります。
     詳細については以下をご覧ください。
  </para>
