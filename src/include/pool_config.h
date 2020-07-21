@@ -100,7 +100,8 @@ typedef enum DLBOW_OPTION
 	DLBOW_OFF = 1,
 	DLBOW_TRANSACTION,
 	DLBOW_TRANS_TRANSACTION,
-	DLBOW_ALWAYS
+	DLBOW_ALWAYS,
+	DLBOW_DML_ADAPTIVE
 }			DLBOW_OPTION;
 
 typedef enum RELQTARGET_OPTION
@@ -170,6 +171,31 @@ typedef struct
 	int			connect_timeout;	/* timeout value before giving up
 									 * connecting to backend */
 }			HealthCheckParams;
+
+/*
+ * For dml adaptive object relations
+ * Currently we only require functions
+ * and relations
+ *
+ */
+typedef enum
+{
+	OBJECT_TYPE_FUNCTION,
+	OBJECT_TYPE_RELATION,
+	OBJECT_TYPE_UNKNOWN
+}		DBObjectTypes;
+
+typedef struct
+{
+	char	*name;
+	DBObjectTypes object_type;
+}		DBObject;
+
+typedef struct
+{
+	DBObject	left_token;
+	DBObject	right_token;
+}		DBObjectRelation;
 
 /*
  * configuration parameters
@@ -363,7 +389,6 @@ typedef struct
 												 * black_query_pattern_list */
 	int			num_wd_monitoring_interfaces_list;	/* number of items in
 													 * wd_monitoring_interfaces_list */
-
 	/* ssl configuration */
 	bool		ssl;			/* if non 0, activate ssl support
 								 * (frontend+backend) */
@@ -485,6 +510,9 @@ typedef struct
 												 * an explicit transaction
 												 * will not be load balanced
 												 * until the session ends. */
+
+	char	   *dml_adaptive_object_relationship_list;	/* objects relationship list*/
+	DBObjectRelation *parsed_dml_adaptive_object_relationship_list;
 
 	bool		statement_level_load_balance; /* if on, select load balancing node per statement */
 

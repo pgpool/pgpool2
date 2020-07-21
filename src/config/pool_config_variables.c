@@ -94,6 +94,9 @@ static bool get_index_in_var_name(struct config_generic *record,
 
 static bool MakeDBRedirectListRegex(char *newval, int elevel);
 static bool MakeAppRedirectListRegex(char *newval, int elevel);
+static bool MakeDMLAdaptiveObjectRelationList(char *newval, int elevel);
+static char* getParsedToken(char *token, DBObjectTypes *object_type);
+
 static bool check_redirect_node_spec(char *node_spec);
 static char **get_list_from_string(const char *str, const char *delimi, int *n);
 static char **get_list_from_string_regex_delim(const char *str, const char *delimi, int *n);
@@ -269,6 +272,7 @@ static const struct config_enum_entry disable_load_balance_on_write_options[] = 
 	{"transaction", DLBOW_TRANSACTION, false},
 	{"trans_transaction", DLBOW_TRANS_TRANSACTION, false},
 	{"always", DLBOW_ALWAYS, false},
+	{"dml_adaptive", DLBOW_DML_ADAPTIVE, false},
 	{NULL, 0, false}
 };
 
@@ -760,6 +764,17 @@ static struct config_string ConfigureNamesString[] =
 		NULL,
 		NULL, NULL,
 		MakeAppRedirectListRegex, NULL
+	},
+
+	{
+		{"dml_adaptive_object_relationship_list", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
+			"list of relationships between objects.",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.dml_adaptive_object_relationship_list,
+		NULL,
+		NULL, NULL,
+		MakeDMLAdaptiveObjectRelationList, NULL
 	},
 
 	{
@@ -4730,6 +4745,87 @@ config_post_processor(ConfigContext context, int elevel)
 		return false;
 	}
 	return true;
+}
+
+static bool
+MakeDMLAdaptiveObjectRelationList(char *newval, int elevel)
+{
+	int i;
+	int elements_count = 0;
+	char **rawList = get_list_from_string(newval, ",", &elements_count);
+
+	if (rawList == NULL || elements_count == 0)
+	{
+		pool_config->parsed_dml_adaptive_object_relationship_list = NULL;
+		return true;
+	}
+	pool_config->parsed_dml_adaptive_object_relationship_list = palloc(sizeof(DBObjectRelation) * (elements_count + 1));
+
+	for (i = 0; i < elements_count; i++)
+	{
+		char *kvstr = pstrdup(rawList[i]);
+		char *left_token = strtok(kvstr, ":");
+		char *right_token = strtok(NULL, ":");
+		DBObjectTypes object_type;
+
+		ereport(DEBUG5,
+				(errmsg("dml_adaptive_init"),
+					errdetail("%s -- left_token[%s] right_token[%s]", kvstr, left_token, right_token)));
+
+		pool_config->parsed_dml_adaptive_object_relationship_list[i].left_token.name =
+																	getParsedToken(left_token, &object_type);
+		pool_config->parsed_dml_adaptive_object_relationship_list[i].left_token.object_type = object_type;
+
+		pool_config->parsed_dml_adaptive_object_relationship_list[i].right_token.name =
+																	getParsedToken(right_token,&object_type);
+		pool_config->parsed_dml_adaptive_object_relationship_list[i].right_token.object_type = object_type;
+		pfree(kvstr);
+	}
+	pool_config->parsed_dml_adaptive_object_relationship_list[i].left_token.name = NULL;
+	pool_config->parsed_dml_adaptive_object_relationship_list[i].left_token.object_type = OBJECT_TYPE_UNKNOWN;
+	pool_config->parsed_dml_adaptive_object_relationship_list[i].right_token.name = NULL;
+	pool_config->parsed_dml_adaptive_object_relationship_list[i].right_token.object_type = OBJECT_TYPE_UNKNOWN;
+	return true;
+}
+
+/*
+ * Identify the object type for dml adaptive object
+ * the function is very primitive and just looks for token
+ * ending with ().
+ * We also remove the trailing spaces from the function type token
+ * and return the palloc'd copy of token in new_token
+ */
+static char*
+getParsedToken(char *token, DBObjectTypes *object_type)
+{
+	int len;
+	*object_type = OBJECT_TYPE_UNKNOWN;
+
+	if (!token)
+		return NULL;
+
+	len = strlen(token);
+	if (len > strlen("*()"))
+	{
+		int namelen = len - 2;
+		/* check if token ends with () */
+		if (strcmp(token + namelen,"()") == 0)
+		{
+			/*
+			 * Remove the Parentheses from end of
+			 * token name
+			 */
+			char *new_token;
+			int new_len = strlen(token) - 2;
+			new_token = palloc(new_len + 1);
+			strncpy(new_token,token,new_len);
+			new_token[new_len] = '\0';
+			*object_type = OBJECT_TYPE_FUNCTION;
+			return new_token;
+		}
+	}
+	*object_type = OBJECT_TYPE_RELATION;
+	return pstrdup(token);
 }
 
 static bool

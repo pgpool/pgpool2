@@ -39,6 +39,8 @@ static void GetTranIsolationErrorCb(void *arg);
 static void init_sent_message_list(void);
 static POOL_PENDING_MESSAGE * copy_pending_message(POOL_PENDING_MESSAGE * messag);
 static void dump_sent_message(char *caller, POOL_SENT_MESSAGE * m);
+static void dml_adaptive_init(void);
+static void dml_adaptive_destroy(void);
 
 #ifdef PENDING_MESSAGE_DEBUG
 static int	Elevel = LOG;
@@ -176,6 +178,8 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 
 	/* Transaction read only */
 	session_context->transaction_read_only = false;
+
+	dml_adaptive_init();
 }
 
 /*
@@ -197,6 +201,8 @@ pool_session_context_destroy(void)
 		if (session_context->query_context)
 			pool_query_context_destroy(session_context->query_context);
 		MemoryContextDelete(session_context->memory_context);
+
+		dml_adaptive_destroy();
 	}
 	/* XXX For now, just zap memory */
 	memset(&session_context_d, 0, sizeof(session_context_d));
@@ -528,6 +534,26 @@ dump_sent_message(char *caller, POOL_SENT_MESSAGE * m)
 					caller, m, m->kind, m->name, m->state)));
 }
 
+static void
+dml_adaptive_init(void)
+{
+	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE)
+	{
+		session_context->is_in_transaction = false;
+		session_context->transaction_temp_black_list = NIL;
+	}
+}
+
+static void
+dml_adaptive_destroy(void)
+{
+	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE && session_context)
+	{
+		if (session_context->transaction_temp_black_list != NIL)
+			list_free_deep(session_context->transaction_temp_black_list);
+	}
+}
+
 /*
  * Create a sent message.
  * kind: one of 'P':Parse, 'B':Bind or 'Q':Query(PREPARE)
@@ -717,10 +743,10 @@ void
 pool_set_writing_transaction(void)
 {
 	/*
-	 * If disable_transaction_on_write is 'off', then never turn on writing
+	 * If disable_transaction_on_write is 'off' or 'dml_adaptive', then never turn on writing
 	 * transaction flag.
 	 */
-	if (pool_config->disable_load_balance_on_write != DLBOW_OFF)
+	if (pool_config->disable_load_balance_on_write != DLBOW_OFF && pool_config->disable_load_balance_on_write != DLBOW_DML_ADAPTIVE)
 	{
 		pool_get_session_context(false)->writing_transaction = true;
 		ereport(DEBUG5,
@@ -2056,4 +2082,5 @@ pool_temp_tables_dump(void)
 						table->tablename, table->state)));
 	}
 #endif
+
 }

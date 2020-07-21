@@ -1258,6 +1258,9 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		pool_where_to_send(query_context, query_context->original_query,
 						   query_context->parse_tree);
 
+		if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE && strlen(name) != 0)
+			pool_setall_node_to_be_sent(query_context);
+
 		if (REPLICATION)
 		{
 			char	   *rewrite_query;
@@ -1547,6 +1550,13 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 
 		if (parse_before_bind(frontend, backend, parse_msg, bind_msg) != POOL_CONTINUE)
 			return POOL_END;
+	}
+
+	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE &&
+		TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
+	{
+		pool_where_to_send(query_context, query_context->original_query,
+							query_context->parse_tree);
 	}
 
 	/*

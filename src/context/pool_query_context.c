@@ -62,6 +62,13 @@ static char *remove_read_write(int len, const char *contents, int *rewritten_len
 static void set_virtual_master_node(POOL_QUERY_CONTEXT *query_context);
 static void set_load_balance_info(POOL_QUERY_CONTEXT *query_context);
 
+static bool is_in_list(char *name, List *list);
+static bool is_select_object_in_temp_black_list(Node *node, void *context);
+static bool add_object_into_temp_black_list(Node *node, void *context);
+static void dml_adaptive(Node *node, char *query);
+static char* get_associated_object_from_dml_adaptive_relations
+							(char *left_token, DBObjectTypes object_type);
+
 /*
  * Create and initialize per query session context
  */
@@ -485,6 +492,8 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 
 		dest = send_to_where(node, query);
 
+		dml_adaptive(node, query);
+
 		ereport(DEBUG1,
 				(errmsg("decide where to send the query"),
 				 errdetail("destination = %d for query= \"%s\"", dest, query)));
@@ -617,6 +626,10 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 								(errmsg("could not load balance because writing functions are used"),
 								 errdetail("destination = %d for query= \"%s\"", dest, query)));
 
+						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+					}
+					else if (is_select_object_in_temp_black_list(node, query))
+					{
 						pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 					}
 					else
@@ -2084,4 +2097,187 @@ set_load_balance_info(POOL_QUERY_CONTEXT *query_context)
 
 	pool_set_node_to_be_sent(query_context,
 							 query_context->load_balance_node_id);
+}
+
+/*
+ * Check if the name is in the list.
+ */
+static bool
+is_in_list(char *name, List *list)
+{
+	if (name == NULL || list == NIL)
+		return false;
+
+	ListCell *cell;
+	foreach (cell, list)
+	{
+		char *cell_name = (char *)lfirst(cell);
+		if (strcmp(name, cell_name) == 0)
+		{
+			ereport(DEBUG1,
+					(errmsg("[%s] is in list", name)));
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/*
+ * Check if the relname of SelectStmt is in the temp black list.
+ */
+static bool
+is_select_object_in_temp_black_list(Node *node, void *context)
+{
+	if (node == NULL || pool_config->disable_load_balance_on_write != DLBOW_DML_ADAPTIVE)
+		return false;
+
+	if (IsA(node, RangeVar))
+	{
+		RangeVar   *rgv = (RangeVar *) node;
+		POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
+
+		if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE && session_context->is_in_transaction)
+		{
+			ereport(DEBUG1,
+					(errmsg("is_select_object_in_temp_black_list: \"%s\", found relation \"%s\"", (char*)context, rgv->relname)));
+
+			return is_in_list(rgv->relname, session_context->transaction_temp_black_list);
+		}
+	}
+
+	return raw_expression_tree_walker(node, is_select_object_in_temp_black_list, context);
+}
+
+static char*
+get_associated_object_from_dml_adaptive_relations
+						(char *left_token, DBObjectTypes object_type)
+{
+	int i;
+	char *right_token = NULL;
+	if (!pool_config->parsed_dml_adaptive_object_relationship_list)
+		return NULL;
+	for (i=0 ;; i++)
+	{
+		if (pool_config->parsed_dml_adaptive_object_relationship_list[i].left_token.name == NULL)
+			break;
+
+		if (pool_config->parsed_dml_adaptive_object_relationship_list[i].left_token.object_type != object_type)
+			continue;
+
+		if (strcasecmp(pool_config->parsed_dml_adaptive_object_relationship_list[i].left_token.name, left_token) == 0)
+		{
+			right_token = pool_config->parsed_dml_adaptive_object_relationship_list[i].right_token.name;
+			break;
+		}
+	}
+	return right_token;
+}
+
+/*
+ * Check the object relationship list.
+ * If find the name in the list, will add related objects to the transaction temp black list.
+ */
+void
+check_object_relationship_list(char *name, bool is_func_name)
+{
+	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE && pool_config->parsed_dml_adaptive_object_relationship_list)
+	{
+		POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
+
+		if (session_context->is_in_transaction)
+		{
+			char	*right_token =
+						get_associated_object_from_dml_adaptive_relations
+							(name, is_func_name? OBJECT_TYPE_FUNCTION : OBJECT_TYPE_RELATION);
+
+			if (right_token)
+			{
+				MemoryContext old_context = MemoryContextSwitchTo(session_context->memory_context);
+				session_context->transaction_temp_black_list =
+					lappend(session_context->transaction_temp_black_list, pstrdup(right_token));
+				MemoryContextSwitchTo(old_context);
+			}
+		}
+
+	}
+}
+
+/*
+ * Find the relname and add it to the transaction temp black list.
+ */
+static bool
+add_object_into_temp_black_list(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, RangeVar))
+	{
+		RangeVar   *rgv = (RangeVar *) node;
+
+		ereport(DEBUG5,
+				(errmsg("add_object_into_temp_black_list: \"%s\", found relation \"%s\"", (char*)context, rgv->relname)));
+
+		POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
+		MemoryContext old_context = MemoryContextSwitchTo(session_context->memory_context);
+
+		if (!is_in_list(rgv->relname, session_context->transaction_temp_black_list))
+		{
+			ereport(DEBUG1,
+					(errmsg("add \"%s\" into transaction_temp_black_list", rgv->relname)));
+
+			session_context->transaction_temp_black_list = lappend(session_context->transaction_temp_black_list, pstrdup(rgv->relname));
+		}
+
+		MemoryContextSwitchTo(old_context);
+
+		check_object_relationship_list(rgv->relname, false);
+	}
+
+	return raw_expression_tree_walker(node, add_object_into_temp_black_list, context);
+}
+
+/*
+ * dml adaptive.
+ */
+static void
+dml_adaptive(Node *node, char *query)
+{
+	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE)
+	{
+		/* Set/Unset transaction status flags */
+		if (IsA(node, TransactionStmt))
+		{
+			POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
+			MemoryContext old_context = MemoryContextSwitchTo(session_context->memory_context);
+
+			if (is_start_transaction_query(node))
+			{
+				session_context->is_in_transaction = true;
+
+				if (session_context->transaction_temp_black_list != NIL)
+					list_free_deep(session_context->transaction_temp_black_list);
+
+				session_context->transaction_temp_black_list = NIL;
+			}
+			else if(is_commit_or_rollback_query(node))
+			{
+				session_context->is_in_transaction = false;
+
+				if (session_context->transaction_temp_black_list != NIL)
+					list_free_deep(session_context->transaction_temp_black_list);
+
+				session_context->transaction_temp_black_list = NIL;
+			}
+
+			MemoryContextSwitchTo(old_context);
+			return;
+		}
+
+		/* If non-selectStmt, find the relname and add it to the transaction temp black list. */
+		if (!is_select_query(node, query))
+			add_object_into_temp_black_list(node, query);
+
+	}
 }

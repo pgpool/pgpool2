@@ -963,8 +963,62 @@
       compatibility with not-clustering-aware applications and the
       lowest performance.
      </para>
+
+     <para>
+		If this parameter is set to <varname>dml_adaptive</varname> <productname>Pgpool-II</>
+		keep track of each TABLE referenced in the WRITE statements within
+		the explicit transactions and will not load balances the subsequent
+		READ queries if the TABLE they are reading from is previously modified
+		inside the same transaction.
+		Dependent functions, triggers, and views on the tables can be configured
+		using <xref linkend="guc-dml-adaptive-object-relationship-list">
+     </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry id="guc-dml-adaptive-object-relationship-list" xreflabel="dml_adaptive_object_relationship_list">
+    <term><varname>dml_adaptive_object_relationship_list</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>dml_adaptive_object_relationship_list</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+
+     <para>
+	 To prevent load balancing of READ dependent objects, you may specificy the object name
+	 followed by a colon(<literal>:</>) and then a comma(<literal>,</>) separated list of dependent object names.
+	 <replaceable>"[object]:[dependent-object]"</replaceable>
+     In an explicit transaction block after a WRITE statement has been issues, this will prevent
+	 load balancing of any READ statements containing references of dependent object(s).
+	 <example id="example-dml-adaptive-object-relationship-list-1">
+	 <title>Configuring dml adaptive object relationship</title>
+	   <para>
+	    If you have a trigger installed on table_1 that do INSERT in  <literal>table_2</> for each
+		INSERT on  <literal>table_1</>. Then you would want to make sure that
+		read on  <literal>table_2</> must not get load-balanced within the same transaction
+		after INSERT into  <literal>table_1</>.
+		For this configuration you can set
+		<programlisting>
+             dml_adaptive_object_relationship_list = 'table_1:table_2'
+		</programlisting>
+	  </para>
+	 </example>
+
+     This parameter is only valid for
+	 <xref linkend="guc-disable-load-balance-on-write">=<emphasis>'dml_adaptive'</emphasis>
+
+	  <note>
+	   <para>
+	   To configure the dependency on the function,
+	   The function must be present in the <xref linkend="guc-black-function-list">
+	   </para>
+	  </note>
+
+     </para>
+
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-statement-level-load-balance" xreflabel="statement_level_load_balance">
     <term><varname>statement_level_load_balance</varname> (<type>boolean</type>)
      <indexterm>

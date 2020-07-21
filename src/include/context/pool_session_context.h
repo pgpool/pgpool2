@@ -285,6 +285,13 @@ typedef struct
 	 */
 	List	   *temp_tables;
 
+	bool		is_in_transaction;
+
+	/*
+	 * Current transaction temp black list
+	 */
+	List	   *transaction_temp_black_list;
+
 #ifdef NOT_USED
 	/* Preferred "master" node id. Only used for SimpleForwardToFrontend. */
 	int			preferred_master_node_id;

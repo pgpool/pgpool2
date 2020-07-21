@@ -126,4 +126,5 @@ extern void pool_set_cache_exceeded(void);
 extern void pool_unset_cache_exceeded(void);
 extern bool pool_is_transaction_read_only(Node *node);
 extern void pool_force_query_node_to_backend(POOL_QUERY_CONTEXT * query_context, int backend_id);
+extern void check_object_relationship_list(char *name, bool is_func_name);
 #endif							/* POOL_QUERY_CONTEXT_H */

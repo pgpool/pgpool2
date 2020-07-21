@@ -524,6 +524,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "Load balance behavior when write query is received", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "dml_adaptive_object_relationship_list", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->dml_adaptive_object_relationship_list);
+	StrNCpy(status[i].desc, "list of relationships between objects", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "statement_level_load_balance", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->statement_level_load_balance);
 	StrNCpy(status[i].desc, "statement level load balancing", POOLCONFIG_MAXDESCLEN);
