@@ -267,7 +267,7 @@ pool_unset_query_in_progress(void)
 
 	s->in_progress = false;
 
-	/* Restore where_to_send map if neccessary */
+	/* Restore where_to_send map if necessary */
 	if (s->need_to_restore_where_to_send)
 	{
 		memcpy(s->query_context->where_to_send, s->where_to_send_save, sizeof(s->where_to_send_save));
