@@ -88,7 +88,7 @@ static bool SyslogFacilityProcessFunc (int newval, int elevel);
 
 #ifndef POOL_PRIVATE
 /* These functions are used to provide Hints for enum type config parameters and
- * to output the vslues of the parameters.
+ * to output the values of the parameters.
  * These functuons are not available for tools since they use the stringInfo that is
  * not present for tools.
  */

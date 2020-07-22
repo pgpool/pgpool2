@@ -51,7 +51,7 @@
 #define LIFECHECK_GETNODE_WAIT_SEC_COUNT 5 /* max number of seconds the lifecheck process
 											* should waits before giving up
 											* while fetching the configured watchdog node
-											* infromation from watchdog process through IPC channel
+											* information from watchdog process through IPC channel
 											*/
 
 /*
