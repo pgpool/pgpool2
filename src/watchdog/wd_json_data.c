@@ -235,7 +235,7 @@ char* get_pool_config_json(void)
 	return json_str;
 }
 
-/* The function returs the simple JSON string that contains
+/* The function returns the simple JSON string that contains
  * only one KEY,VALUE along with the authkey key value if provided
  */
 char* get_simple_request_json(char *key, char* value, unsigned int sharedKey, char* authKey)
