@@ -136,7 +136,7 @@ static struct config_generic *get_index_free_record_if_any(struct config_generic
 
 #ifndef POOL_PRIVATE
 /* These functions are used to provide Hints for enum type config parameters and
- * to output the vslues of the parameters.
+ * to output the values of the parameters.
  * These functuons are not available for tools since they use the stringInfo that is
  * not present for tools.
  */
