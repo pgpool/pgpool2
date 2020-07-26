@@ -339,22 +339,14 @@ function_call_walker(Node *node, void *context)
 
 		if (length > 0)
 		{
-			if (length == 1)	/* no schema qualification? */
-			{
-				fname = strVal(linitial(fcall->funcname));
-			}
-			else
-			{
-				fname = strVal(lsecond(fcall->funcname));	/* with schema
-															 * qualification */
-			}
+			fname = make_function_name_from_funccall(fcall);
 
 			ereport(DEBUG1,
 					(errmsg("function call walker, function name: \"%s\"", fname)));
 
-			check_object_relationship_list(fname, true);
+			check_object_relationship_list(strVal(llast(fcall->funcname)), true);
 
-			if (ctx->pg_terminate_backend_pid == 0 && strcmp("pg_terminate_backend", fname) == 0)
+			if (ctx->pg_terminate_backend_pid == 0 && strcmp("pg_terminate_backend", strVal(llast(fcall->funcname))) == 0)
 			{
 				if (list_length(fcall->args) == 1)
 				{
@@ -997,15 +989,7 @@ non_immutable_function_call_walker(Node *node, void *context)
 
 		if (length > 0)
 		{
-			if (length == 1)	/* no schema qualification? */
-			{
-				fname = strVal(linitial(fcall->funcname));
-			}
-			else
-			{
-				fname = strVal(lsecond(fcall->funcname));	/* with schema
-															 * qualification */
-			}
+			fname = make_function_name_from_funccall(fcall);
 
 			ereport(DEBUG1,
 					(errmsg("non immutable function walker. checking function \"%s\"", fname)));
@@ -1047,20 +1031,75 @@ is_immutable_function(char *fname)
 /*
  * Query to know if the function is IMMUTABLE
  */
-#define IS_STABLE_FUNCTION_QUERY "SELECT count(*) FROM pg_catalog.pg_proc AS p WHERE p.proname = '%s' AND p.provolatile = 'i'"
+#define IS_STABLE_FUNCTION_QUERY "SELECT count(*) FROM pg_catalog.pg_proc AS p, pg_catalog.pg_namespace AS n WHERE p.proname %s '%s' AND n.oid = p.pronamespace AND n.nspname = '%s' AND p.provolatile = 'i'"
 	bool		result;
-	static POOL_RELCACHE * relcache;
-	POOL_CONNECTION_POOL *backend;
+	char		query[1024];
+	char	   *rawstring = NULL;
+	char	   *key_str = NULL;
+	List	   *names = NIL;
+	POOL_CONNECTION_POOL   *backend;
+	static POOL_RELCACHE   *relcache;
+
+	/* We need a modifiable copy of the input string. */
+	rawstring = pstrdup(fname);
+
+	/* split "schemaname.funcname" */
+	if(!SplitIdentifierString(rawstring, '.', (Node **) &names) ||
+		names == NIL)
+	{
+		if(rawstring)
+			pfree(rawstring);
+		if(names)
+			list_free(names);
+
+		ereport(WARNING,
+				(errmsg("invalid function name %s", fname)));
+
+		return false;
+	}
+
+	/* with schema qualification */
+	if(list_length(names) == 2)
+	{
+		key_str = fname;
+		if(!relcache)
+		{
+			snprintf(query, sizeof(query), IS_STABLE_FUNCTION_QUERY,
+					"=", (char *) lsecond(names), (char *) linitial(names));
+		}
+		else
+		{
+			snprintf(relcache->sql, sizeof(relcache->sql), IS_STABLE_FUNCTION_QUERY,
+					"=", (char *) lsecond(names), (char *) linitial(names));
+		}
+	}
+	else
+	{
+		key_str = (char *) llast(names);
+		if(!relcache)
+		{
+			snprintf(query, sizeof(query), IS_STABLE_FUNCTION_QUERY,
+					"~", ".*", (char *) llast(names));
+		}
+		else
+		{
+			snprintf(relcache->sql, sizeof(relcache->sql), IS_STABLE_FUNCTION_QUERY,
+					"~", ".*", (char *) llast(names));
+		}
+	}
 
 	backend = pool_get_session_context(false)->backend;
 
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(pool_config->relcache_size, IS_STABLE_FUNCTION_QUERY,
+		relcache = pool_create_relcache(pool_config->relcache_size, query,
 										int_register_func, int_unregister_func,
 										false);
 		if (relcache == NULL)
 		{
+			pfree(rawstring);
+			list_free(names);
+
 			ereport(WARNING,
 					(errmsg("unable to create relcache, while checking if the function is immutable")));
 			return false;
@@ -1070,7 +1109,10 @@ is_immutable_function(char *fname)
 				 errdetail("relcache created")));
 	}
 
-	result = (pool_search_relcache(relcache, backend, fname) == 0) ? 0 : 1;
+	result = (pool_search_relcache(relcache, backend, key_str) == 0) ? 0 : 1;
+
+	pfree(rawstring);
+	list_free(names);
 
 	ereport(DEBUG1,
 			(errmsg("checking if the function is IMMUTABLE"),
@@ -1254,6 +1296,75 @@ makeRangeVarFromNameList(List *names)
 	}
 
 	return rel;
+}
+
+/*
+ * Extract function name from FuncCall.  Make schema qualification name if
+ * necessary.  The returned function name is in static area. So next
+ * call to this function will break previous result.
+ */
+char *
+make_function_name_from_funccall(FuncCall *fcall)
+{
+	/*
+	 * Function name. Max size is calculated as follows: schema
+	 * name(POOL_NAMEDATALEN byte) + quotation marks for schmea name(2 byte) +
+	 * period(1 byte) + table name (POOL_NAMEDATALEN byte) + quotation marks
+	 * for table name(2 byte) + NULL(1 byte)
+	 */
+	static char funcname[POOL_NAMEDATALEN * 2 + 1 + 2 * 2 + 1];
+	List 	   *names;
+
+	if(fcall == NULL)
+	{
+		ereport(WARNING,
+				(errmsg("FuncCall argument is NULL, while getting function name from FuncCall")));
+		return "";
+	}
+
+	*funcname = '\0';
+	names = fcall->funcname;
+
+	switch (list_length(names))
+	{
+		case 1:
+			strcat(funcname, "\"");
+			strncat(funcname, strVal(linitial(names)), POOL_NAMEDATALEN);
+			strcat(funcname, "\"");
+			break;
+		case 2:
+			strcat(funcname, "\"");
+			strncat(funcname, strVal(linitial(names)), POOL_NAMEDATALEN);
+			strcat(funcname, "\"");
+
+			strcat(funcname, ".");
+
+			strcat(funcname, "\"");
+			strncat(funcname, strVal(lsecond(names)), POOL_NAMEDATALEN);
+			strcat(funcname, "\"");
+			break;
+		case 3:
+			strcat(funcname, "\"");
+			strncat(funcname, strVal(lsecond(names)), POOL_NAMEDATALEN);
+			strcat(funcname, "\"");
+
+			strcat(funcname, ".");
+
+			strcat(funcname, "\"");
+			strncat(funcname, strVal(lthird(names)), POOL_NAMEDATALEN);
+			strcat(funcname, "\"");
+
+			break;
+		default:
+			ereport(WARNING,
+					(errmsg("invalid function name, too many indirections, while getting function name from FuncCall")));
+			break;
+	}
+
+	ereport(DEBUG1,
+			(errmsg("make function name from funccall: funcname:\"%s\"", funcname)));
+
+	return funcname;
 }
 
 /*

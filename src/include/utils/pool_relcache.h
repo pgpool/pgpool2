@@ -80,5 +80,6 @@ extern void *int_register_func(POOL_SELECT_RESULT * res);
 extern void *int_unregister_func(void *data);
 extern void *string_register_func(POOL_SELECT_RESULT * res);
 extern void *string_unregister_func(void *data);
+extern bool SplitIdentifierString(char *rawstring, char separator, Node **namelist);
 
 #endif							/* POOL_RELCACHE_H */

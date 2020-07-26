@@ -24,7 +24,7 @@ do
 
 	echo "backend_weight0 = 0" >> etc/pgpool.conf
 	echo "backend_weight1 = 1" >> etc/pgpool.conf
-	echo "black_function_list = 'f1'" >> etc/pgpool.conf
+	echo "black_function_list = 'f1,public.f2'" >> etc/pgpool.conf
 
 	./startall
 
@@ -36,8 +36,10 @@ do
 CREATE TABLE t1(i INTEGER);
 CREATE TABLE t2(i INTEGER);
 CREATE FUNCTION f1(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL;
+CREATE FUNCTION f2(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL;
 SELECT * FROM t1;		-- this load balances
-SELECT f1(1);		-- this does not load balance
+SELECT f1(1);			-- this does not load balance
+SELECT public.f2(1);	-- this does not load balance
 EOF
 
 # check if simple load balance worked
@@ -58,20 +60,35 @@ EOF
 		./shutdownall
 		exit 1
 	fi
+	fgrep "SELECT public.f2(1);" log/pgpool.log |grep "DB node id: 0">/dev/null 2>&1
+	if [ $? != 0 ];then
+	# expected result not found
+		echo fail: black function is sent to node 1.
+		./shutdownall
+		exit 1
+	fi
 	echo ok: black function list works.
 
-	echo "white_function_list = 'f1'" >> etc/pgpool.conf
+	echo "white_function_list = 'f1,public.f2'" >> etc/pgpool.conf
 	echo "black_function_list = ''" >> etc/pgpool.conf
 
 	./pgpool_reload
 	sleep $st
 
 	$PSQL test <<EOF
-SELECT f1(1);		-- this does load balance
+SELECT f1(1);			-- this does load balance
+SELECT public.f2(1);	-- this does load balance
 EOF
 
 # check if white function list worked
 	fgrep "SELECT f1(1);" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1
+	if [ $? != 0 ];then
+	# expected result not found
+		echo fail: white function is sent to zero-weight node.
+		./shutdownall
+		exit 1
+	fi
+	fgrep "SELECT public.f2(1);" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1
 	if [ $? != 0 ];then
 	# expected result not found
 		echo fail: white function is sent to zero-weight node.

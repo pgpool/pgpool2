@@ -39,11 +39,14 @@ do
 	wait_for_pgpool_startup
 
 	$PSQL test <<EOF
+CREATE SCHEMA other_schema;
 CREATE TABLE t1 (i int);
 CREATE TABLE black_t (i int);
 CREATE TABLE with_modify (i int);
 CREATE VIEW normal_v AS SELECT * FROM t1;
 CREATE VIEW white_v AS SELECT * FROM t1;
+CREATE FUNCTION public.immutable_func(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL IMMUTABLE;
+CREATE FUNCTION other_schema.volatile_func(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL VOLATILE;
 SELECT pg_sleep(2);	-- Sleep for a while to make sure object creations are replicated
 SELECT * FROM t1;
 SELECT * FROM t1;
@@ -57,6 +60,10 @@ SELECT * FROM with_modify;
 WITH cte AS (INSERT INTO with_modify values(1) RETURNING *) SELECT * FROM with_modify;
 WITH cte AS (INSERT INTO with_modify values(1) RETURNING *) SELECT * FROM with_modify;
 SELECT * FROM with_modify;
+select public.immutable_func(1);
+select public.immutable_func(1);
+select other_schema.volatile_func(1);
+select other_schema.volatile_func(1);
 EOF
 
 	success=true
@@ -65,6 +72,8 @@ EOF
 	grep "fetched from cache" log/pgpool.log | grep normal_v > /dev/null && success=false
 	grep "fetched from cache" log/pgpool.log | grep white_v > /dev/null || success=false
 	grep "fetched from cache" log/pgpool.log | grep with_modify > /dev/null && success=false
+	grep "fetched from cache" log/pgpool.log | grep immutable_func > /dev/null || success=false
+	grep "fetched from cache" log/pgpool.log | grep volatile_func > /dev/null && success=false
 	if [ $success = false ];then
 		./shutdownall
 		exit 1

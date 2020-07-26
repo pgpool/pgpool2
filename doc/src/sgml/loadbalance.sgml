@@ -513,14 +513,19 @@
 
      <note>
       <para>
-       Schema qualifications can not be used
-       in <xref linkend="guc-white-function-list">
-	because <productname>Pgpool-II</productname> silently
-	ignores a schema qualification in function names appearing
-	in an input SQL while comparing the list and the input
-	SQL. As a result, a schema qualified function name in the
-	list never matches function names appearing in the input
-	SQL.
+       If the queries can refer to the function with and without the schema
+       qualification then you must add both entries (with and without
+       schema name) in the list.
+       <programlisting>
+	#For example:
+	#If the queries sometime use "f1()" and other times "public.f1()"
+	#to refer the function f1 then the white_function_list
+	#would be configured as follows.
+
+	white_function_list = "f1,public.f1"
+
+       </programlisting>
+
       </para>
      </note>
 
@@ -564,14 +569,19 @@
 
      <note>
       <para>
-       Schema qualifications can not be used
-       in <xref linkend="guc-black-function-list">
-	because <productname>Pgpool-II</productname> silently
-	ignores a schema qualification in function names appearing
-	in an input SQL while comparing the list and the input
-	SQL. As a result, a schema qualified function name in the
-	list never matches function names appearing in the input
-	SQL.
+       If the queries can refer the function with and without the schema
+       qualification then you must add both entries(with and without
+       schema name) in the list.
+       <programlisting>
+	#For example:
+	#If the queries sometime use "f1()" and other times "public.f1()"
+	#to refer the function f1 then the black_function_list
+	#would be configured as follows.
+
+	black_function_list = "f1,public.f1"
+
+       </programlisting>
+
       </para>
      </note>
 
