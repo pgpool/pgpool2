@@ -1047,10 +1047,8 @@ is_immutable_function(char *fname)
 	if(!SplitIdentifierString(rawstring, '.', (Node **) &names) ||
 		names == NIL)
 	{
-		if(rawstring)
-			pfree(rawstring);
-		if(names)
-			list_free(names);
+		pfree(rawstring);
+		list_free(names);
 
 		ereport(WARNING,
 				(errmsg("invalid function name %s", fname)));
