@@ -36,7 +36,7 @@ Source2:        pgpool_rhel6.sysconfig
 %if %{systemd_enabled}
 Source3:        pgpool.service
 %endif
-Source4:        pgpool_rhel7.sysconfig
+Source4:        pgpool_rhel.sysconfig
 Patch1:         pgpool-II-head.patch
 %if %{pgsql_ver} >=94 && %{rhel} >= 7
 Patch2:         pgpool_socket_dir.patch
@@ -309,6 +309,9 @@ fi
 %endif
 
 %changelog
+* Mon Jul 27 2020 Bo Peng <pengbo@sraoss.co.jp> 4.1.3
+- Rename src/redhat/pgpool_rhel7.sysconfig to src/redhat/pgpool_rhel.sysconfig.
+
 * Thu Oct 10 2019 Bo Peng <pengbo@sraoss.co.jp> 4.1.0
 - Update to support PostgreSQL 12
 

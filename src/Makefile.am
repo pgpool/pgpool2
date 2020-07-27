@@ -172,7 +172,7 @@ EXTRA_DIST = sample/pgpool.pam \
 		test/pdo-test/mod/database.inc test/pdo-test/mod/errorhandler.inc \
 		test/pgpool_setup test/watchdog_setup test/regression \
 		redhat/pgpool.init \
-		redhat/pgpool_rhel7.sysconfig redhat/pgpool_rhel6.sysconfig \
+		redhat/pgpool_rhel.sysconfig redhat/pgpool_rhel6.sysconfig \
 	   	redhat/pgpool.conf.sample.patch \
 		redhat/pgpool.service \
 		pgpool.spec
