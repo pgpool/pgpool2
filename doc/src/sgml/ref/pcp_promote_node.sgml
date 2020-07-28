@@ -35,6 +35,47 @@ Pgpool-II documentation
    <command>pcp_promote_node</command>
    promotes the given node as new master to Pgpool-II. In master/slave streaming replication only. Please note that this command does not actually promote standby PostgreSQL backend: it just changes the internal status of Pgpool-II and trigger failover and users have to promote standby PostgreSQL outside Pgpool-II.
   </para>
+
+  <para>
+   <command>pcp_promote_node</command> executes followings.  Please be
+   warned that if <xref linkend="guc-follow-master-command"> is set,
+   the command will be executed.  It is a standard advice that you
+   disable <xref linkend="guc-follow-master-command"> before executing
+   this command.
+
+   <orderedlist>
+
+    <listitem>
+     <para>
+      Change the status of standby
+      <productname>PostgreSQL</productname> from standby to
+      primary. It just changes the internal status of Pgpool-II and it
+      does not actually promote <productname>PostgreSQL</productname>
+      standby server.
+     </para>
+    </listitem>     
+
+    <listitem>
+     <para>
+      Change the status of <productname>PostgreSQL</productname> node
+      which is not specified by this command's argument to down.  It
+      just changes the internal status of Pgpool-II and it does not
+      actually make <productname>PostgreSQL</productname> standby
+      server down.
+     </para>
+    </listitem>     
+
+    <listitem>
+     <para>
+      If <xref linkend="guc-follow-master-command"> is set, execute
+      <xref linkend="guc-follow-master-command"> against
+      <productname>PostgreSQL</productname>.
+     </para>
+    </listitem>     
+
+   </orderedlist>
+  </para>
+
  </refsect1>
 
  <refsect1>
