@@ -40,6 +40,7 @@ Source4:        pgpool_rhel7.sysconfig
 Patch1:         pgpool-II-head.patch
 %if %{pgsql_ver} >=94 && %{rhel} >= 7
 Patch2:         pgpool_socket_dir.patch
+Patch3:         pcp_unix_domain_path.patch
 %endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl
@@ -96,6 +97,7 @@ Postgresql extensions libraries and sql files for pgpool-II.
 %patch1 -p1
 %if %{pgsql_ver} >=94 && %{rhel} >= 7
 %patch2 -p0
+%patch3 -p0
 %endif
 
 %build
