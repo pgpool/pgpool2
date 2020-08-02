@@ -699,8 +699,25 @@
 
      <note>
       <para>
-       <productname>Pgpool-II</productname>はリストを参照する際に、暗黙のうちに入力SQLの関数名からスキーマ修飾部分を削除するため、<xref linkend="guc-white-function-list">でスキーマ修飾を使えません。
-	その結果、リスト中のスキーマ修飾された関数名は、決して入力SQLの関数と一致しません。
+       問い合わせがスキーマ修飾なしあるいはスキーマ修飾ありの両方の関数を参照するなら、その両者をリストに登録しなければなりません。
+       <programlisting>
+	#たとえば、ある問い合わせが"f1()"を、他の問い合わせが"public.f1()"を関数f1を参照するなら、
+	#black_function_listは以下のように設定されるでしょう。
+
+	black_function_list = "f1,public.f1"
+
+       </programlisting>
+
+      </para>
+     </note>
+
+     <note>
+      <para>
+       このパラメータと<xref linkend="guc-black-function-list">が空文字なら、関数の揮発性属性が検査されます。
+       これが揮発性(volatile)なら、この関数は書き込みを行うと見なされます。
+       これは便利ですし、推奨できる設定です。
+       しかしこれにより初回システムカタログへのアクセスが発生します（次回以降はキャッシュされた結果が使用されるので余計な問い合わせは送信されません。）
+       そのようなクエリの送信を望まないのであれば、このパラメータを使い続けることができます。
       </para>
      </note>
 
@@ -765,8 +782,15 @@
 
      <note>
       <para>
-       <productname>Pgpool-II</productname>はリストを参照する際に、暗黙のうちに入力SQLの関数名からスキーマ修飾部分を削除するため、<xref linkend="guc-black-function-list">でスキーマ修飾を使えません。
-	その結果、リスト中のスキーマ修飾された関数名は、決して入力SQLの関数と一致しません。
+       問い合わせがスキーマ修飾なしあるいはスキーマ修飾ありの両方の関数を参照するなら、その両者をリストに登録しなければなりません。
+       <programlisting>
+	#たとえば、ある問い合わせが"f1()"を、他の問い合わせが"public.f1()"を関数f1を参照するなら、
+	#white_function_listは以下のように設定されるでしょう。
+
+	white_function_list = "f1,public.f1"
+
+       </programlisting>
+
       </para>
      </note>
 
@@ -817,6 +841,17 @@
        <literal>lastval()</literal>と<literal>currval()</literal>は書き込みを行う関数ではありませんが、これらの関数が負荷分散されることで発生するエラーを防ぐため、<literal>lastval()</literal>と<literal>currval()</literal>を書き込みを行う関数として扱うのが望ましいです。
       </para>
      </note>
+
+     <note>
+      <para>
+       このパラメータと<xref linkend="guc-white-function-list">が空文字なら、関数の揮発性属性が検査されます。
+       これが揮発性(volatile)なら、この関数は書き込みを行うと見なされます。
+       これは便利ですし、推奨できる設定です。
+       しかしこれにより初回システムカタログへのアクセスが発生します（次回以降はキャッシュされた結果が使用されるので余計な問い合わせは送信されません。）
+       そのようなクエリの送信を望まないのであれば、このパラメータを使い続けることができます。
+      </para>
+     </note>
+
      <para>
       <!--
       This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.

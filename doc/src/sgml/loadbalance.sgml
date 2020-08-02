@@ -172,9 +172,25 @@
 
   <para>
    <itemizedlist>
+
+    <listitem>
+     <para>
+      SELECT/WITH without writing functions.
+      Volatile functions are regarded writing functions.
+      You can define your own writing functions by using <xref linkend="guc-black-function-list">
+      or <xref linkend="guc-white-function-list">.
+     </para>
+    </listitem>
+
     <listitem>
      <para>
       SELECT/WITH without FOR UPDATE/SHARE
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      WITH without DML statements
      </para>
     </listitem>
 
@@ -529,6 +545,19 @@
       </para>
      </note>
 
+     <note>
+      <para>
+       If this parameter and <xref linkend="guc-black-function-list">
+       is empty string, function's volatile proper will be checked. If
+       the property is volatile, the function is regarded as a writing
+       function.  This is convenient and recommended way. However this
+       requires one extra query against system catalog for the first
+       time (in the next time cached query result is used and no extra
+       query will be sent). If you don't want to send such query, you
+       can keep on using this parameter.
+      </para>
+     </note>
+
      <para>
       This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
      </para>
@@ -618,6 +647,20 @@
        these functions are accidentally load balanced.
       </para>
      </note>
+
+     <note>
+      <para>
+       If this parameter and <xref linkend="guc-white-function-list">
+       is empty string, function's volatile proper will be checked. If
+       the property is volatile, the function is regarded as a writing
+       function.  This is convenient and recommended way. However this
+       requires one extra query against system catalog for the first
+       time (in the next time cached query result is used and no extra
+       query will be sent). If you don't want to send such query, you
+       can keep on using this parameter.
+      </para>
+     </note>
+
      <para>
       This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
      </para>

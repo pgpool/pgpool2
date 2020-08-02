@@ -216,6 +216,37 @@ EOF
 		fi
 	fi
 
+# -------------------------------------------------------------------------------
+# check the case when black_function_list and white_function_list are both empty.
+# In this case pg_proc.provolatile is checked. If it is 'v' (volatile), then the
+# function is regarded doing writes.
+# -------------------------------------------------------------------------------
+	echo "black_function_list = ''" >> etc/pgpool.conf
+	echo "white_function_list = ''" >> etc/pgpool.conf
+	./pgpool_reload
+	sleep $st
+
+	$PSQL test <<EOF
+SELECT f1(1);
+SELECT public.f2(1);
+EOF
+
+	fgrep "SELECT f1(1);" log/pgpool.log |grep "DB node id: 0">/dev/null 2>&1
+	if [ $? != 0 ];then
+	# expected result not found
+		echo fail: volatile function is sent to node 1.
+		./shutdownall
+		exit 1
+	fi
+	fgrep "SELECT public.f2(1);" log/pgpool.log |grep "DB node id: 0">/dev/null 2>&1
+	if [ $? != 0 ];then
+	# expected result not found
+		echo fail: volatile function is sent to node 1.
+		./shutdownall
+		exit 1
+	fi
+	echo ok: volatile function check works.
+
 	./shutdownall
 
 	cd ..

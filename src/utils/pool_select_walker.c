@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -31,6 +31,15 @@
 #include "rewrite/pool_timestamp.h"
 #include "protocol/pool_pg_utils.h"
 
+/*
+ * Possible argument (property) values for function_volatile_property
+ */
+typedef enum {
+	FUNC_VOLATILE,
+	FUNC_STABLE,
+	FUNC_IMMUTABLE
+} FUNC_VOLATILE_PROPERTY;
+
 static bool function_call_walker(Node *node, void *context);
 static bool system_catalog_walker(Node *node, void *context);
 static bool is_system_catalog(char *table_name);
@@ -43,6 +52,7 @@ static bool is_immutable_function(char *fname);
 static bool select_table_walker(Node *node, void *context);
 static bool non_immutable_function_call_walker(Node *node, void *context);
 static char *strip_quote(char *str);
+static bool function_volatile_property(char *fname, FUNC_VOLATILE_PROPERTY property);
 
 /*
  * Return true if this SELECT has function calls *and* supposed to
@@ -360,6 +370,21 @@ function_call_walker(Node *node, void *context)
 								(errmsg("pg_terminate_backend pid = %d", ctx->pg_terminate_backend_pid)));
 					}
 				}
+			}
+
+			/*
+			 * If both white_function_list and black_function_list is empty,
+			 * check volatile property of the function in the system catalog.
+			 */
+			if (pool_config->num_white_function_list == 0 &&
+				pool_config->num_black_function_list == 0)
+			{
+				if (function_volatile_property(fname, FUNC_VOLATILE))
+				{
+					ctx->has_function_call = true;
+					return false;
+				}
+				return raw_expression_tree_walker(node, function_call_walker, context);
 			}
 
 			/*
@@ -1028,17 +1053,28 @@ non_immutable_function_call_walker(Node *node, void *context)
 static bool
 is_immutable_function(char *fname)
 {
+	return function_volatile_property(fname, FUNC_IMMUTABLE);
+}
+
 /*
- * Query to know if the function is IMMUTABLE
+ * Check volatile property of function specified by the name.
+ * If the function property is match with "property" argument, returns true.
+ * Note that "fname" can be schema qualified.
  */
-#define IS_STABLE_FUNCTION_QUERY "SELECT count(*) FROM pg_catalog.pg_proc AS p, pg_catalog.pg_namespace AS n WHERE p.proname %s '%s' AND n.oid = p.pronamespace AND n.nspname = '%s' AND p.provolatile = 'i'"
+static
+bool function_volatile_property(char *fname, FUNC_VOLATILE_PROPERTY property)
+{
+/*
+ * Query to know if function's volatile property.
+ */
+#define VOLATILE_FUNCTION_QUERY "SELECT count(*) FROM pg_catalog.pg_proc AS p, pg_catalog.pg_namespace AS n WHERE p.proname = '%s' AND n.oid = p.pronamespace AND n.nspname %s '%s' AND p.provolatile = '%c'"
 	bool		result;
 	char		query[1024];
 	char	   *rawstring = NULL;
-	char	   *key_str = NULL;
 	List	   *names = NIL;
 	POOL_CONNECTION_POOL   *backend;
 	static POOL_RELCACHE   *relcache;
+	char	prop_volatile;
 
 	/* We need a modifiable copy of the input string. */
 	rawstring = pstrdup(fname);
@@ -1056,41 +1092,45 @@ is_immutable_function(char *fname)
 		return false;
 	}
 
+	/*
+	 * Get volatile property character.
+	 */
+	switch (property)
+	{
+		case FUNC_STABLE:
+			prop_volatile = 's';
+			break;
+
+		case FUNC_IMMUTABLE:
+			prop_volatile = 'i';
+			break;
+
+		default:
+			prop_volatile = 'v';
+			break;
+	}
+
 	/* with schema qualification */
 	if(list_length(names) == 2)
 	{
-		key_str = fname;
-		if(!relcache)
-		{
-			snprintf(query, sizeof(query), IS_STABLE_FUNCTION_QUERY,
-					"=", (char *) lsecond(names), (char *) linitial(names));
-		}
-		else
-		{
-			snprintf(relcache->sql, sizeof(relcache->sql), IS_STABLE_FUNCTION_QUERY,
-					"=", (char *) lsecond(names), (char *) linitial(names));
-		}
+		snprintf(query, sizeof(query), VOLATILE_FUNCTION_QUERY, (char *) llast(names),
+				 "=", (char *) linitial(names), prop_volatile);
 	}
 	else
 	{
-		key_str = (char *) llast(names);
-		if(!relcache)
-		{
-			snprintf(query, sizeof(query), IS_STABLE_FUNCTION_QUERY,
-					"~", ".*", (char *) llast(names));
-		}
-		else
-		{
-			snprintf(relcache->sql, sizeof(relcache->sql), IS_STABLE_FUNCTION_QUERY,
-					"~", ".*", (char *) llast(names));
-		}
+		snprintf(query, sizeof(query), VOLATILE_FUNCTION_QUERY, (char *) llast(names),
+				 "~", ".*", prop_volatile);
 	}
 
 	backend = pool_get_session_context(false)->backend;
 
 	if (!relcache)
 	{
-		relcache = pool_create_relcache(pool_config->relcache_size, query,
+		/*
+		 * We pass "%s" as a template query so that pool_search_relcache
+		 * passes whole query.
+		 */
+		relcache = pool_create_relcache(pool_config->relcache_size, "%s",
 										int_register_func, int_unregister_func,
 										false);
 		if (relcache == NULL)
@@ -1099,22 +1139,26 @@ is_immutable_function(char *fname)
 			list_free(names);
 
 			ereport(WARNING,
-					(errmsg("unable to create relcache, while checking if the function is immutable")));
+					(errmsg("unable to create relcache, while checking the function volatile property")));
 			return false;
 		}
 		ereport(DEBUG1,
-				(errmsg("checking if the function is IMMUTABLE"),
+				(errmsg("checking the function volatile property"),
 				 errdetail("relcache created")));
 	}
 
-	result = (pool_search_relcache(relcache, backend, key_str) == 0) ? 0 : 1;
+	/*
+	 * We pass whole query as "table" parameter of pool_search_relcache so
+	 * that each relcache entry is distinguished by actual query string.
+	 */
+	result = (pool_search_relcache(relcache, backend, query) == 0) ? 0 : 1;
 
 	pfree(rawstring);
 	list_free(names);
 
 	ereport(DEBUG1,
-			(errmsg("checking if the function is IMMUTABLE"),
-			 errdetail("search result = %d", result)));
+			(errmsg("checking the function volatile property"),
+			 errdetail("search result = %d (%c)", result, prop_volatile)));
 	return result;
 }
 

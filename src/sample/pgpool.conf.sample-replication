@@ -356,10 +356,14 @@ white_function_list = ''
                                    # Comma separated list of function names
                                    # that don't write to database
                                    # Regexp are accepted
-black_function_list = 'currval,lastval,nextval,setval'
+black_function_list = ''
                                    # Comma separated list of function names
                                    # that write to database
                                    # Regexp are accepted
+				   # If both white_function_list and black_function_list
+				   # is empty, function's volatile property is checked.
+				   # If it's volatile, the function is regarded as a
+				   # writing function.
 
 black_query_pattern_list = ''
                                    # Semicolon separated list of query patterns
