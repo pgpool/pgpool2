@@ -331,6 +331,7 @@ PORT=$4
 
 log=$DATADIR_BASE/log/recovery.log
 touch standby.signal
+touch $DEST_CLUSTER/standby.signal
 
 $psql -p $PORT -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
 
@@ -351,7 +352,7 @@ rm -fr $DEST_CLUSTER/pg_wal
 mkdir $DEST_CLUSTER/pg_wal
 chmod 700 $DEST_CLUSTER/pg_wal
 
-rm $DEST_CLUSTER/recovery.done standby.signal
+rm $DEST_CLUSTER/recovery.done
 rm standby.signal
 EOF
 
