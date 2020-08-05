@@ -43,6 +43,7 @@ CREATE SCHEMA other_schema;
 CREATE TABLE t1 (i int);
 CREATE TABLE black_t (i int);
 CREATE TABLE with_modify (i int);
+CREATE TABLE explain_analyze (i int);
 CREATE VIEW normal_v AS SELECT * FROM t1;
 CREATE VIEW white_v AS SELECT * FROM t1;
 CREATE FUNCTION public.immutable_func(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL IMMUTABLE;
@@ -60,10 +61,13 @@ SELECT * FROM with_modify;
 WITH cte AS (INSERT INTO with_modify values(1) RETURNING *) SELECT * FROM with_modify;
 WITH cte AS (INSERT INTO with_modify values(1) RETURNING *) SELECT * FROM with_modify;
 SELECT * FROM with_modify;
-select public.immutable_func(1);
-select public.immutable_func(1);
-select other_schema.volatile_func(1);
-select other_schema.volatile_func(1);
+SELECT public.immutable_func(1);
+SELECT public.immutable_func(1);
+SELECT other_schema.volatile_func(1);
+SELECT other_schema.volatile_func(1);
+SELECT * FROM explain_analyze;
+EXPLAIN ANALYZE INSERT INTO explain_analyze VALUES(1);
+SELECT * FROM explain_analyze;
 EOF
 
 	success=true
@@ -74,6 +78,7 @@ EOF
 	grep "fetched from cache" log/pgpool.log | grep with_modify > /dev/null && success=false
 	grep "fetched from cache" log/pgpool.log | grep immutable_func > /dev/null || success=false
 	grep "fetched from cache" log/pgpool.log | grep volatile_func > /dev/null && success=false
+	grep "fetched from cache" log/pgpool.log | grep explain_analyze > /dev/null && success=false
 	if [ $success = false ];then
 		./shutdownall
 		exit 1

@@ -1248,6 +1248,23 @@ pool_extract_table_oids(Node *node, int **oidsp)
 		}
 		return num_oids;
 	}
+	else if (IsA(node, ExplainStmt))
+	{
+		ListCell	*cell;
+		DefElem		*def;
+		ExplainStmt *stmt = (ExplainStmt *) node;
+
+		foreach(cell, stmt->options)
+		{
+			def = lfirst(cell);
+			if (strncmp("analyze", def->defname, 7) == 0)
+			{
+				return pool_extract_table_oids(stmt->query, oidsp);
+			}
+		}
+
+		table = NULL;
+	}
 	else
 	{
 		ereport(DEBUG1,
