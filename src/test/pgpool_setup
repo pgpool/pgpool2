@@ -424,9 +424,6 @@ EOF
 fi
 
 cat >> $1/$SCRIPT <<'EOF'
-touch standby.signal
-touch $DEST_CLUSTER/standby.signal
-
 if [ $pg_rewind_failed = "true" ];then
 
 $psql -p $PORT -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
@@ -448,7 +445,6 @@ mkdir $DEST_CLUSTER/pg_wal
 chmod 700 $DEST_CLUSTER/pg_wal
 
 rm $DEST_CLUSTER/recovery.done
-rm standby.signal
 fi
 EOF
 
@@ -495,6 +491,7 @@ fi
 if [ $pg_rewind_failed = "false" ];then
     cp /tmp/postgresql.conf $DEST_CLUSTER/
 fi
+touch $DEST_CLUSTER/standby.signal
 EOF
 
 #-------------------------------------------
