@@ -551,7 +551,7 @@ wd_hb_sender(int fork_wait_time, WdHbIf * hb_if)
 
 		/* contents of packet */
 		gettimeofday(&pkt.send_time, NULL);
-		strlcpy(pkt.from, pool_config->wd_hostname, sizeof(pkt.from));
+		strlcpy(pkt.from, pool_config->wd_nodes.wd_node_info[pool_config->pgpool_node_id].hostname, sizeof(pkt.from));
 		pkt.from_pgpool_port = pool_config->port;
 
 		/* authentication key */

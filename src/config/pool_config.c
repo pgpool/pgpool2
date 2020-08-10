@@ -480,6 +480,8 @@ static char *yy_last_accepting_cpos;
 extern int yy_flex_debug;
 int yy_flex_debug = 0;
 
+char    *config_file_dir = NULL; /* directory path of config file pgpool.conf */
+
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
  */
@@ -522,6 +524,7 @@ char *yytext;
 #include "pool_config.h"
 #include "pool_config_variables.h"
 #include "utils/regex_array.h"
+#include "utils/pool_path.h"
 #ifndef POOL_PRIVATE
 #include "utils/elog.h"
 #else
@@ -2062,8 +2065,14 @@ ParseConfigFile(const char *config_file, int elevel,
 	char *key;
 	char *val;
 	ConfigVariable *item;
-	
+	char buf[POOLMAXPATHLEN + 1];
+
 	*head_p = NULL;
+
+	/* get directory path of config file pgpool.conf */
+	strlcpy(buf, config_file, sizeof(buf));
+	get_parent_directory(buf);
+	config_file_dir = buf;
 
 	/* open config file */
 	fd = fopen(config_file, "r");

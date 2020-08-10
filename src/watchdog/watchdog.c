@@ -617,7 +617,7 @@ initialize_watchdog(void)
 static void
 wd_check_config(void)
 {
-	if (pool_config->wd_remote_nodes.num_wd == 0)
+	if (pool_config->wd_nodes.num_wd == 0)
 		ereport(ERROR,
 				(errmsg("invalid watchdog configuration. other pgpools setting is not defined")));
 
@@ -627,7 +627,7 @@ wd_check_config(void)
 						MAX_PASSWORD_SIZE)));
 	if (pool_config->wd_lifecheck_method == LIFECHECK_BY_HB)
 	{
-		if (pool_config->num_hb_if <= 0)
+		if (pool_config->num_hb_dest_if <= 0)
 			ereport(ERROR,
 					(errmsg("invalid lifecheck configuration. no heartbeat interfaces defined")));
 	}
@@ -714,22 +714,24 @@ static void
 wd_cluster_initialize(void)
 {
 	int			i = 0;
+	int			pgpool_node_id = pool_config->pgpool_node_id;
 
-	if (pool_config->wd_remote_nodes.num_wd <= 0)
+	if (pool_config->wd_nodes.num_wd <= 0)
 	{
 		/* should also have upper limit??? */
 		ereport(ERROR,
 				(errmsg("initializing watchdog failed. no watchdog nodes configured")));
 	}
+
 	/* initialize local node settings */
 	g_cluster.localNode = palloc0(sizeof(WatchdogNode));
-	g_cluster.localNode->wd_port = pool_config->wd_port;
+	g_cluster.localNode->wd_port = pool_config->wd_nodes.wd_node_info[pgpool_node_id].wd_port;
+	g_cluster.localNode->pgpool_port = pool_config->wd_nodes.wd_node_info[pgpool_node_id].pgpool_port;
 	g_cluster.localNode->wd_priority = pool_config->wd_priority;
-	g_cluster.localNode->pgpool_port = pool_config->port;
-	g_cluster.localNode->private_id = 0;
+	g_cluster.localNode->pgpool_node_id = pool_config->pgpool_node_id;
 	gettimeofday(&g_cluster.localNode->startup_time, NULL);
 
-	strncpy(g_cluster.localNode->hostname, pool_config->wd_hostname, sizeof(g_cluster.localNode->hostname) - 1);
+	strncpy(g_cluster.localNode->hostname, pool_config->wd_nodes.wd_node_info[pgpool_node_id].hostname, sizeof(g_cluster.localNode->hostname) - 1);
 	strncpy(g_cluster.localNode->delegate_ip, pool_config->delegate_IP, sizeof(g_cluster.localNode->delegate_ip) - 1);
 	/* Assign the node name */
 	{
@@ -737,8 +739,8 @@ wd_cluster_initialize(void)
 
 		uname(&unameData);
 		snprintf(g_cluster.localNode->nodeName, sizeof(g_cluster.localNode->nodeName), "%s:%d %s %s",
-				 pool_config->wd_hostname,
-				 pool_config->port,
+				 pool_config->wd_nodes.wd_node_info[pgpool_node_id].hostname,
+				 pool_config->wd_nodes.wd_node_info[pgpool_node_id].pgpool_port,
 				 unameData.sysname,
 				 unameData.nodename);
 		/* should also have upper limit??? */
@@ -747,24 +749,32 @@ wd_cluster_initialize(void)
 	}
 
 	/* initialize remote nodes */
-	g_cluster.remoteNodeCount = pool_config->wd_remote_nodes.num_wd;
-	g_cluster.remoteNodes = palloc0((sizeof(WatchdogNode) * g_cluster.remoteNodeCount));
+	g_cluster.remoteNodeCount = pool_config->wd_nodes.num_wd - 1;
+	if (g_cluster.remoteNodeCount == 0)
+		ereport(ERROR,
+                (errmsg("invalid watchdog configuration. other pgpools setting is not defined")));
 
 	ereport(LOG,
 			(errmsg("watchdog cluster is configured with %d remote nodes", g_cluster.remoteNodeCount)));
-
-	for (i = 0; i < pool_config->wd_remote_nodes.num_wd; i++)
+	g_cluster.remoteNodes = palloc0((sizeof(WatchdogNode) * g_cluster.remoteNodeCount));
+	int idx = 0;
+	for (i = 0; i < pool_config->wd_nodes.num_wd; i++)
 	{
-		g_cluster.remoteNodes[i].wd_port = pool_config->wd_remote_nodes.wd_remote_node_info[i].wd_port;
-		g_cluster.remoteNodes[i].private_id = i + 1;
-		g_cluster.remoteNodes[i].pgpool_port = pool_config->wd_remote_nodes.wd_remote_node_info[i].pgpool_port;
-		strcpy(g_cluster.remoteNodes[i].hostname, pool_config->wd_remote_nodes.wd_remote_node_info[i].hostname);
-		g_cluster.remoteNodes[i].delegate_ip[0] = '\0'; /* this will be
+		if (i == pool_config->pgpool_node_id)
+			continue;
+
+		g_cluster.remoteNodes[idx].wd_port = pool_config->wd_nodes.wd_node_info[i].wd_port;
+		g_cluster.remoteNodes[idx].pgpool_node_id = i;
+		g_cluster.remoteNodes[idx].pgpool_port = pool_config->wd_nodes.wd_node_info[i].pgpool_port;
+		strcpy(g_cluster.remoteNodes[idx].hostname, pool_config->wd_nodes.wd_node_info[i].hostname);
+		g_cluster.remoteNodes[idx].delegate_ip[0] = '\0'; /* this will be
 														 * populated by remote
 														 * node */
 
 		ereport(LOG,
-				(errmsg("watchdog remote node:%d on %s:%d", i, g_cluster.remoteNodes[i].hostname, g_cluster.remoteNodes[i].wd_port)));
+				(errmsg("watchdog remote node:%d on %s:%d", idx, g_cluster.remoteNodes[idx].hostname, g_cluster.remoteNodes[idx].wd_port)));
+
+		idx++;
 	}
 
 	g_cluster.clusterMasterInfo.masterNode = NULL;
@@ -1545,6 +1555,15 @@ read_sockets(fd_set *rmask, int pending_fds_count)
 					bool		found = false;
 					bool		authenticated = false;
 
+					if (tempNode->pgpool_node_id == pool_config->pgpool_node_id)
+					{
+						ereport(ERROR,
+								(errmsg("the pgpool node id configured on node \"%s\" cannot be same as local node", tempNode->nodeName),
+								 errdetail("this node id is \"%d\" while local node is \"%d\"",
+										   tempNode->pgpool_node_id,
+										   pool_config->pgpool_node_id)));
+					}
+
 					print_watchdog_node_info(tempNode);
 					authenticated = verify_authhash_for_node(tempNode, authkey);
 					ereport(DEBUG1,
@@ -1557,7 +1576,8 @@ read_sockets(fd_set *rmask, int pending_fds_count)
 						{
 							wdNode = &(g_cluster.remoteNodes[i]);
 
-							if ((wdNode->wd_port == tempNode->wd_port && wdNode->pgpool_port == tempNode->pgpool_port) &&
+							if ((wdNode->wd_port == tempNode->wd_port && wdNode->pgpool_port == tempNode->pgpool_port &&
+								wdNode->pgpool_node_id == tempNode->pgpool_node_id) &&
 								((strcmp(wdNode->hostname, conn->addr) == 0) || (strcmp(wdNode->hostname, tempNode->hostname) == 0)))
 							{
 								/* We have found the match */
@@ -2230,7 +2250,7 @@ fire_node_status_event(int nodeID, int nodeStatus)
 
 		for (i = 0; i < g_cluster.remoteNodeCount; i++)
 		{
-			if (nodeID == g_cluster.remoteNodes[i].private_id)
+			if (nodeID == g_cluster.remoteNodes[i].pgpool_node_id)
 			{
 				wdNode = &g_cluster.remoteNodes[i];
 				break;
@@ -3572,7 +3592,7 @@ add_nodeinfo_to_json(JsonNode * jNode, WatchdogNode * node)
 {
 	jw_start_object(jNode, "WatchdogNode");
 
-	jw_put_int(jNode, "ID", nodeIfNull_int(private_id, -1));
+	jw_put_int(jNode, "ID", nodeIfNull_int(pgpool_node_id, -1));
 	jw_put_int(jNode, "State", nodeIfNull_int(state, -1));
 	jw_put_string(jNode, "NodeName", nodeIfNull_str(nodeName, NotSet));
 	jw_put_string(jNode, "HostName", nodeIfNull_str(hostname, NotSet));
@@ -3634,7 +3654,7 @@ static JsonNode * get_node_list_json(int id)
 			{
 				WatchdogNode *wdNode = &(g_cluster.remoteNodes[i]);
 
-				if (wdNode->private_id == id)
+				if (wdNode->pgpool_node_id == id)
 				{
 					wdNodeToAdd = wdNode;
 					break;
@@ -7397,14 +7417,14 @@ verify_pool_configurations(WatchdogNode * wdNode, POOL_CONFIG * config)
 		}
 	}
 
-	if (config->wd_remote_nodes.num_wd != pool_config->wd_remote_nodes.num_wd)
+	if (config->wd_nodes.num_wd != pool_config->wd_nodes.num_wd)
 	{
 		ereport(WARNING,
 				(errmsg("the number of configured watchdog nodes on node \"%s\" are different", wdNode->nodeName),
 				 errdetail("this node has %d watchdog nodes while \"%s\" is configured with %d watchdog nodes",
-						   pool_config->wd_remote_nodes.num_wd,
+						   pool_config->wd_nodes.num_wd,
 						   wdNode->nodeName,
-						   config->wd_remote_nodes.num_wd)));
+						   config->wd_nodes.num_wd)));
 	}
 }
 

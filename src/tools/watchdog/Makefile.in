@@ -104,9 +104,9 @@ dist_wd_cli_OBJECTS = wd_cli.$(OBJEXT) ../fe_port.$(OBJEXT)
 nodist_wd_cli_OBJECTS = ssl_utils.$(OBJEXT) wd_ipc_conn.$(OBJEXT) \
 	wd_commands.$(OBJEXT) json_writer.$(OBJEXT) json.$(OBJEXT) \
 	pool_config_variables.$(OBJEXT) pool_config.$(OBJEXT) \
-	fe_memutils.$(OBJEXT) stringinfo.$(OBJEXT) strlcpy.$(OBJEXT) \
-	socket_stream.$(OBJEXT) regex_array.$(OBJEXT) \
-	psprintf.$(OBJEXT) md5.$(OBJEXT)
+	pool_path.$(OBJEXT) fe_memutils.$(OBJEXT) stringinfo.$(OBJEXT) \
+	strlcpy.$(OBJEXT) socket_stream.$(OBJEXT) \
+	regex_array.$(OBJEXT) psprintf.$(OBJEXT) md5.$(OBJEXT)
 wd_cli_OBJECTS = $(dist_wd_cli_OBJECTS) $(nodist_wd_cli_OBJECTS)
 wd_cli_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -353,6 +353,7 @@ nodist_wd_cli_SOURCES = ssl_utils.c \
 		json.c \
 		pool_config_variables.c \
 		pool_config.c \
+		pool_path.c \
 		fe_memutils.c \
 		stringinfo.h \
 		stringinfo.c \
@@ -756,6 +757,8 @@ stringinfo.h: ../../../src/include/parser/stringinfo.h
 pool_config_variables.c: ../../../src/config/pool_config_variables.c
 	rm -f $@ && ln -s $< .
 pool_config.c: ../../../src/config/pool_config.c
+	rm -f $@ && ln -s $< .
+pool_path.c: ../../../src/utils/pool_path.c
 	rm -f $@ && ln -s $< .
 fe_memutils.c: ../../../src/tools/fe_memutils.c
 	rm -f $@ && ln -s $< .

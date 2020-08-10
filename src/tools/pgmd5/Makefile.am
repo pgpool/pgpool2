@@ -9,7 +9,8 @@ nodist_pg_md5_SOURCES = md5.c \
 		regex_array.c \
 		pool_config_variables.c \
 		pool_config.c \
-		fe_memutils.c
+		fe_memutils.c \
+		pool_path.c
 
 DEFS = @DEFS@ \
     -DDEFAULT_CONFIGDIR=\"$(sysconfdir)\" -DPOOL_TOOLS
@@ -19,6 +20,8 @@ md5.c: ../../../src/auth/md5.c
 md5.h: ../../../src/include/auth/md5.h
 	rm -f $@ && ln -s $< .
 pool_passwd.c: ../../../src/auth/pool_passwd.c
+	rm -f $@ && ln -s $< .
+pool_path.c: ../../../src/utils/pool_path.c
 	rm -f $@ && ln -s $< .
 strlcpy.c: ../../../src/utils/strlcpy.c
 	rm -f $@ && ln -s $< .

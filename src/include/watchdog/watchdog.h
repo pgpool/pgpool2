@@ -57,7 +57,7 @@
  */
 
 #define WD_MESSAGE_DATA_VERSION_MAJOR	"1"
-#define WD_MESSAGE_DATA_VERSION_MINOR	"1"
+#define WD_MESSAGE_DATA_VERSION_MINOR	"2"
 #define WD_MESSAGE_DATA_VERSION	WD_MESSAGE_DATA_VERSION_MAJOR "." WD_MESSAGE_DATA_VERSION_MINOR
 #define MAX_VERSION_STR_LEN		10
 
@@ -172,8 +172,7 @@ typedef struct WatchdogNode
 	int			pgpool_port;	/* pgpool port */
 	int			wd_priority;	/* watchdog priority */
 	char		delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
-	int			private_id;		/* ID assigned to this node This id is
-								 * consumed locally */
+	int			pgpool_node_id;		/* pgpool node id specified in pgpool_node_id file */
 	int			standby_nodes_count;	/* number of standby nodes joined the
 										 * cluster only applicable when this
 										 * WatchdogNode is the

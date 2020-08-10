@@ -103,7 +103,7 @@ dist_pg_md5_OBJECTS = pg_md5.$(OBJEXT) ../fe_port.$(OBJEXT)
 nodist_pg_md5_OBJECTS = md5.$(OBJEXT) pool_passwd.$(OBJEXT) \
 	strlcpy.$(OBJEXT) regex_array.$(OBJEXT) \
 	pool_config_variables.$(OBJEXT) pool_config.$(OBJEXT) \
-	fe_memutils.$(OBJEXT)
+	fe_memutils.$(OBJEXT) pool_path.$(OBJEXT)
 pg_md5_OBJECTS = $(dist_pg_md5_OBJECTS) $(nodist_pg_md5_OBJECTS)
 pg_md5_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -319,7 +319,8 @@ nodist_pg_md5_SOURCES = md5.c \
 		regex_array.c \
 		pool_config_variables.c \
 		pool_config.c \
-		fe_memutils.c
+		fe_memutils.c \
+		pool_path.c
 
 all: all-am
 
@@ -647,6 +648,8 @@ md5.c: ../../../src/auth/md5.c
 md5.h: ../../../src/include/auth/md5.h
 	rm -f $@ && ln -s $< .
 pool_passwd.c: ../../../src/auth/pool_passwd.c
+	rm -f $@ && ln -s $< .
+pool_path.c: ../../../src/utils/pool_path.c
 	rm -f $@ && ln -s $< .
 strlcpy.c: ../../../src/utils/strlcpy.c
 	rm -f $@ && ln -s $< .

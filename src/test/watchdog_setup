@@ -171,35 +171,30 @@ function set_watchdog_params {
     priority=`expr $num_pgpool - $id`
     n=0
     conf=etc/pgpool.conf
-    wd_port=`expr $base_port + \( $id \* $num_ports_per_node \) + 2`
-    wd_heartbeat_port=`expr $wd_port + 1`
+	node_id_file=etc/pgpool_node_id
 
     cat >> $conf <<EOF
 use_watchdog = on
 wd_interval = 1
 wd_priority = $priority
-wd_hostname = 'localhost'
-wd_port = $wd_port
-wd_heartbeat_port = $wd_heartbeat_port
 EOF
 
-    suf=0
     while [ $n -lt $num_pgpool ]
     do
-	if [ $id != $n ];then
-	    echo "heartbeat_destination$suf = 'localhost'" >> $conf
-	    pgpool_port=`expr $base_port + \( $n \* $num_ports_per_node \)`
-	    pcp_port=`expr $pgpool_port + 1`
-	    wd_port=`expr $pcp_port + 1`
-	    wd_heartbeat_port=`expr $wd_port + 1`
-	    echo "heartbeat_destination_port$suf = $wd_heartbeat_port" >> $conf
-	    echo "other_pgpool_hostname$suf = 'localhost'" >> $conf
-	    echo "other_pgpool_port$suf = $pgpool_port" >> $conf
-	    echo "other_wd_port$suf = $wd_port" >> $conf
-	    suf=`expr $suf + 1`
-	fi
-	n=`expr $n + 1`
+		pgpool_port=`expr $base_port + \( $n \* $num_ports_per_node \)`
+		pcp_port=`expr $pgpool_port + 1`
+		wd_port=`expr $pcp_port + 1`
+
+		wd_heartbeat_port=`expr $wd_port + 1`
+		echo "hostname$n = 'localhost'" >> $conf
+		echo "pgpool_port$n = $pgpool_port" >> $conf
+		echo "wd_port$n = $wd_port" >> $conf
+		echo "heartbeat_hostname$n = 'localhost'" >> $conf
+		echo "heartbeat_port$n = $wd_heartbeat_port" >> $conf
+		n=`expr $n + 1`
     done
+
+	echo "$id" >> $node_id_file
 }
 
 #################################################################################

@@ -80,7 +80,7 @@ wd_ipc_conn_initialize(void)
 {
 	if (watchdog_ipc_address == NULL)
 	{
-		wd_set_ipc_address(pool_config->wd_ipc_socket_dir, pool_config->wd_port);
+		wd_set_ipc_address(pool_config->wd_ipc_socket_dir, pool_config->wd_nodes.wd_node_info[pool_config->pgpool_node_id].wd_port);
 	}
 }
 

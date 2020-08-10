@@ -628,12 +628,25 @@ ping_path = '/bin'
 
 # - Watchdog communication Settings -
 
-wd_hostname = ''
-                                    # Host name or IP address of this watchdog
+hostname0 = ''
+                                    # Host name or IP address of pgpool node
+                                    # for watchdog connection
                                     # (change requires restart)
-wd_port = 9000
-                                    # port number for watchdog service
+wd_port0 = 9000
+                                    # Port number for watchdog service
                                     # (change requires restart)
+pgpool_port0 = 9999
+                                    # Port number for pgpool
+                                    # (change requires restart)
+
+#hostname1 = ''
+#wd_port1 = 9000
+#pgpool_port1 = 9999
+
+#wd_hostname2 = ''
+#wd_port2 = 9000
+#pgpool_port2 = 9999
+
 wd_priority = 1
                                     # priority of this watchdog in leader election
                                     # (change requires restart)
@@ -737,23 +750,13 @@ wd_interval = 10
 
 # -- heartbeat mode --
 
-wd_heartbeat_port = 9694
-                                    # Port number for receiving heartbeat signal
-                                    # (change requires restart)
-wd_heartbeat_keepalive = 2
-                                    # Interval time of sending heartbeat signal (sec)
-                                    # (change requires restart)
-wd_heartbeat_deadtime = 30
-                                    # Deadtime interval for heartbeat signal (sec)
-                                    # (change requires restart)
-heartbeat_destination0 = 'host0_ip1'
-                                    # Host name or IP address of destination 0
+heartbeat_hostname0 = ''
+                                    # Host name or IP address used
                                     # for sending heartbeat signal.
                                     # (change requires restart)
-heartbeat_destination_port0 = 9694 
-                                    # Port number of destination 0 for sending
-                                    # heartbeat signal. Usually this is the
-                                    # same as wd_heartbeat_port.
+heartbeat_port0 = 9694
+                                    # Port number used for receiving/sending heartbeat signal
+                                    # Usually this is the same as heartbeat_portX.
                                     # (change requires restart)
 heartbeat_device0 = ''
                                     # Name of NIC device (such like 'eth0')
@@ -763,9 +766,19 @@ heartbeat_device0 = ''
                                     # and pgpool has root privilege.
                                     # (change requires restart)
 
-#heartbeat_destination1 = 'host0_ip2'
-#heartbeat_destination_port1 = 9694
+#heartbeat_hostname1 = ''
+#heartbeat_port1 = 9694
 #heartbeat_device1 = ''
+#heartbeat_hostname2 = ''
+#heartbeat_port2 = 9694
+#heartbeat_device2 = ''
+
+wd_heartbeat_keepalive = 2
+                                    # Interval time of sending heartbeat signal (sec)
+                                    # (change requires restart)
+wd_heartbeat_deadtime = 30
+                                    # Deadtime interval for heartbeat signal (sec)
+                                    # (change requires restart)
 
 # -- query mode --
 
@@ -786,22 +799,6 @@ wd_lifecheck_password = ''
                                     # Leaving it empty will make Pgpool-II to first look for the
                                     # Password in pool_passwd file before using the empty password
                                     # (change requires restart)
-
-# - Other pgpool Connection Settings -
-
-#other_pgpool_hostname0 = 'host0'
-                                    # Host name or IP address to connect to for other pgpool 0
-                                    # (change requires restart)
-#other_pgpool_port0 = 5432
-                                    # Port number for other pgpool 0
-                                    # (change requires restart)
-#other_wd_port0 = 9000
-                                    # Port number for other watchdog 0
-                                    # (change requires restart)
-#other_pgpool_hostname1 = 'host1'
-#other_pgpool_port1 = 5432
-#other_wd_port1 = 9000
-
 
 #------------------------------------------------------------------------------
 # OTHERS

@@ -34,6 +34,7 @@ echo "master setup done."
 
 source ./bashrc.ports
 cat ../master.conf >> etc/pgpool.conf
+echo 0 > etc/pgpool_node_id
 
 ./startall
 wait_for_pgpool_startup

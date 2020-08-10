@@ -136,13 +136,8 @@
    <!--
    Next, set the following parameters for each <productname>
    Pgpool-II</productname>.
-   Specify <xref linkend="guc-other-pgpool-hostname">,
-   <xref linkend="guc-other-pgpool-port"> and
-   <xref linkend="guc-other-wd-port"> with the values of
-   other <productname>Pgpool-II</productname> server values.
    -->
    次に、それぞれの<productname>Pgpool-II</>で以下のパラメータを設定します。
-   <xref linkend="guc-other-pgpool-hostname">、<xref linkend="guc-other-pgpool-port">、<xref linkend="guc-other-wd-port">を他の<productname>Pgpool-II</>の値で設定します。
   </para>
 
   <sect3 id="example-watchdog-configuration-active-server">
@@ -428,7 +423,7 @@
     -->
     watchdog の監視方法について設定するパラメータがあります。
     監視間隔秒を指定する<xref linkend="guc-wd-interval">、死活監視のタイプを指定する<xref linkend="guc-wd-lifecheck-method">を記述します。
-      <literal>heartbeat</literal>方式では、障害と判断する秒数を指定する<xref linkend="guc-wd-heartbeat-deadtime">、受信ポート番号を指定する<xref linkend="guc-wd-heartbeat-port">、ハートビート信号の送信間隔秒を指定する<xref linkend="guc-wd-heartbeat-keepalive">、送信先<xref linkend="guc-heartbeat-destination">、<xref linkend="guc-heartbeat-destination-port">を記述します。
+      <literal>heartbeat</literal>方式では、障害と判断する秒数を指定する<xref linkend="guc-wd-heartbeat-deadtime">、受信ポート番号を指定する<xref linkend="guc-heartbeat-port">、ハートビート信号の送信間隔秒を指定する<xref linkend="guc-wd-heartbeat-keepalive">、送信先<xref linkend="guc-heartbeat-hostname">、<xref linkend="guc-heartbeat-port">を記述します。
 	   <programlisting>
 	    wd_lifecheck_method = 'heartbeat'
 	    # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')

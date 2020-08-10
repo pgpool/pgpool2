@@ -130,18 +130,18 @@ typedef enum CHECK_TEMP_TABLE_OPTION
 /*
  * watchdog list
  */
-typedef struct WdRemoteNodeInfo
+typedef struct WdNodeInfo
 {
 	char		hostname[WD_MAX_HOST_NAMELEN];	/* host name */
 	int			pgpool_port;	/* pgpool port */
 	int			wd_port;		/* watchdog port */
-}			WdRemoteNodeInfo;
+}			WdNodeInfo;
 
-typedef struct WdRemoteNodesConfig
+typedef struct WdNodesConfig
 {
 	int			num_wd;			/* number of watchdogs */
-	WdRemoteNodeInfo wd_remote_node_info[MAX_WATCHDOG_NUM];
-}			WdRemoteNodesConfig;
+	WdNodeInfo wd_node_info[MAX_WATCHDOG_NUM];
+}			WdNodesConfig;
 
 
 typedef struct
@@ -151,8 +151,8 @@ typedef struct
 	int			dest_port;
 }			WdHbIf;
 
-#define WD_INFO(wd_id) (pool_config->wd_remote_nodes.wd_remote_node_info[(wd_id)])
-#define WD_HB_IF(if_id) (pool_config->hb_if[(if_id)])
+#define WD_INFO(wd_id) (pool_config->wd_nodes.wd_node_info[(wd_id)])
+#define WD_HB_IF(if_id) (pool_config->hb_dest_if[(if_id)])
 
 /*
  * Per node health check parameters
@@ -543,11 +543,10 @@ typedef struct
 										 * on new active pgpool. */
 	char	   *wd_de_escalation_command;	/* Executes this command when
 											 * master pgpool goes down. */
-	char	   *wd_hostname;	/* watchdog hostname */
-	int			wd_port;		/* watchdog port */
 	int			wd_priority;	/* watchdog node priority, during leader
 								 * election */
-	WdRemoteNodesConfig wd_remote_nodes;	/* watchdog lists */
+	int			pgpool_node_id;	/* pgpool (watchdog) node id */
+	WdNodesConfig wd_nodes;		/* watchdog lists */
 	char	   *trusted_servers;	/* icmp reachable server list (A,B,C) */
 	char	   *delegate_IP;	/* delegate IP address */
 	int			wd_interval;	/* lifecheck interval (sec) */
@@ -570,14 +569,16 @@ typedef struct
 										 * signal (sec) */
 	int			wd_heartbeat_deadtime;	/* Deadtime interval for heartbeat
 										 * signal (sec) */
-	WdHbIf		hb_if[WD_MAX_IF_NUM];	/* interface devices */
-	int			num_hb_if;		/* number of interface devices */
+	WdHbIf		hb_ifs[WD_MAX_IF_NUM];		/* heartbeat interfaces of all watchdog nodes */
+	WdHbIf		hb_dest_if[WD_MAX_IF_NUM];	/* heartbeat destination interfaces */
+	int			num_hb_dest_if;				/* number of interface devices */
 	char	  **wd_monitoring_interfaces_list;	/* network interface name list
 												 * to be monitored by watchdog */
 
 }			POOL_CONFIG;
 
 extern POOL_CONFIG * pool_config;
+extern char *config_file_dir; /* directory path of config file pgpool.conf */
 
 typedef enum
 {

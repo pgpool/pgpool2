@@ -40,10 +40,10 @@
 
   <variablelist>
 
-   <varlistentry id="guc-wd-hostname" xreflabel="wd_hostname">
-    <term><varname>wd_hostname</varname> (<type>string</type>)
+   <varlistentry id="guc-hostname" xreflabel="hostname">
+    <term><varname>hostnameX</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>wd_hostname</varname> configuration parameter</primary>
+      <primary><varname>hostnameX</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -52,6 +52,8 @@
       <productname>Pgpool-II</productname> server.
       This is used for sending/receiving queries and packets,
       and also as an identifier of the watchdog node.
+      The number at the end of the parameter name is referred
+      as "pgpool node id", and it starts from 0 (e.g. hostname0).
      </para>
      <para>
       This parameter can only be set at server start.
@@ -60,19 +62,62 @@
    </varlistentry>
 
    <varlistentry id="guc-wd-port" xreflabel="wd_port">
-    <term><varname>wd_port</varname> (<type>integer</type>)
+    <term><varname>wd_portX</varname> (<type>integer</type>)
      <indexterm>
-      <primary><varname>wd_port</varname> configuration parameter</primary>
+      <primary><varname>wd_portX</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
       Specifies the port number to be used by watchdog
       process to listen for connections. Default is 9000.
+      The number at the end of the parameter name is referred
+      as "pgpool node id", and it starts from 0 (e.g. wd_port0).
      </para>
      <para>
       This parameter can only be set at server start.
      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-pgpool-port" xreflabel="pgpool_port">
+    <term><varname>pgpool_portX</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>pgpool_portX</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the <productname>Pgpool-II</productname> port number.
+      Default is 9999.
+      The number at the end of the parameter name is referred
+      as "pgpool node id", and it starts from 0 (e.g. pgpool_port0).
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+
+     <example id="example-watchdog-1">
+      <title>Watchdog configuration</title>
+      <para>
+       If you have 3 pgpool nodes with hostname server1, server2 and server3,
+       you can set the <xref linkend="guc-hostname">,
+       <xref linkend="guc-wd-port"> and <xref linkend="guc-pgpool-port"> like below:
+    <programlisting>
+     hostname0 = 'server1'
+     wd_port0 = 9000
+     pgpool_port0 = 9999
+
+     hostname1 = 'server2'
+     wd_port1 = 9000
+     pgpool_port1 = 9999
+
+     hostname2 = 'server3'
+     wd_port2 = 9000
+     pgpool_port2 = 9999
+    </programlisting>
+      </para>
+     </example>
     </listitem>
    </varlistentry>
 
@@ -850,24 +895,95 @@
 
  <sect2 id="config-watchdog-lifecheck-heartbeat">
   <title>Lifecheck Heartbeat mode configuration</title>
-
   <variablelist>
-   <varlistentry id="guc-wd-heartbeat-port" xreflabel="wd_heartbeat_port">
-    <term><varname>wd_heartbeat_port</varname> (<type>integer</type>)
+   <varlistentry id="guc-heartbeat-hostname" xreflabel="heartbeat_hostname">
+    <term><varname>heartbeat_hostnameX</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>wd_heartbeat_port</varname> configuration parameter</primary>
+      <primary><varname>heartbeat_hostnameX</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
-      Specifies the <acronym>UDP</acronym> port number to receive heartbeat signals.
-      Default is 9694.
-      <varname>wd_heartbeat_port</varname> is only applicable if the
+      Specifies the <acronym>IP</acronym> address or <acronym>hostname</acronym>
+	  for sending and receiving the heartbeat signals.
+      The number at the end of the parameter name is referred
+      as "pgpool node id", and it starts from 0 (e.g. heartbeat_hostname0).
+	  You can specify multiple <acronym>IP</acronym> address or <acronym>hostname</acronym>
+      by separating them using semicolon (;).
+     </para>
+     <para>
+      <varname>heartbeat_hostnameX</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
      </para>
      <para>
       This parameter can only be set at server start.
      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-heartbeat-port" xreflabel="heartbeat_port">
+    <term><varname>heartbeat_portX</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>heartbeat_portX</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the port number for sending and receiving the heartbeat signals.
+      The number at the end of the parameter name is referred
+      as "pgpool node id", and it starts from 0 (e.g. heartbeat_port0).
+     </para>
+     <para>
+      <varname>heartbeat_portX</varname> is only applicable if the
+      <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-heartbeat-device" xreflabel="heartbeat_device">
+    <term><varname>heartbeat_deviceX</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>heartbeat_deviceX</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the network device name for sending and receiving the heartbeat signals.
+      The number at the end of the parameter name is referred
+      as "pgpool node id", and it starts from 0 (e.g. heartbeat_device0).
+	  You can specify multiple network devices by separating them using semicolon (;).
+     </para>
+     <para>
+      <varname>heartbeat_deviceX</varname> is only applicable if the
+      <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+     <example id="example-heartbeat-1">
+      <title>Heartbeat configuration</title>
+      <para>
+       If you have 3 pgpool nodes with hostname server1, server2 and server3,
+       you can set the <xref linkend="guc-heartbeat-hostname">,
+       <xref linkend="guc-heartbeat-port"> and <xref linkend="guc-heartbeat-device"> like below:
+	<programlisting>
+     heartbeat_hostname0 = 'server1'
+     heartbeat_port0 = 9694
+     heartbeat_device0 = ''
+
+     heartbeat_hostname1 = 'server2'
+     heartbeat_port1 = 9694
+     heartbeat_device1 = ''
+
+     heartbeat_hostname2 = 'server3'
+     heartbeat_port2 = 9694
+     heartbeat_device2 = ''
+	</programlisting>
+      </para>
+     </example>
     </listitem>
    </varlistentry>
 
@@ -908,81 +1024,8 @@
      <para>
       This parameter can only be set at server start.
      </para>
-
     </listitem>
    </varlistentry>
-   <varlistentry id="guc-heartbeat-destination" xreflabel="heartbeat_destination<emphasis>0</emphasis>">
-    <term><varname>heartbeat_destination0</varname> (<type>string</type>)
-     <indexterm>
-      <primary><varname>heartbeat_destination</varname> configuration parameter</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      Specifies the <acronym>IP</acronym> address or <acronym>hostname</acronym> of destination the remote
-      <productname>Pgpool-II</productname> for sending the heartbeat signals.
-      Multiple destinations can be configured for the heartbeat signals,
-      the number at the end of the parameter name is
-      referred as the "destination number", that starts from 0.
-     </para>
-     <para>
-      <varname>heartbeat_destination</varname> is only applicable if the
-      <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-     </para>
-     <para>
-      This parameter can only be set at server start.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry id="guc-heartbeat-destination-port" xreflabel="heartbeat_destination_port<emphasis>0</emphasis>">
-    <term><varname>heartbeat_destination_port0</varname> (<type>integer</type>)
-     <indexterm>
-      <primary><varname>heartbeat_destination_port</varname> configuration parameter</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      Specifies the destination port number of the remote
-      <productname>Pgpool-II</productname> for sending the heartbeat signals.
-      Multiple destinations can be configured for the heartbeat signals,
-      the number at the end of the parameter name is
-      referred as the "destination number", that starts from 0.
-     </para>
-     <para>
-      <varname>heartbeat_destination_port</varname> is only applicable if the
-      <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-     </para>
-     <para>
-      This parameter can only be set at server start.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry id="guc-heartbeat-device" xreflabel="heartbeat_device">
-    <term><varname>heartbeat_device0</varname> (<type>string</type>)
-     <indexterm>
-      <primary><varname>heartbeat_device</varname> configuration parameter</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      Specifies the network device name for sending the heartbeat signals to the destination specified by
-      heartbeat_destinationX:heartbeat_destination_portX
-      Different heartbeat devices can be configured for each heartbeat destination
-      by changing the value of X(destination number).
-      at the end of parameter name. The destination index number starts from 0.
-     </para>
-     <para>
-      <varname>heartbeat_device</varname> is only applicable if the
-      <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-     </para>
-     <para>
-      This parameter can only be set at server start.
-     </para>
-    </listitem>
-   </varlistentry>
-
   </variablelist>
  </sect2>
 
@@ -1126,68 +1169,6 @@
      </para>
      <para>
       Default is <literal>''</literal>(empty).
-     </para>
-    </listitem>
-   </varlistentry>
-
-  </variablelist>
- </sect2>
-
- <sect2 id="config-watchdog-server-configuration">
-  <title>Watchdog servers configurations</title>
-  <variablelist>
-
-   <varlistentry id="guc-other-pgpool-hostname" xreflabel="other_pgpool_hostname">
-    <term><varname>other_pgpool_hostname0</varname> (<type>string</type>)
-     <indexterm>
-      <primary><varname>other_pgpool_hostname</varname> configuration parameter</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      Specifies the hostname of remote <productname>Pgpool-II</productname> server for watchdog node.
-      The number at the end of the parameter name is referred as "server id", and it starts from 0.
-     </para>
-     <para>
-      This parameter can only be set at server start.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry id="guc-other-pgpool-port" xreflabel="other_pgpool_port">
-    <term><varname>other_pgpool_port0</varname> (<type>integer</type>)
-     <indexterm>
-      <primary><varname>other_pgpool_port</varname> configuration parameter</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      Specifies the port number of the remote <productname>Pgpool-II</productname>
-      server for watchdog node.
-      The number at the end of the parameter name is referred
-      as "server id", and it starts from 0.
-     </para>
-     <para>
-      This parameter can only be set at server start.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry id="guc-other-wd-port" xreflabel="other_wd_port">
-    <term><varname>other_wd_port0</varname> (<type>integer</type>)
-     <indexterm>
-      <primary><varname>other_wd_port0</varname> configuration parameter</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      Specifies the watchdog port number of the remote
-      <productname>Pgpool-II</productname> server for watchdog node.
-      The number at the end of the parameter name is referred
-      as "server id", and it starts from 0.
-     </para>
-     <para>
-      This parameter can only be set at server start.
      </para>
     </listitem>
    </varlistentry>

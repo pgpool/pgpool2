@@ -105,8 +105,8 @@ static char **get_list_from_string_regex_delim(const char *str, const char *deli
 /*show functions */
 static const char *IntValueShowFunc(int value);
 static const char *HBDestinationPortShowFunc(int index);
-static const char *HBDestinationShowFunc(int index);
 static const char *HBDeviceShowFunc(int index);
+static const char *HBHostnameShowFunc(int index);
 static const char *OtherWDPortShowFunc(int index);
 static const char *OtherPPPortShowFunc(int index);
 static const char *OtherPPHostShowFunc(int index);
@@ -140,9 +140,9 @@ static bool BackendDataDirAssignFunc(ConfigContext context, char *newval, int in
 static bool BackendFlagsAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 static bool BackendWeightAssignFunc(ConfigContext context, double newval, int index, int elevel);
 static bool BackendAppNameAssignFunc(ConfigContext context, char *newval, int index, int elevel);
-static bool HBDestinationAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 static bool HBDestinationPortAssignFunc(ConfigContext context, int newval, int index, int elevel);
 static bool HBDeviceAssignFunc(ConfigContext context, char *newval, int index, int elevel);
+static bool HBHostnameAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 static bool OtherWDPortAssignFunc(ConfigContext context, int newval, int index, int elevel);
 static bool OtherPPPortAssignFunc(ConfigContext context, int newval, int index, int elevel);
 static bool OtherPPHostAssignFunc(ConfigContext context, char *newval, int index, int elevel);
@@ -160,6 +160,8 @@ static bool HealthCheckDatabaseAssignFunc(ConfigContext context, char *newval, i
 static bool LogDestinationProcessFunc(char *newval, int elevel);
 static bool SyslogIdentProcessFunc(char *newval, int elevel);
 static bool SyslogFacilityProcessFunc(int newval, int elevel);
+static bool SetHBDestIfFunc(int elevel);
+static bool SetPgpoolNodeId(int elevel);
 
 static struct config_generic *get_index_free_record_if_any(struct config_generic *record);
 
@@ -1032,16 +1034,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"wd_hostname", CFGCXT_INIT, WATCHDOG_CONFIG,
-			"Host name or IP address of this watchdog.",
-			CONFIG_VAR_TYPE_STRING, false, 0
-		},
-		&g_pool_config.wd_hostname,
-		"",
-		NULL, NULL, NULL, NULL
-	},
-
-	{
 		{"ping_path", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"path to ping command.",
 			CONFIG_VAR_TYPE_STRING, false, 0
@@ -1448,8 +1440,8 @@ static struct config_int_array ConfigureNamesIntArray[] =
 	},
 
 	{
-		{"heartbeat_destination_port", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
-			"Destination port for sending heartbeat.",
+		{"heartbeat_port", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
+			"Port for sending heartbeat.",
 			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, WD_MAX_IF_NUM
 		},
 		NULL,
@@ -1460,7 +1452,7 @@ static struct config_int_array ConfigureNamesIntArray[] =
 	},
 
 	{
-		{"other_wd_port", CFGCXT_RELOAD, WATCHDOG_CONFIG,
+		{"wd_port", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"tcp/ip watchdog port number of other pgpool node for watchdog connection..",
 			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_WATCHDOG_NUM
 		},
@@ -1472,7 +1464,7 @@ static struct config_int_array ConfigureNamesIntArray[] =
 	},
 
 	{
-		{"other_pgpool_port", CFGCXT_RELOAD, WATCHDOG_CONFIG,
+		{"pgpool_port", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"tcp/ip pgpool port number of other pgpool node for watchdog connection.",
 			CONFIG_VAR_TYPE_INT_ARRAY, true, 0, MAX_WATCHDOG_NUM
 		},
@@ -1677,14 +1669,14 @@ static struct config_string_array ConfigureNamesStringArray[] =
 	},
 
 	{
-		{"heartbeat_destination", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
-			"destination host for sending heartbeat signal.",
+		{"heartbeat_hostname", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
+			"Hostname for sending heartbeat signal.",
 			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, WD_MAX_IF_NUM
 		},
 		NULL,
 		"",
 		EMPTY_CONFIG_STRING,
-		HBDestinationAssignFunc, NULL, HBDestinationShowFunc, WdIFSlotEmptyCheckFunc
+		HBHostnameAssignFunc, NULL, HBHostnameShowFunc, WdIFSlotEmptyCheckFunc
 	},
 
 	{
@@ -1699,8 +1691,8 @@ static struct config_string_array ConfigureNamesStringArray[] =
 	},
 
 	{
-		{"other_pgpool_hostname", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
-			"Hostname of other pgpool node for watchdog connection.",
+		{"hostname", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
+			"Hostname of pgpool node for watchdog connection.",
 			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_WATCHDOG_NUM
 		},
 		NULL,
@@ -1942,17 +1934,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"wd_port", CFGCXT_INIT, WATCHDOG_CONFIG,
-			"tcp/IP port number on which watchdog of process of pgpool will listen on.",
-			CONFIG_VAR_TYPE_INT, false, 0
-		},
-		&g_pool_config.wd_port,
-		9000,
-		1024, INT_MAX,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"wd_priority", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Watchdog node priority for leader election.",
 			CONFIG_VAR_TYPE_INT, false, 0
@@ -1982,17 +1963,6 @@ static struct config_int ConfigureNamesInt[] =
 		&g_pool_config.wd_life_point,
 		3,
 		0, INT_MAX,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"wd_heartbeat_port", CFGCXT_INIT, WATCHDOG_CONFIG,
-			"Port number for receiving heartbeat signal.",
-			CONFIG_VAR_TYPE_INT, false, 0
-		},
-		&g_pool_config.wd_heartbeat_port,
-		9694,
-		1024, 65535,
 		NULL, NULL, NULL
 	},
 
@@ -2531,11 +2501,11 @@ build_variable_groups(void)
 	ConfigureVarGroups[1].var_count = 3;
 	ConfigureVarGroups[1].var_list = palloc0(sizeof(struct config_generic *) * ConfigureVarGroups[1].var_count);
 	/* backend hostname */
-	ConfigureVarGroups[1].var_list[0] = find_option("other_pgpool_hostname", FATAL);
+	ConfigureVarGroups[1].var_list[0] = find_option("hostname", FATAL);
 	ConfigureVarGroups[1].var_list[0]->flags |= VAR_PART_OF_GROUP;
-	ConfigureVarGroups[1].var_list[1] = find_option("other_pgpool_port", FATAL);
+	ConfigureVarGroups[1].var_list[1] = find_option("pgpool_port", FATAL);
 	ConfigureVarGroups[1].var_list[1]->flags |= VAR_PART_OF_GROUP;
-	ConfigureVarGroups[1].var_list[2] = find_option("other_wd_port", FATAL);
+	ConfigureVarGroups[1].var_list[2] = find_option("wd_port", FATAL);
 	ConfigureVarGroups[1].var_list[2]->flags |= VAR_PART_OF_GROUP;
 	ConfigureVarGroups[1].gen.max_elements = ConfigureVarGroups[1].var_list[0]->max_elements;
 
@@ -2546,9 +2516,9 @@ build_variable_groups(void)
 	/* backend hostname */
 	ConfigureVarGroups[2].var_list[0] = find_option("heartbeat_device", FATAL);
 	ConfigureVarGroups[2].var_list[0]->flags |= VAR_PART_OF_GROUP;
-	ConfigureVarGroups[2].var_list[1] = find_option("heartbeat_destination", FATAL);
+	ConfigureVarGroups[2].var_list[1] = find_option("heartbeat_hostname", FATAL);
 	ConfigureVarGroups[2].var_list[1]->flags |= VAR_PART_OF_GROUP;
-	ConfigureVarGroups[2].var_list[2] = find_option("heartbeat_destination_port", FATAL);
+	ConfigureVarGroups[2].var_list[2] = find_option("heartbeat_port", FATAL);
 	ConfigureVarGroups[2].var_list[2]->flags |= VAR_PART_OF_GROUP;
 	ConfigureVarGroups[2].gen.max_elements = ConfigureVarGroups[2].var_list[0]->max_elements;
 
@@ -4338,50 +4308,50 @@ BackendSlotEmptyCheckFunc(int index)
 static bool
 WdSlotEmptyCheckFunc(int index)
 {
-	return (g_pool_config.wd_remote_nodes.wd_remote_node_info[index].pgpool_port == 0);
+	return (g_pool_config.wd_nodes.wd_node_info[index].pgpool_port == 0);
 }
 
 static bool
 WdIFSlotEmptyCheckFunc(int index)
 {
 
-	return (index >= g_pool_config.num_hb_if);
+	return (index >= g_pool_config.num_hb_dest_if);
 }
 
 static const char *
 OtherPPHostShowFunc(int index)
 {
-	return g_pool_config.wd_remote_nodes.wd_remote_node_info[index].hostname;
+	return g_pool_config.wd_nodes.wd_node_info[index].hostname;
 }
 
 static const char *
 OtherPPPortShowFunc(int index)
 {
-	return IntValueShowFunc(g_pool_config.wd_remote_nodes.wd_remote_node_info[index].pgpool_port);
+	return IntValueShowFunc(g_pool_config.wd_nodes.wd_node_info[index].pgpool_port);
 }
 
 static const char *
 OtherWDPortShowFunc(int index)
 {
-	return IntValueShowFunc(g_pool_config.wd_remote_nodes.wd_remote_node_info[index].wd_port);
+	return IntValueShowFunc(g_pool_config.wd_nodes.wd_node_info[index].wd_port);
 }
 
 static const char *
 HBDeviceShowFunc(int index)
 {
-	return g_pool_config.hb_if[index].if_name;
+	return g_pool_config.hb_ifs[index].if_name;
 }
 
 static const char *
-HBDestinationShowFunc(int index)
+HBHostnameShowFunc(int index)
 {
-	return g_pool_config.hb_if[index].addr;
+	return g_pool_config.hb_ifs[index].addr;
 }
 
 static const char *
 HBDestinationPortShowFunc(int index)
 {
-	return IntValueShowFunc(g_pool_config.hb_if[index].dest_port);
+	return IntValueShowFunc(g_pool_config.hb_ifs[index].dest_port);
 }
 
 static const char *
@@ -4505,31 +4475,31 @@ HealthCheckDatabaseAssignFunc(ConfigContext context, char *newval, int index, in
 	return true;
 }
 
-/* Watchdog Assign functions */
-/*other_pgpool_hostname*/
+/* Watchdog hostname and heartbeat hostname assign functions */
+/* hostname */
 static bool
 OtherPPHostAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 	if (newval == NULL || strlen(newval) == 0)
-		g_pool_config.wd_remote_nodes.wd_remote_node_info[index].hostname[0] = '\0';
+		g_pool_config.wd_nodes.wd_node_info[index].hostname[0] = '\0';
 	else
-		strlcpy(g_pool_config.wd_remote_nodes.wd_remote_node_info[index].hostname, newval, MAX_DB_HOST_NAMELEN - 1);
+		strlcpy(g_pool_config.wd_nodes.wd_node_info[index].hostname, newval, MAX_DB_HOST_NAMELEN - 1);
 	return true;
 }
 
-/*other_pgpool_port*/
+/* pgpool_port */
 static bool
 OtherPPPortAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
-	g_pool_config.wd_remote_nodes.wd_remote_node_info[index].pgpool_port = newval;
+	g_pool_config.wd_nodes.wd_node_info[index].pgpool_port = newval;
 	return true;
 }
 
-/*other_wd_port*/
+/* wd_port */
 static bool
 OtherWDPortAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
-	g_pool_config.wd_remote_nodes.wd_remote_node_info[index].wd_port = newval;
+	g_pool_config.wd_nodes.wd_node_info[index].wd_port = newval;
 	return true;
 }
 
@@ -4538,28 +4508,28 @@ static bool
 HBDeviceAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 	if (newval == NULL || strlen(newval) == 0)
-		g_pool_config.hb_if[index].if_name[0] = '\0';
+		g_pool_config.hb_ifs[index].if_name[0] = '\0';
 	else
-		strlcpy(g_pool_config.hb_if[index].if_name, newval, WD_MAX_IF_NAME_LEN);
+		strlcpy(g_pool_config.hb_ifs[index].if_name, newval, WD_MAX_IF_NAME_LEN - 1);
 	return true;
 }
 
-/*heartbeat_destination*/
+/*heartbeat_hostname*/
 static bool
-HBDestinationAssignFunc(ConfigContext context, char *newval, int index, int elevel)
+HBHostnameAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
 	if (newval == NULL || strlen(newval) == 0)
-		g_pool_config.hb_if[index].addr[0] = '\0';
+		g_pool_config.hb_ifs[index].addr[0] = '\0';
 	else
-		strlcpy(g_pool_config.hb_if[index].addr, newval, WD_MAX_HOST_NAMELEN - 1);
+		strlcpy(g_pool_config.hb_ifs[index].addr, newval, WD_MAX_HOST_NAMELEN - 1);
 	return true;
 }
 
-/*heartbeat_destination_port*/
+/*heartbeat_port*/
 static bool
 HBDestinationPortAssignFunc(ConfigContext context, int newval, int index, int elevel)
 {
-	g_pool_config.hb_if[index].dest_port = newval;
+	g_pool_config.hb_ifs[index].dest_port = newval;
 	return true;
 }
 
@@ -4618,9 +4588,12 @@ check_redirect_node_spec(char *node_spec)
 static bool
 config_post_processor(ConfigContext context, int elevel)
 {
-	double		total_weight = 0.0;
+	double		 total_weight = 0.0;
 	sig_atomic_t local_num_backends = 0;
-	int			i;
+	int			 i;
+
+	/* read from pgpool_node_id */
+	SetPgpoolNodeId(elevel);
 
 	if (context == CFGCXT_BOOT)
 	{
@@ -4634,7 +4607,7 @@ config_post_processor(ConfigContext context, int elevel)
 					 errdetail("failed to get the local hostname")));
 			return false;
 		}
-		g_pool_config.wd_hostname = pstrdup(localhostname);
+		strcpy(g_pool_config.wd_nodes.wd_node_info[g_pool_config.pgpool_node_id].hostname, localhostname);
 		return true;
 	}
 	for (i = 0; i < MAX_CONNECTION_SLOTS; i++)
@@ -4695,23 +4668,25 @@ config_post_processor(ConfigContext context, int elevel)
 	}
 
 	/* Set the number of configured Watchdog nodes */
-	g_pool_config.wd_remote_nodes.num_wd = 0;
+	g_pool_config.wd_nodes.num_wd = 0;
 	for (i = 0; i < MAX_WATCHDOG_NUM; i++)
 	{
-		WdRemoteNodeInfo *wdNode = &g_pool_config.wd_remote_nodes.wd_remote_node_info[i];
+		WdNodeInfo *wdNode = &g_pool_config.wd_nodes.wd_node_info[i];
+
+		if (i == g_pool_config.pgpool_node_id && wdNode->wd_port <= 0)
+        {
+            ereport(elevel,
+                    (errmsg("invalid watchdog configuration"),
+                     errdetail("no watchdog configuration for local pgpool node, pgpool node id: %d ", g_pool_config.pgpool_node_id)));
+            return false;
+        }
 
 		if (wdNode->wd_port > 0)
-			g_pool_config.wd_remote_nodes.num_wd = i + 1;
+			g_pool_config.wd_nodes.num_wd = i + 1;
 	}
 
-	/* Set the number of configured heartbeat interfaces */
-	g_pool_config.num_hb_if = 0;
-	for (i = 0; i < WD_MAX_IF_NUM; i++)
-	{
-		if (g_pool_config.hb_if[i].dest_port > 0)
-			g_pool_config.num_hb_if = i + 1;
-	}
-
+	/* Set configured heartbeat destination interfaces */
+	SetHBDestIfFunc(elevel);
 
 	if (strcmp(pool_config->recovery_1st_stage_command, "") ||
 		strcmp(pool_config->recovery_2nd_stage_command, ""))
@@ -4909,6 +4884,135 @@ MakeDBRedirectListRegex(char *newval, int elevel)
 					(errmsg("invalid configuration for key \"database_redirect_preference_list\""),
 					 errdetail("wrong redirect dbname regular expression: \"%s\"", lrtokens->token[i].left_token)));
 			return false;
+		}
+	}
+	return true;
+}
+
+/* Read the pgpool_node_id file */
+static bool
+SetPgpoolNodeId(int elevel)
+{
+	char		pgpool_node_id_file[POOLMAXPATHLEN + 1];
+	FILE		*fd;
+	int         length;
+
+	if (g_pool_config.use_watchdog)
+	{
+		snprintf(pgpool_node_id_file, sizeof(pgpool_node_id_file), "%s/%s", config_file_dir, NODE_ID_FILE_NAME);
+
+#define MAXLINE 10
+		char        readbuf[MAXLINE];
+
+		fd = fopen(pgpool_node_id_file, "r");
+		if (!fd)
+			ereport(elevel,
+					(errmsg("Pgpool node id file %s does not exist", pgpool_node_id_file),
+					 errdetail("If watchdog is enable, pgpool_node_id file is required")));
+
+		readbuf[MAXLINE - 1] = '\0';
+		if (fgets(readbuf, MAXLINE - 1, fd) == 0)
+		{
+			ereport(elevel,
+					(errmsg("pgpool_node_id file is empty"),
+					 errdetail("If watchdog is enable, we need to specify pgpool node id in %s file", pgpool_node_id_file)));
+		}
+
+		length = strlen(readbuf);
+		if (length > 0 && readbuf[length - 1] == '\n')
+			readbuf[length - 1] = '\0';
+
+		g_pool_config.pgpool_node_id = atoi(readbuf);
+
+		if (g_pool_config.pgpool_node_id < 0 || g_pool_config.pgpool_node_id > MAX_WATCHDOG_NUM)
+			ereport(elevel,
+					(errmsg("Invalid pgpool node id \"%d\", must be between 0 and %d",
+							g_pool_config.pgpool_node_id, MAX_WATCHDOG_NUM)));
+		else
+			ereport(DEBUG1,
+					(errmsg("read pgpool node id file %s", pgpool_node_id_file),
+					 errdetail("pgpool node id: %s", readbuf)));
+	}
+
+	return true;
+}
+
+/* Set configured heartbeat destination interfaces */
+static bool
+SetHBDestIfFunc(int elevel)
+{
+	int		idx = 0;
+	char	**addrs;
+	char	**if_names;
+	int		i, j,
+			n_addr,
+			n_if_name;
+
+	g_pool_config.num_hb_dest_if = 0;
+
+	if (g_pool_config.wd_lifecheck_method != LIFECHECK_BY_HB)
+	{
+		return true;
+	}
+
+	/*
+	 * g_pool_config.hb_ifs is the information for sending/receiving heartbeat
+	 * for all nodes specied in pgpool.conf.
+	 * If it is local pgpool node information, set dest_port to g_pool_config.wd_heartbeat_port
+	 * and ignore addr and if_name.
+	 * g_pool_config.hb_dest_if is the heartbeat destination information.
+	 */
+	for (i = 0; i < WD_MAX_IF_NUM; i++)
+	{
+		if (g_pool_config.hb_ifs[i].dest_port > 0)
+		{
+			/* Ignore local pgpool node */
+			if (i == g_pool_config.pgpool_node_id)
+			{
+				g_pool_config.wd_heartbeat_port = g_pool_config.hb_ifs[i].dest_port;
+				continue;
+			}
+
+			WdHbIf *hbNodeInfo = &g_pool_config.hb_ifs[i];
+
+			addrs = get_list_from_string(hbNodeInfo->addr, ";", &n_addr);
+			if_names = get_list_from_string(hbNodeInfo->if_name, ";", &n_if_name);
+
+			if (!addrs || n_addr < 0)
+			{
+				g_pool_config.hb_dest_if[idx].addr[0] = '\0';
+
+				if (addrs)
+					pfree(addrs);
+
+				ereport(elevel,
+						(errmsg("invalid watchdog configuration"),
+						 errdetail("heartbeat_hostname%d is not defined", i)));
+
+				return false;
+			}
+
+			for (j = 0; j < n_addr; j++)
+			{
+				strlcpy(g_pool_config.hb_dest_if[idx].addr, addrs[j], WD_MAX_HOST_NAMELEN - 1);
+				g_pool_config.hb_dest_if[idx].dest_port = hbNodeInfo->dest_port;
+				if (n_if_name > j + 1)
+				{
+					strlcpy(g_pool_config.hb_dest_if[idx].if_name, if_names[j], WD_MAX_IF_NAME_LEN - 1);
+					pfree(if_names[j]);
+				}
+				else
+					g_pool_config.hb_dest_if[idx].if_name[0] = '\0';
+
+				g_pool_config.num_hb_dest_if = idx + 1;
+				idx++;
+				pfree(addrs[j]);
+			}
+
+			if (addrs)
+				pfree(addrs);
+			if (if_names)
+				pfree(if_names);
 		}
 	}
 	return true;

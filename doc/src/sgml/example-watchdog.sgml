@@ -82,10 +82,6 @@
   <para>
    Next, set the following parameters for each <productname>
     Pgpool-II</productname>.
-   Specify <xref linkend="guc-other-pgpool-hostname">,
-    <xref linkend="guc-other-pgpool-port"> and
-     <xref linkend="guc-other-wd-port"> with the values of
-      other <productname>Pgpool-II</productname> server values.
   </para>
 
   <sect3 id="example-watchdog-configuration-active-server">
@@ -290,10 +286,10 @@
      the type of lifecheck <xref linkend="guc-wd-lifecheck-method">.
       The <literal>hearbeat</literal> method specify the time to detect
       a fault <xref linkend="guc-wd-heartbeat-deadtime">, the port number to
-       receive <xref linkend="guc-wd-heartbeat-port">, the interval to send
+       receive <xref linkend="guc-heartbeat-port">, the interval to send
 	<xref linkend="guc-wd-heartbeat-keepalive">, the IP address or hostname
-	 of destination <xref linkend="guc-heartbeat-destination"> and finally
-	  the destination port number <xref linkend="guc-heartbeat-destination-port">.
+	 of destination <xref linkend="guc-heartbeat-hostname"> and finally
+	  the destination port number <xref linkend="guc-heartbeat-port">.
 	   <programlisting>
 	    wd_lifecheck_method = 'heartbeat'
 	    # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')

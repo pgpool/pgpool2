@@ -104,9 +104,9 @@ get_pool_config_from_json(char *json_data, int data_len)
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "clear_memqcache_on_escalation", &config->clear_memqcache_on_escalation))
 		goto ERROR_EXIT;
-	if (json_get_int_value_for_key(root, "wd_port", &config->wd_port))
-		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "wd_priority", &config->wd_priority))
+		goto ERROR_EXIT;
+	if (json_get_int_value_for_key(root, "pgpool_node_id", &config->pgpool_node_id))
 		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "master_slave_sub_mode", (int *) &config->master_slave_sub_mode))
 		goto ERROR_EXIT;
@@ -137,25 +137,25 @@ get_pool_config_from_json(char *json_data, int data_len)
 		strncpy(config->backend_desc->backend_info[i].backend_hostname, ptr, sizeof(config->backend_desc->backend_info[i].backend_hostname) - 1);
 	}
 
-	/* wd_remote_nodes array */
-	value = json_get_value_for_key(root, "wd_remote_nodes");
+	/* wd_nodes array */
+	value = json_get_value_for_key(root, "wd_nodes");
 	if (value == NULL || value->type != json_array)
 		goto ERROR_EXIT;
 
-	config->wd_remote_nodes.num_wd = value->u.array.length;
-	for (i = 0; i < config->wd_remote_nodes.num_wd; i++)
+	config->wd_nodes.num_wd = value->u.array.length;
+	for (i = 0; i < config->wd_nodes.num_wd; i++)
 	{
 		json_value *arr_value = value->u.array.values[i];
 		char	   *ptr;
 
-		if (json_get_int_value_for_key(arr_value, "wd_port", &config->wd_remote_nodes.wd_remote_node_info[i].wd_port))
+		if (json_get_int_value_for_key(arr_value, "wd_port", &config->wd_nodes.wd_node_info[i].wd_port))
 			goto ERROR_EXIT;
-		if (json_get_int_value_for_key(arr_value, "pgpool_port", &config->wd_remote_nodes.wd_remote_node_info[i].pgpool_port))
+		if (json_get_int_value_for_key(arr_value, "pgpool_port", &config->wd_nodes.wd_node_info[i].pgpool_port))
 			goto ERROR_EXIT;
 		ptr = json_get_string_value_for_key(arr_value, "hostname");
 		if (ptr == NULL)
 			goto ERROR_EXIT;
-		strncpy(config->wd_remote_nodes.wd_remote_node_info[i].hostname, ptr, sizeof(config->wd_remote_nodes.wd_remote_node_info[i].hostname) - 1);
+		strncpy(config->wd_nodes.wd_node_info[i].hostname, ptr, sizeof(config->wd_nodes.wd_node_info[i].hostname) - 1);
 	}
 
 	json_value_free(root);
@@ -206,8 +206,8 @@ get_pool_config_json(void)
 	jw_put_bool(jNode, "memory_cache_enabled", pool_config->memory_cache_enabled);
 	jw_put_bool(jNode, "use_watchdog", pool_config->use_watchdog);
 	jw_put_bool(jNode, "clear_memqcache_on_escalation", pool_config->clear_memqcache_on_escalation);
-	jw_put_int(jNode, "wd_port", pool_config->wd_port);
 	jw_put_int(jNode, "wd_priority", pool_config->wd_priority);
+	jw_put_int(jNode, "pgpool_node_id", pool_config->pgpool_node_id);
 	jw_put_int(jNode, "master_slave_sub_mode", pool_config->master_slave_sub_mode);
 
 	jw_put_bool(jNode, "failover_when_quorum_exists", pool_config->failover_when_quorum_exists);
@@ -225,17 +225,17 @@ get_pool_config_json(void)
 	}
 	jw_end_element(jNode);		/* backend_desc array End */
 
-	/* Array of wd_remote_nodes */
-	jw_start_array(jNode, "wd_remote_nodes");
-	for (i = 0; i < pool_config->wd_remote_nodes.num_wd; i++)
+	/* Array of wd_nodes */
+	jw_start_array(jNode, "wd_nodes");
+	for (i = 0; i < pool_config->wd_nodes.num_wd; i++)
 	{
-		jw_start_object(jNode, "WdRemoteNodesConfig");
-		jw_put_string(jNode, "hostname", pool_config->wd_remote_nodes.wd_remote_node_info[i].hostname);
-		jw_put_int(jNode, "wd_port", pool_config->wd_remote_nodes.wd_remote_node_info[i].wd_port);
-		jw_put_int(jNode, "pgpool_port", pool_config->wd_remote_nodes.wd_remote_node_info[i].pgpool_port);
+		jw_start_object(jNode, "WdNodesConfig");
+		jw_put_string(jNode, "hostname", pool_config->wd_nodes.wd_node_info[i].hostname);
+		jw_put_int(jNode, "wd_port", pool_config->wd_nodes.wd_node_info[i].wd_port);
+		jw_put_int(jNode, "pgpool_port", pool_config->wd_nodes.wd_node_info[i].pgpool_port);
 		jw_end_element(jNode);
 	}
-	jw_end_element(jNode);		/* wd_remote_nodes array End */
+	jw_end_element(jNode);		/* wd_nodes array End */
 
 	jw_finish_document(jNode);
 	json_str = pstrdup(jw_get_json_string(jNode));
@@ -443,6 +443,7 @@ get_watchdog_node_info_json(WatchdogNode * wdNode, char *authkey)
 	jw_put_int(jNode, "WdPort", wdNode->wd_port);
 	jw_put_int(jNode, "PgpoolPort", wdNode->pgpool_port);
 	jw_put_int(jNode, "WdPriority", wdNode->wd_priority);
+	jw_put_int(jNode, "PgpoolNodeId", wdNode->pgpool_node_id);
 
 	jw_put_string(jNode, "NodeName", wdNode->nodeName);
 	jw_put_string(jNode, "HostName", wdNode->hostname);
@@ -520,6 +521,8 @@ get_watchdog_node_from_json(char *json_data, int data_len, char **authkey)
 	if (json_get_int_value_for_key(root, "PgpoolPort", &wdNode->pgpool_port))
 		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "WdPriority", &wdNode->wd_priority))
+		goto ERROR_EXIT;
+	if (json_get_int_value_for_key(root, "PgpoolNodeId", &wdNode->pgpool_node_id))
 		goto ERROR_EXIT;
 
 

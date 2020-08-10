@@ -334,14 +334,15 @@ main(int argc, char **argv)
 		}
 
 		if (debug)
-			printf("DEBUG: From config %s:%d\n",pool_config->wd_ipc_socket_dir, pool_config->wd_port);
+			printf("DEBUG: From config %s:%d\n",pool_config->wd_ipc_socket_dir,
+					pool_config->wd_nodes.wd_node_info[pool_config->pgpool_node_id].wd_port);
 
 		pfree(conf_file_path);
 		/* only use values from pg_config that are not provided explicitely*/
 		if (wd_authkey == NULL)
 			wd_authkey = pstrdup(pool_config->wd_authkey);
 		if (port < 0)
-			port = pool_config->wd_port;
+			port = pool_config->wd_nodes.wd_node_info[pool_config->pgpool_node_id].wd_port;
 		if (socket_dir == NULL)
 			socket_dir = pstrdup(pool_config->wd_ipc_socket_dir);
 	}

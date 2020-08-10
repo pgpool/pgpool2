@@ -86,6 +86,9 @@
 /* default string used to identify pgpool on syslog output */
 #define DEFAULT_SYSLOG_IDENT "pgpool"
 
+/* Pgpool node id file name */
+#define NODE_ID_FILE_NAME "pgpool_node_id"
+
 /* function return codes */
 #define GENERAL_ERROR		(-1)
 #define RETRY				(-2)

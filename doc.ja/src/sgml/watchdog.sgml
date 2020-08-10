@@ -64,13 +64,13 @@
 
   <variablelist>
 
-   <varlistentry id="guc-wd-hostname" xreflabel="wd_hostname">
-    <term><varname>wd_hostname</varname> (<type>string</type>)
+   <varlistentry id="guc-hostname" xreflabel="hostname">
+    <term><varname>hostnameX</varname> (<type>string</type>)
      <indexterm>
       <!--
-      <primary><varname>wd_hostname</varname> configuration parameter</primary>
+      <primary><varname>hostnameX</varname> configuration parameter</primary>
       -->
-      <primary><varname>wd_hostname</varname>設定パラメータ</primary>
+      <primary><varname>hostnameX</varname>設定パラメータ</primary>
      </indexterm>
     </term>
     <listitem>
@@ -80,9 +80,12 @@
       <productname>Pgpool-II</productname> server.
       This is used for sending/receiving queries and packets,
       and also as an identifier of the watchdog node.
+      The number at the end of the parameter name is referred
+      as "pgpool node id", and it starts from 0 (e.g. hostname0).
       -->
       <productname>Pgpool-II</productname>サーバのホスト名またはIPアドレスを指定します。
       クエリやパケットの送受信の他、watchdogの識別子としても用います。
+      パラメータ名の最後にある数字は「pgpool ノードID」で、0から始まります(たとえばhostname0)。
      </para>
      <para>
       <!--
@@ -93,12 +96,12 @@
    </varlistentry>
 
    <varlistentry id="guc-wd-port" xreflabel="wd_port">
-    <term><varname>wd_port</varname> (<type>integer</type>)
+    <term><varname>wd_portX</varname> (<type>integer</type>)
      <indexterm>
       <!--
-      <primary><varname>wd_port</varname> configuration parameter</primary>
+      <primary><varname>wd_portX</varname> configuration parameter</primary>
       -->
-      <primary><varname>wd_port</varname> 設定パラメータ</primary>
+      <primary><varname>wd_port</varname>設定パラメータ</primary>
      </indexterm>
     </term>
     <listitem>
@@ -106,9 +109,12 @@
       <!--
       Specifies the port number to be used by watchdog
       process to listen for connections. Default is 9000.
+      The number at the end of the parameter name is referred
+      as "pgpool node id", and it starts from 0 (e.g. wd_port0).
       -->
       watchdogが接続を受け付けるために監視するポート番号です。
       デフォルト値は9000です。
+      パラメータ名の最後にある数字は「pgpool ノードID」で、0から始まります(たとえばwd_port0)。
      </para>
      <para>
       <!--
@@ -116,6 +122,65 @@
       -->
       このパラメータは、サーバ起動時にのみ設定できます。
      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-pgpool-port" xreflabel="pgpool_port">
+    <term><varname>pgpool_portX</varname> (<type>integer</type>)
+     <indexterm>
+      <!--
+      <primary><varname>pgpool_portX</varname> configuration parameter</primary>
+      -->
+      <primary><varname>pgpool_portX</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies the <productname>Pgpool-II</productname> port number.
+      Default is 9999.
+      The number at the end of the parameter name is referred
+      as "pgpool node id", and it starts from 0 (e.g. pgpool_port0).
+      -->
+      <productname>Pgpool-II</productname>サーバのポート番号を指定します。
+      デフォルト値は9999です。
+      パラメータ名の最後にある数字は「pgpool ノードID」で、0から始まります(たとえばpgpool_port0)。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータは、サーバ起動時にのみ設定できます。
+     </para>
+     <example id="example-watchdog-1">
+      <!--
+      <title>Watchdog configuration</title>
+      -->
+      <title>Watchdogの設定例</title>
+      <para>
+       <!--
+       If you have 3 pgpool nodes with hostname server1, server2 and server3,
+       you can set the <xref linkend="guc-hostname">,
+       <xref linkend="guc-wd-port"> and <xref linkend="guc-pgpool-port"> like below:
+       -->
+       Pgpool ノードが3つあり、それぞれのホストが server1、server2、server3 の場合、
+       <xref linkend="guc-hostname">、<xref linkend="guc-wd-port">
+       及び<xref linkend="guc-pgpool-port">を以下のように設定します。
+    <programlisting>
+     hostname0 = 'server1'
+     wd_port0 = 9000
+     pgpool_port0 = 9999
+
+     hostname1 = 'server2'
+     wd_port1 = 9000
+     pgpool_port1 = 9999
+
+     hostname2 = 'server3'
+     wd_port2 = 9000
+     pgpool_port2 = 9999
+    </programlisting>
+      </para>
+     </example>
     </listitem>
    </varlistentry>
 
@@ -1201,26 +1266,34 @@
   <title>死活監視：ハートビートモードの設定</title>
 
   <variablelist>
-   <varlistentry id="guc-wd-heartbeat-port" xreflabel="wd_heartbeat_port">
-    <term><varname>wd_heartbeat_port</varname> (<type>integer</type>)
+   <varlistentry id="guc-heartbeat-hostname" xreflabel="heartbeat_hostname">
+    <term><varname>heartbeat_hostnameX</varname> (<type>string</type>)
      <indexterm>
       <!--
-      <primary><varname>wd_heartbeat_port</varname> configuration parameter</primary>
+      <primary><varname>heartbeat_hostnameX</varname> configuration parameter</primary>
       -->
-      <primary><varname>wd_heartbeat_port</varname>設定パラメータ</primary>
+      <primary><varname>heartbeat_hostnameX</varname>設定パラメータ</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
       <!--
-      Specifies the <acronym>UDP</acronym> port number to receive heartbeat signals.
-      Default is 9694.
-      <varname>wd_heartbeat_port</varname> is only applicable if the
+      Specifies the <acronym>IP</acronym> address or <acronym>hostname</acronym> of
+      for sending and receiving the heartbeat signals.
+      Multiple destinations can be configured for the heartbeat singnals,
+      the number at the end of the parameter name is
+      referred as the "pgpool node id", that starts from 0.
+      -->
+      ハートビート信号を送受信するための<acronym>IP</acronym>アドレスまたは <acronym>ホスト名</acronym>を指定します。
+      パラメータ名の最後にある数字は「pgpool ノードID」で、0から始まります(たとえばheartbeat_hostname0)。
+      複数のハートビート信号の送り先をセミコロン(;)で区切って指定することができます。
+     </para>
+     <para>
+      <!--
+      <varname>heartbeat_hostnameX</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
       -->
-      ハートビート信号を受信する<acronym>UDP</acronym>ポート番号を指定します。
-      デフォルトは 9694 です。
-      <xref linkend="guc-wd-lifecheck-method">が<literal>'heartbeat'</literal>に設定されている場合のみ有効です。
+      <varname>heartbeat_hostnameX</varname>は、<xref linkend="guc-wd-lifecheck-method">が<literal>'heartbeat'</literal>に設定されている場合のみ有効です。
      </para>
      <para>
       <!--
@@ -1228,6 +1301,109 @@
       -->
       このパラメータは、サーバ起動時にのみ設定できます。
      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-heartbeat-port" xreflabel="heartbeat_port">
+    <term><varname>heartbeat_portX</varname> (<type>integer</type>)
+     <indexterm>
+      <!--
+      <primary><varname>heartbeat_portX</varname> configuration parameter</primary>
+      -->
+      <primary><varname>heartbeat_portX</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies the port number for sending the heartbeat signals.
+      Multiple destinations can be configured for the heartbeat singnals,
+      the number at the end of the parameter name is
+      referred as the "pgpool node id", that starts from 0.
+      -->
+      ハートビート信号を受信するためのポート番号を指定します。
+      1つのみを指定してください。
+      パラメータ名の最後にある数字は「pgpool ノードID」で、0から始まります(たとえばheartbeat_port0)。
+     </para>
+     <para>
+      <!--
+      <varname>heartbeat_portX</varname> is only applicable if the
+      <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
+      -->
+      <varname>heartbeat_portX</varname>は、<xref linkend="guc-wd-lifecheck-method"> が <literal>'heartbeat'</literal>に設定されている場合のみ有効です。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータは、サーバ起動時にのみ設定できます。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-heartbeat-device" xreflabel="heartbeat_device">
+    <term><varname>heartbeat_deviceX</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>heartbeat_deviceX</varname> configuration parameter</primary>
+      -->
+      <primary><varname>heartbeat_deviceX</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies the network device name for sending and receiving the heartbeat signals.
+      The number at the end of the parameter name is referred
+      as "pgpool node id", and it starts from 0 (e.g. heartbeat_device0).
+	  You can specify multiple network devices by separating them using semicolon (;).
+      -->
+      ハートビートの送受信に用いるネットワークデバイス名を指定します。
+      パラメータ名の最後にある数字は「pgpool ノードID」で、0から始まります(たとえばheartbeat_device0)。
+      複数のネットワークデバイス名をセミコロン(;)で区切って指定することができます。
+     </para>
+     <para>
+      <!--
+      <varname>heartbeat_deviceX</varname> is only applicable if the
+      <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
+      -->
+      <varname>heartbeat_deviceX</varname>は、<xref linkend="guc-wd-lifecheck-method">が<literal>'heartbeat'</literal>に設定されている場合のみ有効です。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータは、サーバ起動時にのみ設定できます。
+     </para>
+     <example id="example-heartbeat-1">
+      <!--
+      <title>Heartbeat configuration</title>
+      -->
+      <title>Heartbeat 信号を用いた死活監視の設定例</title>
+      <para>
+       <!--
+       If you have 3 pgpool nodes with hostname server1, server2 and server3,
+       you can set the <xref linkend="guc-heartbeat-hostname">,
+       <xref linkend="guc-heartbeat-port"> and <xref linkend="guc-heartbeat-device"> like below:
+       -->
+       Pgpool ノードが3つあり、それぞれのホストが server1、server2、server3 の場合、
+       <xref linkend="guc-heartbeat-hostname">、<xref linkend="guc-heartbeat-port">
+       及び<xref linkend="guc-heartbeat-device">を以下のように設定します。
+	<programlisting>
+     heartbeat_hostname0 = 'server1'
+     heartbeat_port0 = 9694
+     heartbeat_device0 = ''
+
+     heartbeat_hostname1 = 'server2'
+     heartbeat_port1 = 9694
+     heartbeat_device1 = ''
+
+     heartbeat_hostname2 = 'server3'
+     heartbeat_port2 = 9694
+     heartbeat_device2 = ''
+	</programlisting>
+      </para>
+     </example>
     </listitem>
    </varlistentry>
 
@@ -1289,123 +1465,8 @@
       -->
       このパラメータは、サーバ起動時にのみ設定できます。
      </para>
-
     </listitem>
    </varlistentry>
-   <varlistentry id="guc-heartbeat-destination" xreflabel="heartbeat_destination<emphasis>0</emphasis>">
-    <term><varname>heartbeat_destination0</varname> (<type>string</type>)
-     <indexterm>
-      <!--
-      <primary><varname>heartbeat_destination</varname> configuration parameter</primary>
-      -->
-      <primary><varname>heartbeat_destination</varname>設定パラメータ</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      <!--
-      Specifies the <acronym>IP</acronym> address or <acronym>hostname</acronym> of destination the remote
-      <productname>Pgpool-II</productname> for sending the heartbeat signals.
-      Multiple destinations can be configured for the heartbeat singnals,
-      the number at the end of the parameter name is
-      referred as the "destination number", that starts from 0.
-      -->
-      ハートビート信号の送る先の<acronym>IP</acronym>アドレスまたは <acronym>ホスト名</acronym>を指定します。
-      複数のハートビート信号の送り先が指定可能です。
-      0から始まるパラメータの最後の部分は送り先の番号です。
-     </para>
-     <para>
-      <!--
-      <varname>heartbeat_destination</varname> is only applicable if the
-      <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-      -->
-      <varname>heartbeat_destination</varname>は、<xref linkend="guc-wd-lifecheck-method">が<literal>'heartbeat'</literal>に設定されている場合のみ有効です。
-     </para>
-     <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータは、サーバ起動時にのみ設定できます。
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry id="guc-heartbeat-destination-port" xreflabel="heartbeat_destination_port<emphasis>0</emphasis>">
-    <term><varname>heartbeat_destination_port0</varname> (<type>integer</type>)
-     <indexterm>
-      <!--
-      <primary><varname>heartbeat_destination_port</varname> configuration parameter</primary>
-      -->
-      <primary><varname>heartbeat_destination_port</varname>設定パラメータ</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      <!--
-      Specifies the destination port number for the heartbeat_destinationX of the remote
-      <productname>Pgpool-II</productname> for sending the heartbeat signals.
-      Multiple destinations can be configured for the heartbeat singnals,
-      the number at the end of the parameter name is
-      referred as the "destination number", that starts from 0.
-      -->
-      ハートビート信号の送る先のポート番号を指定します。
-      複数のハートビート信号の送り先が指定可能です。
-      0から始まるパラメータの最後の部分は送り先の番号です。
-     </para>
-     <para>
-      <!--
-      <varname>heartbeat_destination_port</varname> is only applicable if the
-      <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-      -->
-      <varname>heartbeat_destination_port</varname>は、<xref linkend="guc-wd-lifecheck-method"> が <literal>'heartbeat'</literal>に設定されている場合のみ有効です。 
-     </para>
-     <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータは、サーバ起動時にのみ設定できます。
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry id="guc-heartbeat-device" xreflabel="heartbeat_device">
-    <term><varname>heartbeat_device0</varname> (<type>string</type>)
-     <indexterm>
-      <!--
-      <primary><varname>heartbeat_device</varname> configuration parameter</primary>
-      -->
-      <primary><varname>heartbeat_device</varname>設定パラメータ</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      <!--
-      Specifies the network device name for sending the heartbeat signals to the destination specified by
-      heartbeat_destinationX:heartbeat_destination_portX.
-      Different heartbeat devices can be configured for each heartbeat destination
-      by changing the value of X(destination number)
-      at the end of parameter name. The destination index number starts from 0.
-      -->
-      heartbeat_destinationX:heartbeat_destination_portXで指定されるハートビートの送信先に用いるネットワークデバイス名を指定します。
-      パラメータ名の最後にあるXの値（送信先番号）を変えることにより、ハートビートの送信先ごとに異なるハートビートデバイス番号を設定することが可能です。
-      送信先番号は0から始まります。
-     </para>
-     <para>
-      <!--
-      <varname>heartbeat_device</varname> is only applicable if the
-      <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
-      -->
-      <varname>heartbeat_device</varname>は、<xref linkend="guc-wd-lifecheck-method">が<literal>'heartbeat'</literal>に設定されている場合のみ有効です。
-     </para>
-     <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータは、サーバ起動時にのみ設定できます。
-     </para>
-    </listitem>
-   </varlistentry>
-
   </variablelist>
  </sect2>
 
@@ -1638,101 +1699,6 @@
       Default is <literal>''</literal>(empty).
       -->
       デフォルトは<literal>''</literal>（空文字）です.
-     </para>
-    </listitem>
-   </varlistentry>
-
-  </variablelist>
- </sect2>
-
- <sect2 id="config-watchdog-server-configuration">
-  <!--
-  <title>Watchdog servers configurations</title>
-  -->
-  <title>Watchdogサーバの設定</title>
-  <variablelist>
-
-   <varlistentry id="guc-other-pgpool-hostname" xreflabel="other_pgpool_hostname">
-    <term><varname>other_pgpool_hostname0</varname> (<type>string</type>)
-     <indexterm>
-      <!--
-      <primary><varname>other_pgpool_hostname</varname> configuration parameter</primary>
-      -->
-      <primary><varname>other_pgpool_hostname</varname>設定パラメータ</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      <!--
-      Specifies the hostname of remote <productname>Pgpool-II</productname> server for watchdog node.
-      The number at the end of the parameter name is referred as "server id", and it starts from 0.
-      -->
-      リモートのwatchdogノードに対する<productname>Pgpool-II</productname>サーバのホスト名を指定します。
-      パラメータ名の最後にある数字は「サーバ番号」で、0から始まります。
-     </para>
-     <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータは、サーバ起動時にのみ設定できます。
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry id="guc-other-pgpool-port" xreflabel="other_pgpool_port">
-    <term><varname>other_pgpool_port0</varname> (<type>integer</type>)
-     <indexterm>
-      <!--
-      <primary><varname>other_pgpool_port</varname> configuration parameter</primary>
-      -->
-      <primary><varname>other_pgpool_port</varname>設定パラメータ</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      <!--
-      Specifies the port number of the remote <productname>Pgpool-II</productname>
-      server for watchdog node.
-      The number at the end of the parameter name is referred
-      as "server id", and it starts from 0.
-      -->
-      リモートのwatchdogノードに対する<productname>Pgpool-II</productname>サーバのポート番号を指定します。
-      パラメータ名の最後にある数字は「サーバ番号」で、0から始まります。
-     </para>
-     <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータは、サーバ起動時にのみ設定できます。
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry id="guc-other-wd-port" xreflabel="other_wd_port">
-    <term><varname>other_wd_port0</varname> (<type>integer</type>)
-     <indexterm>
-      <!--
-      <primary><varname>other_wd_port0</varname> configuration parameter</primary>
-      -->
-      <primary><varname>other_wd_port0</varname>設定パラメータ</primary>
-     </indexterm>
-    </term>
-    <listitem>
-     <para>
-      <!--
-      Specifies the watchdog port number of the remote
-      <productname>Pgpool-II</productname> server for watchdog node.
-      The number at the end of the parameter name is referred
-      as "server id", and it starts from 0.
-      -->
-      リモートの<productname>Pgpool-II</productname>サーバにおけるwatchdogのポート番号を指定します。
-      パラメータ名の最後にある数字は「サーバ番号」で、0から始まります。
-     </para>
-     <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータは、サーバ起動時にのみ設定できます。
      </para>
     </listitem>
    </varlistentry>
