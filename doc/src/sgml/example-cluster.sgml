@@ -422,11 +422,11 @@
    </para>
    <programlisting>
     health_check_period = 5
-    # Health check period
-    # Disabled (0) by default
+                                            # Health check period
+                                            # Disabled (0) by default
     health_check_timeout = 30
-    # Health check timeout
-    # 0 means no timeout
+                                            # Health check timeout
+                                            # 0 means no timeout
     health_check_user = 'pgpool'
     health_check_password = ''
 
@@ -440,16 +440,16 @@
     # - Backend Connection Settings -
 
     backend_hostname0 = 'server1'
-    # Host name or IP address to connect to for backend 0
+                                            # Host name or IP address to connect to for backend 0
     backend_port0 = 5432
-    # Port number for backend 0
+                                            # Port number for backend 0
     backend_weight0 = 1
-    # Weight for backend 0 (only in load balancing mode)
+                                            # Weight for backend 0 (only in load balancing mode)
     backend_data_directory0 = '/var/lib/pgsql/11/data'
-    # Data directory for backend 0
+                                            # Data directory for backend 0
     backend_flag0 = 'ALLOW_TO_FAILOVER'
-    # Controls various backend behavior
-    # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
+                                            # Controls various backend behavior
+                                            # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
     backend_hostname1 = 'server2'
     backend_port1 = 5432
     backend_weight1 = 1
@@ -501,287 +501,28 @@
     </para>
    </note>
    <para>
-    Create <filename>/etc/pgpool-II/failover.sh</filename>, and add execute permission.
+    Sample scripts <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/master">failover.sh</ulink>
+    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_master.sh.sample;hb=refs/heads/master">follow_master.sh</ulink>
+    are installed in <filename>/etc/pgpool-II/</filename>. Create failover scripts using these sample files.
    </para>
    <programlisting>
-    # vi /etc/pgpool-II/failover.sh
-    # vi /etc/pgpool-II/follow_master.sh
-    # chmod +x /etc/pgpool-II/{failover.sh,follow_master.sh}
+    # cp /etc/pgpool-II/failover.sh{.sample,}
+    # cp /etc/pgpool-II/follow_master.sh{.sample,}
    </programlisting>
+   <para>
+    Basically, it should work if you change <emphasis>PGHOME</emphasis> according to PostgreSQL installation directory.
+   </para>
+   <programlisting>
+    [server1]# vi /etc/pgpool-II/failover.sh
+    ...
+    PGHOME=/usr/pgsql-11
+    ...
 
-   <itemizedlist>
-    <listitem>
-     <para>
-      /etc/pgpool-II/failover.sh
-     </para>
-     <programlisting>
-#!/bin/bash
-# This script is run by failover_command.
-
-set -o xtrace
-exec &gt; &gt;(logger -i -p local1.info) 2&gt;&1
-
-# Special values:
-#   %d = failed node id
-#   %h = failed node hostname
-#   %p = failed node port number
-#   %D = failed node database cluster path
-#   %m = new master node id
-#   %H = new master node hostname
-#   %M = old master node id
-#   %P = old primary node id
-#   %r = new master port number
-#   %R = new master database cluster path
-#   %N = old primary node hostname
-#   %S = old primary node port number
-#   %% = '%' character
-
-FAILED_NODE_ID="$1"
-FAILED_NODE_HOST="$2"
-FAILED_NODE_PORT="$3"
-FAILED_NODE_PGDATA="$4"
-NEW_MASTER_NODE_ID="$5"
-NEW_MASTER_NODE_HOST="$6"
-OLD_MASTER_NODE_ID="$7"
-OLD_PRIMARY_NODE_ID="$8"
-NEW_MASTER_NODE_PORT="$9"
-NEW_MASTER_NODE_PGDATA="${10}"
-OLD_PRIMARY_NODE_HOST="${11}"
-OLD_PRIMARY_NODE_PORT="${12}"
-
-PGHOME=/usr/pgsql-11
-
-
-logger -i -p local1.info failover.sh: start: failed_node_id=$FAILED_NODE_ID old_primary_node_id=$OLD_PRIMARY_NODE_ID failed_host=$FAILED_NODE_HOST new_master_host=$NEW_MASTER_NODE_HOST
-
-## If there's no master node anymore, skip failover.
-if [ $NEW_MASTER_NODE_ID -lt 0 ]; then
-    logger -i -p local1.info failover.sh: All nodes are down. Skipping failover.
-	exit 0
-fi
-
-## Test passwrodless SSH
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
-
-if [ $? -ne 0 ]; then
-    logger -i -p local1.info failover.sh: passwrodless SSH to postgres@${NEW_MASTER_NODE_HOST} failed. Please setup passwrodless SSH.
-    exit 1
-fi
-
-## If Standby node is down, skip failover.
-if [ $FAILED_NODE_ID -ne $OLD_PRIMARY_NODE_ID ]; then
-    logger -i -p local1.info failover.sh: Standby node is down. Skipping failover.
-
-    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$OLD_PRIMARY_NODE_HOST -i ~/.ssh/id_rsa_pgpool "
-        ${PGHOME}/bin/psql -p $OLD_PRIMARY_NODE_PORT -c \"SELECT pg_drop_replication_slot('${FAILED_NODE_HOST}')\"
-    "
-
-    if [ $? -ne 0 ]; then
-        logger -i -p local1.error failover.sh: drop replication slot "${FAILED_NODE_HOST}" failed
-        exit 1
-    fi
-
-    exit 0
-fi
-
-## Promote Standby node.
-logger -i -p local1.info failover.sh: Primary node is down, promote standby node ${NEW_MASTER_NODE_HOST}.
-
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-    postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ${PGHOME}/bin/pg_ctl -D ${NEW_MASTER_NODE_PGDATA} -w promote
-
-if [ $? -ne 0 ]; then
-    logger -i -p local1.error failover.sh: new_master_host=$NEW_MASTER_NODE_HOST promote failed
-    exit 1
-fi
-
-logger -i -p local1.info failover.sh: end: new_master_node_id=$NEW_MASTER_NODE_ID started as the primary node
-exit 0
-     </programlisting>
-    </listitem>
-   </itemizedlist>
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      /etc/pgpool-II/follow_master.sh
-     </para>
-     <programlisting>
-#!/bin/bash
-# This script is run after failover_command to synchronize the Standby with the new Primary.
-# First try pg_rewind. If pg_rewind failed, use pg_basebackup.
-
-set -o xtrace
-exec &gt; &gt;(logger -i -p local1.info) 2&gt;&1
-
-# Special values:
-#   %d = failed node id
-#   %h = failed node hostname
-#   %p = failed node port number
-#   %D = failed node database cluster path
-#   %m = new master node id
-#   %H = new master node hostname
-#   %M = old master node id
-#   %P = old primary node id
-#   %r = new master port number
-#   %R = new master database cluster path
-#   %N = old primary node hostname
-#   %S = old primary node port number
-#   %% = '%' character
-
-FAILED_NODE_ID="$1"
-FAILED_NODE_HOST="$2"
-FAILED_NODE_PORT="$3"
-FAILED_NODE_PGDATA="$4"
-NEW_MASTER_NODE_ID="$5"
-NEW_MASTER_NODE_HOST="$6"
-OLD_MASTER_NODE_ID="$7"
-OLD_PRIMARY_NODE_ID="$8"
-NEW_MASTER_NODE_PORT="$9"
-NEW_MASTER_NODE_PGDATA="${10}"
-
-PGHOME=/usr/pgsql-11
-ARCHIVEDIR=/var/lib/pgsql/archivedir
-REPLUSER=repl
-PCP_USER=pgpool
-PGPOOL_PATH=/usr/bin
-PCP_PORT=9898
-
-logger -i -p local1.info follow_master.sh: start: Standby node ${FAILED_NODE_ID}
-
-## Test passwrodless SSH
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
-
-if [ $? -ne 0 ]; then
-    logger -i -p local1.info follow_master.sh: passwrodless SSH to postgres@${NEW_MASTER_NODE_HOST} failed. Please setup passwrodless SSH.
-    exit 1
-fi
-
-## Get PostgreSQL major version
-PGVERSION=`${PGHOME}/bin/initdb -V | awk '{print $3}' | sed 's/\..*//' | sed 's/\([0-9]*\)[a-zA-Z].*/\1/'`
-
-if [ $PGVERSION -ge 12 ]; then
-RECOVERYCONF=${FAILED_NODE_PGDATA}/myrecovery.conf
-else
-RECOVERYCONF=${FAILED_NODE_PGDATA}/recovery.conf
-fi
-
-## Check the status of Standby
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-postgres@${FAILED_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ${PGHOME}/bin/pg_ctl -w -D ${FAILED_NODE_PGDATA} status
-
-
-## If Standby is running, synchronize it with the new Primary.
-if [ $? -eq 0 ]; then
-
-    logger -i -p local1.info follow_master.sh: pg_rewind for $FAILED_NODE_ID
-
-    # Create replication slot "${FAILED_NODE_HOST}"
-    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
-        ${PGHOME}/bin/psql -p ${NEW_MASTER_NODE_PORT} -c \"SELECT pg_create_physical_replication_slot('${FAILED_NODE_HOST}');\"
-    "
-
-    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${FAILED_NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
-
-        set -o errexit
-
-        ${PGHOME}/bin/pg_ctl -w -m f -D ${FAILED_NODE_PGDATA} stop
-
-        cat &gt; ${RECOVERYCONF} &lt;&lt; EOT
-primary_conninfo = 'host=${NEW_MASTER_NODE_HOST} port=${NEW_MASTER_NODE_PORT} user=${REPLUSER} application_name=${FAILED_NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
-recovery_target_timeline = 'latest'
-restore_command = 'scp ${NEW_MASTER_NODE_HOST}:${ARCHIVEDIR}/%f %p'
-primary_slot_name = '${FAILED_NODE_HOST}'
-EOT
-
-        if [ ${PGVERSION} -ge 12 ]; then
-            touch ${FAILED_NODE_PGDATA}/standby.signal
-        else
-            echo \"standby_mode = 'on'\" &gt;&gt; ${RECOVERYCONF}
-        fi
-
-        ${PGHOME}/bin/pg_rewind -D ${FAILED_NODE_PGDATA} --source-server=\"user=postgres host=${NEW_MASTER_NODE_HOST} port=${NEW_MASTER_NODE_PORT}\"
-
-    "
-
-    if [ $? -ne 0 ]; then
-        logger -i -p local1.error follow_master.sh: end: pg_rewind failed. Try pg_basebackup.
-
-        ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${FAILED_NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
-             
-            set -o errexit
-
-            # Execute pg_basebackup
-            rm -rf ${FAILED_NODE_PGDATA}
-            rm -rf ${ARCHIVEDIR}/*
-            ${PGHOME}/bin/pg_basebackup -h ${NEW_MASTER_NODE_HOST} -U $REPLUSER -p ${NEW_MASTER_NODE_PORT} -D ${FAILED_NODE_PGDATA} -X stream
-
-            if [ ${PGVERSION} -ge 12 ]; then
-                sed -i -e \"\\\$ainclude_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'\" \
-                       -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${FAILED_NODE_PGDATA}/postgresql.conf
-            fi
-     
-            cat > ${RECOVERYCONF} &lt;&lt; EOT
-primary_conninfo = 'host=${NEW_MASTER_NODE_HOST} port=${NEW_MASTER_NODE_PORT} user=${REPLUSER} application_name=${FAILED_NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
-recovery_target_timeline = 'latest'
-restore_command = 'scp ${NEW_MASTER_NODE_HOST}:${ARCHIVEDIR}/%f %p'
-primary_slot_name = '${FAILED_NODE_HOST}'
-EOT
-
-            if [ ${PGVERSION} -ge 12 ]; then
-                    touch ${FAILED_NODE_PGDATA}/standby.signal
-            else
-                    echo \"standby_mode = 'on'\" &gt;&gt; ${RECOVERYCONF}
-            fi
-        "
-
-        if [ $? -ne 0 ]; then
-            # drop replication slot
-            ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
-                ${PGHOME}/bin/psql -p ${NEW_MASTER_NODE_PORT} -c \"SELECT pg_drop_replication_slot('${FAILED_NODE_HOST}')\"
-            "
-
-            logger -i -p local1.error follow_master.sh: end: pg_basebackup failed
-            exit 1
-        fi
-    fi
-
-    # start Standby node on ${FAILED_NODE_HOST}
-    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-            postgres@${FAILED_NODE_HOST} -i ~/.ssh/id_rsa_pgpool $PGHOME/bin/pg_ctl -l /dev/null -w -D ${FAILED_NODE_PGDATA} start
-
-    # If start Standby successfully, attach this node
-    if [ $? -eq 0 ]; then
-
-        # Run pcp_attact_node to attach Standby node to Pgpool-II.
-        ${PGPOOL_PATH}/pcp_attach_node -w -h localhost -U $PCP_USER -p ${PCP_PORT} -n ${FAILED_NODE_ID}
-
-        if [ $? -ne 0 ]; then
-                logger -i -p local1.error follow_master.sh: end: pcp_attach_node failed
-                exit 1
-        fi
-
-    # If start Standby failed, drop replication slot "${FAILED_NODE_HOST}"
-    else
-
-        ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool \
-        ${PGHOME}/bin/psql -p ${NEW_MASTER_NODE_PORT} -c "SELECT pg_drop_replication_slot('${FAILED_NODE_HOST}')"
-
-        logger -i -p local1.error follow_master.sh: end: follow master command failed
-        exit 1
-    fi
-
-else
-    logger -i -p local1.info follow_master.sh: failed_nod_id=${FAILED_NODE_ID} is not running. skipping follow master command
-    exit 0
-fi
-
-logger -i -p local1.info follow_master.sh: end: follow master command complete
-exit 0
-     </programlisting>
-    </listitem>
-   </itemizedlist>
-
+    [server1]# vi /etc/pgpool-II/follow_master.sh
+    ...
+    PGHOME=/usr/pgsql-11
+    ...
+   </programlisting>
   </sect3>
 
   <sect3 id="example-cluster-pgpool-config-online-recovery">
@@ -798,153 +539,36 @@ exit 0
    </para>
    <programlisting>
     recovery_user = 'postgres'
-    # Online recovery user
+                                            # Online recovery user
     recovery_password = ''
-    # Online recovery password
+                                            # Online recovery password
 
     recovery_1st_stage_command = 'recovery_1st_stage'
    </programlisting>
+   <para>
+    Online recovery sample scripts<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/master">recovery_1st_stage</ulink>
+    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/master">pgpool_remote_start</ulink>
+    are installed in <filename>/etc/pgpool-II/</filename>. Copy these files to the data directory of the primary server (server1).
+   </para>
    <programlisting>
-    [server1]# su - postgres
-    [server1]$ vi /var/lib/pgsql/11/data/recovery_1st_stage
-    [server1]$ vi /var/lib/pgsql/11/data/pgpool_remote_start
-    [server1]$ chmod +x /var/lib/pgsql/11/data/{recovery_1st_stage,pgpool_remote_start}
+    [server1]# cp /etc/pgpool-II/recovery_1st_stage.sample /var/lib/pgsql/11/data/
+    [server1]# cp /etc/pgpool-II/pgpool_remote_start.sample /var/lib/pgsql/11/data/
+    [server1]# chown postgres:postgres /var/lib/pgsql/11/data/{recovery_1st_stage,pgpool_remote_start}
    </programlisting>
+   <para>
+    Basically, it should work if you change <emphasis>PGHOME</emphasis> according to PostgreSQL installation directory.
+   </para>
+   <programlisting>
+    [server1]# vi /var/lib/pgsql/11/data/recovery_1st_stage
+    ...
+    PGHOME=/usr/pgsql-11
+    ...
 
-   <itemizedlist>
-    <listitem>
-     <para>
-      /var/lib/pgsql/11/data/recovery_1st_stage
-     </para>
-     <programlisting>
-#!/bin/bash
-# This script is executed by "recovery_1st_stage" to recovery a Standby node.
-
-set -o xtrace
-exec &gt; &gt;(logger -i -p local1.info) 2&gt;&1
-
-PRIMARY_NODE_PGDATA="$1"
-DEST_NODE_HOST="$2"
-DEST_NODE_PGDATA="$3"
-PRIMARY_NODE_PORT="$4"
-DEST_NODE_ID="$5"
-DEST_NODE_PORT="$6"
-
-PRIMARY_NODE_HOST=$(hostname)
-PGHOME=/usr/pgsql-11
-ARCHIVEDIR=/var/lib/pgsql/archivedir
-REPLUSER=repl
-
-logger -i -p local1.info recovery_1st_stage: start: pg_basebackup for Standby node $DEST_NODE_ID
-
-## Test passwrodless SSH
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
-
-if [ $? -ne 0 ]; then
-    logger -i -p local1.info recovery_1st_stage: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
-    exit 1
-fi
-
-## Get PostgreSQL major version
-PGVERSION=`${PGHOME}/bin/initdb -V | awk '{print $3}' | sed 's/\..*//' | sed 's/\([0-9]*\)[a-zA-Z].*/\1/'`
-if [ $PGVERSION -ge 12 ]; then
-    RECOVERYCONF=${DEST_NODE_PGDATA}/myrecovery.conf
-else
-    RECOVERYCONF=${DEST_NODE_PGDATA}/recovery.conf
-fi
-
-## Create replication slot "${DEST_NODE_HOST}"
-${PGHOME}/bin/psql -p ${PRIMARY_NODE_PORT} &lt;&lt; EOQ
-SELECT pg_create_physical_replication_slot('${DEST_NODE_HOST}');
-EOQ
-
-## Execute pg_basebackup to recovery Standby node
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DEST_NODE_HOST -i ~/.ssh/id_rsa_pgpool "
-
-    set -o errexit
-
-    rm -rf $DEST_NODE_PGDATA
-    rm -rf $ARCHIVEDIR/*
-
-    ${PGHOME}/bin/pg_basebackup -h $PRIMARY_NODE_HOST -U $REPLUSER -p $PRIMARY_NODE_PORT -D $DEST_NODE_PGDATA -X stream
-
-    if [ ${PGVERSION} -ge 12 ]; then
-        sed -i -e \"\\\$ainclude_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'\" \
-               -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${DEST_NODE_PGDATA}/postgresql.conf
-    fi
-
-    cat &gt; ${RECOVERYCONF} &lt;&lt; EOT
-primary_conninfo = 'host=${PRIMARY_NODE_HOST} port=${PRIMARY_NODE_PORT} user=${REPLUSER} application_name=${DEST_NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
-recovery_target_timeline = 'latest'
-restore_command = 'scp ${PRIMARY_NODE_HOST}:${ARCHIVEDIR}/%f %p'
-primary_slot_name = '${DEST_NODE_HOST}'
-EOT
-
-    if [ ${PGVERSION} -ge 12 ]; then
-            touch ${DEST_NODE_PGDATA}/standby.signal
-    else
-            echo \"standby_mode = 'on'\" &gt;&gt; ${RECOVERYCONF}
-    fi
-
-    sed -i \"s/#*port = .*/port = ${DEST_NODE_PORT}/\" ${DEST_NODE_PGDATA}/postgresql.conf
-"
-
-if [ $? -ne 0 ]; then
-
-    ${PGHOME}/bin/psql -p ${PRIMARY_NODE_PORT} &lt;&lt; EOQ
-SELECT pg_drop_replication_slot('${DEST_NODE_HOST}');
-EOQ
-
-    logger -i -p local1.error recovery_1st_stage: end: pg_basebackup failed. online recovery failed
-    exit 1
-fi
-
-logger -i -p local1.info recovery_1st_stage: end: recovery_1st_stage complete
-exit 0
-     </programlisting>
-    </listitem>
-    <listitem>
-
-     <para>
-      /var/lib/pgsql/11/data/pgpool_remote_start
-     </para>
-     <programlisting>
-#!/bin/bash
-# This script is run after recovery_1st_stage to start Standby node.
-
-set -o xtrace
-exec &gt; &gt;(logger -i -p local1.info) 2&gt;&1
-
-PGHOME=/usr/pgsql-11
-DEST_NODE_HOST="$1"
-DEST_NODE_PGDATA="$2"
-
-
-logger -i -p local1.info pgpool_remote_start: start: remote start Standby node $DEST_NODE_HOST
-
-## Test passwrodless SSH
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
-
-if [ $? -ne 0 ]; then
-    logger -i -p local1.info pgpool_remote_start: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
-    exit 1
-fi
-
-## Start Standby node
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DEST_NODE_HOST -i ~/.ssh/id_rsa_pgpool "
-    $PGHOME/bin/pg_ctl -l /dev/null -w -D $DEST_NODE_PGDATA start
-"
-
-if [ $? -ne 0 ]; then
-    logger -i -p local1.error pgpool_remote_start: $DEST_NODE_HOST PostgreSQL start failed.
-    exit 1
-fi
-
-logger -i -p local1.info pgpool_remote_start: end: $DEST_NODE_HOST PostgreSQL started successfully.
-exit 0
-     </programlisting>
-    </listitem>
-   </itemizedlist>
+    [server1]# vi /var/lib/pgsql/11/data/pgpool_remote_start
+    ...
+    PGHOME=/usr/pgsql-11
+    ...
+   </programlisting>
 
    <para>
     In order to use the online recovery functionality, the functions of 
@@ -1112,14 +736,14 @@ arping_path = '/usr/sbin'
       # - Other pgpool Connection Settings -
 
       other_pgpool_hostname0 = 'server2'
-      # Host name or IP address to connect to for other pgpool 0
-      # (change requires restart)
+                                            # Host name or IP address to connect to for other pgpool 0
+                                            # (change requires restart)
       other_pgpool_port0 = 9999
-      # Port number for other pgpool 0
-      # (change requires restart)
+                                            # Port number for other pgpool 0
+                                            # (change requires restart)
       other_wd_port0 = 9000
-      # Port number for other watchdog 0
-      # (change requires restart)
+                                            # Port number for other watchdog 0
+                                            # (change requires restart)
       other_pgpool_hostname1 = 'server3'
       other_pgpool_port1 = 9999
       other_wd_port1 = 9000
@@ -1133,14 +757,14 @@ arping_path = '/usr/sbin'
       # - Other pgpool Connection Settings -
 
       other_pgpool_hostname0 = 'server1'
-      # Host name or IP address to connect to for other pgpool 0
-      # (change requires restart)
+                                            # Host name or IP address to connect to for other pgpool 0
+                                            # (change requires restart)
       other_pgpool_port0 = 9999
-      # Port number for other pgpool 0
-      # (change requires restart)
+                                            # Port number for other pgpool 0
+                                            # (change requires restart)
       other_wd_port0 = 9000
-      # Port number for other watchdog 0
-      # (change requires restart)
+                                            # Port number for other watchdog 0
+                                            # (change requires restart)
       other_pgpool_hostname1 = 'server3'
       other_pgpool_port1 = 9999
       other_wd_port1 = 9000
@@ -1154,14 +778,14 @@ arping_path = '/usr/sbin'
       # - Other pgpool Connection Settings -
 
       other_pgpool_hostname0 = 'server1'
-      # Host name or IP address to connect to for other pgpool 0
-      # (change requires restart)
+                                            # Host name or IP address to connect to for other pgpool 0
+                                            # (change requires restart)
       other_pgpool_port0 = 9999
-      # Port number for other pgpool 0
-      # (change requires restart)
+                                            # Port number for other pgpool 0
+                                            # (change requires restart)
       other_wd_port0 = 9000
-      # Port number for other watchdog 0
-      # (change requires restart)
+                                            # Port number for other watchdog 0
+                                            # (change requires restart)
       other_pgpool_hostname1 = 'server2'
       other_pgpool_port1 = 9999
       other_wd_port1 = 9000
@@ -1180,21 +804,21 @@ arping_path = '/usr/sbin'
      </para>
      <programlisting>
       heartbeat_destination0 = 'server2'
-      # Host name or IP address of destination 0
-      # for sending heartbeat signal.
-      # (change requires restart)
+                                            # Host name or IP address of destination 0
+                                            # for sending heartbeat signal.
+                                            # (change requires restart)
       heartbeat_destination_port0 = 9694
-      # Port number of destination 0 for sending
-      # heartbeat signal. Usually this is the
-      # same as wd_heartbeat_port.
-      # (change requires restart)
+                                            # Port number of destination 0 for sending
+                                            # heartbeat signal. Usually this is the
+                                            # same as wd_heartbeat_port.
+                                            # (change requires restart)
       heartbeat_device0 = ''
-      # Name of NIC device (such like 'eth0')
-      # used for sending/receiving heartbeat
-      # signal to/from destination 0.
-      # This works only when this is not empty
-      # and pgpool has root privilege.
-      # (change requires restart)
+                                            # Name of NIC device (such like 'eth0')
+                                            # used for sending/receiving heartbeat
+                                            # signal to/from destination 0.
+                                            # This works only when this is not empty
+                                            # and pgpool has root privilege.
+                                            # (change requires restart)
 
       heartbeat_destination1 = 'server3'
       heartbeat_destination_port1 = 9694
@@ -1207,21 +831,21 @@ arping_path = '/usr/sbin'
      </para>
      <programlisting>
       heartbeat_destination0 = 'server1'
-      # Host name or IP address of destination 0
-      # for sending heartbeat signal.
-      # (change requires restart)
+                                            # Host name or IP address of destination 0
+                                            # for sending heartbeat signal.
+                                            # (change requires restart)
       heartbeat_destination_port0 = 9694
-      # Port number of destination 0 for sending
-      # heartbeat signal. Usually this is the
-      # same as wd_heartbeat_port.
-      # (change requires restart)
+                                            # Port number of destination 0 for sending
+                                            # heartbeat signal. Usually this is the
+                                            # same as wd_heartbeat_port.
+                                            # (change requires restart)
       heartbeat_device0 = ''
-      # Name of NIC device (such like 'eth0')
-      # used for sending/receiving heartbeat
-      # signal to/from destination 0.
-      # This works only when this is not empty
-      # and pgpool has root privilege.
-      # (change requires restart)
+                                            # Name of NIC device (such like 'eth0')
+                                            # used for sending/receiving heartbeat
+                                            # signal to/from destination 0.
+                                            # This works only when this is not empty
+                                            # and pgpool has root privilege.
+                                            # (change requires restart)
 
       heartbeat_destination1 = 'server3'
       heartbeat_destination_port1 = 9694
@@ -1234,21 +858,21 @@ arping_path = '/usr/sbin'
      </para>
      <programlisting>
       heartbeat_destination0 = 'server1'
-      # Host name or IP address of destination 0
-      # for sending heartbeat signal.
-      # (change requires restart)
+                                            # Host name or IP address of destination 0
+                                            # for sending heartbeat signal.
+                                            # (change requires restart)
       heartbeat_destination_port0 = 9694
-      # Port number of destination 0 for sending
-      # heartbeat signal. Usually this is the
-      # same as wd_heartbeat_port.
-      # (change requires restart)
+                                            # Port number of destination 0 for sending
+                                            # heartbeat signal. Usually this is the
+                                            # same as wd_heartbeat_port.
+                                            # (change requires restart)
       heartbeat_device0 = ''
-      # Name of NIC device (such like 'eth0')
-      # used for sending/receiving heartbeat
-      # signal to/from destination 0.
-      # This works only when this is not empty
-      # and pgpool has root privilege.
-      # (change requires restart)
+                                            # Name of NIC device (such like 'eth0')
+                                            # used for sending/receiving heartbeat
+                                            # signal to/from destination 0.
+                                            # This works only when this is not empty
+                                            # and pgpool has root privilege.
+                                            # (change requires restart)
 
       heartbeat_destination1 = 'server2'
       heartbeat_destination_port1 = 9694
