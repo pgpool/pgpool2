@@ -144,7 +144,7 @@
 	<row>
 	 <entry>%m</entry>
 	 <!--
-	 <entry>	New master node ID</entry>
+	 <entry>New master node ID</entry>
 	 -->
 	 <entry>新しいマスターノードのID</entry>
 	</row>
@@ -158,7 +158,7 @@
 	<row>
 	 <entry>%P</entry>
 	 <!--
-	 <entry>	Old primary node ID</entry>
+	 <entry>Old primary node ID</entry>
 	 -->
 	 <entry>古いプライマリノードのID</entry>
 	</row>
@@ -193,9 +193,9 @@
 	<row>
 	 <entry>%%</entry>
 	 <!--
-	 <entry>	'%' character</entry>
+	 <entry>'%' character</entry>
 	 -->
-	 <entry>	'%'文字</entry>
+	 <entry>'%'文字</entry>
 	</row>
 
        </tbody>
@@ -362,7 +362,7 @@
 	<row>
 	 <entry>%m</entry>
 	 <!--
-	 <entry>	New master node ID</entry>
+	 <entry>New master node ID</entry>
 	 -->
 	 <entry>新しいマスターノードのID</entry>
 	</row>
@@ -376,9 +376,9 @@
 	<row>
 	 <entry>%P</entry>
 	 <!--
-	 <entry>	Current primary node ID</entry>
+	 <entry>Old primary node ID</entry>
 	 -->
-	 <entry>現在のプライマリノードのID</entry>
+	 <entry>古いプライマリノードのID</entry>
 	</row>
 	<row>
 	 <entry>%r</entry>
@@ -411,9 +411,9 @@
 	<row>
 	 <entry>%%</entry>
 	 <!--
-	 <entry>	'%' character</entry>
+	 <entry>'%' character</entry>
 	 -->
-	 <entry>	'%'文字</entry>
+	 <entry>'%'文字</entry>
 	</row>
 
        </tbody>
@@ -560,7 +560,7 @@
 	<row>
 	 <entry>%m</entry>
 	 <!--
-	 <entry>	New primary node ID</entry>
+	 <entry>New primary node ID</entry>
 	 -->
 	 <entry>新しいプライマリノードのID</entry>
 	</row>
@@ -574,7 +574,7 @@
 	<row>
 	 <entry>%P</entry>
 	 <!--
-	 <entry>	Old primary node ID</entry>
+	 <entry>Old primary node ID</entry>
 	 -->
 	 <entry>古いプライマリノードのID</entry>
 	</row>
@@ -609,9 +609,9 @@
 	<row>
 	 <entry>%%</entry>
 	 <!--
-	 <entry>	'%' character</entry>
+	 <entry>'%' character</entry>
 	 -->
-	 <entry>	'%'文字</entry>
+	 <entry>'%'文字</entry>
 	</row>
 
        </tbody>
