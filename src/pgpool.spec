@@ -135,6 +135,7 @@ mv %{buildroot}%{_sysconfdir}/%{short_name}/pcp.conf.sample %{buildroot}%{_sysco
 mv %{buildroot}%{_sysconfdir}/%{short_name}/pgpool.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pgpool.conf
 mv %{buildroot}%{_sysconfdir}/%{short_name}/pool_hba.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pool_hba.conf
 touch %{buildroot}%{_sysconfdir}/%{short_name}/pool_passwd
+touch %{buildroot}%{_sysconfdir}/%{short_name}/pgpool_node_id
 
 %if %{systemd_enabled}
 install -d %{buildroot}%{_unitdir}
@@ -254,10 +255,12 @@ fi
 %{_initrddir}/pgpool
 %endif
 %defattr(600,postgres,postgres,-)
-%{_sysconfdir}/%{short_name}/pgpool.conf.sample-master-slave
-%{_sysconfdir}/%{short_name}/pgpool.conf.sample-replication
-%{_sysconfdir}/%{short_name}/pgpool.conf.sample-stream
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-logical
+%{_sysconfdir}/%{short_name}/pgpool.conf.sample-raw
+%{_sysconfdir}/%{short_name}/pgpool.conf.sample-replication
+%{_sysconfdir}/%{short_name}/pgpool.conf.sample-slony
+%{_sysconfdir}/%{short_name}/pgpool.conf.sample-snapshot
+%{_sysconfdir}/%{short_name}/pgpool.conf.sample-stream
 %defattr(755,postgres,postgres,-)
 %{_sysconfdir}/%{short_name}/failover.sh.sample
 %{_sysconfdir}/%{short_name}/follow_master.sh.sample
@@ -266,6 +269,7 @@ fi
 %{_sysconfdir}/%{short_name}/recovery_2nd_stage.sample
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/*.conf
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/pool_passwd
+%attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/pgpool_node_id
 %config(noreplace) %{_sysconfdir}/sysconfig/pgpool
 
 %files devel
