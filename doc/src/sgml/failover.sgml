@@ -161,7 +161,7 @@
 	</row>
 	<row>
 	 <entry>%%</entry>
-	 <entry>	'%' character</entry>
+	 <entry>'%' character</entry>
 	</row>
 
        </tbody>
@@ -277,7 +277,7 @@
 	</row>
 	<row>
 	 <entry>%m</entry>
-	 <entry>	New master node ID</entry>
+	 <entry>New master node ID</entry>
 	</row>
 	<row>
 	 <entry>%H</entry>
@@ -285,7 +285,7 @@
 	</row>
 	<row>
 	 <entry>%P</entry>
-	 <entry>	Current primary node ID</entry>
+	 <entry>Old primary node ID</entry>
 	</row>
 	<row>
 	 <entry>%r</entry>
@@ -297,7 +297,7 @@
 	</row>
 	<row>
 	 <entry>%%</entry>
-	 <entry>	'%' character</entry>
+	 <entry>'%' character</entry>
 	</row>
 
        </tbody>
@@ -402,7 +402,7 @@
 	</row>
 	<row>
 	 <entry>%m</entry>
-	 <entry>	New primary node ID</entry>
+	 <entry>New primary node ID</entry>
 	</row>
 	<row>
 	 <entry>%H</entry>
@@ -410,7 +410,7 @@
 	</row>
 	<row>
 	 <entry>%P</entry>
-	 <entry>	Old primary node ID</entry>
+	 <entry>Old primary node ID</entry>
 	</row>
 	<row>
 	 <entry>%r</entry>
@@ -422,7 +422,7 @@
 	</row>
 	<row>
 	 <entry>%%</entry>
-	 <entry>	'%' character</entry>
+	 <entry>'%' character</entry>
 	</row>
 
        </tbody>
