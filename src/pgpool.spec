@@ -130,9 +130,9 @@ make %{?_smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool_adm
 
 install -d %{buildroot}%{_datadir}/%{short_name}
 install -d %{buildroot}%{_sysconfdir}/%{short_name}
-mv %{buildroot}%{_sysconfdir}/%{short_name}/pcp.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pcp.conf
-mv %{buildroot}%{_sysconfdir}/%{short_name}/pgpool.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pgpool.conf
-mv %{buildroot}%{_sysconfdir}/%{short_name}/pool_hba.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pool_hba.conf
+cp %{buildroot}%{_sysconfdir}/%{short_name}/pcp.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pcp.conf
+cp %{buildroot}%{_sysconfdir}/%{short_name}/pgpool.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pgpool.conf
+cp %{buildroot}%{_sysconfdir}/%{short_name}/pool_hba.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pool_hba.conf
 
 %if %{systemd_enabled}
 install -d %{buildroot}%{_unitdir}
@@ -238,6 +238,8 @@ fi
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-replication
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-stream
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-logical
+%{_sysconfdir}/%{short_name}/pcp.conf.sample
+%{_sysconfdir}/%{short_name}/pool_hba.conf.sample
 %{_libdir}/libpcp.so.*
 %if %{systemd_enabled}
 %ghost %{_varrundir}
