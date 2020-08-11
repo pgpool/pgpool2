@@ -341,8 +341,11 @@ pool_connection_pool_timer(POOL_CONNECTION_POOL * backend)
 			(errmsg("setting backend connection close timer"),
 			 errdetail("close time %ld", time(NULL))));
 
-	MASTER_CONNECTION(backend)->closetime = time(NULL); /* set connection close
-														 * time */
+	/* Set connection close time */
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		CONNECTION_SLOT(backend, i)->closetime = time(NULL);
+	}
 
 	if (pool_config->connection_life_time == 0)
 		return;
