@@ -23,6 +23,7 @@
 #	'logical_replication', 'slony', 'raw' or 'snapshot_isolation'
 # (change requires restart)
 #------------------------------------------------------------------------------
+
 backend_clustering_mode = 'raw'
 
 #------------------------------------------------------------------------------
@@ -432,6 +433,10 @@ dml_adaptive_object_relationship_list= ''
 
 statement_level_load_balance = off
                                    # Enables statement level load balancing
+
+#------------------------------------------------------------------------------
+# MASTER/SLAVE MODE
+#------------------------------------------------------------------------------
 
 # - Streaming -
 

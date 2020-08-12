@@ -23,6 +23,7 @@
 #	'logical_replication', 'slony', 'raw' or 'snapshot_isolation'
 # (change requires restart)
 #------------------------------------------------------------------------------
+
 backend_clustering_mode = 'slony'
 
 #------------------------------------------------------------------------------
@@ -311,9 +312,6 @@ reset_query_list = 'ABORT; DISCARD ALL'
 # REPLICATION MODE
 #------------------------------------------------------------------------------
 
-replication_mode = off
-                                   # Activate replication mode
-                                   # (change requires restart)
 replicate_select = off
                                    # Replicate SELECT statements
                                    # when in replication mode
@@ -431,6 +429,10 @@ dml_adaptive_object_relationship_list= ''
 
 statement_level_load_balance = off
                                    # Enables statement level load balancing
+
+#------------------------------------------------------------------------------
+# MASTER/SLAVE MODE
+#------------------------------------------------------------------------------
 
 # - Streaming -
 

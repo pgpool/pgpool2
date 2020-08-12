@@ -22,6 +22,7 @@
 # Choose one of: 'streaming_replication', 'native_replication',
 #	'logical_replication', 'slony', 'raw' or 'snapshot_isolation'
 #------------------------------------------------------------------------------
+
 backend_clustering_mode = 'logical_replication'
 
 #------------------------------------------------------------------------------
@@ -314,9 +315,6 @@ reset_query_list = 'ABORT; DISCARD ALL'
 # REPLICATION MODE
 #------------------------------------------------------------------------------
 
-replication_mode = off
-                                   # Activate replication mode
-                                   # (change requires restart)
 replicate_select = off
                                    # Replicate SELECT statements
                                    # when in replication mode
