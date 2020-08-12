@@ -230,21 +230,11 @@
     </term>
     <listitem>
      <para>
-      <!--
-      Specifies a list of <acronym>SSL</acronym> cipher suites that
-      are allowed to be used on secure connections.  See
-      the <citerefentry><refentrytitle>ciphers</refentrytitle></citerefentry>
-      manual page in the <application>OpenSSL</application> package
-      for the syntax of this setting and a list of supported values.
-      The default value
-      is <literal>HIGH:MEDIUM:+3DES:!aNULL</literal>, which is same
-      as <productname>PostgreSQL</productname>.
-      See <productname>PostgreSQL</productname> manual to know why
-      the value is chosen.
-      -->
-      セキュアな接続で使用できる<acronym>SSL</acronym>暗号スイートのリストを指定します。
+      SSL接続で使用できる<acronym>SSL</acronym>暗号スイートのリストを指定します。
       設定構文と使用可能な値のリストについては<application>OpenSSL</application>パッケージの
       <citerefentry><refentrytitle>ciphers</refentrytitle></citerefentry>マニュアルをご覧ください。
+      TLSバージョン1.2あるいはそれ以下のバージョンのみが影響を受けます。
+      今の所、TLSバージョン1.3接続で使用される暗号の選択を制御する設定はありません。
       デフォルト値は<literal>HIGH:MEDIUM:+3DES:!aNULL</literal>で、<productname>PostgreSQL</productname>と同じです。
       この値が選ばれた理由については、<productname>PostgreSQL</productname>のマニュアルをご覧ください。
      </para>
