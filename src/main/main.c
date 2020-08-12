@@ -640,7 +640,7 @@ write_pid_file(void)
 						   pool_config->pid_file_name)));
 	}
 
-	fd = open(pid_file, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+	fd = open(pid_file, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
 	if (fd == -1)
 	{
 		ereport(FATAL,
