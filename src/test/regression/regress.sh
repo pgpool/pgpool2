@@ -176,6 +176,7 @@ fi
 verify_pginstallation
 export_env_vars
 print_info
+source $TESTLIBS
 
 #Start executing tests
 rm -fr $log
@@ -193,6 +194,7 @@ for i in $dirs
 do
 	cd $i
 	echo -n "testing $i..."
+	clean_all
 	timeout $TIMEOUT ./test.sh > $log/$i 2>&1
 	rtn=$?
 	if [ $rtn = 0 ];then
