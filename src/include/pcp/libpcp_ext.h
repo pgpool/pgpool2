@@ -271,6 +271,9 @@ typedef struct
 	char		delete_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		ddl_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		other_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];	
+	char		panic_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];	
+	char		fatal_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];	
+	char		error_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];	
 }			POOL_BACKEND_STATS;
 
 typedef enum

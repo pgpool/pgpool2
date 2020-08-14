@@ -34,6 +34,9 @@ typedef struct
 	uint64		delete_cnt;		/* number of DELETE queries issued */
 	uint64		ddl_cnt;		/* number of DDL queries issued */
 	uint64		other_cnt;		/* number of any other queries issued */
+	uint64		panic_cnt;		/* number of PANIC messages */
+	uint64		fatal_cnt;		/* number of FATAL messages */
+	uint64		error_cnt;		/* number of ERROR messages */
 }			PER_NODE_STAT;
 
 static volatile PER_NODE_STAT *per_node_stat;
@@ -137,6 +140,20 @@ stat_count_up(int backend_node_id, Node *parse_tree)
 }
 
 /*
+ * Update error stat counter
+ */
+void
+error_stat_count_up(int backend_node_id, char *str)
+{
+	if (strcasecmp(str, "PANIC") == 0)
+		per_node_stat[backend_node_id].panic_cnt++;
+	else if (strcasecmp(str, "FATAL") == 0)
+		per_node_stat[backend_node_id].fatal_cnt++;
+	else if (strcasecmp(str, "ERROR") == 0)
+		per_node_stat[backend_node_id].error_cnt++;
+}
+
+/*
  * Stat counter read functions
  */
 uint64
@@ -173,4 +190,22 @@ uint64
 stat_get_other_count(int backend_node_id)
 {
 	return per_node_stat[backend_node_id].other_cnt;
+}
+
+uint64
+stat_get_panic_count(int backend_node_id)
+{
+	return per_node_stat[backend_node_id].panic_cnt;
+}
+
+uint64
+stat_get_fatal_count(int backend_node_id)
+{
+	return per_node_stat[backend_node_id].fatal_cnt;
+}
+
+uint64
+stat_get_error_count(int backend_node_id)
+{
+	return per_node_stat[backend_node_id].error_cnt;
 }

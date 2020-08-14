@@ -2133,6 +2133,9 @@ get_backend_stats(int *nrows)
 		snprintf(backend_stats[i].delete_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_delete_count(i));
 		snprintf(backend_stats[i].ddl_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_ddl_count(i));
 		snprintf(backend_stats[i].other_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_other_count(i));
+		snprintf(backend_stats[i].panic_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_panic_count(i));
+		snprintf(backend_stats[i].fatal_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_fatal_count(i));
+		snprintf(backend_stats[i].error_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_error_count(i));
 
 		if (STREAM)
 		{
@@ -2166,7 +2169,8 @@ void
 show_backend_stats(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
 	static char *field_names[] = {"node_id", "hostname", "port", "status", "role",
-								  "select_cnt", "insert_cnt", "update_cnt", "delete_cnt", "ddl_cnt", "other_cnt"};
+								  "select_cnt", "insert_cnt", "update_cnt", "delete_cnt", "ddl_cnt", "other_cnt",
+								  "panic_cnt", "fatal_cnt", "error_cnt"};
 
 	static int offsettbl[] = {
 		offsetof(POOL_BACKEND_STATS, node_id),
@@ -2179,7 +2183,10 @@ show_backend_stats(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 		offsetof(POOL_BACKEND_STATS, update_cnt),
 		offsetof(POOL_BACKEND_STATS, delete_cnt),
 		offsetof(POOL_BACKEND_STATS, ddl_cnt),
-		offsetof(POOL_BACKEND_STATS, other_cnt)
+		offsetof(POOL_BACKEND_STATS, other_cnt),
+		offsetof(POOL_BACKEND_STATS, panic_cnt),
+		offsetof(POOL_BACKEND_STATS, fatal_cnt),
+		offsetof(POOL_BACKEND_STATS, error_cnt),
 	};
 
 	int	nrows;

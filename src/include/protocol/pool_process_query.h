@@ -83,4 +83,6 @@ int reset_request);
 extern bool is_backend_cache_empty(POOL_CONNECTION_POOL * backend);
 extern void pool_send_readyforquery(POOL_CONNECTION * frontend);
 
+extern char *extract_error_kind(char *message, int major);
+
 #endif /* pool_process_query_h */

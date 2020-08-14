@@ -58,6 +58,7 @@
 #include "utils/pool_select_walker.h"
 #include "utils/pool_relcache.h"
 #include "utils/pool_stream.h"
+#include "utils/statistics.h"
 #include "context/pool_session_context.h"
 #include "context/pool_query_context.h"
 #include "query_cache/pool_memqcache.h"
@@ -81,7 +82,7 @@
 static int	reset_backend(POOL_CONNECTION_POOL * backend, int qcnt);
 static char *get_insert_command_table_name(InsertStmt *node);
 static bool is_cache_empty(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
-static bool is_panic_or_fatal_error(const char *message, int major);
+static bool is_panic_or_fatal_error(char *message, int major);
 static int	extract_message(POOL_CONNECTION * master, char *error_code, int major, char class, bool unread);
 static int	detect_postmaster_down_error(POOL_CONNECTION * master, int major);
 static bool is_internal_transaction_needed(Node *node);
@@ -716,6 +717,11 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 				 errdetail("read from backend failed")));
 	p1 = palloc(len);
 	memcpy(p1, p, len);
+
+	if (kind == 'E')
+	{
+		error_stat_count_up(MASTER_NODE_ID, extract_error_kind(p1, PROTO_MAJOR_V3));
+	}
 
 	/*
 	 * If we received a notification message in master/slave mode, other
@@ -4131,8 +4137,28 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
  * Returns true if error message contains PANIC or FATAL.
  */
 static bool
-is_panic_or_fatal_error(const char *message, int major)
+is_panic_or_fatal_error(char *message, int major)
 {
+	char *str;
+
+	str = extract_error_kind(message, major);
+
+	if (strncasecmp("PANIC", str, 5) == 0 || strncasecmp("FATAL", str, 5) == 0)
+		return true;
+
+	return false;
+}
+
+/*
+ * Look for token in the given ERROR response message, and return the message
+ * pointer in the message if 'V' or 'S' token found.
+ * Other wise returns "unknown".
+ */
+char *
+extract_error_kind(char *message, int major)
+{
+	char *ret = "unknown";
+
 	if (major == PROTO_MAJOR_V3)
 	{
 		for (;;)
@@ -4141,14 +4167,14 @@ is_panic_or_fatal_error(const char *message, int major)
 
 			id = *message++;
 			if (id == '\0')
-				break;
+				return ret;
 
 			/* V is never localized. Only available 9.6 or later. */
-			if (id == 'V' && (strcasecmp("PANIC", message) == 0 || strcasecmp("FATAL", message) == 0))
-				return true;
+			if (id == 'V')
+				return message;
 
-			if (id == 'S' && (strcasecmp("PANIC", message) == 0 || strcasecmp("FATAL", message) == 0))
-				return true;
+			if (id == 'S')
+				return message;
 			else
 			{
 				while (*message++)
@@ -4160,9 +4186,9 @@ is_panic_or_fatal_error(const char *message, int major)
 	else
 	{
 		if (strncmp(message, "PANIC", 5) == 0 || strncmp(message, "FATAL", 5) == 0)
-			return true;
+			return message;
 	}
-	return false;
+	return ret;
 }
 
 static int

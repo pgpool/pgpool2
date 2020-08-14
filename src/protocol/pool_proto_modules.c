@@ -2445,6 +2445,14 @@ ErrorResponse3(POOL_CONNECTION * frontend,
 			   POOL_CONNECTION_POOL * backend)
 {
 	POOL_STATUS ret;
+	char *message;
+	char *str;
+
+	if (pool_extract_error_message(false, MASTER(backend), PROTO_MAJOR_V3, true, &message) == 1)
+	{
+		str = extract_error_kind(message, PROTO_MAJOR_V3);
+		error_stat_count_up(MASTER_NODE_ID, str);
+	}
 
 	ret = SimpleForwardToFrontend('E', frontend, backend);
 	if (ret != POOL_CONTINUE)
