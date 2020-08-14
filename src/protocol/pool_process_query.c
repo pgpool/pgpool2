@@ -4143,6 +4143,10 @@ is_panic_or_fatal_error(const char *message, int major)
 			if (id == '\0')
 				break;
 
+			/* V is never localized. Only available 9.6 or later. */
+			if (id == 'V' && (strcasecmp("PANIC", message) == 0 || strcasecmp("FATAL", message) == 0))
+				return true;
+
 			if (id == 'S' && (strcasecmp("PANIC", message) == 0 || strcasecmp("FATAL", message) == 0))
 				return true;
 			else
