@@ -34,7 +34,8 @@ extern POOL_REPORT_POOLS * get_pools(int *nrows);
 extern POOL_REPORT_PROCESSES * get_processes(int *nrows);
 extern POOL_REPORT_NODES * get_nodes(int *nrows);
 extern POOL_REPORT_VERSION * get_version(void);
-POOL_HEALTH_CHECK_STATS *get_health_check_stats(int *nrows);
+extern POOL_HEALTH_CHECK_STATS *get_health_check_stats(int *nrows);
+extern POOL_BACKEND_STATS *get_backend_stats(int *nrows);
 
 extern void config_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
 extern void pools_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
@@ -43,6 +44,8 @@ extern void nodes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * b
 extern void version_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
 extern void cache_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
 extern void show_health_check_stats(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
+extern void show_backend_stats(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
+
 
 extern void send_config_var_detail_row(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *name, const char *value, const char *description);
 extern void send_config_var_value_only_row(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *value);

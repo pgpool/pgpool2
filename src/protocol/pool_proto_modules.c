@@ -181,6 +181,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	static char *sq_version = "pool_version";
 	static char *sq_cache = "pool_cache";
 	static char *sq_health_check_stats = "pool_health_check_stats";
+	static char *sq_backend_stats = "pool_backend_stats";
 	int			commit;
 	List	   *parse_tree_list;
 	Node	   *node = NULL;
@@ -443,6 +444,15 @@ SimpleQuery(POOL_CONNECTION * frontend,
 						(errmsg("SimpleQuery"),
 						 errdetail("health check stats")));
 				show_health_check_stats(frontend, backend);
+			}
+
+			else if (!strcmp(sq_backend_stats, vnode->name))
+			{
+				is_valid_show_command = true;
+				ereport(DEBUG1,
+						(errmsg("SimpleQuery"),
+						 errdetail("backend stats")));
+				show_backend_stats(frontend, backend);
 			}
 
 			if (is_valid_show_command)

@@ -1,0 +1,63 @@
+<!--
+    doc/src/sgml/ref/show_pool_backend_stats.sgml
+    Pgpool-II documentation
+  -->
+
+<refentry id="SQL-SHOW-POOL-BACKEND-STATS">
+ <indexterm zone="sql-show-pool-backend-stats">
+  <primary>SHOW POOL_BACKEND_STATS</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>SHOW POOL_BACKEND_STATS</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SHOW POOL_BACKEND_STATS</refname>
+  <refpurpose>
+   sends back a list of all configured nodes
+  </refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <synopsis>
+   SHOW POOL_BACKEND_STATS
+  </synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>SHOW POOL_BACKEND_STATS</command> displays the node id,
+   the hostname, the port, the status, the role, the
+   SELECT/INSERT/UPDATE/DELETE/DDL/other query counts issued to each
+   backend. The node id, the hostname, the port, the status, the role
+   are same as <xref linkend="sql-show-pool-nodes">.
+  </para>
+  <para>
+   select_cnt, insert_cnt, update_cnt, delete_cnt, ddl_cnt, other_cnt
+   are the numbers of SQL command: SELECT, INSERT, UPDATE, DELETE, DDL
+   and others issued since <productname>Pgpool-II</productname>
+   started. Commands rolled back are also counted. Currently, other
+   than
+   SELECT/WITH/INSERT/UPDATE/DELETE/CHECKPOINT/DEALLOCATE/DISCARD/EXECUTE/
+   EXPLAIN/LISTEN/LOAD/LOCK/NOTIFY/PREPARE/SET/SHOW/Transaction
+   commands/UNLISTEN are considered as DDL.
+  </para>
+  <para>
+   Here is an example session:
+   <programlisting>
+test=# show pool_backend_stats;
+ node_id | hostname | port  | status |  role   | select_cnt | insert_cnt | update_cnt | delete_cnt | ddl_cnt | other_cnt 
+---------+----------+-------+--------+---------+------------+------------+------------+------------+---------+-----------
+ 0       | /tmp     | 11002 | up     | primary | 27773      | 27784      | 83273      | 0          | 11      | 83298
+ 1       | /tmp     | 11003 | up     | standby | 1          | 0          | 0          | 0          | 0       | 41410
+(2 rows)
+   </programlisting>
+  </para>
+ </refsect1>
+
+</refentry>

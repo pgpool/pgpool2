@@ -257,6 +257,22 @@ typedef struct
 	char		last_failed_health_check[POOLCONFIG_MAXDATELEN];
 }			POOL_HEALTH_CHECK_STATS;
 
+/* show backend statistics report struct */
+typedef struct
+{
+	char		node_id[POOLCONFIG_MAXIDLEN + 1];
+	char		hostname[MAX_DB_HOST_NAMELEN + 1];
+	char		port[POOLCONFIG_MAXPORTLEN + 1];
+	char		status[POOLCONFIG_MAXSTATLEN + 1];
+	char		role[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		select_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		insert_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		update_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		delete_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		ddl_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		other_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];	
+}			POOL_BACKEND_STATS;
+
 typedef enum
 {
 	PCP_CONNECTION_OK,

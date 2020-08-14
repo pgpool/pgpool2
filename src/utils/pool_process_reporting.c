@@ -2108,6 +2108,94 @@ show_health_check_stats(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backe
 }
 
 /*
+ * for SHOW backend_stats
+ */
+POOL_BACKEND_STATS *
+get_backend_stats(int *nrows)
+{
+	int			i;
+	POOL_BACKEND_STATS *backend_stats = palloc(NUM_BACKENDS * sizeof(POOL_BACKEND_STATS));
+	BackendInfo *bi = NULL;
+
+	pool_get_session_context(false);
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		bi = pool_get_node_info(i);
+
+		snprintf(backend_stats[i].node_id, POOLCONFIG_MAXIDLEN, "%d", i);
+		StrNCpy(backend_stats[i].hostname, bi->backend_hostname, strlen(bi->backend_hostname) + 1);
+		snprintf(backend_stats[i].port, POOLCONFIG_MAXPORTLEN, "%d", bi->backend_port);
+		snprintf(backend_stats[i].status, POOLCONFIG_MAXSTATLEN, "%s", backend_status_to_str(bi));
+		snprintf(backend_stats[i].select_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_select_count(i));
+		snprintf(backend_stats[i].insert_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_insert_count(i));
+		snprintf(backend_stats[i].update_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_update_count(i));
+		snprintf(backend_stats[i].delete_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_delete_count(i));
+		snprintf(backend_stats[i].ddl_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_ddl_count(i));
+		snprintf(backend_stats[i].other_cnt, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_other_count(i));
+
+		if (STREAM)
+		{
+			if (i == REAL_PRIMARY_NODE_ID)
+			{
+				snprintf(backend_stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "primary");
+			}
+			else
+			{
+				snprintf(backend_stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "standby");
+			}
+		}
+		else
+		{
+			if (i == REAL_MASTER_NODE_ID)
+				snprintf(backend_stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "master");
+			else
+				snprintf(backend_stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "slave");
+		}
+	}
+
+	*nrows = i;
+
+	return backend_stats;
+}
+
+/*
+ * SHOW backend_stats;
+ */
+void
+show_backend_stats(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
+{
+	static char *field_names[] = {"node_id", "hostname", "port", "status", "role",
+								  "select_cnt", "insert_cnt", "update_cnt", "delete_cnt", "ddl_cnt", "other_cnt"};
+
+	static int offsettbl[] = {
+		offsetof(POOL_BACKEND_STATS, node_id),
+		offsetof(POOL_BACKEND_STATS, hostname),
+		offsetof(POOL_BACKEND_STATS, port),
+		offsetof(POOL_BACKEND_STATS, status),
+		offsetof(POOL_BACKEND_STATS, role),
+		offsetof(POOL_BACKEND_STATS, select_cnt),
+		offsetof(POOL_BACKEND_STATS, insert_cnt),
+		offsetof(POOL_BACKEND_STATS, update_cnt),
+		offsetof(POOL_BACKEND_STATS, delete_cnt),
+		offsetof(POOL_BACKEND_STATS, ddl_cnt),
+		offsetof(POOL_BACKEND_STATS, other_cnt)
+	};
+
+	int	nrows;
+	short		num_fields;
+	POOL_BACKEND_STATS *backend_stats;
+
+	num_fields = sizeof(field_names) / sizeof(char *);
+	backend_stats = get_backend_stats(&nrows);
+
+	send_row_description_and_data_rows(frontend, backend, num_fields, field_names, offsettbl,
+									   (char *)backend_stats, sizeof(POOL_BACKEND_STATS), nrows);
+
+	pfree(backend_stats);
+}
+
+/*
  * Send row description and data rows.
  *
  * Params:
