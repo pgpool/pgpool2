@@ -222,7 +222,7 @@
   &showPoolVersion
   &showPoolCache
   &showPoolHealthCheckStats
-
+  &showPoolBackendStats
  </reference>
  <reference id="pgpool-adm">
   <!--
