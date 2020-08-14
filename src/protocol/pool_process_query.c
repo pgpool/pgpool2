@@ -718,11 +718,6 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 	p1 = palloc(len);
 	memcpy(p1, p, len);
 
-	if (kind == 'E')
-	{
-		error_stat_count_up(MASTER_NODE_ID, extract_error_kind(p1, PROTO_MAJOR_V3));
-	}
-
 	/*
 	 * If we received a notification message in master/slave mode, other
 	 * backends will not receive the message. So we should skip other nodes
@@ -3422,6 +3417,37 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 	ereport(DEBUG5,
 			(errmsg("read_kind_from_backend max_count:%f num_executed_nodes:%d",
 					max_count, num_executed_nodes)));
+
+	/*
+	 * If kind is ERROR Response, accumulate statistics data.
+	 */
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		int	unread_len;
+		char *unread_p;
+		char *p;
+		int	len;
+
+		if (VALID_BACKEND(i))
+		{
+			if (kind_list[i] == 'E')
+			{
+				pool_read(CONNECTION(backend, i), &len, sizeof(len));
+				unread_len = sizeof(len);
+				unread_p = palloc(ntohl(len));
+				memcpy(unread_p, &len, sizeof(len));
+				len = ntohl(len);
+				len -= 4;
+				unread_p = repalloc(unread_p, sizeof(len) + len);
+				p = pool_read2(CONNECTION(backend, i), len);
+				memcpy(unread_p + sizeof(len), p, len);
+				unread_len += len;
+				error_stat_count_up(i, extract_error_kind(unread_p + sizeof(len), PROTO_MAJOR_V3));
+				pool_unread(CONNECTION(backend, i), unread_p, unread_len);
+				pfree(unread_p);
+			}
+		}
+	}
 
 	if (max_count != num_executed_nodes)
 	{
