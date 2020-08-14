@@ -49,14 +49,14 @@ pg_ctl -D data0 -m f stop
 
 wait_for_pgpool_startup
 
-pcp_recovery_node -p $PCP_PORT -w 0
+$PGPOOL_INSTALL_DIR/bin/pcp_recovery_node -p $PCP_PORT -w 0
 
 wait_for_pgpool_startup
 
 # get backend pid
 pid=`$PSQL -t -p 11000 -c "select pg_backend_pid()" test`
 echo "backend pid is: $pid"
-sleep `expr $timeout + 1`
+sleep `expr $timeout + 2`
 ps $pid
 if [ $? = 0 ];then
     echo "backend pid $pid still exists"
