@@ -35,6 +35,9 @@
 #include <time.h>
 #include <netinet/in.h>
 
+static void send_row_description_and_data_rows(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
+											   short num_fields, char **field_names, int *offsettbl,
+											   char *data, int row_size, int nrows);
 static void write_one_field(POOL_CONNECTION * frontend, char *field);
 static void write_one_field_v2(POOL_CONNECTION * frontend, char *field);
 
@@ -1329,165 +1332,34 @@ get_nodes(int *nrows)
 void
 nodes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
-	static char *field_names[] = {"node_id", "hostname", "port", "status", "lb_weight", "role", "select_cnt", "load_balance_node", "replication_delay", "replication_state", "replication_sync_state", "last_status_change"};
-	short		num_fields = sizeof(field_names) / sizeof(char *);
-	int			i;
-	short		s;
-	int			len;
-	int			nrows;
-	int			size;
-	int			hsize;
-	static unsigned char nullmap[2] = {0xff, 0xff};
-	int			nbytes = (num_fields + 7) / 8;
+	static char *field_names[] = {"node_id", "hostname", "port", "status", "lb_weight", "role",
+								  "select_cnt", "load_balance_node", "replication_delay",
+								  "replication_state", "replication_sync_state", "last_status_change"};
 
-	POOL_REPORT_NODES *nodes = get_nodes(&nrows);
+	static int offsettbl[] = {
+		offsetof(POOL_REPORT_NODES, node_id),
+		offsetof(POOL_REPORT_NODES, hostname),
+		offsetof(POOL_REPORT_NODES, port),
+		offsetof(POOL_REPORT_NODES, status),
+		offsetof(POOL_REPORT_NODES, lb_weight),
+		offsetof(POOL_REPORT_NODES, role),
+		offsetof(POOL_REPORT_NODES, select),
+		offsetof(POOL_REPORT_NODES, load_balance_node),
+		offsetof(POOL_REPORT_NODES, delay),
+		offsetof(POOL_REPORT_NODES, rep_state),
+		offsetof(POOL_REPORT_NODES, rep_sync_state),
+		offsetof(POOL_REPORT_NODES, last_status_change)
+	};
 
-	send_row_description(frontend, backend, num_fields, field_names);
+	int	nrows;
+	short		num_fields;
+	POOL_REPORT_NODES *nodes;
 
-	if (MAJOR(backend) == PROTO_MAJOR_V2)
-	{
-		/* ascii row */
-		for (i = 0; i < nrows; i++)
-		{
-			pool_write(frontend, "D", 1);
-			pool_write_and_flush(frontend, nullmap, nbytes);
+	num_fields = sizeof(field_names) / sizeof(char *);
+	nodes = get_nodes(&nrows);
 
-			size = strlen(nodes[i].node_id);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].node_id, size);
-
-			size = strlen(nodes[i].hostname);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].hostname, size);
-
-			size = strlen(nodes[i].port);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].port, size);
-
-			size = strlen(nodes[i].status);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].status, size);
-
-			size = strlen(nodes[i].lb_weight);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].lb_weight, size);
-
-			size = strlen(nodes[i].role);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].role, size);
-
-			size = strlen(nodes[i].select);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].select, size);
-
-			size = strlen(nodes[i].load_balance_node);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].load_balance_node, size);
-
-			size = strlen(nodes[i].delay);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].delay, size);
-
-			size = strlen(nodes[i].rep_state);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].rep_state, size);
-
-			size = strlen(nodes[i].rep_sync_state);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].rep_sync_state, size);
-
-			size = strlen(nodes[i].last_status_change);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, nodes[i].last_status_change, size);
-		}
-	}
-	else
-	{
-		/* data row */
-		for (i = 0; i < nrows; i++)
-		{
-			pool_write(frontend, "D", 1);
-			len = 6;			/* int32 + int16; */
-			len += 4 + strlen(nodes[i].node_id);	/* int32 + data; */
-			len += 4 + strlen(nodes[i].hostname);	/* int32 + data; */
-			len += 4 + strlen(nodes[i].port);	/* int32 + data; */
-			len += 4 + strlen(nodes[i].status); /* int32 + data; */
-			len += 4 + strlen(nodes[i].lb_weight);	/* int32 + data; */
-			len += 4 + strlen(nodes[i].role);	/* int32 + data; */
-			len += 4 + strlen(nodes[i].select); /* int32 + data; */
-			len += 4 + strlen(nodes[i].load_balance_node);	/* int32 + data; */
-			len += 4 + strlen(nodes[i].delay);	/* int32 + data; */
-			len += 4 + strlen(nodes[i].rep_state);	/* int32 + data; */
-			len += 4 + strlen(nodes[i].rep_sync_state);	/* int32 + data; */
-			len += 4 + strlen(nodes[i].last_status_change); /* int32 + data; */
-			len = htonl(len);
-			pool_write(frontend, &len, sizeof(len));
-			s = htons(num_fields);
-			pool_write(frontend, &s, sizeof(s));
-
-			len = htonl(strlen(nodes[i].node_id));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].node_id, strlen(nodes[i].node_id));
-
-			len = htonl(strlen(nodes[i].hostname));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].hostname, strlen(nodes[i].hostname));
-
-			len = htonl(strlen(nodes[i].port));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].port, strlen(nodes[i].port));
-
-			len = htonl(strlen(nodes[i].status));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].status, strlen(nodes[i].status));
-
-			len = htonl(strlen(nodes[i].lb_weight));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].lb_weight, strlen(nodes[i].lb_weight));
-
-			len = htonl(strlen(nodes[i].role));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].role, strlen(nodes[i].role));
-
-			len = htonl(strlen(nodes[i].select));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].select, strlen(nodes[i].select));
-
-			len = htonl(strlen(nodes[i].load_balance_node));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].load_balance_node, strlen(nodes[i].load_balance_node));
-
-			len = htonl(strlen(nodes[i].delay));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].delay, strlen(nodes[i].delay));
-
-			len = htonl(strlen(nodes[i].rep_state));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].rep_state, strlen(nodes[i].rep_state));
-
-			len = htonl(strlen(nodes[i].rep_sync_state));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].rep_sync_state, strlen(nodes[i].rep_sync_state));
-
-			len = htonl(strlen(nodes[i].last_status_change));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, nodes[i].last_status_change, strlen(nodes[i].last_status_change));
-		}
-	}
-
-	send_complete_and_ready(frontend, backend, "SELECT", nrows);
+	send_row_description_and_data_rows(frontend, backend, num_fields, field_names, offsettbl,
+									   (char *)nodes, sizeof(POOL_REPORT_NODES), nrows);
 
 	pfree(nodes);
 }
@@ -2233,6 +2105,85 @@ show_health_check_stats(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backe
 	send_complete_and_ready(frontend, backend, "SELECT", nrows);
 
 	pfree(stats);
+}
+
+/*
+ * Send row description and data rows.
+ *
+ * Params:
+ * frontend/backend: connections to frontend and backend.
+ *
+ * num_fields: number of fields
+ *
+ * field_names: array of field names
+ *
+ * offsettbl: offset array for each "data" member. The number of array
+ * elements must match with num_fields.
+ *
+ * data: string data to be displayed as row data, 2-dimentions array. The
+ * number of array elements must match with num_fields * nrows.
+ *
+ * row_size: byte length of data for 1 row.
+ *
+ * nrows: number of rows in data. 
+ */
+static void send_row_description_and_data_rows(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
+											   short num_fields, char **field_names, int *offsettbl,
+											   char *data, int row_size, int nrows)
+{
+	int			i, j;
+	short		s;
+	int			len;
+	unsigned char *nullmap;
+	int			nbytes;
+
+	nbytes = (num_fields + 7) / 8;
+
+	send_row_description(frontend, backend, num_fields, field_names);
+
+	if (MAJOR(backend) == PROTO_MAJOR_V2)
+	{
+		nullmap = palloc(nbytes);
+		memset(nullmap, 0xff, nbytes);
+
+		/* ascii row */
+		for (i = 0; i < nrows; i++)
+		{
+			pool_write(frontend, "D", 1);
+			pool_write_and_flush(frontend, nullmap, nbytes);
+			pfree(nullmap);
+
+			for (j = 0; j < num_fields; j++)
+			{
+				write_one_field_v2(frontend, data + i * row_size + offsettbl[j]);
+			}
+		}
+	}
+	else
+	{
+		/* data row */
+		for (i = 0; i < nrows; i++)
+		{
+			pool_write(frontend, "D", 1);
+			len = 6;			/* int32 + int16; */
+
+			for (j = 0; j < num_fields; j++)
+			{
+				len += 4 + strlen(data + i * row_size + offsettbl[j]);
+			}
+			len = htonl(len);
+			pool_write(frontend, &len, sizeof(len));
+			s = htons(num_fields);
+			pool_write(frontend, &s, sizeof(s));
+
+			for (j = 0; j < num_fields; j++)
+			{
+				write_one_field(frontend, data + i * row_size + offsettbl[j]);
+			}
+		}
+	}
+
+	send_complete_and_ready(frontend, backend, "SELECT", nrows);
 }
 
 /* Write one field to frontend (v3) */
