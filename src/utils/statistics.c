@@ -92,6 +92,48 @@ stat_count_up(int backend_node_id, Node *parse_tree)
 	{
 		per_node_stat[backend_node_id].select_cnt++;
 	}
+
+	else if (IsA(parse_tree, InsertStmt))
+	{
+		per_node_stat[backend_node_id].insert_cnt++;
+	}
+
+	else if (IsA(parse_tree, UpdateStmt))
+	{
+		per_node_stat[backend_node_id].update_cnt++;
+	}
+
+	else if (IsA(parse_tree, DeleteStmt))
+	{
+		per_node_stat[backend_node_id].delete_cnt++;
+	}
+
+	else
+	{
+		switch(nodeTag(parse_tree))
+		{
+			case(T_CheckPointStmt):
+			case(T_DeallocateStmt):
+			case(T_DiscardStmt):
+			case(T_ExecuteStmt):
+			case(T_ExplainStmt):
+			case(T_ListenStmt):
+			case(T_LoadStmt):
+			case(T_LockStmt):
+			case(T_NotifyStmt):
+			case(T_PrepareStmt):
+			case(T_TransactionStmt):
+			case(T_UnlistenStmt):
+			case(T_VacuumStmt):
+			case(T_VariableSetStmt):
+			case(T_VariableShowStmt):
+				per_node_stat[backend_node_id].other_cnt++;
+				break;
+
+			default:
+				per_node_stat[backend_node_id].ddl_cnt++;
+		}
+	}
 }
 
 /*
@@ -101,4 +143,34 @@ uint64
 stat_get_select_count(int backend_node_id)
 {
 	return per_node_stat[backend_node_id].select_cnt;
+}
+
+uint64
+stat_get_insert_count(int backend_node_id)
+{
+	return per_node_stat[backend_node_id].insert_cnt;
+}
+
+uint64
+stat_get_update_count(int backend_node_id)
+{
+	return per_node_stat[backend_node_id].update_cnt;
+}
+
+uint64
+stat_get_delete_count(int backend_node_id)
+{
+	return per_node_stat[backend_node_id].delete_cnt;
+}
+
+uint64
+stat_get_ddl_count(int backend_node_id)
+{
+	return per_node_stat[backend_node_id].ddl_cnt;
+}
+
+uint64
+stat_get_other_count(int backend_node_id)
+{
+	return per_node_stat[backend_node_id].other_cnt;
 }
