@@ -288,6 +288,10 @@ function set_postgresql_conf
 	echo "max_prepared_transactions = 10" >> $PGCONF
 	echo "unix_socket_directories = '$PGSOCKET_DIR'" >> $PGCONF 
 
+	if [ $PGVERSION -ge 120 ];then
+	    echo "include_if_exists = 'myrecovery.conf'" >> $PGCONF
+	fi
+
 	if [ $MODE = "s" ];then
 		echo "hot_standby = on" >> $PGCONF
 		echo "wal_level = hot_standby" >> $PGCONF
@@ -295,9 +299,6 @@ function set_postgresql_conf
 		echo "archive_mode = on" >> $PGCONF
 		echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
 
-		if [ $PGVERSION -ge 12 ];then
-		    echo "include_if_exists = 'myrecovery.conf'" >> $PGCONF
-		fi
 	elif [ $MODE = 'r' -o $MODE = 'l' -o $MODE = 'y' ];then
 		echo "wal_level = archive" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
@@ -418,11 +419,25 @@ log=$DATADIR_BASE/log/recovery.log
 $psql -p $PORT -c "SELECT pg_start_backup('Native Replication', true)" postgres
 
 echo "source: $master_db_cluster dest: $DEST_CLUSTER" > $log
+EOF
 
+if [ $PGVERSION -ge 120 ];then
+    cat >> $1/$SCRIPT <<'EOF'
+cat > $master_db_cluster/myrecovery.conf <<REOF
+restore_command = 'cp __ARCHDIR__/%f %p'
+REOF
+EOF
+
+else
+
+    cat >> $1/$SCRIPT <<'EOF'
 cat > $master_db_cluster/recovery.conf <<REOF
 restore_command = 'cp __ARCHDIR__/%f %p'
 REOF
+EOF
+fi
 
+cat >> $1/$SCRIPT <<'EOF'
 rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
 --exclude postmaster.opts --exclude pg_log \
 --exclude recovery.done \
@@ -436,9 +451,17 @@ chmod 700 $DEST_CLUSTER/pg_xlog
 rm -fr $DEST_CLUSTER/pg_wal
 mkdir $DEST_CLUSTER/pg_wal
 chmod 700 $DEST_CLUSTER/pg_wal
+EOF
 
+cat >> $1/$SCRIPT <<'EOF'
 $psql -p $PORT -c "SELECT pg_stop_backup()" postgres
 EOF
+
+if [ $PGVERSION -ge 120 ];then
+    cat >> $1/$SCRIPT <<'EOF'
+touch $DEST_CLUSTER/recovery.signal
+EOF
+fi
 
 #-------------------------------------------
 # replace some variables in the script
