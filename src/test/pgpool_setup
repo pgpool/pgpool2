@@ -91,8 +91,32 @@ PG_CTL=$PGBIN/pg_ctl
 PSQL=$PGBIN/psql
 
 # get PostgreSQL major version
-PGVERSION=`$INITDB -V|awk '{print $3}'|sed 's/\..*//'|sed 's/\([0-9]*\)[a-zA-Z].*/\1/'`
+vstr=`$INITDB -V|awk '{print $3}'|sed 's/\./ /g'`
+#vstr="12beta1"
+#vstr="9.1.24"
+#vstr="11.1"
+
+# check if alpha or beta
+echo $vstr|egrep "[a-z]" > /dev/null
+if [ $? = 0 ];then
+    vstr=`echo $vstr|sed 's/\([0-9]*\).*/\1/'`
+    major1=`echo $vstr|awk '{print $1}'`
+    major2=`echo $vstr|awk '{print $2}'`
+    if [ -z $major2 ];then
+	major2=0
+    fi
+else
+    vstr=`echo $vstr|sed 's/\./ /g'`
+    major1=`echo $vstr|awk '{print $1}'`
+    major2=`echo $vstr|awk '{print $2}'`
+fi
+major1=`expr $major1 \* 10`
+PGVERSION=`expr $major1 + $major2`
 echo PostgreSQL major version: $PGVERSION
+
+if [ $PGVERSION -gt 91 ];then
+    INITDBARG="$INITDBARG --data-checksums"
+fi
 
 # pgpool-II configuration file localtion.
 CONF=$BASEDIR/etc/pgpool.conf
@@ -355,7 +379,7 @@ rm $DEST_CLUSTER/recovery.done standby.signal
 rm standby.signal
 EOF
 
-if [ $PGVERSION -ge 12 ];then
+if [ $PGVERSION -ge 120 ];then
     cat >> $1/$SCRIPT <<'EOF'
 cat > $DEST_CLUSTER/myrecovery.conf <<REOF
 primary_conninfo      = 'port=$PORT user=$PGSUPERUSER'
@@ -519,7 +543,7 @@ chmod 755 $1/$SCRIPT
 # argument2: cluster No. we assume that data0 is primary
 #-------------------------------------------
 function create_recovery_conf {
-    if [ $PGVERSION -ge 12 ];then
+    if [ $PGVERSION -ge 120 ];then
 	fname=myrecovery.conf
     elif [ $2 = "0" ];then
 	fname=recovery.done
@@ -527,7 +551,7 @@ function create_recovery_conf {
 	fname=recovery.conf
     fi
 
-    if [ $PGVERSION -lt 12 ];then
+    if [ $PGVERSION -lt 120 ];then
 	cat > $1/$fname <<EOF
 standby_mode          = 'on'
 EOF
@@ -545,7 +569,7 @@ function set_pool_hba_conf {
     sed -i '/host.*all.*all.*trust$/s/^/#/g' $POOL_HBACONF
     sed -i '/local.*all.*all.*trust$/s/^/#/g' $POOL_HBACONF
 
-    if [ $PGVERSION -gt 9 ];
+    if [ $PGVERSION -gt 100 ];
     then
 	echo "host    all         scram_user  0/0                   scram-sha-256" >> $POOL_HBACONF
 	echo "host    all         md5_user    0/0                   md5" >> $POOL_HBACONF
