@@ -43,8 +43,9 @@
    select_cnt, insert_cnt, update_cnt, delete_cnt, ddl_cnt, other_cnt
    are the numbers of SQL command: SELECT, INSERT, UPDATE, DELETE, DDL
    and others issued since <productname>Pgpool-II</productname>
-   started. Commands rolled back are also counted. Currently, other
-   than
+   started. Failed commands (for example SELECT from non-existing
+   table) are counted. Commands rolled back are also
+   counted. Currently, other than
    SELECT/WITH/INSERT/UPDATE/DELETE/CHECKPOINT/DEALLOCATE/DISCARD/EXECUTE/
    EXPLAIN/LISTEN/LOAD/LOCK/NOTIFY/PREPARE/SET/SHOW/Transaction
    commands/UNLISTEN are considered as DDL.

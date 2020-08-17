@@ -38,6 +38,7 @@
   </para>
   <para>
    select_cnt、insert_cnt、update_cnt、delete_cnt、ddl_cnt、other_cntは<productname>Pgpool-II</productname>が起動してからのSQLコマンド: SELECT、INSERT、UPDATE、DELETE、DDL、そして他のコマンドの数です。
+   失敗したコマンド（たとえば存在しないテーブルからのSELECT）は数えられます。
    ロールバックされたコマンドも数えられます。
    今の所SELECT/WITH/INSERT/UPDATE/DELETE/CHECKPOINT/DEALLOCATE/DISCARD/EXECUTE/EXPLAIN/LISTEN/LOAD/LOCK/NOTIFY/PREPARE/SET/SHOW/トランザクションコマンド/UNLISTEN以外のコマンドがDDLであると見なされます。
   </para>
