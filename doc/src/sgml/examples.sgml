@@ -922,7 +922,7 @@
      Install <productname>PostgreSQL</productname> by using <productname>PostgreSQL</productname> YUM repository.
     </para>
     <programlisting>
-	 # yum install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+     # yum install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
      # yum install postgresql11-server
     </programlisting>
     <para>
