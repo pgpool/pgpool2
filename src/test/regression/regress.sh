@@ -91,9 +91,9 @@ function export_env_vars
 
 	PGPOOLLIB=${PGPOOL_INSTALL_DIR}/lib
 	if [ -z "$LD_LIBRARY_PATH" ];then
-	    export LD_LIBRARY_PATH=$PGPOOLLIB
+	    export LD_LIBRARY_PATH=${PGPOOLLIB}:${PGLIB}
 	else
-	    export LD_LIBRARY_PATH=${PGPOOLLIB}:${LD_LIBRARY_PATH}
+	    export LD_LIBRARY_PATH=${PGPOOLLIB}:${PGLIB}:${LD_LIBRARY_PATH}
 	fi
 
 	export TESTLIBS=$dir/libs.sh
