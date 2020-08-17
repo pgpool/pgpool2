@@ -23,7 +23,6 @@ source ./bashrc.ports
 
 export PGPORT=$PGPOOL_PORT
 
-echo "LD_LIBRARY_PATH=/usr/local/pgsql/lib" > pgpool.sh
 echo 'dir=`pwd`' >> pgpool.sh
 grep pgpool.conf startall >> pgpool.sh
 
