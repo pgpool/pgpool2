@@ -922,14 +922,14 @@
      Install <productname>PostgreSQL</productname> by using <productname>PostgreSQL</productname> YUM repository.
     </para>
     <programlisting>
-     # yum install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-centos11-11-2.noarch.rpm
-     # yum install postgresql11 postgresql11-libs postgresql11-devel postgresql11-server
+	 # yum install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+     # yum install postgresql11-server
     </programlisting>
     <para>
      Install <productname>Pgpool-II</productname> by using Pgpool-II YUM repository.
     </para>
     <programlisting>
-     # yum install http://www.pgpool.net/yum/rpms/4.0/redhat/rhel-7-x86_64/pgpool-II-release-4.0-1.noarch.rpm
+     # yum install http://www.pgpool.net/yum/rpms/4.0/redhat/rhel-7-x86_64/pgpool-II-release-4.0-2.noarch.rpm
      # yum install pgpool-II-pg11-*
     </programlisting>
    </sect2>
