@@ -182,15 +182,15 @@
    <productname>PostgreSQL</productname>のインストールは<productname>PostgreSQL</productname>コミュニティのリポジトリを使います。
   </para>
   <programlisting>
-   # yum install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-centos11-11-2.noarch.rpm
-   # yum install postgresql11 postgresql11-libs postgresql11-devel postgresql11-server
+   # yum install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+   # yum install postgresql11-server
   </programlisting>
 
   <para>
    <productname>Pgpool-II</productname>のインストールは<productname>Pgpool-II</productname>開発コミュニティが提供するYumリポジトリを用いてインストールします。
   </para>
   <programlisting>
-   # yum install http://www.pgpool.net/yum/rpms/4.1/redhat/rhel-7-x86_64/pgpool-II-release-4.1-1.noarch.rpm
+   # yum install http://www.pgpool.net/yum/rpms/4.1/redhat/rhel-7-x86_64/pgpool-II-release-4.1-2.noarch.rpm
    # yum install pgpool-II-pg11-*
   </programlisting>
  </sect2>
@@ -472,7 +472,7 @@
     </para>
    </note>
    <para>
-    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/master">failover.sh</ulink>及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_master.sh.sample;hb=refs/heads/master">follow_master.sh</ulink>は
+    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_1_STABLE">failover.sh</ulink>及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_master.sh.sample;hb=refs/heads/V4_1_STABLE">follow_master.sh</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、これらのファイルをコピーして作成します。
    </para>
    <programlisting>
@@ -510,8 +510,8 @@
     recovery_1st_stage_command = 'recovery_1st_stage'
    </programlisting>
    <para>
-    オンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/master">recovery_1st_stage</ulink>
-    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/master">pgpool_remote_start</ulink>は
+    オンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_1_STABLE">recovery_1st_stage</ulink>
+    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_1_STABLE">pgpool_remote_start</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、これらのファイルをプライマリサーバ(server1)のデータベースクラスタ配下に配置します。
    </para>
    <programlisting>

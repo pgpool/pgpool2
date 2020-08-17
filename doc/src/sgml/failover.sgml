@@ -684,7 +684,7 @@
      <note>
       <para>
        <xref linkend="guc-auto-failback"> may not work, when replication slot is used.
-       There's possibility that the streaming replication is stopped, bacause
+       There is possibility that the streaming replication is stopped, bacause
        <xref linkend="guc-failover-command"> is executed and replication slot is deleted by
        the command.
       </para>
