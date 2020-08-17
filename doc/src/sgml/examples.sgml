@@ -810,8 +810,8 @@
      Install <productname>PostgreSQL</productname> by using <productname>PostgreSQL</productname> YUM repository.
     </para>
     <programlisting>
-     # yum install https://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm
-     # yum install postgresql96 postgresql96-devel postgresql96-server
+	 # yum install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+     # yum install postgresql96-server
     </programlisting>
    </sect2>
 
