@@ -53,6 +53,8 @@ do
 		exit 1
 	fi
 
+	sleep 5
+
 	COUNT_UP=`grep "connection_count_up" log/pgpool.log |wc -l`
 	COUNT_DOWN=`grep "connection_count_down" log/pgpool.log |wc -l`
 
