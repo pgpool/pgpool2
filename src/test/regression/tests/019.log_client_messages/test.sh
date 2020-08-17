@@ -7,7 +7,6 @@ TESTDIR=`pwd`/testdir
 PSQL=$PGBIN/psql
 PGBENCH=$PGBENCH_PATH
 WHOAMI=`whoami`
-LD_LIBRARY_PATH=$PGBIN/../lib
 
 #test parameter
 timeout=30
@@ -25,8 +24,6 @@ echo "done."
 
 source ./bashrc.ports
 export PGPORT=$PGPOOL_PORT
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH
-echo $LD_LIBRARY_PATH
 
 # log_client_messages paramater change
 ./startall
