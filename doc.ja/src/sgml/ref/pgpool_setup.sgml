@@ -392,76 +392,77 @@ Pgpool-II documentation
   <title>出力例</title>
   <para>
    <screen>
-    $ pgpool_setup
-    Starting set up in streaming replication mode
-    creating startall and shutdownall
-    creating failover script
-    creating database cluster /home/t-ishii/tmp/test/data0...done.
-    update postgresql.conf
-    creating pgpool_remote_start
-    creating basebackup.sh
-    creating recovery.conf
-    creating database cluster /home/t-ishii/tmp/test/data1...done.
-    update postgresql.conf
-    creating pgpool_remote_start
-    creating basebackup.sh
-    creating recovery.conf
-    temporarily start data0 cluster to create extensions
-    temporarily start pgpool-II to create standby nodes
-    INFO:  unrecognized configuration parameter "debug_level"
-    node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
-    ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
-    0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | true              | 0
-    1       | /tmp     | 11003 | down   | 0.500000  | standby | 0          | false             | 0
-    (2 rows)
+$ pgpool_setup 
+PostgreSQL major version: 124
+Starting set up in streaming replication mode
+creating startall and shutdownall
+creating failover script
+creating database cluster /tmp/test/data0...done.
+update postgresql.conf
+creating pgpool_remote_start
+creating basebackup.sh
+creating recovery.conf
+creating database cluster /tmp/test/data1...done.
+update postgresql.conf
+creating pgpool_remote_start
+creating basebackup.sh
+creating recovery.conf
+temporarily start data0 cluster to create extensions
+temporarily start pgpool-II to create standby nodes
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | true              | 0                 |                   |                        | 2020-08-18 13:50:19
+ 1       | /tmp     | 11003 | down   | 0.500000  | standby | 0          | false             | 0                 |                   |                        | 2020-08-18 13:50:18
+(2 rows)
 
-    recovery node 1...pcp_recovery_node -- Command Successful
-    done.
-    creating follow master script
-    Pager usage is off.
-    node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
-    ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
-    0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | false             | 0
-    1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | true              | 0
-    (2 rows)
+recovery node 1...pcp_recovery_node -- Command Successful
+done.
+creating follow master script
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | true              | 0                 |                   |                        | 2020-08-18 13:50:19
+ 1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | false             | 0                 |                   |                        | 2020-08-18 13:50:23
+(2 rows)
 
-    shutdown all
+shutdown all
 
-    pgpool-II setting for streaming replication mode is done.
-    To start the whole system, use /home/t-ishii/tmp/test/startall.
-    To shutdown the whole system, use /home/t-ishii/tmp/test/shutdownall.
-    pcp command user name is "t-ishii", password is "t-ishii".
-    Each PostgreSQL, pgpool-II and pcp port is as follows:
-    #1 port is 11002
-    #2 port is 11003
-    pgpool port is 11000
-    pcp port is 11001
-    The info above is in README.port.
+pgpool-II setting for streaming replication mode is done.
+To start the whole system, use /tmp/test/startall.
+To shutdown the whole system, use /tmp/test/shutdownall.
+pcp command user name is "t-ishii", password is "t-ishii".
+Each PostgreSQL, pgpool-II and pcp port is as follows:
+#1 port is 11002
+#2 port is 11003
+pgpool port is 11000
+pcp port is 11001
+The info above is in README.port.
+t-ishii$ ./startall 
+waiting for server to start....5744 2020-08-18 13:50:27 JST LOG:  starting PostgreSQL 12.4 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit
+5744 2020-08-18 13:50:27 JST LOG:  listening on IPv4 address "0.0.0.0", port 11002
+5744 2020-08-18 13:50:27 JST LOG:  listening on IPv6 address "::", port 11002
+5744 2020-08-18 13:50:27 JST LOG:  listening on Unix socket "/tmp/.s.PGSQL.11002"
+5744 2020-08-18 13:50:27 JST LOG:  redirecting log output to logging collector process
+5744 2020-08-18 13:50:27 JST HINT:  Future log output will appear in directory "log".
+ done
+server started
+waiting for server to start....5757 2020-08-18 13:50:27 JST LOG:  starting PostgreSQL 12.4 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit
+5757 2020-08-18 13:50:27 JST LOG:  listening on IPv4 address "0.0.0.0", port 11003
+5757 2020-08-18 13:50:27 JST LOG:  listening on IPv6 address "::", port 11003
+5757 2020-08-18 13:50:27 JST LOG:  listening on Unix socket "/tmp/.s.PGSQL.11003"
+5757 2020-08-18 13:50:27 JST LOG:  redirecting log output to logging collector process
+5757 2020-08-18 13:50:27 JST HINT:  Future log output will appear in directory "log".
+ done
+server started
+t-ishii$ psql -p 11000 test
+psql (12.4)
+Type "help" for help.
 
-    $ ls
-    README.port  bashrc.ports  data1  log	   pgpool_reload     run	  startall
-    archivedir   data0	   etc	  pcppass  pgpool_setup.log  shutdownall
-
-    $ ./startall
-    waiting for server to start....11840 2016-08-18 13:08:51 JST LOG:  redirecting log output to logging collector process
-    11840 2016-08-18 13:08:51 JST HINT:  Future log output will appear in directory "pg_log".
-    done
-    server started
-    waiting for server to start....11853 2016-08-18 13:08:52 JST LOG:  redirecting log output to logging collector process
-    11853 2016-08-18 13:08:52 JST HINT:  Future log output will appear in directory "pg_log".
-    done
-    server started
-    $ psql -p 11000 test
-    Pager usage is off.
-    psql (9.5.4)
-    Type "help" for help.
-
-    test=# show pool_nodes;
-    node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay
-    ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------
-    0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | false             | 0
-    1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | true              | 0
-    (2 rows)
+test=# show pool_nodes;
+ node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
+---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
+ 0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | true              | 0                 |                   |                        | 2020-08-18 13:50:32
+ 1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | false             | 0                 | streaming         | async                  | 2020-08-18 13:50:32
+(2 rows)
 
    </screen>
   </para>
