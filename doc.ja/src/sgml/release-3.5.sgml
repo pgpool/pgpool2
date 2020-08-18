@@ -1,6 +1,138 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-5-26> 
+ <!--
+ <title>Release 3.5.26</title>
+ -->
+ <title>リリース 3.5.26</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2020-08-20</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Changes</title>
+  -->
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-05-22 [a73d5a1]
+    -->
+    <para>
+	 <filename>pool_hba.conf</filename>サンプルファイルに<literal>hostssl/hostnossl</literal>に関する説明を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-08-12 [0462d90]
+    -->
+    <para>
+	 pgpoolの起動時に、pidファイルが存在する場合、書き込む前にpidファイルを長さゼロに切り詰めるように修正しました。(Bo Peng)
+    </para>
+    <para>
+	 パッチはmaliangzhuにより提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-11 [81b1e3e]
+    -->
+    <para>
+	 ストリーミングレプリケーションモードでプライマリノードが0以外の場合、<xref linkend="guc-connection-life-time">が機能しない問題を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-05 [014458a]
+    -->
+    <para>
+	 -rオプション及び<productname>PostgreSQL</productname> 12での<command>pgpool_setup</command>の問題を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-31 [ea1a420]
+    -->
+    <para>
+	 RPMパッケージのPCPコマンドの<literal>UNIX_DOMAIN_PATH</literal>を<filename>/var/run/postgresql</filename>に変更します。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+	2020-08-05 [6b31f2e]
+    2020-07-14 [21bdf08]
+    -->
+    <para>
+	 クエリキャッシュの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+	 クエリキャッシュが有効な場合、あるテーブルが更新された場合、<productname>Pgpool-II</productname>は自動的にそのテーブルに関係する全てのキャッシュを削除するようになっています。
+	 しかし、<command>EXPLAIN ANALYZE</command>または<acronym>CTE</acronym>で更新クエリを実行した場合に、
+	 これらのクエリが誤って参照クエリとして扱われ、キャッシュが削除されませんでした。
+    </para>
+    <para>
+	 パッチはHou, Zhijieにより作成され、Tatsuo Ishiiにより修正されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-09 [4827bd4]
+    -->
+    <para>
+	 コーナーケースで発生する<productname>Pgpool-II</productname>のハングアップを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-26 [5f62ef2]
+    -->
+    <para>
+	 user、database、application_name以外のパラメータが指定された場合、startupパケットの読み取りが失敗する不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-22 [7587851]
+    -->
+    <para>
+	 <function>pg_terminate_backend</function>を実行した時にコネクションのカウントがずれる不具合を修正しました。(Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-04 [4100dbf]
+    -->
+    <para>
+     アプリケーション名が<xref linkend="GUC-LOG-LINE-PREFIX">に含まれている場合に発生するセグメンテーション違反を修正しました。 (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=615">bug 615</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-5-25> 
  <!--
  <title>Release 3.5.25</title>

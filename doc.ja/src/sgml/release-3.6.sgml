@@ -1,6 +1,192 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-6-22> 
+ <!--
+ <title>Release 3.6.22</title>
+ -->
+ <title>リリース 3.6.22</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2020-08-20</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Changes</title>
+  -->
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-08-12 [9de4de2]
+    -->
+    <para>
+	 Doc: TLSバージョン1.2あるいはそれ以下のバージョンのみが<xref linkend="GUC-SSL-CIPHERS">の影響をうけるという説明を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-22 [1437d3b]
+    -->
+    <para>
+	 Doc: <xref linkend="GUC-WD-PRIORITY">に関する説明を改善しました。(Bo Peng)
+    </para>
+    <para>
+     パッチはKenichiro Tanakaにより提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-22 [422336a]
+    -->
+    <para>
+	 <filename>pool_hba.conf</filename>サンプルファイルに<literal>hostssl/hostnossl</literal>に関する説明を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-17 [44096e2]
+    2020-07-16 [5115de1]
+    2020-06-30 [8941202]
+    2020-05-30 [6f128fc]
+    2020-05-23 [dde82d3]
+    2020-05-23 [7a73705]
+    2020-07-28 [1e13a96]
+    -->
+    <para>
+	 Doc: 多数ドキュメントの改善を行いました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-08-12 [1b57486]
+    -->
+    <para>
+	 pgpoolの起動時に、pidファイルが存在する場合、書き込む前にpidファイルを長さゼロに切り詰めるように修正しました。(Bo Peng)
+    </para>
+    <para>
+	 パッチはmaliangzhuにより提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-11 [2e3048f]
+    -->
+    <para>
+	 Doc: <xref linkend="GUC-FAILBACK-COMMAND">のパラメータの説明の誤りを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-11 [68b6b36]
+    -->
+    <para>
+	 ストリーミングレプリケーションモードでプライマリノードが0以外の場合、<xref linkend="guc-connection-life-time">が機能しない問題を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-05 [566a48e]
+    -->
+    <para>
+	 -rオプション及び<productname>PostgreSQL</productname> 12での<command>pgpool_setup</command>の問題を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-31 [f8510a4]
+    -->
+    <para>
+	 RPMパッケージのPCPコマンドの<literal>UNIX_DOMAIN_PATH</literal>を<filename>/var/run/postgresql</filename>に変更します。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+	2020-08-05 [0cc495d]
+    2020-07-14 [24fb5d6]
+    -->
+    <para>
+	 クエリキャッシュの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+	 クエリキャッシュが有効な場合、あるテーブルが更新された場合、<productname>Pgpool-II</productname>は自動的にそのテーブルに関係する全てのキャッシュを削除するようになっています。
+	 しかし、<command>EXPLAIN ANALYZE</command>または<acronym>CTE</acronym>で更新クエリを実行した場合に、
+	 これらのクエリが誤って参照クエリとして扱われ、キャッシュが削除されませんでした。
+    </para>
+    <para>
+	 パッチはHou, Zhijieにより作成され、Tatsuo Ishiiにより修正されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-09 [1152b26]
+    -->
+    <para>
+	 コーナーケースで発生する<productname>Pgpool-II</productname>のハングアップを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-26 [28e2885]
+    -->
+    <para>
+	 user、database、application_name以外のパラメータが指定された場合、startupパケットの読み取りが失敗する不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-22 [3525bc2]
+    -->
+    <para>
+	 <function>pg_terminate_backend</function>を実行した時にコネクションのカウントがずれる不具合を修正しました。(Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-04 [9873af0]
+    -->
+    <para>
+     アプリケーション名が<xref linkend="GUC-LOG-LINE-PREFIX">に含まれている場合に発生するセグメンテーション違反を修正しました。 (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=615">bug 615</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-02 [1bdaccf]
+    -->
+    <para>
+	 ネイティブレプリケーションモードで<function>pg_terminate_backend()</function>を実行すると、フェイルオーバを引き起こしてしまう不具合を修正しました。(Takuma Hoshiai)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-6-21> 
  <!--
  <title>Release 3.6.21</title>
