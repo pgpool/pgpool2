@@ -1,6 +1,126 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-5-26> 
+ <title>Release 3.5.26</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2020-08-20</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-05-22 [a73d5a1]
+    -->
+    <para>
+     Add mention about <literal>hostssl/hostnossl</literal> to <filename>pool_hba.conf</filename> sample file. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-08-12 [0462d90]
+    -->
+    <para>
+     At pgpool startup, if pid file exists, truncate pid file to zero length before writing. (Bo Peng)
+    </para>
+    <para>
+     Patch is created by maliangzhu.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-11 [81b1e3e]
+    -->
+    <para>
+     Fix <xref linkend="guc-connection-life-time"> does not work if primary node is not 0 in streaming replication mode. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-05 [014458a]
+    -->
+    <para>
+     Fix <command>pgpool_setup</command> problem with -r option and <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-31 [ea1a420]
+    -->
+    <para>
+     Change PCP <literal>UNIX_DOMAIN_PATH</literal> of RPM package to <filename>/var/run/postgresql</filename>. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+	2020-08-05 [6b31f2e]
+    2020-07-14 [21bdf08]
+    -->
+    <para>
+     Fix query cache bugs. (Tatsuo Ishii)
+    </para>
+    <para>
+     If query cache is enable, when a table is updated, Pgpool-II should delete all the caches related to the table.
+	 However, <command>EXPLAIN ANALYZE</command> and <acronym>CTE</acronym> with data-modifying SQLs
+	 were mistakenly treated as normal read only query so that the query caches were not deleted.
+    </para>
+    <para>
+     Patch is created by Hou, Zhijie and modified by Tatsuo Ishii.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-09 [4827bd4]
+    -->
+    <para>
+     Fix <productname>Pgpool-II</productname> hang in a corner case. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-26 [5f62ef2]
+    -->
+    <para>
+     If there are parameters other than "user", "database" and "application_name", reading startup packet failed. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-22 [7587851]
+    -->
+    <para>
+     Fix miscount of connections when <function>pg_terminate_backend()</function> is executed. (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-04 [4100dbf]
+    -->
+    <para>
+     Fix segmentation fault when application name is included in <xref linkend="GUC-LOG-LINE-PREFIX">. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=615">bug 615</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-5-25> 
  <title>Release 3.5.25</title>
  <note>
