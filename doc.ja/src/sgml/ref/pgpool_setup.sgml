@@ -60,6 +60,11 @@ Pgpool-II documentation
   </para>
 
   <para>
+   <application>pgpool_setup</application> はlocalhostに対して<application>ssh</application>を実行します。
+   パスワード無しで<application>ssh</application>でlocalhostにログインできるように事前に設定してください。
+  </para>
+
+  <para>
    <!--
    Currently <application>pgpool_setup</application> supports streaming replication mode, native replication mode and raw mode.
    Watchdog is not supported yet.

@@ -45,9 +45,17 @@ Pgpool-II documentation
   </para>
 
   <para>
+   <application>pgpool_setup</application> executes
+   <application>ssh</application> against localhost.  You need to
+   configure <application>ssh</application> so that it can login to
+   localhost without password.
+  </para>
+
+  <para>
    Currently <application>pgpool_setup</application> supports streaming replication mode, native replication mode and raw mode.
    To support watchdog, see <xref linkend="WATCHDOG-SETUP"> for details.
   </para>
+
  </refsect1>
 
  <refsect1>
