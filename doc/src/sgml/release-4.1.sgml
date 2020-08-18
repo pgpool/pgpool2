@@ -1,6 +1,213 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-4-1-3> 
+ <title>Release 4.1.3</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2020-08-20</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-08-12 [8523d12]
+    -->
+    <para>
+     Doc: mention that <xref linkend="GUC-SSL-CIPHERS"> only affects to TLS 1.2 and lower. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-11 [0d6b13c]
+    -->
+    <para>
+     Doc: add sample script links in configuration example <xref linkend="EXAMPLE-CLUSTER">. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-22 [230ec4e]
+    -->
+    <para>
+     Doc: Improve the description of <xref linkend="GUC-WD-PRIORITY">. (Bo Peng)
+    </para>
+    <para>
+     Patch is provided by Kenichiro Tanaka.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-22 [624a054]
+    -->
+    <para>
+     Add mention about <literal>hostssl/hostnossl</literal> to <filename>pool_hba.conf</filename> sample file. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-17 [44096e2]
+    2020-07-16 [5115de1]
+    2020-06-30 [8941202]
+    2020-05-30 [6f128fc]
+    2020-05-23 [dde82d3]
+    2020-05-23 [7a73705]
+    2020-07-28 [1e13a96]
+    -->
+    <para>
+     Doc: documentation improvements. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-23 [06080f6]
+    -->
+    <para>
+     Doc: add note about <xref linkend="GUC-AUTO-FAILBACK">. (Takuma Hoshiai)
+    </para>
+    <para>
+     If user uses replication_slot, the replication slot may be deleted by <xref linkend="GUC-FAILOVER-COMMAND"> when standby node is down.
+	 In this case, <xref linkend="GUC-AUTO-FAILBACK"> may not work because replication stopped.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-08-12 [8e8cc39]
+    -->
+    <para>
+     At pgpool startup, if pid file exists, truncate pid file to zero length before writing. (Bo Peng)
+    </para>
+    <para>
+     Patch is created by maliangzhu.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-11 [09a3610]
+    -->
+    <para>
+     Doc: fix error in <xref linkend="GUC-FAILBACK-COMMAND"> parameter description. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-11 [96fa3c9]
+    -->
+    <para>
+     Fix <xref linkend="guc-connection-life-time"> does not work if primary node is not 0 in streaming replication mode. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-05 [4bd2a0d]
+    -->
+    <para>
+     Fix <command>pgpool_setup</command> problem with -r option and <productname>PostgreSQL</productname> 12. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-31 [b1ea477]
+    -->
+    <para>
+     Change PCP <literal>UNIX_DOMAIN_PATH</literal> of RPM package to <filename>/var/run/postgresql</filename>. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-14 [7025c04]
+    -->
+    <para>
+     Fix query cache bugs. (Tatsuo Ishii)
+    </para>
+    <para>
+     If query cache is enable, when a table is updated, Pgpool-II should delete all the caches related to the table.
+	 However, <command>EXPLAIN ANALYZE</command> and <acronym>CTE</acronym> with data-modifying SQLs
+	 were mistakenly treated as normal read only query so that the query caches were not deleted.
+    </para>
+    <para>
+     Patch is created by Hou, Zhijie and modified by Tatsuo Ishii.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-09 [a319c87]
+    -->
+    <para>
+     Fix <productname>Pgpool-II</productname> hang in a corner case. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-26 [fe9d88d]
+    -->
+    <para>
+     If there are parameters other than "user", "database" and "application_name", reading startup packet failed. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-22 [41f3402]
+    -->
+    <para>
+     Fix miscount of connections when <function>pg_terminate_backend()</function> is executed. (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-04 [f4ca7cc]
+    -->
+    <para>
+     Fix segmentation fault when application name is included in <xref linkend="GUC-LOG-LINE-PREFIX">. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=615">bug 615</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-02 [936c7e4]
+    -->
+    <para>
+     Fix incorrectly performing failover when <function>pg_terminate_backend()</function> is executed in native replication mode. (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-27 [b97ab24]
+    -->
+    <para>
+     Fix 004.watchdog test crash on IBM Z hardware. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=614">bug 614</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch is provided by gregn123, slightly modified by Tatsuo Ishii.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-4-1-2> 
  <title>Release 4.1.2</title>
  <note>
@@ -132,7 +339,7 @@
     2020-03-12 [0c1649e]
     -->
     <para>
-     Fix <literal>SCRAM</literal> auth handling bug. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=596">bug 596</ulink>) (Tatsuo Ishii)
+     Fix <literal>SCRAM</literal> auth handling bug. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=595">bug 595</ulink>) (Tatsuo Ishii)
     </para>
     <para>
      Patch is provided by Greg Nancarrow (Fujitsu Australia).
