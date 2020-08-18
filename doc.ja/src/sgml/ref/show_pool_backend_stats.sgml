@@ -34,7 +34,6 @@
    <command>SHOW POOL_BACKEND_STATS</command>はノードID、ホスト名、ポート番号、状態、ノードの役割、SELECT/INSERT/UPDATE/DELETE/DDL/それ以外のコマンドがそれぞれのノードに発行された数を表示します。
    また、バックエンドが返したエラーの数を深刻度に分類して表示します。
    ノードID、ホスト名、ポート番号、状態、ノードの役割は<xref linkend="sql-show-pool-nodes">と同じです。
-   started. 
   </para>
   <para>
    select_cnt、insert_cnt、update_cnt、delete_cnt、ddl_cnt、other_cntは<productname>Pgpool-II</productname>が起動してからのSQLコマンド: SELECT、INSERT、UPDATE、DELETE、DDL、そして他のコマンドの数です。
