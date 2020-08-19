@@ -288,7 +288,7 @@ fi
 %endif
 
 %changelog
-* Mon Jul 27 2019 Bo Peng <pengbo@sraoss.co.jp> 3.6.22
+* Mon Jul 27 2020 Bo Peng <pengbo@sraoss.co.jp> 3.6.22
 - Rename src/redhat/pgpool_rhel7.sysconfig to src/redhat/pgpool_rhel.sysconfig
 
 * Thu Oct 10 2019 Bo Peng <pengbo@sraoss.co.jp> 3.6.19
