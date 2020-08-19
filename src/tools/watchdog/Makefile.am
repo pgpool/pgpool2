@@ -2,7 +2,7 @@ parser_incdir = $(top_srcdir)/src/include/parser
 AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I $(parser_incdir) -I @PGSQL_INCLUDE_DIR@ 
 bin_PROGRAMS = wd_cli
 
-dist_bin_SCRIPTS = watchdog_setup
+bin_SCRIPTS = watchdog_setup
 
 
 dist_wd_cli_SOURCES = wd_cli.c \
@@ -71,4 +71,4 @@ fe_memutils.c: ../../../src/tools/fe_memutils.c
 	rm -f $@ && ln -s $< .
 
 clean-local:
-	-rm -f $(nodist_wd_cli_SOURCES) $(dist_bin_SCRIPTS)
+	-rm -f $(nodist_wd_cli_SOURCES) $(bin_SCRIPTS)

@@ -637,6 +637,7 @@ LTLIBOBJS
 enable_rpath_FALSE
 enable_rpath_TRUE
 MEMCACHED_DIR
+PGSQL_BIN_DIR
 PGSQL_LIB_DIR
 PGSQL_INCLUDE_DIR
 MEMCACHED_RPATH_OPT
@@ -791,6 +792,7 @@ enable_float8_byval
 with_pgsql
 with_pgsql_includedir
 with_pgsql_libdir
+with_pgsql_bindir
 with_sunifdef
 with_openssl
 with_ldap
@@ -1461,6 +1463,7 @@ Optional Packages:
   --with-pgsql=DIR     site header files for PostgreSQL in DIR
   --with-pgsql-includedir=DIR     site header files for PostgreSQL in DIR
   --with-pgsql-libdir=DIR     site library files for PostgreSQL in DIR
+  --with-pgsql-bindir=DIR     site executable files for PostgreSQL in DIR
   --with-sunifdef=DIR     install path for sunifdef utility
   --with-openssl     build with OpenSSL support
   --with-ldap     build with LDAP support
@@ -14687,9 +14690,11 @@ if test -z $PGCONFIG
 then
   PGSQL_INCLUDE_DIR=/usr/local/pgsql/include
   PGSQL_LIB_DIR=/usr/local/pgsql/lib
+  PGSQL_BIN_DIR=/usr/local/pgsql/bin
 else
   PGSQL_INCLUDE_DIR=`pg_config --includedir`
   PGSQL_LIB_DIR=`pg_config --libdir`
+  PGSQL_BIN_DIR=`pg_config --bindir`
 fi
 
 
@@ -14703,6 +14708,7 @@ if test "${with_pgsql+set}" = set; then :
 	esac
 	PGSQL_INCLUDE_DIR="$withval"/include
 	PGSQL_LIB_DIR="$withval"/lib
+	PGSQL_BIN_DIR="$withval"/bin
 
 fi
 
@@ -14731,6 +14737,20 @@ if test "${with_pgsql_libdir+set}" = set; then :
 	  ;;
 	esac
 	PGSQL_LIB_DIR="$withval"
+
+fi
+
+
+
+# Check whether --with-pgsql-bindir was given.
+if test "${with_pgsql_bindir+set}" = set; then :
+  withval=$with_pgsql_bindir;
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    as_fn_error $? "*** You must supply an argument to the --with-pgsql-bindir option." "$LINENO" 5
+	  ;;
+	esac
+	PGSQL_BIN_DIR="$withval"
 
 fi
 
@@ -15204,6 +15224,7 @@ done
 
 LDFLAGS="$OLD_LDFLAGS"
 LIBS="$OLD_LIBS"
+
 
 
 

@@ -82,7 +82,7 @@ host_triplet = @host@
 bin_PROGRAMS = wd_cli$(EXEEXT)
 subdir = src/tools/watchdog
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(top_srcdir)/mkinstalldirs $(dist_bin_SCRIPTS)
+	$(top_srcdir)/mkinstalldirs
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/docbook.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
@@ -140,7 +140,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-SCRIPTS = $(dist_bin_SCRIPTS)
+SCRIPTS = $(bin_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -274,6 +274,7 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL = @PERL@
 PGCONFIG = @PGCONFIG@
+PGSQL_BIN_DIR = @PGSQL_BIN_DIR@
 PGSQL_INCLUDE_DIR = @PGSQL_INCLUDE_DIR@
 PGSQL_LIB_DIR = @PGSQL_LIB_DIR@
 RANLIB = @RANLIB@
@@ -342,7 +343,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 parser_incdir = $(top_srcdir)/src/include/parser
 AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I $(parser_incdir) -I @PGSQL_INCLUDE_DIR@ 
-dist_bin_SCRIPTS = watchdog_setup
+bin_SCRIPTS = watchdog_setup
 dist_wd_cli_SOURCES = wd_cli.c \
 		../fe_port.c
 
@@ -454,9 +455,9 @@ clean-binPROGRAMS:
 wd_cli$(EXEEXT): $(wd_cli_OBJECTS) $(wd_cli_DEPENDENCIES) $(EXTRA_wd_cli_DEPENDENCIES) 
 	@rm -f wd_cli$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(wd_cli_OBJECTS) $(wd_cli_LDADD) $(LIBS)
-install-dist_binSCRIPTS: $(dist_bin_SCRIPTS)
+install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
-	@list='$(dist_bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
+	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
 	if test -n "$$list"; then \
 	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
 	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
@@ -483,9 +484,9 @@ install-dist_binSCRIPTS: $(dist_bin_SCRIPTS)
 	     } \
 	; done
 
-uninstall-dist_binSCRIPTS:
+uninstall-binSCRIPTS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(dist_bin_SCRIPTS)'; test -n "$(bindir)" || exit 0; \
+	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || exit 0; \
 	files=`for p in $$list; do echo "$$p"; done | \
 	       sed -e 's,.*/,,;$(transform)'`; \
 	dir='$(DESTDIR)$(bindir)'; $(am__uninstall_files_from_dir)
@@ -660,7 +661,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS install-dist_binSCRIPTS
+install-exec-am: install-binPROGRAMS install-binSCRIPTS
 
 install-html: install-html-am
 
@@ -699,7 +700,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-dist_binSCRIPTS
+uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS
 
 .MAKE: install-am install-strip
 
@@ -708,16 +709,16 @@ uninstall-am: uninstall-binPROGRAMS uninstall-dist_binSCRIPTS
 	cscopelist-am ctags ctags-am distclean distclean-compile \
 	distclean-generic distclean-libtool distclean-tags distdir dvi \
 	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am \
-	install-dist_binSCRIPTS install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	install-binPROGRAMS install-binSCRIPTS install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-dist_binSCRIPTS
+	uninstall-binSCRIPTS
 
 
 watchdog_setup:
@@ -764,7 +765,7 @@ fe_memutils.c: ../../../src/tools/fe_memutils.c
 	rm -f $@ && ln -s $< .
 
 clean-local:
-	-rm -f $(nodist_wd_cli_SOURCES) $(dist_bin_SCRIPTS)
+	-rm -f $(nodist_wd_cli_SOURCES) $(bin_SCRIPTS)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
