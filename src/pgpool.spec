@@ -255,6 +255,7 @@ fi
 %{_initrddir}/pgpool
 %endif
 %defattr(600,postgres,postgres,-)
+%{_sysconfdir}/%{short_name}/pgpool.conf.sample
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-logical
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-raw
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-replication
