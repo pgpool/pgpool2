@@ -253,6 +253,7 @@ fi
 %{_initrddir}/pgpool
 %endif
 %defattr(600,postgres,postgres,-)
+%{_sysconfdir}/%{short_name}/pgpool.conf.sample
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-master-slave
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-replication
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample-stream
