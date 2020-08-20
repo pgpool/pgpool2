@@ -36,7 +36,7 @@ Source2:        pgpool_rhel6.sysconfig
 %if %{systemd_enabled}
 Source3:        pgpool.service
 %endif
-Source4:        pgpool_rhel7.sysconfig
+Source4:        pgpool_rhel.sysconfig
 Patch1:         pgpool-II-head.patch
 %if %{pgsql_ver} >=94 && %{rhel} >= 7
 Patch2:         pgpool_socket_dir.patch
