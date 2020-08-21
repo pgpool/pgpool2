@@ -53,11 +53,12 @@ do
 		exit 1
 	fi
 
-	sleep 5
+	sleep 10
 
 	COUNT_UP=`grep "connection_count_up" log/pgpool.log |wc -l`
 	COUNT_DOWN=`grep "connection_count_down" log/pgpool.log |wc -l`
 
+	date
 	echo "count_up: ${COUNT_UP}"
 	echo "count_down: ${COUNT_DOWN}"
 	if [ ${COUNT_UP} != ${COUNT_DOWN} ];then
