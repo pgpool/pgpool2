@@ -65,12 +65,12 @@ PGBASEPORT=`expr $BASEPORT + 2`
 # Default number of PostgreSQL database clusters
 NUMCLUSTERS=${NUMCLUSTERS:-"2"}
 # Where to look for pgpool.conf.sample*
-PGPOOL_INSTALL_DIR=${PGPOOL_INSTALL_DIR:-"/usr/local"}
-PGPOOLDIR=${PGPOOLDIR:-${PGPOOL_INSTALL_DIR}/etc}
+PGPOOL_INSTALL_DIR=${PGPOOL_INSTALL_DIR:-"@@PGPOOL_INSTALL_DIR@@"}
+PGPOOLDIR=${PGPOOLDIR:-"@@PGPOOL_CONFIG_DIR@@"}
 # PostgreSQL commands(initdb, pg_ctl, psql) install dir
-PGBIN=${PGBIN:-"/usr/local/pgsql/bin"}
+PGBIN=${PGBIN:-"@@PGSQL_BIN_DIR@@"}
 # LD_LIBRARY_PATH 
-LPATH=${PGLIB:-"/usr/local/pgsql/lib"}
+LPATH=${PGLIB:-"@@PGSQL_LIB_DIR@@"}
 # unix socket directory
 PGSOCKET_DIR=${PGSOCKET_DIR:-"/tmp"}
 # initdb args
@@ -135,6 +135,8 @@ SHUTDOWNALL=$BASEDIR/shutdownall
 PCP_PASS_FILE=$BASEDIR/pcppass
 # pgpool reload script name. This will be generated in this script.
 PGPOOL_RELOAD=$BASEDIR/pgpool_reload
+
+export PGHOST=$PGSOCKET_DIR
 
 #-------------------------------------------
 # create failover script
@@ -361,7 +363,11 @@ PORT=$4
 
 log=$DATADIR_BASE/log/recovery.log
 touch standby.signal
+EOF
 
+echo "export PGHOST=$PGSOCKET_DIR" >> $1/$SCRIPT
+
+cat >> $1/$SCRIPT <<'EOF'
 $psql -p $PORT -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
 
 echo "source: $master_db_cluster dest: $DEST_CLUSTER" > $log
@@ -388,7 +394,7 @@ EOF
 if [ $PGVERSION -ge 120 ];then
     cat >> $1/$SCRIPT <<'EOF'
 cat > $DEST_CLUSTER/myrecovery.conf <<REOF
-primary_conninfo      = 'port=$PORT user=$PGSUPERUSER'
+primary_conninfo      = 'host=localhost port=$PORT user=$PGSUPERUSER'
 recovery_target_timeline='latest'
 restore_command = 'cp $DATADIR_BASE/archivedir/%f "%p" 2> /dev/null'
 REOF
@@ -398,7 +404,7 @@ else
     cat >> $1/$SCRIPT <<'EOF'
 cat > $DEST_CLUSTER/recovery.conf <<REOF
 standby_mode          = 'on'
-primary_conninfo      = 'port=$PORT user=$PGSUPERUSER'
+primary_conninfo      = 'host=localhost port=$PORT user=$PGSUPERUSER'
 recovery_target_timeline='latest'
 restore_command = 'cp $DATADIR_BASE/archivedir/%f "%p" 2> /dev/null'
 REOF
@@ -432,7 +438,11 @@ cat >> $1/$SCRIPT <<'EOF'
 psql=__PGBIN__/psql
 DATADIR_BASE=__DATADIR_BASE__
 PGSUPERUSER=__PGSUPERUSER__
+EOF
 
+echo "export PGHOST=$PGSOCKET_DIR" >> $1/$SCRIPT
+
+cat >> $1/$SCRIPT <<'EOF'
 master_db_cluster=$1
 recovery_node_host_name=$2
 DEST_CLUSTER=$3
@@ -518,7 +528,11 @@ DEST_CLUSTER=$3
 PORT=$4
 
 log=$DATADIR_BASE/log/recovery.log
+EOF
 
+echo "export PGHOST=$PGSOCKET_DIR" >> $1/$SCRIPT
+
+cat >> $1/$SCRIPT <<'EOF'
 # Force to flush current value of sequences to xlog 
 $psql -q -p $PORT -t -c 'SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn' template1|
 while read i
@@ -564,7 +578,7 @@ EOF
     fi
 
     cat > $1/$fname <<EOF
-primary_conninfo      = 'port=$BASEPORT user=$WHOAMI'
+primary_conninfo      = 'host=localhost port=$BASEPORT user=$WHOAMI'
 recovery_target_timeline='latest'
 restore_command = 'cp $BASEDIR/archivedir/%f "%p" 2> /dev/null'
 EOF
