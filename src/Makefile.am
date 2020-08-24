@@ -146,11 +146,23 @@ EXTRA_DIST = sample/pgpool.pam \
 		test/pdo-test/pdotest.php test/pdo-test/regsql.inc \
 		test/pdo-test/SQLlist/test1.sql test/pdo-test/SQLlist/test2.sql \
 		test/pdo-test/mod/database.inc test/pdo-test/mod/errorhandler.inc \
-		test/pgpool_setup test/watchdog_setup test/regression \
+		test/pgpool_setup.in test/watchdog_setup.in test/regression \
 		redhat/pgpool.init \
 		redhat/pgpool_rhel.sysconfig redhat/pgpool_rhel6.sysconfig \
 	   	redhat/pgpool.conf.sample.patch \
 		redhat/pgpool.service \
 		pgpool.spec
+
+bin_SCRIPTS = test/pgpool_setup test/watchdog_setup
+
+%: %.in
+	sed -e 's#[@][@]PGPOOL_INSTALL_DIR[@][@]#$(prefix)#g' \
+		-e 's#[@][@]PGPOOL_CONFIG_DIR[@][@]#$(sysconfdir)#g' \
+		-e 's#[@][@]PGSQL_BIN_DIR[@][@]#$(PGSQL_BIN_DIR)#g' \
+		-e 's#[@][@]PGSQL_LIB_DIR[@][@]#$(PGSQL_LIB_DIR)#g' $^ > $@
+	chmod +x $@
+
+clean-local:
+	-rm -f test/pgpool_setup test/watchdog_setup
 
 SUBDIRS = parser libs watchdog . tools include
