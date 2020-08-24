@@ -49,9 +49,10 @@ WHOAMI=`whoami`
 BASEDIR=`pwd`
 
 # location of pgpool_setup
-PGPOOL_SETUP=${PGPOOL_SETUP:-"pgpool_setup"}
+PGPOOL_SETUP=${PGPOOL_SETUP:-"$(dirname $0)/pgpool_setup"}
 
 # PostgreSQL bin directory
+PGBIN=${PGBIN:-"@@PGSQL_BIN_DIR@@"}
 INITDB=$PGBIN/initdb
 PG_CTL=$PGBIN/pg_ctl
 PSQL=$PGBIN/psql

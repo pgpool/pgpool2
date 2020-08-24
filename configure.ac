@@ -274,9 +274,11 @@ if test -z $PGCONFIG
 then
   PGSQL_INCLUDE_DIR=/usr/local/pgsql/include
   PGSQL_LIB_DIR=/usr/local/pgsql/lib
+  PGSQL_BIN_DIR=/usr/local/pgsql/bin
 else
   PGSQL_INCLUDE_DIR=`pg_config --includedir`
   PGSQL_LIB_DIR=`pg_config --libdir`
+  PGSQL_BIN_DIR=`pg_config --bindir`
 fi
 
 AC_ARG_WITH(pgsql,
@@ -289,6 +291,7 @@ AC_ARG_WITH(pgsql,
 	esac
 	PGSQL_INCLUDE_DIR="$withval"/include
 	PGSQL_LIB_DIR="$withval"/lib
+	PGSQL_BIN_DIR="$withval"/bin
     ])
 
 AC_ARG_WITH(pgsql-includedir,
@@ -313,6 +316,16 @@ AC_ARG_WITH(pgsql-libdir,
 	PGSQL_LIB_DIR="$withval"
     ])
 
+AC_ARG_WITH(pgsql-bindir,
+    [  --with-pgsql-bindir=DIR     site executable files for PostgreSQL in DIR],
+    [
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    AC_MSG_ERROR([*** You must supply an argument to the --with-pgsql-bindir option.])
+	  ;;
+	esac
+	PGSQL_BIN_DIR="$withval"
+    ])
 
 AC_ARG_WITH(openssl,
     [  --with-openssl     build with OpenSSL support],
@@ -387,6 +400,7 @@ LIBS="$OLD_LIBS"
 
 AC_SUBST(PGSQL_INCLUDE_DIR)
 AC_SUBST(PGSQL_LIB_DIR)
+AC_SUBST(PGSQL_BIN_DIR)
 AC_SUBST(MEMCACHED_DIR)
 
 # --enable(disable)-rpath option
