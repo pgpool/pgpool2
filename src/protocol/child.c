@@ -56,6 +56,7 @@
 #include "utils/pool_stream.h"
 #include "utils/elog.h"
 #include "utils/ps_status.h"
+#include "utils/timestamp.h"
 
 #include "context/pool_process_context.h"
 #include "context/pool_session_context.h"
@@ -90,6 +91,7 @@ static void validate_backend_connectivity(int front_end_fd);
 static POOL_CONNECTION * get_connection(int front_end_fd, SockAddr *saddr);
 static POOL_CONNECTION_POOL * get_backend_connection(POOL_CONNECTION * frontend);
 static StartupPacket *StartupPacketCopy(StartupPacket *sp);
+static void log_disconnections(char *database, char *username);
 static void print_process_status(char *remote_host, char *remote_port);
 static bool backend_cleanup(POOL_CONNECTION * volatile *frontend, POOL_CONNECTION_POOL * volatile backend, bool frontend_invalid);
 
@@ -128,6 +130,8 @@ volatile sig_atomic_t got_sighup = 0;
 char		remote_host[NI_MAXHOST];	/* client host */
 char		remote_port[NI_MAXSERV];	/* client port */
 POOL_CONNECTION *volatile child_frontend = NULL;
+
+struct timeval startTime;
 
 #ifdef DEBUG
 bool		stop_now = false;
@@ -254,6 +258,8 @@ do_child(int *fds)
 		{
 			accepted = 0;
 			connection_count_down();
+			if (pool_config->log_disconnections)
+				log_disconnections(child_frontend->database, child_frontend->username);
 		}
 
 		backend_cleanup(&child_frontend, backend, frontend_invalid);
@@ -361,6 +367,7 @@ do_child(int *fds)
 		}
 
 		accepted = 1;
+		gettimeofday(&startTime, NULL);
 
 		check_config_reload();
 		validate_backend_connectivity(front_end_fd);
@@ -382,6 +389,8 @@ do_child(int *fds)
 		backend = get_backend_connection(child_frontend);
 		if (!backend)
 		{
+			if (pool_config->log_disconnections)
+				log_disconnections(child_frontend->database, child_frontend->username);
 			pool_close(child_frontend);
 			child_frontend = NULL;
 			continue;
@@ -443,6 +452,8 @@ do_child(int *fds)
 
 		accepted = 0;
 		connection_count_down();
+		if (pool_config->log_disconnections)
+			log_disconnections(sp->database, sp->user);
 
 		timeout.tv_sec = pool_config->child_life_time;
 		timeout.tv_usec = 0;
@@ -1254,7 +1265,16 @@ child_will_go_down(int code, Datum arg)
 
 	/* count down global connection counter */
 	if (accepted)
+	{
 		connection_count_down();
+		if (pool_config->log_disconnections)
+		{
+			if (child_frontend)
+				log_disconnections(child_frontend->database, child_frontend->username);
+			else
+				log_disconnections("","");
+		}
+	}
 
 	if ((pool_config->memory_cache_enabled || pool_config->enable_shared_relcache)
 		&& !pool_is_shmem_cache())
@@ -1946,6 +1966,34 @@ retry_startup:
 
 	pool_free_startup_packet(sp);
 	return backend;
+}
+
+static void
+log_disconnections(char *database, char *username)
+{
+	struct timeval endTime;
+	long diff;
+	long		secs;
+	int			msecs,
+				hours,
+				minutes,
+				seconds;
+
+	gettimeofday(&endTime, NULL);
+	diff = (long) ((endTime.tv_sec - startTime.tv_sec) * 1000000  + (endTime.tv_usec - startTime.tv_usec));
+
+	msecs = (int) (diff % 1000000) / 1000;
+	secs = (long) (diff / 1000000);
+	hours = secs / 3600;
+	secs %= 3600;
+	minutes = secs / 60;
+	seconds = secs % 60;
+
+	ereport(LOG,
+			(errmsg("frontend disconnection: session time: %d:%02d:%02d.%03d "
+					"user=%s database=%s host=%s%s%s",
+					hours, minutes, seconds, msecs,
+					username, database, remote_host, remote_port[0] ? " port=" : "", remote_port)));
 }
 
 static void

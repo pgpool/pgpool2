@@ -780,6 +780,22 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-log-disconnections" xreflabel="log_disconnections">
+    <term><varname>log_disconnections</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>log_disconnections</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Setting to on, prints all client connection terminations to the log.
+     </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-log-error-verbosity" xreflabel="log_error_verbosity">
     <term><varname>log_error_verbosity</varname> (<type>enum</type>)
      <indexterm>

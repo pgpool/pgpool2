@@ -1210,6 +1210,31 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-log-disconnections" xreflabel="log_disconnections">
+    <term><varname>log_disconnections</varname> (<type>boolean</type>)
+     <indexterm>
+      <!--
+      <primary><varname>log_disconnections</varname> configuration parameter</primary>
+      -->
+      <primary><varname>log_disconnections</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Setting to on, prints all client connection terminations to the log.
+      -->
+      onに設定されている場合、全てのクライアント接続終了をログへ出力します。
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-log-error-verbosity" xreflabel="log_error_verbosity">
     <term><varname>log_error_verbosity</varname> (<type>enum</type>)
      <indexterm>

@@ -243,6 +243,7 @@ typedef struct
 	char	   *pid_file_name;	/* pid file name */
 	bool		replication_mode;	/* replication mode */
 	bool		log_connections;	/* logs incoming connections */
+	bool		log_disconnections;	/* logs closing connections */
 	bool		log_hostname;	/* resolve hostname */
 	bool		enable_pool_hba;	/* enables pool_hba.conf file
 									 * authentication */

@@ -431,6 +431,16 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
+		{"log_disconnections", CFGCXT_RELOAD, LOGING_CONFIG,
+			"Logs end of a session.",
+			CONFIG_VAR_TYPE_BOOL, false, 0
+		},
+		&g_pool_config.log_disconnections,
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"log_hostname", CFGCXT_RELOAD, LOGING_CONFIG,
 			"Logs the host name in the connection logs.",
 			CONFIG_VAR_TYPE_BOOL, false, 0

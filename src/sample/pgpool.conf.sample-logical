@@ -196,6 +196,8 @@ log_line_prefix = '%t: pid %p: '   # printf-style string to output at beginning 
 
 log_connections = off
                                    # Log connections
+log_disconnections = off
+                                   # Log disconnections
 log_hostname = off
                                    # Hostname will be shown in ps status
                                    # and in logs if connections are logged

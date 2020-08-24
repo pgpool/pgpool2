@@ -370,6 +370,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "if true, print incoming connections to the log", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "log_disconnections", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_disconnections);
+	StrNCpy(status[i].desc, "if true, print closing connections to the log", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "log_hostname", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_hostname);
 	StrNCpy(status[i].desc, "if true, resolve hostname for ps and log print", POOLCONFIG_MAXDESCLEN);
