@@ -32,6 +32,7 @@
 #include "pool_config.h"
 #include "pool_config_variables.h"
 #include "utils/regex_array.h"
+#include "utils/pool_path.h"
 #ifndef POOL_PRIVATE
 #include "utils/elog.h"
 #else
@@ -44,6 +45,7 @@ int yylex(void);
 POOL_CONFIG g_pool_config;	/* configuration values */
 POOL_CONFIG *pool_config = &g_pool_config;	/* for lagacy reason pointer to the above struct */
 static unsigned Lineno;
+char   *config_file_dir = NULL; /* directory path of config file pgpool.conf */
 
 typedef enum {
   POOL_KEY = 1,
@@ -332,8 +334,14 @@ ParseConfigFile(const char *config_file, int elevel,
 	char *key;
 	char *val;
 	ConfigVariable *item;
-	
+	char buf[POOLMAXPATHLEN + 1];
+
 	*head_p = NULL;
+
+	/* get directory path of config file pgpool.conf */
+	strlcpy(buf, config_file, sizeof(buf));
+	get_parent_directory(buf);
+	config_file_dir = buf;
 
 	/* open config file */
 	fd = fopen(config_file, "r");
