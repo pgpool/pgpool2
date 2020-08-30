@@ -1131,10 +1131,12 @@ int pool_read_message_length(POOL_CONNECTION_POOL *cp)
 				 errdetail("slot: %d length: %d", i, length)));
 
 		if (length != length0)
-            ereport(ERROR,
-                    (errmsg("unable to read message length"),
-                     errdetail("message length (%d) in slot %d does not match with slot 0(%d)", length, i, length0)));
-            
+		{
+			ereport(LOG,
+					(errmsg("unable to read message length"),
+					 errdetail("message length (%d) in slot %d does not match with slot 0(%d)", length, i, length0)));
+			return -1;
+		}
 	}
 
 	if (length0 < 0)
