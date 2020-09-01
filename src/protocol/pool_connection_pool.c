@@ -399,7 +399,7 @@ pool_backend_timer(void)
 	now = time(NULL);
 
 	ereport(DEBUG1,
-			(errmsg("backend timer handler called at%ld", now)));
+			(errmsg("backend timer handler called at %ld", now)));
 
 	for (i = 0; i < pool_config->max_pool; i++, p++)
 	{

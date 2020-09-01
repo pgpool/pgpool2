@@ -1876,7 +1876,50 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 	 */
 	if (SERIALIZE_ACCEPT)
 	{
-		pool_semaphore_lock(ACCEPT_FD_SEM);
+		if (pool_config->connection_life_time == 0)
+		{
+			pool_semaphore_lock(ACCEPT_FD_SEM);
+		}
+		else
+		{
+			int sts;
+
+			for (;;)
+			{
+				sts = pool_semaphore_lock_allow_interrupt(ACCEPT_FD_SEM);
+
+				/* Interrupted by alarm */
+				if (sts == -2)
+				{
+					/*
+					 * Check if there are expired connection_life_time.
+					 */
+					if (backend_timer_expired)
+					{
+						/*
+						 * We add 10 seconds to connection_life_time so that there's
+						 * enough margin.
+						 */
+						int	seconds = pool_config->connection_life_time + 10;
+
+						while (seconds-- > 0)
+						{
+							/* check backend timer is expired */
+							if (backend_timer_expired)
+							{
+								pool_backend_timer();
+								backend_timer_expired = 0;
+								break;
+							}
+							sleep(1);
+						}
+					}
+				}
+				else	/* success or other error */
+					break;
+			}
+		}
+
 		set_ps_display("wait for connection request", false);
 		ereport(DEBUG1,
 				(errmsg("LOCKING select()")));
