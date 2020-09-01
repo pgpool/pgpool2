@@ -130,6 +130,48 @@ pool_semaphore_lock(int semNum)
 }
 
 /*
+ * Lock a semaphore (decrement count), blocking if count would be < 0.
+ * Unlike pool_semaphore_lock, this returns if interrupted.
+ * Return values:
+ * 0: succeeded in acquiring lock.
+ * -1: error.
+ * -2: interrupted.
+ */
+int
+pool_semaphore_lock_allow_interrupt(int semNum)
+{
+	int			errStatus;
+	struct sembuf sops;
+
+	sops.sem_op = -1;			/* decrement */
+	sops.sem_flg = SEM_UNDO;
+	sops.sem_num = semNum;
+
+	/*
+	 * Note: if errStatus is -1 and errno == EINTR then it means we returned
+	 * from the operation prematurely because we were sent a signal.
+	 */
+	errStatus = semop(semId, &sops, 1);
+
+	if (errStatus < 0)
+	{
+		if (errno == EINTR)
+		{
+			ereport(DEBUG1,
+					(errmsg("interrupted while trying to lock semaphore")));
+			return -2;
+		}
+		else
+		{
+			ereport(WARNING,
+					(errmsg("failed to lock semaphore error:\"%s\"", strerror(errno))));
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/*
  * Unlock a semaphore (increment count)
  */
 void
