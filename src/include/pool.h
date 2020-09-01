@@ -742,6 +742,7 @@ extern void pool_shmem_exit(int code);
 
 extern void pool_semaphore_create(int numSems);
 extern void pool_semaphore_lock(int semNum);
+extern int	pool_semaphore_lock_allow_interrupt(int semNum);
 extern void pool_semaphore_unlock(int semNum);
 
 extern BackendInfo * pool_get_node_info(int node_number);
