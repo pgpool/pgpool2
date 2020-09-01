@@ -645,4 +645,238 @@
 
  </sect1>
 
+ <sect1 id="server-start">
+<!--
+  <title>Starting Pgpool-II and PostgreSQL</title>
+-->
+  <title>Pgpool-IIとPostgreSQLの起動</title>
+
+  <para>
+<!--
+   To start <productname>Pgpool-II</productname>, execute:
+-->
+   <productname>Pgpool-II</productname>を起動するには、以下を実行してください。
+<screen>
+$ <userinput>pgpool -f /usr/local/etc/pgpool.conf -F /usr/local/etc/pcp.conf</userinput>
+</screen>
+<!--
+   which will start the server running in the background. "-f"
+   specifies the path to the main pgpool configuration file and "-F"
+   specifies the path to the configuration file of pcp server, which
+   is the control server for <productname>Pgpool-II</productname>. For
+   other options of the command please take a look at <xref
+   linkend="pgpool"> manual.
+-->
+   これにより、サーバがバックグラウンドモードで起動します。
+   "-f"はpgpoolの主設定ファイルへのパスを指定します。
+   "-F"は<productname>Pgpool-II</productname>の管理サーバであるpcpサーバの設定ファイルへのパスを指定します。
+   他のオプションに関しては、<xref linkend="pgpool">のマニュアルを見てください。
+  </para>
+
+  <para>
+<!--
+   Before starting <productname>Pgpool-II</productname>, you must
+   start <productname>PostgreSQL</productname> because if
+   <productname>PostgreSQL</productname> has not started yet,
+   <productname>Pgpool-II</productname> triggers failover process and
+   makes <productname>PostgreSQL</productname> is in down status.
+-->
+   <productname>Pgpool-II</productname>を起動する前に、<productname>PostgreSQL</productname>を起動しなければなりません。
+   なぜなら、もし<productname>PostgreSQL</productname>が起動していなければ、<productname>Pgpool-II</productname>はフェイルオーバの処理を起動し、<productname>PostgreSQL</productname>をダウン状態にしてしまうからです。
+  </para>
+
+  <para>
+<!--
+   If you have difficulty in controlling the startup sequence of
+   <productname>PostgreSQL</productname>, for example
+   <productname>Pgpool-II</productname> and
+   <productname>PostgreSQL</productname> are installed on different
+   servers, you can make <xref
+   linkend="guc-search-primary-node-timeout"> longer (the default is 5
+   minutes) so that <productname>Pgpool-II</productname> waits for
+   <productname>PostgreSQL</productname> starts up until <xref
+   linkend="guc-search-primary-node-timeout"> expires. If
+   <productname>PostgreSQL</productname> starts up before <xref
+   linkend="guc-search-primary-node-timeout"> expires,
+   <productname>Pgpool-II</productname> should start up without
+   problem. If <xref linkend="guc-search-primary-node-timeout">
+   expires before <productname>PostgreSQL</productname> starts up, no
+   primary node will be detected, which means you cannot execute
+   DML/DDL. You need to restart <productname>Pgpool-II</productname>
+   in this case. To confirm that the primary node exists you can use
+   <xref linkend="sql-show-pool-nodes"> command.
+-->
+たとえば<productname>Pgpool-II</productname>と<productname>PostgreSQL</productname>が別のサーバにインストールされているような理由で<productname>PostgreSQL</productname>の起動順序を制御するのが難しい場合は、<xref linkend="guc-search-primary-node-timeout">を長めにし（デフォルトは5分です)、<productname>Pgpool-II</productname>が、<xref linkend="guc-search-primary-node-timeout">が終了するまで<productname>PostgreSQL</productname>の起動を待つようにすることができます。
+<productname>PostgreSQL</productname>が、<xref linkend="guc-search-primary-node-timeout">が完了するまでの間に起動すれば問題ありません。
+もし<productname>PostgreSQL</productname>が起動する前に<xref linkend="guc-search-primary-node-timeout">が完了すると、プライマリノードが検出されず、DML/DDLを実行できなくなります。
+こうなったら、<productname>Pgpool-II</productname>を再起動する必要があります。
+プライマリノードが存在するかどうかを確認するには、<xref linkend="sql-show-pool-nodes">コマンドを使ってください。
+  </para>
+
+  <para>
+<!--
+   Please note <xref linkend="guc-search-primary-node-timeout"> can
+   only be used in the streaming replication mode because the
+   parameter is only valid in the mode. See <xref
+   linkend="running-mode"> for more details about streaming
+   replication mode. For other mode, tweak the health check (see <xref
+   linkend="runtime-config-health-check">) parameters so that there's
+   enough time before <productname>PostgreSQL</productname> becomes
+   available.
+-->
+<xref linkend="guc-search-primary-node-timeout">はストリーミングレプリケーションモードでのみ使用できることに注意してください。
+そのパラメータはストリーミングレプリケーションモードにしかないからです。
+ストリーミングレプリケーションモードの詳細は<xref linkend="running-mode">をご覧ください。
+他のモードでは、ヘルスチェック（<xref linkend="runtime-config-health-check">参照）のパラメータを調整し、<productname>PostgreSQL</productname>が使えるようになるまでに十分時間が取れるようにしてください。
+  </para>
+
+  <para>
+<!--
+   If health check detects that <productname>PostgreSQL</productname>
+   is not available before <productname>Pgpool-II</productname> starts
+   up, some or all <productname>PostgreSQL</productname> are
+   recognized in "down" status. In this case you need to manually put
+   the <productname>PostgreSQL</productname> server in "up" state by
+   using <xref linkend="pcp-attach-node"> command.  If a client tries
+   to connect to <productname>Pgpool-II</productname> before
+   <productname>PostgreSQL</productname> is available, failover could
+   be triggered. In this case you also need to execute <xref
+   linkend="pcp-attach-node"> command to put the
+   <productname>PostgreSQL</productname> server in "up" state.
+-->
+<productname>Pgpool-II</productname>が起動するまでに<productname>PostgreSQL</productname>が使えないことをヘルスチェックが検出すると、<productname>PostgreSQL</productname>のいくつかが「down」状態であると認識されます。
+この場合は手動で<xref linkend="pcp-attach-node">コマンドを使って<productname>PostgreSQL</productname>サーバを「up」状態にしなければなりません。
+クライアントが<productname>PostgreSQL</productname>が利用可能になる前に<productname>Pgpool-II</productname>に接続しようとすると、フェイルオーバが起こることがあります。
+この場合も<xref linkend="pcp-attach-node">コマンドを使って<productname>PostgreSQL</productname>サーバを「up」状態にしなければなりません。
+  </para>
+ </sect1>
+
+ <sect1 id="server-stop">
+<!--
+  <title>Stopping Pgpool-II and PostgreSQL</title>
+-->
+  <title>Pgpool-IIとPostgreSQLの停止</title>
+
+  <indexterm zone="server-stop">
+   <primary>shutdown</primary>
+  </indexterm>
+
+  <para>
+<!--
+   To stop <productname>Pgpool-II</productname>, execute:
+-->
+<productname>Pgpool-II</productname>を停止するには、以下を実行してください。
+<screen>
+$ <userinput>pgpool -f /usr/local/etc/pgpool.conf -F /usr/local/etc/pcp.conf -m fast stop</userinput>
+</screen>
+<!--
+   "-m" option specifies how gently stops
+   <productname>Pgpool-II</productname>. "fast" means shutdown
+   <productname>Pgpool-II</productname> immediately even if there are
+   existing connections from clients. You can specify "smart" to the
+   option, which force <productname>Pgpool-II</productname> to wait
+   until all clients are disconnected from
+   <productname>Pgpool-II</productname>. But this could make
+   <productname>Pgpool-II</productname> wait forever and this may
+   result in sending SIGKILL signal from the operating system and
+   leaving garbage, which will bring troubles next time when you start
+   <productname>Pgpool-II</productname>.
+-->
+"-m"オプションは<productname>Pgpool-II</productname>をどのくらい優しく停止するかを指定します。
+"fast"は接続済みのクライアントがあっても<productname>Pgpool-II</productname>を直ちに停止することを指定します。
+"smart"を指定すると、<productname>Pgpool-II</productname>はすべてのクライアントが接続を切るまで待つことを余儀なくされます。
+しかし、これは<productname>Pgpool-II</productname>を永遠に待たせることになり、結果的にオペレーティングシステムが送信したSIGKILLシグナルを受け取ってゴミを残すことになるかも知れません。
+そうすると、次に<productname>Pgpool-II</productname>を起動した時に問題が起きるでしょう。
+  </para>
+
+  <para>
+<!--
+   After shutting down <productname>Pgpool-II</productname>, you can
+   shutdown <productname>PostgreSQL</productname>.
+-->
+<productname>Pgpool-II</productname>を停止してから<productname>PostgreSQL</productname>を停止することができます。
+  </para>
+ </sect1>
+
+ <sect1 id="server-temporarily-shutdown">
+<!--
+  <title>Temporarily Shutting Down PostgreSQL</title>
+-->
+  <title>PostgreSQLの一時的な停止</title>
+
+  <indexterm zone="server-temporarily-shutdown">
+   <primary>shutdown</primary>
+  </indexterm>
+
+  <para>
+<!--
+   Sometimes you want to temporarily stop or restart
+   <productname>PostgreSQL</productname> to maintain or version up
+   it. In this section how to perform the task with minimum downtime.
+-->
+保守やバージョンアップの目的で一時的に<productname>PostgreSQL</productname>を停止したいことがあります。
+この節では最小限の停止時間でこの仕事を実行する方法を説明します。
+  </para>
+
+  <para>
+<!--
+   Stopping or restarting <productname>PostgreSQL</productname>
+   causes failover. If the running mode is not streaming replication
+   mode, or the server is a standby server in streaming replication
+   mode, probably that's not a big deal because clients can always
+   use other servers in the cluster. However if the server is primary
+   server, it will cause change of primary server by promoting one of
+   the standby servers. Moreover if there's only one server remains
+   in the cluster, there are no alternative server or standby server
+   which can be promoted.
+-->
+<productname>PostgreSQL</productname>を停止、再起動するとフェイルオーバが発生します。
+ストリーミングレプリケーションモードでない場合、あるいはストリーミングレプリケーションモードであってもサーバがスタンバイサーバであればあまり大きな問題にはなりませ
+ん。
+しかし、サーバがクラスタのプライマリサーバなら、スタンバイサーバの一つが昇格してしまいます。
+更には、クラスタに1台のサーバしか残っていなければ、昇格できるスタンバイサーバがないことになります。
+  </para>
+
+  <para>
+<!--
+   In this case you can use <xref linkend="guc-backend-flag"> to avoid
+   failover.  By setting below in pgpool.conf will avoid failover of
+   backend0.
+-->
+この場合は<xref linkend="guc-backend-flag">を使ってフェイルオーバを避けることができます。
+以下のようにpgpool.confを設定すると、backend0のフェイルオーバが起こりません。
+   <programlisting>
+     backend_flag0 = DISALLOW_TO_FAILOVER
+    </programlisting>
+<!--
+   This will take effect by reloading or restarting
+   <productname>Pgpool-II</productname>. If this flag is set, failover
+   will not happen if the backend is not available. While the backend
+   is not available, clients wil get error message:
+-->
+この設定は、<productname>Pgpool-II</productname>の再読込か再起動で有効になります。
+このフラグが設定されると、バックエンドが使用不可能になってもフェイルオーバが起きません。
+バックエンドが使用不可の間、クライアントは以下のエラーメッセージを受け取ります。
+   <programlisting>
+     psql: error: could not connect to server: FATAL:  failed to create a backend connection
+     DETAIL:  executing failover on backend
+   </programlisting>
+<!--
+   After restarting the backend, clients can connect as usual.
+
+   To allow failover on the backend again, you can set:
+-->
+バックエンドを再起動すると、クライアントは通常通り接続ができます。
+再びフェイルオーバを有効にするには、以下を設定します。
+   <programlisting>
+     backend_flag0 = ALLOW_TO_FAILOVER
+   </programlisting>
+<!--
+   and reload or restart <productname>Pgpool-II</productname>.
+-->
+そして、<productname>Pgpool-II</productname>の再読込か、再起動を行います。
+  </para>
+
+ </sect1>
+
 </chapter>

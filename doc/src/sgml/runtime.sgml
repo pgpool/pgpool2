@@ -494,4 +494,157 @@
 
  </sect1>
 
+ <sect1 id="server-start">
+  <title>Starting Pgpool-II and PostgreSQL</title>
+
+  <para>
+   To start <productname>Pgpool-II</productname>, execute:
+<screen>
+$ <userinput>pgpool -f /usr/local/etc/pgpool.conf -F /usr/local/etc/pcp.conf</userinput>
+</screen>
+   which will start the server running in the background. "-f"
+   specifies the path to the main pgpool configuration file and "-F"
+   specifies the path to the configuration file of pcp server, which
+   is the control server for <productname>Pgpool-II</productname>. For
+   other options of the command please take a look at <xref
+   linkend="pgpool"> manual.
+  </para>
+
+  <para>
+   Before starting <productname>Pgpool-II</productname>, you must
+   start <productname>PostgreSQL</productname> because if
+   <productname>PostgreSQL</productname> has not started yet,
+   <productname>Pgpool-II</productname> triggers failover process and
+   makes <productname>PostgreSQL</productname> is in down status.
+  </para>
+
+  <para>
+   If you have difficulty in controlling the startup sequence of
+   <productname>PostgreSQL</productname>, for example
+   <productname>Pgpool-II</productname> and
+   <productname>PostgreSQL</productname> are installed on different
+   servers, you can make <xref
+   linkend="guc-search-primary-node-timeout"> longer (the default is 5
+   minutes) so that <productname>Pgpool-II</productname> waits for
+   <productname>PostgreSQL</productname> starts up until <xref
+   linkend="guc-search-primary-node-timeout"> expires. If
+   <productname>PostgreSQL</productname> starts up before <xref
+   linkend="guc-search-primary-node-timeout"> expires,
+   <productname>Pgpool-II</productname> should start up without
+   problem. If <xref linkend="guc-search-primary-node-timeout">
+   expires before <productname>PostgreSQL</productname> starts up, no
+   primary node will be detected, which means you cannot execute
+   DML/DDL. You need to restart <productname>Pgpool-II</productname>
+   in this case. To confirm that the primary node exists you can use
+   <xref linkend="sql-show-pool-nodes"> command.
+  </para>
+
+  <para>
+   Please note <xref linkend="guc-search-primary-node-timeout"> can
+   only be used in the streaming replication mode because the
+   parameter is only valid in the mode. See <xref
+   linkend="running-mode"> for more details about streaming
+   replication mode. For other mode, tweak the health check (see <xref
+   linkend="runtime-config-health-check">) parameters so that there's
+   enough time before <productname>PostgreSQL</productname> becomes
+   available.
+  </para>
+
+  <para>
+   If health check detects that <productname>PostgreSQL</productname>
+   is not available before <productname>Pgpool-II</productname> starts
+   up, some or all <productname>PostgreSQL</productname> are
+   recognized in "down" status. In this case you need to manually put
+   the <productname>PostgreSQL</productname> server in "up" state by
+   using <xref linkend="pcp-attach-node"> command.  If a client tries
+   to connect to <productname>Pgpool-II</productname> before
+   <productname>PostgreSQL</productname> is available, failover could
+   be triggered. In this case you also need to execute <xref
+   linkend="pcp-attach-node"> command to put the
+   <productname>PostgreSQL</productname> server in "up" state.
+  </para>
+ </sect1>
+
+ <sect1 id="server-stop">
+  <title>Stopping Pgpool-II and PostgreSQL</title>
+
+  <indexterm zone="server-stop">
+   <primary>shutdown</primary>
+  </indexterm>
+
+  <para>
+   To stop <productname>Pgpool-II</productname>, execute:
+<screen>
+$ <userinput>pgpool -f /usr/local/etc/pgpool.conf -F /usr/local/etc/pcp.conf -m fast stop</userinput>
+</screen>
+   "-m" option specifies how gently stops
+   <productname>Pgpool-II</productname>. "fast" means shutdown
+   <productname>Pgpool-II</productname> immediately even if there are
+   existing connections from clients. You can specify "smart" to the
+   option, which force <productname>Pgpool-II</productname> to wait
+   until all clients are disconnected from
+   <productname>Pgpool-II</productname>. But this could make
+   <productname>Pgpool-II</productname> wait forever and this may
+   result in sending SIGKILL signal from the operating system and
+   leaving garbage, which will bring troubles next time when you start
+   <productname>Pgpool-II</productname>.
+  </para>
+
+  <para>
+   After shutting down <productname>Pgpool-II</productname>, you can
+   shutdown <productname>PostgreSQL</productname>.
+  </para>
+ </sect1>
+
+ <sect1 id="server-temporarily-shutdown">
+  <title>Temporarily Shutting Down PostgreSQL</title>
+
+  <indexterm zone="server-temporarily-shutdown">
+   <primary>shutdown</primary>
+  </indexterm>
+
+  <para>
+   Sometimes you want to temporarily stop or restart
+   <productname>PostgreSQL</productname> to maintain or version up
+   it. In this section how to perform the task with minimum downtime.
+  </para>
+
+  <para>
+   Stopping or restarting <productname>PostgreSQL</productname>
+   causes failover. If the running mode is not streaming replication
+   mode, or the server is a standby server in streaming replication
+   mode, probably that's not a big deal because clients can always
+   use other servers in the cluster. However if the server is primary
+   server, it will cause change of primary server by promoting one of
+   the standby servers. Moreover if there's only one server remains
+   in the cluster, there are no alternative server or standby server
+   which can be promoted.
+  </para>
+
+  <para>
+   In this case you can use <xref linkend="guc-backend-flag"> to avoid
+   failover.  By setting below in pgpool.conf will avoid failover of
+   backend0.
+   <programlisting>
+     backend_flag0 = DISALLOW_TO_FAILOVER
+    </programlisting>
+   This will take effect by reloading or restarting
+   <productname>Pgpool-II</productname>. If this flag is set, failover
+   will not happen if the backend is not available. While the backend
+   is not available, clients wil get error message:
+   <programlisting>
+     psql: error: could not connect to server: FATAL:  failed to create a backend connection
+     DETAIL:  executing failover on backend
+   </programlisting>
+   After restarting the backend, clients can connect as usual.
+
+   To allow failover on the backend again, you can set:
+   <programlisting>
+     backend_flag0 = ALLOW_TO_FAILOVER
+   </programlisting>
+   and reload or restart <productname>Pgpool-II</productname>.
+  </para>
+
+ </sect1>
+
 </chapter>
