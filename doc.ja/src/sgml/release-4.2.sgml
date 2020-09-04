@@ -91,6 +91,118 @@
  </sect2>
 
  <sect2>
+
+<!--
+  <title>Migration to Version 4.2</title>
+-->
+  <title>バージョン4.2への移行</title>
+
+  <itemizedlist>
+
+    <listitem>
+<!--
+Author: Tatsuo Ishii <ishii@sraoss.co.jp>
+2020-03-09 [f0fe8fe9] Unify master_slave_mode, master_slave_sub_mode and replication_mode into backend_clustering_mode.
+-->
+    <para>
+     master_slave_mode、master_slave_sub_mode、replication_modeは廃止され、backend_clustering_modeになりました。
+     以下のように書き換えてください。
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+       master_slave_mode = 'on'、master_slave_sub_mode = 'stream' &rarr; backend_clustering_mode = 'streaming_replication'
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+       master_slave_mode = 'on'、master_slave_sub_mode = 'logical' &rarr; backend_clustering_mode = 'logical_replication'
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+       master_slave_mode = 'on'、master_slave_sub_mode = 'slony' &rarr; backend_clustering_mode = 'slony'
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+       replication_mode = 'on' &rarr; backend_clustering_mode = 'native_replication'
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+       replication_mode = 'off'、master_slave_mode = 'off' &rarr; backend_clustering_mode = 'raw'
+       </para>
+      </listitem>
+
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+<!--
+Author: Bo Peng <pengbo@sraoss.co.jp>
+2020-08-11 [a840ecb2] New feature: Simplify Watchdog related configuration parameters.
+-->
+    <para>
+     以下のwatchdogパラメータは使えなくなりました。
+     <programlisting>
+    - wd_hostname
+    - wd_port
+    - wd_heartbeat_port
+    - heartbeat_device
+    - heartbeat_destination0
+    - heartbeat_destination_port0
+    - heartbeat_destination1
+    - heartbeat_destination_port1
+    - other_pgpool_hostname0
+    - other_pgpool_port0
+    - other_wd_port0
+    - other_pgpool_hostname1
+    - other_pgpool_port1
+    - other_wd_port1
+     </programlisting>
+     その代わりに以下のパラメータを使ってください。
+     詳細は、<xref linkend="config-communication-watchdog">を参照してください。
+     <programlisting>
+     hostname0 = 'server1'
+     wd_port0 = 9000
+     pgpool_port0 = 9999
+    
+     hostname1 = 'server2'
+     wd_port1 = 9000
+     pgpool_port1 = 9999
+    
+     hostname2 = 'server3'
+     wd_port2 = 9000
+     pgpool_port2 = 9999
+    
+     heartbeat_hostname0 = 'server1'
+     heartbeat_port0 = 9694
+     heartbeat_device0 = ''
+    
+     heartbeat_hostname1 = 'server2'
+     heartbeat_port1 = 9694
+     heartbeat_device1 = ''
+    
+     heartbeat_hostname2 = 'server3'
+     heartbeat_port2 = 9694
+     heartbeat_device2 = ''
+     </programlisting>
+      4.1までとは違って、watchdogのパラメータはすべてのホストで同じです。
+      どのホストであるかを区別するために、<filename>pgpool_node_id</filename>というファイルを作り、その中に0, 1, 2などのホストの識別を表す数字を入れてください。
+    </para>
+   </listitem>
+  </itemizedlist>
+
+ </sect2>
+
+ <sect2>
   <title>バグ修正</title>
   <itemizedlist>
    <listitem>
