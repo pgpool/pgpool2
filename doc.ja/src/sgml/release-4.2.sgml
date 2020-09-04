@@ -1,0 +1,109 @@
+<!-- doc/src/sgml/release-4.2.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-4-2-0">
+ <!--
+ <title>Release 4.2.0</title>
+ -->
+ <title>リリース 4.2.0</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2020-10-xx</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Overview</title>
+  -->
+  <title>概要</title>
+  <para>
+   <!--
+   This version implements long awaited features including
+   <xref linkend="guc-statement-level-load-balance">
+   and <xref linkend="guc-auto-failback">. Also it enhances number
+   of areas related to performance. Finally it
+   imports <productname>PostgreSQL</productname> 12's new SQL
+   parser.
+   -->
+   このバージョンでは、設定と管理作業を容易にするために多くの改良が行われています。
+   更に複数<productname>PostgreSQL</productname>の間で更新の一貫性だけでなく、読み取り一貫性を保証する新しいクラスタリングモードが追加されました。
+   また、SSLの機能が改善され、よりセキュアな運用ができるようになりました。
+   さらに、<productname>PostgreSQL</productname>13の新しい<literal>SQL</literal>パーサを取り込んでいます。
+  </para>
+
+  <para>
+   主な改善項目は以下です。
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     設定ファイル<filename>pgpool.conf</filename>の項目が大幅に改善され、設定と管理が容易になりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-logging-collector">が実装され、ログ管理が容易になりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-log-disconnections">が実装され、接続終了のログが取得できるようになりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="PG-ENC">コマンドと<xref linkend="PG-MD5">コマンドでパスワード登録をファイルから一括して行えるようになりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     ヘルスチェックの統計情報を<xref linkend="SQL-SHOW-POOL-HEALTH-CHECK-STATS">コマンドで、発行SQLの統計情報を<xref linkend="SQL-SHOW-POOL-BACKEND-STATS">コマンド取得できるようになりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     システムカタログの情報を参照することにより、<xref linkend="guc-black-function-list">と<xref linkend="guc-white-function-list">の記述を省略できるようになりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     複数<productname>PostgreSQL</productname>の間で更新の一貫性だけでなく、読み取り一貫性を保証する新しいクラスタリングモード<xref linkend="guc-snapshot-isolation-mode">が追加されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     SSLの設定に<xref linkend="guc-ssl-crl-file">と<xref linkend="guc-ssl-passphrase-command">が追加されました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>バグ修正</title>
+  <itemizedlist>
+   <listitem>
+    <para>
+     <!--
+     In this release same bug fixes as <productname>Pgpool-II</productname> 4.1.3 are
+     already applied. See <xref linkend="release-4-1-3"> for more details of those fixes.
+     -->
+     このリリースでは<productname>Pgpool-II</productname> 4.1.3 と同様のバグ修正が既に適用されています。
+     修正の詳細は<xref linkend="release-4-1-3">を参照してください。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+</sect1>
