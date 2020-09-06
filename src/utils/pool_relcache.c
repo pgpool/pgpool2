@@ -5,7 +5,11 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
+<<<<<<< HEAD
  * Copyright (c) 2003-2017	PgPool Global Development Group
+=======
+ * Copyright (c) 2003-2020	PgPool Global Development Group
+>>>>>>> 6197ffec... Fix relcache query sometimes sent to other than primary.
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -103,6 +107,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	time_t now;
 	void *result;
 	ErrorContextCallback callback;
+	int			node_id;
 
 	local_session_id = pool_get_local_session_id();
 	if (local_session_id < 0)
@@ -110,6 +115,15 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 
 	/* Obtain database name */
 	dbname = MASTER_CONNECTION(backend)->sp->database;
+
+	/*
+	 * If in streaming replication mode, prefer to send query to the
+	 * primary node if it exists.
+	 */
+	if (STREAM && PRIMARY_NODE_ID >= 0)
+		node_id = PRIMARY_NODE_ID;
+	else
+		node_id = MASTER_NODE_ID;
 
 	now = time(NULL);
 
@@ -152,7 +166,7 @@ void *pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backen
 	/* Not in cache. Check the system catalog */
 	snprintf(query, sizeof(query), relcache->sql, table);
 
-	per_node_statement_log(backend, MASTER_NODE_ID, query);
+	per_node_statement_log(backend, node_id, query);
 
 	/*
 	 * Register a error context callback to throw proper context message
