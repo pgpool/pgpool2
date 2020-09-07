@@ -1,7 +1,7 @@
 PROGRAM=timestamp-test
 topsrc_dir=../../../../..
 CPPFLAGS=-I$(topsrc_dir)/include -I$(shell pg_config --includedir)
-CFLAGS=-Wall -O0 -g
+CFLAGS=-Wall -O0 -g -std=c99
 CC=gcc
 
 OBJS=main.o \

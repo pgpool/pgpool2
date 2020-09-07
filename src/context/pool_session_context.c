@@ -1081,7 +1081,10 @@ can_query_context_destroy(POOL_QUERY_CONTEXT * qc)
 		{
 			count++;
 		}
-		next = lnext(cell);
+		if (!session_context->pending_messages)
+			return;
+
+		next = lnext(session_context->pending_messages, cell);
 	}
 
 	if (count >= 1)
@@ -1386,7 +1389,7 @@ pool_pending_message_pull_out(void)
 
 	pool_pending_message_free_pending_message(m);
 	session_context->pending_messages =
-		list_delete_cell(session_context->pending_messages, cell, NULL);
+		list_delete_cell(session_context->pending_messages, cell);
 
 	MemoryContextSwitchTo(old_context);
 	return message;
@@ -1416,7 +1419,10 @@ pool_pending_message_get(POOL_MESSAGE_TYPE type)
 	{
 		POOL_PENDING_MESSAGE *m = (POOL_PENDING_MESSAGE *) lfirst(cell);
 
-		next = lnext(cell);
+		if (!session_context->pending_messages)
+			return;
+
+		next = lnext(session_context->pending_messages, cell);
 
 		if (m->type == type)
 		{
@@ -1705,7 +1711,10 @@ pool_pending_message_get_message_num_by_backend_id(int backend_id)
 			}
 		}
 
-		next = lnext(cell);
+		if (!session_context->pending_messages)
+			return;
+
+		next = lnext(session_context->pending_messages, cell);
 	}
 	return cnt;
 }
@@ -1738,7 +1747,10 @@ dump_pending_message(void)
 						message->type, message->contents_len, message->query, message->statement, message->portal,
 						message->node_ids[0], message->node_ids[1])));
 
-		next = lnext(cell);
+		if (!session_context->pending_messages)
+			return;
+
+		next = lnext(session_context->pending_messages, cell);
 	}
 
 	ereport(DEBUG5,

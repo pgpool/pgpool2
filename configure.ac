@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([pgpool-II], [4.2devel], [pgpool-hackers@pgpool.net], [pgpool-II])
 
 dnl Checks for programs.
-AC_PROG_CC
+AC_PROG_CC_STDC
 
 AM_INIT_AUTOMAKE([foreign no-dependencies subdir-objects])
 

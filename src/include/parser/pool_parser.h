@@ -188,6 +188,14 @@ typedef int16 AttrNumber;
 
 #define MAX_TIME_PRECISION 6
 
-
+/*
+ * We require C99, hence the compiler should understand flexible array
+ * members.  However, for documentation purposes we still consider it to be
+ * project style to write "field[FLEXIBLE_ARRAY_MEMBER]" not just "field[]".
+ * When computing the size of such an object, use "offsetof(struct s, f)"
+ * for portability.  Don't use "offsetof(struct s, f[0])", as this doesn't
+ * work with MSVC and with C++ compilers.
+ */
+#define FLEXIBLE_ARRAY_MEMBER   /* empty */
 
 #endif							/* POOL_PARSER_H */

@@ -436,7 +436,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	}
 
 	/* Get the databases. */
-	field = lnext(field);
+	field = lnext(tok_line->fields, field);
 	if (!field)
 	{
 		ereport(elevel,
@@ -456,7 +456,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	}
 
 	/* Get the users. */
-	field = lnext(field);
+	field = lnext(tok_line->fields, field);
 	if (!field)
 	{
 		ereport(elevel,
@@ -478,7 +478,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	if (parsedline->conntype != ctLocal)
 	{
 		/* Read the IP address field. (with or without CIDR netmask) */
-		field = lnext(field);
+		field = lnext(tok_line->fields, field);
 		if (!field)
 		{
 			ereport(elevel,
@@ -601,7 +601,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 			{
 				/* Read the mask field. */
 				pfree(str);
-				field = lnext(field);
+				field = lnext(tok_line->fields, field);
 				if (!field)
 				{
 					ereport(elevel,
@@ -662,7 +662,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	}							/* != ctLocal */
 
 	/* Get the authentication method */
-	field = lnext(field);
+	field = lnext(tok_line->fields, field);
 	if (!field)
 	{
 		ereport(elevel,
@@ -720,7 +720,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 		return NULL;
 	}
 	/* Parse remaining arguments */
-	while ((field = lnext(field)) != NULL)
+	while ((field = lnext(tok_line->fields, field)) != NULL)
 	{
 		tokens = lfirst(field);
 		foreach(tokencell, tokens)

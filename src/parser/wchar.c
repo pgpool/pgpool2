@@ -1891,13 +1891,6 @@ const pg_wchar_tbl pg_wchar_table[] = {
 	{0, 0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2}	/* PG_SHIFT_JIS_2004 */
 };
 
-/* returns the byte length of a word for mule internal code */
-int
-pg_mic_mblen(const unsigned char *mbstr)
-{
-	return pg_mule_mblen(mbstr);
-}
-
 /*
  * Returns the byte length of a multibyte character.
  */
@@ -1997,6 +1990,75 @@ bool
 pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
 {
 	return pg_verify_mbstr_len(encoding, mbstr, len, noError) >= 0;
+}
+
+/*
+ * Convert a single Unicode code point into a string in the server encoding.
+ *
+ * The code point given by "c" is converted and stored at *s, which must
+ * have at least MAX_UNICODE_EQUIVALENT_STRING+1 bytes available.
+ * The output will have a trailing '\0'.  Throws error if the conversion
+ * cannot be performed.
+ *
+ * Note that this relies on having previously looked up any required
+ * conversion function.  That's partly for speed but mostly because the parser
+ * may call this outside any transaction, or in an aborted transaction.
+ */
+void
+pg_unicode_to_server(pg_wchar c, unsigned char *s)
+{
+#ifdef NOT_USED
+	unsigned char c_as_utf8[MAX_MULTIBYTE_CHAR_LEN + 1];
+	int			c_as_utf8_len;
+	int			server_encoding;
+
+	/*
+	 * Complain if invalid Unicode code point.  The choice of errcode here is
+	 * debatable, but really our caller should have checked this anyway.
+	 */
+	if (!is_valid_unicode_codepoint(c))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid Unicode code point")));
+
+	/* Otherwise, if it's in ASCII range, conversion is trivial */
+	if (c <= 0x7F)
+	{
+		s[0] = (unsigned char) c;
+		s[1] = '\0';
+		return;
+	}
+
+	/* If the server encoding is UTF-8, we just need to reformat the code */
+	server_encoding = GetDatabaseEncoding();
+	if (server_encoding == PG_UTF8)
+	{
+		unicode_to_utf8(c, s);
+		s[pg_utf_mblen(s)] = '\0';
+		return;
+	}
+
+	/* For all other cases, we must have a conversion function available */
+	if (Utf8ToServerConvProc == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("conversion between %s and %s is not supported",
+						pg_enc2name_tbl[PG_UTF8].name,
+						GetDatabaseEncodingName())));
+
+	/* Construct UTF-8 source string */
+	unicode_to_utf8(c, c_as_utf8);
+	c_as_utf8_len = pg_utf_mblen(c_as_utf8);
+	c_as_utf8[c_as_utf8_len] = '\0';
+
+	/* Convert, or throw error if we can't */
+	FunctionCall5(Utf8ToServerConvProc,
+				  Int32GetDatum(PG_UTF8),
+				  Int32GetDatum(server_encoding),
+				  CStringGetDatum(c_as_utf8),
+				  CStringGetDatum(s),
+				  Int32GetDatum(c_as_utf8_len));
+#endif
 }
 
 /*

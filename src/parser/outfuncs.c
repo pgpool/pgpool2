@@ -3,8 +3,8 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
- * Portions Copyright (c) 2003-2019, PgPool Global Development Group
- * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2020, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -998,6 +998,11 @@ _outIndexStmt(String * str, IndexStmt *node)
 
 static void
 _outCreateStatsStmt(String * str, CreateStatsStmt *node)
+{
+}
+
+static void
+_outAlterStatsStmt(String * str, const AlterStatsStmt *node)
 {
 }
 
@@ -5841,6 +5846,9 @@ _outNode(String * str, void *obj)
 				break;
 			case T_CreateStatsStmt:
 				_outCreateStatsStmt(str, obj);
+				break;
+			case T_AlterStatsStmt:
+				_outAlterStatsStmt(str, obj);
 				break;
 			case T_NotifyStmt:
 				_outNotifyStmt(str, obj);

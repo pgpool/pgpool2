@@ -390,7 +390,11 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 				ereport(DEBUG1,
 						(errmsg("Dropping temp table: %s", tablename)));
 				pool_temp_tables_delete(tablename, state);
-				next = lnext(cell);
+
+				if (!session_context->temp_tables)
+					return;
+
+				next = lnext(session_context->temp_tables, cell);
 			}
 		}
 	}

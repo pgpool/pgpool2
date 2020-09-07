@@ -4,8 +4,8 @@
  *	  definition of the "trigger" system catalog (pg_trigger)
  *
  *
- * Portions Copyright (c) 2003-2019, PgPool Global Development Group
- * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2020, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_trigger.h
@@ -37,6 +37,7 @@ CATALOG(pg_trigger,2620,TriggerRelationId)
 {
 	Oid			oid;			/* oid */
 	Oid			tgrelid;		/* relation trigger is attached to */
+	Oid			tgparentid;		/* OID of parent trigger, if any */
 	NameData	tgname;			/* trigger's name */
 	Oid			tgfoid;			/* OID of function to be called */
 	int16		tgtype;			/* BEFORE/AFTER/INSTEAD, UPDATE/DELETE/INSERT,
