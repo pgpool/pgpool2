@@ -71,6 +71,12 @@
 
    <listitem>
     <para>
+     新しいPCPコマンド<xref linkend="PCP-RELOAD-CONFIG">が追加されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
      システムカタログの情報を参照することにより、<xref linkend="guc-black-function-list">と<xref linkend="guc-white-function-list">の記述を省略できるようになりました。
     </para>
    </listitem>
@@ -83,9 +89,21 @@
 
    <listitem>
     <para>
+     クライアントと<productname>Pgpool-II</productname>の間でLDAP認証がサポートされました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
      SSLの設定に<xref linkend="guc-ssl-crl-file">と<xref linkend="guc-ssl-passphrase-command">が追加されました。
     </para>
    </listitem>
+
+   <listitem>
+    <para>
+     PostgreSQL 13のSQLパーサを取り込みました。
+    </para>
+  </listitem>
 
   </itemizedlist>
  </sect2>
@@ -105,7 +123,7 @@ Author: Tatsuo Ishii <ishii@sraoss.co.jp>
 2020-03-09 [f0fe8fe9] Unify master_slave_mode, master_slave_sub_mode and replication_mode into backend_clustering_mode.
 -->
     <para>
-     master_slave_mode、master_slave_sub_mode、replication_modeは廃止され、backend_clustering_modeになりました。
+     master_slave_mode、master_slave_sub_mode、replication_modeは廃止され、<xref linkend="guc-backend-clustering-mode">になりました。
      以下のように書き換えてください。
 
      <itemizedlist>
@@ -198,6 +216,13 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
       どのホストであるかを区別するために、<filename>pgpool_node_id</filename>というファイルを作り、その中に0, 1, 2などのホストの識別を表す数字を入れてください。
     </para>
    </listitem>
+
+   <listitem>
+    <para>
+     black_function_list and white_function_list are now both empty.
+    </para>
+   </listitem>
+
   </itemizedlist>
 
  </sect2>
@@ -218,4 +243,778 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
   </itemizedlist>
  </sect2>
 
+ <sect2>
+<!--
+  <title>Major Enhancements</title>
+-->
+  <title>主な改善点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2020-03-09 [f0fe8fe9]
+    2020-09-01 [82d77612]
+    -->
+    <para>
+     Unify master_slave_mode, master_slave_sub_mode and
+     replication_mode into <xref
+     linkend="guc-backend-clustering-mode">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-11 [a840ecb2]
+    -->
+    <para>
+     Simplify Watchdog related configuration parameters. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-20 [b0f976be]
+    -->
+    <para>
+     Allow units to be specified with configuration settings. (Muhammad Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-03 [3996850a]
+    2020-06-29 [d2888d59]
+    2020-06-27 [35037bcd]
+    -->
+    <para>
+     Add <xref linkend="guc-logging-collector">. (Muhammad Usama, Japanese doc by Tatsuo Ishii)
+    </para>
+    <para>
+     Import PostgreSQL's logging collector.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-24 [86778775]
+    -->
+    <para>
+     Add <xref linkend="guc-log-disconnections"> parameter. (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-25 [37772c5b]
+    2020-04-07 [d8434662]
+    -->
+    <para>
+     Allow to set application name parameter of <xref
+     linkend="guc-log-line-prefix"> in more cases. (Tatsuo Ishii)
+    </para>
+    <para>
+     %a in <xref linkend="guc-log-line-prefix"> was only be set if
+     application_name is specified in startup message. Now it is
+     possible to set application_name if it is set in the connection
+     parameter or SET command.
+    </para>
+    <para>
+     Also set hard coded application_name in various internal process so
+     that admins can easily recognize each log line belonging to which
+     process.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-03 [afbcff6f]
+    -->
+    <para>
+     Change <xref linkend="PGPOOL-SETUP"> so that <xref
+     linkend="guc-log-line-prefix"> includes application name. (Tatsuo
+     Ishii)
+    </para>
+    <para>
+     This makes analyzing of pgpool log easier since each line
+     includes the process name.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-18 [78c217cd]
+    -->
+    <para>
+     Add support for an user/password input file to <xref
+     linkend="PG-ENC">. (Umar Hayat, Japanese doc by Tatsuo Ishii)
+    </para>
+    <para>
+     Allow to use an input file containing multiple username/password
+     pairs.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-06 [68d66a66]
+    -->
+    <para>
+     Add support for an user/password input file to <xref
+     linkend="PG-MD5">. (Umar Hayat, Japanese doc by Bo Peng)
+    </para>
+    <para>
+     Allow to use an input file containing multiple username/password pairs.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-14 [9f74a228]
+    2020-08-14 [689a8fcc]
+    2020-08-14 [f04ef82b]
+    2020-08-14 [d23f0af7]
+    2020-08-14 [1afc6431]
+    2020-08-17 [644c0898]
+    2020-08-17 [241ff0f2]
+    2020-08-18 [4b512891]
+    -->
+    <para>
+     Add <xref linkend="SQL-SHOW-POOL-BACKEND-STATS">. (Tatsuo Ishii)
+    </para>
+    <para>
+     The new command shows the number of SQL commands executed and
+     errors returned from backend since
+     <productname>Pgpool-II</productname> started.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-01-27 [c36a2804]
+    2020-01-26 [cb35c9b8]
+    2020-01-26 [154d826b]
+    -->
+    <para>
+     Add <xref linkend="SQL-SHOW-POOL-HEALTH-CHECK-STATS"> to show
+     health check statistics (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-02-24 [42919f2e]
+    -->
+    <para>
+     Add <xref linkend="PCP-HEALTH-CHECK-STATS"> command. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-02-25 [dfc56868]
+    -->
+    <para>
+     Add <xref linkend="pgpool-adm-pcp-health-check-stats"> function. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-04 [c13a630f]
+    2020-06-03 [9e979b7f]
+    2020-05-21 [987b6994]
+    -->
+    <para>
+     New PCP command <xref linkend="PCP-RELOAD-CONFIG"> for reloading
+     the pgpool configuration (Jianshen Zhou, Muhammad Usama, Japanese
+     doc by Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-04 [87e6e11c]
+    2020-05-06 [b859969c]
+    -->
+    <para>
+     Allow to stop whole pgpool cluster by using <xref
+     linkend="PCP-STOP-PGPOOL"> command. (Muhammad Usama, Japanese doc
+     by Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-02 [b7f902d9]
+    -->
+    <para>
+     Implement automatic writing function detection by checking volatile property. (Tatsuo Ishii, Hou, Zhijie)
+    </para>
+    <para>
+     If a function included in SELECT/WITH has volatile property by
+     checking system catalog, regard it a writing function. This
+     feature is available only when the <xref
+     linkend="guc-black-function-list"> and the <xref
+     linkend="guc-white-function-list"> are both empty. The default of
+     the black_function_list and the white_function_list are now empty
+     string so that this feature is enabled by default.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-26 [fc9fa8db]
+    -->
+    <para>
+     Enhance the way getting function names in multiple places. (Hou, Zhijie)
+    </para>
+    <para>
+     With query cache enabled, <productname>Pgpool-II</productname>
+     examines function calls in SELECTs. However if a function were
+     called with schema qualification, it was not recognized. This
+     commit fix to allow schema qualifications in the case.
+    </para>
+    <para>
+     Also we did not allow schema qualified function names in
+     black_function_list and white_function_list. The limitation is also
+     fixed in this commit. Note that if you want to register schema
+     qualified function names, you have to register function names without
+     schema qualification as well.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-21 [761d30a1]
+    -->
+    <para>
+     Add dml object level load balance support in <xref
+     linkend="guc-disable-load-balance-on-write"> .(Subiao, Muhammad
+     Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-07 [cb34604d]
+    -->
+    <para>
+     Allow to use argument names in pgpool_adm functions. (Hou, Zhijie)
+    </para>
+    <para>
+     Now pgpool_adm functions allow to use named parameters like:
+     <programlisting>
+     SELECT * FROM pcp_node_count(host => 'localhost', port => 11001, username => 't-ishii', password => 't-ishii');
+     </programlisting>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-02 [537a2c1d]
+    -->
+    <para>
+     Add public API to invalidate query cache by table/database oid. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-26 [c18c12f8]
+    -->
+    <para>
+     Add support for LDAP authentication between client and pgpool. (Takuma Hoshiai)
+     See <xref linkend="auth-ldap"> for more details.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-23 [5bc38fe1]
+    -->
+    <para>
+     Enhance scram/md5 auth regression test to use AES256 encrypted password. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-01 [3f9a0a3d]
+    2020-06-27 [d8f5c20d]
+    2020-06-26 [8b472278]
+    2020-06-22 [6f35af74]
+    2020-06-20 [ff76762c]
+    2020-06-20 [91e39bb0]
+    2020-06-19 [22930861]
+    -->
+    <para>
+     Add new <xref linkend="guc-backend-clustering-mode"> "snapshot
+     isolation mode". (Tatsuo Ishii)
+    </para>
+    <para>
+     This mode is similar to existing native replication mode except
+     it provides more strict read consistency among backends (so
+     called "atomic visibility") and will give a illusion that a
+     cluster consisting with multiple backends seems to be a single
+     <productname>PostgreSQL</productname> server.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-22 [859080bd]
+    -->
+    <para>
+     Add mention about hostssl/hostnossl to pool_hba.conf sample file. (Tatsuo Ishii)
+    </para>
+    <para>
+     Although hostssl/hostnossl are supported, pool_hba.conf comment did
+     not mention about it.
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2020-04-01 [6ea15445]
+    2020-03-31 [9ee3d93c]
+    2020-03-30 [eb0c7c2c]
+    2020-03-30 [a01c37d8]
+    -->
+    <para>
+     Add support for <xref
+     linkend="guc-ssl-passphrase-command">. (Umar Hayat, Japanese doc
+     by Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-14 [dc3116c7]
+    -->
+    <para>
+     Add support for <xref linkend="guc-ssl-crl-file"> (CRL:
+     Certificate Revocation List). (Umar Hayat, Japanese doc by Tatsuo
+     Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-18 [fc9e9d37]
+    -->
+    <para>
+     Change relative path of SSL files to configuration
+     directory. (Umar Hayat, Japanese doc by Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-28 [eee4c86c]
+    -->
+    <para>
+     Allow to show appropriate process status by ps command with
+     extend queries. (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-04-26 [a2a6005d]
+    -->
+    <para>
+     Downgrade too verbose authentication logs. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-30 [ef3d830f]
+    -->
+    <para>
+     Display more informative error message in authentication process. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-02-10 [6222cb3a]
+    -->
+    <para>
+     Suppress unnecessary error message when there's no standby
+     server. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-01-28 [20baad9d]
+    -->
+    <para>
+     Check if socket file exists at startup and remove them if PID
+     file doesn't exist. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-01-10 [1062b805]
+    -->
+    <para>
+     Teach pgproto notification response message. (Tatsuo Ishii)
+    </para>
+    <para>
+     Now pgproto prints a upon receiving the message like this:
+
+     <= BE Notification response. pid: 28935 channel: aaa payload: "foo"
+
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-09-07 [86778775]
+    -->
+    <para>
+     Import PostgreSQL 13 beta3 new parser.
+     Major changes of PostgreSQL 13 parser include:
+     <itemizedlist>
+      <listitem>
+       <para>
+	Remove an object's dependency on an extension
+	<programlisting>
+	 ALTER TRIGGER ... NO DEPENDS ON EXTENSION ...
+	 ALTER FUNCTION ... NO DEPENDS ON EXTENSION ...
+	</programlisting>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	Allow FETCH FIRST to use WITH TIES.
+	<programlisting>
+	 FETCH FIRST ... WITH TIES
+	</programlisting>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	Add ALTER TABLE clause DROP EXPRESSION
+	<programlisting>
+	 ALTER TABLE ... DROP EXPRESSION
+	</programlisting>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	Allow setting statistics target for extended statistics
+	<programlisting>
+	 ALTER STATISTICS ... SET STATISTICS
+	</programlisting>
+       </para>
+       </listitem>
+
+      <listitem>
+       <para>
+	Allow ALTER VIEW to rename view columns
+	<programlisting>
+	 ALTER VIEW ... RENAME COLUMN ... TO ...
+	</programlisting>
+       </para>
+       </listitem>
+
+      <listitem>
+       <para>
+	Add CREATE DATABASE clause LOCALE option
+	<programlisting>
+	 CREATE DATABASE ... LOCALE
+	</programlisting>
+       </para>
+       </listitem>
+
+      <listitem>
+       <para>
+	Add DROP DATABASE clause WITH FORCE option
+	<programlisting>
+	 DROP DATABASE ... WITH (force)
+	</programlisting>
+       </para>
+       </listitem>
+
+      <listitem>
+       <para>
+	Add VACUUM clause PARALLEL option
+	<programlisting>
+	 VACUUM (PARALLEL 1) ...
+	</programlisting>	 
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-19 [51293488]
+    2020-08-19 [7fecd5cd]
+    -->
+    <para>
+     Replace "PGBIN" and "LPATH" in pgpool_setup and watchdog_setup using PostgreSQL's bin path and lib path. (Bo Peng)
+    </para>
+    <para>
+
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-17 [9c7c3047]
+    -->
+    <para>
+     Use pg_config to get PostgreSQL lib path and add this path to LD_LIBRARY_PATH environment paramater in regress.sh. (Bo Peng)
+    </para>
+    <para>
+
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-11 [88a72578]
+    -->
+    <para>
+     Make RPMs to include pcp.conf and pool_hba.conf sample files. (Bo Peng)
+    </para>
+    <para>
+
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-11 [1c220341]
+    -->
+    <para>
+     Make RPMs to include new sample files. (Bo Peng)
+    </para>
+    <para>
+
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-31 [d7c75781]
+    -->
+    <para>
+     Change PCP UNIX_DOMAIN_PATH of RPM package to "/var/run/postgresql". (Bo Peng)
+    </para>
+    <para>
+
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-27 [680e4d67]
+    -->
+    <para>
+     Rename src/redhat/pgpool_rhel7.sysconfig to src/redhat/pgpool_rhel.sysconfig to make this file available on RHEL8/CentOS8. (Bo Peng)
+    </para>
+    <para>
+
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+<!--
+  <title>Major Enhancements</title>
+-->
+  <title>主なドキュメントの改善点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2020-09-01 [9d5bb1c6]
+    -->
+    <para>
+     Add Pgpool-II/PostgreSQL start/stop etc. documents. (Tatsuo Ishii)
+    </para>
+    <para>
+     See <xref linkend="server-start"> etc. for more details.
+    </para>
+    <para>
+
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-18 [c5a51428]
+    -->
+    <para>
+     Mention that <xref linkend="PGPOOL-SETUP"> needs to be configuredq
+     to log into localhost using ssh without password. (Tatsuo Ishii)
+    </para>
+    <para>
+
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-17 [28351775]
+    -->
+    <para>
+     Change sample scripts and yum repository urls. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-28 [d362cb5d]
+    -->
+    <para>
+     Clarify what <xref linkend="PCP-PROMOTE-NODE"> actually does. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-07-10 [19cbe75d]
+    -->
+    <para>
+     Update "Installation from RPM" section. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-06-23 [02d75774]
+    -->
+    <para>
+     Add note about <xref linkend="guc-auto-failback">. (Takuma Hoshiai)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-23 [d1330ae3]
+    -->
+    <para>
+     Add explanation about .pgpoolkey. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-22 [06632468]
+    -->
+    <para>
+     Improve the description of <xref linkend="guc-wd-priority">. (Kenichiro Tanaka)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-10 [f4d6b41b]
+    -->
+    <para>
+     Add note about if_up_cmd and if_down_cmd command. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-03-02 [3c2eba0d]
+    -->
+    <para>
+     Enhance installation documents. (Tatsuo Ishii)
+    </para>
+    <para>
+     Add "Planning" section (see <xref linkend="planning">) so that
+     users can grasp a big picture of installation.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-02-27 [b439c147]
+    -->
+    <para>
+     Explicitly mention that <productname>Pgpool-II</productname>
+     needs 3 nodes to avoid split brain. (Tatsuo Ishii)
+    </para>
+    <para>
+     See <xref linkend="intro-whatis"> for more details.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-02-27 [52ec89ce]
+    -->
+    <para>
+     Enhance description of failover. (Tatsuo Ishii)
+    </para>
+    <para>
+     See <xref linkend="guc-failover-command"> for more details.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-02-18 [13b5a290]
+    -->
+    <para>
+    Clarify the session disconnection conditions while failover. (Tatsuo Ishii)
+    </para>
+    <para>
+     See <xref linkend="guc-failover-command"> for more details.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-02-12 [ee597b3a]
+    -->
+    <para>
+     Enhance description of <xref
+     linkend="guc-enable-shared-relcache"> parameter. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-11 [a6a15205]
+    -->
+    <para>
+     Add sample script links in configuration example. (Bo Peng)
+    </para>
+    <para>
+     See <xref linkend="example-cluster"> for more details.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-05-23 [249d2955]
+    -->
+    <para>
+     Mention about environment variable PGPOOLKEYFILE in <xref
+     linkend="PG-ENC"> command. (Tatsuo Ishii)
+    </para>
+    <para>
+     pg_enc command actually recognizes the environment variable.  The
+     implementation has been doing so.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
 </sect1>
+
