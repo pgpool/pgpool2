@@ -1390,6 +1390,85 @@
       このパラメータが<varname>always</varname>で、writeクエリが来ると、明示的なトランザクション中であるかどうかを問わず、セッションが終了するまで負荷分散が行われません。
       この設定により、クラスタリングについて考慮しないアプリケーションを使った場合最大の互換性が得られますが、性能は最低になります。
      </para>
+
+     <para>
+<!--
+		If this parameter is set to <varname>dml_adaptive</varname> <productname>Pgpool-II</>
+		keep track of each TABLE referenced in the WRITE statements within
+		the explicit transactions and will not load balances the subsequent
+		READ queries if the TABLE they are reading from is previously modified
+		inside the same transaction.
+		Dependent functions, triggers, and views on the tables can be configured
+		using <xref linkend="guc-dml-adaptive-object-relationship-list">
+-->
+     このパラメータが<varname>dml_adaptive</varname>に設定されると、<productname>Pgpool-II</productname>は明示的なトランザクション内のWRITE文に含まれる個々のテーブルを追跡し、テーブルが同じトランザクション内で事前に変更されている場合には後続のREADクエリを負荷分散しません。
+     テーブルが依存する関数、トリガ、ビューは<xref linkend="guc-dml-adaptive-object-relationship-list">で設定できます。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-dml-adaptive-object-relationship-list" xreflabel="dml_adaptive_object_relationship_list">
+    <term><varname>dml_adaptive_object_relationship_list</varname> (<type>string</type>)
+     <indexterm>
+<!--
+      <primary><varname>dml_adaptive_object_relationship_list</varname> configuration parameter</primary>
+-->
+      <primary><varname>dml_adaptive_object_relationship_list</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+
+     <para>
+<!--
+	 To prevent load balancing of READ dependent objects, you may specificy the object name
+	 followed by a colon(<literal>:</>) and then a comma(<literal>,</>) separated list of dependent object names.
+	 <replaceable>"[object]:[dependent-object]"</replaceable>
+     In an explicit transaction block after a WRITE statement has been issues, this will prevent
+	 load balancing of any READ statements containing references of dependent object(s).
+	 <example id="example-dml-adaptive-object-relationship-list-1">
+	 <title>Configuring dml adaptive object relationship</title>
+-->
+      オブジェクトに依存しているREAD問い合わせが負荷分散しないようにするために、オブジェクト名の後にコロン(<literal>:</>)、続いてカンマ(<literal>,</>)で区切られた依存オブジェクトの名前のリストを指定できます。
+	 <replaceable>"[object]:[dependent-object]"</replaceable>
+      明示的なトランザクションブロックの中でWRITE文が発行された後、依存オブジェクトへの参照を含むREAD文は負荷分散されないようになります。
+	 <example id="example-dml-adaptive-object-relationship-list-1">
+	 <title>dmlが関与するオブジェクト関係の設定</title>
+	   <para>
+<!--
+	    If you have a trigger installed on table_1 that do INSERT in  <literal>table_2</> for each
+		INSERT on  <literal>table_1</>. Then you would want to make sure that
+		read on  <literal>table_2</> must not get load-balanced within the same transaction
+		after INSERT into  <literal>table_1</>.
+		For this configuration you can set
+		<programlisting>
+             dml_adaptive_object_relationship_list = 'table_1:table_2'
+		</programlisting>
+-->
+	<literal>table_1</>へのINSERTのたびに<literal>table_2</>にINSERTを行うトリガがtable_1に設定されており、<literal>table_1</>へのINSERTの後で<literal>table_2</>からの読み出しが同じトランザクション内で負荷分散されないようにしたいとします。
+	このための設定は以下のようになります。
+		<programlisting>
+             dml_adaptive_object_relationship_list = 'table_1:table_2'
+		</programlisting>
+	  </para>
+	 </example>
+
+      <!--
+     This parameter is only valid for
+	 <xref linkend="guc-disable-load-balance-on-write">=<emphasis>'dml_adaptive'</emphasis>
+      -->
+      このパラメータは<xref linkend="guc-disable-load-balance-on-write">=<emphasis>'dml_adaptive'</emphasis>のときにのみ有効です。
+	  <note>
+	   <para>
+<!--
+	   To configure the dependency on the function,
+	   The function must be present in the <xref linkend="guc-black-function-list">
+-->
+関数の依存性を設定するには、関数は<xref linkend="guc-black-function-list">で設定済みでなければなりません。
+	   </para>
+	  </note>
+
+     </para>
+
     </listitem>
    </varlistentry>
 
