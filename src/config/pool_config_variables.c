@@ -4748,7 +4748,7 @@ MakeDMLAdaptiveObjectRelationList(char *newval, int elevel)
 
 	for (i = 0; i < elements_count; i++)
 	{
-		char *kvstr = pstrdup(rawList[i]);
+		char *kvstr = rawList[i];
 		char *left_token = strtok(kvstr, ":");
 		char *right_token = strtok(NULL, ":");
 		DBObjectTypes object_type;
@@ -4770,6 +4770,8 @@ MakeDMLAdaptiveObjectRelationList(char *newval, int elevel)
 	pool_config->parsed_dml_adaptive_object_relationship_list[i].left_token.object_type = OBJECT_TYPE_UNKNOWN;
 	pool_config->parsed_dml_adaptive_object_relationship_list[i].right_token.name = NULL;
 	pool_config->parsed_dml_adaptive_object_relationship_list[i].right_token.object_type = OBJECT_TYPE_UNKNOWN;
+
+	pfree(rawList);
 	return true;
 }
 
