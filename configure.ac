@@ -2,7 +2,14 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([pgpool-II], [4.2devel], [pgpool-hackers@pgpool.net], [pgpool-II])
 
 dnl Checks for programs.
-AC_PROG_CC_STDC
+AC_PROG_CC
+AC_PROG_CC_C99()
+
+# Error out if the compiler does not support C99, as the codebase
+# relies on that.
+if test "$ac_cv_prog_cc_c99" = no; then
+    AC_MSG_ERROR([C compiler "$CC" does not support C99])
+fi
 
 AM_INIT_AUTOMAKE([foreign no-dependencies subdir-objects])
 
