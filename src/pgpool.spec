@@ -43,7 +43,7 @@ Patch2:         pgpool_socket_dir.patch
 Patch3:         pcp_unix_domain_path.patch
 %endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl
+BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl openldap-devel
 %if %{pgsql_ver} >= 110 && %{rhel} == 7
 BuildRequires:  llvm-toolset-7 llvm-toolset-7-llvm-devel llvm5.0
 %endif
@@ -237,11 +237,14 @@ fi
 %{_bindir}/pcp_stop_pgpool
 %{_bindir}/pcp_recovery_node
 %{_bindir}/pcp_watchdog_info
+%{_bindir}/pcp_reload_config
+%{_bindir}/pcp_health_check_stats
 %{_bindir}/pg_md5
 %{_bindir}/pg_enc
 %{_bindir}/pgpool_setup
 %{_bindir}/watchdog_setup
 %{_bindir}/pgproto
+%{_bindir}/wd_cli
 %{_mandir}/man8/*.8.gz
 %{_mandir}/man1/*.1.gz
 %{_datadir}/%{short_name}/insert_lock.sql
@@ -298,6 +301,8 @@ fi
 %{pghome}/share/extension/pgpool_adm--1.0--1.1.sql
 %{pghome}/share/extension/pgpool_adm--1.2.sql
 %{pghome}/share/extension/pgpool_adm--1.1--1.2.sql
+%{pghome}/share/extension/pgpool_adm--1.2--1.3.sql
+%{pghome}/share/extension/pgpool_adm--1.3.sql
 %{pghome}/share/extension/pgpool_adm.control
 %{pghome}/lib/pgpool_adm.so
 # From PostgreSQL 9.4 pgpool-regclass.so is not needed anymore
@@ -318,6 +323,9 @@ fi
 %endif
 
 %changelog
+* Thu Sep 10 2020 Bo Peng <pengbo@sraoss.co.jp> 4.2.0
+- Update to 4.2
+
 * Mon Jul 27 2020 Bo Peng <pengbo@sraoss.co.jp> 4.1.3
 - Rename src/redhat/pgpool_rhel7.sysconfig to src/redhat/pgpool_rhel.sysconfig.
 
