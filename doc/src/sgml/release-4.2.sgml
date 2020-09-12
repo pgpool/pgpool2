@@ -11,12 +11,13 @@
  <sect2>
   <title>Overview</title>
   <para>
-   This version implements long awaited features including
-   <xref linkend="guc-statement-level-load-balance">
-   and <xref linkend="guc-auto-failback">. Also it enhances number
-   of areas related to performance. Finally it
-   imports <productname>PostgreSQL</productname> 13's new SQL
-   parser.
+   Many enhancements are added to this version for easier
+   configuration and administration.  Moreover new clustering mode
+   which allows not only write consistency but read consistency in
+   multiple <productname>PostgreSQL</productname> servers.  Also SSL
+   is improved to allow more secure operation.  New
+   <productname>PostgreSQL</productname> 13 <literal>SQL</literal>
+   parse is imported.
   </para>
 
   <para>
@@ -26,7 +27,7 @@
   <itemizedlist>
    <listitem>
     <para>
-     Some tems in the configuration file
+     Some items in the configuration file
      <filename>pgpool.conf</filename> are vastly enhanced for easier
      configuration and administration.
     </para>
@@ -80,7 +81,7 @@
    <listitem>
     <para>
      Add new clustering mode <xref
-     linkend="guc-snapshot-isolation-mode"> which gurantees not only
+     linkend="guc-snapshot-isolation-mode"> which guarantees not only
      data modifications to multiple
      <productname>PostgreSQL</productname> but read consistency.
     </para>
