@@ -15,7 +15,7 @@
    <xref linkend="guc-statement-level-load-balance">
    and <xref linkend="guc-auto-failback">. Also it enhances number
    of areas related to performance. Finally it
-   imports <productname>PostgreSQL</productname> 12's new SQL
+   imports <productname>PostgreSQL</productname> 13's new SQL
    parser.
   </para>
 
