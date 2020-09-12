@@ -21,12 +21,13 @@
   <title>概要</title>
   <para>
    <!--
-   This version implements long awaited features including
-   <xref linkend="guc-statement-level-load-balance">
-   and <xref linkend="guc-auto-failback">. Also it enhances number
-   of areas related to performance. Finally it
-   imports <productname>PostgreSQL</productname> 13's new SQL
-   parser.
+   Many enhancements are added to this version for easier
+   configuration and administration.  Moreover new clustering mode
+   which allows not only write consistency but read consistency in
+   multiple <productname>PostgreSQL</productname> servers.  Also SSL
+   is improved to allow more secure operation.  New
+   <productname>PostgreSQL</productname> 13 <literal>SQL</literal>
+   parse is imported.
    -->
    このバージョンでは、設定と管理作業を容易にするために多くの改良が行われています。
    更に複数<productname>PostgreSQL</productname>の間で更新の一貫性だけでなく、読み取り一貫性を保証する新しいクラスタリングモードが追加されました。
