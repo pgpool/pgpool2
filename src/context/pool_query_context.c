@@ -468,10 +468,7 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 		 * be able to understand all part of multi statement queries, but
 		 * until that day we need this band aid.
 		 */
-		if (query_context->is_multi_statement)
-		{
-			pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
-		}
+		pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 	}
 	else if (MASTER_SLAVE)
 	{
