@@ -831,7 +831,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 	</programlisting>
        </para>
       </listitem>
-
+<!--
       <listitem>
        <para>
 	Add ALTER TABLE clause DROP EXPRESSION
@@ -849,7 +849,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 	</programlisting>
        </para>
        </listitem>
-
+-->
       <listitem>
        <para>
 	Allow ALTER VIEW to rename view columns
@@ -858,7 +858,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 	</programlisting>
        </para>
        </listitem>
-
+<!--
       <listitem>
        <para>
 	Add CREATE DATABASE clause LOCALE option
@@ -876,7 +876,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 	</programlisting>
        </para>
        </listitem>
-
+-->
       <listitem>
        <para>
 	Add VACUUM clause PARALLEL option
