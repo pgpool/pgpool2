@@ -2115,16 +2115,14 @@ static void failover(void)
 			sts = waitpid(pcp_pid, &status, 0);
 			if (sts != -1)
 				break;
-			if (sts == -1)
+
+			if (errno == EINTR)
+				continue;
+			else
 			{
-				if (errno == EINTR)
-					continue;
-				else
-				{
-					ereport(WARNING,
-							(errmsg("failover: waitpid failed. reason: %s", strerror(errno))));
-					continue;
-				}
+				ereport(WARNING,
+						(errmsg("failover: waitpid failed. reason: %s", strerror(errno))));
+				continue;
 			}
 		}
 		if (WIFSIGNALED(status))
