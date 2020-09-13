@@ -1,19 +1,19 @@
-CREATE OR REPLACE FUNCTION pgpool_recovery(text, text, text, text)
+CREATE FUNCTION pgpool_recovery(text, text, text, text)
 RETURNS bool
 AS 'MODULE_PATHNAME', 'pgpool_recovery'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION pgpool_remote_start(text, text)
+CREATE FUNCTION pgpool_remote_start(text, text)
 RETURNS bool
 AS 'MODULE_PATHNAME', 'pgpool_remote_start'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION pgpool_pgctl(text, text)
+CREATE FUNCTION pgpool_pgctl(text, text)
 RETURNS bool
 AS '$libdir/pgpool-recovery', 'pgpool_pgctl'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION pgpool_switch_xlog(text)
+CREATE FUNCTION pgpool_switch_xlog(text)
 RETURNS text
 AS 'MODULE_PATHNAME', 'pgpool_switch_xlog'
 LANGUAGE C STRICT;
