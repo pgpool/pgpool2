@@ -13,12 +13,12 @@ RETURNS bool
 AS 'MODULE_PATHNAME', 'pgpool_remote_start'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION pgpool_pgctl(IN action text, IN stop_mode text)
+CREATE FUNCTION pgpool_pgctl(IN action text, IN stop_mode text)
 RETURNS bool
 AS '$libdir/pgpool-recovery', 'pgpool_pgctl'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION pgpool_switch_xlog(IN arcive_dir text)
+CREATE FUNCTION pgpool_switch_xlog(IN arcive_dir text)
 RETURNS text
 AS 'MODULE_PATHNAME', 'pgpool_switch_xlog'
 LANGUAGE C STRICT;
