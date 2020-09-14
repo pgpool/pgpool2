@@ -4955,9 +4955,10 @@ SetPgpoolNodeId(int elevel)
 					(errmsg("read pgpool node id file %s", pgpool_node_id_file),
 					 errdetail("pgpool node id: %s", readbuf)));
 		}
+
+		fclose(fd);
 	}
 
-	fclose(fd);
 	return true;
 }
 
