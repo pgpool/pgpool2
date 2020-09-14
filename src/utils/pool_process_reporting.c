@@ -2251,13 +2251,13 @@ static void send_row_description_and_data_rows(POOL_CONNECTION * frontend, POOL_
 		{
 			pool_write(frontend, "D", 1);
 			pool_write_and_flush(frontend, nullmap, nbytes);
-			pfree(nullmap);
 
 			for (j = 0; j < num_fields; j++)
 			{
 				write_one_field_v2(frontend, data + i * row_size + offsettbl[j]);
 			}
 		}
+		pfree(nullmap);
 	}
 	else
 	{
