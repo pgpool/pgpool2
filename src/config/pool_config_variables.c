@@ -4607,7 +4607,7 @@ config_post_processor(ConfigContext context, int elevel)
 
 	if (context == CFGCXT_BOOT)
 	{
-		char		localhostname[256];
+		char		localhostname[128];
 		int			res = gethostname(localhostname, sizeof(localhostname));
 
 		if (res != 0)
@@ -4918,9 +4918,12 @@ SetPgpoolNodeId(int elevel)
 
 		fd = fopen(pgpool_node_id_file, "r");
 		if (!fd)
+		{
 			ereport(elevel,
 					(errmsg("Pgpool node id file %s does not exist", pgpool_node_id_file),
 					 errdetail("If watchdog is enable, pgpool_node_id file is required")));
+			return false;
+		}
 
 		readbuf[MAXLINE - 1] = '\0';
 		if (fgets(readbuf, MAXLINE - 1, fd) == 0)
@@ -4928,6 +4931,8 @@ SetPgpoolNodeId(int elevel)
 			ereport(elevel,
 					(errmsg("pgpool_node_id file is empty"),
 					 errdetail("If watchdog is enable, we need to specify pgpool node id in %s file", pgpool_node_id_file)));
+			fclose(fd);
+			return false;
 		}
 
 		length = strlen(readbuf);
@@ -4937,15 +4942,22 @@ SetPgpoolNodeId(int elevel)
 		g_pool_config.pgpool_node_id = atoi(readbuf);
 
 		if (g_pool_config.pgpool_node_id < 0 || g_pool_config.pgpool_node_id > MAX_WATCHDOG_NUM)
+		{
 			ereport(elevel,
 					(errmsg("Invalid pgpool node id \"%d\", must be between 0 and %d",
 							g_pool_config.pgpool_node_id, MAX_WATCHDOG_NUM)));
+			fclose(fd);
+			return false;
+		}
 		else
+		{
 			ereport(DEBUG1,
 					(errmsg("read pgpool node id file %s", pgpool_node_id_file),
 					 errdetail("pgpool node id: %s", readbuf)));
+		}
 	}
 
+	fclose(fd);
 	return true;
 }
 
@@ -5000,6 +5012,11 @@ SetHBDestIfFunc(int elevel)
 				ereport(elevel,
 						(errmsg("invalid watchdog configuration"),
 						 errdetail("heartbeat_hostname%d is not defined", i)));
+
+				if (addrs)
+					pfree(addrs);
+				if (if_names)
+					pfree(if_names);
 
 				return false;
 			}
