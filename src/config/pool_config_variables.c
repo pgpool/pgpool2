@@ -5009,15 +5009,12 @@ SetHBDestIfFunc(int elevel)
 
 				if (addrs)
 					pfree(addrs);
+				if (if_names)
+					pfree(if_names);
 
 				ereport(elevel,
 						(errmsg("invalid watchdog configuration"),
 						 errdetail("heartbeat_hostname%d is not defined", i)));
-
-				if (addrs)
-					pfree(addrs);
-				if (if_names)
-					pfree(if_names);
 
 				return false;
 			}
