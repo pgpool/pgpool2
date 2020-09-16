@@ -2009,105 +2009,38 @@ show_health_check_stats(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backe
 								  "average_retry_count", "max_retry_count", "max_duration", "min_duration",
 								  "average_duration", "last_health_check", "last_successful_health_check",
 								  "last_skip_health_check", "last_failed_health_check"};
-	short		num_fields = sizeof(field_names) / sizeof(char *);
-	int			i;
-	short		s;
-	int			len;
-	int			nrows;
-	static unsigned char nullmap[2] = {0xff, 0xff};
-	int			nbytes = (num_fields + 7) / 8;
+	static int offsettbl[] = {
+		offsetof(POOL_HEALTH_CHECK_STATS, node_id),
+		offsetof(POOL_HEALTH_CHECK_STATS, hostname),
+		offsetof(POOL_HEALTH_CHECK_STATS, port),
+		offsetof(POOL_HEALTH_CHECK_STATS, status),
+		offsetof(POOL_HEALTH_CHECK_STATS, role),
+		offsetof(POOL_HEALTH_CHECK_STATS, last_status_change),
+		offsetof(POOL_HEALTH_CHECK_STATS, total_count),
+		offsetof(POOL_HEALTH_CHECK_STATS, success_count),
+		offsetof(POOL_HEALTH_CHECK_STATS, fail_count),
+		offsetof(POOL_HEALTH_CHECK_STATS, skip_count),
+		offsetof(POOL_HEALTH_CHECK_STATS, retry_count),
+		offsetof(POOL_HEALTH_CHECK_STATS, average_retry_count),
+		offsetof(POOL_HEALTH_CHECK_STATS, max_retry_count),
+		offsetof(POOL_HEALTH_CHECK_STATS, max_health_check_duration),
+		offsetof(POOL_HEALTH_CHECK_STATS, min_health_check_duration),
+		offsetof(POOL_HEALTH_CHECK_STATS, average_health_check_duration),
+		offsetof(POOL_HEALTH_CHECK_STATS, last_health_check),
+		offsetof(POOL_HEALTH_CHECK_STATS, last_successful_health_check),
+		offsetof(POOL_HEALTH_CHECK_STATS, last_skip_health_check),
+		offsetof(POOL_HEALTH_CHECK_STATS, last_failed_health_check),
+	};
 
-	POOL_HEALTH_CHECK_STATS *stats = get_health_check_stats(&nrows);
+	int	nrows;
+	short		num_fields;
+	POOL_HEALTH_CHECK_STATS *stats;
 
-	send_row_description(frontend, backend, num_fields, field_names);
+	num_fields = sizeof(field_names) / sizeof(char *);
+	stats = get_health_check_stats(&nrows);
 
-	if (MAJOR(backend) == PROTO_MAJOR_V2)
-	{
-		/* ascii row */
-		for (i = 0; i < nrows; i++)
-		{
-			pool_write(frontend, "D", 1);
-			pool_write_and_flush(frontend, nullmap, nbytes);
-
-			write_one_field_v2(frontend, stats[i].node_id);
-			write_one_field_v2(frontend, stats[i].hostname);
-			write_one_field_v2(frontend, stats[i].port);
-			write_one_field_v2(frontend, stats[i].status);
-			write_one_field_v2(frontend, stats[i].role);
-			write_one_field_v2(frontend, stats[i].last_status_change);
-			write_one_field_v2(frontend, stats[i].total_count);
-			write_one_field_v2(frontend, stats[i].success_count);
-			write_one_field_v2(frontend, stats[i].fail_count);
-			write_one_field_v2(frontend, stats[i].skip_count);
-			write_one_field_v2(frontend, stats[i].retry_count);
-			write_one_field_v2(frontend, stats[i].average_retry_count);
-			write_one_field_v2(frontend, stats[i].max_retry_count);
-			write_one_field_v2(frontend, stats[i].max_health_check_duration);
-			write_one_field_v2(frontend, stats[i].min_health_check_duration);
-			write_one_field_v2(frontend, stats[i].average_health_check_duration);
-			write_one_field_v2(frontend, stats[i].last_health_check);
-			write_one_field_v2(frontend, stats[i].last_successful_health_check);
-			write_one_field_v2(frontend, stats[i].last_skip_health_check);
-			write_one_field_v2(frontend, stats[i].last_failed_health_check);
-		}
-	}
-	else
-	{
-		/* data row */
-		for (i = 0; i < nrows; i++)
-		{
-			pool_write(frontend, "D", 1);
-			len = 6;			/* int32 + int16; */
-			len += 4 + strlen(stats[i].node_id);	/* int32 + data; */
-			len += 4 + strlen(stats[i].hostname);	/* int32 + data; */
-			len += 4 + strlen(stats[i].port);	/* int32 + data; */
-			len += 4 + strlen(stats[i].status);	/* int32 + data; */
-			len += 4 + strlen(stats[i].role);	/* int32 + data; */
-			len += 4 + strlen(stats[i].last_status_change); /* int32 + data; */
-			len += 4 + strlen(stats[i].total_count); /* int32 + data; */
-			len += 4 + strlen(stats[i].success_count); /* int32 + data; */
-			len += 4 + strlen(stats[i].fail_count); /* int32 + data; */
-			len += 4 + strlen(stats[i].skip_count); /* int32 + data; */
-			len += 4 + strlen(stats[i].retry_count); /* int32 + data; */
-			len += 4 + strlen(stats[i].average_retry_count); /* int32 + data; */
-			len += 4 + strlen(stats[i].max_retry_count); /* int32 + data; */
-			len += 4 + strlen(stats[i].max_health_check_duration); /* int32 + data; */
-			len += 4 + strlen(stats[i].min_health_check_duration); /* int32 + data; */
-			len += 4 + strlen(stats[i].average_health_check_duration); /* int32 + data; */
-			len += 4 + strlen(stats[i].last_health_check); /* int32 + data; */
-			len += 4 + strlen(stats[i].last_successful_health_check); /* int32 + data; */
-			len += 4 + strlen(stats[i].last_skip_health_check); /* int32 + data; */
-			len += 4 + strlen(stats[i].last_failed_health_check); /* int32 + data; */
-
-			len = htonl(len);
-			pool_write(frontend, &len, sizeof(len));
-			s = htons(num_fields);
-			pool_write(frontend, &s, sizeof(s));
-
-			write_one_field(frontend, stats[i].node_id);
-			write_one_field(frontend, stats[i].hostname);
-			write_one_field(frontend, stats[i].port);
-			write_one_field(frontend, stats[i].status);
-			write_one_field(frontend, stats[i].role);
-			write_one_field(frontend, stats[i].last_status_change);
-			write_one_field(frontend, stats[i].total_count);
-			write_one_field(frontend, stats[i].success_count);
-			write_one_field(frontend, stats[i].fail_count);
-			write_one_field(frontend, stats[i].skip_count);
-			write_one_field(frontend, stats[i].retry_count);
-			write_one_field(frontend, stats[i].average_retry_count);
-			write_one_field(frontend, stats[i].max_retry_count);
-			write_one_field(frontend, stats[i].max_health_check_duration);
-			write_one_field(frontend, stats[i].min_health_check_duration);
-			write_one_field(frontend, stats[i].average_health_check_duration);
-			write_one_field(frontend, stats[i].last_health_check);
-			write_one_field(frontend, stats[i].last_successful_health_check);
-			write_one_field(frontend, stats[i].last_skip_health_check);
-			write_one_field(frontend, stats[i].last_failed_health_check);
-		}
-	}
-
-	send_complete_and_ready(frontend, backend, "SELECT", nrows);
+	send_row_description_and_data_rows(frontend, backend, num_fields, field_names, offsettbl,
+									   (char *)stats, sizeof(POOL_HEALTH_CHECK_STATS), nrows);
 
 	pfree(stats);
 }
