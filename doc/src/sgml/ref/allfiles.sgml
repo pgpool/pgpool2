@@ -20,6 +20,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY pcpReloadConfig      SYSTEM "pcp_reload_config.sgml">
 <!ENTITY pgMd5               SYSTEM "pg_md5.sgml">
 <!ENTITY pgEnc               SYSTEM "pg_enc.sgml">
+<!ENTITY wdCli               SYSTEM "wd_cli.sgml">
 <!ENTITY pgproto             SYSTEM "pgproto.sgml">
 <!ENTITY pgpool              SYSTEM "pgpool.sgml">
 <!ENTITY pgpoolSetup         SYSTEM "pgpool_setup.sgml">

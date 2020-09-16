@@ -662,7 +662,7 @@ print_node_info(LifeCheckNode* lifeCheckNode, bool verbose)
 	if (verbose)
 	{
 		fprintf(stdout,"Node ID:           %d\n",lifeCheckNode->ID);
-		fprintf(stdout,"Node Status code   %d\n",lifeCheckNode->wdState);
+		fprintf(stdout,"Node Status code:  %d\n",lifeCheckNode->wdState);
 		fprintf(stdout,"Node Status:       %s\n",lifeCheckNode->stateName);
 		fprintf(stdout,"Node Name:         %s\n",lifeCheckNode->nodeName);
 		fprintf(stdout,"Node Host:         %s\n",lifeCheckNode->hostName);
@@ -713,7 +713,7 @@ usage(void)
 	fprintf(stderr, "%s version %s (%s)\n", PACKAGE, VERSION, PGPOOLVERSION);
 
 	fprintf(stderr, "\nUsage:\n");
-	fprintf(stderr, "  %s [ operation] [ options] [node srarch criteria]\n",progname);
+	fprintf(stderr, "  %s [ operation] [ options] [node search criteria]\n",progname);
 
 	fprintf(stderr, "\n Operations:\n");
 	fprintf(stderr, "  -i, --info                  Get the node status for nodes based on node search criteria\n");
@@ -725,7 +725,7 @@ usage(void)
 	fprintf(stderr, "  -a, --all                Search all nodes (only available with --info option)\n");
 	fprintf(stderr, "  -n, --node-id=ID         Search watchdog node with node_id\n");
 	fprintf(stderr, "  -N, --node-name=Name     Search watchdog node with name\n");
-	fprintf(stderr, "  -H, --node-name=Host     Search watchdog node with Host\n");
+	fprintf(stderr, "  -H, --node-host=Host     Search watchdog node with Host\n");
 	fprintf(stderr, "  -P, --node-port=port     Search watchdog node with wd_port\n");
 
 	fprintf(stderr, "\n Options:\n");
