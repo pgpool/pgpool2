@@ -180,6 +180,7 @@
   &pgproto;
   &pgpoolSetup;
   &watchdoglSetup;
+  &wdCli;
 
  </reference>
 
