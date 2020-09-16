@@ -127,7 +127,8 @@
     There are four different running modes in <productname>Pgpool-II</>: streaming
     replication mode, master slave mode, native replication mode and
     raw mode. In any mode, <productname>Pgpool-II</> provides connection pooling,
-    automatic fail over and online recovery. The sample configuration
+    and automatic fail over. Online recovery can be used only with streaming
+    replication mode and native replication mode. The sample configuration
     files for each mode are provided. They are located
     under <filename>$prefix/etc</filename>. You can copy one of them
     to <filename>$prefix/etc/pgpool.conf</filename>.
