@@ -1,6 +1,108 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-5-27>
+ <title>Release 3.5.27</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2020-09-17</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-09-13 [d35acfc]
+    -->
+    <para>
+     Follow the guide line of <productname>PostgreSQL</productname> 12.4 regarding extensions. (Tatsuo Ishii)
+    </para>
+    <para>
+     <command>CREATE OR REPLACE FUNCTION</command> should be avoided. Use <command>CREATE FUNCTION</command> instead.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-09-14 [7bf7f09]
+    -->
+    <para>
+     Remove unnecessary checks in some code path. (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch contributed by Hou, Zhijie.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-09-06 [07c8b39]
+    -->
+    <para>
+     Fix relcache query sometimes sent to other than primary. (Tatsuo Ishii)
+    </para>
+    <para>
+     In streaming replication mode, relcache queries are supposed to be
+     sent to the primary node. But actually they were not sent to the primary
+     node if primary node was not the master node. Typically this could
+     happen when the primary is not node 0.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-09-01 [fcb9ac4]
+    -->
+    <para>
+     Fix <xref linkend="GUC-CONNECTION-LIFE-TIME"> not working when <xref linkend="GUC-SERIALIZE-ACCEPT"> is enabled. (Tatsuo Ishii)
+    </para>
+    <para>
+	 Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2020-August/007233.html">[pgpool-general: 7175]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-30 [53457d9]
+    -->
+    <para>
+     Display more informative error message in authentication process. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-21 [310650e]
+    -->
+    <para>
+     Fix segfault in pgpool child process in certain case. (Tatsuo Ishii)
+    </para>
+    <para>
+	 This issue can be reproduced with the following steps:
+     <orderedlist>
+	  <listitem>
+	   <para>
+        Shutdown all backends.
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+        Connect to pgpool with invalid client. I have used <command>pcp_attach_node</command> with pgpool's port number, not pcp's.
+	   </para>
+	  </listitem>
+     </orderedlist>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-5-26> 
  <title>Release 3.5.26</title>
  <note>

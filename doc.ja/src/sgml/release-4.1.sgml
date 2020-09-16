@@ -1,7 +1,195 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
-<sect1 id=release-4-1-3> 
+<sect1 id=release-4-1-4>
+ <!--
+ <title>Release 4.1.4</title>
+ -->
+ <title>リリース 4.1.4</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2020-09-17</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Changes</title>
+  -->
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-09-13 [88a4043]
+    -->
+    <para>
+     <!--
+     Follow the guide line of PostgreSQL 12.4 regarding extensions. (Tatsuo Ishii)
+     -->
+	 <productname>PostgreSQL</productname> 12.4 のガイドラインに従って<productname>Pgpool-II</productname>の拡張機能のスクリプトを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <!--
+     CREATE OR REPLACE FUNCTION should be avoided. Use CREATE FUNCTION instead.
+     -->
+	 <command>CREATE OR REPLACE FUNCTION</command>の使用を避けて、代わりに<command>CREATE FUNCTION</command>を使用するように修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-24 [4e8fece]
+    -->
+    <para>
+     <!--
+     Replace "PGBIN" and "LPATH" in pgpool_setup and watchdog_setup using PostgreSQL's bin path and lib path. (Bo Peng)
+     -->
+	 <xref linkend="PGPOOL-SETUP">と<xref linkend="WATCHDOG-SETUP">の"PGBIN"と"LPATH"を、PostgreSQLのbin pathとlib pathにしました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-09-14 [59367de]
+    -->
+    <para>
+     <!--
+     Remove unnecessary checks in some code path. (Tatsuo Ishii)
+     -->
+	 いくつかの不要なチェックをソースコードから削除しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <!--
+     Patch contributed by Hou, Zhijie.
+     -->
+	 パッチはby Hou, Zhijieにより提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-09-06 [9c0a5ff]
+    -->
+    <para>
+     <!--
+     Fix relcache query sometimes sent to other than primary. (Tatsuo Ishii)
+     -->
+	 relcacheクエリがプライマリ以外に送信される不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <!--
+     In streaming replication mode, relcache queries are supposed to be
+     sent to the primary node.  But actually they were not sent to the primary
+     node if primary node was not the master node. Typically this could
+     happen when the primary is not node 0.
+     -->
+	 ストリーミングレプリケーションモードでは、relcacheクエリはプライマリノードに送信されるようになっています。
+     しかし、実際には、プライマリノードがマスターノードでない場合、relcacheクエリはプライマリノードに送信されませんでした。
+     通常、これはプライマリがノード0でない場合に発生する可能性があります。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-09-01 [5bacc82]
+    -->
+    <para>
+     <!--
+     Fix connection_life_time not working when serialize_accept is enabled. (Tatsuo Ishii)
+     -->
+	 <xref linkend="GUC-SERIALIZE-ACCEPT">が有効になっているときに<xref linkend="GUC-CONNECTION-LIFE-TIME">が機能しない問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+	 Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2020-August/007233.html">[pgpool-general: 7175]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-30 [c45cd0d]
+    -->
+    <para>
+     <!--
+     Display more informative error message in authentication process. (Tatsuo Ishii)
+     -->
+	 認証処理において有益なエラーメッセージを表示するように修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-24 [4e8fece]
+    -->
+    <para>
+     <!--
+     Replace "PGBIN" and "LPATH" in pgpool_setup and watchdog_setup using PostgreSQL's bin path and lib path. (Bo Peng)
+     -->
+	 <xref linkend="PGPOOL-SETUP">と<xref linkend="WATCHDOG-SETUP">の"PGBIN"と"LPATH"を、PostgreSQLのbin pathとlib pathにしました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-22 [a070fda]
+    -->
+    <para>
+     <!--
+     Test: Fix occasional 073.pg_terminate_backend test failure. (Tatsuo Ishii)
+     -->
+	 Test: 時々に発生する073.pg_terminate_backendテストの失敗を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-08-21 [2f14161]
+    -->
+    <para>
+     <!--
+     Fix segfault in pgpool child process in certain case. (Tatsuo Ishii)
+     -->
+	 特定の場合に発生するpgpool子プロセスのセグメンテーション違反を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <!--
+	 This issue can be reproduced with the following steps:
+     -->
+	 以下の方法で再現できます。
+     <orderedlist>
+	  <listitem>
+	   <para>
+        <!--
+        shutdown all backends.
+        -->
+		すべてのバックエンドを停止します。
+	   </para>
+	  </listitem>
+	  <listitem>
+	   <para>
+        <!--
+        connect to pgpool with invalid client. I have used pcp_attach_node with pgpool's port number, not pcp's.
+        -->
+		無効なクライアントでpgpoolに接続します。例えば、pcpのポートではなく、pgpoolのポート番号を使用して<command>pcp_attach_node</command>を実行します。
+	   </para>
+	  </listitem>
+     </orderedlist>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
+<sect1 id=release-4-1-3>
  <!--
  <title>Release 4.1.3</title>
  -->
