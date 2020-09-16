@@ -60,6 +60,18 @@
   <itemizedlist>
    <listitem>
     <!--
+    2020-09-16 [957d3b3]
+    -->
+    <para>
+     <!--
+     Doc: fix the incorrect description regarding the running modes of Pgpoo-II in which online recovery is available. (Bo Peng)
+     -->
+     Doc: オンラインリカバリが利用可能なPgpoo-IIの動作モードに関する誤った説明を修正します。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2020-09-14 [bc35527]
     -->
     <para>
