@@ -212,14 +212,16 @@
     <!--
     There are four different running modes in <productname>Pgpool-II</>: streaming
     replication mode, master slave mode, native replication mode and
-    raw mode. In any mode, <productname>Pgpool-II</> provides connection pooling,
-    automatic fail over and online recovery. The sample configuration
+    raw mode. In any mode, <productname>Pgpool-II</> provides connection pooling
+    and automatic fail over. Online recovery can be used only with streaming replication
+    mode and native replication mode. The sample configuration
     files for each mode are provied. They are located
     under <filename>$prefix/etc</filename>. You can copy one of them
     to <filename>$prefix/etc/pgpool.conf</filename>.
     -->
     <productname>Pgpool-II</>にはストリーミングレプリケーションモード、ロジカルレプリケーションモード、マスタースレーブモード（slonyモード)、ネイティブレプリケーションモード、rawモードの5つの動作モードがあります。
-    いずれのモードにおいても、<productname>Pgpool-II</>はコネクションプーリング、自動フェイルオーバ、オンラインリカバリの機能を提供します。
+    いずれのモードにおいても、<productname>Pgpool-II</>はコネクションプーリング、自動フェイルオーバの機能を提供します。
+    ストリーミングレプリケーションモードとネイティブレプリケーションモードのときにのみオンラインリカバリが可能です。
     各モードのためのサンプルの設定ファイルが提供されています。
     これらは<filename>$prefix/etc/</filename>以下に配置されており、<filename>$prefix/etc/pgpool.conf</filename>としてコピーして使用することができます。
    </para>
