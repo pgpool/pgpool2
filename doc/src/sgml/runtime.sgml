@@ -190,7 +190,8 @@
     replication mode, master slave mode (slony mode), native
     replication mode, raw mode and snapshot isolaton mode. In any
     mode, <productname>Pgpool-II</> provides connection pooling,
-    automatic fail over and online recovery.
+    and automatic fail over.
+    Online recovery can be used only with streaming replication mode and native replication mode.
    </para>
 
    <para>
