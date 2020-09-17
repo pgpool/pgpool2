@@ -2498,7 +2498,7 @@ process_remote_failover_command_on_coordinator(WatchdogNode * wdNode, WDPacketDa
 }
 
 static bool
-reply_to_failove_command(WDCommandData * ipcCommand, WDFailoverCMDResults cmdResult, unsigned int failoverID)
+reply_to_failover_command(WDCommandData * ipcCommand, WDFailoverCMDResults cmdResult, unsigned int failoverID)
 {
 	bool		ret = false;
 	JsonNode   *jNode = jw_create_with_object(true);
@@ -2710,7 +2710,7 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 		ereport(LOG, (
 					  errmsg("failed to process failover command"),
 					  errdetail("unable to parse the command data")));
-		reply_to_failove_command(ipcCommand, FAILOVER_RES_INVALID_FUNCTION, 0);
+		reply_to_failover_command(ipcCommand, FAILOVER_RES_INVALID_FUNCTION, 0);
 		return IPC_CMD_COMPLETE;
 	}
 
@@ -2722,7 +2722,7 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 		reqKind = PROMOTE_NODE_REQUEST;
 	else
 	{
-		reply_to_failove_command(ipcCommand, FAILOVER_RES_INVALID_FUNCTION, 0);
+		reply_to_failover_command(ipcCommand, FAILOVER_RES_INVALID_FUNCTION, 0);
 		return IPC_CMD_COMPLETE;
 	}
 
@@ -2758,9 +2758,9 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 				ret = promote_backend(node_id_list[0], flags);
 
 			if (ret == true)
-				reply_to_failove_command(ipcCommand, FAILOVER_RES_WILL_BE_DONE, 0);
+				reply_to_failover_command(ipcCommand, FAILOVER_RES_WILL_BE_DONE, 0);
 			else
-				reply_to_failove_command(ipcCommand, FAILOVER_RES_ERROR, 0);
+				reply_to_failover_command(ipcCommand, FAILOVER_RES_ERROR, 0);
 		}
 		else
 		{
@@ -2768,7 +2768,7 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 			 * It was the request from the local node, Just reply the caller
 			 * to get on with the failover
 			 */
-			reply_to_failove_command(ipcCommand, FAILOVER_RES_PROCEED, 0);
+			reply_to_failover_command(ipcCommand, FAILOVER_RES_PROCEED, 0);
 		}
 		return IPC_CMD_COMPLETE;
 	}
@@ -2800,7 +2800,7 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 			register_inform_quarantine_nodes_req();
 	}
 
-	reply_to_failove_command(ipcCommand, res, 0);
+	reply_to_failover_command(ipcCommand, res, 0);
 	return IPC_CMD_COMPLETE;
 }
 
@@ -3015,7 +3015,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData * ipcC
 		ereport(LOG,
 				(errmsg("received the failover indication from Pgpool-II on IPC interface, but only master can do failover")));
 	}
-	reply_to_failove_command(ipcCommand, res, 0);
+	reply_to_failover_command(ipcCommand, res, 0);
 
 	return IPC_CMD_COMPLETE;
 }
@@ -5200,9 +5200,9 @@ wd_commands_packet_processor(WD_EVENTS event, WatchdogNode * wdNode, WDPacketDat
 		if (ipcCommand->commandPacket.type == WD_IPC_FAILOVER_COMMAND)
 		{
 			if (pkt->type == WD_ACCEPT_MESSAGE)
-				reply_to_failove_command(ipcCommand, FAILOVER_RES_PROCEED, 0);
+				reply_to_failover_command(ipcCommand, FAILOVER_RES_PROCEED, 0);
 			else
-				reply_to_failove_command(ipcCommand, FAILOVER_RES_MASTER_REJECTED, 0);
+				reply_to_failover_command(ipcCommand, FAILOVER_RES_MASTER_REJECTED, 0);
 			return true;
 		}
 
