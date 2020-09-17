@@ -16,7 +16,7 @@ function wait_for_pgpool_startup {
 }
 
 #-------------------------------------------
-# wait for primary/master failover done
+# wait for primary/main failover done
 #-------------------------------------------
 function wait_for_failover_done {
 	timeout=20
@@ -25,7 +25,7 @@ function wait_for_failover_done {
 	do
 		$PGBIN/psql -p $PGPOOL_PORT -c "show pool_nodes" test >/dev/null 2>&1
 		if [ $? = 0 ];then
-		    $PGBIN/psql -p $PGPOOL_PORT -c "show pool_nodes" test |egrep -i "primary|master">/dev/null 2>&1
+		    $PGBIN/psql -p $PGPOOL_PORT -c "show pool_nodes" test |egrep -i "primary|main">/dev/null 2>&1
 		    if [ $? = 0 ];then
 			break;
 		    fi

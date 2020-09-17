@@ -1484,9 +1484,9 @@
     -->
     <para>
      <!--
-     Fix <xref linkend="GUC-BLACK-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
+     Fix <xref linkend="GUC-WRITE-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
      -->
-     <xref linkend="GUC-BLACK-FUNCTION-LIST">のデフォル値が間違っていた不具合を修正しました。(Tatsuo Ishii)
+     <xref linkend="GUC-WRITE-FUNCTION-LIST">のデフォル値が間違っていた不具合を修正しました。(Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -2407,9 +2407,9 @@
     -->
     <para>
      <!--
-     Doc: Change <xref linkend="GUC-FOLLOW-MASTER-COMMAND"> description "new master" to "new primary". (Bo Peng)
+     Doc: Change <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND"> description "new master" to "new primary". (Bo Peng)
      -->
-     Doc: <xref linkend="GUC-FOLLOW-MASTER-COMMAND">ドキュメントの"new master"を"new primary"に変更しました。(Bo Peng)
+     Doc: <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND">ドキュメントの"new master"を"new primary"に変更しました。(Bo Peng)
     </para>
    </listitem>
 

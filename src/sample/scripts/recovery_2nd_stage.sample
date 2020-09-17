@@ -1,7 +1,7 @@
 #! /bin/sh
 # Online recovery 2nd stage script
 #
-DATADIR=$1		# master dabatase cluster
+DATADIR=$1		# main dabatase cluster
 DEST=$2			# hostname of the DB node to be recovered
 DESTDIR=$3		# database cluster of the DB node to be recovered
 PORT=$4		    # PostgreSQL port number

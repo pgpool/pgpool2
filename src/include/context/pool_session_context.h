@@ -288,13 +288,13 @@ typedef struct
 	bool		is_in_transaction;
 
 	/*
-	 * Current transaction temp black list
+	 * Current transaction temp write list
 	 */
-	List	   *transaction_temp_black_list;
+	List	   *transaction_temp_write_list;
 
 #ifdef NOT_USED
-	/* Preferred "master" node id. Only used for SimpleForwardToFrontend. */
-	int			preferred_master_node_id;
+	/* Preferred "main" node id. Only used for SimpleForwardToFrontend. */
+	int			preferred_main_node_id;
 #endif
 
 	/* Whether snapshot is aquired in this transaction. Only used by Snapshot Isolation mode. */
@@ -386,9 +386,9 @@ extern void	pool_temp_tables_remove_pending(void);
 extern void	pool_temp_tables_dump(void);
 
 #ifdef NOT_USED
-extern void pool_set_preferred_master_node_id(int node_id);
-extern int	pool_get_preferred_master_node_id(void);
-extern void pool_reset_preferred_master_node_id(void);
+extern void pool_set_preferred_main_node_id(int node_id);
+extern int	pool_get_preferred_main_node_id(void);
+extern void pool_reset_preferred_main_node_id(void);
 #endif
 
 #ifdef NOT_USED

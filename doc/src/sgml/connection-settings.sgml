@@ -455,8 +455,8 @@ backend_clustering_mode = 'logical_replication'
     <programlisting>
 backend_clustering_mode = 'slony'
     </programlisting>
-   In this mode you can have up to 127 slave servers.  Also it is
-   possible not to have slave server at all.
+   In this mode you can have up to 127 standby servers.  Also it is
+   possible not to have standby server at all.
   </para>
  </sect2>
 
@@ -471,8 +471,8 @@ backend_clustering_mode = 'slony'
     <programlisting>
 backend_clustering_mode = 'native_replication'
     </programlisting>
-   In this mode you can have up to 127 slave replication servers.
-   Also it is possible not to have slave server at all.
+   In this mode you can have up to 127 standby replication servers.
+   Also it is possible not to have standby server at all.
   </para>
 
   <para>
@@ -552,7 +552,7 @@ backend_clustering_mode = 'native_replication'
      <note>
       <para>
        In case of a tie, when two or more groups have the same
-       number of nodes, then the group containing the master
+       number of nodes, then the group containing the primary
        node (backend node having the youngest node id) gets the
        precedence.
       </para>
@@ -626,7 +626,7 @@ backend_clustering_mode = 'native_replication'
 
 	      <row>
 	       <entry>
-		results(R:replication, M: send only to master, L: load balance)
+		results(R:replication, M: send only to main, L: load balance)
 	       </entry>
 	       <entry align="center">R</entry>
 	       <entry align="center">M</entry>
@@ -1004,10 +1004,10 @@ S2/N2: COMMIT;
       end of the parameter name (e.g.backend_hostname0). This
       number is referred to as "DB node ID", and it starts from
       0. The backend which was given the DB node ID of 0 will be
-      called "master node". When multiple backends are defined, the
-      service can be continued even if the master node is down (not
+      called "main node". When multiple backends are defined, the
+      service can be continued even if the main node is down (not
       true in some modes). In this case, the youngest DB node ID
-      alive will be the new master node.
+      alive will be the new main node.
      </para>
 
      <para>
@@ -1085,8 +1085,8 @@ S2/N2: COMMIT;
       <productname>Pgpool-II</productname> <emphasis>V2.2.6</emphasis>, <emphasis>V2.3</emphasis>
       or later allows updating the values by reloading a
       configuration file.  This is useful if you want to prevent
-      any query sent to slaves to perform some administrative
-      work in master/slave mode.
+      any query sent to standbys to perform some administrative
+      work in native replication mode.
      </para>
     </listitem>
    </varlistentry>
@@ -1174,7 +1174,7 @@ S2/N2: COMMIT;
 	</row>
 
 	<row>
-	 <entry><literal>ALWAYS_MASTER</literal></entry>
+	 <entry><literal>ALWAYS_PRIMARY</literal></entry>
 	 <entry>This is only useful in streaming replication
 	  mode. See <xref linkend="running-mode"> about
 	   streaming replication mode.  If this flag is set to
@@ -1185,7 +1185,7 @@ S2/N2: COMMIT;
 	   flag is set as the primary node. This is useful for
 	   systems including <productname>Amazon Aurora for
 	    PostgreSQL Compatibility</productname> which has
-	   fixed master server name. See <xref linkend="example-Aurora">
+	   fixed primary server name. See <xref linkend="example-Aurora">
 	    for an example settings.
 	 </entry>
 	</row>

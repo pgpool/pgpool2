@@ -17,7 +17,7 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pcp_promote_node</refname>
   <refpurpose>
-   promotes the given node as new master to Pgpool-II</refpurpose>
+   promotes the given node as new main to Pgpool-II</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -33,14 +33,14 @@ Pgpool-II documentation
   <title>Description</title>
   <para>
    <command>pcp_promote_node</command>
-   promotes the given node as new master to Pgpool-II. In master/slave streaming replication only. Please note that this command does not actually promote standby PostgreSQL backend: it just changes the internal status of Pgpool-II and trigger failover and users have to promote standby PostgreSQL outside Pgpool-II.
+   promotes the given node as new primary to Pgpool-II. In streaming replication mode only. Please note that this command does not actually promote standby PostgreSQL backend: it just changes the internal status of Pgpool-II and trigger failover and users have to promote standby PostgreSQL outside Pgpool-II.
   </para>
 
   <para>
    <command>pcp_promote_node</command> executes followings.  Please be
-   warned that if <xref linkend="guc-follow-master-command"> is set,
+   warned that if <xref linkend="guc-follow-primary-command"> is set,
    the command will be executed.  It is a standard advice that you
-   disable <xref linkend="guc-follow-master-command"> before executing
+   disable <xref linkend="guc-follow-primary-command"> before executing
    this command.
 
    <orderedlist>
@@ -67,8 +67,8 @@ Pgpool-II documentation
 
     <listitem>
      <para>
-      If <xref linkend="guc-follow-master-command"> is set, execute
-      <xref linkend="guc-follow-master-command"> against
+      If <xref linkend="guc-follow-primary-command"> is set, execute
+      <xref linkend="guc-follow-primary-command"> against
       <productname>PostgreSQL</productname>.
      </para>
     </listitem>     
@@ -88,7 +88,7 @@ Pgpool-II documentation
      <term><option>--node-id=<replaceable class="parameter">node_id</replaceable></option></term>
      <listitem>
       <para>
-       The index of backend node to promote as new master.
+       The index of backend node to promote as new main.
       </para>
      </listitem>
     </varlistentry>

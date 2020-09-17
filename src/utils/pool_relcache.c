@@ -152,7 +152,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	}
 	else
 	{
-		dbname = MASTER_CONNECTION(backend)->sp->database;
+		dbname = MAIN_CONNECTION(backend)->sp->database;
 
 		/*
 		 * If in streaming replication mode, prefer to send query to the
@@ -161,7 +161,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 		if (STREAM && PRIMARY_NODE_ID >= 0)
 			node_id = PRIMARY_NODE_ID;
 		else
-			node_id = MASTER_NODE_ID;
+			node_id = MAIN_NODE_ID;
 	}
 
 	now = time(NULL);

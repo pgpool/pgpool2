@@ -295,13 +295,13 @@ extern int	pool_get_major_version(void);
  *   no query is in progress and the DB node is healthy
  */
 extern bool pool_is_node_to_be_sent_in_current_query(int node_id);
-extern int	pool_virtual_master_db_node_id(void);
+extern int	pool_virtual_main_db_node_id(void);
 
 extern BACKEND_STATUS * my_backend_status[];
-extern int	my_master_node_id;
+extern int	my_main_node_id;
 
 #define VALID_BACKEND(backend_id) \
-	((RAW_MODE && (backend_id) == REAL_MASTER_NODE_ID) ||		\
+	((RAW_MODE && (backend_id) == REAL_MAIN_NODE_ID) ||		\
 	(pool_is_node_to_be_sent_in_current_query((backend_id)) &&	\
 	 ((*(my_backend_status[(backend_id)]) == CON_UP) ||			\
 	  (*(my_backend_status[(backend_id)]) == CON_CONNECT_WAIT))))
@@ -320,15 +320,15 @@ extern int	my_master_node_id;
  * The first DB node id appears in pgpool.conf or the first "live" DB
  * node otherwise.
  */
-#define REAL_MASTER_NODE_ID (Req_info->master_node_id)
+#define REAL_MAIN_NODE_ID (Req_info->main_node_id)
 
 /*
  * The primary node id in streaming replication mode. If not in the
  * mode or there's no primary node, this macro returns
- * REAL_MASTER_NODE_ID.
+ * REAL_MAIN_NODE_ID.
  */
 #define PRIMARY_NODE_ID (Req_info->primary_node_id >=0 && VALID_BACKEND_RAW(Req_info->primary_node_id) ? \
-						 Req_info->primary_node_id:REAL_MASTER_NODE_ID)
+						 Req_info->primary_node_id:REAL_MAIN_NODE_ID)
 #define IS_PRIMARY_NODE_ID(node_id)	(node_id == PRIMARY_NODE_ID)
 
 /*
@@ -338,14 +338,14 @@ extern int	my_master_node_id;
 #define REAL_PRIMARY_NODE_ID (Req_info->primary_node_id)
 
 /*
- * "Virtual" master node id. It's same as REAL_MASTER_NODE_ID if not
+ * "Virtual" main node id. It's same as REAL_MAIN_NODE_ID if not
  * in load balance mode. If in load balance, it's the first load
  * balance node.
  */
-#define MASTER_NODE_ID (pool_virtual_master_db_node_id())
-#define IS_MASTER_NODE_ID(node_id) (MASTER_NODE_ID == (node_id))
-#define MASTER_CONNECTION(p) ((p)->slots[MASTER_NODE_ID])
-#define MASTER(p) MASTER_CONNECTION(p)->con
+#define MAIN_NODE_ID (pool_virtual_main_db_node_id())
+#define IS_MAIN_NODE_ID(node_id) (MAIN_NODE_ID == (node_id))
+#define MAIN_CONNECTION(p) ((p)->slots[MAIN_NODE_ID])
+#define MAIN(p) MAIN_CONNECTION(p)->con
 
 /*
  * Backend node status in streaming replication mode.
@@ -361,13 +361,13 @@ typedef enum
 /* Clustering mode macros */
 #define REPLICATION (pool_config->backend_clustering_mode == CM_NATIVE_REPLICATION || \
 					 pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
-#define MASTER_SLAVE (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION || \
+#define NATIVE_REPLICATION (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION || \
 					  pool_config->backend_clustering_mode == CM_LOGICAL_REPLICATION || \
 					  pool_config->backend_clustering_mode == CM_SLONY)
 #define STREAM (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION)
 #define LOGICAL (pool_config->backend_clustering_mode == CM_LOGICAL_REPLICATION)
 #define SLONY (pool_config->backend_clustering_mode == CM_SLONY)
-#define DUAL_MODE (REPLICATION || MASTER_SLAVE)
+#define DUAL_MODE (REPLICATION || NATIVE_REPLICATION)
 #define RAW_MODE (pool_config->backend_clustering_mode == CM_RAW)
 #define SL_MODE (STREAM || LOGICAL) /* streaming or logical replication mode */
 
@@ -441,7 +441,7 @@ typedef struct
 	POOL_REQUEST_NODE request[MAX_REQUEST_QUEUE_SIZE];
 	int			request_queue_head;
 	int			request_queue_tail;
-	int			master_node_id; /* the youngest node id which is not in down
+	int			main_node_id; /* the youngest node id which is not in down
 								 * status */
 	int			primary_node_id;	/* the primary node id in streaming
 									 * replication mode */
@@ -623,7 +623,7 @@ extern int	write_status_file(void);
 extern POOL_NODE_STATUS * verify_backend_node_status(POOL_CONNECTION_POOL_SLOT * *slots);
 extern POOL_NODE_STATUS * pool_get_node_status(void);
 extern void pool_set_backend_status_changed_time(int backend_id);
-extern int	get_next_master_node(void);
+extern int	get_next_main_node(void);
 
 
 

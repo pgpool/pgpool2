@@ -121,11 +121,11 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 	}
 
 	/*
-	 * Otherwise just read from master node.
+	 * Otherwise just read from main node.
 	 */
 	else
 	{
-		con = MASTER(backend);
+		con = MAIN(backend);
 
 		if (pool_read(con, &len, sizeof(len)) < 0)
 			return POOL_END;
@@ -196,7 +196,7 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 			}
 			query = session_context->query_context->query_w_hex;
 			node = pool_get_parse_tree();
-			state = TSTATE(backend, MASTER_NODE_ID);
+			state = TSTATE(backend, MAIN_NODE_ID);
 			pool_handle_query_cache(backend, query, node, state);
 		}
 	}
@@ -350,7 +350,7 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 		/* Is this a temporary table? */
 		if (stmt->relation->relpersistence == 't')
 		{
-			if (TSTATE(backend, MASTER_NODE_ID ) == 'T')	/* Are we inside a transaction? */
+			if (TSTATE(backend, MAIN_NODE_ID ) == 'T')	/* Are we inside a transaction? */
 			{
 				state = TEMP_TABLE_CREATING;
 			}
@@ -375,7 +375,7 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 			ListCell   *cell;
 			ListCell   *next;
 
-			if (TSTATE(backend, MASTER_NODE_ID ) == 'T')	/* Are we inside a transaction? */
+			if (TSTATE(backend, MAIN_NODE_ID ) == 'T')	/* Are we inside a transaction? */
 			{
 				state = TEMP_TABLE_DROPPING;
 			}
@@ -440,14 +440,14 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION * frontend, POOL_CONNE
 	rows = extract_ntuples(packet);
 
 	/*
-	 * Save number of affected tuples of master node.
+	 * Save number of affected tuples of main node.
 	 */
-	session_context->ntuples[MASTER_NODE_ID] = rows;
+	session_context->ntuples[MAIN_NODE_ID] = rows;
 
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (!IS_MASTER_NODE_ID(i))
+		if (!IS_MAIN_NODE_ID(i))
 		{
 			if (!VALID_BACKEND(i))
 			{
@@ -468,7 +468,7 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION * frontend, POOL_CONNE
 			{
 				ereport(DEBUG1,
 						(errmsg("processing command complete"),
-						 errdetail("length does not match between backends master(%d) %d th backend(%d)",
+						 errdetail("length does not match between backends main(%d) %d th backend(%d)",
 								   len, i, packetlen)));
 			}
 
@@ -500,7 +500,7 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION * frontend, POOL_CONNE
 		string_append_char(msg, "\"");
 		pool_send_error_message(frontend, MAJOR(backend),
 								"XX001", msg->data, "",
-								"check data consistency between master and other db node", __FILE__, __LINE__);
+								"check data consistency between main and other db node", __FILE__, __LINE__);
 		ereport(LOG,
 				(errmsg("%s", msg->data)));
 		free_string(msg);

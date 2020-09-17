@@ -18,9 +18,9 @@ Pgpool-II documentation
   <refname>pcp_promote_node</refname>
   <refpurpose>
    <!--
-   promotes the given node as new master to Pgpool-II</refpurpose>
+   promotes the given node as new main to Pgpool-II</refpurpose>
    -->
-   <productname>Pgpool-II</productname> のノードをマスターに昇格させる</refpurpose>
+   <productname>Pgpool-II</productname> のノードをプライマリに昇格させる</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -39,16 +39,16 @@ Pgpool-II documentation
   <title>説明</title>
   <para>
    <command>pcp_promote_node</command>
-   は <productname>Pgpool-II</productname> のノードをマスターに昇格させます。
-   これは、マスタースレーブモードで ストリーミングレプリケーション構成の場合のみ使用できます。
+   は <productname>Pgpool-II</productname> のノードをプライマリに昇格させます。
+   これは、ストリーミングレプリケーション構成の場合のみ使用できます。
    このコマンドは実際に <productname>PostgreSQL</productname> のスタンバイサーバを昇格するわけではないことに注意してください。
    単に <productname>Pgpool-II</productname> の内部ステータスを変更するだけです。
    ですから、ユーザはこのコマンドを使う際には自分で <productname>PostgreSQL</productname> のスタンバイを昇格させるようにしてください。
   </para>
   <para>
    <command>pcp_promote_node</command>は、起動された後以下を行います。
-   <xref linkend="guc-follow-master-command">が設定されている場合はそれも起動されるので、十分な注意が必要です。
-   通常は<xref linkend="guc-follow-master-command">を無効にしてからこのコマンドを実行することをお勧めします。
+   <xref linkend="guc-follow-primary-command">が設定されている場合はそれも起動されるので、十分な注意が必要です。
+   通常は<xref linkend="guc-follow-primary-command">を無効にしてからこのコマンドを実行することをお勧めします。
 
    <orderedlist>
 
@@ -68,7 +68,7 @@ Pgpool-II documentation
 
     <listitem>
      <para>
-      <xref linkend="guc-follow-master-command">が設定されている場合は、2でダウンさせた<productname>PostgreSQL</productname>ノードに対して<xref linkend="guc-follow-master-command">を実行します。
+      <xref linkend="guc-follow-primary-command">が設定されている場合は、2でダウンさせた<productname>PostgreSQL</productname>ノードに対して<xref linkend="guc-follow-primary-command">を実行します。
      </para>
     </listitem>     
 
@@ -90,9 +90,9 @@ Pgpool-II documentation
      <listitem>
       <para>
        <!--
-       The index of backend node to promote as new master.
+       The index of backend node to promote as new main node.
        -->
-       マスターに昇格させるバックエンドノードのインデックスを指定します。
+       プライマリに昇格させるバックエンドノードのインデックスを指定します。
       </para>
      </listitem>
     </varlistentry>

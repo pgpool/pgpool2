@@ -56,7 +56,7 @@ static bool function_volatile_property(char *fname, FUNC_VOLATILE_PROPERTY prope
 
 /*
  * Return true if this SELECT has function calls *and* supposed to
- * modify database.  We check black/white function list to determine
+ * modify database.  We check write/read_only function list to determine
  * whether the function modifies database.
  */
 bool
@@ -194,11 +194,11 @@ pool_has_insertinto_or_locking_clause(Node *node)
 }
 
 /*
- * Search function name in whilelist or blacklist regex array
+ * Search function name in readonlylist or writelist regex array
  * Return 1 on success (found in list)
  * Return 0 when not found in list
  * Return -1 if the given search type doesn't exist.
- * Search type supported are: WHITELIST and BLACKLIST
+ * Search type supported are: READONLYLIST and WRITELIST
  */
 int
 pattern_compare(char *str, const int type, const char *param_name)
@@ -210,21 +210,21 @@ pattern_compare(char *str, const int type, const char *param_name)
 	RegPattern *lists_patterns;
 	int		   *pattc;
 
-	if (strcmp(param_name, "white_function_list") == 0 ||
-		strcmp(param_name, "black_function_list") == 0)
+	if (strcmp(param_name, "read_only_function_list") == 0 ||
+		strcmp(param_name, "write_function_list") == 0)
 	{
 		lists_patterns = pool_config->lists_patterns;
 		pattc = &pool_config->pattc;
 
 	}
-	else if (strcmp(param_name, "white_memqcache_table_list") == 0 ||
-			 strcmp(param_name, "black_memqcache_table_list") == 0)
+	else if (strcmp(param_name, "cache_safe_memqcache_table_list") == 0 ||
+			 strcmp(param_name, "cache_unsafe_memqcache_table_list") == 0)
 	{
 		lists_patterns = pool_config->lists_memqcache_table_patterns;
 		pattc = &pool_config->memqcache_table_pattc;
 
 	}
-	else if (strcmp(param_name, "black_query_pattern_list") == 0)
+	else if (strcmp(param_name, "primary_routing_query_pattern_list") == 0)
 	{
 		lists_patterns = pool_config->lists_query_patterns;
 		pattc = &pool_config->query_pattc;
@@ -253,18 +253,18 @@ pattern_compare(char *str, const int type, const char *param_name)
 		{
 			switch (type)
 			{
-					/* return 1 if string matches whitelist pattern */
-				case WHITELIST:
+					/* return 1 if string matches readonly list pattern */
+				case READONLYLIST:
 					ereport(DEBUG2,
-							(errmsg("comparing function name in whitelist regex array"),
+							(errmsg("comparing function name in readonly list regex array"),
 							 errdetail("pattern_compare: %s (%s) matched: %s",
 									   param_name, lists_patterns[i].pattern, s)));
 					result = 1;
 					break;
-					/* return 1 if string matches blacklist pattern */
-				case BLACKLIST:
+					/* return 1 if string matches writelist pattern */
+				case WRITELIST:
 					ereport(DEBUG2,
-							(errmsg("comparing function name in blacklist regex array"),
+							(errmsg("comparing function name in writelist regex array"),
 							 errdetail("pattern_compare: %s (%s) matched: %s",
 									   param_name, lists_patterns[i].pattern, s)));
 					result = 1;
@@ -279,7 +279,7 @@ pattern_compare(char *str, const int type, const char *param_name)
 			break;
 		}
 		ereport(DEBUG2,
-				(errmsg("comparing function name in blacklist/whitelist regex array"),
+				(errmsg("comparing function name in write/readonly list regex array"),
 				 errdetail("pattern_compare: %s (%s) not matched: %s",
 						   param_name, lists_patterns[i].pattern, s)));
 	}
@@ -373,11 +373,11 @@ function_call_walker(Node *node, void *context)
 			}
 
 			/*
-			 * If both white_function_list and black_function_list is empty,
+			 * If both read_only_function_list and write_function_list is empty,
 			 * check volatile property of the function in the system catalog.
 			 */
-			if (pool_config->num_white_function_list == 0 &&
-				pool_config->num_black_function_list == 0)
+			if (pool_config->num_read_only_function_list == 0 &&
+				pool_config->num_write_function_list == 0)
 			{
 				if (function_volatile_property(fname, FUNC_VOLATILE))
 				{
@@ -388,22 +388,22 @@ function_call_walker(Node *node, void *context)
 			}
 
 			/*
-			 * Check white list if any.
+			 * Check read_only list if any.
 			 */
-			if (pool_config->num_white_function_list > 0)
+			if (pool_config->num_read_only_function_list > 0)
 			{
-				/* Search function in the white list regex patterns */
-				if (pattern_compare(fname, WHITELIST, "white_function_list") == 1)
+				/* Search function in the read_only list regex patterns */
+				if (pattern_compare(fname, READONLYLIST, "read_only_function_list") == 1)
 				{
 					/*
-					 * If the function is found in the white list, we can
+					 * If the function is found in the read_only list, we can
 					 * ignore it
 					 */
 					return raw_expression_tree_walker(node, function_call_walker, context);
 				}
 
 				/*
-				 * Since the function was not found in white list, we have
+				 * Since the function was not found in read_only list, we have
 				 * found a writing function.
 				 */
 				ctx->has_function_call = true;
@@ -411,12 +411,12 @@ function_call_walker(Node *node, void *context)
 			}
 
 			/*
-			 * Check black list if any.
+			 * Check write list if any.
 			 */
-			if (pool_config->num_black_function_list > 0)
+			if (pool_config->num_write_function_list > 0)
 			{
-				/* Search function in the black list regex patterns */
-				if (pattern_compare(fname, BLACKLIST, "black_function_list") == 1)
+				/* Search function in the write list regex patterns */
+				if (pattern_compare(fname, WRITELIST, "write_function_list") == 1)
 				{
 					/* Found. */
 					ctx->has_function_call = true;
@@ -916,7 +916,7 @@ pool_has_pgpool_regclass(void)
 	char	   *user;
 
 	backend = pool_get_session_context(false)->backend;
-	user = MASTER_CONNECTION(backend)->sp->user;
+	user = MAIN_CONNECTION(backend)->sp->user;
 
 	if (!relcache)
 	{

@@ -9,7 +9,7 @@
   streaming replication cluster with some exceptions. First,
   fail over and online recovery are managed
   by <productname>Aurora</productname>. So you don't need to
-  set <xref linkend="guc-failover-command">, <xref linkend="guc-follow-master-command">,
+  set <xref linkend="guc-failover-command">, <xref linkend="guc-follow-primary-command">,
     and recovery related parameters. In this section we explain
     how to set up <productname>Pgpool-II</productname> for Aurora.
  </para>
@@ -60,7 +60,7 @@
     </listitem>
     <listitem>
      <para>
-      Set <varname>ALWAYS_MASTER</varname> flag to
+      Set <varname>ALWAYS_PRIMARY</varname> flag to
       the <xref linkend="guc-backend-flag">
        for <xref linkend="guc-backend-hostname">0.
      </para>

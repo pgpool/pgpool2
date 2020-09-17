@@ -778,10 +778,10 @@ backend_clustering_mode = 'slony'
       <para>
        <!--
        In case of a tie, when two or more groups have the same number of nodes,
-       then the group containing the master node (backend node having
+       then the group containing the main node (backend node having
        the youngest node id) gets the precedence.
        -->
-       もし同票で、2つ以上のグループで同じノード数だった場合は、マスターノード(最も若いDBノード番号のバックエンドノード)を含むグループが優先されます。
+       もし同票で、2つ以上のグループで同じノード数だった場合は、メインノード(最も若いDBノード番号のバックエンドノード)を含むグループが優先されます。
       </para>
      </note>
 
@@ -883,9 +883,9 @@ backend_clustering_mode = 'slony'
 	      <row>
 	       <entry>
 		<!--
-		results(R:replication, M: send only to master, L: load balance)
+		results(R:replication, M: send only to main, L: load balance)
 		-->
-		結果（R:レプリケーション、M:マスターのみに送信、L:負荷分散）
+		結果（R:レプリケーション、M:メインのみに送信、L:負荷分散）
 	       </entry>
 	       <entry align="center">R</entry>
 	       <entry align="center">M</entry>
@@ -1355,10 +1355,10 @@ S2/N2: COMMIT;
       end of the parameter name (e.g.backend_hostname0). This
       number is referred to as "DB node ID", and it starts from
       0. The backend which was given the DB node ID of 0 will be
-      called "master node". When multiple backends are defined, the
-      service can be continued even if the master node is down (not
+      called "main node". When multiple backends are defined, the
+      service can be continued even if the main node is down (not
       true in some modes). In this case, the youngest DB node ID
-      alive will be the new master node.
+      alive will be the new main node.
       -->
       パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_hostname0)。
       この数字のことを「DBノードID」と呼び、0から開始します。
@@ -1476,7 +1476,7 @@ S2/N2: COMMIT;
       <productname>Pgpool-II</> <emphasis>V2.2.6</>, <emphasis>V2.3</> or later
       allows alllow updating the values by reloading a configuration file.
       This is useful if you want to prevent any query sent to
-      slaves to perform some administrative work in master/slave mode.
+      standbys to perform some administrative work in native replication mode.
       -->
       新しい<varname>backend_weight</>はパラメータ行を追加して、設定ファイル再読み込みすることで追加できます。
       <productname>Pgpool-II</> <emphasis>V2.2.6</>、<emphasis>V2.3</>以降では、設定ファイルの再読込みで値を変更できます。
@@ -1617,7 +1617,7 @@ S2/N2: COMMIT;
 
 	<row>
 	 <!--
-	 <entry><literal>ALWAYS_MASTER</literal></entry>
+	 <entry><literal>ALWAYS_PRIMARY</literal></entry>
 	 <entry>This is only useful in streaming replication
 	 mode. See <xref linkend="running-mode"> about
 	 streaming replication mode.  If this flag is set to
@@ -1628,11 +1628,11 @@ S2/N2: COMMIT;
 	 flag is set as the primary node. This is useful for
 	 systems including <productname>Amazon Aurora for
 	 PostgreSQL Compatibility</productname> which has
-	 fixed master server name. See <xref linkend="example-Aurora">
+	 fixed primary server name. See <xref linkend="example-Aurora">
 	 for an example settings.
 	</entry>
 	 -->
-	 <entry><literal>ALWAYS_MASTER</literal></entry>
+	 <entry><literal>ALWAYS_PRIMARY</literal></entry>
 	 <entry>ストリーミングレプリケーションでのみ有効です。
 	  ストリーミングレプリケーションモードについては<xref linkend="running-mode">をご覧ください。
 	   このフラグがバックエンドのどれかにセットされていると、<productname>Pgpool-II</productname>はバックエンドにアクセスしてプライマリノードを探すのではなく、このフラグがセットされているノードをプライマリノードと見なします。

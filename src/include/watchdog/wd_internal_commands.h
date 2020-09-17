@@ -40,7 +40,7 @@ extern WDFailoverCMDResults wd_promote_backend(int node_id, unsigned char flags)
 extern WdCommandResult wd_execute_cluster_command(char* clusterCommand,
 												  int nArgs, WDExecCommandArg *wdExecCommandArg);
 
-extern WDPGBackendStatus * get_pg_backend_status_from_master_wd_node(void);
+extern WDPGBackendStatus * get_pg_backend_status_from_leader_wd_node(void);
 
 extern WD_STATES wd_internal_get_watchdog_local_node_state(void);
 extern int	wd_internal_get_watchdog_quorum_state(void);

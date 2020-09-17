@@ -31,7 +31,7 @@
  <caution>
  <para>
  Make sure that <command>autovacuum</command> is stopped on the
- master node (the first node which is up and running) before starting the
+ main node (the first node which is up and running) before starting the
  online recovery. Autovacuum can change the contents of the database which
  can cause the inconsistency after the online recovery.
     </para>
@@ -115,14 +115,14 @@
      </listitem>
      <listitem>
       <para>
-       Path to the database cluster of the master(primary) node.
+       Path to the database cluster of the main(primary) node.
       </para>
      </listitem>
     </itemizedlist>
     The script example can be found in <xref linkend="example-cluster-pgpool-config-online-recovery">.
      <note>
       <para>
-       The script path and filename are hard coded, <command>$PGDATA/pgpool_remote_start</command> is executed on master(primary) node.
+       The script path and filename are hard coded, <command>$PGDATA/pgpool_remote_start</command> is executed on main(primary) node.
       </para>
      </note>
    </para>
@@ -221,7 +221,7 @@
    </term>
    <listitem>
     <para>
-     Specifies a command to be run by master (primary) node at the
+     Specifies a command to be run by main (primary) node at the
      first stage of online recovery. The command file must be placed in the
      database cluster directory for security reasons.
      For example, if <varname>recovery_1st_stage_command</varname> = <literal>
@@ -236,7 +236,7 @@
     <itemizedlist>
      <listitem>
       <para>
-       Path to the database cluster of the master (primary) node.
+       Path to the database cluster of the main (primary) node.
       </para>
      </listitem>
      <listitem>
@@ -251,7 +251,7 @@
      </listitem>
      <listitem>
       <para>
-       Port number of the master (primary) node (<productname>Pgpool-II</productname> 3.4 or after).
+       Port number of the main (primary) node (<productname>Pgpool-II</productname> 3.4 or after).
       </para>
      </listitem>
      <listitem>
@@ -306,7 +306,7 @@
    <listitem>
 
     <para>
-     Specifies a command to be run by master node at the second
+     Specifies a command to be run by main node at the second
      stage of online recovery. This command is required only
      <xref linkend="guc-replication-mode">, so for other modes don't need
       to provide a command file. The command file must be placed in the
@@ -323,7 +323,7 @@
     <itemizedlist>
      <listitem>
       <para>
-       Path to the database cluster of the master(primary) node.
+       Path to the database cluster of the main(primary) node.
       </para>
      </listitem>
      <listitem>
@@ -338,7 +338,7 @@
      </listitem>
      <listitem>
       <para>
-       Port number of the master (primary) node (<productname>Pgpool-II</productname> 3.4 or after).
+       Port number of the main (primary) node (<productname>Pgpool-II</productname> 3.4 or after).
       </para>
      </listitem>
      <listitem>

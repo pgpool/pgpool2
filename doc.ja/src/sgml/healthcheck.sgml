@@ -285,9 +285,9 @@
       <para>
        <!--
        This setting can be useful in spotty networks, when it is expected that
-       health checks will fail occasionally even when the master node is fine.
+       health checks will fail occasionally even when the primary node is fine.
        -->
-       この設定は動作にむらのあるネットワーク環境において、マスターノードが正常であるにも関わらず、たまにヘルスチェックが失敗することが予想される場合に有用です。
+       この設定は動作にむらのあるネットワーク環境において、ノードが正常であるにも関わらず、たまにヘルスチェックが失敗することが予想される場合に有用です。
       </para>
      </tip>
      <tip>

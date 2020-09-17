@@ -121,11 +121,11 @@
    <listitem>
     <para>
      The target node to send queries to create relation cache
-     entries. If set to <literal>master</literal>, queries will
-     be sent to master (primary) node. This is the default and
+     entries. If set to <literal>primary</literal>, queries will
+     be sent to primary node. This is the default and
      recommended to most users because the query could get the
-     latest information.  If you want to lower the load of master
-     (primary) node, you can set the parameter to
+     latest information.  If you want to lower the load of
+     primary node, you can set the parameter to
      <literal>load_balance_node</literal>, which will send
      queries to the load balance node. This is especially useful
      for such a system
@@ -167,9 +167,9 @@
      check in the <acronym>SELECT</acronym> statements. To check
      the temporary table <productname>Pgpool-II</productname>
      queries the system catalog of
-     primary/master <productname>PostgreSQL</productname> backend
+     primary/main <productname>PostgreSQL</productname> backend
      if <literal>catalog</literal> is specified, which
-     increases the load on the primary/master server.
+     increases the load on the primary/main server.
     </para>
     <para>
      If <literal>trace</literal> is
@@ -220,8 +220,8 @@
     <para>
      Setting to on, enables the unlogged table check in the <acronym>SELECT</acronym>
      statements. To check the unlogged table <productname>Pgpool-II</productname>
-     queries the system catalog of primary/master <productname>PostgreSQL</> backend which increases
-     the load on the primary/master server.
+     queries the system catalog of primary/main <productname>PostgreSQL</> backend which increases
+     the load on the primary/main server.
      If you are absolutely sure that your system never uses the unlogged tables
      (for example, you are using 9.0 or earlier version of <productname>PostgreSQL</>) then you
      can safely turn off the <varname>check_unlogged_table</varname>.

@@ -1,5 +1,5 @@
 /*
- * Test for master/slave mode + temporary tables
+ * Test for native replication mode + temporary tables
  */
 import java.sql.*;
 

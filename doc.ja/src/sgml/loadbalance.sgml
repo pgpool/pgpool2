@@ -32,10 +32,10 @@
    arbitrary comment(<emphasis>/*NO LOAD BALANCE*/</emphasis> is usually used)
    before the <acronym>SELECT</acronym> statement. This will disable the
    load balance of the particular query and <productname>Pgpool-II</productname>
-   will send it to the master node (the primary node in Master Slave mode).
+   will send it to the main node (the primary node in Native Replication mode).
    -->
    もし負荷分散対象のクエリを<productname>Pgpool-II</productname>に負荷分散してほしくない場合には、<acronym>SELECT</acronym>文の前の任意のコメント（<emphasis>/*NO LOAD BALANCE*/</emphasis>がよく使われます）を付与することができます。
-   これにより、そのクエリの負荷分散は無効となり、<productname>Pgpool-II</productname>はこれをマスターノード（マスタースレーブモードではプライマリノード）に送信します。
+   これにより、そのクエリの負荷分散は無効となり、<productname>Pgpool-II</productname>はこれをメインノード（プライマリノード）に送信します。
   </para>
  </note>
 
@@ -73,9 +73,9 @@
     <listitem>
      <para>
       <!--
-      either in replication mode or master slave mode
+      either in replication mode or native replication mode
       -->
-      レプリケーションモードまたはマスタースレーブモードである
+      ローモードでない
      </para>
     </listitem>
     <listitem>
@@ -109,23 +109,23 @@
 	   transaction has not issued a write query yet (until a write
 	   query is issued, load balance is possible. Here "write query"
 	   means non SELECT DML or DDL. <EMPHASIS>Before <productname>Pgpool-II</> 4.1</>,
-	   SELECTs having write functions as specified in black or
-	   white function list is not regarded as a write query.)
+	   SELECTs having write functions as specified in write or
+	   read_only function list is not regarded as a write query.)
 	   -->
 	   トランザクション内で更新を伴うクエリが実行されていない
 	   (更新を伴うクエリが実行されるまでは負荷分散されます。
 	   ここで「更新を伴うクエリ」とは、SELECT以外のDDLやDMLを指します。
-	   <EMPHASIS><productname>Pgpool-II</>4.1以前</>のバージョンでは、black/white function list
+	   <EMPHASIS><productname>Pgpool-II</>4.1以前</>のバージョンでは、write/read_only function list
 	   で指定される更新関数を含むSELECTは更新を伴うクエリとは見なされません。)
 	  </para>
 	 </listitem>
 	 <listitem>
 	  <para>
 	   <!--
-	   If black and white function list is empty, SELECTs having
+	   If write and read_only function list is empty, SELECTs having
 	   functions is regarded as a read only query.
 	   -->
-	   もしblack/white function listが空の場合は、関数を持つSELECTは、更新を伴うクエリとは見なされません。
+	   もしwrite/read_only function listが空の場合は、関数を持つSELECTは、更新を伴うクエリとは見なされません。
 	  </para>
 	 </listitem>
 	</itemizedlist>
@@ -154,22 +154,22 @@
       <!--
       it starts with "SELECT" or one of COPY TO STDOUT, EXPLAIN,
       EXPLAIN ANALYZE SELECT... (Except for SELECTs using writing functions
-      specified in <xref linkend="guc-black-function-list"> or
-      <xref linkend="guc-white-function-list">)
+      specified in <xref linkend="guc-write-function-list"> or
+      <xref linkend="guc-read-only-function-list">)
       <xref linkend="guc-ignore-leading-white-space"> = <literal>true</>
       will ignore leading white space.
       -->
       SELECT または COPY TO STDOUT, EXPLAIN, EXPLAIN ANALYZE SELECT... から始まる。
-      (<xref linkend="guc-black-function-list">または<xref linkend="guc-white-function-list">で指定された書き込み関数を含むSELECTを除く)
+      (<xref linkend="guc-write-function-list">または<xref linkend="guc-read-only-function-list">で指定された書き込み関数を含むSELECTを除く)
 	<xref linkend="guc-ignore-leading-white-space"> = <literal>true</>の場合は最初の空白文字は無視されます。
      </para>
     </listitem>
     <listitem>
      <para>
       <!--
-      in master slave mode, in addition to above, following conditions must be met:
+      in native replication mode, in addition to above, following conditions must be met:
       -->
-      マスタースレーブモードの場合、更に以下の条件が満たされなければなりません。
+      ネィティブレプリケーションモードの場合、更に以下の条件が満たされなければなりません。
      </para>
      <itemizedlist>
       <listitem>
@@ -302,7 +302,7 @@
    <!--
    If writing queires appear, succeeding read queries may not be
    load balanced. i.e. sent to primary node (in streaming
-   replication mode) or master node (in other mode) depending on the
+   replication mode) or main node (in other mode) depending on the
    setting of <xref linkend="guc-disable-load-balance-on-write">.
    -->
    更新を伴うクエリが存在する場合、続いて実行される参照クエリは負荷分散しません。
@@ -648,13 +648,13 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-white-function-list" xreflabel="white_function_list">
-    <term><varname>white_function_list</varname> (<type>string</type>)
+   <varlistentry id="guc-read-only-function-list" xreflabel="read_only_function_list">
+    <term><varname>read_only_function_list</varname> (<type>string</type>)
      <indexterm>
       <!--
-      <primary><varname>white_function_list</varname> configuration parameter</primary>
+      <primary><varname>read_only_function_list</varname> configuration parameter</primary>
       -->
-      <primary><varname>white_function_list</varname> 設定パラメータ</primary>
+      <primary><varname>read_only_function_list</varname> 設定パラメータ</primary>
      </indexterm>
     </term>
     <listitem>
@@ -664,7 +664,7 @@
       <emphasis>DO NOT</emphasis> update the database. SELECTs including
       functions <emphasis>not specified </emphasis> in this list are not load balanced.
       These are replicated among all the DB nodes in Replication mode,
-      sent to the primary node only in Maste Slave mode.
+      sent to the primary node only in Native Replication mode.
       -->
       データベースに対して更新を<emphasis>行なわない</emphasis>関数名をコンマ区切りで指定します。
       このリストに<emphasis>指定されていない</emphasis>関数呼び出しを含むSELECTは負荷分散されません。
@@ -679,7 +679,7 @@
       正規表現には自動的に<literal>^</literal>と<literal>$</literal>が付与されます。
      </para>
 
-     <example id="example-white-function-list-1">
+     <example id="example-read-only-function-list-1">
       <!--
       <title>Using regular expression</title>
       -->
@@ -688,11 +688,11 @@
        <!--
        If you have prefixed all your read only function
        with 'get_' or 'select_', You can
-       set the <xref linkend="guc-white-function-list"> like below:
+       set the <xref linkend="guc-read-only-function-list"> like below:
        -->
-       もし読み出しのみを行う関数が"get_"あるいは"select_"で始まるようにしてあるのであれば、<xref linkend="guc-white-function-list">を以下のように設定可能です。
+       もし読み出しのみを行う関数が"get_"あるいは"select_"で始まるようにしてあるのであれば、<xref linkend="guc-read-only-function-list">を以下のように設定可能です。
 	<programlisting>
-	 white_function_list = 'get_.*,select_.*'
+	 read_only_function_list = 'get_.*,select_.*'
 	</programlisting>
       </para>
      </example>
@@ -702,9 +702,9 @@
        問い合わせがスキーマ修飾なしあるいはスキーマ修飾ありの両方の関数を参照するなら、その両者をリストに登録しなければなりません。
        <programlisting>
 	#たとえば、ある問い合わせが"f1()"を、他の問い合わせが"public.f1()"を関数f1を参照するなら、
-	#black_function_listは以下のように設定されるでしょう。
+	#write_function_listは以下のように設定されるでしょう。
 
-	black_function_list = "f1,public.f1"
+	write_function_list = "f1,public.f1"
 
        </programlisting>
 
@@ -713,7 +713,7 @@
 
      <note>
       <para>
-       このパラメータと<xref linkend="guc-black-function-list">が空文字なら、関数の揮発性属性が検査されます。
+       このパラメータと<xref linkend="guc-write-function-list">が空文字なら、関数の揮発性属性が検査されます。
        これが揮発性(volatile)なら、この関数は書き込みを行うと見なされます。
        これは便利ですし、推奨できる設定です。
        しかしこれにより初回システムカタログへのアクセスが発生します（次回以降はキャッシュされた結果が使用されるので余計な問い合わせは送信されません。）
@@ -730,13 +730,13 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-black-function-list" xreflabel="black_function_list">
-    <term><varname>black_function_list</varname> (<type>string</type>)
+   <varlistentry id="guc-write-function-list" xreflabel="write_function_list">
+    <term><varname>write_function_list</varname> (<type>string</type>)
      <indexterm>
       <!--
-      <primary><varname>black_function_list</varname> configuration parameter</primary>
+      <primary><varname>write_function_list</varname> configuration parameter</primary>
       -->
-      <primary><varname>black_function_list</varname> 設定パラメータ</primary>
+      <primary><varname>write_function_list</varname> 設定パラメータ</primary>
      </indexterm>
     </term>
     <listitem>
@@ -747,7 +747,7 @@
       SELECTs including functions <emphasis>specified</emphasis> in this list are
       not load balanced.
       These are replicated among all the DB nodes in Replication mode,
-      sent to the primary node only in Maste Slave mode.
+      sent to the primary node only in Native Replication mode.
       -->
       データベースに対して更新を<emphasis>行う</emphasis>関数名をコンマ区切りで指定します。
       このリストに<emphasis>指定された</emphasis>関数呼び出しを含むSELECTは負荷分散されません。
@@ -762,7 +762,7 @@
       正規表現には自動的に<literal>^</literal>と<literal>$</literal>が付与されます。
      </para>
 
-     <example id="example-black-function-list-1">
+     <example id="example-write-function-list-1">
       <!--
       <title>Using regular expression</title>
       -->
@@ -771,11 +771,11 @@
        <!--
        If you have prefixed all your updating functions
        with 'set_', 'update_', 'delete_' or 'insert_', You can
-       set the <xref linkend="guc-black-function-list"> like below:
+       set the <xref linkend="guc-write-function-list"> like below:
        -->
-       もし更新を行う関数が"set_"、"update_"、"delete_"、あるいは"insert_"で始まるようにしてあるのであれば、<xref linkend="guc-black-function-list">を以下のように設定可能です。
+       もし更新を行う関数が"set_"、"update_"、"delete_"、あるいは"insert_"で始まるようにしてあるのであれば、<xref linkend="guc-write-function-list">を以下のように設定可能です。
 	<programlisting>
-	 black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
+	 write_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
 	</programlisting>
       </para>
      </example>
@@ -785,9 +785,9 @@
        問い合わせがスキーマ修飾なしあるいはスキーマ修飾ありの両方の関数を参照するなら、その両者をリストに登録しなければなりません。
        <programlisting>
 	#たとえば、ある問い合わせが"f1()"を、他の問い合わせが"public.f1()"を関数f1を参照するなら、
-	#white_function_listは以下のように設定されるでしょう。
+	#read_only_function_listは以下のように設定されるでしょう。
 
-	white_function_list = "f1,public.f1"
+	read_only_function_list = "f1,public.f1"
 
        </programlisting>
 
@@ -797,14 +797,14 @@
      <note>
       <para>
        <!--
-       <xref linkend="guc-black-function-list"> and <xref linkend="guc-white-function-list">
+       <xref linkend="guc-write-function-list"> and <xref linkend="guc-read-only-function-list">
        are mutually exclusive and only one of the two lists can be set in the configuration.
        -->
-       <xref linkend="guc-black-function-list">と<xref linkend="guc-white-function-list">は互いに排他的で、２つのリストの内、どちらか一方のみ設定することができます。
+       <xref linkend="guc-write-function-list">と<xref linkend="guc-read-only-function-list">は互いに排他的で、２つのリストの内、どちらか一方のみ設定することができます。
       </para>
      </note>
 
-     <example id="example-black-function-list-2">
+     <example id="example-write-function-list-2">
       <!--
       <title>Configuring to send <literal>nextval()</literal> and <literal>setval()</literal> to the proper backend</title>
       -->
@@ -813,14 +813,14 @@
        <!--
        Prior to <productname>Pgpool-II</productname><emphasis>V3.0</emphasis>,
        <literal>nextval()</literal> and <literal>setval()</literal> were known as functions writing to the database.
-       You can configure this by setting <xref linkend="guc-black-function-list">
-       and <xref linkend="guc-white-function-list"> as follows
+       You can configure this by setting <xref linkend="guc-write-function-list">
+       and <xref linkend="guc-read-only-function-list"> as follows
        -->
        <productname>Pgpool-II</productname> <emphasis>V3.0</emphasis>より前のバージョンでは、固定で<literal>nextval()</literal>と<literal>setval()</literal>がデータベースに書き込みを行なう関数であると認識されていました。
-       以下のように<xref linkend="guc-white-function-list">と<xref linkend="guc-black-function-list">を設定することで、それと同じように動作させることができます。
+       以下のように<xref linkend="guc-read-only-function-list">と<xref linkend="guc-write-function-list">を設定することで、それと同じように動作させることができます。
 	 <programlisting>
-	  white_function_list = ''
-	  black_function_list = 'nextval,setval,lastval,currval'
+	  read_only_function_list = ''
+	  write_function_list = 'nextval,setval,lastval,currval'
 	 </programlisting>
       </para>
      </example>
@@ -844,7 +844,7 @@
 
      <note>
       <para>
-       このパラメータと<xref linkend="guc-white-function-list">が空文字なら、関数の揮発性属性が検査されます。
+       このパラメータと<xref linkend="guc-read-only-function-list">が空文字なら、関数の揮発性属性が検査されます。
        これが揮発性(volatile)なら、この関数は書き込みを行うと見なされます。
        これは便利ですし、推奨できる設定です。
        しかしこれにより初回システムカタログへのアクセスが発生します（次回以降はキャッシュされた結果が使用されるので余計な問い合わせは送信されません。）
@@ -861,13 +861,13 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-black-query-pattern-list" xreflabel="black_query_pattern_list">
-    <term><varname>black_query_pattern_list</varname> (<type>string</type>)
+   <varlistentry id="guc-primary-routing-query-pattern-list" xreflabel="primary_routing_query_pattern_list">
+    <term><varname>primary_routing_query_pattern_list</varname> (<type>string</type>)
      <indexterm>
       <!--
-      <primary><varname>black_query_pattern_list</varname> configuration parameter</primary>
+      <primary><varname>primary_routing_query_pattern_list</varname> configuration parameter</primary>
       -->
-      <primary><varname>black_query_pattern_list</varname> 設定パラメータ</primary>
+      <primary><varname>primary_routing_query_pattern_list</varname> 設定パラメータ</primary>
      </indexterm>
     </term>
     <listitem>
@@ -877,9 +877,9 @@
       should be sent to primary node.
       SQL that matched patterns specified in this list are
       not load balanced.
-      Only Maste Slave mode is supported.
+      Only Native Replication mode is supported.
       -->
-      特定の SQL をプライマリノードに送信するように <xref linkend="guc-black-query-pattern-list">を設定します。
+      特定の SQL をプライマリノードに送信するように <xref linkend="guc-primary-routing-query-pattern-list">を設定します。
        SQL パターンをセミコロン区切りで指定します。
        マスタースレーブモードのみで動作します。
      </para>
@@ -901,7 +901,7 @@
       また、指定される SQL パターンでは大文字と小文字を区別しません。
      </para>
 
-     <example id="example-black-query-pattern-list-1">
+     <example id="example-primary-routing-query-pattern-list-1">
       <!--
       <title>Using regular expression</title>
       -->
@@ -909,9 +909,9 @@
       <para>
        <!--
        If the following SQL should be sent to the primary node only, You can
-       set the <xref linkend="guc-black-query-pattern-list"> like below:
+       set the <xref linkend="guc-primary-routing-query-pattern-list"> like below:
        -->
-       もし以下の SQL をプライマリノードに送信したい場合、<xref linkend="guc-black-query-pattern-list">を以下のように設定可能です。
+       もし以下の SQL をプライマリノードに送信したい場合、<xref linkend="guc-primary-routing-query-pattern-list">を以下のように設定可能です。
 
 	<itemizedlist>
 	 <listitem>
@@ -937,7 +937,7 @@
 
       <para>
        <programlisting>
-	black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
+	primary_routing_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
        </programlisting>
       </para>
      </example>
@@ -945,12 +945,12 @@
      <note>
       <para>
        <!--
-       If SQL matches both <xref linkend="guc-black-function-list"> and
-       <xref linkend="guc-white-function-list">, <xref linkend="guc-white-function-list">
+       If SQL matches both <xref linkend="guc-write-function-list"> and
+       <xref linkend="guc-read-only-function-list">, <xref linkend="guc-read-only-function-list">
        setting is ignored and the SQL should be sent only to the primary node.
        -->
-       <xref linkend="guc-black-query-pattern-list">と<xref linkend="guc-white-function-list">の両方にマッチした場合、
-	 <xref linkend="guc-white-function-list">の設定が無視され、プライマリノードのみに送信されます。
+       <xref linkend="guc-primary-routing-query-pattern-list">と<xref linkend="guc-read-only-function-list">の両方にマッチした場合、
+	 <xref linkend="guc-read-only-function-list">の設定が無視され、プライマリノードのみに送信されます。
       </para>
      </note>
      <para>
@@ -1461,9 +1461,9 @@
 	   <para>
 <!--
 	   To configure the dependency on the function,
-	   The function must be present in the <xref linkend="guc-black-function-list">
+	   The function must be present in the <xref linkend="guc-write-function-list">
 -->
-関数の依存性を設定するには、関数は<xref linkend="guc-black-function-list">で設定済みでなければなりません。
+関数の依存性を設定するには、関数は<xref linkend="guc-write-function-list">で設定済みでなければなりません。
 	   </para>
 	  </note>
 

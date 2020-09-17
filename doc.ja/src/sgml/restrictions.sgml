@@ -60,7 +60,7 @@
     <listitem>
      <para>
       <!--
-      In the replication mode or master/slave mode, trust and pam methods are supported. md5 is also
+      In the replication mode or native replication mode, trust and pam methods are supported. md5 is also
       supported since <productname>Pgpool-II</productname> 3.0. md5
       is supported by using an authencitaion file <filename>pool_passwd</filename>.
       scram-sha-256, cert, and clear text password is also supported since
@@ -179,15 +179,15 @@
 
    <varlistentry>
     <!--
-    <term>Temporary tables in master/slave mode</term>
+    <term>Temporary tables in native replication mode</term>
     -->
     <term>一時テーブル</term>
     <listitem>
      <para>
       <!--
       Creating/inserting/updating/deleting temporary tables are
-      always executed on the master (primary) in master slave mode.
-      SELECT on these tables is executed on master as well.  However
+      always executed on the primary in native replication mode.
+      SELECT on these tables is executed on primary as well.  However
       if the temporary table name is used as a literal in SELECT,
       there's no way to detect it, and the SELECT will be load
       balanced.  That will trigger a "not found the table" error or
@@ -209,7 +209,7 @@
       SELECT 't1'::regclass::oid;
      </programlisting>
       In such that case <productname>Pgpool-II</productname> always
-      sends the query to master and will not cause the problem.
+      sends the query to primary and will not cause the problem.
       -->
       ちなみに、psqlの\dコマンドのように、システムカタログを問い合わせる中で
       文字列としてのテーブル名を使っている場合:
@@ -275,7 +275,7 @@
       using <function>CURRENT_TIMESTAMP</function>, <function>CURRENT_DATE</function>,
       <function>now()</function> as their DEFAULT values will also
       be replicated correctly.  This is done by replacing those
-      functions by constants fetched from master at query execution
+      functions by constants fetched from primary at query execution
       time.  There are a few limitations however:
       -->
       <function>CURRENT_TIMESTAMP</function>、<function>CURRENT_DATE</function>、<function>now()</function>を含むINSERT/UPDATEは正しくレプリケーションされます。

@@ -16,8 +16,8 @@ CREATE TEMP TABLE tmp (
 INSERT INTO tmp VALUES
 ('0',:dir,'11002','up','0.500000','primary','0','false','0','','','XXXX-XX-XX XX:XX:XX','s'),
 ('1',:dir,'11003','down','0.500000','standby','0','false','0','','','XXXX-XX-XX XX:XX:XX','s'),
-('0',:dir,'11002','up','0.500000','master','0','false','0','','','XXXX-XX-XX XX:XX:XX','r'),
-('1',:dir,'11003','down','0.500000','slave','0','false','0','','','XXXX-XX-XX XX:XX:XX','r');
+('0',:dir,'11002','up','0.500000','main','0','false','0','','','XXXX-XX-XX XX:XX:XX','r'),
+('1',:dir,'11003','down','0.500000','replica','0','false','0','','','XXXX-XX-XX XX:XX:XX','r');
 
 SELECT node_id,hostname,port,status,lb_weight,role,select_cnt,load_balance_node,replication_delay,replication_state, replication_sync_state, last_status_change
 FROM tmp

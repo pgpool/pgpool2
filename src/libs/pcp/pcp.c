@@ -1424,7 +1424,7 @@ pcp_recovery_node(PCPConnInfo * pcpConn, int nid)
 }
 
 /* --------------------------------
- * pcp_promote_node - promote a node given by the argument as new pgpool's master
+ * pcp_promote_node - promote a node given by the argument as new pgpool's main node
  *
  * return 0 on success, -1 otherwise
  * --------------------------------
@@ -1437,7 +1437,7 @@ pcp_promote_node(PCPConnInfo * pcpConn, int nid)
 
 /* --------------------------------
 
- * and promote a node given by the argument as new pgpool's master
+ * and promote a node given by the argument as new pgpool's main node
  *
  * return 0 on success, -1 otherwise
  * --------------------------------
@@ -1563,21 +1563,21 @@ process_watchdog_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 		}
 		wd_cluster_info->escalated = tempVal == 0 ? false : true;
 
-		ptr = json_get_string_value_for_key(root, "MasterNodeName");
+		ptr = json_get_string_value_for_key(root, "LeaderNodeName");
 		if (ptr == NULL)
 		{
 			json_value_free(root);
 			goto INVALID_RESPONSE;
 		}
-		strncpy(wd_cluster_info->masterNodeName, ptr, sizeof(wd_cluster_info->masterNodeName) - 1);
+		strncpy(wd_cluster_info->leaderNodeName, ptr, sizeof(wd_cluster_info->leaderNodeName) - 1);
 
-		ptr = json_get_string_value_for_key(root, "MasterHostName");
+		ptr = json_get_string_value_for_key(root, "LeaderHostName");
 		if (ptr == NULL)
 		{
 			json_value_free(root);
 			goto INVALID_RESPONSE;
 		}
-		strncpy(wd_cluster_info->masterHostName, ptr, sizeof(wd_cluster_info->masterHostName) - 1);
+		strncpy(wd_cluster_info->leaderHostName, ptr, sizeof(wd_cluster_info->leaderHostName) - 1);
 
 		/* Get watchdog nodes data */
 		for (i = 0; i < nodeCount; i++)

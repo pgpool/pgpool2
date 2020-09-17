@@ -482,8 +482,8 @@
    <para>
     Specify failover.sh script to be executed after failover in <varname>failover_command</varname>
     parameter. 
-    If we use 3 PostgreSQL servers, we need to specify follow_master_command to run after failover on the primary node failover.
-    In case of two PostgreSQL servers, follow_master_command setting is not necessary.
+    If we use 3 PostgreSQL servers, we need to specify follow_primary_command to run after failover on the primary node failover.
+    In case of two PostgreSQL servers, follow_primary_command setting is not necessary.
    </para>
    <para>
     <productname>Pgpool-II</productname> replaces the following special characters with the backend specific
@@ -492,7 +492,7 @@
    </para>
    <programlisting>
     failover_command = '/etc/pgpool-II/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S'
-    follow_master_command = '/etc/pgpool-II/follow_master.sh %d %h %p %D %m %H %M %P %r %R'
+    follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M %P %r %R'
    </programlisting>
    <note>
     <para>
@@ -502,12 +502,12 @@
    </note>
    <para>
     Sample scripts <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_1_STABLE">failover.sh</ulink>
-    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_master.sh.sample;hb=refs/heads/V4_1_STABLE">follow_master.sh</ulink>
+    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_1_STABLE">follow_primary.sh</ulink>
     are installed in <filename>/etc/pgpool-II/</filename>. Create failover scripts using these sample files.
    </para>
    <programlisting>
     # cp /etc/pgpool-II/failover.sh{.sample,}
-    # cp /etc/pgpool-II/follow_master.sh{.sample,}
+    # cp /etc/pgpool-II/follow_primary.sh{.sample,}
    </programlisting>
    <para>
     Basically, it should work if you change <emphasis>PGHOME</emphasis> according to PostgreSQL installation directory.
@@ -518,7 +518,7 @@
     PGHOME=/usr/pgsql-11
     ...
 
-    [server1]# vi /etc/pgpool-II/follow_master.sh
+    [server1]# vi /etc/pgpool-II/follow_primary.sh
     ...
     PGHOME=/usr/pgsql-11
     ...
@@ -961,7 +961,7 @@ arping_path = '/usr/sbin'
   <sect3 id="example-cluster-pgpool-config-pcppass">
    <title>.pcppass</title>
    <para>
-    Since follow_master_command script has to execute PCP command without entering the
+    Since follow_primary_command script has to execute PCP command without entering the
     password, we create <filename>.pcppass</filename> in the home directory of 
     <productname>Pgpool-II</productname> startup user (root user).
    </para>
@@ -1059,14 +1059,14 @@ arping_path = '/usr/sbin'
   <sect3 id="example-cluster-try-watchdog">
    <title>Switching active/standby watchdog</title>
    <para>
-    Confirm the watchdog status by using <command>pcp_watchdog_info</command>. The <command>Pgpool-II</command> server which is started first run as <literal>MASTER</literal>.
+    Confirm the watchdog status by using <command>pcp_watchdog_info</command>. The <command>Pgpool-II</command> server which is started first run as <literal>LEADER</literal>.
    </para>
    <programlisting>
     # pcp_watchdog_info -h 192.168.137.150 -p 9898 -U pgpool
     Password: 
     3 YES server1:9999 Linux server1 server1
 
-    server1:9999 Linux server1 server1 9999 9000 4 MASTER  #The Pgpool-II server started first becames "MASTER".
+    server1:9999 Linux server1 server1 9999 9000 4 LEADER  #The Pgpool-II server started first becames "LEADER".
     server2:9999 Linux server2 server2 9999 9000 7 STANDBY #run as standby
     server3:9999 Linux server3 server3 9999 9000 7 STANDBY #run as standby
    </programlisting>
@@ -1083,7 +1083,7 @@ arping_path = '/usr/sbin'
     Password: 
     3 YES server2:9999 Linux server2 server2
 
-    server2:9999 Linux server2 server2 9999 9000 4 MASTER     #server2 is promoted to MASTER
+    server2:9999 Linux server2 server2 9999 9000 4 LEADER     #server2 is promoted to LEADER
     server1:9999 Linux server1 server1 9999 9000 10 SHUTDOWN  #server1 is stopped
     server3:9999 Linux server3 server3 9999 9000 7 STANDBY    #server3 runs as STANDBY
    </programlisting>
@@ -1098,7 +1098,7 @@ arping_path = '/usr/sbin'
     Password: 
     3 YES server2:9999 Linux server2 server2
 
-    server2:9999 Linux server2 server2 9999 9000 4 MASTER
+    server2:9999 Linux server2 server2 9999 9000 4 LEADER
     server1:9999 Linux server1 server1 9999 9000 7 STANDBY
     server3:9999 Linux server3 server3 9999 9000 7 STANDBY
    </programlisting>

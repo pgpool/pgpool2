@@ -1538,15 +1538,15 @@
       sent to primary only until the end of this transactionin in
       order to avoid the replication delay.  However, the SELECTs
       having write functions specified
-      in <xref linkend="guc-black-function-list"> or not specified
-       in <xref linkend="guc-white-function-list"> are not regarded
+      in <xref linkend="guc-write-function-list"> or not specified
+       in <xref linkend="guc-read-only-function-list"> are not regarded
 	as a write query and the subsequent read queries are still
 	load balanced. This commit will disable load balance after
 	a SELECT having functions specified in black function list
 	or not specified in white function list.
 -->
      <productname>Pgpool-II</productname>4.0以前では、<xref linkend="guc-disable-load-balance-on-write"> = <literal>transaction</literal>に設定することで明確なトランザクション内で更新を伴うクエリが発行されたとき、後続のクエリはレプリケーション遅延を避けるためにトランザクションが終了するまでプライマリのみに送られるべきです。
-     しかしながら、<xref linkend="guc-black-function-list">で指定された、もしくは<xref linkend="guc-white-function-list">で指定されていない 更新を伴う関数は、white queryとは見なされず、後続の参照クエリはまだ負荷分散します。
+     しかしながら、<xref linkend="guc-write-function-list">で指定された、もしくは<xref linkend="guc-read-only-function-list">で指定されていない 更新を伴う関数は、white queryとは見なされず、後続の参照クエリはまだ負荷分散します。
      このcommitは、black function listで指定された、もしくはwhite function listで指定されていない関数を持つSELECT後の負荷分散を無効化します。
     </para>
    </listitem>
@@ -1990,10 +1990,10 @@
 <!--
 	Enhance explanation
 	about <xref linkend="guc-failover-command">
-	 and <xref linkend="guc-follow-master-command">. (tatsuo
+	 and <xref linkend="guc-follow-primary-command">. (tatsuo
 	  ishii)
 -->
-        <xref linkend="guc-failover-command">と<xref linkend="guc-follow-master-command">について説明を強化しました。(tatsuo Ishii)
+        <xref linkend="guc-failover-command">と<xref linkend="guc-follow-primary-command">について説明を強化しました。(tatsuo Ishii)
        </para>
       </listitem>
 

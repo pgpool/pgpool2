@@ -76,7 +76,7 @@ get_pool_config_from_json(char *json_data, int data_len)
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "replicate_select", &config->replicate_select))
 		goto ERROR_EXIT;
-	if (json_get_bool_value_for_key(root, "master_slave_mode", &config->master_slave_mode))
+	if (json_get_bool_value_for_key(root, "native_replication_mode", &config->native_replication_mode))
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "connection_cache", &config->connection_cache))
 		goto ERROR_EXIT;
@@ -108,7 +108,7 @@ get_pool_config_from_json(char *json_data, int data_len)
 		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "pgpool_node_id", &config->pgpool_node_id))
 		goto ERROR_EXIT;
-	if (json_get_int_value_for_key(root, "master_slave_sub_mode", (int *) &config->master_slave_sub_mode))
+	if (json_get_int_value_for_key(root, "native_replication_sub_mode", (int *) &config->native_replication_sub_mode))
 		goto ERROR_EXIT;
 
 	if (json_get_bool_value_for_key(root, "failover_when_quorum_exists", &config->failover_when_quorum_exists))
@@ -192,7 +192,7 @@ get_pool_config_json(void)
 	jw_put_bool(jNode, "replication_stop_on_mismatch", pool_config->replication_stop_on_mismatch);
 	jw_put_bool(jNode, "failover_if_affected_tuples_mismatch", pool_config->failover_if_affected_tuples_mismatch);
 	jw_put_bool(jNode, "replicate_select", pool_config->replicate_select);
-	jw_put_bool(jNode, "master_slave_mode", pool_config->master_slave_mode);
+	jw_put_bool(jNode, "native_replication_mode", pool_config->native_replication_mode);
 	jw_put_bool(jNode, "connection_cache", pool_config->connection_cache);
 	jw_put_int(jNode, "health_check_timeout", pool_config->health_check_timeout);
 	jw_put_int(jNode, "health_check_period", pool_config->health_check_period);
@@ -208,7 +208,7 @@ get_pool_config_json(void)
 	jw_put_bool(jNode, "clear_memqcache_on_escalation", pool_config->clear_memqcache_on_escalation);
 	jw_put_int(jNode, "wd_priority", pool_config->wd_priority);
 	jw_put_int(jNode, "pgpool_node_id", pool_config->pgpool_node_id);
-	jw_put_int(jNode, "master_slave_sub_mode", pool_config->master_slave_sub_mode);
+	jw_put_int(jNode, "native_replication_sub_mode", pool_config->native_replication_sub_mode);
 
 	jw_put_bool(jNode, "failover_when_quorum_exists", pool_config->failover_when_quorum_exists);
 	jw_put_bool(jNode, "failover_require_consensus", pool_config->failover_require_consensus);

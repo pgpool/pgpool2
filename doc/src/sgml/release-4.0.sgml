@@ -1230,7 +1230,7 @@
     2019-04-18 [9b1bb1f]
     -->
     <para>
-     Fix <xref linkend="GUC-BLACK-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
+     Fix <xref linkend="GUC-WRITE-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -1416,10 +1416,10 @@
     2019-03-05 [5a8d511]
     -->
     <para>
-     Doc: add more explanation to <xref linkend="guc-follow-master-command">. (Tatsuo Ishii)
+     Doc: add more explanation to <xref linkend="guc-follow-primary-command">. (Tatsuo Ishii)
     </para>
     <para>
-     Add description how <xref linkend="guc-follow-master-command"> is executed etc.
+     Add description how <xref linkend="guc-follow-primary-command"> is executed etc.
     </para>
    </listitem>
 
@@ -2122,7 +2122,7 @@
     2018-06-14 [83906d1]
     -->
     <para>
-     Add new parameter <xref linkend="guc-black-query-pattern-list"> to enable 
+     Add new parameter <xref linkend="guc-primary-routing-query-pattern-list"> to enable
       specifying SQL patterns lists that should not be load-balanced. (Bo Peng)
     </para>
     <para>

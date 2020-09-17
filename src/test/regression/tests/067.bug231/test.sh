@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------
 # test script for for bug 231 (packet kind of backend 1 ['3'] does not
-# match with master/majority nodes packet kind ['2']).
+# match with main/majority nodes packet kind ['2']).
 #
 source $TESTLIBS
 TESTDIR=testdir

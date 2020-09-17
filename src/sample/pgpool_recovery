@@ -2,7 +2,7 @@
 
 if [ $# -ne 4 ]
 then
-    echo "pgpool_recovery datadir remote_host remote_datadir master_port"
+    echo "pgpool_recovery datadir remote_host remote_datadir primary_port"
     exit 1
 fi
 

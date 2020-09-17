@@ -63,7 +63,7 @@ typedef struct
 	bool		where_to_send[MAX_NUM_BACKENDS];	/* DB node map to send
 													 * query */
 	int         load_balance_node_id;	/* load balance node id per statement */
-	int			virtual_master_node_id; /* the 1st DB node to send query */
+	int			virtual_main_node_id; /* the 1st DB node to send query */
 	POOL_QUERY_STATE query_state[MAX_NUM_BACKENDS]; /* for extended query
 													 * protocol */
 	bool		is_cache_safe;	/* true if SELECT is safe to cache */

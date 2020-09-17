@@ -137,23 +137,23 @@
 	<row>
 	 <entry>%M</entry>
 	 <!--
-	 <entry>Old master node ID</entry>
+	 <entry>Old main node ID</entry>
 	 -->
-	 <entry>古いマスターノードのID</entry>
+	 <entry>古いメインノードのID</entry>
 	</row>
 	<row>
 	 <entry>%m</entry>
 	 <!--
-	 <entry>New master node ID</entry>
+	 <entry>New main node ID</entry>
 	 -->
-	 <entry>新しいマスターノードのID</entry>
+	 <entry>新しいメインノードのID</entry>
 	</row>
 	<row>
 	 <entry>%H</entry>
 	 <!--
-	 <entry>Hostname of the new master node</entry>
+	 <entry>Hostname of the new main node</entry>
 	 -->
-	 <entry>新しいマスターノードのホスト名</entry>
+	 <entry>新しいメインノードのホスト名</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>
@@ -165,16 +165,16 @@
 	<row>
 	 <entry>%r</entry>
 	 <!--
-	 <entry>Port number of the new master node</entry>
+	 <entry>Port number of the new main node</entry>
 	 -->
-	 <entry>新しいマスターノードのポート番号</entry>
+	 <entry>新しいメインノードのポート番号</entry>
 	</row>
 	<row>
 	 <entry>%R</entry>
 	 <!--
-	 <entry>Database cluster directory of the new master node</entry>
+	 <entry>Database cluster directory of the new main node</entry>
 	 -->
-	 <entry>新しいマスターノードのデータベースクラスタパス</entry>
+	 <entry>新しいメインノードのデータベースクラスタパス</entry>
 	</row>
 	<row>
 	 <entry>%N</entry>
@@ -205,12 +205,12 @@
      <note>
       <para>
        <!--
-       The "master node" refers to a node which has the
+       The "main node" refers to a node which has the
        "youngest (or the smallest) node id" among live the
        database nodes. In <link linkend="running-mode">streaming
 	replication mode</link>, this may be different from
        primary node. In <xref linkend="failover-command-table">,
-	%m is the new master node chosen
+	%m is the new main node chosen
 	by <productname>Pgpool-II</productname>. It is the node
 	being assigned the youngest (smallest) node id which is
 	alive. For example if you have 3 nodes, namely node 0, 1,
@@ -219,10 +219,10 @@
 	called with %m = 0. And, if all standby nodes are down and primary node
     failover happens, failover_command is called with %m = -1 and %H,%R,$r = "".
        -->
-       マスターノードは、生きているデータベースノードの中から一番若い(小さい)ノードIDを持つノードを参照します。
+       メインノードは、生きているデータベースノードの中から一番若い(小さい)ノードIDを持つノードを参照します。
        <link linkend="running-mode">ストリーミングレプリケーションモード</link>では、このノードはプライマリノードとは異なる場合があります。
-       <xref linkend="failover-command-table">内では、 %mは<productname>Pgpool-II</productname>によって選出された新しいマスターノードとなります。
-       新しいマスターノードには生きているノードで一番若い(小さい)ノードが割り当てられます。
+       <xref linkend="failover-command-table">内では、 %mは<productname>Pgpool-II</productname>によって選出された新しいメインノードとなります。
+       新しいメインノードには生きているノードで一番若い(小さい)ノードが割り当てられます。
        例えば、ノード0、1、2という3つのノードを持ち、ノード1がプライマリノード、全てのノードは正常である（ダウンしているノードがない）と仮定します。
       ノード1がダウンした場合、failover_command は %m = 0 で呼び出されます。
       また、全てのスタンバイノードがダウンした状態でプライマリノードのフェイルオーバが起きた場合、failover_commandは %m = -1、および%H,%R,%r = "" で呼び出されます。
@@ -355,23 +355,23 @@
 	<row>
 	 <entry>%M</entry>
 	 <!--
-	 <entry>Old master node ID</entry>
+	 <entry>Old main node ID</entry>
 	 -->
-	 <entry>古いマスターノードのID</entry>
+	 <entry>古いメインノードのID</entry>
 	</row>
 	<row>
 	 <entry>%m</entry>
 	 <!--
-	 <entry>New master node ID</entry>
+	 <entry>New main node ID</entry>
 	 -->
-	 <entry>新しいマスターノードのID</entry>
+	 <entry>新しいメインノードのID</entry>
 	</row>
 	<row>
 	 <entry>%H</entry>
 	 <!--
-	 <entry>Hostname of the new master node</entry>
+	 <entry>Hostname of the new main node</entry>
 	 -->
-	 <entry>新しいマスターノードのホスト名</entry>
+	 <entry>新しいメインノードのホスト名</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>
@@ -383,16 +383,16 @@
 	<row>
 	 <entry>%r</entry>
 	 <!--
-	 <entry>Port number of the new master node</entry>
+	 <entry>Port number of the new main node</entry>
 	 -->
-	 <entry>新しいマスターノードのポート番号</entry>
+	 <entry>新しいメインノードのポート番号</entry>
 	</row>
 	<row>
 	 <entry>%R</entry>
 	 <!--
-	 <entry>Database cluster directory of the new master node</entry>
+	 <entry>Database cluster directory of the new main node</entry>
 	 -->
-	 <entry>新しいマスターノードのデータベースクラスタパス</entry>
+	 <entry>新しいメインノードのデータベースクラスタパス</entry>
 	</row>
 	<row>
 	 <entry>%N</entry>
@@ -446,10 +446,10 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-follow-master-command" xreflabel="follow_master_command">
-    <term><varname>follow_master_command</varname> (<type>string</type>)
+   <varlistentry id="guc-follow-primary-command" xreflabel="follow_primary_command">
+    <term><varname>follow_primary_command</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>follow_master_command</varname> 設定パラメータ</primary>
+      <primary><varname>follow_primary_command</varname> 設定パラメータ</primary>
      </indexterm>
     </term>
     <listitem>
@@ -466,14 +466,14 @@
       プライマリノードのフェイルオーバー後に実行するユーザコマンドを指定します。
       スタンバイがフェイルオーバーした際にはこのコマンドは実行されません。
       このコマンドは、<xref linkend="PCP-PROMOTE-NODE">コマンドによってノードを昇格する要求があった場合にも起動されます。
-       この機能は、マスタースレーブモードでストリーミングレプリケーション構成の場合のみ有効です。
+       この機能は、メインスレーブモードでストリーミングレプリケーション構成の場合のみ有効です。
      </para>
 
      <para>
       <!--
       Since the command is executed within a child process forked
       off by <productname>Pgpool-II</productname> after failover
-      is completed, execution of follow master command does not
+      is completed, execution of follow primary command does not
       block the service
       of <productname>Pgpool-II</productname>. Here is a pseud
       code to illustrate how the command is executed:
@@ -483,15 +483,15 @@
        {
        if (the node is not the new primary)
        set down node status to shared memory status
-       memorize that folllow master command is needed to execute
+       memorize that folllow primary command is needed to execute
        }
-       if (we need to executed follow master command)
+       if (we need to executed follow primary command)
        fork a child process
        (within the child process)
 
        for each backend node
        if (the node status in shared memory is down)
-       execute follow master command
+       execute follow primary command
       </programlisting>
      </para>
 
@@ -504,11 +504,11 @@
 
      </para>
 
-     <table id="follow-master-command-table">
+     <table id="follow-primary-command-table">
       <!--
-      <title>follow master command options</title>
+      <title>follow primary command options</title>
       -->
-      <title>フォローマスターコマンドオプション</title>
+      <title>フォロープライマリコマンドオプション</title>
       <tgroup cols="2">
        <thead>
 	<row>
@@ -553,7 +553,7 @@
 	<row>
 	 <entry>%M</entry>
 	 <!--
-	 <entry>Old master node ID</entry>
+	 <entry>Old main node ID</entry>
 	 -->
 	 <entry>古いマスターノードのID</entry>
 	</row>
@@ -621,22 +621,22 @@
      <note>
       <para>
        <!--
-       If <varname>follow_master_command</varname>> is not empty, then after failover
-       on the primary node gets completed in Master Slave mode with streaming replication,
+       If <varname>follow_primary_command</varname>> is not empty, then after failover
+       on the primary node gets completed in streaming replication mode,
        <productname>Pgpool-II</productname> degenerates all nodes excepted the new primary
        and starts new child processes to be ready again to accept connections from the clients.
        After this, <productname>Pgpool-II</productname> executes the command configured
-       in the <varname>follow_master_command</varname> for each degenerated backend nodes.
+       in the <varname>follow_primary_command</varname> for each degenerated backend nodes.
        -->
-       <varname>follow_master_command</varname>が空文字列でない場合、ストリーミングレプリケーションによるマスタースレーブでプライマリノードのフェイルオーバーが完了した後に、<productname>Pgpool-II</productname>は新しいプライマリ以外のすべてのノードを切り離し、クライアントから再び接続を受け付ける準備のため再度新しい子プロセスを起動します。
-       その後、<productname>Pgpool-II</productname>は切り離されたそれぞれのノードに対して<varname>follow_master_command</varname>に設定したコマンドを実行します。
+       <varname>follow_primary_command</varname>が空文字列でない場合、ストリーミングレプリケーションモードでプライマリノードのフェイルオーバーが完了した後に、<productname>Pgpool-II</productname>は新しいプライマリ以外のすべてのノードを切り離し、クライアントから再び接続を受け付ける準備のため再度新しい子プロセスを起動します。
+       その後、<productname>Pgpool-II</productname>は切り離されたそれぞれのノードに対して<varname>follow_primary_command</varname>に設定したコマンドを実行します。
       </para>
      </note>
      <para>
-      <!-- Typically <varname>follow_master_command</varname> command is
-      used to recover the slave from the new primary by calling
+      <!-- Typically <varname>follow_primary_command</varname> command is
+      used to recover the standby from the new primary by calling
       the pcp_recovery_node command.  In
-      the <varname>follow_master_command</varname>, it is
+      the <varname>follow_primary_command</varname>, it is
       recommended to check whether
       target <productname>PostgreSQL</productname> node is running
       or not using pg_ctl since already stopped node usually has a
@@ -644,15 +644,15 @@
       problems or administrator is maintaining the node.  If the
       node is stopped, skip the node. If the node is running, stop
       the node first and recovery it.  A
-      complete <varname>follow_master_command</varname> example
+      complete <varname>follow_primary_command</varname> example
       can be found in <xref linkend="example-cluster">.
       -->
-      通常は、<varname>follow_master_command</varname>コマンドは<xref linkend="PCP-RECOVERY-NODE">コマンドを呼んで新しいプライマリからスレーブをリカバリするために使用します。
-       <varname>follow_master_command</varname>中では、pg_ctlを使ってターゲットの<productname>PostgreSQL</productname>ノードが動いているかどうかを確認することをお勧めします。
+      通常は、<varname>follow_primary_command</varname>コマンドは<xref linkend="PCP-RECOVERY-NODE">コマンドを呼んで新しいプライマリからスタンバイをリカバリするために使用します。
+       <varname>follow_primary_command</varname>中では、pg_ctlを使ってターゲットの<productname>PostgreSQL</productname>ノードが動いているかどうかを確認することをお勧めします。
        たとえば、そのノードはハードウェア障害で停止しているかも知れませんし、管理者が保守のために停止しているのかも知れません。
        ノードが停止している場合は、そのノードをスキップしてください。
        ノードが動いている場合は、まずそのノードを停止してからリカバリしてください。
-       <varname>follow_master_command</varname>の完全な例は、<xref linkend="example-cluster">にあります。
+       <varname>follow_primary_command</varname>の完全な例は、<xref linkend="example-cluster">にあります。
      </para>
      <para>
       <!--
@@ -736,9 +736,9 @@
      </para>
      <para>
       <!--
-      This parameter is only applicable in Master Slave mode with streaming replication.
+      This parameter is only applicable in streaming replication mode.
       -->
-      このパラメータはストリーミングレプリケーションによるマスタースレーブモードの場合のみ有効です。
+      このパラメータはストリーミングレプリケーションモードの場合のみ有効です。
      </para>
      <para>
       <!--

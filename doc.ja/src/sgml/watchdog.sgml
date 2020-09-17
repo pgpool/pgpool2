@@ -610,7 +610,7 @@
      <para>
       <!--
       Watchdog executes this command on the node that is escalated
-      to the master watchdog.
+      to the leader watchdog.
       -->
       マスターwatchdogに昇格した時に、ここで指定したコマンドがwatchdogによって実行されます。
      </para>
@@ -642,10 +642,10 @@
     <listitem>
      <para>
       <!--
-      Watchdog executes this command on the master <productname>Pgpool-II</productname>
-      watchdog node when that node resigns from the master node responsibilities.
-      A master watchdog node can resign from being a master node,
-      when the master node <productname>Pgpool-II</productname> shuts down, detects a network
+      Watchdog executes this command on the leader <productname>Pgpool-II</productname>
+      watchdog node when that node resigns from the leader node responsibilities.
+      A leader watchdog node can resign from being a leader node,
+      when the leader node <productname>Pgpool-II</productname> shuts down, detects a network
       blackout or detects the lost of quorum.
       -->
       <productname>Pgpool-II</productname>のマスターwatchdogが責務を辞退し降格するときに、ここで指定したコマンドが実行されます。
@@ -750,10 +750,10 @@
       <!--
       Although there are many similarities in quarantine and failover operations, but they both differ in a very
       fundamental way. The quarantine operations does not executes the <xref linkend="guc-failover-command">
-      and silently detaches the problematic node, So in the case when the master backend node is quarantined, the
-      <productname>Pgpool-II</productname> will not promote the standby to take over the master responsibilities
-      and until the master node is quarantined the <productname>Pgpool-II</productname> will not have
-      any useable master backend node.
+      and silently detaches the problematic node, So in the case when the primary backend node is quarantined, the
+      <productname>Pgpool-II</productname> will not promote the standby to take over the primary responsibilities
+      and until the primary node is quarantined the <productname>Pgpool-II</productname> will not have
+      any useable primary backend node.
       -->
       隔離とフェイルオーバ操作には多くの類似点がありますが、どちらも非常に基本的な方法で異なります。
       隔離操作は<xref linkend="guc-failover-command">を実行せず、障害の発生したノードを隔離します。
@@ -1183,15 +1183,15 @@
      <para>
       <!--
       This parameter can be used to elevate the local watchdog node priority in the elections
-      to select master watchdog node.
+      to select leader watchdog node.
       The node with the higher <varname>wd_priority</varname> value will get selected
-      as master watchdog node when cluster will be electing its new master node
-      in the event of old master watchdog node failure.
+      as leader watchdog node when cluster will be electing its new leader node
+      in the event of old leader watchdog node failure.
       <varname>wd_priority</varname> is also valid at the time of cluster startup.
       When some watchdog nodes start up at same time,a node with the higher <varname>wd_priority</varname>
-      value is selected as a master node.
+      value is selected as a leader node.
       So we should start watchdog nodes in order of <varname>wd_priority</varname> priority to prevent 
-      unintended nodes from being selected as masters.
+      unintended nodes from being selected as leader.
       -->
       このパラメータによってローカルのwatchdogノードがマスターに選ばれる優先度を上げることができます。
       古いマスターノードが故障した状況でクラスタがマスターノードの選択を行う際に、<varname>wd_priority</varname>が高いノードがマスターwatchdogノードに選ばれます。

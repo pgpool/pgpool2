@@ -10,7 +10,7 @@
 #include "rewrite/pool_timestamp.h"
 #include "parser/parser.h"
 
-/* for get_current_timestamp() (MASTER() macro) */
+/* for get_current_timestamp() (MAIN() macro) */
 POOL_REQUEST_INFO _req_info;
 POOL_REQUEST_INFO *Req_info = &_req_info;
 
@@ -48,7 +48,7 @@ TSRel		rc[2] = {
 };
 
 int
-pool_virtual_master_db_node_id(void)
+pool_virtual_main_db_node_id(void)
 {
 	return 0;
 }

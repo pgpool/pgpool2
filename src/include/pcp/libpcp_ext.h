@@ -69,8 +69,8 @@ typedef struct
 
 typedef enum
 {
-	ROLE_MASTER,
-	ROLE_SLAVE,
+	ROLE_MAIN,
+	ROLE_REPLICA,
 	ROLE_PRIMARY,
 	ROLE_STANDBY
 }			SERVER_ROLE;

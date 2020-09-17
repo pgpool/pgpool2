@@ -1252,9 +1252,9 @@
     -->
     <para>
      <!--
-     Fix <xref linkend="GUC-BLACK-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
+     Fix <xref linkend="GUC-WRITE-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
      -->
-     <xref linkend="GUC-BLACK-FUNCTION-LIST">のデフォル値が間違っていた不具合を修正しました。(Tatsuo Ishii)
+     <xref linkend="GUC-WRITE-FUNCTION-LIST">のデフォル値が間違っていた不具合を修正しました。(Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -2137,9 +2137,9 @@
     -->
     <para>
      <!--
-     Doc: Change <xref linkend="GUC-FOLLOW-MASTER-COMMAND"> description "new master" to "new primary". (Bo Peng)
+     Doc: Change <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND"> description "new master" to "new primary". (Bo Peng)
      -->
-     Doc: <xref linkend="GUC-FOLLOW-MASTER-COMMAND">ドキュメントの"new master"を"new primary"に変更しました。(Bo Peng)
+     Doc: <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND">ドキュメントの"new master"を"new primary"に変更しました。(Bo Peng)
     </para>
    </listitem>
 
@@ -5210,14 +5210,14 @@
    <listitem>
     <!--
     2016-04-07 [0e01d32] removing the limit on the maximum number
-    of items in the black_function_list and white_function_list lists.
+    of items in the black_function_list and read_only_function_list lists.
     -->
     <para>
      <!--
      Allow to use arbitrary number of items in the
-     black_function_list/white_function_list. (Muhammad Usama)
+     black_function_list/read_only_function_list. (Muhammad Usama)
      -->
-     black_function_list/white_function_list
+     black_function_list/read_only_function_list
      に任意のアイテムの数が使用できるようになりました。(Muhammad Usama)
     </para>
     <para>

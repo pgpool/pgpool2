@@ -218,7 +218,7 @@
      <tip>
       <para>
        This setting can be useful in spotty networks, when it is expected that
-       health checks will fail occasionally even when the master node is fine.
+       health checks will fail occasionally even when the primary node is fine.
       </para>
      </tip>
      <tip>

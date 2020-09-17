@@ -5,14 +5,14 @@
 ##backend_weight0 = 0
 ##backend_weight1 = 1
 
-##black_function_list = 'f1'
+##write_function_list = 'f1'
 
 # disable_load_balance_on_write = 'always'
 # Disable load balance after a WRITE function is issued.
 
 ## disable_load_balance_on_write = 'always'
 
-# Create test white function
+# Create test read_only function
 'Q'	"DROP FUNCTION IF EXISTS f1"
 'Y'
 'Q'	"CREATE FUNCTION f1(INTEGER) returns INTEGER AS 'SELECT $1' LANGUAGE SQL"

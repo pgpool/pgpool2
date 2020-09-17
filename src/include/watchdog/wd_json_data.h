@@ -30,7 +30,7 @@
 
 /*
  * The structure to hold the parsed PG backend node status data fetched
- * from the master watchdog node
+ * from the leader watchdog node
  */
 typedef struct WDPGBackendStatus
 {

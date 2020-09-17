@@ -456,14 +456,14 @@
    <title>フェイルオーバの設定</title>
    <para>
     <productname>PostgreSQL</productname>バックエンドノードがダウンした時に実行するスクリプトを<xref linkend="GUC-FAILOVER-COMMAND">に設定します。
-     また、<productname>PostgreSQL</productname>サーバが3台の場合、プライマリノードのフェイルオーバ後に新しいプライマリからスレーブをリカバリするために<xref linkend="GUC-FOLLOW-MASTER-COMMAND">も設定する必要があります。<xref linkend="GUC-FOLLOW-MASTER-COMMAND">はプライマリノードのフェイルオーバ後に実行されます。<productname>PostgreSQL</productname>サーバが2台の場合、<xref linkend="GUC-FOLLOW-MASTER-COMMAND">の設定は不要です。
+     また、<productname>PostgreSQL</productname>サーバが3台の場合、プライマリノードのフェイルオーバ後に新しいプライマリからスレーブをリカバリするために<xref linkend="GUC-FOLLOW-PRIMARY-COMMAND">も設定する必要があります。<xref linkend="GUC-FOLLOW-PRIMARY-COMMAND">はプライマリノードのフェイルオーバ後に実行されます。<productname>PostgreSQL</productname>サーバが2台の場合、<xref linkend="GUC-FOLLOW-PRIMARY-COMMAND">の設定は不要です。
    </para>
    <para>
     それぞれの実行スクリプトの引数は、それぞれ実行時に<productname>Pgpool-II</productname>によってバックエンドの具体的な情報に置き換えられます。各引数の意味は<xref linkend="GUC-FAILOVER-COMMAND">をご参照ください。
    </para>
    <programlisting>
     failover_command = '/etc/pgpool-II/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S'
-    follow_master_command = '/etc/pgpool-II/follow_master.sh %d %h %p %D %m %H %M %P %r %R'
+    follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M %P %r %R'
    </programlisting>
    <note>
     <para>
@@ -472,12 +472,12 @@
     </para>
    </note>
    <para>
-    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_1_STABLE">failover.sh</ulink>及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_master.sh.sample;hb=refs/heads/V4_1_STABLE">follow_master.sh</ulink>は
+    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_1_STABLE">failover.sh</ulink>及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_1_STABLE">follow_primary.sh</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、これらのファイルをコピーして作成します。
    </para>
    <programlisting>
     # cp /etc/pgpool-II/failover.sh{.sample,}
-    # cp /etc/pgpool-II/follow_master.sh{.sample,}
+    # cp /etc/pgpool-II/follow_primary.sh{.sample,}
    </programlisting>
    <para>
     基本的には<emphasis>PGHOME</emphasis>を環境に合わせて変更すれば、動作します。
@@ -488,7 +488,7 @@
     PGHOME=/usr/pgsql-11
     ...
 
-    [server1]# vi /etc/pgpool-II/follow_master.sh
+    [server1]# vi /etc/pgpool-II/follow_primary.sh
     ...
     PGHOME=/usr/pgsql-11
     ...
@@ -904,7 +904,7 @@ arping_path = '/usr/sbin'
   <sect3 id="example-cluster-pgpool-config-pcppass">
    <title>.pcppassの設定</title>
    <para>
-    前述の<literal>follow_master_command</literal>のスクリプトでパスワード入力なしで<literal>PCP</literal>コマンドを実行できるように、すべてのサーバで<productname>Pgpool-II</productname>の起動ユーザのホームディレクトリに<filename>.pcppass</filename>を作成します。
+    前述の<literal>follow_primary_command</literal>のスクリプトでパスワード入力なしで<literal>PCP</literal>コマンドを実行できるように、すべてのサーバで<productname>Pgpool-II</productname>の起動ユーザのホームディレクトリに<filename>.pcppass</filename>を作成します。
    </para>
    <programlisting>
     [全サーバ]# echo 'localhost:9898:pgpool:pgpool' > ~/.pcppass
@@ -985,14 +985,14 @@ arping_path = '/usr/sbin'
   <sect3 id="example-cluster-try-watchdog">
    <title>watchdogアクティブ/スタンバイの切り替え</title>
    <para>
-    <command>pcp_watchdog_info</command>で<productname>Pgpool-II</productname>の<application>watchdog</application>の情報を確認します。最初に起動した<productname>Pgpool-II</productname>が「MASTER」になります。
+    <command>pcp_watchdog_info</command>で<productname>Pgpool-II</productname>の<application>watchdog</application>の情報を確認します。最初に起動した<productname>Pgpool-II</productname>が「LEADER」になります。
    </para>
    <programlisting>
     # pcp_watchdog_info -h 192.168.137.150 -p 9898 -U pgpool
     Password: 
     3 YES server1:9999 Linux server1 server1
 
-    server1:9999 Linux server1 server1 9999 9000 4 MASTER  #最初に起動されたサーバがMASTERになる
+    server1:9999 Linux server1 server1 9999 9000 4 LEADER  #最初に起動されたサーバがLEADERになる
     server2:9999 Linux server2 server2 9999 9000 7 STANDBY #スタンバイとして稼働
     server3:9999 Linux server3 server3 9999 9000 7 STANDBY #スタンバイとして稼働
    </programlisting>
@@ -1006,7 +1006,7 @@ arping_path = '/usr/sbin'
     Password: 
     3 YES server2:9999 Linux server2 server2
 
-    server2:9999 Linux server2 server2 9999 9000 4 MASTER     #server2がアクティブに昇格
+    server2:9999 Linux server2 server2 9999 9000 4 LEADER     #server2がアクティブに昇格
     server1:9999 Linux server1 server1 9999 9000 10 SHUTDOWN  #server1が停止された
     server3:9999 Linux server3 server3 9999 9000 7 STANDBY    #スタンバイとして稼働
    </programlisting>
@@ -1020,7 +1020,7 @@ arping_path = '/usr/sbin'
     Password: 
     3 YES server2:9999 Linux server2 server2
 
-    server2:9999 Linux server2 server2 9999 9000 4 MASTER
+    server2:9999 Linux server2 server2 9999 9000 4 LEADER
     server1:9999 Linux server1 server1 9999 9000 7 STANDBY
     server3:9999 Linux server3 server3 9999 9000 7 STANDBY
    </programlisting>

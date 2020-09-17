@@ -104,16 +104,16 @@ wd_ipc_initialize_data(void)
 
 /*
  * function gets the PG backend status of all attached nodes from
- * the master watchdog node.
+ * the leader watchdog node.
  */
 WDPGBackendStatus *
-get_pg_backend_status_from_master_wd_node(void)
+get_pg_backend_status_from_leader_wd_node(void)
 {
 	unsigned int *shared_key = get_ipc_shared_key();
 	char	   *data = get_data_request_json(WD_DATE_REQ_PG_BACKEND_DATA,
 											 shared_key ? *shared_key : 0, pool_config->wd_authkey);
 
-	WDIPCCmdResult *result = issue_command_to_watchdog(WD_GET_MASTER_DATA_REQUEST,
+	WDIPCCmdResult *result = issue_command_to_watchdog(WD_GET_LEADER_DATA_REQUEST,
 													   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
 													   data, strlen(data), true);
 
@@ -122,14 +122,14 @@ get_pg_backend_status_from_master_wd_node(void)
 	if (result == NULL)
 	{
 		ereport(WARNING,
-				(errmsg("get backend node status from master watchdog failed"),
+				(errmsg("get backend node status from leader watchdog failed"),
 				 errdetail("issue command to watchdog returned NULL")));
 		return NULL;
 	}
 	if (result->type == WD_IPC_CMD_CLUSTER_IN_TRAN)
 	{
 		ereport(WARNING,
-				(errmsg("get backend node status from master watchdog failed"),
+				(errmsg("get backend node status from leader watchdog failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 				 errhint("try again when the cluster is fully initialized")));
 		FreeCmdResult(result);
@@ -138,7 +138,7 @@ get_pg_backend_status_from_master_wd_node(void)
 	else if (result->type == WD_IPC_CMD_TIMEOUT)
 	{
 		ereport(WARNING,
-				(errmsg("get backend node status from master watchdog failed"),
+				(errmsg("get backend node status from leader watchdog failed"),
 				 errdetail("ipc command timeout")));
 		FreeCmdResult(result);
 		return NULL;
@@ -149,7 +149,7 @@ get_pg_backend_status_from_master_wd_node(void)
 
 		/*
 		 * Watchdog returns the zero length data when the node itself is a
-		 * master watchdog node
+		 * leader watchdog node
 		 */
 		if (result->length <= 0)
 		{
@@ -165,7 +165,7 @@ get_pg_backend_status_from_master_wd_node(void)
 	}
 
 	ereport(WARNING,
-			(errmsg("get backend node status from master watchdog failed")));
+			(errmsg("get backend node status from leader watchdog failed")));
 	FreeCmdResult(result);
 	return NULL;
 }
@@ -432,7 +432,7 @@ wd_issue_failover_command(char *func_name, int *node_id_set, int count, unsigned
  * now watchdog can respond to the request in following ways.
  *
  * 1 - It can tell the caller to procees with failover. This
- * happens when the current node is the master watchdog node.
+ * happens when the current node is the leader watchdog node.
  *
  * 2 - It can tell the caller to failover not allowed
  * this happens when either cluster does not have the quorum

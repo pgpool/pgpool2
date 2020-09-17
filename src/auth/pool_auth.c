@@ -345,7 +345,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 	StartupPacket *sp;
 
 
-	protoMajor = MASTER_CONNECTION(cp)->sp->major;
+	protoMajor = MAIN_CONNECTION(cp)->sp->major;
 
 	kind = pool_read_kind(cp);
 	if (kind < 0)
@@ -433,7 +433,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 
 		msglen = htonl(0);
 		pool_write_and_flush(frontend, &msglen, sizeof(msglen));
-		MASTER(cp)->auth_kind = AUTH_REQ_OK;
+		MAIN(cp)->auth_kind = AUTH_REQ_OK;
 	}
 
 	/* clear text password authentication? */
@@ -498,7 +498,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 		 */
 		if (!RAW_MODE && NUM_BACKENDS > 1)
 		{
-			if (get_auth_password(MASTER(cp), frontend, 0,
+			if (get_auth_password(MAIN(cp), frontend, 0,
 								  &password, &passwordType) == false)
 			{
 				/*
@@ -514,7 +514,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 							 errhint("you can disable this behavior by setting allow_clear_text_frontend_auth to off")));
 					authenticate_frontend_clear_text(frontend);
 					/* now check again if we have a password now */
-					if (get_auth_password(MASTER(cp), frontend, 0,
+					if (get_auth_password(MAIN(cp), frontend, 0,
 										  &password, &passwordType) == false)
 					{
 						ereport(ERROR,
@@ -560,7 +560,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 		char	   *password;
 		PasswordType passwordType = PASSWORD_TYPE_UNKNOWN;
 
-		if (get_auth_password(MASTER(cp), frontend, 0,
+		if (get_auth_password(MAIN(cp), frontend, 0,
 							  &password, &passwordType) == false)
 		{
 			/*
@@ -575,7 +575,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 						 errhint("you can disable this behavior by setting allow_clear_text_frontend_auth to off")));
 				authenticate_frontend_clear_text(frontend);
 				/* now check again if we have a password now */
-				if (get_auth_password(MASTER(cp), frontend, 0,
+				if (get_auth_password(MAIN(cp), frontend, 0,
 									  &password, &passwordType) == false)
 				{
 					ereport(ERROR,
@@ -675,7 +675,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 					break;
 
 				case 'N':
-					if (pool_extract_error_message(false, MASTER(cp), protoMajor, true, &message) == 1)
+					if (pool_extract_error_message(false, MAIN(cp), protoMajor, true, &message) == 1)
 					{
 						ereport(NOTICE,
 								(errmsg("notice from backend"),
@@ -693,7 +693,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 					/* process error message */
 				case 'E':
 
-					if (pool_extract_error_message(false, MASTER(cp), protoMajor, true, &message) == 1)
+					if (pool_extract_error_message(false, MAIN(cp), protoMajor, true, &message) == 1)
 					{
 						ereport(LOG,
 								(errmsg("backend throws an error message"),
@@ -758,7 +758,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 	/*
 	 * OK, read pid and secret key
 	 */
-	sp = MASTER_CONNECTION(cp)->sp;
+	sp = MAIN_CONNECTION(cp)->sp;
 	pid = -1;
 
 	for (i = 0; i < NUM_BACKENDS; i++)
@@ -826,7 +826,7 @@ pool_do_reauth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 	 */
 	if (!frontend->frontend_authenticated)
 	{
-		switch (MASTER(cp)->auth_kind)
+		switch (MAIN(cp)->auth_kind)
 		{
 			case AUTH_REQ_OK:
 				/* trust */
@@ -834,26 +834,26 @@ pool_do_reauth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 
 			case AUTH_REQ_PASSWORD:
 				/* clear text password */
-				do_clear_text_password(MASTER(cp), frontend, 1, protoMajor);
+				do_clear_text_password(MAIN(cp), frontend, 1, protoMajor);
 				break;
 
 			case AUTH_REQ_CRYPT:
 				/* crypt password */
-				do_crypt(MASTER(cp), frontend, 1, protoMajor);
+				do_crypt(MAIN(cp), frontend, 1, protoMajor);
 				break;
 
 			case AUTH_REQ_MD5:
 				/* md5 password */
-				authenticate_frontend_md5(MASTER(cp), frontend, 1, protoMajor);
+				authenticate_frontend_md5(MAIN(cp), frontend, 1, protoMajor);
 				break;
 			case AUTH_REQ_SASL:
 				/* SCRAM */
-				authenticate_frontend_SCRAM(MASTER(cp), frontend, 1);
+				authenticate_frontend_SCRAM(MAIN(cp), frontend, 1);
 				break;
 			default:
 				ereport(ERROR,
 						(errmsg("authentication failed"),
-						 errdetail("unknown authentication request code %d", MASTER(cp)->auth_kind)));
+						 errdetail("unknown authentication request code %d", MAIN(cp)->auth_kind)));
 		}
 	}
 
@@ -867,7 +867,7 @@ pool_do_reauth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 
 	msglen = htonl(0);
 	pool_write_and_flush(frontend, &msglen, sizeof(msglen));
-	pool_send_backend_key_data(frontend, MASTER_CONNECTION(cp)->pid, MASTER_CONNECTION(cp)->key, protoMajor);
+	pool_send_backend_key_data(frontend, MAIN_CONNECTION(cp)->pid, MAIN_CONNECTION(cp)->key, protoMajor);
 	return 0;
 }
 
@@ -885,11 +885,11 @@ pool_send_auth_fail(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 
 	protoMajor = MAJOR(cp);
 
-	messagelen = strlen(MASTER_CONNECTION(cp)->sp->user) + 100;
+	messagelen = strlen(MAIN_CONNECTION(cp)->sp->user) + 100;
 	errmessage = (char *) palloc(messagelen + 1);
 
 	snprintf(errmessage, messagelen, "password authentication failed for user \"%s\"",
-			 MASTER_CONNECTION(cp)->sp->user);
+			 MAIN_CONNECTION(cp)->sp->user);
 	if (send_error_to_frontend)
 		pool_send_fatal_message(frontend, protoMajor, "XX000", errmessage,
 								"", "", __FILE__, __LINE__);
@@ -1100,7 +1100,7 @@ do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, in
 	/* if authenticated, save info */
 	if (kind == AUTH_REQ_OK)
 	{
-		if (IS_MASTER_NODE_ID(backend->db_node_id))
+		if (IS_MAIN_NODE_ID(backend->db_node_id))
 		{
 			send_auth_ok(frontend, protoMajor);
 		}
@@ -1136,8 +1136,8 @@ do_crypt(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int 
 		memcpy(salt, backend->salt, sizeof(salt));
 	}
 
-	/* master? */
-	if (IS_MASTER_NODE_ID(backend->db_node_id))
+	/* main? */
+	if (IS_MAIN_NODE_ID(backend->db_node_id))
 	{
 		pool_write(frontend, "R", 1);	/* authentication */
 		if (protoMajor == PROTO_MAJOR_V3)
@@ -1780,8 +1780,8 @@ do_md5(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int pr
 				 errdetail("unable to get the password")));
 	}
 
-	/* master? */
-	if (IS_MASTER_NODE_ID(backend->db_node_id) && frontend->frontend_authenticated == false)
+	/* main? */
+	if (IS_MAIN_NODE_ID(backend->db_node_id) && frontend->frontend_authenticated == false)
 	{
 		/*
 		 * If frontend is not authenticated and do it it first. but if we have
@@ -1834,7 +1834,7 @@ do_md5(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int pr
 
 	if (!reauth && kind == 0)
 	{
-		if (IS_MASTER_NODE_ID(backend->db_node_id))
+		if (IS_MAIN_NODE_ID(backend->db_node_id))
 		{
 			/* Send auth ok to frontend */
 			send_auth_ok(frontend, protoMajor);
@@ -2107,8 +2107,8 @@ do_SCRAM(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, int protoMajor, 
 				 errdetail("password not found")));
 	}
 
-	/* master? */
-	if (frontend && IS_MASTER_NODE_ID(backend->db_node_id) && frontend->frontend_authenticated == false)
+	/* main? */
+	if (frontend && IS_MAIN_NODE_ID(backend->db_node_id) && frontend->frontend_authenticated == false)
 	{
 		/*
 		 * If frontend is not authenticated and do it it first. but if we have

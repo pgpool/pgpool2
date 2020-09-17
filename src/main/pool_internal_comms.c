@@ -209,7 +209,7 @@ degenerate_backend_set_ex(int *node_id_set, int count, unsigned char flags, bool
 		}
 		else if (res == FAILOVER_RES_WILL_BE_DONE)
 		{
-			/* we will receive a sync request from master watchdog node */
+			/* we will receive a sync request from leader watchdog node */
 			ereport(LOG,
 					(errmsg("degenerate backend request for %d node(s) from pid [%d], will be handled by watchdog"
 							,node_count, getpid())));

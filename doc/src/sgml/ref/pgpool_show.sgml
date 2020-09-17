@@ -132,10 +132,10 @@ PostgreSQL documentation
   </para>
 
   <para>
-   Show the current setting of the parameter <xref linkend="guc-black-function-list">:
+   Show the current setting of the parameter <xref linkend="guc-write-function-list">:
     <programlisting>
-     PGPOOL SHOW black_function_list;
-     black_function_list
+     PGPOOL SHOW write_function_list;
+     write_function_list
      ---------------------
      nextval,setval
      (1 row)

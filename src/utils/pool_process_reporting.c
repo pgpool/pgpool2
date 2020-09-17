@@ -488,40 +488,40 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "ignore leading white spaces", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	StrNCpy(status[i].name, "white_function_list", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "read_only_function_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j = 0; j < pool_config->num_white_function_list; j++)
+	for (j = 0; j < pool_config->num_read_only_function_list; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		strncat(status[i].value, pool_config->white_function_list[j], len);
+		strncat(status[i].value, pool_config->read_only_function_list[j], len);
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		if (j != pool_config->num_white_function_list - 1)
+		if (j != pool_config->num_read_only_function_list - 1)
 			strncat(status[i].value, ",", len);
 	}
 	StrNCpy(status[i].desc, "functions those do not write to database", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	StrNCpy(status[i].name, "black_function_list", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "write_function_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j = 0; j < pool_config->num_black_function_list; j++)
+	for (j = 0; j < pool_config->num_write_function_list; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		strncat(status[i].value, pool_config->black_function_list[j], len);
+		strncat(status[i].value, pool_config->write_function_list[j], len);
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		if (j != pool_config->num_black_function_list - 1)
+		if (j != pool_config->num_write_function_list - 1)
 			strncat(status[i].value, ",", len);
 	}
 	StrNCpy(status[i].desc, "functions those write to database", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	StrNCpy(status[i].name, "black_query_pattern_list", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "primary_routing_query_pattern_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j = 0; j < pool_config->num_black_query_pattern_list; j++)
+	for (j = 0; j < pool_config->num_primary_routing_query_pattern_list; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		strncat(status[i].value, pool_config->black_query_pattern_list[j], len);
+		strncat(status[i].value, pool_config->primary_routing_query_pattern_list[j], len);
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		if (j != pool_config->num_black_query_pattern_list - 1)
+		if (j != pool_config->num_primary_routing_query_pattern_list - 1)
 			strncat(status[i].value, ";", len);
 	}
 	StrNCpy(status[i].desc, "query patterns that should be sent to primary node", POOLCONFIG_MAXDESCLEN);
@@ -542,16 +542,16 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "statement level load balancing", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	/* MASTER/SLAVE MODE */
+	/* NATIVE REPLICATION MODE */
 
-	StrNCpy(status[i].name, "master_slave_mode", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->master_slave_mode);
-	StrNCpy(status[i].desc, "if true, operate in master/slave mode", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].name, "native_replication_mode", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->native_replication_mode);
+	StrNCpy(status[i].desc, "if true, operate in native replication mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	StrNCpy(status[i].name, "master_slave_sub_mode", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->master_slave_sub_mode);
-	StrNCpy(status[i].desc, "master/slave sub mode", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].name, "native_replication_sub_mode", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->native_replication_sub_mode);
+	StrNCpy(status[i].desc, "native replication sub mode", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* - Streaming - */
@@ -581,9 +581,9 @@ get_config(int *nrows)
 	i++;
 
 	/* - Special commands - */
-	StrNCpy(status[i].name, "follow_master_command", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->follow_master_command);
-	StrNCpy(status[i].desc, "follow master command", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].name, "follow_primary_command", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->follow_primary_command);
+	StrNCpy(status[i].desc, "follow primary command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "database_redirect_preference_list", POOLCONFIG_MAXNAMELEN);
@@ -769,7 +769,7 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "wd_de_escalation_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_de_escalation_command);
-	StrNCpy(status[i].desc, "command executed when master pgpool resigns occurs", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "command executed when leader pgpool resigns occurs", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "trusted_servers", POOLCONFIG_MAXNAMELEN);
@@ -779,7 +779,7 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "delegate_IP", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->delegate_IP);
-	StrNCpy(status[i].desc, "delegate IP address of master pgpool", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "delegate IP address of leader pgpool", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "wd_priority", POOLCONFIG_MAXNAMELEN);
@@ -949,27 +949,27 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "Number of SELECTs hitting query cache", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	StrNCpy(status[i].name, "white_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "cache_safe_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j = 0; j < pool_config->num_white_memqcache_table_list; j++)
+	for (j = 0; j < pool_config->num_cache_safe_memqcache_table_list; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		strncat(status[i].value, pool_config->white_memqcache_table_list[j], len);
+		strncat(status[i].value, pool_config->cache_safe_memqcache_table_list[j], len);
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		if (j != pool_config->num_white_memqcache_table_list - 1)
+		if (j != pool_config->num_cache_safe_memqcache_table_list - 1)
 			strncat(status[i].value, ",", len);
 	}
 	StrNCpy(status[i].desc, "tables to memqcache", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	StrNCpy(status[i].name, "black_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
+	StrNCpy(status[i].name, "cache_unsafe_memqcache_table_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
-	for (j = 0; j < pool_config->num_black_memqcache_table_list; j++)
+	for (j = 0; j < pool_config->num_cache_unsafe_memqcache_table_list; j++)
 	{
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		strncat(status[i].value, pool_config->black_memqcache_table_list[j], len);
+		strncat(status[i].value, pool_config->cache_unsafe_memqcache_table_list[j], len);
 		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
-		if (j != pool_config->num_black_memqcache_table_list - 1)
+		if (j != pool_config->num_cache_unsafe_memqcache_table_list - 1)
 			strncat(status[i].value, ",", len);
 	}
 	StrNCpy(status[i].desc, "tables not to memqcache", POOLCONFIG_MAXDESCLEN);
@@ -1311,10 +1311,10 @@ get_nodes(int *nrows)
 		}
 		else
 		{
-			if (i == REAL_MASTER_NODE_ID)
-				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "master");
+			if (i == REAL_MAIN_NODE_ID)
+				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "main");
 			else
-				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "slave");
+				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "replica");
 		}
 
 		/* status last changed */
@@ -1844,10 +1844,10 @@ get_health_check_stats(int *nrows)
 		}
 		else
 		{
-			if (i == REAL_MASTER_NODE_ID)
-				snprintf(stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "master");
+			if (i == REAL_MAIN_NODE_ID)
+				snprintf(stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "main");
 			else
-				snprintf(stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "slave");
+				snprintf(stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "replica");
 		}
 
 		/* status last changed */
@@ -1991,10 +1991,10 @@ get_backend_stats(int *nrows)
 		}
 		else
 		{
-			if (i == REAL_MASTER_NODE_ID)
-				snprintf(backend_stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "master");
+			if (i == REAL_MAIN_NODE_ID)
+				snprintf(backend_stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "main");
 			else
-				snprintf(backend_stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "slave");
+				snprintf(backend_stats[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "replica");
 		}
 	}
 

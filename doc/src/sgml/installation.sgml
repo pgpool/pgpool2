@@ -66,19 +66,19 @@
      database unavailability due to the
      <productname>Pgpool-II</productname> being down. Multiple
      <productname>Pgpool-II</productname> work together and monitor
-     each other. One of them is called "master" and it has a virtual
+     each other. One of them is called "leader" and it has a virtual
      IP. Clients do not need to aware that there are multiple
      <productname>Pgpool-II</productname> because they always access
      the same VIP.  (See <xref linkend="tutorial-watchdog-intro"> for
      watchdog). If one of <productname>Pgpool-II</productname> goes
      down, other <productname>Pgpool-II</productname> takes over the
-     master role.
+     leader role.
     </para>
     <para>
-     Since it is not allowed to have multiple master, watchdog votes to
-     decide a new master. If there are even number of
+     Since it is not allowed to have multiple leader, watchdog votes to
+     decide a new leader. If there are even number of
      <productname>Pgpool-II</productname>, it is impossible to decide
-     the new master by voting. Thus we recommend to deploy
+     the new leader by voting. Thus we recommend to deploy
      <productname>Pgpool-II</productname> in more than 3 odd numbers.
     </para>
     <para>

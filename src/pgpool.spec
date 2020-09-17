@@ -269,7 +269,7 @@ fi
 %{_sysconfdir}/%{short_name}/pool_hba.conf.sample
 %defattr(755,postgres,postgres,-)
 %{_sysconfdir}/%{short_name}/failover.sh.sample
-%{_sysconfdir}/%{short_name}/follow_master.sh.sample
+%{_sysconfdir}/%{short_name}/follow_primary.sh.sample
 %{_sysconfdir}/%{short_name}/pgpool_remote_start.sample
 %{_sysconfdir}/%{short_name}/recovery_1st_stage.sample
 %{_sysconfdir}/%{short_name}/recovery_2nd_stage.sample

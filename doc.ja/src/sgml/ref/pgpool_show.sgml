@@ -181,12 +181,12 @@ PostgreSQL documentation
 
   <para>
    <!--
-   Show the current setting of the parameter <varname>black_function_list</varname>:
+   Show the current setting of the parameter <varname>write_function_list</varname>:
    -->
-   パラメータ <xref linkend="guc-black-function-list"> の現在の設定値を表示:
+   パラメータ <xref linkend="guc-write-function-list"> の現在の設定値を表示:
     <programlisting>
-     PGPOOL SHOW black_function_list;
-     black_function_list
+     PGPOOL SHOW write_function_list;
+     write_function_list
      ---------------------
      nextval,setval
      (1 row)

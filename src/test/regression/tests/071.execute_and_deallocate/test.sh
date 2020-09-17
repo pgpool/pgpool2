@@ -26,7 +26,7 @@ do
 
 	export PGPORT=$PGPOOL_PORT
 
-	# set backend_weight , loadbalance to slave only
+	# set backend_weight , loadbalance to standby only
 	echo "backend_weight0 = 0" >> etc/pgpool.conf
 	echo "backend_weight1 = 1" >> etc/pgpool.conf
 

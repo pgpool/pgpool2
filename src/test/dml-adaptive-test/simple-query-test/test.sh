@@ -226,7 +226,7 @@ backend_weight1 = 1
 log_per_node_statement = on
 
 pid_file_name = '/__TEST_DIR__/pgpool.pid'
-black_function_list = 'currval,lastval,nextval,setval,insert_tb_f_func'
+write_function_list = 'currval,lastval,nextval,setval,insert_tb_f_func'
 disable_load_balance_on_write = 'dml_adaptive'
 dml_adaptive_object_relationship_list= 'tb_t1:tb_t2,insert_tb_f_func():tb_f,tb_v:tb_v_view'
 

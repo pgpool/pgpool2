@@ -266,23 +266,23 @@
     #                  %h = host name
     #                  %p = port number
     #                  %D = database cluster path
-    #                  %m = new master node id
-    #                  %M = old master node id
-    #                  %H = new master node host name
+    #                  %m = new main node id
+    #                  %M = old main node id
+    #                  %H = new main node host name
     #                  %P = old primary node id
-    #                  %R = new master database cluster path
-    #                  %r = new master port number
+    #                  %R = new main database cluster path
+    #                  %r = new main port number
     #                  %% = '%' character
     failed_node_id=$1
     failed_host_name=$2
     failed_port=$3
     failed_db_cluster=$4
-    new_master_id=$5
-    old_master_id=$6
-    new_master_host_name=$7
+    new_main_id=$5
+    old_main_id=$6
+    new_main_host_name=$7
     old_primary_node_id=$8
-    new_master_port_number=$9
-    new_master_db_cluster=${10}
+    new_main_port_number=$9
+    new_main_db_cluster=${10}
     mydir=/home/t-ishii/tmp/Tutorial
     log=$mydir/log/failover.log
     pg_ctl=/usr/local/pgsql/bin/pg_ctl
@@ -290,10 +290,10 @@
     cluster1=$mydir/data1
 
     date >> $log
-    echo "failed_node_id $failed_node_id failed_host_name $failed_host_name failed_port $failed_port failed_db_cluster $failed_db_cluster new_master_id $new_master_id old_master_id $old_master_id new_master_host_name $new_master_host_name old_primary_node_id $old_primary_node_id new_master_port_number $new_master_port_number new_master_db_cluster $new_master_db_cluster" >> $log
+    echo "failed_node_id $failed_node_id failed_host_name $failed_host_name failed_port $failed_port failed_db_cluster $failed_db_cluster new_main_id $new_main_id old_main_id $old_main_id new_main_host_name $new_main_host_name old_primary_node_id $old_primary_node_id new_main_port_number $new_main_port_number new_main_db_cluster $new_main_db_cluster" >> $log
 
-    if [ a"$failed_node_id" = a"$old_primary_node_id" ];then	# master failed
-    ! 	new_primary_db_cluster=${mydir}/data"$new_master_id"
+    if [ a"$failed_node_id" = a"$old_primary_node_id" ];then	# main failed
+    ! 	new_primary_db_cluster=${mydir}/data"$new_main_id"
     echo $pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
     $pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
     sleep 2
@@ -349,7 +349,7 @@
     DATADIR_BASE=/home/t-ishii/tmp/Tutorial
     PGSUPERUSER=t-ishii
 
-    master_db_cluster=$1
+    main_db_cluster=$1
     recovery_node_host_name=$2
     DEST_CLUSTER=$3
     PORT=$4
@@ -364,13 +364,13 @@
 
     $psql -p $PORT -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
 
-    echo "source: $master_db_cluster dest: $DEST_CLUSTER" >> $log
+    echo "source: $main_db_cluster dest: $DEST_CLUSTER" >> $log
 
     rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
     --exclude postmaster.opts --exclude pg_log \
     --exclude recovery.conf --exclude recovery.done \
     --exclude pg_xlog \
-    $master_db_cluster/ $DEST_CLUSTER/
+    $main_db_cluster/ $DEST_CLUSTER/
 
     rm -fr $DEST_CLUSTER/pg_xlog 
     mkdir $DEST_CLUSTER/pg_xlog

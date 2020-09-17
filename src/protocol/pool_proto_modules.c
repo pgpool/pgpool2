@@ -91,7 +91,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
 									 POOL_CONNECTION_POOL * backend,
 									 POOL_SENT_MESSAGE * message,
 									 POOL_SENT_MESSAGE * bind_message);
-static int *find_victim_nodes(int *ntuples, int nmembers, int master_node, int *number_of_nodes);
+static int *find_victim_nodes(int *ntuples, int nmembers, int main_node, int *number_of_nodes);
 static POOL_STATUS close_standby_transactions(POOL_CONNECTION * frontend,
 											  POOL_CONNECTION_POOL * backend);
 
@@ -228,7 +228,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	 */
 	if (pool_config->memory_cache_enabled && is_likely_select &&
 		!pool_is_writing_transaction() &&
-		TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != 'E')
+		TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != 'E')
 	{
 		bool		foundp;
 
@@ -278,7 +278,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			 * execute, instead the original query will be sent to backends,
 			 * which may or may not cause an actual syntax errors. The command
 			 * will be sent to all backends in replication mode or
-			 * master/primary in master/slave mode.
+			 * primary in native replication mode.
 			 */
 			if (!strcmp(remote_host, "[local]"))
 			{
@@ -678,7 +678,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 
 				/*
 				 * If the query is BEGIN READ WRITE or BEGIN ... SERIALIZABLE
-				 * in master/slave mode, we send BEGIN to slaves/standbys
+				 * in native replication mode, we send BEGIN to standbys
 				 * instead. original_query which is BEGIN READ WRITE is sent
 				 * to primary. rewritten_query which is BEGIN is sent to
 				 * standbys.
@@ -697,9 +697,9 @@ SimpleQuery(POOL_CONNECTION * frontend,
 
 			/*
 			 * Optimization effort: If there's only one session, we do not
-			 * need to wait for the master node's response, and could execute
+			 * need to wait for the main node's response, and could execute
 			 * the query concurrently.  In snapshot isolation mode we cannot
-			 * do this optimization because we need to wait for master's
+			 * do this optimization because we need to wait for main node's
 			 * response first.
 			 */
 			if (pool_config->num_init_children == 1 &&
@@ -711,11 +711,11 @@ SimpleQuery(POOL_CONNECTION * frontend,
 				return status;
 			}
 
-			/* Send the query to master node */
-			pool_send_and_wait(query_context, 1, MASTER_NODE_ID);
+			/* Send the query to main node */
+			pool_send_and_wait(query_context, 1, MAIN_NODE_ID);
 
 			/* Check specific errors */
-			specific_error = check_errors(backend, MASTER_NODE_ID);
+			specific_error = check_errors(backend, MAIN_NODE_ID);
 			if (specific_error)
 			{
 				/* log error message */
@@ -733,7 +733,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			/* send query to other nodes */
 			query_context->rewritten_query = msg;
 			query_context->rewritten_length = len;
-			pool_send_and_wait(query_context, -1, MASTER_NODE_ID);
+			pool_send_and_wait(query_context, -1, MAIN_NODE_ID);
 		}
 		else
 		{
@@ -747,19 +747,19 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			}
 
 			/*
-			 * Send the query to other than master node.
+			 * Send the query to other than main node.
 			 */
-			pool_send_and_wait(query_context, -1, MASTER_NODE_ID);
+			pool_send_and_wait(query_context, -1, MAIN_NODE_ID);
 
 		}
 
 		/*
-		 * Send "COMMIT" or "ROLLBACK" to only master node if query is
+		 * Send "COMMIT" or "ROLLBACK" to only main node if query is
 		 * "COMMIT" or "ROLLBACK"
 		 */
 		if (commit)
 		{
-			pool_send_and_wait(query_context, 1, MASTER_NODE_ID);
+			pool_send_and_wait(query_context, 1, MAIN_NODE_ID);
 
 			/*
 			 * If we are in the snapshot isolation mode, we need to declare
@@ -776,7 +776,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	}
 	else
 	{
-		pool_send_and_wait(query_context, 1, MASTER_NODE_ID);
+		pool_send_and_wait(query_context, 1, MAIN_NODE_ID);
 	}
 
 	return POOL_CONTINUE;
@@ -843,7 +843,7 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 
 	ereport(DEBUG1, (errmsg("Execute: pool_is_writing_transaction: %d TSTATE: %c",
 							pool_is_writing_transaction(),
-							TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID))));
+							TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))));
 
 	/* log query to log file if necessary */
 	if (pool_config->log_statement)
@@ -853,7 +853,7 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	 * Fetch memory cache if possible
 	 */
 	if (pool_config->memory_cache_enabled && !pool_is_writing_transaction() &&
-		(TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != 'E')
+		(TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != 'E')
 		&& pool_is_likely_select(query))
 	{
 		POOL_STATUS status;
@@ -863,7 +863,7 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 #define STR_ALLOC_SIZE 1024
 		ereport(DEBUG1, (errmsg("Execute: pool_is_likely_select: true pool_is_writing_transaction: %d TSTATE: %c",
 								pool_is_writing_transaction(),
-								TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID))));
+								TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))));
 
 		len = strlen(query) + 1;
 		search_query = MemoryContextStrdup(query_context->memory_context, query);
@@ -985,11 +985,11 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		 */
 		if (!commit)
 		{
-			/* Send the query to master node */
-			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, false);
+			/* Send the query to main node */
+			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MAIN_NODE_ID, false);
 
 			/* Check specific errors */
-			specific_error = check_errors(backend, MASTER_NODE_ID);
+			specific_error = check_errors(backend, MAIN_NODE_ID);
 			if (specific_error)
 			{
 				/* log error message */
@@ -1005,7 +1005,7 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 			memset(msg + len, 0, sizeof(int));
 
 			/* send query to other nodes */
-			pool_extended_send_and_wait(query_context, "E", len, msg, -1, MASTER_NODE_ID, false);
+			pool_extended_send_and_wait(query_context, "E", len, msg, -1, MAIN_NODE_ID, false);
 		}
 		else
 		{
@@ -1018,16 +1018,16 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 				si_commit_request();
 			}
 
-			pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, false);
+			pool_extended_send_and_wait(query_context, "E", len, contents, -1, MAIN_NODE_ID, false);
 		}
 
 		/*
-		 * send "COMMIT" or "ROLLBACK" to only master node if query is
+		 * send "COMMIT" or "ROLLBACK" to only main node if query is
 		 * "COMMIT" or "ROLLBACK"
 		 */
 		if (commit)
 		{
-			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, false);
+			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MAIN_NODE_ID, false);
 
 			/*
 			 * If we are in the snapshot isolation mode, we need to declare
@@ -1047,8 +1047,8 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 
 		if (!foundp)
 		{
-			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MASTER_NODE_ID, true);
-			pool_extended_send_and_wait(query_context, "E", len, contents, -1, MASTER_NODE_ID, true);
+			pool_extended_send_and_wait(query_context, "E", len, contents, 1, MAIN_NODE_ID, true);
+			pool_extended_send_and_wait(query_context, "E", len, contents, -1, MAIN_NODE_ID, true);
 		}
 
 		/* Add pending message */
@@ -1070,14 +1070,14 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		{
 			ereport(DEBUG1,
 					(errmsg("Execute: TSTATE:%c",
-							TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID))));
+							TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))));
 
 			/*
 			 * If the query was not READ SELECT, and we are in an explicit
 			 * transaction, remember that we had a write query in this
 			 * transaction.
 			 */
-			if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T' ||
+			if (TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T' ||
 				pool_config->disable_load_balance_on_write == DLBOW_ALWAYS)
 			{
 				/*
@@ -1159,7 +1159,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 			 * execute, instead the original query will be sent to backends,
 			 * which may or may not cause an actual syntax errors. The command
 			 * will be sent to all backends in replication mode or
-			 * master/primary in master/slave mode.
+			 * primary in native replication mode.
 			 */
 			if (!strcmp(remote_host, "[local]"))
 			{
@@ -1315,14 +1315,14 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		}
 
 		/*
-		 * If the query is BEGIN READ WRITE in master/slave mode, we send
-		 * BEGIN instead of it to slaves/standbys. original_query which is
+		 * If the query is BEGIN READ WRITE in native replication mode, we send
+		 * BEGIN instead of it to standbys. original_query which is
 		 * BEGIN READ WRITE is sent to primary. rewritten_query which is BEGIN
 		 * is sent to standbys.
 		 */
 		if (is_start_transaction_query(query_context->parse_tree) &&
 			is_read_write((TransactionStmt *) query_context->parse_tree) &&
-			MASTER_SLAVE)
+			NATIVE_REPLICATION)
 		{
 			query_context->rewritten_query = pstrdup("BEGIN");
 		}
@@ -1335,7 +1335,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	{
 		char		kind;
 
-		if (TSTATE(backend, MASTER_NODE_ID) != 'T')
+		if (TSTATE(backend, MAIN_NODE_ID) != 'T')
 		{
 			int			i;
 
@@ -1395,16 +1395,16 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		 * We must synchronize because Parse message acquires table locks.
 		 */
 		ereport(DEBUG1,
-				(errmsg("Parse: waiting for master completing the query")));
-		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, false);
+				(errmsg("Parse: waiting for main node completing the query")));
+		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MAIN_NODE_ID, false);
 
 
 		/*
 		 * We must check deadlock error because a aborted transaction by
 		 * detecting deadlock isn't same on all nodes. If a transaction is
-		 * aborted on master node, pgpool send a error query to another nodes.
+		 * aborted on main node, pgpool send a error query to another nodes.
 		 */
-		deadlock_detected = detect_deadlock_error(MASTER(backend), MAJOR(backend));
+		deadlock_detected = detect_deadlock_error(MAIN(backend), MAJOR(backend));
 
 		/*
 		 * Check if other than deadlock error detected.  If so, emit log. This
@@ -1412,7 +1412,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		 * PostgreSQL does not report what statement caused that error and
 		 * make users confused.
 		 */
-		per_node_error_log(backend, MASTER_NODE_ID, stmt, "Parse: Error or notice message from backend: ", true);
+		per_node_error_log(backend, MAIN_NODE_ID, stmt, "Parse: Error or notice message from backend: ", true);
 
 		if (deadlock_detected)
 		{
@@ -1425,9 +1425,9 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 			pool_copy_prep_where(query_context->where_to_send, error_qc->where_to_send);
 
 			ereport(LOG,
-					(errmsg("Parse: received deadlock error message from master node")));
+					(errmsg("Parse: received deadlock error message from main node")));
 
-			pool_send_and_wait(error_qc, -1, MASTER_NODE_ID);
+			pool_send_and_wait(error_qc, -1, MAIN_NODE_ID);
 
 			pool_query_context_destroy(error_qc);
 
@@ -1437,7 +1437,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		}
 		else
 		{
-			pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, false);
+			pool_extended_send_and_wait(query_context, "P", len, contents, -1, MAIN_NODE_ID, false);
 		}
 	}
 	else if (SL_MODE)
@@ -1452,8 +1452,8 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 #ifdef NOT_USED
 		pool_clear_sync_map();
 #endif
-		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, true);
-		pool_extended_send_and_wait(query_context, "P", len, contents, -1, MASTER_NODE_ID, true);
+		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MAIN_NODE_ID, true);
+		pool_extended_send_and_wait(query_context, "P", len, contents, -1, MAIN_NODE_ID, true);
 		pool_add_sent_message(session_context->uncompleted_message);
 
 		/* Add pending message */
@@ -1466,7 +1466,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	}
 	else
 	{
-		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MASTER_NODE_ID, false);
+		pool_extended_send_and_wait(query_context, "P", len, contents, 1, MAIN_NODE_ID, false);
 	}
 
 	return POOL_CONTINUE;
@@ -1549,7 +1549,7 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	 * primary node.
 	 */
 	if (pool_config->load_balance_mode && pool_is_writing_transaction() &&
-		TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T' &&
+		TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T' &&
 		pool_config->disable_load_balance_on_write != DLBOW_OFF)
 	{
 		if (!SL_MODE)
@@ -1563,7 +1563,7 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	}
 
 	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE &&
-		TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T')
+		TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T')
 	{
 		pool_where_to_send(query_context, query_context->original_query,
 							query_context->parse_tree);
@@ -1601,7 +1601,7 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	}
 
 	ereport(DEBUG1,
-			(errmsg("Bind: waiting for master completing the query")));
+			(errmsg("Bind: waiting for main node completing the query")));
 
 	pool_set_query_in_progress();
 
@@ -1613,8 +1613,8 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	else
 		nowait = false;
 
-	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MASTER_NODE_ID, nowait);
-	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MASTER_NODE_ID, nowait);
+	pool_extended_send_and_wait(query_context, "B", len, contents, 1, MAIN_NODE_ID, nowait);
+	pool_extended_send_and_wait(query_context, "B", len, contents, -1, MAIN_NODE_ID, nowait);
 
 	if (SL_MODE)
 	{
@@ -1696,13 +1696,13 @@ Describe(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	 * leads to "portal not found" etc. errors.
 	 */
 	ereport(DEBUG1,
-			(errmsg("Describe: waiting for master completing the query")));
+			(errmsg("Describe: waiting for main node completing the query")));
 
 	nowait = (SL_MODE ? true : false);
 
 	pool_set_query_in_progress();
-	pool_extended_send_and_wait(query_context, "D", len, contents, 1, MASTER_NODE_ID, nowait);
-	pool_extended_send_and_wait(query_context, "D", len, contents, -1, MASTER_NODE_ID, nowait);
+	pool_extended_send_and_wait(query_context, "D", len, contents, 1, MAIN_NODE_ID, nowait);
+	pool_extended_send_and_wait(query_context, "D", len, contents, -1, MAIN_NODE_ID, nowait);
 
 	if (SL_MODE)
 	{
@@ -1794,14 +1794,14 @@ Close(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	 */
 
 	ereport(DEBUG1,
-			(errmsg("Close: waiting for master completing the query")));
+			(errmsg("Close: waiting for main node completing the query")));
 
 	pool_set_query_in_progress();
 
 	if (!SL_MODE)
 	{
-		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, false);
-		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, false);
+		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MAIN_NODE_ID, false);
+		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MAIN_NODE_ID, false);
 	}
 	else
 	{
@@ -1823,8 +1823,8 @@ Close(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 			query_context->where_to_send[session_context->load_balance_node_id] = true;
 		}
 
-		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MASTER_NODE_ID, true);
-		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MASTER_NODE_ID, true);
+		pool_extended_send_and_wait(query_context, "C", len, contents, 1, MAIN_NODE_ID, true);
+		pool_extended_send_and_wait(query_context, "C", len, contents, -1, MAIN_NODE_ID, true);
 
 		/* Add pending message */
 		pmsg = pool_pending_message_create('C', len, contents);
@@ -1936,7 +1936,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 			char		msgbuf[128];
 
 			victim_nodes = find_victim_nodes(session_context->ntuples, NUM_BACKENDS,
-											 MASTER_NODE_ID, &number_of_nodes);
+											 MAIN_NODE_ID, &number_of_nodes);
 			if (victim_nodes)
 			{
 				int			i;
@@ -2033,7 +2033,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 	/* if (pool_is_query_in_progress() && allow_close_transaction) */
 	if (allow_close_transaction)
 	{
-		bool internal_transaction_started = INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID);
+		bool internal_transaction_started = INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID);
 
 		if (end_internal_transaction(frontend, backend) != POOL_CONTINUE)
 			return POOL_END;
@@ -2060,7 +2060,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 		 * Set transaction state for each node
 		 */
 		state = TSTATE(backend,
-					   MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID);
+					   NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID);
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
@@ -2076,9 +2076,9 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 					 errdetail("transaction state '%c'(%02x)", state, state)));
 
 			/*
-			 * The transaction state to be returned to frontend is master's.
+			 * The transaction state to be returned to frontend is main node's.
 			 */
-			if (i == (MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID))
+			if (i == (NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))
 			{
 				state = kind;
 			}
@@ -2154,7 +2154,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 				if (pool_is_doing_extended_query_message())
 				{
 					if (session_context->query_context &&
-						session_context->query_context->query_state[MASTER_NODE_ID] == POOL_EXECUTE_COMPLETE)
+						session_context->query_context->query_state[MAIN_NODE_ID] == POOL_EXECUTE_COMPLETE)
 					{
 						pool_handle_query_cache(backend, session_context->query_context->query_w_hex, node, state);
 						if (session_context->query_context->query_w_hex)
@@ -2183,7 +2183,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 		{
 			if ((pool_is_doing_extended_query_message() &&
 				 session_context->query_context &&
-				 session_context->query_context->query_state[MASTER_NODE_ID] != POOL_UNPARSED &&
+				 session_context->query_context->query_state[MAIN_NODE_ID] != POOL_UNPARSED &&
 				 session_context->uncompleted_message) ||
 				(!pool_is_doing_extended_query_message() && session_context->uncompleted_message &&
 				 session_context->uncompleted_message->kind != 0))
@@ -2226,12 +2226,12 @@ static POOL_STATUS close_standby_transactions(POOL_CONNECTION * frontend,
 		if (CONNECTION_SLOT(backend, i) &&
 			TSTATE(backend, i) == 'T' &&
 			BACKEND_INFO(i).backend_status == CON_UP &&
-			(MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != i)
+			(NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != i)
 		{
 			per_node_statement_log(backend, i, "COMMIT");
 			if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend),
-						   MASTER_CONNECTION(backend)->pid,
-						   MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
+						   MAIN_CONNECTION(backend)->pid,
+						   MAIN_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
 				ereport(ERROR,
 						(errmsg("unable to close standby transactions"),
 						 errdetail("do_command returned DEADLOCK status")));
@@ -2382,17 +2382,17 @@ ParameterDescription(POOL_CONNECTION * frontend,
 	/* get number of parameters in original query */
 	num_params = session_context->query_context->num_original_params;
 
-	pool_read(MASTER(backend), &len, sizeof(len));
+	pool_read(MAIN(backend), &len, sizeof(len));
 
 	len = ntohl(len);
 	len -= sizeof(int32);
 	len1 = len;
 
 	/* number of parameters in rewritten query is just discarded */
-	pool_read(MASTER(backend), &num_dmy, sizeof(int16));
+	pool_read(MAIN(backend), &num_dmy, sizeof(int16));
 	len -= sizeof(int16);
 
-	p = pool_read2(MASTER(backend), len);
+	p = pool_read2(MAIN(backend), len);
 	if (p == NULL)
 		ereport(ERROR,
 				(errmsg("ParameterDescription. connection error"),
@@ -2404,7 +2404,7 @@ ParameterDescription(POOL_CONNECTION * frontend,
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i))
 		{
 			pool_read(CONNECTION(backend, i), &len, sizeof(len));
 
@@ -2420,7 +2420,7 @@ ParameterDescription(POOL_CONNECTION * frontend,
 			if (len != len1)
 				ereport(DEBUG1,
 						(errmsg("ParameterDescription. backends does not match"),
-						 errdetail("length does not match between backends master(%d) %d th backend(%d) kind:(%c)", len, i, len1, kind)));
+						 errdetail("length does not match between backends main(%d) %d th backend(%d) kind:(%c)", len, i, len1, kind)));
 		}
 	}
 
@@ -2954,8 +2954,8 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 			case 'E':			/* ErrorResponse */
 				status = ErrorResponse3(frontend, backend);
 				pool_unset_command_success();
-				if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID :
-						   REAL_MASTER_NODE_ID) != 'I')
+				if (TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID :
+						   REAL_MAIN_NODE_ID) != 'I')
 				{
 					pool_set_failed_transaction();
 
@@ -3042,8 +3042,8 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 
 			case 'E':			/* ErrorResponse */
 				status = ErrorResponse(frontend, backend);
-				if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID :
-						   REAL_MASTER_NODE_ID) != 'I')
+				if (TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID :
+						   REAL_MAIN_NODE_ID) != 'I')
 					pool_set_failed_transaction();
 				break;
 
@@ -3309,9 +3309,9 @@ raise_intentional_error_if_need(POOL_CONNECTION_POOL * backend)
 
 	query_context = session_context->query_context;
 
-	if (MASTER_SLAVE &&
+	if (NATIVE_REPLICATION &&
 		TSTATE(backend, PRIMARY_NODE_ID) == 'T' &&
-		PRIMARY_NODE_ID != MASTER_NODE_ID &&
+		PRIMARY_NODE_ID != MAIN_NODE_ID &&
 		query_context &&
 		is_select_query(query_context->parse_tree, query_context->original_query))
 	{
@@ -3330,7 +3330,7 @@ raise_intentional_error_if_need(POOL_CONNECTION_POOL * backend)
 	}
 
 	if (REPLICATION &&
-		TSTATE(backend, REAL_MASTER_NODE_ID) == 'T' &&
+		TSTATE(backend, REAL_MAIN_NODE_ID) == 'T' &&
 		!pool_config->replicate_select &&
 		query_context &&
 		is_select_query(query_context->parse_tree, query_context->original_query))
@@ -3383,7 +3383,7 @@ check_errors(POOL_CONNECTION_POOL * backend, int backend_id)
 {
 
 	/*
-	 * Check dead lock error on the master node and abort transactions on all
+	 * Check dead lock error on the main node and abort transactions on all
 	 * nodes if so.
 	 */
 	if (detect_deadlock_error(CONNECTION(backend, backend_id), MAJOR(backend)) == SPECIFIED_ERROR)
@@ -3393,7 +3393,7 @@ check_errors(POOL_CONNECTION_POOL * backend, int backend_id)
 	 * Check serialization failure error and abort
 	 * transactions on all nodes if so. Otherwise we allow
 	 * data inconsistency among DB nodes. See following
-	 * scenario: (M:master, S:slave)
+	 * scenario: (M:main, S:replica)
 	 *
 	 * M:S1:BEGIN;
 	 * M:S2:BEGIN;
@@ -3421,7 +3421,7 @@ check_errors(POOL_CONNECTION_POOL * backend, int backend_id)
 	 *
 	 * M:S1:BEGIN;
 	 * S:S1:BEGIN;
-	 * M:S1:SELECT 1; <-- only sent to MASTER
+	 * M:S1:SELECT 1; <-- only sent to MAIN
 	 * M:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 	 * S:S1:SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 	 * M: <-- error
@@ -3449,10 +3449,10 @@ generate_error_message(char *prefix, int specific_error, char *query)
 		return;
 
 	static char *error_messages[] = {
-		"received deadlock error message from master node. query: %s",
-		"received serialization failure error message from master node. query: %s",
+		"received deadlock error message from main node. query: %s",
+		"received serialization failure error message from main node. query: %s",
 		"received SET TRANSACTION ISOLATION LEVEL must be called before any query error. query: %s",
-		"received query cancel error message from master node. query: %s"
+		"received query cancel error message from main node. query: %s"
 	};
 
 	String	   *msg;
@@ -3515,8 +3515,8 @@ per_node_error_log(POOL_CONNECTION_POOL * backend, int node_id, char *query, cha
 }
 
 /*
- * Send parse message to primary/master node and wait for reply if particular
- * message is not yet parsed on the primary/master node but parsed on other
+ * Send parse message to primary/main node and wait for reply if particular
+ * message is not yet parsed on the primary/main node but parsed on other
  * node. Caller must provide the parse message data as "message".
  */
 static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
@@ -3553,7 +3553,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
 			new_qc = pool_query_context_shallow_copy(qc);
 			memset(new_qc->where_to_send, 0, sizeof(new_qc->where_to_send));
 			new_qc->where_to_send[PRIMARY_NODE_ID] = 1;
-			new_qc->virtual_master_node_id = PRIMARY_NODE_ID;
+			new_qc->virtual_main_node_id = PRIMARY_NODE_ID;
 			new_qc->load_balance_node_id = PRIMARY_NODE_ID;
 
 			/*
@@ -3630,7 +3630,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
 	}
 	else
 	{
-		/* expect to send to master node only */
+		/* expect to send to main node only */
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
 			if (qc->where_to_send[i] && statecmp(qc->query_state[i], POOL_PARSE_COMPLETE) < 0)
@@ -3688,18 +3688,18 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
  * Arguments:
  * ntuples: Array of number of affected tuples. -1 represents down node.
  * nmembers: Number of elements in ntuples.
- * master_node: The master node id. Less than 0 means ignore this parameter.
+ * main_node: The main node id. Less than 0 means ignore this parameter.
  * number_of_nodes: Number of elements in victim nodes array.
  *
- * Note: If no one wins and master_node >= 0, winner would be the
- * master and other nodes who has same number of tuples as the master.
+ * Note: If no one wins and main_node >= 0, winner would be the
+ * main and other nodes who has same number of tuples as the main.
  *
  * Caution: Returned victim node array is allocated in static memory
  * of this function. Subsequent calls to this function will overwrite
  * the memory.
  */
 static int *
-find_victim_nodes(int *ntuples, int nmembers, int master_node, int *number_of_nodes)
+find_victim_nodes(int *ntuples, int nmembers, int main_node, int *number_of_nodes)
 {
 	static int	victim_nodes[MAX_NUM_BACKENDS];
 	static int	votes[MAX_NUM_BACKENDS];
@@ -3748,15 +3748,15 @@ find_victim_nodes(int *ntuples, int nmembers, int master_node, int *number_of_no
 	/* Everyone is different */
 	if (maxvotes == 1)
 	{
-		/* Master node is specified? */
-		if (master_node < 0)
+		/* Main node is specified? */
+		if (main_node < 0)
 			return NULL;
 
 		/*
-		 * If master node is specified, let it and others who has same ntuples
+		 * If main node is specified, let it and others who has same ntuples
 		 * win.
 		 */
-		majority_ntuples = ntuples[master_node];
+		majority_ntuples = ntuples[main_node];
 	}
 	else
 	{
@@ -3774,15 +3774,15 @@ find_victim_nodes(int *ntuples, int nmembers, int master_node, int *number_of_no
 		{
 			/* No one wins */
 
-			/* Master node is specified? */
-			if (master_node < 0)
+			/* Main node is specified? */
+			if (main_node < 0)
 				return NULL;
 
 			/*
-			 * If master node is specified, let it and others who has same
+			 * If main node is specified, let it and others who has same
 			 * ntuples win.
 			 */
-			majority_ntuples = ntuples[master_node];
+			majority_ntuples = ntuples[main_node];
 		}
 	}
 
@@ -4127,7 +4127,7 @@ pool_at_command_success(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backe
 		 * transaction or disable_load_balance_on_write is 'ALWAYS', remember
 		 * that we had a write query in this transaction.
 		 */
-		if (TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) == 'T' ||
+		if (TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T' ||
 			pool_config->disable_load_balance_on_write == DLBOW_ALWAYS)
 		{
 			/*
@@ -4168,17 +4168,17 @@ pool_read_message_length(POOL_CONNECTION_POOL * cp)
 				length0;
 	int			i;
 
-	/* read message from master node */
-	pool_read(CONNECTION(cp, MASTER_NODE_ID), &length0, sizeof(length0));
+	/* read message from main node */
+	pool_read(CONNECTION(cp, MAIN_NODE_ID), &length0, sizeof(length0));
 	length0 = ntohl(length0);
 
 	ereport(DEBUG5,
 			(errmsg("reading message length"),
-			 errdetail("slot: %d length: %d", MASTER_NODE_ID, length0)));
+			 errdetail("slot: %d length: %d", MAIN_NODE_ID, length0)));
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
+		if (!VALID_BACKEND(i) || IS_MAIN_NODE_ID(i))
 		{
 			continue;
 		}
@@ -4221,25 +4221,25 @@ pool_read_message_length2(POOL_CONNECTION_POOL * cp)
 	int			i;
 	static int	length_array[MAX_CONNECTION_SLOTS];
 
-	/* read message from master node */
-	pool_read(CONNECTION(cp, MASTER_NODE_ID), &length0, sizeof(length0));
+	/* read message from main node */
+	pool_read(CONNECTION(cp, MAIN_NODE_ID), &length0, sizeof(length0));
 
 	length0 = ntohl(length0);
-	length_array[MASTER_NODE_ID] = length0;
+	length_array[MAIN_NODE_ID] = length0;
 	ereport(DEBUG5,
 			(errmsg("reading message length"),
-			 errdetail("master slot: %d length: %d", MASTER_NODE_ID, length0)));
+			 errdetail("main slot: %d length: %d", MAIN_NODE_ID, length0)));
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i))
 		{
 			pool_read(CONNECTION(cp, i), &length, sizeof(length));
 
 			length = ntohl(length);
 			ereport(DEBUG5,
 					(errmsg("reading message length"),
-					 errdetail("master slot: %d length: %d", i, length)));
+					 errdetail("main slot: %d length: %d", i, length)));
 
 			if (length != length0)
 			{
@@ -4281,7 +4281,7 @@ pool_read_kind(POOL_CONNECTION_POOL * cp)
 
 		pool_read(CONNECTION(cp, i), &kind, sizeof(kind));
 
-		if (IS_MASTER_NODE_ID(i))
+		if (IS_MAIN_NODE_ID(i))
 		{
 			kind0 = kind;
 		}
@@ -4293,10 +4293,10 @@ pool_read_kind(POOL_CONNECTION_POOL * cp)
 
 				if (kind0 == 'E')
 				{
-					if (pool_extract_error_message(false, MASTER(cp), MAJOR(cp), true, &message) == 1)
+					if (pool_extract_error_message(false, MAIN(cp), MAJOR(cp), true, &message) == 1)
 					{
 						ereport(LOG,
-								(errmsg("pool_read_kind: error message from master backend:%s", message)));
+								(errmsg("pool_read_kind: error message from main backend:%s", message)));
 						pfree(message);
 					}
 				}
@@ -4311,7 +4311,7 @@ pool_read_kind(POOL_CONNECTION_POOL * cp)
 				}
 				ereport(ERROR,
 						(errmsg("unable to read message kind"),
-						 errdetail("kind does not match between master(%x) slot[%d] (%x)", kind0, i, kind)));
+						 errdetail("kind does not match between main(%x) slot[%d] (%x)", kind0, i, kind)));
 			}
 		}
 	}
@@ -4336,7 +4336,7 @@ pool_read_int(POOL_CONNECTION_POOL * cp)
 			continue;
 		}
 		pool_read(CONNECTION(cp, i), &data, sizeof(data));
-		if (IS_MASTER_NODE_ID(i))
+		if (IS_MAIN_NODE_ID(i))
 		{
 			data0 = data;
 		}
@@ -4346,7 +4346,7 @@ pool_read_int(POOL_CONNECTION_POOL * cp)
 			{
 				ereport(ERROR,
 						(errmsg("unable to read int value"),
-						 errdetail("data does not match between between master(%x) slot[%d] (%x)", data0, i, data)));
+						 errdetail("data does not match between between main(%x) slot[%d] (%x)", data0, i, data)));
 
 			}
 		}
@@ -4376,7 +4376,7 @@ si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node
 	 * deadlock.
 	 */
 	if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION &&
-		TSTATE(backend, MASTER_NODE_ID) == 'T' &&
+		TSTATE(backend, MAIN_NODE_ID) == 'T' &&
 		si_snapshot_aquire_command(node) &&
 		!si_snapshot_prepared() &&
 		frontend && frontend->no_forward == 0)

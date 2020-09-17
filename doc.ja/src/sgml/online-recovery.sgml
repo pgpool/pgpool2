@@ -47,10 +47,10 @@
  <caution>
  <para>
  Make sure that <command>autovacuum</command> is stopped on the
- master node (the first node which is up and running) before starting the
+ main node (the first node which is up and running) before starting the
  online recovery. Autovacuum can change the contents of the database which
  can cause the inconsistency after the online recovery.
- オンラインリカバリを実行する前に、マスタノード(稼働中のノードのうち、一番番号が若いノード)上での<command>autovacuum</command>を停止してください。
+ オンラインリカバリを実行する前に、メインノード(稼働中のノードのうち、一番番号が若いノード)上での<command>autovacuum</command>を停止してください。
  オンラインリカバリ中に<command>autovacuum</command>が動作すると、データベースの内容が変化する可能性があるため、ノード間の同期がきちんと取れなくなる可能性があります。
     </para>
  <para>
@@ -170,7 +170,7 @@
      <listitem>
       <para>
        <!--
-       Path to the database cluster of the master(primary) node.
+       Path to the database cluster of the main(primary) node.
        -->
        リカバリされるバックエンドノードのデータベースクラスタへのパス
       </para>
@@ -183,9 +183,9 @@
      <note>
       <para>
        <!--
-       The script path and filename are hard coded, <command>$PGDATA/pgpool_remote_start</command> is executed on master(primary) node.
+       The script path and filename are hard coded, <command>$PGDATA/pgpool_remote_start</command> is executed on main(primary) node.
        -->
-       スクリプトのパスおよびファイル名は固定されており、マスタ(プライマリ)ノード上で<command>$PGDATA/pgpool_remote_start</command>が実行されます。
+       スクリプトのパスおよびファイル名は固定されており、メイン(プライマリ)ノード上で<command>$PGDATA/pgpool_remote_start</command>が実行されます。
 
       </para>
      </note>
@@ -338,7 +338,7 @@
    <listitem>
     <para>
      <!--
-     Specifies a command file to be run by master(primary) node at the
+     Specifies a command file to be run by main(primary) node at the
      first stage of online recovery. The command file must be placed in the
      database cluster directory for security reasons.
      For example, if <varname>recovery_1st_stage_command</varname> = <literal>
@@ -361,9 +361,9 @@
      <listitem>
       <para>
        <!--
-       Path to the database cluster of the master(primary) node.
+       Path to the database cluster of the main(primary) node.
        -->
-       マスター（プライマリ）ノードのデータベースクラスタへのパス
+       メイン（プライマリ）ノードのデータベースクラスタへのパス
       </para>
      </listitem>
      <listitem>
@@ -385,9 +385,9 @@
      <listitem>
       <para>
        <!--
-       Port number of the master(primary) node (<productname>Pgpool-II</productname> 3.4 or after).
+       Port number of the main(primary) node (<productname>Pgpool-II</productname> 3.4 or after).
        -->
-       マスター（プライマリ）ノードのポート番号（<productname>Pgpool-II</productname> 3.4以降）
+       メイン（プライマリ）ノードのポート番号（<productname>Pgpool-II</productname> 3.4以降）
       </para>
      </listitem>
      <listitem>
@@ -465,7 +465,7 @@
 
     <para>
      <!--
-     Specifies a command to be run by master node at the second
+     Specifies a command to be run by main node at the second
      stage of online recovery. This command is required only
      <xref linkend="guc-replication-mode">, so for other modes don't need
      to provide a command file. The command file must be placed in the
@@ -491,9 +491,9 @@
      <listitem>
       <para>
        <!--
-       Path to the database cluster of the master(primary) node.
+       Path to the database cluster of the main(primary) node.
        -->
-       マスター（プライマリ）ノードのデータベースクラスタへのパス
+       メイン（プライマリ）ノードのデータベースクラスタへのパス
       </para>
      </listitem>
      <listitem>
@@ -515,9 +515,9 @@
      <listitem>
       <para>
        <!--
-       Port number of the master(primary) node (<productname>Pgpool-II</productname> 3.4 or after).
+       Port number of the main(primary) node (<productname>Pgpool-II</productname> 3.4 or after).
        -->
-       マスター（プライマリ）ノードのポート番号（<productname>Pgpool-II</productname> 3.4以降）
+       メイン（プライマリ）ノードのポート番号（<productname>Pgpool-II</productname> 3.4以降）
       </para>
      </listitem>
      <listitem>

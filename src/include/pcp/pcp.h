@@ -54,8 +54,8 @@ typedef struct PCPWDClusterInfo
 	int			quorumStatus;
 	int			aliveNodeCount;
 	bool		escalated;
-	char		masterNodeName[WD_MAX_HOST_NAMELEN];
-	char		masterHostName[WD_MAX_HOST_NAMELEN];
+	char		leaderNodeName[WD_MAX_HOST_NAMELEN];
+	char		leaderHostName[WD_MAX_HOST_NAMELEN];
 	int			nodeCount;
 	PCPWDNodeInfo nodeList[1];
 }			PCPWDClusterInfo;

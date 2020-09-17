@@ -125,7 +125,7 @@ static void wakeup_children(void);
 static void reload_config(void);
 static int	pool_pause(struct timeval *timeout);
 static void kill_all_children(int sig);
-static pid_t fork_follow_child(int old_master, int new_primary, int old_primary);
+static pid_t fork_follow_child(int old_main_node, int new_primary, int old_primary);
 static int	read_status_file(bool discard_status);
 static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
@@ -136,7 +136,7 @@ static RETSIGTYPE wakeup_handler(int sig);
 
 static void initialize_shared_mem_objects(bool clear_memcache_oidmaps);
 static int trigger_failover_command(int node, const char *command_line,
-						 int old_master, int new_master, int old_primary);
+						 int old_main_node, int new_main_node, int old_primary);
 static int	find_primary_node(void);
 static int	find_primary_node_repeatedly(void);
 static void terminate_all_childrens(int sig);
@@ -206,7 +206,7 @@ static pid_t wd_lifecheck_pid = 0;	/* pid for child process handling watchdog
 									 * lifecheck */
 
 BACKEND_STATUS *my_backend_status[MAX_NUM_BACKENDS];	/* Backend status buffer */
-int			my_master_node_id;	/* Master node id buffer */
+int			my_main_node_id;	/* Main node id buffer */
 
 /*
  * Dummy varibale to suppress compiler warnings by discarding return values
@@ -1151,11 +1151,11 @@ static RETSIGTYPE exit_handler(int sig)
 }
 
 /*
- * Calculate next valid master node id.
+ * Calculate next valid main node id.
  * If no valid node found, returns -1.
  */
 int
-get_next_master_node(void)
+get_next_main_node(void)
 {
 	int			i;
 
@@ -1163,7 +1163,7 @@ get_next_master_node(void)
 	{
 		/*
 		 * Do not use VALID_BACKEND macro in raw mode. VALID_BACKEND return
-		 * true only if the argument is master node id. In other words,
+		 * true only if the argument is main node id. In other words,
 		 * standby nodes are false. So need to check backend status with
 		 * VALID_BACKEND_RAW.
 		 */
@@ -1249,8 +1249,8 @@ sigusr1_interupt_processor(void)
 		if (wd_internal_get_watchdog_local_node_state() == WD_STANDBY)
 		{
 			ereport(LOG,
-					(errmsg("master watchdog has performed failover"),
-					 errdetail("syncing the backend states from the MASTER watchdog node")));
+					(errmsg("leader watchdog has performed failover"),
+					 errdetail("syncing the backend states from the LEADER watchdog node")));
 			sync_backend_from_watchdog();
 		}
 	}
@@ -1265,7 +1265,7 @@ sigusr1_interupt_processor(void)
 		{
 			ereport(LOG,
 					(errmsg("we have joined the watchdog cluster as STANDBY node"),
-					 errdetail("syncing the backend states from the MASTER watchdog node")));
+					 errdetail("syncing the backend states from the LEADER watchdog node")));
 			sync_backend_from_watchdog();
 		}
 	}
@@ -1318,7 +1318,7 @@ failover(void)
 				j,
 				k;
 	int			node_id;
-	int			new_master;
+	int			new_main_node;
 	int			new_primary = -1;
 	int			nodes[MAX_NUM_BACKENDS];
 	bool		need_to_restart_children = true;
@@ -1414,13 +1414,13 @@ failover(void)
 		wd_failover_start();
 
 		/*
-		 * if not in replication mode/master slave mode, we treat this a
+		 * if not in replication mode/native replication mode, we treat this a
 		 * restart request. otherwise we need to check if we have already
 		 * failovered.
 		 */
 		ereport(DEBUG1,
 				(errmsg("failover handler"),
-				 errdetail("starting to select new master node")));
+				 errdetail("starting to select new main node")));
 		node_id = node_id_set[0];
 
 		/* failback request? */
@@ -1464,11 +1464,11 @@ failover(void)
 				search_primary = false;
 
 				/*
-				 * recalculate the master node id after setting the backend
+				 * recalculate the main node id after setting the backend
 				 * status of quarantined node, this will bring us to the old
-				 * master_node_id that was beofre the quarantine state
+				 * main_node_id that was beofre the quarantine state
 				 */
-				Req_info->master_node_id = get_next_master_node();
+				Req_info->main_node_id = get_next_main_node();
 				if (Req_info->primary_node_id == -1 &&
 					BACKEND_INFO(node_id).role == ROLE_PRIMARY)
 				{
@@ -1515,7 +1515,7 @@ failover(void)
 				(void) write_status_file();
 
 				trigger_failover_command(node_id, pool_config->failback_command,
-										 MASTER_NODE_ID, get_next_master_node(), PRIMARY_NODE_ID);
+										 MAIN_NODE_ID, get_next_main_node(), PRIMARY_NODE_ID);
 			}
 
 			sync_required = true;
@@ -1596,9 +1596,9 @@ failover(void)
 			}
 		}
 
-		new_master = get_next_master_node();
+		new_main_node = get_next_main_node();
 
-		if (new_master < 0)
+		if (new_main_node < 0)
 		{
 			ereport(LOG,
 					(errmsg("failover: no valid backend node found")));
@@ -1732,7 +1732,7 @@ failover(void)
 				if (nodes[i])
 				{
 					trigger_failover_command(i, pool_config->failover_command,
-											 MASTER_NODE_ID, new_master, REAL_PRIMARY_NODE_ID);
+											 MAIN_NODE_ID, new_main_node, REAL_PRIMARY_NODE_ID);
 					sync_required = true;
 				}
 			}
@@ -1796,7 +1796,7 @@ failover(void)
 		}
 
 		/*
-		 * If follow_master_command is provided and in master/slave streaming
+		 * If follow_primary_command is provided and in streaming
 		 * replication mode, we start degenerating all backends as they are
 		 * not replicated anymore.
 		 */
@@ -1804,7 +1804,7 @@ failover(void)
 
 		if (STREAM)
 		{
-			if (*pool_config->follow_master_command != '\0' ||
+			if (*pool_config->follow_primary_command != '\0' ||
 				reqkind == PROMOTE_NODE_REQUEST)
 			{
 				/* only if the failover is against the current primary */
@@ -1842,8 +1842,8 @@ failover(void)
 					}
 					else
 					{
-						/* update new master node */
-						new_master = get_next_master_node();
+						/* update new primary node */
+						new_main_node = get_next_main_node();
 						ereport(LOG,
 								(errmsg("failover: %d follow backends have been degenerated", follow_cnt)));
 					}
@@ -1851,9 +1851,9 @@ failover(void)
 			}
 		}
 
-		if ((follow_cnt > 0) && (*pool_config->follow_master_command != '\0'))
+		if ((follow_cnt > 0) && (*pool_config->follow_primary_command != '\0'))
 		{
-			follow_pid = fork_follow_child(Req_info->master_node_id, new_primary,
+			follow_pid = fork_follow_child(Req_info->primary_node_id, new_primary,
 										   Req_info->primary_node_id);
 		}
 
@@ -1874,12 +1874,12 @@ failover(void)
 		ereport(LOG,
 				(errmsg("failover: set new primary node: %d", Req_info->primary_node_id)));
 
-		if (new_master >= 0)
+		if (new_main_node >= 0)
 		{
-			Req_info->master_node_id = new_master;
+			Req_info->main_node_id = new_main_node;
 			sync_required = true;
 			ereport(LOG,
-					(errmsg("failover: set new master node: %d", Req_info->master_node_id)));
+					(errmsg("failover: set new main node: %d", Req_info->main_node_id)));
 		}
 
 
@@ -2651,14 +2651,14 @@ pool_sleep(unsigned int second)
  */
 static int
 trigger_failover_command(int node, const char *command_line,
-						 int old_master, int new_master, int old_primary)
+						 int old_main_node, int new_main_node, int old_primary)
 {
 	int			r = 0;
 	String	   *exec_cmd;
 	char		port_buf[6];
 	char		buf[2];
 	BackendInfo *info;
-	BackendInfo *newmaster;
+	BackendInfo *newmain;
 	BackendInfo *oldprimary;
 
 	if (command_line == NULL || (strlen(command_line) == 0))
@@ -2703,43 +2703,43 @@ trigger_failover_command(int node, const char *command_line,
 						string_append_char(exec_cmd, info->backend_hostname);
 						break;
 
-					case 'H':	/* new master host name */
-						newmaster = pool_get_node_info(new_master);
-						if (newmaster)
-							string_append_char(exec_cmd, newmaster->backend_hostname);
+					case 'H':	/* new main host name */
+						newmain = pool_get_node_info(new_main_node);
+						if (newmain)
+							string_append_char(exec_cmd, newmain->backend_hostname);
 						else
-							/* no valid new master */
+							/* no valid new main */
 							string_append_char(exec_cmd, "\"\"");
 						break;
 
-					case 'm':	/* new master node id */
-						snprintf(port_buf, sizeof(port_buf), "%d", new_master);
+					case 'm':	/* new main node id */
+						snprintf(port_buf, sizeof(port_buf), "%d", new_main_node);
 						string_append_char(exec_cmd, port_buf);
 						break;
 
-					case 'r':	/* new master port */
-						newmaster = pool_get_node_info(get_next_master_node());
-						if (newmaster)
+					case 'r':	/* new main node port */
+						newmain = pool_get_node_info(get_next_main_node());
+						if (newmain)
 						{
-							snprintf(port_buf, sizeof(port_buf), "%d", newmaster->backend_port);
+							snprintf(port_buf, sizeof(port_buf), "%d", newmain->backend_port);
 							string_append_char(exec_cmd, port_buf);
 						}
 						else
-							/* no valid new master */
+							/* no valid new main node */
 							string_append_char(exec_cmd, "\"\"");
 						break;
 
-					case 'R':	/* new master database directory */
-						newmaster = pool_get_node_info(get_next_master_node());
-						if (newmaster)
-							string_append_char(exec_cmd, newmaster->backend_data_directory);
+					case 'R':	/* new main database directory */
+						newmain = pool_get_node_info(get_next_main_node());
+						if (newmain)
+							string_append_char(exec_cmd, newmain->backend_data_directory);
 						else
-							/* no valid new master */
+							/* no valid new main */
 							string_append_char(exec_cmd, "\"\"");
 						break;
 
-					case 'M':	/* old master node id */
-						snprintf(port_buf, sizeof(port_buf), "%d", old_master);
+					case 'M':	/* old main node id */
+						snprintf(port_buf, sizeof(port_buf), "%d", old_main_node);
 						string_append_char(exec_cmd, port_buf);
 						break;
 
@@ -3096,15 +3096,15 @@ find_primary_node(void)
 	}
 
 	/*
-	 * First check for "ALWAYS_MASTER" flags exists. If so, do not perform
+	 * First check for "ALWAYS_PRIMARY" flags exists. If so, do not perform
 	 * actual primary node check and just returns the node id.
 	 */
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (POOL_ALWAYS_MASTER & BACKEND_INFO(i).flag)
+		if (POOL_ALWAYS_PRIMARY & BACKEND_INFO(i).flag)
 		{
 			ereport(DEBUG1,
-					(errmsg("find_primary_node: ALWAYS_MASTER flag found. Returns node id: %d", i)));
+					(errmsg("find_primary_node: ALWAYS_PRIMARY flag found. Returns node id: %d", i)));
 			return i;
 		}
 	}
@@ -3230,7 +3230,7 @@ find_primary_node_repeatedly(void)
 * fork a follow child
 */
 pid_t
-fork_follow_child(int old_master, int new_primary, int old_primary)
+fork_follow_child(int old_main_node, int new_primary, int old_primary)
 {
 	pid_t		pid;
 	int			i;
@@ -3249,8 +3249,8 @@ fork_follow_child(int old_master, int new_primary, int old_primary)
 
 			bkinfo = pool_get_node_info(i);
 			if (bkinfo->backend_status == CON_DOWN)
-				trigger_failover_command(i, pool_config->follow_master_command,
-										 old_master, new_primary, old_primary);
+				trigger_failover_command(i, pool_config->follow_primary_command,
+										 old_main_node, new_primary, old_primary);
 		}
 		exit(0);
 	}
@@ -3309,7 +3309,7 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 
 	/*
 	 * Initialize backend status area. From now on, VALID_BACKEND macro can be
-	 * used. (get_next_master_node() uses VALID_BACKEND)
+	 * used. (get_next_main_node() uses VALID_BACKEND)
 	 */
 
 	for (i = 0; i < MAX_NUM_BACKENDS; i++)
@@ -3318,7 +3318,7 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	}
 
 	/* initialize Req_info */
-	Req_info->master_node_id = get_next_master_node();
+	Req_info->main_node_id = get_next_main_node();
 	Req_info->conn_counter = 0;
 	Req_info->switching = false;
 	Req_info->request_queue_head = Req_info->request_queue_tail = -1;
@@ -3785,7 +3785,7 @@ update_backend_quarantine_status(void)
 
 /*
  * The function fetch the current status of all configured backend
- * nodes from the MASTER/COORDINATOR watchdog Pgpool-II and synchronize the
+ * nodes from the LEADER/COORDINATOR watchdog Pgpool-II and synchronize the
  * local backend states with the cluster wide status of each node.
  *
  * Latter in the funcrtion after syncing the backend node status the function
@@ -3809,14 +3809,14 @@ sync_backend_from_watchdog(void)
 
 	/*
 	 * Ask the watchdog to get all the backend states from the
-	 * Master/Coordinator Pgpool-II node
+	 * Leader/Coordinator Pgpool-II node
 	 */
-	WDPGBackendStatus *backendStatus = get_pg_backend_status_from_master_wd_node();
+	WDPGBackendStatus *backendStatus = get_pg_backend_status_from_leader_wd_node();
 
 	if (!backendStatus)
 	{
 		ereport(WARNING,
-				(errmsg("failed to get the backend status from the master watchdog node"),
+				(errmsg("failed to get the backend status from the leader watchdog node"),
 				 errdetail("using the local backend node status")));
 		return;
 	}
@@ -3824,21 +3824,21 @@ sync_backend_from_watchdog(void)
 	{
 		/*
 		 * -ve node count is returned by watchdog when the node itself is a
-		 * master and in that case we need to use the loacl backend node
+		 * leader and in that case we need to use the loacl backend node
 		 * status
 		 */
 		ereport(LOG,
-				(errmsg("I am the master watchdog node"),
+				(errmsg("I am the leader watchdog node"),
 				 errdetail("using the local backend node status")));
 		pfree(backendStatus);
 		return;
 	}
 
 	ereport(LOG,
-			(errmsg("master watchdog node \"%s\" returned status for %d backend nodes", backendStatus->nodeName, backendStatus->node_count)));
+			(errmsg("leader watchdog node \"%s\" returned status for %d backend nodes", backendStatus->nodeName, backendStatus->node_count)));
 
 	ereport(DEBUG1,
-			(errmsg("primary node on master watchdog node \"%s\" is %d", backendStatus->nodeName, backendStatus->primary_node_id)));
+			(errmsg("primary node on leader watchdog node \"%s\" is %d", backendStatus->nodeName, backendStatus->primary_node_id)));
 
 
 	/*
@@ -3858,7 +3858,7 @@ sync_backend_from_watchdog(void)
 				node_status_was_changed_to_down = true;
 				ereport(LOG,
 						(errmsg("backend:%d is set to down status", i),
-						 errdetail("backend:%d is DOWN on cluster master \"%s\"", i, backendStatus->nodeName)));
+						 errdetail("backend:%d is DOWN on cluster leader \"%s\"", i, backendStatus->nodeName)));
 				down_node_ids[down_node_ids_index++] = i;
 			}
 		}
@@ -3877,7 +3877,7 @@ sync_backend_from_watchdog(void)
 
 				ereport(LOG,
 						(errmsg("backend:%d is set to UP status", i),
-						 errdetail("backend:%d is UP on cluster master \"%s\"", i, backendStatus->nodeName)));
+						 errdetail("backend:%d is UP on cluster leader \"%s\"", i, backendStatus->nodeName)));
 
 			}
 		}
@@ -3885,7 +3885,7 @@ sync_backend_from_watchdog(void)
 
 	/*
 	 * Update primary node id info on the shared memory area if it's different
-	 * from the one on master watchdog node. This should be done only in streaming
+	 * from the one on leader watchdog node. This should be done only in streaming
 	 * or logical replication mode.
 	 */
 	if (SL_MODE && Req_info->primary_node_id != backendStatus->primary_node_id)
@@ -3893,13 +3893,13 @@ sync_backend_from_watchdog(void)
 		/* Do not produce this log message if we are starting up the Pgpool-II */
 		if (processState != INITIALIZING)
 			ereport(LOG,
-					(errmsg("primary node:%d on master watchdog node \"%s\" is different from local primary node:%d",
+					(errmsg("primary node:%d on leader watchdog node \"%s\" is different from local primary node:%d",
 							backendStatus->primary_node_id, backendStatus->nodeName, Req_info->primary_node_id)));
 		/*
-		 * master node returns primary_node_id = -1 when the primary node is
-		 * in quarantine state on the master.  So we will not update our
+		 * leader node returns primary_node_id = -1 when the primary node is
+		 * in quarantine state on the leader.  So we will not update our
 		 * primary node id when the status of current primary node is not
-		 * CON_DOWN while primary_node_id sent by master watchdong node is -1
+		 * CON_DOWN while primary_node_id sent by leader watchdong node is -1
 		 *
 		 * Note that Req_info->primary_node_id could be -2, which is the
 		 * initial value. So we need to avoid crash by checking the value is
@@ -3910,7 +3910,7 @@ sync_backend_from_watchdog(void)
 			backendStatus->primary_node_id == -1 && BACKEND_INFO(Req_info->primary_node_id).backend_status != CON_DOWN)
 		{
 			ereport(LOG,
-                (errmsg("primary node:%d on master watchdog node \"%s\" seems to be quarantined",
+                (errmsg("primary node:%d on leader watchdog node \"%s\" seems to be quarantined",
 					Req_info->primary_node_id, backendStatus->nodeName),
                 errdetail("keeping the current primary")));
 		}
@@ -3925,7 +3925,7 @@ sync_backend_from_watchdog(void)
 
 	if (reload_maste_node_id)
 	{
-		Req_info->master_node_id = get_next_master_node();
+		Req_info->main_node_id = get_next_main_node();
 	}
 
 	/* We don't need to do anything else if the Pgpool-II is starting up */

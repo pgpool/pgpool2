@@ -35,7 +35,7 @@
    </programlisting>
    However, VIEWs and SELECTs accessing unlogged tables can be
    cached by specifying in
-   the <xref linkend="guc-white-memqcache-table-list">.
+   the <xref linkend="guc-cache-safe-memqcache-table-list">.
   </para>
  </note>
 
@@ -229,10 +229,10 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-white-memqcache-table-list" xreflabel="white_memqcache_table_list">
-    <term><varname>white_memqcache_table_list</varname> (<type>string</type>)
+   <varlistentry id="guc-cache-safe-memqcache-table-list" xreflabel="cache_safe_memqcache_table_list">
+    <term><varname>cache_safe_memqcache_table_list</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>white_memqcache_table_list</varname> configuration parameter</primary>
+      <primary><varname>cache_safe_memqcache_table_list</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -243,7 +243,7 @@
       <productname>Pgpool-II</productname>.  This parameter only
       applies to VIEWs and SELECTs accessing unlogged tables.
       Regular tables can be cached unless specified
-      by <xref linkend="guc-black-memqcache-table-list">.
+      by <xref linkend="guc-cache-unsafe-memqcache-table-list">.
      </para>
 
      <para>
@@ -259,10 +259,10 @@
        <programlisting>
 	#For example:
 	#If the queries sometime use "table1" and other times "public.table1"
-	#to refer the table1 then the white_memqcache_table_list
+	#to refer the table1 then the cache_safe_memqcache_table_list
 	#would be configured as follows.
 
-	white_memqcache_table_list = "table1,public.table1"
+	cache_safe_memqcache_table_list = "table1,public.table1"
 
        </programlisting>
 
@@ -274,10 +274,10 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-black-memqcache-table-list" xreflabel="black_memqcache_table_list">
-    <term><varname>black_memqcache_table_list</varname> (<type>string</type>)
+   <varlistentry id="guc-cache-unsafe-memqcache-table-list" xreflabel="cache_unsafe_memqcache_table_list">
+    <term><varname>cache_unsafe_memqcache_table_list</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>black_memqcache_table_list</varname> configuration parameter</primary>
+      <primary><varname>cache_unsafe_memqcache_table_list</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -300,10 +300,10 @@
        <programlisting>
 	#For example:
 	#If the queries sometime use "table1" and other times "public.table1"
-	#to refer the table1 then the black_memqcache_table_list
+	#to refer the table1 then the cache_unsafe_memqcache_table_list
 	#would be configured as follows.
 
-	black_memqcache_table_list = "table1,public.table1"
+	cache_unsafe_memqcache_table_list = "table1,public.table1"
 
        </programlisting>
 
@@ -314,8 +314,8 @@
      </para>
      <note>
       <para>
-       <varname>black_memqcache_table_list</varname>
-       precedence over <xref linkend="guc-white-memqcache-table-list">
+       <varname>cache_unsafe_memqcache_table_list</varname>
+       precedence over <xref linkend="guc-cache-safe-memqcache-table-list">
       </para>
      </note>
 

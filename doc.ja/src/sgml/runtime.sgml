@@ -256,9 +256,9 @@
 
    <indexterm zone="running-mode">
     <!--
-    <primary>master slave mode</primary>
+    <primary>native replication mode</primary>
     -->
-    <primary>マスタースレーブモード</primary>
+    <primary>slonyモード</primary>
    </indexterm>
 
    <indexterm zone="running-mode">
@@ -337,7 +337,7 @@
 
    <para>
     <!--
-    The <firstterm>master slave mode</firstterm> mode (slony mode)
+    The <firstterm>native replication mode</firstterm> mode (slony mode)
     can be used with <productname>PostgreSQL</> servers
     operating <productname>Slony</>. In this
     mode, <productname>Slony</>/<productname>PostgreSQL</> is
@@ -507,10 +507,10 @@
    end of the parameter name (e.g.backend_hostname0). This
    number is referred to as "DB node ID", and it starts from
    0. The backend which was given the DB node ID of 0 will be
-   called "Master DB". When multiple backends are defined, the
-   service can be continued even if the Master DB is down (not
+   called "Main DB". When multiple backends are defined, the
+   service can be continued even if the Main DB is down (not
    true in some modes). In this case, the youngest DB node ID
-   alive will be the new Master DB.
+   alive will be the new Main DB.
   </para>
 
    <para>

@@ -86,7 +86,7 @@
       <entry>role</entry>
       <entry>
        このノードの役割。ストリーミングレプリケーションモードではprimaryあるいはstandbyです。
-       他のモードでは、masterあるいはslaveです。
+       他のモードでは、mainあるいはreplicaです。
       </entry>
      </row>
 

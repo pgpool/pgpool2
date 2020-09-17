@@ -319,7 +319,7 @@ select_load_balancing_node(void)
 	 */
 	if (SL_MODE && pool_config->redirect_dbnames)
 	{
-		char	   *database = MASTER_CONNECTION(ses->backend)->sp->database;
+		char	   *database = MAIN_CONNECTION(ses->backend)->sp->database;
 
 		/*
 		 * Check to see if the database matches any of
@@ -346,7 +346,7 @@ select_load_balancing_node(void)
 	 */
 	if (SL_MODE && pool_config->redirect_app_names)
 	{
-		char	   *app_name = MASTER_CONNECTION(ses->backend)->sp->application_name;
+		char	   *app_name = MAIN_CONNECTION(ses->backend)->sp->application_name;
 
 		/*
 		 * Check only if application name is set. Old applications may not
@@ -417,7 +417,7 @@ select_load_balancing_node(void)
 	}
 
 	/* Choose a backend in random manner with weight */
-	selected_slot = MASTER_NODE_ID;
+	selected_slot = MAIN_NODE_ID;
 	total_weight = 0.0;
 
 	for (i = 0; i < NUM_BACKENDS; i++)
@@ -625,14 +625,14 @@ Pgversion(POOL_CONNECTION_POOL * backend)
  * standby: any of standby node
  * numeric: physical node id
  *
- * If specified node does exist, returns MASTER_NODE_ID.  If "standby" is
+ * If specified node does exist, returns MAIN_NODE_ID.  If "standby" is
  * specified, returns -1. Caller should choose one of standby nodes
  * appropriately.
  */
 static int
 choose_db_node_id(char *str)
 {
-	int			node_id = MASTER_NODE_ID;
+	int			node_id = MAIN_NODE_ID;
 
 	if (!strcmp("primary", str) && PRIMARY_NODE_ID >= 0)
 	{

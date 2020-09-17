@@ -50,8 +50,8 @@
    <para>
     <!--
     At the startup, if the watchdog is enabled, <productname>Pgpool-II</productname> node
-    sync the status of all configured backend nodes from the master watchdog node.
-    And if the node goes on to become a master node itself it initializes the backend
+    sync the status of all configured backend nodes from the leader watchdog node.
+    And if the node goes on to become a leader node itself it initializes the backend
     status locally. When a backend node status changes by failover etc..,
     watchdog notifies the information to other <productname>Pgpool-II</productname>
     nodes and synchronizes them. When online recovery occurs, watchdog restricts
@@ -67,7 +67,7 @@
    <para>
     <!--
     Watchdog also coordinates with all connected <productname>Pgpool-II</productname> nodes to ensure
-    that failback, failover and follow_master commands must be executed only on one <productname>pgpool-II</productname> node.
+    that failback, failover and follow_primary commands must be executed only on one <productname>pgpool-II</productname> node.
     -->
     また、watchdogは、接続したすべての<productname>Pgpool-II</productname>ノードを調停し、フェイルバック、フェイルオーバ、フォローマスターコマンドがただひとつの<productname>Pgpool-II</productname>で実行されるようにします。
    </para>
@@ -177,7 +177,7 @@
     <!--
     At startup watchdog verifies the <productname>Pgpool-II</productname>
     configuration of the local node for	the consistency with the configurations
-    on the master watchdog node and warns the user of any differences.
+    on the leader watchdog node and warns the user of any differences.
     This eliminates the likelihood of undesired behavior that can happen
     because of different configuration on different <productname>Pgpool-II</productname> nodes.
     -->
@@ -891,10 +891,10 @@
     The heart of a watchdog process is a state machine that starts
     from its initial state (<literal>WD_LOADING</literal>) and transit
     towards either standby (<literal>WD_STANDBY</literal>) or
-    master/coordinator (<literal>WD_COORDINATOR</literal>) state.
-    Both standby and master/coordinator states are stable states of the
+    leader/coordinator (<literal>WD_COORDINATOR</literal>) state.
+    Both standby and leader/coordinator states are stable states of the
     watchdog state machine and the node stays in standby or
-    master/coordinator state until some problem in local
+    leader/coordinator state until some problem in local
     <productname>Pgpool-II</productname> node is detected or a
     remote <productname>Pgpool-II</productname> disconnects from the cluster.
     -->
@@ -947,7 +947,7 @@
       <!--
       Communicates with all the participating <productname>Pgpool-II
      </productname> nodes to coordinate the selection of
-      master/coordinator node and to ensure the quorum in the cluster.
+      leader/coordinator node and to ensure the quorum in the cluster.
       -->
       参加しているすべての<productname>Pgpool-II</productname>ノードと通信し、マスター/コーディネーターノードの選択を調停し、クラスタのクォーラムを確実にする
      </para>

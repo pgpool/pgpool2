@@ -397,8 +397,8 @@ pool_ps_idle_display(POOL_CONNECTION_POOL * backend)
 	StartupPacket *sp;
 	char		psbuf[1024];
 
-	sp = MASTER_CONNECTION(backend)->sp;
-	if (MASTER(backend)->tstate == 'T')
+	sp = MAIN_CONNECTION(backend)->sp;
+	if (MAIN(backend)->tstate == 'T')
 		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle in transaction",
 				 sp->user, sp->database, remote_ps_data);
 	else

@@ -152,15 +152,15 @@
 	</row>
 	<row>
 	 <entry>%M</entry>
-	 <entry>Old master node ID</entry>
+	 <entry>Old main node ID</entry>
 	</row>
 	<row>
 	 <entry>%m</entry>
-	 <entry>New master node ID</entry>
+	 <entry>New main node ID</entry>
 	</row>
 	<row>
 	 <entry>%H</entry>
-	 <entry>Hostname of the new master node</entry>
+	 <entry>Hostname of the new main node</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>
@@ -168,11 +168,11 @@
 	</row>
 	<row>
 	 <entry>%r</entry>
-	 <entry>Port number of the new master node</entry>
+	 <entry>Port number of the new main node</entry>
 	</row>
 	<row>
 	 <entry>%R</entry>
-	 <entry>Database cluster directory of the new master node</entry>
+	 <entry>Database cluster directory of the new main node</entry>
 	</row>
 	<row>
 	 <entry>%N</entry>
@@ -193,12 +193,12 @@
 
      <note>
       <para>
-       The "master node" refers to a node which has the
+       The "main node" refers to a node which has the
        "youngest (or the smallest) node id" among live the
        database nodes. In <link linkend="running-mode">streaming
 	replication mode</link>, this may be different from
        primary node. In <xref linkend="failover-command-table">,
-	%m is the new master node chosen
+	%m is the new main node chosen
 	by <productname>Pgpool-II</productname>. It is the node
 	being assigned the youngest (smallest) node id which is
 	alive. For example if you have 3 nodes, namely node 0, 1,
@@ -301,15 +301,15 @@
 	</row>
 	<row>
 	 <entry>%M</entry>
-	 <entry>Old master node ID</entry>
+	 <entry>Old main node ID</entry>
 	</row>
 	<row>
 	 <entry>%m</entry>
-	 <entry>New master node ID</entry>
+	 <entry>New main node ID</entry>
 	</row>
 	<row>
 	 <entry>%H</entry>
-	 <entry>Hostname of the new master node</entry>
+	 <entry>Hostname of the new main node</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>
@@ -317,11 +317,11 @@
 	</row>
 	<row>
 	 <entry>%r</entry>
-	 <entry>Port number of the new master node</entry>
+	 <entry>Port number of the new main node</entry>
 	</row>
 	<row>
 	 <entry>%R</entry>
-	 <entry>Database cluster directory of the new master node</entry>
+	 <entry>Database cluster directory of the new main node</entry>
 	</row>
 	<row>
 	 <entry>%N</entry>
@@ -359,10 +359,10 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-follow-master-command" xreflabel="follow_master_command">
-    <term><varname>follow_master_command</varname> (<type>string</type>)
+   <varlistentry id="guc-follow-primary-command" xreflabel="follow_primary_command">
+    <term><varname>follow_primary_command</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>follow_master_command</varname> configuration parameter</primary>
+      <primary><varname>follow_primary_command</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -373,13 +373,13 @@
       command will not be executed. This command also runs if a
       node promote request is issued by
       <xref linkend="PCP-PROMOTE-NODE"> command. This works only
-       in Master Replication mode with streaming replication.
+       in Replication mode with streaming replication.
      </para>
 
      <para>
       Since the command is executed within a child process forked
       off by <productname>Pgpool-II</productname> after failover
-      is completed, execution of follow master command does not
+      is completed, execution of follow primary command does not
       block the service
       of <productname>Pgpool-II</productname>. Here is a pseud
       code to illustrate how the command is executed:
@@ -388,15 +388,15 @@
        {
        if (the node is not the new primary)
        set down node status to shared memory status
-       memorize that follow master command is needed to execute
+       memorize that follow primary command is needed to execute
        }
-       if (we need to executed follow master command)
+       if (we need to executed follow primary command)
        fork a child process
        (within the child process)
 
        for each backend node
        if (the node status in shared memory is down)
-       execute follow master command
+       execute follow primary command
       </programlisting>
      </para>
 
@@ -405,8 +405,8 @@
       with the backend specific information before executing the command.
      </para>
 
-     <table id="follow-master-command-table">
-      <title>follow master command options</title>
+     <table id="follow-primary-command-table">
+      <title>follow primary command options</title>
       <tgroup cols="2">
        <thead>
 	<row>
@@ -434,7 +434,7 @@
 	</row>
 	<row>
 	 <entry>%M</entry>
-	 <entry>Old master node ID</entry>
+	 <entry>Old main node ID</entry>
 	</row>
 	<row>
 	 <entry>%m</entry>
@@ -475,19 +475,19 @@
 
      <note>
       <para>
-       If <varname>follow_master_command</varname> is not empty, then after failover
-       on the primary node gets completed in Master Slave mode with streaming replication,
+       If <varname>follow_primary_command</varname> is not empty, then after failover
+       on the primary node gets completed in Native Replication mode with streaming replication,
        <productname>Pgpool-II</productname> degenerates all nodes except the new primary
        and starts new child processes to be ready again to accept connections from the clients.
        After this, <productname>Pgpool-II</productname> executes the command configured
-       in the <varname>follow_master_command</varname> for each degenerated backend nodes.
+       in the <varname>follow_primary_command</varname> for each degenerated backend nodes.
       </para>
      </note>
      <para>
-      Typically <varname>follow_master_command</varname> command
-      is used to recover the slave from the new primary by calling
+      Typically <varname>follow_primary_command</varname> command
+      is used to recover the standby from the new primary by calling
       the pcp_recovery_node command.  In
-      the <varname>follow_master_command</varname>, it is
+      the <varname>follow_primary_command</varname>, it is
       recommended to check whether
       target <productname>PostgreSQL</productname> node is running
       or not using pg_ctl since already stopped node usually has a
@@ -495,7 +495,7 @@
       problems or administrator is maintaining the node.  If the
       node is stopped, skip the node. If the node is running, stop
       the node first and recovery it.  A
-      complete <varname>follow_master_command</varname> example
+      complete <varname>follow_primary_command</varname> example
       can be found in <xref linkend="example-cluster">.
      </para>
      <para>

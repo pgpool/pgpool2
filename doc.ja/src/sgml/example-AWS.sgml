@@ -16,7 +16,7 @@
   <para>
   You can use watchdog with <productname>
   Pgpool-II</productname> in any mode: replication mode,
-  master/slave mode and raw mode.
+  native replication mode and raw mode.
  </para>
  </note>
   -->
@@ -104,9 +104,9 @@
    <xref linkend="guc-delegate-ip"> which we will not set in this example instead
    we will use <xref linkend="guc-wd-escalation-command"> and
    <xref linkend="guc-wd-de-escalation-command"> to switch the
-   Elastic IP address to the master/Active <productname>Pgpool-II</productname> node.
+   Elastic IP address to the leader/Active <productname>Pgpool-II</productname> node.
    -->
-   この例の設定は<xref linkend="example-watchdog">とほとんど同じになりますが、<xref linkend="guc-delegate-ip">を設定せず、代わりに<xref linkend="guc-wd-escalation-command">と<xref linkend="guc-wd-de-escalation-command">を使ってmaster/Active <productname>Pgpool-II</productname>ノードのElastic IPアドレスを切り替えるのが異なります。
+   この例の設定は<xref linkend="example-watchdog">とほとんど同じになりますが、<xref linkend="guc-delegate-ip">を設定せず、代わりに<xref linkend="guc-wd-escalation-command">と<xref linkend="guc-wd-de-escalation-command">を使ってleader/Active <productname>Pgpool-II</productname>ノードのElastic IPアドレスを切り替えるのが異なります。
   </para>
 
   <sect3 id="example-AWS-pgpool-config-instance-1">
@@ -187,10 +187,10 @@
    <para>
     <!--
     This script will be executed by the watchdog
-    to assign the Elastic IP on the instance when the watchdog becomes the active/master node.
+    to assign the Elastic IP on the instance when the watchdog becomes the active/leader node.
     Change the INSTANCE_ID and ELASTIC_IP values as per your AWS setup values.
     -->
-    このスクリプトは、watchdogがactive/masterノードになったときに、Elastic IPをアサインするためにwatchdogが実行します。
+    このスクリプトは、watchdogがactive/leaderノードになったときに、Elastic IPをアサインするためにwatchdogが実行します。
    </para>
    <para>
     <emphasis>aws-escalation.sh:</emphasis>
@@ -222,9 +222,9 @@
    <para>
     <!--
     This script will be executed by watchdog
-    to remove the Elastic IP from the instance when the watchdog resign from the active/master node.
+    to remove the Elastic IP from the instance when the watchdog resign from the active/leader node.
     -->
-    このスクリプトは、watchdogがactive/masterノードを退任するときに、Elastic IPのアサインを解除するためにwatchdogが実行します。
+    このスクリプトは、watchdogがactive/leaderノードを退任するときに、Elastic IPのアサインを解除するためにwatchdogが実行します。
    </para>
    <para>
     <emphasis>aws-de-escalation.sh:</emphasis>
@@ -288,11 +288,11 @@
    <!--
    Start <productname>Pgpool-II</productname> on each server with "-n" switch
    and redirect log messages to the pgpool.log file.
-   The log message of master/active <productname>Pgpool-II</productname> node
+   The log message of leader/active <productname>Pgpool-II</productname> node
    will show the message of Elastic IP assignment.
    -->
    それぞれのサーバ上で<productname>Pgpool-II</productname>を"-n"スイッチ付きで起動し、pgpool.logにログメッセージをリダイレクトします。
-   master/active <productname>Pgpool-II</productname>ノードは、Elastic IPのアサインメッセージを表示します。
+   leader/active <productname>Pgpool-II</productname>ノードは、Elastic IPのアサインメッセージを表示します。
    <programlisting>
     LOG:  I am the cluster leader node. Starting escalation process
     LOG:  escalation process started with PID:23543
@@ -357,8 +357,8 @@
     LOG:  watchdog node state changed from [JOINING] to [INITIALIZING]
     LOG:  I am the only alive node in the watchdog cluster
     HINT:  skipping stand for coordinator state
-    LOG:  watchdog node state changed from [INITIALIZING] to [MASTER]
-    LOG:  I am announcing my self as master/coordinator watchdog node
+    LOG:  watchdog node state changed from [INITIALIZING] to [LEADER]
+    LOG:  I am announcing my self as leader/coordinator watchdog node
     LOG:  I am the cluster leader node
     DETAIL:  our declare coordinator message is accepted by all nodes
     LOG:  I am the cluster leader node. Starting escalation process

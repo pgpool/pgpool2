@@ -37,12 +37,12 @@ do
 	echo "Swapping the role of node 0 and node 1...done."
 	$PSQL -c "show pool_nodes"
 
-	# make sure that node 1 is master/primary
-	test `$PSQL -c "show pool_nodes"|egrep "primary|master"|awk '{print $1}'` = 1 &&
-	    test `$PSQL -c "show pool_nodes"|egrep "primary|master"|awk '{print $7}'` = "up"
+	# make sure that node 1 is main/primary
+	test `$PSQL -c "show pool_nodes"|egrep "primary|main"|awk '{print $1}'` = 1 &&
+	    test `$PSQL -c "show pool_nodes"|egrep "primary|main"|awk '{print $7}'` = "up"
 	if [ $? != 0 ]
 	then
-	    echo "node 1 is not primary or master"
+	    echo "node 1 is not primary or main"
 	    ./shutdownall
 	    exit 1
 	fi

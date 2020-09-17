@@ -11,8 +11,8 @@
   <productname>Pgpool-II</productname> can work with <productname>PostgreSQL</> native
   Streaming Replication, that is available since <productname>PostgreSQL</> 9.0.
   To configure <productname>Pgpool-II</productname> with streaming
-  replication, enable <xref linkend="guc-master-slave-mode"> and set
-  <xref linkend="guc-master-slave-sub-mode"> to <literal>'stream'</literal>.
+  replication, enable <xref linkend="guc-native-replication-mode"> and set
+  <xref linkend="guc-native-replication-sub-mode"> to <literal>'stream'</literal>.
   -->
   <productname>Pgpool-II</productname>は<productname>PostgreSQL</> 9.0から利用可能になった<productname>PostgreSQL</>組み込みのストリーミングレプリケーション機能と一緒に動作することができます。
   ストリーミングレプリケーション向けに<productname>Pgpool-II</productname>を設定するには、<xref linkend="guc-backend-clustering-mode">に<literal>'streaming-replication'</literal>を設定します。

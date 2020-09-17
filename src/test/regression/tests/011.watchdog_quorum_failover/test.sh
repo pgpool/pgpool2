@@ -6,7 +6,7 @@
 # must be defined before compiling main/health_check.c.
 
 source $TESTLIBS
-MASTER_DIR=master
+LEADER_DIR=leader
 STANDBY_DIR=standby
 STANDBY2_DIR=standby2
 num_tests=9
@@ -14,32 +14,32 @@ success_count=0
 PSQL=$PGBIN/psql
 PG_CTL=$PGBIN/pg_ctl
 
-rm -fr $MASTER_DIR
+rm -fr $LEADER_DIR
 rm -fr $STANDBY_DIR
 rm -fr $STANDBY2_DIR
 
-mkdir $MASTER_DIR
+mkdir $LEADER_DIR
 mkdir $STANDBY_DIR
 mkdir $STANDBY2_DIR
 
 
-# dir in master directory
-cd $MASTER_DIR
+# dir in leader directory
+cd $LEADER_DIR
 
-# create master environment
-echo -n "creating master pgpool and PostgreSQL clusters..."
+# create leader environment
+echo -n "creating leader pgpool and PostgreSQL clusters..."
 $PGPOOL_SETUP -m s -n 2 -p 11000|| exit 1
-echo "master setup done."
+echo "leader setup done."
 
 
-# copy the configurations from master to standby
+# copy the configurations from leader to standby
 cp -r etc ../$STANDBY_DIR/
 
-# copy the configurations from master to standby2
+# copy the configurations from leader to standby2
 cp -r etc ../$STANDBY2_DIR/
 
 source ./bashrc.ports
-cat ../master.conf >> etc/pgpool.conf
+cat ../leader.conf >> etc/pgpool.conf
 echo 0 > etc/pgpool_node_id
 
 ./startall
@@ -55,7 +55,7 @@ cd ..
 mkdir $STANDBY_DIR/log
 echo -n "creating standby pgpool..."
 cat standby.conf >> $STANDBY_DIR/etc/pgpool.conf
-# since we are using the same pgpool-II conf as of master. so change the pid file path in standby pgpool conf
+# since we are using the same pgpool-II conf as of leader. so change the pid file path in standby pgpool conf
 echo "pid_file_name = '$PWD/pgpool2.pid'" >> $STANDBY_DIR/etc/pgpool.conf
 echo "logdir = $STANDBY_DIR/log" >> $STANDBY_DIR/etc/pgpool.conf
 echo 1 > $STANDBY_DIR/etc/pgpool_node_id
@@ -67,7 +67,7 @@ $PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $STANDBY_DIR/etc/pgpool.conf -F $STANDBY
 mkdir $STANDBY2_DIR/log
 echo -n "creating standby2 pgpool..."
 cat standby2.conf >> $STANDBY2_DIR/etc/pgpool.conf
-# since we are using the same pgpool-II conf as of master. so change the pid file path in standby pgpool conf
+# since we are using the same pgpool-II conf as of leader. so change the pid file path in standby pgpool conf
 echo "pid_file_name = '$PWD/pgpool3.pid'" >> $STANDBY2_DIR/etc/pgpool.conf
 echo "logdir = $STANDBY2_DIR/log" >> $STANDBY2_DIR/etc/pgpool.conf
 echo 2 > $STANDBY2_DIR/etc/pgpool_node_id
@@ -75,20 +75,20 @@ echo 2 > $STANDBY2_DIR/etc/pgpool_node_id
 $PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $STANDBY2_DIR/etc/pgpool.conf -F $STANDBY2_DIR/etc/pcp.conf -a $STANDBY2_DIR/etc/pool_hba.conf > $STANDBY2_DIR/log/pgpool.log 2>&1 &
 
 # First test check if both pgpool-II have found their correct place in watchdog cluster.
-echo "Waiting for the pgpool master..."
+echo "Waiting for the pgpool leader..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	grep "I am the cluster leader node" $MASTER_DIR/log/pgpool.log > /dev/null 2>&1
+	grep "I am the cluster leader node" $LEADER_DIR/log/pgpool.log > /dev/null 2>&1
 	if [ $? = 0 ];then
 		success_count=$(( success_count + 1 ))
-		echo "Master brought up successfully."
+		echo "Leader brought up successfully."
 		break;
 	fi
 	echo "[check] $i times"
 	sleep 2
 done
 
-# now check if standby has successfully joined connected to the master.
+# now check if standby has successfully joined connected to the leader.
 echo "Waiting for the standby to join cluster..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
@@ -102,7 +102,7 @@ do
 	sleep 2
 done
 
-# now check if standby2 has successfully joined connected to the master.
+# now check if standby2 has successfully joined connected to the leader.
 echo "Waiting for the standby2 to join cluster..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
@@ -148,11 +148,11 @@ if [ $n -eq 3 ];then
 fi
 
 # raise an real DB node 1 error
-$PG_CTL -D master/data1 -m f stop
-echo "Checking if master detects the shutdown error"
+$PG_CTL -D leader/data1 -m f stop
+echo "Checking if leader detects the shutdown error"
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	grep -i "failover" $MASTER_DIR/log/pgpool.log
+	grep -i "failover" $LEADER_DIR/log/pgpool.log
 	if [ $? = 0 ];then
 		success_count=$(( success_count + 1 ))
 		echo "DB error detected."
@@ -184,16 +184,16 @@ do
     sleep 2
 done
 
-# stop master pgpool and see if standby takes over the roll
-$PGPOOL_INSTALL_DIR/bin/pgpool -f $MASTER_DIR/etc/pgpool.conf -m f stop
+# stop leader pgpool and see if standby takes over the roll
+$PGPOOL_INSTALL_DIR/bin/pgpool -f $LEADER_DIR/etc/pgpool.conf -m f stop
 
-echo "Checking if the Standby pgpool-II detected the master shutdown..."
+echo "Checking if the Standby pgpool-II detected the leader shutdown..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
 	grep " is shutting down" $STANDBY_DIR/log/pgpool.log > /dev/null 2>&1
 	if [ $? = 0 ];then
 		success_count=$(( success_count + 1 ))
-		echo "Master shutdown detected."
+		echo "Leader shutdown detected."
 		break;
 	fi
 	echo "[check] $i times"
@@ -202,13 +202,13 @@ done
 
 # Finally see if standby take over
 
-echo "Checking if the Standby pgpool-II takes over the master responsibility..."
+echo "Checking if the Standby pgpool-II takes over the leader responsibility..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
 	grep "I am the cluster leader node" $STANDBY_DIR/log/pgpool.log > /dev/null 2>&1
 	if [ $? = 0 ];then
 		success_count=$(( success_count + 1 ))
-		echo "Standby successfully became the new master."
+		echo "Standby successfully became the new leader."
 		break;
 	fi
 	echo "[check] $i times"
@@ -218,7 +218,7 @@ done
 # we are done. Just stop the standby pgpool-II
 $PGPOOL_INSTALL_DIR/bin/pgpool -f $STANDBY_DIR/etc/pgpool.conf -m f stop
 $PGPOOL_INSTALL_DIR/bin/pgpool -f $STANDBY2_DIR/etc/pgpool.conf -m f stop
-cd master
+cd leader
 ./shutdownall
 
 echo "$success_count out of $num_tests successfull";

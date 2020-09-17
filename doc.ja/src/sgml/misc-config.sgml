@@ -147,9 +147,9 @@
    <listitem>
     <para>
      リレーションキャッシュを作成するためのクエリを送る先のノードを指定します。
-     <literal>master</literal>にすると、クエリはマスタ（プライマリ）に送られます。
+     <literal>primary</literal>にすると、クエリはメイン（プライマリ）に送られます。
      これがデフォルトで、最新のデータを入手できるため、ほとんどのユーザに推奨する設定です。
-     もしマスタ（プライマリ）の負荷を下げたい場合は、このパラメータを<literal>load_balance_node</literal>に設定できます。
+     もしメイン（プライマリ）の負荷を下げたい場合は、このパラメータを<literal>load_balance_node</literal>に設定できます。
      これにより、クエリは負荷分散ノードに送られます。
      これは特に、大陸Aに<productname>Pgpool-II</productname>とプライマリサーバがあり、一方大陸Bに<productname>Pgpool-II</productname>とスタンバイサーバがあるような構成で有効です。
      Bのユーザは地理的にスタンバイサーバが近いため、スタンバイからデータを読みたいと思うでしょう。
@@ -225,8 +225,8 @@
      <!--
      Setting to on, enables the unlogged table check in the <acronym>SELECT</acronym>
      statements. To check the unlogged table <productname>Pgpool-II</productname>
-     queries the system catalog of primary/master <productname>PostgreSQL</> backend which increases
-     the load on the primary/master server.
+     queries the system catalog of primary/main <productname>PostgreSQL</> backend which increases
+     the load on the primary/main server.
      If you are absolutely sure that your system never uses the unlogged tables
      (for example, you are using 9.0 or earlier version of <productname>PostgreSQL</>) then you
      can safely turn off the <varname>check_unlogged_table</varname>.

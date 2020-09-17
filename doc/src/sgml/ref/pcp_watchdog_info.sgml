@@ -79,7 +79,7 @@ Pgpool-II documentation
     3 NO Linux_host1.localdomain_9991 host1
 
     Linux_host1.localdomain_9991 host1 9991 9001 7 STANDBY
-    Linux_host2.localdomain_9992 host2 9992 9002 4 MASTER
+    Linux_host2.localdomain_9992 host2 9992 9002 4 LEADER
     Linux_host3.localdomain_9993 host3 9993 9003 7 STANDBY
    </programlisting>
   </para>
@@ -90,8 +90,8 @@ Pgpool-II documentation
 
     1. Total watchdog nodes in the cluster
     2. Is VIP is up on current node?
-    3. Master node name
-    4. Master node host
+    3. Leader node name
+    4. Leader node host
    </literallayout>
    <literallayout class="monospaced">
     Next is the list of watchdog nodes:
@@ -116,8 +116,8 @@ Pgpool-II documentation
    Quorum state         : QUORUM EXIST
    Alive Remote Nodes   : 2
    VIP up on local node : NO
-   Master Node Name     : Linux_host2.localdomain_9992
-   Master Host Name     : localhost
+   Leader Node Name     : Linux_host2.localdomain_9992
+   Leader Host Name     : localhost
 
    Watchdog Node Information
    Node Name      : Linux_host1.localdomain_9991
@@ -136,7 +136,7 @@ Pgpool-II documentation
    Watchdog port  : 9002
    Node priority  : 1
    Status         : 4
-   Status Name    : MASTER
+   Status Name    : LEADER
 
    Node Name      : Linux_host3.localdomain_9993
    Host Name      : host3

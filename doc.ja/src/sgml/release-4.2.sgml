@@ -78,7 +78,7 @@
 
    <listitem>
     <para>
-     システムカタログの情報を参照することにより、<xref linkend="guc-black-function-list">と<xref linkend="guc-white-function-list">の記述を省略できるようになりました。
+     システムカタログの情報を参照することにより、<xref linkend="guc-write-function-list">と<xref linkend="guc-read-only-function-list">の記述を省略できるようになりました。
     </para>
    </listitem>
 
@@ -221,11 +221,11 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
    <listitem>
     <para>
 <!--
-     <xref linkend="guc-black-function-list"> and <xref
-     linkend="guc-white-function-list"> are now both empty.
+     <xref linkend="guc-write-function-list"> and <xref
+     linkend="guc-read-only-function-list"> are now both empty.
 -->
-     <xref linkend="guc-black-function-list">と<xref
-     linkend="guc-white-function-list">の値は空となりました。
+     <xref linkend="guc-write-function-list">と<xref
+     linkend="guc-read-only-function-list">の値は空となりました。
     </para>
    </listitem>
 
@@ -513,13 +513,13 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
      If a function included in SELECT/WITH has volatile property by
      checking system catalog, regard it a writing function. This
      feature is available only when the <xref
-     linkend="guc-black-function-list"> and the <xref
-     linkend="guc-white-function-list"> are both empty. The default of
+     linkend="guc-write-function-list"> and the <xref
+     linkend="guc-read-only-function-list"> are both empty. The default of
      the black_function_list and the white_function_list are now empty
      string so that this feature is enabled by default.
 -->
      システムカタログをチェックした結果、SELECT/WITHに含まれる関数が揮発性の性質を持っているなら、書き込みを行う関数であると見なします。
-     この機能は<xref linkend="guc-black-function-list">と<xref linkend="guc-white-function-list">が空である場合にのみ有効になります。
+     この機能は<xref linkend="guc-write-function-list">と<xref linkend="guc-read-only-function-list">が空である場合にのみ有効になります。
      この機能がデフォルトで有効になるように、black_function_listとwhite_function_listのデフォルトは空となりました。
     </para>
    </listitem>
@@ -548,12 +548,12 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 <!--
 
      Also now schema qualified function names in <xref
-     linkend="guc-black-function-list"> and <xref
-     linkend="guc-white-function-list"> are allowed. Note that if you
+     linkend="guc-write-function-list"> and <xref
+     linkend="guc-read-only-function-list"> are allowed. Note that if you
      want to register schema qualified function names, you have to
      register function names without schema qualification as well.
 -->
-     また、<xref linkend="guc-black-function-list">と<xref linkend="guc-white-function-list">でスキーマ修飾付きの関数名が認識されなかったのも修正されました。
+     また、<xref linkend="guc-write-function-list">と<xref linkend="guc-read-only-function-list">でスキーマ修飾付きの関数名が認識されなかったのも修正されました。
      なお、スキーマ修飾付きの関数名を登録する際は、スキーマ修飾なし関数名も登録するようにしてください。
     </para>
    </listitem>

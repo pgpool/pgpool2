@@ -1130,8 +1130,8 @@
       sent to primary only until the end of this transaction in
       order to avoid the replication delay.  However, the SELECTs
       having write functions specified
-      in <xref linkend="guc-black-function-list"> or not specified
-       in <xref linkend="guc-white-function-list"> are not regarded
+      in <xref linkend="guc-write-function-list"> or not specified
+       in <xref linkend="guc-read-only-function-list"> are not regarded
 	as a write query and the subsequent read queries are still
 	load balanced. This commit will disable load balance after
 	a SELECT having functions specified in black function list
@@ -1467,7 +1467,7 @@
        <para>
 	Enhance explanation
 	about <xref linkend="guc-failover-command">
-	 and <xref linkend="guc-follow-master-command">. (tatsuo
+	 and <xref linkend="guc-follow-primary-command">. (tatsuo
 	  ishii)
        </para>
       </listitem>

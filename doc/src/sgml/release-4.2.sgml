@@ -72,8 +72,8 @@
    <listitem>
     <para>
      Now it is possible to omit <xref
-     linkend="guc-black-function-list"> and <xref
-     linkend="guc-white-function-list"> by looking at system catalog
+     linkend="guc-write-function-list"> and <xref
+     linkend="guc-read-only-function-list"> by looking at system catalog
      information.
     </para>
    </listitem>
@@ -220,8 +220,8 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 
    <listitem>
     <para>
-     <xref linkend="guc-black-function-list"> and <xref
-     linkend="guc-white-function-list"> are now both empty.
+     <xref linkend="guc-write-function-list"> and <xref
+     linkend="guc-read-only-function-list"> are now both empty.
     </para>
    </listitem>
 
@@ -438,8 +438,8 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
      If a function included in SELECT/WITH has volatile property by
      checking system catalog, regard it a writing function. This
      feature is available only when the <xref
-     linkend="guc-black-function-list"> and the <xref
-     linkend="guc-white-function-list"> are both empty. The default of
+     linkend="guc-write-function-list"> and the <xref
+     linkend="guc-read-only-function-list"> are both empty. The default of
      the black_function_list and the white_function_list are now empty
      string so that this feature is enabled by default.
     </para>
@@ -460,8 +460,8 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
     </para>
     <para>
      Also now schema qualified function names in <xref
-     linkend="guc-black-function-list"> and <xref
-     linkend="guc-white-function-list"> are allowed. Note that if you
+     linkend="guc-write-function-list"> and <xref
+     linkend="guc-read-only-function-list"> are allowed. Note that if you
      want to register schema qualified function names, you have to
      register function names without schema qualification as well.
     </para>

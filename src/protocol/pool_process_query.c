@@ -83,15 +83,15 @@ static int	reset_backend(POOL_CONNECTION_POOL * backend, int qcnt);
 static char *get_insert_command_table_name(InsertStmt *node);
 static bool is_cache_empty(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
 static bool is_panic_or_fatal_error(char *message, int major);
-static int	extract_message(POOL_CONNECTION * master, char *error_code, int major, char class, bool unread);
-static int	detect_postmaster_down_error(POOL_CONNECTION * master, int major);
+static int	extract_message(POOL_CONNECTION * backend, char *error_code, int major, char class, bool unread);
+static int	detect_postmaster_down_error(POOL_CONNECTION * backend, int major);
 static bool is_internal_transaction_needed(Node *node);
 static bool pool_has_insert_lock(void);
 static POOL_STATUS add_lock_target(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *table);
 static bool has_lock_target(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *table, bool for_update);
 static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *table);
 static POOL_STATUS read_packets_and_process(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, int reset_request, int *state, short *num_fields, bool *cont);
-static bool is_all_slaves_command_complete(unsigned char *kind_list, int num_backends, int master);
+static bool is_all_standbys_command_complete(unsigned char *kind_list, int num_backends, int main_node);
 static bool pool_process_notice_message_from_one_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, int backend_idx, char kind);
 
 /*
@@ -297,11 +297,11 @@ pool_process_query(POOL_CONNECTION * frontend,
 				else
 				{
 					/*
-					 * If we have pending data in master, we need to process
+					 * If we have pending data in main, we need to process
 					 * it
 					 */
-					if (pool_ssl_pending(MASTER(backend)) ||
-						!pool_read_buffer_is_empty(MASTER(backend)))
+					if (pool_ssl_pending(MAIN(backend)) ||
+						!pool_read_buffer_is_empty(MAIN(backend)))
 					{
 						status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
 						if (status != POOL_CONTINUE)
@@ -318,10 +318,10 @@ pool_process_query(POOL_CONNECTION * frontend,
 								!pool_read_buffer_is_empty(CONNECTION(backend, i)))
 							{
 								/*
-								 * If we have pending data in master, we need
+								 * If we have pending data in main, we need
 								 * to process it
 								 */
-								if (IS_MASTER_NODE_ID(i))
+								if (IS_MAIN_NODE_ID(i))
 								{
 									status = ProcessBackendResponse(frontend, backend, &state, &num_fields);
 									if (status != POOL_CONTINUE)
@@ -335,7 +335,7 @@ pool_process_query(POOL_CONNECTION * frontend,
 									char	   *string;
 
 									/*
-									 * If master does not have pending data,
+									 * If main does not have pending data,
 									 * we discard one packet from other
 									 * backend
 									 */
@@ -344,21 +344,21 @@ pool_process_query(POOL_CONNECTION * frontend,
 
 									if (kind == 'A')
 									{
-										if (MASTER_SLAVE)
+										if (NATIVE_REPLICATION)
 										{
 											int			sendlen;
 
 											/*
-											 * In master slave mode we may
+											 * In native replication mode we may
 											 * send the query to the standby
 											 * node and the NOTIFY comes back
 											 * only from primary node. But
 											 * since we have sent the query to
 											 * the standby, so the current
-											 * MASTER_NODE_ID will be pointing
+											 * MAIN_NODE_ID will be pointing
 											 * to the standby node. And we
 											 * will get stuck if we keep
-											 * waiting for the current master
+											 * waiting for the current main
 											 * node (standby) in this case to
 											 * send us the NOTIFY message. see
 											 * "0000116: LISTEN Notifications
@@ -387,21 +387,21 @@ pool_process_query(POOL_CONNECTION * frontend,
 											 * sent to all backends. However
 											 * the order of arrival of
 											 * 'Notification response' is not
-											 * necessarily the master first
-											 * and then slaves. So if it
-											 * arrives slave first, we should
-											 * try to read from master, rather
+											 * necessarily the main first
+											 * and then standbys. So if it
+											 * arrives standby first, we should
+											 * try to read from main, rather
 											 * than just discard it.
 											 */
 											pool_unread(CONNECTION(backend, i), &kind, sizeof(kind));
 											ereport(LOG,
 													(errmsg("pool process query"),
-													 errdetail("received %c packet from backend %d. Don't dicard and read %c packet from master", kind, i, kind)));
+													 errdetail("received %c packet from backend %d. Don't dicard and read %c packet from main", kind, i, kind)));
 
-											pool_read_with_error(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind),
+											pool_read_with_error(CONNECTION(backend, MAIN_NODE_ID), &kind, sizeof(kind),
 																 "reading message kind from backend");
 
-											pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
+											pool_unread(CONNECTION(backend, MAIN_NODE_ID), &kind, sizeof(kind));
 										}
 									}
 									else if (SL_MODE)
@@ -704,13 +704,13 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 	int			sendlen;
 	int			i;
 
-	pool_read(MASTER(backend), &len, sizeof(len));
+	pool_read(MAIN(backend), &len, sizeof(len));
 
 	len = ntohl(len);
 	len -= 4;
 	len1 = len;
 
-	p = pool_read2(MASTER(backend), len);
+	p = pool_read2(MAIN(backend), len);
 	if (p == NULL)
 		ereport(ERROR,
 				(errmsg("unable to forward message to frontend"),
@@ -719,11 +719,11 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 	memcpy(p1, p, len);
 
 	/*
-	 * If we received a notification message in master/slave mode, other
+	 * If we received a notification message in native replication mode, other
 	 * backends will not receive the message. So we should skip other nodes
 	 * otherwise we will hang in pool_read.
 	 */
-	if (!MASTER_SLAVE || kind != 'A')
+	if (!NATIVE_REPLICATION || kind != 'A')
 	{
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
@@ -732,7 +732,7 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 				continue;
 #endif
 
-			if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+			if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i))
 			{
 #ifdef NOT_USED
 				if (use_sync_map == POOL_SYNC_MAP_IS_VALID && !pool_is_set_sync_map(i))
@@ -755,7 +755,7 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 				if (len != len1)
 				{
 					ereport(DEBUG1,
-							(errmsg("SimpleForwardToFrontend: length does not match between backends master(%d) %d th backend(%d) kind:(%c)",
+							(errmsg("SimpleForwardToFrontend: length does not match between backends main(%d) %d th backend(%d) kind:(%c)",
 									len, i, len1, kind)));
 				}
 			}
@@ -904,7 +904,7 @@ ParameterStatus(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 				(errmsg("unable to process parameter status"),
 				 errdetail("read on backend failed")));
 
-	len = len_array[MASTER_NODE_ID];
+	len = len_array[MAIN_NODE_ID];
 	sendlen = htonl(len);
 	pool_write(frontend, &sendlen, sizeof(sendlen));
 
@@ -927,7 +927,7 @@ ParameterStatus(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 					(errmsg("process parameter status"),
 					 errdetail("backend:%d name:\"%s\" value:\"%s\"", i, name, value)));
 
-			if (IS_MASTER_NODE_ID(i))
+			if (IS_MAIN_NODE_ID(i))
 			{
 				len1 = len;
 				int	pos;
@@ -942,7 +942,7 @@ ParameterStatus(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 			}
 
 #ifdef DEBUG
-			pool_param_debug_print(&MASTER(backend)->params);
+			pool_param_debug_print(&MAIN(backend)->params);
 #endif
 		}
 	}
@@ -1613,7 +1613,7 @@ retry_read_packet:
  * from backend and discard it until we get Error response.
  *
  * We need to sync transaction status in transaction block.
- * SELECT query is sent to master only.
+ * SELECT query is sent to main node only.
  * If SELECT is error, we must abort transaction on other nodes.
  */
 void
@@ -1667,11 +1667,11 @@ do_error_command(POOL_CONNECTION * backend, int major)
 
 /*
  * Send invalid portal execution to specified DB node to abort current
- * transaction.  Pgpool-II sends a SELECT query to master node only in
- * load balance mode. Problem is, if the query failed, master node
+ * transaction.  Pgpool-II sends a SELECT query to main node only in
+ * load balance mode. Problem is, if the query failed, main node
  * goes to abort status while other nodes remain normal status. To
  * sync transaction status in each node, we send error query to other
- * than master node to ket them go into abort status.
+ * than main node to ket them go into abort status.
  */
 void
 do_error_execute_command(POOL_CONNECTION_POOL * backend, int node_id, int major)
@@ -2671,30 +2671,30 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 		}
 	}
 
-	per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
+	per_node_statement_log(backend, MAIN_NODE_ID, qbuf);
 
 	if (lock_kind == 1)
 	{
 		if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
 		{
-			do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+			do_query(MAIN(backend), qbuf, &result, MAJOR(backend));
 		}
 		else
 		{
-			status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
-								MASTER_CONNECTION(backend)->key, 0);
+			status = do_command(frontend, MAIN(backend), qbuf, MAJOR(backend), MAIN_CONNECTION(backend)->pid,
+								MAIN_CONNECTION(backend)->key, 0);
 		}
 	}
 	else if (lock_kind == 2)
 	{
-		do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+		do_query(MAIN(backend), qbuf, &result, MAJOR(backend));
 	}
 	else
 	{
 		POOL_SELECT_RESULT *result;
 
 		/* issue row lock command */
-		do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+		do_query(MAIN(backend), qbuf, &result, MAJOR(backend));
 		if (status == POOL_CONTINUE)
 		{
 			/* does oid exist in insert_lock table? */
@@ -2707,10 +2707,10 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 				status = add_lock_target(frontend, backend, table);
 				if (status == POOL_CONTINUE)
 				{
-					per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
+					per_node_statement_log(backend, MAIN_NODE_ID, qbuf);
 
 					/* issue row lock command */
-					do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+					do_query(MAIN(backend), qbuf, &result, MAJOR(backend));
 
 					if (!(result && result->data[0] && !strcmp(result->data[0], "1")))
 						ereport(FATAL,
@@ -2729,18 +2729,18 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 			/* try to lock table finally, if row lock failed */
 			lock_kind = 1;
 			snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", table);
-			per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
+			per_node_statement_log(backend, MAIN_NODE_ID, qbuf);
 
 			if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
 			{
-				do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+				do_query(MAIN(backend), qbuf, &result, MAJOR(backend));
 				if (result)
 					free_select_result(result);
 			}
 			else
 			{
-				status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
-									MASTER_CONNECTION(backend)->key, 0);
+				status = do_command(frontend, MAIN(backend), qbuf, MAJOR(backend), MAIN_CONNECTION(backend)->pid,
+									MAIN_CONNECTION(backend)->key, 0);
 			}
 		}
 	}
@@ -2754,11 +2754,11 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i))
 		{
 			if (deadlock_detected)
 				status = do_command(frontend, CONNECTION(backend, i), POOL_ERROR_QUERY, PROTO_MAJOR_V3,
-									MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
+									MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 0);
 			else
 			{
 				if (lock_kind == 1)
@@ -2766,14 +2766,14 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 					per_node_statement_log(backend, i, qbuf);
 					if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
 					{
-						do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+						do_query(MAIN(backend), qbuf, &result, MAJOR(backend));
 						if (result)
 							free_select_result(result);
 					}
 					else
 					{
 						status = do_command(frontend, CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3,
-											MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
+											MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 0);
 					}
 				}
 				else if (lock_kind == 2)
@@ -2845,10 +2845,10 @@ static POOL_STATUS add_lock_target(POOL_CONNECTION * frontend, POOL_CONNECTION_P
 		ereport(LOG,
 				(errmsg("add lock target: not lock the row where reloid is 0")));
 
-		per_node_statement_log(backend, MASTER_NODE_ID, "LOCK TABLE pgpool_catalog.insert_lock IN SHARE ROW EXCLUSIVE MODE");
+		per_node_statement_log(backend, MAIN_NODE_ID, "LOCK TABLE pgpool_catalog.insert_lock IN SHARE ROW EXCLUSIVE MODE");
 
-		if (do_command(frontend, MASTER(backend), "LOCK TABLE pgpool_catalog.insert_lock IN SHARE ROW EXCLUSIVE MODE",
-					   PROTO_MAJOR_V3, MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
+		if (do_command(frontend, MAIN(backend), "LOCK TABLE pgpool_catalog.insert_lock IN SHARE ROW EXCLUSIVE MODE",
+					   PROTO_MAJOR_V3, MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
 			ereport(ERROR,
 					(errmsg("unable to add lock target"),
 					 errdetail("do_command returned DEADLOCK status")));
@@ -2918,8 +2918,8 @@ has_lock_target(POOL_CONNECTION * frontend,
 		snprintf(qbuf, sizeof(qbuf), "SELECT 1 FROM pgpool_catalog.insert_lock WHERE reloid = 0%s", suffix);
 	}
 
-	per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
-	do_query(MASTER(backend), qbuf, &result, MAJOR(backend));
+	per_node_statement_log(backend, MAIN_NODE_ID, qbuf);
+	do_query(MAIN(backend), qbuf, &result, MAJOR(backend));
 	if (result && result->data[0] && !strcmp(result->data[0], "1"))
 	{
 		free_select_result(result);
@@ -2956,9 +2956,9 @@ static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION * frontend,
 		snprintf(qbuf, sizeof(qbuf), "INSERT INTO pgpool_catalog.insert_lock VALUES (0)");
 	}
 
-	per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
-	status = do_command(frontend, MASTER(backend), qbuf, PROTO_MAJOR_V3,
-						MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0);
+	per_node_statement_log(backend, MAIN_NODE_ID, qbuf);
+	status = do_command(frontend, MAIN(backend), qbuf, PROTO_MAJOR_V3,
+						MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 0);
 	return status;
 }
 
@@ -3156,17 +3156,17 @@ read_kind_from_one_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * ba
 }
 
 /*
- * returns true if all slaves status are 'C' (Command Complete)
+ * returns true if all standbys status are 'C' (Command Complete)
  */
 static bool
-is_all_slaves_command_complete(unsigned char *kind_list, int num_backends, int master)
+is_all_standbys_command_complete(unsigned char *kind_list, int num_backends, int main_node)
 {
 	int			i;
 	int			ok = true;
 
 	for (i = 0; i < num_backends; i++)
 	{
-		if (i == master || kind_list[i] == 0)
+		if (i == main_node || kind_list[i] == 0)
 			continue;
 		if (kind_list[i] != 'C')
 		{
@@ -3277,16 +3277,16 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 		}
 	}
 
-	if (MASTER_SLAVE)
+	if (NATIVE_REPLICATION)
 	{
 		ereport(DEBUG5,
 				(errmsg("reading backend data packet kind"),
-				 errdetail("master node id: %d", MASTER_NODE_ID)));
+				 errdetail("main node id: %d", MAIN_NODE_ID)));
 
-		read_kind_from_one_backend(frontend, backend, (char *) &kind, MASTER_NODE_ID);
+		read_kind_from_one_backend(frontend, backend, (char *) &kind, MAIN_NODE_ID);
 
 		/*
-		 * If we received a notification message in master/slave mode, other
+		 * If we received a notification message in native replication mode, other
 		 * backends will not receive the message. So we should skip other
 		 * nodes otherwise we will hang in pool_read.
 		 */
@@ -3296,13 +3296,13 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 
 			ereport(DEBUG5,
 					(errmsg("reading backend data packet kind"),
-					 errdetail("received notification message for master node %d",
-							   MASTER_NODE_ID)));
+					 errdetail("received notification message for main node %d",
+							   MAIN_NODE_ID)));
 			if (msg)
 				pool_pending_message_free_pending_message(msg);
 			return;
 		}
-		pool_unread(CONNECTION(backend, MASTER_NODE_ID), &kind, sizeof(kind));
+		pool_unread(CONNECTION(backend, MAIN_NODE_ID), &kind, sizeof(kind));
 	}
 
 	for (i = 0; i < NUM_BACKENDS; i++)
@@ -3367,7 +3367,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 								(errmsg("reading backend data packet kind"),
 								 errdetail("parameter name: %s value: \"%s\"", p, value)));
 
-						if (IS_MASTER_NODE_ID(i))
+						if (IS_MAIN_NODE_ID(i))
 						{
 							int		pos;
 							pool_add_param(&CONNECTION(backend, i)->params, p, value);
@@ -3458,7 +3458,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 
 		/*
 		 * If we are in streaming replication mode and kind = 'Z' (ready for
-		 * query) on master and kind on standby is not 'Z', it is likely that
+		 * query) on primary and kind on standby is not 'Z', it is likely that
 		 * following scenario happened.
 		 *
 		 * FE=>Parse("BEGIN") FE=>Bind FE=>Execute("BEGIN");
@@ -3505,11 +3505,11 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 		 * cases it is possible that similar issue could happen since returned
 		 * messages do not follow the sequence recorded in the pending
 		 * messages because the backend ignores requests till sync message is
-		 * received. In this case we need to re-sync either master or standby.
-		 * So we check not only the standby but master node.
+		 * received. In this case we need to re-sync either primary or standby.
+		 * So we check not only the standby but primary node.
 		 */
-		if (session_context->load_balance_node_id != MASTER_NODE_ID &&
-			(kind_list[MASTER_NODE_ID] == 'Z' ||
+		if (session_context->load_balance_node_id != MAIN_NODE_ID &&
+			(kind_list[MAIN_NODE_ID] == 'Z' ||
 			 kind_list[session_context->load_balance_node_id] == 'Z')
 			&& SL_MODE)
 		{
@@ -3517,10 +3517,10 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 			char	   *buf;
 			int			len;
 
-			if (kind_list[MASTER_NODE_ID] == 'Z')
+			if (kind_list[MAIN_NODE_ID] == 'Z')
 				s = CONNECTION(backend, session_context->load_balance_node_id);
 			else
-				s = CONNECTION(backend, MASTER_NODE_ID);
+				s = CONNECTION(backend, MAIN_NODE_ID);
 
 			/* skip len and contents corresponding standby data */
 			pool_read(s, &len, sizeof(len));
@@ -3583,19 +3583,19 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 		}
 
 		/*
-		 * In master slave mode, if master gets an error at commit, while
-		 * other slaves are normal at commit, we don't need to degenerate any
+		 * In native replication mode, if primary gets an error at commit, while
+		 * other standbys are normal at commit, we don't need to degenerate any
 		 * backend because it is likely that the error was caused by a
 		 * deferred trigger.
 		 */
-		else if (MASTER_SLAVE && query_context->parse_tree &&
+		else if (NATIVE_REPLICATION && query_context->parse_tree &&
 				 is_commit_query(query_context->parse_tree) &&
-				 kind_list[MASTER_NODE_ID] == 'E' &&
-				 is_all_slaves_command_complete(kind_list, NUM_BACKENDS, MASTER_NODE_ID))
+				 kind_list[MAIN_NODE_ID] == 'E' &&
+				 is_all_standbys_command_complete(kind_list, NUM_BACKENDS, MAIN_NODE_ID))
 		{
-			*decided_kind = kind_list[MASTER_NODE_ID];
+			*decided_kind = kind_list[MAIN_NODE_ID];
 			ereport(LOG,
-					(errmsg("reading backend data packet kind. Error on master while all slaves are normal"),
+					(errmsg("reading backend data packet kind. Error on primary while all standbys are normal"),
 					 errdetail("do not degenerate because it is likely caused by a delayed commit")));
 
 			if (SL_MODE && pool_is_doing_extended_query_message() && msg)
@@ -3604,8 +3604,8 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 		}
 		else if (max_count <= NUM_BACKENDS / 2.0)
 		{
-			/* no one gets majority. We trust master node's kind */
-			trust_kind = kind_list[MASTER_NODE_ID];
+			/* no one gets majority. We trust main node's kind */
+			trust_kind = kind_list[MAIN_NODE_ID];
 		}
 		else					/* max_count > NUM_BACKENDS / 2.0 */
 		{
@@ -3622,7 +3622,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 			{
 				/* degenerate */
 				ereport(WARNING,
-						(errmsg("packet kind of backend %d ['%c'] does not match with master/majority nodes packet kind ['%c']", i, kind_list[i], trust_kind)));
+						(errmsg("packet kind of backend %d ['%c'] does not match with main/majority nodes packet kind ['%c']", i, kind_list[i], trust_kind)));
 				degenerate_node[degenerate_node_num++] = i;
 			}
 		}
@@ -3850,7 +3850,7 @@ query_ps_status(char *query, POOL_CONNECTION_POOL * backend)
 	if (*query == '\0')
 		return;
 
-	sp = MASTER_CONNECTION(backend)->sp;
+	sp = MAIN_CONNECTION(backend)->sp;
 	if (sp)
 		i = snprintf(psbuf, sizeof(psbuf) - 1, "%s %s %s ",
 					 sp->user, sp->database, remote_ps_data);
@@ -4044,7 +4044,7 @@ start_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * ba
 				per_node_statement_log(backend, i, "BEGIN");
 
 				if (do_command(frontend, CONNECTION(backend, i), "BEGIN", MAJOR(backend),
-							   MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
+							   MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
 					ereport(ERROR,
 							(errmsg("unable to start the internal transaction"),
 							 errdetail("do_command returned DEADLOCK status")));
@@ -4077,10 +4077,10 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 
 	PG_TRY();
 	{
-		/* We need to commit from secondary to master. */
+		/* We need to commit from secondary to primary. */
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
-			if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i) &&
+			if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i) &&
 				TSTATE(backend, i) != 'I' &&
 				INTERNAL_TRANSACTION_STARTED(backend, i))
 			{
@@ -4097,7 +4097,7 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 				PG_TRY();
 				{
 					if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend),
-								   MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
+								   MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
 					{
 						ereport(ERROR,
 								(errmsg("unable to COMMIT the transaction"),
@@ -4115,24 +4115,24 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 			}
 		}
 
-		/* Commit on master */
-		if (TSTATE(backend, MASTER_NODE_ID) != 'I' &&
-			INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID))
+		/* Commit on main */
+		if (TSTATE(backend, MAIN_NODE_ID) != 'I' &&
+			INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID))
 		{
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 			{
 				/*
 				 * Skip rest of Ready for Query packet
 				 */
-				pool_read(CONNECTION(backend, MASTER_NODE_ID), &len, sizeof(len));
-				pool_read(CONNECTION(backend, MASTER_NODE_ID), &tstate, sizeof(tstate));
+				pool_read(CONNECTION(backend, MAIN_NODE_ID), &len, sizeof(len));
+				pool_read(CONNECTION(backend, MAIN_NODE_ID), &tstate, sizeof(tstate));
 			}
 
-			per_node_statement_log(backend, MASTER_NODE_ID, "COMMIT");
+			per_node_statement_log(backend, MAIN_NODE_ID, "COMMIT");
 			PG_TRY();
 			{
-				if (do_command(frontend, MASTER(backend), "COMMIT", MAJOR(backend),
-							   MASTER_CONNECTION(backend)->pid, MASTER_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
+				if (do_command(frontend, MAIN(backend), "COMMIT", MAJOR(backend),
+							   MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
 				{
 					ereport(ERROR,
 							(errmsg("unable to COMMIT the transaction"),
@@ -4141,11 +4141,11 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 			}
 			PG_CATCH();
 			{
-				INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = false;
+				INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID) = false;
 				PG_RE_THROW();
 			}
 			PG_END_TRY();
-			INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = false;
+			INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID) = false;
 		}
 	}
 	PG_CATCH();
@@ -4959,12 +4959,12 @@ SELECT_RETRY:
 		}
 	}
 
-	if (FD_ISSET(MASTER(backend)->fd, &exceptmask))
+	if (FD_ISSET(MAIN(backend)->fd, &exceptmask))
 		ereport(FATAL,
 				(errmsg("unable to read from backend socket"),
 				 errdetail("exception occured on backend socket")));
 
-	else if (FD_ISSET(MASTER(backend)->fd, &readmask))
+	else if (FD_ISSET(MAIN(backend)->fd, &readmask))
 	{
 		status = ProcessBackendResponse(frontend, backend, state, num_fields);
 		if (status != POOL_CONTINUE)
@@ -4980,8 +4980,8 @@ void
 pool_dump_valid_backend(int backend_id)
 {
 	ereport(LOG,
-			(errmsg("RAW_MODE:%d REAL_MASTER_NODE_ID:%d pool_is_node_to_be_sent_in_current_query:%d my_backend_status:%d",
-					RAW_MODE, REAL_MASTER_NODE_ID, pool_is_node_to_be_sent_in_current_query(backend_id),
+			(errmsg("RAW_MODE:%d REAL_MAIN_NODE_ID:%d pool_is_node_to_be_sent_in_current_query:%d my_backend_status:%d",
+					RAW_MODE, REAL_MAIN_NODE_ID, pool_is_node_to_be_sent_in_current_query(backend_id),
 					*my_backend_status[backend_id])));
 }
 
@@ -5037,7 +5037,7 @@ pool_push_pending_data(POOL_CONNECTION * backend)
 	/*
 	 * If we have not send the flush message to load balance node yet, send a
 	 * flush message to the load balance node. Otherwise only the non load
-	 * balance node (usually the master node) produces response if we do not
+	 * balance node (usually the primary node) produces response if we do not
 	 * send sync message to it yet.
 	 */
 	session_context = pool_get_session_context(false);

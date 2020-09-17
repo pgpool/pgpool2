@@ -1086,7 +1086,7 @@
     2019-04-18 [56a1fd8]
     -->
     <para>
-     Fix <xref linkend="GUC-BLACK-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
+     Fix <xref linkend="GUC-WRITE-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -1725,7 +1725,7 @@
     2018-08-20 [57b43ae]
     -->
     <para>
-     Doc: Change <xref linkend="GUC-FOLLOW-MASTER-COMMAND"> description "new master" to "new primary". (Bo Peng)
+     Doc: Change <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND"> description "new master" to "new primary". (Bo Peng)
     </para>
    </listitem>
 

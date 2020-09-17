@@ -58,11 +58,11 @@ AsciiRow(POOL_CONNECTION * frontend,
 		return POOL_CONTINUE;
 
 	/* NULL map */
-	pool_read(MASTER(backend), nullmap, nbytes);
+	pool_read(MAIN(backend), nullmap, nbytes);
 	memcpy(nullmap1, nullmap, nbytes);
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i))
 		{
 			pool_read(CONNECTION(backend, i), nullmap, nbytes);
 			if (memcmp(nullmap, nullmap1, nbytes))
@@ -75,7 +75,7 @@ AsciiRow(POOL_CONNECTION * frontend,
 				 */
 				ereport(DEBUG1,
 						(errmsg("processing ASCII row"),
-						 errdetail("NULLMAP is different between master and backend no %d", i)));
+						 errdetail("NULLMAP is different between main and backend no %d", i)));
 			}
 		}
 	}
@@ -94,7 +94,7 @@ AsciiRow(POOL_CONNECTION * frontend,
 		if (mask & nullmap[i / 8])
 		{
 			/* field size */
-			if (pool_read(MASTER(backend), &size, sizeof(int)) < 0)
+			if (pool_read(MAIN(backend), &size, sizeof(int)) < 0)
 				return POOL_END;
 
 			size1 = ntohl(size) - 4;
@@ -102,7 +102,7 @@ AsciiRow(POOL_CONNECTION * frontend,
 			/* read and send actual data only when size > 0 */
 			if (size1 > 0)
 			{
-				sendbuf = pool_read2(MASTER(backend), size1);
+				sendbuf = pool_read2(MAIN(backend), size1);
 				if (sendbuf == NULL)
 					return POOL_END;
 			}
@@ -119,7 +119,7 @@ AsciiRow(POOL_CONNECTION * frontend,
 
 			for (j = 0; j < NUM_BACKENDS; j++)
 			{
-				if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
+				if (VALID_BACKEND(j) && !IS_MAIN_NODE_ID(j))
 				{
 					/* field size */
 					if (pool_read(CONNECTION(backend, j), &size, sizeof(int)) < 0)
@@ -137,7 +137,7 @@ AsciiRow(POOL_CONNECTION * frontend,
 					if (size != size1)
 						ereport(DEBUG1,
 								(errmsg("processing ASCII row"),
-								 errdetail("size of field no %d does not match between master [size:%d] and backend no %d [size:%d]",
+								 errdetail("size of field no %d does not match between main [size:%d] and backend no %d [size:%d]",
 										   i, ntohl(size), j, ntohl(size1))));
 
 					/* read and send actual data only when size > 0 */
@@ -183,13 +183,13 @@ BinaryRow(POOL_CONNECTION * frontend,
 		return POOL_CONTINUE;
 
 	/* NULL map */
-	pool_read(MASTER(backend), nullmap, nbytes);
+	pool_read(MAIN(backend), nullmap, nbytes);
 	if (pool_write(frontend, nullmap, nbytes) < 0)
 		return POOL_END;
 	memcpy(nullmap1, nullmap, nbytes);
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i))
 		{
 			pool_read(CONNECTION(backend, i), nullmap, nbytes);
 			if (memcmp(nullmap, nullmap1, nbytes))
@@ -202,7 +202,7 @@ BinaryRow(POOL_CONNECTION * frontend,
 				 */
 				ereport(DEBUG1,
 						(errmsg("processing binary row"),
-						 errdetail("NULLMAP is different between master and backend no %d", i)));
+						 errdetail("NULLMAP is different between main and backend no %d", i)));
 			}
 		}
 	}
@@ -218,11 +218,11 @@ BinaryRow(POOL_CONNECTION * frontend,
 		if (mask & nullmap[i / 8])
 		{
 			/* field size */
-			if (pool_read(MASTER(backend), &size, sizeof(int)) < 0)
+			if (pool_read(MAIN(backend), &size, sizeof(int)) < 0)
 				return POOL_END;
 			for (j = 0; j < NUM_BACKENDS; j++)
 			{
-				if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
+				if (VALID_BACKEND(j) && !IS_MAIN_NODE_ID(j))
 				{
 					/* field size */
 					if (pool_read(CONNECTION(backend, i), &size, sizeof(int)) < 0)
@@ -237,14 +237,14 @@ BinaryRow(POOL_CONNECTION * frontend,
 					if (size != size1)
 						ereport(DEBUG1,
 								(errmsg("processing binary row"),
-								 errdetail("size of field no %d does not match between master [size:%d] and backend no %d [size:%d]",
+								 errdetail("size of field no %d does not match between main [size:%d] and backend no %d [size:%d]",
 										   i, ntohl(size), j, ntohl(size1))));
 				}
 
 				buf = NULL;
 
 				/* forward to frontend */
-				if (IS_MASTER_NODE_ID(j))
+				if (IS_MAIN_NODE_ID(j))
 					pool_write(frontend, &size, sizeof(int));
 				size = ntohl(size) - 4;
 
@@ -255,7 +255,7 @@ BinaryRow(POOL_CONNECTION * frontend,
 					if (buf == NULL)
 						return POOL_END;
 
-					if (IS_MASTER_NODE_ID(j))
+					if (IS_MAIN_NODE_ID(j))
 					{
 						pool_write(frontend, buf, size);
 					}
@@ -283,20 +283,20 @@ CompletedResponse(POOL_CONNECTION * frontend,
 				len1 = 0;
 
 	/* read command tag */
-	string = pool_read_string(MASTER(backend), &len, 0);
+	string = pool_read_string(MAIN(backend), &len, 0);
 	if (string == NULL)
 		return POOL_END;
 	else if (!strncmp(string, "BEGIN", 5))
-		TSTATE(backend, MASTER_NODE_ID) = 'T';
+		TSTATE(backend, MAIN_NODE_ID) = 'T';
 	else if (!strncmp(string, "COMMIT", 6) || !strncmp(string, "ROLLBACK", 8))
-		TSTATE(backend, MASTER_NODE_ID) = 'I';
+		TSTATE(backend, MAIN_NODE_ID) = 'I';
 
 	len1 = len;
 	string1 = pstrdup(string);
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (!VALID_BACKEND(i) || IS_MASTER_NODE_ID(i))
+		if (!VALID_BACKEND(i) || IS_MAIN_NODE_ID(i))
 			continue;
 
 		/* read command tag */
@@ -316,7 +316,7 @@ CompletedResponse(POOL_CONNECTION * frontend,
 		{
 			ereport(DEBUG1,
 					(errmsg("processing completed response"),
-					 errdetail("message length does not match between master(%d \"%s\",) and %d th server (%d \"%s\",)",
+					 errdetail("message length does not match between main(%d \"%s\",) and %d th server (%d \"%s\",)",
 							   len, string, i, len1, string1)));
 
 			/* we except INSERT, because INSERT response has OID */
@@ -349,7 +349,7 @@ CursorResponse(POOL_CONNECTION * frontend,
 	int			i;
 
 	/* read cursor name */
-	string = pool_read_string(MASTER(backend), &len, 0);
+	string = pool_read_string(MAIN(backend), &len, 0);
 	if (string == NULL)
 		return POOL_END;
 	len1 = len;
@@ -357,7 +357,7 @@ CursorResponse(POOL_CONNECTION * frontend,
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i))
 		{
 			/* read cursor name */
 			string = pool_read_string(CONNECTION(backend, i), &len, 0);
@@ -371,8 +371,8 @@ CursorResponse(POOL_CONNECTION * frontend,
 				ereport(FATAL,
 						(return_code(2),
 						 errmsg("unable to process cursor response"),
-						 errdetail("length does not match between master(%d) and %d th backend(%d)", len, i, len1),
-						 errhint("master(%s) %d th backend(%s)", string1, i, string)));
+						 errdetail("length does not match between main(%d) and %d th backend(%d)", len, i, len1),
+						 errhint("main(%s) %d th backend(%s)", string1, i, string)));
 			}
 		}
 	}
@@ -487,7 +487,7 @@ FunctionResultResponse(POOL_CONNECTION * frontend,
 			if (VALID_BACKEND(i))
 			{
 				/* result value itself */
-				if ((result = pool_read2(MASTER(backend), len)) == NULL)
+				if ((result = pool_read2(MAIN(backend), len)) == NULL)
 					ereport(FATAL,
 							(return_code(2),
 							 errmsg("unable to process function result response"),
@@ -508,7 +508,7 @@ FunctionResultResponse(POOL_CONNECTION * frontend,
 		if (VALID_BACKEND(i))
 		{
 			/* unused ('0') */
-			pool_read(MASTER(backend), &dummy, 1);
+			pool_read(MAIN(backend), &dummy, 1);
 		}
 	}
 	pool_write(frontend, "0", 1);
@@ -575,7 +575,7 @@ NotificationResponse(POOL_CONNECTION * frontend,
 						 errmsg("unable to process Notification response"),
 						 errdetail("reading from backend node %d failed", i)));
 
-			if (IS_MASTER_NODE_ID(i))
+			if (IS_MAIN_NODE_ID(i))
 			{
 				pid1 = pid;
 				len1 = len;
@@ -610,11 +610,11 @@ RowDescription(POOL_CONNECTION * frontend,
 				len1;
 	int			i;
 
-	pool_read(MASTER(backend), &num_fields, sizeof(short));
+	pool_read(MAIN(backend), &num_fields, sizeof(short));
 	num_fields1 = num_fields;
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (VALID_BACKEND(i) && !IS_MASTER_NODE_ID(i))
+		if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i))
 		{
 			/* # of fields (could be 0) */
 			pool_read(CONNECTION(backend, i), &num_fields, sizeof(short));
@@ -623,7 +623,7 @@ RowDescription(POOL_CONNECTION * frontend,
 				ereport(FATAL,
 						(return_code(2),
 						 errmsg("unable to process row description"),
-						 errdetail("num_fields does not match between backends master(%d) and %d th backend(%d)",
+						 errdetail("num_fields does not match between backends main(%d) and %d th backend(%d)",
 								   num_fields, i, num_fields1)));
 			}
 		}
@@ -638,7 +638,7 @@ RowDescription(POOL_CONNECTION * frontend,
 		int			j;
 
 		/* field name */
-		string = pool_read_string(MASTER(backend), &len, 0);
+		string = pool_read_string(MAIN(backend), &len, 0);
 		if (string == NULL)
 			return POOL_END;
 		len1 = len;
@@ -646,7 +646,7 @@ RowDescription(POOL_CONNECTION * frontend,
 
 		for (j = 0; j < NUM_BACKENDS; j++)
 		{
-			if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
+			if (VALID_BACKEND(j) && !IS_MAIN_NODE_ID(j))
 			{
 				string = pool_read_string(CONNECTION(backend, j), &len, 0);
 				if (string == NULL)
@@ -660,21 +660,21 @@ RowDescription(POOL_CONNECTION * frontend,
 					ereport(FATAL,
 							(return_code(2),
 							 errmsg("unable to process row description"),
-							 errdetail("field length does not match between backends master(%d) and %d th backend(%d)",
+							 errdetail("field length does not match between backends main(%d) and %d th backend(%d)",
 									   ntohl(len), j, ntohl(len1))));
 				}
 			}
 		}
 
 		/* type oid */
-		pool_read(MASTER(backend), &oid, sizeof(int));
+		pool_read(MAIN(backend), &oid, sizeof(int));
 		oid1 = oid;
 		ereport(DEBUG1,
 				(errmsg("processing ROW DESCRIPTION"),
 				 errdetail("type oid: %d", ntohl(oid))));
 		for (j = 0; j < NUM_BACKENDS; j++)
 		{
-			if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
+			if (VALID_BACKEND(j) && !IS_MAIN_NODE_ID(j))
 			{
 				pool_read(CONNECTION(backend, j), &oid, sizeof(int));
 
@@ -683,7 +683,7 @@ RowDescription(POOL_CONNECTION * frontend,
 				{
 					ereport(DEBUG1,
 							(errmsg("processing ROW DESCRIPTION"),
-							 errdetail("field oid does not match between backends master(%d) and %d th backend(%d)",
+							 errdetail("field oid does not match between backends main(%d) and %d th backend(%d)",
 									   ntohl(oid), j, ntohl(oid1))));
 				}
 			}
@@ -691,18 +691,18 @@ RowDescription(POOL_CONNECTION * frontend,
 		pool_write(frontend, &oid1, sizeof(int));
 
 		/* size */
-		pool_read(MASTER(backend), &size, sizeof(short));
+		pool_read(MAIN(backend), &size, sizeof(short));
 		size1 = size;
 		for (j = 0; j < NUM_BACKENDS; j++)
 		{
-			if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
+			if (VALID_BACKEND(j) && !IS_MAIN_NODE_ID(j))
 			{
 				pool_read(CONNECTION(backend, j), &size, sizeof(short));
 				if (size1 != size)
 				{
 					ereport(FATAL,
 							(errmsg("data among backends are different"),
-							 errdetail("field size does not match between backends master(%d) and %d th backend(%d", ntohs(size), j, ntohs(size1))));
+							 errdetail("field size does not match between backends main(%d) and %d th backend(%d", ntohs(size), j, ntohs(size1))));
 
 				}
 			}
@@ -713,21 +713,21 @@ RowDescription(POOL_CONNECTION * frontend,
 		pool_write(frontend, &size1, sizeof(short));
 
 		/* modifier */
-		pool_read(MASTER(backend), &mod, sizeof(int));
+		pool_read(MAIN(backend), &mod, sizeof(int));
 		ereport(DEBUG1,
 				(errmsg("processing ROW DESCRIPTION"),
 				 errdetail("modifier: %d", ntohs(mod))));
 		mod1 = mod;
 		for (j = 0; j < NUM_BACKENDS; j++)
 		{
-			if (VALID_BACKEND(j) && !IS_MASTER_NODE_ID(j))
+			if (VALID_BACKEND(j) && !IS_MAIN_NODE_ID(j))
 			{
 				pool_read(CONNECTION(backend, j), &mod, sizeof(int));
 				if (mod != mod1)
 				{
 					ereport(DEBUG1,
 							(errmsg("processing ROW DESCRIPTION"),
-							 errdetail("modifier does not match between backends master(%d) and %d th backend(%d)",
+							 errdetail("modifier does not match between backends main(%d) and %d th backend(%d)",
 									   ntohl(mod), j, ntohl(mod1))));
 				}
 			}

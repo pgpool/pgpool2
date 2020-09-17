@@ -8,32 +8,32 @@
 # test pcp_detach bypass failover_when_quorum_exists and failover_require_consensus
 #
 source $TESTLIBS
-MASTER_DIR=master
+LEADER_DIR=leader
 num_tests=2
 success_count=0
 PSQL=$PGBIN/psql
 PG_CTL=$PGBIN/pg_ctl
 
-rm -fr $MASTER_DIR
+rm -fr $LEADER_DIR
 rm -fr $STANDBY_DIR
 rm -fr $STANDBY2_DIR
 
-mkdir $MASTER_DIR
+mkdir $LEADER_DIR
 mkdir $STANDBY_DIR
 mkdir $STANDBY2_DIR
 
 
-# dir in master directory
-cd $MASTER_DIR
+# dir in leader directory
+cd $LEADER_DIR
 
-# create master environment
-echo -n "creating master pgpool and PostgreSQL clusters..."
+# create leader environment
+echo -n "creating leader pgpool and PostgreSQL clusters..."
 $PGPOOL_SETUP -m s -n 2 -p 11000|| exit 1
-echo "master setup done."
+echo "leader setup done."
 
 
 source ./bashrc.ports
-cat ../master.conf >> etc/pgpool.conf
+cat ../leader.conf >> etc/pgpool.conf
 echo 0 > etc/pgpool_node_id
 
 ./startall
@@ -44,14 +44,14 @@ wait_for_pgpool_startup
 cd ..
 
 
-# First test check if pgpool-II became a master.
-echo "Waiting for the pgpool master..."
+# First test check if pgpool-II became a leader.
+echo "Waiting for the pgpool leader..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	grep "I am the cluster leader node" $MASTER_DIR/log/pgpool.log > /dev/null 2>&1
+	grep "I am the cluster leader node" $LEADER_DIR/log/pgpool.log > /dev/null 2>&1
 	if [ $? = 0 ];then
 		success_count=$(( success_count + 1 ))
-		echo "Master brought up successfully."
+		echo "Leader brought up successfully."
 		break;
 	fi
 	echo "[check] $i times"
@@ -69,7 +69,7 @@ if [ $? = 0 ];then
 	success_count=$(( success_count + 1 ))
 fi
 
-cd master
+cd leader
 ./shutdownall
 
 echo "$success_count out of $num_tests successfull";

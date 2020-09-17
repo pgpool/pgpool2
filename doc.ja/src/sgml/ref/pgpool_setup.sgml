@@ -417,7 +417,7 @@ temporarily start pgpool-II to create standby nodes
 
 recovery node 1...pcp_recovery_node -- Command Successful
 done.
-creating follow master script
+creating follow primary script
  node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
 ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
  0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | true              | 0                 |                   |                        | 2020-08-18 13:50:19

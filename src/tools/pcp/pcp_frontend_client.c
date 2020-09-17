@@ -90,7 +90,7 @@ struct AppTypes AllAppTypes[] =
 	{"pcp_pool_status", PCP_POOL_STATUS, "h:p:U:wWvd", "display pgpool configuration and status"},
 	{"pcp_proc_count", PCP_PROC_COUNT, "h:p:U:wWvd", "display the list of pgpool-II child process PIDs"},
 	{"pcp_proc_info", PCP_PROC_INFO, "h:p:P:U:awWvd", "display a pgpool-II child process' information"},
-	{"pcp_promote_node", PCP_PROMOTE_NODE, "n:h:p:U:gwWvd", "promote a node as new master from pgpool-II"},
+	{"pcp_promote_node", PCP_PROMOTE_NODE, "n:h:p:U:gwWvd", "promote a node as new main from pgpool-II"},
 	{"pcp_recovery_node", PCP_RECOVERY_NODE, "n:h:p:U:wWvd", "recover a node"},
 	{"pcp_stop_pgpool", PCP_STOP_PGPOOL, "m:h:p:U:s:wWvda", "terminate pgpool-II"},
 	{"pcp_watchdog_info", PCP_WATCHDOG_INFO, "n:h:p:U:wWvd", "display a pgpool-II watchdog's information"},
@@ -753,7 +753,7 @@ output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose)
 		else if (cluster->quorumStatus == -1)
 			quorumStatus = "QUORUM ABSENT";
 		else if (cluster->quorumStatus == -2)
-			quorumStatus = "NO MASTER NODE";
+			quorumStatus = "NO LEADER NODE";
 		else
 			quorumStatus = "UNKNOWN";
 
@@ -763,8 +763,8 @@ output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose)
 		printf("Quorum state         : %s\n", quorumStatus);
 		printf("Alive Remote Nodes   : %d\n", cluster->aliveNodeCount);
 		printf("VIP up on local node : %s\n", cluster->escalated ? "YES" : "NO");
-		printf("Master Node Name     : %s\n", cluster->masterNodeName);
-		printf("Master Host Name     : %s\n\n", cluster->masterHostName);
+		printf("Leader Node Name     : %s\n", cluster->leaderNodeName);
+		printf("Leader Host Name     : %s\n\n", cluster->leaderHostName);
 
 		printf("Watchdog Node Information \n");
 		for (i = 0; i < cluster->nodeCount; i++)
@@ -786,8 +786,8 @@ output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose)
 		printf("%d %s %s %s\n\n",
 			   cluster->remoteNodeCount + 1,
 			   cluster->escalated ? "YES" : "NO",
-			   cluster->masterNodeName,
-			   cluster->masterHostName);
+			   cluster->leaderNodeName,
+			   cluster->leaderHostName);
 
 		for (i = 0; i < cluster->nodeCount; i++)
 		{
@@ -960,9 +960,9 @@ backend_status_to_string(BackendInfo * bi)
 char *
 role_to_str(SERVER_ROLE role)
 {
-	static char *role_str[] = {"master", "slave", "primary", "standby"};
+	static char *role_str[] = {"main", "replica", "primary", "standby"};
 
-	if (role < ROLE_MASTER || role > ROLE_STANDBY)
+	if (role < ROLE_MAIN || role > ROLE_STANDBY)
 		return "unknown";
 	return role_str[role];
 }

@@ -147,7 +147,7 @@
       <para>
        <!--
        If a database is replicated (because running in either
-       replication mode or master/slave mode), performing a SELECT
+       replication mode or native replication mode), performing a SELECT
        query on any server will return the same result. <productname>Pgpool-II</productname>
        takes advantage of the replication feature in order to reduce
        the load on each PostgreSQL server.  It does that by

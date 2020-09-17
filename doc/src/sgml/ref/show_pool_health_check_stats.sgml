@@ -91,7 +91,7 @@
       <entry>role</entry>
       <entry>
        Role of the node. Either primary or standby in streaming
-       replication mode. Either master or slave in other mode.
+       replication mode. Either main or replica in other mode.
       </entry>
      </row>
 

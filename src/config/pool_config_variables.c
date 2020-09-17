@@ -49,7 +49,7 @@
 #endif
 
 #define default_reset_query_list	"ABORT;DISCARD ALL"
-#define default_black_function_list "nextval,setval"
+#define default_write_function_list "nextval,setval"
 
 #define EMPTY_CONFIG_GENERIC {NULL, 0, 0, NULL, 0, false, 0, 0, 0, 0, NULL, NULL}
 #define EMPTY_CONFIG_BOOL {EMPTY_CONFIG_GENERIC, NULL, false, NULL, NULL, NULL, false}
@@ -229,7 +229,7 @@ static const struct config_enum_entry backend_clustering_mode_options[] = {
 	{NULL, 0, false}
 };
 
-static const struct config_enum_entry master_slave_sub_mode_options[] = {
+static const struct config_enum_entry native_replication_sub_mode_options[] = {
 	{"slony", SLONY_MODE, false},
 	{"stream", STREAM_MODE, false},
 	{"logical", LOGICAL_MODE, false},
@@ -279,7 +279,7 @@ static const struct config_enum_entry disable_load_balance_on_write_options[] = 
 };
 
 static const struct config_enum_entry relcache_query_target_options[] = {
-	{"master", RELQTARGET_MASTER, false},
+	{"primary", RELQTARGET_PRIMARY, false},
 	{"load_balance_node", RELQTARGET_LOAD_BALANCE_NODE, false},
 	{NULL, 0, false}
 };
@@ -482,7 +482,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"replication_stop_on_mismatch", CFGCXT_RELOAD, REPLICATION_CONFIG,
-			"Starts degeneration and stops replication, If there's a data mismatch between master and secondary.",
+			"Starts degeneration and stops replication, If there's a data mismatch between primary and secondary.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.replication_stop_on_mismatch,
@@ -492,7 +492,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"failover_if_affected_tuples_mismatch", CFGCXT_RELOAD, REPLICATION_CONFIG,
-			"Starts degeneration, If there's a data mismatch between master and secondary.",
+			"Starts degeneration, If there's a data mismatch between primary and secondary.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.failover_if_affected_tuples_mismatch,
@@ -511,11 +511,11 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"master_slave_mode", CFGCXT_INIT, MASTER_SLAVE_CONFIG,
-			"Enables Master/Slave mode.",
+		{"native_replication_mode", CFGCXT_INIT, NATIVE_REPLICATION_CONFIG,
+			"Enables Native Replication mode.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
-		&g_pool_config.master_slave_mode,
+		&g_pool_config.native_replication_mode,
 		false,
 		NULL, NULL, NULL
 	},
@@ -622,7 +622,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"clear_memqcache_on_escalation", CFGCXT_RELOAD, WATCHDOG_CONFIG,
-			"Clears the query cache in the shared memory when pgpool-II escaltes to master watchdog node.",
+			"Clears the query cache in the shared memory when pgpool-II escaltes to leader watchdog node.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.clear_memqcache_on_escalation,
@@ -934,11 +934,11 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"follow_master_command", CFGCXT_RELOAD, FAILOVER_CONFIG,
-			"Command to execute in master/slave streaming replication mode after a master node failover.",
+		{"follow_primary_command", CFGCXT_RELOAD, FAILOVER_CONFIG,
+			"Command to execute in streaming replication mode after a primary node failover.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
-		&g_pool_config.follow_master_command,
+		&g_pool_config.follow_primary_command,
 		"",
 		NULL, NULL, NULL, NULL
 	},
@@ -1005,7 +1005,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"wd_escalation_command", CFGCXT_RELOAD, WATCHDOG_CONFIG,
-			"Command to execute when watchdog node becomes cluster master/leader node.",
+			"Command to execute when watchdog node becomes cluster leader node.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_escalation_command,
@@ -1015,7 +1015,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"wd_de_escalation_command", CFGCXT_RELOAD, WATCHDOG_CONFIG,
-			"Command to execute when watchdog node resigns from the cluster master/leader node.",
+			"Command to execute when watchdog node resigns from the cluster leader node.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_de_escalation_command,
@@ -1035,7 +1035,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"delegate_IP", CFGCXT_INIT, WATCHDOG_CONFIG,
-			"Delegate IP address to be used when pgpool node become a watchdog cluster master/leader.",
+			"Delegate IP address to be used when pgpool node become a watchdog cluster leader.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.delegate_IP,
@@ -1313,12 +1313,12 @@ static struct config_string_list ConfigureNamesStringList[] =
 	},
 
 	{
-		{"white_function_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
+		{"read_only_function_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
 			"list of functions that does not writes to database.",
 			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
-		&g_pool_config.white_function_list,
-		&g_pool_config.num_white_function_list,
+		&g_pool_config.read_only_function_list,
+		&g_pool_config.num_read_only_function_list,
 		NULL,
 		",",
 		true,
@@ -1326,24 +1326,24 @@ static struct config_string_list ConfigureNamesStringList[] =
 	},
 
 	{
-		{"black_function_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
+		{"write_function_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
 			"list of functions that writes to database.",
 			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
-		&g_pool_config.black_function_list,
-		&g_pool_config.num_black_function_list,
-		(const char *) default_black_function_list,
+		&g_pool_config.write_function_list,
+		&g_pool_config.num_write_function_list,
+		(const char *) default_write_function_list,
 		",",
 		true,
 		NULL, NULL, NULL
 	},
 	{
-		{"white_memqcache_table_list", CFGCXT_RELOAD, CACHE_CONFIG,
+		{"cache_safe_memqcache_table_list", CFGCXT_RELOAD, CACHE_CONFIG,
 			"list of tables to be cached.",
 			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
-		&g_pool_config.white_memqcache_table_list,
-		&g_pool_config.num_white_memqcache_table_list,
+		&g_pool_config.cache_safe_memqcache_table_list,
+		&g_pool_config.num_cache_safe_memqcache_table_list,
 		NULL,
 		",",
 		true,
@@ -1351,12 +1351,12 @@ static struct config_string_list ConfigureNamesStringList[] =
 	},
 
 	{
-		{"black_memqcache_table_list", CFGCXT_RELOAD, CACHE_CONFIG,
+		{"cache_unsafe_memqcache_table_list", CFGCXT_RELOAD, CACHE_CONFIG,
 			"list of tables should not be cached.",
 			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
-		&g_pool_config.black_memqcache_table_list,
-		&g_pool_config.num_black_memqcache_table_list,
+		&g_pool_config.cache_unsafe_memqcache_table_list,
+		&g_pool_config.num_cache_unsafe_memqcache_table_list,
 		NULL,
 		",",
 		true,
@@ -1364,12 +1364,12 @@ static struct config_string_list ConfigureNamesStringList[] =
 	},
 
 	{
-		{"black_query_pattern_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
+		{"primary_routing_query_pattern_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
 			"list of query patterns that should be sent to primary node.",
 			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
-		&g_pool_config.black_query_pattern_list,
-		&g_pool_config.num_black_query_pattern_list,
+		&g_pool_config.primary_routing_query_pattern_list,
+		&g_pool_config.num_primary_routing_query_pattern_list,
 		NULL,
 		";",
 		true,
@@ -1673,7 +1673,7 @@ static struct config_string_array ConfigureNamesStringArray[] =
 			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
-		"",	/* for ALWAYS_MASTER */
+		"",	/* for ALWAYS_PRIMARY */
 		EMPTY_CONFIG_STRING,
 		BackendFlagsAssignFunc, NULL, BackendFlagsShowFunc, BackendSlotEmptyCheckFunc
 	},
@@ -2113,7 +2113,7 @@ static struct config_int ConfigureNamesInt[] =
 static struct config_enum ConfigureNamesEnum[] =
 {
 	{
-		{"backend_clustering_mode", CFGCXT_INIT, MASTER_SLAVE_CONFIG,
+		{"backend_clustering_mode", CFGCXT_INIT, NATIVE_REPLICATION_CONFIG,
 			"backend clustering mode.",
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
@@ -2171,18 +2171,18 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"master_slave_sub_mode", CFGCXT_INIT, MASTER_SLAVE_CONFIG,
-			"master/slave sub mode.",
+		{"native_replication_sub_mode", CFGCXT_INIT, NATIVE_REPLICATION_CONFIG,
+			"native replication sub mode.",
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
-		(int *) &g_pool_config.master_slave_sub_mode,
+		(int *) &g_pool_config.native_replication_sub_mode,
 		STREAM_MODE,
-		master_slave_sub_mode_options,
+		native_replication_sub_mode_options,
 		NULL, NULL, NULL, NULL
 	},
 
 	{
-		{"log_standby_delay", CFGCXT_RELOAD, MASTER_SLAVE_CONFIG,
+		{"log_standby_delay", CFGCXT_RELOAD, NATIVE_REPLICATION_CONFIG,
 			"When to log standby delay.",
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
@@ -2231,7 +2231,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
 		(int *) &g_pool_config.relcache_query_target,
-		RELQTARGET_MASTER,
+		RELQTARGET_PRIMARY,
 		relcache_query_target_options,
 		NULL, NULL, NULL, NULL
 	},
@@ -2813,7 +2813,7 @@ initialize_variables_with_default(struct config_generic *gconf)
 				}
 				else
 				{
-					if (strcmp(gconf->name, "black_query_pattern_list") == 0)
+					if (strcmp(gconf->name, "primary_routing_query_pattern_list") == 0)
 					{
 						*conf->variable = get_list_from_string_regex_delim(newval, conf->seperator, conf->list_elements_count);
 					}
@@ -3803,7 +3803,7 @@ setConfigOptionVar(struct config_generic *record, const char *name, int index_va
 						pfree(*conf->variable);
 					}
 
-					if (strcmp(name, "black_query_pattern_list") == 0)
+					if (strcmp(name, "primary_routing_query_pattern_list") == 0)
 					{
 						*conf->variable = get_list_from_string_regex_delim(newval, conf->seperator, conf->list_elements_count);
 					}
@@ -4120,9 +4120,9 @@ BackendFlagsAssignFunc(ConfigContext context, char *newval, int index, int eleve
 			disallow_to_failover_is_specified = true;
 		}
 
-		else if ((!strcmp(flags[i], "ALWAYS_MASTER")))
+		else if ((!strcmp(flags[i], "ALWAYS_PRIMARY")))
 		{
-			flag |= POOL_ALWAYS_MASTER;
+			flag |= POOL_ALWAYS_PRIMARY;
 		}
 
 		else
@@ -4293,12 +4293,12 @@ BackendFlagsShowFunc(int index)
 	else if (POOL_DISALLOW_TO_FAILOVER(flag))
 		snprintf(buffer, sizeof(buffer), "DISALLOW_TO_FAILOVER");
 
-	if (POOL_ALWAYS_MASTER & flag)
+	if (POOL_ALWAYS_PRIMARY & flag)
 	{
 		if (*buffer == '\0')
-			snprintf(buffer, sizeof(buffer), "ALWAYS_MASTER");
+			snprintf(buffer, sizeof(buffer), "ALWAYS_PRIMARY");
 		else
-			snprintf(buffer+strlen(buffer), sizeof(buffer), "|ALWAYS_MASTER");
+			snprintf(buffer+strlen(buffer), sizeof(buffer), "|ALWAYS_PRIMARY");
 	}
 	return buffer;
 }

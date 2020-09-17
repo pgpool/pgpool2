@@ -266,7 +266,7 @@
     2019-04-18 [233673c]
     -->
     <para>
-     Fix <xref linkend="GUC-BLACK-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
+     Fix <xref linkend="GUC-write-function-list">'s broken default value. (Tatsuo Ishii)
     </para>
    </listitem>
 

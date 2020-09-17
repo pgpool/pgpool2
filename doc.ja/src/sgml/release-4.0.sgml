@@ -1661,9 +1661,9 @@
     -->
     <para>
      <!--
-     Fix <xref linkend="GUC-BLACK-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
+     Fix <xref linkend="GUC-WRITE-FUNCTION-LIST">'s broken default value. (Tatsuo Ishii)
      -->
-     <xref linkend="GUC-BLACK-FUNCTION-LIST">のデフォル値が間違っていた不具合を修正しました。(Tatsuo Ishii)
+     <xref linkend="GUC-WRITE-FUNCTION-LIST">のデフォル値が間違っていた不具合を修正しました。(Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -1934,15 +1934,15 @@
     -->
     <para>
      <!--
-     Doc: add more explanation to <xref linkend="guc-follow-master-command">. (Tatsuo Ishii)
+     Doc: add more explanation to <xref linkend="guc-follow-primary-command">. (Tatsuo Ishii)
      -->
-     Doc：<xref linkend="guc-follow-master-command">に関する説明を追加しました。(Tatsuo Ishii)
+     Doc：<xref linkend="guc-follow-primary-command">に関する説明を追加しました。(Tatsuo Ishii)
     </para>
     <para>
      <!--
-     Add description how <xref linkend="guc-follow-master-command"> is executed etc.
+     Add description how <xref linkend="guc-follow-primary-command"> is executed etc.
      -->
-     <xref linkend="guc-follow-master-command">の実行条件などの説明を追加しました。
+     <xref linkend="guc-follow-primary-command">の実行条件などの説明を追加しました。
     </para>
    </listitem>
 
@@ -2986,10 +2986,10 @@
     -->
     <para>
      <!--
-     Add new parameter <xref linkend="guc-black-query-pattern-list"> to enable
+     Add new parameter <xref linkend="guc-primary-routing-query-pattern-list"> to enable
      specifying SQL patterns lists that should not be load-balanced. (Bo Peng)
      -->
-     負荷分散すべきではないSQLパターンのリストを指定できる<xref linkend="guc-black-query-pattern-list"> を追加しました。(Bo Peng)
+     負荷分散すべきではないSQLパターンのリストを指定できる<xref linkend="guc-primary-routing-query-pattern-list"> を追加しました。(Bo Peng)
     </para>
     <para>
      <!--

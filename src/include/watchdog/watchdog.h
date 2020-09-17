@@ -176,7 +176,7 @@ typedef struct WatchdogNode
 	int			standby_nodes_count;	/* number of standby nodes joined the
 										 * cluster only applicable when this
 										 * WatchdogNode is the
-										 * master/coordinator node */
+										 * leader/coordinator node */
 	int			quorum_status;	/* quorum status on the node */
 	bool		escalated;		/* true if the Watchdog node has performed
 								 * escalation */

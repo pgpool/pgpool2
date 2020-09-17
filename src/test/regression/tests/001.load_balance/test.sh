@@ -24,7 +24,7 @@ do
 
 	echo "backend_weight0 = 0" >> etc/pgpool.conf
 	echo "backend_weight1 = 1" >> etc/pgpool.conf
-	echo "black_function_list = 'f1,public.f2'" >> etc/pgpool.conf
+	echo "write_function_list = 'f1,public.f2'" >> etc/pgpool.conf
 
 	./startall
 
@@ -52,25 +52,25 @@ EOF
 	fi
 	echo ok: load balance works.
 
-# check if black function list worked
+# check if write function list worked
 	fgrep "SELECT f1(1);" log/pgpool.log |grep "DB node id: 0">/dev/null 2>&1
 	if [ $? != 0 ];then
 	# expected result not found
-		echo fail: black function is sent to node 1.
+		echo fail: write function is sent to node 1.
 		./shutdownall
 		exit 1
 	fi
 	fgrep "SELECT public.f2(1);" log/pgpool.log |grep "DB node id: 0">/dev/null 2>&1
 	if [ $? != 0 ];then
 	# expected result not found
-		echo fail: black function is sent to node 1.
+		echo fail: write function is sent to node 1.
 		./shutdownall
 		exit 1
 	fi
-	echo ok: black function list works.
+	echo ok: write function list works.
 
-	echo "white_function_list = 'f1,public.f2'" >> etc/pgpool.conf
-	echo "black_function_list = ''" >> etc/pgpool.conf
+	echo "read_only_function_list = 'f1,public.f2'" >> etc/pgpool.conf
+	echo "write_function_list = ''" >> etc/pgpool.conf
 
 	./pgpool_reload
 	sleep $st
@@ -80,26 +80,26 @@ SELECT f1(1);			-- this does load balance
 SELECT public.f2(1);	-- this does load balance
 EOF
 
-# check if white function list worked
+# check if read_only function list worked
 	fgrep "SELECT f1(1);" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1
 	if [ $? != 0 ];then
 	# expected result not found
-		echo fail: white function is sent to zero-weight node.
+		echo fail: read_only function is sent to zero-weight node.
 		./shutdownall
 		exit 1
 	fi
 	fgrep "SELECT public.f2(1);" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1
 	if [ $? != 0 ];then
 	# expected result not found
-		echo fail: white function is sent to zero-weight node.
+		echo fail: read_only function is sent to zero-weight node.
 		./shutdownall
 		exit 1
 	fi
-	echo ok: white function list works.
+	echo ok: read_only function list works.
 
-# check if black query pattern list worked
+# check if primary routing query pattern list worked
 	./shutdownall
-	echo "black_query_pattern_list = 'SELECT \'a\'\;;SELECT 1\;;SELECT \'\;\'\;;SELECT \* FROM t1\;;^.*t2.*\;$;^.*f1.*$'" >> etc/pgpool.conf
+	echo "primary_routing_query_pattern_list = 'SELECT \'a\'\;;SELECT 1\;;SELECT \'\;\'\;;SELECT \* FROM t1\;;^.*t2.*\;$;^.*f1.*$'" >> etc/pgpool.conf
 	./startall
 	wait_for_pgpool_startup
 
@@ -115,9 +115,9 @@ EOF
 	echo "$queries" | while read query; do
 		$PSQL test -c "$query"
 
-		# If master-slave mode, all queries are sent to primary node only.
-		# If query match both black_query_pattern_list and white_function_list,
-		# white_function_list will be ignored, and query is sent to primary node only.
+		# If native replication mode, all queries are sent to primary node only.
+		# If query match both primary_routing_query_pattern_list and read_only_function_list,
+		# read_only_function_list will be ignored, and query is sent to primary node only.
 		#
 		# If replication node, all queries are load-blanced.
 		if [[ $mode = "s" ]];then
@@ -129,7 +129,7 @@ EOF
 
 		if [ $? != 0 ];then
 			# expected result not found
-			echo "fail: black query: ${query} is load-blanced."
+			echo "fail: primary routing query: ${query} is load-blanced."
 			./shutdownall
 			exit 1
 		fi
@@ -138,12 +138,12 @@ EOF
 	if [ $? -eq 1 ]; then
 		exit 1
 	fi
-	echo ok: black query pattern list works.
+	echo ok: primary routing query pattern list works.
 
 	# check if statement level load balance worked
 	./shutdownall
-	echo "white_function_list = ''" >> etc/pgpool.conf
-	echo "black_function_list = ''" >> etc/pgpool.conf
+	echo "read_only_function_list = ''" >> etc/pgpool.conf
+	echo "write_function_list = ''" >> etc/pgpool.conf
 	echo "statement_level_load_balance = on" >> etc/pgpool.conf
 	echo "log_min_messages = debug1" >> etc/pgpool.conf
 
@@ -165,7 +165,7 @@ EOF
 	echo ok: statement level load balance works.
 
 # in replication mode if load_balance_mode = off, SELECT query inside
-# an explicit transaction should be sent to master only.
+# an explicit transaction should be sent to main node only.
 	if [ $mode = "r" ];then
 		./shutdownall
 		echo "load_balance_mode = off" >> etc/pgpool.conf
@@ -184,7 +184,7 @@ EOF
 			fgrep "SELECT 1;" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1		
 			if [ $? != 0 ];then
 			# the SELECT should not be executed on node 1
-				echo ok: select is sent to only master when not load-blanced.
+				echo ok: select is sent to only main node when not load-blanced.
 				ok=1
 			fi
 		# the SELECT should be executed on node 0
@@ -193,8 +193,8 @@ EOF
 # in replication mode if load_balance_mode = off, SELECT query
 # including writing function should be sent to all the nodes.
 # per [pgpool-general: 2221].
-		echo "black_function_list = 'f1'" >> etc/pgpool.conf
-		echo "white_function_list = ''" >> etc/pgpool.conf
+		echo "write_function_list = 'f1'" >> etc/pgpool.conf
+		echo "read_only_function_list = ''" >> etc/pgpool.conf
 		./pgpool_reload
 		sleep $st
 		$PSQL test <<EOF
@@ -205,7 +205,7 @@ EOF
 			fgrep "SELECT f1(2);" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1		
 			if [ $? = 0 ];then
 			# the SELECT should be executed on node 0 & 1
-				echo ok: black function is sent to all nodes.
+				echo ok: write function is sent to all nodes.
 				ok=`expr $ok + 1`
 			fi
 		# the SELECT should be executed on node 0
@@ -217,12 +217,12 @@ EOF
 	fi
 
 # -------------------------------------------------------------------------------
-# check the case when black_function_list and white_function_list are both empty.
+# check the case when write_function_list and read_only_function_list are both empty.
 # In this case pg_proc.provolatile is checked. If it is 'v' (volatile), then the
 # function is regarded doing writes.
 # -------------------------------------------------------------------------------
-	echo "black_function_list = ''" >> etc/pgpool.conf
-	echo "white_function_list = ''" >> etc/pgpool.conf
+	echo "write_function_list = ''" >> etc/pgpool.conf
+	echo "read_only_function_list = ''" >> etc/pgpool.conf
 	./pgpool_reload
 	sleep $st
 

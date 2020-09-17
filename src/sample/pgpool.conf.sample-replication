@@ -355,20 +355,20 @@ load_balance_mode = on
                                    # (change requires restart)
 ignore_leading_white_space = on
                                    # Ignore leading white spaces of each query
-white_function_list = ''
+read_only_function_list = ''
                                    # Comma separated list of function names
                                    # that don't write to database
                                    # Regexp are accepted
-black_function_list = ''
+write_function_list = ''
                                    # Comma separated list of function names
                                    # that write to database
                                    # Regexp are accepted
-				   # If both white_function_list and black_function_list
+				   # If both read_only_function_list and write_function_list
 				   # is empty, function's volatile property is checked.
 				   # If it's volatile, the function is regarded as a
 				   # writing function.
 
-black_query_pattern_list = ''
+primary_routing_query_pattern_list = ''
                                    # Semicolon separated list of query patterns
                                    # that should be sent to primary node
                                    # Regexp are accepted
@@ -425,14 +425,14 @@ dml_adaptive_object_relationship_list= ''
                                    #
                                    # example: 'tb_t1:tb_t2,insert_tb_f_func():tb_f,tb_v:my_view'
                                    # Note: function name in this list must also be present in
-                                   # the black_function_list
+                                   # the write_function_list
                                    # only valid for disable_load_balance_on_write = 'dml_adaptive'.
 
 statement_level_load_balance = off
                                    # Enables statement level load balancing
 
 #------------------------------------------------------------------------------
-# MASTER/SLAVE MODE
+# NATIVE REPLICATION MODE
 #------------------------------------------------------------------------------
 
 # - Streaming -
@@ -459,19 +459,19 @@ delay_threshold = 0
 
 # - Special commands -
 
-follow_master_command = ''
-                                   # Executes this command after master failover
+follow_primary_command = ''
+                                   # Executes this command after main node failover
                                    # Special values:
                                    #   %d = failed node id
                                    #   %h = failed node host name
                                    #   %p = failed node port number
                                    #   %D = failed node database cluster path
-                                   #   %m = new master node id
-                                   #   %H = new master node hostname
-                                   #   %M = old master node id
+                                   #   %m = new main node id
+                                   #   %H = new main node hostname
+                                   #   %M = old main node id
                                    #   %P = old primary node id
-                                   #   %r = new master port number
-                                   #   %R = new master database cluster path
+                                   #   %r = new main port number
+                                   #   %R = new main database cluster path
                                    #   %N = old primary node hostname
                                    #   %S = old primary node port number
                                    #   %% = '%' character
@@ -529,12 +529,12 @@ failover_command = ''
                                    #   %h = failed node host name
                                    #   %p = failed node port number
                                    #   %D = failed node database cluster path
-                                   #   %m = new master node id
-                                   #   %H = new master node hostname
-                                   #   %M = old master node id
+                                   #   %m = new main node id
+                                   #   %H = new main node hostname
+                                   #   %M = old main node id
                                    #   %P = old primary node id
-                                   #   %r = new master port number
-                                   #   %R = new master database cluster path
+                                   #   %r = new main port number
+                                   #   %R = new main database cluster path
                                    #   %N = old primary node hostname
                                    #   %S = old primary node port number
                                    #   %% = '%' character
@@ -545,12 +545,12 @@ failback_command = ''
                                    #   %h = failed node host name
                                    #   %p = failed node port number
                                    #   %D = failed node database cluster path
-                                   #   %m = new master node id
-                                   #   %H = new master node hostname
-                                   #   %M = old master node id
+                                   #   %m = new main node id
+                                   #   %H = new main node hostname
+                                   #   %M = old main node id
                                    #   %P = old primary node id
-                                   #   %r = new master port number
-                                   #   %R = new master database cluster path
+                                   #   %r = new main port number
+                                   #   %R = new main database cluster path
                                    #   %N = old primary node hostname
                                    #   %S = old primary node port number
                                    #   %% = '%' character
@@ -701,7 +701,7 @@ wd_escalation_command = ''
                                     # Executes this command at escalation on new active pgpool.
                                     # (change requires restart)
 wd_de_escalation_command = ''
-                                    # Executes this command when master pgpool resigns from being master.
+                                    # Executes this command when leader pgpool resigns from being leader.
                                     # (change requires restart)
 
 # - Watchdog consensus settings for failover -
@@ -850,10 +850,10 @@ check_temp_table = catalog
 
 check_unlogged_table = on
                                    # If on, enable unlogged table check in SELECT statements.
-                                   # This initiates queries against system catalog of primary/master
-                                   # thus increases load of master.
+                                   # This initiates queries against system catalog of primary/main
+                                   # thus increases load of primary.
                                    # If you are absolutely sure that your system never uses unlogged tables
-                                   # and you want to save access to primary/master, you could turn this off.
+                                   # and you want to save access to primary/main, you could turn this off.
                                    # Default is on.
 enable_shared_relcache = on
                                    # If on, relation cache stored in memory cache,
@@ -861,7 +861,7 @@ enable_shared_relcache = on
                                    # Default is on.
                                    # (change requires restart)
 
-relcache_query_target = master     # Target node to send relcache queries. Default is master (primary) node.
+relcache_query_target = primary     # Target node to send relcache queries. Default is primary node.
                                    # If load_balance_node is specified, queries will be sent to load balance node.
 #------------------------------------------------------------------------------
 # IN MEMORY QUERY MEMORY CACHE
@@ -913,11 +913,11 @@ memqcache_cache_block_size = 1MB
 memqcache_oiddir = '/var/log/pgpool/oiddir'
                                    # Temporary work directory to record table oids
                                    # (change requires restart)
-white_memqcache_table_list = ''
+cache_safe_memqcache_table_list = ''
                                    # Comma separated list of table names to memcache
                                    # that don't write to database
                                    # Regexp are accepted
-black_memqcache_table_list = ''
+cache_unsafe_memqcache_table_list = ''
                                    # Comma separated list of table names not to memcache
                                    # that don't write to database
                                    # Regexp are accepted

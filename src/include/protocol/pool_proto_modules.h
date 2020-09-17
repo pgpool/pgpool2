@@ -161,8 +161,8 @@ extern int	check_copy_from_stdin(Node *node);	/* returns non 0 if this is a
 extern void query_ps_status(char *query, POOL_CONNECTION_POOL * backend);	/* show ps status */
 extern POOL_STATUS start_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node *node);
 extern POOL_STATUS end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
-extern int	detect_deadlock_error(POOL_CONNECTION * master, int major);
-extern int	detect_serialization_error(POOL_CONNECTION * master, int major, bool unread);
+extern int	detect_deadlock_error(POOL_CONNECTION * backend, int major);
+extern int	detect_serialization_error(POOL_CONNECTION * backend, int major, bool unread);
 extern int	detect_active_sql_transaction_error(POOL_CONNECTION * backend, int major);
 extern int	detect_query_cancel_error(POOL_CONNECTION * backend, int major);
 extern int	detect_idle_in_transaction_sesion_timeout_error(POOL_CONNECTION * backend, int major);

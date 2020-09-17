@@ -15,14 +15,14 @@
   streaming replication cluster with some exceptions. First,
   fail over and online recovery are managed
   by <productname>Aurora</productname>. So you don't need to
-  set <xref linkend="guc-failover-command">, <xref linkend="guc-follow-master-command">,
+  set <xref linkend="guc-failover-command">, <xref linkend="guc-follow-primary-command">,
   and recovery related parameters. In this section we explain
   how to set up <productname>Pgpool-II</productname> for Aurora.
   -->
   <productname>Amazon Aurora for PostgreSQL
    Compatibility</productname> (Aurora) は、<productname>PostgreSQL</productname>用のマネージドサービスです。
   ユーザから見ると、<productname>Aurora</productname>は、いくつか例外があるものの、ストリーミングレプリケーションのクラスタのように見えます。フェイルオーバやオンラインリカバリは<productname>Aurora</productname>によって管理されます。
-  ですから、<xref linkend="guc-failover-command">、<xref linkend="guc-follow-master-command">、
+  ですから、<xref linkend="guc-failover-command">、<xref linkend="guc-follow-primary-command">、
     それにオンラインリカバリ関連のパラメータは設定の必要がありません。
     この章では、Aurora用の<productname>Pgpool-II</productname>設定を説明します。
  </para>
@@ -97,11 +97,11 @@
     <listitem>
      <para>
       <!--
-      Set <varname>ALWAYS_MASTER</varname> flag to
-      the <xref linkend="guc-backend-flag"> for the master
+      Set <varname>ALWAYS_PRIMARY</varname> flag to
+      the <xref linkend="guc-backend-flag"> for the primary
       node.
       -->
-      <xref linkend="guc-backend-hostname">0の<xref linkend="guc-backend-flag">の<varname>ALWAYS_MASTER</varname>をオンにします。
+      <xref linkend="guc-backend-hostname">0の<xref linkend="guc-backend-flag">の<varname>ALWAYS_PRIMARY</varname>をオンにします。
      </para>
     </listitem>
     <listitem>

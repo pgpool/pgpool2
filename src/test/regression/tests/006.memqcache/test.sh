@@ -22,8 +22,8 @@ do
 	echo "done."
 
 	echo "memory_cache_enabled = on" >> etc/pgpool.conf
-	echo "white_memqcache_table_list = 'white_v'" >> etc/pgpool.conf
-	echo "black_memqcache_table_list = 'black_t'" >> etc/pgpool.conf
+	echo "cache_safe_memqcache_table_list = 'cache_safe_v'" >> etc/pgpool.conf
+	echo "cache_unsafe_memqcache_table_list = 'cache_unsafe_t'" >> etc/pgpool.conf
 
 	source ./bashrc.ports
 
@@ -41,22 +41,22 @@ do
 	$PSQL test <<EOF
 CREATE SCHEMA other_schema;
 CREATE TABLE t1 (i int);
-CREATE TABLE black_t (i int);
+CREATE TABLE cache_unsafe_t (i int);
 CREATE TABLE with_modify (i int);
 CREATE TABLE explain_analyze (i int);
 CREATE VIEW normal_v AS SELECT * FROM t1;
-CREATE VIEW white_v AS SELECT * FROM t1;
+CREATE VIEW cache_safe_v AS SELECT * FROM t1;
 CREATE FUNCTION public.immutable_func(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL IMMUTABLE;
 CREATE FUNCTION other_schema.volatile_func(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL VOLATILE;
 SELECT pg_sleep(2);	-- Sleep for a while to make sure object creations are replicated
 SELECT * FROM t1;
 SELECT * FROM t1;
-SELECT * FROM black_t;
-SELECT * FROM black_t;
+SELECT * FROM cache_unsafe_t;
+SELECT * FROM cache_unsafe_t;
 SELECT * FROM normal_v;
 SELECT * FROM normal_v;
-SELECT * FROM white_v;
-SELECT * FROM white_v;
+SELECT * FROM cache_safe_v;
+SELECT * FROM cache_safe_v;
 SELECT * FROM with_modify;
 WITH cte AS (INSERT INTO with_modify values(1) RETURNING *) SELECT * FROM with_modify;
 WITH cte AS (INSERT INTO with_modify values(1) RETURNING *) SELECT * FROM with_modify;
@@ -72,9 +72,9 @@ EOF
 
 	success=true
 	grep "fetched from cache" log/pgpool.log | grep t1 > /dev/null || success=false
-	grep "fetched from cache" log/pgpool.log | grep black_t > /dev/null && success=false
+	grep "fetched from cache" log/pgpool.log | grep cache_unsafe_t > /dev/null && success=false
 	grep "fetched from cache" log/pgpool.log | grep normal_v > /dev/null && success=false
-	grep "fetched from cache" log/pgpool.log | grep white_v > /dev/null || success=false
+	grep "fetched from cache" log/pgpool.log | grep cache_safe_v > /dev/null || success=false
 	grep "fetched from cache" log/pgpool.log | grep with_modify > /dev/null && success=false
 	grep "fetched from cache" log/pgpool.log | grep immutable_func > /dev/null || success=false
 	grep "fetched from cache" log/pgpool.log | grep volatile_func > /dev/null && success=false

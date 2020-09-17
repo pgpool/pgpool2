@@ -7,7 +7,7 @@
   <productname>Pgpool-II</productname> load balancing of SELECT queries
   works with any clustering mode except raw mode. When enabled
     <productname>Pgpool-II</productname> sends the writing queries to the
-    <acronym>primary node</acronym> in Master Slave mode, all of the
+    <acronym>primary node</acronym> in Native Replication mode, all of the
     backend nodes in Replication mode, and other queries get load
     balanced among all backend nodes.  To which node the load
     balancing mechanism sends read queries is decided at the session
@@ -27,7 +27,7 @@
    arbitrary comment(<emphasis>/*NO LOAD BALANCE*/</emphasis> is usually used)
    before the <acronym>SELECT</acronym> statement. This will disable the
    load balance of the particular query and <productname>Pgpool-II</productname>
-   will send it to the master node (the primary node in Master Slave mode).
+   will send it to the main node (the primary node in Native Replication mode).
   </para>
  </note>
 
@@ -52,7 +52,7 @@
     </listitem>
     <listitem>
      <para>
-      either in replication mode or master slave mode
+      either in replication mode or native replication mode
      </para>
     </listitem>
     <listitem>
@@ -76,13 +76,13 @@
 	   transaction has not issued a write query yet (until a write
 	   query is issued, load balance is possible. Here "write query"
 	   means non SELECT DML or DDL. <EMPHASIS>Before <productname>Pgpool-II</> 4.1</>,
-	   SELECTs having write functions as specified in black or
-	   white function list is not regarded as a write query.)
+	   SELECTs having write functions as specified in write or
+	   read_only function list is not regarded as a write query.)
 	  </para>
 	 </listitem>
 	 <listitem>
 	  <para>
-	   If black and white function list is empty, SELECTs having
+	   If write and read_only function list is empty, SELECTs having
 	   functions is regarded as a read only query.
 	  </para>
 	 </listitem>
@@ -106,13 +106,13 @@
       it starts with "SELECT" or one of COPY TO STDOUT, EXPLAIN,
       EXPLAIN ANALYZE SELECT... <xref linkend="guc-ignore-leading-white-space"> = <literal>true</>
        will ignore leading white space.
-       (Except for SELECTs using writing functions specified in <xref linkend="guc-black-function-list"> or
-	<xref linkend="guc-white-function-list">)
+       (Except for SELECTs using writing functions specified in <xref linkend="guc-write-function-list"> or
+	<xref linkend="guc-read-only-function-list">)
      </para>
     </listitem>
     <listitem>
      <para>
-      in master slave mode, in addition to above, following conditions must be met:
+      in native replication mode, in addition to above, following conditions must be met:
      </para>
      <itemizedlist>
       <listitem>
@@ -177,8 +177,8 @@
      <para>
       SELECT/WITH without writing functions.
       Volatile functions are regarded writing functions.
-      You can define your own writing functions by using <xref linkend="guc-black-function-list">
-      or <xref linkend="guc-white-function-list">.
+      You can define your own writing functions by using <xref linkend="guc-write-function-list">
+      or <xref linkend="guc-read-only-function-list">.
      </para>
     </listitem>
 
@@ -224,7 +224,7 @@
   <para>
    If writing queries appear, succeeding read queries may not be
    load balanced. i.e. sent to primary node (in streaming
-   replication mode) or master node (in other mode) depending on the
+   replication mode) or main node (in other mode) depending on the
    setting of <xref linkend="guc-disable-load-balance-on-write">.
   </para>
  </sect2>
@@ -496,10 +496,10 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-white-function-list" xreflabel="white_function_list">
-    <term><varname>white_function_list</varname> (<type>string</type>)
+   <varlistentry id="guc-read-only-function-list" xreflabel="read_only_function_list">
+    <term><varname>read_only_function_list</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>white_function_list</varname> configuration parameter</primary>
+      <primary><varname>read_only_function_list</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -508,21 +508,21 @@
       <emphasis>DO NOT</emphasis> update the database. SELECTs including
       functions <emphasis>not specified </emphasis> in this list are not load balanced.
       These are replicated among all the DB nodes in Replication mode,
-      sent to the primary node only in Master Slave mode.
+      sent to the primary node only in Native Replication mode.
      </para>
      <para>
       You can use regular expression to match function names,
       to which <literal>^</> and <literal>$</> are automatically added.
      </para>
 
-     <example id="example-white-function-list-1">
+     <example id="example-read-only-function-list-1">
       <title>Using regular expression</title>
       <para>
        If you have prefixed all your read only function
        with 'get_' or 'select_', You can
-       set the <xref linkend="guc-white-function-list"> like below:
+       set the <xref linkend="guc-read-only-function-list"> like below:
 	<programlisting>
-	 white_function_list = 'get_.*,select_.*'
+	 read_only_function_list = 'get_.*,select_.*'
 	</programlisting>
       </para>
      </example>
@@ -535,10 +535,10 @@
        <programlisting>
 	#For example:
 	#If the queries sometime use "f1()" and other times "public.f1()"
-	#to refer the function f1 then the white_function_list
+	#to refer the function f1 then the read_only_function_list
 	#would be configured as follows.
 
-	white_function_list = "f1,public.f1"
+	read_only_function_list = "f1,public.f1"
 
        </programlisting>
 
@@ -547,7 +547,7 @@
 
      <note>
       <para>
-       If this parameter and <xref linkend="guc-black-function-list">
+       If this parameter and <xref linkend="guc-write-function-list">
        is empty string, function's volatile proper will be checked. If
        the property is volatile, the function is regarded as a writing
        function.  This is convenient and recommended way. However this
@@ -564,10 +564,10 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-black-function-list" xreflabel="black_function_list">
-    <term><varname>black_function_list</varname> (<type>string</type>)
+   <varlistentry id="guc-write-function-list" xreflabel="write_function_list">
+    <term><varname>write_function_list</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>black_function_list</varname> configuration parameter</primary>
+      <primary><varname>write_function_list</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -577,21 +577,21 @@
       SELECTs including functions <emphasis>specified</emphasis> in this list are
       not load balanced.
       These are replicated among all the DB nodes in Replication mode,
-      sent to the primary node only in Master Slave mode.
+      sent to the primary node only in Native Replication mode.
      </para>
      <para>
       You can use regular expression to match function names,
       to which <literal>^</> and <literal>$</> are automatically added.
      </para>
 
-     <example id="example-black-function-list-1">
+     <example id="example-write-function-list-1">
       <title>Using regular expression</title>
       <para>
        If you have prefixed all your updating functions
        with 'set_', 'update_', 'delete_' or 'insert_', You can
-       set the <xref linkend="guc-black-function-list"> like below:
+       set the <xref linkend="guc-write-function-list"> like below:
 	<programlisting>
-	 black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
+	 write_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
 	</programlisting>
       </para>
      </example>
@@ -604,10 +604,10 @@
        <programlisting>
 	#For example:
 	#If the queries sometime use "f1()" and other times "public.f1()"
-	#to refer the function f1 then the black_function_list
+	#to refer the function f1 then the write_function_list
 	#would be configured as follows.
 
-	black_function_list = "f1,public.f1"
+	write_function_list = "f1,public.f1"
 
        </programlisting>
 
@@ -616,21 +616,21 @@
 
      <note>
       <para>
-       <xref linkend="guc-black-function-list"> and <xref linkend="guc-white-function-list">
+       <xref linkend="guc-write-function-list"> and <xref linkend="guc-read-only-function-list">
 	 are mutually exclusive and only one of the two lists can be set in the configuration.
       </para>
      </note>
 
-     <example id="example-black-function-list-2">
+     <example id="example-write-function-list-2">
       <title>Configuring using <literal>nextval()</literal> and <literal>setval()</literal> to land on proper backend</title>
       <para>
        Prior to <productname>Pgpool-II</productname><emphasis>V3.0</emphasis>,
        <literal>nextval()</literal> and <literal>setval()</literal> were known as functions writing to the database.
-       You can configure this by setting <xref linkend="guc-black-function-list">
-	and <xref linkend="guc-white-function-list"> as follows
+       You can configure this by setting <xref linkend="guc-write-function-list">
+	and <xref linkend="guc-read-only-function-list"> as follows
 	 <programlisting>
-	  white_function_list = ''
-	  black_function_list = 'nextval,setval,lastval,currval'
+	  read_only_function_list = ''
+	  write_function_list = 'nextval,setval,lastval,currval'
 	 </programlisting>
       </para>
      </example>
@@ -650,7 +650,7 @@
 
      <note>
       <para>
-       If this parameter and <xref linkend="guc-white-function-list">
+       If this parameter and <xref linkend="guc-read-only-function-list">
        is empty string, function's volatile proper will be checked. If
        the property is volatile, the function is regarded as a writing
        function.  This is convenient and recommended way. However this
@@ -667,10 +667,10 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-black-query-pattern-list" xreflabel="black_query_pattern_list">
-    <term><varname>black_query_pattern_list</varname> (<type>string</type>)
+   <varlistentry id="guc-primary-routing-query-pattern-list" xreflabel="primary_routing_query_pattern_list">
+    <term><varname>primary_routing_query_pattern_list</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>black_query_pattern_list</varname> configuration parameter</primary>
+      <primary><varname>primary_routing_query_pattern_list</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -679,7 +679,7 @@
       should be sent to primary node.
       SQL that matched patterns specified in this list are
       not load balanced.
-      Only Master Slave mode is supported.
+      Only Native Replication mode is supported.
      </para>
      <para>
       You can use regular expression to match SQL patterns,
@@ -691,11 +691,11 @@
       SQL pattern specified in this parameter is case-insensitive.
      </para>
 
-     <example id="example-black-query-pattern-list-1">
+     <example id="example-primary-routing-query-pattern-list-1">
       <title>Using regular expression</title>
       <para>
        If the following SQL should be sent to the primary node only, You can
-       set the <xref linkend="guc-black-query-pattern-list"> like below:
+       set the <xref linkend="guc-primary-routing-query-pattern-list"> like below:
 	<itemizedlist>
 	 <listitem>
 	  <para>
@@ -717,15 +717,15 @@
 
       <para>
        <programlisting>
-	black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
+	primary_routing_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
        </programlisting>
       </para>
      </example>
 
      <note>
       <para>
-       If SQL matches both <xref linkend="guc-black-function-list"> and
-	<xref linkend="guc-white-function-list">, <xref linkend="guc-white-function-list">
+       If SQL matches both <xref linkend="guc-write-function-list"> and
+	<xref linkend="guc-read-only-function-list">, <xref linkend="guc-read-only-function-list">
 	  setting is ignored and the SQL should be sent only to the primary node.
       </para>
      </note>
@@ -1063,7 +1063,7 @@
 	  <note>
 	   <para>
 	   To configure the dependency on the function,
-	   The function must be present in the <xref linkend="guc-black-function-list">
+	   The function must be present in the <xref linkend="guc-write-function-list">
 	   </para>
 	  </note>
 

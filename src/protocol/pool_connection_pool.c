@@ -115,18 +115,18 @@ pool_get_cp(char *user, char *database, int protoMajor, int check_socket)
 
 	for (i = 0; i < pool_config->max_pool; i++)
 	{
-		if (MASTER_CONNECTION(connection_pool) &&
-			MASTER_CONNECTION(connection_pool)->sp &&
-			MASTER_CONNECTION(connection_pool)->sp->major == protoMajor &&
-			MASTER_CONNECTION(connection_pool)->sp->user != NULL &&
-			strcmp(MASTER_CONNECTION(connection_pool)->sp->user, user) == 0 &&
-			strcmp(MASTER_CONNECTION(connection_pool)->sp->database, database) == 0)
+		if (MAIN_CONNECTION(connection_pool) &&
+			MAIN_CONNECTION(connection_pool)->sp &&
+			MAIN_CONNECTION(connection_pool)->sp->major == protoMajor &&
+			MAIN_CONNECTION(connection_pool)->sp->user != NULL &&
+			strcmp(MAIN_CONNECTION(connection_pool)->sp->user, user) == 0 &&
+			strcmp(MAIN_CONNECTION(connection_pool)->sp->database, database) == 0)
 		{
 			int			sock_broken = 0;
 			int			j;
 
 			/* mark this connection is under use */
-			MASTER_CONNECTION(connection_pool)->closetime = 0;
+			MAIN_CONNECTION(connection_pool)->closetime = 0;
 			for (j = 0; j < NUM_BACKENDS; j++)
 			{
 				connection_pool->info[j].counter++;
@@ -259,7 +259,7 @@ pool_create_cp(void)
 
 	for (i = 0; i < pool_config->max_pool; i++)
 	{
-		if (MASTER_CONNECTION(p) == NULL)
+		if (MAIN_CONNECTION(p) == NULL)
 		{
 			ret = new_connection(p);
 			if (ret)
@@ -277,7 +277,7 @@ pool_create_cp(void)
 	 * discard it.
 	 */
 	oldestp = p = pool_connection_pool;
-	closetime = MASTER_CONNECTION(p)->closetime;
+	closetime = MAIN_CONNECTION(p)->closetime;
 	pool_index = 0;
 
 	for (i = 0; i < pool_config->max_pool; i++)
@@ -285,13 +285,13 @@ pool_create_cp(void)
 		ereport(DEBUG1,
 				(errmsg("creating connection pool"),
 				 errdetail("user: %s database: %s closetime: %ld",
-						   MASTER_CONNECTION(p)->sp->user,
-						   MASTER_CONNECTION(p)->sp->database,
-						   MASTER_CONNECTION(p)->closetime)));
+						   MAIN_CONNECTION(p)->sp->user,
+						   MAIN_CONNECTION(p)->sp->database,
+						   MAIN_CONNECTION(p)->closetime)));
 
-		if (MASTER_CONNECTION(p)->closetime < closetime)
+		if (MAIN_CONNECTION(p)->closetime < closetime)
 		{
-			closetime = MASTER_CONNECTION(p)->closetime;
+			closetime = MAIN_CONNECTION(p)->closetime;
 			oldestp = p;
 			pool_index = i;
 		}
@@ -305,8 +305,8 @@ pool_create_cp(void)
 			(errmsg("creating connection pool"),
 			 errdetail("discarding old %zd th connection. user: %s database: %s",
 					   oldestp - pool_connection_pool,
-					   MASTER_CONNECTION(p)->sp->user,
-					   MASTER_CONNECTION(p)->sp->database)));
+					   MAIN_CONNECTION(p)->sp->user,
+					   MAIN_CONNECTION(p)->sp->database)));
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
@@ -360,14 +360,14 @@ pool_connection_pool_timer(POOL_CONNECTION_POOL * backend)
 	/* look for any other timeout */
 	for (i = 0; i < pool_config->max_pool; i++, p++)
 	{
-		if (!MASTER_CONNECTION(p))
+		if (!MAIN_CONNECTION(p))
 			continue;
-		if (!MASTER_CONNECTION(p)->sp)
+		if (!MAIN_CONNECTION(p)->sp)
 			continue;
-		if (MASTER_CONNECTION(p)->sp->user == NULL)
+		if (MAIN_CONNECTION(p)->sp->user == NULL)
 			continue;
 
-		if (p != backend && MASTER_CONNECTION(p)->closetime)
+		if (p != backend && MAIN_CONNECTION(p)->closetime)
 			return;
 	}
 
@@ -409,30 +409,30 @@ pool_backend_timer(void)
 
 	for (i = 0; i < pool_config->max_pool; i++, p++)
 	{
-		if (!MASTER_CONNECTION(p))
+		if (!MAIN_CONNECTION(p))
 			continue;
-		if (!MASTER_CONNECTION(p)->sp)
+		if (!MAIN_CONNECTION(p)->sp)
 			continue;
-		if (MASTER_CONNECTION(p)->sp->user == NULL)
+		if (MAIN_CONNECTION(p)->sp->user == NULL)
 			continue;
 
 		/* timer expire? */
-		if (MASTER_CONNECTION(p)->closetime)
+		if (MAIN_CONNECTION(p)->closetime)
 		{
 			int			freed = 0;
 
 			ereport(DEBUG1,
 					(errmsg("backend timer handler called"),
 					 errdetail("expire time: %ld",
-							   MASTER_CONNECTION(p)->closetime + pool_config->connection_life_time)));
+							   MAIN_CONNECTION(p)->closetime + pool_config->connection_life_time)));
 
-			if (now >= (MASTER_CONNECTION(p)->closetime + pool_config->connection_life_time))
+			if (now >= (MAIN_CONNECTION(p)->closetime + pool_config->connection_life_time))
 			{
 				/* discard expired connection */
 				ereport(DEBUG1,
 						(errmsg("backend timer handler called"),
 						 errdetail("expired user: \"%s\" database: \"%s\"",
-								   MASTER_CONNECTION(p)->sp->user, MASTER_CONNECTION(p)->sp->database)));
+								   MAIN_CONNECTION(p)->sp->user, MAIN_CONNECTION(p)->sp->database)));
 				pool_send_frontend_exits(p);
 
 				for (j = 0; j < NUM_BACKENDS; j++)
@@ -457,8 +457,8 @@ pool_backend_timer(void)
 			else
 			{
 				/* look for nearest timer */
-				if (MASTER_CONNECTION(p)->closetime < nearest)
-					nearest = MASTER_CONNECTION(p)->closetime;
+				if (MAIN_CONNECTION(p)->closetime < nearest)
+					nearest = MAIN_CONNECTION(p)->closetime;
 			}
 		}
 	}
@@ -931,16 +931,16 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 					/* set down status to local status area */
 					*(my_backend_status[i]) = CON_DOWN;
 
-					/* if master_node_id is not updated, then update it */
-					if (Req_info->master_node_id == i)
+					/* if main_node_id is not updated, then update it */
+					if (Req_info->main_node_id == i)
 					{
-						int			old_master = Req_info->master_node_id;
+						int			old_main = Req_info->main_node_id;
 
-						Req_info->master_node_id = get_next_master_node();
+						Req_info->main_node_id = get_next_main_node();
 
 						ereport(LOG,
-								(errmsg("master node %d is down. Update master node to %d",
-										old_master, Req_info->master_node_id)));
+								(errmsg("main node %d is down. Update main node to %d",
+										old_main, Req_info->main_node_id)));
 					}
 
 					/*
@@ -1048,11 +1048,11 @@ close_all_backend_connections(void)
 
 	for (i = 0; i < pool_config->max_pool; i++, p++)
 	{
-		if (!MASTER_CONNECTION(p))
+		if (!MAIN_CONNECTION(p))
 			continue;
-		if (!MASTER_CONNECTION(p)->sp)
+		if (!MAIN_CONNECTION(p)->sp)
 			continue;
-		if (MASTER_CONNECTION(p)->sp->user == NULL)
+		if (MAIN_CONNECTION(p)->sp->user == NULL)
 			continue;
 		pool_send_frontend_exits(p);
 	}

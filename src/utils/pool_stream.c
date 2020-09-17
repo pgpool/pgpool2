@@ -172,7 +172,7 @@ pool_read(POOL_CONNECTION * cp, void *buf, int len)
 		 */
 		if (pool_get_timeout() >= 0 && pool_check_fd(cp))
 		{
-			if (!IS_MASTER_NODE_ID(cp->db_node_id) && (getpid() != mypid))
+			if (!IS_MAIN_NODE_ID(cp->db_node_id) && (getpid() != mypid))
 			{
 				ereport(FATAL,
 						(errmsg("unable to read data from DB node %d", cp->db_node_id),
@@ -340,7 +340,7 @@ pool_read2(POOL_CONNECTION * cp, int len)
 		 */
 		if (pool_get_timeout() >= 0 && pool_check_fd(cp))
 		{
-			if (!IS_MASTER_NODE_ID(cp->db_node_id))
+			if (!IS_MAIN_NODE_ID(cp->db_node_id))
 			{
 				ereport(FATAL,
 						(errmsg("unable to read data from DB node %d", cp->db_node_id),
@@ -944,7 +944,7 @@ pool_read_string(POOL_CONNECTION * cp, int *len, int line)
 	{
 		if (pool_check_fd(cp))
 		{
-			if (!IS_MASTER_NODE_ID(cp->db_node_id))
+			if (!IS_MAIN_NODE_ID(cp->db_node_id))
 			{
 				ereport(FATAL,
 						(errmsg("unable to read data from DB node %d", cp->db_node_id),

@@ -102,7 +102,7 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 	}
 	else
 	{
-		node_id = SL_MODE ? PRIMARY_NODE_ID : MASTER_NODE_ID;
+		node_id = SL_MODE ? PRIMARY_NODE_ID : MAIN_NODE_ID;
 	}
 
 	session_context->load_balance_node_id = node_id;
@@ -169,8 +169,8 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 	pool_temp_tables_init();
 	
 #ifdef NOT_USED
-	/* Initialize preferred master node id */
-	pool_reset_preferred_master_node_id();
+	/* Initialize preferred main node id */
+	pool_reset_preferred_main_node_id();
 #endif
 
 	/* Snapshot isolation state */
@@ -540,7 +540,7 @@ dml_adaptive_init(void)
 	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE)
 	{
 		session_context->is_in_transaction = false;
-		session_context->transaction_temp_black_list = NIL;
+		session_context->transaction_temp_write_list = NIL;
 	}
 }
 
@@ -549,8 +549,8 @@ dml_adaptive_destroy(void)
 {
 	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE && session_context)
 	{
-		if (session_context->transaction_temp_black_list != NIL)
-			list_free_deep(session_context->transaction_temp_black_list);
+		if (session_context->transaction_temp_write_list != NIL)
+			list_free_deep(session_context->transaction_temp_write_list);
 	}
 }
 
@@ -849,7 +849,7 @@ pool_get_transaction_isolation(void)
 
 	/* No cached data is available. Ask backend. */
 
-	do_query(MASTER(session_context->backend),
+	do_query(MAIN(session_context->backend),
 			 "SELECT current_setting('transaction_isolation')", &res, MAJOR(session_context->backend));
 
 	error_context_stack = callback.previous;
@@ -1824,33 +1824,33 @@ pool_unset_suspend_reading_from_frontend(void)
 
 #ifdef NOT_USED
 /*
- * Set preferred "master" node id.
+ * Set preferred "main" node id.
  * Only used for SimpleForwardToFrontend.
  */
 void
-pool_set_preferred_master_node_id(int node_id)
+pool_set_preferred_main_node_id(int node_id)
 {
-	session_context->preferred_master_node_id = node_id;
+	session_context->preferred_main_node_id = node_id;
 }
 
 /*
- * Return preferred "master" node id.
+ * Return preferred "main" node id.
  * Only used for SimpleForwardToFrontend.
  */
 int
-pool_get_preferred_master_node_id(void)
+pool_get_preferred_main_node_id(void)
 {
-	return session_context->preferred_master_node_id;
+	return session_context->preferred_main_node_id;
 }
 
 /*
- * Reset preferred "master" node id.
+ * Reset preferred "main" node id.
  * Only used for SimpleForwardToFrontend.
  */
 void
-pool_reset_preferred_master_node_id(void)
+pool_reset_preferred_main_node_id(void)
 {
-	session_context->preferred_master_node_id = -1;
+	session_context->preferred_main_node_id = -1;
 }
 #endif
 

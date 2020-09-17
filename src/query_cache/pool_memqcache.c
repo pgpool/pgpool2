@@ -801,7 +801,7 @@ pool_fetch_from_memory_cache(POOL_CONNECTION * frontend,
 		/*
 		 * We keep previous transaction state.
 		 */
-		state = MASTER(backend)->tstate;
+		state = MAIN(backend)->tstate;
 		send_message(frontend, 'Z', 5, (char *) &state);
 	}
 
@@ -931,9 +931,9 @@ pool_is_allow_to_cache(Node *node, char *query)
 		return false;
 
 	/*
-	 * Check black table list first.
+	 * Check cache unsafe table list first.
 	 */
-	if (pool_config->num_black_memqcache_table_list > 0)
+	if (pool_config->num_cache_unsafe_memqcache_table_list > 0)
 	{
 		/*
 		 * Extract oids in from clause of SELECT, and check if SELECT to them
@@ -946,7 +946,7 @@ pool_is_allow_to_cache(Node *node, char *query)
 			{
 				ereport(DEBUG1,
 						(errmsg("memcache: checking if node is allowed to cache: check table_names[%d] = \"%s\"", i, ctx.table_names[i])));
-				if (pool_is_table_in_black_list(ctx.table_names[i]) == true)
+				if (pool_is_table_in_unsafe_list(ctx.table_names[i]) == true)
 				{
 					ereport(DEBUG1,
 							(errmsg("memcache: node is not allowed to cache")));
@@ -998,7 +998,7 @@ pool_is_allow_to_cache(Node *node, char *query)
 	 * If the table is in the while list, allow to cache even if it is VIEW or
 	 * unlogged table.
 	 */
-	if (pool_config->num_white_memqcache_table_list > 0)
+	if (pool_config->num_cache_safe_memqcache_table_list > 0)
 	{
 		if (num_oids < 0)
 			num_oids = pool_extract_table_oids_from_select_stmt(node, &ctx);
@@ -1013,7 +1013,7 @@ pool_is_allow_to_cache(Node *node, char *query)
 						(errmsg("memcache: checking if node is allowed to cache: check table_names[%d] = \"%s\"", i, table)));
 				if (is_view(table) || is_unlogged_table(table))
 				{
-					if (pool_is_table_in_white_list(table) == false)
+					if (pool_is_table_in_safe_list(table) == false)
 					{
 						ereport(DEBUG1,
 								(errmsg("memcache: node is not allowed to cache")));
@@ -1066,11 +1066,11 @@ pool_is_allow_to_cache(Node *node, char *query)
  * Return true If the SELECTed table is in back list.
  */
 bool
-pool_is_table_in_black_list(const char *table_name)
+pool_is_table_in_unsafe_list(const char *table_name)
 {
 
-	if (pool_config->num_black_memqcache_table_list > 0 &&
-		pattern_compare((char *) table_name, BLACKLIST, "black_memqcache_table_list") == 1)
+	if (pool_config->num_cache_unsafe_memqcache_table_list > 0 &&
+		pattern_compare((char *) table_name, WRITELIST, "cache_unsafe_memqcache_table_list") == 1)
 	{
 		return true;
 	}
@@ -1079,13 +1079,13 @@ pool_is_table_in_black_list(const char *table_name)
 }
 
 /*
- * Return true If the SELECTed table is in white list.
+ * Return true If the SELECTed table is in cache_safe list.
  */
 bool
-pool_is_table_in_white_list(const char *table_name)
+pool_is_table_in_safe_list(const char *table_name)
 {
-	if (pool_config->num_white_memqcache_table_list > 0 &&
-		pattern_compare((char *) table_name, WHITELIST, "white_memqcache_table_list") == 1)
+	if (pool_config->num_cache_safe_memqcache_table_list > 0 &&
+		pattern_compare((char *) table_name, READONLYLIST, "cache_safe_memqcache_table_list") == 1)
 	{
 		return true;
 	}
@@ -1523,7 +1523,7 @@ pool_get_database_oid(void)
 	 * Search relcache.
 	 */
 	oid = (int) (intptr_t) pool_search_relcache(relcache, backend,
-												MASTER_CONNECTION(backend)->sp->database);
+												MAIN_CONNECTION(backend)->sp->database);
 	return oid;
 }
 
@@ -1543,7 +1543,7 @@ pool_get_database_oid_from_dbname(char *dbname)
 	backend = pool_get_session_context(false)->backend;
 
 	snprintf(query, sizeof(query), DATABASE_TO_OID_QUERY, dbname);
-	do_query(MASTER(backend), query, &res, MAJOR(backend));
+	do_query(MAIN(backend), query, &res, MAJOR(backend));
 
 	if (res->numrows != 1)
 	{

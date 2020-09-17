@@ -79,7 +79,7 @@ sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pgpool.conf.sample-raw \
 			   sample/pgpool.conf.sample-snapshot \
 			   sample/scripts/failover.sh.sample \
-			   sample/scripts/follow_master.sh.sample \
+			   sample/scripts/follow_primary.sh.sample \
 			   sample/scripts/pgpool_remote_start.sample \
 			   sample/scripts/recovery_1st_stage.sample \
 			   sample/scripts/recovery_2nd_stage.sample
@@ -105,7 +105,7 @@ AM_YFLAGS = -d
 
 EXTRA_DIST = sample/pgpool.pam \
 		sample/scripts/failover.sh.sample \
-		sample/scripts/follow_master.sh.sample \
+		sample/scripts/follow_primary.sh.sample \
 		sample/scripts/pgpool_remote_start.sample \
 		sample/scripts/recovery_1st_stage.sample \
 		sample/scripts/recovery_2nd_stage.sample \

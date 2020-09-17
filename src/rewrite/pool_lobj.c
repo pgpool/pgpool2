@@ -172,9 +172,9 @@ pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	 */
 	/* issue lock table command to lob_lock_table */
 	snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", pool_config->lobj_lock_table);
-	per_node_statement_log(backend, MASTER_NODE_ID, qbuf);
-	status = do_command(frontend, MASTER(backend), qbuf, MAJOR(backend), MASTER_CONNECTION(backend)->pid,
-						MASTER_CONNECTION(backend)->key, 0);
+	per_node_statement_log(backend, MAIN_NODE_ID, qbuf);
+	status = do_command(frontend, MAIN(backend), qbuf, MAJOR(backend), MAIN_CONNECTION(backend)->pid,
+						MAIN_CONNECTION(backend)->key, 0);
 	if (status == POOL_END)
 	{
 		ereport(WARNING,
@@ -185,7 +185,7 @@ pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	/*
 	 * If transaction state is E, do_command failed to execute command
 	 */
-	if (TSTATE(backend, MASTER_NODE_ID) == 'E')
+	if (TSTATE(backend, MAIN_NODE_ID) == 'E')
 	{
 		ereport(LOG,
 				(errmsg("failed while rewriting LO CREATE"),
@@ -194,8 +194,8 @@ pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	}
 
 	/* get max lobj id */
-	per_node_statement_log(backend, MASTER_NODE_ID, GET_MAX_LOBJ_KEY);
-	do_query(MASTER(backend), GET_MAX_LOBJ_KEY, &result, MAJOR(backend));
+	per_node_statement_log(backend, MAIN_NODE_ID, GET_MAX_LOBJ_KEY);
+	do_query(MAIN(backend), GET_MAX_LOBJ_KEY, &result, MAJOR(backend));
 
 	if (!result)
 	{

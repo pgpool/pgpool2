@@ -872,10 +872,10 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 	}
 	else
 	{
-		if (Req_info->master_node_id == node_id)
-			role = ROLE_MASTER;
+		if (Req_info->main_node_id == node_id)
+			role = ROLE_MAIN;
 		else
-			role = ROLE_SLAVE;
+			role = ROLE_REPLICA;
 	}
 	snprintf(role_str, sizeof(role_str), "%d", role);
 

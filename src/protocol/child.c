@@ -400,7 +400,7 @@ do_child(int *fds)
 		/*
 		 * show ps status
 		 */
-		sp = MASTER_CONNECTION(backend)->sp;
+		sp = MAIN_CONNECTION(backend)->sp;
 		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
 				 sp->user, sp->database, remote_ps_data);
 		set_ps_display(psbuf, false);
@@ -492,7 +492,7 @@ backend_cleanup(POOL_CONNECTION * volatile *frontend, POOL_CONNECTION_POOL * vol
 	if (backend == NULL)
 		return false;
 
-	sp = MASTER_CONNECTION(backend)->sp;
+	sp = MAIN_CONNECTION(backend)->sp;
 
 	/*
 	 * cach connection if connection cache configuration parameter is enabled
@@ -809,8 +809,8 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
 				if (VALID_BACKEND(i))
 					if (do_command(frontend, CONNECTION(backend, i),
 								   command_buf, MAJOR(backend),
-								   MASTER_CONNECTION(backend)->pid,
-								   MASTER_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
+								   MAIN_CONNECTION(backend)->pid,
+								   MAIN_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
 					{
 						ereport(ERROR,
 								(errmsg("unable to process command for backend connection"),
@@ -818,7 +818,7 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
 					}
 			}
 
-			pool_add_param(&MASTER(backend)->params, "application_name", sp->application_name);
+			pool_add_param(&MAIN(backend)->params, "application_name", sp->application_name);
 			set_application_name_with_string(sp->application_name);
 		}
 
@@ -835,7 +835,7 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
 
 		len = htonl(5);
 		pool_write(frontend, &len, sizeof(len));
-		tstate = TSTATE(backend, MASTER_NODE_ID);
+		tstate = TSTATE(backend, MAIN_NODE_ID);
 		pool_write(frontend, &tstate, 1);
 	}
 
@@ -1144,19 +1144,19 @@ static RETSIGTYPE close_idle_connection(int sig)
 
 	for (j = 0; j < pool_config->max_pool; j++, p++)
 	{
-		if (!MASTER_CONNECTION(p))
+		if (!MAIN_CONNECTION(p))
 			continue;
-		if (!MASTER_CONNECTION(p)->sp)
+		if (!MAIN_CONNECTION(p)->sp)
 			continue;
-		if (MASTER_CONNECTION(p)->sp->user == NULL)
+		if (MAIN_CONNECTION(p)->sp->user == NULL)
 			continue;
 
-		if (MASTER_CONNECTION(p)->closetime > 0)	/* idle connection? */
+		if (MAIN_CONNECTION(p)->closetime > 0)	/* idle connection? */
 		{
 #ifdef NOT_USED
 			ereport(DEBUG1,
 					(errmsg("closing idle connection"),
-					 errdetail("user: %s database: %s", MASTER_CONNECTION(p)->sp->user, MASTER_CONNECTION(p)->sp->database)));
+					 errdetail("user: %s database: %s", MAIN_CONNECTION(p)->sp->user, MAIN_CONNECTION(p)->sp->database)));
 #endif
 
 			pool_send_frontend_exits(p);
@@ -1231,7 +1231,7 @@ send_params(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 				sendlen;
 
 	index = 0;
-	while (pool_get_param(&MASTER(backend)->params, index++, &name, &value) == 0)
+	while (pool_get_param(&MAIN(backend)->params, index++, &name, &value) == 0)
 	{
 		pool_write(frontend, "S", 1);
 		len = sizeof(sendlen) + strlen(name) + 1 + strlen(value) + 1;
@@ -1392,7 +1392,7 @@ check_stop_request(void)
 }
 
 /*
- * Initialize my backend status and master node id.
+ * Initialize my backend status and main node id.
  * We copy the backend status to private area so that
  * they are not changed while I am alive.
  */
@@ -1411,7 +1411,7 @@ pool_initialize_private_backend_status(void)
 		my_backend_status[i] = &private_backend_status[i];
 	}
 
-	my_master_node_id = REAL_MASTER_NODE_ID;
+	my_main_node_id = REAL_MAIN_NODE_ID;
 }
 
 static void
@@ -1968,7 +1968,7 @@ retry_startup:
 		 * however we should make sure that the startup packet contents are
 		 * identical. OPTION data and others might be different.
 		 */
-		if (sp->len != MASTER_CONNECTION(backend)->sp->len)
+		if (sp->len != MAIN_CONNECTION(backend)->sp->len)
 		{
 			ereport(DEBUG1,
 					(errmsg("selecting backend connection"),
@@ -1976,7 +1976,7 @@ retry_startup:
 
 			found = 0;
 		}
-		else if (memcmp(sp->startup_packet, MASTER_CONNECTION(backend)->sp->startup_packet, sp->len) != 0)
+		else if (memcmp(sp->startup_packet, MAIN_CONNECTION(backend)->sp->startup_packet, sp->len) != 0)
 		{
 			ereport(DEBUG1,
 					(errmsg("selecting backend connection"),
