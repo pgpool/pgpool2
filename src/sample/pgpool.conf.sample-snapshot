@@ -643,7 +643,7 @@ pgpool_port0 = 9999
 #wd_port1 = 9000
 #pgpool_port1 = 9999
 
-#wd_hostname2 = ''
+#hostname2 = ''
 #wd_port2 = 9000
 #pgpool_port2 = 9999
 
