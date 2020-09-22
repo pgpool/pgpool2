@@ -606,7 +606,7 @@ PGHOME=/usr/pgsql-13
     <literal>PCP</literal>コマンドを使用するにはユーザ認証が必要になるので、ユーザ名と<literal>md5</literal>ハッシュに変換されたパスワードを"<literal>username:encrypted password</literal>"の形式で<filename>pcp.conf</filename>ファイルに設定します。
    </para>
    <para>
-    <filename>follow_primary.sh</filename>で"pgpool" userが<varname>PCP_USER</varname>に指定している場合、
+    <filename>follow_primary.sh</filename>で<literal>pgpool</literal>ユーザが<varname>PCP_USER</varname>に指定している場合、
    </para>
    <programlisting>
 # cat /etc/pgpool-II/follow_primary.sh
@@ -615,7 +615,7 @@ PCP_USER=pgpool
 ...
    </programlisting>
    <para>
-    以下のコマンドを実行し、ハッシュ化されたpgpoolユーザのパスワードエントリを<filename>/etc/pgpool-II/pcp.conf</filename>に追加します。
+    以下のように<xref linkend="PG-MD5">コマンドを利用し、ハッシュ化されたpgpoolユーザのパスワードエントリを<filename>/etc/pgpool-II/pcp.conf</filename>に追加します。
    </para>
    <programlisting>
 [全サーバ]# echo 'pgpool:'`pg_md5 PCPコマンドパスワード` &gt;&gt; /etc/pgpool-II/pcp.conf
@@ -625,7 +625,7 @@ PCP_USER=pgpool
    </para>
    <programlisting>
 [全サーバ]# su - postgres
-[全サーバ]$ echo 'localhost:9898:pgpool:&lt;pgpool user's password&gt;' &gt; ~/.pcppass
+[全サーバ]$ echo 'localhost:9898:pgpool:&lt;pgpool user password&gt;' &gt; ~/.pcppass
 [全サーバ]$ chmod 600 ~/.pcppass
    </programlisting>
   </sect3>
@@ -1018,7 +1018,7 @@ OPTS=" -D -n"
     次にプライマリである<literal>server1</literal>の<productname>PostgreSQL</productname>を停止し、フェイルオーバするかどうか確認してみます。
    </para>
    <programlisting>
-    [server1]$ pg_ctl -D /var/lib/pgsql/11/data -m immediate stop
+    [server1]$ pg_ctl -D /var/lib/pgsql/13/data -m immediate stop
    </programlisting>
    <para>
     <literal>ノード1</literal>を停止後、フェイルオーバが発生し、<literal>server2</literal>がプライマリに昇格したことを確認します。

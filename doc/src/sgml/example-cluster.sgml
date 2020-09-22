@@ -557,7 +557,7 @@ port = 9999
                                             # Port number for backend 0
     backend_weight0 = 1
                                             # Weight for backend 0 (only in load balancing mode)
-    backend_data_directory0 = '/var/lib/pgsql/11/data'
+    backend_data_directory0 = '/var/lib/pgsql/13/data'
                                             # Data directory for backend 0
     backend_flag0 = 'ALLOW_TO_FAILOVER'
                                             # Controls various backend behavior
@@ -644,7 +644,7 @@ PGHOME=/usr/pgsql-13
     in format "<literal>username:encrypted password</literal>".
    </para>
    <para>
-    if "pgpool" user is specified in <varname>PCP_USER</varname> in <filename>follow_primary.sh</filename>,
+    if <literal>pgpool</literal> user is specified in <varname>PCP_USER</varname> in <filename>follow_primary.sh</filename>,
    </para>
    <programlisting>
 # cat /etc/pgpool-II/follow_primary.sh
@@ -653,19 +653,19 @@ PCP_USER=pgpool
 ...
    </programlisting>
    <para>
-    then we create the encrypted password entry for <literal>pgpool</literal> user as below:
+    then we use <xref linkend="PG-MD5"> to create the encrypted password entry for <literal>pgpool</literal> user as below:
    </para>
    <programlisting>
 [all servers]# echo 'pgpool:'`pg_md5 PCP passowrd` &gt;&gt; /etc/pgpool-II/pcp.conf
    </programlisting>
    <para>
-    Since follow_primary_command script has to execute PCP command without entering the
+    Since <filename>follow_primary.sh</filename> script must execute PCP command without entering a
     password, we need to create <filename>.pcppass</filename> in the home directory of
     <productname>Pgpool-II</productname> startup user (postgres user) on each server.
    </para>
    <programlisting>
 [all servers]# su - postgres
-[all servers]$ echo 'localhost:9898:pgpool:&lt;pgpool user's password&gt;' &gt; ~/.pcppass
+[all servers]$ echo 'localhost:9898:pgpool:&lt;pgpool user password&gt;' &gt; ~/.pcppass
 [all servers]$ chmod 600 ~/.pcppass
    </programlisting>
   </sect3>
@@ -698,7 +698,7 @@ recovery_1st_stage_command = 'recovery_1st_stage'
    <programlisting>
 [server1]# cp -p /etc/pgpool-II/recovery_1st_stage.sample /var/lib/pgsql/13/data/recovery_1st_stage
 [server1]# cp -p /etc/pgpool-II/pgpool_remote_start.sample /var/lib/pgsql/13/data/pgpool_remote_start
-[server1]# chown postgres:postgres /var/lib/pgsql/11/data/{recovery_1st_stage,pgpool_remote_start}
+[server1]# chown postgres:postgres /var/lib/pgsql/13/data/{recovery_1st_stage,pgpool_remote_start}
    </programlisting>
    <para>
     Basically, it should work if you change <emphasis>PGHOME</emphasis> according to PostgreSQL installation directory.
@@ -816,8 +816,9 @@ delegate_IP = '192.168.137.150'
    </para>
    <note>
     <para>
-    If installed from RPM, the <literal>postgres</literal> user has been configured to run
-    <command>ip/arping</command> via <command>sudo</command> without a password.
+    If <productname>Pgpool-II</productname> is installed using RPM, the <literal>postgres</literal>
+    user has been configured to run <command>ip/arping</command> via <command>sudo</command> without
+    a password.
     <programlisting>
 postgres ALL=NOPASSWD: /sbin/ip
 postgres ALL=NOPASSWD: /usr/sbin/arping
@@ -1017,16 +1018,16 @@ OPTS=" -D -n"
     cluster directory of <productname>PostgreSQL</productname> primary server (<literal>server1</literal>).
    </para>
    <programlisting>
-    # pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 1
-    Password: 
-    pcp_recovery_node -- Command Successful
+# pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 1
+Password:
+pcp_recovery_node -- Command Successful
 
-    # pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 2
-    Password: 
-    pcp_recovery_node -- Command Successful
+# pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 2
+Password:
+pcp_recovery_node -- Command Successful
    </programlisting>
    <para>
-    After executing <command>pcp_recovery_node</command> command, 
+    After executing <command>pcp_recovery_node</command> command,
     verify that <literal>server2</literal> and <literal>server3</literal>
     are started as <productname>PostgreSQL</productname> standby server.
    </para>
@@ -1048,13 +1049,13 @@ OPTS=" -D -n"
     Confirm the watchdog status by using <command>pcp_watchdog_info</command>. The <command>Pgpool-II</command> server which is started first run as <literal>LEADER</literal>.
    </para>
    <programlisting>
-    # pcp_watchdog_info -h 192.168.137.150 -p 9898 -U pgpool
-    Password: 
-    3 YES server1:9999 Linux server1 server1
+# pcp_watchdog_info -h 192.168.137.150 -p 9898 -U pgpool
+Password:
+3 YES server1:9999 Linux server1 server1
 
-    server1:9999 Linux server1 server1 9999 9000 4 LEADER  #The Pgpool-II server started first becames "LEADER".
-    server2:9999 Linux server2 server2 9999 9000 7 STANDBY #run as standby
-    server3:9999 Linux server3 server3 9999 9000 7 STANDBY #run as standby
+server1:9999 Linux server1 server1 9999 9000 4 LEADER  #The Pgpool-II server started first becames "LEADER".
+server2:9999 Linux server2 server2 9999 9000 7 STANDBY #run as standby
+server3:9999 Linux server3 server3 9999 9000 7 STANDBY #run as standby
    </programlisting>
    <para>
     Stop active server <literal>server1</literal>, then <literal>server2</literal> or 
@@ -1063,30 +1064,30 @@ OPTS=" -D -n"
     service or shutdown the whole system. Here, we stop <productname>Pgpool-II</productname> service.
    </para>
    <programlisting>
-    [server1]# systemctl stop pgpool.service
+[server1]# systemctl stop pgpool.service
 
-    # pcp_watchdog_info -p 9898 -h 192.168.137.150 -U pgpool
-    Password: 
-    3 YES server2:9999 Linux server2 server2
+# pcp_watchdog_info -p 9898 -h 192.168.137.150 -U pgpool
+Password:
+3 YES server2:9999 Linux server2 server2
 
-    server2:9999 Linux server2 server2 9999 9000 4 LEADER     #server2 is promoted to LEADER
-    server1:9999 Linux server1 server1 9999 9000 10 SHUTDOWN  #server1 is stopped
-    server3:9999 Linux server3 server3 9999 9000 7 STANDBY    #server3 runs as STANDBY
+server2:9999 Linux server2 server2 9999 9000 4 LEADER     #server2 is promoted to LEADER
+server1:9999 Linux server1 server1 9999 9000 10 SHUTDOWN  #server1 is stopped
+server3:9999 Linux server3 server3 9999 9000 7 STANDBY    #server3 runs as STANDBY
    </programlisting>
    <para>
     Start <productname>Pgpool-II</productname> (<literal>server1</literal>) which we have stopped again,
     and verify that <literal>server1</literal> runs as a standby.
    </para>
    <programlisting>
-    [server1]# systemctl start pgpool.service
+[server1]# systemctl start pgpool.service
 
-    [server1]# pcp_watchdog_info -p 9898 -h 192.168.137.150 -U pgpool
-    Password: 
-    3 YES server2:9999 Linux server2 server2
+[server1]# pcp_watchdog_info -p 9898 -h 192.168.137.150 -U pgpool
+Password: 
+3 YES server2:9999 Linux server2 server2
 
-    server2:9999 Linux server2 server2 9999 9000 4 LEADER
-    server1:9999 Linux server1 server1 9999 9000 7 STANDBY
-    server3:9999 Linux server3 server3 9999 9000 7 STANDBY
+server2:9999 Linux server2 server2 9999 9000 4 LEADER
+server1:9999 Linux server1 server1 9999 9000 7 STANDBY
+server3:9999 Linux server3 server3 9999 9000 7 STANDBY
    </programlisting>
   </sect3>
 
@@ -1111,7 +1112,7 @@ OPTS=" -D -n"
     <literal>server1</literal>, and verify automatic failover.
    </para>
    <programlisting>
-    [server1]$ pg_ctl -D /var/lib/pgsql/11/data -m immediate stop
+[server1]$ pg_ctl -D /var/lib/pgsql/13/data -m immediate stop
    </programlisting>
    <para>
     After stopping <productname>PostgreSQL</productname> on <literal>server1</literal>,
@@ -1133,38 +1134,38 @@ OPTS=" -D -n"
    </para>
 
    <programlisting>
-    [server3]# psql -h server3 -p 5432 -U pgpool postgres -c "select pg_is_in_recovery()"
-    pg_is_in_recovery 
-    -------------------
-    t
+[server3]# psql -h server3 -p 5432 -U pgpool postgres -c "select pg_is_in_recovery()"
+pg_is_in_recovery 
+-------------------
+t
 
-    [server2]# psql -h server2 -p 5432 -U pgpool postgres -c "select pg_is_in_recovery()"
-    pg_is_in_recovery 
-    -------------------
-    f
+[server2]# psql -h server2 -p 5432 -U pgpool postgres -c "select pg_is_in_recovery()"
+pg_is_in_recovery 
+-------------------
+f
 
-    [server2]# psql -h server2 -p 5432 -U pgpool postgres -c "select * from pg_stat_replication" -x
-    -[ RECORD 1 ]----+------------------------------
-    pid              | 11059
-    usesysid         | 16392
-    usename          | repl
-    application_name | server3
-    client_addr      | 192.168.137.103
-    client_hostname  | 
-    client_port      | 48694
-    backend_start    | 2019-08-06 11:36:07.479161+09
-    backend_xmin     | 
-    state            | streaming
-    sent_lsn         | 0/75000148
-    write_lsn        | 0/75000148
-    flush_lsn        | 0/75000148
-    replay_lsn       | 0/75000148
-    write_lag        | 
-    flush_lag        | 
-    replay_lag       | 
-    sync_priority    | 0
-    sync_state       | async
-    reply_time       | 2019-08-06 11:42:59.823961+09
+[server2]# psql -h server2 -p 5432 -U pgpool postgres -c "select * from pg_stat_replication" -x
+-[ RECORD 1 ]----+------------------------------
+pid              | 11059
+usesysid         | 16392
+usename          | repl
+application_name | server3
+client_addr      | 192.168.137.103
+client_hostname  | 
+client_port      | 48694
+backend_start    | 2019-08-06 11:36:07.479161+09
+backend_xmin     | 
+state            | streaming
+sent_lsn         | 0/75000148
+write_lsn        | 0/75000148
+flush_lsn        | 0/75000148
+replay_lsn       | 0/75000148
+write_lag        | 
+flush_lag        | 
+replay_lag       | 
+sync_priority    | 0
+sync_state       | async
+reply_time       | 2019-08-06 11:42:59.823961+09
    </programlisting>
   </sect3>
 
@@ -1178,9 +1179,9 @@ OPTS=" -D -n"
     exist in database cluster directory of current primary server <literal>server2</literal>.
    </para>
    <programlisting>
-    # pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 0
-    Password: 
-    pcp_recovery_node -- Command Successful
+# pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 0
+Password: 
+pcp_recovery_node -- Command Successful
    </programlisting>
    <para>
     Then verify that <literal>server1</literal> is started as a standby.
