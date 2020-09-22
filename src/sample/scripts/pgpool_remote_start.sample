@@ -2,20 +2,20 @@
 # This script is run after recovery_1st_stage to start Standby node.
 
 set -o xtrace
-exec > >(logger -i -p local1.info) 2>&1
+exec > >(logger -i -t pgpool) 2>&1
 
 DEST_NODE_HOST="$1"
 DEST_NODE_PGDATA="$2"
 
-PGHOME=/usr/pgsql-11
+PGHOME=/usr/pgsql-13
 
-logger -i -p local1.info pgpool_remote_start: start: remote start Standby node $DEST_NODE_HOST
+echo pgpool_remote_start: start: remote start Standby node $DEST_NODE_HOST
 
 ## Test passwrodless SSH
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
 
 if [ $? -ne 0 ]; then
-    logger -i -p local1.info pgpool_remote_start: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
+    echo pgpool_remote_start: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
     exit 1
 fi
 
@@ -25,9 +25,9 @@ ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DES
 "
 
 if [ $? -ne 0 ]; then
-    logger -i -p local1.error pgpool_remote_start: $DEST_NODE_HOST PostgreSQL start failed.
+    echo pgpool_remote_start: $DEST_NODE_HOST PostgreSQL start failed.
     exit 1
 fi
 
-logger -i -p local1.info pgpool_remote_start: end: $DEST_NODE_HOST PostgreSQL started successfully.
+echo pgpool_remote_start: end: PostgreSQL on $DEST_NODE_HOST is started successfully.
 exit 0

@@ -2,7 +2,7 @@
 # This script is executed by "recovery_1st_stage" to recovery a Standby node.
 
 set -o xtrace
-exec > >(logger -i -p local1.info) 2>&1
+exec > >(logger -i -t pgpool) 2>&1
 
 PRIMARY_NODE_PGDATA="$1"
 DEST_NODE_HOST="$2"
@@ -12,17 +12,17 @@ DEST_NODE_ID="$5"
 DEST_NODE_PORT="$6"
 
 PRIMARY_NODE_HOST=$(hostname)
-PGHOME=/usr/pgsql-11
+PGHOME=/usr/pgsql-13
 ARCHIVEDIR=/var/lib/pgsql/archivedir
 REPLUSER=repl
 
-logger -i -p local1.info recovery_1st_stage: start: pg_basebackup for Standby node $DEST_NODE_ID
+echo recovery_1st_stage: start: pg_basebackup for Standby node $DEST_NODE_ID
 
 ## Test passwrodless SSH
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
 
 if [ $? -ne 0 ]; then
-    logger -i -p local1.info recovery_1st_stage: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
+    echo recovery_1st_stage: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
     exit 1
 fi
 
@@ -76,9 +76,9 @@ if [ $? -ne 0 ]; then
 SELECT pg_drop_replication_slot('${DEST_NODE_HOST}');
 EOQ
 
-    logger -i -p local1.error recovery_1st_stage: end: pg_basebackup failed. online recovery failed
+    echo recovery_1st_stage: end: pg_basebackup failed. online recovery failed
     exit 1
 fi
 
-logger -i -p local1.info recovery_1st_stage: end: recovery_1st_stage complete
+echo recovery_1st_stage: end: recovery_1st_stage is completed successfully
 exit 0

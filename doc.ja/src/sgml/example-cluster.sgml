@@ -6,7 +6,7 @@
   ここでは、ストリーミングレプリケーション構成の<productname>PostgreSQL</productname>を<productname>Pgpool-II</productname>で管理するシステムの構成例を示します。この例では、3台の<productname>Pgpool-II</productname>を使って<productname>PostgreSQL</productname>を管理し、単一障害点やスプリットブレインの起きない堅牢なクラスタを運用することが可能です。
  </para>
  <para>
-  この設定例では<productname>PostgreSQL</productname> 11を使っていますが、各種スクリプトは<productname>PostgreSQL</productname> 12でも動作確認を行っています。
+  この設定例では<productname>PostgreSQL</productname> 13を使っていますが、各種スクリプトは<productname>PostgreSQL</productname> 9.5以降での動作確認を行っています。
  </para>
  <sect2 id="example-cluster-requirement">
   <title>前提条件</title>
@@ -77,7 +77,7 @@
     <tbody>
      <row>
       <entry>PostgreSQLバージョン</entry>
-      <entry>11.1</entry>
+      <entry>13.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -87,7 +87,7 @@
      </row>
      <row>
       <entry>$PGDATA</entry>
-      <entry>/var/lib/pgsql/11/data</entry>
+      <entry>/var/lib/pgsql/13/data</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -123,7 +123,7 @@
     <tbody>
      <row>
       <entry>Pgpool-IIバージョン</entry>
-      <entry>4.1</entry>
+      <entry>4.2.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -171,27 +171,63 @@
     </tbody>
    </tgroup>
   </table>
+
+  <table id="example-cluster-table-sample-scripts">
+   <title>Various sample scripts included in rpm package</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Feature</entry>
+      <entry>Script</entry>
+      <entry>Detail</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry morerows='1'>Failover</entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_2_STABLE">/etc/pgpool-II/failover.sh.sample</ulink></entry>
+      <entry>Run by <xref linkend="GUC-FAILOVER-COMMAND"> to perform failover</entry>
+     </row>
+     <row>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_2_STABLE">/etc/pgpool-II/follow_primary.sh.sample</ulink></entry>
+      <entry>Run by <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND"> to synchronize the Standby with the new Primary after failover.</entry>
+     </row>
+     <row>
+      <entry morerows='1'>Online recovery</entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_2_STABLE">/etc/pgpool-II/recovery_1st_stage.sample</ulink></entry>
+      <entry>Run by <xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND"> to recovery a Standby node</entry>
+     </row>
+     <row>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_2_STABLE">/etc/pgpool-II/pgpool_remote_start.sample</ulink></entry>
+      <entry>Run after <xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND"> to start the Standby node</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+  上記各種スクリプトはRPMパッケージに同梱されており、必要に応じてカスタマイズできます。
+  </para>
  </sect2>
 
  <sect2 id="example-cluster-installation">
   <title>インストール</title>
   <para>
-   すべてのサーバに<productname>PostgreSQL</productname> 11.1と<productname>Pgpool-II</productname> 4.1をRPMからインストールします。
+   すべてのサーバに<productname>PostgreSQL</productname> 13.0と<productname>Pgpool-II</productname> 4.2をRPMからインストールします。
   </para>
   <para>
    <productname>PostgreSQL</productname>のインストールは<productname>PostgreSQL</productname>コミュニティのリポジトリを使います。
   </para>
   <programlisting>
-   # yum install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-   # yum install postgresql11-server
+   # yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+   # yum install -y postgresql13-server
   </programlisting>
 
   <para>
    <productname>Pgpool-II</productname>のインストールは<productname>Pgpool-II</productname>開発コミュニティが提供するYumリポジトリを用いてインストールします。
   </para>
   <programlisting>
-   # yum install http://www.pgpool.net/yum/rpms/4.1/redhat/rhel-7-x86_64/pgpool-II-release-4.1-2.noarch.rpm
-   # yum install pgpool-II-pg11-*
+   # yum install http://www.pgpool.net/yum/rpms/4.2/redhat/rhel-7-x86_64/pgpool-II-release-4.2-1.noarch.rpm
+   # yum install pgpool-II-pg13-*
   </programlisting>
  </sect2>
 
@@ -265,7 +301,7 @@
        <row>
         <entry>pgpool</entry>
         <entry>pgpool</entry>
-        <entry>Pgpool-IIのレプリケーション遅延チェック、ヘルスチェック専用ユーザ</entry>
+        <entry>Pgpool-IIのレプリケーション遅延チェック(<xref linkend="GUC-HEALTH-CHECK-USER">)、ヘルスチェック専用ユーザ(<xref linkend="GUC-SR-CHECK-USER">)</entry>
        </row>
        <row>
         <entry>postgres</entry>
@@ -365,33 +401,101 @@
   </itemizedlist>
  </sect2>
 
+ <sect2 id="example-cluster-pgpool-node-id">
+  <title>pgpool_node_idファイルの作成</title>
+  <para>
+   <productname>Pgpool-II</productname> 4.2以降、すべての設定パラメーターがすべてのホストで同一になりました。
+   <literal>Watchdog</literal>機能が有効になっている場合、どの設定がどのホストであるかを区別するには、
+   <filename>pgpool_node_id</filename>ファイルの設定が必要になります。
+   <filename>pgpool_node_id</filename>ファイルを作成し、そのファイルにpgpool(watchdog)ホストを識別するためのノード番号(0、1、2など)を追加します。
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>server1</literal>
+    </para>
+    <programlisting>
+[server1]# cat /etc/pgpool-II/pgpool_node_id
+0
+    </programlisting>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>server2</literal>
+    </para>
+    <programlisting>
+[server2]# cat /etc/pgpool-II/pgpool_node_id
+1
+    </programlisting>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>server3</literal>
+    </para>
+    <programlisting>
+[server3]# cat /etc/pgpool-II/pgpool_node_id
+2
+    </programlisting>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
  <sect2 id="example-cluster-pgpool-config">
   <title><productname>Pgpool-II</productname>の設定</title>
-  <sect3 id="example-cluster-pgpool-config-common">
-   <title>共通設定</title>
+  <para>
+   <productname>Pgpool-II</productname> 4.2以降、すべての設定パラメーターがすべてのホストで同一になったので、どれか一つのノード上で<filename>pgpool.conf</filename>を編集し、編集した<filename>pgpool.conf</filename>ファイルを他のpgpoolノードにコピーすれば良いです。
+  </para>
+
+  <sect3 id="example-cluster-pgpool-config-config-file">
+   <title>クラスタリングモード</title>
    <para>
-    以下の操作は<literal>server1</literal>, <literal>server2</literal>, <literal>server3</literal>での共通の設定です。
+    <productname>Pgpool-II</productname>にはいくつかのクラスタリングモードがあります。
+    クラスタリングモードの設定には<xref linkend="GUC-BACKEND-CLUSTERING-MODE">を使用します。
+    今回の設定例では、ストリーミングレプリケーションモードを設定します。
    </para>
    <para>
-    RPMからインストールした場合、すべての<productname>Pgpool-II</productname>の設定ファイルは<filename>/etc/pgpool-II</filename>にあります。今回はストリーミングレプリケーションモードのテンプレートとして<filename>pgpool.conf.sample-stream</filename>サンプルファイルを使用します。
+    RPMからインストールした場合、すべての<productname>Pgpool-II</productname>のサンプル設定ファイルは<filename>/etc/pgpool-II</filename>にあります。今回はストリーミングレプリケーションモードのテンプレートとして<filename>pgpool.conf.sample-stream</filename>サンプルファイルを使用します。
    </para>
    <programlisting>
     [全サーバ]# cp -p /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
    </programlisting>
+  </sect3>
+
+  <sect3 id="example-cluster-pgpool-config-listen-addresses">
+   <title>listen_addresses</title>
    <para>
     <productname>Pgpool-II</productname>が全てのIPアドレスから接続を受け付けるように、<xref linkend="GUC-LISTEN-ADDRESSES">パラメータに<literal>'*'</literal>を設定します。
    </para>
    <programlisting>
     listen_addresses = '*'
    </programlisting>
+  </sect3>
+
+  <sect3 id="example-cluster-pgpool-config-port">
+   <title>port</title>
+   <para>
+    <productname>Pgpool-II</productname>が接続を受け付けるために監視するポート番号を指定します。
+   </para>
+   <programlisting>
+port = 9999
+   </programlisting>
+  </sect3>
+
+  <sect3 id="example-cluster-pgpool-config-sr-check">
+   <title>ストリーミングレプリケーションのチェック</title>
    <para>
     レプリケーションの遅延チェックユーザ<xref linkend="GUC-SR-CHECK-USER">にpgpoolユーザを設定します。
-     この設定例では、<xref linkend="GUC-SR-CHECK-PASSWORD">は<filename>pgpool.conf</filename>に指定せず、<xref linkend="GUC-POOL-PASSWD">ファイルに作成します。<productname>Pgpool-II</productname> 4.0から、<xref linkend="GUC-SR-CHECK-PASSWORD">が空白の場合、<productname>Pgpool-II</productname>は空のパスワードを使用する前にまず<xref linkend="GUC-POOL-PASSWD">ファイルから<xref linkend="GUC-SR-CHECK-USER">に指定したユーザのパスワードを取得できるか試みます。
+     この設定例では、<xref linkend="GUC-SR-CHECK-PASSWORD">は<filename>pgpool.conf</filename>に指定せず、<xref linkend="GUC-POOL-PASSWD">ファイルに作成します。作成方法については後述の<xref linkend="example-cluster-pgpool-config-auth">を参照ください。
+     <productname>Pgpool-II</productname> 4.0から、<xref linkend="GUC-SR-CHECK-PASSWORD">が空白の場合、<productname>Pgpool-II</productname>は空のパスワードを使用する前にまず<xref linkend="GUC-POOL-PASSWD">ファイルから<xref linkend="GUC-SR-CHECK-USER">に指定したユーザのパスワードを取得できるか試みます。
    </para>
    <programlisting>
     sr_check_user = 'pgpool'
     sr_check_password = ''
    </programlisting>
+  </sect3>
+
+  <sect3 id="example-cluster-pgpool-config-health-check">
+   <title>ヘルスチェック</title>
    <para>
     自動フェイルオーバのため、ヘルスチェックを有効にします。<xref linkend="GUC-HEALTH-CHECK-PERIOD">のデフォルト値が0で、これはヘルスチェックが無効であることを意味します。
      また、ネットワークが不安定な場合には、バックエンドが正常であるにも関わらず、ヘルスチェックに失敗し、フェイルオーバや縮退運転が発生してしまう可能性があります。そのようなヘルスチェックの誤検知を防止するため、ヘルスチェックのリトライ回数を<varname>health_check_max_retries = 3</varname> に設定しておきます。
@@ -409,6 +513,10 @@
 
     health_check_max_retries = 3
    </programlisting>
+  </sect3>
+
+  <sect3 id="example-cluster-pgpool-config-backend-settings">
+   <title>バックエンドの設定</title>
    <para>
     また、バックエンド情報を前述の<literal>server1</literal>、<literal>server2</literal>及び<literal>server3</literal>の設定に従って設定しておきます。複数バックエンドノードを定義する場合、以下のbackend_*などのパラメータ名の末尾にノードIDを表す数字を付加することで複数のバックエンドを指定することができます。
    </para>
@@ -421,7 +529,7 @@
                                                         # Port number for backend 0
     backend_weight0 = 1
                                                         # Weight for backend 0 (only in load balancing mode)
-    backend_data_directory0 = '/var/lib/pgsql/11/data'
+    backend_data_directory0 = '/var/lib/pgsql/13/data'
                                                         # Data directory for backend 0
     backend_flag0 = 'ALLOW_TO_FAILOVER'
                                                         # Controls various backend behavior
@@ -429,24 +537,24 @@
     backend_hostname1 = 'server2'
     backend_port1 = 5432
     backend_weight1 = 1
-    backend_data_directory1 = '/var/lib/pgsql/11/data'
+    backend_data_directory1 = '/var/lib/pgsql/13/data'
     backend_flag1 = 'ALLOW_TO_FAILOVER'
 
     backend_hostname2 = 'server3'
     backend_port2 = 5432
     backend_weight2 = 1
-    backend_data_directory2 = '/var/lib/pgsql/11/data'
+    backend_data_directory2 = '/var/lib/pgsql/13/data'
     backend_flag2 = 'ALLOW_TO_FAILOVER'
    </programlisting>
 
    <para>
     <xref linkend="SQL-SHOW-POOL-NODES">コマンドでレプリケーション状態と同期レプリケーション状態を表示するには、<xref linkend="GUC-BACKEND-APPLICATION-NAME">パラメータを設定する必要があります。ここではそれぞれのホスト名を設定します。(<productname>Pgpool-II</productname> 4.1以降)
       <programlisting>
-       ...                                                                          
+       ...
        backend_application_name0 = 'server1'
-       ...  
+       ...
        backend_application_name1 = 'server2'
-       ...  
+       ...
        backend_application_name2 = 'server3'
       </programlisting>
    </para>
@@ -462,8 +570,8 @@
     それぞれの実行スクリプトの引数は、それぞれ実行時に<productname>Pgpool-II</productname>によってバックエンドの具体的な情報に置き換えられます。各引数の意味は<xref linkend="GUC-FAILOVER-COMMAND">をご参照ください。
    </para>
    <programlisting>
-    failover_command = '/etc/pgpool-II/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S'
-    follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M %P %r %R'
+failover_command = '/etc/pgpool-II/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S'
+follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M %P %r %R'
    </programlisting>
    <note>
     <para>
@@ -472,26 +580,53 @@
     </para>
    </note>
    <para>
-    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_1_STABLE">failover.sh</ulink>及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_1_STABLE">follow_primary.sh</ulink>は
+    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_2_STABLE">failover.sh</ulink>及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_2_STABLE">follow_primary.sh</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、これらのファイルをコピーして作成します。
    </para>
    <programlisting>
-    # cp /etc/pgpool-II/failover.sh{.sample,}
-    # cp /etc/pgpool-II/follow_primary.sh{.sample,}
+[all servers]# cp -p /etc/pgpool-II/failover.sh{.sample,}
+[all servers]# cp -p /etc/pgpool-II/follow_primary.sh{.sample,}
+[all servers]# chown postgres:postgres /etc/pgpool-II/{failover.sh,follow_primary.sh}
    </programlisting>
    <para>
     基本的には<emphasis>PGHOME</emphasis>を環境に合わせて変更すれば、動作します。
    </para>
    <programlisting>
-    [server1]# vi /etc/pgpool-II/failover.sh
-    ...
-    PGHOME=/usr/pgsql-11
-    ...
+[all servers]# vi /etc/pgpool-II/failover.sh
+...
+PGHOME=/usr/pgsql-13
+...
 
-    [server1]# vi /etc/pgpool-II/follow_primary.sh
-    ...
-    PGHOME=/usr/pgsql-11
-    ...
+[all servers]# vi /etc/pgpool-II/follow_primary.sh
+...
+PGHOME=/usr/pgsql-13
+...
+   </programlisting>
+   <para>
+    <literal>PCP</literal>コマンドを使用するにはユーザ認証が必要になるので、ユーザ名と<literal>md5</literal>ハッシュに変換されたパスワードを"<literal>username:encrypted password</literal>"の形式で<filename>pcp.conf</filename>ファイルに設定します。
+   </para>
+   <para>
+    <filename>follow_primary.sh</filename>で"pgpool" userが<varname>PCP_USER</varname>に指定している場合、
+   </para>
+   <programlisting>
+# cat /etc/pgpool-II/follow_primary.sh
+...
+PCP_USER=pgpool
+...
+   </programlisting>
+   <para>
+    以下のコマンドを実行し、ハッシュ化されたpgpoolユーザのパスワードエントリを<filename>/etc/pgpool-II/pcp.conf</filename>に追加します。
+   </para>
+   <programlisting>
+[全サーバ]# echo 'pgpool:'`pg_md5 PCPコマンドパスワード` &gt;&gt; /etc/pgpool-II/pcp.conf
+   </programlisting>
+   <para>
+   前述の<filename>follow_primary.sh</filename>のスクリプトでパスワード入力なしで<literal>PCP</literal>コマンドを実行できるように、すべてのサーバで<productname>Pgpool-II</productname>の起動ユーザのホームディレクトリに<filename>.pcppass</filename>を作成します。
+   </para>
+   <programlisting>
+[全サーバ]# su - postgres
+[全サーバ]$ echo 'localhost:9898:pgpool:&lt;pgpool user's password&gt;' &gt; ~/.pcppass
+[全サーバ]$ chmod 600 ~/.pcppass
    </programlisting>
   </sect3>
 
@@ -502,44 +637,44 @@
     オンラインリカバリで実行される<function>pgpool_recovery</function>関数は<productname>PostgreSQL</productname>のスーパーユーザ権限が必要なため、<varname>recovery_user</varname>に<emphasis>スーパーユーザ</emphasis>を指定しなければなりません。ここでは、postrgesユーザを指定します。
    </para>
    <programlisting>
-    recovery_user = 'postgres'
-    # Online recovery user
-    recovery_password = ''
-    # Online recovery password
+recovery_user = 'postgres'
+                                            # Online recovery user
+recovery_password = ''
+                                            # Online recovery password
 
-    recovery_1st_stage_command = 'recovery_1st_stage'
+recovery_1st_stage_command = 'recovery_1st_stage'
    </programlisting>
    <para>
-    オンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_1_STABLE">recovery_1st_stage</ulink>
-    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_1_STABLE">pgpool_remote_start</ulink>は
+    オンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_2_STABLE">recovery_1st_stage</ulink>
+    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_2_STABLE">pgpool_remote_start</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、これらのファイルをプライマリサーバ(server1)のデータベースクラスタ配下に配置します。
    </para>
    <programlisting>
-    [server1]# cp /etc/pgpool-II/recovery_1st_stage.sample /var/lib/pgsql/11/data/
-    [server1]# cp /etc/pgpool-II/pgpool_remote_start.sample /var/lib/pgsql/11/data/
-    [server1]# chown postgres:postgres /var/lib/pgsql/11/data/{recovery_1st_stage,pgpool_remote_start}
+[server1]# cp -p /etc/pgpool-II/recovery_1st_stage.sample /var/lib/pgsql/13/data/recovery_1st_stage
+[server1]# cp -p /etc/pgpool-II/pgpool_remote_start.sample /var/lib/pgsql/13/data/pgpool_remote_start
+[server1]# chown postgres:postgres /var/lib/pgsql/13/data/{recovery_1st_stage,pgpool_remote_start}
    </programlisting>
    <para>
     基本的には<emphasis>PGHOME</emphasis>を環境に合わせて変更すれば、動作します。
    </para>
    <programlisting>
-    [server1]# vi /var/lib/pgsql/11/data/recovery_1st_stage
-    ...
-    PGHOME=/usr/pgsql-11
-    ...
+[server1]# vi /var/lib/pgsql/13/data/recovery_1st_stage
+...
+PGHOME=/usr/pgsql-13
+...
 
-    [server1]# vi /var/lib/pgsql/11/data/pgpool_remote_start
-    ...
-    PGHOME=/usr/pgsql-11
-    ...
+[server1]# vi /var/lib/pgsql/13/data/pgpool_remote_start
+...
+PGHOME=/usr/pgsql-13
+...
    </programlisting>
 
    <para>
     また、オンラインリカバリ機能を使用するには、<function>pgpool_recovery</function>、<function>pgpool_remote_start</function>、<function>pgpool_switch_xlog</function>という関数が必要になるので、<literal>server1</literal>のtemplate1に<function>pgpool_recovery</function>をインストールしておきます。
    </para>
    <programlisting>
-    [server1]# su - postgres
-    [server1]$ psql template1 -c "CREATE EXTENSION pgpool_recovery"
+[server1]# su - postgres
+[server1]$ psql template1 -c "CREATE EXTENSION pgpool_recovery"
    </programlisting>
   </sect3>
 
@@ -551,14 +686,14 @@
     デフォルトでは<filename>pool_hba.conf</filename>による認証は無効になっているので、<filename>pgpool.conf</filename>では以下の設定をonに変更します。
    </para>
    <programlisting>
-    enable_pool_hba = on
+enable_pool_hba = on
    </programlisting>
    <para>
     <filename>pool_hba.conf</filename>のフォーマットは<productname>PostgreSQL</productname>の<filename>pg_hba.conf</filename>とほとんど同じです。<literal>pgpool</literal>と<literal>postgres</literal>ユーザを<acronym>scram-sha-256</acronym>認証に設定します。
    </para>
    <programlisting>
-    host    all         pgpool           0.0.0.0/0          scram-sha-256
-    host    all         postgres         0.0.0.0/0          scram-sha-256
+host    all         pgpool           0.0.0.0/0          scram-sha-256
+host    all         postgres         0.0.0.0/0          scram-sha-256
    </programlisting>
    <note>
     <para>
@@ -573,24 +708,24 @@
     <literal>scram-sha-256</literal>認証を利用する場合、<productname>Pgpool-II</productname>はそれらのパスワードを復号化するために復号鍵が必要となります。全サーバで復号鍵ファイルを<productname>Pgpool-II</productname>の起動ユーザ<literal>postgres</literal>(<productname>Pgpool-II</productname> 4.1以降)のホームディレクトリ配下に作成します。(<productname>Pgpool-II</productname> 4.0 以前のバージョンでは、デフォルトでは<literal>root</literal>ユーザで<productname>Pgpool-II</productname>を起動する)
    </para>
    <programlisting>
-    [全サーバ]# su - postgres
-    [全サーバ]$ echo '任意の文字列' > ~/.pgpoolkey 
-    [全サーバ]$ chmod 600 ~/.pgpoolkey
+[全サーバ]# su - postgres
+[全サーバ]$ echo '任意の文字列' > ~/.pgpoolkey 
+[全サーバ]$ chmod 600 ~/.pgpoolkey
    </programlisting>
    <para>
     「pg_enc -m -k /path/to/.pgpoolkey -u ユーザ名 -p」 コマンドを実行すると、ユーザ名と<literal>AES256</literal>で暗号化したパスワードのエントリが<xref linkend="GUC-POOL-PASSWD">に登録されます。 
      <xref linkend="GUC-POOL-PASSWD"> がまだ存在しなければ、<filename>pgpool.conf</filename>と同じディレクトリ内に作成されます。
    </para>
    <programlisting>
-    [全サーバ]# su - postgres
-    [全サーバ]$ pg_enc -m -k ~/.pgpoolkey -u pgpool -p
-    db password: [pgpoolユーザのパスワード]
-    [全サーバ]$ pg_enc -m -k ~/.pgpoolkey -u postgres -p
-    db password: [postgresユーザのパスワード]
+[全サーバ]# su - postgres
+[全サーバ]$ pg_enc -m -k ~/.pgpoolkey -u pgpool -p
+db password: [pgpoolユーザのパスワード]
+[全サーバ]$ pg_enc -m -k ~/.pgpoolkey -u postgres -p
+db password: [postgresユーザのパスワード]
 
-    # cat /etc/pgpool-II/pool_passwd 
-    pgpool:AESheq2ZMZjynddMWk5sKP/Rw==
-    postgres:AESHs/pWL5rtXy2IwuzroHfqg==
+# cat /etc/pgpool-II/pool_passwd 
+pgpool:AESheq2ZMZjynddMWk5sKP/Rw==
+postgres:AESHs/pWL5rtXy2IwuzroHfqg==
    </programlisting>
   </sect3>
 
@@ -600,13 +735,13 @@
     デフォルトでは<literal>watchdog</literal>機能が無効のため、<literal>server1</literal>、<literal>server2</literal>及び<literal>server3</literal>で<literal>watchdog</literal>を有効にします。
    </para>
    <programlisting>
-    use_watchdog = on
+use_watchdog = on
    </programlisting>
    <para>
     アクティブ機が立ち上げる仮想IPをdelegate_IPに指定します。仮想 IP はまだ使われていないIPアドレスを指定してください。<literal>server1</literal>、<literal>server2</literal>及び<literal>server3</literal>の共通の設定です。
    </para>
    <programlisting>
-    delegate_IP = '192.168.137.150'
+delegate_IP = '192.168.137.150'
    </programlisting>
 
    <para>
@@ -615,7 +750,18 @@
     <varname>if_up/down_cmd</varname>や<varname>arping_cmd</varname>を実行するにはroot権限が必要となりますので、
     一般ユーザが実行できるように<command>ip/arping</command>コマンドに<literal>setuid</literal>を設定するか、
     <productname>Pgpool-II</productname>起動ユーザ、デフォルトでは<literal>postgres</literal>ユーザ (<productname>Pgpool-II</productname> 4.1以降) がパスワードなしに<command>sudo</command>を実行できるように設定する必要があります。
-    ここでは、<command>sudo</command>を介して実行するように設定します。RPMからインストールした場合、<literal>postgres</literal>ユーザがパスワードなしに<command>sudo</command>を介して<command>ip/arping</command>を実行できるように設定済みです。
+   </para>
+   <note>
+    <para>
+    RPMからインストールした場合、<literal>postgres</literal>ユーザがパスワードなしに<command>sudo</command>を介して<command>ip/arping</command>を実行できるように設定済みです。
+    <programlisting>
+postgres ALL=NOPASSWD: /sbin/ip
+postgres ALL=NOPASSWD: /usr/sbin/arping
+    </programlisting>
+    </para>
+   </note>
+   <para>
+    ここでは、<command>sudo</command>を介して実行するように設定します。
    </para>
    <programlisting>
 if_up_cmd = '/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev enp0s8 label enp0s8:0'
@@ -638,282 +784,109 @@ if_cmd_path = '/sbin'
 arping_path = '/usr/sbin'
    </programlisting>
    <para>
-    各watchdog が稼働するサーバ情報を設定しておきます。
-   </para>
-   <itemizedlist>
-    <listitem>
-     <para>
-      <literal>server1</literal>の場合
-     </para>
-     <programlisting>
-      wd_hostname = 'server1'
-      wd_port = 9000
-     </programlisting>
-    </listitem>
-    <listitem>
-     <para>
-      <literal>server2</literal>の場合
-     </para>
-     <programlisting>
-      wd_hostname = 'server2'
-      wd_port = 9000
-     </programlisting>
-    </listitem>
-    <listitem>
-     <para>
-      <literal>server3</literal>の場合
-     </para>
-     <programlisting>
-      wd_hostname = 'server3'
-      wd_port = 9000
-     </programlisting>
-    </listitem>
-   </itemizedlist>
-
-   <para>
-    各監視対象の<productname>Pgpool-II</productname>サーバ情報を設定しておきます。
-   </para>
-   <itemizedlist>
-    <listitem>
-     <para>
-      <literal>server1</literal>の場合
-     </para>
-     <programlisting>
-      # - Other pgpool Connection Settings -
-
-      other_pgpool_hostname0 = 'server2'
-                                            # Host name or IP address to connect to for other pgpool 0
-                                            # (change requires restart)
-      other_pgpool_port0 = 9999
-                                            # Port number for other pgpool 0
-                                            # (change requires restart)
-      other_wd_port0 = 9000
-                                            # Port number for other watchdog 0
-                                            # (change requires restart)
-      other_pgpool_hostname1 = 'server3'
-      other_pgpool_port1 = 9999
-      other_wd_port1 = 9000
-     </programlisting>
-    </listitem>
-    <listitem>
-     <para>
-      <literal>server2</literal>の場合
-     </para>
-     <programlisting>
-      # - Other pgpool Connection Settings -
-
-      other_pgpool_hostname0 = 'server1'
-                                              # Host name or IP address to connect to for other pgpool 0
-                                              # (change requires restart)
-      other_pgpool_port0 = 9999
-                                              # Port number for other pgpool 0
-                                              # (change requires restart)
-      other_wd_port0 = 9000
-                                              # Port number for other watchdog 0
-                                              # (change requires restart)
-      other_pgpool_hostname1 = 'server3'
-      other_pgpool_port1 = 9999
-      other_wd_port1 = 9000
-     </programlisting>
-    </listitem>
-    <listitem>
-     <para>
-      <literal>server3</literal>の場合
-     </para>
-     <programlisting>
-      # - Other pgpool Connection Settings -
-
-      other_pgpool_hostname0 = 'server1'
-                                              # Host name or IP address to connect to for other pgpool 0
-                                              # (change requires restart)
-      other_pgpool_port0 = 9999
-                                              # Port number for other pgpool 0
-                                              # (change requires restart)
-      other_wd_port0 = 9000
-                                              # Port number for other watchdog 0
-                                              # (change requires restart)
-      other_pgpool_hostname1 = 'server2'
-      other_pgpool_port1 = 9999
-      other_wd_port1 = 9000
-     </programlisting>
-    </listitem>
-   </itemizedlist>
-
-   <para>
-    ハートビート信号の送信先のホスト名とポート番号を指定します。
-   </para>
-   <itemizedlist>
-    <listitem>
-     <para>
-      <literal>server1</literal>の場合
-     </para>
-     <programlisting>
-      heartbeat_destination0 = 'server2'
-                                              # Host name or IP address of destination 0
-                                              # for sending heartbeat signal.
-                                              # (change requires restart)
-      heartbeat_destination_port0 = 9694
-                                              # Port number of destination 0 for sending
-                                              # heartbeat signal. Usually this is the
-                                              # same as wd_heartbeat_port.
-                                              # (change requires restart)
-      heartbeat_device0 = ''
-                                              # Name of NIC device (such like 'eth0')
-                                              # used for sending/receiving heartbeat
-                                              # signal to/from destination 0.
-                                              # This works only when this is not empty
-                                              # and pgpool has root privilege.
-                                              # (change requires restart)
-
-      heartbeat_destination1 = 'server3'
-      heartbeat_destination_port1 = 9694
-      heartbeat_device1 = ''
-
-     </programlisting>
-    </listitem>
-    <listitem>
-     <para>
-      <literal>server2</literal>の場合
-     </para>
-     <programlisting>
-      heartbeat_destination0 = 'server1'
-                                              # Host name or IP address of destination 0
-                                              # for sending heartbeat signal.
-                                              # (change requires restart)
-      heartbeat_destination_port0 = 9694
-                                              # Port number of destination 0 for sending
-                                              # heartbeat signal. Usually this is the
-                                              # same as wd_heartbeat_port.
-                                              # (change requires restart)
-      heartbeat_device0 = ''
-                                              # Name of NIC device (such like 'eth0')
-                                              # used for sending/receiving heartbeat
-                                              # signal to/from destination 0.
-                                              # This works only when this is not empty
-                                              # and pgpool has root privilege.
-                                              # (change requires restart)
-
-      heartbeat_destination1 = 'server3'
-      heartbeat_destination_port1 = 9694
-      heartbeat_device1 = ''
-
-     </programlisting>
-    </listitem>
-    <listitem>
-     <para>
-      <literal>server3</literal>の場合
-     </para>
-     <programlisting>
-      heartbeat_destination0 = 'server1'
-                                              # Host name or IP address of destination 0
-                                              # for sending heartbeat signal.
-                                              # (change requires restart)
-      heartbeat_destination_port0 = 9694
-                                              # Port number of destination 0 for sending
-                                              # heartbeat signal. Usually this is the
-                                              # same as wd_heartbeat_port.
-                                              # (change requires restart)
-      heartbeat_device0 = ''
-                                              # Name of NIC device (such like 'eth0')
-                                              # used for sending/receiving heartbeat
-                                              # signal to/from destination 0.
-                                              # This works only when this is not empty
-                                              # and pgpool has root privilege.
-                                              # (change requires restart)
-
-      heartbeat_destination1 = 'server2'
-      heartbeat_destination_port1 = 9694
-      heartbeat_device1 = ''
-     </programlisting>
-    </listitem>
-   </itemizedlist>
-  </sect3>
-
-  <sect3 id="example-cluster-pgpool-config-sysconfig">
-   <title>/etc/sysconfig/pgpoolの設定</title>
-   <para>
-    <productname>Pgpool-II</productname>を起動時に<filename>pgpool_status</filename>ファイルを無視させたい場合、<filename>/etc/sysconfig/pgpool</filename>の起動オプションOPTSに「-D」を追加します。
+    各watchdogが稼働するサーバ情報を設定しておきます。<varname>pgpool_portX</varname>には<xref linkend="example-cluster-pgpool-config-port">の<varname>port</varname>に設定されているポート番号を指定します。
    </para>
    <programlisting>
-    [全サーバ]# vi /etc/sysconfig/pgpool 
-    (...省略...)
-    OPTS=" -D -n"
+hostname0 = 'server1'
+                                    # Host name or IP address of pgpool node
+                                    # for watchdog connection
+                                    # (change requires restart)
+wd_port0 = 9000
+                                    # Port number for watchdog service
+                                    # (change requires restart)
+pgpool_port0 = 9999
+                                    # Port number for pgpool
+                                    # (change requires restart)
+
+hostname1 = 'server2'
+wd_port1 = 9000
+pgpool_port1 = 9999
+
+hostname2 = 'server3'
+wd_port2 = 9000
+pgpool_port2 = 9999
    </programlisting>
+
+   <para>
+    ハートビート通信用の各<productname>Pgpool-II</productname>サーバ情報を設定しておきます。
+   </para>
+   <programlisting>
+heartbeat_hostname0 = 'server1'
+                                    # Host name or IP address used
+                                    # for sending heartbeat signal.
+                                    # (change requires restart)
+heartbeat_port0 = 9694
+                                    # Port number used for receiving/sending heartbeat signal
+                                    # Usually this is the same as heartbeat_portX.
+                                    # (change requires restart)
+heartbeat_device0 = ''
+                                    # Name of NIC device (such like 'eth0')
+                                    # used for sending/receiving heartbeat
+                                    # signal to/from destination 0.
+                                    # This works only when this is not empty
+                                    # and pgpool has root privilege.
+                                    # (change requires restart)
+
+heartbeat_hostname1 = 'server2'
+heartbeat_port1 = 9694
+heartbeat_device1 = ''
+heartbeat_hostname2 = 'server3'
+heartbeat_port2 = 9694
+heartbeat_device2 = ''
+   </programlisting>
+   <note>
+    <para>
+     use_watchdog = onの場合は、pgpoolノード番号を<filename>pgpool_node_id</filename>に設定する必要があります。
+     詳細は<xref linkend="example-cluster-pgpool-node-id">を参照ください。
+    </para>
+   </note>
   </sect3>
 
   <sect3 id="example-cluster-pgpool-config-log">
    <title>ログの設定</title>
    <para>
-    この例では、<productname>Pgpool-II</productname>のログ出力は<literal>syslog</literal>を利用するように設定します。
+    <productname>Pgpool-II</productname> 4.2以降、ログ収集プロセスが追加されました。
+    ここでは、ログ収集プロセス(logging_collector)を有効にします。
    </para>
    <programlisting>
-    log_destination = 'syslog'
-    # Where to log
-    # Valid values are combinations of stderr,
-    # and syslog. Default to stderr.
-
-    syslog_facility = 'LOCAL1'
-    # Syslog local facility. Default to LOCAL0
+log_destination = 'stderr'
+logging_collector = on
+log_directory = '/var/log/pgpool_log'
+log_filename = 'pgpool-%Y-%m-%d_%H%M%S.log'
+log_truncate_on_rotation = on
+log_rotation_age = 1d
+log_rotation_size = 10MB
    </programlisting>
    <para>
-    全サーバではログファイルを作成します。
+    すべてのサーバでログファイルを格納するディレクトリを作成します。
    </para>
    <programlisting>
-    [全サーバ]# mkdir /var/log/pgpool-II
-    [全サーバ]# touch /var/log/pgpool-II/pgpool.log
-   </programlisting>
-   <para>
-    次に<literal>syslog</literal>の設定ファイルを以下のように編集します。
-   </para>
-   <programlisting>
-    [全サーバ]# vi /etc/rsyslog.conf
-    ...(省略)...
-    *.info;mail.none;authpriv.none;cron.none;LOCAL1.none    /var/log/messages
-    LOCAL1.*                                                /var/log/pgpool-II/pgpool.log
-   </programlisting>
-   <para>
-    また、<productname>Pgpool-II</productname>に関して<filename>/var/log/messages</filename>と同様のログローテーションを行うように、logrotateの設定を以下のように行います。
-   </para>
-   <programlisting>
-    [全サーバ]# vi /etc/logrotate.d/syslog
-    ...(省略)...
-    /var/log/messages
-    /var/log/pgpool-II/pgpool.log
-    /var/log/secure
+[all servers]# mkdir /var/log/pgpool_log/
+[all servers]# chown postgres:postgres /var/log/pgpool_log/
    </programlisting>
 
    <para>
-    設定が終わったら、rsyslogサービスを再起動します。
+    ここで、server1の<filename>pgpool.conf</filename>の設定は完了です。
+    server1の<filename>pgpool.conf</filename>を他のノード(server2、server3)にコピーします。
    </para>
    <programlisting>
-    [全サーバ]# systemctl restart rsyslog
+[server1]# scp -p /etc/pgpool-II/pgpool.conf root@server2:/etc/pgpool-II/pgpool.conf
+[server1]# scp -p /etc/pgpool-II/pgpool.conf root@server3:/etc/pgpool-II/pgpool.conf
    </programlisting>
   </sect3>
+ </sect2>
 
-  <sect3 id="example-cluster-pgpool-config-pcp">
-   <title>PCPコマンドの設定</title>
-   <para>
-    <literal>PCP</literal>コマンドを使用するにはユーザ認証が必要になるので、ユーザ名と<literal>md5</literal>ハッシュに変換されたパスワードを<filename>pcp.conf</filename>ファイルに設定します。
-    ここではユーザ名に<literal>pgpool</literal>を使用し、以下のコマンドを実行することで、&lt;ユーザ名:ハッシュ化されたパスワード&gt;が<filename>/etc/pgpool-II/pcp.conf</filename>に追加されます。
-   </para>
-   <programlisting>
-    [全サーバ]# echo 'pgpool:'`pg_md5 PCPコマンドパスワード` &gt;&gt; /etc/pgpool-II/pcp.conf
-   </programlisting>
-  </sect3>
-
-  <sect3 id="example-cluster-pgpool-config-pcppass">
-   <title>.pcppassの設定</title>
-   <para>
-    前述の<literal>follow_primary_command</literal>のスクリプトでパスワード入力なしで<literal>PCP</literal>コマンドを実行できるように、すべてのサーバで<productname>Pgpool-II</productname>の起動ユーザのホームディレクトリに<filename>.pcppass</filename>を作成します。
-   </para>
-   <programlisting>
-    [全サーバ]# echo 'localhost:9898:pgpool:pgpool' > ~/.pcppass
-    [全サーバ]# chmod 600 ~/.pcppass
-   </programlisting>
-   <para>
-    ここで、<productname>Pgpool-II</productname>の設定は完了です。
-   </para>
-  </sect3>
+ <sect2 id="example-cluster-pgpool-config-sysconfig">
+  <title>/etc/sysconfig/pgpoolの設定</title>
+  <para>
+   <productname>Pgpool-II</productname>起動時に<filename>pgpool_status</filename>ファイルが存在する場合、<productname>Pgpool-II</productname>は<filename>pgpool_status</filename>ファイルからバックエンドの状態(up/down)を読み取ります。
+   <productname>Pgpool-II</productname>起動時に<filename>pgpool_status</filename>ファイルを無視させたい場合、<filename>/etc/sysconfig/pgpool</filename>の起動オプションOPTSに「-D」を追加します。
+  </para>
+  <programlisting>
+[全サーバ]# vi /etc/sysconfig/pgpool
+(...省略...)
+OPTS=" -D -n"
+  </programlisting>
  </sect2>
 
  <sect2 id="example-cluster-start-stop">
