@@ -186,15 +186,15 @@
    Install <productname>PostgreSQL</productname> by using <productname>PostgreSQL</productname> YUM repository.
   </para>
   <programlisting>
-   # yum install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-   # yum install postgresql11-server
+# yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+# yum install -y postgresql11-server
   </programlisting>
   <para>
    Install <productname>Pgpool-II</productname> by using Pgpool-II YUM repository.
   </para>
   <programlisting>
-   # yum install http://www.pgpool.net/yum/rpms/4.1/redhat/rhel-7-x86_64/pgpool-II-release-4.1-2.noarch.rpm
-   # yum install pgpool-II-pg11-*
+# yum install -y http://www.pgpool.net/yum/rpms/4.1/redhat/rhel-7-x86_64/pgpool-II-release-4.1-2.noarch.rpm
+# yum install -y pgpool-II-pg11-*
   </programlisting>
  </sect2>
 
@@ -216,8 +216,8 @@
      <acronym>WAL</acronym> locally.
     </para>
     <programlisting>
-     [all servers]# su - postgres
-     [all servers]$ mkdir /var/lib/pgsql/archivedir
+[all servers]# su - postgres
+[all servers]$ mkdir /var/lib/pgsql/archivedir
     </programlisting>
 
     <para>
@@ -227,14 +227,14 @@
      Since the Primary may become a Standby later, we set <varname>hot_standby = on</varname>.
     </para>
     <programlisting>
-     listen_addresses = '*'
-     archive_mode = on
-     archive_command = 'cp "%p" "/var/lib/pgsql/archivedir/%f"'
-     max_wal_senders = 10
-     max_replication_slots = 10
-     wal_level = replica
-     hot_standby = on
-     wal_log_hints = on
+listen_addresses = '*'
+archive_mode = on
+archive_command = 'cp "%p" "/var/lib/pgsql/archivedir/%f"'
+max_wal_senders = 10
+max_replication_slots = 10
+wal_level = replica
+hot_standby = on
+wal_log_hints = on
     </programlisting>
     <para>
      We use the online recovery functionality of <productname>Pgpool-II</productname> to setup standby server after the primary server is started.
@@ -279,13 +279,13 @@
     </table>
 
     <programlisting>
-     [server1]# psql -U postgres -p 5432
-     postgres=# SET password_encryption = 'scram-sha-256';
-     postgres=# CREATE ROLE pgpool WITH LOGIN;
-     postgres=# CREATE ROLE repl WITH REPLICATION LOGIN;
-     postgres=# \password pgpool
-     postgres=# \password repl
-     postgres=# \password postgres
+[server1]# psql -U postgres -p 5432
+postgres=# SET password_encryption = 'scram-sha-256';
+postgres=# CREATE ROLE pgpool WITH LOGIN;
+postgres=# CREATE ROLE repl WITH REPLICATION LOGIN;
+postgres=# \password pgpool
+postgres=# \password repl
+postgres=# \password postgres
     </programlisting>
 
     <para>
@@ -296,7 +296,7 @@
       to <literal>pgpool</literal>:
     </para>
     <programlisting>
-     GRANT pg_monitor TO pgpool;
+GRANT pg_monitor TO pgpool;
     </programlisting>
     <note>
      <para>
@@ -311,8 +311,8 @@
      enable <literal>scram-sha-256</literal> authentication method.
     </para>
     <programlisting>
-     host    all             all             samenet                 scram-sha-256
-     host    replication     all             samenet                 scram-sha-256
+host    all             all             samenet                 scram-sha-256
+host    replication     all             samenet                 scram-sha-256
     </programlisting>
    </listitem>
 
@@ -326,18 +326,18 @@
      to set up passwordless <literal>SSH</literal>. The generated key file name is <literal>id_rsa_pgpool</literal>.
     </para>
     <programlisting>
-     [all servers]# cd ~/.ssh
-     [all servers]# ssh-keygen -t rsa -f id_rsa_pgpool
-     [all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
-     [all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server2
-     [all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
+[all servers]# cd ~/.ssh
+[all servers]# ssh-keygen -t rsa -f id_rsa_pgpool
+[all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
+[all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server2
+[all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
 
-     [all servers]# su - postgres
-     [all servers]$ cd ~/.ssh
-     [all servers]$ ssh-keygen -t rsa -f id_rsa_pgpool
-     [all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
-     [all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server2
-     [all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
+[all servers]# su - postgres
+[all servers]$ cd ~/.ssh
+[all servers]$ ssh-keygen -t rsa -f id_rsa_pgpool
+[all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
+[all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server2
+[all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
     </programlisting>
     <para>
      After setting, use <command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command> command to
@@ -355,15 +355,15 @@
      <literal>600</literal> on each <productname>PostgreSQL</productname> server.
     </para>
     <programlisting>
-     [all servers]# su - postgres
-     [all servers]$ vi /var/lib/pgsql/.pgpass
-     server1:5432:replication:repl:&lt;repl user password&gt;
-     server2:5432:replication:repl:&lt;repl user passowrd&gt;
-     server3:5432:replication:repl:&lt;repl user passowrd&gt;
-     server1:5432:postgres:postgres:&lt;postgres user passowrd&gt;
-     server2:5432:postgres:postgres:&lt;postgres user passowrd&gt;
-     server3:5432:postgres:postgres:&lt;postgres user passowrd&gt;
-     [all servers]$ chmod 600  /var/lib/pgsql/.pgpass
+[all servers]# su - postgres
+[all servers]$ vi /var/lib/pgsql/.pgpass
+server1:5432:replication:repl:&lt;repl user password&gt;
+server2:5432:replication:repl:&lt;repl user passowrd&gt;
+server3:5432:replication:repl:&lt;repl user passowrd&gt;
+server1:5432:postgres:postgres:&lt;postgres user passowrd&gt;
+server2:5432:postgres:postgres:&lt;postgres user passowrd&gt;
+server3:5432:postgres:postgres:&lt;postgres user passowrd&gt;
+[all servers]$ chmod 600  /var/lib/pgsql/.pgpass
     </programlisting>
    </listitem>
 
@@ -372,9 +372,9 @@
      When connect to <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname> servers, the target port must be accessible by enabling firewall management softwares. Following is an example for <systemitem>CentOS/RHEL7</systemitem>.
     </para>
     <programlisting>
-     [all servers]# firewall-cmd --permanent --zone=public --add-service=postgresql
-     [all servers]# firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp  --add-port=9694/udp
-     [all servers]# firewall-cmd --reload
+[all servers]# firewall-cmd --permanent --zone=public --add-service=postgresql
+[all servers]# firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp --add-port=9694/udp
+[all servers]# firewall-cmd --reload
     </programlisting>
    </listitem>
   </itemizedlist>
@@ -393,13 +393,13 @@
     In this example, we copy the sample configuration file for streaming replication mode.
    </para>
    <programlisting>
-    # cp -p /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
+# cp -p /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
    </programlisting>
    <para>
     To allow Pgpool-II to accept all incoming connections, we set <varname>listen_addresses = '*'</varname>.
    </para>
    <programlisting>
-    listen_addresses = '*'
+listen_addresses = '*'
    </programlisting>
    <para>
     Specify replication delay check user and password. In this example, we leave 
@@ -410,8 +410,8 @@
        empty password. 
    </para>
    <programlisting>
-    sr_check_user = 'pgpool'
-    sr_check_password = ''
+sr_check_user = 'pgpool'
+sr_check_password = ''
    </programlisting>
    <para>
     Enable health check so that <productname>Pgpool-II</> performs failover. Also, if the network is unstable, 
@@ -421,46 +421,46 @@
       the same way like <xref linkend="GUC-SR-CHECK-USER"> and <xref linkend="GUC-SR-CHECK-PASSWORD">.
    </para>
    <programlisting>
-    health_check_period = 5
+health_check_period = 5
                                             # Health check period
                                             # Disabled (0) by default
-    health_check_timeout = 30
+health_check_timeout = 30
                                             # Health check timeout
                                             # 0 means no timeout
-    health_check_user = 'pgpool'
-    health_check_password = ''
+health_check_user = 'pgpool'
+health_check_password = ''
 
-    health_check_max_retries = 3
+health_check_max_retries = 3
    </programlisting>
    <para>
     Specify the <productname>PostgreSQL</productname> backend information.
     Multiple backends can be specified by adding a number at the end of the parameter name.
    </para>
    <programlisting>
-    # - Backend Connection Settings -
+# - Backend Connection Settings -
 
-    backend_hostname0 = 'server1'
+backend_hostname0 = 'server1'
                                             # Host name or IP address to connect to for backend 0
-    backend_port0 = 5432
+backend_port0 = 5432
                                             # Port number for backend 0
-    backend_weight0 = 1
+backend_weight0 = 1
                                             # Weight for backend 0 (only in load balancing mode)
-    backend_data_directory0 = '/var/lib/pgsql/11/data'
+backend_data_directory0 = '/var/lib/pgsql/11/data'
                                             # Data directory for backend 0
-    backend_flag0 = 'ALLOW_TO_FAILOVER'
+backend_flag0 = 'ALLOW_TO_FAILOVER'
                                             # Controls various backend behavior
                                             # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
-    backend_hostname1 = 'server2'
-    backend_port1 = 5432
-    backend_weight1 = 1
-    backend_data_directory1 = '/var/lib/pgsql/11/data'
-    backend_flag1 = 'ALLOW_TO_FAILOVER'
+backend_hostname1 = 'server2'
+backend_port1 = 5432
+backend_weight1 = 1
+backend_data_directory1 = '/var/lib/pgsql/11/data'
+backend_flag1 = 'ALLOW_TO_FAILOVER'
 
-    backend_hostname2 = 'server3'
-    backend_port2 = 5432
-    backend_weight2 = 1
-    backend_data_directory2 = '/var/lib/pgsql/11/data'
-    backend_flag2 = 'ALLOW_TO_FAILOVER'
+backend_hostname2 = 'server3'
+backend_port2 = 5432
+backend_weight2 = 1
+backend_data_directory2 = '/var/lib/pgsql/11/data'
+backend_flag2 = 'ALLOW_TO_FAILOVER'
    </programlisting>
    <para>
     To show "replication_state" and "replication_sync_state" column in <xref linkend="SQL-SHOW-POOL-NODES">
@@ -468,12 +468,12 @@
       Here we specify each backend's hostname in these parameters. (<productname>Pgpool-II</productname> 4.1 or later)
    </para>
    <programlisting>
-    ...
-    backend_application_name0 = 'server1'
-    ...
-    backend_application_name1 = 'server2'
-    ...
-    backend_application_name2 = 'server3'
+...
+backend_application_name0 = 'server1'
+...
+backend_application_name1 = 'server2'
+...
+backend_application_name2 = 'server3'
    </programlisting>
   </sect3>
 
@@ -561,12 +561,12 @@ PCP_USER=pgpool
   <sect3 id="example-cluster-pgpool-config-online-recovery">
    <title>Pgpool-II Online Recovery Configurations</title>
    <para>
-    Next, in order to perform online recovery with <productname>Pgpool-II</productname> we specify 
-    the <productname>PostgreSQL</productname> user name and online recovery command 
-    <command>recovery_1st_stage</command>. 
+    Next, in order to perform online recovery with <productname>Pgpool-II</productname> we specify
+    the <productname>PostgreSQL</productname> user name and online recovery command
+    <command>recovery_1st_stage</command>.
     Because <emphasis>Superuser</emphasis> privilege in <productname>PostgreSQL</productname>
     is required for performing online recovery, we specify <literal>postgres</literal> user in <xref linkend="GUC-RECOVERY-USER">.
-     Then, we create <filename>recovery_1st_stage</filename> and <filename>pgpool_remote_start</filename> 
+     Then, we create <filename>recovery_1st_stage</filename> and <filename>pgpool_remote_start</filename>
      in database cluster directory of <productname>PostgreSQL</productname> primary server (server1), and add execute permission.
 
    </para>
@@ -611,8 +611,8 @@ PGHOME=/usr/pgsql-11
     <literal>server1</literal>.
    </para>
    <programlisting>
-    [server1]# su - postgres
-    [server1]$ psql template1 -c "CREATE EXTENSION pgpool_recovery"
+[server1]# su - postgres
+[server1]$ psql template1 -c "CREATE EXTENSION pgpool_recovery"
    </programlisting>
   </sect3>
 
@@ -629,7 +629,7 @@ PGHOME=/usr/pgsql-11
     to enable it.
    </para>
    <programlisting>
-    enable_pool_hba = on
+enable_pool_hba = on
    </programlisting>
    <para>
     The format of <filename>pool_hba.conf</filename> file follows very closely PostgreSQL's
@@ -754,8 +754,8 @@ wd_port = 9000
       <literal>server2</literal>
      </para>
      <programlisting>
-      wd_hostname = 'server2'
-      wd_port = 9000
+wd_hostname = 'server2'
+wd_port = 9000
      </programlisting>
     </listitem>
     <listitem>
@@ -848,16 +848,16 @@ other_wd_port1 = 9000
       <literal>server1</literal>
      </para>
      <programlisting>
-      heartbeat_destination0 = 'server2'
+heartbeat_destination0 = 'server2'
                                             # Host name or IP address of destination 0
                                             # for sending heartbeat signal.
                                             # (change requires restart)
-      heartbeat_destination_port0 = 9694
+heartbeat_destination_port0 = 9694
                                             # Port number of destination 0 for sending
                                             # heartbeat signal. Usually this is the
                                             # same as wd_heartbeat_port.
                                             # (change requires restart)
-      heartbeat_device0 = ''
+heartbeat_device0 = ''
                                             # Name of NIC device (such like 'eth0')
                                             # used for sending/receiving heartbeat
                                             # signal to/from destination 0.
@@ -865,9 +865,9 @@ other_wd_port1 = 9000
                                             # and pgpool has root privilege.
                                             # (change requires restart)
 
-      heartbeat_destination1 = 'server3'
-      heartbeat_destination_port1 = 9694
-      heartbeat_device1 = ''
+heartbeat_destination1 = 'server3'
+heartbeat_destination_port1 = 9694
+heartbeat_device1 = ''
      </programlisting>
     </listitem>
     <listitem>
@@ -875,16 +875,16 @@ other_wd_port1 = 9000
       <literal>server2</literal>
      </para>
      <programlisting>
-      heartbeat_destination0 = 'server1'
+heartbeat_destination0 = 'server1'
                                             # Host name or IP address of destination 0
                                             # for sending heartbeat signal.
                                             # (change requires restart)
-      heartbeat_destination_port0 = 9694
+heartbeat_destination_port0 = 9694
                                             # Port number of destination 0 for sending
                                             # heartbeat signal. Usually this is the
                                             # same as wd_heartbeat_port.
                                             # (change requires restart)
-      heartbeat_device0 = ''
+heartbeat_device0 = ''
                                             # Name of NIC device (such like 'eth0')
                                             # used for sending/receiving heartbeat
                                             # signal to/from destination 0.
@@ -892,9 +892,9 @@ other_wd_port1 = 9000
                                             # and pgpool has root privilege.
                                             # (change requires restart)
 
-      heartbeat_destination1 = 'server3'
-      heartbeat_destination_port1 = 9694
-      heartbeat_device1 = ''
+heartbeat_destination1 = 'server3'
+heartbeat_destination_port1 = 9694
+heartbeat_device1 = ''
      </programlisting>
     </listitem>
     <listitem>
@@ -902,16 +902,16 @@ other_wd_port1 = 9000
       <literal>server3</literal>
      </para>
      <programlisting>
-      heartbeat_destination0 = 'server1'
+heartbeat_destination0 = 'server1'
                                             # Host name or IP address of destination 0
                                             # for sending heartbeat signal.
                                             # (change requires restart)
-      heartbeat_destination_port0 = 9694
+heartbeat_destination_port0 = 9694
                                             # Port number of destination 0 for sending
                                             # heartbeat signal. Usually this is the
                                             # same as wd_heartbeat_port.
                                             # (change requires restart)
-      heartbeat_device0 = ''
+heartbeat_device0 = ''
                                             # Name of NIC device (such like 'eth0')
                                             # used for sending/receiving heartbeat
                                             # signal to/from destination 0.
@@ -919,9 +919,9 @@ other_wd_port1 = 9000
                                             # and pgpool has root privilege.
                                             # (change requires restart)
 
-      heartbeat_destination1 = 'server2'
-      heartbeat_destination_port1 = 9694
-      heartbeat_device1 = ''
+heartbeat_destination1 = 'server2'
+heartbeat_destination_port1 = 9694
+heartbeat_device1 = ''
      </programlisting>
     </listitem>
    </itemizedlist>
@@ -935,9 +935,9 @@ other_wd_port1 = 9000
     <filename>/etc/sysconfig/pgpool</filename>.
    </para>
    <programlisting>
-    [all servers]# vi /etc/sysconfig/pgpool 
-    ...
-    OPTS=" -D -n"
+[all servers]# vi /etc/sysconfig/pgpool 
+...
+OPTS=" -D -n"
    </programlisting>
   </sect3>
 
@@ -947,46 +947,46 @@ other_wd_port1 = 9000
     In the example, we output <productname>Pgpool-II</productname>'s log to <literal>syslog</literal>.
    </para>
    <programlisting>
-    log_destination = 'syslog'
-    # Where to log
-    # Valid values are combinations of stderr,
-    # and syslog. Default to stderr.
+log_destination = 'syslog'
+                                    # Where to log
+                                    # Valid values are combinations of stderr,
+                                    # and syslog. Default to stderr.
 
-    syslog_facility = 'LOCAL1'
-    # Syslog local facility. Default to LOCAL0
+syslog_facility = 'LOCAL1'
+                                    # Syslog local facility. Default to LOCAL0
    </programlisting>
    <para>
     Create <productname>Pgpool-II</productname> log file.
    </para>
    <programlisting>
-    [all servers]# mkdir /var/log/pgpool-II
-    [all servers]# touch /var/log/pgpool-II/pgpool.log
+[all servers]# mkdir /var/log/pgpool-II
+[all servers]# touch /var/log/pgpool-II/pgpool.log
    </programlisting>
    <para>
     Edit config file of syslog <filename>/etc/rsyslog.conf</filename>.
    </para>
    <programlisting>
-    [all servers]# vi /etc/rsyslog.conf
-    ...
-    *.info;mail.none;authpriv.none;cron.none;LOCAL1.none    /var/log/messages
-    LOCAL1.*                                                /var/log/pgpool-II/pgpool.log
+[all servers]# vi /etc/rsyslog.conf
+...
+*.info;mail.none;authpriv.none;cron.none;LOCAL1.none    /var/log/messages
+LOCAL1.*                                                /var/log/pgpool-II/pgpool.log
    </programlisting>
    <para>
     Setting logrotate same as <filename>/var/log/messages</filename>.
    </para>
    <programlisting>
-    [all servers]# vi /etc/logrotate.d/syslog
-    ...
-    /var/log/messages
-    /var/log/pgpool-II/pgpool.log
-    /var/log/secure
+[all servers]# vi /etc/logrotate.d/syslog
+...
+/var/log/messages
+/var/log/pgpool-II/pgpool.log
+/var/log/secure
    </programlisting>
 
    <para>
     Restart rsyslog service.
    </para>
    <programlisting>
-    [all servers]# systemctl restart rsyslog
+[all servers]# systemctl restart rsyslog
    </programlisting>
    <para>
     The settings of <productname>Pgpool-II</productname> is completed. 
@@ -1014,7 +1014,7 @@ other_wd_port1 = 9000
      <productname>Pgpool-II</productname>, restart the whole system or execute the following command.
     </para>
     <programlisting>
-     # systemctl start pgpool.service
+# systemctl start pgpool.service
     </programlisting>
    </listitem>
    <listitem>
@@ -1022,7 +1022,7 @@ other_wd_port1 = 9000
      Stopping <productname>Pgpool-II</productname>
     </para>
     <programlisting>
-     # systemctl stop pgpool.service
+# systemctl stop pgpool.service
     </programlisting>
    </listitem>
   </itemizedlist>
@@ -1036,7 +1036,7 @@ other_wd_port1 = 9000
    <literal>server2</literal>, <literal>server3</literal> by using the following command.
   </para>
   <programlisting>
-   # systemctl start pgpool.service
+# systemctl start pgpool.service
   </programlisting>
 
   <sect3 id="example-cluster-try-standby">
@@ -1049,13 +1049,13 @@ other_wd_port1 = 9000
     cluster directory of <productname>PostgreSQL</productname> primary server (<literal>server1</literal>).
    </para>
    <programlisting>
-    # pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 1
-    Password: 
-    pcp_recovery_node -- Command Successful
+# pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 1
+Password: 
+pcp_recovery_node -- Command Successful
 
-    # pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 2
-    Password: 
-    pcp_recovery_node -- Command Successful
+# pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 2
+Password: 
+pcp_recovery_node -- Command Successful
    </programlisting>
    <para>
     After executing <command>pcp_recovery_node</command> command, 
@@ -1063,14 +1063,14 @@ other_wd_port1 = 9000
     are started as <productname>PostgreSQL</productname> standby server.
    </para>
    <programlisting>
-    # psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
-    Password for user pgpool
-    node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
-    ---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
-    0       | server1  | 5432 | up     | 0.333333  | primary | 0          | false             | 0                 |                   |                        | 2019-08-06 11:13:17
-    1       | server2  | 5432 | up     | 0.333333  | standby | 0          | true              | 0                 | streaming         | async                  | 2019-08-06 11:13:25
-    2       | server3  | 5432 | up     | 0.333333  | standby | 0          | false             | 0                 | streaming         | async                  | 2019-08-06 11:14:20
-    (3 rows)
+# psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
+Password for user pgpool
+node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
+---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
+0       | server1  | 5432 | up     | 0.333333  | primary | 0          | false             | 0                 |                   |                        | 2019-08-06 11:13:17
+1       | server2  | 5432 | up     | 0.333333  | standby | 0          | true              | 0                 | streaming         | async                  | 2019-08-06 11:13:25
+2       | server3  | 5432 | up     | 0.333333  | standby | 0          | false             | 0                 | streaming         | async                  | 2019-08-06 11:14:20
+(3 rows)
    </programlisting>
   </sect3>
 
@@ -1080,45 +1080,45 @@ other_wd_port1 = 9000
     Confirm the watchdog status by using <command>pcp_watchdog_info</command>. The <command>Pgpool-II</command> server which is started first run as <literal>MASTER</literal>.
    </para>
    <programlisting>
-    # pcp_watchdog_info -h 192.168.137.150 -p 9898 -U pgpool
-    Password: 
-    3 YES server1:9999 Linux server1 server1
+# pcp_watchdog_info -h 192.168.137.150 -p 9898 -U pgpool
+Password:
+3 YES server1:9999 Linux server1 server1
 
-    server1:9999 Linux server1 server1 9999 9000 4 MASTER  #The Pgpool-II server started first becames "MASTER".
-    server2:9999 Linux server2 server2 9999 9000 7 STANDBY #run as standby
-    server3:9999 Linux server3 server3 9999 9000 7 STANDBY #run as standby
+server1:9999 Linux server1 server1 9999 9000 4 MASTER  #The Pgpool-II server started first becames "MASTER".
+server2:9999 Linux server2 server2 9999 9000 7 STANDBY #run as standby
+server3:9999 Linux server3 server3 9999 9000 7 STANDBY #run as standby
    </programlisting>
    <para>
-    Stop active server <literal>server1</literal>, then <literal>server2</literal> or 
-    <literal>server3</literal> will be promoted to active server. To stop 
-    <literal>server1</literal>, we can stop <productname>Pgpool-II</productname> 
+    Stop active server <literal>server1</literal>, then <literal>server2</literal> or
+    <literal>server3</literal> will be promoted to active server. To stop
+    <literal>server1</literal>, we can stop <productname>Pgpool-II</productname>
     service or shutdown the whole system. Here, we stop <productname>Pgpool-II</productname> service.
    </para>
    <programlisting>
-    [server1]# systemctl stop pgpool.service
+[server1]# systemctl stop pgpool.service
 
-    # pcp_watchdog_info -p 9898 -h 192.168.137.150 -U pgpool
-    Password: 
-    3 YES server2:9999 Linux server2 server2
+# pcp_watchdog_info -p 9898 -h 192.168.137.150 -U pgpool
+Password:
+3 YES server2:9999 Linux server2 server2
 
-    server2:9999 Linux server2 server2 9999 9000 4 MASTER     #server2 is promoted to MASTER
-    server1:9999 Linux server1 server1 9999 9000 10 SHUTDOWN  #server1 is stopped
-    server3:9999 Linux server3 server3 9999 9000 7 STANDBY    #server3 runs as STANDBY
+server2:9999 Linux server2 server2 9999 9000 4 MASTER     #server2 is promoted to MASTER
+server1:9999 Linux server1 server1 9999 9000 10 SHUTDOWN  #server1 is stopped
+server3:9999 Linux server3 server3 9999 9000 7 STANDBY    #server3 runs as STANDBY
    </programlisting>
    <para>
     Start <productname>Pgpool-II</productname> (<literal>server1</literal>) which we have stopped again,
     and verify that <literal>server1</literal> runs as a standby.
    </para>
    <programlisting>
-    [server1]# systemctl start pgpool.service
+[server1]# systemctl start pgpool.service
 
-    [server1]# pcp_watchdog_info -p 9898 -h 192.168.137.150 -U pgpool
-    Password: 
-    3 YES server2:9999 Linux server2 server2
+[server1]# pcp_watchdog_info -p 9898 -h 192.168.137.150 -U pgpool
+Password:
+3 YES server2:9999 Linux server2 server2
 
-    server2:9999 Linux server2 server2 9999 9000 4 MASTER
-    server1:9999 Linux server1 server1 9999 9000 7 STANDBY
-    server3:9999 Linux server3 server3 9999 9000 7 STANDBY
+server2:9999 Linux server2 server2 9999 9000 4 MASTER
+server1:9999 Linux server1 server1 9999 9000 7 STANDBY
+server3:9999 Linux server3 server3 9999 9000 7 STANDBY
    </programlisting>
   </sect3>
 
@@ -1129,17 +1129,17 @@ other_wd_port1 = 9000
     and verify the backend information.
    </para>
    <programlisting>
-    # psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
-    Password for user pgpool:
-    node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
-    ---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
-    0       | server1  | 5432 | up     | 0.333333  | primary | 0          | false             | 0                 |                   |                        | 2019-08-06 11:13:17
-    1       | server2  | 5432 | up     | 0.333333  | standby | 0          | true              | 0                 | streaming         | async                  | 2019-08-06 11:13:25
-    2       | server3  | 5432 | up     | 0.333333  | standby | 0          | false             | 0                 | streaming         | async                  | 2019-08-06 11:14:20
-    (3 rows)
+# psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
+Password for user pgpool:
+node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
+---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
+0       | server1  | 5432 | up     | 0.333333  | primary | 0          | false             | 0                 |                   |                        | 2019-08-06 11:13:17
+1       | server2  | 5432 | up     | 0.333333  | standby | 0          | true              | 0                 | streaming         | async                  | 2019-08-06 11:13:25
+2       | server3  | 5432 | up     | 0.333333  | standby | 0          | false             | 0                 | streaming         | async                  | 2019-08-06 11:14:20
+(3 rows)
    </programlisting>
    <para>
-    Next, stop primary <productname>PostgreSQL</productname> server 
+    Next, stop primary <productname>PostgreSQL</productname> server
     <literal>server1</literal>, and verify automatic failover.
    </para>
    <programlisting>
@@ -1147,56 +1147,56 @@ other_wd_port1 = 9000
    </programlisting>
    <para>
     After stopping <productname>PostgreSQL</productname> on <literal>server1</literal>,
-    failover occurs and <productname>PostgreSQL</productname> on 
+    failover occurs and <productname>PostgreSQL</productname> on
     <literal>server2</literal> becomes new primary DB.
    </para>
    <programlisting>
-    # psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
-    Password for user pgpool:
-    node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
-    ---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
-    0       | server1  | 5432 | down   | 0.333333  | standby | 0          | false             | 0                 |                   |                        | 2019-08-06 11:36:03
-    1       | server2  | 5432 | up     | 0.333333  | primary | 0          | true              | 0                 |                   |                        | 2019-08-06 11:36:03
-    2       | server3  | 5432 | up     | 0.333333  | standby | 0          | false             | 0                 | streaming         | async                  | 2019-08-06 11:36:15
-    (3 rows)
+# psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
+Password for user pgpool:
+node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
+---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
+0       | server1  | 5432 | down   | 0.333333  | standby | 0          | false             | 0                 |                   |                        | 2019-08-06 11:36:03
+1       | server2  | 5432 | up     | 0.333333  | primary | 0          | true              | 0                 |                   |                        | 2019-08-06 11:36:03
+2       | server3  | 5432 | up     | 0.333333  | standby | 0          | false             | 0                 | streaming         | async                  | 2019-08-06 11:36:15
+(3 rows)
    </programlisting>
    <para>
     <literal>server3</literal> is running as standby of new primary <literal>server2</literal>.
    </para>
 
    <programlisting>
-    [server3]# psql -h server3 -p 5432 -U pgpool postgres -c "select pg_is_in_recovery()"
-    pg_is_in_recovery 
-    -------------------
-    t
+[server3]# psql -h server3 -p 5432 -U pgpool postgres -c "select pg_is_in_recovery()"
+pg_is_in_recovery 
+-------------------
+t
 
-    [server2]# psql -h server2 -p 5432 -U pgpool postgres -c "select pg_is_in_recovery()"
-    pg_is_in_recovery 
-    -------------------
-    f
+[server2]# psql -h server2 -p 5432 -U pgpool postgres -c "select pg_is_in_recovery()"
+pg_is_in_recovery 
+-------------------
+f
 
-    [server2]# psql -h server2 -p 5432 -U pgpool postgres -c "select * from pg_stat_replication" -x
-    -[ RECORD 1 ]----+------------------------------
-    pid              | 11059
-    usesysid         | 16392
-    usename          | repl
-    application_name | server3
-    client_addr      | 192.168.137.103
-    client_hostname  | 
-    client_port      | 48694
-    backend_start    | 2019-08-06 11:36:07.479161+09
-    backend_xmin     | 
-    state            | streaming
-    sent_lsn         | 0/75000148
-    write_lsn        | 0/75000148
-    flush_lsn        | 0/75000148
-    replay_lsn       | 0/75000148
-    write_lag        | 
-    flush_lag        | 
-    replay_lag       | 
-    sync_priority    | 0
-    sync_state       | async
-    reply_time       | 2019-08-06 11:42:59.823961+09
+[server2]# psql -h server2 -p 5432 -U pgpool postgres -c "select * from pg_stat_replication" -x
+-[ RECORD 1 ]----+------------------------------
+pid              | 11059
+usesysid         | 16392
+usename          | repl
+application_name | server3
+client_addr      | 192.168.137.103
+client_hostname  | 
+client_port      | 48694
+backend_start    | 2019-08-06 11:36:07.479161+09
+backend_xmin     | 
+state            | streaming
+sent_lsn         | 0/75000148
+write_lsn        | 0/75000148
+flush_lsn        | 0/75000148
+replay_lsn       | 0/75000148
+write_lag        | 
+flush_lag        | 
+replay_lag       | 
+sync_priority    | 0
+sync_state       | async
+reply_time       | 2019-08-06 11:42:59.823961+09
    </programlisting>
   </sect3>
 
@@ -1210,22 +1210,22 @@ other_wd_port1 = 9000
     exist in database cluster directory of current primary server <literal>server2</literal>.
    </para>
    <programlisting>
-    # pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 0
-    Password: 
-    pcp_recovery_node -- Command Successful
+# pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 0
+Password: 
+pcp_recovery_node -- Command Successful
    </programlisting>
    <para>
     Then verify that <literal>server1</literal> is started as a standby.
    </para>
    <programlisting>
-    # psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
-    Password for user pgpool:
-    node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
-    ---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
-    0       | server1  | 5432 | up     | 0.333333  | standby | 0          | false             | 0                 | streaming         | async                  | 2019-08-06 11:48:05
-    1       | server2  | 5432 | up     | 0.333333  | primary | 0          | false             | 0                 |                   |                        | 2019-08-06 11:36:03
-    2       | server3  | 5432 | up     | 0.333333  | standby | 0          | true              | 0                 | streaming         | async                  | 2019-08-06 11:36:15
-    (3 rows)
+# psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
+Password for user pgpool:
+node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
+---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
+0       | server1  | 5432 | up     | 0.333333  | standby | 0          | false             | 0                 | streaming         | async                  | 2019-08-06 11:48:05
+1       | server2  | 5432 | up     | 0.333333  | primary | 0          | false             | 0                 |                   |                        | 2019-08-06 11:36:03
+2       | server3  | 5432 | up     | 0.333333  | standby | 0          | true              | 0                 | streaming         | async                  | 2019-08-06 11:36:15
+(3 rows)
    </programlisting>
   </sect3>
  </sect2>
