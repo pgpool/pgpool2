@@ -491,8 +491,8 @@
     See <xref linkend="GUC-FAILOVER-COMMAND"> for more details about each character.
    </para>
    <programlisting>
-    failover_command = '/etc/pgpool-II/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S'
-    follow_master_command = '/etc/pgpool-II/follow_master.sh %d %h %p %D %m %H %M %P %r %R'
+failover_command = '/etc/pgpool-II/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S'
+follow_master_command = '/etc/pgpool-II/follow_master.sh %d %h %p %D %m %H %M %P %r %R'
    </programlisting>
    <note>
     <para>
@@ -506,22 +506,55 @@
     are installed in <filename>/etc/pgpool-II/</filename>. Create failover scripts using these sample files.
    </para>
    <programlisting>
-    # cp /etc/pgpool-II/failover.sh{.sample,}
-    # cp /etc/pgpool-II/follow_master.sh{.sample,}
+[all servers]# cp -p /etc/pgpool-II/failover.sh{.sample,}
+[all servers]# cp -p /etc/pgpool-II/follow_master.sh{.sample,}
+[all servers]# chown postgres:postgres /etc/pgpool-II/{failover.sh,follow_master.sh}
    </programlisting>
    <para>
     Basically, it should work if you change <emphasis>PGHOME</emphasis> according to PostgreSQL installation directory.
    </para>
    <programlisting>
-    [server1]# vi /etc/pgpool-II/failover.sh
-    ...
-    PGHOME=/usr/pgsql-11
-    ...
+[server1]# vi /etc/pgpool-II/failover.sh
+...
+PGHOME=/usr/pgsql-11
+...
 
-    [server1]# vi /etc/pgpool-II/follow_master.sh
-    ...
-    PGHOME=/usr/pgsql-11
-    ...
+[server1]# vi /etc/pgpool-II/follow_master.sh
+...
+PGHOME=/usr/pgsql-11
+...
+   </programlisting>
+
+   <para>
+    Since user authentication is required to use the <literal>PCP</literal> command in
+    <varname>follow_master_command</varname> script,
+    we need to specify user name and md5 encrypted password in <filename>pcp.conf</filename>
+    in format "<literal>username:encrypted password</literal>".
+   </para>
+   <para>
+    if <literal>pgpool</literal> user is specified in <varname>PCP_USER</varname> in <filename>follow_master.sh</filename>,
+   </para>
+   <programlisting>
+# cat /etc/pgpool-II/follow_master.sh
+...
+PCP_USER=pgpool
+...
+   </programlisting>
+   <para>
+    then we use <xref linkend="PG-MD5"> to create the encrypted password entry for <literal>pgpool</literal> user as below:
+   </para>
+   <programlisting>
+[all servers]# echo 'pgpool:'`pg_md5 PCP passowrd` &gt;&gt; /etc/pgpool-II/pcp.conf
+   </programlisting>
+   <para>
+    Since <filename>follow_master.sh</filename> script must execute PCP command without entering a
+    password, we need to create <filename>.pcppass</filename> in the home directory of
+    <productname>Pgpool-II</productname> startup user (postgres user) on each server.
+   </para>
+   <programlisting>
+[all servers]# su - postgres
+[all servers]$ echo 'localhost:9898:pgpool:&lt;pgpool user password&gt;' &gt; ~/.pcppass
+[all servers]$ chmod 600 ~/.pcppass
    </programlisting>
   </sect3>
 
@@ -538,12 +571,12 @@
 
    </para>
    <programlisting>
-    recovery_user = 'postgres'
+recovery_user = 'postgres'
                                             # Online recovery user
-    recovery_password = ''
+recovery_password = ''
                                             # Online recovery password
 
-    recovery_1st_stage_command = 'recovery_1st_stage'
+recovery_1st_stage_command = 'recovery_1st_stage'
    </programlisting>
    <para>
     Online recovery sample scripts<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_1_STABLE">recovery_1st_stage</ulink>
@@ -551,30 +584,30 @@
     are installed in <filename>/etc/pgpool-II/</filename>. Copy these files to the data directory of the primary server (server1).
    </para>
    <programlisting>
-    [server1]# cp /etc/pgpool-II/recovery_1st_stage.sample /var/lib/pgsql/11/data/
-    [server1]# cp /etc/pgpool-II/pgpool_remote_start.sample /var/lib/pgsql/11/data/
-    [server1]# chown postgres:postgres /var/lib/pgsql/11/data/{recovery_1st_stage,pgpool_remote_start}
+[server1]# cp -p /etc/pgpool-II/recovery_1st_stage.sample /var/lib/pgsql/11/data/recovery_1st_stage
+[server1]# cp -p /etc/pgpool-II/pgpool_remote_start.sample /var/lib/pgsql/13/data/pgpool_remote_start
+[server1]# chown postgres:postgres /var/lib/pgsql/11/data/{recovery_1st_stage,pgpool_remote_start}
    </programlisting>
    <para>
     Basically, it should work if you change <emphasis>PGHOME</emphasis> according to PostgreSQL installation directory.
    </para>
    <programlisting>
-    [server1]# vi /var/lib/pgsql/11/data/recovery_1st_stage
-    ...
-    PGHOME=/usr/pgsql-11
-    ...
+[server1]# vi /var/lib/pgsql/11/data/recovery_1st_stage
+...
+PGHOME=/usr/pgsql-11
+...
 
-    [server1]# vi /var/lib/pgsql/11/data/pgpool_remote_start
-    ...
-    PGHOME=/usr/pgsql-11
-    ...
+[server1]# vi /var/lib/pgsql/11/data/pgpool_remote_start
+...
+PGHOME=/usr/pgsql-11
+...
    </programlisting>
 
    <para>
-    In order to use the online recovery functionality, the functions of 
-    <function>pgpool_recovery</function>, <function>pgpool_remote_start</function>, 
-    <function>pgpool_switch_xlog</function> are required, so we need install 
-    <function>pgpool_recovery</function> on template1 of <productname>PostgreSQL</productname> server 
+    In order to use the online recovery functionality, the functions of
+    <function>pgpool_recovery</function>, <function>pgpool_remote_start</function>,
+    <function>pgpool_switch_xlog</function> are required, so we need install
+    <function>pgpool_recovery</function> on template1 of <productname>PostgreSQL</productname> server
     <literal>server1</literal>.
    </para>
    <programlisting>
@@ -586,25 +619,25 @@
   <sect3 id="example-cluster-pgpool-config-auth">
    <title>Client Authentication Configuration</title>
    <para>
-    Because in the section <link linkend="EXAMPLE-CLUSTER-PRE-SETUP">Before Starting</link>, 
-    we already set <productname>PostgreSQL</productname> authentication method to 
-    <acronym>scram-sha-256</acronym>, it is necessary to set a client authentication by 
-    <productname>Pgpool-II</productname> to connect to backend nodes. 
-    When installing with RPM, the <productname>Pgpool-II</productname> configuration file 
-    <filename>pool_hba.conf</filename> is in <filename>/etc/pgpool-II</filename>. 
-    By default, pool_hba authentication is disabled, set <varname>enable_pool_hba = on</varname> 
+    Because in the section <link linkend="EXAMPLE-CLUSTER-PRE-SETUP">Before Starting</link>,
+    we already set <productname>PostgreSQL</productname> authentication method to
+    <acronym>scram-sha-256</acronym>, it is necessary to set a client authentication by
+    <productname>Pgpool-II</productname> to connect to backend nodes.
+    When installing with RPM, the <productname>Pgpool-II</productname> configuration file
+    <filename>pool_hba.conf</filename> is in <filename>/etc/pgpool-II</filename>.
+    By default, pool_hba authentication is disabled, set <varname>enable_pool_hba = on</varname>
     to enable it.
    </para>
    <programlisting>
     enable_pool_hba = on
    </programlisting>
    <para>
-    The format of <filename>pool_hba.conf</filename> file follows very closely PostgreSQL's 
+    The format of <filename>pool_hba.conf</filename> file follows very closely PostgreSQL's
     <filename>pg_hba.conf</filename> format. Set <literal>pgpool</literal> and <literal>postgres</literal> user's authentication method to <literal>scram-sha-256</literal>.
    </para>
    <programlisting>
-    host    all         pgpool           0.0.0.0/0          scram-sha-256
-    host    all         postgres         0.0.0.0/0          scram-sha-256
+host    all         pgpool           0.0.0.0/0          scram-sha-256
+host    all         postgres         0.0.0.0/0          scram-sha-256
    </programlisting>
    <note>
     <para>
@@ -621,9 +654,9 @@
      (<productname>Pgpool-II</productname> 4.0 or before, by default <productname>Pgpool-II</productname>
      is started as <literal>root</literal>)
      <programlisting>
-      [all servers]# su - postgres
-      [all servers]$ echo 'some string' > ~/.pgpoolkey
-      [all servers]$ chmod 600 ~/.pgpoolkey
+[all servers]# su - postgres
+[all servers]$ echo 'some string' > ~/.pgpoolkey
+[all servers]$ chmod 600 ~/.pgpoolkey
      </programlisting>
    </para>
    <para>
@@ -633,15 +666,15 @@
     <filename>pgpool.conf</filename>.
    </para>
    <programlisting>
-    [all servers]# su - postgres
-    [all servers]$ pg_enc -m -k ~/.pgpoolkey -u pgpool -p
-    db password: [pgpool user's password]
-    [all servers]$ pg_enc -m -k ~/.pgpoolkey -u postgres -p
-    db password: [postgres user's passowrd]
+[all servers]# su - postgres
+[all servers]$ pg_enc -m -k ~/.pgpoolkey -u pgpool -p
+db password: [pgpool user's password]
+[all servers]$ pg_enc -m -k ~/.pgpoolkey -u postgres -p
+db password: [postgres user's passowrd]
 
-    # cat /etc/pgpool-II/pool_passwd 
-    pgpool:AESheq2ZMZjynddMWk5sKP/Rw==
-    postgres:AESHs/pWL5rtXy2IwuzroHfqg==
+# cat /etc/pgpool-II/pool_passwd 
+pgpool:AESheq2ZMZjynddMWk5sKP/Rw==
+postgres:AESHs/pWL5rtXy2IwuzroHfqg==
    </programlisting>
   </sect3>
 
@@ -651,7 +684,7 @@
     Enable watchdog functionality on <literal>server1</literal>, <literal>server2</literal>, <literal>server3</literal>.
    </para>
    <programlisting>
-    use_watchdog = on
+use_watchdog = on
    </programlisting>
    <para>
     Specify virtual IP address that accepts connections from clients on 
@@ -659,17 +692,29 @@
     Ensure that the IP address set to virtual IP isn't used yet.
    </para>
    <programlisting>
-    delegate_IP = '192.168.137.150'
+delegate_IP = '192.168.137.150'
    </programlisting>
 
    <para>
     To bring up/down the virtual IP and send the ARP requests, we set <xref linkend="GUC-IF-UP-CMD">, <xref linkend="GUC-IF-DOWN-CMD"> and <xref linkend="GUC-ARPING-CMD">.
     The network interface used in this example is "enp0s8".
     Since root privilege is required to execute <varname>if_up/down_cmd</varname> or
-    <varname>arping_cmd</varname> command, use setuid on these command or allow 
+    <varname>arping_cmd</varname> command, use setuid on these command or allow
     <productname>Pgpool-II</productname> startup user, <literal>postgres</literal> user (Pgpool-II 4.1 or later) to run <command>sudo</command> command without a password.
-    If installed from RPM, the <literal>postgres</literal> user has been configured to run
-    <command>ip/arping</command> via <command>sudo</command> without a password.
+   </para>
+   <note>
+    <para>
+    If <productname>Pgpool-II</productname> is installed using RPM, the <literal>postgres</literal>
+    user has been configured to run <command>ip/arping</command> via <command>sudo</command> without
+    a password.
+    <programlisting>
+postgres ALL=NOPASSWD: /sbin/ip
+postgres ALL=NOPASSWD: /usr/sbin/arping
+    </programlisting>
+    </para>
+   </note>
+   <para>
+    Here we configure the following parameters to run <varname>if_up/down_cmd</varname> or <varname>arping_cmd</varname> with sudo.
    </para>
    <programlisting>
 if_up_cmd = '/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev enp0s8 label enp0s8:0'
@@ -685,7 +730,7 @@ arping_cmd = '/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I enp0s8'
    <para>
     Set <xref linkend="GUC-IF-CMD-PATH"> and <xref linkend="GUC-ARPING-PATH"> according to the
     command path.
-    If <varname>if_up/down_cmd</varname> or <varname>arping_cmd</varname> starts with "/", these parameters will be ignored. 
+    If <varname>if_up/down_cmd</varname> or <varname>arping_cmd</varname> starts with "/", these parameters will be ignored.
    </para>
    <programlisting>
 if_cmd_path = '/sbin'
@@ -700,8 +745,8 @@ arping_path = '/usr/sbin'
       <literal>server1</literal>
      </para>
      <programlisting>
-      wd_hostname = 'server1'
-      wd_port = 9000
+wd_hostname = 'server1'
+wd_port = 9000
      </programlisting>
     </listitem>
     <listitem>
@@ -718,8 +763,8 @@ arping_path = '/usr/sbin'
       <literal>server3</literal>
      </para>
      <programlisting>
-      wd_hostname = 'server3'
-      wd_port = 9000
+wd_hostname = 'server3'
+wd_port = 9000
      </programlisting>
     </listitem>
    </itemizedlist>
@@ -733,20 +778,20 @@ arping_path = '/usr/sbin'
       <literal>server1</literal>
      </para>
      <programlisting>
-      # - Other pgpool Connection Settings -
+# - Other pgpool Connection Settings -
 
-      other_pgpool_hostname0 = 'server2'
+other_pgpool_hostname0 = 'server2'
                                             # Host name or IP address to connect to for other pgpool 0
                                             # (change requires restart)
-      other_pgpool_port0 = 9999
+other_pgpool_port0 = 9999
                                             # Port number for other pgpool 0
                                             # (change requires restart)
-      other_wd_port0 = 9000
+other_wd_port0 = 9000
                                             # Port number for other watchdog 0
                                             # (change requires restart)
-      other_pgpool_hostname1 = 'server3'
-      other_pgpool_port1 = 9999
-      other_wd_port1 = 9000
+other_pgpool_hostname1 = 'server3'
+other_pgpool_port1 = 9999
+other_wd_port1 = 9000
      </programlisting>
     </listitem>
     <listitem>
@@ -754,20 +799,20 @@ arping_path = '/usr/sbin'
       <literal>server2</literal>
      </para>
      <programlisting>
-      # - Other pgpool Connection Settings -
+# - Other pgpool Connection Settings -
 
-      other_pgpool_hostname0 = 'server1'
+other_pgpool_hostname0 = 'server1'
                                             # Host name or IP address to connect to for other pgpool 0
                                             # (change requires restart)
-      other_pgpool_port0 = 9999
+other_pgpool_port0 = 9999
                                             # Port number for other pgpool 0
                                             # (change requires restart)
-      other_wd_port0 = 9000
+other_wd_port0 = 9000
                                             # Port number for other watchdog 0
                                             # (change requires restart)
-      other_pgpool_hostname1 = 'server3'
-      other_pgpool_port1 = 9999
-      other_wd_port1 = 9000
+other_pgpool_hostname1 = 'server3'
+other_pgpool_port1 = 9999
+other_wd_port1 = 9000
      </programlisting>
     </listitem>
     <listitem>
@@ -775,20 +820,20 @@ arping_path = '/usr/sbin'
       <literal>server3</literal>
      </para>
      <programlisting>
-      # - Other pgpool Connection Settings -
+# - Other pgpool Connection Settings -
 
-      other_pgpool_hostname0 = 'server1'
+other_pgpool_hostname0 = 'server1'
                                             # Host name or IP address to connect to for other pgpool 0
                                             # (change requires restart)
-      other_pgpool_port0 = 9999
+other_pgpool_port0 = 9999
                                             # Port number for other pgpool 0
                                             # (change requires restart)
-      other_wd_port0 = 9000
+other_wd_port0 = 9000
                                             # Port number for other watchdog 0
                                             # (change requires restart)
-      other_pgpool_hostname1 = 'server2'
-      other_pgpool_port1 = 9999
-      other_wd_port1 = 9000
+other_pgpool_hostname1 = 'server2'
+other_pgpool_port1 = 9999
+other_wd_port1 = 9000
      </programlisting>
     </listitem>
    </itemizedlist>
@@ -943,37 +988,10 @@ arping_path = '/usr/sbin'
    <programlisting>
     [all servers]# systemctl restart rsyslog
    </programlisting>
-  </sect3>
-
-  <sect3 id="example-cluster-pgpool-config-pcp">
-   <title>PCP Command Configuration</title>
-   <para>
-    Since user authentication is required to use the <literal>PCP</literal> command, 
-    specify user name and md5 encrypted password in <filename>pcp.conf</filename>.
-    Here we create the encrypted password for <literal>pgpool</literal> user, and add
-    "<literal>username:encrypted password</literal>" in <filename>/etc/pgpool-II/pcp.conf</filename>.
-   </para>
-   <programlisting>
-    [all servers]# echo 'pgpool:'`pg_md5 PCP passowrd` &gt;&gt; /etc/pgpool-II/pcp.conf
-   </programlisting>
-  </sect3>
-
-  <sect3 id="example-cluster-pgpool-config-pcppass">
-   <title>.pcppass</title>
-   <para>
-    Since follow_master_command script has to execute PCP command without entering the
-    password, we create <filename>.pcppass</filename> in the home directory of 
-    <productname>Pgpool-II</productname> startup user (root user).
-   </para>
-   <programlisting>
-    [all servers]# echo 'localhost:9898:pgpool:pgpool' > ~/.pcppass
-    [all servers]# chmod 600 ~/.pcppass
-   </programlisting>
    <para>
     The settings of <productname>Pgpool-II</productname> is completed. 
    </para>
   </sect3>
-
  </sect2>
 
  <sect2 id="example-cluster-start-stop">

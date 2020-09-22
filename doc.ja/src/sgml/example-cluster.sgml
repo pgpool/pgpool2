@@ -442,12 +442,12 @@
    <para>
     <xref linkend="SQL-SHOW-POOL-NODES">コマンドでレプリケーション状態と同期レプリケーション状態を表示するには、<xref linkend="GUC-BACKEND-APPLICATION-NAME">パラメータを設定する必要があります。ここではそれぞれのホスト名を設定します。(<productname>Pgpool-II</productname> 4.1以降)
       <programlisting>
-       ...                                                                          
-       backend_application_name0 = 'server1'
-       ...  
-       backend_application_name1 = 'server2'
-       ...  
-       backend_application_name2 = 'server3'
+...
+backend_application_name0 = 'server1'
+...
+backend_application_name1 = 'server2'
+...
+backend_application_name2 = 'server3'
       </programlisting>
    </para>
   </sect3>
@@ -476,22 +476,49 @@
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、これらのファイルをコピーして作成します。
    </para>
    <programlisting>
-    # cp /etc/pgpool-II/failover.sh{.sample,}
-    # cp /etc/pgpool-II/follow_master.sh{.sample,}
+[全サーバ]# cp -p /etc/pgpool-II/failover.sh{.sample,}
+[全サーバ]# cp -p /etc/pgpool-II/follow_master.sh{.sample,}
+[全サーバ]# chown postgres:postgres /etc/pgpool-II/{failover.sh,follow_master.sh}
    </programlisting>
    <para>
     基本的には<emphasis>PGHOME</emphasis>を環境に合わせて変更すれば、動作します。
    </para>
    <programlisting>
-    [server1]# vi /etc/pgpool-II/failover.sh
-    ...
-    PGHOME=/usr/pgsql-11
-    ...
+[server1]# vi /etc/pgpool-II/failover.sh
+...
+PGHOME=/usr/pgsql-11
+...
 
-    [server1]# vi /etc/pgpool-II/follow_master.sh
-    ...
-    PGHOME=/usr/pgsql-11
-    ...
+[server1]# vi /etc/pgpool-II/follow_master.sh
+...
+PGHOME=/usr/pgsql-11
+...
+   </programlisting>
+   <para>
+    <literal>PCP</literal>コマンドを使用するにはユーザ認証が必要になるので、ユーザ名と<literal>md5</literal>ハッシュに変換されたパスワードを"<literal>username:encrypted password</literal>"の形式で<filename>pcp.conf</filename>ファイルに設定します。
+   </para>
+   <para>
+    <filename>follow_master.sh</filename>で<literal>pgpool</literal>ユーザが<varname>PCP_USER</varname>に指定している場合、
+   </para>
+   <programlisting>
+# cat /etc/pgpool-II/follow_master.sh
+...
+PCP_USER=pgpool
+...
+   </programlisting>
+   <para>
+    以下のように<xref lin="PG-MD5">コマンドを利用し、ハッシュ化されたpgpoolユーザのパスワードエントリを<filename>/etc/pgpool-II/pcp.conf</filename>に追加します。
+   </para>
+   <programlisting>
+[全サーバ]# echo 'pgpool:'`pg_md5 PCPコマンドパスワード` &gt;&gt; /etc/pgpool-II/pcp.conf
+   </programlisting>
+   <para>
+   前述の<filename>follow_master.sh</filename>のスクリプトでパスワード入力なしで<literal>PCP</literal>コマンドを実行できるように、すべてのサーバで<productname>Pgpool-II</productname>の起動ユーザのホームディレクトリに<filename>.pcppass</filename>を作成します。
+   </para>
+   <programlisting>
+[全サーバ]# su - postgres
+[全サーバ]$ echo 'localhost:9898:pgpool:&lt;pgpool user password&gt;' &gt; ~/.pcppass
+[全サーバ]$ chmod 600 ~/.pcppass
    </programlisting>
   </sect3>
 
@@ -502,12 +529,12 @@
     オンラインリカバリで実行される<function>pgpool_recovery</function>関数は<productname>PostgreSQL</productname>のスーパーユーザ権限が必要なため、<varname>recovery_user</varname>に<emphasis>スーパーユーザ</emphasis>を指定しなければなりません。ここでは、postrgesユーザを指定します。
    </para>
    <programlisting>
-    recovery_user = 'postgres'
-    # Online recovery user
-    recovery_password = ''
-    # Online recovery password
+recovery_user = 'postgres'
+                                # Online recovery user
+recovery_password = ''
+                                # Online recovery password
 
-    recovery_1st_stage_command = 'recovery_1st_stage'
+recovery_1st_stage_command = 'recovery_1st_stage'
    </programlisting>
    <para>
     オンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_1_STABLE">recovery_1st_stage</ulink>
@@ -515,9 +542,9 @@
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、これらのファイルをプライマリサーバ(server1)のデータベースクラスタ配下に配置します。
    </para>
    <programlisting>
-    [server1]# cp /etc/pgpool-II/recovery_1st_stage.sample /var/lib/pgsql/11/data/
-    [server1]# cp /etc/pgpool-II/pgpool_remote_start.sample /var/lib/pgsql/11/data/
-    [server1]# chown postgres:postgres /var/lib/pgsql/11/data/{recovery_1st_stage,pgpool_remote_start}
+[server1]# cp -p /etc/pgpool-II/recovery_1st_stage.sample /var/lib/pgsql/11/data/recovery_1st_stage
+[server1]# cp -p /etc/pgpool-II/pgpool_remote_start.sample /var/lib/pgsql/11/data/pgpool_remote_start
+[server1]# chown postgres:postgres /var/lib/pgsql/11/data/{recovery_1st_stage,pgpool_remote_start}
    </programlisting>
    <para>
     基本的には<emphasis>PGHOME</emphasis>を環境に合わせて変更すれば、動作します。
@@ -615,7 +642,18 @@
     <varname>if_up/down_cmd</varname>や<varname>arping_cmd</varname>を実行するにはroot権限が必要となりますので、
     一般ユーザが実行できるように<command>ip/arping</command>コマンドに<literal>setuid</literal>を設定するか、
     <productname>Pgpool-II</productname>起動ユーザ、デフォルトでは<literal>postgres</literal>ユーザ (<productname>Pgpool-II</productname> 4.1以降) がパスワードなしに<command>sudo</command>を実行できるように設定する必要があります。
-    ここでは、<command>sudo</command>を介して実行するように設定します。RPMからインストールした場合、<literal>postgres</literal>ユーザがパスワードなしに<command>sudo</command>を介して<command>ip/arping</command>を実行できるように設定済みです。
+   </para>
+   <note>
+    <para>
+    RPMからインストールした場合、<literal>postgres</literal>ユーザがパスワードなしに<command>sudo</command>を介して<command>ip/arping</command>を実行できるように設定済みです。
+    <programlisting>
+postgres ALL=NOPASSWD: /sbin/ip
+postgres ALL=NOPASSWD: /usr/sbin/arping
+    </programlisting>
+    </para>
+   </note>
+   <para>
+    ここでは、<command>sudo</command>を介して実行するように設定します。
    </para>
    <programlisting>
 if_up_cmd = '/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev enp0s8 label enp0s8:0'
@@ -887,28 +925,6 @@ arping_path = '/usr/sbin'
    </para>
    <programlisting>
     [全サーバ]# systemctl restart rsyslog
-   </programlisting>
-  </sect3>
-
-  <sect3 id="example-cluster-pgpool-config-pcp">
-   <title>PCPコマンドの設定</title>
-   <para>
-    <literal>PCP</literal>コマンドを使用するにはユーザ認証が必要になるので、ユーザ名と<literal>md5</literal>ハッシュに変換されたパスワードを<filename>pcp.conf</filename>ファイルに設定します。
-    ここではユーザ名に<literal>pgpool</literal>を使用し、以下のコマンドを実行することで、&lt;ユーザ名:ハッシュ化されたパスワード&gt;が<filename>/etc/pgpool-II/pcp.conf</filename>に追加されます。
-   </para>
-   <programlisting>
-    [全サーバ]# echo 'pgpool:'`pg_md5 PCPコマンドパスワード` &gt;&gt; /etc/pgpool-II/pcp.conf
-   </programlisting>
-  </sect3>
-
-  <sect3 id="example-cluster-pgpool-config-pcppass">
-   <title>.pcppassの設定</title>
-   <para>
-    前述の<literal>follow_master_command</literal>のスクリプトでパスワード入力なしで<literal>PCP</literal>コマンドを実行できるように、すべてのサーバで<productname>Pgpool-II</productname>の起動ユーザのホームディレクトリに<filename>.pcppass</filename>を作成します。
-   </para>
-   <programlisting>
-    [全サーバ]# echo 'localhost:9898:pgpool:pgpool' > ~/.pcppass
-    [全サーバ]# chmod 600 ~/.pcppass
    </programlisting>
    <para>
     ここで、<productname>Pgpool-II</productname>の設定は完了です。
