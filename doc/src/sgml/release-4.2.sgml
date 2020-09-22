@@ -21,6 +21,13 @@
   </para>
 
   <para>
+   Please be warned that in this version some configuration parameters
+   are changed to use more appropriate language. Also some words used
+   in reporting are changed accordingly. See "Migration" section for
+   more details.
+  </para>
+
+  <para>
    Below are major enhancements.
   </para>
 
@@ -163,9 +170,112 @@ Author: Tatsuo Ishii <ishii@sraoss.co.jp>
 
    <listitem>
 <!--
+2020-09-17 [9e366c14]
+-->
+    <para>
+     Cleanup language. (Umar Hayat)
+    </para>
+    <para>
+     Following changes are made in <filename>pgpool.conf</filename>.
+     <itemizedlist>
+
+      <listitem>
+       <para>
+	black_function_list &rarr; write_function_list
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	white_function_list &rarr; read_function_list
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	black_query_pattern &rarr; primary_routing_query_pattern
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	black_memcache_table_list &rarr; cache_unsafe_table_list
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	white_memcache_table_list &rarr; cache_safe_table_list
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	ALWAYS_MASTER flag &rarr; ALWAYS_PRIMARY flag
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	follow_master_command  &rarr; follow_primary_command
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	Replace relcache_query_target option value 'master' to 'primary'.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+    </para>
+
+    <para>
+     Some words used in reporting are changed.
+
+     <itemizedlist>
+      <listitem>
+       <para>
+	master &rarr; main
+       </para>
+       <para>
+	slave &rarr; replica
+       </para>
+      </listitem>
+      </itemizedlist>
+    </para>
+
+    <para>
+     Some parameter names used in scripts are changed.
+
+     <itemizedlist>
+      <listitem>
+       <para>
+	master &rarr; main
+       </para>
+      </listitem>
+      </itemizedlist>
+    </para>
+
+    <para>
+     Some names used in watchdog are changed.
+
+     <itemizedlist>
+      <listitem>
+       <para>
+	master &rarr; leader
+       </para>
+      </listitem>
+      </itemizedlist>
+    </para>
+
+   </listitem>
+
+<!--
 Author: Bo Peng <pengbo@sraoss.co.jp>
 2020-08-11 [a840ecb2] New feature: Simplify Watchdog related configuration parameters.
 -->
+   <listitem>
     <para>
      Watchdog parameters below are deprecated.
      <programlisting>
@@ -234,8 +344,8 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
   <itemizedlist>
    <listitem>
     <para>
-     In this release same bug fixes as <productname>Pgpool-II</productname> 4.1.3 are
-     already applied. See <xref linkend="release-4-1-3"> for more details of those fixes.
+     In this release same bug fixes as <productname>Pgpool-II</productname> 4.1.4 are
+     already applied. See <xref linkend="release-4-1-4"> for more details of those fixes.
     </para>
    </listitem>
   </itemizedlist>
@@ -424,6 +534,19 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
      Allow to stop whole pgpool cluster by using <xref
      linkend="PCP-STOP-PGPOOL"> command. (Muhammad Usama, Japanese doc
      by Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-24 [6156534a]
+    -->
+    <para>
+     Add wd_cli utility (Muhammad Usama, Japanese doc by Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="wd-cli"> makes it easier to integrate the external health check systems with the
+     <productname>Pgpool-II</productname>.
     </para>
    </listitem>
 

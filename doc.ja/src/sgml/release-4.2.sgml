@@ -36,6 +36,17 @@
   </para>
 
   <para>
+<!--
+   Please be warned that in this version some configuration parameters
+   are changed to use more appropriate language. Also some words used
+   in reporting are changed accordingly. See "Migration" section for
+   more details.
+-->
+   このバージョンでは、より適切な用語を使うために設定パラメータ名が変更されていることに注意してください。
+   また、レポートでも用語が変更されています。詳細は、「移行」の章を見てください。
+  </para>
+
+  <para>
    主な改善項目は以下です。
   </para>
 
@@ -165,9 +176,130 @@ Author: Tatsuo Ishii <ishii@sraoss.co.jp>
 
    <listitem>
 <!--
+2020-09-17 [9e366c14]
+-->
+    <para>
+<!--
+     Cleanup language. (Umar Hayat)
+-->
+     適切な用語に変更しました。(Umar Hayat)
+    </para>
+    <para>
+     <!--
+     Following changes are made in <filename>pgpool.conf</filename>.
+     -->
+     <filename>pgpool.conf</filename>に以下の変更が行われました。
+     <itemizedlist>
+
+      <listitem>
+       <para>
+	black_function_list &rarr; write_function_list
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	white_function_list &rarr; read_function_list
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	black_query_pattern &rarr; primary_routing_query_pattern
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	black_memcache_table_list &rarr; cache_unsafe_table_list
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	white_memcache_table_list &rarr; cache_safe_table_list
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	ALWAYS_MASTER flag &rarr; ALWAYS_PRIMARY flag
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	follow_master_command  &rarr; follow_primary_command
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	<!--
+	Replace relcache_query_target option value 'master' to 'primary'.
+	-->
+	relcache_query_targetのオプション値'master'を'primary'に変更しました。
+       </para>
+      </listitem>
+
+     </itemizedlist>
+    </para>
+
+    <para>
+<!--
+     Some words used in reporting are changed.
+-->
+     レポートで使われている用語を変更しました。
+
+     <itemizedlist>
+      <listitem>
+       <para>
+	master &rarr; main
+       </para>
+       <para>
+	slave &rarr; replica
+       </para>
+      </listitem>
+      </itemizedlist>
+    </para>
+
+    <para>
+<!--
+     Some parameter names used in scripts are changed.
+-->
+     スクリプトの引数で使われている用語を変更しました。
+
+     <itemizedlist>
+      <listitem>
+       <para>
+	master &rarr; main
+       </para>
+      </listitem>
+      </itemizedlist>
+    </para>
+
+    <para>
+<!--
+     Some names used in watchdog are changed.
+-->
+     watchdogで使われている用語を変更しました。
+
+     <itemizedlist>
+      <listitem>
+       <para>
+	master &rarr; leader
+       </para>
+      </listitem>
+      </itemizedlist>
+    </para>
+
+   </listitem>
+
+<!--
 Author: Bo Peng <pengbo@sraoss.co.jp>
 2020-08-11 [a840ecb2] New feature: Simplify Watchdog related configuration parameters.
 -->
+   <listitem>
     <para>
      以下のwatchdogパラメータは使えなくなりました。
      <programlisting>
@@ -239,11 +371,11 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
    <listitem>
     <para>
      <!--
-     In this release same bug fixes as <productname>Pgpool-II</productname> 4.1.3 are
-     already applied. See <xref linkend="release-4-1-3"> for more details of those fixes.
+     In this release same bug fixes as <productname>Pgpool-II</productname> 4.1.4 are
+     already applied. See <xref linkend="release-4-1-4"> for more details of those fixes.
      -->
-     このリリースでは<productname>Pgpool-II</productname> 4.1.3 と同様のバグ修正が既に適用されています。
-     修正の詳細は<xref linkend="release-4-1-3">を参照してください。
+     このリリースでは<productname>Pgpool-II</productname> 4.1.4 と同様のバグ修正が既に適用されています。
+     修正の詳細は<xref linkend="release-4-1-4">を参照してください。
     </para>
    </listitem>
   </itemizedlist>
@@ -495,6 +627,25 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
      by Tatsuo Ishii)
 -->
      <xref linkend="PCP-STOP-PGPOOL">を使ってpgpoolクラスタ全体を停止することができるようになりました。(Muhammad Usama, Japanese doc by Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2019-09-24 [6156534a]
+    -->
+    <para>
+<!--
+     Add wd_cli utility (Muhammad Usama, Japanese doc by Tatsuo Ishii)
+-->
+     wd_cliユーティリティを追加しました。(Muhammad Usama, Japanese doc by Tatsuo Ishii)
+    </para>
+    <para>
+<!--
+     <xref linkend="wd-cli"> makes it easier to integrate the external health check systems with the
+     <productname>Pgpool-II</productname>.
+-->
+     <xref linkend="wd-cli">は<productname>Pgpool-II</productname>と外部ヘルスチェックシステとの連携を容易にします。
     </para>
    </listitem>
 
