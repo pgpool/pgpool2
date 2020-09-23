@@ -283,7 +283,7 @@ function set_postgresql_conf
 	echo "max_prepared_transactions = 10" >> $PGCONF
 	echo "unix_socket_directories = '$PGSOCKET_DIR'" >> $PGCONF 
 
-	if [ $PGVERSION -ge 120 ];then
+	if [ $PGVERSION -ge 12 ];then
 	    echo "include_if_exists = 'myrecovery.conf'" >> $PGCONF
 	fi
 
@@ -412,7 +412,7 @@ $psql -p $PORT -c "SELECT pg_start_backup('Native Replication', true)" postgres
 echo "source: $master_db_cluster dest: $DEST_CLUSTER" > $log
 EOF
 
-if [ $PGVERSION -ge 120 ];then
+if [ $PGVERSION -ge 12 ];then
     cat >> $1/$SCRIPT <<'EOF'
 cat > $master_db_cluster/myrecovery.conf <<REOF
 restore_command = 'cp __ARCHDIR__/%f %p'
@@ -448,7 +448,7 @@ cat >> $1/$SCRIPT <<'EOF'
 $psql -p $PORT -c "SELECT pg_stop_backup()" postgres
 EOF
 
-if [ $PGVERSION -ge 120 ];then
+if [ $PGVERSION -ge 12 ];then
     cat >> $1/$SCRIPT <<'EOF'
 touch $DEST_CLUSTER/recovery.signal
 EOF
