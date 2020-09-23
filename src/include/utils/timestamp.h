@@ -16,7 +16,7 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
- * ppgool_logger.h.: master definition header file
+ * ppgool_logger.h.: ppgool_logger definition header file
  *
  */
 /*-------------------------------------------------------------------------

@@ -461,7 +461,7 @@
       command will not be executed. This command also runs if a
       node promote request is issued by
       <xref linkend="PCP-PROMOTE-NODE"> command. This works only
-      in Master Replication mode with streaming replication.
+      in streaming replication mode.
       -->
       プライマリノードのフェイルオーバー後に実行するユーザコマンドを指定します。
       スタンバイがフェイルオーバーした際にはこのコマンドは実行されません。

@@ -18,7 +18,7 @@
  * is" without express or implied warranty.
  *
  *
- * pcp.h - master header file.
+ * pcp.h - pcp header file.
  */
 
 #ifndef PCP_H

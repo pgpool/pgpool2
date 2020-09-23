@@ -373,7 +373,7 @@
       command will not be executed. This command also runs if a
       node promote request is issued by
       <xref linkend="PCP-PROMOTE-NODE"> command. This works only
-       in Replication mode with streaming replication.
+       in streaming replication mode.
      </para>
 
      <para>

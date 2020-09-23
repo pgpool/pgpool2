@@ -17,7 +17,7 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
- * pcp_stream.h - master header file.
+ * pcp_stream.h - pcp_stream header file.
  */
 
 #ifndef PCP_STREAM_H

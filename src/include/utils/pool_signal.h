@@ -20,7 +20,7 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
- * pool.h.: master definition header file
+ * pool_signal.h.: pool_signal definition header file
  *
  */
 

@@ -264,7 +264,7 @@ Pgpool-II documentation
 	*****************
 	Node ID:           0
 	Node Status code   4
-	Node Status:       MASTER
+	Node Status:       LEADER
 	Node Name:         localhost:9991 Linux localhost.localdomain
 	Node Host:         localhost
 	Node WD Port:      9001
