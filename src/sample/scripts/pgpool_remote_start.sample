@@ -2,7 +2,6 @@
 # This script is run after recovery_1st_stage to start Standby node.
 
 set -o xtrace
-exec > >(logger -i -t pgpool) 2>&1
 
 DEST_NODE_HOST="$1"
 DEST_NODE_PGDATA="$2"

@@ -3,7 +3,6 @@
 # First try pg_rewind. If pg_rewind failed, use pg_basebackup.
 
 set -o xtrace
-exec > >(logger -i -t pgpool) 2>&1
 
 # Special values:
 #   %d = failed node id
