@@ -2109,7 +2109,7 @@ is_in_list(char *name, List *list)
 	foreach (cell, list)
 	{
 		char *cell_name = (char *)lfirst(cell);
-		if (strcmp(name, cell_name) == 0)
+		if (strcasecmp(name, cell_name) == 0)
 		{
 			ereport(DEBUG1,
 					(errmsg("[%s] is in list", name)));
