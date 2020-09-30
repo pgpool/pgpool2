@@ -555,7 +555,7 @@
 	 <!--
 	 <entry>Old main node ID</entry>
 	 -->
-	 <entry>古いマスターノードのID</entry>
+	 <entry>古いメインノードのID</entry>
 	</row>
 	<row>
 	 <entry>%m</entry>

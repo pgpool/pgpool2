@@ -181,7 +181,7 @@
     This eliminates the likelihood of undesired behavior that can happen
     because of different configuration on different <productname>Pgpool-II</productname> nodes.
     -->
-    起動時に、watchdogはローカルノードの<productname>Pgpool-II</productname>の設定パラメータを、マスターノードのwatchdog上の設定パラメータとの一貫性を確認し、違いがあれば警告を出します。
+    起動時に、watchdogはローカルノードの<productname>Pgpool-II</productname>の設定パラメータを、リーダーノードのwatchdog上の設定パラメータとの一貫性を確認し、違いがあれば警告を出します。
     これにより、異なる<productname>Pgpool-II</productname>ノードにおける設定パラメータの違いによる好ましくない振る舞いが起きる可能性を減らします。
    </para>
   </sect2>
