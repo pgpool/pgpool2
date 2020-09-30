@@ -312,11 +312,8 @@
    <!--
    <productname>Pgpool-II</productname> works on Linux, Solaris,
    FreeBSD, and most of the UNIX-like architectures. Windows is not
-   supported. Supported PostgreSQL server's versions are 6.4 and
-   higher.  If you are using <productname>PostgreSQL</productname>
-   7.3 or older, some features
-   of <productname>Pgpool-II</productname> won't be available. But
-   you shouldn't use such an old release anyway.  You must also make
+   supported. Supported PostgreSQL server's versions are 7.4 and
+   higher. You must also make
    sure that all of your <productname>PostgreSQL</productname>
    servers are using the same major version. In addition to this, we
    do not recommend mixing
@@ -332,9 +329,7 @@
    -->
    <productname>Pgpool-II</productname> は、Linuxをはじめ、SolarisやFreeBSDなどのほとんどのUNIX環境で動作します。
    Windows では動きません。
-   対応する<productname>PostgreSQL</productname>のバージョンは、6.4 以降です。
-   また、<productname>PostgreSQL</productname> 7.4 より前のバージョンでは、使用できる機能に制限事項があります。
-   もっとも、そのような古いバージョンの<productname>PostgreSQL</productname> はそもそも使うべきではありません。
+   対応する<productname>PostgreSQL</productname>のバージョンは、7.4 以降です。
    <productname>Pgpool-II</productname>配下で利用する<productname>PostgreSQL</productname>サーバのメジャーバージョン、
    OS やハードウェアアーキテクチャを同じものにしなければなりません。
    また、バージョンが同じであっても、<productname>PostgreSQL</productname> のビルド方法が違うものを混ぜている場合の動作は保証できません。
