@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -35,7 +35,7 @@ typedef enum
 	LOAD_BALANCE_CONFIG,
 	REPLICATION_CONFIG,
 	STREAMING_REPLICATION_CONFIG,
-	NATIVE_REPLICATION_CONFIG,
+	MAIN_REPLICA_CONFIG,
 	WATCHDOG_CONFIG,
 	SSL_CONFIG,
 	FAILOVER_CONFIG,

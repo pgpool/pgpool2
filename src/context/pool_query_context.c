@@ -391,7 +391,7 @@ pool_virtual_main_db_node_id(void)
 	 * if exists.  Otherwise returns my_main_node_id, which represents the
 	 * last REAL_MAIN_NODE_ID.
 	 */
-	if (NATIVE_REPLICATION)
+	if (MAIN_REPLICA)
 	{
 		return PRIMARY_NODE_ID;
 	}
@@ -448,7 +448,7 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 	if (!strncasecmp(query, NO_LOAD_BALANCE, NO_LOAD_BALANCE_COMMENT_SZ))
 	{
 		pool_set_node_to_be_sent(query_context,
-								 NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID);
+								 MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID);
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
 			if (query_context->where_to_send[i])
@@ -467,7 +467,7 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 	{
 		pool_set_node_to_be_sent(query_context, REAL_MAIN_NODE_ID);
 	}
-	else if (NATIVE_REPLICATION && query_context->is_multi_statement)
+	else if (MAIN_REPLICA && query_context->is_multi_statement)
 	{
 		/*
 		 * If we are in native replication mode and we have multi statement query,
@@ -483,7 +483,7 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 		 */
 		pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 	}
-	else if (NATIVE_REPLICATION)
+	else if (MAIN_REPLICA)
 	{
 		POOL_DEST	dest;
 
@@ -856,7 +856,7 @@ pool_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 		 * If in native replication mode, we do not send COMMIT/ABORT to
 		 * standbys if it's in I(idle) state.
 		 */
-		if (is_commit && NATIVE_REPLICATION && !IS_MAIN_NODE_ID(i) && TSTATE(backend, i) == 'I')
+		if (is_commit && MAIN_REPLICA && !IS_MAIN_NODE_ID(i) && TSTATE(backend, i) == 'I')
 		{
 			pool_unset_node_to_be_sent(query_context, i);
 			continue;
@@ -907,7 +907,7 @@ pool_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 		 * If in native replication mode, we do not send COMMIT/ABORT to
 		 * standbys if it's in I(idle) state.
 		 */
-		if (is_commit && NATIVE_REPLICATION && !IS_MAIN_NODE_ID(i) && TSTATE(backend, i) == 'I')
+		if (is_commit && MAIN_REPLICA && !IS_MAIN_NODE_ID(i) && TSTATE(backend, i) == 'I')
 		{
 			continue;
 		}
@@ -1117,7 +1117,7 @@ pool_extended_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 			 * If in native replication mode, we do not send COMMIT/ABORT to
 			 * standbys if it's in I(idle) state.
 			 */
-			if (is_commit && NATIVE_REPLICATION && !IS_MAIN_NODE_ID(i) && TSTATE(backend, i) == 'I')
+			if (is_commit && MAIN_REPLICA && !IS_MAIN_NODE_ID(i) && TSTATE(backend, i) == 'I')
 			{
 				continue;
 			}
@@ -1746,7 +1746,7 @@ is_serializable(TransactionStmt *node)
 bool
 pool_need_to_treat_as_if_default_transaction(POOL_QUERY_CONTEXT * query_context)
 {
-	return (NATIVE_REPLICATION &&
+	return (MAIN_REPLICA &&
 			is_start_transaction_query(query_context->parse_tree) &&
 			(is_read_write((TransactionStmt *) query_context->parse_tree) ||
 			 is_serializable((TransactionStmt *) query_context->parse_tree)));

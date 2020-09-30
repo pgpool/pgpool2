@@ -344,7 +344,7 @@ pool_process_query(POOL_CONNECTION * frontend,
 
 									if (kind == 'A')
 									{
-										if (NATIVE_REPLICATION)
+										if (MAIN_REPLICA)
 										{
 											int			sendlen;
 
@@ -723,7 +723,7 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 	 * backends will not receive the message. So we should skip other nodes
 	 * otherwise we will hang in pool_read.
 	 */
-	if (!NATIVE_REPLICATION || kind != 'A')
+	if (!MAIN_REPLICA || kind != 'A')
 	{
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
@@ -3277,7 +3277,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 		}
 	}
 
-	if (NATIVE_REPLICATION)
+	if (MAIN_REPLICA)
 	{
 		ereport(DEBUG5,
 				(errmsg("reading backend data packet kind"),
@@ -3583,12 +3583,12 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 		}
 
 		/*
-		 * In native replication mode, if primary gets an error at commit, while
+		 * In main/replica mode, if primary gets an error at commit, while
 		 * other standbys are normal at commit, we don't need to degenerate any
 		 * backend because it is likely that the error was caused by a
 		 * deferred trigger.
 		 */
-		else if (NATIVE_REPLICATION && query_context->parse_tree &&
+		else if (MAIN_REPLICA && query_context->parse_tree &&
 				 is_commit_query(query_context->parse_tree) &&
 				 kind_list[MAIN_NODE_ID] == 'E' &&
 				 is_all_standbys_command_complete(kind_list, NUM_BACKENDS, MAIN_NODE_ID))

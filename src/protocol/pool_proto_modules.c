@@ -228,7 +228,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	 */
 	if (pool_config->memory_cache_enabled && is_likely_select &&
 		!pool_is_writing_transaction() &&
-		TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != 'E')
+		TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != 'E')
 	{
 		bool		foundp;
 
@@ -843,7 +843,7 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 
 	ereport(DEBUG1, (errmsg("Execute: pool_is_writing_transaction: %d TSTATE: %c",
 							pool_is_writing_transaction(),
-							TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))));
+							TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))));
 
 	/* log query to log file if necessary */
 	if (pool_config->log_statement)
@@ -853,7 +853,7 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	 * Fetch memory cache if possible
 	 */
 	if (pool_config->memory_cache_enabled && !pool_is_writing_transaction() &&
-		(TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != 'E')
+		(TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != 'E')
 		&& pool_is_likely_select(query))
 	{
 		POOL_STATUS status;
@@ -863,7 +863,7 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 #define STR_ALLOC_SIZE 1024
 		ereport(DEBUG1, (errmsg("Execute: pool_is_likely_select: true pool_is_writing_transaction: %d TSTATE: %c",
 								pool_is_writing_transaction(),
-								TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))));
+								TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))));
 
 		len = strlen(query) + 1;
 		search_query = MemoryContextStrdup(query_context->memory_context, query);
@@ -1070,14 +1070,14 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		{
 			ereport(DEBUG1,
 					(errmsg("Execute: TSTATE:%c",
-							TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))));
+							TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))));
 
 			/*
 			 * If the query was not READ SELECT, and we are in an explicit
 			 * transaction, remember that we had a write query in this
 			 * transaction.
 			 */
-			if (TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T' ||
+			if (TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T' ||
 				pool_config->disable_load_balance_on_write == DLBOW_ALWAYS)
 			{
 				/*
@@ -1315,14 +1315,14 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		}
 
 		/*
-		 * If the query is BEGIN READ WRITE in native replication mode, we send
+		 * If the query is BEGIN READ WRITE in main replica mode, we send
 		 * BEGIN instead of it to standbys. original_query which is
 		 * BEGIN READ WRITE is sent to primary. rewritten_query which is BEGIN
 		 * is sent to standbys.
 		 */
 		if (is_start_transaction_query(query_context->parse_tree) &&
 			is_read_write((TransactionStmt *) query_context->parse_tree) &&
-			NATIVE_REPLICATION)
+			MAIN_REPLICA)
 		{
 			query_context->rewritten_query = pstrdup("BEGIN");
 		}
@@ -1549,7 +1549,7 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	 * primary node.
 	 */
 	if (pool_config->load_balance_mode && pool_is_writing_transaction() &&
-		TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T' &&
+		TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T' &&
 		pool_config->disable_load_balance_on_write != DLBOW_OFF)
 	{
 		if (!SL_MODE)
@@ -1563,7 +1563,7 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	}
 
 	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE &&
-		TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T')
+		TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T')
 	{
 		pool_where_to_send(query_context, query_context->original_query,
 							query_context->parse_tree);
@@ -2060,7 +2060,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 		 * Set transaction state for each node
 		 */
 		state = TSTATE(backend,
-					   NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID);
+					   MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID);
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
@@ -2078,7 +2078,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 			/*
 			 * The transaction state to be returned to frontend is main node's.
 			 */
-			if (i == (NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))
+			if (i == (MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))
 			{
 				state = kind;
 			}
@@ -2226,7 +2226,7 @@ static POOL_STATUS close_standby_transactions(POOL_CONNECTION * frontend,
 		if (CONNECTION_SLOT(backend, i) &&
 			TSTATE(backend, i) == 'T' &&
 			BACKEND_INFO(i).backend_status == CON_UP &&
-			(NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != i)
+			(MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != i)
 		{
 			per_node_statement_log(backend, i, "COMMIT");
 			if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend),
@@ -2954,7 +2954,7 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 			case 'E':			/* ErrorResponse */
 				status = ErrorResponse3(frontend, backend);
 				pool_unset_command_success();
-				if (TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID :
+				if (TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID :
 						   REAL_MAIN_NODE_ID) != 'I')
 				{
 					pool_set_failed_transaction();
@@ -3042,7 +3042,7 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 
 			case 'E':			/* ErrorResponse */
 				status = ErrorResponse(frontend, backend);
-				if (TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID :
+				if (TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID :
 						   REAL_MAIN_NODE_ID) != 'I')
 					pool_set_failed_transaction();
 				break;
@@ -3309,7 +3309,7 @@ raise_intentional_error_if_need(POOL_CONNECTION_POOL * backend)
 
 	query_context = session_context->query_context;
 
-	if (NATIVE_REPLICATION &&
+	if (MAIN_REPLICA &&
 		TSTATE(backend, PRIMARY_NODE_ID) == 'T' &&
 		PRIMARY_NODE_ID != MAIN_NODE_ID &&
 		query_context &&
@@ -4127,7 +4127,7 @@ pool_at_command_success(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backe
 		 * transaction or disable_load_balance_on_write is 'ALWAYS', remember
 		 * that we had a write query in this transaction.
 		 */
-		if (TSTATE(backend, NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T' ||
+		if (TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T' ||
 			pool_config->disable_load_balance_on_write == DLBOW_ALWAYS)
 		{
 			/*

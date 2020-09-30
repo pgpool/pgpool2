@@ -297,8 +297,6 @@ typedef struct
 	bool		log_truncate_on_rotation;
 	int			log_file_mode;
 
-	bool		native_replication_mode;	/* operate in native replication mode */
-	NativeReplicationSubModes native_replication_sub_mode;	/* either "slony" or "stream" */
 	int64		delay_threshold;	/* If the standby server delays more than
 									 * delay_threshold, any query goes to the
 									 * primary only. The unit is in bytes. 0

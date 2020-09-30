@@ -86,7 +86,7 @@ start_recovery(int recovery_node)
 				(errmsg("node recovery failed, node id: %d is alive", recovery_node)));
 
 	/* select main/primary node */
-	node_id = NATIVE_REPLICATION ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID;
+	node_id = MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID;
 	backend = &pool_config->backend_desc->backend_info[node_id];
 
 	/* get node info to be recovered */

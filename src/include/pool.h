@@ -361,7 +361,7 @@ typedef enum
 /* Clustering mode macros */
 #define REPLICATION (pool_config->backend_clustering_mode == CM_NATIVE_REPLICATION || \
 					 pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
-#define NATIVE_REPLICATION (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION || \
+#define MAIN_REPLICA (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION || \
 					  pool_config->backend_clustering_mode == CM_LOGICAL_REPLICATION || \
 					  pool_config->backend_clustering_mode == CM_SLONY)
 #define STREAM (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION)

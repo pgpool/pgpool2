@@ -229,14 +229,6 @@ static const struct config_enum_entry backend_clustering_mode_options[] = {
 	{NULL, 0, false}
 };
 
-static const struct config_enum_entry native_replication_sub_mode_options[] = {
-	{"slony", SLONY_MODE, false},
-	{"stream", STREAM_MODE, false},
-	{"logical", LOGICAL_MODE, false},
-	{NULL, 0, false}
-};
-
-
 static const struct config_enum_entry log_standby_delay_options[] = {
 	{"always", LSD_ALWAYS, false},
 	{"if_over_threshold", LSD_OVER_THRESHOLD, false},
@@ -506,16 +498,6 @@ static struct config_bool ConfigureNamesBool[] =
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.replicate_select,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"native_replication_mode", CFGCXT_INIT, NATIVE_REPLICATION_CONFIG,
-			"Enables Native Replication mode.",
-			CONFIG_VAR_TYPE_BOOL, false, 0
-		},
-		&g_pool_config.native_replication_mode,
 		false,
 		NULL, NULL, NULL
 	},
@@ -2113,7 +2095,7 @@ static struct config_int ConfigureNamesInt[] =
 static struct config_enum ConfigureNamesEnum[] =
 {
 	{
-		{"backend_clustering_mode", CFGCXT_INIT, NATIVE_REPLICATION_CONFIG,
+		{"backend_clustering_mode", CFGCXT_INIT, MAIN_REPLICA_CONFIG,
 			"backend clustering mode.",
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
@@ -2171,18 +2153,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"native_replication_sub_mode", CFGCXT_INIT, NATIVE_REPLICATION_CONFIG,
-			"native replication sub mode.",
-			CONFIG_VAR_TYPE_ENUM, false, 0
-		},
-		(int *) &g_pool_config.native_replication_sub_mode,
-		STREAM_MODE,
-		native_replication_sub_mode_options,
-		NULL, NULL, NULL, NULL
-	},
-
-	{
-		{"log_standby_delay", CFGCXT_RELOAD, NATIVE_REPLICATION_CONFIG,
+		{"log_standby_delay", CFGCXT_RELOAD, MAIN_REPLICA_CONFIG,
 			"When to log standby delay.",
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},

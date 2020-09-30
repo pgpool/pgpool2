@@ -542,18 +542,6 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "statement level load balancing", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	/* NATIVE REPLICATION MODE */
-
-	StrNCpy(status[i].name, "native_replication_mode", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->native_replication_mode);
-	StrNCpy(status[i].desc, "if true, operate in native replication mode", POOLCONFIG_MAXDESCLEN);
-	i++;
-
-	StrNCpy(status[i].name, "native_replication_sub_mode", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->native_replication_sub_mode);
-	StrNCpy(status[i].desc, "native replication sub mode", POOLCONFIG_MAXDESCLEN);
-	i++;
-
 	/* - Streaming - */
 	StrNCpy(status[i].name, "sr_check_period", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->sr_check_period);
