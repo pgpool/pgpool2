@@ -258,7 +258,7 @@
     <!--
     <primary>native replication mode</primary>
     -->
-    <primary>slonyモード</primary>
+    <primary>メインレプリカモード</primary>
    </indexterm>
 
    <indexterm zone="running-mode">
@@ -283,7 +283,7 @@
    </indexterm>
 
    <para>
-    <productname>Pgpool-II</>にはストリーミングレプリケーションモード、ロジカルレプリケーションモード、Slonyモード、ネイティブレプリケーションモード、スナップショットアイソレーションモード、rawモードの6つのクラスタリングモードがあります。
+    <productname>Pgpool-II</>にはストリーミングレプリケーションモード、ロジカルレプリケーションモード、メインレプリカモード(Slonyモード)、ネイティブレプリケーションモード、スナップショットアイソレーションモード、rawモードの6つのクラスタリングモードがあります。
     いずれのモードにおいても、<productname>Pgpool-II</>はコネクションプーリング、自動フェイルオーバの機能を提供します。
     ストリーミングレプリケーションモードとネイティブレプリケーションモードのときにのみオンラインリカバリが利用可能です。
    </para>
@@ -348,7 +348,7 @@
     use <productname>Slony</>. Load balancing is possible in the
     mode.
     -->
-    <firstterm>マスタスレーブモード</firstterm>(slonyモード)は<productname>Slony-I</>を使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。
+    <firstterm>メインレプリカモード</firstterm>(slonyモード)は<productname>Slony-I</>を使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。
     このモードでは、<productname>Slony</>/<productname>PostgreSQL</>がデータベースを同期する責任を持ちます。
     <productname>Slony</>はストリーミングレプリケーションの登場により廃れつつあるため、<productname>Slony</>を使う特別な理由が無い限りこのモードの使用を推奨しません。
     このモードでは負荷分散が可能です。
