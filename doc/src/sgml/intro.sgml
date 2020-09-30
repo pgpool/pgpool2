@@ -182,11 +182,8 @@
   <para>
    <productname>Pgpool-II</productname> works on Linux, Solaris,
    FreeBSD, and most of the UNIX-like architectures. Windows is not
-   supported. Supported PostgreSQL server's versions are 6.4 and
-   higher.  If you are using <productname>PostgreSQL</productname>
-   7.3 or older, some features
-   of <productname>Pgpool-II</productname> won't be available. But
-   you shouldn't use such an old release anyway.  You must also make
+   supported. Supported PostgreSQL server's versions are 7.4 and
+   higher. You must also make
    sure that all of your <productname>PostgreSQL</productname>
    servers are using the same major version. In addition to this, we
    do not recommend mixing
