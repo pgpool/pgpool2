@@ -69,7 +69,7 @@
     Watchdog also coordinates with all connected <productname>Pgpool-II</productname> nodes to ensure
     that failback, failover and follow_primary commands must be executed only on one <productname>pgpool-II</productname> node.
     -->
-    また、watchdogは、接続したすべての<productname>Pgpool-II</productname>ノードを調停し、フェイルバック、フェイルオーバ、フォローマスターコマンドがただひとつの<productname>Pgpool-II</productname>で実行されるようにします。
+    また、watchdogは、接続したすべての<productname>Pgpool-II</productname>ノードを調停し、フェイルバック、フェイルオーバ、フォロープライマリコマンドがただひとつの<productname>Pgpool-II</productname>で実行されるようにします。
    </para>
 
   </sect2>
