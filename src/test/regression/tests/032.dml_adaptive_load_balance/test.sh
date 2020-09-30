@@ -5,7 +5,6 @@
 source $TESTLIBS
 TESTDIR=testdir
 PSQL=$PGBIN/psql
-export PGHOST=/tmp
 # sleep time after reload in seconds
 st=10
 
