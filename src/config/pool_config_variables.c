@@ -4879,6 +4879,7 @@ SetPgpoolNodeId(int elevel)
 	char		pgpool_node_id_file[POOLMAXPATHLEN + 1];
 	FILE		*fd;
 	int         length;
+	int         i;
 
 	if (g_pool_config.use_watchdog)
 	{
@@ -4908,7 +4909,31 @@ SetPgpoolNodeId(int elevel)
 
 		length = strlen(readbuf);
 		if (length > 0 && readbuf[length - 1] == '\n')
+		{
 			readbuf[length - 1] = '\0';
+
+			length = strlen(readbuf);
+			if (length <= 0)
+			{
+				ereport(elevel,
+						(errmsg("pgpool_node_id file is empty"),
+						 errdetail("If watchdog is enable, we need to specify pgpool node id in %s file", pgpool_node_id_file)));
+				fclose(fd);
+				return false;
+			}
+		}
+
+		for (i = 0; i < length; i++)
+		{
+			if (!isdigit((int) readbuf[i]))
+			{
+				ereport(elevel,
+						(errmsg("pgpool_node_id is not a numeric value"),
+						 errdetail("Please specify a numeric value in %s file", pgpool_node_id_file)));
+				fclose(fd);
+				return false;
+			}
+		}
 
 		g_pool_config.pgpool_node_id = atoi(readbuf);
 
