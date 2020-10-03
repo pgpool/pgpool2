@@ -1038,6 +1038,37 @@
     </para>
    </note>
   </sect2>
+
+  <sect2 id="auth-gssapi">
+   <!--
+   <title>GSSAPI Authentication</title>
+   -->
+   <title>GSSAPI認証</title>
+
+   <indexterm zone="auth-gssapi">
+    <primary>GSSAPI</primary>
+   </indexterm>
+
+   <para>
+    <!--
+    GSSAPI is an industry-standard protocol for secure authentication
+    defined in RFC 2743.  Currently
+    <productname>Pgpool-II</productname> does not support GSSAPI.
+    Clients should not use GSSAPI authentication, or should use
+    "prefer GSSAPI authentication if possible" option (this is the
+    default setting of <productname>PostgreSQL</productname> clients).
+    If latter is chosen, <productname>Pgpool-II</productname> requests
+    non-GSSAPI authentication to client, and the clients will fall
+    back to non-GSSAPI authentication method. Thus, usually users do
+    not need to worry about that <productname>Pgpool-II</productname>
+    does not accept GSSAPI authentication.
+    -->
+    GSSAPIは、RFC 2743で定義されている安全な認証のための業界標準のプロトコルです。
+    今の所<productname>Pgpool-II</productname>はGSSAPIをサポートしていません。
+    クライアントはGSSAPI認証要求を行わないようにするか、「可能ならばGSSAPI認証を使う」オプションを選択しなければなりません（これは<productname>PostgreSQL</productname>クライアントのデフォルト設定です)。
+    後者を選択した場合、<productname>Pgpool-II</productname>はGSSAPIを使わない認証方式をクライアントにリクエストし、その結果クライアントはGSSAPIを使わない認証方式を使用するので、通常ユーザはGSSAPI認証方式を<productname>Pgpool-II</productname>が受け入れないことを意識する必要はありません。
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="auth-different-auth-method">
