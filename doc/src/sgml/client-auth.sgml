@@ -595,6 +595,27 @@
     </para>
    </note>
   </sect2>
+
+  <sect2 id="auth-gssapi">
+   <title>GSSAPI Authentication</title>
+   <indexterm zone="auth-gssapi">
+    <primary>GSSAPI</primary>
+   </indexterm>
+
+   <para>
+    GSSAPI is an industry-standard protocol for secure authentication
+    defined in RFC 2743.  Currently
+    <productname>Pgpool-II</productname> does not support GSSAPI.
+    Clients should not use GSSAPI authentication, or should use
+    "prefer GSSAPI authentication if possible" option (this is the
+    default setting of <productname>PostgreSQL</productname> clients).
+    If latter is chosen, <productname>Pgpool-II</productname> requests
+    non-GSSAPI authentication to client, and the clients will fall
+    back to non-GSSAPI authentication method. Thus, usually users do
+    not need to worry about that <productname>Pgpool-II</productname>
+    does not accept GSSAPI authentication.
+   </para>
+  </sect2>
  </sect1>
 
 </chapter>
