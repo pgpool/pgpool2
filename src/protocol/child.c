@@ -1906,6 +1906,20 @@ retry_startup:
 		goto retry_startup;
 	}
 
+	/* GSSAPI? */
+	if (sp->major == 1234 && sp->minor == 5680)
+	{
+		ereport(DEBUG1,
+				(errmsg("selecting backend connection"),
+				 errdetail("GSSAPI request from client")));
+
+		/* sorry, Pgpool-II does not support GSSAPI yet */
+		pool_write_and_flush(frontend, "N", 1);
+
+		pool_free_startup_packet(sp);
+		goto retry_startup;
+	}
+
 	frontend->protoVersion = sp->major;
 	frontend->database = pstrdup(sp->database);
 	frontend->username = pstrdup(sp->user);
