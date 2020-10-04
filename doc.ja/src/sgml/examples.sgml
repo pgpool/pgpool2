@@ -22,7 +22,6 @@
   -->
   <title>設定の例</title>
   &example-basic;
-  &example-watchdog;
   &example-cluster;
   &example-AWS;
   &example-Aurora;

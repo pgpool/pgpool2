@@ -12,7 +12,6 @@
  <chapter id="example-configs">
   <title>Configuration Examples</title>
   &example-basic;
-  &example-watchdog;
   &example-cluster;
   &example-AWS;
   &example-Aurora;

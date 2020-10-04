@@ -51,6 +51,51 @@
       -->
       このパラメータは、サーバ起動時にのみ設定できます。
      </para>
+     <para>
+      <productname>Pgpool-II</productname> 4.2より前では、watchdogは自ノードとそれを基準に他ノードの設定を記述するため、
+      ノードごとに異なる設定を記述する必要がありました。
+      <productname>Pgpool-II</productname> 4.2以降では、watchdogの設定はノード間で共通するようにしました。
+      そのため、<productname>Pgpool-II</productname> 4.2以降、<literal>Watchdog</literal>機能が有効になっている場合、
+      どの設定がどのホストであるかを区別するには、
+      設定ファイル<filename>pgpool.conf</filename>を格納するディレクトリに<filename>pgpool_node_id</filename>ファイルの作成が必要になります。
+      そのファイルにpgpool(watchdog)ホストを識別するためのノード番号(0、1、2など)を指定します。
+     </para>
+     <example id="example-pgpool-node-id-1">
+      <title>pgpool_node_idの設定例</title>
+      <para>
+       Pgpool ノードが3つあり、それぞれのホスト名が server1、server2、server3 の場合、各ホスト上で<filename>pgpool_node_id</filename>ファイル以下のように作成します。
+       RPMからインストールした場合は、<filename>pgpool.conf</filename>が<filename>/etc/pgpool-II/</filename>配下にインストールされます。
+      </para>
+      <itemizedlist>
+       <listitem>
+        <para>
+         <literal>server1</literal>
+        </para>
+        <programlisting>
+[server1]# cat /etc/pgpool-II/pgpool_node_id
+0
+        </programlisting>
+       </listitem>
+       <listitem>
+        <para>
+         <literal>server2</literal>
+        </para>
+        <programlisting>
+[server2]# cat /etc/pgpool-II/pgpool_node_id
+1
+        </programlisting>
+       </listitem>
+       <listitem>
+        <para>
+         <literal>server3</literal>
+        </para>
+        <programlisting>
+[server3]# cat /etc/pgpool-II/pgpool_node_id
+2
+        </programlisting>
+       </listitem>
+      </itemizedlist>
+     </example>
     </listitem>
    </varlistentry>
   </variablelist>
@@ -163,7 +208,7 @@
        you can set the <xref linkend="guc-hostname">,
        <xref linkend="guc-wd-port"> and <xref linkend="guc-pgpool-port"> like below:
        -->
-       Pgpool ノードが3つあり、それぞれのホストが server1、server2、server3 の場合、
+       Pgpool ノードが3つあり、それぞれのホスト名が server1、server2、server3 の場合、
        <xref linkend="guc-hostname">、<xref linkend="guc-wd-port">
        及び<xref linkend="guc-pgpool-port">を以下のように設定します。
     <programlisting>
@@ -1321,8 +1366,8 @@
       the number at the end of the parameter name is
       referred as the "pgpool node id", that starts from 0.
       -->
-      ハートビート信号を受信するためのポート番号を指定します。
-      1つのみを指定してください。
+      ハートビート信号を受信するためのUDPポート番号を指定します。
+      1つのみを指定してください。デフォルトは9694です。
       パラメータ名の最後にある数字は「pgpool ノードID」で、0から始まります(たとえばheartbeat_port0)。
      </para>
      <para>
@@ -1386,22 +1431,22 @@
        you can set the <xref linkend="guc-heartbeat-hostname">,
        <xref linkend="guc-heartbeat-port"> and <xref linkend="guc-heartbeat-device"> like below:
        -->
-       Pgpool ノードが3つあり、それぞれのホストが server1、server2、server3 の場合、
+       Pgpool ノードが3つあり、それぞれのホスト名が server1、server2、server3 の場合、
        <xref linkend="guc-heartbeat-hostname">、<xref linkend="guc-heartbeat-port">
        及び<xref linkend="guc-heartbeat-device">を以下のように設定します。
-	<programlisting>
-     heartbeat_hostname0 = 'server1'
-     heartbeat_port0 = 9694
-     heartbeat_device0 = ''
+      <programlisting>
+heartbeat_hostname0 = 'server1'
+heartbeat_port0 = 9694
+heartbeat_device0 = ''
 
-     heartbeat_hostname1 = 'server2'
-     heartbeat_port1 = 9694
-     heartbeat_device1 = ''
+heartbeat_hostname1 = 'server2'
+heartbeat_port1 = 9694
+heartbeat_device1 = ''
 
-     heartbeat_hostname2 = 'server3'
-     heartbeat_port2 = 9694
-     heartbeat_device2 = ''
-	</programlisting>
+heartbeat_hostname2 = 'server3'
+heartbeat_port2 = 9694
+heartbeat_device2 = ''
+      </programlisting>
       </para>
      </example>
     </listitem>

@@ -98,58 +98,16 @@
   -->
   <title><productname>Pgpool-II</productname>の設定</title>
   <para>
-   <!--
-   Mostly the <productname>Pgpool-II</productname> configurations for this
-   example will be same as in the <xref linkend="example-watchdog">, except the
-   <xref linkend="guc-delegate-ip"> which we will not set in this example instead
-   we will use <xref linkend="guc-wd-escalation-command"> and
-   <xref linkend="guc-wd-de-escalation-command"> to switch the
-   Elastic IP address to the leader/Active <productname>Pgpool-II</productname> node.
-   -->
-   この例の設定は<xref linkend="example-watchdog">とほとんど同じになりますが、<xref linkend="guc-delegate-ip">を設定せず、代わりに<xref linkend="guc-wd-escalation-command">と<xref linkend="guc-wd-de-escalation-command">を使ってleader/Active <productname>Pgpool-II</productname>ノードのElastic IPアドレスを切り替えるのが異なります。
+   この例の設定は<xref linkend="example-cluster">とほとんど同じになりますが、<xref linkend="guc-delegate-ip">を設定せず、代わりに<xref linkend="guc-wd-escalation-command">と<xref linkend="guc-wd-de-escalation-command">を使ってleader/Active <productname>Pgpool-II</productname>ノードのElastic IPアドレスを切り替えるのが異なります。
   </para>
 
-  <sect3 id="example-AWS-pgpool-config-instance-1">
-   <!--
-   <title><productname>Pgpool-II</productname> configurations on Instance-1</title>
-   -->
-   <title>Instance-1における<productname>Pgpool-II</productname>の設定</title>
-   <para>
-
-    <programlisting>
-     use_watchdog = on
-     delegate_IP = ''
-     wd_hostname = 'instance-1-private-ip'
-     other_pgpool_hostname0 = 'instance-2-private-ip'
-     other_pgpool_port0 = 9999
-     other_wd_port0 = 9000
-     wd_escalation_command = '$path_to_script/aws-escalation.sh'
-     wd_de_escalation_command = '$path_to_script/aws-de-escalation.sh'
-    </programlisting>
-
-   </para>
-  </sect3>
-
-  <sect3 id="example-AWS-pgpool-config-instance-2">
-   <!--
-   <title><productname>Pgpool-II</productname> configurations on Instance-2</title>
-   -->
-   <title>Instance-2における<productname>Pgpool-II</productname>の設定</title>
-   <para>
-
-    <programlisting>
-     use_watchdog = on
-     delegate_IP = ''
-     wd_hostname = 'instance-2-private-ip'
-     other_pgpool_hostname0 = 'instance-1-private-ip'
-     other_pgpool_port0 = 9999
-     other_wd_port0 = 9000
-     wd_escalation_command = '$path_to_script/aws-escalation.sh'
-     wd_de_escalation_command = '$path_to_script/aws-de-escalation.sh'
-    </programlisting>
-
-   </para>
-  </sect3>
+  <programlisting>
+use_watchdog = on
+delegate_IP = ''
+...
+wd_escalation_command = '$path_to_script/aws-escalation.sh'
+wd_de_escalation_command = '$path_to_script/aws-de-escalation.sh'
+  </programlisting>
  </sect2>
 
  <sect2 id="example-AWS-pgpool-aws-escalation-instance">

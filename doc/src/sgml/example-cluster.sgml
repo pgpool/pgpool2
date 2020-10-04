@@ -873,7 +873,19 @@ hostname2 = 'server3'
 wd_port2 = 9000
 pgpool_port2 = 9999
    </programlisting>
-
+   <para>
+    Specify the method of lifecheck <xref linkend="guc-wd-lifecheck-method">
+    and the lifecheck interval <xref linkend="guc-wd-interval">.
+    Here, we use <literal>hearbeat</literal> method to perform watchdog lifecheck.
+   </para>
+   <programlisting>
+wd_lifecheck_method = 'heartbeat'
+                                    # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
+                                    # (change requires restart)
+wd_interval = 10
+                                    # lifecheck interval (sec) > 0
+                                    # (change requires restart)
+   </programlisting>
    <para>
     Specify all <productname>Pgpool-II</productname> nodes information for sending and receiving heartbeat signal.
    </para>
@@ -901,6 +913,24 @@ heartbeat_hostname2 = 'server3'
 heartbeat_port2 = 9694
 heartbeat_device2 = ''
    </programlisting>
+   <para>
+    If the <xref linkend="guc-wd-lifecheck-method"> is set to <literal>heartbeat</literal>,
+    specify the time to detect a fault <xref linkend="guc-wd-heartbeat-deadtime"> and
+    the interval to send heartbeat signals <xref linkend="guc-wd-heartbeat-deadtime">.
+   </para>
+   <programlisting>
+wd_heartbeat_keepalive = 2
+                                    # Interval time of sending heartbeat signal (sec)
+                                    # (change requires restart)
+wd_heartbeat_deadtime = 30
+                                    # Deadtime interval for heartbeat signal (sec)
+                                    # (change requires restart)
+   </programlisting>
+   <note>
+    <para>
+     If you have even number of watchdog nodes, you need to turn on <xref linkend="guc-enable-consensus-with-half-votes"> parameter.
+    </para>
+   </note>
    <note>
     <para>
      If use_watchdog = on, please make sure the pgpool node number is specified

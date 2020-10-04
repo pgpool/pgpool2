@@ -808,7 +808,22 @@ pgpool_port2 = 9999
    </programlisting>
 
    <para>
-    ハートビート通信用の各<productname>Pgpool-II</productname>サーバ情報を設定しておきます。
+    <literal>Watchdog</literal>死活監視の設定では、死活監視の方法を指定する<xref linkend="guc-wd-lifecheck-method">、
+    監視間隔(秒)を指定する<xref linkend="guc-wd-interval">を設定します。
+    この設定例では、死活監視の方法は<literal>hearbeat</literal>を用います。
+   </para>
+
+   <programlisting>
+wd_lifecheck_method = 'heartbeat'
+                                    # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
+                                    # (change requires restart)
+wd_interval = 10
+                                    # lifecheck interval (sec) > 0
+                                    # (change requires restart)
+   </programlisting>
+   <para>
+    <xref linkend="guc-wd-lifecheck-method">が<literal>heartbeat</literal>に設定されている場合、
+    heartbeat通信用の各<productname>Pgpool-II</productname>サーバ情報を設定しておきます。
    </para>
    <programlisting>
 heartbeat_hostname0 = 'server1'
@@ -834,6 +849,24 @@ heartbeat_hostname2 = 'server3'
 heartbeat_port2 = 9694
 heartbeat_device2 = ''
    </programlisting>
+   <para>
+    <xref linkend="guc-wd-lifecheck-method">が<literal>heartbeat</literal>に設定されている場合、
+    障害と判断する秒数を指定する<xref linkend="guc-wd-heartbeat-deadtime">、
+    ハートビート信号の送信間隔(秒)を指定する<xref linkend="guc-wd-heartbeat-keepalive">を設定します。
+   </para>
+   <programlisting>
+wd_heartbeat_keepalive = 2
+                                    # Interval time of sending heartbeat signal (sec)
+                                    # (change requires restart)
+wd_heartbeat_deadtime = 30
+                                    # Deadtime interval for heartbeat signal (sec)
+                                    # (change requires restart)
+   </programlisting>
+   <note>
+    <para>
+    Watchdogノードの数が偶数の場合は、<xref linkend="guc-enable-consensus-with-half-votes">パラメータをonにする必要があります。
+    </para>
+   </note>
    <note>
     <para>
      use_watchdog = onの場合は、pgpoolノード番号を<filename>pgpool_node_id</filename>に設定する必要があります。

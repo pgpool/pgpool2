@@ -30,6 +30,54 @@
      <para>
       This parameter can only be set at server start.
      </para>
+     <para>
+      <productname>Pgpool-II</productname> 4.1 or earlier, because it is required to specify
+      its own pgpool node information and the destination pgpool nodes information, the
+      settings are different per pgpool node.
+      Since <productname>Pgpool-II</productname> 4.2, all configuration parameters are
+      identical on all hosts. If watchdog feature is enabled, to distingusish which host
+      is which, a <filename>pgpool_node_id</filename> file is required.
+      You need to create a <filename>pgpool_node_id</filename> file and specify the
+      pgpool (watchdog) node number (e.g. 0, 1, 2 ...) to identify pgpool (watchdog) host.
+     </para>
+     <example id="example-pgpool-node-id-1">
+      <title>pgpool_node_id configuration</title>
+      <para>
+       If you have 3 pgpool nodes with hostname server1, server2 and server3, create the
+       <filename>pgpool_node_id</filename> file on each host as follows.
+       When installing <productname>Pgpool-II</productname> using RPM,
+       <filename>pgpool.conf</filename> is installed under <filename>/etc/pgpool-II/</filename>.
+      </para>
+      <itemizedlist>
+       <listitem>
+        <para>
+         <literal>server1</literal>
+        </para>
+        <programlisting>
+[server1]# cat /etc/pgpool-II/pgpool_node_id
+0
+        </programlisting>
+       </listitem>
+       <listitem>
+        <para>
+         <literal>server2</literal>
+        </para>
+        <programlisting>
+[server2]# cat /etc/pgpool-II/pgpool_node_id
+1
+        </programlisting>
+       </listitem>
+       <listitem>
+        <para>
+         <literal>server3</literal>
+        </para>
+        <programlisting>
+[server3]# cat /etc/pgpool-II/pgpool_node_id
+2
+        </programlisting>
+       </listitem>
+      </itemizedlist>
+     </example>
     </listitem>
    </varlistentry>
   </variablelist>
@@ -101,20 +149,20 @@
       <title>Watchdog configuration</title>
       <para>
        If you have 3 pgpool nodes with hostname server1, server2 and server3,
-       you can set the <xref linkend="guc-hostname">,
+       you can configure <xref linkend="guc-hostname">,
        <xref linkend="guc-wd-port"> and <xref linkend="guc-pgpool-port"> like below:
     <programlisting>
-     hostname0 = 'server1'
-     wd_port0 = 9000
-     pgpool_port0 = 9999
+hostname0 = 'server1'
+wd_port0 = 9000
+pgpool_port0 = 9999
 
-     hostname1 = 'server2'
-     wd_port1 = 9000
-     pgpool_port1 = 9999
+hostname1 = 'server2'
+wd_port1 = 9000
+pgpool_port1 = 9999
 
-     hostname2 = 'server3'
-     wd_port2 = 9000
-     pgpool_port2 = 9999
+hostname2 = 'server3'
+wd_port2 = 9000
+pgpool_port2 = 9999
     </programlisting>
       </para>
      </example>
@@ -930,6 +978,7 @@
     <listitem>
      <para>
       Specifies the port number for sending and receiving the heartbeat signals.
+      Specify only one port number here. Default is 9694.
       The number at the end of the parameter name is referred
       as "pgpool node id", and it starts from 0 (e.g. heartbeat_port0).
      </para>
@@ -967,7 +1016,7 @@
       <title>Heartbeat configuration</title>
       <para>
        If you have 3 pgpool nodes with hostname server1, server2 and server3,
-       you can set the <xref linkend="guc-heartbeat-hostname">,
+       you can configure <xref linkend="guc-heartbeat-hostname">,
        <xref linkend="guc-heartbeat-port"> and <xref linkend="guc-heartbeat-device"> like below:
 	<programlisting>
      heartbeat_hostname0 = 'server1'

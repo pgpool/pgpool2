@@ -63,48 +63,19 @@
   <title><productname>Pgpool-II</productname> configurations</title>
   <para>
    Mostly the <productname>Pgpool-II</productname> configurations for this
-   example will be same as in the <xref linkend="example-watchdog">, except the
+   example will be same as in the <xref linkend="example-cluster">, except the
     <xref linkend="guc-delegate-ip"> which we will not set in this example instead
      we will use <xref linkend="guc-wd-escalation-command"> and
       <xref linkend="guc-wd-de-escalation-command"> to switch the
        Elastic IP address to the leader/Active <productname>Pgpool-II</productname> node.
   </para>
-
-  <sect3 id="example-AWS-pgpool-config-instance-1">
-   <title><productname>Pgpool-II</productname> configurations on Instance-1</title>
-   <para>
-
-    <programlisting>
-     use_watchdog = on
-     delegate_IP = ''
-     wd_hostname = 'instance-1-private-ip'
-     other_pgpool_hostname0 = 'instance-2-private-ip'
-     other_pgpool_port0 = 9999
-     other_wd_port0 = 9000
-     wd_escalation_command = '$path_to_script/aws-escalation.sh'
-     wd_de_escalation_command = '$path_to_script/aws-de-escalation.sh'
+  <programlisting>
+use_watchdog = on
+delegate_IP = ''
+...
+wd_escalation_command = '$path_to_script/aws-escalation.sh'
+wd_de_escalation_command = '$path_to_script/aws-de-escalation.sh'
     </programlisting>
-
-   </para>
-  </sect3>
-
-  <sect3 id="example-AWS-pgpool-config-instance-2">
-   <title><productname>Pgpool-II</productname> configurations on Instance-2</title>
-   <para>
-
-    <programlisting>
-     use_watchdog = on
-     delegate_IP = ''
-     wd_hostname = 'instance-2-private-ip'
-     other_pgpool_hostname0 = 'instance-1-private-ip'
-     other_pgpool_port0 = 9999
-     other_wd_port0 = 9000
-     wd_escalation_command = '$path_to_script/aws-escalation.sh'
-     wd_de_escalation_command = '$path_to_script/aws-de-escalation.sh'
-    </programlisting>
-
-   </para>
-  </sect3>
  </sect2>
 
  <sect2 id="example-AWS-pgpool-aws-escalation-instance">
