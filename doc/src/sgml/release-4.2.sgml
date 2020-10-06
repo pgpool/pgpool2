@@ -922,6 +922,18 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 
    <listitem>
     <!--
+    2020-10-04 [a3d6554]
+    -->
+    <para>
+     Remove "8.2. Watchdog Configuration Example". (Bo Peng)
+    </para>
+    <para>
+     See <xref linkend="EXAMPLE-CLUSTER-PGPOOL-CONFIG-WATCHDOG"> of "Pgpool-II + Watchdog Setup Example" for watchdog configuration.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2020-09-01 [9d5bb1c6]
     -->
     <para>

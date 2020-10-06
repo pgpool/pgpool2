@@ -1122,6 +1122,18 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 
    <listitem>
     <!--
+    2020-10-04 [a3d6554]
+    -->
+    <para>
+     「8.2. Watchdogの設定例」を削除しました。(Bo Peng)
+    </para>
+    <para>
+     Watchdogの設定方法については、「Pgpool-II + Watchdogの構築の例」の<xref linkend="EXAMPLE-CLUSTER-PGPOOL-CONFIG-WATCHDOG">を参照ください。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2020-09-01 [9d5bb1c6]
     -->
     <para>
