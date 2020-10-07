@@ -11,7 +11,7 @@
   <title>Release Date</title>
   -->
   <title>リリース日</title>
-  <simpara>2020-10-xx</simpara>
+  <simpara>2020-11-xx</simpara>
  </note>
 
  <sect2>
@@ -199,7 +199,7 @@ Author: Tatsuo Ishii <ishii@sraoss.co.jp>
 
       <listitem>
        <para>
-	white_function_list &rarr; read_function_list
+	white_function_list &rarr; read_only_function_list
        </para>
       </listitem>
 
