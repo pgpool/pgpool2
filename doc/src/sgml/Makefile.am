@@ -5,8 +5,7 @@ DEFS = @DEFS@ \
 
 all: html man1 man8
 
-GENERATED_SGML = bookindex.sgml version.sgml \
-					features-supported.sgml features-unsupported.sgml errcodes-table.sgml
+GENERATED_SGML = bookindex.sgml version.sgml
 
 ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
 
