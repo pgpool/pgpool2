@@ -73,39 +73,6 @@
 
  &reference;
 
- <!--
- <part id="internals">
- <title>Internals</title>
-
- <partintro>
- <para>
- This part contains assorted information that might be of use to
- <productname>PostgreSQL</> developers.
-   </para>
-  </partintro>
-
- &arch-dev;
- &catalogs;
- &protocol;
- &sources;
- &nls;
- &plhandler;
- &fdwhandler;
- &tablesample-method;
- &custom-scan;
- &geqo;
- &indexam;
- &gist;
- &spgist;
- &gin;
- &brin;
- &storage;
- &bki;
- &planstats;
-
- </part>
- -->
-
  <part id="appendixes">
   <title>Appendixes</title>
 
