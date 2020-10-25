@@ -121,11 +121,7 @@
 	 </listitem>
 	 <listitem>
 	  <para>
-	   <!--
-	   If write and read_only function list is empty, SELECTs having
-	   functions is regarded as a read only query.
-	   -->
-	   もしwrite/read_only function listが空の場合は、関数を持つSELECTは、更新を伴うクエリとは見なされません。
+	   もしwrite/read_only function listが空の場合は、揮発性ではない関数を持つSELECTは、更新を伴うクエリとは見なされません。
 	  </para>
 	 </listitem>
 	</itemizedlist>
