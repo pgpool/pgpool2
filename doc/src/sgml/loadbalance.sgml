@@ -82,8 +82,8 @@
 	 </listitem>
 	 <listitem>
 	  <para>
-	   If write and read_only function list is empty, SELECTs having
-	   functions is regarded as a read only query.
+	   If write and read_only function list is empty, SELECT having
+	   functions which are not volatile is regarded as a read only query.
 	  </para>
 	 </listitem>
 	</itemizedlist>
