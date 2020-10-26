@@ -2018,7 +2018,7 @@ Retry:
 		{
 			ereport(DEBUG1,
 					(errmsg("pool_temp_tables_commit_pending: remove: %s", table->tablename)));
-			session_context->temp_tables = list_delete_ptr(session_context->temp_tables, table);
+			session_context->temp_tables = list_delete_cell(session_context->temp_tables, cell);
 			pool_temp_tables_dump();
 			goto Retry;
 		}
@@ -2055,7 +2055,7 @@ Retry:
 			ereport(DEBUG1,
 					(errmsg("pool_temp_tables_remove_pending: remove: %s", table->tablename)));
 
-			session_context->temp_tables = list_delete_ptr(session_context->temp_tables, table);
+			session_context->temp_tables = list_delete_cell(session_context->temp_tables, cell);
 			pool_temp_tables_dump();
 			goto Retry;
 		}
