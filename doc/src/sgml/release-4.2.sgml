@@ -922,6 +922,15 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 
    <listitem>
     <!--
+    2020-10-27 [317c39e]
+    -->
+    <para>
+     Add escalation.sh sample script executed by <xref linkend="guc-wd-escalation-command">. (Masaya Kawamoto)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2020-10-04 [a3d6554]
     -->
     <para>

@@ -1122,6 +1122,15 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 
    <listitem>
     <!--
+    2020-10-27 [317c39e]
+    -->
+    <para>
+     <xref linkend="guc-wd-escalation-command">によって実行されるサンプルスクリプトescalation.shを追加しました。(Masaya Kawamoto)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2020-10-04 [a3d6554]
     -->
     <para>
