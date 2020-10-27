@@ -273,6 +273,7 @@ fi
 %{_sysconfdir}/%{short_name}/pgpool_remote_start.sample
 %{_sysconfdir}/%{short_name}/recovery_1st_stage.sample
 %{_sysconfdir}/%{short_name}/recovery_2nd_stage.sample
+%{_sysconfdir}/%{short_name}/escalation.sh.sample
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/*.conf
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/pool_passwd
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/pgpool_node_id
