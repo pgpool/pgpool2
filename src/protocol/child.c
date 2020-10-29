@@ -2348,6 +2348,7 @@ retry_startup:
 	{
 		cancel_request((CancelPacket *)sp->startup_packet);
 		pool_free_startup_packet(sp);
+		connection_count_down();
 		return NULL;
 	}
 
