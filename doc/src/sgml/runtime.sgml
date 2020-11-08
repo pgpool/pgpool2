@@ -142,6 +142,10 @@
        <entry><literal>pgpool.conf.sample-slony</literal></entry>
       </row>
       <row>
+       <entry>Snapshot isolation mode</entry>
+       <entry><literal>pgpool.conf.sample-snapshot</literal></entry>
+      </row>
+      <row>
        <entry>Raw mode</entry>
        <entry><literal>pgpool.conf.sample-raw</literal> </entry>
       </row>
@@ -212,32 +216,6 @@
    </para>
 
    <para>
-    The <firstterm>logical replication mode</firstterm> can be used
-    with <productname>PostgreSQL</> servers operating logical
-    replication. In this mode, <productname>PostgreSQL</> is
-    responsible for synchronizing tables. Load balancing is possible
-    in the mode. Since logical replication does not replicate all
-    tables, it's user's responsibility to replicate the table which
-    could be load balanced. <productname>Pgpool-II</> load balances
-    all tables. This means that if a table is not
-    replicated, <productname>Pgpool-II</> may lookup outdated tables
-    in the subscriber side.
-   </para>
-
-   <para>
-    The <firstterm>native replication mode</firstterm> mode (slony mode)
-    can be used with <productname>PostgreSQL</> servers
-    operating <productname>Slony</>. In this
-    mode, <productname>Slony</>/<productname>PostgreSQL</> is
-    responsible for synchronizing
-    databases. Since <productname>Slony-I</> is being obsoleted by
-    streaming replication, we do not recommend to use this mode
-    unless you have specific reason to
-    use <productname>Slony</>. Load balancing is possible in the
-    mode.
-   </para>
-
-   <para>
     In the <firstterm>native replication
      mode</firstterm>, <productname>Pgpool-II</> is responsible for
     synchronizing databases. The advantage for the mode is the
@@ -261,6 +239,32 @@
    </para>
    <para>
     Load balancing is possible in the mode.
+   </para>
+
+   <para>
+    The <firstterm>logical replication mode</firstterm> can be used
+    with <productname>PostgreSQL</> servers operating logical
+    replication. In this mode, <productname>PostgreSQL</> is
+    responsible for synchronizing tables. Load balancing is possible
+    in the mode. Since logical replication does not replicate all
+    tables, it's user's responsibility to replicate the table which
+    could be load balanced. <productname>Pgpool-II</> load balances
+    all tables. This means that if a table is not
+    replicated, <productname>Pgpool-II</> may lookup outdated tables
+    in the subscriber side.
+   </para>
+
+   <para>
+    The <firstterm>main replica mode</firstterm> mode (slony mode)
+    can be used with <productname>PostgreSQL</> servers
+    operating <productname>Slony</>. In this
+    mode, <productname>Slony</>/<productname>PostgreSQL</> is
+    responsible for synchronizing
+    databases. Since <productname>Slony-I</> is being obsoleted by
+    streaming replication, we do not recommend to use this mode
+    unless you have specific reason to
+    use <productname>Slony</>. Load balancing is possible in the
+    mode.
    </para>
 
    <para>

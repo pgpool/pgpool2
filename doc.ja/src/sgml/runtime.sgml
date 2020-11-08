@@ -207,15 +207,20 @@
        <entry><literal>pgpool.conf.sample-stream</literal></entry>
       </row>
       <row>
-       <!--
-       <entry>Replication mode</entry>
-       -->
        <entry>ネイティブレプリケーションモード</entry>
        <entry><literal>pgpool.conf.sample-replication</literal></entry>
       </row>
       <row>
        <entry>ロジカルレプリケーションモード</entry>
        <entry><literal>pgpool.conf.sample-logical</literal></entry>
+      </row>
+      <row>
+       <entry>slonyモード</entry>
+       <entry><literal>pgpool.conf.sample-slony</literal></entry>
+      </row>
+      <row>
+       <entry>スナップショットアイソレーションモード</entry>
+       <entry><literal>pgpool.conf.sample-snapshot</literal></entry>
       </row>
       <row>
        <entry>Rawモード</entry>
@@ -316,46 +321,6 @@
 
    <para>
     <!--
-    The <firstterm>logical replication mode</firstterm> can be used
-    with <productname>PostgreSQL</> servers operating logical
-    replication. In this mode, <productname>PostgreSQL</> is
-    responsible for synchronizing tables. Load balancing is possible
-    in the mode. Since logical replication does not replicate all
-    tables, it's user's responsibility to replicate the table which
-    could be load balanced. <productname>Pgpool-II</> load balaces
-    all tables. This means that if a table is not
-    replicated, <productname>Pgpool-II</> may lookup outdated tables
-    in the subscriber side.
-    -->
-    <firstterm>ロジカルレプリケーションモード</firstterm>はロジカルレプリケーションを使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。
-    このモードでは、<productname>PostgreSQL</>がテーブルを同期する責任を持ちます。
-    このモードでは負荷分散が可能です。
-    ロジカルレプリケーションは必ずしもすべてのテーブルをレプリケーションしないので、負荷分散させるテーブルがレプリケーションされるようにするのはユーザの責任です。
-    <productname>Pgpool-II</>はすべてのテーブルをロードバランスします。
-    このことは、テーブルがレプリケーションされていない場合には、<productname>Pgpool-II</>がサブスクライバー側の更新されていない古いテーブルを見てしまうかもしれないことを意味します。
-   </para>
-
-   <para>
-    <!--
-    The <firstterm>native replication mode</firstterm> mode (slony mode)
-    can be used with <productname>PostgreSQL</> servers
-    operating <productname>Slony</>. In this
-    mode, <productname>Slony</>/<productname>PostgreSQL</> is
-    responsible for synchronizing
-    databases. Since <productname>Slony-I</> is being obsoleted by
-    streaming replication, we do not recommend to use this mode
-    unless you have specific reason to
-    use <productname>Slony</>. Load balancing is possible in the
-    mode.
-    -->
-    <firstterm>メインレプリカモード</firstterm>(slonyモード)は<productname>Slony-I</>を使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。
-    このモードでは、<productname>Slony</>/<productname>PostgreSQL</>がデータベースを同期する責任を持ちます。
-    <productname>Slony</>はストリーミングレプリケーションの登場により廃れつつあるため、<productname>Slony</>を使う特別な理由が無い限りこのモードの使用を推奨しません。
-    このモードでは負荷分散が可能です。
-   </para>
-
-   <para>
-    <!--
     In the <firstterm>native replication
     mode</firstterm>, <productname>Pgpool-II</> is responsible for
     synchronizing databases. The advantage for the mode is the
@@ -399,6 +364,46 @@
      これがストリーミングレプリケーションと<literal>synchronous_commit = remote_apply</literal>を使用することをおすすめするもう一つの理由です。
    </para>
    <para>
+    このモードでは負荷分散が可能です。
+   </para>
+
+   <para>
+    <!--
+    The <firstterm>logical replication mode</firstterm> can be used
+    with <productname>PostgreSQL</> servers operating logical
+    replication. In this mode, <productname>PostgreSQL</> is
+    responsible for synchronizing tables. Load balancing is possible
+    in the mode. Since logical replication does not replicate all
+    tables, it's user's responsibility to replicate the table which
+    could be load balanced. <productname>Pgpool-II</> load balaces
+    all tables. This means that if a table is not
+    replicated, <productname>Pgpool-II</> may lookup outdated tables
+    in the subscriber side.
+    -->
+    <firstterm>ロジカルレプリケーションモード</firstterm>はロジカルレプリケーションを使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。
+    このモードでは、<productname>PostgreSQL</>がテーブルを同期する責任を持ちます。
+    このモードでは負荷分散が可能です。
+    ロジカルレプリケーションは必ずしもすべてのテーブルをレプリケーションしないので、負荷分散させるテーブルがレプリケーションされるようにするのはユーザの責任です。
+    <productname>Pgpool-II</>はすべてのテーブルをロードバランスします。
+    このことは、テーブルがレプリケーションされていない場合には、<productname>Pgpool-II</>がサブスクライバー側の更新されていない古いテーブルを見てしまうかもしれないことを意味します。
+   </para>
+
+   <para>
+    <!--
+    The <firstterm>native replication mode</firstterm> mode (slony mode)
+    can be used with <productname>PostgreSQL</> servers
+    operating <productname>Slony</>. In this
+    mode, <productname>Slony</>/<productname>PostgreSQL</> is
+    responsible for synchronizing
+    databases. Since <productname>Slony-I</> is being obsoleted by
+    streaming replication, we do not recommend to use this mode
+    unless you have specific reason to
+    use <productname>Slony</>. Load balancing is possible in the
+    mode.
+    -->
+    <firstterm>メインレプリカモード</firstterm>(slonyモード)は<productname>Slony-I</>を使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。
+    このモードでは、<productname>Slony</>/<productname>PostgreSQL</>がデータベースを同期する責任を持ちます。
+    <productname>Slony</>はストリーミングレプリケーションの登場により廃れつつあるため、<productname>Slony</>を使う特別な理由が無い限りこのモードの使用を推奨しません。
     このモードでは負荷分散が可能です。
    </para>
 
