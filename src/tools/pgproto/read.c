@@ -219,6 +219,7 @@ read_until_ready_for_query(PGconn *conn, int timeout)
 
 			case 'A':			/* Notification response */
 				len = read_int32(conn);
+				(void)len;
 				pid = read_int32(conn);
 
 				channel = read_string(conn);
