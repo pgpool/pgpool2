@@ -55,6 +55,9 @@
       <xref linkend="guc-sr-check-period">を0にして、ストリーミングレプリケーション遅延チェックを無効にします。
        <productname>Aurora</productname>では、ストリーミングレプリケーションの遅延をチェックするための関数が提供されないためです。
      </para>
+     <programlisting>
+sr_check_period = 0
+     </programlisting>
     </listitem>
     <listitem>
      <para>
@@ -67,6 +70,9 @@
       <xref linkend="guc-enable-pool-hba">をオンにし、md5認証を有効にします。
        （<productname>Aurora</productname>では常にmd5認証が有効になっています)
      </para>
+     <programlisting>
+enable_pool_hba = on
+     </programlisting>
     </listitem>
     <listitem>
      <para>
@@ -81,18 +87,20 @@
     <listitem>
      <para>
       <!--
-      Set <xref linkend="guc-backend-hostname">0 for the
-      Aurora writer node.  Set
-      other <xref linkend="guc-backend-hostname"> for the
-      Aurora reader node.  Set
-      appropreate <xref linkend="guc-backend-weight"> as
-      usual. You don't need to
-      set <xref linkend="guc-backend-data-directory">
+      Set <xref linkend="guc-backend-hostname">0 for the Aurora cluster endpoint.
+	  Set <xref linkend="guc-backend-hostname">1 for the Aurora reader endpoint.
+	  Set appropriate <xref linkend="guc-backend-weight"> as usual.
+	  You don't need to set <xref linkend="guc-backend-data-directory">
       -->
-      <xref linkend="guc-backend-hostname">0をAuroraのwriterノードに設定します。
-       他の<xref linkend="guc-backend-hostname">はAuroraのreaderノードに設定します。
-        <xref linkend="guc-backend-data-directory">は設定の必要がありません。
+      <xref linkend="guc-backend-hostname">0をAuroraのクラスタエンドポイントに設定します。
+      <xref linkend="guc-backend-hostname">1をAuroraの読み取りエンドポイントに設定します。
+	  通常どおり、適切な<xref linkend="guc-backend-weight">を設定します。
+      <xref linkend="guc-backend-data-directory">は設定の必要がありません。
      </para>
+     <programlisting>
+backend_hostname0 = 'クラスタエンドポイント'
+backend_hostname1 = '読み取りエンドポイント'
+     </programlisting>
     </listitem>
     <listitem>
      <para>
@@ -107,29 +115,27 @@
     <listitem>
      <para>
       <!--
-      Enable health checking.
-      Set <xref linkend="guc-health-check-period"> to 5.
-      Set <xref linkend="guc-health-check-user">, <xref linkend="guc-health-check-password">,
-      <xref linkend="guc-health-check-user"> and
-      <xref linkend="guc-health-check-database"> to appropriate values.
-      Enable health check retry.
-      <productname>Aurora</productname> shutdowns all DB nodes while switching
-      over or failover. If the retry is not performed,
-      <productname>Pgpool-II</productname> thinks that all DB nodes are in down status
-      so that it is required to restart <productname>Pgpool-II</productname>.
-      Set <xref linkend="guc-health-check-max-retries"> to 20.
-      Set <xref linkend="guc-health-check-retry-delay"> to 1 to avoid the problem.
+      Because failover is managed by Aurora, set <varname>DISALLOW_TO_FAILOVER</varname> flag to
+      the <xref linkend="guc-backend-flag">
+      for <xref linkend="guc-backend-hostname">0 and <xref linkend="guc-backend-hostname">1.
       -->
-      ヘルスチェックを有効にします。
-      <xref linkend="guc-health-check-period">に5を設定します.
-       <xref linkend="guc-health-check-user">、<xref linkend="guc-health-check-password">、
-	 <xref linkend="guc-health-check-user">、<xref linkend="guc-health-check-database">
-	   に適切な値を設定します。
-	   リトライを設定します。
-	   <productname>Aurora</productname>は、スィッチングオーバやフェイルオーバの際に、一時的に全DBノードを停止します。
-	   リトライを行わないと、<productname>Pgpool-II</productname>から見ると全DBノードがダウン状態になり、<productname>Pgpool-II</productname>の再起動が必要になります。
-	   <xref linkend="guc-health-check-max-retries">を20に、<xref linkend="guc-health-check-retry-delay">を1にして、そのような問題を回避してください。
+      フェイルオーバはAuroraによって管理されますので、<xref linkend="guc-backend-hostname">0と<xref linkend="guc-backend-hostname">1の<xref linkend="guc-backend-flag">の<varname>DISALLOW_TO_FAILOVER</varname>をオンにします。
      </para>
+     <programlisting>
+backend_flag0 = 'ALWAYS_MASTER|DISALLOW_TO_FAILOVER'
+backend_flag1 = 'DISALLOW_TO_FAILOVER'
+     </programlisting>
+    </listitem>
+    <listitem>
+     <para>
+      <!--
+      Set <xref linkend="guc-health-check-period"> to 0 to disable health checking.
+      -->
+      <xref linkend="guc-health-check-period">を0にして、ヘルスチェックを無効にします。
+     </para>
+     <programlisting>
+health_check_period = 0
+     </programlisting>
     </listitem>
     <listitem>
      <para>
