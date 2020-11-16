@@ -32,6 +32,9 @@
        not provide necessary functions to check the
        replication delay.
      </para>
+     <programlisting>
+sr_check_period = 0
+     </programlisting>
     </listitem>
     <listitem>
      <para>
@@ -40,6 +43,9 @@
        (<productname>Aurora</productname> always use md5
        authentication).
      </para>
+     <programlisting>
+enable_pool_hba = on
+     </programlisting>
     </listitem>
     <listitem>
      <para>
@@ -49,37 +55,41 @@
     </listitem>
     <listitem>
      <para>
-      Set <xref linkend="guc-backend-hostname">0 for the
-       Aurora writer node.  Set
-       other <xref linkend="guc-backend-hostname"> for the
-	Aurora reader node.  Set
-	appropriate <xref linkend="guc-backend-weight"> as
-	 usual. You don't need to
-	 set <xref linkend="guc-backend-data-directory">
+      Set <xref linkend="guc-backend-hostname">0 for the Aurora cluster endpoint.
+	  Set <xref linkend="guc-backend-hostname">1 for the Aurora reader endpoint.
+	  Set appropriate <xref linkend="guc-backend-weight"> as usual.
+	  You don't need to set <xref linkend="guc-backend-data-directory">.
      </para>
+     <programlisting>
+backend_hostname0 = 'cluster endpoint'
+backend_hostname1 = 'reader endpoint'
+     </programlisting>
     </listitem>
     <listitem>
      <para>
       Set <varname>ALWAYS_PRIMARY</varname> flag to
       the <xref linkend="guc-backend-flag">
-       for <xref linkend="guc-backend-hostname">0.
+      for <xref linkend="guc-backend-hostname">0.
      </para>
     </listitem>
     <listitem>
      <para>
-      Enable health checking.
-      Set <xref linkend="guc-health-check-period"> to 5.
-       Set <xref linkend="guc-health-check-user">, <xref linkend="guc-health-check-password">,
-	 <xref linkend="guc-health-check-user"> and
-	  <xref linkend="guc-health-check-database"> to appropriate values.
-	   Enable health check retry.
-	   <productname>Aurora</productname> shutdowns all DB nodes while switching
-	   over or failover. If the retry is not performed,
-	   <productname>Pgpool-II</productname> thinks that all DB nodes are in down status
-	   so that it is required to restart <productname>Pgpool-II</productname>.
-	   Set <xref linkend="guc-health-check-max-retries"> to 20.
-	    Set <xref linkend="guc-health-check-retry-delay"> to 1 to avoid the problem.
+      Because failover is managed by Aurora, set <varname>DISALLOW_TO_FAILOVER</varname> flag to
+      the <xref linkend="guc-backend-flag">
+      for <xref linkend="guc-backend-hostname">0 and <xref linkend="guc-backend-hostname">1.
      </para>
+     <programlisting>
+backend_flag0 = 'ALWAYS_MASTER|DISALLOW_TO_FAILOVER'
+backend_flag1 = 'DISALLOW_TO_FAILOVER'
+     </programlisting>
+    </listitem>
+    <listitem>
+     <para>
+      Set <xref linkend="guc-health-check-period"> to 0 to disable health checking.
+     </para>
+     <programlisting>
+health_check_period = 0
+     </programlisting>
     </listitem>
     <listitem>
      <para>
