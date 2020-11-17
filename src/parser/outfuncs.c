@@ -5448,8 +5448,12 @@ _outOnConflictClause(String *str, OnConflictClause *node)
 			string_append_char(str, " ( ");
 			_outList(str, node->infer->indexElems);
 			string_append_char(str, " ) ");
-			string_append_char(str, " WHERE ");
-			_outNode(str, node->infer->whereClause);
+
+			if (node->infer->whereClause)
+			{
+				string_append_char(str, " WHERE ");
+				_outNode(str, node->infer->whereClause);
+			}
 		}
 		else
 		{
