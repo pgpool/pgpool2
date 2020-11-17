@@ -1,6 +1,79 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-5-28>
+ <!--
+ <title>Release 3.5.28</title>
+ -->
+ <title>リリース 3.5.28</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2020-11-19</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Changes</title>
+  -->
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-10-03 [d4cd86e]
+    -->
+    <para>
+	 フロントエンドが<acronym>GSSAPI</acronym>暗号化接続を要求した場合、
+	 <productname>Pgpool-II</productname>は<acronym>GSSAPI</acronym>をサポートしていないため、
+	 これまでエラーを返していましたが、他の方式での接続を要求するように変更しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     パッチはTatsuo Ishiiにより作成され、Umar Hayatによりレビュー・テストされました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-11-17 [94cbceb]
+    -->
+    <para>
+	 ネイティブレプリケーションモードで「INSERT ... ON CONFLICT」クエリ書換えの不具合を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=654">bug 654</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-10-30 [0e76626]
+    -->
+    <para>
+	 クエリがキャンセルされたときにコネクションカウントが減少しない不具合を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=656">bug 656</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-09-23 [cefb2fc]
+    -->
+    <para>
+     pgpool_setupのPostgreSQLのバージョンチェックの不具合を修正しました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-5-27>
  <!--
  <title>Release 3.5.27</title>
