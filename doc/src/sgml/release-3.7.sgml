@@ -1,6 +1,84 @@
 <!-- doc/src/sgml/release-3.7.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-7-17>
+ <title>Release 3.7.17</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2020-11-19</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-11-17 [6382452]
+    -->
+    <para>
+     Doc: update "Aurora Configuration Example". (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-10-03 [1b81b2c]
+    -->
+    <para>
+     Doc: mention that <acronym>GSSAPI</acronym> is not supported. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-10-03 [0b7a180]
+    -->
+    <para>
+     <productname>Pgpool-II</productname> doesn't support <acronym>GSSAPI</acronym>.
+	 Allow <productname>Pgpool-II</productname> to deal with <acronym>GSSAPI</acronym> encrypted connection request from frontend instead of responding with an error. (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch is created by me, reviewed and tested by Umar Hayat.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-11-17 [94cbceb]
+    -->
+    <para>
+	 Fix query rewrite syntax error of "INSERT ... ON CONFLICT" in native replication mode.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=654">bug 654</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-10-30 [a33017b]
+    -->
+    <para>
+     Fix connection counter was not counted down when query is canceled.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=656">bug 656</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-09-30 [03abedd]
+    -->
+    <para>
+     Doc: fix usable versions of PostgreSQL to be 7.4 or later. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-7-16>
  <title>Release 3.7.16</title>
  <note>
