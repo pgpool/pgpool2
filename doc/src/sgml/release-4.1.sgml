@@ -1,6 +1,96 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-4-1-5>
+ <title>Release 4.1.5</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2020-11-19</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-11-17 [fd481f1]
+    -->
+    <para>
+     Doc: update "Aurora Configuration Example". (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-10-03 [4999b13]
+    -->
+    <para>
+     Doc: mention that <acronym>GSSAPI</acronym> is not supported. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-10-03 [f9217a8]
+    -->
+    <para>
+     <productname>Pgpool-II</productname> doesn't support <acronym>GSSAPI</acronym>.
+	 Allow <productname>Pgpool-II</productname> to deal with this issue and expects that the frontend falls back to other connections
+	 instead of responding with an error. (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch is created by me, reviewed and tested by Umar Hayat.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-09-22 [f26a293]
+    2020-09-22 [fc3525e]
+    -->
+    <para>
+     Doc: update "Pgpool-II + Watchdog Setup Example". (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-11-17 [94cbceb]
+    -->
+    <para>
+	 Fix query rewrite syntax error of "INSERT ... ON CONFLICT" in native replication mode.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=654">bug 654</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-10-30 [6d6e4cc]
+    -->
+    <para>
+     Fix connection counter was not counted down when query is canceled.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=656">bug 656</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-09-30 [c83c400]
+    -->
+    <para>
+     Doc: fix usable versions of PostgreSQL to be 7.4 or later. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
+
 <sect1 id=release-4-1-4>
  <title>Release 4.1.4</title>
  <note>

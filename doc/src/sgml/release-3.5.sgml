@@ -1,6 +1,66 @@
 <!-- doc/src/sgml/release-3.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id=release-3-5-28>
+ <title>Release 3.5.28</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2020-11-19</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-10-03 [d4cd86e]
+    -->
+    <para>
+     <productname>Pgpool-II</productname> doesn't support <acronym>GSSAPI</acronym>.
+	 Allow <productname>Pgpool-II</productname> to deal with <acronym>GSSAPI</acronym> encrypted connection request from frontend instead of responding with an error. (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch is created by me, reviewed and tested by Umar Hayat.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-11-17 [94cbceb]
+    -->
+    <para>
+	 Fix query rewrite syntax error of "INSERT ... ON CONFLICT" in native replication mode.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=654">bug 654</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-10-30 [0e76626]
+    -->
+    <para>
+     Fix connection counter was not counted down when query is canceled.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=656">bug 656</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-09-23 [cefb2fc]
+    -->
+    <para>
+     Fix pgpool_setup bugs while checking the version of PostgreSQL. (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-3-5-27>
  <title>Release 3.5.27</title>
  <note>
