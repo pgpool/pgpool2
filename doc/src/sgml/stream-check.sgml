@@ -160,12 +160,12 @@
       <tbody>
        <row>
 	<entry><literal>'none'</literal></entry>
-	<entry>Never log the standby delay</entry>
+	<entry>Never log the standby delay (the default)</entry>
        </row>
 
        <row>
 	<entry><literal>'always'</literal></entry>
-	<entry>Log the standby delay, every time the replication delay is checked</entry>
+	<entry>Log the standby delay if it's greater than 0, every time the replication delay is checked</entry>
        </row>
 
        <row>
