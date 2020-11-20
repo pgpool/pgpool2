@@ -270,7 +270,6 @@
      -->
      レプリケーションの遅延状況をログ出力する条件を指定します。
      以下の表にこのパラメータでとることができる値のリストを示します。
-     'none'を指定すると、ログを出力しません。 'always'ならレプリケーションの遅延チェックを実行するたびに必ず出力します。 'if_over_threshold'を指定すると、delay_thresholdを超えたときだけ ログが出力されます。 デフォルト値は'none'です。
     </para>
 
     <table id="log-standby-delay-table">
@@ -296,7 +295,7 @@
 	<!--
 	<entry>Never log the standby delay</entry>
 	-->
-	<entry>スタンバイの遅延はログ出力されない</entry>
+	<entry>スタンバイの遅延はログ出力されない (デフォルト)</entry>
        </row>
 
        <row>
@@ -304,7 +303,7 @@
 	<!--
 	<entry>Log the standby delay, every time the replication delay is checked</entry>
 	-->
-	<entry>レプリケーション遅延がチェックされる度に、スタンバイの遅延がログ出力される</entry>
+	<entry>スタンバイの遅延が0より大きければ、レプリケーション遅延がチェックされる度に、スタンバイの遅延がログ出力される</entry>
        </row>
 
        <row>
