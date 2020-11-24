@@ -710,7 +710,7 @@ pool_check_fd(POOL_CONNECTION * cp)
 				continue;
 
 			ereport(WARNING,
-					(errmsg("waiting for reading data. select failed with error: \"%s\"", strerror(errno))));
+					(errmsg("waiting for reading data. select failed with error: \"%m\"")));
 			break;
 		}
 		else if (fds == 0)		/* timeout */
@@ -4764,7 +4764,7 @@ SELECT_RETRY:
 
 		ereport(FATAL,
 				(errmsg("unable to read data"),
-				 errdetail("select() system call failed with reason \"%s\"", strerror(errno))));
+				 errdetail("select() system call failed with reason \"%m\"")));
 	}
 
 	/* select timeout */

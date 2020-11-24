@@ -827,7 +827,7 @@ wd_create_recv_socket(int port)
 		/* socket create failed */
 		ereport(ERROR,
 				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("create socket failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("create socket failed with reason: \"%m\"")));
 	}
 
 	pool_set_nonblock(sock);
@@ -909,7 +909,7 @@ wd_create_client_socket(char *hostname, int port, bool *connected)
 	{
 		/* socket create failed */
 		ereport(LOG,
-				(errmsg("create socket failed with reason: \"%s\"", strerror(errno))));
+				(errmsg("create socket failed with reason: \"%m\"")));
 		return -1;
 	}
 
@@ -919,14 +919,14 @@ wd_create_client_socket(char *hostname, int port, bool *connected)
 		close(sock);
 		ereport(LOG,
 				(errmsg("failed to set socket options"),
-				 errdetail("setsockopt(TCP_NODELAY) failed with error: \"%s\"", strerror(errno))));
+				 errdetail("setsockopt(TCP_NODELAY) failed with error: \"%m\"")));
 		return -1;
 	}
 	if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1)
 	{
 		ereport(LOG,
 				(errmsg("failed to set socket options"),
-				 errdetail("setsockopt(SO_KEEPALIVE) failed with error: \"%s\"", strerror(errno))));
+				 errdetail("setsockopt(SO_KEEPALIVE) failed with error: \"%m\"")));
 		close(sock);
 		return -1;
 	}
@@ -967,7 +967,7 @@ wd_create_client_socket(char *hostname, int port, bool *connected)
 		}
 		ereport(LOG,
 				(errmsg("connect on socket failed"),
-				 errdetail("connect failed with error: \"%s\"", strerror(errno))));
+				 errdetail("connect failed with error: \"%m\"")));
 		close(sock);
 		return -1;
 	}
@@ -1103,7 +1103,8 @@ fork_watchdog_child(void)
 	{
 		ereport(FATAL,
 				(return_code(POOL_EXIT_FATAL),
-				 errmsg("fork() failed. reason: %s", strerror(errno))));
+				 errmsg("fork() failed"),
+				 errdetail("%m")));
 	}
 
 	return pid;
@@ -1275,7 +1276,7 @@ wd_create_command_server_socket(void)
 		ereport(FATAL,
 				(return_code(POOL_EXIT_FATAL),
 				 errmsg("failed to create watchdog command server socket"),
-				 errdetail("create socket failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("create socket failed with reason: \"%m\"")));
 	}
 	memset((char *) &addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
@@ -1860,7 +1861,7 @@ read_ipc_socket_and_process(int sock, bool *remove_socket)
 	{
 		ereport(WARNING,
 				(errmsg("error reading from IPC socket"),
-				 errdetail("read from socket failed with error \"%s\"", strerror(errno))));
+				 errdetail("read from socket failed with error \"%m\"")));
 		return false;
 	}
 
@@ -1870,7 +1871,7 @@ read_ipc_socket_and_process(int sock, bool *remove_socket)
 	{
 		ereport(WARNING,
 				(errmsg("error reading from IPC socket"),
-				 errdetail("read from socket failed with error \"%s\"", strerror(errno))));
+				 errdetail("read from socket failed with error \"%m\"")));
 		return false;
 	}
 
@@ -1890,7 +1891,7 @@ read_ipc_socket_and_process(int sock, bool *remove_socket)
 		{
 			ereport(LOG,
 					(errmsg("error reading IPC from socket"),
-					 errdetail("read from socket failed with error \"%s\"", strerror(errno))));
+					 errdetail("read from socket failed with error \"%m\"")));
 			return false;
 		}
 	}
@@ -3312,7 +3313,7 @@ update_successful_outgoing_cons(fd_set *wmask, int pending_fds_count)
 				{
 					ereport(DEBUG1,
 							(errmsg("error in outbound connection to %s:%d ", wdNode->hostname, wdNode->wd_port),
-							 errdetail("getsockopt failed with error \"%s\"", strerror(errno))));
+							 errdetail("getsockopt failed with error \"%m\"")));
 					close_socket_connection(&wdNode->client_socket);
 					wdNode->client_socket.sock_state = WD_SOCK_ERROR;
 
@@ -3344,7 +3345,7 @@ write_packet_to_socket(int sock, WDPacketData * pkt, bool ipcPacket)
 	{
 		ereport(LOG,
 				(errmsg("failed to write watchdog packet to socket"),
-				 errdetail("%s", strerror(errno))));
+				 errdetail("%m")));
 		return false;
 	}
 	if (ipcPacket == false)
@@ -3355,7 +3356,7 @@ write_packet_to_socket(int sock, WDPacketData * pkt, bool ipcPacket)
 		{
 			ereport(LOG,
 					(errmsg("failed to write watchdog packet to socket"),
-					 errdetail("%s", strerror(errno))));
+					 errdetail("%m")));
 			return false;
 		}
 	}
@@ -3365,7 +3366,7 @@ write_packet_to_socket(int sock, WDPacketData * pkt, bool ipcPacket)
 	{
 		ereport(LOG,
 				(errmsg("failed to write watchdog packet to socket"),
-				 errdetail("%s", strerror(errno))));
+				 errdetail("%m")));
 		return false;
 	}
 	/* DATA */
@@ -3380,7 +3381,7 @@ write_packet_to_socket(int sock, WDPacketData * pkt, bool ipcPacket)
 			{
 				ereport(LOG,
 						(errmsg("failed to write watchdog packet to socket"),
-						 errdetail("%s", strerror(errno))));
+						 errdetail("%m")));
 				return false;
 			}
 			bytes_send += ret;
@@ -7761,7 +7762,7 @@ load_watchdog_debug_test_option(void)
 		ereport(DEBUG3,
 				(errmsg("load_watchdog_debug_test_option: failed to open file %s",
 						wd_debug_request_file),
-				 errdetail("\"%s\"", strerror(errno))));
+				 errdetail("%m")));
 		return;
 	}
 

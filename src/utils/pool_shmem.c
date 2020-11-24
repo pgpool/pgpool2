@@ -55,7 +55,7 @@ pool_shared_memory_create(size_t size)
 	if (shmid < 0)
 		ereport(FATAL,
 				(errmsg("could not create shared memory for request size: %ld", size),
-				 errdetail("shared memory creation failed with error \"%s\"", strerror(errno))));
+				 errdetail("shared memory creation failed with error \"%m\"")));
 
 	/* Register on-exit routine to delete the new segment */
 	on_shmem_exit(IpcMemoryDelete, shmid);
@@ -66,7 +66,7 @@ pool_shared_memory_create(size_t size)
 	if (memAddress == (void *) -1)
 		ereport(FATAL,
 				(errmsg("could not create shared memory for request size: %ld", size),
-				 errdetail("attach to shared memory [id:%d] failed with reason: \"%s\"", shmid, strerror(errno))));
+				 errdetail("attach to shared memory [id:%d] failed with reason: \"%m\"", shmid)));
 
 
 	/* Register on-exit routine to detach new segment before deleting */
@@ -85,7 +85,7 @@ IpcMemoryDetach(int status, Datum shmaddr)
 	if (shmdt((void *) shmaddr) < 0)
 		ereport(LOG,
 				(errmsg("removing shared memory segments"),
-				 errdetail("shmdt(%p) failed: %s", (void *) shmaddr, strerror(errno))));
+				 errdetail("shmdt(%p) failed: %m", (void *) shmaddr)));
 
 }
 
@@ -112,8 +112,8 @@ IpcMemoryDelete(int status, Datum shmId)
 	if (shmctl(shmId, IPC_RMID, NULL) < 0)
 		ereport(LOG,
 				(errmsg("deleting shared memory segments"),
-				 errdetail("shmctl(%lu, %d, 0) failed: %s",
-						   shmId, IPC_RMID, strerror(errno))));
+				 errdetail("shmctl(%lu, %d, 0) failed with error \"%m\"",
+						   shmId, IPC_RMID)));
 }
 
 void

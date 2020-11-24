@@ -455,7 +455,7 @@ check_backend_down_request(int node, bool done_requests)
 		ereport(WARNING,
 				(errmsg("check_backend_down_request: failed to open file %s",
 						backend_down_request_file),
-				 errdetail("\"%s\"", strerror(errno))));
+				 errdetail("%m")));
 		return false;
 	}
 
@@ -510,7 +510,7 @@ check_backend_down_request(int node, bool done_requests)
 		ereport(WARNING,
 				(errmsg("check_backend_down_request: failed to open file for writing %s",
 						backend_down_request_file),
-				 errdetail("\"%s\"", strerror(errno))));
+				 errdetail("%m")));
 		return false;
 	}
 
@@ -519,7 +519,7 @@ check_backend_down_request(int node, bool done_requests)
 		ereport(WARNING,
 				(errmsg("check_backend_down_request: failed to write %s",
 						backend_down_request_file),
-				 errdetail("\"%s\"", strerror(errno))));
+				 errdetail("%m")));
 		fclose(fd);
 		return false;
 	}

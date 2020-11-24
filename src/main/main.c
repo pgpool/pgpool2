@@ -250,7 +250,8 @@ main(int argc, char **argv)
 			{
 				ereport(FATAL,
 						(return_code(1),
-						 errmsg("could not reload configuration file pid: %d. reason: %s", pid, strerror(errno))));
+						 errmsg("could not reload configuration file pid: %d", pid),
+						 errdetail("%m")));
 			}
 			exit(0);
 		}
@@ -448,7 +449,7 @@ daemonize(void)
 	{
 		ereport(FATAL,
 				(errmsg("could not daemonize the pgpool-II"),
-				 errdetail("fork() system call failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("fork() system call failed with reason: \"%m\"")));
 	}
 	else if (pid > 0)
 	{							/* parent */
@@ -460,7 +461,7 @@ daemonize(void)
 	{
 		ereport(FATAL,
 				(errmsg("could not daemonize the pgpool-II"),
-				 errdetail("setsid() system call failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("setsid() system call failed with reason: \"%m\"")));
 	}
 #endif
 
@@ -469,14 +470,15 @@ daemonize(void)
 	if (chdir("/"))
 		ereport(WARNING,
 				(errmsg("change directory failed"),
-				 errdetail("chdir() system call failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("chdir() system call failed with reason: \"%m\"")));
 
 	/* redirect stdin, stdout and stderr to /dev/null */
 	i = open("/dev/null", O_RDWR);
 	if (i < 0)
 	{
 		ereport(WARNING,
-				(errmsg("failed to open \"/dev/null\", open() failed with error \"%s\"", strerror(errno))));
+				(errmsg("failed to open \"/dev/null\""),
+				 errdetail("%m")));
 	}
 	else
 	{
@@ -517,7 +519,7 @@ stop_me(void)
 	{
 		ereport(FATAL,
 				(errmsg("could not stop process with pid: %d", pid),
-				 errdetail("\"%s\"", strerror(errno))));
+				 errdetail("%m")));
 	}
 	ereport(LOG,
 			(errmsg("stop request sent to pgpool. waiting for termination...")));
@@ -555,8 +557,9 @@ get_pid_file_path(void)
 		if (conf_dir == NULL)
 		{
 			ereport(LOG,
-					(errmsg("failed to get the dirname of pid file:\"%s\". reason: %s",
-							pool_config->pid_file_name, strerror(errno))));
+					(errmsg("failed to get the dirname of pid file:\"%s\"",
+							pool_config->pid_file_name),
+					 errdetail("%m")));
 			return NULL;
 		}
 		path_size = strlen(conf_dir) + strlen(pool_config->pid_file_name) + 1 + 1;
@@ -606,16 +609,18 @@ read_pid_file(void)
 		close(fd);
 		pfree(pid_file);
 		ereport(FATAL,
-				(errmsg("could not read pid file as \"%s\". reason: %s",
-						pool_config->pid_file_name, strerror(errno))));
+				(errmsg("could not read pid file \"%s\"",
+						pool_config->pid_file_name),
+				 errdetail("%m")));
 	}
 	else if (readlen == 0)
 	{
 		close(fd);
 		pfree(pid_file);
 		ereport(FATAL,
-				(errmsg("EOF detected while reading pid file \"%s\". reason: %s",
-						pool_config->pid_file_name, strerror(errno))));
+				(errmsg("EOF detected while reading pid file \"%s\"",
+						pool_config->pid_file_name),
+				 errdetail("%m")));
 	}
 	pfree(pid_file);
 	close(fd);
@@ -644,8 +649,9 @@ write_pid_file(void)
 	if (fd == -1)
 	{
 		ereport(FATAL,
-				(errmsg("could not open pid file as %s. reason: %s",
-						pool_config->pid_file_name, strerror(errno))));
+				(errmsg("could not open pid file \"%s\"",
+						pool_config->pid_file_name),
+				 errdetail("%m")));
 	}
 	snprintf(pidbuf, sizeof(pidbuf), "%d", (int) getpid());
 	if (write(fd, pidbuf, strlen(pidbuf) + 1) == -1)
@@ -653,23 +659,26 @@ write_pid_file(void)
 		close(fd);
 		pfree(pid_file);
 		ereport(FATAL,
-				(errmsg("could not write pid file as %s. reason: %s",
-						pool_config->pid_file_name, strerror(errno))));
+				(errmsg("could not write pid file \"%s\"",
+						pool_config->pid_file_name),
+				 errdetail("%m")));
 	}
 	if (fsync(fd) == -1)
 	{
 		close(fd);
 		pfree(pid_file);
 		ereport(FATAL,
-				(errmsg("could not fsync pid file as %s. reason: %s",
-						pool_config->pid_file_name, strerror(errno))));
+				(errmsg("could not fsync pid file \"%s\"",
+						pool_config->pid_file_name),
+				 errdetail("%m")));
 	}
 	if (close(fd) == -1)
 	{
 		pfree(pid_file);
 		ereport(FATAL,
-				(errmsg("could not close pid file as %s. reason: %s",
-						pool_config->pid_file_name, strerror(errno))));
+				(errmsg("could not close pid file \"%s\"",
+						pool_config->pid_file_name),
+				 errdetail("%m")));
 	}
 	/* register the call back to delete the pid file at system exit */
 	on_proc_exit(FileUnlink, (Datum) pid_file);
@@ -710,5 +719,5 @@ FileUnlink(int code, Datum path)
 	 */
 	ereport(LOG,
 			(errmsg("unlink failed for file at path \"%s\"", filePath),
-			 errdetail("\"%s\"", strerror(errno))));
+			 errdetail("%m")));
 }

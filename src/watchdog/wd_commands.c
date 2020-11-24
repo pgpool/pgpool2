@@ -297,7 +297,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char *data, int data_len, 
 					continue;
 				ereport(WARNING,
 						(errmsg("error reading from IPC command socket for ipc command %c", type),
-						 errdetail("select system call failed with error \"%s\"", strerror(errno))));
+						 errdetail("select system call failed with error \"%m\"")));
 				close(sock);
 				return NULL;
 			}
@@ -308,7 +308,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char *data, int data_len, 
 				{
 					ereport(WARNING,
 							(errmsg("error reading from IPC command socket for ipc command %c", type),
-							 errdetail("read from socket failed with error \"%s\"", strerror(errno))));
+							 errdetail("read from socket failed with error \"%m\"")));
 					close(sock);
 					return result;
 				}
@@ -317,7 +317,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char *data, int data_len, 
 				{
 					ereport(WARNING,
 							(errmsg("error reading from IPC command socket for ipc command %c", type),
-							 errdetail("read from socket failed with error \"%s\"", strerror(errno))));
+							 errdetail("read from socket failed with error \"%m\"")));
 					close(sock);
 					return result;
 				}
@@ -336,7 +336,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char *data, int data_len, 
 						pfree(result);
 						ereport(DEBUG1,
 								(errmsg("error reading from IPC command socket for ipc command %c", type),
-								 errdetail("read from socket failed with error \"%s\"", strerror(errno))));
+								 errdetail("read from socket failed with error \"%m\"")));
 						close(sock);
 						return NULL;
 					}
@@ -905,7 +905,7 @@ open_wd_command_sock(bool throw_error)
 		/* socket create failed */
 		ereport(throw_error ? ERROR : LOG,
 				(errmsg("failed to connect to watchdog command server socket"),
-				 errdetail("connect on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(errno))));
+				 errdetail("connect on \"%s\" failed with reason: \"%m\"", addr.sun_path)));
 		return -1;
 	}
 
@@ -916,10 +916,11 @@ open_wd_command_sock(bool throw_error)
 
 	if (connect(sock, (struct sockaddr *) &addr, len) == -1)
 	{
+		int saved_errno = errno;
 		close(sock);
 		ereport(throw_error ? ERROR : LOG,
 				(errmsg("failed to connect to watchdog command server socket"),
-				 errdetail("connect on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(errno))));
+				 errdetail("connect on \"%s\" failed with reason: \"%s\"", addr.sun_path, strerror(saved_errno))));
 		return -1;
 	}
 	return sock;
