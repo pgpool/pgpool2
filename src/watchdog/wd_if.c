@@ -267,7 +267,8 @@ exec_if_cmd(char *path, char *command)
 	if (pipe(pfd) == -1)
 	{
 		ereport(WARNING,
-				(errmsg("while executing interface up/down command, pipe open failed with error \"%s\"", strerror(errno))));
+				(errmsg("while executing interface up/down command, pipe open failed"),
+				 errdetail("%m")));
 		return WD_NG;
 	}
 
@@ -306,7 +307,7 @@ exec_if_cmd(char *path, char *command)
 	{
 		ereport(FATAL,
 				(errmsg("failed to execute interface up/down command"),
-				 errdetail("fork() failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("fork() failed with reason: \"%m\"")));
 	}
 	if (pid == 0)
 	{
@@ -334,7 +335,7 @@ exec_if_cmd(char *path, char *command)
 
 				ereport(DEBUG1,
 						(errmsg("watchdog exec waitpid()failed"),
-						 errdetail("waitpid() system call failed with reason \"%s\"", strerror(errno))));
+						 errdetail("waitpid() system call failed with reason \"%m\"")));
 
 				return WD_NG;
 			}
@@ -372,7 +373,7 @@ create_monitoring_socket(void)
 	if (sock < 0)
 		ereport(ERROR,
 				(errmsg("watchdog: VIP monitoring failed to create socket"),
-				 errdetail("socket() failed with error \"%s\"", strerror(errno))));
+				 errdetail("socket() failed with error \"%m\"")));
 
 #ifdef __linux__
 	struct sockaddr_nl addr;
@@ -386,7 +387,7 @@ create_monitoring_socket(void)
 		close(sock);
 		ereport(ERROR,
 				(errmsg("watchdog: VIP monitoring failed to bind socket"),
-				 errdetail("bind() failed with error \"%s\"", strerror(errno))));
+				 errdetail("bind() failed with error \"%m\"")));
 	}
 #endif
 
@@ -419,7 +420,7 @@ read_interface_change_event(int sock, bool *link_event, bool *deleted)
 	{
 		ereport(DEBUG1,
 				(errmsg("VIP monitoring failed to receive from socket"),
-				 errdetail("recvmsg() failed with error \"%s\"", strerror(errno))));
+				 errdetail("recvmsg() failed with error \"%m\"")));
 		return false;
 	}
 
@@ -483,7 +484,7 @@ read_interface_change_event(int sock, bool *link_event, bool *deleted)
 	{
 		ereport(DEBUG1,
 				(errmsg("VIP monitoring failed to receive from socket"),
-				 errdetail("recv() failed with error \"%s\"", strerror(errno))));
+				 errdetail("recv() failed with error \"%m\"")));
 		return false;
 	}
 

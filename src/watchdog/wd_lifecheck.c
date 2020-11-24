@@ -317,7 +317,8 @@ lifecheck_exit_handler(int sig)
 
 		if (wpid == -1 && errno != ECHILD)
 			ereport(WARNING,
-					(errmsg("wait() on lifecheck children failed. reason:%s", strerror(errno))));
+					(errmsg("wait() on lifecheck children failed"),
+					 errdetail("%m")));
 
 		if (g_hb_receiver_pid)
 			pfree(g_hb_receiver_pid);
@@ -365,7 +366,8 @@ fork_lifecheck_child(void)
 	else if (pid == -1)
 	{
 		ereport(FATAL,
-				(errmsg("fork() failed. reason: %s", strerror(errno))));
+				(errmsg("fork() failed"),
+				 errdetail("%m")));
 	}
 
 	return pid;
@@ -1142,7 +1144,7 @@ wd_ping_all_server(void)
 				continue;
 			ereport(WARNING,
 					(errmsg("failed to check the ping status of trusted servers"),
-					 errdetail("waitpid failed with reason: %s", strerror(errno))));
+					 errdetail("waitpid failed with reason: %m")));
 			break;
 		}
 	}

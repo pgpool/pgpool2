@@ -95,7 +95,7 @@ wd_create_hb_send_socket(WdHbIf * hb_if)
 		/* socket create failed */
 		ereport(ERROR,
 				(errmsg("failed to create watchdog heartbeat sender socket"),
-				 errdetail("create socket failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("create socket failed with reason: \"%m\"")));
 	}
 
 	/* set socket option */
@@ -105,7 +105,7 @@ wd_create_hb_send_socket(WdHbIf * hb_if)
 		close(sock);
 		ereport(ERROR,
 				(errmsg("failed to create watchdog heartbeat sender socket"),
-				 errdetail("setsockopt(IP_TOS) failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("setsockopt(IP_TOS) failed with reason: \"%m\"")));
 	}
 
 	if (hb_if->if_name[0] != '\0')
@@ -123,7 +123,7 @@ wd_create_hb_send_socket(WdHbIf * hb_if)
 					close(sock);
 					ereport(ERROR,
 							(errmsg("failed to create watchdog heartbeat sender socket"),
-							 errdetail("setsockopt(SO_BINDTODEVICE) failed with reason: \"%s\"", strerror(errno))));
+							 errdetail("setsockopt(SO_BINDTODEVICE) failed with reason: \"%m\"")));
 
 				}
 				ereport(LOG,
@@ -152,7 +152,7 @@ wd_create_hb_send_socket(WdHbIf * hb_if)
 		close(sock);
 		ereport(ERROR,
 				(errmsg("failed to create watchdog heartbeat sender socket"),
-				 errdetail("setting close-on-exec flag failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("setting close-on-exec flag failed with reason: \"%m\"")));
 	}
 
 	return sock;
@@ -179,7 +179,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 		/* socket create failed */
 		ereport(ERROR,
 				(errmsg("failed to create watchdog heartbeat receive socket"),
-				 errdetail("create socket failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("create socket failed with reason: \"%m\"")));
 	}
 
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1)
@@ -187,7 +187,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 		close(sock);
 		ereport(ERROR,
 				(errmsg("failed to create watchdog heartbeat receive socket"),
-				 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%m\"")));
 	}
 
 	if (hb_if->if_name[0] != '\0')
@@ -205,7 +205,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 					close(sock);
 					ereport(ERROR,
 							(errmsg("failed to create watchdog heartbeat receive socket"),
-							 errdetail("setsockopt(SO_BINDTODEVICE) failed with reason: \"%s\"", strerror(errno))));
+							 errdetail("setsockopt(SO_BINDTODEVICE) failed with reason: \"%m\"")));
 				}
 				ereport(LOG,
 						(errmsg("createing watchdog heartbeat receive socket."),
@@ -237,8 +237,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 		{
 			ereport(LOG,
 					(errmsg("failed to create watchdog heartbeat receive socket. retrying..."),
-					 errdetail("bind failed with reason: \"%s\"",
-							   strerror(errno))));
+					 errdetail("bind failed with reason: \"%m\"")));
 
 			sleep(1);
 		}
@@ -254,7 +253,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 		close(sock);
 		ereport(ERROR,
 				(errmsg("failed to create watchdog heartbeat receive socket"),
-				 errdetail("bind socket failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("bind socket failed with reason: \"%m\"")));
 	}
 
 	if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0)
@@ -262,7 +261,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 		close(sock);
 		ereport(ERROR,
 				(errmsg("failed to create watchdog heartbeat receive socket"),
-				 errdetail("setting close-on-exec flag failed with reason: \"%s\"", strerror(errno))));
+				 errdetail("setting close-on-exec flag failed with reason: \"%m\"")));
 	}
 
 	return sock;
@@ -299,7 +298,7 @@ wd_hb_send(int sock, WdHbPacket * pkt, int len, const char *host, const int port
 	{
 		ereport(ERROR,
 				(errmsg("failed to send watchdog heartbeat, sendto failed"),
-				 errdetail("sending packet to \"%s\" failed with reason: \"%s\"", host, strerror(errno))));
+				 errdetail("sending packet to \"%s\" failed with reason: \"%m\"", host)));
 
 	}
 	ereport(DEBUG2,
@@ -677,15 +676,14 @@ wd_set_reuseport(int sock)
 		{
 			ereport(LOG,
 					(errmsg("error seting SO_REUSEPORT option to the socket"),
-					 errdetail("setsockopt(SO_REUSEPORT) is not supported by the kernel. detail: %s",
-							   strerror(errno))));
+					 errdetail("setsockopt(SO_REUSEPORT) is not supported by the kernel. detail: %m")));
 		}
 		else
 		{
 			close(sock);
 			ereport(ERROR,
 					(errmsg("failed to create watchdog heartbeat socket"),
-					 errdetail("setsockopt(SO_REUSEPORT) failed with reason: \"%s\"", strerror(errno))));
+					 errdetail("setsockopt(SO_REUSEPORT) failed with reason: \"%m\"")));
 		}
 	}
 	else
