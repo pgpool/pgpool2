@@ -110,7 +110,12 @@ if [ $? = 0 ];then
 else
     vstr=`echo $vstr|sed 's/\./ /g'`
     major1=`echo $vstr|awk '{print $1}'`
-    major2=`echo $vstr|awk '{print $2}'`
+
+    if [ $major1 -ge 10 ];then
+        major2=0
+    else
+        major2=`echo $vstr|awk '{print $2}'`
+    fi
 fi
 major1=`expr $major1 \* 10`
 PGVERSION=`expr $major1 + $major2`
