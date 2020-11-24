@@ -521,7 +521,7 @@ connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 	{
 		ereport(LOG,
 				(errmsg("failed to connect to PostgreSQL server by unix domain socket"),
-				 errdetail("create socket failed with error \"%s\"", strerror(errno))));
+				 errdetail("create socket failed with error \"%m\"")));
 		return -1;
 	}
 
@@ -548,7 +548,7 @@ connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 			close(fd);
 			ereport(LOG,
 					(errmsg("failed to connect to PostgreSQL server by unix domain socket"),
-					 errdetail("connect to \"%s\" failed with error \"%s\"", addr.sun_path, strerror(errno))));
+					 errdetail("connect to \"%s\" failed with error \"%m\"", addr.sun_path)));
 
 			return -1;
 		}
@@ -618,7 +618,8 @@ connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool r
 			if (errno != EINPROGRESS && errno != EALREADY)
 			{
 				ereport(LOG,
-						(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" with error \"%s\"", host, port, strerror(errno))));
+						(errmsg("failed to connect to PostgreSQL server on \"%s:%d\"", host, port),
+						 errdetail("%m")));
 				return false;
 			}
 
@@ -678,7 +679,8 @@ connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool r
 					{
 						/* Solaris returns error in this case */
 						ereport(LOG,
-								(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() failed with error \"%s\"", host, port, strerror(errno))));
+								(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() failed", host, port),
+								 errdetail("%m")));
 
 						return false;
 					}
@@ -687,7 +689,8 @@ connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool r
 					if (error != 0)
 					{
 						ereport(LOG,
-								(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() detected error \"%s\"", host, port, strerror(error))));
+								(errmsg("failed to connect to PostgreSQL server on \"%s:%d\", getsockopt() failed", host, port),
+								 errdetail("%m")));
 						return false;
 					}
 				}
@@ -734,7 +737,7 @@ connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool r
 				{
 					ereport(LOG,
 							(errmsg("failed to connect to PostgreSQL server on \"%s:%d\" using INET socket", host, port),
-							 errdetail("select() system call failed with an error \"%s\"", strerror(errno))));
+							 errdetail("select() system call failed with error \"%m\"")));
 				}
 				close(fd);
 				return false;
@@ -769,7 +772,8 @@ connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	if (asprintf(&portstr, "%d", port) == -1)
 	{
 		ereport(WARNING,
-				(errmsg("failed to connect to PostgreSQL server, asprintf() failed with error \"%s\"", strerror(errno))));
+				(errmsg("failed to connect to PostgreSQL server, asprintf() failed"),
+				 errdetail("%m")));
 
 		return -1;
 	}
@@ -795,7 +799,8 @@ connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 		if (fd < 0)
 		{
 			ereport(WARNING,
-					(errmsg("failed to connect to PostgreSQL server, socket() failed with error \"%s\"", strerror(errno))));
+					(errmsg("failed to connect to PostgreSQL server, socket() failed"),
+					 errdetail("%m")));
 			continue;
 		}
 
@@ -805,7 +810,8 @@ connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 					   sizeof(on)) < 0)
 		{
 			ereport(WARNING,
-					(errmsg("failed to connect to PostgreSQL server, setsockopt() failed with error \"%s\"", strerror(errno))));
+					(errmsg("failed to connect to PostgreSQL server, setsockopt() failed"),
+					 errdetail("%m")));
 
 			close(fd);
 			freeaddrinfo(res);

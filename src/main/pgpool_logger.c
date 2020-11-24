@@ -277,7 +277,7 @@ SysLoggerMain(int argc, char *argv[])
 				if (mkdir(pool_config->log_directory, S_IREAD | S_IWRITE | S_IEXEC) == -1)
 				{
 					ereport(LOG,
-							(errmsg("pgpool logger, failed to create directory:\"%s\". error:\"%s\"", pool_config->log_directory, strerror(errno))));
+							(errmsg("pgpool logger, failed to create directory:\"%s\". error:\"%m\"", pool_config->log_directory)));
 				}
 			}
 			if (strcmp(pool_config->log_filename, currentLogFilename) != 0)

@@ -59,14 +59,14 @@ socket_set_nonblock(int fd)
 	{
 		ereport(FATAL,
 				(errmsg("unable to set options on socket"),
-				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
+				 errdetail("fcntl system call failed with error \"%m\"")));
 
 	}
 	if (fcntl(fd, F_SETFL, var | O_NONBLOCK) == -1)
 	{
 		ereport(FATAL,
 				(errmsg("unable to set options on socket"),
-				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
+				 errdetail("fcntl system call failed with error \"%m\"")));
 	}
 }
 
@@ -84,13 +84,13 @@ socket_unset_nonblock(int fd)
 	{
 		ereport(FATAL,
 				(errmsg("unable to set options on socket"),
-				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
+				 errdetail("fcntl system call failed with error \"%m\"")));
 	}
 	if (fcntl(fd, F_SETFL, var & ~O_NONBLOCK) == -1)
 	{
 		ereport(FATAL,
 				(errmsg("unable to set options on socket"),
-				 errdetail("fcntl system call failed with error \"%s\"", strerror(errno))));
+				 errdetail("fcntl system call failed with error \"%m\"")));
 	}
 }
 
@@ -123,12 +123,13 @@ socket_write(int fd, void *buf, size_t len)
 			if (errno == EINTR || errno == EAGAIN)
 			{
 				ereport(DEBUG5,
-						(errmsg("write on socket failed with error :\"%s\"", strerror(errno)),
+						(errmsg("write on socket failed with error :\"%m\""),
 						 errdetail("retrying...")));
 				continue;
 			}
 			ereport(LOG,
-					(errmsg("write on socket failed with error :\"%s\"", strerror(errno))));
+					(errmsg("write on socket failed"),
+					 errdetail("%m")));
 			return -1;
 		}
 		bytes_send += ret;
@@ -162,7 +163,8 @@ socket_read(int fd, void *buf, size_t len, int timeout)
 				continue;
 
 			ereport(WARNING,
-					(errmsg("select failed with error: \"%s\"", strerror(errno))));
+					(errmsg("system call select() failed"),
+					 errdetail("%m")));
 			return -1;
 		}
 		else if (fds == 0)
@@ -175,12 +177,12 @@ socket_read(int fd, void *buf, size_t len, int timeout)
 			if (errno == EINTR || errno == EAGAIN)
 			{
 				ereport(DEBUG5,
-						(errmsg("read from socket failed with error :\"%s\"", strerror(errno)),
+						(errmsg("read from socket failed with error :\"%m\""),
 						 errdetail("retrying...")));
 				continue;
 			}
 			ereport(LOG,
-					(errmsg("read from socket failed with error :\"%s\"", strerror(errno))));
+					(errmsg("read from socket failed with error :\"%m\"")));
 			return -1;
 		}
 		if (ret == 0)
