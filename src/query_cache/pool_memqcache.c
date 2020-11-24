@@ -1583,7 +1583,8 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 		if (errno != EEXIST)
 		{
 			ereport(WARNING,
-					(errmsg("memcache: adding table oid maps, failed to create directory:\"%s\". error:\"%s\"", dir, strerror(errno))));
+					(errmsg("memcache: adding table oid maps, failed to create directory:\"%s\"", dir),
+					 errdetail("%m")));
 			return;
 		}
 	}
@@ -1609,7 +1610,8 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 		if (errno != EEXIST)
 		{
 			ereport(WARNING,
-					(errmsg("memcache: adding table oid maps, failed to create directory:\"%s\". error:\"%s\"", path, strerror(errno))));
+					(errmsg("memcache: adding table oid maps, failed to create directory:\"%s\"", path),
+					 errdetail("%m")));
 			return;
 		}
 	}
@@ -1637,7 +1639,8 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 		if ((fd = open(path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)) == -1)
 		{
 			ereport(WARNING,
-					(errmsg("memcache: adding table oid maps, failed to open file:\"%s\". error:\"%s\"", path, strerror(errno))));
+					(errmsg("memcache: adding table oid maps, failed to open file:\"%s\"", path),
+					 errdetail("%m")));
 			return;
 		}
 
@@ -1650,7 +1653,8 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 		if (sts == -1)
 		{
 			ereport(WARNING,
-					(errmsg("memcache: adding table oid maps, failed to lock file:\"%s\". error:\"%s\"", path, strerror(errno))));
+					(errmsg("memcache: adding table oid maps, failed to lock file:\"%s\"", path),
+					 errdetail("%m")));
 
 			close(fd);
 			return;
@@ -1669,7 +1673,8 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 			if (sts == -1)
 			{
 				ereport(WARNING,
-						(errmsg("memcache: adding table oid maps, failed to read file:\"%s\". error:\"%s\"", path, strerror(errno))));
+						(errmsg("memcache: adding table oid maps, failed to read file:\"%s\"", path),
+						 errdetail("%m")));
 				close(fd);
 				return;
 			}
@@ -1701,7 +1706,8 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 		if (lseek(fd, 0, SEEK_END) == -1)
 		{
 			ereport(WARNING,
-					(errmsg("memcache: adding table oid maps, failed seek on file:\"%s\". error:\"%s\"", path, strerror(errno))));
+					(errmsg("memcache: adding table oid maps, failed seek on file:\"%s\"", path),
+					 errdetail("%m")));
 			close(fd);
 			return;
 		}
@@ -1713,7 +1719,8 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 		if (sts == -1 || sts != len)
 		{
 			ereport(WARNING,
-					(errmsg("memcache: adding table oid maps, failed to write file:\"%s\". error:\"%s\"", path, strerror(errno))));
+					(errmsg("memcache: adding table oid maps, failed to write file:\"%s\"", path),
+					 errdetail("%m")));
 			close(fd);
 			return;
 		}
@@ -1735,7 +1742,7 @@ pool_discard_oid_maps(void)
 	if (system(command) == -1)
 		ereport(WARNING,
 				(errmsg("unable to execute command \"%s\"", command),
-				 errdetail("system() command failed with error \"%s\"", strerror(errno))));
+				 errdetail("system() command failed with error \"%m\"")));
 
 
 }
@@ -1757,7 +1764,7 @@ pool_discard_oid_maps_by_db(int dboid)
 		if (system(command) == -1)
 			ereport(WARNING,
 					(errmsg("unable to execute command \"%s\"", command),
-					 errdetail("system() command failed with error \"%s\"", strerror(errno))));
+					 errdetail("system() command failed with error \"%m\"")));
 	}
 }
 
@@ -1785,7 +1792,8 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 		if (errno != EEXIST)
 		{
 			ereport(WARNING,
-					(errmsg("memcache: invalidating query cache, failed to create directory:\"%s\". error:\"%s\"", dir, strerror(errno))));
+					(errmsg("memcache: invalidating query cache, failed to create directory:\"%s\"", dir),
+					 errdetail("%m")));
 			return;
 		}
 	}
@@ -1814,7 +1822,8 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 		if (errno != EEXIST)
 		{
 			ereport(WARNING,
-					(errmsg("memcache: invalidating query cache, failed to create directory:\"%s\". error:\"%s\"", path, strerror(errno))));
+					(errmsg("memcache: invalidating query cache, failed to create directory:\"%s\"", path),
+					 errdetail("%m")));
 			return;
 		}
 	}
@@ -1848,7 +1857,7 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 			 */
 			ereport(DEBUG1,
 					(errmsg("memcache invalidating query cache"),
-					 errdetail("failed to open \"%s\". reason:\"%s\"", path, strerror(errno))));
+					 errdetail("failed to open \"%s\". reason:\"%m\"", path)));
 			continue;
 		}
 
@@ -1861,7 +1870,8 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 		if (sts == -1)
 		{
 			ereport(WARNING,
-					(errmsg("memcache: invalidating query cache, failed to lock file:\"%s\". error:\"%s\"", path, strerror(errno))));
+					(errmsg("memcache: invalidating query cache, failed to lock file:\"%s\"", path),
+					 errdetail("%m")));
 			close(fd);
 			return;
 		}
@@ -1871,7 +1881,8 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 			if (sts == -1)
 			{
 				ereport(WARNING,
-						(errmsg("memcache: invalidating query cache, failed to read file:\"%s\". error:\"%s\"", path, strerror(errno))));
+						(errmsg("memcache: invalidating query cache, failed to read file:\"%s\"", path),
+						 errdetail("%m")));
 
 				close(fd);
 				return;

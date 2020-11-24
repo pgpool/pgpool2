@@ -2016,7 +2016,7 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 			return RETRY;
 		ereport(ERROR,
 				(errmsg("failed to accept user connection"),
-				 errdetail("select on socket failed with error : \"%s\"", strerror(errno))));
+				 errdetail("select on socket failed with error : \"%m\"")));
 	}
 
 	/* timeout */
@@ -2075,7 +2075,7 @@ retry_accept:
 		if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)
 			ereport(ERROR,
 					(errmsg("failed to accept user connection"),
-					 errdetail("accept on socket failed with error : \"%s\"", strerror(errno))));
+					 errdetail("accept on socket failed with error : \"%m\"")));
 		return RETRY;
 
 	}
@@ -2092,7 +2092,7 @@ retry_accept:
 					   sizeof(on)) < 0)
 		{
 			ereport(WARNING,
-					(errmsg("wait_for_new_connections: setsockopt failed with error \"%s\"", strerror(errno))));
+					(errmsg("wait_for_new_connections: setsockopt failed with error \"%m\"")));
 			close(afd);
 			return -1;
 		}
@@ -2261,12 +2261,12 @@ get_connection(int front_end_fd, SockAddr *saddr)
 					   sizeof(on)) < 0)
 			ereport(ERROR,
 					(errmsg("failed to accept user connection"),
-					 errdetail("setsockopt on socket failed with error : \"%s\"", strerror(errno))));
+					 errdetail("setsockopt on socket failed with error : \"%m\"")));
 
 		if (setsockopt(front_end_fd, SOL_SOCKET, SO_KEEPALIVE, (char *) &on, sizeof(on)) < 0)
 			ereport(FATAL,
 					(errmsg("failed to accept user connection"),
-					 errdetail("setsockopt on socket failed with error : \"%s\"", strerror(errno))));
+					 errdetail("setsockopt on socket failed with error : \"%m\"")));
 
 	}
 
@@ -2275,7 +2275,7 @@ get_connection(int front_end_fd, SockAddr *saddr)
 		close(front_end_fd);
 		ereport(ERROR,
 				(errmsg("failed to accept user connection"),
-				 errdetail("unable to open connection with remote end : \"%s\"", strerror(errno))));
+				 errdetail("unable to open connection with remote end : \"%m\"")));
 	}
 
 	/* save ip address for hba */

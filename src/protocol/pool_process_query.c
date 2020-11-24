@@ -4679,7 +4679,7 @@ SELECT_RETRY:
 
 		ereport(FATAL,
 				(errmsg("unable to read data"),
-				 errdetail("select() system call failed with reason \"%s\"", strerror(errno))));
+				 errdetail("select() system call failed with reason \"%m\"")));
 	}
 
 	/* select timeout */

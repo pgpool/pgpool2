@@ -627,7 +627,7 @@ pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	else if (pid == -1)
 	{
 		ereport(FATAL,
-				(errmsg("fork() failed. reason: %s", strerror(errno))));
+				(errmsg("fork() failed. reason: %m")));
 	}
 
 	return pid;
@@ -675,7 +675,7 @@ fork_a_child(int *fds, int id)
 	{
 		ereport(FATAL,
 				(errmsg("failed to fork a child"),
-				 errdetail("system call fork() failed with reason: %s", strerror(errno))));
+				 errdetail("system call fork() failed with reason: %m")));
 	}
 
 	return pid;
@@ -721,7 +721,7 @@ static pid_t worker_fork_a_child(ProcessType type, void (*func) (), void *params
 	{
 		ereport(FATAL,
 				(errmsg("failed to fork a child"),
-				 errdetail("system call fork() failed with reason: %s", strerror(errno))));
+				 errdetail("system call fork() failed with reason: %m")));
 	}
 
 	return pid;
@@ -755,7 +755,7 @@ create_inet_domain_sockets(const char *hostname, const int port)
 	{
 		ereport(FATAL,
 				(errmsg("failed to create INET domain socket"),
-				 errdetail("asprintf() failed: %s", strerror(errno))));
+				 errdetail("asprintf() failed: %m")));
 	}
 
 	if ((ret = getaddrinfo((!hostname || strcmp(hostname, "*") == 0) ? NULL : hostname, portstr, &hints, &res)) != 0)
@@ -804,7 +804,7 @@ create_inet_domain_sockets(const char *hostname, const int port)
 			 */
 			ereport(LOG,
 					(errmsg("perhaps failed to create INET domain socket"),
-					 errdetail("socket(%s) failed: \"%s\"", buf, strerror(errno))));
+					 errdetail("socket(%s) failed: \"%m\"", buf)));
 			continue;
 		}
 
@@ -813,7 +813,7 @@ create_inet_domain_sockets(const char *hostname, const int port)
 		{
 			ereport(FATAL,
 					(errmsg("failed to create INET domain socket"),
-					 errdetail("socket error \"%s\"", strerror(errno))));
+					 errdetail("socket error \"%m\"")));
 		}
 
 		if (walk->ai_family == AF_INET6)
@@ -829,7 +829,7 @@ create_inet_domain_sockets(const char *hostname, const int port)
 			{
 				ereport(LOG,
 						(errmsg("perhaps failed to create INET domain socket"),
-						 errdetail("setsockopt(%s, IPV6_V6ONLY) failed: \"%s\"", buf, strerror(errno))));
+						 errdetail("setsockopt(%s, IPV6_V6ONLY) failed: \"%m\"", buf)));
 			}
 		}
 
@@ -837,7 +837,7 @@ create_inet_domain_sockets(const char *hostname, const int port)
 		{
 			ereport(FATAL,
 					(errmsg("failed to create INET domain socket"),
-					 errdetail("bind on socket failed with error \"%s\"", strerror(errno))));
+					 errdetail("bind on socket failed with error \"%m\"")));
 		}
 
 		backlog = pool_config->num_init_children * pool_config->listen_backlog_multiplier;
@@ -849,7 +849,7 @@ create_inet_domain_sockets(const char *hostname, const int port)
 		if (status < 0)
 			ereport(FATAL,
 					(errmsg("failed to create INET domain socket"),
-					 errdetail("listen on socket failed with error \"%s\"", strerror(errno))));
+					 errdetail("listen on socket failed with error \"%m\"")));
 
 		sockfds[n++] = fd;
 	}
@@ -884,14 +884,14 @@ create_inet_domain_socket(const char *hostname, const int port)
 	{
 		ereport(FATAL,
 				(errmsg("failed to create INET domain socket"),
-				 errdetail("socket error \"%s\"", strerror(errno))));
+				 errdetail("%m")));
 	}
 	if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 					sizeof(one))) == -1)
 	{
 		ereport(FATAL,
 				(errmsg("failed to create INET domain socket"),
-				 errdetail("socket error \"%s\"", strerror(errno))));
+				 errdetail("%m")));
 	}
 
 	memset((char *) &addr, 0, sizeof(addr));
@@ -949,7 +949,7 @@ create_inet_domain_socket(const char *hostname, const int port)
 	if (status < 0)
 		ereport(FATAL,
 				(errmsg("failed to create INET domain socket"),
-				 errdetail("listen on socket failed with error \"%s\"", strerror(errno))));
+				 errdetail("listen on socket failed with error \"%m\"")));
 
 	return fd;
 }
@@ -973,7 +973,7 @@ create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 	{
 		ereport(FATAL,
 				(errmsg("failed to create a socket"),
-				 errdetail("Failed to create UNIX domain socket. error: \"%s\"", strerror(errno))));
+				 errdetail("Failed to create UNIX domain socket. error: \"%m\"")));
 	}
 	memset((char *) &addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
@@ -984,14 +984,14 @@ create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 	{
 		ereport(FATAL,
 				(errmsg("failed to bind a socket: \"%s\"", un_addr_tmp.sun_path),
-				 errdetail("bind socket failed with error: \"%s\"", strerror(errno))));
+				 errdetail("bind socket failed with error: \"%m\"")));
 	}
 
 	if (chmod(un_addr_tmp.sun_path, 0777) == -1)
 	{
 		ereport(FATAL,
 				(errmsg("failed to bind a socket: \"%s\"", un_addr_tmp.sun_path),
-				 errdetail("system call chmod failed with error: \"%s\"", strerror(errno))));
+				 errdetail("system call chmod failed with error: \"%m\"")));
 	}
 
 	status = listen(fd, PGPOOLMAXLITSENQUEUELENGTH);
@@ -999,7 +999,7 @@ create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 	{
 		ereport(FATAL,
 				(errmsg("failed to bind a socket: \"%s\"", un_addr_tmp.sun_path),
-				 errdetail("system call listen() failed with error: \"%s\"", strerror(errno))));
+				 errdetail("system call listen() failed with error: \"%m\"")));
 	}
 	return fd;
 }
@@ -1060,7 +1060,8 @@ terminate_all_childrens()
 
 	if (wpid == -1 && errno != ECHILD)
 		ereport(LOG,
-				(errmsg("wait() failed. reason:%s", strerror(errno))));
+				(errmsg("wait() failed"),
+				 errdetail("%m")));
 
 	POOL_SETMASK(&UnBlockSig);
 }
@@ -1541,7 +1542,8 @@ static RETSIGTYPE sigusr1_handler(int sig)
 #ifdef NOT_USED
 	if (write(pipe_fds[1], "\0", 1) < 0)
 		ereport(WARNING,
-				(errmsg("SIGUSR1 handler: write to pipe failed with error \"%s\"", strerror(errno))));
+				(errmsg("SIGUSR1 handler: write to pipe failed"),
+						errdetail("%m")));
 #endif
 
 	POOL_SETMASK(&UnBlockSig);
@@ -2384,7 +2386,8 @@ failover(void)
 			else
 			{
 				ereport(WARNING,
-						(errmsg("failover: waitpid failed. reason: %s", strerror(errno))));
+						(errmsg("failover: waitpid failed"),
+						 errdetail("%m")));
 				continue;
 			}
 		}
@@ -2518,7 +2521,8 @@ static RETSIGTYPE reap_handler(int sig)
 #ifdef NOT_USED
 	if (pipe_fds[1] && write(pipe_fds[1], "\0", 1) < 0)
 		ereport(WARNING,
-				(errmsg("reap_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+				(errmsg("reap_handler: write to pipe failed"),
+						errdetail("%m")));
 #endif
 
 	POOL_SETMASK(&UnBlockSig);
@@ -2853,7 +2857,8 @@ static RETSIGTYPE wakeup_handler(int sig)
 #ifdef NOT_USED
 		if (write(pipe_fds[1], "\0", 1) < 0)
 			ereport(WARNING,
-					(errmsg("wakeup_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+					(errmsg("wakeup_handler: write to pipe failed"),
+					 errdetail("%m")));
 #endif
 		POOL_SETMASK(&UnBlockSig);
 	}
@@ -2874,7 +2879,8 @@ static RETSIGTYPE reload_config_handler(int sig)
 #ifdef NOT_USED
 	if (write(pipe_fds[1], "\0", 1) < 0)
 		ereport(WARNING,
-				(errmsg("reload_config_handler: write to pipe failed with error \"%s\"", strerror(errno))));
+				(errmsg("reload_config_handler: write to pipe failed"),
+				 errdetail("%m")));
 #endif
 
 	POOL_SETMASK(&UnBlockSig);
@@ -2938,7 +2944,8 @@ pool_pause(struct timeval *timeout)
 	{
 		if (read(pipe_fds[0], &dummy, 1) < 0)
 			ereport(WARNING,
-					(errmsg("pool_pause: read on pipe failed with error \"%s\"", strerror(errno))));
+					(errmsg("pool_pause: read on pipe failed"),
+					 errdetail("%m")));
 	}
 	return n;
 }
@@ -3598,7 +3605,8 @@ fork_follow_child(int old_master, int new_primary, int old_primary)
 	else if (pid == -1)
 	{
 		ereport(WARNING,
-				(errmsg("follow fork() failed with reason: \"%s\"", strerror(errno))));
+				(errmsg("follow fork() failed"),
+				 errdetail("%m")));
 		exit(1);
 	}
 	return pid;
@@ -3773,7 +3781,8 @@ read_status_file(bool discard_status)
 					(errmsg("Backend status file %s discarded", fnamebuf)));
 		else
 			ereport(WARNING,
-					(errmsg("failed to discard backend status file: \"%s\" with reason: \"%s\"", fnamebuf, strerror(errno))));
+					(errmsg("failed to discard backend status file: \"%s\"", fnamebuf),
+					 errdetail("%m")));
 		return 0;
 	}
 
@@ -3940,7 +3949,7 @@ write_status_file(void)
 	{
 		ereport(WARNING,
 				(errmsg("failed to open status file at: \"%s\"", fnamebuf),
-				 errdetail("\"%s\"", strerror(errno))));
+				 errdetail("%m")));
 		return -1;
 	}
 
@@ -3961,7 +3970,7 @@ write_status_file(void)
 		{
 			ereport(WARNING,
 					(errmsg("failed to write status file at: \"%s\"", fnamebuf),
-					 errdetail("\"%s\"", strerror(errno))));
+					 errdetail("%m")));
 			fclose(fd);
 			return -1;
 		}
@@ -3971,7 +3980,7 @@ write_status_file(void)
 	{
 		ereport(WARNING,
 				(errmsg("failed to write status file at: \"%s\"", fnamebuf),
-				 errdetail("\"%s\"", strerror(errno))));
+				 errdetail("%m")));
 		fclose(fd);
 		return -1;
 	}
@@ -3980,7 +3989,7 @@ write_status_file(void)
 	{
 		ereport(WARNING,
 				(errmsg("failed to get file number. fsync() will not be performed: \"%s\"", fnamebuf),
-				 errdetail("\"%s\"", strerror(errno))));
+				 errdetail("%m")));
 		fclose(fd);
 		return -1;
 	}
@@ -3988,7 +3997,7 @@ write_status_file(void)
 	{
 		ereport(WARNING,
 				(errmsg("failed to fsync(): \"%s\"", fnamebuf),
-				 errdetail("\"%s\"", strerror(errno))));
+				 errdetail("%m")));
 		fclose(fd);
 		return -1;
 	}
@@ -4034,7 +4043,7 @@ FileUnlink(int code, Datum path)
 	 */
 	ereport(LOG,
 			(errmsg("unlink failed for file at path \"%s\"", filePath),
-			 errdetail("%s", strerror(errno))));
+			 errdetail("%m")));
 }
 
 static void

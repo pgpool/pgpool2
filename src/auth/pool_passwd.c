@@ -83,7 +83,7 @@ pool_init_pool_passwd(char *pool_passwd_filename, POOL_PASSWD_MODE mode)
 		}
 		ereport(ERROR,
 				(errmsg("initializing pool password, failed to open file:\"%s\"", pool_passwd_filename),
-				 errdetail("file open failed with error:\"%s\"", strerror(errno))));
+				 errdetail("file open failed with error:\"%m\"")));
 	}
 }
 

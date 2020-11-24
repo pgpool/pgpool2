@@ -382,14 +382,14 @@ unset_nonblock(int fd)
 	{
 		ereport(FATAL,
 				(errmsg("unable to connect"),
-				 errdetail("fcntl system call failed with error : \"%s\"", strerror(errno))));
+				 errdetail("fcntl system call failed with error : \"%m\"")));
 
 	}
 	if (fcntl(fd, F_SETFL, var & ~O_NONBLOCK) == -1)
 	{
 		ereport(FATAL,
 				(errmsg("unable to connect"),
-				 errdetail("fcntl system call failed with error : \"%s\"", strerror(errno))));
+				 errdetail("fcntl system call failed with error : \"%m\"")));
 	}
 }
 
@@ -427,7 +427,7 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 	{
 		ereport(FATAL,
 				(errmsg("failed to authenticate PCP user"),
-				 errdetail("could not open %s. reason: %s", passwd_file, strerror(errno))));
+				 errdetail("could not open %s. reason: %m", passwd_file)));
 		return 0;
 	}
 
@@ -1293,7 +1293,7 @@ do_pcp_flush(PCP_CONNECTION * frontend)
 	if (pcp_flush(frontend) < 0)
 		ereport(FATAL,
 				(errmsg("failed to flush data to client"),
-				 errdetail("pcp_flush failed with error : \"%s\"", strerror(errno))));
+				 errdetail("pcp_flush failed with error : \"%m\"")));
 }
 
 /*
@@ -1305,7 +1305,7 @@ do_pcp_read(PCP_CONNECTION * pc, void *buf, int len)
 	if (pcp_read(pc, buf, len))
 		ereport(FATAL,
 				(errmsg("unable to read from client"),
-				 errdetail("pcp_read failed with error : \"%s\"", strerror(errno))));
+				 errdetail("pcp_read failed with error : \"%m\"")));
 }
 
 int

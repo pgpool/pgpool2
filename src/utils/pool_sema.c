@@ -68,7 +68,7 @@ IpcSemaphoreKill(int status, Datum semId)
 	if (semctl(semId, 0, IPC_RMID) < 0)
 		ereport(LOG,
 				(errmsg("removing semaphore set"),
-				 errdetail("semctl(%lu, 0, IPC_RMID, ...) failed: %s", semId, strerror(errno))));
+				 errdetail("semctl(%lu, 0, IPC_RMID, ...) failed with error \"%m\"", semId)));
 }
 
 /*
@@ -84,7 +84,8 @@ pool_semaphore_create(int numSems)
 
 	if (semId < 0)
 		ereport(FATAL,
-				(errmsg("Unable to create semaphores:%d error:\"%s\"", numSems, strerror(errno))));
+				(errmsg("Unable to create semaphores:%d", numSems),
+				 errdetail("%m")));
 
 	on_shmem_exit(IpcSemaphoreKill, semId);
 
@@ -96,7 +97,7 @@ pool_semaphore_create(int numSems)
 		semun.val = 1;
 		if (semctl(semId, i, SETVAL, semun) < 0)
 			ereport(FATAL,
-					(errmsg("Unable to create semaphores:%d error:\"%s\"", numSems, strerror(errno)),
+					(errmsg("Unable to create semaphores:%d error:\"%m\"", numSems),
 					 errdetail("semctl(%d, %d, SETVAL, %d) failed", semId, i, semun.val)));
 	}
 }
@@ -126,7 +127,8 @@ pool_semaphore_lock(int semNum)
 
 	if (errStatus < 0)
 		ereport(WARNING,
-				(errmsg("failed to lock semaphore error:\"%s\"", strerror(errno))));
+				(errmsg("failed to lock semaphore"),
+				 errdetail("%m")));
 }
 
 /*
@@ -164,7 +166,8 @@ pool_semaphore_lock_allow_interrupt(int semNum)
 		else
 		{
 			ereport(WARNING,
-					(errmsg("failed to lock semaphore error:\"%s\"", strerror(errno))));
+					(errmsg("failed to lock semaphore"),
+					 errdetail("%m")));
 			return -1;
 		}
 	}
@@ -197,5 +200,6 @@ pool_semaphore_unlock(int semNum)
 
 	if (errStatus < 0)
 		ereport(WARNING,
-				(errmsg("failed to unlock semaphore error:\"%s\"", strerror(errno))));
+				(errmsg("failed to unlock semaphore"),
+				 errdetail("%m")));
 }
