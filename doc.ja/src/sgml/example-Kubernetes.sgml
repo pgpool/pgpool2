@@ -1,0 +1,332 @@
+<sect1 id="example-Kubernetes">
+ <title>Kubernetesの設定例</title>
+ <para>
+  この章では、<productname>Kubernetes</productname>上で<productname>Pgpool-II</productname>を利用し、読み取りクエリの負荷分散とコネクションプーリングを実現する方法について説明します。
+ </para>
+ <sect2 id="example-Kubernetes-intro">
+  <title>はじめに</title>
+  <para>
+   <productname>PostgreSQL</productname>はステートフルなアプリケーションであり、また<productname>PostgreSQL</productname>の運用ではバックアップ、リカバリ、障害対策などの管理が必要になります。
+   <productname>Kubernetes</productname>の標準的な機能ではこれらの機能を実現できません。
+   そのために、<productname>Kubernetes</productname>を使って<productname>PostgreSQL</productname>を運用するには、
+   <productname>Kubernetes</productname>の本来の機能を拡張するためのOperatorが必要になります。
+  </para>
+  <para>
+   代表的なPostgreSQL Operatorとしては、
+   <ulink url="https://github.com/CrunchyData/postgres-operator">Crunchy PostgreSQL Operator</ulink>や
+   <ulink url="https://github.com/zalando/postgres-operator">Zalando PostgreSQL Operator</ulink>、
+   <ulink url="https://github.com/kubedb/operator">KubeDB</ulink>があります。
+   しかし、これらのPostgreSQL Operatorには読み取りクエリの負荷分散機能はありません。
+  </para>
+  <para>
+   この章では、PostgreSQL OperatorをPgpool-IIと組み合わせて、<productname>Kubernetes</productname>上で読み取りクエリの負荷分散とコネクションプーリング機能を備えた<productname>PostgreSQL</productname>クラスタの構築方法について説明します。Pgpool-IIは、上記PostgreSQL Operatorのいずれかと組み合わせることができます。
+  </para>
+ </sect2>
+
+ <sect2 id="example-Kubernetes-architecture">
+  <title>全体構成図</title>
+  <para>
+   <figure>
+    <title>全体構成図</title>
+    <mediaobject>
+     <imageobject>
+      <imagedata fileref="pgpool_on_k8s.gif">
+     </imageobject>
+    </mediaobject>
+   </figure>
+  </para>
+ </sect2>
+
+ <sect2 id="example-Kubernetes-pre-setup">
+  <title>前提条件</title>
+  <para>
+   Pgpool-IIの設定の前に、以下の設定を行ってください。
+  <itemizedlist>
+   <listitem>
+    <para>
+     Kubernetesクラスタを構築し、<command>kubectl</command>をインストールしておきます。
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     KubernetesクラスタにPostgreSQL Operatorをインストールし、PostgreSQLクラスタを1つ作成しておきます。
+    </para>
+   </listitem>
+  </itemizedlist>
+  </para>
+ </sect2>
+
+ <sect2 id="example-Kubernetes-deploy-pgpool">
+  <title>Pgpool-IIのデプロイ</title>
+  <para>
+   <productname>Pgpool-II</productname>のPodに<productname>Pgpool-II</productname>コンテナと
+   <ulink url="https://github.com/pgpool/pgpool2_exporter">Pgpool-II Exporter</ulink>コンテナを作成します。
+  </para>
+  <programlisting>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgpool
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgpool
+  template:
+    metadata:
+      labels:
+        app: pgpool
+    spec:
+      containers:
+      - name: pgpool
+        image: pgpool/pgpool:4.2
+    ...
+      - name: pgpool-stats
+        image: pgpool/pgpool2_exporter:1.0
+    ...
+  </programlisting>
+  <para>
+   <productname>pgpool-II</productname>のヘルスチェック、自動フェイルオーバー、Watchdogおよびオンラインリカバリ機能は<productname>Kubernetes</productname>環境では必要ありません。
+   読み取りクエリの負荷分散とコネクションプーリング機能のみを有効ににすれば良いです。
+  </para>
+  <para>
+   Kubernetes上でpgpool を動かすために、以下の設定が必要最低限の設定です。
+  </para>
+  <programlisting>
+backend_hostname0='primary service name'
+backend_hostname1='replica service name'
+backend_port0='5432'
+backend_port1='5432'
+backend_flag0='ALWAYS_PRIMARY|DISALLOW_TO_FAILOVER'
+backend_flag1='DISALLOW_TO_FAILOVER'
+
+sr_check_period = 10
+sr_check_user='PostgreSQL user name'
+
+load_balance_mode = on
+connection_cache = on
+listen_addresses = '*'
+  </programlisting>
+  <para>
+   Pgpool-IIを構成する方法は2つあります。
+   <orderedlist>
+    <listitem>
+     <para>
+      環境変数を利用する
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <ulink url="https://kubernetes.io/docs/concepts/configuration/configmap/">ConfigMap</ulink>を利用する
+     </para>
+    </listitem>
+   </orderedlist>
+  </para>
+  <para>
+   プロダクション環境では、クライアント認証、または多くのパラメーターを設定する必要があります。
+   プロダクション環境の場合は、<literal>ConfigMap</literal>を使用して<literal>Pgpool-II</literal>の設定ファイル、
+   例えば、pgpool.conf、pcp.conf、pool_passwd、pool_hba.confなどを設定することをお勧めします。
+  </para>
+  <para>
+   次のセクションでは、環境変数と<literal>ConfigMap</literal>をそれぞれ使用して<productname>Pgpool-II</productname>
+   を設定およびデプロイする方法について説明します。
+   <productname>Pgpool-II</productname>のデプロイに使用される各種マニフェストファイルは、
+   <ulink url="https://github.com/pgpool/pgpool2_on_k8s">ここ</ulink>からダウンロードできます。
+  </para>
+
+  <sect3 id="example-Kubernetes-configure-pgpool-env">
+   <title>環境変数を使用したPgpool-IIの設定</title>
+   <para>
+    <productname>Kubernetes</productname>環境変数は、Pod内のコンテナに渡すことができます。
+    マニフェストで環境変数を定義することで、Pgpool-IIのパラメーターを設定することができます。
+    <filename>pgpool_deploy.yaml</filename>は、Deploymentマニフェストの例です。
+    <filename>pgpool_deploy.yaml</filename>をダウンロードして、このマニフェストにて必要な環境変数を指定します。
+   </para>
+   <programlisting>
+$ curl -LO https://raw.githubusercontent.com/pgpool/pgpool2_on_k8s/master/pgpool_deploy.yaml
+   </programlisting>
+   <para>
+    <literal>PGPOOL_PARAMS_</literal>で始まる環境変数は、Pgpool-IIの設定パラメーターに変換され、
+    デフォルトの設定値を上書きすることができます。
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Pgpool-IIコンテナのDockerイメージは、ストリーミングレプリケーションモードでビルドされています。
+      デフォルトでは、クエリの負荷分散、コネクションプーリング、およびストリーミングレプリケーションチェックが有効になっています。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <emphasis>2つのバックエンドノードのみ</emphasis>を指定すれば良いです。
+      <xref linkend="GUC-BACKEND-HOSTNAME">0にプライマリservice名を指定します。
+      <xref linkend="GUC-BACKEND-HOSTNAME">1にレプリカservice名を指定します。
+      自動フェイルオーバがKubernetesによって管理されているので、両方のノードの<xref linkend="GUC-BACKEND-FLAG">に
+      DISALLOW_TO_FAILOVERフラグを指定します。
+      <xref linkend="GUC-BACKEND-FLAG">0にALWAYS_PRIMARYフラグを指定します。
+      <xref linkend="GUC-BACKEND-WEIGHT">は通常どおり設定します。
+      <xref linkend="GUC-BACKEND-DATA-DIRECTORY">を設定する必要はありません。
+     </para>
+     <para>
+      例えば、マニフェストで定義されている環境変数は、
+     </para>
+     <programlisting>
+env:
+- name: PGPOOL_PARAMS_BACKEND_HOSTNAME0
+  value: "hippo"
+- name: PGPOOL_PARAMS_BACKEND_HOSTNAME1
+  value: "hippo-replica"
+- name: PGPOOL_PARAMS_BACKEND_FLAG0
+  value: "ALWAYS_PRIMARY|DISALLOW_TO_FAILOVER"
+- name: PGPOOL_PARAMS_BACKEND_FLAG1
+  value: "DISALLOW_TO_FAILOVER"
+     </programlisting>
+     <para>
+      以下のように<filename>pgpool.conf</filename>の設定パラメータに変換されます。
+     </para>
+     <programlisting>
+backend_hostname0='hippo'
+backend_hostname1='hippo-replica'
+backend_flag0='ALWAYS_PRIMARY|DISALLOW_TO_FAILOVER'
+backend_flag1='DISALLOW_TO_FAILOVER'
+     </programlisting>
+    </listitem>
+    <listitem>
+     <para>
+      ストリーミングレプリケーションチェックを実行するための<productname>PostgreSQL</productname>のユーザー名とパスワードを指定します。
+      セキュリティ上の理由から、暗号化されたパスワードを指定することをお勧めします。
+     </para>
+     <programlisting>
+- name: PGPOOL_PARAMS_SR_CHECK_USER
+  value: "PostgreSQL user name"
+- name: PGPOOL_PARAMS_SR_CHECK_PASSWORD
+  value: "encrypted PostgreSQL user's password"
+     </programlisting>
+     <para>
+      または、作成済のSecretを利用し環境変数を設定することもできます。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      ヘルスチェックは<productname>Kubernetes</productname>によって実施されているため、
+      Pgpool-IIのヘルスチェックを無効にする必要があります。
+      デフォルト値がオフになっているため、このパラメーターを設定する必要はありません。
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      デフォルトでは、Pgpool-IIコンテナの起動時に以下の環境変数が設定済です。
+     </para>
+     <programlisting>
+export PGPOOL_PARAMS_LISTEN_ADDRESSES=*
+export PGPOOL_PARAMS_SR_CHECK_USER=${POSTGRES_USER:-"postgres"}
+export PGPOOL_PARAMS_SOCKET_DIR=/var/run/postgresql
+export PGPOOL_PARAMS_PCP_SOCKET_DIR=/var/run/postgresql
+     </programlisting>
+    </listitem>
+   </itemizedlist>
+  </sect3>
+  <sect3 id="example-Kubernetes-configure-pgpool-configmap">
+   <title>ConfigMapを使用したPgpool-IIの設定</title>
+   <para>
+    Kubernetesの<literal>ConfigMap</literal>を使用し、pgpool.conf、pcp.conf、pool_passwd、pool_hba.conf、
+    これらの設定ファイル全体を保存することができます。
+    また、ConfigMapは、ボリュームとしてはpgpool-IIのコンテナにマウントすることができます。
+   </para>
+   <para>
+    <literal>ConfigMap</literal>とDeploymentを定義するサンプルマニフェストファイルは
+    <ulink url="https://github.com/pgpool/pgpool2_on_k8s">リポジトリ</ulink>からダウンロードできます。
+   </para>
+   <programlisting>
+curl -LO https://raw.githubusercontent.com/pgpool/pgpool2_on_k8s/master/pgpool_configmap.yaml
+curl -LO https://raw.githubusercontent.com/pgpool/pgpool2_on_k8s/master/pgpool_deploy_with_mount_configmap.yaml
+   </programlisting>
+   <para>
+    サンプルのConfigMapは以下のような形式で定義されています。必要に応じて更新してください。
+   </para>
+   <programlisting>
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgpool-config
+  labels:
+    app: pgpool-config
+data:
+  pgpool.conf: |-
+    listen_addresses = '*'
+    port = 9999
+    socket_dir = '/var/run/postgresql'
+    pcp_listen_addresses = '*'
+    pcp_port = 9898
+    pcp_socket_dir = '/var/run/postgresql'
+    backend_hostname0 = 'hippo'
+    backend_port0 = 5432
+    backend_weight0 = 1
+    backend_flag0 = 'ALWAYS_PRIMARY|DISALLOW_TO_FAILOVER'
+    backend_hostname1 = 'hippo-replica'
+    backend_port1 = 5432
+    backend_weight1 = 1
+    backend_flag1 = 'DISALLOW_TO_FAILOVER'
+    sr_check_user = 'postgres'
+    sr_check_period = 10
+    enable_pool_hba = on
+    master_slave_mode = on
+    num_init_children = 32
+    max_pool = 4
+    child_life_time = 300
+    child_max_connections = 0
+    connection_life_time = 0
+    client_idle_limit = 0
+    connection_cache = on
+    load_balance_mode = on
+  pcp.conf: |-
+    postgres:e8a48653851e28c69d0506508fb27fc5
+  pool_passwd: |-
+    postgres:md53175bce1d3201d16594cebf9d7eb3f9d
+  pool_hba.conf: |-
+    local   all         all                               trust
+    host    all         all         127.0.0.1/32          trust
+    host    all         all         ::1/128               trust
+    host    all         all         0.0.0.0/0             md5
+   </programlisting>
+   <para>
+    まず、<productname>Pgpool-II</productname>のPodをデプロイする前に<literal>ConfigMap</literal>を作成する必要があります。
+   </para>
+   <programlisting>
+kubectl apply -f pgpool_configmap.yaml
+   </programlisting>
+   <para>
+    <literal>ConfigMap</literal>を作成したら、<productname>Pgpool-II</productname>をデプロイするマニフェストで
+    <literal>ConfigMap</literal>をボリュームとしてPgpool-IIのPodにマウントするように設定します。
+   </para>
+   <programlisting>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgpool
+  ...
+        volumeMounts:
+        - name: pgpool-config
+          mountPath: /usr/local/pgpool-II/etc
+      ...
+      volumes:
+      - name: pgpool-config
+        configMap:
+          name: pgpool-config
+   </programlisting>
+   <para>
+    <filename>pgpool_deploy_with_mount_configmap.yaml</filename>は、作成された<literal>ConfigMap</literal>を
+    <productname>Pgpool-II</productname>のPodにマウントするサンプルマニフェストです。
+    基本的にはそのまま利用できます。
+   </para>
+   <programlisting>
+kubectl apply -f pgpool_deploy_with_mount_configmap.yaml
+   </programlisting>
+  <para>
+   <productname>Pgpool-II</productname>をデプロイした後、<command>kubectl get pod</command>や
+   <command>kubectl get svc</command>コマンドを使用して<productname>Pgpool-II</productname>のPodとserviceを確認できます。
+  </para>
+  </sect3>
+ </sect2>
+</sect1>

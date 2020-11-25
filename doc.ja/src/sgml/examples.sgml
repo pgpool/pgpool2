@@ -25,5 +25,6 @@
   &example-cluster;
   &example-AWS;
   &example-Aurora;
+  &example-Kubernetes;
  </chapter>
 </part>
