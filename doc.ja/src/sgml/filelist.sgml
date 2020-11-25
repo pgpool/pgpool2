@@ -45,6 +45,7 @@
 <!ENTITY example-cluster    SYSTEM "example-cluster.sgml">
 <!ENTITY example-AWS        SYSTEM "example-AWS.sgml">
 <!ENTITY example-Aurora     SYSTEM "example-Aurora.sgml">
+<!ENTITY example-Kubernetes SYSTEM "example-Kubernetes.sgml">
 
 <!-- reference pages -->
 <!ENTITY % allfiles   SYSTEM "ref/allfiles.sgml">
