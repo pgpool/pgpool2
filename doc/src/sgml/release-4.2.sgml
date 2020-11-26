@@ -5,7 +5,7 @@
  <title>Release 4.2.0</title>
  <note>
   <title>Release Date</title>
-  <simpara>2020-11-xx</simpara>
+  <simpara>2020-11-26</simpara>
  </note>
 
  <sect2>
@@ -354,6 +354,19 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
  <sect2>
   <title>Major Enhancements</title>
   <itemizedlist>
+
+   <listitem>
+    <!--
+    2020-11-25 [935e045]
+    -->
+    <para>
+     Removing strerror() call from ereports. (Muhammad Usama)
+    </para>
+    <para>
+     Call to ereport() resets the errno value and using the "strerror(errno)" emmits the wrong error message.
+     The right way is to use %m format specifier instead.
+    </para>
+   </listitem>
 
    <listitem>
     <!--
@@ -919,6 +932,15 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
  <sect2>
   <title>Major Documentation Enhancements</title>
   <itemizedlist>
+
+   <listitem>
+    <!--
+    2020-11-25 [48d25a8]
+    -->
+    <para>
+     Add new documentation of <xref linkend="EXAMPLE-KUBERNETES"> "Pgpool-II on Kubernetes". (Bo Peng)
+    </para>
+   </listitem>
 
    <listitem>
     <!--

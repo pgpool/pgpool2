@@ -11,7 +11,7 @@
   <title>Release Date</title>
   -->
   <title>リリース日</title>
-  <simpara>2020-11-xx</simpara>
+  <simpara>2020-11-26</simpara>
  </note>
 
  <sect2>
@@ -387,6 +387,19 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 -->
   <title>主な改善点</title>
   <itemizedlist>
+
+   <listitem>
+    <!--
+    2020-11-25 [935e045]
+    -->
+    <para>
+     ereportsからstrerror()呼び出しを削除します。(Muhammad Usama)
+    </para>
+    <para>
+     ereport()を呼び出すと、errno値がリセットされ、「strerror(errno)」を使用すると、誤ったエラーメッセージが出力されます。
+     正しい方法は、代わりに%mを使用することです。
+    </para>
+   </listitem>
 
    <listitem>
     <!--
@@ -1119,6 +1132,15 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
 -->
   <title>主なドキュメントの改善点</title>
   <itemizedlist>
+
+   <listitem>
+    <!--
+    2020-11-25 [48d25a8]
+    -->
+    <para>
+     新しいドキュメント<xref linkend="EXAMPLE-KUBERNETES">「Kubernetesの設定例」を追加しました。(Bo Peng)
+    </para>
+   </listitem>
 
    <listitem>
     <!--
