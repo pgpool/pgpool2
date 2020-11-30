@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -621,14 +621,25 @@ read_pool_key(char *key_file_path)
 	if (strlen(key_file_path) == 0)
 		return NULL;
 
+	/*
+	 * To prevent file-swapping due to file race conditions,
+	 * we open the key file before checking it by stat().
+	 */
 	/* If password file cannot be opened, ignore it. */
-	if (stat(key_file_path, &stat_buf) != 0)
+	if ( (fp = fopen(key_file_path, "r")) == NULL)
 		return NULL;
+
+	if (fstat(fileno(fp), &stat_buf) != 0)
+	{
+		fclose(fp);
+		return NULL;
+	}
 
 	if (!S_ISREG(stat_buf.st_mode))
 	{
 		ereport(WARNING,
 				(errmsg("pool key file \"%s\" is not a plain file\n", key_file_path)));
+		fclose(fp);
 		return NULL;
 	}
 
@@ -639,12 +650,9 @@ read_pool_key(char *key_file_path)
 				(errmsg("pool key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n",
 						key_file_path)));
 		/* do we want to allow unsecure pool key file ? */
+		/* fclose(fp); */
 		/* return NULL; */
 	}
-
-	fp = fopen(key_file_path, "r");
-	if (fp == NULL)
-		return NULL;
 
 	while (!feof(fp) && !ferror(fp))
 	{
