@@ -632,7 +632,7 @@ read_pool_key(char *key_file_path)
 	if (fstat(fileno(fp), &stat_buf) != 0)
 	{
 		ereport(WARNING,
-				(errmsg("failed to stat pool key file")
+				(errmsg("failed to stat pool key file"),
 				 errdetail("fstat failed with reason: \"%m\"")));
 		fclose(fp);
 		return NULL;
