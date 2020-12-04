@@ -45,6 +45,11 @@
 #include <signal.h>
 
 #include <libgen.h>
+
+#ifdef  __FreeBSD__
+#include <netinet/in.h>
+#endif
+
 #include "utils/elog.h"
 #include "utils/palloc.h"
 
