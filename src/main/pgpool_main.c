@@ -34,6 +34,10 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 
+#ifdef  __FreeBSD__
+#include <netinet/in.h>
+#endif
+
 #include "pool.h"
 #include "version.h"
 #include "pool_config.h"
