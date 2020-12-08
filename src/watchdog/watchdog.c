@@ -1302,14 +1302,8 @@ wd_create_command_server_socket(void)
 	ereport(INFO,
 			(errmsg("IPC socket path: \"%s\"", get_watchdog_ipc_address())));
 
-	if (get_watchdog_process_needs_cleanup())
-	{
-		/*
-		 * If we are recovering from crash or abnormal termination of watchdog
-		 * process. Unlink the old socket file
-		 */
-		unlink(addr.sun_path);
-	}
+	/* Delete any pre-existing socket file to avoid failure at bind() time */
+	unlink(addr.sun_path);
 
 	if (bind(sock, (struct sockaddr *) &addr, len) == -1)
 	{
