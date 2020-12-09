@@ -214,7 +214,7 @@
     receives a <systemitem>SIGHUP</> signal; this signal is most easily
     sent by running <literal>pgpool reload</> from the command line. The main
     pgpool process also propagates this signal to all its child
-    processes, so that existing sessions also adopt the new values.
+    processes, so that next sessions also adopt the new values.
     Some parameters can only be set at server start; any changes to their
     entries in the configuration file will be ignored until the server is restarted.
     Invalid parameter settings in the configuration file are likewise
@@ -222,7 +222,7 @@
     -->
     設定ファイルはメインサーバプロセスが<systemitem>SIGHUP</>信号を受け取ると何時でも 再読み込みされます。
     手っ取り早く行なうには、コマンドラインから<literal>pgpool reload</>を実行します。
-    メインpgpoolプロセスは同時にこの信号を、現存のセッションが同様に新しい値を入手できるように、全ての子プロセスに伝播します。
+    メインpgpoolプロセスは同時にこの信号を、次のセッションが同様に新しい値を入手できるように、全ての子プロセスに伝播します。
     いくつかのパラメータはサーバの起動時のみ設定されます;
     設定ファイル中のそれらのエントリのいかなる変更も、サーバが再起動されるまで無視されます。
     設定ファイル内で無効なパラメータが設定された場合は同様に（ログには残りますが）<systemitem>SIGHUP</>処理中に無視されます。

@@ -138,7 +138,7 @@
     receives a <systemitem>SIGHUP</> signal; this signal is most easily
     sent by running <literal>pgpool reload</> from the command line. The main
     pgpool process also propagates this signal to all its child
-    processes, so that existing sessions also adopt the new values.
+    processes, so that next sessions also adopt the new values.
     Some parameters can only be set at server start; any changes to their
     entries in the configuration file will be ignored until the server is restarted.
     Invalid parameter settings in the configuration file are likewise
