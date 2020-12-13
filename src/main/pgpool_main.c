@@ -1969,7 +1969,18 @@ failover(void)
 		 * See bug 248 for more details.
 		 */
 
-		if (STREAM && reqkind == NODE_UP_REQUEST && all_backend_down == false)
+		/*
+		 * We also need to think about a case when the former primary node did
+		 * not exist.  In the case we need to restart all children as
+		 * well. For example when previous primary node id is 0 and then it
+		 * went down, restarted, re-attached without promotion. Then existing
+		 * child process loses connection slot to node 0 and keeps on using it
+		 * when node 0 comes back. This could result in segfault later on in
+		 * the child process because there's no connection to node id 0.  See
+		 * bug 672 for more details.
+		 */
+		if (STREAM && reqkind == NODE_UP_REQUEST && all_backend_down == false &&
+			Req_info->primary_node_id >= 0)
 		{
 			/*
 			 * The decision to restart/no-restart children for update status
