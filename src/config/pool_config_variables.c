@@ -4650,20 +4650,24 @@ config_post_processor(ConfigContext context, int elevel)
 
 	/* Set the number of configured Watchdog nodes */
 	g_pool_config.wd_nodes.num_wd = 0;
-	for (i = 0; i < MAX_WATCHDOG_NUM; i++)
+
+	if (g_pool_config.use_watchdog)
 	{
-		WdNodeInfo *wdNode = &g_pool_config.wd_nodes.wd_node_info[i];
+		for (i = 0; i < MAX_WATCHDOG_NUM; i++)
+		{
+			WdNodeInfo *wdNode = &g_pool_config.wd_nodes.wd_node_info[i];
 
-		if (i == g_pool_config.pgpool_node_id && wdNode->wd_port <= 0)
-        {
-            ereport(elevel,
-                    (errmsg("invalid watchdog configuration"),
-                     errdetail("no watchdog configuration for local pgpool node, pgpool node id: %d ", g_pool_config.pgpool_node_id)));
-            return false;
-        }
+			if (i == g_pool_config.pgpool_node_id && wdNode->wd_port <= 0)
+			{
+				ereport(elevel,
+						(errmsg("invalid watchdog configuration"),
+						 errdetail("no watchdog configuration for local pgpool node, pgpool node id: %d ", g_pool_config.pgpool_node_id)));
+				return false;
+			}
 
-		if (wdNode->wd_port > 0)
-			g_pool_config.wd_nodes.num_wd = i + 1;
+			if (wdNode->wd_port > 0)
+				g_pool_config.wd_nodes.num_wd = i + 1;
+		}
 	}
 
 	/* Set configured heartbeat destination interfaces */
