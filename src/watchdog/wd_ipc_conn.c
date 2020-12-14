@@ -67,7 +67,7 @@ void wd_set_ipc_address(char *socket_dir, int port)
 				 port);
 
 #ifndef POOL_PRIVATE
-		watchdog_ipc_address = pool_shared_memory_create(strlen(wd_ipc_sock_addr) + 1);
+		watchdog_ipc_address = pool_shared_memory_segment_get_chunk(strlen(wd_ipc_sock_addr) + 1);
 		strcpy(watchdog_ipc_address, wd_ipc_sock_addr);
 #else
 		watchdog_ipc_address = pstrdup(wd_ipc_sock_addr);
@@ -82,6 +82,11 @@ wd_ipc_conn_initialize(void)
 	{
 		wd_set_ipc_address(pool_config->wd_ipc_socket_dir, pool_config->wd_nodes.wd_node_info[pool_config->pgpool_node_id].wd_port);
 	}
+}
+
+size_t estimate_ipc_socket_addr_len(void)
+{
+	return strlen(pool_config->wd_ipc_socket_dir) + 25; /* wd_ipc_socket_dir/.s.PGPOOLWD_CMD.port*/
 }
 
 char *

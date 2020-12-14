@@ -569,6 +569,7 @@ fetch_watchdog_nodes_data(void)
 static void
 load_watchdog_nodes_from_json(char *json_data, int len)
 {
+	size_t shmem_size;
 	json_value *root;
 	json_value *value;
 	int			i,
@@ -617,9 +618,12 @@ load_watchdog_nodes_from_json(char *json_data, int len)
 	}
 
 	/* okay we are done, put this in shared memory */
-	gslifeCheckCluster = pool_shared_memory_create(sizeof(LifeCheckCluster));
+	shmem_size = MAXALIGN(sizeof(LifeCheckCluster));
+	shmem_size += MAXALIGN(sizeof(LifeCheckNode) * nodeCount);
+
+	gslifeCheckCluster = pool_shared_memory_create(shmem_size);
 	gslifeCheckCluster->nodeCount = nodeCount;
-	gslifeCheckCluster->lifeCheckNodes = pool_shared_memory_create(sizeof(LifeCheckNode) * gslifeCheckCluster->nodeCount);
+	gslifeCheckCluster->lifeCheckNodes = (LifeCheckNode*)((char*)gslifeCheckCluster + MAXALIGN(sizeof(LifeCheckCluster)));
 	for (i = 0; i < nodeCount; i++)
 	{
 		WDNodeInfo *nodeInfo = parse_watchdog_node_info_from_wd_node_json(value->u.array.values[i]);

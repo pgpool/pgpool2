@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/shm.h>
+#include <unistd.h>
 
 #include "utils/pool_ipc.h"
 
@@ -35,9 +36,63 @@
 #define PG_SHMAT_FLAGS			0
 #endif
 
+static void* shared_mem_chunk = NULL;
+static char* shared_mem_free_pos = NULL;
+static size_t chunk_size = 0;
+
 static void IpcMemoryDetach(int status, Datum shmaddr);
 static void IpcMemoryDelete(int status, Datum shmId);
 
+void
+initialize_shared_memory_main_segment(size_t size)
+{
+	/* only main process is allowed to create the chunk */
+	if (mypid != getpid())
+	{
+		/* should never happen */
+		ereport(LOG, (errmsg("initialize_shared_memory_chunk called from invalid process")));
+		return;
+	}
+
+	if (shared_mem_chunk)
+		return;
+
+	ereport(LOG,
+			(errmsg("allocating shared memory segment of size: %zu ",size)));
+
+	shared_mem_chunk = pool_shared_memory_create(size);
+	shared_mem_free_pos = (char*)shared_mem_chunk;
+	chunk_size = size;
+	memset(shared_mem_chunk, 0, size);
+}
+
+void *
+pool_shared_memory_segment_get_chunk(size_t size)
+{
+	void *ptr = NULL;
+	if (mypid != getpid())
+	{
+		/* should never happen */
+		ereport(ERROR,
+				(errmsg("initialize_shared_memory_chunk called from invalid process")));
+		return NULL;
+	}
+	/* check if we have enough space left in chunk */
+	if ((shared_mem_free_pos - (char*)shared_mem_chunk) + size > chunk_size)
+	{
+		ereport(ERROR,
+				(errmsg("no space left in shared memory segment")));
+		return NULL;
+
+	}
+	/*
+	 * return the current shared_mem_free_pos pointer
+	 * and advance it by size
+	 */
+	ptr = (void*)shared_mem_free_pos;
+	shared_mem_free_pos += MAXALIGN(size);
+	return ptr;
+}
 
 /*
  * Create a shared memory segment of the given size and initialize.  Also,

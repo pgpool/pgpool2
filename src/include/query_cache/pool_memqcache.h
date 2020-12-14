@@ -230,6 +230,7 @@ typedef struct
 }			POOL_HASH_HEADER;
 
 extern int	pool_hash_init(int nelements);
+extern size_t pool_hash_size(int nelements);
 extern POOL_CACHEID * pool_hash_search(POOL_QUERY_HASH * key);
 extern int	pool_hash_delete(POOL_QUERY_HASH * key);
 extern uint32 hash_any(unsigned char *k, int keylen);

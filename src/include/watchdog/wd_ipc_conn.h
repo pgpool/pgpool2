@@ -48,6 +48,7 @@ typedef struct WDIPCCmdResult
 
 extern void wd_ipc_conn_initialize(void);
 extern void wd_set_ipc_address(char *socket_dir, int port);
+extern size_t estimate_ipc_socket_addr_len(void);
 extern char *get_watchdog_ipc_address(void);
 
 extern WDIPCCmdResult * issue_command_to_watchdog(char type, int timeout_sec, char *data, int data_len, bool blocking);

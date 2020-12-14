@@ -2076,7 +2076,7 @@ pool_init_memory_cache(size_t size)
 	ereport(DEBUG1,
 			(errmsg("memory cache request size : %zd", size)));
 
-	shmem = pool_shared_memory_create(size);
+	shmem = pool_shared_memory_segment_get_chunk(size);
 	return 0;
 }
 
@@ -2174,7 +2174,7 @@ pool_init_fsmm(size_t size)
 	int			maxblock = pool_get_memqcache_blocks();
 	int			encode_value;
 
-	fsmm = pool_shared_memory_create(size);
+	fsmm = pool_shared_memory_segment_get_chunk(size);
 	encode_value = POOL_MAX_FREE_SPACE / POOL_FSMM_RATIO;
 	memset(fsmm, encode_value, maxblock);
 	return 0;
@@ -2204,7 +2204,7 @@ static int *pool_fsmm_clock_hand;
 void
 pool_allocate_fsmm_clock_hand(void)
 {
-	pool_fsmm_clock_hand = pool_shared_memory_create(sizeof(*pool_fsmm_clock_hand));
+	pool_fsmm_clock_hand = pool_shared_memory_segment_get_chunk(sizeof(*pool_fsmm_clock_hand));
 	*pool_fsmm_clock_hand = 0;
 }
 
@@ -3770,7 +3770,7 @@ static POOL_QUERY_CACHE_STATS * stats;
 int
 pool_init_memqcache_stats(void)
 {
-	stats = pool_shared_memory_create(sizeof(POOL_QUERY_CACHE_STATS));
+	stats = pool_shared_memory_segment_get_chunk(sizeof(POOL_QUERY_CACHE_STATS));
 	pool_reset_memqcache_stats();
 	return 0;
 }
@@ -3927,7 +3927,7 @@ pool_hash_init(int nelements)
 	mask = ~0;
 	mask >>= shift;
 	size = (char *) &hh.elements - (char *) &hh + sizeof(POOL_HEADER_ELEMENT) * nelements2;
-	hash_header = pool_shared_memory_create(size);
+	hash_header = pool_shared_memory_segment_get_chunk(size);
 	hash_header->nhash = nelements2;
 	hash_header->mask = mask;
 
@@ -3939,7 +3939,7 @@ pool_hash_init(int nelements)
 #endif
 
 	size = sizeof(POOL_HASH_ELEMENT) * nelements2;
-	hash_elements = pool_shared_memory_create(size);
+	hash_elements = pool_shared_memory_segment_get_chunk(size);
 
 #ifdef POOL_HASH_DEBUG
 	ereport(LOG,
@@ -3957,6 +3957,30 @@ pool_hash_init(int nelements)
 	return 0;
 }
 
+size_t
+pool_hash_size(int nelements)
+{
+	size_t		size;
+	int			nelements2;		/* number of rounded up hash keys */
+	int			shift;
+	POOL_HASH_HEADER hh;
+
+
+	/* Round up to power of 2 */
+	shift = 32;
+	nelements2 = 1;
+	do
+	{
+		nelements2 <<= 1;
+		shift--;
+	} while (nelements2 < nelements);
+
+	size = (char *) &hh.elements - (char *) &hh + sizeof(POOL_HEADER_ELEMENT) * nelements2;
+
+	size += sizeof(POOL_HASH_ELEMENT) * nelements2;
+
+	return size;
+}
 /*
  * Reset hash table on shared memory "nelements" is max number of
  * hash keys. The actual number of hash key is rounded up to power of
