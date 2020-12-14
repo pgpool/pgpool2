@@ -890,7 +890,7 @@ check_pgpool_status_by_query(void)
 					continue;
 				node->nodeState = NODE_DEAD;
 				/* It's me! */
-				if (i == 0)
+				if (i == pool_config->pgpool_node_id)
 					inform_node_status(node, "parent process is dead");
 				else
 					inform_node_status(node, "unable to connect to node");
