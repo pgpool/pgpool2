@@ -59,5 +59,5 @@ extern bool get_watchdog_process_needs_cleanup(void);
 extern void set_watchdog_node_escalated(void);
 extern void reset_watchdog_node_escalated(void);
 extern bool get_watchdog_node_escalation_state(void);
-
+extern size_t wd_ipc_get_shared_mem_size(void);
 #endif							/* WD_INTERNAL_COMMANDS_H */

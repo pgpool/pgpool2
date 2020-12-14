@@ -3287,48 +3287,84 @@ fork_follow_child(int old_main_node, int new_primary, int old_primary)
 }
 
 
+
 static void
 initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 {
-	int			size,
-				i;
+	BackendDesc* backend_desc;
+	Size	size;
+	int		i;
 
 	/*
-	 * con_info is a 3 dimension array: i corresponds to pgpool child process,
-	 * j corresponds to connection pool in each process and k corresponds to
-	 * backends in each connection pool.
-	 *
-	 * XXX: Before 2010/4/12 this was a 2 dimension array: i corresponds to
-	 * pgpool child process, j corresponds to connection pool in each process.
-	 * Of course this was wrong.
+	 * Calculate the size of required shared memory and try to allocate
+	 * everyting in sigle memory segment
 	 */
-	size = pool_coninfo_size();
-	con_info = pool_shared_memory_create(size);
-	memset(con_info, 0, size);
+	size = 256;/* let us have some extra space */
+	size += MAXALIGN(sizeof(BackendDesc));
+	size += MAXALIGN(pool_coninfo_size());
+	size += MAXALIGN(pool_config->num_init_children * (sizeof(ProcessInfo)));
+	size += MAXALIGN(sizeof(User1SignalSlot));
+	size += MAXALIGN(sizeof(POOL_REQUEST_INFO));
+	size += MAXALIGN(sizeof(int)); /* for InRecovery */
+	size += MAXALIGN(stat_shared_memory_size());
+	size += MAXALIGN(health_check_stats_shared_memory_size());
+	/* Snapshot Isolation manage area */
+	size += MAXALIGN(sizeof(SI_ManageInfo));
+	size += MAXALIGN(pool_config->num_init_children * sizeof(pid_t));
+	size += MAXALIGN(pool_config->num_init_children * sizeof(pid_t));
 
-	size = pool_config->num_init_children * (sizeof(ProcessInfo));
-
-	ereport(DEBUG1,
-			(errmsg("ProcessInfo: num_init_children (%d) * sizeof(ProcessInfo) (%zu) = %d bytes requested for shared memory",
-					pool_config->num_init_children,
-					sizeof(ProcessInfo),
-					size)));
-
-	process_info = pool_shared_memory_create(size);
-	memset(process_info, 0, size);
-
-	for (i = 0; i < pool_config->num_init_children; i++)
+	if (pool_is_shmem_cache())
 	{
-		process_info[i].connection_info = pool_coninfo(i, 0, 0);
+		size += MAXALIGN(pool_shared_memory_cache_size());
+		size += MAXALIGN(pool_shared_memory_fsmm_size());
+		size += MAXALIGN(pool_hash_size(pool_config->memqcache_max_num_cache));
+	}
+	if (pool_config->memory_cache_enabled || pool_config->enable_shared_relcache)
+		size += MAXALIGN(sizeof(POOL_QUERY_CACHE_STATS));
+
+	if (pool_config->use_watchdog)
+	{
+		size += MAXALIGN(wd_ipc_get_shared_mem_size());
 	}
 
-	user1SignalSlot = pool_shared_memory_create(sizeof(User1SignalSlot));
-	/* create fail over/switch over event area */
-	Req_info = pool_shared_memory_create(sizeof(POOL_REQUEST_INFO));
+	ereport(LOG,
+			(errmsg("allocating (%zu) bytes of shared memory segment",size)));
+	initialize_shared_memory_main_segment(size);
 
-	ereport(DEBUG1,
-			(errmsg("Request info are: sizeof(POOL_REQUEST_INFO) %zu bytes requested for shared memory",
-					sizeof(POOL_REQUEST_INFO))));
+	/* Move the backend descriptors to shared memory */
+	backend_desc = pool_shared_memory_segment_get_chunk(sizeof(BackendDesc));
+	memcpy(backend_desc, pool_config->backend_desc,sizeof(BackendDesc));
+	pfree(pool_config->backend_desc);
+	pool_config->backend_desc = backend_desc;
+
+	/* get the shared memory from main segment*/
+	con_info = (ConnectionInfo *)pool_shared_memory_segment_get_chunk(pool_coninfo_size());
+
+	process_info = (ProcessInfo *)pool_shared_memory_segment_get_chunk(pool_config->num_init_children * (sizeof(ProcessInfo)));
+	for (i = 0; i < pool_config->num_init_children; i++)
+		process_info[i].connection_info = pool_coninfo(i, 0, 0);
+
+	user1SignalSlot = (User1SignalSlot *)pool_shared_memory_segment_get_chunk(sizeof(User1SignalSlot));
+
+	Req_info = (POOL_REQUEST_INFO *)pool_shared_memory_segment_get_chunk(sizeof(POOL_REQUEST_INFO));
+
+	InRecovery = (int *)pool_shared_memory_segment_get_chunk(sizeof(int));
+
+	/* Initialize statistics area */
+	stat_set_stat_area(pool_shared_memory_segment_get_chunk(stat_shared_memory_size()));
+	stat_init_stat_area();
+
+	/* Initialize health check statistics area */
+	health_check_stats_init(pool_shared_memory_segment_get_chunk(health_check_stats_shared_memory_size()));
+
+	/* Initialize Snapshot Isolation manage area */
+	si_manage_info = (SI_ManageInfo*)pool_shared_memory_segment_get_chunk(sizeof(SI_ManageInfo));
+
+	si_manage_info->snapshot_waiting_children =
+		(pid_t*)pool_shared_memory_segment_get_chunk(pool_config->num_init_children * sizeof(pid_t));
+
+	si_manage_info->commit_waiting_children =
+		(pid_t*)pool_shared_memory_segment_get_chunk(pool_config->num_init_children * sizeof(pid_t));
 
 	/*
 	 * Initialize backend status area. From now on, VALID_BACKEND macro can be
@@ -3346,12 +3382,7 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	Req_info->switching = false;
 	Req_info->request_queue_head = Req_info->request_queue_tail = -1;
 	Req_info->primary_node_id = -2;
-	InRecovery = pool_shared_memory_create(sizeof(int));
 	*InRecovery = RECOVERY_INIT;
-
-	ereport(DEBUG1,
-			(errmsg("Recovery management area: sizeof(int) %zu bytes requested for shared memory",
-					sizeof(int))));
 
 	/*
 	 * Initialize shared memory cache
@@ -3403,28 +3434,13 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 		pool_init_memqcache_stats();
 	}
 
-	/* Initialize statistics area */
-	stat_set_stat_area(pool_shared_memory_create(stat_shared_memory_size()));
-	stat_init_stat_area();
-
-	/* Initialize health check statistics area */
-	health_check_stats_init(pool_shared_memory_create(health_check_stats_shared_memory_size()));
-
 	/* initialize watchdog IPC unix domain socket address */
 	if (pool_config->use_watchdog)
 	{
 		wd_ipc_initialize_data();
 	}
 
-	/* Initialize Snapshot Isolation manage area */
-	size = MAXALIGN(sizeof(SI_ManageInfo));
-	si_manage_info = pool_shared_memory_create(size);
-	memset((void *)si_manage_info, 0, size);
-	size = MAXALIGN(pool_config->num_init_children * sizeof(pid_t));
-	si_manage_info->snapshot_waiting_children = pool_shared_memory_create(size);
-	si_manage_info->commit_waiting_children = pool_shared_memory_create(size);
 }
-
 /*
 * Read the status file
 */

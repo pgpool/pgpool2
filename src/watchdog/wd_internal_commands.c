@@ -80,7 +80,7 @@ wd_ipc_initialize_data(void)
 
 	if (ipc_shared_key == NULL)
 	{
-		ipc_shared_key = pool_shared_memory_create(sizeof(unsigned int));
+		ipc_shared_key = pool_shared_memory_segment_get_chunk(sizeof(unsigned int));
 		*ipc_shared_key = 0;
 		while (*ipc_shared_key == 0)
 		{
@@ -90,17 +90,26 @@ wd_ipc_initialize_data(void)
 
 	if (watchdog_require_cleanup == NULL)
 	{
-		watchdog_require_cleanup = pool_shared_memory_create(sizeof(bool));
+		watchdog_require_cleanup = pool_shared_memory_segment_get_chunk(sizeof(bool));
 		*watchdog_require_cleanup = false;
 	}
 
 	if (watchdog_node_escalated == NULL)
 	{
-		watchdog_node_escalated = pool_shared_memory_create(sizeof(bool));
+		watchdog_node_escalated = pool_shared_memory_segment_get_chunk(sizeof(bool));
 		*watchdog_node_escalated = false;
 	}
 }
 
+size_t wd_ipc_get_shared_mem_size(void)
+{
+	size_t size = 0;
+	size += MAXALIGN(sizeof(unsigned int)); /* ipc_shared_key */
+	size += MAXALIGN(sizeof(bool)); /* watchdog_require_cleanup */
+	size += MAXALIGN(sizeof(bool)); /* watchdog_node_escalated */
+	size += estimate_ipc_socket_addr_len();
+	return size;
+}
 
 /*
  * function gets the PG backend status of all attached nodes from

@@ -607,6 +607,8 @@ extern int	get_frontend_protocol_version(void);
 /*pool_shmem.c*/
 extern void *pool_shared_memory_create(size_t size);
 extern void pool_shmem_exit(int code);
+extern void initialize_shared_memory_main_segment(size_t size);
+extern void * pool_shared_memory_segment_get_chunk(size_t size);
 
 
 /* pool_main.c*/
