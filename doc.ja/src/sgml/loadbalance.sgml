@@ -664,7 +664,7 @@
       -->
       データベースに対して更新を<emphasis>行なわない</emphasis>関数名をコンマ区切りで指定します。
       このリストに<emphasis>指定されていない</emphasis>関数呼び出しを含むSELECTは負荷分散されません。
-      これらのクエリはレプリケーションモードにおいてはすべてのDBノードで複製され、マスタースレーブモードにおいてはプライマリノードにのみ送信されます。
+      これらのクエリはレプリケーションモードにおいてはすべてのDBノードで複製され、それ以外のモードにおいてはプライマリノードにのみ送信されます。
      </para>
      <para>
       <!--
@@ -747,7 +747,7 @@
       -->
       データベースに対して更新を<emphasis>行う</emphasis>関数名をコンマ区切りで指定します。
       このリストに<emphasis>指定された</emphasis>関数呼び出しを含むSELECTは負荷分散されません。
-      これらのクエリはレプリケーションモードにおいてはすべてのDBノードで複製され、マスタースレーブモードにおいてはプライマリノードにのみ送信されます。
+      これらのクエリはレプリケーションモードにおいてはすべてのDBノードで複製され、それ以外のモードにおいてはプライマリノードにのみ送信されます。
      </para>
      <para>
       <!--
@@ -873,11 +873,11 @@
       should be sent to primary node.
       SQL that matched patterns specified in this list are
       not load balanced.
-      Only Native Replication mode is supported.
+      Other than Native Replication mode is supported.
       -->
       特定の SQL をプライマリノードに送信するように <xref linkend="guc-primary-routing-query-pattern-list">を設定します。
        SQL パターンをセミコロン区切りで指定します。
-       マスタースレーブモードのみで動作します。
+       ネイティブレプリケーションモード以外でのみで動作します。
      </para>
      <para>
       <!--

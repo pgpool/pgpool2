@@ -657,7 +657,7 @@
       Watchdog executes this command on the node that is escalated
       to the leader watchdog.
       -->
-      マスターwatchdogに昇格した時に、ここで指定したコマンドがwatchdogによって実行されます。
+      リーダーwatchdogに昇格した時に、ここで指定したコマンドがwatchdogによって実行されます。
      </para>
      <para>
       <!--
@@ -693,8 +693,8 @@
       when the leader node <productname>Pgpool-II</productname> shuts down, detects a network
       blackout or detects the lost of quorum.
       -->
-      <productname>Pgpool-II</productname>のマスターwatchdogが責務を辞退し降格するときに、ここで指定したコマンドが実行されます。
-      マスターwatchdogノードは、そのマスターノードの<productname>Pgpool-II</productname>が停止したとき、ネットワーク切断や<firstterm>クォーラム(quorum)</firstterm><indexterm><primary>クォーラム</primary></indexterm><indexterm><primary>quorum</primary></indexterm>が失われたことを検出した時に、マスターから辞任します。
+      <productname>Pgpool-II</productname>のリーダーwatchdogが責務を辞退し降格するときに、ここで指定したコマンドが実行されます。
+      リーダーwatchdogノードは、そのリーダーノードの<productname>Pgpool-II</productname>が停止したとき、ネットワーク切断や<firstterm>クォーラム(quorum)</firstterm><indexterm><primary>クォーラム</primary></indexterm><indexterm><primary>quorum</primary></indexterm>が失われたことを検出した時に、リーダーから辞任します。
      </para>
      <para>
       <!--
@@ -1238,11 +1238,11 @@
       So we should start watchdog nodes in order of <varname>wd_priority</varname> priority to prevent 
       unintended nodes from being selected as leader.
       -->
-      このパラメータによってローカルのwatchdogノードがマスターに選ばれる優先度を上げることができます。
-      古いマスターノードが故障した状況でクラスタがマスターノードの選択を行う際に、<varname>wd_priority</varname>が高いノードがマスターwatchdogノードに選ばれます。
+      このパラメータによってローカルのwatchdogノードがリーダーに選ばれる優先度を上げることができます。
+      古いリーダーノードが故障した状況でクラスタがリーダーノードの選択を行う際に、<varname>wd_priority</varname>が高いノードがリーダーwatchdogノードに選ばれます。
       <varname>wd_priority</varname>はクラスタの初期起動時にも有効なので、
-      複数のwatchdogノードを同時に起動した場合、<varname>wd_priority</varname>が高いノードがマスターwatchdogノードに選ばれます。
-      このため、watchdogノードは意図しないノードがマスターに選ばれることが無いように<varname>wd_priority</varname>の優先順位が高い順に起動するべきです。
+      複数のwatchdogノードを同時に起動した場合、<varname>wd_priority</varname>が高いノードがリーダーwatchdogノードに選ばれます。
+      このため、watchdogノードは意図しないノードがリーダーに選ばれることが無いように<varname>wd_priority</varname>の優先順位が高い順に起動するべきです。
      </para>
      <para>
       <!--

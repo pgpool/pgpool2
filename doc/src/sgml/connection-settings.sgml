@@ -1086,7 +1086,7 @@ S2/N2: COMMIT;
       or later allows updating the values by reloading a
       configuration file.  This is useful if you want to prevent
       any query sent to standbys to perform some administrative
-      work in native replication mode.
+      work in streaming replication mode, logical replication mode and slony mode.
      </para>
     </listitem>
    </varlistentry>

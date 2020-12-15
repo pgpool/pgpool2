@@ -178,7 +178,7 @@
 
     <para>
      <literal>catalog</literal>あるいは<literal>trace</literal>に設定されたとき、<acronym>SELECT</acronym>に含まれるテーブルが一時テーブルかどうかのチェックを行います。
-     <literal>catalog</literal>に設定すると一時テーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/マスター<productname>PostgreSQL</productname>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
+     <literal>catalog</literal>に設定すると一時テーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/メイン<productname>PostgreSQL</productname>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
     </para>
     <para>
      <literal>trace</literal>に設定されていると、一時テーブルの情報を入手するために<productname>Pgpool-II</productname>は一時テーブルの作成と削除を追跡します。
@@ -233,7 +233,7 @@
      Default is on.
      -->
      onに設定されたとき、<acronym>SELECT</acronym>に含まれるテーブルがunloggedテーブルかどうかのチェックを行います。
-     unloggedテーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/マスター<productname>PostgreSQL</>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
+     unloggedテーブルをチェックするため<productname>Pgpool-II</productname>はプライマリ/メイン<productname>PostgreSQL</>バックエンドのシステムカタログに問い合わせ、プライマリ/マスタサーバの負荷を上げます。
      もしシステムが決してunloggedテーブルを使用しないことが確かならば（たとえば、9.0 以前のバージョンの<productname>PostgreSQL</>を使っている）、安全に<varname>check_unlogged_table</varname>をoffにすることができます。
      デフォルトはonです。
     </para>
