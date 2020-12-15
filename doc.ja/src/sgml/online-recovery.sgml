@@ -346,7 +346,7 @@
      look for the command scrit in <literal>$PGDATA</literal> directory and will
      try to execute <command>$PGDATA/sync-command</command>.
      -->
-     オンラインリカバリのファーストステージでマスタ（プライマリ）ノードで実行されるコマンドを指定します。
+     オンラインリカバリのファーストステージでメイン（プライマリ）ノードで実行されるコマンドを指定します。
      コマンドファイルはセキュリティ上の観点からデータベースクラスタ内に配置される必要があります。
      例えば、<varname>recovery_1st_stage_command</varname> = <literal>'sync-command'</literal>となっている場合、<productname>Pgpool-II</productname>はコマンドスクリプトを<literal>$PGDATA</literal>ディレクトリの中で探し、<command>$PGDATA/sync-command</command>を起動しようとします。
     </para>
@@ -475,7 +475,7 @@
      look for the command scrit in <literal>$PGDATA</literal> directory and will
      try to execute <command>$PGDATA/sync-command</command>.
      -->
-     オンラインリカバリのセカンドステージでマスタノードで実行されるコマンドを指定します。
+     オンラインリカバリのセカンドステージでメインノードで実行されるコマンドを指定します。
      これは<xref linkend="guc-replication-mode">時のみ必要であるため、他のモードではコマンドファイルを用意する必要はありません。
       コマンドファイルはセキュリティ上の観点からデータベースクラスタ内に配置される必要があります。
       例えば、<varname>recovery_2nd_stage_command</varname> = <literal>'sync-command'</literal>となっている場合、<productname>Pgpool-II</productname>はコマンドスクリプトを<literal>$PGDATA</literal>ディレクトリの中で探し、<command>$PGDATA/sync-command</command>を起動しようとします。

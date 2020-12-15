@@ -508,7 +508,7 @@
       <emphasis>DO NOT</emphasis> update the database. SELECTs including
       functions <emphasis>not specified </emphasis> in this list are not load balanced.
       These are replicated among all the DB nodes in Replication mode,
-      sent to the primary node only in Native Replication mode.
+      sent to the primary node only in other mode.
      </para>
      <para>
       You can use regular expression to match function names,
@@ -577,7 +577,7 @@
       SELECTs including functions <emphasis>specified</emphasis> in this list are
       not load balanced.
       These are replicated among all the DB nodes in Replication mode,
-      sent to the primary node only in Native Replication mode.
+      sent to the primary node only in other mode.
      </para>
      <para>
       You can use regular expression to match function names,
@@ -679,7 +679,7 @@
       should be sent to primary node.
       SQL that matched patterns specified in this list are
       not load balanced.
-      Only Native Replication mode is supported.
+      Other than Only Native Replication mode is supported.
      </para>
      <para>
       You can use regular expression to match SQL patterns,

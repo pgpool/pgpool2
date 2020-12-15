@@ -58,8 +58,8 @@
     client connections to other <productname>Pgpool-II</productname>
     nodes for avoiding inconsistency between backends.
     -->
-    もしwatchdogが有効なら、<productname>Pgpool-II</productname>ノードは起動時にマスターwatchdogノードの情報を使ってバックエンドの状態の同期を取ります。
-    そのノードが自分自身をマスターに昇格中であれば、バックエンド状態をローカルに初期化します。
+    もしwatchdogが有効なら、<productname>Pgpool-II</productname>ノードは起動時にリーダーwatchdogノードの情報を使ってバックエンドの状態の同期を取ります。
+    そのノードが自分自身をリーダーに昇格中であれば、バックエンド状態をローカルに初期化します。
     フェイルオーバなどでバックエンドの状態が変更したら、watchdogは他の<productname>Pgpool-II</productname>ノードに通知し、同期を取ります。
     オンラインリカバリを実行すると、バックエンドの不整合を防ぐために、watchdogはクライアントが他の<productname>Pgpool-II</productname>ノードに接続するのを防ぎます。
    </para>
@@ -898,8 +898,8 @@
     <productname>Pgpool-II</productname> node is detected or a
     remote <productname>Pgpool-II</productname> disconnects from the cluster.
     -->
-    watchdogプロセスの中心はステートマシンで、初期状態(<literal>WD_LOADING</literal>)から出発し、スタンバイ状態(<literal>WD_STANDBY</literal>)かマスター/コーディネーター状態(<literal>WD_COORDINATOR</literal>)へと遷移します。
-    スタンバイ状態もマスター/コーディネーター状態も、watchdogステートマシンとしては安定状態です。
+    watchdogプロセスの中心はステートマシンで、初期状態(<literal>WD_LOADING</literal>)から出発し、スタンバイ状態(<literal>WD_STANDBY</literal>)かリーダー/コーディネーター状態(<literal>WD_COORDINATOR</literal>)へと遷移します。
+    スタンバイ状態もリーダー/コーディネーター状態も、watchdogステートマシンとしては安定状態です。
     ローカルの<productname>Pgpool-II</productname>ノードに問題が起きるか、リモートの<productname>Pgpool-II</productname>ノードがクラスタから切り離されるまでその状態を保ちます。
    </para>
    <para>
@@ -949,7 +949,7 @@
      </productname> nodes to coordinate the selection of
       leader/coordinator node and to ensure the quorum in the cluster.
       -->
-      参加しているすべての<productname>Pgpool-II</productname>ノードと通信し、マスター/コーディネーターノードの選択を調停し、クラスタのクォーラムを確実にする
+      参加しているすべての<productname>Pgpool-II</productname>ノードと通信し、リーダー/コーディネーターノードの選択を調停し、クラスタのクォーラムを確実にする
      </para>
     </listitem>
 
@@ -960,7 +960,7 @@
       allow the users to provide custom scripts for
       escalation and de-escalation.
       -->
-      マスター/コーディネーターノード上の仮想IPを管理し、ユーザが昇格と降格用のカスタムスクリプトを書けるようにする
+      リーダー/コーディネーターノード上の仮想IPを管理し、ユーザが昇格と降格用のカスタムスクリプトを書けるようにする
      </para>
     </listitem>
 
