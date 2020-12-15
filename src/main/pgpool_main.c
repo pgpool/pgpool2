@@ -1871,11 +1871,18 @@ static void failover(void)
 		 * went down, restarted, re-attached without promotion. Then existing
 		 * child process loses connection slot to node 0 and keeps on using it
 		 * when node 0 comes back. This could result in segfault later on in
-		 * the child process because there's no connection to node id 0.  See
-		 * bug 672 for more details.
+		 * the child process because there's no connection to node id 0.
+		 *
+		 * Actually we need to think about when ALWAYS_PRIMARY flag is set
+		 * *but* DISALLOW_TO_FAILOVER flag is not set case. In the case after
+		 * primary failover Req_info->primary_node_id is set, but connection
+		 * to the primary node does not exist. So we should do full restart if
+		 * requested node id is the former primary node.
+		 *
+		 * See bug 672 for more details.
 		 */
 		if (STREAM && reqkind == NODE_UP_REQUEST && all_backend_down == false &&
-			Req_info->primary_node_id >= 0)
+			Req_info->primary_node_id >= 0 && Req_info->primary_node_id != node_id)
 		{
 			/*
 			 * The decision to restart/no-restart children for update status request has already been
