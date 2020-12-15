@@ -660,7 +660,7 @@ backend_clustering_mode = 'slony'
  </sect2>
 
  <sect2 id="guc-replication-mode" xreflabel="native_replication_mode">
-  <title>ネィティブレプリケーションモード</title>
+  <title>ネイティブレプリケーションモード</title>
 
   <para>
    <!--
@@ -668,6 +668,10 @@ backend_clustering_mode = 'slony'
    between <productname>PostgreSQL</> backends.
    -->
    このモードでは<productname>PostgreSQL</>間のデータレプリケーションを<productname>Pgpool-II</productname>に行わせます。
+   このモードを有効にするには<varname>backend_clustering_mode</varname>に'native_replication'を設定してください。
+    <programlisting>
+backend_clustering_mode = 'native_replication'
+    </programlisting>
   </para>
 
   <para>
@@ -1224,8 +1228,12 @@ backend_clustering_mode = 'slony'
   <title>スナップショットアイソレーションモード</title>
 
   <para>
-   このモードは、ネィティブレプリケーションモードと似ていますが、更にノードをまたがる可視性の一貫性を保証します。
+   このモードは、ネイティブレプリケーションモードと似ていますが、更にノードをまたがる可視性の一貫性を保証します。
    実装は研究論文<xref linkend="mishima2009">に基づいています。
+   このモードを有効にするには<varname>backend_clustering_mode</varname>に'snapshot_isolation'を設定してください。
+    <programlisting>
+backend_clustering_mode = 'snapshot_isolation'
+    </programlisting>
    たとえば、以下のようなノードにまたがる可視性の一貫性がないことからくるノード間のデータ不整合を防ぐことができます。
    ここで、S1, S2はセッションを表し、N1, N2はPostgreSQLのサーバ1と2を表します。
    <programlisting>

@@ -882,8 +882,13 @@ backend_clustering_mode = 'native_replication'
   <para>
    This mode is similar to the native replication mode except it adds
    the visibility consistency among nodes. The implemenation is based
-   on a research paper <xref linkend="mishima2009">. For example, you
-   can avoid following inconsistency among nodes caused by the
+   on a research paper <xref linkend="mishima2009">.
+   To enable this mode, use 'snapshot_isolation' for
+   <varname>backend_clustering_mode</varname>.
+    <programlisting>
+backend_clustering_mode = 'snapshot_isolation'
+    </programlisting>
+   For example, you can avoid following inconsistency among nodes caused by the
    visibility inconsistency. Here S1 and S2 denotes sessions, while N1
    and N2 denotes the PostgreSQL server 1 and 2 respectively.
    <programlisting>
