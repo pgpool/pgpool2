@@ -9916,7 +9916,7 @@
         SimpleForwardToBackend. Per bug report from Bugtrack #1010771.
         Report from Peter Pramberge(Tatsuo Ishii)
 
-      - Fix rewriting "*" in paralell query.  Patch contributed by
+      - Fix rewriting "*" in parallel query.  Patch contributed by
         sho-san(Toshihiro Kitagawa)
 
       - Fix connect_inet_domain_socket_by_port() so that it print out
