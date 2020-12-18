@@ -182,7 +182,7 @@ create_lrtoken_array(void)
 }
 
 /*
- * Extract tokens separated by delimi from str. Each token is separeted by delim2,
+ * Extract tokens separated by delimi from str. Each token is separated by delim2,
  * and token lists are returned to left_tokens and right_tokens respectively.
  * Nnumber of tokens is set to *n.
  */
