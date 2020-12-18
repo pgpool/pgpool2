@@ -177,7 +177,7 @@ static void convert_int_from_base_unit(int64 base_value, int base_unit,
 
 /* These functions are used to provide Hints for enum type config parameters and
  * to output the values of the parameters.
- * These functuons are not available for tools since they use the stringInfo that is
+ * These functions are not available for tools since they use the stringInfo that is
  * not present for tools.
  */
 
