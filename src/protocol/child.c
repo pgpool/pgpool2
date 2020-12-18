@@ -341,7 +341,7 @@ do_child(int *fds)
 			continue;
 
 		/*
-		 * Check if max connections from clients execeeded.
+		 * Check if max connections from clients exceeded.
 		 */
 		con_count = connection_count_up();
 		if (con_count > (pool_config->num_init_children - pool_config->reserved_connections))
