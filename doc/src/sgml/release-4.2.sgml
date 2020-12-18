@@ -363,7 +363,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
      Removing strerror() call from ereports. (Muhammad Usama)
     </para>
     <para>
-     Call to ereport() resets the errno value and using the "strerror(errno)" emmits the wrong error message.
+     Call to ereport() resets the errno value and using the "strerror(errno)" emits the wrong error message.
      The right way is to use %m format specifier instead.
     </para>
    </listitem>
