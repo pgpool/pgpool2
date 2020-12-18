@@ -413,7 +413,7 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"log_connections", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"log_connections", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"Logs each successful connection.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
@@ -423,7 +423,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"log_disconnections", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"log_disconnections", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"Logs end of a session.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
@@ -433,7 +433,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"log_hostname", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"log_hostname", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"Logs the host name in the connection logs.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
@@ -453,7 +453,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"replication_mode", CFGCXT_INIT, LOGING_CONFIG,
+		{"replication_mode", CFGCXT_INIT, LOGGING_CONFIG,
 			"Enables replication mode.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
@@ -563,7 +563,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"log_statement", CFGCXT_SESSION, LOGING_CONFIG,
+		{"log_statement", CFGCXT_SESSION, LOGGING_CONFIG,
 			"Logs all statements in the pgpool logs.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
@@ -573,7 +573,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"log_per_node_statement", CFGCXT_SESSION, LOGING_CONFIG,
+		{"log_per_node_statement", CFGCXT_SESSION, LOGGING_CONFIG,
 			"Logs per node detailed SQL statements.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
@@ -583,7 +583,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"log_client_messages", CFGCXT_SESSION, LOGING_CONFIG,
+		{"log_client_messages", CFGCXT_SESSION, LOGGING_CONFIG,
 			"Logs any client messages in the pgpool logs.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
@@ -711,7 +711,7 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"logging_collector", CFGCXT_INIT, LOGING_CONFIG,
+		{"logging_collector", CFGCXT_INIT, LOGGING_CONFIG,
 			"Enable capturing of stderr into log files.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
@@ -720,7 +720,7 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"log_truncate_on_rotation", CFGCXT_INIT, LOGING_CONFIG,
+		{"log_truncate_on_rotation", CFGCXT_INIT, LOGGING_CONFIG,
 			"If on, an existing log file gets truncated on time based log rotation.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
@@ -822,7 +822,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"log_destination", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"log_destination", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"destination of pgpool-II log",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -834,7 +834,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"syslog_ident", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"syslog_ident", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"syslog program ident string.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -866,7 +866,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"log_line_prefix", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"log_line_prefix", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"printf-style string to output at beginning of each log line.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1247,7 +1247,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"logdir", CFGCXT_INIT, LOGING_CONFIG,
+		{"logdir", CFGCXT_INIT, LOGGING_CONFIG,
 			"PgPool status file logging directory.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1256,7 +1256,7 @@ static struct config_string ConfigureNamesString[] =
 		NULL, NULL, NULL, NULL
 	},
 	{
-		{"log_directory", CFGCXT_INIT, LOGING_CONFIG,
+		{"log_directory", CFGCXT_INIT, LOGGING_CONFIG,
 			"directory where log files are written.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1266,7 +1266,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"log_filename", CFGCXT_INIT, LOGING_CONFIG,
+		{"log_filename", CFGCXT_INIT, LOGGING_CONFIG,
 			"log file name pattern.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -2057,7 +2057,7 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"log_rotation_age", CFGCXT_INIT, LOGING_CONFIG,
+		{"log_rotation_age", CFGCXT_INIT, LOGGING_CONFIG,
 			"Automatic rotation of logfiles will happen after that (minutes) time.",
 			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_MIN
 		},
@@ -2067,7 +2067,7 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"log_rotation_size", CFGCXT_INIT, LOGING_CONFIG,
+		{"log_rotation_size", CFGCXT_INIT, LOGGING_CONFIG,
 			"Automatic rotation of logfiles will happen after that much (kilobytes) log output.",
 			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_KB
 		},
@@ -2077,7 +2077,7 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"log_file_mode", CFGCXT_INIT, LOGING_CONFIG,
+		{"log_file_mode", CFGCXT_INIT, LOGGING_CONFIG,
 			"creation mode for log files.",
 			CONFIG_VAR_TYPE_INT, false, 0
 		},
@@ -2107,7 +2107,7 @@ static struct config_enum ConfigureNamesEnum[] =
 
 
 	{
-		{"syslog_facility", CFGCXT_RELOAD, LOGING_CONFIG,
+		{"syslog_facility", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"syslog local facility.",
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
@@ -2120,7 +2120,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"log_error_verbosity", CFGCXT_SESSION, LOGING_CONFIG,
+		{"log_error_verbosity", CFGCXT_SESSION, LOGGING_CONFIG,
 			"How much details about error should be emitted.",
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
@@ -2131,7 +2131,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"client_min_messages", CFGCXT_SESSION, LOGING_CONFIG,
+		{"client_min_messages", CFGCXT_SESSION, LOGGING_CONFIG,
 			"Which messages should be sent to client.",
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
@@ -2142,7 +2142,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"log_min_messages", CFGCXT_SESSION, LOGING_CONFIG,
+		{"log_min_messages", CFGCXT_SESSION, LOGGING_CONFIG,
 			"Which messages should be emitted to server log.",
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
