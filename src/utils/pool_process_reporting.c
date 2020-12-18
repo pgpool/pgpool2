@@ -884,7 +884,7 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "memqcache_memcached_port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_memcached_port);
-	StrNCpy(status[i].desc, "Memcached port number. Mondatory if memqcache_method=memcached", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Memcached port number. Mandatory if memqcache_method=memcached", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "memqcache_total_size", POOLCONFIG_MAXNAMELEN);
