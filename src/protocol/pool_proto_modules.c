@@ -3933,7 +3933,7 @@ pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION * frontend,
 		return;
 
 	/*
-	 * Check to see if we aready received a sync message. If not, call
+	 * Check to see if we already received a sync message. If not, call
 	 * ProcessFrontendResponse() to get the sync message from client.
 	 */
 	pmsg = pool_pending_message_get(POOL_SYNC);
