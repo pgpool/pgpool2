@@ -536,7 +536,7 @@ pool_detach_node(int node_id, bool gracefully)
 	/*
 	 * Wait until all frontends exit
 	 */
-	*InRecovery = RECOVERY_DETACH;	/* This wiil ensure that new incoming
+	*InRecovery = RECOVERY_DETACH;	/* This will ensure that new incoming
 									 * connection requests are blocked */
 
 	if (wait_connection_closed())
@@ -587,7 +587,7 @@ pool_promote_node(int node_id, bool gracefully)
 	/*
 	 * Wait until all frontends exit
 	 */
-	*InRecovery = RECOVERY_PROMOTE; /* This wiil ensure that new incoming
+	*InRecovery = RECOVERY_PROMOTE; /* This will ensure that new incoming
 									 * connection requests are blocked */
 
 	if (wait_connection_closed())

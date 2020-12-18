@@ -636,7 +636,7 @@ $ <userinput>pgpool -f /usr/local/etc/pgpool.conf -F /usr/local/etc/pcp.conf -m 
    This will take effect by reloading or restarting
    <productname>Pgpool-II</productname>. If this flag is set, failover
    will not happen if the backend is not available. While the backend
-   is not available, clients wil get error message:
+   is not available, clients will get error message:
    <programlisting>
      psql: error: could not connect to server: FATAL:  failed to create a backend connection
      DETAIL:  executing failover on backend
