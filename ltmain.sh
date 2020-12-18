@@ -836,7 +836,7 @@ extracted_archives=
 extracted_serial=0
 
 # If this variable is set in any of the actions, the command in it
-# will be execed at the end.  This prevents here-documents from being
+# will be executed at the end.  This prevents here-documents from being
 # left over by shells.
 exec_cmd=
 
