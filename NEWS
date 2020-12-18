@@ -3737,7 +3737,7 @@
 
       This is reported in [pgpool-general-jp: 1192].
 
-    - Fix backend error of prepared statement about table which has column whoes
+    - Fix backend error of prepared statement about table which has column whose
       default value is now() in replication mode (Yugo Nagata)
 
       When pgpool parses a named prepared statement with default now(),
@@ -5164,7 +5164,7 @@
 
       This is reported in [pgpool-general-jp: 1192].
 
-    - Fix backend error of prepared statement about table which has column whoes
+    - Fix backend error of prepared statement about table which has column whose
       default value is now() in replication mode (Yugo Nagata)
 
       When pgpool parses a named prepared statement with default now(),
@@ -7305,7 +7305,7 @@
 
       This is reported in [pgpool-general-jp: 1192].
 
-    - Fix backend error of prepared statement about table which has column whoes
+    - Fix backend error of prepared statement about table which has column whose
       default value is now() in replication mode (Yugo Nagata)
 
       When pgpool parses a named prepared statement with default now(),
@@ -8668,7 +8668,7 @@
 
       This is reported in [pgpool-general-jp: 1192].
 
-    - Fix backend error of prepared statement about table which has column whoes
+    - Fix backend error of prepared statement about table which has column whose
       default value is now() in replication mode (Yugo Nagata)
 
       When pgpool parses a named prepared statement with default now(),
