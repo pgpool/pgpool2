@@ -3650,7 +3650,7 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 	}
 	else						/* Non cache safe queries */
 	{
-		/* Non cachable SELECT */
+		/* Non cacheable SELECT */
 		if (node && IsA(node, SelectStmt))
 		{
 			/* Extract table oids from buffer */
