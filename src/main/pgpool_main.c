@@ -300,7 +300,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		 * In addition, when wathcodg fails to start with FATAL, the process
 		 * exits and SIGCHLD is fired, so we can also expect SIGCHLD from
 		 * watchdog process. Finally, we also need to look for the SIGUSR1
-		 * signla for the failover requests from other watchdog nodes. In
+		 * signal for the failover requests from other watchdog nodes. In
 		 * case a request arrives at the same time when the watchdog has just
 		 * been initialized.
 		 *

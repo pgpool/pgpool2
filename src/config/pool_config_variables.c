@@ -1960,7 +1960,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wd_heartbeat_keepalive", CFGCXT_INIT, WATCHDOG_CONFIG,
-			"Time interval in seconds between sending the heartbeat siganl.",
+			"Time interval in seconds between sending the heartbeat signal.",
 			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.wd_heartbeat_keepalive,
@@ -1971,7 +1971,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wd_heartbeat_deadtime", CFGCXT_INIT, WATCHDOG_CONFIG,
-			"Deadtime interval in seconds for heartbeat siganl.",
+			"Deadtime interval in seconds for heartbeat signal.",
 			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.wd_heartbeat_deadtime,

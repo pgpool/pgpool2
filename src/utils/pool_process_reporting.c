@@ -817,12 +817,12 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "wd_heartbeat_keepalive", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_heartbeat_keepalive);
-	StrNCpy(status[i].desc, "interval time of sending heartbeat siganl (sec)", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "interval time of sending heartbeat signal (sec)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "wd_heartbeat_deadtime", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_heartbeat_deadtime);
-	StrNCpy(status[i].desc, "deadtime interval for heartbeat siganl (sec)", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "deadtime interval for heartbeat signal (sec)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "wd_life_point", POOLCONFIG_MAXNAMELEN);
