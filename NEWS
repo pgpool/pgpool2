@@ -10297,7 +10297,7 @@
       - Send NOTICE message to frontend periodically if V2 protocol is
         used. This is ifdef out since it affects visible change to
         applications.  2.2.3 unconditionaly sends param packet to
-        client even it uses version 2 protocol, which is apparentlt
+        client even it uses version 2 protocol, which is apparently
         wrong. Also tweak checking period from 1 second to 30 seconds
         since 1 second seems too aggressive(Tatsuo Ishii)
 
