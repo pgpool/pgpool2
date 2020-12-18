@@ -91,7 +91,7 @@ typedef enum
 #define VAR_NO_RESET_ALL			0x0008	/* for variables not to be reset
 											 * with reset all */
 #define ARRAY_VAR_ALLOW_NO_INDEX	0x0010	/* for array type vars that also
-											 * allows variable with same naem
+											 * allows variable with same name
 											 * with out index */
 #define DEFAULT_FOR_NO_VALUE_ARRAY_VAR	0x0020
 
