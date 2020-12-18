@@ -156,15 +156,15 @@ struct config_generic
 
 	GucSource  *sources;		/* source of the current actual value, For
 								 * array type config elements it contains the
-								 * corosponding source of each individual
+								 * corresponding source of each individual
 								 * element */
 	GucSource  *reset_sources;	/* source of the reset value, For array type
 								 * config elements it contains the
-								 * corosponding source of each individual
+								 * corresponding source of each individual
 								 * element */
 	ConfigContext *scontexts;	/* context that set the current value, For
 								 * array type config elements it contains the
-								 * corosponding context of each individual
+								 * corresponding context of each individual
 								 * element */
 
 };
