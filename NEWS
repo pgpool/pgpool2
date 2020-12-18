@@ -523,7 +523,7 @@
 
     - Fix a posible hang during health checking. (bug 204) (Yugo Nagata)
 
-      Helath checking was hang when any data wasn't sent from
+      Health checking was hang when any data wasn't sent from
       backend after connect(2) succeeded. To fix this, pool_check_fd()
       returns 1 when select(2) exits with EINTR due to SIGALRM while
       health checking is performed.
@@ -923,7 +923,7 @@
 
     - Fix a posible hang during health checking (Yugo Nagata)
 
-      Helath checking was hang when any data wasn't sent
+      Health checking was hang when any data wasn't sent
       from backend after connect(2) succeeded. To fix this,
       pool_check_fd() returns 1 when select(2) exits with
       EINTR due to SIGALRM while health checking is performed.
@@ -1658,7 +1658,7 @@
 
     - Fix a posible hang during health checking (Yugo Nagata)
 
-      Helath checking was hang when any data wasn't sent
+      Health checking was hang when any data wasn't sent
       from backend after connect(2) succeeded. To fix this,
       pool_check_fd() returns 1 when select(2) exits with
       EINTR due to SIGALRM while health checking is performed.
@@ -2819,7 +2819,7 @@
 
     - Fix a posible hang during health checking (Yugo Nagata)
 
-      Helath checking was hang when any data wasn't sent
+      Health checking was hang when any data wasn't sent
       from backend after connect(2) succeeded. To fix this,
       pool_check_fd() returns 1 when select(2) exits with
       EINTR due to SIGALRM while health checking is performed.
@@ -4631,7 +4631,7 @@
 
     - Fix a posible hang during health checking (Yugo Nagata)
 
-      Helath checking was hang when any data wasn't sent
+      Health checking was hang when any data wasn't sent
       from backend after connect(2) succeeded. To fix this,
       pool_check_fd() returns 1 when select(2) exits with
       EINTR due to SIGALRM while health checking is performed.
@@ -6870,7 +6870,7 @@
 
     - Fix a posible hang during health checking (Yugo Nagata)
 
-      Helath checking was hang when any data wasn't sent
+      Health checking was hang when any data wasn't sent
       from backend after connect(2) succeeded. To fix this,
       pool_check_fd() returns 1 when select(2) exits with
       EINTR due to SIGALRM while health checking is performed.
@@ -9903,7 +9903,7 @@
       - Fix possible crash during creating "kind mismatch" error
         message. This used to work but was broken in 2.3.2(Tatsuo Ishii)
 
-      - Fix bug with healh checking. If a network problem such as
+      - Fix bug with health checking. If a network problem such as
         unplugged wire happens while calling connect(), health
         checking does not work since
         connect_unix_domain_socket()/connect_inet_domain_socket() do
