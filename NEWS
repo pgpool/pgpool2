@@ -9949,7 +9949,7 @@
 
 * Version 2.3.2.1
 
-      This version fixes bug in 2.3.x. It is identfied that
+      This version fixes bug in 2.3.x. It is identified that
       pgpool-II 2.3.x has a problem with erroneous query
       processing(Akio Ishida).
 
