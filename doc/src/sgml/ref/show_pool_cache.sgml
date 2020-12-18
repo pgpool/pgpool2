@@ -48,7 +48,7 @@
     num_hash_entries            | 131072
     used_hash_entries           | 99992
     num_cache_entries           | 99992
-    used_cache_enrties_size     | 12482600
+    used_cache_entries_size     | 12482600
     free_cache_entries_size     | 54626264
     fragment_cache_entries_size | 0
    </programlisting>
