@@ -41,7 +41,7 @@ typedef enum
 	POOL_UNKNOWN,				/* Unknown. Need to ask backend */
 	POOL_READ_UNCOMMITTED,		/* Read uncommitted */
 	POOL_READ_COMMITTED,		/* Read committed */
-	POOL_REPEATABLE_READ,		/* Rpeatable read */
+	POOL_REPEATABLE_READ,		/* Repeatable read */
 	POOL_SERIALIZABLE			/* Serializable */
 }			POOL_TRANSACTION_ISOLATION;
 
