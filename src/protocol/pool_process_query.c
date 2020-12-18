@@ -1064,7 +1064,7 @@ reset_backend(POOL_CONNECTION_POOL * backend, int qcnt)
  * Returns true if the SQL statement is regarded as read SELECT from syntax's
  * point of view. However callers need to do additional checking such as if the
  * SELECT does not have write functions or not to make sure that the SELECT is
- * sematically read SELECT.
+ * semantically read SELECT.
  *
  * For followings this function returns true:
  * - SELECT/WITH without FOR UPDATE/SHARE
