@@ -87,7 +87,7 @@ typedef struct
 	double		backend_weight; /* normalized backend load balance ratio */
 	double		unnormalized_weight;	/* described parameter */
 	char		backend_data_directory[MAX_PATH_LENGTH];
-	char		backend_application_name[NAMEDATALEN];	/* application_name for walreciever */
+	char		backend_application_name[NAMEDATALEN];	/* application_name for walreceiver */
 	unsigned short flag;		/* various flags */
 	bool		quarantine;		/* true if node is CON_DOWN because of
 								 * quarantine */

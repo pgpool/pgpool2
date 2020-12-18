@@ -5327,7 +5327,7 @@ watchdog_state_machine(WD_EVENTS event, WatchdogNode * wdNode, WDPacketData * pk
 	else if (event == WD_EVENT_PACKET_RCV)
 	{
 		print_packet_node_info(pkt, wdNode, false);
-		/* update the last receiv time */
+		/* update the last receive time */
 		gettimeofday(&wdNode->last_rcv_time, NULL);
 
 		if (pkt->type == WD_INFO_MESSAGE)

@@ -6133,7 +6133,7 @@
       sends a packet to other pgpools. However, the packet sometimes is sent
       before the virtual IP is brought down completely. In this case the packet
       sender is set to this IP. When the IP is brought down before other pgpools
-      respond, the active pgpool can not recieve the response, and hang up.
+      respond, the active pgpool can not receive the response, and hang up.
 
       In this fix, the active pgpool confirms that the virtual IP is brought
       down before sending the packet.

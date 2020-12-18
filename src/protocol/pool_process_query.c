@@ -1438,7 +1438,7 @@ do_command(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
 
 	/*
 	 * Continue to read packets until we get ReadForQuery (Z). Until that we
-	 * may recieve one of:
+	 * may receive one of:
 	 *
 	 * N: Notice response E: Error response C: Command complete
 	 *
@@ -1628,7 +1628,7 @@ do_error_command(POOL_CONNECTION * backend, int major)
 
 	/*
 	 * Continue to read packets until we get Error response (E). Until that we
-	 * may recieve one of:
+	 * may receive one of:
 	 *
 	 * N: Notice response C: Command complete
 	 *
