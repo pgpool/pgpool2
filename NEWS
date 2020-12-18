@@ -10667,7 +10667,7 @@
 * Replication
 
         - Always start a new transaction even if the query is not in
-          an explicit transaction to enhance the reliabilty of
+          an explicit transaction to enhance the reliability of
           replication(Yoshiyuki Asaba)
         - Enhance the performance of replication for write
           queries. Now the worst case is 1/2 compared with single DB
