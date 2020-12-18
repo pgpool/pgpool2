@@ -9724,7 +9724,7 @@
 
       - Fix bug with timeout handling in pcp commands(Tatsuo Ishii)
 
-      - Fix SSL hang when large amount of data transfered(Tatsuo Ishii)
+      - Fix SSL hang when large amount of data transferred(Tatsuo Ishii)
 
       - Fix failover when there's only one DB node(Tatsuo Ishii)
 
