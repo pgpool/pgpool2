@@ -2896,7 +2896,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_leader(WDCommandData *
 	if (get_local_node_state() == WD_STANDBY)
 	{
 		/*
-		 * set the command id in the IPC packet before forwaring it on the
+		 * set the command id in the IPC packet before forwarding it on the
 		 * watchdog socket
 		 */
 		wd_packet_shallow_copy(&ipcCommand->sourcePacket, &ipcCommand->commandPacket);
