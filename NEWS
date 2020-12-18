@@ -3550,7 +3550,7 @@
 
       Coverity issue #1111419, #1111420, #1111422.
 
-    - replacing strcpy() with much safer and recomended call strlcpy()
+    - replacing strcpy() with much safer and recommended call strlcpy()
       (Muhammad Usama)
 
       Coverity issue #1111480.
