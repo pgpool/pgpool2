@@ -3016,7 +3016,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData * ipcC
 }
 
 
-/* Failover start basically does nothing fency, It just sets the failover_in_progress
+/* Failover start basically does nothing fancy, It just sets the failover_in_progress
  * flag and inform all nodes that the failover is in progress.
  *
  * only the local node that is a leader can start the failover.
