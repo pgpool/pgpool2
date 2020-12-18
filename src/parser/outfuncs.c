@@ -4574,7 +4574,7 @@ _outAlterObjectSchemaStmt(String * str, AlterObjectSchemaStmt *node)
 				string_append_char(str, "*");
 			else
 				_outNode(str, lfirst(list_head(owa->objargs)));
-			string_append_char(str, ") SET SCHAME \"");
+			string_append_char(str, ") SET SCHEME \"");
 			string_append_char(str, node->newschema);
 			string_append_char(str, "\"");
 			break;
