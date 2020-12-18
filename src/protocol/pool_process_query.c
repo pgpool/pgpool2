@@ -1834,7 +1834,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 /*
  * State transition control bits. We expect all following events have
  * been occur before finish do_query() in extended protocol mode.
- * Note that "Close Compplete" should occur twice, because two close
+ * Note that "Close Complete" should occur twice, because two close
  * requests(one for prepared statement and the other for portal) have
  * been sent.
  */
