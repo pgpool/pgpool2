@@ -1821,7 +1821,7 @@ free_select_result(POOL_SELECT_RESULT * result)
  * Send a query to one DB node and wait for it's completion.  The quey
  * can be SELECT or any other type of query. However at this moment,
  * the only client calls this function other than SELECT is
- * insert_lock(), and the qury is either LOCK or SELECT for UPDATE.
+ * insert_lock(), and the query is either LOCK or SELECT for UPDATE.
  * Note: After the introduction of elog API the return type of do_query is changed
  * to void. and now ereport is thrown in case of error occurred within the function
  */
