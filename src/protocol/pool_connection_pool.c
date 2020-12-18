@@ -559,7 +559,7 @@ connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry)
 }
 
 /*
- * Connet to backend using pool_config->connect_timeout.
+ * Connect to backend using pool_config->connect_timeout.
  *
  * fd: the socket
  * walk: backend address to connect
