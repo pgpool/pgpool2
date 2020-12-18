@@ -4203,7 +4203,7 @@ standard_packet_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 					else if (WD_LEADER_NODE == wdNode && oldQuorumStatus != wdNode->quorum_status)
 					{
 						/* inform Pgpool main about quorum status changes */
-						register_watchdog_quorum_change_interupt();
+						register_watchdog_quorum_change_interrupt();
 					}
 				}
 
@@ -5904,7 +5904,7 @@ watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode * wdNode, WDPac
 								 errdetail("our declare coordinator message is accepted by all nodes")));
 
 						set_cluster_leader_node(g_cluster.localNode);
-						register_watchdog_state_change_interupt();
+						register_watchdog_state_change_interrupt();
 
 						/*
 						 * Check if the quorum is present then start the
@@ -6001,7 +6001,7 @@ watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode * wdNode, WDPac
 					}
 					/* inform to the cluster about the new quorum status */
 					send_message_of_type(NULL, WD_INFO_MESSAGE, NULL);
-					register_watchdog_quorum_change_interupt();
+					register_watchdog_quorum_change_interrupt();
 				}
 			}
 			break;
@@ -6717,7 +6717,7 @@ watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode * wdNode, WDPacketD
 				if (clusterCommand->commandStatus == COMMAND_FINISHED_ALL_REPLIED ||
 					clusterCommand->commandStatus == COMMAND_FINISHED_TIMEOUT)
 				{
-					register_watchdog_state_change_interupt();
+					register_watchdog_state_change_interrupt();
 
 					ereport(LOG,
 							(errmsg("successfully joined the watchdog cluster as standby node"),
@@ -6798,7 +6798,7 @@ watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode * wdNode, WDPacketD
 
 					case WD_FAILOVER_END:
 						{
-							register_backend_state_sync_req_interupt();
+							register_backend_state_sync_req_interrupt();
 						}
 						break;
 

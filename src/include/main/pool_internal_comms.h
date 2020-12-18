@@ -36,9 +36,9 @@ extern void degenerate_all_quarantine_nodes(void);
 extern bool close_idle_connections(void);
 
 /* defined in pgpool_main.c */
-extern void register_watchdog_quorum_change_interupt(void);
-extern void register_watchdog_state_change_interupt(void);
-extern void register_backend_state_sync_req_interupt(void);
+extern void register_watchdog_quorum_change_interrupt(void);
+extern void register_watchdog_state_change_interrupt(void);
+extern void register_backend_state_sync_req_interrupt(void);
 extern void register_inform_quarantine_nodes_req(void);
 extern bool register_node_operation_request(POOL_REQUEST_KIND kind,
 											int *node_id_set, int count, unsigned char flags);
