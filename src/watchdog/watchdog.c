@@ -515,7 +515,7 @@ static int	watchdog_state_machine(WD_EVENTS event, WatchdogNode * wdNode, WDPack
 static int	watchdog_state_machine_nw_error(WD_EVENTS event, WatchdogNode * wdNode, WDPacketData * pkt, WDCommandData * clusterCommand);
 static int watchdog_state_machine_nw_isolation(WD_EVENTS event, WatchdogNode * wdNode, WDPacketData * pkt, WDCommandData * clusterCommand);
 
-static int	I_am_leader_and_cluser_in_split_brain(WatchdogNode * otherLeaderNode);
+static int	I_am_leader_and_cluster_in_split_brain(WatchdogNode * otherLeaderNode);
 static void handle_split_brain(WatchdogNode * otherLeaderNode, WDPacketData * pkt);
 static bool beacon_message_received_from_node(WatchdogNode * wdNode, WDPacketData * pkt);
 
@@ -5658,7 +5658,7 @@ watchdog_state_machine_initializing(WD_EVENTS event, WatchdogNode * wdNode, WDPa
 		case WD_EVENT_TIMEOUT:
 			{
 				/*
-				 * If leader node exists in cluser, Join it otherwise try
+				 * If leader node exists in cluster, Join it otherwise try
 				 * becoming a leader
 				 */
 				if (WD_LEADER_NODE)
@@ -6406,7 +6406,7 @@ beacon_message_received_from_node(WatchdogNode * wdNode, WDPacketData * pkt)
  *  1 : local node should remain as the leader/coordinator
  */
 static int
-I_am_leader_and_cluser_in_split_brain(WatchdogNode * otherLeaderNode)
+I_am_leader_and_cluster_in_split_brain(WatchdogNode * otherLeaderNode)
 {
 	if (get_local_node_state() != WD_COORDINATOR)
 		return 0;
@@ -6507,7 +6507,7 @@ I_am_leader_and_cluser_in_split_brain(WatchdogNode * otherLeaderNode)
 static void
 handle_split_brain(WatchdogNode * otherLeaderNode, WDPacketData * pkt)
 {
-	int			decide_leader = I_am_leader_and_cluser_in_split_brain(otherLeaderNode);
+	int			decide_leader = I_am_leader_and_cluster_in_split_brain(otherLeaderNode);
 
 	if (decide_leader == 0)
 	{
