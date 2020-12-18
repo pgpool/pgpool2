@@ -2346,7 +2346,7 @@
       parameter description.  Unfortunately recovery_timeout description is
       64 chars, which is 1 byte longer than former definition of the macro.
 
-    - doc: Update document of condition for load balancig (Yugo Nagata)
+    - doc: Update document of condition for load balancing (Yugo Nagata)
 
       Load balancing is possible in an explicit transaction block
       even in replication mode since 3.3.0.
@@ -3232,7 +3232,7 @@
       parameter description.  Unfortunately recovery_timeout description is
       64 chars, which is 1 byte longer than former definition of the macro.
 
-    - doc: Update document of condition for load balancig (Yugo Nagata)
+    - doc: Update document of condition for load balancing (Yugo Nagata)
 
       Load balancing is possible in an explicit transaction block
       even in replication mode since 3.3.0.
