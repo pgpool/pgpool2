@@ -4298,7 +4298,7 @@
 
       The typical symptom is "I see SELECT is keep on running according to
       pg_stat_activity". To fix this pgpool-II just exits the process and
-      kill the existig connection.  This is not gentle but at this point I
+      kill the existing connection.  This is not gentle but at this point I
       believe this is the best solution.
 
     - Fix possible deadlock during failover with watchdog enabled.
@@ -5524,7 +5524,7 @@
 
       The typical symptom is "I see SELECT is keep on running according to
       pg_stat_activity". To fix this pgpool-II just exits the process and
-      kill the existig connection.  This is not gentle but at this point I
+      kill the existing connection.  This is not gentle but at this point I
       believe this is the best solution.
 
     - Fix possible deadlock during failover with watchdog enabled
@@ -7531,7 +7531,7 @@
 
       The typical symptom is "I see SELECT is keep on running according to
       pg_stat_activity". To fix this pgpool-II just exits the process and
-      kill the existig connection.  This is not gentle but at this point I
+      kill the existing connection.  This is not gentle but at this point I
       believe this is the best solution.
 
     - Fix bug with do_query which causes hung in extended protocol
@@ -8859,7 +8859,7 @@
 
       The typical symptom is "I see SELECT is keep on running according to
       pg_stat_activity". To fix this pgpool-II just exits the process and
-      kill the existig connection.  This is not gentle but at this point I
+      kill the existing connection.  This is not gentle but at this point I
       believe this is the best solution.
 
     - Fix bug with do_query which causes hung in extended protocol

@@ -31,7 +31,7 @@ names. Next you need to add expected output of pgproto to "expected"
 directory. The file name must be identical to the file name added to
 the tests directory. Note that source files lines like "1186" below <=
 BE ErrorResponse(S ERROR V ERROR C 42P01 M relation
-"non_existsing_table" does not exist P 15 F parse_relation.c L 1186 R
+"non_existing_table" does not exist P 15 F parse_relation.c L 1186 R
 parserOpenTable ) will be replaced with "xxx" to avoid the source code
 version differences.
 
