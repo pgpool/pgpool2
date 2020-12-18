@@ -2976,7 +2976,7 @@ InitializeConfigOptions(void)
 /*
  * returns the index value postfixed with the variable name
  * for example if the if name contains "backend_hostname11" and
- * the record name must be for the variable nameed "backend_hostname"
+ * the record name must be for the variable named "backend_hostname"
  * if the index is not present at end of the name the function
  * will return true and out parameter index will be assigned with -ve value
  */
