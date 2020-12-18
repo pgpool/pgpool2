@@ -21,7 +21,7 @@
  */
 
 /*
- * This module handles regular expressio array.
+ * This module handles regular expression array.
  */
 #include <string.h>
 
