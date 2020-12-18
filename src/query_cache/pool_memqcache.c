@@ -3451,8 +3451,8 @@ pool_check_and_discard_cache_buffer(int num_oids, int *oids)
 }
 
 /*
- * At Ready for Query or Comand Complete handle query cache.  For streaming
- * replication mode and extended query at Comand Complete handle query cache.
+ * At Ready for Query or Command Complete handle query cache.  For streaming
+ * replication mode and extended query at Command Complete handle query cache.
  * For other case At Ready for Query handle query cache.
  */
 void

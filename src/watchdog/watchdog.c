@@ -259,7 +259,7 @@ typedef struct WDPacketData
 
 typedef enum WDNodeCommandState
 {
-	COMMAMD_STATE_INIT,
+	COMMAND_STATE_INIT,
 	COMMAND_STATE_SENT,
 	COMMAND_STATE_REPLIED,
 	COMMAND_STATE_SEND_ERROR,
@@ -827,7 +827,7 @@ clear_command_node_result(WDCommandNodeResult * nodeResult)
 	nodeResult->result_type = WD_NO_MESSAGE;
 	nodeResult->result_data = NULL;
 	nodeResult->result_data_len = 0;
-	nodeResult->cmdState = COMMAMD_STATE_INIT;
+	nodeResult->cmdState = COMMAND_STATE_INIT;
 }
 
 static int
@@ -1732,7 +1732,7 @@ read_sockets(fd_set *rmask, int pending_fds_count)
 					/*
 					 * special case we want to remove the socket from
 					 * ipc_command_sock list manually, so mark the issuing
-					 * socket of ipcComman to invalid value
+					 * socket of ipcCommand to invalid value
 					 */
 					ipcCommand->sourceIPCSocket = -1;
 				}

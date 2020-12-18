@@ -866,7 +866,7 @@ pcp_reload_config(PCPConnInfo * pcpConn,char command_scope)
 	int                     wsize;
 /*
  * pcp packet format for pcp_reload_config
- * z[size][commmand_scope]
+ * z[size][command_scope]
  */
 	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{

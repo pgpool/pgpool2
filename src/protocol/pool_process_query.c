@@ -1440,7 +1440,7 @@ do_command(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
 	 * Continue to read packets until we get ReadForQuery (Z). Until that we
 	 * may recieve one of:
 	 *
-	 * N: Notice response E: Error response C: Comand complete
+	 * N: Notice response E: Error response C: Command complete
 	 *
 	 * XXX: we ignore Notice and Error here. Even notice/error messages are
 	 * not sent to the frontend. May be it's ok since the error was caused by
@@ -1630,7 +1630,7 @@ do_error_command(POOL_CONNECTION * backend, int major)
 	 * Continue to read packets until we get Error response (E). Until that we
 	 * may recieve one of:
 	 *
-	 * N: Notice response C: Comand complete
+	 * N: Notice response C: Command complete
 	 *
 	 * XXX: we ignore Notice here. Even notice messages are not sent to the
 	 * frontend. May be it's ok since the error was caused by our internal use
@@ -2147,7 +2147,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 					state |= COMMAND_COMPLETE_RECEIVED;
 
 				/*
-				 * "Comand Complete" implies data row received status if the
+				 * "Command Complete" implies data row received status if the
 				 * query was SELECT.  If there's no row returned, "command
 				 * complete" comes without row data.
 				 */
