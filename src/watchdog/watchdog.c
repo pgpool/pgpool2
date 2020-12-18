@@ -1067,7 +1067,7 @@ connect_to_node(WatchdogNode * wdNode)
 	return (wdNode->client_socket.sock_state != WD_SOCK_ERROR);
 }
 
-/* signal handler for SIGHUP and SIGCHILD handler */
+/* signal handler for SIGHUP and SIGCHLD handler */
 static RETSIGTYPE watchdog_signal_handler(int sig)
 {
 	if (sig == SIGHUP)
