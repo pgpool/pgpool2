@@ -1905,7 +1905,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 		/*
 		 * In streaming replication mode, send flush message before going any
 		 * further to retrieve and save any pending response packet from
-		 * backend. The saved packets will be poped up before returning to
+		 * backend. The saved packets will be popped up before returning to
 		 * caller. This preserves the user's expectation of packet sequence.
 		 */
 		if (SL_MODE && pool_pending_message_exists())
@@ -5020,7 +5020,7 @@ pool_push_pending_data(POOL_CONNECTION * backend)
 	 * retrieve and save any pending response packet from backend. This
 	 * ensures that at least "close complete" message is retured from backend.
 	 *
-	 * The saved packets will be poped up before returning to caller. This
+	 * The saved packets will be popped up before returning to caller. This
 	 * preserves the user's expectation of packet sequence.
 	 */
 	pool_write(backend, "C", 1);
