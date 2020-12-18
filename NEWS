@@ -10295,7 +10295,7 @@
         DML/DDL call might sent to only master node(Tatsuo Ishii)
 
       - Send NOTICE message to frontend periodically if V2 protocol is
-        used. This is ifdef out since it affectes visible change to
+        used. This is ifdef out since it affects visible change to
         applications.  2.2.3 unconditionaly sends param packet to
         client even it uses version 2 protocol, which is apparentlt
         wrong. Also tweak checking period from 1 second to 30 seconds
