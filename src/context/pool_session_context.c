@@ -1119,7 +1119,7 @@ pool_pending_messages_destroy(void)
 
 	if (!session_context)
 		ereport(ERROR,
-				(errmsg("pool_pending_message_destory: session context is not initialized")));
+				(errmsg("pool_pending_message_destroy: session context is not initialized")));
 
 	foreach(cell, session_context->pending_messages)
 	{
@@ -1880,7 +1880,7 @@ pool_temp_tables_destroy(void)
 {
 	if (!session_context)
 		ereport(ERROR,
-				(errmsg("pool_temp_tables_destory: session context is not initialized")));
+				(errmsg("pool_temp_tables_destroy: session context is not initialized")));
 
 	list_free(session_context->temp_tables);
 }
