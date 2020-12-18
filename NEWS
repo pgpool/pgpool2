@@ -4182,7 +4182,7 @@
       used in query mode lifecheck of watchdog . Previously, these are hard
       coded to use template1, recovery_user, and recovery_password.
 
-    - When delegate_IP parameter is emply, viertual IP is neither brought up
+    - When delegate_IP parameter is empty, viertual IP is neither brought up
       nor switched. (Yugo Nagata)
 
       This allows multi-master like configuration without virtual IP.
