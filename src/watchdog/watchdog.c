@@ -361,7 +361,7 @@ typedef struct wd_cluster
 	bool		ipc_auth_needed;
 	int			current_failover_id;
 	struct timeval last_bcast_srv_msg_time;	/* timestamp when last packet was
-											 *  boradcasted by the local node */
+											 *  broadcasted by the local node */
 	char		last_bcast_srv_msg;
 
 	List	   *unidentified_socks;
