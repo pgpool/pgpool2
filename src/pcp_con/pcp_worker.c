@@ -798,7 +798,7 @@ inform_watchdog_info(PCP_CONNECTION * frontend, char *buf)
 	if (!pool_config->use_watchdog)
 		ereport(ERROR,
 				(errmsg("PCP: informing watchdog info failed"),
-				 errdetail("watcdhog is not enabled")));
+				 errdetail("watchdog is not enabled")));
 
 	wd_index = atoi(buf);
 

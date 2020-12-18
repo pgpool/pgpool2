@@ -24,7 +24,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY pgproto             SYSTEM "pgproto.sgml">
 <!ENTITY pgpool              SYSTEM "pgpool.sgml">
 <!ENTITY pgpoolSetup         SYSTEM "pgpool_setup.sgml">
-<!ENTITY watchdoglSetup      SYSTEM "watchdog_setup.sgml">
+<!ENTITY watchdogSetup       SYSTEM "watchdog_setup.sgml">
 <!ENTITY pgpoolShow          SYSTEM "pgpool_show.sgml">
 <!ENTITY pgpoolReset         SYSTEM "pgpool_reset.sgml">
 <!ENTITY pgpoolSet           SYSTEM "pgpool_set.sgml">

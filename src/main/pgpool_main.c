@@ -297,7 +297,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 		/*
 		 * Watchdog process fires SIGUSR2 once in stable state
-		 * In addition, when wathcodg fails to start with FATAL, the process
+		 * In addition, when watchdog fails to start with FATAL, the process
 		 * exits and SIGCHLD is fired, so we can also expect SIGCHLD from
 		 * watchdog process. Finally, we also need to look for the SIGUSR1
 		 * signal for the failover requests from other watchdog nodes. In
@@ -3946,7 +3946,7 @@ sync_backend_from_watchdog(void)
 		 * leader node returns primary_node_id = -1 when the primary node is
 		 * in quarantine state on the leader.  So we will not update our
 		 * primary node id when the status of current primary node is not
-		 * CON_DOWN while primary_node_id sent by leader watchdong node is -1
+		 * CON_DOWN while primary_node_id sent by leader watchdog node is -1
 		 *
 		 * Note that Req_info->primary_node_id could be -2, which is the
 		 * initial value. So we need to avoid crash by checking the value is

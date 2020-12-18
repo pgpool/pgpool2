@@ -42,8 +42,8 @@ Pgpool-II documentation
    <variablelist>
 
     <varlistentry>
-     <term><option>-n <replaceable class="parameter">watcgdog_id</replaceable></option></term>
-     <term><option>--node-id=<replaceable class="parameter">watcgdog_id</replaceable></option></term>
+     <term><option>-n <replaceable class="parameter">watchdog_id</replaceable></option></term>
+     <term><option>--node-id=<replaceable class="parameter">watchdog_id</replaceable></option></term>
      <listitem>
       <para>
        The index of other Pgpool-II to get information for.
