@@ -2144,7 +2144,7 @@
       ERROR:  failed to make persistent db connection
       DETAIL:  connection to host:"x.x.x.x:5432 failed
 
-      However, the healthchek triggers neither fail over nor retrying. So,
+      However, the healthcheck triggers neither fail over nor retrying. So,
       except the annoying messages above, everything goes well. This could
       occur more easily if 1) num_init_children is big and 2) pgpool
       children go into idle state (no query arrived from client for
@@ -2262,7 +2262,7 @@
       ERROR:  failed to make persistent db connection
       DETAIL:  connection to host:"x.x.x.x:5432 failed
 
-      However, the healthchek triggers neither fail over nor retrying. So,
+      However, the healthcheck triggers neither fail over nor retrying. So,
       except the annoying messages above, everything goes well. This could
       occur more easily if 1) num_init_children is big and 2) pgpool
       children go into idle state (no query arrived from client for
@@ -3167,7 +3167,7 @@
       ERROR:  failed to make persistent db connection
       DETAIL:  connection to host:"x.x.x.x:5432 failed
 
-      However, the healthchek triggers neither fail over nor retrying. So,
+      However, the healthcheck triggers neither fail over nor retrying. So,
       except the annoying messages above, everything goes well. This could
       occur more easily if 1) num_init_children is big and 2) pgpool
       children go into idle state (no query arrived from client for
