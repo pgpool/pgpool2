@@ -650,7 +650,7 @@
 
       This could happen if we execute an extended protocol query
       and it fails. After an error is received the "ignore till sync flag"
-      is set and remained even if sync message was actually received.
+      is set and retained even if sync message was actually received.
       Thus any subsequent query (in the case above "DEALLOCATE message")
       is not processed and pgpool waits for message from frontend and backend,
       and pgpool stucks here because no message will arrive from both side.
