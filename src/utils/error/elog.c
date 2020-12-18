@@ -1737,7 +1737,7 @@ write_console(const char *line, int len)
 	/*
 	 * Conversion on non-win32 platforms is not implemented yet. It requires
 	 * non-throw version of pg_do_encoding_conversion(), that converts
-	 * unconvertable characters to '?' without errors.
+	 * unconvertible characters to '?' without errors.
 	 */
 #endif
 
