@@ -10500,7 +10500,7 @@
           return ReadyForQuery. This due to a wrong assumption for the
           client/server protocol(Tatsuo Ishii)
 
-        - Fix the case when sending an erronous query to abort
+        - Fix the case when sending an erroneous query to abort
           transaction. It assumed that after sending an error query,
           always ReadyForQuery came right after that. If some
           debugging or logging verboseness is set, PostgreSQL might
