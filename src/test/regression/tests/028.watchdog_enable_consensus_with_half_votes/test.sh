@@ -31,7 +31,7 @@ function wait_for_watchdog_startup
     done
 }
 
-# retun 0 if quorum exists.
+# return 0 if quorum exists.
 function quorum_exists
 {
     $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -h localhost -p $PCP_PORT >/dev/null 2>&1
