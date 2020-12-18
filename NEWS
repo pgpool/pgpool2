@@ -6241,7 +6241,7 @@
 
     - Fix typo in cache_reporting(). (Tatsuo Ishii)
 
-    - Fix inifinit loop in SSL mode.  (Tatsuo Ishii)
+    - Fix infinite loop in SSL mode.  (Tatsuo Ishii)
 
       When there's pending data in SSL layer of frontend, pool_process_query()
       checks pending data in backend. If there's non, it loops again and checks
@@ -7828,7 +7828,7 @@
 
     - Remove unnecessary/confusing debug log from s_do_auth.(Tatsuo Ishii)
 
-    - Fix inifinit loop in SSL mode. When there's pending data in SSL layer
+    - Fix infinite loop in SSL mode. When there's pending data in SSL layer
       of frontend, pool_process_query() checks pending data in backend.
       (Tatsuo Ishii)
 
@@ -9159,7 +9159,7 @@
 
     - Remove unnecessary/confusing debug log from s_do_auth.(Tatsuo Ishii)
 
-    - Fix inifinit loop in SSL mode. When there's pending data in SSL layer
+    - Fix infinite loop in SSL mode. When there's pending data in SSL layer
       of frontend, pool_process_query() checks pending data in backend.
       (Tatsuo Ishii)
 
@@ -10271,7 +10271,7 @@
         other cases such as internal locks are issued and Parse
         (Tatsuo Ishii)
 
-      - Fix inifinit loop in reset_backend(Xavier Noguer, Tatsuo)
+      - Fix infinite loop in reset_backend(Xavier Noguer, Tatsuo)
 
       - Fix Parse() to print actual query when it detects kind
         mismatch error(Tatsuo Ishii)

@@ -361,7 +361,7 @@ main(int argc, char **argv)
 
 	pool_semaphore_create(MAX_NUM_SEMAPHORES);
 
-	PgpoolMain(discard_status, clear_memcache_oidmaps); /* this is an infinate
+	PgpoolMain(discard_status, clear_memcache_oidmaps); /* this is an infinite
 														 * loop */
 
 	exit(0);
