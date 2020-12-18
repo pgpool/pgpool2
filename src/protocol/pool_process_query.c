@@ -647,7 +647,7 @@ synchronize(POOL_CONNECTION * cp)
 /*
  * send "terminate"(X) message to all backends, indicating that
  * backend should prepare to close connection to frontend (actually
- * pgpool). Note that caller must be proteceted from a signal
+ * pgpool). Note that caller must be protected from a signal
  * interruption while calling this function. Otherwise the number of
  * valid backends might be changed by failover/failback.
  */
