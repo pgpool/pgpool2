@@ -726,7 +726,7 @@ read_startup_packet(POOL_CONNECTION * cp)
 				 errdetail("no PostgreSQL user name specified in startup packet")));
 	}
 
-	/* The database defaults to ther user name. */
+	/* The database defaults to their user name. */
 	if (sp->database == NULL || sp->database[0] == '\0')
 	{
 		sp->database = pstrdup(sp->user);
