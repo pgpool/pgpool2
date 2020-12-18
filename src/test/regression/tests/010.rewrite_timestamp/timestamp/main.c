@@ -150,7 +150,7 @@ main(int argc, char **argv)
 
 	if (argc != 2)
 	{
-		fprintf(stderr, "./timestmp-test query\n");
+		fprintf(stderr, "./timestamp-test query\n");
 		exit(1);
 	}
 
