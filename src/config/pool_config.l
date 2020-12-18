@@ -43,7 +43,7 @@
 int yylex(void);
 
 POOL_CONFIG g_pool_config;	/* configuration values */
-POOL_CONFIG *pool_config = &g_pool_config;	/* for lagacy reason pointer to the above struct */
+POOL_CONFIG *pool_config = &g_pool_config;	/* for legacy reason pointer to the above struct */
 static unsigned Lineno;
 char   *config_file_dir = NULL; /* directory path of config file pgpool.conf */
 
