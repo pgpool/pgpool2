@@ -5018,7 +5018,7 @@ pool_push_pending_data(POOL_CONNECTION * backend)
 	 * In streaming replication mode, send a Close message for none existing
 	 * prepared statement and flush message before going any further to
 	 * retrieve and save any pending response packet from backend. This
-	 * ensures that at least "close complete" message is retured from backend.
+	 * ensures that at least "close complete" message is returned from backend.
 	 *
 	 * The saved packets will be popped up before returning to caller. This
 	 * preserves the user's expectation of packet sequence.
