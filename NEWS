@@ -1395,7 +1395,7 @@
     - doc: Add caution about JDBC driver version regarding app_name_redirect_preference_list
       (Tatsuo Ishii)
 
-    - Fix hang problmen reported in bug #145. (Tatsuo Ishii)
+    - Fix hang problem reported in bug #145. (Tatsuo Ishii)
 
       The problem occurs when all the condition below are met:
 
@@ -6050,7 +6050,7 @@
       stack and pop out when it is convenient. For this purpose, new
       functions pool_push(), pool_pop() and pool_stacklen() are added.
 
-      This probmel is reported in but grack #45 by rpashin.
+      This problem is reported in but grack #45 by rpashin.
 
       #45 LISTEN/NOTIFY doesn't work if cluster contains more then 1 node in
       streaming replication mode
