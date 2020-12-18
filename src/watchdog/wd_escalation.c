@@ -73,7 +73,7 @@ fork_escalation_process(void)
 		return pid;
 	}
 	on_exit_reset();
-	SetProcessGlobalVaraibles(PT_WATCHDOG_UTILITY);
+	SetProcessGlobalVariables(PT_WATCHDOG_UTILITY);
 
 	POOL_SETMASK(&UnBlockSig);
 
@@ -161,7 +161,7 @@ fork_plunging_process(void)
 		return pid;
 	}
 	on_exit_reset();
-	SetProcessGlobalVaraibles(PT_WATCHDOG_UTILITY);
+	SetProcessGlobalVariables(PT_WATCHDOG_UTILITY);
 
 	POOL_SETMASK(&UnBlockSig);
 

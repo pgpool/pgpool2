@@ -357,7 +357,7 @@ fork_lifecheck_child(void)
 	if (pid == 0)
 	{
 		on_exit_reset();
-		SetProcessGlobalVaraibles(PT_LIFECHECK);
+		SetProcessGlobalVariables(PT_LIFECHECK);
 
 		/* call lifecheck child main */
 		POOL_SETMASK(&UnBlockSig);

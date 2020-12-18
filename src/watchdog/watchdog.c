@@ -1109,7 +1109,7 @@ fork_watchdog_child(void)
 	{
 		on_exit_reset();
 
-		SetProcessGlobalVaraibles(PT_WATCHDOG);
+		SetProcessGlobalVariables(PT_WATCHDOG);
 
 		/* call watchdog child main */
 		POOL_SETMASK(&UnBlockSig);

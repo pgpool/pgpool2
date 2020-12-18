@@ -525,7 +525,7 @@ SysLogger_Start(void)
 
 		case 0:
 			on_exit_reset();
-			SetProcessGlobalVaraibles(PT_LOGGER);
+			SetProcessGlobalVariables(PT_LOGGER);
 			/* do the work */
 			SysLoggerMain(0, NULL);
 			break;

@@ -102,7 +102,7 @@ get_application_name(void)
 	return process_application_name;
 }
 
-void SetProcessGlobalVaraibles(ProcessType pType)
+void SetProcessGlobalVariables(ProcessType pType)
 {
 	processType = pType;
 	myProcPid = getpid();

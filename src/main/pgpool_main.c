@@ -617,7 +617,7 @@ pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	if (pid == 0)
 	{
 		on_exit_reset();
-		SetProcessGlobalVaraibles(PT_PCP);
+		SetProcessGlobalVariables(PT_PCP);
 
 		close(pipe_fds[0]);
 		close(pipe_fds[1]);
@@ -665,7 +665,7 @@ fork_a_child(int *fds, int id)
 			close(pipe_fds[1]);
 		}
 
-		SetProcessGlobalVaraibles(PT_CHILD);
+		SetProcessGlobalVariables(PT_CHILD);
 
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
@@ -712,7 +712,7 @@ worker_fork_a_child(ProcessType type, void (*func) (), void *params)
 			close(pipe_fds[1]);
 		}
 
-		SetProcessGlobalVaraibles(type);
+		SetProcessGlobalVariables(type);
 
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
@@ -3269,7 +3269,7 @@ fork_follow_child(int old_main_node, int new_primary, int old_primary)
 	if (pid == 0)
 	{
 		on_exit_reset();
-		SetProcessGlobalVaraibles(PT_FOLLOWCHILD);
+		SetProcessGlobalVariables(PT_FOLLOWCHILD);
 		ereport(LOG,
 				(errmsg("start triggering follow command.")));
 		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
