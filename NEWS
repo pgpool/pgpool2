@@ -1234,7 +1234,7 @@
 
 * Enhancements
 
-    - Performance improvement in extened query protocol (Tatsuo Ishii)
+    - Performance improvement in extended query protocol (Tatsuo Ishii)
 
       Unnecessary "flush" messages which used to be sent in each step of
       extended protocol messages (parse, bind, describe and execute) and
