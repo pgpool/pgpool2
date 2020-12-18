@@ -19,7 +19,7 @@
  *
  */
 
-How does online reconvery work?
+How does online recovery work?
 
 pcp_recovery_node calls pcp_recovery_node() API
 

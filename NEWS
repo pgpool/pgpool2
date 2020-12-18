@@ -9412,7 +9412,7 @@
       - Fix bug with pcp_connect() which causes double free. Patch
         contributed by Jehan-Guillaume (ioguix) de Rorthais(Tatsuo Ishii)
 
-      - Fix bug with start_recoery() which is apparently wrong usage of
+      - Fix bug with start_recovery() which is apparently wrong usage of
         PQfinish()(Tatsuo Ishii)
 
       - Fix incorrect error message which is sent to the frontend when
