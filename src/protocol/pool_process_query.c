@@ -4481,7 +4481,7 @@ pool_process_notice_message_from_one_backend(POOL_CONNECTION * frontend, POOL_CO
 
 /*
  * pool_extract_error_message: Extract human readable message from
- * ERROR/NOTICE reponse packet and return it. If "read_kind" is true,
+ * ERROR/NOTICE response packet and return it. If "read_kind" is true,
  * kind will be read in this function. If "read_kind" is false, kind
  * should have been already read and it should be either 'E' or
  * 'N'. The returned string is in palloc'd buffer. Callers must pfree
