@@ -215,7 +215,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 			else
 				ereport(LOG,
 						(errmsg("failed to create watchdog heartbeat receive socket."),
-						 errdetail("setsockopt(SO_BINDTODEVICE) requies root privilege")));
+						 errdetail("setsockopt(SO_BINDTODEVICE) requires root privilege")));
 		}
 #else
 		ereport(LOG,
