@@ -10082,7 +10082,7 @@
       - Enable proper replication of results of temporal functions
         (CURRENT_TIMESTAMP, CURRENT_DATE, now() etc.). Now
         applications can execute INSERT/UPDATE tables which include
-        defaut values using those temporal functions. There are small
+        default values using those temporal functions. There are small
         limitations. See restriction sections of docs for more
         details (Akio Ishida)
 
