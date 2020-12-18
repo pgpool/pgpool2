@@ -4096,7 +4096,7 @@
 
 * Incompatible changes
 
-    - All the follwing are about watchdog.
+    - All the following are about watchdog.
       See "New features" section below for details of these changes.
 
       - Default monitoring method was changed from query mode to heartbeat mode.
