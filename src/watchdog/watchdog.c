@@ -2573,7 +2573,7 @@ static WDFailoverCMDResults compute_failover_consensus(POOL_REQUEST_KIND reqKind
 	}
 
 	/*
-	 * So we reached here means quorum is present Now come to dificult part of
+	 * So we reached here means quorum is present Now come to difficult part of
 	 * enusring the consensus
 	 */
 	if (pool_config->failover_require_consensus == true)
