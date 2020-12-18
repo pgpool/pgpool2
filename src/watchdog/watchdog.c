@@ -3866,7 +3866,7 @@ cluster_service_message_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 		case CLUSTER_IAM_TRUE_LEADER:
 			{
 				/*
-				 * The cluster was in split-brain and remote node thiks it is
+				 * The cluster was in split-brain and remote node thinks it is
 				 * the worthy leader
 				 */
 				if (get_local_node_state() == WD_COORDINATOR)
