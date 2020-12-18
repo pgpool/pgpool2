@@ -551,7 +551,7 @@ wait_for_query_response(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, i
 			if (protoVersion == PROTO_MAJOR_V3)
 			{
 				/*
-				 * Write dummy parameter staus packet to check if the socket
+				 * Write dummy parameter status packet to check if the socket
 				 * to frontend is ok
 				 */
 				pool_write(frontend, "S", 1);

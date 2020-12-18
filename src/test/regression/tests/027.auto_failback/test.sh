@@ -81,7 +81,7 @@ if [ $? != 0 ];then
 	./shutdownall
 	exit 1
 fi
-echo `date` ":backend node staus is still detached"
+echo `date` ":backend node status is still detached"
 
 echo `date` ":sleep 40[sec]"
 sleep 40;
