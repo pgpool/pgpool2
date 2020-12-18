@@ -2044,7 +2044,7 @@ show_backend_stats(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
  * offsettbl: offset array for each "data" member. The number of array
  * elements must match with num_fields.
  *
- * data: string data to be displayed as row data, 2-dimentions array. The
+ * data: string data to be displayed as row data, 2-dimensions array. The
  * number of array elements must match with num_fields * nrows.
  *
  * row_size: byte length of data for 1 row.
