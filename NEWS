@@ -3670,7 +3670,7 @@
 
     - Fix query cache bug with extended protocol. (Tatsuo Ishii)
 
-      SELECT retrieves outdated cache even DML was executed in an expilicit
+      SELECT retrieves outdated cache even DML was executed in an explicit
       transaction. The bug had been there since in memory query cache was
       born. Per [pgpool-general-jp: 1252].
 
@@ -5103,7 +5103,7 @@
 
     - Fix query cache bug with extended protocol. (Tatsuo Ishii)
 
-      SELECT retrieves outdated cache even DML was executed in an expilicit
+      SELECT retrieves outdated cache even DML was executed in an explicit
       transaction. The bug had been there since in memory query cache was
       born. Per [pgpool-general-jp: 1252].
 
