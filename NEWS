@@ -1384,7 +1384,7 @@
 
     - doc: Fix wrong description in documents about log_standby_delay (Yugo Nagata)
 
-    - Fix segfalut that occurs when function is used in FROM clause (Yugo Nagata)
+    - Fix segfault that occurs when function is used in FROM clause (Yugo Nagata)
 
       PREPARE statements in streaming-reapplication mode and INSERT/UPDATE
       with SELECT in native-replication mode were affected. For example:
@@ -2022,7 +2022,7 @@
 
       Per bug #153.
 
-    - Fix segfalut that occurs when function is used in FROM clause (Yugo Nagata)
+    - Fix segfault that occurs when function is used in FROM clause (Yugo Nagata)
 
       PREPARE statements in streaming-reapplication mode and INSERT/UPDATE
       with SELECT in native-replication mode were affected. For example:
@@ -8035,7 +8035,7 @@
 
         Real master node could be changed while pgpool is running in streaming
         replication mode. Previously it is assigned REAL_MASTER_NODE_ID, which
-        could have no connections after fail over and cause segafult.
+        could have no connections after fail over and cause segfault.
 
       - Fix pool_setall_node_to_be_sent() to use private_backend_status instead
         of BACKEND_INFO macro. (Tatsuo Ishii)
