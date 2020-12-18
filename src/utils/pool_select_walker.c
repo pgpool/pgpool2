@@ -1350,7 +1350,7 @@ make_function_name_from_funccall(FuncCall *fcall)
 {
 	/*
 	 * Function name. Max size is calculated as follows: schema
-	 * name(POOL_NAMEDATALEN byte) + quotation marks for schmea name(2 byte) +
+	 * name(POOL_NAMEDATALEN byte) + quotation marks for schema name(2 byte) +
 	 * period(1 byte) + table name (POOL_NAMEDATALEN byte) + quotation marks
 	 * for table name(2 byte) + NULL(1 byte)
 	 */
@@ -1419,7 +1419,7 @@ make_table_name_from_rangevar(RangeVar *rangevar)
 {
 	/*
 	 * Table name. Max size is calculated as follows: schema
-	 * name(POOL_NAMEDATALEN byte) + quotation marks for schmea name(2 byte) +
+	 * name(POOL_NAMEDATALEN byte) + quotation marks for schema name(2 byte) +
 	 * period(1 byte) + table name (POOL_NAMEDATALEN byte) + quotation marks
 	 * for table name(2 byte) + NULL(1 byte)
 	 */
