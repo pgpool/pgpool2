@@ -85,7 +85,7 @@ typedef struct
 	BACKEND_STATUS backend_status;	/* backend status */
 	time_t		status_changed_time;	/* backend status changed time */
 	double		backend_weight; /* normalized backend load balance ratio */
-	double		unnormalized_weight;	/* descripted parameter */
+	double		unnormalized_weight;	/* described parameter */
 	char		backend_data_directory[MAX_PATH_LENGTH];
 	char		backend_application_name[NAMEDATALEN];	/* application_name for walreciever */
 	unsigned short flag;		/* various flags */
