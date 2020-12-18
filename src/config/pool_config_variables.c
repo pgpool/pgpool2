@@ -1673,7 +1673,7 @@ static struct config_string_array ConfigureNamesStringArray[] =
 
 	{
 		{"heartbeat_device", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
-			"Name of NIC device for sending hearbeat.",
+			"Name of NIC device for sending heartbeat.",
 			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, WD_MAX_IF_NUM
 		},
 		NULL,

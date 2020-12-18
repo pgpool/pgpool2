@@ -898,7 +898,7 @@ pgpool_port2 = 9999
    <para>
     Specify the method of lifecheck <xref linkend="guc-wd-lifecheck-method">
     and the lifecheck interval <xref linkend="guc-wd-interval">.
-    Here, we use <literal>hearbeat</literal> method to perform watchdog lifecheck.
+    Here, we use <literal>heartbeat</literal> method to perform watchdog lifecheck.
    </para>
    <programlisting>
 wd_lifecheck_method = 'heartbeat'

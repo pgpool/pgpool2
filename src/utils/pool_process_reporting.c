@@ -1064,7 +1064,7 @@ get_config(int *nrows)
 
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_device%d", j);
 		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_HB_IF(j).if_name);
-		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "name of NIC device #%d for sending hearbeat", j);
+		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "name of NIC device #%d for sending heartbeat", j);
 		i++;
 
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_destination_port%d", j);
