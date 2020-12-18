@@ -4706,7 +4706,7 @@ SELECT_RETRY:
 
 	/*
 	 * If we are in load balance mode and the selected node is down, we need
-	 * to re-select load_balancing_node.  Note that we cannnot use
+	 * to re-select load_balancing_node.  Note that we cannot use
 	 * VALID_BACKEND macro here.  If in_load_balance == 1, VALID_BACKEND macro
 	 * may return 0.
 	 */
