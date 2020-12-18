@@ -155,7 +155,7 @@
       and secondly the routing of the query containing pg_terminate_backend
       also needs a new logic so that the query should be sent to the correct
       PostgreSQL node that hosts the backend with the PID referred by
-      the pg_terminate_bakend()
+      the pg_terminate_backend()
 
       So how does this commit handles pg_terminate_backend()??
       In the SimpleQuery() function which is the work horse of simple query

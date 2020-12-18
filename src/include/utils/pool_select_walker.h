@@ -42,7 +42,7 @@ typedef struct
 	bool		has_view;		/* True if view is used */
 	bool		has_function_call;	/* True if write function call is used */
 	int			pg_terminate_backend_pid;	/* pid argument of
-											 * pg_terminate_backedn_call(if
+											 * pg_terminate_backend_call(if
 											 * used) */
 	bool		has_non_immutable_function_call;	/* True if non immutable
 													 * functions are used */

@@ -117,7 +117,7 @@ pool_process_query(POOL_CONNECTION * frontend,
 	 * This variable is used while processing reset_request (i.e.:
 	 * reset_request == 1).  If state is 0, then we call reset_backend. And we
 	 * set state to 1 so that we wait for ready for query message from
-	 * badckends.
+	 * backends.
 	 */
 	int			state;
 
@@ -1418,7 +1418,7 @@ do_command(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
 	send_simplequery_message(backend, strlen(query) + 1, query, protoMajor);
 
 	/*
-	 * Wait for response from badckend while polling frontend connection is
+	 * Wait for response from backend while polling frontend connection is
 	 * ok. If not, cancel the transaction.
 	 */
 	wait_for_query_response_with_trans_cleanup(frontend,
