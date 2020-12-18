@@ -3472,7 +3472,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 		 *
 		 * Here, Sync message is sent to only primary, since the query context
 		 * said so. Thus responses for Parse, Bind, and Execute for "BEGIN"
-		 * are still penidng on the standby node.
+		 * are still pending on the standby node.
 		 *
 		 * The the frontend sends closes the transaction.
 		 *
