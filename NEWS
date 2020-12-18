@@ -6311,7 +6311,7 @@
     - Fix to set unix domain socket path for pgpool PCP communication before
       setting up signal handlers. (Yugo Nagata)
 
-      Previously, unlink of the socket in exitting process was failed because
+      Previously, unlink of the socket in exiting process was failed because
       the path of the socket was not set.
       Patch contributed by Gilles Darold
 
