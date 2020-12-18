@@ -2336,7 +2336,7 @@
       Rather, it is harmful, and due to this it was regarded that ping
       command exited abnormally in error even when this succeeded.
 
-    - Fix to use waitpid instead of wait in exec_ifconifg (Yugo Nagata)
+    - Fix to use waitpid instead of wait in exec_ifconfig (Yugo Nagata)
 
     - Remove an unnecessary include directive (Yugo Nagata)
 
