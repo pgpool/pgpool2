@@ -576,7 +576,7 @@
 
     - Fix confusing comments in pgpool.conf. (Tatsuo Ishii)
 
-    - Fix Japanese and Chinese documetation bug about raw mode. (Yugo Nagata, Bo Peng)
+    - Fix Japanese and Chinese documentation bug about raw mode. (Yugo Nagata, Bo Peng)
 
       Connection pool is available in raw mode.
 
@@ -863,7 +863,7 @@
 
       See bug 191 for related info.
 
-    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+    - Fix Chinese documentation bug about raw mode (Yugo Nagata, Bo Peng)
       Connection pool is available in raw mode.
 
     - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
@@ -1624,7 +1624,7 @@
 
       See bug 191 for related info.
 
-    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+    - Fix Chinese documentation bug about raw mode (Yugo Nagata, Bo Peng)
       Connection pool is available in raw mode.
 
     - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
@@ -2765,7 +2765,7 @@
 
       See bug 191 for related info.
 
-    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+    - Fix Chinese documentation bug about raw mode (Yugo Nagata, Bo Peng)
       Connection pool is available in raw mode.
 
     - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
@@ -4577,7 +4577,7 @@
 
       See bug 191 for related info.
 
-    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+    - Fix Chinese documentation bug about raw mode (Yugo Nagata, Bo Peng)
       Connection pool is available in raw mode.
 
     - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
@@ -6816,7 +6816,7 @@
 
       See bug 191 for related info.
 
-    - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
+    - Fix Chinese documentation bug about raw mode (Yugo Nagata, Bo Peng)
       Connection pool is available in raw mode.
 
     - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
