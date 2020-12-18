@@ -272,7 +272,7 @@
       before executing the command.
      </para>
 
-     <table id="ffailback-command-table">
+     <table id="failback-command-table">
       <title>failback command options</title>
       <tgroup cols="2">
        <thead>
