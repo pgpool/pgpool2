@@ -61,7 +61,7 @@ cat standby.conf >> $STANDBY_DIR/etc/pgpool.conf
 echo "pid_file_name = '$PWD/pgpool2.pid'" >> $STANDBY_DIR/etc/pgpool.conf
 echo "logdir = $STANDBY_DIR/log" >> $STANDBY_DIR/etc/pgpool.conf
 echo 1 > $STANDBY_DIR/etc/pgpool_node_id
-# start the stnadby pgpool-II by hand
+# start the standby pgpool-II by hand
 #$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $STANDBY_DIR/etc/pgpool.conf -F $STANDBY_DIR/etc/pcp.conf -a $STANDBY_DIR/etc/pool_hba.conf > $STANDBY_DIR/log/pgpool.log 2>&1 &
 
 # create standby2 environment but do not start pgpool
@@ -73,7 +73,7 @@ cat standby2.conf >> $STANDBY2_DIR/etc/pgpool.conf
 echo "pid_file_name = '$PWD/pgpool3.pid'" >> $STANDBY2_DIR/etc/pgpool.conf
 echo "logdir = $STANDBY2_DIR/log" >> $STANDBY2_DIR/etc/pgpool.conf
 echo 2 > $STANDBY2_DIR/etc/pgpool_node_id
-# start the stnadby pgpool-II by hand
+# start the standby pgpool-II by hand
 #$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $STANDBY2_DIR/etc/pgpool.conf -F $STANDBY2_DIR/etc/pcp.conf -a $STANDBY2_DIR/etc/pool_hba.conf > $STANDBY2_DIR/log/pgpool.log 2>&1 &
 
 # First test check if both pgpool-II have found their correct place in watchdog cluster.
@@ -108,9 +108,9 @@ done
 
 # now start other Pgpool-II nodes to complete the quorum
 
-# start the stnadby pgpool-II by hand
+# start the standby pgpool-II by hand
 $PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $STANDBY_DIR/etc/pgpool.conf -F $STANDBY_DIR/etc/pcp.conf -a $STANDBY_DIR/etc/pool_hba.conf > $STANDBY_DIR/log/pgpool.log 2>&1 &
-# start the second stnadby pgpool-II by hand
+# start the second standby pgpool-II by hand
 $PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $STANDBY2_DIR/etc/pgpool.conf -F $STANDBY2_DIR/etc/pcp.conf -a $STANDBY2_DIR/etc/pool_hba.conf > $STANDBY2_DIR/log/pgpool.log 2>&1 &
 
 # now check if standby1 has successfully joined connected to the leader.

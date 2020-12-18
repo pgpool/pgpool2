@@ -45,7 +45,7 @@ cat standby.conf >> $STANDBY_DIR/etc/pgpool.conf
 # since we are using the same pgpool-II conf as of leader. so change the pid file path in standby pgpool conf
 echo "pid_file_name = '$PWD/pgpool2.pid'" >> $STANDBY_DIR/etc/pgpool.conf
 echo 1 > $STANDBY_DIR/etc/pgpool_node_id
-# start the stnadby pgpool-II by hand
+# start the standby pgpool-II by hand
 $PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $STANDBY_DIR/etc/pgpool.conf -F $STANDBY_DIR/etc/pcp.conf -a $STANDBY_DIR/etc/pool_hba.conf > $STANDBY_DIR/log/pgpool.log 2>&1 &
 
 # First test check if both pgpool-II have found their correct place in watchdog cluster.

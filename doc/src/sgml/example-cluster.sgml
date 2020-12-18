@@ -36,7 +36,7 @@
   </para>
   <note>
    <para>
-    The roles of <literal>Active</literal>, <literal>Standy</literal>, <literal>Primary</literal>,
+    The roles of <literal>Active</literal>, <literal>Standby</literal>, <literal>Primary</literal>,
     <literal>Standby</literal> are not fixed and may be changed by further operations.
    </para>
   </note>

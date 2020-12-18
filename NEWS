@@ -8018,7 +8018,7 @@
         From 3.1 transactional statements such as "BEGIN" are sent to not only
         primary but also standbys. This brings an unfortunate side effect: if
         the multi statement is "BEGIN;DELETE FROM table;END", this will be
-        sent to standy as well and cause an error because standby does notallow
+        sent to standby as well and cause an error because standby does notallow
         write SQL. So fix is, if a query is a multi statement one, then send it
         to primary only.
 

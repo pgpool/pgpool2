@@ -3533,7 +3533,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 				pfree(buf);
 			}
 			ereport(DEBUG5,
-					(errmsg("read_kind_from_backend: skipped first standy packet")));
+					(errmsg("read_kind_from_backend: skipped first standby packet")));
 
 			for (;;)
 			{
