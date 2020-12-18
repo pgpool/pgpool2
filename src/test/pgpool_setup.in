@@ -132,7 +132,7 @@ if [ $PGVERSION -gt 91 ];then
     INITDBARG="$INITDBARG --data-checksums"
 fi
 
-# pgpool-II configuration file localtion.
+# pgpool-II configuration file location.
 CONF=$BASEDIR/etc/pgpool.conf
 # failover script
 FAILOVER_SCRIPT=$BASEDIR/etc/failover.sh
