@@ -87,10 +87,10 @@ Requires:    %{name} = %{version}
 Development headers and libraries for pgpool-II.
 
 %package extensions
-Summary:     Postgersql extensions for pgpool-II
+Summary:     PostgreSQL extensions for pgpool-II
 Group:       Applications/Databases
 %description extensions
-Postgresql extensions libraries and sql files for pgpool-II.
+PostgreSQL extensions libraries and sql files for pgpool-II.
 
 %prep
 %setup -q -n %{archive_name}
@@ -314,7 +314,7 @@ fi
   %{pghome}/share/extension/pgpool-regclass.sql
   %{pghome}/lib/pgpool-regclass.so
 %endif
-# From PostgerSQL 11 the relevant files have to be installed 
+# From PostgreSQL 11 the relevant files have to be installed 
 # into $pkglibdir/bitcode/
 %if %{pgsql_ver} >= 110 && %{rhel} >= 7
   %{pghome}/lib/bitcode/pgpool-recovery.index.bc
