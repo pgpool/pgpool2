@@ -4548,7 +4548,7 @@
    </listitem>
    <listitem>
     <!--
-    2016-08-01 [024eaea]  Fix for 215: pgpool doesnt escalate ip in case of another node unavailability
+    2016-08-01 [024eaea]  Fix for 215: pgpool doesn't escalate ip in case of another node unavailability
     -->
     <para>
      Fix <productname>Pgpool-II</productname> doesn't escalate ip in case of another node unavailability. (bug 215) (Muhammad Usama)

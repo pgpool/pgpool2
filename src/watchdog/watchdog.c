@@ -4180,7 +4180,7 @@ standard_packet_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 						if (get_local_node_state() != WD_COORDINATOR)
 						{
 							/*
-							 * This fight dosen't belong to me broadcast the
+							 * This fight doesn't belong to me broadcast the
 							 * message about cluster in split-brain
 							 */
 
