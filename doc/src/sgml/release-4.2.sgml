@@ -889,7 +889,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
     <para>
      Use <command>pg_config</command> to get
      <productname>PostgreSQL</productname> lib path and add this path
-     to LD_LIBRARY_PATH environment paramater in regress.sh. (Bo Peng)
+     to LD_LIBRARY_PATH environment parameter in regress.sh. (Bo Peng)
     </para>
     <para>
 

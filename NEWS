@@ -2639,7 +2639,7 @@
     - Rename all occurrence of "on memory query cache" to "in memory
       query cache" because latter is more correct in English (Tatsuo Ishii)
 
-    - Add 4th paramter "master node port number" to recovery script
+    - Add 4th parameter "master node port number" to recovery script
       (Tatsuo Ishii)
 
     - Allow to handle more than 3 database nodes in pgpool_setup

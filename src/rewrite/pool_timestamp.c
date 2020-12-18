@@ -1110,7 +1110,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL * backend,
 	else
 	{
 		/* If num formats is 1, this means the specified format code is applied for all original parameters,
-		 * so enlarge message length to specify format codes for each of original paramters. */
+		 * so enlarge message length to specify format codes for each of original parameters. */
 		if (num_formats == 1)
 			*len += (num_org_params - 1) * sizeof(int16);
 

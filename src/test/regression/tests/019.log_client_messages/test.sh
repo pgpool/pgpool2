@@ -25,7 +25,7 @@ echo "done."
 source ./bashrc.ports
 export PGPORT=$PGPOOL_PORT
 
-# log_client_messages paramater change
+# log_client_messages parameter change
 ./startall
 wait_for_pgpool_startup
 
