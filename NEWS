@@ -5669,7 +5669,7 @@
       message.  Problem is, the rewritten message was kept in the data which
       is managed by pool_create_sent_message() etc. The function assumes
       that all the data is in session context memory. However, palloc()
-      allocates memory in query context of course, and gets freeed later on
+      allocates memory in query context of course, and gets freed later on
       when the query context disappears. And the function tries to free the
       memory as well, which causes various problems, including segfault and
       double free. To fix this, memory to store rewritten message is
@@ -7612,7 +7612,7 @@
       message.  Problem is, the rewritten message was kept in the data which
       is managed by pool_create_sent_message() etc. The function assumes
       that all the data is in session context memory. However, palloc()
-      allocates memory in query context of course, and gets freeed later on
+      allocates memory in query context of course, and gets freed later on
       when the query context disappears. And the function tries to free the
       memory as well, which causes various problems, including segfault and
       double free. To fix this, memory to store rewritten message is
@@ -8961,7 +8961,7 @@
       message.  Problem is, the rewritten message was kept in the data which
       is managed by pool_create_sent_message() etc. The function assumes
       that all the data is in session context memory. However, palloc()
-      allocates memory in query context of course, and gets freeed later on
+      allocates memory in query context of course, and gets freed later on
       when the query context disappears. And the function tries to free the
       memory as well, which causes various problems, including segfault and
       double free. To fix this, memory to store rewritten message is
