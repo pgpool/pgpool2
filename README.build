@@ -1,6 +1,6 @@
 This memo explains the rule how to build pgpool-II source tree using
 autotools and need to push derived files such as Makefile.in into
-pgpool-II official source reporsitory.
+pgpool-II official source repository.
 
 So the rule does not apply to:
 
