@@ -945,7 +945,7 @@
      startup user is changed to <literal>postgres</literal> user.
     </para>
     <para>
-     If installing from RPMs, <literal>postrges</literal> user will be allowed to
+     If installing from RPMs, <literal>postgres</literal> user will be allowed to
      run <varname>if_up/down_cmd</varname> and <varname>arping_cmd</varname>
      with <command>sudo</command> without a password.
      If <varname>if_up/down_cmd</varname> or <varname>arping_cmd</varname> starts with "/",

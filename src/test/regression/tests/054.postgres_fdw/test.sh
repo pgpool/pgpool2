@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------
 # Check to see if postgres_fdw works with pgpool-II.  Since
-# postres_fdw sets search_path to pg_catalog, pgpool_regclass() should
+# postgres_fdw sets search_path to pg_catalog, pgpool_regclass() should
 # be registered as "pg_catalog.pgpool_regclass".
 #
 # Requires PostgreSQL 9.3 or later and contrib/postgres_fdw be
