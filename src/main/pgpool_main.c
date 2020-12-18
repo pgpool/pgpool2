@@ -3848,7 +3848,7 @@ sync_backend_from_watchdog(void)
 	bool		node_status_was_changed_to_up = false;
 	bool		need_to_restart_children = false;
 	bool		partial_restart = false;
-	bool		reload_maste_node_id = false;
+	bool		reload_master_node_id = false;
 
 	int			down_node_ids[MAX_NUM_BACKENDS];
 	int			down_node_ids_index = 0;
@@ -3901,7 +3901,7 @@ sync_backend_from_watchdog(void)
 				BACKEND_INFO(i).backend_status = CON_DOWN;
 				pool_set_backend_status_changed_time(i);
 				my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
-				reload_maste_node_id = true;
+				reload_master_node_id = true;
 				node_status_was_changed_to_down = true;
 				ereport(LOG,
 						(errmsg("backend:%d is set to down status", i),
@@ -3920,7 +3920,7 @@ sync_backend_from_watchdog(void)
 				BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
 				pool_set_backend_status_changed_time(i);
 				my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
-				reload_maste_node_id = true;
+				reload_master_node_id = true;
 
 				ereport(LOG,
 						(errmsg("backend:%d is set to UP status", i),
@@ -3970,7 +3970,7 @@ sync_backend_from_watchdog(void)
 
 	pfree(backendStatus);
 
-	if (reload_maste_node_id)
+	if (reload_master_node_id)
 	{
 		Req_info->main_node_id = get_next_main_node();
 	}

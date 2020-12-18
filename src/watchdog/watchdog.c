@@ -6480,7 +6480,7 @@ I_am_leader_and_cluster_in_split_brain(WatchdogNode * otherLeaderNode)
 			return 1;
 		}
 	}
-	else						/* decide on which node is the older mater */
+	else						/* decide on which node is the older master */
 	{
 		if (otherLeaderNode->current_state_time.tv_sec < g_cluster.localNode->current_state_time.tv_sec)
 		{
