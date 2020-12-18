@@ -3211,7 +3211,7 @@ _outSetRest(String * str, VariableSetStmt *node)
 	{
 		A_Const    *v = linitial(node->args);
 
-		string_append_char(str, "XML OPTOIN ");
+		string_append_char(str, "XML OPTION ");
 		string_append_char(str, v->val.val.str);
 	}
 	else
