@@ -119,7 +119,7 @@ done
 
 # raise an artificial communication error on standby for DB node 1
 echo "1	down" > $STANDBY_DIR/log/backend_down_request
-echo "Checking if the standby successfuly process the failover request..."
+echo "Checking if the standby successfully process the failover request..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
 	grep -i "building consensus for request" $STANDBY_DIR/log/pgpool.log
