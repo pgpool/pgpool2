@@ -256,7 +256,7 @@ relcache_lookup(TSRewriteContext * ctx)
 	return (TSRel *) pool_search_relcache(ts_relcache, ctx->backend, table_name);
 }
 
-/* If timestamp valus is required then return ts_const. Otherwize make
+/* If timestamp value is required then return ts_const. Otherwize make
  * a new ParamRef, whose number member is 0 and is overwritten at last,
  * and add it into params list in context.
  */

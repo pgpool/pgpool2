@@ -1572,7 +1572,7 @@ failover(void)
 						 * node and that node had a primary role before it was
 						 * quarantined, Restore the primary node status for
 						 * that node before degenerating it. This is important
-						 * for the failover script to get the proper valueo of
+						 * for the failover script to get the proper value of
 						 * old primary
 						 */
 						if (Req_info->primary_node_id == -1 &&
