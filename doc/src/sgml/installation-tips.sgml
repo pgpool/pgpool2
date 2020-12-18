@@ -26,7 +26,7 @@
    9694.  Notice that only heartbeat port uses UDP and others use TCP.
 
    <programlisting>
-    firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp  --add-port=9694/tcp
+    firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp
     firewall-cmd --permanent --zone=public --add-port=9694/udp
     firewall-cmd --reload
    </programlisting>
