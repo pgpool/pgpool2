@@ -101,7 +101,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	struct sockaddr_in addr;
 	struct sockaddr_un unix_addr;
 	struct hostent *hp;
-	char	   *password_fron_file = NULL;
+	char	   *password_from_file = NULL;
 	char		os_user[256];
 	PCPConnInfo *pcpConn = palloc0(sizeof(PCPConnInfo));
 	int			fd;
@@ -228,8 +228,8 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		char		port_str[100];
 
 		snprintf(port_str, sizeof(port_str), "%d", port);
-		password_fron_file = PasswordFromFile(pcpConn, hostname, port_str, username);
-		password = password_fron_file;
+		password_from_file = PasswordFromFile(pcpConn, hostname, port_str, username);
+		password = password_from_file;
 	}
 
 	if (pcp_authorize(pcpConn, username, password) < 0)
@@ -241,8 +241,8 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	else
 		pcpConn->connState = PCP_CONNECTION_OK;
 
-	if (password_fron_file)
-		pfree(password_fron_file);
+	if (password_from_file)
+		pfree(password_from_file);
 
 	return pcpConn;
 }
