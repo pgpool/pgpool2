@@ -881,7 +881,7 @@ backend_clustering_mode = 'native_replication'
 
   <para>
    This mode is similar to the native replication mode except it adds
-   the visibility consistency among nodes. The implemenation is based
+   the visibility consistency among nodes. The implementation is based
    on a research paper <xref linkend="mishima2009">.
    To enable this mode, use 'snapshot_isolation' for
    <varname>backend_clustering_mode</varname>.
