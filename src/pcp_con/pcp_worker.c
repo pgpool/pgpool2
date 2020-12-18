@@ -813,7 +813,7 @@ inform_watchdog_info(PCP_CONNECTION * frontend, char *buf)
 			 errdetail("retrieved node information from IPC socket")));
 
 	/*
-	 * This is the voilation of PCP protocol but I think in future we should
+	 * This is the violation of PCP protocol but I think in future we should
 	 * shift to more adaptable protocol for data transmission.
 	 */
 	json_data_len = strlen(json_data);
