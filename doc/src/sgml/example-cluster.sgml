@@ -968,7 +968,7 @@ wd_escalation_command = '/etc/pgpool-II/escalation.sh'
 
    <para>
     Basically, it should work if you change the following variables according to your environment.
-    PGPOOL is tha array of the hostname that runnig Pgpool-II.
+    PGPOOL is tha array of the hostname that running Pgpool-II.
     VIP is the virtual IP address that you set as delegate_IP.
     DEVICE is the network interface for the virtual IP.
    </para>

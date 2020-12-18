@@ -54,7 +54,7 @@ do
 done
 
 # send cancel request
-# executing long runing query
+# executing long running query
 $PSQL -c "select pg_sleep(30);" test &
 # get psql process pid
 psqlpid=$!
