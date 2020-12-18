@@ -4337,7 +4337,7 @@
 
       SELECT * FROM t1;
 
-      At commit pgpool tries to delete cache for t2 but failes because
+      At commit pgpool tries to delete cache for t2 but fails because
       there's no oid table entry for t2. Problem is, it fails to check oid
       table for t1. So cache for t1 remains and the last SELECT incorrectly
       returns cached data. Fix is, continuing to check oid table entries.
@@ -5565,7 +5565,7 @@
 
       SELECT * FROM t1;
 
-      At commit pgpool tries to delete cache for t2 but failes because
+      At commit pgpool tries to delete cache for t2 but fails because
       there's no oid table entry for t2. Problem is, it fails to check oid
       table for t1. So cache for t1 remains and the last SELECT incorrectly
       returns cached data. Fix is, continuing to check oid table entries.
@@ -10238,7 +10238,7 @@
         the connection unexpectedly" when authentication fails(Glyn
         Astill)
 
-      - Add info to logs when writing to sockets falis to know if it
+      - Add info to logs when writing to sockets fails to know if it
         was for backend or frontend(Tatsuo Ishii)
 
       - Do not complain when writing to socket of frontend
