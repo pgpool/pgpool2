@@ -1436,7 +1436,7 @@ check_restart_request(void)
  * wait_for_new_connections()
  * functions calls select on sockets and wait for new client
  * to connect, on successfull connection returns the socket descriptor
- * and returns -1 if timeout has occured
+ * and returns -1 if timeout has occurred
  */
 
 static int

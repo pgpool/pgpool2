@@ -540,7 +540,7 @@ wait_for_query_response(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, i
 		if (status < 0)			/* error ? */
 		{
 			ereport(ERROR,
-					(errmsg("backend error occured while waiting for backend response")));
+					(errmsg("backend error occurred while waiting for backend response")));
 		}
 		else if (frontend != NULL && status > 0)
 		{
@@ -564,7 +564,7 @@ wait_for_query_response(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, i
 				{
 					ereport(FRONTEND_ERROR,
 							(errmsg("unable to to flush data to frontend"),
-							 errdetail("frontend error occured while waiting for backend reply")));
+							 errdetail("frontend error occurred while waiting for backend reply")));
 				}
 
 			}
@@ -588,7 +588,7 @@ wait_for_query_response(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, i
 				{
 					ereport(FRONTEND_ERROR,
 							(errmsg("unable to to flush data to frontend"),
-							 errdetail("frontend error occured while waiting for backend reply")));
+							 errdetail("frontend error occurred while waiting for backend reply")));
 
 				}
 #endif
@@ -815,7 +815,7 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 		if (is_panic_or_fatal_error(p1, MAJOR(backend)))
 			ereport(ERROR,
 					(errmsg("unable to forward message to frontend"),
-					 errdetail("FATAL error occured on backend")));
+					 errdetail("FATAL error occurred on backend")));
 	}
 
 	pfree(p1);
@@ -1397,7 +1397,7 @@ pool_send_readyforquery(POOL_CONNECTION * frontend)
 /*
  * Send a query to a backend in sync manner.
  * This function sends a query and waits for CommandComplete/ReadyForQuery.
- * If an error occured, it returns with POOL_ERROR.
+ * If an error occurred, it returns with POOL_ERROR.
  * This function does NOT handle SELECT/SHOW queries.
  * If no_ready_for_query is non 0, returns without reading the packet
  * length for ReadyForQuery. This mode is necessary when called from ReadyForQuery().
@@ -1823,7 +1823,7 @@ free_select_result(POOL_SELECT_RESULT * result)
  * the only client calls this function other than SELECT is
  * insert_lock(), and the qury is either LOCK or SELECT for UPDATE.
  * Note: After the introduction of elog API the return type of do_query is changed
- * to void. and now ereport is thrown in case of error occured within the function
+ * to void. and now ereport is thrown in case of error occurred within the function
  */
 void
 do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, int major)
@@ -4815,7 +4815,7 @@ SELECT_RETRY:
 			if (CONNECTION_SLOT(backend, i) == 0)
 			{
 				ereport(LOG,
-						(errmsg("error occured while reading and processing packets"),
+						(errmsg("error occurred while reading and processing packets"),
 						 errdetail("FATAL ERROR: VALID_BACKEND returns non 0 but connection slot is empty. backend id:%d RAW_MODE:%d LOAD_BALANCE_STATUS:%d status:%d",
 								   i, RAW_MODE, LOAD_BALANCE_STATUS(i), BACKEND_INFO(i).backend_status)));
 				was_error = 1;
@@ -4949,7 +4949,7 @@ SELECT_RETRY:
 		if (FD_ISSET(frontend->fd, &exceptmask))
 			ereport(ERROR,
 					(errmsg("unable to read from frontend socket"),
-					 errdetail("exception occured on frontend socket")));
+					 errdetail("exception occurred on frontend socket")));
 
 		else if (FD_ISSET(frontend->fd, &readmask))
 		{
@@ -4962,7 +4962,7 @@ SELECT_RETRY:
 	if (FD_ISSET(MAIN(backend)->fd, &exceptmask))
 		ereport(FATAL,
 				(errmsg("unable to read from backend socket"),
-				 errdetail("exception occured on backend socket")));
+				 errdetail("exception occurred on backend socket")));
 
 	else if (FD_ISSET(MAIN(backend)->fd, &readmask))
 	{
