@@ -1061,7 +1061,7 @@ static POOL_CONNECTION_POOL * connect_backend(StartupPacket *sp, POOL_CONNECTION
 }
 
 /*
- * signal handler for SIGTERM, SIGINT and SIGQUUT
+ * signal handler for SIGTERM, SIGINT and SIGQUIT
  */
 static RETSIGTYPE die(int sig)
 {
