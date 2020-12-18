@@ -16,7 +16,7 @@
  * is" without express or implied warranty.
  *
  * pgpool-regclass.c is similar to PostgreSQL builtin function
- * reglcass but does not throw exceptions.
+ * regclass but does not throw exceptions.
  * If something goes wrong, it returns InvalidOid.
  */
 

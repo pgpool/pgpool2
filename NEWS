@@ -5723,7 +5723,7 @@
 
       The problem is reported in bugtrack #53.
 
-      #53 pgpool_regclas hangs all connections
+      #53 pgpool_regclass hangs all connections
       Date:     2013-04-04 13:35
       Reporter: tmandke
       http://www.pgpool.net/mantisbt/view.php?id=53
@@ -7666,7 +7666,7 @@
 
       The problem is reported in bugtrack #53.
 
-      #53 pgpool_regclas hangs all connections
+      #53 pgpool_regclass hangs all connections
       Date:     2013-04-04 13:35
       Reporter: tmandke
       http://www.pgpool.net/mantisbt/view.php?id=53
@@ -9015,7 +9015,7 @@
 
       The problem is reported in bugtrack #53.
 
-      #53 pgpool_regclas hangs all connections
+      #53 pgpool_regclass hangs all connections
       Date:     2013-04-04 13:35
       Reporter: tmandke
       http://www.pgpool.net/mantisbt/view.php?id=53
