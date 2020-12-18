@@ -4339,7 +4339,7 @@
 
       At commit pgpool tries to delete cache for t2 but failes because
       there's no oid table entry for t2. Problem is, it fails to check oid
-      table for t1. So cahce for t1 remains and the last SELECT incorrectly
+      table for t1. So cache for t1 remains and the last SELECT incorrectly
       returns cached data. Fix is, continuing to check oid table entries.
 
       This is reported in Bug track #58 by wms
@@ -5567,7 +5567,7 @@
 
       At commit pgpool tries to delete cache for t2 but failes because
       there's no oid table entry for t2. Problem is, it fails to check oid
-      table for t1. So cahce for t1 remains and the last SELECT incorrectly
+      table for t1. So cache for t1 remains and the last SELECT incorrectly
       returns cached data. Fix is, continuing to check oid table entries.
 
       This is reported in Bug track #58 by wms
