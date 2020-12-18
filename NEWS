@@ -10656,7 +10656,7 @@
 
 * General
         - Allow to reload pgpool.conf(Yoshiyuki Asaba)
-        - The paraser is now compatible with PostgreSQL 8.3(Yoshiyuki Asaba)
+        - The parser is now compatible with PostgreSQL 8.3(Yoshiyuki Asaba)
         - Add new directive "failover_command" to specify command when
           a node is detached(Yoshiyuki Asaba)
         - Add new directive "client_idle_limit" to specify the time out since
