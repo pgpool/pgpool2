@@ -6397,7 +6397,7 @@
       - On memory query cache deletes the all cache of an updated table
         automatically with monitoring if the executed query is UPDATE, INSERT,
         ALTER TABLE and so on. But pgpool-II isn't able to recognize implicit
-        updates due to trigers, foreign keys and DROP TABLE CASCADE.
+        updates due to triggers, foreign keys and DROP TABLE CASCADE.
         You can avoid this problem with memqcache_expire by which pgpool deletes
         old cache in a fixed time automatically, or with black_memqcache_table_list
         by which pgpool's memory cache flow ignores the tables.
