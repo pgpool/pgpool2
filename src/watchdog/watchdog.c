@@ -2598,7 +2598,7 @@ static WDFailoverCMDResults compute_failover_consensus(POOL_REQUEST_KIND reqKind
 			ereport(LOG, (
 						  errmsg("we have got the consensus to perform the failover"),
 						  errdetail("%d node(s) voted in the favor", failoverObj->request_count)));
-			/* restor the flag value to the one from the first call */
+			/* restore the flag value to the one from the first call */
 			*flags = failoverObj->reqFlags;
 			/* remove this object, It is no longer needed */
 			remove_failover_object(failoverObj);
