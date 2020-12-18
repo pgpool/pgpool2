@@ -92,7 +92,7 @@ static char *pwdfMatchesString(char *buf, char *token);
  */
 
 /* Check if PCP connection is connected and authenticated
- * return 1 on successfull 0 otherwise
+ * return 1 on successful 0 otherwise
  */
 
 PCPConnInfo *

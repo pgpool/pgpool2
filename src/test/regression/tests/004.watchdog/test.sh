@@ -112,7 +112,7 @@ $PGPOOL_INSTALL_DIR/bin/pgpool -f $STANDBY_DIR/etc/pgpool.conf -m f stop
 cd leader
 ./shutdownall
 
-echo "$success_count out of 4 successfull";
+echo "$success_count out of 4 successful";
 
 if test $success_count -eq 4
 then

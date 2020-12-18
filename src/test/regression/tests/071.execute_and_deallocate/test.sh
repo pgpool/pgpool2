@@ -95,7 +95,7 @@ EOF
 	cd ..
 done
 
-echo "$success_count out of $num_tests successfull";
+echo "$success_count out of $num_tests successful";
 
 if test $success_count -eq $num_tests
 then

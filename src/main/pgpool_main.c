@@ -470,7 +470,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 		/*
 		 * check for child signals to ensure child startup before reporting
-		 * successfull start.
+		 * successful start.
 		 */
 		if (first)
 		{

@@ -232,7 +232,7 @@ issue_command_to_watchdog(char type, int timeout_sec, char *data, int data_len, 
 	else
 	{
 		/*
-		 * For non blocking mode if we are sucessful in sending the command
+		 * For non blocking mode if we are successful in sending the command
 		 * that means the command is success
 		 */
 		result = palloc0(sizeof(WDIPCCmdResult));

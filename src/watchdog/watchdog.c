@@ -909,7 +909,7 @@ wd_create_recv_socket(int port)
 
 /*
  * creates a socket in non blocking mode and connects it to the hostname and port
- * the out parameter connected is set to true if the connection is successfull
+ * the out parameter connected is set to true if the connection is successful
  */
 static int
 wd_create_client_socket(char *hostname, int port, bool *connected)
@@ -994,7 +994,7 @@ wd_create_client_socket(char *hostname, int port, bool *connected)
 	return sock;
 }
 
-/* returns the number of successfull connections */
+/* returns the number of successful connections */
 static int
 connect_with_all_configured_nodes(void)
 {

@@ -154,7 +154,7 @@ typedef struct WatchdogNode
 									 */
 	int    sending_failures_count;  /* number of times we have failed
 									 * to send message to the node.
-									 * Gets reset after successfull sent
+									 * Gets reset after successful sent
 									 */
 	int    missed_beacon_count;     /* number of times the node has
 									 * failed to reply for beacon.

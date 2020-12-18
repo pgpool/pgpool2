@@ -36,7 +36,7 @@ typedef struct {
 	int32	max_health_check_duration;	/* maximum duration spent for a health check session in milli seconds */
 	int32	min_health_check_duration;	/* minimum duration spent for a health check session in milli seconds */
 	time_t	last_health_check;	/* last health check timestamp */
-	time_t	last_successful_health_check;	/* last succesfull health check timestamp */
+	time_t	last_successful_health_check;	/* last successful health check timestamp */
 	time_t	last_skip_health_check;			/* last skipped health check timestamp */
 	time_t	last_failed_health_check;		/* last failed health check timestamp */
 } POOL_HEALTH_CHECK_STATISTICS;
