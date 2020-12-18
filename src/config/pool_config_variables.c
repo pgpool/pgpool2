@@ -280,8 +280,8 @@ static const struct config_enum_entry check_temp_table_options[] = {
 	{"catalog", CHECK_TEMP_CATALOG, false},	/* search system catalogs */
 	{"trace", CHECK_TEMP_TRACE, false},		/* tracing temp tables */
 	{"none", CHECK_TEMP_NONE, false},		/* do not check temp tables */
-	{"on", CHECK_TEMP_ON, false},			/* same as CHECK_TEMP_CATALOG. Just for backward compatibilty. */
-	{"off", CHECK_TEMP_OFF, false},			/* same as CHECK_TEMP_NONE. Just for backward compatibilty. */
+	{"on", CHECK_TEMP_ON, false},			/* same as CHECK_TEMP_CATALOG. Just for backward compatibility. */
+	{"off", CHECK_TEMP_OFF, false},			/* same as CHECK_TEMP_NONE. Just for backward compatibility. */
 	{NULL, 0, false}
 };
 

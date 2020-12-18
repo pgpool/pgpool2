@@ -489,7 +489,7 @@ typedef struct
 									 * possible. If off, SQL comments
 									 * effectively prevent the judgment (pre
 									 * 3.4 behavior). For backward
-									 * compatibilty sake, default is off. */
+									 * compatibility sake, default is off. */
 
 	DLBOW_OPTION disable_load_balance_on_write; /* Load balance behavior when
 												 * write query is issued in an
