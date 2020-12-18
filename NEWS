@@ -5869,10 +5869,10 @@
       Date: 2012-10-23 06:25
       http://www.pgpool.net/mantisbt/view.php?id=31
 
-    - Fix hung up while repeating pcp_attach_node and pcp_detatch_node
+    - Fix hung up while repeating pcp_attach_node and pcp_detach_node
       (Tatsuo Ishii)
 
-      When node status is changed by pcp_attach_node and pcp_detatch_node,
+      When node status is changed by pcp_attach_node and pcp_detach_node,
       failover() sends SIGUSR1 to pcp_child process expecting it exits to
       refresh node status. In this situation lots of pgpool children exit and
       produce SIGCHLD as well. The SIGCHLD handler reaper() tries catch all
@@ -7703,10 +7703,10 @@
       Date: Sun, 28 Oct 2012 01:12:52 -0400
       http://www.sraoss.jp/pipermail/pgpool-general/2012-October/001160.html
 
-    - Fix hung up while repeating pcp_attach_node and pcp_detatch_node
+    - Fix hung up while repeating pcp_attach_node and pcp_detach_node
       (Tatsuo Ishii)
 
-      When node status is changed by pcp_attach_node and pcp_detatch_node,
+      When node status is changed by pcp_attach_node and pcp_detach_node,
       failover() sends SIGUSR1 to pcp_child process expecting it exits to
       refresh node status. In this situation lots of pgpool children exit and
       produce SIGCHLD as well. The SIGCHLD handler reaper() tries catch all
@@ -9652,8 +9652,8 @@
         connection pool or not are added to pcp_proc_info's
         output(Tatsuo Ishii)
 
-      - "Gracefuly detach" option is added to pcp_detatch_node. With
-        this option, pcp_detatch_node waits until all frontends
+      - "Gracefuly detach" option is added to pcp_detach_node. With
+        this option, pcp_detach_node waits until all frontends
         disconnected(Tatsuo Ishii)
 
       - New directive "white_function_list" and "black_function_list"
