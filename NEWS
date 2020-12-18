@@ -4106,7 +4106,7 @@
       - In default, all the query caches on shared memory are cleared when
         standby pgpool-II escalates to active.
 
-      - Database name, user name, and password used for monitring other
+      - Database name, user name, and password used for monitoring other
         pgpool-II by query are specified by dedicated parameters.
         Previously, template1, recovery_user, and recovery_password are used.
 
@@ -4116,7 +4116,7 @@
 
   ** Watchdog
 
-    - Add a new monitring method using heartbeat signal of UDP packet in
+    - Add a new monitoring method using heartbeat signal of UDP packet in
       lifecheck. (Yugo Nagata)
 
       You can select a method from either of two methods, "heartbeat" mode or
