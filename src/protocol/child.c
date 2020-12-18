@@ -1132,7 +1132,7 @@ static RETSIGTYPE close_idle_connection(int sig)
 	int			save_errno = errno;
 
 	/*
-	 * DROP DATABSE is ongoing.
+	 * DROP DATABASE is ongoing.
 	 */
 	if (ignore_sigusr1)
 		return;
