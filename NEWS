@@ -6730,7 +6730,7 @@
 
     - If frontend terminates while reading large number of query results
       from backend, pgpool continues to read from backend and write to
-      frontend until all query results consumued. (Tatsuo Ishii)
+      frontend until all query results consumed. (Tatsuo Ishii)
 
       This will take very long time if query results is huge. To finish pgpool
       session as soon as possible, modify pool_flush_it to returns error if
