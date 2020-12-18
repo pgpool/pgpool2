@@ -255,7 +255,7 @@ typedef struct
 								 * transaction */
 
 	/*
-	 * Parse/Bind/Decribe/Execute/Close message queue.
+	 * Parse/Bind/Describe/Execute/Close message queue.
 	 */
 	List	   *pending_messages;
 

@@ -1548,7 +1548,7 @@ const char *
 pool_pending_message_type_to_string(POOL_MESSAGE_TYPE type)
 {
 	static const char *pending_msg_string[] = {"Parse", "Bind", "Execute",
-	"Descripbe", "Close", "Sync"};
+	"Describe", "Close", "Sync"};
 
 	if (type < 0 || type > POOL_SYNC)
 		return "unknown type";

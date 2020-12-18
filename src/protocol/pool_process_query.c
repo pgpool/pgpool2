@@ -1981,12 +1981,12 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 		pool_write(backend, prepared_name, pname_len);
 
 		/*
-		 * Send descrive message if the query is SELECT.
+		 * Send describe message if the query is SELECT.
 		 */
 		if (!strncasecmp(query, "SELECT", strlen("SELECT")))
 		{
 			/*
-			 * Send descrive message
+			 * Send describe message
 			 */
 			pool_write(backend, "D", 1);
 			len = 4 + 1 + pname_len;
