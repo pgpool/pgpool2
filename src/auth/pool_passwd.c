@@ -329,7 +329,7 @@ userMatchesString(char *buf, char *user)
 }
 
 /*
- * user:passwod[:user:password]
+ * user:password[:user:password]
  */
 PasswordMapping *
 pool_get_user_credentials(char *username)

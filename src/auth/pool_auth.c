@@ -502,7 +502,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 								  &password, &passwordType) == false)
 			{
 				/*
-				 * We do not have any passeord, we can still get the password
+				 * We do not have any password, we can still get the password
 				 * from client using plain text authentication if it is
 				 * allowed by user
 				 */
@@ -1026,7 +1026,7 @@ do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, in
 	if (get_auth_password(backend, frontend, reauth, &pwd, &passwordType) == false)
 	{
 		/*
-		 * We do not have any passeord, we can still get the password
+		 * We do not have any password, we can still get the password
 		 * from client using plain text authentication if it is
 		 * allowed by user
 		 */
