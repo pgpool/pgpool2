@@ -1472,7 +1472,7 @@ failover(void)
 				/*
 				 * recalculate the main node id after setting the backend
 				 * status of quarantined node, this will bring us to the old
-				 * main_node_id that was beofre the quarantine state
+				 * main_node_id that was before the quarantine state
 				 */
 				Req_info->main_node_id = get_next_main_node();
 				if (Req_info->primary_node_id == -1 &&

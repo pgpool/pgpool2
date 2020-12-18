@@ -2945,7 +2945,7 @@ get_list_from_string_regex_delim(const char *input, const char *delimi, int *n)
 }
 
 /*
- * Memory of the array type variables must be initialized befor calling this function
+ * Memory of the array type variables must be initialized before calling this function
  */
 void
 InitializeConfigOptions(void)
