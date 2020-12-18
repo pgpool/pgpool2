@@ -40,7 +40,7 @@
 #include "pool_config_variables.h"
 
 static int	choose_db_node_id(char *str);
-static void free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT * cp);
+static void free_persistent_db_connection_memory(POOL_CONNECTION_POOL_SLOT * cp);
 static void si_enter_critical_region(void);
 static void si_leave_critical_region(void);
 
@@ -86,7 +86,7 @@ make_persistent_db_connection(
 
 	if (fd < 0)
 	{
-		free_persisten_db_connection_memory(cp);
+		free_persistent_db_connection_memory(cp);
 		pfree(startup_packet);
 		ereport(ERROR,
 				(errmsg("failed to make persistent db connection"),
@@ -108,7 +108,7 @@ make_persistent_db_connection(
 	if (len1 >= (sizeof(startup_packet->data) - len))
 	{
 		pool_close(cp->con);
-		free_persisten_db_connection_memory(cp);
+		free_persistent_db_connection_memory(cp);
 		pfree(startup_packet);
 		ereport(ERROR,
 				(errmsg("failed to make persistent db connection"),
@@ -120,7 +120,7 @@ make_persistent_db_connection(
 	if (len1 >= (sizeof(startup_packet->data) - len))
 	{
 		pool_close(cp->con);
-		free_persisten_db_connection_memory(cp);
+		free_persistent_db_connection_memory(cp);
 		pfree(startup_packet);
 		ereport(ERROR,
 				(errmsg("failed to make persistent db connection"),
@@ -132,7 +132,7 @@ make_persistent_db_connection(
 	if (len1 >= (sizeof(startup_packet->data) - len))
 	{
 		pool_close(cp->con);
-		free_persisten_db_connection_memory(cp);
+		free_persistent_db_connection_memory(cp);
 		pfree(startup_packet);
 		ereport(ERROR,
 				(errmsg("failed to make persistent db connection"),
@@ -161,7 +161,7 @@ make_persistent_db_connection(
 	PG_CATCH();
 	{
 		pool_close(cp->con);
-		free_persisten_db_connection_memory(cp);
+		free_persistent_db_connection_memory(cp);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -205,7 +205,7 @@ make_persistent_db_connection_noerror(
  * make_persistent_db_connection and discard_persistent_db_connection.
  */
 static void
-free_persisten_db_connection_memory(POOL_CONNECTION_POOL_SLOT * cp)
+free_persistent_db_connection_memory(POOL_CONNECTION_POOL_SLOT * cp)
 {
 	if (!cp)
 		return;
@@ -251,7 +251,7 @@ discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT * cp)
 	socket_unset_nonblock(cp->con->fd);
 
 	pool_close(cp->con);
-	free_persisten_db_connection_memory(cp);
+	free_persistent_db_connection_memory(cp);
 }
 
 /*
