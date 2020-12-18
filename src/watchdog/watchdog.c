@@ -5651,7 +5651,7 @@ watchdog_state_machine_initializing(WD_EVENTS event, WatchdogNode * wdNode, WDPa
 	switch (event)
 	{
 		case WD_EVENT_WD_STATE_CHANGED:
-			/* set 1 sec timeout, save ourself from recurrsion */
+			/* set 1 sec timeout, save ourself from recursion */
 			set_timeout(1);
 			break;
 
