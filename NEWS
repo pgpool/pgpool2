@@ -4219,7 +4219,7 @@
       "pgpool-recovery" and "pgpool-regclass" because latters are not
       convenient in using CREATE EXTENSION command (requires double quotes).
 
-    - Add a function "pgpool_pgctl()" which enebles to execute
+    - Add a function "pgpool_pgctl()" which enables to execute
       pg_ctl stop/restart/reload (except for start) by SQL. (Nozomi Anzai)
 
       $ psql sales -c "select pgpool_pgctl('reload', 'fast')";
