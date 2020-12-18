@@ -3304,7 +3304,7 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 
 	/*
 	 * Calculate the size of required shared memory and try to allocate
-	 * everyting in sigle memory segment
+	 * everything in sigle memory segment
 	 */
 	size = 256;/* let us have some extra space */
 	size += MAXALIGN(sizeof(BackendDesc));
