@@ -10672,7 +10672,7 @@
         - Enhance the performance of replication for write
           queries. Now the worst case is 1/2 compared with single DB
           node regardless the number of DB nodes. Previous release
-          tends to degrade according to the numer of DB
+          tends to degrade according to the number of DB
           nodes(Yoshiyuki Asaba)
         - Add "online recovery" which allows to add a DB node and sync
           with other DB nodes without stopping the pgpool
