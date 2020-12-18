@@ -1917,7 +1917,7 @@ failover(void)
 				 * not be received by pgpool child. This could happen if
 				 * multiple PostgreSQL are going down (or even starting
 				 * pgpool, without starting PostgreSQL can trigger this).
-				 * Child calls degenerate_backend() and it tries to aquire
+				 * Child calls degenerate_backend() and it tries to acquire
 				 * semaphore to write a failover request. In this case the
 				 * signal mask is set as well, thus signals are never
 				 * received.

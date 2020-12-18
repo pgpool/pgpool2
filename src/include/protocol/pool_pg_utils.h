@@ -55,9 +55,9 @@ extern PGVersion *Pgversion(POOL_CONNECTION_POOL * backend);
 
 /* pool_pg_utils.c */
 extern bool si_snapshot_prepared(void);
-extern bool si_snapshot_aquire_command(Node *node);
-extern void si_aquire_snapshot(void);
-extern void si_snapshot_aquired(void);
+extern bool si_snapshot_acquire_command(Node *node);
+extern void si_acquire_snapshot(void);
+extern void si_snapshot_acquired(void);
 extern void si_commit_request(void);
 extern void si_commit_done(void);
 

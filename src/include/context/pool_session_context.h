@@ -297,7 +297,7 @@ typedef struct
 	int			preferred_main_node_id;
 #endif
 
-	/* Whether snapshot is aquired in this transaction. Only used by Snapshot Isolation mode. */
+	/* Whether snapshot is acquired in this transaction. Only used by Snapshot Isolation mode. */
 	SI_STATE	si_state;
 	/* Whether transaction is read only. Only used by Snapshot Isolation mode. */
 	SI_STATE	transaction_read_only;

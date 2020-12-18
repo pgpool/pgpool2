@@ -6045,7 +6045,7 @@ watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode * wdNode, WDPac
 							/*
 							 * Okay this is the case when only our VIP is lost
 							 * but network interface seems to be working fine
-							 * try to re-aquire the VIP
+							 * try to re-acquire the VIP
 							 */
 							wd_IP_up();
 						}

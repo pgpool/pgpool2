@@ -725,10 +725,10 @@ si_snapshot_prepared(void)
 }
 
 /*
- * Reurns true if the command will aquire snapshot.
+ * Reurns true if the command will acquire snapshot.
  */
 bool
-si_snapshot_aquire_command(Node *node)
+si_snapshot_acquire_command(Node *node)
 {
 	return !is_start_transaction_query(node) &&
 		!IsA(node, VariableSetStmt) &&
@@ -736,10 +736,10 @@ si_snapshot_aquire_command(Node *node)
 }
 
 /*
- * Aquire snapshot
+ * Acquire snapshot
  */
 void
-si_aquire_snapshot(void)
+si_acquire_snapshot(void)
 {
 	POOL_SESSION_CONTEXT *session;
 
@@ -750,13 +750,13 @@ si_aquire_snapshot(void)
 		for (;;)
 		{
 			si_enter_critical_region();
-			elog(SI_DEBUG_LOG_LEVEL, "si_aquire_snapshot called: counter: %d", si_manage_info->snapshot_counter);
+			elog(SI_DEBUG_LOG_LEVEL, "si_acquire_snapshot called: counter: %d", si_manage_info->snapshot_counter);
 
 			if (si_manage_info->commit_counter > 0)
 			{
 				si_manage_info->commit_waiting_children[my_proc_id] = getpid();
 				si_leave_critical_region();
-				elog(SI_DEBUG_LOG_LEVEL, "si_aquire_snapshot left critical region");
+				elog(SI_DEBUG_LOG_LEVEL, "si_acquire_snapshot left critical region");
 				sleep(1);
 			}
 			else
@@ -769,10 +769,10 @@ si_aquire_snapshot(void)
 }
 
 /*
- * Notice that snapshot is aquired
+ * Notice that snapshot is acquired
  */
 void
-si_snapshot_aquired(void)
+si_snapshot_acquired(void)
 {
 	POOL_SESSION_CONTEXT *session;
 	int		i;
@@ -783,7 +783,7 @@ si_snapshot_aquired(void)
 	{
 		si_enter_critical_region();
 
-		elog(SI_DEBUG_LOG_LEVEL, "si_snapshot_aquired called: counter: %d", si_manage_info->snapshot_counter);
+		elog(SI_DEBUG_LOG_LEVEL, "si_snapshot_acquired called: counter: %d", si_manage_info->snapshot_counter);
 
 		si_manage_info->snapshot_counter--;
 
@@ -795,7 +795,7 @@ si_snapshot_aquired(void)
 				pid_t pid = si_manage_info->snapshot_waiting_children[i];
 				if (pid > 0)
 				{
-					elog(SI_DEBUG_LOG_LEVEL, "si_snapshot_aquired: send SIGUSR2 to %d", pid);
+					elog(SI_DEBUG_LOG_LEVEL, "si_snapshot_acquired: send SIGUSR2 to %d", pid);
 					kill(pid, SIGUSR2);
 					si_manage_info->snapshot_waiting_children[i] = 0;
 				}
