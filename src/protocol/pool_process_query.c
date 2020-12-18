@@ -1454,7 +1454,7 @@ do_command(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
 
 		if (kind == 'Z')		/* Ready for Query? */
 			break;				/* get out the loop without reading message
-								 * lenghth */
+								 * length */
 
 		if (protoMajor == PROTO_MAJOR_V3)
 		{
@@ -1591,7 +1591,7 @@ retry_read_packet:
 
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
-		/* read packet lenghth for ready for query */
+		/* read packet length for ready for query */
 		pool_read(backend, &len, sizeof(len));
 
 		/* read transaction state */

@@ -8127,7 +8127,7 @@
 
       - Major cleanup for strncpy(Tatsuo Ishii). There are several
           places where strncpy() is used. Problem is some of them do not
-          consider the case when copy lengh == buffer size. In this case
+          consider the case when copy length == buffer size. In this case
           copied buffer is not null terminated and may cause tons of
           problems later.  To fix this, most of them are replaced by
           strlcpy().
