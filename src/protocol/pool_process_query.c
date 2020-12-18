@@ -4827,7 +4827,7 @@ SELECT_RETRY:
 				int			r;
 
 				/*
-				 * connection was terminated due to confilct with recovery
+				 * connection was terminated due to conflict with recovery
 				 */
 				r = detect_serialization_error(CONNECTION(backend, i), MAJOR(backend), false);
 				if (r == SPECIFIED_ERROR)
