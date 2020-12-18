@@ -10396,7 +10396,7 @@
 
       - Update pgpool.spec along with related files(Devrim)
 
-      - Fix inser_lock so that it is ignored when protocol version is
+      - Fix insert_lock so that it is ignored when protocol version is
         2(Tatsuo Ishii)
 
       - Remove excessive log messages regarding parameter change notice(Tatsuo Ishii)
