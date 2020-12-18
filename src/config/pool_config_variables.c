@@ -4982,7 +4982,7 @@ SetHBDestIfFunc(int elevel)
 
 	/*
 	 * g_pool_config.hb_ifs is the information for sending/receiving heartbeat
-	 * for all nodes specied in pgpool.conf.
+	 * for all nodes specified in pgpool.conf.
 	 * If it is local pgpool node information, set dest_port to g_pool_config.wd_heartbeat_port
 	 * and ignore addr and if_name.
 	 * g_pool_config.hb_dest_if is the heartbeat destination information.

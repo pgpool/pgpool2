@@ -191,7 +191,7 @@ openfile(char *filename)
 }
 
 /*
- * Connect to the specifed PostgreSQL. If failed, do not return and exit
+ * Connect to the specified PostgreSQL. If failed, do not return and exit
  * within this function.
  */
 static PGconn *
