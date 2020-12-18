@@ -6301,7 +6301,7 @@
       modules. So this fix is not Parse() only, rather for other modules. For
       this purpose ProcessFrontendResponse() is changed.
 
-      See bugtrack in detai.
+      See bugtrack in detail.
 
       #21 pgpool-II 3.2.0 cannot execute sql through jdbc
       Date:     2012-08-17 16:31
