@@ -477,7 +477,7 @@ pcp_mark_recovery_in_progress(void)
 
 /*
  * unsets the shared memory flag to indicate pcp recovery command
- * is finsihed.
+ * is finished.
  */
 void
 pcp_mark_recovery_finished(void)
