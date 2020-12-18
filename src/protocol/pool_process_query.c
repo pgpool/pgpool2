@@ -1890,7 +1890,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 	res->data = palloc0(DO_QUERY_ALLOC_NUM * sizeof(char *));
 
 	/*
-	 * Send a query to the backend. We use extended query proctocol with named
+	 * Send a query to the backend. We use extended query protocol with named
 	 * statement/portal if we are processing extended query since simple
 	 * query breaks unnamed statements/portals. The name of named
 	 * statment/unamed statement are "pgpool_PID" where PID is the process id

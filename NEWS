@@ -4009,7 +4009,7 @@
 
     - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
 
-      For this pupose, new static function free_persisten_db_connection_memory
+      For this purpose, new static function free_persisten_db_connection_memory
       is added.
       Per Coverity report #1111468.
 
@@ -5402,7 +5402,7 @@
 
     - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
 
-      For this pupose, new static function free_persisten_db_connection_memory
+      For this purpose, new static function free_persisten_db_connection_memory
       is added.
       Per Coverity report #1111468.
 
@@ -7467,7 +7467,7 @@
 
     - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
 
-      For this pupose, new static function free_persisten_db_connection_memory
+      For this purpose, new static function free_persisten_db_connection_memory
       is added.
       Per Coverity report #1111468.
 
@@ -8799,7 +8799,7 @@
 
     - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
 
-      For this pupose, new static function free_persisten_db_connection_memory
+      For this purpose, new static function free_persisten_db_connection_memory
       is added.
       Per Coverity report #1111468.
 
