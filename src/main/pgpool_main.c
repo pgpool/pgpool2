@@ -74,7 +74,7 @@ typedef enum
 								 * required */
 	SIG_WATCHDOG_QUORUM_CHANGED,	/* notify main about cluster quorum change
 									 * of watchdog cluster */
-	SIG_INFORM_QURANTINE_NODES, /* notify main about send degenerate requests
+	SIG_INFORM_QUARANTINE_NODES, /* notify main about send degenerate requests
 								 * for all quarantine nodes */
 	MAX_INTERRUPTS				/* Must be last! */
 }			User1SignalReason;
@@ -594,7 +594,7 @@ register_backend_state_sync_req_interrupt(void)
 void
 register_inform_quarantine_nodes_req(void)
 {
-	signal_user1_to_parent_with_reason(SIG_INFORM_QURANTINE_NODES);
+	signal_user1_to_parent_with_reason(SIG_INFORM_QUARANTINE_NODES);
 }
 
 static void
@@ -1237,12 +1237,12 @@ sigusr1_interrupt_processor(void)
 		}
 	}
 
-	if (user1SignalSlot->signalFlags[SIG_INFORM_QURANTINE_NODES])
+	if (user1SignalSlot->signalFlags[SIG_INFORM_QUARANTINE_NODES])
 	{
 		ereport(LOG,
 				(errmsg("Pgpool-II parent process received inform quarantine nodes signal from watchdog")));
 
-		user1SignalSlot->signalFlags[SIG_INFORM_QURANTINE_NODES] = false;
+		user1SignalSlot->signalFlags[SIG_INFORM_QUARANTINE_NODES] = false;
 		degenerate_all_quarantine_nodes();
 	}
 
