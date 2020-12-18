@@ -1020,7 +1020,7 @@ wd_ping_pgpool(LifeCheckNode * node, char* password)
 	return ping_pgpool(conn);
 }
 
-/* inner function for issueing lifecheck query */
+/* inner function for issuing lifecheck query */
 static int
 ping_pgpool(PGconn *conn)
 {
