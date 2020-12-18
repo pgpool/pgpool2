@@ -794,7 +794,7 @@
    </indexterm>
 
    <para>
-    This authentication method uses LDAP as the password cerification method.
+    This authentication method uses LDAP as the password certification method.
     LDAP is used only to validate the user name/password pairs. Therefore the user must
     already exist in the database before LDAP can be used for authentication.
    </para>
