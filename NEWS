@@ -5860,7 +5860,7 @@
       If there are more than 128 SELECTs in a transaction, the module expands
       cache_array by using realloc. However it does not record the new pointer
       returned by realloc. So the module keeps on using the old pointer which is
-      absoleted.
+      obsoleted.
 
       This problem is reported in bug track #31 by jgentsch.
 
