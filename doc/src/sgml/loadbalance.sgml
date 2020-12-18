@@ -1038,7 +1038,7 @@
     <listitem>
 
      <para>
-	 To prevent load balancing of READ dependent objects, you may specificy the object name
+	 To prevent load balancing of READ dependent objects, you may specify the object name
 	 followed by a colon(<literal>:</>) and then a comma(<literal>,</>) separated list of dependent object names.
 	 <replaceable>"[object]:[dependent-object]"</replaceable>
      In an explicit transaction block after a WRITE statement has been issues, this will prevent
