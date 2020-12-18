@@ -1386,7 +1386,7 @@
 
     - Fix segfalut that occurs when function is used in FROM clause (Yugo Nagata)
 
-      PRPARE statements in streaming-reapplication mode and INSERT/UPDATE
+      PREPARE statements in streaming-reapplication mode and INSERT/UPDATE
       with SELECT in native-replication mode were affected. For example:
 
       - prepare p as select * from generate_series(1,1);
@@ -2024,7 +2024,7 @@
 
     - Fix segfalut that occurs when function is used in FROM clause (Yugo Nagata)
 
-      PRPARE statements in streaming-reapplication mode and INSERT/UPDATE
+      PREPARE statements in streaming-reapplication mode and INSERT/UPDATE
       with SELECT in native-replication mode were affected. For example:
 
       - prepare p as select * from generate_series(1,1);
