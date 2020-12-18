@@ -5890,7 +5890,7 @@
     - Fix pool_send_severity_message() not to use uninitialized memory.
       (Tatsuo Ishii)
 
-      It cause a segmentaion fault.
+      It cause a segmentation fault.
       Reported in Bug #33's attached valgrind output by dudee.
 
       #33 pgpool-II 3.2.1 segfault
@@ -7724,7 +7724,7 @@
     - Fix pool_send_severity_message() not to use uninitialized memory.
       (Tatsuo Ishii)
 
-      It cause a segmentaion fault.
+      It cause a segmentation fault.
       Reported in Bug #33's attached valgrind output by dudee.
 
       #33 pgpool-II 3.2.1 segfault
@@ -9055,7 +9055,7 @@
     - Fix pool_send_severity_message() not to use uninitialized memory.
       (Tatsuo Ishii)
 
-      It cause a segmentaion fault.
+      It cause a segmentation fault.
       Reported in Bug #33's attached valgrind output by dudee.
 
       #33 pgpool-II 3.2.1 segfault
