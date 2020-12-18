@@ -44,7 +44,7 @@ echo "ssl_key_file = '$SSL_KEY'" >> data0/postgresql.conf
 echo "backend_hostname0 = 'localhost'" >> etc/pgpool.conf
 
 # produce debug message since the only way to confirm the SSL
-# connectins is being established is, look into the debug log.
+# connections is being established is, look into the debug log.
 echo "log_min_messages = debug5" >> etc/pgpool.conf
 
 # allow to access IPv6 localhost
