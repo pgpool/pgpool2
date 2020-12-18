@@ -291,7 +291,7 @@ typedef struct Param
  *
  * The aggregate's args list is a targetlist, ie, a list of TargetEntry nodes.
  *
- * For a normal (non-ordered-set) aggregate, the non-resjunk TargetEntries
+ * For a normal (non-ordered-set) aggregate, the non-resjunk TargetEntry nodes
  * represent the aggregate's regular arguments (if any) and resjunk TLEs can
  * be added at the end to represent ORDER BY expressions that are not also
  * arguments.  As in a top-level Query, the TLEs can be marked with
@@ -1551,7 +1551,7 @@ typedef struct OnConflictExpr
 	Oid			constraint;		/* pg_constraint OID for arbiter */
 
 	/* ON CONFLICT UPDATE */
-	List	   *onConflictSet;	/* List of ON CONFLICT SET TargetEntrys */
+	List	   *onConflictSet;	/* List of ON CONFLICT SET TargetEntry nodes */
 	Node	   *onConflictWhere;	/* qualifiers to restrict UPDATE to */
 	int			exclRelIndex;	/* RT index of 'excluded' relation */
 	List	   *exclRelTlist;	/* tlist of the EXCLUDED pseudo relation */
