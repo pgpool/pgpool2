@@ -324,7 +324,7 @@ typedef struct PCPConnInfo
 	char	   *errMsg;			/* error message, or NULL if no error */
 	ConnStateType connState;
 	PCPResultInfo *pcpResInfo;
-	FILE	   *Pfdebug;		/* File pointer to output debug infor */
+	FILE	   *Pfdebug;		/* File pointer to output debug info */
 }			PCPConnInfo;
 
 struct WdInfo;
