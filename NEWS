@@ -5988,7 +5988,7 @@
     - Fix child_exit() to not call send_frontend_exits() if there's no
       connection pool. (Tatsuo Ishii)
 
-      Otherwise, it segfaults because send_frontend_exits() referes to objects
+      Otherwise, it segfaults because send_frontend_exits() refers to objects
       pointed to by pool_connection_pool. Per bug track #44 by tuomas.
 
       #44 pgpool went haywire after slave shutdown triggering master failover
@@ -7769,7 +7769,7 @@
     - Fix child_exit() to not call send_frontend_exits() if there's no
       connection pool. (Tatsuo Ishii)
 
-      Otherwise, it segfaults because send_frontend_exits() referes to objects
+      Otherwise, it segfaults because send_frontend_exits() refers to objects
       pointed to by pool_connection_pool. Per bug track #44 by tuomas.
 
       #44 pgpool went haywire after slave shutdown triggering master failover
@@ -9098,7 +9098,7 @@
     - Fix child_exit() to not call send_frontend_exits() if there's no
       connection pool. (Tatsuo Ishii)
 
-      Otherwise, it segfaults because send_frontend_exits() referes to objects
+      Otherwise, it segfaults because send_frontend_exits() refers to objects
       pointed to by pool_connection_pool. Per bug track #44 by tuomas.
 
       #44 pgpool went haywire after slave shutdown triggering master failover
