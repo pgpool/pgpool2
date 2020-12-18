@@ -215,7 +215,7 @@
       make sure that we do not declare the timer expire due to some other
       signal arrived while waiting for data for health check in pool_check_fd().
 
-    - Add new script called "watchdog_setup". (Tatstuo Ishii)
+    - Add new script called "watchdog_setup". (Tatsuo Ishii)
 
       watchdog_setup is a command to create a temporary installation
       of Pgpool-II clusters with watchdog for mainly testings.
@@ -267,7 +267,7 @@
 * Changes
 
     - Change the default value of search_primary_node_timeout from 10 to
-      300. (Tatstuo Ishii)
+      300. (Tatsuo Ishii)
 
       Prior default value 10 seconds is sometimes too short for a standby
       to be promoted.
@@ -659,7 +659,7 @@
       in ReadyforQuery(). This is safe because apparently we already
       received the ready for query message.
 
-    - Fix query stack problems in extended protocol case. (bug 167, 168) (Tatstuo Ishii)
+    - Fix query stack problems in extended protocol case. (bug 167, 168) (Tatsuo Ishii)
 
     - Fix [pgpool-hackers: 1440] yet another reset query stuck problem. (Tatsuo Ishii)
 
@@ -4007,7 +4007,7 @@
     - RPM: Improved to specify the versions of pgpool-II and PostgreSQL in the.
       spec file. (Nozomi Anzai)
 
-    - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
+    - Fix resource leak in make_persistent_db_connection. (Tatsuo Ishii)
 
       For this purpose, new static function free_persisten_db_connection_memory
       is added.
@@ -5400,7 +5400,7 @@
       string than the buffer.
       Per Coverity report 1111426 "Out-of-bounds access".
 
-    - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
+    - Fix resource leak in make_persistent_db_connection. (Tatsuo Ishii)
 
       For this purpose, new static function free_persisten_db_connection_memory
       is added.
@@ -5948,7 +5948,7 @@
       http://www.sraoss.jp/pipermail/pgpool-general/2012-December/001237.html
 
     - Fix health_check() to check the health check timer before retrying
-      with template1 database. (Tatuo Ishii)
+      with template1 database. (Tatsuo Ishii)
 
       Without this, the retry with node 0 always fails because health check timer
       may be already expired.
@@ -6528,7 +6528,7 @@
         Date: Fri, 18 Nov 2011 16:28:44 -0500
 
     - Log client IP and port number when pgpool failed to parse given query.
-      (Tasuo)
+      (Tatsuo)
 
       This is usefull to identify which client gives wrong query without
       enabling log_connections, which produces too many log entries on busy web
@@ -6563,14 +6563,14 @@
       pgpool-II. Patch contributed by Gurjeet Singh.
 
     - Remove unused parameter "query" from is_set_transaction_serializable().
-      (Tastuo Ishii)
+      (Tatsuo Ishii)
 
     - Fix on memory query cache section's comments in pgpool.com in the way
-      which other sections employ. (Tastuo Ishii)
+      which other sections employ. (Tatsuo Ishii)
 
     - Add missing health_check_max_retries and health_check_retry_delay
       directives to pgpool.conf.sample-master-slave, pgpool.conf.sample-replication
-      pgpool.conf.sample-stream. (Tastuo Ishii)
+      pgpool.conf.sample-stream. (Tatsuo Ishii)
 
     - Fix pool_ssl_write. It seems someone forgot to do retrying when SSL
       returns SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE.
@@ -7465,7 +7465,7 @@
       will access out of array.
       Per Coverity report 1111413 "Memory - illegal accesses".
 
-    - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
+    - Fix resource leak in make_persistent_db_connection. (Tatsuo Ishii)
 
       For this purpose, new static function free_persisten_db_connection_memory
       is added.
@@ -8797,7 +8797,7 @@
       string than the buffer.
       Per Coverity report 1111426 "Out-of-bounds access".
 
-    - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
+    - Fix resource leak in make_persistent_db_connection. (Tatsuo Ishii)
 
       For this purpose, new static function free_persisten_db_connection_memory
       is added.
