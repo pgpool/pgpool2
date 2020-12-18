@@ -95,7 +95,7 @@ bool terminate_pgpool(char mode, bool error)
  *				executed on provided node ids and never registers the operation
  *				request.
  *				For test_only case function returs false or throws an error as
- *				soon as first non complient node in node_id_set is found
+ *				soon as first non compliant node in node_id_set is found
  * switch_over: if set, the request is originated by switch over, not errors.
  *
  * wd_failover_id: The watchdog internal ID for this failover
