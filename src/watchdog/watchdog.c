@@ -4754,7 +4754,7 @@ watchdog_internal_command_packet_processor(WatchdogNode * wdNode, WDPacketData *
 	}
 	else if (pkt->type == WD_REJECT_MESSAGE || pkt->type == WD_ERROR_MESSAGE)
 	{
-		/* Error or reject message by any node imidiately finishes the command */
+		/* Error or reject message by any node immediately finishes the command */
 		ereport(DEBUG1,
 				(errmsg("command %c with command id %d is finished with COMMAND_FINISHED_NODE_REJECTED", pkt->type, pkt->command_id)));
 		clusterCommand->commandStatus = COMMAND_FINISHED_NODE_REJECTED;
