@@ -1173,7 +1173,7 @@ pool_pending_message_create(char kind, int len, char *contents)
 
 		default:
 			ereport(ERROR,
-					(errmsg("pool_pending_message_create: unknow kind: %c", kind)));
+					(errmsg("pool_pending_message_create: unknown kind: %c", kind)));
 			break;
 	}
 

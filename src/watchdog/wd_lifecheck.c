@@ -690,7 +690,7 @@ is_wd_lifecheck_ready(void)
 		else
 		{
 			ereport(ERROR,
-					(errmsg("checking if watchdog is ready, unkown watchdog mode \"%d\"",
+					(errmsg("checking if watchdog is ready, unknown watchdog mode \"%d\"",
 							pool_config->wd_lifecheck_method)));
 		}
 	}
