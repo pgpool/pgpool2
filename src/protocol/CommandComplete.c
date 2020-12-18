@@ -333,12 +333,12 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 		}
 		else if (stmt->kind == 	TRANS_STMT_COMMIT)
 		{
-			/* Commit ongoing CRETAE/DROP temp table status */
+			/* Commit ongoing CREATE/DROP temp table status */
 			pool_temp_tables_commit_pending();			
 		}
 		else if (stmt->kind == TRANS_STMT_ROLLBACK)
 		{
-			/* Remove ongoing CRETAE/DROP temp table status */
+			/* Remove ongoing CREATE/DROP temp table status */
 			pool_temp_tables_remove_pending();
 		}
 	}

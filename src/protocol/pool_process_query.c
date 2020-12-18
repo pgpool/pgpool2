@@ -3904,7 +3904,7 @@ is_internal_transaction_needed(Node *node)
 		T_ClosePortalStmt,
 		T_ClusterStmt,
 		T_CopyStmt,
-		T_CreateStmt,			/* CREAE TABLE */
+		T_CreateStmt,			/* CREATE TABLE */
 		T_DefineStmt,			/* CREATE AGGREGATE, OPERATOR, TYPE */
 		T_DropStmt,				/* DROP TABLE etc. */
 		T_TruncateStmt,

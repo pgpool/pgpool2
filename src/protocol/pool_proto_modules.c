@@ -2959,7 +2959,7 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 				{
 					pool_set_failed_transaction();
 
-					/* Remove ongoing CRETAE/DROP temp tables */
+					/* Remove ongoing CREATE/DROP temp tables */
 					pool_temp_tables_remove_pending();
 				}
 				if (pool_is_doing_extended_query_message())
