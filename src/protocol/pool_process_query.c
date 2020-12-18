@@ -4309,7 +4309,7 @@ detect_query_cancel_error(POOL_CONNECTION * backend, int major)
 
 
 int
-detect_idle_in_transaction_sesion_timeout_error(POOL_CONNECTION * backend, int major)
+detect_idle_in_transaction_session_timeout_error(POOL_CONNECTION * backend, int major)
 {
 	int			r = extract_message(backend, IDLE_IN_TRANSACTION_SESSION_TIMEOUT_ERROR_CODE, major, 'E', true);
 
@@ -4841,9 +4841,9 @@ SELECT_RETRY:
 				}
 
 				/*
-				 * connection was terminated due to idle_in_transaction_sesion_timeout expired
+				 * connection was terminated due to idle_in_transaction_session_timeout expired
 				 */
-				r = detect_idle_in_transaction_sesion_timeout_error(CONNECTION(backend, i), MAJOR(backend));
+				r = detect_idle_in_transaction_session_timeout_error(CONNECTION(backend, i), MAJOR(backend));
 				if (r == SPECIFIED_ERROR)
 				{
 					ereport(FATAL,
