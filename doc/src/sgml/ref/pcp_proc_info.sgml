@@ -101,7 +101,7 @@ Pgpool-II documentation
     6. protocol minor version
     7. connection-reuse counter
     8. PostgreSQL backend process id
-    9. 1 if frontend conncted 0 if not
+    9. 1 if frontend connected 0 if not
     10. pgpool child process id
     11. PostgreSQL backend id 
    </literallayout>
