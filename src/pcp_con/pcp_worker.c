@@ -88,7 +88,7 @@ static void process_attach_node(PCP_CONNECTION * frontend, char *buf);
 static void process_recovery_request(PCP_CONNECTION * frontend, char *buf);
 static void process_status_request(PCP_CONNECTION * frontend);
 static void process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos);
-static void process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos);
+static void process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos);
 static void process_set_configuration_parameter(PCP_CONNECTION * frontend, char *buf, int len);
 
 static void pcp_worker_will_go_down(int code, Datum arg);
@@ -307,7 +307,7 @@ pcp_process_command(char tos, char *buf, int buf_len)
 		case 'T':
 		case 't':
 			set_ps_display("PCP: processing shutdown request", false);
-			process_shutown_request(pcp_frontend, buf[0], tos);
+			process_shutdown_request(pcp_frontend, buf[0], tos);
 			break;
 
 		case 'O':				/* recovery request */
@@ -1302,7 +1302,7 @@ send_md5salt(PCP_CONNECTION * frontend, char *salt)
 }
 
 static void
-process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos)
+process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos)
 {
 	char		code[] = "CommandComplete";
 	int			len;
