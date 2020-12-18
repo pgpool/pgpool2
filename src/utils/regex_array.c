@@ -21,7 +21,7 @@
  */
 
 /*
- * This module handles regular expressio arrary.
+ * This module handles regular expressio array.
  */
 #include <string.h>
 
@@ -159,7 +159,7 @@ regex_array_match(RegArray * ar, char *pattern)
  * Destroy RegArray object
  */
 void
-destroy_regex_arrary(RegArray * ar)
+destroy_regex_array(RegArray * ar)
 {
 	pfree(ar->regex);
 	pfree(ar);

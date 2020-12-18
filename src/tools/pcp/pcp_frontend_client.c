@@ -972,7 +972,7 @@ role_to_str(SERVER_ROLE role)
  *
  * titles: title string array
  * types:  printf format type string array (example: "d")
- * ntitles: size of the arrary
+ * ntitles: size of the array
  */
 static char *
 format_titles(const char **titles, const char **types, int ntitles)

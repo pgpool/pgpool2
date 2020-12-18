@@ -5856,9 +5856,9 @@
 
     - Fix segfault due to bug with query cache array handling. (Tatsuo Ishii)
 
-      The cache arrary is used to keep temporary cache results in a transaction.
+      The cache array is used to keep temporary cache results in a transaction.
       If there are more than 128 SELECTs in a transaction, the module expands
-      cache_arrary by using realloc. However it does not record the new pointer
+      cache_array by using realloc. However it does not record the new pointer
       returned by realloc. So the module keeps on using the old pointer which is
       absoleted.
 

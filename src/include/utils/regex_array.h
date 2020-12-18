@@ -39,7 +39,7 @@ typedef struct
 RegArray   *create_regex_array(void);
 int			add_regex_array(RegArray * ar, char *pattern);
 int			regex_array_match(RegArray * ar, char *pattern);
-void		destroy_regex_arrary(RegArray * ar);
+void		destroy_regex_array(RegArray * ar);
 
 /*
  * String left-right token type
