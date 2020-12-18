@@ -3725,7 +3725,7 @@ reload_config(void)
 
 	pool_get_config(conf_file, CFGCXT_RELOAD);
 
-	/* Realoading config file could change backend status */
+	/* Reloading config file could change backend status */
 	(void) write_status_file();
 
 	MemoryContextSwitchTo(oldContext);
