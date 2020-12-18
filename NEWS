@@ -6379,7 +6379,7 @@
         On the other hand, it might be slower than the normal path because it
         adds some overhead to store cache. Moreover when a table is updated,
         pgpool automatically deletes all the caches related to the table. So the
-        prformace will be degraded by a system with a lot of updates. If the
+        performance will be degraded by a system with a lot of updates. If the
         cache_hit_ratio is lower than 70%, you might want to disable onl memory
         cache.
 
@@ -10060,7 +10060,7 @@
 
       This version enhances replication, especially CURRENT_TIMESTAMP,
       CURRENT_DATE, now() etc. now can be properly replicated. Also
-      perforance of replication when num_init_children == 1 is
+      performance of replication when num_init_children == 1 is
       enhanced. Pgpool-II now records the status of down nodes, and
       remember when it restarts to ensure that keep the node status as
       before. Also some logs are enhanced and more fine fail over
