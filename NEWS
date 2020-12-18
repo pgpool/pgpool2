@@ -653,7 +653,7 @@
       is set and retained even if sync message was actually received.
       Thus any subsequent query (in the case above "DEALLOCATE message")
       is not processed and pgpool waits for message from frontend and backend,
-      and pgpool stucks here because no message will arrive from both side.
+      and pgpool sticks here because no message will arrive from both side.
 
       To fix this, unconditionally reset the "ignore till sync flag"
       in ReadyforQuery(). This is safe because apparently we already
