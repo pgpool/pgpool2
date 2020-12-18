@@ -2969,7 +2969,7 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT * *slots)
 		if (!check_connectivity)
 		{
 			ereport(DEBUG1,
-					(errmsg("verify_backend_node_status: server verion is lower than 9.6.0. Skipping connectivity checks")));
+					(errmsg("verify_backend_node_status: server version is lower than 9.6.0. Skipping connectivity checks")));
 			return pool_node_status;
 		}
 
