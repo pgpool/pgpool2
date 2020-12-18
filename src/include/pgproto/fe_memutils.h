@@ -84,7 +84,7 @@ extern size_t pvsnprintf(char *buf, size_t len, const char *fmt, va_list args) p
 			memset(_vstart, _val, _len); \
 	} while (0)
 
-/* originaly gettext staff */
+/* originally gettext staff */
 #define _(x) x
 
 /* Get a bit mask of the bits set in non-long aligned addresses */
