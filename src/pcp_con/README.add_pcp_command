@@ -9,7 +9,7 @@ character (in the example 'H'). In the case statement,
 set_ps_display() is called to show what the PCP server is doing. Then
 "inform_xxx" function (in the example inform_health_check_stats) is
 called. this function is responsible for creating packet and sends to
-PCP frontend. The parameter is "pcp_frontend" which is the conection
+PCP frontend. The parameter is "pcp_frontend" which is the connection
 object to the PCP frontend and "buf" which includes data send from the
 PCP client.
 
