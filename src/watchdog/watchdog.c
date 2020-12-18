@@ -4539,7 +4539,7 @@ node_lost_while_ipc_command(WatchdogNode * wdNode)
 
 /*
  * The function walks through all command and resends
- * the failed maessage again if it can.
+ * the failed message again if it can.
  */
 static void
 service_ipc_commands(void)

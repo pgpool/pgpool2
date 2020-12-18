@@ -37,7 +37,7 @@ static POOL_SESSION_CONTEXT session_context_d;
 static POOL_SESSION_CONTEXT * session_context = NULL;
 static void GetTranIsolationErrorCb(void *arg);
 static void init_sent_message_list(void);
-static POOL_PENDING_MESSAGE * copy_pending_message(POOL_PENDING_MESSAGE * messag);
+static POOL_PENDING_MESSAGE * copy_pending_message(POOL_PENDING_MESSAGE * message);
 static void dump_sent_message(char *caller, POOL_SENT_MESSAGE * m);
 static void dml_adaptive_init(void);
 static void dml_adaptive_destroy(void);

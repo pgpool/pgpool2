@@ -4397,7 +4397,7 @@ extract_message(POOL_CONNECTION * backend, char *error_code, int major, char cla
 }
 
 /*
- * The function forwards the NOTICE mesaage received from one backend
+ * The function forwards the NOTICE message received from one backend
  * to the frontend and also puts the human readable message to the
  * pgpool log
  */

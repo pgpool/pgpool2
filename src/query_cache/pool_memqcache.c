@@ -4433,7 +4433,7 @@ inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen)
 	else
 		timeout = 0;
 
-	/* Send flush messsage to backend to retrieve response of backend */
+	/* Send flush message to backend to retrieve response of backend */
 	pool_write(backend, "H", 1);
 	len = htonl(sizeof(len));
 	pool_write_and_flush(backend, &len, sizeof(len));

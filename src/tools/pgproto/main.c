@@ -460,7 +460,7 @@ process_message_type(int kind, char *buf, PGconn *conn)
 }
 
 /*
- * Process function call messaage
+ * Process function call message
  */
 static void
 process_function_call(char *buf, PGconn *conn)

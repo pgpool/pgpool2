@@ -2315,7 +2315,7 @@ CloseComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 			if (pmsg->type != POOL_CLOSE)
 			{
 				ereport(LOG,
-						(errmsg("CloseComplete: pending messge was not Close request: %s", pool_pending_message_type_to_string(pmsg->type))));
+						(errmsg("CloseComplete: pending message was not Close request: %s", pool_pending_message_type_to_string(pmsg->type))));
 			}
 			else
 			{

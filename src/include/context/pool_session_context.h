@@ -60,8 +60,8 @@ typedef enum
  */
 typedef enum
 {
-	POOL_SENT_MESSAGE_CREATED,	/* initial state of sent meesage */
-	POOL_SENT_MESSAGE_CLOSED	/* sent meesage closed but close complete
+	POOL_SENT_MESSAGE_CREATED,	/* initial state of sent message */
+	POOL_SENT_MESSAGE_CLOSED	/* sent message closed but close complete
 								 * message has not arrived yet */
 }			POOL_SENT_MESSAGE_STATE;
 
