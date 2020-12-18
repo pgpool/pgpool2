@@ -162,5 +162,5 @@ Step6: add the new config parameter to the report program.
 	StrNCpy(status[i].desc, "Load balance behavior when write query is received", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-Step7: remeber to add documents and tests!
-==========================================
+Step7: remember to add documents and tests!
+===========================================
