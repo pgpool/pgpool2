@@ -20,7 +20,7 @@
  */
 
 /*
- * pool_internal_comms consistes of functions that can be called
+ * pool_internal_comms consists of functions that can be called
  * from any pgpool-II process to instruct pgpool-II main process to
  * perform a particular function
  */
