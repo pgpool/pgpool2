@@ -10437,7 +10437,7 @@
 
         - Add -d option to pcp commands(Jun Kuriyama)
 
-        - Enahnce kind mismatch error message to include originarl
+        - Enhance kind mismatch error message to include originarl
           query string(Tatsuo Ishii)
 
       __________________________________________________________________
