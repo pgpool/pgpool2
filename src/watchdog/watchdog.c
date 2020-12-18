@@ -7468,7 +7468,7 @@ verify_authhash_for_node(WatchdogNode * wdNode, char *authhash)
 /*
  * function authenticates the IPC command by looking for the
  * auth key in the JSON data of IPC command.
- * For IPC commands coming from outer wrold the function validates the
+ * For IPC commands coming from outer world the function validates the
  * authkey in JSON packet with configured pool_config->wd_authkey.
  * if internal_client_only is true then the JSON data must contain the
  * shared key present in the pgpool-II shared memory. This can be used
