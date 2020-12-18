@@ -76,7 +76,7 @@ echo "Checking cert auth between Pgpool-II and frontend was ok."
 ./shutdownall
 
 
-# Starting CRL verfication
+# Starting CRL verification
 # Adding valid CRL file in pgpool.conf file.
 echo "ssl_crl_file = '$SSL_CRL'" >> etc/pgpool.conf
 
