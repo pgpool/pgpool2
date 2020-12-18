@@ -61,7 +61,7 @@
 # Starting port number to be used. Each PostgreSQL is assigned
 # $BASEPORT + 2, $BASEPORT + 3 and so on.
 # pgpool port and pcp_port will be assigned to $BASEPORT and $BASEPORT +1 .
-BASEPORT=${BASEBOPRT:-"11000"}
+BASEPORT=${BASEPORT:-"11000"}
 ORIGBASEPORT=$BASEPORT
 # PostgreSQL startig port number.
 PGBASEPORT=`expr $BASEPORT + 2`
