@@ -3729,7 +3729,7 @@
       With JDBC, when a prepared statement is executed more than
       PrepareThreshold times, the statement is named and Describe message
       is sent after Parse. With named statement, pgpool rewrite now() to
-      parameter in replication mode. Hence, rewritten query has additonal
+      parameter in replication mode. Hence, rewritten query has additional
       parameter than original. In this case, ParameterDescription message
       sent to frontend (response of Describe) should include OIDs of the
       same number os original query's parameters. Otherwize, JDBC throws
@@ -5156,7 +5156,7 @@
       With JDBC, when a prepared statement is executed more than
       PrepareThreshold times, the statement is named and Describe message
       is sent after Parse. With named statement, pgpool rewrite now() to
-      parameter in replication mode. Hence, rewritten query has additonal
+      parameter in replication mode. Hence, rewritten query has additional
       parameter than original. In this case, ParameterDescription message
       sent to frontend (response of Describe) should include OIDs of the
       same number os original query's parameters. Otherwize, JDBC throws
@@ -7297,7 +7297,7 @@
       With JDBC, when a prepared statement is executed more than
       PrepareThreshold times, the statement is named and Describe message
       is sent after Parse. With named statement, pgpool rewrite now() to
-      parameter in replication mode. Hence, rewritten query has additonal
+      parameter in replication mode. Hence, rewritten query has additional
       parameter than original. In this case, ParameterDescription message
       sent to frontend (response of Describe) should include OIDs of the
       same number os original query's parameters. Otherwize, JDBC throws
@@ -8660,7 +8660,7 @@
       With JDBC, when a prepared statement is executed more than
       PrepareThreshold times, the statement is named and Describe message
       is sent after Parse. With named statement, pgpool rewrite now() to
-      parameter in replication mode. Hence, rewritten query has additonal
+      parameter in replication mode. Hence, rewritten query has additional
       parameter than original. In this case, ParameterDescription message
       sent to frontend (response of Describe) should include OIDs of the
       same number os original query's parameters. Otherwize, JDBC throws

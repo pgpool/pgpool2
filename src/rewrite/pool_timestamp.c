@@ -985,7 +985,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 		return NULL;
 
 	/*
-	 * PREPARE or Parse: handle additinal parameters for timestamps
+	 * PREPARE or Parse: handle additional parameters for timestamps
 	 */
 	if (ctx.rewrite_to_params && message)
 	{
