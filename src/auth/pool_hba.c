@@ -156,7 +156,7 @@ static POOL_STATUS CheckUserExist(char *username);
 static POOL_STATUS CheckPAMAuth(POOL_CONNECTION * frontend, char *user, char *password);
 static int	pam_passwd_conv_proc(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr);
 
-static struct pam_conv pam_passw_conv = {
+static struct pam_conv pam_passwd_conv = {
 	&pam_passwd_conv_proc,
 	NULL
 };
@@ -2376,16 +2376,16 @@ static POOL_STATUS CheckPAMAuth(POOL_CONNECTION * frontend, char *user, char *pa
 	 * later used inside the PAM conversation to pass the password to the
 	 * authentication module.
 	 */
-	pam_passw_conv.appdata_ptr = (char *) password; /* from password above,
+	pam_passwd_conv.appdata_ptr = (char *) password; /* from password above,
 													 * not allocated */
 
 	/* Optionally, one can set the service name in pool_hba.conf */
 	if (frontend->pool_hba->pamservice && frontend->pool_hba->pamservice[0] != '\0')
 		retval = pam_start(frontend->pool_hba->pamservice, "pgpool@",
-						   &pam_passw_conv, &pamh);
+						   &pam_passwd_conv, &pamh);
 	else
 		retval = pam_start(PGPOOL_PAM_SERVICE, "pgpool@",
-						   &pam_passw_conv, &pamh);
+						   &pam_passwd_conv, &pamh);
 
 	if (retval != PAM_SUCCESS)
 	{
@@ -2406,7 +2406,7 @@ static POOL_STATUS CheckPAMAuth(POOL_CONNECTION * frontend, char *user, char *pa
 				 errdetail("pam_set_item(PAM_USER) failed: %s", pam_strerror(pamh, retval))));
 	}
 
-	retval = pam_set_item(pamh, PAM_CONV, &pam_passw_conv);
+	retval = pam_set_item(pamh, PAM_CONV, &pam_passwd_conv);
 	if (retval != PAM_SUCCESS)
 	{
 		pam_passwd = NULL;		/* Unset pam_passwd */
