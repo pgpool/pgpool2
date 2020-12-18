@@ -282,7 +282,7 @@
     Below table details the message fields and description.
    </para>
 
-   <table id="wd-ipc-resutl-format-table">
+   <table id="wd-ipc-result-format-table">
     <title>Watchdog IPC result packet format</title>
     <tgroup cols="3">
      <thead>
