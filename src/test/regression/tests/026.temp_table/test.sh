@@ -29,7 +29,7 @@ cmp results.txt ../expected.txt || exit 1
 
 # test2: trace
 
-echo "check_temp_table = trace" >> etc/pgpoo.conf
+echo "check_temp_table = trace" >> etc/pgpool.conf
 
 ./pgpool_reload
 

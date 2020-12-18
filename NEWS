@@ -4004,7 +4004,7 @@
       string than the buffer.
       Per Coverity report 1111426 "Out-of-bounds access".
 
-    - RPM: Improved to specify the versions of pgool-II and PostgreSQL in the.
+    - RPM: Improved to specify the versions of pgpool-II and PostgreSQL in the.
       spec file. (Nozomi Anzai)
 
     - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
@@ -6083,7 +6083,7 @@
 
       See [pgpool-general: 1330] for more details.
 
-      [pgpool-general: 1330] WatchDog and pgool sudden stop working
+      [pgpool-general: 1330] WatchDog and pgpool sudden stop working
       From: Tomas Halgas
       Date: Fri, 18 Jan 2013 14:47:23 +0100
       http://www.sraoss.jp/pipermail/pgpool-general/2013-January/001350.html
@@ -9617,7 +9617,7 @@
         executes on master(primary)
 
       Also many new features are added and major refactoring has been
-      made to the internal structure of pgpoo-II. For example, in
+      made to the internal structure of pgpool-II. For example, in
       replication mode, SELECTs calling functions possibly write to
       database will not allow to load balance.
 
@@ -10222,7 +10222,7 @@
 
       - Remove init script from all runlevels before uninstall(Devrim)
 
-      - Fix pgpoo.spec(Devrim)
+      - Fix pgpool.spec(Devrim)
 
       - Do not execute REINDEX DATABASE or SYSTEM, CREATE/DROP TABLE
         SPACE inside a transaction block(Tatsuo Ishii)
@@ -10231,7 +10231,7 @@
 
 * Enhancements
 
-      - Allow to change weight by reloading pgool.conf. This will take
+      - Allow to change weight by reloading pgpool.conf. This will take
         effect for next client sessions(Tatsuo Ishii)
 
       - Reply with usefull error messages, rather than "server closed

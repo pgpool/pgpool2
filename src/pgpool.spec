@@ -29,7 +29,7 @@ Release:        1pgdg%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
-URL:            http://www.pgppol.net/
+URL:            http://www.pgpool.net/
 Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool_rhel6.sysconfig
@@ -392,7 +392,7 @@ fi
 - Add openssl support
 
 * Tue Nov 26 2013 Nozomi Anzai <anzai@sraoss.co.jp> 3.3.1-1
-- Improved to specify the versions of pgool-II and PostgreSQL
+- Improved to specify the versions of pgpool-II and PostgreSQL
 
 * Mon May 13 2013 Nozomi Anzai <anzai@sraoss.co.jp> 3.3.0-1
 - Update to 3.3.0

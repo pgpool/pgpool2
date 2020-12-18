@@ -2,7 +2,7 @@ $Header$
 
 * General
 
-- Reset application name to "pgppol" when client disconnects(3.1. why
+- Reset application name to "pgpool" when client disconnects(3.1. why
   not use set command?) -> Done.
   - Use reset_query_list to reset to "pgpool" for client disconnection
   - Reset to client specified application name when reusing existing
