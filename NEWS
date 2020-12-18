@@ -5691,7 +5691,7 @@
       http://www.pgpool.net/pipermail/pgpool-general/2013-March/001551.html
 
     - Fix to calculate replication delay only if standby server is behind from
-      the primay server. (Yugo Nagata)
+      the primary server. (Yugo Nagata)
 
       When the primary server is behind from standby server, negative value of
       delay is calculated and the value is assigned to unsigned variable. It
@@ -7634,7 +7634,7 @@
       http://www.pgpool.net/pipermail/pgpool-general/2013-March/001551.html
 
     - Fix to calculate replication delay only if standby server is behind from
-      the primay server. (Yugo Nagata)
+      the primary server. (Yugo Nagata)
 
       When the primary server is behind from standby server, negative value of
       delay is calculated and the value is assigned to unsigned variable. It
@@ -8983,7 +8983,7 @@
       http://www.pgpool.net/pipermail/pgpool-general/2013-March/001551.html
 
     - Fix to calculate replication delay only if standby server is behind from
-      the primay server. (Yugo Nagata)
+      the primary server. (Yugo Nagata)
 
       When the primary server is behind from standby server, negative value of
       delay is calculated and the value is assigned to unsigned variable. It
