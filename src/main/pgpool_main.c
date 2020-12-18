@@ -213,7 +213,7 @@ BACKEND_STATUS *my_backend_status[MAX_NUM_BACKENDS];	/* Backend status buffer */
 int			my_main_node_id;	/* Main node id buffer */
 
 /*
- * Dummy varibale to suppress compiler warnings by discarding return values
+ * Dummy variable to suppress compiler warnings by discarding return values
  * from write(2) in signal handlers
  */
 static int dummy_status;

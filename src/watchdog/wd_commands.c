@@ -110,7 +110,7 @@ get_watchdog_quorum_state(char* wd_authkey)
 
 
 /*
- * Function gets the runtime value of watchdog varibale using the
+ * Function gets the runtime value of watchdog variable using the
  * watchdog IPC
  */
 WDGenericData *
