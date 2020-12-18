@@ -651,7 +651,7 @@ wd_initialize_monitoring_interfaces(void)
 				   *idx;
 
 		ereport(LOG,
-				(errmsg("ensure availibility on any interface")));
+				(errmsg("ensure availability on any interface")));
 
 		if_ni = if_nameindex();
 		if (if_ni == NULL)
