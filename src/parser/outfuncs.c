@@ -1349,7 +1349,7 @@ _outTypeName(String * str, TypeName *node)
 				int			mask = v->val.val.ival;
 
 				/*
-				 * precision for SECOND field. backword comaptibility. use
+				 * precision for SECOND field. backward comaptibility. use
 				 * `'1.2 second'::interval(0) second' not `'1.2
 				 * second'::interval second(0)'(standarad for 8.4).
 				 */
