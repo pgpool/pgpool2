@@ -1363,7 +1363,7 @@
 
       When a schema name was provided, the table name was quoted wrongly as
       like "public.mytbl" instead of "public"."mytbl". So, pool_regclass
-      and to_regclass couldn't find right talbe oid and insert lock was
+      and to_regclass couldn't find right table oid and insert lock was
       never executed. This caused inconsistency between DB nodes.
 
     - test: Fix complication error and segfault of timestamp rewrite test (Yugo Nagata)
@@ -1870,7 +1870,7 @@
 
       When a schema name was provided, the table name was quoted wrongly as
       like "public.mytbl" instead of "public"."mytbl". So, pool_regclass
-      and to_regclass couldn't find right talbe oid and insert lock was
+      and to_regclass couldn't find right table oid and insert lock was
       never executed. This caused inconsistency between DB nodes.
 
     - test: Fix complication error and segfault of timestamp rewrite test
@@ -2984,7 +2984,7 @@
 
       When a schema name was provided, the table name was quoted wrongly as
       like "public.mytbl" instead of "public"."mytbl". So, pool_regclass
-      and to_regclass couldn't find right talbe oid and insert lock was
+      and to_regclass couldn't find right table oid and insert lock was
       never executed. This caused inconsistency between DB nodes.
 
     - test: Fix complication error and segfault of timestamp rewrite test
