@@ -76,13 +76,13 @@ typedef enum
 									 * of watchdog cluster */
 	SIG_INFORM_QURANTINE_NODES, /* notify main about send degenerate requests
 								 * for all quarantine nodes */
-	MAX_INTERUPTS				/* Must be last! */
+	MAX_INTERRUPTS				/* Must be last! */
 }			User1SignalReason;
 
 
 typedef struct User1SignalSlot
 {
-	sig_atomic_t signalFlags[MAX_INTERUPTS];
+	sig_atomic_t signalFlags[MAX_INTERRUPTS];
 }			User1SignalSlot;
 
 /*
