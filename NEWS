@@ -4213,7 +4213,7 @@
     - Support installation method using CREATE EXTENSION for pgpool-recovery
       and pgpool-regclass. (Tatsuo Ishii)
 
-      Older installtion method is still preserved.
+      Older installation method is still preserved.
 
       Note: extension names are "pgpool_recovery" and "pgpool_regclass", not
       "pgpool-recovery" and "pgpool-regclass" because latters are not
