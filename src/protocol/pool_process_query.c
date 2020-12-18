@@ -3330,7 +3330,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 					ereport(FATAL,
 							(return_code(2),
 							 errmsg("failed to read kind from backend %d", i),
-							 errdetail("pool_read retruns error")));
+							 errdetail("pool_read returns error")));
 				}
 
 				if (kind == 0)

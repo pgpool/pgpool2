@@ -725,7 +725,7 @@ si_snapshot_prepared(void)
 }
 
 /*
- * Reurns true if the command will acquire snapshot.
+ * Returns true if the command will acquire snapshot.
  */
 bool
 si_snapshot_acquire_command(Node *node)

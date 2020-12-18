@@ -94,7 +94,7 @@ bool terminate_pgpool(char mode, bool error)
  * test_only:	When set, function only checks if NODE DOWN operation can be
  *				executed on provided node ids and never registers the operation
  *				request.
- *				For test_only case function returs false or throws an error as
+ *				For test_only case function returns false or throws an error as
  *				soon as first non compliant node in node_id_set is found
  * switch_over: if set, the request is originated by switch over, not errors.
  *
