@@ -692,7 +692,7 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "client_idle_limit_in_recovery", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->client_idle_limit_in_recovery);
-	StrNCpy(status[i].desc, "if idle for this seconds, child connection closes in recovery 2nd statge", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if idle for this seconds, child connection closes in recovery 2nd stage", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* OTHERS */
