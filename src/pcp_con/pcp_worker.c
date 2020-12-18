@@ -89,7 +89,7 @@ static void process_recovery_request(PCP_CONNECTION * frontend, char *buf);
 static void process_status_request(PCP_CONNECTION * frontend);
 static void process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos);
 static void process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos);
-static void process_set_configration_parameter(PCP_CONNECTION * frontend, char *buf, int len);
+static void process_set_configuration_parameter(PCP_CONNECTION * frontend, char *buf, int len);
 
 static void pcp_worker_will_go_down(int code, Datum arg);
 
@@ -259,8 +259,8 @@ pcp_process_command(char tos, char *buf, int buf_len)
 	switch (tos)
 	{
 		case 'A':				/* set configuration parameter */
-			set_ps_display("PCP: processing set configration parameter request", false);
-			process_set_configration_parameter(pcp_frontend, buf, buf_len);
+			set_ps_display("PCP: processing set configuration parameter request", false);
+			process_set_configuration_parameter(pcp_frontend, buf, buf_len);
 			break;
 
 		case 'L':				/* node count */
@@ -1347,7 +1347,7 @@ process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos)
 }
 
 static void
-process_set_configration_parameter(PCP_CONNECTION * frontend, char *buf, int len)
+process_set_configuration_parameter(PCP_CONNECTION * frontend, char *buf, int len)
 {
 	char	   *param_name;
 	char	   *param_value;
