@@ -10040,7 +10040,7 @@
         - INSERT or UPDATE are used which explicitly include now(),
         - CURRENT_TIMESTAMP, CURRENT_DATE, CURRENT_TIME. Or the target
         - Table's default value use above functions
-        - The SQL statement inclludes out of 32bit
+        - The SQL statement includes out of 32bit
           integer value(-2147483648 to 2147483647 in decimal)
 
         Example SQL: INSERT INTO t1(id, regdate) VALUES(98887776655,
