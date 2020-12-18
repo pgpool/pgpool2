@@ -9978,7 +9978,7 @@
       - Emit statement log when error or notice message comes from
         query parsing process. This is usefull because PostgreSQL does
         not log particular statement if the error was detected
-        *before* raw parser get executed.  This typlically happens
+        *before* raw parser get executed.  This typically happens
         when encoding error was found(Tatsuo Ishii)
 
       - Display original query to log if kind mismatch error was
