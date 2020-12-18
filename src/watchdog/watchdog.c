@@ -7572,7 +7572,7 @@ check_and_report_IPC_authentication(WDCommandData * ipcCommand)
 		case WD_IPC_ONLINE_RECOVERY_COMMAND:
 		case WD_EXECUTE_CLUSTER_COMMAND:
 		case WD_GET_LEADER_DATA_REQUEST:
-			/* only allowed internaly. */
+			/* only allowed internally. */
 			internal_client_only = true;
 			break;
 
