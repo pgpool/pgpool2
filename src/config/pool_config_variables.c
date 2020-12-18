@@ -703,7 +703,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"auto_failback", CFGCXT_RELOAD, FAILOVER_CONFIG,
-			"Enables nodes automatically reattach, when dettached node continue streaming replication.",
+			"Enables nodes automatically reattach, when detached node continue streaming replication.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.auto_failback,
