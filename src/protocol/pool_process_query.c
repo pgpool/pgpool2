@@ -396,7 +396,7 @@ pool_process_query(POOL_CONNECTION * frontend,
 											pool_unread(CONNECTION(backend, i), &kind, sizeof(kind));
 											ereport(LOG,
 													(errmsg("pool process query"),
-													 errdetail("received %c packet from backend %d. Don't dicard and read %c packet from main", kind, i, kind)));
+													 errdetail("received %c packet from backend %d. Don't discard and read %c packet from main", kind, i, kind)));
 
 											pool_read_with_error(CONNECTION(backend, MAIN_NODE_ID), &kind, sizeof(kind),
 																 "reading message kind from backend");
