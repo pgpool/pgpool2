@@ -4800,7 +4800,7 @@ SELECT_RETRY:
 			ereport(FRONTEND_ERROR,
 					(pool_error_code("57000"),
 					 errmsg("connection terminated due to online recovery"),
-					 errdetail("child connection forced to terminate due to client_idle_limitis:-1")));
+					 errdetail("child connection forced to terminate due to client_idle_limit:-1")));
 		}
 		goto SELECT_RETRY;
 	}
