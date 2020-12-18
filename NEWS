@@ -3278,7 +3278,7 @@
     - doc: Describe explicitly that the number of slave nodes is not
       necessarily 1 (Tatsuo Ishii)
 
-    - Fix occasinal deadlock in failover with watchdog enabled
+    - Fix occasional deadlock in failover with watchdog enabled
       (Muhammad Usama)
 
       per bug #105
