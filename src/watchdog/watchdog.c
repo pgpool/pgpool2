@@ -6895,7 +6895,7 @@ watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode * wdNode, WDPacketD
 		else if (last_rcv_sec >= (2 * BEACON_MESSAGE_INTERVAL_SECONDS))
 		{
 			/*
-			 * We have not received a last becacon from leader ask for the
+			 * We have not received a last beacon from leader ask for the
 			 * node info from leader node
 			 */
 			ereport(WARNING,
