@@ -1025,7 +1025,7 @@ process_reload_config(PCP_CONNECTION * frontend, char scope)
 		if (wd_execute_cluster_command(WD_COMMAND_RELOAD_CONFIG_CLUSTER,0, NULL) != COMMAND_OK)
 			ereport(ERROR,
 					(errmsg("PCP: error while processing reload config request for cluster"),
-					 errdetail("failed to propogate reload config command through watchdog")));
+					 errdetail("failed to propagate reload config command through watchdog")));
 	}
 
 	if(pool_signal_parent(SIGHUP) == -1)
@@ -1312,7 +1312,7 @@ process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos)
 			 errdetail("shutdown mode \"%c\"", mode)));
 
 	/* quickly bail out if invalid mode is specified
-	 * because we do not want to propogate the command
+	 * because we do not want to propagate the command
 	 * with invalid mode over the watchdog network */
 	if (mode != 's' && mode != 'i' && mode != 'f' )
 	{
@@ -1334,7 +1334,7 @@ process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos)
 		if (wd_execute_cluster_command(WD_COMMAND_SHUTDOWN_CLUSTER,1, &wdExecCommandArg) != COMMAND_OK)
 			ereport(ERROR,
 					(errmsg("PCP: error while processing shutdown cluster request"),
-					 errdetail("failed to propogate shutdown command through watchdog")));
+					 errdetail("failed to propagate shutdown command through watchdog")));
 	}
 
 	pcp_write(frontend, "t", 1);
