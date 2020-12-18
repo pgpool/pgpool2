@@ -10007,7 +10007,7 @@
         when smart shutdown signal has been sent.  This has been used
         to work in 2.2(Toshihiro Kitagawa)
 
-      - Fix ProcessFrontendResponse not to accept invalid frotend
+      - Fix ProcessFrontendResponse not to accept invalid frontend
         packet(Xavier Noguer)
 
       - Use %dz for sizeof in fprintf for more portability(Tatsuo Ishii)
