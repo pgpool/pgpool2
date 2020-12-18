@@ -2108,7 +2108,7 @@ static struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"syslog_facility", CFGCXT_RELOAD, LOGING_CONFIG,
-			"syslog local faclity.",
+			"syslog local facility.",
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
 		&g_pool_config.syslog_facility,

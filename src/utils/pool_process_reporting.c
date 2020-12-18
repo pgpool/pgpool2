@@ -403,7 +403,7 @@ get_config(int *nrows)
 	/* - Syslog specific -  */
 	StrNCpy(status[i].name, "syslog_facility", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "LOCAL%d", (pool_config->syslog_facility / 8) - 16);
-	StrNCpy(status[i].desc, "syslog local faclity", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "syslog local facility", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "syslog_ident", POOLCONFIG_MAXNAMELEN);
