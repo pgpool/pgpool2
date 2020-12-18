@@ -2406,7 +2406,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
  * Judge if we need to lock the table
  * to keep SERIAL consistency among servers
  * Return values are:
- * 0: lock is not neccessary
+ * 0: lock is not necessary
  * 1: table lock is required
  * 2: row lock against sequence table is required
  * 3: row lock against insert_lock table is required

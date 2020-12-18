@@ -8142,7 +8142,7 @@
       - Fix buffer overrun problem when pcp password is longer than
         32(Tatsuo Ishii).
 
-      - Remove PGDLLIMPORTI which is only neccessary for Windows
+      - Remove PGDLLIMPORTI which is only necessary for Windows
           and cause a problem for non gcc. Patch contributed by Ibrar Ahmed.
 
 ===============================================================================
@@ -10218,7 +10218,7 @@
 
       - In master/slave mode, execute Parse message on only master
         node. In previous versions Parse executed on all nodes, which
-        grabbed unneccessary lock(Tatsuo Ishii)
+        grabbed unnecessary lock(Tatsuo Ishii)
 
       - Remove init script from all runlevels before uninstall(Devrim)
 

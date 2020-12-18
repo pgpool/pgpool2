@@ -1186,7 +1186,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 
 		/*
 		 * If replication mode, check to see what kind of insert lock is
-		 * neccessary.
+		 * necessary.
 		 */
 		if (REPLICATION)
 			insert_stmt_with_lock = need_insert_lock(backend, stmt, node);
