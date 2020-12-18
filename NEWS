@@ -429,7 +429,7 @@
       the watchdog master/coordinator node at the time of startup.
 
     - Fix Pgpool-II doesn't escalate ip in case of another node
-      inavailability. (bug 215) (Muhammad Usama)
+      unavailability. (bug 215) (Muhammad Usama)
 
       The heartbeat receiver fails to identify the heartbeat sender watchdog
       node when the heartbeat destination is specified in terms of an IP address
@@ -750,7 +750,7 @@
 
     - doc : Fixing a typo in english doc (Muhammad Usama)
 
-    - Fix for bun 215 that pgpool doesn't escalate ip in case of another node inavailability.
+    - Fix for bun 215 that pgpool doesn't escalate ip in case of another node unavailability.
       (Muhammad Usama)
 
       The heartbeat receiver fails to identify the heartbeat sender watchdog node when
