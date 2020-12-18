@@ -1469,7 +1469,7 @@
       backend nodes. The function assumed that the node was also invalid when its
       connection status was down. However, that is not always right.
 
-    - Fix white/black_memqcache_table_list  not to require quotaion (Yugo Nagata)
+    - Fix white/black_memqcache_table_list  not to require quotation (Yugo Nagata)
 
       The tables and schemas name specified in *_memqcache_table_list
       were needed to be quoted by double quotation.
@@ -1968,7 +1968,7 @@
       The expected result of 'show pool_nodes' is fixed to use
       PGSOCKET_DIR in hostname column.
 
-    - Fix white/black_memqcache_table_list not require quotaion (Yugo Nagata)
+    - Fix white/black_memqcache_table_list not require quotation (Yugo Nagata)
 
       The tables and schemas name specified in *_memqcache_table_list
       were needed to be quoted by double quotation.
@@ -3048,7 +3048,7 @@
       The expected result of 'show pool_nodes' is fixed to use
       PGSOCKET_DIR in hostname column.
 
-    - Fix white/black_memqcache_table_list not require quotaion (Yugo Nagata)
+    - Fix white/black_memqcache_table_list not require quotation (Yugo Nagata)
 
       The tables and schemas name specified in *_memqcache_table_list
       were needed to be quoted by double quotation.
