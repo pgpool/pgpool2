@@ -189,7 +189,7 @@ pool_set_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id)
 }
 
 /*
- * Unspecify DB node to send query
+ * Unspecified DB node to send query
  */
 void
 pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id)
