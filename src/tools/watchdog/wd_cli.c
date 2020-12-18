@@ -293,7 +293,7 @@ main(int argc, char **argv)
 			default:
 				
 				/*
-				 * getopt_long whould already have emitted a complaint
+				 * getopt_long should already have emitted a complaint
 				 */
 				fprintf(stderr, "Try \"%s --help\" for more information.\n\n", progname);
 				exit(EXIT_FAILURE);
