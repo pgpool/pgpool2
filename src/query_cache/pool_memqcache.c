@@ -1999,7 +1999,7 @@ pool_reset_memqcache_buffer(bool reset_dml_oids)
 
 /*
  * Return true if memory cache method is "shmem".  The purpose of this
- * function is to cache the result of stcmp and to save a few cycle.
+ * function is to cache the result of strcmp and to save a few cycle.
  */
 bool
 pool_is_shmem_cache(void)
