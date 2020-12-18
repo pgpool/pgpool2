@@ -42,9 +42,9 @@
 
 static int	extract_ntuples(char *message);
 static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *packet, int packetlen, bool command_complete);
-static int	foward_command_complete(POOL_CONNECTION * frontend, char *packet, int packetlen);
-static int	foward_empty_query(POOL_CONNECTION * frontend, char *packet, int packetlen);
-static int	foward_packet_to_frontend(POOL_CONNECTION * frontend, char kind, char *packet, int packetlen);
+static int	forward_command_complete(POOL_CONNECTION * frontend, char *packet, int packetlen);
+static int	forward_empty_query(POOL_CONNECTION * frontend, char *packet, int packetlen);
+static int	forward_packet_to_frontend(POOL_CONNECTION * frontend, char kind, char *packet, int packetlen);
 
 POOL_STATUS
 CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool command_complete)
@@ -158,9 +158,9 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 		}
 
 		if (command_complete)
-			status = foward_command_complete(frontend, p1, len1);
+			status = forward_command_complete(frontend, p1, len1);
 		else
-			status = foward_empty_query(frontend, p1, len1);
+			status = forward_empty_query(frontend, p1, len1);
 
 		if (status < 0)
 			return POOL_END;
@@ -522,12 +522,12 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION * frontend, POOL_CONNE
 	{
 		if (command_complete)
 		{
-			if (foward_command_complete(frontend, packet, packetlen) < 0)
+			if (forward_command_complete(frontend, packet, packetlen) < 0)
 				return POOL_END;
 		}
 		else
 		{
-			if (foward_empty_query(frontend, packet, packetlen) < 0)
+			if (forward_empty_query(frontend, packet, packetlen) < 0)
 				return POOL_END;
 		}
 	}
@@ -539,25 +539,25 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION * frontend, POOL_CONNE
  * Forward Command complete packet to frontend
  */
 static int
-foward_command_complete(POOL_CONNECTION * frontend, char *packet, int packetlen)
+forward_command_complete(POOL_CONNECTION * frontend, char *packet, int packetlen)
 {
-	return foward_packet_to_frontend(frontend, 'C', packet, packetlen);
+	return forward_packet_to_frontend(frontend, 'C', packet, packetlen);
 }
 
 /*
  * Forward Empty query response to frontend
  */
 static int
-foward_empty_query(POOL_CONNECTION * frontend, char *packet, int packetlen)
+forward_empty_query(POOL_CONNECTION * frontend, char *packet, int packetlen)
 {
-	return foward_packet_to_frontend(frontend, 'I', packet, packetlen);
+	return forward_packet_to_frontend(frontend, 'I', packet, packetlen);
 }
 
 /*
  * Forward packet to frontend
  */
 static int
-foward_packet_to_frontend(POOL_CONNECTION * frontend, char kind, char *packet, int packetlen)
+forward_packet_to_frontend(POOL_CONNECTION * frontend, char kind, char *packet, int packetlen)
 {
 	int			sendlen;
 

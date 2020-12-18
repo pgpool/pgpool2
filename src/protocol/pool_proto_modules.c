@@ -2889,7 +2889,7 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 					if (pmsg && pmsg->not_forward_to_frontend)
 					{
 						/*
-						 * parse_before_bind() was called. Do not foward the
+						 * parse_before_bind() was called. Do not forward the
 						 * parse complete message to frontend.
 						 */
 						ereport(DEBUG5,
@@ -2922,7 +2922,7 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 					if (pmsg && pmsg->not_forward_to_frontend)
 					{
 						/*
-						 * parse_before_bind() was called. Do not foward the
+						 * parse_before_bind() was called. Do not forward the
 						 * close complete message to frontend.
 						 */
 						ereport(DEBUG5,
