@@ -1348,7 +1348,7 @@
       caching the PostgreSQL connection if the connection to frontend was not
       properly terminated.
 
-    - test: Fix false alerm of regression tset 062 (Yugo Nagata)
+    - test: Fix false alarm of regression tset 062 (Yugo Nagata)
 
     - test: Fix broken regression test for native replication (Yugo Nagata)
 
@@ -1855,7 +1855,7 @@
       caching the PostgreSQL connection if the connection to frontend was not
       properly terminated.
 
-    - test: Fix false alerm of regression tset 062 (Yugo Nagata)
+    - test: Fix false alarm of regression tset 062 (Yugo Nagata)
 
     - test: Fix broken regression test for native replication (Yugo Nagata)
 
@@ -2969,7 +2969,7 @@
       This ensures that pgpool_status is saved to permanent storage and
       allow to survive after system crash.
 
-    - test: Fix false alerm of regression tset 062 (Yugo Nagata)
+    - test: Fix false alarm of regression tset 062 (Yugo Nagata)
 
     - test: Fix broken regression test for native replication (Yugo Nagata)
 
