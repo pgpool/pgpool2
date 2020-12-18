@@ -192,7 +192,7 @@
     There are six different running modes in
     <productname>Pgpool-II</>: streaming replication mode, logical
     replication mode, main replica mode (slony mode), native
-    replication mode, raw mode and snapshot isolaton mode. In any
+    replication mode, raw mode and snapshot isolation mode. In any
     mode, <productname>Pgpool-II</> provides connection pooling,
     and automatic fail over.
     Online recovery can be used only with streaming replication mode and native replication mode.
