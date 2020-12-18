@@ -30,12 +30,20 @@
   <para>
    <!--
    First, allow to access port that <productname>Pgpool-II</productname> use.
+   In the example below, let <link linkend="guc-port">Pgpool-II listen
+   port number</link> be 9999, <link linkend="guc-pcp-port">PCP listen
+   port number</link> be 9898, <link linkend="guc-wd-port">watchdog
+   listen port number</link> be 9000 and <link
+   linkend="guc-heartbeat-port">heartbeat listen port number</link> be
+   9694.  Notice that only heartbeat port uses UDP and others use TCP.
    -->
+   以下の例では、<link linkend="guc-port">Pgpool-IIの受付ポート番号</link>を9999、<link linkend="guc-pcp-port">PCPの受付ポート番号</link>を9898、<link linkend="guc-wd-port">watchdogの受付ポート番号</link>を9000、<link linkend="guc-heartbeat-port">heartbeatの受付ポート番号</link>を9694とします。
    まず、<productname>Pgpool-II</productname>の使用するポートを開放します。
+   heartbeatのポートのみUDPで、それ以外はすべてTCPであることに注意してください。
 
    <programlisting>
-    firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp  --add-port=9694/tcp
-    firewall-cmd --permanent --zone=public --add-port=9999/udp --add-port=9898/udp --add-port=9000/udp  --add-port=9694/udp
+    firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp
+    firewall-cmd --permanent --zone=public --add-port=9694/udp
     firewall-cmd --reload
    </programlisting>
   </para>
