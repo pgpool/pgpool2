@@ -95,7 +95,7 @@
       table, allow_sql_comments, client_idle_limit, log_error_verbosity,
       client_min_messages, log_min_messages, client_idle_limit_in_recovery.
 
-    - Sync inconsitent status of PostgreSQL nodes in Pgpool-II instances
+    - Sync inconsistent status of PostgreSQL nodes in Pgpool-II instances
       after restart. (Muhammad Usama)
 
     - At the Pgpool-II startup, the status of each configured backend node
