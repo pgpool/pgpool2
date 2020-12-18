@@ -31,7 +31,7 @@ pcp_recovery_node(int node_id) does:
     pcp_child calls start_recovery() and waits for its completion
 
 	  start_recovery() sets Req_info->kind to NODE_RECOVERY_REQUEST
-	    start_recovery calls execute_checkpoint() execute CHEKPOINT
+	    start_recovery calls execute_checkpoint() execute CHECKPOINT
 	    command
 	    start_recovery calls exec_recovery
 	      exec_recovery executes SELECT pgpool_recovery()
@@ -40,7 +40,7 @@ pcp_recovery_node(int node_id) does:
 		/* start 2nd stage */
 		sets InRecovery to 1
 		wait_connection_closed() to wait for all frontend exits
-	    calls execute_checkpoint() execute CHEKPOINT
+	    calls execute_checkpoint() execute CHECKPOINT
 	    calls exec_recovery to execute 2nd stage script
 		calls exec_remote_start to start postmaster
 		calls check_postmaster_started to wait for postmaster starts
