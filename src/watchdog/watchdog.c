@@ -493,7 +493,7 @@ static int	send_message_of_type(WatchdogNode * wdNode, char type, WDPacketData *
 static bool send_cluster_service_message(WatchdogNode * wdNode, WDPacketData * replyFor, char message);
 
 
-static int	accept_incomming_connections(fd_set *rmask, int pending_fds_count);
+static int	accept_incoming_connections(fd_set *rmask, int pending_fds_count);
 
 static int	standard_packet_processor(WatchdogNode * wdNode, WDPacketData * pkt);
 static void cluster_service_message_processor(WatchdogNode * wdNode, WDPacketData * pkt);
@@ -1243,7 +1243,7 @@ watchdog_main(void)
 		{
 			int			processed_fds = 0;
 
-			processed_fds += accept_incomming_connections(&rmask, (select_ret - processed_fds));
+			processed_fds += accept_incoming_connections(&rmask, (select_ret - processed_fds));
 			processed_fds += update_successful_outgoing_cons(&wmask, (select_ret - processed_fds));
 			processed_fds += read_sockets(&rmask, (select_ret - processed_fds));
 		}
@@ -1401,7 +1401,7 @@ prepare_fds(fd_set *rmask, fd_set *wmask, fd_set *emask)
 	}
 
 	/*
-	 * I know this is getting complex but we need to add all incomming
+	 * I know this is getting complex but we need to add all incoming
 	 * unassigned connection sockets these one will go for reading
 	 */
 	foreach(lc, g_cluster.unidentified_socks)
@@ -3319,7 +3319,7 @@ is_node_active_and_reachable(WatchdogNode * wdNode)
 }
 
 static int
-accept_incomming_connections(fd_set *rmask, int pending_fds_count)
+accept_incoming_connections(fd_set *rmask, int pending_fds_count)
 {
 	int			processed_fds = 0;
 	int			fd;
@@ -3341,7 +3341,7 @@ accept_incomming_connections(fd_set *rmask, int pending_fds_count)
 			}
 			/* accept failed */
 			ereport(DEBUG1,
-					(errmsg("Failed to accept incomming watchdog connection")));
+					(errmsg("Failed to accept incoming watchdog connection")));
 		}
 		else
 		{
@@ -7468,7 +7468,7 @@ verify_authhash_for_node(WatchdogNode * wdNode, char *authhash)
 /*
  * function authenticates the IPC command by looking for the
  * auth key in the JSON data of IPC command.
- * For IPC commands comming from outer wrold the function validates the
+ * For IPC commands coming from outer wrold the function validates the
  * authkey in JSON packet with configured pool_config->wd_authkey.
  * if internal_client_only is true then the JSON data must contain the
  * shared key present in the pgpool-II shared memory. This can be used
