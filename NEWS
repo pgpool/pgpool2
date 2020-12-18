@@ -521,7 +521,7 @@
       The reason was a missing command timeout handling in the function
       that sends the IPC commands to watchdog.
 
-    - Fix a posible hang during health checking. (bug 204) (Yugo Nagata)
+    - Fix a possible hang during health checking. (bug 204) (Yugo Nagata)
 
       Health checking was hang when any data wasn't sent from
       backend after connect(2) succeeded. To fix this, pool_check_fd()
@@ -921,7 +921,7 @@
       either load balance node or primary node, the primary node id is
       returned.
 
-    - Fix a posible hang during health checking (Yugo Nagata)
+    - Fix a possible hang during health checking (Yugo Nagata)
 
       Health checking was hang when any data wasn't sent
       from backend after connect(2) succeeded. To fix this,
@@ -1656,7 +1656,7 @@
 
       See bug 194 for related info.
 
-    - Fix a posible hang during health checking (Yugo Nagata)
+    - Fix a possible hang during health checking (Yugo Nagata)
 
       Health checking was hang when any data wasn't sent
       from backend after connect(2) succeeded. To fix this,
@@ -2817,7 +2817,7 @@
     - change the Makefile under the directory src/sql/, that is proposed (Bo Peng)
       by [pgpool-hackers: 1611]
 
-    - Fix a posible hang during health checking (Yugo Nagata)
+    - Fix a possible hang during health checking (Yugo Nagata)
 
       Health checking was hang when any data wasn't sent
       from backend after connect(2) succeeded. To fix this,
@@ -4629,7 +4629,7 @@
     - change the Makefile under the directory src/sql/, that is proposed (Bo Peng)
       by [pgpool-hackers: 1611]
 
-    - Fix a posible hang during health checking (Yugo Nagata)
+    - Fix a possible hang during health checking (Yugo Nagata)
 
       Health checking was hang when any data wasn't sent
       from backend after connect(2) succeeded. To fix this,
@@ -6868,7 +6868,7 @@
     - change the Makefile under the directory src/sql/, that is proposed (Bo Peng)
       by [pgpool-hackers: 1611]
 
-    - Fix a posible hang during health checking (Yugo Nagata)
+    - Fix a possible hang during health checking (Yugo Nagata)
 
       Health checking was hang when any data wasn't sent
       from backend after connect(2) succeeded. To fix this,
