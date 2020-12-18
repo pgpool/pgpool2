@@ -284,7 +284,7 @@ function create_pgpool_remote_start_script()
 cat >> $1/$PGPOOL_REMOTE_START_SCRIPT <<'EOF'
 #! /bin/sh
 #
-# start postmaster on the recoveried node
+# start postmaster on the recovered node
 #
 if [ $# -ne 2 ]
 then
