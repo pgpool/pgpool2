@@ -10784,7 +10784,7 @@
       * Improve replication. SELECT nextval() and SELECT setval() are
         now replicated. (Yoshiyuki Asaba)
       * Change SELECT query is only sent to the master node. (Yoshiyuki Asaba)
-        - Use /*REPLICATION*/ comment to repliate a SELECT query.
+        - Use /*REPLICATION*/ comment to replicate a SELECT query.
       * Fix unexpected failover error due to receiving an interrupt
         signal while connecting to the backend. (Yoshiyuki Asaba)
       * Add "pgpool.pam" file, for PAM configuration file, to be
