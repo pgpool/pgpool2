@@ -34,7 +34,7 @@ public class PgTester {
             for(int cv = startValue; cv <= max; cv++){
                 query.setInt(1, cv);
                 query.execute();
-                //System.out.println("interted "+cv);
+                //System.out.println("inserted "+cv);
             }
             query.close();
 			//conn.commit();
