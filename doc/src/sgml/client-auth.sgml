@@ -992,7 +992,7 @@ ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<rep
       <term><literal>backendusepasswd</literal></term>
       <listitem>
        <para>
-        Set to 1 to make the password used for LDAP authentication use authetication
+        Set to 1 to make the password used for LDAP authentication use authentication
         between <productname>Pgpool-II</productname> and backendd.
        </para>
       </listitem>
