@@ -4986,7 +4986,7 @@ pool_dump_valid_backend(int backend_id)
 }
 
 /*
- * Read pending data from backend and push them into pending statck if any.
+ * Read pending data from backend and push them into pending stack if any.
  * Should be used for streaming replication mode and extended query.
  * Returns true if data was actually pushed.
  */
