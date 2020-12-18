@@ -430,7 +430,7 @@
    backend_data_directory0.
   </para>
    <para>
-   New backend data_directorys can be added in this parameter
+   New backend data_directories can be added in this parameter
    by reloading a configuration file. However, values cannot
    be updated so you must
    restart <productname>Pgpool-II</productname> in that case.
