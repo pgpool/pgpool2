@@ -4262,7 +4262,7 @@
 
 * Bug fixes
 
-    - Consider timeout waiting for compeletion of failback request in on line
+    - Consider timeout waiting for completion of failback request in on line
       recovery. (Tatsuo Ishii)
 
       This will prevent the situation that recovery operation continues forever
@@ -5491,7 +5491,7 @@
 
     - Add mention about "-D" option to the man page. (Tatsuo Ishii)
 
-    - Consider timeout waiting for compeletion of failback request in on line
+    - Consider timeout waiting for completion of failback request in on line
       recovery (Tatsuo Ishii)
 
       This will prevent the situation that recovery operation continues forever
@@ -7515,7 +7515,7 @@
 
     - Add mention about "-D" option to the man page. (Tatsuo Ishii)
 
-    - Consider timeout waiting for compeletion of failback request in on line
+    - Consider timeout waiting for completion of failback request in on line
       recovery (Tatsuo Ishii)
 
       This will prevent the situation that recovery operation continues forever
@@ -8847,7 +8847,7 @@
 
     - Add mention about "-D" option to the man page. (Tatsuo Ishii)
 
-    - Consider timeout waiting for compeletion of failback request in on line
+    - Consider timeout waiting for completion of failback request in on line
       recovery (Tatsuo Ishii)
 
       This will prevent the situation that recovery operation continues forever
