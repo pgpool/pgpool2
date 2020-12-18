@@ -58,7 +58,7 @@ typedef struct
 	char	   *relname;
 	int			num_params;		/* num of original params (for Parse) */
 	bool		rewrite_to_params;	/* true if timestamp is rewritten to param
-									 * insread of const */
+									 * instead of const */
 	bool		rewrite;		/* has rewritten? */
 	List	   *params;			/* list of additional params */
 }			TSRewriteContext;
