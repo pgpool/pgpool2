@@ -2204,7 +2204,7 @@ static RETSIGTYPE reap_handler(int sig)
 /*
  * pool_waitpid:
  * nothing more than a wrapper function over NOHANG mode waitpid() or wait3()
- * depending on the existance of waitpid in the system
+ * depending on the existence of waitpid in the system
  */
 pid_t
 pool_waitpid(int *status)
