@@ -2463,7 +2463,7 @@
     - Change the log level of "Frontend Terminated" message to DEBUG1 from LOG
       (Muhammad Usama)
 
-    - Fix ill signal befavior of SIGCHLD in exec_ifconfig() (Tatsuo Ishii)
+    - Fix ill signal behavior of SIGCHLD in exec_ifconfig() (Tatsuo Ishii)
 
       For some reason SIGCHLD was set to SIG_IGN *and* tries to wait
       child process which always fails because SIGCHLD is never delivered.
@@ -3320,7 +3320,7 @@
 
     - test: Add memory leak regression test (Tatsuo Ishii)
 
-    - Fix ill signal befavior of SIGCHLD in exec_ifconfig() (Tatsuo Ishii)
+    - Fix ill signal behavior of SIGCHLD in exec_ifconfig() (Tatsuo Ishii)
 
       For some reason SIGCHLD was set to SIG_IGN *and* tries to wait
       child process which always fails because SIGCHLD is never delivered.
@@ -10096,7 +10096,7 @@
         it easier which query is sent to which DB node(Tatsuo Ishii)
 
       - Add new directive fail_over_on_backend_error to control the
-         behaviro of fail over(Tatsuo Ishii)
+         behavior of fail over(Tatsuo Ishii)
 
       - Record DB node status and remember when pgpool-II restarts(Tatsuo Ishii)
 
