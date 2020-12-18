@@ -87,7 +87,7 @@ typedef enum IPC_CMD_PREOCESS_RES
 
 #define MAX_SECS_ESC_PROC_EXIT_WAIT 5	/* maximum amount of seconds to wait
 										 * for escalation/de-escalation process
-										 * to exit normaly before moving on */
+										 * to exit normally before moving on */
 
 #define BEACON_MESSAGE_INTERVAL_SECONDS		10	/* interval between beacon
 												 * messages */
