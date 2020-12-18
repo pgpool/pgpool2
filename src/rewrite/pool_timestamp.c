@@ -1103,7 +1103,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL * backend,
 	{
 		/*
 		 * If num_formats is 0, the original message has no parameters or the parameter formats are all text,
-		 * so we don't need additional format codes since timestamp parametes use text as its format.
+		 * so we don't need additional format codes since timestamp parameters use text as its format.
 		 */
 		num_formats_new = 0;
 	}
