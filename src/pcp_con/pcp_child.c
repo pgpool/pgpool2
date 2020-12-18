@@ -461,7 +461,7 @@ pcp_mark_recovery_in_progress(void)
 	pool_sigset_t oldmask;
 
 	/*
-	 * only pcp worker is allowd to make this call
+	 * only pcp worker is allowed to make this call
 	 */
 	if (processType != PT_PCP_WORKER)
 		return false;
@@ -485,7 +485,7 @@ pcp_mark_recovery_finished(void)
 	pool_sigset_t oldmask;
 
 	/*
-	 * only pcp worker is allowd to make this call
+	 * only pcp worker is allowed to make this call
 	 */
 	if (processType != PT_PCP_WORKER)
 		return;

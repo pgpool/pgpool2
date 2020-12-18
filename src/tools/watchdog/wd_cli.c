@@ -179,7 +179,7 @@ main(int argc, char **argv)
 					status_ALIVE = true;
 				else
 				{
-					fprintf(stderr, "ERROR: Invalid node status \"%s\", Allowd options are DEAD or ALIVE''\n",optarg);
+					fprintf(stderr, "ERROR: Invalid node status \"%s\", Allowed options are DEAD or ALIVE''\n",optarg);
 					exit(EXIT_FAILURE);
 				}
 				break;
