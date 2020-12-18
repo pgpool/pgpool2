@@ -4216,7 +4216,7 @@
       Older installation method is still preserved.
 
       Note: extension names are "pgpool_recovery" and "pgpool_regclass", not
-      "pgpool-recovery" and "pgpool-regclass" because latters are not
+      "pgpool-recovery" and "pgpool-regclass" because letters are not
       convenient in using CREATE EXTENSION command (requires double quotes).
 
     - Add a function "pgpool_pgctl()" which enables to execute
