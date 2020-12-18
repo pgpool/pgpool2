@@ -3504,7 +3504,7 @@
 
       This problem is reported by Qian Peng in [pgpool-hackers: 520].
 
-    - Disbale statement_timeout of PostgreSQL while executing online recovery
+    - Disable statement_timeout of PostgreSQL while executing online recovery
       (Tatsuo Ishii)
 
       Online recovery may take very long time and user may enable statement
@@ -5018,7 +5018,7 @@
       Per bug #104.
       http://www.pgpool.net/mantisbt/view.php?id=104
 
-    - Disbale statement_timeout of PostgreSQL while executing online recovery
+    - Disable statement_timeout of PostgreSQL while executing online recovery
       (Tatsuo Ishii)
 
       Online recovery may take very long time and user may enable statement
@@ -7175,7 +7175,7 @@
 
       See [pgpool-hackers: 239][pgpool-hackers: 512].
 
-    - Disbale statement_timeout of PostgreSQL while executing online recovery
+    - Disable statement_timeout of PostgreSQL while executing online recovery
       (Tatsuo Ishii)
 
       Online recovery may take very long time and user may enable statement
@@ -8564,7 +8564,7 @@
 
       See [pgpool-hackers: 239][pgpool-hackers: 512].
 
-    - Disbale statement_timeout of PostgreSQL while executing online recovery
+    - Disable statement_timeout of PostgreSQL while executing online recovery
       (Tatsuo Ishii)
 
       Online recovery may take very long time and user may enable statement
