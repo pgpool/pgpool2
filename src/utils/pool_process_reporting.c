@@ -919,7 +919,7 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "memqcache_cache_oiddir", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->memqcache_oiddir);
-	StrNCpy(status[i].desc, "Tempory work directory to record table oids", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Temporary work directory to record table oids", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "memqcache_stats_start_time", POOLCONFIG_MAXNAMELEN);

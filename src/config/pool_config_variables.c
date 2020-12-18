@@ -1228,7 +1228,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"memqcache_oiddir", CFGCXT_INIT, CACHE_CONFIG,
-			"Tempory directory to record table oids.",
+			"Temporary directory to record table oids.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.memqcache_oiddir,
