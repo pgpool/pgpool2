@@ -688,7 +688,7 @@
     - Add some warning messages for wd_authkey hash calculation failure. (Yugo Nagata)
 
       Sometimes wd_authkey calculation fails for some reason other
-      than authkey mismatch. The additional messages make these distingushable
+      than authkey mismatch. The additional messages make these distinguishable
       for each other.
 
 ===============================================================================
@@ -1048,7 +1048,7 @@
       (Yugo Nagata)
 
       Sometimes wd_authkey calculation fails for some reason other than
-      authkey mismatch. The additional messages make these distingushable
+      authkey mismatch. The additional messages make these distinguishable
       for each other.
 
     - test: Fix regression test to check timeout of each test (Yugo Nagata)
@@ -2006,7 +2006,7 @@
       (Yugo Nagata)
 
       Sometimes wd_authkey calculation fails for some reason other than
-      authkey mismatch. The additional messages make these distingushable
+      authkey mismatch. The additional messages make these distinguishable
       for each other.
 
     - test: Fix regression test to check timeout of each test (Yugo Nagata)
@@ -3073,7 +3073,7 @@
       (Yugo Nagata)
 
       Sometimes wd_authkey calculation fails for some reason other than
-      authkey mismatch. The additional messages make these distingushable
+      authkey mismatch. The additional messages make these distinguishable
       for each other.
 
     - test: Fix regression test to check timeout of each test (Yugo Nagata)
