@@ -2075,7 +2075,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 				if (processType == PT_WORKER)
 				{
 					/*
-					 * sleep appropreate time to avoid pool_worker_child
+					 * sleep appropriate time to avoid pool_worker_child
 					 * exit/fork storm.
 					 */
 					sleep(pool_config->sr_check_period);

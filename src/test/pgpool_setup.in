@@ -39,7 +39,7 @@
 # -r: use pg_rewind for base backup if possible.
 #
 # The user run this script will become the PostgreSQL super user as
-# well.  Current directory must be empty.  Assume that appropreate
+# well.  Current directory must be empty.  Assume that appropriate
 # pgpool and PostgreSQL binaries are in the command search path.
 # The user must have passwordless access to localhost over SSH.
 #
