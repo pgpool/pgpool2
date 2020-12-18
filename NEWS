@@ -7915,7 +7915,7 @@
         unnamed statements. To fix this, if extended query is used, named
         statement/portal for internal are used for internal query.
 
-      - Fix is_system_catalog(). Its relcach was accidently defined as
+      - Fix is_system_catalog(). Its relcache was accidently defined as
         "session local". (Tatsuo Ishii)
 
       - Fix hangup when query conflict occurs in Hot-Standby mode.
@@ -9236,7 +9236,7 @@
         unnamed statements. To fix this, if extended query is used, named
         statement/portal for internal are used for internal query.
 
-      - Fix is_system_catalog(). Its relcach was accidently defined as
+      - Fix is_system_catalog(). Its relcache was accidently defined as
         "session local". (Tatsuo Ishii)
 
       - Improve reading and writing pid_file. (Tatsuo Ishii)
