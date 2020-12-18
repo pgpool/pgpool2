@@ -4448,7 +4448,7 @@
       snprintf and strlcpy respectively. (Yugo Nagata)
 
     - Replace "sticky bit" to "setuid bit" in log message, comments and
-      funcation names. (Yugo Nagata)
+      function names. (Yugo Nagata)
 
       These words were used mistakenly and caused confusion.
 

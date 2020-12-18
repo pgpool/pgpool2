@@ -3835,7 +3835,7 @@ update_backend_quarantine_status(void)
  * nodes from the LEADER/COORDINATOR watchdog Pgpool-II and synchronize the
  * local backend states with the cluster wide status of each node.
  *
- * Latter in the funcrtion after syncing the backend node status the function
+ * Latter in the function after syncing the backend node status the function
  * do a partial or full restart of Pgpool-II children depending upon the
  * Pgpool-II mode and type of node status change
  *
