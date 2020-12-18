@@ -2458,7 +2458,7 @@
 
     - Fix a memory leak with long-lived connections (Muhammad Usama)
 
-      Problem reporeted in [pgpool-general: 3325].
+      Problem reported in [pgpool-general: 3325].
 
     - Change the log level of "Frontend Terminated" message to DEBUG1 from LOG
       (Muhammad Usama)
@@ -2505,7 +2505,7 @@
     - Fix pgpool main process to shutdown in case of child process start-up
       failures (Muhammad Usama)
 
-      Problem rported in [pgpool-general: 3358].
+      Problem reported in [pgpool-general: 3358].
 
     - Fix a segmentation fault that could happen in child process error
       (Muhammad Usama)
