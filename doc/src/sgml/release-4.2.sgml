@@ -322,7 +322,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
      heartbeat_device2 = ''
      </programlisting>
       Unlike 4.1 or before, now all watchdog parameters are identical
-      on all hosts.  To distingusish which host is which, create a file
+      on all hosts.  To distinguish which host is which, create a file
       <filename>pgpool_node_id</filename> and put number 0, 1, 2
       etc. to identify host.
     </para>
