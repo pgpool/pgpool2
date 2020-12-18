@@ -3742,7 +3742,7 @@
 
       When pgpool parses a named prepared statement with default now(),
       timestamps are replaced to additional parameters. So, Bind message also
-      should inclued additional parameter format codes. However, when the
+      should included additional parameter format codes. However, when the
       number of original parameter was one, pgpool didn't handle this. This
       caused a error like "incorrect binary data format in bind parameter 2".
 
@@ -5169,7 +5169,7 @@
 
       When pgpool parses a named prepared statement with default now(),
       timestamps are replaced to additional parameters. So, Bind message also
-      should inclued additional parameter format codes. However, when the
+      should included additional parameter format codes. However, when the
       number of original parameter was one, pgpool didn't handle this. This
       caused a error like "incorrect binary data format in bind parameter 2".
 
@@ -7310,7 +7310,7 @@
 
       When pgpool parses a named prepared statement with default now(),
       timestamps are replaced to additional parameters. So, Bind message also
-      should inclued additional parameter format codes. However, when the
+      should included additional parameter format codes. However, when the
       number of original parameter was one, pgpool didn't handle this. This
       caused a error like "incorrect binary data format in bind parameter 2".
 
@@ -8673,7 +8673,7 @@
 
       When pgpool parses a named prepared statement with default now(),
       timestamps are replaced to additional parameters. So, Bind message also
-      should inclued additional parameter format codes. However, when the
+      should included additional parameter format codes. However, when the
       number of original parameter was one, pgpool didn't handle this. This
       caused a error like "incorrect binary data format in bind parameter 2".
 
