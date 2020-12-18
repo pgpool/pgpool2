@@ -3980,7 +3980,7 @@ sync_backend_from_watchdog(void)
 		return;
 
 	/*
-	 * Decide if All or subset of the Pgpool-II children needs immidiate
+	 * Decide if All or subset of the Pgpool-II children needs immediate
 	 * restart or we can do that after finishing the current session
 	 *
 	 * Check if there was no change at all
