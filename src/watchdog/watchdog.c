@@ -86,7 +86,7 @@ typedef enum IPC_CMD_PREOCESS_RES
 										 * with node once it was failed */
 
 #define MAX_SECS_ESC_PROC_EXIT_WAIT 5	/* maximum amount of seconds to wait
-										 * for escalation/de-esclation process
+										 * for escalation/de-escalation process
 										 * to exit normaly before moving on */
 
 #define BEACON_MESSAGE_INTERVAL_SECONDS		10	/* interval between beacon
