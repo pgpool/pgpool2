@@ -207,7 +207,7 @@ main(int argc, char **argv)
 						command_scope = 'l';
 					else
 					{
-						fprintf(stderr, "%s: Invalid command socpe \"%s\", must be either \"cluster\" or \"local\" \n", progname, optarg);
+						fprintf(stderr, "%s: Invalid command scope \"%s\", must be either \"cluster\" or \"local\" \n", progname, optarg);
 						exit(1);
 					}
 				}
