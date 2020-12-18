@@ -91,7 +91,7 @@ pool_get_my_process_info(void)
  * Increment local session id
  */
 void
-pool_incremnet_local_session_id(void)
+pool_increment_local_session_id(void)
 {
 	POOL_PROCESS_CONTEXT *p = pool_get_process_context();
 

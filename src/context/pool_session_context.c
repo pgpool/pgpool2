@@ -76,7 +76,7 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 	session_context->query_context = NULL;
 
 	/* Initialize local session id */
-	pool_incremnet_local_session_id();
+	pool_increment_local_session_id();
 
 	/* Create memory context */
 	/* TODO re-think about the parent for this context ?? */
