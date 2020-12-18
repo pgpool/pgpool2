@@ -389,7 +389,7 @@ check_replication_time_lag(void)
 		if (status == -1 || (status == -2 && active_standby_node > 0))
 		{
 			ereport(LOG,
-					(errmsg("get_query_result falied: status: %d", status)));
+					(errmsg("get_query_result failed: status: %d", status)));
 		}
 
 		for (i = 0; i < NUM_BACKENDS; i++)

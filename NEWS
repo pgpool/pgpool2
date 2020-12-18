@@ -6518,7 +6518,7 @@
 
 * Enhancements
 
-    - Retry if health check faied rather than immediately do failover. For
+    - Retry if health check failed rather than immediately do failover. For
       this purpose new directives "health_check_max_retries" and
       "health_check_retry_delay" were added. (Tatsuo Ishii)
       Patch contributed by Matt Solnit.

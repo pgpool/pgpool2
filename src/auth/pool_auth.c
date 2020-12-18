@@ -1318,7 +1318,7 @@ authenticate_frontend_SCRAM(POOL_CONNECTION * backend, POOL_CONNECTION * fronten
 	if (!shadow_pass)
 		ereport(ERROR,
 				(errmsg("authentication failed"),
-				 errdetail("faild to build the scram verifier")));
+				 errdetail("failed to build the scram verifier")));
 
 	/*
 	 * SASL auth is not supported for protocol versions before 3, because it
