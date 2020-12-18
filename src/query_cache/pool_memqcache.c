@@ -258,7 +258,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 		return -1;
 	}
 	ereport(DEBUG1,
-			(errmsg("commiting SELECT results to cache storage"),
+			(errmsg("committing SELECT results to cache storage"),
 			 errdetail("Query=\"%s\"", query)));
 #ifdef DEBUG
 	dump_cache_data(data, datalen);
@@ -268,14 +268,14 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 	/* encode md5key for memcached */
 	encode_key(query, tmpkey, backend);
 	ereport(DEBUG2,
-			(errmsg("commiting SELECT results to cache storage"),
+			(errmsg("committing SELECT results to cache storage"),
 			 errdetail("search key : \"%s\"", tmpkey)));
 
 	memcpy(cachekey.hashkey, tmpkey, 32);
 
 	memqcache_expire = pool_config->memqcache_expire;
 	ereport(DEBUG1,
-			(errmsg("commiting SELECT results to cache storage"),
+			(errmsg("committing SELECT results to cache storage"),
 			 errdetail("memqcache_expire = %ld", memqcache_expire)));
 
 	if (pool_is_shmem_cache())
@@ -290,7 +290,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 		if (cacheid != NULL)
 		{
 			ereport(DEBUG1,
-					(errmsg("commiting SELECT results to cache storage"),
+					(errmsg("committing SELECT results to cache storage"),
 					 errdetail("item already exists")));
 
 			return 0;
@@ -307,7 +307,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 			else
 			{
 				ereport(DEBUG2,
-						(errmsg("commiting SELECT results to cache storage"),
+						(errmsg("committing SELECT results to cache storage"),
 						 errdetail("blockid: %d itemid: %d",
 								   cacheid->blockid, cacheid->itemid)));
 			}
@@ -328,7 +328,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 			return -1;
 		}
 		ereport(DEBUG1,
-				(errmsg("commiting SELECT results to cache storage"),
+				(errmsg("committing SELECT results to cache storage"),
 				 errdetail("set cache succeeded")));
 	}
 #endif
@@ -368,7 +368,7 @@ pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *dat
 		return -1;
 	}
 	ereport(DEBUG1,
-			(errmsg("commiting relation cache to cache storage"),
+			(errmsg("committing relation cache to cache storage"),
 			 errdetail("Query=\"%s\"", query)));
 
 #ifdef DEBUG
@@ -378,14 +378,14 @@ pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *dat
 	/* encode md5key for memcached */
 	encode_key(query, tmpkey, backend);
 	ereport(DEBUG2,
-			(errmsg("commiting relation cache to cache storage"),
+			(errmsg("committing relation cache to cache storage"),
 			 errdetail("search key : \"%s\"", tmpkey)));
 
 	memcpy(cachekey.hashkey, tmpkey, 32);
 
 	memqcache_expire = pool_config->relcache_expire;
 	ereport(DEBUG1,
-			(errmsg("commiting relation cache to cache storage"),
+			(errmsg("committing relation cache to cache storage"),
 			 errdetail("memqcache_expire = %ld", memqcache_expire)));
 
 	if (pool_is_shmem_cache())
@@ -400,7 +400,7 @@ pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *dat
 		if (cacheid != NULL)
 		{
 			ereport(DEBUG1,
-					(errmsg("commiting relation cache to cache storage"),
+					(errmsg("committing relation cache to cache storage"),
 					 errdetail("item already exists")));
 
 			return 0;
@@ -417,7 +417,7 @@ pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *dat
 			else
 			{
 				ereport(DEBUG2,
-						(errmsg("commiting relation cache to cache storage"),
+						(errmsg("committing relation cache to cache storage"),
 						 errdetail("blockid: %d itemid: %d",
 								   cacheid->blockid, cacheid->itemid)));
 			}
@@ -438,7 +438,7 @@ pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *dat
 			return -1;
 		}
 		ereport(DEBUG1,
-				(errmsg("commiting relation cache to cache storage"),
+				(errmsg("committing relation cache to cache storage"),
 				 errdetail("set cache succeeded")));
 	}
 #endif
