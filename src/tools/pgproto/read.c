@@ -252,7 +252,7 @@ read_until_ready_for_query(PGconn *conn, int timeout)
 				break;
 		}
 
-		/* If nap-bwteen-line is requested, nap for some time */
+		/* If nap-between-line is requested, nap for some time */
 		if (read_nap > 0)
 		{
 			(void) usleep(read_nap);
