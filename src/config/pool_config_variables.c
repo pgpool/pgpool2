@@ -3027,7 +3027,7 @@ find_option(const char *name, int elevel)
 
 			/*
 			 * For dynamic array type vars the key also have the index at the
-			 * end e.g. backend_hostname0 so we only comapare the key's name
+			 * end e.g. backend_hostname0 so we only compare the key's name
 			 * part
 			 */
 			if (!strncmp(gconf->name, name, index_start_index))
