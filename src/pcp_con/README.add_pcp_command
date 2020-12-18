@@ -24,7 +24,7 @@ pcp_write(). Usually the character is lower case of the server side
 protocol character (in the example 'h').
 
 Next send an 4 byte integer representing the packet length in network
-byte order. Note that the length includes the interger itself.
+byte order. Note that the length includes the integer itself.
 
 Finally send the protocol body followed by do_pcp_flush() which flush
 out the internal network write buffer.
