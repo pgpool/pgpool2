@@ -53,7 +53,7 @@
 											 * lifecheck process should waits
 											 * before giving up while fetching
 											 * the configured watchdog node
-											 * infromation from watchdog
+											 * information from watchdog
 											 * process through IPC channel */
 
 const char *progname = NULL;
