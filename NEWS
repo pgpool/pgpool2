@@ -2424,7 +2424,7 @@
       The node id should be lower than NUM_BACKENDS. Probably harmless since
       callers never pass node ids greater or equal to NUM_BACKENDS.
 
-    - Fix occasional stuck that occures when a NOTIFY message is sent from
+    - Fix occasional stuck that occurs when a NOTIFY message is sent from
       a backend. (Muhammad Usama)
 
       The issue happens in master slave mode with load balancing when the
@@ -4401,7 +4401,7 @@
       of recovery script, and this causes a malfunction. In especially,
       rsync may delete unrelated files in basebackup scripts.
 
-    - Fix a segmentation fault on main process that could occures after backend
+    - Fix a segmentation fault on main process that could occurs after backend
       error detection (Tatsuo Ishii)
 
       This is reported in Bug track #62 by tuomas.
@@ -5424,7 +5424,7 @@
 
 * Bug fixes
 
-    - Fix a segmentation fault on main process that could occures after backend
+    - Fix a segmentation fault on main process that could occurs after backend
       error detection (Tatsuo Ishii)
 
       This is reported in Bug track #62 by tuomas.
