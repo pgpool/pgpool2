@@ -355,7 +355,7 @@ select_load_balancing_node(void)
 		if (app_name && strlen(app_name) > 0)
 		{
 			/*
-			 * Check to see if the aplication name matches any of
+			 * Check to see if the application name matches any of
 			 * app_name_redirect_preference_list.
 			 */
 			index_app = regex_array_match(pool_config->redirect_app_names, app_name);
@@ -363,7 +363,7 @@ select_load_balancing_node(void)
 			{
 
 				/*
-				 * if the aplication name matches any of
+				 * if the application name matches any of
 				 * app_name_redirect_preference_list,
 				 * database_redirect_preference_list will be ignored.
 				 */

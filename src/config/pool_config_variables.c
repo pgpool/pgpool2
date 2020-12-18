@@ -1629,7 +1629,7 @@ static struct config_string_array ConfigureNamesStringArray[] =
 
 	{
 		{"backend_application_name", CFGCXT_RELOAD, CONNECTION_CONFIG,
-			"applicaton_name of the backend.",
+			"application_name of the backend.",
 			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
