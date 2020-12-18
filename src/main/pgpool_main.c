@@ -1811,7 +1811,7 @@ failover(void)
 		else if (search_primary == false)
 		{
 			ereport(DEBUG1,
-					(errmsg("faliover was called on quarantined node. No need to search for primary node")));
+					(errmsg("failover was called on quarantined node. No need to search for primary node")));
 			new_primary = Req_info->primary_node_id;
 		}
 		else
