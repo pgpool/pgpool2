@@ -338,7 +338,7 @@ main(int argc, char **argv)
 					pool_config->wd_nodes.wd_node_info[pool_config->pgpool_node_id].wd_port);
 
 		pfree(conf_file_path);
-		/* only use values from pg_config that are not provided explicitely*/
+		/* only use values from pg_config that are not provided explicitly*/
 		if (wd_authkey == NULL)
 			wd_authkey = pstrdup(pool_config->wd_authkey);
 		if (port < 0)
