@@ -8310,8 +8310,8 @@
         Now restarting pgpool-II children is avoided when recovery finished. So
         existing sessions can be continued while doing online recovery(Tatsuo Ishii)
 
-      - pcp_attach_node does not diconnect existing sessions in
-        streaming replication mode. In other mode, pcp_attache_node
+      - pcp_attach_node does not disconnect existing sessions in
+        streaming replication mode. In other mode, pcp_attach_node
         still disconnects existing sessions(Tatsuo Ishii).
 
       - Import PostgreSQL 9.0 parser. This allows to use CREATE INDEX with
