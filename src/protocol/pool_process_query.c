@@ -2223,7 +2223,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 				}
 				num_fields = ntohs(shortval);	/* number of fields */
 				ereport(DEBUG5,
-						(errmsg("do_query: row description: num_fileds: %d", num_fields)));
+						(errmsg("do_query: row description: num_fields: %d", num_fields)));
 
 				if (num_fields > 0)
 				{
