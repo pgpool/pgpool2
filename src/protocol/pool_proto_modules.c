@@ -3560,7 +3560,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
 			 * Before sending the parse message to the primary, we need to
 			 * close the named statement. Otherwise we will get an error from
 			 * backend if the named statement already exists. This could
-			 * happend if parse_before_bind is called with a bind message
+			 * happened if parse_before_bind is called with a bind message
 			 * using same named statement. If the named statement does not
 			 * exist, it's fine. PostgreSQL just ignores a request trying to
 			 * close a non-existing statement. If the statement is unnamed

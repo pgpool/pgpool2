@@ -1118,7 +1118,7 @@
 
     - Fix pgpool hung after receiving error state from backend (Tatsuo Ishii)
 
-      This could happend if we execute an extended protocol query and it
+      This could happened if we execute an extended protocol query and it
       fails.
 
       Per bug #169.

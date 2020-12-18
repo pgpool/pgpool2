@@ -1418,7 +1418,7 @@ static void
 check_restart_request(void)
 {
 	/*
-	 * Check if restart request is set because of failback event happend.  If
+	 * Check if restart request is set because of failback event happened.  If
 	 * so, exit myself with exit code 1 to be restarted by pgpool parent.
 	 */
 	if (pool_get_my_process_info()->need_to_restart)
