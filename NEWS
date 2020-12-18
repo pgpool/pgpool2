@@ -9652,7 +9652,7 @@
         connection pool or not are added to pcp_proc_info's
         output(Tatsuo Ishii)
 
-      - "Gracefuly detach" option is added to pcp_detach_node. With
+      - "Gracefully detach" option is added to pcp_detach_node. With
         this option, pcp_detach_node waits until all frontends
         disconnected(Tatsuo Ishii)
 
@@ -10356,7 +10356,7 @@
 
       This version fixes various bugs in 2.2.1 or before. Please note
       that an importan fix is made to avoid data incositency risk,
-      which could happen when client does not exit gracely(without
+      which could happen when client does not exit gracefully(without
       sending "X" packet) while pgpool is trying to send data to
       it. This could happen with all version of pgpool-II.
 
