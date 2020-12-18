@@ -5768,7 +5768,7 @@
       health checking. If all of following conditions are met, pgpool
       main process disappeared and all client connections to pgpool-II
       hang forever when failover happens. And the only way to recover
-      from it is, manualy killing the pgpool child process and restart
+      from it is, manually killing the pgpool child process and restart
       pgpool-II.
 
       - health checking is enabled
