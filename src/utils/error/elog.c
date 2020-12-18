@@ -2624,7 +2624,7 @@ proc_exit_prepare(int code)
 	error_context_stack = NULL;
 
 	/*
-	 * call on exit prepare if some function is specified this extention is
+	 * call on exit prepare if some function is specified this extension is
 	 * added by pgpool
 	 */
 	if (on_exit_prepare.function)

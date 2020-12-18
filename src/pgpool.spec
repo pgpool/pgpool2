@@ -374,7 +374,7 @@ fi
 - Adopt to PostgreSQL 9.4
 
 * Thu Sep 25 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-2
-- Split pgpool_regclass and pgpool_recovery as a separate extention package.
+- Split pgpool_regclass and pgpool_recovery as a separate extension package.
 - Fix wrong OpenSSL build option.
 
 * Fri Sep 5 2014 Yugo Nagata <nagata@sraoss.co.jp> 3.3.4-1

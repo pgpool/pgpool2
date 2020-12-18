@@ -6222,7 +6222,7 @@
       (Tatsuo Ishii)
 
       If one of bind parameter < 0, it was possible to produce more than 2
-      byte string for "%02X" due to sign extention.
+      byte string for "%02X" due to sign extension.
       Also use snprintf, rather than sprintf to prevent from possible buffer
       overrun in the future.
 
