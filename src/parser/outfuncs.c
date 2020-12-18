@@ -1351,7 +1351,7 @@ _outTypeName(String * str, TypeName *node)
 				/*
 				 * precision for SECOND field. backward compatibility. use
 				 * `'1.2 second'::interval(0) second' not `'1.2
-				 * second'::interval second(0)'(standarad for 8.4).
+				 * second'::interval second(0)'(standard for 8.4).
 				 */
 				if ((INTERVAL_MASK(SECOND) & mask) &&
 					list_length(node->typmods) == 2)
