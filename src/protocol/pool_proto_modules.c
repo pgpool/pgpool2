@@ -3984,7 +3984,7 @@ pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION * frontend,
 
 	pool_pending_message_reset_previous_message();
 
-	/* Discard read buffer execpt "Ready for query" */
+	/* Discard read buffer except "Ready for query" */
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (VALID_BACKEND(i))
