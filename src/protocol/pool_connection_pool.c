@@ -668,7 +668,7 @@ connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool r
 				 * If read data or write data was set, either connect
 				 * succeeded or error.  We need to figure it out. This is the
 				 * hardest part in using non blocking connect(2).  See W.
-				 * Richar Stevens's "UNIX Network Programming: Volume 1,
+				 * Richard Stevens's "UNIX Network Programming: Volume 1,
 				 * Second Edition" section 15.4.
 				 */
 				if (FD_ISSET(fd, &rset) || FD_ISSET(fd, &wset))
