@@ -167,7 +167,7 @@ errstart(int elevel, const char *filename, int lineno,
 	_fe_error_level = elevel;
 
 	/*
-	 * This is a basic version and for now we just supress all messages below
+	 * This is a basic version and for now we just suppress all messages below
 	 * WARNING for frontend
 	 */
 	if (_fe_error_level < WARNING)
