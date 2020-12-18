@@ -868,7 +868,7 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		len = strlen(query) + 1;
 		search_query = MemoryContextStrdup(query_context->memory_context, query);
 
-		ereport(DEBUG1, (errmsg("Execute: checkig cache fetch condition")));
+		ereport(DEBUG1, (errmsg("Execute: checking cache fetch condition")));
 
 		/*
 		 * Add bind message's info to query to search.
