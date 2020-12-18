@@ -1289,7 +1289,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 		&g_pool_config.reset_query_list,	/* variable */
 		&g_pool_config.num_reset_queries,	/* item count var  */
 		(const char *) default_reset_query_list,	/* boot value */
-		";",					/* token seperator */
+		";",					/* token separator */
 		false,					/* compute_regex ? */
 		NULL, NULL, NULL		/* assign, check, show funcs */
 	},
@@ -2786,11 +2786,11 @@ initialize_variables_with_default(struct config_generic *gconf)
 				{
 					if (strcmp(gconf->name, "primary_routing_query_pattern_list") == 0)
 					{
-						*conf->variable = get_list_from_string_regex_delim(newval, conf->seperator, conf->list_elements_count);
+						*conf->variable = get_list_from_string_regex_delim(newval, conf->separator, conf->list_elements_count);
 					}
 					else
 					{
-						*conf->variable = get_list_from_string(newval, conf->seperator, conf->list_elements_count);
+						*conf->variable = get_list_from_string(newval, conf->separator, conf->list_elements_count);
 					}
 
 					if (conf->compute_regex)
@@ -3776,11 +3776,11 @@ setConfigOptionVar(struct config_generic *record, const char *name, int index_va
 
 					if (strcmp(name, "primary_routing_query_pattern_list") == 0)
 					{
-						*conf->variable = get_list_from_string_regex_delim(newval, conf->seperator, conf->list_elements_count);
+						*conf->variable = get_list_from_string_regex_delim(newval, conf->separator, conf->list_elements_count);
 					}
 					else
 					{
-						*conf->variable = get_list_from_string(newval, conf->seperator, conf->list_elements_count);
+						*conf->variable = get_list_from_string(newval, conf->separator, conf->list_elements_count);
 					}
 
 					if (conf->compute_regex)

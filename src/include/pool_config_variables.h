@@ -302,7 +302,7 @@ struct config_string_list
 	char	 ***variable;
 	int		   *list_elements_count;
 	const char *boot_val;
-	const char *seperator;
+	const char *separator;
 	bool		compute_regex;
 	ConfigStringListAssignFunc assign_func;
 	ConfigStringListAssignFunc check_func;
