@@ -5909,7 +5909,7 @@
       4) CREATE TEMP TABLE t1(i int);    -- create a temp table
       5) SELECT * FROM t1;        -- query cache entry mistakenly created!
 
-      Problem is #3 creates relcache entry for t1, and #5 incorrecly uses it
+      Problem is #3 creates relcache entry for t1, and #5 incorrectly uses it
       and believes that temp table t1 is not a temp table.
 
     - Add a description about "-f" to help message. (Tatsuo Ishii)
