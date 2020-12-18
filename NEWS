@@ -1066,7 +1066,7 @@
     - test: Fix test/regression/clean.sh to remove binary files of
       010.rewrite_timestamp test (Yugo Nagata)
 
-    - Fix memorry leak reported by Coverity (CID 1350095) (Yugo Nagata)
+    - Fix memory leak reported by Coverity (CID 1350095) (Yugo Nagata)
 
     - Fixing pgpool-recovery module compilation issue with PostgreSQL 9.6
       (Muhammad Usama)
@@ -1769,7 +1769,7 @@
     - test: Fix test/regression/clean.sh to remove binary files of
       010.rewrite_timestamp test (Yugo Nagata)
 
-    - Fix memorry leak reported by Coverity (CID 1350095) (Yugo Nagata)
+    - Fix memory leak reported by Coverity (CID 1350095) (Yugo Nagata)
 
     - Fixing pgpool-recovery module compilation issue with PostgreSQL 9.6
       (Muhammad Usama)
@@ -2900,7 +2900,7 @@
     - test: Fix test/regression/clean.sh to remove binary files of
       010.rewrite_timestamp test (Yugo Nagata)
 
-    - Fix memorry leak reported by Coverity (CID 1350095) (Yugo Nagata)
+    - Fix memory leak reported by Coverity (CID 1350095) (Yugo Nagata)
 
     - Fixing pgpool-recovery module compilation issue with PostgreSQL 9.6
       (Muhammad Usama)
@@ -6410,7 +6410,7 @@
 
     New parameters:
 
-      - Add parameters for on memoey query cache as follows:
+      - Add parameters for on memory query cache as follows:
         memory_cache_enabled, memqcache_method, memqcache_expire,
         memqcache_maxcache, memqcache_oiddir. (Tatsuo Ishii)
 
