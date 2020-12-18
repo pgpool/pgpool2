@@ -212,7 +212,7 @@ wd_calc_hash_error:
 /*
  * string_replace:
  * returns the new palloced string after replacing all
- * occurances of pattern in string with replacement string
+ * occurrences of pattern in string with replacement string
  */
 char *
 string_replace(const char *string, const char *pattern, const char *replacement)
