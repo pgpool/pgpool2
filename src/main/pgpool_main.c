@@ -2320,7 +2320,7 @@ reaper(void)
 						(errmsg("%s process with pid: %d exits with status %d by signal %d", exiting_process_name, pid, status, WTERMSIG(status))));
 
 			/*
-			 * If the watchdog process was terminated abonormally. we need to
+			 * If the watchdog process was terminated abnormally. we need to
 			 * set the cleanup flag so that the new watchdog process can start
 			 * without problems
 			 */
