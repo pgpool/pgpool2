@@ -440,7 +440,7 @@ wd_issue_failover_command(char *func_name, int *node_id_set, int count, unsigned
  * send the degenerate backend request to watchdog.
  * now watchdog can respond to the request in following ways.
  *
- * 1 - It can tell the caller to procees with failover. This
+ * 1 - It can tell the caller to process with failover. This
  * happens when the current node is the leader watchdog node.
  *
  * 2 - It can tell the caller to failover not allowed

@@ -72,14 +72,14 @@
 #define NODE_DOWN_REQUIRE_CONSENSUS
 #define NODE_PROMOTE_REQUIRE_CONSENSUS
 
-typedef enum IPC_CMD_PREOCESS_RES
+typedef enum IPC_CMD_PROCESS_RES
 {
 	IPC_CMD_COMPLETE,
 	IPC_CMD_PROCESSING,
 	IPC_CMD_ERROR,
 	IPC_CMD_OK,
 	IPC_CMD_TRY_AGAIN
-}			IPC_CMD_PREOCESS_RES;
+}			IPC_CMD_PROCESS_RES;
 
 
 #define MIN_SECS_CONNECTION_RETRY	10	/* Time in seconds to retry connection
@@ -418,7 +418,7 @@ static WDFailoverCMDResults compute_failover_consensus(POOL_REQUEST_KIND reqKind
 
 static int	send_command_packet_to_remote_nodes(WDCommandData * ipcCommand, bool source_included);
 static void wd_command_is_complete(WDCommandData * ipcCommand);
-static IPC_CMD_PREOCESS_RES wd_command_processor_for_node_lost_event(WDCommandData * ipcCommand, WatchdogNode * wdLostNode);
+static IPC_CMD_PROCESS_RES wd_command_processor_for_node_lost_event(WDCommandData * ipcCommand, WatchdogNode * wdLostNode);
 
 volatile sig_atomic_t reload_config_signal = 0;
 volatile sig_atomic_t sigchld_request = 0;
@@ -536,16 +536,16 @@ static WDCommandData * get_wd_cluster_command_from_reply(WDPacketData * pkt);
 static WDCommandData * get_wd_IPC_command_from_reply(WDPacketData * pkt);
 static WDCommandData * get_wd_IPC_command_from_socket(int sock);
 
-static IPC_CMD_PREOCESS_RES process_IPC_command(WDCommandData * ipcCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDCommandData * ipcCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDCommandData * ipcCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_get_runtime_variable_value_request(WDCommandData * ipcCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_online_recovery(WDCommandData * ipcCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData * ipcCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_leader(WDCommandData * ipcCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData * ipcCommand);
-static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandData * ipcCommand);
-static IPC_CMD_PREOCESS_RES process_IPC_execute_cluster_command(WDCommandData * ipcCommand);
+static IPC_CMD_PROCESS_RES process_IPC_command(WDCommandData * ipcCommand);
+static IPC_CMD_PROCESS_RES process_IPC_nodeStatusChange_command(WDCommandData * ipcCommand);
+static IPC_CMD_PROCESS_RES process_IPC_nodeList_command(WDCommandData * ipcCommand);
+static IPC_CMD_PROCESS_RES process_IPC_get_runtime_variable_value_request(WDCommandData * ipcCommand);
+static IPC_CMD_PROCESS_RES process_IPC_online_recovery(WDCommandData * ipcCommand);
+static IPC_CMD_PROCESS_RES process_IPC_failover_indication(WDCommandData * ipcCommand);
+static IPC_CMD_PROCESS_RES process_IPC_data_request_from_leader(WDCommandData * ipcCommand);
+static IPC_CMD_PROCESS_RES process_IPC_failover_command(WDCommandData * ipcCommand);
+static IPC_CMD_PROCESS_RES process_failover_command_on_coordinator(WDCommandData * ipcCommand);
+static IPC_CMD_PROCESS_RES process_IPC_execute_cluster_command(WDCommandData * ipcCommand);
 
 static bool write_ipc_command_with_result_data(WDCommandData * ipcCommand, char type, char *data, int len);
 
@@ -1874,7 +1874,7 @@ read_ipc_socket_and_process(int sock, bool *remove_socket)
 	int			data_len,
 				ret;
 	WDCommandData *ipcCommand;
-	IPC_CMD_PREOCESS_RES res;
+	IPC_CMD_PROCESS_RES res;
 
 	*remove_socket = true;
 
@@ -1984,7 +1984,7 @@ read_ipc_socket_and_process(int sock, bool *remove_socket)
 	return (res != IPC_CMD_ERROR);
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_command(WDCommandData * ipcCommand)
+static IPC_CMD_PROCESS_RES process_IPC_command(WDCommandData * ipcCommand)
 {
 	/* authenticate the client first */
 	if (check_and_report_IPC_authentication(ipcCommand) == false)
@@ -2041,7 +2041,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_command(WDCommandData * ipcCommand)
 	return IPC_CMD_ERROR;
 }
 
-static IPC_CMD_PREOCESS_RES
+static IPC_CMD_PROCESS_RES
 process_IPC_execute_cluster_command(WDCommandData * ipcCommand)
 {
 	/* get the json for node list */
@@ -2097,7 +2097,7 @@ ERROR_EXIT:
 	return IPC_CMD_ERROR;
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_get_runtime_variable_value_request(WDCommandData * ipcCommand)
+static IPC_CMD_PROCESS_RES process_IPC_get_runtime_variable_value_request(WDCommandData * ipcCommand)
 {
 	/* get the json for node list */
 	JsonNode   *jNode = NULL;
@@ -2162,7 +2162,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_get_runtime_variable_value_request(WDCom
 	return IPC_CMD_COMPLETE;
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDCommandData * ipcCommand)
+static IPC_CMD_PROCESS_RES process_IPC_nodeList_command(WDCommandData * ipcCommand)
 {
 	/* get the json for node list */
 	JsonNode   *jNode = NULL;
@@ -2197,7 +2197,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_nodeList_command(WDCommandData * ipcComm
 	return IPC_CMD_COMPLETE;
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_nodeStatusChange_command(WDCommandData * ipcCommand)
+static IPC_CMD_PROCESS_RES process_IPC_nodeStatusChange_command(WDCommandData * ipcCommand)
 {
 	int			nodeStatus;
 	int			nodeID;
@@ -2457,7 +2457,7 @@ process_remote_failover_command_on_coordinator(WatchdogNode * wdNode, WDPacketDa
 	}
 	else
 	{
-		IPC_CMD_PREOCESS_RES res;
+		IPC_CMD_PROCESS_RES res;
 		WDCommandData *ipcCommand = create_command_object(pkt->len);
 
 		ipcCommand->sourcePacket.type = pkt->type;
@@ -2685,7 +2685,7 @@ static WDFailoverObject * add_failover(POOL_REQUEST_KIND reqKind, int *node_id_l
 /*
  * The function processes all failover commands on leader node
  */
-static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandData * ipcCommand)
+static IPC_CMD_PROCESS_RES process_failover_command_on_coordinator(WDCommandData * ipcCommand)
 {
 	char	   *func_name;
 	int			node_count = 0;
@@ -2799,7 +2799,7 @@ static IPC_CMD_PREOCESS_RES process_failover_command_on_coordinator(WDCommandDat
 	return IPC_CMD_COMPLETE;
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData * ipcCommand)
+static IPC_CMD_PROCESS_RES process_IPC_failover_command(WDCommandData * ipcCommand)
 {
 	if (is_local_node_true_leader())
 	{
@@ -2846,7 +2846,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_failover_command(WDCommandData * ipcComm
 	return IPC_CMD_ERROR;
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_online_recovery(WDCommandData * ipcCommand)
+static IPC_CMD_PROCESS_RES process_IPC_online_recovery(WDCommandData * ipcCommand)
 {
 	if (get_local_node_state() == WD_STANDBY ||
 		get_local_node_state() == WD_COORDINATOR)
@@ -2884,7 +2884,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_online_recovery(WDCommandData * ipcComma
 	return IPC_CMD_TRY_AGAIN;
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_leader(WDCommandData * ipcCommand)
+static IPC_CMD_PROCESS_RES process_IPC_data_request_from_leader(WDCommandData * ipcCommand)
 {
 	/*
 	 * if cluster or myself is not in stable state just return cluster in
@@ -2941,7 +2941,7 @@ static IPC_CMD_PREOCESS_RES process_IPC_data_request_from_leader(WDCommandData *
 	return IPC_CMD_TRY_AGAIN;
 }
 
-static IPC_CMD_PREOCESS_RES process_IPC_failover_indication(WDCommandData * ipcCommand)
+static IPC_CMD_PROCESS_RES process_IPC_failover_indication(WDCommandData * ipcCommand)
 {
 	WDFailoverCMDResults res = FAILOVER_RES_NOT_ALLOWED;
 
@@ -4400,7 +4400,7 @@ send_message(WatchdogNode * wdNode, WDPacketData * pkt)
 	return count;
 }
 
-static IPC_CMD_PREOCESS_RES wd_command_processor_for_node_lost_event(WDCommandData * ipcCommand, WatchdogNode * wdLostNode)
+static IPC_CMD_PROCESS_RES wd_command_processor_for_node_lost_event(WDCommandData * ipcCommand, WatchdogNode * wdLostNode)
 {
 	if (ipcCommand->sendToNode)
 	{
@@ -4518,7 +4518,7 @@ node_lost_while_ipc_command(WatchdogNode * wdNode)
 	foreach(lc, g_cluster.ipc_commands)
 	{
 		WDCommandData *ipcCommand = lfirst(lc);
-		IPC_CMD_PREOCESS_RES res = wd_command_processor_for_node_lost_event(ipcCommand, wdNode);
+		IPC_CMD_PROCESS_RES res = wd_command_processor_for_node_lost_event(ipcCommand, wdNode);
 
 		if (res != IPC_CMD_PROCESSING)
 		{

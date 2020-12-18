@@ -547,7 +547,7 @@ extern void set_application_name(ProcessType ptype);
 extern void set_application_name_with_string(char *string);
 extern void set_application_name_with_suffix(ProcessType ptype, int suffix);
 extern char *get_application_name(void);
-extern char *get_application_name_for_procees(ProcessType ptype);
+extern char *get_application_name_for_process(ProcessType ptype);
 
 void SetProcessGlobalVaraibles(ProcessType pType);
 

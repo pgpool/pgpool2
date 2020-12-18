@@ -3427,7 +3427,7 @@
       (Yugo Nagata)
 
       When executing command such as ifconfig or ping by execv() in a forked
-      child proess, wait() can fails with an error code ECHILD, although the
+      child process, wait() can fails with an error code ECHILD, although the
       process exists exactly, if SIGCHLD is set to SIG_IGN in Linux. We should
       ignore this and not treat as failure of the command.
 
