@@ -2344,7 +2344,7 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
 	}
 
 	/*
-	 * PAM will free this memory in * pam_end() Do not use Palloc and freinds
+	 * PAM will free this memory in * pam_end() Do not use Palloc and friends
 	 * to allocate this memory, Since the PAM library will be freeing this
 	 * memory who knowns nothing about our MemoryManager
 	 */
