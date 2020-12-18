@@ -37,7 +37,7 @@ static char *read_string(PGconn *conn);
 /*
  * Read message from connection until ready for query message is received.  If
  * a positive timeout is given, wait for timeout seconds then return if no
- * data is availble from the connection.
+ * data is available from the connection.
  */
 void
 read_until_ready_for_query(PGconn *conn, int timeout)

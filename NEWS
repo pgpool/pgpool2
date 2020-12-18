@@ -578,7 +578,7 @@
 
     - Fix Japanese and Chinese documetation bug about raw mode. (Yugo Nagata, Bo Peng)
 
-      Connection pool is avalilable in raw mode.
+      Connection pool is available in raw mode.
 
     - Fix is_set_transaction_serializable() when
       SET default_transaction_isolation TO 'serializable'. (bug 191) (Bo Peng)
@@ -864,7 +864,7 @@
       See bug 191 for related info.
 
     - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
-      Connection pool is avalilable in raw mode.
+      Connection pool is available in raw mode.
 
     - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
 
@@ -1625,7 +1625,7 @@
       See bug 191 for related info.
 
     - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
-      Connection pool is avalilable in raw mode.
+      Connection pool is available in raw mode.
 
     - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
 
@@ -2766,7 +2766,7 @@
       See bug 191 for related info.
 
     - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
-      Connection pool is avalilable in raw mode.
+      Connection pool is available in raw mode.
 
     - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
 
@@ -4578,7 +4578,7 @@
       See bug 191 for related info.
 
     - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
-      Connection pool is avalilable in raw mode.
+      Connection pool is available in raw mode.
 
     - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
 
@@ -6817,7 +6817,7 @@
       See bug 191 for related info.
 
     - Fix Chinese documetation bug about raw mode (Yugo Nagata, Bo Peng)
-      Connection pool is avalilable in raw mode.
+      Connection pool is available in raw mode.
 
     - Fix confusing comments in pgpool.conf (Tatsuo Ishii)
 
