@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------
-# test script for unit test of rewriting timestamp qeries.
+# test script for unit test of rewriting timestamp queries.
 # requires Ruby
 
 cd timestamp
