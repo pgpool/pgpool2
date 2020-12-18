@@ -5171,7 +5171,7 @@ wd_commands_packet_processor(WD_EVENTS event, WatchdogNode * wdNode, WDPacketDat
 		if (ipcCommand == NULL)
 			return false;
 
-		/* Just forward the data to IPC socket and finsh the command */
+		/* Just forward the data to IPC socket and finish the command */
 		if (write_ipc_command_with_result_data(ipcCommand, WD_IPC_CMD_RESULT_OK, pkt->data, pkt->len) == false)
 			ereport(LOG,
 					(errmsg("failed to forward data message to IPC command socket")));
