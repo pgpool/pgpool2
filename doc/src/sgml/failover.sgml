@@ -671,7 +671,7 @@
      <para>
       To use this feature, streaming replication check (see <xref linkend="runtime-streaming-replication-check"> for more details)
        must be enabled, and <productname>PostgreSQL</productname> 9.1 or later
-       is required as backend nodes. This feature uses <function>pg_stat_replicatoin</function>
+       is required as backend nodes. This feature uses <function>pg_stat_replication</function>
        on primary node. The automatic failback is performed on standby node only.
        Note that failback_command will be executed as well if failback_command is not empty.
        If you plan to detach standby node for maintenance, set this parameter to off beforehand.

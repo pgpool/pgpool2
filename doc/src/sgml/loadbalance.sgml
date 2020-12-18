@@ -229,7 +229,7 @@
   </para>
  </sect2>
 
- <sect2 id="runtime-config-load-balancing-in-streaming-rapplication">
+ <sect2 id="runtime-config-load-balancing-in-streaming-replication">
 
   <title>Load Balancing in Streaming Replication</title>
 

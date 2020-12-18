@@ -186,8 +186,8 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupledesc, (AttrNumber) 4, "weight", FLOAT4OID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 5, "role", TEXTOID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 6, "replication_delay", INT8OID, -1, 0);
-	TupleDescInitEntry(tupledesc, (AttrNumber) 7, "replcation_state", TEXTOID, -1, 0);
-	TupleDescInitEntry(tupledesc, (AttrNumber) 8, "replcation_sync_state", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 7, "replication_state", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 8, "replication_sync_state", TEXTOID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 9, "last_status_change", TIMESTAMPOID, -1, 0);
 	tupledesc = BlessTupleDesc(tupledesc);
 
