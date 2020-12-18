@@ -706,7 +706,7 @@ delete_cache_on_memcached(const char *key)
 	memcached_return rc;
 
 	ereport(DEBUG2,
-			(errmsg("memcache: deleteing cache on memcached with key: \"%s\"", key)));
+			(errmsg("memcache: deleting cache on memcached with key: \"%s\"", key)));
 
 
 	/* delete cache data on memcached. key is md5 hash query */
