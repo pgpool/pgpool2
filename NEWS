@@ -1290,7 +1290,7 @@
            Long command line options can be used now.
         -- PCP password is safe:
            Don't pass password via command line, which causes security risks.
-        -- Mutiple concurrent execution of pcp commands:
+        -- Multiple concurrent execution of pcp commands:
            Allow to execute a pcp command while running pcp_recovery_node
            which takes sometime to finish.
 
@@ -3807,7 +3807,7 @@
       Per bug#74. http://www.pgpool.net/mantisbt/view.php?id=74
 
     - doc: Modify descriptions about restrictions of parallel mode
-      Muliple rows INSERT using VALUES are not supported in parallel mode.
+      Multiple rows INSERT using VALUES are not supported in parallel mode.
       (Yugo Nagata)
 
     - Avoid calling find_primary_node_repeatedly() when standby node goes
@@ -5219,7 +5219,7 @@
       Per bug#74. http://www.pgpool.net/mantisbt/view.php?id=74
 
     - doc: Modify descriptions about restrictions of parallel mode
-      Muliple rows INSERT using VALUES are not supported in parallel mode.
+      Multiple rows INSERT using VALUES are not supported in parallel mode.
       (Yugo Nagata)
 
     - Avoid calling find_primary_node_repeatedly() when standby node goes
@@ -7361,7 +7361,7 @@
       Per bug#74. http://www.pgpool.net/mantisbt/view.php?id=74
 
     - doc: Modify descriptions about restrictions of parallel mode
-      Muliple rows INSERT using VALUES are not supported in parallel mode.
+      Multiple rows INSERT using VALUES are not supported in parallel mode.
       (Yugo Nagata)
 
     - Avoid calling find_primary_node_repeatedly() when standby node goes
@@ -8724,7 +8724,7 @@
       Per bug#74. http://www.pgpool.net/mantisbt/view.php?id=74
 
     - doc: Modify descriptions about restrictions of parallel mode
-      Muliple rows INSERT using VALUES are not supported in parallel mode.
+      Multiple rows INSERT using VALUES are not supported in parallel mode.
       (Yugo Nagata)
 
     - Avoid calling find_primary_node_repeatedly() when standby node goes
