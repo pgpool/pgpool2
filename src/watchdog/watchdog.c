@@ -4888,7 +4888,7 @@ issue_watchdog_internal_command(WatchdogNode * wdNode, WDPacketData * pkt, int t
 		}
 		if (nodeResult == NULL)
 		{
-			/* should never hapen */
+			/* should never happen */
 			ereport(WARNING,
 					(errmsg("Internal error. Not able to locate node result slot")));
 			MemoryContextDelete(clusterCommand->memoryContext);
