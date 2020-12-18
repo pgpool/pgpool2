@@ -1268,7 +1268,7 @@ pool_extract_table_oids(Node *node, int **oidsp)
 	else
 	{
 		ereport(DEBUG1,
-				(errmsg("memcache: extracting table oids: statment is different from INSERT/UPDATE/DELETE/TRUNCATE/DROP TABLE/ALTER TABLE")));
+				(errmsg("memcache: extracting table oids: statement is different from INSERT/UPDATE/DELETE/TRUNCATE/DROP TABLE/ALTER TABLE")));
 		return 0;
 	}
 

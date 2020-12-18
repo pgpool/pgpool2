@@ -132,7 +132,7 @@ typedef struct
 								 * kind */
 	int			contents_len;	/* message packet length */
 	char		query[QUERY_STRING_BUFFER_LEN]; /* copy of original query */
-	char		statement[MAX_IDENTIFIER_LEN];	/* prepared statment name if
+	char		statement[MAX_IDENTIFIER_LEN];	/* prepared statement name if
 												 * any */
 	char		portal[MAX_IDENTIFIER_LEN]; /* portal name if any */
 	bool		is_rows_returned;	/* true if the message could produce row

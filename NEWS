@@ -6621,7 +6621,7 @@
 
     - Fix segfault of pcp_systemdb_info not in parallel mode. (Nozomi Anzai)
 
-    - Fix "unnamed prepared statment does not exist" error. (Tatsuo Ishii)
+    - Fix "unnamed prepared statement does not exist" error. (Tatsuo Ishii)
 
       This is caused by pgpool's internal query, which breaks client's unnamed
       statements. To fix this, if extended query is used, named
@@ -7909,7 +7909,7 @@
 
       - Fix segfault of pcp_systemdb_info not in parallel mode. (Nozomi Anzai)
 
-      - Fix "unnamed prepared statment does not exist" error. (Tatsuo Ishii)
+      - Fix "unnamed prepared statement does not exist" error. (Tatsuo Ishii)
 
         This is caused by pgpool's internal query, which breaks client's
         unnamed statements. To fix this, if extended query is used, named
@@ -9230,7 +9230,7 @@
 
       - Fix segfault of pcp_systemdb_info not in parallel mode. (Nozomi Anzai)
 
-      - Fix "unnamed prepared statment does not exist" error. (Tatsuo Ishii)
+      - Fix "unnamed prepared statement does not exist" error. (Tatsuo Ishii)
 
         This is caused by pgpool's internal query, which breaks client's
         unnamed statements. To fix this, if extended query is used, named
@@ -10325,7 +10325,7 @@
 
       - Fix message corruption for kid mismatch error(Akio Ishida)
 
-      - Now stetmemt_time works(Tatsuo Ishii)
+      - Now statement_time works(Tatsuo Ishii)
 
       - Enhance health checking to detect postmaster stopping by
         SIGSTOP(Tatsuo Ishii)
@@ -10621,7 +10621,7 @@
         - Fix INSERT failure. (Yoshiharu Mori)
         - Fix syntax error when a query contains "AS" in FROM
           clause. (sho)
-        - Fix Hung up when two or more statment was executed
+        - Fix Hung up when two or more statement was executed
           in parallel mode (Yoshiharu Mori)
         - Fix Query rewriting of Join Expression and DISTINCT ON
           (Yoshiharu Mori)
