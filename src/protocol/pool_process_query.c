@@ -514,7 +514,7 @@ wait_for_query_response_with_trans_cleanup(POOL_CONNECTION * frontend, POOL_CONN
 /*
  * Wait for query response from single node. If frontend is not NULL,
  * also check frontend connection by writing dummy parameter status
- * packet every 30 seccond, and if the connection broke, returns error
+ * packet every 30 second, and if the connection broke, returns error
  * since there's no point in that waiting until backend returns
  * response.
  */
