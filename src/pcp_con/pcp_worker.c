@@ -916,7 +916,7 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
  *
  * The protocol starts with 'h', followed by 4-byte packet length integer in
  * network byte order including self.  Each data is represented as a null
- * terminted string. The order of each data is defined in
+ * terminated string. The order of each data is defined in
  * POOL_HEALTH_CHECK_STATS struct.
  */
 static void
