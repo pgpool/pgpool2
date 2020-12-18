@@ -389,7 +389,7 @@ typedef enum
 #define SI_CRITICAL_REGION_SEM	6
 #define MAX_REQUEST_QUEUE_SIZE	10
 
-#define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 10	/* time in seconds to keep
+#define MAX_SEC_WAIT_FOR_CLUSTER_TRANSACTION 10	/* time in seconds to keep
 												 * retrying for a watchdog
 												 * command if the cluster is
 												 * not in stable state */

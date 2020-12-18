@@ -162,7 +162,7 @@ degenerate_backend_set_ex(int *node_id_set, int count, unsigned char flags, bool
 		{
 			int			x;
 
-			for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+			for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSACTION; x++)
 			{
 				res = wd_degenerate_backend_set(node_id_set, count, flags);
 				if (res != FAILOVER_RES_TRANSITION)
@@ -268,7 +268,7 @@ promote_backend(int node_id, unsigned char flags)
 	{
 		int			x;
 
-		for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+		for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSACTION; x++)
 		{
 			res = wd_promote_backend(node_id, flags);
 			if (res != FAILOVER_RES_TRANSITION)
@@ -362,7 +362,7 @@ send_failback_request(int node_id, bool throw_error, unsigned char flags)
 		{
 			int			x;
 
-			for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+			for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSACTION; x++)
 			{
 				res = wd_send_failback_request(node_id, flags);
 				if (res != FAILOVER_RES_TRANSITION)

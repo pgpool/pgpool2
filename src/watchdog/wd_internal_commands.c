@@ -210,7 +210,7 @@ wd_start_recovery(void)
 				(errmsg("start recovery command lock failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 				 errhint("try again when the cluster is fully initialized")));
-		return CLUSTER_IN_TRANSATIONING;
+		return CLUSTER_IN_TRANSACTIONING;
 	}
 	else if (type == WD_IPC_CMD_TIMEOUT)
 	{
@@ -259,7 +259,7 @@ wd_end_recovery(void)
 				(errmsg("end recovery command lock failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 				 errhint("try again when the cluster is fully initialized")));
-		return CLUSTER_IN_TRANSATIONING;
+		return CLUSTER_IN_TRANSACTIONING;
 	}
 	else if (type == WD_IPC_CMD_TIMEOUT)
 	{
@@ -308,7 +308,7 @@ wd_execute_cluster_command(char* clusterCommand,
 				(errmsg("execute cluster command failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 				 errhint("try again when the cluster is fully initialized")));
-		return CLUSTER_IN_TRANSATIONING;
+		return CLUSTER_IN_TRANSACTIONING;
 	}
 	else if (type == WD_IPC_CMD_TIMEOUT)
 	{
