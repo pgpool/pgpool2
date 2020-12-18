@@ -9994,7 +9994,7 @@
 
 * Bug fixes
 
-      - Fix errors in timestamp rewriting which occasionaly cause
+      - Fix errors in timestamp rewriting which occasionally cause
         broken packet sentto slave nodes(Tatsuo Ishii)
 
       - Fix errors when timestamp rewriting is used with V2
@@ -10741,7 +10741,7 @@
         - If it is true, SELECT query is replicated. This behavior is
           same as V3.2 or earlier.
       * Improve signal handling. (Yoshiyuki Asaba)
-        - Occasionaly, zombie processes were remained. Or processes
+        - Occasionally, zombie processes were remained. Or processes
           were unstable.
       * Fix hang up when SELECT was error inside a transaction
         block. The bug was introduced in V3.3. (Yoshiyuki Asaba)
