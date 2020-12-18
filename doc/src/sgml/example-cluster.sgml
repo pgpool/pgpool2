@@ -1138,7 +1138,7 @@ pcp_recovery_node -- Command Successful
 Password:
 3 YES server1:9999 Linux server1 server1
 
-server1:9999 Linux server1 server1 9999 9000 4 LEADER  #The Pgpool-II server started first becames "LEADER".
+server1:9999 Linux server1 server1 9999 9000 4 LEADER  #The Pgpool-II server started first became "LEADER".
 server2:9999 Linux server2 server2 9999 9000 7 STANDBY #run as standby
 server3:9999 Linux server3 server3 9999 9000 7 STANDBY #run as standby
    </programlisting>
