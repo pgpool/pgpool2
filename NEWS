@@ -5654,7 +5654,7 @@
       interrupted by alarm. (Tatsuo Ishii)
 
       This confuses health checking because connect_inet_domain_socket_by_port()
-      returns unsable fd. This makes detecting errors in health checking longer.
+      returns usable fd. This makes detecting errors in health checking longer.
 
       See the following for more details:
 
