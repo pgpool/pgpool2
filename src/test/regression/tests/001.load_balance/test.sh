@@ -119,7 +119,7 @@ EOF
 		# If query match both primary_routing_query_pattern_list and read_only_function_list,
 		# read_only_function_list will be ignored, and query is sent to primary node only.
 		#
-		# If replication node, all queries are load-blanced.
+		# If replication node, all queries are load-balanced.
 		if [[ $mode = "s" ]];then
 			node_id=0
 		else
@@ -129,7 +129,7 @@ EOF
 
 		if [ $? != 0 ];then
 			# expected result not found
-			echo "fail: primary routing query: ${query} is load-blanced."
+			echo "fail: primary routing query: ${query} is load-balanced."
 			./shutdownall
 			exit 1
 		fi
@@ -184,7 +184,7 @@ EOF
 			fgrep "SELECT 1;" log/pgpool.log |grep "DB node id: 1">/dev/null 2>&1		
 			if [ $? != 0 ];then
 			# the SELECT should not be executed on node 1
-				echo ok: select is sent to only main node when not load-blanced.
+				echo ok: select is sent to only main node when not load-balanced.
 				ok=1
 			fi
 		# the SELECT should be executed on node 0
