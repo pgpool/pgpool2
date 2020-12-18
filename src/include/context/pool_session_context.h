@@ -262,7 +262,7 @@ typedef struct
 	/*
 	 * The last pending message. Reset at Ready for query.  Note that this is
 	 * a shallow copy of pending message.  Once the are is reset,
-	 * previos_message_exists is set to false.
+	 * previous_message_exists is set to false.
 	 */
 	bool		previous_message_exists;
 	POOL_PENDING_MESSAGE previous_message;

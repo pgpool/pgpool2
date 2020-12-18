@@ -210,7 +210,7 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 
 	/*
 	 * If we are in streaming replication mode and we are doing extended
-	 * query, reset query in progress flag and prevoius pending message.
+	 * query, reset query in progress flag and previous pending message.
 	 */
 	if (SL_MODE && pool_is_doing_extended_query_message())
 	{
