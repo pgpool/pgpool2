@@ -5115,7 +5115,7 @@ is_local_node_true_leader(void)
 }
 
 /*
- * returns true if no message is swollowed by the
+ * returns true if no message is swallowed by the
  * processor and no further action is required
  */
 static bool
