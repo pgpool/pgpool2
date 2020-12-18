@@ -807,7 +807,7 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "arping_cmd", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->arping_cmd);
-	StrNCpy(status[i].desc, "send ARP REQUESTi to neighbour host", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "send ARP REQUEST to neighbour host", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "wd_heartbeat_port", POOLCONFIG_MAXNAMELEN);

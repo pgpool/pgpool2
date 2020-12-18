@@ -403,7 +403,7 @@ send_failback_request(int node_id, bool throw_error, unsigned char flags)
 }
 
 /*
- * Reuest failover. If "switch_over" is false, request all existing sessions
+ * Request failover. If "switch_over" is false, request all existing sessions
  * restarting.
  */
 void
