@@ -10489,7 +10489,7 @@
             M: <-- error
             S: <-- ok since no previous SELECT is sent. kind mismatch error occurs!
 
-        - Process status display has extra space on FreeeBSD(Jun Kuriyama)
+        - Process status display has extra space on FreeBSD(Jun Kuriyama)
 
         - Fix incorrect kind mismatch detection case. e.g: BEGIN;
           BEGIN; (Tatsuo Ishii)
