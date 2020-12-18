@@ -5893,7 +5893,7 @@ watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode * wdNode, WDPac
 								(errmsg("declare coordinator command finished with status:[%s]",
 										clusterCommand->commandStatus == COMMAND_FINISHED_ALL_REPLIED ?
 										"ALL NODES REPLIED" :
-										"COMMAND TIMEED OUT"),
+										"COMMAND TIMED OUT"),
 								 errdetail("The command was sent to %d nodes and %d nodes replied to it",
 										   clusterCommand->commandSendToCount,
 										   clusterCommand->commandReplyFromCount
@@ -5950,7 +5950,7 @@ watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode * wdNode, WDPac
 					else if (clusterCommand->commandStatus == COMMAND_FINISHED_TIMEOUT)
 					{
 						ereport(DEBUG1,
-								(errmsg("I am the cluster leader node command finished with status:[COMMAND TIMEED OUT] which is success"),
+								(errmsg("I am the cluster leader node command finished with status:[COMMAND TIMED OUT] which is success"),
 								 errdetail("The command was sent to %d nodes and %d nodes replied to it",
 										   clusterCommand->commandSendToCount,
 										   clusterCommand->commandReplyFromCount
