@@ -2133,7 +2133,7 @@ parse_error:
 	*head_p = NULL;
 	*tail_p = NULL;
 	ereport(elevel,
-		(errmsg("syntex error in configuration file \"%s\"",config_file),
+		(errmsg("syntax error in configuration file \"%s\"",config_file),
 			errdetail("parse error at line %d '%s' token = %d", Lineno, yytext,token)));
 
 	return false;
