@@ -3700,7 +3700,7 @@
       Replace strcpy() with strlcpy(). Per Coverity report 1111478, 1111480,
       1111481.
 
-    - Add dubug messages for analyzing errors in if_up_cmd (Yugo Nagata)
+    - Add debug messages for analyzing errors in if_up_cmd (Yugo Nagata)
 
     - Fix freeing NULL. (Tatsuo Ishii)
 
