@@ -6374,7 +6374,7 @@
         On memory cache saves pair of SELECT statements (with its Bind parameters
         if the SELECT is an extended query). If the same SELECTs comes in, it
         returns the value from cache. Since no SQL parsing nor access to
-        PostgreSQL are involed, it's extremely fast.
+        PostgreSQL are involved, it's extremely fast.
 
         On the other hand, it might be slower than the normal path because it
         adds some overhead to store cache. Moreover when a table is updated,
