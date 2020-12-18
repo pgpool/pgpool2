@@ -3897,7 +3897,7 @@
       unnecessary 4 bytes, which did nothing bd for the execution of program.
       But a bug is a bug.
 
-      Per covery report "1111476 Wrong sizeof argument"
+      Per coverity report "1111476 Wrong sizeof argument"
 
     - Fix "show pool_status" always shows memqcache_auto_cache_invalidation as
       0. (Tatsuo Ishii)
@@ -5306,7 +5306,7 @@
       unnecessary 4 bytes, which did nothing bd for the execution of program.
       But a bug is a bug.
 
-      Per covery report "1111476 Wrong sizeof argument"
+      Per coverity report "1111476 Wrong sizeof argument"
 
     - Fix "show pool_status" always shows memqcache_auto_cache_invalidation as
       0. (Tatsuo Ishii)
