@@ -810,11 +810,6 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "send ARP REQUESTi to neighbour host", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	StrNCpy(status[i].name, "wd_heartbeat_port", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_heartbeat_port);
-	StrNCpy(status[i].desc, "port number for receiving heartbeat signal", POOLCONFIG_MAXDESCLEN);
-	i++;
-
 	StrNCpy(status[i].name, "wd_heartbeat_keepalive", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_heartbeat_keepalive);
 	StrNCpy(status[i].desc, "interval time of sending heartbeat siganl (sec)", POOLCONFIG_MAXDESCLEN);
@@ -849,6 +844,88 @@ get_config(int *nrows)
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->wd_lifecheck_password);
 	StrNCpy(status[i].desc, "password for watchdog user in lifecheck", POOLCONFIG_MAXDESCLEN);
 	i++;
+
+	for (j = 0; j < MAX_WATCHDOG_NUM; j++)
+	{
+		if (WD_INFO(j).pgpool_port == 0)
+			continue;
+
+		if (j == pool_config->pgpool_node_id)
+		{
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "hostname%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_INFO(j).hostname);
+			StrNCpy(status[i].desc, "hostname or IP address of local pgpool node", POOLCONFIG_MAXDESCLEN);
+			i++;
+
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "pgpool_port%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_INFO(j).pgpool_port);
+			StrNCpy(status[i].desc, "local pgpool port number", POOLCONFIG_MAXDESCLEN);
+			i++;
+
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "wd_port%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_INFO(j).wd_port);
+			StrNCpy(status[i].desc, "local watchdog port number", POOLCONFIG_MAXDESCLEN);
+			i++;
+		}
+		else
+		{
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "hostname%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_INFO(j).hostname);
+			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "hostname or IP address of pgpool node #%d", j);
+			i++;
+
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "pgpool_port%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_INFO(j).pgpool_port);
+			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "pgpool port number of pgpool node #%d", j);
+			i++;
+
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "wd_port%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_INFO(j).wd_port);
+			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "watchdog port number of pgpool node #%d", j);
+			i++;
+		}
+	}
+
+	for (j = 0; j < MAX_WATCHDOG_NUM; j++)
+	{
+		if (pool_config->hb_ifs[j].dest_port == 0)
+			continue;
+
+		if (j == pool_config->pgpool_node_id)
+		{
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_hostname%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->hb_ifs[j].addr);
+			StrNCpy(status[i].desc, "IP address or hostname for receiving heartbeat", POOLCONFIG_MAXDESCLEN);
+			i++;
+
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_device%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->hb_ifs[j].if_name);
+			StrNCpy(status[i].desc, "name of NIC device for receiving hearbeat", POOLCONFIG_MAXDESCLEN);
+			i++;
+
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_port%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->hb_ifs[j].dest_port);
+			StrNCpy(status[i].desc, "port number for receiving heartbeat", POOLCONFIG_MAXDESCLEN);
+			i++;
+		}
+		else
+		{
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_hostname%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->hb_ifs[j].addr);
+			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "destination IP address or hostname for sending heartbeat to pgpool node #%d", j);
+			i++;
+
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_device%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->hb_ifs[j].if_name);
+			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "name of NIC device for sending hearbeat to pgpool node #%d", j);
+			i++;
+
+			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_port%d", j);
+			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->hb_ifs[j].dest_port);
+			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "destination port for sending heartbeat to pgpool node #%d", j);
+			i++;
+		}
+	}
 
 	StrNCpy(status[i].name, "wd_monitoring_interfaces_list", POOLCONFIG_MAXNAMELEN);
 	*(status[i].value) = '\0';
@@ -1008,68 +1085,6 @@ get_config(int *nrows)
 		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "backend_application_name%d", j);
 		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", BACKEND_INFO(j).backend_application_name);
 		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "application_name for backend #%d", j);
-		i++;
-	}
-
-	for (j = 0; j < MAX_WATCHDOG_NUM; j++)
-	{
-		if (WD_INFO(j).pgpool_port == 0)
-			continue;
-
-		if (j == pool_config->pgpool_node_id)
-		{
-			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "hostname%d", j);
-			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_INFO(j).hostname);
-			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "Host name or IP address of this watchdog");
-			i++;
-
-			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "pgpool_port%d", j);
-			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_INFO(j).pgpool_port);
-			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "local pgpool port number");
-			i++;
-
-			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "wd_port%d", j);
-			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_INFO(j).wd_port);
-			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "local pgpool watchdog port number");
-			i++;
-		}
-		else
-		{
-			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "hostname%d", j);
-			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_INFO(j).hostname);
-			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "pgpool #%d hostname", j);
-			i++;
-
-			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "pgpool_port%d", j);
-			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_INFO(j).pgpool_port);
-			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "pgpool #%d port number", j);
-			i++;
-
-			snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "wd_port%d", j);
-			snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_INFO(j).wd_port);
-			snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "pgpool #%d watchdog port number", j);
-			i++;
-		}
-	}
-
-	for (j = 0; j < pool_config->num_hb_dest_if; j++)
-	{
-		if (j == pool_config->pgpool_node_id)
-			continue;
-
-		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_destination%d", j);
-		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_HB_IF(j).addr);
-		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "destination host for sending heartbeat using NIC device %d", j);
-		i++;
-
-		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_device%d", j);
-		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", WD_HB_IF(j).if_name);
-		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "name of NIC device #%d for sending hearbeat", j);
-		i++;
-
-		snprintf(status[i].name, POOLCONFIG_MAXNAMELEN, "heartbeat_destination_port%d", j);
-		snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", WD_HB_IF(j).dest_port);
-		snprintf(status[i].desc, POOLCONFIG_MAXDESCLEN, "destination port for sending heartbeat using NIC device %d", j);
 		i++;
 	}
 
