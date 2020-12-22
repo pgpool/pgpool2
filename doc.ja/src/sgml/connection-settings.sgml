@@ -654,8 +654,8 @@ backend_clustering_mode = 'logical_replication'
     <programlisting>
 backend_clustering_mode = 'slony'
     </programlisting>
-   このモードでは127台までのスレーブサーバを使用できます。
-   また、スレーブサーバをまったく使用しないことも可能です。
+   このモードでは127台までのレプリカサーバを使用できます。
+   また、レプリカサーバをまったく使用しないことも可能です。
   </para>
  </sect2>
 
@@ -1300,9 +1300,20 @@ S2/N2: COMMIT;
      シリアル型やシーケンスに関する一貫した可視性を保証しません。
     </para>
    </listitem>
-
   </itemizedlist>
+ </sect2>
 
+ <sect2 id="guc-raw-mode" xreflabel="raw_mode">
+  <title>rawモード</title>
+  <para>
+   このモードでは、<productname>Pgpool-II</>はデータベースの同期に関しては関与しません。
+   システム全体に意味の有る動作をさせるのはユーザの責任となります。
+   このモードでは負荷分散は<emphasis>できません</emphasis>。
+   このモードを有効にするには<varname>backend_clustering_mode</varname>に'raw'を設定してください。
+    <programlisting>
+backend_clustering_mode = 'raw'
+    </programlisting>
+  </para>
  </sect2>
 
 </sect1>
