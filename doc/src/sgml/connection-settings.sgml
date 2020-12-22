@@ -450,13 +450,13 @@ backend_clustering_mode = 'logical_replication'
   <para>
    This mode is used to couple <productname>Pgpool-II</productname>
    with <acronym>Slony-I</acronym>.  Slony-I is responsible for doing
-   the actual data replication.  To enable this mode, use 'slony' for
+   the actual data replication. To enable this mode, use 'slony' for
    <varname>backend_clustering_mode</varname>.
     <programlisting>
 backend_clustering_mode = 'slony'
     </programlisting>
-   In this mode you can have up to 127 standby servers.  Also it is
-   possible not to have standby server at all.
+   In this mode you can have up to 127 replica servers.  Also it is
+   possible not to have replica server at all.
   </para>
  </sect2>
 
@@ -877,7 +877,7 @@ backend_clustering_mode = 'native_replication'
  </sect2>
 
  <sect2 id="guc-snapshot-isolation-mode" xreflabel="snapshot_isolation_mode">
-  <title>Snapshot Isolation Mode</title>
+  <title>Snapshot isolation mode</title>
 
   <para>
    This mode is similar to the native replication mode except it adds
@@ -951,7 +951,7 @@ S2/N2: COMMIT;
      REPEATABLE READ.  That means you need to set it in
      <filename>postgresql.conf</filename> like this:
      <programlisting>
-      default_transaction_isolation = 'repeatable read'
+default_transaction_isolation = 'repeatable read'
      </programlisting>
     </para>
    </listitem>
@@ -962,9 +962,20 @@ S2/N2: COMMIT;
      guaranteed.
     </para>
    </listitem>
-
   </itemizedlist>
+ </sect2>
 
+ <sect2 id="guc-raw-mode" xreflabel="raw_mode">
+  <title>Raw mode</title>
+  <para>
+   In this mode, <productname>Pgpool-II</> does not care about the database synchronization.
+   It's user's responsibility to make the whole system does a meaningful thing.
+   Load balancing is <emphasis>not</emphasis> possible in the mode.
+   To enable this mode, use 'raw' for <varname>backend_clustering_mode</varname>.
+   <programlisting>
+backend_clustering_mode = 'raw'
+   </programlisting>
+  </para>
  </sect2>
 
 </sect1>

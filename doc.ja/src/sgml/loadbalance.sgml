@@ -75,7 +75,7 @@
       <!--
       either in replication mode or native replication mode
       -->
-      ローモードでない
+      rawモードでない
      </para>
     </listitem>
     <listitem>
