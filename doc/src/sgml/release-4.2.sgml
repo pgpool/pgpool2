@@ -1,6 +1,144 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-1">
+ <title>Release 4.2.1</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2020-12-23</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-12-22 [5b9a29c]
+    -->
+    <para>
+     Change the socket path to "/var/run/postgresql" in all of the <filename>pgpool.conf</filename> samples. (Bo Peng)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2020-12-14 [3dc4cb2]
+    -->
+    <para>
+     Use single shared memory segment for all shared variables in Pgpool parent process (Muhammad Usama)
+    </para>
+    <para>
+     Shared memory segments is a limited resource and opening too many segments should be avoided.
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2020-12-08 [db613fd]
+    -->
+    <para>
+     Delete any pre-existing watchdog command socket file at startup (Muhammad Usama)
+    </para>
+    <para>
+     Patch provided by Masaya Kawamoto
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-12-22 [a180302]
+    -->
+    <para>
+     Doc: Add missing raw mode to "5.3. Clustering mode" and fix typos. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-21 [2aa234d]
+    -->
+    <para>
+     Fix incorrect heartbeat related results of <command>pcp_pool_status</command> and <command>SHOW POOL_STATUS</command> commands. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-18 [e7d9477]
+    2020-12-18 [86ee4d6]
+    -->
+    <para>
+     Doc: fix usage of <command>firewall-cmd</command> in the installation tips section. (Tatsuo Ishii)
+    </para>
+    <para>
+     <command>firewall-cmd</command> opened unnecessary ports in the example.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-15 [59d7431]
+    2020-12-13 [00d103f]
+    -->
+    <para>
+     Fix segfault that may occur when backend_flag = 'ALWAYS_PRIMARY|ALLOW_TO_FAILOVER' or failover_command = ''.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=672">bug 672</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-14 [83355dd]
+    -->
+    <para>
+     Fix for inconsistent watchdog node_id problem in <xref linkend="WD-CLI"> and watchdog lifecheck mechanism. (Muhammad Usama)
+    </para>
+    <para>
+     When pgpool node 0 (master watchdog) is shutdown, all of the pgpool nodes terminate abnormally.
+     This commit fixed this issue.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-13 [cf668fa]
+    -->
+    <para>
+     Fix error if watchdog is disabled and <varname>wd_port</varname> is not defined. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-04 [3bd83aa]
+    -->
+    <para>
+     Fix compiler error on FreeBSD.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=670">bug 670</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch is provided by ajs.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-11-30 [86d4dd0]
+    -->
+    <para>
+     Fix file swapping race condition in <filename>pool_passwd</filename>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch is provided by Masaya Kawamoto.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-0">
  <title>Release 4.2.0</title>
  <note>
