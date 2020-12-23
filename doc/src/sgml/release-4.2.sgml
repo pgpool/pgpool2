@@ -97,7 +97,7 @@
      Fix for inconsistent watchdog node_id problem in <xref linkend="WD-CLI"> and watchdog lifecheck mechanism. (Muhammad Usama)
     </para>
     <para>
-     When pgpool node 0 (master watchdog) is shutdown, all of the pgpool nodes terminate abnormally.
+     When pgpool node 0 (leader watchdog) is shutdown, all of the pgpool nodes terminate abnormally.
      This commit fixed this issue.
     </para>
    </listitem>
