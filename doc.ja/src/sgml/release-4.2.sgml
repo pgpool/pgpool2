@@ -1,6 +1,157 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-1">
+ <!--
+ <title>Release 4.2.1</title>
+ -->
+ <title>リリース 4.2.1</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2020-12-23</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Changes</title>
+  -->
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-12-22 [5b9a29c]
+    -->
+    <para>
+     すべての<filename>pgpool.conf</filename>サンプルファイルのソケットファイルのパスを/var/run/postgresqlに変更しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-14 [3dc4cb2]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>親プロセスのすべての共有変数に単一の共有メモリセグメントを使用するとうに修正しました。(Muhammad Usama)
+    </para>
+    <para>
+     共有メモリセグメントは限られたリソースであるため、多くのセグメントを開くことは避けるべきです。
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2020-12-08 [db613fd]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>起動時に既存のwatchdogコマンドソケットファイルを削除するように修正しました。(Muhammad Usama)
+    </para>
+    <para>
+     パッチはMasaya Kawamotoによって提供されました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-12-22 [a180302]
+    -->
+    <para>
+     Doc: 欠落していたrawモードの説明を「5.3 クラスタリングモード」に追加しました。タイポを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-21 [2aa234d]
+    -->
+    <para>
+     <command>pcp_pool_status</command>および<command>SHOW POOL_STATUS</command>コマンドのハートビート関連パラメータの誤った結果を修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-18 [e7d9477]
+    2020-12-18 [86ee4d6]
+    -->
+    <para>
+     Doc: インストールのヒントのセクションで<command>firewall-cmd</command>の使用法を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     この例では、<command>firewall-cmd</command>が不要なポートを開放しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-15 [59d7431]
+    2020-12-13 [00d103f]
+    -->
+    <para>
+     backend_flag0 = 'ALWAYS_PRIMARY|ALLOW_TO_FAILOVER'またはfailover_command=''の場合に発生しうるセグメンテーション違反を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=672">bug 672</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-14 [83355dd]
+    -->
+    <para>
+     <xref linkend="WD-CLI">およびwatchdogライフチェックメカニズムの一貫性のないpgpool node_idの問題を修正しました。(Muhammad Usama)
+    </para>
+    <para>
+     pgpoolノード0（マスターwatchdog）がシャットダウンされると、すべてのpgpoolノードが異常終了する問題を修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-13 [cf668fa]
+    -->
+    <para>
+     Watchdog機能が無効で、<varname>wd_port</varname>が定義されていない場合に発生するエラーを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-04 [3bd83aa]
+    -->
+    <para>
+     コンパイルエラーを修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=670">bug 670</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     パッチはajsによって提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-11-30 [86d4dd0]
+    -->
+    <para>
+     <filename>pool_passwd</filename>のファイルスワッピングの競合状態を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     パッチはMasaya Kawamotoによって提供されました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-0">
  <!--
  <title>Release 4.2.0</title>
