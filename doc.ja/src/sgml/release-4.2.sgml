@@ -34,7 +34,7 @@
     2020-12-14 [3dc4cb2]
     -->
     <para>
-     <productname>Pgpool-II</productname>親プロセスのすべての共有変数に単一の共有メモリセグメントを使用するとうに修正しました。(Muhammad Usama)
+     <productname>Pgpool-II</productname>親プロセスのすべての共有変数に単一の共有メモリセグメントを使用するように修正しました。(Muhammad Usama)
     </para>
     <para>
      共有メモリセグメントは限られたリソースであるため、多くのセグメントを開くことは避けるべきです。
@@ -111,7 +111,7 @@
      <xref linkend="WD-CLI">およびwatchdogライフチェックメカニズムの一貫性のないpgpool node_idの問題を修正しました。(Muhammad Usama)
     </para>
     <para>
-     pgpoolノード0（マスターwatchdog）がシャットダウンされると、すべてのpgpoolノードが異常終了する問題を修正しました。
+     pgpoolノード0（リーダーwatchdog）がシャットダウンされると、すべてのpgpoolノードが異常終了する問題を修正しました。
     </para>
    </listitem>
 
