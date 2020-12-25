@@ -9617,7 +9617,7 @@
         executes on master(primary)
 
       Also many new features are added and major refactoring has been
-      made to the internal structure of pgpoo-II. For example, in
+      made to the internal structure of pgpool-II. For example, in
       replication mode, SELECTs calling functions possibly write to
       database will not allow to load balance.
 
