@@ -2185,7 +2185,7 @@
     <programlisting>
      - pgpool.conf is configured so that all read queries are sent to the standby.
      - First, issue a writing query in a transaction block
-     - After commiting the transaction, issue a select query.
+     - After committing the transaction, issue a select query.
      - When processing the query, send Describe (statement) message just after Parse.
     </programlisting>
 

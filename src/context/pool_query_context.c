@@ -189,7 +189,7 @@ pool_set_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id)
 }
 
 /*
- * Unspecify DB node to send query
+ * Unspecified DB node to send query
  */
 void
 pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id)
@@ -528,7 +528,7 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 				 */
 
 				ereport(DEBUG1,
-						(errmsg("checking load balance precondtions. TSTATE:%c wrting_trancation:%d failed_transaction:%d isolation:%d",
+						(errmsg("checking load balance preconditions. TSTATE:%c writing_transaction:%d failed_transaction:%d isolation:%d",
 								TSTATE(backend, PRIMARY_NODE_ID),
 								pool_is_writing_transaction(),
 								pool_is_failed_transaction(),

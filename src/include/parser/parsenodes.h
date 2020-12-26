@@ -1033,7 +1033,7 @@ typedef struct RangeTblEntry
 	 * as a result of subquery-flattening substitutions.
 	 *
 	 * joinleftcols is an integer list of physical column numbers of the left
-	 * join input rel that are included in the join; likewise joinrighttcols
+	 * join input rel that are included in the join; likewise joinrightcols
 	 * for the right join input rel.  (Which rels those are can be determined
 	 * from the associated JoinExpr.)  If the join is USING/NATURAL, then the
 	 * first joinmergedcols entries in each list identify the merged columns.
@@ -1043,7 +1043,7 @@ typedef struct RangeTblEntry
 	 * Note that input columns could have been dropped after creation of a
 	 * stored rule, if they are not referenced in the query (in particular,
 	 * merged columns could not be dropped); this is not accounted for in
-	 * joinleftcols/joinrighttcols.
+	 * joinleftcols/joinrightcols.
 	 */
 	JoinType	jointype;		/* type of join */
 	int			joinmergedcols; /* number of merged (JOIN USING) columns */

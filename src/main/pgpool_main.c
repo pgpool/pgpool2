@@ -74,15 +74,15 @@ typedef enum
 								 * required */
 	SIG_WATCHDOG_QUORUM_CHANGED,	/* notify main about cluster quorum change
 									 * of watchdog cluster */
-	SIG_INFORM_QURANTINE_NODES, /* notify main about send degenerate requests
+	SIG_INFORM_QUARANTINE_NODES, /* notify main about send degenerate requests
 								 * for all quarantine nodes */
-	MAX_INTERUPTS				/* Must be last! */
+	MAX_INTERRUPTS				/* Must be last! */
 }			User1SignalReason;
 
 
 typedef struct User1SignalSlot
 {
-	sig_atomic_t signalFlags[MAX_INTERUPTS];
+	sig_atomic_t signalFlags[MAX_INTERRUPTS];
 }			User1SignalSlot;
 
 /*
@@ -97,7 +97,7 @@ typedef struct User1SignalSlot
 		} \
 		if (sigusr1_request) \
 		{ \
-			sigusr1_interupt_processor(); \
+			sigusr1_interrupt_processor(); \
 			sigusr1_request = 0; \
 		} \
 		if (sigchld_request) \
@@ -134,7 +134,7 @@ static int	read_status_file(bool discard_status);
 static RETSIGTYPE exit_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
 static RETSIGTYPE sigusr1_handler(int sig);
-static void sigusr1_interupt_processor(void);
+static void sigusr1_interrupt_processor(void);
 static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE wakeup_handler(int sig);
 
@@ -213,7 +213,7 @@ BACKEND_STATUS *my_backend_status[MAX_NUM_BACKENDS];	/* Backend status buffer */
 int			my_main_node_id;	/* Main node id buffer */
 
 /*
- * Dummy varibale to suppress compiler warnings by discarding return values
+ * Dummy variable to suppress compiler warnings by discarding return values
  * from write(2) in signal handlers
  */
 static int dummy_status;
@@ -297,10 +297,10 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 		/*
 		 * Watchdog process fires SIGUSR2 once in stable state
-		 * In addition, when wathcodg fails to start with FATAL, the process
+		 * In addition, when watchdog fails to start with FATAL, the process
 		 * exits and SIGCHLD is fired, so we can also expect SIGCHLD from
 		 * watchdog process. Finally, we also need to look for the SIGUSR1
-		 * signla for the failover requests from other watchdog nodes. In
+		 * signal for the failover requests from other watchdog nodes. In
 		 * case a request arrives at the same time when the watchdog has just
 		 * been initialized.
 		 *
@@ -350,7 +350,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 		if (sigusr1_request)
 		{
-			sigusr1_interupt_processor();
+			sigusr1_interrupt_processor();
 			sigusr1_request = 0;
 		}
 	}
@@ -470,7 +470,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 		/*
 		 * check for child signals to ensure child startup before reporting
-		 * successfull start.
+		 * successful start.
 		 */
 		if (first)
 		{
@@ -576,25 +576,25 @@ register_node_operation_request(POOL_REQUEST_KIND kind, int *node_id_set, int co
 }
 
 void
-register_watchdog_quorum_change_interupt(void)
+register_watchdog_quorum_change_interrupt(void)
 {
 	signal_user1_to_parent_with_reason(SIG_WATCHDOG_QUORUM_CHANGED);
 }
 
 void
-register_watchdog_state_change_interupt(void)
+register_watchdog_state_change_interrupt(void)
 {
 	signal_user1_to_parent_with_reason(SIG_WATCHDOG_STATE_CHANGED);
 }
 void
-register_backend_state_sync_req_interupt(void)
+register_backend_state_sync_req_interrupt(void)
 {
 	signal_user1_to_parent_with_reason(SIG_BACKEND_SYNC_REQUIRED);
 }
 void
 register_inform_quarantine_nodes_req(void)
 {
-	signal_user1_to_parent_with_reason(SIG_INFORM_QURANTINE_NODES);
+	signal_user1_to_parent_with_reason(SIG_INFORM_QUARANTINE_NODES);
 }
 
 static void
@@ -617,7 +617,7 @@ pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 	if (pid == 0)
 	{
 		on_exit_reset();
-		SetProcessGlobalVaraibles(PT_PCP);
+		SetProcessGlobalVariables(PT_PCP);
 
 		close(pipe_fds[0]);
 		close(pipe_fds[1]);
@@ -665,7 +665,7 @@ fork_a_child(int *fds, int id)
 			close(pipe_fds[1]);
 		}
 
-		SetProcessGlobalVaraibles(PT_CHILD);
+		SetProcessGlobalVariables(PT_CHILD);
 
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
@@ -712,7 +712,7 @@ worker_fork_a_child(ProcessType type, void (*func) (), void *params)
 			close(pipe_fds[1]);
 		}
 
-		SetProcessGlobalVaraibles(type);
+		SetProcessGlobalVariables(type);
 
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
@@ -1217,7 +1217,7 @@ static RETSIGTYPE sigusr1_handler(int sig)
 
 
 static void
-sigusr1_interupt_processor(void)
+sigusr1_interrupt_processor(void)
 {
 	ereport(DEBUG1,
 			(errmsg("Pgpool-II parent process received SIGUSR1")));
@@ -1237,12 +1237,12 @@ sigusr1_interupt_processor(void)
 		}
 	}
 
-	if (user1SignalSlot->signalFlags[SIG_INFORM_QURANTINE_NODES])
+	if (user1SignalSlot->signalFlags[SIG_INFORM_QUARANTINE_NODES])
 	{
 		ereport(LOG,
 				(errmsg("Pgpool-II parent process received inform quarantine nodes signal from watchdog")));
 
-		user1SignalSlot->signalFlags[SIG_INFORM_QURANTINE_NODES] = false;
+		user1SignalSlot->signalFlags[SIG_INFORM_QUARANTINE_NODES] = false;
 		degenerate_all_quarantine_nodes();
 	}
 
@@ -1472,7 +1472,7 @@ failover(void)
 				/*
 				 * recalculate the main node id after setting the backend
 				 * status of quarantined node, this will bring us to the old
-				 * main_node_id that was beofre the quarantine state
+				 * main_node_id that was before the quarantine state
 				 */
 				Req_info->main_node_id = get_next_main_node();
 				if (Req_info->primary_node_id == -1 &&
@@ -1572,7 +1572,7 @@ failover(void)
 						 * node and that node had a primary role before it was
 						 * quarantined, Restore the primary node status for
 						 * that node before degenerating it. This is important
-						 * for the failover script to get the proper valueo of
+						 * for the failover script to get the proper value of
 						 * old primary
 						 */
 						if (Req_info->primary_node_id == -1 &&
@@ -1811,7 +1811,7 @@ failover(void)
 		else if (search_primary == false)
 		{
 			ereport(DEBUG1,
-					(errmsg("faliover was called on quarantined node. No need to search for primary node")));
+					(errmsg("failover was called on quarantined node. No need to search for primary node")));
 			new_primary = Req_info->primary_node_id;
 		}
 		else
@@ -1917,7 +1917,7 @@ failover(void)
 				 * not be received by pgpool child. This could happen if
 				 * multiple PostgreSQL are going down (or even starting
 				 * pgpool, without starting PostgreSQL can trigger this).
-				 * Child calls degenerate_backend() and it tries to aquire
+				 * Child calls degenerate_backend() and it tries to acquire
 				 * semaphore to write a failover request. In this case the
 				 * signal mask is set as well, thus signals are never
 				 * received.
@@ -2204,7 +2204,7 @@ static RETSIGTYPE reap_handler(int sig)
 /*
  * pool_waitpid:
  * nothing more than a wrapper function over NOHANG mode waitpid() or wait3()
- * depending on the existance of waitpid in the system
+ * depending on the existence of waitpid in the system
  */
 pid_t
 pool_waitpid(int *status)
@@ -2320,7 +2320,7 @@ reaper(void)
 						(errmsg("%s process with pid: %d exits with status %d by signal %d", exiting_process_name, pid, status, WTERMSIG(status))));
 
 			/*
-			 * If the watchdog process was terminated abonormally. we need to
+			 * If the watchdog process was terminated abnormally. we need to
 			 * set the cleanup flag so that the new watchdog process can start
 			 * without problems
 			 */
@@ -2969,7 +2969,7 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT * *slots)
 		if (!check_connectivity)
 		{
 			ereport(DEBUG1,
-					(errmsg("verify_backend_node_status: server verion is lower than 9.6.0. Skipping connectivity checks")));
+					(errmsg("verify_backend_node_status: server version is lower than 9.6.0. Skipping connectivity checks")));
 			return pool_node_status;
 		}
 
@@ -3269,7 +3269,7 @@ fork_follow_child(int old_main_node, int new_primary, int old_primary)
 	if (pid == 0)
 	{
 		on_exit_reset();
-		SetProcessGlobalVaraibles(PT_FOLLOWCHILD);
+		SetProcessGlobalVariables(PT_FOLLOWCHILD);
 		ereport(LOG,
 				(errmsg("start triggering follow command.")));
 		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
@@ -3304,7 +3304,7 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 
 	/*
 	 * Calculate the size of required shared memory and try to allocate
-	 * everyting in sigle memory segment
+	 * everything in single memory segment
 	 */
 	size = 256;/* let us have some extra space */
 	size += MAXALIGN(sizeof(BackendDesc));
@@ -3725,7 +3725,7 @@ reload_config(void)
 
 	pool_get_config(conf_file, CFGCXT_RELOAD);
 
-	/* Realoading config file could change backend status */
+	/* Reloading config file could change backend status */
 	(void) write_status_file();
 
 	MemoryContextSwitchTo(oldContext);
@@ -3835,7 +3835,7 @@ update_backend_quarantine_status(void)
  * nodes from the LEADER/COORDINATOR watchdog Pgpool-II and synchronize the
  * local backend states with the cluster wide status of each node.
  *
- * Latter in the funcrtion after syncing the backend node status the function
+ * Latter in the function after syncing the backend node status the function
  * do a partial or full restart of Pgpool-II children depending upon the
  * Pgpool-II mode and type of node status change
  *
@@ -3848,7 +3848,7 @@ sync_backend_from_watchdog(void)
 	bool		node_status_was_changed_to_up = false;
 	bool		need_to_restart_children = false;
 	bool		partial_restart = false;
-	bool		reload_maste_node_id = false;
+	bool		reload_master_node_id = false;
 
 	int			down_node_ids[MAX_NUM_BACKENDS];
 	int			down_node_ids_index = 0;
@@ -3901,7 +3901,7 @@ sync_backend_from_watchdog(void)
 				BACKEND_INFO(i).backend_status = CON_DOWN;
 				pool_set_backend_status_changed_time(i);
 				my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
-				reload_maste_node_id = true;
+				reload_master_node_id = true;
 				node_status_was_changed_to_down = true;
 				ereport(LOG,
 						(errmsg("backend:%d is set to down status", i),
@@ -3920,7 +3920,7 @@ sync_backend_from_watchdog(void)
 				BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
 				pool_set_backend_status_changed_time(i);
 				my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
-				reload_maste_node_id = true;
+				reload_master_node_id = true;
 
 				ereport(LOG,
 						(errmsg("backend:%d is set to UP status", i),
@@ -3946,7 +3946,7 @@ sync_backend_from_watchdog(void)
 		 * leader node returns primary_node_id = -1 when the primary node is
 		 * in quarantine state on the leader.  So we will not update our
 		 * primary node id when the status of current primary node is not
-		 * CON_DOWN while primary_node_id sent by leader watchdong node is -1
+		 * CON_DOWN while primary_node_id sent by leader watchdog node is -1
 		 *
 		 * Note that Req_info->primary_node_id could be -2, which is the
 		 * initial value. So we need to avoid crash by checking the value is
@@ -3970,7 +3970,7 @@ sync_backend_from_watchdog(void)
 
 	pfree(backendStatus);
 
-	if (reload_maste_node_id)
+	if (reload_master_node_id)
 	{
 		Req_info->main_node_id = get_next_main_node();
 	}
@@ -3980,7 +3980,7 @@ sync_backend_from_watchdog(void)
 		return;
 
 	/*
-	 * Decide if All or subset of the Pgpool-II children needs immidiate
+	 * Decide if All or subset of the Pgpool-II children needs immediate
 	 * restart or we can do that after finishing the current session
 	 *
 	 * Check if there was no change at all

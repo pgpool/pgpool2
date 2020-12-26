@@ -267,7 +267,7 @@ start_pcp_command_processor_process(int port)
 
 	if (pid == 0)				/* child */
 	{
-		SetProcessGlobalVaraibles(PT_PCP_WORKER);
+		SetProcessGlobalVariables(PT_PCP_WORKER);
 
 		on_exit_reset();
 		/* Close the listen sockets sockets */
@@ -461,7 +461,7 @@ pcp_mark_recovery_in_progress(void)
 	pool_sigset_t oldmask;
 
 	/*
-	 * only pcp worker is allowd to make this call
+	 * only pcp worker is allowed to make this call
 	 */
 	if (processType != PT_PCP_WORKER)
 		return false;
@@ -477,7 +477,7 @@ pcp_mark_recovery_in_progress(void)
 
 /*
  * unsets the shared memory flag to indicate pcp recovery command
- * is finsihed.
+ * is finished.
  */
 void
 pcp_mark_recovery_finished(void)
@@ -485,7 +485,7 @@ pcp_mark_recovery_finished(void)
 	pool_sigset_t oldmask;
 
 	/*
-	 * only pcp worker is allowd to make this call
+	 * only pcp worker is allowed to make this call
 	 */
 	if (processType != PT_PCP_WORKER)
 		return;

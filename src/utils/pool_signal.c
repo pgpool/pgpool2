@@ -171,7 +171,7 @@ pool_signal_parent(int sig)
 	if (processType != PT_PCP_WORKER && mypid != getppid())
 	{
 		/*
-		 * pgpool parent is no more alive, commiting sucide.
+		 * pgpool parent is no more alive, committing suicide.
 		 */
 		ereport(PANIC,
 				(errmsg("pgpool-II main process died unexpectedly. exiting current process")));

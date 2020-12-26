@@ -15,7 +15,7 @@ clean.sh: remove files including PostgreSQL DB clusters created by regress.sh.
 tests: test scripts live here. Each test case has its own
 	   subdirectory. In the directory the test script resides and the
 	   script name must be "test.sh". The script should return exit
-	   code 0 upon successfull completion of the test. Otherwise it
+	   code 0 upon successful completion of the test. Otherwise it
 	   should return non 0 value. To add a new test case, simply
 	   create a shell script under this.
 

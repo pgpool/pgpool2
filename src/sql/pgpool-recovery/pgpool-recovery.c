@@ -322,7 +322,7 @@ get_function_oid(const char *funcname, const char *argtype, const char *nspname)
 	/*
 	 * LookupExplicitNamespace() of PostgreSQL 9.3 or later, has third
 	 * argument "missing_ok" which suppresses ERROR exception, but returns
-	 * invlaid_oid. See include/catalog/namespace.h
+	 * invalid_oid. See include/catalog/namespace.h
 	 */
 	nspid = LookupExplicitNamespace(nspname, false);
 #endif

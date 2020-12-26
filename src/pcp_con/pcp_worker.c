@@ -88,8 +88,8 @@ static void process_attach_node(PCP_CONNECTION * frontend, char *buf);
 static void process_recovery_request(PCP_CONNECTION * frontend, char *buf);
 static void process_status_request(PCP_CONNECTION * frontend);
 static void process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos);
-static void process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos);
-static void process_set_configration_parameter(PCP_CONNECTION * frontend, char *buf, int len);
+static void process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos);
+static void process_set_configuration_parameter(PCP_CONNECTION * frontend, char *buf, int len);
 
 static void pcp_worker_will_go_down(int code, Datum arg);
 
@@ -259,8 +259,8 @@ pcp_process_command(char tos, char *buf, int buf_len)
 	switch (tos)
 	{
 		case 'A':				/* set configuration parameter */
-			set_ps_display("PCP: processing set configration parameter request", false);
-			process_set_configration_parameter(pcp_frontend, buf, buf_len);
+			set_ps_display("PCP: processing set configuration parameter request", false);
+			process_set_configuration_parameter(pcp_frontend, buf, buf_len);
 			break;
 
 		case 'L':				/* node count */
@@ -307,7 +307,7 @@ pcp_process_command(char tos, char *buf, int buf_len)
 		case 'T':
 		case 't':
 			set_ps_display("PCP: processing shutdown request", false);
-			process_shutown_request(pcp_frontend, buf[0], tos);
+			process_shutdown_request(pcp_frontend, buf[0], tos);
 			break;
 
 		case 'O':				/* recovery request */
@@ -536,7 +536,7 @@ pool_detach_node(int node_id, bool gracefully)
 	/*
 	 * Wait until all frontends exit
 	 */
-	*InRecovery = RECOVERY_DETACH;	/* This wiil ensure that new incoming
+	*InRecovery = RECOVERY_DETACH;	/* This will ensure that new incoming
 									 * connection requests are blocked */
 
 	if (wait_connection_closed())
@@ -587,7 +587,7 @@ pool_promote_node(int node_id, bool gracefully)
 	/*
 	 * Wait until all frontends exit
 	 */
-	*InRecovery = RECOVERY_PROMOTE; /* This wiil ensure that new incoming
+	*InRecovery = RECOVERY_PROMOTE; /* This will ensure that new incoming
 									 * connection requests are blocked */
 
 	if (wait_connection_closed())
@@ -798,7 +798,7 @@ inform_watchdog_info(PCP_CONNECTION * frontend, char *buf)
 	if (!pool_config->use_watchdog)
 		ereport(ERROR,
 				(errmsg("PCP: informing watchdog info failed"),
-				 errdetail("watcdhog is not enabled")));
+				 errdetail("watchdog is not enabled")));
 
 	wd_index = atoi(buf);
 
@@ -813,8 +813,8 @@ inform_watchdog_info(PCP_CONNECTION * frontend, char *buf)
 			 errdetail("retrieved node information from IPC socket")));
 
 	/*
-	 * This is the voilation of PCP protocol but I think in future we should
-	 * shift to more adaptable protocol for data transmition.
+	 * This is the violation of PCP protocol but I think in future we should
+	 * shift to more adaptable protocol for data transmission.
 	 */
 	json_data_len = strlen(json_data);
 	wsize = htonl(sizeof(code) +
@@ -916,7 +916,7 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
  *
  * The protocol starts with 'h', followed by 4-byte packet length integer in
  * network byte order including self.  Each data is represented as a null
- * terminted string. The order of each data is defined in
+ * terminated string. The order of each data is defined in
  * POOL_HEALTH_CHECK_STATS struct.
  */
 static void
@@ -1025,7 +1025,7 @@ process_reload_config(PCP_CONNECTION * frontend, char scope)
 		if (wd_execute_cluster_command(WD_COMMAND_RELOAD_CONFIG_CLUSTER,0, NULL) != COMMAND_OK)
 			ereport(ERROR,
 					(errmsg("PCP: error while processing reload config request for cluster"),
-					 errdetail("failed to propogate reload config command through watchdog")));
+					 errdetail("failed to propagate reload config command through watchdog")));
 	}
 
 	if(pool_signal_parent(SIGHUP) == -1)
@@ -1302,7 +1302,7 @@ send_md5salt(PCP_CONNECTION * frontend, char *salt)
 }
 
 static void
-process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos)
+process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos)
 {
 	char		code[] = "CommandComplete";
 	int			len;
@@ -1312,7 +1312,7 @@ process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos)
 			 errdetail("shutdown mode \"%c\"", mode)));
 
 	/* quickly bail out if invalid mode is specified
-	 * because we do not want to propogate the command
+	 * because we do not want to propagate the command
 	 * with invalid mode over the watchdog network */
 	if (mode != 's' && mode != 'i' && mode != 'f' )
 	{
@@ -1334,7 +1334,7 @@ process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos)
 		if (wd_execute_cluster_command(WD_COMMAND_SHUTDOWN_CLUSTER,1, &wdExecCommandArg) != COMMAND_OK)
 			ereport(ERROR,
 					(errmsg("PCP: error while processing shutdown cluster request"),
-					 errdetail("failed to propogate shutdown command through watchdog")));
+					 errdetail("failed to propagate shutdown command through watchdog")));
 	}
 
 	pcp_write(frontend, "t", 1);
@@ -1347,7 +1347,7 @@ process_shutown_request(PCP_CONNECTION * frontend, char mode, char tos)
 }
 
 static void
-process_set_configration_parameter(PCP_CONNECTION * frontend, char *buf, int len)
+process_set_configuration_parameter(PCP_CONNECTION * frontend, char *buf, int len)
 {
 	char	   *param_name;
 	char	   *param_value;

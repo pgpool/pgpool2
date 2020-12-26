@@ -403,7 +403,7 @@ get_config(int *nrows)
 	/* - Syslog specific -  */
 	StrNCpy(status[i].name, "syslog_facility", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "LOCAL%d", (pool_config->syslog_facility / 8) - 16);
-	StrNCpy(status[i].desc, "syslog local faclity", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "syslog local facility", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "syslog_ident", POOLCONFIG_MAXNAMELEN);
@@ -692,7 +692,7 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "client_idle_limit_in_recovery", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->client_idle_limit_in_recovery);
-	StrNCpy(status[i].desc, "if idle for this seconds, child connection closes in recovery 2nd statge", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if idle for this seconds, child connection closes in recovery 2nd stage", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* OTHERS */
@@ -807,17 +807,17 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "arping_cmd", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->arping_cmd);
-	StrNCpy(status[i].desc, "send ARP REQUESTi to neighbour host", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "send ARP REQUEST to neighbour host", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "wd_heartbeat_keepalive", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_heartbeat_keepalive);
-	StrNCpy(status[i].desc, "interval time of sending heartbeat siganl (sec)", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "interval time of sending heartbeat signal (sec)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "wd_heartbeat_deadtime", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->wd_heartbeat_deadtime);
-	StrNCpy(status[i].desc, "deadtime interval for heartbeat siganl (sec)", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "deadtime interval for heartbeat signal (sec)", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "wd_life_point", POOLCONFIG_MAXNAMELEN);
@@ -961,7 +961,7 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "memqcache_memcached_port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->memqcache_memcached_port);
-	StrNCpy(status[i].desc, "Memcached port number. Mondatory if memqcache_method=memcached", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Memcached port number. Mandatory if memqcache_method=memcached", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "memqcache_total_size", POOLCONFIG_MAXNAMELEN);
@@ -996,7 +996,7 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "memqcache_cache_oiddir", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->memqcache_oiddir);
-	StrNCpy(status[i].desc, "Tempory work directory to record table oids", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "Temporary work directory to record table oids", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "memqcache_stats_start_time", POOLCONFIG_MAXNAMELEN);
@@ -2059,7 +2059,7 @@ show_backend_stats(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
  * offsettbl: offset array for each "data" member. The number of array
  * elements must match with num_fields.
  *
- * data: string data to be displayed as row data, 2-dimentions array. The
+ * data: string data to be displayed as row data, 2-dimensions array. The
  * number of array elements must match with num_fields * nrows.
  *
  * row_size: byte length of data for 1 row.

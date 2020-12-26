@@ -210,7 +210,7 @@ wd_start_recovery(void)
 				(errmsg("start recovery command lock failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 				 errhint("try again when the cluster is fully initialized")));
-		return CLUSTER_IN_TRANSATIONING;
+		return CLUSTER_IN_TRANSACTIONING;
 	}
 	else if (type == WD_IPC_CMD_TIMEOUT)
 	{
@@ -259,7 +259,7 @@ wd_end_recovery(void)
 				(errmsg("end recovery command lock failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 				 errhint("try again when the cluster is fully initialized")));
-		return CLUSTER_IN_TRANSATIONING;
+		return CLUSTER_IN_TRANSACTIONING;
 	}
 	else if (type == WD_IPC_CMD_TIMEOUT)
 	{
@@ -308,7 +308,7 @@ wd_execute_cluster_command(char* clusterCommand,
 				(errmsg("execute cluster command failed"),
 				 errdetail("watchdog cluster is not in stable state"),
 				 errhint("try again when the cluster is fully initialized")));
-		return CLUSTER_IN_TRANSATIONING;
+		return CLUSTER_IN_TRANSACTIONING;
 	}
 	else if (type == WD_IPC_CMD_TIMEOUT)
 	{
@@ -440,7 +440,7 @@ wd_issue_failover_command(char *func_name, int *node_id_set, int count, unsigned
  * send the degenerate backend request to watchdog.
  * now watchdog can respond to the request in following ways.
  *
- * 1 - It can tell the caller to procees with failover. This
+ * 1 - It can tell the caller to process with failover. This
  * happens when the current node is the leader watchdog node.
  *
  * 2 - It can tell the caller to failover not allowed

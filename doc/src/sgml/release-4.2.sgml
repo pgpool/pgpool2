@@ -460,7 +460,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
      heartbeat_device2 = ''
      </programlisting>
       Unlike 4.1 or before, now all watchdog parameters are identical
-      on all hosts.  To distingusish which host is which, create a file
+      on all hosts.  To distinguish which host is which, create a file
       <filename>pgpool_node_id</filename> and put number 0, 1, 2
       etc. to identify host.
     </para>
@@ -501,7 +501,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
      Removing strerror() call from ereports. (Muhammad Usama)
     </para>
     <para>
-     Call to ereport() resets the errno value and using the "strerror(errno)" emmits the wrong error message.
+     Call to ereport() resets the errno value and using the "strerror(errno)" emits the wrong error message.
      The right way is to use %m format specifier instead.
     </para>
    </listitem>
@@ -1027,7 +1027,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
     <para>
      Use <command>pg_config</command> to get
      <productname>PostgreSQL</productname> lib path and add this path
-     to LD_LIBRARY_PATH environment paramater in regress.sh. (Bo Peng)
+     to LD_LIBRARY_PATH environment parameter in regress.sh. (Bo Peng)
     </para>
     <para>
 

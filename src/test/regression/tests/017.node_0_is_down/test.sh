@@ -126,7 +126,7 @@ do
 		echo "Writing query in mode $mode failed by \"executing failover on backend\" as expected in test case 3"
 	    fi
 	else
-	    echo "Writing query succeeded in test case 3 mode $mode. Suspicious sccess."
+	    echo "Writing query succeeded in test case 3 mode $mode. Suspicious access."
 	    ./shutdownall
 	    exit 1
 	fi

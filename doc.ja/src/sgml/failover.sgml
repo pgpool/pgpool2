@@ -306,7 +306,7 @@
       <productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。
      </para>
 
-     <table id="ffailback-command-table">
+     <table id="failback-command-table">
       <!--
       <title>failback command options</title>
       -->

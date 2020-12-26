@@ -41,7 +41,7 @@ typedef enum
 	POOL_UNKNOWN,				/* Unknown. Need to ask backend */
 	POOL_READ_UNCOMMITTED,		/* Read uncommitted */
 	POOL_READ_COMMITTED,		/* Read committed */
-	POOL_REPEATABLE_READ,		/* Rpeatable read */
+	POOL_REPEATABLE_READ,		/* Repeatable read */
 	POOL_SERIALIZABLE			/* Serializable */
 }			POOL_TRANSACTION_ISOLATION;
 
@@ -60,8 +60,8 @@ typedef enum
  */
 typedef enum
 {
-	POOL_SENT_MESSAGE_CREATED,	/* initial state of sent meesage */
-	POOL_SENT_MESSAGE_CLOSED	/* sent meesage closed but close complete
+	POOL_SENT_MESSAGE_CREATED,	/* initial state of sent message */
+	POOL_SENT_MESSAGE_CLOSED	/* sent message closed but close complete
 								 * message has not arrived yet */
 }			POOL_SENT_MESSAGE_STATE;
 
@@ -132,7 +132,7 @@ typedef struct
 								 * kind */
 	int			contents_len;	/* message packet length */
 	char		query[QUERY_STRING_BUFFER_LEN]; /* copy of original query */
-	char		statement[MAX_IDENTIFIER_LEN];	/* prepared statment name if
+	char		statement[MAX_IDENTIFIER_LEN];	/* prepared statement name if
 												 * any */
 	char		portal[MAX_IDENTIFIER_LEN]; /* portal name if any */
 	bool		is_rows_returned;	/* true if the message could produce row
@@ -255,14 +255,14 @@ typedef struct
 								 * transaction */
 
 	/*
-	 * Parse/Bind/Decribe/Execute/Close message queue.
+	 * Parse/Bind/Describe/Execute/Close message queue.
 	 */
 	List	   *pending_messages;
 
 	/*
 	 * The last pending message. Reset at Ready for query.  Note that this is
 	 * a shallow copy of pending message.  Once the are is reset,
-	 * previos_message_exists is set to false.
+	 * previous_message_exists is set to false.
 	 */
 	bool		previous_message_exists;
 	POOL_PENDING_MESSAGE previous_message;
@@ -297,7 +297,7 @@ typedef struct
 	int			preferred_main_node_id;
 #endif
 
-	/* Whether snapshot is aquired in this transaction. Only used by Snapshot Isolation mode. */
+	/* Whether snapshot is acquired in this transaction. Only used by Snapshot Isolation mode. */
 	SI_STATE	si_state;
 	/* Whether transaction is read only. Only used by Snapshot Isolation mode. */
 	SI_STATE	transaction_read_only;

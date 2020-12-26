@@ -92,7 +92,7 @@ static char *pwdfMatchesString(char *buf, char *token);
  */
 
 /* Check if PCP connection is connected and authenticated
- * return 1 on successfull 0 otherwise
+ * return 1 on successful 0 otherwise
  */
 
 PCPConnInfo *
@@ -101,7 +101,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	struct sockaddr_in addr;
 	struct sockaddr_un unix_addr;
 	struct hostent *hp;
-	char	   *password_fron_file = NULL;
+	char	   *password_from_file = NULL;
 	char		os_user[256];
 	PCPConnInfo *pcpConn = palloc0(sizeof(PCPConnInfo));
 	int			fd;
@@ -228,8 +228,8 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		char		port_str[100];
 
 		snprintf(port_str, sizeof(port_str), "%d", port);
-		password_fron_file = PasswordFromFile(pcpConn, hostname, port_str, username);
-		password = password_fron_file;
+		password_from_file = PasswordFromFile(pcpConn, hostname, port_str, username);
+		password = password_from_file;
 	}
 
 	if (pcp_authorize(pcpConn, username, password) < 0)
@@ -241,8 +241,8 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	else
 		pcpConn->connState = PCP_CONNECTION_OK;
 
-	if (password_fron_file)
-		pfree(password_fron_file);
+	if (password_from_file)
+		pfree(password_from_file);
 
 	return pcpConn;
 }
@@ -866,7 +866,7 @@ pcp_reload_config(PCPConnInfo * pcpConn,char command_scope)
 	int                     wsize;
 /*
  * pcp packet format for pcp_reload_config
- * z[size][commmand_scope]
+ * z[size][command_scope]
  */
 	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{

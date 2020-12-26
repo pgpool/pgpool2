@@ -31,12 +31,12 @@ do
 
 	$PSQL test <<EOF
 CREATE TABLE foo(x serial);
--- Below should be executed on the primary node in streaming replicatoion mode.
--- Below should be executed on both nodes in native replicatoion mode.
+-- Below should be executed on the primary node in streaming replication mode.
+-- Below should be executed on both nodes in native replication mode.
 WITH r AS (INSERT INTO foo VALUES (default) RETURNING x) SELECT x FROM r;
 
--- Below should be executed on the primary node in streaming replicatoion mode.
--- Below should be executed on both nodes in native replicatoion mode.
+-- Below should be executed on the primary node in streaming replication mode.
+-- Below should be executed on both nodes in native replication mode.
 WITH t AS (SELECT nextval('foo_x_seq')) SELECT * FROM t;
 
 -- Below should be executed on node 1.

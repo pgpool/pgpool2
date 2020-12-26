@@ -191,7 +191,7 @@ openfile(char *filename)
 }
 
 /*
- * Connect to the specifed PostgreSQL. If failed, do not return and exit
+ * Connect to the specified PostgreSQL. If failed, do not return and exit
  * within this function.
  */
 static PGconn *
@@ -460,7 +460,7 @@ process_message_type(int kind, char *buf, PGconn *conn)
 }
 
 /*
- * Process function call messaage
+ * Process function call message
  */
 static void
 process_function_call(char *buf, PGconn *conn)

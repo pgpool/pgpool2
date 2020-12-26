@@ -1250,8 +1250,8 @@ _copyPartitionedRelPruneInfo(const PartitionedRelPruneInfo *from)
 	COPY_POINTER_FIELD(subplan_map, from->nparts * sizeof(int));
 	COPY_POINTER_FIELD(subpart_map, from->nparts * sizeof(int));
 	COPY_POINTER_FIELD(relid_map, from->nparts * sizeof(Oid));
-	COPY_NODE_FIELD(initial_pruning_steps);
-	COPY_NODE_FIELD(exec_pruning_steps);
+	COPY_NODE_FIELD(initial_prunning_steps);
+	COPY_NODE_FIELD(exec_prunning_steps);
 	COPY_BITMAPSET_FIELD(execparamids);
 
 	return newnode;

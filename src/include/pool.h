@@ -389,7 +389,7 @@ typedef enum
 #define SI_CRITICAL_REGION_SEM	6
 #define MAX_REQUEST_QUEUE_SIZE	10
 
-#define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 10	/* time in seconds to keep
+#define MAX_SEC_WAIT_FOR_CLUSTER_TRANSACTION 10	/* time in seconds to keep
 												 * retrying for a watchdog
 												 * command if the cluster is
 												 * not in stable state */
@@ -518,7 +518,7 @@ typedef enum
 	INITIALIZING,
 	PERFORMING_HEALTH_CHECK,
 	SLEEPING,
-	WAITIG_FOR_CONNECTION,
+	WAITING_FOR_CONNECTION,
 	BACKEND_CONNECTING,
 	PROCESSING,
 	EXITING
@@ -547,9 +547,9 @@ extern void set_application_name(ProcessType ptype);
 extern void set_application_name_with_string(char *string);
 extern void set_application_name_with_suffix(ProcessType ptype, int suffix);
 extern char *get_application_name(void);
-extern char *get_application_name_for_procees(ProcessType ptype);
+extern char *get_application_name_for_process(ProcessType ptype);
 
-void SetProcessGlobalVaraibles(ProcessType pType);
+void SetProcessGlobalVariables(ProcessType pType);
 
 extern volatile SI_ManageInfo *si_manage_info;
 extern volatile sig_atomic_t sigusr2_received;

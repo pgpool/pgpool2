@@ -329,7 +329,7 @@ userMatchesString(char *buf, char *user)
 }
 
 /*
- * user:passwod[:user:password]
+ * user:password[:user:password]
  */
 PasswordMapping *
 pool_get_user_credentials(char *username)
@@ -464,7 +464,7 @@ get_pgpool_config_user_password(char *username, char *password_in_config)
 	PasswordMapping *password_mapping = NULL;
 
 	/*
-	 * if the password specified in config is empty strin or NULL look for the
+	 * if the password specified in config is empty string or NULL look for the
 	 * password in pool_passwd file
 	 */
 	if (password_in_config == NULL || strlen(password_in_config) == 0)

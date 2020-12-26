@@ -272,7 +272,7 @@
       before executing the command.
      </para>
 
-     <table id="ffailback-command-table">
+     <table id="failback-command-table">
       <title>failback command options</title>
       <tgroup cols="2">
        <thead>
@@ -671,7 +671,7 @@
      <para>
       To use this feature, streaming replication check (see <xref linkend="runtime-streaming-replication-check"> for more details)
        must be enabled, and <productname>PostgreSQL</productname> 9.1 or later
-       is required as backend nodes. This feature uses <function>pg_stat_replicatoin</function>
+       is required as backend nodes. This feature uses <function>pg_stat_replication</function>
        on primary node. The automatic failback is performed on standby node only.
        Note that failback_command will be executed as well if failback_command is not empty.
        If you plan to detach standby node for maintenance, set this parameter to off beforehand.
@@ -684,7 +684,7 @@
      <note>
       <para>
        <xref linkend="guc-auto-failback"> may not work, when replication slot is used.
-       There is possibility that the streaming replication is stopped, bacause
+       There is possibility that the streaming replication is stopped, because
        <xref linkend="guc-failover-command"> is executed and replication slot is deleted by
        the command.
       </para>

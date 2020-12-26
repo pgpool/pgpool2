@@ -48,7 +48,7 @@ do
 	./shutdownall
 
 	echo "SELECT query don not use query cache"
-	grep "commiting SELECT results to cache storage" log/pgpool.log > /dev/null 2>&1
+	grep "committing SELECT results to cache storage" log/pgpool.log > /dev/null 2>&1
 	if [ $? != 0 ];then
 		echo "... ok."
 	else
@@ -57,7 +57,7 @@ do
 	fi
 
 	echo "relation cache use query cache"
-	grep "commiting relation cache to cache storage" log/pgpool.log > /dev/null 2>&1
+	grep "committing relation cache to cache storage" log/pgpool.log > /dev/null 2>&1
 	if [ $? = 0 ];then
 		echo "... ok."
 	else

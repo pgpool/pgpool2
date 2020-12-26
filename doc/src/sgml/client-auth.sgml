@@ -794,7 +794,7 @@
    </indexterm>
 
    <para>
-    This authentication method uses LDAP as the password cerification method.
+    This authentication method uses LDAP as the password certification method.
     LDAP is used only to validate the user name/password pairs. Therefore the user must
     already exist in the database before LDAP can be used for authentication.
    </para>
@@ -992,8 +992,8 @@ ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<rep
       <term><literal>backendusepasswd</literal></term>
       <listitem>
        <para>
-        Set to 1 to make the password used for LDAP authentication use authetication
-        between <productname>Pgpool-II</productname> and backendd.
+        Set to 1 to make the password used for LDAP authentication use authentication
+        between <productname>Pgpool-II</productname> and backend.
        </para>
       </listitem>
      </varlistentry>

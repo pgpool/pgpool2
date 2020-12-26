@@ -314,7 +314,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	if (relcache->cache[index].refcnt != 0)
 	{
 		ereport(LOG,
-				(errmsg("searching relcache. cache replacement occured")));
+				(errmsg("searching relcache. cache replacement occurred")));
 
 	}
 

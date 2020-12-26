@@ -802,7 +802,7 @@ pool_flush_noerror(POOL_CONNECTION * cp)
 						 errdetail("pg_terminate_backend was called on the backend")));
 			}
 
-			/* if fail_over_on_backend_erro is true, then trigger failover */
+			/* if fail_over_on_backend_error is true, then trigger failover */
 			if (pool_config->failover_on_backend_error)
 			{
 				notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
@@ -847,7 +847,7 @@ pool_write_and_flush(POOL_CONNECTION * cp, void *buf, int len)
 }
 
 /*
- * same as pool_write_and_flush() but does not throws ereport when error occures
+ * same as pool_write_and_flush() but does not throws ereport when error occurs
  */
 int
 pool_write_and_flush_noerror(POOL_CONNECTION * cp, void *buf, int len)

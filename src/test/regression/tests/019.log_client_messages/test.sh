@@ -25,7 +25,7 @@ echo "done."
 source ./bashrc.ports
 export PGPORT=$PGPOOL_PORT
 
-# log_client_messages paramater change
+# log_client_messages parameter change
 ./startall
 wait_for_pgpool_startup
 
@@ -54,7 +54,7 @@ do
 done
 
 # send cancel request
-# executing long runing query
+# executing long running query
 $PSQL -c "select pg_sleep(30);" test &
 # get psql process pid
 psqlpid=$!
@@ -151,7 +151,7 @@ if [ $? = 0 ];then
 	success_count=$(( success_count + 1 ))
 fi
 
-echo "$success_count out of $num_tests successfull";
+echo "$success_count out of $num_tests successful";
 
 if test $success_count -eq $num_tests
 then

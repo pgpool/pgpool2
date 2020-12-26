@@ -510,7 +510,7 @@ int ensure_conn_counter_validity(void)
 		 pool_config->recovery_timeout >= pool_config->client_idle_limit_in_recovery))
 	{
 		ereport(LOG,
-				(errmsg("wait_connection_closed: mulformed conn_counter (%d) detected. reset it to 0",
+				(errmsg("wait_connection_closed: malformed conn_counter (%d) detected. reset it to 0",
 						Req_info->conn_counter)));
 		Req_info->conn_counter = 0;
 		return 0;

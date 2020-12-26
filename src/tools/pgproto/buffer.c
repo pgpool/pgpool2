@@ -68,7 +68,7 @@ buffer_read_int(char *buf, char **bufp)
 
 /*
  * Read string and returns pg_malloced buffer.  The string must start with a
- * double quation and end with a double quotation. The pointer in the buffer
+ * double quotation and end with a double quotation. The pointer in the buffer
  * afer reading the data is returned to "bufp".  If the format is not follows
  * above, exit within this function.
  */
@@ -116,7 +116,7 @@ buffer_read_string(char *buf, char **bufp)
 
 /*
  * Read a character and returns it.  The character must start with a single
- * quation and end with a single quotation. The pointer in the buffer afer
+ * quotation and end with a single quotation. The pointer in the buffer afer
  * reading the data is returned to "bufp".  If the format is not follows
  * above, exit within this function.
  */

@@ -53,7 +53,7 @@
 											 * lifecheck process should waits
 											 * before giving up while fetching
 											 * the configured watchdog node
-											 * infromation from watchdog
+											 * information from watchdog
 											 * process through IPC channel */
 
 const char *progname = NULL;
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 					status_ALIVE = true;
 				else
 				{
-					fprintf(stderr, "ERROR: Invalid node status \"%s\", Allowd options are DEAD or ALIVE''\n",optarg);
+					fprintf(stderr, "ERROR: Invalid node status \"%s\", Allowed options are DEAD or ALIVE''\n",optarg);
 					exit(EXIT_FAILURE);
 				}
 				break;
@@ -293,7 +293,7 @@ main(int argc, char **argv)
 			default:
 				
 				/*
-				 * getopt_long whould already have emitted a complaint
+				 * getopt_long should already have emitted a complaint
 				 */
 				fprintf(stderr, "Try \"%s --help\" for more information.\n\n", progname);
 				exit(EXIT_FAILURE);
@@ -338,7 +338,7 @@ main(int argc, char **argv)
 					pool_config->wd_nodes.wd_node_info[pool_config->pgpool_node_id].wd_port);
 
 		pfree(conf_file_path);
-		/* only use values from pg_config that are not provided explicitely*/
+		/* only use values from pg_config that are not provided explicitly*/
 		if (wd_authkey == NULL)
 			wd_authkey = pstrdup(pool_config->wd_authkey);
 		if (port < 0)
@@ -489,7 +489,7 @@ inform_node_status(LifeCheckNode * node, char *message, char* authkey)
 	if (json_data == NULL)
 		return false;
 
-	for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+	for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSACTION; x++)
 	{
 		res = issue_command_to_watchdog(WD_NODE_STATUS_CHANGE_COMMAND, 0, json_data, strlen(json_data), false);
 		if (res)

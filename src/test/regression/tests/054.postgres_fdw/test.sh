@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------
 # Check to see if postgres_fdw works with pgpool-II.  Since
-# postres_fdw sets search_path to pg_catalog, pgpool_regclass() should
+# postgres_fdw sets search_path to pg_catalog, pgpool_regclass() should
 # be registered as "pg_catalog.pgpool_regclass".
 #
 # Requires PostgreSQL 9.3 or later and contrib/postgres_fdw be
@@ -42,7 +42,7 @@ CREATE TABLE fr1(i INTEGER);
 EOF
 
 # detach node #1 so that pgpool does not access
-# postgres_fdw. Otherwise it will go into an inifinite loop.
+# postgres_fdw. Otherwise it will go into an infinite loop.
 $PGPOOL_INSTALL_DIR/bin/pcp_detach_node -w -h localhost -p $PCP_PORT -n 1
 
 if [ $? != 0 ];then

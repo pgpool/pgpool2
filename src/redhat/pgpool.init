@@ -17,7 +17,7 @@
 #
 # v3.3.3 Ryan Deshone <rdshone@liquidweb.com> and Yugo Nagata <nagata@sraoss.co.jp>
 # - Update stop and reload to use pgpool commands properly
-# - Removed "switch" as pgpool no longer suppports that command
+# - Removed "switch" as pgpool no longer supports that command
 # - Add try-restart option
 # - Fix exit code according with LSB
 

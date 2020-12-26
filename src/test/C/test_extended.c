@@ -43,7 +43,7 @@ main(int argc, char **argv)
 	int			doTrace = 1;	/* set 1 to start libpq trace */
 	int			doTransaction = 1;	/* set 1 to start explicit transaction */
 	int			doSleep = 0;	/* set non 0 seconds to sleep after connection
-								 * and beforfe starting command */
+								 * and before starting command */
 
 	/* SQL commands to be executed */
 	static char *commands[] = {

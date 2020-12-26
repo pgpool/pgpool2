@@ -87,11 +87,11 @@ struct config_generic
 
 
 	GucSource		*sources;	/* source of the current actual value, For array type config elements
-						 * it contains the corosponding source of each individual element */
+						 * it contains the corresponding source of each individual element */
 	GucSource		*reset_sources;	/* source of the reset value, For array type config elements
-						 * it contains the corosponding source of each individual element */
+						 * it contains the corresponding source of each individual element */
 	ConfigContext	*scontexts;		/* context that set the current value, For array type config elements
-						 * it contains the corosponding context of each individual element */
+						 * it contains the corresponding context of each individual element */
 
 };
 
@@ -162,5 +162,5 @@ Step6: add the new config parameter to the report program.
 	StrNCpy(status[i].desc, "Load balance behavior when write query is received", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-Step7: remeber to add documents and tests!
-==========================================
+Step7: remember to add documents and tests!
+===========================================

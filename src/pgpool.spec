@@ -29,7 +29,7 @@ Release:        1pgdg%{?dist}
 License:        BSD
 Group:          Applications/Databases
 Vendor:         Pgpool Global Development Group
-URL:            http://www.pgppol.net/
+URL:            http://www.pgpool.net/
 Source0:        pgpool-II-%{version}.tar.gz
 Source1:        pgpool.init
 Source2:        pgpool_rhel6.sysconfig
@@ -87,10 +87,10 @@ Requires:    %{name} = %{version}
 Development headers and libraries for pgpool-II.
 
 %package extensions
-Summary:     Postgersql extensions for pgpool-II
+Summary:     PostgreSQL extensions for pgpool-II
 Group:       Applications/Databases
 %description extensions
-Postgresql extensions libraries and sql files for pgpool-II.
+PostgreSQL extensions libraries and sql files for pgpool-II.
 
 %prep
 %setup -q -n %{archive_name}
@@ -314,7 +314,7 @@ fi
   %{pghome}/share/extension/pgpool-regclass.sql
   %{pghome}/lib/pgpool-regclass.so
 %endif
-# From PostgerSQL 11 the relevant files have to be installed 
+# From PostgreSQL 11 the relevant files have to be installed 
 # into $pkglibdir/bitcode/
 %if %{pgsql_ver} >= 110 && %{rhel} >= 7
   %{pghome}/lib/bitcode/pgpool-recovery.index.bc
@@ -374,7 +374,7 @@ fi
 - Adopt to PostgreSQL 9.4
 
 * Thu Sep 25 2014 Tatsuo Ishii <ishii@sraoss.co.jp> 3.3.4-2
-- Split pgpool_regclass and pgpool_recovery as a separate extention package.
+- Split pgpool_regclass and pgpool_recovery as a separate extension package.
 - Fix wrong OpenSSL build option.
 
 * Fri Sep 5 2014 Yugo Nagata <nagata@sraoss.co.jp> 3.3.4-1
@@ -392,7 +392,7 @@ fi
 - Add openssl support
 
 * Tue Nov 26 2013 Nozomi Anzai <anzai@sraoss.co.jp> 3.3.1-1
-- Improved to specify the versions of pgool-II and PostgreSQL
+- Improved to specify the versions of pgpool-II and PostgreSQL
 
 * Mon May 13 2013 Nozomi Anzai <anzai@sraoss.co.jp> 3.3.0-1
 - Update to 3.3.0

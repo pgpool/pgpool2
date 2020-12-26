@@ -2,7 +2,7 @@ $Header$
 
 * General
 
-- Reset application name to "pgppol" when client disconnects(3.1. why
+- Reset application name to "pgpool" when client disconnects(3.1. why
   not use set command?) -> Done.
   - Use reset_query_list to reset to "pgpool" for client disconnection
   - Reset to client specified application name when reusing existing
@@ -55,11 +55,11 @@ $Header$
 
 - Cache invalidation
 
-- More effcient cache (memcache?)
+- More efficient cache (memcache?)
 
 * Log
 
-- Mutiple log levels(3.1, but low priority)
+- Multiple log levels(3.1, but low priority)
 
 - Multiple log destinations(3.1, but low priority)
 
@@ -91,7 +91,7 @@ LINE 1: SELECT pool_parallel("SELECT d1.id, d1.aaaa, d1.bbbb...
 - Allow to run pgpoolAdmin on a host different from a host which
   pgpool-II is running on(3.2?)
 
-- Allow to stop PostgeSQL from pgpoolAdmin to make the on-line
+- Allow to stop PostgreSQL from pgpoolAdmin to make the on-line
   recovery more convenient(pgpool_stop()?)
 
 * Docs

@@ -58,7 +58,7 @@ typedef struct
 	char	   *relname;
 	int			num_params;		/* num of original params (for Parse) */
 	bool		rewrite_to_params;	/* true if timestamp is rewritten to param
-									 * insread of const */
+									 * instead of const */
 	bool		rewrite;		/* has rewritten? */
 	List	   *params;			/* list of additional params */
 }			TSRewriteContext;
@@ -256,7 +256,7 @@ relcache_lookup(TSRewriteContext * ctx)
 	return (TSRel *) pool_search_relcache(ts_relcache, ctx->backend, table_name);
 }
 
-/* If timestamp valus is required then return ts_const. Otherwize make
+/* If timestamp value is required then return ts_const. Otherwize make
  * a new ParamRef, whose number member is 0 and is overwritten at last,
  * and add it into params list in context.
  */
@@ -985,7 +985,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 		return NULL;
 
 	/*
-	 * PREPARE or Parse: handle additinal parameters for timestamps
+	 * PREPARE or Parse: handle additional parameters for timestamps
 	 */
 	if (ctx.rewrite_to_params && message)
 	{
@@ -1103,14 +1103,14 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL * backend,
 	{
 		/*
 		 * If num_formats is 0, the original message has no parameters or the parameter formats are all text,
-		 * so we don't need additional format codes since timestamp parametes use text as its format.
+		 * so we don't need additional format codes since timestamp parameters use text as its format.
 		 */
 		num_formats_new = 0;
 	}
 	else
 	{
 		/* If num formats is 1, this means the specified format code is applied for all original parameters,
-		 * so enlarge message length to specify format codes for each of original paramters. */
+		 * so enlarge message length to specify format codes for each of original parameters. */
 		if (num_formats == 1)
 			*len += (num_org_params - 1) * sizeof(int16);
 

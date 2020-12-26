@@ -1349,9 +1349,9 @@ _outTypeName(String * str, TypeName *node)
 				int			mask = v->val.val.ival;
 
 				/*
-				 * precision for SECOND field. backword comaptibility. use
+				 * precision for SECOND field. backward compatibility. use
 				 * `'1.2 second'::interval(0) second' not `'1.2
-				 * second'::interval second(0)'(standarad for 8.4).
+				 * second'::interval second(0)'(standard for 8.4).
 				 */
 				if ((INTERVAL_MASK(SECOND) & mask) &&
 					list_length(node->typmods) == 2)
@@ -3211,7 +3211,7 @@ _outSetRest(String * str, VariableSetStmt *node)
 	{
 		A_Const    *v = linitial(node->args);
 
-		string_append_char(str, "XML OPTOIN ");
+		string_append_char(str, "XML OPTION ");
 		string_append_char(str, v->val.val.str);
 	}
 	else
@@ -3944,7 +3944,7 @@ _outCreateOpClassStmt(String * str, CreateOpClassStmt *node)
 }
 
 /*
- * Handle drop satements. As of pgpool-II 3.3(derived parser from
+ * Handle drop statements. As of pgpool-II 3.3(derived parser from
  * PostgreSQL 9.2), following types are supported:
  *
  * DROP TABLE, DROP SEQUENCE, DROP VIEW, DROP INDEX, DROP FOREIGN
@@ -4574,7 +4574,7 @@ _outAlterObjectSchemaStmt(String * str, AlterObjectSchemaStmt *node)
 				string_append_char(str, "*");
 			else
 				_outNode(str, lfirst(list_head(owa->objargs)));
-			string_append_char(str, ") SET SCHAME \"");
+			string_append_char(str, ") SET SCHEME \"");
 			string_append_char(str, node->newschema);
 			string_append_char(str, "\"");
 			break;

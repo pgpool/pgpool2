@@ -207,7 +207,7 @@ main(int argc, char **argv)
 						command_scope = 'l';
 					else
 					{
-						fprintf(stderr, "%s: Invalid command socpe \"%s\", must be either \"cluster\" or \"local\" \n", progname, optarg);
+						fprintf(stderr, "%s: Invalid command scope \"%s\", must be either \"cluster\" or \"local\" \n", progname, optarg);
 						exit(1);
 					}
 				}
@@ -294,7 +294,7 @@ main(int argc, char **argv)
 			default:
 
 				/*
-				 * getopt_long whould already have emitted a complaint
+				 * getopt_long should already have emitted a complaint
 				 */
 				fprintf(stderr, "Try \"%s --help\" for more information.\n\n", progname);
 				exit(1);
@@ -972,7 +972,7 @@ role_to_str(SERVER_ROLE role)
  *
  * titles: title string array
  * types:  printf format type string array (example: "d")
- * ntitles: size of the arrary
+ * ntitles: size of the array
  */
 static char *
 format_titles(const char **titles, const char **types, int ntitles)

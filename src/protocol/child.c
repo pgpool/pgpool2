@@ -341,7 +341,7 @@ do_child(int *fds)
 			continue;
 
 		/*
-		 * Check if max connections from clients execeeded.
+		 * Check if max connections from clients exceeded.
 		 */
 		con_count = connection_count_up();
 		if (con_count > (pool_config->num_init_children - pool_config->reserved_connections))
@@ -726,7 +726,7 @@ read_startup_packet(POOL_CONNECTION * cp)
 				 errdetail("no PostgreSQL user name specified in startup packet")));
 	}
 
-	/* The database defaults to ther user name. */
+	/* The database defaults to their user name. */
 	if (sp->database == NULL || sp->database[0] == '\0')
 	{
 		sp->database = pstrdup(sp->user);
@@ -1061,7 +1061,7 @@ static POOL_CONNECTION_POOL * connect_backend(StartupPacket *sp, POOL_CONNECTION
 }
 
 /*
- * signal handler for SIGTERM, SIGINT and SIGQUUT
+ * signal handler for SIGTERM, SIGINT and SIGQUIT
  */
 static RETSIGTYPE die(int sig)
 {
@@ -1132,7 +1132,7 @@ static RETSIGTYPE close_idle_connection(int sig)
 	int			save_errno = errno;
 
 	/*
-	 * DROP DATABSE is ongoing.
+	 * DROP DATABASE is ongoing.
 	 */
 	if (ignore_sigusr1)
 		return;
@@ -1418,7 +1418,7 @@ static void
 check_restart_request(void)
 {
 	/*
-	 * Check if restart request is set because of failback event happend.  If
+	 * Check if restart request is set because of failback event happened.  If
 	 * so, exit myself with exit code 1 to be restarted by pgpool parent.
 	 */
 	if (pool_get_my_process_info()->need_to_restart)
@@ -1435,8 +1435,8 @@ check_restart_request(void)
 /*
  * wait_for_new_connections()
  * functions calls select on sockets and wait for new client
- * to connect, on successfull connection returns the socket descriptor
- * and returns -1 if timeout has occured
+ * to connect, on successful connection returns the socket descriptor
+ * and returns -1 if timeout has occurred
  */
 
 static int

@@ -117,7 +117,7 @@ pool_process_query(POOL_CONNECTION * frontend,
 	 * This variable is used while processing reset_request (i.e.:
 	 * reset_request == 1).  If state is 0, then we call reset_backend. And we
 	 * set state to 1 so that we wait for ready for query message from
-	 * badckends.
+	 * backends.
 	 */
 	int			state;
 
@@ -396,7 +396,7 @@ pool_process_query(POOL_CONNECTION * frontend,
 											pool_unread(CONNECTION(backend, i), &kind, sizeof(kind));
 											ereport(LOG,
 													(errmsg("pool process query"),
-													 errdetail("received %c packet from backend %d. Don't dicard and read %c packet from main", kind, i, kind)));
+													 errdetail("received %c packet from backend %d. Don't discard and read %c packet from main", kind, i, kind)));
 
 											pool_read_with_error(CONNECTION(backend, MAIN_NODE_ID), &kind, sizeof(kind),
 																 "reading message kind from backend");
@@ -514,7 +514,7 @@ wait_for_query_response_with_trans_cleanup(POOL_CONNECTION * frontend, POOL_CONN
 /*
  * Wait for query response from single node. If frontend is not NULL,
  * also check frontend connection by writing dummy parameter status
- * packet every 30 seccond, and if the connection broke, returns error
+ * packet every 30 second, and if the connection broke, returns error
  * since there's no point in that waiting until backend returns
  * response.
  */
@@ -540,7 +540,7 @@ wait_for_query_response(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, i
 		if (status < 0)			/* error ? */
 		{
 			ereport(ERROR,
-					(errmsg("backend error occured while waiting for backend response")));
+					(errmsg("backend error occurred while waiting for backend response")));
 		}
 		else if (frontend != NULL && status > 0)
 		{
@@ -551,7 +551,7 @@ wait_for_query_response(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, i
 			if (protoVersion == PROTO_MAJOR_V3)
 			{
 				/*
-				 * Write dummy parameter staus packet to check if the socket
+				 * Write dummy parameter status packet to check if the socket
 				 * to frontend is ok
 				 */
 				pool_write(frontend, "S", 1);
@@ -564,7 +564,7 @@ wait_for_query_response(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, i
 				{
 					ereport(FRONTEND_ERROR,
 							(errmsg("unable to to flush data to frontend"),
-							 errdetail("frontend error occured while waiting for backend reply")));
+							 errdetail("frontend error occurred while waiting for backend reply")));
 				}
 
 			}
@@ -588,7 +588,7 @@ wait_for_query_response(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, i
 				{
 					ereport(FRONTEND_ERROR,
 							(errmsg("unable to to flush data to frontend"),
-							 errdetail("frontend error occured while waiting for backend reply")));
+							 errdetail("frontend error occurred while waiting for backend reply")));
 
 				}
 #endif
@@ -647,7 +647,7 @@ synchronize(POOL_CONNECTION * cp)
 /*
  * send "terminate"(X) message to all backends, indicating that
  * backend should prepare to close connection to frontend (actually
- * pgpool). Note that caller must be proteceted from a signal
+ * pgpool). Note that caller must be protected from a signal
  * interruption while calling this function. Otherwise the number of
  * valid backends might be changed by failover/failback.
  */
@@ -815,7 +815,7 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 		if (is_panic_or_fatal_error(p1, MAJOR(backend)))
 			ereport(ERROR,
 					(errmsg("unable to forward message to frontend"),
-					 errdetail("FATAL error occured on backend")));
+					 errdetail("FATAL error occurred on backend")));
 	}
 
 	pfree(p1);
@@ -1062,9 +1062,9 @@ reset_backend(POOL_CONNECTION_POOL * backend, int qcnt)
 
 /*
  * Returns true if the SQL statement is regarded as read SELECT from syntax's
- * point of view. However callers need to do aditional checking such as if the
+ * point of view. However callers need to do additional checking such as if the
  * SELECT does not have write functions or not to make sure that the SELECT is
- * sematically read SELECT.
+ * semantically read SELECT.
  *
  * For followings this function returns true:
  * - SELECT/WITH without FOR UPDATE/SHARE
@@ -1397,7 +1397,7 @@ pool_send_readyforquery(POOL_CONNECTION * frontend)
 /*
  * Send a query to a backend in sync manner.
  * This function sends a query and waits for CommandComplete/ReadyForQuery.
- * If an error occured, it returns with POOL_ERROR.
+ * If an error occurred, it returns with POOL_ERROR.
  * This function does NOT handle SELECT/SHOW queries.
  * If no_ready_for_query is non 0, returns without reading the packet
  * length for ReadyForQuery. This mode is necessary when called from ReadyForQuery().
@@ -1418,7 +1418,7 @@ do_command(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
 	send_simplequery_message(backend, strlen(query) + 1, query, protoMajor);
 
 	/*
-	 * Wait for response from badckend while polling frontend connection is
+	 * Wait for response from backend while polling frontend connection is
 	 * ok. If not, cancel the transaction.
 	 */
 	wait_for_query_response_with_trans_cleanup(frontend,
@@ -1438,9 +1438,9 @@ do_command(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
 
 	/*
 	 * Continue to read packets until we get ReadForQuery (Z). Until that we
-	 * may recieve one of:
+	 * may receive one of:
 	 *
-	 * N: Notice response E: Error response C: Comand complete
+	 * N: Notice response E: Error response C: Command complete
 	 *
 	 * XXX: we ignore Notice and Error here. Even notice/error messages are
 	 * not sent to the frontend. May be it's ok since the error was caused by
@@ -1454,7 +1454,7 @@ do_command(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
 
 		if (kind == 'Z')		/* Ready for Query? */
 			break;				/* get out the loop without reading message
-								 * lenghth */
+								 * length */
 
 		if (protoMajor == PROTO_MAJOR_V3)
 		{
@@ -1591,7 +1591,7 @@ retry_read_packet:
 
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
-		/* read packet lenghth for ready for query */
+		/* read packet length for ready for query */
 		pool_read(backend, &len, sizeof(len));
 
 		/* read transaction state */
@@ -1628,9 +1628,9 @@ do_error_command(POOL_CONNECTION * backend, int major)
 
 	/*
 	 * Continue to read packets until we get Error response (E). Until that we
-	 * may recieve one of:
+	 * may receive one of:
 	 *
-	 * N: Notice response C: Comand complete
+	 * N: Notice response C: Command complete
 	 *
 	 * XXX: we ignore Notice here. Even notice messages are not sent to the
 	 * frontend. May be it's ok since the error was caused by our internal use
@@ -1821,9 +1821,9 @@ free_select_result(POOL_SELECT_RESULT * result)
  * Send a query to one DB node and wait for it's completion.  The quey
  * can be SELECT or any other type of query. However at this moment,
  * the only client calls this function other than SELECT is
- * insert_lock(), and the qury is either LOCK or SELECT for UPDATE.
+ * insert_lock(), and the query is either LOCK or SELECT for UPDATE.
  * Note: After the introduction of elog API the return type of do_query is changed
- * to void. and now ereport is thrown in case of error occured within the function
+ * to void. and now ereport is thrown in case of error occurred within the function
  */
 void
 do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, int major)
@@ -1834,7 +1834,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 /*
  * State transition control bits. We expect all following events have
  * been occur before finish do_query() in extended protocol mode.
- * Note that "Close Compplete" should occur twice, because two close
+ * Note that "Close Complete" should occur twice, because two close
  * requests(one for prepared statement and the other for portal) have
  * been sent.
  */
@@ -1890,10 +1890,10 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 	res->data = palloc0(DO_QUERY_ALLOC_NUM * sizeof(char *));
 
 	/*
-	 * Send a query to the backend. We use extended query proctocol with named
-	 * statement/portal if we are processing exetended query since simple
+	 * Send a query to the backend. We use extended query protocol with named
+	 * statement/portal if we are processing extended query since simple
 	 * query breaks unnamed statements/portals. The name of named
-	 * statment/unamed statement are "pgpool_PID" where PID is the process id
+	 * statement/unnamed statement are "pgpool_PID" where PID is the process id
 	 * of itself.
 	 */
 	if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
@@ -1905,7 +1905,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 		/*
 		 * In streaming replication mode, send flush message before going any
 		 * further to retrieve and save any pending response packet from
-		 * backend. The saved packets will be poped up before returning to
+		 * backend. The saved packets will be popped up before returning to
 		 * caller. This preserves the user's expectation of packet sequence.
 		 */
 		if (SL_MODE && pool_pending_message_exists())
@@ -1981,12 +1981,12 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 		pool_write(backend, prepared_name, pname_len);
 
 		/*
-		 * Send descrive message if the query is SELECT.
+		 * Send describe message if the query is SELECT.
 		 */
 		if (!strncasecmp(query, "SELECT", strlen("SELECT")))
 		{
 			/*
-			 * Send descrive message
+			 * Send describe message
 			 */
 			pool_write(backend, "D", 1);
 			len = 4 + 1 + pname_len;
@@ -2075,7 +2075,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 				if (processType == PT_WORKER)
 				{
 					/*
-					 * sleep appropreate time to avoid pool_worker_child
+					 * sleep appropriate time to avoid pool_worker_child
 					 * exit/fork storm.
 					 */
 					sleep(pool_config->sr_check_period);
@@ -2147,7 +2147,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 					state |= COMMAND_COMPLETE_RECEIVED;
 
 				/*
-				 * "Comand Complete" implies data row received status if the
+				 * "Command Complete" implies data row received status if the
 				 * query was SELECT.  If there's no row returned, "command
 				 * complete" comes without row data.
 				 */
@@ -2223,7 +2223,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 				}
 				num_fields = ntohs(shortval);	/* number of fields */
 				ereport(DEBUG5,
-						(errmsg("do_query: row description: num_fileds: %d", num_fields)));
+						(errmsg("do_query: row description: num_fields: %d", num_fields)));
 
 				if (num_fields > 0)
 				{
@@ -2406,7 +2406,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
  * Judge if we need to lock the table
  * to keep SERIAL consistency among servers
  * Return values are:
- * 0: lock is not neccessary
+ * 0: lock is not necessary
  * 1: table lock is required
  * 2: row lock against sequence table is required
  * 3: row lock against insert_lock table is required
@@ -3330,7 +3330,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 					ereport(FATAL,
 							(return_code(2),
 							 errmsg("failed to read kind from backend %d", i),
-							 errdetail("pool_read retruns error")));
+							 errdetail("pool_read returns error")));
 				}
 
 				if (kind == 0)
@@ -3472,7 +3472,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 		 *
 		 * Here, Sync message is sent to only primary, since the query context
 		 * said so. Thus responses for Parse, Bind, and Execute for "BEGIN"
-		 * are still penidng on the standby node.
+		 * are still pending on the standby node.
 		 *
 		 * The the frontend sends closes the transaction.
 		 *
@@ -3533,7 +3533,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 				pfree(buf);
 			}
 			ereport(DEBUG5,
-					(errmsg("read_kind_from_backend: skipped first standy packet")));
+					(errmsg("read_kind_from_backend: skipped first standby packet")));
 
 			for (;;)
 			{
@@ -3904,7 +3904,7 @@ is_internal_transaction_needed(Node *node)
 		T_ClosePortalStmt,
 		T_ClusterStmt,
 		T_CopyStmt,
-		T_CreateStmt,			/* CREAE TABLE */
+		T_CreateStmt,			/* CREATE TABLE */
 		T_DefineStmt,			/* CREATE AGGREGATE, OPERATOR, TYPE */
 		T_DropStmt,				/* DROP TABLE etc. */
 		T_TruncateStmt,
@@ -4309,7 +4309,7 @@ detect_query_cancel_error(POOL_CONNECTION * backend, int major)
 
 
 int
-detect_idle_in_transaction_sesion_timeout_error(POOL_CONNECTION * backend, int major)
+detect_idle_in_transaction_session_timeout_error(POOL_CONNECTION * backend, int major)
 {
 	int			r = extract_message(backend, IDLE_IN_TRANSACTION_SESSION_TIMEOUT_ERROR_CODE, major, 'E', true);
 
@@ -4397,7 +4397,7 @@ extract_message(POOL_CONNECTION * backend, char *error_code, int major, char cla
 }
 
 /*
- * The function forwards the NOTICE mesaage received from one backend
+ * The function forwards the NOTICE message received from one backend
  * to the frontend and also puts the human readable message to the
  * pgpool log
  */
@@ -4481,7 +4481,7 @@ pool_process_notice_message_from_one_backend(POOL_CONNECTION * frontend, POOL_CO
 
 /*
  * pool_extract_error_message: Extract human readable message from
- * ERROR/NOTICE reponse packet and return it. If "read_kind" is true,
+ * ERROR/NOTICE response packet and return it. If "read_kind" is true,
  * kind will be read in this function. If "read_kind" is false, kind
  * should have been already read and it should be either 'E' or
  * 'N'. The returned string is in palloc'd buffer. Callers must pfree
@@ -4706,7 +4706,7 @@ SELECT_RETRY:
 
 	/*
 	 * If we are in load balance mode and the selected node is down, we need
-	 * to re-select load_balancing_node.  Note that we cannnot use
+	 * to re-select load_balancing_node.  Note that we cannot use
 	 * VALID_BACKEND macro here.  If in_load_balance == 1, VALID_BACKEND macro
 	 * may return 0.
 	 */
@@ -4800,7 +4800,7 @@ SELECT_RETRY:
 			ereport(FRONTEND_ERROR,
 					(pool_error_code("57000"),
 					 errmsg("connection terminated due to online recovery"),
-					 errdetail("child connection forced to terminate due to client_idle_limitis:-1")));
+					 errdetail("child connection forced to terminate due to client_idle_limit:-1")));
 		}
 		goto SELECT_RETRY;
 	}
@@ -4815,7 +4815,7 @@ SELECT_RETRY:
 			if (CONNECTION_SLOT(backend, i) == 0)
 			{
 				ereport(LOG,
-						(errmsg("error occured while reading and processing packets"),
+						(errmsg("error occurred while reading and processing packets"),
 						 errdetail("FATAL ERROR: VALID_BACKEND returns non 0 but connection slot is empty. backend id:%d RAW_MODE:%d LOAD_BALANCE_STATUS:%d status:%d",
 								   i, RAW_MODE, LOAD_BALANCE_STATUS(i), BACKEND_INFO(i).backend_status)));
 				was_error = 1;
@@ -4827,7 +4827,7 @@ SELECT_RETRY:
 				int			r;
 
 				/*
-				 * connection was terminated due to confilct with recovery
+				 * connection was terminated due to conflict with recovery
 				 */
 				r = detect_serialization_error(CONNECTION(backend, i), MAJOR(backend), false);
 				if (r == SPECIFIED_ERROR)
@@ -4841,9 +4841,9 @@ SELECT_RETRY:
 				}
 
 				/*
-				 * connection was terminated due to idle_in_transaction_sesion_timeout expired
+				 * connection was terminated due to idle_in_transaction_session_timeout expired
 				 */
-				r = detect_idle_in_transaction_sesion_timeout_error(CONNECTION(backend, i), MAJOR(backend));
+				r = detect_idle_in_transaction_session_timeout_error(CONNECTION(backend, i), MAJOR(backend));
 				if (r == SPECIFIED_ERROR)
 				{
 					ereport(FATAL,
@@ -4949,7 +4949,7 @@ SELECT_RETRY:
 		if (FD_ISSET(frontend->fd, &exceptmask))
 			ereport(ERROR,
 					(errmsg("unable to read from frontend socket"),
-					 errdetail("exception occured on frontend socket")));
+					 errdetail("exception occurred on frontend socket")));
 
 		else if (FD_ISSET(frontend->fd, &readmask))
 		{
@@ -4962,7 +4962,7 @@ SELECT_RETRY:
 	if (FD_ISSET(MAIN(backend)->fd, &exceptmask))
 		ereport(FATAL,
 				(errmsg("unable to read from backend socket"),
-				 errdetail("exception occured on backend socket")));
+				 errdetail("exception occurred on backend socket")));
 
 	else if (FD_ISSET(MAIN(backend)->fd, &readmask))
 	{
@@ -4986,7 +4986,7 @@ pool_dump_valid_backend(int backend_id)
 }
 
 /*
- * Read pending data from backend and push them into pending statck if any.
+ * Read pending data from backend and push them into pending stack if any.
  * Should be used for streaming replication mode and extended query.
  * Returns true if data was actually pushed.
  */
@@ -5018,9 +5018,9 @@ pool_push_pending_data(POOL_CONNECTION * backend)
 	 * In streaming replication mode, send a Close message for none existing
 	 * prepared statement and flush message before going any further to
 	 * retrieve and save any pending response packet from backend. This
-	 * ensures that at least "close complete" message is retured from backend.
+	 * ensures that at least "close complete" message is returned from backend.
 	 *
-	 * The saved packets will be poped up before returning to caller. This
+	 * The saved packets will be popped up before returning to caller. This
 	 * preserves the user's expectation of packet sequence.
 	 */
 	pool_write(backend, "C", 1);

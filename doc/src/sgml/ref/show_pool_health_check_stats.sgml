@@ -208,7 +208,7 @@
      </row>
 
      <row>
-      <entry>last_falied_health_check</entry>
+      <entry>last_failed_health_check</entry>
       <entry>
        Timestamp of last failed health check. If heath check does not
        fail yet, empty string. Note that it is possible that this

@@ -197,7 +197,7 @@
      </row>
 
      <row>
-      <entry>last_falied_health_check</entry>
+      <entry>last_failed_health_check</entry>
       <entry>
        最後にヘルスチェックに失敗した時刻。
        まだヘルスチェックが失敗していない場合は空文字です。

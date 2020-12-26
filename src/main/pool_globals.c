@@ -53,7 +53,7 @@ char	*application_names[] = {"main",
 };
 
 char *
-get_application_name_for_procees(ProcessType ptype)
+get_application_name_for_process(ProcessType ptype)
 {
 	if (ptype < 0 || ptype >= PT_LAST_PTYPE)
 	{
@@ -69,7 +69,7 @@ get_application_name_for_procees(ProcessType ptype)
 void
 set_application_name(ProcessType ptype)
 {
-	process_application_name = get_application_name_for_procees(ptype);
+	process_application_name = get_application_name_for_process(ptype);
 }
 
 /*
@@ -89,7 +89,7 @@ void
 set_application_name_with_suffix(ProcessType ptype, int suffix)
 {
 	static char	appname_buf[POOLCONFIG_MAXNAMELEN +1];
-	snprintf(appname_buf, POOLCONFIG_MAXNAMELEN, "%s%d", get_application_name_for_procees(ptype), suffix);
+	snprintf(appname_buf, POOLCONFIG_MAXNAMELEN, "%s%d", get_application_name_for_process(ptype), suffix);
 	set_application_name_with_string(appname_buf);
 }
 
@@ -102,7 +102,7 @@ get_application_name(void)
 	return process_application_name;
 }
 
-void SetProcessGlobalVaraibles(ProcessType pType)
+void SetProcessGlobalVariables(ProcessType pType)
 {
 	processType = pType;
 	myProcPid = getpid();

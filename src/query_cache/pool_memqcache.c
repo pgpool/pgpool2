@@ -258,7 +258,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 		return -1;
 	}
 	ereport(DEBUG1,
-			(errmsg("commiting SELECT results to cache storage"),
+			(errmsg("committing SELECT results to cache storage"),
 			 errdetail("Query=\"%s\"", query)));
 #ifdef DEBUG
 	dump_cache_data(data, datalen);
@@ -268,14 +268,14 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 	/* encode md5key for memcached */
 	encode_key(query, tmpkey, backend);
 	ereport(DEBUG2,
-			(errmsg("commiting SELECT results to cache storage"),
+			(errmsg("committing SELECT results to cache storage"),
 			 errdetail("search key : \"%s\"", tmpkey)));
 
 	memcpy(cachekey.hashkey, tmpkey, 32);
 
 	memqcache_expire = pool_config->memqcache_expire;
 	ereport(DEBUG1,
-			(errmsg("commiting SELECT results to cache storage"),
+			(errmsg("committing SELECT results to cache storage"),
 			 errdetail("memqcache_expire = %ld", memqcache_expire)));
 
 	if (pool_is_shmem_cache())
@@ -290,7 +290,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 		if (cacheid != NULL)
 		{
 			ereport(DEBUG1,
-					(errmsg("commiting SELECT results to cache storage"),
+					(errmsg("committing SELECT results to cache storage"),
 					 errdetail("item already exists")));
 
 			return 0;
@@ -307,7 +307,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 			else
 			{
 				ereport(DEBUG2,
-						(errmsg("commiting SELECT results to cache storage"),
+						(errmsg("committing SELECT results to cache storage"),
 						 errdetail("blockid: %d itemid: %d",
 								   cacheid->blockid, cacheid->itemid)));
 			}
@@ -328,7 +328,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 			return -1;
 		}
 		ereport(DEBUG1,
-				(errmsg("commiting SELECT results to cache storage"),
+				(errmsg("committing SELECT results to cache storage"),
 				 errdetail("set cache succeeded")));
 	}
 #endif
@@ -368,7 +368,7 @@ pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *dat
 		return -1;
 	}
 	ereport(DEBUG1,
-			(errmsg("commiting relation cache to cache storage"),
+			(errmsg("committing relation cache to cache storage"),
 			 errdetail("Query=\"%s\"", query)));
 
 #ifdef DEBUG
@@ -378,14 +378,14 @@ pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *dat
 	/* encode md5key for memcached */
 	encode_key(query, tmpkey, backend);
 	ereport(DEBUG2,
-			(errmsg("commiting relation cache to cache storage"),
+			(errmsg("committing relation cache to cache storage"),
 			 errdetail("search key : \"%s\"", tmpkey)));
 
 	memcpy(cachekey.hashkey, tmpkey, 32);
 
 	memqcache_expire = pool_config->relcache_expire;
 	ereport(DEBUG1,
-			(errmsg("commiting relation cache to cache storage"),
+			(errmsg("committing relation cache to cache storage"),
 			 errdetail("memqcache_expire = %ld", memqcache_expire)));
 
 	if (pool_is_shmem_cache())
@@ -400,7 +400,7 @@ pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *dat
 		if (cacheid != NULL)
 		{
 			ereport(DEBUG1,
-					(errmsg("commiting relation cache to cache storage"),
+					(errmsg("committing relation cache to cache storage"),
 					 errdetail("item already exists")));
 
 			return 0;
@@ -417,7 +417,7 @@ pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *dat
 			else
 			{
 				ereport(DEBUG2,
-						(errmsg("commiting relation cache to cache storage"),
+						(errmsg("committing relation cache to cache storage"),
 						 errdetail("blockid: %d itemid: %d",
 								   cacheid->blockid, cacheid->itemid)));
 			}
@@ -438,7 +438,7 @@ pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *dat
 			return -1;
 		}
 		ereport(DEBUG1,
-				(errmsg("commiting relation cache to cache storage"),
+				(errmsg("committing relation cache to cache storage"),
 				 errdetail("set cache succeeded")));
 	}
 #endif
@@ -706,7 +706,7 @@ delete_cache_on_memcached(const char *key)
 	memcached_return rc;
 
 	ereport(DEBUG2,
-			(errmsg("memcache: deleteing cache on memcached with key: \"%s\"", key)));
+			(errmsg("memcache: deleting cache on memcached with key: \"%s\"", key)));
 
 
 	/* delete cache data on memcached. key is md5 hash query */
@@ -1268,7 +1268,7 @@ pool_extract_table_oids(Node *node, int **oidsp)
 	else
 	{
 		ereport(DEBUG1,
-				(errmsg("memcache: extracting table oids: statment is different from INSERT/UPDATE/DELETE/TRUNCATE/DROP TABLE/ALTER TABLE")));
+				(errmsg("memcache: extracting table oids: statement is different from INSERT/UPDATE/DELETE/TRUNCATE/DROP TABLE/ALTER TABLE")));
 		return 0;
 	}
 
@@ -1999,7 +1999,7 @@ pool_reset_memqcache_buffer(bool reset_dml_oids)
 
 /*
  * Return true if memory cache method is "shmem".  The purpose of this
- * function is to cache the result of stcmp and to save a few cycle.
+ * function is to cache the result of strcmp and to save a few cycle.
  */
 bool
 pool_is_shmem_cache(void)
@@ -3451,8 +3451,8 @@ pool_check_and_discard_cache_buffer(int num_oids, int *oids)
 }
 
 /*
- * At Ready for Query or Comand Complete handle query cache.  For streaming
- * replication mode and extended query at Comand Complete handle query cache.
+ * At Ready for Query or Command Complete handle query cache.  For streaming
+ * replication mode and extended query at Command Complete handle query cache.
  * For other case At Ready for Query handle query cache.
  */
 void
@@ -3650,7 +3650,7 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 	}
 	else						/* Non cache safe queries */
 	{
-		/* Non cachable SELECT */
+		/* Non cacheable SELECT */
 		if (node && IsA(node, SelectStmt))
 		{
 			/* Extract table oids from buffer */
@@ -4433,7 +4433,7 @@ inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen)
 	else
 		timeout = 0;
 
-	/* Send flush messsage to backend to retrieve response of backend */
+	/* Send flush message to backend to retrieve response of backend */
 	pool_write(backend, "H", 1);
 	len = htonl(sizeof(len));
 	pool_write_and_flush(backend, &len, sizeof(len));

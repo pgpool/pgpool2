@@ -26,7 +26,7 @@ export PGPORT=$PGPOOL_PORT
 
 sleep 1
 
-# executing long runing query
+# executing long running query
 $PSQL -c "select pg_sleep(10000);" test &
 
 # get psql process pid

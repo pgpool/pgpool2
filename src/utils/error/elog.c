@@ -302,7 +302,7 @@ errstart(int elevel, const char *filename, int lineno,
 	if (recursion_depth++ > 0 && elevel >= ERROR && elevel != FRONTEND_ONLY_ERROR)
 	{
 		/*
-		 * Ooops, error during error processing.  Clear ErrorContext as
+		 * Oops, error during error processing.  Clear ErrorContext as
 		 * discussed at top of file.  We will not return to the original
 		 * error's reporter or handler, so we don't need it.
 		 */
@@ -1737,7 +1737,7 @@ write_console(const char *line, int len)
 	/*
 	 * Conversion on non-win32 platforms is not implemented yet. It requires
 	 * non-throw version of pg_do_encoding_conversion(), that converts
-	 * unconvertable characters to '?' without errors.
+	 * unconvertible characters to '?' without errors.
 	 */
 #endif
 
@@ -2624,7 +2624,7 @@ proc_exit_prepare(int code)
 	error_context_stack = NULL;
 
 	/*
-	 * call on exit prepare if some function is specified this extention is
+	 * call on exit prepare if some function is specified this extension is
 	 * added by pgpool
 	 */
 	if (on_exit_prepare.function)

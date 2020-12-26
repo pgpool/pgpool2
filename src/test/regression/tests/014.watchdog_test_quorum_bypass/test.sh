@@ -65,14 +65,14 @@ wait_for_pgpool_startup
 
 $PSQL -p 11000 -c "show pool_nodes" test|grep standby|grep down >/dev/null 2>&1
 if [ $? = 0 ];then
-    echo "Failover was successfuly executed"
+    echo "Failover was successfully executed"
 	success_count=$(( success_count + 1 ))
 fi
 
 cd leader
 ./shutdownall
 
-echo "$success_count out of $num_tests successfull";
+echo "$success_count out of $num_tests successful";
 
 if test $success_count -eq $num_tests
 then

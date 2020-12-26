@@ -179,7 +179,7 @@
   &pgEnc;
   &pgproto;
   &pgpoolSetup;
-  &watchdoglSetup;
+  &watchdogSetup;
   &wdCli;
 
  </reference>

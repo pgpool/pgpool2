@@ -21,7 +21,7 @@
  */
 
 /*
- * This module handles regular expressio arrary.
+ * This module handles regular expression array.
  */
 #include <string.h>
 
@@ -159,7 +159,7 @@ regex_array_match(RegArray * ar, char *pattern)
  * Destroy RegArray object
  */
 void
-destroy_regex_arrary(RegArray * ar)
+destroy_regex_array(RegArray * ar)
 {
 	pfree(ar->regex);
 	pfree(ar);
@@ -182,7 +182,7 @@ create_lrtoken_array(void)
 }
 
 /*
- * Extract tokens separated by delimi from str. Each token is separeted by delim2,
+ * Extract tokens separated by delimi from str. Each token is separated by delim2,
  * and token lists are returned to left_tokens and right_tokens respectively.
  * Nnumber of tokens is set to *n.
  */

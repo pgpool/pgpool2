@@ -45,14 +45,14 @@ $PSQL -c "CREATE ROLE trust_user PASSWORD 'trust_password';ALTER ROLE trust_user
 
 if $PSQL -c "SELECT rolname,substring(rolpassword, 1, 14) FROM pg_authid where rolname ='scram_user'" test|grep "SCRAM-SHA-256" >/dev/null 2>&1
 then
-    echo "scram_user authenticated setup successfuly"
+    echo "scram_user authenticated setup successfully"
 else
     echo "scram authentication setup failed"
     failed=1
 fi
 if $PSQL -c "SELECT rolname,substring(rolpassword, 1, 4) FROM pg_authid where rolname ='md5_user'" test|grep "md5" >/dev/null 2>&1
 then
-    echo "md5 authenticated setup successfuly"
+    echo "md5 authenticated setup successfully"
 else
     echo "md5 authentication setup failed"
     failed=1
@@ -69,7 +69,7 @@ export PGPASSFILE=$PWD/pgpass
 
 if $PSQL -h 127.0.0.1 -U scram_user -c "SELECT user, inet_client_addr();" test|grep "scram_user" >/dev/null 2>&1
 then
-    echo "scram_user authenticated successfuly"
+    echo "scram_user authenticated successfully"
 else
     echo "scram authentication failed"
     failed=1
@@ -77,7 +77,7 @@ fi
 
 if $PSQL -h 127.0.0.1 -U md5_user -c "SELECT user, inet_client_addr();" test|grep "md5_user" >/dev/null 2>&1
 then
-    echo "md5_user authenticated successfuly"
+    echo "md5_user authenticated successfully"
 else
     echo "md5 authentication failed"
     failed=1

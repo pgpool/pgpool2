@@ -468,7 +468,7 @@ typedef struct
 	char	   *database_redirect_preference_list;	/* raw string in
 													 * pgpool.conf */
 	RegArray   *redirect_dbnames;	/* Precompiled regex patterns for db
-									 * prefrence list */
+									 * preference list */
 	Left_right_tokens *db_redirect_tokens;	/* db redirect for dbname and node
 											 * string */
 
@@ -479,7 +479,7 @@ typedef struct
 	char	   *app_name_redirect_preference_list;	/* raw string in
 													 * pgpool.conf */
 	RegArray   *redirect_app_names; /* Precompiled regex patterns for app name
-									 * prefrence list */
+									 * preference list */
 	Left_right_tokens *app_name_redirect_tokens;	/* app name redirect for
 													 * app_name and node
 													 * string */
@@ -489,7 +489,7 @@ typedef struct
 									 * possible. If off, SQL comments
 									 * effectively prevent the judgment (pre
 									 * 3.4 behavior). For backward
-									 * compatibilty sake, default is off. */
+									 * compatibility sake, default is off. */
 
 	DLBOW_OPTION disable_load_balance_on_write; /* Load balance behavior when
 												 * write query is issued in an

@@ -43,7 +43,7 @@
 int yylex(void);
 
 POOL_CONFIG g_pool_config;	/* configuration values */
-POOL_CONFIG *pool_config = &g_pool_config;	/* for lagacy reason pointer to the above struct */
+POOL_CONFIG *pool_config = &g_pool_config;	/* for legacy reason pointer to the above struct */
 static unsigned Lineno;
 char   *config_file_dir = NULL; /* directory path of config file pgpool.conf */
 
@@ -403,7 +403,7 @@ parse_error:
 	*head_p = NULL;
 	*tail_p = NULL;
 	ereport(elevel,
-		(errmsg("syntex error in configuration file \"%s\"",config_file),
+		(errmsg("syntax error in configuration file \"%s\"",config_file),
 			errdetail("parse error at line %d '%s' token = %d", Lineno, yytext,token)));
 
 	return false;

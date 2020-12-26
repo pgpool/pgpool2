@@ -17,7 +17,7 @@ do
 # create test environment
 	echo -n "creating test environment..."
 
-	# to avoid repication lag problem when testing under streaming
+	# to avoid replication lag problem when testing under streaming
 	# replication mode, set number of cluster to 1 when in the mode
 	if [ $mode = "s" ];then
 		n=1

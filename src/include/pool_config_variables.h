@@ -29,7 +29,7 @@ typedef enum
 {
 	CONNECTION_CONFIG,
 	CONNECTION_POOL_CONFIG,
-	LOGING_CONFIG,
+	LOGGING_CONFIG,
 	HEALTH_CHECK_CONFIG,
 	FILE_LOCATION_CONFIG,
 	LOAD_BALANCE_CONFIG,
@@ -91,7 +91,7 @@ typedef enum
 #define VAR_NO_RESET_ALL			0x0008	/* for variables not to be reset
 											 * with reset all */
 #define ARRAY_VAR_ALLOW_NO_INDEX	0x0010	/* for array type vars that also
-											 * alows variable with same naem
+											 * allows variable with same name
 											 * with out index */
 #define DEFAULT_FOR_NO_VALUE_ARRAY_VAR	0x0020
 
@@ -156,15 +156,15 @@ struct config_generic
 
 	GucSource  *sources;		/* source of the current actual value, For
 								 * array type config elements it contains the
-								 * corosponding source of each individual
+								 * corresponding source of each individual
 								 * element */
 	GucSource  *reset_sources;	/* source of the reset value, For array type
 								 * config elements it contains the
-								 * corosponding source of each individual
+								 * corresponding source of each individual
 								 * element */
 	ConfigContext *scontexts;	/* context that set the current value, For
 								 * array type config elements it contains the
-								 * corosponding context of each individual
+								 * corresponding context of each individual
 								 * element */
 
 };
@@ -302,7 +302,7 @@ struct config_string_list
 	char	 ***variable;
 	int		   *list_elements_count;
 	const char *boot_val;
-	const char *seperator;
+	const char *separator;
 	bool		compute_regex;
 	ConfigStringListAssignFunc assign_func;
 	ConfigStringListAssignFunc check_func;

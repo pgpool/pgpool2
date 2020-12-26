@@ -868,7 +868,7 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		len = strlen(query) + 1;
 		search_query = MemoryContextStrdup(query_context->memory_context, query);
 
-		ereport(DEBUG1, (errmsg("Execute: checkig cache fetch condition")));
+		ereport(DEBUG1, (errmsg("Execute: checking cache fetch condition")));
 
 		/*
 		 * Add bind message's info to query to search.
@@ -1186,7 +1186,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 
 		/*
 		 * If replication mode, check to see what kind of insert lock is
-		 * neccessary.
+		 * necessary.
 		 */
 		if (REPLICATION)
 			insert_stmt_with_lock = need_insert_lock(backend, stmt, node);
@@ -2315,7 +2315,7 @@ CloseComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 			if (pmsg->type != POOL_CLOSE)
 			{
 				ereport(LOG,
-						(errmsg("CloseComplete: pending messge was not Close request: %s", pool_pending_message_type_to_string(pmsg->type))));
+						(errmsg("CloseComplete: pending message was not Close request: %s", pool_pending_message_type_to_string(pmsg->type))));
 			}
 			else
 			{
@@ -2889,7 +2889,7 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 					if (pmsg && pmsg->not_forward_to_frontend)
 					{
 						/*
-						 * parse_before_bind() was called. Do not foward the
+						 * parse_before_bind() was called. Do not forward the
 						 * parse complete message to frontend.
 						 */
 						ereport(DEBUG5,
@@ -2922,7 +2922,7 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 					if (pmsg && pmsg->not_forward_to_frontend)
 					{
 						/*
-						 * parse_before_bind() was called. Do not foward the
+						 * parse_before_bind() was called. Do not forward the
 						 * close complete message to frontend.
 						 */
 						ereport(DEBUG5,
@@ -2959,7 +2959,7 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 				{
 					pool_set_failed_transaction();
 
-					/* Remove ongoing CRETAE/DROP temp tables */
+					/* Remove ongoing CREATE/DROP temp tables */
 					pool_temp_tables_remove_pending();
 				}
 				if (pool_is_doing_extended_query_message())
@@ -3560,7 +3560,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
 			 * Before sending the parse message to the primary, we need to
 			 * close the named statement. Otherwise we will get an error from
 			 * backend if the named statement already exists. This could
-			 * happend if parse_before_bind is called with a bind message
+			 * happened if parse_before_bind is called with a bind message
 			 * using same named statement. If the named statement does not
 			 * exist, it's fine. PostgreSQL just ignores a request trying to
 			 * close a non-existing statement. If the statement is unnamed
@@ -3933,7 +3933,7 @@ pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION * frontend,
 		return;
 
 	/*
-	 * Check to see if we aready received a sync message. If not, call
+	 * Check to see if we already received a sync message. If not, call
 	 * ProcessFrontendResponse() to get the sync message from client.
 	 */
 	pmsg = pool_pending_message_get(POOL_SYNC);
@@ -3984,7 +3984,7 @@ pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION * frontend,
 
 	pool_pending_message_reset_previous_message();
 
-	/* Discard read buffer execpt "Ready for query" */
+	/* Discard read buffer except "Ready for query" */
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		if (VALID_BACKEND(i))
@@ -4355,7 +4355,7 @@ pool_read_int(POOL_CONNECTION_POOL * cp)
 }
 
 /*
- * Aquire snapshot in snapshot isolation mode.
+ * Acquire snapshot in snapshot isolation mode.
  */
 static void
 si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node * node)
@@ -4377,13 +4377,13 @@ si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node
 	 */
 	if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION &&
 		TSTATE(backend, MAIN_NODE_ID) == 'T' &&
-		si_snapshot_aquire_command(node) &&
+		si_snapshot_acquire_command(node) &&
 		!si_snapshot_prepared() &&
 		frontend && frontend->no_forward == 0)
 	{
 		int	i;
 
-		si_aquire_snapshot();
+		si_acquire_snapshot();
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
@@ -4402,6 +4402,6 @@ si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node
 			per_node_statement_log(backend, i, si_query);
 		}
 
-		si_snapshot_aquired();
+		si_snapshot_acquired();
 	}
 }

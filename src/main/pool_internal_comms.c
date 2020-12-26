@@ -20,7 +20,7 @@
  */
 
 /*
- * pool_internal_comms consistes of functions that can be called
+ * pool_internal_comms consists of functions that can be called
  * from any pgpool-II process to instruct pgpool-II main process to
  * perform a particular function
  */
@@ -94,8 +94,8 @@ bool terminate_pgpool(char mode, bool error)
  * test_only:	When set, function only checks if NODE DOWN operation can be
  *				executed on provided node ids and never registers the operation
  *				request.
- *				For test_only case function returs false or throws an error as
- *				soon as first non complient node in node_id_set is found
+ *				For test_only case function returns false or throws an error as
+ *				soon as first non compliant node in node_id_set is found
  * switch_over: if set, the request is originated by switch over, not errors.
  *
  * wd_failover_id: The watchdog internal ID for this failover
@@ -162,7 +162,7 @@ degenerate_backend_set_ex(int *node_id_set, int count, unsigned char flags, bool
 		{
 			int			x;
 
-			for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+			for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSACTION; x++)
 			{
 				res = wd_degenerate_backend_set(node_id_set, count, flags);
 				if (res != FAILOVER_RES_TRANSITION)
@@ -268,7 +268,7 @@ promote_backend(int node_id, unsigned char flags)
 	{
 		int			x;
 
-		for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+		for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSACTION; x++)
 		{
 			res = wd_promote_backend(node_id, flags);
 			if (res != FAILOVER_RES_TRANSITION)
@@ -362,7 +362,7 @@ send_failback_request(int node_id, bool throw_error, unsigned char flags)
 		{
 			int			x;
 
-			for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+			for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSACTION; x++)
 			{
 				res = wd_send_failback_request(node_id, flags);
 				if (res != FAILOVER_RES_TRANSITION)
@@ -403,7 +403,7 @@ send_failback_request(int node_id, bool throw_error, unsigned char flags)
 }
 
 /*
- * Reuest failover. If "switch_over" is false, request all existing sessions
+ * Request failover. If "switch_over" is false, request all existing sessions
  * restarting.
  */
 void

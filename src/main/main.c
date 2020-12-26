@@ -222,7 +222,7 @@ main(int argc, char **argv)
 	hba_file = make_absolute_path(hba_file_path, base_dir);
 
 	mypid = getpid();
-	SetProcessGlobalVaraibles(PT_MAIN);
+	SetProcessGlobalVariables(PT_MAIN);
 
 
 	pool_init_config();
@@ -361,7 +361,7 @@ main(int argc, char **argv)
 
 	pool_semaphore_create(MAX_NUM_SEMAPHORES);
 
-	PgpoolMain(discard_status, clear_memcache_oidmaps); /* this is an infinate
+	PgpoolMain(discard_status, clear_memcache_oidmaps); /* this is an infinite
 														 * loop */
 
 	exit(0);
@@ -481,7 +481,7 @@ daemonize(void)
 #endif
 
 	mypid = getpid();
-	SetProcessGlobalVaraibles(PT_MAIN);
+	SetProcessGlobalVariables(PT_MAIN);
 	write_pid_file();
 	if (chdir("/"))
 		ereport(WARNING,

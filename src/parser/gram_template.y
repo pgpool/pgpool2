@@ -1480,7 +1480,7 @@ VariableSetStmt:
 			PGPOOL SET generic_set
 				{
 					VariableSetStmt *n = $3;
-					n->type = T_PgpoolVariableSetStmt; /* Hack to keep changes minumum */
+					n->type = T_PgpoolVariableSetStmt; /* Hack to keep changes minimum */
 					n->is_local = false;
 					$$ = (Node *) n;
 				}
@@ -1740,7 +1740,7 @@ VariableResetStmt:
 			| PGPOOL RESET generic_reset
 				{
 					VariableSetStmt *n = $3;
-					n->type = T_PgpoolVariableSetStmt; /* Hack to keep the changes minumum */
+					n->type = T_PgpoolVariableSetStmt; /* Hack to keep the changes minimum */
 					$$ = (Node *) n;
 				}
 		;

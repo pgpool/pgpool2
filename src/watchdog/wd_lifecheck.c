@@ -357,7 +357,7 @@ fork_lifecheck_child(void)
 	if (pid == 0)
 	{
 		on_exit_reset();
-		SetProcessGlobalVaraibles(PT_LIFECHECK);
+		SetProcessGlobalVariables(PT_LIFECHECK);
 
 		/* call lifecheck child main */
 		POOL_SETMASK(&UnBlockSig);
@@ -534,7 +534,7 @@ inform_node_status(LifeCheckNode * node, char *message)
 	if (json_data == NULL)
 		return false;
 
-	for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION; x++)
+	for (x = 0; x < MAX_SEC_WAIT_FOR_CLUSTER_TRANSACTION; x++)
 	{
 		res = issue_command_to_watchdog(WD_NODE_STATUS_CHANGE_COMMAND, 0, json_data, strlen(json_data), false);
 		if (res)
@@ -690,7 +690,7 @@ is_wd_lifecheck_ready(void)
 		else
 		{
 			ereport(ERROR,
-					(errmsg("checking if watchdog is ready, unkown watchdog mode \"%d\"",
+					(errmsg("checking if watchdog is ready, unknown watchdog mode \"%d\"",
 							pool_config->wd_lifecheck_method)));
 		}
 	}
@@ -1020,7 +1020,7 @@ wd_ping_pgpool(LifeCheckNode * node, char* password)
 	return ping_pgpool(conn);
 }
 
-/* inner function for issueing lifecheck query */
+/* inner function for issuing lifecheck query */
 static int
 ping_pgpool(PGconn *conn)
 {

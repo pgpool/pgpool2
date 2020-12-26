@@ -110,7 +110,7 @@ get_watchdog_quorum_state(char* wd_authkey)
 
 
 /*
- * Function gets the runtime value of watchdog varibale using the
+ * Function gets the runtime value of watchdog variable using the
  * watchdog IPC
  */
 WDGenericData *
@@ -420,7 +420,7 @@ extern void set_wd_command_timeout(int sec)
 	wd_command_timeout_sec = sec;
 }
 
-/* The function returs the simple JSON string that contains
+/* The function returns the simple JSON string that contains
  * only one KEY,VALUE along with the authkey key value if provided
  */
 char *

@@ -16,7 +16,7 @@
  * is" without express or implied warranty.
  *
  * pgpool-regclass.c is similar to PostgreSQL builtin function
- * reglcass but does not throw exceptions.
+ * regclass but does not throw exceptions.
  * If something goes wrong, it returns InvalidOid.
  */
 
@@ -97,7 +97,7 @@ pgpool_regclass(PG_FUNCTION_ARGS)
 
 	/*
 	 * RangeVarGetRelid() of PostgreSQL 9.2 or later, has third argument
-	 * "missing_ok" which suppresses ERROR exception, but returns invlaid_oid.
+	 * "missing_ok" which suppresses ERROR exception, but returns invalid_oid.
 	 * See include/catalog/namespace.h
 	 */
 	result = RangeVarGetRelid(rel, true, true);

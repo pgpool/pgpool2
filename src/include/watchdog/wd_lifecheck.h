@@ -64,7 +64,7 @@ extern LifeCheckCluster * gslifeCheckCluster;	/* lives in shared memory */
 extern pid_t initialize_watchdog_lifecheck(void);
 
 
-/* wd_hearbeat.c */
+/* wd_heartbeat.c */
 extern pid_t wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if);
 extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf * hb_if);
 

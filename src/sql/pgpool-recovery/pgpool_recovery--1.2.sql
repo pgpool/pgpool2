@@ -35,7 +35,7 @@ RETURNS bool
 AS '$libdir/pgpool-recovery', 'pgpool_pgctl'
 LANGUAGE C STRICT;
 
-CREATE FUNCTION pgpool_switch_xlog(IN arcive_dir text)
+CREATE FUNCTION pgpool_switch_xlog(IN archive_dir text)
 RETURNS text
 AS 'MODULE_PATHNAME', 'pgpool_switch_xlog'
 LANGUAGE C STRICT;

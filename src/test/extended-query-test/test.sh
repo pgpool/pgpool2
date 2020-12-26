@@ -184,7 +184,7 @@ do
 		failcnt=`expr $failcnt + 1`
 	    else
 		extra_fail=0
-		# excute extra scripts if exists.
+		# execute extra scripts if exists.
 		if [ -x $extra_scripts/$i ]
 		then
 		    $extra_scripts/$i > $results/$i.extra 2>&1
@@ -280,7 +280,7 @@ else
 		failcnt=`expr $failcnt + 1`
 	    else
 		extra_fail=0
-		# excute extra scripts if exists.
+		# execute extra scripts if exists.
 		if [ -x $extra_scripts/$i ]
 		then
 		    $extra_scripts/$i > $results/$i.extra 2>&1

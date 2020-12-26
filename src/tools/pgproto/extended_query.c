@@ -32,7 +32,7 @@
 #include "pgproto/buffer.h"
 
 /*
- * Send parse messae. "conn" should at the point right after the message kind
+ * Send parse message. "conn" should at the point right after the message kind
  * was read.
  */
 void
@@ -246,7 +246,7 @@ process_bind(char *buf, PGconn *conn)
 }
 
 /*
- * Send execute messae. "conn" should at the point right after the message
+ * Send execute message. "conn" should at the point right after the message
  * kind was read.
  */
 void
@@ -283,7 +283,7 @@ process_execute(char *buf, PGconn *conn)
 }
 
 /*
- * Send describe messae. "conn" should at the point right after the message kind
+ * Send describe message. "conn" should at the point right after the message kind
  * was read.
  */
 void
@@ -332,7 +332,7 @@ process_describe(char *buf, PGconn *conn)
 }
 
 /*
- * Send close messae. "conn" should at the point right after the message kind
+ * Send close message. "conn" should at the point right after the message kind
  * was read.
  */
 void

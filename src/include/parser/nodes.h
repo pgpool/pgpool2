@@ -516,7 +516,7 @@ typedef enum NodeTag
 	TsmRoutine ,				/* in access/tsmapi.h */
 	T_ForeignKeyCacheInfo,      /* in utils/rel.h */
 	T_CallContext,              /* in nodes/parsenodes.h */
-	/* pgpool Extention */
+	/* pgpool Extension */
 				T_PgpoolVariableSetStmt,
 				T_PgpoolVariableShowStmt
 

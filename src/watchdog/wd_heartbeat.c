@@ -208,14 +208,14 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 							 errdetail("setsockopt(SO_BINDTODEVICE) failed with reason: \"%m\"")));
 				}
 				ereport(LOG,
-						(errmsg("createing watchdog heartbeat receive socket."),
+						(errmsg("creating watchdog heartbeat receive socket."),
 						 errdetail("bind receive socket to device: \"%s\"", i.ifr_name)));
 
 			}
 			else
 				ereport(LOG,
 						(errmsg("failed to create watchdog heartbeat receive socket."),
-						 errdetail("setsockopt(SO_BINDTODEVICE) requies root privilege")));
+						 errdetail("setsockopt(SO_BINDTODEVICE) requires root privilege")));
 		}
 #else
 		ereport(LOG,
@@ -363,7 +363,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if)
 	}
 
 	on_exit_reset();
-	SetProcessGlobalVaraibles(PT_HB_RECEIVER);
+	SetProcessGlobalVariables(PT_HB_RECEIVER);
 
 	if (fork_wait_time > 0)
 	{
@@ -496,7 +496,7 @@ wd_hb_sender(int fork_wait_time, WdHbIf * hb_if)
 	}
 
 	on_exit_reset();
-	SetProcessGlobalVaraibles(PT_HB_SENDER);
+	SetProcessGlobalVariables(PT_HB_SENDER);
 
 	if (fork_wait_time > 0)
 	{

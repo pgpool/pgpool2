@@ -35,7 +35,7 @@
       its own pgpool node information and the destination pgpool nodes information, the
       settings are different per pgpool node.
       Since <productname>Pgpool-II</productname> 4.2, all configuration parameters are
-      identical on all hosts. If watchdog feature is enabled, to distingusish which host
+      identical on all hosts. If watchdog feature is enabled, to distinguish which host
       is which, a <filename>pgpool_node_id</filename> file is required.
       You need to create a <filename>pgpool_node_id</filename> file and specify the
       pgpool (watchdog) node number (e.g. 0, 1, 2 ...) to identify pgpool (watchdog) host.

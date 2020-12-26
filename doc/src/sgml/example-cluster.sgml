@@ -36,7 +36,7 @@
   </para>
   <note>
    <para>
-    The roles of <literal>Active</literal>, <literal>Standy</literal>, <literal>Primary</literal>,
+    The roles of <literal>Active</literal>, <literal>Standby</literal>, <literal>Primary</literal>,
     <literal>Standby</literal> are not fixed and may be changed by further operations.
    </para>
   </note>
@@ -442,7 +442,7 @@ server3:5432:postgres:postgres:&lt;postgres user passowrd&gt;
   <title>Create pgpool_node_id</title>
   <para>
     From <productname>Pgpool-II</productname> 4.2, now all configuration parameters are identical on all hosts.
-    If <literal>watchdog</literal> feature is enabled, to distingusish which host is which,
+    If <literal>watchdog</literal> feature is enabled, to distinguish which host is which,
     a <filename>pgpool_node_id</filename> file is required.
     You need to create a <filename>pgpool_node_id</filename> file and specify the pgpool (watchdog) node number
     (e.g. 0, 1, 2 ...) to identify pgpool (watchdog) host.
@@ -678,7 +678,7 @@ PCP_USER=pgpool
     then we use <xref linkend="PG-MD5"> to create the encrypted password entry for <literal>pgpool</literal> user as below:
    </para>
    <programlisting>
-[all servers]# echo 'pgpool:'`pg_md5 PCP passowrd` &gt;&gt; /etc/pgpool-II/pcp.conf
+[all servers]# echo 'pgpool:'`pg_md5 PCP password` &gt;&gt; /etc/pgpool-II/pcp.conf
    </programlisting>
    <para>
     Since <filename>follow_primary.sh</filename> script must execute PCP command without entering a
@@ -804,7 +804,7 @@ host    all         postgres         0.0.0.0/0          scram-sha-256
 [all servers]$ pg_enc -m -k ~/.pgpoolkey -u pgpool -p
 db password: [pgpool user's password]
 [all servers]$ pg_enc -m -k ~/.pgpoolkey -u postgres -p
-db password: [postgres user's passowrd]
+db password: [postgres user's password]
 
 # cat /etc/pgpool-II/pool_passwd
 pgpool:AESheq2ZMZjynddMWk5sKP/Rw==
@@ -898,7 +898,7 @@ pgpool_port2 = 9999
    <para>
     Specify the method of lifecheck <xref linkend="guc-wd-lifecheck-method">
     and the lifecheck interval <xref linkend="guc-wd-interval">.
-    Here, we use <literal>hearbeat</literal> method to perform watchdog lifecheck.
+    Here, we use <literal>heartbeat</literal> method to perform watchdog lifecheck.
    </para>
    <programlisting>
 wd_lifecheck_method = 'heartbeat'
@@ -968,7 +968,7 @@ wd_escalation_command = '/etc/pgpool-II/escalation.sh'
 
    <para>
     Basically, it should work if you change the following variables according to your environment.
-    PGPOOL is tha array of the hostname that runnig Pgpool-II.
+    PGPOOL is tha array of the hostname that running Pgpool-II.
     VIP is the virtual IP address that you set as delegate_IP.
     DEVICE is the network interface for the virtual IP.
    </para>
@@ -1138,7 +1138,7 @@ node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_bal
 Password:
 3 YES server1:9999 Linux server1 server1
 
-server1:9999 Linux server1 server1 9999 9000 4 LEADER  #The Pgpool-II server started first becames "LEADER".
+server1:9999 Linux server1 server1 9999 9000 4 LEADER  #The Pgpool-II server started first became "LEADER".
 server2:9999 Linux server2 server2 9999 9000 7 STANDBY #run as standby
 server3:9999 Linux server3 server3 9999 9000 7 STANDBY #run as standby
    </programlisting>

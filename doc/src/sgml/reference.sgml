@@ -5,7 +5,7 @@
 
  <partintro>
   <para>
-   This part contains reference information for the <productname>Pgool-II</productname>.
+   This part contains reference information for the <productname>Pgpool-II</productname>.
   </para>
 
   <para>
@@ -123,7 +123,7 @@
   &pgEnc;
   &pgproto;
   &pgpoolSetup;
-  &watchdoglSetup;
+  &watchdogSetup;
   &wdCli;
 
  </reference>

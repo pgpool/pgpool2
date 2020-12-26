@@ -122,7 +122,7 @@ BLOCKQUOTE.NOTE, BLOCKQUOTE.TIP, table.CAUTION, table.WARNING, div.note, div.tip
 	max-width: 720px;
 	border-width: 1px;
 	border-style: solid;
-	overfileow: auto;
+	overflow: auto;
 	-moz-border-radius: 8px;
 	-webkit-border-radius: 8px;
 	-khtml-border-radius: 8px;

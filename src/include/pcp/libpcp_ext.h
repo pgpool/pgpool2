@@ -85,9 +85,9 @@ typedef struct
 	BACKEND_STATUS backend_status;	/* backend status */
 	time_t		status_changed_time;	/* backend status changed time */
 	double		backend_weight; /* normalized backend load balance ratio */
-	double		unnormalized_weight;	/* descripted parameter */
+	double		unnormalized_weight;	/* described parameter */
 	char		backend_data_directory[MAX_PATH_LENGTH];
-	char		backend_application_name[NAMEDATALEN];	/* application_name for walreciever */
+	char		backend_application_name[NAMEDATALEN];	/* application_name for walreceiver */
 	unsigned short flag;		/* various flags */
 	bool		quarantine;		/* true if node is CON_DOWN because of
 								 * quarantine */
@@ -324,7 +324,7 @@ typedef struct PCPConnInfo
 	char	   *errMsg;			/* error message, or NULL if no error */
 	ConnStateType connState;
 	PCPResultInfo *pcpResInfo;
-	FILE	   *Pfdebug;		/* File pointer to output debug infor */
+	FILE	   *Pfdebug;		/* File pointer to output debug info */
 }			PCPConnInfo;
 
 struct WdInfo;
