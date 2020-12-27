@@ -184,7 +184,7 @@
        create a robust cluster system and avoid the single point of failure or split brain.
        To avoid the split brain, you need at least 3 <productname>Pgpool-II</productname> nodes.
        Watchdog can perform lifecheck against other <productname>pgpool-II</productname> nodes,
-       to detect a fault of <productname>Pgpoll-II</productname>.
+       to detect a fault of <productname>Pgpool-II</productname>.
        If active <productname>Pgpool-II</productname> goes down, standby
        <productname>Pgpool-II</productname> can be promoted to active, and take over Virtual IP.
       </para>

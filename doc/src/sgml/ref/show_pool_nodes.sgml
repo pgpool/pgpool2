@@ -45,7 +45,7 @@
     <productname>Pgpool-II</productname> is connecting to backend by
     using UNIX domain sockets. The SELECT count does not include
     internal queries used
-    by <productname>Pgoool-II</productname>. Also the counters are
+    by <productname>Pgpool-II</productname>. Also the counters are
     reset to zero upon starting up
     of <productname>Pgpool-II</productname>.  The last status change
     time is initially set to the

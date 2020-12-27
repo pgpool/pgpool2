@@ -3686,7 +3686,7 @@
      -->
      <function>read_kind_from_backend()</function> は、バックエンドからメッセージを読み取り、"ready for query" メッセージが受信されたときにバックエンドノードを再同期します。
      しかし、<function>pool_pending_message_pull_out()</function> を呼び出して「sync メッセージを受信した」を削除することを忘れていました。
-     これによって、バックエンドからのパケットの読み取り中に <productname>Popool-II</productname> がハングアップする可能性がありました。
+     これによって、バックエンドからのパケットの読み取り中に <productname>Pgpool-II</productname> がハングアップする可能性がありました。
      <function>pool_pending_message_pull_out()</function>を呼び出し、「sync メッセージを受信した」を削除するように修正しました。
     </para>
    </listitem>
