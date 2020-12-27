@@ -3313,7 +3313,7 @@
       string than the buffer.
       Per Coverity report 1111426 "Out-of-bounds access".
 
-    - RPM: Improved to specify the versions of pgool-II and PostgreSQL in the.
+    - RPM: Improved to specify the versions of pgpool-II and PostgreSQL in the.
       spec file. (Nozomi Anzai)
 
     - Fix resource leak in make_persistent_db_connection. (Tatsio Ishii)
@@ -5392,7 +5392,7 @@
 
       See [pgpool-general: 1330] for more details.
 
-      [pgpool-general: 1330] WatchDog and pgool sudden stop working
+      [pgpool-general: 1330] WatchDog and pgpool sudden stop working
       From: Tomas Halgas
       Date: Fri, 18 Jan 2013 14:47:23 +0100
       http://www.sraoss.jp/pipermail/pgpool-general/2013-January/001350.html
@@ -9540,7 +9540,7 @@
 
 * Enhancements
 
-      - Allow to change weight by reloading pgool.conf. This will take
+      - Allow to change weight by reloading pgpool.conf. This will take
         effect for next client sessions(Tatsuo Ishii)
 
       - Reply with usefull error messages, rather than "server closed
