@@ -1036,7 +1036,7 @@
   </sect1>
 
   <sect1 id="example-cluster">
-   <title><productname>Pgpoo-II</productname> + Watchdogの構築の例</title>
+   <title><productname>Pgpool-II</productname> + Watchdogの構築の例</title>
    <para>
     ここでは、ストリーミングレプリケーション構成の<productname>PostgreSQL</productname>を<productname>Pgpool-II</productname>で管理するシステムの構成例を示します。この例では、3台の<productname>Pgpool-II</productname>を使って<productname>PostgreSQL</productname>を管理し、単一障害点やスプリットブレインの起きない堅牢なクラスタを運用することが可能です。
    </para>

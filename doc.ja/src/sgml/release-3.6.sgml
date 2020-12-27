@@ -3032,7 +3032,7 @@
      -->
      <function>read_kind_from_backend()</function> は、バックエンドからメッセージを読み取り、"ready for query" メッセージが受信されたときにバックエンドノードを再同期します。
      しかし、<function>pool_pending_message_pull_out()</function> を呼び出して「sync メッセージを受信した」を削除することを忘れていました。
-     これによって、バックエンドからのパケットの読み取り中に <productname>Popool-II</productname> がハングアップする可能性がありました。
+     これによって、バックエンドからのパケットの読み取り中に <productname>Pgpool-II</productname> がハングアップする可能性がありました。
      <function>pool_pending_message_pull_out()</function>を呼び出し、「sync メッセージを受信した」を削除するように修正しました。
     </para>
    </listitem>
@@ -3546,7 +3546,7 @@
     2017-08-21 [1812a84]
     -->
     <para>
-     Doc: 英語/日本語ドキュメントに <link linkend="example-cluster">「Pgpoo-II + Watchdogの構築の例」</link>を追加しました。(Bo Peng)
+     Doc: 英語/日本語ドキュメントに <link linkend="example-cluster">「Pgpool-II + Watchdogの構築の例」</link>を追加しました。(Bo Peng)
     </para>
    </listitem>
 
@@ -4539,7 +4539,7 @@
       <listitem>
        <para>
         <!--
-	Pgool-II forward it to backend 1
+	Pgpool-II forward it to backend 1
 	-->
 	Pgpool-IIはそれをバックエンド1に転送します。
        </para>
@@ -4555,7 +4555,7 @@
       <listitem>
        <para>
         <!--
-	Pgool-II forward it to backend 0 & 1
+	Pgpool-II forward it to backend 0 & 1
 	-->
 	Pgpool-IIはそれをバックエンド0と1に転送します。
        </para>
@@ -4571,7 +4571,7 @@
       <listitem>
        <para>
         <!--
-	Pgool-II forward it to backend 0 & 1
+	Pgpool-II forward it to backend 0 & 1
 	-->
 	Pgpool-IIはそれをバックエンド0と1に転送します。
        </para>
