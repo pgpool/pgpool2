@@ -138,8 +138,13 @@ void do_child(int *fds)
 	struct timezone tz;
 	struct timeval timeout;
 	static int connected = 0;	/* non 0 if has been accepted connections from frontend */
-	int connections_count = 0;	/* used if child_max_connections > 0 */
 	char psbuf[NI_MAXHOST + 128];
+
+	/* counter for child_max_connections.  "volatile" declaration is necessary
+	 * so that this is counted up even if long jump is issued due to
+	 * ereport(ERROR).
+	 */
+	volatile	int			connections_count = 0;
 
 	ereport(DEBUG2,
 			(errmsg("I am Pgpool Child process with pid: %d", getpid())));
