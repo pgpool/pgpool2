@@ -219,23 +219,25 @@ cat >> $FOLLOW_PRIMARY_SCRIPT <<'EOF'
 #                  %h = host name
 #                  %p = port number
 #                  %D = database cluster path
-#                  %m = new main node id
+#                  %m = new primary node id
 #                  %M = old main node id
-#                  %H = new main node host name
+#                  %H = new primary node host name
 #                  %P = old primary node id
-#                  %R = new main database cluster path
-#                  %r = new main port number
+#                  %R = new primary database cluster path
+#                  %r = new primary port number
+#                  %N = old primary node host name
+#                  %S = old primary node port number
 #                  %% = '%' character
-failed_node_id=$1
-failed_host_name=$2
-failed_port=$3
-failed_db_cluster=$4
-new_main_id=$5
+node_id=$1
+host_name=$2
+port=$3
+db_cluster=$4
+new_primary_id=$5
 old_main_id=$6
-new_main_host_name=$7
+new_primary_host_name=$7
 old_primary_node_id=$8
-new_main_port_number=$9
-new_main_db_cluster=${10}
+new_primary_port_number=$9
+new_primary_db_cluster=${10}
 mydir=__MYDIR__
 log=$mydir/log/failover.log
 pg_ctl=__PGBIN__/pg_ctl
@@ -246,18 +248,18 @@ PCP_PORT=__PCPPORT__
 export PCPPASSFILE=__PCPPASSFILE__
 
 date >> $log
-echo "failed_node_id $failed_node_id failed_host_name $failed_host_name failed_port $failed_port failed_db_cluster $failed_db_cluster new_main_id $new_main_id old_main_id $old_main_id new_main_host_name $new_main_host_name old_primary_node_id $old_primary_node_id new_main_port_number $new_main_port_number new_main_db_cluster $new_main_db_cluster" >> $log
+echo "node_id $node_id host_name $host_name port $port db_cluster $db_cluster new_primary_id $new_primary_id old_main_id $old_main_id new_main_host_name $new_main_host_name old_primary_node_id $old_primary_node_id new_primary_port_number $new_primary_port_number new_primary_db_cluster $new_primary_db_cluster" >> $log
 
 # Stop standby node if it's running
-$pg_ctl -D $failed_db_cluster status >/dev/null 2>&1
+$pg_ctl -D $db_cluster status >/dev/null 2>&1
 if [ $? = 0 ]
 then
-	$pg_ctl -w -m f -D $failed_db_cluster stop >> $log 2>&1
+	$pg_ctl -w -m f -D $db_cluster stop >> $log 2>&1
 	sleep 10
 	# recovery the node
-	pcp_recovery_node -w -h localhost -p $PCP_PORT -n $failed_node_id >> $log 2>&1
+	pcp_recovery_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
 else
-	echo "$failed_db_cluster is not running. skipping follow primary command." >> $log
+	echo "$db_cluster is not running. skipping follow primary command." >> $log
 fi
 EOF
 
