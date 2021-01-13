@@ -1199,7 +1199,7 @@
     もし、<xref linkend="guc-pool-passwd"> ファイルに<literal>AES</literal>暗号化パスワードが保存されていた場合、<productname>Pgpool-II</productname>はそれらのパスワードを復号化するために復号鍵が必要となり、<productname>Pgpool-II</productname>は起動時に<filename>.pgpoolkey</filename>ファイルから復号鍵を読み込もうとします。
      <indexterm><primary>pgpoolkey</primary></indexterm>
      <indexterm><primary>PGPOOLKEYFILE</primary></indexterm>
-     <filename>.pgpoolkey</filename>は複合鍵の文字列を格納した単純なテキストファイルです。
+     <filename>.pgpoolkey</filename>は復号鍵の文字列を格納した単純なテキストファイルです。
    </para>
    <para>
     <!--
