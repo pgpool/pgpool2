@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -104,10 +104,10 @@ pool_incremnet_local_session_id(void)
 /*
  * Return byte size of connection info(ConnectionInfo) on shmem.
  */
-int
+size_t
 pool_coninfo_size(void)
 {
-	int			size;
+	size_t			size;
 
 	size = pool_config->num_init_children *
 		pool_config->max_pool *
@@ -115,7 +115,7 @@ pool_coninfo_size(void)
 		sizeof(ConnectionInfo);
 
 	ereport(DEBUG1,
-			(errmsg("pool_coninfo_size: num_init_children (%d) * max_pool (%d) * MAX_NUM_BACKENDS (%d) * sizeof(ConnectionInfo) (%zu) = %d bytes requested for shared memory",
+			(errmsg("pool_coninfo_size: num_init_children (%d) * max_pool (%d) * MAX_NUM_BACKENDS (%d) * sizeof(ConnectionInfo) (%zu) = %zu bytes requested for shared memory",
 					pool_config->num_init_children,
 					pool_config->max_pool,
 					MAX_NUM_BACKENDS,
