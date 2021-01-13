@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2011, PgPool Global Development Group
+ * Portions Copyright (c) 2003-2021, PgPool Global Development Group
  * Portions Copyright (c) 2003-2004, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
@@ -54,8 +54,8 @@ pool_shared_memory_create(size_t size)
 
 	if (shmid < 0)
 		ereport(FATAL,
-			(errmsg("could not create shared memory for request size: %ld",size),
-				errdetail("shared memory creation failed with error \"%s\"",strerror(errno))));
+				(errmsg("could not create shared memory for request size: %zu", size),
+				 errdetail("shared memory creation failed with error \"%m\"")));
 
 	/* Register on-exit routine to delete the new segment */
 	on_shmem_exit(IpcMemoryDelete, shmid);
