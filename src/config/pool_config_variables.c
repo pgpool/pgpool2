@@ -2072,8 +2072,8 @@ static struct config_int ConfigureNamesInt[] =
 			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_KB
 		},
 		&g_pool_config.log_rotation_size,
-		0,
-		1, INT_MAX,
+		10 * 1024,
+		0, INT_MAX/1024,
 		NULL, NULL, NULL
 	},
 	{
