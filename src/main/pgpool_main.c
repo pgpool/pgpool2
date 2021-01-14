@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3202,7 +3202,9 @@ pid_t fork_follow_child(int old_master, int new_primary, int old_primary)
 
 static void initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 {
-	int size,i;
+	size_t		size;
+	int			i;
+
 	/*
 	 * con_info is a 3 dimension array: i corresponds to pgpool child
 	 * process, j corresponds to connection pool in each process and k
