@@ -61,6 +61,13 @@
 	size.
     </para>
 
+    <para>
+     Note that, however, in <productname>Pgpool-II</productname> 4.1
+     or after, even if the in memory query cache is not enabled, it
+     consumes additional 64MB of shared memory, if <xref
+     linkend="guc-enable-shared-relcache"> is enabled (it is enabled
+     by default).
+    </para>
    </sect3>
    
    <sect3 id="process-memory-requirement">
