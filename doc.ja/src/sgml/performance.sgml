@@ -48,6 +48,10 @@
       必要メモリ量に関しては<xref linkend="guc-memqcache-total-size">と<xref linkend="guc-memqcache-max-num-cache">を参照してください。
     </para>
 
+    <para>
+     ただし<productname>Pgpool-II</productname> 4.1移行では、インメモリクエリキャッシュが有効になっていなくても、<xref linkend="guc-enable-shared-relcache">が有効なら(デフォルトで有効です)、追加で64MBの共有メモリを使用することに注意してください。
+    </para>
+
    </sect3>
    
    <sect3 id="process-memory-requirement">
