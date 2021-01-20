@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2013-2020 PgPool Global Development Group
+# Copyright (c) 2013-2021 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby
@@ -245,21 +245,34 @@ cluster0=$mydir/data0
 cluster1=$mydir/data1
 cluster2=$mydir/data2
 PCP_PORT=__PCPPORT__
+pgversion=__PGVERSION__
 export PCPPASSFILE=__PCPPASSFILE__
 
 date >> $log
 echo "node_id $node_id host_name $host_name port $port db_cluster $db_cluster new_primary_id $new_primary_id old_main_id $old_main_id new_main_host_name $new_main_host_name old_primary_node_id $old_primary_node_id new_primary_port_number $new_primary_port_number new_primary_db_cluster $new_primary_db_cluster" >> $log
 
-# Stop standby node if it's running
+# change primary node connection info so that it points to the new primary
+if [ $pgversion -ge 120 ];then
+   sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/myrecovery.conf
+else
+   sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/recovery.conf
+fi
+
+# Skip the target standby node if it's not running
 $pg_ctl -D $db_cluster status >/dev/null 2>&1
 if [ $? = 0 ]
 then
-	$pg_ctl -w -m f -D $db_cluster stop >> $log 2>&1
-	sleep 10
-	# recovery the node
-	pcp_recovery_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
+    if [ $pgversion -ge 130 ];then
+       echo "reload the target server" >> $log
+       $pg_ctl -m f -D $db_cluster reload >> $log 2>&1
+    else
+	echo "restart the target server" >> $log
+	$pg_ctl -w -m f -D $db_cluster restart >> $log 2>&1
+    fi
+    # attach the node
+    pcp_attach_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
 else
-	echo "$db_cluster is not running. skipping follow primary command." >> $log
+    echo "$db_cluster is not running. skipping follow primary command." >> $log
 fi
 EOF
 
@@ -272,6 +285,7 @@ EOF
 	 -e "/__PGBIN__/s@__PGBIN__@$PGBIN@" \
 	 -e "/__PCPPASSFILE__/s@__PCPPASSFILE__@$PCP_PASS_FILE@" \
 	 -e "/__PCPPORT__/s/__PCPPORT__/$PCP_PORT/" \
+	 -e "/__PGVERSION__/s/__PGVERSION__/$PGVERSION/" \
 	$FOLLOW_PRIMARY_SCRIPT
 
 chmod 755 $FOLLOW_PRIMARY_SCRIPT
