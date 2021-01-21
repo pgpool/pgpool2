@@ -4,19 +4,19 @@
 set -o xtrace
 
 # Special values:
-#   %d = failed node id
-#   %h = failed node hostname
-#   %p = failed node port number
-#   %D = failed node database cluster path
-#   %m = new main node id
-#   %H = new main node hostname
-#   %M = old main node id
-#   %P = old primary node id
-#   %r = new main port number
-#   %R = new main database cluster path
-#   %N = old primary node hostname
-#   %S = old primary node port number
-#   %% = '%' character
+# 1)  %d = failed node id
+# 2)  %h = failed node hostname
+# 3)  %p = failed node port number
+# 4)  %D = failed node database cluster path
+# 5)  %m = new main node id
+# 6)  %H = new main node hostname
+# 7)  %M = old main node id
+# 8)  %P = old primary node id
+# 9)  %r = new main port number
+# 10) %R = new main database cluster path
+# 11) %N = old primary node hostname
+# 12) %S = old primary node port number
+# 13) %% = '%' character
 
 FAILED_NODE_ID="$1"
 FAILED_NODE_HOST="$2"

@@ -135,13 +135,6 @@
 	 <entry>切り離されたノードのデータベースクラスタパス</entry>
 	</row>
 	<row>
-	 <entry>%M</entry>
-	 <!--
-	 <entry>Old main node ID</entry>
-	 -->
-	 <entry>古いメインノードのID</entry>
-	</row>
-	<row>
 	 <entry>%m</entry>
 	 <!--
 	 <entry>New main node ID</entry>
@@ -154,6 +147,13 @@
 	 <entry>Hostname of the new main node</entry>
 	 -->
 	 <entry>新しいメインノードのホスト名</entry>
+	</row>
+	<row>
+	 <entry>%M</entry>
+	 <!--
+	 <entry>Old main node ID</entry>
+	 -->
+	 <entry>古いメインノードのID</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>
@@ -479,19 +479,23 @@
       code to illustrate how the command is executed:
       -->
       <programlisting>
-       for each backend node
-       {
-       if (the node is not the new primary)
-       set down node status to shared memory status
-       memorize that folllow primary command is needed to execute
-       }
-       if (we need to executed follow primary command)
-       fork a child process
-       (within the child process)
+for each backend node
+{
+    if (the node is not the new primary)
+        set down node status to shared memory status
+        memorize that folllow primary command is needed to execute
+}
+if (we need to executed follow primary command)
+{
+    fork a child process
+    (within the child process)
 
-       for each backend node
-       if (the node status in shared memory is down)
-       execute follow primary command
+    for each backend node
+    {
+        if (the node status in shared memory is down)
+            execute follow primary command
+    }
+}
       </programlisting>
      </para>
 
@@ -551,13 +555,6 @@
 	 <entry>切り離されたノードのデータベースクラスタパス</entry>
 	</row>
 	<row>
-	 <entry>%M</entry>
-	 <!--
-	 <entry>Old main node ID</entry>
-	 -->
-	 <entry>古いメインノードのID</entry>
-	</row>
-	<row>
 	 <entry>%m</entry>
 	 <!--
 	 <entry>New primary node ID</entry>
@@ -570,6 +567,13 @@
 	 <entry>Hostname of the new primary node</entry>
 	 -->
 	 <entry>新しいプライマリノードのホスト名</entry>
+	</row>
+	<row>
+	 <entry>%M</entry>
+	 <!--
+	 <entry>Old main node ID</entry>
+	 -->
+	 <entry>古いメインノードのID</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>
