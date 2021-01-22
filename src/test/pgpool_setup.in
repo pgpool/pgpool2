@@ -553,7 +553,7 @@ EOF
 # replace some variables in the script
 #-------------------------------------------
 /bin/sed -i \
-	-e "/__PGBIN__/s@__PGBIN__@$PGBIN@p" \
+	-e "/__PGBIN__/s@__PGBIN__@$PGBIN@" \
 	-e "/__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@" \
 	-e "/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/" \
 	-e "/__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir@" \
