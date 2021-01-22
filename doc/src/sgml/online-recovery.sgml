@@ -54,15 +54,40 @@
  <para>
   Online recovery is performed in two phases. The first phase is
   called "first stage" and the second phase is called "second
-  stage". You need to provide scripts for each
-  stage. Only <xref linkend="guc-replication-mode"> requires the
-   second stage.  For other modes including streaming replication
-   mode the second stage is not performed and you don't need to
-   provide a script for the stage
-   in <xref linkend="guc-recovery-2nd-stage-command">. i.e. you can
-    safely leave it as an empty string. Those scripts example can be found in
-    <xref linkend="example-cluster-pgpool-config-online-recovery">.
+  stage". Only <xref linkend="guc-replication-mode"> and <xref
+  linkend="guc-snapshot-isolation-mode"> require the second stage.
+  For other modes including streaming replication mode the second
+  stage is not performed and you don't need to provide a script for
+  the stage in <xref
+  linkend="guc-recovery-2nd-stage-command">. i.e. you can safely leave
+  it as an empty string.
  </para>
+
+ <para>
+  In the first stage the standby (replica) node is created by using
+  <productname>PostgreSQL</productname>'s
+  <command>pg_basebackup</command>, for example, from a backup of the
+  main (primary) node. Update data while executing the first stage
+  will be logged into the <productname>PostgreSQL</productname>'s
+  transaction log.
+ </para>
+
+ <para>
+  In the second stage the target recovery node is started. The
+  transaction log will be replayed and the replica node will be
+  completely synced with the master node.
+ </para>
+
+ <para>
+  You need to provide scripts for each stage.  Complete sample scripts
+  are provided at <ulink
+  url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/master">/etc/pgpool-II/recovery_1st_stage.sample</ulink>
+  and <ulink
+  url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_2nd_stage.sample;hb=refs/heads/master">/etc/pgpool-II/recovery_2nd_stage.sample</ulink>.
+  Example installation using those scripts can be found in <xref
+  linkend="example-cluster-pgpool-config-online-recovery">.
+ </para>
+
  <para>
   Connections from clients are not allowed only in the second stage
   while the data can be updated or retrieved during the first stage.
@@ -84,20 +109,22 @@
   </listitem>
   <listitem>
    <para>
-    Wait until all client connections have disconnected (only
-    in <xref linkend="guc-replication-mode">).
+    Wait until all client connections have disconnected (only in <xref
+    linkend="guc-replication-mode"> and <xref
+    linkend="guc-snapshot-isolation-mode">).
    </para>
   </listitem>
   <listitem>
    <para>
-    CHECKPOINT (only in <xref linkend="guc-replication-mode">).
-     specified).
+    CHECKPOINT (only in <xref linkend="guc-replication-mode"> and
+  <xref linkend="guc-snapshot-isolation-mode">).
    </para>
   </listitem>
   <listitem>
    <para>
-    Execute second stage of online recovery (only
-    in <xref linkend="guc-replication-mode">).
+    Execute second stage of online recovery (only in <xref
+    linkend="guc-replication-mode"> and <xref
+    linkend="guc-snapshot-isolation-mode">).
    </para>
   </listitem>
   <listitem>

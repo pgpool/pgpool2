@@ -89,11 +89,23 @@
   -->
   オンラインリカバリは2段階に分けて実施されます。
   第1段階は「ファーストステージ」、第2段階は「セカンドステージ」と呼ばれます。
-  それぞれのステージ用にスクリプトを用意する必要があります。
-  <xref linkend="guc-replication-mode">の時のみセカンドステージが必要です。
+  <xref linkend="guc-replication-mode">あるいは<xref linkend="guc-snapshot-isolation-mode">の時のみセカンドステージが必要です。
    ストリーミングレプリケーションモードを含むその他のモードでは、セカンドステージは実施されず、<xref linkend="guc-recovery-2nd-stage-command">用のスクリプトを用意する必要はありません。
     つまり、そのエントリを空文字にしておいても問題ありません。
-    これらのスクリプトの例は<xref linkend="example-cluster-pgpool-config-online-recovery">にあります。
+ </para>
+
+ <para>
+  ファーストステージでは、<productname>PostgreSQL</productname>の<command>pg_baseback</command>コマンドなどを利用してメイン(プライマリ)ノードのバックアップコピーからレプリカ(スタンバイ)ノードを作ります。
+  ファーストステージ中に更新されたデータは<productname>PostgreSQL</productname>のトランザクションログに記録されます。
+ </para>
+ <para>
+  セカンドステージでは、リカバリ対象のレプリカノードを起動します。
+  この時にトランザクションログが再生され、このレプリカノードは完全にメインノードと同期します。
+ </para>
+ <para>
+  それぞれのステージ用にスクリプトを用意する必要があります。
+  完全なサンプルスクリプトが<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/master">/etc/pgpool-II/recovery_1st_stage.sample</ulink>および<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_2nd_stage.sample;hb=refs/heads/master">/etc/pgpool-II/recovery_2nd_stage.sample</ulink>に用意されています。
+  これらのスクリプトを使ったインストール例は<xref linkend="example-cluster-pgpool-config-online-recovery">にあります。
  </para>
  <para>
   <!--
@@ -128,12 +140,12 @@
     <!--
     Wait until all client connections have disconnected.
     -->
-    全てのクライアント接続が切断されるまで待機（<xref linkend="guc-replication-mode">のみ）。
+    全てのクライアント接続が切断されるまで待機（<xref linkend="guc-replication-mode">あるいは<xref linkend="guc-snapshot-isolation-mode">のみ）。
    </para>
   </listitem>
   <listitem>
    <para>
-    CHECKPOINT（<xref linkend="guc-replication-mode">のみ）。
+    CHECKPOINT.
    </para>
   </listitem>
   <listitem>
@@ -141,7 +153,7 @@
     <!--
     Second stage of online recovery.
     -->
-    オンラインリカバリのセカンドステージ（<xref linkend="guc-replication-mode">のみ）。
+    オンラインリカバリのセカンドステージ（<xref linkend="guc-replication-mode">あるいは<xref linkend="guc-snapshot-isolation-mode">のみ）。
    </para>
   </listitem>
   <listitem>
@@ -214,7 +226,7 @@
    only one of them will have received the online recovery command and will
    block the connections from clients.
    -->
-   <xref linkend="guc-replication-mode">でのオンラインリカバリには制限事項があります。
+   <xref linkend="guc-replication-mode">あるいは<xref linkend="guc-snapshot-isolation-mode">でのオンラインリカバリには制限事項があります。
     <productname>Pgpool-II</productname>が複数のホストにインストールされている場合、<productname>Pgpool-II</productname>はオンラインリカバリの2ndステージの間全てのクライアントを止める必要があるため、オンラインリカバリは正しく動作しません。
     複数の<productname>Pgpool-II</productname>ホストがある場合、そのうちの１台のみがオンラインリカバコマンドを受け取り、クライアントからの接続をブロックします。
   </para>
@@ -419,30 +431,6 @@
      </para>
     </note>
 
-    <caution>
-     <para>
-      <!--
-      <varname>recovery_1st_stage command</varname> runs as a <acronym>SQL</acronym>
-      command from <productname>PostgreSQL</>'s point of view. Therefore, <varname>recovery_1st_stage_command
-     </varname> can get prematuraly killed by <productname>PostgreSQL</> if
-      <varname>statement_timeout</varname> is configured with the value that is
-      smaller than the time <varname>recovery_1st_stage_command</varname> takes for
-      completion.
-      -->
-      <varname>recovery_1st_stage_command</varname>は、<productname>PostgreSQL</>から見ると、一つの<acronym>SQL</acronym>として実行されます。
-      そのため、<productname>PostgreSQL</>の<varname>statement_timeout</varname>が<varname>recovery_1st_stage_command</varname>の完了にかかる時間よりも短く設定されていると、<varname>recovery_1st_stagecommand</varname>コマンドの実行が途中でキャンセルされます。
-     </para>
-     <para>
-      <!--
-      Typical error in such case is
-      -->
-      典型的なエラーは以下のようなものです。
-      <programlisting>
-       rsync used in the command is killed by signal 2 for example.
-      </programlisting>
-     </para>
-    </caution>
-
     <para>
      <!--
      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
@@ -476,7 +464,7 @@
      try to execute <command>$PGDATA/sync-command</command>.
      -->
      オンラインリカバリのセカンドステージでメインノードで実行されるコマンドを指定します。
-     これは<xref linkend="guc-replication-mode">時のみ必要であるため、他のモードではコマンドファイルを用意する必要はありません。
+     これは<xref linkend="guc-replication-mode">あるいは<xref linkend="guc-snapshot-isolation-mode">時のみ必要であるため、他のモードではコマンドファイルを用意する必要はありません。
       コマンドファイルはセキュリティ上の観点からデータベースクラスタ内に配置される必要があります。
       例えば、<varname>recovery_2nd_stage_command</varname> = <literal>'sync-command'</literal>となっている場合、<productname>Pgpool-II</productname>はコマンドスクリプトを<literal>$PGDATA</literal>ディレクトリの中で探し、<command>$PGDATA/sync-command</command>を起動しようとします。
     </para>
@@ -554,21 +542,6 @@
       そのため、長時間接続したままのクライアントがいる場合、<varname>recovery_2nd_stage_command</varname>は実行されない可能性があります。
      </para>
     </note>
-
-    <caution>
-     <para>
-      <!--
-      <varname>recovery_2nd_stage command</varname> runs as a <acronym>SQL</acronym>
-      command from PostgreSQL's point of view. Therefore, <varname>recovery_2nd_stage command
-     </varname> can get prematuraly killed by PostgreSQL if the PostgreSQL's
-      <varname>statement_time_out</varname> is configured with the value that is
-      smaller than the time <varname>recovery_2nd_stage_command</varname> takes for
-      completion.
-      -->
-      <varname>recovery_2nd_stage_command</varname>は、<productname>PostgreSQL</>から見ると、一つの<acronym>SQL</acronym>として実行されます。
-      そのため、<productname>PostgreSQL</>の<varname>statement_timeout</varname>が<varname>recovery_2nd_stage_command</varname>の完了にかかる時間よりも短く設定されていると、<varname>recovery_1st_stagecommand</varname>コマンドの実行が途中でキャンセルされます。
-     </para>
-    </caution>
 
     <para>
      <!--
