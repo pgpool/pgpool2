@@ -338,7 +338,7 @@ function set_postgresql_conf
 
 		if [ $USE_REPLICATION_SLOT = "false" ];then
 		    echo "archive_mode = on" >> $PGCONF
-		    echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
+		    echo "archive_command = 'cp %p $BASEDIR/archivedir/`basename $1`/%f </dev/null'" >> $PGCONF
 		else
 		    num_slots=`expr $NUMCLUSTERS + 10`
 		    echo "max_replication_slots = $num_slots" >> $PGCONF
@@ -347,7 +347,7 @@ function set_postgresql_conf
 	elif [ $MODE = 'r' -o $MODE = 'l' -o $MODE = 'y' ];then
 		echo "wal_level = archive" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
-		echo "archive_command = 'cp %p $BASEDIR/archivedir/%f </dev/null'" >> $PGCONF
+		echo "archive_command = 'cp %p $BASEDIR/archivedir/`basename $1`/%f </dev/null'" >> $PGCONF
 		if [ $MODE = 'l' ];then
 		    echo "wal_level = logical" >> $PGCONF
 		fi
@@ -482,7 +482,7 @@ fi
 
 if [ $USE_REPLICATION_SLOT = "false" ];then
     cat >> $1/$SCRIPT <<'EOF'
-restore_command = 'cp $DATADIR_BASE/archivedir/%f "%p" 2> /dev/null'
+restore_command = 'cp $DATADIR_BASE/archivedir/`basename $1`/%f "%p" 2> /dev/null'
 REOF
 EOF
 else
@@ -592,7 +592,7 @@ fi
 	-e "/__PGBIN__/s@__PGBIN__@$PGBIN@" \
 	-e "/__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@" \
 	-e "/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/" \
-	-e "/__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir@" \
+	-e "/__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir/\`basename \$1\`@" \
 	$1/$SCRIPT
 
 chmod 755 $1/$SCRIPT
@@ -639,7 +639,7 @@ EOF
 	-e "/__PGBIN__/s@__PGBIN__@$PGBIN@" \
 	-e "/__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@" \
 	-e "/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/" \
-	-e "/__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir@" \
+	-e "/__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir/\`basename \$1\`@" \
 	$1/$SCRIPT
 
 chmod 755 $1/$SCRIPT
@@ -673,7 +673,7 @@ EOF
 	echo "primary_slot_name = 'pgpool_setup_slot$2'" >> $1/$fname
     else
 	cat >> $1/$fname <<EOF
-restore_command = 'cp $BASEDIR/archivedir/%f "%p" 2> /dev/null'
+restore_command = 'cp $BASEDIR/archivedir/`basename $1`/%f "%p" 2> /dev/null'
 EOF
     fi
 }
@@ -963,6 +963,9 @@ do
 
 	echo "#$n port is $PORT" >> README.port
 
+	# create archive directory
+	test ! -d archivedir/$CLUSTER && mkdir -p archivedir/$CLUSTER
+
 done
 
 set_pgpool_conf $CONF
@@ -1001,14 +1004,9 @@ $PGPOOL_INSTALL_DIR/bin/pg_md5 $WHOAMI >> etc/pcp.conf
 # create pool_passwd
 $PGPOOL_INSTALL_DIR/bin/pg_md5 -m -f etc/pgpool.conf -u $WHOAMI $WHOAMI
 
-if [ $USE_REPLICATION_SLOT = "false" ];then
-    # create archive directory
-    mkdir archivedir
-fi
-
 #-------------------------------------------
 # if streaming replication mode, we need to create data1 and so on, by
-# using on line recovery.
+# using online recovery.
 #-------------------------------------------
 
 if [ $MODE = 's' ];then
@@ -1049,6 +1047,9 @@ EOF
 		n=1
 		while [ $n -lt $NUMCLUSTERS ]
 		do
+		    # create archive directory
+		    test ! -d $BASEDIR/archivedir/`basename $CLUSTER` && mkdir $BASEDIR/archivedir/`basename $CLUSTER`
+
 		# set up pgpool.conf
 			PORT=`expr $PORT + 1`
 			echo "backend_hostname$n = '$PGSOCKET_DIR'" >> $CONF
