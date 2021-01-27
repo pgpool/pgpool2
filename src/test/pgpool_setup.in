@@ -414,8 +414,11 @@ cat >> $1/$SCRIPT <<'EOF'
 #! /bin/sh
 psql=__PGBIN__/psql
 pg_rewind=__PGBIN__/pg_rewind
+PG_CTL=__PGBIN__/pg_ctl
 DATADIR_BASE=__DATADIR_BASE__
 PGSUPERUSER=__PGSUPERUSER__
+MAX_DURATION=60
+pgversion=__PGVERSION__
 
 main_db_cluster=$1
 recovery_node_host_name=$2
@@ -532,80 +535,56 @@ EOF
 	-e "/__PGBIN__/s@__PGBIN__@$PGBIN@" \
 	-e "/__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@" \
 	-e "/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/" \
+	-e "/__PGVERSION__/s/__PGVERSION__/$PGVERSION/" \
 $1/$SCRIPT
 
 chmod 755 $1/$SCRIPT
 }
 
 #-------------------------------------------
-# create basebackup.sh for native replication mode
-# argument: PostgreSQL database cluster directory
+# create basebackup.sh for native replication mode and snapshot isolation mode.
+# argument1: full path to database cluster directory of main node
+# argument2: node number of target node
 #-------------------------------------------
 function create_basebackup_replication {
-SCRIPT=basebackup.sh
-cat >> $1/$SCRIPT <<'EOF'
-#! /bin/sh
-psql=__PGBIN__/psql
-DATADIR_BASE=__DATADIR_BASE__
-PGSUPERUSER=__PGSUPERUSER__
-EOF
+    CLUSTERDIR=$1
+    n=$2
+    SCRIPT=basebackup.sh
 
-echo "export PGHOST=$PGSOCKET_DIR" >> $1/$SCRIPT
-
-cat >> $1/$SCRIPT <<'EOF'
-main_db_cluster=$1
-recovery_node_host_name=$2
-DEST_CLUSTER=$3
-PORT=$4
-
-log=$DATADIR_BASE/log/recovery.log
-
-$psql -p $PORT -c "SELECT pg_start_backup('Native Replication', true)" postgres
-
-echo "source: $main_db_cluster dest: $DEST_CLUSTER" > $log
-EOF
-
-if [ $PGVERSION -ge 120 ];then
+    create_basebackup_stream $CLUSTERDIR $n
     cat >> $1/$SCRIPT <<'EOF'
-cat > $main_db_cluster/myrecovery.conf <<REOF
-restore_command = 'cp __ARCHDIR__/%f %p'
-REOF
+# start target server as a streaming replication standby server
+$PG_CTL -w -D $DEST_CLUSTER start
+
+# wait till the standby catches up primary server or
+# $MAX_DURATION seconds passes
+sec=0
+while [ $sec -lt $MAX_DURATION ]
+do
+  sec=`expr $sec + 1`
+
+  if [ $pgversion -ge 100 ];then
+    p_lsn=`psql -p $4 -c "SELECT pg_current_wal_lsn()" postgres|sed -n 3p|sed 's/ //'`
+    s_lsn=`psql -p $6 -c "SELECT pg_last_wal_replay_lsn()" postgres|sed -n 3p|sed 's/ //'`
+  else
+    p_lsn=`psql -p $4 -c "SELECT pg_current_xlog_lsn()" postgres|sed -n 3p|sed 's/ //'`
+    s_lsn=`psql -p $6 -c "SELECT pg_last_xlog_replay_lsn()" postgres|sed -n 3p|sed 's/ //'`
+  fi
+
+  if [ $pgversion -ge 100 ];then
+    sql=`echo "SELECT pg_wal_lsn_diff('$p_lsn','$s_lsn');"`
+  else
+    sql=`echo "SELECT pg_xlog_location_diff('$p_lsn','$s_lsn');"`
+  fi
+
+  diff=`psql -p $4 -c "$sql" postgres|sed -n 3p|sed 's/ //g'`
+#  echo "p_lsn: $p_lsn s_lsn: $s_lsn diff: $diff"
+  if [ $diff -le 0 ];then
+    sec=$MAX_DURATION
+  fi
+  sleep 1
+done
 EOF
-
-else
-
-    cat >> $1/$SCRIPT <<'EOF'
-cat > $main_db_cluster/recovery.conf <<REOF
-restore_command = 'cp __ARCHDIR__/%f %p'
-REOF
-EOF
-fi
-
-cat >> $1/$SCRIPT <<'EOF'
-rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
---exclude postmaster.opts --exclude pg_log \
---exclude recovery.done \
---exclude pg_xlog pg_wal \
-$main_db_cluster/ $DEST_CLUSTER/
-
-rm -fr $DEST_CLUSTER/pg_xlog 
-mkdir $DEST_CLUSTER/pg_xlog
-chmod 700 $DEST_CLUSTER/pg_xlog
-
-rm -fr $DEST_CLUSTER/pg_wal
-mkdir $DEST_CLUSTER/pg_wal
-chmod 700 $DEST_CLUSTER/pg_wal
-EOF
-
-cat >> $1/$SCRIPT <<'EOF'
-$psql -p $PORT -c "SELECT pg_stop_backup()" postgres
-EOF
-
-if [ $PGVERSION -ge 120 ];then
-    cat >> $1/$SCRIPT <<'EOF'
-touch $DEST_CLUSTER/recovery.signal
-EOF
-fi
 
 #-------------------------------------------
 # replace some variables in the script
@@ -615,7 +594,8 @@ fi
 	-e "/__DATADIR_BASE__/s@__DATADIR_BASE__@$BASEDIR@" \
 	-e "/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/" \
 	-e "/__ARCHDIR__/s@__ARCHDIR__@$BASEDIR/archivedir/\`basename \$1\`@" \
-	$1/$SCRIPT
+	-e "/__PGVERSION__/s/__PGVERSION__/$PGVERSION/" \
+$1/$SCRIPT
 
 chmod 755 $1/$SCRIPT
 }
@@ -631,6 +611,7 @@ cat >> $1/$SCRIPT <<'EOF'
 psql=__PGBIN__/psql
 DATADIR_BASE=__DATADIR_BASE__
 PGSUPERUSER=__PGSUPERUSER__
+PGCTL=__PGBIN__/pg_ctl
 
 main_db_cluster=$1
 recovery_node_host_name=$2
@@ -653,6 +634,8 @@ do
 done
 
 $psql -p $PORT -c "SELECT pgpool_switch_xlog('__ARCHDIR__')" template1
+
+$PGCTL -D $DEST_CLUSTER promote
 EOF
 #-------------------------------------------
 # replace some variables in the script
@@ -972,8 +955,8 @@ do
 	if [ $MODE = 's' ];then
 		create_basebackup_stream $CLUSTERDIR $n >&5 2>&1
 	elif [ $MODE = 'r' -o $MODE = 'i' ];then
-		create_basebackup_replication $CLUSTERDIR >&5 2>&1
-		create_pgpool_recovery_pitr $CLUSTERDIR >&5 2>&1
+		create_basebackup_replication $CLUSTERDIR $n >&5 2>&1
+		create_pgpool_recovery_pitr $CLUSTERDIR $n >&5 2>&1
 	fi
 
 	# create recovery.conf or recovery.done if streaming replication
