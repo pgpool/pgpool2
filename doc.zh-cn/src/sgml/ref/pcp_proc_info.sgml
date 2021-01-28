@@ -1,0 +1,145 @@
+<!--
+doc/src/sgml/ref/pcp_proc_info.sgml
+Pgpool-II documentation
+-->
+
+<refentry id="PCP-PROC-INFO">
+ <indexterm zone="pcp-proc-info">
+  <primary>pcp_proc_info</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>pcp_proc_info</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>PCP Command</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pcp_proc_info</refname>
+  <refpurpose>
+   displays the information on the given Pgpool-II child process ID</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pcp_proc_info</command>
+   <arg rep="repeat"><replaceable>options</replaceable></arg>
+   <arg><replaceable>pgpool_child_processid</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-PCP-PROC-INFO-1">
+  <title>Description</title>
+  <para>
+   <command>pcp_proc_info</command>
+   displays the information on the given Pgpool-II child process ID.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+  <para>
+   <variablelist>
+
+    <varlistentry>
+     <term><option>-a</option></term>
+     <term><option>--all</option></term>
+     <listitem>
+      <para>
+       Display all child processes and their available connection slots.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-P <replaceable class="parameter">PID</replaceable></option></term>
+     <term><option>--process-id=<replaceable class="parameter">PID</replaceable></option></term>
+     <listitem>
+      <para>
+       PID of <productname>Pgpool-II</productname> child process.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>Other options </option></term>
+     <listitem>
+      <para>
+       See <xref linkend="pcp-common-options">.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   If -a nor -P is not specified, process information of all
+   connected <productname>Pgpool-II</productname> child process will
+   be printed. In this case if there's no
+   connected <productname>Pgpool-II</productname> child process,
+   nothing but "No process information available" message will be
+   printed.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Example</title>
+  <para>
+   Here is an example output:
+   <programlisting>
+    $ pcp_proc_info -p 11001 1406
+    test t-ishii 2018-07-09 16:43:53 2018-07-09 16:44:08 3 0 1 1435 1 1406 0
+    test t-ishii 2018-07-09 16:43:53 2018-07-09 16:44:08 3 0 1 1436 1 1406 1
+   </programlisting>
+  </para>
+  <para>
+   The result is in the following order:
+   <literallayout class="monospaced">
+    1. connected database name
+    2. connected user name
+    3. process start-up timestamp
+    4. connection created timestamp
+    5. protocol major version
+    6. protocol minor version
+    7. connection-reuse counter
+    8. PostgreSQL backend process id
+    9. 1 if frontend connected 0 if not
+    10. pgpool child process id
+    11. PostgreSQL backend id 
+   </literallayout>
+  </para>
+  <para>
+   If <literal>-a</literal> or <literal>--all</literal> option is not specified and
+   there is no connection to the backends, nothing will be displayed. If there are
+   multiple connections, one connection's information will be displayed on each
+   line multiple times. Timestamps are displayed in EPOCH format.
+  </para>
+  <para>
+   The <option>--verbose</option> option can help understand the output. For example:
+  </para>
+  <programlisting>
+   $ pcp_proc_info -p 11001 --verbose 1406
+   Database     : test
+   Username     : t-ishii
+   Start time   : 2018-07-09 16:43:53
+   Creation time: 2018-07-09 16:44:08
+   Major        : 3
+   Minor        : 0
+   Counter      : 1
+   Backend PID  : 1435
+   Connected    : 1
+   PID          : 1406
+   Backend ID   : 0
+   Database     : test
+   Username     : t-ishii
+   Start time   : 2018-07-09 16:43:53
+   Creation time: 2018-07-09 16:44:08
+   Major        : 3
+   Minor        : 0
+   Counter      : 1
+   Backend PID  : 1436
+   Connected    : 1
+   PID          : 1406
+   Backend ID   : 1
+  </programlisting>
+ </refsect1>
+
+</refentry>

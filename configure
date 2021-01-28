@@ -15547,7 +15547,7 @@ $as_echo "enable cassert = $enable_cassert" >&6; }
 ac_config_headers="$ac_config_headers src/include/config.h"
 
 
-ac_config_files="$ac_config_files Makefile doc/Makefile doc/src/Makefile doc/src/sgml/Makefile doc.ja/Makefile doc.ja/src/Makefile doc.ja/src/sgml/Makefile src/Makefile src/include/Makefile src/parser/Makefile src/libs/Makefile src/libs/pcp/Makefile src/tools/Makefile src/tools/pgmd5/Makefile src/tools/pgenc/Makefile src/tools/pcp/Makefile src/tools/pgproto/Makefile src/tools/watchdog/Makefile src/watchdog/Makefile"
+ac_config_files="$ac_config_files Makefile doc/Makefile doc/src/Makefile doc/src/sgml/Makefile doc.ja/Makefile doc.ja/src/Makefile doc.ja/src/sgml/Makefile doc.zh-cn/Makefile doc.zh-cn/src/Makefile doc.zh-cn/src/sgml/Makefile src/Makefile src/include/Makefile src/parser/Makefile src/libs/Makefile src/libs/pcp/Makefile src/tools/Makefile src/tools/pgmd5/Makefile src/tools/pgenc/Makefile src/tools/pcp/Makefile src/tools/pgproto/Makefile src/tools/watchdog/Makefile src/watchdog/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -16570,6 +16570,9 @@ do
     "doc.ja/Makefile") CONFIG_FILES="$CONFIG_FILES doc.ja/Makefile" ;;
     "doc.ja/src/Makefile") CONFIG_FILES="$CONFIG_FILES doc.ja/src/Makefile" ;;
     "doc.ja/src/sgml/Makefile") CONFIG_FILES="$CONFIG_FILES doc.ja/src/sgml/Makefile" ;;
+    "doc.zh-cn/Makefile") CONFIG_FILES="$CONFIG_FILES doc.zh-cn/Makefile" ;;
+    "doc.zh-cn/src/Makefile") CONFIG_FILES="$CONFIG_FILES doc.zh-cn/src/Makefile" ;;
+    "doc.zh-cn/src/sgml/Makefile") CONFIG_FILES="$CONFIG_FILES doc.zh-cn/src/sgml/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "src/include/Makefile") CONFIG_FILES="$CONFIG_FILES src/include/Makefile" ;;
     "src/parser/Makefile") CONFIG_FILES="$CONFIG_FILES src/parser/Makefile" ;;
