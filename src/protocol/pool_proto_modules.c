@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -4389,6 +4389,9 @@ si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node
 		{
 			static	char *si_query = "SELECT current_setting('transaction_read_only')";
 			POOL_SELECT_RESULT *res;
+
+			if (!VALID_BACKEND(i))
+				continue;
 
 			do_query(CONNECTION(backend, i), si_query, &res, MAJOR(backend));
 			if (res)
