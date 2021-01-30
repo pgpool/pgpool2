@@ -564,22 +564,13 @@ do
   sec=`expr $sec + 1`
 
   if [ $pgversion -ge 100 ];then
-    p_lsn=`psql -p $4 -c "SELECT pg_current_wal_lsn()" postgres|sed -n 3p|sed 's/ //'`
-    s_lsn=`psql -p $6 -c "SELECT pg_last_wal_replay_lsn()" postgres|sed -n 3p|sed 's/ //'`
+    result=`psql -p $4 -c "SELECT sent_lsn = replay_lsn FROM pg_stat_replication where application_name = 'server$recovery_node'" postgres|sed -n 3p|sed 's/ //'`      
   else
-    p_lsn=`psql -p $4 -c "SELECT pg_current_xlog_lsn()" postgres|sed -n 3p|sed 's/ //'`
-    s_lsn=`psql -p $6 -c "SELECT pg_last_xlog_replay_lsn()" postgres|sed -n 3p|sed 's/ //'`
+    result=`psql -p $4 -c "SELECT sent_location = replay_location FROM pg_stat_replication where application_name = 'server$recovery_node'" postgres|sed -n 3p|sed 's/ //'`      
   fi
 
-  if [ $pgversion -ge 100 ];then
-    sql=`echo "SELECT pg_wal_lsn_diff('$p_lsn','$s_lsn');"`
-  else
-    sql=`echo "SELECT pg_xlog_location_diff('$p_lsn','$s_lsn');"`
-  fi
-
-  diff=`psql -p $4 -c "$sql" postgres|sed -n 3p|sed 's/ //g'`
-#  echo "p_lsn: $p_lsn s_lsn: $s_lsn diff: $diff"
-  if [ $diff -le 0 ];then
+  # echo "result: $result"
+  if [ "$result" = "t" ];then
     sec=$MAX_DURATION
   fi
   sleep 1
