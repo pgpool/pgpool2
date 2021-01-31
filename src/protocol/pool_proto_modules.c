@@ -4390,7 +4390,10 @@ si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node
 			static	char *si_query = "SELECT current_setting('transaction_read_only')";
 			POOL_SELECT_RESULT *res;
 
-			if (!VALID_BACKEND(i))
+			/* We cannot use VALID_BACKEND macro here because load balance
+			 * node has not been decided yet.
+			 */
+			if (!VALID_BACKEND_RAW(i))
 				continue;
 
 			do_query(CONNECTION(backend, i), si_query, &res, MAJOR(backend));
