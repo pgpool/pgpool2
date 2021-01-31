@@ -343,6 +343,7 @@ function set_postgresql_conf
 	echo "log_statement = 'all'" >> $PGCONF
 	echo "max_prepared_transactions = 10" >> $PGCONF
 	echo "unix_socket_directories = '$PGSOCKET_DIR'" >> $PGCONF 
+	echo "max_wal_senders = $NUMCLUSTERS" >> $PGCONF
 
 	if [ $PGVERSION -ge 120 ];then
 	    echo "include_if_exists = 'myrecovery.conf'" >> $PGCONF
@@ -351,7 +352,6 @@ function set_postgresql_conf
 	if [ $MODE = "s" ];then
 		echo "hot_standby = on" >> $PGCONF
 		echo "wal_level = hot_standby" >> $PGCONF
-		echo "max_wal_senders = $NUMCLUSTERS" >> $PGCONF
 
 		if [ $USE_REPLICATION_SLOT = "false" ];then
 		    echo "archive_mode = on" >> $PGCONF
