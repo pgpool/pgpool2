@@ -1330,11 +1330,11 @@
 #                  %p = port number
 #                  %D = database cluster path
 #                  %m = new master node id
-#                  %M = old master node id
 #                  %H = new master node host name
+#                  %M = old master node id
 #                  %P = old primary node id
-#                  %R = new master database cluster path
 #                  %r = new master port number
+#                  %R = new master database cluster path
 #                  %% = '%' character
 
 falling_node=$1          # %d
