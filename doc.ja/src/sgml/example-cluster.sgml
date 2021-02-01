@@ -646,6 +646,12 @@ PCP_USER=pgpool
 [全サーバ]$ echo 'localhost:9898:pgpool:&lt;pgpool user password&gt;' &gt; ~/.pcppass
 [全サーバ]$ chmod 600 ~/.pcppass
    </programlisting>
+   <note>
+    <para>
+     <filename>follow_primary.sh</filename>スクリプトはテーブルスペースに対応していません。
+     テーブルスペースを使っている場合は、スクリプトを自分で変更する必要があります。
+    </para>
+   </note>
   </sect3>
 
   <sect3 id="example-cluster-pgpool-config-online-recovery">
@@ -694,6 +700,12 @@ PGHOME=/usr/pgsql-13
 [server1]# su - postgres
 [server1]$ psql template1 -c "CREATE EXTENSION pgpool_recovery"
    </programlisting>
+   <note>
+    <para>
+     <filename>recovery_1st_stage</filename>スクリプトはテーブルスペースに対応していません。
+     テーブルスペースを使っている場合は、スクリプトを自分で変更する必要があります。
+    </para>
+   </note>
   </sect3>
 
   <sect3 id="example-cluster-pgpool-config-auth">

@@ -690,17 +690,23 @@ PCP_USER=pgpool
 [all servers]$ echo 'localhost:9898:pgpool:&lt;pgpool user password&gt;' &gt; ~/.pcppass
 [all servers]$ chmod 600 ~/.pcppass
    </programlisting>
+   <note>
+    <para>
+     The <filename>follow_primary.sh</filename> script does not support tablespaces.
+     If you are using tablespaces, you need to modify the script to support tablespaces.
+    </para>
+   </note>
   </sect3>
 
   <sect3 id="example-cluster-pgpool-config-online-recovery">
    <title>Pgpool-II Online Recovery Configurations</title>
    <para>
-    Next, in order to perform online recovery with <productname>Pgpool-II</productname> we specify 
+    Next, in order to perform online recovery with <productname>Pgpool-II</productname> we specify
     the <productname>PostgreSQL</productname> user name and online recovery command 
     <command>recovery_1st_stage</command>.
     Because <emphasis>Superuser</emphasis> privilege in <productname>PostgreSQL</productname>
     is required for performing online recovery, we specify <literal>postgres</literal> user in <xref linkend="GUC-RECOVERY-USER">.
-     Then, we create <filename>recovery_1st_stage</filename> and <filename>pgpool_remote_start</filename> 
+     Then, we create <filename>recovery_1st_stage</filename> and <filename>pgpool_remote_start</filename>
      in database cluster directory of <productname>PostgreSQL</productname> primary server (server1), and add execute permission.
 
    </para>
@@ -738,16 +744,22 @@ PGHOME=/usr/pgsql-13
    </programlisting>
 
    <para>
-    In order to use the online recovery functionality, the functions of 
-    <function>pgpool_recovery</function>, <function>pgpool_remote_start</function>, 
-    <function>pgpool_switch_xlog</function> are required, so we need install 
-    <function>pgpool_recovery</function> on template1 of <productname>PostgreSQL</productname> server 
+    In order to use the online recovery functionality, the functions of
+    <function>pgpool_recovery</function>, <function>pgpool_remote_start</function>,
+    <function>pgpool_switch_xlog</function> are required, so we need install
+    <function>pgpool_recovery</function> on template1 of <productname>PostgreSQL</productname> server
     <literal>server1</literal>.
    </para>
    <programlisting>
 [server1]# su - postgres
 [server1]$ psql template1 -c "CREATE EXTENSION pgpool_recovery"
    </programlisting>
+   <note>
+    <para>
+     The <filename>recovery_1st_stage</filename> script does not support tablespaces.
+     If you are using tablespaces, you need to modify the script to support tablespaces.
+    </para>
+   </note>
   </sect3>
 
   <sect3 id="example-cluster-pgpool-config-auth">
