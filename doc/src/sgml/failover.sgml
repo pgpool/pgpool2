@@ -136,16 +136,16 @@
 	 <entry>Database cluster directory of the detached node</entry>
 	</row>
 	<row>
-	 <entry>%M</entry>
-	 <entry>Old master node ID</entry>
-	</row>
-	<row>
 	 <entry>%m</entry>
 	 <entry>New master node ID</entry>
 	</row>
 	<row>
 	 <entry>%H</entry>
 	 <entry>Hostname of the new master node</entry>
+	</row>
+	<row>
+	 <entry>%M</entry>
+	 <entry>Old master node ID</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>
@@ -272,16 +272,16 @@
 	 <entry>Database cluster directory of the attached node</entry>
 	</row>
 	<row>
-	 <entry>%M</entry>
-	 <entry>Old master node ID</entry>
-	</row>
-	<row>
 	 <entry>%m</entry>
 	 <entry>New master node ID</entry>
 	</row>
 	<row>
 	 <entry>%H</entry>
 	 <entry>Hostname of the new master node</entry>
+	</row>
+	<row>
+	 <entry>%M</entry>
+	 <entry>Old master node ID</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>

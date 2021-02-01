@@ -127,13 +127,6 @@
 	 <entry>切り離されたノードのデータベースクラスタパス</entry>
 	</row>
 	<row>
-	 <entry>%M</entry>
-	 <!--
-	 <entry>Old master node ID</entry>
-	 -->
-	 <entry>古いマスターノードのID</entry>
-	</row>
-	<row>
 	 <entry>%m</entry>
 	 <!--
 	 <entry>New master node ID</entry>
@@ -146,6 +139,13 @@
 	 <entry>Hostname of the new master node</entry>
 	 -->
 	 <entry>新しいマスターノードのホスト名</entry>
+	</row>
+	<row>
+	 <entry>%M</entry>
+	 <!--
+	 <entry>Old master node ID</entry>
+	 -->
+	 <entry>古いマスターノードのID</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>
@@ -323,13 +323,6 @@
 	 <entry>復帰したノードのデータベースクラスタパス</entry>
 	</row>
 	<row>
-	 <entry>%M</entry>
-	 <!--
-	 <entry>Old master node ID</entry>
-	 -->
-	 <entry>古いマスターノードのID</entry>
-	</row>
-	<row>
 	 <entry>%m</entry>
 	 <!--
 	 <entry>New master node ID</entry>
@@ -342,6 +335,13 @@
 	 <entry>Hostname of the new master node</entry>
 	 -->
 	 <entry>新しいマスターノードのホスト名</entry>
+	</row>
+	<row>
+	 <entry>%M</entry>
+	 <!--
+	 <entry>Old master node ID</entry>
+	 -->
+	 <entry>古いマスターノードのID</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>
