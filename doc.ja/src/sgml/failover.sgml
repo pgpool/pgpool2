@@ -306,7 +306,7 @@
       <productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。
      </para>
 
-     <table id="ffailback-command-table">
+     <table id="failback-command-table">
       <!--
       <title>failback command options</title>
       -->
@@ -353,13 +353,6 @@
 	 <entry>復帰したノードのデータベースクラスタパス</entry>
 	</row>
 	<row>
-	 <entry>%M</entry>
-	 <!--
-	 <entry>Old main node ID</entry>
-	 -->
-	 <entry>古いメインノードのID</entry>
-	</row>
-	<row>
 	 <entry>%m</entry>
 	 <!--
 	 <entry>New main node ID</entry>
@@ -372,6 +365,13 @@
 	 <entry>Hostname of the new main node</entry>
 	 -->
 	 <entry>新しいメインノードのホスト名</entry>
+	</row>
+	<row>
+	 <entry>%M</entry>
+	 <!--
+	 <entry>Old main node ID</entry>
+	 -->
+	 <entry>古いメインノードのID</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>
