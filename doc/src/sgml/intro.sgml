@@ -74,11 +74,61 @@
   <title> What is <productname>Pgpool-II</productname>?</title>
 
   <para>
-   <productname>Pgpool-II</productname> is a proxy software that sits
-   between <productname>PostgreSQL</productname> servers and a
-   <productname>PostgreSQL</productname> database client. It provides
-   the following features:
+   <productname>Pgpool-II</productname> manages a
+   <firstterm>pool</firstterm> of
+   <productname>PostgreSQL</productname> servers to achieve some
+   features that are not available with single
+   <productname>PostgreSQL</productname> installation. The fearures
+   include:
 
+   <variablelist>
+
+    <varlistentry>
+     <term>High Availability</term>
+     <listitem>
+      <para>
+       <productname>Pgpool-II</productname> provides a high
+       availability (HA) feature by using multiple
+       <productname>PostgreSQL</productname> servers so that it
+       automatically removes broken server from the server pool to
+       continue the database task. This is called <firstterm>automatic
+       failover</firstterm>. Also <productname>Pgpool-II</productname>
+       offers an HA feature for <productname>Pgpool-II</productname>
+       itself, called <firstterm>Watchdog</firstterm> (see <xref
+       linkend="tutorial-watchdog"> for more details). Moreover
+       <productname>Pgpool-II</productname> hires sophoiscated
+       <firstterm>quorum</firstterm> algorithm to aovid false positive
+       errors and split brain problem to make the whole HA system
+       highly reliable. See <xref
+       linkend="config-watchdog-failover-behavior"> for more details.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Load balancing</term>
+     <listitem>
+      <para>
+       <productname>Pgpool-II</productname> distributes read queries
+       over multiple <productname>PostgreSQL</productname> servers to
+       gain higher performance. This feature is called <firstterm>load
+       balancing</firstterm>. Write queries are sent to either the
+       primary server (in streaming replication mode) or all servers
+       (in native replication mode and snapshot isolation mode). See
+       <xref linkend="running-mode"> for more details about these
+       mode. In any case, <productname>Pgpool-II</productname>
+       automatically distinguish the read queries from the write
+       queries.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  <para>
+   Besides these essential features, <productname>Pgpool-II</productname> also provides useful
+   features such as:
+  </para>
+  <para>
    <variablelist>
 
     <varlistentry>
@@ -96,37 +146,6 @@
     </varlistentry>
 
     <varlistentry>
-     <term>Load Balancing</term>
-     <listitem>
-      <para>
-       If a database is replicated (because running in either
-       replication mode or native replication mode), performing a SELECT
-       query on any server will return the same result. <productname>Pgpool-II</productname>
-       takes advantage of the replication feature in order to reduce
-       the load on each PostgreSQL server.  It does that by
-       distributing SELECT queries among available servers, improving
-       the system's overall throughput. In an ideal scenario, read
-       performance could improve proportionally to the number of
-       PostgreSQL servers. Load balancing works best in a scenario
-       where there are a lot of users executing many read-only
-       queries at the same time.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>Automated fail over</term>
-     <listitem>
-      <para>
-       If one of the database servers goes down or becomes unreachable,
-       <productname>Pgpool-II</productname> will detach it and will continue operations by using the rest
-       of database servers. There are some sophisticated features that
-       help the automated failover including timeouts and retries.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term>Online Recovery</term>
      <listitem>
       <para>
@@ -135,24 +154,6 @@
        automated fail over, a detached node by fail over is possible to attach as
        standby node automatically. It is possible to synchronize and attach new
        <productname>PostgreSQL</productname> server too.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>Replication</term>
-     <listitem>
-      <para>
-       <productname>Pgpool-II</productname> can manage
-       multiple <productname>PostgreSQL</productname>
-       servers. Activating the replication feature makes it possible
-       to create a real time backup on 2 or
-       more <productname>PostgreSQL</productname> clusters, so that
-       the service can continue without interruption if one of those
-       clusters fails. <productname>Pgpool-II</productname> has
-       built-in replication (native replication). However user can
-       use external replication features including streaming
-       replication of <productname>PostgreSQL</productname>.
       </para>
      </listitem>
     </varlistentry>
@@ -222,21 +223,21 @@
   </para>
 
   <para>
-   <productname>Pgpool-II</productname> works on Linux, Solaris,
-   FreeBSD, and most of the UNIX-like architectures. Windows is not
+   <productname>Pgpool-II</productname> works on Linux, FreeBSD, and
+   most of the UNIX-like architectures. Windows is not
    supported. Supported PostgreSQL server's versions are 7.4 and
-   higher. You must also make
-   sure that all of your <productname>PostgreSQL</productname>
-   servers are using the same major version. In addition to this, we
-   do not recommend mixing
-   different <productname>PostgreSQL</productname> installation with
-   different build options: including supporting SSL or not, to use
-   --disable-integer-datetimes or not, different block size. These
-   might affect part of functionality
-   of <productname>Pgpool-II</productname>. The difference of
-   <productname>PostgreSQL</productname> minor versions is not
-   usually a problem. However we do not test every occurrence of
-   minor versions and we recommend to use exact same minor version of
+   higher (some of the features may not work with older versions of
+   <productname>PostgreSQL</productname>). You must also make sure
+   that all of your <productname>PostgreSQL</productname> servers are
+   using the same major version. In addition to this, we do not
+   recommend mixing different <productname>PostgreSQL</productname>
+   installation with different build options: including supporting SSL
+   or not, to use --disable-integer-datetimes or not, different block
+   size. These might affect part of functionality of
+   <productname>Pgpool-II</productname>. The difference of
+   <productname>PostgreSQL</productname> minor versions is not usually
+   a problem. However we do not test every occurrence of minor
+   versions and we recommend to use exact same minor version of
    <productname>PostgreSQL</productname>.
   </para>
 
