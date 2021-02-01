@@ -300,16 +300,16 @@
 	 <entry>Database cluster directory of the attached node</entry>
 	</row>
 	<row>
-	 <entry>%M</entry>
-	 <entry>Old main node ID</entry>
-	</row>
-	<row>
 	 <entry>%m</entry>
 	 <entry>New main node ID</entry>
 	</row>
 	<row>
 	 <entry>%H</entry>
 	 <entry>Hostname of the new main node</entry>
+	</row>
+	<row>
+	 <entry>%M</entry>
+	 <entry>Old main node ID</entry>
 	</row>
 	<row>
 	 <entry>%P</entry>
