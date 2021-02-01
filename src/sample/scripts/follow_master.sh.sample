@@ -6,19 +6,19 @@ set -o xtrace
 exec > >(logger -i -p local1.info) 2>&1
 
 # Special values:
-#   %d = failed node id
-#   %h = failed node hostname
-#   %p = failed node port number
-#   %D = failed node database cluster path
-#   %m = new master node id
-#   %H = new master node hostname
-#   %M = old master node id
-#   %P = old primary node id
-#   %r = new master port number
-#   %R = new master database cluster path
-#   %N = old primary node hostname
-#   %S = old primary node port number
-#   %% = '%' character
+# 1)  %d = failed node id
+# 2)  %h = failed node hostname
+# 3)  %p = failed node port number
+# 4)  %D = failed node database cluster path
+# 5)  %m = new primary node id
+# 6)  %H = new primary node hostname
+# 7)  %M = old master node id
+# 8)  %P = old primary node id
+# 9)  %r = new primary port number
+# 10) %R = new primary database cluster path
+# 11) %N = old primary node hostname
+# 12) %S = old primary node port number
+# 13) %% = '%' character
 
 FAILED_NODE_ID="$1"
 FAILED_NODE_HOST="$2"
