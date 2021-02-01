@@ -37,7 +37,7 @@
    linkend="guc-heartbeat-port">heartbeat listen port number</link> be
    9694.  Notice that only heartbeat port uses UDP and others use TCP.
    -->
-   以下の例では、<link linkend="guc-port">Pgpool-IIの受付ポート番号</link>を9999、<link linkend="guc-pcp-port">PCPの受付ポート番号</link>を9898、<link linkend="guc-wd-port">watchdogの受付ポート番号</link>を9000、<link linkend="guc-heartbeat-port">heartbeatの受付ポート番号</link>を9694とします。
+   以下の例では、<link linkend="guc-port">Pgpool-IIの受付ポート番号</link>を9999、<link linkend="guc-pcp-port">PCPの受付ポート番号</link>を9898、<link linkend="guc-wd-port">watchdogの受付ポート番号</link>を9000、<link linkend="guc-wd-heartbeat-port">heartbeatの受付ポート番号</link>を9694とします。
    まず、<productname>Pgpool-II</productname>の使用するポートを開放します。
    heartbeatのポートのみUDPで、それ以外はすべてTCPであることに注意してください。
 

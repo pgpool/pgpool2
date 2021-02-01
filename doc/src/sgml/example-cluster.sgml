@@ -556,6 +556,12 @@ PCP_USER=pgpool
 [all servers]$ echo 'localhost:9898:pgpool:&lt;pgpool user password&gt;' &gt; ~/.pcppass
 [all servers]$ chmod 600 ~/.pcppass
    </programlisting>
+   <note>
+    <para>
+     The <filename>follow_master.sh</filename> script does not support tablespaces.
+     If you are using tablespaces, you need to modify the script to support tablespaces.
+    </para>
+   </note>
   </sect3>
 
   <sect3 id="example-cluster-pgpool-config-online-recovery">
@@ -614,6 +620,12 @@ PGHOME=/usr/pgsql-11
 [server1]# su - postgres
 [server1]$ psql template1 -c "CREATE EXTENSION pgpool_recovery"
    </programlisting>
+   <note>
+    <para>
+     The <filename>recovery_1st_stage</filename> script does not support tablespaces.
+     If you are using tablespaces, you need to modify the script to support tablespaces.
+    </para>
+   </note>
   </sect3>
 
   <sect3 id="example-cluster-pgpool-config-auth">
