@@ -711,6 +711,9 @@ static pid_t worker_fork_a_child(ProcessType type, void (*func) (), void *params
 		/* Set the process type variable */
 		processType = type;
 
+		ereport(LOG,
+				(errmsg("process started")));
+
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
 		health_check_timer_expired = 0;
@@ -2623,6 +2626,7 @@ reaper(void)
 		bool		restart_child = true;
 		bool		found = false;
 		char	   *exiting_process_name = process_name_from_pid(pid);
+		bool		process_health_check = false;
 
 		/*
 		 * Check if the terminating child wants pgpool main to go down with it
@@ -2749,6 +2753,8 @@ reaper(void)
 		/* Check health check process */
 		if (found == false)
 		{
+			process_health_check = true;
+
 			for (i = 0; i < NUM_BACKENDS; i++)
 			{
 				if (pid == health_check_pids[i])
@@ -2778,9 +2784,12 @@ reaper(void)
 		}
 		else
 		{
-			/* And the child was not restarted */
-			ereport(LOG,
-					(errmsg("%s process with pid: %d exited with success and will not be restarted", exiting_process_name, pid)));
+			if (process_health_check == false)
+			{
+				/* And the child was not restarted */
+				ereport(LOG,
+						(errmsg("%s process with pid: %d exited with success and will not be restarted", exiting_process_name, pid)));
+			}
 		}
 
 	}
