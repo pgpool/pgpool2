@@ -176,6 +176,13 @@ get_config(int *nrows)
 
 	i = 0;
 
+	/* CLUSTERING MODE */
+
+	StrNCpy(status[i].name, "backend_clustering_mode", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->backend_clustering_mode);
+	StrNCpy(status[i].desc, "clustering mode", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* CONNECTIONS */
 
 	/* - pgpool Connection Settings - */
@@ -444,11 +451,6 @@ get_config(int *nrows)
 	i++;
 
 	/* REPLICATION MODE */
-
-	StrNCpy(status[i].name, "replication_mode", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replication_mode);
-	StrNCpy(status[i].desc, "non 0 if operating in replication mode", POOLCONFIG_MAXDESCLEN);
-	i++;
 
 	StrNCpy(status[i].name, "replicate_select", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->replicate_select);
