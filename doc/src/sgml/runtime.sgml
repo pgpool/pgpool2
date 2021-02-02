@@ -193,51 +193,72 @@
     <productname>Pgpool-II</>: streaming replication mode, logical
     replication mode, main replica mode (slony mode), native
     replication mode, raw mode and snapshot isolation mode. In any
-    mode, <productname>Pgpool-II</> provides connection pooling,
-    and automatic fail over.
-    Online recovery can be used only with streaming replication mode and native replication mode.
+    mode, <productname>Pgpool-II</> provides connection pooling, and
+    automatic fail over.  Online recovery can be used only with
+    streaming replication mode, snapshot isolation mode and native
+    replication mode.  See <xref linkend="runtime-online-recovery">
+    for more details of online recovery.
    </para>
 
    <para>
     Those modes are exclusive each other and cannot be changed after
     starting the server. You should make a decision which to use in
     the early stage of designing the system. If you are not sure, it
-    is recommended to use the streaming replication mode.
+    is recommended to use the streaming replication mode or the
+    snapshot isolation mode.
    </para>
 
    <para>
-    The <firstterm>streaming replication mode</firstterm> can be
-    used with <productname>PostgreSQL</> servers operating streaming
+    The <firstterm>streaming replication mode</firstterm> can be used
+    with <productname>PostgreSQL</> servers operating streaming
     replication. In this mode, <productname>PostgreSQL</> is
-    responsible for synchronizing databases. This mode is widely
-    used and most recommended way to
-    use <productname>Pgpool-II</>. Load balancing is possible in the
-    mode.
+    responsible for synchronizing databases. This mode is widely used
+    and most recommended way to use <productname>Pgpool-II</>. Load
+    balancing is possible in the mode. visibility consistency among
+    nodes is not guaranteed.
    </para>
 
    <para>
-    In the <firstterm>native replication
-     mode</firstterm>, <productname>Pgpool-II</> is responsible for
-    synchronizing databases. The advantage for the mode is the
-    synchronization is done in synchronous way: writing to the
-    database does not return until all of <productname>PostgreSQL</>
-    servers finish the write operation. However, you could get a
-    similar effect using <productname>PostgreSQL</> 9.6 or later
-    with <literal>synchronous_commit = remote_apply</literal> being
-    set in streaming replication. If you could use the setting, we
-    strongly recommend to use it instead of native replication mode
-    because you can avoid some <xref linkend="restrictions"> in the
-     native replication mode.  Since <productname>PostgreSQL</> does
-     not provide cross node snapshot control, it is possible that
-     session X can see data on node A committed by session Y before
-     session Y commits data on node B. If session X tries to update
-     data on node B based on the data seen on node A, then data
-     consistency between node A and B might be lost. To avoid the
-     problem, user need to issue an explicit lock on the data. This is
-     another reason why we recommend to use streaming replication
-     mode with <literal>synchronous_commit = remote_apply</literal>.
+    In the <firstterm>snapshot isolation mode</firstterm>
+    <productname>Pgpool-II</> is responsible for synchronizing
+    databases. The advantage for the mode is the synchronization is
+    done in synchronous way: writing to the database does not return
+    until all of <productname>PostgreSQL</> servers finish the write
+    operation. Also it guarantees the visibility consistency among
+    nodes. To put it simply, it means that the visibility rule of
+    transactions on single server is applied to a cluster consisting
+    of multiple servers as well.  This is a remarkable feature of the
+    snapshot isolation mode in
+    <productname>Pgpool-II</productname>. In fact, the snapshot
+    isolation mode in <productname>Pgpool-II</productname> is the only
+    system which guarantees the visibility consistency among nodes
+    without modifications to <productname>PostgreSQL</> at the moment.
+    Because of this, applications do not need to recognize that they
+    are using a cluster consisting of
+    <productname>PostgreSQL</productname> servers, rather than a
+    single <productname>PostgreSQL</productname> system.  However in
+    this mode the transaction isolation level <emphasis>must be
+    REPEATABLE READ</emphasis>.  You need to set
+    <filename>postgresql.conf</filename> like this:
+    <programlisting>
+     default_transaction_isolation = 'repeatable read'
+    </programlisting>
    </para>
    <para>
+    Also you need to aware that performance in the mode may be worse
+    than the streaming replication mode and native replication mode
+    due to the overhead to keep the consistency in transactions.
+   </para>
+   
+   <para>
+    In the <firstterm>native replication mode</firstterm>,
+    <productname>Pgpool-II</> is responsible for synchronizing
+    databases. The advantage for the mode is the synchronization is
+    done in synchronous way: writing to the database does not return
+    until all of <productname>PostgreSQL</> servers finish the write
+    operation. As visibility consistency among nodes is not
+    guaranteed, it is recommended to use the snapshot isolation mode
+    except you want to use other than REPEATABLE READ isolation mode.
     Load balancing is possible in the mode.
    </para>
 
@@ -255,7 +276,7 @@
    </para>
 
    <para>
-    The <firstterm>main replica mode</firstterm> mode (slony mode)
+    The <firstterm>main replica mode</firstterm> (slony mode)
     can be used with <productname>PostgreSQL</> servers
     operating <productname>Slony</>. In this
     mode, <productname>Slony</>/<productname>PostgreSQL</> is
@@ -266,36 +287,6 @@
     use <productname>Slony</>. Load balancing is possible in the
     mode.
    </para>
-
-   <para>
-    The <firstterm>snapshot isolation mode</firstterm> is similar to
-    the native replication mode and it adds the visibility consistency
-    among nodes.  Please note that there are some limitations in this
-    mode and currently (in <productname>Pgpool-II</productname> 4.2)
-    this mode is regarded as "experimental" implementation. Be warned
-    that careful testings are required before you implement this in a
-    production system.
-   </para>
-   <itemizedlist>
-    <listitem>
-     <para>
-      It is necessary to set the transaction isolation level to
-      REPEATABLE READ.  That means you need to set it in
-      <filename>postgresql.conf</filename> like this:
-      <programlisting>
-       default_transaction_isolation = 'repeatable read'
-      </programlisting>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Consistent visibility in SERIAL data type and sequences are not
-      guaranteed.
-     </para>
-    </listitem>
-
-   </itemizedlist>
 
    <para>
     In the <firstterm>raw

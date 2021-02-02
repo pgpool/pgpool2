@@ -290,80 +290,45 @@
    <para>
     <productname>Pgpool-II</>にはストリーミングレプリケーションモード、ロジカルレプリケーションモード、メインレプリカモード(Slonyモード)、ネイティブレプリケーションモード、スナップショットアイソレーションモード、rawモードの6つのクラスタリングモードがあります。
     いずれのモードにおいても、<productname>Pgpool-II</>はコネクションプーリング、自動フェイルオーバの機能を提供します。
-    ストリーミングレプリケーションモードとネイティブレプリケーションモードのときにのみオンラインリカバリが利用可能です。
+    ストリーミングレプリケーションモード、ネイティブレプリケーションモード、スナップショットアイソレーションモードでは、更新処理を受け付けながらデータベースノードの同期を取り直すオンラインリカバリが利用可能です。
+    オンラインリカバリの詳細については<xref linkend="runtime-online-recovery">を参照してください。
    </para>
 
    <para>
-    <!--
-    Those modes are exclusive each other and cannot be changed after
-    starting the server. You should make a decision which to use in
-    the early stage of designing the system. If you are not sure, it
-    is recommended to use the streaming replication mode.
-    -->
     これらのモードは互いに排他的であり、サーバ起動後は変更することができません。
     システム設計の初期の段階でどのモードを使うか決めなければなりません。
-    どれを使えば良いかわからない場合は、ストリーミングレプリケーションモードを使うことを推奨します。
+    どれを使えば良いかわからない場合は、ストリーミングレプリケーションモードかスナップショットアイソレーションモードを使うことを推奨します。
    </para>
 
    <para>
-    <!--
-    The streaming replication mode can be used with <productname>PostgreSQL</> servers
-    operating streaming replication. In this mode, <productname>PostgreSQL</> is
-    responsible for synchronizing databases. This mode is widely used
-    and most recommended way to use <productname>Pgpool-II</>. Load balancing is
-    possible in the mode.
-    -->
-    <firstterm>ストリーミングレプリケーションモード</firstterm>はストリーミングレプリケーションを使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。
+    <firstterm>ストリーミングレプリケーションモード</firstterm>はストリーミングレプリケーションを使用する<productname>PostgreSQL</>サーバ(AWSのAuroa、RDSを含みます)と一緒に使うことができます。
     このモードでは、<productname>PostgreSQL</>がデータベースを同期する責任を持ちます。
     このモードは広く使われており、最も推奨される<productname>Pgpool-II</>の使用法です。
     このモードでは負荷分散が可能です。
+    ノードをまたがる可視性の一貫性は保証されません。
    </para>
 
    <para>
-    <!--
-    In the <firstterm>native replication
-    mode</firstterm>, <productname>Pgpool-II</> is responsible for
-    synchronizing databases. The advantage for the mode is the
-    synchronization is done in synchronous way: writing to the
-    database does not return until all of <productname>PostgreSQL</>
-    servers finish the write operation. However, you could get a
-    similar effect using <productname>PostgreSQL</> 9.6 or later
-    with <literal>synchronous_commit = remote_apply</literal> being
-    set in streaming replication. If you could use the setting, we
-    strongly recommend to use it instead of native replication mode
-    because you can avoid some <xref linkend="restrictions"> in the
-    native replication mode.  Since <productname>PostgreSQL</> does
-    not provide cross node snapshot control, it is possible that
-    session X can see data on node A committed by session Y before
-    session Y commits data on node B. If session X tries to update
-    data on node B based on the data seen on node A, then data
-    consistency between node A and B might be lost. To avoid the
-    problem, user need to issue an explict lock on the data. This is
-    another why reason we recommend to use streaming replication
-    mode with <literal>synchronous_commit = remote_apply</literal>.
-   </para>
-    <para>
-    Load balancing is possible in the mode.
+    <firstterm>スナップショットアイソレーションモード</firstterm>では、<productname>Pgpool-II</productname>がデータベースを同期する責任を持ちます。
+    このモードの利点はデータベース同期が同期的に行われることです。
+    すなわち、データベースへの書き込みは全ての<productname>PostgreSQL</productname>サーバが書き込み操作を完了するまで返ってきません。
+    また、スナップショットアイソレーションモードは、ノードをまたがる可視性の一貫性を保証します。
+    これは簡単に言うと、単一サーバ上のトランザクション可視性ルールがそのまま複数サーバからなるクラスタでも適用されるということで、<productname>Pgpool-II</productname>のスナップショットアイソレーションモードが持つ著しい特徴です。
+    実際、<productname>PostgreSQL</productname>に改造を加えずにノードをまたがる可視性の一貫性を保証するシステムは、現時点では<productname>Pgpool-II</productname>のスナップショットアイソレーションモードだけです。
+    これにより、アプリケーションは単一の<productname>PostgreSQL</productname>ではなく複数<productname>PostgreSQL</productname>からなるクラスタを使っていることを意識しないで済むメリットがあります。
+    ただし、このモードではトランザクション分離レベルを<emphasis>REPEATABLE READにする必要があります</emphasis>。
+      具体的には、<filename>postgresql.conf</filename>に以下のように記述します。
+      <programlisting>
+       default_transaction_isolation = 'repeatable read'
+      </programlisting>
+    また、トランザクションの一貫性を保つ仕組みのオーバヘッドにより、ストリーミングレプリケーションモードやネイティブレプリケーションモードに比べると性能が低下します。
    </para>
 
-    <para>
-    In the <firstterm>raw
-    mode</firstterm>, <productname>Pgpool-II</> does not care about
-    the database synchronization. It's user's responsibility to make
-    the whole system does a meaningfull thing. Load balancing
-    is <emphasis>not</emphasis> possible in the mode.
-    -->
+   <para>
     <firstterm>ネイティブレプリケーションモード</firstterm>では、<productname>Pgpool-II</>がデータベースを同期する責任を持ちます。
     このモードの利点は同期が同期的に行われることです。
     すなわち、データベースへの書き込みは全ての<productname>PostgreSQL</>サーバが書き込み操作を完了するまで返ってきません。
-    しかし、<productname>PostgreSQL</> 9.6以降では、ストリーミングレプリケーションで<literal>synchronous_commit = remote_apply</literal>と設定することにより、同様の効果が得られます。
-    ネイティブレプリケーションモードの<xref linkend="restrictions">を回避できるので、この設定が使える場合には、ネイティブレプリケーションモードではなくてこの設定を使うことをお勧めします。
-     <productname>PostgreSQL</>はノードをまたがるスナップショット管理を提供しないため、セッションYがノードBでコミットする前に、ノードAでコミットしたデータをセッションXが見ることがあり得ます。
-     もしセッションXが、そのときノードAで見た見たデータに基づいてノードBのデータを更新しようとすると、ノードAとノードBのデータ一貫性は損なわれるかもしれません。
-     この問題を回避するには、ユーザは明示的にノードAのデータをロックしなければなりません。
-     これがストリーミングレプリケーションと<literal>synchronous_commit = remote_apply</literal>を使用することをおすすめするもう一つの理由です。
-   </para>
-   <para>
+    このモードではノードをまたがる可視性の一貫性は保証されないので、トランザクション分離レベルをREPEATABLE READに限定したくない場合を除き、スナップショットアイソレーションモードを使うことをお勧めします。
     このモードでは負荷分散が可能です。
    </para>
 
@@ -407,29 +372,6 @@
     このモードでは負荷分散が可能です。
    </para>
 
-   <para>
-    <firstterm>スナップショットアイソレーションモード</firstterm>は、ネィティブレプリケーションモードと似ていますが、更にノードをまたがる可視性の一貫性を保証します。
-    ただし、制限事項がいくつかあり、今の所(<productname>Pgpool-II</productname> 4.2)では「実験的な実装」という位置づけです。
-    業務で使用する場合には慎重なテストをお勧めします。
-   </para>
-   <itemizedlist>
-    <listitem>
-     <para>
-      PostgreSQLのトランザクション分離レベルをREPEATABLE READにする必要があります。
-      具体的には、<filename>postgresql.conf</filename>に以下のように記述します。
-      <programlisting>
-       default_transaction_isolation = 'repeatable read'
-      </programlisting>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      シリアル型やシーケンスに関する一貫した可視性を保証しません。
-     </para>
-    </listitem>
-
-   </itemizedlist>
 
    <para>
     <!--
