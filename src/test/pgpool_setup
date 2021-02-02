@@ -724,8 +724,7 @@ echo "PGPOOL_INSTALL_DIR=$PGPOOL_INSTALL_DIR" >> $STARTALL
 chmod 755 $STARTALL
 echo 'dir=`pwd`' > $SHUTDOWNALL
 echo "PGPOOL_INSTALL_DIR=$PGPOOL_INSTALL_DIR" >> $SHUTDOWNALL
-echo '$PGPOOL_INSTALL_DIR/bin/pgpool -f $dir/etc/pgpool.conf -m f stop' >> $SHUTDOWNALL
-echo 'while [ -f $dir/run/pgpool.pid ];do sleep 1;done' >> $SHUTDOWNALL
+echo '$PGPOOL_INSTALL_DIR/bin/pgpool -f $dir/etc/pgpool.conf -m f stop && while [ -f $dir/run/pgpool.pid ];do sleep 1;done' >> $SHUTDOWNALL
 if [ $CHECK_TIME_WAIT != "false" ];then
    echo "while  netstat -a|grep $ORIGBASEPORT ;do sleep 1;done" >> $SHUTDOWNALL
 fi
