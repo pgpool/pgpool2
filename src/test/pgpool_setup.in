@@ -351,7 +351,7 @@ function set_postgresql_conf
 
 	if [ $MODE = "s" ];then
 		echo "hot_standby = on" >> $PGCONF
-		echo "wal_level = hot_standby" >> $PGCONF
+		echo "wal_level = 'hot_standby'" >> $PGCONF
 
 		if [ $USE_REPLICATION_SLOT = "false" ];then
 		    echo "archive_mode = on" >> $PGCONF
@@ -361,12 +361,12 @@ function set_postgresql_conf
 		    echo "max_replication_slots = $num_slots" >> $PGCONF
 		fi
 
-	elif [ $MODE = 'r' -o $MODE = 'l' -o $MODE = 'y' -o $MODE = 'i' ];then
-		echo "wal_level = archive" >> $PGCONF
+	elif [ $MODE = 'r' -o $MODE = 'n' -o $MODE = 'l' -o $MODE = 'y' -o $MODE = 'i' ];then
+		echo "wal_level = 'archive'" >> $PGCONF
 		echo "archive_mode = on" >> $PGCONF
 		echo "archive_command = 'cp %p $BASEDIR/archivedir/`basename $1`/%f </dev/null'" >> $PGCONF
 		if [ $MODE = 'l' ];then
-		    echo "wal_level = logical" >> $PGCONF
+		    echo "wal_level = 'logical'" >> $PGCONF
 		fi
 	fi
 
