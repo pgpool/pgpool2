@@ -3695,7 +3695,7 @@ static void sync_backend_from_watchdog(void)
 		 * restart all child processes
 		 */
 		ereport(LOG,
-			(errmsg("node status was chenged after the sync from \"%s\"",backendStatus->nodeName),
+				(errmsg("node status was changed after the sync from \"%s\"", backendStatus->nodeName),
 				 errdetail("all children needs to be restarted as we are not in streaming replication mode")));
 		need_to_restart_children = true;
 		partial_restart = false;
@@ -3708,9 +3708,8 @@ static void sync_backend_from_watchdog(void)
 		need_to_restart_children = true;
 		partial_restart = false;
 		ereport(LOG,
-			(errmsg("primary node was chenged after the sync from \"%s\"",backendStatus->nodeName),
-				errdetail("all children needs to be restarted")));
-
+				(errmsg("primary node was changed after the sync from \"%s\"", backendStatus->nodeName),
+				 errdetail("all children needs to be restarted")));
 	}
 	else
 	{
