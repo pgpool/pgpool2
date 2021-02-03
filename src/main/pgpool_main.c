@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -4009,7 +4009,7 @@ sync_backend_from_watchdog(void)
 		 * processes
 		 */
 		ereport(LOG,
-				(errmsg("node status was chenged after the sync from \"%s\"", backendStatus->nodeName),
+				(errmsg("node status was changed after the sync from \"%s\"", backendStatus->nodeName),
 				 errdetail("all children needs to be restarted as we are not in streaming replication mode")));
 		need_to_restart_children = true;
 		partial_restart = false;
@@ -4022,7 +4022,7 @@ sync_backend_from_watchdog(void)
 		need_to_restart_children = true;
 		partial_restart = false;
 		ereport(LOG,
-				(errmsg("primary node was chenged after the sync from \"%s\"", backendStatus->nodeName),
+				(errmsg("primary node was changed after the sync from \"%s\"", backendStatus->nodeName),
 				 errdetail("all children needs to be restarted")));
 
 	}
