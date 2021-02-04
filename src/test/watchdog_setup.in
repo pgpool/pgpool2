@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2013-2019 PgPool Global Development Group
+# Copyright (c) 2013-2021 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby
@@ -298,11 +298,15 @@ do
     $PGPOOL_SETUP -m $MODE -p $port -pg $PGBASEPORT
     set_watchdog_params $cnt $W_NUM_PGPOOL $W_BASE_PORT
 
-    # remove "pg_ctl start" line from startall/shutdownall script in other than pgpool0
     if [ $cnt != 0 ]
     then
+	# remove "pg_ctl start" line from startall/shutdownall script in other than pgpool0
 	sed -i '/.*data.*/d' startall
 	sed -i '/.*data.*/d' shutdownall
+
+	# replace database cluster path to pgpool0 so that pgpool1 etc. share the cluster
+	PGPOOLCONF=etc/pgpool.conf
+	sed -i "/backend_data_directory/s/pgpool$cnt/pgpool0/g" $PGPOOLCONF
     fi
 
     echo "cd pgpool$cnt" >> $STARTALL
