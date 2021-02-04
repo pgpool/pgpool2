@@ -625,40 +625,17 @@ backend_clustering_mode = 'streaming_replication'
    また、スタンバイサーバをまったく使用しないことも可能です。
   </para>
   <para>
+   このモードの難点は、検索問い合わせを負荷分散させた時に、スタンバイサーバのレプリケーション遅延を意識しなければならない点です。
+   ノードをまたがる可視性の一貫性も保証されません。
+   この問題を改善するために多くの追加パラメータが用意されていますが、そのことが管理を難しくする場合もあります。
+   また、プライマリサーバがダウンしてスタンバイが昇格する場合にフェイルオーバの時間がかかることがあります。
+   こうした問題を避けたい場合は、<link linkend="guc-snapshot-isolation-mode">スナップショットアイソレーションモード</link>をご検討ください。
+  </para>
+  <para>
    ストリーミングレプリケーションモードで使用する追加のパラメータについては<xref linkend="runtime-streaming-replication-check">をご覧ください。
   </para>
  </sect2>
  
- <sect2 id="runtime-config-logical-replication-mode">
-  <title>ロジカルレプリケーションモード</title>
-
-  <para>
-   このモードは最近追加されました。
-   このモードでは<productname>PostgreSQL</productname>が個々のサーバをレプリケーションします。
-   このモードを有効にするには<varname>backend_clustering_mode</varname>に'logical_replication'を設定してください。
-    <programlisting>
-backend_clustering_mode = 'logical_replication'
-    </programlisting>
-   このモードでは127台までのロジカルレプリケーションストリーミングレプリケーションスタンバイサーバを使用できます。
-   また、スタンバイサーバをまったく使用しないことも可能です。
-  </para>
- </sect2>
-
- <sect2 id="runtime-config-slony-mode">
-  <title>Slonyモード</title>
-
-  <para>
-   このモードでは<productname>Pgpool-II</productname>を<acronym>Slony-I</acronym>と組み合わせて使用します。
-   Slony-Iが実際にデータのレプリケーションを行います。
-   このモードを有効にするには<varname>backend_clustering_mode</varname>に'slony'を設定してください。
-    <programlisting>
-backend_clustering_mode = 'slony'
-    </programlisting>
-   このモードでは127台までのレプリカサーバを使用できます。
-   また、レプリカサーバをまったく使用しないことも可能です。
-  </para>
- </sect2>
-
  <sect2 id="guc-replication-mode" xreflabel="native_replication_mode">
   <title>ネイティブレプリケーションモード</title>
 
@@ -672,6 +649,8 @@ backend_clustering_mode = 'slony'
     <programlisting>
 backend_clustering_mode = 'native_replication'
     </programlisting>
+   このモードでは127台までのレプリカサーバを使用できます。
+   また、レプリカサーバをまったく使用しないことも可能です。
   </para>
 
   <para>
@@ -680,8 +659,15 @@ backend_clustering_mode = 'native_replication'
    also be used with replication mode to distribute the load to the
    attached backend nodes.
    -->
-   参照負荷をスタンバイバックエンドノードに振り分ける負荷分散（<xref linkend="runtime-config-load-balancing">を参照）もレプリケーションモードと共に使用可能です。
+   参照負荷をバックエンドノードに振り分ける負荷分散（<xref linkend="runtime-config-load-balancing">を参照）もレプリケーションモードと共に使用可能です。
   </para>
+
+  <para>
+   このモードの難点は、ノードをまたがる可視性の一貫性が保証されないことです。
+   このことでノードの間のデータの一貫性が崩れたり、一貫性のないデータを一時的に読み込んでしまうことがあります。
+   こうした問題を避けたい場合は、<link linkend="guc-snapshot-isolation-mode">スナップショットアイソレーションモード</link>をご検討ください。
+  </para>
+
   <para>
    <!--
    Following options affect the behavior of
@@ -1281,8 +1267,6 @@ S2/N1: COMMIT;
 S2/N2: COMMIT;
    </programlisting>
 
-   ただし、制限事項がいくつかあり、今の所(<productname>Pgpool-II</productname> 4.2)では「実験的な実装」という位置づけです。
-   業務で使用する場合には慎重なテストをお勧めします。
   </para>
   <itemizedlist>
    <listitem>
@@ -1295,12 +1279,49 @@ S2/N2: COMMIT;
     </para>
    </listitem>
 
-   <listitem>
-    <para>
-     シリアル型やシーケンスに関する一貫した可視性を保証しません。
-    </para>
-   </listitem>
   </itemizedlist>
+ </sect2>
+
+ <sect2 id="runtime-config-logical-replication-mode">
+  <title>ロジカルレプリケーションモード</title>
+
+  <para>
+   このモードでは<productname>PostgreSQL</productname>が個々のサーバをレプリケーションします。
+   このモードを有効にするには<varname>backend_clustering_mode</varname>に'logical_replication'を設定してください。
+    <programlisting>
+backend_clustering_mode = 'logical_replication'
+    </programlisting>
+   このモードでは127台までのロジカルレプリケーションサーバを使用できます。
+   また、スタンバイサーバをまったく使用しないことも可能です。
+  </para>
+  <para>
+   このモードの難点は、検索問い合わせを負荷分散させた時に、スタンバイサーバのレプリケーション遅延を意識しなければならない点です。
+   ノードをまたがる可視性の一貫性も保証されません。
+   また、DDLやラージオブジェクトなど、一部のデータオブジェクトはレプリケーションされません。
+  </para>
+ </sect2>
+
+ <sect2 id="runtime-config-slony-mode">
+  <title>Slonyモード</title>
+
+  <para>
+   このモードでは<productname>Pgpool-II</productname>を<acronym>Slony-I</acronym>と組み合わせて使用します。
+   Slony-Iが実際にデータのレプリケーションを行います。
+   このモードを有効にするには<varname>backend_clustering_mode</varname>に'slony'を設定してください。
+    <programlisting>
+backend_clustering_mode = 'slony'
+    </programlisting>
+   このモードでは127台までのレプリカサーバを使用できます。
+   また、レプリカサーバをまったく使用しないことも可能です。
+  </para>
+  <para>
+   このモードの難点は、検索問い合わせを負荷分散させた時に、スタンバイサーバのレプリケーション遅延を意識しなければならない点です。
+   ノードをまたがる可視性の一貫性も保証されません。
+   また、DDLやラージオブジェクトなど、一部のデータオブジェクトはレプリケーションされません。
+  </para>
+  <para>
+   ストリーミングレプリケーションやロジカルレプリケーションが登場後、Slony-Iを新規に採用するシステムは少ないので、特に理由がない限りこのモードを使用することはお勧めしません。
+  </para>
  </sect2>
 
  <sect2 id="guc-raw-mode" xreflabel="raw_mode">
