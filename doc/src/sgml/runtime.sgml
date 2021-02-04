@@ -166,7 +166,7 @@
   </sect2>
 
   <sect2 id="running-mode">
-   <title>Running mode of Pgpool-II</title>
+   <title>Clustering mode of Pgpool-II</title>
 
    <indexterm zone="running-mode">
     <primary>streaming replication mode</primary>
@@ -189,7 +189,7 @@
    </indexterm>
 
    <para>
-    There are six different running modes in
+    There are six different <link linkend="guc-backend-clustering-mode">clustering modes</link> in
     <productname>Pgpool-II</>: streaming replication mode, logical
     replication mode, main replica mode (slony mode), native
     replication mode, raw mode and snapshot isolation mode. In any
