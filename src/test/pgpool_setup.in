@@ -254,8 +254,10 @@ echo "node_id $node_id host_name $host_name port $port db_cluster $db_cluster ne
 # change primary node connection info so that it points to the new primary
 if [ $pgversion -ge 120 ];then
    sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/myrecovery.conf
+   sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/myrecovery.conf
 else
    sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/recovery.conf
+   sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/myrecovery.conf
 fi
 
 # Skip the target standby node if it's not running
