@@ -605,41 +605,64 @@ $ <userinput>pgpool -f /usr/local/etc/pgpool.conf -F /usr/local/etc/pcp.conf -m 
    it. In this section how to perform the task with minimum downtime.
   </para>
 
-  <para>
-   Stopping or restarting <productname>PostgreSQL</productname>
-   causes failover. If the running mode is not streaming replication
-   mode, or the server is a standby server in streaming replication
-   mode, probably that's not a big deal because clients can always
-   use other servers in the cluster. However if the server is primary
-   server, it will cause change of primary server by promoting one of
-   the standby servers. Moreover if there's only one server remains
-   in the cluster, there are no alternative server or standby server
-   which can be promoted.
-  </para>
+  <sect2 id="using-pcp-detach-node">
+   <title>Using pcp_detach_node command</title>
+   <para>
+    If you stop <productname>PostgreSQL</productname> by using
+    <command>pg_ctl</command>, failover will not happen until
+    <productname>Pgpool-II</productname> detects it by the health
+    check depending on the health check settings and it will take
+    sometime to detach <productname>PostgreSQL</productname>.
+    Especially if <link linkend="tutorial-watchdog">Watchdog</link> is
+    enabled and <xref linkend="guc-failover-require-consensus"> is on,
+    <productname>Pgpool-II</productname> will not start failover until
+    more than half of watchdog nodes agree that
+    <productname>PostgreSQL</productname> is stopped. If you detach
+    the node by using <xref linkend="pcp-detach-node">, failover will
+    immediately start regardless the settings of health check. Please
+    note that the detached <productname>PostgreSQL</productname> node
+    is not actually stopped and if necessary, you need to manually
+    stop it.
+   </para>
+  </sect2>
 
-  <para>
-   In this case you can use <xref linkend="guc-backend-flag"> to avoid
-   failover.  By setting below in pgpool.conf will avoid failover of
-   backend0.
-   <programlisting>
-     backend_flag0 = DISALLOW_TO_FAILOVER
-    </programlisting>
-   This will take effect by reloading or restarting
-   <productname>Pgpool-II</productname>. If this flag is set, failover
-   will not happen if the backend is not available. While the backend
-   is not available, clients will get error message:
-   <programlisting>
-     psql: error: could not connect to server: FATAL:  failed to create a backend connection
-     DETAIL:  executing failover on backend
-   </programlisting>
-   After restarting the backend, clients can connect as usual.
+  <sect2 id="using-backend-flag">
+   <title>Using backend_flag</title>
+   <para>
+    Stopping or restarting <productname>PostgreSQL</productname>
+    causes failover. If the running mode is not streaming replication
+    mode, or the server is a standby server in streaming replication
+    mode, probably that's not a big deal because clients can always
+    use other servers in the cluster. However if the server is primary
+    server, it will cause change of primary server by promoting one of
+    the standby servers. Moreover if there's only one server remains
+    in the cluster, there are no alternative server or standby server
+    which can be promoted.
+   </para>
 
-   To allow failover on the backend again, you can set:
-   <programlisting>
-     backend_flag0 = ALLOW_TO_FAILOVER
-   </programlisting>
-   and reload or restart <productname>Pgpool-II</productname>.
-  </para>
+   <para>
+    In this case you can use <xref linkend="guc-backend-flag"> to avoid
+     failover.  By setting below in pgpool.conf will avoid failover of
+     backend0.
+     <programlisting>
+      backend_flag0 = DISALLOW_TO_FAILOVER
+     </programlisting>
+     This will take effect by reloading or restarting
+     <productname>Pgpool-II</productname>. If this flag is set, failover
+     will not happen if the backend is not available. While the backend
+     is not available, clients will get error message:
+     <programlisting>
+      psql: error: could not connect to server: FATAL:  failed to create a backend connection
+      DETAIL:  executing failover on backend
+     </programlisting>
+     After restarting the backend, clients can connect as usual.
+     To allow failover on the backend again, you can set:
+     <programlisting>
+      backend_flag0 = ALLOW_TO_FAILOVER
+     </programlisting>
+     and reload or restart <productname>Pgpool-II</productname>.
+   </para>
+  </sect2>
 
  </sect1>
 

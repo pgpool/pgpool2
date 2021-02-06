@@ -766,65 +766,77 @@ $ <userinput>pgpool -f /usr/local/etc/pgpool.conf -F /usr/local/etc/pcp.conf -m 
 この節では最小限の停止時間でこの仕事を実行する方法を説明します。
   </para>
 
-  <para>
-<!--
-   Stopping or restarting <productname>PostgreSQL</productname>
-   causes failover. If the running mode is not streaming replication
-   mode, or the server is a standby server in streaming replication
-   mode, probably that's not a big deal because clients can always
-   use other servers in the cluster. However if the server is primary
-   server, it will cause change of primary server by promoting one of
-   the standby servers. Moreover if there's only one server remains
-   in the cluster, there are no alternative server or standby server
-   which can be promoted.
--->
-<productname>PostgreSQL</productname>を停止、再起動するとフェイルオーバが発生します。
-ストリーミングレプリケーションモードでない場合、あるいはストリーミングレプリケーションモードであってもサーバがスタンバイサーバであればあまり大きな問題にはなりませ
-ん。
-しかし、サーバがクラスタのプライマリサーバなら、スタンバイサーバの一つが昇格してしまいます。
-更には、クラスタに1台のサーバしか残っていなければ、昇格できるスタンバイサーバがないことになります。
-  </para>
+  <sect2 id="using-pcp-detach-node">
+   <title>pcp_detach_nodeコマンドの活用</title>
+   <para>
+    <command>pg_ctl</command>で<productname>PostgreSQL</productname>を停止すると、<productname>Pgpool-II</productname>がそのことをヘルスチェックで検知するまではフェイルオーバが発生せず、ヘルスチェックの設定によっては<productname>PostgreSQL</productname>の切り離しに時間がかかります。
+    とりわけ<link linkend="tutorial-watchdog">Watchdog</link>が有効かつ<xref linkend="guc-failover-require-consensus">がonなら、<productname>Pgpool-II</productname>は過半数のWatchdogが<productname>PostgreSQL</productname>の停止に合意するまで、フェイルオーバを開始しません。
+    <xref linkend="pcp-detach-node">でノードを切り離せば、ヘルスチェックの設定に関わらず直ちにフェイルオーバが開始されます。
+     切り離されたノードは実際には<productname>PostgreSQL</productname>が停止しておらず、必要なら手動で停止させなければならないことに注意してください。
+   </para>
+  </sect2>
 
-  <para>
-<!--
-   In this case you can use <xref linkend="guc-backend-flag"> to avoid
-   failover.  By setting below in pgpool.conf will avoid failover of
-   backend0.
--->
-この場合は<xref linkend="guc-backend-flag">を使ってフェイルオーバを避けることができます。
-以下のようにpgpool.confを設定すると、backend0のフェイルオーバが起こりません。
-   <programlisting>
-     backend_flag0 = DISALLOW_TO_FAILOVER
-    </programlisting>
-<!--
-   This will take effect by reloading or restarting
-   <productname>Pgpool-II</productname>. If this flag is set, failover
-   will not happen if the backend is not available. While the backend
-   is not available, clients wil get error message:
--->
-この設定は、<productname>Pgpool-II</productname>の再読込か再起動で有効になります。
-このフラグが設定されると、バックエンドが使用不可能になってもフェイルオーバが起きません。
-バックエンドが使用不可の間、クライアントは以下のエラーメッセージを受け取ります。
-   <programlisting>
-     psql: error: could not connect to server: FATAL:  failed to create a backend connection
-     DETAIL:  executing failover on backend
-   </programlisting>
-<!--
-   After restarting the backend, clients can connect as usual.
+  <sect2 id="using-backend-flag">
+   <title>backend_flagの活用</title>
+   <para>
+    <!--
+    Stopping or restarting <productname>PostgreSQL</productname>
+    causes failover. If the running mode is not streaming replication
+    mode, or the server is a standby server in streaming replication
+    mode, probably that's not a big deal because clients can always
+    use other servers in the cluster. However if the server is primary
+    server, it will cause change of primary server by promoting one of
+    the standby servers. Moreover if there's only one server remains
+    in the cluster, there are no alternative server or standby server
+    which can be promoted.
+    -->
+    <productname>PostgreSQL</productname>を停止、再起動するとフェイルオーバが発生します。
+    ストリーミングレプリケーションモードでない場合、あるいはストリーミングレプリケーションモードであってもサーバがスタンバイサーバであればあまり大きな問題にはなりませ
+    ん。
+    しかし、サーバがクラスタのプライマリサーバなら、スタンバイサーバの一つが昇格してしまいます。
+    更には、クラスタに1台のサーバしか残っていなければ、昇格できるスタンバイサーバがないことになります。
+   </para>
 
-   To allow failover on the backend again, you can set:
--->
-バックエンドを再起動すると、クライアントは通常通り接続ができます。
-再びフェイルオーバを有効にするには、以下を設定します。
-   <programlisting>
-     backend_flag0 = ALLOW_TO_FAILOVER
-   </programlisting>
-<!--
-   and reload or restart <productname>Pgpool-II</productname>.
--->
-そして、<productname>Pgpool-II</productname>の再読込か、再起動を行います。
-  </para>
+   <para>
+    <!--
+    In this case you can use <xref linkend="guc-backend-flag"> to avoid
+    failover.  By setting below in pgpool.conf will avoid failover of
+    backend0.
+    -->
+    この場合は<xref linkend="guc-backend-flag">を使ってフェイルオーバを避けることができます。
+     以下のようにpgpool.confを設定すると、backend0のフェイルオーバが起こりません。
+     <programlisting>
+      backend_flag0 = DISALLOW_TO_FAILOVER
+     </programlisting>
+     <!--
+     This will take effect by reloading or restarting
+     <productname>Pgpool-II</productname>. If this flag is set, failover
+     will not happen if the backend is not available. While the backend
+     is not available, clients wil get error message:
+     -->
+     この設定は、<productname>Pgpool-II</productname>の再読込か再起動で有効になります。
+     このフラグが設定されると、バックエンドが使用不可能になってもフェイルオーバが起きません。
+     バックエンドが使用不可の間、クライアントは以下のエラーメッセージを受け取ります。
+     <programlisting>
+      psql: error: could not connect to server: FATAL:  failed to create a backend connection
+      DETAIL:  executing failover on backend
+     </programlisting>
+     <!--
+     After restarting the backend, clients can connect as usual.
 
+     To allow failover on the backend again, you can set:
+     -->
+     バックエンドを再起動すると、クライアントは通常通り接続ができます。
+     再びフェイルオーバを有効にするには、以下を設定します。
+     <programlisting>
+      backend_flag0 = ALLOW_TO_FAILOVER
+     </programlisting>
+     <!--
+     and reload or restart <productname>Pgpool-II</productname>.
+     -->
+     そして、<productname>Pgpool-II</productname>の再読込か、再起動を行います。
+   </para>
+  </sect2>
  </sect1>
 
 </chapter>
