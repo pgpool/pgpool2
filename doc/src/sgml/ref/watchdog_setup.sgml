@@ -51,7 +51,7 @@ Pgpool-II documentation
   </para>
 
   <para>
-   Currently <application>watchdog_setup</application> supports streaming replication mode, native replication mode, logical replication mode and raw mode.
+   Currently <application>watchdog_setup</application> supports streaming replication mode, snapshot isolation mode, native replication mode, logical replication mode and raw mode.
   </para>
  </refsect1>
 
@@ -96,8 +96,7 @@ Pgpool-II documentation
      <listitem>
       <para>
        Specifies the running mode.  <replaceable>mode</replaceable>
-       can be <literal>r</literal> (native replication mode), <literal>s</literal> (streaming replication mode), or
-       <literal>n</literal> (raw mode).
+       can be <literal>r</literal> (native replication mode), <literal>i</literal> (snapshot isolation mode), <literal>s</literal> (streaming replication mode), <literal>l</literal> (logical replication mode) or <literal>n</literal> (raw mode).
        If this is omitted, <literal>s</literal> is used.
       </para>
      </listitem>
