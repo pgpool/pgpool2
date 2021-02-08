@@ -2336,8 +2336,8 @@ failover(void)
 				{
 					ereport(LOG,
 							(errmsg("start health check process for host %s(%d)",
-									BACKEND_INFO(node_id).backend_hostname,
-									BACKEND_INFO(node_id).backend_port)));
+									BACKEND_INFO(i).backend_hostname,
+									BACKEND_INFO(i).backend_port)));
 
 					health_check_pids[i] = worker_fork_a_child(PT_HEALTH_CHECK, do_health_check_child, &i);
 				}
@@ -4431,6 +4431,20 @@ sync_backend_from_watchdog(void)
 	 * Send restart request to worker child.
 	 */
 	kill(worker_pid, SIGUSR1);
+
+	/* Fork health check process if needed */
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (health_check_pids[i] == 0)
+		{
+			ereport(LOG,
+					(errmsg("start health check process for host %s(%d)",
+							BACKEND_INFO(i).backend_hostname,
+							BACKEND_INFO(i).backend_port)));
+
+			health_check_pids[i] = worker_fork_a_child(PT_HEALTH_CHECK, do_health_check_child, &i);
+		}
+	}
 }
 
 /*
