@@ -260,17 +260,14 @@ else
    sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/myrecovery.conf
 fi
 
+touch $db_cluster/standby.signal
+
 # Skip the target standby node if it's not running
 $pg_ctl -D $db_cluster status >/dev/null 2>&1
 if [ $? = 0 ]
 then
-    if [ $pgversion -ge 130 ];then
-       echo "reload the target server" >> $log
-       $pg_ctl -m f -D $db_cluster reload >> $log 2>&1
-    else
-	echo "restart the target server" >> $log
-	$pg_ctl -w -m f -D $db_cluster restart >> $log 2>&1
-    fi
+    echo "restart the target server" >> $log
+    $pg_ctl -w -m f -D $db_cluster restart >> $log 2>&1
     # attach the node
     pcp_attach_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
 else
