@@ -51,9 +51,9 @@ fi
 PGVERSION=`${PGHOME}/bin/initdb -V | awk '{print $3}' | sed 's/\..*//' | sed 's/\([0-9]*\)[a-zA-Z].*/\1/'`
 
 if [ $PGVERSION -ge 12 ]; then
-RECOVERYCONF=${NODE_PGDATA}/myrecovery.conf
+    RECOVERYCONF=${NODE_PGDATA}/myrecovery.conf
 else
-RECOVERYCONF=${NODE_PGDATA}/recovery.conf
+    RECOVERYCONF=${NODE_PGDATA}/recovery.conf
 fi
 
 ## Check the status of Standby
@@ -77,6 +77,8 @@ if [ $? -eq 0 ]; then
 
         ${PGHOME}/bin/pg_ctl -w -m f -D ${NODE_PGDATA} stop
 
+        ${PGHOME}/bin/pg_rewind -D ${NODE_PGDATA} --source-server=\"user=postgres host=${NEW_PRIMARY_NODE_HOST} port=${NEW_PRIMARY_NODE_PORT}\"
+
         cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${NEW_PRIMARY_NODE_HOST} port=${NEW_PRIMARY_NODE_PORT} user=${REPLUSER} application_name=${NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
@@ -90,9 +92,11 @@ EOT
             echo \"standby_mode = 'on'\" >> ${RECOVERYCONF}
         fi
 
-        ${PGHOME}/bin/pg_rewind -D ${NODE_PGDATA} --source-server=\"user=postgres host=${NEW_PRIMARY_NODE_HOST} port=${NEW_PRIMARY_NODE_PORT}\"
-
     "
+
+    # start Standby node on ${NODE_HOST}
+    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            postgres@${NODE_HOST} -i ~/.ssh/id_rsa_pgpool $PGHOME/bin/pg_ctl -l /dev/null -w -D ${NODE_PGDATA} start
 
     if [ $? -ne 0 ]; then
         echo follow_primary.sh: end: pg_rewind failed. Try pg_basebackup.
@@ -134,11 +138,12 @@ EOT
             echo follow_primary.sh: end: pg_basebackup failed
             exit 1
         fi
-    fi
 
-    # start Standby node on ${NODE_HOST}
-    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-            postgres@${NODE_HOST} -i ~/.ssh/id_rsa_pgpool $PGHOME/bin/pg_ctl -l /dev/null -w -D ${NODE_PGDATA} start
+        # start Standby node on ${NODE_HOST}
+        ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+                postgres@${NODE_HOST} -i ~/.ssh/id_rsa_pgpool $PGHOME/bin/pg_ctl -l /dev/null -w -D ${NODE_PGDATA} start
+
+    fi
 
     # If start Standby successfully, attach this node
     if [ $? -eq 0 ]; then
