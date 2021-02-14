@@ -137,7 +137,7 @@ Pgpool-II documentation
     test=# SELECT * FROM pcp_node_info(node_id => 1, host => '', port => 11001, username => 't-ishii', password => 't-ishii');
     host | port  |      status       | weight |  role   | replication_delay | replication_state | replication_sync_state | last_status_change  
     ------+-------+-------------------+--------+---------+-------------------+-------------------+------------------------+---------------------
-    /tmp | 11003 | Connection in use |      0 | Standby |                 0 | streaming         | async                  | 2019-04-23 15:02:46
+    /tmp | 11003 | Connection in use |     0.5 | Standby |                 0 | streaming         | async                  | 2019-04-23 15:02:46
     (1 row)
    </programlisting>
   </para>
