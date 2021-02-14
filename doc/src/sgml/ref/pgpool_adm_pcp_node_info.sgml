@@ -102,7 +102,7 @@ Pgpool-II documentation
     test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
     host | port  |      status       | weight |  role   | replication_delay | last_status_change  
     ------+-------+-------------------+--------+---------+-------------------+---------------------
-    /tmp | 11002 | Connection in use |      0 | Primary |                 0 | 2018-07-04 17:34:39
+    /tmp | 11002 | Connection in use |    0.5 | Primary |                 0 | 2018-07-04 17:34:39
     (1 row)
    </programlisting>
   </para>
