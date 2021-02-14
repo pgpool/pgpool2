@@ -3,7 +3,7 @@
  * pgpool_adm.c
  *
  *
- * Copyright (c) 2002-2018, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2021, PostgreSQL Global Development Group
  *
  * Author: Jehan-Guillaume (ioguix) de Rorthais <jgdr@dalibo.com>
  *
@@ -212,7 +212,7 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 			break;
 	}
 	nulls[2] = false;
-	values[3] = Float8GetDatum(backend_info->backend_weight / RAND_MAX);
+	values[3] = Float4GetDatum(backend_info->backend_weight / RAND_MAX);
 	nulls[3] = false;
 
 	nulls[4] = false;
