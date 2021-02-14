@@ -96,7 +96,7 @@ Pgpool-II documentation
     test=# SELECT * FROM pcp_node_info(0,'',11001,'t-ishii','t-ishii');
     host | port  |      status       | weight
     ------+-------+-------------------+--------
-    /tmp | 11002 | Connection in use |      0
+    /tmp | 11002 | Connection in use |    0.5
     (1 row)
    </programlisting>
   </para>
