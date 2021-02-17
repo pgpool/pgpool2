@@ -1,6 +1,182 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-2">
+ <title>Release 4.2.2</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2021-02-18</simpara>
+ </note>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-02-14 [395ad59]
+    -->
+    <para>
+     Fix the incorrect "weight" displayed in <xref linkend="PGPOOL-ADM-PCP-NODE-INFO">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-14 [de3f0ed]
+    -->
+    <para>
+     Fix <filename>follow_primary.sh.sample</filename> to avoid removing <filename>recovery.conf</filename> after executing <command>pg_rewind</command>. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-08 [40d4bde]
+    -->
+    <para>
+     Fix watchdog leader sync process to start health check process. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-06 [d9835c1]
+    -->
+    <para>
+     Doc: fix the missing description of snapshot isolation mode in <xref linkend="WATCHDOG-SETUP"> manual. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-04 [be0e714]
+    -->
+    <para>
+     Fix <command>watchdog_setup</command> to support for snapshot isolation mode. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-04 [e2eb019]
+    -->
+    <para>
+     Fix that DB cluster path was not correct in <command>watchdog_setup</command> installation. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-05 [009e4b7]
+    2021-01-20 [2d4451f]
+    -->
+    <para>
+     Fix follow_primary.sh creation in <command>pgpool_setup</command>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-02 [644d72e]
+    -->
+    <para>
+     Enhance <filename>shutdownall</filename> script used by <command>pgpool_setup</command>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-24 [de2c03c]
+    -->
+    <para>
+     Fix <command>pgpool_setup</command> so that it creates separate archive directory for each DB node. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-02 [f1124c5]
+    -->
+    <para>
+     Fix missing display of <xref linkend="GUC-BACKEND-CLUSTERING-MODE"> in "show pool_status" command. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-02 [57d416a]
+    -->
+    <para>
+     Fix messages when health check process starts. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-01 [71ab697]
+    -->
+    <para>
+     Doc: mention that the sample scripts doesn't support tablespaces in "Pgpool-II + Watchdog Setup Example". (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-28 [d479a46]
+    -->
+    <para>
+     Fix segfault in snapshot isolation mode. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-22 [50c5735]
+    -->
+    <para>
+     Doc: enhance online recovery document about recovery first stage and second stage. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-16 [dfdd63d]
+    -->
+    <para>
+     Doc: add explanation about the shared memory required by shared relation cache. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-13 [e5dff9b]
+    -->
+    <para>
+     Adjusting the allowed range and default value for <xref linkend="GUC-LOG-ROTATION-SIZE">. (Muhammad Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-13 [f780fd5]
+    -->
+    <para>
+     Fix error while allocating shared memory. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-01 [01e56dd]
+    -->
+    <para>
+     Fix bug <xref linkend="GUC-CHILD-MAX-CONNECTIONS"> is not respected if ERROR occurs. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-1">
  <title>Release 4.2.1</title>
  <note>
