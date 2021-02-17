@@ -1,6 +1,168 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-1-6">
+ <title>Release 4.1.6</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2021-02-18</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2020-12-08 [db613fd]
+    -->
+    <para>
+     Delete any pre-existing watchdog command socket file at startup. (Muhammad Usama)
+    </para>
+    <para>
+     Patch provided by Masaya Kawamoto.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-02-14 [395ad59]
+    -->
+    <para>
+     Fix the incorrect "weight" displayed in <xref linkend="PGPOOL-ADM-PCP-NODE-INFO">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-14 [de3f0ed]
+    -->
+    <para>
+     Fix <filename>follow_primary.sh.sample</filename> to avoid removing <filename>recovery.conf</filename> after executing <command>pg_rewind</command>. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-08 [40d4bde]
+    -->
+    <para>
+     Fix watchdog leader sync process to start health check process. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-04 [e2eb019]
+    -->
+    <para>
+     Fix that DB cluster path was not correct in <command>watchdog_setup</command> installation. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-24 [de2c03c]
+    -->
+    <para>
+     Fix <command>pgpool_setup</command> so that it creates separate archive directory for each DB node. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-02 [57d416a]
+    -->
+    <para>
+     Fix messages when health check process starts. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-01 [71ab697]
+    -->
+    <para>
+     Doc: mention that the sample scripts doesn't support tablespaces in "Pgpool-II + Watchdog Setup Example". (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-16 [dfdd63d]
+    -->
+    <para>
+     Doc: add explanation about the shared memory required by shared relation cache. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-13 [f780fd5]
+    -->
+    <para>
+     Fix error while allocating shared memory. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-01 [01e56dd]
+    -->
+    <para>
+     Fix bug <xref linkend="GUC-CHILD-MAX-CONNECTIONS"> is not respected if ERROR occurs. (Tatsuo Ishii)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2020-12-18 [e7d9477]
+    2020-12-18 [86ee4d6]
+    -->
+    <para>
+     Doc: fix usage of <command>firewall-cmd</command> in the installation tips section. (Tatsuo Ishii)
+    </para>
+    <para>
+     <command>firewall-cmd</command> opened unnecessary ports in the example.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2020-12-15 [59d7431]
+    2020-12-13 [00d103f]
+    -->
+    <para>
+     Fix segfault that may occur when backend_flag = 'ALWAYS_PRIMARY|ALLOW_TO_FAILOVER' or failover_command = ''.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=672">bug 672</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2020-11-30 [86d4dd0]
+    -->
+    <para>
+     Fix file swapping race condition in <filename>pool_passwd</filename>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch is provided by Masaya Kawamoto.
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2020-11-20 [14dadc6]
+    -->
+    <para>
+     Doc: fix <xref linkend="GUC-LOG-STANDBY-DELAY"> description. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id=release-4-1-5>
  <title>Release 4.1.5</title>
  <note>
