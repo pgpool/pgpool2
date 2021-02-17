@@ -65,7 +65,7 @@ postgres@${FAILED_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ${PGHOME}/bin/pg_ctl -w -D 
 ## If Standby is running, synchronize it with the new Primary.
 if [ $? -eq 0 ]; then
 
-    logger -i -p local1.info follow_master.sh: pg_rewind for $FAILED_NODE_ID
+    logger -i -p local1.info follow_master.sh: pg_rewind for node $FAILED_NODE_ID
 
     # Create replication slot "${FAILED_NODE_HOST}"
     ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
@@ -93,11 +93,9 @@ EOT
             echo \"standby_mode = 'on'\" >> ${RECOVERYCONF}
         fi
 
-    "
+        ${PGHOME}/bin/pg_ctl -l /dev/null -w -D ${FAILED_NODE_PGDATA} start
 
-    # start Standby node on ${FAILED_NODE_HOST}
-    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-            postgres@${FAILED_NODE_HOST} -i ~/.ssh/id_rsa_pgpool $PGHOME/bin/pg_ctl -l /dev/null -w -D ${FAILED_NODE_PGDATA} start
+    "
 
     if [ $? -ne 0 ]; then
         logger -i -p local1.error follow_master.sh: end: pg_rewind failed. Try pg_basebackup.
