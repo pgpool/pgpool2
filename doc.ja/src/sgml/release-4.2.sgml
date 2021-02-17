@@ -1,6 +1,191 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-2">
+ <!--
+ <title>Release 4.2.2</title>
+ -->
+ <title>リリース 4.2.2</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2021-02-18</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-02-14 [395ad59]
+    -->
+    <para>
+     <xref linkend="PGPOOL-ADM-PCP-NODE-INFO">の誤ったweightの表示を修正しました。 (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-14 [de3f0ed]
+    -->
+    <para>
+     <filename>follow_primary.sh.sample</filename>で<command>pg_rewind</command>実行後に<filename>recovery.conf</filename>が削除されないように修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-08 [40d4bde]
+    -->
+    <para>
+     Watchdogリーダーによる同期処理後に、ヘルスチェックプロセスが起動されない不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-06 [d9835c1]
+    -->
+    <para>
+     Doc: <xref linkend="WATCHDOG-SETUP">マニュアルに不足しているスナップショットアイソレーションモードの説明を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-04 [be0e714]
+    -->
+    <para>
+     <command>watchdog_setup</command>がスナップショットアイソレーションモードをサポートするように修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-04 [e2eb019]
+    -->
+    <para>
+     <command>watchdog_setup</command>の誤ったデータベースクラスタのパスを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-05 [009e4b7]
+    2021-01-20 [2d4451f]
+    -->
+    <para>
+     <command>pgpool_setup</command>によって作成されるfollow_primary.shの不具合を修正しました。 (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-02 [644d72e]
+    -->
+    <para>
+     <command>pgpool_setup</command>で使用される<filename>shutdownall</filename>スクリプトを改善しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-24 [de2c03c]
+    -->
+    <para>
+     DBノードごとに個別のアーカイブディレクトリを作成するように<command>pgpool_setup</command>を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-02 [f1124c5]
+    -->
+    <para>
+     <xref linkend="SQL-SHOW-POOL-STATUS">コマンドの結果に欠落している<xref linkend="GUC-BACKEND-CLUSTERING-MODE">の表示を修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-02 [57d416a]
+    -->
+    <para>
+     ヘルスチェックプロセス起動時のメッセージを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-01 [71ab697]
+    -->
+    <para>
+     Doc: サンプルスクリプトはテーブルスペースをサポートしていないことをドキュメント「Pgpool-II + Watchdogの構築の例」に追加しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-28 [d479a46]
+    -->
+    <para>
+     スナップショットアイソレーションモードで発生するセグメンテーション違反を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-22 [50c5735]
+    -->
+    <para>
+     Doc: オンラインリカバリドキュメントで1st_stageと2nd stageに関する説明を改善しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-16 [dfdd63d]
+    -->
+    <para>
+     Doc: 共有リレーションキャッシュに必要な共有メモリについての説明を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-13 [e5dff9b]
+    -->
+    <para>
+     <xref linkend="GUC-LOG-ROTATION-SIZE">の許容範囲とデフォルト値を修正しました。 (Muhammad Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-13 [f780fd5]
+    -->
+    <para>
+     共有メモリの割り当て中のエラーを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-01-01 [01e56dd]
+    -->
+    <para>
+     ERRORが発生した場合、<xref linkend="GUC-CHILD-MAX-CONNECTIONS">が正しくカウンタされない不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-1">
  <!--
  <title>Release 4.2.1</title>
@@ -544,7 +729,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
     2020-11-25 [935e045]
     -->
     <para>
-     ereportsからstrerror()呼び出しを削除します。(Muhammad Usama)
+     ereportsからstrerror()呼び出しを削除しました。(Muhammad Usama)
     </para>
     <para>
      ereport()を呼び出すと、errno値がリセットされ、「strerror(errno)」を使用すると、誤ったエラーメッセージが出力されます。
@@ -856,7 +1041,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
      called with schema qualification, it was not recognized. This
      commit fix to allow schema qualifications in the case.
 -->
-     クエリキャッシュが有効である場合、<productname>Pgpool-II</productname>はSELECT中の関数呼び出しを精査します。
+     クエリキャッシュが有効である場合、<productname>Pgpool-II</productname>はSELECT中の関数呼び出しを精査しました。
      今までは関数がスキーマ修飾付きで呼び出されていると認識されませんでしたが、これを認識するように改善しました。
     </para>
     <para>
