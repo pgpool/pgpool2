@@ -38,11 +38,17 @@ Pgpool-II documentation
   -->
   <title>説明</title>
   <para>
-   <command>pcp_detach_node</command>
-   <!--
-   detaches the given node from Pgpool-II. Exisiting connections to Pgpool-II are forced to be disconnected.
-   -->
-   は <productname>Pgpool-II</productname> のノードを切り離します。すでに <productname>Pgpool-II</productname> に接続しているセッションは強制的に切断されます。
+   <command>pcp_detach_node</command> は <productname>Pgpool-II</productname> のノードを切り離します。
+   <xref linkend="guc-failover-command"> あるいは <xref linkend="guc-follow-primary-command">が指定されていれば、それらも実行されます。
+   すでに <productname>Pgpool-II</productname> に接続しているセッションは強制的に切断されます。
+  </para>
+  <para>
+   <command>pcp_detach_node</command>は単にノードを切り離すだけで、そのノードで背後で稼働しているバックエンドには触りません。
+   このコマンドは、管理者が<productname>PostgreSQL</productname>ノードを保守する際に有用です。
+   管理者は好きなだけそのバックエンドを停止したり起動できます。
+  </para>
+  <para>
+   切り離したノードは、バックエンドを停止した上で<xref linkend="pcp-recovery-node">で復帰させるのが安全ですが、レプリケーション遅延がない（もしくは後でレプリケーション遅延を回復できる）ことが確実で、ノードの役割(プライマリ/スタンバイ)の変更を伴わないことが確実なら、<xref linkend="pcp-attach-node">で復帰させることもできます。
   </para>
  </refsect1>
 
