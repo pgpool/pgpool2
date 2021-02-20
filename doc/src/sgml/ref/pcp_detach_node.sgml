@@ -17,7 +17,7 @@ Pgpool-II documentation
  <refnamediv>
   <refname>pcp_detach_node</refname>
   <refpurpose>
-   detaches the given node from Pgpool-II. Existing connections to Pgpool-II are forced to be disconnected.</refpurpose>
+   detaches the given node from Pgpool-II. Exisiting connections to Pgpool-II are forced to be disconnected.</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -32,8 +32,26 @@ Pgpool-II documentation
  <refsect1 id="R1-PCP-DETACH-NODE-1">
   <title>Description</title>
   <para>
-   <command>pcp_detach_node</command>
-   detaches the given node from Pgpool-II. Existing connections to Pgpool-II are forced to be disconnected.
+   <command>pcp_detach_node</command> detaches the given node from
+   <productname>Pgpool-II</productname>. If <xref
+   linkend="guc-failover-command"> and/or <xref
+   linkend="guc-follow-primary-command"> are specified, they are
+   executed too. Existing connections to
+   <productname>Pgpool-II</productname> are forced to be disconnected.
+  </para>
+  <para>
+   <command>pcp_detach_node</command> just detaches the node, and does
+   not touch running backend behind the node. This command is useful
+   when admin needs to maintain the
+   <productname>PostgreSQL</productname> node. He/she can shutdown or
+   stop the backend as many times as he/she wants.
+  </para>
+  <para>
+   The safest way to re-attach the detached node is, stopping the
+    backend and apply <xref linkend="pcp-recovery-node">. However if
+    you are sure that there's no replication delay (or the delay will
+    be recovered later on) and the role of the node (primary/standby)
+    will not be changed, you can use <xref linkend="pcp-attach-node">.
   </para>
  </refsect1>
 
