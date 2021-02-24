@@ -95,7 +95,7 @@
  </para>
 
  <para>
-  ファーストステージでは、<productname>PostgreSQL</productname>の<command>pg_baseback</command>コマンドなどを利用してメイン(プライマリ)ノードのバックアップコピーからレプリカ(スタンバイ)ノードを作ります。
+  ファーストステージでは、<productname>PostgreSQL</productname>の<command>pg_basebackup</command>コマンドなどを利用してメイン(プライマリ)ノードのバックアップコピーからレプリカ(スタンバイ)ノードを作ります。
   ファーストステージ中に更新されたデータは<productname>PostgreSQL</productname>のトランザクションログに記録されます。
  </para>
  <para>
