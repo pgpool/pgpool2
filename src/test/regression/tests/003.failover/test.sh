@@ -15,12 +15,14 @@ do
 
 # create test environment
 	echo -n "creating test environment..."
-	$PGPOOL_SETUP -m $mode -n 2 --no-stop|| exit 1
+	$PGPOOL_SETUP -m $mode -n 2|| exit 1
 	echo "done."
 
 	# disable replication delay check so that comparison between
 	# expected and actual result is not confused.
 	echo "sr_check_period = 0" >> etc/pgpool.conf
+	./startall
+	wait_for_pgpool_startup
 
 	source ./bashrc.ports
 

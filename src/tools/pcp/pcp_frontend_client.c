@@ -516,8 +516,8 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose)
 
 	if (verbose)
 	{
-		const char *titles[] = {"Hostname", "Port", "Status", "Weight", "Status Name", "Role", "Replication Delay", "Replication State", "Replication Sync State", "Last Status Change"};
-		const char *types[] = {"s", "d", "d", "f", "s", "s", "lu", "s", "s", "s"};
+		const char *titles[] = {"Hostname", "Port", "Status", "Weight", "Status Name", "Backend Status Name", "Role", "Backend Role", "Replication Delay", "Replication State", "Replication Sync State", "Last Status Change"};
+		const char *types[] = {"s", "d", "d", "f", "s", "s", "s", "s", "lu", "s", "s", "s"};
 		char *format_string;
 
 		format_string = format_titles(titles, types, sizeof(titles)/sizeof(char *));
@@ -527,7 +527,9 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose)
 			   backend_info->backend_status,
 			   backend_info->backend_weight / RAND_MAX,
 			   backend_status_to_string(backend_info),
+			   backend_info->pg_backend_status,
 			   role_to_str(backend_info->role),
+			   backend_info->pg_role,
 			   backend_info->standby_delay,
 			   backend_info->replication_state,
 			   backend_info->replication_sync_state,
@@ -535,13 +537,15 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose)
 	}
 	else
 	{
-		printf("%s %d %d %f %s %s %lu %s %s %s\n",
+		printf("%s %d %d %f %s %s %s %s %lu %s %s %s\n",
 			   backend_info->backend_hostname,
 			   backend_info->backend_port,
 			   backend_info->backend_status,
 			   backend_info->backend_weight / RAND_MAX,
 			   backend_status_to_string(backend_info),
+			   backend_info->pg_backend_status,
 			   role_to_str(backend_info->role),
+			   backend_info->pg_role,
 			   backend_info->standby_delay,
 			   backend_info->replication_state,
 			   backend_info->replication_sync_state,

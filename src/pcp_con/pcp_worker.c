@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -48,6 +48,7 @@
 #include "auth/md5.h"
 #include "auth/pool_auth.h"
 #include "context/pool_process_context.h"
+#include "context/pool_session_context.h"
 #include "utils/pool_process_reporting.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
@@ -834,6 +835,8 @@ inform_watchdog_info(PCP_CONNECTION * frontend, char *buf)
 static void
 inform_node_info(PCP_CONNECTION * frontend, char *buf)
 {
+	POOL_REPORT_NODES *nodes;
+	int			nrows;
 	int			node_id;
 	int			wsize;
 	char		port_str[6];
@@ -883,13 +886,17 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 
 	snprintf(status_changed_time_str, sizeof(status_changed_time_str), UINT64_FORMAT, bi->status_changed_time);
 
+	nodes = get_nodes(&nrows);
+
 	pcp_write(frontend, "i", 1);
 	wsize = htonl(sizeof(code) +
 				  strlen(bi->backend_hostname) + 1 +
 				  strlen(port_str) + 1 +
 				  strlen(status) + 1 +
+				  strlen(nodes[node_id].pg_status) + 1 +
 				  strlen(weight_str) + 1 +
 				  strlen(role_str) + 1 +
+				  strlen(nodes[node_id].pg_role) + 1 +
 				  strlen(standby_delay_str) + 1 +
 				  strlen(bi->replication_state) + 1 +
 				  strlen(bi->replication_sync_state) + 1 +
@@ -900,8 +907,10 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 	pcp_write(frontend, bi->backend_hostname, strlen(bi->backend_hostname) + 1);
 	pcp_write(frontend, port_str, strlen(port_str) + 1);
 	pcp_write(frontend, status, strlen(status) + 1);
+	pcp_write(frontend, nodes[node_id].pg_status, strlen(nodes[node_id].pg_status) + 1);
 	pcp_write(frontend, weight_str, strlen(weight_str) + 1);
 	pcp_write(frontend, role_str, strlen(role_str) + 1);
+	pcp_write(frontend, nodes[node_id].pg_role, strlen(nodes[node_id].pg_role) + 1);
 	pcp_write(frontend, standby_delay_str, strlen(standby_delay_str) + 1);
 	pcp_write(frontend, bi->replication_state, strlen(bi->replication_state) + 1);
 	pcp_write(frontend, bi->replication_sync_state, strlen(bi->replication_sync_state) + 1);

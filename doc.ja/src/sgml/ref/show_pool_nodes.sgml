@@ -61,12 +61,19 @@
    重み(ロードバランスモードで運用しているときにのみ意味があります)、
    ノードの役割、発行された SELECT の数、ロードバランスノードであるかどうか、
    レプリケーション遅延 (ストリーミングレプリケーションモードのみ) 、最終状態変更時刻が表示されます。
+  </para>
+  <para>
    これらに加えて、<productname>Pgpool-II</productname> 4.1以降では、スタンバイサーバの行でレプリケーション状態と、同期レプリケーション状態が表示されます。
-   状態(status)の意味については、 <xref linkend="pcp-node-info"> リファレンスで説明されています。
-    ホスト名が "/tmp" のように表示される場合、UNIX ドメインソケットを使用して
+   更に、<productname>Pgpool-II</productname> 4.3以降では、"pg_status"と"pg_role"が追加されています。
+   表示情報の意味については、 <xref linkend="pcp-node-info"> リファレンスで説明されています。
+  </para>
+  <para>
+   ホスト名が "/tmp" のように表示される場合、UNIX ドメインソケットを使用して
     <productname>Pgpool-II</productname> が <productname>PostgreSQL</productname> に接続していることを意味します。
     SELECT の数には、<productname>Pgpool-II</productname> 内部で発行されるクエリの数は含まれません。
     また、このカウンタは <productname>Pgpool-II</productname> がスタートした時に 0にリセットされます。
+  </para>
+  <para>
     最終状態変更時刻は、<productname>Pgpool-II</productname>が起動した時にセットされたあとは、"status"あるいは"role"が変更される度に更新されます。
   </para>
   <para>
@@ -75,12 +82,12 @@
    -->
    ここでは例を示します。
    <programlisting>
-    test=# show pool_nodes;
-    node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
-    ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
-    0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | false             | 0                 |                   |                        | 2019-04-22 16:13:46
-    1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | true              | 0                 | streaming         | async                  | 2019-04-22 16:13:46
-    (2 rows)
+test=# show pool_nodes;
+ node_id | hostname | port  | status | pg_status | lb_weight |  role   | pg_role | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
+---------+----------+-------+--------+-----------+-----------+---------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
+ 0       | /tmp     | 11002 | up     | up        | 0.500000  | primary | primary | 0          | false             | 0                 |                   |                        | 2021-02-27 15:10:19
+ 1       | /tmp     | 11003 | up     | up        | 0.500000  | standby | standby | 0          | true              | 0                 | streaming         | async                  | 2021-02-27 15:10:19
+(2 rows)
    </programlisting>
   </para>
  </refsect1>

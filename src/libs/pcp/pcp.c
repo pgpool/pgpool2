@@ -728,14 +728,25 @@ process_node_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 		if (index == NULL)
 			goto INVALID_RESPONSE;
 		index += 1;
+		strlcpy(backend_info->pg_backend_status, index, sizeof(backend_info->pg_backend_status));
+
+		index = (char *) memchr(index, '\0', len);
+		if (index == NULL)
+			goto INVALID_RESPONSE;
+		index += 1;
 		backend_info->backend_weight = atof(index);
 
 		index = (char *) memchr(index, '\0', len);
 		if (index == NULL)
 			goto INVALID_RESPONSE;
-
 		index++;
 		backend_info->role = atoi(index);
+
+		index = (char *) memchr(index, '\0', len);
+		if (index == NULL)
+			goto INVALID_RESPONSE;
+		index++;
+		strlcpy(backend_info->pg_role, index, sizeof(backend_info->pg_role));
 
 		index = (char *) memchr(index, '\0', len);
 		if (index == NULL)

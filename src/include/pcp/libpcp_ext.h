@@ -83,6 +83,7 @@ typedef struct
 	char		backend_hostname[MAX_DB_HOST_NAMELEN];	/* backend host name */
 	int			backend_port;	/* backend port numbers */
 	BACKEND_STATUS backend_status;	/* backend status */
+	char		pg_backend_status[NAMEDATALEN];	/* backend status examined by show pool_nodes and pcp_node_info*/
 	time_t		status_changed_time;	/* backend status changed time */
 	double		backend_weight; /* normalized backend load balance ratio */
 	double		unnormalized_weight;	/* described parameter */
@@ -95,6 +96,7 @@ typedef struct
 	SERVER_ROLE role;			/* Role of server. used by pcp_node_info and
 								 * failover() to keep track of quarantined
 								 * primary node */
+	char		pg_role[NAMEDATALEN];	/* backend role examined by show pool_nodes and pcp_node_info*/
 	char		replication_state [NAMEDATALEN];	/* "state" from pg_stat_replication */
 	char		replication_sync_state [NAMEDATALEN];	/* "sync_state" from pg_stat_replication */
 }			BackendInfo;
@@ -188,8 +190,10 @@ typedef struct
 	char		hostname[MAX_DB_HOST_NAMELEN + 1];
 	char		port[POOLCONFIG_MAXPORTLEN + 1];
 	char		status[POOLCONFIG_MAXSTATLEN + 1];
+	char		pg_status[POOLCONFIG_MAXSTATLEN + 1];
 	char		lb_weight[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		role[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		pg_role[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		select[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		load_balance_node[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		delay[POOLCONFIG_MAXWEIGHTLEN + 1];

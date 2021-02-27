@@ -35,8 +35,10 @@ Pgpool-II documentation
     <paramdef>text <parameter>username</parameter></paramdef>
     <paramdef>text <parameter>password</parameter></paramdef>
     <paramdef>out <parameter>status text</parameter></paramdef>
+    <paramdef>out <parameter>pg_status text</parameter></paramdef>
     <paramdef>out <parameter>weight float4</parameter></paramdef>
     <paramdef>out <parameter>role text</parameter></paramdef>
+    <paramdef>out <parameter>pg_role text</parameter></paramdef>
     <paramdef>out <parameter>replication_delay bigint</parameter></paramdef>
     <paramdef>out <parameter>replication_state text</parameter></paramdef>
     <paramdef>out <parameter>replication_sync_state text</parameter></paramdef>
@@ -48,8 +50,10 @@ Pgpool-II documentation
     <paramdef>integer <parameter>node_id</parameter></paramdef>
     <paramdef>text <parameter>pcp_server</parameter></paramdef>
     <paramdef>out <parameter>status text</parameter></paramdef>
+    <paramdef>out <parameter>pg_status text</parameter></paramdef>
     <paramdef>out <parameter>weight float4</parameter></paramdef>
     <paramdef>out <parameter>role text</parameter></paramdef>
+    <paramdef>out <parameter>pg_role text</parameter></paramdef>
     <paramdef>out <parameter>replication_delay bigint</parameter></paramdef>
     <paramdef>out <parameter>replication_state text</parameter></paramdef>
     <paramdef>out <parameter>replication_sync_state text</parameter></paramdef>
@@ -134,12 +138,16 @@ Pgpool-II documentation
    -->
    使用例です。
    <programlisting>
-    test=# SELECT * FROM pcp_node_info(node_id => 1, host => '', port => 11001, username => 't-ishii', password => 't-ishii');
-    host | port  |      status       | weight |  role   | replication_delay | replication_state | replication_sync_state | last_status_change  
-    ------+-------+-------------------+--------+---------+-------------------+-------------------+------------------------+---------------------
-    /tmp | 11003 | Connection in use |     0.5 | Standby |                 0 | streaming         | async                  | 2019-04-23 15:02:46
-    (1 row)
+test=# SELECT * FROM pcp_node_info(node_id => 1, host => '', port => 11001, username => 't-ishii', password => 't-ishii');
+ host | port  |      status       | pg_status | weight |  role   | pg_role | replication_delay | replication_state | replication_sync_state | last_status_change  
+------+-------+-------------------+-----------+--------+---------+---------+-------------------+-------------------+------------------------+---------------------
+ /tmp | 11003 | Connection in use | up        |    0.5 | Standby | standby |                 0 | streaming         | async                  | 2021-02-27 15:10:19
+(1 row)
    </programlisting>
+  </para>
+
+  <para>
+   表示データの意味については、<xref linkend="pcp-node-info">をご覧ください。
   </para>
 
   <note>
@@ -166,6 +174,16 @@ Pgpool-II documentation
    <para>
     <parameter>role</parameter>, <parameter>replication_delay</parameter>, <parameter>last_status_change</parameter>出力パラメータは<productname>Pgpool-II</productname> 4.1で追加されました。
     すでに4.0以前のpgpool_adm拡張をインストールしている場合は、ALTER EXTENSION SQLコマンドを使って更新が可能です。
+    <programlisting>
+     ALTER EXTENSION pgpool_adm UPDATE;
+    </programlisting>
+   </para>
+  </note>
+
+  <note>
+   <para>
+    <parameter>pg_status</parameter>, <parameter>pg_role</parameter>出力パラメータは<productname>Pgpool-II</productname> 4.3で追加されました。
+    すでに4.2以前のpgpool_adm拡張をインストールしている場合は、ALTER EXTENSION SQLコマンドを使って更新が可能です。
     <programlisting>
      ALTER EXTENSION pgpool_adm UPDATE;
     </programlisting>

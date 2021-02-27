@@ -130,12 +130,13 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	PCPResultInfo *pcpResInfo;
 
 	BackendInfo *backend_info = NULL;
-	Datum		values[9];		/* values to build the returned tuple from */
-	bool		nulls[] = {false, false, false, false, false, false, false, false, false};
+	Datum		values[11];		/* values to build the returned tuple from */
+	bool		nulls[] = {false, false, false, false, false, false, false, false, false, false, false};
 	TupleDesc	tupledesc;
 	HeapTuple	tuple;
 	struct tm	tm;
 	char		datebuf[20];
+	int			i;
 
 	if (nodeID < 0 || nodeID >= MAX_NUM_BACKENDS)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("NodeID is out of range.")));
@@ -176,63 +177,84 @@ _pcp_node_info(PG_FUNCTION_ARGS)
 	 * Construct a tuple descriptor for the result rows.
 	 **/
 #if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 120000)
-	tupledesc = CreateTemplateTupleDesc(9);
+	tupledesc = CreateTemplateTupleDesc(11);
 #else
-	tupledesc = CreateTemplateTupleDesc(9, false);
+	tupledesc = CreateTemplateTupleDesc(11, false);
 #endif
 	TupleDescInitEntry(tupledesc, (AttrNumber) 1, "hostname", TEXTOID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 2, "port", INT4OID, -1, 0);
 	TupleDescInitEntry(tupledesc, (AttrNumber) 3, "status", TEXTOID, -1, 0);
-	TupleDescInitEntry(tupledesc, (AttrNumber) 4, "weight", FLOAT4OID, -1, 0);
-	TupleDescInitEntry(tupledesc, (AttrNumber) 5, "role", TEXTOID, -1, 0);
-	TupleDescInitEntry(tupledesc, (AttrNumber) 6, "replication_delay", INT8OID, -1, 0);
-	TupleDescInitEntry(tupledesc, (AttrNumber) 7, "replication_state", TEXTOID, -1, 0);
-	TupleDescInitEntry(tupledesc, (AttrNumber) 8, "replication_sync_state", TEXTOID, -1, 0);
-	TupleDescInitEntry(tupledesc, (AttrNumber) 9, "last_status_change", TIMESTAMPOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 4, "pg_status", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 5, "weight", FLOAT4OID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 6, "role", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 7, "pg_role", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 8, "replication_delay", INT8OID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 9, "replication_state", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 10, "replication_sync_state", TEXTOID, -1, 0);
+	TupleDescInitEntry(tupledesc, (AttrNumber) 11, "last_status_change", TIMESTAMPOID, -1, 0);
 	tupledesc = BlessTupleDesc(tupledesc);
 
 	backend_info = (BackendInfo *) pcp_get_binary_data(pcpResInfo, 0);
 
 	/* set values */
-	values[0] = CStringGetTextDatum(backend_info->backend_hostname);
-	nulls[0] = false;
-	values[1] = Int16GetDatum(backend_info->backend_port);
-	nulls[1] = false;
+	i = 0;
+	values[i] = CStringGetTextDatum(backend_info->backend_hostname);
+	nulls[i] = false;
+	i++;
+	values[i] = Int16GetDatum(backend_info->backend_port);
+	nulls[i] = false;
+
+	i++;
 	switch (backend_info->backend_status)
 	{
 		case CON_UNUSED:
-			values[2] = CStringGetTextDatum("Connection unused");
+			values[i] = CStringGetTextDatum("Connection unused");
 			break;
 		case CON_CONNECT_WAIT:
-			values[2] = CStringGetTextDatum("Waiting for connection to start");
+			values[i] = CStringGetTextDatum("Waiting for connection to start");
 			break;
 		case CON_UP:
-			values[2] = CStringGetTextDatum("Connection in use");
+			values[i] = CStringGetTextDatum("Connection in use");
 			break;
 		case CON_DOWN:
-			values[2] = CStringGetTextDatum("Disconnected");
+			values[i] = CStringGetTextDatum("Disconnected");
 			break;
 	}
-	nulls[2] = false;
-	values[3] = Float4GetDatum(backend_info->backend_weight / RAND_MAX);
-	nulls[3] = false;
+	nulls[i] = false;
 
-	nulls[4] = false;
-	values[4] = backend_info->role == ROLE_PRIMARY ? CStringGetTextDatum("Primary") : CStringGetTextDatum("Standby");
+	i++;
+	nulls[i] = false;
+	values[i] = CStringGetTextDatum(backend_info->pg_backend_status);
 
-	nulls[5] = false;
-	values[5] = Int64GetDatum(backend_info->standby_delay);
+	i++;
+	values[i] = Float4GetDatum(backend_info->backend_weight / RAND_MAX);
+	nulls[i] = false;
 
-	nulls[6] = false;
-	values[6] = CStringGetTextDatum(backend_info->replication_state);
+	i++;
+	nulls[i] = false;
+	values[i] = backend_info->role == ROLE_PRIMARY ? CStringGetTextDatum("Primary") : CStringGetTextDatum("Standby");
 
-	nulls[7] = false;
-	values[7] = CStringGetTextDatum(backend_info->replication_sync_state);
+	i++;
+	nulls[i] = false;
+	values[i] = CStringGetTextDatum(backend_info->pg_role);
 
-	nulls[8] = false;
+	i++;
+	nulls[i] = false;
+	values[i] = Int64GetDatum(backend_info->standby_delay);
+
+	i++;
+	nulls[i] = false;
+	values[i] = CStringGetTextDatum(backend_info->replication_state);
+
+	i++;
+	nulls[i] = false;
+	values[i] = CStringGetTextDatum(backend_info->replication_sync_state);
+
+	i++;
+	nulls[i] = false;
 	localtime_r(&backend_info->status_changed_time, &tm);
 	strftime(datebuf, sizeof(datebuf), "%F %T", &tm);
-	values[8] = DatumGetTimestamp(DirectFunctionCall3(timestamp_in,
+	values[i] = DatumGetTimestamp(DirectFunctionCall3(timestamp_in,
 													  CStringGetDatum(datebuf),
 													  ObjectIdGetDatum(InvalidOid),
 													  Int32GetDatum(-1)));

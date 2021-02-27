@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -23,12 +23,14 @@
 #include "pool.h"
 #include "main/health_check.h"
 #include "protocol/pool_proto_modules.h"
+#include "protocol/pool_process_query.h"
 #include "utils/elog.h"
 #include "utils/pool_stream.h"
 #include "utils/statistics.h"
 #include "pool_config.h"
 #include "query_cache/pool_memqcache.h"
 #include "version.h"
+#include "protocol/pool_pg_utils.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -40,6 +42,8 @@ static void send_row_description_and_data_rows(POOL_CONNECTION * frontend, POOL_
 											   char *data, int row_size, int nrows);
 static void write_one_field(POOL_CONNECTION * frontend, char *field);
 static void write_one_field_v2(POOL_CONNECTION * frontend, char *field);
+static char *db_node_status(int node);
+static char *db_node_role(int node);
 
 void
 send_row_description(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
@@ -1284,7 +1288,7 @@ get_nodes(int *nrows)
 	int			i;
 	POOL_REPORT_NODES *nodes = palloc(NUM_BACKENDS * sizeof(POOL_REPORT_NODES));
 	BackendInfo *bi = NULL;
-	POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
+	POOL_SESSION_CONTEXT *session_context = pool_get_session_context(true);
 	struct tm	tm;
 
 	for (i = 0; i < NUM_BACKENDS; i++)
@@ -1297,8 +1301,11 @@ get_nodes(int *nrows)
 		snprintf(nodes[i].status, POOLCONFIG_MAXSTATLEN, "%s", backend_status_to_str(bi));
 		snprintf(nodes[i].lb_weight, POOLCONFIG_MAXWEIGHTLEN, "%f", bi->backend_weight / RAND_MAX);
 		snprintf(nodes[i].select, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, stat_get_select_count(i));
-		snprintf(nodes[i].load_balance_node, POOLCONFIG_MAXWEIGHTLEN, "%s",
-				 (session_context->load_balance_node_id == i) ? "true" : "false");
+		if (session_context)
+			snprintf(nodes[i].load_balance_node, POOLCONFIG_MAXWEIGHTLEN, "%s",
+					 (session_context->load_balance_node_id == i) ? "true" : "false");
+		else
+			snprintf(nodes[i].load_balance_node, POOLCONFIG_MAXWEIGHTLEN, "%s", "false");
 
 		snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, "%d", 0);
 
@@ -1313,6 +1320,7 @@ get_nodes(int *nrows)
 				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "standby");
 				snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, bi->standby_delay);
 			}
+			snprintf(nodes[i].pg_role, POOLCONFIG_MAXWEIGHTLEN, "%s", db_node_role(i));
 		}
 		else
 		{
@@ -1320,7 +1328,11 @@ get_nodes(int *nrows)
 				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "main");
 			else
 				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "replica");
+
+			snprintf(nodes[i].pg_role, POOLCONFIG_MAXWEIGHTLEN, "%s", nodes[i].role);
 		}
+
+		snprintf(nodes[i].pg_status, POOLCONFIG_MAXSTATLEN, "%s", db_node_status(i));
 
 		/* status last changed */
 		localtime_r(&bi->status_changed_time, &tm);
@@ -1342,8 +1354,8 @@ get_nodes(int *nrows)
 void
 nodes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
-	static char *field_names[] = {"node_id", "hostname", "port", "status", "lb_weight", "role",
-								  "select_cnt", "load_balance_node", "replication_delay",
+	static char *field_names[] = {"node_id", "hostname", "port", "status", "pg_status", "lb_weight", "role",
+								  "pg_role", "select_cnt", "load_balance_node", "replication_delay",
 								  "replication_state", "replication_sync_state", "last_status_change"};
 
 	static int offsettbl[] = {
@@ -1351,8 +1363,10 @@ nodes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 		offsetof(POOL_REPORT_NODES, hostname),
 		offsetof(POOL_REPORT_NODES, port),
 		offsetof(POOL_REPORT_NODES, status),
+		offsetof(POOL_REPORT_NODES, pg_status),
 		offsetof(POOL_REPORT_NODES, lb_weight),
 		offsetof(POOL_REPORT_NODES, role),
+		offsetof(POOL_REPORT_NODES, pg_role),
 		offsetof(POOL_REPORT_NODES, select),
 		offsetof(POOL_REPORT_NODES, load_balance_node),
 		offsetof(POOL_REPORT_NODES, delay),
@@ -2147,4 +2161,125 @@ static void write_one_field_v2(POOL_CONNECTION * frontend, char *field)
 	hsize = htonl(size + 4);
 	pool_write(frontend, &hsize, sizeof(hsize));
 	pool_write(frontend, field, size);
+}
+
+/*
+ * Get DB node status.  Return values are "up", "down" or "unknown" (in case
+ * when health check is not enabled).
+ */
+static
+char *db_node_status(int node)
+{
+	BackendInfo *bkinfo;
+	char	*user;
+	char	*dbname;
+	char	*host;
+	int		port;
+	char	command[4096];
+	int		wstatus;
+
+	/*
+	 * If health check is not enabled, return "unknown".
+	 */
+	if (pool_config->health_check_params[node].health_check_period == 0)
+	{
+		return "unknown";
+	}
+
+	user = pool_config->health_check_params[node].health_check_user;
+
+	/*
+	 * If health check database is not defined, use "postgres" database.
+	 */
+	if (*pool_config->health_check_params[node].health_check_database == '\0')
+		dbname = "postgres";
+	else
+		dbname = pool_config->health_check_params[node].health_check_database;
+
+	bkinfo = pool_get_node_info(node);
+	host = bkinfo->backend_hostname;
+	port = bkinfo->backend_port;
+	snprintf(command, sizeof(command), "pg_isready --dbname=%s --host=%s --port=%d --username=%s --quiet",
+			 dbname, host, port, user);
+	/*
+	 * Use pg_isready command to know if the backend is alive or not.
+	 */
+	wstatus = system(command);
+
+	if (WEXITSTATUS(wstatus) == 0)
+	{
+		return "up";
+	}
+	return "down";
+}
+
+/*
+ * Get DB node role.  Return values are "primary", "standby" or "unknown" (in case
+ * when sr check is not enabled).
+ */
+static
+char *db_node_role(int node)
+{
+	BackendInfo *bkinfo;
+	POOL_CONNECTION_POOL_SLOT *slots[MAX_NUM_BACKENDS];
+	POOL_SELECT_RESULT *res;
+	char	*user;
+	char	*password;
+	char	*dbname;
+	char	*host;
+	int		port;
+	char	*sts;
+
+	if (pool_config->sr_check_period == 0)
+	{
+		/* sr check is disabled */
+		return "unknown";
+	}
+
+	bkinfo = pool_get_node_info(node);
+	host = bkinfo->backend_hostname;
+	port = bkinfo->backend_port;
+	user = pool_config->sr_check_user;
+	password = get_pgpool_config_user_password(user, pool_config->sr_check_password);
+	dbname = pool_config->sr_check_database;
+	if (*dbname == '\0')
+		dbname = "postgres";
+
+	/*
+	 * Establish connection to backend.
+	 */
+	slots[node] = make_persistent_db_connection_noerror(node, host, port, dbname, user,
+														password ? password : "", true);
+
+	if (slots[node] == NULL)
+		return "unknown";
+
+	/*
+	 * Query whether the node is in recovery.
+	 */
+	if (get_query_result(slots, node, "SELECT pg_is_in_recovery()", &res))
+	{
+		return "unknown";
+	}
+
+	if (res->data[0] && !strcmp(res->data[0], "t"))
+	{
+		sts = "standby";
+	}
+	else if (res->data[0] && !strcmp(res->data[0], "f"))
+	{
+		sts = "primary";
+	}
+	else
+	{
+		sts = "unknown";
+	}
+	free_select_result(res);
+
+	/*
+	 * Discard connection to backend.
+	 */
+	discard_persistent_db_connection(slots[node]);
+
+	return sts;
 }

@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -28,6 +28,9 @@
 #include "utils/pool_signal.h"
 #include "utils/pool_ipc.h"
 #include "utils/ps_status.h"
+
+#include "context/pool_process_context.h"
+#include "context/pool_session_context.h"
 
 #include "pcp/pcp_worker.h"
 
@@ -136,6 +139,9 @@ pcp_main(int unix_fd, int inet_fd)
 	pool_signal(SIGALRM, SIG_IGN);
 
 	MemoryContextSwitchTo(TopMemoryContext);
+
+	/* Initialize per process context */
+	pool_init_process_context();
 
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{

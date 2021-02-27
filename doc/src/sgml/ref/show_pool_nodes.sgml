@@ -38,9 +38,17 @@
    balance node or not, the replication delay (only if in streaming
    replication mode) and last status change time. In addition to
    this replication state and sync state are shown for standby nodes
-   in <productname>Pgpool-II</productname> 4.1 or after. The
+   in <productname>Pgpool-II</productname> 4.1 or after.
+   Also actual node status and node role are shown in
+   <productname>Pgpool-II</productname> 4.3 or after.
+  </para>
+  <para>
+   The
    possible values in the status column are explained in
-   the <xref linkend="pcp-node-info"> reference. If the hostname is
+   the <xref linkend="pcp-node-info"> reference.
+  </para>
+  <para> 
+    If the hostname is
     something like "/tmp", that means
     <productname>Pgpool-II</productname> is connecting to backend by
     using UNIX domain sockets. The SELECT count does not include
@@ -55,12 +63,12 @@
   <para>
    Here is an example session:
    <programlisting>
-    test=# show pool_nodes;
-    node_id | hostname | port  | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
-    ---------+----------+-------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
-    0       | /tmp     | 11002 | up     | 0.500000  | primary | 0          | false             | 0                 |                   |                        | 2019-04-22 16:13:46
-    1       | /tmp     | 11003 | up     | 0.500000  | standby | 0          | true              | 0                 | streaming         | async                  | 2019-04-22 16:13:46
-    (2 rows)
+test=# show pool_nodes;
+ node_id | hostname | port  | status | pg_status | lb_weight |  role   | pg_role | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
+---------+----------+-------+--------+-----------+-----------+---------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
+ 0       | /tmp     | 11002 | up     | up        | 0.500000  | primary | primary | 0          | false             | 0                 |                   |                        | 2021-02-27 15:10:19
+ 1       | /tmp     | 11003 | up     | up        | 0.500000  | standby | standby | 0          | true              | 0                 | streaming         | async                  | 2021-02-27 15:10:19
+(2 rows)
    </programlisting>
   </para>
  </refsect1>
