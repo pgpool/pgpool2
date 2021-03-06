@@ -36,14 +36,14 @@
    -->
    RHELとその派生ディストリビューションでは、以下を一度行ってください。
    <programlisting>
-    yum install https://www.pgpool.net/yum/rpms/4.1/redhat/rhel-7-x86_64/pgpool-II-release-4.1-2.noarch.rpm
+    dnf install https://www.pgpool.net/yum/rpms/4.2/redhat/rhel-8-x86_64/pgpool-II-release-4.2-1.noarch.rpm
    </programlisting>
    <!--
    Then:
    -->
    そして以下を実施してください。
    <programlisting>
-    yum install pgpool-II-pg12
+    dnf install pgpool-II-pg13
    </programlisting>
 
    <!--
@@ -60,12 +60,12 @@
 
    Optionally you can install:
    -->
-   <literal>pg12</literal>は、<literal>PostgreSQL 12</literal>を意味しています。
+   <literal>pg13</literal>は、<literal>PostgreSQL 13</literal>を意味しています。
    <productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>のライブラリと拡張のディレクトリが必要です。
    そのディレクトリへのパスは<productname>PostgreSQL</productname>のバージョンごとに異なっているので、<productname>PostgreSQL</productname>に対応するRPMを選んでください。
    またRPMは、<ulink url="https://www.postgresql.org/download/linux/redhat/"><productname>PostgreSQL</productname>コミュニティRPM</ulink>を使用することを前提としています。
    <programlisting>
-    yum install pgpool-II-pg12-debuginfo
+    dnf install pgpool-II-pg13-debuginfo
    </programlisting>
    <!--
    which makes it easier to retrieve debugging symbols from the core
@@ -77,7 +77,7 @@
    インストールすることを推奨します。
    開発向けのオプションパッケージがあります。
    <programlisting>
-    yum install pgpool-II-pg12-devel
+    dnf install pgpool-II-pg13-devel
    </programlisting>
    <!--
    This installs header files which developers are interested in
@@ -92,7 +92,7 @@
    -->
    すべての<productname>PostgreSQL</productname>サーバに、以下をインストールしてください。
    <programlisting>
-    yum install pgpool-II-pg12-extensions
+    dnf install pgpool-II-pg13-extensions
    </programlisting>
 
   </para>
