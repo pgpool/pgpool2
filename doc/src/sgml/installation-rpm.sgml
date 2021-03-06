@@ -20,15 +20,15 @@
   <para>
    For RHEL and its derivatives do following once:
    <programlisting>
-    yum install https://www.pgpool.net/yum/rpms/4.1/redhat/rhel-7-x86_64/pgpool-II-release-4.1-2.noarch.rpm
+    dnf install https://www.pgpool.net/yum/rpms/4.2/redhat/rhel-8-x86_64/pgpool-II-release-4.2-1.noarch.rpm
    </programlisting>
    Then:
    <programlisting>
-    yum install pgpool-II-pg12
+    dnf install pgpool-II-pg13
    </programlisting>
 
-   <literal>pg12</literal> means <literal>PostgreSQL
-    12</literal>. <productname>Pgpool-II</productname>
+   <literal>pg13</literal> means <literal>PostgreSQL
+    13</literal>. <productname>Pgpool-II</productname>
    needs <productname>PostgreSQL</productname>'s library and
    extensions directory. Since the directory paths are different in
    the particular <productname>PostgreSQL</productname> versions,
@@ -40,14 +40,14 @@
 
    Optionally you can install:
    <programlisting>
-    yum install pgpool-II-pg12-debuginfo
+    dnf install pgpool-II-pg13-debuginfo
    </programlisting>
    which makes it easier to retrieve debugging symbols from the core
    or the backtrace. We recommend to install it.
 
    There is an optional package for developers.
    <programlisting>
-    yum install pgpool-II-pg12-devel
+    dnf install pgpool-II-pg13-devel
    </programlisting>
    This installs header files which developers are interested in.
   </para>
@@ -56,7 +56,7 @@
    On all the <productname>PostgreSQL</productname> servers you need
    to install:
    <programlisting>
-    yum install pgpool-II-pg12-extensions
+    dnf install pgpool-II-pg13-extensions
    </programlisting>
 
   </para>
