@@ -191,7 +191,20 @@ make_persistent_db_connection_noerror(
 	}
 	PG_CATCH();
 	{
-		EmitErrorReport();
+		/*
+		 * We used to call EmitErrorReport() to log the error and send an
+		 * error message to frontend.  However if pcp frontend program
+		 * receives an ERROR, it stops processing and terminates, which is not
+		 * good. This is problematic especially with pcp_node_info, since it
+		 * calls db_node_role(), and db_node_role() calls this function. So if
+		 * the target PostgreSQL is down, EmitErrorRepor() sends ERROR message
+		 * to pcp frontend and it stops (see process_pcp_response() in
+		 * src/libs/pcp/pcp.c. To fix this, just eliminate calling
+		 * EmitErrorReport(). This will suppress ERROR message but as you can
+		 * see the comment in this function "does not ereports in case of an
+		 * error", this should have been the right behavior in the first
+		 * place.
+		 */
 		MemoryContextSwitchTo(oldContext);
 		FlushErrorState();
 		slot = NULL;
