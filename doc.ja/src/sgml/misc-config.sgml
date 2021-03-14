@@ -141,7 +141,7 @@
   <varlistentry id="guc-relcache-query-target" xreflabel="relcache_query_target">
    <term><varname>relcache_query_target</varname> (<type>enum</type>)
     <indexterm>
-     <primary><varname>relache_query_target</varname>設定パラメータ</primary>
+     <primary><varname>relcache_query_target</varname>設定パラメータ</primary>
     </indexterm>
    </term>
    <listitem>
@@ -153,7 +153,7 @@
      これにより、クエリは負荷分散ノードに送られます。
      これは特に、大陸Aに<productname>Pgpool-II</productname>とプライマリサーバがあり、一方大陸Bに<productname>Pgpool-II</productname>とスタンバイサーバがあるような構成で有効です。
      Bのユーザは地理的にスタンバイサーバが近いため、スタンバイからデータを読みたいと思うでしょう。
-     その場合は、backend_weight0 (これはプライマリの設定です)を0に、backend_weight1(これはスタンバイの設定です)を1にし、relache_query_targetを<literal>load_balance_node</literal>にします。
+     その場合は、backend_weight0 (これはプライマリの設定です)を0に、backend_weight1(これはスタンバイの設定です)を1にし、relcache_query_targetを<literal>load_balance_node</literal>にします。
     </para>
     <para>
      しかし、スタンバイにクエリを送る場合、レプリケーションの遅延により、最近作られたテーブルや行はスタンバイサーバにはまだないかもしれないことに注意してください。
