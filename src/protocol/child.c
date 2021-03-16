@@ -645,7 +645,11 @@ static StartupPacket *read_startup_packet(POOL_CONNECTION *cp)
 				}
 				else
 				{
+					ereport(DEBUG1,
+							(errmsg("reading startup packet"),
+							 errdetail("guc name: %s value: %s", p, p+strlen(p)+1)));
 					p += (strlen(p) + 1);
+
 				}
 
 				p += (strlen(p) + 1);
