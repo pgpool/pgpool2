@@ -248,22 +248,26 @@ syslog_ident = 'pgpool'
                                         #   panic
 
 # This is used when logging to stderr:
-#logging_collector = off                # Enable capturing of stderr
+#logging_collector = off
+                                        # Enable capturing of stderr
                                         # into log files.
                                         # (change requires restart)
 
 # -- Only used if logging_collector is on ---
 
-#log_directory = '/tmp/pgpool_log'      # directory where log files are written,
+#log_directory = '/tmp/pgpool_log'
+                                        # directory where log files are written,
                                         # can be absolute
 #log_filename = 'pgpool-%Y-%m-%d_%H%M%S.log'
                                         # log file name pattern,
                                         # can include strftime() escapes
 
-#log_file_mode = 0600                   # creation mode for log files,
+#log_file_mode = 0600
+                                        # creation mode for log files,
                                         # begin with 0 to use octal notation
 
-#log_truncate_on_rotation = off         # If on, an existing log file with the
+#log_truncate_on_rotation = off
+                                        # If on, an existing log file with the
                                         # same name as the new log file will be
                                         # truncated rather than appended to.
                                         # But such truncation only occurs on
@@ -272,10 +276,12 @@ syslog_ident = 'pgpool'
                                         # off, meaning append to existing files
                                         # in all cases.
 
-#log_rotation_age = 1d                  # Automatic rotation of logfiles will
+#log_rotation_age = 1d
+                                        # Automatic rotation of logfiles will
                                         # happen after that (minutes)time.
                                         # 0 disables time based rotation.
-#log_rotation_size = 10MB               # Automatic rotation of logfiles will
+#log_rotation_size = 10MB
+                                        # Automatic rotation of logfiles will
                                         # happen after that much (KB) log output.
                                         # 0 disables size based rotation.
 
@@ -364,10 +370,10 @@ write_function_list = ''
                                    # Comma separated list of function names
                                    # that write to database
                                    # Regexp are accepted
-				   # If both read_only_function_list and write_function_list
-				   # is empty, function's volatile property is checked.
-				   # If it's volatile, the function is regarded as a
-				   # writing function.
+                                   # If both read_only_function_list and write_function_list
+                                   # is empty, function's volatile property is checked.
+                                   # If it's volatile, the function is regarded as a
+                                   # writing function.
 
 primary_routing_query_pattern_list = ''
                                    # Semicolon separated list of query patterns
@@ -737,7 +743,8 @@ enable_consensus_with_half_votes = off
 
 # -- common --
 
-wd_monitoring_interfaces_list = ''  # Comma separated list of interfaces names to monitor.
+wd_monitoring_interfaces_list = ''
+                                    # Comma separated list of interfaces names to monitor.
                                     # if any interface from the list is active the watchdog will
                                     # consider the network is fine
                                     # 'any' to enable monitoring on all interfaces except loopback
