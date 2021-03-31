@@ -248,31 +248,42 @@ PCP_PORT=__PCPPORT__
 pgversion=__PGVERSION__
 export PCPPASSFILE=__PCPPASSFILE__
 
+echo "follow primary script started" >> $log
 date >> $log
 echo "node_id $node_id host_name $host_name port $port db_cluster $db_cluster new_primary_id $new_primary_id old_main_id $old_main_id new_main_host_name $new_main_host_name old_primary_node_id $old_primary_node_id new_primary_port_number $new_primary_port_number new_primary_db_cluster $new_primary_db_cluster" >> $log
-
-# change primary node connection info so that it points to the new primary
-if [ $pgversion -ge 120 ];then
-   sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/myrecovery.conf
-   sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/myrecovery.conf
-else
-   sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/recovery.conf
-   sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/myrecovery.conf
-fi
-
-touch $db_cluster/standby.signal
 
 # Skip the target standby node if it's not running
 $pg_ctl -D $db_cluster status >/dev/null 2>&1
 if [ $? = 0 ]
 then
+    # change primary node connection info so that it points to the new primary
+    if [ $pgversion -ge 120 ];then
+        sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/myrecovery.conf
+        sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/myrecovery.conf
+    else
+        sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/recovery.conf
+        sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/myrecovery.conf
+    fi
+
+    touch $db_cluster/standby.signal
+
     echo "restart the target server" >> $log
     $pg_ctl -w -m f -D $db_cluster restart >> $log 2>&1
-    # attach the node
-    pcp_attach_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
+
+    $pg_ctl -D $db_cluster status >>$log 2>&1
+    if [ $? != 0 ]
+    then
+        echo "restarting $db_cluster failed" >>$log
+        echo "fail back to pcp_recovery_node" >>$log
+        pcp_recovery_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
+    else
+        # attach the node
+        pcp_attach_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
+    fi
 else
     echo "$db_cluster is not running. skipping follow primary command." >> $log
 fi
+echo "follow primary script ended" >> $log
 EOF
 
 #-------------------------------------------
