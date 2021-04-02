@@ -67,7 +67,8 @@ pgpool_SOURCES = main/main.c \
 
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\" \
-	-DHEALTHCHECK_OPTS=$(HEALTHCHECK_DEBUG)
+	-DHEALTHCHECK_OPTS=$(HEALTHCHECK_DEBUG) \
+	-DPGSQL_BIN_DIR=\"$(PGSQL_BIN_DIR)\"
 
 sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pcp.conf.sample \

@@ -2199,8 +2199,8 @@ char *db_node_status(int node)
 	bkinfo = pool_get_node_info(node);
 	host = bkinfo->backend_hostname;
 	port = bkinfo->backend_port;
-	snprintf(command, sizeof(command), "pg_isready --dbname=%s --host=%s --port=%d --username=%s --quiet",
-			 dbname, host, port, user);
+	snprintf(command, sizeof(command), "%s/pg_isready --dbname=%s --host=%s --port=%d --username=%s --quiet",
+			 PGSQL_BIN_DIR, dbname, host, port, user);
 	/*
 	 * Use pg_isready command to know if the backend is alive or not.
 	 */
