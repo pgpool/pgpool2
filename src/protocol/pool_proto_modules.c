@@ -1177,9 +1177,9 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	}
 
 	/*
-	 * If in replication mode, send "SYNC" message if not in a transaction.
+	 * If not in streaming or logical replication mode, send "SYNC" message if not in a transaction.
 	 */
-	if (REPLICATION)
+	if (!SL_MODE)
 	{
 		char kind;
 
