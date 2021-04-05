@@ -67,9 +67,12 @@ if [ $? -eq 0 ]; then
     echo follow_primary.sh: pg_rewind for node ${NODE_ID}
 
     # Create replication slot "${NODE_HOST}"
-    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_PRIMARY_NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
-        ${PGHOME}/bin/psql -p ${NEW_PRIMARY_NODE_PORT} -c \"SELECT pg_create_physical_replication_slot('${NODE_HOST}');\"
-    "
+    ${PGHOME}/bin/psql -h ${NEW_PRIMARY_NODE_HOST} -p ${NEW_PRIMARY_NODE_PORT} \
+        -c "SELECT pg_create_physical_replication_slot('${NODE_HOST}');"  >/dev/null 2>&1
+
+    if [ $? -ne 0 ]; then
+        echo follow_primary.sh: create replication slot \"${NODE_HOST}\" failed. You may need to create replication slot manually.
+    fi
 
     ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
 
@@ -78,6 +81,8 @@ if [ $? -eq 0 ]; then
         ${PGHOME}/bin/pg_ctl -w -m f -D ${NODE_PGDATA} stop
 
         ${PGHOME}/bin/pg_rewind -D ${NODE_PGDATA} --source-server=\"user=postgres host=${NEW_PRIMARY_NODE_HOST} port=${NEW_PRIMARY_NODE_PORT}\"
+
+        rm -rf ${NODE_PGDATA}/pg_replslot/*
 
         cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${NEW_PRIMARY_NODE_HOST} port=${NEW_PRIMARY_NODE_PORT} user=${REPLUSER} application_name=${NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
@@ -128,10 +133,14 @@ EOT
         "
 
         if [ $? -ne 0 ]; then
+
             # drop replication slot
-            ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_PRIMARY_NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
-                ${PGHOME}/bin/psql -p ${NEW_PRIMARY_NODE_PORT} -c \"SELECT pg_drop_replication_slot('${NODE_HOST}')\"
-            "
+            ${PGHOME}/bin/psql -h ${NEW_PRIMARY_NODE_HOST} -p ${NEW_PRIMARY_NODE_PORT} \
+                -c "SELECT pg_drop_replication_slot('${NODE_HOST}');"  >/dev/null 2>&1
+
+            if [ $? -ne 0 ]; then
+                echo ERROR: follow_primary.sh: drop replication slot \"${NODE_HOST}\" failed. You may need to drop replication slot manually.
+            fi
 
             echo follow_primary.sh: end: pg_basebackup failed
             exit 1
@@ -150,17 +159,21 @@ EOT
         ${PGPOOL_PATH}/pcp_attach_node -w -h localhost -U $PCP_USER -p ${PCP_PORT} -n ${NODE_ID}
 
         if [ $? -ne 0 ]; then
-                echo follow_primary.sh: end: pcp_attach_node failed
+                echo ERROR: follow_primary.sh: end: pcp_attach_node failed
                 exit 1
         fi
 
     # If start Standby failed, drop replication slot "${NODE_HOST}"
     else
 
-        ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_PRIMARY_NODE_HOST} -i ~/.ssh/id_rsa_pgpool \
-        ${PGHOME}/bin/psql -p ${NEW_PRIMARY_NODE_PORT} -c "SELECT pg_drop_replication_slot('${NODE_HOST}')"
+        ${PGHOME}/bin/psql -h ${NEW_PRIMARY_NODE_HOST} -p ${NEW_PRIMARY_NODE_PORT} \
+            -c "SELECT pg_drop_replication_slot('${NODE_HOST}');"  >/dev/null 2>&1
 
-        echo follow_primary.sh: end: follow primary command failed
+        if [ $? -ne 0 ]; then
+            echo ERROR: follow_primary.sh: drop replication slot \"${NODE_HOST}\" failed. You may need to drop replication slot manually.
+        fi
+
+        echo ERROR: follow_primary.sh: end: follow primary command failed
         exit 1
     fi
 
