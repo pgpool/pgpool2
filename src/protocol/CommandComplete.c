@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -180,10 +180,10 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 		}
 
 		/*
-		 * If we are in streaming replication mode and we are doing extended
-		 * query, register query cache now.
+		 * If we are doing extended query, register the SELECT result to temp
+		 * query cache now.
 		 */
-		if (SL_MODE && pool_is_doing_extended_query_message())
+		if (pool_is_doing_extended_query_message())
 		{
 			char	   *query;
 			Node	   *node;
@@ -191,7 +191,7 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 
 			if (session_context->query_context == NULL)
 			{
-				elog(WARNING, "expected query_contex is not NULL");
+				elog(WARNING, "expected query_contex is NULL");
 				return POOL_END;
 			}
 			query = session_context->query_context->query_w_hex;
