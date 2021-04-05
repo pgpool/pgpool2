@@ -34,9 +34,12 @@ else
 fi
 
 ## Create replication slot "${DEST_NODE_HOST}"
-${PGHOME}/bin/psql -p ${PRIMARY_NODE_PORT} << EOQ
-SELECT pg_create_physical_replication_slot('${DEST_NODE_HOST}');
-EOQ
+${PGHOME}/bin/psql -h ${PRIMARY_NODE_HOST} -p ${PRIMARY_NODE_PORT} \
+    -c "SELECT pg_create_physical_replication_slot('${DEST_NODE_HOST}');"  >/dev/null 2>&1
+
+if [ $? -ne 0 ]; then
+    echo ERROR: recovery_1st_stage: create replication slot \"${DEST_NODE_HOST}\" failed. You may need to create replication slot manually.
+fi
 
 ## Execute pg_basebackup to recovery Standby node
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DEST_NODE_HOST -i ~/.ssh/id_rsa_pgpool "
@@ -71,11 +74,14 @@ EOT
 
 if [ $? -ne 0 ]; then
 
-    ${PGHOME}/bin/psql -p ${PRIMARY_NODE_PORT} << EOQ
-SELECT pg_drop_replication_slot('${DEST_NODE_HOST}');
-EOQ
+    ${PGHOME}/bin/psql -h ${PRIMARY_NODE_HOST} -p ${PRIMARY_NODE_PORT} \
+        -c "SELECT pg_drop_replication_slot('${DEST_NODE_HOST}');"  >/dev/null 2>&1
 
-    echo recovery_1st_stage: end: pg_basebackup failed. online recovery failed
+    if [ $? -ne 0 ]; then
+        echo ERROR: recovery_1st_stage: drop replication slot \"${DEST_NODE_HOST}\" failed. You may need to drop replication slot manually.
+    fi
+
+    echo ERROR: recovery_1st_stage: end: pg_basebackup failed. online recovery failed
     exit 1
 fi
 

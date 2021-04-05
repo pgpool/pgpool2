@@ -34,7 +34,8 @@ OLD_PRIMARY_NODE_PORT="${12}"
 PGHOME=/usr/pgsql-13
 
 
-echo failover.sh: start: failed_node_id=$FAILED_NODE_ID old_primary_node_id=$OLD_PRIMARY_NODE_ID failed_host=$FAILED_NODE_HOST new_main_host=$NEW_MAIN_NODE_HOST
+echo failover.sh: start: failed_node_id=$FAILED_NODE_ID failed_host=$FAILED_NODE_HOST \
+    old_primary_node_id=$OLD_PRIMARY_NODE_ID new_main_node_id=$NEW_MAIN_NODE_ID new_main_host=$NEW_MAIN_NODE_HOST
 
 ## If there's no main node anymore, skip failover.
 if [ $NEW_MAIN_NODE_ID -lt 0 ]; then
@@ -53,30 +54,28 @@ fi
 ## If Standby node is down, skip failover.
 if [ $FAILED_NODE_ID -ne $OLD_PRIMARY_NODE_ID ]; then
 
-    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$OLD_PRIMARY_NODE_HOST -i ~/.ssh/id_rsa_pgpool "
-        ${PGHOME}/bin/psql -p $OLD_PRIMARY_NODE_PORT -c \"SELECT pg_drop_replication_slot('${FAILED_NODE_HOST}')\"
-    "
+    # If Standby node is down, drop replication slot.
+    ${PGHOME}/bin/psql -h ${OLD_PRIMARY_NODE_HOST} -p ${OLD_PRIMARY_NODE_PORT} \
+        -c "SELECT pg_drop_replication_slot('${FAILED_NODE_HOST}');"  >/dev/null 2>&1
 
     if [ $? -ne 0 ]; then
-        echo failover.sh: Standby node is down. Skipping failover.
-        echo failover.sh: end: drop replication slot "${FAILED_NODE_HOST}" failed
-        exit 1
+        echo ERROR: failover.sh: drop replication slot \"${FAILED_NODE_HOST}\" failed. You may need to drop replication slot manually.
     fi
 
-    echo failover.sh: end: Standby node is down. Skipping failover.
+    echo failover.sh: end: standby node is down. Skipping failover.
     exit 0
 fi
 
 ## Promote Standby node.
-echo failover.sh: Primary node is down, promote standby node ${NEW_MAIN_NODE_HOST}.
+echo failover.sh: primary node is down, promote new_main_node_id=$NEW_MAIN_NODE_ID on ${NEW_MAIN_NODE_HOST}.
 
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
     postgres@${NEW_MAIN_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ${PGHOME}/bin/pg_ctl -D ${NEW_MAIN_NODE_PGDATA} -w promote
 
 if [ $? -ne 0 ]; then
-    echo failover.sh: end: failover failed
+    echo ERROR: failover.sh: end: failover failed
     exit 1
 fi
 
-echo failover.sh: end: new_main_node_id=$NEW_MAIN_NODE_ID is promoted to a primary
+echo failover.sh: end: new_main_node_id=$NEW_MAIN_NODE_ID on ${NEW_MAIN_NODE_HOST} is promoted to a primary
 exit 0

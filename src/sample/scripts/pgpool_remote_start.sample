@@ -14,7 +14,7 @@ echo pgpool_remote_start: start: remote start Standby node $DEST_NODE_HOST
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
 
 if [ $? -ne 0 ]; then
-    echo pgpool_remote_start: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
+    echo ERROR: pgpool_remote_start: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
     exit 1
 fi
 
@@ -24,7 +24,7 @@ ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DES
 "
 
 if [ $? -ne 0 ]; then
-    echo pgpool_remote_start: $DEST_NODE_HOST PostgreSQL start failed.
+    echo ERROR: pgpool_remote_start: $DEST_NODE_HOST PostgreSQL start failed.
     exit 1
 fi
 
