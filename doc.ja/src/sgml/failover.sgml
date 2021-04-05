@@ -306,7 +306,7 @@
       <productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。
      </para>
 
-     <table id="ffailback-command-table">
+     <table id="failback-command-table">
       <!--
       <title>failback command options</title>
       -->
@@ -430,10 +430,10 @@
        script is called from <productname>Pgpool-II</productname>
        and it needs to run
        while <productname>Pgpool-II</productname> is working on
-       failover.
+       failback.
        -->
        スクリプトの中で<command>psql</command>やその他のコマンドを使ってバックエンドにアクセスし、情報を取り出すことはできますが、<command>psql</command>を <productname>Pgpool-II</productname>自体に対して実行することはできません。
-       スクリプトは<productname>Pgpool-II</productname>から呼ばれ、<productname>Pgpool-II</productname>がフェイルオーバーを実行している間に動作するからです。
+       スクリプトは<productname>Pgpool-II</productname>から呼ばれ、<productname>Pgpool-II</productname>がフェイルバックを実行している間に動作するからです。
       </para>
      </note>
 
@@ -478,20 +478,27 @@
       of <productname>Pgpool-II</productname>. Here is a pseud
       code to illustrate how the command is executed:
       -->
+      このコマンドは、フェイルオーバが完了した後に<productname>Pgpool-II</productname>によりフォークされた子プロセス内で実行されるので、
+      follow_primary_commandの実行は<productname>Pgpool-II</productname>のサービスを妨げることはありません。
+      以下で、このコマンドがどのように実行されるのかを疑似コードで説明します。
       <programlisting>
-       for each backend node
-       {
-       if (the node is not the new primary)
-       set down node status to shared memory status
-       memorize that folllow master command is needed to execute
-       }
-       if (we need to executed follow master command)
-       fork a child process
-       (within the child process)
+for each backend node
+{
+    if (the node is not the new primary)
+        set down node status to shared memory status
+        memorize that follow master command is needed to execute
+}
+if (we need to executed follow master command)
+{
+    fork a child process
+    (within the child process)
 
-       for each backend node
-       if (the node status in shared memory is down)
-       execute follow master command
+    for each backend node
+    {
+        if (the node status in shared memory is down)
+            execute follow master command
+    }
+}
       </programlisting>
      </para>
 

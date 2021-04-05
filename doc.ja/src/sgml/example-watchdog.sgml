@@ -55,8 +55,8 @@
     -->
     まず、<xref linkend="guc-use-watchdog">をonにします。
      <programlisting>
-      use_watchdog = on
-      # Activates watchdog
+use_watchdog = on
+                            # Activates watchdog
      </programlisting>
    </para>
   </sect3>
@@ -74,10 +74,10 @@
     上流のサーバ（アプリケーションサーバなど）を指定します。
     空欄にしておいても構いません。
     <programlisting>
-     trusted_servers = ''
-     # trusted server list which are used
-     # to confirm network connection
-     # (hostA,hostB,hostC,...)
+trusted_servers = ''
+                            # trusted server list which are used
+                            # to confirm network connection
+                            # (hostA,hostB,hostC,...)
     </programlisting>
    </para>
   </sect3>
@@ -93,8 +93,8 @@
     -->
     watchdog通信を行うTCPポート番号を指定します。
     <programlisting>
-     wd_port = 9000
-     # port number for watchdog service
+wd_port = 9000
+                            # port number for watchdog service
     </programlisting>
    </para>
   </sect3>
@@ -111,8 +111,8 @@
     -->
     仮想IPを<xref linkend="guc-delegate-IP">に設定します。
      <programlisting>
-      delegate_IP = '133.137.177.143'
-      # delegate IP address
+delegate_IP = '133.137.177.143'
+                            # delegate IP address
      </programlisting>
    </para>
    <note>
@@ -152,12 +152,12 @@
    <title>Activeサーバの設定(osspc16)</title>
    <para>
     <programlisting>
-     other_pgpool_hostname0 = 'osspc20'
-     # Host name or IP address to connect to for other pgpool 0
-     other_pgpool_port0 = 9999
-     # Port number for other pgpool 0
-     other_wd_port0 = 9000
-     # Port number for other watchdog 0
+other_pgpool_hostname0 = 'osspc20'
+                                # Host name or IP address to connect to for other pgpool 0
+other_pgpool_port0 = 9999
+                                # Port number for other pgpool 0
+other_wd_port0 = 9000
+                                # Port number for other watchdog 0
     </programlisting>
    </para>
   </sect3>
@@ -169,12 +169,12 @@
    <title>Standbyサーバの設定(osspc20)</title>
    <para>
     <programlisting>
-     other_pgpool_hostname0 = 'osspc16'
-     # Host name or IP address to connect to for other pgpool 0
-     other_pgpool_port0 = 9999
-     # Port number for other pgpool 0
-     other_wd_port0 = 9000
-     # Port number for other watchdog 0
+other_pgpool_hostname0 = 'osspc16'
+                                # Host name or IP address to connect to for other pgpool 0
+other_pgpool_port0 = 9999
+                                # Port number for other pgpool 0
+other_wd_port0 = 9000
+                                # Port number for other watchdog 0
     </programlisting>
    </para>
   </sect3>
@@ -205,8 +205,8 @@
     -->
     最初に、Active サーバで<productname>Pgpool-II</productname>を起動します。
     <programlisting>
-     [user@osspc16]$ su -
-     [root@osspc16]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf > pgpool.log 2>&1
+[user@osspc16]$ su -
+[root@osspc16]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf > pgpool.log 2>&1
     </programlisting>
     <!--
     Log messages will show that <productname>Pgpool-II</productname>
@@ -214,15 +214,15 @@
     -->
     ログから、仮想IP アドレスを使用し、またwatchdogプロセス起動したことが確認できます。
     <programlisting>
-     LOG:  I am announcing my self as master/coordinator watchdog node
-     LOG:  I am the cluster leader node
-     DETAIL:  our declare coordinator message is accepted by all nodes
-     LOG:  I am the cluster leader node. Starting escalation process
-     LOG:  escalation process started with PID:59449
-     <emphasis>LOG:  watchdog process is initialized
-      LOG:  watchdog: escalation started
-      LOG:  I am the master watchdog node</emphasis>
-     DETAIL:  using the local backend node status
+LOG:  I am announcing my self as master/coordinator watchdog node
+LOG:  I am the cluster leader node
+DETAIL:  our declare coordinator message is accepted by all nodes
+LOG:  I am the cluster leader node. Starting escalation process
+LOG:  escalation process started with PID:59449
+<emphasis>LOG:  watchdog process is initialized
+LOG:  watchdog: escalation started
+LOG:  I am the master watchdog node</emphasis>
+DETAIL:  using the local backend node status
     </programlisting>
    </para>
   </sect3>
@@ -238,8 +238,8 @@
     -->
     次に、Standbyサーバで<productname>Pgpool-II</>を起動します。
     <programlisting>
-     [user@osspc20]$ su -
-     [root@osspc20]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf > pgpool.log 2>&1
+[user@osspc20]$ su -
+[root@osspc20]# {installed_dir}/bin/pgpool -n -f {installed_dir}/etc/pgpool.conf > pgpool.log 2>&1
     </programlisting>
     <!--
     Log messages will show that <productname>Pgpool-II</productname>
@@ -247,19 +247,19 @@
     -->
     ログメッセージから<productname>Pgpool-II</productname>がwatchdogクラスタにスタンバイとして参加したことがわかります。
     <programlisting>
-     LOG:  watchdog cluster configured with 1 remote nodes
-     LOG:  watchdog remote node:0 on Linux_osspc16_9000:9000
-     LOG:  interface monitoring is disabled in watchdog
-     LOG:  IPC socket path: "/tmp/.s.PGPOOLWD_CMD.9000"
-     LOG:  watchdog node state changed from [DEAD] to [LOADING]
-     LOG:  new outbound connection to Linux_osspc16_9000:9000
-     LOG:  watchdog node state changed from [LOADING] to [INITIALIZING]
-     LOG:  watchdog node state changed from [INITIALIZING] to [STANDBY]
-     <emphasis>
-      LOG:  successfully joined the watchdog cluster as standby node
-      DETAIL:  our join coordinator request is accepted by cluster leader node "Linux_osspc16_9000"
-      LOG:  watchdog process is initialized
-     </emphasis>
+LOG:  watchdog cluster configured with 1 remote nodes
+LOG:  watchdog remote node:0 on Linux_osspc16_9000:9000
+LOG:  interface monitoring is disabled in watchdog
+LOG:  IPC socket path: "/tmp/.s.PGPOOLWD_CMD.9000"
+LOG:  watchdog node state changed from [DEAD] to [LOADING]
+LOG:  new outbound connection to Linux_osspc16_9000:9000
+LOG:  watchdog node state changed from [LOADING] to [INITIALIZING]
+LOG:  watchdog node state changed from [INITIALIZING] to [STANDBY]
+<emphasis>
+LOG:  successfully joined the watchdog cluster as standby node
+DETAIL:  our join coordinator request is accepted by cluster leader node "Linux_osspc16_9000"
+LOG:  watchdog process is initialized
+</emphasis>
     </programlisting>
    </para>
   </sect3>
@@ -276,11 +276,11 @@
    -->
    仮想 IP アドレスに、pingが通ることを確認します。
    <programlisting>
-    [user@someserver]$ ping 133.137.177.143
-    PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
-    64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
-    64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
-    64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+[user@someserver]$ ping 133.137.177.143
+PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
    </programlisting>
    <!--
    Confirm if the Active server which started at first has the virtual IP address.
@@ -310,7 +310,7 @@
    -->
    仮想IPアドレスを使って、<productname>PostgreSQL</> に接続をできることを確認します。
    <programlisting>
-    [user@someserver]$ psql -h 133.137.177.143 -p 9999 -l
+[user@someserver]$ psql -h 133.137.177.143 -p 9999 -l
    </programlisting>
   </para>
  </sect2>
@@ -328,7 +328,7 @@
    Activeサーバがサービス供給不可な状態になったときに、Standbyがそれを引き継ぐのを確認します。
    Activeサーバの<productname>Pgpool-II</>を停止します。
    <programlisting>
-    [root@osspc16]# {installed_dir}/bin/pgpool stop
+[root@osspc16]# {installed_dir}/bin/pgpool stop
    </programlisting>
 
    <!--
@@ -338,22 +338,22 @@
 
    <programlisting>
     <emphasis>
-     LOG:  remote node "Linux_osspc16_9000" is shutting down
-     LOG:  watchdog cluster has lost the coordinator node
+LOG:  remote node "Linux_osspc16_9000" is shutting down
+LOG:  watchdog cluster has lost the coordinator node
     </emphasis>
-    LOG:  watchdog node state changed from [STANDBY] to [JOINING]
-    LOG:  watchdog node state changed from [JOINING] to [INITIALIZING]
-    LOG:  I am the only alive node in the watchdog cluster
-    HINT:  skipping stand for coordinator state
-    LOG:  watchdog node state changed from [INITIALIZING] to [MASTER]
-    LOG:  I am announcing my self as master/coordinator watchdog node
-    LOG:  I am the cluster leader node
-    DETAIL:  our declare coordinator message is accepted by all nodes
+LOG:  watchdog node state changed from [STANDBY] to [JOINING]
+LOG:  watchdog node state changed from [JOINING] to [INITIALIZING]
+LOG:  I am the only alive node in the watchdog cluster
+HINT:  skipping stand for coordinator state
+LOG:  watchdog node state changed from [INITIALIZING] to [MASTER]
+LOG:  I am announcing my self as master/coordinator watchdog node
+LOG:  I am the cluster leader node
+DETAIL:  our declare coordinator message is accepted by all nodes
     <emphasis>
-     LOG:  I am the cluster leader node. Starting escalation process
-     LOG:  watchdog: escalation started
+LOG:  I am the cluster leader node. Starting escalation process
+LOG:  watchdog: escalation started
     </emphasis>
-    LOG:  watchdog escalation process with pid: 59551 exit with SUCCESS.
+LOG:  watchdog escalation process with pid: 59551 exit with SUCCESS.
    </programlisting>
 
    <!--
@@ -361,11 +361,11 @@
    -->
    仮想 IP アドレスに、pingが通ることを確認します。
    <programlisting>
-    [user@someserver]$ ping 133.137.177.143
-    PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
-    64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
-    64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
-    64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
+[user@someserver]$ ping 133.137.177.143
+PING 133.137.177.143 (133.137.177.143) 56(84) bytes of data.
+64 bytes from 133.137.177.143: icmp_seq=1 ttl=64 time=0.328 ms
+64 bytes from 133.137.177.143: icmp_seq=2 ttl=64 time=0.264 ms
+64 bytes from 133.137.177.143: icmp_seq=3 ttl=64 time=0.412 ms
    </programlisting>
 
    <!--
@@ -373,10 +373,10 @@
    -->
    Activeではもう仮想IPアドレスが使われなくなったのを確認します。
    <programlisting>
-    [root@osspc16]# ifconfig
-    eth0      ...
+[root@osspc16]# ifconfig
+eth0      ...
 
-    lo        ...
+lo        ...
    </programlisting>
 
    <!--
@@ -384,12 +384,12 @@
    -->
    Standbyで仮想IP アドレスが使われていることを確認します。
    <programlisting>
-    [root@osspc20]# ifconfig
-    eth0      ...
+[root@osspc20]# ifconfig
+eth0      ...
 
-    eth0:0    inet addr:133.137.177.143 ...
+eth0:0    inet addr:133.137.177.143 ...
 
-    lo        ...
+lo        ...
    </programlisting>
 
    <!--
@@ -397,7 +397,7 @@
    -->
    仮想IPアドレスを使って、<productname>PostgreSQL</>に接続できることを確認します。
    <programlisting>
-    [user@someserver]$ psql -h 133.137.177.143 -p 9999 -l
+[user@someserver]$ psql -h 133.137.177.143 -p 9999 -l
    </programlisting>
 
   </para>
@@ -430,29 +430,29 @@
     監視間隔秒を指定する<xref linkend="guc-wd-interval">、死活監視のタイプを指定する<xref linkend="guc-wd-lifecheck-method">を記述します。
       <literal>heartbeat</literal>方式では、障害と判断する秒数を指定する<xref linkend="guc-wd-heartbeat-deadtime">、受信ポート番号を指定する<xref linkend="guc-wd-heartbeat-port">、ハートビート信号の送信間隔秒を指定する<xref linkend="guc-wd-heartbeat-keepalive">、送信先<xref linkend="guc-heartbeat-destination">、<xref linkend="guc-heartbeat-destination-port">を記述します。
 	   <programlisting>
-	    wd_lifecheck_method = 'heartbeat'
-	    # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
-	    # (change requires restart)
-	    wd_interval = 10
-	    # lifecheck interval (sec) > 0
-	    wd_heartbeat_port = 9694
-	    # Port number for receiving heartbeat signal
-	    # (change requires restart)
-	    wd_heartbeat_keepalive = 2
-	    # Interval time of sending heartbeat signal (sec)
-	    # (change requires restart)
-	    wd_heartbeat_deadtime = 30
-	    # Deadtime interval for heartbeat signal (sec)
-	    # (change requires restart)
-	    heartbeat_destination0 = 'host0_ip1'
-	    # Host name or IP address of destination 0
-	    # for sending heartbeat signal.
-	    # (change requires restart)
-	    heartbeat_destination_port0 = 9694
-	    # Port number of destination 0 for sending
-	    # heartbeat signal. Usually this is the
-	    # same as wd_heartbeat_port.
-	    # (change requires restart)
+wd_lifecheck_method = 'heartbeat'
+                                # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
+	                            # (change requires restart)
+wd_interval = 10
+	                            # lifecheck interval (sec) > 0
+wd_heartbeat_port = 9694
+	                            # Port number for receiving heartbeat signal
+	                            # (change requires restart)
+wd_heartbeat_keepalive = 2
+	                            # Interval time of sending heartbeat signal (sec)
+	                            # (change requires restart)
+wd_heartbeat_deadtime = 30
+	                            # Deadtime interval for heartbeat signal (sec)
+	                            # (change requires restart)
+heartbeat_destination0 = 'host0_ip1'
+	                            # Host name or IP address of destination 0
+	                            # for sending heartbeat signal.
+	                            # (change requires restart)
+heartbeat_destination_port0 = 9694
+	                            # Port number of destination 0 for sending
+	                            # heartbeat signal. Usually this is the
+	                            # same as wd_heartbeat_port.
+	                            # (change requires restart)
 	   </programlisting>
 
    </para>
@@ -476,16 +476,17 @@
     仮想 IP を切り替える際に使うコマンドとして<xref linkend="guc-if-up-cmd">、<xref linkend="guc-if-down-cmd">、そのパスを指定する<xref linkend="guc-if-cmd-path">を記述します。
        また、仮想IP切り替え後のARPリクエスト送信コマンドを指定する<xref linkend="guc-arping-cmd">、そのパスを指定する<xref linkend="guc-arping-path">を記述します。
 	 <programlisting>
-	  if_cmd_path = '/sbin'
-	  # path to the directory where if_up/down_cmd exists
-	  if_up_cmd = 'ip addr add $_IP_$/24 dev eth0 label eth0:0'
-	  # startup delegate IP command
-	  if_down_cmd = 'ip addr del $_IP_$/24 dev eth0'
-	  # shutdown delegate IP command
+if_cmd_path = '/sbin'
+                                # path to the directory where if_up/down_cmd exists
+if_up_cmd = 'ip addr add $_IP_$/24 dev eth0 label eth0:0'
+	                            # startup delegate IP command
+if_down_cmd = 'ip addr del $_IP_$/24 dev eth0'
+	                            # shutdown delegate IP command
 
-	  arping_path = '/usr/sbin'           # arping command path
+arping_path = '/usr/sbin'
+                                # arping command path
 
-	  arping_cmd = 'arping -U $_IP_$ -w 1'
+arping_cmd = 'arping -U $_IP_$ -w 1'
 	 </programlisting>
 	 <!--
 	 You can also bring up and bring down the virtual IP using arbitrary scripts

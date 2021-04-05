@@ -153,8 +153,8 @@
     You can copy one of them as <filename>pgpool.conf</filename>.
     (probably you need root privilege for this)
     <programlisting>
-     # cd /usr/local/etc
-     # cp pgpool.conf.sample-stream pgpool.conf
+# cd /usr/local/etc
+# cp pgpool.conf.sample-stream pgpool.conf
     </programlisting>
    </para>
   </sect2>

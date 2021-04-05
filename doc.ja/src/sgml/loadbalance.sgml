@@ -222,7 +222,7 @@
     SELECTクエリの前に任意のコメントを挿入することにより負荷分散を抑制することができます。
    </para>
    <programlisting>
-    /*REPLICATION*/ SELECT ...
+/*REPLICATION*/ SELECT ...
    </programlisting>
    <para>
     <!--
@@ -264,7 +264,7 @@
    balancing. Here "writing queries" mean all the queries except
    below:
    -->
-   一般的には、特定の条件を満している場合、参照クエリは負荷分散します。
+   一般的には、特定の条件を満たしている場合、参照クエリは負荷分散します。
    ただし、更新を伴うクエリは負荷分散に影響する可能性があります。
    ここで、”更新を伴うクエリ”とは以下の例を除く全てのクエリを指します。
   </para>
@@ -704,7 +704,7 @@
        -->
        もし読み出しのみを行う関数が"get_"あるいは"select_"で始まるようにしてあるのであれば、<xref linkend="guc-white-function-list">を以下のように設定可能です。
 	<programlisting>
-	 white_function_list = 'get_.*,select_.*'
+white_function_list = 'get_.*,select_.*'
 	</programlisting>
       </para>
      </example>
@@ -770,7 +770,7 @@
        -->
        もし更新を行う関数が"set_"、"update_"、"delete_"、あるいは"insert_"で始まるようにしてあるのであれば、<xref linkend="guc-black-function-list">を以下のように設定可能です。
 	<programlisting>
-	 black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
+black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
 	</programlisting>
       </para>
      </example>
@@ -807,8 +807,8 @@
        <productname>Pgpool-II</productname> <emphasis>V3.0</emphasis>より前のバージョンでは、固定で<literal>nextval()</literal>と<literal>setval()</literal>がデータベースに書き込みを行なう関数であると認識されていました。
        以下のように<xref linkend="guc-white-function-list">と<xref linkend="guc-black-function-list">を設定することで、それと同じように動作させることができます。
 	 <programlisting>
-	  white_function_list = ''
-	  black_function_list = 'nextval,setval,lastval,currval'
+white_function_list = ''
+black_function_list = 'nextval,setval,lastval,currval'
 	 </programlisting>
       </para>
      </example>
@@ -914,7 +914,7 @@
 
       <para>
        <programlisting>
-	black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
+black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
        </programlisting>
       </para>
      </example>
@@ -1037,7 +1037,7 @@
        -->
        <xref linkend="guc-database-redirect-preference-list">は以下のように設定します。
 	<programlisting>
-	 database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:standby'
+database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:standby'
 	</programlisting>
       </para>
      </example>
@@ -1164,7 +1164,7 @@
        -->
        <xref linkend="guc-app-name-redirect-preference-list">は以下のように設定します。
 	<programlisting>
-	 app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
+app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
 	</programlisting>
       </para>
      </example>

@@ -37,7 +37,7 @@
        <xref linkend="guc-ssl-key"> and <xref linkend="guc-ssl-cert"> must also be
        configured in order for SSL to work with frontend connections.
        -->
-       フロントエンド接続にSSLするには、<xref linkend="guc-ssl-key">と<xref linkend="guc-ssl-cert">が設定されてなければなりません。
+       フロントエンド接続でSSLを動作させるには、<xref linkend="guc-ssl-key">と<xref linkend="guc-ssl-cert">が設定されてなければなりません。
       </para>
      </note>
      <note>

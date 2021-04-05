@@ -420,10 +420,8 @@
       libpq version must be 3.0 or later. Building <productname>Pgpool-II</productname> with libpq version 2.0 will fail.
       -->
       <productname>pgpool-II</productname> では libpq をリンクします。
-      libpq のバージョンは 2.0 の場合、configureに失敗します。
+      libpq のバージョンが 2.0 の場合、configureに失敗します。
       必ず libpq 3.0 以降(<productname>PostgreSQL</productname> 7.4以降)をリンクするようにしてください。
-      マルチステートメント（';'で区切って複数の文をまとめたSQL）を<productname>Pgpool-II</productname>が正しく処理することができません。
-      必ず文を分けて送信してください。
      </para>
     </listitem>
    </varlistentry>

@@ -15,7 +15,7 @@
   the underlying table updates.
   -->
   <productname>Pgpool-II</productname>の全てのモードでインメモリクエリキャッシュを利用することができます。
-  テーブルが更新によりキャッシュが古くなっても、<productname>Pgpool-II</>の再起動の必要はありません。
+  テーブルの更新によりキャッシュが古くなっても、<productname>Pgpool-II</>の再起動の必要はありません。
  </para>
 
  <note>
@@ -78,7 +78,7 @@
   反面、キャッシュをストアするオーバヘッドが生じるので、通常の方法より遅くなる場合も有ります。
   また、あるテーブルが更新された場合、<productname>Pgpool-II</productname>は自動的にそのテーブルに関係する全てのキャッシュを削除します。
   そのため、更新が多いシステムではパフォーマンスが悪くなります。
-  キャッシュのヒット率(<xref linkend="SQL-SHOW-POOL-CACHE">を使って確認できます)が70%以下の場合は、インメモリクエリキャッシュ無効にしたほうがいいかもしれません。
+  キャッシュのヒット率(<xref linkend="SQL-SHOW-POOL-CACHE">を使って確認できます)が70%以下の場合は、インメモリクエリキャッシュを無効にしたほうがいいかもしれません。
  </para>
 
  <sect2 id="runtime-in-memory-query-cache-enabling">
@@ -123,7 +123,7 @@
        parameter is set to off. See <xref linkend="runtime-misc"> for more details to relation cache.
        -->
        <xref linkend="guc-enable-shared-relcache">が有効の場合、クエリキャッシュはリレーションキャッシュでも使用されます。
-       その上、たとえ<xref linkend="guc-memory-cache-enabled">パラメータがオフに設定されいたとしても、クエリキャッシュは使用されます。
+       その上、たとえ<xref linkend="guc-memory-cache-enabled">パラメータがオフに設定されていたとしても、クエリキャッシュは使用されます。
        リレーションキャッシュの詳細は<xref linkend="runtime-misc">を参照してください。
       </para>
      </note>

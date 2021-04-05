@@ -247,7 +247,7 @@
   <para>
    After extracting the source tarball, execute the <filename>configure</> script.
    <programlisting>
-    ./configure
+./configure
    </programlisting>
   </para>
 
@@ -345,8 +345,8 @@
 
   <para>
    <programlisting>
-    make
-    make install
+make
+make install
    </programlisting>
    This will install <productname>Pgpool-II</>. (If you use <productname>Solaris</> or <productname>FreeBSD</>, replace <command>make</> with <command>gmake</>)
   </para>
@@ -369,19 +369,19 @@
    This is required in all <productname>Pgpool-II</productname>
    installation.
    <programlisting>
-    $ cd pgpool-II-&version/src/sql/pgpool-recovery
-    $ make
-    $ make install
+$ cd pgpool-II-&version/src/sql/pgpool-recovery
+$ make
+$ make install
    </programlisting>
    After this:
    <programlisting>
-    $ psql template1
-    =# CREATE EXTENSION pgpool_recovery;
+$ psql template1
+=# CREATE EXTENSION pgpool_recovery;
    </programlisting>
 
    or
    <programlisting>
-    $ psql -f pgpool-recovery.sql template1
+$ psql -f pgpool-recovery.sql template1
    </programlisting>
 
   </para>
@@ -394,12 +394,12 @@
    add following to <filename>postgresql.conf</filename>.
 
    <programlisting>
-    pgpool.pg_ctl = '/usr/local/pgsql/bin/pg_ctl'
+pgpool.pg_ctl = '/usr/local/pgsql/bin/pg_ctl'
    </programlisting>
 
    Probably you want to execute following after this:
    <programlisting>
-    $ pg_ctl reload -D /usr/local/pgsql/data
+$ pg_ctl reload -D /usr/local/pgsql/data
    </programlisting>
 
   </para>
@@ -429,21 +429,21 @@
 
   <para>
    <programlisting>
-    $ cd pgpool-II-&version/src/sql/pgpool-regclass
-    $ make
-    $ make install
+$ cd pgpool-II-&version/src/sql/pgpool-regclass
+$ make
+$ make install
    </programlisting>
    After this:
 
    <programlisting>
-    $ psql template1
-    =# CREATE EXTENSION pgpool_regclass;
+$ psql template1
+=# CREATE EXTENSION pgpool_regclass;
    </programlisting>
 
    or 
 
    <programlisting>
-    $ psql -f pgpool-regclass.sql template1
+$ psql -f pgpool-regclass.sql template1
    </programlisting>
 
    Executing <command>CREATE EXTENSION</command>
@@ -476,8 +476,8 @@
    processing may be thereby kept waiting for a long time.
 
    <programlisting>
-    $ cd pgpool-II-&version/src/sql
-    $ psql -f insert_lock.sql template1
+$ cd pgpool-II-&version/src/sql
+$ psql -f insert_lock.sql template1
    </programlisting>
 
   </para>
@@ -505,7 +505,7 @@
     compile them using docbook tools. To install Docbook tools on
     RHEL or similar systems, use:
     <programlisting>
-     yum install docbook-dtds docbook-style-dsssl docbook-style-xsl libxslt openjade
+yum install docbook-dtds docbook-style-dsssl docbook-style-xsl libxslt openjade
     </programlisting>
    </para>
   </sect2>
@@ -515,11 +515,11 @@
    <para>
     Once the tool sets are installed on the system, you can compile the docs:
     <programlisting>
-     $ cd doc
-     $ make
-     $ cd ..
-     $ cd doc.ja
-     $ make
+$ cd doc
+$ make
+$ cd ..
+$ cd doc.ja
+$ make
     </programlisting>
     You will see English HTML docs under doc/src/sgml/html, and online docs under sgml/man[1-8].
     Japanese docs can be found under doc.ja/src/sgml/html, and online docs under sgml/man[1-8].

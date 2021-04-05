@@ -81,7 +81,7 @@
    -->
    <productname>PostgreSQL</productname>が標準の5432ポートではなく、11002をリッスンしている場合は以下のように設定できます。
    <programlisting>
-    firewall-cmd --zone=public --remove-service=popstgresql --permanent
+    firewall-cmd --zone=public --remove-service=postgresql --permanent
     firewall-cmd --zone=public --add-port=11002/tcp --permanent
     firewall-cmd --reload
    </programlisting>

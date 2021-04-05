@@ -142,7 +142,7 @@
     comments just in front of the SELECT query:
    </para>
    <programlisting>
-    /*REPLICATION*/ SELECT ...
+/*REPLICATION*/ SELECT ...
    </programlisting>
    <para>
     If you want to use comments without suppressing load balancing, you can set
@@ -507,7 +507,7 @@
        with 'get_' or 'select_', You can
        set the <xref linkend="guc-white-function-list"> like below:
 	<programlisting>
-	 white_function_list = 'get_.*,select_.*'
+white_function_list = 'get_.*,select_.*'
 	</programlisting>
       </para>
      </example>
@@ -558,7 +558,7 @@
        with 'set_', 'update_', 'delete_' or 'insert_', You can
        set the <xref linkend="guc-black-function-list"> like below:
 	<programlisting>
-	 black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
+black_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
 	</programlisting>
       </para>
      </example>
@@ -591,8 +591,8 @@
        You can configure this by setting <xref linkend="guc-black-function-list">
 	and <xref linkend="guc-white-function-list"> as follows
 	 <programlisting>
-	  white_function_list = ''
-	  black_function_list = 'nextval,setval,lastval,currval'
+white_function_list = ''
+black_function_list = 'nextval,setval,lastval,currval'
 	 </programlisting>
       </para>
      </example>
@@ -665,7 +665,7 @@
 
       <para>
        <programlisting>
-	black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
+black_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
        </programlisting>
       </para>
      </example>
@@ -745,7 +745,7 @@
       <para>
        then the <xref linkend="guc-database-redirect-preference-list"> will be configured as follows:
 	<programlisting>
-	 database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:standby'
+database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:standby'
 	</programlisting>
       </para>
      </example>
@@ -831,7 +831,7 @@
       <para>
        then the <xref linkend="guc-app-name-redirect-preference-list"> will be configured as follows:
 	<programlisting>
-	 app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
+app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
 	</programlisting>
       </para>
      </example>

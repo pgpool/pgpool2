@@ -349,7 +349,7 @@
        script is called from <productname>Pgpool-II</productname>
        and it needs to run
        while <productname>Pgpool-II</productname> is working on
-       failover.
+       failback.
       </para>
      </note>
 
@@ -384,19 +384,23 @@
       of <productname>Pgpool-II</productname>. Here is a pseud
       code to illustrate how the command is executed:
       <programlisting>
-       for each backend node
-       {
-       if (the node is not the new primary)
-       set down node status to shared memory status
-       memorize that follow master command is needed to execute
-       }
-       if (we need to executed follow master command)
-       fork a child process
-       (within the child process)
+for each backend node
+{
+    if (the node is not the new primary)
+        set down node status to shared memory status
+        memorize that follow master command is needed to execute
+}
+if (we need to executed follow master command)
+{
+    fork a child process
+    (within the child process)
 
-       for each backend node
-       if (the node status in shared memory is down)
-       execute follow master command
+    for each backend node
+    {
+        if (the node status in shared memory is down)
+            execute follow master command
+    }
+}
       </programlisting>
      </para>
 

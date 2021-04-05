@@ -253,8 +253,8 @@
     これらを<filename>pgpool.conf</filename>としてコピーして使うことが可能です。
     （もしかするとそのためにはroot権限が必要かもしれません。）
     <programlisting>
-     # cd /usr/local/etc
-     # cp pgpool.conf.sample-stream pgpool.conf
+# cd /usr/local/etc
+# cp pgpool.conf.sample-stream pgpool.conf
     </programlisting>
    </para>
   </sect2>
