@@ -143,7 +143,7 @@
     2021-01-22 [50c5735]
     -->
     <para>
-     Doc: オンラインリカバリドキュメントで1st_stageと2nd stageに関する説明を改善しました。(Tatsuo Ishii)
+     Doc: オンラインリカバリドキュメントで1st stageと2nd stageに関する説明を改善しました。(Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -179,7 +179,7 @@
     2021-01-01 [01e56dd]
     -->
     <para>
-     ERRORが発生した場合、<xref linkend="GUC-CHILD-MAX-CONNECTIONS">が正しくカウンタされない不具合を修正しました。(Tatsuo Ishii)
+     ERRORが発生した場合、<xref linkend="GUC-CHILD-MAX-CONNECTIONS">が正しくカウントされない不具合を修正しました。(Tatsuo Ishii)
     </para>
    </listitem>
   </itemizedlist>

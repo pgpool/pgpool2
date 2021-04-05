@@ -349,7 +349,7 @@
        script is called from <productname>Pgpool-II</productname>
        and it needs to run
        while <productname>Pgpool-II</productname> is working on
-       failover.
+       failback.
       </para>
      </note>
 

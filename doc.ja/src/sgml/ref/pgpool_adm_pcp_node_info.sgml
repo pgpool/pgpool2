@@ -172,8 +172,8 @@ test=# SELECT * FROM pcp_node_info(node_id => 1, host => '', port => 11001, user
 
   <note>
    <para>
-    <parameter>role</parameter>, <parameter>replication_delay</parameter>, <parameter>last_status_change</parameter>出力パラメータは<productname>Pgpool-II</productname> 4.1で追加されました。
-    すでに4.0以前のpgpool_adm拡張をインストールしている場合は、ALTER EXTENSION SQLコマンドを使って更新が可能です。
+    <parameter>replication_state</parameter>, <parameter>replication_sync_state</parameter>出力パラメータは<productname>Pgpool-II</productname> 4.1で追加されました。
+    すでに4.1以前のpgpool_adm拡張をインストールしている場合は、ALTER EXTENSION SQLコマンドを使って更新が可能です。
     <programlisting>
      ALTER EXTENSION pgpool_adm UPDATE;
     </programlisting>

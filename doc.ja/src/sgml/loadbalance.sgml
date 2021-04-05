@@ -206,7 +206,7 @@
     SELECTクエリの前に任意のコメントを挿入することにより負荷分散を抑制することができます。
    </para>
    <programlisting>
-    /*REPLICATION*/ SELECT ...
+/*REPLICATION*/ SELECT ...
    </programlisting>
    <para>
     <!--
@@ -248,7 +248,7 @@
    balancing. Here "writing queries" mean all the queries except
    below:
    -->
-   一般的には、特定の条件を満している場合、参照クエリは負荷分散します。
+   一般的には、特定の条件を満たしている場合、参照クエリは負荷分散します。
    ただし、更新を伴うクエリは負荷分散に影響する可能性があります。
    ここで、”更新を伴うクエリ”とは以下の例を除く全てのクエリを指します。
   </para>
@@ -688,7 +688,7 @@
        -->
        もし読み出しのみを行う関数が"get_"あるいは"select_"で始まるようにしてあるのであれば、<xref linkend="guc-read-only-function-list">を以下のように設定可能です。
 	<programlisting>
-	 read_only_function_list = 'get_.*,select_.*'
+read_only_function_list = 'get_.*,select_.*'
 	</programlisting>
       </para>
      </example>
@@ -697,10 +697,10 @@
       <para>
        問い合わせがスキーマ修飾なしあるいはスキーマ修飾ありの両方の関数を参照するなら、その両者をリストに登録しなければなりません。
        <programlisting>
-	#たとえば、ある問い合わせが"f1()"を、他の問い合わせが"public.f1()"を関数f1を参照するなら、
-	#write_function_listは以下のように設定されるでしょう。
+#たとえば、ある問い合わせが"f1()"を、他の問い合わせが"public.f1()"を関数f1を参照するなら、
+#read_only_function_listは以下のように設定されるでしょう。
 
-	write_function_list = "f1,public.f1"
+read_only_function_list = "f1,public.f1"
 
        </programlisting>
 
@@ -780,11 +780,10 @@
       <para>
        問い合わせがスキーマ修飾なしあるいはスキーマ修飾ありの両方の関数を参照するなら、その両者をリストに登録しなければなりません。
        <programlisting>
-	#たとえば、ある問い合わせが"f1()"を、他の問い合わせが"public.f1()"を関数f1を参照するなら、
-	#read_only_function_listは以下のように設定されるでしょう。
+#たとえば、ある問い合わせが"f1()"を、他の問い合わせが"public.f1()"を関数f1を参照するなら、
+#write_function_listは以下のように設定されるでしょう。
 
-	read_only_function_list = "f1,public.f1"
-
+write_function_list = "f1,public.f1"
        </programlisting>
 
       </para>
@@ -815,8 +814,8 @@
        <productname>Pgpool-II</productname> <emphasis>V3.0</emphasis>より前のバージョンでは、固定で<literal>nextval()</literal>と<literal>setval()</literal>がデータベースに書き込みを行なう関数であると認識されていました。
        以下のように<xref linkend="guc-read-only-function-list">と<xref linkend="guc-write-function-list">を設定することで、それと同じように動作させることができます。
 	 <programlisting>
-	  read_only_function_list = ''
-	  write_function_list = 'nextval,setval,lastval,currval'
+read_only_function_list = ''
+write_function_list = 'nextval,setval,lastval,currval'
 	 </programlisting>
       </para>
      </example>
@@ -933,7 +932,7 @@
 
       <para>
        <programlisting>
-	primary_routing_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
+primary_routing_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
        </programlisting>
       </para>
      </example>
@@ -1056,7 +1055,7 @@
        -->
        <xref linkend="guc-database-redirect-preference-list">は以下のように設定します。
 	<programlisting>
-	 database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:standby'
+database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:standby'
 	</programlisting>
       </para>
      </example>
@@ -1183,7 +1182,7 @@
        -->
        <xref linkend="guc-app-name-redirect-preference-list">は以下のように設定します。
 	<programlisting>
-	 app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
+app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
 	</programlisting>
       </para>
      </example>
@@ -1437,13 +1436,13 @@
 		after INSERT into  <literal>table_1</>.
 		For this configuration you can set
 		<programlisting>
-             dml_adaptive_object_relationship_list = 'table_1:table_2'
+dml_adaptive_object_relationship_list = 'table_1:table_2'
 		</programlisting>
 -->
 	<literal>table_1</>へのINSERTのたびに<literal>table_2</>にINSERTを行うトリガがtable_1に設定されており、<literal>table_1</>へのINSERTの後で<literal>table_2</>からの読み出しが同じトランザクション内で負荷分散されないようにしたいとします。
 	このための設定は以下のようになります。
 		<programlisting>
-             dml_adaptive_object_relationship_list = 'table_1:table_2'
+dml_adaptive_object_relationship_list = 'table_1:table_2'
 		</programlisting>
 	  </para>
 	 </example>

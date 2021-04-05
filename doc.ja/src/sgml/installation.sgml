@@ -46,7 +46,7 @@
    <title>Pgpool-IIの導入形態</title>
    <para>
     <productname>Pgpool-II</productname>は1台でも利用が可能ですが、その<productname>Pgpool-II</productname>が停止するとデータベース全体が利用できなくなるので、複数の<productname>Pgpool-II</productname>を導入することをお勧めします。
-    複数の<productname>Pgpool-II</productname>はwatchdogと言う仕組みで連携を取りつつお互いを監視し、その中の1台が「リーダー」と呼ばれて仮想IPを持つので、クライアントはその仮想IPにアクセスすればばよく、複数の<productname>Pgpool-II</productname>が導入されていることを意識する必要はありません。
+    複数の<productname>Pgpool-II</productname>はwatchdogと言う仕組みで連携を取りつつお互いを監視し、その中の1台が「リーダー」と呼ばれて仮想IPを持つので、クライアントはその仮想IPにアクセスすればよく、複数の<productname>Pgpool-II</productname>が導入されていることを意識する必要はありません。
     (watchdogについては<xref linkend="tutorial-watchdog-intro">をご覧ください。)
     もしある<productname>Pgpool-II</productname>がダウンすると、別の<productname>Pgpool-II</productname>が取って代わってリーダーになります。
    </para>

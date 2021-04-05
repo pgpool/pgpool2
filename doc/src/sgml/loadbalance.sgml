@@ -141,7 +141,7 @@
     comments just in front of the SELECT query:
    </para>
    <programlisting>
-    /*REPLICATION*/ SELECT ...
+/*REPLICATION*/ SELECT ...
    </programlisting>
    <para>
     If you want to use comments without suppressing load balancing, you can set
@@ -522,7 +522,7 @@
        with 'get_' or 'select_', You can
        set the <xref linkend="guc-read-only-function-list"> like below:
 	<programlisting>
-	 read_only_function_list = 'get_.*,select_.*'
+read_only_function_list = 'get_.*,select_.*'
 	</programlisting>
       </para>
      </example>
@@ -533,13 +533,12 @@
        qualification then you must add both entries (with and without
        schema name) in the list.
        <programlisting>
-	#For example:
-	#If the queries sometime use "f1()" and other times "public.f1()"
-	#to refer the function f1 then the read_only_function_list
-	#would be configured as follows.
+#For example:
+#If the queries sometime use "f1()" and other times "public.f1()"
+#to refer the function f1 then the read_only_function_list
+#would be configured as follows.
 
-	read_only_function_list = "f1,public.f1"
-
+read_only_function_list = "f1,public.f1"
        </programlisting>
 
       </para>
@@ -591,7 +590,7 @@
        with 'set_', 'update_', 'delete_' or 'insert_', You can
        set the <xref linkend="guc-write-function-list"> like below:
 	<programlisting>
-	 write_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
+write_function_list = 'nextval,setval,set_.*,update_.*,delete_.*,insert_.*'
 	</programlisting>
       </para>
      </example>
@@ -602,13 +601,12 @@
        qualification then you must add both entries(with and without
        schema name) in the list.
        <programlisting>
-	#For example:
-	#If the queries sometime use "f1()" and other times "public.f1()"
-	#to refer the function f1 then the write_function_list
-	#would be configured as follows.
+#For example:
+#If the queries sometime use "f1()" and other times "public.f1()"
+#to refer the function f1 then the write_function_list
+#would be configured as follows.
 
-	write_function_list = "f1,public.f1"
-
+write_function_list = "f1,public.f1"
        </programlisting>
 
       </para>
@@ -629,8 +627,8 @@
        You can configure this by setting <xref linkend="guc-write-function-list">
 	and <xref linkend="guc-read-only-function-list"> as follows
 	 <programlisting>
-	  read_only_function_list = ''
-	  write_function_list = 'nextval,setval,lastval,currval'
+read_only_function_list = ''
+write_function_list = 'nextval,setval,lastval,currval'
 	 </programlisting>
       </para>
      </example>
@@ -717,7 +715,7 @@
 
       <para>
        <programlisting>
-	primary_routing_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
+primary_routing_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, col2 FROM table_name2 WHERE col1 LIKE \'%a%\'\;;.*table_name3.*'
        </programlisting>
       </para>
      </example>
@@ -797,7 +795,7 @@
       <para>
        then the <xref linkend="guc-database-redirect-preference-list"> will be configured as follows:
 	<programlisting>
-	 database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:standby'
+database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:standby'
 	</programlisting>
       </para>
      </example>
@@ -883,7 +881,7 @@
       <para>
        then the <xref linkend="guc-app-name-redirect-preference-list"> will be configured as follows:
 	<programlisting>
-	 app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
+app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
 	</programlisting>
       </para>
      </example>
@@ -1052,7 +1050,7 @@
 		after INSERT into  <literal>table_1</>.
 		For this configuration you can set
 		<programlisting>
-             dml_adaptive_object_relationship_list = 'table_1:table_2'
+dml_adaptive_object_relationship_list = 'table_1:table_2'
 		</programlisting>
 	  </para>
 	 </example>

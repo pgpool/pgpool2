@@ -224,7 +224,7 @@
        -->
        以下のコマンドを使って<command>pgbench</command>を実行します。
        <programlisting>
-	pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
+pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
        </programlisting>
        <!--
        Here, <literal>-C</literal> tells <command>pgbench</command> to connect
@@ -350,7 +350,8 @@
       connection between client and <productname>Pgpool-II</productname>.
       -->
       クライアントが前回のクエリからアイドル状態のままでいるときに、それを切断するまでの時間を秒単位で指定します。
-      これは、だらしないクライアントや<productname>Pgpool-II</productname>の間のTCP/IPコネクションの不調によって、<productname>Pgpool-II</productname>の子プロセスが占有されてしまうのを回避するのに役立ちます。
+      これは、だらしないクライアントや<productname>Pgpool-II</productname>とクライアントの間のTCP/IPコネクションの不調によって、
+      <productname>Pgpool-II</productname>の子プロセスが占有されてしまうのを回避するのに役立ちます。
      </para>
      <note>
       <para>
@@ -603,8 +604,8 @@
       <productname>Pgpool-II</productname>は、<productname>Pgpool-II</productname>のメッセージのログ出力先を2種類サポートします。
       複数のログ出力先を使用したい場合は、希望するログ出力先をカンマで区切ったリストをパラメータに設定することができます。
       <programlisting>
-       #for example to log on both syslog and stderr
-       log_destination = 'syslog,stderr'
+#for example to log on both syslog and stderr
+log_destination = 'syslog,stderr'
       </programlisting>
       <!--
       The default is to log to <literal>stderr</literal> only.
@@ -629,7 +630,7 @@
 	しかし、ほとんどのプラットフォームのデフォルトの<application>syslog</application>設定ではこれらのメッセージはすべて破棄されます。
 	うまく動作させるために<application>syslog</application>デーモンの設定に以下のようなものを追加しなければならないでしょう。
 	<programlisting>
-	 local0.*    /var/log/pgpool.log
+local0.*    /var/log/pgpool.log
 	</programlisting>
 	<!--
 	to the syslog daemon's configuration file to make it work.
@@ -829,7 +830,7 @@
 <!--
       Set to zero to disable size-based creation of new log files.
 -->
-      ゼロに設定することで、サイズに基づいた新しいログファイルの生成は無効になります。
+      ゼロに設定することで、寿命に基づいた新しいログファイルの生成は無効になります。
      </para>
      <para>
 <!--

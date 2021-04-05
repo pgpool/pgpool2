@@ -527,7 +527,7 @@
 	 it is taken as minutes. The default is 24 hours.
      </para>
 	 <para>
-	 Set to zero to disable size-based creation of new log files.
+	 Set to zero to disable time-based creation of new log files.
      </para>
 	 <para>
 	 This parameter can only be set at the Pgpool-II start.

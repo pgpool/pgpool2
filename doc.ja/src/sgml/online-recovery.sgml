@@ -285,7 +285,7 @@
      will first try to get the password for <xref linkend="guc-recovery-user"> from
      <xref linkend="guc-pool-passwd"> file before using the empty password.
      -->
-     <varname>recovery_password</varname>が空白のままの場合、 <productname>Pgpool-II</productname>は空のパスワードを使用する前にまず<xref linkend="guc-pool-passwd">ファイルから<xref linkend="guc-recovery-user">のパスワードを取得できるか試みます。
+     <varname>recovery_password</varname>が空のままの場合、 <productname>Pgpool-II</productname>は空のパスワードを使用する前にまず<xref linkend="guc-pool-passwd">ファイルから<xref linkend="guc-recovery-user">のパスワードを取得できるか試みます。
     </para>
     <para>
      <!--
@@ -624,7 +624,7 @@
       <varname>client_idle_limit_in_recovery</varname>は、<xref linkend="guc-recovery-timeout">よりも小さな値でなければなりません。
        さもないと、<xref linkend="guc-recovery-timeout">のタイムアウトが先に起こり、オンラインリカバリを実行中に以下のエラーとなります。
 	<programlisting>
-	 ERROR:  node recovery failed, waiting connection closed in the other pgpools timeout
+ERROR:  node recovery failed, waiting connection closed in the other pgpools timeout
 	</programlisting>
      </para>
     </note>
