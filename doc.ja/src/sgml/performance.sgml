@@ -59,7 +59,7 @@
     <para>
      必要プロセスメモリの計算式を示します。
      <programlisting>
-      合計必要プロセスメモリ(メババイト単位) = <xref linkend="guc-num-init-children"> * 5
+      合計必要プロセスメモリ(メガバイト単位) = <xref linkend="guc-num-init-children"> * 5
      </programlisting>
      たとえば<varname>num_init_children</varname> = 32 (デフォルト値です)なら、160MBのメモリが必要です。
     </para>

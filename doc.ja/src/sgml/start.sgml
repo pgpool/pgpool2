@@ -40,7 +40,7 @@
    replication using <productname>Pgpool-II</productname>, which is
    one of most common setup.
    -->
-   この節では、<productname>Pgpool-II</productname>を使って、もっとも一般的な設定の一つである、<productname>PostgreSQL</productname>クラスターをストリーミングレプリケーション構成で管理する方法を説明します。
+   この節では、<productname>Pgpool-II</productname>を使って、もっとも一般的な設定の一つである、<productname>PostgreSQL</productname>クラスタをストリーミングレプリケーション構成で管理する方法を説明します。
   </para>
 
   <para>

@@ -159,8 +159,8 @@
     You can copy one of them as <filename>pgpool.conf</filename>.
     (probably you need root privilege for this)
     <programlisting>
-     # cd /usr/local/etc
-     # cp pgpool.conf.sample-stream pgpool.conf
+# cd /usr/local/etc
+# cp pgpool.conf.sample-stream pgpool.conf
     </programlisting>
    </para>
   </sect2>
@@ -283,7 +283,7 @@
       REPEATABLE READ.  That means you need to set it in
       <filename>postgresql.conf</filename> like this:
       <programlisting>
-       default_transaction_isolation = 'repeatable read'
+default_transaction_isolation = 'repeatable read'
       </programlisting>
      </para>
     </listitem>
@@ -631,21 +631,21 @@ $ <userinput>pgpool -f /usr/local/etc/pgpool.conf -F /usr/local/etc/pcp.conf -m 
    failover.  By setting below in pgpool.conf will avoid failover of
    backend0.
    <programlisting>
-     backend_flag0 = DISALLOW_TO_FAILOVER
+backend_flag0 = DISALLOW_TO_FAILOVER
     </programlisting>
    This will take effect by reloading or restarting
    <productname>Pgpool-II</productname>. If this flag is set, failover
    will not happen if the backend is not available. While the backend
    is not available, clients wil get error message:
    <programlisting>
-     psql: error: could not connect to server: FATAL:  failed to create a backend connection
-     DETAIL:  executing failover on backend
+psql: error: could not connect to server: FATAL:  failed to create a backend connection
+DETAIL:  executing failover on backend
    </programlisting>
    After restarting the backend, clients can connect as usual.
 
    To allow failover on the backend again, you can set:
    <programlisting>
-     backend_flag0 = ALLOW_TO_FAILOVER
+backend_flag0 = ALLOW_TO_FAILOVER
    </programlisting>
    and reload or restart <productname>Pgpool-II</productname>.
   </para>

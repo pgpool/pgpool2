@@ -430,10 +430,10 @@
        script is called from <productname>Pgpool-II</productname>
        and it needs to run
        while <productname>Pgpool-II</productname> is working on
-       failover.
+       failback.
        -->
        スクリプトの中で<command>psql</command>やその他のコマンドを使ってバックエンドにアクセスし、情報を取り出すことはできますが、<command>psql</command>を <productname>Pgpool-II</productname>自体に対して実行することはできません。
-       スクリプトは<productname>Pgpool-II</productname>から呼ばれ、<productname>Pgpool-II</productname>がフェイルオーバーを実行している間に動作するからです。
+       スクリプトは<productname>Pgpool-II</productname>から呼ばれ、<productname>Pgpool-II</productname>がフェイルバックを実行している間に動作するからです。
       </para>
      </note>
 
@@ -466,7 +466,7 @@
       プライマリノードのフェイルオーバー後に実行するユーザコマンドを指定します。
       スタンバイがフェイルオーバーした際にはこのコマンドは実行されません。
       このコマンドは、<xref linkend="PCP-PROMOTE-NODE">コマンドによってノードを昇格する要求があった場合にも起動されます。
-       この機能は、メインスレーブモードでストリーミングレプリケーション構成の場合のみ有効です。
+       この機能は、ストリーミングレプリケーションモードでのみ有効です。
      </para>
 
      <para>
@@ -478,12 +478,15 @@
       of <productname>Pgpool-II</productname>. Here is a pseud
       code to illustrate how the command is executed:
       -->
+      このコマンドは、フェイルオーバが完了した後に Pgpool-II によりフォークされた子プロセス内で実行されるので、
+      follow_primary_command の実行は<productname>Pgpool-II</productname>のサービスを妨げることはありません。
+      以下で、このコマンドがどのように実行されるのかを疑似コードで説明します。
       <programlisting>
 for each backend node
 {
     if (the node is not the new primary)
         set down node status to shared memory status
-        memorize that folllow primary command is needed to execute
+        memorize that follow primary command is needed to execute
 }
 if (we need to executed follow primary command)
 {

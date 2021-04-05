@@ -63,7 +63,7 @@
      <example id="example-pgpool-node-id-1">
       <title>pgpool_node_idの設定例</title>
       <para>
-       Pgpool ノードが3つあり、それぞれのホスト名が server1、server2、server3 の場合、各ホスト上で<filename>pgpool_node_id</filename>ファイル以下のように作成します。
+       Pgpool ノードが3つあり、それぞれのホスト名が server1、server2、server3 の場合、各ホスト上で<filename>pgpool_node_id</filename>ファイルを以下のように作成します。
        RPMからインストールした場合は、<filename>pgpool.conf</filename>が<filename>/etc/pgpool-II/</filename>配下にインストールされます。
       </para>
       <itemizedlist>
@@ -735,7 +735,7 @@
    (using PCP command) by-pass these configuration settings.
    -->
    これらの設定は、<application>watchdog</application>機能が有効な場合に、バックエンドノードのフェイルオーバの動作を制御するために使用されます。
-   これらの設定の影響は、内部的な<productname>Pgpool-II</productname>のフェイルオーバ/縮退要求のみに影響します。
+   これらの設定は、内部的な<productname>Pgpool-II</productname>のフェイルオーバ/縮退要求のみに影響します。
    一方、(PCPコマンドを使った)ユーザが起動したバックエンド切り離し操作では、これらの設定項目は迂回され適用されません。
   </para>
 
@@ -808,7 +808,7 @@
       更に、障害ノードとは違い、<productname>Pgpool-II</productname>は隔離されたノードに対してはヘルスチェックを実行し続けます。
       隔離されたノードが到達可能になり次第、そのノードは自動的に再度アタッチされます。
       これは<productname>Pgpool-II </productname><emphasis>V4.1</emphasis>以降にのみ適用されることに注意してください。
-      それ以前のバージョンをお使いの場合は、隔離されたノードに対する接続性の問題が解決されたら、<xref linkend="pcp-attach-node">を使ってそのノードを復帰させさなければなりません。
+      それ以前のバージョンをお使いの場合は、隔離されたノードに対する接続性の問題が解決されたら、<xref linkend="pcp-attach-node">を使ってそのノードを復帰させなければなりません。
      </para>
 
      <para>
@@ -1164,8 +1164,8 @@
       except the loopback. Default is <literal>''</literal> empty list (monitoring disabled).
       -->
       watchdogプロセスがネットワークリンクの状態を監視するネットワークデバイス名をカンマ区切りのリストで指定します。
-      リスト中の全てのネットワークインタフェースが（無効化あるいはケーブルを抜かれることで）非アクティブになると、watchdog はネットワークが完全に故障したと見なし自らを停止させませす。
-      <literal>''</literal>（空文字）を指定するとネットワークインタフェースの監視が無効になります。
+      リスト中の全てのネットワークインタフェースが（無効化あるいはケーブルを抜かれることで）非アクティブになると、watchdog はネットワークが完全に故障したと見なし自らを停止させます。
+      <literal>''</literal>（空リスト）を指定するとネットワークインタフェースの監視が無効になります。
       <literal>'any'</literal>を指定すると、ループバック以外の存在する全てのネットワークインタフェースを監視します。
       デフォルトの値は<literal>''</literal>空リスト '' （監視は無効）です。
      </para>

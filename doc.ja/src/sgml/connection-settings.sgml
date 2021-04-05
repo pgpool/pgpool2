@@ -639,7 +639,7 @@ backend_clustering_mode = 'streaming_replication'
     <programlisting>
 backend_clustering_mode = 'logical_replication'
     </programlisting>
-   このモードでは127台までのロジカルレプリケーションストリーミングレプリケーションスタンバイサーバを使用できます。
+   このモードでは127台までのロジカルレプリケーションスタンバイサーバを使用できます。
    また、スタンバイサーバをまったく使用しないことも可能です。
   </para>
  </sect2>

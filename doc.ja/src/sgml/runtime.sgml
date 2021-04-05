@@ -241,8 +241,8 @@
     これらを<filename>pgpool.conf</filename>としてコピーして使うことが可能です。
     （もしかするとそのためにはroot権限が必要かもしれません。）
     <programlisting>
-     # cd /usr/local/etc
-     # cp pgpool.conf.sample-stream pgpool.conf
+# cd /usr/local/etc
+# cp pgpool.conf.sample-stream pgpool.conf
     </programlisting>
    </para>
   </sect2>
@@ -418,7 +418,7 @@
       PostgreSQLのトランザクション分離レベルをREPEATABLE READにする必要があります。
       具体的には、<filename>postgresql.conf</filename>に以下のように記述します。
       <programlisting>
-       default_transaction_isolation = 'repeatable read'
+default_transaction_isolation = 'repeatable read'
       </programlisting>
      </para>
     </listitem>
@@ -852,7 +852,7 @@ $ <userinput>pgpool -f /usr/local/etc/pgpool.conf -F /usr/local/etc/pcp.conf -m 
 この場合は<xref linkend="guc-backend-flag">を使ってフェイルオーバを避けることができます。
 以下のようにpgpool.confを設定すると、backend0のフェイルオーバが起こりません。
    <programlisting>
-     backend_flag0 = DISALLOW_TO_FAILOVER
+backend_flag0 = DISALLOW_TO_FAILOVER
     </programlisting>
 <!--
    This will take effect by reloading or restarting
@@ -864,8 +864,8 @@ $ <userinput>pgpool -f /usr/local/etc/pgpool.conf -F /usr/local/etc/pcp.conf -m 
 このフラグが設定されると、バックエンドが使用不可能になってもフェイルオーバが起きません。
 バックエンドが使用不可の間、クライアントは以下のエラーメッセージを受け取ります。
    <programlisting>
-     psql: error: could not connect to server: FATAL:  failed to create a backend connection
-     DETAIL:  executing failover on backend
+psql: error: could not connect to server: FATAL:  failed to create a backend connection
+DETAIL:  executing failover on backend
    </programlisting>
 <!--
    After restarting the backend, clients can connect as usual.
@@ -875,7 +875,7 @@ $ <userinput>pgpool -f /usr/local/etc/pgpool.conf -F /usr/local/etc/pcp.conf -m 
 バックエンドを再起動すると、クライアントは通常通り接続ができます。
 再びフェイルオーバを有効にするには、以下を設定します。
    <programlisting>
-     backend_flag0 = ALLOW_TO_FAILOVER
+backend_flag0 = ALLOW_TO_FAILOVER
    </programlisting>
 <!--
    and reload or restart <productname>Pgpool-II</productname>.
