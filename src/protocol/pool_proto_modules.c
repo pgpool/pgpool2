@@ -2349,7 +2349,19 @@ CloseComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 						kind, name)));
 		if (pool_config->memory_cache_enabled)
 		{
-			pool_discard_temp_query_cache(pool_get_current_cache());
+			POOL_QUERY_CONTEXT *query_context;
+			POOL_TEMP_QUERY_CACHE *temp_cache;
+
+			query_context = session_context->query_context;
+			if (query_context)
+			{
+				temp_cache = query_context->temp_cache;
+				if (temp_cache)
+				{
+					pool_discard_temp_query_cache(temp_cache);
+					query_context->temp_cache = NULL;
+				}
+			}
 		}
 	}
 
