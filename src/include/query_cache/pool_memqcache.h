@@ -279,6 +279,7 @@ extern POOL_SHMEM_STATS * pool_get_shmem_storage_stats(void);
 extern POOL_TEMP_QUERY_CACHE * pool_get_current_cache(void);
 extern POOL_TEMP_QUERY_CACHE * pool_get_current_cache(void);
 extern void pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE * temp_cache);
+extern void pool_discard_current_temp_query_cache(void);
 
 extern void pool_shmem_lock(void);
 extern void pool_shmem_unlock(void);

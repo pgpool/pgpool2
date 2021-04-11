@@ -987,7 +987,6 @@ reset_backend(POOL_CONNECTION_POOL * backend, int qcnt)
 	int			i;
 	bool		need_to_abort;
 	POOL_SESSION_CONTEXT *session_context;
-	POOL_TEMP_QUERY_CACHE *cache;
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
@@ -1046,16 +1045,9 @@ reset_backend(POOL_CONNECTION_POOL * backend, int qcnt)
 
 	pool_set_timeout(-1);
 
-	cache = pool_get_current_cache();
-	if (cache)
+	if (pool_config->memory_cache_enabled)
 	{
-		pool_discard_temp_query_cache(cache);
-
-		/*
-		 * Reset temp_cache pointer in the current query context so that we
-		 * don't double free memory.
-		 */
-		session_context->query_context->temp_cache = NULL;
+		pool_discard_current_temp_query_cache();
 	}
 
 	return 1;

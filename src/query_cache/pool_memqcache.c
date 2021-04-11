@@ -3158,6 +3158,29 @@ pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE * temp_cache)
 }
 
 /*
+ * Discard temp query cache in the current query context
+ */
+void
+pool_discard_current_temp_query_cache(void)
+{
+	POOL_SESSION_CONTEXT *session_context;
+	POOL_QUERY_CONTEXT *query_context;
+	POOL_TEMP_QUERY_CACHE * temp_cache;
+
+	session_context = pool_get_session_context(true);
+	query_context = session_context->query_context;
+	if (query_context)
+	{
+		temp_cache = query_context->temp_cache;
+		if (temp_cache)
+		{
+			pool_discard_temp_query_cache(temp_cache);
+			query_context->temp_cache = NULL;
+		}
+	}
+}
+
+/*
  * Add data to temp query cache.
  * Data must be FE/BE protocol packet.
  */
@@ -3555,17 +3578,7 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 			 */
 			if (pool_is_cache_exceeded())
 			{
-				POOL_TEMP_QUERY_CACHE *cache;
-
-				cache = pool_get_current_cache();
-				pool_discard_temp_query_cache(cache);
-
-				/*
-				 * Reset temp_cache pointer in the current query context so
-				 * that we don't double free memory.
-				 */
-				session_context->query_context->temp_cache = NULL;
-
+				pool_discard_current_temp_query_cache();
 			}
 
 			/*
