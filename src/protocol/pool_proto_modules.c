@@ -2349,19 +2349,13 @@ CloseComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 						kind, name)));
 		if (pool_config->memory_cache_enabled)
 		{
-			POOL_QUERY_CONTEXT *query_context;
-			POOL_TEMP_QUERY_CACHE *temp_cache;
-
-			query_context = session_context->query_context;
-			if (query_context)
-			{
-				temp_cache = query_context->temp_cache;
-				if (temp_cache)
-				{
-					pool_discard_temp_query_cache(temp_cache);
-					query_context->temp_cache = NULL;
-				}
-			}
+			/*
+			 * Discard current temp query cache.  This is necessary for the
+			 * case of clustering mode is not either streaming or logical
+			 * replication. Because in the cases the cache has been already
+			 * discarded upon receiving CommandComplete.
+			 */
+			pool_discard_current_temp_query_cache();
 		}
 	}
 
