@@ -8,7 +8,7 @@
 source $TESTLIBS
 WHOAMI=`whoami`
 TESTDIR=testdir
-PGPROTO=pgproto
+PGPROTO=$PGPOOL_INSTALL_DIR/bin/pgproto
 
 rm -fr $TESTDIR
 mkdir $TESTDIR
