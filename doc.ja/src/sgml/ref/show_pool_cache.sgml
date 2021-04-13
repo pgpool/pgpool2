@@ -64,6 +64,18 @@
    </programlisting>
 
   </para>
+
+  <note>
+   <para>
+<!--
+    If the cache storage is <literal>memcached</literal>, values for
+    all columns except num_cache_hits, num_selects and cache_hit_ratio
+    show 0.
+-->
+    キャッシュストレージが<literal>memcached</literal>のときは、num_cache_hits, num_selects and cache_hit_ratio以外の列の値は0になります。
+   </para>
+  </note>
+
  </refsect1>
 
 </refentry>
