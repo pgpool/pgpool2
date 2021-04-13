@@ -54,6 +54,14 @@
    </programlisting>
 
   </para>
+
+  <note>
+   <para>
+    If the cache storage is memcached, values for all columns except
+    num_cache_hits, num_selects and cache_hit_ratio show 0.
+   </para>
+  </note>
+
  </refsect1>
 
 </refentry>
