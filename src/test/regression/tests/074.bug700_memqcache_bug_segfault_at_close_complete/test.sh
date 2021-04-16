@@ -10,7 +10,7 @@ WHOAMI=`whoami`
 TESTDIR=testdir
 PGPROTO=$PGPOOL_INSTALL_DIR/bin/pgproto
 
-for mode in s i r n
+for mode in s r n
 do
     rm -fr $TESTDIR
     mkdir $TESTDIR
