@@ -15,7 +15,8 @@
   the underlying table updates.
   -->
   <productname>Pgpool-II</productname>の全てのモードでインメモリクエリキャッシュを利用することができます。
-  テーブルの更新によりキャッシュが古くなっても、<productname>Pgpool-II</>の再起動の必要はありません。
+  クエリキャッシュはSELECTの結果を保管しておいて再利用するものです。
+  テーブルの更新によりキャッシュが古くなると、自動的にそのテーブルに関連したキャッシュが削除される(<xref linkend="guc-memqcache-auto-cache-invalidation">がonの場合。デフォルトでこの項目はonになっています)ので<productname>Pgpool-II</productname>の再起動の必要はありません。
  </para>
 
  <note>
@@ -78,7 +79,26 @@
   反面、キャッシュをストアするオーバヘッドが生じるので、通常の方法より遅くなる場合も有ります。
   また、あるテーブルが更新された場合、<productname>Pgpool-II</productname>は自動的にそのテーブルに関係する全てのキャッシュを削除します。
   そのため、更新が多いシステムではパフォーマンスが悪くなります。
-  キャッシュのヒット率(<xref linkend="SQL-SHOW-POOL-CACHE">を使って確認できます)が70%以下の場合は、インメモリクエリキャッシュを無効にしたほうがいいかもしれません。
+  キャッシュのヒット率(<xref linkend="SQL-SHOW-POOL-CACHE">を使って確認できます)が70%以下の場合は、インメモリクエリキャッシュを無効にしたほうが良いかもしれません。
+ </para>
+
+ <para>
+  クエリキャッシュに<literal>SELECT</literal>結果が登録されるのは、基本的にSELECTが正常終了したときです。
+  明示的なトランザクションを実行中なら、そのトランザクションがコミットされるまではクエリキャッシュには<literal>SELECT</literal>結果は登録されません。
+  また、拡張問い合わせでは、<link linkend="guc-backend-clustering-mode">クラスタリングモード</link>により、キャッシュの登録されるタイミングが異なることに注意してください。
+  <link linkend="runtime-config-streaming-replication-mode">ストリーミングレプリケーションモード</link>と<link linkend="runtime-config-logical-replication-mode">ロジカルレプリケーションモード</link>では、<literal>Sync</literal>メッセージがフロントエンドから送られ、その応答(<literal>Ready for query</literal>メッセージ)がバックエンドから返ってきたタイミングになります。
+  ですから、
+  <programlisting>
+   Parse (SELECT 1)
+   Bind (SELECT 1)
+   Execute (SELECT 1)
+   Parse (SELECT 1)
+   Bind (SELECT 1)
+   Execute (SELECT 1)
+   Sync
+  </programlisting>
+  という順でコマンドがフロントエンドから送信されても、2回目のExecute (SELECT 1)ではクエリキャッシュは利用されません。
+  一方それ以外のクラスタリングモードでは、1回目のExecute (SELECT 1)の結果がクエリキャッシュに登録されるので、2回目のExecute (SELECT 1)ではクエリキャッシュが利用されます。
  </para>
 
  <sect2 id="runtime-in-memory-query-cache-enabling">
