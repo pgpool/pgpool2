@@ -558,6 +558,34 @@
    </para>
   </sect2>
 
+  <sect2 id="auth-password">
+   <title>Clear Text Password Authentication</title>
+
+   <para>
+    The method <literal>password</literal> sends the password in
+    clear-text and is therefore vulnerable to password
+    <quote>sniffing</quote> attacks. It should always be avoided if
+    possible. If the connection is protected by SSL encryption then
+    <literal>password</literal> can be used safely, though. For this
+    sake, it is recommended to use <literal>hostssl</literal> in
+    <filename>pool_hba.conf</filename> so that clients are enforced to
+    use SSL encryption.
+   </para>
+   <para>
+    A benefit to use the method is, the password for authentication is
+    provided by client side and <filename>pool_passwd</filename> is
+    not consulted. So you can avoid maintaining
+    <filename>pool_passwd</filename> file.
+   </para>
+   <para>
+    You can avoid maintaining <filename>pool_passwd</filename> by
+    using <xref linkend="guc-allow-clear-text-frontend-auth"> as well
+    but it does not enfornce to use SSL encryption because
+    <filename>pool_hba.conf</filename> cannot be used with the
+    parameter.
+   </para>
+  </sect2>
+
   <sect2 id="auth-md5">
    <title>MD5 Password Authentication</title>
 
