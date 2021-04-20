@@ -39,7 +39,7 @@ Pgpool-II documentation
   <title>説明</title>
   <para>
    <command>pcp_detach_node</command> は <productname>Pgpool-II</productname> のノードを切り離します。
-   <xref linkend="guc-failover-command"> あるいは <xref linkend="guc-follow-primary-command">が指定されていれば、それらも実行されます。
+   <xref linkend="guc-failover-command"> あるいは <xref linkend="guc-follow-master-command">が指定されていれば、それらも実行されます。
    すでに <productname>Pgpool-II</productname> に接続しているセッションは強制的に切断されます。
   </para>
   <para>
