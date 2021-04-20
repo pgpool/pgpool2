@@ -745,7 +745,7 @@
      into pool_passwd.
      If pool_passwd does not exist yet, pg_md5 command will automatically create it for you.
      -->
-     1. データベースのOSユーザとしてログインし、<command>"pg_md5 --md5auth --username=ユーザ名 パスワード"</command> を実行します。
+     1. データベースのOSユーザとしてログインし、<command>"pg_md5 --config-file=pgpool.confへのパス --md5auth --username=ユーザ名 パスワード"</command> を実行します。
      pool_passwdがまだ存在していなかった場合は、pg_md5コマンドが自動的にこれを生成します。
      <note>
       <para>
