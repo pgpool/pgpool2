@@ -35,7 +35,7 @@ Pgpool-II documentation
    <command>pcp_detach_node</command> detaches the given node from
    <productname>Pgpool-II</productname>. If <xref
    linkend="guc-failover-command"> and/or <xref
-   linkend="guc-follow-primary-command"> are specified, they are
+   linkend="guc-follow-master-command"> are specified, they are
    executed too. Existing connections to
    <productname>Pgpool-II</productname> are forced to be disconnected.
   </para>
