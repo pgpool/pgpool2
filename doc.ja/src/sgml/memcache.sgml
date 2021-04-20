@@ -85,8 +85,8 @@
  <para>
   クエリキャッシュに<literal>SELECT</literal>結果が登録されるのは、基本的にSELECTが正常終了したときです。
   明示的なトランザクションを実行中なら、そのトランザクションがコミットされるまではクエリキャッシュには<literal>SELECT</literal>結果は登録されません。
-  また、拡張問い合わせでは、<link linkend="guc-backend-clustering-mode">クラスタリングモード</link>により、キャッシュの登録されるタイミングが異なることに注意してください。
-  <link linkend="runtime-config-streaming-replication-mode">ストリーミングレプリケーションモード</link>と<link linkend="runtime-config-logical-replication-mode">ロジカルレプリケーションモード</link>では、<literal>Sync</literal>メッセージがフロントエンドから送られ、その応答(<literal>Ready for query</literal>メッセージ)がバックエンドから返ってきたタイミングになります。
+  また、拡張問い合わせでは、<link linkend="running-mode">クラスタリングモード</link>により、キャッシュの登録されるタイミングが異なることに注意してください。
+  <link linkend="running-mode">ストリーミングレプリケーションモード</link>と<link linkend="running-mode">ロジカルレプリケーションモード</link>では、<literal>Sync</literal>メッセージがフロントエンドから送られ、その応答(<literal>Ready for query</literal>メッセージ)がバックエンドから返ってきたタイミングになります。
   ですから、
   <programlisting>
    Parse (SELECT 1)

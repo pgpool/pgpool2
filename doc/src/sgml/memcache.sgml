@@ -55,10 +55,10 @@
   <literal>SELECT</literal> result is not registered until the
   transaction is committed.  Also in extended query mode, the timing
   of cache registeration varies depending on <link
-  linkend="guc-backend-clustering-mode">clustering mode</link>.  In
-  <link linkend="runtime-config-streaming-replication-mode">streaming
+  linkend="running-mode">clustering mode</link>.  In
+  <link linkend="running-mode">streaming
   replication mode</link> and <link
-  linkend="runtime-config-logical-replication-mode">logical
+  linkend="running-mode">logical
   replication mode</link>, cache is registered when
   <literal>Sync</literal> message is sent from frontend, and the
   response (<literal>Ready for query</literal> message) is returned
