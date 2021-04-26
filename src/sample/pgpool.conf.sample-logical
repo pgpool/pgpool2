@@ -258,7 +258,7 @@ syslog_ident = 'pgpool'
 
 # -- Only used if logging_collector is on ---
 
-#log_directory = '/tmp/pgpool_log'
+#log_directory = '/tmp/pgpool_logs'
                                         # directory where log files are written,
                                         # can be absolute
 #log_filename = 'pgpool-%Y-%m-%d_%H%M%S.log'
