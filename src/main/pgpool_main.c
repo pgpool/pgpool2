@@ -3361,7 +3361,13 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT * *slots)
 
 						/* verify host and port */
 						if (((*backend_info->backend_hostname == '/' && *host == '\0') ||
-							 !strcmp(backend_info->backend_hostname, host)) &&
+							 /*
+							  * It is possible that backend_hostname is Unix
+							  * domain socket but wal_receiver connects via
+							  * TCP/IP localhost.
+							  */
+							 (*backend_info->backend_hostname == '/' && !strcmp("localhost", host)) ||
+							 !strcmp(backend_info->backend_hostname, host))	&&
 							backend_info->backend_port == atoi(port))
 						{
 							/* the standby connects to the primary */
