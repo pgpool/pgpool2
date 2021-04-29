@@ -92,7 +92,9 @@ primary_slot_name = '${NODE_HOST}'
 EOT
 
         if [ ${PGVERSION} -ge 12 ]; then
-            touch ${NODE_PGDATA}/standby.signal
+            touch ${NODE_PGDATA}/standby.signal;
+            sed -i -e \"\\\$ainclude_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'\" \
+                   -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${NODE_PGDATA}/postgresql.conf;
         else
             echo \"standby_mode = 'on'\" >> ${RECOVERYCONF}
         fi
