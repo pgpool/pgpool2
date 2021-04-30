@@ -18,7 +18,7 @@
 # this tool for production environment!
 # Note that this script uses pgpool_setup as a work horse.
 #
-# usage: watchdog_setup [-wn num_pgpool][-wp watchdog_base_port][-m r|s|n][-n num_clusters][-p base_port][--no-stop][-d]
+# usage: watchdog_setup [-wn num_pgpool][-wp watchdog_base_port][-m r|s|n|i][-n num_clusters][-p base_port][--no-stop][-d]
 # -wn num_pgpool: create num_pgpool pgpool nodes. The default is 3. Must be greater than 1.
 # -wp watchdog_base_port: starting port number. The default is
 #  50000.
@@ -107,7 +107,7 @@ function set_pgpool_conf {
     echo "recovery_password = ''"  >> $CONF
     echo "recovery_1st_stage_command = 'basebackup.sh'" >> $CONF
 
-    if [ $MODE = "r" ];then
+    if [ $MODE = "r" || $MODE = "i" ];then
 	echo "recovery_2nd_stage_command = 'pgpool_recovery_pitr'" >> $CONF
     fi
 
@@ -305,9 +305,15 @@ do
 	sed -i '/.*data.*/d' startall
 	sed -i '/.*data.*/d' shutdownall
 
-	# replace database cluster path to pgpool0 so that pgpool1 etc. share the cluster
-	PGPOOLCONF=etc/pgpool.conf
-	sed -i "/backend_data_directory/s/pgpool$cnt/pgpool0/g" $PGPOOLCONF
+	# change database cluster directory symlink to pgpool0.
+	# The database cluster entity only resides in pgpool0.
+	n=0
+	while [ $n -lt $NUMCLUSTERS ]
+	do
+	    rm -fr data$n
+	    ln -s ../pgpool0/data$n .
+	    n=`expr $n + 1`
+	done
     fi
 
     echo "cd pgpool$cnt" >> $STARTALL
