@@ -2171,12 +2171,12 @@ static
 char *db_node_status(int node)
 {
 	BackendInfo *bkinfo;
-	char	*user;
-	char	*dbname;
-	char	*host;
-	int		port;
-	char	command[4096];
-	int		wstatus;
+	int		i;
+	char	portstr[32];
+#define PARAMS_ARRAY_SIZE	7
+	const char *keywords[PARAMS_ARRAY_SIZE];
+	const char *values[PARAMS_ARRAY_SIZE];
+	PGPing	ret;
 
 	/*
 	 * If health check is not enabled, return "unknown".
@@ -2186,27 +2186,37 @@ char *db_node_status(int node)
 		return "unknown";
 	}
 
-	user = pool_config->health_check_params[node].health_check_user;
+	i = 0;
+	
+	keywords[i] = "user";
+	values[i] = pool_config->health_check_params[node].health_check_user;
+	i++;
 
 	/*
 	 * If health check database is not defined, use "postgres" database.
 	 */
+	keywords[i] = "dbname";
 	if (*pool_config->health_check_params[node].health_check_database == '\0')
-		dbname = "postgres";
+		values[i]  = "postgres";
 	else
-		dbname = pool_config->health_check_params[node].health_check_database;
+		values[i] = pool_config->health_check_params[node].health_check_database;
+	i++;
 
 	bkinfo = pool_get_node_info(node);
-	host = bkinfo->backend_hostname;
-	port = bkinfo->backend_port;
-	snprintf(command, sizeof(command), "%s/pg_isready --dbname=%s --host=%s --port=%d --username=%s --quiet",
-			 PGSQL_BIN_DIR, dbname, host, port, user);
-	/*
-	 * Use pg_isready command to know if the backend is alive or not.
-	 */
-	wstatus = system(command);
+	keywords[i] = "host";
+	values[i] = bkinfo->backend_hostname;
+	i++;
 
-	if (WEXITSTATUS(wstatus) == 0)
+	keywords[i] = "port";
+	snprintf(portstr, sizeof(portstr), "%d", bkinfo->backend_port);
+	values[i] = portstr;
+	i++;
+
+	keywords[i] = NULL;
+	values[i] = NULL;
+
+	ret = PQpingParams(keywords, values, 1);
+	if (ret == PQPING_OK)
 	{
 		return "up";
 	}
