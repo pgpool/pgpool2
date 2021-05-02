@@ -247,6 +247,21 @@ Pgpool-II documentation
      </listitem>
     </varlistentry>
 
+    <varlistentry>
+     <term><option>-e</option></term>
+     <listitem>
+      <para>
+<!--
+       Omit to create <productname>PostgreSQL</productname> database
+       clusters. This option is intended to be used by
+       <command>watchdog_setup</command> and probably useless for
+       other purposes.
+-->
+       <productname>PostgreSQL</productname>データベースクラスタの作成を省略します。このオプションは<command>watchdog_setup</command>で使われることを想定しており、おそらく他の目的の役には立たないでしょう。
+      </para>
+     </listitem>
+    </varlistentry>
+
    </variablelist>
   </para>
  </refsect1>

@@ -296,7 +296,13 @@ do
     mkdir pgpool$cnt
     cd pgpool$cnt
     port=`expr $W_BASE_PORT + \( $cnt \* $num_ports_per_node \)`
-    $PGPOOL_SETUP -m $MODE -p $port -pg $PGBASEPORT
+
+    if [ $cnt -gt 0 ];then
+	$PGPOOL_SETUP -m $MODE -p $port -pg $PGBASEPORT -e
+    else
+	$PGPOOL_SETUP -m $MODE -p $port -pg $PGBASEPORT
+    fi
+
     set_watchdog_params $cnt $W_NUM_PGPOOL $W_BASE_PORT
 
     if [ $cnt != 0 ]

@@ -17,7 +17,7 @@
 # directory for *testing* purpose.
 # Do not use this tool for production environment!
 #
-# usage: pgpool_setup [-m r|s|n|l][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d][-s][-r]
+# usage: pgpool_setup [-m r|s|n|l][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d][-s][-r][-e]
 # -m s: create an installation as streaming replication mode.
 # (the default)
 # -m r: create an installation as native replication mode.
@@ -37,6 +37,7 @@
 # -d: start pgpool with debug mode
 # -s: use replication slot, rather than wal archive.
 # -r: use pg_rewind for base backup if possible.
+# -e: do not create PostgreSQL clusters
 #
 # The user run this script will become the PostgreSQL super user as
 # well.  Current directory must be empty.  Assume that appropriate
@@ -781,6 +782,212 @@ function wait_for_pgpool_reload {
 	done
 }
 
+#-------------------------------------------
+# create each PostgreSQL cluster
+#-------------------------------------------
+function create_postgresql_clusters {
+    n=0
+    while [ $n -lt $NUMCLUSTERS ]
+    do
+	CLUSTER="data"`expr $n`
+	CLUSTERDIR=$BASEDIR/$CLUSTER
+	PORT=`expr $BASEPORT + $n`
+
+	if [ $NO_CREATE_PGCLUSTER = "false" ];then
+	    echo -n "creating database cluster $CLUSTERDIR..."
+	    $INITDB -D $CLUSTERDIR $INITDBARG >&5 2>&1
+	    echo "done."
+
+	    # set postgresql.conf
+	    echo "update postgresql.conf"
+	    set_postgresql_conf $CLUSTERDIR >&5 2>&1
+
+	    # create pgpool_remote_start script under cluster directory
+	    echo "creating pgpool_remote_start"
+	    create_pgpool_remote_start_script $CLUSTERDIR >&5 2>&1
+
+	    echo "creating basebackup.sh"
+	    # create basebackup.sh
+	    if [ $MODE = 's' ];then
+		create_basebackup_stream $CLUSTERDIR $n >&5 2>&1
+	    elif [ $MODE = 'r' -o $MODE = 'i' ];then
+		create_basebackup_replication $CLUSTERDIR $n >&5 2>&1
+		create_pgpool_recovery_pitr $CLUSTERDIR $n >&5 2>&1
+	    fi
+
+	    # create recovery.conf or recovery.done if streaming replication
+	    # mode
+	    if [ $MODE = "s" ];then
+		echo "creating recovery.conf"
+		create_recovery_conf $CLUSTERDIR $n >&5 2>&1
+	    fi
+
+	    echo "$PG_CTL -D $CLUSTERDIR -m f stop" >> $SHUTDOWNALL
+	    echo "$PG_CTL -w -D $CLUSTERDIR start" >> $STARTALL
+	fi
+
+	n=`expr $n + 1`
+
+	echo "#$n port is $PORT" >> README.port
+
+	# create archive directory
+	test ! -d archivedir/$CLUSTER && mkdir -p archivedir/$CLUSTER
+
+    done
+}
+
+#-------------------------------------------
+# if streaming replication mode, we need to create data1 and so on, by
+# using online recovery.
+#-------------------------------------------
+function create_followers
+{
+    if [ $MODE = 's' ];then
+	if [ $NO_CREATE_PGCLUSTER = "false" ];then
+	    # temporarily start data0 cluster to create extensions
+	    echo "temporarily start data0 cluster to create extensions"
+	    $PG_CTL -w -D data0 start >&5 2>&1
+	    $PSQL -p $BASEPORT template1 >&5 2>&1 <<EOF
+CREATE EXTENSION pgpool_regclass;
+CREATE EXTENSION pgpool_recovery;
+CREATE DATABASE test;
+EOF
+	    if [ $USE_REPLICATION_SLOT = "true" ];then
+		n=0
+		while [ $n -lt $NUMCLUSTERS ]
+		do
+		    $PSQL -p $BASEPORT template1 -c "SELECT * FROM pg_create_physical_replication_slot('pgpool_setup_slot$n')" >&5 2>&1
+		    n=`expr $n + 1`
+		done
+	    fi
+	fi
+
+	n=0
+	PORT=$BASEPORT
+	CLUSTER="data"`expr $n`
+	CLUSTERDIR=$BASEDIR/$CLUSTER
+	echo "backend_hostname$n = '$PGSOCKET_DIR'" >> $CONF
+	echo "backend_port$n = $PORT" >> $CONF
+	echo "backend_weight$n = 1" >> $CONF
+	echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+	echo "backend_application_name$n = 'server$n'" >> $CONF
+
+	if [ $NO_CREATE_PGCLUSTER = "false" ];then
+	    # temporarily start pgpool
+	    echo "temporarily start pgpool-II to create standby nodes"
+	    $PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $BASEDIR/etc/pgpool.conf -F $BASEDIR/etc/pcp.conf -a $BASEDIR/etc/pool_hba.conf > $BASEDIR/log/pgpool.log 2>&1 &
+
+	    wait_for_pgpool_startup
+	fi
+
+	if [ $NUMCLUSTERS -gt 1 ];then
+	    n=1
+	    while [ $n -lt $NUMCLUSTERS ]
+	    do
+		# create archive directory
+		test ! -d $BASEDIR/archivedir/`basename $CLUSTER` && mkdir -p $BASEDIR/archivedir/`basename $CLUSTER`
+
+		# set up pgpool.conf
+		PORT=`expr $PORT + 1`
+		echo "backend_hostname$n = '$PGSOCKET_DIR'" >> $CONF
+		echo "backend_port$n = $PORT" >> $CONF
+		echo "backend_weight$n = 1" >> $CONF
+		CLUSTER="data"`expr $n`
+		CLUSTERDIR=$BASEDIR/$CLUSTER
+		echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+		echo "backend_application_name$n = 'server$n'" >> $CONF
+		n=`expr $n + 1`
+	    done
+
+	    if [ $NO_CREATE_PGCLUSTER = "false" ];then
+		$PGPOOL_INSTALL_DIR/bin/pgpool -f $BASEDIR/etc/pgpool.conf reload
+	    fi
+	fi
+
+	if [ $NO_CREATE_PGCLUSTER = "false" ];then
+	    wait_for_pgpool_reload $NUMCLUSTERS
+	    $PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
+	    export PCPPASSFILE=$PCP_PASS_FILE
+	    # recovery data1 and so on
+	    n=1
+	    while [ $n -lt $NUMCLUSTERS ]
+	    do
+		echo -n "recovery node $n..."
+		$PGPOOL_INSTALL_DIR/bin/pcp_recovery_node -w -h localhost -p $PCP_PORT -n $n
+		echo "done."
+		n=`expr $n + 1`
+		if [ $n -lt $NUMCLUSTERS ];then
+		    wait_for_pgpool_startup
+		    #			sleep 10
+		fi
+	    done
+	fi
+
+	#	
+	#	replication mode
+	#
+    else
+	n=0
+	PORT=$BASEPORT
+	CLUSTER="data"`expr $n`
+	CLUSTERDIR=$BASEDIR/$CLUSTER
+
+	while [ $n -lt $NUMCLUSTERS ]
+	do
+	    if [ $NO_CREATE_PGCLUSTER = "false" ];then
+		if [ $MODE = 'l' -o $MODE = 'y' ]
+		then
+		    # temporarily start data$n cluster to create extensions
+		    echo "temporarily start data${n} cluster to create extensions"
+		    $PG_CTL -w -D data${n} start >&5 2>&1
+		    $PSQL -p `expr $BASEPORT + $n` template1 >&5 2>&1 <<EOF
+CREATE EXTENSION pgpool_regclass;
+CREATE EXTENSION pgpool_recovery;
+CREATE DATABASE test;
+EOF
+		    $PG_CTL -m f -D data${n} stop >&5 2>&1
+		fi
+	    fi
+
+	    # set up pgpool.conf
+	    echo "backend_hostname$n = '$PGSOCKET_DIR'" >> $CONF
+	    echo "backend_port$n = $PORT" >> $CONF
+	    echo "backend_weight$n = 1" >> $CONF
+
+	    if [ $n -eq 0 -a $MODE = "l" ]
+	    then
+		echo "backend_flag$n = ALWAYS_PRIMARY" >> $CONF
+	    fi
+
+	    CLUSTER="data"`expr $n`
+	    CLUSTERDIR=$BASEDIR/$CLUSTER
+	    echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+	    PORT=`expr $PORT + 1`
+	    n=`expr $n + 1`
+	done
+
+	if [ $NO_CREATE_PGCLUSTER = "false" ];then
+	    echo "start all"
+	    $STARTALL >&5 2>&1
+	    echo -n "waiting for pgpool-II coming up..."
+	    wait_for_pgpool_startup
+	    #	sleep 20
+	    echo "done."
+	fi
+    fi
+
+    if [ $NO_CREATE_PGCLUSTER = "false" ];then
+	if [ $MODE = "r" -o $MODE = "n" -o $MODE = "i" ];then
+	    echo "create extensions"
+	    $PSQL -p $PGPOOL_PORT template1 >&5 2>&1 <<EOF
+CREATE EXTENSION pgpool_regclass;
+CREATE EXTENSION pgpool_recovery;
+CREATE DATABASE test;
+EOF
+	fi
+    fi
+}
+
 #################################################################################
 #
 # main script
@@ -788,7 +995,7 @@ function wait_for_pgpool_reload {
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s|n|l|y|i] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d] [-s] [-r]";exit 1
+	echo "usage: $0 [-m r|s|n|l|y|i] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d] [-s] [-r] [-e]";exit 1
 }
 
 #-------------------------------------------
@@ -799,6 +1006,8 @@ function usage()
 # default mode is streaming replication mode
 MODE="s"
 NO_STOP="false"
+
+NO_CREATE_PGCLUSTER="false"
 
 while [ $# -gt 0 ]
 do
@@ -832,6 +1041,8 @@ do
 	    USE_REPLICATION_SLOT="true"
 	elif [ $1 = "-r" ];then
 	    USE_PG_REWIND="true"
+	elif [ $1 = "-e" ];then
+	     NO_CREATE_PGCLUSTER="true"
 	elif [ $1 = "--help" -o $1 = "-o" ];then
 		usage
 		exit
@@ -931,53 +1142,11 @@ create_failover_script >&5 2>&1
 #-------------------------------------------
 # create each PostgreSQL cluster
 #-------------------------------------------
-n=0
-while [ $n -lt $NUMCLUSTERS ]
-do
-	CLUSTER="data"`expr $n`
-	CLUSTERDIR=$BASEDIR/$CLUSTER
-	PORT=`expr $BASEPORT + $n`
+create_postgresql_clusters
 
-	echo -n "creating database cluster $CLUSTERDIR..."
-	$INITDB -D $CLUSTERDIR $INITDBARG >&5 2>&1
-	echo "done."
-
-	# set postgresql.conf
-	echo "update postgresql.conf"
-	set_postgresql_conf $CLUSTERDIR >&5 2>&1
-
-	# create pgpool_remote_start script under cluster directory
-	echo "creating pgpool_remote_start"
-	create_pgpool_remote_start_script $CLUSTERDIR >&5 2>&1
-
-	echo "creating basebackup.sh"
-	# create basebackup.sh
-	if [ $MODE = 's' ];then
-		create_basebackup_stream $CLUSTERDIR $n >&5 2>&1
-	elif [ $MODE = 'r' -o $MODE = 'i' ];then
-		create_basebackup_replication $CLUSTERDIR $n >&5 2>&1
-		create_pgpool_recovery_pitr $CLUSTERDIR $n >&5 2>&1
-	fi
-
-	# create recovery.conf or recovery.done if streaming replication
-	# mode
-	if [ $MODE = "s" ];then
-		echo "creating recovery.conf"
-		create_recovery_conf $CLUSTERDIR $n >&5 2>&1
-	fi
-
-	echo "$PG_CTL -D $CLUSTERDIR -m f stop" >> $SHUTDOWNALL
-	echo "$PG_CTL -w -D $CLUSTERDIR start" >> $STARTALL
-
-	n=`expr $n + 1`
-
-	echo "#$n port is $PORT" >> README.port
-
-	# create archive directory
-	test ! -d archivedir/$CLUSTER && mkdir -p archivedir/$CLUSTER
-
-done
-
+#-------------------------------------------
+# create pgpool.conf
+#-------------------------------------------
 set_pgpool_conf $CONF
 set_pool_hba_conf $BASEDIR/etc/pool_hba.conf
 
@@ -1018,136 +1187,7 @@ $PGPOOL_INSTALL_DIR/bin/pg_md5 -m -f etc/pgpool.conf -u $WHOAMI $WHOAMI
 # if streaming replication mode, we need to create data1 and so on, by
 # using online recovery.
 #-------------------------------------------
-
-if [ $MODE = 's' ];then
-# temporarily start data0 cluster to create extensions
-	echo "temporarily start data0 cluster to create extensions"
-	$PG_CTL -w -D data0 start >&5 2>&1
-	$PSQL -p $BASEPORT template1 >&5 2>&1 <<EOF
-CREATE EXTENSION pgpool_regclass;
-CREATE EXTENSION pgpool_recovery;
-CREATE DATABASE test;
-EOF
-	if [ $USE_REPLICATION_SLOT = "true" ];then
-	    n=0
-	    while [ $n -lt $NUMCLUSTERS ]
-	    do
-		$PSQL -p $BASEPORT template1 -c "SELECT * FROM pg_create_physical_replication_slot('pgpool_setup_slot$n')" >&5 2>&1
-		n=`expr $n + 1`
-	    done
-	fi
-
-	n=0
-	PORT=$BASEPORT
-	CLUSTER="data"`expr $n`
-	CLUSTERDIR=$BASEDIR/$CLUSTER
-	echo "backend_hostname$n = '$PGSOCKET_DIR'" >> $CONF
-	echo "backend_port$n = $PORT" >> $CONF
-	echo "backend_weight$n = 1" >> $CONF
-	echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
-	echo "backend_application_name$n = 'server$n'" >> $CONF
-
-# temporarily start pgpool
-	echo "temporarily start pgpool-II to create standby nodes"
-	$PGPOOL_INSTALL_DIR/bin/pgpool -D -n -f $BASEDIR/etc/pgpool.conf -F $BASEDIR/etc/pcp.conf -a $BASEDIR/etc/pool_hba.conf > $BASEDIR/log/pgpool.log 2>&1 &
-
-	wait_for_pgpool_startup
-
-	if [ $NUMCLUSTERS -gt 1 ];then
-		n=1
-		while [ $n -lt $NUMCLUSTERS ]
-		do
-		    # create archive directory
-		    test ! -d $BASEDIR/archivedir/`basename $CLUSTER` && mkdir $BASEDIR/archivedir/`basename $CLUSTER`
-
-		# set up pgpool.conf
-			PORT=`expr $PORT + 1`
-			echo "backend_hostname$n = '$PGSOCKET_DIR'" >> $CONF
-			echo "backend_port$n = $PORT" >> $CONF
-			echo "backend_weight$n = 1" >> $CONF
-			CLUSTER="data"`expr $n`
-			CLUSTERDIR=$BASEDIR/$CLUSTER
-			echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
-			echo "backend_application_name$n = 'server$n'" >> $CONF
-			n=`expr $n + 1`
-		done
-		$PGPOOL_INSTALL_DIR/bin/pgpool -f $BASEDIR/etc/pgpool.conf reload
-	fi
-
-	wait_for_pgpool_reload $NUMCLUSTERS
-$PSQL -p $PGPOOL_PORT -c "show pool_nodes" test
-export PCPPASSFILE=$PCP_PASS_FILE
-# recovery data1 and so on
-	n=1
-	while [ $n -lt $NUMCLUSTERS ]
-	do
-		echo -n "recovery node $n..."
-		$PGPOOL_INSTALL_DIR/bin/pcp_recovery_node -w -h localhost -p $PCP_PORT -n $n
-		echo "done."
-		n=`expr $n + 1`
-		if [ $n -lt $NUMCLUSTERS ];then
-			wait_for_pgpool_startup
-#			sleep 10
-		fi
-	done
-
-#	
-#	replication mode
-#
-else
-	n=0
-	PORT=$BASEPORT
-	CLUSTER="data"`expr $n`
-	CLUSTERDIR=$BASEDIR/$CLUSTER
-
-	while [ $n -lt $NUMCLUSTERS ]
-	do
-	    if [ $MODE = 'l' -o $MODE = 'y' ]
-	    then
-		# temporarily start data$n cluster to create extensions
-		echo "temporarily start data${n} cluster to create extensions"
-		$PG_CTL -w -D data${n} start >&5 2>&1
-		$PSQL -p `expr $BASEPORT + $n` template1 >&5 2>&1 <<EOF
-CREATE EXTENSION pgpool_regclass;
-CREATE EXTENSION pgpool_recovery;
-CREATE DATABASE test;
-EOF
-		$PG_CTL -m f -D data${n} stop >&5 2>&1
-	    fi
-
-	# set up pgpool.conf
-		echo "backend_hostname$n = '$PGSOCKET_DIR'" >> $CONF
-		echo "backend_port$n = $PORT" >> $CONF
-		echo "backend_weight$n = 1" >> $CONF
-
-		if [ $n -eq 0 -a $MODE = "l" ]
-		then
-		    echo "backend_flag$n = ALWAYS_PRIMARY" >> $CONF
-		fi
-
-		CLUSTER="data"`expr $n`
-		CLUSTERDIR=$BASEDIR/$CLUSTER
-		echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
-		PORT=`expr $PORT + 1`
-		n=`expr $n + 1`
-	done
-
-	echo "start all"
-	$STARTALL >&5 2>&1
-	echo -n "waiting for pgpool-II coming up..."
-	wait_for_pgpool_startup
-#	sleep 20
-	echo "done."
-fi
-
-if [ $MODE = "r" -o $MODE = "n" -o $MODE = "i" ];then
-	echo "create extensions"
-	$PSQL -p $PGPOOL_PORT template1 >&5 2>&1 <<EOF
-CREATE EXTENSION pgpool_regclass;
-CREATE EXTENSION pgpool_recovery;
-CREATE DATABASE test;
-EOF
-fi
+   create_followers
 
 #-------------------------------------------
 # create follow_primary failover script
@@ -1158,9 +1198,11 @@ if [ $MODE = "s" ];then
 	echo "follow_primary_command = '$FOLLOW_PRIMARY_SCRIPT %d %h %p %D %m %M %H %P %r %R'" >> $CONF
 fi
 
-$PSQL -p $PGPOOL_PORT test <<EOF
+if [ $NO_CREATE_PGCLUSTER = "false" ];then
+    $PSQL -p $PGPOOL_PORT test <<EOF
 show pool_nodes;
 EOF
+fi
 
 echo "pgpool port is $PGPOOL_PORT" >> README.port
 echo "pcp port is $PCP_PORT" >> README.port
