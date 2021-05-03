@@ -166,8 +166,10 @@ Pgpool-II documentation
   </para>
   <para>
    6は実際のバックエンドの状態をリアルタイムで取得して表示します。
-   情報の取得は<command>pg_isready</command>を呼び出すことによって行われます。
-   <xref linkend="pcp-detach-node">でバックエンドノードを切り離すと、<productname>Pgpool-II</productname>が管理する状態は"Down"になりますが、バックエンドの実際の状態は"up"なので、5と6が一致しないことはあり得ます。
+   情報の取得は、このコマンドが実行された時に<function>PQpingParams</function>を呼び出すことによって行われます。
+   <function>PQpingParams</function>は<productname>PostgreSQL</productname> 9.1以降でのみサポートされています。
+   <productname>Pgpool-II</productname>が<productname>PostgreSQL</productname> 9.0以前とともに構築されると、この列は"unknown"と表示します。
+   <xref linkend="pcp-detach-node">でバックエンドノードを切り離すと、<productname>Pgpool-II</productname>が管理する状態は"down"になりますが、バックエンドの実際の状態は"up"なので、5と6が一致しないことはあり得ます。
     逆に、5が"up"なのに、6が"down"というのは起こらないはずです。
   </para>
   <para>

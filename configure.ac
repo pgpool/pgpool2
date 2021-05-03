@@ -429,6 +429,7 @@ LDFLAGS="-L$PGSQL_LIB_DIR $LDFLAGS"
 OLD_LIBS="$LIBS"
 AC_CHECK_LIB(pq, PQexecPrepared, [], [AC_MSG_ERROR(libpq is not installed or libpq is old)])
 AC_CHECK_FUNCS(PQprepare)
+AC_CHECK_FUNCS(PQpingParams)
 LDFLAGS="$OLD_LDFLAGS"
 LIBS="$OLD_LIBS"
 

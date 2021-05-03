@@ -80,7 +80,7 @@ Pgpool-II documentation
     3. status
     4. load balance weight
     5. status name
-    6. actual backend status (taken from pg_isready. Pgpool-II 4.3 or later)
+    6. actual backend status
     7. backend role
     8. actual backend role (taken from pg_is_in_recovery. Pgpool-II 4.3 or later)
     9. replication delay
@@ -120,10 +120,15 @@ Pgpool-II documentation
      </itemizedlist>
   </para>
   <para>
-   6 shows the backend status in real time.  The info is taken by
-   calling <command>pg_isready</command>.  When a backend node is
-   detached by <xref linkend="pcp-detach-node">, the status managed by
-   <productname>Pgpool-II</productname> will be "Down", while the
+   6 shows the backend status in real time.  The info is obtained by
+   calling <function>PQpingParams</function> at the time when the
+   command is invoked. <function>PQpingParams</function> is only
+   available in <productname>PostgreSQL</productname> 9.1 or later. If
+   <productname>Pgpool-II</productname> was built with
+   <productname>PostgreSQL</productname> 9.0 or earlier, the column
+   shows "unknown". When a backend node is detached by <xref
+   linkend="pcp-detach-node">, the status managed by
+   <productname>Pgpool-II</productname> will be "down", while the
    actual backend status is "up". Thus it is possible that 5 does not
    match with 6. However it should not happen that 5 is "up" while 6
    is "down".

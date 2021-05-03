@@ -2170,6 +2170,7 @@ static void write_one_field_v2(POOL_CONNECTION * frontend, char *field)
 static
 char *db_node_status(int node)
 {
+#ifdef HAVE_PQPINGPARAMS
 	BackendInfo *bkinfo;
 	int		i;
 	char	portstr[32];
@@ -2177,6 +2178,7 @@ char *db_node_status(int node)
 	const char *keywords[PARAMS_ARRAY_SIZE];
 	const char *values[PARAMS_ARRAY_SIZE];
 	PGPing	ret;
+#endif
 
 	/*
 	 * If health check is not enabled, return "unknown".
@@ -2186,6 +2188,7 @@ char *db_node_status(int node)
 		return "unknown";
 	}
 
+#ifdef HAVE_PQPINGPARAMS
 	i = 0;
 	
 	keywords[i] = "user";
@@ -2221,6 +2224,9 @@ char *db_node_status(int node)
 		return "up";
 	}
 	return "down";
+#else
+	return "unknown";
+#endif
 }
 
 /*
