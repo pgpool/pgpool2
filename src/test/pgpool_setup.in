@@ -916,10 +916,7 @@ EOF
 		$PGPOOL_INSTALL_DIR/bin/pcp_recovery_node -w -h localhost -p $PCP_PORT -n $n
 		echo "done."
 		n=`expr $n + 1`
-		if [ $n -lt $NUMCLUSTERS ];then
-		    wait_for_pgpool_startup
-		    #			sleep 10
-		fi
+		wait_for_pgpool_startup
 	    done
 	fi
 
