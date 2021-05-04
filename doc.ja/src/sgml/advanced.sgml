@@ -782,7 +782,7 @@
     that is, situations where there are multiple active
     <productname>Pgpool-II</productname>.
     -->
-    クエリモードでは、PostgreSQLサーバの障害やpcp_detach_nodeによってすべてのDBノードが<productname>Pgpool-II</productname>から切り離されると、watchdogは<productname>Pgpool-II</productname>サービスが停止状態にあるとみなし、watchdogに割り当てあられた仮想IPを停止します。
+    クエリモードでは、PostgreSQLサーバの障害やpcp_detach_nodeによってすべてのDBノードが<productname>Pgpool-II</productname>から切り離されると、watchdogは<productname>Pgpool-II</productname>サービスが停止状態にあるとみなし、watchdogに割り当てられた仮想IPを停止します。
     ですので、<productname>Pgpool-II</productname>のクライアントは仮想IPを使って<productname>Pgpool-II</productname>に接続できなくなります。
     これは、複数のアクティブ<productname>Pgpool-II</productname>が存在するスプリットブレインを回避するために必要です。
    </para>
