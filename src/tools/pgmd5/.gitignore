@@ -1,5 +1,6 @@
 fe_memutils.c
 md5.c
+pool_config.c
 pool_config_variables.c
 pool_globals.c
 pool_passwd.c
