@@ -15405,6 +15405,17 @@ _ACEOF
 fi
 done
 
+for ac_func in PQpingParams
+do :
+  ac_fn_c_check_func "$LINENO" "PQpingParams" "ac_cv_func_PQpingParams"
+if test "x$ac_cv_func_PQpingParams" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PQPINGPARAMS 1
+_ACEOF
+
+fi
+done
+
 LDFLAGS="$OLD_LDFLAGS"
 LIBS="$OLD_LIBS"
 
