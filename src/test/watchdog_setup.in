@@ -31,13 +31,15 @@ W_NUM_PGPOOL=${W_NUM_PGPOOL:-"3"}
 # Starting port number.
 W_BASE_PORT=${W_BASE_PORT:-"50000"}
 
+# Number of default PostgreSQL clusters
+NUMCLUSTERS=2
+
 # PostgreSQL startig port number.
 export PGBASEPORT=`expr $W_BASE_PORT + 1000`
 
 # number of ports used in a single pgpool-II installation.
 # (port, pcp_port, wd_port, wd_heartbeat_port)
 num_ports_per_node=4
-
 #-------------------------------------------
 # End of configuration section
 #-------------------------------------------
