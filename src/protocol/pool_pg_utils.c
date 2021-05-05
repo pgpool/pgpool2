@@ -336,7 +336,7 @@ select_load_balancing_node(void)
 							   pool_config->db_redirect_tokens->token[index_db].weight_token)));
 
 			tmp = choose_db_node_id(pool_config->db_redirect_tokens->token[index_db].right_token);
-			if (tmp == -1 || (tmp >= 0 && VALID_BACKEND(tmp)))
+			if (tmp == -1 || (tmp >= 0 && VALID_BACKEND_RAW(tmp)))
 				suggested_node_id = tmp;
 		}
 	}
@@ -377,7 +377,7 @@ select_load_balancing_node(void)
 								   pool_config->app_name_redirect_tokens->token[index_app].weight_token)));
 
 				tmp = choose_db_node_id(pool_config->app_name_redirect_tokens->token[index_app].right_token);
-				if (tmp == -1 || (tmp >= 0 && VALID_BACKEND(tmp)))
+				if (tmp == -1 || (tmp >= 0 && VALID_BACKEND_RAW(tmp)))
 					suggested_node_id = tmp;
 			}
 		}
