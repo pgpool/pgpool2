@@ -79,7 +79,7 @@
      decide a new leader. If there are even number of
      <productname>Pgpool-II</productname>, it is impossible to decide
      the new leader by voting. Thus we recommend to deploy
-     <productname>Pgpool-II</productname> in more than 3 odd numbers.
+     <productname>Pgpool-II</productname> in more than or equal to 3 odd numbers.
     </para>
     <para>
      Please note that it is possible to have
