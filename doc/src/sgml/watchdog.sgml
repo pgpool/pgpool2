@@ -539,11 +539,6 @@ pgpool_port2 = 9999
        If <literal>Quorum state</literal> is <literal>QUORUM ABSENT</literal>, then the quorum does not exist.
      </para>
      <para>
-      Please note that if the number of watchdog nodes is even, we
-      regard that quorum exists when the number of live nodes is
-      greater than or equal to half of total watchdog nodes.
-     </para>
-     <para>
       In the absence of the
       quorum, <productname>Pgpool-II</productname> node that
       detects the backend failure will quarantine the failed

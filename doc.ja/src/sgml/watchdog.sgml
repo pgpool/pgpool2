@@ -768,10 +768,6 @@
        <literal>Quorum state</literal>が<literal>QUORUM EXIST</literal>または<literal>QUORUM IS ON THE EDGE</literal>ならクォーラムは存在します。
        <literal>Quorum state</literal>が<literal>QUORUM ABSENT</literal>ならクォーラムは存在しません。
      </para>
-     <para>
-      なお、watchdogノード数が偶数の場合は、生きているノード数がすべてのwatchdogノード数の半数以上ならクォーラムが存在するとみなします。
-      たとえば全watchdogノード数が4で、生きているノード数が2以上ならクォーラムが存在するとみなします。
-     </para>
 
      <para>
       クォーラムが存在しない場合、クォーラムが再び存在するまで、バックエンドの障害を検出した<productname>Pgpool-II</productname>ノードは、障害の発生したバックエンドノードを隔離します。
