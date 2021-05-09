@@ -911,7 +911,7 @@
      </para>
      <para>
       このパラメータがオンのときは、4ノードのwatchdogクラスタではクォーラムが存在するためには2つの<productname>Pgpool-II</productname>ノードが生きている必要があります。
-      このパラメータがオフのときは、3ノードのwatchdogクラスタではクォーラムが存在するためには2つの<productname>Pgpool-II</productname>ノードが生きている必要があります。
+      このパラメータがオフのときは、4ノードのwatchdogクラスタではクォーラムが存在するためには3つの<productname>Pgpool-II</productname>ノードが生きている必要があります。
      </para>
      <para>
       このパラメータがオンのときは、split-brainが発生するリスクがあることに注意してください。
