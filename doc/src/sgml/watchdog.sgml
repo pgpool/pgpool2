@@ -722,6 +722,13 @@ pgpool_port2 = 9999
       is made by <productname>Pgpool-II</productname> for calculating
       the quorum and resolving the consensus for failover.
      </para>
+     <note>
+      <para>
+       This parameter affects not only the failover behavior of the
+       backend but the quorum and the failover behavior of
+       <productname>Pgpool-II</productname> itself.
+      </para>
+     </note>
      <para>
       When enabled the existence of quorum and consensus on failover requires only half of
       the total number of votes configured in the cluster. Otherwise, both of these
