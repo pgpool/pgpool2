@@ -1027,6 +1027,10 @@
       <varname>heartbeat_device</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
       -->
+      <varname>heartbeat_device</varname>は、<productname>Pgpool-II</productname>をroot権限で起動しているときのみ使用可能です。
+      それ以外の場合は空文字('')のままにしておいてください。
+     </para>
+     <para>
       <varname>heartbeat_device</varname>は、<xref linkend="guc-wd-lifecheck-method">が<literal>'heartbeat'</literal>に設定されている場合のみ有効です。
      </para>
      <para>
