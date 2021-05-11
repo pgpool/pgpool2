@@ -1008,6 +1008,11 @@ pgpool_port2 = 9999
 	  You can specify multiple network devices by separating them using semicolon (;).
      </para>
      <para>
+      <varname>heartbeat_deviceX</varname> is only applicable if
+      <productname>Pgpool-II</productname> is started with root
+      privilege. If not, leave it as an empty string ('').
+     </para>
+     <para>
       <varname>heartbeat_deviceX</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
      </para>
