@@ -805,6 +805,11 @@
       at the end of parameter name. The destination index number starts from 0.
      </para>
      <para>
+      <varname>heartbeat_device</varname> is only applicable if
+      <productname>Pgpool-II</productname> is started with root
+      privilege. If not, leave it as an empty string ('').
+     </para>
+     <para>
       <varname>heartbeat_device</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
      </para>
