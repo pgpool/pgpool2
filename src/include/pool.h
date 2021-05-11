@@ -379,7 +379,7 @@ typedef enum
 #define Min(x, y)		((x) < (y) ? (x) : (y))
 
 
-#define MAX_NUM_SEMAPHORES		7
+#define MAX_NUM_SEMAPHORES		8
 #define CONN_COUNTER_SEM		0
 #define REQUEST_INFO_SEM		1
 #define SHM_CACHE_SEM			2
@@ -387,6 +387,7 @@ typedef enum
 #define PCP_REQUEST_SEM			4
 #define ACCEPT_FD_SEM			5
 #define SI_CRITICAL_REGION_SEM	6
+#define FOLLOW_PRIMARY_SEM		7
 #define MAX_REQUEST_QUEUE_SIZE	10
 
 #define MAX_SEC_WAIT_FOR_CLUSTER_TRANSACTION 10	/* time in seconds to keep
@@ -448,6 +449,9 @@ typedef struct
 	int			conn_counter;
 	bool		switching;		/* it true, failover or failback is in
 								 * progress */
+	/* greater than 0 if follow primary command or detach_false_primary in
+	 * execution */
+	bool		follow_primary_count;
 }			POOL_REQUEST_INFO;
 
 /* description of row. corresponding to RowDescription message */
@@ -626,8 +630,8 @@ extern POOL_NODE_STATUS * verify_backend_node_status(POOL_CONNECTION_POOL_SLOT *
 extern POOL_NODE_STATUS * pool_get_node_status(void);
 extern void pool_set_backend_status_changed_time(int backend_id);
 extern int	get_next_main_node(void);
-
-
+extern bool pool_acquire_follow_primary_lock(bool block);
+extern void pool_release_follow_primary_lock(void);
 
 /* strlcpy.c */
 #ifndef HAVE_STRLCPY

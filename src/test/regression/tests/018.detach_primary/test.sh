@@ -54,4 +54,65 @@ fi
 
 ./shutdownall
 
+#
+# test with watchdog enabled
+#
+
+# wipe out everything
+cd ..
+rm -fr $TESTDIR
+mkdir $TESTDIR
+cd $TESTDIR
+
+# create 3 node pgpool with 3 backends.
+$WATCHDOG_SETUP -wn 3 -n 3
+
+# enable detach_false_primary
+for i in 0 1 2
+do
+    echo "detach_false_primary = on" >> pgpool$i/etc/pgpool.conf
+done
+
+# start only pgpool0 and backend so that the quorum is absent.
+cd pgpool0
+source ./bashrc.ports
+./startall
+cd ..
+export PGPORT=$PGPOOL_PORT
+wait_for_pgpool_startup
+
+# promote #3 node to create false primary
+$PG_CTL -D pgpool0/data2 promote
+sleep 10
+wait_for_pgpool_startup
+
+$PSQL -c "show pool_nodes" postgres|grep down
+if [ $? = 0 ];then
+    echo "node is down despite that the quorum is absent"
+    ./shutdownall
+    exit 1
+fi
+
+# start pgpool1 and pgpool2 so that the quorum exists.
+echo "testing the case when the quorum exists"
+cd pgpool1
+./startall
+cd ..
+cd pgpool2
+./startall
+cd ..
+sleep 10
+pcp_watchdog_info -v -w -p $PCP_PORT
+
+$PSQL -c "show pool_nodes" postgres
+
+$PSQL -c "show pool_nodes" postgres|grep down
+if [ $? != 0 ];then
+    echo "node is not down despite that the quorum exists"
+    ./shutdownall
+    exit 1
+fi
+
+./shutdownall
+
 exit 0
