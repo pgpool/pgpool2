@@ -61,6 +61,9 @@
 #include "auth/pool_hba.h"
 #include "utils/pool_stream.h"
 
+#include "watchdog/wd_internal_commands.h"
+#include "watchdog/watchdog.h"
+
 static POOL_CONNECTION_POOL_SLOT * slots[MAX_NUM_BACKENDS];
 static volatile sig_atomic_t reload_config_request = 0;
 static volatile sig_atomic_t restart_request = 0;
@@ -73,6 +76,7 @@ static unsigned long long int text_to_lsn(char *text);
 static RETSIGTYPE my_signal_handler(int sig);
 static RETSIGTYPE reload_config_handler(int sig);
 static void reload_config(void);
+static void sr_check_will_die(int code, Datum arg);
 
 #define CHECK_REQUEST \
 	do { \
@@ -91,6 +95,8 @@ static void reload_config(void);
 #define PG10_SERVER_VERSION	100000	/* PostgreSQL 10 server version num */
 #define PG91_SERVER_VERSION	90100	/* PostgreSQL 9.1 server version num */
 
+static	volatile bool follow_primary_lock_acquired;
+
 /*
 * worker child main loop
 */
@@ -106,6 +112,11 @@ do_worker_child(void)
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
 	set_ps_display("worker process", false);
+
+	/*
+	 * install the call back for preparation of exit
+	 */
+	on_system_exit(sr_check_will_die, (Datum) NULL);
 
 	/* set up signal handlers */
 	signal(SIGALRM, SIG_DFL);
@@ -149,6 +160,7 @@ do_worker_child(void)
 	{
 		MemoryContextSwitchTo(WorkerMemoryContext);
 		MemoryContextResetAndDeleteChildren(WorkerMemoryContext);
+		WD_STATES	wd_status;
 
 		CHECK_REQUEST;
 
@@ -158,51 +170,91 @@ do_worker_child(void)
 		}
 
 		/*
-		 * If streaming replication mode, do time lag checking
+		 * Get watchdog status if watchdog is enabled.
 		 */
-
-		if (pool_config->sr_check_period > 0 && STREAM)
+		if (pool_config->use_watchdog)
 		{
-			establish_persistent_connection();
-			PG_TRY();
+			wd_status = wd_internal_get_watchdog_local_node_state();
+			ereport(DEBUG1,
+					(errmsg("watchdog status: %d", wd_status)));
+		}
+
+		/*
+		 * If streaming replication mode, do time lag checking
+		 * Also skip if failover/failback is ongoing.
+		 */
+		if (pool_config->sr_check_period > 0 && STREAM &&
+			Req_info->switching == false)
+		{
+			/*
+			 * Acquire follow primary lock. If fail to acqure lock, try again.
+			 */
+			follow_primary_lock_acquired = false;
+
+			if (pool_acquire_follow_primary_lock(false) == true)
 			{
-				POOL_NODE_STATUS *node_status;
-				int			i;
+				follow_primary_lock_acquired = true;
 
-				/* Do replication time lag checking */
-				check_replication_time_lag();
-
-				/* Check node status */
-				node_status = verify_backend_node_status(slots);
-				for (i = 0; i < NUM_BACKENDS; i++)
+				establish_persistent_connection();
+				PG_TRY();
 				{
-					ereport(DEBUG1,
-							(errmsg("node status[%d]: %d", i, node_status[i])));
+					POOL_NODE_STATUS *node_status;
+					int			i;
 
-					if (node_status[i] == POOL_NODE_STATUS_INVALID)
+					/* Do replication time lag checking */
+					check_replication_time_lag();
+
+					/* Check node status */
+					node_status = verify_backend_node_status(slots);
+
+
+					for (i = 0; i < NUM_BACKENDS; i++)
 					{
-						int			n;
+						ereport(DEBUG1,
+								(errmsg("node status[%d]: %d", i, node_status[i])));
 
-						ereport(LOG,
-								(errmsg("pgpool_worker_child: invalid node found %d", i)));
-						if (pool_config->detach_false_primary)
+						if (node_status[i] == POOL_NODE_STATUS_INVALID)
 						{
-							n = i;
-							degenerate_backend_set(&n, 1, REQ_DETAIL_SWITCHOVER | REQ_DETAIL_CONFIRMED);
+							int			n;
+
+							ereport(LOG,
+									(errmsg("pgpool_worker_child: invalid node found %d", i)));
+							/*
+							 * If detach_false_primary is enabled, send
+							 * degenerate request to detach invalid node.
+							 * This should only happen on leader watchdog node
+							 * and quorum exists if watchdog is enabled. Other
+							 * nodes will be informed by the leader node later
+							 * on.
+							 */
+							if ((pool_config->detach_false_primary && !pool_config->use_watchdog) ||
+								(pool_config->detach_false_primary && pool_config->use_watchdog &&
+								 wd_internal_get_watchdog_quorum_state() >= 0 && wd_status == WD_COORDINATOR))
+							{
+								n = i;
+								degenerate_backend_set(&n, 1, REQ_DETAIL_SWITCHOVER | REQ_DETAIL_CONFIRMED);
+							}
 						}
 					}
 				}
-			}
-			PG_CATCH();
-			{
-				discard_persistent_connection();
-				sleep(pool_config->sr_check_period);
-				PG_RE_THROW();
-			}
-			PG_END_TRY();
+				PG_CATCH();
+				{
+					discard_persistent_connection();
+					pool_release_follow_primary_lock();
+					follow_primary_lock_acquired = false;
+					sleep(pool_config->sr_check_period);
+					PG_RE_THROW();
+				}
+				PG_END_TRY();
 
-			/* Discard persistent connections */
-			discard_persistent_connection();
+				/* Discard persistent connections */
+				discard_persistent_connection();
+				if (follow_primary_lock_acquired)
+				{
+					pool_release_follow_primary_lock();
+					follow_primary_lock_acquired = false;
+				}
+			}
 		}
 		sleep(pool_config->sr_check_period);
 	}
@@ -593,4 +645,12 @@ get_query_result(POOL_CONNECTION_POOL_SLOT * *slots, int backend_id, char *query
 
 	sts = 0;
 	return sts;
+}
+
+static void
+sr_check_will_die(int code, Datum arg)
+{
+	if (follow_primary_lock_acquired)
+		pool_release_follow_primary_lock();
+
 }
