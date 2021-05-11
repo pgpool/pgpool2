@@ -3102,6 +3102,7 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT * *slots)
 				}
 			}
 		}
+
 	}
 
 	return pool_node_status;
@@ -3184,7 +3185,9 @@ find_primary_node(void)
 		pfree(password);
 
 	/* Verify backend status */
+	pool_acquire_follow_primary_lock(true);
 	status = verify_backend_node_status(slots);
+	pool_release_follow_primary_lock();
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
@@ -3285,6 +3288,7 @@ fork_follow_child(int old_main_node, int new_primary, int old_primary)
 	{
 		on_exit_reset();
 		SetProcessGlobalVaraibles(PT_FOLLOWCHILD);
+		pool_acquire_follow_primary_lock(true);
 		ereport(LOG,
 				(errmsg("start triggering follow command.")));
 		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
@@ -3296,6 +3300,7 @@ fork_follow_child(int old_main_node, int new_primary, int old_primary)
 				trigger_failover_command(i, pool_config->follow_primary_command,
 										 old_main_node, new_primary, old_primary);
 		}
+		pool_release_follow_primary_lock();
 		exit(0);
 	}
 	else if (pid == -1)
@@ -4219,4 +4224,78 @@ pool_set_backend_status_changed_time(int backend_id)
 
 	tval = time(NULL);
 	BACKEND_INFO(backend_id).status_changed_time = tval;
+}
+
+/*
+ * Acquire lock on follow primary command execution.  Follow primary command
+ * and detach_false_primary must acquire this lock before execution because
+ * they are conflicting each other.  If argument "block" is true, this
+ * function will not return until it succeeds in acquiring the lock.  This
+ * function returns true if succeeded in acquiring the lock.
+ */
+bool
+pool_acquire_follow_primary_lock(bool block)
+{
+	pool_sigset_t oldmask;
+	volatile int	follow_primary_count;
+
+	for (;;)
+	{
+		POOL_SETMASK2(&BlockSig, &oldmask);
+		pool_semaphore_lock(FOLLOW_PRIMARY_SEM);
+		follow_primary_count = Req_info->follow_primary_count;
+
+		if (follow_primary_count <= 0)
+		{
+			/* the lock is not held by anyone */
+			ereport(DEBUG1,
+					(errmsg("pool_acquire_follow_primary_lock: lock was not held by anyone")));
+			break;
+		}
+
+		else if (follow_primary_count > 0 && !block)
+		{
+			pool_semaphore_unlock(FOLLOW_PRIMARY_SEM);
+			POOL_SETMASK(&oldmask);
+			/* return and inform that the lock was held by someone */
+			ereport(DEBUG1,
+					(errmsg("pool_acquire_follow_primary_lock: lock was held by someone %d", follow_primary_count)));
+			return false;
+		}
+
+		pool_semaphore_unlock(FOLLOW_PRIMARY_SEM);
+		POOL_SETMASK(&oldmask);
+		ereport(DEBUG1,
+				(errmsg("pool_acquire_follow_primary_lock: lock was held by someone %d sleeping...", follow_primary_count)));
+		sleep(1);
+	}
+
+	/* acquire lock */
+	Req_info->follow_primary_count = 1;
+	pool_semaphore_unlock(FOLLOW_PRIMARY_SEM);
+	POOL_SETMASK(&oldmask);
+
+	ereport(DEBUG1,
+			(errmsg("pool_acquire_follow_primary_lock: succeeded in acquiring lock")));
+
+	return true;
+}
+
+/*
+ * Release lock on follow primary command execution.
+ */
+void
+pool_release_follow_primary_lock(void)
+{
+	pool_sigset_t oldmask;
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
+	pool_semaphore_lock(FOLLOW_PRIMARY_SEM);
+	Req_info->follow_primary_count = 0;
+	pool_semaphore_unlock(FOLLOW_PRIMARY_SEM);
+	POOL_SETMASK(&oldmask);
+
+	ereport(DEBUG1,
+			(errmsg("pool_release_follow_primary_lock called")));
+
 }
