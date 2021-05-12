@@ -3661,7 +3661,7 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	size = pool_config->num_init_children * (sizeof(ProcessInfo));
 
 	ereport(DEBUG1,
-			(errmsg("ProcessInfo: num_init_children (%d) * sizeof(ProcessInfo) (%zu) = %d bytes requested for shared memory",
+			(errmsg("ProcessInfo: num_init_children (%d) * sizeof(ProcessInfo) (%zu) = %zu bytes requested for shared memory",
 					pool_config->num_init_children,
 					sizeof(ProcessInfo),
 					size)));
