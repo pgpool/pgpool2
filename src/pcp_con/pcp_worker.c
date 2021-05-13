@@ -908,8 +908,6 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 	pcp_write(frontend, status_changed_time_str, strlen(status_changed_time_str) + 1);
 
 	do_pcp_flush(frontend);
-
-	pfree(nodes);
 }
 
 /*
