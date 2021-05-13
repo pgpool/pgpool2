@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -61,7 +61,7 @@
 #include "auth/pool_hba.h"
 #include "utils/pool_stream.h"
 
-#include "watchdog/wd_internal_commands.h"
+#include "watchdog/wd_ipc_commands.h"
 #include "watchdog/watchdog.h"
 
 static POOL_CONNECTION_POOL_SLOT * slots[MAX_NUM_BACKENDS];
@@ -174,7 +174,7 @@ do_worker_child(void)
 		 */
 		if (pool_config->use_watchdog)
 		{
-			wd_status = wd_internal_get_watchdog_local_node_state();
+			wd_status = get_watchdog_local_node_state();
 			ereport(DEBUG1,
 					(errmsg("watchdog status: %d", wd_status)));
 		}
@@ -229,7 +229,7 @@ do_worker_child(void)
 							 */
 							if ((pool_config->detach_false_primary && !pool_config->use_watchdog) ||
 								(pool_config->detach_false_primary && pool_config->use_watchdog &&
-								 wd_internal_get_watchdog_quorum_state() >= 0 && wd_status == WD_COORDINATOR))
+								 get_watchdog_quorum_state() >= 0 && wd_status == WD_COORDINATOR))
 							{
 								n = i;
 								degenerate_backend_set(&n, 1, REQ_DETAIL_SWITCHOVER | REQ_DETAIL_CONFIRMED);
