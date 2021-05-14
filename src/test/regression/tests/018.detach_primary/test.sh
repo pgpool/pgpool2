@@ -38,7 +38,8 @@ $PG_CTL -D data2 promote
 sleep 10
 wait_for_pgpool_startup
 $PSQL -c "show pool_nodes" postgres > show_pool_nodes
-primary_node=`grep primary show_pool_nodes|awk '{print $1}'`
+cat show_pool_nodes
+primary_node=`grep primary show_pool_nodes|grep -v standby|awk '{print $1}'`
 if [ $primary_node != 0 ];then
     echo "primary node is not 0"
     ./shutdownall
