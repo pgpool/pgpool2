@@ -15,6 +15,7 @@ PRIMARY_NODE_HOST=$(hostname)
 PGHOME=/usr/pgsql-11
 ARCHIVEDIR=/var/lib/pgsql/archivedir
 REPLUSER=repl
+REPL_SLOT_NAME=${DEST_NODE_HOST//[-.]/_}
 
 logger -i -p local1.info recovery_1st_stage: start: pg_basebackup for Standby node $DEST_NODE_ID
 
@@ -34,9 +35,9 @@ else
     RECOVERYCONF=${DEST_NODE_PGDATA}/recovery.conf
 fi
 
-## Create replication slot "${DEST_NODE_HOST}"
+## Create replication slot "${REPL_SLOT_NAME}"
 ${PGHOME}/bin/psql -p ${PRIMARY_NODE_PORT} << EOQ
-SELECT pg_create_physical_replication_slot('${DEST_NODE_HOST}');
+SELECT pg_create_physical_replication_slot('${REPL_SLOT_NAME}');
 EOQ
 
 ## Execute pg_basebackup to recovery Standby node
@@ -58,7 +59,7 @@ ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DES
 primary_conninfo = 'host=${PRIMARY_NODE_HOST} port=${PRIMARY_NODE_PORT} user=${REPLUSER} application_name=${DEST_NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
 restore_command = 'scp ${PRIMARY_NODE_HOST}:${ARCHIVEDIR}/%f %p'
-primary_slot_name = '${DEST_NODE_HOST}'
+primary_slot_name = '${REPL_SLOT_NAME}'
 EOT
 
     if [ ${PGVERSION} -ge 12 ]; then
@@ -73,7 +74,7 @@ EOT
 if [ $? -ne 0 ]; then
 
     ${PGHOME}/bin/psql -p ${PRIMARY_NODE_PORT} << EOQ
-SELECT pg_drop_replication_slot('${DEST_NODE_HOST}');
+SELECT pg_drop_replication_slot('${REPL_SLOT_NAME}');
 EOQ
 
     logger -i -p local1.error recovery_1st_stage: end: pg_basebackup failed. online recovery failed
