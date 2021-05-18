@@ -185,7 +185,7 @@
       -->
       この現象は「thundering herd problem（猛獣の暴走）」と呼ばれる古典的な問題です。
       これは<literal>accept()</literal>呼び出しのシリアライズを行うことで解決できます。
-      入ってきた接続に対して<productname>Pgpool-II</productname>プロセスのうちひとつだけが起こされて<literal>accept()</literal>を実行ようになるためです。
+      入ってきた接続に対して<productname>Pgpool-II</productname>プロセスのうちひとつだけが起こされて<literal>accept()</literal>を実行するようになるためです。
      </para>
 
      <para>
