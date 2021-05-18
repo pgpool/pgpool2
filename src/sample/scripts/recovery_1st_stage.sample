@@ -14,6 +14,7 @@ PRIMARY_NODE_HOST=$(hostname)
 PGHOME=/usr/pgsql-13
 ARCHIVEDIR=/var/lib/pgsql/archivedir
 REPLUSER=repl
+REPL_SLOT_NAME=${DEST_NODE_HOST//[-.]/_}
 
 echo recovery_1st_stage: start: pg_basebackup for Standby node $DEST_NODE_ID
 
@@ -33,12 +34,12 @@ else
     RECOVERYCONF=${DEST_NODE_PGDATA}/recovery.conf
 fi
 
-## Create replication slot "${DEST_NODE_HOST}"
+## Create replication slot "${REPL_SLOT_NAME}"
 ${PGHOME}/bin/psql -h ${PRIMARY_NODE_HOST} -p ${PRIMARY_NODE_PORT} \
-    -c "SELECT pg_create_physical_replication_slot('${DEST_NODE_HOST}');"  >/dev/null 2>&1
+    -c "SELECT pg_create_physical_replication_slot('${REPL_SLOT_NAME}');"  >/dev/null 2>&1
 
 if [ $? -ne 0 ]; then
-    echo ERROR: recovery_1st_stage: create replication slot \"${DEST_NODE_HOST}\" failed. You may need to create replication slot manually.
+    echo ERROR: recovery_1st_stage: create replication slot \"${REPL_SLOT_NAME}\" failed. You may need to create replication slot manually.
 fi
 
 ## Execute pg_basebackup to recovery Standby node
@@ -60,7 +61,7 @@ ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DES
 primary_conninfo = 'host=${PRIMARY_NODE_HOST} port=${PRIMARY_NODE_PORT} user=${REPLUSER} application_name=${DEST_NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
 restore_command = 'scp ${PRIMARY_NODE_HOST}:${ARCHIVEDIR}/%f %p'
-primary_slot_name = '${DEST_NODE_HOST}'
+primary_slot_name = '${REPL_SLOT_NAME}'
 EOT
 
     if [ ${PGVERSION} -ge 12 ]; then
@@ -75,10 +76,10 @@ EOT
 if [ $? -ne 0 ]; then
 
     ${PGHOME}/bin/psql -h ${PRIMARY_NODE_HOST} -p ${PRIMARY_NODE_PORT} \
-        -c "SELECT pg_drop_replication_slot('${DEST_NODE_HOST}');"  >/dev/null 2>&1
+        -c "SELECT pg_drop_replication_slot('${REPL_SLOT_NAME}');"  >/dev/null 2>&1
 
     if [ $? -ne 0 ]; then
-        echo ERROR: recovery_1st_stage: drop replication slot \"${DEST_NODE_HOST}\" failed. You may need to drop replication slot manually.
+        echo ERROR: recovery_1st_stage: drop replication slot \"${REPL_SLOT_NAME}\" failed. You may need to drop replication slot manually.
     fi
 
     echo ERROR: recovery_1st_stage: end: pg_basebackup failed. online recovery failed
