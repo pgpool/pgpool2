@@ -619,7 +619,7 @@ wd_check_config(void)
 {
 	if (pool_config->wd_nodes.num_wd == 0)
 		ereport(ERROR,
-				(errmsg("invalid watchdog configuration. other pgpools setting is not defined")));
+				(errmsg("invalid watchdog configuration. no watchdog nodes configured")));
 
 	if (strlen(pool_config->wd_authkey) > MAX_PASSWORD_SIZE)
 		ereport(ERROR,
