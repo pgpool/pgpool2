@@ -35,10 +35,10 @@
     2021-05-11 [aece05f]
     -->
     <para>
-     Fix race condition between <xref linkend="guc-detach-false-primary"> and <xref linkend="guc-follow-primary-command">. (Tatsuo Ishii)
+     Fix race condition between <xref linkend="guc-detach-false-primary"> and <xref linkend="guc-follow-master-command">. (Tatsuo Ishii)
     </para>
     <para>
-     If <xref linkend="guc-detach-false-primary"> and <xref linkend="guc-follow-primary-command"> are running concurrently, many problem occured.
+     If <xref linkend="guc-detach-false-primary"> and <xref linkend="guc-follow-master-command"> are running concurrently, many problem occured.
      Typical problem is, no primary node is found at the end.
     </para>
    </listitem>

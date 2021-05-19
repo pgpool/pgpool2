@@ -44,10 +44,10 @@
     2021-05-11 [aece05f]
     -->
     <para>
-     <xref linkend="guc-detach-false-primary">と<xref linkend="guc-follow-primary-command">の競合状態を修正しました。(Tatsuo Ishii)
+     <xref linkend="guc-detach-false-primary">と<xref linkend="guc-follow-master-command">の競合状態を修正しました。(Tatsuo Ishii)
     </para>
     <para>
-     <xref linkend="guc-detach-false-primary">と<xref linkend="guc-follow-primary-command">が同時に実行されると、多くの問題が発生していました。
+     <xref linkend="guc-detach-false-primary">と<xref linkend="guc-follow-master-command">が同時に実行されると、多くの問題が発生していました。
      典型的な問題としては、プライマリノードが見つからないことです。
     </para>
    </listitem>
