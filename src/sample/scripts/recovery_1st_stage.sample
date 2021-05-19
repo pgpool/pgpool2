@@ -52,11 +52,6 @@ ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DES
 
     ${PGHOME}/bin/pg_basebackup -h $PRIMARY_NODE_HOST -U $REPLUSER -p $PRIMARY_NODE_PORT -D $DEST_NODE_PGDATA -X stream
 
-    if [ ${PGVERSION} -ge 12 ]; then
-        sed -i -e \"\\\$ainclude_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'\" \
-               -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${DEST_NODE_PGDATA}/postgresql.conf
-    fi
-
     cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${PRIMARY_NODE_HOST} port=${PRIMARY_NODE_PORT} user=${REPLUSER} application_name=${DEST_NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
@@ -65,6 +60,8 @@ primary_slot_name = '${REPL_SLOT_NAME}'
 EOT
 
     if [ ${PGVERSION} -ge 12 ]; then
+        sed -i -e \"\\\$ainclude_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'\" \
+               -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${DEST_NODE_PGDATA}/postgresql.conf
         touch ${DEST_NODE_PGDATA}/standby.signal
     else
         echo \"standby_mode = 'on'\" >> ${RECOVERYCONF}
