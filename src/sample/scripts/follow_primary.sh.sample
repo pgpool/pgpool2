@@ -93,6 +93,8 @@ primary_slot_name = '${REPL_SLOT_NAME}'
 EOT
 
         if [ ${PGVERSION} -ge 12 ]; then
+            sed -i -e \"\\\$ainclude_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'\" \
+                   -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${NODE_PGDATA}/postgresql.conf
             touch ${NODE_PGDATA}/standby.signal
         else
             echo \"standby_mode = 'on'\" >> ${RECOVERYCONF}
@@ -114,11 +116,6 @@ EOT
             rm -rf ${ARCHIVEDIR}/*
             ${PGHOME}/bin/pg_basebackup -h ${NEW_PRIMARY_NODE_HOST} -U $REPLUSER -p ${NEW_PRIMARY_NODE_PORT} -D ${NODE_PGDATA} -X stream
 
-            if [ ${PGVERSION} -ge 12 ]; then
-                sed -i -e \"\\\$ainclude_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'\" \
-                       -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${NODE_PGDATA}/postgresql.conf
-            fi
-
             cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${NEW_PRIMARY_NODE_HOST} port=${NEW_PRIMARY_NODE_PORT} user=${REPLUSER} application_name=${NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
@@ -127,6 +124,8 @@ primary_slot_name = '${REPL_SLOT_NAME}'
 EOT
 
             if [ ${PGVERSION} -ge 12 ]; then
+                sed -i -e \"\\\$ainclude_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'\" \
+                       -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${NODE_PGDATA}/postgresql.conf
                 touch ${NODE_PGDATA}/standby.signal
             else
                 echo \"standby_mode = 'on'\" >> ${RECOVERYCONF}
