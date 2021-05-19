@@ -1,6 +1,86 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-6-26">
+ <!--
+ <title>Release 3.6.26</title>
+ -->
+ <title>リリース 3.6.26</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2021-05-20</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-05-11 [241bee3]
+    -->
+    <para>
+     Doc: <xref linkend="guc-heartbeat-device">の説明を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="guc-heartbeat-device">パラメータは、<productname>Pgpool-II</productname>がrootで起動する場合にのみ使用できます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-04-30 [f1e2b71]
+    -->
+    <para>
+     pgpool0の配下のみにデータベースクラスタを作成するように<xref linkend="watchdog-setup">を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-04-09 [16d07f7]
+    -->
+    <para>
+     クエリキャッシュが有効になっている場合のpgpoolのクラッシュを修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=700">bug 700</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     ストリーミングレプリケーションモードと論理レプリケーションモード以外でCloseCompleteを受信すると、Pgpool-IIがクラッシュしていました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-03-16 [f07fdb0]
+    -->
+    <para>
+     Startupパケットを受信したときのデバッグメッセージを改善しました。 (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-09 [9971171]
+    2021-05-05 [96578bd]
+    2021-05-04 [69f3c9b]
+    2021-04-20 [6150d26]
+    2021-04-20 [d5469da]
+    2021-04-13 [b3bddbe]
+    2021-02-20 [d9f25b8]
+    -->
+    <para>
+     Doc: 多数ドキュメントの改善を行いました。 (Tatsuo Ishii, Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-3-6-25">
  <!--
  <title>Release 3.6.25</title>
