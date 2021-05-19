@@ -1,6 +1,219 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-3">
+ <!--
+ <title>Release 4.2.3</title>
+ -->
+ <title>リリース 4.2.3</title>
+ <note>
+  <!--
+  <title>Release Date</title>
+  -->
+  <title>リリース日</title>
+  <simpara>2021-05-20</simpara>
+ </note>
+
+ <sect2>
+  <!--
+  <title>Bug fixes</title>
+  -->
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-05-19 [2a1153d]
+    2021-05-18 [d4f54d8]
+    -->
+    <para>
+     サンプルスクリプトの改善を行いました。 (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-12 [83906c5]
+    -->
+    <para>
+     リグレッションテスト018.detach_primaryの不具合を修正しました。 (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-11 [aece05f]
+    -->
+    <para>
+     <xref linkend="guc-detach-false-primary">と<xref linkend="guc-follow-primary-command">の競合状態を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="guc-detach-false-primary">と<xref linkend="guc-follow-primary-command">が同時に実行されると、多くの問題が発生していました。
+     典型的な問題としては、プライマリノードが見つからないことです。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-11 [241bee3]
+    -->
+    <para>
+     Doc: <xref linkend="guc-heartbeat-device">の説明を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     heartbeat_deviceパラメータは、<productname>Pgpool-II</productname>がrootで起動する場合にのみ使用できます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-10 [d24f075]
+    -->
+    <para>
+     Doc: <xref linkend="guc-enable-consensus-with-half-votes">の説明を改善しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-10 [b582d76]
+    -->
+    <para>
+     Doc: <xref linkend="guc-failover-when-quorum-exists">に関する誤った説明を削除しました。(Tatsuo Ishii)
+    </para>
+    <para>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-05 [049a1b6]
+    -->
+    <para>
+     database/app_name_redirect_preference_listがステートメントレベル負荷分散モードで正しく動作しない不具合を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=707">bug 707</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-05 [c5d7d36]
+    2021-04-30 [f1e2b71]
+    -->
+    <para>
+     pgpool0の配下のみにデータベースクラスタを作成するように<xref linkend="watchdog-setup">を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-04-26 [1d63554]
+    -->
+    <para>
+     <xref linkend="guc-log-directory">のデフォルト値を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     パッチはKAWAMOTO Masayaはによって作成されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-04-25 [d965e4e]
+    -->
+    <para>
+     "pgproto"のアプリケーション名をpgprotoに設定しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-04-11 [3ce359d]
+    2021-04-09 [16d07f7]
+    -->
+    <para>
+     クエリキャッシュが有効になっている場合のpgpoolのクラッシュを修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=700">bug 700</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     ストリーミングレプリケーションモードと論理レプリケーションモード以外でCloseCompleteを受信すると、Pgpool-IIがクラッシュしていました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-04-05 [597a063]
+    -->
+    <para>
+     follow_primary.shサンプルスクリプトを修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=694">bug 694</ulink>) (Bo Peng)
+    </para>
+    <para>
+     <command>pg_rewind</command>を実行した後に、スタンバイノードのpg_replslotディレクトリを空にするように修正しました。
+     これは、古い<productname>PostgreSQL</productname>バージョンではpg_replslotディレクトリがプライマリノードからコピーされる可能性があるためです。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-04-05 [7d54c1b]
+    -->
+    <para>
+     クエリキャッシュがストリーミングレプリケーションモードと論理レプリケーションモード以外で作成されない不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-03-31 [eff77fc]
+    -->
+    <para>
+     <xref linkend="pgpool-setup">において、再起動に失敗した場合にフルリストアを実行するように<xref linkend="pgpool-setup">を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-03-18 [4cd9f4a]
+    -->
+    <para>
+     asyncpgを利用した場合のハングアップを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-03-16 [f07fdb0]
+    -->
+    <para>
+     Startupパケットを受信したときのデバッグメッセージを改善しました。 (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-09 [9971171]
+    2021-05-05 [96578bd]
+    2021-05-04 [69f3c9b]
+    2021-04-20 [6150d26]
+    2021-04-20 [d5469da]
+    2021-04-18 [10b8241]
+    2021-04-13 [b3bddbe]
+    2021-04-06 [35fa87e]
+    2021-02-20 [d9f25b8]
+    2021-02-24 [b66801c]
+    2021-03-06 [f5a8f26]
+    2021-03-14 [30a7057]
+    -->
+    <para>
+     Doc: 多数ドキュメントの改善を行いました。 (Tatsuo Ishii, Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-2">
  <!--
  <title>Release 4.2.2</title>
