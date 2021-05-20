@@ -6232,6 +6232,9 @@ static int watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode* wdNode,
 					ereport(LOG,
 						(errmsg("successfully joined the watchdog cluster as standby node"),
 							 errdetail("our join coordinator request is accepted by cluster leader node \"%s\"",WD_MASTER_NODE->nodeName)));
+
+					/* broadcast our new state change to the cluster */
+					send_message_of_type(NULL, WD_INFO_MESSAGE, NULL);
 				}
 				else
 				{
