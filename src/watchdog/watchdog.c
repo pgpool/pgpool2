@@ -6722,6 +6722,9 @@ watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode * wdNode, WDPacketD
 					ereport(LOG,
 							(errmsg("successfully joined the watchdog cluster as standby node"),
 							 errdetail("our join coordinator request is accepted by cluster leader node \"%s\"", WD_LEADER_NODE->nodeName)));
+					/* broadcast our new state change to the cluster */
+					send_message_of_type(NULL, WD_INFO_MESSAGE, NULL);
+
 				}
 				else
 				{
@@ -6759,6 +6762,15 @@ watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode * wdNode, WDPacketD
 				set_state(WD_JOINING);
 			}
 		}
+			break;
+
+		case WD_EVENT_I_AM_APPEARING_FOUND:
+			{
+				ereport(DEBUG1,
+					(errmsg("updating remote node \"%s\" with node info message", wdNode->nodeName)));
+
+				send_message_of_type(wdNode, WD_INFO_MESSAGE, NULL);
+			}
 			break;
 
 		case WD_EVENT_REMOTE_NODE_LOST:
