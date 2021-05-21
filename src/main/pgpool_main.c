@@ -97,8 +97,10 @@ typedef struct User1SignalSlot
 		} \
 		if (sigusr1_request) \
 		{ \
-			sigusr1_interrupt_processor(); \
-			sigusr1_request = 0; \
+			do {\
+				sigusr1_request = 0; \
+				sigusr1_interrupt_processor(); \
+			} while (sigusr1_request == 1); \
 		} \
 		if (sigchld_request) \
 		{ \
@@ -350,8 +352,10 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 		if (sigusr1_request)
 		{
-			sigusr1_interrupt_processor();
-			sigusr1_request = 0;
+			do {
+				sigusr1_request = 0;
+				sigusr1_interrupt_processor();
+			} while (sigusr1_request == 1);
 		}
 	}
 
@@ -600,6 +604,9 @@ register_inform_quarantine_nodes_req(void)
 static void
 signal_user1_to_parent_with_reason(User1SignalReason reason)
 {
+	ereport(LOG,
+			(errmsg("signal_user1_to_parent_with_reason(%d)", reason)));
+
 	user1SignalSlot->signalFlags[reason] = true;
 	pool_signal_parent(SIGUSR1);
 }
@@ -1222,7 +1229,7 @@ static RETSIGTYPE sigusr1_handler(int sig)
 static void
 sigusr1_interrupt_processor(void)
 {
-	ereport(DEBUG1,
+	ereport(LOG,
 			(errmsg("Pgpool-II parent process received SIGUSR1")));
 
 	if (user1SignalSlot->signalFlags[SIG_WATCHDOG_QUORUM_CHANGED])
@@ -1266,7 +1273,7 @@ sigusr1_interrupt_processor(void)
 
 	if (user1SignalSlot->signalFlags[SIG_WATCHDOG_STATE_CHANGED])
 	{
-		ereport(DEBUG1,
+		ereport(LOG,
 				(errmsg("Pgpool-II parent process received watchdog state change signal from watchdog")));
 
 		user1SignalSlot->signalFlags[SIG_WATCHDOG_STATE_CHANGED] = false;
