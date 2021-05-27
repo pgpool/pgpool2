@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -31,7 +31,7 @@
 /*
  * watchdog
  */
-#define WD_MAX_HOST_NAMELEN (128)
+#define WD_MAX_HOST_NAMELEN MAX_FDQN_HOSTNAME_LEN
 #define WD_MAX_PATH_LEN (128)
 #define MAX_WATCHDOG_NUM (128)
 #define WD_SEND_TIMEOUT (1)
