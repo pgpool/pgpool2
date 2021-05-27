@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -38,9 +38,16 @@
 #define SM_UNUSED		64
 #define SM_TTY			64
 
+/*
+ * Maximum hostname length including domain name and "." including NULL
+ * terminate.
+ * https://en.wikipedia.org/wiki/Hostname#cite_note-Raymond,_Microsoft_devblog,_2012-3
+ */
+#define MAX_FDQN_HOSTNAME_LEN	254
+
 #define MAX_NUM_BACKENDS 128
 #define MAX_CONNECTION_SLOTS MAX_NUM_BACKENDS
-#define MAX_DB_HOST_NAMELEN	 128
+#define MAX_DB_HOST_NAMELEN	 MAX_FDQN_HOSTNAME_LEN
 #define MAX_PATH_LENGTH 256
 
 typedef enum {
