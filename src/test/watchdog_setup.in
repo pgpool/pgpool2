@@ -327,12 +327,20 @@ do
     echo "cd pgpool$cnt" >> $STARTALL
     echo "./startall" >> $STARTALL
     echo "cd .." >> $STARTALL
-    echo "cd pgpool$cnt" >> $SHUTDOWNALL
-    echo "./shutdownall" >> $SHUTDOWNALL
-    echo "cd .." >> $SHUTDOWNALL
 
     cd ..
     cnt=`expr $cnt + 1`
+done
+
+# shutdown needs to be performed in reverse order because shutdown of
+# PostgreSQL servers must be executed in pgpoo0.
+cnt=$W_NUM_PGPOOL
+while [ $cnt -gt 0 ]
+do
+    cnt=`expr $cnt - 1`
+    echo "cd pgpool$cnt" >> $SHUTDOWNALL
+    echo "./shutdownall" >> $SHUTDOWNALL
+    echo "cd .." >> $SHUTDOWNALL
 done
 
 chmod 755 $STARTALL
