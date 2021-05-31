@@ -69,7 +69,7 @@ function shutdown_nodes
     cd $cdir
 }
 
-# return 0 fi nodes is even
+# return 0 if nodes is even
 function nodes_even
 {
     test `expr $nodes % 2` = 0
@@ -110,6 +110,8 @@ do
     quorum_exists
     shutdown_nodes
 
+    sleep 5
+
     if quorum_exists
     then
 	echo "Quorum exists. Test failed"
@@ -127,6 +129,8 @@ do
 
     echo "Testing total nodes: $nodes. enable_consensus_with_half_of_the_votes: $val"
     shutdown_nodes
+
+    sleep 5
 
     if quorum_exists
     then
