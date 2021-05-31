@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -112,7 +112,9 @@ typedef enum IPC_CMD_PREOCESS_RES
 												 * before broadcasting the same cluster
 												 * service message */
 
-
+/*
+ * Packet types. Used in WDPacketData->type.
+ */
 #define WD_NO_MESSAGE						0
 #define WD_ADD_NODE_MESSAGE					'A'
 #define WD_REQ_INFO_MESSAGE					'B'
@@ -248,10 +250,13 @@ char *wd_node_lost_reasons[] = {
 	"SHUTDOWN"
 };
 
+/*
+ * Command packet definition.
+ */
 typedef struct WDPacketData
 {
-	char		type;
-	int			command_id;
+	char		type;	/* packet type. e.g. WD_ADD_NODE_MESSAGE. See #define above. */
+	int			command_id;	/* command sequence number starting from 1 */
 	int			len;
 	char	   *data;
 }			WDPacketData;
@@ -283,11 +288,17 @@ typedef enum WDCommandSource
 	COMMAND_SOURCE_INTERNAL
 }			WDCommandSource;
 
+/*
+ * Watchdog "function" descriptor.  "function" is not a C-function, it's one
+ * of: START_RECOVERY, END_RECOVERY, FAILBACK_REQUEST, DEGENERATE_REQUEST and
+ * PROMOTE_REQUEST. See #define function names (they are prefixed by
+ * "WD_FUNCTION" in src/include/watchdog/wd_ipc_defines.h for more details.
+ */
 typedef struct WDFunctionCommandData
 {
 	char		commandType;
 	unsigned int commandID;
-	char	   *funcName;
+	char	   *funcName;	/* function name */
 	WatchdogNode *wdNode;
 }			WDFunctionCommandData;
 
@@ -1219,8 +1230,13 @@ watchdog_main(void)
 		MemoryContextSwitchTo(ProcessLoopContext);
 		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
 
+		/* take care config reload request and SIGCHLD */
 		check_signals();
 
+		/*
+		 * Establish all accepting socket descriptors and wait for
+		 * incoming/outcoming events for up to 1 second.
+		 */
 		fd_max = prepare_fds(&rmask, &wmask, &emask);
 		tv.tv_sec = select_timeout;
 		tv.tv_usec = 0;
@@ -1239,6 +1255,7 @@ watchdog_main(void)
 #ifdef WATCHDOG_DEBUG
 		load_watchdog_debug_test_option();
 #endif
+		/* process events */
 		if (select_ret > 0)
 		{
 			int			processed_fds = 0;
@@ -1247,6 +1264,10 @@ watchdog_main(void)
 			processed_fds += update_successful_outgoing_cons(&wmask, (select_ret - processed_fds));
 			processed_fds += read_sockets(&rmask, (select_ret - processed_fds));
 		}
+
+		/*
+		 * Take care online recovery
+		 */
 		if (WD_TIME_DIFF_SEC(ref_time, g_tm_set_time) >= 1)
 		{
 			process_wd_func_commands_for_timer_events();
@@ -1260,19 +1281,33 @@ watchdog_main(void)
 
 		check_for_current_command_timeout();
 
+		/*
+		 * If any of connections to remote nodes are established, send
+		 * commands to the remote nodes.
+		 */
 		if (service_lost_connections() == true)
 		{
 			service_internal_command();
 			service_ipc_commands();
 		}
 
+		/*
+		 * Remove the unreachable nodes from cluster
+		 */
 		service_unreachable_nodes();
 
+		/*
+		 * If I am the leader, update the quorum status.
+		 */
 		if (get_local_node_state() == WD_COORDINATOR)
 		{
 			update_quorum_status();
 		}
 
+		/*
+		 * Remove any expired failover command (had spent over 15 seconds
+		 * (FAILOVER_COMMAND_FINISH_TIMEOUT)
+		 */
 		service_expired_failovers();
 	}
 	return 0;
@@ -4922,6 +4957,11 @@ issue_watchdog_internal_command(WatchdogNode * wdNode, WDPacketData * pkt, int t
 	return clusterCommand->commandSendToCount;
 }
 
+/*
+ * Check remote connections except their state are either WD_SHUTDOWN or
+ * WD_DEAD. If suncceeded in connecting to any of the remote nodes, returns
+ * true, otherwise false.
+ */
 static bool
 service_lost_connections(void)
 {
@@ -7279,6 +7319,9 @@ process_wd_func_commands_for_timer_events(void)
 
 	gettimeofday(&currTime, NULL);
 
+	/*
+	 * Take care online recovery
+	 */
 	foreach(lc, g_cluster.wd_timer_commands)
 	{
 		WDCommandTimerData *timerData = lfirst(lc);
