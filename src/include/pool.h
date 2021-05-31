@@ -446,7 +446,7 @@ typedef struct
 								 * status */
 	int			primary_node_id;	/* the primary node id in streaming
 									 * replication mode */
-	int			conn_counter;
+	int			conn_counter;	/* number of connections from clients to pgpool */
 	bool		switching;		/* it true, failover or failback is in
 								 * progress */
 	/* greater than 0 if follow primary command or detach_false_primary in
