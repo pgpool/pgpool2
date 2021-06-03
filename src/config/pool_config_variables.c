@@ -3929,21 +3929,11 @@ BackendFlagsAssignFunc(ConfigContext context, char *newval, int index, int eleve
 static bool
 BackendAppNameAssignFunc(ConfigContext context, char *newval, int index, int elevel)
 {
-	BACKEND_STATUS backend_status = g_pool_config.backend_desc->backend_info[index].backend_status;
-
-	if (context <= CFGCXT_INIT || backend_status == CON_UNUSED || backend_status == CON_DOWN)
-	{
-		if (newval == NULL || strlen(newval) == 0)
-			g_pool_config.backend_desc->backend_info[index].backend_application_name[0] = '\0';
-		else
-			strlcpy(g_pool_config.backend_desc->backend_info[index].backend_application_name, newval, NAMEDATALEN - 1);
-		return true;
-	}
-	/* silent the warning in reload contxt */
-	if (context != CFGCXT_RELOAD)
-		ereport(WARNING,
-				(errmsg("backend_application_name%d cannot be changed in context %d and backend status = %d", index, context, backend_status)));
-	return false;
+	if (newval == NULL || strlen(newval) == 0)
+		g_pool_config.backend_desc->backend_info[index].backend_application_name[0] = '\0';
+	else
+		strlcpy(g_pool_config.backend_desc->backend_info[index].backend_application_name, newval, NAMEDATALEN - 1);
+	return true;
 }
 
 static bool
