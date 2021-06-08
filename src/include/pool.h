@@ -528,6 +528,7 @@ typedef struct
 	/* false if follow primary command or detach_false_primary in
 	 * execution */
 	bool		follow_primary_count;
+	bool		follow_primary_ongoing;	/* true if follow primary command is ongoing */
 }			POOL_REQUEST_INFO;
 
 /* description of row. corresponding to RowDescription message */

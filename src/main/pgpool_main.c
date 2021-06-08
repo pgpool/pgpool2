@@ -2376,8 +2376,11 @@ failover(void)
 		}
 		need_to_restart_pcp = true;
 	}
+
+	pool_semaphore_lock(REQUEST_INFO_SEM);
 	switching = 0;
 	Req_info->switching = false;
+	pool_semaphore_unlock(REQUEST_INFO_SEM);
 
 	/*
 	 * kick wakeup_handler in pcp_child to notice that failover/failback done
@@ -3149,9 +3152,12 @@ trigger_failover_command(int node, const char *command_line,
 
 	if (strlen(exec_cmd->data) != 0)
 	{
+		pool_sigset_t oldmask;
 		ereport(LOG,
 				(errmsg("execute command: %s", exec_cmd->data)));
+		POOL_SETMASK2(&UnBlockSig, &oldmask);
 		r = system(exec_cmd->data);
+		POOL_SETMASK(&oldmask);
 	}
 
 	free_string(exec_cmd);
@@ -3572,6 +3578,20 @@ find_primary_node_repeatedly(void)
 	}
 
 	/*
+	 * If follow primary command is ongoing, skip primary node check.  Just
+	 * return current primary node to avoid deadlock between pgpool main
+	 * failover() and follow primary process.
+	 */
+	if (Req_info->follow_primary_ongoing)
+	{
+		ereport(LOG,
+				(errmsg("find_primary_node_repeatedly: follow primary is ongoing. return current primary: %d",
+						Req_info->primary_node_id)));
+
+		return Req_info->primary_node_id;
+	}
+
+	/*
 	 * If all of the backends are down, there's no point to keep on searching
 	 * primary node.
 	 */
@@ -3621,6 +3641,7 @@ fork_follow_child(int old_master, int new_primary, int old_primary)
 		on_exit_reset();
 		processType = PT_FOLLOWCHILD;
 		pool_acquire_follow_primary_lock(true);
+		Req_info->follow_primary_ongoing = true;
 		ereport(LOG,
 				(errmsg("start triggering follow command.")));
 		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
@@ -3632,6 +3653,7 @@ fork_follow_child(int old_master, int new_primary, int old_primary)
 				trigger_failover_command(i, pool_config->follow_master_command,
 										 old_master, new_primary, old_primary);
 		}
+		Req_info->follow_primary_ongoing = false;
 		pool_release_follow_primary_lock();
 		exit(0);
 	}
