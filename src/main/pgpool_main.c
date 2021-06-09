@@ -1487,6 +1487,28 @@ static RETSIGTYPE exit_handler(int sig)
 		if (wd_lifecheck_pid != 0)
 			kill(wd_lifecheck_pid, sig);
 		wd_lifecheck_pid = 0;
+
+	/*
+	 * Send signal to follow child process and it's children.
+	 */
+	if (follow_pid > 0)
+	{
+		ereport(LOG, 
+				(errmsg("terminating all child processes of follow child")));
+		kill(follow_pid, sig);
+		switch (sig)
+		{
+			case SIGINT:
+			case SIGTERM:
+			case SIGQUIT:
+			case SIGSTOP:
+			case SIGKILL:
+				if (kill(-follow_pid, sig) < 0)
+					elog(LOG, "kill(%ld,%d) failed: %m", (long) (-follow_pid), sig);
+				break;
+			default:
+				break;
+		}
 	}
 
 	POOL_SETMASK(&UnBlockSig);
@@ -2707,6 +2729,12 @@ reaper(void)
 				worker_pid = 0;
 		}
 
+		/* exiting process was follow child process */
+		else if (pid == follow_pid)
+		{
+			follow_pid = 0;
+		}
+
 		/* exiting process was watchdog process */
 		else if (pool_config->use_watchdog)
 		{
@@ -3152,12 +3180,9 @@ trigger_failover_command(int node, const char *command_line,
 
 	if (strlen(exec_cmd->data) != 0)
 	{
-		pool_sigset_t oldmask;
 		ereport(LOG,
 				(errmsg("execute command: %s", exec_cmd->data)));
-		POOL_SETMASK2(&UnBlockSig, &oldmask);
 		r = system(exec_cmd->data);
-		POOL_SETMASK(&oldmask);
 	}
 
 	free_string(exec_cmd);
@@ -3638,8 +3663,31 @@ fork_follow_child(int old_master, int new_primary, int old_primary)
 
 	if (pid == 0)
 	{
+		POOL_SETMASK(&UnBlockSig);
+
+		pool_signal(SIGCHLD, SIG_DFL);
+		pool_signal(SIGUSR1, SIG_DFL);
+		pool_signal(SIGUSR2, SIG_DFL);
+		pool_signal(SIGTERM, SIG_DFL);
+		pool_signal(SIGINT, SIG_DFL);
+		pool_signal(SIGQUIT, SIG_DFL);
+		pool_signal(SIGHUP, SIG_DFL);
+
 		on_exit_reset();
+
 		processType = PT_FOLLOWCHILD;
+
+		/*
+		 * Set session id if possible
+		 */
+#ifdef HAVE_SETSID
+		if (setsid() < 0)
+		{
+			ereport(FATAL,
+					(errmsg("could not set session id in the fork_follow_child"),
+					 errdetail("setsid() system call failed with reason: \"%m\"")));
+		}
+#endif
 		pool_acquire_follow_primary_lock(true);
 		Req_info->follow_primary_ongoing = true;
 		ereport(LOG,
@@ -3666,7 +3714,6 @@ fork_follow_child(int old_master, int new_primary, int old_primary)
 	}
 	return pid;
 }
-
 
 static void
 initialize_shared_mem_objects(bool clear_memcache_oidmaps)
@@ -4120,9 +4167,19 @@ system_will_go_down(int code, Datum arg)
 	 */
 	if (processState != EXITING)
 		terminate_all_childrens();
+	/*
+	 * Send signal to follow child process and it's children.
+	 */
+	if (follow_pid > 0)
+	{
+		ereport(LOG, 
+				(errmsg("terminating all child processes of follow child")));
+		kill(follow_pid, SIGTERM);
+		kill(-follow_pid, SIGTERM);
+	}
+
 	processState = EXITING;
 	POOL_SETMASK(&UnBlockSig);
-
 }
 
 int
