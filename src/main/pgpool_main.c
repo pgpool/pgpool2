@@ -1487,6 +1487,7 @@ static RETSIGTYPE exit_handler(int sig)
 		if (wd_lifecheck_pid != 0)
 			kill(wd_lifecheck_pid, sig);
 		wd_lifecheck_pid = 0;
+	}
 
 	/*
 	 * Send signal to follow child process and it's children.
