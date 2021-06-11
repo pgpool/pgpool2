@@ -26931,7 +26931,7 @@ yyreduce:
 #line 1460 "gram_minimal.y" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = (yyvsp[0].vsetstmt);
-					n->type = T_PgpoolVariableSetStmt; /* Hack to keep changes minumum */
+					n->type = T_PgpoolVariableSetStmt; /* Hack to keep changes minimum */
 					n->is_local = false;
 					(yyval.node) = (Node *) n;
 				}
@@ -27356,7 +27356,7 @@ yyreduce:
 #line 1720 "gram_minimal.y" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = (yyvsp[0].vsetstmt);
-					n->type = T_PgpoolVariableSetStmt; /* Hack to keep the changes minumum */
+					n->type = T_PgpoolVariableSetStmt; /* Hack to keep the changes minimum */
 					(yyval.node) = (Node *) n;
 				}
 #line 27363 "gram_minimal.c" /* yacc.c:1646  */
