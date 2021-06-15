@@ -839,86 +839,135 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 	int			nrows;
 	int			node_id;
 	int			wsize;
-	char		port_str[6];
-	char		status[2];
-	char		weight_str[20];
-	char		role_str[10];
-	char		standby_delay_str[20];
-	char		status_changed_time_str[20];
-	char		code[] = "CommandComplete";
-	BackendInfo *bi = NULL;
-	SERVER_ROLE role;
+	int			i;
+
 
 	node_id = atoi(buf);
 
-	bi = pool_get_node_info(node_id);
-
-	if (bi == NULL)
+	if ((node_id != -1) && (pool_get_node_info(node_id) == NULL))
+	{
 		ereport(ERROR,
 				(errmsg("informing node info failed"),
-				 errdetail("invalid node ID")));
-
-	ereport(DEBUG2,
-			(errmsg("PCP: informing node info"),
-			 errdetail("retrieved node information from shared memory")));
-
-	snprintf(port_str, sizeof(port_str), "%d", bi->backend_port);
-	snprintf(status, sizeof(status), "%d", bi->backend_status);
-	snprintf(weight_str, sizeof(weight_str), "%f", bi->backend_weight);
-
-	if (STREAM)
-	{
-		if (Req_info->primary_node_id == node_id)
-			role = ROLE_PRIMARY;
-		else
-			role = ROLE_STANDBY;
+				 errdetail("invalid node ID : %s", buf)));
 	}
 	else
 	{
-		if (Req_info->main_node_id == node_id)
-			role = ROLE_MAIN;
+		/* First, send array size of node_info */
+		char		arr_code[] = "ArraySize";
+		char		node_info_size[16];
+
+		/* Finally, indicate that all data is sent */
+		char		fin_code[] = "CommandComplete";
+
+		nodes = get_nodes(&nrows);
+
+		if (node_id == -1)
+		{
+			snprintf(node_info_size, sizeof(node_info_size), "%d", NUM_BACKENDS);
+		}
 		else
-			role = ROLE_REPLICA;
+		{
+			snprintf(node_info_size, sizeof(node_info_size), "%d", 1);
+		}
+
+		pcp_write(frontend, "i", 1);
+		wsize = htonl(sizeof(arr_code) +
+					  strlen(node_info_size) + 1 +
+					  sizeof(int));
+		pcp_write(frontend, &wsize, sizeof(int));
+		pcp_write(frontend, arr_code, sizeof(arr_code));
+		pcp_write(frontend, node_info_size, strlen(node_info_size) + 1);
+		do_pcp_flush(frontend);
+
+		/* Second, send process information for all connection_info */
+		for (i = 0; i < NUM_BACKENDS ; i++)
+		{
+			char		port_str[6];
+			char		status[2];
+			char		weight_str[20];
+			char		role_str[10];
+			char		standby_delay_str[20];
+			char		status_changed_time_str[20];
+			char		code[] = "NodeInfo";
+			BackendInfo *bi = NULL;
+			SERVER_ROLE role;
+
+			if (node_id != -1 && node_id != atoi(nodes[i].node_id))
+				continue;
+
+			bi = pool_get_node_info(i);
+
+			if (bi == NULL)
+				ereport(ERROR,
+						(errmsg("informing node info failed"),
+						errdetail("invalid node ID")));
+
+			snprintf(port_str, sizeof(port_str), "%d", bi->backend_port);
+			snprintf(status, sizeof(status), "%d", bi->backend_status);
+			snprintf(weight_str, sizeof(weight_str), "%f", bi->backend_weight);
+
+			if (STREAM)
+			{
+				if (Req_info->primary_node_id == i)
+					role = ROLE_PRIMARY;
+				else
+					role = ROLE_STANDBY;
+			}
+			else
+			{
+				if (Req_info->main_node_id == i)
+					role = ROLE_MAIN;
+				else
+					role = ROLE_REPLICA;
+			}
+			snprintf(role_str, sizeof(role_str), "%d", role);
+
+			snprintf(standby_delay_str, sizeof(standby_delay_str), UINT64_FORMAT, bi->standby_delay);
+
+			snprintf(status_changed_time_str, sizeof(status_changed_time_str), UINT64_FORMAT, bi->status_changed_time);
+
+			pcp_write(frontend, "i", 1);
+			wsize = htonl(sizeof(code) +
+						  strlen(bi->backend_hostname) + 1 +
+						  strlen(port_str) + 1 +
+						  strlen(status) + 1 +
+						  strlen(nodes[i].pg_status) + 1 +
+						  strlen(weight_str) + 1 +
+						  strlen(role_str) + 1 +
+						  strlen(nodes[i].pg_role) + 1 +
+						  strlen(standby_delay_str) + 1 +
+						  strlen(bi->replication_state) + 1 +
+						  strlen(bi->replication_sync_state) + 1 +
+						  strlen(status_changed_time_str) + 1 +
+						  sizeof(int));
+			pcp_write(frontend, &wsize, sizeof(int));
+			pcp_write(frontend, code, sizeof(code));
+			pcp_write(frontend, bi->backend_hostname, strlen(bi->backend_hostname) + 1);
+			pcp_write(frontend, port_str, strlen(port_str) + 1);
+			pcp_write(frontend, status, strlen(status) + 1);
+			pcp_write(frontend, nodes[i].pg_status, strlen(nodes[i].pg_status) + 1);
+			pcp_write(frontend, weight_str, strlen(weight_str) + 1);
+			pcp_write(frontend, role_str, strlen(role_str) + 1);
+			pcp_write(frontend, nodes[i].pg_role, strlen(nodes[i].pg_role) + 1);
+			pcp_write(frontend, standby_delay_str, strlen(standby_delay_str) + 1);
+			pcp_write(frontend, bi->replication_state, strlen(bi->replication_state) + 1);
+			pcp_write(frontend, bi->replication_sync_state, strlen(bi->replication_sync_state) + 1);
+			pcp_write(frontend, status_changed_time_str, strlen(status_changed_time_str) + 1);
+			do_pcp_flush(frontend);
+		}
+
+		pcp_write(frontend, "i", 1);
+		wsize = htonl(sizeof(fin_code) +
+					  sizeof(int));
+		pcp_write(frontend, &wsize, sizeof(int));
+		pcp_write(frontend, fin_code, sizeof(fin_code));
+		do_pcp_flush(frontend);
+		ereport(DEBUG1,
+				(errmsg("PCP informing node info"),
+				 errdetail("retrieved node information from shared memory")));
+
+		pfree(nodes);
 	}
-	snprintf(role_str, sizeof(role_str), "%d", role);
-
-	snprintf(standby_delay_str, sizeof(standby_delay_str), UINT64_FORMAT, bi->standby_delay);
-
-	snprintf(status_changed_time_str, sizeof(status_changed_time_str), UINT64_FORMAT, bi->status_changed_time);
-
-	nodes = get_nodes(&nrows);
-
-	pcp_write(frontend, "i", 1);
-	wsize = htonl(sizeof(code) +
-				  strlen(bi->backend_hostname) + 1 +
-				  strlen(port_str) + 1 +
-				  strlen(status) + 1 +
-				  strlen(nodes[node_id].pg_status) + 1 +
-				  strlen(weight_str) + 1 +
-				  strlen(role_str) + 1 +
-				  strlen(nodes[node_id].pg_role) + 1 +
-				  strlen(standby_delay_str) + 1 +
-				  strlen(bi->replication_state) + 1 +
-				  strlen(bi->replication_sync_state) + 1 +
-				  strlen(status_changed_time_str) + 1 +
-				  sizeof(int));
-	pcp_write(frontend, &wsize, sizeof(int));
-	pcp_write(frontend, code, sizeof(code));
-	pcp_write(frontend, bi->backend_hostname, strlen(bi->backend_hostname) + 1);
-	pcp_write(frontend, port_str, strlen(port_str) + 1);
-	pcp_write(frontend, status, strlen(status) + 1);
-	pcp_write(frontend, nodes[node_id].pg_status, strlen(nodes[node_id].pg_status) + 1);
-	pcp_write(frontend, weight_str, strlen(weight_str) + 1);
-	pcp_write(frontend, role_str, strlen(role_str) + 1);
-	pcp_write(frontend, nodes[node_id].pg_role, strlen(nodes[node_id].pg_role) + 1);
-	pcp_write(frontend, standby_delay_str, strlen(standby_delay_str) + 1);
-	pcp_write(frontend, bi->replication_state, strlen(bi->replication_state) + 1);
-	pcp_write(frontend, bi->replication_sync_state, strlen(bi->replication_sync_state) + 1);
-	pcp_write(frontend, status_changed_time_str, strlen(status_changed_time_str) + 1);
-
-	do_pcp_flush(frontend);
-
-	pfree(nodes);
 }
 
 /*

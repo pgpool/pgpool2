@@ -48,7 +48,7 @@ static void output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose
 static void output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose);
 static void output_proccount_result(PCPResultInfo * pcpResInfo, bool verbose);
 static void output_poolstatus_result(PCPResultInfo * pcpResInfo, bool verbose);
-static void output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose);
+static void output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all,  bool verbose);
 static void output_health_check_stats_result(PCPResultInfo * pcpResInfo, bool verbose);
 static void output_nodecount_result(PCPResultInfo * pcpResInfo, bool verbose);
 static char *backend_status_to_string(BackendInfo * bi);
@@ -85,7 +85,7 @@ struct AppTypes AllAppTypes[] =
 	{"pcp_attach_node", PCP_ATTACH_NODE, "n:h:p:U:wWvd", "attach a node from pgpool-II"},
 	{"pcp_detach_node", PCP_DETACH_NODE, "n:h:p:U:gwWvd", "detach a node from pgpool-II"},
 	{"pcp_node_count", PCP_NODE_COUNT, "h:p:U:wWvd", "display the total number of nodes under pgpool-II's control"},
-	{"pcp_node_info", PCP_NODE_INFO, "n:h:p:U:wWvd", "display a pgpool-II node's information"},
+	{"pcp_node_info", PCP_NODE_INFO, "n:h:p:U:awWvd", "display a pgpool-II node's information"},
 	{"pcp_health_check_stats", PCP_HEALTH_CHECK_STATS, "n:h:p:U:wWvd", "display a pgpool-II health check stats data"},
 	{"pcp_pool_status", PCP_POOL_STATUS, "h:p:U:wWvd", "display pgpool configuration and status"},
 	{"pcp_proc_count", PCP_PROC_COUNT, "h:p:U:wWvd", "display the list of pgpool-II child process PIDs"},
@@ -324,7 +324,7 @@ main(int argc, char **argv)
 				exit(0);
 			}
 		}
-		else if (app_require_nodeID() && nodeID < 0)
+		else if ((app_require_nodeID() || current_app_type->app_type == PCP_NODE_INFO) && nodeID < 0)
 		{
 			nodeID = atoi(argv[optind]);
 			if (nodeID < 0 || nodeID > MAX_NUM_BACKENDS)
@@ -348,7 +348,7 @@ main(int argc, char **argv)
 			fprintf(stderr, "Try \"%s --help\" for more information.\n\n", progname);
 			exit(1);
 		}
-		else if (current_app_type->app_type == PCP_WATCHDOG_INFO)
+		else if (current_app_type->app_type == PCP_WATCHDOG_INFO || current_app_type->app_type == PCP_NODE_INFO)
 		{
 			nodeID = -1;
 		}
@@ -465,7 +465,7 @@ main(int argc, char **argv)
 			output_nodecount_result(pcpResInfo, verbose);
 
 		if (current_app_type->app_type == PCP_NODE_INFO)
-			output_nodeinfo_result(pcpResInfo, verbose);
+			output_nodeinfo_result(pcpResInfo, all, verbose);
 
 		if (current_app_type->app_type == PCP_HEALTH_CHECK_STATS)
 			output_health_check_stats_result(pcpResInfo, verbose);
@@ -505,39 +505,42 @@ output_nodecount_result(PCPResultInfo * pcpResInfo, bool verbose)
 }
 
 static void
-output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose)
+output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 {
-	BackendInfo *backend_info = (BackendInfo *) pcp_get_binary_data(pcpResInfo, 0);
+	bool		printed = false;
+	int			i;
 	char		last_status_change[20];
 	struct tm	tm;
-
-	localtime_r(&backend_info->status_changed_time, &tm);
-	strftime(last_status_change, sizeof(last_status_change), "%F %T", &tm);
+	char	   *frmt;
+	int         array_size = pcp_result_slot_count(pcpResInfo);
 
 	if (verbose)
 	{
 		const char *titles[] = {"Hostname", "Port", "Status", "Weight", "Status Name", "Backend Status Name", "Role", "Backend Role", "Replication Delay", "Replication State", "Replication Sync State", "Last Status Change"};
 		const char *types[] = {"s", "d", "d", "f", "s", "s", "s", "s", "lu", "s", "s", "s"};
-		char *format_string;
 
-		format_string = format_titles(titles, types, sizeof(titles)/sizeof(char *));
-		printf(format_string,
-			   backend_info->backend_hostname,
-			   backend_info->backend_port,
-			   backend_info->backend_status,
-			   backend_info->backend_weight / RAND_MAX,
-			   backend_status_to_string(backend_info),
-			   backend_info->pg_backend_status,
-			   role_to_str(backend_info->role),
-			   backend_info->pg_role,
-			   backend_info->standby_delay,
-			   backend_info->replication_state,
-			   backend_info->replication_sync_state,
-			   last_status_change);
+		frmt = format_titles(titles, types, sizeof(titles)/sizeof(char *));
 	}
 	else
 	{
-		printf("%s %d %d %f %s %s %s %s %lu %s %s %s\n",
+		frmt = "%s %d %d %f %s %s %s %s %lu %s %s %s\n";
+	}
+
+	for (i = 0; i < array_size; i++)
+	{
+
+		BackendInfo *backend_info = (BackendInfo *) pcp_get_binary_data(pcpResInfo, i);
+
+		if (backend_info == NULL)
+			break;
+		if ((!all) && (backend_info->backend_hostname[0] == '\0'))
+			continue;
+
+		printed = true;
+		localtime_r(&backend_info->status_changed_time, &tm);
+		strftime(last_status_change, sizeof(last_status_change), "%F %T", &tm);
+
+		printf(frmt,
 			   backend_info->backend_hostname,
 			   backend_info->backend_port,
 			   backend_info->backend_status,
@@ -547,10 +550,13 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool verbose)
 			   role_to_str(backend_info->role),
 			   backend_info->pg_role,
 			   backend_info->standby_delay,
-			   backend_info->replication_state,
-			   backend_info->replication_sync_state,
+			   backend_info->replication_state[0] == '\0' ? "none" : backend_info->replication_state,
+			   backend_info->replication_sync_state[0] == '\0' ? "none" : backend_info->replication_sync_state,
 			   last_status_change);
 	}
+
+	if (printed == false)
+		printf("No node information available\n\n");
 }
 
 /*
@@ -814,7 +820,6 @@ app_require_nodeID(void)
 {
 	return (current_app_type->app_type == PCP_ATTACH_NODE ||
 			current_app_type->app_type == PCP_DETACH_NODE ||
-			current_app_type->app_type == PCP_NODE_INFO ||
 			current_app_type->app_type == PCP_HEALTH_CHECK_STATS ||
 			current_app_type->app_type == PCP_PROMOTE_NODE ||
 			current_app_type->app_type == PCP_RECOVERY_NODE);
@@ -855,6 +860,13 @@ usage(void)
 	{
 		fprintf(stderr, "  -n, --node-id=NODEID   ID of a backend node\n");
 	}
+
+	if (current_app_type->app_type == PCP_NODE_INFO)
+	{
+		fprintf(stderr, "  -n, --node-id=NODEID   ID of a backend node\n");
+		fprintf(stderr, "  -a, --all              display all backend nodes information\n");
+	}
+
 	if (current_app_type->app_type == PCP_STOP_PGPOOL)
 	{
 		fprintf(stderr, "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n");
@@ -1003,5 +1015,6 @@ format_titles(const char **titles, const char **types, int ntitles)
 		strncat(formatbuf, buf2, sizeof(formatbuf) - strlen(formatbuf) - 2);
 		strcat(formatbuf, "\n");
 	}
+	strcat(formatbuf, "\n");
 	return formatbuf;
 }

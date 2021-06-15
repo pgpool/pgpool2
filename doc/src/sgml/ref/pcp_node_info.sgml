@@ -52,6 +52,16 @@ Pgpool-II documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>-a</option></term>
+     <term><option>--all</option></term>
+     <listitem>
+      <para>
+       Display all backend nodes informatio.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>Other options </option></term>
      <listitem>
       <para>
@@ -68,56 +78,38 @@ Pgpool-II documentation
   <para>
    Here is an example output:
    <programlisting>
-    $ pcp_node_info -w -p 11001 1
-    /tmp 11003 1 0.500000 waiting up standby standby 0 streaming async 2021-02-27 14:51:30
+$ pcp_node_info -w -p 11001 -n 1
+/tmp 11003 1 0.500000 waiting up standby standby 0 streaming async 2021-02-27 14:51:30
    </programlisting>
   </para>
   <para>
    The result is in the following order:
    <literallayout class="monospaced">
-    1. hostname
-    2. port number
-    3. status
-    4. load balance weight
-    5. status name
-    6. actual backend status
-    7. backend role
-    8. actual backend role (taken from pg_is_in_recovery. Pgpool-II 4.3 or later)
-    9. replication delay
-    10. replication state (taken from pg_stat_replication. Pgpool-II 4.1 or later)
-    11. sync replication state (taken from pg_stat_replication. Pgpool-II 4.1 or later)
-    12. last status change time
+1. hostname
+2. port number
+3. status
+4. load balance weight
+5. status name
+6. actual backend status
+7. backend role
+8. actual backend role (taken from pg_is_in_recovery. Pgpool-II 4.3 or later)
+9. replication delay
+10. replication state (taken from pg_stat_replication. Pgpool-II 4.1 or later)
+11. sync replication state (taken from pg_stat_replication. Pgpool-II 4.1 or later)
+12. last status change time
    </literallayout>
   </para>
   <para>
-   Status is represented by a digit from [0 to 3].  To correctly 9,
-   10, 11 are displayed, <xref linkend="guc-sr-check-period"> must not
-    be 0.  10, 11 will not be displayed
-    if <xref linkend="guc-sr-check-user"> is
-     not <productname>PostgreSQL</productname> super user nor it's not
-     in "pg_monitor" group.
-     <note>
-      <para>
-       To make <xref linkend="guc-sr-check-user"> in pg_monitor
-	group, execute following SQL command
-	by <productname>PostgreSQL</productname> super user (replace
-	"sr_check_user" with the setting
-	of <xref linkend="guc-sr-check-user">):
-	 <programlisting>
-	  GRANT pg_monitor TO sr_check_user;
-	 </programlisting>
-	 For <productname>PostgreSQL</productname> 9.6, there's no
-	 pg_monitor group and <xref linkend="guc-sr-check-user"> must
-	  be <productname>PostgreSQL</productname> super user.
-      </para>
-     </note>
-
-     <itemizedlist>
-      <listitem><para>0 - This state is only used during the initialization. PCP will never display it. </para></listitem>
-      <listitem><para>1 - Node is up. No connections yet. </para></listitem>
-      <listitem><para>2 - Node is up. Connections are pooled. </para></listitem>
-      <listitem><para>3 - Node is down. </para></listitem>
-     </itemizedlist>
+   3 (status) is represented by a digit from [0 to 3].
+   <itemizedlist>
+    <listitem><para>0 - This state is only used during the initialization. PCP will never display it. </para></listitem>
+    <listitem><para>1 - Node is up. No connections yet. </para></listitem>
+    <listitem><para>2 - Node is up. Connections are pooled. </para></listitem>
+    <listitem><para>3 - Node is down. </para></listitem>
+   </itemizedlist>
+  </para>
+  <para>
+   4 (load balance weight) is displayed in normalized format (0 - 1).
   </para>
   <para>
    6 shows the backend status in real time.  The info is obtained by
@@ -147,8 +139,35 @@ Pgpool-II documentation
    7 and 8 will be always the same.
   </para>
   <para>
-   The load balance weight is displayed in normalized format (0 - 1).
+   To correctly 9, 10, 11 are displayed, <xref linkend="guc-sr-check-period"> must not
+   be 0.  10, 11 will not be displayed
+   if <xref linkend="guc-sr-check-user"> is
+   not <productname>PostgreSQL</productname> super user nor it's not
+   in "pg_monitor" group.
+   <note>
+    <para>
+     To make <xref linkend="guc-sr-check-user"> in pg_monitor
+     group, execute following SQL command
+     by <productname>PostgreSQL</productname> super user (replace
+     "sr_check_user" with the setting of <xref linkend="guc-sr-check-user">):
+     <programlisting>
+GRANT pg_monitor TO sr_check_user;
+     </programlisting>
+     For <productname>PostgreSQL</productname> 9.6, there's no
+     pg_monitor group and <xref linkend="guc-sr-check-user"> must
+     be <productname>PostgreSQL</productname> super user.
+    </para>
+   </note>
   </para>
+  <para>
+   The <option>-a</option> or <option>--all</option> option lists all backend nodes information.
+  </para>
+  <programlisting>
+$ pcp_node_info -w -p 11001 -a
+/tmp 11002 1 0.500000 waiting up primary primary 0 none none 2021-02-27 14:51:30
+/tmp 11003 1 0.500000 waiting up standby standby 0 streaming async 2021-02-27 14:51:30
+  </programlisting>
+
   <para>
    The <option>--verbose</option> option can help understand the output. For example:
   </para>

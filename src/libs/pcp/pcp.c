@@ -698,11 +698,30 @@ pcp_node_count(PCPConnInfo * pcpConn)
 static void
 process_node_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
+	char       *index;
 	BackendInfo *backend_info = NULL;
 
-	if (strcmp(buf, "CommandComplete") == 0)
+	if (strcmp(buf, "ArraySize") == 0)
+	{
+		int			ci_size;
+
+		index = (char *) memchr(buf, '\0', len);
+		if (index == NULL)
+			goto INVALID_RESPONSE;
+		index += 1;
+		ci_size = atoi(index);
+
+		setResultStatus(pcpConn, PCP_RES_INCOMPLETE);
+		setResultSlotCount(pcpConn, ci_size);
+		pcpConn->pcpResInfo->nextFillSlot = 0;
+		return;
+	}
+	else if (strcmp(buf, "NodeInfo") == 0)
 	{
 		char	   *index = NULL;
+
+		if (PCPResultStatus(pcpConn->pcpResInfo) != PCP_RES_INCOMPLETE)
+			goto INVALID_RESPONSE;
 
 		backend_info = (BackendInfo *) palloc(sizeof(BackendInfo));
 
@@ -772,7 +791,7 @@ process_node_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 		index = (char *) memchr(index, '\0', len);
 		if (index == NULL)
 			goto INVALID_RESPONSE;
-		
+
 		index++;
 		backend_info->status_changed_time = atol(index);
 
@@ -783,16 +802,13 @@ process_node_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *) backend_info, sizeof(BackendInfo), NULL) < 0)
 			goto INVALID_RESPONSE;
 
-		setCommandSuccessful(pcpConn);
+		return;
 	}
-	else
+	else if (strcmp(buf, "CommandComplete") == 0)
 	{
-		pcp_internal_error(pcpConn,
-						   "command failed with reason: \"%s\"", buf);
-		setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+		setResultStatus(pcpConn, PCP_RES_COMMAND_OK);
+		return;
 	}
-
-	return;
 
 INVALID_RESPONSE:
 

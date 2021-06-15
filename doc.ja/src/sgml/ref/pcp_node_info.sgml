@@ -67,6 +67,19 @@ Pgpool-II documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>-a</option></term>
+     <term><option>--all</option></term>
+     <listitem>
+      <para>
+       <!--
+       Display all backend nodes informatio.
+       -->
+       すべてのバックエンドノードの情報を表示します。
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <!--
      <term><option>Other options </option></term>
      -->
@@ -95,8 +108,8 @@ Pgpool-II documentation
    -->
    ここでは例を示します。
    <programlisting>
-    $ pcp_node_info -w -p 11001 1
-    /tmp 11003 1 0.500000 waiting up standby standby 0 streaming async 2021-02-27 14:51:30
+$ pcp_node_info -w -p 11001 -n 1
+/tmp 11003 1 0.500000 waiting up standby standby 0 streaming async 2021-02-27 14:51:30
    </programlisting>
   </para>
   <para>
@@ -119,36 +132,25 @@ Pgpool-II documentation
     11. sync replication state (PostgreSQL 9.2以降。pg_stat_replicationから取得)
     12. last status change time
     -->
-    1. ノードのホスト名
-    2. ノードのポート番号
-    3. ステータス
-    4. ロードバランスウェイト
-    5. バックエンド状態名
-    6. 実際のバックエンドの状態 (Pgpool-II 4.3以降。pg_isreadyで取得)
-    7. バックエンドの役割
-    8. 実際のバックエンドの役割(Pgpool-II 4.3以降。pg_is_in_recoveryで取得)
-    9. レプリケーションの遅延
-    10. レプリケーション状態 (Pgpool-II 4.1以降。pg_stat_replicationから取得)
-    11. 同期レプリケーション状態 (Pgpool-II 4.1以降。pg_stat_replicationから取得)
-    12. 最終ステータス変更時刻
+1. ノードのホスト名
+2. ノードのポート番号
+3. ステータス
+4. ロードバランスウェイト
+5. バックエンド状態名
+6. 実際のバックエンドの状態 (Pgpool-II 4.3以降。pg_isreadyで取得)
+7. バックエンドの役割
+8. 実際のバックエンドの役割(Pgpool-II 4.3以降。pg_is_in_recoveryで取得)
+9. レプリケーションの遅延
+10. レプリケーション状態 (Pgpool-II 4.1以降。pg_stat_replicationから取得)
+11. 同期レプリケーション状態 (Pgpool-II 4.1以降。pg_stat_replicationから取得)
+12. 最終ステータス変更時刻
    </literallayout>
   </para>
   <para>
    <!--
-   Status is represented by a digit from [0 to 3].
+    3 (status) is represented by a digit from [0 to 3].
    -->
-   9, 10, 11は、<xref linkend="guc-sr-check-period">が0以外でなければ正しく表示されません。
-    また、10, 11は、<xref linkend="guc-sr-check-user">が<productname>PostgreSQL</productname>のスーパーユーザーであるか、"pg_monitor"グループに所属していなけれ正しく表示されません。
-     <note>
-      <para>
-       <xref linkend="guc-sr-check-user">をpg_monitorグループに所属させるには、以下のSQLコマンドを<productname>PostgreSQL</productname>スーパーユーザーで実行してください（"sr_check_user"を<xref linkend="guc-sr-check-user">の設定値で置き換えてください）
-	 <programlisting>
-	  GRANT pg_monitor TO sr_check_user;
-	 </programlisting>
-	 <productname>PostgreSQL</productname> 9.6にはpg_monitorグループがないので、<xref linkend="guc-sr-check-user">は<productname>PostgreSQL</productname>のスーパーユーザーでなければなりません。
-      </para>
-     </note>
-     ステータスは [0..3] までの数字で表わされます。各数字の意味は以下のとおりです。
+   3 (ステータス)は [0..3] までの数字で表わされます。各数字の意味は以下のとおりです。
   </para>
   <para>
    <itemizedlist>
@@ -163,6 +165,12 @@ Pgpool-II documentation
     <listitem><para>2 - ノード稼働中。接続有り </para></listitem>
     <listitem><para>3 -  ノードダウン </para></listitem>
    </itemizedlist>
+  </para>
+  <para>
+   <!--
+   4 (load balance weight) is displayed in normalized format.
+   -->
+   4 (ロードバランスウェイト)は0から1に正規化されたフォーマットで出力されます。
   </para>
   <para>
    6は実際のバックエンドの状態をリアルタイムで取得して表示します。
@@ -181,11 +189,30 @@ Pgpool-II documentation
    ストリーミングレプリケーションモードと違って、<function>pg_is_in_recovery</function>は呼び出されず、7と8が異なる値になることはありません。
   </para>
   <para>
-   <!--
-   The load balance weight is displayed in normalized format.
-   -->
-   ロードバランスウェイトは0から1に正規化されたフォーマットで出力されます。
+   9, 10, 11は、<xref linkend="guc-sr-check-period">が0以外でなければ正しく表示されません。
+   また、10, 11は、<xref linkend="guc-sr-check-user">が<productname>PostgreSQL</productname>のスーパーユーザーであるか、"pg_monitor"グループに所属していなけれ正しく表示されません。
+   <note>
+    <para>
+    <xref linkend="guc-sr-check-user">をpg_monitorグループに所属させるには、以下のSQLコマンドを<productname>PostgreSQL</productname>スーパーユーザーで実行してください（"sr_check_user"を<xref linkend="guc-sr-check-user">の設定値で置き換えてください）
+	 <programlisting>
+GRANT pg_monitor TO sr_check_user;
+	 </programlisting>
+	<productname>PostgreSQL</productname> 9.6にはpg_monitorグループがないので、<xref linkend="guc-sr-check-user">は<productname>PostgreSQL</productname>のスーパーユーザーでなければなりません。
+    </para>
+   </note>
   </para>
+  <para>
+   <!--
+   The <option>-a</option> or <option>all</option> option lists all backend nodes information.
+   -->
+   <option>-a</option>または <option>--all</option>オプションはすべてのバックエンドノードの情報を表示します。
+  </para>
+  <programlisting>
+$ pcp_node_info -w -p 11001 -a
+/tmp 11002 1 0.500000 waiting up primary primary 0 none none 2021-02-27 14:51:30
+/tmp 11003 1 0.500000 waiting up standby standby 0 streaming async 2021-02-27 14:51:30
+  </programlisting>
+
   <para>
    <!--
    The <option>verbose</option> option can help understand the output. For example:
