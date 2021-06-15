@@ -75,7 +75,7 @@ static void send_md5salt(PCP_CONNECTION * frontend, char *salt);
 
 static void pcp_process_command(char tos, char *buf, int buf_len);
 
-static int	pool_detach_node(int node_id, bool gracefully);
+static int	pool_detach_node(int node_id, bool gracefully, bool switchover);
 static int	pool_promote_node(int node_id, bool gracefully);
 static void inform_process_count(PCP_CONNECTION * frontend);
 static void inform_process_info(PCP_CONNECTION * frontend, char *buf);
@@ -227,8 +227,10 @@ pcp_worker_main(int port)
 static void
 pcp_process_command(char tos, char *buf, int buf_len)
 {
+	/* The request is recovery or pcp shutdown request? */
 	if (tos == 'O' || tos == 'T')
 	{
+		/* Prevent those pcp requests while processing failover/failback request */
 		if (Req_info->switching)
 		{
 			if (Req_info->request_queue_tail != Req_info->request_queue_head)
@@ -521,11 +523,16 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 
 /* Detach a node */
 static int
-pool_detach_node(int node_id, bool gracefully)
+pool_detach_node(int node_id, bool gracefully, bool switchover)
 {
+	int		flag = 0;
+
+	if (switchover)
+		flag = REQ_DETAIL_PROMOTE;
+
 	if (!gracefully)
 	{
-		degenerate_backend_set_ex(&node_id, 1, REQ_DETAIL_SWITCHOVER | REQ_DETAIL_CONFIRMED, true, false);
+		degenerate_backend_set_ex(&node_id, 1, flag | REQ_DETAIL_SWITCHOVER | REQ_DETAIL_CONFIRMED, true, false);
 		return 0;
 	}
 
@@ -552,7 +559,7 @@ pool_detach_node(int node_id, bool gracefully)
 	/*
 	 * Now all frontends have gone. Let's do failover.
 	 */
-	degenerate_backend_set_ex(&node_id, 1, REQ_DETAIL_SWITCHOVER | REQ_DETAIL_CONFIRMED, false, false);
+	degenerate_backend_set_ex(&node_id, 1, flag | REQ_DETAIL_SWITCHOVER | REQ_DETAIL_CONFIRMED, false, false);
 
 	/*
 	 * Wait for failover completed.
@@ -1120,7 +1127,7 @@ process_detach_node(PCP_CONNECTION * frontend, char *buf, char tos)
 			(errmsg("PCP: processing detach node"),
 			 errdetail("detaching Node ID %d", node_id)));
 
-	pool_detach_node(node_id, gracefully);
+	pool_detach_node(node_id, gracefully, false);
 
 	pcp_write(frontend, "d", 1);
 	wsize = htonl(sizeof(code) + sizeof(int));
@@ -1263,6 +1270,11 @@ process_status_request(PCP_CONNECTION * frontend)
 			 errdetail("retrieved status information")));
 }
 
+/*
+ * Process promote node request.  This function is tricky. If promote option
+ * is sent from client, calls pool_detach_node() so that failover script
+ * actually promote the specified node and detach current primary.
+ */
 static void
 process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos)
 {
@@ -1270,22 +1282,34 @@ process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos)
 	int			wsize;
 	char		code[] = "CommandComplete";
 	bool		gracefully;
+	char		node_id_buf[64];
+	char		*p;
+	char		promote_option;
 
 	if (tos == 'J')
 		gracefully = false;
 	else
 		gracefully = true;
 
-	node_id = atoi(buf);
+	p = node_id_buf;
+	while (*buf && *buf != ' ')
+		*p++ = *buf++;
+	*p = '\0';
+	buf += 2;
+	promote_option = *buf;
+
+	node_id = atoi(node_id_buf);
+
 	if ((node_id < 0) || (node_id >= pool_config->backend_desc->num_backends))
 		ereport(ERROR,
-				(errmsg("could not process recovery request"),
+				(errmsg("could not process promote request"),
 				 errdetail("node id %d is not valid", node_id)));
-	/* promoting node is reserved to Streaming Replication */
+
+	/* Promoting node is only possible in Streaming Replication mode */
 	if (!STREAM)
 	{
 		ereport(FATAL,
-				(errmsg("invalid pgpool mode for process recovery request"),
+				(errmsg("invalid pgpool mode for process promote request"),
 				 errdetail("not in streaming replication mode, can't promote node id %d", node_id)));
 
 	}
@@ -1293,14 +1317,27 @@ process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos)
 	if (node_id == REAL_PRIMARY_NODE_ID)
 	{
 		ereport(FATAL,
-				(errmsg("invalid pgpool mode for process recovery request"),
+				(errmsg("invalid promote request"),
 				 errdetail("specified node is already primary node, can't promote node id %d", node_id)));
 
 	}
-	ereport(DEBUG1,
+
+	ereport(LOG, (errmsg("pcp_promote_node: promote option: %c", promote_option)));
+
+	if (promote_option == 's')
+	{
+		ereport(DEBUG1,
 			(errmsg("PCP: processing promote node"),
-			 errdetail("promoting Node ID %d", node_id)));
-	pool_promote_node(node_id, gracefully);
+			 errdetail("promoting Node ID %d and shutdown primary node %d", node_id, REAL_PRIMARY_NODE_ID)));
+		pool_detach_node(node_id, gracefully, true);
+	}
+	else
+	{
+		ereport(DEBUG1,
+				(errmsg("PCP: processing promote node"),
+				 errdetail("promoting Node ID %d", node_id)));
+		pool_promote_node(node_id, gracefully);
+	}
 
 	pcp_write(frontend, "d", 1);
 	wsize = htonl(sizeof(code) + sizeof(int));

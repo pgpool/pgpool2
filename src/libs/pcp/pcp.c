@@ -8,7 +8,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -56,7 +56,7 @@ static int	pcp_authorize(PCPConnInfo * pcpConn, char *username, char *password);
 static void pcp_internal_error(PCPConnInfo * pcpConn, const char *fmt,...);
 
 static PCPResultInfo * _pcp_detach_node(PCPConnInfo * pcpConn, int nid, bool gracefully);
-static PCPResultInfo * _pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool gracefully);
+static PCPResultInfo * _pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool gracefully, bool promote);
 static PCPResultInfo * process_pcp_response(PCPConnInfo * pcpConn, char sentMsg);
 static void setCommandSuccessful(PCPConnInfo * pcpConn);
 static void setResultStatus(PCPConnInfo * pcpConn, ResultStateType resultState);
@@ -1457,9 +1457,9 @@ pcp_recovery_node(PCPConnInfo * pcpConn, int nid)
  * --------------------------------
  */
 PCPResultInfo *
-pcp_promote_node(PCPConnInfo * pcpConn, int nid)
+pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool promote)
 {
-	return _pcp_promote_node(pcpConn, nid, FALSE);
+	return _pcp_promote_node(pcpConn, nid, FALSE, promote);
 }
 
 /* --------------------------------
@@ -1470,17 +1470,18 @@ pcp_promote_node(PCPConnInfo * pcpConn, int nid)
  * --------------------------------
  */
 PCPResultInfo *
-pcp_promote_node_gracefully(PCPConnInfo * pcpConn, int nid)
+pcp_promote_node_gracefully(PCPConnInfo * pcpConn, int nid, bool switchover)
 {
-	return _pcp_promote_node(pcpConn, nid, TRUE);
+	return _pcp_promote_node(pcpConn, nid, TRUE, switchover);
 }
 
 static PCPResultInfo *
-_pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool gracefully)
+_pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool gracefully, bool switchover)
 {
 	int			wsize;
 	char		node_id[16];
 	char	   *sendchar;
+	char		*switchover_option;	/* n: just change node status, s: switchover primary */
 
 	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
@@ -1488,17 +1489,31 @@ _pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool gracefully)
 		return NULL;
 	}
 
-	snprintf(node_id, sizeof(node_id), "%d", nid);
+	snprintf(node_id, sizeof(node_id), "%d ", nid);
 
 	if (gracefully)
 		sendchar = "j";
 	else
 		sendchar = "J";
 
+	if (switchover)
+		switchover_option = "s";
+	else
+		switchover_option = "n";
+
 	pcp_write(pcpConn->pcpConn, sendchar, 1);
-	wsize = htonl(strlen(node_id) + 1 + sizeof(int));
+
+	/* caluculate send buffer size */
+	wsize = sizeof(char);	/* protocol. 'j' or 'J' */
+	wsize += strlen(node_id);	/* node id + space */
+	wsize += sizeof(char);	/* promote option */
+	wsize += sizeof(int);	/* buffer length */
+	wsize = htonl(wsize);
+
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
 	pcp_write(pcpConn->pcpConn, node_id, strlen(node_id) + 1);
+	pcp_write(pcpConn->pcpConn, switchover_option, 1);
+
 	if (PCPFlush(pcpConn) < 0)
 		return NULL;
 	if (pcpConn->Pfdebug)

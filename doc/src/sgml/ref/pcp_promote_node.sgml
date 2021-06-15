@@ -26,22 +26,43 @@ Pgpool-II documentation
    <arg rep="repeat"><replaceable>options</replaceable></arg>
    <arg><replaceable>node_id</replaceable></arg>
    <arg><replaceable>gracefully</replaceable></arg>
+   <arg><replaceable>switchover</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
  <refsect1 id="R1-PCP-PROMOTE-NODE-1">
   <title>Description</title>
   <para>
-   <command>pcp_promote_node</command>
-   promotes the given node as new primary to Pgpool-II. In streaming replication mode only. Please note that this command does not actually promote standby PostgreSQL backend: it just changes the internal status of Pgpool-II and trigger failover and users have to promote standby PostgreSQL outside Pgpool-II.
+   <command>pcp_promote_node</command> promotes the given node as new
+   primary to <productname>Pgpool-II</productname>. In streaming
+   replication mode only. Please note that this command does not
+   actually promote standby <productname>PostgreSQL</productname>
+   backend unless <literal>switchover</literal> option is specified:
+   it just changes the internal status of
+   <productname>Pgpool-II</productname> and trigger failover and users
+   have to promote standby <productname>PostgreSQL</productname>
+   outside <productname>Pgpool-II</productname>.
   </para>
 
   <para>
-   <command>pcp_promote_node</command> executes followings.  Please be
+   If <literal>switchover</literal> is specified,
+   <productname>Pgpool-II</productname> detaches current primary
+   (changes the internal status to down) and execute the <xref
+   linkend="guc-failover-command">, with the new main node argument to
+   be set to the specified node id. Because most failover scripts
+   promote the new main node, the specified node will be the new
+   primary node. The <xref linkend="guc-follow-primary-command"> is
+   necessary to be set properly to turn the former primary into
+   standby.
+  </para>
+
+  <para>
+   <command>pcp_promote_node</command> executes followings if
+   <literal>switchover</literal> is not specified.  Please be
    warned that if <xref linkend="guc-follow-primary-command"> is set,
    the command will be executed.  It is a standard advice that you
-   disable <xref linkend="guc-follow-primary-command"> before executing
-   this command.
+   disable <xref linkend="guc-follow-primary-command"> before
+   executing this command.
 
    <orderedlist>
 
@@ -49,9 +70,9 @@ Pgpool-II documentation
      <para>
       Change the status of standby
       <productname>PostgreSQL</productname> from standby to
-      primary. It just changes the internal status of Pgpool-II and it
-      does not actually promote <productname>PostgreSQL</productname>
-      standby server.
+      primary. It just changes the internal status of
+      <productname>Pgpool-II</productname> and it does not actually
+      promote <productname>PostgreSQL</productname> standby server.
      </para>
     </listitem>     
 
@@ -59,9 +80,53 @@ Pgpool-II documentation
      <para>
       Change the status of <productname>PostgreSQL</productname> node
       which is not specified by this command's argument to down.  It
-      just changes the internal status of Pgpool-II and it does not
-      actually make <productname>PostgreSQL</productname> standby
-      server down.
+      just changes the internal status of
+      <productname>Pgpool-II</productname> and it does not actually
+      make <productname>PostgreSQL</productname> standby server down.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      If <xref linkend="guc-follow-primary-command"> is set, execute
+      <xref linkend="guc-follow-primary-command"> against
+      <productname>PostgreSQL</productname>.
+     </para>
+    </listitem>
+
+   </orderedlist>
+  </para>
+
+  <para>
+   <command>pcp_promote_node</command> executes followings if
+   <literal>switchover</literal> is specified. If <xref
+   linkend="guc-follow-primary-command"> is set, the command will be
+   executed. You need to set <xref
+   linkend="guc-follow-primary-command"> before executing this command
+   because failover script will create the new primary and other nodes
+   need to be turned into standbys
+
+   <orderedlist>
+
+    <listitem>
+     <para>
+      Change the status of primary
+      <productname>PostgreSQL</productname> from up to down. This
+      triggers <xref linkend="guc-failover-command"> execution, with
+      the new main node argument to be set to the specified node
+      id. Because most failover scripts promote the new main node, the
+      specified node will become the new primary node.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Change the status of standby
+      <productname>PostgreSQL</productname> node which is not
+      specified by this command's argument to down.  It just changes
+      the internal status of <productname>Pgpool-II</productname> and
+      it does not actually make <productname>PostgreSQL</productname>
+      standby server down.
      </para>
     </listitem>     
 
@@ -99,6 +164,18 @@ Pgpool-II documentation
      <listitem>
       <para>
        Wait until all clients are disconnected (unless client_idle_limit_in_recovery is -1 or recovery_timeout is expired).
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-s </option></term>
+     <term><option>--switchover</option></term>
+     <listitem>
+      <para>
+       Let the specified node to be actually promoted by triggering
+       the <xref linkend="guc-failover-command">.  Also change the
+       current primary node status to down.
       </para>
      </listitem>
     </varlistentry>

@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -90,7 +90,7 @@ struct AppTypes AllAppTypes[] =
 	{"pcp_pool_status", PCP_POOL_STATUS, "h:p:U:wWvd", "display pgpool configuration and status"},
 	{"pcp_proc_count", PCP_PROC_COUNT, "h:p:U:wWvd", "display the list of pgpool-II child process PIDs"},
 	{"pcp_proc_info", PCP_PROC_INFO, "h:p:P:U:awWvd", "display a pgpool-II child process' information"},
-	{"pcp_promote_node", PCP_PROMOTE_NODE, "n:h:p:U:gwWvd", "promote a node as new main from pgpool-II"},
+	{"pcp_promote_node", PCP_PROMOTE_NODE, "n:h:p:U:gswWvd", "promote a node as new main from pgpool-II"},
 	{"pcp_recovery_node", PCP_RECOVERY_NODE, "n:h:p:U:wWvd", "recover a node"},
 	{"pcp_stop_pgpool", PCP_STOP_PGPOOL, "m:h:p:U:s:wWvda", "terminate pgpool-II"},
 	{"pcp_watchdog_info", PCP_WATCHDOG_INFO, "n:h:p:U:wWvd", "display a pgpool-II watchdog's information"},
@@ -117,6 +117,7 @@ main(int argc, char **argv)
 	bool		debug = false;
 	bool		need_password = true;
 	bool		gracefully = false;
+	bool		switchover = false;
 	bool		verbose = false;
 	PCPConnInfo *pcpConn;
 	PCPResultInfo *pcpResInfo;
@@ -135,6 +136,7 @@ main(int argc, char **argv)
 		{"mode", required_argument, NULL, 'm'},
 		{"scope", required_argument, NULL, 's'},
 		{"gracefully", no_argument, NULL, 'g'},
+		{"switchover", no_argument, NULL, 's'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"all", no_argument, NULL, 'a'},
 		{"node-id", required_argument, NULL, 'n'},
@@ -213,8 +215,15 @@ main(int argc, char **argv)
 				}
 				else
 				{
-					fprintf(stderr, "Invalid argument \"%s\", Try \"%s --help\" for more information.\n", optarg, progname);
-					exit(1);
+					if (current_app_type->app_type == PCP_PROMOTE_NODE)
+					{
+						switchover = true;
+					}
+					else
+					{
+						fprintf(stderr, "Invalid argument \"%s\", Try \"%s --help\" for more information.\n", optarg, progname);
+						exit(1);
+					}
 				}
 				break;
 
@@ -417,9 +426,9 @@ main(int argc, char **argv)
 	else if (current_app_type->app_type == PCP_PROMOTE_NODE)
 	{
 		if (gracefully)
-			pcpResInfo = pcp_promote_node_gracefully(pcpConn, nodeID);
+			pcpResInfo = pcp_promote_node_gracefully(pcpConn, nodeID, switchover);
 		else
-			pcpResInfo = pcp_promote_node(pcpConn, nodeID);
+			pcpResInfo = pcp_promote_node(pcpConn, nodeID, switchover);
 	}
 
 	else if (current_app_type->app_type == PCP_RECOVERY_NODE)
@@ -881,7 +890,12 @@ usage(void)
 	if (current_app_type->app_type == PCP_PROMOTE_NODE ||
 		current_app_type->app_type == PCP_DETACH_NODE)
 	{
-		fprintf(stderr, "  -g, --gracefully       promote gracefully(optional)\n");
+		fprintf(stderr, "  -g, --gracefully       promote gracefully (optional)\n");
+	}
+
+	if (current_app_type->app_type == PCP_PROMOTE_NODE)
+	{
+		fprintf(stderr, "  -s, --switchover       switchover primary to specified node (optional)\n");
 	}
 
 	if (current_app_type->app_type == PCP_WATCHDOG_INFO)

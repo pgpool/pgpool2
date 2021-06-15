@@ -1417,6 +1417,7 @@ failover(void)
 		int			node_count;
 		unsigned char request_details;
 		bool		search_primary = true;
+		int			promote_node = 0;
 
 		pool_semaphore_lock(REQUEST_INFO_SEM);
 
@@ -1459,6 +1460,20 @@ failover(void)
 		ereport(DEBUG1,
 				(errmsg("failover handler"),
 				 errdetail("starting to select new main node")));
+
+		/* If this is promoting specified node, new_main_node
+		 * should be replaced by the requested node. The requested
+		 * node should be REAL_PRIMARY_NODE_ID.
+		 */
+		if (request_details & REQ_DETAIL_PROMOTE)
+		{
+			promote_node = node_id_set[0];
+			for (i = 0; i < node_count; i++)
+			{
+				node_id_set[i] = REAL_PRIMARY_NODE_ID;
+			}
+		}
+
 		node_id = node_id_set[0];
 
 		/* failback request? */
@@ -1778,8 +1793,8 @@ failover(void)
 		}
 
 		/*
-		 * Exec failover_command if needed We do not execute failover when
-		 * request is quarantine type
+		 * Exec failover_command if needed. We do not execute failover when
+		 * request is quarantine type.
 		 */
 		if (reqkind == NODE_DOWN_REQUEST)
 		{
@@ -1787,8 +1802,20 @@ failover(void)
 			{
 				if (nodes[i])
 				{
-					trigger_failover_command(i, pool_config->failover_command,
-											 MAIN_NODE_ID, new_main_node, REAL_PRIMARY_NODE_ID);
+					/* If this is prmoting specified node, new_main_node
+					 * should be replaced by the requested node. The requested
+					 * node should be REAL_PRIMARY_NODE_ID.
+					 */
+					if (request_details & REQ_DETAIL_PROMOTE)
+					{
+						trigger_failover_command(i, pool_config->failover_command,
+												 MAIN_NODE_ID, promote_node, REAL_PRIMARY_NODE_ID);
+					}
+					else
+					{
+						trigger_failover_command(i, pool_config->failover_command,
+												 MAIN_NODE_ID, new_main_node, REAL_PRIMARY_NODE_ID);
+					}
 					sync_required = true;
 				}
 			}
@@ -2794,7 +2821,7 @@ trigger_failover_command(int node, const char *command_line,
 						break;
 
 					case 'r':	/* new main node port */
-						newmain = pool_get_node_info(get_next_main_node());
+						newmain = pool_get_node_info(new_main_node);
 						if (newmain)
 						{
 							snprintf(port_buf, sizeof(port_buf), "%d", newmain->backend_port);
@@ -2806,7 +2833,7 @@ trigger_failover_command(int node, const char *command_line,
 						break;
 
 					case 'R':	/* new main database directory */
-						newmain = pool_get_node_info(get_next_main_node());
+						newmain = pool_get_node_info(new_main_node);
 						if (newmain)
 							string_append_char(exec_cmd, newmain->backend_data_directory);
 						else

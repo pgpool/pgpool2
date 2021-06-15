@@ -356,8 +356,8 @@ extern PCPResultInfo * pcp_detach_node_gracefully(PCPConnInfo * pcpConn, int nid
 extern PCPResultInfo * pcp_attach_node(PCPConnInfo * pcpConn, int nid);
 extern PCPResultInfo * pcp_pool_status(PCPConnInfo * pcpConn);
 extern PCPResultInfo * pcp_recovery_node(PCPConnInfo * pcpConn, int nid);
-extern PCPResultInfo * pcp_promote_node(PCPConnInfo * pcpConn, int nid);
-extern PCPResultInfo * pcp_promote_node_gracefully(PCPConnInfo * pcpConn, int nid);
+extern PCPResultInfo * pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool promote);
+extern PCPResultInfo * pcp_promote_node_gracefully(PCPConnInfo * pcpConn, int nid, bool promote);
 extern PCPResultInfo * pcp_watchdog_info(PCPConnInfo * pcpConn, int nid);
 extern PCPResultInfo * pcp_set_backend_parameter(PCPConnInfo * pcpConn, char *parameter_name, char *value);
 

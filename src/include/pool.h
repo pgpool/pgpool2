@@ -428,6 +428,8 @@ typedef enum
 											 * require majority vote */
 #define REQ_DETAIL_UPDATE		0x00000008	/* failover req is just and update
 											 * node status request */
+#define REQ_DETAIL_PROMOTE		0x00000010	/* failover req is actually promoting the specified standby node.
+											 * current primary will be detached */
 
 typedef struct
 {

@@ -29,6 +29,7 @@ Pgpool-II documentation
    <arg rep="repeat"><replaceable>options</replaceable></arg>
    <arg><replaceable>node_id</replaceable></arg>
    <arg><replaceable>gracefully</replaceable></arg>
+   <arg><replaceable>switchover</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -41,12 +42,19 @@ Pgpool-II documentation
    <command>pcp_promote_node</command>
    は <productname>Pgpool-II</productname> のノードをプライマリに昇格させます。
    これは、ストリーミングレプリケーション構成の場合のみ使用できます。
-   このコマンドは実際に <productname>PostgreSQL</productname> のスタンバイサーバを昇格するわけではないことに注意してください。
+   <literal>switchover</literal>オプションが指定されない限り、このコマンドは実際に <productname>PostgreSQL</productname> のスタンバイサーバを昇格するわけではないことに注意してください。
    単に <productname>Pgpool-II</productname> の内部ステータスを変更するだけです。
    ですから、ユーザはこのコマンドを使う際には自分で <productname>PostgreSQL</productname> のスタンバイを昇格させるようにしてください。
   </para>
+
   <para>
-   <command>pcp_promote_node</command>は、起動された後以下を行います。
+   <literal>switchover</literal>が指定されると、<productname>Pgpool-II</productname>は現在のプライマリを切り離し（内部状態をダウンにします）、新しいメインノード引数に指定されたノードIDをセットしながら<xref linkend="guc-failover-command">を起動します。
+   ほとんどのフェイルオーバースクリプトはメインノードを昇格させるので、指定されたノードは新しいプライマリになります。
+   以前のプライマリをスタンバイにするには、<xref linkend="guc-follow-primary-command">が正しく設定されていることが必要です。
+  </para>
+
+  <para>
+   <literal>switchover</literal>が指定されていなければ、<command>pcp_promote_node</command>は、起動された後以下を行います。
    <xref linkend="guc-follow-primary-command">が設定されている場合はそれも起動されるので、十分な注意が必要です。
    通常は<xref linkend="guc-follow-primary-command">を無効にしてからこのコマンドを実行することをお勧めします。
 
@@ -74,6 +82,38 @@ Pgpool-II documentation
 
    </orderedlist>
   </para>
+
+  <para>
+   <literal>switchover</literal>が指定されていれば、<command>pcp_promote_node</command>は、起動された後以下を行います。
+   <xref linkend="guc-follow-primary-command">が設定されている場合はそれも起動されます。
+   フェイルオーバースクリプトは、新しいプライマリを作り、他のノードはスタンバイになる必要があるので、このコマンドを実行する前に、<xref linkend="guc-follow-primary-command">を設定する必要があります。
+
+   <orderedlist>
+
+    <listitem>
+     <para>
+      プライマリ<productname>PostgreSQL</productname>ノードのステータスをdownに変更します。
+      これにより、新しいメインノード引数に指定されたノードIDが設定された上で<xref linkend="guc-failover-command">が起動します。
+      ほとんどのフェイルオーバースクリプトはメインノードを昇格させるので、指定されたノードは新しいプライマリになります。
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      引数で指定された以外の<productname>PostgreSQL</productname>ノードのステータスをdownに変更します。
+      これは<productname>Pgpool-II</productname> の内部ステータスを変更するだけで、実際に<productname>PostgreSQL</productname>のスタンバイサーバをダウンさせるわけではありません。
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <xref linkend="guc-follow-primary-command">が設定されている場合は、2でダウンさせた<productname>PostgreSQL</productname>ノードに対して<xref linkend="guc-follow-primary-command">を実行します。
+     </para>
+    </listitem>
+
+   </orderedlist>
+  </para>
+
  </refsect1>
 
  <refsect1>
@@ -108,6 +148,17 @@ Pgpool-II documentation
        すべてのクライアントが接続を終了するまでノードを復帰しません。
        （ただし、<xref linkend="guc-client-idle-limit-in-recovery"> が -1 あるいは、
 	<xref linkend="guc-recovery-timeout"> が設定されている場合を除く）
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-s </option></term>
+     <term><option>--switchover</option></term>
+     <listitem>
+      <para>
+       <xref linkend="guc-failover-command">を起動することにより、指定されたノードを実際に昇格させます。
+       また、現在のプライマリの状態をダウンにします。
       </para>
      </listitem>
     </varlistentry>
