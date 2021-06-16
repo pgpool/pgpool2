@@ -223,18 +223,18 @@ typedef struct
 /* pools reporting struct */
 typedef struct
 {
-	int			pool_pid;
-	time_t		start_time;
-	int			pool_id;
-	int			backend_id;
+	char		pool_pid[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		start_time[POOLCONFIG_MAXDATELEN + 1];
+	char		pool_id[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		backend_id[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		database[POOLCONFIG_MAXIDENTLEN + 1];
 	char		username[POOLCONFIG_MAXIDENTLEN + 1];
-	time_t		create_time;
-	int			pool_majorversion;
-	int			pool_minorversion;
-	int			pool_counter;
-	int			pool_backendpid;
-	int			pool_connected;
+	char		create_time[POOLCONFIG_MAXDATELEN + 1];
+	char		pool_majorversion[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		pool_minorversion[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		pool_counter[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		pool_backendpid[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		pool_connected[POOLCONFIG_MAXCOUNTLEN + 1];
 }			POOL_REPORT_POOLS;
 
 /* version struct */
@@ -377,6 +377,7 @@ extern int	pcp_result_is_empty(PCPResultInfo * res);
 extern char *role_to_str(SERVER_ROLE role);
 
 extern	int * pool_health_check_stats_offsets(int *n);
+extern	int * pool_report_pools_offsets(int *n);
 
 /* ------------------------------
  * pcp_error.c

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -50,4 +50,6 @@ extern void show_backend_stats(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL 
 extern void send_config_var_detail_row(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *name, const char *value, const char *description);
 extern void send_config_var_value_only_row(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *value);
 extern char *get_backend_status_string(BACKEND_STATUS status);
+
+extern int * pool_report_pools_offsets(int *n);
 #endif

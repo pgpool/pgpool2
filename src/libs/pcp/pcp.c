@@ -1081,7 +1081,13 @@ static void
 process_process_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
 	char	   *index;
-	ProcessInfo *processInfo = NULL;
+	int			*offsets;
+	int			i, n;
+	int			maxstr;
+	char		*p;
+	POOL_REPORT_POOLS	*pools = NULL;
+
+	offsets = pool_report_pools_offsets(&n);
 
 	if (strcmp(buf, "ArraySize") == 0)
 	{
@@ -1103,76 +1109,22 @@ process_process_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 		if (PCPResultStatus(pcpConn->pcpResInfo) != PCP_RES_INCOMPLETE)
 			goto INVALID_RESPONSE;
 
-		processInfo = palloc0(sizeof(ProcessInfo));
-		processInfo->connection_info = palloc0(sizeof(ConnectionInfo));
+		pools = palloc0(sizeof(POOL_REPORT_POOLS));
+		p = (char *)pools;
+		buf += strlen(buf) + 1;
 
-		index = (char *) memchr(buf, '\0', len);
-		if (index == NULL)
-			goto INVALID_RESPONSE;
-		index += 1;
-		processInfo->pid = atoi(index);
+		for (i = 0; i < n; i++)
+		{
+			if (i == n -1)
+				maxstr = sizeof(POOL_REPORT_POOLS) - offsets[i];
+			else
+				maxstr = offsets[i + 1] - offsets[i];
 
-		index = (char *) memchr(index, '\0', len);
-		if (index == NULL)
-			goto INVALID_RESPONSE;
-		index += 1;
-		strlcpy(processInfo->connection_info->database, index, SM_DATABASE);
+			StrNCpy(p + offsets[i], buf, maxstr -1);
+			buf += strlen(buf) + 1;
+		}
 
-		index = (char *) memchr(index, '\0', len);
-		if (index == NULL)
-			goto INVALID_RESPONSE;
-		index += 1;
-		strlcpy(processInfo->connection_info->user, index, SM_USER);
-
-		index = (char *) memchr(index, '\0', len);
-		if (index == NULL)
-			goto INVALID_RESPONSE;
-		index += 1;
-		processInfo->start_time = atol(index);
-
-		index = (char *) memchr(index, '\0', len);
-		if (index == NULL)
-			goto INVALID_RESPONSE;
-		index += 1;
-		processInfo->connection_info->create_time = atol(index);
-
-		index = (char *) memchr(index, '\0', len);
-		if (index == NULL)
-			goto INVALID_RESPONSE;
-		index += 1;
-		processInfo->connection_info->major = atoi(index);
-
-		index = (char *) memchr(index, '\0', len);
-		if (index == NULL)
-			goto INVALID_RESPONSE;
-		index += 1;
-		processInfo->connection_info->minor = atoi(index);
-
-		index = (char *) memchr(index, '\0', len);
-		if (index == NULL)
-			goto INVALID_RESPONSE;
-		index += 1;
-		processInfo->connection_info->counter = atoi(index);
-
-		index = (char *) memchr(index, '\0', len);
-		if (index == NULL)
-			goto INVALID_RESPONSE;
-		index += 1;
-		processInfo->connection_info->backend_id = atoi(index);
-
-		index = (char *) memchr(index, '\0', len);
-		if (index == NULL)
-			goto INVALID_RESPONSE;
-		index += 1;
-		processInfo->connection_info->pid = atoi(index);
-
-		index = (char *) memchr(index, '\0', len);
-		if (index == NULL)
-			goto INVALID_RESPONSE;
-		index += 1;
-		processInfo->connection_info->connected = atoi(index);
-
-		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *) processInfo, sizeof(ProcessInfo), free_processInfo) < 0)
+		if (setNextResultBinaryData(pcpConn->pcpResInfo, (void *) pools, sizeof(POOL_REPORT_POOLS), NULL) < 0)
 			goto INVALID_RESPONSE;
 
 		return;
@@ -1186,11 +1138,9 @@ process_process_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 
 INVALID_RESPONSE:
 
-	if (processInfo)
+	if (pools)
 	{
-		if (processInfo->connection_info)
-			pfree(processInfo->connection_info);
-		pfree(processInfo);
+		pfree(pools);
 	}
 	pcp_internal_error(pcpConn,
 					   "command failed. invalid response");

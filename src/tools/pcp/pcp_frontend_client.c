@@ -697,59 +697,50 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 {
 	bool		printed = false;
 	int			i;
-	char	   *frmt;
-	char		strcreatetime[128];
-	char		strstarttime[128];
+	char	   *format;
 	int			array_size = pcp_result_slot_count(pcpResInfo);
 
+	const char *titles[] = {
+		"Database", "Username", "Start time", "Creation time", 
+		"Major", "Minor", "Counter", "Backend PID",
+		"Connected", "PID", "Backend ID"
+	};
+	const char *types[] = {
+		"s", "s", "s", "s",
+		"s", "s", "s", "s",
+		"s", "s", "s"
+	};
+
+
 	if (verbose)
-	{
-		frmt = "Database     : %s\n"
-			"Username     : %s\n"
-			"Start time   : %s\n"
-			"Creation time: %s\n"
-			"Major        : %d\n"
-			"Minor        : %d\n"
-			"Counter      : %d\n"
-			"Backend PID  : %d\n"
-			"Connected    : %d\n"
-			"PID          : %d\n"
-			"Backend ID   : %d\n";
-	}
+		format = format_titles(titles, types, sizeof(titles)/sizeof(char *));
 	else
 	{
-		frmt = "%s %s %s %s %d %d %d %d %d %d %d\n";
+		format = "%s %s %s %s %s %s %s %s %s %s %s\n";
 	}
 
 	for (i = 0; i < array_size; i++)
 	{
 
-		ProcessInfo *process_info = (ProcessInfo *) pcp_get_binary_data(pcpResInfo, i);
+		POOL_REPORT_POOLS *pools = (POOL_REPORT_POOLS *) pcp_get_binary_data(pcpResInfo, i);
 
-		if (process_info == NULL)
+		if (pools == NULL)
 			break;
-		if ((!all) && (process_info->connection_info->database[0] == '\0'))
+		if ((!all) && (pools->database[0] == '\0'))
 			continue;
 		printed = true;
-		*strcreatetime = *strstarttime = '\0';
-
-		if (process_info->start_time)
-			strftime(strstarttime, 128, "%Y-%m-%d %H:%M:%S", localtime(&process_info->start_time));
-		if (process_info->connection_info->create_time)
-			strftime(strcreatetime, 128, "%Y-%m-%d %H:%M:%S", localtime(&process_info->connection_info->create_time));
-
-		printf(frmt,
-			   process_info->connection_info->database,
-			   process_info->connection_info->user,
-			   strstarttime,
-			   strcreatetime,
-			   process_info->connection_info->major,
-			   process_info->connection_info->minor,
-			   process_info->connection_info->counter,
-			   process_info->connection_info->pid,
-			   process_info->connection_info->connected,
-			   process_info->pid,
-			   process_info->connection_info->backend_id);
+		printf(format,
+			   pools->database,
+			   pools->username,
+			   pools->start_time,
+			   pools->create_time,
+			   pools->pool_majorversion,
+			   pools->pool_minorversion,
+			   pools->pool_counter,
+			   pools->pool_backendpid,
+			   pools->pool_connected,
+			   pools->pool_pid,
+			   pools->backend_id);
 	}
 	if (printed == false)
 		printf("No process information available\n\n");

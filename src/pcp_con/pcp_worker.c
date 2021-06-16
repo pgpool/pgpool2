@@ -678,6 +678,9 @@ inform_process_count(PCP_CONNECTION * frontend)
 			 errdetail("%d process(es) found", process_count)));
 }
 
+/*
+ * pcp_process_info
+ */
 static void
 inform_process_info(PCP_CONNECTION * frontend, char *buf)
 {
@@ -685,6 +688,9 @@ inform_process_info(PCP_CONNECTION * frontend, char *buf)
 	int			wsize;
 	int			num_proc = pool_config->num_init_children;
 	int			i;
+	int			*offsets;
+	int			n;
+	POOL_REPORT_POOLS *pools;
 
 	proc_id = atoi(buf);
 
@@ -703,7 +709,7 @@ inform_process_info(PCP_CONNECTION * frontend, char *buf)
 		/* Finally, indicate that all data is sent */
 		char		fin_code[] = "CommandComplete";
 
-		POOL_REPORT_POOLS *pools = get_pools(&num_proc);
+		pools = get_pools(&num_proc);
 
 		if (proc_id == 0)
 		{
@@ -723,60 +729,41 @@ inform_process_info(PCP_CONNECTION * frontend, char *buf)
 		pcp_write(frontend, con_info_size, strlen(con_info_size) + 1);
 		do_pcp_flush(frontend);
 
+		offsets = pool_report_pools_offsets(&n);
+
 		/* Second, send process information for all connection_info */
 		for (i = 0; i < num_proc; i++)
 		{
+			int			j;
 			char		code[] = "ProcessInfo";
-			char		proc_pid[16];
-			char		proc_start_time[20];
-			char		proc_create_time[20];
-			char		majorversion[5];
-			char		minorversion[5];
-			char		pool_counter[16];
-			char		backend_id[16];
-			char		backend_pid[16];
-			char		connected[2];
+			int			pool_pid;
 
-			if (proc_id != 0 && proc_id != pools[i].pool_pid)
+			pool_pid = atoi(pools[i].pool_pid);
+
+			if (proc_id != 0 && pool_pid != proc_id)
 				continue;
 
-			snprintf(proc_pid, sizeof(proc_pid), "%d", pools[i].pool_pid);
-			snprintf(proc_start_time, sizeof(proc_start_time), "%ld", pools[i].start_time);
-			snprintf(proc_create_time, sizeof(proc_create_time), "%ld", pools[i].create_time);
-			snprintf(majorversion, sizeof(majorversion), "%d", pools[i].pool_majorversion);
-			snprintf(minorversion, sizeof(minorversion), "%d", pools[i].pool_minorversion);
-			snprintf(pool_counter, sizeof(pool_counter), "%d", pools[i].pool_counter);
-			snprintf(backend_id, sizeof(backend_pid), "%d", pools[i].backend_id);
-			snprintf(backend_pid, sizeof(backend_pid), "%d", pools[i].pool_backendpid);
-			snprintf(connected, sizeof(connected), "%d", pools[i].pool_connected);
-
 			pcp_write(frontend, "p", 1);
-			wsize = htonl(sizeof(code) +
-						  strlen(proc_pid) + 1 +
-						  strlen(pools[i].database) + 1 +
-						  strlen(pools[i].username) + 1 +
-						  strlen(proc_start_time) + 1 +
-						  strlen(proc_create_time) + 1 +
-						  strlen(majorversion) + 1 +
-						  strlen(minorversion) + 1 +
-						  strlen(pool_counter) + 1 +
-						  strlen(backend_id) + 1 +
-						  strlen(backend_pid) + 1 +
-						  strlen(connected) + 1 +
-						  sizeof(int));
+
+			wsize = 0;
+			for (j = 0; j < n; j++)
+			{
+				wsize += strlen((char *)&pools[i] + offsets[j]) + 1;
+			}
+			wsize += sizeof(code) + sizeof(int);
+			wsize = htonl(wsize);
+
+			/* send packet length to frontend */
 			pcp_write(frontend, &wsize, sizeof(int));
+			/* send "this is a record" to frontend */
 			pcp_write(frontend, code, sizeof(code));
-			pcp_write(frontend, proc_pid, strlen(proc_pid) + 1);
-			pcp_write(frontend, pools[i].database, strlen(pools[i].database) + 1);
-			pcp_write(frontend, pools[i].username, strlen(pools[i].username) + 1);
-			pcp_write(frontend, proc_start_time, strlen(proc_start_time) + 1);
-			pcp_write(frontend, proc_create_time, strlen(proc_create_time) + 1);
-			pcp_write(frontend, majorversion, strlen(majorversion) + 1);
-			pcp_write(frontend, minorversion, strlen(minorversion) + 1);
-			pcp_write(frontend, pool_counter, strlen(pool_counter) + 1);
-			pcp_write(frontend, backend_id, strlen(backend_id) + 1);
-			pcp_write(frontend, backend_pid, strlen(backend_pid) + 1);
-			pcp_write(frontend, connected, strlen(connected) + 1);
+
+			/* send each process info data to frontend */
+			for (j = 0; j < n; j++)
+			{
+				pcp_write(frontend, (char *)&pools[i] + offsets[j], strlen((char *)&pools[i] + offsets[j]) + 1);
+			}
+
 			do_pcp_flush(frontend);
 		}
 
