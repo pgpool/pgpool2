@@ -24,7 +24,7 @@ wait_for_pgpool_startup
 
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-    $PGPOOL_INSTALL_DIR/bin/pcp_node_info -w -p $PCP_PORT
+    $PGPOOL_INSTALL_DIR/bin/pcp_node_info -h localhost -w -p $PCP_PORT
     if [ $? = 0 ];then
 	break;
     fi
@@ -32,7 +32,7 @@ do
 done
 
 # promote node 3
-$PGPOOL_INSTALL_DIR/bin/pcp_promote_node -w -p $PCP_PORT -s 3
+$PGPOOL_INSTALL_DIR/bin/pcp_promote_node -h localhost -w -p $PCP_PORT -s 3
 wait_for_pgpool_startup
 
 # check to see if alll nodes are up
