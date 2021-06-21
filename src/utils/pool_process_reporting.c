@@ -574,6 +574,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "standby delay threshold", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "prefer_lower_delay_standby", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->prefer_lower_delay_standby);
+	StrNCpy(status[i].desc, "load balancing considering streaming delay", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	/* - Special commands - */
 	StrNCpy(status[i].name, "follow_primary_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->follow_primary_command);
