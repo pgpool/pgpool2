@@ -304,6 +304,9 @@ typedef struct
 									 * that health_check_period required to be
 									 * greater than 0 to enable the
 									 * functionality. */
+
+	bool		prefer_lower_delay_standby;
+
 	LogStandbyDelayModes log_standby_delay; /* how to log standby lag */
 	bool		connection_cache;	/* cache connection pool? */
 	int			health_check_timeout;	/* health check timeout */

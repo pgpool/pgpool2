@@ -465,6 +465,11 @@ delay_threshold = 10000000
                                    # Threshold before not dispatching query to standby node
                                    # Unit is in bytes
                                    # Disabled (0) by default
+prefer_lower_delay_standby = off
+                                   # If delay_threshold is set larger than 0, Pgpool-II send to
+                                   # the primary when selected node is delayed over delay_threshold.
+                                   # If this is set to on, Pgpool-II send query to other standby
+                                   # delayed lower.
 
 # - Special commands -
 

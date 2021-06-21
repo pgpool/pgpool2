@@ -313,6 +313,8 @@ select_load_balancing_node(void)
 	POOL_SESSION_CONTEXT *ses = pool_get_session_context(false);
 	int			tmp;
 	int			no_load_balance_node_id = -2;
+	uint64		lowest_delay;
+	int 		lowest_delay_nodes[NUM_BACKENDS];
 
 	/*
 	 * -2 indicates there's no database_redirect_preference_list. -1 indicates
@@ -399,6 +401,89 @@ select_load_balancing_node(void)
 	if (suggested_node_id >= 0)
 	{
 		/*
+		 * If pgpool is running in Streaming Replication mode and delay_threshold
+		 * and prefer_lower_delay_standby are true, we choose the least delayed
+		 * node if suggested_node is standby and delayed over delay_threshold.
+		 */
+		if (STREAM &&
+			pool_config->delay_threshold &&
+			pool_config->prefer_lower_delay_standby &&
+			(suggested_node_id != PRIMARY_NODE_ID) &&
+			(BACKEND_INFO(suggested_node_id).standby_delay > pool_config->delay_threshold))
+		{
+			ereport(DEBUG1,
+				(errmsg("selecting load balance node"),
+				 errdetail("suggested backend %d is streaming delayed over delay_threshold", suggested_node_id)));
+
+			/*
+			 * The new load balancing node is seleted from the
+			 * nodes which have the lowest delay.
+			 */
+			lowest_delay = pool_config->delay_threshold;
+
+			/* Initialize */
+			total_weight = 0.0;
+			for (i = 0; i < NUM_BACKENDS; i++)
+			{
+				lowest_delay_nodes[i] = 0;
+			}
+
+			for (i = 0; i < NUM_BACKENDS; i++)
+			{
+				if (VALID_BACKEND_RAW(i) &&
+					(i != PRIMARY_NODE_ID) &&
+					(BACKEND_INFO(i).backend_weight > 0.0))
+				{
+					if (lowest_delay == BACKEND_INFO(i).standby_delay)
+					{
+						lowest_delay_nodes[i] = 1;
+						total_weight += BACKEND_INFO(i).backend_weight;
+					}
+					else if (lowest_delay > BACKEND_INFO(i).standby_delay)
+					{
+						int ii;
+						lowest_delay = BACKEND_INFO(i).standby_delay;
+						for (ii = 0; ii < NUM_BACKENDS; ii++)
+						{
+							lowest_delay_nodes[ii] = 0;
+						}
+						lowest_delay_nodes[i] = 1;
+						total_weight = BACKEND_INFO(i).backend_weight;
+					}
+				}
+			}
+
+#if defined(sun) || defined(__sun)
+			r = (((double) rand()) / RAND_MAX) * total_weight;
+#else
+			r = (((double) random()) / RAND_MAX) * total_weight;
+#endif
+
+			selected_slot = PRIMARY_NODE_ID;
+			total_weight = 0.0;
+			for (i = 0; i < NUM_BACKENDS; i++)
+			{
+				if (lowest_delay_nodes[i] == 0)
+					continue;
+
+				if (selected_slot == PRIMARY_NODE_ID)
+					selected_slot = i;
+
+				if (r >= total_weight)
+					selected_slot = i;
+				else
+					break;
+
+				total_weight += BACKEND_INFO(i).backend_weight;
+			}
+
+			ereport(DEBUG1,
+					(errmsg("selecting load balance node"),
+					 errdetail("selected backend id is %d", selected_slot)));
+			return selected_slot;
+		}
+
+		/*
 		 * If the weight is bigger than random rate then send to
 		 * suggested_node_id. If the weight is less than random rate then
 		 * choose load balance node from other nodes.
@@ -470,6 +555,81 @@ select_load_balancing_node(void)
 			total_weight += BACKEND_INFO(i).backend_weight;
 		}
 	}
+
+	/*
+	 * If Streaming Replication mode and delay_threshold and
+	 * prefer_lower_delay_standby is true, we elect the most lower delayed
+	 * node if suggested_node is standby and delayed over delay_threshold.
+	 */
+	if (STREAM &&
+		pool_config->delay_threshold &&
+		pool_config->prefer_lower_delay_standby &&
+		(BACKEND_INFO(selected_slot).standby_delay > pool_config->delay_threshold))
+	{
+		ereport(DEBUG1,
+				(errmsg("selecting load balance node"),
+				 errdetail("backend id %d is streaming delayed over delay_threshold", selected_slot)));
+
+		lowest_delay = pool_config->delay_threshold;
+		total_weight = 0.0;
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			lowest_delay_nodes[i] = 0;
+		}
+
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if ((i != PRIMARY_NODE_ID) &&
+				VALID_BACKEND_RAW(i) &&
+				(BACKEND_INFO(i).backend_weight > 0.0))
+			{
+				if (lowest_delay == BACKEND_INFO(i).standby_delay)
+				{
+					lowest_delay_nodes[i] = 1;
+					total_weight += BACKEND_INFO(i).backend_weight;
+				}
+				else if (lowest_delay > BACKEND_INFO(i).standby_delay)
+				{
+					int ii;
+					lowest_delay = BACKEND_INFO(i).standby_delay;
+					for (ii = 0; ii < NUM_BACKENDS; ii++)
+					{
+						lowest_delay_nodes[ii] = 0;
+					}
+					lowest_delay_nodes[i] = 1;
+					total_weight = BACKEND_INFO(i).backend_weight;
+				}
+			}
+		}
+
+#if defined(sun) || defined(__sun)
+		r = (((double) rand()) / RAND_MAX) * total_weight;
+#else
+		r = (((double) random()) / RAND_MAX) * total_weight;
+#endif
+
+		selected_slot = PRIMARY_NODE_ID;
+
+		total_weight = 0.0;
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if (lowest_delay_nodes[i] == 0)
+				continue;
+
+			if (selected_slot == PRIMARY_NODE_ID)
+			{
+				selected_slot = i;
+			}
+
+			if (r >= total_weight)
+				selected_slot = i;
+			else
+				break;
+
+			total_weight += BACKEND_INFO(i).backend_weight;
+		}
+	}
+
 	ereport(DEBUG1,
 			(errmsg("selecting load balance node"),
 			 errdetail("selected backend id is %d", selected_slot)));
