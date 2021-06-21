@@ -1017,7 +1017,7 @@ ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<rep
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><literal>backendusepasswd</literal></term>
+      <term><literal>backend_use_passwd</literal></term>
       <listitem>
        <para>
         Set to 1 to make the password used for LDAP authentication use authetication
