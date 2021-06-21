@@ -185,6 +185,10 @@ log=$mydir/log/failover.log
 pg_ctl=__PGBIN__/pg_ctl
 cluster0=$mydir/data0
 cluster1=$mydir/data1
+PCP_PORT=__PCPPORT__
+pgversion=__PGVERSION__
+export PCPPASSFILE=__PCPPASSFILE__
+PGPOOL_BIN=__PGPOOL_INSTALL_DIR__/bin
 
 date >> $log
 echo "failed_node_id $failed_node_id failed_host_name $failed_host_name failed_port $failed_port failed_db_cluster $failed_db_cluster new_main_id $new_main_id old_main_id $old_main_id new_main_host_name $new_main_host_name old_primary_node_id $old_primary_node_id new_main_port_number $new_main_port_number new_main_db_cluster $new_main_db_cluster" >> $log
@@ -203,6 +207,10 @@ EOF
 /bin/sed -i \
 	 -e "/__MYDIR__/s@__MYDIR__@$BASEDIR@" \
 	 -e "/__PGBIN__/s@__PGBIN__@$PGBIN@" \
+	 -e "/__PCPPASSFILE__/s@__PCPPASSFILE__@$PCP_PASS_FILE@" \
+	 -e "/__PCPPORT__/s/__PCPPORT__/$PCP_PORT/" \
+	 -e "/__PGVERSION__/s/__PGVERSION__/$PGVERSION/" \
+	 -e "/__PGPOOL_INSTALL_DIR__/s@__PGPOOL_INSTALL_DIR__@$PGPOOL_INSTALL_DIR@" \
 	 $FAILOVER_SCRIPT
 
 chmod 755 $FAILOVER_SCRIPT
@@ -248,6 +256,7 @@ cluster2=$mydir/data2
 PCP_PORT=__PCPPORT__
 pgversion=__PGVERSION__
 export PCPPASSFILE=__PCPPASSFILE__
+PGPOOL_BIN=__PGPOOL_INSTALL_DIR__/bin
 
 echo "follow primary script started" >> $log
 date >> $log
@@ -276,10 +285,10 @@ then
     then
         echo "restarting $db_cluster failed" >>$log
         echo "fail back to pcp_recovery_node" >>$log
-        pcp_recovery_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
+        $PGPOOL_BIN/pcp_recovery_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
     else
         # attach the node
-        pcp_attach_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
+        $PGPOOL_BIN/pcp_attach_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
     fi
 else
     echo "$db_cluster is not running. skipping follow primary command." >> $log
@@ -297,6 +306,7 @@ EOF
 	 -e "/__PCPPASSFILE__/s@__PCPPASSFILE__@$PCP_PASS_FILE@" \
 	 -e "/__PCPPORT__/s/__PCPPORT__/$PCP_PORT/" \
 	 -e "/__PGVERSION__/s/__PGVERSION__/$PGVERSION/" \
+	 -e "/__PGPOOL_INSTALL_DIR__/s@__PGPOOL_INSTALL_DIR__@$PGPOOL_INSTALL_DIR@" \
 	$FOLLOW_PRIMARY_SCRIPT
 
 chmod 755 $FOLLOW_PRIMARY_SCRIPT
@@ -1131,6 +1141,12 @@ echo '$PGPOOL_INSTALL_DIR/bin/pgpool -f $dir/etc/pgpool.conf reload' >> $PGPOOL_
 chmod 755 $PGPOOL_RELOAD
 
 #-------------------------------------------
+# setup ports
+#-------------------------------------------
+PGPOOL_PORT=$ORIG_BASEPORT
+PCP_PORT=`expr $PGPOOL_PORT + 1`
+
+#-------------------------------------------
 # create failover script
 #-------------------------------------------
 echo "creating failover script"
@@ -1147,9 +1163,7 @@ create_postgresql_clusters
 set_pgpool_conf $CONF
 set_pool_hba_conf $BASEDIR/etc/pool_hba.conf
 
-PGPOOL_PORT=$ORIG_BASEPORT
 echo "port = $PGPOOL_PORT" >> $CONF
-PCP_PORT=`expr $PGPOOL_PORT + 1`
 echo "pcp_port = $PCP_PORT" >> $CONF
 
 #-------------------------------------------
