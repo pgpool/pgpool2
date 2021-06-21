@@ -24,7 +24,7 @@ export PGPORT=$PGPOOL_PORT
 wait_for_pgpool_startup
 
 # detach node 0
-$PGPOOL_INSTALL_DIR/bin/pcp_detach_node -w -p $PCP_PORT 0
+$PGPOOL_INSTALL_DIR/bin/pcp_detach_node -w -h localhost -p $PCP_PORT 0
 wait_for_pgpool_startup
 
 # check to see if alll nodes are up
