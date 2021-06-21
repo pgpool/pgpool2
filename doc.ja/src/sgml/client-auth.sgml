@@ -1408,7 +1408,7 @@ ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<rep
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><literal>usebackendpasswd</literal></term>
+      <term><literal>backend_use_passwd</literal></term>
       <listitem>
        <para>
         <!--
