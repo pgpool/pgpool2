@@ -49,7 +49,7 @@ pg_ctl -D data0 -m f stop
 
 wait_for_pgpool_startup
 
-$PGPOOL_INSTALL_DIR/bin/pcp_recovery_node -p $PCP_PORT -w 0
+$PGPOOL_INSTALL_DIR/bin/pcp_recovery_node -h localhost -p $PCP_PORT -w 0
 
 wait_for_pgpool_startup
 
