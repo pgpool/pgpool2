@@ -1,7 +1,7 @@
 /*
  * $Header$
  *
- * pgpool: a language independent connection pool server for PostgreSQL 
+ * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2003-2008	PgPool Global Development Group
@@ -29,25 +29,26 @@
 #define WRITEBUFSZ             8192
 
 
-typedef struct {
-	int fd;        /* fd for connection */
+typedef struct
+{
+	int			fd;				/* fd for connection */
 
-	char *wbuf;	   /* write buffer for the connection */
-	int wbufsz;	   /* write buffer size */
-	int wbufpo;	   /* buffer offset */
+	char	   *wbuf;			/* write buffer for the connection */
+	int			wbufsz;			/* write buffer size */
+	int			wbufpo;			/* buffer offset */
 
-	char *hp;	   /* pending data buffer head address */
-	int po;		   /* pending data offset */
-	int bufsz;	   /* pending data buffer size */
-	int len;	   /* pending data length */
-} PCP_CONNECTION;
+	char	   *hp;				/* pending data buffer head address */
+	int			po;				/* pending data offset */
+	int			bufsz;			/* pending data buffer size */
+	int			len;			/* pending data length */
+}			PCP_CONNECTION;
 
-extern PCP_CONNECTION *pcp_open(int fd);
-extern void pcp_close(PCP_CONNECTION *pc);
-extern int pcp_read(PCP_CONNECTION *pc, void *buf, int len);
-extern int pcp_write(PCP_CONNECTION *pc, void *buf, int len);
-extern int pcp_flush(PCP_CONNECTION *pc);
+extern PCP_CONNECTION * pcp_open(int fd);
+extern void pcp_close(PCP_CONNECTION * pc);
+extern int	pcp_read(PCP_CONNECTION * pc, void *buf, int len);
+extern int	pcp_write(PCP_CONNECTION * pc, void *buf, int len);
+extern int	pcp_flush(PCP_CONNECTION * pc);
 
 #define UNIX_DOMAIN_PATH "/tmp"
 
-#endif /* PCP_STREAM_H */
+#endif							/* PCP_STREAM_H */
