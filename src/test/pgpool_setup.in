@@ -271,7 +271,7 @@ then
         sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/myrecovery.conf
     else
         sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/recovery.conf
-        sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/myrecovery.conf
+        sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/recovery.conf
     fi
 
     touch $db_cluster/standby.signal
