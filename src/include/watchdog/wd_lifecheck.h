@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -42,8 +42,8 @@ typedef struct LifeCheckNode
 	int 		ID;
 	WD_STATES	wdState;
 	char		stateName[128];
-	char		hostName[128];
-	char		nodeName[128];
+	char		hostName[WD_MAX_HOST_NAMELEN];
+	char		nodeName[WD_MAX_NODE_NAMELEN];
 	int			wdPort;
 	int			pgpoolPort;
 	int			retry_lives;
