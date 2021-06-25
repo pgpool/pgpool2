@@ -271,6 +271,10 @@ then
         sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/myrecovery.conf
         sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/myrecovery.conf
     else
+	# if recovery.conf is not found, rename recovery.done.
+	if [ ! -f $db_cluster/recovery.conf ];then
+	   mv $db_cluster/recovery.done $db_cluster/recovery.conf
+	fi
         sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/recovery.conf
         sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/recovery.conf
     fi
