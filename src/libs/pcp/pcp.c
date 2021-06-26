@@ -77,7 +77,6 @@ static void process_error_response(PCPConnInfo * pcpConn, char toc, char *buff);
 
 
 static void setResultSlotCount(PCPConnInfo * pcpConn, unsigned int slotCount);
-static void free_processInfo(struct PCPConnInfo *pcpConn, void *ptr);
 static int	PCPFlush(PCPConnInfo * pcpConn);
 
 static bool getPoolPassFilename(char *pgpassfile);
@@ -1056,25 +1055,6 @@ pcp_process_count(PCPConnInfo * pcpConn)
 		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"N\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn, 'N');
-}
-
-static void
-free_processInfo(struct PCPConnInfo *pcpConn, void *ptr)
-{
-	ProcessInfo *pi = (ProcessInfo *) ptr;
-
-	if (pcpConn->Pfdebug)
-		fprintf(pcpConn->Pfdebug, "free ProcessInfo structure \n");
-
-	if (pi == NULL)
-	{
-		if (pcpConn->Pfdebug)
-			fprintf(pcpConn->Pfdebug, "ProcessInfo structure is NULL nothing to free \n");
-		return;
-	}
-	if (pi->connection_info)
-		pfree(pi->connection_info);
-	pfree(pi);
 }
 
 static void
