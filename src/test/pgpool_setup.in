@@ -375,6 +375,7 @@ rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
 --exclude postmaster.opts --exclude pg_log \
 --exclude recovery.conf --exclude recovery.done \
 --exclude pg_xlog --exclude pg_wal \
+--exclude log \
 $master_db_cluster/ $DEST_CLUSTER/
 
 rm -fr $DEST_CLUSTER/pg_xlog 
