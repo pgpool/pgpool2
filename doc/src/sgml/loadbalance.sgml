@@ -20,16 +20,6 @@
    also accounted for in the load balancing algorithm.
   </para>
  </note>
- <note>
-  <para>
-   If you don't want a query that qualifies for the load balancing to be
-   load balanced by <productname>Pgpool-II</productname>, you can put
-   arbitrary comment(<emphasis>/*NO LOAD BALANCE*/</emphasis> is usually used)
-   before the <acronym>SELECT</acronym> statement. This will disable the
-   load balance of the particular query and <productname>Pgpool-II</productname>
-   will send it to the main node (the primary node in Native Replication mode).
-  </para>
- </note>
 
  <note>
   <para>

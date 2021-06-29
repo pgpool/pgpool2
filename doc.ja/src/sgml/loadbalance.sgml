@@ -24,20 +24,6 @@
    負荷分散アルゴリズムの考慮に入れられます。
   </para>
  </note>
- <note>
-  <para>
-   <!--
-   If you don't want a query that qualifies for the load balancing to be
-   load balanced by <productname>Pgpool-II</productname>, you can put
-   arbitrary comment(<emphasis>/*NO LOAD BALANCE*/</emphasis> is usually used)
-   before the <acronym>SELECT</acronym> statement. This will disable the
-   load balance of the particular query and <productname>Pgpool-II</productname>
-   will send it to the main node (the primary node in Native Replication mode).
-   -->
-   もし負荷分散対象のクエリを<productname>Pgpool-II</productname>に負荷分散してほしくない場合には、<acronym>SELECT</acronym>文の前の任意のコメント（<emphasis>/*NO LOAD BALANCE*/</emphasis>がよく使われます）を付与することができます。
-   これにより、そのクエリの負荷分散は無効となり、<productname>Pgpool-II</productname>はこれをメインノード（プライマリノード）に送信します。
-  </para>
- </note>
 
  <note>
   <para>

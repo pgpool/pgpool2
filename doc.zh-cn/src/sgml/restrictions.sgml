@@ -135,7 +135,7 @@
       there's no way to detect it, and the SELECT will be load
       balanced.  That will trigger a "not found the table" error or
       will find another table having same name.  To avoid the
-      problem, use /*NO LOAD BALANCE*/ SQL comment.
+      problem, use SQL comment.
      </para>
      <para>
       Note that such literal table names used in queries to access

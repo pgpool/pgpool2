@@ -192,13 +192,13 @@
       there's no way to detect it, and the SELECT will be load
       balanced.  That will trigger a "not found the table" error or
       will find another table having same name.  To avoid the
-      problem, use /*NO LOAD BALANCE*/ SQL comment.
+      problem, use SQL comment.
       -->
       一時テーブルの作成、挿入、更新、削除は、常にマスター（プライマリ）で実行されます。
       テーブルに対するSELECTもマスター上で実行されます。
       しかし、一時テーブル名が文字列としてSELECTで使われると、それを検知する方法がないため、SELECTは負荷分散されます。
       これにより、「テーブルが見つからない」エラーになったり、同じ名前を持つ別のテーブルを検索することになります。
-      この問題を回避するには、/*NO LOAD BALANCE*/ SQLコメントを使ってください。
+      この問題を回避するには、SQLコメントを使ってください。
      </para>
      <para>
       <!--

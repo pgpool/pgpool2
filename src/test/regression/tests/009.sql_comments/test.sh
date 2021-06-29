@@ -65,10 +65,10 @@ $PSQL -c "/* comment */SELECT 'case5'" test
 
 test `getnode "case5"` -eq 1 || ok=ng
 
-# should be redirect to node 0
+# should be redirect to node 1. this comment is old feature.
 $PSQL -c "/*No LOAD BALANCE*/SELECT 'case6'" test
 
-test `getnode "case6"` -eq 0 || ok=ng
+test `getnode "case6"` -eq 1 || ok=ng
 
 
 ./shutdownall

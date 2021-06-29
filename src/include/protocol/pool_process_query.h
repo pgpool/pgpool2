@@ -26,8 +26,6 @@
 #define LOCK_COMMENT_SZ (sizeof(LOCK_COMMENT)-1)
 #define NO_LOCK_COMMENT "/*NO INSERT LOCK*/"
 #define NO_LOCK_COMMENT_SZ (sizeof(NO_LOCK_COMMENT)-1)
-#define NO_LOAD_BALANCE "/*NO LOAD BALANCE*/"
-#define NO_LOAD_BALANCE_COMMENT_SZ (sizeof(NO_LOAD_BALANCE)-1)
 
 
 extern void reset_variables(void);

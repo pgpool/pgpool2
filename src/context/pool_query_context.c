@@ -443,24 +443,6 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 	pool_clear_node_to_be_sent(query_context);
 
 	/*
-	 * If there is "NO LOAD BALANCE" comment, we send only to main node.
-	 */
-	if (!strncasecmp(query, NO_LOAD_BALANCE, NO_LOAD_BALANCE_COMMENT_SZ))
-	{
-		pool_set_node_to_be_sent(query_context,
-								 MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID);
-		for (i = 0; i < NUM_BACKENDS; i++)
-		{
-			if (query_context->where_to_send[i])
-			{
-				query_context->virtual_main_node_id = i;
-				break;
-			}
-		}
-		return;
-	}
-
-	/*
 	 * In raw mode, we send only to main node. Simple enough.
 	 */
 	if (RAW_MODE)
