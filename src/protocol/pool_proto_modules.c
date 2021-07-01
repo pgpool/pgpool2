@@ -688,7 +688,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		if (specific_error)
 		{
 			char		msg[1024] = POOL_ERROR_QUERY;	/* large enough */
-			int			len = strlen(msg);
+			int			len = strlen(msg) + 1;
 
 			memset(msg + len, 0, sizeof(int));
 
