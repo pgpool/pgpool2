@@ -430,7 +430,6 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION_POOL *backend;
-	int			i;
 
 	CHECK_QUERY_CONTEXT_IS_VALID;
 
