@@ -157,7 +157,7 @@ static void sync_backend_from_watchdog(void);
 static void update_backend_quarantine_status(void);
 static void degenerate_all_quarantine_nodes(void);
 static int	get_server_version(POOL_CONNECTION_POOL_SLOT * *slots, int node_id);
-static void get_info_from_conninfo(char *conninfo, char *host, char *port);
+static void get_info_from_conninfo(char *conninfo, char *host, int hostlen, char *port, int portlen);
 
 static struct sockaddr_un un_addr;	/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;	/* unix domain socket path for PCP */
@@ -3264,7 +3264,7 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT * *slots)
 		bool		check_connectivity = false;
 		int			wal_receiver_status = 0;
 		int			wal_receiver_conninfo = 1;
-		char		host[1024];
+		char		host[MAX_DB_HOST_NAMELEN];
 		char		port[1024];
 		int			primary[MAX_NUM_BACKENDS];
 		int			true_primary = -1;
@@ -3358,7 +3358,7 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT * *slots)
 									(errmsg("verify_backend_node_status: pg_stat_wal_receiver conninfo for standby %d is NULL", j)));
 							continue;
 						}
-						get_info_from_conninfo(res->data[wal_receiver_conninfo], host, port);
+						get_info_from_conninfo(res->data[wal_receiver_conninfo], host, sizeof(host), port, sizeof(port));
 						ereport(DEBUG1,
 								(errmsg("verify_backend_node_status: conninfo for standby %d is === %s ===. host:%s port:%s", j, res->data[wal_receiver_conninfo], host, port)));
 						free_select_result(res);
@@ -4480,7 +4480,7 @@ get_server_version(POOL_CONNECTION_POOL_SLOT * *slots, int node_id)
  * Get info from conninfo string.
  */
 static void
-get_info_from_conninfo(char *conninfo, char *host, char *port)
+get_info_from_conninfo(char *conninfo, char *host, int hostlen, char *port, int portlen)
 {
 	char	   *p;
 
@@ -4494,7 +4494,7 @@ get_info_from_conninfo(char *conninfo, char *host, char *port)
 		while (*p && *p++ != '=')
 			;
 
-		while (*p && *p != ' ')
+		while (*p && hostlen-- && *p != ' ')
 			*host++ = *p++;
 		*host = '\0';
 	}
@@ -4506,7 +4506,7 @@ get_info_from_conninfo(char *conninfo, char *host, char *port)
 		while (*p && *p++ != '=')
 			;
 
-		while (*p && *p != ' ')
+		while (*p && portlen-- && *p != ' ')
 			*port++ = *p++;
 		*port = '\0';
 	}
