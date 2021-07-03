@@ -412,7 +412,7 @@ disable_load_balance_on_write = 'transaction'
                                    #     will not be load balanced until the session ends.
                                    #
                                    # 'dml_adaptive':
-                                   #     Queries on the tables that have already been
+                                   #     Queries on the tables that have already been
                                    #     modified within the current explicit transaction will
                                    #     not be load balanced until the end of the transaction.
                                    #
@@ -421,7 +421,7 @@ disable_load_balance_on_write = 'transaction'
                                    #     not be load balanced until the session ends.
                                    #
                                    # Note that any query not in an explicit transaction
-                                   # is not affected by the parameter.
+                                   # is not affected by the parameter except 'always'.
 
 dml_adaptive_object_relationship_list= ''
                                    # comma separated list of object pairs
