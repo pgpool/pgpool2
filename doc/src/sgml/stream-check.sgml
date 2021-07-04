@@ -212,7 +212,7 @@
       <productname>Pgpool-II</productname> does not send read queries to the primary node but
       the least delay standby with backend_weight to greater than 0. If delay of all standby
       nodes are greater than delay_threshold or the primary selected as the load balancing node
-      first, <productname>Pgpool-II<productname> sends to the primary.
+      first, <productname>Pgpool-II</productname> sends to the primary.
       Default is off.
      </para>
      <para>
