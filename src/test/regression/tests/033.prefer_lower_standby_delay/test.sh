@@ -72,11 +72,9 @@ EOF
 
 	echo start: prefer_lower_delay_standby is off.
 
-	./shutdownall
-
 	echo "prefer_lower_delay_standby = off" >> etc/pgpool.conf
 
-	./startall
+	$PGPOOL_INSTALL_DIR/bin/pcp_reload_config -w -h localhost -p $PCP_PORT
 
 	wait_for_pgpool_startup
 
