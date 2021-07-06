@@ -37,7 +37,7 @@
    -->
    基本的に以下のSELECTはキャッシュされません。
    <programlisting>
-    immutableな関数を含むSELECT
+    immutableでない関数を含むSELECT
     一時テーブル、unloggedテーブルを使ったSELECT
     検索結果が memqcache_maxcache を越えるようなSELECT
     SELECT FOR SHARE/UPDATE
