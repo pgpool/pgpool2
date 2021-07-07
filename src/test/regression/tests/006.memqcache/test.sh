@@ -61,6 +61,8 @@ SELECT * FROM with_modify;
 SELECT * FROM explain_analyze;
 EXPLAIN ANALYZE INSERT INTO explain_analyze VALUES(1);
 SELECT * FROM explain_analyze;
+SELECT CURRENT_TIMESTAMP;
+SELECT CURRENT_USER;
 EOF
 
 	success=true
@@ -70,6 +72,8 @@ EOF
 	grep "fetched from cache" log/pgpool.log | grep white_v > /dev/null || success=false
 	grep "fetched from cache" log/pgpool.log | grep with_modify > /dev/null && success=false
 	grep "fetched from cache" log/pgpool.log | grep explain_analyze > /dev/null && success=false
+	grep "fetched from cache" log/pgpool.log | grep CURRENT_TIMESTAMP > /dev/null && success=false
+	grep "fetched from cache" log/pgpool.log | grep CURRENT_USER > /dev/null && success=false
 	if [ $success = false ];then
 		./shutdownall
 		exit 1
