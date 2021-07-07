@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1042,6 +1042,15 @@ non_immutable_function_call_walker(Node *node, void *context)
 			ctx->has_non_immutable_function_call = true;
 			return false;
 		}
+	}
+	else if (IsA(node, SQLValueFunction))
+	{
+		/*
+		 * SQLValueFunctions (CURRENT_TIME, CURRENT_USER etc.) are regarded as
+		 * non immutable functions.
+		 */
+		ctx->has_non_immutable_function_call = true;
+		return false;
 	}
 
 	return raw_expression_tree_walker(node, non_immutable_function_call_walker, context);
