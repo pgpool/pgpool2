@@ -76,7 +76,14 @@ EOF
 
 	$PGPOOL_INSTALL_DIR/bin/pcp_reload_config -w -h localhost -p $PCP_PORT
 
-	wait_for_pgpool_startup
+	while :
+	do
+		$PSQL test -c "PGPOOL SHOW prefer_lower_delay_standby" |grep off
+		if [ $? = 0 ]; then
+			break
+		fi
+		sleep 1
+	done
 
 	$PSQL -p 11003 test -c "$REPLAY_PAUSE"
 
