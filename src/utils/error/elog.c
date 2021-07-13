@@ -43,7 +43,7 @@
  * overflow.)
  *
  *
- * Portions Copyright (c) 2003-2018, PgPool Global Development Group
+ * Portions Copyright (c) 2003-2021, PgPool Global Development Group
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -2000,6 +2000,8 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 	POOL_CONNECTION *frontend = NULL;
 	POOL_SESSION_CONTEXT *session = pool_get_session_context(true);
 
+	char		strbuf[129];
+
 	if (session)
 		frontend = session->frontend;
 
@@ -2122,10 +2124,29 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 				break;
 			case 't':
 				{
-					char		strbuf[129];
 					time_t		now = time(NULL);
 
-					strftime(strbuf, 128, "%Y-%m-%d %H:%M:%S", localtime(&now));
+					strftime(strbuf, sizeof(strbuf), "%Y-%m-%d %H:%M:%S", localtime(&now));
+
+					if (padding != 0)
+						appendStringInfo(buf, "%*s", padding, strbuf);
+					else
+						appendStringInfoString(buf, strbuf);
+				}
+				break;
+			case 'm':
+				{
+					struct timeval timeval;
+					time_t seconds;
+					struct tm *now;
+					char		msbuf[13];
+
+					gettimeofday(&timeval, NULL);
+					seconds = timeval.tv_sec;
+					now = localtime(&seconds);
+					strftime(strbuf, sizeof(strbuf), "%Y-%m-%d %H:%M:%S", now);
+					snprintf(msbuf, sizeof(msbuf), ".%03d", (int) (timeval.tv_usec / 1000));
+					memcpy(strbuf + 19, msbuf, 4);
 
 					if (padding != 0)
 						appendStringInfo(buf, "%*s", padding, strbuf);

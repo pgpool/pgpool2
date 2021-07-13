@@ -1345,10 +1345,12 @@ local0.*    /var/log/pgpool.log
 
 	<row>
 	 <entry>%t</entry>
-	 <!--
-	 <entry>Time stamp</entry>
-	 -->
-	 <entry>タイムスタンプ</entry>
+	 <entry>ミリ秒なしのタイムスタンプ</entry>
+	</row>
+
+	<row>
+	 <entry>%m</entry>
+	 <entry>ミリ秒付きのタイムスタンプ</entry>
 	</row>
 
 	<row>

@@ -873,7 +873,12 @@
 
 	<row>
 	 <entry>%t</entry>
-	 <entry>Time stamp</entry>
+	 <entry>Time stamp without milliseconds</entry>
+	</row>
+
+	<row>
+	 <entry>%m</entry>
+	 <entry>Time stamp with milliseconds</entry>
 	</row>
 
 	<row>
