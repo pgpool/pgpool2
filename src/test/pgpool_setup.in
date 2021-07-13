@@ -363,7 +363,7 @@ function set_postgresql_conf
 	echo "port = $PORT" >> $PGCONF
 	echo "logging_collector = on" >> $PGCONF
 	echo "log_filename = '%A.log'" >> $PGCONF
-	echo "log_line_prefix = '%p %t '" >> $PGCONF
+	echo "log_line_prefix = '%p %m '" >> $PGCONF
 	echo "log_truncate_on_rotation = on" >> $PGCONF
 	echo "log_statement = 'all'" >> $PGCONF
 	echo "max_prepared_transactions = 10" >> $PGCONF
@@ -758,7 +758,7 @@ function set_pgpool_conf {
 
 	echo "socket_dir = '$PGSOCKET_DIR'" >> $CONF
 	echo "pcp_socket_dir = '$PGSOCKET_DIR'" >> $CONF
-	echo "log_line_prefix = '%t: %a pid %p: '" >> $CONF
+	echo "log_line_prefix = '%m: %a pid %p: '" >> $CONF
 }
 
 #-------------------------------------------
