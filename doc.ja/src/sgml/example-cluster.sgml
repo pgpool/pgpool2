@@ -325,7 +325,8 @@ postgres=# \password postgres
 
     <para>
      <xref linkend="SQL-SHOW-POOL-NODES">コマンドで<literal>replication_stat</literal>カラムと<literal>replication_sync_state</literal>カラムを表示するには、
-     <literal>pgpool</literal>ユーザは<productname>PostgreSQL</productname>のスーパーユーザーであるか、<literal>pg_monitor</literal>グループに所属する必要があります。
+     <literal>pgpool</literal>ユーザは<productname>PostgreSQL</productname>のスーパーユーザーであるか、
+     <literal>pg_monitor</literal>グループに所属する必要があります。(<productname>Pgpool-II</productname>4.1以降)
      以下のコマンドで<literal>pgpool</literal>ユーザをそのグループに所属させます。
     </para>
     <programlisting>
@@ -567,7 +568,8 @@ backend_flag2 = 'ALLOW_TO_FAILOVER'
    </programlisting>
 
    <para>
-    <xref linkend="SQL-SHOW-POOL-NODES">コマンドでレプリケーション状態と同期レプリケーション状態を表示するには、<xref linkend="GUC-BACKEND-APPLICATION-NAME">パラメータを設定する必要があります。ここではそれぞれのホスト名を設定します。(<productname>Pgpool-II</productname> 4.1以降)
+    <xref linkend="SQL-SHOW-POOL-NODES">コマンドで<literal>replication_stat</literal>カラムと<literal>replication_sync_state</literal>カラムを表示するには、
+    <xref linkend="GUC-BACKEND-APPLICATION-NAME">パラメータを設定する必要があります。ここではそれぞれのホスト名を設定します。(<productname>Pgpool-II</productname> 4.1以降)
       <programlisting>
 ...
 backend_application_name0 = 'server1'
