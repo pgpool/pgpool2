@@ -14,9 +14,9 @@
   If an error is detected, <productname>Pgpool-II</productname> performs failover
   or degeneration depending on the configurations.
   -->
-  <productname>Pgpool-II</productname>はサーバネットワークの障害を検知するために、設定されたバックエンドに定期的に接続を試みます。
+  <productname>Pgpool-II</productname>はサーバやネットワークの障害を検知するために、設定されたバックエンドに定期的に接続を試みます。
   この障害チェックの手続きを「ヘルスチェック」と言います。
-  障害が検知されると、<productname>Pgpool-II</productname>は設定に基づいてフェイルオーバや縮退運転を試みます。 
+  障害が検知されると、<productname>Pgpool-II</productname>は設定に基づいてフェイルオーバや縮退運転を試みます。
   <caution>
    <para>
     <!--

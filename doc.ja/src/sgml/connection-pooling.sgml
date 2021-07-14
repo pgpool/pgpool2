@@ -825,6 +825,7 @@ local0.*    /var/log/pgpool.log
       it is taken as minutes. The default is 24 hours.
 -->
       <xref linkend="guc-logging-collector">が有効な場合、このパラメータは個々のログファイルの最大寿命を決定します。
+      この値が単位なしで指定された場合は、分単位であるとみなします。 デフォルトは24時間です。
      </para>
      <para>
 <!--
@@ -1252,7 +1253,7 @@ local0.*    /var/log/pgpool.log
       Valid values are <literal>TERSE</>, <literal>DEFAULT</>, and <literal>VERBOSE</>,
       each adding more fields
       to displayed messages. <literal>TERSE</> excludes the logging of <literal>DETAIL</>,
-      <literal>HINT</>,
+      <literal>HINT</>, <literal>QUERY</>
       and <literal>CONTEXT</> error information.
       -->
       ログ取得されるそれぞれのメッセージに対し、サーバログに書き込まれる詳細の量を制御します。

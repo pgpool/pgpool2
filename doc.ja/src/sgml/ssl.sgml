@@ -289,17 +289,16 @@
       <acronym>ECDH</acronym>キー交換で使われる曲線の名前を指定します。
       接続する全てのクライアントがこの設定をサポートしている必要があります。
       サーバの楕円曲線キーで使用されるのと同じ曲線である必要はありません。
-      クライアントではなく、サーバ指定の<acronym>SSL</acronym>暗号を選択します。
       デフォルト値は<literal>prime256v1</literal>です。
      </para>
      <para>
       <!--
       OpenSSL names for the most common curves are:
       -->
-      OpenSSLはよく使われる曲線に名前を付けています。
+      よく使われる曲線の OpenSSL 名は、
       <literal>prime256v1</literal> (NIST P-256),
       <literal>secp384r1</literal> (NIST P-384),
-      <literal>secp521r1</literal> (NIST P-521)。
+      <literal>secp521r1</literal> (NIST P-521) です。
       <!--
       The full list of available curves can be shown with the command
       <command>openssl ecparam -list_curves</command>. Not all of them
