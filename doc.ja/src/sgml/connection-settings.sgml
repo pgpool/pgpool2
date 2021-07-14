@@ -300,7 +300,7 @@
       <!--
       Number of connections to each <productname>PostgreSQL</> is roughly max_pool*num_init_children.
       -->
-      <productname>PostgreSQL</>へ貼られる接続数は大まかにはmax_pool*num_init_childrenとなります。
+      <productname>PostgreSQL</>へ張られる接続数は大まかにはmax_pool*num_init_childrenとなります。
      </para>
 
      <para>
@@ -1580,12 +1580,13 @@
       specified by adding a number at the end of the parameter
       name (e.g. backend_data_directory0). If you plan to use
       only one PostgreSQL server, specify it by
-      backend_data_directory0.
+      backend_data_directory0. This parameter is used by online recovery.
+      If you do not use online recovery, you do not need to set it.
       -->
       <varname>backend_data_directory</varname>にはバックエンドのデータベースクラスタのディレクトリを指定します。
       パラメータ名の末尾に数字を付加することで複数のバックエンドを指定することができます(たとえばbackend_data_directory0)。
       1台しか<productname>PostgreSQL</>を使用しない場合は、backend_data_directory0で指定してください。
-      使用する PostgreSQL サーバのデータベースクラスタのパスを指定します。 実際には、"backend_data_directory"の後にDBノードIDを付加して使用する複数のPostgreSQLを区別します。 このパラメータはオンラインリカバリの際に使用します。 オンラインリカバリを使用しない場合には設定する必要はありません。
+      このパラメータはオンラインリカバリの際に使用します。 オンラインリカバリを使用しない場合には設定する必要はありません。
      </para>
      <para>
       <!--

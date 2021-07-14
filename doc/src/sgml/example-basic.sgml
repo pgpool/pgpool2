@@ -131,6 +131,8 @@
     for each server. If the servers are placed on separate machines,
     they must be configured properly so that they can accept network
     connections from <productname>Pgpool-II</productname>.
+    In this exapmle, we create 3 <productname>PostgreSQL</productname> servers and
+    specify the PostgreSQL information in the following parameters.
 
     <programlisting>
      backend_hostname0 = 'localhost'

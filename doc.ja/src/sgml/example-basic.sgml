@@ -55,7 +55,7 @@
     In this tutorial, we will install <productname>Pgpool-II
    </productname> in the default <literal>/usr/local</literal> directory.
     -->
-    <command>make</command>コマンドはソースコードはコンパイルし、<command>make install</command>コマンドで実行可能ファイルがインストールされます。
+    <command>make</command>コマンドはソースコードをコンパイルし、<command>make install</command>コマンドで実行可能ファイルがインストールされます。
     インストール先ディレクトリに書き込み権限を持っている必要があります。
     ここでは、<productname>Pgpool-II</productname>は<literal>/usr/local</literal>にインストールすることにします。
    </para>
@@ -108,7 +108,7 @@
     We recommend copying and renaming it to <literal>pgpool.conf</literal>, and edit
     it as you like.
     -->
-    <productname>Pgpool-II</>の設定パラメータは<literal>pgpool.conf</literal>ファイルに保存されてします。
+    <productname>Pgpool-II</>の設定パラメータは<literal>pgpool.conf</literal>ファイルに保存されています。
     ファイルは、1 行ごとに<literal>パラメータ名 = 値</literal>という書式です。
     <productname>Pgpool-II</> をインストールすると、<literal>pgpool.conf.sample</literal>ファイルが作成されます。
     それを<literal>pgpool.conf</literal>というファイル名にコピーしてから編集するといいでしょう。
@@ -182,7 +182,7 @@
     -->
     パスワードをMD5ハッシュ形式に変換する際には、<productname>Pgpool-II</>とともにインストールされる<command>pg_md5</command>コマンドを使用します。
     <command>pg_md5</command>コマンドは、コマンドライン引数として文字列を指定すると、それをMD5ハッシュ化したものを表示します。
-    例えば、以下のようにコマンドライン引数として<literal>"postgres"</literal>を指定して実行すると、それをMD5ハッシュ化しテキストが標準出力に表示されます。
+    例えば、以下のようにコマンドライン引数として<literal>"postgres"</literal>を指定して実行すると、それをMD5ハッシュ化したテキストが標準出力に表示されます。
     <programlisting>
      $ /usr/local/bin/pg_md5 postgres
      e8a48653851e28c69d0506508fb27fc5
@@ -215,12 +215,15 @@
     for each server. If the servers are placed on separate machines,
     they must be configured properly so that they can accept network
     connections from <productname>Pgpool-II</productname>.
+    In this exapmle, we create 3 <productname>PostgreSQL</productname> servers and
+    specify the PostgreSQL information in the following parameters.
     -->
     次に、<productname>Pgpool-II</productname>のための<productname>PostgreSQL</>サーバを設定する必要があります。
     これらのサーバは、<productname>Pgpool-II</> と同じホストで起動しても、異なるホストであっても構いません。
     同じホストにサーバを配置するのならば、各サーバにそれぞれ異なるポート番号を割り合てなければなりません。
     異なるマシンで起動する場合は <productname>Pgpool-II</>からのネットワーク接続を受け入れられるよう適切に設定されている必要があります。
-    <productname>Pgpool-II</> ではデータベースサーバごとにレプリケーションを行うので、チュートリアルのためのデータベースクラスタを作成したほうがいいでしょう。
+    この設定例では、事前に3つのPostgreSQLサーバを作成しておき、それぞれのPostgreSQLサーバの情報を次のパラメータに指定します。
+
     <programlisting>
      backend_hostname0 = 'localhost'
      backend_port0 = 5432
@@ -249,7 +252,7 @@
      set to 1, meaning that SELECT queries are equally distributed among
      three servers.
      -->
-     すべてのノードで<xref linkend="guc-backend-weight">パラメータが1に設定してるのは、SELECTクエリが３台のサーバで等しく分散されることを意味しています。
+     すべてのノードで<xref linkend="guc-backend-weight">パラメータが1に設定されているのは、SELECTクエリが３台のサーバで等しく分散されることを意味しています。
     </para>
    </note>
   </sect3>

@@ -23,8 +23,8 @@
   of each name.  The suffix corresponds to backend id, which is
   defined in backend information, such
   as <xref linkend="guc-backend-hostname">.
-   example, <varname>health_check_timeout0</varname> is applied to
-   backend 0's <varname>health_check_timeout</varname> value.
+  For example, <varname>health_check_timeout0</varname> is applied to
+  backend 0's <varname>health_check_timeout</varname> value.
  </para>
  <para>
   If there's no parameter with suffix, the value for the backend

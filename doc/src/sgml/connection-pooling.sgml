@@ -625,7 +625,7 @@
       Valid values are <literal>TERSE</>, <literal>DEFAULT</>, and <literal>VERBOSE</>,
       each adding more fields
       to displayed messages. <literal>TERSE</> excludes the logging of <literal>DETAIL</>,
-      <literal>HINT</>,
+      <literal>HINT</>, <literal>QUERY</>
       and <literal>CONTEXT</> error information.
      </para>
      <para>

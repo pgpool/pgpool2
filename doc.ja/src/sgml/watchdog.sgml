@@ -347,7 +347,7 @@
       -->
       仮想IPを起動するために実行するコマンドを指定します。
       <command>"ip addr add $_IP_$/24 dev eth0 label eth0:0"</command>のようにコマンドとパラメータを指定します。
-      こをコマンドを実行するには<literal>root</literal>権限が必要となりますので、一般ユーザが実行できるように
+      このコマンドを実行するには<literal>root</literal>権限が必要となりますので、一般ユーザが実行できるように
       <command>ip</command>コマンドに<command>setuid</command>を設定するか、
       <productname>Pgpool-II</productname>起動ユーザ(デフォルトでは<literal>postgres</literal>)がパスワードなしに<command>sudo</command>を実行できるように設定し、
       <command>sudo</command>を介したコマンドを<literal>"/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev eth0 label eth0:0"</literal>のように指定します。
@@ -384,7 +384,7 @@
       -->
       仮想IPを停止するために実行するコマンドを指定します。
       <literal>"ip addr del $_IP_$/24 dev eth0"</literal>のようにコマンドとパラメータを指定します。
-      こをコマンドを実行するにはroot権限が必要となりますので、一般ユーザが実行できるように
+      このコマンドを実行するにはroot権限が必要となりますので、一般ユーザが実行できるように
       <command>ip</command>コマンドに<command>setuid</command>を設定するか、
       <productname>Pgpool-II</productname>起動ユーザ(デフォルトでは<literal>postgres</literal>)がパスワードなしに<command>sudo</command>を実行できるように設定し、
       <command>sudo</command>を介したコマンドを<literal>"/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev eth0"</literal>のように指定します。
@@ -458,7 +458,7 @@
       -->
       IPアドレス切り替え後にARPリクエストを送信するコマンドです。
       <literal>"arping -U $_IP_$ -w 1 -I eth0"</literal>のようにコマンドとパラメータを指定します。
-      こをコマンドを実行するにはroot権限が必要となりますので、一般ユーザが実行できるように
+      このコマンドを実行するにはroot権限が必要となりますので、一般ユーザが実行できるように
       <command>arping</command>コマンドに<literal>setuid</literal>を設定するか、
       <productname>Pgpool-II</productname>起動ユーザ(デフォルトでは<literal>postgres</literal>ユーザ)がパスワードなしに<command>sudo</command>を実行できるように設定し、
       <command>sudo</command>を介したコマンドを<literal>"/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I eth0"</literal>のように設定します。
@@ -1477,7 +1477,7 @@
       <varname>wd_lifecheck_query</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
       -->
-      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_life_check_query</varname>は有効です。
+      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_lifecheck_query</varname>は有効です。
      </para>
      <para>
       <!--
@@ -1512,7 +1512,7 @@
       <varname>wd_lifecheck_dbname</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
       -->
-      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_life_check_dbname</varname>は有効です。
+      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_lifecheck_dbname</varname>は有効です。
      </para>
      <para>
       <!--
@@ -1547,7 +1547,7 @@
       <varname>wd_lifecheck_user</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
       -->
-      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_life_check_user</varname>は有効です。
+      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_lifecheck_user</varname>は有効です。
      </para>
      <para>
       <!--
@@ -1631,7 +1631,7 @@
       <varname>wd_lifecheck_password</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
       -->
-      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_life_check_password</varname>は有効です。
+      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_lifecheck_password</varname>は有効です。
      </para>
      <para>
       <!--
