@@ -919,7 +919,8 @@
       specified by adding a number at the end of the parameter
       name (e.g. backend_data_directory0). If you plan to use
       only one PostgreSQL server, specify it by
-      backend_data_directory0.
+      backend_data_directory0. This parameter is used by online recovery.
+      If you do not use online recovery, you do not need to set it.
      </para>
      <para>
       New <varname>backend data_directory</> can be added by adding parameter rows and reloading a
