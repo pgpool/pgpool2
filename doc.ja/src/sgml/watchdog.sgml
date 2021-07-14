@@ -1341,7 +1341,7 @@
       <varname>wd_lifecheck_query</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
       -->
-      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_life_check_query</varname>は有効です。
+      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_lifecheck_query</varname>は有効です。
      </para>
      <para>
       <!--
@@ -1376,7 +1376,7 @@
       <varname>wd_lifecheck_dbname</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
       -->
-      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_life_check_dbname</varname>は有効です。
+      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_lifecheck_dbname</varname>は有効です。
      </para>
      <para>
       <!--
@@ -1411,7 +1411,7 @@
       <varname>wd_lifecheck_user</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
       -->
-      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_life_check_user</varname>は有効です。
+      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_lifecheck_user</varname>は有効です。
      </para>
      <para>
       <!--
@@ -1495,7 +1495,7 @@
       <varname>wd_lifecheck_password</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'query'</literal>
       -->
-      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_life_check_password</varname>は有効です。
+      <xref linkend="guc-wd-lifecheck-method">が<literal>'query'</literal>の場合のみ、<varname>wd_lifecheck_password</varname>は有効です。
      </para>
      <para>
       <!--
