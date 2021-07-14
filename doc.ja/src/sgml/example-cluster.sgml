@@ -161,7 +161,7 @@
      <row>
       <entry>Watchdog機能</entry>
       <entry>有効</entry>
-      <entry>ハードビート方式</entry>
+      <entry>ハートビート方式</entry>
      </row>
      <row>
       <entry>自動起動</entry>
@@ -302,7 +302,7 @@ wal_log_hints = on
        <row>
         <entry>pgpool</entry>
         <entry>pgpool</entry>
-        <entry>Pgpool-IIのレプリケーション遅延チェック(<xref linkend="GUC-HEALTH-CHECK-USER">)、ヘルスチェック専用ユーザ(<xref linkend="GUC-SR-CHECK-USER">)</entry>
+        <entry>Pgpool-IIのレプリケーション遅延チェック(<xref linkend="GUC-SR-CHECK-USER">)、ヘルスチェック専用ユーザ(<xref linkend="GUC-HEALTH-CHECK-USER">)</entry>
        </row>
        <row>
         <entry>postgres</entry>
@@ -324,8 +324,9 @@ postgres=# \password postgres
     </programlisting>
 
     <para>
-     <xref linkend="SQL-SHOW-POOL-NODES">コマンドでレプリケーション状態と同期レプリケーション状態を表示するには、<literal>pgpool</literal>ユーザにデフォルトロール<literal>pg_monitor</literal>を付与する必要があります (<productname>Pgpool-II</productname>4.1以降)。
-      以下のコマンドで<literal>pgpool</literal>ユーザをそのグループに所属させます。
+     <xref linkend="SQL-SHOW-POOL-NODES">コマンドで<literal>replication_stat</literal>カラムと<literal>replication_sync_state</literal>カラムを表示するには、
+     <literal>pgpool</literal>ユーザは<productname>PostgreSQL</productname>のスーパーユーザーであるか、<literal>pg_monitor</literal>グループに所属する必要があります。
+     以下のコマンドで<literal>pgpool</literal>ユーザをそのグループに所属させます。
     </para>
     <programlisting>
 GRANT pg_monitor TO pgpool;
@@ -624,7 +625,7 @@ PGHOME=/usr/pgsql-13
     <literal>PCP</literal>コマンドを使用するにはユーザ認証が必要になるので、ユーザ名と<literal>md5</literal>ハッシュに変換されたパスワードを"<literal>username:encrypted password</literal>"の形式で<filename>pcp.conf</filename>ファイルに設定します。
    </para>
    <para>
-    <filename>follow_primary.sh</filename>で<literal>pgpool</literal>ユーザが<varname>PCP_USER</varname>に指定している場合、
+    <filename>follow_primary.sh</filename>で<literal>pgpool</literal>ユーザが<varname>PCP_USER</varname>に指定されている場合、
    </para>
    <programlisting>
 # cat /etc/pgpool-II/follow_primary.sh

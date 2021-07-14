@@ -15,7 +15,7 @@
   <xref linkend="guc-native-replication-sub-mode"> to <literal>'stream'</literal>.
   -->
   <productname>Pgpool-II</productname>は<productname>PostgreSQL</> 9.0から利用可能になった<productname>PostgreSQL</>組み込みのストリーミングレプリケーション機能と一緒に動作することができます。
-  ストリーミングレプリケーション向けに<productname>Pgpool-II</productname>を設定するには、<xref linkend="guc-backend-clustering-mode">に<literal>'streaming-replication'</literal>を設定します。
+  ストリーミングレプリケーション向けに<productname>Pgpool-II</productname>を設定するには、<xref linkend="guc-backend-clustering-mode">に<literal>'streaming_replication'</literal>を設定します。
  </para>
  <para>
   <!--

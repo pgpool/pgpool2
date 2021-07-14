@@ -173,7 +173,7 @@
   <title>インメモリクエリキャッシュ</title>
   <para>
    <productname>Pgpool-II</productname>は読み出しクエリの結果をキャッシュし、後で再利用することができます。
-   これは、同じ読みだしクエリを何度も発行するタイプのアプリケーションでは大きなメリットがあります。
+   これは、同じ読み出しクエリを何度も発行するタイプのアプリケーションでは大きなメリットがあります。
    2つのクエリが文字列として同じで（そしてもしあればプリペアドステートメントのパラメータ）が同じなら、それは「同じ」クエリと見なされます。
    最初にそのクエリが送信されると、<productname>Pgpool-II</productname>はクエリの結果を保存し、<productname>PostgreSQL</productname>に一切問い合わせることなく2つ目のクエリのために使用します。
    この技術は<xref linkend="runtime-in-memory-query-cache">で説明されています。
@@ -200,7 +200,7 @@
      次にクエリに同じテーブルが含まれていると、<productname>Pgpool-II</productname>はキャッシュからその情報を取り出します。
   </para>
   <para>
-   リレーションキャッシュの性能に関する設定するためのパラメータがあります。
+   リレーションキャッシュの性能に関する設定を行うためのパラメータがあります。
    詳細は<xref linkend="guc-relcache-expire">、<xref linkend="guc-relcache-size">、<xref linkend="guc-check-temp-table">、<xref linkend="guc-check-unlogged-table">をご覧ください。
   </para>
 

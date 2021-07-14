@@ -87,7 +87,7 @@ spec:
   </programlisting>
   <para>
    <productname>pgpool-II</productname>のヘルスチェック、自動フェイルオーバー、Watchdogおよびオンラインリカバリ機能は<productname>Kubernetes</productname>環境では必要ありません。
-   読み取りクエリの負荷分散とコネクションプーリング機能のみを有効ににすれば良いです。
+   読み取りクエリの負荷分散とコネクションプーリング機能のみを有効にすれば良いです。
   </para>
   <para>
    Kubernetes上でpgpool を動かすために、以下の設定が必要最低限の設定です。
