@@ -479,7 +479,7 @@
       <row>
        <entry>DATA</entry>
        <entry><acronym>JSON</acronym>フォーマットのデータ</entry>
-       <entry><acronym>JSON</acronym>フォーマットのコマンドデータ</entry>
+       <entry><acronym>JSON</acronym>フォーマットのコマンド結果データ</entry>
       </row>
 
      </tbody>
@@ -583,7 +583,7 @@
        <entry>GET NODES LIST</entry>
        <entry>'3'</entry>
        <entry>コマンドパケット</entry>
-       <entry>Command to get the list of all configured watchdog nodes</entry>
+       <entry>全ての設定済み watchdog ノードのリストを要求します</entry>
       </row>
       <row>
        <entry>NODES LIST DATA</entry>
