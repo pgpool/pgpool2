@@ -196,7 +196,7 @@ do_worker_child(void)
 			 */
 			follow_primary_lock_acquired = false;
 
-			if (pool_acquire_follow_primary_lock(false) == true)
+			if (pool_acquire_follow_primary_lock(false, false) == true)
 			{
 				follow_primary_lock_acquired = true;
 
@@ -227,17 +227,11 @@ do_worker_child(void)
 							/*
 							 * If detach_false_primary is enabled, send
 							 * degenerate request to detach invalid node.
-							 * This should only happen on leader watchdog node
-							 * and quorum exists if watchdog is enabled. Other
-							 * nodes will be informed by the leader node later
-							 * on.
 							 */
-							if ((pool_config->detach_false_primary && !pool_config->use_watchdog) ||
-								(pool_config->detach_false_primary && pool_config->use_watchdog &&
-								 wd_internal_get_watchdog_quorum_state() >= 0 && wd_status == WD_COORDINATOR))
+							if (pool_config->detach_false_primary)
 							{
 								n = i;
-								degenerate_backend_set(&n, 1, REQ_DETAIL_SWITCHOVER | REQ_DETAIL_CONFIRMED);
+								degenerate_backend_set(&n, 1, REQ_DETAIL_SWITCHOVER);
 							}
 						}
 					}
@@ -245,7 +239,7 @@ do_worker_child(void)
 				PG_CATCH();
 				{
 					discard_persistent_connection();
-					pool_release_follow_primary_lock();
+					pool_release_follow_primary_lock(false);
 					follow_primary_lock_acquired = false;
 					sleep(pool_config->sr_check_period);
 					PG_RE_THROW();
@@ -256,7 +250,7 @@ do_worker_child(void)
 				discard_persistent_connection();
 				if (follow_primary_lock_acquired)
 				{
-					pool_release_follow_primary_lock();
+					pool_release_follow_primary_lock(false);
 					follow_primary_lock_acquired = false;
 				}
 			}
@@ -656,6 +650,6 @@ static void
 sr_check_will_die(int code, Datum arg)
 {
 	if (follow_primary_lock_acquired)
-		pool_release_follow_primary_lock();
+		pool_release_follow_primary_lock(false);
 
 }

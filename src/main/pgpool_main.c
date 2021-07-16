@@ -1305,6 +1305,13 @@ sigusr1_interupt_processor(void)
 					(errmsg("we have joined the watchdog cluster as STANDBY node"),
 					 errdetail("syncing the backend states from the LEADER watchdog node")));
 			sync_backend_from_watchdog();
+			/*
+			 * we also want to release the follow_primary lock if it was held
+			 * by the remote node.
+			 * because the change of watchdog coordinator would lead to forever stuck
+			 * in the the locked state
+			 */
+			pool_release_follow_primary_lock(true);
 		}
 	}
 	if (user1SignalSlot->signalFlags[SIG_FAILOVER_INTERRUPT])
@@ -3223,9 +3230,9 @@ find_primary_node(void)
 		pfree(password);
 
 	/* Verify backend status */
-	pool_acquire_follow_primary_lock(true);
+	pool_acquire_follow_primary_lock(true, false);
 	status = verify_backend_node_status(slots);
-	pool_release_follow_primary_lock();
+	pool_release_follow_primary_lock(false);
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
@@ -3363,7 +3370,16 @@ fork_follow_child(int old_main_node, int new_primary, int old_primary)
 #endif
 
 		SetProcessGlobalVaraibles(PT_FOLLOWCHILD);
-		pool_acquire_follow_primary_lock(true);
+		/*
+		 * when the watchdog is enabled, we would come here
+		 * only on the coordinator node.
+		 * so before acquiring the local lock, Lock all the
+		 * standby nodes so that they should stop false primary
+		 * detection until we are finished with the follow primary
+		 * command.
+		 */
+		wd_lock_standby(WD_FOLLOW_PRIMARY_LOCK);
+		pool_acquire_follow_primary_lock(true, false);
 		Req_info->follow_primary_ongoing = true;
 		ereport(LOG,
 				(errmsg("start triggering follow command.")));
@@ -3377,7 +3393,9 @@ fork_follow_child(int old_main_node, int new_primary, int old_primary)
 										 old_main_node, new_primary, old_primary);
 		}
 		Req_info->follow_primary_ongoing = false;
-		pool_release_follow_primary_lock();
+		pool_release_follow_primary_lock(false);
+		/* inform standby watchdog nodes to release the lock aswell*/
+		wd_unlock_standby(WD_FOLLOW_PRIMARY_LOCK);
 		exit(0);
 	}
 	else if (pid == -1)
@@ -4318,9 +4336,11 @@ pool_set_backend_status_changed_time(int backend_id)
  * they are conflicting each other.  If argument "block" is true, this
  * function will not return until it succeeds in acquiring the lock.  This
  * function returns true if succeeded in acquiring the lock.
+ *
+ * first arg:block is ignored when remote_request is set
  */
 bool
-pool_acquire_follow_primary_lock(bool block)
+pool_acquire_follow_primary_lock(bool block, bool remote_request)
 {
 	pool_sigset_t oldmask;
 	volatile int	follow_primary_count;
@@ -4337,6 +4357,29 @@ pool_acquire_follow_primary_lock(bool block)
 			ereport(DEBUG1,
 					(errmsg("pool_acquire_follow_primary_lock: lock was not held by anyone")));
 			break;
+		}
+		else if (follow_primary_count > 0 && remote_request)
+		{
+			if (Req_info->follow_primary_lock_held_remotely)
+			{
+				/* The lock was already held by remote node and we only
+				 * support one remote lock
+				 */
+				ereport(LOG,
+						(errmsg("pool_acquire_follow_primary_lock: received remote locking request while lock is already held by the remote node")));
+
+			}
+			else
+			{
+				/* set the flag that watchdog has requested the lock */
+				Req_info->follow_primary_lock_pending = true;
+			}
+			pool_semaphore_unlock(FOLLOW_PRIMARY_SEM);
+			POOL_SETMASK(&oldmask);
+			/* return and inform that the lock was held by someone */
+			ereport(DEBUG1,
+					(errmsg("pool_acquire_follow_primary_lock: lock was held by someone %d", follow_primary_count)));
+			return false;
 		}
 
 		else if (follow_primary_count > 0 && !block)
@@ -4357,6 +4400,8 @@ pool_acquire_follow_primary_lock(bool block)
 	}
 
 	/* acquire lock */
+	Req_info->follow_primary_lock_held_remotely = remote_request;
+
 	Req_info->follow_primary_count = 1;
 	pool_semaphore_unlock(FOLLOW_PRIMARY_SEM);
 	POOL_SETMASK(&oldmask);
@@ -4371,13 +4416,71 @@ pool_acquire_follow_primary_lock(bool block)
  * Release lock on follow primary command execution.
  */
 void
-pool_release_follow_primary_lock(void)
+pool_release_follow_primary_lock(bool remote_request)
 {
 	pool_sigset_t oldmask;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_semaphore_lock(FOLLOW_PRIMARY_SEM);
-	Req_info->follow_primary_count = 0;
+	if (remote_request)
+	{
+		if (Req_info->follow_primary_lock_held_remotely)
+		{
+			/* remote request can only release locks held by remote nodes */
+			Req_info->follow_primary_count = 0;
+			Req_info->follow_primary_lock_held_remotely = false;
+			ereport(DEBUG1,
+					(errmsg("pool_release_follow_primary_lock relased the remote lock")));
+		}
+		else if (Req_info->follow_primary_count)
+		{
+			/*
+			 * we have received the release lock request from remote
+			 * but the lock is not held by remote node.
+			 * Just ignore the request
+			 */
+			ereport(DEBUG1,
+					(errmsg("pool_release_follow_primary_lock is not relasing the lock since it was not held by remote node")));
+		}
+		/*
+		 * Silently ignore, if we received the release request from remote while no lock was held.
+		 * Also clear the pending lock request, As we only support single remote lock
+		 */
+		Req_info->follow_primary_lock_pending = false;
+
+	}
+	else /*local request */
+	{
+		/*
+		 * if we have a pending lock request from watchdog
+		 * do not remove the actual lock, Just clear the pending flag
+		 */
+		if (Req_info->follow_primary_lock_pending)
+		{
+			Req_info->follow_primary_lock_held_remotely = true;
+			Req_info->follow_primary_count = 1;
+			/* also clear the pending lock flag */
+			Req_info->follow_primary_lock_pending = false;
+			ereport(DEBUG1,
+					(errmsg("pool_release_follow_primary_lock is not relasing the lock and shifting it to coordinator watchdog node")));
+		}
+		else
+		{
+			if (Req_info->follow_primary_lock_held_remotely)
+			{
+				/*
+				 * Ideally this should not happen.
+				 * yet if for some reason our local node is trying to release a lock
+				 * that is heald by remote node. Just produce a LOG message and release
+				 * the lock
+				 */
+				ereport(LOG,
+						(errmsg("pool_release_follow_primary_lock is relasing the remote lock by local request")));
+			}
+			Req_info->follow_primary_count = 0;
+			Req_info->follow_primary_lock_held_remotely = false;
+		}
+	}
 	pool_semaphore_unlock(FOLLOW_PRIMARY_SEM);
 	POOL_SETMASK(&oldmask);
 
