@@ -426,7 +426,7 @@ typedef enum
 #define REQ_DETAIL_WATCHDOG		0x00000002	/* failover req from watchdog */
 #define REQ_DETAIL_CONFIRMED	0x00000004	/* failover req that does not
 											 * require majority vote */
-#define REQ_DETAIL_UPDATE		0x00000008	/* failover req is just and update
+#define REQ_DETAIL_UPDATE		0x00000008	/* failover req is just an update
 											 * node status request */
 #define REQ_DETAIL_PROMOTE		0x00000010	/* failover req is actually promoting the specified standby node.
 											 * current primary will be detached */
@@ -454,6 +454,16 @@ typedef struct
 	/* greater than 0 if follow primary command or detach_false_primary in
 	 * execution */
 	bool		follow_primary_count;
+	bool		follow_primary_lock_pending; /* watchdog process can't wait
+											  * for follow_primary lock acquisition
+											  * in case it is held at the time of
+											  * request.
+											  * This flag indicates that lock was requested
+											  * by watchdog coordinator and next contender should
+											  * wait for the coordinator to release the lock
+											  */
+	bool		follow_primary_lock_held_remotely; /* true when lock is held by
+													watchdog coordinator*/
 	bool		follow_primary_ongoing;	/* true if follow primary command is ongoing */
 }			POOL_REQUEST_INFO;
 
@@ -633,8 +643,8 @@ extern POOL_NODE_STATUS * verify_backend_node_status(POOL_CONNECTION_POOL_SLOT *
 extern POOL_NODE_STATUS * pool_get_node_status(void);
 extern void pool_set_backend_status_changed_time(int backend_id);
 extern int	get_next_main_node(void);
-extern bool pool_acquire_follow_primary_lock(bool block);
-extern void pool_release_follow_primary_lock(void);
+extern bool pool_acquire_follow_primary_lock(bool block, bool remote_reques);
+extern void pool_release_follow_primary_lock(bool remote_reques);
 
 /* strlcpy.c */
 #ifndef HAVE_STRLCPY

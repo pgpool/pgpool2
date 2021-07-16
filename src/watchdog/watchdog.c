@@ -2102,6 +2102,16 @@ process_IPC_execute_cluster_command(WDCommandData * ipcCommand)
 		ereport(LOG,
 				(errmsg("Watchdog has received reload config cluster command from IPC channel")));
 	}
+	else if (strcasecmp(WD_COMMAND_LOCK_ON_STANDBY, clusterCommand) == 0)
+	{
+		ereport(LOG,
+				(errmsg("Watchdog has received 'LOCK ON STANDBY' command from IPC channel")));
+		if (get_local_node_state() != WD_COORDINATOR)
+		{
+			ereport(LOG,
+					(errmsg("'LOCK ON STANDBY' command can only be processed on coordinator node")));
+		}
+	}
 	else
 	{
 		ipcCommand->errorMessage = MemoryContextStrdup(ipcCommand->memoryContext,
@@ -3011,7 +3021,6 @@ static IPC_CMD_PROCESS_RES process_IPC_failover_indication(WDCommandData * ipcCo
 							 errdetail("failed to get failover state from json data in command packet")));
 					res = FAILOVER_RES_INVALID_FUNCTION;
 				}
-
 			}
 			else
 			{
@@ -4091,6 +4100,73 @@ wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 		ereport(LOG,
 				(errmsg("processing reload config command from remote node \"%s\"", wdNode->nodeName)));
 		pool_signal_parent(SIGHUP);
+	}
+	else if (strcasecmp(WD_COMMAND_LOCK_ON_STANDBY, clusterCommand) == 0)
+	{
+		int i;
+		int lock_type = -1;
+		char *operation = NULL;
+		if (get_local_node_state() != WD_STANDBY && wdNode->state == WD_COORDINATOR)
+		{
+			if (nArgs == 2)
+			{
+				for ( i =0; i < nArgs; i++)
+				{
+					if (strcmp(wdExecCommandArg[i].arg_name, "StandbyLockType") == 0)
+					{
+						lock_type = atoi(wdExecCommandArg[i].arg_value);
+					}
+					else if (strcmp(wdExecCommandArg[i].arg_name, "LockingOperation") == 0)
+					{
+						operation = wdExecCommandArg[i].arg_value;
+					}
+					else
+						ereport(LOG,
+								(errmsg("unsupported argument \"%s\" in 'LOCK ON STANDBY' from remote node \"%s\"", wdExecCommandArg[i].arg_name, wdNode->nodeName)));
+				}
+				if (lock_type < 0 || operation == NULL)
+				{
+					ereport(LOG,
+							(errmsg("missing argument in 'LOCK ON STANDBY' from remote node \"%s\"", wdNode->nodeName),
+							 errdetail("command ignored")));
+				}
+				else if (lock_type == WD_FOLLOW_PRIMARY_LOCK)
+				{
+					ereport(LOG,
+							(errmsg("processing follow primary looking[%s] request from remote node \"%s\"", operation,wdNode->nodeName)));
+
+					if (strcasecmp("acquire", operation) == 0)
+						pool_acquire_follow_primary_lock(false, true);
+					else if (strcasecmp("release", operation) == 0)
+						pool_release_follow_primary_lock(true);
+					else
+						ereport(LOG,
+								(errmsg("invalid looking operaition[%s] in 'LOCK ON STANDBY' from remote node \"%s\"", operation, wdNode->nodeName),
+								 errdetail("command ignored")));
+				}
+				else
+					ereport(LOG,
+							(errmsg("unsupported lock-type:%d in 'LOCK ON STANDBY' from remote node \"%s\"", lock_type, wdNode->nodeName)));
+
+			}
+			else
+			{
+				ereport(LOG,
+						(errmsg("invalid arguments in 'LOCK ON STANDBY' command from remote node \"%s\"",  wdNode->nodeName)));
+			}
+		}
+		else if (get_local_node_state() != WD_STANDBY)
+		{
+			ereport(LOG,
+					(errmsg("invalid node state to execute 'LOCK ON STANDBY' command")));
+
+		}
+		else
+		{
+			ereport(LOG,
+					(errmsg("'LOCK ON STANDBY' command can only be accepted from the coordinator watchdog node"),
+					 errdetail("ignoring...")));
+		}
 	}
 	else
 	{

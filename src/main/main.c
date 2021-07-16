@@ -77,6 +77,7 @@ int			myargc;
 char	  **myargv;
 int			assert_enabled = 0;
 char	   *pool_key = NULL;
+
 int
 main(int argc, char **argv)
 {
