@@ -564,7 +564,7 @@ extern void set_application_name_with_suffix(ProcessType ptype, int suffix);
 extern char *get_application_name(void);
 extern char *get_application_name_for_procees(ProcessType ptype);
 
-void SetProcessGlobalVaraibles(ProcessType pType);
+void SetProcessGlobalVariables(ProcessType pType);
 
 extern volatile SI_ManageInfo *si_manage_info;
 extern volatile sig_atomic_t sigusr2_received;

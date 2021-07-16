@@ -267,7 +267,7 @@ start_pcp_command_processor_process(int port)
 
 	if (pid == 0)				/* child */
 	{
-		SetProcessGlobalVaraibles(PT_PCP_WORKER);
+		SetProcessGlobalVariables(PT_PCP_WORKER);
 
 		on_exit_reset();
 		/* Close the listen sockets sockets */

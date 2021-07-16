@@ -363,7 +363,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if)
 	}
 
 	on_exit_reset();
-	SetProcessGlobalVaraibles(PT_HB_RECEIVER);
+	SetProcessGlobalVariables(PT_HB_RECEIVER);
 
 	if (fork_wait_time > 0)
 	{
@@ -496,7 +496,7 @@ wd_hb_sender(int fork_wait_time, WdHbIf * hb_if)
 	}
 
 	on_exit_reset();
-	SetProcessGlobalVaraibles(PT_HB_SENDER);
+	SetProcessGlobalVariables(PT_HB_SENDER);
 
 	if (fork_wait_time > 0)
 	{
