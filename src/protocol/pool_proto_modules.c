@@ -2958,6 +2958,23 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 				break;
 
 			case 'E':			/* ErrorResponse */
+				if (pool_is_doing_extended_query_message())
+				{
+					char	*message;
+
+					/* Log the error message which was possibly missed till
+					 * a sync message was sent */
+					if (pool_extract_error_message(false, MAIN(backend), PROTO_MAJOR_V3,
+												   true, &message) == 1)
+					{
+						ereport(LOG,
+								(errmsg("Error message from backend: DB node id: %d message: \"%s\"",
+										MAIN_NODE_ID, message)));
+						pfree(message);
+					}
+				}
+
+				/* Forward the error message to frontend */
 				status = ErrorResponse3(frontend, backend);
 				pool_unset_command_success();
 				if (TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID :
