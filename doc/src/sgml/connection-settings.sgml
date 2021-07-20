@@ -1263,12 +1263,26 @@ backend_clustering_mode = 'raw'
     <listitem>
      <para>
       <varname>backend_application_name</varname> specifies the
-      application name of walsender, which receives WAL log
+      application name of walreceiver, which receives WAL log
       from primary node. Thus in other than streaming
       replication mode, this parameter does not need to be set.
       Also this parameter is required to if you want to show
       "replication_state" and "replication_sync_state" column
-      in <xref linkend="SQL-SHOW-POOL-NODES"> command.
+      in <xref linkend="SQL-SHOW-POOL-NODES"> and <xref linkend="PCP-NODE-INFO"> commands.
+     </para>
+     <para>
+      For example, suppose the primary node is backend0 (its host name
+      is "host0"), the standby node in question is backend1 and the
+      backend_application_name for backend1 is "server1", then
+      <literal>primary_conninfo</literal> parameter of
+      <filename>postgresql.conf</filename> should like like:
+      <programlisting>
+primary_conninfo = 'host=host0 port=5432 user=postgres application_name='server1''
+      </programlisting>
+      The <xref linkend="guc-recovery-1st-stage-command"> should
+      generate the parameter. See <xref
+      linkend="example-cluster-pgpool-config-online-recovery"> for a
+      complete example of the command.
      </para>
      <para>
       This parameter can be changed by reloading

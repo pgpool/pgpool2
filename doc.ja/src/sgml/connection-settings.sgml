@@ -1703,9 +1703,18 @@ backend_clustering_mode = 'raw'
 
     <listitem>
      <para>
-      <varname>backend_application_name</varname>はWAL logをプライマリサーバから読み込むwalsenderのために使用するapplication_nameを設定します。
+      <varname>backend_application_name</varname>はWAL logをプライマリサーバから読み込むwalreceiverのために使用するapplication_nameを設定します。
       ですから、ストリーミングレプリケーションモード以外では設定する必要がありません。
-      また、このパラメータは<xref linkend="SQL-SHOW-POOL-NODES">コマンド中に表示される"replication_state"と"replication_sync_state"のために使用されます。
+      また、このパラメータは<xref linkend="SQL-SHOW-POOL-NODES">と<xref linkend="PCP-NODE-INFO">コマンド中に表示される"replication_state"と"replication_sync_state"のために使用されます。
+     </para>
+     <para>
+      たとえば、プライマリノードがbackend0（そのホスト名は"host0"とします）、スタンバイノードはbackend1で、backend1のbackend_application_nameは"server1"であるとします。
+      すると、<filename>postgresql.conf</filename>の<literal>primary_conninfo</literal>パラメータは次のようになるはずです。
+      <programlisting>
+primary_conninfo = 'host=host0 port=5432 user=postgres application_name='server1''
+      </programlisting>
+      <xref linkend="guc-recovery-1st-stage-command">がそのパラメータを生成します。
+      コマンドの完全な例に関しては、<xref linkend="example-cluster-pgpool-config-online-recovery">をご覧ください。
      </para>
      <para>
       このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
