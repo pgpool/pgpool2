@@ -1,6 +1,342 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-1-8">
+ <title>リリース 4.1.8</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2021-08-05</simpara>
+  </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-05-27 [7c69669]
+    -->
+    <para>
+     ドメイン名を含めたホスト名の長さの最大値を変更しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     ホスト名の長さの最大値を128にしていましたが、正しくは254でした。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-May/003904.html">[pgpool-hackers: 3903]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-07-07 [f3ad7cb]
+    -->
+    <para>
+     クエリキャッシュで<varname>SQLValueFunctions</varname>を含むクエリをキャッシュしないようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <varname>SQLValueFunctions</varname>の一覧は以下になります。
+     <itemizedlist>
+      <listitem>
+       <para>
+        CURRENT_DATE
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        CURRENT_TIME
+       </para>
+      </listitem>
+        <listitem>
+       <para>
+        CURRENT_TIMESTAMP
+       </para>
+      </listitem>
+        <listitem>
+       <para>
+        LOCALTIME
+       </para>
+      </listitem>
+        <listitem>
+       <para>
+        LOCALTIMESTAMP
+       </para>
+      </listitem>
+        <listitem>
+       <para>
+        CURRENT_ROLE
+       </para>
+      </listitem>
+        <listitem>
+       <para>
+        CURRENT_USER
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        SESSION_USER
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        USER
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        CURRENT_CATALOG
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        CURRENT_SCHEMA
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-07-09 [79ace39]
+    -->
+    <para>
+     describeメッセージのあとにNoDataで応答された場合のクライアント側のハングアップを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     問題の報告、パッチはDaniel van de Giessenより提供されました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-July/003951.html">[pgpool-hackers: 3950]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-07-01 [1853b28]
+    -->
+    <para>
+     SIモードにおける不正なメッセージの送信を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     クエリがシリアル化エラーなどの特定の理由によってアボートしたとき、<productname>Pgpool-II</productname>は
+     メインノード以外で実行されているトランザクションを中止するためにエラークエリを送信します。そのメッセージ長が
+     正しくなかったためバックエンドで「invalid string in message」エラーが発生していました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-09 [4a012f8]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>が停止したときに孤児プロセスが残る不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <varname>follow_primary_command</varname>の実行中に<productname>Pgpool-II</productname>が停止すると、
+     <varname>follow_primary_command</varname>によって開始されたいくつかのプロセスが残ったままになる可能性がありました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-08 [08d08a2]
+    -->
+    <para>
+     <command>pcp_detach_node</command>の実行後ダウンノードが残る不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     プライマリノードを<command>pcp_detach_node</command>でデタッチしたとき、follow_primary_commandの
+     実行後にもスタンバイノードがダウンのままになっていました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-June/003916.html">[pgpool-hackers: 3915]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-03 [abd8872]
+    -->
+    <para>
+     <xref linkend="GUC-BACKEND-APPLICATION-NAME">が<filename>pgpool.conf</filename>のリロードで変更できない
+     不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-22 [2b7cdea]
+    -->
+    <para>
+     watchdog通信の競合状態を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     メインプロセスがwatchdogプロセスから通知された処理を実行中に、watchdogプロセスが新しいメッセージを
+     メインプロセスに通知したとき、新しいメッセージが処理されるまに大幅な遅延が発生していました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-May/003901.html">[pgpool-hackers: 3900]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-20 [1cebe5c]
+    -->
+    <para>
+     再起動後にwatchdogノードステータスが更新されない問題を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=684">bug 684</ulink>) (Muhammad Usama)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-07-20 [2708725]
+    -->
+    <para>
+     Doc: <xref linkend="GUC-BACKEND-APPLICATION-NAME">の説明を増やしました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-07-14 [7b676c8]
+    2021-07-14 [bbe913e]
+    -->
+    <para>
+     Doc: いくつかのドキュメントのtypoを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-07-07 [5904e97]
+    -->
+    <para>
+     Doc: インメモリクエリキャッシュのtypoを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-02 [0706c85]
+    -->
+    <para>
+     Doc: <xref linkend="GUC-WD-LIFE-POINT">の説明を修正しました。(Masaya Kawamoto)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>テストツール修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-06-23 [9610470]
+    -->
+    <para>
+     ポータブルな<filename>follow_primary.sh</filename>を生成するように<command>pgpool_setup</command>
+     を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-28 [a58d0f4]
+    -->
+    <para>
+     <command>pgpool_setup</command>で使用されるrsyncのパラメータを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-15 [e4dd160]
+    -->
+    <para>
+     <command>pgpool_setup</command>中のベースバックアップ処理を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-29 [163082a]
+    -->
+    <para>
+     <command>watchdog_setup</command>のスクリプトを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <command>watchdog_setup</command>によって生成されるshutdownallスクリプトは、全体シャットダウンでは
+     不必要なフェイルオーバ処理を引き起こしていました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-06-21 [9bc4bc7]
+    -->
+    <para>
+     075.detach_primary_left_down_nodeの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-21 [eb3ff6f]
+    -->
+    <para>
+     031.connection_life_timeの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-21 [432e9f0]
+    -->
+    <para>
+     018.detach_primaryの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-31 [5db0a96]
+    -->
+    <para>
+     028.watchdog_enable_consensus_with_half_votesの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-28 [4e9e384]
+    -->
+    <para>
+     018.detach_primaryの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-1-7">
  <!--
  <title>Release 4.1.7</title>
