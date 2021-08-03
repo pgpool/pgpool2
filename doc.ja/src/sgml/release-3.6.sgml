@@ -1,6 +1,167 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-6-27">
+ <title>リリース 3.6.27</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2021-08-05</simpara>
+  </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-05-27 [9a74033]
+    -->
+    <para>
+     ドメイン名を含めたホスト名の長さの最大値を変更しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     ホスト名の長さの最大値を128にしていましたが、正しくは254でした。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-May/003904.html">[pgpool-hackers: 3903]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-07-01 [7032a64]
+    -->
+    <para>
+     SIモードにおける不正なメッセージの送信を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     クエリがシリアル化エラーなどの特定の理由によってアボートしたとき、<productname>Pgpool-II</productname>は
+     メインノード以外で実行されているトランザクションを中止するためにエラークエリを送信します。そのメッセージ長が
+     正しくなかったためバックエンドで「invalid string in message」エラーが発生していました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-22 [771cfe7]
+    -->
+    <para>
+     watchdog通信の競合状態を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     メインプロセスがwatchdogプロセスから通知された処理を実行中に、watchdogプロセスが新しいメッセージを
+     メインプロセスに通知したとき、新しいメッセージが処理されるまに大幅な遅延が発生していました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-May/003901.html">[pgpool-hackers: 3900]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-20 [15b4cf7]
+    -->
+    <para>
+     再起動後にwatchdogノードステータスが更新されない問題を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=684">bug 684</ulink>) (Muhammad Usama)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-07-14 [9af73d7]
+    -->
+    <para>
+     Doc: いくつかのドキュメントのtypoを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-07-07 [fb3cc25]
+    -->
+    <para>
+     Doc: インメモリクエリキャッシュのtypoを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-02 [87b918b]
+    -->
+    <para>
+     Doc: <xref linkend="GUC-WD-LIFE-POINT">の説明を修正しました。(Masaya Kawamoto)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+  <sect2>
+  <title>テストツール修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-06-28 [ccb8de8]
+    -->
+    <para>
+     <command>pgpool_setup</command>で使用されるrsyncのパラメータを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-15 [f54930d]
+    -->
+    <para>
+     <command>pgpool_setup</command>中のベースバックアップ処理を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-05-29 [571bba2]
+    -->
+    <para>
+     <command>watchdog_setup</command>のスクリプトを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <command>watchdog_setup</command>によって生成されるshutdownallスクリプトは、全体シャットダウンでは
+     不必要なフェイルオーバ処理を引き起こしていました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+  <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-06-21 [72ad7cb]
+    -->
+    <para>
+     031.connection_life_timeの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-3-6-26">
  <!--
  <title>Release 3.6.26</title>
