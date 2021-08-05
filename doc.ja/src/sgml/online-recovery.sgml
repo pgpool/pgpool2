@@ -418,6 +418,42 @@
        リカバリされるノードのポート番号（<productname>Pgpool-II</productname> 4.1以降）
       </para>
      </listitem>
+     <listitem>
+      <para>
+	<!--
+       Hostname of the main (primary) node
+       (<productname>Pgpool-II</productname> 4.3 or after)
+	-->
+	main (primary)ノードのホスト名（<productname>Pgpool-II</productname> 4.3以降)
+      </para>
+      <para>
+	<!--
+       Before the hostname of the main (primary) node was obtained by
+       using <command>hostname</command> command. This is mostly ok
+       since the script runs on the main (primary) node
+       anyway. However in some systems the hostname obtained
+       by <command>hostname</command> command is different from the
+       hostname defined in backend_hostname configuration parameter.
+       This could cause a trouble
+       in <xref linkend="guc-detach-false-primary"> because it checks
+       connectivity between primary and standby node by
+       using <literal>host</literal> parameter
+       in <varname>primary_conninfo</varname> parameter, which is
+       generated
+       by <varname>recovery_1st_stage_command</varname>. Thus it is
+       strongly recommended to use this parameter instead of
+       using <command>hostname</command> command to obtain the
+       hostname of the primary node
+       in <varname>recovery_1st_stage_command</varname>.
+       -->
+       以前はmain (primary)ノードのホスト名は<command>hostname</command>コマンドを使って取得されていました。
+       スクリプトがmain (primary)ノードで実行されるため、これはほとんどの場合問題になりません。
+       しかし、ある種のシステムでは、<command>hostname</command>コマンドを使って取得したホスト名とbackend_hostname設定パラメータが一致しません。
+       これは<xref linkend="guc-detach-false-primary">で問題になります。
+       なぜなら、<varname>recovery_1st_stage_command</varname>が生成する<varname>primary_conninfo</varname> の<literal>host</literal>パラメータを使ってプライマリとスタンバイの接続性を確認するからです。
+       ですから、<varname>recovery_1st_stage_command</varname>においては、<command>hostname</command>コマンドではなく、このパラメータを使ってプライマリノードのホスト名を得るようにすることを強くおすすめします。
+      </para>
+     </listitem>
     </itemizedlist>
 
     <note>
@@ -522,6 +558,15 @@
        Port number to be recovered (<productname>Pgpool-II</productname> 4.1 or after)
        -->
        リカバリされるノードのポート番号（<productname>Pgpool-II</productname> 4.1以降）
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+	<!--
+       Hostname of the main (primary) node
+       (<productname>Pgpool-II</productname> 4.3 or after)
+	-->
+	main (primary)ノードのホスト名（<productname>Pgpool-II</productname> 4.3以降)
       </para>
      </listitem>
     </itemizedlist>

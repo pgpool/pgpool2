@@ -294,8 +294,10 @@
      <listitem>
       <para>
        Hostname of the main (primary) node
-       (<productname>Pgpool-II</productname> 4.3 or after).  Before
-       the hostname of the main (primary) node was obtained by
+       (<productname>Pgpool-II</productname> 4.3 or after)
+      </para>
+      <para>
+       Before the hostname of the main (primary) node was obtained by
        using <command>hostname</command> command. This is mostly ok
        since the script runs on the main (primary) node
        anyway. However in some systems the hostname obtained
@@ -399,6 +401,12 @@
      <listitem>
       <para>
        Port number to be recovered (<productname>Pgpool-II</productname> 4.1 or after)
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Hostname of the main (primary) node
+       (<productname>Pgpool-II</productname> 4.3 or after)
       </para>
      </listitem>
     </itemizedlist>
