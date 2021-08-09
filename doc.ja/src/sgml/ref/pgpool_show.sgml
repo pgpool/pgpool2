@@ -77,6 +77,12 @@ PostgreSQL documentation
       <productname>Pgpool-II</productname> の設定パラメータ名です。指定可能なパラメータ名は
       <xref linkend="runtime-config"> をご参照ください。
      </para>
+     <note>
+      <para>
+       大文字を含むパラメータ名（例えば、<xref linkend="GUC-DELEGATE-IP">）の場合には、
+       パラメータ名をダブルクォートで囲んで実行してください。
+      </para>
+     </note>
     </listitem>
    </varlistentry>
 

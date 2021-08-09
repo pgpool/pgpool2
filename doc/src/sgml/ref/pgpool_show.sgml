@@ -54,6 +54,12 @@ PostgreSQL documentation
       The name of a <productname>Pgpool-II</productname> configuration parameter.
       Available parameters are documented in <xref linkend="runtime-config">
      </para>
+     <note>
+      <para>
+       If the parameter contains uppercase letters (e.g. <xref linkend="GUC-DELEGATE-IP">),
+       the parameter name must be enclosed in double quotes.
+      </para>
+     </note>
     </listitem>
    </varlistentry>
 
