@@ -295,6 +295,8 @@ fi
 %{pghome}/share/extension/pgpool_recovery--1.1--1.2.sql
 %{pghome}/share/extension/pgpool_recovery--1.3.sql
 %{pghome}/share/extension/pgpool_recovery--1.2--1.3.sql
+%{pghome}/share/extension/pgpool_recovery--1.4.sql
+%{pghome}/share/extension/pgpool_recovery--1.3--1.4.sql
 %{pghome}/share/extension/pgpool_recovery.control
 %{pghome}/lib/pgpool-recovery.so
 %{pghome}/share/extension/pgpool_adm--1.0.sql
