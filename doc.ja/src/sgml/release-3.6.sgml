@@ -55,7 +55,7 @@
     </para>
     <para>
      メインプロセスがwatchdogプロセスから通知された処理を実行中に、watchdogプロセスが新しいメッセージを
-     メインプロセスに通知したとき、新しいメッセージが処理されるまに大幅な遅延が発生していました。
+     メインプロセスに通知したとき、新しいメッセージが処理されるまでに大幅な遅延が発生していました。
      Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-May/003901.html">[pgpool-hackers: 3900]</ulink>
     </para>
    </listitem>
