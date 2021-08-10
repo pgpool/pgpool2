@@ -180,7 +180,10 @@ PGAC_PROG_CC_VAR_OPT(NOT_THE_CFLAGS, [-Wformat-truncation])
 if test -n "$NOT_THE_CFLAGS"; then
   CFLAGS="$CFLAGS -Wno-format-truncation"
 fi
-
+PGAC_PROG_CC_VAR_OPT(NOT_THE_CFLAGS, [-Wstringop-truncation])
+if test -n "$NOT_THE_CFLAGS"; then
+  CFLAGS="$CFLAGS -Wno-stringop-truncation"
+fi
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE",
                    [Name of package])
 

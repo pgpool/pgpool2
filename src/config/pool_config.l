@@ -127,6 +127,8 @@ int add_regex_pattern(const char *type, char *s)
 {
 	int regex_flags = REG_NOSUB;
 	RegPattern currItem;
+	int	pattern_len;
+
 	/* force case insensitive pattern matching */
 	regex_flags |= REG_ICASE;
 	/* Add extended regex search */
@@ -153,16 +155,18 @@ int add_regex_pattern(const char *type, char *s)
 	currItem.flag = regex_flags;
 
 	/* Fill pattern array */
-	currItem.pattern = palloc(sizeof(char)*(strlen(s)+3));
+	pattern_len = sizeof(char)*(strlen(s)+3);
+	currItem.pattern = palloc(pattern_len);
+
 	/* Force exact matching of function name with ^ and $ on the regex
 	   if required to prevent partial matching. It also allow backward
 	   compatibility.
 	 */
 	if (strncmp(s, "^", 1) != 0) {
 		strncpy(currItem.pattern, "^", 2);
-		strncat(currItem.pattern, s, strlen(s) + 1);
+		strncat(currItem.pattern, s, pattern_len - 2);
 	} else {
-		strncpy(currItem.pattern, s, strlen(s) + 1);
+		strncpy(currItem.pattern, s, pattern_len);
 	}
 	if (s[strlen(s)-1] != '$') {
 		strncat(currItem.pattern, "$", 2);
