@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -4025,15 +4025,10 @@ start_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * ba
 	{
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
-			if (VALID_BACKEND(i) && !INTERNAL_TRANSACTION_STARTED(backend, i) &&
+			if (VALID_BACKEND_RAW(i) && CONNECTION_SLOT(backend, i) &&
+				!INTERNAL_TRANSACTION_STARTED(backend, i) &&
 				TSTATE(backend, i) == 'I')
 			{
-				if (!commit_request_done && pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
-				{
-					si_commit_request();
-					commit_request_done = true;
-				}
-
 				per_node_statement_log(backend, i, "BEGIN");
 
 				if (do_command(frontend, CONNECTION(backend, i), "BEGIN", MAJOR(backend),
@@ -4074,7 +4069,6 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
 			if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i) &&
-				TSTATE(backend, i) != 'I' &&
 				INTERNAL_TRANSACTION_STARTED(backend, i))
 			{
 				if (MAJOR(backend) == PROTO_MAJOR_V3)
@@ -4109,8 +4103,7 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 		}
 
 		/* Commit on main */
-		if (TSTATE(backend, MAIN_NODE_ID) != 'I' &&
-			INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID))
+		if (INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID))
 		{
 			if (MAJOR(backend) == PROTO_MAJOR_V3)
 			{

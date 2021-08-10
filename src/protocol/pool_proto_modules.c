@@ -100,7 +100,7 @@ static bool
 			process_pg_terminate_backend_func(POOL_QUERY_CONTEXT * query_context);
 static void pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION * frontend,
 											 POOL_CONNECTION_POOL * backend);
-static void si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node *node);
+static void si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node *node, bool tstate_check);
 
 /*
  * This is the workhorse of processing the pg_terminate_backend function to
@@ -513,6 +513,14 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		}
 
 		/*
+		 * If we are in SI mode, start an internal transaction if needed.
+		 */
+		if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
+		{
+			start_internal_transaction(frontend, backend, node);
+		}
+
+		/*
 		 * From now on it is possible that query is actually sent to backend.
 		 * So we need to acquire snapshot while there's no committing backend
 		 * in snapshot isolation mode except while processing reset queries.
@@ -521,7 +529,8 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		 * because it might cause rw-conflict, which in turn causes a
 		 * deadlock.
 		 */
-		si_get_snapshot(frontend, backend, node);
+		si_get_snapshot(frontend, backend, node,
+						!INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID));
 
 		/*
 		 * pg_terminate function needs special handling, process it if the
@@ -1258,9 +1267,18 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		}
 
 		/*
+		 * If we are in SI mode, start an internal transaction if needed.
+		 */
+		if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
+		{
+			start_internal_transaction(frontend, backend, node);
+		}
+
+		/*
 		 * Get snapshot if needed.
 		 */
-		si_get_snapshot(frontend, backend, node);
+		si_get_snapshot(frontend, backend, node,
+						!INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID));
 
 		/*
 		 * Decide where to send query
@@ -2035,6 +2053,17 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 	{
 		bool internal_transaction_started = INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID);
 
+		/*
+		 * If we are running in snapshot isolation mode and started an
+		 * internal transaction, wait until snapshot is prepared.
+		 */
+		if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION &&
+			internal_transaction_started)
+		{
+			si_commit_request();
+		}
+
+		/* close an internal transaction */
 		if (end_internal_transaction(frontend, backend) != POOL_CONTINUE)
 			return POOL_END;
 
@@ -4379,9 +4408,11 @@ pool_read_int(POOL_CONNECTION_POOL * cp)
 
 /*
  * Acquire snapshot in snapshot isolation mode.
+ * If tstate_check is true, check the transaction state is 'T' (idle in transaction).
+ * In case of starting an internal transaction, this should be false.
  */
 static void
-si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node * node)
+si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node * node, bool tstate_check)
 {
 	POOL_SESSION_CONTEXT *session_context;
 
@@ -4399,7 +4430,7 @@ si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node
 	 * deadlock.
 	 */
 	if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION &&
-		TSTATE(backend, MAIN_NODE_ID) == 'T' &&
+		(!tstate_check || (tstate_check && TSTATE(backend, MAIN_NODE_ID) == 'T')) &&
 		si_snapshot_acquire_command(node) &&
 		!si_snapshot_prepared() &&
 		frontend && frontend->no_forward == 0)
