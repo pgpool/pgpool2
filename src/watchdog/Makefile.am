@@ -1,5 +1,6 @@
 top_builddir = ../..
 AM_CPPFLAGS = -D_GNU_SOURCE -I @PGSQL_INCLUDE_DIR@
+ARFLAGS = cr
 WATCHDOG_DEBUG=0
 noinst_LIBRARIES = lib-watchdog.a
 
