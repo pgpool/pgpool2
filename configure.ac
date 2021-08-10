@@ -17,6 +17,8 @@ dnl Disallow to rebuild configure.
 AM_MAINTAINER_MODE(enable)
 
 # AC_PROG_RANLIB
+AR_FLAGS="cr"
+AC_SUBST(AR_FLAGS)
 AC_PROG_LIBTOOL
 
 AM_PROG_LEX
