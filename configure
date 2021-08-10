@@ -700,6 +700,7 @@ build_vendor
 build_cpu
 build
 LIBTOOL
+AR_FLAGS
 MAINT
 MAINTAINER_MODE_FALSE
 MAINTAINER_MODE_TRUE
@@ -3946,6 +3947,8 @@ fi
 
 
 # AC_PROG_RANLIB
+AR_FLAGS="cr"
+
 case `pwd` in
   *\ * | *\	*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Libtool does not cope well with whitespace in \`pwd\`" >&5
