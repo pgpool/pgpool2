@@ -4414,13 +4414,13 @@ si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node
 	 */
 	if (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION &&
 		(!tstate_check || (tstate_check && TSTATE(backend, MAIN_NODE_ID) == 'T')) &&
-		si_snapshot_aquire_command(node) &&
+		si_snapshot_acquire_command(node) &&
 		!si_snapshot_prepared() &&
 		frontend && frontend->no_forward == 0)
 	{
 		int	i;
 
-		si_aquire_snapshot();
+		si_acquire_snapshot();
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
@@ -4445,6 +4445,6 @@ si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node
 			per_node_statement_log(backend, i, si_query);
 		}
 
-		si_snapshot_aquired();
+		si_snapshot_acquired();
 	}
 }
