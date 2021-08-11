@@ -4016,7 +4016,6 @@ POOL_STATUS
 start_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node *node)
 {
 	int			i;
-	bool		commit_request_done = false;
 
 	/*
 	 * If we are not in a transaction block, start a new transaction
