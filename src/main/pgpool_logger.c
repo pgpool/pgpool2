@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -365,6 +365,9 @@ SysLoggerMain(int argc, char *argv[])
 		 * wait no more than INT_MAX msec, and try again.
 		 */
 		timeout.tv_sec = 0;
+		/* Reset usec everytime before calling sellect */
+		timeout.tv_usec = 0;
+
 		if (pool_config->log_rotation_age > 0 && !rotation_disabled)
 		{
 			pg_time_t	delay;
