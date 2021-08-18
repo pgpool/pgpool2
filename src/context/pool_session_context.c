@@ -92,7 +92,7 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 				(errmsg("failed to get process info for current process")));
 
 	/* Choose load balancing node if necessary */
-	if (pool_config->load_balance_mode)
+	if (!RAW_MODE && pool_config->load_balance_mode)
 	{
 		node_id = select_load_balancing_node();
 	}
