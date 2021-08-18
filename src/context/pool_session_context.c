@@ -98,7 +98,7 @@ void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	pool_reset_preferred_master_node_id();
 
 	/* Choose load balancing node if necessary */
-	if (pool_config->load_balance_mode)
+	if (!RAW_MODE && pool_config->load_balance_mode)
 	{
 		node_id = select_load_balancing_node();
 	}
