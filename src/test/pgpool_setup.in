@@ -187,6 +187,12 @@ cluster1=$mydir/data1
 date >> $log
 echo "failed_node_id $failed_node_id failed_host_name $failed_host_name failed_port $failed_port failed_db_cluster $failed_db_cluster new_master_id $new_master_id old_master_id $old_master_id new_master_host_name $new_master_host_name old_primary_node_id $old_primary_node_id new_master_port_number $new_master_port_number new_master_db_cluster $new_master_db_cluster" >> $log
 
+# check if all node is down
+if [ $new_master_id = "-1" ];then
+    echo "no new master node is available" >>$log
+    exit 0
+fi
+
 if [ a"$failed_node_id" = a"$old_primary_node_id" ];then	# master failed
 ! 	new_primary_db_cluster=${mydir}/data"$new_master_id"
 	echo $pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
