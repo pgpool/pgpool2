@@ -193,6 +193,12 @@ PGPOOL_BIN=__PGPOOL_INSTALL_DIR__/bin
 date >> $log
 echo "failed_node_id $failed_node_id failed_host_name $failed_host_name failed_port $failed_port failed_db_cluster $failed_db_cluster new_main_id $new_main_id old_main_id $old_main_id new_main_host_name $new_main_host_name old_primary_node_id $old_primary_node_id new_main_port_number $new_main_port_number new_main_db_cluster $new_main_db_cluster" >> $log
 
+# check if all node is down
+if [ $new_main_id = "-1" ];then
+    echo "no new main node is available" >>$log
+    exit 0
+fi
+
 if [ a"$failed_node_id" = a"$old_primary_node_id" ];then	# main node failed
 ! 	new_primary_db_cluster=${mydir}/data"$new_main_id"
 	echo $pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
