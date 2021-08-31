@@ -146,6 +146,25 @@
    </para>
   </sect2>
 
+  <sect2 id="config-setting-includes">
+   <title>Managing Configuration File Contents</title>
+
+   <para>
+    <productname>Pgpool-II</productname> provides a feature for breaking down
+    <filename>pgpool.conf</filename> files into sub-files. This feature is
+    especially useful when managing multiple servers or dividing by features.
+    <literal>include</literal> directive can be used like this:
+
+    <programlisting>
+     include = 'filename'
+    </programlisting>
+
+    If the file name is not an absolute path, it is taken as relative
+    to the directory containing the referencing configuration file.
+    Inclusions can be nested.
+   </para>
+  </sect2>
+
   <sect2 id="config-setting-sql-command-interaction">
    <title>Parameter Interaction via SQL Clients</title>
 

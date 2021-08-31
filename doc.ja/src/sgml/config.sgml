@@ -229,6 +229,34 @@
    </para>
   </sect2>
 
+  <sect2 id="config-setting-includes">
+   <!--
+   <title>Managing Configuration File Contents</title>
+   -->
+   <title>設定ファイルの内容の管理</title>
+
+   <para>
+    <!--
+    <productname>Pgpool-II</productname> provides a feature for breaking down
+    <filename>pgpool.conf</filename> files into sub-files. This feature is
+    especially useful when managing multiple servers or dividing by features.
+    <literal>include</literal> directive can be used like this:
+    -->
+    <productname>Pgpool-II</productname>は<filename>pgpool.conf</filename>ファイルを複数のファイルに分割して記述する方法を提供しています。
+    機能やサーバ固有のパラメータの設定を分割したい場合に有用です。
+    次のように<literal>include</literal>ディレクティブを追加します。
+    <programlisting>
+     include = 'filename'
+    </programlisting>
+    <!--
+    If the file name is not an absolute path, it is taken as relative
+    to the directory containing the referencing configuration file.
+    Inclusions can be nested.
+    -->
+    ファイル名が絶対パスでない場合、参照する設定ファイルを含むディレクトリからの相対パスであると受け取られます。includeコマンドは入れ子にすることができます。
+   </para>
+  </sect2>
+
   <sect2 id="config-setting-sql-command-interaction">
    <!--
    <title>Parameter Interaction via SQL Clients</title>

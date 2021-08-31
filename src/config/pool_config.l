@@ -60,8 +60,8 @@ typedef enum {
 
 static char *extract_string(char *value, POOL_TOKEN token);
 static void FreeConfigVariable(ConfigVariable *item);
-static bool ParseConfigFile( const char *config_file, int elevel,
-			ConfigVariable **head_p, ConfigVariable **tail_p);
+static bool ParseConfigFile(const char *config_file, const char *calling_file,
+				int depth, int elevel, ConfigVariable **head_p, ConfigVariable **tail_p);
 
 %}
 
@@ -311,6 +311,9 @@ FreeConfigVariables(ConfigVariable *list)
  *
  * Input parameters:
  *  config_file: absolute or relative path name of the configuration file
+ *  calling_file: absolute path of file containing the "include" directive,
+ *    or NULL at outer level (config_file must be absolute at outer level)
+ *  depth: recursion depth (used only to prevent infinite recursion)
  *  elevel: error logging level to use
  * Input/Output parameters:
  *  head_p, tail_p: head and tail of linked list of name/value pairs
@@ -324,33 +327,65 @@ FreeConfigVariables(ConfigVariable *list)
  *
  */
 static bool
-ParseConfigFile(const char *config_file, int elevel,
-				ConfigVariable **head_p, ConfigVariable **tail_p)
+ParseConfigFile(const char *config_file, const char *calling_file,
+				int depth, int elevel, ConfigVariable **head_p,
+				ConfigVariable **tail_p)
 {
 
 	FILE *fd;
+	YY_BUFFER_STATE lex_buffer;
 	int token;
 	char *key;
 	char *val;
 	ConfigVariable *item;
 	char buf[POOLMAXPATHLEN + 1];
+	char *config_filepath;
 
-	*head_p = NULL;
+	/*
+	 * Reject too-deep include nesting depth.
+	 */
+	if (depth > 10)
+		ereport(elevel,
+				(errmsg("could not open configuration file \"%s\": maximum nesting depth exceeded",
+								config_file)));
 
-	/* get directory path of config file pgpool.conf */
-	strlcpy(buf, config_file, sizeof(buf));
-	get_parent_directory(buf);
-	config_file_dir = buf;
+	if (depth == 0)
+	{
+		/* get directory path of config file pgpool.conf */
+		strlcpy(buf, config_file, sizeof(buf));
+		get_parent_directory(buf);
+		config_file_dir = buf;
+	}
+
+
+	if (calling_file == NULL || is_absolute_path(config_file))
+	{
+		/* absolute path is taken as-is */
+		config_filepath = pstrdup(config_file);
+	}
+	else
+	{
+		/* relative path is relative to dir of calling file */
+		config_filepath = (char *) palloc(strlen(config_file) + 1 +
+									   strlen(calling_file) + 1);
+		strcpy(config_filepath, calling_file);
+		get_parent_directory(config_filepath);
+		join_path_components(config_filepath, config_filepath, config_file);
+		canonicalize_path(config_filepath);
+	}
 
 	/* open config file */
-	fd = fopen(config_file, "r");
+	fd = fopen(config_filepath, "r");
 	if (!fd)
 	{
 		ereport(WARNING,
-			(errmsg("could not open configuration file: \"%s\"",config_file),
+			(errmsg("could not open configuration file: \"%s\"",config_filepath),
 				errdetail("using default configuration parameter values")));
 		return false;
 	}
+
+	lex_buffer = yy_create_buffer(fd, YY_BUF_SIZE);
+	yy_switch_to_buffer(lex_buffer);
 
 	yyin = fd;
 	Lineno = 1;
@@ -384,17 +419,36 @@ ParseConfigFile(const char *config_file, int elevel,
 		ereport(DEBUG5,
 			(errmsg("key: \"%s\" value: \"%s\" kind: %d",key, val, token)));
 
-		/* Add this to the list */
-		item = palloc(sizeof(ConfigVariable));
-		item->name = key;
-		item->value = val;
-		item->sourceline = Lineno;
-		item->next = NULL;
-		if (*head_p == NULL)
-			*head_p = item;
+		if (strcmp(key, "include") == 0)
+		{
+			/*
+			 * An include directive isn't a variable and should be processed
+			 * immediately.
+			 */
+			unsigned save_Lineno = Lineno;
+
+			if (!ParseConfigFile(val, config_filepath, depth + 1, elevel, head_p, tail_p))
+			{
+				goto parse_error;
+			}
+			yy_switch_to_buffer(lex_buffer);
+			Lineno = save_Lineno;
+		}
 		else
-			(*tail_p)->next = item;
-		*tail_p = item;
+		{
+			/* Add this to the list */
+			item = palloc(sizeof(ConfigVariable));
+			item->name = key;
+			item->value = val;
+			item->sourceline = Lineno;
+			item->next = NULL;
+
+			if (*head_p == NULL)
+				*head_p = item;
+			else
+				(*tail_p)->next = item;
+			*tail_p = item;
+		}
 	}
 
 	fclose(fd);
@@ -407,7 +461,7 @@ parse_error:
 	*head_p = NULL;
 	*tail_p = NULL;
 	ereport(elevel,
-		(errmsg("syntax error in configuration file \"%s\"",config_file),
+		(errmsg("syntax error in configuration file \"%s\"", config_filepath),
 			errdetail("parse error at line %d '%s' token = %d", Lineno, yytext,token)));
 
 	return false;
@@ -423,7 +477,7 @@ bool pool_get_config(const char *config_file, ConfigContext context)
 	bool res;
 	int elevel = (context == CFGCXT_INIT)?FATAL:WARNING;
 
-	res = ParseConfigFile(config_file, elevel, &head_p, &tail_p);
+	res = ParseConfigFile(config_file, NULL, 0, elevel, &head_p, &tail_p);
 	if (res == false || head_p == NULL)
 		return false;
 
