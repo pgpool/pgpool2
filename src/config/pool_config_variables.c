@@ -2089,7 +2089,7 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&g_pool_config.log_rotation_age,
 		1440,/*1 day*/
-		10, INT_MAX,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
 	{
