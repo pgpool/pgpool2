@@ -4311,8 +4311,7 @@ WdSlotEmptyCheckFunc(int index)
 static bool
 WdIFSlotEmptyCheckFunc(int index)
 {
-
-	return (index >= g_pool_config.num_hb_dest_if);
+	return (g_pool_config.hb_ifs[index].dest_port  == 0);
 }
 
 static const char *
