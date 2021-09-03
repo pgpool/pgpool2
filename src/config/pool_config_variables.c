@@ -1709,7 +1709,7 @@ static struct config_string_array ConfigureNamesStringArray[] =
 	},
 
 	{
-		{"hostname", CFGCXT_RELOAD, WATCHDOG_LIFECHECK,
+		{"hostname", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Hostname of pgpool node for watchdog connection.",
 			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_WATCHDOG_NUM
 		},
@@ -2260,7 +2260,7 @@ static struct config_grouped_array_var ConfigureVarGroups[] =
 		NULL
 	},
 	{
-		{"other_pgpool", CFGCXT_BOOT, WATCHDOG_CONFIG,
+		{"watchdog", CFGCXT_BOOT, WATCHDOG_CONFIG,
 			"watchdog nodes configuration group.",
 			CONFIG_VAR_TYPE_GROUP, false, 0
 		},
