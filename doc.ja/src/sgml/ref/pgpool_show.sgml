@@ -111,13 +111,13 @@ PostgreSQL documentation
       </varlistentry>
 
       <varlistentry>
-       <term><literal>other_pgpool</literal></term>
+       <term><literal>watchdog</literal></term>
        <listitem>
 	<para>
 	 <!--
 	 Configuration group of all watchdog node config parameters.
 	 -->
-	 すべての watchdog ノードのパラメータの設定値。
+	 すべてのwatchdogノードのパラメータの設定値。
 	</para>
        </listitem>
       </varlistentry>
@@ -127,9 +127,9 @@ PostgreSQL documentation
        <listitem>
 	<para>
 	 <!--
-	 configuration group of all watchdog heartbeat node config parameters.
+	 configuration group of all watchdog heartbeat config parameters.
 	 -->
-	 すべての watchdog heartbeat ノードのパラメータの設定値。
+	 すべてのwatchdog heartbeatパラメータの設定値。
 	</para>
        </listitem>
       </varlistentry>
@@ -177,11 +177,11 @@ PostgreSQL documentation
    パラメータ <xref linkend="guc-port"> の現在の設定値を表示:
 
     <programlisting>
-     PGPOOL SHOW port;
-     port
-     ------
-     9999
-     (1 row)
+PGPOOL SHOW port;
+port
+------
+9999
+(1 row)
     </programlisting>
   </para>
 
@@ -191,11 +191,11 @@ PostgreSQL documentation
    -->
    パラメータ <xref linkend="guc-write-function-list"> の現在の設定値を表示:
     <programlisting>
-     PGPOOL SHOW write_function_list;
-     write_function_list
-     ---------------------
-     nextval,setval
-     (1 row)
+PGPOOL SHOW write_function_list;
+write_function_list
+---------------------
+nextval,setval
+(1 row)
     </programlisting>
   </para>
 
@@ -205,20 +205,20 @@ PostgreSQL documentation
    -->
    バックエンドグループのすべてのパラメータの設定値を表示する:
    <programlisting>
-    PGPOOL SHOW backend;
-    item                     |          value          |              description
-    -------------------------+-------------------------+-----------------------------------------------------------
-    backend_hostname0        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
-    backend_port0            | 5434                    | port number of PostgreSQL backend.
-    backend_weight0          | 0                       | load balance weight of backend.
-    backend_data_directory0  | /var/lib/pgsql/data     | data directory of the backend.
-    backend_flag0            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
-    backend_hostname1        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
-    backend_port1            | 5432                    | port number of PostgreSQL backend.
-    backend_weight1          | 1                       | load balance weight of backend.
-    backend_data_directory1  | /home/work/installed/pg | data directory of the backend.
-    backend_flag1            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
-    (10 rows)
+PGPOOL SHOW backend;
+item                     |          value          |              description
+-------------------------+-------------------------+-----------------------------------------------------------
+backend_hostname0        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+backend_port0            | 5434                    | port number of PostgreSQL backend.
+backend_weight0          | 0                       | load balance weight of backend.
+backend_data_directory0  | /var/lib/pgsql/data     | data directory of the backend.
+backend_flag0            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+backend_hostname1        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+backend_port1            | 5432                    | port number of PostgreSQL backend.
+backend_weight1          | 1                       | load balance weight of backend.
+backend_data_directory1  | /home/work/installed/pg | data directory of the backend.
+backend_flag1            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+(10 rows)
    </programlisting></para>
 
   <para>
@@ -227,26 +227,25 @@ PostgreSQL documentation
    -->
    全設定を表示:
    <programlisting>
-    PGPOOL SHOW ALL;
-    item                     |          value          |              description
-    -------------------------+-------------------------+-----------------------------------------------------------
-    backend_hostname0        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
-    backend_port0            | 5434                    | port number of PostgreSQL backend.
-    backend_weight0          | 0                       | load balance weight of backend.
-    backend_data_directory0  | /var/lib/pgsql/data     | data directory of the backend.
-    backend_flag0            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
-    backend_hostname1        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
-    backend_port1            | 5432                    | port number of PostgreSQL backend.
-    backend_weight1          | 1                       | load balance weight of backend.
-    backend_data_directory1  | /home/work/installed/pg | data directory of the backend.
-    backend_flag1            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
-    other_pgpool_hostname0   | localhost               | Hostname of other pgpool node for watchdog connection.
-    .
-    .
-    .
-    ssl                      | off                     | Enables SSL support for frontend and backend connections
-    (138 rows)
-
+PGPOOL SHOW ALL;
+item                     |          value          |              description
+-------------------------+-------------------------+-----------------------------------------------------------
+backend_hostname0        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+backend_port0            | 5434                    | port number of PostgreSQL backend.
+backend_weight0          | 0                       | load balance weight of backend.
+backend_data_directory0  | /var/lib/pgsql/data     | data directory of the backend.
+backend_flag0            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+backend_hostname1        | 127.0.0.1               | hostname or IP address of PostgreSQL backend.
+backend_port1            | 5432                    | port number of PostgreSQL backend.
+backend_weight1          | 1                       | load balance weight of backend.
+backend_data_directory1  | /home/work/installed/pg | data directory of the backend.
+backend_flag1            | ALLOW_TO_FAILOVER       | Controls various backend behavior.
+hostname0                | localhost               | Hostname of pgpool node for watchdog connection.
+.
+.
+.
+ssl                      | off                     | Enables SSL support for frontend and backend connections
+(138 rows)
    </programlisting></para>
  </refsect1>
 
