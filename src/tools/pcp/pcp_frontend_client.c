@@ -701,14 +701,16 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 	int			array_size = pcp_result_slot_count(pcpResInfo);
 
 	const char *titles[] = {
-		"Database", "Username", "Start time", "Creation time", 
-		"Major", "Minor", "Counter", "Backend PID",
-		"Connected", "PID", "Backend ID"
+		"Database", "Username", "Start time", "Client connection count",
+		"Major", "Minor", "Backend connection time", "Client connection time",
+		"Client idle duration", "Client disconnection time", "Pool Counter", "Backend PID",
+		"Connected", "PID", "Backend ID", "Status"
 	};
 	const char *types[] = {
 		"s", "s", "s", "s",
 		"s", "s", "s", "s",
-		"s", "s", "s"
+		"s", "s", "s", "s",
+		"s", "s", "s", "s"
 	};
 
 
@@ -716,7 +718,7 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 		format = format_titles(titles, types, sizeof(titles)/sizeof(char *));
 	else
 	{
-		format = "%s %s %s %s %s %s %s %s %s %s %s\n";
+		format = "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n";
 	}
 
 	for (i = 0; i < array_size; i++)
@@ -732,15 +734,20 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 		printf(format,
 			   pools->database,
 			   pools->username,
-			   pools->start_time,
-			   pools->create_time,
+			   pools->process_start_time,
+			   pools->client_connection_count,
 			   pools->pool_majorversion,
 			   pools->pool_minorversion,
+			   pools->backend_connection_time,
+			   pools->client_connection_time,
+			   pools->client_idle_duration,
+			   pools->client_disconnection_time,
 			   pools->pool_counter,
 			   pools->pool_backendpid,
 			   pools->pool_connected,
 			   pools->pool_pid,
-			   pools->backend_id);
+			   pools->backend_id,
+			   pools->status);
 	}
 	if (printed == false)
 		printf("No process information available\n\n");

@@ -238,6 +238,7 @@ pool_process_query(POOL_CONNECTION * frontend,
 			bool		cont = true;
 
 			status = read_packets_and_process(frontend, backend, reset_request, &state, &num_fields, &cont);
+			backend->info->client_idle_duration = 0;
 			if (status != POOL_CONTINUE)
 				return status;
 			else if (!cont)		/* Detected admin shutdown */
@@ -289,6 +290,7 @@ pool_process_query(POOL_CONNECTION * frontend,
 					bool		cont = true;
 
 					status = read_packets_and_process(frontend, backend, reset_request, &state, &num_fields, &cont);
+					backend->info->client_idle_duration = 0;
 					if (status != POOL_CONTINUE)
 						return status;
 					else if (!cont) /* Detected admin shutdown */
@@ -3862,6 +3864,7 @@ query_ps_status(char *query, POOL_CONNECTION_POOL * backend)
 	psbuf[i] = '\0';
 
 	set_ps_display(psbuf, false);
+	set_process_status(COMMAND_EXECUTE);
 }
 
 /* compare function for bsearch() */
@@ -4751,6 +4754,7 @@ SELECT_RETRY:
 	/* select timeout */
 	if (fds == 0)
 	{
+		backend->info->client_idle_duration++;
 		if (*InRecovery == RECOVERY_INIT && pool_config->client_idle_limit > 0)
 		{
 			idle_count++;

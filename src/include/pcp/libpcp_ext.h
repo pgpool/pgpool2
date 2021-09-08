@@ -118,6 +118,14 @@ typedef struct
 	BackendInfo backend_info[MAX_NUM_BACKENDS];
 }			BackendDesc;
 
+typedef enum
+{
+	WAIT_FOR_CONNECT,
+	COMMAND_EXECUTE,
+	IDLE,
+	IDLE_IN_TRANS
+}			ProcessStatus;
+
 /*
  * Connection pool information. Placed on shared memory area.
  */
@@ -132,6 +140,9 @@ typedef struct
 	int			key;			/* cancel key */
 	int			counter;		/* used counter */
 	time_t		create_time;	/* connection creation time */
+	time_t		client_connection_time;	/* client connection time */
+	time_t		client_disconnection_time;	/* client last disconnection time */
+	int			client_idle_duration;	/* client idle duration time (s) */
 	int			load_balancing_node;	/* load balancing node */
 	char		connected;		/* True if frontend connected. Please note
 								 * that we use "char" instead of "bool". Since
@@ -160,6 +171,8 @@ typedef struct
 	time_t		start_time;		/* fork() time */
 	ConnectionInfo *connection_info;	/* head of the connection info for
 										 * this process */
+	int			client_connection_count;	/* how many times clients used this process */
+	ProcessStatus	status;
 	char		need_to_restart;	/* If non 0, exit this child process as
 									 * soon as current session ends. Typical
 									 * case this flag being set is failback a
@@ -181,7 +194,7 @@ typedef struct
 #define POOLCONFIG_MAXDATELEN 128
 #define POOLCONFIG_MAXCOUNTLEN 16
 #define POOLCONFIG_MAXLONGCOUNTLEN 20
-
+#define POOLCONFIG_MAXPROCESSSTATUSLEN 20
 /* config report struct*/
 typedef struct
 {
@@ -213,28 +226,35 @@ typedef struct
 typedef struct
 {
 	char		pool_pid[POOLCONFIG_MAXCOUNTLEN + 1];
-	char		start_time[POOLCONFIG_MAXDATELEN + 1];
+	char		process_start_time[POOLCONFIG_MAXDATELEN + 1];
+	char		client_connection_count[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		database[POOLCONFIG_MAXIDENTLEN + 1];
 	char		username[POOLCONFIG_MAXIDENTLEN + 1];
-	char		create_time[POOLCONFIG_MAXDATELEN + 1];
+	char		backend_connection_time[POOLCONFIG_MAXDATELEN + 1];
 	char		pool_counter[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		status[POOLCONFIG_MAXPROCESSSTATUSLEN + 1];
 }			POOL_REPORT_PROCESSES;
 
 /* pools reporting struct */
 typedef struct
 {
 	char		pool_pid[POOLCONFIG_MAXCOUNTLEN + 1];
-	char		start_time[POOLCONFIG_MAXDATELEN + 1];
+	char		process_start_time[POOLCONFIG_MAXDATELEN + 1];
+	char		client_connection_count[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		pool_id[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		backend_id[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		database[POOLCONFIG_MAXIDENTLEN + 1];
 	char		username[POOLCONFIG_MAXIDENTLEN + 1];
-	char		create_time[POOLCONFIG_MAXDATELEN + 1];
+	char		backend_connection_time[POOLCONFIG_MAXDATELEN + 1];
+	char		client_connection_time[POOLCONFIG_MAXDATELEN + 1];
+	char		client_disconnection_time[POOLCONFIG_MAXDATELEN + 1];
+	char		client_idle_duration[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		pool_majorversion[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		pool_minorversion[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		pool_counter[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		pool_backendpid[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		pool_connected[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		status[POOLCONFIG_MAXPROCESSSTATUSLEN + 1];
 }			POOL_REPORT_POOLS;
 
 /* version struct */

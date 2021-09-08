@@ -399,10 +399,16 @@ pool_ps_idle_display(POOL_CONNECTION_POOL * backend)
 
 	sp = MAIN_CONNECTION(backend)->sp;
 	if (MAIN(backend)->tstate == 'T')
+	{
 		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle in transaction",
 				 sp->user, sp->database, remote_ps_data);
+		set_process_status(IDLE_IN_TRANS);
+	}
 	else
+	{
 		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
 				 sp->user, sp->database, remote_ps_data);
+		set_process_status(IDLE);
+	}
 	set_ps_display(psbuf, false);
 }

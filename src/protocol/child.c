@@ -162,6 +162,8 @@ do_child(int *fds)
 	ereport(DEBUG2,
 			(errmsg("I am Pgpool Child process with pid: %d", getpid())));
 
+	ProcessInfo* proc_info = pool_get_process_info(getpid());
+
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
 
@@ -283,6 +285,8 @@ do_child(int *fds)
 			/* increment queries counter if necessary */
 			if (pool_config->child_max_connections > 0)
 				connections_count++;
+
+			proc_info->client_connection_count++;
 
 			/* check if maximum connections count for this child reached */
 			if ((pool_config->child_max_connections > 0) &&
@@ -410,6 +414,7 @@ do_child(int *fds)
 		snprintf(psbuf, sizeof(psbuf), "%s %s %s idle",
 				 sp->user, sp->database, remote_ps_data);
 		set_ps_display(psbuf, false);
+		set_process_status(IDLE);
 
 		/*
 		 * Initialize per session context
@@ -467,6 +472,8 @@ do_child(int *fds)
 		/* increment queries counter if necessary */
 		if (pool_config->child_max_connections > 0)
 			connections_count++;
+
+		proc_info->client_connection_count++;
 
 		/* check if maximum connections count for this child reached */
 		if ((pool_config->child_max_connections > 0) &&
@@ -1481,6 +1488,8 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 	else
 		set_ps_display("wait for connection request", false);
 
+	set_process_status(WAIT_FOR_CONNECT);
+
 	memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
 
 	if (timeout->tv_sec == 0 && timeout->tv_usec == 0)
@@ -1551,6 +1560,7 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 		}
 
 		set_ps_display("wait for connection request", false);
+		set_process_status(WAIT_FOR_CONNECT);
 		ereport(DEBUG1,
 				(errmsg("LOCKING select()")));
 	}
@@ -2123,4 +2133,11 @@ pg_frontend_exists(void)
 static int opt_sort(const void *a, const void *b)
 {
 	return strcmp( *(char **)a, *(char **)b);
+}
+
+void
+set_process_status(ProcessStatus status)
+{
+	ProcessInfo* proc_info = pool_get_process_info(getpid());
+	proc_info->status = status;
 }

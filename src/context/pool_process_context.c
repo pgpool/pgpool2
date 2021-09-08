@@ -292,6 +292,7 @@ pool_coninfo_set_frontend_connected(int proc_id, int pool_index)
 			return;
 		}
 		con->connected = true;
+		con->client_connection_time = time(NULL);
 	}
 }
 
@@ -317,6 +318,7 @@ pool_coninfo_unset_frontend_connected(int proc_id, int pool_index)
 			return;
 		}
 		con->connected = false;
+		con->client_disconnection_time = time(NULL);
 	}
 }
 

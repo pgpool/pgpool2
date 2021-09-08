@@ -118,9 +118,9 @@ Pgpool-II documentation
    -->
    例を示します。
    <programlisting>
-    $ pcp_proc_info -p 11001 1406
-    test t-ishii 2018-07-09 16:43:53 2018-07-09 16:44:08 3 0 1 1435 1 1406 0
-    test t-ishii 2018-07-09 16:43:53 2018-07-09 16:44:08 3 0 1 1436 1 1406 1
+$ pcp_proc_info -p 11001 2871
+postgres postgres 2021-09-07 02:12:53 (remaining: 0:27) 1 3 0 2021-09-07 02:16:59 2021-09-07 02:16:59 273 2021-09-07 02:16:56 1 3016 1 2871 0 Idle
+postgres postgres 2021-09-07 02:12:53 (remaining: 0:27) 1 3 0 2021-09-07 02:16:59 2021-09-07 02:16:59 0 2021-09-07 02:16:56 1 3017 1 2871 1 Idle
    </programlisting>
   </para>
   <para>
@@ -132,27 +132,37 @@ Pgpool-II documentation
     <!--
     1. connected database name
     2. connected user name
-    3. process start-up timestamp
-    4. connection created timestamp
+    3. process start-up timestamp (remaining time by <xref linkend="guc-client-idle-limit">. If client_idle_limit is set 0, remaining is not desplayed.)
+    4. process-reuse counter for <xref linkend="guc-child-max-connections">
     5. protocol major version
     6. protocol minor version
-    7. connection-reuse counter
-    8. PostgreSQL backend process id
-    9. 1 if frontend conncted 0 if not
-    10. pgpool child process id
-    11. PostgreSQL backend id 
+    7. connection created timestamp
+    8. last client connected timestamp
+    9. client idle duration (sec) for <xref linkend="guc-client-idle-limit">
+    10. last client disconnected timestamp
+    11. connection-reuse counter
+    12. PostgreSQL backend process id
+    13. 1 if frontend connected 0 if not
+    14. pgpool child process id
+    15. PostgreSQL backend id
+    16. process status
     -->
     1. 接続先のデータベース名
     2. 接続先のユーザ名
-    3. Pgpool-IIプロセスの起動時刻
-    4. バックエンドへの接続時刻
+    3. Pgpool-IIプロセスの起動時刻 (<xref linkend="guc-client-idle-limit">による残り時間。client_idle_limitが0の場合、remainingは表示されません)
+    4. プロセスの利用カウンタ(<xref linkend="guc-child-max-connections">を参照)
     5. プロトコルのメジャーバージョン
     6. プロトコルのマイナーバージョン
-    7. 接続の再利用カウンタ値
-    8. PostgreSQLバックエンドプロセスのプロセスID
-    9. フロントエンドが接続中なら1、そうでなければ0
-    10. pgpool子プロセスID
-    11. PostgreSQLバックエンドID
+    7. バックエンドへの接続時刻
+    8. クライアントが最後に接続開始した時刻
+    9. 接続がidleとなっている時間(秒)(<xref linkend="guc-client-idle-limit">を参照)
+    10. クライアントが最後に接続終了した時刻
+    11. 接続の再利用カウンタ値
+    12. PostgreSQLバックエンドプロセスのプロセスID
+    13. フロントエンドが接続中なら1、そうでなければ0
+    14. pgpool子プロセスID
+    15. PostgreSQLバックエンドID
+    16. プロセスの状態
    </literallayout>
   </para>
   <para>
@@ -171,29 +181,40 @@ Pgpool-II documentation
    <option>--verbose</option> オプションは出力内容を理解するのに役に立ちます。例：
   </para>
   <programlisting>
-   $ pcp_proc_info -p 11001 --verbose 1406
-   Database     : test
-   Username     : t-ishii
-   Start time   : 2018-07-09 16:43:53
-   Creation time: 2018-07-09 16:44:08
-   Major        : 3
-   Minor        : 0
-   Counter      : 1
-   Backend PID  : 1435
-   Connected    : 1
-   PID          : 1406
-   Backend ID   : 0
-   Database     : test
-   Username     : t-ishii
-   Start time   : 2018-07-09 16:43:53
-   Creation time: 2018-07-09 16:44:08
-   Major        : 3
-   Minor        : 0
-   Counter      : 1
-   Backend PID  : 1436
-   Connected    : 1
-   PID          : 1406
-   Backend ID   : 1
+$ pcp_proc_info -p 11001 --verbose 2871
+Database                  : postgres
+Username                  : postgres
+Start time                : 2021-09-07 02:12:53 (remaining: 3:36)
+Client connection count   : 1
+Major                     : 3
+Minor                     : 0
+Backend connection time   : 2021-09-07 02:16:59
+Client connection time    : 2021-09-07 02:16:59
+Client idle duration      : 84
+Client disconnection time : 2021-09-07 02:16:56
+Pool Counter              : 1
+Backend PID               : 3016
+Connected                 : 1
+PID                       : 2871
+Backend ID                : 0
+Status                    : Idle
+
+Database                  : postgres
+Username                  : postgres
+Start time                : 2021-09-07 02:12:53 (remaining: 3:36)
+Client connection count   : 1
+Major                     : 3
+Minor                     : 0
+Backend connection time   : 2021-09-07 02:16:59
+Client connection time    : 2021-09-07 02:16:59
+Client idle duration      : 0
+Client disconnection time : 2021-09-07 02:16:56
+Pool Counter              : 1
+Backend PID               : 3017
+Connected                 : 1
+PID                       : 2871
+Backend ID                : 1
+Status                    : Idle
   </programlisting>
  </refsect1>
 

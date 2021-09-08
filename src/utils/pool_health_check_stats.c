@@ -69,17 +69,22 @@ int * pool_report_pools_offsets(int *n)
 
 	static int offsettbl[] = {
 		offsetof(POOL_REPORT_POOLS, pool_pid),
-		offsetof(POOL_REPORT_POOLS, start_time),
+		offsetof(POOL_REPORT_POOLS, process_start_time),
+		offsetof(POOL_REPORT_POOLS, client_connection_count),
 		offsetof(POOL_REPORT_POOLS, pool_id),
 		offsetof(POOL_REPORT_POOLS, backend_id),
 		offsetof(POOL_REPORT_POOLS, database),
 		offsetof(POOL_REPORT_POOLS, username),
-		offsetof(POOL_REPORT_POOLS, create_time),
+		offsetof(POOL_REPORT_POOLS, backend_connection_time),
+		offsetof(POOL_REPORT_POOLS, client_connection_time),
+		offsetof(POOL_REPORT_POOLS, client_disconnection_time),
+		offsetof(POOL_REPORT_POOLS, client_idle_duration),
 		offsetof(POOL_REPORT_POOLS, pool_majorversion),
 		offsetof(POOL_REPORT_POOLS, pool_minorversion),
 		offsetof(POOL_REPORT_POOLS, pool_counter),
 		offsetof(POOL_REPORT_POOLS, pool_backendpid),
-		offsetof(POOL_REPORT_POOLS, pool_connected)
+		offsetof(POOL_REPORT_POOLS, pool_connected),
+		offsetof(POOL_REPORT_POOLS, status)
 	};
 
 	*n = sizeof(offsettbl)/sizeof(int);

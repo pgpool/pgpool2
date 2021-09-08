@@ -968,6 +968,7 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 		else
 		{
 			p->info[i].create_time = time(NULL);
+			p->info[i].client_idle_duration = 0;
 			p->slots[i] = s;
 
 			pool_init_params(&s->con->params);

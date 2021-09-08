@@ -21,7 +21,7 @@
    sends back a list of all <productname>Pgpool-II</productname>
    processes waiting for connections and dealing with a connection
    -->
-   接続待ち、あるいは接続中 <productname>Pgpool-II</productname> の子プロセスの状態を表示する
+   接続待ち、あるいは接続中の <productname>Pgpool-II</productname> の子プロセスの状態を表示する
   </refpurpose>
  </refnamediv>
 
@@ -43,14 +43,14 @@
    <productname>Pgpool-II</productname> processes waiting for
    connections and dealing with a connection.
    -->
-   <command>SHOW POOL_PROCESSES</command> は接続待ち、あるいは接続中
+   <command>SHOW POOL_PROCESSES</command> は接続待ち、あるいは接続中の
    <productname>Pgpool-II</productname> の子プロセスの状態を表示します。
   </para>
   <para>
    <!--
-   It has 6 columns:
+   It has 8 columns:
    -->
-   6つのカラムがあります。
+   8つのカラムがあります。
    <itemizedlist>
     <listitem>
      <para>
@@ -68,6 +68,30 @@
       this process was launched.
       -->
       <literal>start_time</literal> はこのプロセスが起動された時刻です。
+      <itemizedlist>
+       <listitem>
+        <para>
+         <!--
+         <literal>remaining</literal> is the remaining time by
+         <xref linkend="guc-client-idle-limit">. If
+         <literal>client_idle_limit</literal> is set 0,
+         <literal>remaining</literal> is not desplayed.
+         -->
+         <literal>remaining</literal> は <xref linkend="guc-client-idle-limit"> に
+         よる残り時間です。<literal>client_idle_limit</literal> が 0 の場合、
+         <literal>remaining</literal> は表示されません。
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <!--
+      <literal>client_connection_count</literal> counts the number of times
+      this process has been used by clients.
+      -->
+      <literal>client_connection_count</literal> はこのプロセスが使用された回数です。
      </para>
     </listitem>
     <listitem>
@@ -92,10 +116,10 @@
     <listitem>
      <para>
       <!--
-      <literal>create_time</literal> is the creation time and
+      <literal>backend_connection_time</literal> is the creation time and
       date of the connection.
       -->
-      <literal>create_time</literal> はこの接続が作成された時刻です。
+      <literal>backend_connection_time</literal> はこの接続が作成された時刻です。
      </para>
     </listitem>
     <listitem>
@@ -108,6 +132,49 @@
       <literal>pool_counter</literal> はこの接続が使用された回数です。
      </para>
     </listitem>
+    <listitem>
+     <para>
+      <!--
+      <literal>status</literal> is current status of this process. Possible values are:
+      -->
+      <literal>status</literal> は現在のプロセスの状態です。以下のいずれかの値を取ります:
+        <itemizedlist>
+          <listitem>
+            <para>
+              <!--
+              <literal>Execute command</literal>: Executing a command.
+              -->
+              <literal>Execute command</literal>: コマンドを実行中です。
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <!--
+              <literal>Idle</literal>: The process is waiting for a new client command.
+              -->
+              <literal>Idle</literal>: クライアントからのコマンドを待機しています。
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <!--
+              <literal>Idle in transaction</literal>: The process is waiting for a new client command
+              in a transaction.
+              -->
+              <literal>Idle in transaction</literal>: トランザクション中にクライアントからのコマンドを待機しています。
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <!--
+              <literal>Wait for connection</literal>: The process is waiting for a new client connection.
+              -->
+              <literal>Wait for connection</literal>: クライアントからの接続を待機しています。
+            </para>
+          </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
   <para>
@@ -117,42 +184,18 @@
    ここでは例を示します。
 
    <programlisting>
-    test=# show pool_processes;
-    pool_pid |     start_time      | database | username |     create_time     | pool_counter
-    ----------+---------------------+----------+----------+---------------------+--------------
-    19696    | 2016-10-17 13:24:17 | postgres | t-ishii  | 2016-10-17 13:35:12 | 1
-    19697    | 2016-10-17 13:24:17 |          |          |                     |
-    19698    | 2016-10-17 13:24:17 |          |          |                     |
-    19699    | 2016-10-17 13:24:17 |          |          |                     |
-    19700    | 2016-10-17 13:24:17 |          |          |                     |
-    19701    | 2016-10-17 13:24:17 |          |          |                     |
-    19702    | 2016-10-17 13:24:17 |          |          |                     |
-    19703    | 2016-10-17 13:24:17 |          |          |                     |
-    19704    | 2016-10-17 13:24:17 |          |          |                     |
-    19705    | 2016-10-17 13:24:17 |          |          |                     |
-    19706    | 2016-10-17 13:24:17 |          |          |                     |
-    19707    | 2016-10-17 13:24:17 |          |          |                     |
-    19708    | 2016-10-17 13:24:17 |          |          |                     |
-    19709    | 2016-10-17 13:24:17 |          |          |                     |
-    19710    | 2016-10-17 13:24:17 |          |          |                     |
-    19711    | 2016-10-17 13:24:17 |          |          |                     |
-    19712    | 2016-10-17 13:24:17 |          |          |                     |
-    19713    | 2016-10-17 13:24:17 |          |          |                     |
-    19714    | 2016-10-17 13:24:17 |          |          |                     |
-    19715    | 2016-10-17 13:24:17 |          |          |                     |
-    19716    | 2016-10-17 13:24:17 |          |          |                     |
-    19717    | 2016-10-17 13:24:17 |          |          |                     |
-    19718    | 2016-10-17 13:24:17 |          |          |                     |
-    19719    | 2016-10-17 13:24:17 |          |          |                     |
-    19720    | 2016-10-17 13:24:17 |          |          |                     |
-    20024    | 2016-10-17 13:33:46 |          |          |                     |
-    19722    | 2016-10-17 13:24:17 | test     | t-ishii  | 2016-10-17 13:34:42 | 1
-    19723    | 2016-10-17 13:24:17 |          |          |                     |
-    19724    | 2016-10-17 13:24:17 |          |          |                     |
-    19725    | 2016-10-17 13:24:17 |          |          |                     |
-    19726    | 2016-10-17 13:24:17 |          |          |                     |
-    19727    | 2016-10-17 13:24:17 |          |          |                     |
-    (32 rows)
+postgres=# show pool_processes;
+ pool_pid |              start_time               | client_connection_count | database | username | backend_connection_time | pool_counter |       status
+----------+---------------------------------------+-------------------------+----------+----------+-------------------------+--------------+---------------------
+ 6685     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
+ 6686     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
+ 6687     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
+ 6688     | 2021-09-07 02:41:13 (remaining: 4:10) | 1                       | postgres | postgres | 2021-09-07 02:41:48     | 1            | Idle
+ 6689     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
+ 6690     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
+ 6691     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
+ 6692     | 2021-09-07 02:41:13 (remaining: 5:00) | 2                       | postgres | postgres | 2021-09-07 02:42:38     | 1            | Execute command
+(8 rows)
    </programlisting>
   </para>
  </refsect1>
