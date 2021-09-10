@@ -23,6 +23,7 @@
  */
 #include "utils/json.h"
 #include "pool_config.h"
+#include "parser/pg_list.h"
 #include "watchdog/watchdog.h"
 
 #ifndef WD_JSON_DATA_H
@@ -71,12 +72,10 @@ extern char *get_data_request_json(char *request_type, unsigned int sharedKey, c
 
 extern bool
 parse_wd_exec_cluster_command_json(char *json_data, int data_len,
-								   char **clusterCommand,
-								   int *nArgs, WDExecCommandArg **wdExecCommandArg);
+								   char **clusterCommand, List **args_list);
 
 extern char *
-get_wd_exec_cluster_command_json(char *clusterCommand,int nArgs,
-								 WDExecCommandArg *wdExecCommandArg,
+get_wd_exec_cluster_command_json(char *clusterCommand,List *args_list,
 								unsigned int sharedKey, char *authKey);
 
 #endif

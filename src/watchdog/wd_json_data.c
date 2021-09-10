@@ -804,12 +804,12 @@ get_wd_simple_message_json(char *message)
 }
 
 char *
-get_wd_exec_cluster_command_json(char *clusterCommand, int nArgs,
-								 WDExecCommandArg *wdExecCommandArg,
+get_wd_exec_cluster_command_json(char *clusterCommand, List *args_list,
 								 unsigned int sharedKey, char *authKey)
 {
-	int i;
-	char	   *json_str;
+	char	*json_str;
+	int 	nArgs = args_list? list_length(args_list):0;
+
 	JsonNode   *jNode = jw_create_with_object(true);
 
 	jw_put_int(jNode, WD_IPC_SHARED_KEY, sharedKey);	/* put the shared key */
@@ -824,12 +824,15 @@ get_wd_exec_cluster_command_json(char *clusterCommand, int nArgs,
 	/* Array of arguments */
 	if(nArgs > 0)
 	{
+		ListCell   *lc;
 		jw_start_array(jNode, "argument_list");
-		for (i = 0; i < nArgs; i++)
+
+		foreach(lc, args_list)
 		{
+			WDExecCommandArg *wdExecCommandArg = lfirst(lc);
 			jw_start_object(jNode, "Arg");
-			jw_put_string(jNode, "arg_name", wdExecCommandArg[i].arg_name);
-			jw_put_string(jNode, "arg_value", wdExecCommandArg[i].arg_value);
+			jw_put_string(jNode, "arg_name", wdExecCommandArg->arg_name);
+			jw_put_string(jNode, "arg_value", wdExecCommandArg->arg_value);
 			jw_end_element(jNode);
 		}
 		jw_end_element(jNode);		/* argument_list array End */
@@ -844,12 +847,14 @@ get_wd_exec_cluster_command_json(char *clusterCommand, int nArgs,
 
 bool
 parse_wd_exec_cluster_command_json(char *json_data, int data_len,
-								   char **clusterCommand,
-								   int *nArgs, WDExecCommandArg **wdExecCommandArg)
+								   char **clusterCommand, List **args_list)
 {
 	json_value *root;
 	char	*ptr = NULL;
 	int		i;
+	int 	nArgs = 0;
+
+	*args_list = NULL;
 
 	root = json_parse(json_data, data_len);
 
@@ -873,44 +878,50 @@ parse_wd_exec_cluster_command_json(char *json_data, int data_len,
 	}
 	*clusterCommand = pstrdup(ptr);
 
-	if (json_get_int_value_for_key(root, "nArgs", nArgs))
+	if (json_get_int_value_for_key(root, "nArgs", &nArgs))
 	{
 		/* nArgs not found, Just ignore it */
-		*nArgs = 0;
+		nArgs = 0;
 		/* it may be from the old version */
 	}
-	if (*nArgs > 0)
+	if (nArgs > 0)
 	{
 		json_value *value;
-
-		*wdExecCommandArg = palloc0(sizeof(WDExecCommandArg) * *nArgs);
-
 		/* backend_desc array */
 		value = json_get_value_for_key(root, "argument_list");
 		if (value == NULL || value->type != json_array)
 			goto ERROR_EXIT;
 
-		if (*nArgs!= value->u.array.length)
+		if (nArgs!= value->u.array.length)
 		{
 			ereport(LOG,
 					(errmsg("watchdog is unable to parse exec cluster command json"),
 					 errdetail("nArgs is different than argument array length \"%s\"", json_data)));
 			goto ERROR_EXIT;
 		}
-		for (i = 0; i < *nArgs; i++)
+		for (i = 0; i < nArgs; i++)
 		{
+			WDExecCommandArg *command_arg = palloc0(sizeof(WDExecCommandArg));
+			/*
+			 * Append to list right away, so that deep freeing the list also
+			 * get rid of half cooked argumnts in case of an error
+			 */
+			*args_list = lappend(*args_list,command_arg);
+
 			json_value *arr_value = value->u.array.values[i];
 			char	   *ptr;
 
 			ptr = json_get_string_value_for_key(arr_value, "arg_name");
 			if (ptr == NULL)
 				goto ERROR_EXIT;
-			strncpy(wdExecCommandArg[i]->arg_name, ptr, sizeof(wdExecCommandArg[i]->arg_name) - 1);
+
+			strncpy(command_arg->arg_name, ptr, sizeof(command_arg->arg_name) - 1);
 
 			ptr = json_get_string_value_for_key(arr_value, "arg_value");
 			if (ptr == NULL)
 				goto ERROR_EXIT;
-			strncpy(wdExecCommandArg[i]->arg_value, ptr, sizeof(wdExecCommandArg[i]->arg_value) - 1);
+
+			strncpy(command_arg->arg_value, ptr, sizeof(command_arg->arg_value) - 1);
 		}
 	}
 
@@ -920,7 +931,8 @@ parse_wd_exec_cluster_command_json(char *json_data, int data_len,
 	ERROR_EXIT:
 	if (root)
 		json_value_free(root);
-	if (*wdExecCommandArg )
-		pfree(*wdExecCommandArg);
+	if (*args_list)
+		list_free_deep(*args_list);
+	*args_list = NULL;
 	return false;
 }

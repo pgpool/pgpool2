@@ -278,13 +278,12 @@ wd_end_recovery(void)
 }
 
 WdCommandResult
-wd_execute_cluster_command(char* clusterCommand,
-						   int nArgs, WDExecCommandArg *wdExecCommandArg)
+wd_execute_cluster_command(char* clusterCommand, List *argsList)
 {
 	char		type;
 	unsigned int *shared_key = get_ipc_shared_key();
 
-	char	   *func = get_wd_exec_cluster_command_json(clusterCommand, nArgs, wdExecCommandArg,
+	char	   *func = get_wd_exec_cluster_command_json(clusterCommand, argsList,
 												 shared_key ? *shared_key : 0, pool_config->wd_authkey);
 
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_EXECUTE_CLUSTER_COMMAND,
@@ -558,19 +557,25 @@ wd_internal_get_watchdog_local_node_state(void)
 static WdCommandResult
 wd_send_locking_command(WD_LOCK_STANDBY_TYPE lock_type, bool acquire)
 {
+	WdCommandResult res;
+	List *args_list = NULL;
 	WDExecCommandArg wdExecCommandArg[2];
 
 	strncpy(wdExecCommandArg[0].arg_name, "StandbyLockType", sizeof(wdExecCommandArg[0].arg_name) - 1);
-	snprintf(wdExecCommandArg[0].arg_value, sizeof(wdExecCommandArg[0].arg_name) - 1, "%d",lock_type);
+	snprintf(wdExecCommandArg[0].arg_value, sizeof(wdExecCommandArg[0].arg_value) - 1, "%d",lock_type);
 
 	strncpy(wdExecCommandArg[1].arg_name, "LockingOperation", sizeof(wdExecCommandArg[1].arg_name) - 1);
-	snprintf(wdExecCommandArg[1].arg_value, sizeof(wdExecCommandArg[1].arg_name) - 1,
+	snprintf(wdExecCommandArg[1].arg_value, sizeof(wdExecCommandArg[1].arg_value) - 1,
 			 "%s",acquire?"acquire":"release");
 
+	args_list = lappend(args_list,&wdExecCommandArg[0]);
+	args_list = lappend(args_list,&wdExecCommandArg[1]);
 	ereport(DEBUG1,
 			(errmsg("sending standby locking request to watchdog")));
 
-	return wd_execute_cluster_command(WD_COMMAND_LOCK_ON_STANDBY, 2, wdExecCommandArg);
+	res = wd_execute_cluster_command(WD_COMMAND_LOCK_ON_STANDBY, args_list);
+	list_free(args_list);
+	return res;
 }
 
 WdCommandResult

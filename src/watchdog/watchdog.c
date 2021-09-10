@@ -2081,14 +2081,13 @@ process_IPC_execute_cluster_command(WDCommandData * ipcCommand)
 {
 	/* get the json for node list */
 	char 	*clusterCommand = NULL;
-	int 	nArgs;
-	WDExecCommandArg *wdExecCommandArg = NULL;
+	List 	*args_list = NULL;
 
 	if (ipcCommand->sourcePacket.len <= 0 || ipcCommand->sourcePacket.data == NULL)
 		return IPC_CMD_ERROR;
 
 	if (!parse_wd_exec_cluster_command_json(ipcCommand->sourcePacket.data, ipcCommand->sourcePacket.len,
-									   &clusterCommand, &nArgs, &wdExecCommandArg))
+									   &clusterCommand, &args_list))
 	{
 		goto ERROR_EXIT;
 	}
@@ -2110,6 +2109,7 @@ process_IPC_execute_cluster_command(WDCommandData * ipcCommand)
 		{
 			ereport(LOG,
 					(errmsg("'LOCK ON STANDBY' command can only be processed on coordinator node")));
+			goto ERROR_EXIT;
 		}
 	}
 	else
@@ -2128,15 +2128,15 @@ process_IPC_execute_cluster_command(WDCommandData * ipcCommand)
 					   ipcCommand->sourcePacket.data, ipcCommand->sourcePacket.len,
 					   NULL);
 
-	if (wdExecCommandArg)
-		pfree(wdExecCommandArg);
+	if (args_list)
+		list_free_deep(args_list);
 
 	pfree(clusterCommand);
 	return IPC_CMD_OK;
 
 ERROR_EXIT:
-	if (wdExecCommandArg)
-		pfree(wdExecCommandArg);
+	if (args_list)
+		list_free_deep(args_list);
 	if (clusterCommand)
 		pfree(clusterCommand);
 	return IPC_CMD_ERROR;
@@ -4053,8 +4053,7 @@ wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 {
 	/* get the json for node list */
 	char 	*clusterCommand = NULL;
-	int 	nArgs;
-	WDExecCommandArg *wdExecCommandArg = NULL;
+	List 	*args_list = NULL;
 
 	if (pkt->type != WD_EXECUTE_COMMAND_REQUEST)
 		return;
@@ -4067,7 +4066,7 @@ wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 	}
 
 	if (!parse_wd_exec_cluster_command_json(pkt->data, pkt->len,
-									   &clusterCommand, &nArgs, &wdExecCommandArg))
+									   &clusterCommand, &args_list))
 	{
 		ereport(LOG,
 				(errmsg("node \"%s\" sent an invalid JSON data in cluster command message", wdNode->nodeName)));
@@ -4076,21 +4075,22 @@ wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 
 	ereport(DEBUG1,
 			(errmsg("received \"%s\" command from node \"%s\"",clusterCommand, wdNode->nodeName)));
-
 	if (strcasecmp(WD_COMMAND_SHUTDOWN_CLUSTER, clusterCommand) == 0)
 	{
-		int i;
 		char mode = 's';
-		for ( i =0; i < nArgs; i++)
+		ListCell   *lc;
+		foreach(lc, args_list)
 		{
-			if (strcmp(wdExecCommandArg[i].arg_name, "mode") == 0)
+			WDExecCommandArg *wdExecCommandArg = lfirst(lc);
+			if (strcmp(wdExecCommandArg->arg_name, "mode") == 0)
 			{
-				mode = wdExecCommandArg[i].arg_value[0];
+				mode = wdExecCommandArg->arg_value[0];
 			}
 			else
 				ereport(LOG,
-						(errmsg("unsupported argument \"%s\" in shutdown command from remote node \"%s\"", wdExecCommandArg[i].arg_name, wdNode->nodeName)));
+						(errmsg("unsupported argument \"%s\" in shutdown command from remote node \"%s\"", wdExecCommandArg->arg_name, wdNode->nodeName)));
 		}
+
 		ereport(LOG,
 				(errmsg("processing shutdown command from remote node \"%s\"", wdNode->nodeName)));
 		terminate_pgpool(mode, false);
@@ -4103,26 +4103,27 @@ wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 	}
 	else if (strcasecmp(WD_COMMAND_LOCK_ON_STANDBY, clusterCommand) == 0)
 	{
-		int i;
 		int lock_type = -1;
 		char *operation = NULL;
-		if (get_local_node_state() != WD_STANDBY && wdNode->state == WD_COORDINATOR)
+		if (get_local_node_state() == WD_STANDBY && wdNode->state == WD_COORDINATOR)
 		{
-			if (nArgs == 2)
+			if (list_length(args_list) == 2)
 			{
-				for ( i =0; i < nArgs; i++)
+				ListCell   *lc;
+				foreach(lc, args_list)
 				{
-					if (strcmp(wdExecCommandArg[i].arg_name, "StandbyLockType") == 0)
+					WDExecCommandArg *wdExecCommandArg = lfirst(lc);
+					if (strcmp(wdExecCommandArg->arg_name, "StandbyLockType") == 0)
 					{
-						lock_type = atoi(wdExecCommandArg[i].arg_value);
+						lock_type = atoi(wdExecCommandArg->arg_value);
 					}
-					else if (strcmp(wdExecCommandArg[i].arg_name, "LockingOperation") == 0)
+					else if (strcmp(wdExecCommandArg->arg_name, "LockingOperation") == 0)
 					{
-						operation = wdExecCommandArg[i].arg_value;
+						operation = wdExecCommandArg->arg_value;
 					}
 					else
 						ereport(LOG,
-								(errmsg("unsupported argument \"%s\" in 'LOCK ON STANDBY' from remote node \"%s\"", wdExecCommandArg[i].arg_name, wdNode->nodeName)));
+								(errmsg("unsupported argument \"%s\" in 'LOCK ON STANDBY' from remote node \"%s\"", wdExecCommandArg->arg_name, wdNode->nodeName)));
 				}
 				if (lock_type < 0 || operation == NULL)
 				{
@@ -4174,8 +4175,8 @@ wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 				(errmsg("received \"%s\" command from node \"%s\" is not supported",clusterCommand, wdNode->nodeName)));
 	}
 
-	if (wdExecCommandArg)
-		pfree(wdExecCommandArg);
+	if (args_list)
+		list_free_deep(args_list);
 	pfree(clusterCommand);
 	return;
 }

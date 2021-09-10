@@ -30,6 +30,7 @@
 #include "watchdog/wd_json_data.h"
 #include "watchdog/wd_ipc_conn.h"
 #include "watchdog/wd_commands.h"
+#include "parser/pg_list.h"
 
 /*
  * These lock can only be acquired by
@@ -50,8 +51,7 @@ extern WDFailoverCMDResults wd_send_failback_request(int node_id, unsigned char 
 extern WDFailoverCMDResults wd_degenerate_backend_set(int *node_id_set, int count, unsigned char flags);
 extern WDFailoverCMDResults wd_promote_backend(int node_id, unsigned char flags);
 
-extern WdCommandResult wd_execute_cluster_command(char* clusterCommand,
-												  int nArgs, WDExecCommandArg *wdExecCommandArg);
+extern WdCommandResult wd_execute_cluster_command(char* clusterCommand,List *argsList);
 
 extern WDPGBackendStatus * get_pg_backend_status_from_leader_wd_node(void);
 
