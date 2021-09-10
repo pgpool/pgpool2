@@ -58,6 +58,7 @@
 #include "watchdog/wd_internal_commands.h"
 #include "main/pool_internal_comms.h"
 
+
 #define MAX_FILE_LINE_LEN    512
 
 extern char *pcp_conf_file;		/* global variable defined in main.c holds the
@@ -1076,7 +1077,7 @@ process_reload_config(PCP_CONNECTION * frontend, char scope)
 		ereport(LOG,
 				(errmsg("PCP: sending command to watchdog to reload config cluster")));
 
-		if (wd_execute_cluster_command(WD_COMMAND_RELOAD_CONFIG_CLUSTER,0, NULL) != COMMAND_OK)
+		if (wd_execute_cluster_command(WD_COMMAND_RELOAD_CONFIG_CLUSTER, NULL) != COMMAND_OK)
 			ereport(ERROR,
 					(errmsg("PCP: error while processing reload config request for cluster"),
 					 errdetail("failed to propagate reload config command through watchdog")));
@@ -1408,17 +1409,21 @@ process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos)
 	if (tos == 't' && pool_config->use_watchdog)
 	{
 		WDExecCommandArg wdExecCommandArg;
+		List *args_list = NULL;
 
 		strncpy(wdExecCommandArg.arg_name, "mode", sizeof(wdExecCommandArg.arg_name) - 1);
-		snprintf(wdExecCommandArg.arg_value, sizeof(wdExecCommandArg.arg_name) - 1, "%c",mode);
+		snprintf(wdExecCommandArg.arg_value, sizeof(wdExecCommandArg.arg_value) - 1, "%c",mode);
+		args_list = lappend(args_list,&wdExecCommandArg);
 
 		ereport(LOG,
 				(errmsg("PCP: sending command to watchdog to shutdown cluster")));
 
-		if (wd_execute_cluster_command(WD_COMMAND_SHUTDOWN_CLUSTER,1, &wdExecCommandArg) != COMMAND_OK)
+		if (wd_execute_cluster_command(WD_COMMAND_SHUTDOWN_CLUSTER, args_list) != COMMAND_OK)
 			ereport(ERROR,
 					(errmsg("PCP: error while processing shutdown cluster request"),
 					 errdetail("failed to propagate shutdown command through watchdog")));
+
+		list_free(args_list);
 	}
 
 	pcp_write(frontend, "t", 1);
@@ -1426,7 +1431,6 @@ process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos)
 	pcp_write(frontend, &len, sizeof(int));
 	pcp_write(frontend, code, sizeof(code));
 	do_pcp_flush(frontend);
-
 	terminate_pgpool(mode, true);
 }
 
