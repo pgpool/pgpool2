@@ -459,8 +459,8 @@ hostssl    all         all         0.0.0.0/0             md5
    </para>
    <para>
     Pgpool-II Exporterを利用する場合は、サンプルのYAMLファイル
-    <filename>pgpool-deploy-monitor.yaml</filename>を利用します。
-    <filename>pgpool-deploy-monitor.yaml</filename>では、
+    <filename>pgpool-deploy-metrics.yaml</filename>を利用します。
+    <filename>pgpool-deploy-metrics.yaml</filename>では、
     <productname>Pgpool-II</productname>のPodに<productname>Pgpool-II</productname>のコンテナと
     Pgpool-II Exporterのコンテナを作成しています。
    </para>
@@ -475,10 +475,10 @@ spec:
   ...
    </programlisting>
    <para>
-    サンプルのYAMLファイル<filename>pgpool-deploy-monitor.yaml</filename>をダウンロードします。
+    サンプルのYAMLファイル<filename>pgpool-deploy-metrics.yaml</filename>をダウンロードします。
    </para>
    <programlisting>
-$ curl -LO https://raw.githubusercontent.com/pgpool/pgpool2_on_k8s/master/pgpool-deploy-monitor.yaml
+$ curl -LO https://raw.githubusercontent.com/pgpool/pgpool2_on_k8s/master/pgpool-deploy-metrics.yaml
    </programlisting>
    <para>
     Pgpool-IIおよびPgpool-II Exporterの設定を行います。
@@ -507,7 +507,7 @@ env:
    </para>
    <programlisting>
 kubectl apply -f pgpool-configmap.yaml
-kubectl apply -f pgpool-deploy-monitor.yaml
+kubectl apply -f pgpool-deploy-metrics.yaml
    </programlisting>
  </sect2>
 </sect1>

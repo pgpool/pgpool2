@@ -448,7 +448,7 @@ hostssl    all         all         0.0.0.0/0             md5
     is a Prometheus exporter for Pgpool-II metrics.
    </para>
    <para>
-    Sample manifest <filename>pgpool-deploy-monitor.yaml</filename> is used to deploy
+    Sample manifest <filename>pgpool-deploy-metrics.yaml</filename> is used to deploy
     Pgpool-II container and Pgpool-II Exporter container in the Pgpool-II Pod.
    </para>
    <programlisting>
@@ -462,10 +462,10 @@ spec:
   ...
    </programlisting>
    <para>
-    Download the sample manifest <filename>pgpool-deploy-monitor.yaml</filename>.
+    Download the sample manifest <filename>pgpool-deploy-metrics.yaml</filename>.
    </para>
    <programlisting>
-$ curl -LO https://raw.githubusercontent.com/pgpool/pgpool2_on_k8s/master/pgpool-deploy-monitor.yaml
+$ curl -LO https://raw.githubusercontent.com/pgpool/pgpool2_on_k8s/master/pgpool-deploy-metrics.yaml
    </programlisting>
    <para>
     Then, Configure Pgpool-II and Pgpool-II Exporter.
@@ -495,7 +495,7 @@ env:
    </para>
    <programlisting>
 kubectl apply -f pgpool-configmap.yaml
-kubectl apply -f pgpool-deploy-monitor.yaml
+kubectl apply -f pgpool-deploy-metrics.yaml
    </programlisting>
  </sect2>
 </sect1>
