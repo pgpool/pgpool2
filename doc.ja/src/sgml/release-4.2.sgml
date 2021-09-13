@@ -1,6 +1,149 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-5">
+ <title>リリース 4.2.5</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2021-09-14</simpara>
+  </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-09-03 [4336785]
+    2021-09-06 [1801393]
+    -->
+    <para>
+     <command>PGPOOL SHOW</command>コマンドの<varname>other_pgpool</varname>オプションを<varname>watchdog</varname>に変更しました。(Bo Peng)
+    </para>
+    <para>
+     4.2から<varname>other_pgpool</varname>パラメータが削除されたため、
+     <varname>other_pgpool</varname>オプションを<varname>watchdog</varname>に変更すべきでした。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-09-10 [3e8807f]
+    -->
+    <para>
+     Watchdogを利用する場合に、<varname>follow_primary_command</varname>の実行に失敗する不具合を修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=731">bug 731</ulink>) (Muhammad Usama)
+    </para>
+    <para>
+     <function>parse_wd_exec_cluster_command_json()</function>関数のコーディングミスによるセグメンテーションが原因でした。
+     この不具合は4.2.4で導入され、4.2.3以前のバージョンには影響しません。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-03 [0f7db66]
+    -->
+    <para>
+     <command>PGPOOL SHOW heartbeat</command>および<command>PGPOOL SHOW ALL</command>コマンドの不具合を修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-02 [0e3bce8]
+    -->
+    <para>
+     <xref linkend="guc-log-rotation-age">を0に設定できない不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     ドキュメントによると、<varname>log_rotation_age</varname>を0に設定することで、
+     ログローテーション機能を無効にすることが可能です。
+     ただし、許可される最小値が誤って10に設定されていたため、<varname>log_rotation_age</varname>を0に設定できませんでした。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-08-18 [3a32b3b]
+    -->
+    <para>
+     rawモードでの誤った負荷分散ノードの表示を修正しました。(Bo Peng)
+    </para>
+    <para>
+     rawモードでは、<productname>Pgpool-II</productname>はすべてのクエリをメインノードに送信します。
+     この不具合は表示上の問題だけで、クエリの転送処理に影響はないですが、 
+     ユーザを混乱させる可能性があるので、修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-08-12 [1e77a94]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>のloggerプロセスがCPUの100%を消費する問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     問題の報告、パッチはFang Junより提供されました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-August/003993.html">[pgpool-hackers: 3992]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-08-10 [af2d2c5]
+    -->
+    <para>
+     SIモードにおいて、内部トランザクションがスナップショットを取得しない不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-08-08 [500133f]
+    -->
+    <para>
+     <command>PGPOOL SHOW ALL</command>の実行結果に<varname>backend_flag*</varname>が2回表示される不具合を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-08-09 [9111a7f]
+    -->
+    <para>
+     Doc: <command>PGPOOL SHOW</command>コマンドを実行する際に、大文字を含むパラメータ名の場合には、
+     パラメータ名をダブルクォートで囲んで実行する必要があることを追加しました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>テストツール修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-08-25 [a1785c3]
+    -->
+    <para>
+     新しいメインノードが利用できない場合に何もしないように<command>pgpool_setup</command>を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-4">
  <title>リリース 4.2.4</title>
   <note>
