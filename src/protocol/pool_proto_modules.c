@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3006,6 +3006,9 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 		}
 	}
 
+	/*
+	 * Wait till backend responds
+	 */
 	if (copyin)
 	{
 		for (i=0;i<NUM_BACKENDS;i++)
@@ -3014,11 +3017,19 @@ POOL_STATUS CopyDataRows(POOL_CONNECTION *frontend,
 			{
 				pool_flush(CONNECTION(backend, i));
 
-				if (synchronize(CONNECTION(backend, i)))
-                    ereport(FATAL,
-                        (return_code(2),
-                         errmsg("unable to copy data rows"),
-                             errdetail("failed to synchronize")));
+				/*
+				 * Check response from the backend.  First check SSL and read
+				 * buffer of the backend. It is possible that there's an error
+				 * message in the buffer if the COPY command went wrong.
+				 * Otherwise wait for data arrival to the backend socket.
+				 */
+				if (!pool_ssl_pending(CONNECTION(backend, i)) &&
+					pool_read_buffer_is_empty(CONNECTION(backend, i)) &&
+					synchronize(CONNECTION(backend, i)))
+					ereport(FATAL,
+							(return_code(2),
+							 errmsg("unable to copy data rows"),
+							 errdetail("failed to synchronize")));
 			}
 		}
 	}
