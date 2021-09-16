@@ -57,6 +57,7 @@
 #include "utils/pool_stream.h"
 #include "utils/ps_status.h"
 #include "utils/pool_signal.h"
+#include "utils/pool_ssl.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "query_cache/pool_memqcache.h"
@@ -3323,6 +3324,9 @@ CopyDataRows(POOL_CONNECTION * frontend,
 		}
 	}
 
+	/*
+	 * Wait till backend responds
+	 */
 	if (copyin)
 	{
 		for (i = 0; i < NUM_BACKENDS; i++)
@@ -3331,7 +3335,15 @@ CopyDataRows(POOL_CONNECTION * frontend,
 			{
 				pool_flush(CONNECTION(backend, i));
 
-				if (synchronize(CONNECTION(backend, i)))
+				/*
+				 * Check response from the backend.  First check SSL and read
+				 * buffer of the backend. It is possible that there's an error
+				 * message in the buffer if the COPY command went wrong.
+				 * Otherwise wait for data arrival to the backend socket.
+				 */
+				if (!pool_ssl_pending(CONNECTION(backend, i)) &&
+					pool_read_buffer_is_empty(CONNECTION(backend, i)) &&
+					synchronize(CONNECTION(backend, i)))
 					ereport(FATAL,
 							(return_code(2),
 							 errmsg("unable to copy data rows"),
