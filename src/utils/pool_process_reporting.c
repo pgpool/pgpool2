@@ -659,6 +659,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "failover on backend error", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "failover_on_backend_shutdown", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->failover_on_backend_shutdown);
+	StrNCpy(status[i].desc, "failover on backend shutdown", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "detach_false_primary", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->detach_false_primary);
 	StrNCpy(status[i].desc, "detach false primary", POOLCONFIG_MAXDESCLEN);

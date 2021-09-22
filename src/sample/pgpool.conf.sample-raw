@@ -576,6 +576,12 @@ failover_on_backend_error = on
                                    # If set to off, pgpool will report an
                                    # error and disconnect the session.
 
+failover_on_backend_shutdown = off
+                                   # Initiates failover when backend is shutdown,
+				   # or backend process is killed.
+                                   # If set to off, pgpool will report an
+                                   # error and disconnect the session.
+
 detach_false_primary = off
                                    # Detach false primary if on. Only
                                    # valid in streaming replicaton

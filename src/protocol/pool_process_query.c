@@ -4872,7 +4872,7 @@ SELECT_RETRY:
 									(errmsg("connection to postmaster on DB node %d was lost due to pg_terminate_backend", i),
 									 errdetail("pg_terminate_backend was called on the backend")));
 						}
-						else
+						else if (pool_config->failover_on_backend_shutdown)
 						{
 							notice_backend_error(i, REQ_DETAIL_SWITCHOVER);
 							sleep(5);

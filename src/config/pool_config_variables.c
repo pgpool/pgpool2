@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -538,6 +538,16 @@ static struct config_bool ConfigureNamesBool[] =
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.failover_on_backend_error,
+		true,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"failover_on_backend_shutdown", CFGCXT_RELOAD, FAILOVER_CONFIG,
+			"Triggers fail over when backend is shutdown.",
+			CONFIG_VAR_TYPE_BOOL, false, 0
+		},
+		&g_pool_config.failover_on_backend_shutdown,
 		true,
 		NULL, NULL, NULL
 	},

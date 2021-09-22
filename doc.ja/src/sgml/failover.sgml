@@ -670,6 +670,78 @@ if (we need to executed follow primary command)
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-failover-on-backend-shutdown" xreflabel="failover_on_backend_shutdown">
+    <term><varname>failover_on_backend_shutdown</varname> (<type>boolean</type>)
+     <indexterm>
+<!--
+      <primary><varname>failover_on_backend_shutdown</varname> configuration parameter</primary>
+-->
+      <primary><varname>failover_on_backend_shutdown</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+<!--
+      When set to on, <productname>Pgpool-II</productname> detects a
+      backend shutdown event by checking particular error code
+      <literal>57P01</literal> and <literal>57P02</literal> on a
+      session established between the client and backend. If it
+      detects those error codes, a failover is triggered on that node.
+      When this is set to off, <productname>Pgpool-II</productname>
+      only report an error and disconnect the session in case of such
+      errors.  The default is off.
+-->
+      onに設定した場合、<productname>Pgpool-II</productname>は確立したクライアントとバックエンドのセッション上で特定のエラーコード：<literal>57P01</literal>と<literal>57P02</literal>をチェックすることにより、バックエンドのシャットダウンイベントを検出します。
+      それらのエラーコードを検出すると、そのノードでフェイルオーバが起動されます。
+      offに設定した場合、そのようなエラーの場合でも<productname>Pgpool-II</productname>は単にエラーをレポートしセッションが切断するのみです。
+      デフォルトはoffです。
+     </para>
+     <para>
+<!--
+      If no client is connected,
+      <productname>Pgpool-II</productname> will not detect the event
+      even if the parameter is on.
+-->
+      クライアントが接続されていなければ、このパラメータがonでも<productname>Pgpool-II</productname>はシャットダウンを検出しません。
+     </para>
+     <para>
+<!--
+      Please note that <literal>57P01</literal> is not only sent at a
+      shutdown event, but also sent when the backend currently
+      connected is killed by <function>pg_terminate_backend</function>
+      or SIGTERM signal. This is annoying because it results in
+      unwanted failover. To avoid this, turn off this parameter.
+-->
+      <literal>57P01</literal>はシャットダウンだけでなく、現在接続中のバックエンドが<function>pg_terminate_backend</function>あるいはSIGTERMシグナルによって終了させられた場合にも送られてくることに注意してください。
+      これは望まないフェイルオーバを引き起こすので困りものです。
+      これを防ぐには、このパラメータをoffにしてください。
+     </para>
+
+     <note>
+      <para>
+<!--
+       It is recommended to turn on the backend health checking
+       (see <xref linkend="runtime-config-health-check">)
+	when <varname>failover_on_backend_shutdown</varname> is set to off.
+-->
+       <varname>failover_on_backend_shutdown</varname>をoffにする場合は、バックエンドのヘルスチェックを有効にすることをお勧めします（<xref linkend="runtime-config-health-check">をご覧ください）。
+      </para>
+     </note>
+
+     <para>
+<!--
+      This parameter is available
+      in <productname>Pgpool-II</productname> 4.3 or later.  This
+      parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+-->
+      このパラメータは<productname>Pgpool-II</productname> 4.3以降で利用可能です。
+      4.2以前では、このパラメータが常にonであるのと同じ動作をします。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-failover-on-backend-error" xreflabel="failover_on_backend_error">
     <term><varname>failover_on_backend_error</varname> (<type>boolean</type>)
      <indexterm>
@@ -696,11 +768,10 @@ if (we need to executed follow primary command)
        when <varname>failover_on_backend_error</varname> is set to off.
        Note, however, that <productname>Pgpool-II</productname> still triggers the
        failover when it detects the administrative shutdown of
-       <productname>PostgreSQL</> backend server.
+       <productname>PostgreSQL</> backend server if <xref linkend="guc-failover-on-backend-shutdown"> is on.
        -->
        <varname>failover_on_backend_error</varname>をoffにする場合は、バックエンドのヘルスチェックを有効にすることをお勧めします（<xref linkend="runtime-config-health-check">をご覧ください）。
-	なお、<productname>PostgreSQL</>バックエンドサーバが管理コマンドでシャットダウンされたことを<productname>Pgpool-II</productname>が検知した場合には、依然としてフェイルオーバが起こることに注意してください。
-	この場合にもフェイルオーバを避けたい場合には、<xref linkend="guc-backend-flag">でDISALLOW_TO_FAILOVERを指定してください。
+	なお、<xref linkend="guc-failover-on-backend-shutdown">がonなら、<productname>PostgreSQL</>バックエンドサーバが管理コマンドでシャットダウンされたことを<productname>Pgpool-II</productname>が検知した場合には、依然としてフェイルオーバが起こることに注意してください。
       </para>
      </note>
      <para>

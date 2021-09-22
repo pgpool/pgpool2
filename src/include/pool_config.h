@@ -341,6 +341,8 @@ typedef struct
 											 * set to false, pgpool will
 											 * report an error and disconnect
 											 * the session. */
+	bool		failover_on_backend_shutdown; /* If true, trigger fail over
+												 when backend is going down */
 	bool		detach_false_primary;	/* If true, detach false primary */
 	char	   *recovery_user;	/* PostgreSQL user name for online recovery */
 	char	   *recovery_password;	/* PostgreSQL user password for online

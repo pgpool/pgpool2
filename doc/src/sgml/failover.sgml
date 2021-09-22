@@ -508,6 +508,53 @@ if (we need to executed follow primary command)
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-failover-on-backend-shutdown" xreflabel="failover_on_backend_shutdown">
+    <term><varname>failover_on_backend_shutdown</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>failover_on_backend_shutdown</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      When set to on, <productname>Pgpool-II</productname> detects a
+      backend shutdown event by checking particular error code
+      <literal>57P01</literal> and <literal>57P02</literal> on a
+      session established between the client and backend. If it
+      detects those error codes, a failover is triggered on that node.
+      When this is set to off, <productname>Pgpool-II</productname>
+      only report an error and disconnect the session in case of such
+      errors.  The default is off.
+     </para>
+     <para>
+      If no client is connected,
+      <productname>Pgpool-II</productname> will not detect the event
+      even if the parameter is on.
+     </para>
+     <para>
+      Please note that <literal>57P01</literal> is not only sent at a
+      shutdown event, but also sent when the backend currently
+      connected is killed by <function>pg_terminate_backend</function>
+      or SIGTERM signal. This is annoying because it results in
+      unwanted failover. To avoid this, turn off this parameter.
+     </para>
+
+     <note>
+      <para>
+       It is recommended to turn on the backend health checking
+       (see <xref linkend="runtime-config-health-check">)
+	when <varname>failover_on_backend_shutdown</varname> is set to off.
+      </para>
+     </note>
+
+     <para>
+      This parameter is available
+      in <productname>Pgpool-II</productname> 4.3 or later.  This
+      parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-failover-on-backend-error" xreflabel="failover_on_backend_error">
     <term><varname>failover_on_backend_error</varname> (<type>boolean</type>)
      <indexterm>
@@ -527,10 +574,6 @@ if (we need to executed follow primary command)
        It is recommended to turn on the backend health checking
        (see <xref linkend="runtime-config-health-check">)
 	when <varname>failover_on_backend_error</varname> is set to off.
-	Note, however, that <productname>Pgpool-II</productname> still triggers the
-	failover when it detects the administrative shutdown of
-	<productname>PostgreSQL</> backend server.
-	If you want to avoid a fail over even in this case, you need to specify DISALLOW_TO_FAILOVER on <xref linkend="guc-backend-flag">.
       </para>
      </note>
      <para>
