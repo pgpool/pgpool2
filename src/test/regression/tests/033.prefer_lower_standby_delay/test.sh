@@ -8,7 +8,7 @@ PG_CTL=$PGBIN/pg_ctl
 PSQL="$PGBIN/psql -X "
 
 version=`$PSQL --version|awk '{print $3}'`
-major_version=${version%.*}
+major_version=`echo ${version%.*} | sed 's/\([0-9]*\).*/\1/'`
 
 result=`echo "$major_version >= 10"|bc`
 if [ $result == 1 ];then
