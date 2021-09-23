@@ -6,6 +6,7 @@
 WHOAMI=`whoami`
 source $TESTLIBS
 TESTDIR=testdir
+PSQL=$PGBIN/psql
 num_tests=6
 success_count=0
 
@@ -36,14 +37,14 @@ do
 	sleep 1
 
 	# run test1 select query
-	psql -p 11000 test <<EOF
+	$PSQL -p 11000 test <<EOF
 PREPARE test1 AS SELECT 1;
 EXECUTE test1;
 DEALLOCATE test1;
 EOF
 
 	# run test2 update query
-	psql -p 11000 test <<EOF
+	$PSQL -p 11000 test <<EOF
 CREATE TABLE test_tbl(id int, name text);
 PREPARE test2 AS UPDATE test_tbl SET id =2;
 EXECUTE test2;
