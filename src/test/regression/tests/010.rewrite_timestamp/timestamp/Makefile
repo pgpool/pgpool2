@@ -1,6 +1,6 @@
 PROGRAM=timestamp-test
 topsrc_dir=../../../../..
-CPPFLAGS=-I$(topsrc_dir)/include -I$(shell pg_config --includedir)
+CPPFLAGS=-I$(topsrc_dir)/include -I$(shell $(PGBIN)/pg_config --includedir)
 CFLAGS=-Wall -O0 -g -std=gnu99
 CC=gcc
 
