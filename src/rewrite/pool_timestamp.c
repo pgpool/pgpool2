@@ -937,7 +937,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 		/*
 		 * CREATE TABLE t1 AS SELECT now();
 		 */
-		if (IsA(c_stmt->query, SelectStmt) && c_stmt->relkind == OBJECT_TABLE)
+		if (IsA(c_stmt->query, SelectStmt) && c_stmt->objtype == OBJECT_TABLE)
 		{
 			/* rewrite params */
 			raw_expression_tree_walker(

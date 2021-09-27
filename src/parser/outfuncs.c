@@ -90,12 +90,16 @@ static void _outSelectStmt(String * str, SelectStmt *node);
 static void _outFuncCall(String * str, FuncCall *node);
 static void _outDefElem(String * str, DefElem *node);
 static void _outLockingClause(String * str, LockingClause *node);
+static void _outReturnStmt(String * str, ReturnStmt *node);
+static void _outPLAssignStmt(String * str, PLAssignStmt *node);
 static void _outColumnDef(String * str, ColumnDef *node);
 static void _outTypeName(String * str, TypeName *node);
 static void _outTypeCast(String * str, TypeCast *node);
 static void _outIndexElem(String * str, IndexElem *node);
 static void _outGroupingSet(String * str, GroupingSet *node);
 static void _outWithClause(String * str, WithClause *node);
+static void _outCTESearchClause(String * str, CTESearchClause *node);
+static void _outCTECycleClause(String * str, CTECycleClause *node);
 static void _outCommonTableExpr(String * str, CommonTableExpr *node);
 static void _outSetOperationStmt(String * str, SetOperationStmt *node);
 static void _outTableSampleClause(String * str, TableSampleClause *node);
@@ -790,6 +794,10 @@ _outJoinExpr(String * str, JoinExpr *node)
 		}
 
 		string_append_char(str, ")");
+
+		if (node->join_using_alias)
+			_outAlias(str, node->join_using_alias);
+
 	}
 
 	if (node->quals)
@@ -1167,6 +1175,10 @@ _outSelectStmt(String * str, SelectStmt *node)
 		if (node->groupClause)
 		{
 			string_append_char(str, " GROUP BY ");
+
+			if (node->groupDistinct)
+				string_append_char(str, "DISTINCT ");
+
 			_outNode(str, node->groupClause);
 		}
 
@@ -1313,6 +1325,16 @@ _outLockingClause(String * str, LockingClause *node)
 
 static void
 _outTriggerTransition(String * str, TriggerTransition *node)
+{
+}
+
+static void
+_outReturnStmt(String * str, ReturnStmt *node)
+{
+}
+
+static void
+_outPLAssignStmt(String * str, PLAssignStmt *node)
 {
 }
 
@@ -1527,6 +1549,16 @@ _outWithClause(String * str, WithClause *node)
 }
 
 static void
+_outCTESearchClause(String * str, CTESearchClause *node)
+{
+}
+
+static void
+_outCTECycleClause(String * str, CTECycleClause *node)
+{
+}
+
+static void
 _outCommonTableExpr(String * str, CommonTableExpr *node)
 {
 	string_append_char(str, "\"");
@@ -1623,17 +1655,6 @@ _outAExpr(String * str, A_Expr *node)
 			string_append_char(str, " NULLIF(");
 			_outNode(str, node->lexpr);
 			string_append_char(str, ", ");
-			_outNode(str, node->rexpr);
-			string_append_char(str, ")");
-			break;
-
-		case AEXPR_OF:
-			_outNode(str, node->lexpr);
-			v = linitial(node->name);
-			if (v->val.str[0] == '!')
-				string_append_char(str, " IS NOT OF (");
-			else
-				string_append_char(str, " IS OF (");
 			_outNode(str, node->rexpr);
 			string_append_char(str, ")");
 			break;
@@ -1736,12 +1757,6 @@ _outAExpr(String * str, A_Expr *node)
 			_outNode(str, linitial((List *) node->rexpr));
 			string_append_char(str, " AND ");
 			_outNode(str, lsecond((List *) node->rexpr));
-			break;
-
-		case AEXPR_PAREN:
-			string_append_char(str, " ( ");
-			_outNode(str, node->lexpr);
-			string_append_char(str, " ) ");
 			break;
 
 		default:
@@ -3490,7 +3505,7 @@ _outAlterTableCmd(String * str, AlterTableCmd *node)
 static void
 _outAlterTableStmt(String * str, AlterTableStmt *node)
 {
-	if (node->relkind == OBJECT_TABLE)
+	if (node->objtype == OBJECT_TABLE)
 		string_append_char(str, "ALTER TABLE ");
 	else
 		string_append_char(str, "ALTER INDEX ");
@@ -5863,6 +5878,12 @@ _outNode(String * str, void *obj)
 			case T_SelectStmt:
 				_outSelectStmt(str, obj);
 				break;
+			case T_ReturnStmt:
+				_outReturnStmt(str, obj);
+				break;
+			case T_PLAssignStmt:
+				_outPLAssignStmt(str, obj);
+				break;
 			case T_ColumnDef:
 				_outColumnDef(str, obj);
 				break;
@@ -5895,6 +5916,12 @@ _outNode(String * str, void *obj)
 				 */
 			case T_WithClause:
 				_outWithClause(str, obj);
+				break;
+			case T_CTESearchClause:
+				_outCTESearchClause(str, obj);
+				break;
+			case T_CTECycleClause:
+				_outCTECycleClause(str, obj);
 				break;
 			case T_CommonTableExpr:
 				_outCommonTableExpr(str, obj);

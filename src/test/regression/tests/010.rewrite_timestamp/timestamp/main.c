@@ -154,7 +154,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-    tree = raw_parser(argv[1], strlen(argv[1]), &error, false);
+    tree = raw_parser(argv[1], RAW_PARSE_DEFAULT, strlen(argv[1]), &error, false);
 	if (tree == NULL)
 	{
 		printf("syntax error: %s\n", argv[1]);

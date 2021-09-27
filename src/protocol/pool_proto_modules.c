@@ -256,7 +256,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 
 	/* parse SQL string */
-	parse_tree_list = raw_parser(contents, len, &error, !REPLICATION);
+	parse_tree_list = raw_parser(contents, RAW_PARSE_DEFAULT, len, &error, !REPLICATION);
 
 	if (parse_tree_list == NIL)
 	{
@@ -1146,7 +1146,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	/* parse SQL string */
 	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 
-	parse_tree_list = raw_parser(stmt, strlen(stmt),&error,!REPLICATION);
+	parse_tree_list = raw_parser(stmt, RAW_PARSE_DEFAULT, strlen(stmt),&error,!REPLICATION);
 
 	if (parse_tree_list == NIL)
 	{

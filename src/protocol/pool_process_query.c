@@ -3678,7 +3678,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 						Node	   *node;
 						bool		error;
 
-						parse_tree_list = raw_parser(query_string_buffer, strlen(query_string_buffer), &error, !REPLICATION);
+						parse_tree_list = raw_parser(query_string_buffer, RAW_PARSE_DEFAULT, strlen(query_string_buffer), &error, !REPLICATION);
 
 						if (parse_tree_list != NIL)
 						{
