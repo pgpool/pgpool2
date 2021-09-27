@@ -3152,13 +3152,23 @@ trigger_failover_command(int node, const char *command_line,
 
 					case 'N':	/* old primary host name */
 						oldprimary = pool_get_node_info(old_primary);
-						string_append_char(exec_cmd, oldprimary->backend_hostname);
+						if (oldprimary)
+							string_append_char(exec_cmd, oldprimary->backend_hostname);
+						else
+							/* no valid old primary */
+							string_append_char(exec_cmd, "\"\"");
 						break;
 
 					case 'S':	/* old primary port */
 						oldprimary = pool_get_node_info(old_primary);
-						snprintf(port_buf, sizeof(port_buf), "%d", oldprimary->backend_port);
-						string_append_char(exec_cmd, port_buf);
+						if (oldprimary)
+						{
+							snprintf(port_buf, sizeof(port_buf), "%d", oldprimary->backend_port);
+							string_append_char(exec_cmd, port_buf);
+						}
+						else
+							/* no valid old primary */
+							string_append_char(exec_cmd, "\"\"");
 						break;
 
 					case '%':	/* escape */
