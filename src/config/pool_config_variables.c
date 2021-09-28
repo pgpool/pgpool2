@@ -49,7 +49,8 @@
 #endif
 
 #define default_reset_query_list	"ABORT;DISCARD ALL"
-#define default_write_function_list "nextval,setval"
+#define default_read_only_function_list ""
+#define default_write_function_list ""
 
 #define EMPTY_CONFIG_GENERIC {NULL, 0, 0, NULL, 0, false, 0, 0, 0, 0, NULL, NULL}
 #define EMPTY_CONFIG_BOOL {EMPTY_CONFIG_GENERIC, NULL, false, NULL, NULL, NULL, false}
@@ -568,7 +569,7 @@ static struct config_bool ConfigureNamesBool[] =
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.insert_lock,
-		true,
+		false,
 		NULL, NULL, NULL
 	},
 
@@ -628,7 +629,7 @@ static struct config_bool ConfigureNamesBool[] =
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.clear_memqcache_on_escalation,
-		false,
+		true,
 		NULL, NULL, NULL
 	},
 
@@ -1121,7 +1122,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_lifecheck_dbname,
-		"postgres",
+		"template1",
 		NULL, NULL, NULL, NULL
 	},
 
@@ -1321,7 +1322,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 		},
 		&g_pool_config.read_only_function_list,
 		&g_pool_config.num_read_only_function_list,
-		NULL,
+		(const char *) default_read_only_function_list,
 		",",
 		true,
 		NULL, NULL, NULL
@@ -1846,7 +1847,7 @@ static struct config_int ConfigureNamesInt[] =
 			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.listen_backlog_multiplier,
-		32,
+		2,
 		1, INT_MAX,
 		NULL, NULL, NULL
 	},
@@ -1901,7 +1902,7 @@ static struct config_int ConfigureNamesInt[] =
 			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.authentication_timeout,
-		0,
+		60,
 		0, INT_MAX,
 		NULL, NULL, NULL
 	},
