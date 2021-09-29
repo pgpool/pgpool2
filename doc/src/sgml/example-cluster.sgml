@@ -234,7 +234,7 @@
    Install <productname>Pgpool-II</productname> by using Pgpool-II YUM repository.
   </para>
   <programlisting>
-# yum install -y http://www.pgpool.net/yum/rpms/4.1/redhat/rhel-7-x86_64/pgpool-II-release-4.1-2.noarch.rpm
+# yum install -y https://www.pgpool.net/yum/rpms/4.2/redhat/rhel-7-x86_64/pgpool-II-release-4.2-1.noarch.rpm
 # yum install -y pgpool-II-pg13-*
   </programlisting>
  </sect2>
