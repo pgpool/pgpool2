@@ -40,14 +40,14 @@ logger -i -p local1.info failover.sh: start: failed_node_id=$FAILED_NODE_ID old_
 ## If there's no master node anymore, skip failover.
 if [ $NEW_MASTER_NODE_ID -lt 0 ]; then
     logger -i -p local1.info failover.sh: All nodes are down. Skipping failover.
-	exit 0
+    exit 0
 fi
 
-## Test passwrodless SSH
+## Test passwordless SSH
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_MASTER_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
 
 if [ $? -ne 0 ]; then
-    logger -i -p local1.info failover.sh: passwrodless SSH to postgres@${NEW_MASTER_NODE_HOST} failed. Please setup passwrodless SSH.
+    logger -i -p local1.info failover.sh: passwordless SSH to postgres@${NEW_MASTER_NODE_HOST} failed. Please setup passwordless SSH.
     exit 1
 fi
 
