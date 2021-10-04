@@ -18,11 +18,11 @@ REPL_SLOT_NAME=${DEST_NODE_HOST//[-.]/_}
 
 echo recovery_1st_stage: start: pg_basebackup for Standby node $DEST_NODE_ID
 
-## Test passwrodless SSH
+## Test passwordless SSH
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
 
 if [ $? -ne 0 ]; then
-    echo recovery_1st_stage: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
+    echo recovery_1st_stage: passwordless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwordless SSH.
     exit 1
 fi
 

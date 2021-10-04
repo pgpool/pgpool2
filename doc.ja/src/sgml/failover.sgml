@@ -47,13 +47,13 @@
  <para>
   フェイルオーバはこのように障害時に発生しますが、手動で意図的にフェイルオーバさせることもできます。
   これを<emphasis>スイッチオーバ</emphasis>と呼びます。
-  たとえば、スィッチオーバで<productname>PostgreSQL</productname>を意図的に切り離して、その間にバックアップを取得するなどの運用が考えられます。
-  スィッチオーバでは、単に<productname>Pgpool-II</productname>内の状態情報をダウン状態にするだけ（ただし、<xref linkend="guc-failover-command">は起動される）で、<productname>PostgreSQL</productname>をダウンさせるわけではないことに注意してください。
-   スィッチオーバは<xref linkend="PCP-DETACH-NODE">コマンドで実行できます。
+  たとえば、スイッチオーバで<productname>PostgreSQL</productname>を意図的に切り離して、その間にバックアップを取得するなどの運用が考えられます。
+  スイッチオーバでは、単に<productname>Pgpool-II</productname>内の状態情報をダウン状態にするだけ（ただし、<xref linkend="guc-failover-command">は起動される）で、<productname>PostgreSQL</productname>をダウンさせるわけではないことに注意してください。
+  スイッチオーバは<xref linkend="PCP-DETACH-NODE">コマンドで実行できます。
  </para>
 
  <para>
-  フェイルオーバないしスィッチオーバで切り離された<productname>PostgreSQL</productname>ノードは、デフォルト設定においては自動でもとの状態（アタッチ状態）には戻りません。
+  フェイルオーバないしスイッチオーバで切り離された<productname>PostgreSQL</productname>ノードは、デフォルト設定においては自動でもとの状態（アタッチ状態）には戻りません。
   -D オプションを指定して<productname>Pgpool-II</productname>を再起動するか、<xref linkend="PCP-ATTACH-NODE">コマンドを使用します。
    その際、<xref linkend="SQL-SHOW-POOL-NODES">を使って、replication_stateが"streaming"になっていることを確認することをお勧めします。
     これは、スタンバイサーバがプライマリサーバとストリーミングレプリケーションで正常に接続されており、データベース内容の整合性が取れていることを示します。

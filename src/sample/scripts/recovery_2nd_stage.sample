@@ -3,10 +3,10 @@
 
 set -o xtrace
 
-DATADIR=$1		# main dabatase cluster
-DEST=$2			# hostname of the DB node to be recovered
-DESTDIR=$3		# database cluster of the DB node to be recovered
-PORT=$4		    # PostgreSQL port number
+DATADIR=$1              # main dabatase cluster
+DEST=$2                 # hostname of the DB node to be recovered
+DESTDIR=$3              # database cluster of the DB node to be recovered
+PORT=$4                 # PostgreSQL port number
 
 PGHOME=/usr/pgsql-13
 ARCHIVEDIR=/var/lib/pgsql/archivedir  # archive log directory
