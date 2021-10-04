@@ -40,11 +40,11 @@ REPL_SLOT_NAME=${NODE_HOST//[-.]/_}
 
 echo follow_primary.sh: start: Standby node ${NODE_ID}
 
-## Test passwrodless SSH
+## Test passwordless SSH
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_PRIMARY_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
 
 if [ $? -ne 0 ]; then
-    echo follow_main.sh: passwrodless SSH to postgres@${NEW_PRIMARY_NODE_HOST} failed. Please setup passwrodless SSH.
+    echo follow_main.sh: passwordless SSH to postgres@${NEW_PRIMARY_NODE_HOST} failed. Please setup passwordless SSH.
     exit 1
 fi
 
@@ -59,7 +59,7 @@ fi
 
 ## Check the status of Standby
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-postgres@${NODE_HOST} -i ~/.ssh/id_rsa_pgpool ${PGHOME}/bin/pg_ctl -w -D ${NODE_PGDATA} status
+    postgres@${NODE_HOST} -i ~/.ssh/id_rsa_pgpool ${PGHOME}/bin/pg_ctl -w -D ${NODE_PGDATA} status
 
 
 ## If Standby is running, synchronize it with the new Primary.
@@ -148,7 +148,7 @@ EOT
 
         # start Standby node on ${NODE_HOST}
         ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-                postgres@${NODE_HOST} -i ~/.ssh/id_rsa_pgpool $PGHOME/bin/pg_ctl -l /dev/null -w -D ${NODE_PGDATA} start
+            postgres@${NODE_HOST} -i ~/.ssh/id_rsa_pgpool $PGHOME/bin/pg_ctl -l /dev/null -w -D ${NODE_PGDATA} start
 
     fi
 
@@ -159,8 +159,8 @@ EOT
         ${PGPOOL_PATH}/pcp_attach_node -w -h localhost -U $PCP_USER -p ${PCP_PORT} -n ${NODE_ID}
 
         if [ $? -ne 0 ]; then
-                echo ERROR: follow_primary.sh: end: pcp_attach_node failed
-                exit 1
+            echo ERROR: follow_primary.sh: end: pcp_attach_node failed
+            exit 1
         fi
 
     # If start Standby failed, drop replication slot "${REPL_SLOT_NAME}"

@@ -10,11 +10,11 @@ PGHOME=/usr/pgsql-13
 
 echo pgpool_remote_start: start: remote start Standby node $DEST_NODE_HOST
 
-## Test passwrodless SSH
+## Test passwordless SSH
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
 
 if [ $? -ne 0 ]; then
-    echo ERROR: pgpool_remote_start: passwrodless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwrodless SSH.
+    echo ERROR: pgpool_remote_start: passwordless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwordless SSH.
     exit 1
 fi
 

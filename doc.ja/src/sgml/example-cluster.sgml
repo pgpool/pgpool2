@@ -374,7 +374,7 @@ host    replication     all             samenet                 scram-sha-256
 
    <listitem>
     <para>
-     <literal>repl</literal>ユーザのパスワード入力なしで、ストリーミングレプリケーションとオンラインリカバリを行うために、または<literal>postgres</literal>ユーザで<application>pg_rewind</application>を実行するために、すべてのサーバにて<literal>postgres</literal>ユーザのホームディレクト<filename>/var/lib/pgsql</filename> に<filename>.pgpass</filename>を作成・配置し、パーミッションを 600 に設定しておきます。
+     <literal>repl</literal>ユーザのパスワード入力なしで、ストリーミングレプリケーションとオンラインリカバリを行うために、または<literal>postgres</literal>ユーザで<application>pg_rewind</application>を実行するために、すべてのサーバにて<literal>postgres</literal>ユーザのホームディレクトリ<filename>/var/lib/pgsql</filename> に<filename>.pgpass</filename>を作成・配置し、パーミッションを 600 に設定しておきます。
     </para>
     <programlisting>
 [全サーバ]# su - postgres
