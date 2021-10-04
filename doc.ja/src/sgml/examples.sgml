@@ -1202,7 +1202,7 @@
 
      <listitem>
       <para>
-       <literal>repl</literal>ユーザのパスワード入力なしで、ストリーミングレプリケーションとオンラインリカバリを行うために、バックエンドの<literal>osspc19</literal>、<literal>osspc20</literal>の<literal>postgres</literal>ユーザのホームディレクト<filename>/var/lib/pgsql</filename> に<filename>.pgpass</filename>を作成・配置し、パーミッションを 600 に設定しておきます。
+       <literal>repl</literal>ユーザのパスワード入力なしで、ストリーミングレプリケーションとオンラインリカバリを行うために、バックエンドの<literal>osspc19</literal>、<literal>osspc20</literal>の<literal>postgres</literal>ユーザのホームディレクトリ<filename>/var/lib/pgsql</filename> に<filename>.pgpass</filename>を作成・配置し、パーミッションを 600 に設定しておきます。
       </para>
       <programlisting>
        [osspc19]$ cat /var/lib/pgsql/.pgpass
