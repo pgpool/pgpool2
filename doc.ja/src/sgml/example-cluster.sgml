@@ -363,8 +363,8 @@ host    replication     all             samenet                 scram-sha-256
 [全サーバ]$ cd ~/.ssh
 [全サーバ]$ ssh-keygen -t rsa -f id_rsa_pgpool
 [全サーバ]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
-[全サーバ]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server2
-[全サーバ]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
+[全サーバ]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server2
+[全サーバ]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
     </programlisting>
     <para>
      設定後、<literal>root</literal>ユーザ及び<literal>postgres</literal>ユーザから<command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command>コマンドを実行し、パスワード入力せずログインできることを確認してください。
