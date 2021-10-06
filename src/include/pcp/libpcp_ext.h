@@ -169,6 +169,8 @@ typedef struct
 {
 	pid_t		pid;			/* OS's process id */
 	time_t		start_time;		/* fork() time */
+	char		connected;		/* if not 0 this process is already used*/
+	int			wait_for_connect;	/* waiting time for client connection (s) */
 	ConnectionInfo *connection_info;	/* head of the connection info for
 										 * this process */
 	int			client_connection_count;	/* how many times clients used this process */
@@ -248,7 +250,7 @@ typedef struct
 	char		backend_connection_time[POOLCONFIG_MAXDATELEN + 1];
 	char		client_connection_time[POOLCONFIG_MAXDATELEN + 1];
 	char		client_disconnection_time[POOLCONFIG_MAXDATELEN + 1];
-	char		client_idle_duration[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		client_idle_duration[POOLCONFIG_MAXDATELEN + 1];
 	char		pool_majorversion[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		pool_minorversion[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		pool_counter[POOLCONFIG_MAXCOUNTLEN + 1];

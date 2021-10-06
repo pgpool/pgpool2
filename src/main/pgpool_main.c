@@ -411,6 +411,8 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		process_info[i].start_time = time(NULL);
 		process_info[i].client_connection_count = 0;
 		process_info[i].status = WAIT_FOR_CONNECT;
+		process_info[i].connected = 0;
+		process_info[i].wait_for_connect = 0;
 	}
 
 	/* create pipe for delivering event */
@@ -2026,6 +2028,8 @@ failover(void)
 						process_info[i].start_time = time(NULL);
 						process_info[i].client_connection_count = 0;
 						process_info[i].status = WAIT_FOR_CONNECT;
+						process_info[i].connected = 0;
+						process_info[i].wait_for_connect = 0;
 					}
 				}
 				else
@@ -2495,6 +2499,8 @@ reaper(void)
 						new_pid = process_info[i].pid;
 						process_info[i].client_connection_count = 0;
 						process_info[i].status = WAIT_FOR_CONNECT;
+						process_info[i].connected = 0;
+						process_info[i].wait_for_connect = 0;
 					}
 					else
 						process_info[i].pid = 0;
@@ -4260,6 +4266,8 @@ sync_backend_from_watchdog(void)
 					process_info[i].start_time = time(NULL);
 					process_info[i].client_connection_count = 0;
 					process_info[i].status = WAIT_FOR_CONNECT;
+					process_info[i].connected = 0;
+					process_info[i].wait_for_connect = 0;
 				}
 			}
 			else

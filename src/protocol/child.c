@@ -84,7 +84,7 @@ static bool connect_using_existing_connection(POOL_CONNECTION * frontend,
 static void check_restart_request(void);
 static void enable_authentication_timeout(void);
 static void disable_authentication_timeout(void);
-static int	wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr);
+static int	wait_for_new_connections(int *fds, SockAddr *saddr);
 static void check_config_reload(void);
 static void get_backends_status(unsigned int *valid_backends, unsigned int *down_backends);
 static void validate_backend_connectivity(int front_end_fd);
@@ -147,9 +147,6 @@ do_child(int *fds)
 	POOL_CONNECTION_POOL *volatile backend = NULL;
 	struct timeval now;
 	struct timezone tz;
-	struct timeval timeout;
-	static int	connected = 0;	/* non 0 if has been accepted connections from
-								 * frontend */
 
 	/* counter for child_max_connections.  "volatile" declaration is necessary
 	 * so that this is counted up even if long jump is issued due to
@@ -311,9 +308,6 @@ do_child(int *fds)
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
 
-	timeout.tv_sec = pool_config->child_life_time;
-	timeout.tv_usec = 0;
-
 	for (;;)
 	{
 		StartupPacket *sp;
@@ -335,10 +329,11 @@ do_child(int *fds)
 		/* Destroy session context for just in case... */
 		pool_session_context_destroy();
 
-		front_end_fd = wait_for_new_connections(fds, &timeout, &saddr);
+		front_end_fd = wait_for_new_connections(fds, &saddr);
+		proc_info->wait_for_connect = 0;
 		if (front_end_fd == OPERATION_TIMEOUT)
 		{
-			if (pool_config->child_life_time > 0 && connected)
+			if (pool_config->child_life_time > 0 && proc_info->connected)
 			{
 				ereport(DEBUG1,
 						(errmsg("child life %d seconds expired", pool_config->child_life_time)));
@@ -405,7 +400,7 @@ do_child(int *fds)
 			child_frontend = NULL;
 			continue;
 		}
-		connected = 1;
+		proc_info->connected = 1;
 
 		/*
 		 * show ps status
@@ -465,9 +460,6 @@ do_child(int *fds)
 		connection_count_down();
 		if (pool_config->log_disconnections)
 			log_disconnections(sp->database, sp->user);
-
-		timeout.tv_sec = pool_config->child_life_time;
-		timeout.tv_usec = 0;
 
 		/* increment queries counter if necessary */
 		if (pool_config->child_max_connections > 0)
@@ -1457,7 +1449,7 @@ check_restart_request(void)
  */
 
 static int
-wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
+wait_for_new_connections(int *fds, SockAddr *saddr)
 {
 	fd_set		rmask;
 	int			numfds;
@@ -1475,10 +1467,10 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 	static int	cnt;
 #endif
 
-	struct timeval *timeoutval;
-	struct timeval tv1,
-				tv2,
-				tmback = {0, 0};
+	struct timeval *timeout;
+	struct timeval timeoutdata;
+
+	ProcessInfo* proc_info = pool_get_process_info(getpid());
 
 	for (walk = fds; *walk != -1; walk++)
 		socket_set_nonblock(*walk);
@@ -1489,25 +1481,6 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 		set_ps_display("wait for connection request", false);
 
 	set_process_status(WAIT_FOR_CONNECT);
-
-	memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
-
-	if (timeout->tv_sec == 0 && timeout->tv_usec == 0)
-		timeoutval = NULL;
-	else
-	{
-		timeoutval = timeout;
-		tmback.tv_sec = timeout->tv_sec;
-		tmback.tv_usec = timeout->tv_usec;
-		gettimeofday(&tv1, NULL);
-
-#ifdef DEBUG
-		ereport(DEBUG3,
-				(errmsg("before select = {%d, %d}", timeoutval->tv_sec, timeoutval->tv_usec)));
-		ereport(DEBUG3,
-				(errmsg("g:before select = {%d, %d}", tv1.tv_sec, tv1.tv_usec)));
-#endif
-	}
 
 	/*
 	 * If child life time is disabled and serialize_accept is on, we serialize
@@ -1560,12 +1533,45 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 		}
 
 		set_ps_display("wait for connection request", false);
-		set_process_status(WAIT_FOR_CONNECT);
 		ereport(DEBUG1,
 				(errmsg("LOCKING select()")));
 	}
 
-	numfds = select(nsocks, &rmask, NULL, NULL, timeoutval);
+	for (;;)
+	{
+		/* check backend timer is expired */
+		if (backend_timer_expired)
+		{
+			pool_backend_timer();
+			backend_timer_expired = 0;
+		}
+
+		/* prepare select */
+		memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
+		if (pool_config->child_life_time > 0)
+		{
+			timeoutdata.tv_sec = 1;
+			timeoutdata.tv_usec = 0;
+			timeout = &timeoutdata;
+		}
+		else
+		{
+			timeout = NULL;
+		}
+
+		numfds = select(nsocks, &rmask, NULL, NULL, timeout);
+
+		/* not timeout*/
+		if (numfds != 0)
+			break;
+
+		/* timeout */
+		proc_info->wait_for_connect++;
+
+		if (proc_info->wait_for_connect > pool_config->child_life_time)
+			return OPERATION_TIMEOUT;
+
+	}
 
 	save_errno = errno;
 
@@ -1583,40 +1589,6 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 		backend_timer_expired = 0;
 	}
 
-	/*
-	 * following code fragment computes remaining timeout val in a portable
-	 * way. Linux does this automatically but other platforms do not.
-	 */
-	if (timeoutval)
-	{
-		gettimeofday(&tv2, NULL);
-
-		tmback.tv_usec -= tv2.tv_usec - tv1.tv_usec;
-		tmback.tv_sec -= tv2.tv_sec - tv1.tv_sec;
-
-		if (tmback.tv_usec < 0)
-		{
-			tmback.tv_sec--;
-			if (tmback.tv_sec < 0)
-			{
-				timeout->tv_sec = 0;
-				timeout->tv_usec = 0;
-			}
-			else
-			{
-				tmback.tv_usec += 1000000;
-				timeout->tv_sec = tmback.tv_sec;
-				timeout->tv_usec = tmback.tv_usec;
-			}
-		}
-#ifdef DEBUG
-		ereport(DEBUG3,
-				(errmsg("g:after select = {%d, %d}", tv2.tv_sec, tv2.tv_usec)));
-		ereport(DEBUG3,
-				(errmsg("after select = {%d, %d}", timeout->tv_sec, timeout->tv_usec)));
-#endif
-	}
-
 	errno = save_errno;
 
 	if (numfds == -1)
@@ -1626,12 +1598,6 @@ wait_for_new_connections(int *fds, struct timeval *timeout, SockAddr *saddr)
 		ereport(ERROR,
 				(errmsg("failed to accept user connection"),
 				 errdetail("select on socket failed with error : \"%m\"")));
-	}
-
-	/* timeout */
-	if (numfds == 0)
-	{
-		return OPERATION_TIMEOUT;
 	}
 
 	for (walk = fds; *walk != -1; walk++)

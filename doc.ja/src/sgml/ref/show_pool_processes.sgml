@@ -72,14 +72,11 @@
        <listitem>
         <para>
          <!--
-         <literal>remaining</literal> is the remaining time by
-         <xref linkend="guc-client-idle-limit">. If
-         <literal>client_idle_limit</literal> is set 0,
-         <literal>remaining</literal> is not desplayed.
+         If <xref linkend="guc-child-life-time"> is set not 0,
+         the time before process restarting is displayed.
          -->
-         <literal>remaining</literal> は <xref linkend="guc-client-idle-limit"> に
-         よる残り時間です。<literal>client_idle_limit</literal> が 0 の場合、
-         <literal>remaining</literal> は表示されません。
+         <xref linkend="guc-child-life-time"> が0出ない場合
+         プロセスが再起動されるまでの時間が表示されます。
         </para>
        </listitem>
       </itemizedlist>
@@ -184,17 +181,17 @@
    ここでは例を示します。
 
    <programlisting>
-postgres=# show pool_processes;
- pool_pid |              start_time               | client_connection_count | database | username | backend_connection_time | pool_counter |       status
-----------+---------------------------------------+-------------------------+----------+----------+-------------------------+--------------+---------------------
- 6685     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
- 6686     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
- 6687     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
- 6688     | 2021-09-07 02:41:13 (remaining: 4:10) | 1                       | postgres | postgres | 2021-09-07 02:41:48     | 1            | Idle
- 6689     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
- 6690     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
- 6691     | 2021-09-07 02:41:13 (remaining: 5:00) | 0                       |          |          |                         |              | Wait for connection
- 6692     | 2021-09-07 02:41:13 (remaining: 5:00) | 2                       | postgres | postgres | 2021-09-07 02:42:38     | 1            | Execute command
+test=# show pool_processes;
+ pool_pid |                      start_time                      | client_connection_count | database | username | backend_connection_time | pool_counter |       status
+----------+------------------------------------------------------+-------------------------+----------+----------+-------------------------+--------------+---------------------
+ 32641    | 2021-09-28 04:40:45                                  | 0                       |          |          |                         |              | Wait for connection
+ 32642    | 2021-09-28 04:40:45                                  | 0                       |          |          |                         |              | Wait for connection
+ 32643    | 2021-09-28 04:40:45                                  | 0                       | test     | kawamoto | 2021-09-28 04:40:48     | 1            | Idle
+ 32644    | 2021-09-28 04:40:45                                  | 0                       | test     | kawamoto | 2021-09-28 04:43:15     | 1            | Execute command
+ 32645    | 2021-09-28 04:40:45                                  | 0                       |          |          |                         |              | Wait for connection
+ 32646    | 2021-09-28 04:40:45                                  | 0                       |          |          |                         |              | Wait for connection
+ 32647    | 2021-09-28 04:40:45                                  | 0                       |          |          |                         |              | Wait for connection
+ 32648    | 2021-09-28 04:40:45 (3:15 before process restarting) | 2                       |          |          |                         |              | Wait for connection
 (8 rows)
    </programlisting>
   </para>

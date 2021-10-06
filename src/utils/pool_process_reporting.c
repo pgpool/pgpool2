@@ -1424,22 +1424,27 @@ get_pools(int *nrows)
 		proc_id = process_info[child].pid;
 		pi = pool_get_process_info(proc_id);
 
-		int remaining_time = pool_config->client_idle_limit;
-		if (pool_config->client_idle_limit)
+		int exist_live_connection = 0;
+		for (pool = 0; pool < pool_config->max_pool; pool++)
 		{
-			for (pool = 0; pool < pool_config->max_pool; pool++)
+			poolBE = pool * MAX_NUM_BACKENDS;
+			if (pi->connection_info[poolBE].connected)
 			{
-				for (backend_id = 0; backend_id < NUM_BACKENDS; backend_id++)
-				{
-					poolBE = pool * MAX_NUM_BACKENDS + backend_id;
-					if (pi->connection_info[poolBE].client_idle_duration > 0)
-						remaining_time = pool_config->client_idle_limit - pi->connection_info[poolBE].client_idle_duration;
-				}
+				exist_live_connection = 1;
+				break;
 			}
 		}
 
+
 		for (pool = 0; pool < pool_config->max_pool; pool++)
 		{
+			int idle_duration = pi->connection_info[pool * MAX_NUM_BACKENDS].client_idle_duration;
+			int cliet_idle_time = pool_config->client_idle_limit;
+			if (pool_config->client_idle_limit > 0)
+			{
+				cliet_idle_time = pool_config->client_idle_limit - idle_duration;
+			}
+
 			for (backend_id = 0; backend_id < NUM_BACKENDS; backend_id++)
 			{
 				poolBE = pool * MAX_NUM_BACKENDS + backend_id;
@@ -1447,15 +1452,19 @@ get_pools(int *nrows)
 
 				if (pi->start_time)
 				{
-					if (pool_config->client_idle_limit)
+					if ((pool_config->child_life_time > 0)
+						&& (pi->connected)
+						&& (!exist_live_connection))
 					{
 						char proc_start_time[POOLCONFIG_MAXDATELEN + 1];
+						int wait_for_connect_time = pool_config->child_life_time - pi->wait_for_connect;
+
 						strftime(proc_start_time, sizeof(proc_start_time),
 								 "%Y-%m-%d %H:%M:%S", localtime(&pi->start_time));
 						snprintf(pools[lines].process_start_time, sizeof(pools[lines].process_start_time),
-								 "%s (remaining: %d:%02d)", proc_start_time,
-								 remaining_time / 60,
-								 remaining_time % 60);
+								 "%s (%d:%02d before process restarting)", proc_start_time,
+								 wait_for_connect_time / 60,
+								 wait_for_connect_time % 60);
 					}
 					else
 					{
@@ -1473,7 +1482,8 @@ get_pools(int *nrows)
 				snprintf(pools[lines].client_connection_count, sizeof(pools[lines].client_connection_count),
 						 "%d", pi->client_connection_count);
 
-				if (pi->connection_info[poolBE].client_connection_time == 0){
+				if (pi->connection_info[poolBE].client_connection_time == 0)
+				{
 					*(pools[lines].client_connection_time) = '\0';
 				}
 				else
@@ -1482,7 +1492,8 @@ get_pools(int *nrows)
 						 "%Y-%m-%d %H:%M:%S", localtime(&pi->connection_info[poolBE].client_connection_time));
 				}
 
-				if (pi->connection_info[poolBE].client_disconnection_time == 0){
+				if (pi->connection_info[poolBE].client_disconnection_time == 0)
+				{
 					*(pools[lines].client_disconnection_time) = '\0';
 				}
 				else
@@ -1491,8 +1502,17 @@ get_pools(int *nrows)
 						 "%Y-%m-%d %H:%M:%S", localtime(&pi->connection_info[poolBE].client_disconnection_time));
 				}
 
-				snprintf(pools[lines].client_idle_duration, sizeof(pools[lines].client_idle_duration), "%d",
-						 pi->connection_info[poolBE].client_idle_duration);
+				if ((pool_config->client_idle_limit > 0)
+					&& (pi->connection_info[poolBE].connected))
+				{
+					snprintf(pools[lines].client_idle_duration, sizeof(pools[lines].client_idle_duration),
+							 "%d (%d:%02d before client disconnected)", idle_duration,
+							 cliet_idle_time / 60,
+							 cliet_idle_time % 60);
+				}
+				else
+					snprintf(pools[lines].client_idle_duration, sizeof(pools[lines].client_idle_duration),
+							 "%d", idle_duration);
 
 				if (strlen(pi->connection_info[poolBE].database) == 0)
 				{
@@ -1589,31 +1609,31 @@ get_processes(int *nrows)
 		proc_id = process_info[child].pid;
 		pi = pool_get_process_info(proc_id);
 
-		int remaining_time = pool_config->client_idle_limit;
-		if (pool_config->client_idle_limit)
+		int exist_live_connection = 0;
+		for (pool = 0; pool < pool_config->max_pool; pool++)
 		{
-			int backend_id;
-			for (pool = 0; pool < pool_config->max_pool; pool++)
+			poolBE = pool * MAX_NUM_BACKENDS;
+			if (pi->connection_info[poolBE].connected)
 			{
-				for (backend_id = 0; backend_id < NUM_BACKENDS; backend_id++)
-				{
-					poolBE = pool * MAX_NUM_BACKENDS + backend_id;
-					if (pi->connection_info[poolBE].client_idle_duration > 0)
-						remaining_time = pool_config->client_idle_limit - pi->connection_info[poolBE].client_idle_duration;
-				}
+				exist_live_connection = 1;
+				break;
 			}
 		}
 
 		snprintf(processes[child].pool_pid, POOLCONFIG_MAXCOUNTLEN, "%d", proc_id);
-		if (pool_config->client_idle_limit)
+		if ((pool_config->child_life_time > 0)
+			&& (pi->connected)
+			&& (!exist_live_connection))
 		{
 			char proc_start_time[POOLCONFIG_MAXDATELEN + 1];
+			int wait_for_connect_time = pool_config->child_life_time - pi->wait_for_connect;
+
 			strftime(proc_start_time, sizeof(proc_start_time),
 					 "%Y-%m-%d %H:%M:%S", localtime(&pi->start_time));
 			snprintf(processes[child].process_start_time, sizeof(processes[child].process_start_time),
-					 "%s (remaining: %d:%02d)", proc_start_time,
-					 remaining_time / 60,
-					 remaining_time % 60);
+					 "%s (%d:%02d before process restarting)", proc_start_time,
+					 wait_for_connect_time / 60,
+					 wait_for_connect_time % 60);
 		}
 		else
 		{
