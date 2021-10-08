@@ -329,7 +329,7 @@
 	<!--
 	<entry>Never log the standby delay</entry>
 	-->
-	<entry>スタンバイの遅延はログ出力されない (デフォルト)</entry>
+	<entry>スタンバイの遅延はログ出力されない</entry>
        </row>
 
        <row>
@@ -345,7 +345,7 @@
 	<!--
 	<entry>Only log the standby delay, when it exceeds <xref linkend="guc-delay-threshold"> value</entry>
 	-->
-	<entry><xref linkend="guc-delay-threshold">の値を超えた時だけ、スタンバイの遅延がログ出力される</entry>
+	<entry><xref linkend="guc-delay-threshold">の値を超えた時だけ、スタンバイの遅延がログ出力される(デフォルト)</entry>
        </row>
       </tbody>
      </tgroup>

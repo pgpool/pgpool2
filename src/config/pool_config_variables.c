@@ -2195,7 +2195,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			CONFIG_VAR_TYPE_ENUM, false, 0
 		},
 		(int *) &g_pool_config.log_standby_delay,
-		LSD_NONE,
+		LSD_OVER_THRESHOLD,
 		log_standby_delay_options,
 		NULL, NULL, NULL, NULL
 	},

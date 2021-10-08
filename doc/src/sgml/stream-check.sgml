@@ -247,7 +247,7 @@
       <tbody>
        <row>
 	<entry><literal>'none'</literal></entry>
-	<entry>Never log the standby delay (the default)</entry>
+	<entry>Never log the standby delay</entry>
        </row>
 
        <row>
@@ -257,7 +257,7 @@
 
        <row>
 	<entry><literal>'if_over_threshold'</literal></entry>
-	<entry>Only log the standby delay, when it exceeds <xref linkend="guc-delay-threshold"> value</entry>
+	<entry>Only log the standby delay, when it exceeds <xref linkend="guc-delay-threshold"> value (the default)</entry>
        </row>
       </tbody>
      </tgroup>
