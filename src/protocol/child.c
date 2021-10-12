@@ -1076,9 +1076,9 @@ static RETSIGTYPE die(int sig)
 {
 	int			save_errno;
 
-	POOL_SETMASK(&BlockSig);
-
 	save_errno = errno;
+
+	POOL_SETMASK(&BlockSig);
 
 #ifdef NOT_USED
 	ereport(LOG,
@@ -1124,8 +1124,9 @@ static RETSIGTYPE die(int sig)
 			break;
 	}
 
-	errno = save_errno;
 	POOL_SETMASK(&UnBlockSig);
+
+	errno = save_errno;
 }
 
 /*
