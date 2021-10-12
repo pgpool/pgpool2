@@ -96,7 +96,7 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 				 DataDir, script, DataDir, remote_host,
 				 remote_data_directory, primary_port, remote_node, remote_port, primary_host);
 	}
-	if (PG_NARGS() >= 6)		/* Pgpool-II 4.1 or 4.2 */
+	else if (PG_NARGS() >= 6)		/* Pgpool-II 4.1 or 4.2 */
 	{
 		char	   *primary_port = DatumGetCString(DirectFunctionCall1(textout,
 																	  PointerGetDatum(PG_GETARG_TEXT_P(3))));
