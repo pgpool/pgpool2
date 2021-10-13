@@ -364,9 +364,9 @@
     </para>
     <para>
      <!--
-     <varname>recovery_1st_stage_command</varname> receives following 6 parameters:
+     <varname>recovery_1st_stage_command</varname> receives following 7 parameters:
      -->
-     <varname>recovery_1st_stage_command</varname>は次の6つの引数を受けとります。 
+     <varname>recovery_1st_stage_command</varname>は次の7つの引数を受けとります。 
     </para>
 
     <itemizedlist>
@@ -506,9 +506,9 @@
     </para>
     <para>
      <!--
-     <varname>recovery_2nd_stage_command</varname> receives following 6 parameters:
+     <varname>recovery_2nd_stage_command</varname> receives following 7 parameters:
      -->
-     <varname>recovery_2nd_stage_command</varname>は次の6つの引数を受けとります。 
+     <varname>recovery_2nd_stage_command</varname>は次の7つの引数を受けとります。 
     </para>
 
     <itemizedlist>

@@ -257,7 +257,7 @@
      try to execute <command>$PGDATA/sync-command</command>.
     </para>
     <para>
-     <varname>recovery_1st_stage_command</varname> receives following 6 parameters:
+     <varname>recovery_1st_stage_command</varname> receives following 7 parameters:
     </para>
 
     <itemizedlist>
@@ -369,7 +369,7 @@
       try to execute <command>$PGDATA/sync-command</command>.
     </para>
     <para>
-     <varname>recovery_2nd_stage_command</varname> receives following 6 parameters:
+     <varname>recovery_2nd_stage_command</varname> receives following 7 parameters:
     </para>
 
     <itemizedlist>
