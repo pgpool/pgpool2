@@ -1924,7 +1924,7 @@ static struct config_int ConfigureNamesInt[] =
 			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
 		&g_pool_config.sr_check_period,
-		0,
+		10,
 		0, INT_MAX,
 		NULL, NULL, NULL
 	},

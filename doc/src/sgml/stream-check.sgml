@@ -29,7 +29,7 @@
     <para>
      Specifies the time interval in seconds to check the streaming
      replication delay.
-     Default is 0, which means the check is disabled.
+     The default is 10.
     </para>
 
     <para>
