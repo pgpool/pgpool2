@@ -459,7 +459,7 @@
       load balancing on incoming <acronym>SELECT</acronym> queries.
       i.e. <acronym>SELECT</acronym> queries from the clients gets distributed to
       the configured <productname>PostgreSQL</> backends.
-      Default is off.
+      Default is on.
      </para>
      <para>
       This parameter can only be set at server start.

@@ -590,7 +590,7 @@
       -->
       onに設定すると、<productname>Pgpool-II</productname>は入ってきた<acronym>SELECT</acronym>クエリに対する負荷分散を有効にします。
       すなわち、クライアントからの<acronym>SELECT</acronym>クエリは設定された<productname>PostgreSQL</>バックエンドに振り分けます。
-      デフォルトはoffです。
+      デフォルトはonです。
      </para>
      <para>
       <!--
