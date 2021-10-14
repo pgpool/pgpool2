@@ -383,7 +383,7 @@ static struct config_bool ConfigureNamesBool[] =
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.failover_when_quorum_exists,
-		false,
+		true,
 		NULL, NULL, NULL
 	},
 	{
