@@ -1082,9 +1082,9 @@ backend_clustering_mode = 'native_replication'
      </note>
      <para>
       <!--
-      Default is off.
+      Default is on.
       -->
-      デフォルトはoffです。
+      デフォルトはonです。
      </para>
      <para>
       <!--

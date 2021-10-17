@@ -569,7 +569,7 @@ static struct config_bool ConfigureNamesBool[] =
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.insert_lock,
-		false,
+		true,
 		NULL, NULL, NULL
 	},
 
