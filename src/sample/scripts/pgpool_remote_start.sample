@@ -6,7 +6,7 @@ set -o xtrace
 DEST_NODE_HOST="$1"
 DEST_NODE_PGDATA="$2"
 
-PGHOME=/usr/pgsql-13
+PGHOME=/usr/pgsql-14
 
 echo pgpool_remote_start: start: remote start Standby node $DEST_NODE_HOST
 

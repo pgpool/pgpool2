@@ -9,9 +9,9 @@ DEST_NODE_PGDATA="$3"
 PRIMARY_NODE_PORT="$4"
 DEST_NODE_ID="$5"
 DEST_NODE_PORT="$6"
+PRIMARY_NODE_HOST="$7"
 
-PRIMARY_NODE_HOST=$(hostname)
-PGHOME=/usr/pgsql-13
+PGHOME=/usr/pgsql-14
 ARCHIVEDIR=/var/lib/pgsql/archivedir
 REPLUSER=repl
 REPL_SLOT_NAME=${DEST_NODE_HOST//[-.]/_}
