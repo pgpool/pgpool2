@@ -102,7 +102,7 @@ backend_clustering_mode = 'snapshot_isolation'
                                    # Delay in seconds to complete client authentication
                                    # 0 means no timeout.
 
-allow_clear_text_frontend_auth = off
+#allow_clear_text_frontend_auth = off
                                    # Allow Pgpool-II to use clear text password authentication
                                    # with clients, when pool_passwd does not
                                    # contain the user password
@@ -432,7 +432,7 @@ allow_clear_text_frontend_auth = off
                                    # the write_function_list
                                    # only valid for disable_load_balance_on_write = 'dml_adaptive'.
 
-statement_level_load_balance = off
+#statement_level_load_balance = off
                                    # Enables statement level load balancing
 
 #------------------------------------------------------------------------------

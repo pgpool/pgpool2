@@ -438,7 +438,7 @@ backend_clustering_mode = 'streaming_replication'
                                    # the write_function_list
                                    # only valid for disable_load_balance_on_write = 'dml_adaptive'.
 
-statement_level_load_balance = off
+#statement_level_load_balance = off
                                    # Enables statement level load balancing
 
 #------------------------------------------------------------------------------
