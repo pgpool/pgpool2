@@ -346,30 +346,34 @@ do_child(int *fds)
 		if (front_end_fd == RETRY)
 			continue;
 
-		/*
-		 * Check if max connections from clients execeeded.
-		 */
 		con_count = connection_count_up();
-		if (con_count > (pool_config->num_init_children - pool_config->reserved_connections))
+
+		if (pool_config->reserved_connections > 0)
 		{
-			POOL_CONNECTION * cp;
-			cp = pool_open(front_end_fd, false);
-			if (cp == NULL)
+			/*
+			 * Check if max connections from clients exceeded.
+			 */
+			if (con_count > (pool_config->num_init_children - pool_config->reserved_connections))
 			{
+				POOL_CONNECTION * cp;
+				cp = pool_open(front_end_fd, false);
+				if (cp == NULL)
+				{
+					connection_count_down();
+					continue;
+				}
 				connection_count_down();
+				pool_send_fatal_message(cp, 3, "53300",
+										"Sorry, too many clients already",
+										"",
+										"",
+										__FILE__, __LINE__);
+				ereport(ERROR,
+						(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+						 errmsg("Sorry, too many clients already")));
+				pool_close(cp);
 				continue;
 			}
-			connection_count_down();
-			pool_send_fatal_message(cp, 3, "53300",
-									"Sorry, too many clients already",
-									"",
-									"",
-									__FILE__, __LINE__);
-			ereport(ERROR,
-					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
-					 errmsg("Sorry, too many clients already")));
-			pool_close(cp);
-			continue;
 		}
 
 		accepted = 1;
