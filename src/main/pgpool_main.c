@@ -2465,10 +2465,13 @@ static void reaper(void)
 		}
 		if (WIFSIGNALED(status))
 		{
-			/* Child terminated by segmentation fault. Report it */
-			if(WTERMSIG(status) == SIGSEGV)
+			/* Child terminated by segmentation fault or sigkill. Report it */
+			if (WTERMSIG(status) == SIGSEGV)
 				ereport(WARNING,
-					(errmsg("%s process with pid: %d was terminated by segmentation fault", exiting_process_name,pid)));
+						(errmsg("%s process with pid: %d was terminated by segmentation fault", exiting_process_name, pid)));
+			else if (WTERMSIG(status) == SIGKILL)
+				ereport(WARNING,
+						(errmsg("%s process with pid: %d was terminated by sigkill", exiting_process_name, pid)));
 			else
 				ereport(LOG,
 						(errmsg("%s process with pid: %d exits with status %d by signal %d", exiting_process_name, pid, status, WTERMSIG(status))));
