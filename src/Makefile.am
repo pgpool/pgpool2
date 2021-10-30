@@ -73,12 +73,6 @@ DEFS = @DEFS@ \
 sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pcp.conf.sample \
 			   sample/pool_hba.conf.sample \
-			   sample/pgpool.conf.sample-replication \
-			   sample/pgpool.conf.sample-slony \
-			   sample/pgpool.conf.sample-stream \
-			   sample/pgpool.conf.sample-logical \
-			   sample/pgpool.conf.sample-raw \
-			   sample/pgpool.conf.sample-snapshot \
 			   sample/scripts/failover.sh.sample \
 			   sample/scripts/follow_primary.sh.sample \
 			   sample/scripts/pgpool_remote_start.sample \

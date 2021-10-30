@@ -68,7 +68,7 @@ ORIGBASEPORT=$BASEPORT
 PGBASEPORT=`expr $BASEPORT + 2`
 # Default number of PostgreSQL database clusters
 NUMCLUSTERS=${NUMCLUSTERS:-"2"}
-# Where to look for pgpool.conf.sample*
+# Where to look for pgpool.conf.sample
 PGPOOL_INSTALL_DIR=${PGPOOL_INSTALL_DIR:-"@@PGPOOL_INSTALL_DIR@@"}
 PGPOOLDIR=${PGPOOLDIR:-"@@PGPOOL_CONFIG_DIR@@"}
 # PostgreSQL commands(initdb, pg_ctl, psql) install dir
@@ -1071,24 +1071,26 @@ do
 	shift
 done
 
+SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample
+
 case $MODE in
 	r) MODENAME="native replication mode"
-		SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-replication
+	   CLUSTERING_MODE_STR="native_replication"
 		;;
 	s ) MODENAME="streaming replication mode"
-		SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-stream
+	    CLUSTERING_MODE_STR="streaming_replication"
 		;;
 	n ) MODENAME="raw mode"
-		SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-raw
+	    CLUSTERING_MODE_STR="raw"
 		;;
 	l ) MODENAME="logical replication mode"
-	    SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-logical
+	    CLUSTERING_MODE_STR="logical_replication"
 	    ;;
 	y ) MODENAME="slony mode"
-	    SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-slony
+	    CLUSTERING_MODE_STR="slony"
 	    ;;
 	i ) MODENAME="snapshot isolation mode"
-	    SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-snapshot
+	    CLUSTERING_MODE_STR="snapshot_isolation"
 	    ;;
 esac
 
@@ -1129,6 +1131,7 @@ BASEPORT=$PGBASEPORT
 #-------------------------------------------
 test ! -d etc && mkdir etc
 cp $SAMPLE_CONF $CONF
+echo "backend_clustering_mode = $CLUSTERING_MODE_STR" >> $CONF
 cp $PGPOOLDIR/pool_hba.conf.sample $BASEDIR/etc/pool_hba.conf
 
 #-------------------------------------------
