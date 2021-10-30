@@ -1,0 +1,485 @@
+<!-- doc/src/sgml/release-4.2.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-4-3-0">
+ <title>Release 4.3.0</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2021-12-xx</simpara>
+ </note>
+
+ <sect2>
+  <title>Overview</title>
+  <para>
+   Many enhancements are added to this version for easier
+   configuration and administration.
+   New <productname>PostgreSQL</productname> 14 <literal>SQL</literal>
+   parse is imported.
+  </para>
+
+  <para>
+   Please be warned that in this version default values fo some
+   configuration parameters are changed to be more consistent and
+   useful. See <link linkend="migration-4-3-0">Migration</link>
+   section for more details.
+  </para>
+
+  <para>
+   Below are major enhancements.
+  </para>
+
+  <itemizedlist>
+
+   <listitem>
+    <para>
+     Allow to choose the least replication delay standby node when
+     selecting the load balance node. For this pupose a new
+     parameter <xref linkend="guc-prefer-lower-delay-standby"> is
+     added.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Allow to specify the node id to be promoted in
+     <xref linkend="pcp-promote-node">. For this purpose new
+     switch <parameter>switchover</parameter> is added. If the switch
+     is specified, <xref linkend="pcp-promote-node"> detaches the
+     current primary node and actually promote the specified node.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Allow to configure to not trigger failover
+     when <productname>PostgreSQL</productname> is shutdown by admin
+     or killed by <function>pg_terminate_backend</function>. For this
+     purpose a new
+     parameter <xref linkend="guc-failover-on-backend-shutdown"> is
+     added.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Add new fields
+     to <xref linkend="pcp-proc-info">, <xref linkend="sql-show-pool-processes">
+     and <xref linkend="sql-show-pool-pools"> command to display more
+     useful information to admin.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Allow <xref linkend="pcp-node-info"> to list all backend nodes
+     information.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Add new fields showing
+     actual <productname>PostgreSQL</productname> status
+     to <xref linkend="sql-show-pool-nodes"> command and friends.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Add a new parameter which represents the recovery source hostname
+     to <xref linkend="guc-recovery-1st-stage-command">
+     and <xref linkend="guc-recovery-2nd-stage-command">.  This is
+     useful for some systems on which hostname command returns
+     unexpected host name.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Add support for log time stamp with milliseconds.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Import PostgreSQL 14's SQL parser.
+    </para>
+    <para>
+      Major changes of PostgreSQL 14 parser include:
+    </para>
+     <itemizedlist>
+
+       <listitem>
+	 <para>
+	 Allow an alias to be used to a JOIN ... USING
+	 </para>
+       </listitem>
+       <listitem>
+	 <para>
+	   SELECT ... FROM t1 JOIN t2 USING (a, b, c) AS x
+	 </para>
+       </listitem>
+       <listitem>
+	 <para>
+	   Allow DISTINCT to be added to GROUP BY
+	 </para>
+       </listitem>
+       <listitem>
+	 <para>
+	   SELECT c1, max(c2) FROM t1 GROUP BY DISTINCT c1;
+	 </para>
+       </listitem>
+       <listitem>
+	 <para>
+	   New SEARCH and CYCLE clauses for common table expressions
+	 </para>
+       </listitem>
+
+     </itemizedlist>
+
+  </listitem>
+
+   <listitem>
+    <para>
+     Support include directive in <filename>pgppol.conf</filename>
+     file. You can have separate sub-config file to be included in
+     <filename>pgpool.conf</filename>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <filename>pgpool.conf</filename> sample files are unified into
+     single sample file for easier configuration.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     All configuration parameters in <filename>pgpool.conf</filename>
+     sample file are commented out to clarify which parameter is
+     needed to be changed. Please note that some configuration
+     parameter's default values are
+     changed. See <link linkend="migration-4-3-0">Migration</link>
+     section for more details.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+      New <link linkend="example-Kubernetes">configuration example for
+      Kubernetes</link> is added.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2 id="migration-4-3-0">
+  <title>Migration to Version 4.3</title>
+
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-10-17 [9abe333b]
+    -->
+    <para>
+     Commenting out all parameters
+     in <filename>pgpool.conf</filename>. (Tatsuo Ishii)
+    </para>
+    <para>
+     This will make <filename>pgpool.conf</filename> less confusing
+     and make <productname>PostgreSQL</productname> users easier to
+     understand <filename>pgpool.conf</filename> because this follows
+     the PostgreSQL way.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-30 [4ab1566f]
+    -->
+    <para>
+     Unify all <filename>pgpool.conf.sample</filename> files into
+     single <filename>pgpool.conf.sample</filename>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Now that all configuration parameters
+     in <filename>pgpool.conf</filename> are commented out, there's no
+     point to have separate configuration sample files. Just specify
+     the <xref linkend="guc-backend-clustering-mode"> parameter is
+     enough.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-17 [a3076a6e]
+    -->
+    <para>
+     Change compile time default value of <xref linkend="guc-insert-lock"> to on. (Tatsuo Ishii)
+    </para>
+    <para>
+     insert_lock is already on
+     in <filename>pgpool.conf.sample</filename>. So sync with it.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-14 [f8578a19]
+    -->
+    <para>
+     Change compile time default value
+     of <xref linkend="guc-failover-when-quorum-exists"> to
+     on. (Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="guc-failover-when-quorum-exists"> is already on in
+     the docs and in <filename>pgpool.conf</filename>. So sync with them.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-14 [7f66d399]
+    -->
+    <para>
+     Change compile time default value
+     of <xref linkend="guc-load-balance-mode"> to on. (Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="guc-load-balance-mode"> is already on
+     in <filename>pgpool.conf.sample</filename>. So sync with it.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-13 [275cc0a0]
+    -->
+    <para>
+     Enable streaming replication check by default. (Tatsuo Ishii)
+    </para>
+    <para>
+     Change the compile time default value
+     of <xref linkend="guc-sr-check-period"> from 0 to 10. This means
+     if operating in streaming replication mode, now streaming
+     replication check is enabled by default. The parameter is already
+     set to 10 in <filename>pgpool.conf.sample</filename>. So the only
+     difference is, when <xref linkend="guc-sr-check-period"> is
+     commented out.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-08 [2ec5d9f3]
+    -->
+    <para>
+     Change compile time default
+     of <xref linkend="guc-log-standby-delay"> from 'none' to
+     'if_over_threshold'. (Tatsuo Ishii)
+    </para>
+    <para>
+     Before the compile time default was 'none' but the default value
+     of sample <filename>pgpool.conf</filename> was
+     'if_over_threshold'. Since 'if_over_threshold' is more useful for
+     most users, change the compile time default to
+     'if_over_threshold' as well.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-28 [21b2a06f]
+    -->
+    <para>
+     Fix some compile time default values. (Tatsuo Ishii)
+    </para>
+    <para>
+     Some default values defined in src/config/pool_config_variable.c
+     were different from what the documentation expects. Namely:
+     <xref linkend="guc-insert-lock"> (changed from "true" to "false")
+     <xref linkend="guc-clear-memqcache-on-escalation"> (changed from "false" to "true")
+     <xref linkend="guc-wd-lifecheck-dbname"> (changed from "postgres" to "template1")
+     <xref linkend="guc-listen-backlog-multiplier"> (changed from "32" to "2")
+     <xref linkend="guc-authentication-timeout"> (changed from "0" to "60")
+    </para>
+   </listitem>
+
+  </itemizedlist>
+
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <para>
+     In this release same bug fixes as <productname>Pgpool-II</productname> 4.2.5 are
+     already applied. See <xref linkend="release-4-2-5"> for more details of those fixes.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-07-12 [7a28bbb1]
+    2021-07-05 [77e7fd22]
+    2021-07-05 [61fb18a0]
+    2021-06-21 [81f185ae]
+    2021-06-21 [b69e6957]
+    -->
+    <para>
+     Add <xref linkend="guc-prefer-lower-delay-standby"> (Masaya Kawamoto)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-15 [83c86ac3]
+    -->
+    <para>
+     Allow to specify node id to be promoted in <xref linkend="pcp-promote-node">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-22 [10ef9092]
+    -->
+    <para>
+     Add new config parameter <xref linkend="guc-failover-on-backend-shutdown">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-08 [45152975]
+    -->
+    <para>
+     Add new fields
+     to <xref linkend="pcp-proc-info">, <xref linkend="sql-show-pool-processes">
+     and <xref linkend="sql-show-pool-pools"> command. (Masaya
+     Kawamoto)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-06-15 [aa516eea]
+    -->
+    <para>
+     Allow <xref linkend="pcp-node-info"> to list all backend nodes. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-02-27 [1ae1f159]
+    -->
+    <para>
+     Add new fields to show
+     actual <productname>PostgreSQL</productname> status
+     to <xref linkend="sql-show-pool-nodes">, <xref linkend="pcp-node-info">
+     and <xref linkend="pgpool-adm-pcp-node-info">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-08-05 [82a92b8e]
+    -->
+    <para>
+     Add a new parameter which represents the recovery source hostname
+     to <xref linkend="guc-recovery-1st-stage-command">
+     and <xref linkend="guc-recovery-2nd-stage-command">.  (Tatsuo
+     Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-07-13 [246068e8]
+    -->
+    <para>
+     Add support for log time stamp with millisecond
+     in <xref linkend="guc-log-line-prefix">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-27 [79d49683]
+    -->
+    <para>
+     Import <productname>PostgreSQL</productname> 14's new SQL
+     parser. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-30 [4ab1566f]
+    -->
+    <para>
+     Unify all <filename>pgpool.conf.sample</filename> files into
+     single <filename>pgpool.conf.sample</filename>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-24 [3525981a]
+    -->
+    <para>
+     Fix missing comment out in
+     sample <filename>pgpool.conf</filename>. (Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="guc-statement-level-load-balance">
+     and <xref linkend="guc-allow-clear-text-frontend-auth"> were not
+     commented out.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documentation changes</title>
+   <itemizedlist>
+    <listitem>
+    <!--
+    2020-11-26 [2fec3c85]
+    -->
+    <para>
+     Add documentation of <link linkend="example-Kubernetes">Pgpool-II on Kubernetes</link>. (Bo Peng)
+    </para>
+    <para>
+     
+    </para>
+   </listitem>
+
+  <listitem>
+    <!--
+    2021-10-21 [4e8fb107]
+    -->
+    <para>
+     Update <link linkend="example-cluster">Pgpool-II + Watchdog Setup
+     Example</link> and sample scripts
+     for <productname>PostgreSQL</productname> 14. (Masaya Kawamoto)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+</sect1>
