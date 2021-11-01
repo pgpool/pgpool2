@@ -34,9 +34,9 @@
    <productname>Pgpool-II</productname>, there configuration file
    are located at /usr/local/etc with default installation from
    source code. you can copy
-   <filename>pgpool.conf.sample-stream</filename> as pgpool.conf.
+   <filename>pgpool.conf.sample</filename> as pgpool.conf.
    <programlisting>
-    cp /usr/local/etc/pgpool.conf.sample-stream pgpool.conf
+    cp /usr/local/etc/pgpool.conf.sample pgpool.conf
    </programlisting>
   </para>
   <para>

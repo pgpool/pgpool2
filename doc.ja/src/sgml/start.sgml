@@ -56,9 +56,9 @@
    先に進む前に、ストリーミングレプリケーションモードで<filename>pgpool.conf</filename>を設定しましょう。
    <productname>Pgpool-II</productname>では設定のサンプルが用意されています。
    これらの設定ファイルはデフォルトのソースコードからのインストールでは/usr/local/etcに配置されています。
-   <filename>pgpool.conf.sample-stream</filename>を<filename>pgpool.conf</filename>としてコピーします。
+   <filename>pgpool.conf.sample</filename>を<filename>pgpool.conf</filename>としてコピーします。
    <programlisting>
-    cp /usr/local/etc/pgpool.conf.sample-stream pgpool.conf
+    cp /usr/local/etc/pgpool.conf.sample pgpool.conf
    </programlisting>
   </para>
   <para>

@@ -180,21 +180,21 @@
 
    </para>
 
-   <table id="pgpool-conf-samples-table">
+   <table id="backend-clustering-mode-table">
     <!--
-    <title>pgpool.conf samples</title>
+    <title><xref linkend="guc-backend-clustering-mode"> value in pgpool.conf</title>
     -->
-    <title>pgpool.confのサンプル</title>
+    <title>pgpool.conf中の<xref linkend="guc-backend-clustering-mode">の値</title>
 
     <tgroup cols="2">
      <thead>
       <row>
        <!--
-       <entry>Operation mode</entry>
-       <entry>Configuration file name</entry>
+       <entry>Clustering mode</entry>
+       <entry>value</entry>
        -->
        <entry>クラスタリングモード</entry>
-       <entry>設定ファイル名</entry>
+       <entry>値</entry>
       </row>
      </thead>
 
@@ -204,27 +204,27 @@
        <entry>Streaming replication mode</entry>
        -->
        <entry>ストリーミングレプリケーションモード</entry>
-       <entry><literal>pgpool.conf.sample-stream</literal></entry>
+       <entry><literal>streaming_replication</literal></entry>
       </row>
       <row>
        <entry>ネイティブレプリケーションモード</entry>
-       <entry><literal>pgpool.conf.sample-replication</literal></entry>
+       <entry><literal>native_replication</literal></entry>
       </row>
       <row>
        <entry>ロジカルレプリケーションモード</entry>
-       <entry><literal>pgpool.conf.sample-logical</literal></entry>
+       <entry><literal>logical_replication</literal> </entry>
       </row>
       <row>
        <entry>slonyモード</entry>
-       <entry><literal>pgpool.conf.sample-slony</literal></entry>
+       <entry><literal>slony</literal></entry>
       </row>
       <row>
        <entry>スナップショットアイソレーションモード</entry>
-       <entry><literal>pgpool.conf.sample-snapshot</literal></entry>
+       <entry><literal>snapshot_isolation</literal></entry>
       </row>
       <row>
        <entry>Rawモード</entry>
-       <entry><literal>pgpool.conf.sample-raw</literal> </entry>
+       <entry><literal>raw</literal> </entry>
       </row>
      </tbody>
     </tgroup>
@@ -242,7 +242,7 @@
     （もしかするとそのためにはroot権限が必要かもしれません。）
     <programlisting>
 # cd /usr/local/etc
-# cp pgpool.conf.sample-stream pgpool.conf
+# cp pgpool.conf.sample pgpool.conf
     </programlisting>
    </para>
   </sect2>
