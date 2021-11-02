@@ -230,6 +230,21 @@
 
    <listitem>
     <!--
+    2021-11-01 [32b97bb0]
+    -->
+    <para>
+     Change compile time default value
+     of <xref linkend="guc-failover-require-consensus"> to
+     on. (Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="guc-failover-require-consensus"> is already on in
+     the docs and in <filename>pgpool.conf</filename>. So sync with them.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2021-10-14 [f8578a19]
     -->
     <para>
