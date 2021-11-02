@@ -107,9 +107,7 @@ EXTRA_DIST = sample/pgpool.pam \
 		sample/scripts/recovery_2nd_stage.sample \
 		sample/scripts/escalation.sh.sample \
 		sample/pgpool.conf.sample sample/pool_hba.conf.sample \
-		sample/pgpool.conf.sample-replication sample/pgpool.conf.sample-slony \
-		sample/pgpool.conf.sample-raw sample/pgpool.conf.sample-snapshot \
-		sample/pgpool.conf.sample-stream sample/pgpool.conf.sample-logical sample/pcp.conf.sample \
+		sample/pcp.conf.sample \
 		sql/Makefile \
 		sql/insert_lock.sql \
 		sql/pgpool-recovery/pgpool-recovery.c \

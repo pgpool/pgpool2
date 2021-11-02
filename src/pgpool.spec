@@ -259,12 +259,6 @@ fi
 %endif
 %defattr(600,postgres,postgres,-)
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample
-%{_sysconfdir}/%{short_name}/pgpool.conf.sample-logical
-%{_sysconfdir}/%{short_name}/pgpool.conf.sample-raw
-%{_sysconfdir}/%{short_name}/pgpool.conf.sample-replication
-%{_sysconfdir}/%{short_name}/pgpool.conf.sample-slony
-%{_sysconfdir}/%{short_name}/pgpool.conf.sample-snapshot
-%{_sysconfdir}/%{short_name}/pgpool.conf.sample-stream
 %{_sysconfdir}/%{short_name}/pcp.conf.sample
 %{_sysconfdir}/%{short_name}/pool_hba.conf.sample
 %defattr(755,postgres,postgres,-)
