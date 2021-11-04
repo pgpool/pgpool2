@@ -21,7 +21,7 @@
     <listitem>
      <para>
       Create <filename>pgpool.conf</filename>
-      from <filename>pgpool.conf.sample-stream</filename>.
+      from <filename>pgpool.conf.sample</filename>.
      </para>
     </listitem>
     <listitem>

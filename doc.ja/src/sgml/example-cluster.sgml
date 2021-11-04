@@ -520,13 +520,14 @@ server3:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
     今回の設定例では、ストリーミングレプリケーションモードを設定します。
    </para>
    <para>
-    RPMからインストールした場合、すべての<productname>Pgpool-II</productname>のサンプル設定ファイルは
+    RPMからインストールした場合、<productname>Pgpool-II</productname>のサンプル設定ファイルは
     <filename>/etc/pgpool-II</filename>にあります。
-    今回はストリーミングレプリケーションモードのテンプレートとして
-    <filename>pgpool.conf.sample-stream</filename>サンプルファイルを使用します。
    </para>
    <programlisting>
-[全サーバ]# cp -p /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
+[server1]# cp -p /etc/pgpool-II/pgpool.conf.sample /etc/pgpool-II/pgpool.conf
+   </programlisting>
+   <programlisting>
+backend_clustering_mode = 'streaming_replication'
    </programlisting>
   </sect3>
 

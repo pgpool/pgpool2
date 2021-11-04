@@ -38,9 +38,9 @@
      <para>
       <!--
       Create <filename>pgpool.conf</filename>
-      from <filename>pgpool.conf.sample-stream</filename>.
+      from <filename>pgpool.conf.sample</filename>.
       -->
-      <filename>pgpool.conf.sample-stream</filename>をコピーして<filename>pgpool.conf</filename>を作ります。
+      <filename>pgpool.conf.sample</filename>をコピーして<filename>pgpool.conf</filename>を作ります。
      </para>
     </listitem>
     <listitem>

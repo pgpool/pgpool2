@@ -494,12 +494,16 @@ server3:5432:postgres:postgres:&lt;postgres user passowrd&gt;
     example, streaming replication mode is used.
    </para>
    <para>
-    When installing <productname>Pgpool-II</productname> using RPM, all the
-    <productname>Pgpool-II</productname> configuration sample files are in <filename>/etc/pgpool-II</filename>.
+    When installing <productname>Pgpool-II</productname> using RPM, the
+    <productname>Pgpool-II</productname> configuration sample files are in
+    <filename>/etc/pgpool-II</filename>.
     In this example, we copy the sample configuration file for streaming replication mode.
    </para>
    <programlisting>
-# cp -p /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
+# cp -p /etc/pgpool-II/pgpool.conf.sample /etc/pgpool-II/pgpool.conf
+   </programlisting>
+   <programlisting>
+backend_clustering_mode = 'streaming_replication'
    </programlisting>
   </sect3>
 
