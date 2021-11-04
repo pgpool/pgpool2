@@ -184,6 +184,24 @@
 
    <listitem>
     <!--
+    2021-09-22 [10ef9092]
+    -->
+    <para>
+     Until <productname>Pgpool-II</productname> 4.2,
+     if <productname>PostgreSQL</productname> was shutdown by an
+     administrator using <command>pg_ctl</command> command, it
+     triggered an immediate failover if clients are connected
+     to <productname>Pgpool-II</productname>. In 4.3 this is not a
+     case anymore.  If a configuration
+     parameter <xref linkend="guc-failover-on-backend-shutdown"> is
+     set to false (the default), the shutdown does not trigger a
+     failover. Setting the parameter to true will preserve the same
+     behavior as pre-4.3.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2021-10-17 [9abe333b]
     -->
     <para>
