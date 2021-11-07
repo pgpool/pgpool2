@@ -9,111 +9,164 @@
  </note>
 
  <sect2>
+  <!--
   <title>Overview</title>
+  -->
+  <title>概要</title>
   <para>
+   <!--
    Many enhancements are added to this version for easier
    configuration and administration.
-   New <productname>PostgreSQL</productname> 14 <literal>SQL</literal>
+   New <productname>PostgreSQL</productname> 14 SQL
    parser is imported.
    The <link linkend="guc-snapshot-isolation-mode">Snapshot Isolation
    Mode</link> is now ready for production.
+   -->
+   このバージョンには、設定と管理を容易にするために多くの機能拡張が追加されています。
+   新しい<productname>PostgreSQL</productname> 14のSQL パーサが取り込まれています。
+   また、<link linkend="guc-snapshot-isolation-mode">スナップショットアイソレーションモード</link> を本番環境で使用できるようにしました。
   </para>
 
   <para>
+   <!--
    Please be warned that in this version default values for some
    configuration parameters are changed to be more consistent and
    useful. See <link linkend="migration-4-3-0">Migration</link>
    section for more details.
+   -->
+   このバージョンでは、一部の設定パラメータのデフォルト値がより一貫性があり、便利になるように変更されていることに注意してください。
+   詳細については、<link linkend="migration-4-3-0">移行</link>セクションを参照してください。
   </para>
 
   <para>
+   <!--
    Below are major enhancements.
+   -->
+   以下は主な機能拡張です。
   </para>
 
   <itemizedlist>
 
    <listitem>
     <para>
+     <!--
      Allow to choose the least replication delay standby node when
      selecting the load balance node. For this pupose a new
      parameter <xref linkend="guc-prefer-lower-delay-standby"> is
      added.
+     -->
+     負荷分散ノードの選択時にレプリケーション遅延が最小のスタンバイノードを選択できるようにしました。
+     この目的のために、新しいパラメータ<xref linkend="guc-prefer-lower-delay-standby">が追加されました。
     </para>
    </listitem>
 
    <listitem>
     <para>
+     <!--
      Allow to specify the node id to be promoted in
      <xref linkend="pcp-promote-node">. For this purpose new
-     switch <parameter>--switchover</parameter> is added. If the switch
+     switch <parameter>switchover</parameter> is added. If the switch
      is specified, <xref linkend="pcp-promote-node"> detaches the
      current primary node and actually promote the specified node.
+     -->
+     <xref linkend="pcp-promote-node">で昇格するノードIDを指定できるようにしました。
+     この目的のために、新しいスイッチ<parameter>--switchover</parameter>が追加されました。
+     スイッチが指定されている場合、<xref linkend="pcp-promote-node">は現在のプライマリノードを切り離し、実際に指定されたノードを昇格します。
     </para>
    </listitem>
 
    <listitem>
     <para>
+     <!--
      Allow to configure to not trigger failover
      when <productname>PostgreSQL</productname> is shutdown by admin
      or killed by <function>pg_terminate_backend</function>. For this
      purpose a new
      parameter <xref linkend="guc-failover-on-backend-shutdown"> is
      added.
+     -->
+     <productname>PostgreSQL</productname>が管理者によってシャットダウンされたとき、または<function>pg_terminate_backend</function>によって強制終了されたときに、フェイルオーバを発生させないように設定できるようにしました。
+     この目的のために、新しいパラメータ<xref linkend="guc-failover-on-backend-shutdown">が追加されました。
     </para>
    </listitem>
 
    <listitem>
     <para>
+     <!--
      Add new fields
      to <xref linkend="pcp-proc-info">, <xref linkend="sql-show-pool-processes">
      and <xref linkend="sql-show-pool-pools"> command to display more
      useful information to admin.
+     -->
+     <xref linkend="pcp-proc-info">、<xref linkend="sql-show-pool-processes">、および<xref linkend="sql-show-pool-pools">コマンドにより有用な情報を表示するために、新しいフィールドを追加しました。
     </para>
    </listitem>
 
    <listitem>
     <para>
+     <!--
      Allow <xref linkend="pcp-node-info"> to list all backend nodes
      information.
+     -->
+     <xref linkend="pcp-node-info">がすべてのバックエンドノード情報を一覧表示できるようにしました。
     </para>
    </listitem>
 
    <listitem>
     <para>
+     <!--
      Add new fields showing
      actual <productname>PostgreSQL</productname> status
      to <xref linkend="sql-show-pool-nodes"> command and friends.
+     -->
+     実際の<productname>PostgreSQL</productname>の状態を示す新しいフィールドを<xref linkend="sql-show-pool-nodes">とその同種のコマンドに追加しました。
     </para>
    </listitem>
 
    <listitem>
     <para>
+     <!--
      Add a new parameter which represents the recovery source hostname
      to <xref linkend="guc-recovery-1st-stage-command">
      and <xref linkend="guc-recovery-2nd-stage-command">.  This is
      useful for some systems on which hostname command returns
      unexpected host name.
+     -->
+     リカバリ元のホスト名を表す新しいパラメータを<xref linkend="guc-recovery-1st-stage-command">および<xref linkend="guc-recovery-2nd-stage-command">に追加しました。
+     これは、hostnameコマンドが予期しないホスト名を返す一部のシステムで役立ちます。
     </para>
    </listitem>
 
    <listitem>
     <para>
+     <!--
      Add support for log time stamp with milliseconds.
+     -->
+     ミリ秒単位でログにタイムスタンプを出力できるようにしました。
     </para>
    </listitem>
 
    <listitem>
     <para>
+     <!--
      Import PostgreSQL 14's SQL parser.
+     -->
+     PostgreSQL 14 の SQL パーサを取り込みました。
     </para>
     <para>
+      <!--
       Major changes of PostgreSQL 14 parser include:
+      -->
+      PostgreSQL 14 パーサのおもな変更点は次のとおりです:
     </para>
      <itemizedlist>
 
        <listitem>
 	 <para>
+         <!--
 	 Allow an alias to be used to a JOIN ... USING
+         -->
+         エイリアスをJOIN ... USINGに使用できるようにしました。
 	 </para>
        </listitem>
        <listitem>
@@ -123,7 +176,10 @@
        </listitem>
        <listitem>
 	 <para>
+           <!--
 	   Allow DISTINCT to be added to GROUP BY
+           -->
+           DISTINCTをGROUP BYに追加できるようにしました。
 	 </para>
        </listitem>
        <listitem>
@@ -133,7 +189,10 @@
        </listitem>
        <listitem>
 	 <para>
+           <!--
 	   New SEARCH and CYCLE clauses for common table expressions
+           -->
+           共通テーブル式に新しいSEARCHとCYCLE句を追加しました。
 	 </para>
        </listitem>
 
@@ -143,34 +202,49 @@
 
    <listitem>
     <para>
+     <!--
      Support include directive in <filename>pgppol.conf</filename>
      file. You can have separate sub-config file to be included in
      <filename>pgpool.conf</filename>.
+     -->
+     <filename>pgpool.conf</filename>ファイルでincludeディレクティブに対応しました。
+     <filename>pgpool.conf</filename>に取り込む分割した小さな設定ファイルを作成することができます。
     </para>
    </listitem>
 
    <listitem>
     <para>
+     <!--
      <filename>pgpool.conf</filename> sample files are unified into
      single sample file for easier configuration.
+     -->
+     <filename>pgpool.conf</filename>のサンプルファイルは、設定を容易にするために単一のサンプルファイルに統合されました。
     </para>
    </listitem>
 
    <listitem>
     <para>
+     <!--
      All configuration parameters in <filename>pgpool.conf</filename>
      sample file are commented out to clarify which parameter is
      needed to be changed. Please note that some configuration
      parameter's default values are
      changed. See <link linkend="migration-4-3-0">Migration</link>
      section for more details.
+     -->
+     <filename>pgpool.conf</filename>サンプルファイルのすべての構成パラメータは、どのパラメータを変更する必要があるかを明確にするためにコメント化されました。
+     一部の設定パラメータのデフォルト値が変更されていることに注意してください。
+     詳細については、<link linkend="migration-4-3-0">移行</link>のセクションを参照してください。
     </para>
    </listitem>
 
    <listitem>
     <para>
+      <!--
       New <link linkend="example-Kubernetes">configuration example for
       Kubernetes</link> is added.
+      -->
+      新しい<link linkend="example-Kubernetes">Kubernetes の設定例</link>が追加されました。
     </para>
    </listitem>
 
@@ -178,41 +252,32 @@
  </sect2>
 
  <sect2 id="migration-4-3-0">
+  <!--
   <title>Migration to Version 4.3</title>
+  -->
+  <title>バージョン 4.3 への移行</title>
 
   <itemizedlist>
-
-   <listitem>
-    <!--
-    2021-09-22 [10ef9092]
-    -->
-    <para>
-     Until <productname>Pgpool-II</productname> 4.2,
-     if <productname>PostgreSQL</productname> was shutdown by an
-     administrator using <command>pg_ctl</command> command, it
-     triggered an immediate failover if clients are connected
-     to <productname>Pgpool-II</productname>. In 4.3 this is not a
-     case anymore.  If a configuration
-     parameter <xref linkend="guc-failover-on-backend-shutdown"> is
-     set to false (the default), the shutdown does not trigger a
-     failover. Setting the parameter to true will preserve the same
-     behavior as pre-4.3.
-    </para>
-   </listitem>
 
    <listitem>
     <!--
     2021-10-17 [9abe333b]
     -->
     <para>
+     <!--
      Commenting out all parameters
      in <filename>pgpool.conf</filename>. (Tatsuo Ishii)
+     -->
+     <filename>pgpool.conf</filename>のすべてのパラメータをコメント化しました。(Tatsuo Ishii)
     </para>
     <para>
+     <!--
      This will make <filename>pgpool.conf</filename> less confusing
      and make <productname>PostgreSQL</productname> users easier to
      understand <filename>pgpool.conf</filename> because this follows
      the PostgreSQL way.
+     -->
+     これにより、<filename>pgpool.conf</filename>の混乱が少なくなり、<productname>PostgreSQL</productname> の方法に従うため、PostgreSQLユーザは<filename>pgpool.conf</filename>を理解しやすくなります。
     </para>
    </listitem>
 
@@ -221,15 +286,22 @@
     2021-10-30 [4ab1566f]
     -->
     <para>
+     <!--
      Unify all <filename>pgpool.conf.sample</filename> files into
      single <filename>pgpool.conf.sample</filename>. (Tatsuo Ishii)
+     -->
+     すべての<filename>pgpool.conf.sample</filename>ファイルを単一の<filename>pgpool.conf.sample</filename>に統合しました。(Tatsuo Ishii)
     </para>
     <para>
+     <!--
      Now that all configuration parameters
      in <filename>pgpool.conf</filename> are commented out, there's no
      point to have separate configuration sample files. Just specify
      the <xref linkend="guc-backend-clustering-mode"> parameter is
      enough.
+     -->
+     <filename>pgpool.conf</filename>のすべての設定パラメータがコメント化されたので、個別の設定サンプルファイルを用意する意味がなくなりました。
+     <xref linkend="guc-backend-clustering-mode">パラメータを指定するだけで十分です。
     </para>
    </listitem>
 
@@ -238,11 +310,18 @@
     2021-10-17 [a3076a6e]
     -->
     <para>
+     <!--
      Change compile time default value of <xref linkend="guc-insert-lock"> to on. (Tatsuo Ishii)
+     -->
+     <xref linkend="guc-insert-lock">のコンパイル時のデフォルト値を on に変更しました。(Tatsuo Ishii)
     </para>
     <para>
+     <!--
      insert_lock is already on
      in <filename>pgpool.conf.sample</filename>. So sync with it.
+     -->
+     insert_lockは<filename>pgpool.conf.sample</filename>ですでにonになっています。
+     よってそれと同期しました。
     </para>
    </listitem>
 
@@ -251,13 +330,20 @@
     2021-11-01 [32b97bb0]
     -->
     <para>
+     <!--
      Change compile time default value
      of <xref linkend="guc-failover-require-consensus"> to
      on. (Tatsuo Ishii)
+     -->
+     <xref linkend="guc-failover-require-consensus">のコンパイル時のデフォルト値をonに変更しました。(Tatsuo Ishii)
     </para>
     <para>
+     <!--
      <xref linkend="guc-failover-require-consensus"> is already on in
      the docs and in <filename>pgpool.conf</filename>. So sync with them.
+     -->
+     <xref linkend="guc-failover-require-consensus">は、ドキュメントと<filename>pgpool.conf</filename>ですでに on になっています。
+     よってそれらと同期しました。
     </para>
    </listitem>
 
@@ -266,13 +352,20 @@
     2021-10-14 [f8578a19]
     -->
     <para>
+     <!--
      Change compile time default value
      of <xref linkend="guc-failover-when-quorum-exists"> to
      on. (Tatsuo Ishii)
+     -->
+     <xref linkend="guc-failover-when-quorum-exists">のコンパイル時のデフォルト値をonに変更しました。(Tatsuo Ishii)
     </para>
     <para>
+     <!--
      <xref linkend="guc-failover-when-quorum-exists"> is already on in
      the docs and in <filename>pgpool.conf</filename>. So sync with them.
+     -->
+     <xref linkend="guc-failover-when-quorum-exists">は、ドキュメントと<filename>pgpool.conf</filename>ですでに on になっています。
+     よってそれらと同期しました。
     </para>
    </listitem>
 
@@ -281,12 +374,19 @@
     2021-10-14 [7f66d399]
     -->
     <para>
+     <!--
      Change compile time default value
      of <xref linkend="guc-load-balance-mode"> to on. (Tatsuo Ishii)
+     -->
+     <xref linkend="guc-load-balance-mode">のコンパイル時のデフォルト値を on に変更しました。(Tatsuo Ishii)
     </para>
     <para>
+     <!--
      <xref linkend="guc-load-balance-mode"> is already on
      in <filename>pgpool.conf.sample</filename>. So sync with it.
+     -->
+     <xref linkend="guc-load-balance-mode">は、ドキュメントと<filename>pgpool.conf</filename>ですでにonになっています。
+     よってそれらと同期しました。
     </para>
    </listitem>
 
@@ -295,9 +395,13 @@
     2021-10-13 [275cc0a0]
     -->
     <para>
+     <!--
      Enable streaming replication check by default. (Tatsuo Ishii)
+     -->
+     デフォルトでストリーミングレプリケーションのチェックを有効にしました。(Tatsuo Ishii)
     </para>
     <para>
+     <!--
      Change the compile time default value
      of <xref linkend="guc-sr-check-period"> from 0 to 10. This means
      if operating in streaming replication mode, now streaming
@@ -305,6 +409,11 @@
      set to 10 in <filename>pgpool.conf.sample</filename>. So the only
      difference is, when <xref linkend="guc-sr-check-period"> is
      commented out.
+     -->
+     <xref linkend="guc-sr-check-period">のコンパイル時のデフォルト値を0から10に変更しました。
+     これは、ストリーミングレプリケーションモードで動作している場合、ストリーミングレプリケーションのチェックがデフォルトで有効になっていることを意味します。
+     このパラメータは、<filename>pgpool.conf.sample</filename> ですでに10に設定されています。
+     したがって、唯一の違いは、<xref linkend="guc-sr-check-period">がコメント化されている場合です。
     </para>
    </listitem>
 
@@ -313,16 +422,23 @@
     2021-10-08 [2ec5d9f3]
     -->
     <para>
+     <!--
      Change compile time default
      of <xref linkend="guc-log-standby-delay"> from 'none' to
      'if_over_threshold'. (Tatsuo Ishii)
+     -->
+     <xref linkend="guc-log-standby-delay">のコンパイル時のデフォルトを'none'から'if_over_threshold'に変更しました。(Tatsuo Ishii)
     </para>
     <para>
+     <!--
      Before the compile time default was 'none' but the default value
      of sample <filename>pgpool.conf</filename> was
      'if_over_threshold'. Since 'if_over_threshold' is more useful for
      most users, change the compile time default to
      'if_over_threshold' as well.
+     -->
+     コンパイル時のデフォルトは'none'でしたが、サンプルの<filename>pgpool.conf</filename>のデフォルト値は'if_over_threshold'でした。
+     'if_over_threshold'はほとんどのユーザにとってより便利なので、コンパイル時のデフォルトも'if_over_threshold'に変更しました。
     </para>
    </listitem>
 
@@ -331,9 +447,13 @@
     2021-09-28 [21b2a06f]
     -->
     <para>
+     <!--
      Fix some compile time default values. (Tatsuo Ishii)
+     -->
+     いくつかのコンパイル時のデフォルト値を修正しました。(Tatsuo Ishii)
     </para>
     <para>
+     <!--
      Some default values defined in src/config/pool_config_variable.c
      were different from what the documentation expects. Namely:
      <xref linkend="guc-insert-lock"> (changed from "true" to "false")
@@ -341,6 +461,14 @@
      <xref linkend="guc-wd-lifecheck-dbname"> (changed from "postgres" to "template1")
      <xref linkend="guc-listen-backlog-multiplier"> (changed from "32" to "2")
      <xref linkend="guc-authentication-timeout"> (changed from "0" to "60")
+     -->
+     src/config/pool_config_variable.cで定義されているいくつかのデフォルト値は、ドキュメントが想定するものとは異なっていました。
+     すなわち:
+     <xref linkend="guc-insert-lock"> ("true" から "false" に変更)
+     <xref linkend="guc-clear-memqcache-on-escalation"> ("false" から "true" に変更)
+     <xref linkend="guc-wd-lifecheck-dbname"> ("postgres" から "template1" に変更)
+     <xref linkend="guc-listen-backlog-multiplier"> ("32" から "2" に変更)
+     <xref linkend="guc-authentication-timeout"> ("0" から "60" に変更)
     </para>
    </listitem>
 
@@ -349,19 +477,29 @@
  </sect2>
 
  <sect2>
+  <!--
   <title>Bug fixes</title>
+  -->
+  <title>バグ修正</title>
   <itemizedlist>
    <listitem>
     <para>
+     <!--
      In this release same bug fixes as <productname>Pgpool-II</productname> 4.2.5 are
      already applied. See <xref linkend="release-4-2-5"> for more details of those fixes.
+     -->
+     このリリースでは、<productname>Pgpool-II</productname> 4.2.5と同じバグ修正がすでに適用されています。
+     これらの修正の詳細については、<xref linkend="release-4-2-5">を参照してください。
     </para>
    </listitem>
   </itemizedlist>
  </sect2>
 
  <sect2>
+  <!--
   <title>Changes</title>
+  -->
+  <title>変更</title>
   <itemizedlist>
 
    <listitem>
@@ -373,7 +511,10 @@
     2021-06-21 [b69e6957]
     -->
     <para>
+     <!--
      Add <xref linkend="guc-prefer-lower-delay-standby"> (Masaya Kawamoto)
+     -->
+     <xref linkend="guc-prefer-lower-delay-standby">を追加しました。(Masaya Kawamoto)
     </para>
    </listitem>
 
@@ -382,7 +523,10 @@
     2021-06-15 [83c86ac3]
     -->
     <para>
+     <!--
      Allow to specify node id to be promoted in <xref linkend="pcp-promote-node">. (Tatsuo Ishii)
+     -->
+     <xref linkend="pcp-promote-node">で昇格するノード ID を指定できるようにしました。(Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -391,7 +535,10 @@
     2021-09-22 [10ef9092]
     -->
     <para>
+     <!--
      Add new config parameter <xref linkend="guc-failover-on-backend-shutdown">. (Tatsuo Ishii)
+     -->
+     新しい設定パラメータ<xref linkend="guc-failover-on-backend-shutdown">を追加しました。(Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -400,10 +547,13 @@
     2021-09-08 [45152975]
     -->
     <para>
+     <!--
      Add new fields
      to <xref linkend="pcp-proc-info">, <xref linkend="sql-show-pool-processes">
      and <xref linkend="sql-show-pool-pools"> command. (Masaya
      Kawamoto)
+     -->
+     <xref linkend="pcp-proc-info">、<xref linkend="sql-show-pool-processes">、および <xref linkend="sql-show-pool-pools">コマンドに新しいフィールドを追加しました。(Masaya Kawamoto)
     </para>
    </listitem>
 
@@ -412,7 +562,10 @@
     2021-06-15 [aa516eea]
     -->
     <para>
+     <!--
      Allow <xref linkend="pcp-node-info"> to list all backend nodes. (Bo Peng)
+     -->
+     <xref linkend="pcp-node-info">がすべてのバックエンドノードを一覧表示できるようにしました。(Bo Peng)
     </para>
    </listitem>
 
@@ -421,10 +574,13 @@
     2021-02-27 [1ae1f159]
     -->
     <para>
+     <!--
      Add new fields to show
      actual <productname>PostgreSQL</productname> status
      to <xref linkend="sql-show-pool-nodes">, <xref linkend="pcp-node-info">
      and <xref linkend="pgpool-adm-pcp-node-info">. (Tatsuo Ishii)
+     -->
+     実際の<productname>PostgreSQL</productname>の状態を<xref linkend="sql-show-pool-nodes">、<xref linkend="pcp-node-info">、および<xref linkend="pgpool-adm-pcp-node-info">で表示するために、新しいフィールドを追加しました。(Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -433,10 +589,13 @@
     2021-08-05 [82a92b8e]
     -->
     <para>
+     <!--
      Add a new parameter which represents the recovery source hostname
      to <xref linkend="guc-recovery-1st-stage-command">
      and <xref linkend="guc-recovery-2nd-stage-command">.  (Tatsuo
      Ishii)
+     -->
+     リカバリ元のホスト名を表す新しいパラメータを<xref linkend="guc-recovery-1st-stage-command">と<xref linkend="guc-recovery-2nd-stage-command">に追加しました。(Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -445,8 +604,11 @@
     2021-07-13 [246068e8]
     -->
     <para>
+     <!--
      Add support for log time stamp with millisecond
      in <xref linkend="guc-log-line-prefix">. (Tatsuo Ishii)
+     -->
+     <xref linkend="guc-log-line-prefix">でミリ秒単位でログにタイムスタンプを出力できるようにしました。(Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -455,8 +617,11 @@
     2021-09-27 [79d49683]
     -->
     <para>
+     <!--
      Import <productname>PostgreSQL</productname> 14's new SQL
      parser. (Bo Peng)
+     -->
+     <productname>PostgreSQL</productname> 14の新しいSQLパーサを取り込みました。(Bo Peng)
     </para>
    </listitem>
 
@@ -465,8 +630,11 @@
     2021-10-30 [4ab1566f]
     -->
     <para>
+     <!--
      Unify all <filename>pgpool.conf.sample</filename> files into
      single <filename>pgpool.conf.sample</filename>. (Tatsuo Ishii)
+     -->
+     すべての<filename>pgpool.conf.sample</filename>ファイルを単一の<filename>pgpool.conf.sample</filename>に統合しました。(Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -475,13 +643,19 @@
     2021-10-24 [3525981a]
     -->
     <para>
+     <!--
      Fix missing comment out in
      sample <filename>pgpool.conf</filename>. (Tatsuo Ishii)
+     -->
+     サンプルの<filename>pgpool.conf</filename>でコメント化の漏れを修正しました。(Tatsuo Ishii)
     </para>
     <para>
+     <!--
      <xref linkend="guc-statement-level-load-balance">
      and <xref linkend="guc-allow-clear-text-frontend-auth"> were not
      commented out.
+     -->
+     <xref linkend="guc-statement-level-load-balance">と<xref linkend="guc-allow-clear-text-frontend-auth">はコメント化されていませんでした。
     </para>
    </listitem>
 
@@ -489,16 +663,22 @@
  </sect2>
 
  <sect2>
+  <!--
   <title>Documentation changes</title>
-   <itemizedlist>
+  -->
+  <title>ドキュメントの変更</title>
+  <itemizedlist>
   <listitem>
     <!--
     2021-10-21 [4e8fb107]
     -->
     <para>
+     <!--
      Update <link linkend="example-cluster">Pgpool-II + Watchdog Setup
      Example</link> and sample scripts
      for <productname>PostgreSQL</productname> 14. (Masaya Kawamoto)
+     -->
+     <link linkend="example-cluster">Pgpool-II + Watchdog の設定例</link>とサンプルスクリプトを<productname>PostgreSQL</productname> 14 向けに更新しました。(Masaya Kawamoto)
     </para>
    </listitem>
 
