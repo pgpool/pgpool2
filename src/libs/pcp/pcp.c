@@ -1518,6 +1518,15 @@ process_watchdog_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 			json_value_free(root);
 			goto INVALID_RESPONSE;
 		}
+		if (json_get_int_value_for_key(root, "MemberRemoteNodeCount", &wd_cluster_info->memberRemoteNodeCount))
+		{
+			wd_cluster_info->memberRemoteNodeCount = -1;
+		}
+		if (json_get_int_value_for_key(root, "NodesRequireForQuorum", &wd_cluster_info->nodesRequiredForQuorum))
+		{
+			wd_cluster_info->nodesRequiredForQuorum = -1;
+		}
+
 		if (json_get_int_value_for_key(root, "QuorumStatus", &wd_cluster_info->quorumStatus))
 		{
 			json_value_free(root);
@@ -1593,6 +1602,22 @@ process_watchdog_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 				goto INVALID_RESPONSE;
 			}
 			strncpy(wdNodeInfo->delegate_ip, ptr, sizeof(wdNodeInfo->delegate_ip) - 1);
+
+			if (json_get_int_value_for_key(nodeInfoValue, "Membership", &wdNodeInfo->membership_status))
+			{
+				/* would be from the older version. No need to panic */
+				wdNodeInfo->membership_status = 0;
+			}
+
+			ptr = json_get_string_value_for_key(nodeInfoValue, "MembershipString");
+			if (ptr == NULL)
+			{
+				strncpy(wdNodeInfo->membership_status_string, "NOT-Available",
+						sizeof(wdNodeInfo->membership_status_string) - 1);
+			}
+			else
+				strncpy(wdNodeInfo->membership_status_string, ptr,
+						sizeof(wdNodeInfo->membership_status_string) - 1);
 
 			if (json_get_int_value_for_key(nodeInfoValue, "WdPort", &wdNodeInfo->wd_port))
 			{

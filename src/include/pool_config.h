@@ -538,6 +538,18 @@ typedef struct
 											 * votes in a cluster with an even
 											 * number of nodes.
 											 */
+	bool		wd_remove_shutdown_nodes;
+											/* revoke membership of properly shutdown watchdog
+											 * nodes.
+											 */
+	int 		wd_lost_node_removal_timeout;
+											/* timeout in seconds to revoke membership of
+											 * LOST watchdog nodes
+											 */
+	int 		wd_initial_node_showup_time;
+											/* time in seconds to revoke membership of
+											 * NO-SHOW watchdog node
+											 */
 
 	WdLifeCheckMethod wd_lifecheck_method;	/* method of lifecheck.
 											 * 'heartbeat' or 'query' */

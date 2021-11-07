@@ -751,6 +751,29 @@ hostname0 = ''
                                     # half of the total votes.
                                     # (change requires restart)
 
+# - Watchdog cluster membership settings for quorum computation -
+
+#wd_remove_shutdown_nodes = off
+                                    # when enabled cluster membership of properly shutdown
+                                    # watchdog nodes gets revoked, After that the node does
+                                    # not count towards the quorum and consensus computations
+
+#wd_lost_node_removal_timeout = 0s
+                                    # Timeout after which the cluster membership of LOST watchdog
+                                    # nodes gets revoked. After that the node node does not
+                                    # count towards the quorum and consensus computations
+                                    # setting timeout to 0 will never revoke the membership
+                                    # of LOST nodes
+
+#wd_initial_node_showup_time = 0s
+                                    # Time to wait for Watchdog node to connect to the cluster.
+                                    # After that time the cluster membership of NO-SHOW node gets
+                                    # revoked and it does not count towards the quorum and
+                                    # consensus computations
+                                    # setting timeout to 0 will not revoke the membership
+                                    # of NO-SHOW nodes
+
+
 # - Lifecheck Setting -
 
 # -- common --

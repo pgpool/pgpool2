@@ -775,33 +775,37 @@ output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose)
 			quorumStatus = "UNKNOWN";
 
 		printf("Watchdog Cluster Information \n");
-		printf("Total Nodes          : %d\n", cluster->remoteNodeCount + 1);
-		printf("Remote Nodes         : %d\n", cluster->remoteNodeCount);
-		printf("Quorum state         : %s\n", quorumStatus);
-		printf("Alive Remote Nodes   : %d\n", cluster->aliveNodeCount);
-		printf("VIP up on local node : %s\n", cluster->escalated ? "YES" : "NO");
-		printf("Leader Node Name     : %s\n", cluster->leaderNodeName);
-		printf("Leader Host Name     : %s\n\n", cluster->leaderHostName);
+		printf("Total Nodes              : %d\n", cluster->remoteNodeCount + 1);
+		printf("Remote Nodes             : %d\n", cluster->remoteNodeCount);
+		printf("Member Remote Nodes      : %d\n", cluster->memberRemoteNodeCount);
+		printf("Alive Remote Nodes       : %d\n", cluster->aliveNodeCount);
+		printf("Nodes required for quorum: %d\n", cluster->nodesRequiredForQuorum);
+		printf("Quorum state             : %s\n", quorumStatus);
+		printf("VIP up on local node     : %s\n", cluster->escalated ? "YES" : "NO");
+		printf("Leader Node Name         : %s\n", cluster->leaderNodeName);
+		printf("Leader Host Name         : %s\n\n", cluster->leaderHostName);
 
 		printf("Watchdog Node Information \n");
 		for (i = 0; i < cluster->nodeCount; i++)
 		{
 			PCPWDNodeInfo *watchdog_info = &cluster->nodeList[i];
 
-			printf("Node Name      : %s\n", watchdog_info->nodeName);
-			printf("Host Name      : %s\n", watchdog_info->hostName);
-			printf("Delegate IP    : %s\n", watchdog_info->delegate_ip);
-			printf("Pgpool port    : %d\n", watchdog_info->pgpool_port);
-			printf("Watchdog port  : %d\n", watchdog_info->wd_port);
-			printf("Node priority  : %d\n", watchdog_info->wd_priority);
-			printf("Status         : %d\n", watchdog_info->state);
-			printf("Status Name    : %s\n\n", watchdog_info->stateName);
+			printf("Node Name         : %s\n", watchdog_info->nodeName);
+			printf("Host Name         : %s\n", watchdog_info->hostName);
+			printf("Delegate IP       : %s\n", watchdog_info->delegate_ip);
+			printf("Pgpool port       : %d\n", watchdog_info->pgpool_port);
+			printf("Watchdog port     : %d\n", watchdog_info->wd_port);
+			printf("Node priority     : %d\n", watchdog_info->wd_priority);
+			printf("Status            : %d\n", watchdog_info->state);
+			printf("Status Name       : %s\n", watchdog_info->stateName);
+			printf("Membership Status : %s\n\n", watchdog_info->membership_status_string);
 		}
 	}
 	else
 	{
-		printf("%d %s %s %s\n\n",
+		printf("%d %d %s %s %s\n\n",
 			   cluster->remoteNodeCount + 1,
+			   cluster->memberRemoteNodeCount + 1,
 			   cluster->escalated ? "YES" : "NO",
 			   cluster->leaderNodeName,
 			   cluster->leaderHostName);
@@ -810,13 +814,15 @@ output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose)
 		{
 			PCPWDNodeInfo *watchdog_info = &cluster->nodeList[i];
 
-			printf("%s %s %d %d %d %s\n",
+			printf("%s %s %d %d %d %s %d %s\n",
 				   watchdog_info->nodeName,
 				   watchdog_info->hostName,
 				   watchdog_info->pgpool_port,
 				   watchdog_info->wd_port,
 				   watchdog_info->state,
-				   watchdog_info->stateName);
+				   watchdog_info->stateName,
+				   watchdog_info->membership_status,
+				   watchdog_info->membership_status_string);
 		}
 	}
 }

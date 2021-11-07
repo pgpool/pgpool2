@@ -250,6 +250,12 @@ char *wd_node_lost_reasons[] = {
 	"SHUTDOWN"
 };
 
+char *wd_cluster_membership_status[] = {
+	"MEMBER",
+	"REVOKED-SHUTDOWN",
+	"REVOKED-NO-SHOW",
+	"REVOKED-LOST"
+};
 /*
  * Command packet definition.
  */
@@ -362,6 +368,7 @@ typedef struct wd_cluster
 	WatchdogNode *remoteNodes;
 	WDClusterLeaderInfo clusterLeaderInfo;
 	int			remoteNodeCount;
+	int			memberRemoteNodeCount; /* no of nodes that count towards quorum and consensus */
 	int			quorum_status;
 	unsigned int nextCommandID;
 	pid_t		escalation_pid;
@@ -594,6 +601,10 @@ static void set_cluster_leader_node(WatchdogNode * wdNode);
 static void clear_standby_nodes_list(void);
 static int	standby_node_left_cluster(WatchdogNode * wdNode);
 static int	standby_node_join_cluster(WatchdogNode * wdNode);
+static void reset_lost_timers(void);
+static int update_cluster_memberships(void);
+static int revoke_cluster_membership_of_node(WatchdogNode* wdNode, WD_NODE_MEMBERSHIP_STATUS revoke_status);
+static int restore_cluster_membership_of_node(WatchdogNode* wdNode);
 static void update_missed_beacon_count(WDCommandData* ipcCommand, bool clear);
 static void wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt);
 
@@ -761,10 +772,10 @@ wd_cluster_initialize(void)
 
 	/* initialize remote nodes */
 	g_cluster.remoteNodeCount = pool_config->wd_nodes.num_wd - 1;
+	g_cluster.memberRemoteNodeCount = g_cluster.remoteNodeCount;
 	if (g_cluster.remoteNodeCount == 0)
 		ereport(ERROR,
                 (errmsg("invalid watchdog configuration. other pgpools setting is not defined")));
-
 	ereport(LOG,
 			(errmsg("watchdog cluster is configured with %d remote nodes", g_cluster.remoteNodeCount)));
 	g_cluster.remoteNodes = palloc0((sizeof(WatchdogNode) * g_cluster.remoteNodeCount));
@@ -1638,6 +1649,7 @@ read_sockets(fd_set *rmask, int pending_fds_count)
 						}
 						if (found)
 						{
+							restore_cluster_membership_of_node(wdNode);
 							/* reply with node info message */
 							ereport(LOG,
 									(errmsg("new node joined the cluster hostname:\"%s\" port:%d pgpool_port:%d", wdNode->hostname,
@@ -3633,6 +3645,8 @@ add_nodeinfo_to_json(JsonNode * jNode, WatchdogNode * node)
 
 	jw_put_int(jNode, "ID", nodeIfNull_int(pgpool_node_id, -1));
 	jw_put_int(jNode, "State", nodeIfNull_int(state, -1));
+	jw_put_int(jNode, "Membership", nodeIfNull_int(membership_status, -1));
+	jw_put_string(jNode, "MembershipString", node ? wd_cluster_membership_status[node->membership_status] : NotSet);
 	jw_put_string(jNode, "NodeName", nodeIfNull_str(nodeName, NotSet));
 	jw_put_string(jNode, "HostName", nodeIfNull_str(hostname, NotSet));
 	jw_put_string(jNode, "StateName", node ? wd_state_names[node->state] : NotSet);
@@ -3652,6 +3666,8 @@ static JsonNode * get_node_list_json(int id)
 	JsonNode   *jNode = jw_create_with_object(true);
 
 	jw_put_int(jNode, "RemoteNodeCount", g_cluster.remoteNodeCount);
+	jw_put_int(jNode, "MemberRemoteNodeCount", g_cluster.memberRemoteNodeCount);
+	jw_put_int(jNode, "NodesRequireForQuorum", get_minimum_votes_to_resolve_consensus());
 	jw_put_int(jNode, "QuorumStatus", WD_LEADER_NODE ? WD_LEADER_NODE->quorum_status : -2);
 	jw_put_int(jNode, "AliveNodeCount", WD_LEADER_NODE ? WD_LEADER_NODE->standby_nodes_count : 0);
 	jw_put_int(jNode, "Escalated", g_cluster.localNode->escalated);
@@ -4755,6 +4771,34 @@ service_unreachable_nodes(void)
 	{
 		WatchdogNode *wdNode = &(g_cluster.remoteNodes[i]);
 
+		if (wdNode->state == WD_LOST && wdNode->membership_status == WD_NODE_MEMBERSHIP_ACTIVE
+			&& pool_config->wd_lost_node_removal_timeout)
+		{
+			int lost_seconds = WD_TIME_DIFF_SEC(currTime, wdNode->lost_time);
+			if (lost_seconds >= pool_config->wd_lost_node_removal_timeout)
+			{
+				ereport(LOG,
+						(errmsg("remote node \"%s\" is lost for %d seconds", wdNode->nodeName,lost_seconds),
+						 errdetail("revoking the node's membership")));
+				revoke_cluster_membership_of_node(wdNode,WD_NODE_REVOKED_LOST);
+			}
+			continue;
+		}
+
+		if (wdNode->state == WD_DEAD && wdNode->membership_status == WD_NODE_MEMBERSHIP_ACTIVE
+			&& pool_config->wd_initial_node_showup_time)
+		{
+			int no_show_seconds = WD_TIME_DIFF_SEC(currTime, g_cluster.localNode->startup_time);
+			if (no_show_seconds >= pool_config->wd_initial_node_showup_time)
+			{
+				ereport(LOG,
+						(errmsg("remote node \"%s\" didn't showed-up in %d seconds", wdNode->nodeName,no_show_seconds),
+						 errdetail("revoking the node's membership")));
+				revoke_cluster_membership_of_node(wdNode,WD_NODE_REVOKED_NO_SHOW);
+			}
+			continue;
+		}
+
 		if (is_node_active(wdNode) == false)
 			continue;
 
@@ -5402,6 +5446,8 @@ watchdog_state_machine(WD_EVENTS event, WatchdogNode * wdNode, WDPacketData * pk
 		{
 			ereport(LOG,
 					(errmsg("remote node \"%s\" is shutting down", wdNode->nodeName)));
+			if (pool_config->wd_remove_shutdown_nodes)
+				revoke_cluster_membership_of_node(wdNode,WD_NODE_REVOKED_SHUTDOWN);
 		}
 		else
 		{
@@ -5440,6 +5486,8 @@ watchdog_state_machine(WD_EVENTS event, WatchdogNode * wdNode, WDPacketData * pk
 		wdNode->node_lost_reason = NODE_LOST_UNKNOWN_REASON;
 		wdNode->state = WD_LOADING;
 		send_cluster_service_message(wdNode, pkt, CLUSTER_NODE_APPEARING_FOUND);
+		/* if this node was kicked out of quorum calculation. add it back */
+		restore_cluster_membership_of_node(wdNode);
 	}
 	else if (event == WD_EVENT_PACKET_RCV)
 	{
@@ -6004,8 +6052,9 @@ watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode * wdNode, WDPac
 					if (clusterCommand->commandStatus == COMMAND_FINISHED_ALL_REPLIED ||
 						clusterCommand->commandStatus == COMMAND_FINISHED_TIMEOUT)
 					{
+						update_cluster_memberships();
 						update_quorum_status();
-
+						reset_lost_timers();
 						ereport(DEBUG1,
 								(errmsg("declare coordinator command finished with status:[%s]",
 										clusterCommand->commandStatus == COMMAND_FINISHED_ALL_REPLIED ?
@@ -7060,7 +7109,7 @@ update_quorum_status(void)
 	}
 	else if (g_cluster.clusterLeaderInfo.standby_nodes_count == get_minimum_remote_nodes_required_for_quorum())
 	{
-		if (g_cluster.remoteNodeCount % 2 != 0)
+		if (g_cluster.memberRemoteNodeCount % 2 != 0)
 		{
 			if (pool_config->enable_consensus_with_half_votes)
 				g_cluster.quorum_status = 0;	/* on the edge */
@@ -7091,14 +7140,14 @@ get_minimum_remote_nodes_required_for_quorum(void)
 	 * Even number of remote nodes, That means total number of nodes are odd,
 	 * so minimum quorum is just remote/2.
 	 */
-	if (g_cluster.remoteNodeCount % 2 == 0)
-			return (g_cluster.remoteNodeCount / 2);
+	if (g_cluster.memberRemoteNodeCount % 2 == 0)
+			return (g_cluster.memberRemoteNodeCount / 2);
 
 	/*
 	 * Total nodes including self are even, So we return 50% nodes as quorum
 	 * requirements
 	 */
-	return ((g_cluster.remoteNodeCount - 1) / 2);
+	return ((g_cluster.memberRemoteNodeCount - 1) / 2);
 }
 
 /*
@@ -7143,7 +7192,7 @@ get_minimum_votes_to_resolve_consensus(void)
 	 * So for even number of nodes when enable_consensus_with_half_votes is
 	 * not allowed than we would add one more vote than exact 50%
 	 */
-	if (g_cluster.remoteNodeCount % 2 != 0)
+	if (g_cluster.memberRemoteNodeCount % 2 != 0)
 	{
 		if (pool_config->enable_consensus_with_half_votes == false)
 			required_node_count += 1;
@@ -7922,9 +7971,73 @@ set_cluster_leader_node(WatchdogNode * wdNode)
 	}
 }
 
-static WatchdogNode * getLeaderWatchdogNode(void)
+static WatchdogNode*
+getLeaderWatchdogNode(void)
 {
 	return g_cluster.clusterLeaderInfo.leaderNode;
+}
+
+static int
+update_cluster_memberships(void)
+{
+	int i;
+	g_cluster.memberRemoteNodeCount = g_cluster.remoteNodeCount;
+	for (i = 0; i < g_cluster.remoteNodeCount; i++)
+	{
+		WatchdogNode *wdNode = &(g_cluster.remoteNodes[i]);
+		if (wdNode->membership_status != WD_NODE_MEMBERSHIP_ACTIVE)
+			g_cluster.memberRemoteNodeCount--;
+	}
+	return g_cluster.memberRemoteNodeCount;
+}
+
+static int
+revoke_cluster_membership_of_node(WatchdogNode* wdNode, WD_NODE_MEMBERSHIP_STATUS revoke_status)
+{
+	if (wdNode->membership_status == WD_NODE_MEMBERSHIP_ACTIVE)
+	{
+		wdNode->membership_status = revoke_status;
+
+		ereport(LOG,
+				(errmsg("revoking the membership of [%s] node:\"%s\" [node_id:%d]",
+							wd_state_names[wdNode->state], wdNode->nodeName,wdNode->pgpool_node_id),
+				 errdetail("membership revoke reason: \"%s\"",
+						   wd_cluster_membership_status[wdNode->membership_status])));
+
+		g_cluster.memberRemoteNodeCount--;
+	}
+	return g_cluster.memberRemoteNodeCount;
+}
+
+static int
+restore_cluster_membership_of_node(WatchdogNode* wdNode)
+{
+	if (wdNode->membership_status != WD_NODE_MEMBERSHIP_ACTIVE)
+	{
+		ereport(LOG,
+				(errmsg("Restoring cluster membership of node:\"%s\"",wdNode->nodeName),
+				 errdetail("membership of node was revoked because it was \"%s\"",
+				   wd_cluster_membership_status[wdNode->membership_status])));
+
+		wdNode->membership_status = WD_NODE_MEMBERSHIP_ACTIVE;
+		/* reset the lost time on the node */
+		wdNode->lost_time.tv_sec = 0;
+		wdNode->lost_time.tv_usec = 0;
+		g_cluster.memberRemoteNodeCount++;
+	}
+	return g_cluster.memberRemoteNodeCount;
+}
+
+static void
+reset_lost_timers(void)
+{
+	int i;
+	for (i = 0; i < g_cluster.remoteNodeCount; i++)
+	{
+		WatchdogNode *wdNode = &(g_cluster.remoteNodes[i]);
+		wdNode->lost_time.tv_sec = 0;
+		wdNode->lost_time.tv_usec = 0;
+	}
 }
 
 static int
@@ -7933,7 +8046,10 @@ standby_node_join_cluster(WatchdogNode * wdNode)
 	if (get_local_node_state() == WD_COORDINATOR)
 	{
 		int			i;
-
+		/* Just rest the lost time stamp*/
+		/* set the timestamp on node to track for how long this node is lost */
+		wdNode->lost_time.tv_sec = 0;
+		wdNode->lost_time.tv_usec = 0;
 		/* First check if the node is already in the List */
 		for (i = 0; i < g_cluster.clusterLeaderInfo.standby_nodes_count; i++)
 		{
@@ -7983,7 +8099,8 @@ standby_node_left_cluster(WatchdogNode * wdNode)
 					 */
 					ereport(LOG,
 							(errmsg("removing watchdog node \"%s\" from the standby list", wdNode->nodeName)));
-
+					/* set the timestamp on node to track for how long this node is lost */
+					gettimeofday(&wdNode->lost_time, NULL);
 					g_cluster.clusterLeaderInfo.standbyNodes[i] = NULL;
 					g_cluster.clusterLeaderInfo.standby_nodes_count--;
 					removed = true;

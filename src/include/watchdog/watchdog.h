@@ -130,6 +130,13 @@ typedef enum {
 	NODE_LOST_SHUTDOWN
 } WD_NODE_LOST_REASONS;
 
+typedef enum {
+	WD_NODE_MEMBERSHIP_ACTIVE,
+	WD_NODE_REVOKED_SHUTDOWN,
+	WD_NODE_REVOKED_NO_SHOW,
+	WD_NODE_REVOKED_LOST
+}WD_NODE_MEMBERSHIP_STATUS;
+
 typedef struct SocketConnection
 {
 	int			sock;			/* socket descriptor */
@@ -148,6 +155,11 @@ typedef struct WatchdogNode
 									 * from the node */
 	struct timeval last_sent_time;	/* timestamp when last packet was sent on
 									 * the node */
+	struct timeval lost_time;	/* timestamp when the remote node was lost on coordinator
+								 */
+	WD_NODE_MEMBERSHIP_STATUS	membership_status; /* status of node membership
+											*in watchdog cluster
+											Only valid for remote nodes */
 	bool   has_lost_us;             /*
 									 * True when this remote node thinks
 									 * we are lost

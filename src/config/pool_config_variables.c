@@ -414,6 +414,15 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"wd_remove_shutdown_nodes", CFGCXT_RELOAD, WATCHDOG_CONFIG,
+			"Revoke the cluster membership of properly shutdown watchdog nodes.",
+			CONFIG_VAR_TYPE_BOOL, false, 0
+		},
+		&g_pool_config.wd_remove_shutdown_nodes,
+		false,
+		NULL, NULL, NULL
+	},
+	{
 		{"log_connections", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"Logs each successful connection.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
@@ -1980,6 +1989,26 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&g_pool_config.wd_interval,
 		10,
+		0, INT_MAX,
+		NULL, NULL, NULL
+	},
+	{
+		{"wd_lost_node_removal_timeout", CFGCXT_RELOAD, WATCHDOG_CONFIG,
+			"Timeout in seconds to revoke the cluster membership of LOST watchdog nodes.",
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
+		},
+		&g_pool_config.wd_lost_node_removal_timeout,
+		0,
+		0, INT_MAX,
+		NULL, NULL, NULL
+	},
+	{
+		{"wd_initial_node_showup_time", CFGCXT_RELOAD, WATCHDOG_CONFIG,
+			"Timeout in seconds to revoke the cluster membership of NO-SHOW watchdog nodes.",
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
+		},
+		&g_pool_config.wd_initial_node_showup_time,
+		0,
 		0, INT_MAX,
 		NULL, NULL, NULL
 	},

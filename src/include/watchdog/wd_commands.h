@@ -32,6 +32,8 @@
 typedef struct WDNodeInfo
 {
 	int			state;
+	int			membership_status;
+	char		membership_status_string[WD_MAX_HOST_NAMELEN];
 	char		nodeName[WD_MAX_HOST_NAMELEN];
 	char		hostName[WD_MAX_HOST_NAMELEN];	/* host name */
 	char		stateName[WD_MAX_HOST_NAMELEN]; /* watchdog state name */

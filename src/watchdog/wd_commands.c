@@ -346,6 +346,20 @@ parse_watchdog_node_info_from_wd_node_json(json_value * source)
 				(errmsg("invalid json data"),
 				 errdetail("unable to find Watchdog Node ID")));
 	}
+	if (json_get_int_value_for_key(source, "Membership", &wdNodeInfo->membership_status))
+	{
+		/* would be from the older version. No need to panic */
+		wdNodeInfo->membership_status = WD_NODE_MEMBERSHIP_ACTIVE;
+	}
+
+	ptr = json_get_string_value_for_key(source, "MembershipString");
+	if (ptr == NULL)
+	{
+		strncpy(wdNodeInfo->membership_status_string, "NOT-Available", sizeof(wdNodeInfo->membership_status_string) - 1);
+	}
+	else
+		strncpy(wdNodeInfo->membership_status_string, ptr, sizeof(wdNodeInfo->membership_status_string) - 1);
+
 	
 	ptr = json_get_string_value_for_key(source, "NodeName");
 	if (ptr == NULL)
