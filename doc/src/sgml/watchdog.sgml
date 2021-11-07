@@ -780,6 +780,116 @@ pgpool_port2 = 9999
   </variablelist>
  </sect2>
 
+ <sect2 id="config-watchdog-cluster-membership">
+  <title>Controlling the watchdog cluster membership </title>
+
+  <para>
+	By default the watchdog cluster consists of all watchdog nodes
+	that are defined in the <filename>pgpool.conf</filename> file
+	irrespective of the current state of the node. Whether the node
+	is <literal>LOST</literal>, <literal>SHUTDOWN</literal>
+	or never started, the node is considered as the member of the
+	watchdog cluster definition as long as it is configured in the
+	configuration file.
+	All the majority rule computations for identifying the existence
+	of a quorum and resolving the consensus are made based on the
+	number of watchdog nodes that makes up the watchdog cluster.
+  </para>
+
+  <para>
+	<productname>Pgpool-II</productname> <emphasis>V4.3</emphasis> enables
+	dynamic cluster definition by introducing the concept of
+	<emphasis>Member</emphasis> and <emphasis>Nonmember</emphasis>.
+	If the node's membership gets revoked from the watchdog cluster,
+	then the cluster re-calibrate itself dynamically to adjust all
+	subsequent majority rule computations.
+	</para>
+	<para>
+	All majority rule computations are done based on the number of
+	member watchdog nodes instead of total number of configured nodes.
+  </para>
+
+  <para>
+	For example: In a five node cluster (<filename>pgpool.conf</filename> has five
+	watchdog nodes defined) at-least three nodes need to be alive to make the quorum.
+	With the dynamic cluster membership mechanism the cluster can re-adjust
+	itself to only count the <emphasis>MEMBER</emphasis> nodes
+	(Member node doesn't necessarily need to be alive).
+	That means effectively a single alive node
+	can also fulfill the quorum requirements (depending on the membership criteria settings)
+	if at some point in time the cluster only has one or two member nodes.
+  </para>
+
+  <para>
+  These settings configures when the node is marked as Nonmember.
+  Leaving all these settings to default values retains the
+  pre <emphasis>V4.3</emphasis> behaviour.
+  </para>
+
+  <variablelist>
+
+   <varlistentry id="guc-wd-remove-shutdown-nodes" xreflabel="wd_remove_shutdown_nodes">
+    <term><varname>wd_remove_shutdown_nodes</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>wd_remove_shutdown_nodes</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+	 When enabled, the <literal>SHUTDOWN</literal> nodes are immediately marked as Nonmember
+	 and removed from the cluster. If the previously shutdown node starts again,
+	 it gets added to cluster automatically.
+     </para>
+	 <para> Default is off. </para>
+	</listitem>
+   </varlistentry>
+
+
+   <varlistentry id="guc-wd-lost-node-removal-timeout" xreflabel="wd_lost_node_removal_timeout">
+    <term><varname>wd_lost_node_removal_timeout</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>wd_lost_node_removal_timeout</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Timeout in seconds to mark the <literal>LOST</literal> watchdog node as
+	  Nonmember and remove from the cluster.
+	  When LOST node re-connects to the cluster, its cluster membership is restored.
+     </para>
+	 <para>
+	 Setting the timeout to <literal>0</literal> disables the removal
+	 of LOST nodes from cluster.
+	 </para>
+	 <para> Default is 0. </para>
+
+	</listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-wd-no-show-node-removal-timeout" xreflabel="wd_no_show_node_removal_timeout">
+    <term><varname>wd_no_show_node_removal_timeout</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>wd_no_show_node_removal_timeout</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Timeout in seconds to mark the node as Nonmember if it doesn't show up
+	  at cluster initialisation. Nonmember node becomes the cluster Member as
+	  soon as it starts up and connects to the cluster.
+	 </para>
+	 <para>
+	 Setting the timeout to <literal>0</literal> disables the removal
+	 of <literal>NO-SHOW</literal> nodes from cluster.
+	 </para>
+	 <para> Default is 0. </para>
+
+	</listitem>
+  </varlistentry>
+
+  </variablelist>
+ </sect2>
+
  <sect2 id="config-watchdog-lifecheck">
   <title>Life checking <productname>Pgpool-II</productname> </title>
 

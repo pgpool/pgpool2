@@ -383,41 +383,46 @@ Pgpool-II documentation
     $ pcp_watchdog_info -p 50001 -v
     Password:
     Watchdog Cluster Information
-    Total Nodes          : 3
-    Remote Nodes         : 2
-    Quorum state         : QUORUM EXIST
-    Alive Remote Nodes   : 2
-    VIP up on local node : NO
-    Leader Node Name     : Linux_tishii-CF-SX3HE4BP_50004
-    Leader Host Name     : localhost
+    Total Nodes              : 3
+    Remote Nodes             : 2
+	Member Remote Nodes      : 2
+	Nodes required for quorum: 2
+    Quorum state             : QUORUM EXIST
+    Alive Remote Nodes       : 2
+    VIP up on local node     : NO
+    Leader Node Name         : Linux_tishii-CF-SX3HE4BP_50004
+    Leader Host Name         : localhost
 
     Watchdog Node Information
-    Node Name      : Linux_tishii-CF-SX3HE4BP_50000
-    Host Name      : localhost
-    Delegate IP    : Not_Set
-    Pgpool port    : 50000
-    Watchdog port  : 50002
-    Node priority  : 1
-    Status         : 7
-    Status Name    : STANDBY
+    Node Name         : Linux_tishii-CF-SX3HE4BP_50000
+    Host Name         : localhost
+    Delegate IP       : Not_Set
+    Pgpool port       : 50000
+    Watchdog port     : 50002
+    Node priority     : 1
+    Status            : 7
+    Status Name       : STANDBY
+	Membership Status : MEMBER
 
-    Node Name      : Linux_tishii-CF-SX3HE4BP_50004
-    Host Name      : localhost
-    Delegate IP    : Not_Set
-    Pgpool port    : 50004
-    Watchdog port  : 50006
-    Node priority  : 1
-    Status         : 4
-    Status Name    : LEADER
+    Node Name         : Linux_tishii-CF-SX3HE4BP_50004
+    Host Name         : localhost
+    Delegate IP       : Not_Set
+    Pgpool port       : 50004
+    Watchdog port     : 50006
+    Node priority     : 1
+    Status            : 4
+    Status Name       : LEADER
+	Membership Status : MEMBER
 
-    Node Name      : Linux_tishii-CF-SX3HE4BP_50008
-    Host Name      : localhost
-    Delegate IP    : Not_Set
-    Pgpool port    : 50008
-    Watchdog port  : 50010
-    Node priority  : 1
-    Status         : 7
-    Status Name    : STANDBY
+    Node Name         : Linux_tishii-CF-SX3HE4BP_50008
+    Host Name         : localhost
+    Delegate IP       : Not_Set
+    Pgpool port       : 50008
+    Watchdog port     : 50010
+    Node priority     : 1
+    Status            : 7
+    Status Name       : STANDBY
+	Membership Status : MEMBER
 
    </screen>
   </para>
