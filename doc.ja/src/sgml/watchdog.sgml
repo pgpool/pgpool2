@@ -1108,6 +1108,20 @@
   </para>
 
   <para>
+	<caution>
+		<para>
+<!--
+		Using the dynamic cluster membership has an associated risk of causing a split-brain.
+		So it is strongly recommended to carefully review if the setup requires the dynamic cluster
+		membership and consider using conservative values for related settings.
+-->
+      動的クラスタメンバーシップを使うことにより、split-brainが起こるリスクがあります。
+      設定において動的クラスタメンバーシップが必要かどうかを注意深くレビューし、関連する設定に保守的な設定を行うことを検討することを強く推奨します。
+		</para>
+	</caution>
+  </para>
+
+  <para>
 <!--
   These settings configures when the node is marked as Nonmember.
   Leaving all these settings to default values retains the
