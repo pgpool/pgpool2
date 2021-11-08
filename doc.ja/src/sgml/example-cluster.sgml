@@ -193,25 +193,25 @@
     <tbody>
      <row>
       <entry morerows='1'>自動フェイルオーバ</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/master">/etc/pgpool-II/failover.sh.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_3_STABLE">/etc/pgpool-II/failover.sh.sample</ulink></entry>
       <entry>フェイルオーバを実行するスクリプト。<xref linkend="GUC-FAILOVER-COMMAND">で使用します。</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/master">/etc/pgpool-II/follow_primary.sh.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_3_STABLE">/etc/pgpool-II/follow_primary.sh.sample</ulink></entry>
       <entry>フェイルオーバ後、新しいプライマリサーバとスタンバイサーバを同期させるスクリプト。<xref linkend="GUC-FOLLOW-PRIMARY-COMMAND">で使用します。</entry>
      </row>
      <row>
       <entry morerows='1'>オンラインリカバリ</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/master">/etc/pgpool-II/recovery_1st_stage.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_3_STABLE">/etc/pgpool-II/recovery_1st_stage.sample</ulink></entry>
       <entry>スタンバイサーバをリカバリするスクリプト。<xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND">で使用します。</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/master">/etc/pgpool-II/pgpool_remote_start.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_3_STABLE">/etc/pgpool-II/pgpool_remote_start.sample</ulink></entry>
       <entry><xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND"> 後に、スタンバイノードを起動させるスクリプト。</entry>
      </row>
      <row>
       <entry morerows='1'>Watchdog</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/master">/etc/pgpool-II/escalation.sh.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_3_STABLE">/etc/pgpool-II/escalation.sh.sample</ulink></entry>
       <entry>
        Pgpool-IIのアクティブ/スタンバイ切り替え時に新アクティブ機以外で起動している
        仮想IPを停止するスクリプト。<xref linkend="guc-wd-escalation-command">で使用します。
@@ -243,7 +243,7 @@
    コミュニティが提供するYumリポジトリを用いてインストールします。
   </para>
   <programlisting>
-# yum install -y
+# yum install -y https://www.pgpool.net/yum/rpms/4.3/redhat/rhel-7-x86_64/pgpool-II-release-4.3-1.noarch.rpm
 # yum install pgpool-II-pg14-*
   </programlisting>
  </sect2>
@@ -675,8 +675,8 @@ follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M 
     </para>
    </note>
    <para>
-    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/master">failover.sh</ulink>及び
-    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/master">follow_primary.sh</ulink>は
+    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_3_STABLE">failover.sh</ulink>及び
+    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_3_STABLE">follow_primary.sh</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、これらのファイルをコピーして作成します。
    </para>
    <programlisting>
@@ -758,8 +758,8 @@ recovery_password = ''
 recovery_1st_stage_command = 'recovery_1st_stage'
    </programlisting>
    <para>
-    オンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/master">recovery_1st_stage</ulink>
-    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/master">pgpool_remote_start</ulink>は
+    オンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_3_STABLE">recovery_1st_stage</ulink>
+    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_3_STABLE">pgpool_remote_start</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、
     これらのファイルをプライマリサーバ(<literal>server1</literal>)のデータベースクラスタ配下に配置します。
    </para>
@@ -1027,7 +1027,7 @@ wd_escalation_command = '/etc/pgpool-II/escalation.sh'
                                     # (change requires restart)
    　</programlisting>
    <para>
-    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/master">escalation.sh</ulink>は
+    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_3_STABLE">escalation.sh</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされています。
    </para>
     <programlisting>
