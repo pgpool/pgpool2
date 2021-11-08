@@ -62,7 +62,7 @@
      A new membership mechanism is introduced to Watchdog to allow to
      keep quorum/VIP when some of watchdog nodes are removed.
      -->
-   　watchdogノードが削除されたときにもquorum/VIPを維持するために、新しくwatchdogにメンバーシップ機構が導入されました。     
+     watchdogノードが削除されたときにもquorum/VIPを維持するために、新しくwatchdogにメンバーシップ機構が導入されました。     
     </para>
    </listitem>
 
