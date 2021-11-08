@@ -819,7 +819,15 @@ pgpool_port2 = 9999
 	can also fulfill the quorum requirements (depending on the membership criteria settings)
 	if at some point in time the cluster only has one or two member nodes.
   </para>
-
+  <para>
+	<caution>
+		<para>
+		Using the dynamic cluster membership has an associated risk of causing a split-brain.
+		So it is strongly recommended to carefully review if the setup requires the dynamic cluster
+		membership and consider using conservative values for related settings.
+		</para>
+	</caution>
+  </para>
   <para>
   These settings configures when the node is marked as Nonmember.
   Leaving all these settings to default values retains the
