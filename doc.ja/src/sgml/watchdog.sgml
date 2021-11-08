@@ -1046,6 +1046,172 @@
      </para>
     </listitem>
    </varlistentry>
+  </variablelist>
+ </sect2>
+
+ <sect2 id="config-watchdog-cluster-membership">
+<!--
+  <title>Controlling the watchdog cluster membership </title>
+-->
+  <title>watchdogクラスタメンバーシップの管理</title>
+  <para>
+<!--
+	By default the watchdog cluster consists of all watchdog nodes
+	that are defined in the <filename>pgpool.conf</filename> file
+	irrespective of the current state of the node. Whether the node
+	is <literal>LOST</literal>, <literal>SHUTDOWN</literal>
+	or never started, the node is considered as the member of the
+	watchdog cluster definition as long as it is configured in the
+	configuration file.
+	All the majority rule computations for identifying the existence
+	of a quorum and resolving the consensus are made based on the
+	number of watchdog nodes that makes up the watchdog cluster.
+-->
+   デフォルトではwatchdogクラスタは、現在のノードの状態とは無関係に<filename>pgpool.conf</filename>ファイルに定義されたすべてのwatchdogノードから構成されます。
+   ノードが<literal>LOST</literal>、<literal>SHUTDOWN</literal>、あるいはノードが起動されなかった場合でも、設定ファイルにて設定されている限りはそのノードはwatchdogクラスタの定義に含まれると考えられます。
+   クォーラムの存在と、合意の解決のためのすべての多数決ルールの計算は、watchdogクラスタを構成するwatchdogノードの数に基づいて行われます。
+  </para>
+
+  <para>
+<!--
+	<productname>Pgpool-II</productname> <emphasis>V4.3</emphasis> enables
+	dynamic cluster definition by introducing the concept of
+	<emphasis>Member</emphasis> and <emphasis>Nonmember</emphasis>.
+	If the node's membership gets revoked from the watchdog cluster,
+	then the cluster re-calibrate itself dynamically to adjust all
+	subsequent majority rule computations.
+-->
+    <productname>Pgpool-II</productname> <emphasis>V4.3</emphasis>では<emphasis>メンバー</emphasis>と<emphasis>非メンバーの</emphasis>の概念を導入することにより動的にクラスタの定義を変えることができるようになりました。
+	</para>
+	<para>
+<!--
+	All majority rule computations are done based on the number of
+	member watchdog nodes instead of total number of configured nodes.
+-->
+   設定されたノードの合計数ではなく、メンバーwatchdogの数に基づいてすべての多数決ルールの計算が行われます。
+  </para>
+
+  <para>
+<!--
+	For example: In a five node cluster (<filename>pgpool.conf</filename> has five
+	watchdog nodes defined) at-least three nodes need to be alive to make the quorum.
+	With the dynamic cluster membership mechanism the cluster can re-adjust
+	itself to only count the <emphasis>MEMBER</emphasis> nodes
+	(Member node doesn't necessarily need to be alive).
+	That means effectively a single alive node
+	can also fulfill the quorum requirements (depending on the membership criteria settings)
+	if at some point in time the cluster only has one or two member nodes.
+-->
+   たとえば5つのノードのクラスタ(<filename>pgpool.conf</filename>に5つのwatchdogノードが定義されています)では、クォーラムを作成するためには少なくとも3つのノードが生きていることが必要です。
+   動的なクラスタメンバー管理の機構では、クラスタは<emphasis>メンバー</emphasis>ノード(メンバーノードは必ずしも生きている必要はありません)だけを数えるために、自分自身を再調整できます。
+   このことは、ある時点でクラスタが1つあるいは2つのノードだけから構成されているときに、実質的に単一の生きているノードが（メンバーシップ管理の設定によって）クォーラム存在の条件を満たすことができることを意味します。
+  </para>
+
+  <para>
+<!--
+  These settings configures when the node is marked as Nonmember.
+  Leaving all these settings to default values retains the
+  pre <emphasis>V4.3</emphasis> behaviour.
+-->
+   これらの設定項目は非メンバーであると印をつけられたノードを設定します。
+   これらの設定をデフォルト値のままにしておくと、<emphasis>V4.3</emphasis>以前の振る舞いになります。
+  </para>
+
+  <variablelist>
+
+   <varlistentry id="guc-wd-remove-shutdown-nodes" xreflabel="wd_remove_shutdown_nodes">
+    <term><varname>wd_remove_shutdown_nodes</varname> (<type>boolean</type>)
+     <indexterm>
+<!--
+      <primary><varname>wd_remove_shutdown_nodes</varname> configuration parameter</primary>
+-->
+      <primary><varname>wd_remove_shutdown_nodes</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+<!--
+	 When enabled, the <literal>SHUTDOWN</literal> nodes are immediately marked as Nonmember
+	 and removed from the cluster. If the previously shutdown node starts again,
+	 it gets added to cluster automatically.
+-->
+      有効ならば、<literal>SHUTDOWN</literal>ノードは直ちに非メンバーであると印を付けられ、クラスタから削除されます。
+      以前停止されたノードが再起動すると、自動的にクラスタに追加されます。
+     </para>
+<!--
+	 <para> Default is off. </para>
+-->
+	 <para>デフォルトはoffです。</para>
+	</listitem>
+   </varlistentry>
+
+
+   <varlistentry id="guc-wd-lost-node-removal-timeout" xreflabel="wd_lost_node_removal_timeout">
+    <term><varname>wd_lost_node_removal_timeout</varname> (<type>integer</type>)
+     <indexterm>
+<!--
+      <primary><varname>wd_lost_node_removal_timeout</varname> configuration parameter</primary>
+-->
+      <primary><varname>wd_lost_node_removal_timeout</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+<!--
+      Timeout in seconds to mark the <literal>LOST</literal> watchdog node as
+	  Nonmember and remove from the cluster.
+	  When LOST node re-connects to the cluster, its cluster membership is restored.
+-->
+      <literal>LOST</literal>状態のwatchdogノードに非メンバーであると印を付けて、クラスタから削除するまでのタイムアウトの秒単位の時間です。
+      LOSTノードが再接続すると、クラスタメンバーシップは復元されます。
+     </para>
+	 <para>
+<!--
+	 Setting the timeout to <literal>0</literal> disables the removal
+	 of LOST nodes from cluster.
+-->
+      タイムアウトを<literal>0</literal>にすると、LOSTノードをクラスタから削除しません。
+	 </para>
+<!--
+	 <para> Default is 0. </para>
+-->
+
+	 <para>デフォルトは0です。</para>
+	</listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-wd-no-show-node-removal-timeout" xreflabel="wd_no_show_node_removal_timeout">
+    <term><varname>wd_no_show_node_removal_timeout</varname> (<type>integer</type>)
+     <indexterm>
+<!--
+      <primary><varname>wd_no_show_node_removal_timeout</varname> configuration parameter</primary>
+-->
+      <primary><varname>wd_no_show_node_removal_timeout</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+<!--
+      Timeout in seconds to mark the node as Nonmember if it doesn't show up
+	  at cluster initialisation. Nonmember node becomes the cluster Member as
+	  soon as it starts up and connects to the cluster.
+-->
+      クラスタ起動時にノードが現れない(NO-SHOW)場合に、非メンバーであると印を付けるまでのタイムアウトの秒単位の時間です。
+      そのノードが起動してクラスタに接続すると、直ちにその非メンバーノードはクラスタメンバーになります。
+	 </para>
+	 <para>
+<!--
+	 Setting the timeout to <literal>0</literal> disables the removal
+	 of <literal>NO-SHOW</literal> nodes from cluster.
+-->
+      タイムアウトを<literal>0</literal>にすると、<literal>NO-SHOW</literal>ノードをクラスタから削除しません。
+	 </para>
+<!--
+	 <para> Default is 0. </para>
+-->
+	 <para>デフォルトは0です。</para>
+	</listitem>
+  </varlistentry>
 
   </variablelist>
  </sect2>

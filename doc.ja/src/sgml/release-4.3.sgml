@@ -16,13 +16,16 @@
   <para>
    <!--
    Many enhancements are added to this version for easier
-   configuration and administration.
-   New <productname>PostgreSQL</productname> 14 SQL
+   configuration and administration.  A new membership mechanism is
+   introduced to Watchdog to allow to keep quorum/VIP when some of
+   watchdog nodes are removed.
+   New <productname>PostgreSQL</productname> 14 <literal>SQL</literal>
    parser is imported.
    The <link linkend="guc-snapshot-isolation-mode">Snapshot Isolation
    Mode</link> is now ready for production.
    -->
    このバージョンには、設定と管理を容易にするために多くの機能拡張が追加されています。
+   watchdogノードが削除されたときにもquorum/VIPを維持するために、新しくwatchdogにメンバーシップ機構が導入されました。
    新しい<productname>PostgreSQL</productname> 14のSQL パーサが取り込まれています。
    また、<link linkend="guc-snapshot-isolation-mode">スナップショットアイソレーションモード</link> を本番環境で使用できるようにしました。
   </para>
@@ -46,6 +49,16 @@
   </para>
 
   <itemizedlist>
+
+   <listitem>
+    <para>
+     <!--
+     A new membership mechanism is introduced to Watchdog to allow to
+     keep quorum/VIP when some of watchdog nodes are removed.
+     -->
+   　watchdogノードが削除されたときにもquorum/VIPを維持するために、新しくwatchdogにメンバーシップ機構が導入されました。     
+    </para>
+   </listitem>
 
    <listitem>
     <para>
@@ -501,6 +514,37 @@
   -->
   <title>変更</title>
   <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-11-07 [3a1216d7]
+    2021-11-07 [4760459d]
+    -->
+    <para>
+<!--
+     Enable dynamic watchdog cluster definition by introducing the
+     concept of Member and Nonmember watchdog nodes. (Muhammad Usama)
+-->
+     watchdogノードのメンバー・非メンバーの概念を導入することにより、動的にwatchdogクラスタの概念を定義できるようになりました(Muhammad Usama)。
+    </para>
+    <para>
+<!--
+     If the node's membership gets revoked from the watchdog cluster,
+     then the cluster re-calibrate itself dynamically to adjust all
+     subsequent majority rule computations.
+-->
+     watchdogノードからノードのメンバーが削除されると、クラスタは以後の多数決ルールの計算を調整するために、動的に自分自身を補正します。
+    </para>
+    <para>
+<!--
+     Three new settings <xref linkend="guc-wd-no-show-node-removal-timeout">,
+     <xref linkend="guc-wd-lost-node-removal-timeout">
+     and <xref linkend="guc-wd-remove-shutdown-nodes"> are added to
+     configure the membership criteria of the watchdog nodes.
+-->
+     3つの新しい設定パラメータ<xref linkend="guc-wd-no-show-node-removal-timeout">、<xref linkend="guc-wd-lost-node-removal-timeout">、<xref linkend="guc-wd-remove-shutdown-nodes">が、watchdogノードのメンバー管理の条件を調整するために導入されました。
+    </para>
+   </listitem>
 
    <listitem>
     <!--
