@@ -12,7 +12,9 @@
   <title>Overview</title>
   <para>
    Many enhancements are added to this version for easier
-   configuration and administration.
+   configuration and administration.  A new membership mechanism is
+   introduced to Watchdog to allow to keep quorum/VIP when some of
+   watchdog nodes are removed.
    New <productname>PostgreSQL</productname> 14 <literal>SQL</literal>
    parser is imported.
    The <link linkend="guc-snapshot-isolation-mode">Snapshot Isolation
@@ -31,6 +33,13 @@
   </para>
 
   <itemizedlist>
+
+   <listitem>
+    <para>
+     A new membership mechanism is introduced to Watchdog to allow to
+     keep quorum/VIP when some of watchdog nodes are removed.
+    </para>
+   </listitem>
 
    <listitem>
     <para>
@@ -363,6 +372,28 @@
  <sect2>
   <title>Changes</title>
   <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-11-07 [3a1216d7]
+    2021-11-07 [4760459d]
+    -->
+    <para>
+     Enable dynamic watchdog cluster definition by introducing the
+     concept of Member and Nonmember watchdog nodes. (Muhammad Usama)
+    </para>
+    <para>
+     If the node's membership gets revoked from the watchdog cluster,
+     then the cluster re-calibrate itself dynamically to adjust all
+     subsequent majority rule computations.
+    </para>
+    <para>
+     Three new settings <xref linkend="guc-wd-no-show-node-removal-timeout">,
+     <xref linkend="guc-wd-lost-node-removal-timeout">
+     and <xref linkend="guc-wd-remove-shutdown-nodes"> are added to
+     configure the membership criteria of the watchdog nodes.
+    </para>
+   </listitem>
 
    <listitem>
     <!--
