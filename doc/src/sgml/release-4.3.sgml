@@ -12,9 +12,11 @@
   <title>Overview</title>
   <para>
    Many enhancements are added to this version for easier
-   configuration and administration.  A new membership mechanism is
-   introduced to Watchdog to allow to keep quorum/VIP when some of
-   watchdog nodes are removed.
+   configuration and administration. A new cluster membership
+   mechanism is introduced to dynamically adjust the Watchdog
+   cluster size.
+   This allows the leader Watchdog node to retain the quorum/VIP
+   even when some of watchdog nodes get Shutdown or disconnected.
    New <productname>PostgreSQL</productname> 14 <literal>SQL</literal>
    parser is imported.
    The <link linkend="guc-snapshot-isolation-mode">Snapshot Isolation
