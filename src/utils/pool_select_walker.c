@@ -332,7 +332,9 @@ static bool function_call_walker(Node *node, void *context)
 
 			if (ctx->pg_terminate_backend_pid == 0 && strcmp("pg_terminate_backend", fname) == 0)
 			{
-				if (list_length(fcall->args) == 1)
+				/* PostgreSQL 14 or after accept two arguments. */
+				if (list_length(fcall->args) == 1 ||
+					list_length(fcall->args) == 2)
 				{
 					Node *arg = linitial(fcall->args);
 					if (IsA(arg, A_Const) &&
