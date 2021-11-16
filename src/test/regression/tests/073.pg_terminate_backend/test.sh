@@ -32,7 +32,7 @@ do
 
 	sleep 2
 	# get process id which query is executed
-	PID=`ps -ef |grep "postgres:" |grep SELECT | awk 'NR==1 {print $2}'`
+	PID=`ps -efw |grep "postgres:" |grep SELECT | awk 'NR==1 {print $2}'`
 
 	$PSQL test -p $PGPORT -c "SELECT pg_terminate_backend($PID)"
 
