@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -123,6 +123,20 @@ pool_ssl_negotiate_clientserver(POOL_CONNECTION * cp)
 	switch (server_response)
 	{
 		case 'S':
+
+			/*
+			 * At this point the server read buffer must be empty. Otherwise it
+			 * is possible that a man-in-the-middle attack is ongoing.
+			 * So we immediately close the communication channel.
+			 */
+			if (!pool_read_buffer_is_empty(cp))
+			{
+				ereport(FATAL,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("received unencrypted data after SSL request"),
+						 errdetail("This could be an evidence of an attempted man-in-the-middle attacck.")));
+			}
+
 			SSL_set_fd(cp->ssl, cp->fd);
 			SSL_RETURN_VOID_IF((SSL_connect(cp->ssl) < 0),
 							   "SSL_connect");
@@ -164,6 +178,19 @@ pool_ssl_negotiate_serverclient(POOL_CONNECTION * cp)
 
 		/* write back an "SSL accept" response */
 		pool_write_and_flush(cp, "S", 1);
+
+		/*
+		 * At this point the frontend read buffer must be empty. Otherwise it
+		 * is possible that a man-in-the-middle attack is ongoing.
+		 * So we immediately close the communication channel.
+		 */
+		if (!pool_read_buffer_is_empty(cp))
+		{
+			ereport(FATAL,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("received unencrypted data after SSL request"),
+					 errdetail("This could be either a client-software bug or evidence of an attempted man-in-the-middle attacck.")));
+		}
 
 		SSL_set_fd(cp->ssl, cp->fd);
 		SSL_RETURN_VOID_IF((SSL_accept(cp->ssl) < 0), "SSL_accept");
