@@ -1,6 +1,172 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-6-28">
+ <title>リリース 3.6.28</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2021-11-18</simpara>
+  </note>
+
+ <sect2>
+  <title>セキュリティリリース</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-11-17 [06ae225d]
+    -->
+    <para>
+     SSL暗号化ハンドシェイク後の余計なデータを拒否するようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     サーバサイドのSSLネゴシエーションの実装において、任意のSQLコマンドを実行できる中間者攻撃が可能でした。
+     これはPgpool-IIがクライアント認証で証明書認証を使用しているか、hotssl + trust認証の場合に可能でした。
+     PostgreSQLのCVE-2021-23214と似た脆弱性です。
+    </para>
+    <para>
+     同様に、クライアントサイドのSSLネゴシエーション実装において、任意の結果に改ざんする中間者攻撃が可能でした。
+     これはPostgreSQLがクライアント認証でhostssl + trust認証を使用しているときに可能でした。
+     証明書認証の場合には、Pgpool-IIはPgpool-IIとPostgreSQL間で証明書認証を実装していないため問題ありません。
+     PostgreSQLのCVE-2021-23222と似た脆弱性です。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-11-16 [02a210dd]
+    -->
+    <para>
+     <command>pg_terminate_backend()</command>の処理に関する<productname>PostgreSQL 14</productname>対応をしました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-24 [01509b12]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>メインプロセスのSIGHLDハンドラを改良しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>の子プロセスがSIGKILLシグナルでkillされたとき、SIGHLDハンドラは他のシグナルと同じようにLOGレベルメッセージを発していました。
+     しかし、SIGKILLシグナルはOMM killerによるkillなど重要なイベントなので、WARNINGレベルのメッセージを発するようにしました。
+     Michail Alexakisから提案されました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2021-October/007808.html">[pgpool-general: 7750]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-09-16 [51c2a12b]
+    -->
+    <para>
+     <command>COPY FROM</command>中のハングアップを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <command>COPY FROM</command>中にエラーが発生したとき、<productname>Pgpool-II</productname>はフロントエンドから<command>COPY</command>終了マーカーが送信されたあと、バックエンドからの応答を永遠に待っている可能性がありました。
+     Bo Pengによって発見されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-08-18 [5f087f8c]
+    -->
+    <para>
+     rawモードでの誤った負荷分散ノードの表示を修正しました。(Bo Peng)
+    </para>
+    <para>
+     rawモードでは、<productname>Pgpool-II</productname>はすべてのクエリをメインノードに送信します。
+     この不具合は表示上の問題だけで、クエリの転送処理に影響はないですが、ユーザを混乱させる可能性があるので、修正しました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-10-04 [d934eb53]
+    -->
+    <para>
+     typoを修正しました。(Bo Peng)
+    </para>
+    <para>
+     パッチはKazufumi Notoによって提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-08-09 [229585a5]
+    -->
+    <para>
+     Doc: <command>PGPOOL SHOW</command>コマンドを実行する際に、大文字を含むパラメータ名の場合には、
+     パラメータ名をダブルクォートで囲んで実行する必要があることを追加しました。(Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+  <sect2>
+  <title>テストツール修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-08-25 [6f7e7bab]
+    -->
+    <para>
+     新しいメインノードが利用できない場合に何もしないように<command>pgpool_setup</command>を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+  <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-11-16 [56f4cf3f]
+    -->
+    <para>
+     たまに発生する073.pg_terminate_backendの失敗を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-23 [20712999]
+    -->
+    <para>
+     テストの失敗を防ぐためにpsqlコマンドのパスを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-3-6-27">
  <title>リリース 3.6.27</title>
   <note>
