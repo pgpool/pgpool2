@@ -1,6 +1,202 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-6">
+ <title>リリース 4.2.6</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2021-11-18</simpara>
+  </note>
+
+ <sect2>
+  <title>セキュリティリリース</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-11-17 [53638419]
+    -->
+    <para>
+     SSL暗号化ハンドシェイク後の余計なデータを拒否するようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     サーバサイドのSSLネゴシエーションの実装において、任意のSQLコマンドを実行できる中間者攻撃が可能でした。
+     これはPgpool-IIがクライアント認証で証明書認証を使用しているか、hotssl + trust認証の場合に可能でした。
+     PostgreSQLのCVE-2021-23214と似た脆弱性です。
+    </para>
+    <para>
+     同様に、クライアントサイドのSSLネゴシエーション実装において、任意の結果に改ざんする中間者攻撃が可能でした。
+     これはPostgreSQLがクライアント認証でhostssl + trust認証を使用しているときに可能でした。
+     証明書認証の場合には、Pgpool-IIはPgpool-IIとPostgreSQL間で証明書認証を実装していないため問題ありません。
+     PostgreSQLのCVE-2021-23222と似た脆弱性です。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-11-16 [b1f7b69b]
+    -->
+    <para>
+     <command>pg_terminate_backend()</command>の処理に関する<productname>PostgreSQL 14</productname>対応をしました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-24 [e633e7ec]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>メインプロセスのSIGHLDハンドラを改良しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>の子プロセスがSIGKILLシグナルでkillされたとき、SIGHLDハンドラは他のシグナルと同じようにLOGレベルメッセージを発していました。
+     しかし、SIGKILLシグナルはOMM killerによるkillなど重要なイベントなので、WARNINGレベルのメッセージを発するようにしました。
+     Michail Alexakisから提案されました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2021-October/007808.html">[pgpool-general: 7750]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-10-25 [708d29a0]
+    -->
+    <para>
+     <varname>application_name</varname>にloggerプロセスがなかったのを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-24 [acd400b6]
+    -->
+    <para>
+     <xref linkend="guc-reserved-connections">が0のときに起こるコネクションカウンタの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <varname>reserved_connections</varname>が0のとき、コネクションカウンタを管理する必要はありませんでした。
+     この修正によって不意のカウンタリークによる不必要な"Sorry, too many clients already"エラーを防ぐことができます。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2021-October/007808.html">[pgpool-general: 7750]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-27 [d752824d]
+    -->
+    <para>
+     <ulink url="https://www.pgpool.net/mantisbt/view.php?id=732">bug 732</ulink>: フェイルオーバ中のセグメンテーション違反を修正しました。 (Muhammad Usama)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-16 [508199bc]
+    -->
+    <para>
+     <command>COPY FROM</command>中のハングアップを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <command>COPY FROM</command>中にエラーが発生したとき、<productname>Pgpool-II</productname>はフロントエンドから<command>COPY</command>終了マーカーが送信されたあと、バックエンドからの応答を永遠に待っている可能性がありました。
+     Bo Pengによって発見されました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-10-06 [eac5296e]
+    -->
+    <para>
+     Doc: ドキュメントのtypoを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-04 [b31bcfc8]
+    -->
+    <para>
+     ドキュメントとサンプルスクリプトのtypoを修正しました。(Bo Peng)
+    </para>
+    <para>
+     パッチはKazufumi Notoによって提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-29 [51015942]
+    -->
+    <para>
+     Doc: 設定例の<command>yum install</command>コマンドのtypoを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-11-16 [4de8698a]
+    -->
+    <para>
+     たまに発生する073.pg_terminate_backendの失敗を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-11-08 [a0aa40d9]
+    -->
+    <para>
+     テスト074の名前を変更しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-23 [e1d0b0e3]
+    -->
+    <para>
+     テストの失敗を防ぐためにpg_configコマンドのパスを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-23 [1e718dfe]
+    -->
+    <para>
+     テストの失敗を防ぐためにpsqlコマンドのパスを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-5">
  <title>リリース 4.2.5</title>
   <note>

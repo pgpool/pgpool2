@@ -1,6 +1,181 @@
 <!-- doc/src/sgml/release-3.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-6-28">
+ <title>Release 3.6.28</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2021-11-18</simpara>
+  </note>
+
+ <sect2>
+  <title>Security release</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2021-11-17 [06ae225d]
+    -->
+    <para>
+     Reject extraneous data after SSL encryption handshake. (Tatsuo Ishii)
+    </para>
+    <para>
+     In the server side implementation of SSL negotiation, it was possible for a
+     man-in-the-middle attacker to inject arbitrary SQL commands. This is
+     possible if Pgpool-II is configured to use cert authentication or
+     hostssl + trust. This resembles PostgreSQL's CVE-2021-23214.
+    </para>
+    <para>
+     Similarly, in the client side implementation of SSL negotiation, it was
+     possible for a man-in-the-middle attacker to inject arbitrary responses.
+     This is possible if PostgreSQL is using trust authentication with a
+     clientcert requirement. It is not possible with cert authentication because
+     Pgpool-II does not implement the cert authentication between Pgpool-II
+     and PostgreSQL. This resembles PostgreSQL's CVE-2021-23222.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-11-16 [02a210dd]
+    -->
+    <para>
+     Deal with <productname>PostgreSQL 14</productname> while processing
+     <command>pg_terminate_backend()</command>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-10-24 [01509b12]
+    -->
+    <para>
+     Enhance SIGHLD handler of <productname>Pgpool-II</productname> main process. (Tatsuo Ishii)
+    </para>
+    <para>
+     When <productname>Pgpool-II</productname> child is killed by SIGKILL signal,
+     the SIGHLD handler just emitted LOG level message as other signals. But
+     SIGKILL is an important event, for example killed by OOM killer. So emit a
+     WARNING level message instead.
+     Per suggestion from Michail Alexakis.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2021-October/007808.html">[pgpool-general: 7750]</ulink>
+
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-09-16 [51c2a12b]
+    -->
+    <para>
+     Fix occasional hang in <command>COPY FROM</command>. (Tatsuo Ishii)
+    </para>
+    <para>
+     If an error occurs while doing <command>COPY FROM</command>, it was possible the
+     <productname>Pgpool-II</productname> waited forever for a response from
+     backend after <command>COPY</command> end marker was sent from frontend.
+     The bug was found by Bo Peng.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-08-18 [5f087f8c]
+    -->
+    <para>
+     Fix the incorrect display of load balancing node in raw mode. (Bo Peng)
+    </para>
+    <para>
+     In raw mode, <productname>Pgpool-II</productname> sends all queies to main node.
+     This is harmless, but it may confuse users.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-10-04 [d934eb53]
+    -->
+    <para>
+     Fix documentation typos. (Bo Peng)
+    </para>
+    <para>
+     Patch is created by Kazufumi Noto.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-08-09 [229585a5]
+    -->
+    <para>
+     Doc: Mention that double quotes are required in <command>PGPOOL SHOW</command> command,
+     if the parameter contains uppercase letters. (Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+  <sect2>
+  <title>Test tools</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-08-25 [6f7e7bab]
+    -->
+    <para>
+     Fix <command>pgpool_setup</command> to do nothing when no new main node is available. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+  <sect2>
+  <title>Regression tests</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-11-16 [56f4cf3f]
+    -->
+    <para>
+     Fix occasional 073.pg_terminate_backend regression test failure. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-09-23 [20712999]
+    -->
+    <para>
+     Fix psql command path to avoid test failure. (Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-3-6-27">
  <title>Release 3.6.27</title>
   <note>
