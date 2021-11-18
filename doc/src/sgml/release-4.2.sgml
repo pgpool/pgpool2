@@ -155,7 +155,7 @@
     2021-09-29 [51015942]
     -->
     <para>
-     Doc: fix <command>yum install<command> command typo in configuration example. (Bo Peng)
+     Doc: fix <command>yum install</command> command typo in configuration example. (Bo Peng)
     </para>
    </listitem>
 
