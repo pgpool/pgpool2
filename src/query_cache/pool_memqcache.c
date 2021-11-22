@@ -2000,7 +2000,7 @@ pool_reset_memqcache_buffer(bool reset_dml_oids)
 bool
 pool_is_shmem_cache(void)
 {
-	return (pool_config->memqcache_method == SHMEM_CACHE) ? true : false;
+	return pool_config->memqcache_method == SHMEM_CACHE;
 }
 
 /*
