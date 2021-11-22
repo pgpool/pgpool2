@@ -1717,7 +1717,7 @@ Describe(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	ereport(DEBUG1,
 			(errmsg("Describe: waiting for main node completing the query")));
 
-	nowait = (SL_MODE ? true : false);
+	nowait = SL_MODE;
 
 	pool_set_query_in_progress();
 	pool_extended_send_and_wait(query_context, "D", len, contents, 1, MAIN_NODE_ID, nowait);
