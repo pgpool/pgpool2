@@ -390,7 +390,11 @@
     <para>
      Some default values defined in src/config/pool_config_variable.c
      were different from what the documentation expects. Namely:
+<!--
+     This was changed from false to true later in commit 2021-10-17 [a3076a6e].
+     To avoid confusion, comment out this entry.
      <xref linkend="guc-insert-lock"> (changed from "true" to "false")
+-->
      <xref linkend="guc-clear-memqcache-on-escalation"> (changed from "false" to "true")
      <xref linkend="guc-wd-lifecheck-dbname"> (changed from "postgres" to "template1")
      <xref linkend="guc-listen-backlog-multiplier"> (changed from "32" to "2")
