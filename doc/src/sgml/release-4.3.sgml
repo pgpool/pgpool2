@@ -1,6 +1,21 @@
 <!-- doc/src/sgml/release-4.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-3RC1">
+ <title>Release 4.3RC1</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2021-11-25</simpara>
+  </note>
+ <sect2>
+  <title>Changes since beta2</title>
+   <para>
+    Several documentation improvements were applied for Pgpool-II 4.3RC1 since the Beta2.
+    For further information about 4.3 please see <xref linkend="release-4-3-0">.
+   </para>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-3beta2">
  <title>Release 4.3beta2</title>
   <note>
@@ -163,37 +178,24 @@
     <para>
       Major changes of PostgreSQL 14 parser include:
     </para>
-     <itemizedlist>
-
-       <listitem>
-	 <para>
-	 Allow an alias to be used to a JOIN ... USING
-	 </para>
-       </listitem>
-       <listitem>
-	 <para>
-	   SELECT ... FROM t1 JOIN t2 USING (a, b, c) AS x
-	 </para>
-       </listitem>
-       <listitem>
-	 <para>
+    <itemizedlist>
+	 <listitem>
+	  <para>
+	  Allow an alias to be used to a JOIN ... USING
+	  </para>
+     </listitem>
+     <listitem>
+	  <para>
 	   Allow DISTINCT to be added to GROUP BY
-	 </para>
-       </listitem>
-       <listitem>
-	 <para>
-	   SELECT c1, max(c2) FROM t1 GROUP BY DISTINCT c1;
-	 </para>
-       </listitem>
-       <listitem>
-	 <para>
+	  </para>
+     </listitem>
+     <listitem>
+	  <para>
 	   New SEARCH and CYCLE clauses for common table expressions
-	 </para>
-       </listitem>
-
-     </itemizedlist>
-
-  </listitem>
+	  </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
 
    <listitem>
     <para>
@@ -220,14 +222,6 @@
      section for more details.
     </para>
    </listitem>
-
-   <listitem>
-    <para>
-      New <link linkend="example-Kubernetes">configuration example for
-      Kubernetes</link> is added.
-    </para>
-   </listitem>
-
   </itemizedlist>
  </sect2>
 

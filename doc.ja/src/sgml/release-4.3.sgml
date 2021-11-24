@@ -1,5 +1,19 @@
 <!-- doc/src/sgml/release-4.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
+<sect1 id="release-4-3RC1">
+ <title>Release 4.3RC1</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2021-11-25</simpara>
+  </note>
+ <sect2>
+  <title>Beta2からの変更点</title>
+   <para>
+    4.3Beta2から4.3RC1にかけて、いくつかのドキュメントの改善が行われました。
+    4.3の詳細については、<xref linkend = "release-4-3-0">を参照してください。
+   </para>
+ </sect2>
+</sect1>
 
 <sect1 id="release-4-3beta2">
  <title>Release 4.3beta2</title>
@@ -114,7 +128,7 @@
      A new membership mechanism is introduced to Watchdog to allow to
      keep quorum/VIP when some of watchdog nodes are removed.
      -->
-     watchdogノードが削除されたときにもquorum/VIPを維持するために、新しくwatchdogにメンバーシップ機構が導入されました。     
+     watchdogノードが削除されたときにもquorum/VIPを維持するために、新しくwatchdogにメンバーシップ機構が導入されました。
     </para>
    </listitem>
 
@@ -230,46 +244,34 @@
       -->
       PostgreSQL 14 パーサのおもな変更点は次のとおりです:
     </para>
+
      <itemizedlist>
-
-       <listitem>
-	 <para>
-         <!--
-	 Allow an alias to be used to a JOIN ... USING
-         -->
-         エイリアスをJOIN ... USINGに使用できるようにしました。
-	 </para>
-       </listitem>
-       <listitem>
-	 <para>
-	   SELECT ... FROM t1 JOIN t2 USING (a, b, c) AS x
-	 </para>
-       </listitem>
-       <listitem>
-	 <para>
-           <!--
+      <listitem>
+	   <para>
+        <!--
+	    Allow an alias to be used to a JOIN ... USING
+        -->
+        エイリアスをJOIN ... USINGに使用できるようにしました。
+	   </para>
+      </listitem>
+      <listitem>
+	   <para>
+       <!--
 	   Allow DISTINCT to be added to GROUP BY
-           -->
-           DISTINCTをGROUP BYに追加できるようにしました。
-	 </para>
-       </listitem>
-       <listitem>
-	 <para>
-	   SELECT c1, max(c2) FROM t1 GROUP BY DISTINCT c1;
-	 </para>
-       </listitem>
-       <listitem>
-	 <para>
-           <!--
+       -->
+       DISTINCTをGROUP BYに追加できるようにしました。
+	   </para>
+      </listitem>
+      <listitem>
+       <para>
+	   <!--
 	   New SEARCH and CYCLE clauses for common table expressions
-           -->
-           共通テーブル式に新しいSEARCHとCYCLE句を追加しました。
-	 </para>
-       </listitem>
-
+	   -->
+	   共通テーブル式に新しいSEARCHとCYCLE句を追加しました。
+	   </para>
+      </listitem>
      </itemizedlist>
-
-  </listitem>
+   </listitem>
 
    <listitem>
     <para>
@@ -308,17 +310,6 @@
      詳細については、<link linkend="migration-4-3-0">移行</link>のセクションを参照してください。
     </para>
    </listitem>
-
-   <listitem>
-    <para>
-      <!--
-      New <link linkend="example-Kubernetes">configuration example for
-      Kubernetes</link> is added.
-      -->
-      新しい<link linkend="example-Kubernetes">Kubernetes の設定例</link>が追加されました。
-    </para>
-   </listitem>
-
   </itemizedlist>
  </sect2>
 
