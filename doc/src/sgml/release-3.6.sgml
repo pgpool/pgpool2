@@ -55,11 +55,11 @@
     2021-10-24 [01509b12]
     -->
     <para>
-     Enhance SIGHLD handler of <productname>Pgpool-II</productname> main process. (Tatsuo Ishii)
+     Enhance SIGCHLD handler of <productname>Pgpool-II</productname> main process. (Tatsuo Ishii)
     </para>
     <para>
      When <productname>Pgpool-II</productname> child is killed by SIGKILL signal,
-     the SIGHLD handler just emitted LOG level message as other signals. But
+     the SIGCHLD handler just emitted LOG level message as other signals. But
      SIGKILL is an important event, for example killed by OOM killer. So emit a
      WARNING level message instead.
      Per suggestion from Michail Alexakis.
