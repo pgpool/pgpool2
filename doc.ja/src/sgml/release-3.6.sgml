@@ -51,10 +51,10 @@
     2021-10-24 [01509b12]
     -->
     <para>
-     <productname>Pgpool-II</productname>メインプロセスのSIGHLDハンドラを改良しました。(Tatsuo Ishii)
+     <productname>Pgpool-II</productname>メインプロセスのSIGCHLDハンドラを改良しました。(Tatsuo Ishii)
     </para>
     <para>
-     <productname>Pgpool-II</productname>の子プロセスがSIGKILLシグナルでkillされたとき、SIGHLDハンドラは他のシグナルと同じようにLOGレベルメッセージを発していました。
+     <productname>Pgpool-II</productname>の子プロセスがSIGKILLシグナルでkillされたとき、SIGCHLDハンドラは他のシグナルと同じようにLOGレベルメッセージを発していました。
      しかし、SIGKILLシグナルはOMM killerによるkillなど重要なイベントなので、WARNINGレベルのメッセージを発するようにしました。
      Michail Alexakisから提案されました。
      Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2021-October/007808.html">[pgpool-general: 7750]</ulink>
