@@ -29,7 +29,7 @@ endif
 EXTRA_DIST = scan.c scan.l
 ARFLAGS = cr
 
-AM_YFLAGS = -d
+AM_YFLAGS = -d -Wno-yacc
 
 gram.c: gram.y scan.c
 gram_minimal.c: gram_minimal.y scan.c
