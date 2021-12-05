@@ -266,7 +266,8 @@ fi
 %{_sysconfdir}/%{short_name}/follow_primary.sh.sample
 %{_sysconfdir}/%{short_name}/pgpool_remote_start.sample
 %{_sysconfdir}/%{short_name}/recovery_1st_stage.sample
-%{_sysconfdir}/%{short_name}/recovery_2nd_stage.sample
+%{_sysconfdir}/%{short_name}/replication_mode_recovery_1st_stage.sample
+%{_sysconfdir}/%{short_name}/replication_mode_recovery_2nd_stage.sample
 %{_sysconfdir}/%{short_name}/escalation.sh.sample
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/*.conf
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/pool_passwd
