@@ -19,14 +19,20 @@ if [ $? -ne 0 ]; then
 fi
 
 ## Start Standby node
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DEST_NODE_HOST -i ~/.ssh/id_rsa_pgpool "
-    $PGHOME/bin/pg_ctl -l /dev/null -w -D $DEST_NODE_PGDATA start
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
+    $PGHOME/bin/pg_ctl -l /dev/null -w -D ${DEST_NODE_PGDATA} status
+
+    if [ $? -eq 0 ]; then
+    	exit 0
+    fi
+
+    $PGHOME/bin/pg_ctl -l /dev/null -w -D ${DEST_NODE_PGDATA} start
 "
 
 if [ $? -ne 0 ]; then
-    echo ERROR: pgpool_remote_start: $DEST_NODE_HOST PostgreSQL start failed.
+    echo ERROR: pgpool_remote_start: ${DEST_NODE_HOST} PostgreSQL start failed.
     exit 1
 fi
 
-echo pgpool_remote_start: end: PostgreSQL on $DEST_NODE_HOST is started successfully.
+echo pgpool_remote_start: end: PostgreSQL on ${DEST_NODE_HOST} is started successfully.
 exit 0
