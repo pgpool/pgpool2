@@ -10,7 +10,7 @@
  </para>
  <para>
   この設定例では<productname>PostgreSQL</productname> 14を使っていますが、
-  各種スクリプトは<productname>PostgreSQL</productname> 9.6以降での動作確認を行っています。
+  各種スクリプトは<productname>PostgreSQL</productname> 10以降での動作確認を行っています。
  </para>
  <sect2 id="example-cluster-requirement">
   <title>前提条件</title>
@@ -24,7 +24,7 @@
   <title>全体構成</title>
   <para>
    今回は、Linuxサーバを3台用意し、それぞれのホスト名は 「server1」、「server2」、「server3」 とします。
-   使用するOSはすべてCentOS 7.4とします。
+   使用するOSはすべてCentOS 7.9とします。
    それぞれのサーバに<productname>PostgreSQL</productname>と<productname>Pgpool-II</productname>をインストールします。
    3台の<productname>PostgreSQL</productname>がストリーミングレプリケーション構成になります。全体構成図は以下の通りです。
   </para>
@@ -506,6 +506,10 @@ server3:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
 
  <sect2 id="example-cluster-pgpool-config">
   <title><productname>Pgpool-II</productname>の設定</title>
+   <para>
+    RPMからインストールした場合、<productname>Pgpool-II</productname>の設定ファイル
+    <filename>pgpool.conf</filename>は<filename>/etc/pgpool-II</filename>にあります。
+   </para>
   <para>
    <productname>Pgpool-II</productname> 4.2以降、すべての設定パラメーターがすべてのホストで同一になったので、
    どれか一つのノード上で<filename>pgpool.conf</filename>を編集し、
@@ -519,13 +523,6 @@ server3:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
     クラスタリングモードの設定には<xref linkend="GUC-BACKEND-CLUSTERING-MODE">を使用します。
     今回の設定例では、ストリーミングレプリケーションモードを設定します。
    </para>
-   <para>
-    RPMからインストールした場合、<productname>Pgpool-II</productname>のサンプル設定ファイルは
-    <filename>/etc/pgpool-II</filename>にあります。
-   </para>
-   <programlisting>
-[server1]# cp -p /etc/pgpool-II/pgpool.conf.sample /etc/pgpool-II/pgpool.conf
-   </programlisting>
    <programlisting>
 backend_clustering_mode = 'streaming_replication'
    </programlisting>
@@ -584,14 +581,9 @@ sr_check_password = ''
    </para>
    <programlisting>
 health_check_period = 5
-                                            # Health check period
-                                            # Disabled (0) by default
 health_check_timeout = 30
-                                            # Health check timeout
-                                            # 0 means no timeout
 health_check_user = 'pgpool'
 health_check_password = ''
-
 health_check_max_retries = 3
    </programlisting>
   </sect3>
@@ -608,16 +600,11 @@ health_check_max_retries = 3
 # - Backend Connection Settings -
 
 backend_hostname0 = 'server1'
-                                                        # Host name or IP address to connect to for backend 0
 backend_port0 = 5432
-                                                        # Port number for backend 0
 backend_weight0 = 1
-                                                        # Weight for backend 0 (only in load balancing mode)
 backend_data_directory0 = '/var/lib/pgsql/14/data'
-                                                        # Data directory for backend 0
 backend_flag0 = 'ALLOW_TO_FAILOVER'
-                                                        # Controls various backend behavior
-                                                        # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
+
 backend_hostname1 = 'server2'
 backend_port1 = 5432
 backend_weight1 = 1
@@ -751,9 +738,7 @@ PCP_USER=pgpool
    </para>
    <programlisting>
 recovery_user = 'postgres'
-                                            # Online recovery user
 recovery_password = ''
-                                            # Online recovery password
 
 recovery_1st_stage_command = 'recovery_1st_stage'
    </programlisting>
@@ -940,15 +925,8 @@ arping_path = '/usr/sbin'
    </para>
    <programlisting>
 hostname0 = 'server1'
-                                    # Host name or IP address of pgpool node
-                                    # for watchdog connection
-                                    # (change requires restart)
 wd_port0 = 9000
-                                    # Port number for watchdog service
-                                    # (change requires restart)
 pgpool_port0 = 9999
-                                    # Port number for pgpool
-                                    # (change requires restart)
 
 hostname1 = 'server2'
 wd_port1 = 9000
@@ -1148,7 +1126,7 @@ OPTS=" -D -n"
   </itemizedlist>
  </sect2>
 
- <sect2 id="example-cluster-try">
+ <sect2 id="example-cluster-verify">
   <title>動作確認</title>
   <para>
    これから、動作確認を行います。
@@ -1159,7 +1137,7 @@ OPTS=" -D -n"
 # systemctl start pgpool.service
   </programlisting>
 
-  <sect3 id="example-cluster-try-standby">
+  <sect3 id="example-cluster-verify-standby">
    <title>PostgreSQL スタンバイサーバを構築</title>
    <para>
     まず、<productname>Pgpool-II</productname>のオンラインリカバリ機能を利用し、スタンバイサーバを構築します。
@@ -1193,7 +1171,7 @@ Password for user pgpool:
    </programlisting>
   </sect3>
 
-  <sect3 id="example-cluster-try-watchdog">
+  <sect3 id="example-cluster-verify-watchdog">
    <title>Watchdogアクティブ/スタンバイの切り替え</title>
    <para>
     <command>pcp_watchdog_info</command>で<productname>Pgpool-II</productname>
@@ -1243,7 +1221,7 @@ server3:9999 Linux server3 server3 9999 9000 7 STANDBY
    </programlisting>
   </sect3>
 
-  <sect3 id="example-cluster-try-failover">
+  <sect3 id="example-cluster-verify-failover">
    <title>自動フェイルオーバ</title>
    <para>
     <command>psql</command>で仮想IPに接続し、バックエンドの情報を確認します。
@@ -1320,7 +1298,7 @@ reply_time       | 2021-10-19 07:11:53.886477+00
    </programlisting>
   </sect3>
 
-  <sect3 id="example-cluster-try-online-recovery">
+  <sect3 id="example-cluster-verify-online-recovery">
    <title>オンラインリカバリ</title>
    <para>
     次に、<productname>Pgpool-II</productname>のオンラインリカバリ機能を利用し、
