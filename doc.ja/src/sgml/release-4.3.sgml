@@ -94,12 +94,16 @@
    parser is imported.
    The <link linkend="guc-snapshot-isolation-mode">Snapshot Isolation
    Mode</link> is now ready for production.
+   New sample configuration for the mode is provided in
+   the <link linkend="example-replication-mode">configuration example
+   section</link>.
    -->
    このバージョンには、設定と管理を容易にするために多くの機能拡張が追加されています。
    動的にwatchdogクラスタのサイズを調整するために、新しくwatchdogにクラスタメンバーシップ機構が導入されました。
    これにより、watchdogノードが停止されたり、接続が切断されたときにもリーダwatchdogノードがquorum/VIPを維持できます。
    新しい<productname>PostgreSQL</productname> 14のSQL パーサが取り込まれています。
    また、<link linkend="guc-snapshot-isolation-mode">スナップショットアイソレーションモード</link> を本番環境で使用できるようにしました。
+   このモードのための新しい設定例が<link linkend="example-replication-mode">設定例の章</link>に提供されています
   </para>
 
   <para>
@@ -765,6 +769,19 @@
   -->
   <title>ドキュメントの変更</title>
   <itemizedlist>
+  <listitem>
+    <!--
+    2021-12-06 [320d4e79]
+    -->
+    <para>
+<!--
+     Add new configuration example for native replication mode and
+     snapshot isolation mode. (Bo Peng)
+-->
+     新しいネィティブレプリケーションモードとスナップショットアイソレーションモードの設定例を追加しました。(Bo Peng)
+    </para>
+   </listitem>
+
   <listitem>
     <!--
     2021-10-21 [4e8fb107]
