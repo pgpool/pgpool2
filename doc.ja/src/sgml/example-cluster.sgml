@@ -813,12 +813,10 @@ host    all         postgres         0.0.0.0/0          scram-sha-256
    </programlisting>
    <note>
     <para>
-     <productname>Pgpool-II</productname> 4.1から<filename>pgpool.conf</filename>ファイル内の
+     <productname>Pgpool-II</productname> 4.0の場合、<filename>pgpool.conf</filename>ファイル内の
      <xref linkend="guc-health-check-password">、<xref linkend="guc-sr-check-password">、
      <xref linkend="guc-wd-lifecheck-password">、<xref linkend="guc-recovery-password">には
-     <acronym>AES256</acronym>暗号化形式、平文形式、md5ハッシュ形式が指定できます。
-     <productname>Pgpool-II</productname> 4.0では<acronym>AES256</acronym>暗号化形式、
-     平文形式が指定可能で、それ以前のバージョンでは平文形式のみが指定可能です。
+     <acronym>AES256</acronym>暗号化形式、平文形式しか指定できないので、ご注意ください。
     </para>
    </note>
    <para>
