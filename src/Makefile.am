@@ -105,7 +105,8 @@ EXTRA_DIST = sample/pgpool.pam \
 		sample/scripts/follow_primary.sh.sample \
 		sample/scripts/pgpool_remote_start.sample \
 		sample/scripts/recovery_1st_stage.sample \
-		sample/scripts/recovery_2nd_stage.sample \
+		sample/scripts/replication_mode_recovery_1st_stage.sample \
+		sample/scripts/replication_mode_recovery_2nd_stage.sample \
 		sample/scripts/escalation.sh.sample \
 		sample/pgpool.conf.sample sample/pool_hba.conf.sample \
 		sample/pcp.conf.sample \
