@@ -1,69 +1,11 @@
 <!-- doc/src/sgml/release-4.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
-<sect1 id="release-4-3RC1">
- <title>Release 4.3RC1</title>
-  <note>
-   <title>Release Date</title>
-   <simpara>2021-11-25</simpara>
-  </note>
- <sect2>
-  <title>Changes since beta2</title>
-   <para>
-    Several documentation improvements were applied for Pgpool-II 4.3RC1 since the Beta2.
-    For further information about 4.3 please see <xref linkend="release-4-3-0">.
-   </para>
- </sect2>
-</sect1>
-
-<sect1 id="release-4-3beta2">
- <title>Release 4.3beta2</title>
-  <note>
-   <title>Release Date</title>
-   <simpara>2021-11-18</simpara>
-  </note>
-
- <sect2>
-  <title>Changes from beta1</title>
-   <para>
-    In this release same bug fixes as <productname>Pgpool-II</productname> 4.2.6
-    are already applied. See <xref linkend="release-4-2-6"> for more details of those fixes.
-    Note that following vulnability fix is also applied.
-   </para>
-
-  <itemizedlist>
-   <listitem>
-    <!--
-    2021-11-17 [4d2e4f4e]
-    -->
-    <para>
-     Reject extraneous data after SSL encryption handshake. (Tatsuo Ishii)
-    </para>
-    <para>
-     In the server side implementation of SSL negotiation, it was possible for a
-     man-in-the-middle attacker to inject arbitrary SQL commands. This is
-     possible if Pgpool-II is configured to use cert authentication or
-     hostssl + trust. This resembles PostgreSQL's CVE-2021-23214.
-    </para>
-    <para>
-     Similarly, in the client side implementation of SSL negotiation, it was
-     possible for a man-in-the-middle attacker to inject arbitrary responses.
-     This is possible if PostgreSQL is using trust authentication with a
-     clientcert requirement. It is not possible with cert authentication because
-     Pgpool-II does not implement the cert authentication between Pgpool-II
-     and PostgreSQL. This resembles PostgreSQL's CVE-2021-23222.
-    </para>
-   </listitem>
-  </itemizedlist>
-
- </sect2>
-</sect1>
-
 <sect1 id="release-4-3-0">
  <title>Release 4.3.0</title>
  <note>
   <title>Release Date</title>
-  <simpara>2021-12-xx</simpara>
+  <simpara>2021-12-07</simpara>
  </note>
 
  <sect2>
