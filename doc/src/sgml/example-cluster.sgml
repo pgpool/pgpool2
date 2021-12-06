@@ -399,11 +399,11 @@ host    replication     all             samenet                 scram-sha-256
 [all servers]# su - postgres
 [all servers]$ vi /var/lib/pgsql/.pgpass
 server1:5432:replication:repl:&lt;repl user password&gt;
-server2:5432:replication:repl:&lt;repl user passowrd&gt;
-server3:5432:replication:repl:&lt;repl user passowrd&gt;
-server1:5432:postgres:postgres:&lt;postgres user passowrd&gt;
-server2:5432:postgres:postgres:&lt;postgres user passowrd&gt;
-server3:5432:postgres:postgres:&lt;postgres user passowrd&gt;
+server2:5432:replication:repl:&lt;repl user password&gt;
+server3:5432:replication:repl:&lt;repl user password&gt;
+server1:5432:postgres:postgres:&lt;postgres user password&gt;
+server2:5432:postgres:postgres:&lt;postgres user password&gt;
+server3:5432:postgres:postgres:&lt;postgres user password&gt;
 [all servers]$ chmod 600  /var/lib/pgsql/.pgpass
     </programlisting>
    </listitem>
