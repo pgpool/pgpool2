@@ -79,6 +79,9 @@
    parser is imported.
    The <link linkend="guc-snapshot-isolation-mode">Snapshot Isolation
    Mode</link> is now ready for production.
+   New sample configuration for the mode is provided in
+   the <link linkend="example-replication-mode">configuration example
+   section</link>.
   </para>
 
   <para>
@@ -565,6 +568,16 @@
  <sect2>
   <title>Documentation changes</title>
    <itemizedlist>
+  <listitem>
+    <!--
+    2021-12-06 [320d4e79]
+    -->
+    <para>
+     Add new configuration example for native replication mode and
+     snapshot isolation mode. (Bo Peng)
+    </para>
+   </listitem>
+
   <listitem>
     <!--
     2021-10-21 [4e8fb107]
