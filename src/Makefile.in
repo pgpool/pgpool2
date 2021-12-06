@@ -506,7 +506,8 @@ sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/scripts/follow_primary.sh.sample \
 			   sample/scripts/pgpool_remote_start.sample \
 			   sample/scripts/recovery_1st_stage.sample \
-			   sample/scripts/recovery_2nd_stage.sample \
+			   sample/scripts/replication_mode_recovery_1st_stage.sample \
+			   sample/scripts/replication_mode_recovery_2nd_stage.sample \
 			   sample/scripts/escalation.sh.sample
 
 pkgdata_DATA = sql/insert_lock.sql \
