@@ -37,32 +37,7 @@ Pgpool-II documentation
   -->
   <title>説明</title>
   <para>
-   <command>pcp_watchdog_info</command> は、
-   <!--
-   Displays the watchdog status of the pgpool-II. watchdog_id is the index of watchdog node to get information for. If this is omitted, display the watchdog status of all watchdog nodes in the cluster.
-
-   watchdog_id = 0 is reserved for local pgpool-II node, So the index of remote watchdog nodes starts from 1. Note that since the index numbering in pcp_watchdog_info utility starts from 1 while the pgpool.conf file uses 0 based indexing to define remote watchdog nodes, so you will require to add one to the other watchdog index to get its information using pcp_watchdog_info utility.
-
-   For example, to get the information of first remote watchdog node configured with prefix 0 defined by other_pgpool_hostname0 parameters you will use watchdog_id = 1 for pcp_watchdog_info.
-
-   -->
-   <productname>Pgpool-II</productname> の <filename>pgpool.conf</filename>
-   の watchdog セクションで定義された <productname>Pgpool-II</productname> の watchdog ステータスを表示します。
-   watchdog_id は情報を取得する watchdog ノードのインデックスです。
-   省略された場合には、クラスタ中の全ての Pgpool-II の watchdog ノードのステータスが表示されます。
-  </para>
-  <para>
-   watchdog_id = 0 はローカルの <productname>Pgpool-II</productname> ノードのために予約されています。
-   そのため、リモートの watchdog ノードのインデックスは 1 から始まります。
-   <filename>pgpool.conf</filename> ではリモート watchdog ノードのインデックスは 0 をベースにしていますが、
-   <command>pcp_watchdog_info</command> ではそれが 1 から始まることに注意してください。
-  </para>
-  <para>
-   <command>pcp_watchdog_info</command> コマンドで情報を取得する際には、他の watchdog のインデックスに 1 を足す必要があります。
-  </para>
-  <para>
-   例えば、<varname>other_pgpool_hostname0</varname> パラメータで定義されている、添字 0 である最初のリモート watchdog ノードの情報を取得するには、
-   <command>pcp_watchdog_info</command> で watchdog_id = 1 を指定します。
+   <command>pcp_watchdog_info</command> は、指定されたノードIDの情報を表示します。
   </para>
 
  </refsect1>
@@ -131,7 +106,7 @@ Pgpool-II documentation
    <programlisting>
     $ pcp_watchdog_info -h localhost -U postgres
 
-    3 NO Linux_host1.localdomain_9991 host1
+    3 3 NO Linux_host1.localdomain_9991 host1
 
     Linux_host1.localdomain_9991 host1 9991 9001 7 STANDBY
     Linux_host2.localdomain_9992 host2 9992 9002 4 LEADER
@@ -150,15 +125,17 @@ Pgpool-II documentation
     最初に出力される行は、watchdog クラスタの情報を示しています:
     <!--
     1. Total watchdog nodes in the cluster
-    2. Is VIP is up on current node?
-    3. Leader node name
-    4. Leader node host
+    2. Total watchdog nodes in the cluster with active membership
+    3. Is VIP is up on current node?
+    4. Leader node name
+    5. Leader node host
     -->
 
     1. クラスタ内の全 watchdog ノード数
-    2. 仮想 IP がこのノードで起動しているか？
-    3. マスターノード名
-    4. マスターノードホスト
+    2. アクティブなメンバーシップを持つwatchdog ノード数
+    3. 仮想 IP がこのノードで起動しているか？
+    4. リーダノード名
+    5. リーダノードホスト
    </literallayout>
    <literallayout class="monospaced">
     <!--
@@ -170,6 +147,8 @@ Pgpool-II documentation
     4. watchdog port
     5. current node state
     6. current node state name
+    7. current cluster membership status
+    8. current cluster membership status name
     -->
     それ以降は watchdog ノードのリストが出力されます:
 
@@ -179,6 +158,8 @@ Pgpool-II documentation
     4. watchdog ポート番号
     5. 現在のノードステータス
     6. 現在のノードステータス名
+    7. 現在のメンバーシップステータス
+    8. 現在のメンバーシップステータス名
    </literallayout>
   </para>
   <para>
@@ -191,41 +172,46 @@ Pgpool-II documentation
    $ pcp_watchdog_info -h localhost -v -U postgres
 
    Watchdog Cluster Information
-   Total Nodes          : 3
-   Remote Nodes         : 2
-   Quorum state         : QUORUM EXIST
-   Alive Remote Nodes   : 2
-   VIP up on local node : NO
-   Leader Node Name     : Linux_host2.localdomain_9992
-   Leader Host Name     : localhost
+   Total Nodes              : 3
+   Remote Nodes             : 2
+   Member Remote Nodes      : 2
+   Nodes required for quorum: 2
+   Quorum state             : QUORUM EXIST
+   Alive Remote Nodes       : 2
+   VIP up on local node     : NO
+   Leader Node Name         : Linux_host2.localdomain_9992
+   Leader Host Name         : localhost
 
    Watchdog Node Information
-   Node Name      : Linux_host1.localdomain_9991
-   Host Name      : host1
-   Delegate IP    : 192.168.1.10
-   Pgpool port    : 9991
-   Watchdog port  : 9001
-   Node priority  : 1
-   Status         : 7
-   Status Name    : STANDBY
+   Node Name         : Linux_host1.localdomain_9991
+   Host Name         : host1
+   Delegate IP       : 192.168.1.10
+   Pgpool port       : 9991
+   Watchdog port     : 9001
+   Node priority     : 1
+   Status            : 7
+   Status Name       : STANDBY
+   Membership Status : MEMBER
 
-   Node Name      : Linux_host2.localdomain_9992
-   Host Name      : host2
-   Delegate IP    : 192.168.1.10
-   Pgpool port    : 9992
-   Watchdog port  : 9002
-   Node priority  : 1
-   Status         : 4
-   Status Name    : LEADER
+   Node Name         : Linux_host2.localdomain_9992
+   Host Name         : host2
+   Delegate IP       : 192.168.1.10
+   Pgpool port       : 9992
+   Watchdog port     : 9002
+   Node priority     : 1
+   Status            : 4
+   Status Name       : LEADER
+   Membership Status : MEMBER
 
-   Node Name      : Linux_host3.localdomain_9993
-   Host Name      : host3
-   Delegate IP    : 192.168.1.10
-   Pgpool port    : 9993
-   Watchdog port  : 9003
-   Node priority  : 1
-   Status         : 7
-   Status Name    : STANDBY
+   Node Name         : Linux_host3.localdomain_9993
+   Host Name         : host3
+   Delegate IP       : 192.168.1.10
+   Pgpool port       : 9993
+   Watchdog port     : 9003
+   Node priority     : 1
+   Status            : 7
+   Status Name       : STANDBY
+   Membership Status : MEMBER
   </programlisting>
  </refsect1>
 
