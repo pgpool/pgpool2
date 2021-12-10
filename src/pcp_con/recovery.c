@@ -81,6 +81,14 @@ start_recovery(int recovery_node)
 		ereport(ERROR,
 				(errmsg("node recovery failed, node id: %d is alive", recovery_node)));
 
+	if (chceck_password_type_is_not_md5(pool_config->recovery_user, pool_config->recovery_password) == -1)
+	{
+		ereport(ERROR,
+				(errmsg("invalid password format for recovery_user: %s",
+						pool_config->recovery_user),
+				errdetail("md5 hashed password is not allowed here")));
+	}
+
 	/* select master/primary node */
 	node_id = MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID;
 	backend = &pool_config->backend_desc->backend_info[node_id];
