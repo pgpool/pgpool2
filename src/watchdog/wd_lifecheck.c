@@ -387,6 +387,14 @@ lifecheck_main(void)
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
 
+	if (chceck_password_type_is_not_md5(pool_config->wd_lifecheck_user, pool_config->wd_lifecheck_password) == -1)
+	{
+		ereport(ERROR,
+				(errmsg("invalid password format for wd_lifecheck_user: %s",
+						pool_config->recovery_user),
+				errdetail("md5 hashed password is not allowed here")));
+	}
+
 	pool_signal(SIGTERM, lifecheck_exit_handler);
 	pool_signal(SIGINT, lifecheck_exit_handler);
 	pool_signal(SIGQUIT, lifecheck_exit_handler);
