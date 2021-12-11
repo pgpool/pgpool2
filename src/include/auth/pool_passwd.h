@@ -85,5 +85,4 @@ extern char *get_decrypted_password(const char *shadow_pass);
 extern char *read_pool_key(char *key_file_path);
 extern char *get_pgpool_config_user_password(char *username, char *password_in_config);
 extern void delete_passwordMapping(PasswordMapping * pwdMapping);
-extern int chceck_password_type_is_not_md5(char *username, char *password_in_config);
 #endif							/* POOL_PASSWD_H */
