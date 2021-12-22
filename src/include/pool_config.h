@@ -524,6 +524,7 @@ typedef struct
 	int			num_hb_if;		/* number of interface devices */
 	char	  **wd_monitoring_interfaces_list;	/* network interface name list
 												 * to be monitored by watchdog */
+	bool		health_check_test;			/* if on, enable health check testing */
 
 }			POOL_CONFIG;
 

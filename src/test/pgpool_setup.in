@@ -36,6 +36,7 @@
 # -d: start pgpool with debug mode
 # -s: use replication slot, rather than wal archive.
 # -r: use pg_rewind for base backup if possible.
+# -t: enable testing facility
 #
 # The user run this script will become the PostgreSQL super user as
 # well.  Current directory must be empty.  Assume that appropreate
@@ -747,6 +748,9 @@ function set_pgpool_conf {
 
 	echo "socket_dir = '$PGSOCKET_DIR'" >> $CONF
 	echo "pcp_socket_dir = '$PGSOCKET_DIR'" >> $CONF
+	if [ $ENABLE_TEST = "true" ];then
+	    echo "health_check_test = on" >> $CONF
+	fi
 }
 
 #-------------------------------------------
@@ -803,6 +807,7 @@ function usage()
 # default mode is streaming replication mode
 MODE="s"
 NO_STOP="false"
+ENABLE_TEST=${ENABLE_TEST:-"false"}
 
 while [ $# -gt 0 ]
 do
@@ -835,6 +840,8 @@ do
 	    USE_REPLICATION_SLOT="true"
 	elif [ $1 = "-r" ];then
 	    USE_PG_REWIND="true"
+	elif [ $1 = "-t" ];then
+	     ENABLE_TEST="true"
 	elif [ $1 = "--help" -o $1 = "-o" ];then
 		usage
 		exit

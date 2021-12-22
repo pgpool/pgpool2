@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -72,15 +72,7 @@ static RETSIGTYPE reload_config_handler(int sig);
 static void reload_config(void);
 static RETSIGTYPE health_check_timer_handler(int sig);
 
-#ifdef HEALTHCHECK_OPTS
-#if HEALTHCHECK_OPTS > 0
-#define HEALTHCHECK_DEBUG
-#endif
-#endif
-
-#ifdef HEALTHCHECK_DEBUG
 static bool check_backend_down_request(int node, bool done_requests);
-#endif
 
 #undef CHECK_REQUEST
 #define CHECK_REQUEST \
@@ -311,12 +303,18 @@ establish_persistent_connection(int node)
 				CLEAR_ALARM;
 			}
 
-#ifdef HEALTHCHECK_DEBUG
-			if (slot && check_backend_down_request(node, false) == true)
+			/*
+			 * If health check test is enabled, check if fake down request is
+			 * set.  If set, discard_persistent_connection will set slot to
+			 * NULL.  This simulates a connection failure.
+			 */
+			if (pool_config->health_check_test)
 			{
-				discard_persistent_connection(node);
+				if (slot && check_backend_down_request(node, false) == true)
+				{
+					discard_persistent_connection(node);
+				}
 			}
-#endif
 
 			if (slot)
 			{
@@ -443,8 +441,6 @@ static RETSIGTYPE health_check_timer_handler(int sig)
 	errno = save_errno;
 }
 
-#ifdef HEALTHCHECK_DEBUG
-
 /*
  * Node down request file. In the file, each line consists of "backend node
  * id", tab and "down".  If such a line found, check_backend_down_request()
@@ -456,7 +452,7 @@ static RETSIGTYPE health_check_timer_handler(int sig)
 /*
  * Check backend down request file with specified backend node id.  If it's
  * down ("down"), returns true and set the status to "already_down" to
- * prevent repeatable * failover. If it's other than "down", returns false.
+ * prevent repeating failover. If it's other than "down", returns false.
  *
  * When done_requests is true (second arg to function) the function returns
  * true if the node has already_done status in the file.
@@ -547,29 +543,5 @@ check_backend_down_request(int node, bool done_requests)
 	if (!found)
 		return false;
 
-#ifdef NOT_USED
-	fd = fopen(backend_down_request_file, "w");
-	if (!fd)
-	{
-		ereport(WARNING,
-				(errmsg("check_backend_down_request: failed to open file for writing %s",
-						backend_down_request_file),
-				 errdetail("%m")));
-		return false;
-	}
-
-	if (fwrite(writebuf, 1, strlen(writebuf), fd) != strlen(writebuf))
-	{
-		ereport(WARNING,
-				(errmsg("check_backend_down_request: failed to write %s",
-						backend_down_request_file),
-				 errdetail("%m")));
-		fclose(fd);
-		return false;
-	}
-	fclose(fd);
-#endif
-
 	return true;
 }
-#endif
