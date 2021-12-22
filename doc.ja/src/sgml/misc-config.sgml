@@ -312,5 +312,80 @@
    </listitem>
   </varlistentry>
 
+  <varlistentry id="guc-health-check-test" xreflabel="health_check_test">
+   <term><varname>health_check_test</varname> (<type>boolean</type>)
+    <indexterm>
+<!--
+     <primary><varname>health_check_test</varname> configuration parameter</primary>
+-->
+     <primary><varname>health_check_test</varname>設定パラメータr</primary>
+    </indexterm>
+   </term>
+   <listitem>
+     <caution>
+       <para>
+<!--
+	Do not set this parameter to on in a production
+	environment. This feature is purely for testing purpose.
+-->
+        実運用のシステムでこのパラメータをonにしないでください。
+        この機能はテスト目的専用です。
+       </para>
+     </caution>
+    <para>
+<!--
+     Setting to on,
+     enables the testing facility of health checking. In this case the
+     health check process looks
+     into <filename>backend_down_request</filename>
+     under <xref linkend="guc-logdir">.  The file may contain multiple
+     lines, and each line corresponds to each backend. A line in the
+     file starts with backend id (must be a decimal number starting
+     with zero), then a TAB, and ends with "down". The backend is
+     assumed in down status and <productname>Pgpool-II</productname>
+     will start a failover. Once the failover completes, the "down" is
+     rewritten to "already_down" by health check process to prevent
+     repeating failovers.
+-->
+     onにすると、ヘルスチェックのテスト機能が有効になります。
+     この場合、ヘルスチェックプロセスは<xref linkend="guc-logdir">の下にある<filename>backend_down_request</filename>を参照します。
+     このファイルは、複数の行から構成され、各行は各々のバックエンドに対応します。
+     各行はバックエンドID（ゼロから始まる十進数でなければなりません）で始まり、続いてタブ、最後に"down"で終わります。
+     そのバックエンドはダウン状態と見なされ、<productname>Pgpool-II</productname>はフェイルオーバを開始します。
+     フェイルオーバが完了すると、"down"はヘルスチェックプロセスによって"already_down"に書き換えられ、何度もフェイルオーバが起きることを防ぎます。
+    </para>
+    <para>
+<!--
+     This feature is particularly useful for
+     testing <xref linkend="guc-failover-require-consensus">. Suppose
+     we have 3 watchdog node. Each watchdog checks healthiness of
+     backend 0. By setting "0	down" in the file only under watchdog 0,
+     other watchdogs disagree with the unhealthiness of backend 0, so
+     failover will not occur. This kind of partial network failure can
+     be simulated using this feature.
+-->
+     この機能は特に<xref linkend="guc-failover-require-consensus">のテストに有用です。
+     今3つのwatchdogノードがあるとします。
+     各々のwatchdogはバックエンド0の健全性を検証します。
+     "0	down"とwatchdog 0の配下のファイルのみに書き込むと、他のバックエンドはバックエンド0が健全ではないことに同意しないので、フェイルオーバは起きません。
+     このような、部分的なネットワーク障害がこの機能でシミュレーションできます。
+    </para>
+    <para>
+<!--
+     Default is <literal>off</literal>.
+-->
+     デフォルトは<literal>off</literal>です。
+    </para>
+
+    <para>
+     <!--
+     This parameter can only be set at server start.
+     -->
+     このパラメータは、サーバ起動時にのみ設定できます。
+    </para>
+
+   </listitem>
+  </varlistentry>
+
  </variablelist>
 </sect1>

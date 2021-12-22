@@ -38,6 +38,7 @@
 # -s: use replication slot, rather than wal archive.
 # -r: use pg_rewind for base backup if possible.
 # -e: do not create PostgreSQL clusters
+# -t: enable testing facility
 #
 # The user run this script will become the PostgreSQL super user as
 # well.  Current directory must be empty.  Assume that appropriate
@@ -765,6 +766,10 @@ function set_pgpool_conf {
 	echo "socket_dir = '$PGSOCKET_DIR'" >> $CONF
 	echo "pcp_socket_dir = '$PGSOCKET_DIR'" >> $CONF
 	echo "log_line_prefix = '%m: %a pid %p: '" >> $CONF
+
+	if [ $ENABLE_TEST = "true" ];then
+	    echo "health_check_test = on" >> $CONF
+	fi
 }
 
 #-------------------------------------------
@@ -1026,6 +1031,7 @@ MODE="s"
 NO_STOP="false"
 
 NO_CREATE_PGCLUSTER="false"
+ENABLE_TEST=${ENABLE_TEST:-"false"}
 
 while [ $# -gt 0 ]
 do
@@ -1061,6 +1067,8 @@ do
 	    USE_PG_REWIND="true"
 	elif [ $1 = "-e" ];then
 	     NO_CREATE_PGCLUSTER="true"
+	elif [ $1 = "-t" ];then
+	     ENABLE_TEST="true"
 	elif [ $1 = "--help" -o $1 = "-o" ];then
 		usage
 		exit
