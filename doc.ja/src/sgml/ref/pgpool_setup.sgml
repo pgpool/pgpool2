@@ -201,6 +201,22 @@ Pgpool-II documentation
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><option>-t</option></term>
+     <listitem>
+      <para>
+<!--
+       Set some additional parameters to pgpool.conf so that the
+       regression test can performs tests against existing
+       installation.  Currently the parameter is
+       <xref linkend="guc-health-check-test">.
+-->
+       regression testが既存のインストールに対して実行できるように、pgpool.confに追加のパラメータを設定します。
+       今の所、そのようなパラメータとしては<xref linkend="guc-health-check-test">があります。
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
   </para>
  </refsect1>

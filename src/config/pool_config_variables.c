@@ -498,6 +498,16 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL,NULL
 	},
 
+	{
+		{"health_check_test", CFGCXT_INIT, HEALTH_CHECK_CONFIG,
+		 "If on, enable health check testing.",
+		 CONFIG_VAR_TYPE_BOOL, false, 0
+		},
+		&g_pool_config.health_check_test,
+		false,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	EMPTY_CONFIG_BOOL
 

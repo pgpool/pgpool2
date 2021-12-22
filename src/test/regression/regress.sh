@@ -37,7 +37,7 @@ function install_pgpool
 
 	test -d $log || mkdir $log
         
-	make install HEALTHCHECK_DEBUG=1 WATCHDOG_DEBUG=1 -C $dir/../../ -e prefix=${PGPOOL_PATH} >& regression.log 2>&1
+	make install WATCHDOG_DEBUG=1 -C $dir/../../ -e prefix=${PGPOOL_PATH} >& regression.log 2>&1
 
 	if [ $? != 0 ];then
 	    echo "make install failed"
@@ -105,6 +105,7 @@ function export_env_vars
 	export JDBC_DRIVER=$JDBC_DRIVER
 	export PGBENCH_PATH=$PGBENCH_PATH
 	export PGSOCKET_DIR=$PGSOCKET_DIR
+	export ENABLE_TEST=true
 }
 function print_info
 {
