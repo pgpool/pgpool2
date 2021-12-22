@@ -1,6 +1,51 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-7">
+ <title>リリース 4.2.7</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2021-12-23</simpara>
+  </note>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-12-10 [ee3c37b6]
+    -->
+    <para>
+     Doc: <command>pcp_watchdog_info</command>マニュアルの誤字を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-12-06 [ecd9222d]
+    -->
+    <para>
+     Doc: 設定例の誤字を修正しました。(Bo Peng)
+    </para>
+    <para>
+     パッチはLu Chenyangによって提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-11-25 [eda1ad5c]
+    -->
+    <para>
+     Doc: リリースノートの誤字を修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-6">
  <title>リリース 4.2.6</title>
   <note>
