@@ -280,5 +280,52 @@
    </listitem>
   </varlistentry>
 
+  <varlistentry id="guc-health-check-test" xreflabel="health_check_test">
+   <term><varname>health_check_test</varname> (<type>boolean</type>)
+    <indexterm>
+     <primary><varname>health_check_test</varname> configuration parameter</primary>
+    </indexterm>
+   </term>
+   <listitem>
+     <caution>
+       <para>
+	Do not set this parameter to on in a production
+	environment. This feature is purely for testing purpose.
+       </para>
+     </caution>
+    <para>
+     Setting to on,
+     enables the testing facility of health checking. In this case the
+     health check process looks
+     into <filename>backend_down_request</filename>
+     under <xref linkend="guc-logdir">.  The file may contain multiple
+     lines, and each line corresponds to each backend. A line in the
+     file starts with backend id (must be a decimal number starting
+     with zero), then a TAB, and ends with "down". The backend is
+     assumed in down status and <productname>Pgpool-II</productname>
+     will start a failover. Once the failover completes, the "down" is
+     rewritten to "already_down" by health check process to prevent
+     repeating failovers.
+    </para>
+    <para>
+     This feature is particularly useful for
+     testing <xref linkend="guc-failover-require-consensus">. Suppose
+     we have 3 watchdog node. Each watchdog checks healthiness of
+     backend 0. By setting "0	down" in the file onky under watchdog 0,
+     other watchdogs disagree with the unhealthiness of backend 0, so
+     failover will not occur. This kind of partial network failure can
+     be simulated using this feature.
+    </para>
+    <para>
+     Default is <literal>off</literal>.
+    </para>
+
+    <para>
+     This parameter can only be set at server start.
+    </para>
+
+   </listitem>
+  </varlistentry>
+
  </variablelist>
 </sect1>
