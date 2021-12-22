@@ -1,6 +1,39 @@
 <!-- doc/src/sgml/release-3.7.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-3-7-22">
+ <title>Release 3.7.22</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2021-12-23</simpara>
+  </note>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-12-10 [66f48ef0]
+    -->
+    <para>
+     Doc: fix typo in <command>pcp_watchdog_info</command> manual. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-11-25 [af77219d]
+    -->
+    <para>
+     Doc: fix typos in release notes. (Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-3-7-21">
  <title>Release 3.7.21</title>
   <note>
