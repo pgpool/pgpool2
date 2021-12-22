@@ -61,8 +61,7 @@ pgpool_SOURCES = main/main.c \
     utils/statistics.c
 
 DEFS = @DEFS@ \
-	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\" \
-	-DHEALTHCHECK_OPTS=$(HEALTHCHECK_DEBUG)
+	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"
 
 sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pcp.conf.sample \
