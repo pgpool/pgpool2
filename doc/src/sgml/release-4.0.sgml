@@ -9,6 +9,34 @@
   </note>
 
  <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-12-03 [74715470]
+    -->
+    <para>
+     Suppress bison warnings regarding yacc incompatibility. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-11-22 [609f3c98]
+    -->
+    <para>
+     Fix redundant code. (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch contributed by Lu Chenyang.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
   <title>Documents</title>
   <itemizedlist>
 
