@@ -9,6 +9,34 @@
   </note>
 
  <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-12-03 [74715470]
+    -->
+    <para>
+     yaccとの非互換性によって出力されるbisonの警告を抑制しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2021-11-22 [609f3c98]
+    -->
+    <para>
+     冗長なコードを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     パッチはLu Chenyangによって提供されました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
   <title>ドキュメント修正</title>
   <itemizedlist>
 
