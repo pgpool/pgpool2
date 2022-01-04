@@ -23,7 +23,7 @@
   For online recovery, the recovery target node must be in detached
   state. This means the node must be either manually detached by
   <xref linkend="pcp-detach-node"> or automatically detached
-  by <productname>Pgpool-II</productname> as a consequnece of
+  by <productname>Pgpool-II</productname> as a consequence of
   failover.
   -->
   オンラインリカバリを実施するためには、リカバリ対象のノードは<productname>Pgpool-II</productname>から切り離された状態になっていなければなりません。
@@ -97,8 +97,8 @@
  </para>
  <para>
   <!--
-  Connections from cliens are not allowd only in the second stage
-  while the data can be updated or retrieved during the first statge.
+  Connections from clients are not allowed only in the second stage
+  while the data can be updated or retrieved during the first stage.
   -->
   ファーストステージではデータの更新や読み取りができますが、セカンドステージではクライアントからの接続は許されていません。
  </para>
@@ -235,7 +235,7 @@
      <!--
      Specifies the <productname>PostgreSQL</> user name to perform online recovery.
      <varname>recovery_user</varname> must specify superuser,
-     beacause <function>pgpool_recovery</function> function is executed
+     because <function>pgpool_recovery</function> function is executed
      during online recovery, require superuser privilege.
      -->
      オンラインリカバリを行うための<productname>PostgreSQL</>ユーザ名です。
@@ -343,7 +343,7 @@
      database cluster directory for security reasons.
      For example, if <varname>recovery_1st_stage_command</varname> = <literal>
      'sync-command'</literal>, then <productname>Pgpool-II</productname> will
-     look for the command scrit in <literal>$PGDATA</literal> directory and will
+     look for the command script in <literal>$PGDATA</literal> directory and will
      try to execute <command>$PGDATA/sync-command</command>.
      -->
      オンラインリカバリのファーストステージでマスタ（プライマリ）ノードで実行されるコマンドを指定します。
@@ -472,7 +472,7 @@
      database cluster directory for security reasons.
      For example, if <varname>recovery_2nd_stage_command</varname> = <literal>
      'sync-command'</literal>, then <productname>Pgpool-II</productname> will
-     look for the command scrit in <literal>$PGDATA</literal> directory and will
+     look for the command script in <literal>$PGDATA</literal> directory and will
      try to execute <command>$PGDATA/sync-command</command>.
      -->
      オンラインリカバリのセカンドステージでマスタノードで実行されるコマンドを指定します。

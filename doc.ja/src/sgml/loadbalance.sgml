@@ -226,7 +226,7 @@
    </programlisting>
    <para>
     <!--
-    If you want to use comments without supressing load balancing, you can set
+    If you want to use comments without suppressing load balancing, you can set
     <xref linkend="guc-allow-sql-comments"> to on.
     Please refer to <xref linkend="guc-replicate-select"> as well.
     -->
@@ -240,7 +240,7 @@
     <!--
     The JDBC driver has an autocommit option. If the autocommit is false,
     the JDBC driver sends "BEGIN" and "COMMIT" by itself, and an explicit
-    tranasacttion starts. In this case the same restriction above regarding
+    transaction starts. In this case the same restriction above regarding
     load balancing will be applied.
     -->
     JDBC ドライバにはautocommitオプションがあります。
@@ -312,7 +312,7 @@
 
   <para>
    <!--
-   If writing queires appear, succeeding read queries may not be
+   If writing queries appear, succeeding read queries may not be
    load balanced. i.e. sent to primary node (in streaming
    replication mode) or master node (in other mode) depending on the
    setting of <xref linkend="guc-disable-load-balance-on-write">.
@@ -322,7 +322,7 @@
   </para>
  </sect2>
 
- <sect2 id="runtime-config-load-balancing-in-streaming-raplication">
+ <sect2 id="runtime-config-load-balancing-in-streaming-replication">
 
   <!--
   <title>Load Balancing in Streaming Replication</title>
@@ -1075,7 +1075,7 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:stan
       <para>
        <!--
        The "Application name" is a name specified by a client when it connects to database,
-       and is avalable in <productname>PostgreSQL</> <emphasis>V9.0</> or later.
+       and is available in <productname>PostgreSQL</> <emphasis>V9.0</> or later.
        -->
        「アプリケーション名」とはクライアントがデータベースに接続する時に指定する名称で、<productname>PostgreSQL</> <emphasis>V9.0</>以降で利用可能です。
       </para>

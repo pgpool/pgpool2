@@ -436,10 +436,10 @@ make install
    <!--
    <productname>Pgpool-II</productname> need function of <function>pgpool_recovery</function>,
    <function>pgpool_remote_start</function> and <function>pgpool_switch_xlog</function>,
-   when you use the online recovery that discribes latter.
+   when you use the online recovery that describes latter.
    Also pgpoolAdmin of management tool, stop, restart or reload a
-   <productname>PostgreSQL </prodcutname> on the screen by use <function>pgpool_pgctl<function>.
-   It is enough, if these function installed in template1 fisrt. These
+   <productname>PostgreSQL </productname> on the screen by use <function>pgpool_pgctl<function>.
+   It is enough, if these function installed in template1 first. These
    function do not needed that install in all databases.
    -->
    後述の オンラインリカバリ の機能を使う場合には、 pgpool_recovery, pgpool_remote_start, pgpool_switch_xlog という関数が必要です。
@@ -578,7 +578,7 @@ $ psql -f pgpool-regclass.sql template1
    as this template database will be cloned to create new databases.
    -->
    <command>CREATE EXTENSION</command>または<filename>pgpool-regclass.sql</filename>の実行は、<productname>Pgpool-II</productname>経由でアクセスされる全てのデータベースで実行しなければなりません。
-   ただし、<command>CREATE EXTENSINON</command>または"psql -f pgpool-regclass.sql template1"の実行後に作成されたデータベースでは、新しいデータベース作成のためにテンプレートデータベースが複製されるため、これを実行する必要はありません。
+   ただし、<command>CREATE EXTENSION</command>または"psql -f pgpool-regclass.sql template1"の実行後に作成されたデータベースでは、新しいデータベース作成のためにテンプレートデータベースが複製されるため、これを実行する必要はありません。
   </para>
 
  </sect1>

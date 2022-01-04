@@ -190,7 +190,7 @@
 
      <para>
       <!--
-      But serialization has its own overheads, and it is recomended
+      But serialization has its own overheads, and it is recommended
       to be used only with the larger values of <xref linkend="guc-num-init-children">.
       For the small number of <xref linkend="guc-num-init-children">,
       the serialize accept can degrade the performance because of
@@ -203,7 +203,7 @@
      <note>
       <para>
        <!--
-       It is recomended to do a benchmark before deciding wether to use
+       It is recommended to do a benchmark before deciding wether to use
        <varname>serialize_accept</varname> or not, because the corelation
        of <xref linkend="guc-num-init-children"> and <varname>serialize_accept</varname>
        can be different on different environments.
@@ -999,7 +999,7 @@ local0.*    /var/log/pgpool.log
       with information outlined below.
       All unrecognized escapes are ignored. Other characters are copied straight to
       the log line. Default is '%t: pid %p: ', which prints timestamp and process id,
-      which keeps backward compatibily with pre<productname>Pgpool-II</productname>
+      which keeps backward compatibly with pre<productname>Pgpool-II</productname>
       <emphasis>V3.4</emphasis>.
       -->
       これは、各ログ行の先頭に出力する<function>printf</>の書式文字列です。

@@ -534,7 +534,7 @@ PCP_USER=pgpool
    <title>オンラインリカバリの設定</title>
    <para>
     続いて、オンラインリカバリを行うための<productname>PostgreSQL</productname>のユーザ名およびオンラインリカバリ時に呼び出されるコマンド<command>recovery_1st_stage</command>を設定します。
-    オンラインリカバリで実行される<function>pgpool_recovery</function>関数は<productname>PostgreSQL</productname>のスーパーユーザ権限が必要なため、<varname>recovery_user</varname>に<emphasis>スーパーユーザ</emphasis>を指定しなければなりません。ここでは、postrgesユーザを指定します。
+    オンラインリカバリで実行される<function>pgpool_recovery</function>関数は<productname>PostgreSQL</productname>のスーパーユーザ権限が必要なため、<varname>recovery_user</varname>に<emphasis>スーパーユーザ</emphasis>を指定しなければなりません。ここでは、postgresユーザを指定します。
    </para>
    <programlisting>
 recovery_user = 'postgres'

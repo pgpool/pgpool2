@@ -49,7 +49,7 @@
       Set <xref linkend="guc-sr-check-period"> to 0 to
       disable streaming replication delay checking.  This
       is because <productname>Aurora</productname> does
-      not provide neccessary functions to check the
+      not provide necessary functions to check the
       replication delay.
       -->
       <xref linkend="guc-sr-check-period">を0にして、ストリーミングレプリケーション遅延チェックを無効にします。
