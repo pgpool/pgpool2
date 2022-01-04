@@ -74,7 +74,7 @@
       <!--
       Specifies a user command to run when a <productname>PostgreSQL</> backend node gets detached.
       <productname>Pgpool-II</productname> replaces the following special characters
-      with the backend specific information before excuting the command.
+      with the backend specific information before executing the command.
       -->
       <productname>PostgreSQL</>バックエンドノードが切り離される時に実行するユーザコマンドを指定します。
       <productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。
@@ -270,7 +270,7 @@
       Specifies a user command to run when a <productname>PostgreSQL</> backend node gets attached to
       <productname>Pgpool-II</productname>. <productname>Pgpool-II</productname>
       replaces the following special characters with the backend specific information.
-      before excuting the command.
+      before executing the command.
       -->
       <productname>PostgreSQL</>バックエンドノードが<productname>Pgpool-II</productname>に復帰された時に実行するユーザコマンドを指定します。
       <productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。
@@ -458,7 +458,7 @@ if (we need to executed follow master command)
      <para>
       <!--
       <productname>Pgpool-II</productname> replaces the following special characters
-      with the backend specific information before excuting the command.
+      with the backend specific information before executing the command.
       -->
       <productname>Pgpool-II</productname>はコマンド実行の前に、以下の特殊文字をバックエンドの具体的な情報に置き換えます。
 

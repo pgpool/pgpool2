@@ -139,7 +139,7 @@ Pgpool-II documentation
       <para>
        <!--
        Set the path to the <filename>.pgpoolkey</filename> file.
-       Mandatory if you use AES256 encrypted password and the file is placed other than the standard locatiaon and used.
+       Mandatory if you use AES256 encrypted password and the file is placed other than the standard location and used.
        -->
        <filename>.pgpoolkey</filename>ファイルへのパスを指定します。
        AES256暗号化パスワードを使用し、このファイルが標準の場所以外にある場合には必須です。
@@ -317,7 +317,7 @@ Pgpool-II documentation
    <!--
    Reload configuration file
    of <productname>Pgpool-II</productname>. No specific options
-   exist for realod mode. Common options are applicable.
+   exist for reload mode. Common options are applicable.
    -->
    <productname>Pgpool-II</productname>の設定ファイルを再読み込みします。
    reloadモードには専用のオプションはありません。

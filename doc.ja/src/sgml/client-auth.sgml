@@ -18,7 +18,7 @@
   Since <productname>Pgpool-II</productname> is a middleware that works between
   <productname>PostgreSQL</> servers and a <productname>PostgreSQL</> database client, so when a client application
   connects to the <productname>Pgpool-II</productname>, <productname>Pgpool-II</productname>
-  inturn connects to the <productname>PostgreSQL</> servers using the same credentials to serve the incomming
+  inturn connects to the <productname>PostgreSQL</> servers using the same credentials to serve the incoming
   client connection. Thus, all the access privileges and restrictions defined for the user in <productname>PostgreSQL</>
   gets automatically applied to all <productname>Pgpool-II</productname> clients, with an exceptions of
   the authentications on <productname>PostgreSQL</> side that depends on the client's IP addresses or hostnames.
@@ -27,7 +27,7 @@
   <productname>Pgpool-II</productname> server and not that of the actual client.
   Therefore, for the client host based authentications <productname>Pgpool-II</productname> has the
   <literal>pool_hba</literal> mechanism similar to the <literal>pg_hba</literal> mechanism for
-  authenticating the incomming client connections.
+  authenticating the incoming client connections.
   -->
   <productname>Pgpool-II</productname>は<productname>PostgreSQL</>サーバと<productname>PostgreSQL</>データベースクライアントの間で動作するミドルウェアであるため、クライアントアプリケーションが<productname>Pgpool-II</productname>に接続したときには、今度は<productname>Pgpool-II</productname>がクライアントが提供したのと同じ認証情報を使って<productname>PostgreSQL</>サーバに接続します。
   したがって、<productname>PostgreSQL</>のユーザに対し定義された全てのアクセス権限と制約が、自動的に全ての<productname>Pgpool-II</productname>クライアントに適用されます。

@@ -134,10 +134,10 @@
       Specifies the authentication key used for all watchdog communications.
       All <productname>Pgpool-II</productname> must have the same key.
       Packets from watchdog having different key will get rejected.
-      This authentication is also applied to the heatrbeat singals
+      This authentication is also applied to the heartbeat signals
       when the <literal>heartbeat</> mode is used as a lifecheck method.
       -->
-      wachdog間通信で用いられる認証キーを指定します。
+      watchdog間通信で用いられる認証キーを指定します。
       全ての<productname>Pgpool-II</productname>で同じキーを指定する必要があります。
       認証キーが異なるwatchdogからの通信は拒絶されます。
       死活監視を<literal>heartbeat</>モードで行う場合には、この認証はハートビート信号にも適用されます。
@@ -440,7 +440,7 @@
 
  <sect2 id="config-watchdog-escalation-de-escalation">
   <!--
-  <title>Behaivor on escalation and de-escalation</title>
+  <title>Behavior on escalation and de-escalation</title>
   -->
   <title>昇格および降格時の振る舞い</title>
   <para>
@@ -466,8 +466,8 @@
      <para>
       <!--
       When set to on, watchdog clears all the query cache in the shared memory
-      when pgpool-II escaltes to active. This prevents the new active <productname>Pgpool-II</productname>
-      from using old query caches inconsistence to the old active.
+      when pgpool-II escalates to active. This prevents the new active <productname>Pgpool-II</productname>
+      from using old query caches inconsistences to the old active.
       -->
       このオプションがonの場合、pgpool-II がアクティブに昇格した時に、共有メモリ上のクエリキャッシュを全て削除します。
       これにより、新しいアクティブの<productname>Pgpool-II</productname>が旧アクティブと非整合な古いクエリキャッシュを使うことを防止します。
@@ -841,7 +841,7 @@
      </para>
      <para>
       <!--
-      <literal>heartbeat</literal>: In this mode, watchdog sends the heartbeat singals (<acronym>UDP</acronym> packets)
+      <literal>heartbeat</literal>: In this mode, watchdog sends the heartbeat signals (<acronym>UDP</acronym> packets)
       periodically to other <productname>Pgpool-II</productname>. Similarly watchdog also receives the signals
       from other <productname>Pgpool-II</productname> .
       If there are no signal for a certain period, watchdog regards is as failure

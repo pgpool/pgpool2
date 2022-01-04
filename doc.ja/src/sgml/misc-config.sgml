@@ -24,7 +24,7 @@
      Specifies the relation cache expiration time in seconds.
      The relation cache is used for caching the query result of
      <productname>PostgreSQL</> system catalogs that is used by <productname>Pgpool-II
-    </productname> to get various informations including the table
+    </productname> to get various information including the table
      structures and to check table types(e.g. To check if the referred
      table is a temporary table or not). The cache is maintained in
      the local memory space of <productname>Pgpool-II</productname>

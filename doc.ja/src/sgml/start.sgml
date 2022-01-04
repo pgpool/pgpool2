@@ -570,7 +570,7 @@
   <para>
    <figure>
     <!--
-    <title>Process architecure of <productname>Pgpool-II</productname></title>
+    <title>Process architecture of <productname>Pgpool-II</productname></title>
     -->
     <title><productname>Pgpool-II</productname>のプロセス構造</title>
     <mediaobject>

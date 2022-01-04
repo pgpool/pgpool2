@@ -497,7 +497,7 @@
    as this template database will be cloned to create new databases.
    -->
    <command>CREATE EXTENSION</command>または<filename>pgpool-regclass.sql</filename>の実行は、<productname>Pgpool-II</productname>経由でアクセスされる全てのデータベースで実行しなければなりません。
-   ただし、<command>CREATE EXTENSINON</command>または"psql -f pgpool-regclass.sql template1"の実行後に作成されたデータベースでは、新しいデータベース作成のためにテンプレートデータベースが複製されるため、これを実行する必要はありません。
+   ただし、<command>CREATE EXTENSION</command>または"psql -f pgpool-regclass.sql template1"の実行後に作成されたデータベースでは、新しいデータベース作成のためにテンプレートデータベースが複製されるため、これを実行する必要はありません。
   </para>
 
  </sect1>
