@@ -117,7 +117,7 @@
     </programlisting>
     <!--
     <productname>Pgpool-II</productname> only accepts connections from the localhost
-    using port 9999 by the default. If you wish to receive conenctions from other hosts,
+    using port 9999 by the default. If you wish to receive connections from other hosts,
     set <xref linkend="guc-listen-addresses"> to <literal>'*'</literal>.
     -->
     <productname>Pgpool-II</> はデフォルトではローカルホストからのポート番号9999への接続のみを受け付けます。
@@ -215,7 +215,7 @@
     for each server. If the servers are placed on separate machines,
     they must be configured properly so that they can accept network
     connections from <productname>Pgpool-II</productname>.
-    In this exapmle, we create 3 <productname>PostgreSQL</productname> servers and
+    In this example, we create 3 <productname>PostgreSQL</productname> servers and
     specify the PostgreSQL information in the following parameters.
     -->
     次に、<productname>Pgpool-II</productname>のための<productname>PostgreSQL</>サーバを設定する必要があります。

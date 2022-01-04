@@ -18,7 +18,7 @@ Pgpool-II documentation
   <refname>pcp_detach_node</refname>
   <refpurpose>
    <!--
-   detaches the given node from Pgpool-II. Exisiting connections to Pgpool-II are forced to be disconnected.</refpurpose>
+   detaches the given node from Pgpool-II. Existing connections to Pgpool-II are forced to be disconnected.</refpurpose>
    -->
    <productname>Pgpool-II</productname> からノードを切り離す</refpurpose>
  </refnamediv>

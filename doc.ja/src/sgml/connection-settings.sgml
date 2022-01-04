@@ -965,7 +965,7 @@ backend_clustering_mode = 'native_replication'
       <!--
       <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis> or later,
       automatically detects whether the table has a SERIAL columns or not,
-      so it never  locks the table if it desn't have the SERIAL columns.
+      so it never  locks the table if it doesn't have the SERIAL columns.
       -->
       <productname>Pgpool-II</productname> <emphasis>V2.2</emphasis>以降では、テーブルがSERIAL列を持つかどうか自動判別するため、SERIAL列がなければ決してテーブルをロックしません。
      </para>
@@ -1496,8 +1496,8 @@ backend_clustering_mode = 'raw'
      <para>
       <!--
       <varname>backend_weight</varname> specifies the load balance
-      ratio of the backends. It may be set to any interger or
-      floating point value greater than or equeal zero.
+      ratio of the backends. It may be set to any integer or
+      floating point value greater than or equal zero.
       Multiple backends can be specified by
       adding a number at the end of the parameter name
       (e.g. backend_weight0). If you plan to use only one
@@ -1514,7 +1514,7 @@ backend_clustering_mode = 'raw'
       reloading a configuration file. However, this will take
       effect only for new established client sessions.
       <productname>Pgpool-II</> <emphasis>V2.2.6</>, <emphasis>V2.3</> or later
-      allows alllow updating the values by reloading a configuration file.
+      allows allow updating the values by reloading a configuration file.
       This is useful if you want to prevent any query sent to
       standbys to perform some administrative work in native replication mode.
       -->
@@ -1643,7 +1643,7 @@ backend_clustering_mode = 'raw'
 	<row>
 	 <entry><literal>DISALLOW_TO_FAILOVER</literal></entry>
 	 <!--
-	 <entry>Disllow to failover or detaching backend
+	 <entry>Disallow to failover or detaching backend
 	 This is useful when you protect backend by
 	 using HA (High Availability) softwares such as
 	 <productname>Heartbeat</> or <productname>Pacemaker</>. You cannot specify with

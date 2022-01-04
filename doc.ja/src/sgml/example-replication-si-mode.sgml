@@ -480,7 +480,7 @@ backend_flag2 = 'ALLOW_TO_FAILOVER'
     オンラインリカバリで実行される<function>pgpool_recovery</function>関数は
     <productname>PostgreSQL</productname>のスーパーユーザ権限が必要なため、
     <varname>recovery_user</varname>に<emphasis>スーパーユーザ</emphasis>を指定しなければなりません。
-    ここでは、<literal>postrges</literal>ユーザを指定します。
+    ここでは、<literal>postgres</literal>ユーザを指定します。
    </para>
    <programlisting>
 recovery_user = 'postgres'

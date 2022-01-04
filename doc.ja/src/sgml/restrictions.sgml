@@ -8,7 +8,7 @@
 
  <para>
   <!--
-  This section descibes current restrictions of <productname>Pgpool-II</productname>.
+  This section describes current restrictions of <productname>Pgpool-II</productname>.
   -->
   この章では、<productname>Pgpool-II</productname>の現在の制限事項について説明します。
 
@@ -62,7 +62,7 @@
       <!--
       In the replication mode or native replication mode, trust and pam methods are supported. md5 is also
       supported since <productname>Pgpool-II</productname> 3.0. md5
-      is supported by using an authencitaion file <filename>pool_passwd</filename>.
+      is supported by using an authentication file <filename>pool_passwd</filename>.
       scram-sha-256, cert, and clear text password is also supported since
       <productname>Pgpool-II</productname> 4.0.
       <filename>pool_passwd</filename> is default name of the
@@ -385,7 +385,7 @@
     <listitem>
      <para>
       <!--
-      <productname>Pgpool-II</productname> does not perform encoding converion between client and
+      <productname>Pgpool-II</productname> does not perform encoding conversion between client and
       <productname>PostgreSQL</productname> for multi-byte characters.
       The encoding for the client and backends must be the same.
       -->

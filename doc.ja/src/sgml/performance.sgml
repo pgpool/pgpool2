@@ -87,7 +87,7 @@
    この問題に対処するための方法がいくつかあります。
   </para>
 
-  <sect2 id="controling-num-init-children">
+  <sect2 id="controlling-num-init-children">
    <title>num_init_childrenの調整</title>
    <para>
     この問題に対処するための明らかな方法は、子プロセスの数を増やすことです。
@@ -103,7 +103,7 @@
    </para>
   </sect2>
 
-  <sect2 id="controling-listen-backlog-multiplier">
+  <sect2 id="controlling-listen-backlog-multiplier">
    <title>listen_backlog_multiplierの制御</title>
    <para>
     別な解決方法は、接続要求待ち行列を長くすることです。

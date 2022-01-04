@@ -56,7 +56,7 @@ Pgpool-II documentation
      <term><option>--all</option></term>
      <listitem>
       <para>
-       Display all backend nodes informatio.
+       Display all backend nodes information.
       </para>
      </listitem>
     </varlistentry>
