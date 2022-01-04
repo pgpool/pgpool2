@@ -78,7 +78,7 @@
    <firstterm>pool</firstterm> of
    <productname>PostgreSQL</productname> servers to achieve some
    features that are not available with single
-   <productname>PostgreSQL</productname> installation. The fearures
+   <productname>PostgreSQL</productname> installation. The features
    include:
 
    <variablelist>
@@ -96,8 +96,8 @@
        offers an HA feature for <productname>Pgpool-II</productname>
        itself, called <firstterm>Watchdog</firstterm> (see <xref
        linkend="tutorial-watchdog"> for more details). Moreover
-       <productname>Pgpool-II</productname> hires sophoiscated
-       <firstterm>quorum</firstterm> algorithm to aovid false positive
+       <productname>Pgpool-II</productname> hires sophisticated
+       <firstterm>quorum</firstterm> algorithm to avoid false positive
        errors and split brain problem to make the whole HA system
        highly reliable. See <xref
        linkend="config-watchdog-failover-behavior"> for more details.

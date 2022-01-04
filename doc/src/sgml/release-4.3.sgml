@@ -49,7 +49,7 @@
    <listitem>
     <para>
      Allow to choose the least replication delay standby node when
-     selecting the load balance node. For this pupose a new
+     selecting the load balance node. For this purpose a new
      parameter <xref linkend="guc-prefer-lower-delay-standby"> is
      added.
     </para>
@@ -144,7 +144,7 @@
 
    <listitem>
     <para>
-     Support include directive in <filename>pgppol.conf</filename>
+     Support include directive in <filename>pgpool.conf</filename>
      file. You can have separate sub-config file to be included in
      <filename>pgpool.conf</filename>.
     </para>

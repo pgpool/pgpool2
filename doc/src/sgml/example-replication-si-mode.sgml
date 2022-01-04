@@ -28,7 +28,7 @@
    replication.
   </para>
   <para>
-   In thie example we use 3 servers with CentOS 7.9 installed.
+   In this example we use 3 servers with CentOS 7.9 installed.
    Let these servers be <literal>server1</literal>,
    <literal>server2</literal>, <literal>server3</literal>.
    We install <productname>PostgreSQL</productname> on all servers and
@@ -198,7 +198,7 @@
    <para>
     To use the online recovery of <productname>Pgpool-II</productname>,
     the settings that allow <emphasis>passwordless</emphasis> SSH to all
-    servers are requried.
+    servers are required.
     Execute the following command on all servers to set up passwordless
     <literal>SSH</literal>.
     The generated key file name is <literal>id_rsa_pgpool</literal>.

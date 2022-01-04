@@ -18,7 +18,7 @@
   Since <productname>Pgpool-II</productname> is a middleware that works between
   <productname>PostgreSQL</> servers and a <productname>PostgreSQL</> database client, so when a client application
   connects to the <productname>Pgpool-II</productname>, <productname>Pgpool-II</productname>
-  inturn connects to the <productname>PostgreSQL</> servers using the same credentials to serve the incomming
+  inturn connects to the <productname>PostgreSQL</> servers using the same credentials to serve the incoming
   client connection. Thus, all the access privileges and restrictions defined for the user in <productname>PostgreSQL</>
   gets automatically applied to all <productname>Pgpool-II</productname> clients, with an exceptions of
   the authentications on <productname>PostgreSQL</> side that depends on the client's IP addresses or hostnames.
@@ -27,7 +27,7 @@
   <productname>Pgpool-II</productname> server and not that of the actual client.
   Therefore, for the client host based authentications <productname>Pgpool-II</productname> has the
   <literal>pool_hba</literal> mechanism similar to the <literal>pg_hba</literal> mechanism for
-  authenticating the incomming client connections.
+  authenticating the incoming client connections.
   -->
   <productname>Pgpool-II</productname>は<productname>PostgreSQL</>サーバと<productname>PostgreSQL</>データベースクライアントの間で動作するミドルウェアであるため、クライアントアプリケーションが<productname>Pgpool-II</productname>に接続したときには、今度は<productname>Pgpool-II</productname>がクライアントが提供したのと同じ認証情報を使って<productname>PostgreSQL</>サーバに接続します。
   したがって、<productname>PostgreSQL</>のユーザに対し定義された全てのアクセス権限と制約が、自動的に全ての<productname>Pgpool-II</productname>クライアントに適用されます。
@@ -770,7 +770,7 @@
 <!--
     You can avoid maintaining <filename>pool_passwd</filename> by
     using <xref linkend="guc-allow-clear-text-frontend-auth"> as well
-    but it does not enfornce to use SSL encryption because
+    but it does not enforce to use SSL encryption because
     <filename>pool_hba.conf</filename> cannot be used with the
     parameter.
 -->
@@ -1122,7 +1122,7 @@
 
    <para>
     <!--
-    This authentication method uses LDAP as the password cerification method.
+    This authentication method uses LDAP as the password certification method.
     LDAP is used only to validate the user name/password pairs. Therefore the user must
     already exist in the database before LDAP can be used for authentication.
     -->
@@ -1412,7 +1412,7 @@ ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<rep
       <listitem>
        <para>
         <!--
-        Set to 1 to make the password used for LDAP authentication use authetication
+        Set to 1 to make the password used for LDAP authentication use authentication
         between <productname>Pgpool-II</productname> and backend.
         -->
 1に設定すると、LDAP認証で使用されたパスワードを<productname>Pgpool-II</productname>とバックエンド間の認証に使用します。
@@ -1427,7 +1427,7 @@ ldap[s]://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<rep
     It is an error to mix configuration options for simple bind with options
     for search+bind.
     -->
-seartch/bindオプションと単純バインドに対するオプションの設定を混在させるのはエラーです。
+search/bindオプションと単純バインドに対するオプションの設定を混在させるのはエラーです。
    </para>
 
    <para>

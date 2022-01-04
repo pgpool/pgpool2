@@ -7,7 +7,7 @@
   In memory query cache can be used with all modes of
   <productname>Pgpool-II</productname>.
   The in memory query cache keeps the SELECT results and the results are reused.
-  When the underlying table gets updated, corresponding cache enrties are deleted (in case <xref linkend="guc-memqcache-auto-cache-invalidation"> is on. This parameter is on by default), thus restarting <productname>Pgpool-II</productname> is not neccessary.
+  When the underlying table gets updated, corresponding cache entries are deleted (in case <xref linkend="guc-memqcache-auto-cache-invalidation"> is on. This parameter is on by default), thus restarting <productname>Pgpool-II</productname> is not necessary.
  </para>
  <para>
   In memory cache saves the pair of SELECT statement
@@ -51,10 +51,10 @@
 
  <para>
   A <literal>SELECT</literal> result is basically registered when
-  SELECT normaly finishes.  If an explicit transaction is executing,
+  SELECT normally finishes.  If an explicit transaction is executing,
   <literal>SELECT</literal> result is not registered until the
   transaction is committed.  Also in extended query mode, the timing
-  of cache registeration varies depending on <link
+  of cache registration varies depending on <link
   linkend="guc-backend-clustering-mode">clustering mode</link>.  In
   <link linkend="runtime-config-streaming-replication-mode">streaming
   replication mode</link> and <link

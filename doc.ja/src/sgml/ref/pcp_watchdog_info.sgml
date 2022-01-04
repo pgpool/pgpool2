@@ -68,7 +68,7 @@ Pgpool-II documentation
       </para>
       <para>
        <!--
-       If ommitted then gets information of all watchdog nodes.
+       If omitted then gets information of all watchdog nodes.
        -->
        省略された場合は、全ての watchdog ノードの情報を取得します。
       </para>

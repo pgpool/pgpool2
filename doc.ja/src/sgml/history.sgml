@@ -53,12 +53,12 @@
   made between <productname>Pgpool</productname>
   and <productname>Pgpool-II</productname> was that the project was
   changed from a personal project to a group project owned by the
-  Pgpool Developement Group.
+  Pgpool Development Group.
   -->
   2006年、<productname>Pgpool</productname>は<productname>Pgpool-II</productname>となりました。
   最初の1.0リリースでは、<productname>Pgpool</productname>の多くの制限事項が撤廃されました。
   たとえば、<productname>PostgreSQL</productname>サーバ数は2まで、といった制限です。
   また、パラレルクエリやPCPコマンド（PCPは、"Pgpool Control Protocol"の略です）といった多くの機能が追加されました。
-  <productname>Pgpool</productname>から<productname>Pgpool-II</productname>への一番重要な変更は、おそらく個人プロジェクトから、Pgpool Developement Groupが所有するグループプロジェクトになったことでした。
+  <productname>Pgpool</productname>から<productname>Pgpool-II</productname>への一番重要な変更は、おそらく個人プロジェクトから、Pgpool Development Groupが所有するグループプロジェクトになったことでした。
  </para>
 </sect1>

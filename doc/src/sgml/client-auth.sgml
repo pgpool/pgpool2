@@ -580,7 +580,7 @@
    <para>
     You can avoid maintaining <filename>pool_passwd</filename> by
     using <xref linkend="guc-allow-clear-text-frontend-auth"> as well
-    but it does not enfornce to use SSL encryption because
+    but it does not enforce to use SSL encryption because
     <filename>pool_hba.conf</filename> cannot be used with the
     parameter.
    </para>

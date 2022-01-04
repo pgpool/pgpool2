@@ -47,7 +47,7 @@
    <!--
    Before going further, you should properly set
    up <filename>pgpool.conf</filename> with streaming replication
-   mode. Sample configulations are provided with
+   mode. Sample configurations are provided with
    <productname>Pgpool-II</productname>, there configuration file
    are located at /usr/local/etc with default installation from
    source code. you can copy
@@ -450,7 +450,7 @@
    installation. The argument -p is to specify the port number
    assigned to the command, which is 11001 set
    by <command>pgpool_setup</command>. The argument -n is to
-   specify the node id to be receovered. After executing the command,
+   specify the node id to be recovered. After executing the command,
    node 0 returned to "up" status.
    -->
    <xref linkend="pcp-recovery-node">は、インストールされた<productname>Pgpool-II</productname>に含まれる管理コマンドの一つです。
@@ -585,7 +585,7 @@
   <para>
    <figure>
     <!--
-    <title>Process architecure of <productname>Pgpool-II</productname></title>
+    <title>Process architecture of <productname>Pgpool-II</productname></title>
     -->
     <title><productname>Pgpool-II</productname>のプロセス構造</title>
     <mediaobject>

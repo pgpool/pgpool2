@@ -72,7 +72,7 @@ Pgpool-II documentation
      <listitem>
       <para>
        <!--
-       Display all backend nodes informatio.
+       Display all backend nodes information.
        -->
        すべてのバックエンドノードの情報を表示します。
       </para>

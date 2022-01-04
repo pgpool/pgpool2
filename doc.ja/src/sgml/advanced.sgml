@@ -432,7 +432,7 @@
     以下のテーブルはメッセージフィールドの詳細な説明です。
    </para>
 
-   <table id="wd-ipc-resutl-format-table">
+   <table id="wd-ipc-result-format-table">
     <!--
     <title>Watchdog IPC result packet format</title>
     -->

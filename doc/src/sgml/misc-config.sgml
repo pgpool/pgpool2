@@ -311,7 +311,7 @@
      This feature is particularly useful for
      testing <xref linkend="guc-failover-require-consensus">. Suppose
      we have 3 watchdog node. Each watchdog checks healthiness of
-     backend 0. By setting "0	down" in the file onky under watchdog 0,
+     backend 0. By setting "0	down" in the file only under watchdog 0,
      other watchdogs disagree with the unhealthiness of backend 0, so
      failover will not occur. This kind of partial network failure can
      be simulated using this feature.

@@ -147,7 +147,7 @@ $ curl -LO https://raw.githubusercontent.com/pgpool/pgpool2_on_k8s/master/pgpool
     Because failover is managed by <productname>Kubernetes</productname>,
     specify <literal>DISALLOW_TO_FAILOVER</literal> flag to <xref linkend="GUC-BACKEND-FLAG">
     for both of the two nodes and <literal>ALWAYS_PRIMARY</literal> flag to <xref linkend="GUC-BACKEND-FLAG">0.
-    The setiing of <xref linkend="GUC-BACKEND-DATA-DIRECTORY"> is not required.
+    The setting of <xref linkend="GUC-BACKEND-DATA-DIRECTORY"> is not required.
    </para>
    <para>
     For example, the following environment variables defined in manifest,
@@ -278,12 +278,12 @@ backend_port1 = '5432'
     On Kubernetes, Kubernetes monitors the PostgreSQL pods,
     if a pod goes down, Kubernetes will restart a new one.
     You need to disable Pgpool-II's automated failover,
-    becuase Pgpool-II's automated failover is not required on Kubernetes.
+    because Pgpool-II's automated failover is not required on Kubernetes.
    </para>
    <para>
     Specify PostgreSQL node 0 as primary (<literal>ALWAYS_PRIMARY</literal>),
     because Service name doesn't change even if the primary or replica pod
-    is sacled, restarted or failover occurred.
+    is scaled, restarted or failover occurred.
    </para>
    <programlisting>
 backend_flag0 ='ALWAYS_PRIMARY|DISALLOW_TO_FAILOVER'
@@ -318,7 +318,7 @@ password: &lt;some string&gt;_PASSWORD
    <para>
     Define the environment variables using Secret is the recommended way to keep user credentials secure.
     In most PostgreSQL Operators, several Secrets which define the
-    <productname>PostgreSQL</productname> user's redentials will be automaticlly
+    <productname>PostgreSQL</productname> user's credentials will be automatically
     created when creating a PostgreSQL cluster.
     Use <command>kubectl get secret</command> command to check the existing Secrets.
    </para>
@@ -380,7 +380,7 @@ sr_check_user='postgres'
     specified in <varname>sr_check_user</varname> and configure the
     environment variables to reference the created Secret.
     In most PostgreSQL Operators, several secrets which define the
-    <productname>PostgreSQL</productname> user's redentials will be automaticlly
+    <productname>PostgreSQL</productname> user's credentials will be automatically
     created when creating a PostgreSQL cluster.
     Use <command>kubectl get secret</command> command to check the existing secrets.
    </para>
