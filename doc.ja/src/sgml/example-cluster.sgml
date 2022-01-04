@@ -661,7 +661,7 @@ PCP_USER=pgpool
    <title>オンラインリカバリの設定</title>
    <para>
     続いて、オンラインリカバリを行うための<productname>PostgreSQL</productname>のユーザ名およびオンラインリカバリ時に呼び出されるコマンド<command>recovery_1st_stage</command>を設定します。
-    オンラインリカバリで実行される<function>pgpool_recovery</function>関数は<productname>PostgreSQL</productname>のスーパーユーザ権限が必要なため、<varname>recovery_user</varname>に<emphasis>スーパーユーザ</emphasis>を指定しなければなりません。ここでは、postrgesユーザを指定します。
+    オンラインリカバリで実行される<function>pgpool_recovery</function>関数は<productname>PostgreSQL</productname>のスーパーユーザ権限が必要なため、<varname>recovery_user</varname>に<emphasis>スーパーユーザ</emphasis>を指定しなければなりません。ここでは、postgresユーザを指定します。
    </para>
    <programlisting>
 recovery_user = 'postgres'
@@ -843,7 +843,7 @@ pgpool_port2 = 9999
    <para>
     <literal>Watchdog</literal>死活監視の設定では、死活監視の方法を指定する<xref linkend="guc-wd-lifecheck-method">、
     監視間隔(秒)を指定する<xref linkend="guc-wd-interval">を設定します。
-    この設定例では、死活監視の方法は<literal>hearbeat</literal>を用います。
+    この設定例では、死活監視の方法は<literal>heartbeat</literal>を用います。
    </para>
 
    <programlisting>

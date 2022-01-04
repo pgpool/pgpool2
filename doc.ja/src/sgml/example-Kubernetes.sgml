@@ -291,7 +291,7 @@ backend_port1 = '5432'
     Pgpool-IIには定期的にPostgreSQLを状態をチェックし、
     障害を検知するとフェイルオーバさせる機能はありますが、Kubernetesでは、
     PostgreSQLの状態はKubernetesによって管理されるので、
-    Pgpoo-IIの自動フェイルオーバ機能を無効にします。
+    Pgpool-IIの自動フェイルオーバ機能を無効にします。
    </para>
    <para>
     また、<productname>PostgreSQL</productname> Podが再作成されたり、
@@ -412,7 +412,7 @@ env:
    </programlisting>
    <para>
     しかし、Kubernetes環境では、Pgpool-IIはすべてのレプリカに接続するのではなく、
-    レプリカSerivceを経由して、いずれかのレプリカに接続します。
+    レプリカServiceを経由して、いずれかのレプリカに接続します。
     レプリカが複数存在しても、Pgpool-IIが1台のレプリカとして管理しています。
     そのため、レプリカServiceにぶら下がっている複数のレプリカのうち、
     どのレプリカが遅延しているのかはPgpool-IIが正確に判断できません。
