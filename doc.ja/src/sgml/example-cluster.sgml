@@ -217,22 +217,66 @@
  <sect2 id="example-cluster-installation">
   <title>インストール</title>
   <para>
-   すべてのサーバに<productname>PostgreSQL</productname> 13.0と<productname>Pgpool-II</productname> 4.2をRPMからインストールします。
+   この設定例ではYUMを使用して<productname>PostgreSQL</productname>および<productname>Pgpool-II</productname>をインストールします。
   </para>
   <para>
    <productname>PostgreSQL</productname>のインストールは<productname>PostgreSQL</productname>コミュニティのリポジトリを使います。
   </para>
   <programlisting>
-# yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-# yum install -y postgresql13-server
+[全サーバ]# yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+[全サーバ]# yum install -y postgresql13-server
   </programlisting>
 
   <para>
    <productname>Pgpool-II</productname>のインストールは<productname>Pgpool-II</productname>開発コミュニティが提供するYumリポジトリを用いてインストールします。
   </para>
+  <para>
+   <productname>Pgpool-II</productname>関連のパッケージは<productname>PostgreSQL</productname>コミュニティのリポジトリにもあるため、
+   <productname>PostgreSQL</productname>コミュニティのリポジトリから<productname>Pgpool-II</productname>をインストールしないように<filename>/etc/yum.repos.d/pgdg-redhat-all.repo</filename>にexclude設定を追加します。
+  </para>
   <programlisting>
-# yum install -y https://www.pgpool.net/yum/rpms/4.2/redhat/rhel-7-x86_64/pgpool-II-release-4.2-1.noarch.rpm
-# yum install pgpool-II-pg13-*
+[全サーバ]# vi /etc/yum.repos.d/pgdg-redhat-all.repo
+  </programlisting>
+  <para>
+   以下は、<filename>/etc/yum.repos.d/pgdg-redhat-all.repo</filename>の設定例です。
+  </para>
+  <programlisting>
+[pgdg-common]
+...
+exclude=pgpool*
+
+
+[pgdg14]
+...
+exclude=pgpool*
+
+[pgdg13]
+...
+exclude=pgpool*
+
+[pgdg12]
+...
+exclude=pgpool*
+
+[pgdg11]
+...
+exclude=pgpool*
+
+[pgdg10]
+...
+exclude=pgpool*
+
+[pgdg96]
+...
+exclude=pgpool*
+  </programlisting>
+
+  <para>
+   <productname>Pgpool-II</productname>をインストールします。
+  </para>
+  <programlisting>
+[全サーバ]# yum install -y https://www.pgpool.net/yum/rpms/4.2/redhat/rhel-7-x86_64/pgpool-II-release-4.2-1.noarch.rpm
+[全サーバ]# yum install pgpool-II-pg13-*
   </programlisting>
  </sect2>
 
