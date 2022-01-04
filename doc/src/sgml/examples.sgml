@@ -915,22 +915,62 @@
    <sect2 id="example-cluster-installation">
     <title>Installation</title>
     <para>
-     In this example, we install <productname>Pgpool-II</productname> 4.0.2 and <productname>PostgreSQL</productname> 11.1 by using RPM packages.
+     In this example, we install <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname> RPM packages with YUM.
     </para>
 
     <para>
-     Install <productname>PostgreSQL</productname> by using <productname>PostgreSQL</productname> YUM repository.
+     Install <productname>PostgreSQL</productname> from <productname>PostgreSQL</productname> YUM repository.
     </para>
     <programlisting>
-# yum install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-# yum install postgresql11-server
+[all servers]# yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+[all servers]# yum install -y postgresql11-server
     </programlisting>
     <para>
-     Install <productname>Pgpool-II</productname> by using Pgpool-II YUM repository.
+     Since <productname>Pgpool-II</productname> related packages are also included in <productname>PostgreSQL</productname> YUM repository,
+     add the "exclude" settings to <filename>/etc/yum.repos.d/pgdg-redhat-all.repo</filename>
+     so that <productname>Pgpool-II</productname> is not installed from <productname>PostgreSQL</productname> YUM repository. 
     </para>
     <programlisting>
-# yum install http://www.pgpool.net/yum/rpms/4.0/redhat/rhel-7-x86_64/pgpool-II-release-4.0-2.noarch.rpm
-# yum install pgpool-II-pg11-*
+[all servers]# vi /etc/yum.repos.d/pgdg-redhat-all.repo
+    </programlisting>
+    <para>
+     The following is a setting example of <filename>/etc/yum.repos.d/pgdg-redhat-all.repo</filename>. 
+    </para>
+    <programlisting>
+[pgdg-common]
+...
+exclude=pgpool*
+
+[pgdg14]
+...
+exclude=pgpool*
+
+[pgdg13]
+...
+exclude=pgpool*
+
+[pgdg12]
+...
+exclude=pgpool*
+
+[pgdg11]
+...
+exclude=pgpool*
+
+[pgdg10]
+...
+exclude=pgpool*
+
+[pgdg96]
+...
+exclude=pgpool*
+    </programlisting>
+    <para>
+     Install <productname>Pgpool-II</productname> from Pgpool-II YUM repository.
+    </para>
+    <programlisting>
+[all servers]# yum install -y http://www.pgpool.net/yum/rpms/4.0/redhat/rhel-7-x86_64/pgpool-II-release-4.0-2.noarch.rpm
+[all servers]# yum install -y pgpool-II-pg11-*
     </programlisting>
    </sect2>
 
