@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1158,7 +1158,7 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 	int i;
 	static int length_array[MAX_CONNECTION_SLOTS];
 
-	/* read message from master node */
+	/* read message from main node */
 	pool_read(CONNECTION(cp, MASTER_NODE_ID), &length0, sizeof(length0));
 
 	length0 = ntohl(length0);
@@ -1180,7 +1180,7 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 
 			if (length != length0)
 			{
-				ereport(LOG,
+				ereport(DEBUG5,
 					(errmsg("reading message length"),
 						errdetail("message length (%d) in slot %d does not match with slot 0(%d)", length, i, length0)));
 			}
@@ -1199,7 +1199,43 @@ int *pool_read_message_length2(POOL_CONNECTION_POOL *cp)
 	return &length_array[0];
 }
 
-signed char pool_read_kind(POOL_CONNECTION_POOL *cp)
+/*
+ * By given message length array, emit log message to complain the difference.
+ * If no difference, no log is emitted.
+ * If "name" is not NULL, it is added to the log message.
+ */
+void
+pool_emit_log_for_message_length_diff(int *length_array, char *name)
+{
+	int			length0,	/* message length of main node id */
+				length;
+	int			i;
+
+	length0 = length_array[MASTER_NODE_ID];
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			length = length_array[i];
+
+			if (length != length0)
+			{
+				if (name != NULL)
+					ereport(LOG,
+							(errmsg("ParameterStatus \"%s\": node %d message length %d is different from main node message length %d",
+									name, i, length_array[i], length0)));
+				else
+					ereport(LOG,
+							(errmsg("node %d message length %d is different from main node message length %d",
+									i, length_array[i], length0)));
+			}
+		}
+	}
+}
+
+signed char
+pool_read_kind(POOL_CONNECTION_POOL * cp)
 {
 	char kind0, kind;
 	int i;
