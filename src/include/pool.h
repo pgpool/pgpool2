@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2022 PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -653,6 +653,7 @@ extern int	pool_read_message_length(POOL_CONNECTION_POOL * cp);
 extern int *pool_read_message_length2(POOL_CONNECTION_POOL * cp);
 extern signed char pool_read_kind(POOL_CONNECTION_POOL * cp);
 extern int	pool_read_int(POOL_CONNECTION_POOL * cp);
+extern void pool_emit_log_for_message_length_diff(int *length_array, char *name);
 
 extern POOL_STATUS SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
 extern POOL_STATUS SimpleForwardToBackend(char kind, POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, int len, char *contents);

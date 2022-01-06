@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -969,8 +969,7 @@ ParameterStatus(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 	char	   *name;
 	char	   *value;
 	POOL_STATUS status;
-	char		parambuf[1024]; /* parameter + value string buffer. XXX is
-								 * this enough? */
+	char		*parambuf = NULL; /* pointer to parameter + value string buffer */
 	int			i;
 
 	pool_write(frontend, "S", 1);
@@ -1008,8 +1007,19 @@ ParameterStatus(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 			if (IS_MASTER_NODE_ID(i))
 			{
 				len1 = len;
+				parambuf = palloc(len);
 				memcpy(parambuf, p, len);
 				pool_add_param(&CONNECTION(backend, i)->params, name, value);
+			}
+			else
+			{
+				/*
+				 * Except "in_hot_standby" parameter, complain the message length difference.
+				 */
+				if (strcmp(name, "in_hot_standby"))
+				{
+					pool_emit_log_for_message_length_diff(len_array, name);
+				}
 			}
 
 #ifdef DEBUG
@@ -1018,7 +1028,14 @@ ParameterStatus(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 		}
 	}
 
-	status = pool_write(frontend, parambuf, len1);
+	if (parambuf)
+	{
+		status = pool_write(frontend, parambuf, len1);
+		pfree(parambuf);
+	}
+	else
+		ereport(ERROR,
+				(errmsg("ParameterStatus: failed to obatain parameter name, value from the main node.")));
 	return status;
 }
 
