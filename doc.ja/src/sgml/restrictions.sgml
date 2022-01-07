@@ -426,6 +426,62 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>ParameterStatus</term>
+    <listitem>
+     <para>
+<!--
+       When a client connects
+       to <productname>PostgreSQL</productname>, <productname>PostgreSQL</productname>
+       sends back some parameter/value pairs to clients. This protocol
+       is
+       called <ulink url="https://www.postgresql.org/docs/14/protocol-flow.html#id-1.10.5.7.3"><firstterm>ParameterStatus</firstterm></ulink>.
+       The parameter/value pairs can be extracted by using some APIs
+       such as <function>PQParameterStatus</function> of libpq.  The
+       actual parameter names can be
+       found <ulink url="https://www.postgresql.org/docs/14/protocol-flow.html#PROTOCOL-ASYNC">here</ulink>.
+       <productname>Pgpool-II</productname> collects ParameterStatus
+       values from multiple <productname>PostgreSQL</productname>
+       servers and it is possible that the values vary among the
+       servers. A typical example is <literal>in_hot_standby</literal>,
+       which is introduced in <productname>PostgreSQL</productname>
+       14. The value for the variable is <literal>off</literal> on
+       primary server and <literal>on</literal> on standby
+       servers. Problem is, <productname>Pgpool-II</productname> has
+       to return client only one of them. In this case it chooses the
+       value reported by the primary
+       server. So <function>PQParameterStatus</function> will
+       return <literal>off</literal>. On the other hand, when the
+       client issues <literal>show in_hot_standby</literal>, the
+       returned value can either <literal>on</literal>
+       or <literal>off</literal> depending on which is the load
+       balance node for the session.
+-->
+       クライアントが<productname>PostgreSQL</productname>に接続すると、<productname>PostgreSQL</productname>は複数のパラメータ/値のペアをクライアントに返します。
+       このプロトコルは<ulink url="https://www.postgresql.org/docs/14/protocol-flow.html#id-1.10.5.7.3"><firstterm>ParameterStatus</firstterm></ulink>と呼ばれます。
+       このパラメータ/値ペアはある種のAPI、たとえばlibpqの<function>PQParameterStatus</function>で取得できます。
+       該当する実際のパラメータ名は<ulink url="https://www.postgresql.org/docs/14/protocol-flow.html#PROTOCOL-ASYNC">ここ</ulink>にあります。
+       <productname>Pgpool-II</productname>はParameterStatusの値を複数の<productname>PostgreSQL</productname>サーバから収集するため、その値がサーバによって異なる可能性があります。典型的な例は、<productname>PostgreSQL</productname> 14で導入された<literal>in_hot_standby</literal>です。
+       この値はプライマリサーバでは<literal>off</literal>で、スタンバイサーバでは<literal>on</literal>になります。
+       問題は、<productname>Pgpool-II</productname>はその値のひとつだけをクライアントに返さなければならないことです。
+       この場合は、プライマリサーバの値が選択されます。
+       ですから、<function>PQParameterStatus</function>は<literal>off</literal>を返すでしょう。
+       一方で、クライアントが<literal>show in_hot_standby</literal>を発行すると、その時のセッションのロードバランスノードによって、<literal>on</literal>あるいは<literal>off</literal>が返ります。
+     </para>
+     <para>
+<!--
+       Note that if the values differ among
+       servers, <productname>Pgpool-II</productname> will emit a log
+       message except <literal>in_hot_standby</literal>. This is to
+       prevent the log file from being flooded
+       since <literal>in_hot_standby</literal> always differs.
+-->
+       その値が<literal>in_hot_standby</literal>以外で異なる時には、<productname>Pgpool-II</productname>はログメッセージを出力することに注意してください。
+       これは、<literal>in_hot_standby</literal>の値は常に異なるからです。
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </para>
 </sect1>
