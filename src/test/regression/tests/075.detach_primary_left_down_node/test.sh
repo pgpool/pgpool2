@@ -33,7 +33,7 @@ date
 cnt=60
 while [ $cnt -gt 0 ]
 do
-    $PGBIN/psql -c "show pool_nodes" test|grep down
+    $PGBIN/psql -c "show pool_nodes" test 2>&1|grep -E 'down|error'
     if [ $? != 0 ];then
 	echo "test succeeded"
 	./shutdownall
