@@ -22,8 +22,8 @@ fi
 ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
     $PGHOME/bin/pg_ctl -l /dev/null -w -D ${DEST_NODE_PGDATA} status
 
-    if [ $? -eq 0 ]; then
-    	exit 0
+    if [ \$? -eq 0 ]; then
+        exit 0
     fi
 
     $PGHOME/bin/pg_ctl -l /dev/null -w -D ${DEST_NODE_PGDATA} start
