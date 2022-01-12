@@ -348,7 +348,7 @@ libsql_parser_a_SOURCES = copyfuncs.c gram.y gram_minimal.y keywords.c \
 	$(am__append_1)
 EXTRA_DIST = scan.c scan.l
 ARFLAGS = cr
-AM_YFLAGS = -d
+AM_YFLAGS = -d -Wno-yacc
 all: all-am
 
 .SUFFIXES:
