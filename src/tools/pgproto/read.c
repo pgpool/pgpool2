@@ -41,7 +41,7 @@ static char *read_string(PGconn *conn);
  * data is available from the connection.
  */
 void
-read_until_ready_for_query(PGconn *conn, int timeout)
+read_until_ready_for_query(PGconn *conn, int timeout, int wait_for_ready_for_query)
 {
 	int			kind;
 	int			len;
@@ -252,6 +252,12 @@ read_until_ready_for_query(PGconn *conn, int timeout)
 				read_and_discard(conn);
 				break;
 		}
+
+		/*
+		 * wait_for_ready_for_query is false, immediately return.
+		 */
+		if (wait_for_ready_for_query == 0)
+			cont = 0;
 
 		/* If nap-between-line is requested, nap for some time */
 		if (read_nap > 0)

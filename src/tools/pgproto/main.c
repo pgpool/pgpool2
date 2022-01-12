@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2018	Tatsuo Ishii
- * Copyright (c) 2018-2021	PgPool Global Development Group
+ * Copyright (c) 2018-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -372,11 +372,15 @@ process_message_type(int kind, char *buf, PGconn *conn)
 	switch (kind)
 	{
 		case 'Y':
-			read_until_ready_for_query(conn, 0);
+			read_until_ready_for_query(conn, 0, 1);
 			break;
 
 		case 'y':
-			read_until_ready_for_query(conn, 1);
+			read_until_ready_for_query(conn, 1, 1);
+			break;
+
+		case 'z':
+			read_until_ready_for_query(conn, 1, 0);
 			break;
 
 		case 'X':
