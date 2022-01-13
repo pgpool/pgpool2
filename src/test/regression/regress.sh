@@ -107,6 +107,7 @@ function export_env_vars
 	export PGBENCH_PATH=$PGBENCH_PATH
 	export PGSOCKET_DIR=$PGSOCKET_DIR
 	export PGVERSION=`$PGBIN/initdb -V|awk '{print $3}'|sed 's/\..*//'`
+	export LANG=C
 
 	export ENABLE_TEST=true
 }
@@ -165,11 +166,11 @@ if [ "$MODE" = "install" ]; then
 
 elif [ "$MODE" = "noinstall" ]; then
 	echo not installing pgpool for the tests ...
-	if [[ -n "$PGPOOL_INSTALL_PATH" ]]; then
-		PGPOOL_PATH=$PGPOOL_INSTALL_PATH
+	if [[ -n "$PGPOOL_INSTALL_DIR" ]]; then
+		PGPOOL_PATH=$PGPOOL_INSTALL_DIR
 	fi
-        export PGPOOL_SETUP=$dir/../pgpool_setup
-        export WATCHDOG_SETUP=$dir/../watchdog_setup
+        export PGPOOL_SETUP=$PGPOOL_PATH/bin/pgpool_setup
+        export WATCHDOG_SETUP=$PGPOOL_PATH/bin/watchdog_setup
 else
 	echo $MODE : Invalid mode
 	exit -1
