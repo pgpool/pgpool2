@@ -4786,10 +4786,10 @@ service_unreachable_nodes(void)
 		}
 
 		if (wdNode->state == WD_DEAD && wdNode->membership_status == WD_NODE_MEMBERSHIP_ACTIVE
-			&& pool_config->wd_initial_node_showup_time)
+			&& pool_config->wd_no_show_node_removal_timeout)
 		{
 			int no_show_seconds = WD_TIME_DIFF_SEC(currTime, g_cluster.localNode->startup_time);
-			if (no_show_seconds >= pool_config->wd_initial_node_showup_time)
+			if (no_show_seconds >= pool_config->wd_no_show_node_removal_timeout)
 			{
 				ereport(LOG,
 						(errmsg("remote node \"%s\" didn't showed-up in %d seconds", wdNode->nodeName,no_show_seconds),

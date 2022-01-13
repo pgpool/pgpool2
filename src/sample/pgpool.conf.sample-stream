@@ -765,7 +765,7 @@ hostname0 = ''
                                     # setting timeout to 0 will never revoke the membership
                                     # of LOST nodes
 
-#wd_initial_node_showup_time = 0s
+#wd_no_show_node_removal_timeout = 0s
                                     # Time to wait for Watchdog node to connect to the cluster.
                                     # After that time the cluster membership of NO-SHOW node gets
                                     # revoked and it does not count towards the quorum and

@@ -546,7 +546,7 @@ typedef struct
 											/* timeout in seconds to revoke membership of
 											 * LOST watchdog nodes
 											 */
-	int 		wd_initial_node_showup_time;
+	int 		wd_no_show_node_removal_timeout;
 											/* time in seconds to revoke membership of
 											 * NO-SHOW watchdog node
 											 */
