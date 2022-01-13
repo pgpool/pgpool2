@@ -2013,11 +2013,11 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"wd_initial_node_showup_time", CFGCXT_RELOAD, WATCHDOG_CONFIG,
+		{"wd_no_show_node_removal_timeout", CFGCXT_RELOAD, WATCHDOG_CONFIG,
 			"Timeout in seconds to revoke the cluster membership of NO-SHOW watchdog nodes.",
 			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S
 		},
-		&g_pool_config.wd_initial_node_showup_time,
+		&g_pool_config.wd_no_show_node_removal_timeout,
 		0,
 		0, INT_MAX,
 		NULL, NULL, NULL
