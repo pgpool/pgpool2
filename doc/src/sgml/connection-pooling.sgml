@@ -832,9 +832,7 @@
       <literal>%</literal> characters begin <quote>escape sequences</> that are replaced
       with information outlined below.
       All unrecognized escapes are ignored. Other characters are copied straight to
-      the log line. Default is '%t: pid %p: ', which prints timestamp and process id,
-      which keeps backward compatibility with pre<productname>Pgpool-II</productname>
-      <emphasis>V3.4</emphasis>.
+      the log line. Default is '%m: %a pid %p: ', which prints timestamp, application name and process id.
      </para>
 
      <table id="log-line-prefix-table">
