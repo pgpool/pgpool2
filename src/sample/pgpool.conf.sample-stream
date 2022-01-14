@@ -193,7 +193,7 @@ backend_clustering_mode = 'streaming_replication'
 
 # - What to log -
 
-#log_line_prefix = '%t: pid %p: '   # printf-style string to output at beginning of each log line.
+#log_line_prefix = '%m: %a pid %p: '   # printf-style string to output at beginning of each log line.
 
 #log_connections = off
                                    # Log connections

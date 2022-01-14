@@ -1289,16 +1289,13 @@ local0.*    /var/log/pgpool.log
       <literal>%</literal> characters begin <quote>escape sequences</> that are replaced
       with information outlined below.
       All unrecognized escapes are ignored. Other characters are copied straight to
-      the log line. Default is '%t: pid %p: ', which prints timestamp and process id,
-      which keeps backward compatibly with pre<productname>Pgpool-II</productname>
-      <emphasis>V3.4</emphasis>.
+      the log line. Default is '%m: %a pid %p: ', which prints timestamp, application name and process id.
       -->
       これは、各ログ行の先頭に出力する<function>printf</>の書式文字列です。
       <literal>%</>から始まる<quote>エスケープシーケンス</>は、後述の通りのステータス情報で置き換えられます。
       認識できないエスケープは無視されます。
       他の文字はそのままログ行に出力されます。
-      デフォルトは '%t: pid %p: 'で、タイムスタンプとプロセスIDを印字します。
-      これは、<productname>Pgpool-II</productname> <emphasis>V3.4</emphasis>より前のバージョンとの互換性を保つためです。
+      デフォルトは '%m: %a pid %p: 'で、タイムスタンプ、アプリケーション名、プロセスIDを印字します。
      </para>
 
      <table id="log-line-prefix-table">

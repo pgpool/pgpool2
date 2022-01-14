@@ -911,7 +911,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.log_line_prefix,
-		"%t: pid %p: ",
+		"%m: %a pid %p: ",
 		NULL, NULL, NULL, NULL
 	},
 
