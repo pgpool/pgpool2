@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2018	Tatsuo Ishii
- * Copyright (c) 2018-2021	PgPool Global Development Group
+ * Copyright (c) 2018-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -163,8 +163,12 @@ read_until_ready_for_query(PGconn *conn, int timeout, int wait_for_ready_for_que
 				break;
 
 			case 'S':			/* Parameter status */
-				fprintf(stderr, "<= BE ParameterStatus\n");
-				read_and_discard(conn);
+				fprintf(stderr, "<= BE ParameterStatus(");
+				len = read_int32(conn);
+				p = read_string(conn);
+				fprintf(stderr, "name: \"%s\"", p);
+				p = read_string(conn);
+				fprintf(stderr, " value: \"%s\")\n", p);
 				break;
 
 			case 'T':			/* Row Description */
