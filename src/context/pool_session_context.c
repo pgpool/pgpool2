@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1192,6 +1192,7 @@ pool_pending_message_create(char kind, int len, char *contents)
 	msg->is_rows_returned = false;
 	msg->not_forward_to_frontend = false;
 	memset(msg->node_ids, false, sizeof(msg->node_ids));
+	msg->flush_pending = false;
 
 	MemoryContextSwitchTo(old_context);
 
@@ -1708,6 +1709,24 @@ pool_pending_message_get_message_num_by_backend_id(int backend_id)
 		next = lnext(session_context->pending_messages, cell);
 	}
 	return cnt;
+}
+
+/*
+ * Set flush request flag
+ */
+void
+pool_pending_message_set_flush_request(void)
+{
+	ListCell   *msg_item;
+
+	foreach(msg_item, session_context->pending_messages)
+	{
+		POOL_PENDING_MESSAGE *msg = (POOL_PENDING_MESSAGE *) lfirst(msg_item);
+		msg->flush_pending = true;
+		ereport(LOG,
+				(errmsg("pool_pending_message_set_flush_request: msg: %s",
+						pool_pending_message_type_to_string(msg->type))));
+	}
 }
 
 /*

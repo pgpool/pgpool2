@@ -705,6 +705,10 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 	char	   *p1 = NULL;
 	int			sendlen;
 	int			i;
+	POOL_SESSION_CONTEXT *session_context;
+
+	/* Get session context */
+	session_context = pool_get_session_context(false);
 
 	pool_read(MAIN(backend), &len, sizeof(len));
 
@@ -786,10 +790,18 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 	{
 		pool_write_and_flush(frontend, p1, len1);
 	}
+	else if (session_context->flush_pending)
+	{
+		pool_write_and_flush(frontend, p1, len1);
+		ereport(DEBUG5,
+				(errmsg("SimpleForwardToFrontend: flush pending request. kind: %c", kind)));
+	}
 	else
 	{
 		pool_write(frontend, p1, len1);
 	}
+
+	session_context->flush_pending = false;
 
 	ereport(DEBUG5,
 			(errmsg("SimpleForwardToFrontend: packet:%c length:%d",
@@ -3281,6 +3293,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 				pool_pending_message_set_previous_message(msg);
 				pool_pending_message_query_context_dest_set(msg, msg->query_context);
 				session_context->query_context = msg->query_context;
+				session_context->flush_pending = msg->flush_pending;
 
 				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: where_to_send[0]:%d [1]:%d",
@@ -3361,7 +3374,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 						 errdetail("backend:%d kind:'%c'", i, kind)));
 
 				/*
-				 * Read and discard parameter status and notice messages
+				 * Read and forward notice messages to frontend
 				 */
 				if (kind == 'N')
 				{
@@ -3370,17 +3383,23 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 					pool_process_notice_message_from_one_backend(frontend, backend, i, kind);
 				}
 
+				/*
+				 * Read and forward ParameterStatus messages to frontend
+				 */
 				else if (kind == 'S')
 				{
+					int		len2;
+
 					pool_read(CONNECTION(backend, i), &len, sizeof(len));
+					len2 = len;
 					len = htonl(len) - 4;
 					p = pool_read2(CONNECTION(backend, i), len);
 					if (p)
 					{
 						value = p + strlen(p) + 1;
-						ereport(DEBUG5,
-								(errmsg("reading backend data packet kind"),
-								 errdetail("parameter name: %s value: \"%s\"", p, value)));
+						ereport(LOG,
+								(errmsg("ParameterStatus message from backend: %d", i),
+								 errdetail("parameter name: \"%s\" value: \"%s\"", p, value)));
 
 						if (IS_MAIN_NODE_ID(i))
 						{
@@ -3392,7 +3411,10 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 								set_application_name_with_string(pool_find_name(&CONNECTION(backend, i)->params, p, &pos));
 							}
 						}
-
+						/* forward to frontend */
+						pool_write(frontend, &kind, 1);
+						pool_write(frontend, &len2, sizeof(len2));
+						pool_write_and_flush(frontend, p, len);
 					}
 					else
 					{
@@ -3401,7 +3423,6 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 								 errdetail("read from backend failed")));
 					}
 				}
-
 			} while (kind == 'S' || kind == 'N');
 
 #ifdef DEALLOCATE_ERROR_TEST

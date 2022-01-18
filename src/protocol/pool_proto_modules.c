@@ -2807,6 +2807,7 @@ ProcessFrontendResponse(POOL_CONNECTION * frontend,
 				if (fkind == 'H')
 				{
 					pool_set_doing_extended_query_message();
+					pool_pending_message_set_flush_request();
 				}
 				status = SimpleForwardToBackend(fkind, frontend, backend, len, contents);
 
@@ -3072,6 +3073,9 @@ ProcessBackendResponse(POOL_CONNECTION * frontend,
 				status = SimpleForwardToFrontend(kind, frontend, backend);
 				break;
 		}
+
+		pool_get_session_context(false)->flush_pending = false;
+
 	}
 	else
 	{
