@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1291,9 +1291,10 @@ config_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 
 /*
  * for SHOW pool_nodes
+ * If node_id is -1, get all node info.
  */
 POOL_REPORT_NODES *
-get_nodes(int *nrows)
+get_nodes(int *nrows, int node_id)
 {
 	int			i;
 	POOL_REPORT_NODES *nodes = palloc(NUM_BACKENDS * sizeof(POOL_REPORT_NODES));
@@ -1303,6 +1304,9 @@ get_nodes(int *nrows)
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
+		if (node_id != -1 && node_id != i)
+			continue;
+
 		bi = pool_get_node_info(i);
 
 		snprintf(nodes[i].node_id, POOLCONFIG_MAXIDLEN, "%d", i);
@@ -1319,6 +1323,8 @@ get_nodes(int *nrows)
 
 		snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, "%d", 0);
 
+		snprintf(nodes[i].pg_status, POOLCONFIG_MAXSTATLEN, "%s", db_node_status(i));
+
 		if (STREAM)
 		{
 			if (i == REAL_PRIMARY_NODE_ID)
@@ -1330,7 +1336,15 @@ get_nodes(int *nrows)
 				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "standby");
 				snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, UINT64_FORMAT, bi->standby_delay);
 			}
-			snprintf(nodes[i].pg_role, POOLCONFIG_MAXWEIGHTLEN, "%s", db_node_role(i));
+
+			if (!strcmp(nodes[i].pg_status, "up"))
+			{
+				snprintf(nodes[i].pg_role, POOLCONFIG_MAXWEIGHTLEN, "%s", db_node_role(i));
+			}
+			else
+			{
+				snprintf(nodes[i].pg_role, POOLCONFIG_MAXWEIGHTLEN, "unknown");
+			}
 		}
 		else
 		{
@@ -1341,8 +1355,6 @@ get_nodes(int *nrows)
 
 			snprintf(nodes[i].pg_role, POOLCONFIG_MAXWEIGHTLEN, "%s", nodes[i].role);
 		}
-
-		snprintf(nodes[i].pg_status, POOLCONFIG_MAXSTATLEN, "%s", db_node_status(i));
 
 		/* status last changed */
 		localtime_r(&bi->status_changed_time, &tm);
@@ -1390,7 +1402,7 @@ nodes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 	POOL_REPORT_NODES *nodes;
 
 	num_fields = sizeof(field_names) / sizeof(char *);
-	nodes = get_nodes(&nrows);
+	nodes = get_nodes(&nrows, -1);
 
 	send_row_description_and_data_rows(frontend, backend, num_fields, field_names, offsettbl,
 									   (char *)nodes, sizeof(POOL_REPORT_NODES), nrows);
@@ -2222,7 +2234,8 @@ char *db_node_status(int node)
 	BackendInfo *bkinfo;
 	int		i;
 	char	portstr[32];
-#define PARAMS_ARRAY_SIZE	7
+	char	timeoutstr[32];
+#define PARAMS_ARRAY_SIZE	8
 	const char *keywords[PARAMS_ARRAY_SIZE];
 	const char *values[PARAMS_ARRAY_SIZE];
 	PGPing	ret;
@@ -2262,6 +2275,14 @@ char *db_node_status(int node)
 	snprintf(portstr, sizeof(portstr), "%d", bkinfo->backend_port);
 	values[i] = portstr;
 	i++;
+
+	if (pool_config->connect_timeout > 0)
+	{
+		keywords[i] = "connect_timeout";
+		snprintf(timeoutstr, sizeof(timeoutstr), "%d", pool_config->connect_timeout / 1000);
+		values[i] = timeoutstr;
+		i++;
+	}
 
 	keywords[i] = NULL;
 	values[i] = NULL;
@@ -2313,7 +2334,7 @@ char *db_node_role(int node)
 	 * Establish connection to backend.
 	 */
 	slots[node] = make_persistent_db_connection_noerror(node, host, port, dbname, user,
-														password ? password : "", true);
+														password ? password : "", false);
 
 	if (slots[node] == NULL)
 		return "unknown";
