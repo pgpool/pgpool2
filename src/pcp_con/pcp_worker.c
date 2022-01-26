@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -854,7 +854,7 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 		/* Finally, indicate that all data is sent */
 		char		fin_code[] = "CommandComplete";
 
-		nodes = get_nodes(&nrows);
+		nodes = get_nodes(&nrows, node_id);
 
 		if (node_id == -1)
 		{
@@ -887,7 +887,7 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 			BackendInfo *bi = NULL;
 			SERVER_ROLE role;
 
-			if (node_id != -1 && node_id != atoi(nodes[i].node_id))
+			if (node_id != -1 && node_id != i)
 				continue;
 
 			bi = pool_get_node_info(i);
