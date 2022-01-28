@@ -882,6 +882,7 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 			char		weight_str[20];
 			char		role_str[10];
 			char		standby_delay_str[20];
+			char		standby_delay_by_time_str[4];
 			char		status_changed_time_str[20];
 			char		code[] = "NodeInfo";
 			BackendInfo *bi = NULL;
@@ -917,6 +918,8 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 			}
 			snprintf(role_str, sizeof(role_str), "%d", role);
 
+			snprintf(standby_delay_by_time_str, sizeof(standby_delay_by_time_str), "%d", bi->standby_delay_by_time);
+
 			snprintf(standby_delay_str, sizeof(standby_delay_str), UINT64_FORMAT, bi->standby_delay);
 
 			snprintf(status_changed_time_str, sizeof(status_changed_time_str), UINT64_FORMAT, bi->status_changed_time);
@@ -930,6 +933,7 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 						  strlen(weight_str) + 1 +
 						  strlen(role_str) + 1 +
 						  strlen(nodes[i].pg_role) + 1 +
+						  strlen(standby_delay_by_time_str) + 1 +
 						  strlen(standby_delay_str) + 1 +
 						  strlen(bi->replication_state) + 1 +
 						  strlen(bi->replication_sync_state) + 1 +
@@ -944,6 +948,7 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 			pcp_write(frontend, weight_str, strlen(weight_str) + 1);
 			pcp_write(frontend, role_str, strlen(role_str) + 1);
 			pcp_write(frontend, nodes[i].pg_role, strlen(nodes[i].pg_role) + 1);
+			pcp_write(frontend, standby_delay_by_time_str, strlen(standby_delay_by_time_str) + 1);
 			pcp_write(frontend, standby_delay_str, strlen(standby_delay_str) + 1);
 			pcp_write(frontend, bi->replication_state, strlen(bi->replication_state) + 1);
 			pcp_write(frontend, bi->replication_sync_state, strlen(bi->replication_sync_state) + 1);

@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2162,7 +2162,16 @@ static struct config_int ConfigureNamesInt[] =
 		0, INT_MAX,
 		NULL, NULL, NULL
 	},
-
+	{
+		{"delay_threshold_by_time", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
+			"standby delay threshold by time.",
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S,
+		},
+		&g_pool_config.delay_threshold_by_time,
+		0,
+		0, INT_MAX,
+		NULL, NULL, NULL
+	},
 
 	/* End-of-list marker */
 	EMPTY_CONFIG_INT

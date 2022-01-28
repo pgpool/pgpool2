@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -99,6 +99,7 @@ static void sr_check_will_die(int code, Datum arg);
 
 #define PG10_SERVER_VERSION	100000	/* PostgreSQL 10 server version num */
 #define PG91_SERVER_VERSION	90100	/* PostgreSQL 9.1 server version num */
+#define PG95_SERVER_VERSION	90500	/* PostgreSQL 9.5 server version num */
 
 static	volatile bool follow_primary_lock_acquired;
 
@@ -323,12 +324,23 @@ check_replication_time_lag(void)
 	POOL_SELECT_RESULT *res;
 	POOL_SELECT_RESULT *res_rep;	/* query results of pg_stat_replication */
 	unsigned long long int lsn[MAX_NUM_BACKENDS];
+
+#define POOL_MAX_TIMESTAMP	64
+	typedef struct {
+		int	delay_in_time;	/* replication delay against primary server in microseconds */
+		char	commit_timestamp[POOL_MAX_TIMESTAMP];	/* last commit timestamp */
+	} REPLICATION_DELAY;
+	REPLICATION_DELAY	replication_delay[MAX_NUM_BACKENDS];
+
+	char	*primary_timestamp;	/* last commit timestamp of primary node or NULL */
+
 	char	   *query;
 	char	   *stat_rep_query;
 	BackendInfo *bkinfo;
 	unsigned long long int lag;
 	ErrorContextCallback callback;
 	int		active_standby_node;
+	bool	replication_delay_by_time;
 
 	/* clear replication state */
 	for (i = 0; i < NUM_BACKENDS; i++)
@@ -360,10 +372,52 @@ check_replication_time_lag(void)
 	error_context_stack = &callback;
 	stat_rep_query = NULL;
 	active_standby_node = 0;
+	primary_timestamp = NULL;	/* last commit timestamp of primary node or NULL */
+
+	replication_delay_by_time = false;
+
+	if (pool_config->delay_threshold_by_time > 0)
+	{
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if (!VALID_BACKEND(i))
+				continue;
+
+			/* replication delay by time? */
+			if (pool_config->delay_threshold_by_time > 0)
+			{
+				/* first check if the PostgreSQL server version is 9.5 or later */
+				if (server_version[i] < PG95_SERVER_VERSION)
+				{
+					replication_delay_by_time = false;
+					break;
+				}
+
+				/* then check if track_commit_timestamp is on or not */
+				query = "SHOW track_commit_timestamp";
+				if (get_query_result(slots, i, query, &res) == 0 && res->nullflags[0] != -1)
+				{
+					if (!strcmp("on", res->data[0]))
+					{
+						ereport(DEBUG5,
+								(errmsg("node: %d track_commit_timestamp is on", i)));
+						replication_delay_by_time = true;
+					}
+					else
+						replication_delay_by_time = false;
+					free_select_result(res);
+					if (replication_delay_by_time == false)
+						break;
+				}
+			}
+		}
+	}
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
 		lsn[i] = 0;
+		replication_delay[i].delay_in_time = 0;
+		replication_delay[i].commit_timestamp[0] = '\0';
 
 		if (!VALID_BACKEND(i))
 			continue;
@@ -396,10 +450,18 @@ check_replication_time_lag(void)
 
 		if (PRIMARY_NODE_ID == i)
 		{
-			if (server_version[i] >= PG10_SERVER_VERSION)
-				query = "SELECT pg_current_wal_lsn()";
+			/* replication delay by time? */
+			if (replication_delay_by_time)
+			{
+				query = "SELECT (pg_last_committed_xact()).timestamp";
+			}
 			else
-				query = "SELECT pg_current_xlog_location()";
+			{
+				if (server_version[i] >= PG10_SERVER_VERSION)
+					query = "SELECT pg_current_wal_lsn()";
+				else
+					query = "SELECT pg_current_xlog_location()";
+			}
 
 			if (server_version[i] == PG91_SERVER_VERSION)
 				stat_rep_query = "SELECT application_name, state, '' AS sync_state FROM pg_stat_replication";
@@ -408,17 +470,43 @@ check_replication_time_lag(void)
 		}
 		else
 		{
-			if (server_version[i] >= PG10_SERVER_VERSION)
-				query = "SELECT pg_last_wal_replay_lsn()";
+			/* replication delay by time? */
+			if (replication_delay_by_time)
+			{
+				query = "SELECT pg_last_xact_replay_timestamp()";
+			}
 			else
-				query = "SELECT pg_last_xlog_replay_location()";
-
+			{
+				if (server_version[i] >= PG10_SERVER_VERSION)
+					query = "SELECT pg_last_wal_replay_lsn()";
+				else
+					query = "SELECT pg_last_xlog_replay_location()";
+			}
 			active_standby_node++;
 		}
 
 		if (get_query_result(slots, i, query, &res) == 0 && res->nullflags[0] != -1)
 		{
-			lsn[i] = text_to_lsn(res->data[0]);
+			/*
+			 * If replication delay is by time, we just save the timestamp
+			 * string so that we could culculate the interval between the
+			 * primary and standby.
+			 */
+			if (replication_delay_by_time)
+			{
+				snprintf(replication_delay[i].commit_timestamp, POOL_MAX_TIMESTAMP, "%s", res->data[0]);
+				if (PRIMARY_NODE_ID == i)
+				{
+					primary_timestamp = replication_delay[i].commit_timestamp;
+				}
+
+				ereport(DEBUG5,
+						(errmsg("node: %d last log timestamp: %s", i, res->data[0])));
+			}
+			else
+			{
+				lsn[i] = text_to_lsn(res->data[0]);
+			}
 			free_select_result(res);
 		}
 	}
@@ -482,7 +570,50 @@ check_replication_time_lag(void)
 
 		/* Set standby delay value */
 		bkinfo = pool_get_node_info(i);
-		lag = (lsn[PRIMARY_NODE_ID] > lsn[i]) ? lsn[PRIMARY_NODE_ID] - lsn[i] : 0;
+
+		if (replication_delay_by_time)
+		{
+			char	query_buf[1024];
+
+			bkinfo->standby_delay_by_time = true;
+			lag = 0;
+
+			if (PRIMARY_NODE_ID != i &&
+				primary_timestamp != NULL && primary_timestamp[0] != '\0')
+			{
+				if (replication_delay[i].commit_timestamp != NULL &&
+					replication_delay[i].commit_timestamp[0] != '\0')
+				{
+					/*
+					 * Create a query to return the replication delay in microseconds as an integer value.
+					 */
+					snprintf(query_buf, sizeof(query_buf), "SELECT ((EXTRACT(EPOCH FROM (('%s'::timestamp - '%s'::timestamp)::interval)))*1000000)::integer",
+							 primary_timestamp, replication_delay[i].commit_timestamp);
+				}
+				else if (replication_delay[i].commit_timestamp == NULL ||
+						 replication_delay[i].commit_timestamp[0] == '\0')
+				{
+					/*
+					 * No wal replay is performed on this standby yet.
+					 * We calculate the delay by "current-timestamp - last-committed-transaction's-timestamp-on-primary".
+					 */
+					snprintf(query_buf, sizeof(query_buf), "SELECT ((EXTRACT(EPOCH FROM ((CURRENT_TIMESTAMP - '%s'::timestamp)::interval)))*1000000)::integer",
+							 primary_timestamp);
+				}
+
+				if (get_query_result(slots, i, query_buf, &res) != -1)
+				{
+					ereport(DEBUG5,
+							(errmsg("replication delay: %s", res->data[0])));
+					lag = atol(res->data[0]);
+				}
+			}
+		}
+		else
+		{
+			lag = (lsn[PRIMARY_NODE_ID] > lsn[i]) ? lsn[PRIMARY_NODE_ID] - lsn[i] : 0;
+			bkinfo->standby_delay_by_time = false;
+		}
 
 		if (PRIMARY_NODE_ID == i)
 		{
@@ -492,15 +623,30 @@ check_replication_time_lag(void)
 		{
 			bkinfo->standby_delay = lag;
 
-			/* Log delay if necessary */
-			if ((pool_config->log_standby_delay == LSD_ALWAYS && lag > 0) ||
-				(pool_config->delay_threshold &&
-				 pool_config->log_standby_delay == LSD_OVER_THRESHOLD &&
-				 lag > pool_config->delay_threshold))
+			if (replication_delay_by_time)
 			{
-				ereport(LOG,
-						(errmsg("Replication of node:%d is behind %llu bytes from the primary server (node:%d)",
-								i, lsn[PRIMARY_NODE_ID] - lsn[i], PRIMARY_NODE_ID)));
+				/* Log delay if necessary */
+				if ((pool_config->log_standby_delay == LSD_ALWAYS && lag > 0) ||
+					(pool_config->log_standby_delay == LSD_OVER_THRESHOLD &&
+					 lag > pool_config->delay_threshold_by_time*1000000))
+				{
+					ereport(LOG,
+							(errmsg("Replication of node: %d is behind %.6f second(s) from the primary server (node: %d)",
+									i, ((float)lag)/1000000, PRIMARY_NODE_ID)));
+				}
+			}
+			else
+			{
+				/* Log delay if necessary */
+				if ((pool_config->log_standby_delay == LSD_ALWAYS && lag > 0) ||
+					(pool_config->delay_threshold &&
+					 pool_config->log_standby_delay == LSD_OVER_THRESHOLD &&
+					 lag > pool_config->delay_threshold))
+				{
+					ereport(LOG,
+							(errmsg("Replication of node: %d is behind %llu bytes from the primary server (node: %d)",
+									i, lsn[PRIMARY_NODE_ID] - lsn[i], PRIMARY_NODE_ID)));
+				}
 			}
 		}
 	}

@@ -201,6 +201,18 @@ GRANT pg_monitor TO sr_check_user;
     </para>
    </note>
   </para>
+
+  <para>
+  <!--
+    From <productname>Pgpool-II</productname> 4.4, 9 (replication
+    delay) is displayed in either bytes or
+    seconds. See <xref linkend="guc-delay-threshold-by-time"> for more
+    details.
+    -->
+    <productname>Pgpool-II</productname> 4.4から、9 (レプリケーション遅延)はバイトもしくは秒単位で表示されます。
+    詳細は<xref linkend="guc-delay-threshold-by-time">を参照ください。
+  </para>
+
   <para>
    <!--
    The <option>-a</option> or <option>all</option> option lists all backend nodes information.

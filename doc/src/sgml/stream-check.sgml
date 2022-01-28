@@ -199,6 +199,55 @@
    </listitem>
   </varlistentry>
 
+  <varlistentry id="guc-delay-threshold-by-time" xreflabel="delay_threshold_by_time">
+   <term><varname>delay_threshold_by_time</varname> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>delay_threshold_by_time</varname> configuration parameter</primary>
+    </indexterm>
+   </term>
+   <listitem>
+
+    <para>
+     Specifies the maximum tolerance level of replication delay in
+     seconds on the standby server against the primary server.  If the
+     specified value is greater than
+     0, <xref linkend="guc-delay-threshold"> is ignored.  If the delay
+     exceeds this configured level,
+     <productname>Pgpool-II</productname> stops sending the <acronym>
+      SELECT</acronym> queries to the standby server and starts routing
+     everything to the primary server even if <xref linkend="guc-load-balance-mode">
+      is enabled, until the standby catches-up with the primary.
+      Setting this parameter to 0 disables the delay checking.
+      This delay threshold check is performed every <xref linkend="guc-sr-check-period">.
+       Default is 0.
+    </para>
+
+    <para>
+      Replication delay is calculated based on the time difference
+      between the last committed timestamp (using
+      pg_last_committed_xact()).timestamp) on the primary server and
+      the last replay timestamp (using
+      pg_last_xact_replay_timestamp()) on the standby server. The
+      timestamp values are only available
+      when <varname>track_commit_timestamp</varname> is enabled
+      in <productname>PostgreSQL</productname> 9.5 or later. If one of
+      those conditions are not
+      met, <varname>delay_threshold_by_time</varname> are ignored and
+      falls back to <varname>delay_threshold</varname> base. Also if
+      no replay is made on the standby server yet, the delay is
+      calculated between the last committed timestamp on the primary
+      server and current timestamp on the standby server. Finally if
+      no commit is made on the primary server since it started, the
+      replication delay is 0.
+    </para>
+
+    <para>
+     This parameter can be changed by reloading the <productname>Pgpool-II</>configurations.
+    </para>
+
+   </listitem>
+  </varlistentry>
+
   <varlistentry id="guc-prefer-lower-delay-standby" xreflabel="prefer_lower_delay_standby">
     <term><varname>prefer_lower_delay_standby</varname> (<type>boolean</type>)
      <indexterm>
@@ -207,13 +256,21 @@
     </term>
     <listitem>
      <para>
-      This parameter is valid only when delay_threshold is set to greater than 0.
-      When set to on, if the delay of the load balancing node is greater than delay_threshold,
-      <productname>Pgpool-II</productname> does not send read queries to the primary node but
-      the least delay standby with backend_weight to greater than 0. If delay of all standby
-      nodes are greater than delay_threshold or the primary selected as the load balancing node
-      first, <productname>Pgpool-II</productname> sends to the primary.
-      Default is off.
+      This parameter is valid only
+      when <xref linkend="guc-delay-threshold">
+      or <xref linkend="guc-delay-threshold-by-time"> is set to
+      greater than 0.  When set to on, if the delay of the load
+      balancing node is greater
+      than <xref linkend="guc-delay-threshold">
+      or <xref linkend="guc-delay-threshold-by-time">,
+      <productname>Pgpool-II</productname> does not send read queries
+      to the primary node but the least delay standby with
+      backend_weight to greater than 0. If delay of all standby nodes
+      are greater than <xref linkend="guc-delay-threshold">
+      or <xref linkend="guc-delay-threshold-by-time"> the primary
+      selected as the load balancing node
+      first, <productname>Pgpool-II</productname> sends to the
+      primary.  Default is off.
      </para>
      <para>
       This parameter can be changed by reloading the <productname>Pgpool-II</productname> configurations.
@@ -257,7 +314,7 @@
 
        <row>
 	<entry><literal>'if_over_threshold'</literal></entry>
-	<entry>Only log the standby delay, when it exceeds <xref linkend="guc-delay-threshold"> value (the default)</entry>
+	<entry>Only log the standby delay, when it exceeds <xref linkend="guc-delay-threshold"> or <xref linkend="guc-delay-threshold-by-time"> value (the default)</entry>
        </row>
       </tbody>
      </tgroup>

@@ -100,6 +100,7 @@ typedef struct
 	bool		quarantine;		/* true if node is CON_DOWN because of
 								 * quarantine */
 	uint64		standby_delay;	/* The replication delay against the primary */
+	bool		standby_delay_by_time;	/* true if standby_delay is measured in milliseconds, not bytes */
 	SERVER_ROLE role;			/* Role of server. used by pcp_node_info and
 								 * failover() to keep track of quarantined
 								 * primary node */

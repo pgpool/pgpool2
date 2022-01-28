@@ -764,7 +764,15 @@ process_node_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 		if (index == NULL)
 			goto INVALID_RESPONSE;
 		index++;
+
 		strlcpy(backend_info->pg_role, index, sizeof(backend_info->pg_role));
+
+		index = (char *) memchr(index, '\0', len);
+		if (index == NULL)
+			goto INVALID_RESPONSE;
+
+		index++;
+		backend_info->standby_delay_by_time = atol(index);
 
 		index = (char *) memchr(index, '\0', len);
 		if (index == NULL)

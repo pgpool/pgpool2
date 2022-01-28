@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -304,6 +304,16 @@ typedef struct
 									 * that health_check_period required to be
 									 * greater than 0 to enable the
 									 * functionality. */
+
+	int		delay_threshold_by_time;	/* If the standby server delays more than
+										* delay_threshold_in_time, any query goes to the
+										* primary only. The unit is in seconds. 0
+										* disables the check. Default is 0.
+										* If delay_threshold_in_time is greater than 0,
+										* delay_threshold will be ignored.
+										* Note that health_check_period required to be
+										* greater than 0 to enable the
+										* functionality. */
 
 	bool		prefer_lower_delay_standby;
 

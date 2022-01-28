@@ -522,17 +522,18 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 	struct tm	tm;
 	char	   *frmt;
 	int         array_size = pcp_result_slot_count(pcpResInfo);
+	char		standby_delay_str[64];
 
 	if (verbose)
 	{
 		const char *titles[] = {"Hostname", "Port", "Status", "Weight", "Status Name", "Backend Status Name", "Role", "Backend Role", "Replication Delay", "Replication State", "Replication Sync State", "Last Status Change"};
-		const char *types[] = {"s", "d", "d", "f", "s", "s", "s", "s", "lu", "s", "s", "s"};
+		const char *types[] = {"s", "d", "d", "f", "s", "s", "s", "s", "s", "s", "s", "s"};
 
 		frmt = format_titles(titles, types, sizeof(titles)/sizeof(char *));
 	}
 	else
 	{
-		frmt = "%s %d %d %f %s %s %s %s %lu %s %s %s\n";
+		frmt = "%s %d %d %f %s %s %s %s %s %s %s %s\n";
 	}
 
 	for (i = 0; i < array_size; i++)
@@ -549,6 +550,22 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 		localtime_r(&backend_info->status_changed_time, &tm);
 		strftime(last_status_change, sizeof(last_status_change), "%F %T", &tm);
 
+		if (backend_info->standby_delay_by_time)
+		{
+			snprintf(standby_delay_str, sizeof(standby_delay_str), "%.6f", ((float)backend_info->standby_delay)/1000000);
+			if (verbose)
+			{
+				if (backend_info->standby_delay > 0)
+					strcat(standby_delay_str, " seconds");
+				else
+					strcat(standby_delay_str, " second");
+			}
+		}
+		else
+		{
+			snprintf(standby_delay_str, sizeof(standby_delay_str), "%lu", backend_info->standby_delay);
+		}
+
 		printf(frmt,
 			   backend_info->backend_hostname,
 			   backend_info->backend_port,
@@ -558,7 +575,7 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 			   backend_info->pg_backend_status,
 			   role_to_str(backend_info->role),
 			   backend_info->pg_role,
-			   backend_info->standby_delay,
+			   standby_delay_str,
 			   backend_info->replication_state[0] == '\0' ? "none" : backend_info->replication_state,
 			   backend_info->replication_sync_state[0] == '\0' ? "none" : backend_info->replication_sync_state,
 			   last_status_change);

@@ -159,6 +159,14 @@ GRANT pg_monitor TO sr_check_user;
     </para>
    </note>
   </para>
+
+  <para>
+    From <productname>Pgpool-II</productname> 4.4, 9 (replication
+    delay) is displayed in either bytes or
+    seconds. See <xref linkend="guc-delay-threshold-by-time"> for more
+    details.
+  </para>
+    
   <para>
    The <option>-a</option> or <option>--all</option> option lists all backend nodes information.
   </para>

@@ -409,7 +409,8 @@ select_load_balancing_node(void)
 			pool_config->delay_threshold &&
 			pool_config->prefer_lower_delay_standby &&
 			(suggested_node_id != PRIMARY_NODE_ID) &&
-			(BACKEND_INFO(suggested_node_id).standby_delay > pool_config->delay_threshold))
+			(((BACKEND_INFO(suggested_node_id).standby_delay_by_time == false && BACKEND_INFO(suggested_node_id).standby_delay > pool_config->delay_threshold)) ||
+			 ((BACKEND_INFO(suggested_node_id).standby_delay_by_time && BACKEND_INFO(suggested_node_id).standby_delay > pool_config->delay_threshold_by_time * 1000000))))
 		{
 			ereport(DEBUG1,
 				(errmsg("selecting load balance node"),
