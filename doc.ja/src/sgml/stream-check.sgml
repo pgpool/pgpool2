@@ -285,28 +285,28 @@
 
     <para>
       <!--
-      Replication delay is calculated based on the time difference
-      between the last committed timestamp (using
-      pg_last_committed_xact()).timestamp) on the primary server and
-      the last replay timestamp (using
-      pg_last_xact_replay_timestamp()) on the standby server. The
-      timestamp values are only available
-      when <varname>track_commit_timestamp</varname> is enabled
-      in <productname>PostgreSQL</productname> 9.5 or later. If one of
-      those conditions are not
-      met, <varname>delay_threshold_by_time</varname> are ignored and
-      falls back to <varname>delay_threshold</varname> base. Also if
-      no replay is made on the standby server yet, the delay is
-      calculated between the last committed timestamp on the primary
-      server and current timestamp on the standby server. Finally if
-      no commit is made on the primary server since it started, the
-      replication delay is 0.
+      Replication delay is taken
+      from <productname>PostgreSQL</productname>'s system
+      view <structname>pg_stat_replication</structname>.<structfield>replay_lag</structfield>. The
+      view is available <productname>PostgreSQL</productname> 10 or
+      later. If earlier version
+      of <productname>PostgreSQL</productname> is
+      used, <productname>Pgpool-II</productname> automatically falls
+      back to <xref linkend="guc-delay-threshold">
+      and <xref linkend="guc-delay-threshold-by-time"> is ignored.
 	-->
-      レプリケーションの遅延チェックは、プライマリサーバ上での最終コミット時刻(pg_last_committed_xact()).timestampを使います)と、スタンバイサーバ上の最終WAL再生時刻(pg_last_xact_replay_timestamp()を使います)の差分で計算されます。
-      これらの時刻は、<varname>track_commit_timestamp</varname>が有効で、<productname>PostgreSQL</productname> 9.5以降でなければ得られません。
-      どれかの条件が満たされない場合は、<varname>delay_threshold</varname>ベースになります。
-      また、スタンバイサーバでまだWL再生が行われていない場合は、遅延はプライマリサーバ上の最終コミット時刻とスタンバイサーバの現在時刻の差分で計算されます。
-      最後に、プライマリサーバ上で起動後まだコミットが行われていない場合は、レプリケーション遅延は0となります。
+     レプリケーション遅延は<productname>PostgreSQL</productname>のシステムビューである<structname>pg_stat_replication</structname>.<structfield>replay_lag</structfield>から取得します。
+     このビューは<productname>PostgreSQL</productname> 10以降でサポートされています。
+     もしそれ以前のバージョンの<productname>PostgreSQL</productname>を使用すると、<productname>Pgpool-II</productname>は自動的に<xref linkend="guc-delay-threshold">を使用するようになり、<xref linkend="guc-delay-threshold-by-time">は無視されます。
+    </para>
+
+    <para>
+      <!-- If this parameter is
+      enabled, <xref linkend="sql-show-pool-nodes">
+      and <xref linkend="pcp-node-info"> show replication delay in
+      seconds, rather than bytes.
+	-->
+      もしこのパラメータが指定されていると、<xref linkend="sql-show-pool-nodes">と<xref linkend="pcp-node-info">はレプリケーション遅延をバイト単位ではなく、秒単位で表示します。
     </para>
 
     <para>

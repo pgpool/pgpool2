@@ -1343,7 +1343,7 @@ get_nodes(int *nrows, int node_id)
 				if (bi->standby_delay_by_time)
 				{
 					snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, "%.6f", ((float)bi->standby_delay)/1000000);
-					if (bi->standby_delay > 0)
+					if (bi->standby_delay >= 2*1000*1000)
 						strcat(nodes[i].delay, " seconds");
 					else
 						strcat(nodes[i].delay, " second");

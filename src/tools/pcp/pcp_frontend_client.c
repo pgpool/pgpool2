@@ -555,7 +555,7 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 			snprintf(standby_delay_str, sizeof(standby_delay_str), "%.6f", ((float)backend_info->standby_delay)/1000000);
 			if (verbose)
 			{
-				if (backend_info->standby_delay > 0)
+				if (backend_info->standby_delay >= 2*1000*1000)
 					strcat(standby_delay_str, " seconds");
 				else
 					strcat(standby_delay_str, " second");
