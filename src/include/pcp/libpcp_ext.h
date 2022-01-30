@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -100,7 +100,7 @@ typedef struct
 	bool		quarantine;		/* true if node is CON_DOWN because of
 								 * quarantine */
 	uint64		standby_delay;	/* The replication delay against the primary */
-	bool		standby_delay_by_time;	/* true if standby_delay is measured in milliseconds, not bytes */
+	bool		standby_delay_by_time;	/* true if standby_delay is measured in microseconds, not bytes */
 	SERVER_ROLE role;			/* Role of server. used by pcp_node_info and
 								 * failover() to keep track of quarantined
 								 * primary node */
