@@ -8,7 +8,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL 
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -696,6 +696,12 @@ process_node_info_response(PCPConnInfo* pcpConn, char* buf, int len)
 
 		index = (char *) memchr(index, '\0', len);
 		if(index == NULL)
+			goto INVALID_RESPONSE;
+		index +=1;
+		backend_info->quarantine = atoi(index);
+
+		index = (char *) memchr(index, '\0', len);
+		if (index == NULL)
 			goto INVALID_RESPONSE;
 		index +=1;
 		backend_info->backend_weight = atof(index);

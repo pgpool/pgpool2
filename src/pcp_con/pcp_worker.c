@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -809,6 +809,7 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 	int wsize;
 	char port_str[6];
 	char status[2];
+	char		quarantine[2];
 	char weight_str[20];
 	char role_str[10];
 	char code[] = "CommandComplete";
@@ -830,6 +831,7 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 	
 	snprintf(port_str, sizeof(port_str), "%d", bi->backend_port);
 	snprintf(status, sizeof(status), "%d", bi->backend_status);
+	snprintf(quarantine, sizeof(quarantine), "%d", bi->quarantine);
 	snprintf(weight_str, sizeof(weight_str), "%f", bi->backend_weight);
 
 	if (STREAM)
@@ -853,6 +855,7 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 				  strlen(bi->backend_hostname)+1 +
 				  strlen(port_str)+1 +
 				  strlen(status)+1 +
+				  strlen(quarantine) + 1 +
 				  strlen(weight_str)+1 +
 				  strlen(role_str)+1 +
 				  sizeof(int));
@@ -861,6 +864,7 @@ inform_node_info(PCP_CONNECTION *frontend,char *buf)
 	pcp_write(frontend, bi->backend_hostname, strlen(bi->backend_hostname)+1);
 	pcp_write(frontend, port_str, strlen(port_str)+1);
 	pcp_write(frontend, status, strlen(status)+1);
+	pcp_write(frontend, quarantine, strlen(quarantine) + 1);
 	pcp_write(frontend, weight_str, strlen(weight_str)+1);
 
 	pcp_write(frontend, role_str, strlen(role_str)+1);
