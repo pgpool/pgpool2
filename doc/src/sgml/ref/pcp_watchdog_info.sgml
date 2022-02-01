@@ -90,7 +90,7 @@ Pgpool-II documentation
 
     1. Total watchdog nodes in the cluster
     2. Total watchdog nodes in the cluster with active membership
-    3. Is VIP is up on current node?
+    3. Local node's escalation status
     4. Leader node name
     5. Leader node host
    </literallayout>
@@ -120,7 +120,7 @@ Pgpool-II documentation
    Nodes required for quorum: 2
    Quorum state             : QUORUM EXIST
    Alive Remote Nodes       : 2
-   VIP up on local node     : NO
+   Local node escalation    : NO
    Leader Node Name         : Linux_host2.localdomain_9992
    Leader Host Name         : localhost
 

@@ -781,7 +781,7 @@ output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose)
 		printf("Alive Remote Nodes       : %d\n", cluster->aliveNodeCount);
 		printf("Nodes required for quorum: %d\n", cluster->nodesRequiredForQuorum);
 		printf("Quorum state             : %s\n", quorumStatus);
-		printf("VIP up on local node     : %s\n", cluster->escalated ? "YES" : "NO");
+		printf("Local node escalation    : %s\n", cluster->escalated ? "YES" : "NO");
 		printf("Leader Node Name         : %s\n", cluster->leaderNodeName);
 		printf("Leader Host Name         : %s\n\n", cluster->leaderHostName);
 
