@@ -89,7 +89,7 @@ Pgpool-II documentation
     The first output line describes the watchdog cluster information:
 
     1. Total watchdog nodes in the cluster
-    2. Is VIP is up on current node?
+    2. Local node's escalation status
     3. Master node name
     4. Master node host
    </literallayout>
@@ -115,7 +115,7 @@ Pgpool-II documentation
    Remote Nodes         : 2
    Quorum state         : QUORUM EXIST
    Alive Remote Nodes   : 2
-   VIP up on local node : NO
+   Local node escalation: NO
    Master Node Name     : Linux_host2.localdomain_9992
    Master Host Name     : localhost
 
