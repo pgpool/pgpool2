@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -466,7 +466,7 @@ check_backend_down_request(int node, bool done_requests)
 		if (fgets(readbuf, MAXLINE - 1, fd) == 0)
 			break;
 
-		strncpy(buf, readbuf, sizeof(buf));
+		strncpy(buf, readbuf, sizeof(buf) - 1);
 		if (strlen(readbuf) > 0 && readbuf[strlen(readbuf) - 1] == '\n')
 			buf[strlen(readbuf) - 1] = '\0';
 
@@ -498,6 +498,9 @@ check_backend_down_request(int node, bool done_requests)
 	}
 
 	fclose(fd);
+
+	if (writebuf)
+		free(writebuf);
 
 	if (!found)
 		return false;
