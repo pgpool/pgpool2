@@ -483,6 +483,60 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>set_config</term>
+    <listitem>
+     <para>
+<!--
+       <productname>PostgreSQL</productname>
+       has <function>set_config</function> function which allows to
+       change parameter values within current session
+       like <command>SET</command> command
+       (actually <function>set_config</function> has more feature than
+       SET. See <productname>PostgreSQL</productname> manual for more
+       details).  When <productname>Pgpool-II</productname> is
+       operated
+       with <link linkend="guc-backend-clustering-mode">clustering
+       mode</link> being set to
+       <literal>streaming_replication</literal>, it sends the function
+       only to the primary server. As the function is not sent to the
+       standby servers, the parameter values are different among each
+       servers. To avoid the problem, you can
+       use <command>SET</command> command instead
+       of <function>set_config</function>.
+       Since <command>SET</command> command is sent to all servers
+       used for this session, the issue will not happen.  However, if
+       you use more than 2 <productname>PostgreSQL</productname>
+       servers, you need to
+       disable <xref linkend="guc-statement-level-load-balance"> and
+       use <command>SET</command> command. This is because,
+       if <xref linkend="guc-statement-level-load-balance"> enabled,
+       queries might be sent to the third server in addition to the
+       primary server and the server which is assigned to the load
+       balance node.
+-->
+       <productname>PostgreSQL</productname>には<function>set_config</function>という関数があり、<command>SET</command>コマンドで現在のセッションに対してパラメータの値を変更するのと同じ効果を与えることができます（実際にはSETにない機能もあります。詳細は<productname>PostgreSQL</productname>のマニュアルを見てください）。
+       <productname>Pgpool-II</productname>では、現在の<link linkend="guc-backend-clustering-mode">クラスタリングモード</link>が<literal>streaming_replication</literal>の場合、プライマリサーバにのみこの関数を送信します。
+       スタンバイサーバにはこの関数が送信されないので、それぞれのサーバでパラメータの値が異なることになります。
+       この問題を回避するには、<function>set_config</function>の代わりに<command>SET</command>コマンドを使用してください。
+       <command>SET</command>コマンドは、現在のセッションが使用しているすべてのサーバに送信されるので、この問題は起きません。
+       ただし<productname>PostgreSQL</productname>サーバを3台以上使っているときは、<xref linkend="guc-statement-level-load-balance">をoffにした上で<command>SET</command>コマンドを使用してください。
+       <xref linkend="guc-statement-level-load-balance">がonの場合、現在のセッションが使用しているプライマリサーバ、ロードバランスノードになっているスタンバイサーバに加え、3台目のスタンバイサーバにもクエリを送信する可能性があるからです。
+     </para>
+     <para>
+<!--
+       If you need to use <function>set_config</function>, turn off
+       load balancing for the session (not only
+       for <function>set_config</function>, load balancing should be
+       disabled in the whole session).  You can avoid the issue by
+       sacrificing performance.
+-->
+       どうしても<function>set_config</function>を使わなければならないのであれば、そのセッションでの負荷分散機能をoffにしてください(<function>set_config</function>だけでなく、そのセッションで負荷分散機能を使わないようにする必要があります)。
+       性能は犠牲になりますが、問題は回避できます。
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </para>
 </sect1>

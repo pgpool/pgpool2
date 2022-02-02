@@ -323,6 +323,47 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>set_config</term>
+    <listitem>
+     <para>
+       <productname>PostgreSQL</productname>
+       has <function>set_config</function> function which allows to
+       change parameter values within current session
+       like <command>SET</command> command
+       (actually <function>set_config</function> has more feature than
+       SET. See <productname>PostgreSQL</productname> manual for more
+       details).  When <productname>Pgpool-II</productname> is
+       operated
+       with <link linkend="guc-backend-clustering-mode">clustering
+       mode</link> being set to
+       <literal>streaming_replication</literal>, it sends the function
+       only to the primary server. As the function is not sent to the
+       standby servers, the parameter values are different among each
+       servers. To avoid the problem, you can
+       use <command>SET</command> command instead
+       of <function>set_config</function>.
+       Since <command>SET</command> command is sent to all servers
+       used for this session, the issue will not happen.  However, if
+       you use more than 2 <productname>PostgreSQL</productname>
+       servers, you need to
+       disable <xref linkend="guc-statement-level-load-balance"> and
+       use <command>SET</command> command. This is because,
+       if <xref linkend="guc-statement-level-load-balance"> enabled,
+       queries might be sent to the third server in addition to the
+       primary server and the server which is assigned to the load
+       balance node.
+     </para>
+     <para>
+       If you need to use <function>set_config</function>, turn off
+       load balancing for the session (not only
+       for <function>set_config</function>, load balancing should be
+       disabled in the whole session).  You can avoid the issue by
+       sacrificing performance.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </para>
 </sect1>
