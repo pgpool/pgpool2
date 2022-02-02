@@ -937,6 +937,16 @@ ParameterStatus(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 				int	pos;
 
 				len1 = len;
+				/*
+				 * To suppress Coverity false positive warning.  Actually
+				 * being IS_MAIN_NODE_ID(i)) true only happens in a loop.  So
+				 * we don't need to worry about to leak memory previously
+				 * allocated in parambuf.  But Coverity is not smart enough
+				 * to realize it.
+				 */
+				if (parambuf)
+					pfree(parambuf);
+
 				parambuf = palloc(len);
 				memcpy(parambuf, p, len);
 				pool_add_param(&CONNECTION(backend, i)->params, name, value);
