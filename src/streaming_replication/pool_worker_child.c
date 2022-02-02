@@ -322,11 +322,12 @@ check_replication_time_lag(void)
 	int			i;
 	POOL_SELECT_RESULT *res;
 	POOL_SELECT_RESULT *res_rep;	/* query results of pg_stat_replication */
-	unsigned long long int lsn[MAX_NUM_BACKENDS];
+	uint64	lsn[MAX_NUM_BACKENDS];
 	char	   *query;
 	char	   *stat_rep_query;
 	BackendInfo *bkinfo;
-	unsigned long long int lag;
+	uint64	lag;
+	uint64	delay_threshold_by_time;
 	ErrorContextCallback callback;
 	int		active_standby_node;
 	bool	replication_delay_by_time;
@@ -481,9 +482,9 @@ check_replication_time_lag(void)
 						s = res_rep->data[j*NUM_COLS+3];
 						if (s)
 						{
+							bkinfo->standby_delay = atol(s);
 							ereport(LOG,
 									(errmsg("standby_delay: %lu", bkinfo->standby_delay)));
-							bkinfo->standby_delay = atol(s);
 						}
 						else
 							bkinfo->standby_delay = 0;
@@ -532,10 +533,13 @@ check_replication_time_lag(void)
 			if (replication_delay_by_time)
 			{
 				lag = bkinfo->standby_delay;
+				delay_threshold_by_time = pool_config->delay_threshold_by_time;
+				delay_threshold_by_time *= 1000000;
+
 				/* Log delay if necessary */
 				if ((pool_config->log_standby_delay == LSD_ALWAYS && lag > 0) ||
 					(pool_config->log_standby_delay == LSD_OVER_THRESHOLD &&
-					 lag > pool_config->delay_threshold_by_time*1000000))
+					 lag > delay_threshold_by_time))
 				{
 					ereport(LOG,
 							(errmsg("Replication of node: %d is behind %.6f second(s) from the primary server (node: %d)",
@@ -550,8 +554,8 @@ check_replication_time_lag(void)
 					 lag > pool_config->delay_threshold))
 				{
 					ereport(LOG,
-							(errmsg("Replication of node: %d is behind %llu bytes from the primary server (node: %d)",
-									i, lsn[PRIMARY_NODE_ID] - lsn[i], PRIMARY_NODE_ID)));
+							(errmsg("Replication of node: %d is behind " UINT64_FORMAT " bytes from the primary server (node: %d)",
+									i, (uint64)(lsn[PRIMARY_NODE_ID] - lsn[i]), PRIMARY_NODE_ID)));
 				}
 			}
 		}
