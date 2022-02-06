@@ -1863,11 +1863,14 @@ failover(void)
 		 * we can avoid calling find_primary_node_repeatedly() and recognize
 		 * the former primary as the new primary node, which will reduce the
 		 * time to process standby down.
+		 * This does not apply to the case when no primary node existed
+		 * (Req_info->primary_node_id < 0). In this case
+		 * find_primary_node_repeatedly() should be called.
 		 */
 		else if (SL_MODE &&
 				 reqkind == NODE_DOWN_REQUEST)
 		{
-			if (Req_info->primary_node_id != node_id)
+			if (Req_info->primary_node_id >= 0 && Req_info->primary_node_id != node_id)
 			{
 				new_primary = Req_info->primary_node_id;
 			}
@@ -1901,10 +1904,16 @@ failover(void)
 			if (*pool_config->follow_primary_command != '\0' ||
 				reqkind == PROMOTE_NODE_REQUEST)
 			{
-				/* only if the failover is against the current primary */
+				/*
+				 * follow primary command is executed in following cases:
+				 * - failover against the current primary
+				 * - no primary exists and new primary is created by failover
+				 * - promote node request
+				 */
 				if (((reqkind == NODE_DOWN_REQUEST) &&
 					 Req_info->primary_node_id >= 0 &&
 					 (nodes[Req_info->primary_node_id])) ||
+					(reqkind == NODE_DOWN_REQUEST && Req_info->primary_node_id < 0 && new_primary >= 0) ||
 					(node_id >= 0 && (reqkind == PROMOTE_NODE_REQUEST) &&
 					 (VALID_BACKEND(node_id))))
 				{
