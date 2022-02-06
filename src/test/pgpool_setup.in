@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2013-2020 PgPool Global Development Group
+# Copyright (c) 2013-2022 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby
@@ -194,8 +194,8 @@ if [ $new_master_id = "-1" ];then
     exit 0
 fi
 
-if [ a"$failed_node_id" = a"$old_primary_node_id" ];then	# master failed
-! 	new_primary_db_cluster=${mydir}/data"$new_master_id"
+if [ a"$failed_node_id" = a"$old_primary_node_id" -o a"$old_primary_node_id" = a"-1" ];then	# master node failed
+ 	new_primary_db_cluster=${mydir}/data"$new_main_id"
 	echo $pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
 	$pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
 	sleep 2
