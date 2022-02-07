@@ -52,7 +52,7 @@ if [ $? -ne 0 ]; then
 fi
 
 ## If Standby node is down, skip failover.
-if [ $FAILED_NODE_ID -ne $OLD_PRIMARY_NODE_ID ]; then
+if [ $OLD_PRIMARY_NODE_ID != "-1" -a $FAILED_NODE_ID != $OLD_PRIMARY_NODE_ID ]; then
     logger -i -p local1.info failover.sh: Standby node is down. Skipping failover.
 
     ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$OLD_PRIMARY_NODE_HOST -i ~/.ssh/id_rsa_pgpool "
