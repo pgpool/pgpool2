@@ -52,8 +52,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+## Check if all node is down
+if [ $NEW_MAIN_NODE_ID = "-1" ]; then
+    echo failover.sh: end: no new main node is available. Skipping failover.
+    exit 0
+fi
+
 ## If Standby node is down, skip failover.
-if [ $FAILED_NODE_ID -ne $OLD_PRIMARY_NODE_ID ]; then
+if [ $OLD_PRIMARY_NODE_ID != "-1" -a $FAILED_NODE_ID != $OLD_PRIMARY_NODE_ID ]; then
 
     # If Standby node is down, drop replication slot.
     ${PGHOME}/bin/psql -h ${OLD_PRIMARY_NODE_HOST} -p ${OLD_PRIMARY_NODE_PORT} \
