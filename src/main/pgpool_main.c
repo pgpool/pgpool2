@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -115,6 +115,30 @@ typedef struct User1SignalSlot
 
 #define PGPOOLMAXLITSENQUEUELENGTH 10000
 
+/*
+ * Context data while exectuing failover()
+ */
+typedef struct
+{
+	bool		all_backend_down;	/* true if all backends are down */
+	bool		search_primary;		/* true if we need to seach primary node */
+	bool		need_to_restart_children;	/* true if we need to restart child process */
+	bool		need_to_restart_pcp;	/* true if we need to restart pc process */
+	bool		partial_restart;	/* true if partial restart is needed */
+	bool		sync_required;		/* true if watchdog synchronization is necessary */
+
+	POOL_REQUEST_KIND reqkind;
+	int			node_id_set[MAX_NUM_BACKENDS];
+	int			node_count;
+	unsigned char request_details;
+
+	/*
+	 * An array to hold down nodes information. Each array member corresponds
+	 * to node id.  If nodes[i] is 1, the node i is down.
+	*/
+	int			nodes[MAX_NUM_BACKENDS];
+} FAILOVER_CONTEXT;
+
 static void signal_user1_to_parent_with_reason(User1SignalReason reason);
 
 static void FileUnlink(int code, Datum path);
@@ -152,6 +176,19 @@ static void sync_backend_from_watchdog(void);
 static void update_backend_quarantine_status(void);
 static int	get_server_version(POOL_CONNECTION_POOL_SLOT * *slots, int node_id);
 static void get_info_from_conninfo(char *conninfo, char *host, int hostlen, char *port, int portlen);
+
+/*
+ * Subroutines of failover()
+ */
+static int handle_failback_request(FAILOVER_CONTEXT *failover_context, int node_id);
+static int handle_failover_request(FAILOVER_CONTEXT *failover_context, int node_id);
+static void kill_failover_children(FAILOVER_CONTEXT *failover_context, int node_id);
+static void exec_failover_command(FAILOVER_CONTEXT *failover_context, int new_main_node_id, int promote_node_id);
+static int determine_new_primary_node(FAILOVER_CONTEXT *failover_context, int node_id);
+static int exec_follow_primary_command(FAILOVER_CONTEXT *failover_context, int node_id, int new_primary_node_id);
+static void save_node_info(FAILOVER_CONTEXT *failover_context, int new_primary_node_id, int new_main_node_id);
+static void exec_child_restart(FAILOVER_CONTEXT *failover_context, int node_id);
+static void exec_notice_pcp_child(FAILOVER_CONTEXT *failover_context);
 
 static struct sockaddr_un un_addr;	/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;	/* unix domain socket path for PCP */
@@ -1357,31 +1394,21 @@ check_all_backend_down(void)
 }
 
 /*
- * backend connection error, failover/failback request, if possible
- * failover() must be called under protecting signals.
+ * The workhorse of failover processing. Directly called with pgpool main
+ * process or called from sigusr1_interrupt_processor() after SIGUSR1 signal
+ * is received.
  */
 static void
 failover(void)
 {
-	int			i,
-				j,
-				k;
+	FAILOVER_CONTEXT failover_context;
 	int			node_id;
 	int			new_main_node;
 	int			new_primary = -1;
-	int			nodes[MAX_NUM_BACKENDS];
-	bool		need_to_restart_children = true;
-	bool		partial_restart = false;
-	int			status;
-	int			sts;
-	bool		need_to_restart_pcp = false;
-	bool		all_backend_down = true;
-	bool		sync_required = false;
+	int			i;
 
 	ereport(DEBUG1,
 			(errmsg("failover handler called")));
-
-	memset(nodes, 0, sizeof(int) * MAX_NUM_BACKENDS);
 
 	/*
 	 * this could happen in a child process if a signal has been sent before
@@ -1418,16 +1445,20 @@ failover(void)
 		return;
 	}
 
+	/* initialize failover context */
+	memset(&failover_context, 0, sizeof(failover_context));
+	failover_context.search_primary = true;
+
 	Req_info->switching = true;
 	switching = 1;
+
+	/*
+	 * This loop processes each failover/failback request until the queue is
+	 * empty.
+	 */
 	for (;;)
 	{
-		POOL_REQUEST_KIND reqkind;
 		int			queue_index;
-		int			node_id_set[MAX_NUM_BACKENDS];
-		int			node_count;
-		unsigned char request_details;
-		bool		search_primary = true;
 		int			promote_node = 0;
 
 		pool_semaphore_lock(REQUEST_INFO_SEM);
@@ -1444,17 +1475,17 @@ failover(void)
 		/* make a local copy of request */
 		Req_info->request_queue_head++;
 		queue_index = Req_info->request_queue_head % MAX_REQUEST_QUEUE_SIZE;
-		memcpy(node_id_set, Req_info->request[queue_index].node_id, (sizeof(int) * Req_info->request[queue_index].count));
-		reqkind = Req_info->request[queue_index].kind;
-		request_details = Req_info->request[queue_index].request_details;
-		node_count = Req_info->request[queue_index].count;
+		memcpy(failover_context.node_id_set, Req_info->request[queue_index].node_id, (sizeof(int) * Req_info->request[queue_index].count));
+		failover_context.reqkind = Req_info->request[queue_index].kind;
+		failover_context.request_details = Req_info->request[queue_index].request_details;
+		failover_context.node_count = Req_info->request[queue_index].count;
 		pool_semaphore_unlock(REQUEST_INFO_SEM);
 
 		ereport(DEBUG1,
 				(errmsg("failover handler"),
-				 errdetail("kind: %d flags: %x node_count: %d index:%d", reqkind, request_details, node_count, queue_index)));
+				 errdetail("kind: %d flags: %x node_count: %d index:%d", failover_context.reqkind, failover_context.request_details, failover_context.node_count, queue_index)));
 
-		if (reqkind == CLOSE_IDLE_REQUEST)
+		if (failover_context.reqkind == CLOSE_IDLE_REQUEST)
 		{
 			kill_all_children(SIGUSR1);
 			continue;
@@ -1476,115 +1507,24 @@ failover(void)
 		 * should be replaced by the requested node. The requested
 		 * node should be REAL_PRIMARY_NODE_ID.
 		 */
-		if (request_details & REQ_DETAIL_PROMOTE)
+		if (failover_context.request_details & REQ_DETAIL_PROMOTE)
 		{
-			promote_node = node_id_set[0];
-			for (i = 0; i < node_count; i++)
+			promote_node = failover_context.node_id_set[0];
+			for (i = 0; i < failover_context.node_count; i++)
 			{
-				node_id_set[i] = REAL_PRIMARY_NODE_ID;
+				failover_context.node_id_set[i] = REAL_PRIMARY_NODE_ID;
 			}
 		}
 
-		node_id = node_id_set[0];
+		node_id = failover_context.node_id_set[0];
 
 		/* failback request? */
-		if (reqkind == NODE_UP_REQUEST)
+		if (failover_context.reqkind == NODE_UP_REQUEST)
 		{
-			if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
-				(reqkind == NODE_UP_REQUEST && !(RAW_MODE &&
-												 BACKEND_INFO(node_id).backend_status == CON_DOWN) && VALID_BACKEND(node_id)) ||
-				(reqkind == NODE_DOWN_REQUEST && !VALID_BACKEND(node_id)))
-			{
-				if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
-					ereport(LOG,
-							(errmsg("invalid failback request, node id: %d is invalid. node id must be between [0 and %d]", node_id, MAX_NUM_BACKENDS)));
-				else
-					ereport(LOG,
-							(errmsg("invalid failback request, status: [%d] of node id : %d is invalid for failback", BACKEND_INFO(node_id).backend_status, node_id)));
-
+			if (handle_failback_request(&failover_context, node_id) < 0)
 				continue;
-			}
-
-			ereport(LOG,
-					(errmsg("starting fail back. reconnect host %s(%d)",
-							BACKEND_INFO(node_id).backend_hostname,
-							BACKEND_INFO(node_id).backend_port)));
-
-			/* Check to see if all backends are down */
-			all_backend_down = check_all_backend_down();
-
-			BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
-			pool_set_backend_status_changed_time(node_id);
-
-			if ((request_details & REQ_DETAIL_UPDATE))
-			{
-				/* remove the quarantine flag */
-				BACKEND_INFO(node_id).quarantine = false;
-
-				/*
-				 * do not search for primary node when handling the quarantine
-				 * nodes
-				 */
-				search_primary = false;
-
-				/*
-				 * recalculate the main node id after setting the backend
-				 * status of quarantined node, this will bring us to the old
-				 * main_node_id that was before the quarantine state
-				 */
-				Req_info->main_node_id = get_next_main_node();
-				if (Req_info->primary_node_id == -1 &&
-					BACKEND_INFO(node_id).role == ROLE_PRIMARY)
-				{
-					/*
-					 * if the failback request is for the quarantined node and
-					 * that node had a primary role before it was quarantined,
-					 * restore the primary node status for that node. this is
-					 * important for the failover script to get the proper
-					 * value of old primary
-					 */
-					ereport(LOG,
-							(errmsg("failover: failing back the quarantine node that was primary before it was quarantined"),
-							 errdetail("all children needs a restart")));
-					Req_info->primary_node_id = node_id;
-
-					/*
-					 * since we changed the primary node so restart of all
-					 * children is required
-					 */
-					need_to_restart_children = true;
-					partial_restart = false;
-				}
-				else if (all_backend_down == false)
-				{
-					ereport(LOG,
-							(errmsg("Do not restart children because we are failing back node id %d host: %s port: %d and we are in streaming replication mode and not all backends were down", node_id,
-									BACKEND_INFO(node_id).backend_hostname,
-									BACKEND_INFO(node_id).backend_port)));
-					need_to_restart_children = false;
-					partial_restart = false;
-				}
-				else
-				{
-					need_to_restart_children = true;
-					partial_restart = false;
-				}
-			}
-			else
-			{
-				/*
-				 * The request is a proper failbak request and not because of
-				 * the update status of quarantined node
-				 */
-				(void) write_status_file();
-
-				trigger_failover_command(node_id, pool_config->failback_command,
-										 MAIN_NODE_ID, get_next_main_node(), PRIMARY_NODE_ID);
-			}
-
-			sync_required = true;
 		}
-		else if (reqkind == PROMOTE_NODE_REQUEST)
+		else if (failover_context.reqkind == PROMOTE_NODE_REQUEST)
 		{
 			if (node_id != -1 && VALID_BACKEND(node_id))
 			{
@@ -1603,63 +1543,14 @@ failover(void)
 		else					/* NODE_DOWN_REQUEST &&
 								 * NODE_QUARANTINE_REQUEST */
 		{
-			int			cnt = 0;
-
-			for (i = 0; i < node_count; i++)
-			{
-				if (node_id_set[i] != -1 && (BACKEND_INFO(node_id_set[i]).quarantine == true ||
-											 ((RAW_MODE && VALID_BACKEND_RAW(node_id_set[i])) ||
-											  VALID_BACKEND(node_id_set[i]))))
-				{
-					ereport(LOG,
-							(errmsg("starting %s. shutdown host %s(%d)",
-									(reqkind == NODE_QUARANTINE_REQUEST) ? "quarantine" : "degeneration",
-									BACKEND_INFO(node_id_set[i]).backend_hostname,
-									BACKEND_INFO(node_id_set[i]).backend_port)));
-
-					BACKEND_INFO(node_id_set[i]).backend_status = CON_DOWN; /* set down status */
-					pool_set_backend_status_changed_time(node_id_set[i]);
-					if (reqkind == NODE_QUARANTINE_REQUEST)
-					{
-						BACKEND_INFO(node_id_set[i]).quarantine = true;
-					}
-					else
-					{
-						/*
-						 * if the degeneration request is for the quarantined
-						 * node and that node had a primary role before it was
-						 * quarantined, Restore the primary node status for
-						 * that node before degenerating it. This is important
-						 * for the failover script to get the proper value of
-						 * old primary
-						 */
-						if (Req_info->primary_node_id == -1 &&
-							BACKEND_INFO(node_id_set[i]).quarantine == true &&
-							BACKEND_INFO(node_id_set[i]).role == ROLE_PRIMARY)
-						{
-							ereport(DEBUG2,
-									(errmsg("failover: degenerating the node that was primary node before it was quarantined")));
-							Req_info->primary_node_id = node_id_set[i];
-							search_primary = false;
-						}
-						BACKEND_INFO(node_id_set[i]).quarantine = false;
-						(void) write_status_file();
-					}
-
-					/* save down node */
-					nodes[node_id_set[i]] = 1;
-					cnt++;
-				}
-			}
-
-			if (cnt == 0)
-			{
-				ereport(LOG,
-						(errmsg("failover: no backends are degenerated")));
+			
+			if (handle_failover_request(&failover_context, node_id) < 0)
 				continue;
-			}
 		}
 
+		/*
+		 * Determin new main node.
+		 */
 		new_main_node = get_next_main_node();
 
 		if (new_main_node < 0)
@@ -1670,495 +1561,60 @@ failover(void)
 
 		ereport(DEBUG1,
 				(errmsg("failover/failback request details: STREAM: %d reqkind: %d detail: %x node_id: %d",
-						STREAM, reqkind, request_details & REQ_DETAIL_SWITCHOVER,
+						STREAM, failover_context.reqkind, failover_context.request_details & REQ_DETAIL_SWITCHOVER,
 						node_id)));
 
 		/*
-		 * On 2011/5/2 Tatsuo Ishii says: if mode is streaming replication and
-		 * request is NODE_UP_REQUEST (failback case) we don't need to restart
-		 * all children. Existing session will not use newly attached node,
-		 * but load balanced node is not changed until this session ends, so
-		 * it's harmless anyway.
+		 * Kill child process to prepare failover/failback.
 		 */
-
-		/*
-		 * On 2015/9/21 Tatsuo Ishii says: this judgment is not sufficient if
-		 * all backends were down. Child process has local status in which all
-		 * backends are down. In this case even if new connection arrives from
-		 * frontend, the child will not accept it because the local status
-		 * shows all backends are down. For this purpose we refer to
-		 * "all_backend_down" variable, which was set before updating backend
-		 * status.
-		 *
-		 * See bug 248 for more details.
-		 */
-
-		/*
-		 * We also need to think about a case when the former primary node did
-		 * not exist.  In the case we need to restart all children as
-		 * well. For example when previous primary node id is 0 and then it
-		 * went down, restarted, re-attached without promotion. Then existing
-		 * child process loses connection slot to node 0 and keeps on using it
-		 * when node 0 comes back. This could result in segfault later on in
-		 * the child process because there's no connection to node id 0.
-		 *
-		 * Actually we need to think about when ALWAYS_PRIMARY flag is set
-		 * *but* DISALLOW_TO_FAILOVER flag is not set case. In the case after
-		 * primary failover Req_info->primary_node_id is set, but connection
-		 * to the primary node does not exist. So we should do full restart if
-		 * requested node id is the former primary node.
-		 *
-		 * See bug 672 for more details.
-		 */
-		if (STREAM && reqkind == NODE_UP_REQUEST && all_backend_down == false &&
-			Req_info->primary_node_id >= 0 && Req_info->primary_node_id != node_id)
-		{
-			/*
-			 * The decision to restart/no-restart children for update status
-			 * request has already been made
-			 */
-			if (!(request_details & REQ_DETAIL_UPDATE))
-			{
-				ereport(LOG,
-						(errmsg("Do not restart children because we are failing back node id %d host: %s port: %d and we are in streaming replication mode and not all backends were down", node_id,
-								BACKEND_INFO(node_id).backend_hostname,
-								BACKEND_INFO(node_id).backend_port)));
-
-				need_to_restart_children = false;
-				partial_restart = false;
-			}
-		}
-
-		/*
-		 * If the mode is streaming replication and the request is
-		 * NODE_DOWN_REQUEST and it's actually a switch over request, we don't
-		 * need to restart all children, except the node is primary.
-		 */
-		else if (STREAM && (reqkind == NODE_DOWN_REQUEST || reqkind == NODE_QUARANTINE_REQUEST) &&
-				 request_details & REQ_DETAIL_SWITCHOVER && node_id != PRIMARY_NODE_ID)
-		{
-			ereport(LOG,
-					(errmsg("Do not restart children because we are switching over node id %d host: %s port: %d and we are in streaming replication mode", node_id,
-							BACKEND_INFO(node_id).backend_hostname,
-							BACKEND_INFO(node_id).backend_port)));
-
-			need_to_restart_children = true;
-			partial_restart = true;
-
-			for (i = 0; i < pool_config->num_init_children; i++)
-			{
-				bool		restart = false;
-
-				for (j = 0; j < pool_config->max_pool; j++)
-				{
-					for (k = 0; k < NUM_BACKENDS; k++)
-					{
-						ConnectionInfo *con = pool_coninfo(i, j, k);
-
-						if (con->connected && con->load_balancing_node == node_id)
-						{
-							ereport(LOG,
-									(errmsg("child pid %d needs to restart because pool %d uses backend %d",
-											process_info[i].pid, j, node_id)));
-							restart = true;
-							break;
-						}
-					}
-				}
-
-				if (restart)
-				{
-					pid_t		pid = process_info[i].pid;
-
-					if (pid)
-					{
-						kill(pid, SIGQUIT);
-						ereport(DEBUG1,
-								(errmsg("failover handler"),
-								 errdetail("kill process with PID:%d", pid)));
-					}
-				}
-			}
-		}
-		else
-		{
-			ereport(LOG,
-					(errmsg("Restart all children")));
-
-			/* kill all children */
-			for (i = 0; i < pool_config->num_init_children; i++)
-			{
-				pid_t		pid = process_info[i].pid;
-
-				if (pid)
-				{
-					kill(pid, SIGQUIT);
-					ereport(DEBUG1,
-							(errmsg("failover handler"),
-							 errdetail("kill process with PID:%d", pid)));
-				}
-			}
-
-			need_to_restart_children = true;
-			partial_restart = false;
-		}
+		kill_failover_children(&failover_context, node_id);
 
 		/*
 		 * Exec failover_command if needed. We do not execute failover when
-		 * request is quarantine type.
+		 * request is quarantine type.  Also if the request is to promote
+		 * specified node, execute failover command.
 		 */
-		if (reqkind == NODE_DOWN_REQUEST)
-		{
-			for (i = 0; i < pool_config->backend_desc->num_backends; i++)
-			{
-				if (nodes[i])
-				{
-					/* If this is prmoting specified node, new_main_node
-					 * should be replaced by the requested node. The requested
-					 * node should be REAL_PRIMARY_NODE_ID.
-					 */
-					if (request_details & REQ_DETAIL_PROMOTE)
-					{
-						trigger_failover_command(i, pool_config->failover_command,
-												 MAIN_NODE_ID, promote_node, REAL_PRIMARY_NODE_ID);
-					}
-					else
-					{
-						trigger_failover_command(i, pool_config->failover_command,
-												 MAIN_NODE_ID, new_main_node, REAL_PRIMARY_NODE_ID);
-					}
-					sync_required = true;
-				}
-			}
-		}
-
-		if (reqkind == PROMOTE_NODE_REQUEST && VALID_BACKEND(node_id))
-		{
-			new_primary = node_id;
-		}
-		else if (reqkind == NODE_QUARANTINE_REQUEST)
-		{
-			/*
-			 * if the quarantine node was the primary node set the newprimary
-			 * to -1 (invalid)
-			 */
-			if (Req_info->primary_node_id == node_id)
-			{
-				/*
-				 * set the role of the node, This will help us restore the
-				 * primary node id when the node will come out from quarantine
-				 * state
-				 */
-				BACKEND_INFO(node_id).role = ROLE_PRIMARY;
-				new_primary = -1;
-			}
-			else if (SL_MODE)
-			{
-				new_primary = Req_info->primary_node_id;
-			}
-		}
+		exec_failover_command(&failover_context, new_main_node, promote_node);
 
 		/*
-		 * If the down node was a standby node in streaming replication mode,
-		 * we can avoid calling find_primary_node_repeatedly() and recognize
-		 * the former primary as the new primary node, which will reduce the
-		 * time to process standby down.
-		 * This does not apply to the case when no primary node existed
-		 * (Req_info->primary_node_id < 0). In this case
-		 * find_primary_node_repeatedly() should be called.
+		 * Determine new primary node id. Possibly call find_primary_node_repeatedly().
 		 */
-		else if (SL_MODE &&
-				 reqkind == NODE_DOWN_REQUEST)
-		{
-			if (Req_info->primary_node_id >= 0 && Req_info->primary_node_id != node_id)
-			{
-				new_primary = Req_info->primary_node_id;
-			}
-			else
-			{
-				if (Req_info->primary_node_id >= 0)
-					BACKEND_INFO(Req_info->primary_node_id).role = ROLE_STANDBY;
-				new_primary = find_primary_node_repeatedly();
-			}
-		}
-		else if (search_primary == false)
-		{
-			ereport(DEBUG1,
-					(errmsg("failover was called on quarantined node. No need to search for primary node")));
-			new_primary = Req_info->primary_node_id;
-		}
-		else
-		{
-			new_primary = find_primary_node_repeatedly();
-		}
-
+		new_primary = determine_new_primary_node(&failover_context, node_id);
+		
 		/*
 		 * If follow_primary_command is provided and in streaming
 		 * replication mode, we start degenerating all backends as they are
 		 * not replicated anymore.
 		 */
-		int			follow_cnt = 0;
+		i = exec_follow_primary_command(&failover_context, node_id, new_primary);
 
-		if (STREAM)
-		{
-			if (*pool_config->follow_primary_command != '\0' ||
-				reqkind == PROMOTE_NODE_REQUEST)
-			{
-				/*
-				 * follow primary command is executed in following cases:
-				 * - failover against the current primary
-				 * - no primary exists and new primary is created by failover
-				 * - promote node request
-				 */
-				if (((reqkind == NODE_DOWN_REQUEST) &&
-					 Req_info->primary_node_id >= 0 &&
-					 (nodes[Req_info->primary_node_id])) ||
-					(reqkind == NODE_DOWN_REQUEST && Req_info->primary_node_id < 0 && new_primary >= 0) ||
-					(node_id >= 0 && (reqkind == PROMOTE_NODE_REQUEST) &&
-					 (VALID_BACKEND(node_id))))
-				{
-
-					for (i = 0; i < pool_config->backend_desc->num_backends; i++)
-					{
-						/* do not degenerate the new primary */
-						if ((new_primary >= 0) && (i != new_primary))
-						{
-							BackendInfo *bkinfo;
-
-							bkinfo = pool_get_node_info(i);
-							ereport(LOG,
-									(errmsg("starting follow degeneration. shutdown host %s(%d)",
-											bkinfo->backend_hostname,
-											bkinfo->backend_port)));
-							bkinfo->backend_status = CON_DOWN;	/* set down status */
-							pool_set_backend_status_changed_time(i);
-							(void) write_status_file();
-
-							follow_cnt++;
-						}
-					}
-
-					if (follow_cnt == 0)
-					{
-						ereport(LOG,
-								(errmsg("failover: no follow backends are degenerated")));
-					}
-					else
-					{
-						/* update new primary node */
-						new_main_node = get_next_main_node();
-						ereport(LOG,
-								(errmsg("failover: %d follow backends have been degenerated", follow_cnt)));
-					}
-				}
-			}
-		}
-
-		if ((follow_cnt > 0) && (*pool_config->follow_primary_command != '\0'))
-		{
-			follow_pid = fork_follow_child(Req_info->primary_node_id, new_primary,
-										   Req_info->primary_node_id);
-		}
-
-		/* Save primary node id */
-		if (Req_info->primary_node_id != new_primary)
-		{
-			if (Req_info->primary_node_id >= 0)
-			{
-				pool_set_backend_status_changed_time(Req_info->primary_node_id);
-			}
-			if (new_primary >= 0)
-			{
-				BACKEND_INFO(new_primary).role = ROLE_PRIMARY;
-				pool_set_backend_status_changed_time(new_primary);
-			}
-		}
-		Req_info->primary_node_id = new_primary;
-		ereport(LOG,
-				(errmsg("failover: set new primary node: %d", Req_info->primary_node_id)));
-
-		if (new_main_node >= 0)
-		{
-			Req_info->main_node_id = new_main_node;
-			sync_required = true;
-			ereport(LOG,
-					(errmsg("failover: set new main node: %d", Req_info->main_node_id)));
-		}
-
-
-		/* Kill children and restart them if needed */
-		if (need_to_restart_children)
-		{
-			for (i = 0; i < pool_config->num_init_children; i++)
-			{
-				/*
-				 * Try to kill pgpool child because previous kill signal may
-				 * not be received by pgpool child. This could happen if
-				 * multiple PostgreSQL are going down (or even starting
-				 * pgpool, without starting PostgreSQL can trigger this).
-				 * Child calls degenerate_backend() and it tries to acquire
-				 * semaphore to write a failover request. In this case the
-				 * signal mask is set as well, thus signals are never
-				 * received.
-				 */
-
-				bool		restart = false;
-
-				if (partial_restart)
-				{
-					for (j = 0; j < pool_config->max_pool; j++)
-					{
-						for (k = 0; k < NUM_BACKENDS; k++)
-						{
-							ConnectionInfo *con = pool_coninfo(i, j, k);
-
-							if (con->connected && con->load_balancing_node == node_id)
-							{
-
-								ereport(LOG,
-										(errmsg("child pid %d needs to restart because pool %d uses backend %d",
-												process_info[i].pid, j, node_id)));
-								restart = true;
-								break;
-							}
-						}
-					}
-				}
-				else
-					restart = true;
-
-				if (restart)
-				{
-					if (process_info[i].pid)
-					{
-						kill(process_info[i].pid, SIGQUIT);
-
-						process_info[i].pid = fork_a_child(fds, i);
-						process_info[i].start_time = time(NULL);
-						process_info[i].client_connection_count = 0;
-						process_info[i].status = WAIT_FOR_CONNECT;
-						process_info[i].connected = 0;
-						process_info[i].wait_for_connect = 0;
-					}
-				}
-				else
-					process_info[i].need_to_restart = 1;
-			}
-		}
-
-		else
-		{
-			/*
-			 * Set restart request to each child. Children will exit(1)
-			 * whenever they are convenient.
-			 */
-			for (i = 0; i < pool_config->num_init_children; i++)
-			{
-				process_info[i].need_to_restart = 1;
-			}
-		}
+		/* if follow primary command was executed, main node can be changed */
+		if (i >= 0)
+			new_main_node = i;
 
 		/*
-		 * Send restart request to worker child.
+		 * Now new primary node and new main node are established.
+		 * Save them into shared memory. Also update status changed time.
 		 */
-		kill(worker_pid, SIGUSR1);
+		save_node_info(&failover_context, new_primary, new_main_node);
 
-		if (sync_required)
-			wd_failover_end();
-
-		if (reqkind == NODE_UP_REQUEST)
-		{
-			ereport(LOG,
-					(errmsg("failback done. reconnect host %s(%d)",
-							BACKEND_INFO(node_id).backend_hostname,
-							BACKEND_INFO(node_id).backend_port)));
-
-			/* Fork health check process if needed */
-			for (i = 0; i < NUM_BACKENDS; i++)
-			{
-				if (health_check_pids[i] == 0)
-				{
-					ereport(LOG,
-							(errmsg("start health check process for host %s(%d)",
-									BACKEND_INFO(i).backend_hostname,
-									BACKEND_INFO(i).backend_port)));
-
-					health_check_pids[i] = worker_fork_a_child(PT_HEALTH_CHECK, do_health_check_child, &i);
-				}
-			}
-		}
-		else if (reqkind == PROMOTE_NODE_REQUEST)
-		{
-			ereport(LOG,
-					(errmsg("promotion done. promoted host %s(%d)",
-							BACKEND_INFO(node_id).backend_hostname,
-							BACKEND_INFO(node_id).backend_port)));
-		}
-		else
-		{
-			/*
-			 * Temporary black magic. Without this regression 055 does not
-			 * finish
-			 */
-			fprintf(stderr, "%s done. shutdown host %s(%d)",
-					(reqkind == NODE_DOWN_REQUEST) ? "failover" : "quarantine",
-					BACKEND_INFO(node_id).backend_hostname,
-					BACKEND_INFO(node_id).backend_port);
-
-			ereport(LOG,
-					(errmsg("%s done. shutdown host %s(%d)",
-							(reqkind == NODE_DOWN_REQUEST) ? "failover" : "quarantine",
-							BACKEND_INFO(node_id).backend_hostname,
-							BACKEND_INFO(node_id).backend_port)));
-		}
-		need_to_restart_pcp = true;
+		/* Kill children and restart them if needed */
+		exec_child_restart(&failover_context, node_id);
 	}
 
+	/*
+	 * We are almost done.
+	 * Unlock flags.
+	 */
 	pool_semaphore_lock(REQUEST_INFO_SEM);
 	switching = 0;
 	Req_info->switching = false;
 	pool_semaphore_unlock(REQUEST_INFO_SEM);
 
 	/*
-	 * kick wakeup_handler in pcp_child to notice that failover/failback done
+	 * kick wakeup_handler in pcp_child to notice that failover/failback done.
 	 */
-	kill(pcp_pid, SIGUSR2);
-
-	if (need_to_restart_pcp)
-	{
-		sleep(1);
-
-		/*
-		 * Send restart request to pcp child.
-		 */
-		kill(pcp_pid, SIGUSR1);
-		for (;;)
-		{
-			sts = waitpid(pcp_pid, &status, 0);
-			if (sts != -1)
-				break;
-
-			if (errno == EINTR)
-				continue;
-			else
-			{
-				ereport(WARNING,
-						(errmsg("failover: waitpid failed"),
-						 errdetail("%m")));
-				continue;
-			}
-		}
-		if (WIFSIGNALED(status))
-			ereport(LOG,
-					(errmsg("PCP child %d exits with status %d by signal %d in failover()", pcp_pid, status, WTERMSIG(status))));
-		else
-			ereport(LOG,
-					(errmsg("PCP child %d exits with status %d in failover()", pcp_pid, status)));
-
-		pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
-		ereport(LOG,
-				(errmsg("fork a new PCP child pid %d in failover()", pcp_pid)));
-	}
+	exec_notice_pcp_child(&failover_context);
 }
 
 #ifdef NOT_USED
@@ -4553,3 +4009,721 @@ pool_release_follow_primary_lock(bool remote_request)
 			(errmsg("pool_release_follow_primary_lock called")));
 
 }
+
+/*
+ * -------------------------------------------------------------------------
+ * Subroutines for failover() begin
+ * -------------------------------------------------------------------------
+ */
+
+/*
+ * Handle failback request. Called from failover().
+ */
+static int
+handle_failback_request(FAILOVER_CONTEXT *failover_context, int node_id)
+{
+	if (node_id < 0 || node_id >= MAX_NUM_BACKENDS ||
+		(failover_context->reqkind == NODE_UP_REQUEST && !(RAW_MODE &&
+										 BACKEND_INFO(node_id).backend_status == CON_DOWN) && VALID_BACKEND(node_id)) ||
+		(failover_context->reqkind == NODE_DOWN_REQUEST && !VALID_BACKEND(node_id)))
+	{
+		if (node_id < 0 || node_id >= MAX_NUM_BACKENDS)
+			ereport(LOG,
+					(errmsg("invalid failback request, node id: %d is invalid. node id must be between [0 and %d]", node_id, MAX_NUM_BACKENDS)));
+		else
+			ereport(LOG,
+					(errmsg("invalid failback request, status: [%d] of node id : %d is invalid for failback", BACKEND_INFO(node_id).backend_status, node_id)));
+
+		return -1;
+	}
+
+	ereport(LOG,
+			(errmsg("starting fail back. reconnect host %s(%d)",
+					BACKEND_INFO(node_id).backend_hostname,
+					BACKEND_INFO(node_id).backend_port)));
+
+	/* Check to see if all backends are down */
+	failover_context->all_backend_down = check_all_backend_down();
+
+	BACKEND_INFO(node_id).backend_status = CON_CONNECT_WAIT;	/* unset down status */
+	pool_set_backend_status_changed_time(node_id);
+
+	if ((failover_context->request_details & REQ_DETAIL_UPDATE))
+	{
+		/* remove the quarantine flag */
+		BACKEND_INFO(node_id).quarantine = false;
+
+		/*
+		 * do not search for primary node when handling the quarantine
+		 * nodes
+		 */
+		failover_context->search_primary = false;
+
+		/*
+		 * recalculate the main node id after setting the backend
+		 * status of quarantined node, this will bring us to the old
+		 * main_node_id that was before the quarantine state
+		 */
+		Req_info->main_node_id = get_next_main_node();
+		if (Req_info->primary_node_id == -1 &&
+			BACKEND_INFO(node_id).role == ROLE_PRIMARY)
+		{
+			/*
+			 * if the failback request is for the quarantined node and
+			 * that node had a primary role before it was quarantined,
+			 * restore the primary node status for that node. this is
+			 * important for the failover script to get the proper
+			 * value of old primary
+			 */
+			ereport(LOG,
+					(errmsg("failover: failing back the quarantine node that was primary before it was quarantined"),
+					 errdetail("all children needs a restart")));
+			Req_info->primary_node_id = node_id;
+
+			/*
+			 * since we changed the primary node so restart of all
+			 * children is required
+			 */
+			failover_context->need_to_restart_children = true;
+			failover_context->partial_restart = false;
+		}
+		else if (failover_context->all_backend_down == false)
+		{
+			ereport(LOG,
+					(errmsg("Do not restart children because we are failing back node id %d host: %s port: %d and we are in streaming replication mode and not all backends were down", node_id,
+							BACKEND_INFO(node_id).backend_hostname,
+							BACKEND_INFO(node_id).backend_port)));
+			failover_context->need_to_restart_children = false;
+			failover_context->partial_restart = false;
+		}
+		else
+		{
+			failover_context->need_to_restart_children = true;
+			failover_context->partial_restart = false;
+		}
+	}
+	else
+	{
+		/*
+		 * The request is a proper failbak request and not because of
+		 * the update status of quarantined node
+		 */
+		(void) write_status_file();
+
+		trigger_failover_command(node_id, pool_config->failback_command,
+								 MAIN_NODE_ID, get_next_main_node(), PRIMARY_NODE_ID);
+	}
+
+	failover_context->sync_required = true;
+
+	return 0;
+}
+
+/*
+ * Handle failover request. Called from failover().
+ * return -1 if no node is requested failover.
+ */
+static int
+handle_failover_request(FAILOVER_CONTEXT *failover_context, int node_id)
+{
+	int		cnt = 0;	/* number of down node ids */
+	int		i;
+
+	for (i = 0; i < failover_context->node_count; i++)
+	{
+		if (failover_context->node_id_set[i] != -1 && (BACKEND_INFO(failover_context->node_id_set[i]).quarantine == true ||
+													  ((RAW_MODE && VALID_BACKEND_RAW(failover_context->node_id_set[i])) ||
+													   VALID_BACKEND(failover_context->node_id_set[i]))))
+		{
+			ereport(LOG,
+					(errmsg("starting %s. shutdown host %s(%d)",
+							(failover_context->reqkind == NODE_QUARANTINE_REQUEST) ? "quarantine" : "degeneration",
+							BACKEND_INFO(failover_context->node_id_set[i]).backend_hostname,
+							BACKEND_INFO(failover_context->node_id_set[i]).backend_port)));
+
+			BACKEND_INFO(failover_context->node_id_set[i]).backend_status = CON_DOWN; /* set down status */
+			pool_set_backend_status_changed_time(failover_context->node_id_set[i]);
+			if (failover_context->reqkind == NODE_QUARANTINE_REQUEST)
+			{
+				BACKEND_INFO(failover_context->node_id_set[i]).quarantine = true;
+			}
+			else
+			{
+				/*
+				 * if the degeneration request is for the quarantined
+				 * node and that node had a primary role before it was
+				 * quarantined, Restore the primary node status for
+				 * that node before degenerating it. This is important
+				 * for the failover script to get the proper value of
+				 * old primary
+				 */
+				if (Req_info->primary_node_id == -1 &&
+					BACKEND_INFO(failover_context->node_id_set[i]).quarantine == true &&
+					BACKEND_INFO(failover_context->node_id_set[i]).role == ROLE_PRIMARY)
+				{
+					ereport(DEBUG2,
+							(errmsg("failover: degenerating the node that was primary node before it was quarantined")));
+					Req_info->primary_node_id = failover_context->node_id_set[i];
+					failover_context->search_primary = false;
+				}
+				BACKEND_INFO(failover_context->node_id_set[i]).quarantine = false;
+				(void) write_status_file();
+			}
+
+			/* save down node */
+			failover_context->nodes[failover_context->node_id_set[i]] = 1;
+			cnt++;
+		}
+	}
+
+	if (cnt == 0)
+	{
+		ereport(LOG,
+				(errmsg("failover: no backends are degenerated")));
+		return -1;
+	}
+	return 0;
+}
+
+/*
+ * Kill child process to prepare failover/failback.
+ */
+static void
+kill_failover_children(FAILOVER_CONTEXT *failover_context, int node_id)
+{
+	int		i, j, k;
+	/*
+	 * On 2011/5/2 Tatsuo Ishii says: if mode is streaming replication and
+	 * request is NODE_UP_REQUEST (failback case) we don't need to restart
+	 * all children. Existing session will not use newly attached node,
+	 * but load balanced node is not changed until this session ends, so
+	 * it's harmless anyway.
+	 */
+
+	/*
+	 * On 2015/9/21 Tatsuo Ishii says: this judgment is not sufficient if
+	 * all backends were down. Child process has local status in which all
+	 * backends are down. In this case even if new connection arrives from
+	 * frontend, the child will not accept it because the local status
+	 * shows all backends are down. For this purpose we refer to
+	 * "all_backend_down" variable, which was set before updating backend
+	 * status.
+	 *
+	 * See bug 248 for more details.
+	 */
+
+	/*
+	 * We also need to think about a case when the former primary node did
+	 * not exist.  In the case we need to restart all children as
+	 * well. For example when previous primary node id is 0 and then it
+	 * went down, restarted, re-attached without promotion. Then existing
+	 * child process loses connection slot to node 0 and keeps on using it
+	 * when node 0 comes back. This could result in segfault later on in
+	 * the child process because there's no connection to node id 0.
+	 *
+	 * Actually we need to think about when ALWAYS_PRIMARY flag is set
+	 * *but* DISALLOW_TO_FAILOVER flag is not set case. In the case after
+	 * primary failover Req_info->primary_node_id is set, but connection
+	 * to the primary node does not exist. So we should do full restart if
+	 * requested node id is the former primary node.
+	 *
+	 * See bug 672 for more details.
+	 */
+	if (STREAM && failover_context->reqkind == NODE_UP_REQUEST && failover_context->all_backend_down == false &&
+		Req_info->primary_node_id >= 0 && Req_info->primary_node_id != node_id)
+	{
+		/*
+		 * The decision to restart/no-restart children for update status
+		 * request has already been made
+		 */
+		if (!(failover_context->request_details & REQ_DETAIL_UPDATE))
+		{
+			ereport(LOG,
+					(errmsg("Do not restart children because we are failing back node id %d host: %s port: %d and we are in streaming replication mode and not all backends were down", node_id,
+							BACKEND_INFO(node_id).backend_hostname,
+							BACKEND_INFO(node_id).backend_port)));
+
+			failover_context->need_to_restart_children = false;
+			failover_context->partial_restart = false;
+		}
+	}
+
+	/*
+	 * If the mode is streaming replication and the request is
+	 * NODE_DOWN_REQUEST and it's actually a switch over request, we don't
+	 * need to restart all children, except the node is primary.
+	 */
+	else if (STREAM && (failover_context->reqkind == NODE_DOWN_REQUEST || failover_context->reqkind == NODE_QUARANTINE_REQUEST) &&
+			 failover_context->request_details & REQ_DETAIL_SWITCHOVER && node_id != PRIMARY_NODE_ID)
+	{
+		ereport(LOG,
+				(errmsg("Do not restart children because we are switching over node id %d host: %s port: %d and we are in streaming replication mode", node_id,
+						BACKEND_INFO(node_id).backend_hostname,
+						BACKEND_INFO(node_id).backend_port)));
+
+		failover_context->need_to_restart_children = true;
+		failover_context->partial_restart = true;
+
+		for (i = 0; i < pool_config->num_init_children; i++)
+		{
+			bool		restart = false;
+
+			for (j = 0; j < pool_config->max_pool; j++)
+			{
+				for (k = 0; k < NUM_BACKENDS; k++)
+				{
+					ConnectionInfo *con = pool_coninfo(i, j, k);
+
+					if (con->connected && con->load_balancing_node == node_id)
+					{
+						ereport(LOG,
+								(errmsg("child pid %d needs to restart because pool %d uses backend %d",
+										process_info[i].pid, j, node_id)));
+						restart = true;
+						break;
+					}
+				}
+			}
+
+			if (restart)
+			{
+				pid_t		pid = process_info[i].pid;
+
+				if (pid)
+				{
+					kill(pid, SIGQUIT);
+					ereport(DEBUG1,
+							(errmsg("failover handler"),
+							 errdetail("kill process with PID:%d", pid)));
+				}
+			}
+		}
+	}
+	else
+	{
+		ereport(LOG,
+				(errmsg("Restart all children")));
+
+		/* kill all children */
+		for (i = 0; i < pool_config->num_init_children; i++)
+		{
+			pid_t		pid = process_info[i].pid;
+
+			if (pid)
+			{
+				kill(pid, SIGQUIT);
+				ereport(DEBUG1,
+						(errmsg("failover handler"),
+						 errdetail("kill process with PID:%d", pid)));
+			}
+		}
+
+		failover_context->need_to_restart_children = true;
+		failover_context->partial_restart = false;
+	}
+}
+
+/*
+ * Exec failover_command if needed. We do not execute failover when request is
+ * quarantine type.  Also if the request is to promote specified node, execute
+ * failover command.
+ */
+static void
+exec_failover_command(FAILOVER_CONTEXT *failover_context, int new_main_node_id, int promote_node_id)
+{
+	int		i;
+
+	if (failover_context->reqkind == NODE_DOWN_REQUEST)
+	{
+		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
+		{
+			if (failover_context->nodes[i])
+			{
+				/* If this is prmoting specified node, new_main_node
+				 * should be replaced by the requested node. The requested
+				 * node should be REAL_PRIMARY_NODE_ID.
+				 */
+				if (failover_context->request_details & REQ_DETAIL_PROMOTE)
+				{
+					trigger_failover_command(i, pool_config->failover_command,
+											 MAIN_NODE_ID, promote_node_id, REAL_PRIMARY_NODE_ID);
+				}
+				else
+				{
+					trigger_failover_command(i, pool_config->failover_command,
+											 MAIN_NODE_ID, new_main_node_id, REAL_PRIMARY_NODE_ID);
+				}
+				failover_context->sync_required = true;
+			}
+		}
+	}
+}
+
+/*
+ * Determine new primary node id. Possibly call find_primary_node_repeatedly().
+ */
+static int
+determine_new_primary_node(FAILOVER_CONTEXT *failover_context, int node_id)
+{
+	int		new_primary;
+
+	if (failover_context->reqkind == PROMOTE_NODE_REQUEST && VALID_BACKEND(node_id))
+	{
+		new_primary = node_id;
+	}
+	else if (failover_context->reqkind == NODE_QUARANTINE_REQUEST)
+	{
+		/*
+		 * If the quarantine node was the primary node, set the new primary
+		 * to -1 (invalid).
+		 */
+		if (Req_info->primary_node_id == node_id)
+		{
+			/*
+			 * set the role of the node, This will help us restore the
+			 * primary node id when the node will come out from quarantine
+			 * state
+			 */
+			BACKEND_INFO(node_id).role = ROLE_PRIMARY;
+			new_primary = -1;
+		}
+		else
+		{
+			new_primary = Req_info->primary_node_id;
+		}
+	}
+
+	/*
+	 * If the down node was a standby node in streaming replication mode,
+	 * we can avoid calling find_primary_node_repeatedly() and recognize
+	 * the former primary as the new primary node, which will reduce the
+	 * time to process standby down.
+	 * This does not apply to the case when no primary node existed
+	 * (Req_info->primary_node_id < 0). In this case
+	 * find_primary_node_repeatedly() should be called.
+	 */
+	else if (SL_MODE &&
+			 failover_context->reqkind == NODE_DOWN_REQUEST)
+	{
+		if (Req_info->primary_node_id >= 0 && Req_info->primary_node_id != node_id)
+		{
+			new_primary = Req_info->primary_node_id;
+		}
+		else
+		{
+			if (Req_info->primary_node_id >= 0)
+				BACKEND_INFO(Req_info->primary_node_id).role = ROLE_STANDBY;
+			new_primary = find_primary_node_repeatedly();
+		}
+	}
+	else if (failover_context->search_primary == false)
+	{
+		ereport(DEBUG1,
+				(errmsg("failover was called on quarantined node. No need to search for primary node")));
+		new_primary = Req_info->primary_node_id;
+	}
+	else
+	{
+		new_primary = find_primary_node_repeatedly();
+	}
+
+	return new_primary;
+}
+
+/*
+ * Execute follow primary command if neccessary.
+ * return new main node id if it needs to be changed.
+ * If not changed, -1 will be returned.
+ */
+static int
+exec_follow_primary_command(FAILOVER_CONTEXT *failover_context, int node_id, int new_primary_node_id)
+{
+	int		follow_cnt = 0;
+	int		new_main_node_id = -1;
+	int		i;
+
+	if (!STREAM)
+		return -1;
+
+	if (*pool_config->follow_primary_command != '\0' ||
+		failover_context->reqkind == PROMOTE_NODE_REQUEST)
+	{
+		/*
+		 * follow primary command is executed in following cases:
+		 * - failover against the current primary
+		 * - no primary exists and new primary is created by failover
+		 * - promote node request
+		 */
+		if (((failover_context->reqkind == NODE_DOWN_REQUEST) &&
+			 Req_info->primary_node_id >= 0 &&
+			 (failover_context->nodes[Req_info->primary_node_id])) ||
+			(failover_context->reqkind == NODE_DOWN_REQUEST && Req_info->primary_node_id < 0 && new_primary_node_id >= 0) ||
+			(node_id >= 0 && (failover_context->reqkind == PROMOTE_NODE_REQUEST) &&
+			 (VALID_BACKEND(node_id))))
+		{
+
+			for (i = 0; i < pool_config->backend_desc->num_backends; i++)
+			{
+				/* do not degenerate the new primary */
+				if ((new_primary_node_id >= 0) && (i != new_primary_node_id))
+				{
+					BackendInfo *bkinfo;
+
+					bkinfo = pool_get_node_info(i);
+					ereport(LOG,
+							(errmsg("starting follow degeneration. shutdown host %s(%d)",
+									bkinfo->backend_hostname,
+									bkinfo->backend_port)));
+					bkinfo->backend_status = CON_DOWN;	/* set down status */
+					pool_set_backend_status_changed_time(i);
+					(void) write_status_file();
+
+					follow_cnt++;
+				}
+			}
+
+			if (follow_cnt == 0)
+			{
+				ereport(LOG,
+						(errmsg("failover: no follow backends are degenerated")));
+			}
+			else
+			{
+				/* update new primary node */
+				new_main_node_id = get_next_main_node();
+				ereport(LOG,
+						(errmsg("failover: %d follow backends have been degenerated", follow_cnt)));
+			}
+		}
+	}
+
+	if ((follow_cnt > 0) && (*pool_config->follow_primary_command != '\0'))
+	{
+		/* exec follow child */
+		follow_pid = fork_follow_child(Req_info->primary_node_id, new_primary_node_id,
+									   Req_info->primary_node_id);
+	}
+
+	return new_main_node_id;
+}
+
+/*
+ * Now new primary node and new main node are established.
+ * Save them into shared memory. Also update status changed time.
+ */
+static void
+save_node_info(FAILOVER_CONTEXT *failover_context, int new_primary_node_id, int new_main_node_id)
+{
+	/* Save primary node id */
+	if (Req_info->primary_node_id != new_primary_node_id)
+	{
+		if (Req_info->primary_node_id >= 0)
+		{
+			pool_set_backend_status_changed_time(Req_info->primary_node_id);
+		}
+		if (new_primary_node_id >= 0)
+		{
+			BACKEND_INFO(new_primary_node_id).role = ROLE_PRIMARY;
+			pool_set_backend_status_changed_time(new_primary_node_id);
+		}
+	}
+	Req_info->primary_node_id = new_primary_node_id;
+	ereport(LOG,
+			(errmsg("failover: set new primary node: %d", Req_info->primary_node_id)));
+
+	if (new_main_node_id >= 0)
+	{
+		Req_info->main_node_id = new_main_node_id;
+		failover_context->sync_required = true;
+		ereport(LOG,
+				(errmsg("failover: set new main node: %d", Req_info->main_node_id)));
+	}
+}
+
+/*
+ * Rstart child process if needed.
+ */
+static void
+exec_child_restart(FAILOVER_CONTEXT *failover_context, int node_id)
+{
+	int		i, j, k;
+
+	if (failover_context->need_to_restart_children)
+	{
+		for (i = 0; i < pool_config->num_init_children; i++)
+		{
+			/*
+			 * Try to kill pgpool child because previous kill signal may
+			 * not be received by pgpool child. This could happen if
+			 * multiple PostgreSQL are going down (or even starting
+			 * pgpool, without starting PostgreSQL can trigger this).
+			 * Child calls degenerate_backend() and it tries to acquire
+			 * semaphore to write a failover request. In this case the
+			 * signal mask is set as well, thus signals are never
+			 * received.
+			 */
+
+			bool		restart = false;
+
+			if (failover_context->partial_restart)
+			{
+				for (j = 0; j < pool_config->max_pool; j++)
+				{
+					for (k = 0; k < NUM_BACKENDS; k++)
+					{
+						ConnectionInfo *con = pool_coninfo(i, j, k);
+
+						if (con->connected && con->load_balancing_node == node_id)
+						{
+
+							ereport(LOG,
+									(errmsg("child pid %d needs to restart because pool %d uses backend %d",
+											process_info[i].pid, j, node_id)));
+							restart = true;
+							break;
+						}
+					}
+				}
+			}
+			else
+				restart = true;
+
+			if (restart)
+			{
+				if (process_info[i].pid)
+				{
+					kill(process_info[i].pid, SIGQUIT);
+
+					process_info[i].pid = fork_a_child(fds, i);
+					process_info[i].start_time = time(NULL);
+					process_info[i].client_connection_count = 0;
+					process_info[i].status = WAIT_FOR_CONNECT;
+					process_info[i].connected = 0;
+					process_info[i].wait_for_connect = 0;
+				}
+			}
+			else
+				process_info[i].need_to_restart = 1;
+		}
+	}
+
+	else
+	{
+		/*
+		 * Set restart request to each child. Children will exit(1)
+		 * whenever they are convenient.
+		 */
+		for (i = 0; i < pool_config->num_init_children; i++)
+		{
+			process_info[i].need_to_restart = 1;
+		}
+	}
+
+	/*
+	 * Send restart request to worker child.
+	 */
+	kill(worker_pid, SIGUSR1);
+
+	if (failover_context->sync_required)
+		wd_failover_end();
+
+	if (failover_context->reqkind == NODE_UP_REQUEST)
+	{
+		ereport(LOG,
+				(errmsg("failback done. reconnect host %s(%d)",
+						BACKEND_INFO(node_id).backend_hostname,
+						BACKEND_INFO(node_id).backend_port)));
+
+		/* Fork health check process if needed */
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if (health_check_pids[i] == 0)
+			{
+				ereport(LOG,
+						(errmsg("start health check process for host %s(%d)",
+								BACKEND_INFO(i).backend_hostname,
+								BACKEND_INFO(i).backend_port)));
+
+				health_check_pids[i] = worker_fork_a_child(PT_HEALTH_CHECK, do_health_check_child, &i);
+			}
+		}
+	}
+	else if (failover_context->reqkind == PROMOTE_NODE_REQUEST)
+	{
+		ereport(LOG,
+				(errmsg("promotion done. promoted host %s(%d)",
+						BACKEND_INFO(node_id).backend_hostname,
+						BACKEND_INFO(node_id).backend_port)));
+	}
+	else
+	{
+		/*
+		 * Temporary black magic. Without this regression 055 does not
+		 * finish
+		 */
+		fprintf(stderr, "%s done. shutdown host %s(%d)",
+				(failover_context->reqkind == NODE_DOWN_REQUEST) ? "failover" : "quarantine",
+				BACKEND_INFO(node_id).backend_hostname,
+				BACKEND_INFO(node_id).backend_port);
+
+		ereport(LOG,
+				(errmsg("%s done. shutdown host %s(%d)",
+						(failover_context->reqkind == NODE_DOWN_REQUEST) ? "failover" : "quarantine",
+						BACKEND_INFO(node_id).backend_hostname,
+						BACKEND_INFO(node_id).backend_port)));
+	}
+	failover_context->need_to_restart_pcp = true;
+}
+
+/*
+ * kick wakeup_handler in pcp_child to notice that failover/failback done.
+ */
+static void
+exec_notice_pcp_child(FAILOVER_CONTEXT *failover_context)
+{
+	int			status;
+	int			sts;
+
+	kill(pcp_pid, SIGUSR2);
+
+	if (failover_context->need_to_restart_pcp)
+	{
+		sleep(1);
+
+		/*
+		 * Send restart request to pcp child.
+		 */
+		kill(pcp_pid, SIGUSR1);
+		for (;;)
+		{
+			sts = waitpid(pcp_pid, &status, 0);
+			if (sts != -1)
+				break;
+
+			if (errno == EINTR)
+				continue;
+			else
+			{
+				ereport(WARNING,
+						(errmsg("failover: waitpid failed"),
+						 errdetail("%m")));
+				continue;
+			}
+		}
+		if (WIFSIGNALED(status))
+			ereport(LOG,
+					(errmsg("PCP child %d exits with status %d by signal %d in failover()", pcp_pid, status, WTERMSIG(status))));
+		else
+			ereport(LOG,
+					(errmsg("PCP child %d exits with status %d in failover()", pcp_pid, status)));
+
+		pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
+		ereport(LOG,
+				(errmsg("fork a new PCP child pid %d in failover()", pcp_pid)));
+	}
+}
+/*
+ * -------------------------------------------------------------------------
+ * Subroutines for failover() end
+ * -------------------------------------------------------------------------
+ */
