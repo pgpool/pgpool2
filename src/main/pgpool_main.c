@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3185,7 +3185,8 @@ static int find_primary_node_repeatedly(void)
 /*
 * fork a follow child
 */
-pid_t fork_follow_child(int old_master, int new_primary, int old_primary)
+static pid_t
+fork_follow_child(int old_master, int new_primary, int old_primary)
 {
 	pid_t pid;
 	int i;
