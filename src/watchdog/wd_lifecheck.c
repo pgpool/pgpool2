@@ -1016,7 +1016,16 @@ wd_ping_pgpool(LifeCheckNode * node, char* password)
 
 	conn = create_conn(node->hostName, node->pgpoolPort, password);
 	if (conn == NULL)
+	{
+		if(chceck_password_type_is_not_md5(pool_config->wd_lifecheck_user, pool_config->wd_lifecheck_password) == -1)
+		{
+			ereport(ERROR,
+					(errmsg("the password of wd_lifecheck_user %s is invalid format",
+						pool_config->recovery_user),
+					errdetail("wd_lifecheck_password is not allowed to be md5 hashed format")));
+		}
 		return WD_NG;
+	}
 	return ping_pgpool(conn);
 }
 
