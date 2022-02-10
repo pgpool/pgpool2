@@ -284,7 +284,7 @@ establish_persistent_connection(void)
 															 bkinfo->backend_port,
 															 pool_config->sr_check_database,
 															 pool_config->sr_check_user,
-															 password ? password : "", true);
+															 password ? password : "", false);
 		}
 	}
 
