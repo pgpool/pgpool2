@@ -90,8 +90,17 @@ start_recovery(int recovery_node)
 
 	conn = connect_backend_libpq(backend);
 	if (conn == NULL)
+	{
+		if(chceck_password_type_is_not_md5(pool_config->recovery_user, pool_config->recovery_password) == -1)
+		{
+			ereport(ERROR,
+					(errmsg("the password of recovery_user %s is invalid format",
+							pool_config->recovery_user),
+					errdetail("recovery_password is not allowed to be md5 hashed format")));
+		}
 		ereport(ERROR,
 				(errmsg("node recovery failed, unable to connect to master node: %d ", node_id)));
+	}
 
 	PG_TRY();
 	{
