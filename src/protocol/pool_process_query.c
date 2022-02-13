@@ -3336,7 +3336,7 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 						 errdetail("backend:%d kind:'%c'",i, kind)));
 
 				/*
-				 * Read and discard parameter status and notice messages
+				 * Read and forward notice messages to frontend
 				 */
 				if (kind == 'N')
 				{
@@ -3345,20 +3345,31 @@ void read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *bac
 					pool_process_notice_message_from_one_backend(frontend, backend, i, kind);
 				}
 
+				/*
+				 * Read and forward ParameterStatus messages to frontend
+				 */
 				else if (kind == 'S')
 				{
+					int		len2;
+
 					pool_read(CONNECTION(backend, i), &len, sizeof(len));
+					len2 = len;
 					len = htonl(len) - 4;
 					p = pool_read2(CONNECTION(backend, i), len);
 					if (p)
 					{
 						value = p + strlen(p) + 1;
-						ereport(DEBUG1,
-							(errmsg("reading backend data packet kind"),
-								 errdetail("parameter name: %s value: \"%s\"", p, value)));
+						ereport(LOG,
+								(errmsg("ParameterStatus message from backend: %d", i),
+								 errdetail("parameter name: \"%s\" value: \"%s\"", p, value)));
 
 						if (IS_MASTER_NODE_ID(i))
 							pool_add_param(&CONNECTION(backend, i)->params, p, value);
+
+						/* forward to frontend */
+						pool_write(frontend, &kind, 1);
+						pool_write(frontend, &len2, sizeof(len2));
+						pool_write_and_flush(frontend, p, len);
 					}
 					else
 					{
