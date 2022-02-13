@@ -207,7 +207,7 @@ static void establish_persistent_connection(void)
 											  bkinfo->backend_port,
 											  pool_config->sr_check_database,
 											  pool_config->sr_check_user,
-											  pool_config->sr_check_password, true);
+											  pool_config->sr_check_password, false);
 		}
 	}
 }
