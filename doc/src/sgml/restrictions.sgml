@@ -335,24 +335,15 @@
        SET. See <productname>PostgreSQL</productname> manual for more
        details).  When <productname>Pgpool-II</productname> is
        operated
-       with <link linkend="guc-backend-clustering-mode">clustering
-       mode</link> being set to
-       <literal>streaming_replication</literal>, it sends the function
+       with running mode being set to <literal>master_slave_mode</literal>
+       and <literal>'stream'</literal>, it sends the function
        only to the primary server. As the function is not sent to the
        standby servers, the parameter values are different among each
        servers. To avoid the problem, you can
        use <command>SET</command> command instead
        of <function>set_config</function>.
        Since <command>SET</command> command is sent to all servers
-       used for this session, the issue will not happen.  However, if
-       you use more than 2 <productname>PostgreSQL</productname>
-       servers, you need to
-       disable <xref linkend="guc-statement-level-load-balance"> and
-       use <command>SET</command> command. This is because,
-       if <xref linkend="guc-statement-level-load-balance"> enabled,
-       queries might be sent to the third server in addition to the
-       primary server and the server which is assigned to the load
-       balance node.
+       used for this session, the issue will not happen.
      </para>
      <para>
        If you need to use <function>set_config</function>, turn off
