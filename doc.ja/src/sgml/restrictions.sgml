@@ -495,9 +495,8 @@
        SET. See <productname>PostgreSQL</productname> manual for more
        details).  When <productname>Pgpool-II</productname> is
        operated
-       with <link linkend="guc-backend-clustering-mode">clustering
-       mode</link> being set to
-       <literal>streaming_replication</literal>, it sends the function
+       with running mode being set to <literal>master_slave_mode</literal>
+       and <literal>'stream'</literal>, it sends the function
        only to the primary server. As the function is not sent to the
        standby servers, the parameter values are different among each
        servers. To avoid the problem, you can
@@ -515,7 +514,7 @@
        balance node.
 -->
        <productname>PostgreSQL</productname>には<function>set_config</function>という関数があり、<command>SET</command>コマンドで現在のセッションに対してパラメータの値を変更するのと同じ効果を与えることができます（実際にはSETにない機能もあります。詳細は<productname>PostgreSQL</productname>のマニュアルを見てください）。
-       <productname>Pgpool-II</productname>では、現在の<link linkend="guc-backend-clustering-mode">クラスタリングモード</link>が<literal>streaming_replication</literal>の場合、プライマリサーバにのみこの関数を送信します。
+       <productname>Pgpool-II</productname>では、現在の動作モードが<literal>master_slave_mode</literal>で<literal>'stream'</literal>の場合、プライマリサーバにのみこの関数を送信します。
        スタンバイサーバにはこの関数が送信されないので、それぞれのサーバでパラメータの値が異なることになります。
        この問題を回避するには、<function>set_config</function>の代わりに<command>SET</command>コマンドを使用してください。
        <command>SET</command>コマンドは、現在のセッションが使用しているすべてのサーバに送信されるので、この問題は起きません。

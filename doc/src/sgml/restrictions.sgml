@@ -336,9 +336,8 @@
        SET. See <productname>PostgreSQL</productname> manual for more
        details).  When <productname>Pgpool-II</productname> is
        operated
-       with <link linkend="guc-backend-clustering-mode">clustering
-       mode</link> being set to
-       <literal>streaming_replication</literal>, it sends the function
+       with running mode being set to <literal>master_slave_mode</literal>
+       and <literal>'stream'</literal>, it sends the function
        only to the primary server. As the function is not sent to the
        standby servers, the parameter values are different among each
        servers. To avoid the problem, you can
