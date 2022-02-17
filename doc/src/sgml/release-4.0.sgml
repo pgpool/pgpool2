@@ -1,6 +1,235 @@
 <!-- doc/src/sgml/release-4.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-0-18">
+ <title>Release 4.0.18</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2022-02-17</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-01-06 [34c0c8d9]
+    -->
+    <para>
+     Suppress message length log for <varname>in_hot_standby</varname>. (Tatsuo Ishii)
+    </para>
+    <para>
+     <productname>PostgreSQL 14</productname> introduced new config parameter <ulink url="https://www.postgresql.org/docs/14/runtime-config-preset.html">in_hot_standby</ulink>.
+    </para>
+    <para>
+     The value is either "on" for standby servers or "off" for primary
+     servers. As a result pgpool log is flooded by the messages:
+    </para>
+
+    <programlisting>
+     LOG:  reading message length
+     DETAIL:  message length (22) in slot 1 does not match with slot 0(23)
+    </programlisting>
+
+    <para>
+     To avoid this, only complain if the parameter name is not <varname>in_hot_standby</varname>.
+    </para>
+    <para>
+     Also the message is enhanced to show the parameter name. For example:
+    </para>
+
+    <programlisting>
+     LOG:  ParameterStatus "TimeZone": node 1 message length 30 is different from main node message length 24
+    </programlisting>
+
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-December/004077.html">[pgpool-hackers: 4076]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-13 [b5701e05]
+    -->
+    <para>
+     Enhance parameter status handling. (Tatsuo Ishii)
+    </para>
+    <para>
+     When a parameter status message arrives from backend <productname>Pgpool-II</productname>
+     forwards it to frontend not just memorize.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-01-31 [da2b7f13]
+    -->
+    <para>
+     Fix long standing bug with <command>pcp_node_info</command>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2022-January/004110.html">[pgpool-hackers: 4109]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-02 [59cb9418]
+    -->
+    <para>
+     Fix health check process issues pointed out by <productname>Coverity</productname>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-02 [5e39be1f]
+    -->
+    <para>
+     Fix memory leak pointed out by <productname>Coverity</productname>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-06 [f87d3b51]
+    -->
+    <para>
+     Fix <function>failover()</function> to deal with the case when no former primary node exists. (Tatsuo Ishii)
+    </para>
+    <para>
+     In case <varname>Req_info->primary_node_id</varname> is -1 like no primary
+     node exists when <productname>Pgpool-II</productname> starts up,
+     <function>failover()</function> skipped to call
+     <function>find_primary_node_repeatedly()</function>. Also
+     <varname>follow_master_command</varname> was not executed.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2022-February/004114.html">[pgpool-hackers: 4113]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-10 [9418df10]
+    -->
+    <para>
+     Fixed the streaming replication check process not to retry if it cannot connect to the backend.(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=742">bug 742</ulink>) (Bo Peng)
+    </para>
+    <para>
+     This retry caused a long time failover.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-01-04 [beb17035]
+    -->
+    <para>
+     Fix documentation typos. (pengbo)
+    </para>
+    <para>
+     Patch is created by Umar Hayat.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-01-04 [6503b2cc]
+    -->
+    <para>
+     Add "exclude" settings to /etc/yum.repos.d/pgdg-redhat-all.repo so
+     that <productname>Pgpool-II</productname> is not installed from
+     <productname>PostgreSQL</productname> YUM repository. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-01-07 [019bc2f9]
+    -->
+    <para>
+     Add restriction regarding <varname>ParameterStatus</varname> and <varname>in_hot_standby</varname> parameter. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-02 [5cd03ce7]
+    -->
+    <para>
+     Add restriction about <varname>set_config</varname>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Test tools</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-02-06 [c58fcb94]
+    2022-02-07 [3192ba94]
+    -->
+    <para>
+     Fix <command>pgpool_setup</command> in failover script creation. (Tatsuo Ishii)
+    </para>
+    <para>
+     When <command>pgpool_setup</command> creates <filename>failover.sh</filename>,
+     it did not consider the case when no primary server existed.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression tests</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-12-22 [022ba990]
+    -->
+    <para>
+     Allow to run regression test against existing installation without recompiling. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-December/004078.html">[pgpool-hackers: 4077]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-01-13 [dba249f8]
+    -->
+    <para>
+     Fix <command>pgpool_setup</command> and <command>watchdog_setup</command> binary PATH in noinstall mode. (Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-0-17">
  <title>Release 4.0.17</title>
   <note>
