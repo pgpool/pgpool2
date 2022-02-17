@@ -1,6 +1,266 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-1-11">
+ <title>リリース 4.1.11</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2022-02-17</simpara>
+  </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-01-06 [4ed45b2c]
+    -->
+    <para>
+     <varname>in_hot_standby</varname>によるメッセージ長の違いに関する不要なログを抑制しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     PostgreSQL 14 は新しいパラメータを導入しました: <ulink url="https://www.postgresql.org/docs/14/runtime-config-preset.html">in_hot_standby</ulink>
+    </para>
+    <para>
+     この値はスタンバイサーバの場合は "on" で、プライマリサーバの場合は "off" になります。
+     その結果 pgpool のログは以下のメッセージで溢れていました。
+    </para>
+
+    <programlisting>
+     LOG:  reading message length
+     DETAIL:  message length (22) in slot 1 does not match with slot 0(23)
+    </programlisting>
+
+    <para>
+     これを防ぐために、パラメータ名が<varname>in_hot_standby</varname>でない場合にのみログを出力するようになりました。
+    </para>
+    <para>
+     また、メッセージにパラメータ名を表示するようになりました。例を示します。
+    </para>
+
+    <programlisting>
+     LOG:  ParameterStatus "TimeZone": node 1 message length 30 is different from main node message length 24
+    </programlisting>
+
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-December/004077.html">[pgpool-hackers: 4076]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-10 [f114a2b2]
+    -->
+    <para>
+     <xref linkend="guc-wd-lifecheck-password">と<xref linkend="guc-recovery-password">の形式の検査を追加しました。(Masaya Kawamoto)
+    </para>
+    <para>
+     <varname>wd_lifecheck_password</varname>と<varname>recovery_password</varname>はmd5ハッシュ形式を使用できませんが、pgpool は認証失敗を報告するだけでそれらのチェックをしていませんでした。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-13 [03a4df5e]
+    -->
+    <para>
+     パラメータステータスの取り扱いを変更しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     バックエンドからパラメータステータスのメッセージが届いたときにただメモリー上に記憶するだけでなく、フロントエンドに転送するようになりました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-01-31 [6dae39f6]
+    -->
+    <para>
+     <command>pcp_node_info</command>の実行の際に長時間待機する不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2022-January/004110.html">[pgpool-hackers: 4109]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-02 [ea377d3a]
+    -->
+    <para>
+     <productname>Coverity</productname>によって見つかったヘルスチェックプロセスの問題を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-02 [aa55bc8e]
+    -->
+    <para>
+     <productname>Coverity</productname>によって見つかったメモリリークを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-06 [19a20fbf]
+    -->
+    <para>
+     プライマリノードが存在しない場合の対処をするように<function>failover()</function>を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     プライマリノードが存在しない場合に pgpool が起動したときなど<varname>Req_info->primary_node_id</varname>が -1 である場合に<function>failover()</function>は<function>find_primary_node_repeatedly()</function>の呼び出しをスキップしていました。
+     また、<varname>follow_master_command</varname>も実行されませんでした。
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2022-February/004114.html">[pgpool-hackers: 4113]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-07 [71da51c8]
+    -->
+    <para>
+     failover スクリプトのサンプルを修正しました。(Bo Peng)
+    </para>
+    <para>
+     old primary node id が"-1"の場合を考慮していませんでした。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-10 [3d04fdda]
+    -->
+    <para>
+     バックエンドに接続できないときにストリーミングレプリケーションチェックプロセスがリトライしないように修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=742">bug 742</ulink>)(Bo Peng)
+    </para>
+    <para>
+     このリトライによってフェイルオーバに時間がかかっていました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-01-04 [205c65e9]
+    -->
+    <para>
+     ドキュメントの誤字を修正しました。(pengbo)
+    </para>
+    <para>
+     パッチはUmar Hayatによって提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-01-04 [beba0359]
+    -->
+    <para>
+     <productname>PostgreSQL</productname> YUM リポジトリから<productname>Pgpool-II</productname>がインストールされないように /etc/yum.repos.d/pgdg-redhat-all.repo を"exclude"する設定を追加しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-01-07 [924fcafd]
+    -->
+    <para>
+     <varname>ParameterStatus</varname>と<varname>in_hot_standby</varname>パラメータに関する制約を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-02 [228b6c1b]
+    -->
+    <para>
+     <varname>set_config</varname>に関する制約を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>テストツール修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-02-06 [fc8c77b7]
+    2022-02-07 [80eebc91]
+    -->
+    <para>
+     <command>pgpool_setup</command>が作成するfailoverスクリプトを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <command>pgpool_setup</command>が<filename>failover.sh</filename>を作成するとき、プライマリサーバが存在しない場合を考慮していませんでした。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2021-12-22 [71d272a5]
+    -->
+    <para>
+     再コンパイルしないで既存のインストールで回帰テストを実行できるようになりました。(Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2021-December/004078.html">[pgpool-hackers: 4077]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-01-12 [c0fefaa7]
+    -->
+    <para>
+     テスト075を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     pgpool が起動していなくても成功していました。
+     報告とパッチはQiang Lingjieによって提供されました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2022-January/004086.html">[pgpool-hackers: 4085]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-01-13 [6f086f72]
+    -->
+    <para>
+     noinstall モード時の<command>pgpool_setup</command>と<command>watchdog_setup</command>のバイナリパスを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-1-10">
  <title>リリース 4.1.10</title>
   <note>
