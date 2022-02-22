@@ -143,9 +143,6 @@ do_worker_child(void)
 
 	MemoryContextSwitchTo(TopMemoryContext);
 
-	/* Initialize my backend status */
-	pool_initialize_private_backend_status();
-
 	/* Initialize per process context */
 	pool_init_process_context();
 
