@@ -151,9 +151,6 @@ do_health_check_child(int *node_id)
 
 	MemoryContextSwitchTo(TopMemoryContext);
 
-	/* Initialize my backend status */
-	pool_initialize_private_backend_status();
-
 	/* Initialize per process context */
 	pool_init_process_context();
 
