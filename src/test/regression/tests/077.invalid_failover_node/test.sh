@@ -41,17 +41,19 @@ echo === promote node 2 as a primary node ===
 $PCP_PROMOTE_NODE -w -p $PCP_PORT --switchover 2
 wait_for_pgpool_startup
 
+date
+
 # wait until node 1 up
 ok=ng
-for i in 1 2 3 4 5
+for i in 1 2 3 4 5 6 7 8 9 10
 do
     $PCP_NODE_INFO -w -p $PCP_PORT 1|grep waiting
     if [ $? -eq 0 ];then
 	ok=ok
 	break;
     fi
-    echo sleep 1
-    sleep 1
+    echo sleep 2
+    sleep 2
 done
 
 if [ $ok != "ok" ];then
