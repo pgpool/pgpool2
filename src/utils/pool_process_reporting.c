@@ -191,7 +191,15 @@ get_config(int *nrows)
 
 	/* - pgpool Connection Settings - */
 	StrNCpy(status[i].name, "listen_addresses", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->listen_addresses);
+	*(status[i].value) = '\0';
+	for (j = 0; j < pool_config->num_listen_addresses; j++)
+	{
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		strncat(status[i].value, pool_config->listen_addresses[j], len);
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		if (j != pool_config->num_listen_addresses - 1)
+			strncat(status[i].value, ",", len);
+	}
 	StrNCpy(status[i].desc, "host name(s) or IP address(es) to listen on", POOLCONFIG_MAXDESCLEN);
 	i++;
 

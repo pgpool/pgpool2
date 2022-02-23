@@ -49,6 +49,7 @@
 #endif
 
 #define default_reset_query_list	"ABORT;DISCARD ALL"
+#define default_listen_addresses_list	"localhost"
 #define default_read_only_function_list ""
 #define default_write_function_list ""
 
@@ -812,16 +813,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"listen_addresses", CFGCXT_INIT, CONNECTION_CONFIG,
-			"hostname or IP address on which pgpool will listen on.",
-			CONFIG_VAR_TYPE_STRING, false, 0
-		},
-		&g_pool_config.listen_addresses,
-		"localhost",
-		NULL, NULL, NULL, NULL
-	},
-
-	{
 		{"pcp_listen_addresses", CFGCXT_INIT, CONNECTION_CONFIG,
 			"hostname(s) or IP address(es) on which pcp will listen on.",
 			CONFIG_VAR_TYPE_STRING, false, 0
@@ -1332,6 +1323,19 @@ static struct config_string_list ConfigureNamesStringList[] =
 		";",					/* token separator */
 		false,					/* compute_regex ? */
 		NULL, NULL, NULL		/* assign, check, show funcs */
+	},
+
+	{
+		{"listen_addresses", CFGCXT_INIT, CONNECTION_CONFIG,
+			"hostname or IP address on which pgpool will listen on.",
+			CONFIG_VAR_TYPE_STRING_LIST, false, 0
+		},
+		&g_pool_config.listen_addresses,
+		&g_pool_config.num_listen_addresses,
+		(const char *) default_listen_addresses_list,
+		",",
+		false,
+		NULL, NULL, NULL
 	},
 
 	{

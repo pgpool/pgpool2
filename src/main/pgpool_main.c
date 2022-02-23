@@ -148,6 +148,7 @@ static pid_t worker_fork_a_child(ProcessType type, void (*func) (), void *params
 static int	create_unix_domain_socket(struct sockaddr_un un_addr_tmp);
 static int	create_inet_domain_socket(const char *hostname, const int port);
 static int *create_inet_domain_sockets(const char *hostname, const int port);
+static int *create_inet_domain_sockets_by_list(char **listen_addresses, int n_listen_addresses, int port, int *n_sockets);
 static void failover(void);
 static bool check_all_backend_down(void);
 static void reaper(void);
@@ -269,6 +270,8 @@ volatile SI_ManageInfo *si_manage_info;
 int
 PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 {
+	int			num_fds = 0;
+	int			*inet_fds;
 	int			i;
 
 	sigjmp_buf	local_sigjmp_buf;
@@ -397,42 +400,25 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	}
 
 	/* create unix domain socket */
-	fds = malloc(sizeof(int) * 2);
+	fds = malloc(sizeof(int) * (num_fds + 2));
 	if (fds == NULL)
 		ereport(FATAL,
 				(errmsg("failed to allocate memory in startup process")));
 
 	fds[0] = create_unix_domain_socket(un_addr);
-	fds[1] = -1;
 	on_proc_exit(FileUnlink, (Datum) un_addr.sun_path);
 
 	/* create inet domain socket if any */
-	if (pool_config->listen_addresses[0])
+	inet_fds = create_inet_domain_sockets_by_list(pool_config->listen_addresses, pool_config->num_listen_addresses,
+												  pool_config->port, &num_fds);
+
+	/* copy inet domain sockets if any */
+	if (num_fds > 0)
 	{
-		int		   *inet_fds,
-				   *walk;
-		int			n = 1;
-
-		inet_fds = create_inet_domain_sockets(pool_config->listen_addresses, pool_config->port);
-
-		for (walk = inet_fds; *walk != -1; walk++)
-			n++;
-
-		fds = realloc(fds, sizeof(int) * (n + 1));
-		if (fds == NULL)
-			ereport(FATAL,
-					(errmsg("failed to allocate memory in startup process")));
-
-		n = 1;
-		for (walk = inet_fds; *walk != -1; walk++)
-		{
-			fds[n] = inet_fds[n - 1];
-			n++;
-		}
-		fds[n] = -1;
+		memcpy(&fds[1], inet_fds, sizeof(int) * num_fds);
+		fds[num_fds + 1] = -1;
 		free(inet_fds);
 	}
-
 
 	/*
 	 * We need to block signal here. Otherwise child might send some signals,
@@ -4628,3 +4614,56 @@ exec_notice_pcp_child(FAILOVER_CONTEXT *failover_context)
  * Subroutines for failover() end
  * -------------------------------------------------------------------------
  */
+
+
+/*
+ * Create INET domain sockets by specified listen address list
+ * "listen_addresses", which is an array of string.  The number of elements is
+ * "n_listen_addresses". "port" is the port number. A socket array is returned.
+ * The number of elements in the socket array is "n_sockets".
+ */
+static int *
+create_inet_domain_sockets_by_list(char **listen_addresses, int n_listen_addresses, int port, int *n_sockets)
+{
+	int		*sockets = NULL;
+	int		i;
+
+	*n_sockets = 0;
+
+	if (listen_addresses == NULL || listen_addresses[0] == NULL)
+		return NULL;
+
+	for (i = 0; i < n_listen_addresses; i++)
+	{
+		int		   *inet_fds,
+				   *walk;
+		int			n = 0;	/* number of fds returned from create_inet_domain_sockets(). */
+
+		ereport(LOG,
+				(errmsg("listen address[%d]: %s", i, listen_addresses[i])));
+
+		inet_fds = create_inet_domain_sockets(listen_addresses[i], port);
+
+		for (walk = inet_fds; *walk != -1; walk++)
+			n++;
+
+		sockets = realloc(sockets, sizeof(int) * (n + 1 + *n_sockets));
+		if (sockets == NULL)
+			ereport(FATAL,
+					(errmsg("failed to allocate memory in startup process")));
+
+		n = 0;
+		for (walk = inet_fds; *walk != -1; walk++)
+		{
+			ereport(DEBUG5,
+					(errmsg("set inet socket: %d to sockets[%d]", inet_fds[n], *n_sockets)));
+
+			sockets[*n_sockets] = inet_fds[n++];
+			(*n_sockets)++;
+		}
+		sockets[*n_sockets] = -1;
+		free(inet_fds);
+	}
+
+	return sockets;
+}
