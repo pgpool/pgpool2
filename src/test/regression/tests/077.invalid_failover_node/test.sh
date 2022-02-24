@@ -71,15 +71,28 @@ $PG_CTL -D data1 stop
 #wait_for_pgpool_startup
 echo sleep 5
 sleep 5
+date
 
 echo === make sure that node 1 is now down ===
-$PCP_NODE_INFO -w -p $PCP_PORT 1|grep "down down"
+ok=ng
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+    $PCP_NODE_INFO -w -p $PCP_PORT 1|grep "down down"
+    if [ $? -eq 0 ];then
+	ok=ok
+	break;
+    fi
+    echo sleep 2
+    sleep 2
+done
 
-if [ $? -eq 0 ];then
+if [ $ok != "ok" ];then
+    echo === failover did not complete ===
     ./shutdownall
-    exit 0
+    exit 1
 fi
 
 ./shutdownall
-exit 1
+exit 0
+
 
