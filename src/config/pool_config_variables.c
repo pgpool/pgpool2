@@ -1327,7 +1327,7 @@ static struct config_string_list ConfigureNamesStringList[] =
 
 	{
 		{"listen_addresses", CFGCXT_INIT, CONNECTION_CONFIG,
-			"hostname or IP address on which pgpool will listen on.",
+			"hostname(s) or IP address(es) on which pgpool will listen on.",
 			CONFIG_VAR_TYPE_STRING_LIST, false, 0
 		},
 		&g_pool_config.listen_addresses,

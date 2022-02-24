@@ -406,6 +406,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 				(errmsg("failed to allocate memory in startup process")));
 
 	fds[0] = create_unix_domain_socket(un_addr);
+	fds[1] = -1;
 	on_proc_exit(FileUnlink, (Datum) un_addr.sun_path);
 
 	/* create inet domain socket if any */
@@ -767,6 +768,13 @@ worker_fork_a_child(ProcessType type, void (*func) (), void *params)
 	return pid;
 }
 
+/*
+ * Create a socket list by "hostname" and return it.  "hostname" can be either
+ * single host name, IP or "*" which means all available UP interface.  If
+ * fails with getaddrinfo, socket, setsockopt, bind or listen, return NULL and
+ * pgpool will ignore the hostname. This could happen if wrong hostname or
+ * duplicated hostname is specified in listen_addresses parameter.
+ */
 static int *
 create_inet_domain_sockets(const char *hostname, const int port)
 {
@@ -800,9 +808,12 @@ create_inet_domain_sockets(const char *hostname, const int port)
 
 	if ((ret = getaddrinfo((!hostname || strcmp(hostname, "*") == 0) ? NULL : hostname, portstr, &hints, &res)) != 0)
 	{
-		ereport(FATAL,
+		/* Perhaps wrong hostname or IP */
+		ereport(WARNING,
 				(errmsg("failed to create INET domain socket"),
 				 errdetail("getaddrinfo() failed: %s", gai_strerror(ret))));
+		free(portstr);
+		return NULL;
 	}
 
 	free(portstr);
@@ -851,9 +862,11 @@ create_inet_domain_sockets(const char *hostname, const int port)
 		if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 						sizeof(one))) == -1)
 		{
-			ereport(FATAL,
+			ereport(WARNING,
 					(errmsg("failed to create INET domain socket"),
 					 errdetail("socket error \"%m\"")));
+			close(fd);
+			continue;
 		}
 
 		if (walk->ai_family == AF_INET6)
@@ -875,9 +888,11 @@ create_inet_domain_sockets(const char *hostname, const int port)
 
 		if (bind(fd, walk->ai_addr, walk->ai_addrlen) != 0)
 		{
-			ereport(FATAL,
+			ereport(WARNING,
 					(errmsg("failed to create INET domain socket"),
 					 errdetail("bind on socket failed with error \"%m\"")));
+			close(fd);
+			continue;
 		}
 
 		backlog = pool_config->num_init_children * pool_config->listen_backlog_multiplier;
@@ -887,9 +902,13 @@ create_inet_domain_sockets(const char *hostname, const int port)
 
 		status = listen(fd, backlog);
 		if (status < 0)
-			ereport(FATAL,
+		{
+			ereport(WARNING,
 					(errmsg("failed to create INET domain socket"),
 					 errdetail("listen on socket failed with error \"%m\"")));
+			close(fd);
+			continue;
+		}
 
 		sockfds[n++] = fd;
 	}
@@ -898,9 +917,9 @@ create_inet_domain_sockets(const char *hostname, const int port)
 
 	if (n == 0)
 	{
-		ereport(FATAL,
-				(errmsg("failed to create INET domain socket"),
-				 errdetail("Failed to create any sockets. See the earlier LOG messages.")));
+		/* No sockets created. Perhaps duplicated listen address. */
+		free(sockfds);
+		return NULL;
 	}
 
 	return sockfds;
@@ -4643,6 +4662,9 @@ create_inet_domain_sockets_by_list(char **listen_addresses, int n_listen_address
 				(errmsg("listen address[%d]: %s", i, listen_addresses[i])));
 
 		inet_fds = create_inet_domain_sockets(listen_addresses[i], port);
+
+		if (!inet_fds)
+			continue;
 
 		for (walk = inet_fds; *walk != -1; walk++)
 			n++;
