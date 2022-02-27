@@ -45,7 +45,7 @@ date
 
 # wait until node 1 up
 ok=ng
-for i in 1 2 3 4 5 6 7 8 9 10
+for i in {1..15}
 do
     $PCP_NODE_INFO -w -p $PCP_PORT 1|grep waiting
     if [ $? -eq 0 ];then
@@ -75,7 +75,7 @@ date
 
 echo === make sure that node 1 is now down ===
 ok=ng
-for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+for i in {1..15}
 do
     $PCP_NODE_INFO -w -p $PCP_PORT 1|grep "down down"
     if [ $? -eq 0 ];then
