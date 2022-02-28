@@ -673,7 +673,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.pcp_listen_addresses,
-		"*",
+		"localhost",
 		NULL, NULL, NULL, NULL
 	},
 
