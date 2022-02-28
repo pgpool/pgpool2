@@ -50,7 +50,7 @@ reserved_connections = 0
 
 # - pgpool Communication Manager Connection Settings -
 
-pcp_listen_addresses = '*'
+pcp_listen_addresses = 'localhost'
                                    # Host name or IP address for pcp process to listen on:
                                    # '*' for all, '' for no TCP/IP connections
                                    # (change requires restart)
