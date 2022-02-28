@@ -81,7 +81,7 @@
       will accept TCP/IP connections. <literal>*</literal>
       accepts all incoming connections. <literal>"" </literal>
       disables TCP/IP connections. Default
-      is <literal>*</literal>. Connections via UNIX domain
+      is <literal>localhost</literal>. Connections via UNIX domain
       socket are always accepted.
      </para>
      <para>

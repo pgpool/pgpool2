@@ -124,13 +124,13 @@
       will accept TCP/IP connections. <literal>*</literal>
       accepts all incoming connections. <literal>''</literal>
       disables TCP/IP connections. Default
-      is <literal>*</literal>. Connections via UNIX domain
+      is <literal>localhost</literal>. Connections via UNIX domain
       socket are always accepted.
       -->
       PCPプロセスがTCP/IP接続を受け付けるホスト名またはIPアドレスを指定します。
       <literal>*</literal>を指定すると入ってくる全ての接続を受け付けます。
       <literal>''</literal>を指定するとTCP/IP接続を受け付けません。
-      デフォルト値は<literal>*</literal>です。
+      デフォルト値は<literal>localhost</literal>です。
       UNIXドメインソケット経由のコネクションは常に受け付けます。
      </para>
      <para>
