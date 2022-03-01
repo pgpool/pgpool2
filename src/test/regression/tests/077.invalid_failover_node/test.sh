@@ -3,6 +3,9 @@
 # test script for "invalid degenerate backend request" issue.
 # ([pgpool-hackers: 4127] invalid degenerate backend request, node id : 2 status: [2] is not valid for failover)
 
+echo "starting test"
+date
+
 source $TESTLIBS
 TESTDIR=testdir
 PSQL=$PGBIN/psql
@@ -45,6 +48,7 @@ date
 
 # wait until node 1 up
 ok=ng
+u=2
 for i in {1..15}
 do
     $PCP_NODE_INFO -w -p $PCP_PORT 1|grep waiting
@@ -52,8 +56,8 @@ do
 	ok=ok
 	break;
     fi
-    echo sleep 2
-    sleep 2
+    echo `expr $u \* $i`
+    sleep $u
 done
 
 if [ $ok != "ok" ];then
@@ -75,6 +79,7 @@ date
 
 echo === make sure that node 1 is now down ===
 ok=ng
+u=2
 for i in {1..15}
 do
     $PCP_NODE_INFO -w -p $PCP_PORT 1|grep "down down"
@@ -82,7 +87,7 @@ do
 	ok=ok
 	break;
     fi
-    echo sleep 2
+    echo `expr $u \* $i`
     sleep 2
 done
 
@@ -94,5 +99,3 @@ fi
 
 ./shutdownall
 exit 0
-
-
