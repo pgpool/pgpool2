@@ -63,6 +63,8 @@
 
 /*
  * watchdog state
+ * If you add a new state. Remember to add entry in
+ * wd_state_names (watchdog.c)
  */
 typedef enum
 {
@@ -120,8 +122,12 @@ typedef enum
 	WD_EVENT_I_AM_APPEARING_FOUND
 }			WD_EVENTS;
 
+/*
+ * If you add a new lost reason. Remember to add entry in
+ * wd_node_lost_reasons (watchdog.c)
+ */
 typedef enum {
-	NODE_LOST_UNKNOWN_REASON,
+	NODE_LOST_UNKNOWN_REASON = 0,
 	NODE_LOST_BY_LIFECHECK,
 	NODE_LOST_BY_SEND_FAILURE,
 	NODE_LOST_BY_MISSING_BEACON,
