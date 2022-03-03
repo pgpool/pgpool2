@@ -190,15 +190,8 @@ packet_types all_packet_types[] = {
 };
 
 
-char	   *wd_failover_lock_name[] =
-{
-	"FAILOVER",
-	"FAILBACK",
-	"FOLLOW MASTER"
-};
-
-char	   *wd_event_name[] =
-{"STATE CHANGED",
+char	   *wd_event_name[] = {
+	"STATE CHANGED",
 	"TIMEOUT",
 	"PACKET RECEIVED",
 	"COMMAND FINISHED",
@@ -215,7 +208,8 @@ char	   *wd_event_name[] =
 	"NODE CONNECTION FOUND",
 	"CLUSTER QUORUM STATUS CHANGED",
 	"NODE REQUIRE TO RELOAD STATE",
-	"I AM APPEARING LOST"
+	"REMOTE NODE LOST US",
+	"REMOTE NODE FOUND US"
 };
 
 char	   *wd_state_names[] = {
