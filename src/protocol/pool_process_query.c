@@ -2079,17 +2079,19 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 
 			if (pool_extract_error_message(false, backend, major, true, &message) == 1)
 			{
+				int	etype;
 				/*
-				 * This is fatal. Because: If we operate extended
-				 * query, backend would not accept subsequent commands
-				 * until "sync" message issued. However, if sync
-				 * message is issued, unnamed statement/unnamed portal
-				 * will disappear and will cause lots of problems.  If
-				 * we do not operate extended query, ongoing
-				 * transaction is aborted, and subsequent query would
-				 * not accepted.  In summary there's no transparent
-				 * way for frontend to handle error case. The only way
-				 * is closing this session.
+				 * This is fatal. Because: If we operate extended query,
+				 * backend would not accept subsequent commands until "sync"
+				 * message issued. However, if sync message is issued, unnamed
+				 * statement/unnamed portal will disappear and will cause lots
+				 * of problems.  If we do not operate extended query, ongoing
+				 * transaction is aborted, and subsequent query would not
+				 * accepted.  In summary there's no transparent way for
+				 * frontend to handle error case. The only way is closing this
+				 * session.
+				 * However if the process type is main process, we should not
+				 * exit the process.
 				 */
 				if (processType == PT_WORKER)
 				{
@@ -2099,12 +2101,16 @@ void do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result
 					 */
 					sleep(pool_config->sr_check_period);
 				}
+				if (processType == PT_MAIN)
+					etype = ERROR;
+				else
+					etype = FATAL;
 
-                ereport(FATAL,
-                    (return_code(1),
-                        errmsg("Backend throw an error message"),
-                         errdetail("Exiting current session because of an error from backend"),
-                            errhint("BACKEND Error: \"%s\"",message?message:"")));
+				ereport(etype,
+						(return_code(1),
+						 errmsg("Backend throw an error message"),
+						 errdetail("Exiting current session because of an error from backend"),
+						 errhint("BACKEND Error: \"%s\"", message ? message : "")));
 				if (message)
 					pfree(message);
 			}
