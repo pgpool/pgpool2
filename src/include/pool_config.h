@@ -205,7 +205,7 @@ typedef struct
 	ClusteringModes	backend_clustering_mode;	/* Backend clustering mode */
 	char	   **listen_addresses;	/* hostnames/IP addresses to listen on */
 	int			port;			/* port # to bind */
-	char	   *pcp_listen_addresses;	/* PCP listen address to listen on */
+	char	   **pcp_listen_addresses;	/* PCP listen address to listen on */
 	int			pcp_port;		/* PCP port # to bind */
 	char	   *socket_dir;		/* pgpool socket directory */
 	char	   *wd_ipc_socket_dir;	/* watchdog command IPC socket directory */
@@ -392,6 +392,7 @@ typedef struct
 	/* followings till syslog, does not exist in the configuration file */
 	int			num_reset_queries;	/* number of queries in reset_query_list */
 	int			num_listen_addresses;	/* number of entries in listen_addresses */
+	int			num_pcp_listen_addresses;	/* number of entries in pcp_listen_addresses */
 	int			num_read_only_function_list;	/* number of functions in
 											 * read_only_function_list */
 	int			num_write_function_list;	/* number of functions in

@@ -215,9 +215,18 @@ get_config(int *nrows)
 	i++;
 
 	StrNCpy(status[i].name, "pcp_listen_addresses", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pcp_listen_addresses);
+	*(status[i].value) = '\0';
+	for (j = 0; j < pool_config->num_pcp_listen_addresses; j++)
+	{
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		strncat(status[i].value, pool_config->pcp_listen_addresses[j], len);
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		if (j != pool_config->num_pcp_listen_addresses - 1)
+			strncat(status[i].value, ",", len);
+	}
 	StrNCpy(status[i].desc, "host name(s) or IP address(es) for pcp process to listen on", POOLCONFIG_MAXDESCLEN);
 	i++;
+
 
 	StrNCpy(status[i].name, "pcp_port", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->pcp_port);

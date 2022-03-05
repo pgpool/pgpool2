@@ -142,11 +142,10 @@ typedef struct
 static void signal_user1_to_parent_with_reason(User1SignalReason reason);
 
 static void FileUnlink(int code, Datum path);
-static pid_t pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file);
+static pid_t pcp_fork_a_child(int *fds, char *pcp_conf_file);
 static pid_t fork_a_child(int *fds, int id);
 static pid_t worker_fork_a_child(ProcessType type, void (*func) (), void *params);
 static int	create_unix_domain_socket(struct sockaddr_un un_addr_tmp);
-static int	create_inet_domain_socket(const char *hostname, const int port);
 static int *create_inet_domain_sockets(const char *hostname, const int port);
 static int *create_inet_domain_sockets_by_list(char **listen_addresses, int n_listen_addresses, int port, int *n_sockets);
 static void failover(void);
@@ -218,8 +217,9 @@ ConnectionInfo *con_info;
 static int *fds = NULL;				/* listening file descriptors (UNIX socket,
 								 * inet domain sockets) */
 
-static int	pcp_unix_fd;		/* unix domain socket fd for PCP (not used) */
-static int	pcp_inet_fd;		/* inet domain socket fd for PCP */
+static int *pcp_fds = NULL;		/* listening file descriptors for pcp (UNIX socket,
+								 * inet domain sockets) */
+
 extern char *pcp_conf_file;		/* path for pcp.conf */
 extern char *conf_file;
 extern char *hba_file;
@@ -272,6 +272,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 {
 	int			num_fds = 0;
 	int			*inet_fds;
+	int			*pcp_inet_fds;
 	int			i;
 
 	sigjmp_buf	local_sigjmp_buf;
@@ -457,16 +458,29 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		Req_info->primary_node_id = find_primary_node_repeatedly();
 	}
 
-	/* fork a child for PCP handling */
-	pcp_unix_fd = create_unix_domain_socket(pcp_un_addr);
-	/* Add onproc exit to clean up the unix domain socket at exit */
+	/* create pcp unix domain socket */
+	num_fds = 0;
+	pcp_fds = malloc(sizeof(int) * (num_fds + 2));
+	if (pcp_fds == NULL)
+		ereport(FATAL,
+				(errmsg("failed to allocate memory in startup process")));
+
+	pcp_fds[0] = create_unix_domain_socket(pcp_un_addr);
+	fds[1] = -1;
 	on_proc_exit(FileUnlink, (Datum) pcp_un_addr.sun_path);
 
-	if (pool_config->pcp_listen_addresses[0])
+	/* create inet domain socket if any */
+	pcp_inet_fds = create_inet_domain_sockets_by_list(pool_config->pcp_listen_addresses, pool_config->num_pcp_listen_addresses,
+													  pool_config->pcp_port, &num_fds);
+
+	if (num_fds > 0)
 	{
-		pcp_inet_fd = create_inet_domain_socket(pool_config->pcp_listen_addresses, pool_config->pcp_port);
+		memcpy(&pcp_fds[1], pcp_inet_fds, sizeof(int) * num_fds);
+		pcp_fds[num_fds + 1] = -1;
+		free(pcp_inet_fds);
 	}
-	pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
+
+	pcp_pid = pcp_fork_a_child(pcp_fds, pcp_conf_file);
 
 	/* Fork worker process */
 	worker_pid = worker_fork_a_child(PT_WORKER, do_worker_child, NULL);
@@ -643,7 +657,7 @@ signal_user1_to_parent_with_reason(User1SignalReason reason)
  * fork a child for PCP
  */
 static pid_t
-pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
+pcp_fork_a_child(int *fds, char *pcp_conf_file)
 {
 	pid_t		pid;
 
@@ -661,7 +675,7 @@ pcp_fork_a_child(int unix_fd, int inet_fd, char *pcp_conf_file)
 		POOL_SETMASK(&UnBlockSig);
 		health_check_timer_expired = 0;
 		reload_config_request = 0;
-		pcp_main(unix_fd, inet_fd);
+		pcp_main(fds);
 	}
 	else if (pid == -1)
 	{
@@ -923,94 +937,6 @@ create_inet_domain_sockets(const char *hostname, const int port)
 	}
 
 	return sockfds;
-}
-
-/*
-* create inet domain socket
-*/
-static int
-create_inet_domain_socket(const char *hostname, const int port)
-{
-	struct sockaddr_in addr;
-	int			fd;
-	int			status;
-	int			one = 1;
-	int			len;
-	int			backlog;
-
-	fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (fd == -1)
-	{
-		ereport(FATAL,
-				(errmsg("failed to create INET domain socket"),
-				 errdetail("%m")));
-	}
-	if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
-					sizeof(one))) == -1)
-	{
-		ereport(FATAL,
-				(errmsg("failed to create INET domain socket"),
-				 errdetail("%m")));
-	}
-
-	memset((char *) &addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-
-	if (strcmp(hostname, "*") == 0)
-	{
-		addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	}
-	else
-	{
-		struct hostent *hostinfo;
-
-		hostinfo = gethostbyname(hostname);
-		if (!hostinfo)
-		{
-			ereport(FATAL,
-					(errmsg("failed to create INET domain socket"),
-					 errdetail("could not resolve hostname \"%s\": error \"%s\"", hostname, hstrerror(h_errno))));
-
-		}
-		addr.sin_addr = *(struct in_addr *) hostinfo->h_addr;
-	}
-
-	addr.sin_port = htons(port);
-	len = sizeof(struct sockaddr_in);
-
-	status = bind(fd, (struct sockaddr *) &addr, len);
-	if (status == -1)
-	{
-		int			saved_errno = errno;
-		char		host[NI_MAXHOST],
-					servname[NI_MAXSERV];
-
-		if ((status = getnameinfo((struct sockaddr *) &addr, len, host, sizeof(host), servname, sizeof(servname), 0)))
-		{
-			ereport(NOTICE,
-					(errmsg("getnameinfo failed while creating INET domain socket"),
-					 errdetail("getnameinfo failed with reason: \"%s\"", gai_strerror(status))));
-
-			snprintf(servname, sizeof(servname), "%d", port);
-			snprintf(host, sizeof(host), "%s", hostname);
-		}
-		ereport(FATAL,
-				(errmsg("failed to create INET domain socket"),
-				 errdetail("bind on host:\"%s\" server:\"%s\" failed with error \"%s\"", host, servname, strerror(saved_errno))));
-	}
-
-	backlog = pool_config->num_init_children * pool_config->listen_backlog_multiplier;
-
-	if (backlog > PGPOOLMAXLITSENQUEUELENGTH)
-		backlog = PGPOOLMAXLITSENQUEUELENGTH;
-
-	status = listen(fd, backlog);
-	if (status < 0)
-		ereport(FATAL,
-				(errmsg("failed to create INET domain socket"),
-				 errdetail("listen on socket failed with error \"%m\"")));
-
-	return fd;
 }
 
 /*
@@ -1791,7 +1717,7 @@ reaper(void)
 			found = true;
 			if (restart_child)
 			{
-				pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
+				pcp_pid = pcp_fork_a_child(pcp_fds, pcp_conf_file);
 				new_pid = pcp_pid;
 			}
 			else
@@ -4623,7 +4549,7 @@ exec_notice_pcp_child(FAILOVER_CONTEXT *failover_context)
 			ereport(LOG,
 					(errmsg("PCP child %d exits with status %d in failover()", pcp_pid, status)));
 
-		pcp_pid = pcp_fork_a_child(pcp_unix_fd, pcp_inet_fd, pcp_conf_file);
+		pcp_pid = pcp_fork_a_child(pcp_fds, pcp_conf_file);
 		ereport(LOG,
 				(errmsg("fork a new PCP child pid %d in failover()", pcp_pid)));
 	}

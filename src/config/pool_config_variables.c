@@ -50,6 +50,7 @@
 
 #define default_reset_query_list	"ABORT;DISCARD ALL"
 #define default_listen_addresses_list	"localhost"
+#define default_pcp_listen_addresses_list	"localhost"
 #define default_read_only_function_list ""
 #define default_write_function_list ""
 
@@ -813,16 +814,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"pcp_listen_addresses", CFGCXT_INIT, CONNECTION_CONFIG,
-			"hostname(s) or IP address(es) on which pcp will listen on.",
-			CONFIG_VAR_TYPE_STRING, false, 0
-		},
-		&g_pool_config.pcp_listen_addresses,
-		"localhost",
-		NULL, NULL, NULL, NULL
-	},
-
-	{
 		{"socket_dir", CFGCXT_INIT, CONNECTION_CONFIG,
 			"The directory to create the UNIX domain socket for accepting pgpool-II client connections.",
 			CONFIG_VAR_TYPE_STRING, false, 0
@@ -1333,6 +1324,19 @@ static struct config_string_list ConfigureNamesStringList[] =
 		&g_pool_config.listen_addresses,
 		&g_pool_config.num_listen_addresses,
 		(const char *) default_listen_addresses_list,
+		",",
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"pcp_listen_addresses", CFGCXT_INIT, CONNECTION_CONFIG,
+			"hostname(s) or IP address(es) on which pcp will listen on.",
+			CONFIG_VAR_TYPE_STRING_LIST, false, 0
+		},
+		&g_pool_config.pcp_listen_addresses,
+		&g_pool_config.num_pcp_listen_addresses,
+		(const char *) default_pcp_listen_addresses_list,
 		",",
 		false,
 		NULL, NULL, NULL

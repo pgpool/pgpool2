@@ -137,18 +137,35 @@
     <listitem>
      <para>
       <!--
-      Specifies the hostname or IP address, on which PCP process
-      will accept TCP/IP connections. <literal>*</literal>
-      accepts all incoming connections. <literal>''</literal>
-      disables TCP/IP connections. Default
-      is <literal>localhost</literal>. Connections via UNIX domain
-      socket are always accepted.
+      Specifies the TCP/IP address(es) on which the pcp server is
+      to listen for connections from client applications.
+      The value takes the form of a comma-separated list of host names
+      and/or numeric IP addresses.  The special entry <literal>*</literal>
+      corresponds to all available IP interfaces.  The entry
+      <literal>0.0.0.0</literal> allows listening for all IPv4 addresses and
+      <literal>::</literal> allows listening for all IPv6 addresses.
+      If the list is empty, the server does not listen on any IP interface
+      at all, in which case only Unix-domain sockets can be used to connect
+      to it.
+      The default value
+      is <systemitem class="systemname">localhost</systemitem>, which
+      allows only local TCP/IP <quote>loopback</quote> connections to
+      be made.  While client authentication
+      (<xref linkend="auth-pool-hba-conf">) allows fine-grained
+      control over who can access the
+      server, <varname>pcp_listen_addresses</varname> controls which
+      interfaces accept connection attempts, which can help prevent
+      repeated malicious connection requests on insecure network
+      interfaces.  This parameter can only be set at server start.
       -->
-      PCPプロセスがTCP/IP接続を受け付けるホスト名またはIPアドレスを指定します。
-      <literal>*</literal>を指定すると入ってくる全ての接続を受け付けます。
-      <literal>''</literal>を指定するとTCP/IP接続を受け付けません。
-      デフォルト値は<literal>localhost</literal>です。
-      UNIXドメインソケット経由のコネクションは常に受け付けます。
+      クライアントアプリケーションからの接続をPCPサーバが監視する TCP/IP アドレスを指定します。
+      この値は、ホスト名をコンマで区切ったリスト、そして/もしくは、数値によるIPアドレスです。
+      <literal>*</literal>という特別なエントリは利用可能な全てのIPインタフェースに対応します。
+      エントリ<literal>0.0.0.0</literal>は全てのIPv4アドレスの監視を、そしてエントリ<literal>::</literal>は全てのIPv6アドレスの監視を許容します。
+      リストが空の場合、サーバはいかなるIPインタフェースも全く監視しないで、Unixドメインソケットのみを使用して接続が行われます。
+      デフォルトの値は<systemitem class="systemname">localhost</systemitem>で、ローカルなTCP/IP <quote>loopback</quote>接続のみ許可します。
+      クライアント認証(<xref linkend="auth-pool-hba-conf">)は誰がサーバにアクセス可能かをきめ細かく制御するのに対し、<varname>pcp_listen_addresses</varname>はどのインタフェースが接続を試みるかを制御します。
+      これにより、安全でないネットワークインタフェース上において繰り返して行われる悪意のある接続要求の防止に役立ちます。
      </para>
      <para>
       <!--

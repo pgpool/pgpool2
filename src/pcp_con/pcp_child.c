@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -81,8 +81,8 @@ static RETSIGTYPE reload_config_handler(int sig);
 static RETSIGTYPE restart_handler(int sig);
 static RETSIGTYPE reap_handler(int sig);
 
-static int	pcp_do_accept(int unix_fd, int inet_fd);
-static void start_pcp_command_processor_process(int port);
+static int	pcp_do_accept(int *fds);
+static void start_pcp_command_processor_process(int port, int *fds);
 static void pcp_child_will_die(int code, Datum arg);
 static void pcp_kill_all_children(int sig);
 static void reaper(void);
@@ -106,7 +106,7 @@ static void reaper(void);
  * main entry point for pcp child process
  */
 void
-pcp_main(int unix_fd, int inet_fd)
+pcp_main(int *fds)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	struct timeval uptime;
@@ -115,8 +115,6 @@ pcp_main(int unix_fd, int inet_fd)
 	init_ps_display("", "", "", "");
 
 	gettimeofday(&uptime, NULL);
-	pcp_unix_fd = unix_fd;
-	pcp_inet_fd = inet_fd;
 
 	pcp_recovery_in_progress = pool_shared_memory_create(sizeof(bool));
 	*pcp_recovery_in_progress = false;
@@ -168,34 +166,44 @@ pcp_main(int unix_fd, int inet_fd)
 		errno = 0;
 		CHECK_RESTART_REQUEST;
 
-		port = pcp_do_accept(unix_fd, inet_fd);
+		port = pcp_do_accept(fds);
 		if (port > 0)
 		{
-			start_pcp_command_processor_process(port);
+			start_pcp_command_processor_process(port, fds);
 		}
 	}
 }
 
+/*
+ * Accept connection to pcp port
+ */
 static int
-pcp_do_accept(int unix_fd, int inet_fd)
+pcp_do_accept(int *fds)
 {
 	fd_set		readmask;
-	int			fds;
-	struct sockaddr addr;
-	socklen_t	addrlen;
+	fd_set		rmask;
+	int			rfds;
 	int			fd = 0;
 	int			afd;
-	int inet = 0;
+	int			*walk;
+	int			nsocks = 0;
+	SockAddr	saddr;
 
 	set_ps_display("PCP: wait for connection request", false);
 
+	for (walk = fds; *walk != -1; walk++)
+	{
+		if (*walk > nsocks)
+			nsocks = *walk;
+	}
+	nsocks++;
 	FD_ZERO(&readmask);
-	FD_SET(unix_fd, &readmask);
-	if (inet_fd)
-		FD_SET(inet_fd, &readmask);
+	for (walk = fds; *walk != -1; walk++)
+		FD_SET(*walk, &readmask);
 
-	fds = select(Max(unix_fd, inet_fd) + 1, &readmask, NULL, NULL, NULL);
-	if (fds == -1)
+	memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
+	rfds = select(nsocks, &rmask, NULL, NULL, NULL);
+	if (rfds == -1)
 	{
 		if (errno == EAGAIN || errno == EINTR)
 			return -1;
@@ -203,19 +211,19 @@ pcp_do_accept(int unix_fd, int inet_fd)
 				(errmsg("unable to accept new pcp connection"),
 				 errdetail("select system call failed with error : \"%m\"")));
 	}
-	if (FD_ISSET(unix_fd, &readmask))
+	for (walk = fds; *walk != -1; walk++)
 	{
-		fd = unix_fd;
-	}
-	if (FD_ISSET(inet_fd, &readmask))
-	{
-		fd = inet_fd;
-		inet	  ++;
+		if (FD_ISSET(*walk, &rmask))
+		{
+			fd = *walk;
+			break;
+		}
 	}
 
-	addrlen = sizeof(addr);
+	memset(&saddr, 0, sizeof(saddr));
+	saddr.salen = sizeof(saddr.addr);
 
-	afd = accept(fd, &addr, &addrlen);
+	afd = accept(fd, (struct sockaddr *) &saddr.addr, &saddr.salen);
 	if (afd < 0)
 	{
 		/*
@@ -237,29 +245,27 @@ pcp_do_accept(int unix_fd, int inet_fd)
 	}
 	ereport(DEBUG2,
 			(errmsg("I am PCP child with PID:%d and accept fd:%d", getpid(), afd)));
-	if (inet)
-	{
-		int			on = 1;
 
+	/*
+	 * Set no delay if AF_INET socket. Not sure if this is really necessary
+	 * but PostgreSQL does this.
+	 */
+	if (!FD_ISSET(fds[0], &rmask))	/* fds[0] is UNIX domain socket */
+	{
+		int	on;
+
+		on = 1;
 		if (setsockopt(afd, IPPROTO_TCP, TCP_NODELAY,
 					   (char *) &on,
 					   sizeof(on)) < 0)
 		{
+			ereport(WARNING,
+					(errmsg("wait_for_new_connections: setsockopt failed with error \"%m\"")));
 			close(afd);
-			ereport(ERROR,
-					(errmsg("unable to accept new pcp connection"),
-					 errdetail("setsockopt system call failed with error : \"%m\"")));
-		}
-		if (setsockopt(afd, SOL_SOCKET, SO_KEEPALIVE,
-					   (char *) &on,
-					   sizeof(on)) < 0)
-		{
-			close(afd);
-			ereport(ERROR,
-					(errmsg("unable to accept new pcp connection"),
-					 errdetail("setsockopt system call failed with error : \"%m\"")));
+			return -1;
 		}
 	}
+
 	return afd;
 }
 
@@ -267,18 +273,21 @@ pcp_do_accept(int unix_fd, int inet_fd)
  * forks a new pcp worker child
  */
 static void
-start_pcp_command_processor_process(int port)
+start_pcp_command_processor_process(int port, int *fds)
 {
 	pid_t		pid = fork();
+	int			*walk;
 
 	if (pid == 0)				/* child */
 	{
 		SetProcessGlobalVariables(PT_PCP_WORKER);
 
 		on_exit_reset();
+
 		/* Close the listen sockets sockets */
-		close(pcp_unix_fd);
-		close(pcp_inet_fd);
+		for (walk = fds; *walk != -1; walk++)
+			close(*walk);
+
 		/* call PCP child main */
 		if (pcp_worker_children)
 			list_free(pcp_worker_children);
