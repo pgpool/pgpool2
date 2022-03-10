@@ -43,7 +43,7 @@
  * overflow.)
  *
  *
- * Portions Copyright (c) 2003-2021, PgPool Global Development Group
+ * Portions Copyright (c) 2003-2022, PgPool Global Development Group
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -2146,7 +2146,7 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 					now = localtime(&seconds);
 					strftime(strbuf, sizeof(strbuf), "%Y-%m-%d %H:%M:%S", now);
 					snprintf(msbuf, sizeof(msbuf), ".%03d", (int) (timeval.tv_usec / 1000));
-					memcpy(strbuf + 19, msbuf, 4);
+					memcpy(strbuf + 19, msbuf, 5);
 
 					if (padding != 0)
 						appendStringInfo(buf, "%*s", padding, strbuf);
