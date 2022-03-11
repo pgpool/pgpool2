@@ -3415,7 +3415,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 					if (p)
 					{
 						value = p + strlen(p) + 1;
-						ereport(LOG,
+						ereport(DEBUG5,
 								(errmsg("ParameterStatus message from backend: %d", i),
 								 errdetail("parameter name: \"%s\" value: \"%s\"", p, value)));
 
