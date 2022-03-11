@@ -1694,7 +1694,7 @@ reaper(void)
 				ereport(WARNING,
 						(errmsg("%s process with pid: %d was terminated by sigkill", exiting_process_name, pid)));
 			else
-				ereport(LOG,
+				ereport(DEBUG1,
 						(errmsg("%s process with pid: %d exits with status %d by signal %d", exiting_process_name, pid, status, WTERMSIG(status))));
 
 			/*
@@ -1708,7 +1708,7 @@ reaper(void)
 			}
 		}
 		else
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("%s process with pid: %d exits with status %d", exiting_process_name, pid, status)));
 
 		/* if exiting child process was PCP handler */
@@ -1838,7 +1838,7 @@ reaper(void)
 		else if (restart_child && new_pid)
 		{
 			/* Report if the child was restarted */
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("fork a new %s process with pid: %d", exiting_process_name, new_pid)));
 		}
 		else
@@ -2730,16 +2730,20 @@ fork_follow_child(int old_main_node, int new_primary, int old_primary)
 		wd_lock_standby(WD_FOLLOW_PRIMARY_LOCK);
 		pool_acquire_follow_primary_lock(true, false);
 		Req_info->follow_primary_ongoing = true;
-		ereport(LOG,
-				(errmsg("start triggering follow command.")));
 		for (i = 0; i < pool_config->backend_desc->num_backends; i++)
 		{
 			BackendInfo *bkinfo;
 
 			bkinfo = pool_get_node_info(i);
 			if (bkinfo->backend_status == CON_DOWN)
+			{
+				ereport(LOG,
+						(errmsg("=== Starting follow primary command for node %d ===", i)));
 				trigger_failover_command(i, pool_config->follow_primary_command,
 										 old_main_node, new_primary, old_primary);
+				ereport(LOG,
+						(errmsg("=== Follow primary command for node %d ended ===", i)));
+			}
 		}
 		Req_info->follow_primary_ongoing = false;
 		pool_release_follow_primary_lock(false);
@@ -3870,7 +3874,7 @@ handle_failback_request(FAILOVER_CONTEXT *failover_context, int node_id)
 	}
 
 	ereport(LOG,
-			(errmsg("starting fail back. reconnect host %s(%d)",
+			(errmsg("=== Starting fail back. reconnect host %s(%d) ===",
 					BACKEND_INFO(node_id).backend_hostname,
 					BACKEND_INFO(node_id).backend_port)));
 
@@ -3968,7 +3972,7 @@ handle_failover_request(FAILOVER_CONTEXT *failover_context, int node_id)
 													   VALID_BACKEND(failover_context->node_id_set[i]))))
 		{
 			ereport(LOG,
-					(errmsg("starting %s. shutdown host %s(%d)",
+					(errmsg("=== Starting %s. shutdown host %s(%d) ===",
 							(failover_context->reqkind == NODE_QUARANTINE_REQUEST) ? "quarantine" : "degeneration",
 							BACKEND_INFO(failover_context->node_id_set[i]).backend_hostname,
 							BACKEND_INFO(failover_context->node_id_set[i]).backend_port)));
@@ -4462,7 +4466,7 @@ exec_child_restart(FAILOVER_CONTEXT *failover_context, int node_id)
 	if (failover_context->reqkind == NODE_UP_REQUEST)
 	{
 		ereport(LOG,
-				(errmsg("failback done. reconnect host %s(%d)",
+				(errmsg("=== Failback done. reconnect host %s(%d) ===",
 						BACKEND_INFO(node_id).backend_hostname,
 						BACKEND_INFO(node_id).backend_port)));
 
@@ -4483,24 +4487,26 @@ exec_child_restart(FAILOVER_CONTEXT *failover_context, int node_id)
 	else if (failover_context->reqkind == PROMOTE_NODE_REQUEST)
 	{
 		ereport(LOG,
-				(errmsg("promotion done. promoted host %s(%d)",
+				(errmsg("=== Promotion done. promoted host %s(%d) ===",
 						BACKEND_INFO(node_id).backend_hostname,
 						BACKEND_INFO(node_id).backend_port)));
 	}
 	else
 	{
+#ifdef NOT_USED
 		/*
 		 * Temporary black magic. Without this regression 055 does not
 		 * finish
 		 */
-		fprintf(stderr, "%s done. shutdown host %s(%d)",
-				(failover_context->reqkind == NODE_DOWN_REQUEST) ? "failover" : "quarantine",
+		fprintf(stderr, "=== %s done. shutdown host %s(%d) ===",
+				(failover_context->reqkind == NODE_DOWN_REQUEST) ? "Failover" : "Quarantine",
 				BACKEND_INFO(node_id).backend_hostname,
 				BACKEND_INFO(node_id).backend_port);
+#endif
 
 		ereport(LOG,
-				(errmsg("%s done. shutdown host %s(%d)",
-						(failover_context->reqkind == NODE_DOWN_REQUEST) ? "failover" : "quarantine",
+				(errmsg("=== %s done. shutdown host %s(%d) ===",
+						(failover_context->reqkind == NODE_DOWN_REQUEST) ? "Failover" : "Quarantine",
 						BACKEND_INFO(node_id).backend_hostname,
 						BACKEND_INFO(node_id).backend_port)));
 	}

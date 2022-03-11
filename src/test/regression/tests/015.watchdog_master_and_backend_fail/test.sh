@@ -141,7 +141,7 @@ sleep 5
 echo "Waiting for the standby to execute failover..."
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-	grep " failover done" $STANDBY_DIR/log/pgpool.log > /dev/null 2>&1
+	grep " Failover done" $STANDBY_DIR/log/pgpool.log > /dev/null 2>&1
 	if [ $? = 0 ];then
 		success_count=$(( success_count + 1 ))
 		echo "Standby became new leader successfully."

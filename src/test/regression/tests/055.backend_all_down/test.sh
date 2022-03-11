@@ -32,7 +32,7 @@ sh pgpool.sh
 
 while true
 do
-	grep "failover done. shutdown host $PGSOCKET_DIR(11003)" log/pgpool.log > /dev/null 2>&1
+	grep "Failover done. shutdown host $PGSOCKET_DIR(11003)" log/pgpool.log > /dev/null 2>&1
 	if [ $? = 0 ];then
 		break;
 	fi
