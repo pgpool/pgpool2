@@ -1198,10 +1198,9 @@ POOL_STATUS Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 			kind = pool_read_kind(backend);
 			if (kind != 'Z')
-                ereport(ERROR,
-                    (errmsg("unable to parse the query"),
-                         errdetail("invalid read kind")));
-
+				ereport(ERROR,
+						(errmsg("unable to parse the query"),
+						 errdetail("invalid read kind \"%c\" returned from backend %d after Sync message sent", kind, i)));
 			/*
 			 * SYNC message returns "Ready for Query" message.
 			 */
