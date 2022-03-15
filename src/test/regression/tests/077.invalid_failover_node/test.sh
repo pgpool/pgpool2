@@ -49,14 +49,15 @@ date
 # wait until node 1 up
 ok=ng
 u=2
-for i in {1..15}
+for i in {1..30}
 do
     $PCP_NODE_INFO -w -p $PCP_PORT 1|grep waiting
     if [ $? -eq 0 ];then
 	ok=ok
 	break;
     fi
-    echo `expr $u \* $i`
+    echo -n "`expr $u \* $i` "
+    date
     sleep $u
 done
 
