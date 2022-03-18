@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -273,7 +273,7 @@ update_pool_passwd_from_file(char *conf_file, char *input_file, bool md5auth)
 			fprintf(stdout, "input exceeds maximum username length %d\n\n", MAX_USER_NAME_LEN);
 			continue;
 		}
-		strncpy(username, buf, sizeof(username) - 1);
+		strncpy(username, buf, pch - buf - 1);
 
 		if (strlen(pch) >= sizeof(password))
 		{
