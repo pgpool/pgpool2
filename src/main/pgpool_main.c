@@ -85,6 +85,7 @@ typedef struct User1SignalSlot
 	sig_atomic_t signalFlags[MAX_INTERRUPTS];
 }			User1SignalSlot;
 
+#ifdef NOT_USED
 /*
  * Process pending signal actions.
  */
@@ -112,6 +113,7 @@ typedef struct User1SignalSlot
 			reload_config_request = 0; \
 		} \
     } while (0)
+#endif
 
 #define PGPOOLMAXLITSENQUEUELENGTH 10000
 
@@ -189,6 +191,11 @@ static int exec_follow_primary_command(FAILOVER_CONTEXT *failover_context, int n
 static void save_node_info(FAILOVER_CONTEXT *failover_context, int new_primary_node_id, int new_main_node_id);
 static void exec_child_restart(FAILOVER_CONTEXT *failover_context, int node_id);
 static void exec_notice_pcp_child(FAILOVER_CONTEXT *failover_context);
+
+static void check_requests(void);
+#ifdef DEBUG
+static void print_signal_member(sigset_t *sig);
+#endif
 
 static struct sockaddr_un un_addr;	/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;	/* unix domain socket path for PCP */
@@ -512,8 +519,11 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	/* This is the main loop */
 	for (;;)
 	{
+		/* Check pending requests */
+		check_requests();
+#ifdef NOT_USED
 		CHECK_REQUEST;
-
+#endif
 		/*
 		 * check for child signals to ensure child startup before reporting
 		 * successful start.
@@ -1636,7 +1646,7 @@ reaper(void)
 	int			status;
 	int			i;
 
-	ereport(DEBUG1,
+	ereport(LOG,
 			(errmsg("reaper handler")));
 
 	if (exiting)
@@ -1852,7 +1862,7 @@ reaper(void)
 		}
 
 	}
-	ereport(DEBUG1,
+	ereport(LOG,
 			(errmsg("reaper handler: exiting normally")));
 }
 
@@ -2060,7 +2070,7 @@ pool_sleep(unsigned int second)
 		r = pool_pause(&timeout);
 		POOL_SETMASK(&BlockSig);
 		if (r > 0)
-			CHECK_REQUEST;
+			check_requests();
 		POOL_SETMASK(&UnBlockSig);
 		gettimeofday(&current_time, NULL);
 	}
@@ -4621,3 +4631,74 @@ create_inet_domain_sockets_by_list(char **listen_addresses, int n_listen_address
 
 	return sockets;
 }
+
+/*
+ * Check and execute pending requests set by signal interrupts.
+ */
+static
+void check_requests(void)
+{
+	/*
+	 * Waking child request?
+	 */
+	if (wakeup_request)
+	{
+		wakeup_children();
+		wakeup_request = 0;
+	}
+
+	/*
+	 * Failover or failback request?
+	 */
+	if (sigusr1_request)
+	{
+		do {
+			sigusr1_request = 0;
+			sigusr1_interrupt_processor();
+		} while (sigusr1_request == 1);
+	}
+
+	/*
+	 * Unblock signals so that SIGQUIT/SIGTERRM/SIGINT can be accepted.
+	 * They are all shutdown requests.
+	 */
+	POOL_SETMASK(&UnBlockSig);
+
+	/*
+	 * Reap child request?
+	 */
+	if (sigchld_request)
+	{
+		reaper();
+	}
+
+	/*
+	 * Configuration file reloading request?
+	 */
+	if (reload_config_request)
+	{
+		reload_config();
+		reload_config_request = 0;
+	}
+
+	/*
+	 * Block signals again
+	 */
+	POOL_SETMASK(&BlockSig);
+}
+
+#ifdef DEBUG
+static
+void print_signal_member(sigset_t *sig)
+{
+	if (sigismember(sig, SIGQUIT))
+		ereport(LOG,
+				(errmsg("SIGQUIT is member")));
+	if (sigismember(sig, SIGINT))
+		ereport(LOG,
+				(errmsg("SIGINT is member")));
+	if (sigismember(sig, SIGTERM))
+		ereport(LOG,
+				(errmsg("SIGTERM is member")));
+}
+#endif
