@@ -193,9 +193,7 @@ static void exec_child_restart(FAILOVER_CONTEXT *failover_context, int node_id);
 static void exec_notice_pcp_child(FAILOVER_CONTEXT *failover_context);
 
 static void check_requests(void);
-#ifdef DEBUG
 static void print_signal_member(sigset_t *sig);
-#endif
 
 static struct sockaddr_un un_addr;	/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;	/* unix domain socket path for PCP */
@@ -4638,6 +4636,8 @@ create_inet_domain_sockets_by_list(char **listen_addresses, int n_listen_address
 static
 void check_requests(void)
 {
+	sigset_t	sig;
+
 	/*
 	 * Waking child request?
 	 */
@@ -4657,6 +4657,10 @@ void check_requests(void)
 			sigusr1_interrupt_processor();
 		} while (sigusr1_request == 1);
 	}
+
+	/* Check pending signals (SIGQUIT/SIGTERRM/SIGINT) */
+	sigpending(&sig);
+	print_signal_member(&sig);
 
 	/*
 	 * Unblock signals so that SIGQUIT/SIGTERRM/SIGINT can be accepted.
@@ -4687,7 +4691,6 @@ void check_requests(void)
 	POOL_SETMASK(&BlockSig);
 }
 
-#ifdef DEBUG
 static
 void print_signal_member(sigset_t *sig)
 {
@@ -4701,4 +4704,3 @@ void print_signal_member(sigset_t *sig)
 		ereport(LOG,
 				(errmsg("SIGTERM is member")));
 }
-#endif
