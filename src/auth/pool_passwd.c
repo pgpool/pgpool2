@@ -56,6 +56,12 @@ pool_init_pool_passwd(char *pool_passwd_filename, POOL_PASSWD_MODE mode)
 	if (passwd_fd)
 		return;
 
+	if (pool_passwd_filename == NULL)
+	{
+		saved_passwd_filename[0] = '\0'; /* indicate pool_passwd is disabled */
+		return;
+	}
+
 	pool_passwd_mode = mode;
 
 	if (saved_passwd_filename[0] == '\0')
@@ -194,8 +200,13 @@ pool_get_passwd(char *username)
 				(errmsg("unable to get password, username is NULL")));
 
 	if (!passwd_fd)
-		ereport(ERROR,
+	{
+		if (strlen(saved_passwd_filename))
+			ereport(ERROR,
 				(errmsg("unable to get password, password file descriptor is NULL")));
+		else
+			return NULL;
+	}
 
 	rewind(passwd_fd);
 	name[0] = '\0';
@@ -340,13 +351,14 @@ pool_get_user_credentials(char *username)
 	if (!username)
 		ereport(ERROR,
 				(errmsg("unable to get password, username is NULL")));
-
 	if (!passwd_fd)
 	{
-		ereport(WARNING,
+		if (strlen(saved_passwd_filename))
+			ereport(WARNING,
 				(errmsg("unable to get password, password file descriptor is NULL")));
 		return NULL;
 	}
+
 	rewind(passwd_fd);
 
 	while (!feof(passwd_fd) && !ferror(passwd_fd))
@@ -650,7 +662,7 @@ read_pool_key(char *key_file_path)
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 	{
 		ereport(WARNING,
-				(errmsg("pool key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n",
+				(errmsg("pool key file \"%s\" has group or world access; permissions should be u=rw (0600) or less",
 						key_file_path)));
 		/* do we want to allow unsecure pool key file ? */
 		/* fclose(fp); */
