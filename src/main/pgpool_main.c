@@ -148,7 +148,7 @@ static int trigger_failover_command(int node, const char *command_line,
 static bool verify_backend_node_status(int backend_no, bool* is_standby);
 static int find_primary_node(void);
 static int find_primary_node_repeatedly(void);
-static void terminate_all_childrens();
+static void terminate_all_children();
 static void system_will_go_down(int code, Datum arg);
 static char* process_name_from_pid(pid_t pid);
 static void sync_backend_from_watchdog(void);
@@ -948,9 +948,10 @@ static int create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 }
 
 /*
- * function called as shared memory exit call back to kill all childrens
+ * Function called as shared memory exit call back to kill all children.
  */
-static void terminate_all_childrens()
+static void
+terminate_all_children()
 {
 	pid_t		wpid;
 	int			i;
@@ -998,8 +999,8 @@ static void terminate_all_childrens()
 	{
 		int			ret_pid;
 
-        wpid = waitpid(-1, &ret_pid, 0);
-    } while (wpid > 0 || (wpid == -1 && errno == EINTR));
+		wpid = waitpid(-1, &ret_pid, WNOHANG);
+	} while (wpid > 0 || (wpid == -1 && errno == EINTR));
 
     if (wpid == -1 && errno != ECHILD)
         ereport(LOG,
@@ -3647,7 +3648,7 @@ static void system_will_go_down(int code, Datum arg)
      * signal.
      */
     if(processState != EXITING)
-        terminate_all_childrens();
+        terminate_all_children();
     processState = EXITING;
     POOL_SETMASK(&UnBlockSig);
 
