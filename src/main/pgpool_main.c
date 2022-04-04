@@ -145,7 +145,7 @@ static int trigger_failover_command(int node, const char *command_line,
 						 int old_main_node, int new_main_node, int old_primary);
 static int	find_primary_node(void);
 static int	find_primary_node_repeatedly(void);
-static void terminate_all_children(int sig);
+static void terminate_all_childrens(int sig);
 static void system_will_go_down(int code, Datum arg);
 static char *process_name_from_pid(pid_t pid);
 static void sync_backend_from_watchdog(void);
@@ -1018,11 +1018,12 @@ create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 }
 
 /*
- * Send the kill signal to all Pgpool children except to the pgpool_logger
- * child and wait for the termination of all killed children before returning.
+ * sends the kill signal to all Pgpool children except to
+ * the pgpool_logger child
+ * wait for the termination of all killed children before returning.
  */
 static void
-terminate_all_children(int sig)
+terminate_all_childrens(int sig)
 {
 	pid_t		wpid;
 	int			i;
@@ -1103,7 +1104,7 @@ terminate_all_children(int sig)
 	{
 		int			ret_pid;
 
-		wpid = waitpid(-1, &ret_pid, WNOHANG);
+		wpid = waitpid(-1, &ret_pid, 0);
 		if (wpid > 0)
 			terminated_count++;
 	} while (terminated_count < killed_count &&
@@ -1154,7 +1155,7 @@ static RETSIGTYPE exit_handler(int sig)
 
 	ereport(LOG,
 			(errmsg("terminating all child processes")));
-	terminate_all_children(sig);
+	terminate_all_childrens(sig);
 
 	/*
 	 * Send signal to follow child process and it's children.
@@ -3911,7 +3912,7 @@ system_will_go_down(int code, Datum arg)
 	{
 		ereport(LOG,
 				(errmsg("shutting down")));
-		terminate_all_children(SIGINT);
+		terminate_all_childrens(SIGINT);
 	}
 
 	/*
