@@ -533,8 +533,12 @@ backend_cleanup(POOL_CONNECTION * volatile *frontend, POOL_CONNECTION_POOL * vol
 	 * Close frontend connection
 	 */
 	reset_connection();
-	pool_close(*frontend);
-	*frontend = NULL;
+
+	if (*frontend != NULL)
+	{
+		pool_close(*frontend);
+		*frontend = NULL;
+	}
 
 	if (cache_connection == false)
 	{
