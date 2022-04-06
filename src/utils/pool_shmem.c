@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2021, PgPool Global Development Group
+ * Portions Copyright (c) 2003-2022, PgPool Global Development Group
  * Portions Copyright (c) 2003-2004, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
@@ -78,7 +78,7 @@ pool_shared_memory_segment_get_chunk(size_t size)
 		return NULL;
 	}
 	/* check if we have enough space left in chunk */
-	if ((shared_mem_free_pos - (char*)shared_mem_chunk) + size > chunk_size)
+	if ((shared_mem_free_pos - (char*)shared_mem_chunk) + MAXALIGN(size) > chunk_size)
 	{
 		ereport(ERROR,
 				(errmsg("no space left in shared memory segment")));
