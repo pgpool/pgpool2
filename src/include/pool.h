@@ -633,7 +633,6 @@ extern BackendInfo * pool_get_node_info(int node_number);
 extern int	pool_get_node_count(void);
 extern int *pool_get_process_list(int *array_size);
 extern ProcessInfo * pool_get_process_info(pid_t pid);
-extern ProcessInfo * pool_get_process_info_by_process_id(void);
 extern void pool_sleep(unsigned int second);
 extern int	PgpoolMain(bool discard_status, bool clear_memcache_oidmaps);
 extern int	pool_send_to_frontend(char *data, int len, bool flush);
