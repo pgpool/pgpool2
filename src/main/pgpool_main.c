@@ -1918,6 +1918,15 @@ pool_get_process_info(pid_t pid)
 }
 
 /*
+ * Get process information by process id.
+ */
+ProcessInfo *
+pool_get_process_info_by_process_id(void)
+{
+	return &process_info[my_proc_id];
+}
+
+/*
  * handle SIGUSR2
  * Wakeup all processes
  */
