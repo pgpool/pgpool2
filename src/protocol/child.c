@@ -156,16 +156,13 @@ do_child(int *fds)
 
 	char		psbuf[NI_MAXHOST + 128];
 
-	ProcessInfo* proc_info;
-
 	ereport(DEBUG2,
 			(errmsg("I am Pgpool Child process with pid: %d", getpid())));
 
+	ProcessInfo* proc_info = pool_get_process_info(getpid());
+
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
-
-	/* Get my process info */
-	proc_info = pool_get_process_info_by_process_id();
 
 	/* set up signal handlers */
 	signal(SIGALRM, SIG_DFL);
