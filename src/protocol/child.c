@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -159,8 +159,6 @@ do_child(int *fds)
 	ereport(DEBUG2,
 			(errmsg("I am Pgpool Child process with pid: %d", getpid())));
 
-	ProcessInfo* proc_info = pool_get_process_info(getpid());
-
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
 
@@ -283,7 +281,7 @@ do_child(int *fds)
 			if (pool_config->child_max_connections > 0)
 				connections_count++;
 
-			proc_info->client_connection_count++;
+			pool_get_my_process_info()->client_connection_count++;
 
 			/* check if maximum connections count for this child reached */
 			if ((pool_config->child_max_connections > 0) &&
@@ -330,10 +328,10 @@ do_child(int *fds)
 		pool_session_context_destroy();
 
 		front_end_fd = wait_for_new_connections(fds, &saddr);
-		proc_info->wait_for_connect = 0;
+		pool_get_my_process_info()->wait_for_connect = 0;
 		if (front_end_fd == OPERATION_TIMEOUT)
 		{
-			if (pool_config->child_life_time > 0 && proc_info->connected)
+			if (pool_config->child_life_time > 0 && pool_get_my_process_info()->connected)
 			{
 				ereport(DEBUG1,
 						(errmsg("child life %d seconds expired", pool_config->child_life_time)));
@@ -404,7 +402,7 @@ do_child(int *fds)
 			child_frontend = NULL;
 			continue;
 		}
-		proc_info->connected = 1;
+		pool_get_my_process_info()->connected = 1;
 
 		/*
 		 * show ps status
@@ -469,7 +467,7 @@ do_child(int *fds)
 		if (pool_config->child_max_connections > 0)
 			connections_count++;
 
-		proc_info->client_connection_count++;
+		pool_get_my_process_info()->client_connection_count++;
 
 		/* check if maximum connections count for this child reached */
 		if ((pool_config->child_max_connections > 0) &&
@@ -1479,8 +1477,6 @@ wait_for_new_connections(int *fds, SockAddr *saddr)
 	struct timeval *timeout;
 	struct timeval timeoutdata;
 
-	ProcessInfo* proc_info = pool_get_process_info(getpid());
-
 	for (walk = fds; *walk != -1; walk++)
 		socket_set_nonblock(*walk);
 
@@ -1575,9 +1571,9 @@ wait_for_new_connections(int *fds, SockAddr *saddr)
 			break;
 
 		/* timeout */
-		proc_info->wait_for_connect++;
+		pool_get_my_process_info()->wait_for_connect++;
 
-		if (proc_info->wait_for_connect > pool_config->child_life_time)
+		if (pool_get_my_process_info()->wait_for_connect > pool_config->child_life_time)
 			return OPERATION_TIMEOUT;
 
 	}
@@ -2113,6 +2109,5 @@ static int opt_sort(const void *a, const void *b)
 void
 set_process_status(ProcessStatus status)
 {
-	ProcessInfo* proc_info = pool_get_process_info(getpid());
-	proc_info->status = status;
+	pool_get_my_process_info()->status = status;
 }
