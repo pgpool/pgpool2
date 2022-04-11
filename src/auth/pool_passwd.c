@@ -705,7 +705,6 @@ int
 chceck_password_type_is_not_md5(char *username, char *password_in_config)
 {
 	PasswordType passwordType = PASSWORD_TYPE_UNKNOWN;
-	PasswordMapping *password_mapping = NULL;
 
 	/*
 	 * if the password specified in config is empty string or NULL look for the
@@ -713,12 +712,14 @@ chceck_password_type_is_not_md5(char *username, char *password_in_config)
 	 */
 	if (password_in_config == NULL || strlen(password_in_config) == 0)
 	{
+		PasswordMapping *password_mapping = NULL;
 		password_mapping = pool_get_user_credentials(username);
 		if (password_mapping == NULL)
 		{
 			return -2;
 		}
 		passwordType = password_mapping->pgpoolUser.passwordType;
+		delete_passwordMapping(password_mapping);
 	}
 	else
 	{
