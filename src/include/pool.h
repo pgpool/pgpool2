@@ -379,7 +379,7 @@ typedef enum
 #define Min(x, y)		((x) < (y) ? (x) : (y))
 
 
-#define MAX_NUM_SEMAPHORES		8
+#define MAX_NUM_SEMAPHORES		9
 #define CONN_COUNTER_SEM		0
 #define REQUEST_INFO_SEM		1
 #define SHM_CACHE_SEM			2
@@ -388,6 +388,7 @@ typedef enum
 #define ACCEPT_FD_SEM			5
 #define SI_CRITICAL_REGION_SEM	6
 #define FOLLOW_PRIMARY_SEM		7
+#define MAIN_EXIT_HANDLER_SEM	8	/* used in exit_hander in pgpool main process */
 #define MAX_REQUEST_QUEUE_SIZE	10
 
 #define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 10	/* time in seconds to keep
