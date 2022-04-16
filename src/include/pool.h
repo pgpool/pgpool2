@@ -456,7 +456,7 @@ typedef enum
 #define NO_LOAD_BALANCE "/*NO LOAD BALANCE*/"
 #define NO_LOAD_BALANCE_COMMENT_SZ (sizeof(NO_LOAD_BALANCE)-1)
 
-#define MAX_NUM_SEMAPHORES		7
+#define MAX_NUM_SEMAPHORES		8
 #define CONN_COUNTER_SEM		0
 #define REQUEST_INFO_SEM		1
 #define SHM_CACHE_SEM			2
@@ -464,6 +464,7 @@ typedef enum
 #define PCP_REQUEST_SEM			4
 #define ACCEPT_FD_SEM			5
 #define FOLLOW_PRIMARY_SEM		6
+#define MAIN_EXIT_HANDLER_SEM	7	/* used in exit_hander in pgpool main process */
 #define MAX_REQUEST_QUEUE_SIZE	10
 
 #define MAX_SEC_WAIT_FOR_CLUSTER_TRANSATION 10	/* time in seconds to keep

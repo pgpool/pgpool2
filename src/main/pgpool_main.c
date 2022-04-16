@@ -192,8 +192,8 @@ extern char *pcp_conf_file;		/* path for pcp.conf */
 extern char *conf_file;
 extern char *hba_file;
 
-static int	exiting = 0;		/* non 0 if I'm exiting */
-static int	switching = 0;		/* non 0 if I'm failing over or degenerating */
+static volatile sig_atomic_t exiting = 0;		/* non 0 if I'm exiting */
+static volatile sig_atomic_t switching = 0;		/* non 0 if I'm failing over or degenerating */
 
 POOL_REQUEST_INFO *Req_info;	/* request info area in shared memory */
 volatile sig_atomic_t *InRecovery;	/* non 0 if recovery is started */
@@ -1417,6 +1417,9 @@ send_failback_request(int node_id, bool throw_error, unsigned char flags)
 	return ret;
 }
 
+/*
+ * Pgpool main process exit handler
+ */
 static RETSIGTYPE exit_handler(int sig)
 {
 	int			i;
@@ -1443,8 +1446,41 @@ static RETSIGTYPE exit_handler(int sig)
 		errno = save_errno;
 		return;
 	}
-	exiting = 1;
+
+	/*
+	 * Check if another exit handler instance is already running.  It is
+	 * possible that exit_handler is interrupted in the middle by other
+	 * signal.
+	 */
+	if (exiting)
+	{
+		ereport(LOG,
+				(errmsg("exit handler (signal: %d) called. but exit handler is already in progress", sig)));
+		POOL_SETMASK(&UnBlockSig);
+		errno = save_errno;
+		return;
+	}
+
+	/* Check to make sure that other exit handler is not running */
+	pool_semaphore_lock(MAIN_EXIT_HANDLER_SEM);
+	if (exiting == 0)
+	{
+		exiting = 1;
+		pool_semaphore_unlock(MAIN_EXIT_HANDLER_SEM);
+	}
+	else
+	{
+		pool_semaphore_unlock(MAIN_EXIT_HANDLER_SEM);
+		ereport(LOG,
+				(errmsg("exit handler (signal: %d) called. but exit handler is already in progress", sig)));
+		POOL_SETMASK(&UnBlockSig);
+		errno = save_errno;
+		return;
+	}
+
 	processState = EXITING;
+	ereport(LOG,
+			(errmsg("shutting down by signal %d", sig)));
 
 	/* Close listen socket */
 	for (walk = fds; *walk != -1; walk++)
@@ -1520,6 +1556,8 @@ static RETSIGTYPE exit_handler(int sig)
 		wpid = waitpid(-1, &ret_pid, 0);
 	} while (wpid > 0 || (wpid == -1 && errno == EINTR));
 
+	ereport(LOG,
+			(errmsg("Pgpool-II system is shutdown")));
 	process_info = NULL;
 	exit(0);
 }
