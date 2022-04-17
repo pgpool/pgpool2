@@ -1,3 +1,5 @@
+'Q'	"SET statement_timeout TO 1000"
+'Y'
 'P'	"S1"	"SELECT 1"	0
 'B'	"P1"	"S1"	0	0	0
 'E'	"P1"	0

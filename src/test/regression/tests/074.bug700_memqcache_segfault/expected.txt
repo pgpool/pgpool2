@@ -1,3 +1,6 @@
+FE=> Query (query="SET statement_timeout TO 1000")
+<= BE CommandComplete(SET)
+<= BE ReadyForQuery(I)
 FE=> Parse(stmt="S1", query="SELECT 1")
 FE=> Bind(stmt="S1", portal="P1")
 FE=> Execute(portal="P1")
