@@ -44,3 +44,10 @@ function clean_all {
 	pgrep postgres | xargs kill -9 > /dev/null 2>&1
 	rm -f $PGSOCKET_DIR/.s.PGSQL.*
 }
+
+#-------------------------------------------
+# check segmentation fault
+#-------------------------------------------
+function check_segfault {
+	egrep -i "segmentation fault|segfault" log/pgpool.log >/dev/null 2>&1
+}
