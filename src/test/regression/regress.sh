@@ -200,6 +200,13 @@ do
 	clean_all
 	timeout $TIMEOUT ./test.sh > $log/$i 2>&1
 	rtn=$?
+
+	check_segfault
+	if [ $? -eq 0 ];then
+		echo "fail: Segmentation fault detected" >> $log/$i
+		rtn=1
+	fi
+
 	if [ $rtn = 0 ];then
 		echo ${CGREEN}"ok."${CNORM}
 		ok=`expr $ok + 1`
