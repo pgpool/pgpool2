@@ -539,7 +539,7 @@ stop_me(void)
 				 errdetail("%m")));
 	}
 	ereport(LOG,
-			(errmsg("stop request sent to pgpool. waiting for termination...")));
+			(errmsg("stop request sent to pgpool (pid: %d). waiting for termination...", pid)));
 
 	while (kill(pid, 0) == 0)
 	{

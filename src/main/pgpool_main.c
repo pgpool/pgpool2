@@ -1106,6 +1106,9 @@ static RETSIGTYPE exit_handler(int sig)
 	int		   *walk;
 	int			save_errno = errno;
 
+	ereport(LOG,
+			(errmsg("exit handler called (signal: %d)", sig)));
+
 	POOL_SETMASK(&AuthBlockSig);
 
 	/*
@@ -1132,8 +1135,6 @@ static RETSIGTYPE exit_handler(int sig)
 	 */
 	if (exiting)
 	{
-		ereport(LOG,
-				(errmsg("exit handler (signal: %d) called. but exit handler is already in progress", sig)));
 		POOL_SETMASK(&UnBlockSig);
 		errno = save_errno;
 		return;
