@@ -238,7 +238,6 @@ volatile sig_atomic_t reload_config_request = 0;
 static volatile sig_atomic_t sigusr1_request = 0;
 static volatile sig_atomic_t sigchld_request = 0;
 static volatile sig_atomic_t wakeup_request = 0;
-static volatile sig_atomic_t pgpool_exit_request = 0;
 
 static int	pipe_fds[2];		/* for delivering signals */
 
@@ -2258,14 +2257,6 @@ trigger_failover_command(int node, const char *command_line,
 		ereport(LOG,
 				(errmsg("execute command: %s", exec_cmd->data)));
 		r = system(exec_cmd->data);
-
-		/* On some platforms system(3) ignores SIGINT and SIGQUIT */
-		if (WIFSIGNALED(r) &&
-			(WTERMSIG(r) == SIGINT || WTERMSIG(r) == SIGQUIT))
-		{
-			/* set exit request set to process later on */
-			pgpool_exit_request = WTERMSIG(r);
-		}
 	}
 
 	free_string(exec_cmd);
@@ -4700,14 +4691,6 @@ void check_requests(void)
 			sigusr1_request = 0;
 			sigusr1_interrupt_processor();
 		} while (sigusr1_request == 1);
-	}
-
-	/* Check exit request */
-	if (pgpool_exit_request != 0)
-	{
-		ereport(LOG,
-				(errmsg("exit request was registered while executing failover/failback")));
-		exit_handler(pgpool_exit_request);
 	}
 
 	/* Check pending signals (SIGQUIT/SIGTERRM/SIGINT) */
