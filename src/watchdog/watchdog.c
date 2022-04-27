@@ -652,7 +652,7 @@ wd_check_config(void)
 	{
 		if (pool_config->num_hb_dest_if <= 0)
 			ereport(ERROR,
-					(errmsg("invalid lifecheck configuration. no heartbeat interfaces defined")));
+					(errmsg("invalid life-check configuration. no heartbeat interfaces defined")));
 	}
 }
 
@@ -1676,18 +1676,9 @@ read_sockets(fd_set *rmask, int pending_fds_count)
 												   wd_node_lost_reasons[wdNode->node_lost_reason],
 												   abs((int)(previous_startup_time.tv_sec - wdNode->startup_time.tv_sec)))));
 
-								if (abs((int)(previous_startup_time.tv_sec - wdNode->startup_time.tv_sec)) <= 2 &&
-									wdNode->node_lost_reason == NODE_LOST_BY_LIFECHECK)
-								{
-									ereport(LOG,
-										(errmsg("node:\"%s\" was reported lost by the lifecheck process",wdNode->nodeName),
-											 errdetail("only lifecheck process can mark this node alive again")));
-									/* restore the node's lost state */
-									wdNode->state = oldNodeState;
-								}
-								else
-									watchdog_state_machine(WD_EVENT_PACKET_RCV, wdNode, pkt, NULL);
-
+								watchdog_state_machine(WD_EVENT_PACKET_RCV, wdNode, pkt, NULL);
+								/* Since the node was lost. Fire node found event as well */
+								watchdog_state_machine(WD_EVENT_REMOTE_NODE_FOUND, wdNode, NULL, NULL);
 							}
 
 						}
@@ -4373,8 +4364,8 @@ standard_packet_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 					if (wdNode->node_lost_reason == NODE_LOST_BY_LIFECHECK)
 					{
 						ereport(LOG,
-							(errmsg("node:\"%s\" was reported lost by the lifecheck process",wdNode->nodeName),
-								 errdetail("only life-check process can mark this node alive again")));
+							(errmsg("node:\"%s\" was reported lost by the life-check process",wdNode->nodeName),
+								 errdetail("node will be added to cluster once life-check mark it as reachable again")));
 						/* restore the node's lost state */
 						wdNode->state = oldNodeState;
 					}
