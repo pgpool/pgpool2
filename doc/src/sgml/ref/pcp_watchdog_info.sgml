@@ -111,6 +111,8 @@ server3:9999 Linux server3.localdomain server3 9999 9000 7 STANDBY 0 MEMBER
    The <option>--verbose</option> option can help understand the output. For example:
   </para>
   <programlisting>
+$ pcp_watchdog_info -h localhost -p 9898 -U pgpool -v
+Password:
 Watchdog Cluster Information 
 Total Nodes              : 3
 Remote Nodes             : 2
