@@ -169,6 +169,8 @@ server3:9999 Linux server3.localdomain server3 9999 9000 7 STANDBY 0 MEMBER
    <option>verbose</option> モードは結果の詳細を表示できます。例えば:
   </para>
   <programlisting>
+$ pcp_watchdog_info -h localhost -p 9898 -U pgpool -v
+Password:
 Watchdog Cluster Information 
 Total Nodes              : 3
 Remote Nodes             : 2
