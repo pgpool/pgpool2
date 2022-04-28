@@ -74,13 +74,13 @@ Pgpool-II documentation
   <para>
    Here is an example output:
    <programlisting>
-    $ pcp_watchdog_info -h localhost -U postgres
+$ pcp_watchdog_info -h localhost -p 9898 -U postgres 
+Password:
+3 YES server1:9999 Linux server1.localdomain server1
 
-    3 NO Linux_host1.localdomain_9991 host1
-
-    Linux_host1.localdomain_9991 host1 9991 9001 7 STANDBY
-    Linux_host2.localdomain_9992 host2 9992 9002 4 MASTER
-    Linux_host3.localdomain_9993 host3 9993 9003 7 STANDBY
+server1:9999 Linux server1.localdomain server1 9999 9000 4 MASTER
+server2:9999 Linux server2.localdomain server2 9999 9000 7 STANDBY
+server3:9999 Linux server3.localdomain server3 9999 9000 7 STANDBY
    </programlisting>
   </para>
   <para>
@@ -108,44 +108,44 @@ Pgpool-II documentation
    The <option>--verbose</option> option can help understand the output. For example:
   </para>
   <programlisting>
-   $ pcp_watchdog_info -h localhost -v -U postgres
+$ pcp_watchdog_info -h localhost -p 9898 -U pgpool -v
+Password:
+Watchdog Cluster Information 
+Total Nodes          : 3
+Remote Nodes         : 2
+Quorum state         : QUORUM EXIST
+Alive Remote Nodes   : 2
+Local node escalation: YES
+Master Node Name     : server1:9999 Linux server1.localdomain
+Master Host Name     : server1
 
-   Watchdog Cluster Information
-   Total Nodes          : 3
-   Remote Nodes         : 2
-   Quorum state         : QUORUM EXIST
-   Alive Remote Nodes   : 2
-   Local node escalation: NO
-   Master Node Name     : Linux_host2.localdomain_9992
-   Master Host Name     : localhost
+Watchdog Node Information 
+Node Name      : server1:9999 Linux server1.localdomain
+Host Name      : server1
+Delegate IP    : 192.168.56.150
+Pgpool port    : 9999
+Watchdog port  : 9000
+Node priority  : 1
+Status         : 4
+Status Name    : MASTER
 
-   Watchdog Node Information
-   Node Name      : Linux_host1.localdomain_9991
-   Host Name      : host1
-   Delegate IP    : 192.168.1.10
-   Pgpool port    : 9991
-   Watchdog port  : 9001
-   Node priority  : 1
-   Status         : 7
-   Status Name    : STANDBY
+Node Name      : server2:9999 Linux server2.localdomain
+Host Name      : server2
+Delegate IP    : 192.168.56.150
+Pgpool port    : 9999
+Watchdog port  : 9000
+Node priority  : 1
+Status         : 7
+Status Name    : STANDBY
 
-   Node Name      : Linux_host2.localdomain_9992
-   Host Name      : host2
-   Delegate IP    : 192.168.1.10
-   Pgpool port    : 9992
-   Watchdog port  : 9002
-   Node priority  : 1
-   Status         : 4
-   Status Name    : MASTER
-
-   Node Name      : Linux_host3.localdomain_9993
-   Host Name      : host3
-   Delegate IP    : 192.168.1.10
-   Pgpool port    : 9993
-   Watchdog port  : 9003
-   Node priority  : 1
-   Status         : 7
-   Status Name    : STANDBY
+Node Name      : server3:9999 Linux server3.localdomain
+Host Name      : server3
+Delegate IP    : 192.168.56.150
+Pgpool port    : 9999
+Watchdog port  : 9000
+Node priority  : 1
+Status         : 7
+Status Name    : STANDBY
   </programlisting>
  </refsect1>
 
