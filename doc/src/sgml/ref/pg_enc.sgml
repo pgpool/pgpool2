@@ -128,8 +128,20 @@ Pgpool-II documentation
       </para>
      </listitem>
     </varlistentry>
-
    </variablelist>
+
+    <note>
+     <para>
+      If you are providing the password as an argument to pg_enc and the password contains a "$" character,
+      you must escape it.
+     </para>
+     <para>
+      For example, if you want to use "ABC$123" as password,
+      <programlisting>
+pg_enc -m -f /path/to/pgpool.conf -u username ABC\$123
+      </programlisting>
+     </para>
+    </note>
   </para>
  </refsect1>
 

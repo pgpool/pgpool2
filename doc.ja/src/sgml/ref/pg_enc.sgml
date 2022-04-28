@@ -165,8 +165,18 @@ Pgpool-II documentation
       </para>
      </listitem>
     </varlistentry>
-
    </variablelist>
+   <note>
+    <para>
+     pg_encの引数としてパスワードを指定し、パスワードに「$」文字が含まれる場合にはエスケープする必要があります。
+    </para>
+    <para>
+     例えば、パスワードとしてABC$123を使用する場合、
+     <programlisting>
+pg_enc -m -f /path/to/pgpool.conf -u username ABC\$123
+     </programlisting>
+    </para>
+   </note>
   </para>
  </refsect1>
 
