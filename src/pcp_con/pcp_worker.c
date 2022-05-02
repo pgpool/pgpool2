@@ -638,14 +638,13 @@ inform_process_count(PCP_CONNECTION * frontend)
 
 	process_list = pool_get_process_list(&process_count);
 
-	mesg = (char *) palloc(7 * process_count);	/* PID is at most 6 characters
-												 * long */
+	mesg = (char *) palloc(8 * process_count);	/* PID is at most 7 characters long */
 
 	snprintf(process_count_str, sizeof(process_count_str), "%d", process_count);
 
 	for (i = 0; i < process_count; i++)
 	{
-		char		process_id[7];
+		char		process_id[8];
 
 		snprintf(process_id, sizeof(process_id), "%d", process_list[i]);
 		snprintf(mesg + total_port_len, strlen(process_id) + 1, "%s", process_id);
