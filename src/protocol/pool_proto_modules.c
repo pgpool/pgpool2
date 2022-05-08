@@ -103,6 +103,8 @@ static void pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION * front
 											 POOL_CONNECTION_POOL * backend);
 static void si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node *node, bool tstate_check);
 
+static bool check_transaction_state_and_abort(char *query, Node *node, POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
+
 /*
  * This is the workhorse of processing the pg_terminate_backend function to
  * make sure that the use of function should not trigger the backend node failover.
@@ -305,6 +307,19 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		 * Start query context
 		 */
 		pool_start_query(query_context, contents, len, node);
+
+		/*
+		 * Check if the transaction is in abort status. If so, we do nothing
+		 * and just return an error message to frontend, execpt for
+		 * transaction commit or abort command.
+		 */
+		if (check_transaction_state_and_abort(contents, node, frontend, backend) == false)
+		{
+			pool_ps_idle_display(backend);
+			pool_query_context_destroy(query_context);
+			pool_set_skip_reading_from_backends();
+			return POOL_CONTINUE;
+		}
 
 		/*
 		 * Create PostgreSQL version cache.  Since the provided query might
@@ -2050,7 +2065,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 	 * transaction.
 	 */
 	/* if (pool_is_query_in_progress() && allow_close_transaction) */
-	if (allow_close_transaction)
+	if (REPLICATION && allow_close_transaction)
 	{
 		bool internal_transaction_started = INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID);
 
@@ -2065,8 +2080,9 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 		}
 
 		/* close an internal transaction */
-		if (end_internal_transaction(frontend, backend) != POOL_CONTINUE)
-			return POOL_END;
+		if (internal_transaction_started)
+			if (end_internal_transaction(frontend, backend) != POOL_CONTINUE)
+				return POOL_END;
 
 		/*
 		 * If we are running in snapshot isolation mode and started an
@@ -4511,4 +4527,52 @@ si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node
 
 		si_snapshot_acquired();
 	}
+}
+
+/*
+ * Check if the transaction is in abort status. If so, we do nothing and just
+ * return error message and ready for query message to frontend, then return
+ * false to caller.
+ */
+static bool
+check_transaction_state_and_abort(char *query, Node *node, POOL_CONNECTION * frontend,
+								  POOL_CONNECTION_POOL * backend)
+{
+	int		len;
+
+	/*
+	 * Are we in failed transaction and the command is not a transaction close
+	 * command?
+	 */
+	if (pool_is_failed_transaction() && !is_commit_or_rollback_query(node))
+	{
+		StringInfoData buf;
+
+		initStringInfo(&buf);
+		appendStringInfo(&buf, "statement: %s", query);
+
+		/* send an error message to frontend */
+		pool_send_error_message(
+			frontend,
+			MAJOR(backend),
+			"25P02",
+			"current transaction is aborted, commands ignored until end of transaction block",
+			buf.data,
+			"",
+			__FILE__,
+			__LINE__);
+
+		pfree(buf.data);
+
+		/* send ready for query to frontend */
+		pool_write(frontend, "Z", 1);
+		len = 5;
+		len = htonl(len);
+		pool_write(frontend, &len, sizeof(len));
+		pool_write(frontend, "E", 1);
+		pool_flush(frontend);
+
+		return false;
+	}
+	return true;
 }

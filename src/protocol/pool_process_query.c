@@ -4190,6 +4190,7 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 	PG_END_TRY();
 
 	POOL_SETMASK(&oldmask);
+	pool_unset_failed_transaction();
 	return POOL_CONTINUE;
 }
 
