@@ -303,6 +303,14 @@ exclude=pgpool*
     </programlisting>
 
     <para>
+     Initialize <productname>PostgreSQL</productname> on the primary server.
+    </para>
+    <programlisting>
+[server1]# su - postgres
+[server1]$ /usr/pgsql-14/bin/initdb -D $PGDATA
+    </programlisting>
+
+    <para>
      Then we edit the configuration file <filename>$PGDATA/postgresql.conf</filename>
      on <literal>server1</literal> (primary) as follows. Enable <literal>wal_log_hints</literal>
      to use <literal>pg_rewind</literal>. 
@@ -408,6 +416,8 @@ host    replication     all             samenet                 scram-sha-256
      to set up passwordless <literal>SSH</literal>. The generated key file name is <literal>id_rsa_pgpool</literal>.
     </para>
     <programlisting>
+[all servers]# mkdir ~/.ssh
+[all servers]# chmod 700 ~/.ssh
 [all servers]# cd ~/.ssh
 [all servers]# ssh-keygen -t rsa -f id_rsa_pgpool
 [all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
@@ -415,6 +425,8 @@ host    replication     all             samenet                 scram-sha-256
 [all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
 
 [all servers]# su - postgres
+[all servers]$ mkdir ~/.ssh
+[all servers]$ chmod 700 ~/.ssh
 [all servers]$ cd ~/.ssh
 [all servers]$ ssh-keygen -t rsa -f id_rsa_pgpool
 [all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
@@ -423,8 +435,9 @@ host    replication     all             samenet                 scram-sha-256
     </programlisting>
     <para>
      After setting SSH, use <command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command> command to
-     make sure that you can log in without entering a password. Edit <filename>/etc/ssh/sshd_config</filename>
-     if necessary and restart sshd.
+     make sure that you can log in without entering a password. If you fail
+     executing <command>ssh-copy-id</command>, set a password for <literal>postgres</literal> user
+     and temporarily allow password authentication for example.
     </para>
    </listitem>
 
@@ -1124,7 +1137,14 @@ OPTS=" -D -n"
   <title>How to use</title>
   <para>
    Let's start to use <productname>Pgpool-II</productname>.
-   First, let's start <productname>Pgpool-II</productname> on <literal>server1</literal>,
+   First, we start the primary <productname>PostgreSQL</productname>.
+  </para>
+  <programlisting>
+[server1]# su - postgres
+[server1]$ /usr/pgsql-14/bin/pg_ctl start -D $PGDATA
+  </programlisting>
+  <para>
+   Then let's start <productname>Pgpool-II</productname> on <literal>server1</literal>,
    <literal>server2</literal>, <literal>server3</literal> by using the following command.
   </para>
   <programlisting>

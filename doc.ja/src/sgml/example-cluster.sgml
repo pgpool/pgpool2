@@ -313,6 +313,14 @@ exclude=pgpool*
     </programlisting>
 
     <para>
+     プライマリサーバの<productname>PostgreSQL</productname>を初期化します。
+    </para>
+    <programlisting>
+[server1]# su - postgres
+[server1]$ /usr/pgsql-14/bin/initdb -D $PGDATA
+    </programlisting>
+
+    <para>
      次に<literal>server1</literal>にて、設定ファイル<filename>$PGDATA/postgresql.conf</filename>を以下のように編集します。
      <application>pg_rewind</application>を使うために<varname>wal_log_hints</varname>を有効にしておきます。
      プライマリが後でスタンバイになる可能性があるので、<literal>hot_standby = on</literal>にしておきます。
@@ -427,6 +435,8 @@ host    replication     all             samenet                 scram-sha-256
      生成される鍵ファイル名は<literal>id_rsa_pgpool</literal>とします。
     </para>
     <programlisting>
+[全サーバ]# midir ~/.ssh
+[全サーバ]# chmod 700 ~/.ssh
 [全サーバ]# cd ~/.ssh
 [全サーバ]# ssh-keygen -t rsa -f id_rsa_pgpool
 [全サーバ]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
@@ -434,6 +444,8 @@ host    replication     all             samenet                 scram-sha-256
 [全サーバ]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
 
 [全サーバ]# su - postgres
+[全サーバ]$ midir ~/.ssh
+[全サーバ]$ chmod 700 ~/.ssh
 [全サーバ]$ cd ~/.ssh
 [全サーバ]$ ssh-keygen -t rsa -f id_rsa_pgpool
 [全サーバ]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
@@ -444,8 +456,7 @@ host    replication     all             samenet                 scram-sha-256
      設定後、<literal>root</literal>ユーザ及び<literal>postgres</literal>ユーザから
      <command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command>コマンドを実行し、
      パスワード入力せずログインできることを確認してください。
-     必要に応じて<filename>/etc/ssh/sshd_config</filename>を編集し、
-     <systemitem>sshd</systemitem>を再起動してください。
+     <command>ssh-copy-id</command>の実行に失敗する場合は、<literal>postgres</literal> ユーザのパスワードを設定し、一時的にパスワード認証を有効化するなどしてください。
     </para>
    </listitem>
 
@@ -1171,7 +1182,14 @@ OPTS=" -D -n"
   <title>動作確認</title>
   <para>
    これから、動作確認を行います。
-   まず、<literal>server1</literal>、<literal>server2</literal>、<literal>server3</literal>で
+   <literal>server1</literal>で以下のコマンドで<productname>PostgreSQL</productname>を起動します。
+  </para>
+  <programlisting>
+[server1]# su - postgres
+[server1]$ /usr/pgsql-14/bin/pg_ctl start -D $PGDATA
+  </programlisting>
+  <para>
+   <literal>server1</literal>、<literal>server2</literal>、<literal>server3</literal>で
    以下のコマンドで<productname>Pgpool-II</productname>を起動します。
   </para>
   <programlisting>
