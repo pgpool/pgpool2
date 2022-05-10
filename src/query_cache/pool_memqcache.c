@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2225,6 +2225,10 @@ pool_reset_fsmm(size_t size)
 /*
  * Find victim block using clock algorithm and make it free.
  * Returns new free block id.
+ * XXX actually this is not a clock algorithm because it does not have "reference" bit.
+ * It's like a simple FIFO.
+ * See https://en.wikipedia.org/wiki/Page_replacement_algorithm#Clock for more details.
+ * It would be nice if we could use true clock algorithm someday.
  */
 static POOL_CACHE_BLOCKID pool_reuse_block(void)
 {
