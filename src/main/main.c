@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -532,19 +532,31 @@ stop_me(void)
 				(errmsg("could not read pid file")));
 	}
 
-	if (kill(pid, stop_sig) == -1)
+	for (;;)
 	{
-		ereport(FATAL,
-				(errmsg("could not stop process with pid: %d", pid),
-				 errdetail("%m")));
-	}
-	ereport(LOG,
-			(errmsg("stop request sent to pgpool. waiting for termination...")));
+		int		cnt = 5;	/* sending sinal retry interval */
 
-	while (kill(pid, 0) == 0)
-	{
-		fprintf(stderr, ".");
-		sleep(1);
+		if (kill(pid, stop_sig) == -1)
+		{
+			ereport(FATAL,
+					(errmsg("could not stop process with pid: %d", pid),
+					 errdetail("%m")));
+		}
+		ereport(LOG,
+				(errmsg("stop request sent to pgpool (pid: %d). waiting for termination...", pid)));
+
+		while (kill(pid, 0) == 0)
+		{
+			fprintf(stderr, ".");
+			sleep(1);
+			cnt--;
+			/* If pgpool did not stop within 5 seconds, break the loop and try
+			 * to send the signal again */
+			if (cnt <= 0)
+				break;
+		}
+		if (cnt > 0)
+			break;
 	}
 	fprintf(stderr, "done.\n");
 	pid_file = get_pid_file_path();
