@@ -2746,7 +2746,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
     2020-11-25 [48d25a8]
     -->
     <para>
-     新しいドキュメント<xref linkend="EXAMPLE-KUBERNETES">「Kubernetesの設定例」を追加しました。(Bo Peng)
+     新しいドキュメント「Kubernetesの設定例」を追加しました。(Bo Peng)
     </para>
    </listitem>
 
