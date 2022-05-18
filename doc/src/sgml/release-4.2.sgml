@@ -2531,7 +2531,7 @@ Author: Bo Peng <pengbo@sraoss.co.jp>
     2020-11-25 [48d25a8]
     -->
     <para>
-     Add new documentation of <xref linkend="EXAMPLE-KUBERNETES"> "Pgpool-II on Kubernetes". (Bo Peng)
+     Add new documentation "Pgpool-II on Kubernetes". (Bo Peng)
     </para>
    </listitem>
 
