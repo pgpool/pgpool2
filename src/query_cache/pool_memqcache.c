@@ -730,7 +730,7 @@ pool_fetch_from_memory_cache(POOL_CONNECTION * frontend,
 {
 	char	   *qcache;
 	size_t		qcachelen;
-	int			sts;
+	volatile int	sts;
 	pool_sigset_t oldmask;
 
 	ereport(DEBUG1,
