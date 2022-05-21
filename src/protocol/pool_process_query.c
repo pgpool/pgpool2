@@ -5141,6 +5141,9 @@ pool_push_pending_data(POOL_CONNECTION * backend)
 	}
 
 	num_pending_messages = pool_pending_message_get_message_num_by_backend_id(backend->db_node_id);
+	ereport(DEBUG1,
+			(errmsg("pool_push_pending_data: num_pending_messages: %d", num_pending_messages)));
+
 	num_pushed_messages = 0;
 
 	for (;;)
