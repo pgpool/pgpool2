@@ -26,6 +26,7 @@ do
     export PGPORT=$PGPOOL_PORT
 
     echo "memory_cache_enabled = on" >> etc/pgpool.conf
+    echo "log_min_messages = debug1" >> etc/pgpool.conf
     ./startall
     wait_for_pgpool_startup
 
