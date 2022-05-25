@@ -471,7 +471,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 				(errmsg("failed to allocate memory in startup process")));
 
 	pcp_fds[0] = create_unix_domain_socket(pcp_un_addr);
-	fds[1] = -1;
+	pcp_fds[1] = -1;
 	on_proc_exit(FileUnlink, (Datum) pcp_un_addr.sun_path);
 
 	/* create inet domain socket if any */
