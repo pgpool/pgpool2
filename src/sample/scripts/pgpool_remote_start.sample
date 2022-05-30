@@ -7,19 +7,21 @@ DEST_NODE_HOST="$1"
 DEST_NODE_PGDATA="$2"
 
 PGHOME=/usr/pgsql-14
+POSTGRESQL_STARTUP_USER=postgres
+SSH_KEY_FILE=id_rsa_pgpool
 
 echo pgpool_remote_start: start: remote start Standby node $DEST_NODE_HOST
 
 ## Test passwordless SSH
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${POSTGRESQL_STARTUP_USER}@${DEST_NODE_HOST} -i ~/.ssh/${SSH_KEY_FILE} ls /tmp > /dev/null
 
 if [ $? -ne 0 ]; then
-    echo ERROR: pgpool_remote_start: passwordless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwordless SSH.
+    echo ERROR: pgpool_remote_start: passwordless SSH to ${POSTGRESQL_STARTUP_USER}@${DEST_NODE_HOST} failed. Please setup passwordless SSH.
     exit 1
 fi
 
 ## Start Standby node
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${POSTGRESQL_STARTUP_USER}@${DEST_NODE_HOST} -i ~/.ssh/${SSH_KEY_FILE} "
     $PGHOME/bin/pg_ctl -l /dev/null -w -D ${DEST_NODE_PGDATA} status
 
     if [ \$? -eq 0 ]; then

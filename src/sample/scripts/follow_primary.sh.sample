@@ -37,6 +37,8 @@ PCP_USER=pgpool
 PGPOOL_PATH=/usr/bin
 PCP_PORT=9898
 REPL_SLOT_NAME=${NODE_HOST//[-.]/_}
+POSTGRESQL_STARTUP_USER=postgres
+SSH_KEY_FILE=id_rsa_pgpool
 
 echo follow_primary.sh: start: Standby node ${NODE_ID}
 
@@ -49,10 +51,10 @@ if [ $? -ne 0 ]; then
 fi
 
 # Test passwordless SSH
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NEW_PRIMARY_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${POSTGRESQL_STARTUP_USER}@${NEW_PRIMARY_NODE_HOST} -i ~/.ssh/${SSH_KEY_FILE} ls /tmp > /dev/null
 
 if [ $? -ne 0 ]; then
-    echo follow_main.sh: passwordless SSH to postgres@${NEW_PRIMARY_NODE_HOST} failed. Please setup passwordless SSH.
+    echo follow_main.sh: passwordless SSH to ${POSTGRESQL_STARTUP_USER}@${NEW_PRIMARY_NODE_HOST} failed. Please setup passwordless SSH.
     exit 1
 fi
 
@@ -76,7 +78,7 @@ if [ $? -ne 0 ]; then
     echo follow_primary.sh: create replication slot \"${REPL_SLOT_NAME}\" failed. You may need to create replication slot manually.
 fi
 
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${POSTGRESQL_STARTUP_USER}@${NODE_HOST} -i ~/.ssh/${SSH_KEY_FILE} "
 
     set -o errexit
 
@@ -109,7 +111,7 @@ EOT
 if [ $? -ne 0 ]; then
     echo follow_primary.sh: end: pg_rewind failed. Try pg_basebackup.
 
-    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${NODE_HOST} -i ~/.ssh/id_rsa_pgpool "
+    ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${POSTGRESQL_STARTUP_USER}@${NODE_HOST} -i ~/.ssh/${SSH_KEY_FILE} "
 
         set -o errexit
 
@@ -149,7 +151,7 @@ EOT
 
     # start Standby node on ${NODE_HOST}
     ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        postgres@${NODE_HOST} -i ~/.ssh/id_rsa_pgpool $PGHOME/bin/pg_ctl -l /dev/null -w -D ${NODE_PGDATA} start
+        ${POSTGRESQL_STARTUP_USER}@${NODE_HOST} -i ~/.ssh/${SSH_KEY_FILE} $PGHOME/bin/pg_ctl -l /dev/null -w -D ${NODE_PGDATA} start
 
 fi
 
