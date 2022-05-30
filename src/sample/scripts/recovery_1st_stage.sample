@@ -15,14 +15,16 @@ PGHOME=/usr/pgsql-14
 ARCHIVEDIR=/var/lib/pgsql/archivedir
 REPLUSER=repl
 REPL_SLOT_NAME=${DEST_NODE_HOST//[-.]/_}
+POSTGRESQL_STARTUP_USER=postgres
+SSH_KEY_FILE=id_rsa_pgpool
 
 echo recovery_1st_stage: start: pg_basebackup for Standby node $DEST_NODE_ID
 
 ## Test passwordless SSH
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${POSTGRESQL_STARTUP_USER}@${DEST_NODE_HOST} -i ~/.ssh/${SSH_KEY_FILE} ls /tmp > /dev/null
 
 if [ $? -ne 0 ]; then
-    echo recovery_1st_stage: passwordless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwordless SSH.
+    echo recovery_1st_stage: passwordless SSH to ${POSTGRESQL_STARTUP_USER}@${DEST_NODE_HOST} failed. Please setup passwordless SSH.
     exit 1
 fi
 
@@ -43,7 +45,7 @@ if [ $? -ne 0 ]; then
 fi
 
 ## Execute pg_basebackup to recovery Standby node
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DEST_NODE_HOST -i ~/.ssh/id_rsa_pgpool "
+ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${POSTGRESQL_STARTUP_USER}@$DEST_NODE_HOST -i ~/.ssh/${SSH_KEY_FILE} "
 
     set -o errexit
 
