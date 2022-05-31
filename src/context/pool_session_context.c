@@ -1745,6 +1745,9 @@ dump_pending_message(void)
 		return;
 	}
 
+	if (!message_level_is_interesting(DEBUG5))
+		return;
+
 	ereport(DEBUG5,
 			(errmsg("start dumping pending message list")));
 

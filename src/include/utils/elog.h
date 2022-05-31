@@ -205,6 +205,7 @@ typedef enum
 
 #define TEXTDOMAIN NULL
 
+extern bool message_level_is_interesting(int elevel);
 extern bool errstart(int elevel, const char *filename, int lineno,
 		 const char *funcname, const char *domain);
 extern void errfinish(int dummy,...);

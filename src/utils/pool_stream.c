@@ -1294,6 +1294,9 @@ pool_stacklen(POOL_CONNECTION * cp)
 static void
 dump_buffer(char *buf, int len)
 {
+	if (!message_level_is_interesting(DEBUG5))
+		return;
+
 	while (--len)
 	{
 		ereport(DEBUG5,

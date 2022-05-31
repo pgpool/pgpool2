@@ -6016,21 +6016,22 @@ watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode * wdNode, WDPac
 	{
 		case WD_EVENT_WD_STATE_CHANGED:
 			{
-				int			i;
-
 				send_cluster_command(NULL, WD_DECLARE_COORDINATOR_MESSAGE, 4);
 				set_timeout(MAX_SECS_WAIT_FOR_REPLY_FROM_NODE);
 				update_missed_beacon_count(NULL,true);
 				ereport(LOG,
 						(errmsg("I am announcing my self as leader/coordinator watchdog node")));
-
-				for (i = 0; i < g_cluster.remoteNodeCount; i++)
+				if (message_level_is_interesting(DEBUG2))
 				{
-					WatchdogNode *wdNode = &(g_cluster.remoteNodes[i]);
-
+					int			i;
 					ereport(DEBUG2,
 							(errmsg("printing all remote node information")));
-					print_watchdog_node_info(wdNode);
+					for (i = 0; i < g_cluster.remoteNodeCount; i++)
+					{
+						WatchdogNode *wdNode = &(g_cluster.remoteNodes[i]);
+
+						print_watchdog_node_info(wdNode);
+					}
 				}
 				/* Also reset my priority as per the original configuration */
 				g_cluster.localNode->wd_priority = pool_config->wd_priority;
