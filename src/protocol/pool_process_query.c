@@ -769,7 +769,7 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 	/*
 	 * Optimization for other than "Command Complete", "Ready For query",
 	 * "Error response" ,"Notice message", "Notification response",
-	 * "Row description" and "No data"
+	 * "Row description", "No data" and "Close Complete".
 	 * messages.  Especially, since it is too often to receive and forward
 	 * "Data Row" message, we do not flush the message to frontend now. We
 	 * expect that "Command Complete" message (or "Error response" or "Notice
@@ -780,7 +780,8 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 	 * CopyData messages are sent to frontend (typical use case is pg_dump).
 	 * So eliminating per CopyData flush significantly enhances performance.
 	 */
-	if (kind == 'C' || kind == 'Z' || kind == 'E' || kind == 'N' || kind == 'A' || kind == 'T' || kind == 'n')
+	if (kind == 'C' || kind == 'Z' || kind == 'E' || kind == 'N' || kind == 'A' || kind == 'T' || kind == 'n' ||
+		kind == '3')
 	{
 		pool_write_and_flush(frontend, p1, len1);
 	}
