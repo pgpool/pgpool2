@@ -88,6 +88,20 @@ if [ $? != 0 ];then
 fi
 echo "Transaction results are consistent (extended query)."
 
+# Test #2. VACUUM after SELECT.
+
+psql test > results.txt 2>&1 <<EOF
+SELECT count(*) FROM t1;
+VACUUM t1;
+EOF
+
+cmp ../expected.txt results.txt >/dev/null
+if [ $? != 0 ];then
+    echo "test #2 failed."
+    ./shutdownall
+    exit 1
+fi
+
 ./shutdownall
 
 exit 0
