@@ -4108,7 +4108,14 @@ start_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * ba
 }
 
 /*
- * End internal transaction.
+ * End internal transaction.  Called by ReadyForQuery(), assuming that the
+ * ReadyForQuery packet kind has been already eaten by the caller and the
+ * query in progress flag is set.  At returning, the ReadyForQuery packet
+ * length and the transaction state should be left in the backend buffers
+ * EXCEPT for backends that do not satisfy VALID_BACKEND macro. This is
+ * required because the caller later on calls pool_message_length() wich
+ * retrieves the packet length and the transaction state from the backends
+ * that satify VALID_BACKEND macro.
  */
 POOL_STATUS
 end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
@@ -4129,13 +4136,16 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 		/* We need to commit from secondary to primary. */
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
-			if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i) &&
+			if (VALID_BACKEND_RAW(i) && !IS_MAIN_NODE_ID(i) &&
 				INTERNAL_TRANSACTION_STARTED(backend, i))
 			{
-				if (MAJOR(backend) == PROTO_MAJOR_V3)
+				if (MAJOR(backend) == PROTO_MAJOR_V3 && VALID_BACKEND(i))
 				{
 					/*
-					 * Skip rest of Ready for Query packet
+					 * Skip rest of Ready for Query packet for backends
+					 * satisfying VALID_BACKEND macro because they should have
+					 * been already received the data, which is not good for
+					 * do_command().
 					 */
 					pool_read(CONNECTION(backend, i), &len, sizeof(len));
 					pool_read(CONNECTION(backend, i), &tstate, sizeof(tstate));
@@ -4160,16 +4170,29 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 				PG_END_TRY();
 
 				INTERNAL_TRANSACTION_STARTED(backend, i) = false;
+
+				if (MAJOR(backend) == PROTO_MAJOR_V3 && !VALID_BACKEND(i))
+				{
+					/*
+					 * Skip rest of Ready for Query packet for the backend
+					 * that does not satisfy VALID_BACKEND.
+					 */
+					pool_read(CONNECTION(backend, i), &len, sizeof(len));
+					pool_read(CONNECTION(backend, i), &tstate, sizeof(tstate));
+				}
 			}
 		}
 
 		/* Commit on main */
 		if (INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID))
 		{
-			if (MAJOR(backend) == PROTO_MAJOR_V3)
+			if (MAJOR(backend) == PROTO_MAJOR_V3 && VALID_BACKEND(MAIN_NODE_ID))
 			{
 				/*
-				 * Skip rest of Ready for Query packet
+				 * Skip rest of Ready for Query packet for backends
+				 * satisfying VALID_BACKEND macro because they should have
+				 * been already received the data, which is not good for
+				 * do_command().
 				 */
 				pool_read(CONNECTION(backend, MAIN_NODE_ID), &len, sizeof(len));
 				pool_read(CONNECTION(backend, MAIN_NODE_ID), &tstate, sizeof(tstate));
@@ -4193,6 +4216,16 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 			}
 			PG_END_TRY();
 			INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID) = false;
+
+			if (MAJOR(backend) == PROTO_MAJOR_V3 && !VALID_BACKEND(MAIN_NODE_ID))
+			{
+				/*
+				 * Skip rest of Ready for Query packet for the backend
+				 * that does not satisfy VALID_BACKEND.
+				 */
+				pool_read(CONNECTION(backend, MAIN_NODE_ID), &len, sizeof(len));
+				pool_read(CONNECTION(backend, MAIN_NODE_ID), &tstate, sizeof(tstate));
+			}
 		}
 	}
 	PG_CATCH();
