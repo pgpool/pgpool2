@@ -276,7 +276,7 @@
 ! log_directory = '/var/log/pgpool_log'
                                           # directory where log files are written,
                                           # can be absolute
-! log_filename = ''pgpool-%a.log'
+! log_filename = 'pgpool-%a.log'
                                           # log file name pattern,
                                           # can include strftime() escapes
   
