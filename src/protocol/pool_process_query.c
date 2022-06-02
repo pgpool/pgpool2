@@ -4109,6 +4109,9 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 	char		tstate;
 	pool_sigset_t oldmask;
 
+	if (!REPLICATION)
+		return POOL_CONTINUE;
+
 	/*
 	 * We must block all signals. If pgpool SIGTERM, SIGINT or SIGQUIT is
 	 * delivered, it could cause data inconsistency.
