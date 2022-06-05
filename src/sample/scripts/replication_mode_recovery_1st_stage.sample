@@ -60,7 +60,10 @@ EOT
         echo \"standby_mode = 'on'\" >> ${RECOVERYCONF}
     fi
 
-    sed -i \"s/#*port = .*/port = ${DEST_NODE_PORT}/\" ${DEST_NODE_PGDATA}/postgresql.conf
+    sed -i \
+        -e \"s/#*port = .*/port = ${DEST_NODE_PORT}/\" \
+        -e \"s@#*archive_command = .*@archive_command = 'cp \\\"%p\\\" \\\"${ARCHIVEDIR}/%f\\\"'@\" \
+        ${DEST_NODE_PGDATA}/postgresql.conf
 "
 
 if [ $? -ne 0 ]; then
