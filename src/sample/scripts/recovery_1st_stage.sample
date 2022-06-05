@@ -37,7 +37,7 @@ else
 fi
 
 ## Create replication slot "${REPL_SLOT_NAME}"
-${PGHOME}/bin/psql -h ${PRIMARY_NODE_HOST} -p ${PRIMARY_NODE_PORT} \
+${PGHOME}/bin/psql -h ${PRIMARY_NODE_HOST} -p ${PRIMARY_NODE_PORT} postgres \
     -c "SELECT pg_create_physical_replication_slot('${REPL_SLOT_NAME}');"  >/dev/null 2>&1
 
 if [ $? -ne 0 ]; then
@@ -74,7 +74,7 @@ EOT
 
 if [ $? -ne 0 ]; then
 
-    ${PGHOME}/bin/psql -h ${PRIMARY_NODE_HOST} -p ${PRIMARY_NODE_PORT} \
+    ${PGHOME}/bin/psql -h ${PRIMARY_NODE_HOST} -p ${PRIMARY_NODE_PORT} postgres \
         -c "SELECT pg_drop_replication_slot('${REPL_SLOT_NAME}');"  >/dev/null 2>&1
 
     if [ $? -ne 0 ]; then
