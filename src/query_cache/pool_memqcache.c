@@ -2062,6 +2062,7 @@ pool_shared_memory_cache_size(void)
 	/* Remember # of blocks */
 	pool_set_memqcache_blocks(num_blocks);
 	size = pool_config->memqcache_cache_block_size * num_blocks;
+	elog(DEBUG1, "shared_memory_cache_size: %zu", size);
 	return size;
 }
 
@@ -2159,6 +2160,7 @@ pool_shared_memory_fsmm_size(void)
 	size_t		size;
 
 	size = pool_get_memqcache_blocks() * sizeof(char);
+	elog(DEBUG1, "shared_memory_fsmm_size: %zu", size);
 	return size;
 }
 
@@ -3995,6 +3997,8 @@ pool_hash_size(int nelements)
 	size = (char *) &hh.elements - (char *) &hh + sizeof(POOL_HEADER_ELEMENT) * nelements2;
 
 	size += sizeof(POOL_HASH_ELEMENT) * nelements2;
+
+	elog(DEBUG1, "pool_hash_size: %zu", size);
 
 	return size;
 }

@@ -2817,15 +2817,22 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 	 */
 	size = 256;/* let us have some extra space */
 	size += MAXALIGN(sizeof(BackendDesc));
+	elog(DEBUG1, "BackendDesc: %zu bytes requested for shared memory", MAXALIGN(sizeof(BackendDesc)));
 	size += MAXALIGN(pool_coninfo_size());
 	size += MAXALIGN(pool_config->num_init_children * (sizeof(ProcessInfo)));
+	elog(DEBUG1, "ProcessInfo: num_init_children (%d) * sizeof(ProcessInfo) (%zu) = %zu bytes requested for shared memory",
+		 pool_config->num_init_children, sizeof(ProcessInfo), pool_config->num_init_children* sizeof(ProcessInfo));
 	size += MAXALIGN(sizeof(User1SignalSlot));
+	elog(DEBUG1, "UserSignalSlot: %zu bytes requested for shared memory", MAXALIGN(sizeof(User1SignalSlot)));
 	size += MAXALIGN(sizeof(POOL_REQUEST_INFO));
+	elog(DEBUG1, "POOL_REQUEST_INFO: %zu bytes requested for shared memory", MAXALIGN(sizeof(POOL_REQUEST_INFO)));
 	size += MAXALIGN(sizeof(int)); /* for InRecovery */
 	size += MAXALIGN(stat_shared_memory_size());
+	elog(DEBUG1, "stat_shared_memory_size: %zu bytes requested for shared memory", MAXALIGN(stat_shared_memory_size()));
 	size += MAXALIGN(health_check_stats_shared_memory_size());
 	/* Snapshot Isolation manage area */
 	size += MAXALIGN(sizeof(SI_ManageInfo));
+	elog(DEBUG1, "SI_ManageInfo: %zu bytes requested for shared memory", MAXALIGN(sizeof(SI_ManageInfo)));
 	size += MAXALIGN(pool_config->num_init_children * sizeof(pid_t));
 	size += MAXALIGN(pool_config->num_init_children * sizeof(pid_t));
 
@@ -2836,11 +2843,15 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 		size += MAXALIGN(pool_hash_size(pool_config->memqcache_max_num_cache));
 	}
 	if (pool_config->memory_cache_enabled || pool_config->enable_shared_relcache)
+	{
 		size += MAXALIGN(sizeof(POOL_QUERY_CACHE_STATS));
+		elog(DEBUG1, "POOL_QUERY_CACHE_STATS: %zu bytes requested for shared memory", MAXALIGN(sizeof(POOL_QUERY_CACHE_STATS)));
+	}
 
 	if (pool_config->use_watchdog)
 	{
 		size += MAXALIGN(wd_ipc_get_shared_mem_size());
+		elog(DEBUG1, "watchdog: %zu bytes requested for shared memory", MAXALIGN(wd_ipc_get_shared_mem_size()));
 	}
 
 	ereport(LOG,
