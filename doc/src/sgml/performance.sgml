@@ -45,10 +45,10 @@
     <para>
      Here is a formula to calculate the shared memory requirement.
      <programlisting>
-      Shared memory requirement (in bytes) = <xref linkend="guc-num-init-children"> * <xref linkend="guc-max-pool"> * 17408
+      Shared memory requirement (in mega bytes) = 10 + <xref linkend="guc-num-init-children"> * <xref linkend="guc-max-pool"> * 0.02
      </programlisting>
      For example if you have <varname>num_init_children</varname> = 32 (the default) and <varname>max_pool</varname> = 4 (the
-     default), then you will need 32 * 4 * 17408 = 2228224 bytes = 2.1 MB.
+     default), then you will need 10 + 32 * 4 * 0.02 = 12.6 MB.
     </para>
 
     <para>
@@ -64,7 +64,7 @@
     <para>
      Note that, however, in <productname>Pgpool-II</productname> 4.1
      or after, even if the in memory query cache is not enabled, it
-     consumes additional 64MB of shared memory, if <xref
+     consumes additional 128MB of shared memory, if <xref
      linkend="guc-enable-shared-relcache"> is enabled (it is enabled
      by default).
     </para>
@@ -76,10 +76,10 @@
 
      Here is a formula to calculate the process memory requirement.
      <programlisting>
-      Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-init-children"> * 5
+      Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-init-children"> * 0.16
      </programlisting>
      For example if you have <varname>num_init_children</varname> =
-     32 (the default), you will need 160MB.
+     32 (the default), you will need 5.2MB.
     </para>
    </sect3>
   </sect2>
