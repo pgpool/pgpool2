@@ -103,7 +103,7 @@
 
   <programlisting>
 use_watchdog = on
-delegate_IP = ''
+delegate_ip = ''
 ...
 wd_escalation_command = '$path_to_script/aws-escalation.sh'
 wd_de_escalation_command = '$path_to_script/aws-de-escalation.sh'

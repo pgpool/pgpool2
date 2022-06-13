@@ -884,7 +884,7 @@ use_watchdog = on
     Ensure that the IP address set to virtual IP isn't used yet.
    </para>
    <programlisting>
-delegate_IP = '192.168.137.150'
+delegate_ip = '192.168.137.150'
    </programlisting>
 
    <para>
@@ -1020,7 +1020,7 @@ wd_escalation_command = '/etc/pgpool-II/escalation.sh'
    <para>
     Basically, it should work if you change the following variables according to your environment.
     PGPOOL is tha array of the hostname that running Pgpool-II.
-    VIP is the virtual IP address that you set as delegate_IP.
+    VIP is the virtual IP address that you set as delegate_ip.
     DEVICE is the network interface for the virtual IP.
    </para>
     <programlisting>

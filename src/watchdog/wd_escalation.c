@@ -134,7 +134,7 @@ fork_escalation_process(void)
 	/*
 	 * STEP 3 bring up the delegate IP
 	 */
-	if (strlen(pool_config->delegate_IP) != 0)
+	if (strlen(pool_config->delegate_ip) != 0)
 	{
 		if (wd_IP_up() != WD_OK)
 			ereport(WARNING,
@@ -211,7 +211,7 @@ fork_plunging_process(void)
 	 * STEP 2 bring down the delegate IP
 	 */
 
-	if (strlen(pool_config->delegate_IP) != 0)
+	if (strlen(pool_config->delegate_ip) != 0)
 	{
 		if (wd_IP_down() != WD_OK)
 			ereport(WARNING,

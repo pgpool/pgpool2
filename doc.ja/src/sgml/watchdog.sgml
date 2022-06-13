@@ -365,13 +365,13 @@
 
   <variablelist>
 
-   <varlistentry id="guc-delegate-IP" xreflabel="delegate_IP">
-    <term><varname>delegate_IP</varname> (<type>string</type>)
+   <varlistentry id="guc-delegate-ip" xreflabel="delegate_ip">
+    <term><varname>delegate_ip</varname> (<type>string</type>)
      <indexterm>
       <!--
-      <primary><varname>delegate_IP</varname> configuration parameter</primary>
+      <primary><varname>delegate_ip</varname> configuration parameter</primary>
       -->
-      <primary><varname>delegate_IP</varname>設定パラメータ</primary>
+      <primary><varname>delegate_ip</varname>設定パラメータ</primary>
      </indexterm>
     </term>
     <listitem>
@@ -453,7 +453,7 @@
       to run <command>sudo</command> command without a password, and specify it such as
       <literal>"/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev eth0 label eth0:0"</literal>.
       <literal>$_IP_$</literal> will get replaced by the IP address
-      specified in the <xref linkend="guc-delegate-IP">.
+      specified in the <xref linkend="guc-delegate-ip">.
       -->
       仮想IPを起動するために実行するコマンドを指定します。
       <command>"ip addr add $_IP_$/24 dev eth0 label eth0:0"</command>のようにコマンドとパラメータを指定します。
@@ -461,7 +461,7 @@
       <command>ip</command>コマンドに<command>setuid</command>を設定するか、
       <productname>Pgpool-II</productname>起動ユーザ(デフォルトでは<literal>postgres</literal>)がパスワードなしに<command>sudo</command>を実行できるように設定し、
       <command>sudo</command>を介したコマンドを<literal>"/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev eth0 label eth0:0"</literal>のように指定します。
-      <literal>$_IP_$</literal>は<xref linkend="guc-delegate-IP">で指定されたIPアドレスに置換されます。
+      <literal>$_IP_$</literal>は<xref linkend="guc-delegate-ip">で指定されたIPアドレスに置換されます。
      </para>
      <para>
       このパラメータは、サーバ起動時にのみ設定できます。
@@ -490,7 +490,7 @@
       to run <command>sudo</command> command without a password, and specify it such as
       <literal>"/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev eth0"</literal>.
       <literal>$_IP_$</literal> will get replaced by the IP address
-      specified in the <xref linkend="guc-delegate-IP">.
+      specified in the <xref linkend="guc-delegate-ip">.
       -->
       仮想IPを停止するために実行するコマンドを指定します。
       <literal>"ip addr del $_IP_$/24 dev eth0"</literal>のようにコマンドとパラメータを指定します。
@@ -498,7 +498,7 @@
       <command>ip</command>コマンドに<command>setuid</command>を設定するか、
       <productname>Pgpool-II</productname>起動ユーザ(デフォルトでは<literal>postgres</literal>)がパスワードなしに<command>sudo</command>を実行できるように設定し、
       <command>sudo</command>を介したコマンドを<literal>"/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev eth0"</literal>のように指定します。
-      <literal>$_IP_$</literal>は<xref linkend="guc-delegate-IP">で指定されたIPアドレスに置換されます。
+      <literal>$_IP_$</literal>は<xref linkend="guc-delegate-ip">で指定されたIPアドレスに置換されます。
      </para>
      <para>
       <!--
@@ -564,7 +564,7 @@
       to run <command>sudo</command> command without a password, and specify it such as
       <literal>"/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I eth0"</literal>.
       <literal>$_IP_$</literal> will get replaced by
-      the IP address specified in the <varname>delegate_IP</varname>.
+      the IP address specified in the <varname>delegate_ip</varname>.
       -->
       IPアドレス切り替え後にARPリクエストを送信するコマンドです。
       <literal>"arping -U $_IP_$ -w 1 -I eth0"</literal>のようにコマンドとパラメータを指定します。
@@ -572,7 +572,7 @@
       <command>arping</command>コマンドに<literal>setuid</literal>を設定するか、
       <productname>Pgpool-II</productname>起動ユーザ(デフォルトでは<literal>postgres</literal>ユーザ)がパスワードなしに<command>sudo</command>を実行できるように設定し、
       <command>sudo</command>を介したコマンドを<literal>"/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I eth0"</literal>のように設定します。
-      <literal>$_IP_$</literal>は<xref linkend="guc-delegate-IP">で指定されたIPアドレスに置換されます。
+      <literal>$_IP_$</literal>は<xref linkend="guc-delegate-ip">で指定されたIPアドレスに置換されます。
      </para>
      <para>
       <!--

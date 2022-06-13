@@ -755,7 +755,7 @@ wd_cluster_initialize(void)
 	gettimeofday(&g_cluster.localNode->startup_time, NULL);
 
 	strncpy(g_cluster.localNode->hostname, pool_config->wd_nodes.wd_node_info[pgpool_node_id].hostname, sizeof(g_cluster.localNode->hostname) - 1);
-	strncpy(g_cluster.localNode->delegate_ip, pool_config->delegate_IP, sizeof(g_cluster.localNode->delegate_ip) - 1);
+	strncpy(g_cluster.localNode->delegate_ip, pool_config->delegate_ip, sizeof(g_cluster.localNode->delegate_ip) - 1);
 	/* Assign the node name */
 	{
 		struct utsname unameData;

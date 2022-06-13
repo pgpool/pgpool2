@@ -67,7 +67,7 @@ wd_check_network_command_configurations(void)
 	 * If delegate IP is not assigned to the node the configuration is not
 	 * used
 	 */
-	if (strlen(pool_config->delegate_IP) == 0)
+	if (strlen(pool_config->delegate_ip) == 0)
 		return;
 
 	/* check setuid bit of ifup command */

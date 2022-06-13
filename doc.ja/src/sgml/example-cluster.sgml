@@ -915,11 +915,11 @@ postgres:AESHs/pWL5rtXy2IwuzroHfqg==
 use_watchdog = on
    </programlisting>
    <para>
-    アクティブ機が立ち上げる仮想IPを<varname>delegate_IP</varname>に指定します。
+    アクティブ機が立ち上げる仮想IPを<varname>delegate_ip</varname>に指定します。
     仮想IPはまだ使われていないIPアドレスを指定してください。
    </para>
    <programlisting>
-delegate_IP = '192.168.137.150'
+delegate_ip = '192.168.137.150'
    </programlisting>
 
    <para>

@@ -690,7 +690,7 @@ hostname0 = ''
 
 # - Virtual IP control Setting -
 
-#delegate_IP = ''
+#delegate_ip = ''
                                     # delegate IP address
                                     # If this is empty, virtual IP never bring up.
                                     # (change requires restart)

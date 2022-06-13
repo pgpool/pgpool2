@@ -108,7 +108,7 @@ wd_IP_up(void)
 	char	   *command;
 	int			i;
 
-	if (strlen(pool_config->delegate_IP) == 0)
+	if (strlen(pool_config->delegate_ip) == 0)
 	{
 		ereport(LOG,
 				(errmsg("trying to acquire the delegate IP address, but delegate IP is not configured")));
@@ -163,7 +163,7 @@ wd_IP_up(void)
 	{
 		for (i = 0; i < WD_TRY_PING_AT_IPUP; i++)
 		{
-			if (wd_is_ip_exists(pool_config->delegate_IP) == true)
+			if (wd_is_ip_exists(pool_config->delegate_ip) == true)
 				break;
 			ereport(LOG,
 					(errmsg("waiting for the delegate IP address to become active"),
@@ -176,7 +176,7 @@ wd_IP_up(void)
 
 	if (rtn == WD_OK)
 		ereport(LOG,
-				(errmsg("successfully acquired the delegate IP:\"%s\"", pool_config->delegate_IP),
+				(errmsg("successfully acquired the delegate IP:\"%s\"", pool_config->delegate_ip),
 				 errdetail("'if_up_cmd' returned with success")));
 	else
 		ereport(LOG,
@@ -192,7 +192,7 @@ wd_IP_down(void)
 	char		path[WD_MAX_PATH_LEN];
 	char	   *command;
 
-	if (strlen(pool_config->delegate_IP) == 0)
+	if (strlen(pool_config->delegate_ip) == 0)
 	{
 		ereport(LOG,
 				(errmsg("trying to release the delegate IP address, but delegate IP is not configured")));
@@ -222,13 +222,13 @@ wd_IP_down(void)
 	if (rtn == WD_OK)
 	{
 		ereport(LOG,
-				(errmsg("successfully released the delegate IP:\"%s\"", pool_config->delegate_IP),
+				(errmsg("successfully released the delegate IP:\"%s\"", pool_config->delegate_ip),
 				 errdetail("'if_down_cmd' returned with success")));
 	}
 	else
 	{
 		ereport(LOG,
-				(errmsg("failed to release the delegate IP:\"%s\"", pool_config->delegate_IP),
+				(errmsg("failed to release the delegate IP:\"%s\"", pool_config->delegate_ip),
 				 errdetail("'if_down_cmd' failed")));
 	}
 	return rtn;
@@ -272,7 +272,7 @@ exec_if_cmd(char *path, char *command)
 		return WD_NG;
 	}
 
-	buf = string_replace(command, "$_IP_$", pool_config->delegate_IP);
+	buf = string_replace(command, "$_IP_$", pool_config->delegate_ip);
 
 	bp = buf;
 	while (*bp == ' ')

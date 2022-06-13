@@ -137,6 +137,7 @@ static bool BackendSlotEmptyCheckFunc(int index);
 
 /*variable custom assign functions */
 static bool FailOverOnBackendErrorAssignMessage(ConfigContext scontext, bool newval, int elevel);
+static bool DelegateIPAssignMessage(ConfigContext scontext, char *newval, int elevel);
 static bool BackendPortAssignFunc(ConfigContext context, int newval, int index, int elevel);
 static bool BackendHostAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 static bool BackendDataDirAssignFunc(ConfigContext context, char *newval, int index, int elevel);
@@ -1039,10 +1040,20 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"delegate_IP", CFGCXT_INIT, WATCHDOG_CONFIG,
+			"Old config parameter for delegate_ip.",
+			CONFIG_VAR_TYPE_STRING, false, VAR_HIDDEN_IN_SHOW_ALL
+		},
+		NULL,
+		"",
+		DelegateIPAssignMessage, NULL, NULL, NULL
+	},
+
+	{
+		{"delegate_ip", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Delegate IP address to be used when pgpool node become a watchdog cluster leader.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
-		&g_pool_config.delegate_IP,
+		&g_pool_config.delegate_ip,
 		"",
 		NULL, NULL, NULL, NULL
 	},
@@ -4606,8 +4617,22 @@ FailOverOnBackendErrorAssignMessage(ConfigContext scontext, bool newval, int ele
 	if (scontext != CFGCXT_BOOT)
 		ereport(WARNING,
 				(errmsg("fail_over_on_backend_error is changed to failover_on_backend_error"),
-				 errdetail("setting failover_on_backend_error has no effect"),
-				 errhint("use failover_on_backend_error instead")));
+				 errdetail("if fail_over_on_backend_error is specified, the value will be set to failover_on_backend_error")));
+	g_pool_config.failover_on_backend_error = newval;
+	return true;
+}
+/*
+ * Throws warning for if someone uses the removed delegate_IP
+ * configuration parameter and set the value to delegate_ip
+ */
+static bool
+DelegateIPAssignMessage(ConfigContext scontext, char *newval, int elevel)
+{
+	if (scontext != CFGCXT_BOOT)
+		ereport(WARNING,
+				(errmsg("delegate_IP is changed to delegate_ip"),
+				 errdetail("if delegate_IP is specified, the value will be set to delegate_ip")));
+	g_pool_config.delegate_ip = newval;
 	return true;
 }
 /*
@@ -5404,8 +5429,10 @@ ShowOption(struct config_generic *record, int index, int elevel)
 
 				if (conf->show_hook)
 					val = (*conf->show_hook) ();
-				else
+				else if (conf->variable)
 					val = *conf->variable ? "on" : "off";
+				else
+					val = "";
 			}
 			break;
 
@@ -5485,7 +5512,7 @@ ShowOption(struct config_generic *record, int index, int elevel)
 
 				if (conf->show_hook)
 					val = (*conf->show_hook) ();
-				else if (*conf->variable && **conf->variable)
+				else if (conf->variable && *conf->variable && **conf->variable)
 					val = *conf->variable;
 				else
 					val = "";
