@@ -6,3 +6,4 @@ pool_passwd.c
 pool_signal.c
 regex_array.c
 strlcpy.c
+pool_config.c
