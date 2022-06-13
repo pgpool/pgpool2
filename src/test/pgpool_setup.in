@@ -17,7 +17,7 @@
 # directory for *testing* purpose.
 # Do not use this tool for production environment!
 #
-# usage: pgpool_setup [-m r|s|n|l][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d][-s][-r][-e]
+# usage: pgpool_setup [-m r|s|n|l][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d][-s][-r][-e][-t][-c]
 # -m s: create an installation as streaming replication mode.
 # (the default)
 # -m r: create an installation as native replication mode.
@@ -86,6 +86,8 @@ USE_REPLICATION_SLOT=${USE_REPLICATION_SLOT:-"false"}
 USE_PG_REWIND=${USE_PG_REWIND:-"false"}
 # Check TIME_WAIT in shutdownall script
 CHECK_TIME_WAIT=${CHECK_TIME_WAIT:-"false"}
+# Test RPMs using sample scripts and config files
+TEST_SAMPLES=${TEST_SAMPLES:-"false"}
 #-------------------------------------------
 # End of configuration section
 #-------------------------------------------
@@ -150,13 +152,33 @@ PCP_PASS_FILE=$BASEDIR/pcppass
 # pgpool reload script name. This will be generated in this script.
 PGPOOL_RELOAD=$BASEDIR/pgpool_reload
 
-export PGHOST=$PGSOCKET_DIR
+export PGHOST=localhost
 
 #-------------------------------------------
 # create failover script
 #-------------------------------------------
 function create_failover_script()
 {
+# If $TEST_SAMPLES = "true", use sample scripts and config files
+if [ $TEST_SAMPLES = "true" ]; then
+    cp -p $PGPOOLDIR/failover.sh.sample $FAILOVER_SCRIPT
+    # Rewrite script
+    PGHOMEVER=`expr $PGVERSION / 10`
+    /bin/sed -i \
+        -e "s/^REPLUSER=.*/REPLUSER=$WHOAMI/" \
+        -e "s/^PCP_USER=.*/PCP_USER=$WHOAMI/" \
+        -e "s/^PGHOME=.*/PGHOME=\/usr\/pgsql-$PGHOMEVER/" \
+        -e "s/^PCP_PORT=.*/PCP_PORT=$PCP_PORT/" \
+        -e "s/^POSTGRESQL_STARTUP_USER=.*/POSTGRESQL_STARTUP_USER=$WHOAMI/" \
+        -e "s/^SSH_KEY_FILE=.*/SSH_KEY_FILE=id_rsa/" \
+        -e "s/^REPL_SLOT_NAME=.*/REPL_SLOT_NAME=pgpool_setup_slot\${FAILED_NODE_ID}/" \
+        -e "/^SSH_KEY_FILE=/a source $BASEDIR/bashrc.ports" \
+	 $FAILOVER_SCRIPT
+
+    chmod 755 $FAILOVER_SCRIPT
+    return;
+fi
+
 cat >> $FAILOVER_SCRIPT <<'EOF'
 #! /bin/sh
 # Execute command by failover.
@@ -176,8 +198,8 @@ failed_host_name=$2
 failed_port=$3
 failed_db_cluster=$4
 new_main_id=$5
-old_main_id=$6
-new_main_host_name=$7
+new_main_host_name=$6
+old_main_id=$7
 old_primary_node_id=$8
 new_main_port_number=$9
 new_main_db_cluster=${10}
@@ -228,6 +250,29 @@ chmod 755 $FAILOVER_SCRIPT
 #-------------------------------------------
 function create_follow_primary_script()
 {
+# If $TEST_SAMPLES = "true", use sample scripts and config files
+if [ $TEST_SAMPLES = "true" ]; then
+    cp -p $PGPOOLDIR/follow_primary.sh.sample  $FOLLOW_PRIMARY_SCRIPT
+    # Rewrite script
+    PGHOMEVER=`expr $PGVERSION / 10`
+    /bin/sed -i \
+        -e "s/^REPLUSER=.*/REPLUSER=$WHOAMI/" \
+        -e "s/^PCP_USER=.*/PCP_USER=$WHOAMI/" \
+        -e "s/^PGHOME=.*/PGHOME=\/usr\/pgsql-$PGHOMEVER/" \
+        -e "s/^PCP_PORT=.*/PCP_PORT=$PCP_PORT/" \
+        -e "s/^POSTGRESQL_STARTUP_USER=.*/POSTGRESQL_STARTUP_USER=$WHOAMI/" \
+        -e "s/^SSH_KEY_FILE=.*/SSH_KEY_FILE=id_rsa/" \
+        -e "s/^REPL_SLOT_NAME=.*/REPL_SLOT_NAME=pgpool_setup_slot\${NODE_ID}/" \
+        -e "/^SSH_KEY_FILE=/a source $BASEDIR/bashrc.ports" \
+        -e "s@^ARCHIVEDIR=.*@ARCHIVEDIR=${BASEDIR}/archivedir/\`basename \$NODE_PGDATA\`@" \
+        -e "/^ARCHIVEDIR=.*/a NEW_PRIMARY_ARCHIVEDIR=${BASEDIR}/archivedir/\`basename \$NEW_PRIMARY_NODE_PGDATA\`" \
+        -e "/restore_command =.*/s/\${ARCHIVEDIR}/\${NEW_PRIMARY_ARCHIVEDIR}/g" \
+	 $FOLLOW_PRIMARY_SCRIPT
+
+    chmod 755 $FOLLOW_PRIMARY_SCRIPT
+    return;
+fi
+
 cat >> $FOLLOW_PRIMARY_SCRIPT <<'EOF'
 #! /bin/sh
 # Execute command by failover.
@@ -249,8 +294,8 @@ host_name=$2
 port=$3
 db_cluster=$4
 new_primary_id=$5
-old_main_id=$6
-new_primary_host_name=$7
+new_primary_host_name=$6
+old_main_id=$7
 old_primary_node_id=$8
 new_primary_port_number=$9
 new_primary_db_cluster=${10}
@@ -329,6 +374,25 @@ chmod 755 $FOLLOW_PRIMARY_SCRIPT
 #-------------------------------------------
 function create_pgpool_remote_start_script()
 {
+# If $TEST_SAMPLES = "true", use sample scripts and config files
+if [ $TEST_SAMPLES = "true" ]; then
+    cp -p $PGPOOLDIR/pgpool_remote_start.sample  $1/$PGPOOL_REMOTE_START_SCRIPT
+    # Rewrite script
+    PGHOMEVER=`expr $PGVERSION / 10`
+    /bin/sed -i \
+        -e "s/^REPLUSER=.*/REPLUSER=$WHOAMI/" \
+        -e "s/^PCP_USER=.*/PCP_USER=$WHOAMI/" \
+        -e "s/^PGHOME=.*/PGHOME=\/usr\/pgsql-$PGHOMEVER/" \
+        -e "s/^PCP_PORT=.*/PCP_PORT=$PCP_PORT/" \
+        -e "s/^POSTGRESQL_STARTUP_USER=.*/POSTGRESQL_STARTUP_USER=$WHOAMI/" \
+        -e "s/^SSH_KEY_FILE=.*/SSH_KEY_FILE=id_rsa/" \
+        -e "/^SSH_KEY_FILE=/a source $BASEDIR/bashrc.ports" \
+    $1/$PGPOOL_REMOTE_START_SCRIPT
+
+    chmod 755 $1/$PGPOOL_REMOTE_START_SCRIPT
+    return;
+fi
+
 cat >> $1/$PGPOOL_REMOTE_START_SCRIPT <<'EOF'
 #! /bin/sh
 #
@@ -388,6 +452,12 @@ function set_postgresql_conf
 		if [ $USE_REPLICATION_SLOT = "false" ];then
 		    echo "archive_mode = on" >> $PGCONF
 		    echo "archive_command = 'cp %p $BASEDIR/archivedir/`basename $1`/%f </dev/null'" >> $PGCONF
+
+            # If $TEST_SAMPLES = "true", always enable replication slot
+		    if [ $TEST_SAMPLES = "true" ];then
+		        num_slots=`expr $NUMCLUSTERS + 10`
+		        echo "max_replication_slots = $num_slots" >> $PGCONF
+		    fi
 		else
 		    num_slots=`expr $NUMCLUSTERS + 10`
 		    echo "max_replication_slots = $num_slots" >> $PGCONF
@@ -412,11 +482,11 @@ function set_postgresql_conf
 
     if [ $PGVERSION -ge 100 ];
     then
-	echo "host      all   scram_user     0/0    scram-sha-256" >> $PGHBACONF
-	echo "host      all   md5_user       0/0    md5" >> $PGHBACONF
+	echo "host      all   scram_user     all    scram-sha-256" >> $PGHBACONF
+	echo "host      all   md5_user       all    md5" >> $PGHBACONF
     fi
 
-    echo "host      all   all       0/0    trust" >> $PGHBACONF
+    echo "host      all   all       all    trust" >> $PGHBACONF
 
     if [ $PGVERSION -ge 100 ];
     then
@@ -442,6 +512,30 @@ EOF
 #-------------------------------------------
 function create_basebackup_stream {
 SCRIPT=basebackup.sh
+
+# If $TEST_SAMPLES = "true", use sample scripts and config files
+if [ $TEST_SAMPLES = "true" ]; then
+    cp -p $PGPOOLDIR/recovery_1st_stage.sample $1/$SCRIPT
+    # Rewrite script
+    PGHOMEVER=`expr $PGVERSION / 10`
+    /bin/sed -i \
+        -e "s/^REPLUSER=.*/REPLUSER=$WHOAMI/" \
+        -e "s/^PCP_USER=.*/PCP_USER=$WHOAMI/" \
+        -e "s/^PGHOME=.*/PGHOME=\/usr\/pgsql-$PGHOMEVER/" \
+        -e "s/^PCP_PORT=.*/PCP_PORT=$PCP_PORT/" \
+        -e "s/^POSTGRESQL_STARTUP_USER=.*/POSTGRESQL_STARTUP_USER=$WHOAMI/" \
+        -e "s/^SSH_KEY_FILE=.*/SSH_KEY_FILE=id_rsa/" \
+        -e "s/^REPL_SLOT_NAME=.*/REPL_SLOT_NAME=pgpool_setup_slot\${DEST_NODE_ID}/" \
+        -e "/^SSH_KEY_FILE=/a source $BASEDIR/bashrc.ports" \
+        -e "s@^ARCHIVEDIR=.*@ARCHIVEDIR=${BASEDIR}/archivedir/\`basename \$DEST_NODE_PGDATA\`@" \
+        -e "/^ARCHIVEDIR=.*/a NEW_PRIMARY_ARCHIVEDIR=${BASEDIR}/archivedir/\`basename \$PRIMARY_NODE_PGDATA\`" \
+        -e "/restore_command =.*/s/\${ARCHIVEDIR}/\${NEW_PRIMARY_ARCHIVEDIR}/g" \
+	 $1/$SCRIPT
+
+    chmod 755 $1/$SCRIPT
+    return;
+fi
+
 cat >> $1/$SCRIPT <<'EOF'
 #! /bin/sh
 psql=__PGBIN__/psql
@@ -465,7 +559,7 @@ echo >> $log
 date >> $log
 EOF
 
-echo "export PGHOST=$PGSOCKET_DIR" >> $1/$SCRIPT
+echo "export PGHOST=localhost" >> $1/$SCRIPT
 
 pg_rewind_failed="true"
 
@@ -584,6 +678,29 @@ function create_basebackup_replication {
     n=$2
     SCRIPT=basebackup.sh
 
+    # If $TEST_SAMPLES = "true", use sample scripts and config files
+    if [ $TEST_SAMPLES = "true" ]; then
+        cp -p $PGPOOLDIR/replication_mode_recovery_1st_stage.sample $1/$SCRIPT
+        # Rewrite script
+        PGHOMEVER=`expr $PGVERSION / 10`
+        /bin/sed -i \
+            -e "s/^REPLUSER=.*/REPLUSER=$WHOAMI/" \
+            -e "s/^PCP_USER=.*/PCP_USER=$WHOAMI/" \
+            -e "s/^PGHOME=.*/PGHOME=\/usr\/pgsql-$PGHOMEVER/" \
+            -e "s/^PCP_PORT=.*/PCP_PORT=$PCP_PORT/" \
+            -e "s/^POSTGRESQL_STARTUP_USER=.*/POSTGRESQL_STARTUP_USER=$WHOAMI/" \
+            -e "s/^SSH_KEY_FILE=.*/SSH_KEY_FILE=id_rsa/" \
+            -e "s/^REPL_SLOT_NAME=.*/REPL_SLOT_NAME=pgpool_setup_slot\${DEST_NODE_ID}/" \
+            -e "/^SSH_KEY_FILE=/a source $BASEDIR/bashrc.ports" \
+            -e "s@^ARCHIVEDIR=.*@ARCHIVEDIR=${BASEDIR}/archivedir/\`basename \$DEST_NODE_PGDATA\`@" \
+            -e "/^ARCHIVEDIR=.*/a NEW_PRIMARY_ARCHIVEDIR=${BASEDIR}/archivedir/\`basename \$MAIN_NODE_PGDATA\`" \
+            -e "/restore_command =.*/s/\${ARCHIVEDIR}/\${NEW_PRIMARY_ARCHIVEDIR}/g" \
+	     $1/$SCRIPT
+
+        chmod 755 $1/$SCRIPT
+        return;
+    fi
+
     create_basebackup_stream $CLUSTERDIR $n
     cat >> $1/$SCRIPT <<'EOF'
 # start target server as a streaming replication standby server
@@ -630,6 +747,30 @@ chmod 755 $1/$SCRIPT
 #-------------------------------------------
 function create_pgpool_recovery_pitr {
 SCRIPT=pgpool_recovery_pitr
+
+# If $TEST_SAMPLES = "true", use sample scripts and config files
+if [ $TEST_SAMPLES = "true" ]; then
+    cp -p $PGPOOLDIR/replication_mode_recovery_2nd_stage.sample $1/$SCRIPT
+    # Rewrite script
+    PGHOMEVER=`expr $PGVERSION / 10`
+    /bin/sed -i \
+        -e "s/^REPLUSER=.*/REPLUSER=$WHOAMI/" \
+        -e "s/^PCP_USER=.*/PCP_USER=$WHOAMI/" \
+        -e "s/^PGHOME=.*/PGHOME=\/usr\/pgsql-$PGHOMEVER/" \
+        -e "s/^PCP_PORT=.*/PCP_PORT=$PCP_PORT/" \
+        -e "s/^POSTGRESQL_STARTUP_USER=.*/POSTGRESQL_STARTUP_USER=$WHOAMI/" \
+        -e "s/^SSH_KEY_FILE=.*/SSH_KEY_FILE=id_rsa/" \
+        -e "s/^REPL_SLOT_NAME=.*/REPL_SLOT_NAME=pgpool_setup_slot\${DEST_NODE_ID}/" \
+        -e "/^SSH_KEY_FILE=/a source $BASEDIR/bashrc.ports" \
+        -e "s@^ARCHIVEDIR=.*@ARCHIVEDIR=${BASEDIR}/archivedir/\`basename \$DEST_NODE_PGDATA\`@" \
+        -e "/^ARCHIVEDIR=.*/a NEW_PRIMARY_ARCHIVEDIR=${BASEDIR}/archivedir/\`basename \$MAIN_NODE_PGDATA\`" \
+        -e "/restore_command =.*/s/\${ARCHIVEDIR}/\${NEW_PRIMARY_ARCHIVEDIR}/g" \
+    $1/$SCRIPT
+
+    chmod 755 $1/$SCRIPT
+    return;
+fi
+
 cat >> $1/$SCRIPT <<'EOF'
 #! /bin/sh
 psql=__PGBIN__/psql
@@ -645,7 +786,7 @@ PORT=$4
 log=$DATADIR_BASE/log/recovery.log
 EOF
 
-echo "export PGHOST=$PGSOCKET_DIR" >> $1/$SCRIPT
+echo "export PGHOST=localhost" >> $1/$SCRIPT
 
 cat >> $1/$SCRIPT <<'EOF'
 # Force to flush current value of sequences to xlog 
@@ -698,7 +839,7 @@ EOF
 primary_conninfo      = 'host=localhost port=$BASEPORT user=$WHOAMI application_name=''server$2'''
 recovery_target_timeline='latest'
 EOF
-    if [ $USE_REPLICATION_SLOT = true ];then
+    if [ $USE_REPLICATION_SLOT = "true" ] || [ $TEST_SAMPLES = "true"]; then
 	echo "primary_slot_name = 'pgpool_setup_slot$2'" >> $1/$fname
     else
 	cat >> $1/$fname <<EOF
@@ -760,11 +901,12 @@ function set_pgpool_conf {
 	echo "log_per_node_statement = on" >> $CONF
 
 	if [ $MODE = "s" ];then
-		echo "failover_command = '$FAILOVER_SCRIPT %d %h %p %D %m %M %H %P %r %R'" >> $CONF
+		echo "failover_command = '$FAILOVER_SCRIPT %d %h %p %D %m %H %M %P %r %R %N %S'" >> $CONF
 	fi
 
 	echo "socket_dir = '$PGSOCKET_DIR'" >> $CONF
 	echo "pcp_socket_dir = '$PGSOCKET_DIR'" >> $CONF
+	echo "logging_collector = off" >> $CONF
 	echo "log_line_prefix = '%m: %a pid %p: '" >> $CONF
 
 	if [ $ENABLE_TEST = "true" ];then
@@ -868,6 +1010,9 @@ function create_postgresql_clusters {
 #-------------------------------------------
 function create_followers
 {
+
+    BACKEND_HOSTNAME=localhost
+
     if [ $MODE = 's' ];then
 	if [ $NO_CREATE_PGCLUSTER = "false" ];then
 	    # temporarily start data0 cluster to create extensions
@@ -878,7 +1023,7 @@ CREATE EXTENSION pgpool_regclass;
 CREATE EXTENSION pgpool_recovery;
 CREATE DATABASE test;
 EOF
-	    if [ $USE_REPLICATION_SLOT = "true" ];then
+	    if [ $USE_REPLICATION_SLOT = "true" ] || [ $TEST_SAMPLES = "true" ]; then
 		n=0
 		while [ $n -lt $NUMCLUSTERS ]
 		do
@@ -892,7 +1037,7 @@ EOF
 	PORT=$BASEPORT
 	CLUSTER="data"`expr $n`
 	CLUSTERDIR=$BASEDIR/$CLUSTER
-	echo "backend_hostname$n = '$PGSOCKET_DIR'" >> $CONF
+	echo "backend_hostname$n = '$BACKEND_HOSTNAME'" >> $CONF
 	echo "backend_port$n = $PORT" >> $CONF
 	echo "backend_weight$n = 1" >> $CONF
 	echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
@@ -915,7 +1060,7 @@ EOF
 
 		# set up pgpool.conf
 		PORT=`expr $PORT + 1`
-		echo "backend_hostname$n = '$PGSOCKET_DIR'" >> $CONF
+		echo "backend_hostname$n = '$BACKEND_HOSTNAME'" >> $CONF
 		echo "backend_port$n = $PORT" >> $CONF
 		echo "backend_weight$n = 1" >> $CONF
 		CLUSTER="data"`expr $n`
@@ -973,7 +1118,7 @@ EOF
 	    fi
 
 	    # set up pgpool.conf
-	    echo "backend_hostname$n = '$PGSOCKET_DIR'" >> $CONF
+	    echo "backend_hostname$n = '$BACKEND_HOSTNAME'" >> $CONF
 	    echo "backend_port$n = $PORT" >> $CONF
 	    echo "backend_weight$n = 1" >> $CONF
 
@@ -1018,12 +1163,12 @@ EOF
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s|n|l|y|i] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d] [-s] [-r] [-e]";exit 1
+	echo "usage: $0 [-m r|s|n|l|y|i] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d] [-s] [-r] [-e] [-t] [-c]";exit 1
 }
 
 #-------------------------------------------
 # Argument check
-# usage: $0  [-m r|s|n][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d][-s][-r]
+# usage: $0  [-m r|s|n][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d][-s][-r][-e][-t][-c]
 #-------------------------------------------
 #
 # default mode is streaming replication mode
@@ -1069,6 +1214,8 @@ do
 	     NO_CREATE_PGCLUSTER="true"
 	elif [ $1 = "-t" ];then
 	     ENABLE_TEST="true"
+	elif [ $1 = "-c" ];then
+	     TEST_SAMPLES="true"
 	elif [ $1 = "--help" -o $1 = "-o" ];then
 		usage
 		exit
@@ -1078,8 +1225,6 @@ do
 	fi
 	shift
 done
-
-SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample
 
 case $MODE in
 	r) MODENAME="native replication mode"
@@ -1112,6 +1257,17 @@ if [ a$USE_PG_REWIND = a"true" ];then
     USE_PG_REWIND="true"
 fi
 
+# If TEST_SAMPLES is provided as an environment variable, turn on -c
+if [ a$TEST_SAMPLES = a"true" ]; then
+    TEST_SAMPLES="true"
+fi
+
+# If $TEST_SAMPLES = "true", use sample scripts and config files under /etc/pgpool-II
+if [ $TEST_SAMPLES = "true" ]; then
+    PGPOOLDIR=/etc/pgpool-II
+
+fi
+
 #-------------------------------------------
 # Make sure that current directory is empty
 #-------------------------------------------
@@ -1121,12 +1277,31 @@ then
 	exit 1
 fi
 
+#-------------------------------------------
+# Make sure that the RPM packages are installed if "-c" option or TEST_SAMPLES is specified.
+#-------------------------------------------
+if [ $TEST_SAMPLES = "true" ]; then
+    rpm -qa | grep pgpool > /dev/null 2>&1
+    if [ $? != 0 ]; then
+        echo "Pgpool-II packages must be installed if \"-c\" option or TEST_SAMPLES is specified."
+        exit 1
+    fi
+
+    if [ ! -r $PGPOOLDIR/pgpool.conf.sample ]; then
+        echo "\"$WHOAMI\" user could not read sample config files unter $PGPOOLDIR"
+        exit 1
+    fi
+fi
+
 exec 5> $BASEDIR/pgpool_setup.log
 
 #-------------------------------------------
 # everything looks good. starting setup...
 #-------------------------------------------
 echo "Starting set up in $MODENAME"
+if [ $TEST_SAMPLES = "true" ]; then
+    echo "Test Pgpool-II RPMs using sample scripts and config files"
+fi
 
 #-------------------------------------------
 # assign base port for PostgreSQL
@@ -1138,7 +1313,7 @@ BASEPORT=$PGBASEPORT
 # install pgpool.conf
 #-------------------------------------------
 test ! -d etc && mkdir etc
-cp $SAMPLE_CONF $CONF
+cp $PGPOOLDIR/pgpool.conf.sample $CONF
 echo "backend_clustering_mode = $CLUSTERING_MODE_STR" >> $CONF
 cp $PGPOOLDIR/pool_hba.conf.sample $BASEDIR/etc/pool_hba.conf
 
@@ -1228,7 +1403,7 @@ $PGPOOL_INSTALL_DIR/bin/pg_md5 -m -f etc/pgpool.conf -u $WHOAMI $WHOAMI
 if [ $MODE = "s" ];then
 	echo "creating follow primary script"
 	create_follow_primary_script >&5 2>&1
-	echo "follow_primary_command = '$FOLLOW_PRIMARY_SCRIPT %d %h %p %D %m %M %H %P %r %R'" >> $CONF
+	echo "follow_primary_command = '$FOLLOW_PRIMARY_SCRIPT %d %h %p %D %m %H %M %P %r %R'" >> $CONF
 fi
 
 if [ $NO_CREATE_PGCLUSTER = "false" ];then

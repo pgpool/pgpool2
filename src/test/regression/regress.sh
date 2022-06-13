@@ -8,7 +8,8 @@
 # -p installation path of Postgres
 # -j JDBC driver path
 # -m install (install pgpool-II and use that for tests) / noinstall : Default install
-# -s unix socket directory 
+# -s unix socket directory
+# -c test pgpool using sample scripts and config files
 # -d start pgpool with debug option
 
 dir=`pwd`
@@ -136,6 +137,7 @@ function print_usage
 	printf "  -j   FILE                Postgres jdbc jar file path\n" >&2
 	printf "  -s   DIRECTORY           unix socket directory\n" >&2
 	printf "  -t   TIMEOUT             timeout value for each test (sec)\n" >&2
+	printf "  -c                       test pgpool using sample scripts and config files\n" >&2
 	printf "  -d                       start pgpool with debug option\n" >&2
 	printf "  -?                       print this help and then exit\n\n" >&2
 	printf "Please read the README for details on adding new tests\n" >&2
@@ -144,7 +146,7 @@ function print_usage
 
 trap "echo ; exit 0" SIGINT SIGQUIT
 
-while getopts "p:m:i:j:b:s:t:d?" OPTION
+while getopts "p:m:i:j:b:s:t:cd?" OPTION
 do
   case $OPTION in
     p)  PG_INSTALL_DIR="$OPTARG";;
@@ -154,6 +156,7 @@ do
     b)  PGBENCH_PATH="$OPTARG";;
     s)  PGSOCKET_DIR="$OPTARG";;
     t)  TIMEOUT="$OPTARG";;
+    c)  export TEST_SAMPLES="true";;
     d)  export PGPOOLDEBUG="true";;
     ?)  print_usage
         exit 2;;
