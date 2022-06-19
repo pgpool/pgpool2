@@ -35,7 +35,7 @@ do
 	    sed -e 's/streaming/         /' | sed -e 's/async/     /'> result
 
 	# check the output of "show pool_nodes".
-	LANG=C $PSQL -f ../create_expected.sql -v mode="'$mode'" -v dir="'$PGSOCKET_DIR'" test | tail -n 6 > expected
+	LANG=C $PSQL -f ../create_expected.sql -v mode="'$mode'" test | tail -n 6 > expected
 	cmp result expected > /dev/null 2>&1
 	if [ $? != 0 ];then
 		./shutdownall
@@ -57,7 +57,7 @@ do
 	fi
 
 	# check the output of "show pool_nodes".
-	LANG=C $PSQL -f ../create_expected_node0.sql -v mode="'$mode'" -v dir="'$PGSOCKET_DIR'" test | tail -n 6 > expected
+	LANG=C $PSQL -f ../create_expected_node0.sql -v mode="'$mode'" test | tail -n 6 > expected
 	cmp result expected > /dev/null 2>&1
 	if [ $? != 0 ];then
 		./shutdownall

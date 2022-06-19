@@ -262,6 +262,29 @@ Pgpool-II documentation
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><option>-c</option></term>
+     <listitem>
+      <para>
+<!--
+       Use the sample scripts and configuration files installed in
+       <filename>/etc/pgpool-II/</filename> directory.
+-->
+       <filename>/etc/pgpool-II/</filename>ディレクトリにインストールされているサンプルスクリプトと設定ファイルを使います。
+      </para>
+      <para>
+<!--
+       This option was added for the purpose of testing the sample scripts and
+       configuration files contained in <productname>Pgpool-II</productname> RPM packages.
+       Make sure you have installed the sample scripts and configuration files in
+       <filename>/etc/pgpool-II/</filename> directory before you specify this option.
+-->
+       このオプションは、<productname>Pgpool-II</productname>のRPMパッケージに含まれているサンプルスクリプトと設定ファイルをテストする目的で追加されたオプションです。
+       このオプションを指定する前に、サンプルスクリプトと設定ファイルが<filename>/etc/pgpool-II/</filename>ディレクトリにインストールされていることを確認してください。
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
   </para>
  </refsect1>
@@ -403,6 +426,18 @@ Pgpool-II documentation
        If "true", act as if "-t" option is specified.
 -->
        "true"ならあたかも"-t"オプションが与えられたかのように振る舞います。
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>TEST_SAMPLES</option></term>
+     <listitem>
+      <para>
+<!--
+       If "true", act as if "-c" option is specified.
+-->
+       "true"ならあたかも"-c"オプションが与えられたかのように振る舞います。
       </para>
      </listitem>
     </varlistentry>
