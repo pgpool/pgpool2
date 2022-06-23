@@ -439,7 +439,7 @@ function set_postgresql_conf
 	echo "log_statement = 'all'" >> $PGCONF
 	echo "max_prepared_transactions = 10" >> $PGCONF
 	echo "unix_socket_directories = '$PGSOCKET_DIR'" >> $PGCONF 
-	echo "max_wal_senders = $NUMCLUSTERS" >> $PGCONF
+	echo "max_wal_senders = `expr $NUMCLUSTERS + 10`" >> $PGCONF
 
 	if [ $PGVERSION -ge 120 ];then
 	    echo "include_if_exists = 'myrecovery.conf'" >> $PGCONF
@@ -540,6 +540,7 @@ cat >> $1/$SCRIPT <<'EOF'
 #! /bin/sh
 psql=__PGBIN__/psql
 pg_rewind=__PGBIN__/pg_rewind
+pg_basebackup=__PGBIN__/pg_basebackup
 PG_CTL=__PGBIN__/pg_ctl
 DATADIR_BASE=__DATADIR_BASE__
 PGSUPERUSER=__PGSUPERUSER__
@@ -557,24 +558,25 @@ pg_rewind_failed="true"
 log=$DATADIR_BASE/log/recovery.log
 echo >> $log
 date >> $log
+
+# Make backup copy of postgresql.conf since pg_rewind/pg_basebackup blindly copies
+# $main_db_cluster/postgresql.conf.
+cp $DEST_CLUSTER/postgresql.conf /tmp/
+
+pg_rewind_failed="true"
 EOF
 
 echo "export PGHOST=localhost" >> $1/$SCRIPT
-
-pg_rewind_failed="true"
 
 if [ $USE_PG_REWIND = "true" ];then
 cat >> $1/$SCRIPT <<'EOF'    
 
 # First try pg_rewind
 
-# Make backup copy of postgresql.conf since pg_rewind blindly copies
-# $main_db_cluster/postgresql.conf.
-cp $DEST_CLUSTER/postgresql.conf /tmp/
 echo "pg_rewind starts" >> $log
 $pg_rewind -P -D $DEST_CLUSTER --source-server="port=$PORT user=$PGSUPERUSER dbname=postgres" >> $log 2>&1
 if [ $? != 0 ];then
-    # pg_rewind failed. Fallback to rsync.
+    # pg_rewind failed. Fallback to pg_basebackup.
    echo "pg_rewind failed. Fall back to rsync" >> $log
    pg_rewind_failed="true"
 else
@@ -586,26 +588,13 @@ fi
 cat >> $1/$SCRIPT <<'EOF'
 if [ $pg_rewind_failed = "true" ];then
 
-$psql -p $PORT -c "SELECT pg_start_backup('Streaming Replication', true)" postgres
-
 echo "source: $main_db_cluster dest: $DEST_CLUSTER" >> $log
 
-rsync -C -a -c --delete --exclude postgresql.conf --exclude postmaster.pid \
---exclude postmaster.opts --exclude pg_log \
---exclude recovery.conf --exclude recovery.done \
---exclude pg_xlog --exclude pg_wal \
---exclude log \
-$main_db_cluster/ $DEST_CLUSTER/
+rm -fr $DEST_CLUSTER/*
+test -d $DEST_CLUSTER || mkdir $DEST_CLUSTER
 
-rm -fr $DEST_CLUSTER/pg_xlog 
-mkdir $DEST_CLUSTER/pg_xlog
-chmod 700 $DEST_CLUSTER/pg_xlog
+$pg_basebackup -w -U $PGSUPERUSER -p $PORT -D $DEST_CLUSTER -c fast
 
-rm -fr $DEST_CLUSTER/pg_wal 
-mkdir $DEST_CLUSTER/pg_wal
-chmod 700 $DEST_CLUSTER/pg_wal
-
-rm $DEST_CLUSTER/recovery.done
 fi
 EOF
 
@@ -645,13 +634,7 @@ EOF
 fi
 
 cat >> $1/$SCRIPT <<'EOF'
-if [ $pg_rewind_failed = "true" ];then
-$psql -p $PORT -c "SELECT pg_stop_backup()" postgres
-fi
-
-if [ $pg_rewind_failed = "false" ];then
-    cp /tmp/postgresql.conf $DEST_CLUSTER/
-fi
+cp /tmp/postgresql.conf $DEST_CLUSTER/
 touch $DEST_CLUSTER/standby.signal
 EOF
 
@@ -839,7 +822,7 @@ EOF
 primary_conninfo      = 'host=localhost port=$BASEPORT user=$WHOAMI application_name=''server$2'''
 recovery_target_timeline='latest'
 EOF
-    if [ $USE_REPLICATION_SLOT = "true" ] || [ $TEST_SAMPLES = "true"]; then
+    if [ $USE_REPLICATION_SLOT = "true" ] || [ $TEST_SAMPLES = "true" ]; then
 	echo "primary_slot_name = 'pgpool_setup_slot$2'" >> $1/$fname
     else
 	cat >> $1/$fname <<EOF
