@@ -76,9 +76,12 @@
      field from the first line that matches the current connection
      parameters will be used. (Therefore, put more-specific entries
      first when you are using wildcards.) If an entry needs to contain
-     : or \, escape this character with \. A host name of localhost
-     matches both TCP (host name localhost) and Unix domain socket
-     connections coming from the local machine.
+     : or \, escape this character with \. The hostname field is matched
+     to the host connection parameter if that is specified, if the host
+     parameter is not given then the host name <literal>localhost</literal>
+     is searched for. The host name <literal>localhost</literal> is also
+     searched for when the connection is a Unix domain socket connection
+     and the host parameter matches the default pcp socket directory path.
     </para>
 
     <para>

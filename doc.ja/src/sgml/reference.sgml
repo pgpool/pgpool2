@@ -115,16 +115,20 @@
      field from the first line that matches the current connection
      parameters will be used. (Therefore, put more-specific entries
      first when you are using wildcards.) If an entry needs to contain
-     : or \, escape this character with \. A host name of localhost
-     matches both TCP (host name localhost) and Unix domain socket
-     connections coming from the local machine.
+     : or \, escape this character with \. The hostname field is matched
+     to the host connection parameter if that is specified, if the host
+     parameter is not given then the host name <literal>localhost</literal>
+     is searched for. The host name <literal>localhost</literal> is also
+     searched for when the connection is a Unix domain socket connection
+     and the host parameter matches the default pcp socket directory path.
      -->
      （この文字列の行頭に # を付けてからファイルにコピーしておけば備忘録のコメントになります。）
      最初の３つのフィールドはそれぞれリテラル値か、任意のものにマッチする * を指定します。
      現在の接続パラメータにマッチした最初の行の password フィールドが使用されます。
      （したがって、ワイルドーカードを使用する場合には、具体的なエントリーの方を先に書きます。）
      エントリーの中に 「:」 か 「\」 を含む必要がある場合には、その文字を 「\」 をつかってエスケープしてください。
-     ホスト名 localhost はローカルマシンからの TCP と Unix ドメインソケットの両方の接続にマッチします。
+     hostname フィールドは、host 接続パラメータとマッチします。host パラメータが指定されていなければ、ホスト名<literal>localhost</literal>がマッチします。
+     接続が Unix ドメインソケット接続で、host パラメータがデフォルトの PCP ソケットディレクトリパスに一致した場合も、ホスト名<literal>localhost</literal>がマッチします。
     </para>
 
     <para>
