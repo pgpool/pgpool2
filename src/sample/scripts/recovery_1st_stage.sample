@@ -16,11 +16,14 @@ PGHOME=/usr/pgsql-11
 ARCHIVEDIR=/var/lib/pgsql/archivedir
 REPLUSER=repl
 REPL_SLOT_NAME=${DEST_NODE_HOST//[-.]/_}
+POSTGRESQL_STARTUP_USER=postgres
+SSH_KEY_FILE=id_rsa_pgpool
+SSH_OPTIONS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/${SSH_KEY_FILE}"
 
 logger -i -p local1.info recovery_1st_stage: start: pg_basebackup for Standby node $DEST_NODE_ID
 
 ## Test passwordless SSH
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@${DEST_NODE_HOST} -i ~/.ssh/id_rsa_pgpool ls /tmp > /dev/null
+ssh -T ${SSH_OPTIONS} ${POSTGRESQL_STARTUP_USER}@${DEST_NODE_HOST} ls /tmp > /dev/null
 
 if [ $? -ne 0 ]; then
     logger -i -p local1.info recovery_1st_stage: passwordless SSH to postgres@${DEST_NODE_HOST} failed. Please setup passwordless SSH.
@@ -41,7 +44,7 @@ SELECT pg_create_physical_replication_slot('${REPL_SLOT_NAME}');
 EOQ
 
 ## Execute pg_basebackup to recovery Standby node
-ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DEST_NODE_HOST -i ~/.ssh/id_rsa_pgpool "
+ssh -T ${SSH_OPTIONS} ${POSTGRESQL_STARTUP_USER}@$DEST_NODE_HOST "
 
     set -o errexit
 
@@ -53,7 +56,7 @@ ssh -T -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres@$DES
     cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${PRIMARY_NODE_HOST} port=${PRIMARY_NODE_PORT} user=${REPLUSER} application_name=${DEST_NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
-restore_command = 'scp ${PRIMARY_NODE_HOST}:${ARCHIVEDIR}/%f %p'
+restore_command = 'scp ${SSH_OPTIONS} ${PRIMARY_NODE_HOST}:${ARCHIVEDIR}/%f %p'
 primary_slot_name = '${REPL_SLOT_NAME}'
 EOT
 
