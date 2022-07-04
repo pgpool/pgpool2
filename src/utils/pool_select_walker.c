@@ -1030,7 +1030,17 @@ non_immutable_function_call_walker(Node *node, void *context)
 			}
 		}
 	}
-	else if (IsA(node, TypeCast))
+
+	/* Before Pgpool-II 3.7 there was no SQLValueFunction in the parser.  For
+	 * the older versions (3.6 or before), we need to check type cast and
+	 * typename instead.  If they are some type casts described below, we
+	 * assume that this SELECT cannot be cached since they might be a
+	 * transformed CURRENT_TIMESTAMP etc.  Of course this could be overkill as
+	 * "SELECT '2022-07-04 09:00:00'::TIMESTAMP" could be regarded as
+	 * non-cachable for example. But there's nothing we can do here.
+	 */
+#ifdef NOT_USED
+	else if (IsA(node, TypeCast) && PG
 	{
 		/* CURRENT_DATE, CURRENT_TIME, LOCALTIMESTAMP, LOCALTIME etc. */
 		TypeCast   *tc = (TypeCast *) node;
@@ -1045,6 +1055,7 @@ non_immutable_function_call_walker(Node *node, void *context)
 			return false;
 		}
 	}
+#endif
 	else if (IsA(node, SQLValueFunction))
 	{
 		/*
