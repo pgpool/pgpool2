@@ -1027,23 +1027,18 @@ non_immutable_function_call_walker(Node *node, void *context)
 	 * "SELECT '2022-07-04 09:00:00'::TIMESTAMP" could be regarded as
 	 * non-cachable for example. But there's nothing we can do here.
 	 */
-#ifdef NOT_USED
-	else if (IsA(node, TypeCast) && PG
+	else if (IsA(node, TypeCast))
 	{
-		/* CURRENT_DATE, CURRENT_TIME, LOCALTIMESTAMP, LOCALTIME etc. */
+		/* TIMESTAMP WITH TIME ZONE and TIME WITH TIME ZONE should not be cached. */
 		TypeCast   *tc = (TypeCast *) node;
 
-		if ((isSystemType((Node *) tc->typeName, "date") ||
-			 isSystemType((Node *) tc->typeName, "timestamp") ||
-			 isSystemType((Node *) tc->typeName, "timestamptz") ||
-			 isSystemType((Node *) tc->typeName, "time") ||
-			 isSystemType((Node *) tc->typeName, "timetz")))
+		if (isSystemType((Node *) tc->typeName, "timestamptz") ||
+			isSystemType((Node *) tc->typeName, "timetz"))
 		{
 			ctx->has_non_immutable_function_call = true;
 			return false;
 		}
 	}
-#endif
 	else if (IsA(node, SQLValueFunction))
 	{
 		/*
