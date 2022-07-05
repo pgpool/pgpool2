@@ -307,7 +307,9 @@ isSystemType(Node *node, const char *name)
 		strcmp("pg_catalog", strVal(linitial(typename->names))) == 0 &&
 		strcmp(name, strVal(lsecond(typename->names))) == 0)
 		return true;
-
+	else if (list_length(typename->names) == 1 &&
+			 strcmp(name, strVal(linitial(typename->names))) == 0)
+		return true;
 	return false;
 }
 
