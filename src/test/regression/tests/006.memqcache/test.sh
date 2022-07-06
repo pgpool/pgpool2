@@ -80,6 +80,8 @@ SELECT '2022-07-05 10:00:00'::TIMESTAMPTZ;
 SELECT '2022-07-05 10:00:00'::TIMESTAMPTZ;
 SELECT '2022-07-05 10:00:00'::TIMETZ;
 SELECT '2022-07-05 10:00:00'::TIMETZ;
+SELECT to_timestamp(0);
+SELECT to_timestamp(0);
 EOF
 
 	success=true
@@ -98,6 +100,7 @@ EOF
 	grep "fetched from cache" log/pgpool.log | grep 'DATE;' > /dev/null || success=false
 	grep "fetched from cache" log/pgpool.log | grep 'TIMESTAMPTZ;' > /dev/null && success=false
 	grep "fetched from cache" log/pgpool.log | grep 'TIMETZ;' > /dev/null && success=false
+	grep "fetched from cache" log/pgpool.log | grep 'to_timestamp' > /dev/null && success=false
 
 	if [ $success = false ];then
 		./shutdownall
