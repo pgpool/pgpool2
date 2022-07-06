@@ -53,6 +53,7 @@ static bool select_table_walker(Node *node, void *context);
 static bool non_immutable_function_call_walker(Node *node, void *context);
 static char *strip_quote(char *str);
 static bool function_volatile_property(char *fname, FUNC_VOLATILE_PROPERTY property);
+static bool function_has_return_type(char *fname, char *typename);
 
 /*
  * Return true if this SELECT has function calls *and* supposed to
@@ -1028,17 +1029,26 @@ non_immutable_function_call_walker(Node *node, void *context)
 				ctx->has_non_immutable_function_call = true;
 				return false;
 			}
+
+			/* check return type is timestamptz */
+			if (function_has_return_type(fname, "timestamptz"))
+			{
+				/* timestamptz should not be cached */
+				ctx->has_non_immutable_function_call = true;
+				return false;
+			}
+
+			/* return type is timetz */
+			if (function_has_return_type(fname, "timetz"))
+			{
+				/* timetz should not be cached */
+				ctx->has_non_immutable_function_call = true;
+				return false;
+			}
 		}
 	}
 
-	/* Before Pgpool-II 3.7 there was no SQLValueFunction in the parser.  For
-	 * the older versions (3.6 or before), we need to check type cast and
-	 * typename instead.  If they are some type casts described below, we
-	 * assume that this SELECT cannot be cached since they might be a
-	 * transformed CURRENT_TIMESTAMP etc.  Of course this could be overkill as
-	 * "SELECT '2022-07-04 09:00:00'::TIMESTAMP" could be regarded as
-	 * non-cachable for example. But there's nothing we can do here.
-	 */
+	/* Check type cast */
 	else if (IsA(node, TypeCast))
 	{
 		/* TIMESTAMP WITH TIME ZONE and TIME WITH TIME ZONE should not be cached. */
@@ -1483,4 +1493,91 @@ make_table_name_from_rangevar(RangeVar *rangevar)
 			(errmsg("make table name from rangevar: tablename:\"%s\"", tablename)));
 
 	return tablename;
+}
+
+/*
+ * Return whether given function has the given type name.  If one or more
+ * functions match, return true.
+ */
+static
+bool function_has_return_type(char *fname, char *typename)
+{
+/*
+ * Query to count the number of records matching given function name and type name.
+ */
+#define FUNCTION_RETURN_TYPE_MATCHEING_QUERY "SELECT count(*) FROM pg_type AS t, pg_catalog.pg_proc AS p, pg_catalog.pg_namespace AS n WHERE p.proname = '%s' AND n.oid = p.pronamespace AND n.nspname %s '%s' AND p.prorettype = t.oid AND t.typname = '%s';"
+	bool		result;
+	char		query[1024];
+	char	   *rawstring = NULL;
+	List	   *names = NIL;
+	POOL_CONNECTION_POOL   *backend;
+	static POOL_RELCACHE   *relcache;
+
+	/* We need a modifiable copy of the input string. */
+	rawstring = pstrdup(fname);
+
+	/* split "schemaname.funcname" */
+	if(!SplitIdentifierString(rawstring, '.', (Node **) &names) ||
+		names == NIL)
+	{
+		pfree(rawstring);
+		list_free(names);
+
+		ereport(WARNING,
+				(errmsg("invalid function name %s", fname)));
+
+		return false;
+	}
+
+	if (list_length(names) == 2)
+	{
+		/* with schema qualification */
+		snprintf(query, sizeof(query), FUNCTION_RETURN_TYPE_MATCHEING_QUERY, (char *) llast(names),
+				 "=", (char *) linitial(names), typename);
+	}
+	else
+	{
+		snprintf(query, sizeof(query), FUNCTION_RETURN_TYPE_MATCHEING_QUERY, (char *) llast(names),
+				 "~", ".*", typename);
+	}
+
+	backend = pool_get_session_context(false)->backend;
+
+	if (!relcache)
+	{
+		/*
+		 * We pass "%s" as a template query so that pool_search_relcache
+		 * passes whole query.
+		 */
+		relcache = pool_create_relcache(pool_config->relcache_size, "%s",
+										int_register_func, int_unregister_func,
+										false);
+		if (relcache == NULL)
+		{
+			pfree(rawstring);
+			list_free(names);
+
+			ereport(WARNING,
+					(errmsg("unable to create relcache, while checking the function volatile property")));
+			return false;
+		}
+		ereport(DEBUG1,
+				(errmsg("checking the function matches the given type name"),
+				 errdetail("relcache created")));
+	}
+
+	/*
+	 * We pass whole query as "table" parameter of pool_search_relcache so
+	 * that each relcache entry is distinguished by actual query string.
+	 */
+	result = (pool_search_relcache(relcache, backend, query) == 0) ? 0 : 1;
+
+	pfree(rawstring);
+	list_free(names);
+
+	ereport(DEBUG1,
+			(errmsg("checking the function matches the given type name"),
+			 errdetail("search result = %d (function name: %s type name: %s)", result, fname, typename)));
+
+	return result;
 }
