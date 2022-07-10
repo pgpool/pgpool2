@@ -93,6 +93,9 @@ function export_env_vars
  	fi
 	
 	echo "using pgpool-II at "$PGPOOL_PATH
+
+	export PGPOOL_VERSION=`$PGPOOL_PATH/bin/pgpool --version 2>&1`
+
 	export PGPOOL_INSTALL_DIR=$PGPOOL_PATH
 	# where to look for pgpool.conf.sample files.
 	export PGPOOLDIR=$PGPOOL_INSTALL_DIR/etc
@@ -119,7 +122,8 @@ function print_info
 	echo ${CBLUE}"*************************"${CNORM}
 
 	echo "REGRESSION MODE          : "${CBLUE}$MODE${CNORM}
-	echo "PGPOOL-II                : "${CBLUE}$PGPOOL_PATH${CNORM}
+	echo "Pgpool-II version        : "${CBLUE}$PGPOOL_VERSION${CNORM}
+	echo "Pgpool-II install path   : "${CBLUE}$PGPOOL_PATH${CNORM}
 	echo "PostgreSQL bin           : "${CBLUE}$PGBIN${CNORM}
 	echo "PostgreSQL Major version : "${CBLUE}$PGVERSION${CNORM}
 	echo "pgbench                  : "${CBLUE}$PGBENCH_PATH${CNORM}
