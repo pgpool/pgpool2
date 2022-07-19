@@ -38,6 +38,9 @@
    基本的に以下のSELECTはキャッシュされません。
    <programlisting>
     immutableでない関数を含むSELECT
+    TIMESTAMP WITH TIMEZONE、TIME WITH TIMEZONEを返す関数を使っているSELECT
+    TIMESTAMP WITH TIMEZONE、TIME WITH TIMEZONEへのキャストを含むSELECT
+    SQLValueFunction (CURRENT_TIME, CURRENT_USERなど)を含むSELECT
     一時テーブル、unloggedテーブルを使ったSELECT
     検索結果が memqcache_maxcache を越えるようなSELECT
     SELECT FOR SHARE/UPDATE
