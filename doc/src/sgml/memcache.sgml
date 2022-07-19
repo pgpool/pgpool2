@@ -26,6 +26,9 @@
    <programlisting>
     SELECTs including non immutable functions
     SELECTs including temp tables, unlogged tables
+    SELECTs including TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
+    SELECTs including CAST to TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
+    SELECTs including SQLValueFunction (CURRENT_TIME, CURRENT_USER etc.)
     SELECT result is too large (memqcache_maxcache)
     SELECT FOR SHARE/UPDATE
     SELECT starting with "/*NO QUERY CACHE*/" comment
