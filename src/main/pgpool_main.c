@@ -60,7 +60,7 @@
 #include "watchdog/wd_lifecheck.h"
 #include "watchdog/watchdog.h"
 #include "pcp/pcp_worker.h"
-
+#include <grp.h>
 
 /*
  * Reasons for signalling a pgpool-II main process
@@ -147,7 +147,8 @@ static void FileUnlink(int code, Datum path);
 static pid_t pcp_fork_a_child(int *fds, char *pcp_conf_file);
 static pid_t fork_a_child(int *fds, int id);
 static pid_t worker_fork_a_child(ProcessType type, void (*func) (), void *params);
-static int	create_unix_domain_socket(struct sockaddr_un un_addr_tmp);
+static int	create_unix_domain_socket(struct sockaddr_un un_addr_tmp, const char *group, const int permissions);
+static int *create_unix_domain_sockets_by_list(struct sockaddr_un *un_addrs, char *group, int permissions, int n_sockets);
 static int *create_inet_domain_sockets(const char *hostname, const int port);
 static int *create_inet_domain_sockets_by_list(char **listen_addresses, int n_listen_addresses, int port, int *n_sockets);
 static void failover(void);
@@ -195,7 +196,7 @@ static void exec_notice_pcp_child(FAILOVER_CONTEXT *failover_context);
 static void check_requests(void);
 static void print_signal_member(sigset_t *sig);
 
-static struct sockaddr_un un_addr;	/* unix domain socket path */
+static struct sockaddr_un *un_addrs;	/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;	/* unix domain socket path for PCP */
 ProcessInfo *process_info = NULL;	/* Per child info table on shmem */
 volatile	User1SignalSlot *user1SignalSlot = NULL;	/* User 1 signal slot on
@@ -304,9 +305,17 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	on_system_exit(system_will_go_down, (Datum) NULL);
 
 	/* set unix domain socket path for connections to pgpool */
-	snprintf(un_addr.sun_path, sizeof(un_addr.sun_path), "%s/.s.PGSQL.%d",
-			 pool_config->socket_dir,
-			 pool_config->port);
+	un_addrs = malloc(sizeof(struct sockaddr_un) * pool_config->num_unix_socket_directories);
+	if (un_addrs == NULL)
+		ereport(FATAL,
+				(errmsg("failed to allocate memory in startup process")));
+
+	for (i = 0; i < pool_config->num_unix_socket_directories; i++)
+	{
+		snprintf(un_addrs[i].sun_path, sizeof(un_addrs[i].sun_path), "%s/.s.PGSQL.%d",
+				 pool_config->unix_socket_directories[i],
+				 pool_config->port);
+	}
 	/* set unix domain socket path for pgpool PCP communication */
 	snprintf(pcp_un_addr.sun_path, sizeof(pcp_un_addr.sun_path), "%s/.s.PGSQL.%d",
 			 pool_config->pcp_socket_dir,
@@ -406,14 +415,20 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	}
 
 	/* create unix domain socket */
-	fds = malloc(sizeof(int) * (num_fds + 2));
+	fds = malloc(sizeof(int) * (pool_config->num_unix_socket_directories + 1));
 	if (fds == NULL)
 		ereport(FATAL,
 				(errmsg("failed to allocate memory in startup process")));
 
-	fds[0] = create_unix_domain_socket(un_addr);
-	fds[1] = -1;
-	on_proc_exit(FileUnlink, (Datum) un_addr.sun_path);
+	fds = create_unix_domain_sockets_by_list(un_addrs,
+											 pool_config->unix_socket_group,
+											 pool_config->unix_socket_permissions,
+											 pool_config->num_unix_socket_directories);
+	fds[pool_config->num_unix_socket_directories] = -1;
+	for (i = 0; i < pool_config->num_unix_socket_directories; i++)
+	{
+		on_proc_exit(FileUnlink, (Datum) un_addrs[i].sun_path);
+	}
 
 	/* create inet domain socket if any */
 	inet_fds = create_inet_domain_sockets_by_list(pool_config->listen_addresses, pool_config->num_listen_addresses,
@@ -422,8 +437,8 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	/* copy inet domain sockets if any */
 	if (num_fds > 0)
 	{
-		memcpy(&fds[1], inet_fds, sizeof(int) * num_fds);
-		fds[num_fds + 1] = -1;
+		memcpy(&fds[pool_config->num_unix_socket_directories], inet_fds, sizeof(int) * num_fds);
+		fds[pool_config->num_unix_socket_directories + num_fds] = -1;
 		free(inet_fds);
 	}
 
@@ -470,7 +485,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		ereport(FATAL,
 				(errmsg("failed to allocate memory in startup process")));
 
-	pcp_fds[0] = create_unix_domain_socket(pcp_un_addr);
+	pcp_fds[0] = create_unix_domain_socket(pcp_un_addr, "", 0777);
 	pcp_fds[1] = -1;
 	on_proc_exit(FileUnlink, (Datum) pcp_un_addr.sun_path);
 
@@ -951,7 +966,7 @@ create_inet_domain_sockets(const char *hostname, const int port)
 * create UNIX domain socket
 */
 static int
-create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
+create_unix_domain_socket(struct sockaddr_un un_addr_tmp, const char *group, const int permissions)
 {
 	struct sockaddr_un addr;
 	int			fd;
@@ -980,7 +995,39 @@ create_unix_domain_socket(struct sockaddr_un un_addr_tmp)
 				 errdetail("bind socket failed with error: \"%m\"")));
 	}
 
-	if (chmod(un_addr_tmp.sun_path, 0777) == -1)
+	if (*group != '\0')
+	{
+		char		*endptr;
+		gid_t	gid;
+		unsigned long val;
+
+		/* check group*/
+		val = strtoul(group, &endptr, 10);
+		if (*endptr == '\0')
+		{
+			gid = val;
+		}
+		else
+		{
+			struct group *gr;
+			gr = getgrnam(group);
+			if(!gr)
+			{
+				ereport(FATAL,
+						(errmsg("unix_socket_group \"%s\" does not exist", group)));
+			}
+			gid = gr->gr_gid;
+		}
+
+		if (chown(un_addr_tmp.sun_path, -1, gid) == -1)
+		{
+			ereport(FATAL,
+					(errmsg("failed to bind a socket: \"%s\"", un_addr_tmp.sun_path),
+					 errdetail("system call chown failed with error: \"%m\"")));
+		}
+	}
+
+	if (chmod(un_addr_tmp.sun_path, permissions) == -1)
 	{
 		ereport(FATAL,
 				(errmsg("failed to bind a socket: \"%s\"", un_addr_tmp.sun_path),
@@ -4620,6 +4667,38 @@ exec_notice_pcp_child(FAILOVER_CONTEXT *failover_context)
  * -------------------------------------------------------------------------
  */
 
+
+/*
+ * Create UNIX domain sockets by unix_socket_directories, which is an array of
+ string.  The number of elements is
+ * "n_listen_addresses". "port" is the port number. A socket array is returned.
+ * The number of elements in the socket array is "n_sockets".
+ */
+static int *
+create_unix_domain_sockets_by_list(struct sockaddr_un *un_addrs,
+								   char *group, int permissions, int n_sockets)
+{
+	int		i;
+	int		*sockets = NULL;
+
+	if (un_addrs == NULL)
+		return NULL;
+
+	sockets = malloc(sizeof(int) * n_sockets);
+	if (sockets == NULL)
+		ereport(FATAL,
+			(errmsg("failed to allocate memory in startup process")));
+
+	for (i = 0; i < n_sockets; i++)
+	{
+		ereport(LOG,
+				(errmsg("unix_socket_directories[%d]: %s", i, un_addrs[i].sun_path)));
+
+		sockets[i] = create_unix_domain_socket(un_addrs[i], group, permissions);
+	}
+
+	return sockets;
+}
 
 /*
  * Create INET domain sockets by specified listen address list

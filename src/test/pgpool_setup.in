@@ -887,7 +887,7 @@ function set_pgpool_conf {
 		echo "failover_command = '$FAILOVER_SCRIPT %d %h %p %D %m %H %M %P %r %R %N %S'" >> $CONF
 	fi
 
-	echo "socket_dir = '$PGSOCKET_DIR'" >> $CONF
+	echo "unix_socket_directories = '$PGSOCKET_DIR'" >> $CONF
 	echo "pcp_socket_dir = '$PGSOCKET_DIR'" >> $CONF
 	echo "logging_collector = off" >> $CONF
 	echo "log_line_prefix = '%m: %a pid %p: '" >> $CONF

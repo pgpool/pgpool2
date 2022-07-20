@@ -98,6 +98,8 @@ static bool backend_cleanup(POOL_CONNECTION * volatile *frontend, POOL_CONNECTIO
 static void child_will_go_down(int code, Datum arg);
 static int opt_sort(const void *a, const void *b);
 
+static bool unix_fds_not_isset(int* fds, int num_unix_fds, fd_set* opt);
+
 /*
  * Non 0 means SIGTERM (smart shutdown) or SIGINT (fast shutdown) has arrived
  */
@@ -1664,7 +1666,7 @@ retry_accept:
 	 * Set no delay if AF_INET socket. Not sure if this is really necessary
 	 * but PostgreSQL does this.
 	 */
-	if (!FD_ISSET(fds[0], &rmask))	/* fds[0] is UNIX domain socket */
+	if (unix_fds_not_isset(fds, pool_config->num_unix_socket_directories, &rmask))
 	{
 		on = 1;
 		if (setsockopt(afd, IPPROTO_TCP, TCP_NODELAY,
@@ -1693,6 +1695,20 @@ retry_accept:
 	}
 #endif
 	return afd;
+}
+
+static bool
+unix_fds_not_isset(int* fds, int num_unix_fds, fd_set* opt)
+{
+	int		i;
+	for (i = 0; i < num_unix_fds; i++)
+	{
+		if (!FD_ISSET(fds[i], opt))
+			continue;
+
+		return false;
+	}
+	return true;
 }
 
 static void

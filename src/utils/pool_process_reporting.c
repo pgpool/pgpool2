@@ -208,10 +208,27 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "pgpool accepting port number", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	/* - pgpool Communication Manager Connection Settings - */
-	StrNCpy(status[i].name, "socket_dir", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->socket_dir);
-	StrNCpy(status[i].desc, "pgpool socket directory", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].name, "unix_socket_directories", POOLCONFIG_MAXNAMELEN);
+	*(status[i].value) = '\0';
+	for (j = 0; j < pool_config->num_unix_socket_directories; j++)
+	{
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		strncat(status[i].value, pool_config->unix_socket_directories[j], len);
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		if (j != pool_config->num_unix_socket_directories - 1)
+			strncat(status[i].value, ",", len);
+	}
+	StrNCpy(status[i].desc, "pgpool socket directories", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	StrNCpy(status[i].name, "unix_socket_group", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->unix_socket_group);
+	StrNCpy(status[i].desc, "owning user of the unix sockets", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	StrNCpy(status[i].name, "unix_socket_permissions", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%04o", pool_config->unix_socket_permissions);
+	StrNCpy(status[i].desc, "access permissions of the unix sockets.", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "pcp_listen_addresses", POOLCONFIG_MAXNAMELEN);

@@ -39,10 +39,16 @@ backend_clustering_mode = 'streaming_replication'
 #port = 9999
                                    # Port number
                                    # (change requires restart)
-#socket_dir = '/tmp'
-                                   # Unix domain socket path
+#unix_socket_directories = '/tmp'
+                                   # Unix domain socket path(s)
                                    # The Debian package defaults to
                                    # /var/run/postgresql
+                                   # (change requires restart)
+#unix_socket_group = ''
+                                   # The Owner group of Unix domain socket(s)
+                                   # (change requires restart)
+#unix_socket_premissions = 0777
+                                   # Permissions of Unix domain socket(s)
                                    # (change requires restart)
 #reserved_connections = 0
                                    # Number of reserved connections.

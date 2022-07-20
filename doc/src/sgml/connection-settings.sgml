@@ -61,20 +61,69 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-socket-dir" xreflabel="socket_dir">
-    <term><varname>socket_dir</varname> (<type>string</type>)
+   <varlistentry id="guc-unix-socket-directories" xreflabel="unix_socket_directories">
+    <term><varname>unix_socket_directories</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>socket_dir</varname> configuration parameter</primary>
+      <primary><varname>unix_socket_directories</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
-      The directory where the UNIX domain socket accepting connections for
-      <productname>Pgpool-II</productname> will be
-      created. Default is <literal>/tmp</literal>. Be aware that
-      this socket might be deleted by a cron job. We recommend
-      to set this value to <literal>/var/run</literal> or such
-      directory.
+      The directory where the UNIX domain socket(s) accepting connections for
+      <productname>Pgpool-II</productname> will be created. Multiple sockets
+      can be created by listing multiple directories separated by commas. Default
+      is <literal>/tmp</literal>. Be aware that this sockets might be deleted
+      by a cron job. We recommend to set this value to <literal>/var/run</literal>
+      or such directory.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-unix-socket-group" xreflabel="unix_socket_group">
+    <term><varname>unix_socket_group</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>unix_socket_group</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Sets the owning group of the Unix-domain socket(s). (The owning user of
+      the sockets is always the user that starts the server.) In combination
+      with the parameter <varname>unix_socket_permissions</varname> this can be
+      used as an additional access control mechanism for Unix-domain connections.
+      By default this is the empty string, which uses the default group of the
+      server user.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-unix-socket-permissions" xreflabel="unix_socket_permissions">
+    <term><varname>unix_socket_permissions</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>unix_socket_permissions</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Sets the access permissions of the Unix-domain socket(s). Unix-domain
+      sockets use the usual Unix file system permission set. The parameter value
+      is expected to be a numeric mode specified in the format accepted by the
+      chmod and umask system calls. (To use the customary octal format the number
+      must start with a <literal>0</literal> (zero).)
+     </para>
+     <para>
+      The default permissions are <literal>0777</literal>, meaning anyone can
+      connect. Reasonable alternatives are <literal>0770</literal> (only user
+      and group, see also <varname>unix_socket_group</varname>) and
+      <literal>0700</literal> (only user). (Note that for a Unix-domain socket,
+      only write permission matters, so there is no point in setting or revoking
+      read or execute permissions.)
      </para>
      <para>
       This parameter can only be set at server start.

@@ -207,7 +207,9 @@ typedef struct
 	int			port;			/* port # to bind */
 	char	   **pcp_listen_addresses;	/* PCP listen address to listen on */
 	int			pcp_port;		/* PCP port # to bind */
-	char	   *socket_dir;		/* pgpool socket directory */
+	char	   **unix_socket_directories;		/* pgpool socket directories */
+	char		*unix_socket_group;			/* owner group of pgpool sockets */
+	int			unix_socket_permissions;	/* pgpool sockets permissions */
 	char	   *wd_ipc_socket_dir;	/* watchdog command IPC socket directory */
 	char	   *pcp_socket_dir; /* PCP socket directory */
 	int			num_init_children;	/* # of children initially pre-forked */
@@ -393,6 +395,7 @@ typedef struct
 	int			num_reset_queries;	/* number of queries in reset_query_list */
 	int			num_listen_addresses;	/* number of entries in listen_addresses */
 	int			num_pcp_listen_addresses;	/* number of entries in pcp_listen_addresses */
+	int			num_unix_socket_directories;	/* number of entries in unix_socket_directories */
 	int			num_read_only_function_list;	/* number of functions in
 											 * read_only_function_list */
 	int			num_write_function_list;	/* number of functions in

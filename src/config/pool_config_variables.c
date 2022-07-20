@@ -51,6 +51,7 @@
 #define default_reset_query_list	"ABORT;DISCARD ALL"
 #define default_listen_addresses_list	"localhost"
 #define default_pcp_listen_addresses_list	"localhost"
+#define default_unix_socket_directories_list	"/tmp"
 #define default_read_only_function_list ""
 #define default_write_function_list ""
 
@@ -107,6 +108,8 @@ static char **get_list_from_string_regex_delim(const char *str, const char *deli
 
 /*show functions */
 static const char *IntValueShowFunc(int value);
+static const char *FilePermissionShowFunc(int value);
+static const char *UnixSockPermissionsShowFunc(void);
 static const char *HBDestinationPortShowFunc(int index);
 static const char *HBDeviceShowFunc(int index);
 static const char *HBHostnameShowFunc(int index);
@@ -815,12 +818,12 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"socket_dir", CFGCXT_INIT, CONNECTION_CONFIG,
-			"The directory to create the UNIX domain socket for accepting pgpool-II client connections.",
+		{"unix_socket_group", CFGCXT_INIT, CONNECTION_CONFIG,
+			"The owning user of the sockets that always starts the server.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
-		&g_pool_config.socket_dir,
-		DEFAULT_SOCKET_DIR,
+		&g_pool_config.unix_socket_group,
+		"",
 		NULL, NULL, NULL, NULL
 	},
 
@@ -1354,6 +1357,19 @@ static struct config_string_list ConfigureNamesStringList[] =
 	},
 
 	{
+		{"unix_socket_directories", CFGCXT_INIT, CONNECTION_CONFIG,
+			"The directories to create the UNIX domain sockets for accepting pgpool-II client connections.",
+			CONFIG_VAR_TYPE_STRING_LIST, false, 0
+		},
+		&g_pool_config.unix_socket_directories,
+		&g_pool_config.num_unix_socket_directories,
+		(const char *) default_unix_socket_directories_list,
+		",",
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"read_only_function_list", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
 			"list of functions that does not writes to database.",
 			CONFIG_VAR_TYPE_STRING_LIST, false, 0
@@ -1855,6 +1871,17 @@ static struct config_int ConfigureNamesInt[] =
 		9898,
 		1024, 65535,
 		NULL, NULL, NULL
+	},
+
+	{
+		{"unix_socket_permissions", CFGCXT_INIT, CONNECTION_CONFIG,
+			"The access permissions of the Unix domain sockets.",
+			CONFIG_VAR_TYPE_INT, false, 0
+		},
+		&g_pool_config.unix_socket_permissions,
+		0777,
+		0000, 0777,
+		NULL, NULL, UnixSockPermissionsShowFunc
 	},
 
 	{
@@ -4318,6 +4345,21 @@ IntValueShowFunc(int value)
 
 	snprintf(buffer, sizeof(buffer), "%d", value);
 	return buffer;
+}
+
+static const char *
+FilePermissionShowFunc(int value)
+{
+	static char buffer[10];
+
+	snprintf(buffer, sizeof(buffer), "%04o", value);
+	return buffer;
+}
+
+static const char *
+UnixSockPermissionsShowFunc(void)
+{
+	return FilePermissionShowFunc(g_pool_config.unix_socket_permissions);
 }
 
 static const char *
