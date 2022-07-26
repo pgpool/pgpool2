@@ -78,8 +78,14 @@
      <programlisting>
       Process memory requirement in total (in mega bytes) = <xref linkend="guc-num-init-children"> * 0.16
      </programlisting>
-     For example if you have <varname>num_init_children</varname> =
-     32 (the default), you will need 5.2MB.
+     For example if you have <varname>num_init_children</varname> = 32
+     (the default), you will need 5.2MB.  Please note that this is
+     minimum memory requirement
+     upon <productname>Pgpool-II</productname> child process starting
+     up. Once the process runs, it will consume more memory depending
+     on the message packet sizes and other factors. It is recommended
+     to measure the amount of memory actually used by the process
+     before starting production use.
     </para>
    </sect3>
   </sect2>
