@@ -62,6 +62,8 @@
       合計必要プロセスメモリ(メガバイト単位) = <xref linkend="guc-num-init-children"> * 0.16
      </programlisting>
      たとえば<varname>num_init_children</varname> = 32 (デフォルト値です)なら、5.2 MBのメモリが必要です。
+     なお、このメモリ量は<productname>Pgpool-II</productname>子プロセス起動時の最低限の必要メモリで、プロセスが稼働するにしたがって、通信データの大きさなどに応じて更に使用するメモリが増えていきます。
+     実際に<productname>Pgpool-II</productname>を動かして、必要なメモリ量がどのくらいになるのか実運用に入る前に検証することをお勧めします。
     </para>
    </sect3>
   </sect2>
