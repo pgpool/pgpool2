@@ -415,11 +415,6 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	}
 
 	/* create unix domain socket */
-	fds = malloc(sizeof(int) * (pool_config->num_unix_socket_directories + 1));
-	if (fds == NULL)
-		ereport(FATAL,
-				(errmsg("failed to allocate memory in startup process")));
-
 	fds = create_unix_domain_sockets_by_list(un_addrs,
 											 pool_config->unix_socket_group,
 											 pool_config->unix_socket_permissions,
