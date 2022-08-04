@@ -277,6 +277,7 @@ int
 PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 {
 	int			num_fds = 0;
+	int			*unix_fds;
 	int			*inet_fds;
 	int			*pcp_inet_fds;
 	int			i;
@@ -414,16 +415,26 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		}
 	}
 
-	/* create unix domain socket */
-	fds = create_unix_domain_sockets_by_list(un_addrs,
+	/* create unix domain socket(s) */
+	fds = malloc(sizeof(int) * (pool_config->num_unix_socket_directories + 1));
+	if (fds == NULL)
+		ereport(FATAL,
+			   (errmsg("failed to allocate memory in startup process")));
+
+	unix_fds = create_unix_domain_sockets_by_list(un_addrs,
 											 pool_config->unix_socket_group,
 											 pool_config->unix_socket_permissions,
 											 pool_config->num_unix_socket_directories);
-	fds[pool_config->num_unix_socket_directories] = -1;
+
 	for (i = 0; i < pool_config->num_unix_socket_directories; i++)
 	{
 		on_proc_exit(FileUnlink, (Datum) un_addrs[i].sun_path);
 	}
+
+	/* copy unix domain sockets */
+	memcpy(fds, unix_fds, sizeof(int) * pool_config->num_unix_socket_directories);
+	fds[pool_config->num_unix_socket_directories] = -1;
+	free(unix_fds);
 
 	/* create inet domain socket if any */
 	inet_fds = create_inet_domain_sockets_by_list(pool_config->listen_addresses, pool_config->num_listen_addresses,
@@ -432,6 +443,11 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	/* copy inet domain sockets if any */
 	if (num_fds > 0)
 	{
+		fds = realloc(fds, sizeof(int) * (num_fds + pool_config->num_unix_socket_directories + 1));
+		if (fds == NULL)
+			ereport(FATAL,
+				   (errmsg("failed to expand memory for fds")));
+
 		memcpy(&fds[pool_config->num_unix_socket_directories], inet_fds, sizeof(int) * num_fds);
 		fds[pool_config->num_unix_socket_directories + num_fds] = -1;
 		free(inet_fds);
@@ -490,6 +506,11 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	if (num_fds > 0)
 	{
+		fds = realloc(fds, sizeof(int) * (num_fds + 2));
+		if (fds == NULL)
+			ereport(FATAL,
+				   (errmsg("failed to expand memory for pcp_fds")));
+
 		memcpy(&pcp_fds[1], pcp_inet_fds, sizeof(int) * num_fds);
 		pcp_fds[num_fds + 1] = -1;
 		free(pcp_inet_fds);
