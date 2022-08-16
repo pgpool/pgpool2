@@ -1,6 +1,153 @@
 <!-- doc/src/sgml/release-4.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-0-20">
+ <title>リリース 4.0.20</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2022-08-18</simpara>
+  </note>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-07-05 [f6fa086f]
+    2022-07-04 [46961809]
+    -->
+    <para>
+     クエリキャッシュの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <!--
+     Pgpool-II did not cache the query like "Select '2022-02-18 07:00:00.006547'::timestamp".
+     SELECTs include TIMESTAMP, TIME and DATE are cached, and SELECTs include TIMESTAMPZ
+     and TIMEZ are not cached because the result can be changed by SET TIME ZONE command etc.
+     Furthermore, SELECTs having functions with return types are timestamptz or timetz are
+     not cached too as same reason.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2022-July/008344.html">[pgpool-general: 8285]</ulink>
+     -->
+     Pgpool-IIは"Select '2022-02-18 07:00:00.006547'::timestamp"のような問合せをキャッシュしていませんでした。
+     TIMESTAMP、TIME、DATEを含むSELECT文はキャッシュされるようになりますが、TIMESTAMPZ、TIMEZを含むSELECT文は"SET TIME ZONE"コマンドなどで結果が変更されるためキャッシュされません。
+     また、TIMESTAMPZやTIMEZ型を返す関数を含むSELECT文も同様の理由でキャッシュされません。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2022-July/008344.html">[pgpool-general: 8285]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-07-19 [668fcea2]
+    -->
+    <para>
+     Doc: 特定のSELECT文がキャッシュされないことに言及しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     特定のSELECT文は以下です。
+     <itemizedlist>
+      <listitem>
+       <para>
+        TIMESTAMP WITH TIMEZONE、TIME WITH TIMEZONEを返す関数を使っているSELECT
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        TIMESTAMP WITH TIMEZONE、TIME WITH TIMEZONEへのキャストを含むSELECT
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        SQLValueFunction (CURRENT_TIME, CURRENT_USERなど)を含むSELECT
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-06-30 [9af40d9f]
+    -->
+    <para>
+     Doc: Unixドメインソケット接続するときのPCPパスワードファイルの使用についての説明を修正しました。(Masaya Kawamoto)
+    </para>
+    <para>
+     pcppassファイルのlocalhostエントリはデフォルトのPCPソケットディレクトリパスへの接続とのみマッチして、全てのUnixソケット接続には使用されません。
+     この振る舞いはpgpassファイルと同じです。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-06-02 [321265a9]
+    -->
+    <para>
+     Doc: <xref linkend="guc-memqcache-maxcache">と<xref linkend="guc-memqcacheexpire">の誤った説明を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     これらのパラメータは設定ファイルの再読み込みでは変更できず、Pgpool-IIの再起動が必要です。
+
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2022-June/008254.html">[pgpool-general: 8195]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>テストツール修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-06-26 [ac315b9d]
+    -->
+    <para>
+     PostgreSQL 15でpgpool_setupを実行できるようになりました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <ulink url="https://www.pgpool.net/mantisbt/view.php?id=757">ticket 757</ulink>を参照ください。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-07-10 [27eefe98]
+    -->
+    <para>
+     Test: 回帰テストで<productname>Pgpool-II</productname>のバージョンを表示するようになりました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-07-09 [d8c7c40f]
+    -->
+    <para>
+     Test: 適切なinstall directoryでpgpool.confを探すように回帰テストスクリプトを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
+
 <sect1 id="release-4-0-19">
  <title>リリース 4.0.19</title>
   <note>

@@ -1,6 +1,149 @@
 <!-- doc/src/sgml/release-4.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-0-20">
+ <title>Release 4.0.20</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2022-08-18</simpara>
+  </note>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-07-05 [f6fa086f]
+    2022-07-04 [46961809]
+    -->
+    <para>
+     Fix bug in query cache. (Tatsuo Ishii)
+    </para>
+    <para>
+     Pgpool-II did not cache the query like "Select '2022-02-18 07:00:00.006547'::timestamp".
+     SELECTs include TIMESTAMP, TIME and DATE are cached, and SELECTs include TIMESTAMPZ
+     and TIMEZ are not cached because the result can be changed by SET TIME ZONE command etc.
+     Furthermore, SELECTs having functions with return types are timestamptz or timetz are
+     not cached too as same reason.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2022-July/008344.html">[pgpool-general: 8285]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-07-19 [668fcea2]
+    -->
+    <para>
+     Doc: mention that certain SELECTs are not cached. (Tatsuo Ishii)
+    </para>
+    <para>
+     certain SELECTs are follows.
+     <itemizedlist>
+      <listitem>
+       <para>
+        SELECTs including TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        SELECTs including CAST to TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        SELECTs including SQLValueFunction (CURRENT_TIME, CURRENT_USER etc.)
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-06-30 [9af40d9f]
+    -->
+    <para>
+     Doc: fix description about using PCP password file when connect to Unix domain socket (Masaya Kawamoto)
+    </para>
+    <para>
+     The localhost entry in pcppass matches only for the default PCP socket
+     directory path, not all Unix socket connections. This behavior is the
+     same as pgpass.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-06-02 [321265a9]
+    -->
+    <para>
+     Doc: fix wrong explanation on <xref linkend="guc-memqcache-maxcache">, <xref linkend="guc-memqcacheexpire">. (Tatsuo Ishii)
+    </para>
+    <para>
+     Those parameters cannot be changed by reloading config file. Restarting
+     pgpool is required.
+
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2022-June/008254.html">[pgpool-general: 8195]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Test Tools</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-06-26 [ac315b9d]
+    -->
+    <para>
+     Allow to run pgpool_setup on PostgreSQL 15. (Tatsuo Ishii)
+    </para>
+    <para>
+     Per <ulink url="https://www.pgpool.net/mantisbt/view.php?id=757">ticket 757</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-07-10 [27eefe98]
+    -->
+    <para>
+     Test: print <productname>Pgpool-II</productname> version in the regression test. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-07-09 [d8c7c40f]
+    -->
+    <para>
+     Test: Fix regression test script to look for pgpool.conf in the proper install directory. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
+
 <sect1 id="release-4-0-19">
  <title>Release 4.0.19</title>
   <note>
