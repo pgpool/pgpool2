@@ -1,6 +1,268 @@
 <!-- doc/src/sgml/release-4.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-3-3">
+ <title>Release 4.3.3</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2022-08-18</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-07-01 [aec234c2]
+    -->
+    <para>
+     Add ssh options to restore_command in sample scripts. (Bo Peng)
+    </para>
+    <para>
+     Patch is created by Jon SCHEWE and updated by Bo Peng.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-06-05 [8cf4d9ab]
+    2022-05-31 [ad64b786]
+    -->
+    <para>
+     Update sample scripts. (Bo Peng)
+     <itemizedlist>
+      <listitem>
+       <para>
+        Update PSQL connection information to use postgres database when creating or dropping replication slots.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        Allow to set ssh login user and ssh key file using variables.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-05-31 [f08ef22b]
+    -->
+    <para>
+     When CloseComplete is received, foward to frontend without buffering. (Tatsuo Ishii)
+    </para>
+    <para>
+     It seems this caused occasional timeout error in 074.bug700_memqcache_segfault.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-07-10 [a070748b]
+    -->
+    <para>
+     Fix pgpool_recovery extension script. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-07-06 [724cf6e7]
+    2022-07-05 [7c5485c9]
+    2022-07-04 [4ef67a15]
+    -->
+    <para>
+     Fix bug in query cache. (Tatsuo Ishii)
+    </para>
+    <para>
+     Pgpool-II did not cache the query like "Select '2022-02-18 07:00:00.006547'::timestamp".
+     SELECTs include TIMESTAMP, TIME and DATE are cached, and SELECTs include TIMESTAMPZ
+     and TIMEZ are not cached because the result can be changed by SET TIME ZONE command etc.
+     Furthermore, SELECTs having functions with return types are timestamptz or timetz are
+     not cached too as same reason.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2022-July/008344.html">[pgpool-general: 8285]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-06-02 [5ccf6319]
+    2022-05-31 [1731f206]
+    -->
+    <para>
+     Fix internal transaction handling bug in snapshot isolation mode. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-07-19 [1334e425]
+    -->
+    <para>
+     Doc: mention that certain SELECTs are not cached. (Tatsuo Ishii)
+    </para>
+    <para>
+     certain SELECTs are follows.
+     <itemizedlist>
+      <listitem>
+       <para>
+        SELECTs including TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        SELECTs including CAST to TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        SELECTs including SQLValueFunction (CURRENT_TIME, CURRENT_USER etc.)
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-06-30 [c2d48151]
+    -->
+    <para>
+     Doc: fix description about using PCP password file when connect to Unix domain socket (Masaya Kawamoto)
+    </para>
+    <para>
+     The localhost entry in pcppass matches only for the default PCP socket
+     directory path, not all Unix socket connections. This behavior is the
+     same as pgpass.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-07-26 [25fd3f6f]
+    2022-06-06 [6d826e25]
+    -->
+    <para>
+     Doc: enhance and fix memory requirement section. (Tatsuo Ishii)
+    </para>
+    <para>
+     <itemizedlist>
+      <listitem>
+       <para>
+        Add explanation about memory usage while pgpool child process is running.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Enhance the formula to calculate shared memory requirement so that it computes more accurate result.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Fix shared memory requirement for shared rel cache. The old value 64MB was simply wrong.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Fix process memory requirement. Previously the formula was based on
+        RSS. However PSS should be used because RSS includes shared memory
+        such as the memory used for libraries. This resuls in lot smaller
+        memory requirement than before.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-06-02 [33cdc91f]
+    -->
+    <para>
+     Doc: fix wrong explanation on <xref linkend="guc-memqcache-maxcache">, <xref linkend="guc-memqcacheexpire">. (Tatsuo Ishii)
+    </para>
+    <para>
+     Those parameters cannot be changed by reloading config file. Restarting
+     pgpool is required.
+
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2022-June/008254.html">[pgpool-general: 8195]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Test Tools</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-06-26 [0607aed9]
+    -->
+    <para>
+     Allow to run pgpool_setup on PostgreSQL 15. (Tatsuo Ishii)
+    </para>
+    <para>
+     Per <ulink url="https://www.pgpool.net/mantisbt/view.php?id=757">ticket 757</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-06-19 [0924f3cc]
+    -->
+    <para>
+     Allow pgpool_setup to test sample scripts and sample config files contained in RPMs. (Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-07-10 [81e331eb]
+    -->
+    <para>
+     Test: print <productname>Pgpool-II</productname> version in the regression test. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-07-09 [2f07915c]
+    -->
+    <para>
+     Test: Fix regression test script to look for pgpool.conf in the proper install directory. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-3-2">
  <title>Release 4.3.2</title>
   <note>
