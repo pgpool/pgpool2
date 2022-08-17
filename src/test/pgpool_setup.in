@@ -1032,6 +1032,28 @@ do
 	shift
 done
 
+
+# If USE_REPLICATION_SLOT is provided as an environment variable, turn on -s
+if [ a$USE_REPLICATION_SLOT = a"true" ];then
+    USE_REPLICATION_SLOT="true"
+fi
+
+# If USE_PG_REWIND is provided as an environment variable, turn on -r
+if [ a$USE_PG_REWIND = a"true" ];then
+    USE_PG_REWIND="true"
+fi
+
+# If TEST_SAMPLES is provided as an environment variable, turn on -c
+if [ a$TEST_SAMPLES = a"true" ]; then
+    TEST_SAMPLES="true"
+fi
+
+# If $TEST_SAMPLES = "true", use sample scripts and config files under /etc/pgpool-II
+if [ $TEST_SAMPLES = "true" ]; then
+    PGPOOLDIR=/etc/pgpool-II
+fi
+
+
 case $MODE in
 	r) MODENAME="native replication mode"
 		SAMPLE_CONF=$PGPOOLDIR/pgpool.conf.sample-replication
@@ -1053,26 +1075,6 @@ case $MODE in
 	    ;;
 esac
 
-# If USE_REPLICATION_SLOT is provided as an environment variable, turn on -s
-if [ a$USE_REPLICATION_SLOT = a"true" ];then
-    USE_REPLICATION_SLOT="true"
-fi
-
-# If USE_PG_REWIND is provided as an environment variable, turn on -r
-if [ a$USE_PG_REWIND = a"true" ];then
-    USE_PG_REWIND="true"
-fi
-
-# If TEST_SAMPLES is provided as an environment variable, turn on -c
-if [ a$TEST_SAMPLES = a"true" ]; then
-    TEST_SAMPLES="true"
-fi
-
-# If $TEST_SAMPLES = "true", use sample scripts and config files under /etc/pgpool-II
-if [ $TEST_SAMPLES = "true" ]; then
-    PGPOOLDIR=/etc/pgpool-II
-
-fi
 
 #-------------------------------------------
 # Make sure that current directory is empty
