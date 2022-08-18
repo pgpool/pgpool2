@@ -405,7 +405,7 @@ host    replication     all             samenet                 scram-sha-256
      自動フェイルオーバ、オンラインリカバリ機能を利用するには、<productname>Pgpool-II</productname>起動ユーザ(デフォルトでは<literal>root</literal>)と<literal>postgres</literal>ユーザ間、<literal>postgres</literal>ユーザと<literal>postgres</literal>ユーザ間が双方向に<emphasis>パスワードなし</emphasis>で<literal>SSH</literal>接続できる状態になっている必要があります。全サーバで以下のコマンドを実行し、<literal>SSH</literal>の設定を行います。生成される鍵ファイル名は<literal>id_rsa_pgpool</literal>とします。
     </para>
     <programlisting>
-[全サーバ]# midir ~/.ssh
+[全サーバ]# mkdir ~/.ssh
 [全サーバ]# chmod 700 ~/.ssh
 [全サーバ]# cd ~/.ssh
 [全サーバ]# ssh-keygen -t rsa -f id_rsa_pgpool
@@ -414,7 +414,7 @@ host    replication     all             samenet                 scram-sha-256
 [全サーバ]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
 
 [全サーバ]# su - postgres
-[全サーバ]$ midir ~/.ssh
+[全サーバ]$ mkdir ~/.ssh
 [全サーバ]$ chmod 700 ~/.ssh
 [全サーバ]$ cd ~/.ssh
 [全サーバ]$ ssh-keygen -t rsa -f id_rsa_pgpool
